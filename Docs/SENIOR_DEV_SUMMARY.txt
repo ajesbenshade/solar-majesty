@@ -1,0 +1,89 @@
+================================================================================
+SOLAR MAJESTY — SENIOR DEVELOPER HANDOFF SUMMARY
+================================================================================
+Project path : /Users/aaronesbenshade/solar-conquest
+Status       : Pure C# systems + Phase-1 Runtime drivers (not a full Unity project)
+
+--------------------------------------------------------------------------------
+1. DESIGN (LOCKED)
+--------------------------------------------------------------------------------
+Majesty-style Overseer RTS: player never direct-controls units. Build,
+post bounty flags, manage economy. Autonomous specialists accept/reject work
+via SpecialistBrain (utility AI + greed gate).
+
+Namespace: SolarMajesty
+Systems/ remains pure C# (no MonoBehaviour). Runtime/ holds thin drivers only.
+
+--------------------------------------------------------------------------------
+2. PURE SYSTEMS (UNCHANGED THIS PHASE)
+--------------------------------------------------------------------------------
+Assets/Scripts/Systems/
+  SpecialistBrain.cs   — decision core
+  FlagManager.cs       — post / work / claim
+  BuildingPlacer.cs    — place + construction queue
+  ResourceManager.cs   — stockpile
+  SimpleEconomy.cs     — upkeep + resupply
+  GameTypes.cs         — enums, ConstructionOrder
+
+Assets/Scripts/Core/SpecialistTypes.cs
+  SpecialistContext, BrainDecision, FlagHandle, SpecialistAction
+
+Assets/Scripts/Data/
+  BuildingData, SpecialistData, FlagData, ResourceData, MonsterData
+
+--------------------------------------------------------------------------------
+3. PHASE 1 VERTICAL SLICE (NEW)
+--------------------------------------------------------------------------------
+Assets/Scripts/Runtime/
+  IsoGrid.cs
+  IsometricCameraController.cs
+  SpecialistAgent.cs      — think interval → Brain.Evaluate → move/work/rest
+  FlagMarker.cs
+  FlagPlacementInput.cs   — F1 Explore, F2 ClearThreat, LMB, +/- bounty
+  BuildingPlacementInput.cs
+  GameLoop.cs             — owns pure systems, spawns one specialist
+  DebugHud.cs
+
+Systems/ was NOT modified. GameLoop constructs pure types in Awake.
+
+Docs/VERTICAL_SLICE_PHASE1.md — setup + success criteria
+
+--------------------------------------------------------------------------------
+4. AGENT LOOP
+--------------------------------------------------------------------------------
+SpecialistAgent every 0.4–0.6s:
+  Build SpecialistContext (position, fatigue, health, current flag, greedHunger)
+  decision = brain.Evaluate(ctx, flags.Flags, bodyDanger)
+  PursueFlag → move toward flag; when close ApplyWork; on complete grant bounty
+  Rest / Idle → timers / light wander (not player-directed)
+
+Player cannot set specialist destination. Click only posts flags/buildings.
+
+--------------------------------------------------------------------------------
+5. UNITY DROP-IN + PLAY
+--------------------------------------------------------------------------------
+1. Create Unity 6 project; copy Assets/ in.
+2. Empty scene → GameObject + GameLoop component → Play.
+3. If SO refs empty, GameLoop creates runtime Scout + Explore + ClearThreat + buildings.
+
+Controls: G flag · B build · F1/F2 · +/- bounty · LMB place · R force fatigue
+HUD shows decision Action, Score, Reason, fatigue, health.
+
+Success criteria:
+  - Low bounty far → Idle no_attractive_flag
+  - High bounty preferred nearby → walk + work
+  - High fatigue → Rest
+  - No click-to-move specialist
+
+--------------------------------------------------------------------------------
+6. NEXT
+--------------------------------------------------------------------------------
+- Real SO assets in Editor
+- More specialist classes
+- NavMesh optional
+- Real construction visuals / progress UI
+- Dust Stalker runtime (MonsterData already exists)
+
+================================================================================
+END
+================================================================================
