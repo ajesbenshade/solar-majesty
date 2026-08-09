@@ -51,11 +51,25 @@ namespace SolarMajesty.EditorTools
             WriteFlag("Flag_Explore", FlagType.Explore, "Explore", 40, 0.08f, 4f, new Color(0.3f, 0.85f, 1f));
             WriteFlag("Flag_ClearThreat", FlagType.ClearThreat, "Clear Threat", 80, 0.4f, 6f, new Color(1f, 0.3f, 0.25f));
             WriteFlag("Flag_Build", FlagType.Build, "Build Here", 70, 0.1f, 8f, new Color(1f, 0.65f, 0.15f));
+            WriteFlag("Flag_Extract", FlagType.Extract, "Extract", 55, 0.12f, 7f, new Color(0.55f, 0.9f, 0.35f));
+            WriteFlag("Flag_DefendArea", FlagType.DefendArea, "Defend Area", 65, 0.25f, 9f, new Color(0.85f, 0.35f, 1f));
 
             WriteBuilding("Building_LandingPad", "Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6);
             WriteBuilding("Building_HAB1", "Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 3);
             WriteBuilding("Building_PWR1", "Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 3, 3);
             WriteBuilding("Building_OPS1", "Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 3, 3);
+            WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 3, 2);
+            WriteBuilding("Building_CMD1", "Command (CMD-1)", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
+            WriteBuilding(
+                "Building_SolarArray",
+                "Solar Array",
+                BuildingCategory.Power,
+                30,
+                0,
+                9f,
+                3,
+                4,
+                BuildingVisualCatalog.LoadSolarArray());
 
             // Keep authored Data copies in sync with Resources (Resources are what Play loads).
             MirrorAsset(scout, $"{DataRoot}/Specialists/Specialist_ScoutDrone.asset");
@@ -112,7 +126,8 @@ namespace SolarMajesty.EditorTools
             int power,
             float time,
             int fw,
-            int fh)
+            int fh,
+            GameObject prefabOverride = null)
         {
             string resPath = $"{ResourcesDemo}/Buildings/{fileName}.asset";
             var asset = LoadOrCreate<BuildingData>(resPath);
@@ -130,7 +145,7 @@ namespace SolarMajesty.EditorTools
                     new ResourceAmount(ResourceId.Power, power)
                 }
                 : new[] { new ResourceAmount(ResourceId.Metals, metals) };
-            asset.prefab = BuildingVisualCatalog.LoadPrefab(cat);
+            asset.prefab = prefabOverride != null ? prefabOverride : BuildingVisualCatalog.LoadPrefab(cat);
             EditorUtility.SetDirty(asset);
 
             MirrorAsset(asset, $"{DataRoot}/Buildings/{fileName}.asset");

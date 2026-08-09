@@ -18,6 +18,7 @@ namespace SolarMajesty
                 { BuildingCategory.Mining, "Buildings/SM_OPS1_OperationsUnit" },
                 { BuildingCategory.Defense, "Buildings/SM_CMD1_CommandBuilding" },
                 { BuildingCategory.Utility, "Buildings/SM_ModularTubeConnector" },
+                { BuildingCategory.Laboratory, "Buildings/SM_LAB1_LaboratoryModule" },
             };
 
         private static readonly Dictionary<string, GameObject> Cache = new Dictionary<string, GameObject>();

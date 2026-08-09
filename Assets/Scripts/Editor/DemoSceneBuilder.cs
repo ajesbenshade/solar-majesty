@@ -32,6 +32,18 @@ namespace SolarMajesty.EditorTools
             Debug.Log("[Solar Majesty] Opened " + scene.path + " — press Play.");
         }
 
+        [MenuItem("Solar Majesty/Play Demo")]
+        public static void PlayDemo()
+        {
+            OpenDemoScene();
+            if (!EditorApplication.isPlaying)
+                EditorApplication.isPlaying = true;
+            Debug.Log("[Solar Majesty] Entering Play Mode — Game tab for the overseer demo.");
+        }
+
+        /// <summary>Unity (editor, no -quit) -executeMethod SolarMajesty.EditorTools.DemoSceneBuilder.PlayDemo</summary>
+        public static void PlayDemoCli() => PlayDemo();
+
         /// <summary>Unity -batchmode -executeMethod SolarMajesty.EditorTools.DemoSceneBuilder.Build</summary>
         public static void Build()
         {
@@ -44,20 +56,23 @@ namespace SolarMajesty.EditorTools
             var sunGo = new GameObject("Directional Light");
             var sun = sunGo.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 1.1f;
-            sun.color = new Color(1f, 0.96f, 0.9f);
-            sunGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+            sun.intensity = 1.45f;
+            sun.color = new Color(1f, 0.94f, 0.86f);
+            sun.shadows = LightShadows.Soft;
+            sun.shadowStrength = 0.78f;
+            sunGo.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
 
             // Keep a Main Camera in the scene so opening the file isn't an empty Game view.
-            // GameLoop.ConfigureCamera repositions it on Play.
+            // GameLoop.ConfigureCamera / DemoAtmosphere reposition + grade on Play.
             var camGo = new GameObject("Main Camera");
             camGo.tag = "MainCamera";
             var cam = camGo.AddComponent<Camera>();
             cam.orthographic = true;
             cam.orthographicSize = ColonyLayout.CameraOrthoSize;
-            cam.clearFlags = CameraClearFlags.Skybox;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.06f, 0.08f, 0.14f);
             cam.nearClipPlane = 0.3f;
-            cam.farClipPlane = 500f;
+            cam.farClipPlane = 200f;
             camGo.AddComponent<AudioListener>();
             camGo.AddComponent<IsometricCameraController>();
             Vector3 focus = ColonyLayout.CameraFocus;
@@ -110,6 +125,17 @@ namespace SolarMajesty.EditorTools
 
             GraphicsSettings.defaultRenderPipeline = pipeline;
             QualitySettings.renderPipeline = pipeline;
+
+            // Soft shadows help the greybox campus read volume under the iso sun.
+            var so = new SerializedObject(pipeline);
+            var soft = so.FindProperty("m_SoftShadowsSupported");
+            if (soft != null) soft.boolValue = true;
+            var dist = so.FindProperty("m_ShadowDistance");
+            if (dist != null) dist.floatValue = 80f;
+            var cascades = so.FindProperty("m_ShadowCascadeCount");
+            if (cascades != null) cascades.intValue = 2;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(pipeline);
         }
 
         private static void AddToBuildSettings(string scenePath)

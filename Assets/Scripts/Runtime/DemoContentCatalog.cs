@@ -14,11 +14,16 @@ namespace SolarMajesty
         public const string ExploreFlagPath = "DemoContent/Flags/Flag_Explore";
         public const string ClearThreatFlagPath = "DemoContent/Flags/Flag_ClearThreat";
         public const string BuildFlagPath = "DemoContent/Flags/Flag_Build";
+        public const string ExtractFlagPath = "DemoContent/Flags/Flag_Extract";
+        public const string DefendFlagPath = "DemoContent/Flags/Flag_DefendArea";
 
         public const string LandingPadPath = "DemoContent/Buildings/Building_LandingPad";
         public const string HabPath = "DemoContent/Buildings/Building_HAB1";
         public const string PowerPath = "DemoContent/Buildings/Building_PWR1";
         public const string OpsPath = "DemoContent/Buildings/Building_OPS1";
+        public const string LabPath = "DemoContent/Buildings/Building_LAB1";
+        public const string CmdPath = "DemoContent/Buildings/Building_CMD1";
+        public const string SolarPath = "DemoContent/Buildings/Building_SolarArray";
 
         public const string ScoutPrefabPath = "Units/Unit_ScoutDrone";
         public const string EngineerPrefabPath = "Units/Unit_EngineerBot";
@@ -32,6 +37,8 @@ namespace SolarMajesty
         public static FlagData LoadExploreFlag() => Resources.Load<FlagData>(ExploreFlagPath);
         public static FlagData LoadClearThreatFlag() => Resources.Load<FlagData>(ClearThreatFlagPath);
         public static FlagData LoadBuildFlag() => Resources.Load<FlagData>(BuildFlagPath);
+        public static FlagData LoadExtractFlag() => Resources.Load<FlagData>(ExtractFlagPath);
+        public static FlagData LoadDefendFlag() => Resources.Load<FlagData>(DefendFlagPath);
 
         public static BuildingData[] LoadStarterBuildings()
         {
@@ -39,8 +46,16 @@ namespace SolarMajesty
             var hab = Resources.Load<BuildingData>(HabPath);
             var pwr = Resources.Load<BuildingData>(PowerPath);
             var ops = Resources.Load<BuildingData>(OpsPath);
+            var lab = Resources.Load<BuildingData>(LabPath);
+            var cmd = Resources.Load<BuildingData>(CmdPath);
+            var solar = Resources.Load<BuildingData>(SolarPath);
             if (pad == null || hab == null || pwr == null || ops == null)
                 return null;
+
+            if (lab != null && cmd != null && solar != null)
+                return new[] { pad, hab, pwr, ops, lab, cmd, solar };
+            if (lab != null && cmd != null)
+                return new[] { pad, hab, pwr, ops, lab, cmd };
             return new[] { pad, hab, pwr, ops };
         }
 

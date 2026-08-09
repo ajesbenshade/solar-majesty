@@ -39,7 +39,7 @@ namespace SolarMajesty
         /// <summary>Camera look-at for first Play frame.</summary>
         public static Vector3 CameraFocus => CampusOrigin + new Vector3(0f, 0f, -2f);
 
-        public const float CameraOrthoSize = 14f;
+        public const float CameraOrthoSize = 16f;
 
         /// <summary>
         /// Ordered showcase pieces: path, local offset from CampusOrigin, yaw, footprint cells (W×H).
@@ -56,13 +56,19 @@ namespace SolarMajesty
             new ShowcasePiece("Buildings/SM_LAB1_LaboratoryModule", new Vector3(-18.5f, 0f, 0f), 0f, 3, 2),
             new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(-14.2f, 0f, 0f), 0f, 2, 1),
 
+            // East habitat spur + apron connectors
+            new ShowcasePiece("Buildings/SM_HAB1_HabitatModule", new Vector3(8f, 0f, -6f), 90f, 4, 3),
+            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(4f, 0f, -6f), 90f, 2, 1),
+
             // Command / ops (north)
             new ShowcasePiece("Buildings/SM_CMD1_CommandBuilding", new Vector3(-4f, 0f, 10f), 0f, 4, 4),
             new ShowcasePiece("Buildings/SM_OPS1_OperationsUnit", new Vector3(6f, 0f, 10f), 0f, 3, 3),
+            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(1f, 0f, 10f), 90f, 2, 1),
 
             // Power yard (south)
             new ShowcasePiece("Buildings/SM_PWR1_PowerNode", new Vector3(2f, 0f, -11f), 0f, 3, 3),
             new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(8.5f, 0f, -11f), 0f, 3, 4),
+            new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(-4.5f, 0f, -11f), 0f, 3, 4),
 
             // Landing complex (east) — ship shares pad footprint (skip duplicate reserve)
             new ShowcasePiece("Environment/SM_LandingPad", new Vector3(16f, 0f, 0f), 0f, 6, 6, PadScale),

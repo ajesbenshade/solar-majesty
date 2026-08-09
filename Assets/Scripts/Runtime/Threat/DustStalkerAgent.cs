@@ -25,6 +25,10 @@ namespace SolarMajesty
         [SerializeField] private float maxHealth = 28f;
         [SerializeField] private float damagePerSecondWhileCleared = 9f;
 
+        [Header("Phase 2A bite")]
+        [SerializeField] private float biteRange = 3.2f;
+        [SerializeField] private float biteDamagePerSecond = 0.18f;
+
         [Header("Visual")]
         [SerializeField] private Color stalkerColor = new Color(0.45f, 0.08f, 0.1f);
         [SerializeField] private float bobAmp = 0.12f;
@@ -71,6 +75,7 @@ namespace SolarMajesty
             float dt = Time.deltaTime;
             TickWander(dt);
             TickAggroAndPressure();
+            TickBite(dt);
             TickDefeat(dt);
             TickPresentation(dt);
         }
@@ -113,6 +118,36 @@ namespace SolarMajesty
 
             float pressure = _aggro ? aggroPressure : idlePressure;
             _threat.Report(_sourceId, pressure);
+        }
+
+        private void TickBite(float dt)
+        {
+            if (!_aggro) return;
+
+            var specialists = FindObjectsByType<SpecialistAgent>(FindObjectsSortMode.None);
+            Vector3 me = Flat(transform.position);
+            SpecialistAgent nearest = null;
+            float best = biteRange * biteRange;
+
+            for (int i = 0; i < specialists.Length; i++)
+            {
+                var s = specialists[i];
+                if (s == null || s.IsIncapacitated) continue;
+                float sq = (Flat(s.transform.position) - me).sqrMagnitude;
+                if (sq <= best)
+                {
+                    best = sq;
+                    nearest = s;
+                }
+            }
+
+            if (nearest == null) return;
+
+            // Crawl toward prey while biting.
+            Vector3 prey = nearest.transform.position;
+            prey.y = transform.position.y;
+            transform.position = Vector3.MoveTowards(transform.position, prey, moveSpeed * 0.85f * dt);
+            nearest.ApplyDamage(biteDamagePerSecond * dt);
         }
 
         private void TickDefeat(float dt)
@@ -181,6 +216,8 @@ namespace SolarMajesty
         private void Die()
         {
             _threat?.Clear(_sourceId);
+            DemoAudio.PlayStalkerDeath();
+            DemoVfx.DeathBurst(transform.position, stalkerColor);
             Debug.Log("[Threat] Dust Stalker defeated — pressure contribution removed.");
             Destroy(gameObject);
         }

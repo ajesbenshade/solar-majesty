@@ -31,6 +31,8 @@ namespace SolarMajesty
         [SerializeField] private FlagData exploreFlagData;
         [SerializeField] private FlagData clearThreatFlagData;
         [SerializeField] private FlagData buildFlagData;
+        [SerializeField] private FlagData extractFlagData;
+        [SerializeField] private FlagData defendFlagData;
         [SerializeField] private BuildingData[] starterBuildings;
 
         [Header("Slice settings")]
@@ -66,6 +68,25 @@ namespace SolarMajesty
         public float FlagBounty => _flagInput != null ? _flagInput.Bounty : 0f;
         public float CurrentThreatPressure => Threat != null ? Threat.Current : 0f;
 
+        /// <summary>True when every living specialist is incapacitated.</summary>
+        public bool IsOutpostOverwhelmed
+        {
+            get
+            {
+                if (_agents.Count == 0) return false;
+                int living = 0;
+                int down = 0;
+                for (int i = 0; i < _agents.Count; i++)
+                {
+                    var a = _agents[i];
+                    if (a == null) continue;
+                    living++;
+                    if (a.IsIncapacitated) down++;
+                }
+                return living > 0 && down == living;
+            }
+        }
+
         private readonly List<SpecialistAgent> _agents = new List<SpecialistAgent>();
         private readonly List<DustStalkerAgent> _stalkers = new List<DustStalkerAgent>();
         private FlagPlacementInput _flagInput;
@@ -73,6 +94,19 @@ namespace SolarMajesty
         private IsometricCameraController _isoCam;
         private Transform _threatRoot;
         private float _constructionTick;
+        private DebugHud _debugHud;
+        private OverseerHud _overseerHud;
+        private CampusNavMesh _campusNav;
+        private MissionController _mission;
+
+        public MissionController Mission => _mission;
+
+        /// <summary>HUD helper for hold timer display.</summary>
+        public string FormatHold(float seconds)
+        {
+            int s = Mathf.Max(0, Mathf.CeilToInt(seconds));
+            return $"{s / 60}:{s % 60:00}";
+        }
 
         private void Awake()
         {
@@ -84,15 +118,20 @@ namespace SolarMajesty
             SpawnParty();
             SpawnThreats();
             SpawnShowcaseColony();
+            EnsureNavMesh();
+            DemoAtmosphere.Apply(mainCamera, transform);
             EnsureHud();
+            EnsureMission();
+            DemoAudio.Ensure();
 
-            Debug.Log("[GameLoop] Demo ready — party, stalkers, mesh colony kit, ThreatPressure → bodyDanger.");
+            Debug.Log("[GameLoop] Demo ready — Phase 5A map/deadline/ambient.");
         }
 
         private void Update()
         {
             HandleToolHotkeys();
             PushThreatToSpecialists();
+            _mission?.Tick();
 
             _constructionTick += Time.deltaTime;
             if (_constructionTick >= 0.25f)
@@ -122,8 +161,25 @@ namespace SolarMajesty
         {
             if (Threat == null) return;
             float danger = Threat.Current;
+            // Phase 4B: claimed DefendArea flags calm the outpost while Defense works them.
+            if (HasActiveDefendClaim())
+                danger = Mathf.Clamp01(danger * 0.55f);
+
             for (int i = 0; i < _agents.Count; i++)
                 _agents[i]?.SetBodyDanger(danger);
+        }
+
+        private bool HasActiveDefendClaim()
+        {
+            if (Flags == null) return false;
+            var list = Flags.Flags;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var f = list[i];
+                if (f?.Data != null && f.Data.flagType == FlagType.DefendArea && f.ClaimCount > 0)
+                    return true;
+            }
+            return false;
         }
 
         private void EnsureSceneRefs()
@@ -181,11 +237,12 @@ namespace SolarMajesty
                 ground.transform.SetParent(transform);
                 // Center under campus; default plane is 10×10 units at scale 1.
                 ground.transform.position = ColonyLayout.CampusOrigin;
-                ground.transform.localScale = new Vector3(6f, 1f, 6f);
+                // Cover expanded IsoGrid (~56×56 × 1.5) with margin.
+                ground.transform.localScale = new Vector3(10f, 1f, 10f);
                 var rend = ground.GetComponent<Renderer>();
                 if (rend != null)
                 {
-                    var col = new Color(0.42f, 0.34f, 0.28f);
+                    var col = new Color(0.48f, 0.44f, 0.38f);
                     if (rend.material.HasProperty("_BaseColor"))
                         rend.material.SetColor("_BaseColor", col);
                     else if (rend.material.HasProperty("_Color"))
@@ -248,6 +305,12 @@ namespace SolarMajesty
             if (buildFlagData == null)
                 buildFlagData = DemoContentCatalog.LoadBuildFlag()
                     ?? CreateFlag(FlagType.Build, "Build Here", 70, 0.1f, 8f, new Color(1f, 0.65f, 0.15f));
+            if (extractFlagData == null)
+                extractFlagData = DemoContentCatalog.LoadExtractFlag()
+                    ?? CreateFlag(FlagType.Extract, "Extract", 55, 0.12f, 7f, new Color(0.55f, 0.9f, 0.35f));
+            if (defendFlagData == null)
+                defendFlagData = DemoContentCatalog.LoadDefendFlag()
+                    ?? CreateFlag(FlagType.DefendArea, "Defend Area", 65, 0.25f, 9f, new Color(0.85f, 0.35f, 1f));
 
             if (starterBuildings == null || starterBuildings.Length == 0)
             {
@@ -259,7 +322,9 @@ namespace SolarMajesty
                         CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6),
                         CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 3),
                         CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 3, 3),
-                        CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 3, 3)
+                        CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 3, 3),
+                        CreateBuilding("Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 3, 2),
+                        CreateBuilding("Command (CMD-1)", BuildingCategory.Defense, 60, 8, 16f, 4, 4)
                     };
                 }
             }
@@ -292,6 +357,7 @@ namespace SolarMajesty
             _flagInput.Initialize(
                 Flags, grid, _isoCam,
                 exploreFlagData, clearThreatFlagData, buildFlagData,
+                extractFlagData, defendFlagData,
                 flagRoot);
             _buildInput.Initialize(Placer, Resources, grid, _isoCam, starterBuildings, buildingRoot);
             ApplyTool(activeTool);
@@ -367,8 +433,18 @@ namespace SolarMajesty
 
             var agent = go.GetComponent<SpecialistAgent>();
             if (agent == null) agent = go.AddComponent<SpecialistAgent>();
-            agent.Initialize(data, Flags, Brain, Economy, tint);
+            agent.Initialize(data, Flags, Brain, Economy, tint, Placer, _campusNav);
             return agent;
+        }
+
+        private void EnsureNavMesh()
+        {
+            _campusNav = GetComponent<CampusNavMesh>();
+            if (_campusNav == null) _campusNav = gameObject.AddComponent<CampusNavMesh>();
+            _campusNav.Build(grid);
+
+            for (int i = 0; i < _agents.Count; i++)
+                _agents[i]?.BindNavMesh(_campusNav);
         }
 
         private void SpawnThreats()
@@ -377,17 +453,28 @@ namespace SolarMajesty
             if (!spawnDustStalkers || dustStalkerCount <= 0 || Threat == null)
                 return;
 
-            Vector3 origin = ColonyLayout.CampusOrigin;
-            float radius = Mathf.Max(14f, stalkerSpawnRadius);
-            GameObject stalkerPrefab = DemoContentCatalog.LoadStalkerPrefab();
+            SpawnStalkerWave(dustStalkerCount, Mathf.Max(14f, stalkerSpawnRadius));
+            Debug.Log($"[GameLoop] Spawned {_stalkers.Count} Dust Stalker(s). Post ClearThreat (F2) near them to defeat.");
+        }
 
-            for (int i = 0; i < dustStalkerCount; i++)
+        /// <summary>Spawns additional stalkers for mission wave 2. Returns count spawned.</summary>
+        public int SpawnStalkerWave(int count, float radius)
+        {
+            if (count <= 0 || Threat == null) return 0;
+
+            Vector3 origin = ColonyLayout.CampusOrigin;
+            float r = Mathf.Max(10f, radius);
+            GameObject stalkerPrefab = DemoContentCatalog.LoadStalkerPrefab();
+            int spawned = 0;
+            float phase = Random.Range(0f, Mathf.PI * 2f);
+
+            for (int i = 0; i < count; i++)
             {
-                float angle = (Mathf.PI * 2f * i) / dustStalkerCount + 0.65f;
+                float angle = phase + (Mathf.PI * 2f * i) / count;
                 Vector3 pos = origin + new Vector3(
-                    Mathf.Cos(angle) * radius,
+                    Mathf.Cos(angle) * r,
                     0f,
-                    Mathf.Sin(angle) * radius);
+                    Mathf.Sin(angle) * r);
                 Vector3 home = pos + Vector3.up * 0.2f;
 
                 GameObject go;
@@ -407,16 +494,45 @@ namespace SolarMajesty
                 if (stalker == null) stalker = go.AddComponent<DustStalkerAgent>();
                 stalker.Initialize(Threat, Flags, home);
                 _stalkers.Add(stalker);
+                spawned++;
             }
 
-            Debug.Log($"[GameLoop] Spawned {_stalkers.Count} Dust Stalker(s). Post ClearThreat (F2) near them to defeat.");
+            return spawned;
         }
 
         private void EnsureHud()
         {
-            var hud = GetComponent<DebugHud>();
-            if (hud == null) hud = gameObject.AddComponent<DebugHud>();
-            hud.Bind(this);
+            _overseerHud = GetComponent<OverseerHud>();
+            if (_overseerHud == null) _overseerHud = gameObject.AddComponent<OverseerHud>();
+            _overseerHud.Bind(this);
+
+            _debugHud = GetComponent<DebugHud>();
+            if (_debugHud == null) _debugHud = gameObject.AddComponent<DebugHud>();
+            _debugHud.Bind(this);
+            _debugHud.SetVisible(false);
+        }
+
+        private void EnsureMission()
+        {
+            _mission = GetComponent<MissionController>();
+            if (_mission == null) _mission = gameObject.AddComponent<MissionController>();
+            _mission.Bind(this);
+        }
+
+        public void RetryParty()
+        {
+            DemoAudio.PlayRetry();
+            for (int i = 0; i < _agents.Count; i++)
+                _agents[i]?.ReviveFull();
+            _mission?.OnPartyRevived();
+            Debug.Log("[GameLoop] Party revived — outpost holds.");
+        }
+
+        public void RestartMission()
+        {
+            DemoAudio.PlayRetry();
+            var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            UnityEngine.SceneManagement.SceneManager.LoadScene(scene.buildIndex);
         }
 
         private void HandleToolHotkeys()
@@ -430,6 +546,12 @@ namespace SolarMajesty
             if (Input.GetKeyDown(KeyCode.B)) ApplyTool(OverseerTool.Build);
             if (Input.GetKeyDown(KeyCode.G)) ApplyTool(OverseerTool.Flag);
             if (Input.GetKeyDown(KeyCode.Q)) ApplyTool(OverseerTool.None);
+
+            if (Input.GetKeyDown(KeyCode.F8) && _debugHud != null)
+                _debugHud.ToggleVisible();
+
+            if (Input.GetKeyDown(KeyCode.R))
+                DebugFatigueAll(0.92f);
         }
 
         private void ApplyTool(OverseerTool tool)
@@ -593,6 +715,7 @@ namespace SolarMajesty
             go.name = name;
             go.transform.localScale = Vector3.one * scale;
             ColonyVisualUtility.EnsureUrpMaterials(go);
+            CampusNavMesh.AddObstacle(go);
         }
     }
 }

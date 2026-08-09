@@ -37,7 +37,8 @@ namespace SolarMajesty
         Power = 2,
         Mining = 3,
         Defense = 4,
-        Utility = 5
+        Utility = 5,
+        Laboratory = 6
     }
 
     [Serializable]

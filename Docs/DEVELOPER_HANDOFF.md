@@ -43,16 +43,22 @@ courage matters. Greybox demo is playable in Unity 6 URP.
   Flag/Building placement; Threat/; BuildingVisualCatalog)
 - Building meshes: Assets/Resources/Buildings + Environment (FBX from Blender)
 - Blender source: Blender/SolarMajesty_Modules.blend + Blender/scripts/
-- Docs: DEMO.md, VERTICAL_SLICE_PHASE1.md, PHASE_1_6_THREAT.md, ARCHITECTURE.md,
+- Docs: DEMO.md, DEVELOPER_HANDOFF.md, VERTICAL_SLICE_PHASE1.md, PHASE_1_6_THREAT.md,
+  PHASE_2A_BITE_AND_BOUNTY.md, PHASE_2B_NAVMESH_AND_JUICE.md,
+  PHASE_3A_PRESENTATION_AND_MISSION.md, PHASE_3B_UNITS_VOLUME_WAVES.md,
+  PHASE_4A_MISSION_STAKES.md, PHASE_4B_CONTENT_SCALE.md,
+  PHASE_5A_MAP_DEADLINE_AMBIENT.md, ARCHITECTURE.md,
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
-1. Run Docs/DEMO.md Play Mode checklist (content pass landed: SOs, unit placeholders, campus reservation).
-2. Only then: combat HP for specialists, NavMesh, construction UI, multi-body.
+1. Run Docs/DEMO.md Play Mode checklist through Phase 5A.
+2. Phase 5B: Blender hero units OR multi-body.
+3. Campaign framing.
 
 ## Controls reference
 G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
-+/- bounty · LMB post/place · 1–4 buildings · R force fatigue Rest.
+F4 Extract · F5 Defend · +/- bounty · LMB post/place · 1–7 buildings ·
+R force fatigue Rest · F8 debug · Y revive.
 
 When done with a change set: commit on main (or PR) with a clear message and
 update Docs/NEXT_STEPS.md if milestones moved.
@@ -78,12 +84,18 @@ update Docs/NEXT_STEPS.md if milestones moved.
 - [x] Blender modular blockouts + FBX exports  
 - [x] Unity 6 URP project + greybox demo scene  
 - [x] Demo content pass (Data SOs, unit placeholders, campus reservation)  
+- [x] Phase 2A Bite & Bounty (HP combat, OverseerHud, construction feedback)  
+- [x] Phase 2B NavMesh pathing + hit/death/claim VFX + richer SFX  
+- [x] Phase 3A lunar lighting + clear-stalkers mission win  
+- [x] Phase 3B industrial unit silhouettes + URP volume + two-wave mission  
+- [x] Phase 4A multi-stake mission (combat + hold + build)  
+- [x] Phase 4B content scale (Extract/Defend, LAB/CMD/Solar, denser campus)  
+- [x] Phase 5A larger map + deadline fail + ambient audio  
 
 ### Known gaps
 
-- Building footprints vs real mesh size are still approximate (improved, not exact)  
-- Landing Pad placeable footprint is compact vs Ø40 showcase mesh  
-- Unit/stalker placeholders are primitive composites (not final Blender heroes)  
+- Building footprints vs real mesh size are still approximate  
+- Unit/stalker meshes are refined placeholders (not final Blender heroes)  
 - No multiplayer / save / campaign  
 
 ---

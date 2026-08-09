@@ -3,8 +3,8 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Runtime greybox silhouettes for specialists / stalkers. Brain loop unchanged.
-    /// Prefabs under Resources/Units are preferred; these builders are the fallback + editor source.
+    /// Phase 3B industrial silhouettes: white shell + black bands + orange accents + class tint body.
+    /// Prefabs under Resources/Units are preferred; these builders are fallback + editor source.
     /// </summary>
     public static class UnitPlaceholderFactory
     {
@@ -13,43 +13,65 @@ namespace SolarMajesty
         public static readonly Color DefenseTint = new Color(0.85f, 0.22f, 0.22f);
         public static readonly Color StalkerTint = new Color(0.42f, 0.07f, 0.1f);
 
+        private static readonly Color WhiteShell = new Color(0.86f, 0.88f, 0.9f);
+        private static readonly Color BlackBand = new Color(0.06f, 0.06f, 0.07f);
+        private static readonly Color OrangeAccent = new Color(0.95f, 0.42f, 0.08f);
+        private static readonly Color Steel = new Color(0.48f, 0.5f, 0.53f);
+
         public static GameObject BuildScout()
         {
-            // Tall thin body + antenna — explores.
+            // Tall probe drone — white hull, cyan sensor, whip antenna.
             var root = new GameObject("Unit_ScoutDrone");
-            var body = Capsule("Body", root.transform, new Vector3(0f, 1.35f, 0f), new Vector3(0.55f, 1.35f, 0.55f), ScoutTint);
-            var head = Sphere("Sensor", root.transform, new Vector3(0f, 2.55f, 0f), new Vector3(0.35f, 0.35f, 0.35f), ScoutTint * 1.05f);
-            var ant = Cylinder("Antenna", root.transform, new Vector3(0.15f, 3.05f, 0f), new Vector3(0.06f, 0.45f, 0.06f), Color.white);
+            Capsule("Body", root.transform, new Vector3(0f, 1.35f, 0f), new Vector3(0.5f, 1.25f, 0.5f), ScoutTint);
+            Cylinder("Band", root.transform, new Vector3(0f, 1.55f, 0f), new Vector3(0.58f, 0.08f, 0.58f), BlackBand);
+            Sphere("Sensor", root.transform, new Vector3(0f, 2.55f, 0f), new Vector3(0.38f, 0.38f, 0.38f), WhiteShell);
+            Cube("Visor", root.transform, new Vector3(0f, 2.55f, 0.18f), new Vector3(0.28f, 0.12f, 0.08f), ScoutTint);
+            Cylinder("Antenna", root.transform, new Vector3(0.18f, 3.15f, 0f), new Vector3(0.05f, 0.5f, 0.05f), Steel);
+            Cube("Beacon", root.transform, new Vector3(-0.22f, 2.95f, 0f), new Vector3(0.1f, 0.1f, 0.1f), OrangeAccent);
             return root;
         }
 
         public static GameObject BuildEngineer()
         {
-            // Squat body + toolbox — builders.
+            // Squat builder — orange shell, toolbox, orange service stripe.
             var root = new GameObject("Unit_EngineerBot");
-            Capsule("Body", root.transform, new Vector3(0f, 0.95f, 0f), new Vector3(0.95f, 0.95f, 0.95f), EngineerTint);
-            Cube("Toolbox", root.transform, new Vector3(0.75f, 0.85f, 0f), new Vector3(0.55f, 0.4f, 0.45f), new Color(0.25f, 0.25f, 0.28f));
-            Cube("Visor", root.transform, new Vector3(0f, 1.45f, 0.42f), new Vector3(0.55f, 0.18f, 0.12f), new Color(0.2f, 0.75f, 1f));
+            Capsule("Body", root.transform, new Vector3(0f, 0.95f, 0f), new Vector3(0.95f, 0.9f, 0.95f), EngineerTint);
+            Cylinder("Band", root.transform, new Vector3(0f, 0.85f, 0f), new Vector3(1.05f, 0.1f, 1.05f), BlackBand);
+            Cube("Toolbox", root.transform, new Vector3(0.78f, 0.85f, 0f), new Vector3(0.5f, 0.38f, 0.42f), BlackBand);
+            Cube("Stripe", root.transform, new Vector3(0.78f, 0.95f, 0.22f), new Vector3(0.52f, 0.08f, 0.08f), OrangeAccent);
+            Cube("Visor", root.transform, new Vector3(0f, 1.4f, 0.42f), new Vector3(0.55f, 0.16f, 0.1f), new Color(0.25f, 0.85f, 1f));
+            Cube("Arm", root.transform, new Vector3(-0.7f, 1.05f, 0.15f), new Vector3(0.35f, 0.18f, 0.18f), Steel);
             return root;
         }
 
         public static GameObject BuildDefense()
         {
-            // Wide chassis + shoulder block — combat.
+            // Wide combat chassis — red hull, shield plate, shoulder block.
             var root = new GameObject("Unit_DefenseMech");
-            Capsule("Body", root.transform, new Vector3(0f, 1.1f, 0f), new Vector3(1.15f, 1.1f, 1.0f), DefenseTint);
-            Cube("Shoulder", root.transform, new Vector3(0.7f, 1.55f, 0f), new Vector3(0.7f, 0.45f, 0.7f), new Color(0.35f, 0.12f, 0.12f));
-            Cube("Shield", root.transform, new Vector3(-0.75f, 1.2f, 0.15f), new Vector3(0.2f, 1.1f, 0.85f), new Color(0.55f, 0.55f, 0.6f));
+            Capsule("Body", root.transform, new Vector3(0f, 1.1f, 0f), new Vector3(1.1f, 1.05f, 0.95f), DefenseTint);
+            Cylinder("Band", root.transform, new Vector3(0f, 0.95f, 0f), new Vector3(1.2f, 0.1f, 1.05f), BlackBand);
+            Cube("Shoulder", root.transform, new Vector3(0.72f, 1.55f, 0f), new Vector3(0.65f, 0.42f, 0.65f), WhiteShell);
+            Cube("ShoulderAccent", root.transform, new Vector3(0.72f, 1.7f, 0.28f), new Vector3(0.5f, 0.08f, 0.12f), OrangeAccent);
+            Cube("Shield", root.transform, new Vector3(-0.78f, 1.15f, 0.12f), new Vector3(0.18f, 1.15f, 0.9f), Steel);
+            Cube("Plating", root.transform, new Vector3(0f, 1.35f, 0.45f), new Vector3(0.7f, 0.35f, 0.12f), BlackBand);
             return root;
         }
 
         public static GameObject BuildDustStalker()
         {
-            // Low elongated predator silhouette.
+            // Low predator — dark carapace, glowing eyes, spine ridges.
             var root = new GameObject("Unit_DustStalker");
-            Sphere("Body", root.transform, new Vector3(0f, 0.35f, 0f), new Vector3(1.6f, 0.55f, 1.1f), StalkerTint);
-            Sphere("Head", root.transform, new Vector3(0f, 0.45f, 0.65f), new Vector3(0.55f, 0.4f, 0.55f), StalkerTint * 1.1f);
-            Cube("Spine", root.transform, new Vector3(0f, 0.55f, -0.35f), new Vector3(0.25f, 0.2f, 0.9f), new Color(0.2f, 0.05f, 0.05f));
+            Sphere("Body", root.transform, new Vector3(0f, 0.38f, 0f), new Vector3(1.7f, 0.55f, 1.15f), StalkerTint);
+            Sphere("Head", root.transform, new Vector3(0f, 0.48f, 0.7f), new Vector3(0.55f, 0.4f, 0.55f), StalkerTint * 1.15f);
+            Cube("Spine", root.transform, new Vector3(0f, 0.58f, -0.35f), new Vector3(0.22f, 0.18f, 0.95f), BlackBand);
+            Cube("RidgeA", root.transform, new Vector3(0f, 0.72f, 0.05f), new Vector3(0.12f, 0.28f, 0.18f), BlackBand);
+            Cube("RidgeB", root.transform, new Vector3(0f, 0.68f, -0.35f), new Vector3(0.1f, 0.22f, 0.16f), BlackBand);
+            Sphere("EyeL", root.transform, new Vector3(-0.16f, 0.55f, 0.92f), new Vector3(0.12f, 0.1f, 0.1f), OrangeAccent);
+            Sphere("EyeR", root.transform, new Vector3(0.16f, 0.55f, 0.92f), new Vector3(0.12f, 0.1f, 0.1f), OrangeAccent);
+            Cube("LegFL", root.transform, new Vector3(-0.55f, 0.18f, 0.35f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
+            Cube("LegFR", root.transform, new Vector3(0.55f, 0.18f, 0.35f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
+            Cube("LegBL", root.transform, new Vector3(-0.5f, 0.18f, -0.4f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
+            Cube("LegBR", root.transform, new Vector3(0.5f, 0.18f, -0.4f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
             return root;
         }
 
@@ -124,12 +146,25 @@ namespace SolarMajesty
         {
             var rend = go.GetComponent<Renderer>();
             if (rend == null) return;
-            // Instance material so batch tint works in Play.
-            var mat = rend.material;
-            if (mat.HasProperty("_BaseColor"))
-                mat.SetColor("_BaseColor", color);
-            else if (mat.HasProperty("_Color"))
-                mat.color = color;
+
+            Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+            if (lit == null) lit = Shader.Find("Universal Render Pipeline/Simple Lit");
+            if (lit != null)
+            {
+                var mat = new Material(lit) { name = go.name + "_Mat" };
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+                if (mat.HasProperty("_Color")) mat.color = color;
+                if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.42f);
+                if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.15f);
+                rend.sharedMaterial = mat;
+                return;
+            }
+
+            var fallback = rend.material;
+            if (fallback.HasProperty("_BaseColor"))
+                fallback.SetColor("_BaseColor", color);
+            else if (fallback.HasProperty("_Color"))
+                fallback.color = color;
         }
     }
 }

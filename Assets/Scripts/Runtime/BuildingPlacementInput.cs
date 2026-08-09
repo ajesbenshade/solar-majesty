@@ -4,7 +4,7 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Player places buildings only (Overseer). Never commands specialists.
-    /// Keys 1–4 select building data when assigned; LMB commits when build tool active.
+    /// Keys 1–7 select building data when assigned; LMB commits when build tool active.
     /// </summary>
     public class BuildingPlacementInput : MonoBehaviour
     {
@@ -64,6 +64,9 @@ namespace SolarMajesty
             if (Input.GetKeyDown(KeyCode.Alpha2)) Select(1);
             if (Input.GetKeyDown(KeyCode.Alpha3)) Select(2);
             if (Input.GetKeyDown(KeyCode.Alpha4)) Select(3);
+            if (Input.GetKeyDown(KeyCode.Alpha5)) Select(4);
+            if (Input.GetKeyDown(KeyCode.Alpha6)) Select(5);
+            if (Input.GetKeyDown(KeyCode.Alpha7)) Select(6);
 
             if (!enabledPlacement || Selected == null)
             {
@@ -94,6 +97,8 @@ namespace SolarMajesty
                 if (_placer.TryPlace(Selected, cell, snapped, out ConstructionOrder order, out string fail))
                 {
                     SpawnBuildingVisual(order);
+                    SpawnConstructionSite(order);
+                    DemoAudio.PlayBuildPlace();
                     Debug.Log($"[Build] Placed {Selected.displayName} @ {cell}");
                 }
                 else
@@ -134,6 +139,16 @@ namespace SolarMajesty
 
             go.name = $"Bld_{order.Data.displayName}_{order.Id}";
             ColonyVisualUtility.EnsureUrpMaterials(go);
+            CampusNavMesh.AddObstacle(go);
+        }
+
+        private void SpawnConstructionSite(ConstructionOrder order)
+        {
+            var site = new GameObject($"Site_{order.Id}");
+            site.transform.SetParent(_buildingRoot, true);
+            site.transform.position = order.WorldPosition + Vector3.up * 0.05f;
+            var vis = site.AddComponent<ConstructionSiteVisual>();
+            vis.Bind(order);
         }
 
         private void EnsureGhost()

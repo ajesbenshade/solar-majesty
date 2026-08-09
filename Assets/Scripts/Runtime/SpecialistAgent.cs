@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace SolarMajesty
 {
@@ -20,11 +21,17 @@ namespace SolarMajesty
         [Header("Movement / work")]
         [SerializeField] private float arriveDistance = 1.1f;
         [SerializeField] private float idleWanderRadius = 2.5f;
+        [SerializeField] private bool useNavMesh = true;
 
         [Header("Needs (0-1)")]
         [SerializeField] [Range(0f, 1f)] private float fatigue;
         [SerializeField] [Range(0f, 1f)] private float healthNormalized = 1f;
         [SerializeField] [Range(0f, 1f)] private float greedHunger = 0.5f;
+
+        [Header("Phase 2A combat")]
+        [SerializeField] private float incapacitateThreshold = 0.02f;
+        [SerializeField] private float recoverySeconds = 8f;
+        [SerializeField] private float restHealPerSecond = 0.08f;
 
         [Header("Debug force (playtesting only — not player commands)")]
         [SerializeField] private bool debugForceFatigue;
@@ -33,10 +40,12 @@ namespace SolarMajesty
         [Header("Presentation")]
         [SerializeField] private Color bodyTint = Color.white;
 
-        // Injected by GameLoop (pure systems)
         private FlagManager _flags;
         private SpecialistBrain _brain;
         private SimpleEconomy _economy;
+        private BuildingPlacer _placer;
+        private CampusNavMesh _navMesh;
+        private NavMeshAgent _agent;
 
         private float _thinkTimer;
         private BrainDecision _lastDecision;
@@ -46,8 +55,9 @@ namespace SolarMajesty
         private bool _hasIdleTarget;
         private float _restTimer;
         private string _status = "boot";
+        private bool _incapacitated;
+        private float _recoverTimer;
 
-        // Work pulse placeholder animation
         private Vector3 _baseScale = Vector3.one;
         private float _workPulse;
         private Renderer _bodyRend;
@@ -64,31 +74,52 @@ namespace SolarMajesty
         public SpecialistAction CurrentAction => _lastDecision.Action;
         public FlagHandle ActiveFlag => _activeFlag;
         public float BodyDanger => bodyDanger;
+        public bool IsIncapacitated => _incapacitated;
+        public bool IsAlive => !_incapacitated || healthNormalized > incapacitateThreshold;
 
-        /// <summary>
-        /// Pushed by GameLoop from ThreatPressure.Current each frame.
-        /// Feeds SpecialistBrain.Evaluate as bodyDanger (risk term).
-        /// </summary>
-        public void SetBodyDanger(float danger01)
+        public void SetBodyDanger(float danger01) => bodyDanger = Mathf.Clamp01(danger01);
+
+        public void ApplyDamage(float amount01)
         {
-            bodyDanger = Mathf.Clamp01(danger01);
+            if (amount01 <= 0f || _incapacitated) return;
+            healthNormalized = Mathf.Clamp01(healthNormalized - amount01);
+            DemoAudio.PlayBite();
+            DemoVfx.HitFlash(transform, new Color(1f, 0.25f, 0.2f));
+            if (healthNormalized <= incapacitateThreshold)
+                EnterIncapacitated();
         }
 
-        /// <summary>Called by GameLoop after spawn. Does not accept player move orders.</summary>
+        public void ReviveFull()
+        {
+            _incapacitated = false;
+            _recoverTimer = 0f;
+            healthNormalized = 1f;
+            fatigue = 0.1f;
+            _status = "revived";
+            ApplyBodyTint(bodyTint);
+            SetAgentStopped(false);
+        }
+
         public void Initialize(
             SpecialistData specialistData,
             FlagManager flagManager,
             SpecialistBrain brain,
             SimpleEconomy economy = null,
-            Color? tint = null)
+            Color? tint = null,
+            BuildingPlacer placer = null,
+            CampusNavMesh navMesh = null)
         {
             data = specialistData;
             _flags = flagManager;
             _brain = brain;
             _economy = economy;
+            _placer = placer;
+            _navMesh = navMesh;
             fatigue = 0.1f;
             healthNormalized = 1f;
             greedHunger = 0.55f;
+            _incapacitated = false;
+            _recoverTimer = 0f;
             _thinkTimer = Random.Range(0f, thinkIntervalMax);
             _lastDecision = BrainDecision.Idle(0f, "spawn");
             _status = "idle";
@@ -98,11 +129,39 @@ namespace SolarMajesty
             _bodyRend = GetComponentInChildren<Renderer>();
             if (tint.HasValue) bodyTint = tint.Value;
             ApplyBodyTint(bodyTint);
+            EnsureNavAgent();
 
             _statusDisplay = GetComponent<SpecialistStatusDisplay>();
             if (_statusDisplay == null)
                 _statusDisplay = gameObject.AddComponent<SpecialistStatusDisplay>();
             _statusDisplay.Bind(this);
+        }
+
+        /// <summary>Called after CampusNavMesh.Build so agents warp onto the mesh.</summary>
+        public void BindNavMesh(CampusNavMesh navMesh)
+        {
+            _navMesh = navMesh;
+            EnsureNavAgent();
+            if (_agent != null && _navMesh != null && _navMesh.IsReady &&
+                _navMesh.SamplePosition(transform.position, out Vector3 onMesh))
+            {
+                _agent.Warp(onMesh);
+            }
+        }
+
+        private void EnsureNavAgent()
+        {
+            if (!useNavMesh) return;
+            _agent = GetComponent<NavMeshAgent>();
+            if (_agent == null) _agent = gameObject.AddComponent<NavMeshAgent>();
+            _agent.speed = data != null ? data.moveSpeed : 3.5f;
+            _agent.angularSpeed = 720f;
+            _agent.acceleration = 18f;
+            _agent.stoppingDistance = arriveDistance * 0.85f;
+            _agent.radius = 0.4f;
+            _agent.height = 2.2f;
+            _agent.obstacleAvoidanceType = ObstacleAvoidanceType.MedQualityObstacleAvoidance;
+            _agent.updateRotation = false;
         }
 
         private void Update()
@@ -114,10 +173,48 @@ namespace SolarMajesty
                 fatigue = debugFatigueValue;
 
             float dt = Time.deltaTime;
+            if (_incapacitated)
+            {
+                SetAgentStopped(true);
+                TickIncapacitated(dt);
+                TickWorkPulse(dt);
+                return;
+            }
+
             TickNeeds(dt);
             TickThink(dt);
             TickBehaviour(dt);
             TickWorkPulse(dt);
+        }
+
+        private void EnterIncapacitated()
+        {
+            _incapacitated = true;
+            _recoverTimer = recoverySeconds;
+            ReleaseClaim();
+            _activeFlag = null;
+            _lastDecision = BrainDecision.Idle(0f, "incapacitated");
+            _status = "incapacitated";
+            SetAgentStopped(true);
+            ApplyBodyTint(Color.Lerp(bodyTint, Color.black, 0.55f));
+            DemoVfx.DeathBurst(transform.position, bodyTint);
+            Debug.Log($"[Specialist] {data.displayName} incapacitated — recovering in {recoverySeconds:F0}s");
+        }
+
+        private void TickIncapacitated(float dt)
+        {
+            _recoverTimer -= dt;
+            _status = $"down {_recoverTimer:F1}s";
+            healthNormalized = Mathf.Clamp01(healthNormalized + dt * 0.04f);
+            if (_recoverTimer <= 0f && healthNormalized > 0.25f)
+            {
+                _incapacitated = false;
+                fatigue = Mathf.Max(fatigue, 0.55f);
+                _status = "recovered";
+                ApplyBodyTint(bodyTint);
+                SetAgentStopped(false);
+                Debug.Log($"[Specialist] {data.displayName} recovered");
+            }
         }
 
         private void TickNeeds(float dt)
@@ -130,6 +227,7 @@ namespace SolarMajesty
                     break;
                 case SpecialistAction.Rest:
                     fatigue = Mathf.Clamp01(fatigue - dt * 0.12f);
+                    healthNormalized = Mathf.Clamp01(healthNormalized + dt * restHealPerSecond);
                     break;
                 default:
                     fatigue = Mathf.Clamp01(fatigue - dt * 0.015f);
@@ -143,23 +241,19 @@ namespace SolarMajesty
             if (_thinkTimer > 0f) return;
             _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
 
-            SpecialistContext ctx = BuildContext();
-            BrainDecision decision = _brain.Evaluate(ctx, _flags.Flags, bodyDanger);
+            BrainDecision decision = _brain.Evaluate(BuildContext(), _flags.Flags, bodyDanger);
             ApplyDecision(decision);
         }
 
-        private SpecialistContext BuildContext()
+        private SpecialistContext BuildContext() => new SpecialistContext
         {
-            return new SpecialistContext
-            {
-                Data = data,
-                Position = transform.position,
-                Fatigue = fatigue,
-                GreedHunger = greedHunger,
-                CurrentFlag = _activeFlag,
-                HealthNormalized = healthNormalized
-            };
-        }
+            Data = data,
+            Position = transform.position,
+            Fatigue = fatigue,
+            GreedHunger = greedHunger,
+            CurrentFlag = _activeFlag,
+            HealthNormalized = healthNormalized
+        };
 
         private void ApplyDecision(BrainDecision decision)
         {
@@ -177,8 +271,11 @@ namespace SolarMajesty
                     _activeFlag = decision.TargetFlag;
                     _flags.AddClaim(_activeFlag);
                     _claimedActive = true;
+                    DemoAudio.PlayClaim();
+                    DemoVfx.ClaimRing(_activeFlag.WorldPosition, new Color(1f, 0.85f, 0.2f));
                 }
                 _status = $"pursue_{decision.TargetFlag.Data.flagType}";
+                SetDestination(_activeFlag.WorldPosition);
             }
             else
             {
@@ -187,6 +284,7 @@ namespace SolarMajesty
                 _status = decision.Action == SpecialistAction.Rest ? "rest" : "idle";
                 if (decision.Action == SpecialistAction.Idle)
                     _hasIdleTarget = false;
+                SetAgentStopped(decision.Action == SpecialistAction.Rest);
             }
 
             if (changed && logDecisions)
@@ -231,28 +329,36 @@ namespace SolarMajesty
             }
 
             Vector3 target = _activeFlag.WorldPosition;
-            target.y = transform.position.y;
-            float dist = Vector3.Distance(transform.position, target);
+            float dist = FlatDistance(transform.position, target);
 
             if (dist > arriveDistance)
             {
-                transform.position = Vector3.MoveTowards(
-                    transform.position, target, data.moveSpeed * dt);
+                SetDestination(target);
+                MoveFallback(target, data.moveSpeed * dt);
                 _status = $"moving_to_{_activeFlag.Data.flagType}";
                 return;
             }
 
-            // In range: apply work autonomously + pulse feedback.
+            SetAgentStopped(true);
             _status = $"working_{_activeFlag.Data.flagType}";
             _workPulse = 1f;
             float work = data.workRate * dt;
             bool done = _flags.ApplyWork(_activeFlag, work);
+
+            if (_activeFlag.Data.flagType == FlagType.Build && _placer != null)
+                ContributeBuildLabor(work);
+
             if (done)
             {
                 float bounty = _activeFlag.CurrentBounty;
+                var completedType = _activeFlag.Data.flagType;
                 _economy?.GrantBountyReward(bounty);
+                if (completedType == FlagType.Extract)
+                    _economy?.GrantExtractYield();
                 greedHunger = Mathf.Clamp01(greedHunger - 0.25f);
-                Debug.Log($"[Specialist] {data.displayName} completed flag bounty={bounty}");
+                DemoAudio.PlayClaim();
+                DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
+                Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty={bounty}");
                 ReleaseClaim();
                 _activeFlag = null;
                 _status = "completed_flag";
@@ -260,8 +366,31 @@ namespace SolarMajesty
             }
         }
 
+        private void ContributeBuildLabor(float workSeconds)
+        {
+            if (_placer == null || _activeFlag == null) return;
+            var orders = _placer.Orders;
+            ConstructionOrder best = null;
+            float bestDist = 6f;
+            Vector3 me = transform.position;
+            for (int i = 0; i < orders.Count; i++)
+            {
+                var o = orders[i];
+                if (o == null || o.IsComplete) continue;
+                float d = Vector3.Distance(me, o.WorldPosition);
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = o;
+                }
+            }
+            if (best != null)
+                _placer.ApplyLabor(best, workSeconds);
+        }
+
         private void TickRest(float dt)
         {
+            SetAgentStopped(true);
             _restTimer += dt;
             _status = "resting";
             if (_restTimer > 3f && fatigue < 0.35f)
@@ -271,21 +400,46 @@ namespace SolarMajesty
         private void TickIdle(float dt)
         {
             _status = "idle";
-            if (!_hasIdleTarget || Vector3.Distance(transform.position, _idleTarget) < 0.3f)
+            if (!_hasIdleTarget || FlatDistance(transform.position, _idleTarget) < 0.3f)
             {
                 if (Random.value < 0.02f)
                 {
                     Vector2 r = Random.insideUnitCircle * idleWanderRadius;
                     _idleTarget = transform.position + new Vector3(r.x, 0f, r.y);
                     _hasIdleTarget = true;
+                    SetDestination(_idleTarget);
                 }
                 return;
             }
 
-            transform.position = Vector3.MoveTowards(
-                transform.position,
-                _idleTarget,
-                data.moveSpeed * 0.35f * dt);
+            SetDestination(_idleTarget);
+            MoveFallback(_idleTarget, data.moveSpeed * 0.35f * dt);
+        }
+
+        private void SetDestination(Vector3 world)
+        {
+            if (_agent == null || !_agent.isOnNavMesh) return;
+            SetAgentStopped(false);
+            if (_navMesh != null && _navMesh.SamplePosition(world, out Vector3 onMesh))
+                world = onMesh;
+            if (!_agent.pathPending && (_agent.destination - world).sqrMagnitude > 0.25f)
+                _agent.SetDestination(world);
+        }
+
+        private void MoveFallback(Vector3 target, float step)
+        {
+            if (_agent != null && _agent.isOnNavMesh) return;
+            target.y = transform.position.y;
+            transform.position = Vector3.MoveTowards(transform.position, target, step);
+        }
+
+        private void SetAgentStopped(bool stopped)
+        {
+            if (_agent == null) return;
+            if (_agent.isOnNavMesh)
+                _agent.isStopped = stopped;
+            if (stopped && _agent.isOnNavMesh)
+                _agent.ResetPath();
         }
 
         private void TickWorkPulse(float dt)
@@ -309,10 +463,7 @@ namespace SolarMajesty
             _claimedActive = false;
         }
 
-        private void OnDestroy()
-        {
-            ReleaseClaim();
-        }
+        private void OnDestroy() => ReleaseClaim();
 
         public void DebugSetFatigue(float value) => fatigue = Mathf.Clamp01(value);
 
@@ -325,14 +476,24 @@ namespace SolarMajesty
                 _bodyRend.material.SetColor("_BaseColor", c);
         }
 
+        private static float FlatDistance(Vector3 a, Vector3 b)
+        {
+            a.y = 0f;
+            b.y = 0f;
+            return Vector3.Distance(a, b);
+        }
+
         public string DebugLine()
         {
             string flagInfo = _activeFlag != null
                 ? $"{_activeFlag.Data.flagType} b={_activeFlag.CurrentBounty:F0}"
                 : "-";
+            string nav = _agent != null && _agent.isOnNavMesh ? "nav" : "direct";
             return $"{data?.displayName ?? "?"} | {_lastDecision.Action} | " +
                    $"score={_lastDecision.Score:F2} | {_lastDecision.Reason} | " +
-                   $"fat={fatigue:F2} danger={bodyDanger:F2} | flag={flagInfo} | {_status}";
+                   $"hp={healthNormalized:F2} fat={fatigue:F2} danger={bodyDanger:F2} | " +
+                   $"flag={flagInfo} | {_status} | {nav}" +
+                   (_incapacitated ? " [DOWN]" : "");
         }
     }
 }

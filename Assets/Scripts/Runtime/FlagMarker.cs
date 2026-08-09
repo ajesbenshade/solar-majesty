@@ -11,6 +11,8 @@ namespace SolarMajesty
         [SerializeField] private Color exploreColor = new Color(0.3f, 0.85f, 1f);
         [SerializeField] private Color threatColor = new Color(1f, 0.3f, 0.25f);
         [SerializeField] private Color buildColor = new Color(1f, 0.65f, 0.15f);
+        [SerializeField] private Color extractColor = new Color(0.55f, 0.9f, 0.35f);
+        [SerializeField] private Color defendColor = new Color(0.85f, 0.35f, 1f);
         [SerializeField] private Color defaultColor = Color.yellow;
         [SerializeField] private Color claimedTint = new Color(1f, 0.9f, 0.35f);
         [SerializeField] private float bobAmp = 0.12f;
@@ -87,6 +89,8 @@ namespace SolarMajesty
                     case FlagType.ClearThreat: _baseColor = threatColor; break;
                     case FlagType.Explore: _baseColor = exploreColor; break;
                     case FlagType.Build: _baseColor = buildColor; break;
+                    case FlagType.Extract: _baseColor = extractColor; break;
+                    case FlagType.DefendArea: _baseColor = defendColor; break;
                     default: _baseColor = defaultColor; break;
                 }
             }

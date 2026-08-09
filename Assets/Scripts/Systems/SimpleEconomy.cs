@@ -76,6 +76,14 @@ namespace SolarMajesty
             _resources.Add(ResourceId.Metals, metals);
         }
 
+        /// <summary>Phase 4B: Extract flags yield regolith + a bit of metals beyond bounty pay.</summary>
+        public void GrantExtractYield()
+        {
+            _resources.Add(ResourceId.Regolith, 12);
+            _resources.Add(ResourceId.Metals, 4);
+            _resources.Add(ResourceId.WaterIce, 2);
+        }
+
         private void ApplyUpkeep(IReadOnlyList<SpecialistData> livingSpecialists)
         {
             if (BasePowerUpkeep > 0)

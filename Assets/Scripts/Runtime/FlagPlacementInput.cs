@@ -4,13 +4,15 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Player posts / adjusts bounty flags only. Never commands specialists.
-    /// F1 Explore · F2 ClearThreat · F3 Build · LMB place · +/- bounty
+    /// F1 Explore · F2 ClearThreat · F3 Build · F4 Extract · F5 DefendArea · LMB place · +/- bounty
     /// </summary>
     public class FlagPlacementInput : MonoBehaviour
     {
         [SerializeField] private FlagData exploreFlag;
         [SerializeField] private FlagData clearThreatFlag;
         [SerializeField] private FlagData buildFlag;
+        [SerializeField] private FlagData extractFlag;
+        [SerializeField] private FlagData defendFlag;
         [SerializeField] private float bounty = 50f;
         [SerializeField] private float bountyStep = 15f;
         [SerializeField] private KeyCode placeKey = KeyCode.Mouse0;
@@ -37,6 +39,8 @@ namespace SolarMajesty
             FlagData explore,
             FlagData clearThreat,
             FlagData build = null,
+            FlagData extract = null,
+            FlagData defend = null,
             Transform markerRoot = null)
         {
             _flags = flags;
@@ -45,6 +49,8 @@ namespace SolarMajesty
             exploreFlag = explore;
             clearThreatFlag = clearThreat;
             buildFlag = build;
+            extractFlag = extract;
+            defendFlag = defend;
             _selected = exploreFlag != null ? exploreFlag : clearThreatFlag;
             _markerRoot = markerRoot;
             bounty = _selected != null ? _selected.defaultBounty : 50f;
@@ -60,6 +66,10 @@ namespace SolarMajesty
                 Select(clearThreatFlag);
             if (Input.GetKeyDown(KeyCode.F3) && buildFlag != null)
                 Select(buildFlag);
+            if (Input.GetKeyDown(KeyCode.F4) && extractFlag != null)
+                Select(extractFlag);
+            if (Input.GetKeyDown(KeyCode.F5) && defendFlag != null)
+                Select(defendFlag);
 
             if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))
                 bounty += bountyStep;
@@ -79,6 +89,7 @@ namespace SolarMajesty
 
             FlagHandle handle = _flags.Post(_selected, world, bounty);
             SpawnMarker(handle, world);
+            DemoAudio.PlayFlagPost();
             Debug.Log($"[Flags] Posted {_selected.flagType} bounty={handle.CurrentBounty:F0} at {world}");
         }
 
