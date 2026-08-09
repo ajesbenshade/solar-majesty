@@ -39,6 +39,11 @@ namespace SolarMajesty
         [SerializeField] private bool seedStartingResources = true;
         [SerializeField] private bool spawnFullParty = true;
 
+        [Header("Phase 1.6 Threat")]
+        [SerializeField] private bool spawnDustStalkers = true;
+        [SerializeField] private int dustStalkerCount = 2;
+        [SerializeField] private float stalkerSpawnRadius = 14f;
+
         // Pure systems
         public ResourceManager Resources { get; private set; }
         public FlagManager Flags { get; private set; }
@@ -46,16 +51,23 @@ namespace SolarMajesty
         public SpecialistBrain Brain { get; private set; }
         public SimpleEconomy Economy { get; private set; }
 
+        // Runtime threat service (not in Systems/)
+        public ThreatPressure Threat { get; private set; }
+
         // Drivers
         public SpecialistAgent Agent { get; private set; } // first / primary (Scout)
         public IReadOnlyList<SpecialistAgent> Agents => _agents;
+        public IReadOnlyList<DustStalkerAgent> Stalkers => _stalkers;
         public OverseerTool ActiveTool => activeTool;
         public float FlagBounty => _flagInput != null ? _flagInput.Bounty : 0f;
+        public float CurrentThreatPressure => Threat != null ? Threat.Current : 0f;
 
         private readonly List<SpecialistAgent> _agents = new List<SpecialistAgent>();
+        private readonly List<DustStalkerAgent> _stalkers = new List<DustStalkerAgent>();
         private FlagPlacementInput _flagInput;
         private BuildingPlacementInput _buildInput;
         private IsometricCameraController _isoCam;
+        private Transform _threatRoot;
         private float _constructionTick;
 
         private void Awake()
@@ -66,14 +78,16 @@ namespace SolarMajesty
             WireInputDrivers();
             ConfigureCamera();
             SpawnParty();
+            SpawnThreats();
             EnsureHud();
 
-            Debug.Log("[GameLoop] Phase 1.5 ready — Scout / Engineer / Defense autonomous party.");
+            Debug.Log("[GameLoop] Phase 1.6 ready — party + Dust Stalkers (ThreatPressure → bodyDanger).");
         }
 
         private void Update()
         {
             HandleToolHotkeys();
+            PushThreatToSpecialists();
 
             _constructionTick += Time.deltaTime;
             if (_constructionTick >= 0.25f)
@@ -89,6 +103,22 @@ namespace SolarMajesty
                 Economy?.Tick(_constructionTick, living);
                 _constructionTick = 0f;
             }
+
+            // Prune destroyed stalkers from list
+            for (int i = _stalkers.Count - 1; i >= 0; i--)
+            {
+                if (_stalkers[i] == null)
+                    _stalkers.RemoveAt(i);
+            }
+        }
+
+        /// <summary>Each frame: ThreatPressure.Current → SpecialistAgent.bodyDanger for brain risk term.</summary>
+        private void PushThreatToSpecialists()
+        {
+            if (Threat == null) return;
+            float danger = Threat.Current;
+            for (int i = 0; i < _agents.Count; i++)
+                _agents[i]?.SetBodyDanger(danger);
         }
 
         private void EnsureSceneRefs()
@@ -131,6 +161,13 @@ namespace SolarMajesty
                 go.transform.position = specialistSpawnOffset;
                 specialistSpawn = go.transform;
             }
+
+            if (_threatRoot == null)
+            {
+                var go = new GameObject("Threats");
+                go.transform.SetParent(transform);
+                _threatRoot = go.transform;
+            }
         }
 
         private void BuildPureSystems()
@@ -151,6 +188,7 @@ namespace SolarMajesty
 
             Brain = new SpecialistBrain();
             Economy = new SimpleEconomy(Resources);
+            Threat = new ThreatPressure { Ambient = 0.18f };
         }
 
         private void EnsureContent()
@@ -244,6 +282,37 @@ namespace SolarMajesty
             if (agent == null) agent = go.AddComponent<SpecialistAgent>();
             agent.Initialize(data, Flags, Brain, Economy, tint);
             return agent;
+        }
+
+        private void SpawnThreats()
+        {
+            _stalkers.Clear();
+            if (!spawnDustStalkers || dustStalkerCount <= 0 || Threat == null)
+                return;
+
+            Vector3 origin = specialistSpawn != null ? specialistSpawn.position : specialistSpawnOffset;
+
+            for (int i = 0; i < dustStalkerCount; i++)
+            {
+                float angle = (Mathf.PI * 2f * i) / dustStalkerCount + 0.4f;
+                Vector3 pos = origin + new Vector3(
+                    Mathf.Cos(angle) * stalkerSpawnRadius,
+                    0f,
+                    Mathf.Sin(angle) * stalkerSpawnRadius);
+
+                var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                go.transform.SetParent(_threatRoot != null ? _threatRoot : transform);
+                go.transform.position = pos;
+                // Flattened dark silhouette — readable on isometric grid
+                go.transform.localScale = new Vector3(1.15f, 0.5f, 1.35f);
+                Object.Destroy(go.GetComponent<Collider>());
+
+                var stalker = go.AddComponent<DustStalkerAgent>();
+                stalker.Initialize(Threat, Flags, pos);
+                _stalkers.Add(stalker);
+            }
+
+            Debug.Log($"[GameLoop] Spawned {_stalkers.Count} Dust Stalker(s). Post ClearThreat (F2) near them to defeat.");
         }
 
         private void EnsureHud()

@@ -63,6 +63,16 @@ namespace SolarMajesty
         public string Status => _status;
         public SpecialistAction CurrentAction => _lastDecision.Action;
         public FlagHandle ActiveFlag => _activeFlag;
+        public float BodyDanger => bodyDanger;
+
+        /// <summary>
+        /// Pushed by GameLoop from ThreatPressure.Current each frame.
+        /// Feeds SpecialistBrain.Evaluate as bodyDanger (risk term).
+        /// </summary>
+        public void SetBodyDanger(float danger01)
+        {
+            bodyDanger = Mathf.Clamp01(danger01);
+        }
 
         /// <summary>Called by GameLoop after spawn. Does not accept player move orders.</summary>
         public void Initialize(
@@ -322,7 +332,7 @@ namespace SolarMajesty
                 : "-";
             return $"{data?.displayName ?? "?"} | {_lastDecision.Action} | " +
                    $"score={_lastDecision.Score:F2} | {_lastDecision.Reason} | " +
-                   $"fat={fatigue:F2} hp={healthNormalized:F2} | flag={flagInfo} | {_status}";
+                   $"fat={fatigue:F2} danger={bodyDanger:F2} | flag={flagInfo} | {_status}";
         }
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// On-screen readout for vertical-slice success criteria (all specialists).
+    /// On-screen readout for vertical-slice success criteria (specialists + threat).
     /// </summary>
     public class DebugHud : MonoBehaviour
     {
@@ -20,20 +20,25 @@ namespace SolarMajesty
             if (_loop == null) return;
 
             int agentCount = _loop.Agents != null ? _loop.Agents.Count : 0;
-            int h = 280 + agentCount * 52;
-            GUILayout.BeginArea(new Rect(10, 10, 560, h), GUI.skin.box);
-            GUILayout.Label("Solar Majesty — Phase 1.5 (3 specialists)");
+            int stalkerCount = _loop.Stalkers != null ? _loop.Stalkers.Count : 0;
+            int h = 310 + agentCount * 52 + stalkerCount * 22;
+            GUILayout.BeginArea(new Rect(10, 10, 580, h), GUI.skin.box);
+            GUILayout.Label("Solar Majesty — Phase 1.6 (threat pressure)");
             GUILayout.Label("Player: flags / buildings only. No unit commands.");
             GUILayout.Space(4);
 
             GUILayout.Label($"Tool: {_loop.ActiveTool}  (Tab / B build · G flag · Q none)");
             GUILayout.Label("Flags: F1 Explore · F2 ClearThreat · F3 Build · LMB · +/- bounty");
             GUILayout.Label($"Bounty: {_loop.FlagBounty:F0}   {_loop.Resources?.DebugSummary()}");
+
+            // Threat pressure — what brains receive as bodyDanger
+            string threatLine = _loop.Threat != null ? _loop.Threat.DebugLine() : "threat=n/a";
+            GUILayout.Label($">>> {threatLine}  (pushed as bodyDanger)");
             GUILayout.Space(6);
 
             if (_loop.Agents != null && _loop.Agents.Count > 0)
             {
-                GUILayout.Label("--- Specialists (orb: gray Idle · blue Rest · orange Pursue) ---");
+                GUILayout.Label("--- Specialists ---");
                 for (int i = 0; i < _loop.Agents.Count; i++)
                 {
                     var a = _loop.Agents[i];
@@ -41,15 +46,30 @@ namespace SolarMajesty
                     GUILayout.Label(a.DebugLine());
                 }
             }
+
+            if (_loop.Stalkers != null && _loop.Stalkers.Count > 0)
+            {
+                GUILayout.Space(4);
+                GUILayout.Label("--- Dust Stalkers (dark red blobs) ---");
+                for (int i = 0; i < _loop.Stalkers.Count; i++)
+                {
+                    var s = _loop.Stalkers[i];
+                    if (s == null) continue;
+                    string ag = s.IsAggro ? "AGGRO" : "wander";
+                    GUILayout.Label($"  Stalker {i + 1}: {ag}  HP={s.Health01:P0}");
+                }
+            }
             else
             {
-                GUILayout.Label("No specialists spawned.");
+                GUILayout.Space(4);
+                GUILayout.Label("--- No living Dust Stalkers (pressure should drop to ambient) ---");
             }
 
             GUILayout.Space(6);
-            GUILayout.Label("Verify: low far bounty → Idle | high preferred near → walk");
-            GUILayout.Label("        R = force fatigue Rest | claim badge on taken flags");
-            GUILayout.Label("Emergent: Explore→Scout · Build$high→Engineer · Threat→Defense");
+            GUILayout.Label("Threat tests: stalker near party → high danger → Defense takes ClearThreat");
+            GUILayout.Label("  Engineer (low courage) more Rest/Idle under pressure");
+            GUILayout.Label("  F2 ClearThreat on stalker + Defense work → stalker dies → danger falls");
+            GUILayout.Label("  R = force fatigue Rest on all");
             GUILayout.EndArea();
         }
 
