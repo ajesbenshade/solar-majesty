@@ -1,16 +1,14 @@
 #if UNITY_EDITOR
-using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.SceneManagement;
 
 namespace SolarMajesty.EditorTools
 {
     /// <summary>
-    /// Builds LunarOutpost_Sandbox with a single GameLoop object. Menu or -executeMethod.
+    /// Builds LunarOutpost_Sandbox with GameLoop + framed Main Camera. Menu or -executeMethod.
     /// </summary>
     public static class DemoSceneBuilder
     {
@@ -25,6 +23,15 @@ namespace SolarMajesty.EditorTools
             EditorUtility.DisplayDialog("Solar Majesty", "Demo scene saved:\n" + ScenePath, "OK");
         }
 
+        [MenuItem("Solar Majesty/Open Demo Scene")]
+        public static void OpenDemoScene()
+        {
+            if (!System.IO.File.Exists(ScenePath))
+                Build();
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            Debug.Log("[Solar Majesty] Opened " + scene.path + " — press Play.");
+        }
+
         /// <summary>Unity -batchmode -executeMethod SolarMajesty.EditorTools.DemoSceneBuilder.Build</summary>
         public static void Build()
         {
@@ -32,16 +39,7 @@ namespace SolarMajesty.EditorTools
             ConfigurePlayerSettings();
             EnsureUrpPipeline();
 
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
-
-            // Strip default Main Camera — GameLoop creates/configures isometric camera.
-            var existingCam = Object.FindFirstObjectByType<Camera>();
-            if (existingCam != null)
-                Object.DestroyImmediate(existingCam.gameObject);
-
-            // Remove default light if present; GameLoop/ground will add simple lighting.
-            foreach (var light in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
-                Object.DestroyImmediate(light.gameObject);
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             var sunGo = new GameObject("Directional Light");
             var sun = sunGo.AddComponent<Light>();
@@ -50,8 +48,28 @@ namespace SolarMajesty.EditorTools
             sun.color = new Color(1f, 0.96f, 0.9f);
             sunGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
+            // Keep a Main Camera in the scene so opening the file isn't an empty Game view.
+            // GameLoop.ConfigureCamera repositions it on Play.
+            var camGo = new GameObject("Main Camera");
+            camGo.tag = "MainCamera";
+            var cam = camGo.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.orthographicSize = ColonyLayout.CameraOrthoSize;
+            cam.clearFlags = CameraClearFlags.Skybox;
+            cam.nearClipPlane = 0.3f;
+            cam.farClipPlane = 500f;
+            camGo.AddComponent<AudioListener>();
+            camGo.AddComponent<IsometricCameraController>();
+            Vector3 focus = ColonyLayout.CameraFocus;
+            camGo.transform.position = focus + new Vector3(-18f, 22f, -18f);
+            camGo.transform.rotation = Quaternion.Euler(30f, 45f, 0f);
+
             var loopGo = new GameObject("GameLoop");
-            loopGo.AddComponent<GameLoop>();
+            var loop = loopGo.AddComponent<GameLoop>();
+            // Assign camera via SerializedObject so the scene reference sticks.
+            var so = new SerializedObject(loop);
+            so.FindProperty("mainCamera").objectReferenceValue = cam;
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AddToBuildSettings(ScenePath);

@@ -8,10 +8,13 @@ Shareable overseer-loop sandbox: post flags, place mesh buildings, watch three s
 2. **Unity Hub → Open →** select this repo folder  
    (clone of `ajesbenshade/solar-majesty` / `solar-conquest`).
 3. First open may take several minutes (package resolve + FBX import).
-4. Open scene: **`Assets/Scenes/LunarOutpost_Sandbox.unity`**
-5. Press **Play**.
+4. Open scene via menu **Solar Majesty → Open Demo Scene**  
+   (or double-click `Assets/Scenes/LunarOutpost_Sandbox.unity` in the Project window).  
+   Hierarchy must show **GameLoop** + **Main Camera** + **Directional Light**.
+5. Select the **Game** tab (not only Scene view) and press **Play**.
 
-If the scene is missing, in the Editor menu run **Solar Majesty → Build Demo Scene**, then Play.
+If you only see empty sky with no GameLoop in Hierarchy, you are in the wrong scene — use **Open Demo Scene**.  
+If the scene asset is missing: **Solar Majesty → Build Demo Scene**, then Play.
 
 No Inspector wiring is required: `GameLoop` bootstraps grid, camera, party, stalkers, economy, HUD, and loads building meshes from `Resources/`.
 
@@ -37,13 +40,13 @@ No Inspector wiring is required: `GameLoop` bootstraps grid, camera, party, stal
 
 Speak while playing:
 
-1. **Show the colony** — mesh HAB-1, PWR, dome, landing pad + Starship placeholder already in the sandbox. Capsule specialists (cyan Scout, orange Engineer, red Defense). Dark-red Dust Stalkers wander.
+1. **Show the colony** — one campus: dome core, HAB–LAB spine with connectors, CMD/OPS north, power/solar south, pad+ship east. Specialists spawn in the plaza south of the dome (cyan / orange / red). Dust Stalkers ring the campus. Meshes use Majesty-readable scale (not raw Blender meters).
 2. **Explore (Scout)** — **G**, **F1**, bounty **~100+**, place **near the cyan Scout**. He should **Pursue** and work the flag.
 3. **Build (Engineer)** — **F3**, bounty **~120+**, place **near the orange Engineer**. High-greed builder should prefer it over combat.
 4. **Threat** — Note HUD **`threat=`** rise when stalkers aggro. **F2 ClearThreat**, bounty **~80+**, drop **on/near a stalker**. **Defense Mech** should engage; Engineer should stay reluctant.
 5. **Greed reject** — Post **Explore** with **low bounty far away**. Expect **Idle** / `no_attractive_flag`.
 6. **Rest** — Press **R**. Specialists should show **Rest** (blue status orbs).
-7. **Build placement** — **B**, keys **1–4**, place a mesh building; stockpile deducts on the HUD.
+7. **Build placement** — **B**, keys **1–4**, place a mesh building; green/red ghost + footprint pad shows validity; stockpile deducts on the HUD.
 
 ---
 

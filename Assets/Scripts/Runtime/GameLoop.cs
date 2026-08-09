@@ -35,7 +35,7 @@ namespace SolarMajesty
 
         [Header("Slice settings")]
         [SerializeField] private OverseerTool activeTool = OverseerTool.Flag;
-        [SerializeField] private Vector3 specialistSpawnOffset = new Vector3(8f, 0f, 8f);
+        [SerializeField] private Vector3 specialistSpawnOffset = new Vector3(24f, 0f, 12f);
         [SerializeField] private bool seedStartingResources = true;
         [SerializeField] private bool spawnFullParty = true;
 
@@ -179,13 +179,13 @@ namespace SolarMajesty
                 var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 ground.name = "GroundPlane";
                 ground.transform.SetParent(transform);
-                ground.transform.position = new Vector3(30f, 0f, 30f);
-                // Default plane is 10x10 units; scale to cover sandbox grid (~48 cells * 1.5m).
-                ground.transform.localScale = new Vector3(8f, 1f, 8f);
+                // Center under campus; default plane is 10×10 units at scale 1.
+                ground.transform.position = ColonyLayout.CampusOrigin;
+                ground.transform.localScale = new Vector3(6f, 1f, 6f);
                 var rend = ground.GetComponent<Renderer>();
                 if (rend != null)
                 {
-                    var col = new Color(0.35f, 0.32f, 0.28f);
+                    var col = new Color(0.42f, 0.34f, 0.28f);
                     if (rend.material.HasProperty("_BaseColor"))
                         rend.material.SetColor("_BaseColor", col);
                     else if (rend.material.HasProperty("_Color"))
@@ -208,7 +208,20 @@ namespace SolarMajesty
             Flags = new FlagManager();
             Placer = new BuildingPlacer(Resources);
             if (grid != null)
-                Placer.ExtraPlacementRule = (cell, data) => grid.InBounds(cell);
+            {
+                // Reject if any footprint cell is off-map (not only the origin).
+                Placer.ExtraPlacementRule = (cell, data) =>
+                {
+                    if (data == null) return false;
+                    for (int x = 0; x < data.footprintWidth; x++)
+                    for (int y = 0; y < data.footprintHeight; y++)
+                    {
+                        if (!grid.InBounds(new Vector2Int(cell.x + x, cell.y + y)))
+                            return false;
+                    }
+                    return true;
+                };
+            }
 
             Brain = new SpecialistBrain();
             Economy = new SimpleEconomy(Resources);
@@ -230,12 +243,13 @@ namespace SolarMajesty
 
             if (starterBuildings == null || starterBuildings.Length == 0)
             {
+                // Footprints match demo visual scale (mesh meters × ColonyLayout scale / cellSize).
                 starterBuildings = new[]
                 {
-                    CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 3, 3),
-                    CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 2),
-                    CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 2, 2),
-                    CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 2, 2)
+                    CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6),
+                    CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 3),
+                    CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 3, 3),
+                    CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 3, 3)
                 };
             }
 
@@ -269,17 +283,36 @@ namespace SolarMajesty
         private void ConfigureCamera()
         {
             mainCamera.orthographic = true;
-            mainCamera.orthographicSize = 14f;
-            mainCamera.transform.position = new Vector3(-16f, 20f, -16f);
+            mainCamera.orthographicSize = ColonyLayout.CameraOrthoSize;
+            mainCamera.nearClipPlane = 0.3f;
+            mainCamera.farClipPlane = 500f;
+            mainCamera.clearFlags = CameraClearFlags.Skybox;
             mainCamera.transform.rotation = Quaternion.Euler(30f, 45f, 0f);
+            Vector3 focus = ColonyLayout.CameraFocus;
+            mainCamera.transform.position = focus + new Vector3(-18f, 22f, -18f);
             if (mainCamera.GetComponent<AudioListener>() == null)
                 mainCamera.gameObject.AddComponent<AudioListener>();
+
+            if (_isoCam != null)
+            {
+                if (grid != null)
+                {
+                    float maxX = grid.Width * grid.CellSize + 8f;
+                    float maxZ = grid.Height * grid.CellSize + 8f;
+                    _isoCam.SetPanBounds(new Vector2(-8f, -8f), new Vector2(maxX, maxZ));
+                }
+                _isoCam.FocusOn(focus, ColonyLayout.CameraOrthoSize);
+                _isoCam.SnapToTarget();
+            }
         }
 
         private void SpawnParty()
         {
             _agents.Clear();
-            Vector3 origin = specialistSpawn != null ? specialistSpawn.position : specialistSpawnOffset;
+            // Plaza south of the dome — same campus as buildings (not a random corner).
+            Vector3 origin = ColonyLayout.PartySpawn;
+            if (specialistSpawn != null)
+                specialistSpawn.position = origin;
 
             // Scout — cyan, curious, moderate greed
             Agent = SpawnOne(scoutData, origin + new Vector3(0f, 0f, 0f), new Color(0.35f, 0.85f, 1f));
@@ -288,10 +321,10 @@ namespace SolarMajesty
             if (!spawnFullParty) return;
 
             // Engineer — orange, greedy builder, cautious
-            _agents.Add(SpawnOne(engineerData, origin + new Vector3(2.2f, 0f, 0.5f), new Color(1f, 0.55f, 0.15f)));
+            _agents.Add(SpawnOne(engineerData, origin + new Vector3(1.8f, 0f, 0.4f), new Color(1f, 0.55f, 0.15f)));
 
             // Defense — red, brave combat, less greedy
-            _agents.Add(SpawnOne(defenseData, origin + new Vector3(-2.2f, 0f, 0.5f), new Color(0.85f, 0.22f, 0.22f)));
+            _agents.Add(SpawnOne(defenseData, origin + new Vector3(-1.8f, 0f, 0.4f), new Color(0.85f, 0.22f, 0.22f)));
         }
 
         private SpecialistAgent SpawnOne(SpecialistData data, Vector3 pos, Color tint)
@@ -305,8 +338,9 @@ namespace SolarMajesty
             {
                 go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 go.transform.SetParent(transform);
-                go.transform.position = pos;
-                go.transform.localScale = new Vector3(0.7f, 1f, 0.7f);
+                // Capsule default height 2; scale to ~2.4m tall readable hero next to scaled modules.
+                go.transform.position = pos + Vector3.up * 1.2f;
+                go.transform.localScale = new Vector3(0.85f, 1.2f, 0.85f);
             }
 
             var agent = go.GetComponent<SpecialistAgent>();
@@ -321,25 +355,26 @@ namespace SolarMajesty
             if (!spawnDustStalkers || dustStalkerCount <= 0 || Threat == null)
                 return;
 
-            Vector3 origin = specialistSpawn != null ? specialistSpawn.position : specialistSpawnOffset;
+            // Ring just outside the campus so threat is visible without sitting on the plaza.
+            Vector3 origin = ColonyLayout.CampusOrigin;
+            float radius = Mathf.Max(14f, stalkerSpawnRadius);
 
             for (int i = 0; i < dustStalkerCount; i++)
             {
-                float angle = (Mathf.PI * 2f * i) / dustStalkerCount + 0.4f;
+                float angle = (Mathf.PI * 2f * i) / dustStalkerCount + 0.65f;
                 Vector3 pos = origin + new Vector3(
-                    Mathf.Cos(angle) * stalkerSpawnRadius,
+                    Mathf.Cos(angle) * radius,
                     0f,
-                    Mathf.Sin(angle) * stalkerSpawnRadius);
+                    Mathf.Sin(angle) * radius);
 
                 var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 go.transform.SetParent(_threatRoot != null ? _threatRoot : transform);
-                go.transform.position = pos;
-                // Flattened dark silhouette — readable on isometric grid
-                go.transform.localScale = new Vector3(1.15f, 0.5f, 1.35f);
+                go.transform.localScale = new Vector3(1.4f, 0.6f, 1.6f);
                 Object.Destroy(go.GetComponent<Collider>());
 
                 var stalker = go.AddComponent<DustStalkerAgent>();
-                stalker.Initialize(Threat, Flags, pos);
+                Vector3 home = pos + Vector3.up * 0.35f;
+                stalker.Initialize(Threat, Flags, home);
                 _stalkers.Add(stalker);
             }
 
@@ -479,24 +514,27 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Places a few mesh buildings so the greybox demo reads as a colony immediately.
-        /// Does not grant housing logic beyond visuals (specialists still use BuildingRegistry when present).
+        /// Coherent campus (see ColonyLayout): dome core, habitat spine, power yard, pad/ship.
+        /// Uses Majesty-readable visual scale so modules and specialists share one silhouette language.
         /// </summary>
         private void SpawnShowcaseColony()
         {
             if (!spawnShowcaseColony || buildingRoot == null)
                 return;
 
-            SpawnMesh("Buildings/SM_HAB1_HabitatModule", new Vector3(12f, 0f, 18f), "Showcase_HAB1");
-            SpawnMesh("Buildings/SM_PWR1_PowerNode", new Vector3(22f, 0f, 14f), "Showcase_PWR1");
-            SpawnMesh("Buildings/SM_PWR1_SolarArray", new Vector3(28f, 0f, 14f), "Showcase_Solar");
-            SpawnMesh("Environment/SM_LandingPad", new Vector3(40f, 0f, 40f), "Showcase_LandingPad");
-            SpawnMesh("Environment/SM_Starship_Placeholder", new Vector3(40f, 0f, 40f), "Showcase_Starship");
-            SpawnMesh("Buildings/SM_CommandDome_CentralHub", new Vector3(18f, 0f, 32f), "Showcase_Dome");
-            SpawnMesh("Buildings/SM_CMD1_CommandBuilding", new Vector3(8f, 0f, 26f), "Showcase_CMD1");
+            for (int i = 0; i < ColonyLayout.Showcase.Length; i++)
+            {
+                var piece = ColonyLayout.Showcase[i];
+                SpawnMesh(
+                    piece.ResourcesPath,
+                    piece.WorldPosition,
+                    $"Showcase_{i}_{System.IO.Path.GetFileName(piece.ResourcesPath)}",
+                    piece.ResolveScale(),
+                    piece.YawDegrees);
+            }
         }
 
-        private void SpawnMesh(string resourcesPath, Vector3 position, string name)
+        private void SpawnMesh(string resourcesPath, Vector3 position, string name, float scale, float yawDegrees = 0f)
         {
             GameObject prefab = BuildingVisualCatalog.LoadByPath(resourcesPath);
             if (prefab == null)
@@ -505,8 +543,10 @@ namespace SolarMajesty
                 return;
             }
 
-            var go = Object.Instantiate(prefab, position, Quaternion.identity, buildingRoot);
+            var go = Object.Instantiate(prefab, position, Quaternion.Euler(0f, yawDegrees, 0f), buildingRoot);
             go.name = name;
+            go.transform.localScale = Vector3.one * scale;
+            ColonyVisualUtility.EnsureUrpMaterials(go);
         }
     }
 }

@@ -18,7 +18,7 @@ namespace SolarMajesty
         private IsometricCameraController _cam;
         private Transform _buildingRoot;
         private GameObject _ghost;
-        private Renderer _ghostRend;
+        private GameObject _footprint;
 
         public bool EnabledPlacement
         {
@@ -26,8 +26,11 @@ namespace SolarMajesty
             set
             {
                 enabledPlacement = value;
-                if (!value && _ghost != null)
-                    _ghost.SetActive(false);
+                if (!value)
+                {
+                    if (_ghost != null) _ghost.SetActive(false);
+                    if (_footprint != null) _footprint.SetActive(false);
+                }
             }
         }
 
@@ -65,6 +68,7 @@ namespace SolarMajesty
             if (!enabledPlacement || Selected == null)
             {
                 if (_ghost != null) _ghost.SetActive(false);
+                if (_footprint != null) _footprint.SetActive(false);
                 return;
             }
 
@@ -73,20 +77,17 @@ namespace SolarMajesty
             Vector3 snapped = _grid != null ? _grid.CellToWorld(cell) : world;
 
             EnsureGhost();
+            EnsureFootprint();
             _ghost.SetActive(true);
-            // Mesh pivots are ground-based; no vertical fudge needed.
+            _footprint.SetActive(true);
             _ghost.transform.position = snapped;
 
             bool valid = _placer.CanFit(Selected, cell) &&
                          (_resources == null || _resources.CanAfford(Selected.buildCost));
-            Color c = valid ? new Color(0.3f, 1f, 0.4f, 0.45f) : new Color(1f, 0.25f, 0.2f, 0.45f);
-            foreach (var r in _ghost.GetComponentsInChildren<Renderer>())
-            {
-                if (r.material.HasProperty("_BaseColor"))
-                    r.material.SetColor("_BaseColor", c);
-                else if (r.material.HasProperty("_Color"))
-                    r.material.color = c;
-            }
+            if (valid && _placer.ExtraPlacementRule != null)
+                valid = _placer.ExtraPlacementRule(cell, Selected);
+            ColonyVisualUtility.ApplyGhostTint(_ghost, valid);
+            UpdateFootprint(cell, valid);
 
             if (Input.GetKeyDown(KeyCode.Mouse0) && valid && !Input.GetMouseButton(1))
             {
@@ -117,62 +118,91 @@ namespace SolarMajesty
                 : BuildingVisualCatalog.LoadPrefab(order.Data.category);
 
             GameObject go;
+            float scale = ColonyLayout.ScaleForCategory(order.Data.category);
             if (prefab != null)
             {
                 go = Instantiate(prefab, order.WorldPosition, Quaternion.identity, _buildingRoot);
+                go.transform.localScale = Vector3.one * scale;
             }
             else
             {
                 go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 go.transform.SetParent(_buildingRoot, true);
-                go.transform.position = order.WorldPosition + Vector3.up * 0.75f;
-                go.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f);
+                go.transform.position = order.WorldPosition + Vector3.up * (0.75f * scale);
+                go.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f) * scale;
             }
 
             go.name = $"Bld_{order.Data.displayName}_{order.Id}";
+            ColonyVisualUtility.EnsureUrpMaterials(go);
         }
 
         private void EnsureGhost()
         {
-            // Rebuild ghost when selection changes to match mesh kit.
             if (_ghost != null)
             {
                 if (Selected != null && _ghost.name == $"Ghost_{Selected.category}")
                     return;
-                Object.Destroy(_ghost);
+                Destroy(_ghost);
                 _ghost = null;
-                _ghostRend = null;
             }
 
             GameObject prefab = Selected != null
                 ? (Selected.prefab != null ? Selected.prefab : BuildingVisualCatalog.LoadPrefab(Selected.category))
                 : null;
 
+            float scale = Selected != null
+                ? ColonyLayout.ScaleForCategory(Selected.category)
+                : ColonyLayout.ModuleScale;
+
             if (prefab != null)
             {
                 _ghost = Instantiate(prefab);
                 _ghost.name = Selected != null ? $"Ghost_{Selected.category}" : "BuildGhost";
+                _ghost.transform.localScale = Vector3.one * scale;
                 foreach (var col in _ghost.GetComponentsInChildren<Collider>())
-                    Object.Destroy(col);
+                    Destroy(col);
+                ColonyVisualUtility.EnsureUrpMaterials(_ghost);
             }
             else
             {
                 _ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 _ghost.name = "BuildGhost";
-                _ghost.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f);
-                Object.Destroy(_ghost.GetComponent<Collider>());
+                _ghost.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f) * scale;
+                Destroy(_ghost.GetComponent<Collider>());
             }
 
-            _ghostRend = _ghost.GetComponentInChildren<Renderer>();
-            // Soft ghost tint
-            foreach (var r in _ghost.GetComponentsInChildren<Renderer>())
-            {
-                var c = new Color(0.4f, 1f, 0.5f, 0.4f);
-                if (r.material.HasProperty("_BaseColor"))
-                    r.material.SetColor("_BaseColor", c);
-                else if (r.material.HasProperty("_Color"))
-                    r.material.color = c;
-            }
+            ColonyVisualUtility.ApplyGhostTint(_ghost, true);
+        }
+
+        private void EnsureFootprint()
+        {
+            if (_footprint != null) return;
+            _footprint = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _footprint.name = "BuildFootprint";
+            Destroy(_footprint.GetComponent<Collider>());
+            var rend = _footprint.GetComponent<Renderer>();
+            if (rend != null)
+                rend.sharedMaterial = ColonyVisualUtility.GetFootprintMaterial(true);
+        }
+
+        private void UpdateFootprint(Vector2Int cell, bool valid)
+        {
+            if (_footprint == null || Selected == null || _grid == null) return;
+
+            float cellSize = _grid.CellSize;
+            float w = Selected.footprintWidth * cellSize;
+            float h = Selected.footprintHeight * cellSize;
+            // Footprint anchored at placement cell (same origin BuildingPlacer uses).
+            Vector3 origin = _grid.CellToWorld(cell);
+            // CellToWorld is cell center; shift to footprint AABB center.
+            float ox = (Selected.footprintWidth - 1) * 0.5f * cellSize;
+            float oz = (Selected.footprintHeight - 1) * 0.5f * cellSize;
+            _footprint.transform.position = new Vector3(origin.x + ox, 0.05f, origin.z + oz);
+            _footprint.transform.localScale = new Vector3(w * 0.98f, 0.06f, h * 0.98f);
+
+            var rend = _footprint.GetComponent<Renderer>();
+            if (rend != null)
+                rend.sharedMaterial = ColonyVisualUtility.GetFootprintMaterial(valid);
         }
 
         private bool TryGround(out Vector3 world)

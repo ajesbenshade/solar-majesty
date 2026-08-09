@@ -47,5 +47,6 @@ namespace SolarMajesty
         public static GameObject LoadStarship() => LoadByPath("Environment/SM_Starship_Placeholder");
         public static GameObject LoadSolarArray() => LoadByPath("Buildings/SM_PWR1_SolarArray");
         public static GameObject LoadConnector() => LoadByPath("Buildings/SM_ModularTubeConnector");
+        public static GameObject LoadLaboratory() => LoadByPath("Buildings/SM_LAB1_LaboratoryModule");
     }
 }

@@ -47,13 +47,11 @@ courage matters. Greybox demo is playable in Unity 6 URP.
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
-1. Playtest polish: scale/footprints of FBX vs grid, material cleanup if pink,
-   ghost placement readability, camera bounds over showcase colony.
-2. Add SM_LAB1_LaboratoryModule blockout to the blend + Resources if still missing.
-3. Optional: real ScriptableObject assets under Assets/Data/ instead of runtime
+1. Run Docs/DEMO.md Play Mode checklist (camera/LAB-1/ghost polish landed).
+2. Optional: real ScriptableObject assets under Assets/Data/ instead of runtime
    CreateInstance factories in GameLoop.
-4. Optional: specialist/stalker mesh placeholders (keep brain loop identical).
-5. Only then: combat HP for specialists, NavMesh, construction UI, multi-body.
+3. Optional: specialist/stalker mesh placeholders (keep brain loop identical).
+4. Only then: combat HP for specialists, NavMesh, construction UI, multi-body.
 
 ## Controls reference
 G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
@@ -85,8 +83,8 @@ update Docs/NEXT_STEPS.md if milestones moved.
 
 ### Known gaps
 
-- LAB-1 may still be missing as a mesh in Resources (HAB/CMD/OPS/PWR/Dome/Pad present)  
-- Building footprints vs real mesh size are approximate greybox  
+- Building footprints vs real mesh size are still approximate (improved, not exact)  
+- Landing Pad placeable footprint is compact vs Ø40 showcase mesh  
 - Specialists/stalkers are primitives (intentional for this demo)  
 - No multiplayer / save / campaign  
 

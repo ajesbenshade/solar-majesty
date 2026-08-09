@@ -41,6 +41,53 @@ namespace SolarMajesty
             _targetZoom = _cam.orthographicSize;
         }
 
+        /// <summary>Clamp pan to sandbox / showcase extents (XZ → Vector2 x/y).</summary>
+        public void SetPanBounds(Vector2 min, Vector2 max)
+        {
+            panBoundsMin = min;
+            panBoundsMax = max;
+        }
+
+        /// <summary>Snap look-at focus on the ground plane; keeps current iso pitch/yaw.</summary>
+        public void FocusOn(Vector3 groundPoint, float? orthoSize = null)
+        {
+            if (_cam == null) _cam = GetComponent<Camera>();
+
+            // Preserve camera offset from ground focus (iso look direction).
+            Vector3 forward = transform.forward;
+            var plane = new Plane(Vector3.up, Vector3.zero);
+            var ray = new Ray(transform.position, forward);
+            if (plane.Raycast(ray, out float t) && t > 0f)
+            {
+                Vector3 currentFocus = ray.GetPoint(t);
+                Vector3 delta = groundPoint - currentFocus;
+                _targetPos = transform.position + delta;
+            }
+            else
+            {
+                float y = Mathf.Max(12f, transform.position.y);
+                _targetPos = groundPoint + new Vector3(-22f, y, -22f);
+            }
+
+            transform.position = _targetPos;
+
+            if (orthoSize.HasValue)
+            {
+                _targetZoom = Mathf.Clamp(orthoSize.Value, minZoom, maxZoom);
+                if (_cam != null)
+                    _cam.orthographicSize = _targetZoom;
+            }
+        }
+
+        /// <summary>Hard-set transform to the current pan/zoom targets (skip smoothing).</summary>
+        public void SnapToTarget()
+        {
+            if (_cam == null) _cam = GetComponent<Camera>();
+            transform.position = _targetPos;
+            if (_cam != null)
+                _cam.orthographicSize = _targetZoom;
+        }
+
         private void Update()
         {
             HandleKeyboardPan();

@@ -173,10 +173,17 @@ Also exported for quick look in other viewers; FBX is preferred for Unity workfl
 | `SM_PWR1_SolarArray` | 10.4 × 12.4 × 0.1 | (28, -18) |
 | `SM_LandingPad` | 41 × 40 × 1.3 | (-50, 0) |
 | `SM_Starship_Placeholder` | 4.6 × 7.1 × 44 | on pad |
+| `SM_LAB1_LaboratoryModule` | ~9.6 × 4.9 × 6.7 (Ø4.5 × L8.7 target) | (0, 22) |
 
-**Missing from blend:** `SM_LAB1_LaboratoryModule` (Ø4.5 × L8.7) — add with a dedicated script next if needed.
+Add / refresh LAB-1 only:
 
-Regenerate only remaining modules (does not touch HAB / connector):
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender --background \
+  Blender/SolarMajesty_Modules.blend \
+  --python Blender/scripts/sm_add_lab1_blockout.py
+```
+
+Regenerate remaining modules (does not touch HAB / LAB / connector):
 
 ```bash
 /Applications/Blender.app/Contents/MacOS/Blender --background \
@@ -184,12 +191,13 @@ Regenerate only remaining modules (does not touch HAB / connector):
   --python Blender/scripts/sm_add_remaining_blockouts.py
 ```
 
+Copy new FBX into `Assets/Resources/Buildings/` (or Environment) after export.
+
 ## Next modeling session
 
-1. Add LAB-1 blockout if still missing  
-2. Subdivide/bevel HAB-1 / modules to match panel lines on sheets  
-3. Mate docking sockets to **connector** flush  
-4. Replace Starship placeholder with refined stack when ready  
+1. Subdivide/bevel HAB-1 / LAB-1 / modules to match panel lines on sheets  
+2. Mate docking sockets to **connector** flush  
+3. Replace Starship placeholder with refined stack when ready  
 
 ---
 
