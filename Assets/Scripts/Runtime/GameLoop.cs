@@ -44,6 +44,10 @@ namespace SolarMajesty
         [SerializeField] private int dustStalkerCount = 2;
         [SerializeField] private float stalkerSpawnRadius = 14f;
 
+        [Header("Demo greybox visuals")]
+        [SerializeField] private bool spawnGroundPlane = true;
+        [SerializeField] private bool spawnShowcaseColony = true;
+
         // Pure systems
         public ResourceManager Resources { get; private set; }
         public FlagManager Flags { get; private set; }
@@ -79,9 +83,10 @@ namespace SolarMajesty
             ConfigureCamera();
             SpawnParty();
             SpawnThreats();
+            SpawnShowcaseColony();
             EnsureHud();
 
-            Debug.Log("[GameLoop] Phase 1.6 ready — party + Dust Stalkers (ThreatPressure → bodyDanger).");
+            Debug.Log("[GameLoop] Demo ready — party, stalkers, mesh colony kit, ThreatPressure → bodyDanger.");
         }
 
         private void Update()
@@ -168,6 +173,25 @@ namespace SolarMajesty
                 go.transform.SetParent(transform);
                 _threatRoot = go.transform;
             }
+
+            if (spawnGroundPlane && GameObject.Find("GroundPlane") == null)
+            {
+                var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                ground.name = "GroundPlane";
+                ground.transform.SetParent(transform);
+                ground.transform.position = new Vector3(30f, 0f, 30f);
+                // Default plane is 10x10 units; scale to cover sandbox grid (~48 cells * 1.5m).
+                ground.transform.localScale = new Vector3(8f, 1f, 8f);
+                var rend = ground.GetComponent<Renderer>();
+                if (rend != null)
+                {
+                    var col = new Color(0.35f, 0.32f, 0.28f);
+                    if (rend.material.HasProperty("_BaseColor"))
+                        rend.material.SetColor("_BaseColor", col);
+                    else if (rend.material.HasProperty("_Color"))
+                        rend.material.color = col;
+                }
+            }
         }
 
         private void BuildPureSystems()
@@ -208,11 +232,18 @@ namespace SolarMajesty
             {
                 starterBuildings = new[]
                 {
-                    CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f),
-                    CreateBuilding("Hab Module", BuildingCategory.Habitat, 50, 8, 12f),
-                    CreateBuilding("Power Node", BuildingCategory.Power, 35, 0, 8f),
-                    CreateBuilding("Mining Outpost", BuildingCategory.Mining, 45, 6, 14f)
+                    CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 3, 3),
+                    CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 2),
+                    CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 2, 2),
+                    CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 2, 2)
                 };
+            }
+
+            // Bind Blender blockout meshes from Resources (no Inspector wiring required).
+            for (int i = 0; i < starterBuildings.Length; i++)
+            {
+                if (starterBuildings[i] != null && starterBuildings[i].prefab == null)
+                    starterBuildings[i].prefab = BuildingVisualCatalog.LoadPrefab(starterBuildings[i].category);
             }
         }
 
@@ -419,13 +450,20 @@ namespace SolarMajesty
             return f;
         }
 
-        private static BuildingData CreateBuilding(string name, BuildingCategory cat, int metals, int power, float time)
+        private static BuildingData CreateBuilding(
+            string name,
+            BuildingCategory cat,
+            int metals,
+            int power,
+            float time,
+            int footprintW = 1,
+            int footprintH = 1)
         {
             var b = ScriptableObject.CreateInstance<BuildingData>();
             b.displayName = name;
             b.category = cat;
-            b.footprintWidth = 1;
-            b.footprintHeight = 1;
+            b.footprintWidth = Mathf.Max(1, footprintW);
+            b.footprintHeight = Mathf.Max(1, footprintH);
             b.buildTimeSeconds = time;
             b.housingSlots = cat == BuildingCategory.Habitat ? 3 : 0;
             b.powerDraw = power > 0 ? 2 : 0;
@@ -436,7 +474,39 @@ namespace SolarMajesty
                     new ResourceAmount(ResourceId.Power, power)
                 }
                 : new[] { new ResourceAmount(ResourceId.Metals, metals) };
+            b.prefab = BuildingVisualCatalog.LoadPrefab(cat);
             return b;
+        }
+
+        /// <summary>
+        /// Places a few mesh buildings so the greybox demo reads as a colony immediately.
+        /// Does not grant housing logic beyond visuals (specialists still use BuildingRegistry when present).
+        /// </summary>
+        private void SpawnShowcaseColony()
+        {
+            if (!spawnShowcaseColony || buildingRoot == null)
+                return;
+
+            SpawnMesh("Buildings/SM_HAB1_HabitatModule", new Vector3(12f, 0f, 18f), "Showcase_HAB1");
+            SpawnMesh("Buildings/SM_PWR1_PowerNode", new Vector3(22f, 0f, 14f), "Showcase_PWR1");
+            SpawnMesh("Buildings/SM_PWR1_SolarArray", new Vector3(28f, 0f, 14f), "Showcase_Solar");
+            SpawnMesh("Environment/SM_LandingPad", new Vector3(40f, 0f, 40f), "Showcase_LandingPad");
+            SpawnMesh("Environment/SM_Starship_Placeholder", new Vector3(40f, 0f, 40f), "Showcase_Starship");
+            SpawnMesh("Buildings/SM_CommandDome_CentralHub", new Vector3(18f, 0f, 32f), "Showcase_Dome");
+            SpawnMesh("Buildings/SM_CMD1_CommandBuilding", new Vector3(8f, 0f, 26f), "Showcase_CMD1");
+        }
+
+        private void SpawnMesh(string resourcesPath, Vector3 position, string name)
+        {
+            GameObject prefab = BuildingVisualCatalog.LoadByPath(resourcesPath);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[GameLoop] Missing mesh resource: {resourcesPath}");
+                return;
+            }
+
+            var go = Object.Instantiate(prefab, position, Quaternion.identity, buildingRoot);
+            go.name = name;
         }
     }
 }

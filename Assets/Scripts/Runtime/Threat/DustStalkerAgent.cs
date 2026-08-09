@@ -30,6 +30,8 @@ namespace SolarMajesty
         [SerializeField] private float bobAmp = 0.12f;
         [SerializeField] private float bobSpeed = 3.2f;
 
+        private static int _nextSourceId = 1;
+
         private ThreatPressure _threat;
         private FlagManager _flags;
         private Vector3 _home;
@@ -52,7 +54,7 @@ namespace SolarMajesty
             _threat = threat;
             _flags = flags;
             _home = home;
-            _sourceId = GetInstanceID();
+            _sourceId = _nextSourceId++;
             _health = maxHealth;
             _baseScale = transform.localScale;
             _yBase = transform.position.y;

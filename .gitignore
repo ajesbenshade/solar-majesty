@@ -38,3 +38,7 @@ Thumbs.db
 **/StreamingAssets/aa/*
 **/StreamingAssets/aa.meta
 *.burstdebugcache
+
+# Blender
+Blender/*.blend1
+Blender/*.blend2

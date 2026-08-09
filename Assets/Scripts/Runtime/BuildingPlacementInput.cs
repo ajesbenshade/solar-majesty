@@ -74,17 +74,18 @@ namespace SolarMajesty
 
             EnsureGhost();
             _ghost.SetActive(true);
-            _ghost.transform.position = snapped + Vector3.up * 0.75f;
+            // Mesh pivots are ground-based; no vertical fudge needed.
+            _ghost.transform.position = snapped;
 
             bool valid = _placer.CanFit(Selected, cell) &&
                          (_resources == null || _resources.CanAfford(Selected.buildCost));
-            if (_ghostRend != null)
+            Color c = valid ? new Color(0.3f, 1f, 0.4f, 0.45f) : new Color(1f, 0.25f, 0.2f, 0.45f);
+            foreach (var r in _ghost.GetComponentsInChildren<Renderer>())
             {
-                Color c = valid ? new Color(0.3f, 1f, 0.4f, 0.45f) : new Color(1f, 0.25f, 0.2f, 0.45f);
-                if (_ghostRend.material.HasProperty("_Color"))
-                    _ghostRend.material.color = c;
-                else if (_ghostRend.material.HasProperty("_BaseColor"))
-                    _ghostRend.material.SetColor("_BaseColor", c);
+                if (r.material.HasProperty("_BaseColor"))
+                    r.material.SetColor("_BaseColor", c);
+                else if (r.material.HasProperty("_Color"))
+                    r.material.color = c;
             }
 
             if (Input.GetKeyDown(KeyCode.Mouse0) && valid && !Input.GetMouseButton(1))
@@ -111,10 +112,14 @@ namespace SolarMajesty
 
         private void SpawnBuildingVisual(ConstructionOrder order)
         {
+            GameObject prefab = order.Data.prefab != null
+                ? order.Data.prefab
+                : BuildingVisualCatalog.LoadPrefab(order.Data.category);
+
             GameObject go;
-            if (order.Data.prefab != null)
+            if (prefab != null)
             {
-                go = Instantiate(order.Data.prefab, order.WorldPosition, Quaternion.identity, _buildingRoot);
+                go = Instantiate(prefab, order.WorldPosition, Quaternion.identity, _buildingRoot);
             }
             else
             {
@@ -129,12 +134,45 @@ namespace SolarMajesty
 
         private void EnsureGhost()
         {
-            if (_ghost != null) return;
-            _ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            _ghost.name = "BuildGhost";
-            _ghost.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f);
-            Object.Destroy(_ghost.GetComponent<Collider>());
-            _ghostRend = _ghost.GetComponent<Renderer>();
+            // Rebuild ghost when selection changes to match mesh kit.
+            if (_ghost != null)
+            {
+                if (Selected != null && _ghost.name == $"Ghost_{Selected.category}")
+                    return;
+                Object.Destroy(_ghost);
+                _ghost = null;
+                _ghostRend = null;
+            }
+
+            GameObject prefab = Selected != null
+                ? (Selected.prefab != null ? Selected.prefab : BuildingVisualCatalog.LoadPrefab(Selected.category))
+                : null;
+
+            if (prefab != null)
+            {
+                _ghost = Instantiate(prefab);
+                _ghost.name = Selected != null ? $"Ghost_{Selected.category}" : "BuildGhost";
+                foreach (var col in _ghost.GetComponentsInChildren<Collider>())
+                    Object.Destroy(col);
+            }
+            else
+            {
+                _ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                _ghost.name = "BuildGhost";
+                _ghost.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f);
+                Object.Destroy(_ghost.GetComponent<Collider>());
+            }
+
+            _ghostRend = _ghost.GetComponentInChildren<Renderer>();
+            // Soft ghost tint
+            foreach (var r in _ghost.GetComponentsInChildren<Renderer>())
+            {
+                var c = new Color(0.4f, 1f, 0.5f, 0.4f);
+                if (r.material.HasProperty("_BaseColor"))
+                    r.material.SetColor("_BaseColor", c);
+                else if (r.material.HasProperty("_Color"))
+                    r.material.color = c;
+            }
         }
 
         private bool TryGround(out Vector3 world)

@@ -160,12 +160,36 @@ Also exported for quick look in other viewers; FBX is preferred for Unity workfl
 
 ---
 
+## Blockout inventory (current)
+
+| Object | Approx size (W×D×H m) | Collection / park |
+|--------|------------------------|-------------------|
+| `SM_ModularTubeConnector` | 4.4 × 2.8 × 2.8 | origin |
+| `SM_HAB1_HabitatModule` | 13.1 × 8.3 × 8.4 | Y=10 |
+| `SM_CMD1_CommandBuilding` | 11.4 × 11.1 × 6.5 | (20, 0) |
+| `SM_OPS1_OperationsUnit` | 9.7 × 9.4 × 5.7 | (20, 14) |
+| `SM_CommandDome_CentralHub` | 20.8 × 20.8 × 9.9 | (45, 0) |
+| `SM_PWR1_PowerNode` | 8.0 × 9.4 × 6.3 | (20, -18) |
+| `SM_PWR1_SolarArray` | 10.4 × 12.4 × 0.1 | (28, -18) |
+| `SM_LandingPad` | 41 × 40 × 1.3 | (-50, 0) |
+| `SM_Starship_Placeholder` | 4.6 × 7.1 × 44 | on pad |
+
+**Missing from blend:** `SM_LAB1_LaboratoryModule` (Ø4.5 × L8.7) — add with a dedicated script next if needed.
+
+Regenerate only remaining modules (does not touch HAB / connector):
+
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender --background \
+  Blender/SolarMajesty_Modules.blend \
+  --python Blender/scripts/sm_add_remaining_blockouts.py
+```
+
 ## Next modeling session
 
-1. Subdivide/bevel HAB-1 blockout to match panel lines on the sheet  
-2. Boolean or inset docking sockets so **connector** mates flush  
-3. LAB-1 (smaller cylinder Ø4.5 × 8.7) reusing connector + materials  
-4. CMD-1 / OPS-1 hard-surface from multi-view sheet  
+1. Add LAB-1 blockout if still missing  
+2. Subdivide/bevel HAB-1 / modules to match panel lines on sheets  
+3. Mate docking sockets to **connector** flush  
+4. Replace Starship placeholder with refined stack when ready  
 
 ---
 
