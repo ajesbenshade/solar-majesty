@@ -5,7 +5,8 @@
 You never control units. You build infrastructure, post flags/bounties, and manage the economy. Autonomous specialists accept or ignore work based on personality and greed.
 
 This repo is a **Unity 6 URP project** with a playable greybox demo scene.  
-See **[Docs/DEMO.md](Docs/DEMO.md)** for open → Play → 60-second demo script.
+See **[Docs/DEMO.md](Docs/DEMO.md)** for open → Play → 60-second demo script.  
+**Next developer pickup:** **[Docs/DEVELOPER_HANDOFF.md](Docs/DEVELOPER_HANDOFF.md)**
 
 ## Namespace
 
