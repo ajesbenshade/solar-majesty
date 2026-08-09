@@ -147,6 +147,23 @@ namespace SolarMajesty
             return true;
         }
 
+        /// <summary>
+        /// Reserve cells without spending resources (showcase colony / pre-built map blockers).
+        /// </summary>
+        public void MarkOccupiedRect(Vector2Int origin, int width, int height)
+        {
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                    _occupiedCells.Add(Pack(origin.x + x, origin.y + y));
+            }
+        }
+
+        public bool IsCellOccupied(Vector2Int cell) =>
+            _occupiedCells.Contains(Pack(cell.x, cell.y));
+
         private void MarkFootprint(BuildingData data, Vector2Int origin, bool occupied)
         {
             if (data == null) return;

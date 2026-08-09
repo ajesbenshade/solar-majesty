@@ -230,27 +230,38 @@ namespace SolarMajesty
 
         private void EnsureContent()
         {
-            if (scoutData == null) scoutData = CreateScout();
-            if (engineerData == null) engineerData = CreateEngineer();
-            if (defenseData == null) defenseData = CreateDefense();
+            // Prefer authored Resources/DemoContent assets; factories remain Play-safe fallback.
+            if (scoutData == null) scoutData = DemoContentCatalog.LoadScout() ?? CreateScout();
+            if (engineerData == null) engineerData = DemoContentCatalog.LoadEngineer() ?? CreateEngineer();
+            if (defenseData == null) defenseData = DemoContentCatalog.LoadDefense() ?? CreateDefense();
+
+            BindUnitPrefab(scoutData, SpecialistClass.ScoutDrone);
+            BindUnitPrefab(engineerData, SpecialistClass.EngineerBot);
+            BindUnitPrefab(defenseData, SpecialistClass.DefenseMech);
 
             if (exploreFlagData == null)
-                exploreFlagData = CreateFlag(FlagType.Explore, "Explore", 40, 0.08f, 4f, new Color(0.3f, 0.85f, 1f));
+                exploreFlagData = DemoContentCatalog.LoadExploreFlag()
+                    ?? CreateFlag(FlagType.Explore, "Explore", 40, 0.08f, 4f, new Color(0.3f, 0.85f, 1f));
             if (clearThreatFlagData == null)
-                clearThreatFlagData = CreateFlag(FlagType.ClearThreat, "Clear Threat", 80, 0.4f, 6f, new Color(1f, 0.3f, 0.25f));
+                clearThreatFlagData = DemoContentCatalog.LoadClearThreatFlag()
+                    ?? CreateFlag(FlagType.ClearThreat, "Clear Threat", 80, 0.4f, 6f, new Color(1f, 0.3f, 0.25f));
             if (buildFlagData == null)
-                buildFlagData = CreateFlag(FlagType.Build, "Build Here", 70, 0.1f, 8f, new Color(1f, 0.65f, 0.15f));
+                buildFlagData = DemoContentCatalog.LoadBuildFlag()
+                    ?? CreateFlag(FlagType.Build, "Build Here", 70, 0.1f, 8f, new Color(1f, 0.65f, 0.15f));
 
             if (starterBuildings == null || starterBuildings.Length == 0)
             {
-                // Footprints match demo visual scale (mesh meters × ColonyLayout scale / cellSize).
-                starterBuildings = new[]
+                starterBuildings = DemoContentCatalog.LoadStarterBuildings();
+                if (starterBuildings == null || starterBuildings.Length == 0)
                 {
-                    CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6),
-                    CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 3),
-                    CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 3, 3),
-                    CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 3, 3)
-                };
+                    starterBuildings = new[]
+                    {
+                        CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6),
+                        CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 3),
+                        CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 3, 3),
+                        CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 3, 3)
+                    };
+                }
             }
 
             // Bind Blender blockout meshes from Resources (no Inspector wiring required).
@@ -259,6 +270,12 @@ namespace SolarMajesty
                 if (starterBuildings[i] != null && starterBuildings[i].prefab == null)
                     starterBuildings[i].prefab = BuildingVisualCatalog.LoadPrefab(starterBuildings[i].category);
             }
+        }
+
+        private static void BindUnitPrefab(SpecialistData data, SpecialistClass cls)
+        {
+            if (data == null || data.prefab != null) return;
+            data.prefab = DemoContentCatalog.LoadUnitPrefab(cls);
         }
 
         private void WireInputDrivers()
@@ -330,17 +347,22 @@ namespace SolarMajesty
         private SpecialistAgent SpawnOne(SpecialistData data, Vector3 pos, Color tint)
         {
             GameObject go;
-            if (data.prefab != null)
+            GameObject prefab = data != null ? data.prefab : null;
+            if (prefab == null && data != null)
+                prefab = DemoContentCatalog.LoadUnitPrefab(data.specialistClass);
+
+            if (prefab != null)
             {
-                go = Instantiate(data.prefab, pos, Quaternion.identity, transform);
+                go = Instantiate(prefab, pos, Quaternion.identity, transform);
             }
             else
             {
-                go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                go.transform.SetParent(transform);
-                // Capsule default height 2; scale to ~2.4m tall readable hero next to scaled modules.
-                go.transform.position = pos + Vector3.up * 1.2f;
-                go.transform.localScale = new Vector3(0.85f, 1.2f, 0.85f);
+                // Runtime silhouette fallback if prefabs not generated yet.
+                go = data != null
+                    ? UnitPlaceholderFactory.BuildForClass(data.specialistClass)
+                    : UnitPlaceholderFactory.BuildScout();
+                go.transform.SetParent(transform, false);
+                go.transform.position = pos;
             }
 
             var agent = go.GetComponent<SpecialistAgent>();
@@ -355,9 +377,9 @@ namespace SolarMajesty
             if (!spawnDustStalkers || dustStalkerCount <= 0 || Threat == null)
                 return;
 
-            // Ring just outside the campus so threat is visible without sitting on the plaza.
             Vector3 origin = ColonyLayout.CampusOrigin;
             float radius = Mathf.Max(14f, stalkerSpawnRadius);
+            GameObject stalkerPrefab = DemoContentCatalog.LoadStalkerPrefab();
 
             for (int i = 0; i < dustStalkerCount; i++)
             {
@@ -366,14 +388,23 @@ namespace SolarMajesty
                     Mathf.Cos(angle) * radius,
                     0f,
                     Mathf.Sin(angle) * radius);
+                Vector3 home = pos + Vector3.up * 0.2f;
 
-                var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                go.transform.SetParent(_threatRoot != null ? _threatRoot : transform);
-                go.transform.localScale = new Vector3(1.4f, 0.6f, 1.6f);
-                Object.Destroy(go.GetComponent<Collider>());
+                GameObject go;
+                if (stalkerPrefab != null)
+                {
+                    go = Object.Instantiate(stalkerPrefab, home, Quaternion.identity,
+                        _threatRoot != null ? _threatRoot : transform);
+                }
+                else
+                {
+                    go = UnitPlaceholderFactory.BuildDustStalker();
+                    go.transform.SetParent(_threatRoot != null ? _threatRoot : transform, false);
+                    go.transform.position = home;
+                }
 
-                var stalker = go.AddComponent<DustStalkerAgent>();
-                Vector3 home = pos + Vector3.up * 0.35f;
+                var stalker = go.GetComponent<DustStalkerAgent>();
+                if (stalker == null) stalker = go.AddComponent<DustStalkerAgent>();
                 stalker.Initialize(Threat, Flags, home);
                 _stalkers.Add(stalker);
             }
@@ -531,7 +562,22 @@ namespace SolarMajesty
                     $"Showcase_{i}_{System.IO.Path.GetFileName(piece.ResourcesPath)}",
                     piece.ResolveScale(),
                     piece.YawDegrees);
+
+                if (piece.ReservesCells && Placer != null && grid != null)
+                    ReserveShowcaseFootprint(piece);
             }
+        }
+
+        private void ReserveShowcaseFootprint(ColonyLayout.ShowcasePiece piece)
+        {
+            // Footprint origin = SW corner of AABB centered on piece world position.
+            Vector3 world = piece.WorldPosition;
+            float cell = grid.CellSize;
+            float halfW = (piece.FootprintW * cell) * 0.5f;
+            float halfH = (piece.FootprintH * cell) * 0.5f;
+            Vector3 corner = world - new Vector3(halfW, 0f, halfH) + new Vector3(cell * 0.5f, 0f, cell * 0.5f);
+            Vector2Int origin = grid.WorldToCell(corner);
+            Placer.MarkOccupiedRect(origin, piece.FootprintW, piece.FootprintH);
         }
 
         private void SpawnMesh(string resourcesPath, Vector3 position, string name, float scale, float yawDegrees = 0f)

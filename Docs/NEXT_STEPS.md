@@ -10,13 +10,12 @@
 - [x] LAB-1 blockout (`SM_LAB1_LaboratoryModule`) in blend + Resources + showcase
 - [x] Demo polish: camera framed on colony, footprint ghost pad, URP material remap, mesh-aware footprints
 - [x] Coherent campus layout + Majesty-readable visual scale (`ColonyLayout`)
+- [x] Demo content pass: authored SOs under `Assets/Data` + `Resources/DemoContent`, unit/stalker placeholders, showcase footprint reservation
 
 ## Next
 
-1. Run **Docs/DEMO.md** checklist in Play Mode (verify ghost/camera/LAB-1).
-2. Optional: real ScriptableObject assets under Assets/Data/.
-3. Optional: specialist/stalker mesh placeholders (keep brain loop identical).
-4. Later: NavMesh, construction UI, richer combat — not for shareable greybox.
+1. Run **Docs/DEMO.md** checklist in Play Mode (distinct unit silhouettes + blocked campus placement).
+2. Later: specialist combat HP, NavMesh, construction UI, multi-body — not for shareable greybox.
 
 ## Still out of scope
 

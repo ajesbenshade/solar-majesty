@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad6cec0d07ef9498c83b1151499c4966, type: 3}
+  m_Name: Building_PWR1
+  m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.BuildingData
+  displayName: Power Node (PWR-1)
+  category: 2
+  description: 
+  footprintWidth: 3
+  footprintHeight: 3
+  buildCost:
+  - resource: 2
+    amount: 35
+  buildTimeSeconds: 8
+  powerDraw: 0
+  housingSlots: 0
+  attractionWeight: 1
+  preferredOccupants: 
+  prefab: {fileID: 919132149155446097, guid: 1e37937bb6c95408a9984032c2312f6d, type: 3}

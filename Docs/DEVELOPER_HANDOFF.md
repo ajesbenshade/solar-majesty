@@ -47,11 +47,8 @@ courage matters. Greybox demo is playable in Unity 6 URP.
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
-1. Run Docs/DEMO.md Play Mode checklist (camera/LAB-1/ghost polish landed).
-2. Optional: real ScriptableObject assets under Assets/Data/ instead of runtime
-   CreateInstance factories in GameLoop.
-3. Optional: specialist/stalker mesh placeholders (keep brain loop identical).
-4. Only then: combat HP for specialists, NavMesh, construction UI, multi-body.
+1. Run Docs/DEMO.md Play Mode checklist (content pass landed: SOs, unit placeholders, campus reservation).
+2. Only then: combat HP for specialists, NavMesh, construction UI, multi-body.
 
 ## Controls reference
 G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
@@ -80,12 +77,13 @@ update Docs/NEXT_STEPS.md if milestones moved.
 - [x] Three personalities + Dust Stalker threat pressure  
 - [x] Blender modular blockouts + FBX exports  
 - [x] Unity 6 URP project + greybox demo scene  
+- [x] Demo content pass (Data SOs, unit placeholders, campus reservation)  
 
 ### Known gaps
 
 - Building footprints vs real mesh size are still approximate (improved, not exact)  
 - Landing Pad placeable footprint is compact vs Ø40 showcase mesh  
-- Specialists/stalkers are primitives (intentional for this demo)  
+- Unit/stalker placeholders are primitive composites (not final Blender heroes)  
 - No multiplayer / save / campaign  
 
 ---

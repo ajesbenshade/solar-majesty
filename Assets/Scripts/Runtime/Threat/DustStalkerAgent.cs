@@ -202,7 +202,6 @@ namespace SolarMajesty
             _rend = GetComponentInChildren<Renderer>();
             if (_rend == null)
             {
-                // Host should already be a primitive; if not, add a sphere.
                 var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 sphere.transform.SetParent(transform, false);
                 sphere.transform.localPosition = Vector3.zero;
@@ -213,8 +212,9 @@ namespace SolarMajesty
 
             SetColor(_rend, stalkerColor);
 
-            // Slightly flattened “bug” silhouette
-            transform.localScale = new Vector3(1.1f, 0.55f, 1.3f);
+            // Only flatten anonymous single-sphere hosts; multi-part placeholders keep authored scale.
+            if (transform.childCount <= 1 && transform.localScale == Vector3.one)
+                transform.localScale = new Vector3(1.1f, 0.55f, 1.3f);
             _baseScale = transform.localScale;
 
             if (_label == null)

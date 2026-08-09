@@ -16,7 +16,9 @@ Shareable overseer-loop sandbox: post flags, place mesh buildings, watch three s
 If you only see empty sky with no GameLoop in Hierarchy, you are in the wrong scene — use **Open Demo Scene**.  
 If the scene asset is missing: **Solar Majesty → Build Demo Scene**, then Play.
 
-No Inspector wiring is required: `GameLoop` bootstraps grid, camera, party, stalkers, economy, HUD, and loads building meshes from `Resources/`.
+No Inspector wiring is required: `GameLoop` bootstraps grid, camera, party, stalkers, economy, HUD, and loads demo ScriptableObjects from `Resources/DemoContent` (factories remain as fallback). Building meshes load from `Resources/Buildings` + `Environment`.
+
+Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo Content Assets**.
 
 ---
 
@@ -40,13 +42,13 @@ No Inspector wiring is required: `GameLoop` bootstraps grid, camera, party, stal
 
 Speak while playing:
 
-1. **Show the colony** — one campus: dome core, HAB–LAB spine with connectors, CMD/OPS north, power/solar south, pad+ship east. Specialists spawn in the plaza south of the dome (cyan / orange / red). Dust Stalkers ring the campus. Meshes use Majesty-readable scale (not raw Blender meters).
+1. **Show the colony** — one campus: dome core, HAB–LAB spine with connectors, CMD/OPS north, power/solar south, pad+ship east. Specialists spawn in the plaza with **distinct silhouettes** (tall Scout / squat Engineer / shielded Defense). Dust Stalkers use a low predator placeholder. Meshes use Majesty-readable scale (not raw Blender meters).
 2. **Explore (Scout)** — **G**, **F1**, bounty **~100+**, place **near the cyan Scout**. He should **Pursue** and work the flag.
 3. **Build (Engineer)** — **F3**, bounty **~120+**, place **near the orange Engineer**. High-greed builder should prefer it over combat.
 4. **Threat** — Note HUD **`threat=`** rise when stalkers aggro. **F2 ClearThreat**, bounty **~80+**, drop **on/near a stalker**. **Defense Mech** should engage; Engineer should stay reluctant.
 5. **Greed reject** — Post **Explore** with **low bounty far away**. Expect **Idle** / `no_attractive_flag`.
 6. **Rest** — Press **R**. Specialists should show **Rest** (blue status orbs).
-7. **Build placement** — **B**, keys **1–4**, place a mesh building; green/red ghost + footprint pad shows validity; stockpile deducts on the HUD.
+7. **Build placement** — **B**, keys **1–4**, place a mesh building; green/red ghost + footprint pad shows validity; **campus tiles stay red** (showcase footprints reserved). Stockpile deducts on the HUD.
 
 ---
 
@@ -73,7 +75,10 @@ Speak while playing:
 
 - [ ] Showcase colony meshes visible on Play
 - [ ] Placed buildings use Blender FBX kit (not only cubes)
-- [ ] Specialists remain capsules; stalkers remain spheres (by design for this greybox)
+- [ ] Specialists show distinct class silhouettes (Scout / Engineer / Defense)
+- [ ] Stalkers use predator placeholder (not anonymous spheres)
+- [ ] Cannot place buildings overlapping showcase campus footprints
+- [ ] Content loads from `Resources/DemoContent` (or factory fallback)
 
 ---
 
