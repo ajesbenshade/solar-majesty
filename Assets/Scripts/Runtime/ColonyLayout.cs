@@ -3,13 +3,16 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Demo campus layout: Majesty-readable scale (not 1:1 meters) + coherent clustering.
-    /// Real Blender meters are too large next to capsule specialists; we shrink for silhouette clarity.
+    /// Demo campus layout: Majesty-readable scale + coherent clustering.
+    /// Phase 5C: Campus A (primary) + Campus B (second body) for multi-body framing.
     /// </summary>
     public static class ColonyLayout
     {
-        /// <summary>World-space campus center (ground).</summary>
+        /// <summary>World-space campus A center (ground).</summary>
         public static readonly Vector3 CampusOrigin = new Vector3(24f, 0f, 22f);
+
+        /// <summary>World-space campus B center (NE outpost).</summary>
+        public static readonly Vector3 CampusBOrigin = new Vector3(54f, 0f, 48f);
 
         /// <summary>Modules (HAB/LAB/CMD/OPS/PWR/Dome/connectors).</summary>
         public const float ModuleScale = 0.42f;
@@ -33,46 +36,49 @@ namespace SolarMajesty
             return category == BuildingCategory.LandingPad ? PadScale : ModuleScale;
         }
 
-        /// <summary>Plaza where specialists gather (south of dome).</summary>
+        /// <summary>Plaza where specialists gather (south of dome A).</summary>
         public static Vector3 PartySpawn => CampusOrigin + new Vector3(0f, 0f, -10f);
 
-        /// <summary>Camera look-at for first Play frame.</summary>
+        public static Vector3 PartySpawnB => CampusBOrigin + new Vector3(0f, 0f, -6f);
+
+        /// <summary>Camera look-at for campus A.</summary>
         public static Vector3 CameraFocus => CampusOrigin + new Vector3(0f, 0f, -2f);
+
+        public static Vector3 CameraFocusB => CampusBOrigin + new Vector3(0f, 0f, -1f);
+
+        public static Vector3 GroundCenter => (CampusOrigin + CampusBOrigin) * 0.5f;
 
         public const float CameraOrthoSize = 16f;
 
-        /// <summary>
-        /// Ordered showcase pieces: path, local offset from CampusOrigin, yaw, footprint cells (W×H).
-        /// Footprints reserve BuildingPlacer cells so player placement cannot overlap the campus.
-        /// </summary>
+        /// <summary>Campus A showcase pieces (local offsets from CampusOrigin).</summary>
         public static readonly ShowcasePiece[] Showcase =
         {
-            // Core hub
             new ShowcasePiece("Buildings/SM_CommandDome_CentralHub", new Vector3(0f, 0f, 0f), 0f, 6, 6),
-
-            // Habitat spine (west)
             new ShowcasePiece("Buildings/SM_HAB1_HabitatModule", new Vector3(-11f, 0f, 0f), 0f, 4, 3),
             new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(-6.2f, 0f, 0f), 0f, 2, 1),
             new ShowcasePiece("Buildings/SM_LAB1_LaboratoryModule", new Vector3(-18.5f, 0f, 0f), 0f, 3, 2),
             new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(-14.2f, 0f, 0f), 0f, 2, 1),
-
-            // East habitat spur + apron connectors
             new ShowcasePiece("Buildings/SM_HAB1_HabitatModule", new Vector3(8f, 0f, -6f), 90f, 4, 3),
             new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(4f, 0f, -6f), 90f, 2, 1),
-
-            // Command / ops (north)
             new ShowcasePiece("Buildings/SM_CMD1_CommandBuilding", new Vector3(-4f, 0f, 10f), 0f, 4, 4),
             new ShowcasePiece("Buildings/SM_OPS1_OperationsUnit", new Vector3(6f, 0f, 10f), 0f, 3, 3),
             new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(1f, 0f, 10f), 90f, 2, 1),
-
-            // Power yard (south)
             new ShowcasePiece("Buildings/SM_PWR1_PowerNode", new Vector3(2f, 0f, -11f), 0f, 3, 3),
             new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(8.5f, 0f, -11f), 0f, 3, 4),
             new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(-4.5f, 0f, -11f), 0f, 3, 4),
-
-            // Landing complex (east) — ship shares pad footprint (skip duplicate reserve)
             new ShowcasePiece("Environment/SM_LandingPad", new Vector3(16f, 0f, 0f), 0f, 6, 6, PadScale),
             new ShowcasePiece("Environment/SM_Starship_Placeholder", new Vector3(16f, 0f, 0f), 0f, 0, 0, ShipScale),
+        };
+
+        /// <summary>Smaller second-body outpost (local offsets from CampusBOrigin).</summary>
+        public static readonly ShowcasePiece[] ShowcaseB =
+        {
+            new ShowcasePiece("Buildings/SM_CommandDome_CentralHub", new Vector3(0f, 0f, 0f), 0f, 6, 6),
+            new ShowcasePiece("Buildings/SM_HAB1_HabitatModule", new Vector3(-9f, 0f, 0f), 0f, 4, 3),
+            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(-4.5f, 0f, 0f), 0f, 2, 1),
+            new ShowcasePiece("Buildings/SM_PWR1_PowerNode", new Vector3(6f, 0f, -4f), 0f, 3, 3),
+            new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(11f, 0f, -4f), 0f, 3, 4),
+            new ShowcasePiece("Buildings/SM_OPS1_OperationsUnit", new Vector3(4f, 0f, 7f), 0f, 3, 3),
         };
 
         public readonly struct ShowcasePiece
@@ -80,7 +86,7 @@ namespace SolarMajesty
             public readonly string ResourcesPath;
             public readonly Vector3 LocalOffset;
             public readonly float YawDegrees;
-            public readonly float Scale; // 0 = use ScaleForPath
+            public readonly float Scale;
             public readonly int FootprintW;
             public readonly int FootprintH;
 
@@ -100,7 +106,9 @@ namespace SolarMajesty
                 Scale = scale;
             }
 
-            public Vector3 WorldPosition => CampusOrigin + LocalOffset;
+            public Vector3 WorldPosition => WorldPositionAt(CampusOrigin);
+
+            public Vector3 WorldPositionAt(Vector3 campusOrigin) => campusOrigin + LocalOffset;
 
             public float ResolveScale() => Scale > 0f ? Scale : ScaleForPath(ResourcesPath);
 

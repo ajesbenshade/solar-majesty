@@ -8,8 +8,8 @@ namespace SolarMajesty
     /// </summary>
     public class IsoGrid : MonoBehaviour
     {
-        [SerializeField] private int width = 56;
-        [SerializeField] private int height = 56;
+        [SerializeField] private int width = 64;
+        [SerializeField] private int height = 64;
         [SerializeField] private float cellSize = 1.5f;
         [SerializeField] private Vector3 origin = Vector3.zero;
         [SerializeField] private bool drawGizmos = true;

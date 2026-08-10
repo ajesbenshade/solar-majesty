@@ -29,6 +29,7 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 | **WASD** / edge pan / MMB–RMB drag / scroll | Isometric camera |
 | **G** / **B** / **Q** / **Tab** | Flag tool / Build tool / None / cycle |
 | **F1** Explore · **F2** ClearThreat · **F3** Build · **F4** Extract · **F5** Defend | Flag type |
+| **F6** / **F7** | Camera → Campus A / Campus B |
 | **+/-** | Adjust bounty |
 | **LMB** | Post flag or place building (active tool) |
 | **1–7** | Pad · HAB · PWR · OPS · LAB · CMD · Solar |

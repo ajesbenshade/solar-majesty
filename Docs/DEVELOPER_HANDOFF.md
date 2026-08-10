@@ -47,13 +47,14 @@ courage matters. Greybox demo is playable in Unity 6 URP.
   PHASE_2A_BITE_AND_BOUNTY.md, PHASE_2B_NAVMESH_AND_JUICE.md,
   PHASE_3A_PRESENTATION_AND_MISSION.md, PHASE_3B_UNITS_VOLUME_WAVES.md,
   PHASE_4A_MISSION_STAKES.md, PHASE_4B_CONTENT_SCALE.md,
-  PHASE_5A_MAP_DEADLINE_AMBIENT.md, ARCHITECTURE.md,
+  PHASE_5A_MAP_DEADLINE_AMBIENT.md, PHASE_5B_UNIT_BLOCKOUTS.md,
+  PHASE_5C_MULTI_BODY.md, ARCHITECTURE.md,
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
-1. Run Docs/DEMO.md Play Mode checklist — units should be Blender FBX blockouts.
-2. When Imagine credits return: refine `sm_unit_blockouts.py` against turnaround sheets.
-3. Multi-body / campaign framing.
+1. Play Mode: F6/F7 between campuses; clear stalkers on both for mission combat stake.
+2. When Imagine credits return: refine unit blockouts against turnarounds.
+3. Per-body threat / campaign framing.
 
 ## Controls reference
 G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
@@ -92,11 +93,13 @@ update Docs/NEXT_STEPS.md if milestones moved.
 - [x] Phase 4B content scale (Extract/Defend, LAB/CMD/Solar, denser campus)  
 - [x] Phase 5A larger map + deadline fail + ambient audio  
 - [x] Blender unit FBX blockouts (Scout / Engineer / Defense / Stalker)  
+- [x] Phase 5C multi-body scaffold (Campus A + B, F6/F7)  
 
 ### Known gaps
 
 - Building footprints vs real mesh size are still approximate  
 - Unit meshes are Blender blockouts pending Imagine turnaround refinement  
+- Multi-body is camera/layout only (no per-body economy yet)  
 - No multiplayer / save / campaign  
 
 ---

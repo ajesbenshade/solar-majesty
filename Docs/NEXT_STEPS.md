@@ -16,11 +16,12 @@
 - [x] Phase 4B Content Scale — Extract/Defend flags, LAB/CMD/Solar placeables, denser campus
 - [x] Phase 5A Map / Deadline / Ambient — larger grid, 3‑min deadline fail, ambient hum
 - [x] Blender unit blockouts — Scout/Engineer/Defense/Stalker FBX in Resources/Units
+- [x] Phase 5C Multi-Body — Campus B outpost + F6/F7 camera switch
 
-## Next (Phase 5B → AAA)
+## Next (Phase 5D → AAA)
 
 1. Refine unit meshes when Grok Imagine turnarounds arrive (Tuesday+).
-2. Multi-body / campaign framing.
+2. Per-body threat / economy framing.
 3. Richer authored audio + VolumeProfile assets.
 
 ## Still out of scope (for now)

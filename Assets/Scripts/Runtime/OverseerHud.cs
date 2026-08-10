@@ -76,7 +76,7 @@ namespace SolarMajesty
                 GUILayout.Label($"Focus [{status}]: {mission.ObjectiveLabel}");
             }
 
-            GUILayout.Label("G flag · B build · F1–F5 flags · +/- bounty · LMB · 1–7 buildings · F8 debug · R fatigue · Y revive");
+            GUILayout.Label("G flag · B build · F1–F5 flags · F6/F7 campuses · +/- bounty · LMB · 1–7 buildings · F8 debug · R fatigue · Y revive");
             GUILayout.EndArea();
         }
 

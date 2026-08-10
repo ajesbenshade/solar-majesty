@@ -45,6 +45,8 @@ namespace SolarMajesty
         [SerializeField] private bool spawnDustStalkers = true;
         [SerializeField] private int dustStalkerCount = 2;
         [SerializeField] private float stalkerSpawnRadius = 14f;
+        [SerializeField] private bool spawnSecondBody = true;
+        [SerializeField] private int campusBStalkerCount = 2;
 
         [Header("Demo greybox visuals")]
         [SerializeField] private bool spawnGroundPlane = true;
@@ -124,7 +126,7 @@ namespace SolarMajesty
             EnsureMission();
             DemoAudio.Ensure();
 
-            Debug.Log("[GameLoop] Demo ready — Phase 5A map/deadline/ambient.");
+            Debug.Log("[GameLoop] Demo ready — Phase 5C multi-body (Campus A + B).");
         }
 
         private void Update()
@@ -236,9 +238,9 @@ namespace SolarMajesty
                 ground.name = "GroundPlane";
                 ground.transform.SetParent(transform);
                 // Center under campus; default plane is 10×10 units at scale 1.
-                ground.transform.position = ColonyLayout.CampusOrigin;
-                // Cover expanded IsoGrid (~56×56 × 1.5) with margin.
-                ground.transform.localScale = new Vector3(10f, 1f, 10f);
+                // Center under both campuses; default plane is 10×10 units at scale 1.
+                ground.transform.position = ColonyLayout.GroundCenter;
+                ground.transform.localScale = new Vector3(12f, 1f, 12f);
                 var rend = ground.GetComponent<Renderer>();
                 if (rend != null)
                 {
@@ -450,19 +452,24 @@ namespace SolarMajesty
         private void SpawnThreats()
         {
             _stalkers.Clear();
-            if (!spawnDustStalkers || dustStalkerCount <= 0 || Threat == null)
+            if (!spawnDustStalkers || Threat == null)
                 return;
 
-            SpawnStalkerWave(dustStalkerCount, Mathf.Max(14f, stalkerSpawnRadius));
-            Debug.Log($"[GameLoop] Spawned {_stalkers.Count} Dust Stalker(s). Post ClearThreat (F2) near them to defeat.");
+            if (dustStalkerCount > 0)
+                SpawnStalkerWave(dustStalkerCount, Mathf.Max(14f, stalkerSpawnRadius), ColonyLayout.CampusOrigin);
+            if (spawnSecondBody && campusBStalkerCount > 0)
+                SpawnStalkerWave(campusBStalkerCount, 11f, ColonyLayout.CampusBOrigin);
+            Debug.Log($"[GameLoop] Spawned {_stalkers.Count} Dust Stalker(s) across campuses. Post ClearThreat (F2) near them to defeat.");
         }
 
-        /// <summary>Spawns additional stalkers for mission wave 2. Returns count spawned.</summary>
-        public int SpawnStalkerWave(int count, float radius)
+        /// <summary>Spawns additional stalkers. Returns count spawned.</summary>
+        public int SpawnStalkerWave(int count, float radius) =>
+            SpawnStalkerWave(count, radius, ColonyLayout.CampusOrigin);
+
+        public int SpawnStalkerWave(int count, float radius, Vector3 origin)
         {
             if (count <= 0 || Threat == null) return 0;
 
-            Vector3 origin = ColonyLayout.CampusOrigin;
             float r = Mathf.Max(10f, radius);
             GameObject stalkerPrefab = DemoContentCatalog.LoadStalkerPrefab();
             int spawned = 0;
@@ -550,8 +557,24 @@ namespace SolarMajesty
             if (Input.GetKeyDown(KeyCode.F8) && _debugHud != null)
                 _debugHud.ToggleVisible();
 
+            if (Input.GetKeyDown(KeyCode.F6))
+                FocusCampus(0);
+            if (Input.GetKeyDown(KeyCode.F7))
+                FocusCampus(1);
+
             if (Input.GetKeyDown(KeyCode.R))
                 DebugFatigueAll(0.92f);
+        }
+
+        /// <summary>0 = Campus A (primary), 1 = Campus B (second body).</summary>
+        public void FocusCampus(int bodyIndex)
+        {
+            if (_isoCam == null) return;
+            Vector3 focus = bodyIndex <= 0 ? ColonyLayout.CameraFocus : ColonyLayout.CameraFocusB;
+            _isoCam.FocusOn(focus, ColonyLayout.CameraOrthoSize);
+            Debug.Log(bodyIndex <= 0
+                ? "[GameLoop] Camera → Campus A (primary)"
+                : "[GameLoop] Camera → Campus B (second body)");
         }
 
         private void ApplyTool(OverseerTool tool)
@@ -675,31 +698,38 @@ namespace SolarMajesty
             if (!spawnShowcaseColony || buildingRoot == null)
                 return;
 
-            for (int i = 0; i < ColonyLayout.Showcase.Length; i++)
+            SpawnShowcaseSet(ColonyLayout.Showcase, ColonyLayout.CampusOrigin, "A");
+            if (spawnSecondBody)
+                SpawnShowcaseSet(ColonyLayout.ShowcaseB, ColonyLayout.CampusBOrigin, "B");
+        }
+
+        private void SpawnShowcaseSet(ColonyLayout.ShowcasePiece[] pieces, Vector3 campusOrigin, string tag)
+        {
+            if (pieces == null) return;
+            for (int i = 0; i < pieces.Length; i++)
             {
-                var piece = ColonyLayout.Showcase[i];
+                var piece = pieces[i];
+                Vector3 world = piece.WorldPositionAt(campusOrigin);
                 SpawnMesh(
                     piece.ResourcesPath,
-                    piece.WorldPosition,
-                    $"Showcase_{i}_{System.IO.Path.GetFileName(piece.ResourcesPath)}",
+                    world,
+                    $"Showcase{tag}_{i}_{System.IO.Path.GetFileName(piece.ResourcesPath)}",
                     piece.ResolveScale(),
                     piece.YawDegrees);
 
                 if (piece.ReservesCells && Placer != null && grid != null)
-                    ReserveShowcaseFootprint(piece);
+                    ReserveShowcaseFootprint(world, piece.FootprintW, piece.FootprintH);
             }
         }
 
-        private void ReserveShowcaseFootprint(ColonyLayout.ShowcasePiece piece)
+        private void ReserveShowcaseFootprint(Vector3 world, int footprintW, int footprintH)
         {
-            // Footprint origin = SW corner of AABB centered on piece world position.
-            Vector3 world = piece.WorldPosition;
             float cell = grid.CellSize;
-            float halfW = (piece.FootprintW * cell) * 0.5f;
-            float halfH = (piece.FootprintH * cell) * 0.5f;
+            float halfW = (footprintW * cell) * 0.5f;
+            float halfH = (footprintH * cell) * 0.5f;
             Vector3 corner = world - new Vector3(halfW, 0f, halfH) + new Vector3(cell * 0.5f, 0f, cell * 0.5f);
             Vector2Int origin = grid.WorldToCell(corner);
-            Placer.MarkOccupiedRect(origin, piece.FootprintW, piece.FootprintH);
+            Placer.MarkOccupiedRect(origin, footprintW, footprintH);
         }
 
         private void SpawnMesh(string resourcesPath, Vector3 position, string name, float scale, float yawDegrees = 0f)
