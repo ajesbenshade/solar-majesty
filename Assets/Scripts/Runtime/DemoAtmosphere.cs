@@ -120,8 +120,20 @@ namespace SolarMajesty
             volume.isGlobal = true;
             volume.priority = 1f;
 
+            var authored = Resources.Load<VolumeProfile>("Atmosphere/DemoVolumeProfile");
+            if (authored != null)
+            {
+                volume.sharedProfile = authored;
+                return;
+            }
+
+            volume.sharedProfile = BuildRuntimeProfile();
+        }
+
+        private static VolumeProfile BuildRuntimeProfile()
+        {
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            profile.name = "DemoVolumeProfile";
+            profile.name = "DemoVolumeProfile_Runtime";
 
             var color = profile.Add<ColorAdjustments>(true);
             color.contrast.Override(8f);
@@ -139,7 +151,7 @@ namespace SolarMajesty
             vignette.smoothness.Override(0.4f);
             vignette.color.Override(new Color(0.05f, 0.06f, 0.1f));
 
-            volume.sharedProfile = profile;
+            return profile;
         }
     }
 }

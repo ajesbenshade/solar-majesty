@@ -27,12 +27,13 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 | Input | Action |
 |-------|--------|
 | **WASD** / edge pan / MMB–RMB drag / scroll | Isometric camera |
-| **G** / **B** / **Q** / **Tab** | Flag tool / Build tool / None / cycle |
-| **F1** Explore · **F2** ClearThreat · **F3** Build · **F4** Extract · **F5** Defend | Flag type |
-| **F6** / **F7** | Camera → Campus A / Campus B |
+| **G** / **B** / **Q** / **Tab** | Flag tool / Build tool / None / cycle (also clickable on HUD) |
+| **F1** Explore · **F2** ClearThreat · **F3** Build · **F4** Extract · **F5** Defend | Flag type (also listed in Flag menu when Flag tool is active) |
+| **1–7** | Select building (Pad · HAB · PWR · OPS · LAB · CMD · Solar) — also clickable in Build menu |
+| **F6** / **F7** | Camera → Campus A / Campus B (ambient A/B beds; HUD A/B chips) |
+| **F9** | Seed Explore attractor at Campus B + focus B |
 | **+/-** | Adjust bounty |
 | **LMB** | Post flag or place building (active tool) |
-| **1–7** | Pad · HAB · PWR · OPS · LAB · CMD · Solar |
 | **R** | Debug: force high fatigue → Rest (all specialists) |
 | **F8** | Toggle deep debug score HUD |
 | **Y** | Revive party when outpost is overwhelmed |
@@ -141,7 +142,7 @@ Speak while playing:
 | Is | Isn’t |
 |----|--------|
 | Playable overseer loop with multi-stake win/lose + deadline | Full game / campaign |
-| Personality + greed + threat + NavMesh campus pathing | Save/load, multi-body |
-| Mesh building kit + lunar lighting greybox | Final Blender hero unit art / animation |
+| Personality + greed + **local** threat + NavMesh campus pathing | Save/load, dual parties |
+| Mesh building kit + lunar lighting + Campus A/B framing | Final Blender hero unit art / animation |
 
-See also: `Docs/VERTICAL_SLICE_PHASE1.md`, `Docs/PHASE_1_6_THREAT.md`, `Docs/PHASE_2A_BITE_AND_BOUNTY.md`, `Docs/PHASE_2B_NAVMESH_AND_JUICE.md`, `Docs/PHASE_3A_PRESENTATION_AND_MISSION.md`, `Docs/PHASE_3B_UNITS_VOLUME_WAVES.md`, `Docs/PHASE_4A_MISSION_STAKES.md`, `Docs/PHASE_4B_CONTENT_SCALE.md`, `Docs/PHASE_5A_MAP_DEADLINE_AMBIENT.md`, `Docs/ART_DIRECTION.md`.
+See also: `Docs/VERTICAL_SLICE_PHASE1.md`, `Docs/PHASE_1_6_THREAT.md`, `Docs/PHASE_2A_BITE_AND_BOUNTY.md`, `Docs/PHASE_2B_NAVMESH_AND_JUICE.md`, `Docs/PHASE_3A_PRESENTATION_AND_MISSION.md`, `Docs/PHASE_3B_UNITS_VOLUME_WAVES.md`, `Docs/PHASE_4A_MISSION_STAKES.md`, `Docs/PHASE_4B_CONTENT_SCALE.md`, `Docs/PHASE_5A_MAP_DEADLINE_AMBIENT.md`, `Docs/PHASE_5C_MULTI_BODY.md`, `Docs/PHASE_5D_BODY_FRAMING.md`, `Docs/ART_DIRECTION.md`.

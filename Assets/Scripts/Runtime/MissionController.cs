@@ -211,11 +211,14 @@ namespace SolarMajesty
         {
             _awaitingReinforcements = false;
             _wave = 2;
-            int spawned = _loop.SpawnStalkerWave(Mathf.Max(1, reinforcementCount), 18f);
+            int spawned = _loop.SpawnStalkerWave(
+                Mathf.Max(1, reinforcementCount),
+                18f,
+                ColonyLayout.CampusOriginFor(_loop.FocusedCampus));
             _waveTarget = spawned;
             StalkersRemaining = CountLivingStalkers();
             DemoAudio.PlayBite();
-            Debug.Log($"[Mission] Wave 2 — {spawned} Dust Stalker(s) closing on the plaza.");
+            Debug.Log($"[Mission] Wave 2 — {spawned} Dust Stalker(s) closing on {ColonyLayout.CampusLabel(_loop.FocusedCampus)}.");
         }
 
         private void EnterWon()
@@ -225,7 +228,9 @@ namespace SolarMajesty
             {
                 _winLatched = true;
                 DemoAudio.PlayVictory();
-                DemoVfx.ClaimRing(ColonyLayout.CampusOrigin, new Color(0.35f, 0.95f, 0.55f));
+                DemoVfx.ClaimRing(
+                    ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
+                    new Color(0.35f, 0.95f, 0.55f));
                 Debug.Log("[Mission] Victory — combat, hold, and colony stakes met.");
             }
         }

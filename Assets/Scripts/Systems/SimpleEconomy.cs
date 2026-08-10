@@ -77,11 +77,26 @@ namespace SolarMajesty
         }
 
         /// <summary>Phase 4B: Extract flags yield regolith + a bit of metals beyond bounty pay.</summary>
-        public void GrantExtractYield()
+        public void GrantExtractYield() => GrantExtractYield(0);
+
+        /// <summary>
+        /// Phase 5D: shared stockpile, campus-framed yield.
+        /// Campus A (pad) — balanced package; Campus B outpost — more regolith, leaner metals/ice.
+        /// </summary>
+        public void GrantExtractYield(int campusIndex)
         {
-            _resources.Add(ResourceId.Regolith, 12);
-            _resources.Add(ResourceId.Metals, 4);
-            _resources.Add(ResourceId.WaterIce, 2);
+            if (campusIndex <= 0)
+            {
+                _resources.Add(ResourceId.Regolith, 12);
+                _resources.Add(ResourceId.Metals, 4);
+                _resources.Add(ResourceId.WaterIce, 2);
+            }
+            else
+            {
+                _resources.Add(ResourceId.Regolith, 16);
+                _resources.Add(ResourceId.Metals, 3);
+                _resources.Add(ResourceId.WaterIce, 1);
+            }
         }
 
         private void ApplyUpkeep(IReadOnlyList<SpecialistData> livingSpecialists)

@@ -93,6 +93,27 @@ namespace SolarMajesty
             return valid ? _footprintValid : _footprintInvalid;
         }
 
+        /// <summary>
+        /// Lift/drop an object so its renderer bounds sit on groundY (fixes Blender center pivots).
+        /// </summary>
+        public static void SnapToGround(GameObject root, float groundY = 0f)
+        {
+            if (root == null) return;
+            var rends = root.GetComponentsInChildren<Renderer>();
+            if (rends == null || rends.Length == 0) return;
+
+            Bounds b = rends[0].bounds;
+            for (int i = 1; i < rends.Length; i++)
+            {
+                if (rends[i] != null)
+                    b.Encapsulate(rends[i].bounds);
+            }
+
+            float dy = groundY - b.min.y;
+            if (Mathf.Abs(dy) < 0.001f) return;
+            root.transform.position += new Vector3(0f, dy, 0f);
+        }
+
         private static void EnsureLitShader()
         {
             if (_lit != null) return;

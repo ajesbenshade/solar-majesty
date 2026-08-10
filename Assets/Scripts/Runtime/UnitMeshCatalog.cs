@@ -37,6 +37,7 @@ namespace SolarMajesty
             go.name = name;
             StripImportJunk(go);
             ColonyVisualUtility.EnsureUrpMaterials(go);
+            ColonyVisualUtility.SnapToGround(go);
             return go;
         }
 

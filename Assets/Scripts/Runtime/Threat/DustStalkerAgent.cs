@@ -61,8 +61,10 @@ namespace SolarMajesty
             _sourceId = _nextSourceId++;
             _health = maxHealth;
             _baseScale = transform.localScale;
-            _yBase = transform.position.y;
             transform.position = home;
+            ColonyVisualUtility.SnapToGround(gameObject);
+            _home = transform.position;
+            _yBase = transform.position.y;
             PickWanderTarget();
             EnsureVisual();
             gameObject.name = "DustStalker";
@@ -194,12 +196,20 @@ namespace SolarMajesty
 
             if (_label != null)
             {
-                string state = _aggro ? "AGGRO" : "wander";
-                _label.text = $"Stalker\n{state}  HP {Health01:P0}";
-                if (Camera.main != null)
+                // Quiet world labels — full status lives on the Overseer HUD.
+                if (_aggro)
                 {
-                    _label.transform.rotation = Quaternion.LookRotation(
-                        _label.transform.position - Camera.main.transform.position);
+                    _label.gameObject.SetActive(true);
+                    _label.text = "AGGRO";
+                    if (Camera.main != null)
+                    {
+                        _label.transform.rotation = Quaternion.LookRotation(
+                            _label.transform.position - Camera.main.transform.position);
+                    }
+                }
+                else
+                {
+                    _label.gameObject.SetActive(false);
                 }
             }
 

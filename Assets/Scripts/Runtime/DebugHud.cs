@@ -35,7 +35,11 @@ namespace SolarMajesty
             GUILayout.Label(_loop.Resources?.DebugSummary() ?? "");
 
             string threatLine = _loop.Threat != null ? _loop.Threat.DebugLine() : "threat=n/a";
-            GUILayout.Label($">>> {threatLine}  (bodyDanger)");
+            GUILayout.Label($">>> {threatLine}  (global peak)");
+            GUILayout.Label(
+                $"local A={_loop.LocalThreatAt(ColonyLayout.CampusOrigin):F2}  " +
+                $"B={_loop.LocalThreatAt(ColonyLayout.CampusBOrigin):F2}  " +
+                $"focus={ColonyLayout.CampusLabel(_loop.FocusedCampus)}");
             GUILayout.Space(6);
 
             if (_loop.Agents != null && _loop.Agents.Count > 0)

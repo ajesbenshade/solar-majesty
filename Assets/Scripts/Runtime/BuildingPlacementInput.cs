@@ -39,6 +39,11 @@ namespace SolarMajesty
                 ? catalog[selectedIndex]
                 : null;
 
+        public BuildingData[] Catalog => catalog;
+        public int SelectedIndex => selectedIndex;
+
+        public void SelectBuilding(int index) => Select(index);
+
         public void Initialize(
             BuildingPlacer placer,
             ResourceManager resources,
@@ -84,6 +89,7 @@ namespace SolarMajesty
             _ghost.SetActive(true);
             _footprint.SetActive(true);
             _ghost.transform.position = snapped;
+            ColonyVisualUtility.SnapToGround(_ghost);
 
             bool valid = _placer.CanFit(Selected, cell) &&
                          (_resources == null || _resources.CanAfford(Selected.buildCost));
@@ -139,6 +145,7 @@ namespace SolarMajesty
 
             go.name = $"Bld_{order.Data.displayName}_{order.Id}";
             ColonyVisualUtility.EnsureUrpMaterials(go);
+            ColonyVisualUtility.SnapToGround(go);
             CampusNavMesh.AddObstacle(go);
         }
 

@@ -26,10 +26,44 @@ namespace SolarMajesty
 
         public float Bounty => bounty;
         public FlagData SelectedFlag => _selected;
+        public FlagData ExploreFlag => exploreFlag;
+        public FlagData ClearThreatFlag => clearThreatFlag;
+        public FlagData BuildFlag => buildFlag;
+        public FlagData ExtractFlag => extractFlag;
+        public FlagData DefendFlag => defendFlag;
+
         public bool EnabledPlacement
         {
             get => enabledPlacement;
             set => enabledPlacement = value;
+        }
+
+        public void SelectFlag(FlagData data)
+        {
+            if (data == null) return;
+            Select(data);
+            enabledPlacement = true;
+        }
+
+        public void NudgeBounty(float delta)
+        {
+            bounty += delta;
+            if (_selected != null)
+                bounty = Mathf.Clamp(bounty, _selected.minBounty, _selected.maxBounty);
+        }
+
+        /// <summary>Programmatic post (Phase 5E attractor) with marker + SFX.</summary>
+        public FlagHandle PostFlagAt(FlagData data, Vector3 world, float bountyAmount)
+        {
+            if (_flags == null || data == null) return null;
+            FlagData prev = _selected;
+            _selected = data;
+            FlagHandle handle = _flags.Post(data, world, bountyAmount);
+            SpawnMarker(handle, world);
+            DemoAudio.PlayFlagPost();
+            _selected = prev;
+            Debug.Log($"[Flags] Posted {data.flagType} bounty={handle.CurrentBounty:F0} at {world}");
+            return handle;
         }
 
         public void Initialize(

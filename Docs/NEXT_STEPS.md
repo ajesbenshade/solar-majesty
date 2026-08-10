@@ -17,12 +17,14 @@
 - [x] Phase 5A Map / Deadline / Ambient — larger grid, 3‑min deadline fail, ambient hum
 - [x] Blender unit blockouts — Scout/Engineer/Defense/Stalker FBX in Resources/Units
 - [x] Phase 5C Multi-Body — Campus B outpost + F6/F7 camera switch
+- [x] Phase 5D Body Framing — local threat per specialist, campus HUD, authored audio/VolumeProfile path
+- [x] Phase 5E Dual Deploy — Campus B Scout detachment, F9 attractor, dual ambient beds
 
-## Next (Phase 5D → AAA)
+## Next (Phase 5F → AAA)
 
 1. Refine unit meshes when Grok Imagine turnarounds arrive (Tuesday+).
-2. Per-body threat / economy framing.
-3. Richer authored audio + VolumeProfile assets.
+2. Optional full B party / mixer asset polish.
+3. Content pass: more placeables / mission variants.
 
 ## Still out of scope (for now)
 

@@ -354,7 +354,7 @@ namespace SolarMajesty
                 var completedType = _activeFlag.Data.flagType;
                 _economy?.GrantBountyReward(bounty);
                 if (completedType == FlagType.Extract)
-                    _economy?.GrantExtractYield();
+                    _economy?.GrantExtractYield(ColonyLayout.NearestCampusIndex(transform.position));
                 greedHunger = Mathf.Clamp01(greedHunger - 0.25f);
                 DemoAudio.PlayClaim();
                 DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));

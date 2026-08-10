@@ -48,7 +48,7 @@ courage matters. Greybox demo is playable in Unity 6 URP.
   PHASE_3A_PRESENTATION_AND_MISSION.md, PHASE_3B_UNITS_VOLUME_WAVES.md,
   PHASE_4A_MISSION_STAKES.md, PHASE_4B_CONTENT_SCALE.md,
   PHASE_5A_MAP_DEADLINE_AMBIENT.md, PHASE_5B_UNIT_BLOCKOUTS.md,
-  PHASE_5C_MULTI_BODY.md, ARCHITECTURE.md,
+  PHASE_5C_MULTI_BODY.md, PHASE_5D_BODY_FRAMING.md, PHASE_5E_DUAL_DEPLOY_AUDIO.md, ARCHITECTURE.md,
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
@@ -93,7 +93,9 @@ update Docs/NEXT_STEPS.md if milestones moved.
 - [x] Phase 4B content scale (Extract/Defend, LAB/CMD/Solar, denser campus)  
 - [x] Phase 5A larger map + deadline fail + ambient audio  
 - [x] Blender unit FBX blockouts (Scout / Engineer / Defense / Stalker)  
-- [x] Phase 5C multi-body scaffold (Campus A + B, F6/F7)  
+- [x] Phase 5C multi-body scaffold (Campus A + B, F6/F7)
+- [x] Phase 5D body framing (local threat, campus extract yield, authored audio/VolumeProfile)
+- [x] Phase 5E dual deploy (B Scout detachment, F9 attractor, Ambient A/B beds)  
 
 ### Known gaps
 

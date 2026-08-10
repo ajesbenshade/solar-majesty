@@ -15,13 +15,13 @@ namespace SolarMajesty
         public static readonly Vector3 CampusBOrigin = new Vector3(54f, 0f, 48f);
 
         /// <summary>Modules (HAB/LAB/CMD/OPS/PWR/Dome/connectors).</summary>
-        public const float ModuleScale = 0.42f;
+        public const float ModuleScale = 0.36f;
 
         /// <summary>Landing pad — still a landmark, not a 40m plate.</summary>
-        public const float PadScale = 0.22f;
+        public const float PadScale = 0.18f;
 
         /// <summary>Starship placeholder height landmark.</summary>
-        public const float ShipScale = 0.22f;
+        public const float ShipScale = 0.18f;
 
         public static float ScaleForPath(string resourcesPath)
         {
@@ -49,6 +49,30 @@ namespace SolarMajesty
         public static Vector3 GroundCenter => (CampusOrigin + CampusBOrigin) * 0.5f;
 
         public const float CameraOrthoSize = 16f;
+
+        /// <summary>Distance within which stalkers contribute to a specialist's bodyDanger.</summary>
+        public const float LocalThreatRadius = 16f;
+
+        /// <summary>0 = Campus A (primary), 1 = Campus B (outpost).</summary>
+        public static int NearestCampusIndex(Vector3 world)
+        {
+            float da = FlatDistSq(world, CampusOrigin);
+            float db = FlatDistSq(world, CampusBOrigin);
+            return db < da ? 1 : 0;
+        }
+
+        public static Vector3 CampusOriginFor(int campusIndex) =>
+            campusIndex <= 0 ? CampusOrigin : CampusBOrigin;
+
+        public static string CampusLabel(int campusIndex) =>
+            campusIndex <= 0 ? "Campus A" : "Campus B";
+
+        private static float FlatDistSq(Vector3 a, Vector3 b)
+        {
+            float dx = a.x - b.x;
+            float dz = a.z - b.z;
+            return dx * dx + dz * dz;
+        }
 
         /// <summary>Campus A showcase pieces (local offsets from CampusOrigin).</summary>
         public static readonly ShowcasePiece[] Showcase =

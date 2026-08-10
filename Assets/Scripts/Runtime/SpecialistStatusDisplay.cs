@@ -86,8 +86,11 @@ namespace SolarMajesty
             }
 
             SetColor(_orbRend, c);
-            _label.text = $"{text}\n{_agent.LastScore:F2}";
+            // Short action chip only — scores stay on F8 debug HUD.
+            _label.text = text;
             _label.color = c;
+            _label.gameObject.SetActive(_agent.CurrentAction != SpecialistAction.Idle ||
+                                        (_agent.Status != null && _agent.Status.StartsWith("down")));
 
             // Subtle idle pulse on the orb so state is readable at a glance.
             float pulse = 1f + Mathf.Sin(Time.time * 3f) * 0.08f;

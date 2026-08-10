@@ -47,6 +47,8 @@ namespace SolarMajesty
         [SerializeField] private float stalkerSpawnRadius = 14f;
         [SerializeField] private bool spawnSecondBody = true;
         [SerializeField] private int campusBStalkerCount = 2;
+        [Tooltip("Phase 5E: spawn a Scout detachment at Campus B (shared brain, local threat).")]
+        [SerializeField] private bool spawnCampusBDetachment = true;
 
         [Header("Demo greybox visuals")]
         [SerializeField] private bool spawnGroundPlane = true;
@@ -68,7 +70,57 @@ namespace SolarMajesty
         public IReadOnlyList<DustStalkerAgent> Stalkers => _stalkers;
         public OverseerTool ActiveTool => activeTool;
         public float FlagBounty => _flagInput != null ? _flagInput.Bounty : 0f;
+        public FlagPlacementInput FlagInput => _flagInput;
+        public BuildingPlacementInput BuildInput => _buildInput;
+        public int FocusedCampus => _focusedCampus;
+
+        public void SetTool(OverseerTool tool) => ApplyTool(tool);
         public float CurrentThreatPressure => Threat != null ? Threat.Current : 0f;
+
+        /// <summary>Local threat at the camera-focused campus (HUD framing).</summary>
+        public float FocusedLocalThreat => LocalThreatAt(ColonyLayout.CampusOriginFor(_focusedCampus));
+
+        /// <summary>Local threat sample at an arbitrary world point (ambient + nearby stalkers).</summary>
+        public float LocalThreatAt(Vector3 world)
+        {
+            float ambient = Threat != null ? Threat.Ambient : 0.18f;
+            float peak = 0f;
+            float r = ColonyLayout.LocalThreatRadius;
+            float rSq = r * r;
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                var s = _stalkers[i];
+                if (s == null || !s.IsAlive) continue;
+                Vector3 sp = s.transform.position;
+                float dx = sp.x - world.x;
+                float dz = sp.z - world.z;
+                float dSq = dx * dx + dz * dz;
+                if (dSq > rSq) continue;
+                float d = Mathf.Sqrt(dSq);
+                float pressure = s.IsAggro ? 0.55f : 0.08f;
+                float falloff = 1f - (d / r);
+                peak = Mathf.Max(peak, pressure * falloff);
+            }
+            return Mathf.Clamp01(ambient + peak);
+        }
+
+        public int CountStalkersNearCampus(int campusIndex)
+        {
+            Vector3 origin = ColonyLayout.CampusOriginFor(campusIndex);
+            float r = ColonyLayout.LocalThreatRadius * 1.35f;
+            float rSq = r * r;
+            int n = 0;
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                var s = _stalkers[i];
+                if (s == null || !s.IsAlive) continue;
+                Vector3 sp = s.transform.position;
+                float dx = sp.x - origin.x;
+                float dz = sp.z - origin.z;
+                if (dx * dx + dz * dz <= rSq) n++;
+            }
+            return n;
+        }
 
         /// <summary>True when every living specialist is incapacitated.</summary>
         public bool IsOutpostOverwhelmed
@@ -98,6 +150,7 @@ namespace SolarMajesty
         private float _constructionTick;
         private DebugHud _debugHud;
         private OverseerHud _overseerHud;
+        private int _focusedCampus;
         private CampusNavMesh _campusNav;
         private MissionController _mission;
 
@@ -125,8 +178,9 @@ namespace SolarMajesty
             EnsureHud();
             EnsureMission();
             DemoAudio.Ensure();
+            DemoAudio.SetCampusAmbient(0);
 
-            Debug.Log("[GameLoop] Demo ready — Phase 5C multi-body (Campus A + B).");
+            Debug.Log("[GameLoop] Demo ready — Phase 5E dual deploy + campus ambient beds.");
         }
 
         private void Update()
@@ -158,17 +212,45 @@ namespace SolarMajesty
             }
         }
 
-        /// <summary>Each frame: ThreatPressure.Current → SpecialistAgent.bodyDanger for brain risk term.</summary>
+        /// <summary>
+        /// Phase 5D: each specialist feels local stalker pressure near their position —
+        /// Campus B fauna no longer spikes bodyDanger for the Campus A party until nearby.
+        /// SpecialistBrain scoring unchanged; only the bodyDanger input is spatially honest.
+        /// </summary>
         private void PushThreatToSpecialists()
         {
             if (Threat == null) return;
-            float danger = Threat.Current;
-            // Phase 4B: claimed DefendArea flags calm the outpost while Defense works them.
-            if (HasActiveDefendClaim())
-                danger = Mathf.Clamp01(danger * 0.55f);
 
             for (int i = 0; i < _agents.Count; i++)
-                _agents[i]?.SetBodyDanger(danger);
+            {
+                var agent = _agents[i];
+                if (agent == null) continue;
+
+                float danger = LocalThreatAt(agent.transform.position);
+                if (HasActiveDefendNear(agent.transform.position))
+                    danger = Mathf.Clamp01(danger * 0.55f);
+
+                agent.SetBodyDanger(danger);
+            }
+        }
+
+        private bool HasActiveDefendNear(Vector3 world, float radius = 14f)
+        {
+            if (Flags == null) return false;
+            float rSq = radius * radius;
+            var list = Flags.Flags;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var f = list[i];
+                if (f?.Data == null || f.Data.flagType != FlagType.DefendArea || f.ClaimCount <= 0)
+                    continue;
+                Vector3 p = f.WorldPosition;
+                float dx = p.x - world.x;
+                float dz = p.z - world.z;
+                if (dx * dx + dz * dz <= rSq)
+                    return true;
+            }
+            return false;
         }
 
         private bool HasActiveDefendClaim()
@@ -403,13 +485,29 @@ namespace SolarMajesty
             Agent = SpawnOne(scoutData, origin + new Vector3(0f, 0f, 0f), new Color(0.35f, 0.85f, 1f));
             _agents.Add(Agent);
 
-            if (!spawnFullParty) return;
+            if (spawnFullParty)
+            {
+                // Engineer — orange, greedy builder, cautious
+                _agents.Add(SpawnOne(engineerData, origin + new Vector3(1.8f, 0f, 0.4f), new Color(1f, 0.55f, 0.15f)));
 
-            // Engineer — orange, greedy builder, cautious
-            _agents.Add(SpawnOne(engineerData, origin + new Vector3(1.8f, 0f, 0.4f), new Color(1f, 0.55f, 0.15f)));
+                // Defense — red, brave combat, less greedy
+                _agents.Add(SpawnOne(defenseData, origin + new Vector3(-1.8f, 0f, 0.4f), new Color(0.85f, 0.22f, 0.22f)));
+            }
 
-            // Defense — red, brave combat, less greedy
-            _agents.Add(SpawnOne(defenseData, origin + new Vector3(-1.8f, 0f, 0.4f), new Color(0.85f, 0.22f, 0.22f)));
+            // Phase 5E: optional outpost Scout — same brain, local bodyDanger from 5D.
+            if (spawnCampusBDetachment && spawnSecondBody)
+            {
+                var bScout = SpawnOne(
+                    scoutData,
+                    ColonyLayout.PartySpawnB,
+                    new Color(0.45f, 0.95f, 1f));
+                if (bScout != null)
+                {
+                    bScout.gameObject.name = "Specialist_ScoutDrone_CampusB";
+                    _agents.Add(bScout);
+                    Debug.Log("[GameLoop] Campus B Scout detachment deployed.");
+                }
+            }
         }
 
         private SpecialistAgent SpawnOne(SpecialistData data, Vector3 pos, Color tint)
@@ -432,6 +530,9 @@ namespace SolarMajesty
                 go.transform.SetParent(transform, false);
                 go.transform.position = pos;
             }
+
+            ColonyVisualUtility.EnsureUrpMaterials(go);
+            ColonyVisualUtility.SnapToGround(go);
 
             var agent = go.GetComponent<SpecialistAgent>();
             if (agent == null) agent = go.AddComponent<SpecialistAgent>();
@@ -497,6 +598,10 @@ namespace SolarMajesty
                     go.transform.position = home;
                 }
 
+                ColonyVisualUtility.EnsureUrpMaterials(go);
+                ColonyVisualUtility.SnapToGround(go);
+                home = go.transform.position;
+
                 var stalker = go.GetComponent<DustStalkerAgent>();
                 if (stalker == null) stalker = go.AddComponent<DustStalkerAgent>();
                 stalker.Initialize(Threat, Flags, home);
@@ -561,18 +666,49 @@ namespace SolarMajesty
                 FocusCampus(0);
             if (Input.GetKeyDown(KeyCode.F7))
                 FocusCampus(1);
+            if (Input.GetKeyDown(KeyCode.F9))
+                SeedCampusBAttract();
 
             if (Input.GetKeyDown(KeyCode.R))
                 DebugFatigueAll(0.92f);
         }
 
+        /// <summary>
+        /// Phase 5E: high Explore bounty at Campus B plaza — Scout may pursue via brain scoring.
+        /// No click-to-move; F7 focuses camera on the outpost.
+        /// </summary>
+        public void SeedCampusBAttract()
+        {
+            if (Flags == null || exploreFlagData == null) return;
+
+            Vector3 world = ColonyLayout.PartySpawnB;
+            if (grid != null)
+                world = grid.SnapToCellCenter(world);
+
+            const float bounty = 160f;
+            if (_flagInput != null)
+            {
+                _flagInput.PostFlagAt(exploreFlagData, world, bounty);
+            }
+            else
+            {
+                Flags.Post(exploreFlagData, world, bounty);
+                DemoAudio.PlayFlagPost();
+            }
+
+            FocusCampus(1);
+            Debug.Log($"[GameLoop] Seeded Explore attractor @ Campus B bounty={bounty:F0}");
+        }
+
         /// <summary>0 = Campus A (primary), 1 = Campus B (second body).</summary>
         public void FocusCampus(int bodyIndex)
         {
+            _focusedCampus = bodyIndex <= 0 ? 0 : 1;
             if (_isoCam == null) return;
-            Vector3 focus = bodyIndex <= 0 ? ColonyLayout.CameraFocus : ColonyLayout.CameraFocusB;
+            Vector3 focus = _focusedCampus == 0 ? ColonyLayout.CameraFocus : ColonyLayout.CameraFocusB;
             _isoCam.FocusOn(focus, ColonyLayout.CameraOrthoSize);
-            Debug.Log(bodyIndex <= 0
+            DemoAudio.SetCampusAmbient(_focusedCampus);
+            Debug.Log(_focusedCampus == 0
                 ? "[GameLoop] Camera → Campus A (primary)"
                 : "[GameLoop] Camera → Campus B (second body)");
         }
@@ -745,6 +881,7 @@ namespace SolarMajesty
             go.name = name;
             go.transform.localScale = Vector3.one * scale;
             ColonyVisualUtility.EnsureUrpMaterials(go);
+            ColonyVisualUtility.SnapToGround(go);
             CampusNavMesh.AddObstacle(go);
         }
     }
