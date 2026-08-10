@@ -15,10 +15,11 @@
 - [x] Phase 4A Mission Stakes — combat + hold timer + construction checklist win
 - [x] Phase 4B Content Scale — Extract/Defend flags, LAB/CMD/Solar placeables, denser campus
 - [x] Phase 5A Map / Deadline / Ambient — larger grid, 3‑min deadline fail, ambient hum
+- [x] Blender unit blockouts — Scout/Engineer/Defense/Stalker FBX in Resources/Units
 
 ## Next (Phase 5B → AAA)
 
-1. Blender hero meshes for specialists / stalkers (prefab swap path ready).
+1. Refine unit meshes when Grok Imagine turnarounds arrive (Tuesday+).
 2. Multi-body / campaign framing.
 3. Richer authored audio + VolumeProfile assets.
 

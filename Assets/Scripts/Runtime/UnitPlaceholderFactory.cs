@@ -3,8 +3,8 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Phase 3B industrial silhouettes: white shell + black bands + orange accents + class tint body.
-    /// Prefabs under Resources/Units are preferred; these builders are fallback + editor source.
+    /// Unit builders: prefer Blender SM_Unit_* FBX meshes, else industrial primitive fallbacks.
+    /// Prefabs under Resources/Units wrap these for Play Mode.
     /// </summary>
     public static class UnitPlaceholderFactory
     {
@@ -20,6 +20,9 @@ namespace SolarMajesty
 
         public static GameObject BuildScout()
         {
+            var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadScout(), "Unit_ScoutDrone");
+            if (mesh != null) return mesh;
+
             // Tall probe drone — white hull, cyan sensor, whip antenna.
             var root = new GameObject("Unit_ScoutDrone");
             Capsule("Body", root.transform, new Vector3(0f, 1.35f, 0f), new Vector3(0.5f, 1.25f, 0.5f), ScoutTint);
@@ -33,6 +36,9 @@ namespace SolarMajesty
 
         public static GameObject BuildEngineer()
         {
+            var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadEngineer(), "Unit_EngineerBot");
+            if (mesh != null) return mesh;
+
             // Squat builder — orange shell, toolbox, orange service stripe.
             var root = new GameObject("Unit_EngineerBot");
             Capsule("Body", root.transform, new Vector3(0f, 0.95f, 0f), new Vector3(0.95f, 0.9f, 0.95f), EngineerTint);
@@ -46,6 +52,9 @@ namespace SolarMajesty
 
         public static GameObject BuildDefense()
         {
+            var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadDefense(), "Unit_DefenseMech");
+            if (mesh != null) return mesh;
+
             // Wide combat chassis — red hull, shield plate, shoulder block.
             var root = new GameObject("Unit_DefenseMech");
             Capsule("Body", root.transform, new Vector3(0f, 1.1f, 0f), new Vector3(1.1f, 1.05f, 0.95f), DefenseTint);
@@ -59,6 +68,9 @@ namespace SolarMajesty
 
         public static GameObject BuildDustStalker()
         {
+            var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadStalker(), "Unit_DustStalker");
+            if (mesh != null) return mesh;
+
             // Low predator — dark carapace, glowing eyes, spine ridges.
             var root = new GameObject("Unit_DustStalker");
             Sphere("Body", root.transform, new Vector3(0f, 0.38f, 0f), new Vector3(1.7f, 0.55f, 1.15f), StalkerTint);

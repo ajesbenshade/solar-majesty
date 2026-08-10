@@ -51,9 +51,9 @@ courage matters. Greybox demo is playable in Unity 6 URP.
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
-1. Run Docs/DEMO.md Play Mode checklist through Phase 5A.
-2. Phase 5B: Blender hero units OR multi-body.
-3. Campaign framing.
+1. Run Docs/DEMO.md Play Mode checklist — units should be Blender FBX blockouts.
+2. When Imagine credits return: refine `sm_unit_blockouts.py` against turnaround sheets.
+3. Multi-body / campaign framing.
 
 ## Controls reference
 G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
@@ -91,11 +91,12 @@ update Docs/NEXT_STEPS.md if milestones moved.
 - [x] Phase 4A multi-stake mission (combat + hold + build)  
 - [x] Phase 4B content scale (Extract/Defend, LAB/CMD/Solar, denser campus)  
 - [x] Phase 5A larger map + deadline fail + ambient audio  
+- [x] Blender unit FBX blockouts (Scout / Engineer / Defense / Stalker)  
 
 ### Known gaps
 
 - Building footprints vs real mesh size are still approximate  
-- Unit/stalker meshes are refined placeholders (not final Blender heroes)  
+- Unit meshes are Blender blockouts pending Imagine turnaround refinement  
 - No multiplayer / save / campaign  
 
 ---

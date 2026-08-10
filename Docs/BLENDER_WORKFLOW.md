@@ -132,7 +132,26 @@ Refine from blockout by matching orthographic front/side/rear panels on the HAB 
 
 ---
 
-## Unity export settings
+## Unit hero blockouts (Blender CLI)
+
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender --background \
+  --python Blender/scripts/sm_unit_blockouts.py
+```
+
+Creates `Blender/SolarMajesty_Units.blend`, exports `SM_Unit_*.fbx` to `Blender/exports/` and copies into `Assets/Resources/Units/`.
+
+| Mesh | Silhouette |
+|------|------------|
+| `SM_Unit_ScoutDrone` | Tall probe + antenna (~3.2 m) |
+| `SM_Unit_EngineerBot` | Squat builder + toolbox |
+| `SM_Unit_DefenseMech` | Wide chassis + shield |
+| `SM_Unit_DustStalker` | Low predator + orange eyes |
+
+Then in Unity: **Solar Majesty → Build Demo Content Assets** to refresh `Unit_*` prefabs.
+
+When Grok Imagine turnarounds land, refine these blockouts against the sheets (same white/black/orange lock).
+
 
 ### FBX (primary)
 
