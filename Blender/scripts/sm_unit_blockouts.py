@@ -1,8 +1,8 @@
 """
 Solar Majesty — hero unit blockouts (Scout / Engineer / Defense / Dust Stalker).
 
-Readable Majesty-scale silhouettes (~2–3 m tall) with SpaceX white/black/orange palette.
-No concept sheets required — proportions match runtime UnitPlaceholderFactory.
+Readable Majesty-scale silhouettes with SpaceX white/black/orange palette.
+Scout refined against ConceptSheets/SM_Unit_ScoutDrone_Turnaround.jpg (Imagine).
 
 Run:
   /Applications/Blender.app/Contents/MacOS/Blender --background \
@@ -179,42 +179,77 @@ def remove_if_exists(name: str):
 # ---------------------------------------------------------------------------
 
 def build_scout(mats: dict) -> bpy.types.Object:
-    """Tall thin probe ~2.9 m — explore silhouette."""
+    """
+    LO-SCT-1 Scout — refined against ConceptSheets/SM_Unit_ScoutDrone_Turnaround.jpg.
+    Tall tripod probe: white thermal shell, black frame, cyan eye, whip antenna, orange beacons.
+    Game-readable height ~3.6 m (sheet lists 4.2 m).
+    """
     name = "SM_Unit_ScoutDrone"
     remove_if_exists(name)
     parts = []
 
-    body = add_cylinder("TMP", 0.28, 2.0, (0, 0, 1.15), vertices=24)
-    assign_mat(body, mats["SM_Scout"])
-    parts.append(body)
+    # Lower hip / pelvis (black structural)
+    hip = add_cylinder("TMP", 0.32, 0.28, (0, 0, 1.05), vertices=20)
+    assign_mat(hip, mats["SM_Black"])
+    parts.append(hip)
 
-    band = add_cylinder("TMP", 0.32, 0.14, (0, 0, 1.35), vertices=24)
+    # Main torso — white thermal shell (elongated)
+    torso = add_cylinder("TMP", 0.30, 1.35, (0, 0, 1.85), vertices=24)
+    assign_mat(torso, mats["SM_White"])
+    parts.append(torso)
+
+    # Mid black structural band
+    band = add_cylinder("TMP", 0.34, 0.12, (0, 0, 1.55), vertices=24)
     assign_mat(band, mats["SM_Black"])
     parts.append(band)
 
-    sensor = add_uv_sphere("TMP", 0.22, (0, 0, 2.35))
-    assign_mat(sensor, mats["SM_White"])
-    parts.append(sensor)
+    # Upper chest collar
+    collar = add_cylinder("TMP", 0.33, 0.16, (0, 0, 2.45), vertices=20)
+    assign_mat(collar, mats["SM_Black"])
+    parts.append(collar)
 
-    visor = add_cube("TMP", 1.0, (0, 0.18, 2.35), scale=(0.28, 0.08, 0.12))
-    assign_mat(visor, mats["SM_Cyan"])
-    parts.append(visor)
+    # Sensor head — small box + cyan eye
+    head = add_cube("TMP", 1.0, (0, 0.05, 2.78), scale=(0.28, 0.32, 0.26))
+    assign_mat(head, mats["SM_White"])
+    parts.append(head)
 
-    ant = add_cylinder("TMP", 0.03, 0.7, (0.16, 0, 2.85), vertices=12)
+    eye = add_uv_sphere("TMP", 0.09, (0, 0.22, 2.78), segments=16, rings=8)
+    assign_mat(eye, mats["SM_Cyan"])
+    parts.append(eye)
+
+    # Orange shoulder beacons
+    for sx in (-0.28, 0.28):
+        beacon = add_uv_sphere("TMP", 0.06, (sx, 0.0, 2.55), segments=12, rings=6)
+        assign_mat(beacon, mats["SM_Orange"])
+        parts.append(beacon)
+
+    # Whip antenna (tall, steel + orange tip)
+    ant = add_cylinder("TMP", 0.025, 1.05, (0.08, -0.05, 3.45), vertices=10)
     assign_mat(ant, mats["SM_Steel"])
     parts.append(ant)
-
-    tip = add_uv_sphere("TMP", 0.05, (0.16, 0, 3.2))
+    tip = add_uv_sphere("TMP", 0.045, (0.08, -0.05, 4.0), segments=10, rings=6)
     assign_mat(tip, mats["SM_Orange"])
     parts.append(tip)
 
-    beacon = add_cube("TMP", 1.0, (-0.2, 0, 2.7), scale=(0.08, 0.08, 0.08))
-    assign_mat(beacon, mats["SM_Orange"])
-    parts.append(beacon)
-
-    foot = add_cylinder("TMP", 0.22, 0.12, (0, 0, 0.06), vertices=16)
-    assign_mat(foot, mats["SM_Black"])
-    parts.append(foot)
+    # Tripod legs (3) — black/steel articulations + flat feet
+    for i in range(3):
+        ang = (2.0 * math.pi * i) / 3.0 + math.pi / 6.0
+        # hip attachment
+        hx = math.cos(ang) * 0.28
+        hy = math.sin(ang) * 0.28
+        thigh = add_cube("TMP", 1.0, (hx * 1.4, hy * 1.4, 0.72), scale=(0.1, 0.1, 0.55))
+        assign_mat(thigh, mats["SM_Black"])
+        parts.append(thigh)
+        # shin
+        fx = math.cos(ang) * 0.55
+        fy = math.sin(ang) * 0.55
+        shin = add_cube("TMP", 1.0, (fx, fy, 0.28), scale=(0.08, 0.08, 0.42))
+        assign_mat(shin, mats["SM_Steel"])
+        parts.append(shin)
+        # foot pad
+        foot = add_cube("TMP", 1.0, (fx * 1.15, fy * 1.15, 0.05), scale=(0.22, 0.16, 0.05))
+        assign_mat(foot, mats["SM_Graphite"])
+        parts.append(foot)
 
     obj = join_parts(parts, name)
     col = ensure_collection("10_Units_Scout")
@@ -225,42 +260,97 @@ def build_scout(mats: dict) -> bpy.types.Object:
 
 
 def build_engineer(mats: dict) -> bpy.types.Object:
-    """Squat builder ~2.1 m — toolbox + stripe."""
+    """
+    Engineer Bot — refined against ConceptSheets/SM_Unit_EngineerBot_Turnaround.jpg (v2).
+    Stocky habitat builder: weathered white shell, cyan visor, orange arm/leg stripes,
+    chest dock port, rear cargo backpack. Game height ~2.2 m. No weapons.
+    """
     name = "SM_Unit_EngineerBot"
     remove_if_exists(name)
     parts = []
 
-    body = add_cylinder("TMP", 0.55, 1.5, (0, 0, 0.95), vertices=24)
-    assign_mat(body, mats["SM_Engineer"])
-    parts.append(body)
+    # Pelvis
+    hips = add_cylinder("TMP", 0.40, 0.32, (0, 0, 0.58), vertices=20)
+    assign_mat(hips, mats["SM_Black"])
+    parts.append(hips)
 
-    band = add_cylinder("TMP", 0.60, 0.14, (0, 0, 0.75), vertices=24)
+    # Torso — weathered white (use white + slight graphite overlay via plates)
+    torso = add_cylinder("TMP", 0.50, 0.95, (0, 0, 1.22), vertices=24)
+    assign_mat(torso, mats["SM_White"])
+    parts.append(torso)
+
+    # Chest armor plate + circular dock port
+    chest = add_cube("TMP", 1.0, (0, 0.38, 1.30), scale=(0.58, 0.12, 0.55))
+    assign_mat(chest, mats["SM_White"])
+    parts.append(chest)
+    dock = add_cylinder("TMP", 0.14, 0.08, (0, 0.48, 1.28), rotation=(math.pi / 2, 0, 0), vertices=20)
+    assign_mat(dock, mats["SM_Graphite"])
+    parts.append(dock)
+    dock_ring = add_cylinder("TMP", 0.17, 0.04, (0, 0.50, 1.28), rotation=(math.pi / 2, 0, 0), vertices=20)
+    assign_mat(dock_ring, mats["SM_Orange"])
+    parts.append(dock_ring)
+
+    # Black mid band
+    band = add_cylinder("TMP", 0.54, 0.12, (0, 0, 0.92), vertices=24)
     assign_mat(band, mats["SM_Black"])
     parts.append(band)
 
-    toolbox = add_cube("TMP", 1.0, (0.72, 0, 0.85), scale=(0.42, 0.35, 0.32))
-    assign_mat(toolbox, mats["SM_Black"])
-    parts.append(toolbox)
-
-    stripe = add_cube("TMP", 1.0, (0.72, 0.2, 0.95), scale=(0.44, 0.06, 0.08))
-    assign_mat(stripe, mats["SM_Orange"])
-    parts.append(stripe)
-
-    visor = add_cube("TMP", 1.0, (0, 0.48, 1.35), scale=(0.45, 0.08, 0.14))
+    # Head + cyan visor
+    head = add_cube("TMP", 1.0, (0, 0.08, 1.92), scale=(0.40, 0.36, 0.28))
+    assign_mat(head, mats["SM_White"])
+    parts.append(head)
+    visor = add_cube("TMP", 1.0, (0, 0.30, 1.92), scale=(0.36, 0.05, 0.09))
     assign_mat(visor, mats["SM_Cyan"])
     parts.append(visor)
 
-    arm = add_cube("TMP", 1.0, (-0.65, 0.15, 1.0), scale=(0.32, 0.14, 0.14))
-    assign_mat(arm, mats["SM_Steel"])
-    parts.append(arm)
+    # Rear cargo / power backpack
+    pack = add_cube("TMP", 1.0, (0, -0.42, 1.25), scale=(0.55, 0.32, 0.7))
+    assign_mat(pack, mats["SM_Graphite"])
+    parts.append(pack)
+    pack_shell = add_cube("TMP", 1.0, (0, -0.52, 1.35), scale=(0.48, 0.12, 0.5))
+    assign_mat(pack_shell, mats["SM_White"])
+    parts.append(pack_shell)
+    pack_stripe = add_cube("TMP", 1.0, (0, -0.58, 1.35), scale=(0.08, 0.04, 0.4))
+    assign_mat(pack_stripe, mats["SM_Orange"])
+    parts.append(pack_stripe)
 
-    claw = add_cube("TMP", 1.0, (-0.95, 0.15, 1.0), scale=(0.12, 0.18, 0.1))
-    assign_mat(claw, mats["SM_Graphite"])
-    parts.append(claw)
+    # Arms — thick shoulders, orange upper-arm stripes, 3-finger hands
+    for sx in (-0.68, 0.68):
+        shoulder = add_cube("TMP", 1.0, (sx, 0.05, 1.55), scale=(0.28, 0.28, 0.28))
+        assign_mat(shoulder, mats["SM_White"])
+        parts.append(shoulder)
+        upper = add_cube("TMP", 1.0, (sx * 1.05, 0.08, 1.2), scale=(0.2, 0.2, 0.4))
+        assign_mat(upper, mats["SM_Graphite"])
+        parts.append(upper)
+        stripe = add_cube("TMP", 1.0, (sx * 1.18, 0.08, 1.25), scale=(0.05, 0.16, 0.28))
+        assign_mat(stripe, mats["SM_Orange"])
+        parts.append(stripe)
+        lower = add_cube("TMP", 1.0, (sx * 1.1, 0.18, 0.85), scale=(0.16, 0.16, 0.32))
+        assign_mat(lower, mats["SM_Steel"])
+        parts.append(lower)
+        # hand block + fingers
+        hand = add_cube("TMP", 1.0, (sx * 1.12, 0.28, 0.62), scale=(0.14, 0.16, 0.12))
+        assign_mat(hand, mats["SM_Black"])
+        parts.append(hand)
+        for fy in (-0.06, 0.0, 0.06):
+            finger = add_cube("TMP", 1.0, (sx * 1.12, 0.38 + fy * 0.1, 0.52), scale=(0.04, 0.1, 0.04))
+            assign_mat(finger, mats["SM_Graphite"])
+            parts.append(finger)
 
-    foot = add_cylinder("TMP", 0.42, 0.12, (0, 0, 0.06), vertices=16)
-    assign_mat(foot, mats["SM_Black"])
-    parts.append(foot)
+    # Legs — orange lower-leg stripes, industrial boots
+    for sx in (-0.28, 0.28):
+        thigh = add_cube("TMP", 1.0, (sx, 0.02, 0.38), scale=(0.22, 0.24, 0.38))
+        assign_mat(thigh, mats["SM_White"])
+        parts.append(thigh)
+        shin = add_cube("TMP", 1.0, (sx, 0.05, 0.18), scale=(0.2, 0.22, 0.22))
+        assign_mat(shin, mats["SM_Graphite"])
+        parts.append(shin)
+        leg_stripe = add_cube("TMP", 1.0, (sx, 0.18, 0.2), scale=(0.16, 0.05, 0.14))
+        assign_mat(leg_stripe, mats["SM_Orange"])
+        parts.append(leg_stripe)
+        boot = add_cube("TMP", 1.0, (sx, 0.12, 0.06), scale=(0.28, 0.38, 0.1))
+        assign_mat(boot, mats["SM_Black"])
+        parts.append(boot)
 
     obj = join_parts(parts, name)
     col = ensure_collection("11_Units_Engineer")
@@ -271,42 +361,85 @@ def build_engineer(mats: dict) -> bpy.types.Object:
 
 
 def build_defense(mats: dict) -> bpy.types.Object:
-    """Wide combat chassis ~2.4 m — shield + shoulder."""
+    """
+    Defense Mech Guardian — refined against ConceptSheets/SM_Unit_DefenseMech_Turnaround.jpg.
+    Tracked combat chassis: 4 tread pods, white ceramic hull, red class ID face,
+    modular shoulder blocks, orange hazard accents. Game height ~2.0 m.
+    """
     name = "SM_Unit_DefenseMech"
     remove_if_exists(name)
     parts = []
 
-    body = add_cylinder("TMP", 0.62, 1.7, (0, 0, 1.05), vertices=24)
-    assign_mat(body, mats["SM_Defense"])
-    parts.append(body)
+    # Central undercarriage / belly (black carbon-titanium)
+    belly = add_cube("TMP", 1.0, (0, 0, 0.45), scale=(0.85, 1.05, 0.35))
+    assign_mat(belly, mats["SM_Black"])
+    parts.append(belly)
 
-    band = add_cylinder("TMP", 0.68, 0.14, (0, 0, 0.85), vertices=24)
-    assign_mat(band, mats["SM_Black"])
-    parts.append(band)
+    # Four independent tread pods (front L/R, rear L/R)
+    for sx, sy in ((-0.55, 0.45), (0.55, 0.45), (-0.55, -0.45), (0.55, -0.45)):
+        bogie = add_cube("TMP", 1.0, (sx, sy, 0.22), scale=(0.32, 0.42, 0.28))
+        assign_mat(bogie, mats["SM_Graphite"])
+        parts.append(bogie)
+        # track block (low)
+        track = add_cube("TMP", 1.0, (sx, sy, 0.08), scale=(0.36, 0.48, 0.1))
+        assign_mat(track, mats["SM_Black"])
+        parts.append(track)
+        # wheels suggestion
+        for wy in (-0.12, 0.12):
+            wh = add_cylinder(
+                "TMP", 0.1, 0.08,
+                (sx + (0.12 if sx > 0 else -0.12), sy + wy, 0.14),
+                rotation=(0, math.pi / 2, 0),
+                vertices=12,
+            )
+            assign_mat(wh, mats["SM_Steel"])
+            parts.append(wh)
 
-    shoulder = add_cube("TMP", 1.0, (0.7, 0, 1.55), scale=(0.55, 0.5, 0.38))
-    assign_mat(shoulder, mats["SM_White"])
-    parts.append(shoulder)
+    # Main hull — white ceramic, sloping forward
+    hull = add_cube("TMP", 1.0, (0, 0.05, 0.95), scale=(0.95, 1.0, 0.7))
+    assign_mat(hull, mats["SM_White"])
+    parts.append(hull)
 
-    accent = add_cube("TMP", 1.0, (0.7, 0.28, 1.7), scale=(0.42, 0.08, 0.08))
-    assign_mat(accent, mats["SM_Orange"])
-    parts.append(accent)
+    # Red class-ID front face / hex panel stand-in
+    face = add_cube("TMP", 1.0, (0, 0.55, 1.0), scale=(0.55, 0.08, 0.45))
+    assign_mat(face, mats["SM_Defense"])
+    parts.append(face)
+    # Hex-ish sensor (cylinder facade)
+    sensor = add_cylinder("TMP", 0.18, 0.06, (0, 0.62, 1.05), rotation=(math.pi / 2, 0, 0), vertices=6)
+    assign_mat(sensor, mats["SM_Defense"])
+    parts.append(sensor)
 
-    shield = add_cube("TMP", 1.0, (-0.78, 0.1, 1.15), scale=(0.12, 0.85, 1.05))
-    assign_mat(shield, mats["SM_Steel"])
-    parts.append(shield)
+    # Small crest above face
+    crest = add_cube("TMP", 1.0, (0, 0.52, 1.35), scale=(0.14, 0.06, 0.12))
+    assign_mat(crest, mats["SM_Orange"])
+    parts.append(crest)
 
-    plating = add_cube("TMP", 1.0, (0, 0.5, 1.25), scale=(0.55, 0.1, 0.3))
-    assign_mat(plating, mats["SM_Black"])
-    parts.append(plating)
+    # Modular shoulder pods L/R
+    for sx in (-0.85, 0.85):
+        shoulder = add_cube("TMP", 1.0, (sx, 0.0, 1.15), scale=(0.45, 0.7, 0.55))
+        assign_mat(shoulder, mats["SM_White"])
+        parts.append(shoulder)
+        # red side panel (class ID)
+        panel = add_cube("TMP", 1.0, (sx * 1.15, 0.15, 1.15), scale=(0.08, 0.4, 0.35))
+        assign_mat(panel, mats["SM_Defense"])
+        parts.append(panel)
+        # orange hazard strip
+        haz = add_cube("TMP", 1.0, (sx, 0.38, 1.4), scale=(0.32, 0.06, 0.06))
+        assign_mat(haz, mats["SM_Orange"])
+        parts.append(haz)
 
-    head = add_uv_sphere("TMP", 0.28, (0, 0, 2.05), scale=(1.0, 0.9, 0.85))
-    assign_mat(head, mats["SM_White"])
-    parts.append(head)
+    # Top sensor / comms turret
+    turret = add_cylinder("TMP", 0.22, 0.28, (0, -0.05, 1.5), vertices=16)
+    assign_mat(turret, mats["SM_Graphite"])
+    parts.append(turret)
+    dome = add_uv_sphere("TMP", 0.16, (0, -0.05, 1.68), scale=(1.0, 1.0, 0.7), segments=16, rings=8)
+    assign_mat(dome, mats["SM_White"])
+    parts.append(dome)
 
-    foot = add_cylinder("TMP", 0.55, 0.14, (0, 0, 0.07), vertices=16)
-    assign_mat(foot, mats["SM_Black"])
-    parts.append(foot)
+    # Rear black banding
+    rear = add_cube("TMP", 1.0, (0, -0.55, 0.9), scale=(0.7, 0.12, 0.5))
+    assign_mat(rear, mats["SM_Black"])
+    parts.append(rear)
 
     obj = join_parts(parts, name)
     col = ensure_collection("12_Units_Defense")
@@ -317,37 +450,75 @@ def build_defense(mats: dict) -> bpy.types.Object:
 
 
 def build_stalker(mats: dict) -> bpy.types.Object:
-    """Low predator ~0.9 m tall — orange eyes."""
+    """
+    Dust Stalker — refined against ConceptSheets/SM_Unit_DustStalker_Turnaround.jpg.
+    Low quadruped predator: dark hide, bone-white dorsal plating, orange eyes/seams,
+    spine ridges, thick tapered tail. Game height ~0.95 m.
+    """
     name = "SM_Unit_DustStalker"
     remove_if_exists(name)
     parts = []
 
-    body = add_uv_sphere("TMP", 0.55, (0, 0, 0.4), scale=(1.55, 1.0, 0.55), segments=24, rings=12)
+    # Main body — elongated dark carapace
+    body = add_uv_sphere("TMP", 0.55, (0, 0, 0.42), scale=(1.15, 1.7, 0.55), segments=24, rings=12)
     assign_mat(body, mats["SM_Stalker"])
     parts.append(body)
 
-    head = add_uv_sphere("TMP", 0.28, (0, 0.55, 0.48), scale=(1.0, 1.0, 0.85))
+    # White shoulder / dorsal armor plates
+    for y, scz in ((0.25, 0.22), (-0.15, 0.2), (-0.5, 0.16)):
+        plate = add_cube("TMP", 1.0, (0, y, 0.62), scale=(0.55, 0.35, scz))
+        assign_mat(plate, mats["SM_White"])
+        parts.append(plate)
+
+    # Head — tapered
+    head = add_uv_sphere("TMP", 0.28, (0, 0.95, 0.48), scale=(0.9, 1.15, 0.75), segments=20, rings=10)
     assign_mat(head, mats["SM_Stalker"])
     parts.append(head)
 
-    spine = add_cube("TMP", 1.0, (0, -0.25, 0.58), scale=(0.12, 0.7, 0.1))
-    assign_mat(spine, mats["SM_Black"])
-    parts.append(spine)
-
-    for y in (0.05, -0.25):
-        ridge = add_cone("TMP", 0.08, 0.28, (0, y, 0.72))
-        assign_mat(ridge, mats["SM_Black"])
-        parts.append(ridge)
-
-    for x in (-0.14, 0.14):
-        eye = add_uv_sphere("TMP", 0.055, (x, 0.78, 0.55), segments=12, rings=8)
+    # Glowing orange eyes
+    for x in (-0.12, 0.12):
+        eye = add_uv_sphere("TMP", 0.06, (x, 1.15, 0.52), segments=12, rings=8)
         assign_mat(eye, mats["SM_Orange"])
         parts.append(eye)
 
-    for x, y in ((-0.45, 0.3), (0.45, 0.3), (-0.4, -0.35), (0.4, -0.35)):
-        leg = add_cube("TMP", 1.0, (x, y, 0.18), scale=(0.08, 0.08, 0.32))
-        assign_mat(leg, mats["SM_Black"])
-        parts.append(leg)
+    # Jaw glow seams
+    for x in (-0.1, 0.1):
+        seam = add_cube("TMP", 1.0, (x, 1.05, 0.35), scale=(0.04, 0.18, 0.04))
+        assign_mat(seam, mats["SM_Orange"])
+        parts.append(seam)
+
+    # Dorsal spines along back → tail
+    for i, y in enumerate((0.7, 0.35, 0.0, -0.35, -0.7, -1.0)):
+        h = 0.32 - i * 0.03
+        ridge = add_cone("TMP", 0.07, h, (0, y, 0.72 + h * 0.35))
+        assign_mat(ridge, mats["SM_Black"])
+        parts.append(ridge)
+
+    # Thick tapered tail
+    tail = add_uv_sphere("TMP", 0.22, (0, -1.15, 0.35), scale=(0.7, 1.6, 0.55), segments=16, rings=8)
+    assign_mat(tail, mats["SM_Stalker"])
+    parts.append(tail)
+    tip = add_cone("TMP", 0.1, 0.35, (0, -1.65, 0.32))
+    assign_mat(tip, mats["SM_Black"])
+    parts.append(tip)
+
+    # Four legs with bracer plates + claws
+    for sx, sy in ((-0.42, 0.45), (0.42, 0.45), (-0.4, -0.4), (0.4, -0.4)):
+        upper = add_cube("TMP", 1.0, (sx, sy, 0.32), scale=(0.14, 0.14, 0.28))
+        assign_mat(upper, mats["SM_Stalker"])
+        parts.append(upper)
+        bracer = add_cube("TMP", 1.0, (sx * 1.05, sy, 0.18), scale=(0.16, 0.16, 0.12))
+        assign_mat(bracer, mats["SM_White"])
+        parts.append(bracer)
+        # claws
+        for cx in (-0.05, 0.05):
+            claw = add_cone("TMP", 0.03, 0.12, (sx + cx, sy + 0.08, 0.06))
+            assign_mat(claw, mats["SM_Black"])
+            parts.append(claw)
+        # orange joint glow
+        glow = add_uv_sphere("TMP", 0.04, (sx, sy, 0.38), segments=8, rings=6)
+        assign_mat(glow, mats["SM_Orange"])
+        parts.append(glow)
 
     obj = join_parts(parts, name)
     col = ensure_collection("13_Units_Stalker")

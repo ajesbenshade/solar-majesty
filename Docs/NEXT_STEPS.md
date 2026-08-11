@@ -22,9 +22,9 @@
 
 ## Next (Phase 5F → AAA)
 
-1. Refine unit meshes when Grok Imagine turnarounds arrive (Tuesday+).
-2. Optional full B party / mixer asset polish.
-3. Content pass: more placeables / mission variants.
+1. Play Mode smoke with Imagine-refined unit FBX (Scout / Engineer / Defense / Stalker).
+2. Optional second-pass scale sheets (unit next to HAB) + further mesh detail.
+3. Optional full B party / content pass.
 
 ## Still out of scope (for now)
 

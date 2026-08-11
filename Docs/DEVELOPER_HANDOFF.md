@@ -52,9 +52,9 @@ courage matters. Greybox demo is playable in Unity 6 URP.
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
-1. Play Mode: F6/F7 between campuses; clear stalkers on both for mission combat stake.
-2. When Imagine credits return: refine unit blockouts against turnarounds.
-3. Per-body threat / campaign framing.
+1. Play Mode smoke with Imagine-refined unit FBX (all four turnarounds in `ConceptSheets/`).
+2. Optional HAB scale sheets + further mesh detail.
+3. Optional full B party / content pass.
 
 ## Controls reference
 G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
