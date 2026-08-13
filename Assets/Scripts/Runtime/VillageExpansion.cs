@@ -188,6 +188,7 @@ namespace SolarMajesty
             SpawnConnector(plusPos);
             SpawnHab(habPos);
             _loop.Settlement.AddVillageHab();
+            _loop.NotifyCampusExpanded();
             _expandCooldown = 12f;
 
             Debug.Log($"[Village] HAB + plus @ {habPos} pop={_loop.Settlement.Population}/{_loop.Settlement.Housing}");

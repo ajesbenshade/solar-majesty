@@ -1,6 +1,6 @@
-# Solar Majesty — Greybox Demo (2–3 min)
+# Solar Majesty — Greybox Demo (campaign)
 
-Shareable overseer-loop sandbox: post flags, place mesh buildings, watch a party of up to **four** specialists self-sort under Dust Stalker **bite** pressure on a **procedural world** (Luna or Mars: craters, resource nodes, lairs) with a real Overseer HUD.
+Shareable overseer-loop sandbox: post flags, place mesh buildings, watch a party of up to **four** specialists self-sort under Dust Stalker **bite** pressure across a **campaign spine** (Earth → Luna → Mars) with research, sustain gates, and a real Overseer HUD.
 
 ## Open & Play
 
@@ -30,37 +30,49 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 | **G** / **B** / **Q** / **Tab** | Open Flag popup / Build popup / close tool / cycle (also bottom dock) |
 | **F1** Explore · **F2** ClearThreat · **F3** Build · **F4** Extract · **F5** Defend | Flag type (in Flag popup when open) |
 | **1–9 / 0** | Select building (Pad · HAB · PWR · OPS · LAB · CMD · Solar · Farm · Mine · Regolith camp; workshops in Build popup) |
-| **LMB** | Inspect: select specialist or building (info + upgrades / workers). Flag/Build: empty ground places · drag pans |
+| **LMB** | Inspect: select specialist or building (info / workers / FLAG HERE). Flag/Build: empty ground places · drag pans |
 | **P** | Form a specialist party at the waystation inn (2+ heroes near the inn, max 4) |
 | **[** | Disband selected party (or the last party) |
+| **T** | Toggle research / tech tree panel |
 | **F6** / **F7** | Camera → Campus A / Campus B (HUD A/B chips on bottom dock) |
 | **F9** | Seed Explore attractor at Campus B + focus B |
-| **F10** | Cycle world (Luna ↔ Mars) — reloads, does not advance seed |
+| **F10** | Debug: cycle any body (reload). **Shift+F10** also unlocks all campaign worlds |
 | **+/-** | Adjust bounty |
 | **Shift+LMB** | Add/remove specialist from selection (up to 4) |
 | **R** | Debug: force high fatigue → Rest (all specialists) |
 | **F8** | Toggle deep debug score HUD |
 | **Y** | Revive party when outpost is overwhelmed / dismiss win banner |
 
-**Procedural worlds:** each body (Luna, Mars) keeps its own persisted seed on a **384 m** sandbox (16× the original 96 m campus). Craters use Blender rim meshes; solar arrays are a wafer farm. HUD **LUNA / MARS** chips (or **F10**) switch bodies without advancing seed. **F4 Extract** near a node harvests that deposit; **F2 ClearThreat** clears lair fauna. **Restart mission** or win → **NEW LUNA / NEW MARS** advances the *current* body's seed for a fresh layout. Campus A landing stays fixed. Same body+seed → same map.
+**Procedural worlds / campaign:** fresh play starts on **Earth** (tutorial). Body chips show unlocked worlds only (`EARTH?` while locked). Conquest win unlocks the next body — win banner **TO LUNA** / **TO MARS**. Each body keeps its own seed on a **384 m** sandbox. **F4 Extract** near a node harvests that deposit; **F2 ClearThreat** clears lair fauna. **Shift+F10** unlocks all bodies for debug. Campus A landing stays fixed. Same body+seed → same map.
 
-**No click-to-move on specialists.** They act like Majesty 2 heroes: take bounties they want, **flee to the waystation inn** when hurt, **hunt** nearby fauna if brave, and hang out at **per-class workshops** (not guilds) when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. Click a building to inspect, upgrade, and set which class works there. **P** at the inn forms a follow-the-leader party. Population grows with the stockpile and camps; village HABs radiate from Campus A and pay tax. Flag/Build menus are popups above the bottom dock — click the dock button again (or **Q**) to close.
+**No click-to-move on specialists.** They act like Majesty 2 heroes: take bounties they want, **flee to the waystation inn** when hurt, **hunt** nearby fauna if brave, and hang out at **per-class workshops** (not guilds) when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. Click a building to inspect and set which class works there. **P** at the inn forms a follow-the-leader party. Population grows with the stockpile and camps; village HABs radiate from Campus A and pay tax. **Conquest gates** (HUD): clear all dens · sustain pop goal with farm+mine · research **Lunar Rocket** (TECH · **T**). Labs tick science into one active tech. Flag/Build menus are popups above the bottom dock — click the dock button again (or **Q**) to close.
 
 ---
 
-## 60-second demo script
+## 60-second demo script (Earth tutorial)
 
-Speak while playing:
+Speak while playing (fresh prefs / Earth):
 
-1. **Show the colony** — one campus: dome core, HAB–LAB spine with connectors, CMD/OPS north, power/solar south, pad+ship east. Specialists spawn in the plaza with **distinct silhouettes** (tall Scout / squat Engineer / shielded Defense). Dust Stalkers use a low predator placeholder. Meshes use Majesty-readable scale (not raw Blender meters).
-2. **Explore (Scout)** — **G**, **F1**, bounty **~100+**, place **near the cyan Scout**. He should **Pursue** and work the flag.
-3. **Build (Engineer)** — **F3**, bounty **~120+**, place **near the orange Engineer**. High-greed builder should prefer it over combat.
-4. **Threat** — Note HUD **Threat** / HP bars when stalkers aggro and **bite**. Defense may **HUNT** without a flag if fauna is close. **F2 ClearThreat**, bounty **~80+**, still pulls Defense onto a posted bounty. Engineer should stay reluctant. Hurt specialists **FLEE** to the inn.
-5. **Greed reject** — Post **Explore** with **low bounty far away**. Expect Scout to keep **SCOUT** wandering instead of taking it; Engineer stays in town.
-6. **Rest** — Press **R**. Specialists should walk to the **waystation inn** (south of the plaza) and show **REST** / **INN**.
-7. **Build placement** — **B**, keys **1–7** for campus modules, **8–0** for Farm / Mine / Regolith camp; green/red ghost + footprint pad shows validity; **campus tiles stay red** (showcase footprints reserved). Camps tick ice / metals / regolith. Village HABs grow as POP exceeds housing.
-8. **Party** — After **R** (heroes at the inn), press **P**. Followers show **PARTY** and trail the bravest leader. **[** disbands.
-9. **Extract / Defend** — **F4** near Engineer for regolith yield; **F5** near Defense to calm Threat while claimed.
+1. **Show Earth campus** — blue sky, dome + HAB spine, pad, starter **Farm** + **Mine** south of campus. Note conquest gates: dens · sustain · launch.
+2. **TECH · T** — Field Survey is already ticking from the LAB; completions auto-queue the next tech. Point at tip **Lunar Rocket**.
+3. **Threat** — **F2 ClearThreat** on a den; Defense/party clears fauna; dens checkbox fills as lairs go quiet.
+4. **Economy** — grow POP toward goal 8 (extra HAB / camps optional); sustain meter holds when stockpile is healthy.
+5. **Rocket** — tree auto-advances toward **Lunar Rocket** (pays metals/ice). Pad stages departure craft (reuses starship); Launch gate checks.
+6. **Win** — OUTPOST SECURED → **TO LUNA**.
+
+## Luna excerpt (after Earth)
+
+1. Cratered grey world; dens harder; pop goal 12.
+2. Research continues toward **Mars Ship** (unlocks persist).
+3. Clear dens + farm/mine sustain + Mars Ship → **TO MARS**.
+4. Mars finale banner: **SOLAR CONQUEST COMPLETE**.
+
+## Classic overseer beat (any body)
+
+1. **Explore (Scout)** — **G**, **F1**, bounty **~100+**, near cyan Scout.
+2. **Build (Engineer)** — **F3**, bounty **~120+**, near orange Engineer.
+3. **Hunt / flee** — Defense **HUNT**; hurt heroes **FLEE** to the disconnected inn; **P** forms a party.
+4. **Extract** — **F4** on a metal/ice/fissile node.
 
 ---
 
@@ -137,6 +149,48 @@ Speak while playing:
 - [ ] Wider map / camera; deadline countdown on stakes panel
 - [ ] Miss deadline → MISSION TIME EXPIRED → Restart mission
 - [ ] Quiet ambient hum under SFX
+
+### Phase 6A (procedural world)
+
+- [ ] HUD shows body code + seed + node count + uncleared/total lairs
+- [ ] Same body+seed → same crater / node / lair layout
+- [ ] Restart / win → NEW LUNA or NEW MARS advances seed → fresh layout
+- [ ] **F4** Extract near metal / ice / fissile / regolith node yields that resource
+- [ ] **F2** ClearThreat worked on a lair → den clears; fauna gone; lair count drops
+- [ ] Campus A footprints stay clear of procedural props
+- [ ] **F10** / body chips switch Luna ↔ Mars without advancing that body's seed
+
+### Week 1 campaign gates
+
+- [ ] Building card has **no Upgrade** button / LVL chip
+- [ ] Mission panel shows Clear dens · Sustain colony · Launch craft
+- [ ] Hard 3‑minute deadline is **off** by default
+- [ ] Clear all dens + farm/mine + pop goal held ~40s → sustain gate fills
+- [ ] Win banner mentions dens / sustain / launch
+
+### Week 2 tech tree
+
+- [ ] **T** / TECH dock opens research panel
+- [ ] Showcase LAB (and placed labs) raise science rate
+- [ ] Pick Field Survey → branch toward Lunar Rocket
+- [ ] Completing Lunar Rocket spends metals/ice and checks Launch gate
+- [ ] Dens + sustain + Lunar Rocket → OUTPOST SECURED
+
+### Week 3 campaign
+
+- [ ] Fresh prefs start on **Earth** (blue sky, fewer dens, pop goal 8)
+- [ ] Luna/Mars chips locked until prior body conquered
+- [ ] Win on Earth → **TO LUNA** unlocks and travels
+- [ ] Research unlocks persist across bodies (Mars Ship available after Lunar Rocket)
+- [ ] **Shift+F10** unlocks all bodies for debug
+
+### Week 4 polish
+
+- [ ] Launch tech stages departure craft on the pad + plume VFX
+- [ ] Sustain hint shows pop / farm+mine / stockpile needs
+- [ ] Village HAB expansion rebuilds NavMesh
+- [ ] Mars win shows **SOLAR CONQUEST COMPLETE**
+- [ ] Advance campaign plays launch plume before reload
 
 ### Demo visuals
 

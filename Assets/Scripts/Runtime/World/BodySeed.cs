@@ -11,7 +11,7 @@ namespace SolarMajesty
         private const string BodyPrefsKey = "SM_CelestialBody";
         private const string SeedPrefix = "SM_BodySeed_";
 
-        public static CelestialBodyId Body { get; private set; } = CelestialBodyId.Luna;
+        public static CelestialBodyId Body { get; private set; } = CelestialBodyId.Earth;
         public static int Current { get; private set; } = 10007;
 
         public static void Ensure(
@@ -41,9 +41,9 @@ namespace SolarMajesty
             PersistSeed();
         }
 
-        /// <summary>Load last selected body from prefs (Luna if unset).</summary>
+        /// <summary>Load last selected body from prefs (Earth if unset).</summary>
         public static CelestialBodyId LoadSavedBody() =>
-            (CelestialBodyId)PlayerPrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Luna);
+            (CelestialBodyId)PlayerPrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Earth);
 
         public static void SetBody(CelestialBodyId body)
         {
@@ -77,7 +77,14 @@ namespace SolarMajesty
 
         private static string SeedKey(CelestialBodyId body) => SeedPrefix + body;
 
-        private static int DefaultSeed(CelestialBodyId body) =>
-            body == CelestialBodyId.Mars ? 20011 : 10007;
+        private static int DefaultSeed(CelestialBodyId body)
+        {
+            switch (body)
+            {
+                case CelestialBodyId.Earth: return 9001;
+                case CelestialBodyId.Mars: return 20011;
+                default: return 10007;
+            }
+        }
     }
 }

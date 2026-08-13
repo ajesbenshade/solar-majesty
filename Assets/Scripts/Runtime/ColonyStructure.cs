@@ -13,13 +13,12 @@ namespace SolarMajesty
     }
 
     /// <summary>
-    /// Selectable, upgradable colony piece. Village HABs take raids first.
+    /// Selectable colony piece. Village HABs take raids first.
     /// Workshops (not guilds) are per-class hangouts — flags nearby pull matching specialists.
+    /// Progression is via research / campaign gates, not per-building upgrade levels.
     /// </summary>
     public class ColonyStructure : MonoBehaviour
     {
-        public const int MaxLevel = 3;
-
         [SerializeField] private StructureRole role = StructureRole.Core;
         [SerializeField] private float maxHealth = 48f;
 
@@ -33,7 +32,6 @@ namespace SolarMajesty
         public BuildingCategory Category { get; private set; } = BuildingCategory.Utility;
         public BuildingData SourceData { get; private set; }
         public string DisplayName { get; private set; } = "Module";
-        public int Level { get; private set; } = 1;
         public SpecialistClass PreferredClass { get; private set; } = SpecialistClass.EngineerBot;
         public bool ClassLocked { get; private set; }
         public bool HasPreferredClass { get; private set; }
@@ -44,7 +42,7 @@ namespace SolarMajesty
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
         public Vector3 WorldPosition => transform.position;
         public bool IsSelected => _selected;
-        public int WorkerSlots => (IsWorkshop ? 2 : 1) + (Level - 1);
+        public int WorkerSlots => IsWorkshop ? 2 : 1;
         public IReadOnlyList<SpecialistAgent> Workers => _workers;
         public int WorkerCount
         {
@@ -54,10 +52,6 @@ namespace SolarMajesty
                 return _workers.Count;
             }
         }
-
-        public int UpgradeCostMetals => 18 * Level;
-        public int UpgradeCostRegolith => 10 * Level;
-        public bool CanUpgrade => Level < MaxLevel && IsAlive;
 
         public void Configure(
             StructureRole structureRole,
@@ -87,24 +81,6 @@ namespace SolarMajesty
             if (ClassLocked) return;
             PreferredClass = cls;
             HasPreferredClass = true;
-        }
-
-        public bool TryUpgrade(ResourceManager resources)
-        {
-            if (!CanUpgrade || resources == null) return false;
-            var cost = new[]
-            {
-                new ResourceAmount(ResourceId.Metals, UpgradeCostMetals),
-                new ResourceAmount(ResourceId.Regolith, UpgradeCostRegolith)
-            };
-            if (!resources.TrySpend(cost)) return false;
-
-            Level++;
-            maxHealth *= 1.28f;
-            _health = maxHealth;
-            DemoAudio.PlayBuildPlace();
-            DemoVfx.ClaimRing(transform.position, new Color(0.96f, 0.42f, 0.08f));
-            return true;
         }
 
         public bool HasOpenSlot()

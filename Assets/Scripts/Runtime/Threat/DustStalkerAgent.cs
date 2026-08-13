@@ -63,6 +63,13 @@ namespace SolarMajesty
                 Die();
         }
 
+        /// <summary>Instant kill when a ClearThreat job clears the owning lair.</summary>
+        public void ApplyClearThreatKill()
+        {
+            if (!IsAlive) return;
+            Die();
+        }
+
         private GameLoop _loop;
 
         public void Initialize(ThreatPressure threat, FlagManager flags, Vector3 home, GameLoop loop = null)

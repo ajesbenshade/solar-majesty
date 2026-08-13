@@ -56,8 +56,50 @@ namespace SolarMajesty
                     _spawned.RemoveAt(i);
             }
 
+            // ClearThreat posted on the den itself depletes the lair even if fauna wandered.
+            if (HasActiveClearThreatNearby())
+            {
+                ForceClear();
+                return;
+            }
+
             if (_spawned.Count == 0)
                 MarkCleared();
+        }
+
+        /// <summary>ClearThreat near this den — kill remaining fauna and silence the lair.</summary>
+        public void ForceClear()
+        {
+            if (cleared) return;
+            for (int i = 0; i < _spawned.Count; i++)
+            {
+                if (_spawned[i] != null && _spawned[i].IsAlive)
+                    _spawned[i].ApplyClearThreatKill();
+            }
+            _spawned.Clear();
+            MarkCleared();
+        }
+
+        private bool HasActiveClearThreatNearby()
+        {
+            if (_loop == null || _loop.Flags == null) return false;
+            var list = _loop.Flags.Flags;
+            Vector3 me = transform.position;
+            float r = clearRadius;
+            float rSq = r * r;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var f = list[i];
+                if (f == null || f.Data == null) continue;
+                if (f.Data.flagType != FlagType.ClearThreat) continue;
+                float dx = f.WorldPosition.x - me.x;
+                float dz = f.WorldPosition.z - me.z;
+                if (dx * dx + dz * dz > rSq) continue;
+                // Only deplete once a specialist is actually working the den, not on claim alone.
+                if (_loop.Flags.GetWorkRemaining(f) < f.Data.workRequired - 0.05f)
+                    return true;
+            }
+            return false;
         }
 
         private void MarkCleared()

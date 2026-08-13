@@ -10,79 +10,103 @@ namespace SolarMajesty
     }
 
     /// <summary>
-    /// Phase 4A multi-stake mission: clear stalker waves + hold timer + finish a construction.
+    /// Campaign gates: clear dens, sustain population goal, launch-ready (tech stub until Week 2).
     /// Does not touch SpecialistBrain.
     /// </summary>
     public class MissionController : MonoBehaviour
     {
-        [Header("Combat waves")]
-        [SerializeField] private int reinforcementCount = 2;
-        [SerializeField] private float reinforcementDelay = 2.5f;
+        [Header("Sustain gate")]
+        [SerializeField] private float sustainHoldSeconds = 40f;
+        [SerializeField] private int populationGoal = 12;
 
-        [Header("Hold / colony stakes")]
-        [SerializeField] private float holdSecondsRequired = 60f;
-        [SerializeField] private int metalsGoal = 0;
-        [SerializeField] private int buildingsRequired = 1;
+        [Header("Launch gate (tech tree)")]
+        [Tooltip("When true, Lunar Rocket (or other launch unlock) must be researched.")]
+        [SerializeField] private bool requireLaunchTech = true;
 
-        [Header("Phase 5A deadline")]
-        [SerializeField] private bool enforceDeadline = true;
-        [SerializeField] private float missionDeadlineSeconds = 180f;
+        [Header("Optional pressure")]
+        [SerializeField] private bool spawnPressureFromLairs = true;
+        [SerializeField] private int pressureStalkerCount = 2;
+        [SerializeField] private float pressureCooldown = 90f;
+
+        [Header("Deadline (off for campaign)")]
+        [SerializeField] private bool enforceDeadline = false;
+        [SerializeField] private float missionDeadlineSeconds = 900f;
 
         private GameLoop _loop;
         private MissionState _state = MissionState.Active;
-        private int _wave = 1;
-        private int _waveTarget;
         private bool _armed;
         private bool _winLatched;
         private bool _loseLatched;
-        private bool _awaitingReinforcements;
-        private float _reinforceTimer;
-        private float _holdElapsed;
         private float _missionElapsed;
-        private bool _combatCleared;
-        private int _completedBuildings;
+        private float _sustainElapsed;
+        private float _pressureTimer;
         private bool _deadlineFail;
+        private bool _launchReady;
 
         public MissionState State => _state;
         public int StalkersRemaining { get; private set; }
-        public int WaveTarget => Mathf.Max(1, _waveTarget);
-        public int Wave => _wave;
         public bool IsWon => _state == MissionState.Won;
         public bool IsLost => _state == MissionState.Lost;
 
-        public bool CombatCleared => _combatCleared;
-        public bool HoldComplete => _holdElapsed >= holdSecondsRequired;
-        public bool ColonyComplete =>
-            _completedBuildings >= buildingsRequired ||
-            (metalsGoal > 0 && _loop != null && _loop.Resources != null &&
-             _loop.Resources.Get(ResourceId.Metals) >= metalsGoal);
+        public bool DensCleared { get; private set; }
+        public bool SustainComplete => _sustainElapsed >= sustainHoldSeconds;
+        public bool LaunchReady => _launchReady;
+        public bool AllGatesMet => DensCleared && SustainComplete && LaunchReady;
 
-        public float HoldElapsed => _holdElapsed;
-        public float HoldRequired => holdSecondsRequired;
+        public float SustainElapsed => _sustainElapsed;
+        public float SustainRequired => sustainHoldSeconds;
+        public int PopulationGoal => populationGoal;
+        public int PopulationCurrent =>
+            _loop != null && _loop.Settlement != null ? _loop.Settlement.Population : 0;
+        public int UnclearedLairs { get; private set; }
+        public int LairCount { get; private set; }
+
         public float MissionElapsed => _missionElapsed;
         public float MissionDeadline => missionDeadlineSeconds;
         public bool DeadlineEnabled => enforceDeadline;
         public bool WasDeadlineFail => _deadlineFail;
-        public int CompletedBuildings => _completedBuildings;
-        public int BuildingsRequired => buildingsRequired;
-        public int MetalsGoal => metalsGoal;
-        public int MetalsCurrent =>
-            _loop != null && _loop.Resources != null ? _loop.Resources.Get(ResourceId.Metals) : 0;
+
+        // Compat aliases so older HUD/debug call sites compile during transition.
+        public bool CombatCleared => DensCleared;
+        public bool HoldComplete => SustainComplete;
+        public bool ColonyComplete => LaunchReady;
+        public int Wave => 1;
+        public int WaveTarget => Mathf.Max(1, LairCount);
+        public int CompletedBuildings => LaunchReady ? 1 : 0;
+        public int BuildingsRequired => 1;
+        public int MetalsGoal => 0;
+        public int MetalsCurrent => 0;
+        public float HoldElapsed => _sustainElapsed;
+        public float HoldRequired => sustainHoldSeconds;
 
         public string ObjectiveLabel
         {
             get
             {
-                if (_state == MissionState.Won) return "Outpost secured — all stakes met";
-                if (_awaitingReinforcements) return "Reinforcements inbound…";
-                if (!_combatCleared)
+                if (_state == MissionState.Won)
                 {
-                    return _wave <= 1
-                        ? "Wave 1 — clear Dust Stalkers"
-                        : "Wave 2 — clear reinforcements";
+                    if (_loop != null && _loop.ActiveBody == CelestialBodyId.Mars)
+                        return "Solar conquest complete — Mars holds";
+                    return "Outpost secured — advance the campaign";
                 }
-                if (!HoldComplete) return "Hold the outpost";
-                if (!ColonyComplete) return "Finish a construction order";
+                if (!DensCleared)
+                {
+                    if (LairCount > 0)
+                        return $"Clear dens — {UnclearedLairs} left (F2 Clear Threat)";
+                    return "Clear remaining fauna near campus";
+                }
+                if (!SustainComplete)
+                {
+                    string hint = _loop?.Settlement != null ? _loop.Settlement.SustainHint : "hold population";
+                    return $"Sustain — {hint}";
+                }
+                if (!LaunchReady)
+                {
+                    string craft = _loop != null && _loop.Research != null
+                        ? _loop.Research.LaunchTechLabel(_loop.ActiveBody)
+                        : "departure craft";
+                    return $"Research {craft} (TECH · T) — craft stages on the pad";
+                }
                 return "Securing…";
             }
         }
@@ -92,35 +116,42 @@ namespace SolarMajesty
             _loop = loop;
             _armed = false;
             _state = MissionState.Active;
-            _wave = 1;
-            _waveTarget = 0;
             _winLatched = false;
             _loseLatched = false;
-            _awaitingReinforcements = false;
-            _reinforceTimer = 0f;
-            _holdElapsed = 0f;
             _missionElapsed = 0f;
-            _combatCleared = false;
-            _completedBuildings = 0;
+            _sustainElapsed = 0f;
+            _pressureTimer = pressureCooldown * 0.5f;
             _deadlineFail = false;
+            DensCleared = false;
+            UnclearedLairs = 0;
+            LairCount = 0;
+
+            var body = _loop.BodyProfile;
+            if (body != null)
+            {
+                populationGoal = Mathf.Max(1, body.PopulationGoal);
+                sustainHoldSeconds = Mathf.Max(5f, body.SustainHoldSeconds);
+            }
+
+            _launchReady = !requireLaunchTech;
+            if (_loop.Settlement != null)
+                _loop.Settlement.SetPopulationGoal(populationGoal);
         }
+
+        /// <summary>Week 2+: call when rocket tech is researched and craft is built.</summary>
+        public void SetLaunchReady(bool ready) => _launchReady = ready;
 
         public void Tick()
         {
             if (_loop == null) return;
 
             StalkersRemaining = CountLivingStalkers();
-            RefreshColonyProgress();
+            RefreshGates();
 
             if (!_armed)
             {
-                _waveTarget = StalkersRemaining;
-                if (_waveTarget > 0 || Time.timeSinceLevelLoad > 1f)
-                {
+                if (Time.timeSinceLevelLoad > 1f)
                     _armed = true;
-                    if (_waveTarget <= 0)
-                        _combatCleared = true;
-                }
                 return;
             }
 
@@ -137,45 +168,23 @@ namespace SolarMajesty
                 return;
 
             _missionElapsed += Time.deltaTime;
+            TickSustain(Time.deltaTime);
+            TickPressure(Time.deltaTime);
 
-            // Hold clock only while the outpost is standing.
-            _holdElapsed = Mathf.Min(holdSecondsRequired, _holdElapsed + Time.deltaTime);
-
-            if (enforceDeadline && _missionElapsed >= missionDeadlineSeconds &&
-                !(_combatCleared && HoldComplete && ColonyComplete))
+            if (enforceDeadline && _missionElapsed >= missionDeadlineSeconds && !AllGatesMet)
             {
                 _deadlineFail = true;
                 EnterLost();
                 return;
             }
 
-            if (_awaitingReinforcements)
-            {
-                _reinforceTimer -= Time.deltaTime;
-                if (_reinforceTimer <= 0f)
-                    SpawnReinforcementWave();
-                return;
-            }
-
-            if (!_combatCleared && _waveTarget > 0 && StalkersRemaining <= 0)
-            {
-                if (_wave <= 1)
-                    BeginReinforcementCountdown();
-                else
-                {
-                    _combatCleared = true;
-                    DemoAudio.PlayClaim();
-                    Debug.Log("[Mission] Combat stake clear — hold + construction still required.");
-                }
-            }
-
-            if (_combatCleared && HoldComplete && ColonyComplete)
+            if (AllGatesMet)
                 EnterWon();
         }
 
         public void OnPartyRevived()
         {
-            if (_state == MissionState.Lost)
+            if (_state == MissionState.Lost && !_deadlineFail)
             {
                 _state = MissionState.Active;
                 _loseLatched = false;
@@ -187,54 +196,63 @@ namespace SolarMajesty
             _winLatched = true;
         }
 
-        private void RefreshColonyProgress()
+        private void RefreshGates()
         {
-            _completedBuildings = 0;
-            if (_loop.Placer == null || _loop.Placer.Orders == null) return;
-            for (int i = 0; i < _loop.Placer.Orders.Count; i++)
-            {
-                var o = _loop.Placer.Orders[i];
-                if (o != null && o.IsComplete)
-                    _completedBuildings++;
-            }
-        }
-
-        private void BeginReinforcementCountdown()
-        {
-            _awaitingReinforcements = true;
-            _reinforceTimer = reinforcementDelay;
-            DemoAudio.PlayFlagPost();
-            Debug.Log("[Mission] Wave 1 cleared — reinforcements inbound.");
-        }
-
-        private void SpawnReinforcementWave()
-        {
-            _awaitingReinforcements = false;
-            _wave = 2;
-
-            Vector3 origin = ColonyLayout.CampusOriginFor(_loop.FocusedCampus);
-            // Prefer an uncleared lair so wave 2 feels like the moon pushing back.
+            LairCount = 0;
+            UnclearedLairs = 0;
             if (_loop.World != null)
             {
-                var lairs = _loop.World.Lairs;
-                for (int i = 0; i < lairs.Count; i++)
+                LairCount = _loop.World.Lairs.Count;
+                UnclearedLairs = _loop.World.UnclearedLairCount;
+            }
+
+            if (LairCount > 0)
+                DensCleared = UnclearedLairs <= 0 && StalkersRemaining <= 0;
+            else
+                DensCleared = StalkersRemaining <= 0;
+        }
+
+        private void TickSustain(float dt)
+        {
+            var set = _loop.Settlement;
+            if (set == null)
+            {
+                _sustainElapsed = 0f;
+                return;
+            }
+
+            if (set.IsSustainable)
+                _sustainElapsed = Mathf.Min(sustainHoldSeconds, _sustainElapsed + dt);
+            else
+                _sustainElapsed = Mathf.Max(0f, _sustainElapsed - dt * 0.5f);
+        }
+
+        private void TickPressure(float dt)
+        {
+            if (!spawnPressureFromLairs || DensCleared) return;
+            if (_loop.World == null || UnclearedLairs <= 0) return;
+
+            _pressureTimer -= dt;
+            if (_pressureTimer > 0f) return;
+            _pressureTimer = pressureCooldown;
+
+            Vector3 origin = ColonyLayout.CampusOrigin;
+            var lairs = _loop.World.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                if (lairs[i] != null && !lairs[i].IsCleared)
                 {
-                    if (lairs[i] != null && !lairs[i].IsCleared)
-                    {
-                        origin = lairs[i].WorldPosition;
-                        break;
-                    }
+                    origin = lairs[i].WorldPosition;
+                    break;
                 }
             }
 
             int spawned = _loop.SpawnStalkerWave(
-                Mathf.Max(1, reinforcementCount),
+                Mathf.Max(1, pressureStalkerCount),
                 10f,
                 origin);
-            _waveTarget = spawned;
-            StalkersRemaining = CountLivingStalkers();
-            DemoAudio.PlayBite();
-            Debug.Log($"[Mission] Wave 2 — {spawned} Dust Stalker(s) closing from procedural dens.");
+            if (spawned > 0)
+                Debug.Log($"[Mission] Pressure wave — {spawned} from uncleared dens.");
         }
 
         private void EnterWon()
@@ -247,7 +265,9 @@ namespace SolarMajesty
                 DemoVfx.ClaimRing(
                     ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
                     new Color(0.35f, 0.95f, 0.55f));
-                Debug.Log("[Mission] Victory — combat, hold, and colony stakes met.");
+                Debug.Log("[Mission] Victory — dens cleared, colony sustained, launch ready.");
+                if (_loop.ActiveBody == CelestialBodyId.Mars)
+                    Debug.Log("[Mission] Mars finale — solar conquest complete.");
             }
         }
 

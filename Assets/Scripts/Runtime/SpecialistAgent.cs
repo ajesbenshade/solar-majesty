@@ -571,6 +571,11 @@ namespace SolarMajesty
                         : null;
                     _economy?.GrantExtractYield(campus, node);
                 }
+                else if (completedType == FlagType.ClearThreat && _world != null)
+                {
+                    var lair = _world.FindNearestLair(transform.position, 12f);
+                    lair?.ForceClear();
+                }
                 greedHunger = Mathf.Clamp01(greedHunger - 0.25f);
                 DemoAudio.PlayClaim();
                 DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));

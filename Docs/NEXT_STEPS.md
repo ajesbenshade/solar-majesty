@@ -2,35 +2,26 @@
 
 ## Done
 
-- [x] Pure C# systems + SO definitions
-- [x] Phase-1 Runtime + polish
-- [x] Phase-1.5 three personalities
-- [x] Phase-1.6 Dust Stalker + ThreatPressure → bodyDanger
-- [x] Unity 6 URP project + `LunarOutpost_Sandbox` greybox demo (mesh buildings)
-- [x] LAB-1 blockout + coherent campus layout + demo content pass
-- [x] Phase 2A Bite & Bounty — specialist HP, OverseerHud, construction progress, fail/retry
-- [x] Phase 2B NavMesh & Juice — campus pathing, hit/death/claim VFX, richer SFX, fail veil
-- [x] Phase 3A Presentation & Mission — lunar lighting/shadows/fog + clear-stalkers win
-- [x] Phase 3B Units / Volume / Waves — industrial silhouettes, URP volume, two-wave mission
-- [x] Phase 4A Mission Stakes — combat + hold timer + construction checklist win
-- [x] Phase 4B Content Scale — Extract/Defend flags, LAB/CMD/Solar placeables, denser campus
-- [x] Phase 5A Map / Deadline / Ambient — larger grid, 3‑min deadline fail, ambient hum
-- [x] Blender unit blockouts — Scout/Engineer/Defense/Stalker FBX in Resources/Units
-- [x] Phase 5C Multi-Body — Campus B outpost + F6/F7 camera switch
-- [x] Phase 5D Body Framing — local threat per specialist, campus HUD, authored audio/VolumeProfile path
-- [x] Phase 5E Dual Deploy — Campus B Scout detachment, F9 attractor, dual ambient beds
-- [x] Phase 6A Procedural worlds — seeded Luna/Mars profiles, nodes, lairs, body switch (F10)
-- [x] Phase 6B Majesty loop — flee-to-inn, opportunistic hunt, kingdom vocation (patrol/tinker/scout)
-- [x] Phase 6C Settlement — waystation inn, radiating village HABs + tax, farms/mines/regolith camps, inn parties (P / [)
-- [x] Phase 6D Inspect / workshops — LMB inspect buildings, upgrades, per-class workshops, flag attract (no guilds)
-- [x] Phase 6E Map 16× — 256-cell / 384 m sandbox, Blender craters + solar farm
+- [x] Pure C# systems + SO definitions through Phase 6E (see git history / prior checklists)
+- [x] Week 1A — remove building upgrades; three conquest gates; deadline off
+- [x] Week 2A — Alpha Centauri tech tree (lab ticks, TECH·T, Lunar Rocket / Mars Ship)
+- [x] Week 3A — Earth body + CampaignProgress unlock spine (Earth → Luna → Mars)
+- [x] Week 4A — launch craft staging + plume, sustain hints, NavMesh rebuild on expand, campaign DEMO script
+- [x] Post-month polish — Earth starter Farm/Mine, research auto-queue, launch site reuses starship, NavMesh on place, clearer gate/toast copy
 
-## Next (Phase 6+)
+## Month roadmap
 
-1. Play Mode smoke — village ring, inn party (P), camp production, stalkers hitting outer HABs first.
-2. Optional second-pass scale sheets (unit next to HAB) + further mesh detail.
-3. Optional extra heroes from workshops / random landing. Add further bodies as catalog profiles (Ceres, Titan, …).
+1. **Week 1** — Campaign-ready sandbox *(done)*
+2. **Week 2** — Tech tree *(done)*
+3. **Week 3** — Earth tutorial + unlocks *(done)*
+4. **Week 4** — Juice + demo package *(done)*
+
+## Next
+
+1. Play Mode smoke of full Earth → Luna → Mars path (commit campaign when verified).
+2. Optional: authored rocket FBX, tech icons, Earth-specific campus kit.
+3. Optional: Ceres / Titan catalog profiles once Mars feels solid.
 
 ## Still out of scope (for now)
 
-Full combat sim rewrite, campaign, multiplayer.
+Full combat sim rewrite, multiplayer, heightmap terrain.

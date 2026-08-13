@@ -4,8 +4,9 @@ namespace SolarMajesty
 {
     public enum CelestialBodyId
     {
-        Luna = 0,
-        Mars = 1
+        Earth = 0,
+        Luna = 1,
+        Mars = 2
     }
 
     /// <summary>
@@ -57,5 +58,10 @@ namespace SolarMajesty
 
         /// <summary>Relative weights for Regolith, Metals, Ice, Fissile (must be length 4).</summary>
         public int[] ResourceWeights = { 5, 3, 2, 2 };
+
+        [Header("Campaign gates")]
+        public int PopulationGoal = 12;
+        public float SustainHoldSeconds = 40f;
+        public float ResearchRateMultiplier = 1f;
     }
 }

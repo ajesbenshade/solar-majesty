@@ -3,7 +3,8 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Population, housing, HAB tax, and camp production. Grows with the stockpile + camps.
+    /// Population, housing, HAB tax, and camp production.
+    /// Campaign sustain gate uses <see cref="PopulationGoal"/> + camp balance.
     /// </summary>
     public sealed class Settlement
     {
@@ -19,16 +20,50 @@ namespace SolarMajesty
         public int RegolithCamps { get; private set; }
         public int LastTax { get; private set; }
 
-        public int ExtraHousing { get; private set; }
-        public int ExtraIcePerTick { get; private set; }
-        public int ExtraMetalsPerTick { get; private set; }
-        public int ExtraRegolithPerTick { get; private set; }
+        /// <summary>Preset conquest goal (set per body / campaign beat).</summary>
+        public int PopulationGoal { get; private set; } = 12;
 
-        public int Housing => (CoreHabs + VillageHabs) * HousingPerHab + ExtraHousing;
+        public int Housing => (CoreHabs + VillageHabs) * HousingPerHab;
         public int CampCount => Farms + Mines + RegolithCamps;
         public int TargetPopulation { get; private set; } = 6;
         public bool NeedsVillageHab =>
             TargetPopulation > Housing && VillageHabs < MaxVillageHabs;
+
+        public bool MeetsPopulationGoal => Population >= PopulationGoal && Housing >= Population;
+
+        /// <summary>
+        /// Colony can feed itself: pop at goal, farm+mine online, and stockpile not empty.
+        /// </summary>
+        public bool IsSustainable =>
+            MeetsPopulationGoal &&
+            Farms > 0 &&
+            Mines > 0 &&
+            StockpileHealthy;
+
+        public bool StockpileHealthy
+        {
+            get
+            {
+                if (_resources == null) return false;
+                return _resources.Get(ResourceId.WaterIce) >= 8 &&
+                       _resources.Get(ResourceId.Metals) >= 12 &&
+                       _resources.Get(ResourceId.Regolith) >= 10;
+            }
+        }
+
+        public string SustainHint
+        {
+            get
+            {
+                if (!MeetsPopulationGoal)
+                    return $"grow to {PopulationGoal} (now {Population}, housing {Housing})";
+                if (Farms <= 0 || Mines <= 0)
+                    return "place a Farm and a Mine";
+                if (!StockpileHealthy)
+                    return "stockpile low — extract / produce";
+                return "holding sustain";
+            }
+        }
 
         private float _taxTimer;
         private float _prodTimer;
@@ -46,6 +81,9 @@ namespace SolarMajesty
             _prodTimer = ProductionInterval;
             _growTimer = GrowInterval;
         }
+
+        public void SetPopulationGoal(int goal) =>
+            PopulationGoal = Mathf.Clamp(goal, 1, 48);
 
         public void Tick(float dt)
         {
@@ -86,25 +124,6 @@ namespace SolarMajesty
             }
         }
 
-        public void NotifyUpgrade(BuildingCategory cat)
-        {
-            switch (cat)
-            {
-                case BuildingCategory.Farm:
-                    ExtraIcePerTick += 2;
-                    break;
-                case BuildingCategory.Mine:
-                    ExtraMetalsPerTick += 3;
-                    break;
-                case BuildingCategory.RegolithCamp:
-                    ExtraRegolithPerTick += 4;
-                    break;
-                case BuildingCategory.Habitat:
-                    ExtraHousing++;
-                    break;
-            }
-        }
-
         public void AddVillageHab()
         {
             VillageHabs++;
@@ -128,17 +147,18 @@ namespace SolarMajesty
             }
             int fromWealth = wealth / 18;
             int fromCamps = CampCount * 2;
-            TargetPopulation = Mathf.Clamp(6 + fromWealth + fromCamps, 6, 24);
+            int natural = 6 + fromWealth + fromCamps;
+            TargetPopulation = Mathf.Clamp(Mathf.Max(PopulationGoal, natural), 6, 36);
         }
 
         private void ProduceCamps()
         {
-            if (Farms > 0 || ExtraIcePerTick > 0)
-                _resources.Add(ResourceId.WaterIce, Farms * 3 + ExtraIcePerTick);
-            if (Mines > 0 || ExtraMetalsPerTick > 0)
-                _resources.Add(ResourceId.Metals, Mines * 4 + ExtraMetalsPerTick);
-            if (RegolithCamps > 0 || ExtraRegolithPerTick > 0)
-                _resources.Add(ResourceId.Regolith, RegolithCamps * 6 + ExtraRegolithPerTick);
+            if (Farms > 0)
+                _resources.Add(ResourceId.WaterIce, Farms * 3);
+            if (Mines > 0)
+                _resources.Add(ResourceId.Metals, Mines * 4);
+            if (RegolithCamps > 0)
+                _resources.Add(ResourceId.Regolith, RegolithCamps * 6);
         }
 
         private void CollectTax()

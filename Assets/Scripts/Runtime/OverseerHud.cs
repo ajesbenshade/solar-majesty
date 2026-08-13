@@ -29,12 +29,14 @@ namespace SolarMajesty
         private const float Pad = 10f;    // panel padding
         private const float TopW = 300f;  // top-left command width
         private const float DockH = 52f;
-        private const float DockW = 560f;
+        private const float DockW = 660f;
 
         private GameLoop _loop;
         private bool _failLatched;
         private bool _winDismissed;
         private bool _deadlineDismissed;
+        private bool _techOpen;
+        private Vector2 _techScroll;
         private string _toast;
         private float _toastUntil;
         private int _lastFocusToast = -1;
@@ -75,6 +77,19 @@ namespace SolarMajesty
             {
                 _loop.Economy.ResupplyArrived -= OnResupply;
                 _loop.Economy.ResupplyArrived += OnResupply;
+            }
+
+            if (_loop != null && _loop.ActiveBody == CelestialBodyId.Earth)
+            {
+                Toast("Earth tutorial — clear dens, grow to pop goal, research Lunar Rocket (T).", 5.5f);
+            }
+            else if (_loop != null && _loop.ActiveBody == CelestialBodyId.Luna)
+            {
+                Toast("Luna — dens + sustain, then research Mars Ship for departure.", 4.5f);
+            }
+            else if (_loop != null && _loop.ActiveBody == CelestialBodyId.Mars)
+            {
+                Toast("Mars finale — clear dens, sustain, Mars Ship already unlocks the pad.", 4.5f);
             }
         }
 
@@ -225,6 +240,7 @@ namespace SolarMajesty
 
             DrawCommandPanel(M);
             DrawMissionPanel();
+            DrawTechPanel();
 
             float dockTop = Screen.height - M - DockH;
             _contentBottom = dockTop;
@@ -312,8 +328,10 @@ namespace SolarMajesty
             {
                 var id = bodies[i];
                 var profile = CelestialBodyCatalog.Get(id);
+                bool unlocked = CampaignProgress.IsUnlocked(id);
                 var chipRect = new Rect(c.x + i * (chipW + 3f), y, chipW, 20f);
-                if (Chip(chipRect, profile.ShortCode, _loop.ActiveBody == id))
+                string label = unlocked ? profile.ShortCode : $"{profile.ShortCode}?";
+                if (Chip(chipRect, label, _loop.ActiveBody == id) && unlocked)
                     _loop.SelectBody(id);
             }
             y += 22f;
@@ -335,7 +353,7 @@ namespace SolarMajesty
             {
                 GUI.Label(
                     new Rect(c.x, y, c.width, 14f),
-                    $"POP {set.Population}/{set.Housing}  ·  VILLAGE {set.VillageHabs}  ·  TAX +{set.LastTax}",
+                    $"POP {set.Population}/{set.PopulationGoal}  ·  HOUSING {set.Housing}  ·  VILLAGE {set.VillageHabs}  ·  TAX +{set.LastTax}",
                     _micro);
                 y += 16f;
             }
@@ -365,19 +383,116 @@ namespace SolarMajesty
                 _loop.ToggleTool(OverseerTool.Flag);
             if (Chip(new Rect(c.x + 102f, c.y + 4f, 96f, 30f), "BUILD · B", _loop.ActiveTool == OverseerTool.Build))
                 _loop.ToggleTool(OverseerTool.Build);
+            if (Chip(new Rect(c.x + 204f, c.y + 4f, 96f, 30f), "TECH · T", _techOpen))
+                ToggleTechPanel();
 
-            Fill(new Rect(c.x + 210f, c.y + 6f, 1f, c.height - 4f), Hairline);
+            Fill(new Rect(c.x + 312f, c.y + 6f, 1f, c.height - 4f), Hairline);
 
-            GUI.Label(new Rect(c.x + 222f, c.y + 8f, 40f, 22f), "FOCUS", _micro);
-            if (Chip(new Rect(c.x + 262f, c.y + 6f, 34f, 26f), "A", _loop.FocusedCampus == 0))
+            GUI.Label(new Rect(c.x + 324f, c.y + 8f, 40f, 22f), "FOCUS", _micro);
+            if (Chip(new Rect(c.x + 364f, c.y + 6f, 34f, 26f), "A", _loop.FocusedCampus == 0))
                 _loop.FocusCampus(0);
-            if (Chip(new Rect(c.x + 300f, c.y + 6f, 34f, 26f), "B", _loop.FocusedCampus == 1))
+            if (Chip(new Rect(c.x + 402f, c.y + 6f, 34f, 26f), "B", _loop.FocusedCampus == 1))
                 _loop.FocusCampus(1);
 
             float threat = _loop.FocusedLocalThreat;
-            GUI.Label(new Rect(c.x + 350f, c.y + 2f, 50f, 14f), "THREAT", _micro);
-            Meter(new Rect(c.x + 350f, c.y + 18f, c.width - 350f - 44f, 6f), threat, Color.Lerp(Accent, Alarm, threat));
+            GUI.Label(new Rect(c.x + 452f, c.y + 2f, 50f, 14f), "THREAT", _micro);
+            Meter(new Rect(c.x + 452f, c.y + 18f, c.width - 452f - 44f, 6f), threat, Color.Lerp(Accent, Alarm, threat));
             GUI.Label(new Rect(c.xMax - 40f, c.y + 8f, 40f, 22f), $"{threat * 100f:F0}%", _microRight);
+        }
+
+        public void ToggleTechPanel() => _techOpen = !_techOpen;
+
+        private void DrawTechPanel()
+        {
+            if (!_techOpen) return;
+            var research = _loop.Research;
+            if (research == null) return;
+
+            const float panelW = 360f;
+            const float panelH = 420f;
+            var rect = new Rect(Screen.width - M - panelW, M + 140f, panelW, panelH);
+            var c = Panel(rect, "Research · T");
+
+            string launch = research.LaunchTechLabel(_loop.ActiveBody);
+            GUI.Label(new Rect(c.x, c.y, c.width, 14f),
+                $"Labs {research.LabCount} · rate {research.CurrentRate:F1}/s · tip {launch}", _micro);
+            float y = c.y + 18f;
+
+            if (research.ActiveTech != TechId.None)
+            {
+                var active = TechCatalog.Get(research.ActiveTech);
+                string name = active != null ? active.DisplayName : research.ActiveTech.ToString();
+                float frac = research.ActiveCost > 0f ? research.ActiveProgress / research.ActiveCost : 0f;
+                GUI.Label(new Rect(c.x, y, c.width, 14f), $"Active: {name}", _body);
+                y += 16f;
+                Meter(new Rect(c.x, y, c.width, 7f), frac, Accent);
+                y += 12f;
+                GUI.Label(new Rect(c.x, y, c.width, 13f),
+                    $"{research.ActiveProgress:F0}/{research.ActiveCost:F0} science" +
+                    (research.LastEvent == "awaiting_stockpile" ? " · need metals/ice" : ""),
+                    _micro);
+                y += 18f;
+            }
+            else
+            {
+                var rec = research.RecommendedNext();
+                var recDef = TechCatalog.Get(rec);
+                string tip = recDef != null
+                    ? $"Next: {recDef.DisplayName} — click to start."
+                    : "Tree complete — launch tech unlocked.";
+                GUI.Label(new Rect(c.x, y, c.width, 14f), tip, _muted);
+                y += 20f;
+            }
+
+            Fill(new Rect(c.x, y, c.width, 1f), Hairline);
+            y += 8f;
+
+            float listH = c.yMax - y;
+            var view = new Rect(c.x, y, c.width, listH);
+            var content = new Rect(0f, 0f, c.width - 18f, TechCatalog.All.Count * 54f);
+            _techScroll = GUI.BeginScrollView(view, _techScroll, content);
+
+            float rowY = 0f;
+            var techs = TechCatalog.All;
+            for (int i = 0; i < techs.Count; i++)
+            {
+                var t = techs[i];
+                bool done = research.IsUnlocked(t.Id);
+                bool can = research.CanSelect(t.Id);
+                bool active = research.ActiveTech == t.Id;
+                var row = new Rect(0f, rowY, content.width, 50f);
+
+                if (GUI.Button(row, GUIContent.none, active ? _rowOn : _rowOff) && can)
+                    research.TrySelect(t.Id);
+
+                string mark = done ? "DONE" : active ? "…" : can ? "GO" : "—";
+                Color markC = done ? Good : active ? Accent : can ? TextPrimary : TextMuted;
+                GUI.Label(new Rect(row.x + 6f, row.y + 4f, row.width - 50f, 16f), t.DisplayName, _value);
+                var prev = _microRight.normal.textColor;
+                _microRight.normal.textColor = markC;
+                GUI.Label(new Rect(row.xMax - 44f, row.y + 4f, 40f, 16f), mark, _microRight);
+                _microRight.normal.textColor = prev;
+
+                GUI.Label(new Rect(row.x + 6f, row.y + 22f, row.width - 12f, 24f),
+                    Truncate(t.Description, 58), _micro);
+
+                if (!done)
+                {
+                    float p = research.Progress01(t.Id);
+                    if (p > 0.01f)
+                        Meter(new Rect(row.x + 6f, row.yMax - 6f, row.width - 12f, 3f), p, Accent);
+                }
+
+                rowY += 54f;
+            }
+
+            GUI.EndScrollView();
+        }
+
+        private static string Truncate(string s, int max)
+        {
+            if (string.IsNullOrEmpty(s) || s.Length <= max) return s ?? "";
+            return s.Substring(0, max - 1) + "…";
         }
 
         private void DrawToolPopups(float dockTop)
@@ -521,28 +636,42 @@ namespace SolarMajesty
             var mission = _loop.Mission;
             if (mission == null) return;
 
-            float h = 104f;
+            float h = 118f;
             if (mission.DeadlineEnabled) h += 26f;
-            if (mission.MetalsGoal > 0) h += 16f;
 
-            var rect = new Rect(Screen.width - M - 286f, M, 286f, h);
-            var c = Panel(rect, "Mission stakes");
+            var rect = new Rect(Screen.width - M - 300f, M, 300f, h);
+            var c = Panel(rect, "Conquest gates");
             float y = c.y;
 
-            Stake(new Rect(c.x, y, c.width, 20f), mission.CombatCleared,
-                $"Combat · wave {mission.Wave}",
-                $"{mission.StalkersRemaining}/{mission.WaveTarget} left");
+            Stake(new Rect(c.x, y, c.width, 20f), mission.DensCleared,
+                "Clear dens",
+                mission.LairCount > 0
+                    ? $"{mission.UnclearedLairs}/{mission.LairCount} left"
+                    : $"{mission.StalkersRemaining} fauna");
             y += 20f;
 
-            Stake(new Rect(c.x, y, c.width, 20f), mission.HoldComplete,
-                "Hold the outpost",
-                $"{_loop.FormatHold(mission.HoldElapsed)} / {_loop.FormatHold(mission.HoldRequired)}");
+            var set = _loop.Settlement;
+            string sustainVal = set != null
+                ? $"pop {mission.PopulationCurrent}/{mission.PopulationGoal} · {_loop.FormatHold(mission.SustainElapsed)}/{_loop.FormatHold(mission.SustainRequired)}"
+                : _loop.FormatHold(mission.SustainElapsed);
+            Stake(new Rect(c.x, y, c.width, 20f), mission.SustainComplete,
+                "Sustain colony",
+                sustainVal);
             y += 20f;
 
-            Stake(new Rect(c.x, y, c.width, 20f), mission.ColonyComplete,
-                "Construction",
-                $"{mission.CompletedBuildings}/{mission.BuildingsRequired} done");
+            string launchNeed = _loop.Research != null
+                ? _loop.Research.LaunchTechLabel(_loop.ActiveBody)
+                : "craft";
+            Stake(new Rect(c.x, y, c.width, 20f), mission.LaunchReady,
+                "Launch craft",
+                mission.LaunchReady ? "ready on pad" : $"need {launchNeed}");
             y += 22f;
+
+            if (set != null)
+            {
+                GUI.Label(new Rect(c.x, y, c.width, 14f), set.SustainHint, _micro);
+                y += 16f;
+            }
 
             if (mission.DeadlineEnabled)
             {
@@ -551,13 +680,6 @@ namespace SolarMajesty
                 GUI.Label(new Rect(c.x, y, 120f, 14f), "DEADLINE", _micro);
                 GUI.Label(new Rect(c.xMax - 60f, y, 60f, 14f), _loop.FormatHold(left), _microRight);
                 Meter(new Rect(c.x, y + 16f, c.width, 5f), frac, frac < 0.25f ? Alarm : Accent);
-                y += 26f;
-            }
-
-            if (mission.MetalsGoal > 0)
-            {
-                GUI.Label(new Rect(c.x, y, c.width, 14f),
-                    $"alt. goal — metals {mission.MetalsCurrent}/{mission.MetalsGoal}", _micro);
             }
         }
 
@@ -581,15 +703,14 @@ namespace SolarMajesty
         private void DrawBuildingCard(ColonyStructure st)
         {
             const float cardW = 340f;
-            const float cardH = 168f;
+            const float cardH = 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
             var c = Panel(rect, null);
             Outline(rect, new Color(0.96f, 0.42f, 0.08f, 0.45f));
 
             float row = c.y;
-            GUI.Label(new Rect(c.x, row, c.width - 70f, 16f), st.DisplayName, _value);
-            GUI.Label(new Rect(c.xMax - 66f, row, 66f, 16f), $"LVL {st.Level}", _microRight);
+            GUI.Label(new Rect(c.x, row, c.width, 16f), st.DisplayName, _value);
             row += 18f;
 
             string role = st.IsWorkshop ? "Workshop" : st.Role.ToString();
@@ -627,20 +748,10 @@ namespace SolarMajesty
             }
             row += 26f;
 
-            bool canUp = st.CanUpgrade &&
-                         (_loop.Resources == null ||
-                          _loop.Resources.CanAfford(new[]
-                          {
-                              new ResourceAmount(ResourceId.Metals, st.UpgradeCostMetals),
-                              new ResourceAmount(ResourceId.Regolith, st.UpgradeCostRegolith)
-                          }));
-            string upLabel = st.CanUpgrade
-                ? $"UPGRADE  {st.UpgradeCostMetals}M {st.UpgradeCostRegolith}R"
-                : "MAX LEVEL";
-            if (GUI.Button(new Rect(c.x, row, 188f, 24f), upLabel, canUp ? _chipOn : _chipOff) && canUp)
-                _loop.TryUpgradeSelected();
-            if (GUI.Button(new Rect(c.x + 194f, row, 116f, 24f), "FLAG HERE", _chipOff))
+            if (GUI.Button(new Rect(c.x, row, 116f, 24f), "FLAG HERE", _chipOff))
                 _loop.PostAttractFlagOnSelected();
+            GUI.Label(new Rect(c.x + 124f, row + 4f, c.width - 124f, 20f),
+                "Progress via research & conquest gates", _micro);
         }
 
         private static string FormatWorkers(ColonyStructure st)
@@ -792,22 +903,42 @@ namespace SolarMajesty
 
             var prev = _banner.normal.textColor;
             _banner.normal.textColor = Good;
-            GUI.Label(new Rect(c.x, c.y, c.width, 26f), "OUTPOST SECURED", _banner);
+            bool finale = !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue;
+            GUI.Label(new Rect(c.x, c.y, c.width, 26f),
+                finale ? "SOLAR CONQUEST COMPLETE" : "OUTPOST SECURED", _banner);
             _banner.normal.textColor = prev;
 
-            GUI.Label(new Rect(c.x, c.y + 32f, c.width, 16f), "Combat cleared · hold survived · construction finished.", _body);
-            GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f), "Continue this world, or conquer a new seeded layout.", _muted);
+            GUI.Label(new Rect(c.x, c.y + 32f, c.width, 16f), "Dens cleared · colony sustained · launch ready.", _body);
+            GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f),
+                finale
+                    ? "Mars holds. Rematch this world, or oversee in sandbox."
+                    : "Stage the next departure, or keep overseeing here.",
+                _muted);
 
             if (GUI.Button(new Rect(c.x, c.yMax - 30f, 190f, 28f), "CONTINUE OVERSEEING  ·  Y", _chipOn))
             {
                 _winDismissed = true;
                 mission.DismissWinToSandbox();
             }
-            string nextLabel = _loop.BodyProfile != null ? $"NEW {_loop.BodyProfile.ShortCode}" : "NEW WORLD";
-            if (GUI.Button(new Rect(c.x + 200f, c.yMax - 30f, 160f, 28f), nextLabel, _chipOff))
+
+            var next = CampaignProgress.NextAfter(_loop.ActiveBody);
+            if (next.HasValue)
             {
-                _winDismissed = true;
-                _loop.BeginNextConquest();
+                string nextName = CelestialBodyCatalog.Get(next.Value).ShortCode;
+                if (GUI.Button(new Rect(c.x + 200f, c.yMax - 30f, 160f, 28f), $"TO {nextName}", _chipOff))
+                {
+                    _winDismissed = true;
+                    _loop.AdvanceCampaign();
+                }
+            }
+            else
+            {
+                string rematch = _loop.BodyProfile != null ? $"NEW {_loop.BodyProfile.ShortCode}" : "NEW WORLD";
+                if (GUI.Button(new Rect(c.x + 200f, c.yMax - 30f, 160f, 28f), rematch, _chipOff))
+                {
+                    _winDismissed = true;
+                    _loop.BeginNextConquest();
+                }
             }
         }
 

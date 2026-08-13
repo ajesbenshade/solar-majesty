@@ -160,6 +160,7 @@ namespace SolarMajesty
             ColonyVisualUtility.SnapToGround(go);
             CampusNavMesh.AddObstacle(go);
             _loop?.NotifyBuildingPlaced(order.Data, go, order.WorldPosition);
+            _loop?.NotifyCampusExpanded();
         }
 
         private void SpawnConstructionSite(ConstructionOrder order)

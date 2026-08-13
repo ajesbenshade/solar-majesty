@@ -14,9 +14,9 @@ You are picking up Solar Majesty (repo: ajesbenshade/solar-majesty).
 ## What this is
 Majesty 2–style RTS homage: player is Overseer AI (never direct unit control).
 Build infrastructure, post bounty flags, manage economy. Autonomous specialists
-(Scout / Engineer / Defense) accept or reject work via SpecialistBrain utility AI
-(personality + greed + distance + risk). Dust Stalkers raise ThreatPressure so
-courage matters. Greybox demo is playable in Unity 6 URP.
+(Scout / Engineer / Defense / Medic) accept or reject work via SpecialistBrain.
+Campaign spine: Earth tutorial → Luna → Mars with dens / sustain / launch gates
+and an Alpha Centauri-style tech tree (TECH · T). Dust Stalkers raise ThreatPressure.
 
 ## Non-negotiables
 - Do NOT add click-to-move or any player command that bypasses SpecialistBrain.
@@ -24,15 +24,13 @@ courage matters. Greybox demo is playable in Unity 6 URP.
   under Assets/Scripts/Runtime/.
 - Namespace: SolarMajesty.
 - Prefer thin visual/runtime wiring over architecture rewrites.
-- No NavMesh, save/load, multi-body campaign, or new flag types unless explicitly asked.
 
 ## Open & verify first (mandatory)
 1. Unity Hub → Open the repo root (needs Unity 6000.5.x).
-2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play.
+2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (starts on Earth if prefs fresh).
 3. If scene missing: menu Solar Majesty → Build Demo Scene.
-4. Run the 60-second script and checklist in Docs/DEMO.md.
-5. Confirm: mesh colony showcase, three specialists self-sort, stalkers raise
-   threat, F2 ClearThreat attracts Defense, cheap far Explore → Idle, R → Rest.
+4. Run the Earth tutorial script in Docs/DEMO.md (TECH · T, dens, starter farm/mine, Lunar Rocket, TO LUNA).
+5. Confirm: no building Upgrade button; conquest gates panel; research auto-queue; launch craft stages on pad (reuses starship).
 
 ## Architecture map
 - Pure systems: Assets/Scripts/Systems/ (SpecialistBrain, FlagManager, BuildingPlacer,

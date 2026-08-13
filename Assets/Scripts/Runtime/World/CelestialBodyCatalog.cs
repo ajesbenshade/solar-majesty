@@ -4,27 +4,86 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Built-in world profiles. Future bodies (Ceres, Titan, …) land here.
+    /// Campaign order: Earth → Luna → Mars.
     /// </summary>
     public static class CelestialBodyCatalog
     {
+        private static CelestialBodyProfile _earth;
         private static CelestialBodyProfile _luna;
         private static CelestialBodyProfile _mars;
         private static readonly CelestialBodyId[] AllBodies =
         {
+            CelestialBodyId.Earth,
             CelestialBodyId.Luna,
             CelestialBodyId.Mars
         };
 
         public static CelestialBodyId[] All => AllBodies;
 
+        public static CelestialBodyProfile Earth() => _earth ??= BuildEarth();
         public static CelestialBodyProfile Luna() => _luna ??= BuildLuna();
         public static CelestialBodyProfile Mars() => _mars ??= BuildMars();
 
-        public static CelestialBodyProfile Get(CelestialBodyId id) =>
-            id == CelestialBodyId.Mars ? Mars() : Luna();
+        public static CelestialBodyProfile Get(CelestialBodyId id)
+        {
+            switch (id)
+            {
+                case CelestialBodyId.Earth: return Earth();
+                case CelestialBodyId.Mars: return Mars();
+                default: return Luna();
+            }
+        }
 
-        public static CelestialBodyId Next(CelestialBodyId id) =>
-            id == CelestialBodyId.Luna ? CelestialBodyId.Mars : CelestialBodyId.Luna;
+        public static CelestialBodyId Next(CelestialBodyId id)
+        {
+            int n = ((int)id + 1) % AllBodies.Length;
+            return AllBodies[n];
+        }
+
+        private static CelestialBodyProfile BuildEarth()
+        {
+            return new CelestialBodyProfile
+            {
+                Id = CelestialBodyId.Earth,
+                DisplayName = "Earth",
+                ShortCode = "EARTH",
+                GroundLight = new Color(0.28f, 0.38f, 0.22f),
+                GroundDark = new Color(0.16f, 0.22f, 0.12f),
+                Horizon = new Color(0.35f, 0.48f, 0.55f),
+                RockColor = new Color(0.32f, 0.30f, 0.28f),
+                CraterRim = new Color(0.34f, 0.36f, 0.30f),
+                CraterFloor = new Color(0.22f, 0.26f, 0.18f),
+                DuneColor = new Color(0.42f, 0.40f, 0.28f),
+                SoilNodeColor = new Color(0.40f, 0.36f, 0.22f),
+                LairRim = new Color(0.20f, 0.10f, 0.08f),
+                LairPit = new Color(0.08f, 0.05f, 0.04f),
+                SkyTop = new Color(0.22f, 0.42f, 0.72f),
+                SkyHorizon = new Color(0.62f, 0.72f, 0.82f),
+                SunColor = new Color(1f, 0.96f, 0.88f),
+                SunIntensity = 1.25f,
+                FillColor = new Color(0.45f, 0.55f, 0.75f),
+                AmbientSky = new Color(0.40f, 0.55f, 0.75f),
+                AmbientEquator = new Color(0.35f, 0.40f, 0.32f),
+                AmbientGround = new Color(0.12f, 0.14f, 0.10f),
+                FogColor = new Color(0.55f, 0.62f, 0.68f),
+                FogStart = 50f,
+                FogEnd = 280f,
+                AtmosphereThickness = 1.05f,
+                SkyExposure = 1.05f,
+                CraterCount = 24,
+                RockCount = 50,
+                DuneCount = 12,
+                ResourceNodeCount = 10,
+                LairCount = 3,
+                CampusExclusion = 20f,
+                MinSpacing = 8f,
+                IcePolarBias = 0.25f,
+                ResourceWeights = new[] { 4, 3, 3, 1 },
+                PopulationGoal = 8,
+                SustainHoldSeconds = 25f,
+                ResearchRateMultiplier = 1.35f
+            };
+        }
 
         private static CelestialBodyProfile BuildLuna()
         {
@@ -64,7 +123,10 @@ namespace SolarMajesty
                 CampusExclusion = 22f,
                 MinSpacing = 9f,
                 IcePolarBias = 0.55f,
-                ResourceWeights = new[] { 5, 3, 2, 2 }
+                ResourceWeights = new[] { 5, 3, 2, 2 },
+                PopulationGoal = 12,
+                SustainHoldSeconds = 40f,
+                ResearchRateMultiplier = 1f
             };
         }
 
@@ -106,7 +168,10 @@ namespace SolarMajesty
                 CampusExclusion = 22f,
                 MinSpacing = 8.5f,
                 IcePolarBias = 0.82f,
-                ResourceWeights = new[] { 3, 5, 2, 2 }
+                ResourceWeights = new[] { 3, 5, 2, 2 },
+                PopulationGoal = 16,
+                SustainHoldSeconds = 50f,
+                ResearchRateMultiplier = 0.9f
             };
         }
     }

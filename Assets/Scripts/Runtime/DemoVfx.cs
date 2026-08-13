@@ -53,6 +53,25 @@ namespace SolarMajesty
             Object.Destroy(go, 0.45f);
         }
 
+        /// <summary>Orange exhaust plume for staged / departing craft.</summary>
+        public static void LaunchPlume(Vector3 worldPos)
+        {
+            ClaimRing(worldPos, new Color(0.96f, 0.42f, 0.08f));
+            for (int i = 0; i < 8; i++)
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                go.name = "VfxPlume";
+                Object.Destroy(go.GetComponent<Collider>());
+                go.transform.position = worldPos + Vector3.up * 0.2f;
+                go.transform.localScale = Vector3.one * 0.35f;
+                SetColor(go, Color.Lerp(new Color(1f, 0.55f, 0.12f), new Color(1f, 0.85f, 0.4f), i / 8f));
+                var bit = go.AddComponent<VfxBurstBit>();
+                float ang = (Mathf.PI * 2f * i) / 8f;
+                bit.velocity = new Vector3(Mathf.Cos(ang) * 0.6f, 4.5f + i * 0.2f, Mathf.Sin(ang) * 0.6f);
+                bit.lifetime = 0.7f;
+            }
+        }
+
         private static void SetColor(GameObject go, Color c)
         {
             var rend = go.GetComponent<Renderer>();

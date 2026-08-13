@@ -54,7 +54,8 @@ namespace SolarMajesty
                 ColonyLayout.CampusOrigin,
                 ColonyLayout.CampusBOrigin,
                 ColonyLayout.PartySpawn,
-                ColonyLayout.PartySpawnB
+                ColonyLayout.PartySpawnB,
+                ColonyLayout.InnOutpost
             };
 
             SpawnCraters(rng, placed);
@@ -121,6 +122,30 @@ namespace SolarMajesty
                 {
                     bestSq = dSq;
                     best = n;
+                }
+            }
+            return best;
+        }
+
+        public StalkerLair FindNearestLair(Vector3 world, float maxDist = 12f)
+        {
+            StalkerLair best = null;
+            float bestSq = maxDist * maxDist;
+            for (int i = 0; i < _lairs.Count; i++)
+            {
+                var lair = _lairs[i];
+                if (lair == null || lair.IsCleared) continue;
+                float limit = Mathf.Max(maxDist, lair.ClearRadius);
+                float limitSq = limit * limit;
+                Vector3 p = lair.WorldPosition;
+                float dx = p.x - world.x;
+                float dz = p.z - world.z;
+                float dSq = dx * dx + dz * dz;
+                if (dSq > limitSq) continue;
+                if (dSq < bestSq)
+                {
+                    bestSq = dSq;
+                    best = lair;
                 }
             }
             return best;

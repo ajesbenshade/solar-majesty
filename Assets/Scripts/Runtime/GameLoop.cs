@@ -61,7 +61,7 @@ namespace SolarMajesty
         [SerializeField] private bool spawnShowcaseColony = true;
 
         [Header("Procedural world")]
-        [SerializeField] private CelestialBodyId celestialBody = CelestialBodyId.Luna;
+        [SerializeField] private CelestialBodyId celestialBody = CelestialBodyId.Earth;
         [Tooltip("0 = use persisted BodySeed for this world; non-zero forces that seed for this Play.")]
         [SerializeField] private int worldSeedOverride = 0;
         [SerializeField] private bool advanceSeedOnRestart = true;
@@ -89,6 +89,7 @@ namespace SolarMajesty
         public IsoGrid Grid => grid;
         public Settlement Settlement { get; private set; }
         public VillageExpansion Village { get; private set; }
+        public ResearchManager Research { get; private set; }
         public IReadOnlyList<HeroParty> Parties => _parties;
         public CelestialBodyId ActiveBody => celestialBody;
         public CelestialBodyProfile BodyProfile => _body;
@@ -191,6 +192,7 @@ namespace SolarMajesty
         private MissionController _mission;
         private PlanetaryWorldGen _world;
         private CelestialBodyProfile _body;
+        private bool _launchCraftStaged;
 
         public MissionController Mission => _mission;
 
@@ -203,9 +205,10 @@ namespace SolarMajesty
 
         private void Awake()
         {
+            CampaignProgress.Ensure();
             celestialBody = BodySeed.LoadSavedBody();
-            if (celestialBody != CelestialBodyId.Luna && celestialBody != CelestialBodyId.Mars)
-                celestialBody = CelestialBodyId.Luna;
+            if (!CampaignProgress.IsUnlocked(celestialBody))
+                celestialBody = CelestialBodyId.Earth;
             _body = CelestialBodyCatalog.Get(celestialBody);
             BodySeed.Ensure(celestialBody, worldSeedOverride);
 
@@ -218,6 +221,7 @@ namespace SolarMajesty
             if (Village == null) Village = gameObject.AddComponent<VillageExpansion>();
             Village.Bind(this);
             SpawnShowcaseColony();
+            SpawnEarthStarterCamps();
             GenerateWorld();
             SpawnParty();
             SpawnThreats();
@@ -227,10 +231,86 @@ namespace SolarMajesty
             KingdomLife.Dress(transform);
             EnsureHud();
             EnsureMission();
+            LaunchSite.ClearSession();
+            _launchCraftStaged = false;
+            BootstrapResearch();
+            SyncLaunchGate();
             DemoAudio.Ensure();
             DemoAudio.SetCampusAmbient(0);
 
             Debug.Log($"[GameLoop] Demo ready — {_body.DisplayName} seed={BodySeed.Current}.");
+        }
+
+        /// <summary>
+        /// Earth tutorial: starter Farm + Mine so sustain is learnable without hunting the build menu first.
+        /// </summary>
+        private void SpawnEarthStarterCamps()
+        {
+            if (celestialBody != CelestialBodyId.Earth || buildingRoot == null) return;
+
+            SpawnStarterCamp(
+                BuildingCategory.Farm,
+                ColonyLayout.CampusOrigin + new Vector3(-10f, 0f, -18f),
+                "EarthFarm");
+            SpawnStarterCamp(
+                BuildingCategory.Mine,
+                ColonyLayout.CampusOrigin + new Vector3(10f, 0f, -18f),
+                "EarthMine");
+
+            if (Resources != null)
+            {
+                Resources.Add(ResourceId.WaterIce, 10);
+                Resources.Add(ResourceId.Metals, 8);
+                Resources.Add(ResourceId.Regolith, 12);
+            }
+        }
+
+        private void SpawnStarterCamp(BuildingCategory cat, Vector3 world, string name)
+        {
+            GameObject prefab = BuildingVisualCatalog.LoadPrefab(cat);
+            GameObject go;
+            float scale = ColonyLayout.ScaleForCategory(cat);
+            if (prefab != null)
+            {
+                go = ColonyVisualUtility.InstantiateOriented(prefab, world, buildingRoot);
+                go.transform.localScale = Vector3.one * scale;
+            }
+            else
+            {
+                go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.transform.SetParent(buildingRoot, true);
+                go.transform.position = world + Vector3.up * (0.75f * scale);
+                go.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f) * scale;
+            }
+
+            go.name = name;
+            ColonyVisualUtility.EnsureUrpMaterials(go);
+            ColonyVisualUtility.SnapToGround(go);
+            CampusNavMesh.AddObstacle(go);
+
+            var data = FindBuildingData(cat);
+            if (data != null)
+                NotifyBuildingPlaced(data, go, world);
+            else
+                Village?.RegisterPlacedBuilding(null, cat, go, world);
+        }
+
+        private BuildingData FindBuildingData(BuildingCategory cat)
+        {
+            if (starterBuildings == null) return null;
+            for (int i = 0; i < starterBuildings.Length; i++)
+            {
+                if (starterBuildings[i] != null && starterBuildings[i].category == cat)
+                    return starterBuildings[i];
+            }
+            return null;
+        }
+
+        private void BootstrapResearch()
+        {
+            if (Research == null) return;
+            if (Research.ActiveTech == TechId.None && Research.CanSelect(TechId.FieldSurvey))
+                Research.TrySelect(TechId.FieldSurvey);
         }
 
         private void Update()
@@ -241,6 +321,7 @@ namespace SolarMajesty
             _world?.TickLairs();
             Village?.Tick(Time.deltaTime);
             Settlement?.Tick(Time.deltaTime);
+            TickResearch(Time.deltaTime);
             _mission?.Tick();
 
             _constructionTick += Time.deltaTime;
@@ -443,7 +524,42 @@ namespace SolarMajesty
             Brain = new SpecialistBrain();
             Economy = new SimpleEconomy(Resources);
             Settlement = new Settlement(Resources);
+            Research = new ResearchManager(Resources);
+            Research.TechUnlocked += OnTechUnlocked;
             Threat = new ThreatPressure { Ambient = 0.18f };
+        }
+
+        private void OnTechUnlocked(TechId id)
+        {
+            SyncLaunchGate();
+            Debug.Log($"[GameLoop] Tech unlocked: {id}");
+        }
+
+        private void SyncLaunchGate()
+        {
+            if (_mission == null || Research == null) return;
+            if (!Research.HasLaunchUnlockFor(celestialBody)) return;
+
+            bool wasReady = _mission.LaunchReady;
+            _mission.SetLaunchReady(true);
+            if (!_launchCraftStaged)
+            {
+                _launchCraftStaged = true;
+                bool heavy = celestialBody != CelestialBodyId.Earth;
+                LaunchSite.EnsureReady(buildingRoot != null ? buildingRoot : transform, heavy);
+            }
+
+            if (!wasReady)
+                Debug.Log("[GameLoop] Launch gate ready — departure craft staged.");
+        }
+
+        private void TickResearch(float dt)
+        {
+            if (Research == null) return;
+            CountLabs(out int labs, out int workers);
+            float mult = _body != null ? _body.ResearchRateMultiplier : 1f;
+            Research.Tick(dt, labs, workers, mult);
+            SyncLaunchGate();
         }
 
         private void EnsureContent()
@@ -818,6 +934,15 @@ namespace SolarMajesty
                 _agents[i]?.BindNavMesh(_campusNav);
         }
 
+        /// <summary>Rebuild walkable mesh after village HABs / connectors expand the campus.</summary>
+        public void NotifyCampusExpanded()
+        {
+            if (_campusNav == null || grid == null) return;
+            _campusNav.Build(grid);
+            for (int i = 0; i < _agents.Count; i++)
+                _agents[i]?.BindNavMesh(_campusNav);
+        }
+
         private void SpawnThreats()
         {
             _stalkers.Clear();
@@ -917,11 +1042,28 @@ namespace SolarMajesty
             _debugHud.SetVisible(false);
         }
 
+        private void CountLabs(out int labs, out int workers)
+        {
+            labs = 0;
+            workers = 0;
+            if (Village == null) return;
+            var list = Village.Structures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                if (s.Category != BuildingCategory.Laboratory) continue;
+                labs++;
+                workers += s.WorkerCount;
+            }
+        }
+
         private void EnsureMission()
         {
             _mission = GetComponent<MissionController>();
             if (_mission == null) _mission = gameObject.AddComponent<MissionController>();
             _mission.Bind(this);
+            SyncLaunchGate();
         }
 
         public void RetryParty()
@@ -941,7 +1083,7 @@ namespace SolarMajesty
             ReloadActiveScene();
         }
 
-        /// <summary>Win dismiss into a fresh conquest of the current body (new seed + reload).</summary>
+        /// <summary>Same-body reseed (sandbox rematch).</summary>
         public void BeginNextConquest()
         {
             BodySeed.AdvanceForNextConquest();
@@ -949,10 +1091,35 @@ namespace SolarMajesty
             ReloadActiveScene();
         }
 
-        /// <summary>Switch world without advancing that body's seed. Reloads the scene.</summary>
-        public void SelectBody(CelestialBodyId body)
+        /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>
+        public void AdvanceCampaign()
+        {
+            Vector3 pad = ColonyLayout.CampusOrigin + new Vector3(16f, 0f, 0f);
+            LaunchSite.PlayDeparture(pad);
+            CampaignProgress.UnlockNextFrom(celestialBody);
+            var next = CampaignProgress.NextAfter(celestialBody);
+            if (!next.HasValue)
+            {
+                BeginNextConquest();
+                return;
+            }
+
+            BodySeed.SetBody(next.Value);
+            BodySeed.Ensure(next.Value, 0);
+            BodySeed.AdvanceForNextConquest();
+            DemoAudio.PlayRetry();
+            ReloadActiveScene();
+        }
+
+        /// <summary>Switch world without advancing that body's seed. Respects campaign unlocks unless cheating.</summary>
+        public void SelectBody(CelestialBodyId body, bool allowLocked = false)
         {
             if (body == celestialBody) return;
+            if (!allowLocked && !CampaignProgress.IsUnlocked(body))
+            {
+                Debug.Log($"[GameLoop] {body} is locked — conquer the prior world first.");
+                return;
+            }
             BodySeed.SetBody(body);
             DemoAudio.PlayRetry();
             ReloadActiveScene();
@@ -976,6 +1143,8 @@ namespace SolarMajesty
             if (Input.GetKeyDown(KeyCode.B)) ToggleTool(OverseerTool.Build);
             if (Input.GetKeyDown(KeyCode.G)) ToggleTool(OverseerTool.Flag);
             if (Input.GetKeyDown(KeyCode.Q)) ApplyTool(OverseerTool.None);
+            if (Input.GetKeyDown(KeyCode.T) && _overseerHud != null)
+                _overseerHud.ToggleTechPanel();
 
             if (Input.GetKeyDown(KeyCode.F8) && _debugHud != null)
                 _debugHud.ToggleVisible();
@@ -988,7 +1157,12 @@ namespace SolarMajesty
                 SeedCampusBAttract();
 
             if (Input.GetKeyDown(KeyCode.F10))
-                SelectBody(CelestialBodyCatalog.Next(celestialBody));
+            {
+                // Debug cheat: cycle any body. Hold Shift to also unlock all.
+                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                    CampaignProgress.DebugUnlockAll();
+                SelectBody(CelestialBodyCatalog.Next(celestialBody), allowLocked: true);
+            }
 
             if (Input.GetKeyDown(KeyCode.P))
                 FormPartyAtInn();
@@ -1275,15 +1449,6 @@ namespace SolarMajesty
         {
             if (SelectedStructure == st)
                 SelectedStructure = null;
-        }
-
-        public bool TryUpgradeSelected()
-        {
-            var st = SelectedStructure;
-            if (st == null || !st.CanUpgrade) return false;
-            if (!st.TryUpgrade(Resources)) return false;
-            Settlement?.NotifyUpgrade(st.Category);
-            return true;
         }
 
         public void SetSelectedWorkplaceClass(SpecialistClass cls)
