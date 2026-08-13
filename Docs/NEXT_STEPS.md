@@ -19,13 +19,18 @@
 - [x] Phase 5C Multi-Body — Campus B outpost + F6/F7 camera switch
 - [x] Phase 5D Body Framing — local threat per specialist, campus HUD, authored audio/VolumeProfile path
 - [x] Phase 5E Dual Deploy — Campus B Scout detachment, F9 attractor, dual ambient beds
+- [x] Phase 6A Procedural worlds — seeded Luna/Mars profiles, nodes, lairs, body switch (F10)
+- [x] Phase 6B Majesty loop — flee-to-inn, opportunistic hunt, kingdom vocation (patrol/tinker/scout)
+- [x] Phase 6C Settlement — waystation inn, radiating village HABs + tax, farms/mines/regolith camps, inn parties (P / [)
+- [x] Phase 6D Inspect / workshops — LMB inspect buildings, upgrades, per-class workshops, flag attract (no guilds)
+- [x] Phase 6E Map 16× — 256-cell / 384 m sandbox, Blender craters + solar farm
 
-## Next (Phase 5F → AAA)
+## Next (Phase 6+)
 
-1. Play Mode smoke with Imagine-refined unit FBX (Scout / Engineer / Defense / Stalker).
+1. Play Mode smoke — village ring, inn party (P), camp production, stalkers hitting outer HABs first.
 2. Optional second-pass scale sheets (unit next to HAB) + further mesh detail.
-3. Optional full B party / content pass.
+3. Optional extra heroes from workshops / random landing. Add further bodies as catalog profiles (Ceres, Titan, …).
 
 ## Still out of scope (for now)
 
-Full combat sim rewrite, campaign, multiplayer, SpecialistBrain rescoring without design sign-off.
+Full combat sim rewrite, campaign, multiplayer.

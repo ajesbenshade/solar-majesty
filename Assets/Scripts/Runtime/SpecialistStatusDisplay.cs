@@ -70,17 +70,34 @@ namespace SolarMajesty
             switch (_agent.CurrentAction)
             {
                 case SpecialistAction.Rest:
-                    c = new Color(0.45f, 0.75f, 1f); // cool blue
-                    text = "REST";
+                    c = new Color(0.45f, 0.75f, 1f);
+                    text = _agent.Status != null && _agent.Status.Contains("seeking") ? "INN" : "REST";
+                    break;
+                case SpecialistAction.Flee:
+                    c = new Color(0.95f, 0.32f, 0.26f);
+                    text = "FLEE";
+                    break;
+                case SpecialistAction.Hunt:
+                    c = new Color(0.95f, 0.35f, 0.2f);
+                    text = _agent.Status == "engaging" ? "FIGHT" : "HUNT";
+                    break;
+                case SpecialistAction.Wander:
+                    c = new Color(0.72f, 0.78f, 0.55f);
+                    text = _agent.LastReason != null && _agent.LastReason.Contains("party_follow") ? "PARTY"
+                        : _agent.LastReason != null && _agent.LastReason.Contains("workshop") ? "SHOP"
+                        : _agent.LastReason != null && _agent.LastReason.Contains("patrol") ? "PATROL"
+                        : _agent.LastReason != null && _agent.LastReason.Contains("tinker") ? "TOWN"
+                        : _agent.LastReason != null && _agent.LastReason.Contains("triage") ? "HEAL"
+                        : "SCOUT";
                     break;
                 case SpecialistAction.PursueFlag:
-                    c = new Color(1f, 0.55f, 0.15f); // orange pursue
+                    c = new Color(1f, 0.55f, 0.15f);
                     text = _agent.Status != null && _agent.Status.StartsWith("working")
                         ? "WORK"
                         : "PURSUE";
                     break;
                 default:
-                    c = new Color(0.7f, 0.7f, 0.75f); // idle gray
+                    c = new Color(0.7f, 0.7f, 0.75f);
                     text = "IDLE";
                     break;
             }
@@ -89,8 +106,7 @@ namespace SolarMajesty
             // Short action chip only — scores stay on F8 debug HUD.
             _label.text = text;
             _label.color = c;
-            _label.gameObject.SetActive(_agent.CurrentAction != SpecialistAction.Idle ||
-                                        (_agent.Status != null && _agent.Status.StartsWith("down")));
+            _label.gameObject.SetActive(true);
 
             // Subtle idle pulse on the orb so state is readable at a glance.
             float pulse = 1f + Mathf.Sin(Time.time * 3f) * 0.08f;

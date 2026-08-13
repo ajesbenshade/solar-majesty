@@ -3,21 +3,30 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Minimal flat grid for the lunar sandbox. Presentation is isometric via the camera;
+    /// Minimal flat grid for the planetary sandbox. Presentation is isometric via the camera;
     /// world space remains axis-aligned XZ for simple agent movement.
     /// </summary>
     public class IsoGrid : MonoBehaviour
     {
-        [SerializeField] private int width = 64;
-        [SerializeField] private int height = 64;
+        [SerializeField] private int width = 256;
+        [SerializeField] private int height = 256;
         [SerializeField] private float cellSize = 1.5f;
         [SerializeField] private Vector3 origin = Vector3.zero;
-        [SerializeField] private bool drawGizmos = true;
+        [SerializeField] private bool drawGizmos = false;
         [SerializeField] private Color gizmoColor = new Color(0.35f, 0.7f, 1f, 0.35f);
 
         public int Width => width;
         public int Height => height;
         public float CellSize => cellSize;
+        public float WorldWidth => width * cellSize;
+        public float WorldHeight => height * cellSize;
+
+        /// <summary>4× cells on each axis vs the original 64 → 16× playable area.</summary>
+        public void Resize(int cellsX, int cellsZ)
+        {
+            width = Mathf.Max(8, cellsX);
+            height = Mathf.Max(8, cellsZ);
+        }
 
         public bool InBounds(Vector2Int cell) =>
             cell.x >= 0 && cell.y >= 0 && cell.x < width && cell.y < height;

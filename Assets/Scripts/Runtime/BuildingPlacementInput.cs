@@ -4,7 +4,7 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Player places buildings only (Overseer). Never commands specialists.
-    /// Keys 1–7 select building data when assigned; LMB commits when build tool active.
+    /// Keys 1–9 and 0 select building data when assigned; LMB commits when build tool active.
     /// </summary>
     public class BuildingPlacementInput : MonoBehaviour
     {
@@ -19,6 +19,7 @@ namespace SolarMajesty
         private Transform _buildingRoot;
         private GameObject _ghost;
         private GameObject _footprint;
+        private GameLoop _loop;
 
         public bool EnabledPlacement
         {
@@ -58,6 +59,7 @@ namespace SolarMajesty
             _cam = cam;
             catalog = buildings;
             _buildingRoot = buildingRoot;
+            _loop = GetComponent<GameLoop>();
         }
 
         private void Update()
@@ -72,6 +74,9 @@ namespace SolarMajesty
             if (Input.GetKeyDown(KeyCode.Alpha5)) Select(4);
             if (Input.GetKeyDown(KeyCode.Alpha6)) Select(5);
             if (Input.GetKeyDown(KeyCode.Alpha7)) Select(6);
+            if (Input.GetKeyDown(KeyCode.Alpha8)) Select(7);
+            if (Input.GetKeyDown(KeyCode.Alpha9)) Select(8);
+            if (Input.GetKeyDown(KeyCode.Alpha0)) Select(9);
 
             if (!enabledPlacement || Selected == null)
             {
@@ -98,7 +103,10 @@ namespace SolarMajesty
             ColonyVisualUtility.ApplyGhostTint(_ghost, valid);
             UpdateFootprint(cell, valid);
 
-            if (Input.GetKeyDown(KeyCode.Mouse0) && valid && !Input.GetMouseButton(1))
+            // Place on release so LMB drag-pan does not also commit a building.
+            if (Input.GetMouseButtonUp(0) && valid && !Input.GetMouseButton(1) &&
+                (_cam == null || !_cam.SuppressWorldClick) &&
+                (_loop == null || !_loop.WorldClickUsedBySelection))
             {
                 if (_placer.TryPlace(Selected, cell, snapped, out ConstructionOrder order, out string fail))
                 {
@@ -130,9 +138,13 @@ namespace SolarMajesty
 
             GameObject go;
             float scale = ColonyLayout.ScaleForCategory(order.Data.category);
-            if (prefab != null)
+            if (order.Data.category == BuildingCategory.Utility)
             {
-                go = Instantiate(prefab, order.WorldPosition, Quaternion.identity, _buildingRoot);
+                go = ColonyVisualUtility.SpawnPlusConnector(order.WorldPosition, _buildingRoot, scale);
+            }
+            else if (prefab != null)
+            {
+                go = ColonyVisualUtility.InstantiateOriented(prefab, order.WorldPosition, _buildingRoot);
                 go.transform.localScale = Vector3.one * scale;
             }
             else
@@ -147,6 +159,7 @@ namespace SolarMajesty
             ColonyVisualUtility.EnsureUrpMaterials(go);
             ColonyVisualUtility.SnapToGround(go);
             CampusNavMesh.AddObstacle(go);
+            _loop?.NotifyBuildingPlaced(order.Data, go, order.WorldPosition);
         }
 
         private void SpawnConstructionSite(ConstructionOrder order)
@@ -176,7 +189,14 @@ namespace SolarMajesty
                 ? ColonyLayout.ScaleForCategory(Selected.category)
                 : ColonyLayout.ModuleScale;
 
-            if (prefab != null)
+            if (Selected != null && Selected.category == BuildingCategory.Utility)
+            {
+                _ghost = ColonyVisualUtility.SpawnPlusConnector(Vector3.zero, null, scale);
+                _ghost.name = $"Ghost_{Selected.category}";
+                foreach (var col in _ghost.GetComponentsInChildren<Collider>())
+                    Destroy(col);
+            }
+            else if (prefab != null)
             {
                 _ghost = Instantiate(prefab);
                 _ghost.name = Selected != null ? $"Ghost_{Selected.category}" : "BuildGhost";

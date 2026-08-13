@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Thin greybox helpers: URP Lit remap (avoid pink FBX mats) + translucent ghost mats.
+    /// Thin visual helpers: industrial mesh dressing, ghost tints, ground snap, FBX orientation.
     /// </summary>
     public static class ColonyVisualUtility
     {
@@ -13,53 +13,9 @@ namespace SolarMajesty
         private static Material _footprintValid;
         private static Material _footprintInvalid;
 
-        private static readonly Color WhiteShell = new Color(0.82f, 0.84f, 0.86f);
-        private static readonly Color BlackBand = new Color(0.06f, 0.06f, 0.07f);
-        private static readonly Color Graphite = new Color(0.22f, 0.23f, 0.24f);
-        private static readonly Color OrangeAccent = new Color(0.95f, 0.42f, 0.08f);
-        private static readonly Color Steel = new Color(0.48f, 0.5f, 0.53f);
-
         public static void EnsureUrpMaterials(GameObject root)
         {
-            if (root == null) return;
-            EnsureLitShader();
-            if (_lit == null) return;
-
-            var renderers = root.GetComponentsInChildren<Renderer>(true);
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                var rend = renderers[i];
-                var mats = rend.sharedMaterials;
-                if (mats == null || mats.Length == 0) continue;
-
-                var next = new Material[mats.Length];
-                bool changed = false;
-                for (int m = 0; m < mats.Length; m++)
-                {
-                    var src = mats[m];
-                    if (src == null || IsBrokenOrBuiltin(src))
-                    {
-                        next[m] = CreatePaletteMaterial(GuessPalette(src != null ? src.name : rend.name));
-                        changed = true;
-                    }
-                    else if (src.shader != _lit && !src.shader.name.Contains("Universal Render Pipeline"))
-                    {
-                        // Keep albedo tint when remapping into URP Lit.
-                        Color c = WhiteShell;
-                        if (src.HasProperty("_Color")) c = src.color;
-                        else if (src.HasProperty("_BaseColor")) c = src.GetColor("_BaseColor");
-                        next[m] = CreateLit(c, src.name + "_URP");
-                        changed = true;
-                    }
-                    else
-                    {
-                        next[m] = src;
-                    }
-                }
-
-                if (changed)
-                    rend.sharedMaterials = next;
-            }
+            IndustrialArtDressing.Apply(root);
         }
 
         public static void ApplyGhostTint(GameObject ghost, bool valid)
@@ -114,6 +70,89 @@ namespace SolarMajesty
             root.transform.position += new Vector3(0f, dy, 0f);
         }
 
+        /// <summary>
+        /// Parent an FBX/unit prefab under an upright locomotion root.
+        /// Import axis correction (-90° X) stays on the visual child so NavMeshAgent
+        /// on the root cannot wipe it (which lays bots on their sides).
+        /// </summary>
+        public static GameObject AttachImportVisual(GameObject prefab, Transform parent)
+        {
+            if (prefab == null || parent == null) return null;
+            var visual = Object.Instantiate(prefab, parent, false);
+            visual.name = "Visual";
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localRotation = prefab.transform.localRotation;
+            visual.transform.localScale = Vector3.one;
+            return visual;
+        }
+
+        /// <summary>
+        /// Instantiate an FBX/prefab while keeping Unity's import axis correction (-90° X from Blender),
+        /// then apply an optional yaw around world up. Using Quaternion.identity here lays meshes on their side.
+        /// Prefer <see cref="AttachImportVisual"/> for units that also get a NavMeshAgent.
+        /// </summary>
+        public static GameObject InstantiateOriented(
+            GameObject prefab,
+            Vector3 position,
+            Transform parent = null,
+            float yawDegrees = 0f)
+        {
+            if (prefab == null) return null;
+            // Apply import orientation first, then yaw around world up (a * b ⇒ b first).
+            Quaternion rot = Quaternion.Euler(0f, yawDegrees, 0f) * prefab.transform.rotation;
+            return Object.Instantiate(prefab, position, rot, parent);
+        }
+
+        /// <summary>Apply yaw around world up without wiping the mesh import orientation.</summary>
+        public static void SetYawKeepingImport(Transform t, Quaternion importRotation, float yawDegrees)
+        {
+            if (t == null) return;
+            t.rotation = Quaternion.Euler(0f, yawDegrees, 0f) * importRotation;
+        }
+
+        /// <summary>
+        /// 2-axis-symmetric plus junction. Root stays at yaw 0 so modules dock on +X/−X and +Z/−Z
+        /// without the player rotating anything. Child tubes may be yawed internally.
+        /// </summary>
+        public static GameObject SpawnPlusConnector(Vector3 position, Transform parent, float scale)
+        {
+            var root = new GameObject("PlusConnector");
+            if (parent != null)
+                root.transform.SetParent(parent, false);
+            root.transform.SetPositionAndRotation(position, Quaternion.identity);
+
+            GameObject prefab = BuildingVisualCatalog.LoadConnector();
+            if (prefab != null)
+            {
+                var a = InstantiateOriented(prefab, position, root.transform, 0f);
+                a.name = "Arm_NS";
+                a.transform.localScale = Vector3.one * scale;
+                var b = InstantiateOriented(prefab, position, root.transform, 90f);
+                b.name = "Arm_EW";
+                b.transform.localScale = Vector3.one * scale;
+            }
+            else
+            {
+                float s = Mathf.Max(0.2f, scale);
+                CubeArm(root.transform, "Arm_NS", new Vector3(0.35f, 0.28f, 2.4f) * s);
+                CubeArm(root.transform, "Arm_EW", new Vector3(2.4f, 0.28f, 0.35f) * s);
+            }
+
+            EnsureUrpMaterials(root);
+            SnapToGround(root);
+            return root;
+        }
+
+        private static void CubeArm(Transform parent, string name, Vector3 scale)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = scale;
+        }
+
         private static void EnsureLitShader()
         {
             if (_lit != null) return;
@@ -151,44 +190,6 @@ namespace SolarMajesty
                 _footprintValid.color = new Color(0.2f, 1f, 0.45f, 0.28f);
                 _footprintInvalid.color = new Color(1f, 0.25f, 0.2f, 0.32f);
             }
-        }
-
-        private static bool IsBrokenOrBuiltin(Material mat)
-        {
-            if (mat.shader == null) return true;
-            string n = mat.shader.name;
-            return n == "Hidden/InternalErrorShader" ||
-                   n.Contains("Error") ||
-                   n.StartsWith("Standard") ||
-                   n.StartsWith("Legacy");
-        }
-
-        private static Color GuessPalette(string name)
-        {
-            if (string.IsNullOrEmpty(name)) return WhiteShell;
-            string n = name.ToLowerInvariant();
-            if (n.Contains("orange")) return OrangeAccent;
-            if (n.Contains("black")) return BlackBand;
-            if (n.Contains("graphite") || n.Contains("grey") || n.Contains("gray")) return Graphite;
-            if (n.Contains("steel") || n.Contains("metal")) return Steel;
-            return WhiteShell;
-        }
-
-        private static Material CreatePaletteMaterial(Color color) =>
-            CreateLit(color, "SM_Palette");
-
-        private static Material CreateLit(Color color, string name)
-        {
-            EnsureLitShader();
-            if (_lit == null) return null;
-            var mat = new Material(_lit) { name = name };
-            if (mat.HasProperty("_BaseColor"))
-                mat.SetColor("_BaseColor", color);
-            if (mat.HasProperty("_Color"))
-                mat.color = color;
-            if (mat.HasProperty("_Smoothness"))
-                mat.SetFloat("_Smoothness", 0.35f);
-            return mat;
         }
 
         private static void ForceTransparent(Material mat)

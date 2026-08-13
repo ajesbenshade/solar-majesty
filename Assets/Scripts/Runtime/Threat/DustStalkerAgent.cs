@@ -53,10 +53,23 @@ namespace SolarMajesty
         public bool IsAggro => _aggro;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
 
-        public void Initialize(ThreatPressure threat, FlagManager flags, Vector3 home)
+        /// <summary>Opportunistic combat from a hunting specialist (no bounty flag required).</summary>
+        public void ApplyCombatDamage(float amount)
+        {
+            if (!IsAlive || amount <= 0f) return;
+            _health -= amount;
+            transform.localScale = _baseScale * (1f + Mathf.Sin(Time.time * 18f) * 0.08f);
+            if (_health <= 0f)
+                Die();
+        }
+
+        private GameLoop _loop;
+
+        public void Initialize(ThreatPressure threat, FlagManager flags, Vector3 home, GameLoop loop = null)
         {
             _threat = threat;
             _flags = flags;
+            _loop = loop;
             _home = home;
             _sourceId = _nextSourceId++;
             _health = maxHealth;
@@ -75,11 +88,52 @@ namespace SolarMajesty
             if (!IsAlive || _threat == null) return;
 
             float dt = Time.deltaTime;
+            if (TickRaidVillage(dt))
+            {
+                TickDefeat(dt);
+                TickPresentation(dt);
+                return;
+            }
             TickWander(dt);
             TickAggroAndPressure();
             TickBite(dt);
             TickDefeat(dt);
             TickPresentation(dt);
+        }
+
+        /// <summary>Village HABs are the outer ring — raid those before the main campus.</summary>
+        private bool TickRaidVillage(float dt)
+        {
+            if (_loop?.Village == null) return false;
+            var hab = _loop.Village.NearestVillageHab(transform.position, 36f);
+            if (hab == null || !hab.IsAlive) return false;
+
+            Vector3 dest = hab.WorldPosition;
+            dest.y = transform.position.y;
+            float dist = Vector3.Distance(Flat(transform.position), Flat(dest));
+
+            var specialists = _loop.Agents;
+            if (specialists != null)
+            {
+                for (int i = 0; i < specialists.Count; i++)
+                {
+                    var s = specialists[i];
+                    if (s == null || s.IsIncapacitated) continue;
+                    if ((Flat(s.transform.position) - Flat(transform.position)).sqrMagnitude < 16f)
+                        return false;
+                }
+            }
+
+            _aggro = true;
+            _threat?.Report(_sourceId, aggroPressure);
+            if (dist > 2.4f)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, dest, moveSpeed * 1.15f * dt);
+                return true;
+            }
+
+            hab.ApplyRaidDamage(7f * dt);
+            return true;
         }
 
         private void TickWander(float dt)
@@ -213,13 +267,19 @@ namespace SolarMajesty
                 }
             }
 
-            // Aggro = brighter red
-            if (_rend != null)
+            // Aggro = brighter overlay on placeholders only — authored art keeps hide/plate slots.
+            if (_rend != null && !IndustrialArtDressing.HasArt(gameObject))
             {
                 Color c = _aggro
                     ? Color.Lerp(stalkerColor, new Color(1f, 0.15f, 0.1f), 0.55f)
                     : stalkerColor;
                 SetColor(_rend, c);
+            }
+            else if (IndustrialArtDressing.HasArt(gameObject))
+            {
+                IndustrialArtDressing.SetTintOverlay(
+                    gameObject,
+                    _aggro ? new Color(1.15f, 0.85f, 0.8f) : Color.white);
             }
         }
 
@@ -257,10 +317,17 @@ namespace SolarMajesty
                 _rend = sphere.GetComponent<Renderer>();
             }
 
-            SetColor(_rend, stalkerColor);
+            if (!IndustrialArtDressing.HasArt(gameObject))
+                SetColor(_rend, stalkerColor);
 
-            // Only flatten anonymous single-sphere hosts; multi-part placeholders keep authored scale.
-            if (transform.childCount <= 1 && transform.localScale == Vector3.one)
+            bool authored = IndustrialArtDressing.HasArt(gameObject);
+            // Only flatten the anonymous single-sphere placeholder — never authored mesh visuals.
+            bool placeholderSphere = !authored &&
+                                     _rend != null &&
+                                     _rend.transform.parent == transform &&
+                                     _rend.GetComponent<MeshFilter>() != null &&
+                                     _rend.name.Contains("Sphere");
+            if (placeholderSphere && transform.localScale == Vector3.one)
                 transform.localScale = new Vector3(1.1f, 0.55f, 1.3f);
             _baseScale = transform.localScale;
 

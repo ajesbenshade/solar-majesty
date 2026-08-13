@@ -11,6 +11,7 @@ namespace SolarMajesty
         public static readonly Color ScoutTint = new Color(0.35f, 0.85f, 1f);
         public static readonly Color EngineerTint = new Color(1f, 0.55f, 0.15f);
         public static readonly Color DefenseTint = new Color(0.85f, 0.22f, 0.22f);
+        public static readonly Color MedicTint = new Color(0.92f, 0.96f, 1f);
         public static readonly Color StalkerTint = new Color(0.42f, 0.07f, 0.1f);
 
         private static readonly Color WhiteShell = new Color(0.86f, 0.88f, 0.9f);
@@ -66,6 +67,21 @@ namespace SolarMajesty
             return root;
         }
 
+        public static GameObject BuildMedic()
+        {
+            var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadForClass(SpecialistClass.Medic), "Unit_Medic");
+            if (mesh != null) return mesh;
+
+            var root = new GameObject("Unit_Medic");
+            Capsule("Body", root.transform, new Vector3(0f, 1.1f, 0f), new Vector3(0.7f, 1.05f, 0.7f), WhiteShell);
+            Cylinder("Band", root.transform, new Vector3(0f, 1.15f, 0f), new Vector3(0.78f, 0.08f, 0.78f), BlackBand);
+            Cube("CrossH", root.transform, new Vector3(0f, 1.55f, 0.38f), new Vector3(0.42f, 0.1f, 0.08f), ScoutTint);
+            Cube("CrossV", root.transform, new Vector3(0f, 1.55f, 0.38f), new Vector3(0.1f, 0.42f, 0.08f), ScoutTint);
+            Sphere("Kit", root.transform, new Vector3(0.42f, 0.95f, 0.05f), new Vector3(0.28f, 0.22f, 0.28f), MedicTint);
+            Cube("Beacon", root.transform, new Vector3(-0.22f, 2.05f, 0f), new Vector3(0.1f, 0.1f, 0.1f), OrangeAccent);
+            return root;
+        }
+
         public static GameObject BuildDustStalker()
         {
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadStalker(), "Unit_DustStalker");
@@ -94,6 +110,7 @@ namespace SolarMajesty
                 case SpecialistClass.ScoutDrone: return BuildScout();
                 case SpecialistClass.EngineerBot: return BuildEngineer();
                 case SpecialistClass.DefenseMech: return BuildDefense();
+                case SpecialistClass.Medic: return BuildMedic();
                 default: return BuildScout();
             }
         }

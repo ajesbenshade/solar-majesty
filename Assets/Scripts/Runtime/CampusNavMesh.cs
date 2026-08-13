@@ -76,8 +76,8 @@ namespace SolarMajesty
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "NavGround";
             ground.transform.SetParent(walkRoot.transform, false);
-            float worldW = grid.Width * grid.CellSize;
-            float worldH = grid.Height * grid.CellSize;
+            float worldW = grid.WorldWidth;
+            float worldH = grid.WorldHeight;
             ground.transform.position = new Vector3(worldW * 0.5f, 0.01f, worldH * 0.5f);
             ground.transform.localScale = new Vector3(worldW / 10f, 1f, worldH / 10f);
             // Invisible — visual GroundPlane already exists from GameLoop.
@@ -88,7 +88,7 @@ namespace SolarMajesty
             _surface.collectObjects = CollectObjects.Children;
             _surface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
             _surface.overrideVoxelSize = true;
-            _surface.voxelSize = 0.2f;
+            _surface.voxelSize = 0.45f;
         }
     }
 }

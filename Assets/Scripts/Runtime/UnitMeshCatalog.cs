@@ -25,6 +25,7 @@ namespace SolarMajesty
                 case SpecialistClass.ScoutDrone: return LoadScout();
                 case SpecialistClass.EngineerBot: return LoadEngineer();
                 case SpecialistClass.DefenseMech: return LoadDefense();
+                case SpecialistClass.Medic: return null;
                 default: return LoadScout();
             }
         }

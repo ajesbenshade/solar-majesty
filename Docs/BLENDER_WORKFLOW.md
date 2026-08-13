@@ -189,7 +189,10 @@ Also exported for quick look in other viewers; FBX is preferred for Unity workfl
 | `SM_OPS1_OperationsUnit` | 9.7 × 9.4 × 5.7 | (20, 14) |
 | `SM_CommandDome_CentralHub` | 20.8 × 20.8 × 9.9 | (45, 0) |
 | `SM_PWR1_PowerNode` | 8.0 × 9.4 × 6.3 | (20, -18) |
-| `SM_PWR1_SolarArray` | 10.4 × 12.4 × 0.1 | (28, -18) |
+| `SM_PWR1_SolarArray` | farm of PV wafers on pylons (~10×12 m) | (28, -18) |
+| `SM_Crater_Small` | Ø ~5 m rim + pit | Environment |
+| `SM_Crater_Medium` | Ø ~9 m | Environment |
+| `SM_Crater_Large` | Ø ~14 m | Environment |
 | `SM_LandingPad` | 41 × 40 × 1.3 | (-50, 0) |
 | `SM_Starship_Placeholder` | 4.6 × 7.1 × 44 | on pad |
 | `SM_LAB1_LaboratoryModule` | ~9.6 × 4.9 × 6.7 (Ø4.5 × L8.7 target) | (0, 22) |
@@ -211,6 +214,16 @@ Regenerate remaining modules (does not touch HAB / LAB / connector):
 ```
 
 Copy new FBX into `Assets/Resources/Buildings/` (or Environment) after export.
+
+Craters + rebuilt solar array:
+
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender --background \
+  Blender/SolarMajesty_Modules.blend \
+  --python Blender/scripts/sm_craters_and_solar.py
+```
+
+Writes `SM_Crater_Small/Medium/Large` to `Assets/Resources/Environment/` and replaces `SM_PWR1_SolarArray`.
 
 ## Next modeling session
 

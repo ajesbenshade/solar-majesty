@@ -19,6 +19,13 @@ namespace SolarMajesty
                 { BuildingCategory.Defense, "Buildings/SM_CMD1_CommandBuilding" },
                 { BuildingCategory.Utility, "Buildings/SM_ModularTubeConnector" },
                 { BuildingCategory.Laboratory, "Buildings/SM_LAB1_LaboratoryModule" },
+                { BuildingCategory.Farm, "Buildings/SM_LAB1_LaboratoryModule" },
+                { BuildingCategory.Mine, "Buildings/SM_OPS1_OperationsUnit" },
+                { BuildingCategory.RegolithCamp, "Buildings/SM_PWR1_PowerNode" },
+                { BuildingCategory.Inn, "Buildings/SM_CMD1_CommandBuilding" },
+                { BuildingCategory.ScoutWorkshop, "Buildings/SM_LAB1_LaboratoryModule" },
+                { BuildingCategory.EngineerWorkshop, "Buildings/SM_OPS1_OperationsUnit" },
+                { BuildingCategory.DefenseWorkshop, "Buildings/SM_CMD1_CommandBuilding" },
             };
 
         private static readonly Dictionary<string, GameObject> Cache = new Dictionary<string, GameObject>();
@@ -49,5 +56,15 @@ namespace SolarMajesty
         public static GameObject LoadSolarArray() => LoadByPath("Buildings/SM_PWR1_SolarArray");
         public static GameObject LoadConnector() => LoadByPath("Buildings/SM_ModularTubeConnector");
         public static GameObject LoadLaboratory() => LoadByPath("Buildings/SM_LAB1_LaboratoryModule");
+
+        public static GameObject LoadCrater(int sizeClass)
+        {
+            switch (Mathf.Clamp(sizeClass, 0, 2))
+            {
+                case 0: return LoadByPath("Environment/SM_Crater_Small");
+                case 1: return LoadByPath("Environment/SM_Crater_Medium");
+                default: return LoadByPath("Environment/SM_Crater_Large");
+            }
+        }
     }
 }

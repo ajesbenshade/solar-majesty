@@ -27,7 +27,8 @@ namespace SolarMajesty
     {
         EngineerBot = 0,
         ScoutDrone = 1,
-        DefenseMech = 2
+        DefenseMech = 2,
+        Medic = 3
     }
 
     public enum BuildingCategory
@@ -38,7 +39,14 @@ namespace SolarMajesty
         Mining = 3,
         Defense = 4,
         Utility = 5,
-        Laboratory = 6
+        Laboratory = 6,
+        Farm = 7,
+        Mine = 8,
+        RegolithCamp = 9,
+        Inn = 10,
+        ScoutWorkshop = 11,
+        EngineerWorkshop = 12,
+        DefenseWorkshop = 13
     }
 
     [Serializable]

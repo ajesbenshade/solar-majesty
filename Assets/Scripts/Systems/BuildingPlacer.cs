@@ -15,7 +15,12 @@ namespace SolarMajesty
         private readonly ResourceManager _resources;
         private readonly List<ConstructionOrder> _orders = new List<ConstructionOrder>();
         private readonly HashSet<long> _occupiedCells = new HashSet<long>();
+        private readonly HashSet<long> _campusCells = new HashSet<long>();
         private int _nextId = 1;
+
+        /// <summary>The waystation inn is occupied but never part of the tube graph.</summary>
+        public static bool RequiresCampusLink(BuildingCategory cat) =>
+            cat != BuildingCategory.Inn;
 
         /// <summary>Optional map bounds / terrain rule. Return false to reject.</summary>
         public Func<Vector2Int, BuildingData, bool> ExtraPlacementRule { get; set; }
@@ -147,6 +152,19 @@ namespace SolarMajesty
             return true;
         }
 
+        public bool CanFitRect(Vector2Int origin, int width, int height)
+        {
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                if (_occupiedCells.Contains(Pack(origin.x + x, origin.y + y)))
+                    return false;
+            }
+            return true;
+        }
+
         /// <summary>
         /// Reserve cells without spending resources (showcase colony / pre-built map blockers).
         /// </summary>
@@ -164,17 +182,57 @@ namespace SolarMajesty
         public bool IsCellOccupied(Vector2Int cell) =>
             _occupiedCells.Contains(Pack(cell.x, cell.y));
 
+        /// <summary>Campus graph (excludes the disconnected waystation inn).</summary>
+        public void MarkCampusRect(Vector2Int origin, int width, int height)
+        {
+            MarkOccupiedRect(origin, width, height);
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+                _campusCells.Add(Pack(origin.x + x, origin.y + y));
+        }
+
+        public bool TouchesCampus(Vector2Int origin, int width, int height)
+        {
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+            int[] dx = { 1, -1, 0, 0 };
+            int[] dy = { 0, 0, 1, -1 };
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                int cx = origin.x + x;
+                int cy = origin.y + y;
+                for (int i = 0; i < 4; i++)
+                {
+                    if (_campusCells.Contains(Pack(cx + dx[i], cy + dy[i])))
+                        return true;
+                }
+            }
+            return false;
+        }
+
         private void MarkFootprint(BuildingData data, Vector2Int origin, bool occupied)
         {
             if (data == null) return;
 
+            bool campus = RequiresCampusLink(data.category);
             for (int x = 0; x < data.footprintWidth; x++)
             {
                 for (int y = 0; y < data.footprintHeight; y++)
                 {
                     long key = Pack(origin.x + x, origin.y + y);
-                    if (occupied) _occupiedCells.Add(key);
-                    else _occupiedCells.Remove(key);
+                    if (occupied)
+                    {
+                        _occupiedCells.Add(key);
+                        if (campus) _campusCells.Add(key);
+                    }
+                    else
+                    {
+                        _occupiedCells.Remove(key);
+                        if (campus) _campusCells.Remove(key);
+                    }
                 }
             }
         }

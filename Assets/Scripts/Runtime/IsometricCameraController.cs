@@ -5,12 +5,14 @@ namespace SolarMajesty
     /// <summary>
     /// Orthographic isometric pan/zoom. Presentation only — never commands specialists.
     /// Suggested camera rotation: (30, 45, 0).
+    /// LMB / MMB / RMB drag pans; LMB click (no drag) is left for tools/selection.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Camera))]
     public class IsometricCameraController : MonoBehaviour
     {
         [Header("Pan")]
-        [SerializeField] private float panSpeed = 22f;
+        [SerializeField] private float panSpeed = 36f;
         [SerializeField] private float panSmooth = 12f;
         [SerializeField] private bool edgePan = true;
         [SerializeField] private float edgeBorder = 14f;
@@ -20,18 +22,35 @@ namespace SolarMajesty
         [Header("Zoom")]
         [SerializeField] private float zoomSpeed = 6f;
         [SerializeField] private float minZoom = 6f;
-        [SerializeField] private float maxZoom = 30f;
+        [SerializeField] private float maxZoom = 52f;
         [SerializeField] private float zoomSmooth = 10f;
 
         [Header("Drag")]
+        [SerializeField] private bool leftMouseDrag = true;
         [SerializeField] private bool middleMouseDrag = true;
         [SerializeField] private bool rightMouseDrag = true;
+        [SerializeField] private float leftDragThresholdPixels = 6f;
 
         private Camera _cam;
         private Vector3 _targetPos;
         private float _targetZoom;
         private bool _dragging;
         private Vector3 _dragOrigin;
+
+        private bool _lmbTracking;
+        private Vector2 _lmbScreenStart;
+        private bool _lmbBecameDrag;
+        private bool _suppressWorldClick;
+        private bool _clearSuppressNextFrame;
+
+        /// <summary>True while any mouse-button pan drag is active.</summary>
+        public bool IsDragging => _dragging;
+
+        /// <summary>
+        /// True when the current/just-finished LMB gesture exceeded the drag threshold.
+        /// Flag/build placement and unit selection should ignore the click.
+        /// </summary>
+        public bool SuppressWorldClick => _suppressWorldClick;
 
         private void Awake()
         {
@@ -53,7 +72,6 @@ namespace SolarMajesty
         {
             if (_cam == null) _cam = GetComponent<Camera>();
 
-            // Preserve camera offset from ground focus (iso look direction).
             Vector3 forward = transform.forward;
             var plane = new Plane(Vector3.up, Vector3.zero);
             var ray = new Ray(transform.position, forward);
@@ -90,6 +108,12 @@ namespace SolarMajesty
 
         private void Update()
         {
+            if (_clearSuppressNextFrame)
+            {
+                _suppressWorldClick = false;
+                _clearSuppressNextFrame = false;
+            }
+
             HandleKeyboardPan();
             HandleEdgePan();
             HandleDragPan();
@@ -126,8 +150,11 @@ namespace SolarMajesty
 
         private void HandleDragPan()
         {
+            TrackLeftMouseGesture();
+
             bool want = (middleMouseDrag && Input.GetMouseButton(2)) ||
-                        (rightMouseDrag && Input.GetMouseButton(1));
+                        (rightMouseDrag && Input.GetMouseButton(1)) ||
+                        (leftMouseDrag && _lmbBecameDrag && Input.GetMouseButton(0));
 
             if (want)
             {
@@ -142,9 +169,44 @@ namespace SolarMajesty
                     _targetPos += _dragOrigin - cur;
                 }
             }
-            else
+            else if (!Input.GetMouseButton(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
             {
                 _dragging = false;
+            }
+        }
+
+        private void TrackLeftMouseGesture()
+        {
+            if (!leftMouseDrag) return;
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                _lmbTracking = true;
+                _lmbBecameDrag = false;
+                _lmbScreenStart = Input.mousePosition;
+                _suppressWorldClick = false;
+            }
+
+            if (_lmbTracking && Input.GetMouseButton(0) && !_lmbBecameDrag)
+            {
+                float dist = Vector2.Distance(_lmbScreenStart, (Vector2)Input.mousePosition);
+                if (dist >= leftDragThresholdPixels)
+                {
+                    _lmbBecameDrag = true;
+                    _suppressWorldClick = true;
+                    _dragging = false; // force re-seed origin on next want pass
+                }
+            }
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                if (_lmbBecameDrag)
+                {
+                    _suppressWorldClick = true;
+                    _clearSuppressNextFrame = true;
+                }
+                _lmbTracking = false;
+                _lmbBecameDrag = false;
             }
         }
 

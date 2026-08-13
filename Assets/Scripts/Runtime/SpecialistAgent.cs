@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -45,7 +46,9 @@ namespace SolarMajesty
         private SimpleEconomy _economy;
         private BuildingPlacer _placer;
         private CampusNavMesh _navMesh;
+        private PlanetaryWorldGen _world;
         private NavMeshAgent _agent;
+        private GameLoop _loop;
 
         private float _thinkTimer;
         private BrainDecision _lastDecision;
@@ -60,8 +63,9 @@ namespace SolarMajesty
 
         private Vector3 _baseScale = Vector3.one;
         private float _workPulse;
-        private Renderer _bodyRend;
         private SpecialistStatusDisplay _statusDisplay;
+        private GameObject _selectRing;
+        private bool _selected;
 
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
@@ -76,6 +80,27 @@ namespace SolarMajesty
         public float BodyDanger => bodyDanger;
         public bool IsIncapacitated => _incapacitated;
         public bool IsAlive => !_incapacitated || healthNormalized > incapacitateThreshold;
+        public bool IsSelected => _selected;
+        public HeroParty Party { get; private set; }
+        public bool IsPartyLeader => Party != null && Party.IsLeader(this);
+        public ColonyStructure Workplace { get; private set; }
+
+        public void SetParty(HeroParty party) => Party = party;
+
+        public void SetWorkplace(ColonyStructure workplace)
+        {
+            if (Workplace == workplace) return;
+            Workplace?.ClockOut(this);
+            Workplace = workplace;
+            Workplace?.TryClockIn(this);
+        }
+
+        public void SetSelected(bool selected)
+        {
+            _selected = selected;
+            if (_selectRing != null)
+                _selectRing.SetActive(selected);
+        }
 
         public void SetBodyDanger(float danger01) => bodyDanger = Mathf.Clamp01(danger01);
 
@@ -89,6 +114,12 @@ namespace SolarMajesty
                 EnterIncapacitated();
         }
 
+        public void ReceiveHeal(float amount01)
+        {
+            if (amount01 <= 0f) return;
+            healthNormalized = Mathf.Clamp01(healthNormalized + amount01);
+        }
+
         public void ReviveFull()
         {
             _incapacitated = false;
@@ -96,7 +127,7 @@ namespace SolarMajesty
             healthNormalized = 1f;
             fatigue = 0.1f;
             _status = "revived";
-            ApplyBodyTint(bodyTint);
+            IndustrialArtDressing.ClearTintOverlay(gameObject);
             SetAgentStopped(false);
         }
 
@@ -107,7 +138,8 @@ namespace SolarMajesty
             SimpleEconomy economy = null,
             Color? tint = null,
             BuildingPlacer placer = null,
-            CampusNavMesh navMesh = null)
+            CampusNavMesh navMesh = null,
+            PlanetaryWorldGen world = null)
         {
             data = specialistData;
             _flags = flagManager;
@@ -115,6 +147,8 @@ namespace SolarMajesty
             _economy = economy;
             _placer = placer;
             _navMesh = navMesh;
+            _world = world;
+            _loop = FindAnyObjectByType<GameLoop>();
             fatigue = 0.1f;
             healthNormalized = 1f;
             greedHunger = 0.55f;
@@ -126,15 +160,68 @@ namespace SolarMajesty
             gameObject.name = $"Specialist_{data.displayName}";
 
             _baseScale = transform.localScale;
-            _bodyRend = GetComponentInChildren<Renderer>();
             if (tint.HasValue) bodyTint = tint.Value;
-            ApplyBodyTint(bodyTint);
+            IndustrialArtDressing.ClearTintOverlay(gameObject);
             EnsureNavAgent();
 
             _statusDisplay = GetComponent<SpecialistStatusDisplay>();
             if (_statusDisplay == null)
                 _statusDisplay = gameObject.AddComponent<SpecialistStatusDisplay>();
             _statusDisplay.Bind(this);
+
+            EnsureSelectProxy();
+            EnsureSelectRing();
+            SetSelected(false);
+        }
+
+        /// <summary>
+        /// Dedicated pick volume — FBX imports strip colliders, and child meshes are unreliable to click.
+        /// </summary>
+        private void EnsureSelectProxy()
+        {
+            Transform existing = transform.Find("SelectProxy");
+            if (existing != null)
+            {
+                existing.gameObject.SetActive(true);
+                return;
+            }
+
+            var proxy = new GameObject("SelectProxy");
+            proxy.transform.SetParent(transform, false);
+            proxy.transform.localPosition = new Vector3(0f, 1.0f, 0f);
+            proxy.layer = gameObject.layer;
+
+            var cap = proxy.AddComponent<CapsuleCollider>();
+            cap.center = Vector3.zero;
+            cap.height = 2.4f;
+            cap.radius = 0.85f;
+            cap.isTrigger = false;
+            cap.direction = 1; // Y-axis
+        }
+
+        private void EnsureSelectRing()
+        {
+            if (_selectRing != null) return;
+            _selectRing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            _selectRing.name = "SelectRing";
+            _selectRing.transform.SetParent(transform, false);
+            _selectRing.transform.localPosition = new Vector3(0f, 0.04f, 0f);
+            _selectRing.transform.localScale = new Vector3(1.35f, 0.02f, 1.35f);
+            Object.Destroy(_selectRing.GetComponent<Collider>());
+            var rend = _selectRing.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                       ?? Shader.Find("Universal Render Pipeline/Unlit")
+                                       ?? Shader.Find("Sprites/Default"));
+                if (mat.HasProperty("_BaseColor"))
+                    mat.SetColor("_BaseColor", new Color(0.96f, 0.42f, 0.08f, 0.85f));
+                else if (mat.HasProperty("_Color"))
+                    mat.color = new Color(0.96f, 0.42f, 0.08f, 0.85f);
+                rend.material = mat;
+                rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+            _selectRing.SetActive(false);
         }
 
         /// <summary>Called after CampusNavMesh.Build so agents warp onto the mesh.</summary>
@@ -182,6 +269,7 @@ namespace SolarMajesty
             }
 
             TickNeeds(dt);
+            TickMedic(dt);
             TickThink(dt);
             TickBehaviour(dt);
             TickWorkPulse(dt);
@@ -196,7 +284,7 @@ namespace SolarMajesty
             _lastDecision = BrainDecision.Idle(0f, "incapacitated");
             _status = "incapacitated";
             SetAgentStopped(true);
-            ApplyBodyTint(Color.Lerp(bodyTint, Color.black, 0.55f));
+            IndustrialArtDressing.SetTintOverlay(gameObject, new Color(0.38f, 0.38f, 0.4f));
             DemoVfx.DeathBurst(transform.position, bodyTint);
             Debug.Log($"[Specialist] {data.displayName} incapacitated — recovering in {recoverySeconds:F0}s");
         }
@@ -211,7 +299,7 @@ namespace SolarMajesty
                 _incapacitated = false;
                 fatigue = Mathf.Max(fatigue, 0.55f);
                 _status = "recovered";
-                ApplyBodyTint(bodyTint);
+                IndustrialArtDressing.ClearTintOverlay(gameObject);
                 SetAgentStopped(false);
                 Debug.Log($"[Specialist] {data.displayName} recovered");
             }
@@ -222,14 +310,24 @@ namespace SolarMajesty
             switch (_lastDecision.Action)
             {
                 case SpecialistAction.PursueFlag:
+                case SpecialistAction.Hunt:
                     fatigue = Mathf.Clamp01(fatigue + dt * 0.035f);
                     greedHunger = Mathf.Clamp01(greedHunger + dt * 0.01f);
                     break;
+                case SpecialistAction.Flee:
+                    fatigue = Mathf.Clamp01(fatigue + dt * 0.02f);
+                    break;
                 case SpecialistAction.Rest:
-                    fatigue = Mathf.Clamp01(fatigue - dt * 0.12f);
-                    healthNormalized = Mathf.Clamp01(healthNormalized + dt * restHealPerSecond);
+                    float innBoost = KingdomLife.AtInn(transform.position) ? 1.45f : 0.55f;
+                    fatigue = Mathf.Clamp01(fatigue - dt * 0.12f * innBoost);
+                    healthNormalized = Mathf.Clamp01(healthNormalized + dt * restHealPerSecond * innBoost);
+                    break;
+                case SpecialistAction.Wander:
+                    greedHunger = Mathf.Clamp01(greedHunger + dt * 0.018f);
+                    fatigue = Mathf.Clamp01(fatigue - dt * 0.01f);
                     break;
                 default:
+                    greedHunger = Mathf.Clamp01(greedHunger + dt * 0.012f);
                     fatigue = Mathf.Clamp01(fatigue - dt * 0.015f);
                     break;
             }
@@ -242,18 +340,116 @@ namespace SolarMajesty
             _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
 
             BrainDecision decision = _brain.Evaluate(BuildContext(), _flags.Flags, bodyDanger);
+            Party?.PromoteIfNeeded();
+            if (Party != null && !Party.IsLeader(this) &&
+                decision.Action != SpecialistAction.Flee &&
+                decision.Action != SpecialistAction.Rest)
+            {
+                var lead = Party.Leader;
+                if (lead != null && lead.IsAlive)
+                {
+                    Vector3 follow = lead.transform.position;
+                    if (lead.CurrentAction == SpecialistAction.PursueFlag && lead.ActiveFlag != null)
+                        follow = lead.ActiveFlag.WorldPosition;
+                    decision = BrainDecision.Wander(follow, 0.4f, "party_follow");
+                }
+            }
             ApplyDecision(decision);
+            SyncWorkplace(decision);
         }
 
-        private SpecialistContext BuildContext() => new SpecialistContext
+        private void SyncWorkplace(BrainDecision decision)
         {
-            Data = data,
-            Position = transform.position,
-            Fatigue = fatigue,
-            GreedHunger = greedHunger,
-            CurrentFlag = _activeFlag,
-            HealthNormalized = healthNormalized
-        };
+            var duty = FindDutyBuilding();
+            bool fieldJob = decision.Action == SpecialistAction.PursueFlag ||
+                            decision.Action == SpecialistAction.Flee ||
+                            decision.Action == SpecialistAction.Hunt;
+            if (fieldJob)
+            {
+                if (decision.Action == SpecialistAction.PursueFlag &&
+                    decision.TargetFlag != null && duty != null &&
+                    FlatDistance(decision.TargetFlag.WorldPosition, duty.WorldPosition) < 12f)
+                {
+                    SetWorkplace(duty);
+                    return;
+                }
+                SetWorkplace(null);
+                return;
+            }
+
+            if (duty != null && FlatDistance(transform.position, duty.WorldPosition) < 5f)
+                SetWorkplace(duty);
+            else if (Workplace != null &&
+                     FlatDistance(transform.position, Workplace.WorldPosition) > 14f)
+                SetWorkplace(null);
+        }
+
+        private ColonyStructure FindDutyBuilding()
+        {
+            if (_loop?.Village == null || data == null) return null;
+            if (Workplace != null && Workplace.IsAlive &&
+                (!Workplace.HasPreferredClass || Workplace.PreferredClass == data.specialistClass))
+                return Workplace;
+            return _loop.Village.NearestDutyFor(data.specialistClass, transform.position, 42f);
+        }
+
+        private SpecialistContext BuildContext()
+        {
+            Vector3 hunt = Vector3.zero;
+            float huntDist = 99f;
+            bool hasHunt = TryNearestStalker(out hunt, out huntDist);
+
+            Vector3? site = NearestConstruction();
+            Vector3? node = null;
+            if (_world != null)
+            {
+                var n = _world.FindNearestNodeAny(transform.position, 40f);
+                if (n != null && !n.IsDepleted)
+                    node = n.WorldPosition;
+            }
+
+            int salt = GetEntityId().GetHashCode();
+            var duty = FindDutyBuilding();
+            Vector3 vocation;
+            Vector3 workshopPos = Vector3.zero;
+            bool hasWorkshop = false;
+            if (duty != null)
+            {
+                vocation = duty.WorldPosition;
+                workshopPos = duty.WorldPosition;
+                hasWorkshop = duty.IsWorkshop;
+            }
+            else
+            {
+                vocation = KingdomLife.VocationAnchor(
+                    data.specialistClass, transform.position, site, node, salt);
+            }
+
+            Vector3 patient = Vector3.zero;
+            bool hasPatient = data.specialistClass == SpecialistClass.Medic &&
+                              TryNearestWounded(out patient, out _);
+
+            return new SpecialistContext
+            {
+                Data = data,
+                Position = transform.position,
+                Fatigue = fatigue,
+                GreedHunger = greedHunger,
+                CurrentFlag = _activeFlag,
+                HealthNormalized = healthNormalized,
+                SafetyPosition = KingdomLife.InnNear(transform.position),
+                VocationPosition = vocation,
+                HuntPosition = hunt,
+                HuntDistance = huntDist,
+                HasHunt = hasHunt,
+                CurrentAction = _lastDecision.Action,
+                WorkshopPosition = workshopPos,
+                HasWorkshop = hasWorkshop,
+                FlagWorkshopBonus = hasWorkshop ? 0.22f : 0f,
+                HasPatient = hasPatient,
+                PatientPosition = patient
+            };
+        }
 
         private void ApplyDecision(BrainDecision decision)
         {
@@ -274,6 +470,8 @@ namespace SolarMajesty
                     DemoAudio.PlayClaim();
                     DemoVfx.ClaimRing(_activeFlag.WorldPosition, new Color(1f, 0.85f, 0.2f));
                 }
+                _idleTarget = _activeFlag.WorldPosition;
+                _hasIdleTarget = true;
                 _status = $"pursue_{decision.TargetFlag.Data.flagType}";
                 SetDestination(_activeFlag.WorldPosition);
             }
@@ -281,10 +479,13 @@ namespace SolarMajesty
             {
                 ReleaseClaim();
                 _activeFlag = null;
-                _status = decision.Action == SpecialistAction.Rest ? "rest" : "idle";
-                if (decision.Action == SpecialistAction.Idle)
-                    _hasIdleTarget = false;
-                SetAgentStopped(decision.Action == SpecialistAction.Rest);
+                _idleTarget = decision.TargetPosition;
+                _hasIdleTarget = _idleTarget.sqrMagnitude > 0.01f;
+                _status = decision.Reason ?? decision.Action.ToString().ToLowerInvariant();
+                if (decision.Action != SpecialistAction.Rest || !KingdomLife.AtInn(transform.position))
+                    SetAgentStopped(false);
+                if (_hasIdleTarget)
+                    SetDestination(_idleTarget);
             }
 
             if (changed && logDecisions)
@@ -305,6 +506,15 @@ namespace SolarMajesty
                     break;
                 case SpecialistAction.Rest:
                     TickRest(dt);
+                    break;
+                case SpecialistAction.Flee:
+                    TickFlee(dt);
+                    break;
+                case SpecialistAction.Hunt:
+                    TickHunt(dt);
+                    break;
+                case SpecialistAction.Wander:
+                    TickWanderTown(dt);
                     break;
                 default:
                     TickIdle(dt);
@@ -354,7 +564,13 @@ namespace SolarMajesty
                 var completedType = _activeFlag.Data.flagType;
                 _economy?.GrantBountyReward(bounty);
                 if (completedType == FlagType.Extract)
-                    _economy?.GrantExtractYield(ColonyLayout.NearestCampusIndex(transform.position));
+                {
+                    int campus = ColonyLayout.NearestCampusIndex(transform.position);
+                    ResourceNode node = _world != null
+                        ? _world.FindNearestNode(transform.position, 10f)
+                        : null;
+                    _economy?.GrantExtractYield(campus, node);
+                }
                 greedHunger = Mathf.Clamp01(greedHunger - 0.25f);
                 DemoAudio.PlayClaim();
                 DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
@@ -390,30 +606,178 @@ namespace SolarMajesty
 
         private void TickRest(float dt)
         {
+            Vector3 inn = KingdomLife.InnNear(transform.position);
+            if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
+            {
+                SetDestination(inn);
+                MoveFallback(inn, data.moveSpeed * dt);
+                _status = "seeking_inn";
+                return;
+            }
+
             SetAgentStopped(true);
             _restTimer += dt;
-            _status = "resting";
+            _status = "resting_at_inn";
             if (_restTimer > 3f && fatigue < 0.35f)
                 _restTimer = 0f;
         }
 
-        private void TickIdle(float dt)
+        private void TickFlee(float dt)
         {
-            _status = "idle";
-            if (!_hasIdleTarget || FlatDistance(transform.position, _idleTarget) < 0.3f)
+            Vector3 inn = KingdomLife.InnNear(transform.position);
+            if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
             {
-                if (Random.value < 0.02f)
-                {
-                    Vector2 r = Random.insideUnitCircle * idleWanderRadius;
-                    _idleTarget = transform.position + new Vector3(r.x, 0f, r.y);
-                    _hasIdleTarget = true;
-                    SetDestination(_idleTarget);
-                }
+                SetDestination(inn);
+                MoveFallback(inn, data.moveSpeed * 1.35f * dt);
+                _status = "fleeing";
                 return;
             }
 
-            SetDestination(_idleTarget);
-            MoveFallback(_idleTarget, data.moveSpeed * 0.35f * dt);
+            SetAgentStopped(true);
+            _status = "refuge_inn";
+            fatigue = Mathf.Clamp01(fatigue - dt * 0.08f);
+            healthNormalized = Mathf.Clamp01(healthNormalized + dt * restHealPerSecond);
+        }
+
+        private void TickHunt(float dt)
+        {
+            if (!TryNearestStalker(out Vector3 prey, out float dist))
+            {
+                _status = "hunt_lost";
+                return;
+            }
+
+            if (dist > KingdomLife.HuntRange)
+            {
+                SetDestination(prey);
+                MoveFallback(prey, data.moveSpeed * dt);
+                _status = "hunting";
+                return;
+            }
+
+            SetAgentStopped(true);
+            _status = "engaging";
+            _workPulse = 1f;
+            var stalker = NearestStalkerAgent();
+            if (stalker != null)
+                stalker.ApplyCombatDamage(data.workRate * 8f * dt);
+        }
+
+        private void TickWanderTown(float dt)
+        {
+            Vector3 dest = _lastDecision.TargetPosition;
+            if (dest.sqrMagnitude < 0.01f)
+                dest = KingdomLife.Plaza(ColonyLayout.NearestCampusIndex(transform.position));
+
+            if (FlatDistance(transform.position, dest) < 1.4f)
+            {
+                _status = _lastDecision.Reason ?? "wandering";
+                SetAgentStopped(true);
+                return;
+            }
+
+            SetDestination(dest);
+            MoveFallback(dest, data.moveSpeed * 0.72f * dt);
+            _status = _lastDecision.Reason ?? "wandering";
+        }
+
+        private void TickIdle(float dt)
+        {
+            TickWanderTown(dt);
+        }
+
+        private bool TryNearestStalker(out Vector3 pos, out float dist)
+        {
+            pos = Vector3.zero;
+            dist = 99f;
+            var stalker = NearestStalkerAgent();
+            if (stalker == null || !stalker.IsAlive) return false;
+            pos = stalker.transform.position;
+            dist = FlatDistance(transform.position, pos);
+            return dist < 28f;
+        }
+
+        private void TickMedic(float dt)
+        {
+            if (data == null || data.specialistClass != SpecialistClass.Medic) return;
+            if (!IsAlive) return;
+            var agents = _loop != null ? _loop.Agents : null;
+            if (agents == null) return;
+
+            const float range = 3.6f;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var ally = agents[i];
+                if (ally == null || ally == this) continue;
+                if (ally.HealthNormalized >= 0.98f) continue;
+                if (FlatDistance(transform.position, ally.transform.position) > range) continue;
+                ally.ReceiveHeal(dt * 0.14f);
+            }
+        }
+
+        private bool TryNearestWounded(out Vector3 pos, out float dist)
+        {
+            pos = Vector3.zero;
+            dist = 99f;
+            var agents = _loop != null ? _loop.Agents : null;
+            if (agents == null) return false;
+
+            Vector3 me = transform.position;
+            bool found = false;
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var ally = agents[i];
+                if (ally == null || ally == this) continue;
+                if (ally.HealthNormalized >= 0.82f) continue;
+                float d = FlatDistance(me, ally.transform.position);
+                if (d >= 28f || d >= dist) continue;
+                dist = d;
+                pos = ally.transform.position;
+                found = true;
+            }
+
+            return found;
+        }
+
+        private DustStalkerAgent NearestStalkerAgent()
+        {
+            IReadOnlyList<DustStalkerAgent> list = _loop != null ? _loop.Stalkers : null;
+            if (list == null || list.Count == 0) return null;
+            DustStalkerAgent best = null;
+            float bestD = 28f;
+            Vector3 me = transform.position;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                float d = FlatDistance(me, s.transform.position);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = s;
+                }
+            }
+            return best;
+        }
+
+        private Vector3? NearestConstruction()
+        {
+            if (_placer == null || _placer.Orders == null) return null;
+            ConstructionOrder best = null;
+            float bestD = 22f;
+            Vector3 me = transform.position;
+            for (int i = 0; i < _placer.Orders.Count; i++)
+            {
+                var o = _placer.Orders[i];
+                if (o == null || o.IsComplete) continue;
+                float d = Vector3.Distance(me, o.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = o;
+                }
+            }
+            return best != null ? best.WorldPosition : (Vector3?)null;
         }
 
         private void SetDestination(Vector3 world)
@@ -463,18 +827,13 @@ namespace SolarMajesty
             _claimedActive = false;
         }
 
-        private void OnDestroy() => ReleaseClaim();
+        private void OnDestroy()
+        {
+            SetWorkplace(null);
+            ReleaseClaim();
+        }
 
         public void DebugSetFatigue(float value) => fatigue = Mathf.Clamp01(value);
-
-        private void ApplyBodyTint(Color c)
-        {
-            if (_bodyRend == null) return;
-            if (_bodyRend.material.HasProperty("_Color"))
-                _bodyRend.material.color = c;
-            else if (_bodyRend.material.HasProperty("_BaseColor"))
-                _bodyRend.material.SetColor("_BaseColor", c);
-        }
 
         private static float FlatDistance(Vector3 a, Vector3 b)
         {

@@ -23,6 +23,7 @@ namespace SolarMajesty
         private IsometricCameraController _cam;
         private FlagData _selected;
         private Transform _markerRoot;
+        private GameLoop _loop;
 
         public float Bounty => bounty;
         public FlagData SelectedFlag => _selected;
@@ -87,6 +88,7 @@ namespace SolarMajesty
             defendFlag = defend;
             _selected = exploreFlag != null ? exploreFlag : clearThreatFlag;
             _markerRoot = markerRoot;
+            _loop = GetComponent<GameLoop>();
             bounty = _selected != null ? _selected.defaultBounty : 50f;
         }
 
@@ -114,7 +116,18 @@ namespace SolarMajesty
                 bounty = Mathf.Clamp(bounty, _selected.minBounty, _selected.maxBounty);
 
             if (_selected == null) return;
-            if (!Input.GetKeyDown(placeKey)) return;
+            // Place on release so LMB drag-pan does not also post a flag.
+            if (placeKey == KeyCode.Mouse0)
+            {
+                if (!Input.GetMouseButtonUp(0)) return;
+                if (_cam != null && _cam.SuppressWorldClick) return;
+                if (_loop != null && _loop.WorldClickUsedBySelection) return;
+            }
+            else if (!Input.GetKeyDown(placeKey))
+            {
+                return;
+            }
+
             if (Input.GetMouseButton(1) || Input.GetMouseButton(2)) return;
 
             if (!TryGround(out Vector3 world)) return;
@@ -138,7 +151,7 @@ namespace SolarMajesty
             GameObject go;
             if (_selected.prefab != null)
             {
-                go = Instantiate(_selected.prefab, world, Quaternion.identity, _markerRoot);
+                go = ColonyVisualUtility.InstantiateOriented(_selected.prefab, world, _markerRoot);
             }
             else
             {

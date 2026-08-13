@@ -85,6 +85,50 @@ namespace SolarMajesty
         /// </summary>
         public void GrantExtractYield(int campusIndex)
         {
+            GrantExtractYield(campusIndex, null);
+        }
+
+        /// <summary>
+        /// Phase 6A: if a resource node is in range, harvest from it; otherwise campus fallback.
+        /// </summary>
+        public void GrantExtractYield(int campusIndex, ResourceNode node)
+        {
+            if (node != null && !node.IsDepleted)
+            {
+                switch (node.NodeType)
+                {
+                    case ResourceNodeType.Metals:
+                    {
+                        int took = node.Harvest(8);
+                        if (took > 0) _resources.Add(ResourceId.Metals, took);
+                        _resources.Add(ResourceId.Regolith, 2);
+                        break;
+                    }
+                    case ResourceNodeType.Ice:
+                    {
+                        int took = node.Harvest(7);
+                        if (took > 0) _resources.Add(ResourceId.WaterIce, took);
+                        _resources.Add(ResourceId.Regolith, 3);
+                        break;
+                    }
+                    case ResourceNodeType.Fissile:
+                    {
+                        int took = node.Harvest(5);
+                        if (took > 0) _resources.Add(ResourceId.Power, took);
+                        _resources.Add(ResourceId.Metals, 1);
+                        break;
+                    }
+                    default:
+                    {
+                        int took = node.Harvest(10);
+                        if (took > 0) _resources.Add(ResourceId.Regolith, took);
+                        _resources.Add(ResourceId.Metals, 2);
+                        break;
+                    }
+                }
+                return;
+            }
+
             if (campusIndex <= 0)
             {
                 _resources.Add(ResourceId.Regolith, 12);

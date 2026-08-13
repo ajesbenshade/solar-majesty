@@ -211,14 +211,30 @@ namespace SolarMajesty
         {
             _awaitingReinforcements = false;
             _wave = 2;
+
+            Vector3 origin = ColonyLayout.CampusOriginFor(_loop.FocusedCampus);
+            // Prefer an uncleared lair so wave 2 feels like the moon pushing back.
+            if (_loop.World != null)
+            {
+                var lairs = _loop.World.Lairs;
+                for (int i = 0; i < lairs.Count; i++)
+                {
+                    if (lairs[i] != null && !lairs[i].IsCleared)
+                    {
+                        origin = lairs[i].WorldPosition;
+                        break;
+                    }
+                }
+            }
+
             int spawned = _loop.SpawnStalkerWave(
                 Mathf.Max(1, reinforcementCount),
-                18f,
-                ColonyLayout.CampusOriginFor(_loop.FocusedCampus));
+                10f,
+                origin);
             _waveTarget = spawned;
             StalkersRemaining = CountLivingStalkers();
             DemoAudio.PlayBite();
-            Debug.Log($"[Mission] Wave 2 — {spawned} Dust Stalker(s) closing on {ColonyLayout.CampusLabel(_loop.FocusedCampus)}.");
+            Debug.Log($"[Mission] Wave 2 — {spawned} Dust Stalker(s) closing from procedural dens.");
         }
 
         private void EnterWon()

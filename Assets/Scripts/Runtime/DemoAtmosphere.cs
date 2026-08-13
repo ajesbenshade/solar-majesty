@@ -5,30 +5,25 @@ using UnityEngine.Rendering.Universal;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Phase 3: runtime lunar lighting + fog + ground tint + light URP Volume grade.
+    /// Runtime lighting + fog + URP Volume grade, driven by a celestial body profile.
+    /// Ground albedo is owned by <see cref="PlanetaryMapDressing"/> — do not tint it here.
     /// </summary>
     public static class DemoAtmosphere
     {
-        private static readonly Color SunColor = new Color(1f, 0.94f, 0.86f);
-        private static readonly Color FillColor = new Color(0.35f, 0.48f, 0.72f);
-        private static readonly Color AmbientSky = new Color(0.28f, 0.32f, 0.42f);
-        private static readonly Color AmbientEquator = new Color(0.22f, 0.2f, 0.18f);
-        private static readonly Color AmbientGround = new Color(0.12f, 0.1f, 0.09f);
-        private static readonly Color FogColor = new Color(0.55f, 0.52f, 0.48f);
-        private static readonly Color GroundColor = new Color(0.48f, 0.44f, 0.38f);
-        private static readonly Color SkyClear = new Color(0.06f, 0.08f, 0.14f);
+        public static void Apply(Camera cam, Transform groundParent) =>
+            Apply(cam, groundParent, CelestialBodyCatalog.Luna());
 
-        public static void Apply(Camera cam, Transform groundParent)
+        public static void Apply(Camera cam, Transform groundParent, CelestialBodyProfile body)
         {
-            ConfigureSun();
-            EnsureFillLight(groundParent);
-            ConfigureAmbientAndFog();
-            TintGround();
-            ConfigureCamera(cam);
+            if (body == null) body = CelestialBodyCatalog.Luna();
+            ConfigureSun(body);
+            EnsureFillLight(groundParent, body);
+            ConfigureAmbientAndFog(body);
+            ConfigureCamera(cam, body);
             EnsureVolume(groundParent);
         }
 
-        private static void ConfigureSun()
+        private static void ConfigureSun(CelestialBodyProfile body)
         {
             Light sun = null;
             var lights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
@@ -48,8 +43,8 @@ namespace SolarMajesty
                 sun.type = LightType.Directional;
             }
 
-            sun.color = SunColor;
-            sun.intensity = 1.45f;
+            sun.color = body.SunColor;
+            sun.intensity = body.SunIntensity;
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = 0.78f;
             sun.shadowBias = 0.04f;
@@ -58,51 +53,50 @@ namespace SolarMajesty
             sun.name = "Directional Light";
         }
 
-        private static void EnsureFillLight(Transform parent)
+        private static void EnsureFillLight(Transform parent, CelestialBodyProfile body)
         {
-            if (GameObject.Find("Fill Light") != null) return;
-            var go = new GameObject("Fill Light");
-            if (parent != null) go.transform.SetParent(parent, false);
-            var fill = go.AddComponent<Light>();
+            var existing = GameObject.Find("Fill Light");
+            GameObject go = existing;
+            if (go == null)
+            {
+                go = new GameObject("Fill Light");
+                if (parent != null) go.transform.SetParent(parent, false);
+                go.AddComponent<Light>();
+                go.transform.rotation = Quaternion.Euler(25f, 140f, 0f);
+            }
+
+            var fill = go.GetComponent<Light>();
+            if (fill == null) fill = go.AddComponent<Light>();
             fill.type = LightType.Directional;
-            fill.color = FillColor;
+            fill.color = body.FillColor;
             fill.intensity = 0.28f;
             fill.shadows = LightShadows.None;
-            go.transform.rotation = Quaternion.Euler(25f, 140f, 0f);
         }
 
-        private static void ConfigureAmbientAndFog()
+        private static void ConfigureAmbientAndFog(CelestialBodyProfile body)
         {
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = AmbientSky;
-            RenderSettings.ambientEquatorColor = AmbientEquator;
-            RenderSettings.ambientGroundColor = AmbientGround;
+            RenderSettings.ambientSkyColor = body.AmbientSky;
+            RenderSettings.ambientEquatorColor = body.AmbientEquator;
+            RenderSettings.ambientGroundColor = body.AmbientGround;
             RenderSettings.ambientIntensity = 1f;
 
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = FogColor;
-            RenderSettings.fogStartDistance = 28f;
-            RenderSettings.fogEndDistance = 95f;
+            RenderSettings.fogColor = body.FogColor;
+            RenderSettings.fogStartDistance = body.FogStart;
+            RenderSettings.fogEndDistance = body.FogEnd;
         }
 
-        private static void TintGround()
-        {
-            var ground = GameObject.Find("GroundPlane");
-            if (ground == null) return;
-            var rend = ground.GetComponent<Renderer>();
-            if (rend == null) return;
-            if (rend.material.HasProperty("_BaseColor"))
-                rend.material.SetColor("_BaseColor", GroundColor);
-            else if (rend.material.HasProperty("_Color"))
-                rend.material.color = GroundColor;
-        }
-
-        private static void ConfigureCamera(Camera cam)
+        private static void ConfigureCamera(Camera cam, CelestialBodyProfile body)
         {
             if (cam == null) return;
-            cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = SkyClear;
+            // PlanetaryMapDressing may switch to Skybox after Apply; keep a body-tinted fallback.
+            if (cam.clearFlags != CameraClearFlags.Skybox)
+            {
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = body.SkyTop;
+            }
             cam.farClipPlane = Mathf.Max(cam.farClipPlane, 200f);
 
             var additional = cam.GetComponent<UniversalAdditionalCameraData>();

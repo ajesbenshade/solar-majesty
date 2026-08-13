@@ -10,6 +10,7 @@ namespace SolarMajesty
         public const string ScoutPath = "DemoContent/Specialists/Specialist_ScoutDrone";
         public const string EngineerPath = "DemoContent/Specialists/Specialist_EngineerBot";
         public const string DefensePath = "DemoContent/Specialists/Specialist_DefenseMech";
+        public const string MedicPath = "DemoContent/Specialists/Specialist_Medic";
 
         public const string ExploreFlagPath = "DemoContent/Flags/Flag_Explore";
         public const string ClearThreatFlagPath = "DemoContent/Flags/Flag_ClearThreat";
@@ -33,6 +34,7 @@ namespace SolarMajesty
         public static SpecialistData LoadScout() => Resources.Load<SpecialistData>(ScoutPath);
         public static SpecialistData LoadEngineer() => Resources.Load<SpecialistData>(EngineerPath);
         public static SpecialistData LoadDefense() => Resources.Load<SpecialistData>(DefensePath);
+        public static SpecialistData LoadMedic() => Resources.Load<SpecialistData>(MedicPath);
 
         public static FlagData LoadExploreFlag() => Resources.Load<FlagData>(ExploreFlagPath);
         public static FlagData LoadClearThreatFlag() => Resources.Load<FlagData>(ClearThreatFlagPath);

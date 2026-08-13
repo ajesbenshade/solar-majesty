@@ -7,7 +7,10 @@ namespace SolarMajesty
     {
         Idle,
         Rest,
-        PursueFlag
+        PursueFlag,
+        Flee,
+        Hunt,
+        Wander
     }
 
     [Serializable]
@@ -19,23 +22,44 @@ namespace SolarMajesty
         public float GreedHunger;      // how hungry for reward right now (0-1)
         public FlagHandle CurrentFlag; // null if none
         public float HealthNormalized; // 0-1
+        public Vector3 SafetyPosition; // inn / campus
+        public Vector3 VocationPosition;
+        public Vector3 HuntPosition;
+        public float HuntDistance;
+        public bool HasHunt;
+        public SpecialistAction CurrentAction;
+        public Vector3 WorkshopPosition;
+        public bool HasWorkshop;
+        public float FlagWorkshopBonus;
+        public bool HasPatient;
+        public Vector3 PatientPosition;
     }
 
     public struct BrainDecision
     {
         public SpecialistAction Action;
         public FlagHandle TargetFlag;   // only valid if Action == PursueFlag
+        public Vector3 TargetPosition;
         public float Score;
         public string Reason;
 
         public static BrainDecision Idle(float score, string reason) =>
             new BrainDecision { Action = SpecialistAction.Idle, Score = score, Reason = reason };
 
-        public static BrainDecision Rest(float score, string reason) =>
-            new BrainDecision { Action = SpecialistAction.Rest, Score = score, Reason = reason };
+        public static BrainDecision Rest(float score, string reason, Vector3 inn) =>
+            new BrainDecision { Action = SpecialistAction.Rest, TargetPosition = inn, Score = score, Reason = reason };
 
         public static BrainDecision Pursue(FlagHandle flag, float score, string reason) =>
             new BrainDecision { Action = SpecialistAction.PursueFlag, TargetFlag = flag, Score = score, Reason = reason };
+
+        public static BrainDecision Flee(Vector3 safety, float score, string reason) =>
+            new BrainDecision { Action = SpecialistAction.Flee, TargetPosition = safety, Score = score, Reason = reason };
+
+        public static BrainDecision Hunt(Vector3 prey, float score, string reason) =>
+            new BrainDecision { Action = SpecialistAction.Hunt, TargetPosition = prey, Score = score, Reason = reason };
+
+        public static BrainDecision Wander(Vector3 dest, float score, string reason) =>
+            new BrainDecision { Action = SpecialistAction.Wander, TargetPosition = dest, Score = score, Reason = reason };
     }
 
     /// <summary>

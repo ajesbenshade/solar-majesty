@@ -42,11 +42,13 @@ namespace SolarMajesty.EditorTools
             var scoutPrefab = SaveUnitPrefab("Unit_ScoutDrone", UnitPlaceholderFactory.BuildScout);
             var engPrefab = SaveUnitPrefab("Unit_EngineerBot", UnitPlaceholderFactory.BuildEngineer);
             var defPrefab = SaveUnitPrefab("Unit_DefenseMech", UnitPlaceholderFactory.BuildDefense);
+            var medicPrefab = SaveUnitPrefab("Unit_Medic", UnitPlaceholderFactory.BuildMedic);
             SaveUnitPrefab("Unit_DustStalker", UnitPlaceholderFactory.BuildDustStalker);
 
             var scout = WriteSpecialist("Specialist_ScoutDrone", GameLoop.CreateScout(), scoutPrefab);
             var eng = WriteSpecialist("Specialist_EngineerBot", GameLoop.CreateEngineer(), engPrefab);
             var def = WriteSpecialist("Specialist_DefenseMech", GameLoop.CreateDefense(), defPrefab);
+            WriteSpecialist("Specialist_Medic", GameLoop.CreateMedic(), medicPrefab);
 
             WriteFlag("Flag_Explore", FlagType.Explore, "Explore", 40, 0.08f, 4f, new Color(0.3f, 0.85f, 1f));
             WriteFlag("Flag_ClearThreat", FlagType.ClearThreat, "Clear Threat", 80, 0.4f, 6f, new Color(1f, 0.3f, 0.25f));
