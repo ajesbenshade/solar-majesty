@@ -21,6 +21,9 @@ namespace SolarMajesty
         public float UpkeepIntervalSeconds { get; set; } = 30f;
         public float ResupplyIntervalSeconds { get; set; } = 90f;
         public bool ResupplyEnabled { get; set; } = true;
+        public bool ResupplyRequiresPad { get; set; } = true;
+        public bool HasDock { get; set; }
+        public int ResupplyDockFee { get; set; }
 
         /// <summary>Flat power drain each upkeep tick (base outpost draw).</summary>
         public int BasePowerUpkeep { get; set; } = 1;
@@ -35,6 +38,7 @@ namespace SolarMajesty
 
         public event Action UpkeepApplied;
         public event Action ResupplyArrived;
+        public event Action ResupplyWavedOff;
 
         /// <summary>Seconds until the next specialist/grid upkeep tick.</summary>
         public float UpkeepSecondsLeft => Mathf.Max(0f, _upkeepTimer);
@@ -54,6 +58,8 @@ namespace SolarMajesty
         public string LastUpkeepLine { get; private set; } = "";
         public string LastExtractLine { get; private set; } = "";
         public int LastExtractAmount { get; private set; }
+        public string LastResupplyLine { get; private set; } = "";
+        public bool LastResupplyDocked { get; private set; }
 
         public SimpleEconomy(ResourceManager resources)
         {
@@ -83,9 +89,27 @@ namespace SolarMajesty
             if (_resupplyTimer <= 0f)
             {
                 _resupplyTimer += ResupplyIntervalSeconds;
-                DeliverResupply();
-                ResupplyArrived?.Invoke();
+                if (DeliverResupply())
+                    ResupplyArrived?.Invoke();
+                else
+                    ResupplyWavedOff?.Invoke();
             }
+        }
+
+        public void ConfigureResupply(float intervalSeconds, int dockFee)
+        {
+            ResupplyIntervalSeconds = Mathf.Max(20f, intervalSeconds);
+            ResupplyDockFee = Mathf.Max(0, dockFee);
+            _resupplyTimer = ResupplyIntervalSeconds;
+        }
+
+        /// <summary>Live rule change without resetting the incoming ship clock unless it overshoots.</summary>
+        public void SetResupplyRules(float intervalSeconds, int dockFee)
+        {
+            ResupplyIntervalSeconds = Mathf.Max(20f, intervalSeconds);
+            ResupplyDockFee = Mathf.Max(0, dockFee);
+            if (_resupplyTimer > ResupplyIntervalSeconds)
+                _resupplyTimer = ResupplyIntervalSeconds;
         }
 
         public int EscrowedMetals { get; private set; }
@@ -139,9 +163,16 @@ namespace SolarMajesty
 
         /// <summary>
         /// Phase 6A: if a resource node is in range, harvest from it; otherwise campus fallback.
+        /// Efficiency is haul delivered to stockpile (node still loses the full take).
         /// </summary>
-        public void GrantExtractYield(int campusIndex, ResourceNode node)
+        public void GrantExtractYield(int campusIndex, ResourceNode node) =>
+            GrantExtractYield(campusIndex, node, 1f, null);
+
+        public void GrantExtractYield(int campusIndex, ResourceNode node, float efficiency, string via)
         {
+            float haul = Mathf.Clamp(efficiency, 0.05f, 1.25f);
+            string tag = HaulTag(via, haul);
+
             if (node != null && !node.IsDepleted)
             {
                 switch (node.NodeType)
@@ -149,33 +180,33 @@ namespace SolarMajesty
                     case ResourceNodeType.Metals:
                     {
                         int took = node.Harvest(8);
-                        if (took > 0) _resources.Add(ResourceId.Metals, took);
-                        _resources.Add(ResourceId.Regolith, 2);
-                        RecordExtract($"+{took} MET from ore node", took);
+                        int got = Deliver(ResourceId.Metals, took, haul);
+                        Deliver(ResourceId.Regolith, 2, haul);
+                        RecordExtract($"+{got} MET {tag}", got);
                         break;
                     }
                     case ResourceNodeType.Ice:
                     {
                         int took = node.Harvest(7);
-                        if (took > 0) _resources.Add(ResourceId.WaterIce, took);
-                        _resources.Add(ResourceId.Regolith, 3);
-                        RecordExtract($"+{took} ICE from ice node", took);
+                        int got = Deliver(ResourceId.WaterIce, took, haul);
+                        Deliver(ResourceId.Regolith, 3, haul);
+                        RecordExtract($"+{got} ICE {tag}", got);
                         break;
                     }
                     case ResourceNodeType.Fissile:
                     {
                         int took = node.Harvest(5);
-                        if (took > 0) _resources.Add(ResourceId.Power, took);
-                        _resources.Add(ResourceId.Metals, 1);
-                        RecordExtract($"+{took} PWR from fissile node", took);
+                        int got = Deliver(ResourceId.Power, took, haul);
+                        Deliver(ResourceId.Metals, 1, haul);
+                        RecordExtract($"+{got} PWR {tag}", got);
                         break;
                     }
                     default:
                     {
                         int took = node.Harvest(10);
-                        if (took > 0) _resources.Add(ResourceId.Regolith, took);
-                        _resources.Add(ResourceId.Metals, 2);
-                        RecordExtract($"+{took} REG from deposit", took);
+                        int got = Deliver(ResourceId.Regolith, took, haul);
+                        Deliver(ResourceId.Metals, 2, haul);
+                        RecordExtract($"+{got} REG {tag}", got);
                         break;
                     }
                 }
@@ -184,18 +215,33 @@ namespace SolarMajesty
 
             if (campusIndex <= 0)
             {
-                _resources.Add(ResourceId.Regolith, 12);
-                _resources.Add(ResourceId.Metals, 4);
-                _resources.Add(ResourceId.WaterIce, 2);
-                RecordExtract("+12 REG campus extract", 12);
+                int got = Deliver(ResourceId.Regolith, 12, haul);
+                Deliver(ResourceId.Metals, 4, haul);
+                Deliver(ResourceId.WaterIce, 2, haul);
+                RecordExtract($"+{got} REG campus {tag}", got);
             }
             else
             {
-                _resources.Add(ResourceId.Regolith, 16);
-                _resources.Add(ResourceId.Metals, 3);
-                _resources.Add(ResourceId.WaterIce, 1);
-                RecordExtract("+16 REG outpost extract", 16);
+                int got = Deliver(ResourceId.Regolith, 16, haul);
+                Deliver(ResourceId.Metals, 3, haul);
+                Deliver(ResourceId.WaterIce, 1, haul);
+                RecordExtract($"+{got} REG outpost {tag}", got);
             }
+        }
+
+        private int Deliver(ResourceId id, int amount, float efficiency)
+        {
+            int n = Mathf.Max(0, Mathf.RoundToInt(amount * efficiency));
+            if (n > 0) _resources.Add(id, n);
+            return n;
+        }
+
+        private static string HaulTag(string via, float efficiency)
+        {
+            int pct = Mathf.RoundToInt(efficiency * 100f);
+            if (string.IsNullOrEmpty(via))
+                return $"loose haul · {pct}%";
+            return $"via {via} · {pct}%";
         }
 
         private void RecordExtract(string line, int amount)
@@ -245,9 +291,23 @@ namespace SolarMajesty
             if (spentIce > 0) LastUpkeepLine += $" −{spentIce} ICE";
         }
 
-        private void DeliverResupply()
+        private bool DeliverResupply()
         {
-            if (ResupplyPackage == null) return;
+            LastResupplyDocked = false;
+            if (ResupplyPackage == null)
+            {
+                LastResupplyLine = "Earth ship empty";
+                return false;
+            }
+
+            if (ResupplyRequiresPad && !HasDock)
+            {
+                LastResupplyLine = "Earth ship waved off — no Landing Pad";
+                return false;
+            }
+
+            if (ResupplyDockFee > 0)
+                _resources.SpendUpTo(ResourceId.Metals, ResupplyDockFee);
 
             for (int i = 0; i < ResupplyPackage.Length; i++)
             {
@@ -255,6 +315,12 @@ namespace SolarMajesty
                 if (p.amount > 0)
                     _resources.Add(p.resource, p.amount);
             }
+
+            LastResupplyDocked = true;
+            LastResupplyLine = ResupplyDockFee > 0
+                ? $"Earth resupply docked (−{ResupplyDockFee} MET fee)"
+                : "Earth resupply docked";
+            return true;
         }
     }
 }

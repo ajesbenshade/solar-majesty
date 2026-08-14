@@ -4,7 +4,7 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Player posts / adjusts bounty flags only. Never commands specialists.
-    /// F1 Explore · F2 ClearThreat · F3 Build · F4 Extract · F5 DefendArea · LMB place · +/- bounty
+    /// F1 Explore · F2 ClearThreat · F3 Build · F4 Extract · F5 Defend · I Research Site · O Outpost · U Terraform
     /// </summary>
     public class FlagPlacementInput : MonoBehaviour
     {
@@ -13,6 +13,9 @@ namespace SolarMajesty
         [SerializeField] private FlagData buildFlag;
         [SerializeField] private FlagData extractFlag;
         [SerializeField] private FlagData defendFlag;
+        [SerializeField] private FlagData researchSiteFlag;
+        [SerializeField] private FlagData outpostFlag;
+        [SerializeField] private FlagData terraformFlag;
         [SerializeField] private float bounty = 50f;
         [SerializeField] private float bountyStep = 15f;
         [SerializeField] private KeyCode placeKey = KeyCode.Mouse0;
@@ -32,6 +35,9 @@ namespace SolarMajesty
         public FlagData BuildFlag => buildFlag;
         public FlagData ExtractFlag => extractFlag;
         public FlagData DefendFlag => defendFlag;
+        public FlagData ResearchSiteFlag => researchSiteFlag;
+        public FlagData OutpostFlag => outpostFlag;
+        public FlagData TerraformFlag => terraformFlag;
 
         public bool EnabledPlacement
         {
@@ -79,7 +85,10 @@ namespace SolarMajesty
             FlagData build = null,
             FlagData extract = null,
             FlagData defend = null,
-            Transform markerRoot = null)
+            Transform markerRoot = null,
+            FlagData researchSite = null,
+            FlagData outpost = null,
+            FlagData terraform = null)
         {
             _flags = flags;
             _grid = grid;
@@ -89,6 +98,9 @@ namespace SolarMajesty
             buildFlag = build;
             extractFlag = extract;
             defendFlag = defend;
+            researchSiteFlag = researchSite;
+            outpostFlag = outpost;
+            terraformFlag = terraform;
             _selected = exploreFlag != null ? exploreFlag : clearThreatFlag;
             _markerRoot = markerRoot;
             _loop = GetComponent<GameLoop>();
@@ -110,6 +122,12 @@ namespace SolarMajesty
                 Select(extractFlag);
             if (Input.GetKeyDown(KeyCode.F5) && defendFlag != null)
                 Select(defendFlag);
+            if (Input.GetKeyDown(KeyCode.I) && researchSiteFlag != null)
+                Select(researchSiteFlag);
+            if (Input.GetKeyDown(KeyCode.O) && outpostFlag != null)
+                Select(outpostFlag);
+            if (Input.GetKeyDown(KeyCode.U) && terraformFlag != null)
+                Select(terraformFlag);
 
             if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))
                 bounty += bountyStep;
@@ -156,6 +174,8 @@ namespace SolarMajesty
 
             FlagHandle handle = _flags.Post(data, world, bountyAmount);
             handle.EscrowMetals = escrow;
+            if (_loop != null)
+                handle.Risk = Mathf.Clamp01(data.baseRisk + _loop.LocalThreatAt(world) * 0.5f);
             SpawnMarker(handle, world);
             DemoAudio.PlayFlagPost();
             _loop?.NotifyFlagPosted(handle);

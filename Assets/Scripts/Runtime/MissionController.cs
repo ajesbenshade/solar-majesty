@@ -88,8 +88,10 @@ namespace SolarMajesty
             {
                 if (_state == MissionState.Won)
                 {
-                    if (_loop != null && _loop.ActiveBody == CelestialBodyId.Mars)
-                        return "Solar conquest complete — Mars holds";
+                    if (ReplayRules.IsEndless)
+                        return "Keep colonizing — dens quiet, colony holding";
+                    if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
+                        return $"{_loop.BodyProfile?.DisplayName ?? "Outpost"} holds — campaign spine complete";
                     return "Outpost secured — advance the campaign";
                 }
                 if (!DensCleared)
@@ -121,6 +123,8 @@ namespace SolarMajesty
         {
             get
             {
+                if (ReplayRules.IsEndless)
+                    return "KEEP COLONIZING";
                 if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
                     return "SOLAR CONQUEST COMPLETE";
                 return "OUTPOST SECURED";
@@ -131,6 +135,13 @@ namespace SolarMajesty
         {
             get
             {
+                if (ReplayRules.IsEndless)
+                {
+                    var endless = _loop != null ? _loop.BodyProfile : null;
+                    if (endless != null && !string.IsNullOrEmpty(endless.EndlessLog))
+                        return endless.EndlessLog;
+                    return "Gates met. Stay on this world — rating stands while you keep expanding.";
+                }
                 var body = _loop != null ? _loop.BodyProfile : null;
                 if (body != null && !string.IsNullOrEmpty(body.VictoryLog))
                     return body.VictoryLog;
@@ -142,8 +153,10 @@ namespace SolarMajesty
         {
             get
             {
+                if (ReplayRules.IsEndless)
+                    return "Campaign hop is off. Shift+F10 still unlocks body chips.";
                 if (_loop == null || !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "Mars holds. Rematch this world, or oversee in sandbox.";
+                    return "Outer system open. Rematch this world, or oversee in sandbox.";
                 var next = CampaignProgress.NextAfter(_loop.ActiveBody);
                 string name = next.HasValue
                     ? CelestialBodyCatalog.Get(next.Value).DisplayName
@@ -336,9 +349,12 @@ namespace SolarMajesty
                     ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
                     new Color(0.35f, 0.95f, 0.55f));
                 _loop.LogOverseer(WinDetail);
-                Debug.Log("[Mission] Victory — dens cleared, colony sustained, launch ready.");
-                if (_loop.ActiveBody == CelestialBodyId.Mars)
-                    Debug.Log("[Mission] Mars finale — solar conquest complete.");
+                if (ReplayRules.IsEndless)
+                    Debug.Log("[Mission] Victory — keep colonizing. Rating stands.");
+                else
+                    Debug.Log("[Mission] Victory — dens cleared, colony sustained, launch ready.");
+                if (!ReplayRules.IsEndless && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
+                    Debug.Log("[Mission] Campaign spine complete.");
             }
         }
 

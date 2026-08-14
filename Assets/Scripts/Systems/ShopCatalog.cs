@@ -93,6 +93,12 @@ namespace SolarMajesty
                 SpecialistClass.ScoutDrone => ShopItemId.GeneSwift,
                 SpecialistClass.EngineerBot => ShopItemId.GeneWork,
                 SpecialistClass.Medic => ShopItemId.GeneCourage,
+                SpecialistClass.HarvesterBot => ShopItemId.GeneWork,
+                SpecialistClass.SurveyorBot => ShopItemId.GeneSwift,
+                SpecialistClass.TerraformerBot => ShopItemId.GeneWork,
+                SpecialistClass.CourierBot => ShopItemId.GeneSwift,
+                SpecialistClass.GeologistBot => ShopItemId.GeneWork,
+                SpecialistClass.SentinelMech => ShopItemId.GeneCourage,
                 _ => ShopItemId.GeneWork
             };
             var def = Get(prefer);

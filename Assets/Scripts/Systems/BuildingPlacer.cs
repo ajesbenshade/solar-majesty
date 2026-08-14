@@ -45,6 +45,7 @@ namespace SolarMajesty
         private readonly List<ConstructionOrder> _orders = new List<ConstructionOrder>();
         private readonly HashSet<long> _occupiedCells = new HashSet<long>();
         private readonly HashSet<long> _campusCells = new HashSet<long>();
+        private readonly HashSet<long> _outpostCells = new HashSet<long>();
         private readonly List<CampusPiece> _pieces = new List<CampusPiece>();
         private int _nextId = 1;
 
@@ -58,6 +59,30 @@ namespace SolarMajesty
         /// <summary>Airlock junction piece — docks modules on cardinal faces.</summary>
         public static bool IsAirlock(BuildingCategory cat) =>
             cat == BuildingCategory.Utility;
+
+        /// <summary>Pad / extract / power / defense / harvest-defense shops may land on Campus B without Lego tubes.</summary>
+        public static bool IsForwardOutpost(BuildingCategory cat)
+        {
+            switch (cat)
+            {
+                case BuildingCategory.LandingPad:
+                case BuildingCategory.Mine:
+                case BuildingCategory.Mining:
+                case BuildingCategory.Farm:
+                case BuildingCategory.RegolithCamp:
+                case BuildingCategory.Power:
+                case BuildingCategory.Defense:
+                case BuildingCategory.HarvesterWorkshop:
+                case BuildingCategory.DefenseWorkshop:
+                case BuildingCategory.TerraformerWorkshop:
+                case BuildingCategory.CourierWorkshop:
+                case BuildingCategory.GeologistWorkshop:
+                case BuildingCategory.SentinelWorkshop:
+                    return true;
+                default:
+                    return false;
+            }
+        }
 
         /// <summary>Optional map bounds / terrain rule. Return false to reject.</summary>
         public Func<Vector2Int, BuildingData, bool> ExtraPlacementRule { get; set; }
@@ -126,6 +151,34 @@ namespace SolarMajesty
             };
 
             _orders.Add(order);
+            return true;
+        }
+
+        /// <summary>Replay a saved piece without charging stockpile or dock rules.</summary>
+        public bool TryRestore(
+            BuildingData data,
+            Vector2Int gridCell,
+            Vector3 worldPosition,
+            float progress01,
+            out ConstructionOrder order)
+        {
+            order = null;
+            if (data == null) return false;
+            if (!CanFit(data, gridCell)) return false;
+
+            MarkFootprint(data, gridCell, occupied: true);
+            float required = Mathf.Max(0.1f, data.buildTimeSeconds);
+            order = new ConstructionOrder
+            {
+                Id = _nextId++,
+                Data = data,
+                GridCell = gridCell,
+                WorldPosition = worldPosition,
+                ProgressSeconds = Mathf.Clamp01(progress01) * required,
+                RequiredSeconds = required
+            };
+            if (!order.IsComplete)
+                _orders.Add(order);
             return true;
         }
 
@@ -231,6 +284,30 @@ namespace SolarMajesty
             for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
                 _campusCells.Add(Pack(origin.x + x, origin.y + y));
+        }
+
+        /// <summary>Disconnected Campus B claim — not part of the Palace Lego graph.</summary>
+        public void SeedOutpostClaim(Vector2Int origin, int width, int height)
+        {
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+                _outpostCells.Add(Pack(origin.x + x, origin.y + y));
+        }
+
+        public bool OverlapsOutpostClaim(Vector2Int origin, int width, int height)
+        {
+            if (_outpostCells.Count == 0) return false;
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                if (_outpostCells.Contains(Pack(origin.x + x, origin.y + y)))
+                    return true;
+            }
+            return false;
         }
 
         public bool HasCampus => _campusCells.Count > 0;

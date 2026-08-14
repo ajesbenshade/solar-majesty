@@ -83,6 +83,8 @@ namespace SolarMajesty
             {
                 case CelestialBodyId.Earth: return 9001;
                 case CelestialBodyId.Mars: return 20011;
+                case CelestialBodyId.Belt: return 30013;
+                case CelestialBodyId.Europa: return 40017;
                 default: return 10007;
             }
         }

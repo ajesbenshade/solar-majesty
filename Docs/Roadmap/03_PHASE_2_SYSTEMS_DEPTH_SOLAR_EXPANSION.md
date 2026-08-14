@@ -1,6 +1,6 @@
 # Phase 2 – Systems Depth & Solar Expansion
 
-**Status:** After Phase 1  
+**Status:** Complete (Weeks 1–12 in). Titan / remesh / external playtest leftover. Phase 3 next; visual-target fidelity is Phase 4, not a Phase 2 remake.  
 **Duration:** 8–12 weeks  
 **Goal:** Transform the polished three-body demo into a true multi-body strategy sandbox. Players should feel real strategic depth when expanding across the Solar System, with body-specific constraints, deeper economy, and meaningful tech choices.
 
@@ -73,29 +73,29 @@ Each body must change:
 ## Task Checklist (High Level)
 
 **Weeks 1–3 – Body Expansion Foundation**
-- [ ] Define BodySeed / CelestialBodyProfile data for Asteroid Belt + Europa
-- [ ] World gen and map dressing support for new bodies
-- [ ] Body-specific resource nodes and constraints
-- [ ] Basic campus start kits per new body
+- [x] Define BodySeed / CelestialBodyProfile data for Asteroid Belt + Europa
+- [x] World gen and map dressing support for new bodies
+- [x] Body-specific resource nodes and constraints
+- [x] Basic campus start kits per new body
 
 **Weeks 4–6 – Economy & Logistics**
-- [ ] Extraction chain and drop-off improvements
-- [ ] Housing / power / population pressure systems
-- [ ] Inter-body shipping / resupply events
-- [ ] Forward outpost rules and upkeep
+- [x] Extraction chain and drop-off improvements
+- [x] Housing / power / population pressure systems
+- [x] Inter-body shipping / resupply events
+- [x] Forward outpost rules and upkeep
 
 **Weeks 7–9 – Tech & Specialists**
-- [ ] Expand tech tree with meaningful branches and 2–3 Secret Projects
-- [ ] Guild / hall buildings and specialist attraction
-- [ ] 2–3 additional specialist classes with distinct personalities
-- [ ] Flag type expansion and risk dynamics
+- [x] Expand tech tree with meaningful branches and 2–3 Secret Projects
+- [x] Guild / hall buildings and specialist attraction
+- [x] 2–3 additional specialist classes with distinct personalities
+- [x] Flag type expansion and risk dynamics
 
 **Weeks 10–12 – Integration & Polish**
-- [ ] Multi-campus play testing and balancing
-- [ ] Threat ecology responses per body
-- [ ] Art pass for new body environments and new buildings
-- [ ] Full playtest of expanded solar progression
-- [ ] Documentation and Phase 2 exit review
+- [x] Multi-campus play testing and balancing
+- [x] Threat ecology responses per body
+- [x] Art pass for new body environments and new buildings *(greybox / tint / dressing grade — not the [visual target](05_PHASE_4_VISUAL_TARGET.md))*
+- [x] Full playtest of expanded solar progression
+- [x] Documentation and Phase 2 exit review
 
 ---
 
@@ -132,9 +132,13 @@ Each body must change:
 
 ## Exit Criteria
 
-- [ ] At least two new bodies fully playable with unique rules
-- [ ] Multi-campus logistics functional
-- [ ] Expanded tech tree with at least two meaningful branches + Secret Projects
-- [ ] 5–6 specialist classes with clear personalities
-- [ ] Economy and threat systems support the larger scale
-- [ ] Ready for content explosion without further core system rewrites
+- [x] At least two new bodies fully playable with unique rules
+- [x] Multi-campus logistics functional
+- [x] Expanded tech tree with at least two meaningful branches + Secret Projects
+- [x] 5–6 specialist classes with clear personalities
+- [x] Economy and threat systems support the larger scale
+- [x] Ready for content explosion without further core system rewrites
+
+**Visual debt vs target:** Belt / Europa kits and body tints are readable placeholders. Do not reopen this phase to match the Mars mockup; Phase 4 pays that debt on a shared tube-campus kit.
+
+Exit write-up: [PHASE_2_EXIT.md](PHASE_2_EXIT.md).

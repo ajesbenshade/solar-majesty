@@ -32,6 +32,9 @@ namespace SolarMajesty
             {
                 case BuildingCategory.Palace:
                 case BuildingCategory.LandingPad:
+                case BuildingCategory.ClimateLoom:
+                case BuildingCategory.AegisSpire:
+                case BuildingCategory.DeepArchive:
                     return 6;
                 case BuildingCategory.Habitat:
                 case BuildingCategory.Defense:
@@ -43,6 +46,14 @@ namespace SolarMajesty
                 case BuildingCategory.EngineerWorkshop:
                 case BuildingCategory.DefenseWorkshop:
                 case BuildingCategory.MedicWorkshop:
+                case BuildingCategory.HarvesterWorkshop:
+                case BuildingCategory.SurveyorWorkshop:
+                case BuildingCategory.TerraformerWorkshop:
+                case BuildingCategory.CourierWorkshop:
+                case BuildingCategory.GeologistWorkshop:
+                case BuildingCategory.SentinelWorkshop:
+                case BuildingCategory.GuildHall:
+                    return 4;
                 case BuildingCategory.Power:
                 case BuildingCategory.Mining:
                 case BuildingCategory.Laboratory:

@@ -6,7 +6,16 @@ namespace SolarMajesty
     {
         Earth = 0,
         Luna = 1,
-        Mars = 2
+        Mars = 2,
+        Belt = 3,
+        Europa = 4
+    }
+
+    public enum TerrainKit
+    {
+        Standard = 0,
+        AsteroidField = 1,
+        IceCrust = 2
     }
 
     /// <summary>
@@ -22,6 +31,7 @@ namespace SolarMajesty
         public string ArrivalLog;
         public string VictoryLog;
         public string FailLog;
+        public string EndlessLog;
 
         [Header("Surface")]
         public Color GroundLight;
@@ -75,15 +85,57 @@ namespace SolarMajesty
         /// <summary>Relative weights for Regolith, Metals, Ice, Fissile (must be length 4).</summary>
         public int[] ResourceWeights = { 5, 3, 2, 2 };
 
+        [Header("Body constraints")]
+        public TerrainKit Kit = TerrainKit.Standard;
+        public TechId LaunchTech = TechId.None;
+        public float ExtractYieldScale = 1f;
+        public float FarmYieldScale = 1f;
+        public float MineYieldScale = 1f;
+        public float PowerDrawScale = 1f;
+        public int AsteroidIsletCount = 0;
+        public int IcePlateCount = 0;
+
         [Header("Campaign gates")]
         public int PopulationGoal = 12;
         public float SustainHoldSeconds = 40f;
         public float ResearchRateMultiplier = 1f;
+
+        [Header("Logistics")]
+        public float ResupplyIntervalScale = 1f;
+        public int ResupplyDockFee = 0;
+        public int FreightMetals = 0;
+        public int FreightIce = 0;
+        public int OutpostPowerDraw = 2;
 
         [Header("Empty-start stockpile")]
         public int StartRegolith = 90;
         public int StartWaterIce = 55;
         public int StartMetals = 280;
         public int StartPower = 100;
+
+        [Header("Ecology / movement")]
+        public float MoveSpeedScale = 1f;
+        public float RadiationDrainPerSecond = 0f;
+        public float RadiationSafeRadius = 22f;
+        public float AmbientThreat = 0.12f;
+        public float ExpansionThreat = 0.018f;
+        public int CampusFaunaCap = 4;
+        public float MiteSpawnWeight = 1f;
+        public float LeechSpawnWeight = 1f;
+        public float TickSpawnWeight = 0f;
+        public float WispSpawnWeight = 0f;
+        public float CreeperSpawnWeight = 0f;
+        public float HopperSpawnWeight = 0f;
+        public float FaunaSpeedScale = 1f;
+        public float FaunaAggroScale = 1f;
+        public int LairStalkerBudget = 2;
+        public bool PreferMineMites;
+        /// <summary>Alpha 0 keeps factory mite/leech tints.</summary>
+        public Color FaunaMiteTint;
+        public Color FaunaLeechTint;
+        public Color FaunaCreeperTint;
+        public Color FaunaHopperTint;
+        public Color FaunaWispTint;
+        public Color FaunaTickTint;
     }
 }

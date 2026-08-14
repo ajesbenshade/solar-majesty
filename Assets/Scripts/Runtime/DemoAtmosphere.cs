@@ -46,9 +46,12 @@ namespace SolarMajesty
             sun.color = body.SunColor;
             sun.intensity = body.SunIntensity;
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = 0.78f;
+            sun.shadowStrength = body.Id == CelestialBodyId.Mars || body.Id == CelestialBodyId.Luna
+                ? 0.90f
+                : 0.72f;
             sun.shadowBias = 0.04f;
-            sun.shadowNormalBias = 0.6f;
+            sun.shadowNormalBias = 0.55f;
+            sun.shadowNearPlane = 0.2f;
             sun.transform.rotation = Quaternion.Euler(body.SunEuler);
             sun.name = "Directional Light";
         }
@@ -69,7 +72,7 @@ namespace SolarMajesty
             if (fill == null) fill = go.AddComponent<Light>();
             fill.type = LightType.Directional;
             fill.color = body.FillColor;
-            fill.intensity = 0.28f;
+            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.18f : 0.28f;
             fill.shadows = LightShadows.None;
         }
 

@@ -5,14 +5,15 @@ alwaysApply: true
 
 # Solar Majesty roadmap
 
-Living plan: `Docs/Roadmap/`. Work **one phase at a time**. Current work is **Phase 1** (`02_PHASE_1_CAMPAIGN_QUALITY_DEMO.md`). Phase 0 is locked.
+Living plan: `Docs/Roadmap/`. Work **one phase at a time**. Current work is **Phase 4** (`05_PHASE_4_VISUAL_TARGET.md`). Phase 0 is locked. Phase 1 demo packaging is in. Phase 2 solar expansion is complete (`PHASE_2_EXIT.md`). Phase 3 content explosion is complete (`PHASE_3_EXIT.md`). Phase 4 Week 1 (atmosphere / tubes / cranes / HUD), Week 2 (HAB / keep / pad / extractor hero kits), and Week 3 (junction turrets + solar-field landmark) are in. After Phase 4: Phase 5 ship.
 
 ## Non-negotiables
 - Never add click-to-move or any player command that bypasses `SpecialistBrain`.
 - Pure C# only under `Assets/Scripts/Systems/`. Runtime/MonoBehaviours under `Runtime/`.
 - Namespace `SolarMajesty`. Data-driven ScriptableObjects for numbers and affinities.
-- New art uses locked Grok Imagine style keywords (see Phase 0).
+- New art uses locked Grok Imagine style keywords (see Phase 0), extended by the Phase 4 visual target sheet — do not replace the lock.
+- Mockup squad bars / action commands are HUD chrome only; map to buildings, flags, research, camera, parties.
 - Do not rewrite `SpecialistBrain` scoring without explicit design sign-off.
 
 ## Phase order
-0 Foundation lock (complete) → 1 Campaign-quality demo → 2 Solar expansion → 3 Content explosion → 4 Ship polish.
+0 Foundation lock (complete) → 1 Campaign-quality demo (packaged) → 2 Solar expansion (complete) → 3 Content explosion (complete) → 4 Visual target → 5 Ship polish.

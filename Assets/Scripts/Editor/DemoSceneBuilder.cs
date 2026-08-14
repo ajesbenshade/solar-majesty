@@ -41,6 +41,19 @@ namespace SolarMajesty.EditorTools
             Debug.Log("[Solar Majesty] Entering Play Mode — Game tab for the overseer demo.");
         }
 
+        [MenuItem("Solar Majesty/Open Smoke Test Notes")]
+        public static void OpenSmokeTestNotes()
+        {
+            string path = System.IO.Path.GetFullPath(
+                System.IO.Path.Combine(Application.dataPath, "..", "Docs", "SMOKE_TEST.md"));
+            if (!System.IO.File.Exists(path))
+            {
+                EditorUtility.DisplayDialog("Solar Majesty", "Missing Docs/SMOKE_TEST.md", "OK");
+                return;
+            }
+            EditorUtility.OpenWithDefaultApp(path);
+        }
+
         /// <summary>Unity (editor, no -quit) -executeMethod SolarMajesty.EditorTools.DemoSceneBuilder.PlayDemo</summary>
         public static void PlayDemoCli() => PlayDemo();
 

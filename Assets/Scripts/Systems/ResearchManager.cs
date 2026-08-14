@@ -73,6 +73,22 @@ namespace SolarMajesty
             PlayerPrefs.Save();
         }
 
+        public int UnlockedCount => _unlocked.Count;
+
+        public static int SavedUnlockCount()
+        {
+            string raw = PlayerPrefs.GetString(PrefsKey, "");
+            if (string.IsNullOrEmpty(raw)) return 0;
+            int n = 0;
+            var parts = raw.Split(',');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (int.TryParse(parts[i], out int v) && v != (int)TechId.None)
+                    n++;
+            }
+            return n;
+        }
+
         public bool IsUnlocked(TechId id) => id != TechId.None && _unlocked.Contains(id);
 
         public bool PrerequisitesMet(TechDef def)
@@ -117,16 +133,48 @@ namespace SolarMajesty
         public TechId RecommendedNext()
         {
             var techs = TechCatalog.All;
+            TechId secret = TechId.None;
             for (int i = 0; i < techs.Count; i++)
             {
-                if (CanSelect(techs[i].Id))
-                    return techs[i].Id;
+                if (!CanSelect(techs[i].Id)) continue;
+                if (techs[i].SecretProject)
+                {
+                    if (secret == TechId.None)
+                        secret = techs[i].Id;
+                    continue;
+                }
+                return techs[i].Id;
             }
-            return TechId.None;
+            return secret;
         }
 
-        public string LaunchTechLabel(CelestialBodyId body) =>
-            body == CelestialBodyId.Earth ? "Lunar Rocket" : "Mars Ship";
+        /// <summary>Research Site flags dump science into the active tech.</summary>
+        public void AddScience(float amount)
+        {
+            if (amount <= 0f || ActiveTech == TechId.None) return;
+            var def = TechCatalog.Get(ActiveTech);
+            if (def == null || IsUnlocked(ActiveTech)) return;
+            ActiveProgress += amount;
+            _progress[ActiveTech] = ActiveProgress;
+            LastEvent = $"site_+{amount:F0}";
+        }
+
+        public string LaunchTechLabel(CelestialBodyId body)
+        {
+            var profile = CelestialBodyCatalog.Get(body);
+            if (profile == null || profile.LaunchTech == TechId.None)
+                return "departure";
+            var def = TechCatalog.Get(profile.LaunchTech);
+            return def != null ? def.DisplayName : profile.LaunchTech.ToString();
+        }
+
+        public bool HasLaunchUnlockFor(CelestialBodyId body)
+        {
+            var profile = CelestialBodyCatalog.Get(body);
+            if (profile == null || profile.LaunchTech == TechId.None)
+                return true;
+            return IsUnlocked(profile.LaunchTech);
+        }
 
         public void Tick(float dt, int labCount, int labWorkers, float rateMultiplier = 1f)
         {
@@ -191,19 +239,6 @@ namespace SolarMajesty
             var next = RecommendedNext();
             if (next != TechId.None)
                 TrySelect(next);
-        }
-
-        public bool HasLaunchUnlockFor(CelestialBodyId body)
-        {
-            switch (body)
-            {
-                case CelestialBodyId.Earth:
-                    return IsUnlocked(TechId.LunarRocket);
-                case CelestialBodyId.Luna:
-                    return IsUnlocked(TechId.MarsShip);
-                default:
-                    return IsUnlocked(TechId.MarsShip);
-            }
         }
     }
 }

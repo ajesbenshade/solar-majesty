@@ -4,7 +4,7 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Departure craft marker on the landing pad once launch tech is ready.
-    /// Prefers the showcase starship if present; otherwise builds a simple stack.
+    /// Reuses the Phase 4 parked pad ship (Dress_Starship) when present.
     /// </summary>
     public static class LaunchSite
     {

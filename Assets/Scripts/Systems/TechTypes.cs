@@ -15,7 +15,23 @@ namespace SolarMajesty
         MedProtocols = 8,
         DeepSurvey = 9,
         LunarRocket = 10,
-        MarsShip = 11
+        MarsShip = 11,
+        BeltHauler = 12,
+        Icebreaker = 13,
+        GuildCharter = 14,
+        HarvestDoctrine = 15,
+        AegisDoctrine = 16,
+        SurveyDoctrine = 17,
+        PlanetaryAnvil = 18,
+        OrbitalSkyhook = 19,
+        GeneVault = 20,
+        TerraformCharter = 21,
+        FreightDoctrine = 22,
+        CoreSampling = 23,
+        PerimeterDoctrine = 24,
+        ClimateLoom = 25,
+        AegisSpire = 26,
+        DeepArchive = 27
     }
 
     /// <summary>Static tech definition used by <see cref="ResearchManager"/>.</summary>
@@ -29,6 +45,7 @@ namespace SolarMajesty
         public ResourceAmount[] CompleteCost;
         public bool UnlocksLaunch;
         public float ResearchRateBonus;
+        public bool SecretProject;
 
         public TechDef(
             TechId id,
@@ -38,7 +55,8 @@ namespace SolarMajesty
             TechId[] prerequisites = null,
             ResourceAmount[] completeCost = null,
             bool unlocksLaunch = false,
-            float researchRateBonus = 0f)
+            float researchRateBonus = 0f,
+            bool secretProject = false)
         {
             Id = id;
             DisplayName = name;
@@ -48,6 +66,7 @@ namespace SolarMajesty
             CompleteCost = completeCost;
             UnlocksLaunch = unlocksLaunch;
             ResearchRateBonus = researchRateBonus;
+            SecretProject = secretProject;
         }
     }
 }

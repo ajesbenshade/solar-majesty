@@ -1,6 +1,6 @@
 # Phase 1 – Campaign-Quality Demo
 
-**Status:** In progress (Week 1–4 complete; Imagine unit remesh deferred)  
+**Status:** Packaged (Week 1–6 in; playtest/remesh optional). Phase 2 complete; Phase 3 in progress.  
 **Duration:** 4–6 weeks  
 **Goal:** Deliver a polished 45–90 minute experience (Earth tutorial → Luna → Mars) that feels like a finished vertical slice and strongly sells the unique fantasy. A new player should finish the arc and feel “this is Majesty 2 in space with AoE progression and SMAC planetary weight.”
 
@@ -49,6 +49,8 @@
 - HUD polish: better resource readouts, flag status, specialist status panels.
 - Basic VFX for construction, claim, combat, death, launch plume.
 
+**Visual debt vs target:** This pass is demo-grade (blockouts, body lighting, industrial scatter). It is **not** the [Mars visual target](05_PHASE_4_VISUAL_TARGET.md). Do not reopen Phase 1 to remake campus/HUD to mockup fidelity — that is Phase 4. Deferred unit remesh stays optional leftover until then.
+
 ### 6. Demo Package
 - Title → New Game → Earth empty drop → full arc → Mars feels complete.
 - Skippable tutorial that teaches by doing.
@@ -94,8 +96,8 @@
 - [x] HUD and camera framing improvements
 
 **Week 5–6 – Package & Test**
-- [ ] Full demo packaging and smoke tests
-- [ ] Update DEMO.md and DEVELOPER_HANDOFF.md
+- [x] Full demo packaging and smoke tests
+- [x] Update DEMO.md and DEVELOPER_HANDOFF.md
 - [ ] External playtest (if available) and iteration
 - [ ] Phase 1 exit review
 
@@ -125,7 +127,7 @@
 ## Exit Criteria
 
 - [ ] Playable, polished Earth–Luna–Mars arc
-- [ ] Documented smoke-test path
+- [x] Documented smoke-test path (`Docs/SMOKE_TEST.md`)
 - [ ] Art and UI at “demo-ready” quality for current assets
 - [ ] NEXT_STEPS.md and this document updated
-- [ ] Ready to begin Phase 2 content expansion without foundation rework
+- [ ] Ready to begin Phase 2 content expansion without foundation rework *(Phase 2 has since completed)*

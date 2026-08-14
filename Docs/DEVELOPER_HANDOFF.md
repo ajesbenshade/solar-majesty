@@ -15,9 +15,11 @@ You are picking up Solar Majesty (repo: ajesbenshade/solar-majesty).
 Majesty 2–style RTS homage: player is Overseer AI (never direct unit control).
 Build infrastructure, post bounty flags, manage economy. Autonomous specialists
 (Scout / Engineer / Defense / Medic) accept or reject work via SpecialistBrain.
-Campaign spine: Earth tutorial → Luna → Mars with dens / sustain / launch gates
+Campaign spine: Earth tutorial → Luna → Mars → Belt → Europa with dens / sustain / launch gates
 (tech + Landing Pad) and an Alpha Centauri-style tech tree (TECH · T).
-Roadmap: Docs/Roadmap/ (Phase 1 in progress). Dust Stalkers raise ThreatPressure.
+Roadmap: Docs/Roadmap/ (Phase 3 complete: exit in PHASE_3_EXIT.md). Dust Stalkers raise ThreatPressure.
+After Phase 3: Phase 4 visual target (Mars mockup fidelity), then Phase 5 ship.
+Never add click-to-move to match mockup squad UI.
 
 ## Non-negotiables
 - Do NOT add click-to-move or any player command that bypasses SpecialistBrain.
@@ -30,7 +32,7 @@ Roadmap: Docs/Roadmap/ (Phase 1 in progress). Dust Stalkers raise ThreatPressure
 1. Unity Hub → Open the repo root (needs Unity 6000.5.x).
 2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (title screen; New Game is Earth if prefs fresh).
 3. If scene missing: menu Solar Majesty → Build Demo Scene.
-4. Run the Earth tutorial script in Docs/DEMO.md (empty drop → build campus → dens → Lunar Rocket → TO LUNA).
+4. Run Docs/SMOKE_TEST.md (10-minute boot, then Earth loop). DEMO.md has the talk-track.
 5. Confirm: no free starter robots; HAB = humans; workshops fabricate outdoor robots; empty drop + conquest gates + research.
 
 ## Architecture map
@@ -42,7 +44,7 @@ Roadmap: Docs/Roadmap/ (Phase 1 in progress). Dust Stalkers raise ThreatPressure
   Flag/Building placement; Threat/; BuildingVisualCatalog)
 - Building meshes: Assets/Resources/Buildings + Environment (FBX from Blender)
 - Blender source: Blender/SolarMajesty_Modules.blend + Blender/scripts/
-- Docs: DEMO.md, DEVELOPER_HANDOFF.md, VERTICAL_SLICE_PHASE1.md, PHASE_1_6_THREAT.md,
+- Docs: SMOKE_TEST.md, DEMO.md, DEVELOPER_HANDOFF.md, VERTICAL_SLICE_PHASE1.md, PHASE_1_6_THREAT.md,
   PHASE_2A_BITE_AND_BOUNTY.md, PHASE_2B_NAVMESH_AND_JUICE.md,
   PHASE_3A_PRESENTATION_AND_MISSION.md, PHASE_3B_UNITS_VOLUME_WAVES.md,
   PHASE_4A_MISSION_STAKES.md, PHASE_4B_CONTENT_SCALE.md,
@@ -51,13 +53,13 @@ Roadmap: Docs/Roadmap/ (Phase 1 in progress). Dust Stalkers raise ThreatPressure
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
-1. Play Mode smoke with Imagine-refined unit FBX (all four turnarounds in `ConceptSheets/`).
-2. Optional HAB scale sheets + further mesh detail.
-3. Optional full B party / content pass.
+1. Phase 4 visual target — Week 1 campus/HUD/Mars atmosphere, Week 2 HAB / keep / pad+ship / extractor hero kits, and Week 3 junction turrets + solar-field landmark are in (`Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md`). Next: remaining unit Imagine remesh (Defense walker still open), guild/lab/wonder dress, Mars sign-off. Do not add click-to-move. Square airlocks stay; tubes/domes/kits/turrets/solar are dressing.
+2. Shift+F10 smoke: Earth soil creepers (**F5**), Luna ash hoppers (**F2**), Belt (`LOW-G`, rock mites/ticks **F5**, shard hoppers **F2**), Europa (`RAD`, fissure leeches / ice wisps **F2**, ice creepers **F5**). **T** Guild Charter → assign hall class (Horizon / Anvil / Aegis / Triage). ★ Climate Loom / Aegis Spire / Deep Archive landmarks. Settings: Mode / Challenge / Stance — Open Hands should take a $70 Build.
+3. Imagine turnarounds from `Docs/GROK_IMAGINE_UNIT_PROMPTS.md`, then refine Blender. Engineer biped / geologist rover / scout hover blockouts are in; Defense walker vs tracked guardian still open. Remaining classes + fauna next.
 
 ## Controls reference
 Esc pause · G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
-F4 Extract · F5 Defend · +/- bounty · LMB post/place · RMB cancel flag · 1–7 buildings ·
+F4 Extract · F5 Defend · +/- bounty · I Research Site · O Outpost · U Terraform · LMB post/place · RMB cancel flag · 1–7 buildings ·
 P party (selection or inn) · R force fatigue Rest · F8 debug · Y revive.
 
 When done with a change set: commit on main (or PR) with a clear message and
@@ -94,14 +96,21 @@ update Docs/NEXT_STEPS.md if milestones moved.
 - [x] Blender unit FBX blockouts (Scout / Engineer / Defense / Stalker)  
 - [x] Phase 5C multi-body scaffold (Campus A + B, F6/F7)
 - [x] Phase 5D body framing (local threat, campus extract yield, authored audio/VolumeProfile)
-- [x] Phase 5E dual deploy (B Scout detachment, F9 attractor, Ambient A/B beds)  
+- [x] Phase 5E dual deploy (B Scout detachment, F9 attractor, Ambient A/B beds)
+- [x] Phase 2 solar expansion (Belt + Europa, haul, doctrines, ecology — [exit](Roadmap/PHASE_2_EXIT.md))  
+- [x] Phase 3 Weeks 8–10 — replay doctrines, challenges, Endless, Overseer rating  
+- [x] Phase 3 Weeks 11–14 — balance / flavor / exit ([PHASE_3_EXIT.md](Roadmap/PHASE_3_EXIT.md))  
+- [x] Phase 4 Week 1 — Mars atmosphere, tube dressing, construction cranes, Overseer HUD chrome  
+- [x] Phase 4 Week 2 — HAB / keep-dome / pad+ship / water vs regolith extractor hero kits  
+- [x] Phase 4 Week 3 — junction turrets + solar-field landmark (Defense bunker kit)  
 
 ### Known gaps
 
-- Unit meshes are Blender blockouts pending Imagine turnaround refinement  
-- Continue slot is stockpile + last body (not a full world snapshot)  
+- Unit meshes are Blender blockouts pending Imagine turnaround refinement (production look: [Phase 4 visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md)). HAB / keep / pad / extractor / solar / Defense bunker hero kits are in-engine procedural silhouettes (`HeroBuildingKits`); junction turrets dress airlock hubs. Engineer (small white biped), Geologist (six-wheel rover), and Scout (hover probe) blockouts were remeshed this slice; Defense stays the Imagine tracked guardian (biped walker still open). Remaining classes + fauna still need the same silhouette bar.  
+- Continue slot is campus + stockpile + research per body (flags/fauna/HP are not snapshotted)  
+- External Phase 1 playtest / exit review still open  
 - No multiplayer  
-- Roadmap: [Docs/Roadmap/00_ROADMAP_OVERVIEW.md](Roadmap/00_ROADMAP_OVERVIEW.md) — Phase 1 Week 1 done  
+- Roadmap: [Docs/Roadmap/00_ROADMAP_OVERVIEW.md](Roadmap/00_ROADMAP_OVERVIEW.md) — Phase 2 complete ([exit](Roadmap/PHASE_2_EXIT.md)); Phase 3 complete ([exit](Roadmap/PHASE_3_EXIT.md)); then [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) → [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md)  
 
 ---
 

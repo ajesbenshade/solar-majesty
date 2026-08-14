@@ -22,6 +22,20 @@ namespace SolarMajesty
 
         public static Vector3 InnNear(Vector3 world) => ColonyLayout.InnOutpost;
 
+        /// <summary>
+        /// Rest / flee beacon. Campus B robots use the outpost plaza once claimed;
+        /// otherwise everyone rallies at the Campus A inn disc.
+        /// </summary>
+        public static Vector3 RestNear(Vector3 world, bool outpostClaimed)
+        {
+            if (outpostClaimed && ColonyLayout.NearestCampusIndex(world) == 1)
+                return ColonyLayout.PartySpawnB;
+            return ColonyLayout.InnOutpost;
+        }
+
+        public static bool AtRest(Vector3 world, bool outpostClaimed) =>
+            Flat(world, RestNear(world, outpostClaimed)) < InnArrive;
+
         public static Vector3 Workshop(int campus) =>
             campus <= 0
                 ? ColonyLayout.CampusOrigin + new Vector3(10f, 0f, 12f)
@@ -69,6 +83,22 @@ namespace SolarMajesty
                 case SpecialistClass.Medic:
                     return InnNear(from);
 
+                case SpecialistClass.CourierBot:
+                    return Pick(from, salt, Pad(campus), Plaza(campus), Frontier(from, salt));
+
+                case SpecialistClass.TerraformerBot:
+                    if (resourceNode.HasValue)
+                        return resourceNode.Value;
+                    return Pick(from, salt, Pad(campus), Lab(campus), Plaza(campus));
+
+                case SpecialistClass.GeologistBot:
+                    if (resourceNode.HasValue)
+                        return resourceNode.Value;
+                    return Pick(from, salt, Workshop(campus), Pad(campus), Plaza(campus));
+
+                case SpecialistClass.SentinelMech:
+                    return PatrolPost(campus, salt);
+
                 default:
                     if (resourceNode.HasValue)
                         return resourceNode.Value;
@@ -93,6 +123,8 @@ namespace SolarMajesty
 
             // Rest / party rally still use InnOutpost coords even without a mesh.
             Marker(root, Inn(0), "Inn_RestBeacon", new Color(0.96f, 0.42f, 0.08f), emptyStart ? 0.55f : 1.15f);
+            Marker(root, ColonyLayout.PartySpawnB, "Outpost_RestBeacon",
+                new Color(0.25f, 0.85f, 0.92f), 0.5f);
 
             if (emptyStart) return;
 

@@ -77,6 +77,7 @@
 - Continue slot is stockpile + last body only (not full snapshot)
 - No multiplayer, heightmap terrain, or full combat rewrite
 - Building footprints now fill grid cells (Lego docks); remaining gap is art fidelity, not scale
+- **Visual debt vs target:** this phase locked a greybox slice, not the production look. North star is the Mars mockup in [Phase 4 – Visual Target](05_PHASE_4_VISUAL_TARGET.md). Do not reopen Phase 0 to remake art. Grok Imagine keywords stay mandatory; Phase 4 extends them.
 
 ---
 

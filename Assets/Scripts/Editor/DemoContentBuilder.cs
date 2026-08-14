@@ -43,18 +43,39 @@ namespace SolarMajesty.EditorTools
             var engPrefab = SaveUnitPrefab("Unit_EngineerBot", UnitPlaceholderFactory.BuildEngineer);
             var defPrefab = SaveUnitPrefab("Unit_DefenseMech", UnitPlaceholderFactory.BuildDefense);
             var medicPrefab = SaveUnitPrefab("Unit_Medic", UnitPlaceholderFactory.BuildMedic);
+            var harvPrefab = SaveUnitPrefab("Unit_HarvesterBot", UnitPlaceholderFactory.BuildHarvester);
+            var survPrefab = SaveUnitPrefab("Unit_SurveyorBot", UnitPlaceholderFactory.BuildSurveyor);
+            var terraPrefab = SaveUnitPrefab("Unit_TerraformerBot", UnitPlaceholderFactory.BuildTerraformer);
+            var courPrefab = SaveUnitPrefab("Unit_CourierBot", UnitPlaceholderFactory.BuildCourier);
+            var geoPrefab = SaveUnitPrefab("Unit_GeologistBot", UnitPlaceholderFactory.BuildGeologist);
+            var sentPrefab = SaveUnitPrefab("Unit_SentinelMech", UnitPlaceholderFactory.BuildSentinel);
             SaveUnitPrefab("Unit_DustStalker", UnitPlaceholderFactory.BuildDustStalker);
+            SaveUnitPrefab("Unit_RegolithMite", UnitPlaceholderFactory.BuildRegolithMite);
+            SaveUnitPrefab("Unit_WattLeech", UnitPlaceholderFactory.BuildWattLeech);
+            SaveUnitPrefab("Unit_IceWisp", UnitPlaceholderFactory.BuildIceWisp);
+            SaveUnitPrefab("Unit_RockTick", UnitPlaceholderFactory.BuildRockTick);
+            SaveUnitPrefab("Unit_SoilCreeper", UnitPlaceholderFactory.BuildSoilCreeper);
+            SaveUnitPrefab("Unit_AshHopper", UnitPlaceholderFactory.BuildAshHopper);
 
             var scout = WriteSpecialist("Specialist_ScoutDrone", GameLoop.CreateScout(), scoutPrefab);
             var eng = WriteSpecialist("Specialist_EngineerBot", GameLoop.CreateEngineer(), engPrefab);
             var def = WriteSpecialist("Specialist_DefenseMech", GameLoop.CreateDefense(), defPrefab);
             WriteSpecialist("Specialist_Medic", GameLoop.CreateMedic(), medicPrefab);
+            WriteSpecialist("Specialist_HarvesterBot", GameLoop.CreateHarvester(), harvPrefab);
+            WriteSpecialist("Specialist_SurveyorBot", GameLoop.CreateSurveyor(), survPrefab);
+            WriteSpecialist("Specialist_TerraformerBot", GameLoop.CreateTerraformer(), terraPrefab);
+            WriteSpecialist("Specialist_CourierBot", GameLoop.CreateCourier(), courPrefab);
+            WriteSpecialist("Specialist_GeologistBot", GameLoop.CreateGeologist(), geoPrefab);
+            WriteSpecialist("Specialist_SentinelMech", GameLoop.CreateSentinel(), sentPrefab);
 
             WriteFlag("Flag_Explore", FlagType.Explore, "Explore", 40, 0.08f, 4f, new Color(0.3f, 0.85f, 1f));
             WriteFlag("Flag_ClearThreat", FlagType.ClearThreat, "Clear Threat", 80, 0.4f, 6f, new Color(1f, 0.3f, 0.25f));
             WriteFlag("Flag_Build", FlagType.Build, "Build Here", 70, 0.1f, 8f, new Color(1f, 0.65f, 0.15f));
             WriteFlag("Flag_Extract", FlagType.Extract, "Extract", 55, 0.12f, 7f, new Color(0.55f, 0.9f, 0.35f));
-            WriteFlag("Flag_DefendArea", FlagType.DefendArea, "Defend Area", 65, 0.25f, 9f, new Color(0.85f, 0.35f, 1f));
+            WriteFlag("Flag_DefendArea", FlagType.DefendArea, "Defend Area", 65, 0.25f, 9f, new Color(0.95f, 0.48f, 0.18f));
+            WriteFlag("Flag_ResearchSite", FlagType.ResearchSite, "Research Site", 50, 0.1f, 6f, new Color(0.45f, 0.72f, 1f));
+            WriteFlag("Flag_EstablishOutpost", FlagType.EstablishOutpost, "Establish Outpost", 75, 0.22f, 10f, new Color(0.22f, 0.82f, 0.78f));
+            WriteFlag("Flag_Terraform", FlagType.Terraform, "Terraform", 70, 0.14f, 11f, new Color(0.42f, 0.88f, 0.38f));
 
             WriteBuilding("Building_Palace", "Palace Keep", BuildingCategory.Palace, 70, 10, 18f, 6, 6);
             WriteBuilding("Building_LandingPad", "Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6);
@@ -63,6 +84,16 @@ namespace SolarMajesty.EditorTools
             WriteBuilding("Building_OPS1", "Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 4, 4);
             WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4);
             WriteBuilding("Building_CMD1", "Command (CMD-1)", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
+            WriteBuilding("Building_GuildHall", "Guild Hall", BuildingCategory.GuildHall, 56, 6, 14f, 4, 4);
+            WriteBuilding("Building_HarvesterWorkshop", "Harvester Workshop", BuildingCategory.HarvesterWorkshop, 40, 5, 12f, 4, 4);
+            WriteBuilding("Building_SurveyorWorkshop", "Surveyor Workshop", BuildingCategory.SurveyorWorkshop, 38, 4, 12f, 4, 4);
+            WriteBuilding("Building_TerraformerWorkshop", "Terraformer Workshop", BuildingCategory.TerraformerWorkshop, 42, 5, 12f, 4, 4);
+            WriteBuilding("Building_CourierWorkshop", "Courier Workshop", BuildingCategory.CourierWorkshop, 36, 4, 12f, 4, 4);
+            WriteBuilding("Building_GeologistWorkshop", "Geologist Workshop", BuildingCategory.GeologistWorkshop, 38, 4, 12f, 4, 4);
+            WriteBuilding("Building_SentinelWorkshop", "Sentinel Workshop", BuildingCategory.SentinelWorkshop, 40, 5, 12f, 4, 4);
+            WriteBuilding("Building_ClimateLoom", "Climate Loom", BuildingCategory.ClimateLoom, 92, 12, 18f, 6, 6);
+            WriteBuilding("Building_AegisSpire", "Aegis Spire", BuildingCategory.AegisSpire, 100, 14, 18f, 6, 6);
+            WriteBuilding("Building_DeepArchive", "Deep Archive", BuildingCategory.DeepArchive, 88, 10, 16f, 6, 6);
             WriteBuilding(
                 "Building_SolarArray",
                 "Solar Array",

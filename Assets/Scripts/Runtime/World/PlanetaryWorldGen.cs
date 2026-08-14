@@ -6,8 +6,8 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Seeded procedural world contents outside campus footprints.
-    /// Driven by <see cref="CelestialBodyProfile"/> so Luna/Mars keep craters/dunes while
-    /// Earth spawns lakes, rivers, and forest patches from the same generator.
+    /// Driven by <see cref="CelestialBodyProfile"/> so each body keeps its kit
+    /// (Earth hydrology, Luna craters, Mars dunes, Belt islets, Europa ice).
     /// </summary>
     public class PlanetaryWorldGen : MonoBehaviour
     {
@@ -64,6 +64,8 @@ namespace SolarMajesty
             SpawnRivers(rng, placed);
             SpawnForestPatches(rng, placed);
             SpawnDunes(rng, placed);
+            SpawnAsteroidIslets(rng, placed);
+            SpawnIcePlates(rng, placed);
             SpawnRocks(rng, placed);
             SpawnResourceNodes(rng, placed);
             SpawnLairs(rng, placed);
@@ -81,10 +83,10 @@ namespace SolarMajesty
                 _lairs[i]?.SpawnInitial(threatParent);
         }
 
-        public void TickLairs()
+        public void TickLairs(int campusPieces = 0)
         {
             for (int i = 0; i < _lairs.Count; i++)
-                _lairs[i]?.Tick();
+                _lairs[i]?.Tick(campusPieces);
         }
 
         public ResourceNode FindNearestNode(Vector3 world, float maxDist = 10f)
@@ -486,6 +488,86 @@ namespace SolarMajesty
             }
         }
 
+        private void SpawnAsteroidIslets(System.Random rng, List<Vector3> placed)
+        {
+            if (_body.AsteroidIsletCount <= 0) return;
+
+            var root = new GameObject("AsteroidIslets").transform;
+            root.SetParent(_worldRoot, false);
+
+            for (int i = 0; i < _body.AsteroidIsletCount; i++)
+            {
+                if (!TrySample(rng, placed, _body.CampusExclusion * 0.7f, _body.MinSpacing * 0.85f, out Vector3 pos))
+                    continue;
+
+                var islet = new GameObject($"Islet_{i}");
+                islet.transform.SetParent(root, false);
+                islet.transform.position = pos;
+
+                int chunks = 3 + rng.Next(0, 4);
+                for (int c = 0; c < chunks; c++)
+                {
+                    bool cube = rng.NextDouble() < 0.45;
+                    var chunk = GameObject.CreatePrimitive(cube ? PrimitiveType.Cube : PrimitiveType.Sphere);
+                    chunk.name = $"Chunk_{c}";
+                    chunk.transform.SetParent(islet.transform, false);
+                    float ang = c * 2.1f + (float)rng.NextDouble();
+                    float dist = Mathf.Lerp(0.2f, 1.4f, (float)rng.NextDouble());
+                    chunk.transform.localPosition = new Vector3(
+                        Mathf.Cos(ang) * dist,
+                        Mathf.Lerp(0.25f, 1.1f, (float)rng.NextDouble()),
+                        Mathf.Sin(ang) * dist);
+                    float s = Mathf.Lerp(0.55f, 1.8f, (float)rng.NextDouble());
+                    chunk.transform.localScale = new Vector3(
+                        s * Mathf.Lerp(0.7f, 1.4f, (float)rng.NextDouble()),
+                        s * Mathf.Lerp(0.45f, 1.1f, (float)rng.NextDouble()),
+                        s * Mathf.Lerp(0.7f, 1.4f, (float)rng.NextDouble()));
+                    chunk.transform.localRotation = Quaternion.Euler(
+                        (float)rng.NextDouble() * 50f,
+                        (float)rng.NextDouble() * 360f,
+                        (float)rng.NextDouble() * 50f);
+                    Object.Destroy(chunk.GetComponent<Collider>());
+                    Color tint = Color.Lerp(_body.RockColor, _body.GroundLight, (float)rng.NextDouble() * 0.45f);
+                    if (rng.NextDouble() < 0.2f)
+                        tint = Color.Lerp(tint, new Color(0.55f, 0.52f, 0.42f), 0.4f);
+                    Tint(chunk, tint);
+                }
+
+                ColonyVisualUtility.SnapToGround(islet);
+                placed.Add(pos);
+            }
+        }
+
+        private void SpawnIcePlates(System.Random rng, List<Vector3> placed)
+        {
+            if (_body.IcePlateCount <= 0) return;
+
+            var root = new GameObject("IcePlates").transform;
+            root.SetParent(_worldRoot, false);
+
+            for (int i = 0; i < _body.IcePlateCount; i++)
+            {
+                if (!TrySample(rng, placed, _body.CampusExclusion * 0.8f, _body.MinSpacing * 0.9f, out Vector3 pos))
+                    continue;
+
+                var plate = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                plate.name = $"IcePlate_{i}";
+                plate.transform.SetParent(root, false);
+                plate.transform.position = pos + Vector3.up * 0.02f;
+                float r = Mathf.Lerp(3.2f, 8.5f, (float)rng.NextDouble());
+                plate.transform.localScale = new Vector3(
+                    r * 2f,
+                    0.04f,
+                    r * 2f * Mathf.Lerp(0.65f, 1.2f, (float)rng.NextDouble()));
+                plate.transform.rotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
+                Object.Destroy(plate.GetComponent<Collider>());
+                Color ice = Color.Lerp(_body.WaterShallow, _body.GroundLight, 0.45f);
+                Tint(plate, ice, 0.55f);
+                ColonyVisualUtility.SnapToGround(plate);
+                placed.Add(pos);
+            }
+        }
+
         private void SpawnRocks(System.Random rng, List<Vector3> placed)
         {
             var root = new GameObject("Rocks").transform;
@@ -541,6 +623,7 @@ namespace SolarMajesty
                     ResourceNodeType.Fissile => 14 + rng.Next(0, 10),
                     _ => 36 + rng.Next(0, 20)
                 };
+                yield = Mathf.Max(4, Mathf.RoundToInt(yield * Mathf.Max(0.25f, _body.ExtractYieldScale)));
 
                 var go = new GameObject($"Node_{type}_{i}");
                 go.transform.SetParent(root, false);
@@ -589,7 +672,7 @@ namespace SolarMajesty
                 if (!TrySample(rng, placed, _body.CampusExclusion * 1.05f, _body.MinSpacing * 1.2f, out Vector3 pos))
                     continue;
 
-                int budget = 2 + (rng.NextDouble() < 0.35 ? 1 : 0);
+                int budget = Mathf.Max(1, _body.LairStalkerBudget) + (rng.NextDouble() < 0.28 ? 1 : 0);
                 var go = new GameObject($"Lair_{i}");
                 go.transform.SetParent(root, false);
                 go.transform.position = pos;

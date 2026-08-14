@@ -53,6 +53,15 @@ namespace SolarMajesty
         public bool IsAggro => _aggro;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
         public FaunaKind Kind { get; private set; } = FaunaKind.Stalker;
+        public string RoleLabel => string.IsNullOrEmpty(_roleNoun) ? Kind.ToString() : _roleNoun;
+
+        public static bool IsCampusPest(FaunaKind kind) =>
+            kind == FaunaKind.Mite || kind == FaunaKind.Leech ||
+            kind == FaunaKind.Wisp || kind == FaunaKind.Tick ||
+            kind == FaunaKind.Creeper || kind == FaunaKind.Hopper;
+
+        public static bool UsesDefendCounter(FaunaKind kind) =>
+            kind == FaunaKind.Mite || kind == FaunaKind.Tick || kind == FaunaKind.Creeper;
 
         /// <summary>Opportunistic combat from a hunting specialist (no bounty flag required).</summary>
         public void ApplyCombatDamage(float amount)
@@ -74,6 +83,12 @@ namespace SolarMajesty
         private GameLoop _loop;
         private float _stealTimer;
         private bool _raiding;
+        private bool _preferMines;
+        private bool _preferFarms;
+        private bool _retreating;
+        private float _retreatTimer;
+        private string _roleNoun;
+        private string _roleVerb;
 
         public void Initialize(ThreatPressure threat, FlagManager flags, Vector3 home, GameLoop loop = null)
         {
@@ -93,7 +108,7 @@ namespace SolarMajesty
             gameObject.name = "DustStalker";
         }
 
-        /// <summary>Retarget this agent as a mite or leech after Initialize. Stalker is the default.</summary>
+        /// <summary>Retarget this agent as campus fauna after Initialize. Stalker is the default.</summary>
         public void SetKind(FaunaKind kind)
         {
             Kind = kind;
@@ -110,7 +125,8 @@ namespace SolarMajesty
                     idlePressure = 0.05f;
                     defeatLinkRadius = 5f;
                     biteDamagePerSecond = 0.06f;
-                    transform.localScale = new Vector3(0.85f, 0.7f, 0.85f);
+                    _roleNoun = "MITE";
+                    _roleVerb = "MITE STEAL";
                     break;
                 case FaunaKind.Leech:
                     gameObject.name = "WattLeech";
@@ -123,21 +139,230 @@ namespace SolarMajesty
                     idlePressure = 0.06f;
                     defeatLinkRadius = 5f;
                     biteDamagePerSecond = 0.04f;
-                    transform.localScale = new Vector3(1f, 0.65f, 1.1f);
+                    _roleNoun = "LEECH";
+                    _roleVerb = "LEECH DRAIN";
+                    break;
+                case FaunaKind.Wisp:
+                    gameObject.name = "IceWisp";
+                    stalkerColor = UnitPlaceholderFactory.WispTint;
+                    maxHealth = 14f;
+                    _health = maxHealth;
+                    moveSpeed = 1.4f;
+                    wanderRadius = 10f;
+                    aggroPressure = 0.36f;
+                    idlePressure = 0.07f;
+                    defeatLinkRadius = 5.5f;
+                    biteDamagePerSecond = 0.03f;
+                    bobAmp = 0.22f;
+                    bobSpeed = 4.2f;
+                    _roleNoun = "WISP";
+                    _roleVerb = "WISP DRAIN";
+                    break;
+                case FaunaKind.Tick:
+                    gameObject.name = "RockTick";
+                    stalkerColor = UnitPlaceholderFactory.TickTint;
+                    maxHealth = 12f;
+                    _health = maxHealth;
+                    moveSpeed = 1.95f;
+                    wanderRadius = 6f;
+                    aggroPressure = 0.28f;
+                    idlePressure = 0.05f;
+                    defeatLinkRadius = 4.5f;
+                    biteDamagePerSecond = 0.05f;
+                    _preferMines = true;
+                    _roleNoun = "TICK";
+                    _roleVerb = "TICK STEAL";
+                    break;
+                case FaunaKind.Creeper:
+                    gameObject.name = "SoilCreeper";
+                    stalkerColor = UnitPlaceholderFactory.CreeperTint;
+                    maxHealth = 22f;
+                    _health = maxHealth;
+                    moveSpeed = 1.05f;
+                    wanderRadius = 6f;
+                    aggroPressure = 0.30f;
+                    idlePressure = 0.05f;
+                    defeatLinkRadius = 5.2f;
+                    biteDamagePerSecond = 0.05f;
+                    _preferFarms = true;
+                    _roleNoun = "CREEPER";
+                    _roleVerb = "CREEP STEAL";
+                    break;
+                case FaunaKind.Hopper:
+                    gameObject.name = "AshHopper";
+                    stalkerColor = UnitPlaceholderFactory.HopperTint;
+                    maxHealth = 15f;
+                    _health = maxHealth;
+                    moveSpeed = 2.05f;
+                    wanderRadius = 9f;
+                    aggroPressure = 0.38f;
+                    idlePressure = 0.06f;
+                    defeatLinkRadius = 5f;
+                    biteDamagePerSecond = 0.07f;
+                    bobAmp = 0.18f;
+                    bobSpeed = 5.1f;
+                    _roleNoun = "HOPPER";
+                    _roleVerb = "HAB RAID";
                     break;
                 default:
                     gameObject.name = "DustStalker";
+                    _roleNoun = "AGGRO";
+                    _roleVerb = "AGGRO";
                     break;
             }
             _baseScale = transform.localScale;
             if (_rend != null && !IndustrialArtDressing.HasArt(gameObject))
                 SetColor(_rend, stalkerColor);
             if (_label != null)
-                _label.color = kind == FaunaKind.Leech
-                    ? new Color(0.45f, 1f, 1f)
-                    : kind == FaunaKind.Mite
-                        ? new Color(1f, 0.72f, 0.35f)
-                        : new Color(1f, 0.45f, 0.4f);
+                _label.color = LabelColor(kind);
+        }
+
+        /// <summary>Body-native speed, aggro, and tints. Does not change SpecialistBrain.</summary>
+        public void ApplyBodyTune(CelestialBodyProfile body)
+        {
+            if (body == null) return;
+            moveSpeed *= Mathf.Clamp(body.FaunaSpeedScale, 0.5f, 1.6f);
+            aggroRange *= Mathf.Clamp(body.FaunaAggroScale, 0.6f, 1.6f);
+            aggroPressure = Mathf.Clamp01(aggroPressure * Mathf.Clamp(body.FaunaAggroScale, 0.6f, 1.5f));
+
+            if (Kind == FaunaKind.Mite)
+            {
+                _preferMines = body.PreferMineMites;
+                if (body.FaunaMiteTint.a > 0.05f)
+                    stalkerColor = body.FaunaMiteTint;
+                if (body.Id == CelestialBodyId.Belt)
+                {
+                    gameObject.name = "RockMite";
+                    _roleNoun = "ROCK MITE";
+                    _roleVerb = "ORE STEAL";
+                    if (_label != null) _label.color = new Color(0.92f, 0.72f, 0.42f);
+                }
+            }
+            else if (Kind == FaunaKind.Leech)
+            {
+                if (body.FaunaLeechTint.a > 0.05f)
+                    stalkerColor = body.FaunaLeechTint;
+                if (body.Id == CelestialBodyId.Europa)
+                {
+                    gameObject.name = "FissureLeech";
+                    _roleNoun = "FISSURE LEECH";
+                    _roleVerb = "FISSURE DRAIN";
+                    if (_label != null) _label.color = new Color(0.55f, 0.95f, 1f);
+                }
+            }
+            else if (Kind == FaunaKind.Wisp)
+            {
+                if (body.FaunaWispTint.a > 0.05f)
+                    stalkerColor = body.FaunaWispTint;
+                if (body.Id == CelestialBodyId.Mars)
+                {
+                    gameObject.name = "DustWisp";
+                    stalkerColor = body.FaunaWispTint.a > 0.05f
+                        ? body.FaunaWispTint
+                        : new Color(0.82f, 0.52f, 0.28f);
+                    _roleNoun = "DUST WISP";
+                    _roleVerb = "DUST DRAIN";
+                    if (_label != null) _label.color = new Color(1f, 0.72f, 0.42f);
+                }
+                else if (body.Id == CelestialBodyId.Europa)
+                {
+                    gameObject.name = "IceWisp";
+                    _roleNoun = "ICE WISP";
+                    _roleVerb = "ICE DRAIN";
+                    if (_label != null) _label.color = new Color(0.65f, 0.95f, 1f);
+                }
+            }
+            else if (Kind == FaunaKind.Tick)
+            {
+                _preferMines = true;
+                if (body.FaunaTickTint.a > 0.05f)
+                    stalkerColor = body.FaunaTickTint;
+                if (body.Id == CelestialBodyId.Belt)
+                {
+                    gameObject.name = "RockTick";
+                    _roleNoun = "ROCK TICK";
+                    _roleVerb = "ORE STEAL";
+                    if (_label != null) _label.color = new Color(0.88f, 0.68f, 0.38f);
+                }
+                else if (body.Id == CelestialBodyId.Luna || body.Id == CelestialBodyId.Earth)
+                {
+                    gameObject.name = "DustTick";
+                    _roleNoun = "DUST TICK";
+                    _roleVerb = "CAMP STEAL";
+                    if (_label != null) _label.color = new Color(0.85f, 0.62f, 0.42f);
+                }
+            }
+            else if (Kind == FaunaKind.Creeper)
+            {
+                _preferFarms = true;
+                if (body.FaunaCreeperTint.a > 0.05f)
+                    stalkerColor = body.FaunaCreeperTint;
+                if (body.Id == CelestialBodyId.Mars)
+                {
+                    gameObject.name = "DustCreeper";
+                    _roleNoun = "DUST CREEPER";
+                    _roleVerb = "FARM STEAL";
+                    if (_label != null) _label.color = new Color(1f, 0.62f, 0.32f);
+                }
+                else if (body.Id == CelestialBodyId.Europa)
+                {
+                    gameObject.name = "IceCreeper";
+                    _roleNoun = "ICE CREEPER";
+                    _roleVerb = "ICE STEAL";
+                    if (_label != null) _label.color = new Color(0.72f, 0.92f, 0.95f);
+                }
+                else
+                {
+                    gameObject.name = "SoilCreeper";
+                    _roleNoun = "SOIL CREEPER";
+                    _roleVerb = "FARM STEAL";
+                    if (_label != null) _label.color = new Color(0.62f, 0.82f, 0.32f);
+                }
+            }
+            else if (Kind == FaunaKind.Hopper)
+            {
+                if (body.FaunaHopperTint.a > 0.05f)
+                    stalkerColor = body.FaunaHopperTint;
+                if (body.Id == CelestialBodyId.Mars)
+                {
+                    gameObject.name = "DustHopper";
+                    _roleNoun = "DUST HOPPER";
+                    _roleVerb = "HAB RAID";
+                    if (_label != null) _label.color = new Color(1f, 0.68f, 0.38f);
+                }
+                else if (body.Id == CelestialBodyId.Belt)
+                {
+                    gameObject.name = "ShardHopper";
+                    _roleNoun = "SHARD HOPPER";
+                    _roleVerb = "HAB RAID";
+                    if (_label != null) _label.color = new Color(0.82f, 0.78f, 0.62f);
+                }
+                else
+                {
+                    gameObject.name = "AshHopper";
+                    _roleNoun = "ASH HOPPER";
+                    _roleVerb = "HAB RAID";
+                    if (_label != null) _label.color = new Color(0.85f, 0.82f, 0.72f);
+                }
+            }
+
+            if (_rend != null && !IndustrialArtDressing.HasArt(gameObject))
+                SetColor(_rend, stalkerColor);
+        }
+
+        /// <summary>Scatter after dens go quiet. Despawns off-campus without a death burst.</summary>
+        public void BeginRetreat()
+        {
+            if (_retreating || !IsAlive) return;
+            _retreating = true;
+            _aggro = false;
+            _raiding = false;
+            Vector3 away = transform.position - ColonyLayout.CampusOrigin;
+            away.y = 0f;
+            if (away.sqrMagnitude < 1f) away = Vector3.forward;
+            _wanderTarget = transform.position + away.normalized * 48f;
+            _retreatTimer = 11f;
+            _threat?.Clear(_sourceId);
         }
 
         private void Update()
@@ -145,6 +370,12 @@ namespace SolarMajesty
             if (!IsAlive || _threat == null) return;
 
             float dt = Time.deltaTime;
+            if (_retreating)
+            {
+                TickRetreat(dt);
+                TickPresentation(dt);
+                return;
+            }
             if (TickRole(dt))
             {
                 TickDefeat(dt);
@@ -163,8 +394,15 @@ namespace SolarMajesty
             _raiding = false;
             switch (Kind)
             {
-                case FaunaKind.Mite: return TickRaidExtractor(dt);
-                case FaunaKind.Leech: return TickRaidPower(dt);
+                case FaunaKind.Mite:
+                case FaunaKind.Tick:
+                case FaunaKind.Creeper:
+                    return TickRaidExtractor(dt);
+                case FaunaKind.Leech:
+                case FaunaKind.Wisp:
+                    return TickRaidPower(dt);
+                case FaunaKind.Hopper:
+                    return TickRaidHabitat(dt);
                 default: return TickRaidVillage(dt);
             }
         }
@@ -208,9 +446,37 @@ namespace SolarMajesty
         private bool TickRaidExtractor(float dt)
         {
             if (_loop?.Village == null) return false;
-            var camp = _loop.Village.NearestExtractor(transform.position, 42f);
+            ColonyStructure camp = null;
+            if (_preferFarms)
+                camp = _loop.Village.NearestByCategory(transform.position, 42f, BuildingCategory.Farm);
+            if (camp == null && _preferMines)
+                camp = _loop.Village.NearestByCategory(
+                    transform.position, 42f, BuildingCategory.Mine, BuildingCategory.Mining);
+            if (camp == null)
+                camp = _loop.Village.NearestExtractor(transform.position, 42f);
             if (camp == null || !camp.IsAlive) return false;
             return TickRaidStructure(dt, camp, StealFromCamp);
+        }
+
+        private bool TickRaidHabitat(float dt)
+        {
+            if (_loop?.Village == null) return false;
+            var hab = _loop.Village.NearestByCategory(transform.position, 42f, BuildingCategory.Habitat);
+            if (hab == null || !hab.IsAlive)
+                hab = _loop.Village.NearestVillageHab(transform.position, 42f);
+            if (hab == null || !hab.IsAlive) return false;
+            return TickRaidStructure(dt, hab, StealLifeSupport);
+        }
+
+        private void TickRetreat(float dt)
+        {
+            Vector3 dest = _wanderTarget;
+            dest.y = transform.position.y;
+            transform.position = Vector3.MoveTowards(transform.position, dest, moveSpeed * 1.45f * dt);
+            _retreatTimer -= dt;
+            if (_retreatTimer <= 0f ||
+                Vector3.Distance(Flat(transform.position), Flat(_wanderTarget)) < 1.2f)
+                DespawnQuiet();
         }
 
         private bool TickRaidPower(float dt)
@@ -262,6 +528,11 @@ namespace SolarMajesty
         private void DrainPower()
         {
             _loop?.Resources?.SpendUpTo(ResourceId.Power, 1);
+        }
+
+        private void StealLifeSupport()
+        {
+            _loop?.Resources?.SpendUpTo(ResourceId.WaterIce, 1);
         }
 
         private void TickWander(float dt)
@@ -339,7 +610,9 @@ namespace SolarMajesty
             if (_flags == null) return;
 
             // Nearby claimed/worked counter-flag damages this fauna.
-            FlagType counter = Kind == FaunaKind.Mite ? FlagType.DefendArea : FlagType.ClearThreat;
+            FlagType counter = UsesDefendCounter(Kind)
+                ? FlagType.DefendArea
+                : FlagType.ClearThreat;
             var list = _flags.Flags;
             Vector3 me = Flat(transform.position);
             float linkSq = defeatLinkRadius * defeatLinkRadius;
@@ -379,16 +652,16 @@ namespace SolarMajesty
 
             if (_label != null)
             {
-                bool show = _aggro || Kind != FaunaKind.Stalker;
+                bool show = _aggro || _retreating || Kind != FaunaKind.Stalker;
                 _label.gameObject.SetActive(show);
                 if (show)
                 {
-                    _label.text = Kind switch
-                    {
-                        FaunaKind.Mite => _raiding ? "MITE STEAL" : "MITE",
-                        FaunaKind.Leech => _raiding ? "LEECH DRAIN" : "LEECH",
-                        _ => "AGGRO"
-                    };
+                    if (_retreating)
+                        _label.text = "SCATTER";
+                    else if (IsCampusPest(Kind))
+                        _label.text = _raiding ? (_roleVerb ?? "RAID") : (_roleNoun ?? "PEST");
+                    else
+                        _label.text = "AGGRO";
                     if (Camera.main != null)
                     {
                         _label.transform.rotation = Quaternion.LookRotation(
@@ -420,11 +693,21 @@ namespace SolarMajesty
             DemoVfx.DeathBurst(transform.position, stalkerColor);
             string who = Kind switch
             {
-                FaunaKind.Mite => "Regolith Mite",
-                FaunaKind.Leech => "Watt Leech",
+                FaunaKind.Mite => string.IsNullOrEmpty(_roleNoun) ? "Regolith Mite" : _roleNoun,
+                FaunaKind.Leech => string.IsNullOrEmpty(_roleNoun) ? "Watt Leech" : _roleNoun,
+                FaunaKind.Wisp => string.IsNullOrEmpty(_roleNoun) ? "Ice Wisp" : _roleNoun,
+                FaunaKind.Tick => string.IsNullOrEmpty(_roleNoun) ? "Rock Tick" : _roleNoun,
+                FaunaKind.Creeper => string.IsNullOrEmpty(_roleNoun) ? "Soil Creeper" : _roleNoun,
+                FaunaKind.Hopper => string.IsNullOrEmpty(_roleNoun) ? "Ash Hopper" : _roleNoun,
                 _ => "Dust Stalker"
             };
             Debug.Log($"[Threat] {who} defeated — pressure contribution removed.");
+            Destroy(gameObject);
+        }
+
+        private void DespawnQuiet()
+        {
+            _threat?.Clear(_sourceId);
             Destroy(gameObject);
         }
 
@@ -483,6 +766,20 @@ namespace SolarMajesty
         }
 
         private static Vector3 Flat(Vector3 v) => new Vector3(v.x, 0f, v.z);
+
+        private static Color LabelColor(FaunaKind kind)
+        {
+            switch (kind)
+            {
+                case FaunaKind.Mite: return new Color(1f, 0.72f, 0.35f);
+                case FaunaKind.Leech: return new Color(0.45f, 1f, 1f);
+                case FaunaKind.Wisp: return new Color(0.65f, 0.95f, 1f);
+                case FaunaKind.Tick: return new Color(0.88f, 0.68f, 0.38f);
+                case FaunaKind.Creeper: return new Color(0.62f, 0.82f, 0.32f);
+                case FaunaKind.Hopper: return new Color(0.85f, 0.82f, 0.68f);
+                default: return new Color(1f, 0.45f, 0.4f);
+            }
+        }
 
         private static void SetColor(Renderer rend, Color c)
         {

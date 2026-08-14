@@ -94,6 +94,21 @@ namespace SolarMajesty
             return pay;
         }
 
+        /// <summary>Jettison a fraction of every stockpile entry (unpaid freight / emergency mass).</summary>
+        public void ApplyLoss(float fraction)
+        {
+            if (fraction <= 0f) return;
+            if (fraction > 1f) fraction = 1f;
+            var keys = new List<ResourceId>(_stock.Keys);
+            for (int i = 0; i < keys.Count; i++)
+            {
+                int have = Get(keys[i]);
+                if (have <= 0) continue;
+                int keep = (int)Math.Floor(have * (1f - fraction));
+                Set(keys[i], keep);
+            }
+        }
+
         public string DebugSummary() =>
             $"Regolith={Get(ResourceId.Regolith)} Ice={Get(ResourceId.WaterIce)} " +
             $"Metals={Get(ResourceId.Metals)} Power={Get(ResourceId.Power)}";

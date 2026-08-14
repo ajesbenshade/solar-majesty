@@ -28,6 +28,16 @@ namespace SolarMajesty
                 { BuildingCategory.EngineerWorkshop, "Buildings/SM_OPS1_OperationsUnit" },
                 { BuildingCategory.DefenseWorkshop, "Buildings/SM_CMD1_CommandBuilding" },
                 { BuildingCategory.MedicWorkshop, "Buildings/SM_HAB1_HabitatModule" },
+                { BuildingCategory.HarvesterWorkshop, "Buildings/SM_OPS1_OperationsUnit" },
+                { BuildingCategory.SurveyorWorkshop, "Buildings/SM_LAB1_LaboratoryModule" },
+                { BuildingCategory.TerraformerWorkshop, "Buildings/SM_LAB1_LaboratoryModule" },
+                { BuildingCategory.CourierWorkshop, "Buildings/SM_OPS1_OperationsUnit" },
+                { BuildingCategory.GeologistWorkshop, "Buildings/SM_OPS1_OperationsUnit" },
+                { BuildingCategory.SentinelWorkshop, "Buildings/SM_CMD1_CommandBuilding" },
+                { BuildingCategory.GuildHall, "Buildings/SM_CMD1_CommandBuilding" },
+                { BuildingCategory.ClimateLoom, "Buildings/SM_LAB1_LaboratoryModule" },
+                { BuildingCategory.AegisSpire, "Buildings/SM_CommandDome_CentralHub" },
+                { BuildingCategory.DeepArchive, "Buildings/SM_LAB1_LaboratoryModule" },
                 { BuildingCategory.Palace, "Buildings/SM_CommandDome_CentralHub" },
             };
 

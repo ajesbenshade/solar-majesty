@@ -5,10 +5,44 @@ namespace SolarMajesty
     /// <summary>
     /// Unique bilaterally-symmetric building kits sized to their grid footprints.
     /// Cardinal airlock ports sit on the hull faces so Utility junctions click flush.
+    /// Phase 4 HAB / keep / pad / extractors / solar / Defense dispatch to HeroBuildingKits.
     /// </summary>
     public static class ModularBuildingFactory
     {
         private static Material _hull;
+        private static Color _bodyHull = new Color(0.62f, 0.66f, 0.72f);
+
+        /// <summary>Greybox hull tint per body. Hero kits lerp a white shell toward this grade.</summary>
+        public static void BindBody(CelestialBodyProfile body)
+        {
+            if (body == null)
+            {
+                _bodyHull = new Color(0.62f, 0.66f, 0.72f);
+                return;
+            }
+
+            switch (body.Id)
+            {
+                case CelestialBodyId.Earth:
+                    _bodyHull = new Color(0.58f, 0.66f, 0.58f);
+                    break;
+                case CelestialBodyId.Luna:
+                    _bodyHull = new Color(0.68f, 0.70f, 0.72f);
+                    break;
+                case CelestialBodyId.Mars:
+                    _bodyHull = new Color(0.72f, 0.52f, 0.42f);
+                    break;
+                case CelestialBodyId.Belt:
+                    _bodyHull = new Color(0.42f, 0.40f, 0.38f);
+                    break;
+                case CelestialBodyId.Europa:
+                    _bodyHull = new Color(0.62f, 0.78f, 0.86f);
+                    break;
+                default:
+                    _bodyHull = new Color(0.62f, 0.66f, 0.72f);
+                    break;
+            }
+        }
 
         /// <summary>Hulls fill the footprint so faces meet the 2×2 airlock cell.</summary>
         private const float HullFill = 1f;
@@ -52,11 +86,14 @@ namespace SolarMajesty
                 root.transform.SetParent(parent, false);
             root.transform.SetPositionAndRotation(position, Quaternion.identity);
 
-            BuildDeck(root.transform, worldW, worldD);
+            if (!HeroBuildingKits.IsHero(category))
+                BuildDeck(root.transform, worldW, worldD);
             BuildCore(root.transform, category, worldW * HullFill, worldD * HullFill);
             AttachCardinalAirlocks(root.transform, worldW * 0.5f, worldD * 0.5f);
 
             ColonyVisualUtility.EnsureUrpMaterials(root);
+            if (!ghost)
+                IndustrialArtDressing.SetTintOverlay(root, Color.Lerp(Color.white, _bodyHull, 0.18f));
             ColonyVisualUtility.SnapToGround(root);
             if (ghost)
                 StripColliders(root);
@@ -76,21 +113,34 @@ namespace SolarMajesty
                 core.name = "Mesh";
                 core.transform.localPosition = Vector3.zero;
                 FitToFootprint(wrap, w, d);
-                if (cat == BuildingCategory.Palace)
-                    BuildPalaceWings(root, w * 0.5f, d * 0.5f);
                 return;
             }
 
             switch (cat)
             {
+                case BuildingCategory.Habitat:
+                    HeroBuildingKits.BuildHabitat(root, w, d, HeroHull());
+                    break;
+                case BuildingCategory.Palace:
+                    HeroBuildingKits.BuildKeep(root, w, d, HeroHull());
+                    break;
+                case BuildingCategory.LandingPad:
+                    HeroBuildingKits.BuildLandingPad(root, w, d, HeroHull());
+                    break;
                 case BuildingCategory.Farm:
-                    BuildGreenhouse(root, w, d);
+                    HeroBuildingKits.BuildWaterExtractor(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.Mine:
-                    BuildOreMine(root, w, d);
+                    HeroBuildingKits.BuildOreExtractor(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.RegolithCamp:
-                    BuildRegolithCamp(root, w, d);
+                    HeroBuildingKits.BuildRegolithExtractor(root, w, d, HeroHull());
+                    break;
+                case BuildingCategory.Power:
+                    HeroBuildingKits.BuildSolarField(root, w, d, HeroHull());
+                    break;
+                case BuildingCategory.Defense:
+                    HeroBuildingKits.BuildDefenseBattery(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.ScoutWorkshop:
                     BuildWorkshop(root, w, d, new Color(0.35f, 0.85f, 1f), tall: false);
@@ -104,8 +154,36 @@ namespace SolarMajesty
                 case BuildingCategory.MedicWorkshop:
                     BuildWorkshop(root, w, d, new Color(0.45f, 0.95f, 0.55f), tall: false);
                     break;
+                case BuildingCategory.HarvesterWorkshop:
+                    BuildWorkshop(root, w, d, new Color(0.82f, 0.62f, 0.22f), tall: false);
+                    break;
+                case BuildingCategory.SurveyorWorkshop:
+                    BuildWorkshop(root, w, d, new Color(0.45f, 0.82f, 0.95f), tall: false);
+                    break;
+                case BuildingCategory.TerraformerWorkshop:
+                    BuildWorkshop(root, w, d, new Color(0.42f, 0.82f, 0.38f), tall: false);
+                    break;
+                case BuildingCategory.CourierWorkshop:
+                    BuildWorkshop(root, w, d, new Color(0.95f, 0.72f, 0.28f), tall: false);
+                    break;
+                case BuildingCategory.GeologistWorkshop:
+                    BuildWorkshop(root, w, d, new Color(0.68f, 0.52f, 0.32f), tall: false);
+                    break;
+                case BuildingCategory.SentinelWorkshop:
+                    BuildWorkshop(root, w, d, new Color(0.78f, 0.38f, 0.22f), tall: true);
+                    break;
+                case BuildingCategory.GuildHall:
                 case BuildingCategory.Inn:
                     BuildInn(root, w, d);
+                    break;
+                case BuildingCategory.ClimateLoom:
+                    BuildWonder(root, w, d, new Color(0.38f, 0.82f, 0.48f), 2.8f);
+                    break;
+                case BuildingCategory.AegisSpire:
+                    BuildWonder(root, w, d, new Color(0.45f, 0.72f, 1f), 3.6f);
+                    break;
+                case BuildingCategory.DeepArchive:
+                    BuildWonder(root, w, d, new Color(0.42f, 0.78f, 0.88f), 2.4f);
                     break;
                 default:
                     BuildGenericModule(root, w, d, AccentFor(cat));
@@ -117,14 +195,8 @@ namespace SolarMajesty
         {
             switch (cat)
             {
-                case BuildingCategory.Palace:
-                    return BuildingVisualCatalog.LoadCommandDome();
-                case BuildingCategory.Habitat:
-                case BuildingCategory.Power:
                 case BuildingCategory.Mining:
-                case BuildingCategory.Defense:
                 case BuildingCategory.Laboratory:
-                case BuildingCategory.LandingPad:
                     return BuildingVisualCatalog.LoadPrefab(cat);
                 default:
                     return null;
@@ -150,76 +222,6 @@ namespace SolarMajesty
             float sz = targetZ / Mathf.Max(0.05f, b.size.z);
             Vector3 ls = go.transform.localScale;
             go.transform.localScale = new Vector3(ls.x * sx, ls.y * Mathf.Min(sx, sz), ls.z * sz);
-        }
-
-        private static void BuildPalaceWings(Transform root, float halfW, float halfD)
-        {
-            float wingX = halfW * 0.72f;
-            Part(root, "KeepWing_L", PrimitiveType.Cube,
-                new Vector3(-wingX, 1.6f, 0f),
-                new Vector3(1.1f, 3.2f, halfD * 0.45f),
-                AccentFor(BuildingCategory.Palace));
-            Part(root, "KeepWing_R", PrimitiveType.Cube,
-                new Vector3(wingX, 1.6f, 0f),
-                new Vector3(1.1f, 3.2f, halfD * 0.45f),
-                AccentFor(BuildingCategory.Palace));
-        }
-
-        private static void BuildGreenhouse(Transform root, float w, float d)
-        {
-            float h = Mathf.Max(2.2f, Mathf.Min(w, d) * 0.4f);
-            Part(root, "Hull", PrimitiveType.Cube,
-                new Vector3(0f, h * 0.5f, 0f),
-                new Vector3(w, h, d),
-                HullColor());
-            Part(root, "Vault_L", PrimitiveType.Cube,
-                new Vector3(-w * 0.22f, h + 0.55f, 0f),
-                new Vector3(w * 0.42f, 1.1f, d * 0.9f),
-                GlassColor());
-            Part(root, "Vault_R", PrimitiveType.Cube,
-                new Vector3(w * 0.22f, h + 0.55f, 0f),
-                new Vector3(w * 0.42f, 1.1f, d * 0.9f),
-                GlassColor());
-            Part(root, "Planter", PrimitiveType.Cube,
-                new Vector3(0f, 0.22f, 0f),
-                new Vector3(w * 0.94f, 0.36f, d * 0.94f),
-                new Color(0.25f, 0.55f, 0.28f));
-        }
-
-        private static void BuildOreMine(Transform root, float w, float d)
-        {
-            Part(root, "Silo_L", PrimitiveType.Cylinder,
-                new Vector3(-w * 0.28f, 1.4f, 0f),
-                new Vector3(w * 0.32f, 1.4f, w * 0.32f),
-                new Color(0.55f, 0.45f, 0.32f));
-            Part(root, "Silo_R", PrimitiveType.Cylinder,
-                new Vector3(w * 0.28f, 1.4f, 0f),
-                new Vector3(w * 0.32f, 1.4f, w * 0.32f),
-                new Color(0.55f, 0.45f, 0.32f));
-            Part(root, "Headframe", PrimitiveType.Cube,
-                new Vector3(0f, 2.4f, 0f),
-                new Vector3(w * 0.95f, 0.4f, 0.7f),
-                HullColor());
-            Part(root, "Hopper", PrimitiveType.Cube,
-                new Vector3(0f, 0.7f, d * 0.28f),
-                new Vector3(w * 0.45f, 1.2f, d * 0.4f),
-                AccentFor(BuildingCategory.Mine));
-        }
-
-        private static void BuildRegolithCamp(Transform root, float w, float d)
-        {
-            Part(root, "Berm", PrimitiveType.Cube,
-                new Vector3(0f, 0.35f, 0f),
-                new Vector3(w, 0.7f, d),
-                new Color(0.55f, 0.48f, 0.38f));
-            Part(root, "Tent_L", PrimitiveType.Cube,
-                new Vector3(-w * 0.28f, 1.05f, 0f),
-                new Vector3(w * 0.38f, 1.4f, d * 0.72f),
-                HullColor());
-            Part(root, "Tent_R", PrimitiveType.Cube,
-                new Vector3(w * 0.28f, 1.05f, 0f),
-                new Vector3(w * 0.38f, 1.4f, d * 0.72f),
-                HullColor());
         }
 
         private static void BuildWorkshop(Transform root, float w, float d, Color accent, bool tall)
@@ -261,6 +263,22 @@ namespace SolarMajesty
                 new Vector3(w * 0.38f, 0.85f, 0f),
                 new Vector3(w * 0.28f, 1.7f, d * 0.72f),
                 AccentFor(BuildingCategory.Inn));
+        }
+
+        private static void BuildWonder(Transform root, float w, float d, Color accent, float height)
+        {
+            Part(root, "Plinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.35f, 0f),
+                new Vector3(w * 0.92f, 0.7f, d * 0.92f),
+                HullColor());
+            Part(root, "Tower", PrimitiveType.Cube,
+                new Vector3(0f, height * 0.5f + 0.5f, 0f),
+                new Vector3(w * 0.42f, height, d * 0.42f),
+                accent);
+            Part(root, "Cap", PrimitiveType.Cylinder,
+                new Vector3(0f, height + 0.85f, 0f),
+                new Vector3(w * 0.28f, 0.35f, d * 0.28f),
+                new Color(0.95f, 0.42f, 0.08f));
         }
 
         private static void BuildGenericModule(Transform root, float w, float d, Color accent)
@@ -357,9 +375,9 @@ namespace SolarMajesty
             _hull = new Material(sh) { name = "SM_ModHull" };
         }
 
-        private static Color HullColor() => new Color(0.62f, 0.66f, 0.72f);
-        private static Color GlassColor() => new Color(0.35f, 0.75f, 0.85f, 0.85f);
-        private static Color AirlockColor() => new Color(0.2f, 0.85f, 0.95f);
+        private static Color HullColor() => _bodyHull;
+        private static Color HeroHull() => Color.Lerp(new Color(0.88f, 0.90f, 0.93f), _bodyHull, 0.18f);
+        private static Color AirlockColor() => new Color(0.96f, 0.42f, 0.08f);
 
         private static Color AccentFor(BuildingCategory cat)
         {
@@ -369,9 +387,19 @@ namespace SolarMajesty
                 case BuildingCategory.Farm: return new Color(0.35f, 0.8f, 0.4f);
                 case BuildingCategory.Mine: return new Color(0.75f, 0.55f, 0.3f);
                 case BuildingCategory.RegolithCamp: return new Color(0.7f, 0.6f, 0.45f);
-                case BuildingCategory.Inn: return new Color(0.7f, 0.45f, 0.85f);
+                case BuildingCategory.Inn: return new Color(0.92f, 0.62f, 0.28f);
                 case BuildingCategory.Laboratory: return new Color(0.45f, 0.7f, 1f);
                 case BuildingCategory.Power: return new Color(1f, 0.85f, 0.25f);
+                case BuildingCategory.GuildHall: return new Color(0.92f, 0.78f, 0.28f);
+                case BuildingCategory.HarvesterWorkshop: return new Color(0.82f, 0.62f, 0.22f);
+                case BuildingCategory.SurveyorWorkshop: return new Color(0.45f, 0.82f, 0.95f);
+                case BuildingCategory.TerraformerWorkshop: return new Color(0.42f, 0.82f, 0.38f);
+                case BuildingCategory.CourierWorkshop: return new Color(0.95f, 0.72f, 0.28f);
+                case BuildingCategory.GeologistWorkshop: return new Color(0.68f, 0.52f, 0.32f);
+                case BuildingCategory.SentinelWorkshop: return new Color(0.78f, 0.38f, 0.22f);
+                case BuildingCategory.ClimateLoom: return new Color(0.38f, 0.82f, 0.48f);
+                case BuildingCategory.AegisSpire: return new Color(0.45f, 0.72f, 1f);
+                case BuildingCategory.DeepArchive: return new Color(0.42f, 0.78f, 0.88f);
                 default: return new Color(0.55f, 0.7f, 0.85f);
             }
         }

@@ -48,6 +48,9 @@ namespace SolarMajesty
                 case FlagType.DefendArea:
                     return defendPreference > 0.01f ? defendPreference : combatPreference;
                 case FlagType.Extract: return extractPreference;
+                case FlagType.ResearchSite: return explorePreference;
+                case FlagType.EstablishOutpost: return extractPreference;
+                case FlagType.Terraform: return buildPreference;
                 default: return 0.4f;
             }
         }

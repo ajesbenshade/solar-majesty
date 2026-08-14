@@ -21,6 +21,7 @@ namespace SolarMajesty
         public const string BootPlayKey = "SM_BootPlay";
         public const string QualityKey = "SM_Set_Quality";
         public const string FullscreenKey = "SM_Set_Fullscreen";
+        public const string CampusKeyPrefix = "SM_Campus_";
 
         public static float Master = 1f;
         public static float Sfx = 1f;
@@ -47,6 +48,7 @@ namespace SolarMajesty
             QualityIndex = PlayerPrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
             Fullscreen = PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) == 1;
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
+            ReplayRules.Load();
             if (BootStraightIntoPlay)
             {
                 PlayerPrefs.DeleteKey(BootPlayKey);
@@ -78,6 +80,7 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(InvertKey, InvertPan ? 1 : 0);
             PlayerPrefs.SetInt(QualityKey, QualityIndex);
             PlayerPrefs.SetInt(FullscreenKey, Fullscreen ? 1 : 0);
+            ReplayRules.Save();
             PlayerPrefs.Save();
         }
 
@@ -127,13 +130,58 @@ namespace SolarMajesty
             PlayerPrefs.DeleteKey(SaveIceKey);
             PlayerPrefs.DeleteKey(SaveMetKey);
             PlayerPrefs.DeleteKey(SavePwrKey);
+            ClearCampus();
             PlayerPrefs.Save();
+        }
+
+        public static string CampusKey(CelestialBodyId body) => CampusKeyPrefix + (int)body;
+
+        public static void WriteCampus(CelestialBodyId body, string blob)
+        {
+            if (string.IsNullOrEmpty(blob))
+                PlayerPrefs.DeleteKey(CampusKey(body));
+            else
+                PlayerPrefs.SetString(CampusKey(body), blob);
+            PlayerPrefs.Save();
+        }
+
+        public static string LoadCampus(CelestialBodyId body) =>
+            PlayerPrefs.GetString(CampusKey(body), "");
+
+        public static void ClearCampus()
+        {
+            var bodies = CelestialBodyCatalog.All;
+            for (int i = 0; i < bodies.Length; i++)
+                PlayerPrefs.DeleteKey(CampusKey(bodies[i]));
         }
 
         public static void RequestBootIntoPlay()
         {
             PlayerPrefs.SetInt(BootPlayKey, 1);
             PlayerPrefs.Save();
+        }
+
+        public static string ContinueButtonLabel()
+        {
+            if (!SaveExists) return "CONTINUE  ·  no save";
+            var body = CelestialBodyCatalog.Get(BodySeed.LoadSavedBody());
+            string name = body != null ? body.DisplayName : "last drop";
+            int met = PlayerPrefs.GetInt(SaveMetKey, 0);
+            return $"CONTINUE  ·  {name}  ·  MET {met}";
+        }
+
+        public static string ContinueDetail()
+        {
+            if (!SaveExists)
+                return "No continue slot yet. New Game drops Earth; Continue restores that body's campus.";
+            int reg = PlayerPrefs.GetInt(SaveRegKey, 0);
+            int ice = PlayerPrefs.GetInt(SaveIceKey, 0);
+            int met = PlayerPrefs.GetInt(SaveMetKey, 0);
+            int pwr = PlayerPrefs.GetInt(SavePwrKey, 0);
+            int tech = ResearchManager.SavedUnlockCount();
+            int modules = CampusSnapshot.SlotCount(LoadCampus(BodySeed.LoadSavedBody()));
+            string campus = modules > 0 ? $"{modules} modules" : "empty campus";
+            return $"REG {reg}  ICE {ice}  MET {met}  PWR {pwr}  ·  {campus}  ·  {tech} techs";
         }
     }
 }

@@ -143,10 +143,23 @@ Creates `Blender/SolarMajesty_Units.blend`, exports `SM_Unit_*.fbx` to `Blender/
 
 | Mesh | Silhouette |
 |------|------------|
-| `SM_Unit_ScoutDrone` | Tall probe + antenna (~3.2 m) |
-| `SM_Unit_EngineerBot` | Squat builder + toolbox |
-| `SM_Unit_DefenseMech` | Wide chassis + shield |
+| `SM_Unit_ScoutDrone` | Hovering probe + four rotors + antenna (~2.8 m) |
+| `SM_Unit_EngineerBot` | Small white biped + toolbox (~1.7 m) |
+| `SM_Unit_DefenseMech` | Wide tracked chassis + shield (~2.0 m) |
 | `SM_Unit_DustStalker` | Low predator + orange eyes |
+| `SM_Unit_Medic` | White shell, cyan cross, kit |
+| `SM_Unit_HarvesterBot` | Hopper + scoop |
+| `SM_Unit_SurveyorBot` | Tall mast + dish |
+| `SM_Unit_TerraformerBot` | Tank backpack + spray boom |
+| `SM_Unit_CourierBot` | Cargo crate chassis |
+| `SM_Unit_GeologistBot` | Six-wheel rover + drill arm + sample crate (~1.3 m) |
+| `SM_Unit_SentinelMech` | Squat turret chassis + chevron (~1.2 m; shorter than Defense) |
+| `SM_Unit_RegolithMite` | Low beetle + rock plate |
+| `SM_Unit_WattLeech` | Long body + cyan core |
+| `SM_Unit_IceWisp` | Shard cluster + cyan core |
+| `SM_Unit_RockTick` | Spiky crab + orange pincers |
+| `SM_Unit_SoilCreeper` | Low millipede + soil plate + orange nubs (~1.2 m long) |
+| `SM_Unit_AshHopper` | Compact body + long legs + cyan eyes (~0.85 m) |
 
 Then in Unity: **Solar Majesty → Build Demo Content Assets** to refresh `Unit_*` prefabs.
 
@@ -224,6 +237,12 @@ Craters + rebuilt solar array:
 ```
 
 Writes `SM_Crater_Small/Medium/Large` to `Assets/Resources/Environment/` and replaces `SM_PWR1_SolarArray`.
+
+## In-engine hero kits (Phase 4 Weeks 2–3)
+
+Play Mode HAB / Palace Keep / landing pad / Farm (water-ice) / Regolith Camp / **Power solar field** / **Defense bunker** are **procedural silhouettes** in `HeroBuildingKits` (via `ModularBuildingFactory`), sized to the existing square footprints. Junction dual-barrel turrets sit on square airlock hubs (`ColonyVisualUtility` → `BuildJunctionTurret`) — dressing only, no fire. The HAB-1 cylinder FBX remains in the catalog for other modules. Refine these against the Mars visual target sheet when doing the next Blender pass — do not change footprints.
+
+Parked pad ship prefers `Environment/SM_Starship_Placeholder` (scaled); otherwise a procedural white/black/orange stack. Launch still uses existing `LaunchSite` / `MissionController` logic.
 
 ## Next modeling session
 

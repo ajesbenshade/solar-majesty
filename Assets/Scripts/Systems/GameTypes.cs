@@ -20,7 +20,10 @@ namespace SolarMajesty
         ClearThreat = 1,
         Build = 2,
         Extract = 3,
-        DefendArea = 4
+        DefendArea = 4,
+        ResearchSite = 5,
+        EstablishOutpost = 6,
+        Terraform = 7
     }
 
     public enum SpecialistClass
@@ -28,15 +31,28 @@ namespace SolarMajesty
         EngineerBot = 0,
         ScoutDrone = 1,
         DefenseMech = 2,
-        Medic = 3
+        Medic = 3,
+        HarvesterBot = 4,
+        SurveyorBot = 5,
+        TerraformerBot = 6,
+        CourierBot = 7,
+        GeologistBot = 8,
+        SentinelMech = 9
     }
 
-    /// <summary>Early fauna kinds. Stalkers hunt specialists; mites steal from camps; leeches drain power.</summary>
+    /// <summary>
+    /// Fauna kinds. Stalkers hunt from lairs; mites/ticks/creepers steal (Defend);
+    /// leeches/wisps drain power and hoppers raid HABs (Clear Threat).
+    /// </summary>
     public enum FaunaKind
     {
         Stalker = 0,
         Mite = 1,
-        Leech = 2
+        Leech = 2,
+        Wisp = 3,
+        Tick = 4,
+        Creeper = 5,
+        Hopper = 6
     }
 
     public enum BuildingCategory
@@ -57,7 +73,17 @@ namespace SolarMajesty
         DefenseWorkshop = 13,
         MedicWorkshop = 14,
         /// <summary>Majesty-style keep — must be built first; campus docks from its airlocks.</summary>
-        Palace = 15
+        Palace = 15,
+        GuildHall = 16,
+        HarvesterWorkshop = 17,
+        SurveyorWorkshop = 18,
+        TerraformerWorkshop = 19,
+        CourierWorkshop = 20,
+        GeologistWorkshop = 21,
+        SentinelWorkshop = 22,
+        ClimateLoom = 23,
+        AegisSpire = 24,
+        DeepArchive = 25
     }
 
     [Serializable]

@@ -9,12 +9,14 @@ namespace SolarMajesty
         VillageHab = 1,
         Inn = 2,
         Camp = 3,
-        Workshop = 4
+        Workshop = 4,
+        Guild = 5
     }
 
     /// <summary>
     /// Selectable colony piece. Village HABs take raids first.
-    /// Workshops (not guilds) are per-class hangouts — flags nearby pull matching specialists.
+    /// Workshops fabricate robots. Guild halls are assignable class hangouts — flags nearby
+    /// pull that class via the same workshop-bonus path (no SpecialistBrain rewrite).
     /// Progression is via research / campaign gates, not per-building upgrade levels.
     /// </summary>
     public class ColonyStructure : MonoBehaviour
@@ -38,6 +40,8 @@ namespace SolarMajesty
 
         public bool IsVillageHab => role == StructureRole.VillageHab;
         public bool IsWorkshop => role == StructureRole.Workshop;
+        public bool IsGuild => role == StructureRole.Guild || Category == BuildingCategory.GuildHall;
+        public bool IsWonder => IsWonderCategory(Category);
         public bool IsResidential =>
             role == StructureRole.VillageHab || Category == BuildingCategory.Habitat;
         public int ResidentCapacity => IsResidential ? Settlement.HousingPerHab : 0;
@@ -47,7 +51,7 @@ namespace SolarMajesty
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
         public Vector3 WorldPosition => transform.position;
         public bool IsSelected => _selected;
-        public int WorkerSlots => IsWorkshop ? 2 : 1;
+        public int WorkerSlots => IsWorkshop || IsGuild ? 2 : 1;
         public IReadOnlyList<SpecialistAgent> Workers => _workers;
         public int WorkerCount
         {
@@ -83,6 +87,13 @@ namespace SolarMajesty
             }
             EnsureSelectProxy();
             EnsureSelectRing();
+            if (_selectRing != null)
+            {
+                float ring = Category == BuildingCategory.Palace || Category == BuildingCategory.LandingPad
+                    ? 6.4f
+                    : HeroBuildingKits.IsHero(Category) ? 4.4f : 3.2f;
+                _selectRing.transform.localScale = new Vector3(ring, 0.025f, ring);
+            }
             SetSelected(false);
         }
 
@@ -109,7 +120,7 @@ namespace SolarMajesty
 
             var root = new GameObject("ResidentPips").transform;
             root.SetParent(transform, false);
-            root.localPosition = new Vector3(0f, 2.1f, 0f);
+            root.localPosition = new Vector3(0f, 3.65f, 0f);
             for (int i = 0; i < Residents; i++)
             {
                 var pip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -136,6 +147,8 @@ namespace SolarMajesty
             if (ClassLocked) return;
             PreferredClass = cls;
             HasPreferredClass = true;
+            if (IsGuild)
+                DisplayName = GuildNameFor(cls);
         }
 
         public bool HasOpenSlot()
@@ -217,6 +230,12 @@ namespace SolarMajesty
                 case SpecialistClass.EngineerBot: return FlagType.Build;
                 case SpecialistClass.DefenseMech: return FlagType.DefendArea;
                 case SpecialistClass.Medic: return FlagType.DefendArea;
+                case SpecialistClass.HarvesterBot: return FlagType.Extract;
+                case SpecialistClass.SurveyorBot: return FlagType.ResearchSite;
+                case SpecialistClass.TerraformerBot: return FlagType.Terraform;
+                case SpecialistClass.CourierBot: return FlagType.EstablishOutpost;
+                case SpecialistClass.GeologistBot: return FlagType.Extract;
+                case SpecialistClass.SentinelMech: return FlagType.DefendArea;
                 default: return FlagType.Explore;
             }
         }
@@ -228,6 +247,12 @@ namespace SolarMajesty
                 case SpecialistClass.EngineerBot: return "ENG";
                 case SpecialistClass.DefenseMech: return "DEF";
                 case SpecialistClass.Medic: return "MED";
+                case SpecialistClass.HarvesterBot: return "HARV";
+                case SpecialistClass.SurveyorBot: return "SURV";
+                case SpecialistClass.TerraformerBot: return "TERR";
+                case SpecialistClass.CourierBot: return "COUR";
+                case SpecialistClass.GeologistBot: return "GEO";
+                case SpecialistClass.SentinelMech: return "SENT";
                 default: return "SCOUT";
             }
         }
@@ -236,7 +261,35 @@ namespace SolarMajesty
             cat == BuildingCategory.ScoutWorkshop ||
             cat == BuildingCategory.EngineerWorkshop ||
             cat == BuildingCategory.DefenseWorkshop ||
-            cat == BuildingCategory.MedicWorkshop;
+            cat == BuildingCategory.MedicWorkshop ||
+            cat == BuildingCategory.HarvesterWorkshop ||
+            cat == BuildingCategory.SurveyorWorkshop ||
+            cat == BuildingCategory.TerraformerWorkshop ||
+            cat == BuildingCategory.CourierWorkshop ||
+            cat == BuildingCategory.GeologistWorkshop ||
+            cat == BuildingCategory.SentinelWorkshop;
+
+        public static bool IsWonderCategory(BuildingCategory cat) =>
+            cat == BuildingCategory.ClimateLoom ||
+            cat == BuildingCategory.AegisSpire ||
+            cat == BuildingCategory.DeepArchive;
+
+        public static string GuildNameFor(SpecialistClass cls)
+        {
+            switch (cls)
+            {
+                case SpecialistClass.EngineerBot: return "Anvil Compact";
+                case SpecialistClass.DefenseMech: return "Aegis Lodge";
+                case SpecialistClass.Medic: return "Triage Compact";
+                case SpecialistClass.HarvesterBot: return "Strip Guild";
+                case SpecialistClass.SurveyorBot: return "Chart Lodge";
+                case SpecialistClass.TerraformerBot: return "Bloom Compact";
+                case SpecialistClass.CourierBot: return "Haul Lodge";
+                case SpecialistClass.GeologistBot: return "Core Lodge";
+                case SpecialistClass.SentinelMech: return "Rim Watch";
+                default: return "Horizon Lodge";
+            }
+        }
 
         /// <summary>True after this workshop has fabricated its outdoor robot.</summary>
         public bool RobotFabricated { get; private set; }
@@ -251,6 +304,12 @@ namespace SolarMajesty
                 case BuildingCategory.EngineerWorkshop: return SpecialistClass.EngineerBot;
                 case BuildingCategory.DefenseWorkshop: return SpecialistClass.DefenseMech;
                 case BuildingCategory.MedicWorkshop: return SpecialistClass.Medic;
+                case BuildingCategory.HarvesterWorkshop: return SpecialistClass.HarvesterBot;
+                case BuildingCategory.SurveyorWorkshop: return SpecialistClass.SurveyorBot;
+                case BuildingCategory.TerraformerWorkshop: return SpecialistClass.TerraformerBot;
+                case BuildingCategory.CourierWorkshop: return SpecialistClass.CourierBot;
+                case BuildingCategory.GeologistWorkshop: return SpecialistClass.GeologistBot;
+                case BuildingCategory.SentinelWorkshop: return SpecialistClass.SentinelMech;
                 default: return null;
             }
         }
@@ -291,6 +350,54 @@ namespace SolarMajesty
                     HasPreferredClass = true;
                     ClassLocked = true;
                     role = StructureRole.Workshop;
+                    break;
+                case BuildingCategory.HarvesterWorkshop:
+                    PreferredClass = SpecialistClass.HarvesterBot;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Workshop;
+                    break;
+                case BuildingCategory.SurveyorWorkshop:
+                    PreferredClass = SpecialistClass.SurveyorBot;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Workshop;
+                    break;
+                case BuildingCategory.TerraformerWorkshop:
+                    PreferredClass = SpecialistClass.TerraformerBot;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Workshop;
+                    break;
+                case BuildingCategory.CourierWorkshop:
+                    PreferredClass = SpecialistClass.CourierBot;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Workshop;
+                    break;
+                case BuildingCategory.GeologistWorkshop:
+                    PreferredClass = SpecialistClass.GeologistBot;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Workshop;
+                    break;
+                case BuildingCategory.SentinelWorkshop:
+                    PreferredClass = SpecialistClass.SentinelMech;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Workshop;
+                    break;
+                case BuildingCategory.GuildHall:
+                    HasPreferredClass = false;
+                    ClassLocked = false;
+                    role = StructureRole.Guild;
+                    break;
+                case BuildingCategory.ClimateLoom:
+                case BuildingCategory.AegisSpire:
+                case BuildingCategory.DeepArchive:
+                    HasPreferredClass = false;
+                    ClassLocked = true;
+                    role = StructureRole.Core;
                     break;
                 case BuildingCategory.Farm:
                 case BuildingCategory.Mine:
@@ -333,6 +440,16 @@ namespace SolarMajesty
                 case BuildingCategory.EngineerWorkshop: return "Engineer Workshop";
                 case BuildingCategory.DefenseWorkshop: return "Defense Workshop";
                 case BuildingCategory.MedicWorkshop: return "Medic Workshop";
+                case BuildingCategory.HarvesterWorkshop: return "Harvester Workshop";
+                case BuildingCategory.SurveyorWorkshop: return "Surveyor Workshop";
+                case BuildingCategory.TerraformerWorkshop: return "Terraformer Workshop";
+                case BuildingCategory.CourierWorkshop: return "Courier Workshop";
+                case BuildingCategory.GeologistWorkshop: return "Geologist Workshop";
+                case BuildingCategory.SentinelWorkshop: return "Sentinel Workshop";
+                case BuildingCategory.GuildHall: return "Guild Hall";
+                case BuildingCategory.ClimateLoom: return "Climate Loom";
+                case BuildingCategory.AegisSpire: return "Aegis Spire";
+                case BuildingCategory.DeepArchive: return "Deep Archive";
                 case BuildingCategory.Power: return "Power Node";
                 case BuildingCategory.Laboratory: return "Laboratory";
                 case BuildingCategory.Defense: return "Command";
@@ -358,7 +475,10 @@ namespace SolarMajesty
             proxy.layer = gameObject.layer;
             var box = proxy.AddComponent<BoxCollider>();
             box.center = Vector3.zero;
-            box.size = new Vector3(2.6f, 2.2f, 2.6f);
+            float span = Category == BuildingCategory.Palace || Category == BuildingCategory.LandingPad
+                ? 5.4f
+                : HeroBuildingKits.IsHero(Category) ? 3.6f : 2.6f;
+            box.size = new Vector3(span, 2.2f, span);
         }
 
         private void EnsureSelectRing()

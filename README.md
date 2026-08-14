@@ -6,6 +6,7 @@ You never control units. You build infrastructure, post flags/bounties, and mana
 
 This repo is a **Unity 6 URP project** with a playable greybox demo scene.  
 See **[Docs/DEMO.md](Docs/DEMO.md)** for open → Play → 60-second demo script.  
+**Smoke test:** **[Docs/SMOKE_TEST.md](Docs/SMOKE_TEST.md)**  
 **Next developer pickup:** **[Docs/DEVELOPER_HANDOFF.md](Docs/DEVELOPER_HANDOFF.md)**
 
 ## Namespace
@@ -56,4 +57,4 @@ Every Grok Imagine prompt must include:
 
 > isometric view, Majesty 2 inspired readable silhouettes, SpaceX industrial aesthetic, clean white and black Starship materials with orange accents, modular habitat design, slightly exaggerated proportions for clarity, vibrant but grounded sci-fi lighting, high detail 3D render style
 
-See `Docs/ART_DIRECTION.md`.
+See `Docs/ART_DIRECTION.md`. Production look (extends these keywords): [Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md](Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md).

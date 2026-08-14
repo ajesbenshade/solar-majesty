@@ -14,6 +14,7 @@ namespace SolarMajesty
 
         private readonly List<DustStalkerAgent> _spawned = new List<DustStalkerAgent>(4);
         private GameLoop _loop;
+        private bool _expansionSpawned;
 
         public bool IsCleared => cleared;
         public int StalkerBudget => stalkerBudget;
@@ -46,7 +47,7 @@ namespace SolarMajesty
             }
         }
 
-        public void Tick()
+        public void Tick(int campusPieces = 0)
         {
             if (cleared) return;
 
@@ -64,7 +65,26 @@ namespace SolarMajesty
             }
 
             if (_spawned.Count == 0)
+            {
                 MarkCleared();
+                return;
+            }
+
+            TryExpansionRestock(campusPieces);
+        }
+
+        /// <summary>
+        /// Campus growth restocks one extra stalker once — expansion response, not a timed wave.
+        /// </summary>
+        private void TryExpansionRestock(int campusPieces)
+        {
+            if (cleared || _expansionSpawned || _loop == null) return;
+            if (campusPieces < 8) return;
+            _expansionSpawned = true;
+            Vector3 offset = transform.right * 3.4f;
+            var extra = _loop.SpawnStalkerAt(transform.position + offset, transform.parent);
+            if (extra != null)
+                _spawned.Add(extra);
         }
 
         /// <summary>ClearThreat near this den — kill remaining fauna and silence the lair.</summary>

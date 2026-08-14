@@ -63,17 +63,29 @@ namespace SolarMajesty
                 BuildingCategory.EngineerWorkshop => StructureRole.Workshop,
                 BuildingCategory.DefenseWorkshop => StructureRole.Workshop,
                 BuildingCategory.MedicWorkshop => StructureRole.Workshop,
+                BuildingCategory.HarvesterWorkshop => StructureRole.Workshop,
+                BuildingCategory.SurveyorWorkshop => StructureRole.Workshop,
+                BuildingCategory.TerraformerWorkshop => StructureRole.Workshop,
+                BuildingCategory.CourierWorkshop => StructureRole.Workshop,
+                BuildingCategory.GeologistWorkshop => StructureRole.Workshop,
+                BuildingCategory.SentinelWorkshop => StructureRole.Workshop,
+                BuildingCategory.GuildHall => StructureRole.Guild,
                 BuildingCategory.Palace => StructureRole.Core,
                 BuildingCategory.Habitat => StructureRole.Core,
                 _ => StructureRole.Core
             };
 
-            var st = go.GetComponent<ColonyStructure>() ?? go.AddComponent<ColonyStructure>();
+            var st = go.GetComponent<ColonyStructure>();
+            if (st == null)
+                st = go.AddComponent<ColonyStructure>();
             float hp = cat == BuildingCategory.Palace ? 140f
+                : ColonyStructure.IsWonderCategory(cat) ? 120f
                 : role == StructureRole.Inn ? 80f
-                : role == StructureRole.Workshop ? 70f
+                : role == StructureRole.Workshop || role == StructureRole.Guild ? 70f
                 : 48f;
             st.Configure(role, this, hp, cat, data);
+            if (cat == BuildingCategory.GuildHall)
+                InheritGuildClass(st);
             if (!_structures.Contains(st))
                 _structures.Add(st);
 
@@ -83,6 +95,38 @@ namespace SolarMajesty
                 if (n > 0)
                     st.SetResidents(n);
             }
+        }
+
+        private void InheritGuildClass(ColonyStructure hall)
+        {
+            if (hall == null) return;
+            ColonyStructure best = null;
+            float bestD = 36f;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive || !s.IsWorkshop || !s.HasPreferredClass) continue;
+                float d = Flat(hall.WorldPosition, s.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = s;
+                }
+            }
+            if (best != null)
+                hall.SetPreferredClass(best.PreferredClass);
+        }
+
+        public void RegisterRestoredVillageHab(GameObject go)
+        {
+            if (go == null || _loop?.Settlement == null) return;
+            var st = go.GetComponent<ColonyStructure>();
+            if (st == null)
+                st = go.AddComponent<ColonyStructure>();
+            st.Configure(StructureRole.VillageHab, this, 48f, BuildingCategory.Habitat);
+            if (!_structures.Contains(st))
+                _structures.Add(st);
+            _loop.Settlement.AddVillageHab();
         }
 
         public ColonyStructure NearestDutyFor(SpecialistClass cls, Vector3 from, float maxDist)
@@ -97,12 +141,12 @@ namespace SolarMajesty
                 if (s == null || !s.IsAlive || !s.HasPreferredClass) continue;
                 if (s.PreferredClass != cls) continue;
                 float d = Flat(from, s.WorldPosition);
-                if (s.IsWorkshop && d < bestShopD)
+                if ((s.IsWorkshop || s.IsGuild) && d < bestShopD)
                 {
                     bestShopD = d;
                     bestShop = s;
                 }
-                else if (!s.IsWorkshop && s.HasOpenSlot() && d < bestJobD)
+                else if (!s.IsWorkshop && !s.IsGuild && s.HasOpenSlot() && d < bestJobD)
                 {
                     bestJobD = d;
                     bestJob = s;
@@ -235,6 +279,63 @@ namespace SolarMajesty
 
         public ColonyStructure NearestPower(Vector3 from, float maxDist) =>
             NearestByCategory(from, maxDist, BuildingCategory.Power);
+
+        /// <summary>
+        /// Prefer a matching drop-off (Mine for ore, Farm for ice, …) within haul range;
+        /// otherwise the nearest pad / palace / camp.
+        /// </summary>
+        public bool TryFindDropOff(
+            Vector3 from,
+            ResourceNodeType node,
+            out ColonyStructure site,
+            out float dist,
+            out bool matching)
+        {
+            site = null;
+            dist = ExtractLogistics.MaxHaul;
+            matching = false;
+            ColonyStructure bestMatch = null;
+            ColonyStructure bestAny = null;
+            float bestMatchD = ExtractLogistics.MaxHaul;
+            float bestAnyD = ExtractLogistics.MaxHaul;
+
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive) continue;
+                if (!ExtractLogistics.IsDropOff(s.Category)) continue;
+                float d = Flat(from, s.WorldPosition);
+                if (d >= ExtractLogistics.MaxHaul) continue;
+                if (d < bestAnyD)
+                {
+                    bestAnyD = d;
+                    bestAny = s;
+                }
+                if (ExtractLogistics.Prefers(s.Category, node) && d < bestMatchD)
+                {
+                    bestMatchD = d;
+                    bestMatch = s;
+                }
+            }
+
+            if (bestMatch != null)
+            {
+                site = bestMatch;
+                dist = bestMatchD;
+                matching = true;
+                return true;
+            }
+
+            if (bestAny != null)
+            {
+                site = bestAny;
+                dist = bestAnyD;
+                matching = false;
+                return true;
+            }
+
+            return false;
+        }
 
         private static bool Matches(BuildingCategory cat, BuildingCategory[] cats)
         {

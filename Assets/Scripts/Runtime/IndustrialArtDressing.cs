@@ -152,13 +152,15 @@ namespace SolarMajesty
             if (ContainsAny(n, "sm_cyan", "sm_scout", "sm_medic")) { slot = Slot.Cyan; return true; }
             if (ContainsAny(n, "sm_engineer")) { slot = Slot.Orange; return true; }
             if (ContainsAny(n, "sm_defense")) { slot = Slot.DefenseRed; return true; }
-            if (ContainsAny(n, "sm_stalker", "mite", "regolithmite")) { slot = Slot.StalkerHide; return true; }
-            if (ContainsAny(n, "leech", "wattleech")) { slot = Slot.Cyan; return true; }
+            if (ContainsAny(n, "sm_stalker", "mite", "regolithmite", "creeper", "soilcreeper")) { slot = Slot.StalkerHide; return true; }
+            if (ContainsAny(n, "leech", "wattleech", "wisp", "icewisp")) { slot = Slot.Cyan; return true; }
+            if (ContainsAny(n, "tick", "rocktick")) { slot = Slot.Graphite; return true; }
+            if (ContainsAny(n, "hopper", "ashhopper")) { slot = Slot.Steel; return true; }
             if (ContainsAny(n, "sm_regolith", "sm_crater", "crater")) { slot = Slot.Graphite; return true; }
             if (ContainsAny(n, "sm_solar", "solarcell", "pv_cell")) { slot = Slot.Solar; return true; }
 
             if (ContainsAny(n, "visor", "eyel", "eyer", "eye")) { slot = Slot.Cyan; return true; }
-            if (ContainsAny(n, "beacon", "stripe", "hatch", "hazard", "accent")) { slot = Slot.Orange; return true; }
+            if (ContainsAny(n, "beacon", "stripe", "hatch", "hazard", "accent", "airlock")) { slot = Slot.Orange; return true; }
             if (ContainsAny(n, "band", "skid", "tread", "boot", "spine", "ridge", "leg")) { slot = Slot.BlackCarbon; return true; }
             if (ContainsAny(n, "toolbox", "pack", "vent", "plinth", "bogie")) { slot = Slot.Graphite; return true; }
             if (ContainsAny(n, "shield", "plating", "face")) { slot = Slot.DefenseRed; return true; }
@@ -273,6 +275,7 @@ namespace SolarMajesty
                     albedo = _solarAlbedo;
                     metallic = 0.35f;
                     smooth = 0.62f;
+                    emission = new Color(0.10f, 0.28f, 0.85f);
                     tile = new Vector2(4f, 4f);
                     break;
                 case Slot.DefenseRed:

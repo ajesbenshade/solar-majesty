@@ -27,8 +27,8 @@ namespace SolarMajesty
             }
 
             HighestUnlocked = (CelestialBodyId)PlayerPrefs.GetInt(MaxKey, (int)CelestialBodyId.Earth);
-            if ((int)HighestUnlocked < (int)CelestialBodyId.Earth ||
-                (int)HighestUnlocked > (int)CelestialBodyId.Mars)
+            int last = (int)CelestialBodyCatalog.Last;
+            if ((int)HighestUnlocked < (int)CelestialBodyId.Earth || (int)HighestUnlocked > last)
                 HighestUnlocked = CelestialBodyId.Earth;
         }
 
@@ -38,7 +38,7 @@ namespace SolarMajesty
         public static CelestialBodyId? NextAfter(CelestialBodyId current)
         {
             int n = (int)current + 1;
-            if (n > (int)CelestialBodyId.Mars) return null;
+            if (n > (int)CelestialBodyCatalog.Last) return null;
             return (CelestialBodyId)n;
         }
 
@@ -82,14 +82,14 @@ namespace SolarMajesty
             PlayerPrefs.Save();
         }
 
-        /// <summary>Debug cheat (Shift+F10): unlock Earth → Luna → Mars.</summary>
+        /// <summary>Debug cheat (Shift+F10): unlock the full campaign spine.</summary>
         public static void DebugUnlockAll()
         {
-            HighestUnlocked = CelestialBodyId.Mars;
-            PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Mars);
+            HighestUnlocked = CelestialBodyCatalog.Last;
+            PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
             PlayerPrefs.SetInt(FreshKey, 1);
             PlayerPrefs.Save();
-            Debug.Log("[Campaign] Debug unlocked all bodies through Mars.");
+            Debug.Log($"[Campaign] Debug unlocked all bodies through {HighestUnlocked}.");
         }
     }
 }

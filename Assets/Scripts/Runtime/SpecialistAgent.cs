@@ -76,6 +76,9 @@ namespace SolarMajesty
         private float _geneWork;
         private float _shopCooldown;
         private ColonyStructure _repairTarget;
+        private bool _radExposed;
+        private float _radFlash;
+        private bool _radToast;
 
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
@@ -92,6 +95,7 @@ namespace SolarMajesty
                 ? "no suit"
                 : (ShopCatalog.Get(equippedSuit)?.DisplayName ?? "suit");
         public string Status => _status;
+        public string FlavorLine { get; private set; } = "Booting.";
         public SpecialistAction CurrentAction => _lastDecision.Action;
         public FlagHandle ActiveFlag => _activeFlag;
         public float BodyDanger => bodyDanger;
@@ -104,13 +108,14 @@ namespace SolarMajesty
 
         public float EffectiveMoveSpeed =>
             (data != null ? data.moveSpeed : 3.5f) *
-            (1f + _geneSpeed + SuitSpeedBonus());
+            (1f + _geneSpeed + SuitSpeedBonus()) *
+            BodyMoveScale();
 
         public float EffectiveWorkRate =>
             (data != null ? data.workRate : 1f) * (1f + _geneWork);
 
         public float EffectiveCourage =>
-            Mathf.Clamp01((data != null ? data.courage : 0.5f) + _geneCourage);
+            Mathf.Clamp01(((data != null ? data.courage : 0.5f) + _geneCourage) * ReplayRules.CourageScale);
 
         public float ArmorMitigation
         {
@@ -140,13 +145,16 @@ namespace SolarMajesty
 
         public void SetBodyDanger(float danger01) => bodyDanger = Mathf.Clamp01(danger01);
 
-        public void ApplyDamage(float amount01)
+        public void ApplyDamage(float amount01, bool feedback = true)
         {
             if (amount01 <= 0f || _incapacitated) return;
             float mitigated = amount01 * (1f - ArmorMitigation);
             healthNormalized = Mathf.Clamp01(healthNormalized - mitigated);
-            DemoAudio.PlayBite();
-            DemoVfx.HitFlash(transform, new Color(1f, 0.25f, 0.2f));
+            if (feedback)
+            {
+                DemoAudio.PlayBite();
+                DemoVfx.HitFlash(transform, new Color(1f, 0.25f, 0.2f));
+            }
             if (healthNormalized <= incapacitateThreshold)
                 EnterIncapacitated();
         }
@@ -213,6 +221,7 @@ namespace SolarMajesty
             _thinkTimer = Random.Range(0f, thinkIntervalMax);
             _lastDecision = BrainDecision.Idle(0f, "spawn");
             _status = "idle";
+            FlavorLine = SpecialistFlavor.CardLine(data.specialistClass, SpecialistAction.Idle, "spawn", null);
             gameObject.name = $"Specialist_{data.displayName}";
 
             _baseScale = transform.localScale;
@@ -325,6 +334,7 @@ namespace SolarMajesty
             }
 
             TickNeeds(dt);
+            TickRadiation(dt);
             TickGene(dt);
             TickMedic(dt);
             TickThink(dt);
@@ -399,7 +409,7 @@ namespace SolarMajesty
                     fatigue = Mathf.Clamp01(fatigue + dt * 0.02f);
                     break;
                 case SpecialistAction.Rest:
-                    float innBoost = KingdomLife.AtInn(transform.position) ? 1.45f : 0.55f;
+                    float innBoost = KingdomLife.AtRest(transform.position, OutpostClaimed) ? 1.45f : 0.55f;
                     fatigue = Mathf.Clamp01(fatigue - dt * 0.12f * innBoost);
                     healthNormalized = Mathf.Clamp01(healthNormalized + dt * restHealPerSecond * innBoost);
                     break;
@@ -423,13 +433,13 @@ namespace SolarMajesty
             BrainDecision decision = _brain.Evaluate(BuildContext(), _flags.Flags, bodyDanger);
             if (decision.Action != SpecialistAction.Flee &&
                 _lastDecision.Action == SpecialistAction.Rest &&
-                KingdomLife.AtInn(transform.position) &&
+                KingdomLife.AtRest(transform.position, OutpostClaimed) &&
                 (fatigue > 0.22f || healthNormalized < 0.82f))
             {
                 decision = BrainDecision.Rest(
                     Mathf.Max(decision.Score, 0.6f),
                     "recovering_at_inn",
-                    KingdomLife.InnNear(transform.position));
+                    RestPosition);
             }
 
             Party?.PromoteIfNeeded();
@@ -484,7 +494,7 @@ namespace SolarMajesty
 
         private BrainDecision FollowLeader(SpecialistAgent lead)
         {
-            Vector3 inn = KingdomLife.InnNear(transform.position);
+            Vector3 inn = RestPosition;
             switch (lead.CurrentAction)
             {
                 case SpecialistAction.Rest:
@@ -525,7 +535,7 @@ namespace SolarMajesty
             {
                 vocation = duty.WorldPosition;
                 workshopPos = duty.WorldPosition;
-                hasWorkshop = duty.IsWorkshop;
+                hasWorkshop = duty.IsWorkshop || duty.IsGuild;
             }
             else
             {
@@ -554,10 +564,10 @@ namespace SolarMajesty
                 Data = data,
                 Position = transform.position,
                 Fatigue = fatigue,
-                GreedHunger = greedHunger,
+                GreedHunger = Mathf.Clamp01(greedHunger + ReplayRules.GreedHungerBias),
                 CurrentFlag = _activeFlag,
                 HealthNormalized = healthNormalized,
-                SafetyPosition = KingdomLife.InnNear(transform.position),
+                SafetyPosition = KingdomLife.RestNear(transform.position, OutpostClaimed),
                 VocationPosition = vocation,
                 HuntPosition = hunt,
                 HuntDistance = huntDist,
@@ -565,7 +575,10 @@ namespace SolarMajesty
                 CurrentAction = _lastDecision.Action,
                 WorkshopPosition = workshopPos,
                 HasWorkshop = hasWorkshop,
-                FlagWorkshopBonus = hasWorkshop ? 0.22f : 0f,
+                FlagWorkshopBonus = hasWorkshop
+                    ? 0.22f + (_loop != null && _loop.Settlement != null && _loop.Settlement.HasGuild ? 0.16f : 0f)
+                      + ReplayRules.WorkshopBonusExtra
+                    : 0f,
                 HasPatient = hasPatient,
                 PatientPosition = patient,
                 HasRepair = hasRepair,
@@ -594,10 +607,16 @@ namespace SolarMajesty
                     _claimedActive = true;
                     DemoAudio.PlayClaim();
                     DemoVfx.ClaimRing(_activeFlag.WorldPosition, new Color(1f, 0.85f, 0.2f));
+                    if (decision.TargetFlag.Data != null)
+                        _loop?.LogOverseer(SpecialistFlavor.ClaimLine(
+                            data.displayName, data.specialistClass, decision.TargetFlag.Data.flagType));
                 }
                 _idleTarget = _activeFlag.WorldPosition;
                 _hasIdleTarget = true;
                 _status = $"pursue_{decision.TargetFlag.Data.flagType}";
+                FlavorLine = SpecialistFlavor.CardLine(
+                    data.specialistClass, SpecialistAction.PursueFlag, decision.Reason,
+                    decision.TargetFlag.Data != null ? decision.TargetFlag.Data.flagType : (FlagType?)null);
                 SetDestination(_activeFlag.WorldPosition);
             }
             else
@@ -607,11 +626,14 @@ namespace SolarMajesty
                 _idleTarget = decision.TargetPosition;
                 _hasIdleTarget = _idleTarget.sqrMagnitude > 0.01f;
                 _status = decision.Reason ?? decision.Action.ToString().ToLowerInvariant();
+                FlavorLine = SpecialistFlavor.CardLine(
+                    data != null ? data.specialistClass : SpecialistClass.ScoutDrone,
+                    decision.Action, decision.Reason, null);
                 if (decision.Action == SpecialistAction.Repair && _loop?.Village != null)
                     _repairTarget = _loop.Village.NearestDamaged(transform.position, 48f);
                 else if (decision.Action != SpecialistAction.Repair)
                     _repairTarget = null;
-                if (decision.Action != SpecialistAction.Rest || !KingdomLife.AtInn(transform.position))
+                if (decision.Action != SpecialistAction.Rest || !KingdomLife.AtRest(transform.position, OutpostClaimed))
                     SetAgentStopped(false);
                 if (_hasIdleTarget)
                     SetDestination(_idleTarget);
@@ -698,16 +720,27 @@ namespace SolarMajesty
                 _economy?.ReleaseBountyEscrow(_activeFlag.EscrowMetals);
                 if (completedType == FlagType.Extract)
                 {
-                    int campus = ColonyLayout.NearestCampusIndex(transform.position);
                     ResourceNode node = _world != null
                         ? _world.FindNearestNode(transform.position, 10f)
                         : null;
-                    _economy?.GrantExtractYield(campus, node);
+                    if (_loop != null)
+                        _loop.ApplyExtractYield(transform.position, node);
+                    else
+                    {
+                        int campus = ColonyLayout.NearestCampusIndex(transform.position);
+                        _economy?.GrantExtractYield(campus, node);
+                    }
                 }
                 else if (completedType == FlagType.ClearThreat && _world != null)
                 {
                     var lair = _world.FindNearestLair(transform.position, 12f);
                     lair?.ForceClear();
+                }
+                else if (completedType == FlagType.ResearchSite ||
+                         completedType == FlagType.EstablishOutpost ||
+                         completedType == FlagType.Terraform)
+                {
+                    _loop?.NotifySpecialFlag(completedType, transform.position);
                 }
                 greedHunger = Mathf.Clamp01(greedHunger - 0.25f);
                 if (completedType == FlagType.Extract)
@@ -794,7 +827,7 @@ namespace SolarMajesty
 
         private void TickRest(float dt)
         {
-            Vector3 inn = KingdomLife.InnNear(transform.position);
+            Vector3 inn = RestPosition;
             if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
             {
                 SetDestination(inn);
@@ -813,7 +846,7 @@ namespace SolarMajesty
 
         private void TickFlee(float dt)
         {
-            Vector3 inn = KingdomLife.InnNear(transform.position);
+            Vector3 inn = RestPosition;
             if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
             {
                 SetDestination(inn);
@@ -1052,6 +1085,11 @@ namespace SolarMajesty
                 float s = 1f + Mathf.Sin((1f - _workPulse) * Mathf.PI) * 0.18f * _workPulse;
                 transform.localScale = _baseScale * s;
             }
+            else if (_radExposed)
+            {
+                float s = 1f + Mathf.Sin(Time.time * 6.5f) * 0.035f;
+                transform.localScale = _baseScale * s;
+            }
             else if (transform.localScale != _baseScale)
             {
                 transform.localScale = Vector3.Lerp(transform.localScale, _baseScale, dt * 8f);
@@ -1072,6 +1110,48 @@ namespace SolarMajesty
         }
 
         public void DebugSetFatigue(float value) => fatigue = Mathf.Clamp01(value);
+
+        private void TickRadiation(float dt)
+        {
+            var body = _loop != null ? _loop.BodyProfile : null;
+            if (body == null || body.RadiationDrainPerSecond <= 0f)
+            {
+                _radExposed = false;
+                return;
+            }
+
+            float nearest = FlatDistance(transform.position, ColonyLayout.CampusOrigin);
+            if (OutpostClaimed)
+                nearest = Mathf.Min(nearest, FlatDistance(transform.position, ColonyLayout.CampusBOrigin));
+
+            _radExposed = nearest > body.RadiationSafeRadius;
+            if (!_radExposed) return;
+
+            ApplyDamage(body.RadiationDrainPerSecond * dt, false);
+            _radFlash -= dt;
+            if (_radFlash <= 0f)
+            {
+                _radFlash = 2.4f;
+                DemoVfx.HitFlash(transform, new Color(0.45f, 0.85f, 1f));
+                if (!_radToast)
+                {
+                    _radToast = true;
+                    _loop.NoteRadiationExposure();
+                }
+            }
+        }
+
+        private bool OutpostClaimed =>
+            _loop != null && _loop.Settlement != null && _loop.Settlement.HasOutpost;
+
+        private Vector3 RestPosition =>
+            KingdomLife.RestNear(transform.position, OutpostClaimed);
+
+        private float BodyMoveScale()
+        {
+            var body = _loop != null ? _loop.BodyProfile : null;
+            return body != null ? Mathf.Clamp(body.MoveSpeedScale, 0.5f, 1.4f) : 1f;
+        }
 
         private static float FlatDistance(Vector3 a, Vector3 b)
         {

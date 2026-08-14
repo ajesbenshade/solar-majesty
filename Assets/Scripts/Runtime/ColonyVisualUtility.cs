@@ -123,11 +123,11 @@ namespace SolarMajesty
 
             float span = Mathf.Max(ColonyLayout.DefaultCellSize * 2f, worldSpan);
             float length = span + 1.7f; // overlap well into neighboring hull sockets
-            float diameter = 1.25f;
-            float height = 1.15f;
+            float diameter = 1.15f;
 
-            CubeArm(root.transform, "Collar_NS", new Vector3(diameter, height, length));
-            CubeArm(root.transform, "Collar_EW", new Vector3(length, height, diameter));
+            SpawnAirlockHub(root.transform);
+            CorrugatedArm(root.transform, "Dress_Collar_NS", Vector3.forward, length, diameter);
+            CorrugatedArm(root.transform, "Dress_Collar_EW", Vector3.right, length, diameter);
 
             GameObject prefab = BuildingVisualCatalog.LoadConnector();
             if (prefab != null)
@@ -143,6 +143,81 @@ namespace SolarMajesty
             EnsureUrpMaterials(root);
             SnapToGround(root);
             return root;
+        }
+
+        private static void SpawnAirlockHub(Transform parent)
+        {
+            var hub = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            hub.name = "Dress_AirlockHub";
+            hub.transform.SetParent(parent, false);
+            hub.transform.localPosition = new Vector3(0f, 0.85f, 0f);
+            hub.transform.localScale = new Vector3(1.72f, 1.55f, 1.72f);
+            TintPrimitive(hub, new Color(0.88f, 0.89f, 0.91f));
+
+            // Orange edge frame (hollow) — mockup square airlock, not a solid orange box.
+            float y = 0.85f;
+            OrangeStrip(parent, "Dress_Frame_N", new Vector3(0f, y, 0.88f), new Vector3(1.9f, 1.7f, 0.12f));
+            OrangeStrip(parent, "Dress_Frame_S", new Vector3(0f, y, -0.88f), new Vector3(1.9f, 1.7f, 0.12f));
+            OrangeStrip(parent, "Dress_Frame_E", new Vector3(0.88f, y, 0f), new Vector3(0.12f, 1.7f, 1.9f));
+            OrangeStrip(parent, "Dress_Frame_W", new Vector3(-0.88f, y, 0f), new Vector3(0.12f, 1.7f, 1.9f));
+
+            float yaw = 40f + (parent.position.x + parent.position.z) * 13f;
+            HeroBuildingKits.BuildJunctionTurret(parent, new Vector3(0f, 1.68f, 0f), yaw, 0.92f);
+        }
+
+        private static void OrangeStrip(Transform parent, string name, Vector3 pos, Vector3 scale)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = pos;
+            go.transform.localScale = scale;
+            Object.Destroy(go.GetComponent<Collider>());
+            TintPrimitive(go, new Color(0.96f, 0.42f, 0.08f));
+        }
+
+        private static void CorrugatedArm(
+            Transform parent, string name, Vector3 axis, float length, float diameter)
+        {
+            bool ns = Mathf.Abs(axis.z) >= Mathf.Abs(axis.x);
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = new Vector3(0f, 0.85f, 0f);
+            go.transform.localScale = ns
+                ? new Vector3(diameter, diameter, length)
+                : new Vector3(length, diameter, diameter);
+            TintPrimitive(go, new Color(0.72f, 0.74f, 0.76f));
+
+            int ribs = 5;
+            for (int i = 0; i < ribs; i++)
+            {
+                float t = (i + 0.5f) / ribs - 0.5f;
+                var rib = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                rib.name = name + "_Rib";
+                rib.transform.SetParent(parent, false);
+                rib.transform.localPosition = ns
+                    ? new Vector3(0f, 0.85f, t * length * 0.85f)
+                    : new Vector3(t * length * 0.85f, 0.85f, 0f);
+                rib.transform.localScale = ns
+                    ? new Vector3(diameter * 1.12f, diameter * 1.12f, 0.12f)
+                    : new Vector3(0.12f, diameter * 1.12f, diameter * 1.12f);
+                Object.Destroy(rib.GetComponent<Collider>());
+                TintPrimitive(rib, new Color(0.14f, 0.14f, 0.15f));
+            }
+        }
+
+        private static void TintPrimitive(GameObject go, Color color)
+        {
+            var rend = go.GetComponent<Renderer>();
+            if (rend == null) return;
+            EnsureLitShader();
+            if (_lit == null) return;
+            var mat = new Material(_lit);
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+            if (mat.HasProperty("_Color")) mat.color = color;
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.32f);
+            rend.sharedMaterial = mat;
         }
 
         private static void FitTubeToSpan(GameObject tube, float length, float diameter)
@@ -163,16 +238,6 @@ namespace SolarMajesty
             float sz = length / Mathf.Max(0.05f, b.size.z);
             Vector3 ls = tube.transform.localScale;
             tube.transform.localScale = new Vector3(ls.x * sx, ls.y * sy, ls.z * sz);
-        }
-
-        private static void CubeArm(Transform parent, string name, Vector3 scale)
-        {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = Vector3.zero;
-            go.transform.localRotation = Quaternion.identity;
-            go.transform.localScale = scale;
         }
 
         private static void EnsureLitShader()

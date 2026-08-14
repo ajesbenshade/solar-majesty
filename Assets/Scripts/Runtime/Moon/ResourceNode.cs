@@ -50,13 +50,9 @@ namespace SolarMajesty
 
         private void BuildMarker(Color soilColor)
         {
-            // Clear prior children if reconfigured.
             for (int i = transform.childCount - 1; i >= 0; i--)
-            {
-                var child = transform.GetChild(i);
-                if (child != null && child.name == "YieldLabel") continue;
-                Destroy(child.gameObject);
-            }
+                DestroyImmediate(transform.GetChild(i).gameObject);
+            _yieldLabel = null;
 
             Color body = nodeType switch
             {
@@ -108,20 +104,22 @@ namespace SolarMajesty
 
         private void EnsureYieldLabel()
         {
-            if (_yieldLabel == null)
+            if (_yieldLabel != null)
             {
-                Transform existing = transform.Find("YieldLabel");
-                GameObject go = existing != null ? existing.gameObject : new GameObject("YieldLabel");
-                go.transform.SetParent(transform, false);
-                go.transform.localPosition = new Vector3(0f, 1.35f, 0f);
-                _yieldLabel = go.GetComponent<TextMesh>() ?? go.AddComponent<TextMesh>();
-                _yieldLabel.anchor = TextAnchor.MiddleCenter;
-                _yieldLabel.alignment = TextAlignment.Center;
-                _yieldLabel.characterSize = 0.12f;
-                _yieldLabel.fontSize = 36;
-                _yieldLabel.fontStyle = FontStyle.Bold;
-                _yieldLabel.color = new Color(0.92f, 0.93f, 0.9f);
+                RefreshYieldLabel();
+                return;
             }
+
+            var go = new GameObject("YieldLabel");
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+            _yieldLabel = go.AddComponent<TextMesh>();
+            _yieldLabel.anchor = TextAnchor.MiddleCenter;
+            _yieldLabel.alignment = TextAlignment.Center;
+            _yieldLabel.characterSize = 0.12f;
+            _yieldLabel.fontSize = 36;
+            _yieldLabel.fontStyle = FontStyle.Bold;
+            _yieldLabel.color = new Color(0.92f, 0.93f, 0.9f);
             RefreshYieldLabel();
         }
 

@@ -1,8 +1,10 @@
 # Phase 3 – Content Explosion & Replayability
 
-**Status:** After Phase 2  
+**Status:** Complete (Weeks 1–14 in). See [PHASE_3_EXIT.md](PHASE_3_EXIT.md). Phase 4 visual target is next.  
 **Duration:** 10–14 weeks  
 **Goal:** Fill the expanded solar systems with rich, readable content so every playthrough feels distinct. Specialists become characters, threats become memorable ecology, and optional systems (Doctrines, Secret Projects, challenge modes) create high replay value.
+
+Phase 2 already shipped doctrine techs, three Secret Projects, Harvester/Surveyor, and per-body ecology. Phase 3 expands that content — it does not rewrite cores. Full mockup fidelity is [Phase 4](05_PHASE_4_VISUAL_TARGET.md); this phase still aims new class **silhouettes** at that sheet so hero art is not thrown away later.
 
 ---
 
@@ -35,6 +37,15 @@ Suggested expansion (beyond existing Scout / Engineer / Defense):
 - Research-focused specialists
 - Logistics / Pilot types (for inter-body)
 
+**Silhouette / readability (aim at the visual target, do not wait for Phase 4 to invent shapes):**
+- Engineer — small white biped
+- Geologist — wheeled rover
+- Scout — hovering drone
+- Defense — bulky walker
+- Courier / logistics — rugged wheeled hauler when present
+
+Blockout meshes in Weeks 1–4 should be distinguishable at a glance. Hero materials, Mars lighting, tube campus, and HUD chrome stay Phase 4. Do not change class identities overnight just to match mockup labels.
+
 ### Monster / Threat Roster
 Organized by celestial body. Each body needs 4–8 native threats with clear counters and ecological roles (predator, scavenger, environmental hazard, adaptive).
 
@@ -44,10 +55,20 @@ Examples of desired flavor:
 - Europa ice and radiation-adapted life
 - Titan atmospheric and chemical threats
 
+**Weeks 1–4 roster (in play):**
+
+| Body | Signature mix | Defend (F5) | Clear Threat (F2) |
+|------|----------------|-------------|-------------------|
+| Earth | Soil creeper + watt leech | Creeper, mite | Leech, stalker |
+| Luna | Ash hopper + dust tick | Dust tick | Hopper, leech, stalker |
+| Mars | Dust wisp + dust creeper | Creeper, mite | Wisp, hopper, stalker |
+| Belt | Rock mite/tick swarm + shard hopper | Mite, tick | Hopper, stalker |
+| Europa | Fissure leech + ice wisp + ice creeper | Creeper | Leech, wisp, stalker |
+
 No intelligent aliens — pure fauna, adaptive wildlife, and environmental hazards.
 
 ### Buildings & Modules
-- Complete modular kits per body
+- Complete modular kits per body *(data + greybox footprints this phase; tube/dome/crane/extractor hero kits are Phase 4)*
 - Guild / hall variants that attract specific specialist classes
 - Advanced power, research, and terraforming structures
 - Wonder / Secret Project buildings with unique footprints and effects
@@ -83,29 +104,56 @@ Major milestones that:
 ## Task Checklist (High Level)
 
 **Weeks 1–4 – Specialist & Threat Expansion**
-- [ ] Design and data-author 4–6 new specialist classes
-- [ ] Full personality and affinity matrices
-- [ ] Body-organized threat roster (minimum 3–4 bodies fully populated)
-- [ ] Counter clarity and ecological behaviors
+- [x] Blender hero meshes for Medic / Harvester / Surveyor / Terraformer / Courier / Geologist / Sentinel / Mite / Leech / Ice Wisp / Rock Tick / Soil Creeper / Ash Hopper
+- [x] Design and data-author 4–6 new specialist classes *(4 in: Terraformer, Courier, Geologist, Sentinel — 10 classes total)*
+- [x] Full personality and affinity matrices *(existing GetPreference + stronglyAttracts; no brain rewrite)*
+- [x] Body-organized threat roster (minimum 3–4 bodies fully populated) *(Earth / Luna / Mars / Belt / Europa each have 4–6 natives: stalker + body mix; Soil Creeper / Ash Hopper added)*
+- [x] Counter clarity and ecological behaviors *(mites/ticks/creepers = Defend; leeches/wisps/hoppers = Clear Threat)*
 
 **Weeks 5–7 – Buildings, Guilds, Wonders**
-- [ ] Complete modular building sets for all supported bodies
-- [ ] Guild / hall attraction system
-- [ ] 4–6 Secret Project / Wonder designs implemented
-- [ ] Art pipeline for new content (Grok Imagine → Blender)
+- [x] Complete modular building sets for all supported bodies *(greybox hull tints per body; tube/dome/crane hero kits wait for Phase 4)*
+- [x] Guild / hall attraction system *(Guild Hall inherits nearest workshop class or assign SCOUT/ENG/DEF/MED; flags nearby pull that class — same workshop-bonus path)*
+- [x] 4–6 Secret Project / Wonder designs implemented *(6: Anvil, Skyhook, Gene Vault, Climate Loom, Aegis Spire, Deep Archive — last three also place 6×6 landmarks)*
+- [x] Art pipeline for new content (Grok Imagine → Blender), using Phase 0 keywords plus [Phase 4 silhouette goals](05_PHASE_4_VISUAL_TARGET.md) — prompt sheets in `Docs/GROK_IMAGINE_UNIT_PROMPTS.md`; remesh waits for Phase 4
 
 **Weeks 8–10 – Doctrines & Replay Systems**
-- [ ] Doctrine data and light behavioral modifiers
-- [ ] Challenge mode framework
-- [ ] Endless / free-play colonization mode
-- [ ] Scoring and rating systems
+- [x] Doctrine data and light behavioral modifiers *(Settings stance: Balanced / Open Hands / Aegis Watch / Survey First — nudges `SpecialistContext` hunger, courage, workshop bonus, and `Brain.ConsiderRange` only; `ScoreFlag` unchanged)*
+- [x] Challenge mode framework *(Austere 55% start stockpile · Swarm fauna/ambient · Tight Purse resupply + dock fee)*
+- [x] Endless / free-play colonization mode *(campaign hop hidden on win; keep colonizing; Shift+F10 still hops)*
+- [x] Scoring and rating systems *(OverseerScore letter S/A/B/C/D from dens/sustain/launch/economy/roster/pace; HUD + win banner)*
 
 **Weeks 11–14 – Integration, Balancing, Content Pass**
-- [ ] Full content integration and balancing
-- [ ] Multiple strategy viability testing
-- [ ] Narrative / flavor text pass
-- [ ] Documentation of all new content
-- [ ] Phase 3 exit review
+- [x] Full content integration and balancing *(ReplayRules readability bump; guild/wonder place costs; Swarm spawn cadence; Tight Purse fee/interval; S-letter dens+roster+pace gate)*
+- [x] Multiple strategy viability testing *(desktop: extract/haul, guild+workshop, aegis/defense — noted in PHASE_1_FRICTION; live 45–90 min leftover)*
+- [x] Narrative / flavor text pass *(SpecialistFlavor voice; guild callsigns; body briefing/endless logs; claim lines)*
+- [x] Documentation of all new content *([PHASE_3_EXIT.md](PHASE_3_EXIT.md) catalog)*
+- [x] Phase 3 exit review
+
+### Weeks 8–10 mapping (in play)
+
+| Control | Effect | When it applies |
+|---------|--------|-----------------|
+| **Open Hands** | Hunger +0.26 (cheaper flags via existing greed bypass at 0.75); courage ×0.90 | Live (context) |
+| **Aegis Watch** | Courage ×1.22; workshop bonus +0.18; hunger −0.08 | Live |
+| **Survey First** | Consider range ×1.50; workshop bonus +0.10 | Range on settings close / boot; workshop live |
+| **Austere** | Start stockpile ×0.55 | New Game / scene reload (Continue keeps saved pile) |
+| **Swarm** | Fauna cap ×1.50; spawn weights ×1.22; ambient ×1.28; spawn interval ×1.35 | Reload |
+| **Tight Purse** | Resupply interval ×1.55; extra dock fee 8 | Live via `RefreshTechEffects` on settings close |
+| **Endless** | Win copy “keep colonizing”; body `EndlessLog`; no **TO {next}** | Live |
+
+Tune these in `ReplayRules` constants only. Do not retune `SpecialistBrain.ScoreFlag`.
+
+### Weeks 11–14 balance / flavor notes (done)
+
+Desktop pass (not a live 45–90 min). Numbers live in `ReplayRules`:
+
+- **Open Hands vs Aegis vs Survey** — Open Hands hunger +0.26 crosses the 0.75 cheap-flag bypass at spawn. Aegis workshop +0.18 / courage ×1.22. Survey consider ×1.50. Still no ScoreFlag rewrite.
+- **Austere** Earth 187 MET: Palace + airlock + HAB + workshop = 164. Farm waits on extract or the ship.
+- **Swarm** cap ×1.50 with spawn interval ×1.35 — more F5/F2 after buildings exist, not a dump on the empty drop.
+- **Tight Purse** interval ×1.55 and +8 MET fee. Drop pile unchanged.
+- **S rating** requires dens + gates + ≥3 robots + mean HP ≥0.55 + elapsed ≤12 min. Stockpile cannot buy S.
+- Flavor: `SpecialistFlavor` voice on cards and claim logs; body `EndlessLog`; guild callsigns (Horizon / Anvil / Aegis / Triage).
+- Three mid-game strategies stay viable on paper (extract/haul, guild+workshop, aegis/defense). Notes in `PHASE_1_FRICTION.md`.
 
 ---
 
@@ -142,9 +190,9 @@ Major milestones that:
 
 ## Exit Criteria
 
-- [ ] 8+ specialist classes with distinct, readable personalities
-- [ ] Full threat roster for all supported bodies
-- [ ] Guilds, Secret Projects, and optional Doctrines functional
-- [ ] Challenge and free-play modes available
-- [ ] Content is balanced enough for enjoyable multi-hour sessions
-- [ ] Ready for final production polish without needing more core systems
+- [x] 8+ specialist classes with distinct, readable personalities *(10 classes)*
+- [x] Full threat roster for all supported bodies *(Earth / Luna / Mars / Belt / Europa)*
+- [x] Guilds, Secret Projects, and optional Doctrines functional
+- [x] Challenge and free-play modes available
+- [x] Content is balanced enough for enjoyable multi-hour sessions *(desktop pass; live 45–90 min leftover)*
+- [x] Ready for [Phase 4 visual-target production](05_PHASE_4_VISUAL_TARGET.md) without needing more core systems
