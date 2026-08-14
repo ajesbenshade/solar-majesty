@@ -8,6 +8,9 @@
 - [x] Week 3A — Earth body + CampaignProgress unlock spine (Earth → Luna → Mars)
 - [x] Week 4A — launch craft staging + plume, sustain hints, NavMesh rebuild on expand, campaign DEMO script
 - [x] Post-month polish — Earth starter Farm/Mine, research auto-queue, launch site reuses starship, NavMesh on place, clearer gate/toast copy
+- [x] Empty-start levels — map + dens only; claim disc; per-body starter stockpile; player places all buildings
+- [x] Demo shell — title / pause / settings / continue slot / skippable tutorial / flag MET escrow + RMB cancel
+- [x] Workshop-built robots — no free starter specialists; HAB = humans indoors; workshops fabricate outdoor robots
 
 ## Month roadmap
 
@@ -18,7 +21,7 @@
 
 ## Next
 
-1. Play Mode smoke of full Earth → Luna → Mars path (commit campaign when verified).
+1. Play Mode smoke: title → New Game → Earth empty drop → dens / sustain / Lunar Rocket → TO LUNA → Mars.
 2. Optional: authored rocket FBX, tech icons, Earth-specific campus kit.
 3. Optional: Ceres / Titan catalog profiles once Mars feels solid.
 

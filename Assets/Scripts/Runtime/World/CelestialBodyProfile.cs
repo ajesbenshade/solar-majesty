@@ -50,11 +50,20 @@ namespace SolarMajesty
         public int CraterCount = 28;
         public int RockCount = 40;
         public int DuneCount = 0;
+        public int LakeCount = 0;
+        public int RiverCount = 0;
+        public int ForestPatchCount = 0;
         public int ResourceNodeCount = 12;
         public int LairCount = 4;
         public float CampusExclusion = 18f;
         public float MinSpacing = 7f;
         public float IcePolarBias = 0.55f;
+
+        [Header("Earth hydrology / vegetation")]
+        public Color WaterDeep = new Color(0.12f, 0.28f, 0.42f);
+        public Color WaterShallow = new Color(0.22f, 0.48f, 0.55f);
+        public Color ForestCanopy = new Color(0.14f, 0.32f, 0.12f);
+        public Color ForestTrunk = new Color(0.28f, 0.18f, 0.10f);
 
         /// <summary>Relative weights for Regolith, Metals, Ice, Fissile (must be length 4).</summary>
         public int[] ResourceWeights = { 5, 3, 2, 2 };
@@ -63,5 +72,11 @@ namespace SolarMajesty
         public int PopulationGoal = 12;
         public float SustainHoldSeconds = 40f;
         public float ResearchRateMultiplier = 1f;
+
+        [Header("Empty-start stockpile")]
+        public int StartRegolith = 90;
+        public int StartWaterIce = 55;
+        public int StartMetals = 280;
+        public int StartPower = 100;
     }
 }

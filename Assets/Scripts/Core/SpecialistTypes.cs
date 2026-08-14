@@ -10,7 +10,8 @@ namespace SolarMajesty
         PursueFlag,
         Flee,
         Hunt,
-        Wander
+        Wander,
+        Repair
     }
 
     [Serializable]
@@ -33,6 +34,11 @@ namespace SolarMajesty
         public float FlagWorkshopBonus;
         public bool HasPatient;
         public Vector3 PatientPosition;
+        public bool HasRepair;
+        public Vector3 RepairPosition;
+        public float RepairDistance;
+        public float RepairNeed;
+        public float CourageEffective;
     }
 
     public struct BrainDecision
@@ -60,12 +66,16 @@ namespace SolarMajesty
 
         public static BrainDecision Wander(Vector3 dest, float score, string reason) =>
             new BrainDecision { Action = SpecialistAction.Wander, TargetPosition = dest, Score = score, Reason = reason };
+
+        public static BrainDecision Repair(Vector3 site, float score, string reason) =>
+            new BrainDecision { Action = SpecialistAction.Repair, TargetPosition = site, Score = score, Reason = reason };
     }
 
     /// <summary>
     /// Lightweight handle so the brain never holds heavy scene references.
     /// Created by FlagManager; scored by SpecialistBrain.
     /// </summary>
+    [Serializable]
     public class FlagHandle
     {
         public FlagData Data;
@@ -73,6 +83,8 @@ namespace SolarMajesty
         public float CurrentBounty;
         public float Risk;              // 0-1
         public int ClaimCount;          // how many specialists already chasing it
-        public object RuntimeId;        // whatever FlagManager uses as identity
+        [NonSerialized] public object RuntimeId; // FlagManager identity — not Unity-serializable
+        /// <summary>Metals reserved from the stockpile when the flag was posted.</summary>
+        public int EscrowMetals;
     }
 }

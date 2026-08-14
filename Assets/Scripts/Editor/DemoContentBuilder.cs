@@ -56,11 +56,12 @@ namespace SolarMajesty.EditorTools
             WriteFlag("Flag_Extract", FlagType.Extract, "Extract", 55, 0.12f, 7f, new Color(0.55f, 0.9f, 0.35f));
             WriteFlag("Flag_DefendArea", FlagType.DefendArea, "Defend Area", 65, 0.25f, 9f, new Color(0.85f, 0.35f, 1f));
 
+            WriteBuilding("Building_Palace", "Palace Keep", BuildingCategory.Palace, 70, 10, 18f, 6, 6);
             WriteBuilding("Building_LandingPad", "Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6);
-            WriteBuilding("Building_HAB1", "Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 3);
-            WriteBuilding("Building_PWR1", "Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 3, 3);
-            WriteBuilding("Building_OPS1", "Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 3, 3);
-            WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 3, 2);
+            WriteBuilding("Building_HAB1", "Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4);
+            WriteBuilding("Building_PWR1", "Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4);
+            WriteBuilding("Building_OPS1", "Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 4, 4);
+            WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4);
             WriteBuilding("Building_CMD1", "Command (CMD-1)", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
             WriteBuilding(
                 "Building_SolarArray",

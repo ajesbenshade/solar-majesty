@@ -29,6 +29,10 @@ namespace SolarMajesty
         [SerializeField] [Range(0f, 1f)] private float healthNormalized = 1f;
         [SerializeField] [Range(0f, 1f)] private float greedHunger = 0.5f;
 
+        [Header("Personal wallet / gear")]
+        [SerializeField] private float credits;
+        [SerializeField] private ShopItemId equippedSuit = ShopItemId.None;
+
         [Header("Phase 2A combat")]
         [SerializeField] private float incapacitateThreshold = 0.02f;
         [SerializeField] private float recoverySeconds = 8f;
@@ -66,6 +70,12 @@ namespace SolarMajesty
         private SpecialistStatusDisplay _statusDisplay;
         private GameObject _selectRing;
         private bool _selected;
+        private float _geneTimer;
+        private float _geneCourage;
+        private float _geneSpeed;
+        private float _geneWork;
+        private float _shopCooldown;
+        private ColonyStructure _repairTarget;
 
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
@@ -74,6 +84,13 @@ namespace SolarMajesty
         public float Fatigue => fatigue;
         public float HealthNormalized => healthNormalized;
         public float GreedHunger => greedHunger;
+        public float Credits => credits;
+        public ShopItemId EquippedSuit => equippedSuit;
+        public float GeneSecondsLeft => _geneTimer;
+        public string SuitLabel =>
+            equippedSuit == ShopItemId.None
+                ? "no suit"
+                : (ShopCatalog.Get(equippedSuit)?.DisplayName ?? "suit");
         public string Status => _status;
         public SpecialistAction CurrentAction => _lastDecision.Action;
         public FlagHandle ActiveFlag => _activeFlag;
@@ -84,6 +101,25 @@ namespace SolarMajesty
         public HeroParty Party { get; private set; }
         public bool IsPartyLeader => Party != null && Party.IsLeader(this);
         public ColonyStructure Workplace { get; private set; }
+
+        public float EffectiveMoveSpeed =>
+            (data != null ? data.moveSpeed : 3.5f) *
+            (1f + _geneSpeed + SuitSpeedBonus());
+
+        public float EffectiveWorkRate =>
+            (data != null ? data.workRate : 1f) * (1f + _geneWork);
+
+        public float EffectiveCourage =>
+            Mathf.Clamp01((data != null ? data.courage : 0.5f) + _geneCourage);
+
+        public float ArmorMitigation
+        {
+            get
+            {
+                var suit = ShopCatalog.Get(equippedSuit);
+                return suit != null ? Mathf.Clamp01(suit.ArmorMitigation) : 0f;
+            }
+        }
 
         public void SetParty(HeroParty party) => Party = party;
 
@@ -107,11 +143,27 @@ namespace SolarMajesty
         public void ApplyDamage(float amount01)
         {
             if (amount01 <= 0f || _incapacitated) return;
-            healthNormalized = Mathf.Clamp01(healthNormalized - amount01);
+            float mitigated = amount01 * (1f - ArmorMitigation);
+            healthNormalized = Mathf.Clamp01(healthNormalized - mitigated);
             DemoAudio.PlayBite();
             DemoVfx.HitFlash(transform, new Color(1f, 0.25f, 0.2f));
             if (healthNormalized <= incapacitateThreshold)
                 EnterIncapacitated();
+        }
+
+        public void EarnCredits(float amount, string reason = null)
+        {
+            if (amount <= 0f) return;
+            credits += amount;
+            greedHunger = Mathf.Clamp01(greedHunger - Mathf.Clamp01(amount / 120f) * 0.35f);
+            if (!string.IsNullOrEmpty(reason))
+                Debug.Log($"[Credits] {data?.displayName} +${amount:F0} ({reason}) → ${credits:F0}");
+        }
+
+        private float SuitSpeedBonus()
+        {
+            var suit = ShopCatalog.Get(equippedSuit);
+            return suit != null ? suit.SpeedBonus : 0f;
         }
 
         public void ReceiveHeal(float amount01)
@@ -152,6 +204,10 @@ namespace SolarMajesty
             fatigue = 0.1f;
             healthNormalized = 1f;
             greedHunger = 0.55f;
+            credits = 20f;
+            equippedSuit = ShopItemId.None;
+            _geneTimer = 0f;
+            _geneCourage = _geneSpeed = _geneWork = 0f;
             _incapacitated = false;
             _recoverTimer = 0f;
             _thinkTimer = Random.Range(0f, thinkIntervalMax);
@@ -269,10 +325,34 @@ namespace SolarMajesty
             }
 
             TickNeeds(dt);
+            TickGene(dt);
             TickMedic(dt);
             TickThink(dt);
             TickBehaviour(dt);
             TickWorkPulse(dt);
+            if (_agent != null && _agent.enabled)
+                _agent.speed = EffectiveMoveSpeed;
+        }
+
+        private void TickGene(float dt)
+        {
+            _shopCooldown = Mathf.Max(0f, _shopCooldown - dt);
+            if (_geneTimer <= 0f)
+            {
+                _geneCourage = 0f;
+                _geneSpeed = 0f;
+                _geneWork = 0f;
+                return;
+            }
+
+            _geneTimer = Mathf.Max(0f, _geneTimer - dt);
+            if (_geneTimer <= 0f)
+            {
+                _geneCourage = 0f;
+                _geneSpeed = 0f;
+                _geneWork = 0f;
+                Debug.Log($"[Shop] {data.displayName} gene therapy wore off.");
+            }
         }
 
         private void EnterIncapacitated()
@@ -311,6 +391,7 @@ namespace SolarMajesty
             {
                 case SpecialistAction.PursueFlag:
                 case SpecialistAction.Hunt:
+                case SpecialistAction.Repair:
                     fatigue = Mathf.Clamp01(fatigue + dt * 0.035f);
                     greedHunger = Mathf.Clamp01(greedHunger + dt * 0.01f);
                     break;
@@ -363,7 +444,8 @@ namespace SolarMajesty
             var duty = FindDutyBuilding();
             bool fieldJob = decision.Action == SpecialistAction.PursueFlag ||
                             decision.Action == SpecialistAction.Flee ||
-                            decision.Action == SpecialistAction.Hunt;
+                            decision.Action == SpecialistAction.Hunt ||
+                            decision.Action == SpecialistAction.Repair;
             if (fieldJob)
             {
                 if (decision.Action == SpecialistAction.PursueFlag &&
@@ -429,6 +511,18 @@ namespace SolarMajesty
             bool hasPatient = data.specialistClass == SpecialistClass.Medic &&
                               TryNearestWounded(out patient, out _);
 
+            ColonyStructure damaged = null;
+            if (_loop != null && _loop.Village != null &&
+                data.specialistClass == SpecialistClass.EngineerBot)
+            {
+                damaged = _loop.Village.NearestDamaged(transform.position, 42f);
+            }
+
+            bool hasRepair = damaged != null;
+            Vector3 repairPos = hasRepair ? damaged.WorldPosition : Vector3.zero;
+            float repairDist = hasRepair ? FlatDistance(transform.position, repairPos) : 99f;
+            float repairNeed = hasRepair ? (1f - damaged.Health01) : 0f;
+
             return new SpecialistContext
             {
                 Data = data,
@@ -447,7 +541,12 @@ namespace SolarMajesty
                 HasWorkshop = hasWorkshop,
                 FlagWorkshopBonus = hasWorkshop ? 0.22f : 0f,
                 HasPatient = hasPatient,
-                PatientPosition = patient
+                PatientPosition = patient,
+                HasRepair = hasRepair,
+                RepairPosition = repairPos,
+                RepairDistance = repairDist,
+                RepairNeed = repairNeed,
+                CourageEffective = EffectiveCourage
             };
         }
 
@@ -482,6 +581,10 @@ namespace SolarMajesty
                 _idleTarget = decision.TargetPosition;
                 _hasIdleTarget = _idleTarget.sqrMagnitude > 0.01f;
                 _status = decision.Reason ?? decision.Action.ToString().ToLowerInvariant();
+                if (decision.Action == SpecialistAction.Repair && _loop?.Village != null)
+                    _repairTarget = _loop.Village.NearestDamaged(transform.position, 48f);
+                else if (decision.Action != SpecialistAction.Repair)
+                    _repairTarget = null;
                 if (decision.Action != SpecialistAction.Rest || !KingdomLife.AtInn(transform.position))
                     SetAgentStopped(false);
                 if (_hasIdleTarget)
@@ -512,6 +615,9 @@ namespace SolarMajesty
                     break;
                 case SpecialistAction.Hunt:
                     TickHunt(dt);
+                    break;
+                case SpecialistAction.Repair:
+                    TickRepair(dt);
                     break;
                 case SpecialistAction.Wander:
                     TickWanderTown(dt);
@@ -544,7 +650,7 @@ namespace SolarMajesty
             if (dist > arriveDistance)
             {
                 SetDestination(target);
-                MoveFallback(target, data.moveSpeed * dt);
+                MoveFallback(target, EffectiveMoveSpeed * dt);
                 _status = $"moving_to_{_activeFlag.Data.flagType}";
                 return;
             }
@@ -552,7 +658,7 @@ namespace SolarMajesty
             SetAgentStopped(true);
             _status = $"working_{_activeFlag.Data.flagType}";
             _workPulse = 1f;
-            float work = data.workRate * dt;
+            float work = EffectiveWorkRate * dt;
             bool done = _flags.ApplyWork(_activeFlag, work);
 
             if (_activeFlag.Data.flagType == FlagType.Build && _placer != null)
@@ -562,7 +668,8 @@ namespace SolarMajesty
             {
                 float bounty = _activeFlag.CurrentBounty;
                 var completedType = _activeFlag.Data.flagType;
-                _economy?.GrantBountyReward(bounty);
+                EarnCredits(bounty, $"flag_{completedType}");
+                _economy?.ReleaseBountyEscrow(_activeFlag.EscrowMetals);
                 if (completedType == FlagType.Extract)
                 {
                     int campus = ColonyLayout.NearestCampusIndex(transform.position);
@@ -579,11 +686,53 @@ namespace SolarMajesty
                 greedHunger = Mathf.Clamp01(greedHunger - 0.25f);
                 DemoAudio.PlayClaim();
                 DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
-                Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty={bounty}");
+                Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty=${bounty:F0}");
                 ReleaseClaim();
                 _activeFlag = null;
                 _status = "completed_flag";
                 _workPulse = 1.5f;
+            }
+        }
+
+        private void TickRepair(float dt)
+        {
+            if (_loop?.Village == null)
+            {
+                _status = "repair_no_village";
+                return;
+            }
+
+            if (_repairTarget == null || !_repairTarget.NeedsRepair)
+                _repairTarget = _loop.Village.NearestDamaged(transform.position, 48f);
+
+            if (_repairTarget == null)
+            {
+                _status = "repair_done";
+                return;
+            }
+
+            Vector3 target = _repairTarget.WorldPosition;
+            if (FlatDistance(transform.position, target) > arriveDistance + 0.6f)
+            {
+                SetDestination(target);
+                MoveFallback(target, EffectiveMoveSpeed * dt);
+                _status = "moving_to_repair";
+                return;
+            }
+
+            SetAgentStopped(true);
+            _status = "repairing";
+            _workPulse = 1f;
+            float healed = _repairTarget.Repair(EffectiveWorkRate * 6.5f * dt);
+            if (healed > 0f)
+                EarnCredits(Mathf.Clamp(healed * 0.55f, 0.15f, 2.5f), "repair");
+
+            if (!_repairTarget.NeedsRepair)
+            {
+                DemoAudio.PlayClaim();
+                DemoVfx.ClaimRing(target, new Color(0.45f, 0.85f, 1f));
+                _status = "repaired";
+                _repairTarget = null;
             }
         }
 
@@ -615,7 +764,7 @@ namespace SolarMajesty
             if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
             {
                 SetDestination(inn);
-                MoveFallback(inn, data.moveSpeed * dt);
+                MoveFallback(inn, EffectiveMoveSpeed * dt);
                 _status = "seeking_inn";
                 return;
             }
@@ -623,6 +772,7 @@ namespace SolarMajesty
             SetAgentStopped(true);
             _restTimer += dt;
             _status = "resting_at_inn";
+            ConsiderShopPurchase();
             if (_restTimer > 3f && fatigue < 0.35f)
                 _restTimer = 0f;
         }
@@ -633,7 +783,7 @@ namespace SolarMajesty
             if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
             {
                 SetDestination(inn);
-                MoveFallback(inn, data.moveSpeed * 1.35f * dt);
+                MoveFallback(inn, EffectiveMoveSpeed * 1.35f * dt);
                 _status = "fleeing";
                 return;
             }
@@ -642,6 +792,54 @@ namespace SolarMajesty
             _status = "refuge_inn";
             fatigue = Mathf.Clamp01(fatigue - dt * 0.08f);
             healthNormalized = Mathf.Clamp01(healthNormalized + dt * restHealPerSecond);
+            ConsiderShopPurchase();
+        }
+
+        private void ConsiderShopPurchase()
+        {
+            if (_shopCooldown > 0f || data == null) return;
+            int purse = Mathf.FloorToInt(credits);
+
+            // Prefer permanent armor when unprotected and funded.
+            var suit = ShopCatalog.BestAffordableSuit(purse, equippedSuit);
+            if (suit != null && (equippedSuit == ShopItemId.None || healthNormalized < 0.85f || greedHunger < 0.55f))
+            {
+                if (TryBuy(suit))
+                    return;
+            }
+
+            // Consumable gene when none active and wallet allows.
+            if (_geneTimer <= 1f)
+            {
+                var gene = ShopCatalog.PreferredGene(data.specialistClass, purse);
+                if (gene != null && (greedHunger < 0.7f || bodyDanger > 0.35f || fatigue > 0.4f))
+                    TryBuy(gene);
+            }
+        }
+
+        private bool TryBuy(ShopItemDef item)
+        {
+            if (item == null || credits < item.Cost) return false;
+            credits -= item.Cost;
+            _shopCooldown = 8f;
+
+            if (item.Kind == ShopItemKind.PermanentSuit)
+            {
+                equippedSuit = item.Id;
+                DemoVfx.ClaimRing(transform.position, new Color(0.7f, 0.85f, 1f));
+                DemoAudio.PlayClaim();
+                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for ${item.Cost} (armor {item.ArmorMitigation:P0})");
+                return true;
+            }
+
+            _geneTimer = Mathf.Max(_geneTimer, item.DurationSeconds);
+            _geneCourage = Mathf.Max(_geneCourage, item.CourageBonus);
+            _geneSpeed = Mathf.Max(_geneSpeed, item.SpeedBonus);
+            _geneWork = Mathf.Max(_geneWork, item.WorkBonus);
+            DemoVfx.ClaimRing(transform.position, new Color(0.55f, 1f, 0.45f));
+            DemoAudio.PlayClaim();
+            Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for ${item.Cost}");
+            return true;
         }
 
         private void TickHunt(float dt)
@@ -655,7 +853,7 @@ namespace SolarMajesty
             if (dist > KingdomLife.HuntRange)
             {
                 SetDestination(prey);
-                MoveFallback(prey, data.moveSpeed * dt);
+                MoveFallback(prey, EffectiveMoveSpeed * dt);
                 _status = "hunting";
                 return;
             }
@@ -665,7 +863,7 @@ namespace SolarMajesty
             _workPulse = 1f;
             var stalker = NearestStalkerAgent();
             if (stalker != null)
-                stalker.ApplyCombatDamage(data.workRate * 8f * dt);
+                stalker.ApplyCombatDamage(EffectiveWorkRate * 8f * dt);
         }
 
         private void TickWanderTown(float dt)
@@ -674,7 +872,8 @@ namespace SolarMajesty
             if (dest.sqrMagnitude < 0.01f)
                 dest = KingdomLife.Plaza(ColonyLayout.NearestCampusIndex(transform.position));
 
-            if (FlatDistance(transform.position, dest) < 1.4f)
+            float arrive = Mathf.Max(0.8f, idleWanderRadius * 0.55f);
+            if (FlatDistance(transform.position, dest) < arrive)
             {
                 _status = _lastDecision.Reason ?? "wandering";
                 SetAgentStopped(true);
@@ -682,7 +881,7 @@ namespace SolarMajesty
             }
 
             SetDestination(dest);
-            MoveFallback(dest, data.moveSpeed * 0.72f * dt);
+            MoveFallback(dest, EffectiveMoveSpeed * 0.72f * dt);
             _status = _lastDecision.Reason ?? "wandering";
         }
 

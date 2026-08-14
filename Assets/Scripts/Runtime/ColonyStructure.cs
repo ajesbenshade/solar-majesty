@@ -38,6 +38,11 @@ namespace SolarMajesty
 
         public bool IsVillageHab => role == StructureRole.VillageHab;
         public bool IsWorkshop => role == StructureRole.Workshop;
+        public bool IsResidential =>
+            role == StructureRole.VillageHab || Category == BuildingCategory.Habitat;
+        public int ResidentCapacity => IsResidential ? Settlement.HousingPerHab : 0;
+        public int Residents { get; private set; }
+        public bool HasVacancy => IsResidential && IsAlive && Residents < ResidentCapacity;
         public bool IsAlive => _health > 0f;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
         public Vector3 WorldPosition => transform.position;
@@ -71,9 +76,59 @@ namespace SolarMajesty
             maxHealth = hp;
             _health = hp;
             ApplyDefaultClass();
+            if (Category == BuildingCategory.Habitat)
+            {
+                HasPreferredClass = false;
+                ClassLocked = false;
+            }
             EnsureSelectProxy();
             EnsureSelectRing();
             SetSelected(false);
+        }
+
+        public void SetResidents(int count)
+        {
+            Residents = Mathf.Clamp(count, 0, ResidentCapacity);
+            RefreshResidentPips();
+        }
+
+        public bool TryAddResident()
+        {
+            if (!HasVacancy) return false;
+            Residents++;
+            RefreshResidentPips();
+            return true;
+        }
+
+        private void RefreshResidentPips()
+        {
+            Transform existing = transform.Find("ResidentPips");
+            if (existing != null)
+                Destroy(existing.gameObject);
+            if (!IsResidential || Residents <= 0) return;
+
+            var root = new GameObject("ResidentPips").transform;
+            root.SetParent(transform, false);
+            root.localPosition = new Vector3(0f, 2.1f, 0f);
+            for (int i = 0; i < Residents; i++)
+            {
+                var pip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                pip.name = $"Pip_{i}";
+                pip.transform.SetParent(root, false);
+                pip.transform.localPosition = new Vector3((i - (Residents - 1) * 0.5f) * 0.35f, 0f, 0f);
+                pip.transform.localScale = Vector3.one * 0.18f;
+                Object.Destroy(pip.GetComponent<Collider>());
+                var rend = pip.GetComponent<Renderer>();
+                if (rend != null)
+                {
+                    var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                           ?? Shader.Find("Sprites/Default"));
+                    var c = new Color(0.96f, 0.42f, 0.08f);
+                    if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+                    else if (mat.HasProperty("_Color")) mat.color = c;
+                    rend.sharedMaterial = mat;
+                }
+            }
         }
 
         public void SetPreferredClass(SpecialistClass cls)
@@ -111,10 +166,41 @@ namespace SolarMajesty
         {
             if (!IsAlive || amount <= 0f) return;
             _health -= amount;
-            float visual = ColonyLayout.ModuleScale * (0.92f + Health01 * 0.08f);
-            transform.localScale = Vector3.one * visual;
+            RefreshDamageVisual();
             if (_health <= 0f)
                 Collapse();
+        }
+
+        /// <summary>Engineer patch. Returns HP actually restored.</summary>
+        public float Repair(float amount)
+        {
+            if (!IsAlive || amount <= 0f || !NeedsRepair) return 0f;
+            float before = _health;
+            _health = Mathf.Min(maxHealth, _health + amount);
+            RefreshDamageVisual();
+            return Mathf.Max(0f, _health - before);
+        }
+
+        public bool NeedsRepair => IsAlive && Health01 < 0.985f;
+
+        private Vector3 _baseScale = Vector3.one;
+        private bool _capturedBaseScale;
+
+        private void CaptureBaseScale()
+        {
+            if (_capturedBaseScale) return;
+            _baseScale = transform.localScale;
+            if (_baseScale.sqrMagnitude < 0.0001f)
+                _baseScale = Vector3.one;
+            _capturedBaseScale = true;
+        }
+
+        private void RefreshDamageVisual()
+        {
+            CaptureBaseScale();
+            // Footprint-fitted kits must stay at authored scale; damage only nicks the silhouette.
+            float n = 0.94f + Health01 * 0.06f;
+            transform.localScale = _baseScale * n;
         }
 
         public void SetSelected(bool selected)
@@ -149,7 +235,25 @@ namespace SolarMajesty
         public static bool IsWorkshopCategory(BuildingCategory cat) =>
             cat == BuildingCategory.ScoutWorkshop ||
             cat == BuildingCategory.EngineerWorkshop ||
-            cat == BuildingCategory.DefenseWorkshop;
+            cat == BuildingCategory.DefenseWorkshop ||
+            cat == BuildingCategory.MedicWorkshop;
+
+        /// <summary>True after this workshop has fabricated its outdoor robot.</summary>
+        public bool RobotFabricated { get; private set; }
+
+        public void MarkRobotFabricated() => RobotFabricated = true;
+
+        public static SpecialistClass? RobotClassForWorkshop(BuildingCategory cat)
+        {
+            switch (cat)
+            {
+                case BuildingCategory.ScoutWorkshop: return SpecialistClass.ScoutDrone;
+                case BuildingCategory.EngineerWorkshop: return SpecialistClass.EngineerBot;
+                case BuildingCategory.DefenseWorkshop: return SpecialistClass.DefenseMech;
+                case BuildingCategory.MedicWorkshop: return SpecialistClass.Medic;
+                default: return null;
+            }
+        }
 
         private void ApplyDefaultClass()
         {
@@ -182,6 +286,12 @@ namespace SolarMajesty
                     ClassLocked = true;
                     role = StructureRole.Workshop;
                     break;
+                case BuildingCategory.MedicWorkshop:
+                    PreferredClass = SpecialistClass.Medic;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Workshop;
+                    break;
                 case BuildingCategory.Farm:
                 case BuildingCategory.Mine:
                 case BuildingCategory.RegolithCamp:
@@ -199,8 +309,8 @@ namespace SolarMajesty
                     HasPreferredClass = true;
                     break;
                 case BuildingCategory.Habitat:
-                    PreferredClass = SpecialistClass.Medic;
-                    HasPreferredClass = true;
+                    // Humans live indoors — no outdoor robot duty class.
+                    HasPreferredClass = false;
                     break;
                 default:
                     HasPreferredClass = false;
@@ -214,6 +324,7 @@ namespace SolarMajesty
             if (role == StructureRole.Inn) return "Waystation Inn";
             switch (cat)
             {
+                case BuildingCategory.Palace: return "Palace Keep";
                 case BuildingCategory.Habitat: return "Habitat";
                 case BuildingCategory.Farm: return "Greenhouse Farm";
                 case BuildingCategory.Mine: return "Ore Mine";
@@ -221,11 +332,13 @@ namespace SolarMajesty
                 case BuildingCategory.ScoutWorkshop: return "Scout Workshop";
                 case BuildingCategory.EngineerWorkshop: return "Engineer Workshop";
                 case BuildingCategory.DefenseWorkshop: return "Defense Workshop";
+                case BuildingCategory.MedicWorkshop: return "Medic Workshop";
                 case BuildingCategory.Power: return "Power Node";
                 case BuildingCategory.Laboratory: return "Laboratory";
                 case BuildingCategory.Defense: return "Command";
                 case BuildingCategory.Mining: return "Ops";
                 case BuildingCategory.LandingPad: return "Landing Pad";
+                case BuildingCategory.Utility: return "Airlock";
                 default: return "Module";
             }
         }
@@ -284,9 +397,7 @@ namespace SolarMajesty
             for (int i = 0; i < _workers.Count; i++)
                 _workers[i]?.SetWorkplace(null);
             _workers.Clear();
-            if (role == StructureRole.VillageHab)
-                _village?.OnVillageHabDestroyed(this);
-            _village?.OnStructureDestroyed(this);
+            _village?.NotifyCollapsed(this);
             DemoVfx.DeathBurst(transform.position, new Color(0.95f, 0.42f, 0.08f));
             Destroy(gameObject);
         }

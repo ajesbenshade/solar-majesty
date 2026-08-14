@@ -59,12 +59,15 @@ namespace SolarMajesty
             if (_flags == null || data == null) return null;
             FlagData prev = _selected;
             _selected = data;
-            FlagHandle handle = _flags.Post(data, world, bountyAmount);
-            SpawnMarker(handle, world);
-            DemoAudio.PlayFlagPost();
+            FlagHandle handle = TryPost(data, world, bountyAmount);
             _selected = prev;
-            Debug.Log($"[Flags] Posted {data.flagType} bounty={handle.CurrentBounty:F0} at {world}");
             return handle;
+        }
+
+        public bool CanAffordSelectedBounty()
+        {
+            if (_loop?.Economy == null) return true;
+            return _loop.Economy.CanAffordBounty(bounty);
         }
 
         public void Initialize(
@@ -95,6 +98,7 @@ namespace SolarMajesty
         private void Update()
         {
             if (!enabledPlacement || _flags == null) return;
+            if (_loop != null && !_loop.IsPlaying) return;
 
             if (Input.GetKeyDown(KeyCode.F1) && exploreFlag != null)
                 Select(exploreFlag);
@@ -134,10 +138,28 @@ namespace SolarMajesty
             if (_grid != null)
                 world = _grid.SnapToCellCenter(world);
 
-            FlagHandle handle = _flags.Post(_selected, world, bounty);
+            FlagHandle handle = TryPost(_selected, world, bounty);
+            if (handle == null)
+                Debug.Log("[Flags] Cannot post — not enough metals in the stockpile.");
+        }
+
+        private FlagHandle TryPost(FlagData data, Vector3 world, float bountyAmount)
+        {
+            if (data == null || _flags == null) return null;
+
+            int escrow = 0;
+            if (_loop?.Economy != null)
+            {
+                if (!_loop.Economy.TryEscrowBounty(bountyAmount, out escrow))
+                    return null;
+            }
+
+            FlagHandle handle = _flags.Post(data, world, bountyAmount);
+            handle.EscrowMetals = escrow;
             SpawnMarker(handle, world);
             DemoAudio.PlayFlagPost();
-            Debug.Log($"[Flags] Posted {_selected.flagType} bounty={handle.CurrentBounty:F0} at {world}");
+            Debug.Log($"[Flags] Posted {data.flagType} bounty=${handle.CurrentBounty:F0} escrow={escrow} MET at {world}");
+            return handle;
         }
 
         private void Select(FlagData data)
@@ -159,7 +181,6 @@ namespace SolarMajesty
                 go.transform.SetParent(_markerRoot, true);
                 go.transform.position = world + Vector3.up * 0.6f;
                 go.transform.localScale = new Vector3(0.45f, 0.6f, 0.45f);
-                Object.Destroy(go.GetComponent<Collider>());
             }
 
             go.name = $"Flag_{_selected.flagType}_{handle.RuntimeId}";

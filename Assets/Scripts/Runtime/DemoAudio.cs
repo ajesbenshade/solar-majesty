@@ -14,6 +14,14 @@ namespace SolarMajesty
         private static bool _ready;
         private static int _campus = 0;
 
+        public static void ApplyVolumes()
+        {
+            Ensure();
+            if (_sfx != null)
+                _sfx.volume = Mathf.Clamp01(DemoSettings.Master);
+            ApplyCampusVolumes(_campus, instant: true);
+        }
+
         public static void Ensure()
         {
             if (_ready && _sfx != null) return;
@@ -27,7 +35,7 @@ namespace SolarMajesty
             if (_sfx == null) _sfx = go.AddComponent<AudioSource>();
             _sfx.playOnAwake = false;
             _sfx.spatialBlend = 0f;
-            _sfx.volume = 1f;
+            _sfx.volume = Mathf.Clamp01(DemoSettings.Master);
             _ready = true;
             EnsureAmbientBeds(go);
         }
@@ -78,8 +86,8 @@ namespace SolarMajesty
 
         private static void ApplyCampusVolumes(int campusIndex, bool instant)
         {
-            float targetA = campusIndex <= 0 ? 0.045f : 0f;
-            float targetB = campusIndex > 0 ? 0.04f : 0f;
+            float targetA = campusIndex <= 0 ? 0.045f * DemoSettings.Ambient * DemoSettings.Master : 0f;
+            float targetB = campusIndex > 0 ? 0.04f * DemoSettings.Ambient * DemoSettings.Master : 0f;
             if (_ambientA != null)
                 _ambientA.volume = targetA;
             if (_ambientB != null)
@@ -140,7 +148,7 @@ namespace SolarMajesty
             if (clip == null) return false;
             Ensure();
             if (_sfx == null) return false;
-            _sfx.PlayOneShot(clip, volume);
+            _sfx.PlayOneShot(clip, volume * DemoSettings.Sfx * DemoSettings.Master);
             return true;
         }
 
@@ -183,7 +191,7 @@ namespace SolarMajesty
                 data[i] = sum * inv * env * volume;
             }
             clip.SetData(data, 0);
-            _sfx.PlayOneShot(clip, volume);
+            _sfx.PlayOneShot(clip, volume * DemoSettings.Sfx * DemoSettings.Master);
         }
 
         private static void Beep(float hz, float duration, float volume)

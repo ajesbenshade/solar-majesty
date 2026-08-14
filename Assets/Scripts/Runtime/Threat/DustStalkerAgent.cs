@@ -161,7 +161,7 @@ namespace SolarMajesty
         private void TickAggroAndPressure()
         {
             _aggro = false;
-            var specialists = FindObjectsByType<SpecialistAgent>(FindObjectsSortMode.None);
+            var specialists = FindObjectsByType<SpecialistAgent>();
             float aggroSq = aggroRange * aggroRange;
             Vector3 me = Flat(transform.position);
 
@@ -187,7 +187,7 @@ namespace SolarMajesty
         {
             if (!_aggro) return;
 
-            var specialists = FindObjectsByType<SpecialistAgent>(FindObjectsSortMode.None);
+            var specialists = FindObjectsByType<SpecialistAgent>();
             Vector3 me = Flat(transform.position);
             SpecialistAgent nearest = null;
             float best = biteRange * biteRange;

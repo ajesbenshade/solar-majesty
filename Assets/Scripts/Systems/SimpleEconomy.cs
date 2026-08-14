@@ -69,11 +69,41 @@ namespace SolarMajesty
             }
         }
 
-        /// <summary>Convert a completed flag bounty into stockpile reward (Phase-0: Metals).</summary>
-        public void GrantBountyReward(float bounty)
+        public int EscrowedMetals { get; private set; }
+
+        /// <summary>Metals withdrawn from the stockpile to post a bounty flag.</summary>
+        public static int BountyMetalsCost(float bounty) =>
+            Mathf.Max(1, Mathf.RoundToInt(bounty));
+
+        /// <summary>True if the colony can escrow this bounty in metals.</summary>
+        public bool CanAffordBounty(float bounty) =>
+            _resources != null && _resources.Get(ResourceId.Metals) >= BountyMetalsCost(bounty);
+
+        /// <summary>
+        /// Escrow metals from the stockpile. Heroes are paid in personal credits on complete —
+        /// the colony does not get those metals back.
+        /// </summary>
+        public bool TryEscrowBounty(float bounty, out int metals)
         {
-            int metals = Mathf.Max(1, Mathf.RoundToInt(bounty / 5f));
+            metals = BountyMetalsCost(bounty);
+            if (_resources == null) return false;
+            if (!_resources.TrySpend(ResourceId.Metals, metals)) return false;
+            EscrowedMetals += metals;
+            return true;
+        }
+
+        public void RefundBountyEscrow(int metals)
+        {
+            if (metals <= 0 || _resources == null) return;
+            EscrowedMetals = Mathf.Max(0, EscrowedMetals - metals);
             _resources.Add(ResourceId.Metals, metals);
+        }
+
+        /// <summary>Flag completed — metals stay spent, reserved readout clears.</summary>
+        public void ReleaseBountyEscrow(int metals)
+        {
+            if (metals <= 0) return;
+            EscrowedMetals = Mathf.Max(0, EscrowedMetals - metals);
         }
 
         /// <summary>Phase 4B: Extract flags yield regolith + a bit of metals beyond bounty pay.</summary>

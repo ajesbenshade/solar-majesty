@@ -86,7 +86,7 @@ namespace SolarMajesty
                 }
             }
 
-            var all = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+            var all = Object.FindObjectsByType<Transform>();
             for (int i = 0; i < all.Length; i++)
             {
                 var t = all[i];

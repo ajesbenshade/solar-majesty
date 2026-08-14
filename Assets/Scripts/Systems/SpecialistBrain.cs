@@ -28,10 +28,11 @@ namespace SolarMajesty
 
             float injury = 1f - ctx.HealthNormalized;
             float restScore = CalculateRestScore(ctx);
+            float courage = EffectiveCourage(ctx);
 
             // 1. Panic — Majesty heroes drop quests and run to the inn when badly hurt.
             bool panicked = injury > 0.55f ||
-                            (injury > 0.32f && bodyDanger > 0.4f && data.courage < 0.55f);
+                            (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
             if (panicked && ctx.HealthNormalized < 0.62f)
                 return BrainDecision.Flee(inn, 0.95f, "flee_to_inn");
 
@@ -90,6 +91,22 @@ namespace SolarMajesty
             if (huntScore >= acceptance && huntScore > bestFlagScore)
                 return BrainDecision.Hunt(ctx.HuntPosition, huntScore, "hunt_fauna");
 
+            // 4b. Engineers patch damaged modules for a small personal payday.
+            float repairScore = -1f;
+            if (data.specialistClass == SpecialistClass.EngineerBot && ctx.HasRepair)
+            {
+                repairScore = ScoreRepair(ctx);
+                if (ctx.CurrentAction == SpecialistAction.Repair)
+                    repairScore += 0.12f;
+            }
+
+            if (repairScore >= acceptance * 0.82f &&
+                repairScore > bestFlagScore &&
+                repairScore > huntScore)
+            {
+                return BrainDecision.Repair(ctx.RepairPosition, repairScore, "repair_module");
+            }
+
             if (takeFlag)
                 return BrainDecision.Pursue(bestFlag, bestFlagScore, bestFlagReason);
 
@@ -128,18 +145,34 @@ namespace SolarMajesty
         float ScoreHunt(in SpecialistContext ctx, float bodyDanger)
         {
             var data = ctx.Data;
+            float courage = EffectiveCourage(ctx);
             float distPenalty = Mathf.Clamp01(ctx.HuntDistance / 28f) * 0.55f;
-            float courageBoost = data.courage * 0.45f;
+            float courageBoost = courage * 0.45f;
             float pref = data.combatPreference * 0.95f;
-            float fear = (1f - ctx.HealthNormalized) * (1.1f - data.courage) * 0.5f;
-            float danger = bodyDanger * (1.05f - data.courage) * 0.35f;
+            float fear = (1f - ctx.HealthNormalized) * (1.1f - courage) * 0.5f;
+            float danger = bodyDanger * (1.05f - courage) * 0.35f;
             return Mathf.Clamp01(pref + courageBoost - distPenalty - fear - danger);
         }
+
+        float ScoreRepair(in SpecialistContext ctx)
+        {
+            var data = ctx.Data;
+            float pref = data.buildPreference * 0.95f;
+            float need = ctx.RepairNeed * 0.55f;
+            float greed = ctx.GreedHunger * 0.12f;
+            float distPenalty = Mathf.Clamp01(ctx.RepairDistance / 36f) * 0.45f;
+            float fatiguePenalty = ctx.Fatigue * 0.18f;
+            return Mathf.Clamp01(pref + need + greed - distPenalty - fatiguePenalty);
+        }
+
+        static float EffectiveCourage(in SpecialistContext ctx) =>
+            ctx.CourageEffective > 0.01f ? ctx.CourageEffective : (ctx.Data != null ? ctx.Data.courage : 0.5f);
 
         float ScoreFlag(in SpecialistContext ctx, FlagHandle flag, float distance, float bodyDanger)
         {
             var data = ctx.Data;
             var fdata = flag.Data;
+            float courage = EffectiveCourage(ctx);
 
             float bountyFactor = Mathf.Clamp01(flag.CurrentBounty / 100f);
             float greedScore = bountyFactor * (0.55f + data.baseGreed * 0.7f);
@@ -166,7 +199,7 @@ namespace SolarMajesty
             }
             float distPenalty = Mathf.Clamp01(distance / 45f) * 0.55f;
             float risk = flag.Risk + bodyDanger * 0.4f;
-            float riskPenalty = risk * (1.15f - data.courage);
+            float riskPenalty = risk * (1.15f - courage);
             float crowdPenalty = Mathf.Clamp01(flag.ClaimCount * 0.18f);
             float fatiguePenalty = ctx.Fatigue * 0.25f * (distance / 30f);
 

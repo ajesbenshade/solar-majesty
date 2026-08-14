@@ -41,6 +41,8 @@ namespace SolarMajesty
         private float _toastUntil;
         private int _lastFocusToast = -1;
         private float _contentBottom; // top of dock/popup stack — cards sit above this
+        private float _sw;
+        private float _sh;
 
 
         private bool _stylesReady;
@@ -78,20 +80,18 @@ namespace SolarMajesty
                 _loop.Economy.ResupplyArrived -= OnResupply;
                 _loop.Economy.ResupplyArrived += OnResupply;
             }
-
-            if (_loop != null && _loop.ActiveBody == CelestialBodyId.Earth)
-            {
-                Toast("Earth tutorial — clear dens, grow to pop goal, research Lunar Rocket (T).", 5.5f);
-            }
-            else if (_loop != null && _loop.ActiveBody == CelestialBodyId.Luna)
-            {
-                Toast("Luna — dens + sustain, then research Mars Ship for departure.", 4.5f);
-            }
-            else if (_loop != null && _loop.ActiveBody == CelestialBodyId.Mars)
-            {
-                Toast("Mars finale — clear dens, sustain, Mars Ship already unlocks the pad.", 4.5f);
-            }
         }
+
+        public void OnSessionPlaying()
+        {
+            if (_loop == null || !_loop.StartsEmpty) return;
+            if (!DemoSettings.TutorialDone)
+                return;
+            string body = _loop.BodyProfile != null ? _loop.BodyProfile.DisplayName : "world";
+            Toast($"{body} drop — raise the Palace keep first, then dock modules via airlocks.", 5.5f);
+        }
+
+        public void Notify(string message, float seconds) => Toast(message, seconds);
 
         private void OnResupply()
         {
@@ -238,37 +238,65 @@ namespace SolarMajesty
             EnsureStyles();
             _hitRects.Clear();
 
-            DrawCommandPanel(M);
-            DrawMissionPanel();
-            DrawTechPanel();
+            float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
+            var prevMatrix = GUI.matrix;
+            GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(s, s, 1f));
+            _sw = Screen.width / s;
+            _sh = Screen.height / s;
 
-            float dockTop = Screen.height - M - DockH;
-            _contentBottom = dockTop;
-            DrawToolPopups(dockTop);
-            DrawBottomDock(dockTop);
-
-            DrawConstructionPanel();
-            DrawInspectPanel();
-            DrawToast();
-            DrawWinBanner();
-            DrawFailBanner();
-
-            Vector2 imguiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
-            PointerBlocksWorld = false;
-            for (int i = 0; i < _hitRects.Count; i++)
+            if (_loop.Screen == DemoScreen.Title)
             {
-                if (_hitRects[i].Contains(imguiMouse))
+                DrawTitle();
+            }
+            else if (_loop.Screen == DemoScreen.Settings)
+            {
+                DrawSettings();
+            }
+            else if (_loop.Screen == DemoScreen.Paused)
+            {
+                DrawPause();
+            }
+            else
+            {
+                DrawCommandPanel(M);
+                DrawMissionPanel();
+                DrawTechPanel();
+                DrawDropManifest();
+
+                float dockTop = _sh - M - DockH;
+                _contentBottom = dockTop;
+                DrawToolPopups(dockTop);
+                DrawBottomDock(dockTop);
+
+                DrawConstructionPanel();
+                DrawInspectPanel();
+                DrawTutorial();
+                DrawToast();
+                DrawWinBanner();
+                DrawFailBanner();
+            }
+
+            Vector2 imguiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y) / s;
+            PointerBlocksWorld = _loop.Screen != DemoScreen.Playing;
+            if (!PointerBlocksWorld)
+            {
+                for (int i = 0; i < _hitRects.Count; i++)
                 {
-                    PointerBlocksWorld = true;
-                    break;
+                    if (_hitRects[i].Contains(imguiMouse))
+                    {
+                        PointerBlocksWorld = true;
+                        break;
+                    }
                 }
             }
+
+            GUI.matrix = prevMatrix;
         }
 
         /// <summary>Brand + stockpile + current objective.</summary>
         private void DrawCommandPanel(float top)
         {
-            var rect = new Rect(M, top, TopW, 172f);
+            var rect = new Rect(M, top, TopW, 214f);
             var c = Panel(rect, null);
 
             GUI.Label(new Rect(c.x, c.y, 190f, 22f), "SOLAR MAJESTY", _brand);
@@ -341,9 +369,12 @@ namespace SolarMajesty
             if (_loop.Resources != null)
             {
                 float resW = (c.width - 9f) / 4f;
+                int metals = _loop.Resources.Get(ResourceId.Metals);
+                int escrow = _loop.Economy != null ? _loop.Economy.EscrowedMetals : 0;
                 ResourceChip(new Rect(c.x, y, resW, 28f), "REGOLITH", _loop.Resources.Get(ResourceId.Regolith));
                 ResourceChip(new Rect(c.x + resW + 3f, y, resW, 28f), "ICE", _loop.Resources.Get(ResourceId.WaterIce));
-                ResourceChip(new Rect(c.x + (resW + 3f) * 2f, y, resW, 28f), "METALS", _loop.Resources.Get(ResourceId.Metals));
+                ResourceChip(new Rect(c.x + (resW + 3f) * 2f, y, resW, 28f),
+                    escrow > 0 ? $"METALS  −{escrow}" : "METALS", metals);
                 ResourceChip(new Rect(c.x + (resW + 3f) * 3f, y, resW, 28f), "POWER", _loop.Resources.Get(ResourceId.Power));
                 y += 32f;
             }
@@ -353,15 +384,17 @@ namespace SolarMajesty
             {
                 GUI.Label(
                     new Rect(c.x, y, c.width, 14f),
-                    $"POP {set.Population}/{set.PopulationGoal}  ·  HOUSING {set.Housing}  ·  VILLAGE {set.VillageHabs}  ·  TAX +{set.LastTax}",
+                    $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}  ·  TAX +{set.LastTax} MET",
                     _micro);
                 y += 16f;
             }
 
             int partyCount = _loop.Parties != null ? _loop.Parties.Count : 0;
-            if (Chip(new Rect(c.x, y, 118f, 22f), "PARTY · P", partyCount > 0))
-                _loop.FormPartyAtInn();
-            GUI.Label(new Rect(c.x + 124f, y + 4f, c.width - 124f, 16f), "[  disband", _micro);
+            if (Chip(new Rect(c.x, y, 108f, 22f), "PARTY · P", partyCount > 0))
+                _loop.FormParty();
+            if (Chip(new Rect(c.x + 114f, y, 88f, 22f), "MENU · Esc", false))
+                _loop.TogglePause();
+            GUI.Label(new Rect(c.x + 208f, y + 4f, c.width - 208f, 16f), "select 2+ or inn", _micro);
         }
 
         private void ResourceChip(Rect r, string label, int amount)
@@ -371,7 +404,7 @@ namespace SolarMajesty
             GUI.Label(new Rect(r.x + 6f, r.y + 12f, r.width - 8f, 15f), amount.ToString(), _value);
         }
 
-        private float DockLeft() => (Screen.width - DockW) * 0.5f;
+        private float DockLeft() => (_sw - DockW) * 0.5f;
 
         private void DrawBottomDock(float top)
         {
@@ -400,7 +433,12 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.xMax - 40f, c.y + 8f, 40f, 22f), $"{threat * 100f:F0}%", _microRight);
         }
 
-        public void ToggleTechPanel() => _techOpen = !_techOpen;
+        public void ToggleTechPanel()
+        {
+            _techOpen = !_techOpen;
+            if (_techOpen)
+                _loop?.NotifyTechOpened();
+        }
 
         private void DrawTechPanel()
         {
@@ -410,7 +448,7 @@ namespace SolarMajesty
 
             const float panelW = 360f;
             const float panelH = 420f;
-            var rect = new Rect(Screen.width - M - panelW, M + 140f, panelW, panelH);
+            var rect = new Rect(_sw - M - panelW, M + 140f, panelW, panelH);
             var c = Panel(rect, "Research · T");
 
             string launch = research.LaunchTechLabel(_loop.ActiveBody);
@@ -489,12 +527,6 @@ namespace SolarMajesty
             GUI.EndScrollView();
         }
 
-        private static string Truncate(string s, int max)
-        {
-            if (string.IsNullOrEmpty(s) || s.Length <= max) return s ?? "";
-            return s.Substring(0, max - 1) + "…";
-        }
-
         private void DrawToolPopups(float dockTop)
         {
             if (_loop.ActiveTool == OverseerTool.Flag)
@@ -509,13 +541,13 @@ namespace SolarMajesty
             if (fp == null) return;
 
             const float popupW = 300f;
-            const float popupH = 236f;
+            const float popupH = 264f;
             float left = DockLeft();
             var rect = new Rect(left, dockTop - 8f - popupH, popupW, popupH);
             _contentBottom = rect.y;
             var c = Panel(rect, "Flag orders");
 
-            GUI.Label(new Rect(c.x, c.y, c.width, 13f), "Post a bounty — specialists choose freely.", _micro);
+            GUI.Label(new Rect(c.x, c.y, c.width, 13f), "Bounty is escrowed from METALS. Heroes keep $.", _micro);
             float y = c.y + 17f;
 
             y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F1  Explore", fp.ExploreFlag);
@@ -525,13 +557,20 @@ namespace SolarMajesty
             y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F5  Defend", fp.DefendFlag);
 
             y += 4f;
+            int metCost = SimpleEconomy.BountyMetalsCost(_loop.FlagBounty);
+            bool canPay = fp.CanAffordSelectedBounty();
             GUI.Label(new Rect(c.x, y, 60f, 24f), "BOUNTY", _micro);
             GUI.Label(new Rect(c.x + 58f, y, 70f, 24f), $"${_loop.FlagBounty:F0}", _value);
             if (GUI.Button(new Rect(c.xMax - 58f, y + 2f, 26f, 20f), "−", _chipOff)) fp.NudgeBounty(-15f);
             if (GUI.Button(new Rect(c.xMax - 28f, y + 2f, 26f, 20f), "+", _chipOff)) fp.NudgeBounty(15f);
 
-            y += 26f;
-            GUI.Label(new Rect(c.x, y, c.width, 13f), "LMB places · click FLAG again to close", _micro);
+            y += 22f;
+            var prevC = _micro.normal.textColor;
+            _micro.normal.textColor = canPay ? TextMuted : Alarm;
+            GUI.Label(new Rect(c.x, y, c.width, 13f),
+                canPay ? $"escrow {metCost} MET · LMB places · RMB flag refunds" : $"need {metCost} MET — raise stockpile",
+                _micro);
+            _micro.normal.textColor = prevC;
         }
 
         private float FlagRow(FlagPlacementInput fp, Rect r, string label, FlagData data)
@@ -639,7 +678,7 @@ namespace SolarMajesty
             float h = 118f;
             if (mission.DeadlineEnabled) h += 26f;
 
-            var rect = new Rect(Screen.width - M - 300f, M, 300f, h);
+            var rect = new Rect(_sw - M - 300f, M, 300f, h);
             var c = Panel(rect, "Conquest gates");
             float y = c.y;
 
@@ -713,20 +752,40 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, row, c.width, 16f), st.DisplayName, _value);
             row += 18f;
 
-            string role = st.IsWorkshop ? "Workshop" : st.Role.ToString();
-            string worker = st.HasPreferredClass ? ColonyStructure.ClassLabel(st.PreferredClass) : "—";
+            string role = st.IsWorkshop
+                ? (st.RobotFabricated ? "Workshop · robot online" : "Workshop · fabricating…")
+                : st.IsResidential ? "Habitat · colonists"
+                : st.Role.ToString();
+            string worker = st.IsResidential
+                ? "humans"
+                : (st.HasPreferredClass ? ColonyStructure.ClassLabel(st.PreferredClass) : "—");
+            string beds = st.IsResidential
+                ? $" · residents {st.Residents}/{st.ResidentCapacity}"
+                : "";
             GUI.Label(new Rect(c.x, row, c.width, 13f),
-                $"{role} · {worker} {st.WorkerCount}/{st.WorkerSlots}", _micro);
+                st.IsResidential
+                    ? $"{role}{beds}"
+                    : $"{role} · {worker} {st.WorkerCount}/{st.WorkerSlots}{beds}",
+                _micro);
             row += 15f;
 
             Bar(new Rect(c.x, row, c.width, 14f), "HP", st.Health01, HpFill);
             row += 18f;
 
-            string workers = FormatWorkers(st);
+            string workers = st.IsResidential
+                ? (st.Residents > 0
+                    ? $"Colonists indoors — tax + births, no outdoor villagers."
+                    : "Empty beds — seed crew arrives with the first HAB.")
+                : FormatWorkers(st);
             GUI.Label(new Rect(c.x, row, c.width, 13f), workers, _micro);
             row += 16f;
 
-            if (!st.ClassLocked)
+            if (st.IsResidential)
+            {
+                GUI.Label(new Rect(c.x, row, c.width, 22f),
+                    "Humans stay in HABs. Outdoor work is robots from workshops.", _micro);
+            }
+            else if (!st.ClassLocked)
             {
                 if (Chip(new Rect(c.x, row, 54f, 22f), "SCOUT",
                         st.HasPreferredClass && st.PreferredClass == SpecialistClass.ScoutDrone))
@@ -744,7 +803,10 @@ namespace SolarMajesty
             else
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    $"Locked to {ColonyStructure.ClassLabel(st.PreferredClass)} — flags nearby pull them.", _micro);
+                    st.RobotFabricated
+                        ? $"Fabricates {ColonyStructure.ClassLabel(st.PreferredClass)} — flags nearby pull them."
+                        : $"Building a {ColonyStructure.ClassLabel(st.PreferredClass)} robot…",
+                    _micro);
             }
             row += 26f;
 
@@ -778,14 +840,14 @@ namespace SolarMajesty
                 Fill(hint, PanelBg);
                 Outline(hint, Hairline);
                 GUI.Label(new Rect(hint.x + 10f, hint.y, hint.width - 16f, hint.height),
-                    "Click a specialist or building · Shift+click up to 4 heroes", _micro);
+                    "Build the Palace keep first · dock via airlocks · HABs house colonists", _micro);
                 return;
             }
 
             int n = selected.Count;
-            float avail = Screen.width - M * 2f - (n - 1) * 8f;
-            float cardW = Mathf.Clamp(avail / n, 150f, 208f);
-            const float cardH = 120f;
+            float avail = _sw - M * 2f - (n - 1) * 8f;
+            float cardW = Mathf.Clamp(avail / n, 168f, 230f);
+            const float cardH = 148f;
             float y = _contentBottom - 8f - cardH;
 
             for (int i = 0; i < n; i++)
@@ -813,7 +875,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{ColonyLayout.CampusLabel(campus)} · danger {a.BodyDanger * 100f:F0}%", _micro);
+                    $"{ColonyLayout.CampusLabel(campus)} · ${a.Credits:F0} · {a.SuitLabel}", _micro);
                 row += 16f;
 
                 GUI.Label(new Rect(c.x, row, c.width, 14f), FormatAction(a), _action);
@@ -824,7 +886,11 @@ namespace SolarMajesty
                 Bar(new Rect(c.x, row, c.width, 14f), "FATIGUE", a.Fatigue, FatigueFill);
                 row += 17f;
 
-                GUI.Label(new Rect(c.x, row, c.width, 13f), Truncate(a.LastReason, 30), _micro);
+                string gene = a.GeneSecondsLeft > 0.5f
+                    ? $"gene {a.GeneSecondsLeft:F0}s"
+                    : "shop at rest beacon";
+                GUI.Label(new Rect(c.x, row, c.width, 13f),
+                    Truncate($"{Truncate(a.LastReason, 18)} · {gene}", 36), _micro);
             }
         }
 
@@ -833,9 +899,10 @@ namespace SolarMajesty
             string action = a.CurrentAction switch
             {
                 SpecialistAction.PursueFlag => "Working a flag",
-                SpecialistAction.Rest => "Resting at inn",
+                SpecialistAction.Rest => "Resting / shopping",
                 SpecialistAction.Flee => "Fleeing to inn",
                 SpecialistAction.Hunt => "Hunting fauna",
+                SpecialistAction.Repair => "Repairing module",
                 SpecialistAction.Wander => a.LastReason != null && a.LastReason.Contains("workshop")
                     ? "At workshop"
                     : "Kingdom vocation",
@@ -854,7 +921,7 @@ namespace SolarMajesty
             float cardReserve = (_loop.SelectedAgents != null && _loop.SelectedAgents.Count > 0) ||
                                 _loop.SelectedStructure != null
                 ? 176f : 36f;
-            var rect = new Rect(Screen.width - M - 286f, _contentBottom - 8f - cardReserve - 8f - h, 286f, h);
+            var rect = new Rect(_sw - M - 286f, _contentBottom - 8f - cardReserve - 8f - h, 286f, h);
             var c = Panel(rect, "Construction");
 
             float y = c.y;
@@ -879,9 +946,9 @@ namespace SolarMajesty
             }
 
             float left = M + TopW + 10f;
-            float right = Screen.width - M - 286f - 10f;
+            float right = _sw - M - 286f - 10f;
             float w = Mathf.Min(380f, Mathf.Max(200f, right - left));
-            float x = Mathf.Clamp((Screen.width - w) * 0.5f, left, Mathf.Max(left, right - w));
+            float x = Mathf.Clamp((_sw - w) * 0.5f, left, Mathf.Max(left, right - w));
             var rect = new Rect(x, M, w, 32f);
             _hitRects.Add(rect);
             Fill(rect, PanelBg);
@@ -895,9 +962,9 @@ namespace SolarMajesty
             var mission = _loop.Mission;
             if (mission == null || !mission.IsWon || _winDismissed) return;
 
-            Fill(new Rect(0, 0, Screen.width, Screen.height), new Color(0.02f, 0.05f, 0.03f, 0.55f));
+            Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.05f, 0.03f, 0.55f));
 
-            var rect = new Rect((Screen.width - 460f) * 0.5f, Screen.height * 0.3f, 460f, 160f);
+            var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.3f, 460f, 160f);
             var c = Panel(rect, null, false);
             Fill(new Rect(rect.x, rect.y, rect.width, 2f), Good);
 
@@ -955,9 +1022,9 @@ namespace SolarMajesty
                 DemoAudio.PlayFail();
             }
 
-            Fill(new Rect(0, 0, Screen.width, Screen.height), new Color(0.10f, 0.01f, 0.01f, 0.55f));
+            Fill(new Rect(0, 0, _sw, _sh), new Color(0.10f, 0.01f, 0.01f, 0.55f));
 
-            var rect = new Rect((Screen.width - 460f) * 0.5f, Screen.height * 0.32f, 460f, 146f);
+            var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.32f, 460f, 146f);
             var c = Panel(rect, null, false);
             Fill(new Rect(rect.x, rect.y, rect.width, 2f), Alarm);
 
@@ -985,7 +1052,7 @@ namespace SolarMajesty
 
         private void Update()
         {
-            if (_loop == null) return;
+            if (_loop == null || !_loop.IsPlaying) return;
             if (_loop.IsOutpostOverwhelmed && Input.GetKeyDown(KeyCode.Y))
                 _loop.RetryParty();
             if (!_loop.IsOutpostOverwhelmed &&
@@ -1009,6 +1076,180 @@ namespace SolarMajesty
         {
             if (string.IsNullOrEmpty(s)) return "—";
             return s.Length <= max ? s : s.Substring(0, max - 1) + "…";
+        }
+
+        private void DrawTitle()
+        {
+            Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.03f, 0.04f, 0.86f));
+            var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.16f, 460f, 420f);
+            var c = Panel(rect, null, false);
+            Fill(new Rect(rect.x, rect.y, rect.width, 3f), Accent);
+
+            GUI.Label(new Rect(c.x, c.y, c.width, 32f), "SOLAR MAJESTY", _banner);
+            GUI.Label(new Rect(c.x, c.y + 34f, c.width, 16f), "Overseer the drop. Never command the heroes.", _muted);
+            GUI.Label(new Rect(c.x, c.y + 52f, c.width, 14f), "EARTH  →  LUNA  →  MARS", _section);
+
+            float y = c.y + 82f;
+            if (GUI.Button(new Rect(c.x, y, c.width, 40f), "NEW GAME  ·  Earth drop", _chipOn))
+                _loop.StartNewGame();
+            y += 48f;
+
+            string continueLabel = "CONTINUE  ·  no save";
+            if (DemoSettings.SaveExists)
+            {
+                var body = CelestialBodyCatalog.Get(BodySeed.LoadSavedBody());
+                string name = body != null ? body.DisplayName : "last drop";
+                continueLabel = $"CONTINUE  ·  {name}";
+            }
+            GUI.enabled = DemoSettings.SaveExists;
+            if (GUI.Button(new Rect(c.x, y, c.width, 40f), continueLabel, _chipOff))
+                _loop.ContinueGame();
+            GUI.enabled = true;
+            y += 48f;
+            if (GUI.Button(new Rect(c.x, y, c.width, 36f), "SETTINGS", _chipOff))
+                _loop.OpenSettings();
+            y += 44f;
+            if (GUI.Button(new Rect(c.x, y, c.width, 36f), "QUIT", _chipOff))
+                _loop.QuitDemo();
+
+            GUI.Label(new Rect(c.x, c.yMax - 36f, c.width, 16f),
+                "B build  ·  G flag  ·  T tech  ·  Esc pause  ·  RMB cancel flag", _micro);
+            GUI.Label(new Rect(c.x, c.yMax - 18f, c.width, 16f),
+                "WASD pans this frozen drop. Heroes choose their own work.", _micro);
+        }
+
+        private void DrawPause()
+        {
+            Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f, 0.72f));
+            var rect = new Rect((_sw - 400f) * 0.5f, _sh * 0.26f, 400f, 268f);
+            var c = Panel(rect, "Paused");
+            GUI.Label(new Rect(c.x, c.y, c.width, 16f), "Simulation frozen. Overseer tools are closed.", _micro);
+            if (GUI.Button(new Rect(c.x, c.y + 28f, c.width, 32f), "RESUME  ·  Esc", _chipOn))
+                _loop.ResumePlay();
+            if (GUI.Button(new Rect(c.x, c.y + 68f, c.width, 32f), "SETTINGS", _chipOff))
+                _loop.OpenSettings();
+            if (GUI.Button(new Rect(c.x, c.y + 108f, c.width, 32f), "TITLE", _chipOff))
+                _loop.ReturnToTitle();
+            if (GUI.Button(new Rect(c.x, c.y + 148f, c.width, 32f), "ABANDON BODY  ·  new seed", _chipOff))
+            {
+                DemoSettings.RequestBootIntoPlay();
+                _loop.RestartMission();
+            }
+        }
+
+        private void DrawSettings()
+        {
+            Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f, 0.78f));
+            var rect = new Rect((_sw - 440f) * 0.5f, _sh * 0.10f, 440f, 470f);
+            var c = Panel(rect, "Settings");
+            float y = c.y;
+
+            y = SettingsSlider(c.x, y, c.width, "MASTER", ref DemoSettings.Master);
+            y = SettingsSlider(c.x, y, c.width, "SFX", ref DemoSettings.Sfx);
+            y = SettingsSlider(c.x, y, c.width, "AMBIENCE", ref DemoSettings.Ambient);
+            y = SettingsSlider(c.x, y, c.width, "HUD SCALE", ref DemoSettings.HudScale, 0.85f, 1.25f, applyAudio: false);
+            y += 8f;
+
+            if (Chip(new Rect(c.x, y, 200f, 26f), "INVERT CAMERA PAN", DemoSettings.InvertPan))
+                DemoSettings.InvertPan = !DemoSettings.InvertPan;
+            y += 34f;
+
+            if (Chip(new Rect(c.x, y, 200f, 26f),
+                    DemoSettings.Fullscreen ? "FULLSCREEN" : "WINDOWED", DemoSettings.Fullscreen))
+            {
+                DemoSettings.Fullscreen = !DemoSettings.Fullscreen;
+                DemoSettings.ApplyDisplay();
+            }
+            y += 34f;
+
+            var qualityNames = QualitySettings.names;
+            string qLabel = "QUALITY";
+            if (qualityNames != null && qualityNames.Length > 0)
+            {
+                DemoSettings.QualityIndex = Mathf.Clamp(DemoSettings.QualityIndex, 0, qualityNames.Length - 1);
+                qLabel = $"QUALITY  ·  {qualityNames[DemoSettings.QualityIndex].ToUpperInvariant()}";
+            }
+            if (Chip(new Rect(c.x, y, c.width, 26f), qLabel, false) && qualityNames != null && qualityNames.Length > 0)
+            {
+                DemoSettings.QualityIndex = (DemoSettings.QualityIndex + 1) % qualityNames.Length;
+                DemoSettings.ApplyDisplay();
+            }
+
+            if (GUI.Button(new Rect(c.x, c.yMax - 36f, c.width, 32f), "BACK  ·  Esc", _chipOn))
+                _loop.CloseSettings();
+        }
+
+        private float SettingsSlider(
+            float x, float y, float width, string label, ref float value,
+            float min = 0f, float max = 1f, bool applyAudio = true)
+        {
+            GUI.Label(new Rect(x, y, 120f, 18f), label, _micro);
+            float next = GUI.HorizontalSlider(new Rect(x + 90f, y + 4f, width - 90f, 16f), value, min, max);
+            if (!Mathf.Approximately(next, value))
+            {
+                value = next;
+                if (applyAudio)
+                    DemoAudio.ApplyVolumes();
+            }
+            return y + 28f;
+        }
+
+        private void DrawTutorial()
+        {
+            if (DemoSettings.TutorialDone || _loop.TutorialStep >= 5) return;
+
+            string[] beats =
+            {
+                "1/5  Palace — B, key 1. Raise the keep on the claim.",
+                "2/5  Airlock — snap an Airlock Junction onto a Palace face socket.",
+                "3/5  Module — dock HAB onto that airlock (then workshops the same Lego way).",
+                "4/5  Flag — G, post a bounty (METALS). Robots choose freely.",
+                "5/5  Research — T, keep Field Survey ticking toward Lunar Rocket."
+            };
+            int step = Mathf.Clamp(_loop.TutorialStep, 0, beats.Length - 1);
+            float w = 560f;
+            var rect = new Rect((_sw - w) * 0.5f, _sh - M - DockH - 70f, w, 56f);
+            var c = Panel(rect, null);
+            GUI.Label(new Rect(c.x, c.y, c.width - 80f, 32f), beats[step], _body);
+            if (GUI.Button(new Rect(c.xMax - 72f, c.y + 4f, 72f, 24f), "SKIP", _chipOff))
+                _loop.SkipTutorial();
+        }
+
+        private void DrawDropManifest()
+        {
+            if (!_loop.StartsEmpty || _loop.TutorialStep > 3) return;
+            var catalog = _loop.StarterBuildings;
+            if (catalog == null || catalog.Length == 0) return;
+
+            BuildingCategory[] want =
+            {
+                BuildingCategory.Palace,
+                BuildingCategory.Habitat,
+                BuildingCategory.Utility,
+                BuildingCategory.EngineerWorkshop
+            };
+
+            var rect = new Rect(M, M + 226f, TopW, 118f);
+            var c = Panel(rect, "Drop manifest");
+            float y = c.y;
+            GUI.Label(new Rect(c.x, y, c.width, 13f), "Palace → airlock sockets → modules. Lego campus only.", _micro);
+            y += 16f;
+            for (int w = 0; w < want.Length; w++)
+            {
+                BuildingData found = null;
+                for (int i = 0; i < catalog.Length; i++)
+                {
+                    if (catalog[i] != null && catalog[i].category == want[w])
+                    {
+                        found = catalog[i];
+                        break;
+                    }
+                }
+                if (found == null) continue;
+                GUI.Label(new Rect(c.x, y, c.width, 14f),
+                    $"{found.displayName}  ·  {FormatBuildCost(found)}", _micro);
+                y += 15f;
+            }
         }
     }
 }

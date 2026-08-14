@@ -10,13 +10,6 @@ namespace SolarMajesty
     /// </summary>
     public class VillageExpansion : MonoBehaviour
     {
-        private static readonly Vector3[] Cardinals =
-        {
-            new Vector3(1f, 0f, 0f),
-            new Vector3(-1f, 0f, 0f),
-            new Vector3(0f, 0f, 1f)
-        };
-
         private readonly List<ColonyStructure> _structures = new List<ColonyStructure>(24);
         private GameLoop _loop;
         private Transform _root;
@@ -30,16 +23,20 @@ namespace SolarMajesty
             _loop = loop;
             _root = new GameObject("VillageRing").transform;
             _root.SetParent(transform, false);
-            SpawnInn();
+            if (_loop != null && _loop.SpawnWaystationInn)
+                SpawnInn();
         }
 
         public void Tick(float dt)
         {
             if (_loop == null || _loop.Settlement == null) return;
+            if (_loop.Placer == null || !_loop.Placer.HasCampus) return;
             _expandCooldown = Mathf.Max(0f, _expandCooldown - dt);
             Prune();
 
             var set = _loop.Settlement;
+            if (set.BirthDue)
+                TryBirth(set);
             if (set.NeedsVillageHab && _expandCooldown <= 0f)
                 TryExpandVillage();
         }
@@ -65,15 +62,27 @@ namespace SolarMajesty
                 BuildingCategory.ScoutWorkshop => StructureRole.Workshop,
                 BuildingCategory.EngineerWorkshop => StructureRole.Workshop,
                 BuildingCategory.DefenseWorkshop => StructureRole.Workshop,
+                BuildingCategory.MedicWorkshop => StructureRole.Workshop,
+                BuildingCategory.Palace => StructureRole.Core,
                 BuildingCategory.Habitat => StructureRole.Core,
                 _ => StructureRole.Core
             };
 
             var st = go.GetComponent<ColonyStructure>() ?? go.AddComponent<ColonyStructure>();
-            float hp = role == StructureRole.Inn ? 80f : role == StructureRole.Workshop ? 70f : 48f;
+            float hp = cat == BuildingCategory.Palace ? 140f
+                : role == StructureRole.Inn ? 80f
+                : role == StructureRole.Workshop ? 70f
+                : 48f;
             st.Configure(role, this, hp, cat, data);
             if (!_structures.Contains(st))
                 _structures.Add(st);
+
+            if (st.IsResidential && _loop.Settlement.Population <= 0)
+            {
+                int n = _loop.Settlement.SeedStarterCrew();
+                if (n > 0)
+                    st.SetResidents(n);
+            }
         }
 
         public ColonyStructure NearestDutyFor(SpecialistClass cls, Vector3 from, float maxDist)
@@ -100,6 +109,75 @@ namespace SolarMajesty
                 }
             }
             return bestShop != null ? bestShop : bestJob;
+        }
+
+        public ColonyStructure FindNear(Vector3 world, float maxDist = 3f)
+        {
+            ColonyStructure best = null;
+            float bestD = maxDist;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive) continue;
+                float d = Flat(world, s.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = s;
+                }
+            }
+            return best;
+        }
+
+        public ColonyStructure NearestDamaged(Vector3 from, float maxDist)
+        {
+            ColonyStructure best = null;
+            float bestD = maxDist;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.NeedsRepair) continue;
+                float d = Flat(from, s.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = s;
+                }
+            }
+            return best;
+        }
+
+        public ColonyStructure FindVacantHab()
+        {
+            ColonyStructure best = null;
+            int bestSpare = -1;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.HasVacancy) continue;
+                int spare = s.ResidentCapacity - s.Residents;
+                if (spare > bestSpare)
+                {
+                    bestSpare = spare;
+                    best = s;
+                }
+            }
+            return best;
+        }
+
+        public void NotifyCollapsed(ColonyStructure st)
+        {
+            if (st == null) return;
+            var set = _loop?.Settlement;
+            if (set != null)
+            {
+                int killed = set.KillResidents(st.Residents);
+                if (killed > 0)
+                    st.SetResidents(0);
+                set.Unregister(st.Category, st.IsVillageHab);
+            }
+            _structures.Remove(st);
+            _loop?.NotifyStructureDestroyed(st);
         }
 
         public void OnStructureDestroyed(ColonyStructure st)
@@ -135,31 +213,34 @@ namespace SolarMajesty
 
         public void OnVillageHabDestroyed(ColonyStructure hab)
         {
-            _loop?.Settlement?.LoseVillageHab();
-            _structures.Remove(hab);
+            NotifyCollapsed(hab);
+        }
+
+        private void TryBirth(Settlement set)
+        {
+            if (set == null || !set.BirthDue) return;
+            var hab = FindVacantHab();
+            if (hab == null || !hab.TryAddResident())
+                return;
+            if (set.TryBirth())
+                Debug.Log($"[Village] Birth in {hab.DisplayName} — pop {set.Population}/{set.Housing}");
+            else
+                hab.SetResidents(Mathf.Max(0, hab.Residents - 1));
         }
 
         private void SpawnInn()
         {
             Vector3 pos = ColonyLayout.InnOutpost;
-            GameObject prefab = BuildingVisualCatalog.LoadPrefab(BuildingCategory.Inn);
-            GameObject go;
-            if (prefab != null)
-            {
-                go = ColonyVisualUtility.InstantiateOriented(prefab, pos, _root, 0f);
-                go.transform.localScale = Vector3.one * ColonyLayout.ModuleScale * 1.05f;
-            }
-            else
-            {
-                go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                go.transform.SetParent(_root, false);
-                go.transform.position = pos;
-                go.transform.localScale = new Vector3(3.2f, 1.4f, 3.2f);
-            }
+            float cell = _loop != null && _loop.Grid != null
+                ? _loop.Grid.CellSize
+                : ColonyLayout.DefaultCellSize;
+            GameObject go = ModularBuildingFactory.Spawn(
+                BuildingCategory.Inn,
+                pos,
+                _root,
+                4, 4, cell);
 
             go.name = "WaystationInn";
-            ColonyVisualUtility.EnsureUrpMaterials(go);
-            ColonyVisualUtility.SnapToGround(go);
             CampusNavMesh.AddObstacle(go);
 
             var st = go.AddComponent<ColonyStructure>();
@@ -168,8 +249,8 @@ namespace SolarMajesty
 
             if (_loop != null && _loop.Placer != null && _loop.Grid != null)
             {
-                Vector2Int cell = FootprintOrigin(pos, 4, 4);
-                _loop.Placer.MarkOccupiedRect(cell, 4, 4);
+                Vector2Int origin = FootprintOrigin(pos, 4, 4);
+                _loop.Placer.MarkOccupiedRect(origin, 4, 4);
             }
         }
 
@@ -182,45 +263,53 @@ namespace SolarMajesty
                 new ResourceAmount(ResourceId.Regolith, 12)
             };
             if (!_loop.Resources.CanAfford(cost)) return;
-            if (!TryNextSlot(out Vector3 habPos, out Vector3 plusPos)) return;
+            if (!TryNextSlot(out Vector2Int airlockCell, out Vector2Int habCell)) return;
             if (!_loop.Resources.TrySpend(cost)) return;
 
-            SpawnConnector(plusPos);
-            SpawnHab(habPos);
+            SpawnConnector(airlockCell);
+            SpawnHab(habCell);
             _loop.Settlement.AddVillageHab();
             _loop.NotifyCampusExpanded();
             _expandCooldown = 12f;
 
-            Debug.Log($"[Village] HAB + plus @ {habPos} pop={_loop.Settlement.Population}/{_loop.Settlement.Housing}");
+            Debug.Log($"[Village] HAB + airlock @ {habCell}");
         }
 
-        private bool TryNextSlot(out Vector3 habPos, out Vector3 plusPos)
+        private bool TryNextSlot(out Vector2Int airlockCell, out Vector2Int habCell)
         {
-            habPos = Vector3.zero;
-            plusPos = Vector3.zero;
+            airlockCell = default;
+            habCell = default;
             if (_loop.Grid == null || _loop.Placer == null) return false;
 
-            Vector3 origin = ColonyLayout.CampusOrigin;
-            for (int d = 0; d < Cardinals.Length; d++)
+            var pieces = _loop.Placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
             {
-                Vector3 dir = Cardinals[d];
-                for (float dist = 6f; dist <= 72f; dist += 1.5f)
+                var module = pieces[i];
+                if (!module.IsModule) continue;
+                for (int f = 0; f < 4; f++)
                 {
-                    Vector3 plus = origin + dir * dist;
-                    Vector3 hab = plus + dir * 4.5f;
+                    var face = (BuildingPlacer.Cardinal)f;
+                    Vector2Int aCell = BuildingPlacer.AirlockOriginOnModuleFace(module, face);
+                    if (!_loop.Placer.CanFitRect(aCell, 2, 2)) continue;
+                    if (!_loop.Grid.InBounds(aCell) ||
+                        !_loop.Grid.InBounds(new Vector2Int(aCell.x + 1, aCell.y + 1)))
+                        continue;
 
-                    if (Flat(hab, ColonyLayout.InnOutpost) < 10f) continue;
-                    if (Flat(hab, ColonyLayout.CampusBOrigin) < 16f) continue;
-                    if (!_loop.Grid.InBounds(_loop.Grid.WorldToCell(hab))) continue;
+                    var outFace = Opposite(face);
+                    Vector2Int hCell = BuildingPlacer.ModuleOriginOnAirlockFace(
+                        new BuildingPlacer.CampusPiece(aCell, 2, 2, BuildingCategory.Utility),
+                        4, 4, outFace);
+                    if (!_loop.Placer.CanFitRect(hCell, 4, 4)) continue;
+                    if (!_loop.Grid.InBounds(hCell) ||
+                        !_loop.Grid.InBounds(new Vector2Int(hCell.x + 3, hCell.y + 3)))
+                        continue;
 
-                    Vector2Int plusCell = FootprintOrigin(plus, 2, 2);
-                    Vector2Int habCell = FootprintOrigin(hab, 4, 4);
-                    if (!_loop.Placer.CanFitRect(plusCell, 2, 2)) continue;
-                    if (!_loop.Placer.CanFitRect(habCell, 4, 4)) continue;
-                    if (!_loop.Placer.TouchesCampus(plusCell, 2, 2)) continue;
+                    Vector3 habWorld = _loop.Grid.CellToWorld(hCell) + FootprintCenterOffset(4, 4);
+                    if (Flat(habWorld, ColonyLayout.InnOutpost) < 10f) continue;
+                    if (Flat(habWorld, ColonyLayout.CampusBOrigin) < 16f) continue;
 
-                    plusPos = plus;
-                    habPos = hab;
+                    airlockCell = aCell;
+                    habCell = hCell;
                     return true;
                 }
             }
@@ -228,38 +317,53 @@ namespace SolarMajesty
             return false;
         }
 
-        private void SpawnConnector(Vector3 mid)
+        private static BuildingPlacer.Cardinal Opposite(BuildingPlacer.Cardinal face)
         {
-            var go = ColonyVisualUtility.SpawnPlusConnector(mid, _root, ColonyLayout.ModuleScale);
-            go.name = "VillagePlus";
-            CampusNavMesh.AddObstacle(go);
-            if (_loop.Placer != null && _loop.Grid != null)
-                _loop.Placer.MarkCampusRect(FootprintOrigin(mid, 2, 2), 2, 2);
+            switch (face)
+            {
+                case BuildingPlacer.Cardinal.East: return BuildingPlacer.Cardinal.West;
+                case BuildingPlacer.Cardinal.West: return BuildingPlacer.Cardinal.East;
+                case BuildingPlacer.Cardinal.North: return BuildingPlacer.Cardinal.South;
+                default: return BuildingPlacer.Cardinal.North;
+            }
         }
 
-        private ColonyStructure SpawnHab(Vector3 pos)
+        private Vector3 FootprintCenterOffset(int w, int h)
         {
-            GameObject prefab = BuildingVisualCatalog.LoadPrefab(BuildingCategory.Habitat);
-            GameObject go;
-            if (prefab != null)
-            {
-                go = ColonyVisualUtility.InstantiateOriented(prefab, pos, _root, 0f);
-                go.transform.localScale = Vector3.one * ColonyLayout.ModuleScale;
-            }
-            else
-            {
-                go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                go.transform.SetParent(_root, false);
-                go.transform.position = pos;
-            }
+            float cell = _loop.Grid.CellSize;
+            return new Vector3((w - 1) * 0.5f * cell, 0f, (h - 1) * 0.5f * cell);
+        }
+
+        private void SpawnConnector(Vector2Int cell)
+        {
+            Vector3 mid = _loop.Grid.CellToWorld(cell) + FootprintCenterOffset(2, 2);
+            float cellSize = _loop.Grid.CellSize;
+            var go = ModularBuildingFactory.Spawn(
+                BuildingCategory.Utility,
+                mid,
+                _root,
+                2, 2, cellSize);
+            go.name = "VillageAirlock";
+            CampusNavMesh.AddObstacle(go);
+            _loop.Placer.MarkCampusRect(cell, 2, 2);
+            _loop.Placer.RegisterPiece(cell, 2, 2, BuildingCategory.Utility);
+        }
+
+        private ColonyStructure SpawnHab(Vector2Int cell)
+        {
+            Vector3 pos = _loop.Grid.CellToWorld(cell) + FootprintCenterOffset(4, 4);
+            float cellSize = _loop.Grid.CellSize;
+            GameObject go = ModularBuildingFactory.Spawn(
+                BuildingCategory.Habitat,
+                pos,
+                _root,
+                4, 4, cellSize);
 
             go.name = $"VillageHAB_{_structures.Count}";
-            ColonyVisualUtility.EnsureUrpMaterials(go);
-            ColonyVisualUtility.SnapToGround(go);
             CampusNavMesh.AddObstacle(go);
 
-            if (_loop.Placer != null && _loop.Grid != null)
-                _loop.Placer.MarkCampusRect(FootprintOrigin(pos, 4, 4), 4, 4);
+            _loop.Placer.MarkCampusRect(cell, 4, 4);
+            _loop.Placer.RegisterPiece(cell, 4, 4, BuildingCategory.Habitat);
 
             var st = go.AddComponent<ColonyStructure>();
             st.Configure(StructureRole.VillageHab, this, 48f, BuildingCategory.Habitat);

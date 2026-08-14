@@ -26,7 +26,7 @@ namespace SolarMajesty
         private static void ConfigureSun(CelestialBodyProfile body)
         {
             Light sun = null;
-            var lights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+            var lights = Object.FindObjectsByType<Light>();
             for (int i = 0; i < lights.Length; i++)
             {
                 if (lights[i] != null && lights[i].type == LightType.Directional && lights[i].name != "Fill Light")

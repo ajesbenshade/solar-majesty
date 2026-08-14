@@ -6,7 +6,8 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Seeded procedural world contents outside campus footprints.
-    /// Driven by <see cref="CelestialBodyProfile"/> so Luna, Mars, and future bodies share one generator.
+    /// Driven by <see cref="CelestialBodyProfile"/> so Luna/Mars keep craters/dunes while
+    /// Earth spawns lakes, rivers, and forest patches from the same generator.
     /// </summary>
     public class PlanetaryWorldGen : MonoBehaviour
     {
@@ -59,6 +60,9 @@ namespace SolarMajesty
             };
 
             SpawnCraters(rng, placed);
+            SpawnLakes(rng, placed);
+            SpawnRivers(rng, placed);
+            SpawnForestPatches(rng, placed);
             SpawnDunes(rng, placed);
             SpawnRocks(rng, placed);
             SpawnResourceNodes(rng, placed);
@@ -66,7 +70,8 @@ namespace SolarMajesty
 
             Debug.Log(
                 $"[WorldGen] {_body.DisplayName} seed={seed} " +
-                $"craters={_body.CraterCount} dunes={_body.DuneCount} rocks={_body.RockCount} " +
+                $"craters={_body.CraterCount} lakes={_body.LakeCount} rivers={_body.RiverCount} " +
+                $"forests={_body.ForestPatchCount} dunes={_body.DuneCount} rocks={_body.RockCount} " +
                 $"nodes={_nodes.Count} lairs={_lairs.Count}");
         }
 
@@ -153,6 +158,8 @@ namespace SolarMajesty
 
         private void SpawnCraters(System.Random rng, List<Vector3> placed)
         {
+            if (_body.CraterCount <= 0) return;
+
             var root = new GameObject("Craters").transform;
             root.SetParent(_worldRoot, false);
 
@@ -198,6 +205,251 @@ namespace SolarMajesty
 
                 ColonyVisualUtility.SnapToGround(crater);
                 placed.Add(pos);
+            }
+        }
+
+        /// <summary>Irregular multi-lobe lakes (Earth). Visual only.</summary>
+        private void SpawnLakes(System.Random rng, List<Vector3> placed)
+        {
+            if (_body.LakeCount <= 0) return;
+
+            var root = new GameObject("Lakes").transform;
+            root.SetParent(_worldRoot, false);
+
+            for (int i = 0; i < _body.LakeCount; i++)
+            {
+                if (!TrySample(rng, placed, _body.CampusExclusion * 1.1f, _body.MinSpacing * 1.4f, out Vector3 pos))
+                    continue;
+
+                float baseR = Mathf.Lerp(5.5f, 14f, (float)rng.NextDouble());
+                var lake = new GameObject($"Lake_{i}");
+                lake.transform.SetParent(root, false);
+                lake.transform.position = pos;
+
+                int lobes = 4 + rng.Next(0, 5);
+                for (int L = 0; L < lobes; L++)
+                {
+                    float ang = (L / (float)lobes) * Mathf.PI * 2f + (float)rng.NextDouble() * 0.7f;
+                    float dist = baseR * Mathf.Lerp(0.05f, 0.55f, (float)rng.NextDouble());
+                    float rx = baseR * Mathf.Lerp(0.45f, 1.15f, (float)rng.NextDouble());
+                    float rz = baseR * Mathf.Lerp(0.35f, 1.05f, (float)rng.NextDouble());
+                    Color water = Color.Lerp(_body.WaterDeep, _body.WaterShallow, (float)rng.NextDouble() * 0.7f);
+
+                    var lobe = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    lobe.name = $"Lobe_{L}";
+                    lobe.transform.SetParent(lake.transform, false);
+                    lobe.transform.localPosition = new Vector3(Mathf.Cos(ang) * dist, 0.015f, Mathf.Sin(ang) * dist);
+                    lobe.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
+                    lobe.transform.localScale = new Vector3(rx * 2f, 0.025f, rz * 2f);
+                    Object.Destroy(lobe.GetComponent<Collider>());
+                    Tint(lobe, water, 0.72f);
+
+                    // Soft shoreline under the water rim.
+                    var shore = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    shore.name = $"Shore_{L}";
+                    shore.transform.SetParent(lake.transform, false);
+                    shore.transform.localPosition = lobe.transform.localPosition + new Vector3(0f, -0.01f, 0f);
+                    shore.transform.localRotation = lobe.transform.localRotation;
+                    shore.transform.localScale = new Vector3(rx * 2.25f, 0.02f, rz * 2.25f);
+                    Object.Destroy(shore.GetComponent<Collider>());
+                    Tint(shore, Color.Lerp(_body.GroundDark, _body.WaterDeep, 0.25f), 0.05f);
+                }
+
+                ColonyVisualUtility.SnapToGround(lake);
+                placed.Add(pos);
+            }
+        }
+
+        /// <summary>Meandering river polylines made of irregular water segments.</summary>
+        private void SpawnRivers(System.Random rng, List<Vector3> placed)
+        {
+            if (_body.RiverCount <= 0) return;
+
+            var root = new GameObject("Rivers").transform;
+            root.SetParent(_worldRoot, false);
+            float maxX = _grid != null ? _grid.WorldWidth - 8f : 370f;
+            float maxZ = _grid != null ? _grid.WorldHeight - 8f : 370f;
+
+            for (int i = 0; i < _body.RiverCount; i++)
+            {
+                if (!TrySampleRiverEndpoints(rng, maxX, maxZ, out Vector3 start, out Vector3 end))
+                    continue;
+
+                var river = new GameObject($"River_{i}");
+                river.transform.SetParent(root, false);
+
+                int segs = 14 + rng.Next(0, 10);
+                float seedX = (float)rng.NextDouble() * 100f;
+                float seedZ = (float)rng.NextDouble() * 100f;
+                float amp = Mathf.Lerp(6f, 18f, (float)rng.NextDouble());
+                Vector3 prev = Vector3.zero;
+                bool hasPrev = false;
+
+                for (int s = 0; s <= segs; s++)
+                {
+                    float t = s / (float)segs;
+                    Vector3 p = Vector3.Lerp(start, end, t);
+                    Vector3 dir = (end - start).normalized;
+                    Vector3 side = new Vector3(-dir.z, 0f, dir.x);
+                    float wander = (Mathf.PerlinNoise(seedX + t * 3.2f, seedZ) - 0.5f) * 2f * amp;
+                    wander += (Mathf.PerlinNoise(seedX + t * 7.1f, seedZ + 4f) - 0.5f) * amp * 0.45f;
+                    p += side * wander;
+                    p.y = 0f;
+
+                    if (FlatDist(p, ColonyLayout.CampusOrigin) < _body.CampusExclusion * 0.9f ||
+                        FlatDist(p, ColonyLayout.CampusBOrigin) < _body.CampusExclusion * 0.75f)
+                    {
+                        hasPrev = false;
+                        continue;
+                    }
+
+                    if (hasPrev)
+                    {
+                        Vector3 mid = (prev + p) * 0.5f;
+                        Vector3 delta = p - prev;
+                        float len = delta.magnitude;
+                        if (len > 0.4f)
+                        {
+                            float yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
+                            float width = Mathf.Lerp(1.6f, 3.4f, Mathf.PerlinNoise(seedX + t * 5f, seedZ + 2f));
+                            width *= Mathf.Lerp(0.75f, 1.35f, (float)rng.NextDouble());
+
+                            var seg = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                            seg.name = $"Seg_{s}";
+                            seg.transform.SetParent(river.transform, false);
+                            seg.transform.position = mid + Vector3.up * 0.02f;
+                            seg.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+                            seg.transform.localScale = new Vector3(width, 0.04f, len * 1.08f);
+                            Object.Destroy(seg.GetComponent<Collider>());
+                            Color water = Color.Lerp(_body.WaterDeep, _body.WaterShallow,
+                                0.25f + 0.5f * Mathf.PerlinNoise(seedX + t, seedZ));
+                            Tint(seg, water, 0.7f);
+                        }
+                    }
+
+                    prev = p;
+                    hasPrev = true;
+                }
+
+                placed.Add(Vector3.Lerp(start, end, 0.5f));
+            }
+        }
+
+        private bool TrySampleRiverEndpoints(
+            System.Random rng, float maxX, float maxZ, out Vector3 start, out Vector3 end)
+        {
+            for (int attempt = 0; attempt < 40; attempt++)
+            {
+                // Prefer edge-to-edge or edge-to-interior so rivers read as watercourses.
+                start = SampleEdgePoint(rng, maxX, maxZ);
+                end = rng.NextDouble() < 0.55
+                    ? SampleEdgePoint(rng, maxX, maxZ)
+                    : new Vector3(
+                        Mathf.Lerp(8f, maxX, (float)rng.NextDouble()),
+                        0f,
+                        Mathf.Lerp(8f, maxZ, (float)rng.NextDouble()));
+
+                if (FlatDist(start, end) < 55f) continue;
+                if (FlatDist(start, ColonyLayout.CampusOrigin) < _body.CampusExclusion &&
+                    FlatDist(end, ColonyLayout.CampusOrigin) < _body.CampusExclusion)
+                    continue;
+                return true;
+            }
+
+            start = end = Vector3.zero;
+            return false;
+        }
+
+        private static Vector3 SampleEdgePoint(System.Random rng, float maxX, float maxZ)
+        {
+            int edge = rng.Next(0, 4);
+            float u = (float)rng.NextDouble();
+            return edge switch
+            {
+                0 => new Vector3(Mathf.Lerp(4f, maxX, u), 0f, 4f),
+                1 => new Vector3(Mathf.Lerp(4f, maxX, u), 0f, maxZ),
+                2 => new Vector3(4f, 0f, Mathf.Lerp(4f, maxZ, u)),
+                _ => new Vector3(maxX, 0f, Mathf.Lerp(4f, maxZ, u))
+            };
+        }
+
+        /// <summary>Irregular forest clumps — canopy blobs + trunk props.</summary>
+        private void SpawnForestPatches(System.Random rng, List<Vector3> placed)
+        {
+            if (_body.ForestPatchCount <= 0) return;
+
+            var root = new GameObject("Forests").transform;
+            root.SetParent(_worldRoot, false);
+
+            for (int i = 0; i < _body.ForestPatchCount; i++)
+            {
+                if (!TrySample(rng, placed, _body.CampusExclusion * 0.95f, _body.MinSpacing * 0.85f, out Vector3 pos))
+                    continue;
+
+                float patchR = Mathf.Lerp(6f, 16f, (float)rng.NextDouble());
+                var patch = new GameObject($"Forest_{i}");
+                patch.transform.SetParent(root, false);
+                patch.transform.position = pos;
+
+                int trees = 8 + rng.Next(0, 18);
+                for (int t = 0; t < trees; t++)
+                {
+                    // Rejection sampling for irregular density (not a filled disc).
+                    float ang = (float)rng.NextDouble() * Mathf.PI * 2f;
+                    float rad = patchR * Mathf.Sqrt((float)rng.NextDouble());
+                    float dens = Mathf.PerlinNoise(pos.x * 0.05f + rad * 0.2f, pos.z * 0.05f + ang);
+                    if (dens < 0.28f && rng.NextDouble() < 0.55) continue;
+
+                    Vector3 local = new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
+                    if (FlatDist(pos + local, ColonyLayout.CampusOrigin) < _body.CampusExclusion * 0.8f)
+                        continue;
+
+                    SpawnTree(patch.transform, local, rng);
+                }
+
+                ColonyVisualUtility.SnapToGround(patch);
+                placed.Add(pos);
+            }
+        }
+
+        private void SpawnTree(Transform parent, Vector3 local, System.Random rng)
+        {
+            var tree = new GameObject("Tree");
+            tree.transform.SetParent(parent, false);
+            tree.transform.localPosition = local;
+
+            float h = Mathf.Lerp(1.1f, 2.6f, (float)rng.NextDouble());
+            float trunkR = Mathf.Lerp(0.12f, 0.28f, (float)rng.NextDouble());
+
+            var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            trunk.name = "Trunk";
+            trunk.transform.SetParent(tree.transform, false);
+            trunk.transform.localPosition = new Vector3(0f, h * 0.28f, 0f);
+            trunk.transform.localScale = new Vector3(trunkR * 2f, h * 0.28f, trunkR * 2f);
+            Object.Destroy(trunk.GetComponent<Collider>());
+            Tint(trunk, Color.Lerp(_body.ForestTrunk, _body.RockColor, (float)rng.NextDouble() * 0.25f), 0.08f);
+
+            int canopies = 1 + (rng.NextDouble() < 0.45 ? 1 : 0) + (rng.NextDouble() < 0.2 ? 1 : 0);
+            for (int c = 0; c < canopies; c++)
+            {
+                float cr = Mathf.Lerp(0.9f, 2.1f, (float)rng.NextDouble());
+                var canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                canopy.name = $"Canopy_{c}";
+                canopy.transform.SetParent(tree.transform, false);
+                canopy.transform.localPosition = new Vector3(
+                    (float)(rng.NextDouble() - 0.5) * cr * 0.35f,
+                    h * Mathf.Lerp(0.55f, 0.95f, (float)rng.NextDouble()),
+                    (float)(rng.NextDouble() - 0.5) * cr * 0.35f);
+                canopy.transform.localScale = new Vector3(
+                    cr * Mathf.Lerp(0.85f, 1.25f, (float)rng.NextDouble()),
+                    cr * Mathf.Lerp(0.55f, 0.95f, (float)rng.NextDouble()),
+                    cr * Mathf.Lerp(0.85f, 1.25f, (float)rng.NextDouble()));
+                Object.Destroy(canopy.GetComponent<Collider>());
+                Color leaf = Color.Lerp(
+                    _body.ForestCanopy,
+                    _body.GroundLight,
+                    (float)rng.NextDouble() * 0.35f);
+                Tint(canopy, leaf, 0.12f);
             }
         }
 

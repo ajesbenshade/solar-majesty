@@ -55,11 +55,23 @@ namespace SolarMajesty
             }
         }
 
+        public static void ResetCampaign()
+        {
+            HighestUnlocked = CelestialBodyId.Earth;
+            PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
+            PlayerPrefs.SetInt(FreshKey, 1);
+            BodySeed.SetBody(CelestialBodyId.Earth);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>Debug cheat (Shift+F10): unlock Earth → Luna → Mars.</summary>
         public static void DebugUnlockAll()
         {
             HighestUnlocked = CelestialBodyId.Mars;
-            PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
+            PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Mars);
+            PlayerPrefs.SetInt(FreshKey, 1);
             PlayerPrefs.Save();
+            Debug.Log("[Campaign] Debug unlocked all bodies through Mars.");
         }
     }
 }

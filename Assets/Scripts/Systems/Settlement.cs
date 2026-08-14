@@ -4,36 +4,45 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Population, housing, HAB tax, and camp production.
-    /// Campaign sustain gate uses <see cref="PopulationGoal"/> + camp balance.
+    /// Citizens live in HABs: tax is per person; births need spare beds;
+    /// destroyed housing kills occupants (runtime reports the deaths).
     /// </summary>
     public sealed class Settlement
     {
         public const int HousingPerHab = 3;
         public const int MaxVillageHabs = 12;
         public const int MaxVillagers = 8;
+        public const int StarterColonists = 2;
+        public const int TaxPerCitizen = 2;
 
-        public int Population { get; private set; } = 6;
-        public int CoreHabs { get; set; } = 3;
+        public int Population { get; private set; }
+        public int PalaceCount { get; private set; }
+        public int CoreHabs { get; set; }
         public int VillageHabs { get; private set; }
         public int Farms { get; private set; }
         public int Mines { get; private set; }
         public int RegolithCamps { get; private set; }
         public int LastTax { get; private set; }
+        public int LastBirths { get; private set; }
+        public int LastDeaths { get; private set; }
+
+        public bool HasPalace => PalaceCount > 0;
 
         /// <summary>Preset conquest goal (set per body / campaign beat).</summary>
         public int PopulationGoal { get; private set; } = 12;
 
         public int Housing => (CoreHabs + VillageHabs) * HousingPerHab;
         public int CampCount => Farms + Mines + RegolithCamps;
-        public int TargetPopulation { get; private set; } = 6;
+        public int VacantBeds => Mathf.Max(0, Housing - Population);
+
+        /// <summary>Overcrowded (or at cap) — village should grow a new HAB.</summary>
         public bool NeedsVillageHab =>
-            TargetPopulation > Housing && VillageHabs < MaxVillageHabs;
+            HasPalace && CoreHabs > 0 && Population >= Housing && VillageHabs < MaxVillageHabs;
+
+        public bool CanBirth => Population > 0 && Population < Housing;
 
         public bool MeetsPopulationGoal => Population >= PopulationGoal && Housing >= Population;
 
-        /// <summary>
-        /// Colony can feed itself: pop at goal, farm+mine online, and stockpile not empty.
-        /// </summary>
         public bool IsSustainable =>
             MeetsPopulationGoal &&
             Farms > 0 &&
@@ -55,6 +64,10 @@ namespace SolarMajesty
         {
             get
             {
+                if (!HasPalace)
+                    return "raise the Palace keep first";
+                if (CoreHabs <= 0)
+                    return "dock a Habitat for colonists";
                 if (!MeetsPopulationGoal)
                     return $"grow to {PopulationGoal} (now {Population}, housing {Housing})";
                 if (Farms <= 0 || Mines <= 0)
@@ -72,7 +85,8 @@ namespace SolarMajesty
 
         public float TaxInterval { get; set; } = 24f;
         public float ProductionInterval { get; set; } = 8f;
-        public float GrowInterval { get; set; } = 16f;
+        public float GrowInterval { get; set; } = 18f;
+        public bool BirthDue { get; private set; }
 
         public Settlement(ResourceManager resources)
         {
@@ -88,7 +102,6 @@ namespace SolarMajesty
         public void Tick(float dt)
         {
             if (dt <= 0f || _resources == null) return;
-            RecalcTarget();
 
             _prodTimer -= dt;
             if (_prodTimer <= 0f)
@@ -108,8 +121,8 @@ namespace SolarMajesty
             if (_growTimer <= 0f)
             {
                 _growTimer += GrowInterval;
-                if (Population < TargetPopulation && Population < Housing)
-                    Population++;
+                LastBirths = 0;
+                BirthDue = CanBirth;
             }
         }
 
@@ -117,6 +130,7 @@ namespace SolarMajesty
         {
             switch (cat)
             {
+                case BuildingCategory.Palace: PalaceCount++; break;
                 case BuildingCategory.Farm: Farms++; break;
                 case BuildingCategory.Mine: Mines++; break;
                 case BuildingCategory.RegolithCamp: RegolithCamps++; break;
@@ -124,9 +138,63 @@ namespace SolarMajesty
             }
         }
 
+        public void Unregister(BuildingCategory cat, bool villageHab = false)
+        {
+            switch (cat)
+            {
+                case BuildingCategory.Palace:
+                    PalaceCount = Mathf.Max(0, PalaceCount - 1);
+                    break;
+                case BuildingCategory.Farm:
+                    Farms = Mathf.Max(0, Farms - 1);
+                    break;
+                case BuildingCategory.Mine:
+                    Mines = Mathf.Max(0, Mines - 1);
+                    break;
+                case BuildingCategory.RegolithCamp:
+                    RegolithCamps = Mathf.Max(0, RegolithCamps - 1);
+                    break;
+                case BuildingCategory.Habitat:
+                    if (villageHab)
+                        VillageHabs = Mathf.Max(0, VillageHabs - 1);
+                    else
+                        CoreHabs = Mathf.Max(0, CoreHabs - 1);
+                    break;
+            }
+
+            if (Population > Housing)
+                Population = Housing;
+        }
+
+        /// <summary>First HAB on a body: drop a starter crew into the census.</summary>
+        public int SeedStarterCrew()
+        {
+            if (Population > 0) return 0;
+            int n = Mathf.Min(StarterColonists, Housing);
+            Population = n;
+            return n;
+        }
+
         public void AddVillageHab()
         {
             VillageHabs++;
+        }
+
+        public bool TryBirth()
+        {
+            BirthDue = false;
+            if (!CanBirth) return false;
+            Population++;
+            LastBirths = 1;
+            return true;
+        }
+
+        public int KillResidents(int count)
+        {
+            int killed = Mathf.Clamp(count, 0, Population);
+            Population -= killed;
+            LastDeaths = killed;
+            return killed;
         }
 
         public void LoseVillageHab()
@@ -134,21 +202,6 @@ namespace SolarMajesty
             VillageHabs = Mathf.Max(0, VillageHabs - 1);
             if (Population > Housing)
                 Population = Housing;
-        }
-
-        public void RecalcTarget()
-        {
-            int wealth = 0;
-            if (_resources != null)
-            {
-                wealth = _resources.Get(ResourceId.Regolith)
-                         + _resources.Get(ResourceId.Metals)
-                         + _resources.Get(ResourceId.WaterIce);
-            }
-            int fromWealth = wealth / 18;
-            int fromCamps = CampCount * 2;
-            int natural = 6 + fromWealth + fromCamps;
-            TargetPopulation = Mathf.Clamp(Mathf.Max(PopulationGoal, natural), 6, 36);
         }
 
         private void ProduceCamps()
@@ -163,8 +216,7 @@ namespace SolarMajesty
 
         private void CollectTax()
         {
-            int habs = CoreHabs + VillageHabs;
-            LastTax = habs * 2;
+            LastTax = Population * TaxPerCitizen;
             if (LastTax > 0)
                 _resources.Add(ResourceId.Metals, LastTax);
         }

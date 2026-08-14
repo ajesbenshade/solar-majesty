@@ -11,7 +11,7 @@ Shareable overseer-loop sandbox: post flags, place mesh buildings, watch a party
 4. Open scene via menu **Solar Majesty → Open Demo Scene**  
    (or double-click `Assets/Scenes/LunarOutpost_Sandbox.unity` in the Project window).  
    Hierarchy must show **GameLoop** + **Main Camera** + **Directional Light**.
-5. Select the **Game** tab (not only Scene view) and press **Play**.
+5. Select the **Game** tab (not only Scene view) and press **Play**. You should see the title screen over a frozen drop.
 
 If you only see empty sky with no GameLoop in Hierarchy, you are in the wrong scene — use **Open Demo Scene**.  
 If the scene asset is missing: **Solar Majesty → Build Demo Scene**, then Play.
@@ -22,16 +22,20 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 ---
 
+Play opens on the **title screen** (frozen drop behind the menu). **New Game** wipes campaign prefs and starts the Earth empty drop. **Continue** reloads the last stockpile on the saved body. **Esc** pauses in play.
+
 ## Controls
 
 | Input | Action |
 |-------|--------|
+| **Esc** | Pause / resume (Settings from pause or title) |
 | **WASD** / edge pan / **LMB–MMB–RMB drag** / scroll | Isometric camera |
 | **G** / **B** / **Q** / **Tab** | Open Flag popup / Build popup / close tool / cycle (also bottom dock) |
 | **F1** Explore · **F2** ClearThreat · **F3** Build · **F4** Extract · **F5** Defend | Flag type (in Flag popup when open) |
-| **1–9 / 0** | Select building (Pad · HAB · PWR · OPS · LAB · CMD · Solar · Farm · Mine · Regolith camp; workshops in Build popup) |
+| **1–9 / 0** | Select building (Palace · HAB · PWR · OPS · LAB · Pad · CMD · …; Airlock + workshops in Build popup) |
 | **LMB** | Inspect: select specialist or building (info / workers / FLAG HERE). Flag/Build: empty ground places · drag pans |
-| **P** | Form a specialist party at the waystation inn (2+ heroes near the inn, max 4) |
+| **RMB** on a flag | Cancel that bounty and **refund escrowed MET** |
+| **P** | Form a party from the current selection (2+), else 2+ heroes at the inn (max 4) |
 | **[** | Disband selected party (or the last party) |
 | **T** | Toggle research / tech tree panel |
 | **F6** / **F7** | Camera → Campus A / Campus B (HUD A/B chips on bottom dock) |
@@ -45,7 +49,7 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 **Procedural worlds / campaign:** fresh play starts on **Earth** (tutorial). Body chips show unlocked worlds only (`EARTH?` while locked). Conquest win unlocks the next body — win banner **TO LUNA** / **TO MARS**. Each body keeps its own seed on a **384 m** sandbox. **F4 Extract** near a node harvests that deposit; **F2 ClearThreat** clears lair fauna. **Shift+F10** unlocks all bodies for debug. Campus A landing stays fixed. Same body+seed → same map.
 
-**No click-to-move on specialists.** They act like Majesty 2 heroes: take bounties they want, **flee to the waystation inn** when hurt, **hunt** nearby fauna if brave, and hang out at **per-class workshops** (not guilds) when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. Click a building to inspect and set which class works there. **P** at the inn forms a follow-the-leader party. Population grows with the stockpile and camps; village HABs radiate from Campus A and pay tax. **Conquest gates** (HUD): clear all dens · sustain pop goal with farm+mine · research **Lunar Rocket** (TECH · **T**). Labs tick science into one active tech. Flag/Build menus are popups above the bottom dock — click the dock button again (or **Q**) to close.
+**No click-to-move on specialists.** Outdoor units are **robots** fabricated when their **workshop** finishes building (Scout / Engineer / Defense / Medic). **Humans live only in HABs** (tax, births, beds) — never as outdoor agents. Raise the **Palace Keep** first (Majesty castle). **Airlock Junctions** snap only to module face midlines (symmetry axes); every other module must Lego-dock onto an airlock end. Robots take bounties they want, **flee to the rest beacon** when hurt, **hunt** nearby fauna if brave, and hang out at workshops when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. **P** parties the current selection or inn. Bounties escrow **MET** from the stockpile; robots keep **$**. **Conquest gates** (HUD): clear all dens · sustain pop goal with farm+mine · research **Lunar Rocket** (TECH · **T**). Labs tick science into one active tech. Flag/Build menus are popups above the bottom dock — click the dock button again (or **Q**) to close.
 
 ---
 
@@ -53,12 +57,13 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 Speak while playing (fresh prefs / Earth):
 
-1. **Show Earth campus** — blue sky, dome + HAB spine, pad, starter **Farm** + **Mine** south of campus. Note conquest gates: dens · sustain · launch.
-2. **TECH · T** — Field Survey is already ticking from the LAB; completions auto-queue the next tech. Point at tip **Lunar Rocket**.
-3. **Threat** — **F2 ClearThreat** on a den; Defense/party clears fauna; dens checkbox fills as lairs go quiet.
-4. **Economy** — grow POP toward goal 8 (extra HAB / camps optional); sustain meter holds when stockpile is healthy.
-5. **Rocket** — tree auto-advances toward **Lunar Rocket** (pays metals/ice). Pad stages departure craft (reuses starship); Launch gate checks.
-6. **Win** — OUTPOST SECURED → **TO LUNA**.
+1. **Title** — New Game. Empty drop: map + dens only; orange claim disc at Campus A. Starter stockpile is loaded. First-run beats (Palace → HAB → workshop robot → flag → TECH) are skippable.
+2. **Build (B)** — **Palace Keep** (key 1) on the claim → **Airlock Junction** snapped to a face socket → dock **HAB** / workshops onto airlock ends (Lego campus).
+3. **TECH · T** — once the LAB is up, Field Survey ticks; completions auto-queue toward **Lunar Rocket**.
+4. **Threat** — **F2 ClearThreat** on a den; dens checkbox fills as lairs go quiet.
+5. **Economy** — place **Farm** + **Mine**, grow POP toward goal 8; sustain holds when stockpile is healthy.
+6. **Rocket** — finish tree to **Lunar Rocket** (pays metals/ice). Pad stages departure craft; Launch gate checks.
+7. **Win** — OUTPOST SECURED → **TO LUNA**.
 
 ## Luna excerpt (after Earth)
 
@@ -207,8 +212,8 @@ Speak while playing (fresh prefs / Earth):
 
 | Is | Isn’t |
 |----|--------|
-| Playable overseer loop with multi-stake win/lose + deadline | Full game / campaign |
-| Personality + greed + **local** threat + NavMesh campus pathing | Save/load, dual parties |
+| Playable overseer loop + Earth → Luna → Mars campaign | Finished commercial game |
+| Personality + greed + **local** threat + NavMesh campus pathing | Full save (continue is stockpile + body + research prefs) |
 | Mesh building kit + Luna/Mars lighting + Campus A/B framing | Final Blender hero unit art / animation |
 
 See also: `Docs/VERTICAL_SLICE_PHASE1.md`, `Docs/PHASE_1_6_THREAT.md`, `Docs/PHASE_2A_BITE_AND_BOUNTY.md`, `Docs/PHASE_2B_NAVMESH_AND_JUICE.md`, `Docs/PHASE_3A_PRESENTATION_AND_MISSION.md`, `Docs/PHASE_3B_UNITS_VOLUME_WAVES.md`, `Docs/PHASE_4A_MISSION_STAKES.md`, `Docs/PHASE_4B_CONTENT_SCALE.md`, `Docs/PHASE_5A_MAP_DEADLINE_AMBIENT.md`, `Docs/PHASE_5C_MULTI_BODY.md`, `Docs/PHASE_5D_BODY_FRAMING.md`, `Docs/ART_DIRECTION.md`.

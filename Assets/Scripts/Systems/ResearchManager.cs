@@ -31,6 +31,12 @@ namespace SolarMajesty
             Load();
         }
 
+        public static void WipeUnlocks()
+        {
+            PlayerPrefs.DeleteKey(PrefsKey);
+            PlayerPrefs.Save();
+        }
+
         private void Load()
         {
             string raw = PlayerPrefs.GetString(PrefsKey, "");

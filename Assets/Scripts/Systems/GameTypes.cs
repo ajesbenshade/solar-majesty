@@ -46,7 +46,10 @@ namespace SolarMajesty
         Inn = 10,
         ScoutWorkshop = 11,
         EngineerWorkshop = 12,
-        DefenseWorkshop = 13
+        DefenseWorkshop = 13,
+        MedicWorkshop = 14,
+        /// <summary>Majesty-style keep — must be built first; campus docks from its airlocks.</summary>
+        Palace = 15
     }
 
     [Serializable]

@@ -65,6 +65,12 @@ namespace SolarMajesty
         private void Update()
         {
             if (_placer == null) return;
+            if (_loop != null && !_loop.IsPlaying)
+            {
+                if (_ghost != null) _ghost.SetActive(false);
+                if (_footprint != null) _footprint.SetActive(false);
+                return;
+            }
 
             // Hotkeys always switch selection; placement only when tool enabled.
             if (Input.GetKeyDown(KeyCode.Alpha1)) Select(0);
@@ -87,7 +93,12 @@ namespace SolarMajesty
 
             if (!TryGround(out Vector3 world)) return;
             Vector2Int cell = _grid != null ? _grid.WorldToCell(world) : Vector2Int.zero;
-            Vector3 snapped = _grid != null ? _grid.CellToWorld(cell) : world;
+
+            // Lego snap: airlocks → module sockets; modules → airlock ends.
+            if (_placer.TrySnapDock(Selected, cell, out Vector2Int snappedCell))
+                cell = snappedCell;
+
+            Vector3 snapped = FootprintWorldCenter(cell, Selected);
 
             EnsureGhost();
             EnsureFootprint();
@@ -132,32 +143,16 @@ namespace SolarMajesty
 
         private void SpawnBuildingVisual(ConstructionOrder order)
         {
-            GameObject prefab = order.Data.prefab != null
-                ? order.Data.prefab
-                : BuildingVisualCatalog.LoadPrefab(order.Data.category);
-
-            GameObject go;
-            float scale = ColonyLayout.ScaleForCategory(order.Data.category);
-            if (order.Data.category == BuildingCategory.Utility)
-            {
-                go = ColonyVisualUtility.SpawnPlusConnector(order.WorldPosition, _buildingRoot, scale);
-            }
-            else if (prefab != null)
-            {
-                go = ColonyVisualUtility.InstantiateOriented(prefab, order.WorldPosition, _buildingRoot);
-                go.transform.localScale = Vector3.one * scale;
-            }
-            else
-            {
-                go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                go.transform.SetParent(_buildingRoot, true);
-                go.transform.position = order.WorldPosition + Vector3.up * (0.75f * scale);
-                go.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f) * scale;
-            }
+            float cell = _grid != null ? _grid.CellSize : ColonyLayout.DefaultCellSize;
+            GameObject go = ModularBuildingFactory.Spawn(
+                order.Data.category,
+                order.WorldPosition,
+                _buildingRoot,
+                order.Data.footprintWidth,
+                order.Data.footprintHeight,
+                cell);
 
             go.name = $"Bld_{order.Data.displayName}_{order.Id}";
-            ColonyVisualUtility.EnsureUrpMaterials(go);
-            ColonyVisualUtility.SnapToGround(go);
             CampusNavMesh.AddObstacle(go);
             _loop?.NotifyBuildingPlaced(order.Data, go, order.WorldPosition);
             _loop?.NotifyCampusExpanded();
@@ -182,38 +177,17 @@ namespace SolarMajesty
                 _ghost = null;
             }
 
-            GameObject prefab = Selected != null
-                ? (Selected.prefab != null ? Selected.prefab : BuildingVisualCatalog.LoadPrefab(Selected.category))
-                : null;
+            if (Selected == null) return;
 
-            float scale = Selected != null
-                ? ColonyLayout.ScaleForCategory(Selected.category)
-                : ColonyLayout.ModuleScale;
-
-            if (Selected != null && Selected.category == BuildingCategory.Utility)
-            {
-                _ghost = ColonyVisualUtility.SpawnPlusConnector(Vector3.zero, null, scale);
-                _ghost.name = $"Ghost_{Selected.category}";
-                foreach (var col in _ghost.GetComponentsInChildren<Collider>())
-                    Destroy(col);
-            }
-            else if (prefab != null)
-            {
-                _ghost = Instantiate(prefab);
-                _ghost.name = Selected != null ? $"Ghost_{Selected.category}" : "BuildGhost";
-                _ghost.transform.localScale = Vector3.one * scale;
-                foreach (var col in _ghost.GetComponentsInChildren<Collider>())
-                    Destroy(col);
-                ColonyVisualUtility.EnsureUrpMaterials(_ghost);
-            }
-            else
-            {
-                _ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                _ghost.name = "BuildGhost";
-                _ghost.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f) * scale;
-                Destroy(_ghost.GetComponent<Collider>());
-            }
-
+            float cell = _grid != null ? _grid.CellSize : ColonyLayout.DefaultCellSize;
+            _ghost = ModularBuildingFactory.Spawn(
+                Selected.category,
+                Vector3.zero,
+                null,
+                Selected.footprintWidth,
+                Selected.footprintHeight,
+                cell,
+                ghost: true);
             ColonyVisualUtility.ApplyGhostTint(_ghost, true);
         }
 
@@ -246,6 +220,18 @@ namespace SolarMajesty
             var rend = _footprint.GetComponent<Renderer>();
             if (rend != null)
                 rend.sharedMaterial = ColonyVisualUtility.GetFootprintMaterial(valid);
+        }
+
+        private Vector3 FootprintWorldCenter(Vector2Int origin, BuildingData data)
+        {
+            if (_grid == null || data == null)
+                return Vector3.zero;
+            Vector3 corner = _grid.CellToWorld(origin);
+            float cs = _grid.CellSize;
+            return corner + new Vector3(
+                (data.footprintWidth - 1) * 0.5f * cs,
+                0f,
+                (data.footprintHeight - 1) * 0.5f * cs);
         }
 
         private bool TryGround(out Vector3 world)

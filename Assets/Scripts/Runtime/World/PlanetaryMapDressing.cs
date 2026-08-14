@@ -105,6 +105,7 @@ namespace SolarMajesty
                 filterMode = FilterMode.Bilinear
             };
             var pixels = new Color[size * size];
+            bool earthy = body.Id == CelestialBodyId.Earth;
             for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
             {
@@ -112,6 +113,14 @@ namespace SolarMajesty
                 float n2 = Mathf.PerlinNoise(x * 0.37f + 20f, y * 0.37f + 8f);
                 float h = Frac(Mathf.Sin(x * 127.1f + y * 311.7f) * 43758.5453f);
                 Color c = Color.Lerp(body.GroundDark, body.GroundLight, n * 0.65f + n2 * 0.35f);
+                if (earthy)
+                {
+                    float meadow = Mathf.PerlinNoise(x * 0.07f + 3f, y * 0.07f + 1f);
+                    float soil = Mathf.PerlinNoise(x * 0.22f + 9f, y * 0.22f);
+                    c = Color.Lerp(c, body.GroundLight * 1.08f, meadow * 0.35f);
+                    if (soil > 0.72f)
+                        c = Color.Lerp(c, body.SoilNodeColor, 0.22f);
+                }
                 c *= 0.92f + h * 0.16f;
                 pixels[y * size + x] = c;
             }

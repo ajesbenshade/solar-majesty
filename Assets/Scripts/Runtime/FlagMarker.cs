@@ -38,10 +38,27 @@ namespace SolarMajesty
             transform.position = _basePos;
             CacheBaseColor();
             ApplyColor(_baseColor);
+            EnsureHitCollider();
             EnsureLabels();
             EnsureClaimBadge();
             RefreshLabels();
             RefreshClaimVisual();
+        }
+
+        private void EnsureHitCollider()
+        {
+            var cols = GetComponentsInChildren<Collider>();
+            for (int i = 0; i < cols.Length; i++)
+            {
+                if (cols[i] != null && cols[i].GetType() != typeof(BoxCollider))
+                    Destroy(cols[i]);
+            }
+
+            var box = GetComponent<BoxCollider>();
+            if (box == null) box = gameObject.AddComponent<BoxCollider>();
+            box.size = new Vector3(1.2f, 2.2f, 1.2f);
+            box.center = new Vector3(0f, 0.9f, 0f);
+            box.isTrigger = false;
         }
 
         private void Update()
@@ -155,7 +172,12 @@ namespace SolarMajesty
             if (_handle == null) return;
 
             if (_bountyLabel != null)
-                _bountyLabel.text = $"$ {_handle.CurrentBounty:F0}";
+            {
+                string pay = $"$ {_handle.CurrentBounty:F0}";
+                if (_handle.EscrowMetals > 0)
+                    pay += $"  ·  {_handle.EscrowMetals} MET";
+                _bountyLabel.text = pay;
+            }
 
             if (_metaLabel != null)
             {
@@ -163,7 +185,7 @@ namespace SolarMajesty
                 float work = _manager != null ? _manager.GetWorkRemaining(_handle) : 0f;
                 int claims = _handle.ClaimCount;
                 string claimTxt = claims > 0 ? $"CLAIMED x{claims}" : "OPEN";
-                _metaLabel.text = $"{type}  ·  {claimTxt}\nw {work:F1}";
+                _metaLabel.text = $"{type}  ·  {claimTxt}  ·  RMB cancel\nw {work:F1}";
             }
         }
 

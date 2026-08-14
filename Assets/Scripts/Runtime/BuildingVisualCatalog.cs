@@ -19,6 +19,7 @@ namespace SolarMajesty
                 { BuildingCategory.Defense, "Buildings/SM_CMD1_CommandBuilding" },
                 { BuildingCategory.Utility, "Buildings/SM_ModularTubeConnector" },
                 { BuildingCategory.Laboratory, "Buildings/SM_LAB1_LaboratoryModule" },
+                // Unique modular kits (Farm / Mine / Camp / Workshops) are composed at runtime.
                 { BuildingCategory.Farm, "Buildings/SM_LAB1_LaboratoryModule" },
                 { BuildingCategory.Mine, "Buildings/SM_OPS1_OperationsUnit" },
                 { BuildingCategory.RegolithCamp, "Buildings/SM_PWR1_PowerNode" },
@@ -26,6 +27,8 @@ namespace SolarMajesty
                 { BuildingCategory.ScoutWorkshop, "Buildings/SM_LAB1_LaboratoryModule" },
                 { BuildingCategory.EngineerWorkshop, "Buildings/SM_OPS1_OperationsUnit" },
                 { BuildingCategory.DefenseWorkshop, "Buildings/SM_CMD1_CommandBuilding" },
+                { BuildingCategory.MedicWorkshop, "Buildings/SM_HAB1_HabitatModule" },
+                { BuildingCategory.Palace, "Buildings/SM_CommandDome_CentralHub" },
             };
 
         private static readonly Dictionary<string, GameObject> Cache = new Dictionary<string, GameObject>();

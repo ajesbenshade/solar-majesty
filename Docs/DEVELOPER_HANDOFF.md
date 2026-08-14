@@ -27,10 +27,10 @@ and an Alpha Centauri-style tech tree (TECH · T). Dust Stalkers raise ThreatPre
 
 ## Open & verify first (mandatory)
 1. Unity Hub → Open the repo root (needs Unity 6000.5.x).
-2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (starts on Earth if prefs fresh).
+2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (title screen; New Game is Earth if prefs fresh).
 3. If scene missing: menu Solar Majesty → Build Demo Scene.
-4. Run the Earth tutorial script in Docs/DEMO.md (TECH · T, dens, starter farm/mine, Lunar Rocket, TO LUNA).
-5. Confirm: no building Upgrade button; conquest gates panel; research auto-queue; launch craft stages on pad (reuses starship).
+4. Run the Earth tutorial script in Docs/DEMO.md (empty drop → build campus → dens → Lunar Rocket → TO LUNA).
+5. Confirm: no free starter robots; HAB = humans; workshops fabricate outdoor robots; empty drop + conquest gates + research.
 
 ## Architecture map
 - Pure systems: Assets/Scripts/Systems/ (SpecialistBrain, FlagManager, BuildingPlacer,
@@ -55,9 +55,9 @@ and an Alpha Centauri-style tech tree (TECH · T). Dust Stalkers raise ThreatPre
 3. Optional full B party / content pass.
 
 ## Controls reference
-G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
-F4 Extract · F5 Defend · +/- bounty · LMB post/place · 1–7 buildings ·
-R force fatigue Rest · F8 debug · Y revive.
+Esc pause · G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
+F4 Extract · F5 Defend · +/- bounty · LMB post/place · RMB cancel flag · 1–7 buildings ·
+P party (selection or inn) · R force fatigue Rest · F8 debug · Y revive.
 
 When done with a change set: commit on main (or PR) with a clear message and
 update Docs/NEXT_STEPS.md if milestones moved.
@@ -99,8 +99,8 @@ update Docs/NEXT_STEPS.md if milestones moved.
 
 - Building footprints vs real mesh size are still approximate  
 - Unit meshes are Blender blockouts pending Imagine turnaround refinement  
-- Multi-body is camera/layout only (no per-body economy yet)  
-- No multiplayer / save / campaign  
+- Continue slot is stockpile + last body (not a full world snapshot)  
+- No multiplayer  
 
 ---
 

@@ -81,6 +81,10 @@ namespace SolarMajesty
                     c = new Color(0.95f, 0.35f, 0.2f);
                     text = _agent.Status == "engaging" ? "FIGHT" : "HUNT";
                     break;
+                case SpecialistAction.Repair:
+                    c = new Color(0.45f, 0.85f, 1f);
+                    text = "FIX";
+                    break;
                 case SpecialistAction.Wander:
                     c = new Color(0.72f, 0.78f, 0.55f);
                     text = _agent.LastReason != null && _agent.LastReason.Contains("party_follow") ? "PARTY"

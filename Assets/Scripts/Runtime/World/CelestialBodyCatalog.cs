@@ -57,6 +57,10 @@ namespace SolarMajesty
                 SoilNodeColor = new Color(0.40f, 0.36f, 0.22f),
                 LairRim = new Color(0.20f, 0.10f, 0.08f),
                 LairPit = new Color(0.08f, 0.05f, 0.04f),
+                WaterDeep = new Color(0.10f, 0.26f, 0.40f),
+                WaterShallow = new Color(0.20f, 0.52f, 0.58f),
+                ForestCanopy = new Color(0.12f, 0.34f, 0.14f),
+                ForestTrunk = new Color(0.30f, 0.18f, 0.10f),
                 SkyTop = new Color(0.22f, 0.42f, 0.72f),
                 SkyHorizon = new Color(0.62f, 0.72f, 0.82f),
                 SunColor = new Color(1f, 0.96f, 0.88f),
@@ -70,9 +74,12 @@ namespace SolarMajesty
                 FogEnd = 280f,
                 AtmosphereThickness = 1.05f,
                 SkyExposure = 1.05f,
-                CraterCount = 24,
-                RockCount = 50,
-                DuneCount = 12,
+                CraterCount = 0,
+                RockCount = 36,
+                DuneCount = 0,
+                LakeCount = 7,
+                RiverCount = 4,
+                ForestPatchCount = 14,
                 ResourceNodeCount = 10,
                 LairCount = 3,
                 CampusExclusion = 20f,
@@ -81,7 +88,11 @@ namespace SolarMajesty
                 ResourceWeights = new[] { 4, 3, 3, 1 },
                 PopulationGoal = 8,
                 SustainHoldSeconds = 25f,
-                ResearchRateMultiplier = 1.35f
+                ResearchRateMultiplier = 1.35f,
+                StartRegolith = 110,
+                StartWaterIce = 70,
+                StartMetals = 340,
+                StartPower = 120
             };
         }
 
@@ -126,7 +137,11 @@ namespace SolarMajesty
                 ResourceWeights = new[] { 5, 3, 2, 2 },
                 PopulationGoal = 12,
                 SustainHoldSeconds = 40f,
-                ResearchRateMultiplier = 1f
+                ResearchRateMultiplier = 1f,
+                StartRegolith = 90,
+                StartWaterIce = 55,
+                StartMetals = 300,
+                StartPower = 110
             };
         }
 
@@ -171,7 +186,11 @@ namespace SolarMajesty
                 ResourceWeights = new[] { 3, 5, 2, 2 },
                 PopulationGoal = 16,
                 SustainHoldSeconds = 50f,
-                ResearchRateMultiplier = 0.9f
+                ResearchRateMultiplier = 0.9f,
+                StartRegolith = 100,
+                StartWaterIce = 65,
+                StartMetals = 320,
+                StartPower = 120
             };
         }
     }

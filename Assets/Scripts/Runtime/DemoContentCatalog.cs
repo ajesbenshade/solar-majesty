@@ -18,6 +18,7 @@ namespace SolarMajesty
         public const string ExtractFlagPath = "DemoContent/Flags/Flag_Extract";
         public const string DefendFlagPath = "DemoContent/Flags/Flag_DefendArea";
 
+        public const string PalacePath = "DemoContent/Buildings/Building_Palace";
         public const string LandingPadPath = "DemoContent/Buildings/Building_LandingPad";
         public const string HabPath = "DemoContent/Buildings/Building_HAB1";
         public const string PowerPath = "DemoContent/Buildings/Building_PWR1";
@@ -44,6 +45,7 @@ namespace SolarMajesty
 
         public static BuildingData[] LoadStarterBuildings()
         {
+            var palace = Resources.Load<BuildingData>(PalacePath);
             var pad = Resources.Load<BuildingData>(LandingPadPath);
             var hab = Resources.Load<BuildingData>(HabPath);
             var pwr = Resources.Load<BuildingData>(PowerPath);
@@ -54,11 +56,18 @@ namespace SolarMajesty
             if (pad == null || hab == null || pwr == null || ops == null)
                 return null;
 
+            // Palace is injected by GameLoop.EnsurePalaceFirst when the asset is missing.
             if (lab != null && cmd != null && solar != null)
-                return new[] { pad, hab, pwr, ops, lab, cmd, solar };
+                return palace != null
+                    ? new[] { palace, hab, pwr, ops, lab, pad, cmd, solar }
+                    : new[] { pad, hab, pwr, ops, lab, cmd, solar };
             if (lab != null && cmd != null)
-                return new[] { pad, hab, pwr, ops, lab, cmd };
-            return new[] { pad, hab, pwr, ops };
+                return palace != null
+                    ? new[] { palace, hab, pwr, ops, lab, pad, cmd }
+                    : new[] { pad, hab, pwr, ops, lab, cmd };
+            return palace != null
+                ? new[] { palace, hab, pwr, ops, pad }
+                : new[] { pad, hab, pwr, ops };
         }
 
         public static GameObject LoadUnitPrefab(SpecialistClass cls)

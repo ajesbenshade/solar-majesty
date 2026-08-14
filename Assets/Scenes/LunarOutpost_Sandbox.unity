@@ -382,7 +382,8 @@ MonoBehaviour:
   dustStalkerCount: 2
   stalkerSpawnRadius: 14
   spawnGroundPlane: 1
-  spawnShowcaseColony: 1
+  spawnShowcaseColony: 0
+  spawnWaystationInn: 0
 --- !u!4 &1891535069
 Transform:
   m_ObjectHideFlags: 0

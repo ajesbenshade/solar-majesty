@@ -10,6 +10,14 @@ namespace SolarMajesty
         Flag = 2
     }
 
+    public enum DemoScreen
+    {
+        Title = 0,
+        Playing = 1,
+        Paused = 2,
+        Settings = 3
+    }
+
     /// <summary>
     /// Vertical-slice bootstrap: owns pure C# systems and thin scene drivers.
     /// Phase 1.5: spawns Scout + Engineer + Defense with distinct personalities.
@@ -41,9 +49,6 @@ namespace SolarMajesty
         [SerializeField] private OverseerTool activeTool = OverseerTool.None;
         [SerializeField] private Vector3 specialistSpawnOffset = new Vector3(24f, 0f, 12f);
         [SerializeField] private bool seedStartingResources = true;
-        [SerializeField] private bool spawnFullParty = true;
-        [Tooltip("Campus A party size (1–4). Slot 4 is the Medic.")]
-        [SerializeField] [Range(1, 4)] private int partySize = 4;
 
         public const int MaxPartySize = 4;
 
@@ -53,12 +58,13 @@ namespace SolarMajesty
         [SerializeField] private float stalkerSpawnRadius = 14f;
         [SerializeField] private bool spawnSecondBody = true;
         [SerializeField] private int campusBStalkerCount = 2;
-        [Tooltip("Phase 5E: spawn a Scout detachment at Campus B (shared brain, local threat).")]
-        [SerializeField] private bool spawnCampusBDetachment = true;
 
         [Header("Demo greybox visuals")]
         [SerializeField] private bool spawnGroundPlane = true;
-        [SerializeField] private bool spawnShowcaseColony = true;
+        [Tooltip("Debug: pre-build Campus A/B. Campaign starts empty — map + dens only.")]
+        [SerializeField] private bool spawnShowcaseColony = false;
+        [Tooltip("Debug: spawn waystation inn mesh. Empty start uses a rest beacon only.")]
+        [SerializeField] private bool spawnWaystationInn = false;
 
         [Header("Procedural world")]
         [SerializeField] private CelestialBodyId celestialBody = CelestialBodyId.Earth;
@@ -92,6 +98,13 @@ namespace SolarMajesty
         public ResearchManager Research { get; private set; }
         public IReadOnlyList<HeroParty> Parties => _parties;
         public CelestialBodyId ActiveBody => celestialBody;
+        public bool StartsEmpty => !spawnShowcaseColony;
+        public bool SpawnWaystationInn => spawnWaystationInn;
+        public DemoScreen Screen { get; private set; } = DemoScreen.Title;
+        public bool IsPlaying => Screen == DemoScreen.Playing;
+        public bool AllowsCamera => Screen == DemoScreen.Playing || Screen == DemoScreen.Title;
+        public int TutorialStep { get; private set; }
+        public BuildingData[] StarterBuildings => starterBuildings;
         public CelestialBodyProfile BodyProfile => _body;
         public PlanetaryWorldGen World => _world;
         public int MoonSeedValue => BodySeed.Current;
@@ -193,6 +206,9 @@ namespace SolarMajesty
         private PlanetaryWorldGen _world;
         private CelestialBodyProfile _body;
         private bool _launchCraftStaged;
+        private DemoScreen _settingsReturn = DemoScreen.Title;
+        private float _autosaveTimer;
+        private readonly List<ConstructionOrder> _completedBuilds = new List<ConstructionOrder>(8);
 
         public MissionController Mission => _mission;
 
@@ -205,6 +221,7 @@ namespace SolarMajesty
 
         private void Awake()
         {
+            DemoSettings.Load();
             CampaignProgress.Ensure();
             celestialBody = BodySeed.LoadSavedBody();
             if (!CampaignProgress.IsUnlocked(celestialBody))
@@ -220,15 +237,17 @@ namespace SolarMajesty
             Village = GetComponent<VillageExpansion>();
             if (Village == null) Village = gameObject.AddComponent<VillageExpansion>();
             Village.Bind(this);
-            SpawnShowcaseColony();
-            SpawnEarthStarterCamps();
+            if (spawnShowcaseColony)
+                SpawnShowcaseColony();
+            else
+                SeedEmptyStartClaim();
             GenerateWorld();
             SpawnParty();
             SpawnThreats();
             EnsureNavMesh();
             DemoAtmosphere.Apply(mainCamera, transform, _body);
             PlanetaryMapDressing.Apply(transform, grid, _body);
-            KingdomLife.Dress(transform);
+            KingdomLife.Dress(transform, emptyStart: StartsEmpty);
             EnsureHud();
             EnsureMission();
             LaunchSite.ClearSession();
@@ -236,74 +255,256 @@ namespace SolarMajesty
             BootstrapResearch();
             SyncLaunchGate();
             DemoAudio.Ensure();
+            DemoAudio.ApplyVolumes();
             DemoAudio.SetCampusAmbient(0);
 
-            Debug.Log($"[GameLoop] Demo ready — {_body.DisplayName} seed={BodySeed.Current}.");
+            if (DemoSettings.BootStraightIntoPlay)
+                EnterPlaying(loadStockpile: DemoSettings.SaveExists);
+            else
+                EnterTitle();
+
+            Debug.Log($"[GameLoop] Demo ready — {_body.DisplayName} seed={BodySeed.Current}" +
+                      (StartsEmpty ? " (empty start)." : "."));
+        }
+
+        private void OnDestroy()
+        {
+            Time.timeScale = 1f;
+        }
+
+        public void EnterTitle()
+        {
+            Screen = DemoScreen.Title;
+            Time.timeScale = 0f;
+            ApplyTool(OverseerTool.None);
+        }
+
+        public void EnterPlaying(bool loadStockpile)
+        {
+            Screen = DemoScreen.Playing;
+            Time.timeScale = 1f;
+            if (loadStockpile)
+                DemoSettings.TryLoadStockpile(Resources);
+            DemoSettings.WriteStockpile(Resources);
+            TutorialStep = DemoSettings.TutorialDone ? 5 : 0;
+            _overseerHud?.OnSessionPlaying();
+        }
+
+        public void StartNewGame()
+        {
+            ResearchManager.WipeUnlocks();
+            CampaignProgress.ResetCampaign();
+            DemoSettings.ClearSave();
+            DemoSettings.ResetTutorial();
+            DemoSettings.RequestBootIntoPlay();
+            BodySeed.SetBody(CelestialBodyId.Earth);
+            ReloadActiveScene();
+        }
+
+        public void ContinueGame()
+        {
+            if (!DemoSettings.SaveExists)
+            {
+                EnterPlaying(loadStockpile: false);
+                return;
+            }
+            EnterPlaying(loadStockpile: true);
+        }
+
+        public void TogglePause()
+        {
+            if (Screen == DemoScreen.Title || Screen == DemoScreen.Settings) return;
+            if (Screen == DemoScreen.Paused)
+                ResumePlay();
+            else if (Screen == DemoScreen.Playing)
+                PausePlay();
+        }
+
+        public void PausePlay()
+        {
+            if (Screen != DemoScreen.Playing) return;
+            Screen = DemoScreen.Paused;
+            Time.timeScale = 0f;
+            ApplyTool(OverseerTool.None);
+            DemoSettings.WriteStockpile(Resources);
+        }
+
+        public void ResumePlay()
+        {
+            Screen = DemoScreen.Playing;
+            Time.timeScale = 1f;
+        }
+
+        public void OpenSettings()
+        {
+            _settingsReturn = Screen == DemoScreen.Playing ? DemoScreen.Paused : Screen;
+            if (Screen == DemoScreen.Playing)
+                PausePlay();
+            Screen = DemoScreen.Settings;
+            Time.timeScale = 0f;
+        }
+
+        public void CloseSettings()
+        {
+            DemoSettings.SaveSettings();
+            DemoAudio.ApplyVolumes();
+            if (_settingsReturn == DemoScreen.Paused)
+            {
+                Screen = DemoScreen.Paused;
+                Time.timeScale = 0f;
+            }
+            else if (_settingsReturn == DemoScreen.Title)
+                EnterTitle();
+            else
+                ResumePlay();
+        }
+
+        public void ReturnToTitle()
+        {
+            DemoSettings.WriteStockpile(Resources);
+            EnterTitle();
+        }
+
+        public void QuitDemo()
+        {
+            DemoSettings.WriteStockpile(Resources);
+            Time.timeScale = 1f;
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
+        public void SkipTutorial()
+        {
+            TutorialStep = 5;
+            DemoSettings.MarkTutorialDone();
+        }
+
+        public void NotifyTechOpened()
+        {
+            if (TutorialStep == 4)
+                AdvanceTutorial();
+        }
+
+        public void CancelFlag(FlagHandle handle)
+        {
+            if (handle == null || Flags == null) return;
+            int refund = handle.EscrowMetals;
+            Economy?.RefundBountyEscrow(refund);
+            Flags.Cancel(handle);
+            _overseerHud?.Notify(refund > 0 ? $"Flag cancelled — {refund} MET returned." : "Flag cancelled.", 2.4f);
+            Debug.Log("[Flags] Cancelled — metals refunded.");
+        }
+
+        private void HandleSessionHotkeys()
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (Screen == DemoScreen.Settings)
+                    CloseSettings();
+                else if (Screen == DemoScreen.Title)
+                    return;
+                else
+                    TogglePause();
+            }
+        }
+
+        private void TickTutorial()
+        {
+            if (DemoSettings.TutorialDone || TutorialStep >= 5) return;
+            if (TutorialStep == 0 && Settlement != null && Settlement.HasPalace)
+                AdvanceTutorial();
+            else if (TutorialStep == 1 && HasAnyAirlock())
+                AdvanceTutorial();
+            else if (TutorialStep == 2 && Settlement != null && Settlement.CoreHabs > 0)
+                AdvanceTutorial();
+            else if (TutorialStep == 3 && Flags != null && Flags.Flags.Count > 0)
+                AdvanceTutorial();
+        }
+
+        private bool HasAnyAirlock()
+        {
+            if (Placer == null) return false;
+            var pieces = Placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                if (pieces[i].IsAirlock) return true;
+            }
+            return false;
+        }
+
+        private void AdvanceTutorial()
+        {
+            TutorialStep++;
+            if (TutorialStep >= 5)
+                DemoSettings.MarkTutorialDone();
+        }
+
+        private void TickAutosave()
+        {
+            _autosaveTimer += Time.unscaledDeltaTime;
+            if (_autosaveTimer < 20f) return;
+            _autosaveTimer = 0f;
+            DemoSettings.WriteStockpile(Resources);
+        }
+
+        private void TryCancelFlagUnderCursor()
+        {
+            if (!Input.GetMouseButtonUp(1)) return;
+            if (_isoCam != null && (_isoCam.IsDragging || _isoCam.SuppressFlagCancel)) return;
+            if (_overseerHud != null && _overseerHud.PointerBlocksWorld) return;
+            if (mainCamera == null || Flags == null) return;
+
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            if (!Physics.Raycast(ray, out RaycastHit hit, 400f)) return;
+            var marker = hit.collider.GetComponentInParent<FlagMarker>();
+            if (marker != null && marker.Handle != null)
+                CancelFlag(marker.Handle);
         }
 
         /// <summary>
-        /// Earth tutorial: starter Farm + Mine so sustain is learnable without hunting the build menu first.
+        /// Empty campaign start: soft claim at Campus A so the first modules must dock there.
+        /// No buildings — player spends the starter stockpile.
         /// </summary>
-        private void SpawnEarthStarterCamps()
+        private void SeedEmptyStartClaim()
         {
-            if (celestialBody != CelestialBodyId.Earth || buildingRoot == null) return;
+            if (Placer == null || grid == null) return;
 
-            SpawnStarterCamp(
-                BuildingCategory.Farm,
-                ColonyLayout.CampusOrigin + new Vector3(-10f, 0f, -18f),
-                "EarthFarm");
-            SpawnStarterCamp(
-                BuildingCategory.Mine,
-                ColonyLayout.CampusOrigin + new Vector3(10f, 0f, -18f),
-                "EarthMine");
+            Vector3 world = ColonyLayout.CampusOrigin;
+            const int footprint = 6;
+            float cell = grid.CellSize;
+            float half = (footprint * cell) * 0.5f;
+            Vector3 corner = world - new Vector3(half, 0f, half) + new Vector3(cell * 0.5f, 0f, cell * 0.5f);
+            Vector2Int origin = grid.WorldToCell(corner);
+            Placer.SeedCampusClaim(origin, footprint, footprint);
 
-            if (Resources != null)
-            {
-                Resources.Add(ResourceId.WaterIce, 10);
-                Resources.Add(ResourceId.Metals, 8);
-                Resources.Add(ResourceId.Regolith, 12);
-            }
+            SpawnClaimBeacon(world);
         }
 
-        private void SpawnStarterCamp(BuildingCategory cat, Vector3 world, string name)
+        private void SpawnClaimBeacon(Vector3 world)
         {
-            GameObject prefab = BuildingVisualCatalog.LoadPrefab(cat);
-            GameObject go;
-            float scale = ColonyLayout.ScaleForCategory(cat);
-            if (prefab != null)
-            {
-                go = ColonyVisualUtility.InstantiateOriented(prefab, world, buildingRoot);
-                go.transform.localScale = Vector3.one * scale;
-            }
-            else
-            {
-                go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                go.transform.SetParent(buildingRoot, true);
-                go.transform.position = world + Vector3.up * (0.75f * scale);
-                go.transform.localScale = new Vector3(1.3f, 1.4f, 1.3f) * scale;
-            }
-
-            go.name = name;
+            var root = buildingRoot != null ? buildingRoot : transform;
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            go.name = "DropZone_Claim";
+            go.transform.SetParent(root, true);
+            go.transform.position = world + Vector3.up * 0.04f;
+            go.transform.localScale = new Vector3(9.5f, 0.04f, 9.5f);
+            var col = go.GetComponent<Collider>();
+            if (col != null) Destroy(col);
             ColonyVisualUtility.EnsureUrpMaterials(go);
-            ColonyVisualUtility.SnapToGround(go);
-            CampusNavMesh.AddObstacle(go);
-
-            var data = FindBuildingData(cat);
-            if (data != null)
-                NotifyBuildingPlaced(data, go, world);
-            else
-                Village?.RegisterPlacedBuilding(null, cat, go, world);
-        }
-
-        private BuildingData FindBuildingData(BuildingCategory cat)
-        {
-            if (starterBuildings == null) return null;
-            for (int i = 0; i < starterBuildings.Length; i++)
+            var rend = go.GetComponent<Renderer>();
+            if (rend != null)
             {
-                if (starterBuildings[i] != null && starterBuildings[i].category == cat)
-                    return starterBuildings[i];
+                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                       ?? Shader.Find("Sprites/Default"));
+                var c = new Color(0.96f, 0.42f, 0.08f, 0.55f);
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+                else if (mat.HasProperty("_Color")) mat.color = c;
+                if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 1f);
+                rend.sharedMaterial = mat;
             }
-            return null;
         }
 
         private void BootstrapResearch()
@@ -315,19 +516,25 @@ namespace SolarMajesty
 
         private void Update()
         {
+            HandleSessionHotkeys();
+            if (!IsPlaying) return;
+
             HandleToolHotkeys();
             HandleSelection();
+            TryCancelFlagUnderCursor();
             PushThreatToSpecialists();
             _world?.TickLairs();
-            Village?.Tick(Time.deltaTime);
             Settlement?.Tick(Time.deltaTime);
+            Village?.Tick(Time.deltaTime);
             TickResearch(Time.deltaTime);
             _mission?.Tick();
+            TickTutorial();
+            TickAutosave();
 
             _constructionTick += Time.deltaTime;
             if (_constructionTick >= 0.25f)
             {
-                Placer?.TickConstruction(_constructionTick);
+                ProcessCompletedConstruction();
 
                 var living = new List<SpecialistData>(_agents.Count);
                 for (int i = 0; i < _agents.Count; i++)
@@ -339,11 +546,16 @@ namespace SolarMajesty
                 _constructionTick = 0f;
             }
 
-            // Prune destroyed stalkers from list
+            // Prune destroyed stalkers / robots from lists
             for (int i = _stalkers.Count - 1; i >= 0; i--)
             {
                 if (_stalkers[i] == null)
                     _stalkers.RemoveAt(i);
+            }
+            for (int i = _agents.Count - 1; i >= 0; i--)
+            {
+                if (_agents[i] == null)
+                    _agents.RemoveAt(i);
             }
         }
 
@@ -491,15 +703,13 @@ namespace SolarMajesty
         {
             Resources = new ResourceManager();
             if (seedStartingResources)
-            {
-                Resources.Set(ResourceId.Regolith, 80);
-                Resources.Set(ResourceId.WaterIce, 40);
-                Resources.Set(ResourceId.Metals, 200);
-                Resources.Set(ResourceId.Power, 80);
-            }
+                ApplyStarterStockpile();
+            if (DemoSettings.BootStraightIntoPlay && DemoSettings.SaveExists)
+                DemoSettings.TryLoadStockpile(Resources);
 
             Flags = new FlagManager();
             Placer = new BuildingPlacer(Resources);
+            Placer.HasPalace = () => Settlement != null && Settlement.HasPalace;
             if (grid != null)
             {
                 // Reject if any footprint cell is off-map (not only the origin).
@@ -513,20 +723,47 @@ namespace SolarMajesty
                             return false;
                     }
 
-                    if (BuildingPlacer.RequiresCampusLink(data.category) &&
-                        !Placer.TouchesCampus(cell, data.footprintWidth, data.footprintHeight))
+                    bool hasPalace = Settlement != null && Settlement.HasPalace;
+
+                    // Palace: first keep on the drop claim only.
+                    if (data.category == BuildingCategory.Palace)
+                    {
+                        if (hasPalace) return false;
+                        return Placer.OverlapsSoftClaim(cell, data.footprintWidth, data.footprintHeight);
+                    }
+
+                    if (data.category == BuildingCategory.Inn)
+                        return true;
+
+                    if (!hasPalace)
                         return false;
 
-                    return true;
+                    // Airlocks: only on module face midlines (symmetry-axis ends).
+                    if (BuildingPlacer.IsAirlock(data.category))
+                        return Placer.IsValidAirlockDock(cell);
+
+                    // Every other module must Lego-dock onto an airlock end.
+                    return Placer.IsValidModuleDock(cell, data.footprintWidth, data.footprintHeight);
                 };
             }
 
             Brain = new SpecialistBrain();
             Economy = new SimpleEconomy(Resources);
             Settlement = new Settlement(Resources);
+            // Rebind after Settlement exists (constructor order).
+            Placer.HasPalace = () => Settlement != null && Settlement.HasPalace;
             Research = new ResearchManager(Resources);
             Research.TechUnlocked += OnTechUnlocked;
             Threat = new ThreatPressure { Ambient = 0.18f };
+        }
+
+        private void ApplyStarterStockpile()
+        {
+            var body = _body ?? CelestialBodyCatalog.Get(celestialBody);
+            Resources.Set(ResourceId.Regolith, Mathf.Max(0, body.StartRegolith));
+            Resources.Set(ResourceId.WaterIce, Mathf.Max(0, body.StartWaterIce));
+            Resources.Set(ResourceId.Metals, Mathf.Max(0, body.StartMetals));
+            Resources.Set(ResourceId.Power, Mathf.Max(0, body.StartPower));
         }
 
         private void OnTechUnlocked(TechId id)
@@ -598,11 +835,12 @@ namespace SolarMajesty
                 {
                     starterBuildings = new[]
                     {
-                        CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6),
+                        CreateBuilding("Palace Keep", BuildingCategory.Palace, 70, 10, 18f, 6, 6),
                         CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4),
-                        CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 3, 3),
-                        CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 3, 3),
-                        CreateBuilding("Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 3, 3),
+                        CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4),
+                        CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 4, 4),
+                        CreateBuilding("Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4),
+                        CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6),
                         CreateBuilding("Command (CMD-1)", BuildingCategory.Defense, 60, 8, 16f, 4, 4)
                     };
                 }
@@ -615,8 +853,48 @@ namespace SolarMajesty
                     starterBuildings[i].prefab = BuildingVisualCatalog.LoadPrefab(starterBuildings[i].category);
             }
 
+            starterBuildings = EnsurePalaceFirst(starterBuildings);
             starterBuildings = AppendEconomyBuildings(starterBuildings);
             ForceCardinalFootprints(starterBuildings);
+        }
+
+        /// <summary>Palace keep is always catalog index 0 — Majesty first-build.</summary>
+        private static BuildingData[] EnsurePalaceFirst(BuildingData[] current)
+        {
+            var palace = CreateBuilding("Palace Keep", BuildingCategory.Palace, 70, 10, 18f, 6, 6);
+            if (current == null || current.Length == 0)
+                return new[] { palace };
+
+            int existing = -1;
+            for (int i = 0; i < current.Length; i++)
+            {
+                if (current[i] != null && current[i].category == BuildingCategory.Palace)
+                {
+                    existing = i;
+                    break;
+                }
+            }
+
+            if (existing == 0)
+                return current;
+
+            if (existing > 0)
+            {
+                var reorder = new BuildingData[current.Length];
+                reorder[0] = current[existing];
+                int w = 1;
+                for (int i = 0; i < current.Length; i++)
+                {
+                    if (i == existing) continue;
+                    reorder[w++] = current[i];
+                }
+                return reorder;
+            }
+
+            var merged = new BuildingData[current.Length + 1];
+            merged[0] = palace;
+            current.CopyTo(merged, 1);
+            return merged;
         }
 
         private static void BindUnitPrefab(SpecialistData data, SpecialistClass cls)
@@ -677,51 +955,78 @@ namespace SolarMajesty
         {
             _agents.Clear();
             ClearSelection();
+            Agent = null;
+            // Outdoor robots are fabricated when their workshop finishes construction.
+            // Humans live only in HABs (Settlement census) — never as outdoor agents.
+            Debug.Log("[GameLoop] No starter robots — build workshops to fabricate Scout / Engineer / Defense / Medic.");
+        }
 
-            // Plaza south of the dome — same campus as buildings (not a random corner).
-            Vector3 origin = ColonyLayout.PartySpawn;
-            if (specialistSpawn != null)
-                specialistSpawn.position = origin;
+        /// <summary>Fabricate one outdoor robot when a workshop finishes building.</summary>
+        public bool TryFabricateRobot(ColonyStructure workshop)
+        {
+            if (workshop == null || !workshop.IsAlive || !workshop.IsWorkshop) return false;
+            if (workshop.RobotFabricated) return false;
 
-            int size = spawnFullParty ? Mathf.Clamp(partySize, 1, MaxPartySize) : 1;
+            var cls = ColonyStructure.RobotClassForWorkshop(workshop.Category);
+            if (!cls.HasValue && workshop.HasPreferredClass)
+                cls = workshop.PreferredClass;
+            if (!cls.HasValue) return false;
 
-            // Scout — cyan, curious, moderate greed
-            Agent = SpawnOne(scoutData, origin + new Vector3(0f, 0f, 0f), new Color(0.35f, 0.85f, 1f));
-            _agents.Add(Agent);
+            SpecialistData data = DataForClass(cls.Value);
+            if (data == null) return false;
 
-            if (size >= 2)
+            Vector3 pos = workshop.WorldPosition + new Vector3(1.6f, 0f, 0.4f);
+            if (grid != null)
+                pos = grid.SnapToCellCenter(pos);
+
+            var agent = SpawnOne(data, pos, TintForClass(cls.Value));
+            if (agent == null) return false;
+
+            workshop.MarkRobotFabricated();
+            workshop.TryClockIn(agent);
+            _agents.Add(agent);
+            if (Agent == null)
+                Agent = agent;
+            agent.BindNavMesh(_campusNav);
+
+            string label = data.displayName ?? cls.Value.ToString();
+            _overseerHud?.Notify($"{label} fabricated at {workshop.DisplayName}.", 3.2f);
+            DemoAudio.PlayClaim();
+            DemoVfx.ClaimRing(pos, TintForClass(cls.Value));
+            Debug.Log($"[GameLoop] Fabricated {label} from {workshop.DisplayName}.");
+            return true;
+        }
+
+        private SpecialistData DataForClass(SpecialistClass cls) => cls switch
+        {
+            SpecialistClass.EngineerBot => engineerData,
+            SpecialistClass.DefenseMech => defenseData,
+            SpecialistClass.Medic => medicData,
+            _ => scoutData
+        };
+
+        private static Color TintForClass(SpecialistClass cls) => cls switch
+        {
+            SpecialistClass.EngineerBot => new Color(1f, 0.55f, 0.15f),
+            SpecialistClass.DefenseMech => new Color(0.85f, 0.22f, 0.22f),
+            SpecialistClass.Medic => new Color(0.92f, 0.96f, 1f),
+            _ => new Color(0.35f, 0.85f, 1f)
+        };
+
+        private void ProcessCompletedConstruction()
+        {
+            if (Placer == null) return;
+            _completedBuilds.Clear();
+            Placer.TickConstruction(_constructionTick, _completedBuilds);
+            for (int i = 0; i < _completedBuilds.Count; i++)
             {
-                // Engineer — orange, greedy builder, cautious
-                _agents.Add(SpawnOne(engineerData, origin + new Vector3(1.8f, 0f, 0.4f), new Color(1f, 0.55f, 0.15f)));
+                var order = _completedBuilds[i];
+                if (order?.Data == null) continue;
+                if (!ColonyStructure.IsWorkshopCategory(order.Data.category)) continue;
+                var st = Village?.FindNear(order.WorldPosition, 4f);
+                if (st != null && st.Category == order.Data.category)
+                    TryFabricateRobot(st);
             }
-
-            if (size >= 3)
-            {
-                // Defense — red, brave combat, less greedy
-                _agents.Add(SpawnOne(defenseData, origin + new Vector3(-1.8f, 0f, 0.4f), new Color(0.85f, 0.22f, 0.22f)));
-            }
-
-            if (size >= 4)
-            {
-                _agents.Add(SpawnOne(medicData, origin + new Vector3(0f, 0f, 1.6f), new Color(0.92f, 0.96f, 1f)));
-            }
-
-            // Phase 5E: Campus B Scout only if party still has a free slot (cap = 4).
-            if (spawnCampusBDetachment && spawnSecondBody && _agents.Count < MaxPartySize)
-            {
-                var bScout = SpawnOne(
-                    scoutData,
-                    ColonyLayout.PartySpawnB,
-                    new Color(0.45f, 0.95f, 1f));
-                if (bScout != null)
-                {
-                    bScout.gameObject.name = "Specialist_ScoutDrone_CampusB";
-                    _agents.Add(bScout);
-                    Debug.Log("[GameLoop] Campus B Scout detachment deployed.");
-                }
-            }
-
-            Debug.Log($"[GameLoop] Party size {_agents.Count}/{MaxPartySize}.");
         }
 
         public bool IsSelected(SpecialistAgent agent) =>
@@ -769,6 +1074,7 @@ namespace SolarMajesty
         private void HandleSelection()
         {
             WorldClickUsedBySelection = false;
+            if (!IsPlaying) return;
             if (!Input.GetMouseButtonUp(0)) return;
             if (_isoCam != null && _isoCam.SuppressWorldClick) return;
             if (_overseerHud != null && _overseerHud.PointerBlocksWorld) return;
@@ -1080,6 +1386,7 @@ namespace SolarMajesty
             if (advanceSeedOnRestart)
                 BodySeed.AdvanceForNextConquest();
             DemoAudio.PlayRetry();
+            DemoSettings.RequestBootIntoPlay();
             ReloadActiveScene();
         }
 
@@ -1087,6 +1394,7 @@ namespace SolarMajesty
         public void BeginNextConquest()
         {
             BodySeed.AdvanceForNextConquest();
+            DemoSettings.RequestBootIntoPlay();
             DemoAudio.PlayRetry();
             ReloadActiveScene();
         }
@@ -1097,6 +1405,8 @@ namespace SolarMajesty
             Vector3 pad = ColonyLayout.CampusOrigin + new Vector3(16f, 0f, 0f);
             LaunchSite.PlayDeparture(pad);
             CampaignProgress.UnlockNextFrom(celestialBody);
+            DemoSettings.WriteStockpile(Resources);
+            DemoSettings.RequestBootIntoPlay();
             var next = CampaignProgress.NextAfter(celestialBody);
             if (!next.HasValue)
             {
@@ -1121,6 +1431,8 @@ namespace SolarMajesty
                 return;
             }
             BodySeed.SetBody(body);
+            DemoSettings.WriteStockpile(Resources);
+            DemoSettings.RequestBootIntoPlay();
             DemoAudio.PlayRetry();
             ReloadActiveScene();
         }
@@ -1133,6 +1445,8 @@ namespace SolarMajesty
 
         private void HandleToolHotkeys()
         {
+            if (!IsPlaying) return;
+
             if (Input.GetKeyDown(KeyCode.Tab))
             {
                 if (activeTool == OverseerTool.Flag) ApplyTool(OverseerTool.Build);
@@ -1165,7 +1479,7 @@ namespace SolarMajesty
             }
 
             if (Input.GetKeyDown(KeyCode.P))
-                FormPartyAtInn();
+                FormParty();
             if (Input.GetKeyDown(KeyCode.LeftBracket))
                 DisbandSelectedParty();
 
@@ -1349,13 +1663,14 @@ namespace SolarMajesty
         {
             var extra = new[]
             {
-                CreateBuilding("Plus Connector", BuildingCategory.Utility, 8, 0, 4f, 2, 2),
-                CreateBuilding("Greenhouse Farm", BuildingCategory.Farm, 28, 4, 10f, 3, 3),
-                CreateBuilding("Ore Mine", BuildingCategory.Mine, 32, 4, 12f, 3, 3),
-                CreateBuilding("Regolith Camp", BuildingCategory.RegolithCamp, 22, 0, 9f, 3, 3),
-                CreateBuilding("Scout Workshop", BuildingCategory.ScoutWorkshop, 36, 4, 12f, 3, 3),
-                CreateBuilding("Engineer Workshop", BuildingCategory.EngineerWorkshop, 36, 4, 12f, 3, 3),
-                CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 3, 3)
+                CreateBuilding("Airlock Junction", BuildingCategory.Utility, 8, 0, 4f, 2, 2),
+                CreateBuilding("Greenhouse Farm", BuildingCategory.Farm, 28, 4, 10f, 4, 4),
+                CreateBuilding("Ore Mine", BuildingCategory.Mine, 32, 4, 12f, 4, 4),
+                CreateBuilding("Regolith Camp", BuildingCategory.RegolithCamp, 22, 0, 9f, 4, 4),
+                CreateBuilding("Scout Workshop", BuildingCategory.ScoutWorkshop, 36, 4, 12f, 4, 4),
+                CreateBuilding("Engineer Workshop", BuildingCategory.EngineerWorkshop, 36, 4, 12f, 4, 4),
+                CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
+                CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4)
             };
             if (current == null || current.Length == 0) return extra;
             var merged = new BuildingData[current.Length + extra.Length];
@@ -1374,19 +1689,30 @@ namespace SolarMajesty
                 int side = Mathf.Max(1, b.footprintWidth, b.footprintHeight);
                 switch (b.category)
                 {
+                    case BuildingCategory.Palace:
+                    case BuildingCategory.LandingPad:
+                        side = 6;
+                        break;
                     case BuildingCategory.Habitat:
                     case BuildingCategory.Defense:
                     case BuildingCategory.Inn:
+                    case BuildingCategory.Farm:
+                    case BuildingCategory.Mine:
+                    case BuildingCategory.RegolithCamp:
+                    case BuildingCategory.ScoutWorkshop:
+                    case BuildingCategory.EngineerWorkshop:
+                    case BuildingCategory.DefenseWorkshop:
+                    case BuildingCategory.MedicWorkshop:
+                    case BuildingCategory.Power:
+                    case BuildingCategory.Mining:
+                    case BuildingCategory.Laboratory:
                         side = 4;
                         break;
                     case BuildingCategory.Utility:
                         side = 2;
                         break;
-                    case BuildingCategory.LandingPad:
-                        side = 6;
-                        break;
                     default:
-                        side = 3;
+                        side = 4;
                         break;
                 }
 
@@ -1409,8 +1735,10 @@ namespace SolarMajesty
                 case BuildingCategory.Laboratory:
                 case BuildingCategory.LandingPad:
                     return new[] { SpecialistClass.ScoutDrone };
-                case BuildingCategory.Habitat:
+                case BuildingCategory.MedicWorkshop:
                     return new[] { SpecialistClass.Medic };
+                case BuildingCategory.Habitat:
+                    return null;
                 case BuildingCategory.DefenseWorkshop:
                 case BuildingCategory.Defense:
                     return new[] { SpecialistClass.DefenseMech };
@@ -1477,6 +1805,46 @@ namespace SolarMajesty
             float bounty = _flagInput.Bounty > 10f ? _flagInput.Bounty : 80f;
             _flagInput.PostFlagAt(data, st.WorldPosition, bounty);
             DemoVfx.ClaimRing(st.WorldPosition, new Color(1f, 0.85f, 0.2f));
+        }
+
+        /// <summary>Form a party from the current selection, else from heroes at the rest beacon.</summary>
+        public void FormParty()
+        {
+            if (TryFormPartyFrom(_selected)) return;
+            FormPartyAtInn();
+        }
+
+        private bool TryFormPartyFrom(IReadOnlyList<SpecialistAgent> pool)
+        {
+            var members = new List<SpecialistAgent>(4);
+            if (pool == null) return false;
+            for (int i = 0; i < pool.Count; i++)
+            {
+                var a = pool[i];
+                if (a == null || !a.IsAlive || a.Party != null) continue;
+                members.Add(a);
+                if (members.Count >= HeroParty.MaxSize) break;
+            }
+            if (members.Count < 2) return false;
+
+            SpecialistAgent leader = members[0];
+            for (int i = 1; i < members.Count; i++)
+            {
+                if ((members[i].Data?.courage ?? 0f) > (leader.Data?.courage ?? 0f))
+                    leader = members[i];
+            }
+
+            var party = new HeroParty(_nextPartyId++, leader);
+            for (int i = 0; i < members.Count; i++)
+            {
+                party.Members.Add(members[i]);
+                members[i].SetParty(party);
+            }
+            _parties.Add(party);
+            DemoAudio.PlayClaim();
+            DemoVfx.ClaimRing(leader.transform.position, new Color(0.96f, 0.42f, 0.08f));
+            Debug.Log($"[Party] Formed #{party.Id} from selection leader={leader.Data?.displayName} size={party.Count}");
+            return true;
         }
 
         /// <summary>Majesty inn party: specialists at the waystation form a group (max 4).</summary>
@@ -1563,7 +1931,9 @@ namespace SolarMajesty
                 if (!string.IsNullOrEmpty(piece.ResourcesPath) &&
                     piece.ResourcesPath.Contains("ModularTube"))
                 {
-                    go = ColonyVisualUtility.SpawnPlusConnector(world, buildingRoot, piece.ResolveScale());
+                    float span = Mathf.Max(piece.FootprintW, piece.FootprintH) *
+                                 (grid != null ? grid.CellSize : ColonyLayout.DefaultCellSize);
+                    go = ColonyVisualUtility.SpawnPlusConnector(world, buildingRoot, span);
                     go.name = $"Showcase{tag}_{i}_Plus";
                     CampusNavMesh.AddObstacle(go);
                 }
@@ -1578,7 +1948,32 @@ namespace SolarMajesty
                 }
 
                 if (piece.ReservesCells && Placer != null && grid != null)
-                    ReserveShowcaseFootprint(world, piece.FootprintW, piece.FootprintH);
+                {
+                    Vector2Int origin = ReserveShowcaseFootprint(world, piece.FootprintW, piece.FootprintH);
+                    BuildingCategory pieceCat = BuildingCategory.Utility;
+                    if (!string.IsNullOrEmpty(piece.ResourcesPath))
+                    {
+                        if (piece.ResourcesPath.Contains("ModularTube"))
+                            pieceCat = BuildingCategory.Utility;
+                        else if (piece.ResourcesPath.Contains("CommandDome"))
+                            pieceCat = BuildingCategory.Palace;
+                        else if (piece.ResourcesPath.Contains("HAB"))
+                            pieceCat = BuildingCategory.Habitat;
+                        else if (piece.ResourcesPath.Contains("LAB"))
+                            pieceCat = BuildingCategory.Laboratory;
+                        else if (piece.ResourcesPath.Contains("CMD"))
+                            pieceCat = BuildingCategory.Defense;
+                        else if (piece.ResourcesPath.Contains("OPS"))
+                            pieceCat = BuildingCategory.Mining;
+                        else if (piece.ResourcesPath.Contains("PWR") || piece.ResourcesPath.Contains("Solar"))
+                            pieceCat = BuildingCategory.Power;
+                        else if (piece.ResourcesPath.Contains("LandingPad"))
+                            pieceCat = BuildingCategory.LandingPad;
+                        else
+                            pieceCat = BuildingCategory.Utility;
+                    }
+                    Placer.RegisterPiece(origin, piece.FootprintW, piece.FootprintH, pieceCat);
+                }
 
                 if (go != null)
                     RegisterShowcaseStructure(go, piece.ResourcesPath);
@@ -1596,7 +1991,9 @@ namespace SolarMajesty
             if (resourcesPath.Contains("HAB")) cat = BuildingCategory.Habitat;
             else if (resourcesPath.Contains("LAB")) cat = BuildingCategory.Laboratory;
             else if (resourcesPath.Contains("CMD") || resourcesPath.Contains("CommandDome"))
-                cat = BuildingCategory.Defense;
+                cat = resourcesPath.Contains("CommandDome")
+                    ? BuildingCategory.Palace
+                    : BuildingCategory.Defense;
             else if (resourcesPath.Contains("OPS")) cat = BuildingCategory.Mining;
             else if (resourcesPath.Contains("PWR") || resourcesPath.Contains("Solar"))
                 cat = BuildingCategory.Power;
@@ -1609,7 +2006,7 @@ namespace SolarMajesty
             Village.RegisterShowcase(st);
         }
 
-        private void ReserveShowcaseFootprint(Vector3 world, int footprintW, int footprintH)
+        private Vector2Int ReserveShowcaseFootprint(Vector3 world, int footprintW, int footprintH)
         {
             float cell = grid.CellSize;
             float halfW = (footprintW * cell) * 0.5f;
@@ -1617,6 +2014,7 @@ namespace SolarMajesty
             Vector3 corner = world - new Vector3(halfW, 0f, halfH) + new Vector3(cell * 0.5f, 0f, cell * 0.5f);
             Vector2Int origin = grid.WorldToCell(corner);
             Placer.MarkCampusRect(origin, footprintW, footprintH);
+            return origin;
         }
 
         private GameObject SpawnMesh(string resourcesPath, Vector3 position, string name, float scale, float yawDegrees = 0f)

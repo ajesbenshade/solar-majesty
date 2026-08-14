@@ -14,7 +14,10 @@ namespace SolarMajesty
         /// <summary>World-space campus B center (NE outpost).</summary>
         public static readonly Vector3 CampusBOrigin = new Vector3(54f, 0f, 48f);
 
-        /// <summary>Modules (HAB/LAB/CMD/OPS/PWR/Dome/connectors).</summary>
+        /// <summary>Must match IsoGrid default so Lego docks and visuals share one meter grid.</summary>
+        public const float DefaultCellSize = 1.5f;
+
+        /// <summary>Legacy uniform mesh scale — visuals now fit footprints instead.</summary>
         public const float ModuleScale = 0.36f;
 
         /// <summary>Landing pad — still a landmark, not a 40m plate.</summary>
@@ -22,6 +25,37 @@ namespace SolarMajesty
 
         /// <summary>Starship placeholder height landmark.</summary>
         public const float ShipScale = 0.18f;
+
+        public static int FootprintSide(BuildingCategory category)
+        {
+            switch (category)
+            {
+                case BuildingCategory.Palace:
+                case BuildingCategory.LandingPad:
+                    return 6;
+                case BuildingCategory.Habitat:
+                case BuildingCategory.Defense:
+                case BuildingCategory.Inn:
+                case BuildingCategory.Farm:
+                case BuildingCategory.Mine:
+                case BuildingCategory.RegolithCamp:
+                case BuildingCategory.ScoutWorkshop:
+                case BuildingCategory.EngineerWorkshop:
+                case BuildingCategory.DefenseWorkshop:
+                case BuildingCategory.MedicWorkshop:
+                case BuildingCategory.Power:
+                case BuildingCategory.Mining:
+                case BuildingCategory.Laboratory:
+                    return 4;
+                case BuildingCategory.Utility:
+                    return 2;
+                default:
+                    return 4;
+            }
+        }
+
+        public static float FootprintMeters(BuildingCategory category, float cellSize = DefaultCellSize) =>
+            FootprintSide(category) * cellSize;
 
         public static float ScaleForPath(string resourcesPath)
         {

@@ -82,12 +82,16 @@ namespace SolarMajesty
             return origin + new Vector3(Mathf.Cos(ang) * radius, 0f, Mathf.Sin(ang) * radius);
         }
 
-        public static void Dress(Transform parent)
+        public static void Dress(Transform parent, bool emptyStart = false)
         {
             var root = new GameObject("KingdomLife").transform;
             if (parent != null) root.SetParent(parent, false);
 
-            Marker(root, Inn(0), "Inn_Waystation", new Color(0.95f, 0.42f, 0.08f));
+            // Rest / party rally still use InnOutpost coords even without a mesh.
+            Marker(root, Inn(0), "Inn_RestBeacon", new Color(0.96f, 0.42f, 0.08f), emptyStart ? 0.55f : 1.15f);
+
+            if (emptyStart) return;
+
             Marker(root, Guardhouse(0), "Guard_A", new Color(0.72f, 0.16f, 0.14f));
             Marker(root, Workshop(0), "Workshop_A", new Color(0.55f, 0.58f, 0.62f));
             Marker(root, Workshop(1), "Workshop_B", new Color(0.55f, 0.58f, 0.62f));
@@ -137,13 +141,13 @@ namespace SolarMajesty
             return chosen;
         }
 
-        private static void Marker(Transform parent, Vector3 pos, string name, Color accent)
+        private static void Marker(Transform parent, Vector3 pos, string name, Color accent, float diameter = 1.15f)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = name;
             go.transform.SetParent(parent, false);
             go.transform.position = pos + Vector3.up * 0.12f;
-            go.transform.localScale = new Vector3(1.15f, 0.08f, 1.15f);
+            go.transform.localScale = new Vector3(diameter, 0.08f, diameter);
             Object.Destroy(go.GetComponent<Collider>());
             Tint(go, accent, 0.18f);
             ColonyVisualUtility.SnapToGround(go);

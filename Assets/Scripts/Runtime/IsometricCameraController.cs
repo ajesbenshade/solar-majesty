@@ -42,6 +42,13 @@ namespace SolarMajesty
         private bool _lmbBecameDrag;
         private bool _suppressWorldClick;
         private bool _clearSuppressNextFrame;
+        private GameLoop _loop;
+
+        private bool _suppressFlagCancel;
+        private bool _clearFlagSuppressNext;
+        private bool _rmbTracking;
+        private Vector2 _rmbScreenStart;
+        private bool _rmbBecameDrag;
 
         /// <summary>True while any mouse-button pan drag is active.</summary>
         public bool IsDragging => _dragging;
@@ -52,12 +59,16 @@ namespace SolarMajesty
         /// </summary>
         public bool SuppressWorldClick => _suppressWorldClick;
 
+        /// <summary>True on the RMB-up frame after a pan drag — skip flag cancel.</summary>
+        public bool SuppressFlagCancel => _suppressFlagCancel;
+
         private void Awake()
         {
             _cam = GetComponent<Camera>();
             _cam.orthographic = true;
             _targetPos = transform.position;
             _targetZoom = _cam.orthographicSize;
+            _loop = FindAnyObjectByType<GameLoop>();
         }
 
         /// <summary>Clamp pan to sandbox / showcase extents (XZ → Vector2 x/y).</summary>
@@ -108,10 +119,20 @@ namespace SolarMajesty
 
         private void Update()
         {
+            var loop = _loop != null ? _loop : FindAnyObjectByType<GameLoop>();
+            _loop = loop;
+            if (loop != null && !loop.AllowsCamera) return;
+
             if (_clearSuppressNextFrame)
             {
                 _suppressWorldClick = false;
                 _clearSuppressNextFrame = false;
+            }
+
+            if (_clearFlagSuppressNext)
+            {
+                _suppressFlagCancel = false;
+                _clearFlagSuppressNext = false;
             }
 
             HandleKeyboardPan();
@@ -130,6 +151,11 @@ namespace SolarMajesty
             Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
             Vector3 right = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
             float scale = panSpeed * Time.unscaledDeltaTime * (_targetZoom / 12f);
+            if (DemoSettings.InvertPan)
+            {
+                h = -h;
+                v = -v;
+            }
             _targetPos += (right * h + forward * v) * scale;
         }
 
@@ -141,6 +167,7 @@ namespace SolarMajesty
             Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
             Vector3 right = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
             float scale = panSpeed * Time.unscaledDeltaTime * (_targetZoom / 12f);
+            if (DemoSettings.InvertPan) scale = -scale;
 
             if (m.x <= edgeBorder) _targetPos -= right * scale;
             if (m.x >= Screen.width - edgeBorder) _targetPos += right * scale;
@@ -151,6 +178,7 @@ namespace SolarMajesty
         private void HandleDragPan()
         {
             TrackLeftMouseGesture();
+            TrackRightMouseGesture();
 
             bool want = (middleMouseDrag && Input.GetMouseButton(2)) ||
                         (rightMouseDrag && Input.GetMouseButton(1)) ||
@@ -207,6 +235,37 @@ namespace SolarMajesty
                 }
                 _lmbTracking = false;
                 _lmbBecameDrag = false;
+            }
+        }
+
+        private void TrackRightMouseGesture()
+        {
+            if (!rightMouseDrag) return;
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                _rmbTracking = true;
+                _rmbBecameDrag = false;
+                _rmbScreenStart = Input.mousePosition;
+                _suppressFlagCancel = false;
+            }
+
+            if (_rmbTracking && Input.GetMouseButton(1) && !_rmbBecameDrag)
+            {
+                float dist = Vector2.Distance(_rmbScreenStart, (Vector2)Input.mousePosition);
+                if (dist >= leftDragThresholdPixels)
+                    _rmbBecameDrag = true;
+            }
+
+            if (Input.GetMouseButtonUp(1))
+            {
+                if (_rmbBecameDrag)
+                {
+                    _suppressFlagCancel = true;
+                    _clearFlagSuppressNext = true;
+                }
+                _rmbTracking = false;
+                _rmbBecameDrag = false;
             }
         }
 

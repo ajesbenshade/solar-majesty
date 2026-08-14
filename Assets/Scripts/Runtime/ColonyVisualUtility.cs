@@ -111,36 +111,58 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// 2-axis-symmetric plus junction. Root stays at yaw 0 so modules dock on +X/−X and +Z/−Z
-        /// without the player rotating anything. Child tubes may be yawed internally.
+        /// 2-axis-symmetric airlock junction sized in world meters to fill its 2×2 footprint
+        /// and overlap neighboring module ports so the campus clicks together.
         /// </summary>
-        public static GameObject SpawnPlusConnector(Vector3 position, Transform parent, float scale)
+        public static GameObject SpawnPlusConnector(Vector3 position, Transform parent, float worldSpan)
         {
             var root = new GameObject("PlusConnector");
             if (parent != null)
                 root.transform.SetParent(parent, false);
             root.transform.SetPositionAndRotation(position, Quaternion.identity);
 
+            float span = Mathf.Max(ColonyLayout.DefaultCellSize * 2f, worldSpan);
+            float length = span + 1.7f; // overlap well into neighboring hull sockets
+            float diameter = 1.25f;
+            float height = 1.15f;
+
+            CubeArm(root.transform, "Collar_NS", new Vector3(diameter, height, length));
+            CubeArm(root.transform, "Collar_EW", new Vector3(length, height, diameter));
+
             GameObject prefab = BuildingVisualCatalog.LoadConnector();
             if (prefab != null)
             {
                 var a = InstantiateOriented(prefab, position, root.transform, 0f);
                 a.name = "Arm_NS";
-                a.transform.localScale = Vector3.one * scale;
+                FitTubeToSpan(a, length * 0.92f, diameter * 0.85f);
                 var b = InstantiateOriented(prefab, position, root.transform, 90f);
                 b.name = "Arm_EW";
-                b.transform.localScale = Vector3.one * scale;
-            }
-            else
-            {
-                float s = Mathf.Max(0.2f, scale);
-                CubeArm(root.transform, "Arm_NS", new Vector3(0.35f, 0.28f, 2.4f) * s);
-                CubeArm(root.transform, "Arm_EW", new Vector3(2.4f, 0.28f, 0.35f) * s);
+                FitTubeToSpan(b, length * 0.92f, diameter * 0.85f);
             }
 
             EnsureUrpMaterials(root);
             SnapToGround(root);
             return root;
+        }
+
+        private static void FitTubeToSpan(GameObject tube, float length, float diameter)
+        {
+            if (tube == null) return;
+            var rends = tube.GetComponentsInChildren<Renderer>();
+            if (rends == null || rends.Length == 0) return;
+
+            Bounds b = rends[0].bounds;
+            for (int i = 1; i < rends.Length; i++)
+            {
+                if (rends[i] != null)
+                    b.Encapsulate(rends[i].bounds);
+            }
+
+            float sx = diameter / Mathf.Max(0.05f, b.size.x);
+            float sy = diameter / Mathf.Max(0.05f, b.size.y);
+            float sz = length / Mathf.Max(0.05f, b.size.z);
+            Vector3 ls = tube.transform.localScale;
+            tube.transform.localScale = new Vector3(ls.x * sx, ls.y * sy, ls.z * sz);
         }
 
         private static void CubeArm(Transform parent, string name, Vector3 scale)
