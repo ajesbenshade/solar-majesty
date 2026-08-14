@@ -13,6 +13,8 @@ namespace SolarMajesty
         public static readonly Color DefenseTint = new Color(0.85f, 0.22f, 0.22f);
         public static readonly Color MedicTint = new Color(0.92f, 0.96f, 1f);
         public static readonly Color StalkerTint = new Color(0.42f, 0.07f, 0.1f);
+        public static readonly Color MiteTint = new Color(0.72f, 0.48f, 0.18f);
+        public static readonly Color LeechTint = new Color(0.18f, 0.78f, 0.82f);
 
         private static readonly Color WhiteShell = new Color(0.86f, 0.88f, 0.9f);
         private static readonly Color BlackBand = new Color(0.06f, 0.06f, 0.07f);
@@ -100,6 +102,27 @@ namespace SolarMajesty
             Cube("LegFR", root.transform, new Vector3(0.55f, 0.18f, 0.35f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
             Cube("LegBL", root.transform, new Vector3(-0.5f, 0.18f, -0.4f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
             Cube("LegBR", root.transform, new Vector3(0.5f, 0.18f, -0.4f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
+            return root;
+        }
+
+        public static GameObject BuildRegolithMite()
+        {
+            var root = new GameObject("Unit_RegolithMite");
+            Sphere("Body", root.transform, new Vector3(0f, 0.28f, 0f), new Vector3(0.85f, 0.42f, 0.7f), MiteTint);
+            Cube("Mandible", root.transform, new Vector3(0f, 0.22f, 0.38f), new Vector3(0.28f, 0.12f, 0.22f), BlackBand);
+            Sphere("EyeL", root.transform, new Vector3(-0.14f, 0.34f, 0.28f), new Vector3(0.1f, 0.08f, 0.08f), OrangeAccent);
+            Sphere("EyeR", root.transform, new Vector3(0.14f, 0.34f, 0.28f), new Vector3(0.1f, 0.08f, 0.08f), OrangeAccent);
+            Cube("LegL", root.transform, new Vector3(-0.32f, 0.12f, 0.05f), new Vector3(0.08f, 0.22f, 0.08f), BlackBand);
+            Cube("LegR", root.transform, new Vector3(0.32f, 0.12f, 0.05f), new Vector3(0.08f, 0.22f, 0.08f), BlackBand);
+            return root;
+        }
+
+        public static GameObject BuildWattLeech()
+        {
+            var root = new GameObject("Unit_WattLeech");
+            Capsule("Body", root.transform, new Vector3(0f, 0.22f, 0f), new Vector3(0.55f, 0.22f, 1.15f), LeechTint);
+            Sphere("Core", root.transform, new Vector3(0f, 0.32f, 0.15f), new Vector3(0.28f, 0.28f, 0.28f), new Color(0.55f, 1f, 1f));
+            Cube("Spark", root.transform, new Vector3(0f, 0.48f, 0.4f), new Vector3(0.12f, 0.18f, 0.12f), OrangeAccent);
             return root;
         }
 

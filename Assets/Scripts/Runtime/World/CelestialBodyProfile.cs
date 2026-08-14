@@ -18,6 +18,10 @@ namespace SolarMajesty
         public CelestialBodyId Id;
         public string DisplayName;
         public string ShortCode;
+        public string Briefing;
+        public string ArrivalLog;
+        public string VictoryLog;
+        public string FailLog;
 
         [Header("Surface")]
         public Color GroundLight;
@@ -36,6 +40,9 @@ namespace SolarMajesty
         public Color SkyHorizon;
         public Color SunColor;
         public float SunIntensity = 1.45f;
+        public Vector3 SunEuler = new Vector3(48f, -35f, 0f);
+        public Color GradeFilter = Color.white;
+        public float AmbientHum = 55f;
         public Color FillColor;
         public Color AmbientSky;
         public Color AmbientEquator;

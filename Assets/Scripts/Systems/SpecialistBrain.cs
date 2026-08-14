@@ -77,6 +77,8 @@ namespace SolarMajesty
             float acceptance = 0.38f + data.baseGreed * 0.25f - ctx.GreedHunger * 0.22f;
             acceptance = Mathf.Clamp(acceptance, 0.22f, 0.72f);
             bool takeFlag = bestFlag != null && bestFlagScore >= acceptance;
+            if (takeFlag && !PassesGreedGate(data, bestFlag.CurrentBounty, ctx.GreedHunger))
+                takeFlag = false;
 
             // 4. Opportunistic hunt — warriors engage nearby fauna without a posted bounty.
             float huntScore = -1f;
@@ -131,6 +133,43 @@ namespace SolarMajesty
                 ? inn
                 : (ctx.VocationPosition.sqrMagnitude > 0.01f ? ctx.VocationPosition : inn);
             return BrainDecision.Wander(dest, ctx.HasWorkshop ? 0.34f : 0.28f, vocation);
+        }
+
+        /// <summary>
+        /// True if this hero would Pursue the flag right now. Uses the same score + greed gate as Evaluate.
+        /// </summary>
+        public bool WouldTakeFlag(in SpecialistContext ctx, FlagHandle flag, float bodyDanger, out float score)
+        {
+            score = 0f;
+            if (ctx.Data == null || flag?.Data == null) return false;
+
+            float injury = 1f - ctx.HealthNormalized;
+            float courage = EffectiveCourage(ctx);
+            bool panicked = injury > 0.55f ||
+                            (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
+            if (panicked && ctx.HealthNormalized < 0.62f) return false;
+            if (CalculateRestScore(ctx) > 0.78f) return false;
+
+            float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
+            float consider = 40f + ctx.Data.explorePreference * 35f;
+            if (ConsiderRange > 0f)
+                consider = Mathf.Max(consider, ConsiderRange * 0.7f);
+            if (consider > 0f && dist > consider) return false;
+
+            score = ScoreFlag(ctx, flag, dist, bodyDanger);
+            float acceptance = 0.38f + ctx.Data.baseGreed * 0.25f - ctx.GreedHunger * 0.22f;
+            acceptance = Mathf.Clamp(acceptance, 0.22f, 0.72f);
+            if (score < acceptance) return false;
+            return PassesGreedGate(ctx.Data, flag.CurrentBounty, ctx.GreedHunger);
+        }
+
+        /// <summary>Greedy heroes skip underpaid jobs unless starving. Does not change ScoreFlag weights.</summary>
+        static bool PassesGreedGate(SpecialistData data, float bounty, float hunger)
+        {
+            if (data == null) return false;
+            float need = 18f + data.baseGreed * 95f;
+            if (bounty + 0.01f >= need * 0.78f) return true;
+            return hunger > 0.75f;
         }
 
         float CalculateRestScore(in SpecialistContext ctx)

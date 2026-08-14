@@ -1,0 +1,18 @@
+---
+description: Solar Majesty roadmap non-negotiables and current phase
+alwaysApply: true
+---
+
+# Solar Majesty roadmap
+
+Living plan: `Docs/Roadmap/`. Work **one phase at a time**. Current work is **Phase 1** (`02_PHASE_1_CAMPAIGN_QUALITY_DEMO.md`). Phase 0 is locked.
+
+## Non-negotiables
+- Never add click-to-move or any player command that bypasses `SpecialistBrain`.
+- Pure C# only under `Assets/Scripts/Systems/`. Runtime/MonoBehaviours under `Runtime/`.
+- Namespace `SolarMajesty`. Data-driven ScriptableObjects for numbers and affinities.
+- New art uses locked Grok Imagine style keywords (see Phase 0).
+- Do not rewrite `SpecialistBrain` scoring without explicit design sign-off.
+
+## Phase order
+0 Foundation lock (complete) → 1 Campaign-quality demo → 2 Solar expansion → 3 Content explosion → 4 Ship polish.

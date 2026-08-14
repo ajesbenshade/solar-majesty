@@ -36,6 +36,25 @@ namespace SolarMajesty
         public event Action UpkeepApplied;
         public event Action ResupplyArrived;
 
+        /// <summary>Seconds until the next specialist/grid upkeep tick.</summary>
+        public float UpkeepSecondsLeft => Mathf.Max(0f, _upkeepTimer);
+
+        /// <summary>Seconds until the next Earth resupply package.</summary>
+        public float ResupplySecondsLeft => Mathf.Max(0f, _resupplyTimer);
+
+        /// <summary>Power generated each upkeep interval (from Power Nodes / arrays).</summary>
+        public int PowerGen { get; set; }
+
+        /// <summary>Power consumed each upkeep interval (modules + robots + base draw).</summary>
+        public int PowerDraw { get; set; }
+
+        public bool PowerShort =>
+            PowerDraw > PowerGen && _resources.Get(ResourceId.Power) < 8;
+
+        public string LastUpkeepLine { get; private set; } = "";
+        public string LastExtractLine { get; private set; } = "";
+        public int LastExtractAmount { get; private set; }
+
         public SimpleEconomy(ResourceManager resources)
         {
             _resources = resources ?? throw new ArgumentNullException(nameof(resources));
@@ -132,6 +151,7 @@ namespace SolarMajesty
                         int took = node.Harvest(8);
                         if (took > 0) _resources.Add(ResourceId.Metals, took);
                         _resources.Add(ResourceId.Regolith, 2);
+                        RecordExtract($"+{took} MET from ore node", took);
                         break;
                     }
                     case ResourceNodeType.Ice:
@@ -139,6 +159,7 @@ namespace SolarMajesty
                         int took = node.Harvest(7);
                         if (took > 0) _resources.Add(ResourceId.WaterIce, took);
                         _resources.Add(ResourceId.Regolith, 3);
+                        RecordExtract($"+{took} ICE from ice node", took);
                         break;
                     }
                     case ResourceNodeType.Fissile:
@@ -146,6 +167,7 @@ namespace SolarMajesty
                         int took = node.Harvest(5);
                         if (took > 0) _resources.Add(ResourceId.Power, took);
                         _resources.Add(ResourceId.Metals, 1);
+                        RecordExtract($"+{took} PWR from fissile node", took);
                         break;
                     }
                     default:
@@ -153,6 +175,7 @@ namespace SolarMajesty
                         int took = node.Harvest(10);
                         if (took > 0) _resources.Add(ResourceId.Regolith, took);
                         _resources.Add(ResourceId.Metals, 2);
+                        RecordExtract($"+{took} REG from deposit", took);
                         break;
                     }
                 }
@@ -164,37 +187,62 @@ namespace SolarMajesty
                 _resources.Add(ResourceId.Regolith, 12);
                 _resources.Add(ResourceId.Metals, 4);
                 _resources.Add(ResourceId.WaterIce, 2);
+                RecordExtract("+12 REG campus extract", 12);
             }
             else
             {
                 _resources.Add(ResourceId.Regolith, 16);
                 _resources.Add(ResourceId.Metals, 3);
                 _resources.Add(ResourceId.WaterIce, 1);
+                RecordExtract("+16 REG outpost extract", 16);
             }
+        }
+
+        private void RecordExtract(string line, int amount)
+        {
+            LastExtractLine = line;
+            LastExtractAmount = amount;
         }
 
         private void ApplyUpkeep(IReadOnlyList<SpecialistData> livingSpecialists)
         {
-            if (BasePowerUpkeep > 0)
-                _resources.SpendUpTo(ResourceId.Power, BasePowerUpkeep);
+            if (PowerGen > 0)
+                _resources.Add(ResourceId.Power, PowerGen);
 
-            if (livingSpecialists == null) return;
+            int gridDraw = Mathf.Max(0, PowerDraw) + Mathf.Max(0, BasePowerUpkeep);
+            int spentPower = gridDraw > 0
+                ? _resources.SpendUpTo(ResourceId.Power, gridDraw)
+                : 0;
 
-            float scale = UpkeepIntervalSeconds / 60f; // upkeepPerMinute → this interval
-
-            for (int s = 0; s < livingSpecialists.Count; s++)
+            int spentMet = 0;
+            int spentIce = 0;
+            if (livingSpecialists != null)
             {
-                SpecialistData data = livingSpecialists[s];
-                if (data == null || data.upkeepPerMinute == null) continue;
+                float scale = UpkeepIntervalSeconds / 60f; // upkeepPerMinute → this interval
 
-                for (int i = 0; i < data.upkeepPerMinute.Length; i++)
+                for (int s = 0; s < livingSpecialists.Count; s++)
                 {
-                    ResourceAmount c = data.upkeepPerMinute[i];
-                    int amt = Mathf.Max(0, Mathf.RoundToInt(c.amount * scale));
-                    if (amt > 0)
-                        _resources.SpendUpTo(c.resource, amt);
+                    SpecialistData data = livingSpecialists[s];
+                    if (data == null || data.upkeepPerMinute == null) continue;
+
+                    for (int i = 0; i < data.upkeepPerMinute.Length; i++)
+                    {
+                        ResourceAmount c = data.upkeepPerMinute[i];
+                        int amt = Mathf.Max(0, Mathf.RoundToInt(c.amount * scale));
+                        if (amt <= 0) continue;
+                        int paid = _resources.SpendUpTo(c.resource, amt);
+                        if (c.resource == ResourceId.Power) spentPower += paid;
+                        else if (c.resource == ResourceId.Metals) spentMet += paid;
+                        else if (c.resource == ResourceId.WaterIce) spentIce += paid;
+                    }
                 }
             }
+
+            LastUpkeepLine = PowerGen > 0
+                ? $"grid +{PowerGen}/−{spentPower} PWR"
+                : $"upkeep −{spentPower} PWR";
+            if (spentMet > 0) LastUpkeepLine += $" −{spentMet} MET";
+            if (spentIce > 0) LastUpkeepLine += $" −{spentIce} ICE";
         }
 
         private void DeliverResupply()

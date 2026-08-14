@@ -421,19 +421,24 @@ namespace SolarMajesty
             _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
 
             BrainDecision decision = _brain.Evaluate(BuildContext(), _flags.Flags, bodyDanger);
+            if (decision.Action != SpecialistAction.Flee &&
+                _lastDecision.Action == SpecialistAction.Rest &&
+                KingdomLife.AtInn(transform.position) &&
+                (fatigue > 0.22f || healthNormalized < 0.82f))
+            {
+                decision = BrainDecision.Rest(
+                    Mathf.Max(decision.Score, 0.6f),
+                    "recovering_at_inn",
+                    KingdomLife.InnNear(transform.position));
+            }
+
             Party?.PromoteIfNeeded();
             if (Party != null && !Party.IsLeader(this) &&
-                decision.Action != SpecialistAction.Flee &&
-                decision.Action != SpecialistAction.Rest)
+                decision.Action != SpecialistAction.Flee)
             {
                 var lead = Party.Leader;
                 if (lead != null && lead.IsAlive)
-                {
-                    Vector3 follow = lead.transform.position;
-                    if (lead.CurrentAction == SpecialistAction.PursueFlag && lead.ActiveFlag != null)
-                        follow = lead.ActiveFlag.WorldPosition;
-                    decision = BrainDecision.Wander(follow, 0.4f, "party_follow");
-                }
+                    decision = FollowLeader(lead);
             }
             ApplyDecision(decision);
             SyncWorkplace(decision);
@@ -473,6 +478,27 @@ namespace SolarMajesty
                 (!Workplace.HasPreferredClass || Workplace.PreferredClass == data.specialistClass))
                 return Workplace;
             return _loop.Village.NearestDutyFor(data.specialistClass, transform.position, 42f);
+        }
+
+        public SpecialistContext PeekContext() => BuildContext();
+
+        private BrainDecision FollowLeader(SpecialistAgent lead)
+        {
+            Vector3 inn = KingdomLife.InnNear(transform.position);
+            switch (lead.CurrentAction)
+            {
+                case SpecialistAction.Rest:
+                    return BrainDecision.Rest(0.55f, "party_rest", inn);
+                case SpecialistAction.Flee:
+                    return BrainDecision.Flee(inn, 0.9f, "party_flee");
+                case SpecialistAction.Hunt:
+                    return BrainDecision.Wander(lead.transform.position, 0.45f, "party_hunt");
+                case SpecialistAction.PursueFlag:
+                    if (lead.ActiveFlag != null)
+                        return BrainDecision.Wander(lead.ActiveFlag.WorldPosition, 0.45f, "party_follow_flag");
+                    break;
+            }
+            return BrainDecision.Wander(lead.transform.position, 0.4f, "party_follow");
         }
 
         private SpecialistContext BuildContext()
@@ -684,8 +710,16 @@ namespace SolarMajesty
                     lair?.ForceClear();
                 }
                 greedHunger = Mathf.Clamp01(greedHunger - 0.25f);
-                DemoAudio.PlayClaim();
-                DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
+                if (completedType == FlagType.Extract)
+                {
+                    DemoAudio.PlayExtract();
+                    DemoVfx.ExtractPing(transform.position);
+                }
+                else
+                {
+                    DemoAudio.PlayClaim();
+                    DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
+                }
                 Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty=${bounty:F0}");
                 ReleaseClaim();
                 _activeFlag = null;

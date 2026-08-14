@@ -143,7 +143,7 @@ namespace SolarMajesty
             {
                 var go = new GameObject("MetaLabel");
                 go.transform.SetParent(transform, false);
-                go.transform.localPosition = Vector3.up * 1.05f;
+                go.transform.localPosition = Vector3.up * 0.92f;
                 _metaLabel = go.AddComponent<TextMesh>();
                 _metaLabel.anchor = TextAnchor.MiddleCenter;
                 _metaLabel.alignment = TextAlignment.Center;
@@ -185,7 +185,13 @@ namespace SolarMajesty
                 float work = _manager != null ? _manager.GetWorkRemaining(_handle) : 0f;
                 int claims = _handle.ClaimCount;
                 string claimTxt = claims > 0 ? $"CLAIMED x{claims}" : "OPEN";
-                _metaLabel.text = $"{type}  ·  {claimTxt}  ·  RMB cancel\nw {work:F1}";
+                string interest = string.IsNullOrEmpty(_handle.InterestLabel)
+                    ? (claims > 0 ? claimTxt : "…")
+                    : _handle.InterestLabel;
+                _metaLabel.text = $"{type}  ·  {interest}\n{claimTxt}  ·  RMB cancel  ·  w {work:F1}";
+                _metaLabel.color = _handle.InterestCount > 0
+                    ? new Color(0.85f, 1f, 0.55f)
+                    : new Color(1f, 0.55f, 0.35f);
             }
         }
 

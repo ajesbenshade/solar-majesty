@@ -16,7 +16,8 @@ Majesty 2–style RTS homage: player is Overseer AI (never direct unit control).
 Build infrastructure, post bounty flags, manage economy. Autonomous specialists
 (Scout / Engineer / Defense / Medic) accept or reject work via SpecialistBrain.
 Campaign spine: Earth tutorial → Luna → Mars with dens / sustain / launch gates
-and an Alpha Centauri-style tech tree (TECH · T). Dust Stalkers raise ThreatPressure.
+(tech + Landing Pad) and an Alpha Centauri-style tech tree (TECH · T).
+Roadmap: Docs/Roadmap/ (Phase 1 in progress). Dust Stalkers raise ThreatPressure.
 
 ## Non-negotiables
 - Do NOT add click-to-move or any player command that bypasses SpecialistBrain.
@@ -97,10 +98,10 @@ update Docs/NEXT_STEPS.md if milestones moved.
 
 ### Known gaps
 
-- Building footprints vs real mesh size are still approximate  
 - Unit meshes are Blender blockouts pending Imagine turnaround refinement  
 - Continue slot is stockpile + last body (not a full world snapshot)  
 - No multiplayer  
+- Roadmap: [Docs/Roadmap/00_ROADMAP_OVERVIEW.md](Roadmap/00_ROADMAP_OVERVIEW.md) — Phase 1 Week 1 done  
 
 ---
 

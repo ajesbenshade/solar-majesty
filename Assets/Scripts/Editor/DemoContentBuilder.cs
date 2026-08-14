@@ -116,6 +116,7 @@ namespace SolarMajesty.EditorTools
             asset.baseRisk = risk;
             asset.workRequired = work;
             asset.bannerColor = color;
+            asset.stronglyAttracts = SpecialistPersonality.Attracts(type);
             EditorUtility.SetDirty(asset);
 
             MirrorAsset(asset, $"{DataRoot}/Flags/{fileName}.asset");
@@ -140,7 +141,10 @@ namespace SolarMajesty.EditorTools
             asset.footprintHeight = fh;
             asset.buildTimeSeconds = time;
             asset.housingSlots = cat == BuildingCategory.Habitat ? 3 : 0;
-            asset.powerDraw = power > 0 ? 2 : 0;
+            asset.powerDraw = cat == BuildingCategory.Power ? 0 : (power > 0 ? 2 : 0);
+            asset.powerGen = cat != BuildingCategory.Power
+                ? 0
+                : (display.IndexOf("Solar", System.StringComparison.OrdinalIgnoreCase) >= 0 ? 8 : 6);
             asset.buildCost = power > 0
                 ? new[]
                 {

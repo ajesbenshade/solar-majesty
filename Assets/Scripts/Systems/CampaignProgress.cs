@@ -10,6 +10,7 @@ namespace SolarMajesty
     {
         private const string MaxKey = "SM_CampaignMaxBody";
         private const string FreshKey = "SM_CampaignInitialized";
+        private const string TravelLogKey = "SM_PendingTravelLog";
 
         public static CelestialBodyId HighestUnlocked { get; private set; } = CelestialBodyId.Earth;
 
@@ -55,11 +56,28 @@ namespace SolarMajesty
             }
         }
 
+        public static void QueueTravelLog(string line)
+        {
+            if (string.IsNullOrEmpty(line)) return;
+            PlayerPrefs.SetString(TravelLogKey, line);
+            PlayerPrefs.Save();
+        }
+
+        public static string ConsumeTravelLog()
+        {
+            if (!PlayerPrefs.HasKey(TravelLogKey)) return null;
+            string line = PlayerPrefs.GetString(TravelLogKey, "");
+            PlayerPrefs.DeleteKey(TravelLogKey);
+            PlayerPrefs.Save();
+            return string.IsNullOrEmpty(line) ? null : line;
+        }
+
         public static void ResetCampaign()
         {
             HighestUnlocked = CelestialBodyId.Earth;
             PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
             PlayerPrefs.SetInt(FreshKey, 1);
+            PlayerPrefs.DeleteKey(TravelLogKey);
             BodySeed.SetBody(CelestialBodyId.Earth);
             PlayerPrefs.Save();
         }

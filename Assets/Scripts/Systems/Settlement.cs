@@ -17,14 +17,17 @@ namespace SolarMajesty
 
         public int Population { get; private set; }
         public int PalaceCount { get; private set; }
+        public int PadCount { get; private set; }
         public int CoreHabs { get; set; }
         public int VillageHabs { get; private set; }
         public int Farms { get; private set; }
         public int Mines { get; private set; }
         public int RegolithCamps { get; private set; }
+        public int PowerPlants { get; private set; }
         public int LastTax { get; private set; }
         public int LastBirths { get; private set; }
         public int LastDeaths { get; private set; }
+        public string LastProductionLine { get; private set; } = "";
 
         public bool HasPalace => PalaceCount > 0;
 
@@ -35,6 +38,10 @@ namespace SolarMajesty
         public int CampCount => Farms + Mines + RegolithCamps;
         public int VacantBeds => Mathf.Max(0, Housing - Population);
 
+        /// <summary>Full beds, or still short of the conquest housing goal.</summary>
+        public bool HousingTight =>
+            Population > 0 && (Population >= Housing || Housing < PopulationGoal);
+
         /// <summary>Overcrowded (or at cap) — village should grow a new HAB.</summary>
         public bool NeedsVillageHab =>
             HasPalace && CoreHabs > 0 && Population >= Housing && VillageHabs < MaxVillageHabs;
@@ -43,7 +50,10 @@ namespace SolarMajesty
 
         public bool MeetsPopulationGoal => Population >= PopulationGoal && Housing >= Population;
 
+        public bool HasPad => PadCount > 0;
+
         public bool IsSustainable =>
+            HasPalace &&
             MeetsPopulationGoal &&
             Farms > 0 &&
             Mines > 0 &&
@@ -68,13 +78,17 @@ namespace SolarMajesty
                     return "raise the Palace keep first";
                 if (CoreHabs <= 0)
                     return "dock a Habitat for colonists";
-                if (!MeetsPopulationGoal)
-                    return $"grow to {PopulationGoal} (now {Population}, housing {Housing})";
-                if (Farms <= 0 || Mines <= 0)
-                    return "place a Farm and a Mine";
+                if (Housing < PopulationGoal)
+                    return $"need {PopulationGoal} beds (housing {Housing} — dock more HAB)";
+                if (Population < PopulationGoal)
+                    return $"grow to {PopulationGoal} (now {Population}) — births need vacant beds";
+                if (Farms <= 0)
+                    return "place a Greenhouse Farm (dock via airlock)";
+                if (Mines <= 0)
+                    return "place an Ore Mine (dock via airlock)";
                 if (!StockpileHealthy)
-                    return "stockpile low — extract / produce";
-                return "holding sustain";
+                    return "stockpile low — Extract flags / wait on farm+mine ticks";
+                return "holding sustain — keep ICE/MET/REG above the floor";
             }
         }
 
@@ -131,10 +145,12 @@ namespace SolarMajesty
             switch (cat)
             {
                 case BuildingCategory.Palace: PalaceCount++; break;
+                case BuildingCategory.LandingPad: PadCount++; break;
                 case BuildingCategory.Farm: Farms++; break;
                 case BuildingCategory.Mine: Mines++; break;
                 case BuildingCategory.RegolithCamp: RegolithCamps++; break;
                 case BuildingCategory.Habitat: CoreHabs++; break;
+                case BuildingCategory.Power: PowerPlants++; break;
             }
         }
 
@@ -144,6 +160,9 @@ namespace SolarMajesty
             {
                 case BuildingCategory.Palace:
                     PalaceCount = Mathf.Max(0, PalaceCount - 1);
+                    break;
+                case BuildingCategory.LandingPad:
+                    PadCount = Mathf.Max(0, PadCount - 1);
                     break;
                 case BuildingCategory.Farm:
                     Farms = Mathf.Max(0, Farms - 1);
@@ -159,6 +178,9 @@ namespace SolarMajesty
                         VillageHabs = Mathf.Max(0, VillageHabs - 1);
                     else
                         CoreHabs = Mathf.Max(0, CoreHabs - 1);
+                    break;
+                case BuildingCategory.Power:
+                    PowerPlants = Mathf.Max(0, PowerPlants - 1);
                     break;
             }
 
@@ -206,12 +228,23 @@ namespace SolarMajesty
 
         private void ProduceCamps()
         {
-            if (Farms > 0)
-                _resources.Add(ResourceId.WaterIce, Farms * 3);
-            if (Mines > 0)
-                _resources.Add(ResourceId.Metals, Mines * 4);
-            if (RegolithCamps > 0)
-                _resources.Add(ResourceId.Regolith, RegolithCamps * 6);
+            int ice = Farms * 3;
+            int met = Mines * 4;
+            int reg = RegolithCamps * 6;
+            if (ice > 0)
+                _resources.Add(ResourceId.WaterIce, ice);
+            if (met > 0)
+                _resources.Add(ResourceId.Metals, met);
+            if (reg > 0)
+                _resources.Add(ResourceId.Regolith, reg);
+
+            if (ice + met + reg <= 0)
+            {
+                LastProductionLine = "";
+                return;
+            }
+
+            LastProductionLine = $"camps +{ice} ICE +{met} MET +{reg} REG";
         }
 
         private void CollectTax()

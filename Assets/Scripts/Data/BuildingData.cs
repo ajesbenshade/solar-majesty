@@ -23,6 +23,7 @@ namespace SolarMajesty
 
         [Header("Operation")]
         [Min(0)] public int powerDraw;
+        [Min(0)] public int powerGen;
         [Min(0)] public int housingSlots;
         [Range(0f, 2f)] public float attractionWeight = 1f;
         public SpecialistClass[] preferredOccupants;

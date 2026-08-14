@@ -31,6 +31,14 @@ namespace SolarMajesty
         Medic = 3
     }
 
+    /// <summary>Early fauna kinds. Stalkers hunt specialists; mites steal from camps; leeches drain power.</summary>
+    public enum FaunaKind
+    {
+        Stalker = 0,
+        Mite = 1,
+        Leech = 2
+    }
+
     public enum BuildingCategory
     {
         LandingPad = 0,

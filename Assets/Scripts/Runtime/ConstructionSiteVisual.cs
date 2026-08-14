@@ -3,17 +3,19 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// World-space progress bar for a pending ConstructionOrder.
+    /// World-space progress bar for a pending ConstructionOrder, plus work sparks.
     /// </summary>
     public class ConstructionSiteVisual : MonoBehaviour
     {
         private ConstructionOrder _order;
         private Transform _fill;
+        private float _sparkTimer;
 
         public void Bind(ConstructionOrder order)
         {
             _order = order;
             EnsureBar();
+            EnsureScaffold();
         }
 
         private void EnsureBar()
@@ -22,7 +24,7 @@ namespace SolarMajesty
             var baseGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
             baseGo.name = "ProgressBase";
             baseGo.transform.SetParent(transform, false);
-            baseGo.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+            baseGo.transform.localPosition = new Vector3(0f, 1.35f, 0f);
             baseGo.transform.localScale = new Vector3(2.2f, 0.12f, 0.35f);
             Object.Destroy(baseGo.GetComponent<Collider>());
             SetColor(baseGo, new Color(0.1f, 0.1f, 0.12f, 0.9f));
@@ -30,11 +32,22 @@ namespace SolarMajesty
             var fillGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
             fillGo.name = "ProgressFill";
             fillGo.transform.SetParent(transform, false);
-            fillGo.transform.localPosition = new Vector3(-1.05f, 0.2f, 0f);
+            fillGo.transform.localPosition = new Vector3(-1.05f, 1.4f, 0f);
             fillGo.transform.localScale = new Vector3(0.05f, 0.18f, 0.28f);
             Object.Destroy(fillGo.GetComponent<Collider>());
             SetColor(fillGo, new Color(1f, 0.65f, 0.15f, 0.95f));
             _fill = fillGo.transform;
+        }
+
+        private void EnsureScaffold()
+        {
+            var post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            post.name = "Scaffold";
+            post.transform.SetParent(transform, false);
+            post.transform.localPosition = new Vector3(1.15f, 0.7f, 0.9f);
+            post.transform.localScale = new Vector3(0.12f, 0.7f, 0.12f);
+            Object.Destroy(post.GetComponent<Collider>());
+            SetColor(post, new Color(0.96f, 0.42f, 0.08f));
         }
 
         private void Update()
@@ -47,11 +60,25 @@ namespace SolarMajesty
 
             float width = Mathf.Max(0.05f, 2.1f * p);
             _fill.localScale = new Vector3(width, 0.18f, 0.28f);
-            _fill.localPosition = new Vector3(-1.05f + width * 0.5f, 0.2f, 0f);
+            _fill.localPosition = new Vector3(-1.05f + width * 0.5f, 1.4f, 0f);
+
+            if (Camera.main != null)
+            {
+                Vector3 fwd = Camera.main.transform.forward;
+                fwd.y = 0f;
+                if (fwd.sqrMagnitude > 0.01f)
+                    transform.rotation = Quaternion.LookRotation(fwd);
+            }
+
+            _sparkTimer -= Time.deltaTime;
+            if (_sparkTimer <= 0f)
+            {
+                _sparkTimer = 0.65f;
+                DemoVfx.ConstructionSparks(transform.position + Vector3.up * 0.6f);
+            }
 
             if (_order.IsComplete || (_order.Data != null && p >= 0.999f))
             {
-                // Site complete — leave fill full briefly then destroy marker.
                 Destroy(gameObject, 0.4f);
                 enabled = false;
             }

@@ -43,6 +43,9 @@ namespace SolarMajesty
         private bool _deadlineFail;
         private bool _launchReady;
 
+        private bool _loggedDens;
+        private bool _loggedSustain;
+
         public MissionState State => _state;
         public int StalkersRemaining { get; private set; }
         public bool IsWon => _state == MissionState.Won;
@@ -102,12 +105,65 @@ namespace SolarMajesty
                 }
                 if (!LaunchReady)
                 {
-                    string craft = _loop != null && _loop.Research != null
-                        ? _loop.Research.LaunchTechLabel(_loop.ActiveBody)
-                        : "departure craft";
-                    return $"Research {craft} (TECH · T) — craft stages on the pad";
+                    if (_loop != null && _loop.Research != null &&
+                        !_loop.Research.HasLaunchUnlockFor(_loop.ActiveBody))
+                    {
+                        string craft = _loop.Research.LaunchTechLabel(_loop.ActiveBody);
+                        return $"Research {craft} (TECH · T) — then place a Landing Pad";
+                    }
+                    return "Place a Landing Pad — departure craft stages there";
                 }
                 return "Securing…";
+            }
+        }
+
+        public string WinHeadline
+        {
+            get
+            {
+                if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
+                    return "SOLAR CONQUEST COMPLETE";
+                return "OUTPOST SECURED";
+            }
+        }
+
+        public string WinDetail
+        {
+            get
+            {
+                var body = _loop != null ? _loop.BodyProfile : null;
+                if (body != null && !string.IsNullOrEmpty(body.VictoryLog))
+                    return body.VictoryLog;
+                return "Dens cleared · colony sustained · launch ready.";
+            }
+        }
+
+        public string WinSubline
+        {
+            get
+            {
+                if (_loop == null || !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
+                    return "Mars holds. Rematch this world, or oversee in sandbox.";
+                var next = CampaignProgress.NextAfter(_loop.ActiveBody);
+                string name = next.HasValue
+                    ? CelestialBodyCatalog.Get(next.Value).DisplayName
+                    : "the next body";
+                return $"Stage departure, or keep overseeing here. Next: {name}.";
+            }
+        }
+
+        public string FailHeadline => WasDeadlineFail ? "MISSION TIME EXPIRED" : "OUTPOST OVERWHELMED";
+
+        public string FailDetail
+        {
+            get
+            {
+                var body = _loop != null ? _loop.BodyProfile : null;
+                if (WasDeadlineFail)
+                    return "The window to secure the outpost closed. Restart for a tighter run.";
+                if (body != null && !string.IsNullOrEmpty(body.FailLog))
+                    return body.FailLog;
+                return "Every specialist is incapacitated. Revive the party to retake the plaza.";
             }
         }
 
@@ -122,6 +178,8 @@ namespace SolarMajesty
             _sustainElapsed = 0f;
             _pressureTimer = pressureCooldown * 0.5f;
             _deadlineFail = false;
+            _loggedDens = false;
+            _loggedSustain = false;
             DensCleared = false;
             UnclearedLairs = 0;
             LairCount = 0;
@@ -210,6 +268,12 @@ namespace SolarMajesty
                 DensCleared = UnclearedLairs <= 0 && StalkersRemaining <= 0;
             else
                 DensCleared = StalkersRemaining <= 0;
+
+            if (DensCleared && !_loggedDens)
+            {
+                _loggedDens = true;
+                _loop.LogOverseer("Dens quiet. Fauna no longer holds the plaza.");
+            }
         }
 
         private void TickSustain(float dt)
@@ -225,6 +289,12 @@ namespace SolarMajesty
                 _sustainElapsed = Mathf.Min(sustainHoldSeconds, _sustainElapsed + dt);
             else
                 _sustainElapsed = Mathf.Max(0f, _sustainElapsed - dt * 0.5f);
+
+            if (SustainComplete && !_loggedSustain)
+            {
+                _loggedSustain = true;
+                _loop.LogOverseer($"Colony holding — pop {set.Population}/{populationGoal} for {Mathf.RoundToInt(sustainHoldSeconds)}s.");
+            }
         }
 
         private void TickPressure(float dt)
@@ -265,6 +335,7 @@ namespace SolarMajesty
                 DemoVfx.ClaimRing(
                     ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
                     new Color(0.35f, 0.95f, 0.55f));
+                _loop.LogOverseer(WinDetail);
                 Debug.Log("[Mission] Victory — dens cleared, colony sustained, launch ready.");
                 if (_loop.ActiveBody == CelestialBodyId.Mars)
                     Debug.Log("[Mission] Mars finale — solar conquest complete.");
@@ -281,6 +352,7 @@ namespace SolarMajesty
                     Debug.Log("[Mission] Defeat — mission deadline elapsed.");
                 else
                     Debug.Log("[Mission] Defeat — outpost overwhelmed.");
+                _loop.LogOverseer(FailDetail);
             }
         }
 

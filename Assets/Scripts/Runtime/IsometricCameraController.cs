@@ -78,6 +78,30 @@ namespace SolarMajesty
             panBoundsMax = max;
         }
 
+        /// <summary>Smooth pan toward a ground point (does not snap this frame).</summary>
+        public void GlanceAt(Vector3 groundPoint, float? orthoSize = null)
+        {
+            if (_cam == null) _cam = GetComponent<Camera>();
+
+            Vector3 forward = transform.forward;
+            var plane = new Plane(Vector3.up, Vector3.zero);
+            var ray = new Ray(transform.position, forward);
+            if (plane.Raycast(ray, out float t) && t > 0f)
+            {
+                Vector3 currentFocus = ray.GetPoint(t);
+                Vector3 delta = groundPoint - currentFocus;
+                _targetPos = transform.position + delta;
+            }
+            else
+            {
+                float y = Mathf.Max(12f, transform.position.y);
+                _targetPos = groundPoint + new Vector3(-22f, y, -22f);
+            }
+
+            if (orthoSize.HasValue)
+                _targetZoom = Mathf.Clamp(orthoSize.Value, minZoom, maxZoom);
+        }
+
         /// <summary>Snap look-at focus on the ground plane; keeps current iso pitch/yaw.</summary>
         public void FocusOn(Vector3 groundPoint, float? orthoSize = null)
         {

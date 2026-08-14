@@ -20,6 +20,6 @@ MonoBehaviour:
   maxBounty: 500
   workRequired: 9
   baseRisk: 0.25
-  stronglyAttracts: 
+  stronglyAttracts: 0200000003000000 
   bannerColor: {r: 0.85, g: 0.35, b: 1, a: 1}
   prefab: {fileID: 0}

@@ -20,7 +20,7 @@ namespace SolarMajesty
             EnsureFillLight(groundParent, body);
             ConfigureAmbientAndFog(body);
             ConfigureCamera(cam, body);
-            EnsureVolume(groundParent);
+            EnsureVolume(groundParent, body);
         }
 
         private static void ConfigureSun(CelestialBodyProfile body)
@@ -49,7 +49,7 @@ namespace SolarMajesty
             sun.shadowStrength = 0.78f;
             sun.shadowBias = 0.04f;
             sun.shadowNormalBias = 0.6f;
-            sun.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
+            sun.transform.rotation = Quaternion.Euler(body.SunEuler);
             sun.name = "Directional Light";
         }
 
@@ -104,24 +104,36 @@ namespace SolarMajesty
             additional.renderPostProcessing = true;
         }
 
-        private static void EnsureVolume(Transform parent)
+        private static void EnsureVolume(Transform parent, CelestialBodyProfile body)
         {
-            if (GameObject.Find("DemoVolume") != null) return;
-
-            var go = new GameObject("DemoVolume");
-            if (parent != null) go.transform.SetParent(parent, false);
-            var volume = go.AddComponent<Volume>();
-            volume.isGlobal = true;
-            volume.priority = 1f;
-
-            var authored = Resources.Load<VolumeProfile>("Atmosphere/DemoVolumeProfile");
-            if (authored != null)
+            var existing = GameObject.Find("DemoVolume");
+            Volume volume;
+            if (existing == null)
             {
-                volume.sharedProfile = authored;
-                return;
+                var go = new GameObject("DemoVolume");
+                if (parent != null) go.transform.SetParent(parent, false);
+                volume = go.AddComponent<Volume>();
+                volume.isGlobal = true;
+                volume.priority = 1f;
+                var authored = Resources.Load<VolumeProfile>("Atmosphere/DemoVolumeProfile");
+                volume.sharedProfile = authored != null ? authored : BuildRuntimeProfile();
+            }
+            else
+            {
+                volume = existing.GetComponent<Volume>();
             }
 
-            volume.sharedProfile = BuildRuntimeProfile();
+            GradeVolume(volume, body);
+        }
+
+        private static void GradeVolume(Volume volume, CelestialBodyProfile body)
+        {
+            if (volume == null || body == null) return;
+            var profile = volume.profile;
+            if (profile == null) return;
+            if (!profile.TryGet(out ColorAdjustments color))
+                color = profile.Add<ColorAdjustments>(true);
+            color.colorFilter.Override(body.GradeFilter);
         }
 
         private static VolumeProfile BuildRuntimeProfile()

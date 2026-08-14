@@ -52,6 +52,7 @@ namespace SolarMajesty
         public bool IsAlive => _health > 0f;
         public bool IsAggro => _aggro;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
+        public FaunaKind Kind { get; private set; } = FaunaKind.Stalker;
 
         /// <summary>Opportunistic combat from a hunting specialist (no bounty flag required).</summary>
         public void ApplyCombatDamage(float amount)
@@ -71,6 +72,8 @@ namespace SolarMajesty
         }
 
         private GameLoop _loop;
+        private float _stealTimer;
+        private bool _raiding;
 
         public void Initialize(ThreatPressure threat, FlagManager flags, Vector3 home, GameLoop loop = null)
         {
@@ -90,12 +93,59 @@ namespace SolarMajesty
             gameObject.name = "DustStalker";
         }
 
+        /// <summary>Retarget this agent as a mite or leech after Initialize. Stalker is the default.</summary>
+        public void SetKind(FaunaKind kind)
+        {
+            Kind = kind;
+            switch (kind)
+            {
+                case FaunaKind.Mite:
+                    gameObject.name = "RegolithMite";
+                    stalkerColor = UnitPlaceholderFactory.MiteTint;
+                    maxHealth = 16f;
+                    _health = maxHealth;
+                    moveSpeed = 1.7f;
+                    wanderRadius = 7f;
+                    aggroPressure = 0.32f;
+                    idlePressure = 0.05f;
+                    defeatLinkRadius = 5f;
+                    biteDamagePerSecond = 0.06f;
+                    transform.localScale = new Vector3(0.85f, 0.7f, 0.85f);
+                    break;
+                case FaunaKind.Leech:
+                    gameObject.name = "WattLeech";
+                    stalkerColor = UnitPlaceholderFactory.LeechTint;
+                    maxHealth = 18f;
+                    _health = maxHealth;
+                    moveSpeed = 1.15f;
+                    wanderRadius = 8f;
+                    aggroPressure = 0.40f;
+                    idlePressure = 0.06f;
+                    defeatLinkRadius = 5f;
+                    biteDamagePerSecond = 0.04f;
+                    transform.localScale = new Vector3(1f, 0.65f, 1.1f);
+                    break;
+                default:
+                    gameObject.name = "DustStalker";
+                    break;
+            }
+            _baseScale = transform.localScale;
+            if (_rend != null && !IndustrialArtDressing.HasArt(gameObject))
+                SetColor(_rend, stalkerColor);
+            if (_label != null)
+                _label.color = kind == FaunaKind.Leech
+                    ? new Color(0.45f, 1f, 1f)
+                    : kind == FaunaKind.Mite
+                        ? new Color(1f, 0.72f, 0.35f)
+                        : new Color(1f, 0.45f, 0.4f);
+        }
+
         private void Update()
         {
             if (!IsAlive || _threat == null) return;
 
             float dt = Time.deltaTime;
-            if (TickRaidVillage(dt))
+            if (TickRole(dt))
             {
                 TickDefeat(dt);
                 TickPresentation(dt);
@@ -106,6 +156,17 @@ namespace SolarMajesty
             TickBite(dt);
             TickDefeat(dt);
             TickPresentation(dt);
+        }
+
+        private bool TickRole(float dt)
+        {
+            _raiding = false;
+            switch (Kind)
+            {
+                case FaunaKind.Mite: return TickRaidExtractor(dt);
+                case FaunaKind.Leech: return TickRaidPower(dt);
+                default: return TickRaidVillage(dt);
+            }
         }
 
         /// <summary>Village HABs are the outer ring — raid those before the main campus.</summary>
@@ -140,7 +201,67 @@ namespace SolarMajesty
             }
 
             hab.ApplyRaidDamage(7f * dt);
+            _raiding = true;
             return true;
+        }
+
+        private bool TickRaidExtractor(float dt)
+        {
+            if (_loop?.Village == null) return false;
+            var camp = _loop.Village.NearestExtractor(transform.position, 42f);
+            if (camp == null || !camp.IsAlive) return false;
+            return TickRaidStructure(dt, camp, StealFromCamp);
+        }
+
+        private bool TickRaidPower(float dt)
+        {
+            if (_loop?.Village == null) return false;
+            var node = _loop.Village.NearestPower(transform.position, 42f);
+            if (node == null || !node.IsAlive) return false;
+            return TickRaidStructure(dt, node, DrainPower);
+        }
+
+        private bool TickRaidStructure(float dt, ColonyStructure target, System.Action steal)
+        {
+            Vector3 dest = target.WorldPosition;
+            dest.y = transform.position.y;
+            float dist = Vector3.Distance(Flat(transform.position), Flat(dest));
+
+            _aggro = true;
+            _raiding = true;
+            _threat?.Report(_sourceId, aggroPressure);
+            if (dist > 2.4f)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, dest, moveSpeed * 1.2f * dt);
+                return true;
+            }
+
+            target.ApplyRaidDamage(4f * dt);
+            _stealTimer += dt;
+            if (_stealTimer >= 0.8f)
+            {
+                _stealTimer = 0f;
+                steal?.Invoke();
+            }
+            return true;
+        }
+
+        private void StealFromCamp()
+        {
+            if (_loop?.Resources == null) return;
+            var camp = _loop.Village?.NearestExtractor(transform.position, 4f);
+            if (camp == null) return;
+            if (camp.Category == BuildingCategory.Farm)
+                _loop.Resources.SpendUpTo(ResourceId.WaterIce, 1);
+            else if (camp.Category == BuildingCategory.Mine)
+                _loop.Resources.SpendUpTo(ResourceId.Metals, 1);
+            else
+                _loop.Resources.SpendUpTo(ResourceId.Regolith, 1);
+        }
+
+        private void DrainPower()
+        {
+            _loop?.Resources?.SpendUpTo(ResourceId.Power, 1);
         }
 
         private void TickWander(float dt)
@@ -217,7 +338,8 @@ namespace SolarMajesty
         {
             if (_flags == null) return;
 
-            // ClearThreat flags near this stalker, while claimed/worked, damage it.
+            // Nearby claimed/worked counter-flag damages this fauna.
+            FlagType counter = Kind == FaunaKind.Mite ? FlagType.DefendArea : FlagType.ClearThreat;
             var list = _flags.Flags;
             Vector3 me = Flat(transform.position);
             float linkSq = defeatLinkRadius * defeatLinkRadius;
@@ -227,7 +349,7 @@ namespace SolarMajesty
             {
                 FlagHandle f = list[i];
                 if (f == null || f.Data == null) continue;
-                if (f.Data.flagType != FlagType.ClearThreat) continue;
+                if (f.Data.flagType != counter) continue;
                 if ((Flat(f.WorldPosition) - me).sqrMagnitude > linkSq) continue;
 
                 // Claimed or any remaining work in range = player posted a clear job here.
@@ -257,20 +379,21 @@ namespace SolarMajesty
 
             if (_label != null)
             {
-                // Quiet world labels — full status lives on the Overseer HUD.
-                if (_aggro)
+                bool show = _aggro || Kind != FaunaKind.Stalker;
+                _label.gameObject.SetActive(show);
+                if (show)
                 {
-                    _label.gameObject.SetActive(true);
-                    _label.text = "AGGRO";
+                    _label.text = Kind switch
+                    {
+                        FaunaKind.Mite => _raiding ? "MITE STEAL" : "MITE",
+                        FaunaKind.Leech => _raiding ? "LEECH DRAIN" : "LEECH",
+                        _ => "AGGRO"
+                    };
                     if (Camera.main != null)
                     {
                         _label.transform.rotation = Quaternion.LookRotation(
                             _label.transform.position - Camera.main.transform.position);
                     }
-                }
-                else
-                {
-                    _label.gameObject.SetActive(false);
                 }
             }
 
@@ -295,7 +418,13 @@ namespace SolarMajesty
             _threat?.Clear(_sourceId);
             DemoAudio.PlayStalkerDeath();
             DemoVfx.DeathBurst(transform.position, stalkerColor);
-            Debug.Log("[Threat] Dust Stalker defeated — pressure contribution removed.");
+            string who = Kind switch
+            {
+                FaunaKind.Mite => "Regolith Mite",
+                FaunaKind.Leech => "Watt Leech",
+                _ => "Dust Stalker"
+            };
+            Debug.Log($"[Threat] {who} defeated — pressure contribution removed.");
             Destroy(gameObject);
         }
 

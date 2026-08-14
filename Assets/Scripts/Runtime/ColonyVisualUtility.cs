@@ -214,6 +214,8 @@ namespace SolarMajesty
             }
         }
 
+        public static void ApplyTransparent(Material mat) => ForceTransparent(mat);
+
         private static void ForceTransparent(Material mat)
         {
             if (mat == null) return;

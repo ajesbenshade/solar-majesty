@@ -14,14 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.SpecialistData
   specialistClass: 1
   displayName: Scout Drone
-  description: 
-  baseGreed: 0.4
-  courage: 0.55
-  workaholicBias: 0.3
-  explorePreference: 0.95
-  buildPreference: 0.2
-  combatPreference: 0.25
-  extractPreference: 0.45
+  description: Curious cheapskate. Takes modest Explore; ignores fights.
+  baseGreed: 0.32
+  courage: 0.52
+  workaholicBias: 0.28
+  explorePreference: 1
+  buildPreference: 0.12
+  combatPreference: 0.1
+  extractPreference: 0.38
+  defendPreference: 0.18
   moveSpeed: 4.4
   workRate: 1
   maxEnergy: 100

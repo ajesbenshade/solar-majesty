@@ -43,6 +43,7 @@ namespace SolarMajesty
         private float _contentBottom; // top of dock/popup stack — cards sit above this
         private float _sw;
         private float _sh;
+        private bool _powerAlarmLatched;
 
 
         private bool _stylesReady;
@@ -74,21 +75,26 @@ namespace SolarMajesty
             _winDismissed = false;
             _deadlineDismissed = false;
             _toast = null;
+            _powerAlarmLatched = false;
             _lastFocusToast = _loop != null ? _loop.FocusedCampus : -1;
             if (_loop != null && _loop.Economy != null)
             {
                 _loop.Economy.ResupplyArrived -= OnResupply;
                 _loop.Economy.ResupplyArrived += OnResupply;
+                _loop.Economy.UpkeepApplied -= OnUpkeep;
+                _loop.Economy.UpkeepApplied += OnUpkeep;
             }
         }
 
         public void OnSessionPlaying()
         {
             if (_loop == null || !_loop.StartsEmpty) return;
-            if (!DemoSettings.TutorialDone)
-                return;
-            string body = _loop.BodyProfile != null ? _loop.BodyProfile.DisplayName : "world";
-            Toast($"{body} drop — raise the Palace keep first, then dock modules via airlocks.", 5.5f);
+            var body = _loop.BodyProfile;
+            string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
+                ? body.Briefing
+                : "Raise the Palace keep first, then dock modules via airlocks.";
+            if (DemoSettings.TutorialDone)
+                Toast(briefing, 6f);
         }
 
         public void Notify(string message, float seconds) => Toast(message, seconds);
@@ -97,6 +103,21 @@ namespace SolarMajesty
         {
             Toast("Earth resupply docked at Campus A pad — stockpile topped up.", 4f);
             DemoAudio.PlayRetry();
+        }
+
+        private void OnUpkeep()
+        {
+            if (_loop?.Economy == null) return;
+            bool shortOnPower = _loop.Economy.PowerShort;
+            if (shortOnPower && !_powerAlarmLatched)
+            {
+                _powerAlarmLatched = true;
+                Toast("Power short — dock a Power Node. Grid draw exceeds generation.", 4f);
+            }
+            else if (!shortOnPower)
+            {
+                _powerAlarmLatched = false;
+            }
         }
 
         private void Toast(string message, float seconds)
@@ -296,7 +317,7 @@ namespace SolarMajesty
         /// <summary>Brand + stockpile + current objective.</summary>
         private void DrawCommandPanel(float top)
         {
-            var rect = new Rect(M, top, TopW, 214f);
+            var rect = new Rect(M, top, TopW, 304f);
             var c = Panel(rect, null);
 
             GUI.Label(new Rect(c.x, c.y, 190f, 22f), "SOLAR MAJESTY", _brand);
@@ -370,24 +391,60 @@ namespace SolarMajesty
             {
                 float resW = (c.width - 9f) / 4f;
                 int metals = _loop.Resources.Get(ResourceId.Metals);
+                int ice = _loop.Resources.Get(ResourceId.WaterIce);
+                int reg = _loop.Resources.Get(ResourceId.Regolith);
+                int pwr = _loop.Resources.Get(ResourceId.Power);
                 int escrow = _loop.Economy != null ? _loop.Economy.EscrowedMetals : 0;
-                ResourceChip(new Rect(c.x, y, resW, 28f), "REGOLITH", _loop.Resources.Get(ResourceId.Regolith));
-                ResourceChip(new Rect(c.x + resW + 3f, y, resW, 28f), "ICE", _loop.Resources.Get(ResourceId.WaterIce));
+                bool pwrAlarm = pwr < 8 || (_loop.Economy != null && _loop.Economy.PowerDraw > _loop.Economy.PowerGen);
+                ResourceChip(new Rect(c.x, y, resW, 28f), "REGOLITH", reg, reg < 10);
+                ResourceChip(new Rect(c.x + resW + 3f, y, resW, 28f), "ICE", ice, ice < 8);
                 ResourceChip(new Rect(c.x + (resW + 3f) * 2f, y, resW, 28f),
-                    escrow > 0 ? $"METALS  −{escrow}" : "METALS", metals);
-                ResourceChip(new Rect(c.x + (resW + 3f) * 3f, y, resW, 28f), "POWER", _loop.Resources.Get(ResourceId.Power));
+                    escrow > 0 ? $"METALS  −{escrow}" : "METALS", metals, metals < 12);
+                ResourceChip(new Rect(c.x + (resW + 3f) * 3f, y, resW, 28f), "POWER", pwr, pwrAlarm);
                 y += 32f;
             }
 
             var set = _loop.Settlement;
             if (set != null)
             {
+                var prevPop = _micro.normal.textColor;
+                _micro.normal.textColor = set.HousingTight ? Alarm : TextMuted;
                 GUI.Label(
                     new Rect(c.x, y, c.width, 14f),
                     $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}  ·  TAX +{set.LastTax} MET",
                     _micro);
-                y += 16f;
+                _micro.normal.textColor = prevPop;
+                y += 15f;
             }
+
+            var eco = _loop.Economy;
+            if (eco != null)
+            {
+                int gen = eco.PowerGen;
+                int draw = eco.PowerDraw;
+                var prevPwr = _micro.normal.textColor;
+                _micro.normal.textColor = draw > gen ? Alarm : TextMuted;
+                GUI.Label(
+                    new Rect(c.x, y, c.width, 14f),
+                    $"PWR {gen} gen / {draw} draw  ·  upkeep {_loop.FormatHold(eco.UpkeepSecondsLeft)}  ·  ship {_loop.FormatHold(eco.ResupplySecondsLeft)}",
+                    _micro);
+                _micro.normal.textColor = prevPwr;
+                y += 14f;
+
+                string feed = !string.IsNullOrEmpty(eco.LastExtractLine)
+                    ? eco.LastExtractLine
+                    : (set != null && !string.IsNullOrEmpty(set.LastProductionLine)
+                        ? set.LastProductionLine
+                        : eco.LastUpkeepLine);
+                if (!string.IsNullOrEmpty(feed))
+                {
+                    GUI.Label(new Rect(c.x, y, c.width, 13f), feed, _micro);
+                    y += 14f;
+                }
+            }
+
+            DrawLogLines(new Rect(c.x, y, c.width, 40f));
+            y += 42f;
 
             int partyCount = _loop.Parties != null ? _loop.Parties.Count : 0;
             if (Chip(new Rect(c.x, y, 108f, 22f), "PARTY · P", partyCount > 0))
@@ -397,9 +454,33 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x + 208f, y + 4f, c.width - 208f, 16f), "select 2+ or inn", _micro);
         }
 
-        private void ResourceChip(Rect r, string label, int amount)
+        private void DrawLogLines(Rect r)
         {
-            Fill(r, PanelSoft);
+            var log = _loop.Log;
+            if (log == null || log.Entries.Count == 0)
+            {
+                GUI.Label(r, "Overseer log — drop, dens, sustain, launch.", _micro);
+                return;
+            }
+
+            int n = Mathf.Min(3, log.Entries.Count);
+            float row = r.height / 3f;
+            for (int i = 0; i < n; i++)
+            {
+                var e = log.Entries[log.Entries.Count - n + i];
+                GUI.Label(new Rect(r.x, r.y + i * row, r.width, row), e.Line, _micro);
+            }
+        }
+
+        private void ResourceChip(Rect r, string label, int amount, bool alarm = false)
+        {
+            Color fill = PanelSoft;
+            if (alarm)
+            {
+                float pulse = 0.4f + 0.35f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 7f));
+                fill = Color.Lerp(PanelSoft, Alarm, pulse);
+            }
+            Fill(r, fill);
             GUI.Label(new Rect(r.x + 6f, r.y + 1f, r.width - 8f, 11f), label, _micro);
             GUI.Label(new Rect(r.x + 6f, r.y + 12f, r.width - 8f, 15f), amount.ToString(), _value);
         }
@@ -547,7 +628,7 @@ namespace SolarMajesty
             _contentBottom = rect.y;
             var c = Panel(rect, "Flag orders");
 
-            GUI.Label(new Rect(c.x, c.y, c.width, 13f), "Bounty is escrowed from METALS. Heroes keep $.", _micro);
+            GUI.Label(new Rect(c.x, c.y, c.width, 13f), FlagBoardLine(), _micro);
             float y = c.y + 17f;
 
             y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F1  Explore", fp.ExploreFlag);
@@ -847,7 +928,7 @@ namespace SolarMajesty
             int n = selected.Count;
             float avail = _sw - M * 2f - (n - 1) * 8f;
             float cardW = Mathf.Clamp(avail / n, 168f, 230f);
-            const float cardH = 148f;
+            const float cardH = 162f;
             float y = _contentBottom - 8f - cardH;
 
             for (int i = 0; i < n; i++)
@@ -859,6 +940,7 @@ namespace SolarMajesty
                 var c = Panel(rect, null);
                 Outline(rect, new Color(0.96f, 0.42f, 0.08f, 0.45f));
                 if (a.IsIncapacitated) Outline(rect, new Color(0.95f, 0.32f, 0.26f, 0.55f));
+                Fill(new Rect(rect.x, rect.y, 3f, rect.height), ClassTint(a.Data != null ? a.Data.specialistClass : SpecialistClass.ScoutDrone));
 
                 float row = c.y;
                 GUI.Label(new Rect(c.x, row, c.width - 44f, 16f), a.Data?.displayName ?? "Specialist", _value);
@@ -878,8 +960,16 @@ namespace SolarMajesty
                     $"{ColonyLayout.CampusLabel(campus)} · ${a.Credits:F0} · {a.SuitLabel}", _micro);
                 row += 16f;
 
+                var prevAct = _action.normal.textColor;
+                _action.normal.textColor = ActionTint(a.CurrentAction);
                 GUI.Label(new Rect(c.x, row, c.width, 14f), FormatAction(a), _action);
-                row += 17f;
+                _action.normal.textColor = prevAct;
+                row += 16f;
+                if (!string.IsNullOrEmpty(a.Data?.description))
+                {
+                    GUI.Label(new Rect(c.x, row, c.width, 13f), Truncate(a.Data.description, 42), _micro);
+                    row += 14f;
+                }
 
                 Bar(new Rect(c.x, row, c.width, 14f), "HP", a.HealthNormalized, HpFill);
                 row += 16f;
@@ -910,6 +1000,43 @@ namespace SolarMajesty
             };
             return string.IsNullOrEmpty(a.Status) ? action : $"{action} — {a.Status}";
         }
+
+        private string FlagBoardLine()
+        {
+            int posted = 0;
+            int claimed = 0;
+            var flags = _loop.Flags != null ? _loop.Flags.Flags : null;
+            if (flags != null)
+            {
+                posted = flags.Count;
+                for (int i = 0; i < flags.Count; i++)
+                {
+                    if (flags[i] != null && flags[i].ClaimCount > 0)
+                        claimed++;
+                }
+            }
+            return posted <= 0
+                ? "Bounty escrowed from METALS. Heroes keep $."
+                : $"Posted {posted}  ·  claimed {claimed}  ·  heroes keep $";
+        }
+
+        private static Color ActionTint(SpecialistAction action) => action switch
+        {
+            SpecialistAction.Hunt => new Color(0.95f, 0.45f, 0.32f),
+            SpecialistAction.Flee => new Color(0.95f, 0.32f, 0.26f),
+            SpecialistAction.PursueFlag => new Color(1f, 0.62f, 0.22f),
+            SpecialistAction.Repair => new Color(0.55f, 0.85f, 1f),
+            SpecialistAction.Rest => new Color(0.55f, 0.78f, 1f),
+            _ => TextPrimary
+        };
+
+        private static Color ClassTint(SpecialistClass cls) => cls switch
+        {
+            SpecialistClass.EngineerBot => new Color(1f, 0.55f, 0.15f),
+            SpecialistClass.DefenseMech => new Color(0.85f, 0.22f, 0.22f),
+            SpecialistClass.Medic => new Color(0.55f, 0.9f, 0.7f),
+            _ => new Color(0.35f, 0.85f, 1f)
+        };
 
         private void DrawConstructionPanel()
         {
@@ -964,23 +1091,17 @@ namespace SolarMajesty
 
             Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.05f, 0.03f, 0.55f));
 
-            var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.3f, 460f, 160f);
+            var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.3f, 460f, 176f);
             var c = Panel(rect, null, false);
             Fill(new Rect(rect.x, rect.y, rect.width, 2f), Good);
 
             var prev = _banner.normal.textColor;
             _banner.normal.textColor = Good;
-            bool finale = !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue;
-            GUI.Label(new Rect(c.x, c.y, c.width, 26f),
-                finale ? "SOLAR CONQUEST COMPLETE" : "OUTPOST SECURED", _banner);
+            GUI.Label(new Rect(c.x, c.y, c.width, 26f), mission.WinHeadline, _banner);
             _banner.normal.textColor = prev;
 
-            GUI.Label(new Rect(c.x, c.y + 32f, c.width, 16f), "Dens cleared · colony sustained · launch ready.", _body);
-            GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f),
-                finale
-                    ? "Mars holds. Rematch this world, or oversee in sandbox."
-                    : "Stage the next departure, or keep overseeing here.",
-                _muted);
+            GUI.Label(new Rect(c.x, c.y + 32f, c.width, 32f), mission.WinDetail, _body);
+            GUI.Label(new Rect(c.x, c.y + 66f, c.width, 28f), mission.WinSubline, _muted);
 
             if (GUI.Button(new Rect(c.x, c.yMax - 30f, 190f, 28f), "CONTINUE OVERSEEING  ·  Y", _chipOn))
             {
@@ -1024,27 +1145,28 @@ namespace SolarMajesty
 
             Fill(new Rect(0, 0, _sw, _sh), new Color(0.10f, 0.01f, 0.01f, 0.55f));
 
-            var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.32f, 460f, 146f);
+            var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.32f, 460f, 168f);
             var c = Panel(rect, null, false);
             Fill(new Rect(rect.x, rect.y, rect.width, 2f), Alarm);
 
             var prev = _banner.normal.textColor;
             _banner.normal.textColor = Alarm;
-            GUI.Label(new Rect(c.x, c.y, c.width, 26f),
-                deadline ? "MISSION TIME EXPIRED" : "OUTPOST OVERWHELMED", _banner);
+            GUI.Label(new Rect(c.x, c.y, c.width, 26f), mission != null ? mission.FailHeadline : "OUTPOST OVERWHELMED", _banner);
             _banner.normal.textColor = prev;
 
             if (deadline)
             {
-                GUI.Label(new Rect(c.x, c.y + 32f, c.width, 16f), "The window to secure the outpost closed.", _body);
-                GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f), "Stakes unmet — restart to try a tighter run.", _muted);
+                GUI.Label(new Rect(c.x, c.y + 32f, c.width, 32f),
+                    mission != null ? mission.FailDetail : "The window to secure the outpost closed.", _body);
+                GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f), "Restart to try a tighter run.", _muted);
                 if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), "RESTART MISSION", _chipOn))
                     _loop.RestartMission();
             }
             else
             {
-                GUI.Label(new Rect(c.x, c.y + 32f, c.width, 16f), "Every specialist is incapacitated.", _body);
-                GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f), "Stalkers hold the plaza until the party is revived.", _muted);
+                GUI.Label(new Rect(c.x, c.y + 32f, c.width, 32f),
+                    mission != null ? mission.FailDetail : "Every specialist is incapacitated.", _body);
+                GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f), "Stalkers hold the plaza until the party is revived.", _muted);
                 if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), "REVIVE PARTY  ·  Y", _chipOn))
                     _loop.RetryParty();
             }
@@ -1229,7 +1351,7 @@ namespace SolarMajesty
                 BuildingCategory.EngineerWorkshop
             };
 
-            var rect = new Rect(M, M + 226f, TopW, 118f);
+            var rect = new Rect(M, M + 316f, TopW, 118f);
             var c = Panel(rect, "Drop manifest");
             float y = c.y;
             GUI.Label(new Rect(c.x, y, c.width, 13f), "Palace → airlock sockets → modules. Lego campus only.", _micro);

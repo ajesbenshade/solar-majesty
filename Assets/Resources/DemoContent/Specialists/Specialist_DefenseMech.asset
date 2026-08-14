@@ -14,14 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.SpecialistData
   specialistClass: 2
   displayName: Defense Mech
-  description: 
-  baseGreed: 0.35
-  courage: 0.9
-  workaholicBias: 0.5
-  explorePreference: 0.25
-  buildPreference: 0.15
-  combatPreference: 0.95
-  extractPreference: 0.2
+  description: Duty-bound. Cheap Clear Threat is fine; will not wander or tinker.
+  baseGreed: 0.22
+  courage: 0.94
+  workaholicBias: 0.48
+  explorePreference: 0.08
+  buildPreference: 0.06
+  combatPreference: 1
+  extractPreference: 0.12
+  defendPreference: 0.92
   moveSpeed: 3
   workRate: 1.15
   maxEnergy: 100

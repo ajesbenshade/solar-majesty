@@ -86,5 +86,9 @@ namespace SolarMajesty
         [NonSerialized] public object RuntimeId; // FlagManager identity — not Unity-serializable
         /// <summary>Metals reserved from the stockpile when the flag was posted.</summary>
         public int EscrowMetals;
+        /// <summary>How many living specialists would take this flag at the current bounty.</summary>
+        public int InterestCount;
+        /// <summary>Short class names currently tempted (empty if ignored).</summary>
+        public string InterestLabel;
     }
 }

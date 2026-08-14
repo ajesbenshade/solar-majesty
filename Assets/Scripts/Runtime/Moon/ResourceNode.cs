@@ -42,14 +42,21 @@ namespace SolarMajesty
             remaining -= take;
             if (remaining <= 0)
                 ApplyDepletedLook();
+            RefreshYieldLabel();
             return take;
         }
+
+        private TextMesh _yieldLabel;
 
         private void BuildMarker(Color soilColor)
         {
             // Clear prior children if reconfigured.
             for (int i = transform.childCount - 1; i >= 0; i--)
-                Destroy(transform.GetChild(i).gameObject);
+            {
+                var child = transform.GetChild(i);
+                if (child != null && child.name == "YieldLabel") continue;
+                Destroy(child.gameObject);
+            }
 
             Color body = nodeType switch
             {
@@ -96,6 +103,42 @@ namespace SolarMajesty
             }
 
             ColonyVisualUtility.SnapToGround(gameObject);
+            EnsureYieldLabel();
+        }
+
+        private void EnsureYieldLabel()
+        {
+            if (_yieldLabel == null)
+            {
+                Transform existing = transform.Find("YieldLabel");
+                GameObject go = existing != null ? existing.gameObject : new GameObject("YieldLabel");
+                go.transform.SetParent(transform, false);
+                go.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+                _yieldLabel = go.GetComponent<TextMesh>() ?? go.AddComponent<TextMesh>();
+                _yieldLabel.anchor = TextAnchor.MiddleCenter;
+                _yieldLabel.alignment = TextAlignment.Center;
+                _yieldLabel.characterSize = 0.12f;
+                _yieldLabel.fontSize = 36;
+                _yieldLabel.fontStyle = FontStyle.Bold;
+                _yieldLabel.color = new Color(0.92f, 0.93f, 0.9f);
+            }
+            RefreshYieldLabel();
+        }
+
+        private void RefreshYieldLabel()
+        {
+            if (_yieldLabel == null) return;
+            string tag = nodeType switch
+            {
+                ResourceNodeType.Metals => "MET",
+                ResourceNodeType.Ice => "ICE",
+                ResourceNodeType.Fissile => "PWR",
+                _ => "REG"
+            };
+            _yieldLabel.text = IsDepleted ? $"{tag} —" : $"{tag} {remaining}";
+            _yieldLabel.color = IsDepleted
+                ? new Color(0.55f, 0.52f, 0.48f)
+                : new Color(0.92f, 0.93f, 0.9f);
         }
 
         private void ApplyDepletedLook()
@@ -103,10 +146,19 @@ namespace SolarMajesty
             var rends = GetComponentsInChildren<Renderer>();
             for (int i = 0; i < rends.Length; i++)
             {
-                if (rends[i] == null) continue;
+                if (rends[i] == null || rends[i].GetComponent<TextMesh>() != null) continue;
                 SetColor(rends[i].gameObject, new Color(0.35f, 0.33f, 0.3f));
             }
             gameObject.name = $"Node_{nodeType}_Depleted";
+            RefreshYieldLabel();
+        }
+
+        private void Update()
+        {
+            if (_yieldLabel == null) return;
+            if (Camera.main == null) return;
+            _yieldLabel.transform.rotation = Quaternion.LookRotation(
+                _yieldLabel.transform.position - Camera.main.transform.position);
         }
 
         private static void SetColor(GameObject go, Color c)

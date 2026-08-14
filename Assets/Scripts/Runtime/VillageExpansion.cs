@@ -211,6 +211,41 @@ namespace SolarMajesty
             return best;
         }
 
+        public ColonyStructure NearestByCategory(Vector3 from, float maxDist, params BuildingCategory[] cats)
+        {
+            ColonyStructure best = null;
+            float bestD = maxDist;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive) continue;
+                if (!Matches(s.Category, cats)) continue;
+                float d = Flat(from, s.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = s;
+                }
+            }
+            return best;
+        }
+
+        public ColonyStructure NearestExtractor(Vector3 from, float maxDist) =>
+            NearestByCategory(from, maxDist, BuildingCategory.Farm, BuildingCategory.Mine, BuildingCategory.RegolithCamp);
+
+        public ColonyStructure NearestPower(Vector3 from, float maxDist) =>
+            NearestByCategory(from, maxDist, BuildingCategory.Power);
+
+        private static bool Matches(BuildingCategory cat, BuildingCategory[] cats)
+        {
+            if (cats == null) return false;
+            for (int i = 0; i < cats.Length; i++)
+            {
+                if (cats[i] == cat) return true;
+            }
+            return false;
+        }
+
         public void OnVillageHabDestroyed(ColonyStructure hab)
         {
             NotifyCollapsed(hab);

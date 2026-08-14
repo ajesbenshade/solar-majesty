@@ -49,7 +49,7 @@ Play opens on the **title screen** (frozen drop behind the menu). **New Game** w
 
 **Procedural worlds / campaign:** fresh play starts on **Earth** (tutorial). Body chips show unlocked worlds only (`EARTH?` while locked). Conquest win unlocks the next body — win banner **TO LUNA** / **TO MARS**. Each body keeps its own seed on a **384 m** sandbox. **F4 Extract** near a node harvests that deposit; **F2 ClearThreat** clears lair fauna. **Shift+F10** unlocks all bodies for debug. Campus A landing stays fixed. Same body+seed → same map.
 
-**No click-to-move on specialists.** Outdoor units are **robots** fabricated when their **workshop** finishes building (Scout / Engineer / Defense / Medic). **Humans live only in HABs** (tax, births, beds) — never as outdoor agents. Raise the **Palace Keep** first (Majesty castle). **Airlock Junctions** snap only to module face midlines (symmetry axes); every other module must Lego-dock onto an airlock end. Robots take bounties they want, **flee to the rest beacon** when hurt, **hunt** nearby fauna if brave, and hang out at workshops when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. **P** parties the current selection or inn. Bounties escrow **MET** from the stockpile; robots keep **$**. **Conquest gates** (HUD): clear all dens · sustain pop goal with farm+mine · research **Lunar Rocket** (TECH · **T**). Labs tick science into one active tech. Flag/Build menus are popups above the bottom dock — click the dock button again (or **Q**) to close.
+**No click-to-move on specialists.** Outdoor units are **robots** fabricated when their **workshop** finishes building (Scout / Engineer / Defense / Medic). **Humans live only in HABs** (tax, births, beds) — never as outdoor agents. Raise the **Palace Keep** first (Majesty castle). **Airlock Junctions** snap only to module face midlines (symmetry axes); every other module must Lego-dock onto an airlock end. Robots take bounties they want, **flee to the rest beacon** when hurt, **hunt** nearby fauna if brave, and hang out at workshops when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. **P** parties the current selection or inn. Bounties escrow **MET** from the stockpile; robots keep **$**. **Conquest gates** (HUD): clear all dens · sustain pop goal with palace+farm+mine · research **Lunar Rocket** (TECH · **T**) **and place a Landing Pad**. Labs tick science into one active tech. Flag/Build menus are popups above the bottom dock — click the dock button again (or **Q**) to close. The command panel shows the last Overseer log lines (drop, dens, sustain, launch, travel).
 
 ---
 
@@ -61,9 +61,10 @@ Speak while playing (fresh prefs / Earth):
 2. **Build (B)** — **Palace Keep** (key 1) on the claim → **Airlock Junction** snapped to a face socket → dock **HAB** / workshops onto airlock ends (Lego campus).
 3. **TECH · T** — once the LAB is up, Field Survey ticks; completions auto-queue toward **Lunar Rocket**.
 4. **Threat** — **F2 ClearThreat** on a den; dens checkbox fills as lairs go quiet.
-5. **Economy** — place **Farm** + **Mine**, grow POP toward goal 8; sustain holds when stockpile is healthy.
-6. **Rocket** — finish tree to **Lunar Rocket** (pays metals/ice). Pad stages departure craft; Launch gate checks.
-7. **Win** — OUTPOST SECURED → **TO LUNA**.
+5. **Economy** — place **Farm** + **Mine**, grow POP toward goal 8; sustain holds when stockpile is healthy. Command chips flash when ICE/MET/REG/PWR are short. Dock a **Power Node** so gen covers draw.
+6. **Ecology** — a **Regolith Mite** shows up at the farm (**F5 Defend Area**); a **Watt Leech** at the Power Node (**F2 Clear Threat**).
+7. **Rocket** — finish tree to **Lunar Rocket** (pays metals/ice). **Place a Landing Pad** — craft stages with an orange beacon; Launch gate checks.
+8. **Win** — OUTPOST SECURED → **TO LUNA**.
 
 ## Luna excerpt (after Earth)
 
@@ -74,10 +75,11 @@ Speak while playing (fresh prefs / Earth):
 
 ## Classic overseer beat (any body)
 
-1. **Explore (Scout)** — **G**, **F1**, bounty **~100+**, near cyan Scout.
-2. **Build (Engineer)** — **F3**, bounty **~120+**, near orange Engineer.
-3. **Hunt / flee** — Defense **HUNT**; hurt heroes **FLEE** to the disconnected inn; **P** forms a party.
-4. **Extract** — **F4** on a metal/ice/fissile node.
+1. **Explore (Scout)** — **G**, **F1**, bounty **~40+**. Pole should read **SCOUT** tempted (or *ignored — raise $* if no Scout robot yet).
+2. **Build (Engineer)** — **F3**, default **$70** is ignored by a greedy Engineer. **+** to **~$90**, then they take it.
+3. **Hunt / flee** — Defense **HUNT**; hurt heroes **FLEE** to the rest beacon and stay until recovered. **P** parties the current selection or inn; followers rest/hunt with the leader.
+4. **Extract** — **F4** on a metal/ice/fissile node (world label shows remaining yield).
+5. **Mites / leeches** — Farm attracts ochre **MITE STEAL** (Defend). Power Node attracts cyan **LEECH DRAIN** (Clear Threat).
 
 ---
 
@@ -189,6 +191,15 @@ Speak while playing (fresh prefs / Earth):
 - [ ] Research unlocks persist across bodies (Mars Ship available after Lunar Rocket)
 - [ ] **Shift+F10** unlocks all bodies for debug
 
+### Week 3 economy & threat
+
+- [ ] Resource chips flash when REG < 10, ICE < 8, MET < 12, or PWR short / draw > gen
+- [ ] Command strip shows `PWR gen/draw`, upkeep countdown, Earth resupply countdown
+- [ ] Extract near a node updates remaining yield label + last-extract line
+- [ ] Docking a Farm/Mine attracts a **Regolith Mite** — **F5 Defend Area** kills it
+- [ ] Docking a Power Node attracts a **Watt Leech** — **F2 Clear Threat** kills it
+- [ ] Campus growth raises ambient threat (THREAT meter on the dock)
+
 ### Week 4 polish
 
 - [ ] Launch tech stages departure craft on the pad + plume VFX
@@ -196,6 +207,9 @@ Speak while playing (fresh prefs / Earth):
 - [ ] Village HAB expansion rebuilds NavMesh
 - [ ] Mars win shows **SOLAR CONQUEST COMPLETE**
 - [ ] Advance campaign plays launch plume before reload
+- [ ] Construction sites spark; completed modules burst orange
+- [ ] Extract flags ping green; Earth/Luna/Mars lighting reads different
+- [ ] Camera glances at Palace / first mite or leech
 
 ### Demo visuals
 

@@ -21,9 +21,13 @@
 
 ## Next
 
-1. Play Mode smoke: title → New Game → Earth empty drop → dens / sustain / Lunar Rocket → TO LUNA → Mars.
-2. Optional: authored rocket FBX, tech icons, Earth-specific campus kit.
-3. Optional: Ceres / Titan catalog profiles once Mars feels solid.
+Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 Week 1–4 is in** (gates, flags, economy/threat, juice). Next: Week 5–6 demo package. Imagine→Blender unit remesh is still waiting on art.
+
+1. Play Mode smoke: title → New Game → Earth empty drop → dens / sustain / Lunar Rocket + **Landing Pad** → TO LUNA → Mars.
+2. Week 3 beat: dock Farm → mite + **F5 Defend**; dock Power Node → leech + **F2 Clear Threat**; watch chips flash when ICE/MET/PWR are short.
+3. Week 4 beat: construction sparks + complete burst; extract ping; camera glances at Palace / first mite; Earth vs Luna vs Mars lighting reads different.
+4. Optional: authored rocket FBX, Imagine unit remesh, Earth-specific campus kit meshes.
+5. Optional: Ceres / Titan catalog profiles once Mars feels solid (Phase 2).
 
 ## Still out of scope (for now)
 

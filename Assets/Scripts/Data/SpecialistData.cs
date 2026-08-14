@@ -24,6 +24,7 @@ namespace SolarMajesty
         [Range(0f, 1f)] public float buildPreference = 0.5f;
         [Range(0f, 1f)] public float combatPreference = 0.5f;
         [Range(0f, 1f)] public float extractPreference = 0.5f;
+        [Range(0f, 1f)] public float defendPreference = 0.5f;
 
         [Header("Capabilities (runtime agent later)")]
         [Min(0.1f)] public float moveSpeed = 3.5f;
@@ -44,7 +45,8 @@ namespace SolarMajesty
                 case FlagType.Explore: return explorePreference;
                 case FlagType.Build: return buildPreference;
                 case FlagType.ClearThreat: return combatPreference;
-                case FlagType.DefendArea: return combatPreference;
+                case FlagType.DefendArea:
+                    return defendPreference > 0.01f ? defendPreference : combatPreference;
                 case FlagType.Extract: return extractPreference;
                 default: return 0.4f;
             }

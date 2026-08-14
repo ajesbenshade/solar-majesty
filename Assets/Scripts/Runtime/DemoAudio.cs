@@ -11,8 +11,10 @@ namespace SolarMajesty
         private static AudioSource _sfx;
         private static AudioSource _ambientA;
         private static AudioSource _ambientB;
+        private static DemoAudioHost _host;
         private static bool _ready;
         private static int _campus = 0;
+        private static float _hum = 55f;
 
         public static void ApplyVolumes()
         {
@@ -38,7 +40,31 @@ namespace SolarMajesty
             _sfx.volume = Mathf.Clamp01(DemoSettings.Master);
             _ready = true;
             EnsureAmbientBeds(go);
+            _host = go.GetComponent<DemoAudioHost>();
+            if (_host == null) _host = go.AddComponent<DemoAudioHost>();
+            _host.Bind(_ambientA, _ambientB);
         }
+
+        /// <summary>Retune procedural beds to the active body (Earth air / Luna vacuum / Mars dust).</summary>
+        public static void SetBody(CelestialBodyProfile body)
+        {
+            Ensure();
+            _hum = body != null ? body.AmbientHum : 55f;
+            if (IsProcedural(_ambientA))
+            {
+                _ambientA.clip = BuildAmbientClip(0);
+                if (!_ambientA.isPlaying) _ambientA.Play();
+            }
+            if (IsProcedural(_ambientB))
+            {
+                _ambientB.clip = BuildAmbientClip(1);
+                if (!_ambientB.isPlaying) _ambientB.Play();
+            }
+            ApplyCampusVolumes(_campus, instant: true);
+        }
+
+        private static bool IsProcedural(AudioSource src) =>
+            src != null && src.clip != null && src.clip.name.StartsWith("ambient_");
 
         private static void EnsureAmbientBeds(GameObject host)
         {
@@ -88,10 +114,13 @@ namespace SolarMajesty
         {
             float targetA = campusIndex <= 0 ? 0.045f * DemoSettings.Ambient * DemoSettings.Master : 0f;
             float targetB = campusIndex > 0 ? 0.04f * DemoSettings.Ambient * DemoSettings.Master : 0f;
-            if (_ambientA != null)
-                _ambientA.volume = targetA;
-            if (_ambientB != null)
-                _ambientB.volume = targetB;
+            if (_host != null)
+            {
+                _host.SetTargets(targetA, targetB, instant);
+                return;
+            }
+            if (_ambientA != null) _ambientA.volume = targetA;
+            if (_ambientB != null) _ambientB.volume = targetB;
         }
 
         public static void PlayFlagPost()
@@ -142,6 +171,24 @@ namespace SolarMajesty
                 Chord(new[] { 523f, 659f, 784f, 1046f }, 0.35f, 0.32f);
         }
 
+        public static void PlayExtract()
+        {
+            if (!TryPlay("sfx_extract", 0.38f))
+                Chord(new[] { 392f, 523f, 659f }, 0.12f, 0.22f);
+        }
+
+        public static void PlayBuildComplete()
+        {
+            if (!TryPlay("sfx_build_complete", 0.4f))
+                Chord(new[] { 330f, 440f, 554f }, 0.16f, 0.24f);
+        }
+
+        public static void PlayResearch()
+        {
+            if (!TryPlay("sfx_research", 0.38f))
+                Chord(new[] { 587f, 740f, 880f }, 0.2f, 0.22f);
+        }
+
         private static bool TryPlay(string resourceName, float volume)
         {
             var clip = Resources.Load<AudioClip>("Audio/" + resourceName);
@@ -159,8 +206,8 @@ namespace SolarMajesty
             int samples = Mathf.CeilToInt(hz * seconds);
             var clip = AudioClip.Create(campusIndex > 0 ? "ambient_b" : "ambient_a", samples, 1, hz, false);
             var data = new float[samples];
-            float f0 = campusIndex > 0 ? 62f : 55f;
-            float f1 = campusIndex > 0 ? 93f : 82.5f;
+            float f0 = _hum * (campusIndex > 0 ? 1.12f : 1f);
+            float f1 = f0 * 1.5f;
             for (int i = 0; i < samples; i++)
             {
                 float t = i / (float)hz;
@@ -197,6 +244,39 @@ namespace SolarMajesty
         private static void Beep(float hz, float duration, float volume)
         {
             Chord(new[] { hz }, duration, volume);
+        }
+    }
+
+    /// <summary>Lerps campus ambient beds so F6/F7 crossfade instead of hard-cut.</summary>
+    public sealed class DemoAudioHost : MonoBehaviour
+    {
+        private AudioSource _a;
+        private AudioSource _b;
+        private float _targetA;
+        private float _targetB;
+
+        public void Bind(AudioSource a, AudioSource b)
+        {
+            _a = a;
+            _b = b;
+        }
+
+        public void SetTargets(float a, float b, bool instant)
+        {
+            _targetA = a;
+            _targetB = b;
+            if (!instant) return;
+            if (_a != null) _a.volume = a;
+            if (_b != null) _b.volume = b;
+        }
+
+        private void Update()
+        {
+            float k = 1f - Mathf.Exp(-3.2f * Time.unscaledDeltaTime);
+            if (_a != null)
+                _a.volume = Mathf.Lerp(_a.volume, _targetA, k);
+            if (_b != null)
+                _b.volume = Mathf.Lerp(_b.volume, _targetB, k);
         }
     }
 }

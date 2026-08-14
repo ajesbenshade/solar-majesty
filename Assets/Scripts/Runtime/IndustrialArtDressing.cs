@@ -104,6 +104,8 @@ namespace SolarMajesty
             string n = rend.name;
             if (n.Contains("SelectRing") || n.Contains("StatusOrb") || n.Contains("Label"))
                 return true;
+            if (n.Contains("Vfx") || n.StartsWith("Dress_") || n.Contains("YieldLabel"))
+                return true;
             if (n.Contains("GroundPlane") || n.Contains("HorizonSkirt") || n.Contains("Footprint"))
                 return true;
             Transform t = rend.transform;
@@ -150,7 +152,8 @@ namespace SolarMajesty
             if (ContainsAny(n, "sm_cyan", "sm_scout", "sm_medic")) { slot = Slot.Cyan; return true; }
             if (ContainsAny(n, "sm_engineer")) { slot = Slot.Orange; return true; }
             if (ContainsAny(n, "sm_defense")) { slot = Slot.DefenseRed; return true; }
-            if (ContainsAny(n, "sm_stalker")) { slot = Slot.StalkerHide; return true; }
+            if (ContainsAny(n, "sm_stalker", "mite", "regolithmite")) { slot = Slot.StalkerHide; return true; }
+            if (ContainsAny(n, "leech", "wattleech")) { slot = Slot.Cyan; return true; }
             if (ContainsAny(n, "sm_regolith", "sm_crater", "crater")) { slot = Slot.Graphite; return true; }
             if (ContainsAny(n, "sm_solar", "solarcell", "pv_cell")) { slot = Slot.Solar; return true; }
 

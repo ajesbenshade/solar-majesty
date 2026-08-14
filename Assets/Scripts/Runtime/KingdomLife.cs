@@ -9,7 +9,8 @@ namespace SolarMajesty
     /// </summary>
     public static class KingdomLife
     {
-        public const float InnArrive = 2.6f;
+        public const float InnArrive = 3.2f;
+        public const float InnPartyRadius = 7.5f;
         public const float HuntRange = 3.4f;
 
         public static Vector3 Palace(int campus) => ColonyLayout.CampusOriginFor(campus);
@@ -43,6 +44,9 @@ namespace SolarMajesty
 
         public static bool AtInn(Vector3 world) =>
             Flat(world, InnNear(world)) < InnArrive;
+
+        public static bool AtInnParty(Vector3 world) =>
+            Flat(world, InnNear(world)) < InnPartyRadius;
 
         public static Vector3 VocationAnchor(
             SpecialistClass cls,

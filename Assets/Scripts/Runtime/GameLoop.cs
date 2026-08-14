@@ -208,9 +208,28 @@ namespace SolarMajesty
         private bool _launchCraftStaged;
         private DemoScreen _settingsReturn = DemoScreen.Title;
         private float _autosaveTimer;
+        private float _interestTimer;
+        private float _ecologyCooldown = 5f;
+        private float _glanceCooldown;
         private readonly List<ConstructionOrder> _completedBuilds = new List<ConstructionOrder>(8);
 
         public MissionController Mission => _mission;
+        public OverseerLog Log { get; } = new OverseerLog();
+
+        /// <summary>Soft camera pan toward a world event. Rate-limited so it never fights the player.</summary>
+        public void GlanceAt(Vector3 world, float? orthoSize = null, bool force = false)
+        {
+            if (!IsPlaying || _isoCam == null) return;
+            if (!force && _glanceCooldown > 0f) return;
+            _isoCam.GlanceAt(world, orthoSize ?? ColonyLayout.CameraOrthoSize);
+            _glanceCooldown = 5.5f;
+        }
+
+        public void LogOverseer(string line)
+        {
+            Log.Push(line);
+            _overseerHud?.Notify(line, 4.2f);
+        }
 
         /// <summary>HUD helper for hold timer display.</summary>
         public string FormatHold(float seconds)
@@ -248,6 +267,7 @@ namespace SolarMajesty
             DemoAtmosphere.Apply(mainCamera, transform, _body);
             PlanetaryMapDressing.Apply(transform, grid, _body);
             KingdomLife.Dress(transform, emptyStart: StartsEmpty);
+            CampusDressing.Reset();
             EnsureHud();
             EnsureMission();
             LaunchSite.ClearSession();
@@ -255,8 +275,15 @@ namespace SolarMajesty
             BootstrapResearch();
             SyncLaunchGate();
             DemoAudio.Ensure();
+            DemoAudio.SetBody(_body);
             DemoAudio.ApplyVolumes();
             DemoAudio.SetCampusAmbient(0);
+
+            string travel = CampaignProgress.ConsumeTravelLog();
+            if (!string.IsNullOrEmpty(travel))
+                Log.Push(travel);
+            if (_body != null && !string.IsNullOrEmpty(_body.ArrivalLog))
+                Log.Push(_body.ArrivalLog);
 
             if (DemoSettings.BootStraightIntoPlay)
                 EnterPlaying(loadStockpile: DemoSettings.SaveExists);
@@ -398,6 +425,58 @@ namespace SolarMajesty
             Debug.Log("[Flags] Cancelled — metals refunded.");
         }
 
+        public void NotifyFlagPosted(FlagHandle handle)
+        {
+            RefreshFlagInterest();
+            if (handle == null) return;
+            if (_agents.Count == 0)
+            {
+                LogOverseer("Flag posted — fabricate a workshop robot before anyone can take it.");
+                return;
+            }
+            if (handle.InterestCount <= 0)
+                LogOverseer($"Ignored — raise bounty (+) or pick a type they want. {handle.Data?.displayName ?? "Flag"} ${handle.CurrentBounty:F0}.");
+            else
+                LogOverseer($"{handle.InterestCount} tempted: {handle.InterestLabel}");
+        }
+
+        private void TickFlagInterest(float dt)
+        {
+            _interestTimer += dt;
+            if (_interestTimer < 0.45f) return;
+            _interestTimer = 0f;
+            RefreshFlagInterest();
+        }
+
+        public void RefreshFlagInterest()
+        {
+            if (Flags == null || Brain == null) return;
+            var flags = Flags.Flags;
+            for (int i = 0; i < flags.Count; i++)
+            {
+                var flag = flags[i];
+                if (flag == null) continue;
+                int n = 0;
+                string names = "";
+                for (int a = 0; a < _agents.Count; a++)
+                {
+                    var agent = _agents[a];
+                    if (agent == null || !agent.IsAlive || agent.Data == null) continue;
+                    if (!Brain.WouldTakeFlag(agent.PeekContext(), flag, agent.BodyDanger, out _))
+                        continue;
+                    n++;
+                    string label = ColonyStructure.ClassLabel(agent.Data.specialistClass);
+                    if (names.Length == 0) names = label;
+                    else if (names.IndexOf(label, System.StringComparison.Ordinal) < 0)
+                        names += " · " + label;
+                }
+                flag.InterestCount = n;
+                flag.InterestLabel = n <= 0
+                    ? (_agents.Count == 0 ? "no robots yet" : "ignored — raise $")
+                    : names;
+            }
+        }
+
         private void HandleSessionHotkeys()
         {
             if (Input.GetKeyDown(KeyCode.Escape))
@@ -530,6 +609,11 @@ namespace SolarMajesty
             _mission?.Tick();
             TickTutorial();
             TickAutosave();
+            TickFlagInterest(Time.deltaTime);
+            RefreshPowerBudget();
+            TickCampusEcology(Time.deltaTime);
+            if (_glanceCooldown > 0f)
+                _glanceCooldown -= Time.deltaTime;
 
             _constructionTick += Time.deltaTime;
             if (_constructionTick >= 0.25f)
@@ -769,13 +853,24 @@ namespace SolarMajesty
         private void OnTechUnlocked(TechId id)
         {
             SyncLaunchGate();
+            DemoAudio.PlayResearch();
+            DemoVfx.ClaimRing(ColonyLayout.CampusOrigin, new Color(0.45f, 0.75f, 1f));
             Debug.Log($"[GameLoop] Tech unlocked: {id}");
+            if (Research != null && Research.HasLaunchUnlockFor(celestialBody) &&
+                Settlement != null && !Settlement.HasPad)
+            {
+                string craft = Research.LaunchTechLabel(celestialBody);
+                LogOverseer($"{craft} researched. Place a Landing Pad to stage the craft.");
+            }
         }
 
         private void SyncLaunchGate()
         {
             if (_mission == null || Research == null) return;
-            if (!Research.HasLaunchUnlockFor(celestialBody)) return;
+            bool tech = Research.HasLaunchUnlockFor(celestialBody);
+            bool pad = Settlement != null && Settlement.HasPad;
+            if (!tech || !pad)
+                return;
 
             bool wasReady = _mission.LaunchReady;
             _mission.SetLaunchReady(true);
@@ -784,10 +879,14 @@ namespace SolarMajesty
                 _launchCraftStaged = true;
                 bool heavy = celestialBody != CelestialBodyId.Earth;
                 LaunchSite.EnsureReady(buildingRoot != null ? buildingRoot : transform, heavy);
+                _isoCam?.FocusOn(LaunchSite.PadWorld, ColonyLayout.CameraOrthoSize);
             }
 
             if (!wasReady)
-                Debug.Log("[GameLoop] Launch gate ready — departure craft staged.");
+            {
+                string craft = Research.LaunchTechLabel(celestialBody);
+                LogOverseer($"{craft} staged on the Landing Pad. Launch gate is open.");
+            }
         }
 
         private void TickResearch(float dt)
@@ -811,6 +910,10 @@ namespace SolarMajesty
             BindUnitPrefab(engineerData, SpecialistClass.EngineerBot);
             BindUnitPrefab(defenseData, SpecialistClass.DefenseMech);
             BindUnitPrefab(medicData, SpecialistClass.Medic);
+            SpecialistPersonality.Apply(scoutData);
+            SpecialistPersonality.Apply(engineerData);
+            SpecialistPersonality.Apply(defenseData);
+            SpecialistPersonality.Apply(medicData);
 
             if (exploreFlagData == null)
                 exploreFlagData = DemoContentCatalog.LoadExploreFlag()
@@ -827,6 +930,11 @@ namespace SolarMajesty
             if (defendFlagData == null)
                 defendFlagData = DemoContentCatalog.LoadDefendFlag()
                     ?? CreateFlag(FlagType.DefendArea, "Defend Area", 65, 0.25f, 9f, new Color(0.85f, 0.35f, 1f));
+            SpecialistPersonality.ApplyFlagAffinity(exploreFlagData);
+            SpecialistPersonality.ApplyFlagAffinity(clearThreatFlagData);
+            SpecialistPersonality.ApplyFlagAffinity(buildFlagData);
+            SpecialistPersonality.ApplyFlagAffinity(extractFlagData);
+            SpecialistPersonality.ApplyFlagAffinity(defendFlagData);
 
             if (starterBuildings == null || starterBuildings.Length == 0)
             {
@@ -1243,10 +1351,161 @@ namespace SolarMajesty
         /// <summary>Rebuild walkable mesh after village HABs / connectors expand the campus.</summary>
         public void NotifyCampusExpanded()
         {
-            if (_campusNav == null || grid == null) return;
-            _campusNav.Build(grid);
+            if (_campusNav != null && grid != null)
+            {
+                _campusNav.Build(grid);
+                for (int i = 0; i < _agents.Count; i++)
+                    _agents[i]?.BindNavMesh(_campusNav);
+            }
+
+            if (_ecologyCooldown > 4f)
+                _ecologyCooldown = 4f;
+            TrySpawnCampusFauna();
+        }
+
+        private void RefreshPowerBudget()
+        {
+            if (Economy == null) return;
+
+            int gen = 0;
+            int draw = 0;
+            var structures = Village != null ? Village.Structures : null;
+            if (structures != null)
+            {
+                for (int i = 0; i < structures.Count; i++)
+                {
+                    var st = structures[i];
+                    if (st == null || !st.IsAlive) continue;
+                    var data = st.SourceData;
+                    if (st.Category == BuildingCategory.Power)
+                    {
+                        gen += data != null && data.powerGen > 0 ? data.powerGen : 6;
+                        continue;
+                    }
+                    if (st.Category == BuildingCategory.Utility) continue;
+                    draw += data != null && data.powerDraw > 0 ? data.powerDraw : 1;
+                }
+            }
+
+            int robots = 0;
             for (int i = 0; i < _agents.Count; i++)
-                _agents[i]?.BindNavMesh(_campusNav);
+            {
+                if (_agents[i] != null) robots++;
+            }
+            draw += robots;
+
+            Economy.PowerGen = gen;
+            Economy.PowerDraw = draw;
+        }
+
+        private void TickCampusEcology(float dt)
+        {
+            if (Threat == null) return;
+            int pieces = Placer != null ? Placer.Pieces.Count : 0;
+            Threat.Ambient = 0.12f + 0.018f * Mathf.Min(14, pieces);
+            _ecologyCooldown -= dt;
+            if (_ecologyCooldown <= 0f)
+                TrySpawnCampusFauna();
+        }
+
+        private void TrySpawnCampusFauna()
+        {
+            if (Settlement == null || Threat == null) return;
+
+            int mites = CountFauna(FaunaKind.Mite);
+            int leeches = CountFauna(FaunaKind.Leech);
+            if (mites + leeches >= 4)
+            {
+                _ecologyCooldown = 12f;
+                return;
+            }
+
+            int miteCap = Mathf.Min(3, Settlement.Farms + Settlement.Mines);
+            int leechCap = Mathf.Min(2, Settlement.PowerPlants);
+
+            if (mites < miteCap)
+            {
+                var camp = Village != null
+                    ? Village.NearestExtractor(ColonyLayout.CampusOrigin, 80f)
+                    : null;
+                Vector3 home = FaunaSpawnNear(camp != null ? camp.WorldPosition : ColonyLayout.CampusOrigin);
+                if (SpawnFaunaAt(FaunaKind.Mite, home) != null)
+                {
+                    if (mites == 0)
+                    {
+                        LogOverseer("Regolith mites on the farm — post Defend Area.");
+                        GlanceAt(home, force: true);
+                    }
+                    _ecologyCooldown = 10f;
+                    return;
+                }
+            }
+
+            if (leeches < leechCap)
+            {
+                var pwr = Village != null
+                    ? Village.NearestPower(ColonyLayout.CampusOrigin, 80f)
+                    : null;
+                Vector3 home = FaunaSpawnNear(pwr != null ? pwr.WorldPosition : ColonyLayout.CampusOrigin);
+                if (SpawnFaunaAt(FaunaKind.Leech, home) != null)
+                {
+                    if (leeches == 0)
+                    {
+                        LogOverseer("Watt leeches on the Power Node — post Clear Threat.");
+                        GlanceAt(home, force: true);
+                    }
+                    _ecologyCooldown = 10f;
+                    return;
+                }
+            }
+
+            _ecologyCooldown = 8f;
+        }
+
+        private static Vector3 FaunaSpawnNear(Vector3 target)
+        {
+            Vector3 away = target - ColonyLayout.CampusOrigin;
+            away.y = 0f;
+            if (away.sqrMagnitude < 0.25f) away = Vector3.forward;
+            away.Normalize();
+            Vector2 jitter = Random.insideUnitCircle * 2.5f;
+            return target + away * 9f + new Vector3(jitter.x, 0f, jitter.y);
+        }
+
+        private int CountFauna(FaunaKind kind)
+        {
+            int n = 0;
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                var s = _stalkers[i];
+                if (s != null && s.IsAlive && s.Kind == kind) n++;
+            }
+            return n;
+        }
+
+        /// <summary>Spawn campus-attracted fauna (mites / leeches) or a Dust Stalker.</summary>
+        public DustStalkerAgent SpawnFaunaAt(FaunaKind kind, Vector3 home, Transform parent = null)
+        {
+            if (kind == FaunaKind.Stalker)
+                return SpawnStalkerAt(home, parent);
+            if (Threat == null) return null;
+
+            Transform root = parent != null ? parent : (_threatRoot != null ? _threatRoot : transform);
+            GameObject go = kind == FaunaKind.Mite
+                ? UnitPlaceholderFactory.BuildRegolithMite()
+                : UnitPlaceholderFactory.BuildWattLeech();
+            go.transform.SetParent(root, false);
+            go.transform.SetPositionAndRotation(home, Quaternion.identity);
+            ColonyVisualUtility.EnsureUrpMaterials(go);
+            ColonyVisualUtility.SnapToGround(go);
+            home = go.transform.position;
+
+            var agent = go.GetComponent<DustStalkerAgent>();
+            if (agent == null) agent = go.AddComponent<DustStalkerAgent>();
+            agent.Initialize(Threat, Flags, home, this);
+            agent.SetKind(kind);
+            _stalkers.Add(agent);
+            return agent;
         }
 
         private void SpawnThreats()
@@ -1414,6 +1673,9 @@ namespace SolarMajesty
                 return;
             }
 
+            string from = _body != null ? _body.DisplayName : celestialBody.ToString();
+            string to = CelestialBodyCatalog.Get(next.Value).DisplayName;
+            CampaignProgress.QueueTravelLog($"Departure from {from}. Trajectory locked: {to}.");
             BodySeed.SetBody(next.Value);
             BodySeed.Ensure(next.Value, 0);
             BodySeed.AdvanceForNextConquest();
@@ -1506,8 +1768,9 @@ namespace SolarMajesty
             }
             else
             {
-                Flags.Post(exploreFlagData, world, bounty);
+                var handle = Flags.Post(exploreFlagData, world, bounty);
                 DemoAudio.PlayFlagPost();
+                NotifyFlagPosted(handle);
             }
 
             FocusCampus(1);
@@ -1543,75 +1806,39 @@ namespace SolarMajesty
 
         // ---- Personality factories (Phase 1.5 values) ----
 
-        /// <summary>Scout: high explore, moderate greed, mid courage.</summary>
+        /// <summary>Scout: cheap Explore, ignores fights.</summary>
         public static SpecialistData CreateScout()
         {
             var s = ScriptableObject.CreateInstance<SpecialistData>();
             s.specialistClass = SpecialistClass.ScoutDrone;
-            s.displayName = "Scout Drone";
-            s.baseGreed = 0.40f;
-            s.courage = 0.55f;
-            s.workaholicBias = 0.30f;
-            s.explorePreference = 0.95f;
-            s.buildPreference = 0.20f;
-            s.combatPreference = 0.25f;
-            s.extractPreference = 0.45f;
-            s.moveSpeed = 4.4f;
-            s.workRate = 1.0f;
+            SpecialistPersonality.Apply(s);
             return s;
         }
 
-        /// <summary>Engineer: high build + high greed, low courage.</summary>
+        /// <summary>Engineer: greedy builder. Ignores cheap flags.</summary>
         public static SpecialistData CreateEngineer()
         {
             var s = ScriptableObject.CreateInstance<SpecialistData>();
             s.specialistClass = SpecialistClass.EngineerBot;
-            s.displayName = "Engineer Bot";
-            s.baseGreed = 0.85f;       // picky about pay
-            s.courage = 0.25f;         // avoids risky ClearThreat
-            s.workaholicBias = 0.70f;  // resists resting
-            s.explorePreference = 0.20f;
-            s.buildPreference = 0.95f;
-            s.combatPreference = 0.15f;
-            s.extractPreference = 0.70f;
-            s.moveSpeed = 3.1f;
-            s.workRate = 1.35f;
+            SpecialistPersonality.Apply(s);
             return s;
         }
 
-        /// <summary>Defense: high combat + high courage, lower greed.</summary>
+        /// <summary>Defense: cheap combat is fine; no tinkering.</summary>
         public static SpecialistData CreateDefense()
         {
             var s = ScriptableObject.CreateInstance<SpecialistData>();
             s.specialistClass = SpecialistClass.DefenseMech;
-            s.displayName = "Defense Mech";
-            s.baseGreed = 0.35f;       // will take cheaper combat jobs
-            s.courage = 0.90f;
-            s.workaholicBias = 0.50f;
-            s.explorePreference = 0.25f;
-            s.buildPreference = 0.15f;
-            s.combatPreference = 0.95f;
-            s.extractPreference = 0.20f;
-            s.moveSpeed = 3.0f;
-            s.workRate = 1.15f;
+            SpecialistPersonality.Apply(s);
             return s;
         }
 
-        /// <summary>Medic: low combat, inn triage, heals wounded specialists in the field.</summary>
+        /// <summary>Medic: defends the wounded; will not hunt dens.</summary>
         public static SpecialistData CreateMedic()
         {
             var s = ScriptableObject.CreateInstance<SpecialistData>();
             s.specialistClass = SpecialistClass.Medic;
-            s.displayName = "Medic";
-            s.baseGreed = 0.30f;
-            s.courage = 0.45f;
-            s.workaholicBias = 0.55f;
-            s.explorePreference = 0.35f;
-            s.buildPreference = 0.10f;
-            s.combatPreference = 0.08f;
-            s.extractPreference = 0.15f;
-            s.moveSpeed = 3.6f;
-            s.workRate = 1.1f;
+            SpecialistPersonality.Apply(s);
             return s;
         }
 
@@ -1626,6 +1853,7 @@ namespace SolarMajesty
             f.baseRisk = risk;
             f.workRequired = work;
             f.bannerColor = color;
+            SpecialistPersonality.ApplyFlagAffinity(f);
             return f;
         }
 
@@ -1645,7 +1873,8 @@ namespace SolarMajesty
             b.footprintHeight = Mathf.Max(1, footprintH);
             b.buildTimeSeconds = time;
             b.housingSlots = cat == BuildingCategory.Habitat ? 3 : 0;
-            b.powerDraw = power > 0 ? 2 : 0;
+            b.powerDraw = cat == BuildingCategory.Power ? 0 : (power > 0 ? 2 : 0);
+            b.powerGen = PowerGenFor(cat, name);
             b.preferredOccupants = DefaultOccupants(cat);
             b.attractionWeight = ColonyStructure.IsWorkshopCategory(cat) ? 1.4f : 1f;
             b.buildCost = power > 0
@@ -1657,6 +1886,14 @@ namespace SolarMajesty
                 : new[] { new ResourceAmount(ResourceId.Metals, metals) };
             b.prefab = BuildingVisualCatalog.LoadPrefab(cat);
             return b;
+        }
+
+        private static int PowerGenFor(BuildingCategory cat, string name)
+        {
+            if (cat != BuildingCategory.Power) return 0;
+            if (!string.IsNullOrEmpty(name) && name.IndexOf("Solar", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                return 8;
+            return 6;
         }
 
         private static BuildingData[] AppendEconomyBuildings(BuildingData[] current)
@@ -1718,6 +1955,8 @@ namespace SolarMajesty
 
                 b.footprintWidth = side;
                 b.footprintHeight = side;
+                if (b.category == BuildingCategory.Power && b.powerGen <= 0)
+                    b.powerGen = PowerGenFor(b.category, b.displayName);
             }
         }
 
@@ -1725,6 +1964,14 @@ namespace SolarMajesty
         {
             if (data == null) return;
             Village?.RegisterPlacedBuilding(data, data.category, go, world);
+            CampusDressing.DressPlaced(data, go, _body);
+            DemoVfx.BuildComplete(world);
+            DemoAudio.PlayBuildComplete();
+            if (data.category == BuildingCategory.Palace ||
+                data.category == BuildingCategory.LandingPad)
+                GlanceAt(world);
+            if (data.category == BuildingCategory.LandingPad)
+                SyncLaunchGate();
         }
 
         private static SpecialistClass[] DefaultOccupants(BuildingCategory cat)
@@ -1843,6 +2090,7 @@ namespace SolarMajesty
             _parties.Add(party);
             DemoAudio.PlayClaim();
             DemoVfx.ClaimRing(leader.transform.position, new Color(0.96f, 0.42f, 0.08f));
+            LogOverseer($"Party of {party.Count} — {ColonyStructure.ClassLabel(leader.Data != null ? leader.Data.specialistClass : SpecialistClass.ScoutDrone)} leads. Followers rest and hunt together.");
             Debug.Log($"[Party] Formed #{party.Id} from selection leader={leader.Data?.displayName} size={party.Count}");
             return true;
         }
@@ -1855,7 +2103,7 @@ namespace SolarMajesty
             {
                 var a = _agents[i];
                 if (a == null || !a.IsAlive) continue;
-                if (FlatDist(a.transform.position, ColonyLayout.InnOutpost) > 6.5f) continue;
+                if (!KingdomLife.AtInnParty(a.transform.position)) continue;
                 if (a.Party != null) continue;
                 atInn.Add(a);
                 if (atInn.Count >= HeroParty.MaxSize) break;
@@ -1883,6 +2131,7 @@ namespace SolarMajesty
             _parties.Add(party);
             DemoAudio.PlayClaim();
             DemoVfx.ClaimRing(ColonyLayout.InnOutpost, new Color(0.96f, 0.42f, 0.08f));
+            LogOverseer($"Party of {party.Count} formed at the rest beacon.");
             Debug.Log($"[Party] Formed #{party.Id} leader={leader.Data?.displayName} size={party.Count}");
         }
 

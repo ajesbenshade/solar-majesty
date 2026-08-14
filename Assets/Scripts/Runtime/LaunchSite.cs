@@ -9,6 +9,7 @@ namespace SolarMajesty
     public static class LaunchSite
     {
         private static GameObject _craft;
+        private static GameObject _beacon;
         private static bool _spawnedReadyFx;
 
         public static Vector3 PadWorld => ColonyLayout.CampusOrigin + new Vector3(16f, 0f, 0f);
@@ -17,6 +18,7 @@ namespace SolarMajesty
         {
             if (_craft != null)
             {
+                EnsurePadBeacon(parent, _craft.transform.position);
                 PulseReady(_craft.transform.position);
                 return;
             }
@@ -45,6 +47,7 @@ namespace SolarMajesty
             }
 
             _craft.name = heavyShip ? "DepartureCraft_MarsShip" : "DepartureCraft_LunarRocket";
+            EnsurePadBeacon(parent, _craft.transform.position);
             PulseReady(_craft.transform.position);
         }
 
@@ -58,7 +61,30 @@ namespace SolarMajesty
         public static void ClearSession()
         {
             _craft = null;
+            _beacon = null;
             _spawnedReadyFx = false;
+        }
+
+        private static void EnsurePadBeacon(Transform parent, Vector3 at)
+        {
+            if (_beacon != null) return;
+            _beacon = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            _beacon.name = "LaunchPadBeacon";
+            Object.Destroy(_beacon.GetComponent<Collider>());
+            if (parent != null)
+                _beacon.transform.SetParent(parent, true);
+            _beacon.transform.position = new Vector3(at.x, 0.06f, at.z);
+            _beacon.transform.localScale = new Vector3(5.4f, 0.04f, 5.4f);
+            var rend = _beacon.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                       ?? Shader.Find("Sprites/Default"));
+                Color c = new Color(0.96f, 0.42f, 0.08f, 0.85f);
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+                else if (mat.HasProperty("_Color")) mat.color = c;
+                rend.sharedMaterial = mat;
+            }
         }
 
         private static void PulseReady(Vector3 at)

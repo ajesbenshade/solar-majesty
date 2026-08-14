@@ -14,14 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.SpecialistData
   specialistClass: 0
   displayName: Engineer Bot
-  description: 
-  baseGreed: 0.85
-  courage: 0.25
-  workaholicBias: 0.7
-  explorePreference: 0.2
-  buildPreference: 0.95
-  combatPreference: 0.15
-  extractPreference: 0.7
+  description: Greedy builder. Ignores cheap flags. Loves Build once pay is right.
+  baseGreed: 0.88
+  courage: 0.22
+  workaholicBias: 0.72
+  explorePreference: 0.08
+  buildPreference: 1
+  combatPreference: 0.05
+  extractPreference: 0.62
+  defendPreference: 0.1
   moveSpeed: 3.1
   workRate: 1.35
   maxEnergy: 100

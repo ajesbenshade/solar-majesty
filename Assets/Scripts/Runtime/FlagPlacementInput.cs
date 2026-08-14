@@ -158,6 +158,7 @@ namespace SolarMajesty
             handle.EscrowMetals = escrow;
             SpawnMarker(handle, world);
             DemoAudio.PlayFlagPost();
+            _loop?.NotifyFlagPosted(handle);
             Debug.Log($"[Flags] Posted {data.flagType} bounty=${handle.CurrentBounty:F0} escrow={escrow} MET at {world}");
             return handle;
         }
