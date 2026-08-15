@@ -111,8 +111,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// 2-axis-symmetric airlock junction sized in world meters to fill its 2×2 footprint
-        /// and overlap neighboring module ports so the campus clicks together.
+        /// 2-axis-symmetric airlock junction sized in world meters to fill its 2×2 footprint.
+        /// Plus-arms end on the cell faces so orange collars mate module sockets flush
+        /// (no punch-through into paneled hulls).
         /// </summary>
         public static GameObject SpawnPlusConnector(Vector3 position, Transform parent, float worldSpan)
         {
@@ -122,7 +123,7 @@ namespace SolarMajesty
             root.transform.SetPositionAndRotation(position, Quaternion.identity);
 
             float span = Mathf.Max(ColonyLayout.DefaultCellSize * 2f, worldSpan);
-            float length = span + 1.7f; // overlap well into neighboring hull sockets
+            float length = span; // 3 m plus fills the 2×2 cell; collars sit on the module faces
             float diameter = 1.38f;
 
             SpawnAirlockHub(root.transform);
@@ -134,10 +135,10 @@ namespace SolarMajesty
             {
                 var a = InstantiateOriented(prefab, position, root.transform, 0f);
                 a.name = "Arm_NS";
-                FitTubeToSpan(a, length * 0.92f, diameter * 0.85f);
+                FitTubeToSpan(a, length * 0.96f, diameter * 0.85f);
                 var b = InstantiateOriented(prefab, position, root.transform, 90f);
                 b.name = "Arm_EW";
-                FitTubeToSpan(b, length * 0.92f, diameter * 0.85f);
+                FitTubeToSpan(b, length * 0.96f, diameter * 0.85f);
             }
 
             EnsureUrpMaterials(root);
@@ -233,6 +234,13 @@ namespace SolarMajesty
                 : new Vector3(length, diameter, diameter);
             TintPrimitive(go, new Color(0.82f, 0.84f, 0.86f));
 
+            // Carbon top seam so the plus-arm is not a raw box against the paneled hub.
+            Vector3 seamPos = new Vector3(0f, 0.85f + diameter * 0.50f, 0f);
+            Vector3 seamScale = ns
+                ? new Vector3(diameter * 0.22f, 0.035f, length * 0.62f)
+                : new Vector3(length * 0.62f, 0.035f, diameter * 0.22f);
+            DressCube(parent, name + "_Seam", seamPos, seamScale, HubCarbon);
+
             int ribs = 7;
             for (int i = 0; i < ribs; i++)
             {
@@ -241,8 +249,8 @@ namespace SolarMajesty
                 rib.name = name + "_Rib";
                 rib.transform.SetParent(parent, false);
                 rib.transform.localPosition = ns
-                    ? new Vector3(0f, 0.85f, t * length * 0.85f)
-                    : new Vector3(t * length * 0.85f, 0.85f, 0f);
+                    ? new Vector3(0f, 0.85f, t * length * 0.72f)
+                    : new Vector3(t * length * 0.72f, 0.85f, 0f);
                 rib.transform.localScale = ns
                     ? new Vector3(diameter * 1.14f, diameter * 1.14f, 0.12f)
                     : new Vector3(0.12f, diameter * 1.14f, diameter * 1.14f);
@@ -253,15 +261,24 @@ namespace SolarMajesty
                     : new Color(0.20f, 0.21f, 0.22f));
             }
 
+            float half = length * 0.5f;
             for (int e = -1; e <= 1; e += 2)
             {
+                // Collar sits on the airlock side of the Lego face (half - 0.05).
                 Vector3 collarPos = ns
-                    ? new Vector3(0f, 0.85f, e * length * 0.46f)
-                    : new Vector3(e * length * 0.46f, 0.85f, 0f);
+                    ? new Vector3(0f, 0.85f, e * (half - 0.05f))
+                    : new Vector3(e * (half - 0.05f), 0.85f, 0f);
                 Vector3 collarScale = ns
                     ? new Vector3(diameter * 1.22f, diameter * 1.22f, 0.10f)
                     : new Vector3(0.10f, diameter * 1.22f, diameter * 1.22f);
                 DressCube(parent, name + "_Collar", collarPos, collarScale, new Color(0.96f, 0.42f, 0.08f));
+                Vector3 lipPos = ns
+                    ? new Vector3(0f, 0.85f, e * (half - 0.14f))
+                    : new Vector3(e * (half - 0.14f), 0.85f, 0f);
+                Vector3 lipScale = ns
+                    ? new Vector3(diameter * 1.06f, diameter * 1.06f, 0.06f)
+                    : new Vector3(0.06f, diameter * 1.06f, diameter * 1.06f);
+                DressCube(parent, name + "_Lip", lipPos, lipScale, HubCarbon);
             }
         }
 

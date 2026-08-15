@@ -71,6 +71,7 @@ namespace SolarMajesty
         private GUIStyle _banner;
         private GUIStyle _action;
         private GUIStyle _wrap;
+        private GUIStyle _chipLabel;
 
         /// <summary>True when the cursor is over a HUD panel (blocks world select).</summary>
         public bool PointerBlocksWorld { get; private set; }
@@ -227,7 +228,7 @@ namespace SolarMajesty
 
         private void EnsureStyles()
         {
-            if (_stylesReady) return;
+            if (_stylesReady && _chipLabel != null) return;
             _stylesReady = true;
 
             _brand = Label(17, FontStyle.Bold, TextPrimary, TextAnchor.MiddleLeft);
@@ -243,6 +244,8 @@ namespace SolarMajesty
             _wrap = Label(11, FontStyle.Normal, TextMuted, TextAnchor.UpperLeft);
             _wrap.wordWrap = true;
             _onText = Label(11, FontStyle.Bold, Ink, TextAnchor.MiddleLeft);
+            _chipLabel = Label(11, FontStyle.Bold, TextPrimary, TextAnchor.MiddleLeft);
+            _chipLabel.clipping = TextClipping.Overflow;
 
             _chipOff = Button(PanelSoft, PanelHover, TextPrimary, 11, FontStyle.Normal, TextAnchor.MiddleCenter, 4);
             _chipOn = Button(Accent, Accent, Ink, 11, FontStyle.Bold, TextAnchor.MiddleCenter, 4);
@@ -283,6 +286,7 @@ namespace SolarMajesty
         {
             if (_loop == null) return;
             EnsureStyles();
+            HandleDebugHopKeys();
             _hitRects.Clear();
 
             float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
@@ -349,7 +353,7 @@ namespace SolarMajesty
         {
             int n = CelestialBodyCatalog.All != null ? CelestialBodyCatalog.All.Length : 3;
             int rows = Mathf.Max(1, (n + 2) / 3);
-            return 268f + Mathf.Max(0, rows - 1) * 24f;
+            return 284f + Mathf.Max(0, rows - 1) * 24f;
         }
 
         private float DrawTopStrip()
@@ -475,6 +479,8 @@ namespace SolarMajesty
             var bodies = CelestialBodyCatalog.All;
             const int cols = 3;
             float chipW = (c.width - 3f * (cols - 1)) / cols;
+            bool anyLocked = false;
+            bool shiftHeld = ShiftHeld();
             for (int i = 0; i < bodies.Length; i++)
             {
                 int row = i / cols;
@@ -482,13 +488,26 @@ namespace SolarMajesty
                 var id = bodies[i];
                 var profile = CelestialBodyCatalog.Get(id);
                 bool unlocked = CampaignProgress.IsUnlocked(id);
+                if (!unlocked) anyLocked = true;
                 var chipRect = new Rect(c.x + col * (chipW + 3f), y + row * 22f, chipW, 20f);
                 string label = unlocked ? profile.ShortCode : $"{profile.ShortCode}?";
-                if (Chip(chipRect, label, _loop.ActiveBody == id) && unlocked)
-                    _loop.SelectBody(id);
+                if (Chip(chipRect, label, _loop.ActiveBody == id))
+                {
+                    if (unlocked)
+                        _loop.SelectBody(id);
+                    else if (shiftHeld)
+                        _loop.RequestDebugHop(id, unlockAll: true);
+                    else
+                        Notify("Locked — Shift+click this chip (or Shift+F10) to unlock.", 3.5f);
+                }
             }
             int rows = (bodies.Length + cols - 1) / cols;
             y += 22f * rows;
+            GUI.Label(
+                new Rect(c.x, y, c.width, 13f),
+                anyLocked ? "Shift+click locked  ·  Shift+F10 unlocks" : "F10 cycles worlds",
+                _micro);
+            y += 14f;
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 6f;
 
@@ -583,13 +602,15 @@ namespace SolarMajesty
             Fill(r, fill);
             Outline(r, Gold, 1.5f);
             Fill(new Rect(r.x, r.y, 3f, r.height), Gold);
-            var swatch = new Rect(r.x + 6f, r.y + 10f, 12f, 12f);
+            var swatch = new Rect(r.x + 5f, r.y + 13f, 10f, 10f);
             Fill(swatch, ChipSwatch(label));
             Outline(swatch, Gold, 1f);
-            GUI.Label(new Rect(r.x + 22f, r.y + 1f, r.width - 24f, 11f), label, _micro);
-            GUI.Label(new Rect(r.x + 22f, r.y + 12f, r.width - 56f, 16f), amount.ToString(), _value);
+            // Label sits on its own row and stops before the rate column so "BEDS"
+            // cannot clip into "0/0" (that composite read as REDSK).
+            GUI.Label(new Rect(r.x + 20f, r.y + 1f, r.width - 24f, 14f), label, _chipLabel);
+            GUI.Label(new Rect(r.x + 20f, r.y + 16f, r.width - 58f, 18f), amount.ToString(), _value);
             if (!string.IsNullOrEmpty(rate))
-                GUI.Label(new Rect(r.xMax - 38f, r.y + 14f, 34f, 12f), rate, _microRight);
+                GUI.Label(new Rect(r.xMax - 40f, r.y + 18f, 36f, 14f), rate, _microRight);
         }
 
         private static Color ChipSwatch(string label)
@@ -880,6 +901,23 @@ namespace SolarMajesty
 
         private bool Chip(Rect r, string label, bool on) =>
             GUI.Button(r, label, on ? _chipOn : _chipOff);
+
+        private static bool ShiftHeld()
+        {
+            var e = Event.current;
+            if (e != null && e.shift) return true;
+            return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        }
+
+        /// <summary>F10 during Playing/Paused even when a HUD button has IMGUI focus.</summary>
+        private void HandleDebugHopKeys()
+        {
+            if (_loop.Screen != DemoScreen.Playing && _loop.Screen != DemoScreen.Paused) return;
+            var e = Event.current;
+            if (e == null || e.type != EventType.KeyDown || e.keyCode != KeyCode.F10) return;
+            e.Use();
+            _loop.RequestDebugBodyCycle(ShiftHeld());
+        }
 
         private static string FormatBuildCost(BuildingData b)
         {

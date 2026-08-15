@@ -313,10 +313,13 @@ namespace SolarMajesty
 
         private static void AttachCardinalAirlocks(Transform root, float halfW, float halfD)
         {
-            const float bore = 1.25f;
-            const float inset = 1.5f;
-            const float outset = 1.35f;
-            float y = 0.7f;
+            // Square sockets sit on the footprint faces and mate the 2×2 airlock at the
+            // cell boundary. Inset bites cylinder/dome hulls; outset stays on the face
+            // so sleeves do not overlap the hub.
+            const float bore = 1.38f;
+            const float inset = 1.35f;
+            const float outset = 0.10f;
+            const float y = 0.85f;
             DockSleeve(root, "Airlock_N", new Vector3(0f, y, halfD), Vector3.forward, bore, inset, outset);
             DockSleeve(root, "Airlock_S", new Vector3(0f, y, -halfD), Vector3.back, bore, inset, outset);
             DockSleeve(root, "Airlock_E", new Vector3(halfW, y, 0f), Vector3.right, bore, inset, outset);
@@ -336,6 +339,7 @@ namespace SolarMajesty
             Vector3 dir = outward.normalized;
             Vector3 center = facePos + dir * ((outset - inset) * 0.5f);
             bool ns = Mathf.Abs(outward.z) >= Mathf.Abs(outward.x);
+            Color carbon = new Color(0.16f, 0.17f, 0.19f);
             // White square tube + orange collars — not a solid orange box. Grid docks stay square.
             Vector3 tubeScale = ns
                 ? new Vector3(bore * 0.92f, bore * 0.92f, length)
@@ -343,19 +347,24 @@ namespace SolarMajesty
             Part(parent, name, PrimitiveType.Cube, center, tubeScale, new Color(0.86f, 0.87f, 0.89f));
 
             Vector3 outerScale = ns
-                ? new Vector3(bore * 1.12f, bore * 1.12f, 0.16f)
-                : new Vector3(0.16f, bore * 1.12f, bore * 1.12f);
-            DressPart(parent, name + "_Collar", facePos + dir * (outset * 0.82f), outerScale, AirlockColor());
+                ? new Vector3(bore * 1.14f, bore * 1.14f, 0.10f)
+                : new Vector3(0.10f, bore * 1.14f, bore * 1.14f);
+            DressPart(parent, name + "_Collar", facePos + dir * 0.05f, outerScale, AirlockColor());
+
+            Vector3 lipScale = ns
+                ? new Vector3(bore * 1.04f, bore * 1.04f, 0.08f)
+                : new Vector3(0.08f, bore * 1.04f, bore * 1.04f);
+            DressPart(parent, name + "_Lip", facePos - dir * 0.04f, lipScale, carbon);
 
             Vector3 innerScale = ns
                 ? new Vector3(bore * 1.08f, bore * 1.08f, 0.10f)
                 : new Vector3(0.10f, bore * 1.08f, bore * 1.08f);
-            DressPart(parent, name + "_Inner", facePos - dir * (inset * 0.35f), innerScale, new Color(0.16f, 0.17f, 0.19f));
+            DressPart(parent, name + "_Inner", facePos - dir * (inset * 0.42f), innerScale, carbon);
 
             Vector3 ringScale = ns
-                ? new Vector3(bore * 1.04f, bore * 1.04f, 0.06f)
-                : new Vector3(0.06f, bore * 1.04f, bore * 1.04f);
-            DressPart(parent, name + "_Ring", facePos + dir * ((outset - inset) * 0.12f), ringScale, AirlockColor());
+                ? new Vector3(bore * 1.00f, bore * 1.00f, 0.06f)
+                : new Vector3(0.06f, bore * 1.00f, bore * 1.00f);
+            DressPart(parent, name + "_Ring", facePos - dir * (inset * 0.18f), ringScale, AirlockColor());
         }
 
         private static void DressPart(Transform parent, string name, Vector3 localPos, Vector3 localScale, Color color)

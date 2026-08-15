@@ -270,6 +270,9 @@ namespace SolarMajesty
         private bool _faunaRetreated;
         private bool _radWarned;
         private float _glanceCooldown;
+        private bool _bodyHopQueued;
+        private CelestialBodyId _bodyHopTarget;
+        private bool _bodyHopUnlock;
         private GameObject _outpostBeacon;
         private readonly Dictionary<EntityId, float> _extractStamp = new Dictionary<EntityId, float>(8);
         private readonly List<ConstructionOrder> _completedBuilds = new List<ConstructionOrder>(8);
@@ -703,7 +706,10 @@ namespace SolarMajesty
 
         private void Update()
         {
+            FlushDebugBodyHop();
             HandleSessionHotkeys();
+            HandleBodyHopHotkeys();
+            FlushDebugBodyHop();
             if (!IsPlaying) return;
 
             HandleToolHotkeys();
@@ -2195,6 +2201,44 @@ namespace SolarMajesty
             ReloadActiveScene();
         }
 
+        /// <summary>
+        /// Debug hop from Playing or Paused (tutorial does not block). Shift+F10 unlocks
+        /// the campaign spine then cycles; Shift+click a locked chip hops to that body.
+        /// Queued so OnGUI and Update cannot double-load the scene in one press.
+        /// </summary>
+        public void RequestDebugHop(CelestialBodyId body, bool unlockAll)
+        {
+            if (_bodyHopQueued) return;
+            _bodyHopQueued = true;
+            _bodyHopTarget = body;
+            _bodyHopUnlock = unlockAll;
+        }
+
+        public void RequestDebugBodyCycle(bool unlockAll) =>
+            RequestDebugHop(CelestialBodyCatalog.Next(celestialBody), unlockAll);
+
+        private void HandleBodyHopHotkeys()
+        {
+            if (Screen != DemoScreen.Playing && Screen != DemoScreen.Paused) return;
+            if (!Input.GetKeyDown(KeyCode.F10)) return;
+            bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            RequestDebugBodyCycle(shift);
+        }
+
+        private void FlushDebugBodyHop()
+        {
+            if (!_bodyHopQueued) return;
+            _bodyHopQueued = false;
+            if (_bodyHopUnlock)
+                CampaignProgress.DebugUnlockAll();
+            var profile = CelestialBodyCatalog.Get(_bodyHopTarget);
+            string hop = _bodyHopUnlock
+                ? $"Debug hop — {profile.DisplayName} (all worlds unlocked)."
+                : $"Debug hop — {profile.DisplayName}.";
+            CampaignProgress.QueueTravelLog(hop);
+            SelectBody(_bodyHopTarget, allowLocked: true);
+        }
+
         private static void ReloadActiveScene()
         {
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
@@ -2227,14 +2271,6 @@ namespace SolarMajesty
                 FocusCampus(1);
             if (Input.GetKeyDown(KeyCode.F9))
                 SeedCampusBAttract();
-
-            if (Input.GetKeyDown(KeyCode.F10))
-            {
-                // Debug cheat: cycle any body. Hold Shift to also unlock all.
-                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-                    CampaignProgress.DebugUnlockAll();
-                SelectBody(CelestialBodyCatalog.Next(celestialBody), allowLocked: true);
-            }
 
             if (Input.GetKeyDown(KeyCode.P))
                 FormParty();

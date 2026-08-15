@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.IO;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace SolarMajesty.EditorTools
@@ -314,8 +315,180 @@ namespace SolarMajesty.EditorTools
                       " hab=" + habR + " commons=" + comR + " lab=" + labR +
                       " power=" + pwrR + " pad=" + padR +
                       " guild=" + guildR + " ops=" + opsR + " farm=" + farmR);
+            SmokeDockFlush();
             Debug.Log("[Smoke] hero FBX ok=" + ok + " miss=" + miss +
                       (miss == 0 ? " SMOKE_OK" : " SMOKE_PARTIAL"));
+        }
+
+        /// <summary>
+        /// Commons (9 m) + 2×2 airlock + HAB (6 m) on a cardinal spine.
+        /// Orange collars should kiss at the Lego faces (z≈4.55 and z≈7.45).
+        /// </summary>
+        private static void SmokeDockFlush()
+        {
+            var root = new GameObject("Smoke_DockFlush");
+            var commons = ModularBuildingFactory.Spawn(
+                BuildingCategory.Commons, Vector3.zero, root.transform);
+            var airlock = ModularBuildingFactory.Spawn(
+                BuildingCategory.Utility, new Vector3(0f, 0f, 6f), root.transform);
+            var hab = ModularBuildingFactory.Spawn(
+                BuildingCategory.Habitat, new Vector3(0f, 0f, 10.5f), root.transform);
+            float cN = NearestCollarZ(commons, 4.55f);
+            float aS = NearestCollarZ(airlock, 4.55f);
+            float aN = NearestCollarZ(airlock, 7.45f);
+            float hS = NearestCollarZ(hab, 7.45f);
+            float dCommons = Mathf.Abs(cN - aS);
+            float dHab = Mathf.Abs(aN - hS);
+            bool flush = dCommons <= 0.12f && dHab <= 0.12f;
+            Debug.Log("[Smoke] dock flush Commons|airlock Δz=" + dCommons.ToString("0.000") +
+                      " airlock|HAB Δz=" + dHab.ToString("0.000") +
+                      " collars z=" + cN.ToString("0.00") + "/" + aS.ToString("0.00") +
+                      " " + aN.ToString("0.00") + "/" + hS.ToString("0.00") +
+                      (flush ? " FLUSH_OK" : " FLUSH_GAP"));
+            if (!flush)
+                Debug.LogWarning("[Smoke] dock collars are not flush at the Lego face.");
+            Object.DestroyImmediate(root);
+        }
+
+        private static float NearestCollarZ(GameObject go, float targetZ)
+        {
+            if (go == null) return float.NaN;
+            float best = float.NaN;
+            float bestD = 999f;
+            var ts = go.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < ts.Length; i++)
+            {
+                if (ts[i] == null || ts[i].name.IndexOf("Collar", System.StringComparison.Ordinal) < 0)
+                    continue;
+                float z = ts[i].position.z;
+                float d = Mathf.Abs(z - targetZ);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = z;
+                }
+            }
+            return best;
+        }
+
+        private const string MarsStillRel = "Docs/Roadmap/SM_MarsCampaign_EditorStill.png";
+
+        /// <summary>
+        /// Edit-mode Camera.Render of a Mars-graded Commons + airlock + HAB.
+        /// Not a Game-tab HUD still. CLI: -executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CaptureMarsStill
+        /// </summary>
+        [MenuItem("Solar Majesty/Capture Mars Still")]
+        public static void CaptureMarsStill()
+        {
+            string abs = Path.GetFullPath(Path.Combine(Application.dataPath, "..", MarsStillRel));
+            Directory.CreateDirectory(Path.GetDirectoryName(abs));
+
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            var mars = CelestialBodyCatalog.Get(CelestialBodyId.Mars);
+            ModularBuildingFactory.BindBody(mars);
+            CampusDressing.Reset();
+
+            var root = new GameObject("CaptureRoot");
+            var gridGo = new GameObject("IsoGrid");
+            gridGo.transform.SetParent(root.transform);
+            var grid = gridGo.AddComponent<IsoGrid>();
+            grid.Resize(ColonyLayout.MapCells, ColonyLayout.MapCells);
+
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            ground.name = "GroundPlane";
+            ground.transform.SetParent(root.transform);
+            float worldW = grid.WorldWidth;
+            float worldH = grid.WorldHeight;
+            ground.transform.position = new Vector3(worldW * 0.5f, 0f, worldH * 0.5f);
+            ground.transform.localScale = new Vector3(worldW / 10f, 1f, worldH / 10f);
+
+            var sunGo = new GameObject("Directional Light");
+            var sun = sunGo.AddComponent<Light>();
+            sun.type = LightType.Directional;
+            sun.shadows = LightShadows.Soft;
+
+            var camGo = new GameObject("Main Camera");
+            camGo.tag = "MainCamera";
+            var cam = camGo.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.orthographicSize = ColonyLayout.CameraOrthoSize;
+            cam.nearClipPlane = 0.3f;
+            cam.farClipPlane = 900f;
+            cam.allowHDR = true;
+            Vector3 focus = ColonyLayout.CameraFocus;
+            camGo.transform.position = focus + new Vector3(-18f, 22f, -18f);
+            camGo.transform.rotation = Quaternion.Euler(30f, 45f, 0f);
+
+            DemoAtmosphere.Apply(cam, root.transform, mars);
+            PlanetaryMapDressing.Apply(root.transform, grid, mars);
+
+            Vector3 o = ColonyLayout.CampusOrigin;
+            var buildings = new GameObject("Buildings");
+            buildings.transform.SetParent(root.transform);
+            var commons = ModularBuildingFactory.Spawn(
+                BuildingCategory.Commons, o, buildings.transform);
+            var airlock = ModularBuildingFactory.Spawn(
+                BuildingCategory.Utility, o + new Vector3(0f, 0f, 6f), buildings.transform);
+            var hab = ModularBuildingFactory.Spawn(
+                BuildingCategory.Habitat, o + new Vector3(0f, 0f, 10.5f), buildings.transform);
+
+            var commonsData = ScriptableObject.CreateInstance<BuildingData>();
+            commonsData.category = BuildingCategory.Commons;
+            var habData = ScriptableObject.CreateInstance<BuildingData>();
+            habData.category = BuildingCategory.Habitat;
+            CampusDressing.DressPlaced(commonsData, commons, mars);
+            CampusDressing.DressPlaced(habData, hab, mars);
+
+            int w = 1920;
+            int h = 1080;
+            var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32)
+            {
+                antiAliasing = 1,
+                useMipMap = false
+            };
+            cam.targetTexture = rt;
+            cam.Render();
+            RenderTexture.active = rt;
+            var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            tex.Apply();
+            cam.targetTexture = null;
+            RenderTexture.active = null;
+
+            Color32[] px = tex.GetPixels32();
+            long sum = 0;
+            int samples = 0;
+            for (int i = 0; i < px.Length; i += 32)
+            {
+                sum += px[i].r + px[i].g + px[i].b;
+                samples++;
+            }
+
+            float avg = samples > 0 ? sum / (float)(samples * 3) : 0f;
+            bool live = avg >= 12f;
+            Debug.Log("[Capture] Mars still avgLum=" + avg.ToString("0.0") +
+                      " commons=" + (commons != null) +
+                      " airlock=" + (airlock != null) +
+                      " hab=" + (hab != null) +
+                      (live ? " CAPTURE_OK" : " CAPTURE_BLACK"));
+
+            if (live)
+            {
+                File.WriteAllBytes(abs, tex.EncodeToPNG());
+                Debug.Log("[Capture] wrote " + abs);
+            }
+            else
+                Debug.LogWarning("[Capture] refused to write a black frame to " + MarsStillRel);
+
+            Object.DestroyImmediate(tex);
+            rt.Release();
+            Object.DestroyImmediate(rt);
+            Object.DestroyImmediate(commonsData);
+            Object.DestroyImmediate(habData);
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(sunGo);
+            Object.DestroyImmediate(camGo);
         }
     }
 }

@@ -273,14 +273,14 @@ Writes `SM_Crater_Small/Medium/Large` to `Assets/Resources/Environment/` and rep
 
 ## In-engine hero kits (Phase 4 Weeks 2–4)
 
-Play Mode HAB / Colony Commons / landing pad / Farm (greenhouse + ice) / Regolith Camp / **Power solar field** / **Defense bunker** / **Guild Hall (CMD-1)** / **OPS-1 annex** / **LAB** / **wonders** / **workshop hangar** / **tall hangar** / **Inn** prefer `SM_Hero_*` FBX via `BuildingVisualCatalog.LoadHeroKit`, with `HeroBuildingKits` procedural fallback. Sized to the existing square footprints. HAB / Commons / LAB / Power / pad match ConceptSheets at RTS scale (not sheet meters). Junction dual-barrel turrets sit on square airlock hubs (`ColonyVisualUtility` → `BuildJunctionTurret`) — dressing only, no fire. The HAB-1 cylinder FBX remains in the catalog for other modules. Square airlocks stay; do not change footprints.
+Play Mode HAB / Colony Commons / landing pad / Farm (greenhouse + ice) / Regolith Camp / **Power solar field** / **Defense bunker** / **Guild Hall (CMD-1)** / **OPS-1 annex** / **LAB** / **wonders** / **workshop hangar** / **tall hangar** / **Inn** prefer `SM_Hero_*` FBX via `BuildingVisualCatalog.LoadHeroKit`, with `HeroBuildingKits` procedural fallback. Sized to the existing square footprints. HAB / Commons / LAB / Power / pad match ConceptSheets at RTS scale (not sheet meters). HAB / Commons / LAB / CMD-1 / OPS-1 hulls carry geometric panel lines (bevelled boxes + carbon seams). Junction dual-barrel turrets sit on square airlock hubs (`ColonyVisualUtility` → `BuildJunctionTurret`) — dressing only, no fire. Dock sleeves and plus-arms **mate flush at the Lego cell face**. The HAB-1 cylinder FBX remains in the catalog for other modules. Square airlocks stay; do not change footprints.
 
 Parked pad ship is authored on `SM_Hero_LandingPad` (white/black stack). Launch still uses existing `LaunchSite` / `MissionController` logic.
 
 ## Next modeling session
 
-1. Subdivide/bevel HAB-1 / LAB-1 / dome / CMD-1 / OPS-1 panel lines  
-2. Mate docking sockets to **connector** flush  
+1. ~~Subdivide/bevel HAB-1 / LAB-1 / dome / CMD-1 / OPS-1 panel lines~~ (in — carbon rings, spine seams, civic wrap bands; box hulls bevelled)
+2. ~~Mate docking sockets to **connector** flush~~ (in — plus-arms end on the 2×2 cell face; module sleeves + orange collars sit on the footprint face; Commons cardinal stubs / Guild E/W ports reach that face)
 3. Human Mars Game-tab still vs `SM_MarsCampaign_VisualTarget.png`  
 
 ---

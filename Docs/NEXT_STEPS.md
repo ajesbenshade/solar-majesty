@@ -34,6 +34,9 @@
 - [x] Phase 4 hero-building sheet-match — HAB-1 cylinder, command-dome Colony Commons, LAB-1 cylinder, PWR-1 + solar field, pad + Starship stack vs existing ConceptSheets (Phase 4 still open)
 - [x] Phase 4 CMD-1 / OPS-1 / guild / wonders / extractor remesh — Guild = CMD-1 civic, Mining = OPS-1 annex, Farm greenhouse + ice, Camp drum, Mine A-frame, Loom / Spire / Archive distinct (Phase 4 still open)
 - [x] Phase 4 airlock panel-line polish — square hub (carbon corners / recessed orange doors) + white dock sleeves with orange collars (Phase 4 still open)
+- [x] Phase 4 HAB / Commons / LAB / CMD-1 / OPS-1 panel-bevel pass — carbon rings, spine seams, civic wrap bands, bevelled box hulls (Phase 4 still open)
+- [x] Phase 4 dock sockets flush — square airlock plus-arms + module sleeves + orange collars mate at the Lego face; Commons cardinal stubs / Guild E/W ports reach the footprint (Phase 4 still open)
+- [x] Phase 4 editor Mars still (`Docs/Roadmap/SM_MarsCampaign_EditorStill.png`) + Game-tab empty-Sol-1 still (`Docs/Roadmap/SM_MarsCampaign_PlayModeStill.png`) + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)) — **not** complete
 
 ## Month roadmap
 
@@ -45,9 +48,9 @@
 
 ## Next
 
-Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 is packaged. Phase 2 is complete** ([exit review](Roadmap/PHASE_2_EXIT.md)). **Phase 3 is complete** ([exit review](Roadmap/PHASE_3_EXIT.md)). Next: [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md), then [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
+Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 is packaged. Phase 2 is complete** ([exit review](Roadmap/PHASE_2_EXIT.md)). **Phase 3 is complete** ([exit review](Roadmap/PHASE_3_EXIT.md)). Current: [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) ([exit blocked](Roadmap/PHASE_4_EXIT.md)). After Phase 4: [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
 
-1. Phase 4 visual target — **Weeks 1–4 continued are in**, plus Earth New Game produced biome, Imagine-sheet refine for Scout / Engineer / Defense / Stalker, Workshop / Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, a Mars dressing/HUD/lighting close, hero-building sheet-match (HAB / Commons / LAB / Power / pad), **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, and **airlock panel-line polish**. Next: a human Mars Game-tab still for Phase 4 exit review. **Do not stamp Phase 4 complete.** Square Lego airlocks stay; tubes/domes/cranes/kits/turrets/solar are dressing. Mockup squad bars are HUD chrome only. Do not add click-to-move. Defense stays the tracked Guardian.
+1. Phase 4 visual target — **Weeks 1–4 continued are in**. Exit review is **blocked** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)): editor still of Commons+airlock+HAB exists; Game-tab still saved at `Docs/Roadmap/SM_MarsCampaign_PlayModeStill.png` (empty Mars Sol 1 + HUD — **not** a campus match). Next human step: **Shift+click MARS?** (Playing, tutorial 1/6) or **Shift+F10** then **F10** again, then place Commons + airlock + HAB for a campus still. **Do not stamp Phase 4 complete. Do not start Phase 5.** Square Lego airlocks stay; tubes/domes/cranes/kits/turrets/solar are dressing. Mockup squad bars are HUD chrome only. Do not add click-to-move. Defense stays the tracked Guardian.
 2. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes. Guild Hall: assign SCOUT/ENG/DEF/MED (Horizon / Anvil / Aegis / Triage).
 3. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`.
 

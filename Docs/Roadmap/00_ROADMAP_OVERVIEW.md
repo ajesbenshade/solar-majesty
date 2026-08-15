@@ -44,9 +44,10 @@
 - [Phase 3 – Content Explosion & Replayability](04_PHASE_3_CONTENT_EXPLOSION_REPLAYABILITY.md)
 - [Phase 3 exit review](PHASE_3_EXIT.md)
 - [Phase 4 – Visual Target (Art Production)](05_PHASE_4_VISUAL_TARGET.md)
+- [Phase 4 exit review (blocked)](PHASE_4_EXIT.md)
 - [Phase 5 – Production Values & Ship](06_PHASE_5_PRODUCTION_VALUES_SHIP.md)
 
 ---
 
-*Last updated: 2026-08-14*  
-*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 (visual target) then Phase 5 (ship) follow content.*
+*Last updated: 2026-08-15*  
+*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 visual target in progress (exit blocked: Game-tab still is empty Sol 1, not a campus match). Phase 5 (ship) after Phase 4.*

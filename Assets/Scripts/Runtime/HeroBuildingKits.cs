@@ -5,7 +5,8 @@ namespace SolarMajesty
     /// <summary>
     /// Phase 4 hero silhouettes. HAB / Commons / LAB / Power / pad stay sheet-matched.
     /// Guild is CMD-1 civic dress; Mining is OPS-1 annex; Farm / Camp / Mine and wonders
-    /// use distinct industrial kits. Dressing on the square Lego grid — no new pathing,
+    /// use distinct industrial kits. HAB / Commons / LAB / CMD / OPS carry panel seams.
+    /// Dressing on the square Lego grid — no new pathing,
     /// no extra occupancy colliders, no click-to-fire.
     /// </summary>
     public static class HeroBuildingKits
@@ -117,6 +118,19 @@ namespace SolarMajesty
                 new Vector3(1.15f, z + 0.12f, radius * 0.92f),
                 new Vector3(0.55f, 0.22f, 0.06f), Cyan, CyanEmit);
 
+            Prim(root, "HabSeamRing_L", PrimitiveType.Cylinder,
+                new Vector3(-length * 0.18f, z, 0f),
+                new Vector3(radius * 2.036f, 0.016f, radius * 2.036f), Graphite, alongX);
+            Prim(root, "HabSeamRing_R", PrimitiveType.Cylinder,
+                new Vector3(length * 0.18f, z, 0f),
+                new Vector3(radius * 2.036f, 0.016f, radius * 2.036f), Graphite, alongX);
+            Prim(root, "HabSpine", PrimitiveType.Cube,
+                new Vector3(0f, z + radius * 1.012f, 0f),
+                new Vector3(length * 0.58f, 0.028f, 0.035f), Carbon);
+            Prim(root, "HabSeam_N", PrimitiveType.Cube,
+                new Vector3(0f, z + radius * 0.50f, radius * 0.70f),
+                new Vector3(length * 0.46f, 0.028f, 0.028f), Graphite);
+
             float[] sx = { -1.85f, -1.85f, 1.85f, 1.85f };
             float[] sz = { -1.15f, 1.15f, -1.15f, 1.15f };
             for (int i = 0; i < 4; i++)
@@ -196,21 +210,24 @@ namespace SolarMajesty
                     Cyan, Quaternion.Euler(0f, i * 45f, 0f), CyanEmit);
             }
 
-            // Radial tube stubs are dressing. Square airlocks still attach in the factory.
+            // Radial tube stubs are dressing. Cardinals mate Unity square sleeves at the 6×6 face.
+            float face = Mathf.Min(w, d) * 0.5f;
             for (int i = 0; i < 8; i++)
             {
                 float ang = i * 45f * Mathf.Deg2Rad;
                 bool cardinal = i % 2 == 0;
-                float stubLen = cardinal ? 0.92f : 0.52f;
+                float stubLen = cardinal ? face - radius * 0.96f : 0.52f;
                 float stubR = cardinal ? 0.50f : 0.36f;
-                float dist = radius * 0.98f + stubLen * 0.42f;
+                float dist = cardinal
+                    ? radius * 0.96f + stubLen * 0.5f
+                    : radius * 0.98f + stubLen * 0.42f;
                 Vector3 dir = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang));
                 Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
                 Prim(root, "CommonsStub_" + i, PrimitiveType.Cylinder,
                     dir * dist + new Vector3(0f, 1.18f, 0f),
                     new Vector3(stubR * 2f, stubLen * 0.5f, stubR * 2f), White, rot);
                 Prim(root, "CommonsStubTip_" + i, PrimitiveType.Cylinder,
-                    dir * (dist + stubLen * 0.42f) + new Vector3(0f, 1.18f, 0f),
+                    dir * (dist + stubLen * 0.5f - 0.04f) + new Vector3(0f, 1.18f, 0f),
                     new Vector3(stubR * 2.24f, 0.04f, stubR * 2.24f), Orange, rot);
                 if (cardinal)
                 {
@@ -218,6 +235,34 @@ namespace SolarMajesty
                         dir * (dist - stubLen * 0.18f) + new Vector3(0f, 1.18f, 0f),
                         new Vector3(stubR * 2.12f, 0.05f, stubR * 2.12f), Carbon, rot);
                 }
+            }
+
+            Prim(root, "CommonsSeamRing_0", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.88f, 0f),
+                new Vector3(radius * 2.03f, 0.019f, radius * 2.03f), Graphite);
+            Prim(root, "CommonsSeamRing_1", PrimitiveType.Cylinder,
+                new Vector3(0f, 1.55f, 0f),
+                new Vector3(radius * 2.024f, 0.019f, radius * 2.024f), Carbon);
+            Prim(root, "CommonsSeamRing_2", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.22f, 0f),
+                new Vector3(radius * 1.88f, 0.019f, radius * 1.88f), Graphite);
+            Prim(root, "CommonsSeamRing_3", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.62f, 0f),
+                new Vector3(radius * 1.60f, 0.019f, radius * 1.60f), Carbon);
+            Prim(root, "CommonsSeamRing_4", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.92f, 0f),
+                new Vector3(radius * 1.28f, 0.019f, radius * 1.28f), Graphite);
+            for (int i = 0; i < 8; i++)
+            {
+                float ang = i * 45f * Mathf.Deg2Rad;
+                Vector3 dir = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang));
+                Quaternion yaw = Quaternion.Euler(0f, i * 45f, 0f);
+                Prim(root, "CommonsMeridianLo_" + i, PrimitiveType.Cube,
+                    dir * (radius * 1.012f) + new Vector3(0f, 0.82f, 0f),
+                    new Vector3(0.032f, 0.38f, 0.032f), Carbon, yaw);
+                Prim(root, "CommonsMeridianHi_" + i, PrimitiveType.Cube,
+                    dir * (radius * 1.012f) + new Vector3(0f, 1.62f, 0f),
+                    new Vector3(0.032f, 0.28f, 0.032f), Carbon, yaw);
             }
         }
 
@@ -774,17 +819,17 @@ namespace SolarMajesty
                 new Vector3(0.38f, 3.05f, 0.08f),
                 new Vector3(0.04f, 0.42f, 0.04f), Steel);
             Prim(root, "GuildPort_E", PrimitiveType.Cube,
-                new Vector3(w * 0.40f, 0.55f, 0f),
-                new Vector3(0.18f, 0.55f, 0.55f), White);
+                new Vector3(w * 0.5f - 0.15f, 0.85f, 0f),
+                new Vector3(0.30f, 0.62f, 0.62f), White);
             Prim(root, "GuildPortRing_E", PrimitiveType.Cube,
-                new Vector3(w * 0.48f, 0.55f, 0f),
-                new Vector3(0.06f, 0.62f, 0.62f), Orange);
+                new Vector3(w * 0.5f - 0.04f, 0.85f, 0f),
+                new Vector3(0.08f, 0.70f, 0.70f), Orange);
             Prim(root, "GuildPort_W", PrimitiveType.Cube,
-                new Vector3(-w * 0.40f, 0.55f, 0f),
-                new Vector3(0.18f, 0.55f, 0.55f), White);
+                new Vector3(-(w * 0.5f - 0.15f), 0.85f, 0f),
+                new Vector3(0.30f, 0.62f, 0.62f), White);
             Prim(root, "GuildPortRing_W", PrimitiveType.Cube,
-                new Vector3(-w * 0.48f, 0.55f, 0f),
-                new Vector3(0.06f, 0.62f, 0.62f), Orange);
+                new Vector3(-(w * 0.5f - 0.04f), 0.85f, 0f),
+                new Vector3(0.08f, 0.70f, 0.70f), Orange);
             Prim(root, "GuildMast", PrimitiveType.Cylinder,
                 new Vector3(w * 0.22f, 3.35f, -d * 0.18f),
                 new Vector3(0.08f, 0.85f, 0.08f), Steel);
@@ -794,6 +839,39 @@ namespace SolarMajesty
             Prim(root, "GuildBeacon", PrimitiveType.Sphere,
                 new Vector3(w * 0.22f, 4.25f, -d * 0.18f),
                 new Vector3(0.18f, 0.18f, 0.18f), Cyan, CyanEmit);
+            Prim(root, "GuildBand_Lo", PrimitiveType.Cube,
+                new Vector3(0f, 0.68f, -d * 0.04f),
+                new Vector3(w * 0.80f, 0.04f, d * 0.64f), Carbon);
+            Prim(root, "GuildBand_Hi", PrimitiveType.Cube,
+                new Vector3(0f, 1.42f, -d * 0.04f),
+                new Vector3(w * 0.80f, 0.04f, d * 0.64f), Carbon);
+            Prim(root, "GuildGroove_L", PrimitiveType.Cube,
+                new Vector3(-w * 0.20f, 1.08f, -d * 0.04f),
+                new Vector3(0.04f, 1.05f, d * 0.63f), Graphite);
+            Prim(root, "GuildGroove_R", PrimitiveType.Cube,
+                new Vector3(w * 0.20f, 1.08f, -d * 0.04f),
+                new Vector3(0.04f, 1.05f, d * 0.63f), Graphite);
+            Prim(root, "GuildRoofSeam_L", PrimitiveType.Cube,
+                new Vector3(-w * 0.12f, 2.39f, -d * 0.06f),
+                new Vector3(0.035f, 0.035f, d * 0.48f), Carbon);
+            Prim(root, "GuildRoofSeam_C", PrimitiveType.Cube,
+                new Vector3(0f, 2.39f, -d * 0.06f),
+                new Vector3(0.035f, 0.035f, d * 0.48f), Carbon);
+            Prim(root, "GuildRoofSeam_R", PrimitiveType.Cube,
+                new Vector3(w * 0.12f, 2.39f, -d * 0.06f),
+                new Vector3(0.035f, 0.035f, d * 0.48f), Carbon);
+            Prim(root, "GuildCorner_0", PrimitiveType.Cube,
+                new Vector3(-w * 0.38f, 1.05f, -d * 0.33f),
+                new Vector3(0.08f, 1.12f, 0.08f), Carbon);
+            Prim(root, "GuildCorner_1", PrimitiveType.Cube,
+                new Vector3(w * 0.38f, 1.05f, -d * 0.33f),
+                new Vector3(0.08f, 1.12f, 0.08f), Carbon);
+            Prim(root, "GuildCorner_2", PrimitiveType.Cube,
+                new Vector3(-w * 0.38f, 1.05f, d * 0.22f),
+                new Vector3(0.08f, 1.12f, 0.08f), Carbon);
+            Prim(root, "GuildCorner_3", PrimitiveType.Cube,
+                new Vector3(w * 0.38f, 1.05f, d * 0.22f),
+                new Vector3(0.08f, 1.12f, 0.08f), Carbon);
         }
 
         public static void BuildOpsUnit(Transform root, float w, float d, Color hull)
@@ -847,6 +925,27 @@ namespace SolarMajesty
             Prim(root, "OpsBeacon", PrimitiveType.Sphere,
                 new Vector3(-0.35f, 1.62f, 0.18f),
                 new Vector3(0.16f, 0.16f, 0.16f), Cyan, CyanEmit);
+            Prim(root, "OpsBand_Lo", PrimitiveType.Cube,
+                new Vector3(0f, 0.42f, 0f),
+                new Vector3(w * 0.84f, 0.04f, d * 0.64f), Carbon);
+            Prim(root, "OpsBand_Hi", PrimitiveType.Cube,
+                new Vector3(0f, 0.98f, 0f),
+                new Vector3(w * 0.84f, 0.04f, d * 0.64f), Carbon);
+            Prim(root, "OpsRoofSeam_L", PrimitiveType.Cube,
+                new Vector3(0f, 1.39f, -d * 0.12f),
+                new Vector3(w * 0.70f, 0.03f, 0.03f), Carbon);
+            Prim(root, "OpsRoofSeam_C", PrimitiveType.Cube,
+                new Vector3(0f, 1.39f, 0f),
+                new Vector3(w * 0.70f, 0.03f, 0.03f), Carbon);
+            Prim(root, "OpsRoofSeam_R", PrimitiveType.Cube,
+                new Vector3(0f, 1.39f, d * 0.12f),
+                new Vector3(w * 0.70f, 0.03f, 0.03f), Carbon);
+            Prim(root, "OpsPlate_L", PrimitiveType.Cube,
+                new Vector3(-w * 0.18f, 0.78f, -d * 0.32f),
+                new Vector3(0.70f, 0.52f, 0.035f), Graphite);
+            Prim(root, "OpsPlate_R", PrimitiveType.Cube,
+                new Vector3(w * 0.18f, 0.78f, -d * 0.32f),
+                new Vector3(0.70f, 0.52f, 0.035f), Graphite);
         }
 
         public static void BuildLaboratory(Transform root, float w, float d, Color hull)
@@ -932,6 +1031,18 @@ namespace SolarMajesty
             Prim(root, "LabSkid_R", PrimitiveType.Cube,
                 new Vector3(0f, 0.10f, 1.05f),
                 new Vector3(length * 0.62f, 0.18f, 0.32f), Carbon);
+            Prim(root, "LabSeamRing_L", PrimitiveType.Cylinder,
+                new Vector3(-length * 0.18f, z, 0f),
+                new Vector3(radius * 2.036f, 0.016f, radius * 2.036f), Graphite, alongX);
+            Prim(root, "LabSeamRing_R", PrimitiveType.Cylinder,
+                new Vector3(length * 0.18f, z, 0f),
+                new Vector3(radius * 2.036f, 0.016f, radius * 2.036f), Graphite, alongX);
+            Prim(root, "LabSpine", PrimitiveType.Cube,
+                new Vector3(0f, z + radius * 1.012f, 0f),
+                new Vector3(length * 0.58f, 0.028f, 0.035f), Carbon);
+            Prim(root, "LabSeam_S", PrimitiveType.Cube,
+                new Vector3(0f, z + radius * 0.50f, -radius * 0.70f),
+                new Vector3(length * 0.46f, 0.028f, 0.028f), Graphite);
         }
 
         public static void BuildClimateLoom(Transform root, float w, float d, Color hull)

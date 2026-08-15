@@ -18,7 +18,7 @@ Build infrastructure, post bounty flags, manage economy. Autonomous specialists
 Campaign spine: Earth tutorial → Luna → Mars → Belt → Europa with dens / sustain / launch gates
 (tech + Landing Pad) and an Alpha Centauri-style tech tree (TECH · T).
 Roadmap: Docs/Roadmap/ (Phase 3 complete: exit in PHASE_3_EXIT.md). Dust Stalkers raise ThreatPressure.
-After Phase 3: Phase 4 visual target (Mars mockup fidelity — Weeks 1–4 continued in, including Imagine-sheet unit refine, Earth New Game produced biome, Workshop/Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, a Mars dressing close, hero-building sheet-match, **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, and **airlock panel-line polish**; **not** exited). Then Phase 5 ship.
+After Phase 3: Phase 4 visual target (Mars mockup fidelity — Weeks 1–4 continued in, including Imagine-sheet unit refine, Earth New Game produced biome, Workshop/Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, a Mars dressing close, hero-building sheet-match, **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, **airlock panel-line polish**, **HAB/LAB/Commons/CMD/OPS panel bevels**, and **flush docks**; editor still + Game-tab empty-Sol-1 still in; exit **blocked** in PHASE_4_EXIT.md — **not** exited). Then Phase 5 ship.
 Never add click-to-move to match mockup squad UI.
 
 ## Non-negotiables
@@ -53,7 +53,7 @@ Never add click-to-move to match mockup squad UI.
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
-1. Phase 4 visual target — Week 1 campus/HUD/Mars atmosphere, Week 2 HAB / Colony Commons / pad+ship / extractor hero kits, Week 3 junction turrets + solar-field landmark, Week 4 remesh + hero building FBX, Earth New Game produced biome, Scout/Engineer/Defense/Stalker Imagine-sheet refine, Workshop/Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, a Mars dressing/HUD/lighting close, HAB/Commons/LAB/Power/pad sheet-match, **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, and **airlock panel-line polish** are in (`Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md`). Next: a human Mars side-by-side still. Do not add click-to-move. Square airlocks stay; tubes/domes/kits/turrets/solar are dressing. Defense stays tracked.
+1. Phase 4 visual target — Week 1–4 continued are in (`Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md`), including flush docks. Exit is **blocked** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)): editor still `SM_MarsCampaign_EditorStill.png` exists; next is a **human Game-tab** Mars still. Do not add click-to-move. Do not start Phase 5. Square airlocks stay; tubes/domes/kits/turrets/solar are dressing. Defense stays tracked.
 2. Shift+F10 smoke: Earth soil creepers (**F5**), Luna ash hoppers (**F2**), Belt (`LOW-G`, rock mites/ticks **F5**, shard hoppers **F2**), Europa (`RAD`, fissure leeches / ice wisps **F2**, ice creepers **F5**). **T** Guild Charter → assign hall class (Horizon / Anvil / Aegis / Triage). ★ Climate Loom / Aegis Spire / Deep Archive landmarks. Settings: Mode / Challenge / Stance — Open Hands should take a $70 Build.
 3. Imagine turnarounds from `Docs/GROK_IMAGINE_UNIT_PROMPTS.md`. All ten specialists + seven fauna Blender meshes are sheet-matched blockouts against `ConceptSheets/` JPGs. Defense stays tracked (PNG walker still open). Building FBX pipeline (`SM_Hero_*`) is in.
 
@@ -109,11 +109,13 @@ update Docs/NEXT_STEPS.md if milestones moved.
 - [x] Phase 4 Imagine-sheet refine — Scout / Engineer / Defense / Stalker vs ConceptSheets; HUD/tube/pad/solar dressing (Phase 4 still open)
 - [x] Phase 4 Workshop / Inn FBX + campus clutter / HUD class readout (Phase 4 still open)
 - [x] Phase 4 remaining-class Imagine prompt sheets + Mars dressing/HUD/lighting close (Phase 4 still open)
-- [x] Phase 4 remaining-class + leftover-fauna Imagine JPGs + sheet-matched remesh (Phase 4 still open)  
+- [x] Phase 4 remaining-class + leftover-fauna Imagine JPGs + sheet-matched remesh (Phase 4 still open)
+- [x] Phase 4 dock sockets flush to the square connector (Phase 4 still open)
+- [x] Phase 4 editor Mars still + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md))  
 
 ### Known gaps
 
-- Unit meshes are Blender blockouts. All ten specialists + seven fauna are sheet-matched against `ConceptSheets/` turnarounds (Scout keeps hover rotors; Defense stays the Imagine tracked guardian — PNG biped walker still open). Play Mode HAB / Colony Commons / pad / extractor / solar / Defense bunker / Guild / LAB / wonder / **workshop hangar / tall hangar / Inn** kits prefer `SM_Hero_*` FBX (`HeroBuildingKits` fallback). Junction turrets dress airlock hubs. Medic capsule / Harvester orange-blade hopper / Surveyor tripod / Courier white crate / Sentinel **treads** / Terraformer **orange blade + rear rake** silhouettes are in. Fauna: Stalker / six-leg Hopper / graphite Creeper / Tick / pillbug Mite / **white-ray Leech** / seven-point Wisp. Honest Mars mockup notes live in the Phase 4 doc — **Phase 4 is not exited**.  
+- Unit meshes are Blender blockouts. All ten specialists + seven fauna are sheet-matched against `ConceptSheets/` turnarounds (Scout keeps hover rotors; Defense stays the Imagine tracked guardian — PNG biped walker still open). Play Mode HAB / Colony Commons / pad / extractor / solar / Defense bunker / Guild / LAB / wonder / **workshop hangar / tall hangar / Inn** kits prefer `SM_Hero_*` FBX (`HeroBuildingKits` fallback). Junction turrets dress airlock hubs. Medic capsule / Harvester orange-blade hopper / Surveyor tripod / Courier white crate / Sentinel **treads** / Terraformer **orange blade + rear rake** silhouettes are in. Fauna: Stalker / six-leg Hopper / graphite Creeper / Tick / pillbug Mite / **white-ray Leech** / seven-point Wisp. Honest Mars mockup notes live in the Phase 4 doc — **Phase 4 is not exited** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md): Game-tab still is empty Sol 1, not a campus stamp).  
 - Continue slot is campus + stockpile + research per body (flags/fauna/HP are not snapshotted)  
 - External Phase 1 playtest / exit review still open  
 - No multiplayer  

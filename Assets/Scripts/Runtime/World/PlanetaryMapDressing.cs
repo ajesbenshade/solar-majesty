@@ -17,6 +17,7 @@ namespace SolarMajesty
             EnsureSky(body);
             EnsureDustDevils(parent, grid, body);
             EnsureEarthVista(parent, body);
+            EnsureMarsVista(parent, body);
             Debug.Log("[MapDressing] " + body.DisplayName + " ground+sky applied.");
         }
 
@@ -45,7 +46,9 @@ namespace SolarMajesty
             float worldW = grid != null ? grid.WorldWidth : 384f;
             float tiles = body.Id == CelestialBodyId.Earth
                 ? Mathf.Max(12f, worldW / 22f)
-                : Mathf.Max(24f, worldW / 8f);
+                : body.Id == CelestialBodyId.Mars
+                    ? Mathf.Max(16f, worldW / 14f)
+                    : Mathf.Max(24f, worldW / 8f);
 
             if (mat.HasProperty("_BaseMap"))
             {
@@ -335,6 +338,112 @@ namespace SolarMajesty
                 SpawnVistaTree(root, treeSpots[i], body, i);
 
             SpawnVistaPond(root, campus + new Vector3(14.5f, 0f, 6.2f), body);
+        }
+
+        /// <summary>
+        /// Empty Mars drop: boulder field + a crater bowl + a dune ridge in the ortho 16 shot.
+        /// Visual only — does not spawn a campus. Nodes/lairs stay world-gen.
+        /// </summary>
+        private static void EnsureMarsVista(Transform parent, CelestialBodyProfile body)
+        {
+            var old = GameObject.Find("MarsVistaRoot");
+            if (old != null)
+            {
+                old.name = "MarsVistaRoot_old";
+                Object.Destroy(old);
+            }
+            if (body == null || body.Id != CelestialBodyId.Mars) return;
+
+            Vector3 campus = ColonyLayout.CampusOrigin;
+            var root = new GameObject("MarsVistaRoot").transform;
+            if (parent != null) root.SetParent(parent, false);
+
+            for (int i = 0; i < 24; i++)
+            {
+                float ang = i * 1.618f * Mathf.PI;
+                float rad = 7.4f + (i % 5) * 1.65f;
+                Vector3 at = campus + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
+                SpawnVistaBoulder(root, at, body, i, 0.48f + (i % 4) * 0.16f);
+            }
+
+            Vector3[] outcrops =
+            {
+                campus + new Vector3(12.8f, 0f, 7.6f),
+                campus + new Vector3(-13.4f, 0f, 9.2f),
+                campus + new Vector3(10.6f, 0f, -12.4f),
+                campus + new Vector3(-11.8f, 0f, -8.6f),
+                campus + new Vector3(16.4f, 0f, -3.2f),
+                campus + new Vector3(-15.6f, 0f, 2.8f)
+            };
+            for (int i = 0; i < outcrops.Length; i++)
+            {
+                SpawnVistaBoulder(root, outcrops[i], body, i + 40, 1.15f + (i % 3) * 0.22f);
+                SpawnVistaBoulder(root, outcrops[i] + new Vector3(0.85f, 0f, -0.55f), body, i + 60, 0.62f);
+                SpawnVistaBoulder(root, outcrops[i] + new Vector3(-0.7f, 0f, 0.7f), body, i + 80, 0.48f);
+            }
+
+            SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
+            SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
+        }
+
+        private static void SpawnVistaBoulder(
+            Transform parent, Vector3 world, CelestialBodyProfile body, int salt, float scale)
+        {
+            var go = GameObject.CreatePrimitive(salt % 3 == 0 ? PrimitiveType.Sphere : PrimitiveType.Capsule);
+            go.name = "Dress_MarsBoulder";
+            go.transform.SetParent(parent, false);
+            go.transform.position = world + Vector3.up * (0.18f * scale);
+            go.transform.localScale = new Vector3(
+                scale * (0.85f + (salt % 3) * 0.12f),
+                scale * (0.42f + (salt % 2) * 0.18f),
+                scale * (0.72f + (salt % 4) * 0.1f));
+            go.transform.rotation = Quaternion.Euler(12f * (salt % 5), salt * 37f, 8f * (salt % 3));
+            Object.Destroy(go.GetComponent<Collider>());
+            Color c = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
+            PlanetaryWorldGen.Tint(go, c, 0.08f, ShadowCastingMode.On);
+            ColonyVisualUtility.SnapToGround(go);
+        }
+
+        private static void SpawnVistaCrater(Transform parent, Vector3 world, CelestialBodyProfile body)
+        {
+            var crater = new GameObject("Dress_MarsCrater");
+            crater.transform.SetParent(parent, false);
+            crater.transform.position = world;
+
+            var rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            rim.name = "Rim";
+            rim.transform.SetParent(crater.transform, false);
+            rim.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            rim.transform.localScale = new Vector3(7.2f, 0.08f, 6.4f);
+            Object.Destroy(rim.GetComponent<Collider>());
+            PlanetaryWorldGen.Tint(rim, body.CraterRim, 0.06f);
+
+            var floor = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            floor.name = "Floor";
+            floor.transform.SetParent(crater.transform, false);
+            floor.transform.localPosition = new Vector3(0.15f, 0.02f, -0.1f);
+            floor.transform.localScale = new Vector3(4.8f, 0.04f, 4.2f);
+            Object.Destroy(floor.GetComponent<Collider>());
+            PlanetaryWorldGen.Tint(floor, body.CraterFloor, 0.05f);
+
+            ColonyVisualUtility.SnapToGround(crater);
+        }
+
+        private static void SpawnVistaDune(Transform parent, Vector3 world, CelestialBodyProfile body)
+        {
+            var dune = new GameObject("Dress_MarsDune");
+            dune.transform.SetParent(parent, false);
+            dune.transform.position = world;
+            dune.transform.rotation = Quaternion.Euler(0f, 38f, 0f);
+
+            var ridge = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            ridge.name = "Ridge";
+            ridge.transform.SetParent(dune.transform, false);
+            ridge.transform.localPosition = new Vector3(0f, 0.22f, 0f);
+            ridge.transform.localScale = new Vector3(6.8f, 0.55f, 2.4f);
+            Object.Destroy(ridge.GetComponent<Collider>());
+            PlanetaryWorldGen.Tint(ridge, body.DuneColor, 0.06f);
+            ColonyVisualUtility.SnapToGround(dune);
         }
 
         private static void SpawnGrassTuft(Transform parent, Vector3 world, CelestialBodyProfile body, int salt)

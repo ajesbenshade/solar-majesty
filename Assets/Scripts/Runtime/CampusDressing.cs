@@ -8,6 +8,7 @@ namespace SolarMajesty
     /// HAB / Commons / pad / extractor / solar field / Defense bunker live in HeroBuildingKits.
     /// Junction turrets sit on airlock hubs (ColonyVisualUtility).
     /// Airlock hubs are panel-lined square primitives; docks stay Lego.
+    /// Tube cladding spans the hub-frame → module-face joint only (flush collars).
     /// </summary>
     public static class CampusDressing
     {
@@ -190,10 +191,16 @@ namespace SolarMajesty
             if (span < 0.4f) return;
 
             Vector3 dir = delta / span;
-            // Cover the gap plus a bite of each hull so the campus reads as one pressurized spine.
-            float length = Mathf.Clamp(span * 0.68f, 2.4f, 9.2f);
-            Vector3 mid = (from + to) * 0.5f;
-            mid.y = 0.95f;
+            // Clad the hub-frame → module-face joint only. Do not run tubes through hulls.
+            // 2×2 airlock half-extent is one cell; hub orange frame sits 0.92 m from origin.
+            float airlockHalf = ColonyLayout.DefaultCellSize;
+            const float hubReach = 0.92f;
+            const float bite = 0.08f;
+            float gap = airlockHalf - hubReach;
+            if (gap < 0.2f) return;
+            float length = gap + bite * 2f;
+            Vector3 mid = from + dir * ((hubReach + airlockHalf) * 0.5f);
+            mid.y = 0.85f;
             const float dia = 1.42f;
 
             var tube = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -205,14 +212,14 @@ namespace SolarMajesty
             Object.Destroy(tube.GetComponent<Collider>());
             Tint(tube, new Color(0.86f, 0.87f, 0.89f), 0.18f);
 
-            int ribs = Mathf.Clamp(Mathf.RoundToInt(length / 0.52f), 5, 14);
+            int ribs = 3;
             for (int i = 0; i < ribs; i++)
             {
                 float t = (i + 0.5f) / ribs - 0.5f;
                 var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 rib.name = "Dress_Rib";
                 rib.transform.SetParent(parent, false);
-                rib.transform.position = mid + dir * (t * length);
+                rib.transform.position = mid + dir * (t * length * 0.72f);
                 rib.transform.rotation = tube.transform.rotation;
                 rib.transform.localScale = new Vector3(dia * 1.14f, 0.07f, dia * 1.14f);
                 Object.Destroy(rib.GetComponent<Collider>());
@@ -228,7 +235,7 @@ namespace SolarMajesty
                 var collar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 collar.name = "Dress_TubeCollar";
                 collar.transform.SetParent(parent, false);
-                collar.transform.position = mid + dir * (e * length * 0.46f);
+                collar.transform.position = mid + dir * (e * (length * 0.5f - 0.04f));
                 collar.transform.rotation = tube.transform.rotation;
                 collar.transform.localScale = new Vector3(dia * 1.22f, 0.06f, dia * 1.22f);
                 Object.Destroy(collar.GetComponent<Collider>());

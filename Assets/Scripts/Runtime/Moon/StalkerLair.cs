@@ -135,25 +135,63 @@ namespace SolarMajesty
         private void BuildMarker(Color rimColor, Color pitColor)
         {
             for (int i = transform.childCount - 1; i >= 0; i--)
-                Destroy(transform.GetChild(i).gameObject);
+                DestroyImmediate(transform.GetChild(i).gameObject);
 
-            var rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            rim.name = "Rim";
-            rim.transform.SetParent(transform, false);
-            rim.transform.localPosition = new Vector3(0f, 0.08f, 0f);
-            rim.transform.localScale = new Vector3(4.2f, 0.12f, 4.2f);
-            Object.Destroy(rim.GetComponent<Collider>());
-            SetColor(rim, rimColor);
-
-            var pit = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            pit.name = "Pit";
-            pit.transform.SetParent(transform, false);
-            pit.transform.localPosition = new Vector3(0f, 0.02f, 0f);
-            pit.transform.localScale = new Vector3(2.6f, 0.04f, 2.6f);
-            Object.Destroy(pit.GetComponent<Collider>());
+            // Irregular den — crater bowl + rim boulders + bone spines, not a dark cylinder pad.
+            var pit = Prim(PrimitiveType.Sphere, "Pit",
+                new Vector3(0f, 0.08f, 0f),
+                new Vector3(3.5f, 0.2f, 3.05f),
+                Quaternion.Euler(0f, 18f, 0f));
             SetColor(pit, pitColor);
 
+            var maw = Prim(PrimitiveType.Sphere, "Maw",
+                new Vector3(0.18f, 0.14f, -0.12f),
+                new Vector3(1.55f, 0.28f, 1.35f),
+                Quaternion.Euler(8f, 12f, 0f));
+            SetColor(maw, pitColor * 0.55f);
+
+            var mouth = Prim(PrimitiveType.Capsule, "Mouth",
+                new Vector3(0.05f, 0.32f, 0.55f),
+                new Vector3(0.95f, 0.42f, 0.7f),
+                Quaternion.Euler(72f, 8f, 0f));
+            SetColor(mouth, Color.Lerp(pitColor, rimColor, 0.35f));
+
+            for (int i = 0; i < 7; i++)
+            {
+                float a = i * (Mathf.PI * 2f / 7f) + 0.2f;
+                float rad = 1.55f + (i % 3) * 0.18f;
+                var rock = Prim(PrimitiveType.Capsule, "Rim_" + i,
+                    new Vector3(Mathf.Cos(a) * rad, 0.28f, Mathf.Sin(a) * rad * 0.9f),
+                    new Vector3(0.55f + (i % 2) * 0.12f, 0.32f + (i % 3) * 0.06f, 0.42f),
+                    Quaternion.Euler(18f * i, 40f * i, 12f));
+                SetColor(rock, Color.Lerp(rimColor, new Color(0.32f, 0.14f, 0.08f), 0.35f));
+            }
+
+            Color bone = new Color(0.72f, 0.66f, 0.54f);
+            for (int i = 0; i < 3; i++)
+            {
+                float a = i * 2.1f + 0.55f;
+                var spine = Prim(PrimitiveType.Capsule, "Spine_" + i,
+                    new Vector3(Mathf.Cos(a) * 0.85f, 0.72f, Mathf.Sin(a) * 0.85f),
+                    new Vector3(0.12f, 0.48f + i * 0.08f, 0.12f),
+                    Quaternion.Euler(18f, 50f * i, 8f));
+                SetColor(spine, bone);
+            }
+
             ColonyVisualUtility.SnapToGround(gameObject);
+        }
+
+        private GameObject Prim(
+            PrimitiveType type, string name, Vector3 localPos, Vector3 scale, Quaternion rot)
+        {
+            var go = GameObject.CreatePrimitive(type);
+            go.name = name;
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = localPos;
+            go.transform.localScale = scale;
+            go.transform.localRotation = rot;
+            Object.Destroy(go.GetComponent<Collider>());
+            return go;
         }
 
         private void ApplyClearedLook()
@@ -174,7 +212,9 @@ namespace SolarMajesty
                                    ?? Shader.Find("Sprites/Default"));
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             else if (mat.HasProperty("_Color")) mat.color = c;
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.1f);
             rend.sharedMaterial = mat;
+            rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
         }
     }
 }

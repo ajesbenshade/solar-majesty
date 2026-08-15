@@ -34,10 +34,10 @@ namespace SolarMajesty
 
         /// <summary>
         /// Visual scatter (lakes/forests/rocks) can sit closer than gameplay nodes.
-        /// Earth drop camera is ortho 16 — 20 m exclusion hid the biome.
+        /// Drop camera is ortho 16 — 20 m exclusion hid the Earth biome and left Mars a tiled plane.
         /// </summary>
         private float VistaExclusion =>
-            _body != null && _body.Id == CelestialBodyId.Earth
+            _body != null && (_body.Id == CelestialBodyId.Earth || _body.Id == CelestialBodyId.Mars)
                 ? 11.2f
                 : (_body != null ? _body.CampusExclusion : 20f);
 
@@ -473,7 +473,7 @@ namespace SolarMajesty
 
             for (int i = 0; i < _body.DuneCount; i++)
             {
-                if (!TrySample(rng, placed, _body.CampusExclusion * 0.75f, _body.MinSpacing * 0.55f, out Vector3 pos))
+                if (!TrySample(rng, placed, VistaExclusion * 0.9f, _body.MinSpacing * 0.55f, out Vector3 pos))
                     continue;
 
                 var dune = new GameObject($"Dune_{i}");
@@ -587,21 +587,41 @@ namespace SolarMajesty
                 if (!TrySample(rng, placed, VistaExclusion * 0.85f, 2.2f, out Vector3 pos))
                     continue;
 
-                var rock = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                rock.name = $"Rock_{i}";
+                bool cluster = _body.Id == CelestialBodyId.Mars && rng.NextDouble() < 0.32;
+                int lobes = cluster ? 2 + rng.Next(0, 2) : 1;
+                var rock = new GameObject($"Rock_{i}");
                 rock.transform.SetParent(root, false);
-                rock.transform.position = pos + Vector3.up * 0.15f;
-                float s = Mathf.Lerp(0.25f, 0.85f, (float)rng.NextDouble());
-                rock.transform.localScale = new Vector3(
-                    s * Mathf.Lerp(0.7f, 1.3f, (float)rng.NextDouble()),
-                    s * Mathf.Lerp(0.4f, 0.9f, (float)rng.NextDouble()),
-                    s * Mathf.Lerp(0.7f, 1.3f, (float)rng.NextDouble()));
-                rock.transform.rotation = Quaternion.Euler(
-                    (float)rng.NextDouble() * 25f,
-                    (float)rng.NextDouble() * 360f,
-                    (float)rng.NextDouble() * 25f);
-                Object.Destroy(rock.GetComponent<Collider>());
-                Tint(rock, Color.Lerp(_body.RockColor, _body.GroundDark, (float)rng.NextDouble() * 0.4f));
+                rock.transform.position = pos;
+
+                for (int L = 0; L < lobes; L++)
+                {
+                    var chunk = GameObject.CreatePrimitive(
+                        rng.NextDouble() < 0.45 ? PrimitiveType.Sphere : PrimitiveType.Capsule);
+                    chunk.name = $"Chunk_{L}";
+                    chunk.transform.SetParent(rock.transform, false);
+                    float ang = L * 2.1f + (float)rng.NextDouble();
+                    float dist = L == 0 ? 0f : Mathf.Lerp(0.2f, 0.55f, (float)rng.NextDouble());
+                    chunk.transform.localPosition = new Vector3(
+                        Mathf.Cos(ang) * dist,
+                        0.12f,
+                        Mathf.Sin(ang) * dist);
+                    float s = Mathf.Lerp(0.28f, 0.92f, (float)rng.NextDouble());
+                    chunk.transform.localScale = new Vector3(
+                        s * Mathf.Lerp(0.7f, 1.35f, (float)rng.NextDouble()),
+                        s * Mathf.Lerp(0.35f, 0.85f, (float)rng.NextDouble()),
+                        s * Mathf.Lerp(0.65f, 1.25f, (float)rng.NextDouble()));
+                    chunk.transform.localRotation = Quaternion.Euler(
+                        (float)rng.NextDouble() * 28f,
+                        (float)rng.NextDouble() * 360f,
+                        (float)rng.NextDouble() * 22f);
+                    Object.Destroy(chunk.GetComponent<Collider>());
+                    Tint(
+                        chunk,
+                        Color.Lerp(_body.RockColor, _body.GroundDark, (float)rng.NextDouble() * 0.4f),
+                        0.08f,
+                        ShadowCastingMode.On);
+                }
+
                 ColonyVisualUtility.SnapToGround(rock);
             }
         }

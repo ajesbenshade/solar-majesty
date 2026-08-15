@@ -4,8 +4,10 @@ Solar Majesty — Phase 4 hero building kits as FBX.
 Sheet-matched HAB / Colony Commons / LAB / Power / landing pad against
 ConceptSheets (HAB-1 cylinder, command dome citadel, LAB-1 cylinder,
 PWR-1 + solar field, pad + Starship stack). Guild Hall is CMD-1 civic
-dress; Mining is OPS-1 annex. Farm / Camp / Mine and wonders use distinct
-industrial silhouettes. Cardinal square airlocks stay in Unity.
+dress; Mining is OPS-1 annex. HAB / Commons / LAB / CMD-1 / OPS-1 carry
+bevelled panel lines (carbon rings, spine seams, civic wrap bands).
+Farm / Camp / Mine and wonders use distinct industrial silhouettes.
+Cardinal square airlocks stay in Unity and mate flush at the footprint face.
 
 Run:
   /Applications/Blender.app/Contents/MacOS/Blender --background \
@@ -19,6 +21,7 @@ import shutil
 import sys
 from pathlib import Path
 
+import bmesh
 import bpy
 from mathutils import Vector
 
@@ -362,6 +365,83 @@ def turret(parts, mats, at, scale=1.0):
     parts.append(stripe)
 
 
+def bevel_hull(obj, width=0.045, segments=2):
+    """Fillet hard edges so white hulls catch isometric light (CMD/OPS boxes)."""
+    if obj is None or obj.type != "MESH" or width <= 0:
+        return obj
+    me = obj.data
+    bm = bmesh.new()
+    try:
+        bm.from_mesh(me)
+        kwargs = dict(
+            geom=list(bm.edges) + list(bm.verts),
+            offset=width,
+            offset_type="OFFSET",
+            segments=max(1, int(segments)),
+            profile=0.5,
+            clamp_overlap=True,
+        )
+        try:
+            bmesh.ops.bevel(bm, affect="EDGES", **kwargs)
+        except TypeError:
+            bmesh.ops.bevel(bm, **kwargs)
+        bm.to_mesh(me)
+        me.update()
+    except Exception as e:
+        print(f"[SM] bevel skip {obj.name}: {e}")
+    finally:
+        bm.free()
+    return obj
+
+
+def cyl_x_panel_lines(parts, mats, length, radius, z_axis, skip_y_sign=0.0):
+    """Carbon rings + spine on a HAB/LAB X-cylinder. Stay inside existing bounds."""
+    for x in (-length * 0.18, length * 0.18):
+        ring = add_cyl_x("TMP", radius * 1.018, 0.032, (x, 0.0, z_axis), vertices=32)
+        assign_mat(ring, mats["SM_Graphite"])
+        parts.append(ring)
+    spine = add_cube(
+        "TMP", 1.0, (0.0, 0.0, z_axis + radius * 1.012),
+        scale=(length * 0.58, 0.035, 0.028),
+    )
+    assign_mat(spine, mats["SM_Black"])
+    parts.append(spine)
+    for y_sign in (-1.0, 1.0):
+        if skip_y_sign != 0.0 and y_sign == skip_y_sign:
+            continue
+        seam = add_cube(
+            "TMP", 1.0,
+            (0.0, y_sign * radius * 0.70, z_axis + radius * 0.50),
+            scale=(length * 0.46, 0.028, 0.028),
+        )
+        assign_mat(seam, mats["SM_Graphite"])
+        parts.append(seam)
+
+
+def commons_panel_lines(parts, mats, radius):
+    """Equatorial rings + drum meridians on the command dome (not a smooth blob)."""
+    for z, r, key in (
+        (0.88, radius * 1.015, "SM_Graphite"),
+        (1.55, radius * 1.012, "SM_Black"),
+        (2.22, radius * 0.94, "SM_Graphite"),
+        (2.62, radius * 0.80, "SM_Black"),
+        (2.92, radius * 0.64, "SM_Graphite"),
+    ):
+        ring = add_cylinder("TMP", r, 0.038, (0.0, 0.0, z), vertices=32)
+        assign_mat(ring, mats[key])
+        parts.append(ring)
+    for i in range(8):
+        ang = i * math.pi / 4.0
+        px = math.sin(ang) * radius * 1.012
+        py = math.cos(ang) * radius * 1.012
+        for z, h in ((0.82, 0.38), (1.62, 0.28)):
+            seam = add_cube("TMP", 1.0, (px, py, z), scale=(0.032, 0.032, h))
+            seam.rotation_euler = (0.0, 0.0, ang)
+            apply_rot(seam)
+            assign_mat(seam, mats["SM_Black"])
+            parts.append(seam)
+
+
 # ---------------------------------------------------------------------------
 # Kits
 # ---------------------------------------------------------------------------
@@ -375,19 +455,19 @@ def build_hab(mats: dict) -> bpy.types.Object:
     radius = length / 3.0
     z_axis = radius + 0.22
 
-    shell = add_cyl_x("TMP", radius, length * 0.72, (0, 0, z_axis), vertices=28)
+    shell = add_cyl_x("TMP", radius, length * 0.72, (0, 0, z_axis), vertices=32)
     assign_mat(shell, mats["SM_White"])
     parts.append(shell)
-    mid = add_cyl_x("TMP", radius * 1.03, 0.72, (0, 0, z_axis), vertices=28)
+    mid = add_cyl_x("TMP", radius * 1.03, 0.72, (0, 0, z_axis), vertices=32)
     assign_mat(mid, mats["SM_Black"])
     parts.append(mid)
 
     for sign in (-1.0, 1.0):
         x = sign * (length * 0.36)
-        cap = add_cyl_x("TMP", radius * 0.99, 0.78, (x, 0, z_axis), vertices=28)
+        cap = add_cyl_x("TMP", radius * 0.99, 0.78, (x, 0, z_axis), vertices=32)
         assign_mat(cap, mats["SM_Black"])
         parts.append(cap)
-        ring = add_cyl_x("TMP", radius * 1.05, 0.10, (x + sign * 0.38, 0, z_axis), vertices=28)
+        ring = add_cyl_x("TMP", radius * 1.05, 0.10, (x + sign * 0.38, 0, z_axis), vertices=32)
         assign_mat(ring, mats["SM_Orange"])
         parts.append(ring)
         dock = add_cyl_x("TMP", 0.62, 0.42, (sign * (length * 0.50), 0, z_axis), vertices=20)
@@ -402,6 +482,7 @@ def build_hab(mats: dict) -> bpy.types.Object:
     parts.append(front)
     sq = add_cube("TMP", 1.0, (-length * 0.54, 0, z_axis), scale=(0.10, 0.55, 0.55))
     assign_mat(sq, mats["SM_White"])
+    bevel_hull(sq, 0.018, 1)
     parts.append(sq)
     rear_f = add_cube("TMP", 1.0, (length * 0.50, 0, z_axis), scale=(0.06, 0.88, 1.32))
     assign_mat(rear_f, mats["SM_Black"])
@@ -434,6 +515,8 @@ def build_hab(mats: dict) -> bpy.types.Object:
         vis = add_cube("TMP", 1.0, (x, radius * 0.92, z_axis + 0.12), scale=(0.55, 0.06, 0.22))
         assign_mat(vis, mats["SM_Cyan"])
         parts.append(vis)
+
+    cyl_x_panel_lines(parts, mats, length, radius, z_axis, skip_y_sign=-1.0)
 
     for x, y in ((-1.85, -1.15), (-1.85, 1.15), (1.85, -1.15), (1.85, 1.15)):
         leg = add_cube("TMP", 1.0, (x, y, 0.42), scale=(0.55, 0.38, 0.72))
@@ -470,6 +553,7 @@ def build_commons(mats: dict) -> bpy.types.Object:
 
     drum = add_cylinder("TMP", radius, 1.15, (0, 0, 1.15), vertices=32)
     assign_mat(drum, mats["SM_White"])
+    bevel_hull(drum, 0.028, 1)
     parts.append(drum)
     band = add_cylinder("TMP", radius * 1.04, 0.14, (0, 0, 1.35), vertices=32)
     assign_mat(band, mats["SM_Black"])
@@ -479,7 +563,7 @@ def build_commons(mats: dict) -> bpy.types.Object:
     parts.append(stripe)
     dome = add_uv_sphere(
         "TMP", radius * 1.02, (0, 0, 1.85),
-        scale=(1.0, 1.0, 0.72), segments=28, rings=12,
+        scale=(1.0, 1.0, 0.72), segments=32, rings=14,
     )
     assign_mat(dome, mats["SM_White"])
     parts.append(dome)
@@ -524,19 +608,24 @@ def build_commons(mats: dict) -> bpy.types.Object:
         assign_mat(vis, mats["SM_Cyan"])
         parts.append(vis)
 
-    # Radial tube stubs — dressing only; Unity still attaches square airlocks.
+    # Radial tube stubs — dressing. Cardinals mate Unity square sleeves at the 6×6 face.
+    face = FOOT_6 * 0.5
     for i in range(8):
         ang = i * math.pi / 4.0
         cardinal = (i % 2) == 0
-        stub_len = 0.92 if cardinal else 0.52
+        if cardinal:
+            stub_len = face - radius * 0.96
+            dist = radius * 0.96 + stub_len * 0.5
+        else:
+            stub_len = 0.52
+            dist = radius * 0.98 + stub_len * 0.42
         stub_r = 0.50 if cardinal else 0.36
-        dist = radius * 0.98 + stub_len * 0.42
         pos = (math.sin(ang) * dist, math.cos(ang) * dist, 1.18)
         stub = add_cylinder("TMP", stub_r, stub_len, pos, vertices=16)
         orient_along_xy(stub, ang)
         assign_mat(stub, mats["SM_White"])
         parts.append(stub)
-        tip_dist = dist + stub_len * 0.42
+        tip_dist = dist + stub_len * 0.5 - 0.04
         tip = add_cylinder(
             "TMP", stub_r * 1.12, 0.08,
             (math.sin(ang) * tip_dist, math.cos(ang) * tip_dist, 1.18),
@@ -554,6 +643,7 @@ def build_commons(mats: dict) -> bpy.types.Object:
             orient_along_xy(collar, ang)
             assign_mat(collar, mats["SM_Black"])
             parts.append(collar)
+    commons_panel_lines(parts, mats, radius)
     return finish(parts, name, "31_Hero_Commons", (14.0, 0.0, 0.0))
 
 
@@ -958,10 +1048,31 @@ def build_guild(mats: dict) -> bpy.types.Object:
     parts.append(mech)
     hull_lo = add_box_u("TMP", (0.0, 1.05, -d * 0.04), (w * 0.78, 1.15, d * 0.62))
     assign_mat(hull_lo, mats["SM_White"])
+    bevel_hull(hull_lo, 0.05, 2)
     parts.append(hull_lo)
     hull_hi = add_box_u("TMP", (0.0, 1.95, -d * 0.06), (w * 0.62, 0.85, d * 0.50))
     assign_mat(hull_hi, mats["SM_White"])
+    bevel_hull(hull_hi, 0.04, 2)
     parts.append(hull_hi)
+    for y in (0.68, 1.42):
+        band = add_box_u("TMP", (0.0, y, -d * 0.04), (w * 0.80, 0.04, d * 0.64))
+        assign_mat(band, mats["SM_Black"])
+        parts.append(band)
+    for sx in (-w * 0.20, w * 0.20):
+        groove = add_box_u("TMP", (sx, 1.08, -d * 0.04), (0.04, 1.05, d * 0.63))
+        assign_mat(groove, mats["SM_Graphite"])
+        parts.append(groove)
+    for sx in (-w * 0.12, 0.0, w * 0.12):
+        roof = add_box_u("TMP", (sx, 2.39, -d * 0.06), (0.035, 0.035, d * 0.48))
+        assign_mat(roof, mats["SM_Black"])
+        parts.append(roof)
+    for sx, sz in (
+        (-w * 0.38, -d * 0.33), (w * 0.38, -d * 0.33),
+        (-w * 0.38, d * 0.22), (w * 0.38, d * 0.22),
+    ):
+        post = add_box_u("TMP", (sx, 1.05, sz), (0.08, 1.12, 0.08))
+        assign_mat(post, mats["SM_Black"])
+        parts.append(post)
     cap = add_box_u("TMP", (0.0, 2.42, -d * 0.06), (w * 0.68, 0.12, d * 0.56))
     assign_mat(cap, mats["SM_Black"])
     parts.append(cap)
@@ -996,11 +1107,11 @@ def build_guild(mats: dict) -> bpy.types.Object:
     ant_r = add_cyl_u("TMP", (0.38, 3.05, 0.08), (0.04, 0.42, 0.04), vertices=8)
     assign_mat(ant_r, mats["SM_Steel"])
     parts.append(ant_r)
-    for sx, sign in ((w * 0.40, 1.0), (-w * 0.40, -1.0)):
-        port = add_box_u("TMP", (sx, 0.55, 0.0), (0.18, 0.55, 0.55))
+    for sign in (1.0, -1.0):
+        port = add_box_u("TMP", (sign * (w * 0.5 - 0.15), 0.85, 0.0), (0.30, 0.62, 0.62))
         assign_mat(port, mats["SM_White"])
         parts.append(port)
-        ring = add_box_u("TMP", (sx + sign * 0.08, 0.55, 0.0), (0.06, 0.62, 0.62))
+        ring = add_box_u("TMP", (sign * (w * 0.5 - 0.04), 0.85, 0.0), (0.08, 0.70, 0.70))
         assign_mat(ring, mats["SM_Orange"])
         parts.append(ring)
     mast = add_cyl_u("TMP", (w * 0.22, 3.35, -d * 0.18), (0.08, 0.85, 0.08), vertices=8)
@@ -1024,22 +1135,22 @@ def build_lab(mats: dict) -> bpy.types.Object:
     radius = length / 3.86
     z_axis = radius + 0.20
 
-    shell = add_cyl_x("TMP", radius, length * 0.78, (0, 0, z_axis), vertices=28)
+    shell = add_cyl_x("TMP", radius, length * 0.78, (0, 0, z_axis), vertices=32)
     assign_mat(shell, mats["SM_White"])
     parts.append(shell)
     belly = add_cube("TMP", 1.0, (0, 0, z_axis - radius * 0.42), scale=(length * 0.72, radius * 1.35, radius * 0.55))
     assign_mat(belly, mats["SM_Graphite"])
     parts.append(belly)
-    mid = add_cyl_x("TMP", radius * 1.04, 0.55, (0, 0, z_axis), vertices=28)
+    mid = add_cyl_x("TMP", radius * 1.04, 0.55, (0, 0, z_axis), vertices=32)
     assign_mat(mid, mats["SM_Black"])
     parts.append(mid)
 
     for sign in (-1.0, 1.0):
         x = sign * (length * 0.34)
-        cap = add_cyl_x("TMP", radius * 1.01, 0.42, (x, 0, z_axis), vertices=24)
+        cap = add_cyl_x("TMP", radius * 1.01, 0.42, (x, 0, z_axis), vertices=28)
         assign_mat(cap, mats["SM_Black"])
         parts.append(cap)
-        ring = add_cyl_x("TMP", radius * 1.08, 0.08, (x + sign * 0.28, 0, z_axis), vertices=24)
+        ring = add_cyl_x("TMP", radius * 1.08, 0.08, (x + sign * 0.28, 0, z_axis), vertices=28)
         assign_mat(ring, mats["SM_Orange"])
         parts.append(ring)
         stripe = add_cube("TMP", 1.0, (x, -radius * 0.15, z_axis + radius * 0.35), scale=(0.10, 0.12, 0.85))
@@ -1057,6 +1168,7 @@ def build_lab(mats: dict) -> bpy.types.Object:
     parts.append(front)
     sq = add_cube("TMP", 1.0, (-length * 0.54, 0, z_axis), scale=(0.08, 0.42, 0.42))
     assign_mat(sq, mats["SM_White"])
+    bevel_hull(sq, 0.014, 1)
     parts.append(sq)
 
     hatch_f = add_cube("TMP", 1.0, (0.15, radius * 0.98, z_axis), scale=(0.72, 0.08, 0.72))
@@ -1101,6 +1213,7 @@ def build_lab(mats: dict) -> bpy.types.Object:
         foot = add_cube("TMP", 1.0, (0, y, 0.28), scale=(length * 0.22, 0.22, 0.28))
         assign_mat(foot, mats["SM_Graphite"])
         parts.append(foot)
+    cyl_x_panel_lines(parts, mats, length, radius, z_axis, skip_y_sign=1.0)
     return finish(parts, name, "39_Hero_LAB", (28.0, 16.0, 0.0))
 
 
@@ -1266,10 +1379,23 @@ def build_ops(mats: dict) -> bpy.types.Object:
     parts.append(plinth)
     hull = add_box_u("TMP", (0.0, 0.72, 0.0), (w * 0.82, 1.12, d * 0.62))
     assign_mat(hull, mats["SM_White"])
+    bevel_hull(hull, 0.05, 2)
     parts.append(hull)
     cap = add_box_u("TMP", (0.0, 1.32, 0.0), (w * 0.88, 0.12, d * 0.68))
     assign_mat(cap, mats["SM_Black"])
     parts.append(cap)
+    for y in (0.42, 0.98):
+        band = add_box_u("TMP", (0.0, y, 0.0), (w * 0.84, 0.04, d * 0.64))
+        assign_mat(band, mats["SM_Black"])
+        parts.append(band)
+    for sz in (-d * 0.12, 0.0, d * 0.12):
+        roof = add_box_u("TMP", (0.0, 1.39, sz), (w * 0.70, 0.03, 0.03))
+        assign_mat(roof, mats["SM_Black"])
+        parts.append(roof)
+    for sx in (-w * 0.18, w * 0.18):
+        plate = add_box_u("TMP", (sx, 0.78, -d * 0.32), (0.70, 0.52, 0.035))
+        assign_mat(plate, mats["SM_Graphite"])
+        parts.append(plate)
     for sx, sz in ((-w * 0.38, -d * 0.28), (w * 0.38, -d * 0.28), (-w * 0.38, d * 0.28), (w * 0.38, d * 0.28)):
         corner = add_cyl_u("TMP", (sx, 0.72, sz), (0.42, 1.12, 0.42), vertices=12)
         assign_mat(corner, mats["SM_White"])
