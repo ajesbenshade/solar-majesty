@@ -1,6 +1,6 @@
 // Player building placement — pure C#, no MonoBehaviour, no specialist commands.
 // Lego campus: modules expose cardinal airlock sockets; airlocks dock only there;
-// every non-palace module must dock to an airlock end.
+// every non-Commons module must dock to an airlock end.
 
 using System;
 using System.Collections.Generic;
@@ -87,8 +87,8 @@ namespace SolarMajesty
         /// <summary>Optional map bounds / terrain rule. Return false to reject.</summary>
         public Func<Vector2Int, BuildingData, bool> ExtraPlacementRule { get; set; }
 
-        /// <summary>When set, non-palace buildings are rejected until a palace exists.</summary>
-        public Func<bool> HasPalace { get; set; }
+        /// <summary>When set, non-Commons buildings are rejected until Colony Commons exists.</summary>
+        public Func<bool> HasCommons { get; set; }
 
         public BuildingPlacer(ResourceManager resources)
         {
@@ -286,7 +286,7 @@ namespace SolarMajesty
                 _campusCells.Add(Pack(origin.x + x, origin.y + y));
         }
 
-        /// <summary>Disconnected Campus B claim — not part of the Palace Lego graph.</summary>
+        /// <summary>Disconnected Campus B claim — not part of the Commons Lego graph.</summary>
         public void SeedOutpostClaim(Vector2Int origin, int width, int height)
         {
             width = Mathf.Max(1, width);
@@ -447,14 +447,14 @@ namespace SolarMajesty
 
         /// <summary>
         /// Snap cursor cell to the nearest legal Lego dock for this building.
-        /// Palace snaps onto the soft claim; airlocks → module sockets; modules → airlock ends.
+        /// Colony Commons snaps onto the soft claim; airlocks → module sockets; modules → airlock ends.
         /// </summary>
         public bool TrySnapDock(BuildingData data, Vector2Int preferred, out Vector2Int snapped)
         {
             snapped = preferred;
             if (data == null) return false;
 
-            if (data.category == BuildingCategory.Palace)
+            if (data.category == BuildingCategory.Commons)
             {
                 if (CanFit(data, preferred) && OverlapsSoftClaim(preferred, data.footprintWidth, data.footprintHeight))
                 {

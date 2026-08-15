@@ -70,7 +70,7 @@ namespace SolarMajesty
                 BuildingCategory.GeologistWorkshop => StructureRole.Workshop,
                 BuildingCategory.SentinelWorkshop => StructureRole.Workshop,
                 BuildingCategory.GuildHall => StructureRole.Guild,
-                BuildingCategory.Palace => StructureRole.Core,
+                BuildingCategory.Commons => StructureRole.Core,
                 BuildingCategory.Habitat => StructureRole.Core,
                 _ => StructureRole.Core
             };
@@ -78,7 +78,7 @@ namespace SolarMajesty
             var st = go.GetComponent<ColonyStructure>();
             if (st == null)
                 st = go.AddComponent<ColonyStructure>();
-            float hp = cat == BuildingCategory.Palace ? 140f
+            float hp = cat == BuildingCategory.Commons ? 140f
                 : ColonyStructure.IsWonderCategory(cat) ? 120f
                 : role == StructureRole.Inn ? 80f
                 : role == StructureRole.Workshop || role == StructureRole.Guild ? 70f
@@ -282,7 +282,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// Prefer a matching drop-off (Mine for ore, Farm for ice, …) within haul range;
-        /// otherwise the nearest pad / palace / camp.
+        /// otherwise the nearest pad / Commons / camp.
         /// </summary>
         public bool TryFindDropOff(
             Vector3 from,

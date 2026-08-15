@@ -210,11 +210,16 @@ namespace SolarMajesty
                     _roleVerb = "AGGRO";
                     break;
             }
+            // Authored Blender scale lives on the visual child (AttachImportVisual).
+            // Never flatten transform.localScale here — that squash was placeholder-only.
             _baseScale = transform.localScale;
             if (_rend != null && !IndustrialArtDressing.HasArt(gameObject))
                 SetColor(_rend, stalkerColor);
             if (_label != null)
+            {
+                _label.transform.localPosition = Vector3.up * LabelHeight(kind);
                 _label.color = LabelColor(kind);
+            }
         }
 
         /// <summary>Body-native speed, aggro, and tints. Does not change SpecialistBrain.</summary>
@@ -766,6 +771,21 @@ namespace SolarMajesty
         }
 
         private static Vector3 Flat(Vector3 v) => new Vector3(v.x, 0f, v.z);
+
+        private static float LabelHeight(FaunaKind kind)
+        {
+            switch (kind)
+            {
+                case FaunaKind.Hopper: return 2.05f;
+                case FaunaKind.Stalker: return 1.85f;
+                case FaunaKind.Wisp: return 1.45f;
+                case FaunaKind.Creeper: return 1.15f;
+                case FaunaKind.Tick: return 1.05f;
+                case FaunaKind.Mite: return 0.85f;
+                case FaunaKind.Leech: return 0.72f;
+                default: return 1.6f;
+            }
+        }
 
         private static Color LabelColor(FaunaKind kind)
         {

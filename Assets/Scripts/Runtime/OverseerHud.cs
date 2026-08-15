@@ -14,7 +14,7 @@ namespace SolarMajesty
         private static readonly Color PanelBg = new Color(0.032f, 0.033f, 0.038f, 0.94f);
         private static readonly Color PanelSoft = new Color(0.10f, 0.105f, 0.11f, 0.94f);
         private static readonly Color PanelHover = new Color(0.17f, 0.175f, 0.18f, 0.95f);
-        private static readonly Color Hairline = new Color(0.82f, 0.62f, 0.22f, 0.32f);
+        private static readonly Color Hairline = new Color(0.82f, 0.62f, 0.22f, 0.55f);
         private static readonly Color Gold = new Color(0.82f, 0.62f, 0.22f);
         private static readonly Color Accent = new Color(0.96f, 0.42f, 0.08f);
         private static readonly Color Ink = new Color(0.06f, 0.06f, 0.07f);
@@ -29,10 +29,10 @@ namespace SolarMajesty
         private const float M = 14f;      // screen margin
         private const float Pad = 10f;    // panel padding
         private const float TopW = 300f;  // top-left command width
-        private const float DockH = 56f;
-        private const float DockW = 560f;
-        private const float TopStripH = 50f;
-        private const float MapSize = 148f;
+        private const float DockH = 58f;
+        private const float DockW = 620f;
+        private const float TopStripH = 56f;
+        private const float MapSize = 168f;
 
         private GameLoop _loop;
         private bool _failLatched;
@@ -104,7 +104,7 @@ namespace SolarMajesty
             var body = _loop.BodyProfile;
             string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
                 ? body.Briefing
-                : "Raise the Palace keep first, then dock modules via airlocks.";
+                : "Raise Colony Commons first, then dock modules via airlocks.";
             Toast(briefing, 6.5f);
         }
 
@@ -166,12 +166,12 @@ namespace SolarMajesty
             GUI.color = prev;
         }
 
-        private static void Outline(Rect r, Color c)
+        private static void Outline(Rect r, Color c, float t = 1f)
         {
-            Fill(new Rect(r.x, r.y, r.width, 1f), c);
-            Fill(new Rect(r.x, r.yMax - 1f, r.width, 1f), c);
-            Fill(new Rect(r.x, r.y, 1f, r.height), c);
-            Fill(new Rect(r.xMax - 1f, r.y, 1f, r.height), c);
+            Fill(new Rect(r.x, r.y, r.width, t), c);
+            Fill(new Rect(r.x, r.yMax - t, r.width, t), c);
+            Fill(new Rect(r.x, r.y, t, r.height), c);
+            Fill(new Rect(r.xMax - t, r.y, t, r.height), c);
         }
 
         /// <summary>Panel chrome (bg, hairline, accent tab, optional header). Returns content rect.</summary>
@@ -179,8 +179,9 @@ namespace SolarMajesty
         {
             _hitRects.Add(r);
             Fill(r, PanelBg);
-            Outline(r, Hairline);
-            Outline(new Rect(r.x + 1f, r.y + 1f, r.width - 2f, r.height - 2f), new Color(Gold.r, Gold.g, Gold.b, 0.12f));
+            Outline(r, Hairline, 1.5f);
+            Outline(new Rect(r.x + 1.5f, r.y + 1.5f, r.width - 3f, r.height - 3f), new Color(Gold.r, Gold.g, Gold.b, 0.18f));
+            Fill(new Rect(r.x, r.y, r.width, 2f), Gold);
             if (accentTab) Fill(new Rect(r.x, r.y, 3f, 22f), Accent);
 
             float y = r.y + Pad;
@@ -355,17 +356,17 @@ namespace SolarMajesty
         {
             var rect = new Rect(M, M, _sw - M * 2f, TopStripH);
             var c = Panel(rect, null, false);
-            Fill(new Rect(rect.x, rect.y, rect.width, 2f), Gold);
 
             string body = _loop.BodyProfile != null ? _loop.BodyProfile.DisplayName : "Colony";
+            int sol = 1 + Mathf.FloorToInt((_loop.Mission != null ? _loop.Mission.MissionElapsed : 0f) / 60f);
             GUI.Label(new Rect(c.x, c.y, 280f, 18f), "SOLAR MAJESTY", _brand);
             GUI.Label(new Rect(c.x, c.y + 16f, 280f, 14f),
-                $"{body} campaign  ·  {ReplayRules.HudTag}", _micro);
+                $"{body}  ·  Sol {sol}  ·  {ReplayRules.HudTag}", _micro);
 
             if (_loop.Resources != null)
             {
-                float chipW = 78f;
-                float chipsW = chipW * 5f + 12f;
+                float chipW = 86f;
+                float chipsW = chipW * 5f + 16f;
                 float x0 = c.x + (c.width - chipsW) * 0.5f;
                 int metals = _loop.Resources.Get(ResourceId.Metals);
                 int ice = _loop.Resources.Get(ResourceId.WaterIce);
@@ -375,13 +376,21 @@ namespace SolarMajesty
                 bool pwrAlarm = pwr < 8 || (_loop.Economy != null && _loop.Economy.PowerDraw > _loop.Economy.PowerGen);
                 var set = _loop.Settlement;
                 int pop = set != null ? set.Population : 0;
-                ResourceChip(new Rect(x0, c.y, chipW, 32f), "REG", reg, reg < 10);
-                ResourceChip(new Rect(x0 + chipW + 3f, c.y, chipW, 32f), "ICE", ice, ice < 8);
-                ResourceChip(new Rect(x0 + (chipW + 3f) * 2f, c.y, chipW, 32f),
-                    escrow > 0 ? $"MET −{escrow}" : "MET", metals, metals < 12);
-                ResourceChip(new Rect(x0 + (chipW + 3f) * 3f, c.y, chipW, 32f), "PWR", pwr, pwrAlarm);
-                ResourceChip(new Rect(x0 + (chipW + 3f) * 4f, c.y, chipW, 32f),
-                    "BEDS", pop, set != null && set.HousingTight);
+                float scale = set != null ? set.ProductionScale : 1f;
+                int regRate = set != null ? Mathf.Max(0, Mathf.RoundToInt(set.RegolithCamps * 6 * scale)) : 0;
+                int iceRate = set != null ? Mathf.Max(0, Mathf.RoundToInt(set.Farms * 3 * set.FarmYieldScale * scale)) : 0;
+                int metRate = 0;
+                if (set != null)
+                    metRate = Mathf.Max(0, Mathf.RoundToInt(set.Mines * 4 * set.MineYieldScale * scale)) + set.LastTax;
+                int pwrRate = _loop.Economy != null ? _loop.Economy.PowerGen - _loop.Economy.PowerDraw : 0;
+                ResourceChip(new Rect(x0, c.y, chipW, 36f), "REG", reg, reg < 10, FormatRate(regRate));
+                ResourceChip(new Rect(x0 + chipW + 4f, c.y, chipW, 36f), "ICE", ice, ice < 8, FormatRate(iceRate));
+                ResourceChip(new Rect(x0 + (chipW + 4f) * 2f, c.y, chipW, 36f),
+                    escrow > 0 ? $"MET −{escrow}" : "MET", metals, metals < 12, FormatRate(metRate));
+                ResourceChip(new Rect(x0 + (chipW + 4f) * 3f, c.y, chipW, 36f), "PWR", pwr, pwrAlarm, FormatRate(pwrRate));
+                ResourceChip(new Rect(x0 + (chipW + 4f) * 4f, c.y, chipW, 36f),
+                    "BEDS", pop, set != null && set.HousingTight,
+                    set != null ? $"{pop}/{set.Housing}" : null);
             }
 
             int posted = 0;
@@ -557,7 +566,13 @@ namespace SolarMajesty
             }
         }
 
-        private void ResourceChip(Rect r, string label, int amount, bool alarm = false)
+        private static string FormatRate(int rate)
+        {
+            if (rate == 0) return null;
+            return rate > 0 ? $"+{rate}" : rate.ToString();
+        }
+
+        private void ResourceChip(Rect r, string label, int amount, bool alarm = false, string rate = null)
         {
             Color fill = PanelSoft;
             if (alarm)
@@ -566,8 +581,25 @@ namespace SolarMajesty
                 fill = Color.Lerp(PanelSoft, Alarm, pulse);
             }
             Fill(r, fill);
-            GUI.Label(new Rect(r.x + 6f, r.y + 1f, r.width - 8f, 11f), label, _micro);
-            GUI.Label(new Rect(r.x + 6f, r.y + 12f, r.width - 8f, 15f), amount.ToString(), _value);
+            Outline(r, Gold, 1.5f);
+            Fill(new Rect(r.x, r.y, 3f, r.height), Gold);
+            var swatch = new Rect(r.x + 6f, r.y + 10f, 12f, 12f);
+            Fill(swatch, ChipSwatch(label));
+            Outline(swatch, Gold, 1f);
+            GUI.Label(new Rect(r.x + 22f, r.y + 1f, r.width - 24f, 11f), label, _micro);
+            GUI.Label(new Rect(r.x + 22f, r.y + 12f, r.width - 56f, 16f), amount.ToString(), _value);
+            if (!string.IsNullOrEmpty(rate))
+                GUI.Label(new Rect(r.xMax - 38f, r.y + 14f, 34f, 12f), rate, _microRight);
+        }
+
+        private static Color ChipSwatch(string label)
+        {
+            if (label.StartsWith("REG")) return new Color(0.62f, 0.38f, 0.18f);
+            if (label.StartsWith("ICE")) return new Color(0.35f, 0.78f, 0.92f);
+            if (label.StartsWith("MET")) return new Color(0.72f, 0.74f, 0.78f);
+            if (label.StartsWith("PWR")) return new Color(0.92f, 0.78f, 0.22f);
+            if (label.StartsWith("BEDS")) return new Color(0.96f, 0.42f, 0.08f);
+            return Gold;
         }
 
         private float DockLeft() => (_sw - DockW) * 0.5f;
@@ -576,9 +608,10 @@ namespace SolarMajesty
         {
             var rect = new Rect(DockLeft(), top, DockW, DockH);
             var c = Panel(rect, null);
+            Outline(rect, Gold, 2f);
 
             // Mockup action squares → Overseer verbs only (never unit orders).
-            float sq = 44f;
+            float sq = 46f;
             float x = c.x;
             if (SquareAction(new Rect(x, c.y + 2f, sq, sq), "BLD", "B", _loop.ActiveTool == OverseerTool.Build))
                 _loop.ToggleTool(OverseerTool.Build);
@@ -592,14 +625,18 @@ namespace SolarMajesty
             if (SquareAction(new Rect(x, c.y + 2f, sq, sq), "CAM", "A/B", false))
                 _loop.FocusCampus(1 - _loop.FocusedCampus);
             x += sq + 6f;
+            int partyCount = _loop.Parties != null ? _loop.Parties.Count : 0;
+            if (SquareAction(new Rect(x, c.y + 2f, sq, sq), "PTY", "P", partyCount > 0))
+                _loop.FormParty();
+            x += sq + 6f;
             if (SquareAction(new Rect(x, c.y + 2f, sq, sq), "MENU", "Esc", false))
                 _loop.TogglePause();
 
-            Fill(new Rect(c.x + 268f, c.y + 6f, 1f, c.height - 4f), Hairline);
+            Fill(new Rect(c.x + 322f, c.y + 6f, 1f, c.height - 4f), Hairline);
 
             float threat = _loop.FocusedLocalThreat;
-            GUI.Label(new Rect(c.x + 280f, c.y + 4f, 50f, 14f), "THREAT", _micro);
-            Meter(new Rect(c.x + 280f, c.y + 22f, c.width - 280f - 48f, 6f), threat, Color.Lerp(Accent, Alarm, threat));
+            GUI.Label(new Rect(c.x + 334f, c.y + 4f, 50f, 14f), "THREAT", _micro);
+            Meter(new Rect(c.x + 334f, c.y + 22f, c.width - 334f - 48f, 6f), threat, Color.Lerp(Accent, Alarm, threat));
             GUI.Label(new Rect(c.xMax - 44f, c.y + 10f, 44f, 22f), $"{threat * 100f:F0}%", _microRight);
         }
 
@@ -879,7 +916,7 @@ namespace SolarMajesty
             h += 18f + flagN * 16f;
 
             var rect = new Rect(_sw - M - 300f, _playTop > 1f ? _playTop : M, 300f, h);
-            var c = Panel(rect, "Conquest gates");
+            var c = Panel(rect, "Active bounties");
             float y = c.y;
 
             Stake(new Rect(c.x, y, c.width, 20f), mission.DensCleared,
@@ -922,7 +959,7 @@ namespace SolarMajesty
                 y += 26f;
             }
 
-            GUI.Label(new Rect(c.x, y, c.width, 14f), "BOUNTY LOG", _section);
+            GUI.Label(new Rect(c.x, y, c.width, 14f), "FLAG LOG", _section);
             y += 16f;
             if (flagN <= 0)
             {
@@ -937,7 +974,9 @@ namespace SolarMajesty
                     string claim = f.ClaimCount > 0
                         ? "claimed"
                         : (string.IsNullOrEmpty(f.InterestLabel) ? "open" : f.InterestLabel);
-                    GUI.Label(new Rect(c.x, y, c.width, 15f),
+                    Color col = f.Data != null ? f.Data.bannerColor : Gold;
+                    Fill(new Rect(c.x, y + 3f, 8f, 8f), col);
+                    GUI.Label(new Rect(c.x + 12f, y, c.width - 12f, 15f),
                         $"{f.Data.displayName}  ${f.CurrentBounty:F0}  ·  {claim}", _micro);
                     y += 15f;
                 }
@@ -1084,7 +1123,7 @@ namespace SolarMajesty
             int n = selected.Count;
             float avail = _sw - M * 2f - (n - 1) * 8f;
             float cardW = Mathf.Clamp(avail / n, 168f, 230f);
-            const float cardH = 162f;
+            const float cardH = 176f;
             float y = _contentBottom - 8f - cardH;
 
             for (int i = 0; i < n; i++)
@@ -1099,14 +1138,18 @@ namespace SolarMajesty
                 Fill(new Rect(rect.x, rect.y, 3f, rect.height), ClassTint(a.Data != null ? a.Data.specialistClass : SpecialistClass.ScoutDrone));
 
                 float row = c.y;
-                GUI.Label(new Rect(c.x, row, c.width - 44f, 16f), a.Data?.displayName ?? "Specialist", _value);
-                if (a.IsIncapacitated)
+                GUI.Label(new Rect(c.x, row, c.width - 50f, 16f), a.Data?.displayName ?? "Specialist", _value);
                 {
-                    var tag = new Rect(c.xMax - 42f, row + 2f, 42f, 13f);
-                    Fill(tag, Alarm);
+                    string tagLabel = a.IsIncapacitated ? "DOWN" : RosterStatus(a);
+                    Color tagFill = a.IsIncapacitated ? Alarm
+                        : a.CurrentAction == SpecialistAction.PursueFlag ? Accent
+                        : a.CurrentAction == SpecialistAction.Rest ? new Color(0.55f, 0.78f, 1f)
+                        : Good;
+                    var tag = new Rect(c.xMax - 46f, row + 2f, 46f, 13f);
+                    Fill(tag, tagFill);
                     var prev = _pill.normal.textColor;
                     _pill.normal.textColor = Ink;
-                    GUI.Label(tag, "DOWN", _pill);
+                    GUI.Label(tag, tagLabel, _pill);
                     _pill.normal.textColor = prev;
                 }
                 row += 18f;
@@ -1130,7 +1173,10 @@ namespace SolarMajesty
                 Bar(new Rect(c.x, row, c.width, 14f), "HP", a.HealthNormalized, HpFill);
                 row += 16f;
                 Bar(new Rect(c.x, row, c.width, 14f), "FATIGUE", a.Fatigue, FatigueFill);
-                row += 17f;
+                row += 16f;
+                GUI.Label(new Rect(c.x, row, c.width, 13f),
+                    $"MOVE {a.EffectiveMoveSpeed:F1}  ·  WORK {a.EffectiveWorkRate:F2}  ·  status", _micro);
+                row += 15f;
 
                 string gene = a.GeneSecondsLeft > 0.5f
                     ? $"gene {a.GeneSecondsLeft:F0}s"
@@ -1222,15 +1268,17 @@ namespace SolarMajesty
                 Fill(hint, PanelBg);
                 Outline(hint, Hairline);
                 GUI.Label(new Rect(hint.x + 10f, hint.y, hint.width - 16f, hint.height),
-                    "Build the Palace keep first · dock via airlocks · HABs house colonists", _micro);
+                    "Build Colony Commons first · dock via airlocks · HABs house colonists", _micro);
                 return;
             }
 
             int rows = Mathf.Min(8, living);
-            float h = 28f + rows * 18f;
-            var rect = new Rect(M, _contentBottom - 8f - h, 248f, h);
+            float h = 44f + rows * 18f;
+            var rect = new Rect(M, _contentBottom - 8f - h, 268f, h);
             var c = Panel(rect, "Roster · status");
             float y = c.y;
+            GUI.Label(new Rect(c.x, y, c.width, 14f), ClassReadout(agents), _micro);
+            y += 16f;
             int drawn = 0;
             for (int i = 0; i < agents.Count && drawn < rows; i++)
             {
@@ -1251,6 +1299,30 @@ namespace SolarMajesty
             }
         }
 
+        private static string ClassReadout(IReadOnlyList<SpecialistAgent> agents)
+        {
+            int sct = 0, eng = 0, def = 0, med = 0, extra = 0;
+            if (agents != null)
+            {
+                for (int i = 0; i < agents.Count; i++)
+                {
+                    var a = agents[i];
+                    if (a == null || !a.IsAlive) continue;
+                    var cls = a.Data != null ? a.Data.specialistClass : SpecialistClass.ScoutDrone;
+                    switch (cls)
+                    {
+                        case SpecialistClass.ScoutDrone: sct++; break;
+                        case SpecialistClass.EngineerBot: eng++; break;
+                        case SpecialistClass.DefenseMech: def++; break;
+                        case SpecialistClass.Medic: med++; break;
+                        default: extra++; break;
+                    }
+                }
+            }
+            string line = $"SCT {sct}  ENG {eng}  DEF {def}  MED {med}";
+            return extra > 0 ? line + $"  +{extra}" : line;
+        }
+
         private static string RosterStatus(SpecialistAgent a)
         {
             if (a.IsIncapacitated) return "DOWN";
@@ -1269,12 +1341,13 @@ namespace SolarMajesty
         {
             EnsureMinimapDisc();
             float size = MapSize;
-            var rect = new Rect(_sw - M - size, _sh - M - size, size, size);
+            var rect = new Rect(_sw - M - size, _sh - M - size - 16f, size, size + 16f);
             _hitRects.Add(rect);
             Fill(rect, PanelBg);
-            Outline(rect, Gold);
+            Outline(rect, Gold, 2f);
+            GUI.Label(new Rect(rect.x + 8f, rect.y + 4f, rect.width - 16f, 14f), "MAJESTY COLONY", _section);
 
-            var disc = new Rect(rect.x + 8f, rect.y + 8f, size - 16f, size - 16f);
+            var disc = new Rect(rect.x + 10f, rect.y + 20f, size - 20f, size - 36f);
             if (_minimapDisc != null)
             {
                 var prev = GUI.color;
@@ -1300,6 +1373,25 @@ namespace SolarMajesty
 
             Pip(ColonyLayout.CampusOrigin, Accent, 6f);
             Pip(ColonyLayout.CampusBOrigin, new Color(0.35f, 0.85f, 1f), 5f);
+
+            var pieces = _loop.Placer != null ? _loop.Placer.Pieces : null;
+            if (pieces != null && _loop.Grid != null)
+            {
+                for (int i = 0; i < pieces.Count; i++)
+                {
+                    var piece = pieces[i];
+                    Vector3 a = _loop.Grid.CellToWorld(piece.Origin);
+                    Vector3 b = _loop.Grid.CellToWorld(
+                        piece.Origin + new Vector2Int(piece.Width - 1, piece.Height - 1));
+                    Vector3 mid = (a + b) * 0.5f;
+                    Color col = piece.IsAirlock
+                        ? Accent
+                        : piece.Category == BuildingCategory.Commons
+                            ? Gold
+                            : new Color(0.88f, 0.90f, 0.93f);
+                    Pip(mid, col, piece.IsAirlock ? 3f : 4.5f);
+                }
+            }
 
             var flags = _loop.Flags != null ? _loop.Flags.Flags : null;
             if (flags != null)
@@ -1345,7 +1437,7 @@ namespace SolarMajesty
                 }
             }
 
-            GUI.Label(new Rect(rect.x + 8f, rect.yMax - 18f, rect.width - 16f, 14f), "MAP · click pans", _micro);
+            GUI.Label(new Rect(rect.x + 8f, rect.yMax - 16f, rect.width - 16f, 14f), "SPC · B · G · T", _micro);
 
             var e = Event.current;
             Vector2 mouse = e.mousePosition;
@@ -1561,7 +1653,7 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f), "EARTH  →  LUNA  →  MARS  →  BELT  →  EUROPA", _wrap);
             GUI.Label(new Rect(c.x, c.y + 68f, c.width, 14f), ReplayRules.HudTag, _micro);
             GUI.Label(new Rect(c.x, c.y + 86f, c.width, 40f),
-                "Raise a Palace, post bounties, let greedy robots choose. Three gates: clear dens, sustain the colony, launch.",
+                "Raise Colony Commons, post bounties, let greedy robots choose. Three gates: clear dens, sustain the colony, launch.",
                 _wrap);
 
             if (_confirmNewGame)
@@ -1734,8 +1826,8 @@ namespace SolarMajesty
 
             string[] beats =
             {
-                "1/6  Palace — B, key 1. Raise the keep on the orange claim.",
-                "2/6  Airlock — snap an Airlock Junction onto a Palace face socket.",
+                "1/6  COMMONS — B, key 1. Raise Colony Commons on the orange claim.",
+                "2/6  Airlock — snap an Airlock Junction onto a Commons face socket.",
                 "3/6  HAB — dock housing onto that airlock. Humans live indoors only.",
                 "4/6  Workshop — dock Scout / Engineer / Defense. A robot fabricates when it finishes.",
                 "5/6  Flag — G, post a bounty (METALS). Robots choose; you never click-to-move.",
@@ -1758,7 +1850,7 @@ namespace SolarMajesty
 
             BuildingCategory[] want =
             {
-                BuildingCategory.Palace,
+                BuildingCategory.Commons,
                 BuildingCategory.Habitat,
                 BuildingCategory.Utility,
                 BuildingCategory.EngineerWorkshop
@@ -1767,7 +1859,7 @@ namespace SolarMajesty
             var rect = new Rect(M, _playTop + CommandPanelHeight() + 8f, TopW, 118f);
             var c = Panel(rect, "Drop manifest");
             float y = c.y;
-            GUI.Label(new Rect(c.x, y, c.width, 13f), "Palace → airlock sockets → HAB / workshops. Lego campus only.", _micro);
+            GUI.Label(new Rect(c.x, y, c.width, 13f), "COMMONS → airlock sockets → HAB / workshops. Lego campus only.", _micro);
             y += 16f;
             for (int w = 0; w < want.Length; w++)
             {

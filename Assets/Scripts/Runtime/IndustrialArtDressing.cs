@@ -22,7 +22,13 @@ namespace SolarMajesty
             Glass,
             Solar,
             DefenseRed,
-            StalkerHide
+            StalkerHide,
+            MiteHide,
+            LeechHide,
+            WispHide,
+            CreeperHide,
+            HopperHide,
+            TickHide
         }
 
         private static readonly Dictionary<Slot, Material> Mats = new Dictionary<Slot, Material>(16);
@@ -152,10 +158,18 @@ namespace SolarMajesty
             if (ContainsAny(n, "sm_cyan", "sm_scout", "sm_medic")) { slot = Slot.Cyan; return true; }
             if (ContainsAny(n, "sm_engineer")) { slot = Slot.Orange; return true; }
             if (ContainsAny(n, "sm_defense")) { slot = Slot.DefenseRed; return true; }
-            if (ContainsAny(n, "sm_stalker", "mite", "regolithmite", "creeper", "soilcreeper")) { slot = Slot.StalkerHide; return true; }
-            if (ContainsAny(n, "leech", "wattleech", "wisp", "icewisp")) { slot = Slot.Cyan; return true; }
-            if (ContainsAny(n, "tick", "rocktick")) { slot = Slot.Graphite; return true; }
-            if (ContainsAny(n, "hopper", "ashhopper")) { slot = Slot.Steel; return true; }
+            if (ContainsAny(n, "sm_stalker")) { slot = Slot.StalkerHide; return true; }
+            if (ContainsAny(n, "sm_mite", "regolithmite")) { slot = Slot.MiteHide; return true; }
+            if (ContainsAny(n, "sm_leech", "wattleech")) { slot = Slot.LeechHide; return true; }
+            if (ContainsAny(n, "sm_wisp", "icewisp")) { slot = Slot.WispHide; return true; }
+            if (ContainsAny(n, "sm_creeper", "soilcreeper")) { slot = Slot.CreeperHide; return true; }
+            if (ContainsAny(n, "sm_hopper", "ashhopper")) { slot = Slot.HopperHide; return true; }
+            if (ContainsAny(n, "sm_tick", "rocktick")) { slot = Slot.TickHide; return true; }
+            if (ContainsAny(n, "sm_dust")) { slot = Slot.MiteHide; return true; }
+            if (ContainsAny(n, "sm_plant")) { slot = Slot.CreeperHide; return true; }
+            if (ContainsAny(n, "sm_ice")) { slot = Slot.Cyan; return true; }
+            if (ContainsAny(n, "sm_yellow")) { slot = Slot.Orange; return true; }
+            if (ContainsAny(n, "sm_concrete")) { slot = Slot.Graphite; return true; }
             if (ContainsAny(n, "sm_regolith", "sm_crater", "crater")) { slot = Slot.Graphite; return true; }
             if (ContainsAny(n, "sm_solar", "solarcell", "pv_cell")) { slot = Slot.Solar; return true; }
 
@@ -290,6 +304,53 @@ namespace SolarMajesty
                     normal = _hideNormal;
                     metallic = 0.04f;
                     smooth = 0.14f;
+                    tile = new Vector2(2.2f, 2.2f);
+                    break;
+                case Slot.MiteHide:
+                    albedo = _hideAlbedo;
+                    normal = _hideNormal;
+                    tint = new Color(0.62f, 0.48f, 0.32f);
+                    metallic = 0.06f;
+                    smooth = 0.18f;
+                    tile = new Vector2(2.4f, 2.4f);
+                    break;
+                case Slot.LeechHide:
+                    albedo = _hideAlbedo;
+                    normal = _hideNormal;
+                    tint = new Color(0.28f, 0.78f, 0.82f);
+                    metallic = 0.12f;
+                    smooth = 0.32f;
+                    emission = new Color(0.08f, 0.32f, 0.38f);
+                    tile = new Vector2(2.0f, 2.0f);
+                    break;
+                case Slot.WispHide:
+                    albedo = _whiteAlbedo;
+                    tint = new Color(0.72f, 0.92f, 1f);
+                    metallic = 0.04f;
+                    smooth = 0.62f;
+                    emission = new Color(0.18f, 0.55f, 0.72f);
+                    tile = new Vector2(1.2f, 1.2f);
+                    break;
+                case Slot.CreeperHide:
+                    albedo = _graphiteAlbedo;
+                    normal = _hideNormal;
+                    tint = new Color(0.42f, 0.58f, 0.22f);
+                    metallic = 0.05f;
+                    smooth = 0.22f;
+                    tile = new Vector2(2f, 2f);
+                    break;
+                case Slot.HopperHide:
+                    albedo = _graphiteAlbedo;
+                    tint = new Color(0.56f, 0.54f, 0.50f);
+                    metallic = 0.18f;
+                    smooth = 0.28f;
+                    tile = new Vector2(1.8f, 1.8f);
+                    break;
+                case Slot.TickHide:
+                    albedo = _graphiteAlbedo;
+                    tint = new Color(0.52f, 0.46f, 0.4f);
+                    metallic = 0.28f;
+                    smooth = 0.24f;
                     tile = new Vector2(2.2f, 2.2f);
                     break;
             }

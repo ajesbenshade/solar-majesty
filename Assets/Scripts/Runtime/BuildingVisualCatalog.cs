@@ -38,13 +38,53 @@ namespace SolarMajesty
                 { BuildingCategory.ClimateLoom, "Buildings/SM_LAB1_LaboratoryModule" },
                 { BuildingCategory.AegisSpire, "Buildings/SM_CommandDome_CentralHub" },
                 { BuildingCategory.DeepArchive, "Buildings/SM_LAB1_LaboratoryModule" },
-                { BuildingCategory.Palace, "Buildings/SM_CommandDome_CentralHub" },
+                { BuildingCategory.Commons, "Buildings/SM_CommandDome_CentralHub" },
+            };
+
+        /// <summary>
+        /// Phase 4 hero FBX (sheet-matched HAB cylinder / Commons dome / solar field /
+        /// extractors / bunker / pad / workshop hangar / tall hangar / Inn / CMD-1 guild /
+        /// OPS-1 annex / wonders). Play Mode prefers these;
+        /// <see cref="HeroBuildingKits"/> is the procedural fallback.
+        /// </summary>
+        private static readonly Dictionary<BuildingCategory, string> HeroResource =
+            new Dictionary<BuildingCategory, string>
+            {
+                { BuildingCategory.Habitat, "Buildings/SM_Hero_HAB" },
+                { BuildingCategory.Commons, "Buildings/SM_Hero_Commons" },
+                { BuildingCategory.Power, "Buildings/SM_Hero_Power" },
+                { BuildingCategory.Farm, "Buildings/SM_Hero_Farm" },
+                { BuildingCategory.RegolithCamp, "Buildings/SM_Hero_Camp" },
+                { BuildingCategory.Mine, "Buildings/SM_Hero_Mine" },
+                { BuildingCategory.Defense, "Buildings/SM_Hero_Defense" },
+                { BuildingCategory.LandingPad, "Buildings/SM_Hero_LandingPad" },
+                { BuildingCategory.GuildHall, "Buildings/SM_Hero_GuildHall" },
+                { BuildingCategory.Mining, "Buildings/SM_Hero_OPS" },
+                { BuildingCategory.Laboratory, "Buildings/SM_Hero_LAB" },
+                { BuildingCategory.ClimateLoom, "Buildings/SM_Hero_ClimateLoom" },
+                { BuildingCategory.AegisSpire, "Buildings/SM_Hero_AegisSpire" },
+                { BuildingCategory.DeepArchive, "Buildings/SM_Hero_DeepArchive" },
+                { BuildingCategory.Inn, "Buildings/SM_Hero_Inn" },
+                { BuildingCategory.ScoutWorkshop, "Buildings/SM_Hero_Workshop" },
+                { BuildingCategory.EngineerWorkshop, "Buildings/SM_Hero_Workshop" },
+                { BuildingCategory.MedicWorkshop, "Buildings/SM_Hero_Workshop" },
+                { BuildingCategory.HarvesterWorkshop, "Buildings/SM_Hero_Workshop" },
+                { BuildingCategory.SurveyorWorkshop, "Buildings/SM_Hero_Workshop" },
+                { BuildingCategory.TerraformerWorkshop, "Buildings/SM_Hero_Workshop" },
+                { BuildingCategory.CourierWorkshop, "Buildings/SM_Hero_Workshop" },
+                { BuildingCategory.GeologistWorkshop, "Buildings/SM_Hero_Workshop" },
+                { BuildingCategory.DefenseWorkshop, "Buildings/SM_Hero_WorkshopTall" },
+                { BuildingCategory.SentinelWorkshop, "Buildings/SM_Hero_WorkshopTall" },
             };
 
         private static readonly Dictionary<string, GameObject> Cache = new Dictionary<string, GameObject>();
+        private static readonly HashSet<string> MissingLogged = new HashSet<string>();
 
         public static GameObject LoadPrefab(BuildingCategory category)
         {
+            GameObject hero = LoadHeroKit(category);
+            if (hero != null)
+                return hero;
             if (!CategoryResource.TryGetValue(category, out string path))
                 return null;
             return LoadByPath(path);
@@ -59,8 +99,26 @@ namespace SolarMajesty
 
             GameObject go = Resources.Load<GameObject>(resourcesPath);
             if (go != null)
+            {
                 Cache[resourcesPath] = go;
-            return go;
+                return go;
+            }
+
+            if (MissingLogged.Add(resourcesPath) &&
+                resourcesPath.IndexOf("SM_Hero_", System.StringComparison.Ordinal) >= 0)
+            {
+                Debug.LogWarning(
+                    "[BuildingVisualCatalog] Hero kit missing at Resources/" + resourcesPath +
+                    " — using procedural HeroBuildingKits. Reimport Assets/Resources/Buildings if the FBX is on disk.");
+            }
+            return null;
+        }
+
+        public static GameObject LoadHeroKit(BuildingCategory category)
+        {
+            if (!HeroResource.TryGetValue(category, out string path))
+                return null;
+            return LoadByPath(path);
         }
 
         /// <summary>Optional showcase pieces (dome, starship) for greybox colony look.</summary>

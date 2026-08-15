@@ -52,7 +52,7 @@ No 11th/12th class. Surveyor / Geologist / Courier already cover research and sc
 | **Open Hands** | Hunger +0.26 (spawn 0.55 → 0.81, past the 0.75 cheap-flag greed bypass); courage ×0.90 |
 | **Aegis Watch** | Courage ×1.22; workshop bonus +0.18; hunger −0.08 |
 | **Survey First** | Consider range ×1.50 (~84 m vs ~75); workshop bonus +0.10 |
-| **Austere** | Start stockpile ×0.55 (Earth 187 MET — Palace + airlock + HAB + workshop = 164) |
+| **Austere** | Start stockpile ×0.55 (Earth 187 MET — Colony Commons + airlock + HAB + workshop = 164) |
 | **Swarm** | Fauna cap ×1.50; weights ×1.22; ambient ×1.28; spawn interval ×1.35 |
 | **Tight Purse** | Resupply interval ×1.55; extra dock fee 8 MET |
 | **Endless** | Body `EndlessLog`; no **TO {next}** |
@@ -72,7 +72,7 @@ If a live 45–90 min session finds one of these dead, note it in `PHASE_1_FRICT
 
 1. `Docs/SMOKE_TEST.md` 10-minute boot + Earth loop + Replay section.
 2. Settings: cycle Stance — Open Hands should take a default $70 Build within ~5 minutes (Engineer hunger past 0.75). Aegis Watch hunts/shops harder. Survey First considers farther.
-3. Austere New Game: Palace + airlock + HAB + one workshop still affordable (~187 MET start). Farm waits on extract or the ship.
+3. Austere New Game: Colony Commons + airlock + HAB + one workshop still affordable (~187 MET start). Farm waits on extract or the ship.
 4. Swarm New Game: more F5/F2 after farm/power/HAB, not a wipe on the empty drop (pests still gate on buildings).
 5. Tight Purse: ship timer slower; +8 MET fee. Drop pile unchanged.
 6. Win banner: rating letter + breakdown. Endless: body endless line, no **TO {next}**.

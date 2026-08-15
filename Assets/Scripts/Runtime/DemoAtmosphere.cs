@@ -11,16 +11,17 @@ namespace SolarMajesty
     public static class DemoAtmosphere
     {
         public static void Apply(Camera cam, Transform groundParent) =>
-            Apply(cam, groundParent, CelestialBodyCatalog.Luna());
+            Apply(cam, groundParent, CelestialBodyCatalog.Earth());
 
         public static void Apply(Camera cam, Transform groundParent, CelestialBodyProfile body)
         {
-            if (body == null) body = CelestialBodyCatalog.Luna();
+            if (body == null) body = CelestialBodyCatalog.Earth();
             ConfigureSun(body);
             EnsureFillLight(groundParent, body);
             ConfigureAmbientAndFog(body);
             ConfigureCamera(cam, body);
             EnsureVolume(groundParent, body);
+            Debug.Log($"[Atmosphere] {body.DisplayName} sun={body.SunIntensity:0.00} fog={body.FogStart:0}/{body.FogEnd:0}");
         }
 
         private static void ConfigureSun(CelestialBodyProfile body)
@@ -48,7 +49,7 @@ namespace SolarMajesty
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = body.Id == CelestialBodyId.Mars || body.Id == CelestialBodyId.Luna
                 ? 0.90f
-                : 0.72f;
+                : body.Id == CelestialBodyId.Earth ? 0.84f : 0.72f;
             sun.shadowBias = 0.04f;
             sun.shadowNormalBias = 0.55f;
             sun.shadowNearPlane = 0.2f;
@@ -72,7 +73,8 @@ namespace SolarMajesty
             if (fill == null) fill = go.AddComponent<Light>();
             fill.type = LightType.Directional;
             fill.color = body.FillColor;
-            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.18f : 0.28f;
+            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.12f
+                : body.Id == CelestialBodyId.Earth ? 0.34f : 0.28f;
             fill.shadows = LightShadows.None;
         }
 
@@ -94,13 +96,10 @@ namespace SolarMajesty
         private static void ConfigureCamera(Camera cam, CelestialBodyProfile body)
         {
             if (cam == null) return;
-            // PlanetaryMapDressing may switch to Skybox after Apply; keep a body-tinted fallback.
-            if (cam.clearFlags != CameraClearFlags.Skybox)
-            {
-                cam.clearFlags = CameraClearFlags.SolidColor;
-                cam.backgroundColor = body.SkyTop;
-            }
+            cam.backgroundColor = body.SkyTop;
             cam.farClipPlane = Mathf.Max(cam.farClipPlane, 200f);
+            if (cam.clearFlags != CameraClearFlags.Skybox)
+                cam.clearFlags = CameraClearFlags.SolidColor;
 
             var additional = cam.GetComponent<UniversalAdditionalCameraData>();
             if (additional == null) additional = cam.gameObject.AddComponent<UniversalAdditionalCameraData>();
@@ -137,6 +136,24 @@ namespace SolarMajesty
             if (!profile.TryGet(out ColorAdjustments color))
                 color = profile.Add<ColorAdjustments>(true);
             color.colorFilter.Override(body.GradeFilter);
+            if (body.Id == CelestialBodyId.Earth)
+            {
+                color.contrast.Override(12f);
+                color.saturation.Override(14f);
+                color.postExposure.Override(0.10f);
+            }
+            else if (body.Id == CelestialBodyId.Mars)
+            {
+                color.contrast.Override(14f);
+                color.saturation.Override(16f);
+                color.postExposure.Override(0.10f);
+            }
+            else
+            {
+                color.contrast.Override(8f);
+                color.saturation.Override(6f);
+                color.postExposure.Override(0.05f);
+            }
         }
 
         private static VolumeProfile BuildRuntimeProfile()

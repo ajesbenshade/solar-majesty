@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -5,7 +6,7 @@ namespace SolarMajesty
     /// <summary>
     /// Unique bilaterally-symmetric building kits sized to their grid footprints.
     /// Cardinal airlock ports sit on the hull faces so Utility junctions click flush.
-    /// Phase 4 HAB / keep / pad / extractors / solar / Defense dispatch to HeroBuildingKits.
+    /// Phase 4 hero FBX (SM_Hero_*) is preferred; HeroBuildingKits is the procedural fallback.
     /// </summary>
     public static class ModularBuildingFactory
     {
@@ -24,7 +25,7 @@ namespace SolarMajesty
             switch (body.Id)
             {
                 case CelestialBodyId.Earth:
-                    _bodyHull = new Color(0.58f, 0.66f, 0.58f);
+                    _bodyHull = new Color(0.74f, 0.78f, 0.74f);
                     break;
                 case CelestialBodyId.Luna:
                     _bodyHull = new Color(0.68f, 0.70f, 0.72f);
@@ -92,8 +93,8 @@ namespace SolarMajesty
             AttachCardinalAirlocks(root.transform, worldW * 0.5f, worldD * 0.5f);
 
             ColonyVisualUtility.EnsureUrpMaterials(root);
-            if (!ghost)
-                IndustrialArtDressing.SetTintOverlay(root, Color.Lerp(Color.white, _bodyHull, 0.18f));
+            // Do not SetTintOverlay here — MPB _BaseColor replaces orange/cyan/carbon
+            // and flattens hero kits into greybox hulls. Body grade lives in atmosphere.
             ColonyVisualUtility.SnapToGround(root);
             if (ghost)
                 StripColliders(root);
@@ -102,27 +103,16 @@ namespace SolarMajesty
 
         private static void BuildCore(Transform root, BuildingCategory cat, float w, float d)
         {
-            GameObject uniqueMesh = UniqueMeshPrefab(cat);
-            if (uniqueMesh != null)
-            {
-                var wrap = new GameObject("CoreMesh");
-                wrap.transform.SetParent(root, false);
-                wrap.transform.localPosition = Vector3.zero;
-                wrap.transform.localRotation = Quaternion.identity;
-                var core = ColonyVisualUtility.InstantiateOriented(uniqueMesh, root.position, wrap.transform);
-                core.name = "Mesh";
-                core.transform.localPosition = Vector3.zero;
-                FitToFootprint(wrap, w, d);
+            if (TryAttachHeroMesh(root, cat, w, d))
                 return;
-            }
 
             switch (cat)
             {
                 case BuildingCategory.Habitat:
                     HeroBuildingKits.BuildHabitat(root, w, d, HeroHull());
                     break;
-                case BuildingCategory.Palace:
-                    HeroBuildingKits.BuildKeep(root, w, d, HeroHull());
+                case BuildingCategory.Commons:
+                    HeroBuildingKits.BuildCommons(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.LandingPad:
                     HeroBuildingKits.BuildLandingPad(root, w, d, HeroHull());
@@ -143,47 +133,55 @@ namespace SolarMajesty
                     HeroBuildingKits.BuildDefenseBattery(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.ScoutWorkshop:
-                    BuildWorkshop(root, w, d, new Color(0.35f, 0.85f, 1f), tall: false);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(0.35f, 0.85f, 1f), tall: false);
                     break;
                 case BuildingCategory.EngineerWorkshop:
-                    BuildWorkshop(root, w, d, new Color(1f, 0.65f, 0.2f), tall: false);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(1f, 0.65f, 0.2f), tall: false);
                     break;
                 case BuildingCategory.DefenseWorkshop:
-                    BuildWorkshop(root, w, d, new Color(0.95f, 0.35f, 0.35f), tall: true);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(0.95f, 0.35f, 0.35f), tall: true);
                     break;
                 case BuildingCategory.MedicWorkshop:
-                    BuildWorkshop(root, w, d, new Color(0.45f, 0.95f, 0.55f), tall: false);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(0.45f, 0.95f, 0.55f), tall: false);
                     break;
                 case BuildingCategory.HarvesterWorkshop:
-                    BuildWorkshop(root, w, d, new Color(0.82f, 0.62f, 0.22f), tall: false);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(0.82f, 0.62f, 0.22f), tall: false);
                     break;
                 case BuildingCategory.SurveyorWorkshop:
-                    BuildWorkshop(root, w, d, new Color(0.45f, 0.82f, 0.95f), tall: false);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(0.45f, 0.82f, 0.95f), tall: false);
                     break;
                 case BuildingCategory.TerraformerWorkshop:
-                    BuildWorkshop(root, w, d, new Color(0.42f, 0.82f, 0.38f), tall: false);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(0.42f, 0.82f, 0.38f), tall: false);
                     break;
                 case BuildingCategory.CourierWorkshop:
-                    BuildWorkshop(root, w, d, new Color(0.95f, 0.72f, 0.28f), tall: false);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(0.95f, 0.72f, 0.28f), tall: false);
                     break;
                 case BuildingCategory.GeologistWorkshop:
-                    BuildWorkshop(root, w, d, new Color(0.68f, 0.52f, 0.32f), tall: false);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(0.68f, 0.52f, 0.32f), tall: false);
                     break;
                 case BuildingCategory.SentinelWorkshop:
-                    BuildWorkshop(root, w, d, new Color(0.78f, 0.38f, 0.22f), tall: true);
+                    HeroBuildingKits.BuildWorkshop(root, w, d, new Color(0.78f, 0.38f, 0.22f), tall: true);
                     break;
                 case BuildingCategory.GuildHall:
+                    HeroBuildingKits.BuildGuildHall(root, w, d, HeroHull());
+                    break;
+                case BuildingCategory.Mining:
+                    HeroBuildingKits.BuildOpsUnit(root, w, d, HeroHull());
+                    break;
                 case BuildingCategory.Inn:
-                    BuildInn(root, w, d);
+                    HeroBuildingKits.BuildInn(root, w, d);
+                    break;
+                case BuildingCategory.Laboratory:
+                    HeroBuildingKits.BuildLaboratory(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.ClimateLoom:
-                    BuildWonder(root, w, d, new Color(0.38f, 0.82f, 0.48f), 2.8f);
+                    HeroBuildingKits.BuildClimateLoom(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.AegisSpire:
-                    BuildWonder(root, w, d, new Color(0.45f, 0.72f, 1f), 3.6f);
+                    HeroBuildingKits.BuildAegisSpire(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.DeepArchive:
-                    BuildWonder(root, w, d, new Color(0.42f, 0.78f, 0.88f), 2.4f);
+                    HeroBuildingKits.BuildDeepArchive(root, w, d, HeroHull());
                     break;
                 default:
                     BuildGenericModule(root, w, d, AccentFor(cat));
@@ -191,16 +189,72 @@ namespace SolarMajesty
             }
         }
 
+        private static readonly HashSet<BuildingCategory> AttachedLogged = new HashSet<BuildingCategory>();
+
+        private static bool TryAttachHeroMesh(Transform root, BuildingCategory cat, float w, float d)
+        {
+            GameObject uniqueMesh = UniqueMeshPrefab(cat);
+            if (uniqueMesh == null) return false;
+
+            var wrap = new GameObject("CoreMesh");
+            wrap.transform.SetParent(root, false);
+            wrap.transform.localPosition = Vector3.zero;
+            wrap.transform.localRotation = Quaternion.identity;
+            var core = ColonyVisualUtility.InstantiateOriented(uniqueMesh, root.position, wrap.transform);
+            if (core == null)
+            {
+                Object.Destroy(wrap);
+                return false;
+            }
+
+            core.name = "Mesh";
+            core.transform.localPosition = Vector3.zero;
+            SanitizeImportedMesh(wrap);
+            var rends = wrap.GetComponentsInChildren<Renderer>(true);
+            if (rends == null || rends.Length == 0)
+            {
+                Object.Destroy(wrap);
+                Debug.LogWarning("[HeroKit] " + cat + " FBX had no renderers — procedural fallback.");
+                return false;
+            }
+
+            FitToFootprint(wrap, w, d);
+            if (AttachedLogged.Add(cat))
+                Debug.Log("[HeroKit] Attached " + uniqueMesh.name + " for " + cat + ".");
+            return true;
+        }
+
         private static GameObject UniqueMeshPrefab(BuildingCategory cat)
         {
+            GameObject hero = BuildingVisualCatalog.LoadHeroKit(cat);
+            if (hero != null)
+                return hero;
             switch (cat)
             {
                 case BuildingCategory.Mining:
-                case BuildingCategory.Laboratory:
                     return BuildingVisualCatalog.LoadPrefab(cat);
                 default:
                     return null;
             }
+        }
+
+        private static void SanitizeImportedMesh(GameObject go)
+        {
+            if (go == null) return;
+            foreach (var cam in go.GetComponentsInChildren<Camera>(true))
+            {
+                if (cam == null || cam.gameObject == go) continue;
+                cam.enabled = false;
+                Object.Destroy(cam.gameObject);
+            }
+            foreach (var light in go.GetComponentsInChildren<Light>(true))
+            {
+                if (light == null || light.gameObject == go) continue;
+                light.enabled = false;
+                Object.Destroy(light.gameObject);
+            }
+            foreach (var col in go.GetComponentsInChildren<Collider>(true))
+                Object.Destroy(col);
         }
 
         private static void FitToFootprint(GameObject go, float targetX, float targetZ)
@@ -209,76 +263,28 @@ namespace SolarMajesty
             var rends = go.GetComponentsInChildren<Renderer>();
             if (rends == null || rends.Length == 0) return;
 
-            Bounds b = rends[0].bounds;
-            for (int i = 1; i < rends.Length; i++)
+            Bounds b = default;
+            bool any = false;
+            for (int i = 0; i < rends.Length; i++)
             {
-                if (rends[i] != null)
-                    b.Encapsulate(rends[i].bounds);
+                var r = rends[i];
+                if (r == null || r is ParticleSystemRenderer) continue;
+                if (!any)
+                {
+                    b = r.bounds;
+                    any = true;
+                }
+                else b.Encapsulate(r.bounds);
             }
+            if (!any) return;
 
-            // Scale the unrotated wrapper so world XZ matches the footprint even when
-            // the FBX child carries Blender's -90° X import rotation.
+            // Uniform scale from the tighter axis so cylinder HAB / LAB keep L/D
+            // instead of being inflated to a square. Clamp bad import bounds.
             float sx = targetX / Mathf.Max(0.05f, b.size.x);
             float sz = targetZ / Mathf.Max(0.05f, b.size.z);
+            float uniform = Mathf.Clamp(Mathf.Min(sx, sz), 0.2f, 6f);
             Vector3 ls = go.transform.localScale;
-            go.transform.localScale = new Vector3(ls.x * sx, ls.y * Mathf.Min(sx, sz), ls.z * sz);
-        }
-
-        private static void BuildWorkshop(Transform root, float w, float d, Color accent, bool tall)
-        {
-            float h = tall ? 2.4f : 1.8f;
-            Part(root, "Bay", PrimitiveType.Cube,
-                new Vector3(0f, h * 0.5f, 0f),
-                new Vector3(w, h, d),
-                HullColor());
-            Part(root, "Door_L", PrimitiveType.Cube,
-                new Vector3(-w * 0.22f, 0.85f, d * 0.5f),
-                new Vector3(w * 0.28f, 1.5f, 0.12f),
-                accent);
-            Part(root, "Door_R", PrimitiveType.Cube,
-                new Vector3(w * 0.22f, 0.85f, d * 0.5f),
-                new Vector3(w * 0.28f, 1.5f, 0.12f),
-                accent);
-            Part(root, "Stack_L", PrimitiveType.Cylinder,
-                new Vector3(-w * 0.32f, h + 0.45f, -d * 0.2f),
-                new Vector3(0.4f, 0.55f, 0.4f),
-                accent);
-            Part(root, "Stack_R", PrimitiveType.Cylinder,
-                new Vector3(w * 0.32f, h + 0.45f, -d * 0.2f),
-                new Vector3(0.4f, 0.55f, 0.4f),
-                accent);
-        }
-
-        private static void BuildInn(Transform root, float w, float d)
-        {
-            Part(root, "Hall", PrimitiveType.Cube,
-                new Vector3(0f, 1.15f, 0f),
-                new Vector3(w * 0.72f, 2.3f, d),
-                HullColor());
-            Part(root, "Wing_L", PrimitiveType.Cube,
-                new Vector3(-w * 0.38f, 0.85f, 0f),
-                new Vector3(w * 0.28f, 1.7f, d * 0.72f),
-                AccentFor(BuildingCategory.Inn));
-            Part(root, "Wing_R", PrimitiveType.Cube,
-                new Vector3(w * 0.38f, 0.85f, 0f),
-                new Vector3(w * 0.28f, 1.7f, d * 0.72f),
-                AccentFor(BuildingCategory.Inn));
-        }
-
-        private static void BuildWonder(Transform root, float w, float d, Color accent, float height)
-        {
-            Part(root, "Plinth", PrimitiveType.Cube,
-                new Vector3(0f, 0.35f, 0f),
-                new Vector3(w * 0.92f, 0.7f, d * 0.92f),
-                HullColor());
-            Part(root, "Tower", PrimitiveType.Cube,
-                new Vector3(0f, height * 0.5f + 0.5f, 0f),
-                new Vector3(w * 0.42f, height, d * 0.42f),
-                accent);
-            Part(root, "Cap", PrimitiveType.Cylinder,
-                new Vector3(0f, height + 0.85f, 0f),
-                new Vector3(w * 0.28f, 0.35f, d * 0.28f),
-                new Color(0.95f, 0.42f, 0.08f));
+            go.transform.localScale = new Vector3(ls.x * uniform, ls.y * uniform, ls.z * uniform);
         }
 
         private static void BuildGenericModule(Transform root, float w, float d, Color accent)
@@ -327,12 +333,41 @@ namespace SolarMajesty
             float outset)
         {
             float length = inset + outset;
-            Vector3 center = facePos + outward.normalized * ((outset - inset) * 0.5f);
+            Vector3 dir = outward.normalized;
+            Vector3 center = facePos + dir * ((outset - inset) * 0.5f);
             bool ns = Mathf.Abs(outward.z) >= Mathf.Abs(outward.x);
-            Vector3 scale = ns
-                ? new Vector3(bore, bore, length)
-                : new Vector3(length, bore, bore);
-            Part(parent, name, PrimitiveType.Cube, center, scale, AirlockColor());
+            // White square tube + orange collars — not a solid orange box. Grid docks stay square.
+            Vector3 tubeScale = ns
+                ? new Vector3(bore * 0.92f, bore * 0.92f, length)
+                : new Vector3(length, bore * 0.92f, bore * 0.92f);
+            Part(parent, name, PrimitiveType.Cube, center, tubeScale, new Color(0.86f, 0.87f, 0.89f));
+
+            Vector3 outerScale = ns
+                ? new Vector3(bore * 1.12f, bore * 1.12f, 0.16f)
+                : new Vector3(0.16f, bore * 1.12f, bore * 1.12f);
+            DressPart(parent, name + "_Collar", facePos + dir * (outset * 0.82f), outerScale, AirlockColor());
+
+            Vector3 innerScale = ns
+                ? new Vector3(bore * 1.08f, bore * 1.08f, 0.10f)
+                : new Vector3(0.10f, bore * 1.08f, bore * 1.08f);
+            DressPart(parent, name + "_Inner", facePos - dir * (inset * 0.35f), innerScale, new Color(0.16f, 0.17f, 0.19f));
+
+            Vector3 ringScale = ns
+                ? new Vector3(bore * 1.04f, bore * 1.04f, 0.06f)
+                : new Vector3(0.06f, bore * 1.04f, bore * 1.04f);
+            DressPart(parent, name + "_Ring", facePos + dir * ((outset - inset) * 0.12f), ringScale, AirlockColor());
+        }
+
+        private static void DressPart(Transform parent, string name, Vector3 localPos, Vector3 localScale, Color color)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = localScale;
+            Object.Destroy(go.GetComponent<Collider>());
+            ApplyColor(go, color);
         }
 
         private static void Part(
@@ -383,7 +418,7 @@ namespace SolarMajesty
         {
             switch (cat)
             {
-                case BuildingCategory.Palace: return new Color(0.85f, 0.72f, 0.35f);
+                case BuildingCategory.Commons: return new Color(0.85f, 0.72f, 0.35f);
                 case BuildingCategory.Farm: return new Color(0.35f, 0.8f, 0.4f);
                 case BuildingCategory.Mine: return new Color(0.75f, 0.55f, 0.3f);
                 case BuildingCategory.RegolithCamp: return new Color(0.7f, 0.6f, 0.45f);

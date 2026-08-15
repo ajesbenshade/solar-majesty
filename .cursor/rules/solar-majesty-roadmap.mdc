@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Solar Majesty roadmap
 
-Living plan: `Docs/Roadmap/`. Work **one phase at a time**. Current work is **Phase 4** (`05_PHASE_4_VISUAL_TARGET.md`). Phase 0 is locked. Phase 1 demo packaging is in. Phase 2 solar expansion is complete (`PHASE_2_EXIT.md`). Phase 3 content explosion is complete (`PHASE_3_EXIT.md`). Phase 4 Week 1 (atmosphere / tubes / cranes / HUD), Week 2 (HAB / keep / pad / extractor hero kits), and Week 3 (junction turrets + solar-field landmark) are in. After Phase 4: Phase 5 ship.
+Living plan: `Docs/Roadmap/`. Work **one phase at a time**. Current work is **Phase 4** (`05_PHASE_4_VISUAL_TARGET.md`). Phase 0 is locked. Phase 1 demo packaging is in. Phase 2 solar expansion is complete (`PHASE_2_EXIT.md`). Phase 3 content explosion is complete (`PHASE_3_EXIT.md`). Phase 4 Week 1 (atmosphere / tubes / cranes / HUD), Week 2 (HAB / Colony Commons / pad / extractor hero kits), Week 3 (junction turrets + solar-field landmark), and Week 4 (Commons rename, guild/lab/wonder dress, specialist remesh, Terraformer dozer, all seven fauna silhouettes, hero building FBX, Earth New Game produced biome, Imagine-sheet Scout/Engineer/Defense/Stalker refine, Workshop/Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, Mars dressing/HUD/lighting close, **HAB/Commons/LAB/Power/pad sheet-match**, **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, **airlock panel-line polish**) are in. Phase 4 is **not** complete. After Phase 4: Phase 5 ship.
 
 ## Non-negotiables
 - Never add click-to-move or any player command that bypasses `SpecialistBrain`.

@@ -77,13 +77,13 @@ namespace SolarMajesty.EditorTools
             WriteFlag("Flag_EstablishOutpost", FlagType.EstablishOutpost, "Establish Outpost", 75, 0.22f, 10f, new Color(0.22f, 0.82f, 0.78f));
             WriteFlag("Flag_Terraform", FlagType.Terraform, "Terraform", 70, 0.14f, 11f, new Color(0.42f, 0.88f, 0.38f));
 
-            WriteBuilding("Building_Palace", "Palace Keep", BuildingCategory.Palace, 70, 10, 18f, 6, 6);
+            WriteBuilding("Building_Commons", "Colony Commons", BuildingCategory.Commons, 70, 10, 18f, 6, 6);
             WriteBuilding("Building_LandingPad", "Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6);
             WriteBuilding("Building_HAB1", "Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4);
             WriteBuilding("Building_PWR1", "Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4);
             WriteBuilding("Building_OPS1", "Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 4, 4);
             WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4);
-            WriteBuilding("Building_CMD1", "Command (CMD-1)", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
+            WriteBuilding("Building_CMD1", "Defense Battery", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
             WriteBuilding("Building_GuildHall", "Guild Hall", BuildingCategory.GuildHall, 56, 6, 14f, 4, 4);
             WriteBuilding("Building_HarvesterWorkshop", "Harvester Workshop", BuildingCategory.HarvesterWorkshop, 40, 5, 12f, 4, 4);
             WriteBuilding("Building_SurveyorWorkshop", "Surveyor Workshop", BuildingCategory.SurveyorWorkshop, 38, 4, 12f, 4, 4);
@@ -221,6 +221,101 @@ namespace SolarMajesty.EditorTools
             if (!string.IsNullOrEmpty(parent) && !AssetDatabase.IsValidFolder(parent))
                 EnsureFolder(parent);
             AssetDatabase.CreateFolder(parent, name);
+        }
+
+        /// <summary>
+        /// Batch smoke: Resources.Load SM_Hero_* + Earth grade + workshop kit.
+        /// Unity -batchmode -executeMethod SolarMajesty.EditorTools.DemoContentBuilder.SmokeHeroKits
+        /// </summary>
+        public static void SmokeHeroKits()
+        {
+            var cats = new[]
+            {
+                BuildingCategory.Habitat, BuildingCategory.Commons, BuildingCategory.Power,
+                BuildingCategory.Farm, BuildingCategory.RegolithCamp, BuildingCategory.Mine,
+                BuildingCategory.Defense, BuildingCategory.LandingPad, BuildingCategory.GuildHall,
+                BuildingCategory.Mining, BuildingCategory.Laboratory, BuildingCategory.ClimateLoom,
+                BuildingCategory.AegisSpire, BuildingCategory.DeepArchive, BuildingCategory.Inn,
+                BuildingCategory.EngineerWorkshop, BuildingCategory.DefenseWorkshop
+            };
+            int ok = 0;
+            int miss = 0;
+            for (int i = 0; i < cats.Length; i++)
+            {
+                var cat = cats[i];
+                var prefab = BuildingVisualCatalog.LoadHeroKit(cat);
+                if (prefab == null)
+                {
+                    miss++;
+                    Debug.LogWarning("[Smoke] hero FBX miss " + cat);
+                    continue;
+                }
+
+                var inst = Object.Instantiate(prefab);
+                int rends = inst.GetComponentsInChildren<Renderer>(true).Length;
+                Object.DestroyImmediate(inst);
+                if (rends <= 0)
+                {
+                    miss++;
+                    Debug.LogWarning("[Smoke] hero FBX empty " + cat + " " + prefab.name);
+                }
+                else
+                {
+                    ok++;
+                    Debug.Log("[Smoke] hero FBX ok " + cat + " " + prefab.name + " renderers=" + rends);
+                }
+            }
+
+            var earth = CelestialBodyCatalog.Earth();
+            Debug.Log("[Smoke] Earth SkyTop=" + earth.SkyTop + " GroundLight=" + earth.GroundLight +
+                      " fogEnd=" + earth.FogEnd);
+
+            var shop = new GameObject("Smoke_Workshop");
+            HeroBuildingKits.BuildWorkshop(shop.transform, 6f, 6f, new Color(1f, 0.65f, 0.2f), false);
+            int shopR = shop.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(shop);
+            var inn = new GameObject("Smoke_Inn");
+            HeroBuildingKits.BuildInn(inn.transform, 6f, 6f);
+            int innR = inn.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(inn);
+            var hab = new GameObject("Smoke_HAB");
+            HeroBuildingKits.BuildHabitat(hab.transform, 6f, 6f, Color.white);
+            int habR = hab.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(hab);
+            var commons = new GameObject("Smoke_Commons");
+            HeroBuildingKits.BuildCommons(commons.transform, 9f, 9f, Color.white);
+            int comR = commons.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(commons);
+            var lab = new GameObject("Smoke_LAB");
+            HeroBuildingKits.BuildLaboratory(lab.transform, 6f, 6f, Color.white);
+            int labR = lab.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(lab);
+            var pwr = new GameObject("Smoke_Power");
+            HeroBuildingKits.BuildSolarField(pwr.transform, 6f, 6f, Color.white);
+            int pwrR = pwr.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(pwr);
+            var pad = new GameObject("Smoke_Pad");
+            HeroBuildingKits.BuildLandingPad(pad.transform, 9f, 9f, Color.white);
+            int padR = pad.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(pad);
+            var guild = new GameObject("Smoke_Guild");
+            HeroBuildingKits.BuildGuildHall(guild.transform, 6f, 6f, Color.white);
+            int guildR = guild.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(guild);
+            var ops = new GameObject("Smoke_OPS");
+            HeroBuildingKits.BuildOpsUnit(ops.transform, 6f, 6f, Color.white);
+            int opsR = ops.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(ops);
+            var farm = new GameObject("Smoke_Farm");
+            HeroBuildingKits.BuildWaterExtractor(farm.transform, 6f, 6f, Color.white);
+            int farmR = farm.GetComponentsInChildren<Renderer>().Length;
+            Object.DestroyImmediate(farm);
+            Debug.Log("[Smoke] workshop kit renderers=" + shopR + " inn kit renderers=" + innR +
+                      " hab=" + habR + " commons=" + comR + " lab=" + labR +
+                      " power=" + pwrR + " pad=" + padR +
+                      " guild=" + guildR + " ops=" + opsR + " farm=" + farmR);
+            Debug.Log("[Smoke] hero FBX ok=" + ok + " miss=" + miss +
+                      (miss == 0 ? " SMOKE_OK" : " SMOKE_PARTIAL"));
         }
     }
 }

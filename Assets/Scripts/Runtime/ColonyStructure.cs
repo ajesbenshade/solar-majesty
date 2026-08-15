@@ -89,7 +89,8 @@ namespace SolarMajesty
             EnsureSelectRing();
             if (_selectRing != null)
             {
-                float ring = Category == BuildingCategory.Palace || Category == BuildingCategory.LandingPad
+                float ring = Category == BuildingCategory.Commons || Category == BuildingCategory.LandingPad
+                    || IsWonderCategory(Category)
                     ? 6.4f
                     : HeroBuildingKits.IsHero(Category) ? 4.4f : 3.2f;
                 _selectRing.transform.localScale = new Vector3(ring, 0.025f, ring);
@@ -431,7 +432,7 @@ namespace SolarMajesty
             if (role == StructureRole.Inn) return "Waystation Inn";
             switch (cat)
             {
-                case BuildingCategory.Palace: return "Palace Keep";
+                case BuildingCategory.Commons: return "Colony Commons";
                 case BuildingCategory.Habitat: return "Habitat";
                 case BuildingCategory.Farm: return "Greenhouse Farm";
                 case BuildingCategory.Mine: return "Ore Mine";
@@ -452,8 +453,8 @@ namespace SolarMajesty
                 case BuildingCategory.DeepArchive: return "Deep Archive";
                 case BuildingCategory.Power: return "Power Node";
                 case BuildingCategory.Laboratory: return "Laboratory";
-                case BuildingCategory.Defense: return "Command";
-                case BuildingCategory.Mining: return "Ops";
+                case BuildingCategory.Defense: return "Defense Battery";
+                case BuildingCategory.Mining: return "Ops Unit";
                 case BuildingCategory.LandingPad: return "Landing Pad";
                 case BuildingCategory.Utility: return "Airlock";
                 default: return "Module";
@@ -475,7 +476,8 @@ namespace SolarMajesty
             proxy.layer = gameObject.layer;
             var box = proxy.AddComponent<BoxCollider>();
             box.center = Vector3.zero;
-            float span = Category == BuildingCategory.Palace || Category == BuildingCategory.LandingPad
+            float span = Category == BuildingCategory.Commons || Category == BuildingCategory.LandingPad
+                || IsWonderCategory(Category)
                 ? 5.4f
                 : HeroBuildingKits.IsHero(Category) ? 3.6f : 2.6f;
             box.size = new Vector3(span, 2.2f, span);

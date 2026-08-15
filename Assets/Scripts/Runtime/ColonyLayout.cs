@@ -30,7 +30,7 @@ namespace SolarMajesty
         {
             switch (category)
             {
-                case BuildingCategory.Palace:
+                case BuildingCategory.Commons:
                 case BuildingCategory.LandingPad:
                 case BuildingCategory.ClimateLoom:
                 case BuildingCategory.AegisSpire:

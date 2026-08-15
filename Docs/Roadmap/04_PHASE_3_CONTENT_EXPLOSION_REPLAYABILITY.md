@@ -148,7 +148,7 @@ Tune these in `ReplayRules` constants only. Do not retune `SpecialistBrain.Score
 Desktop pass (not a live 45–90 min). Numbers live in `ReplayRules`:
 
 - **Open Hands vs Aegis vs Survey** — Open Hands hunger +0.26 crosses the 0.75 cheap-flag bypass at spawn. Aegis workshop +0.18 / courage ×1.22. Survey consider ×1.50. Still no ScoreFlag rewrite.
-- **Austere** Earth 187 MET: Palace + airlock + HAB + workshop = 164. Farm waits on extract or the ship.
+- **Austere** Earth 187 MET: Colony Commons + airlock + HAB + workshop = 164. Farm waits on extract or the ship.
 - **Swarm** cap ×1.50 with spawn interval ×1.35 — more F5/F2 after buildings exist, not a dump on the empty drop.
 - **Tight Purse** interval ×1.55 and +8 MET fee. Drop pile unchanged.
 - **S rating** requires dens + gates + ≥3 robots + mean HP ≥0.55 + elapsed ≤12 min. Stockpile cannot buy S.

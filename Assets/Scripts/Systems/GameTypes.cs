@@ -60,6 +60,7 @@ namespace SolarMajesty
         LandingPad = 0,
         Habitat = 1,
         Power = 2,
+        /// <summary>OPS-1 ops annex (legacy id). Not Colony Commons; metals drop-off like Mine.</summary>
         Mining = 3,
         Defense = 4,
         Utility = 5,
@@ -72,8 +73,11 @@ namespace SolarMajesty
         EngineerWorkshop = 12,
         DefenseWorkshop = 13,
         MedicWorkshop = 14,
-        /// <summary>Majesty-style keep — must be built first; campus docks from its airlocks.</summary>
-        Palace = 15,
+        /// <summary>
+        /// Colony Commons — first 6×6 civic landmark; campus docks from its airlocks.
+        /// Saved as int 15 (CampusSnapshot). Do not change the numeric id.
+        /// </summary>
+        Commons = 15,
         GuildHall = 16,
         HarvesterWorkshop = 17,
         SurveyorWorkshop = 18,

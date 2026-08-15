@@ -27,7 +27,7 @@ namespace SolarMajesty
         public const string OutpostFlagPath = "DemoContent/Flags/Flag_EstablishOutpost";
         public const string TerraformFlagPath = "DemoContent/Flags/Flag_Terraform";
 
-        public const string PalacePath = "DemoContent/Buildings/Building_Palace";
+        public const string CommonsPath = "DemoContent/Buildings/Building_Commons";
         public const string LandingPadPath = "DemoContent/Buildings/Building_LandingPad";
         public const string HabPath = "DemoContent/Buildings/Building_HAB1";
         public const string PowerPath = "DemoContent/Buildings/Building_PWR1";
@@ -70,7 +70,8 @@ namespace SolarMajesty
 
         public static BuildingData[] LoadStarterBuildings()
         {
-            var palace = Resources.Load<BuildingData>(PalacePath);
+            var commons = Resources.Load<BuildingData>(CommonsPath)
+                          ?? Resources.Load<BuildingData>("DemoContent/Buildings/Building_Palace"); // legacy filename
             var pad = Resources.Load<BuildingData>(LandingPadPath);
             var hab = Resources.Load<BuildingData>(HabPath);
             var pwr = Resources.Load<BuildingData>(PowerPath);
@@ -81,17 +82,17 @@ namespace SolarMajesty
             if (pad == null || hab == null || pwr == null || ops == null)
                 return null;
 
-            // Palace is injected by GameLoop.EnsurePalaceFirst when the asset is missing.
+            // Commons is injected by GameLoop.EnsureCommonsFirst when the asset is missing.
             if (lab != null && cmd != null && solar != null)
-                return palace != null
-                    ? new[] { palace, hab, pwr, ops, lab, pad, cmd, solar }
+                return commons != null
+                    ? new[] { commons, hab, pwr, ops, lab, pad, cmd, solar }
                     : new[] { pad, hab, pwr, ops, lab, cmd, solar };
             if (lab != null && cmd != null)
-                return palace != null
-                    ? new[] { palace, hab, pwr, ops, lab, pad, cmd }
+                return commons != null
+                    ? new[] { commons, hab, pwr, ops, lab, pad, cmd }
                     : new[] { pad, hab, pwr, ops, lab, cmd };
-            return palace != null
-                ? new[] { palace, hab, pwr, ops, pad }
+            return commons != null
+                ? new[] { commons, hab, pwr, ops, pad }
                 : new[] { pad, hab, pwr, ops };
         }
 

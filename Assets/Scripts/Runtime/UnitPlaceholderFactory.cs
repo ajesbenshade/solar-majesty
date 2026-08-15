@@ -15,8 +15,8 @@ namespace SolarMajesty
         public static readonly Color HarvesterTint = new Color(0.82f, 0.62f, 0.18f);
         public static readonly Color SurveyorTint = new Color(0.45f, 0.82f, 0.95f);
         public static readonly Color StalkerTint = new Color(0.42f, 0.07f, 0.1f);
-        public static readonly Color MiteTint = new Color(0.72f, 0.48f, 0.18f);
-        public static readonly Color LeechTint = new Color(0.18f, 0.78f, 0.82f);
+        public static readonly Color MiteTint = new Color(0.62f, 0.48f, 0.32f);
+        public static readonly Color LeechTint = new Color(0.88f, 0.90f, 0.92f);
         public static readonly Color BeltMiteTint = new Color(0.38f, 0.32f, 0.28f);
         public static readonly Color EuropaLeechTint = new Color(0.32f, 0.82f, 0.95f);
         public static readonly Color GeologistTint = new Color(0.68f, 0.52f, 0.32f);
@@ -36,21 +36,23 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadScout(), "Unit_ScoutDrone");
             if (mesh != null) return mesh;
 
-            // Hovering probe — white hull, four rotors, cyan sensor, whip antenna.
+            // Imagine LO-SCT-1 fuselage + hover rotors (not a Surveyor tripod).
             var root = new GameObject("Unit_ScoutDrone");
-            Cylinder("Pad", root.transform, new Vector3(0f, 0.06f, 0f), new Vector3(0.45f, 0.04f, 0.45f), BlackBand);
-            Capsule("Probe", root.transform, new Vector3(0f, 1.35f, 0f), new Vector3(0.32f, 0.7f, 0.32f), WhiteShell);
-            Cylinder("Band", root.transform, new Vector3(0f, 1.15f, 0f), new Vector3(0.38f, 0.06f, 0.38f), BlackBand);
-            Sphere("Sensor", root.transform, new Vector3(0f, 1.95f, 0.08f), new Vector3(0.28f, 0.28f, 0.28f), WhiteShell);
-            Cube("Visor", root.transform, new Vector3(0f, 1.95f, 0.18f), new Vector3(0.18f, 0.08f, 0.06f), ScoutTint);
-            Cylinder("Antenna", root.transform, new Vector3(0.1f, 2.45f, 0f), new Vector3(0.04f, 0.4f, 0.04f), Steel);
-            Cube("Beacon", root.transform, new Vector3(-0.16f, 1.72f, 0f), new Vector3(0.08f, 0.08f, 0.08f), OrangeAccent);
+            Cylinder("Pad", root.transform, new Vector3(0f, 0.06f, 0f), new Vector3(0.48f, 0.05f, 0.48f), BlackBand);
+            Capsule("Probe", root.transform, new Vector3(0f, 1.45f, 0f), new Vector3(0.36f, 0.78f, 0.36f), WhiteShell);
+            Cylinder("BandLo", root.transform, new Vector3(0f, 1.12f, 0f), new Vector3(0.40f, 0.05f, 0.40f), BlackBand);
+            Cylinder("BandMid", root.transform, new Vector3(0f, 1.48f, 0f), new Vector3(0.40f, 0.05f, 0.40f), BlackBand);
+            Cylinder("Collar", root.transform, new Vector3(0f, 2.05f, 0.04f), new Vector3(0.32f, 0.06f, 0.32f), OrangeAccent);
+            Cube("Head", root.transform, new Vector3(0f, 2.28f, 0.08f), new Vector3(0.28f, 0.24f, 0.32f), WhiteShell);
+            Cube("Lens", root.transform, new Vector3(0f, 2.28f, 0.26f), new Vector3(0.16f, 0.14f, 0.06f), ScoutTint);
+            Cylinder("Antenna", root.transform, new Vector3(0.08f, 2.72f, -0.06f), new Vector3(0.04f, 0.42f, 0.04f), Steel);
+            Cube("Beacon", root.transform, new Vector3(0.16f, 1.88f, 0f), new Vector3(0.08f, 0.08f, 0.08f), OrangeAccent);
             for (int i = 0; i < 4; i++)
             {
                 float ang = 45f + i * 90f;
                 float rad = ang * Mathf.Deg2Rad;
-                Vector3 p = new Vector3(Mathf.Cos(rad), 0f, Mathf.Sin(rad)) * 0.55f;
-                Cylinder("Rotor_" + i, root.transform, p + new Vector3(0f, 0.95f, 0f), new Vector3(0.32f, 0.03f, 0.32f), BlackBand);
+                Vector3 p = new Vector3(Mathf.Cos(rad), 0f, Mathf.Sin(rad)) * 0.58f;
+                Cylinder("Rotor_" + i, root.transform, p + new Vector3(0f, 0.98f, 0f), new Vector3(0.36f, 0.03f, 0.36f), BlackBand);
             }
             return root;
         }
@@ -60,14 +62,20 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadEngineer(), "Unit_EngineerBot");
             if (mesh != null) return mesh;
 
-            // Squat builder — orange shell, toolbox, orange service stripe.
+            // Imagine v2 builder — white hull, crate pack, cyan visor, orange docks.
             var root = new GameObject("Unit_EngineerBot");
-            Capsule("Body", root.transform, new Vector3(0f, 0.95f, 0f), new Vector3(0.95f, 0.9f, 0.95f), EngineerTint);
-            Cylinder("Band", root.transform, new Vector3(0f, 0.85f, 0f), new Vector3(1.05f, 0.1f, 1.05f), BlackBand);
-            Cube("Toolbox", root.transform, new Vector3(0.78f, 0.85f, 0f), new Vector3(0.5f, 0.38f, 0.42f), BlackBand);
-            Cube("Stripe", root.transform, new Vector3(0.78f, 0.95f, 0.22f), new Vector3(0.52f, 0.08f, 0.08f), OrangeAccent);
-            Cube("Visor", root.transform, new Vector3(0f, 1.4f, 0.42f), new Vector3(0.55f, 0.16f, 0.1f), new Color(0.25f, 0.85f, 1f));
-            Cube("Arm", root.transform, new Vector3(-0.7f, 1.05f, 0.15f), new Vector3(0.35f, 0.18f, 0.18f), Steel);
+            Capsule("Body", root.transform, new Vector3(0f, 1.05f, 0.04f), new Vector3(1.05f, 0.95f, 0.92f), WhiteShell);
+            Cylinder("Band", root.transform, new Vector3(0f, 0.82f, 0.04f), new Vector3(1.12f, 0.08f, 1.02f), BlackBand);
+            Cube("Pack", root.transform, new Vector3(0f, 1.12f, -0.38f), new Vector3(0.48f, 0.58f, 0.28f), Steel);
+            Cube("PackStripe", root.transform, new Vector3(0f, 1.12f, -0.54f), new Vector3(0.08f, 0.36f, 0.04f), OrangeAccent);
+            Cube("Toolbox", root.transform, new Vector3(0.52f, 0.78f, 0.08f), new Vector3(0.28f, 0.22f, 0.22f), BlackBand);
+            Cube("Visor", root.transform, new Vector3(0f, 1.58f, 0.28f), new Vector3(0.42f, 0.12f, 0.08f), ScoutTint);
+            Cube("Dock", root.transform, new Vector3(0f, 1.12f, 0.42f), new Vector3(0.28f, 0.12f, 0.06f), OrangeAccent);
+            Cube("BootL", root.transform, new Vector3(-0.18f, 0.08f, 0.12f), new Vector3(0.22f, 0.10f, 0.32f), BlackBand);
+            Cube("BootR", root.transform, new Vector3(0.18f, 0.08f, 0.12f), new Vector3(0.22f, 0.10f, 0.32f), BlackBand);
+            Cube("ArmL", root.transform, new Vector3(-0.62f, 1.12f, 0.12f), new Vector3(0.16f, 0.42f, 0.16f), Steel);
+            Cube("ArmR", root.transform, new Vector3(0.62f, 1.12f, 0.12f), new Vector3(0.16f, 0.42f, 0.16f), Steel);
+            Cube("StripeL", root.transform, new Vector3(-0.72f, 1.18f, 0.12f), new Vector3(0.04f, 0.22f, 0.12f), OrangeAccent);
             return root;
         }
 
@@ -76,14 +84,23 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadDefense(), "Unit_DefenseMech");
             if (mesh != null) return mesh;
 
-            // Wide combat chassis — red hull, shield plate, shoulder block.
+            // Imagine Guardian — continuous treads, red viewport, massive shoulder pods.
             var root = new GameObject("Unit_DefenseMech");
-            Capsule("Body", root.transform, new Vector3(0f, 1.1f, 0f), new Vector3(1.1f, 1.05f, 0.95f), DefenseTint);
-            Cylinder("Band", root.transform, new Vector3(0f, 0.95f, 0f), new Vector3(1.2f, 0.1f, 1.05f), BlackBand);
-            Cube("Shoulder", root.transform, new Vector3(0.72f, 1.55f, 0f), new Vector3(0.65f, 0.42f, 0.65f), WhiteShell);
-            Cube("ShoulderAccent", root.transform, new Vector3(0.72f, 1.7f, 0.28f), new Vector3(0.5f, 0.08f, 0.12f), OrangeAccent);
-            Cube("Shield", root.transform, new Vector3(-0.78f, 1.15f, 0.12f), new Vector3(0.18f, 1.15f, 0.9f), Steel);
-            Cube("Plating", root.transform, new Vector3(0f, 1.35f, 0.45f), new Vector3(0.7f, 0.35f, 0.12f), BlackBand);
+            Cube("Belly", root.transform, new Vector3(0f, 0.42f, 0.02f), new Vector3(1.12f, 0.38f, 1.32f), BlackBand);
+            Cube("Hull", root.transform, new Vector3(0f, 1.08f, -0.04f), new Vector3(1.18f, 0.78f, 1.22f), WhiteShell);
+            Cube("Slope", root.transform, new Vector3(0f, 0.98f, 0.52f), new Vector3(0.95f, 0.58f, 0.32f), WhiteShell);
+            Cube("Face", root.transform, new Vector3(0f, 1.05f, 0.68f), new Vector3(0.72f, 0.48f, 0.10f), BlackBand);
+            Cube("Visor", root.transform, new Vector3(0f, 1.08f, 0.74f), new Vector3(0.48f, 0.28f, 0.06f), DefenseTint);
+            Cube("Emblem", root.transform, new Vector3(0f, 1.42f, 0.62f), new Vector3(0.16f, 0.14f, 0.08f), OrangeAccent);
+            Cube("ShoulderL", root.transform, new Vector3(-0.92f, 1.18f, 0.02f), new Vector3(0.58f, 0.72f, 0.88f), WhiteShell);
+            Cube("ShoulderR", root.transform, new Vector3(0.92f, 1.18f, 0.02f), new Vector3(0.58f, 0.72f, 0.88f), WhiteShell);
+            Cube("PortL", root.transform, new Vector3(-0.92f, 1.18f, 0.46f), new Vector3(0.28f, 0.32f, 0.06f), DefenseTint);
+            Cube("PortR", root.transform, new Vector3(0.92f, 1.18f, 0.46f), new Vector3(0.28f, 0.32f, 0.06f), DefenseTint);
+            Cube("HazL", root.transform, new Vector3(-0.92f, 1.55f, 0.18f), new Vector3(0.38f, 0.06f, 0.10f), OrangeAccent);
+            Cube("HazR", root.transform, new Vector3(0.92f, 1.55f, 0.18f), new Vector3(0.38f, 0.06f, 0.10f), OrangeAccent);
+            Cube("Turret", root.transform, new Vector3(0f, 1.68f, -0.06f), new Vector3(0.36f, 0.18f, 0.32f), BlackBand);
+            Cube("TreadL", root.transform, new Vector3(-0.72f, 0.18f, 0.02f), new Vector3(0.42f, 0.28f, 1.58f), BlackBand);
+            Cube("TreadR", root.transform, new Vector3(0.72f, 0.18f, 0.02f), new Vector3(0.42f, 0.28f, 1.58f), BlackBand);
             return root;
         }
 
@@ -92,13 +109,24 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadForClass(SpecialistClass.Medic), "Unit_Medic");
             if (mesh != null) return mesh;
 
+            // LO-MED-1 hover capsule — white top / black belly, no rotors.
             var root = new GameObject("Unit_Medic");
-            Capsule("Body", root.transform, new Vector3(0f, 1.1f, 0f), new Vector3(0.7f, 1.05f, 0.7f), WhiteShell);
-            Cylinder("Band", root.transform, new Vector3(0f, 1.15f, 0f), new Vector3(0.78f, 0.08f, 0.78f), BlackBand);
-            Cube("CrossH", root.transform, new Vector3(0f, 1.55f, 0.38f), new Vector3(0.42f, 0.1f, 0.08f), ScoutTint);
-            Cube("CrossV", root.transform, new Vector3(0f, 1.55f, 0.38f), new Vector3(0.1f, 0.42f, 0.08f), ScoutTint);
-            Sphere("Kit", root.transform, new Vector3(0.42f, 0.95f, 0.05f), new Vector3(0.28f, 0.22f, 0.28f), MedicTint);
-            Cube("Beacon", root.transform, new Vector3(-0.22f, 2.05f, 0f), new Vector3(0.1f, 0.1f, 0.1f), OrangeAccent);
+            Cylinder("Pad", root.transform, new Vector3(0f, 0.04f, 0f), new Vector3(0.52f, 0.04f, 0.52f), BlackBand);
+            Sphere("Hull", root.transform, new Vector3(0f, 0.72f, 0.04f), new Vector3(0.86f, 0.68f, 1.68f), WhiteShell);
+            Sphere("Belly", root.transform, new Vector3(0f, 0.50f, 0.04f), new Vector3(0.74f, 0.32f, 1.46f), BlackBand);
+            Cube("StripeL", root.transform, new Vector3(-0.30f, 0.52f, 0.72f), new Vector3(0.10f, 0.08f, 0.22f), OrangeAccent);
+            Cube("StripeR", root.transform, new Vector3(0.30f, 0.52f, 0.72f), new Vector3(0.10f, 0.08f, 0.22f), OrangeAccent);
+            Cube("Visor", root.transform, new Vector3(0f, 0.74f, 0.82f), new Vector3(0.48f, 0.08f, 0.04f), ScoutTint);
+            Cube("CrossH", root.transform, new Vector3(0f, 1.08f, 0.06f), new Vector3(0.46f, 0.05f, 0.08f), ScoutTint);
+            Cube("CrossV", root.transform, new Vector3(0f, 1.08f, 0.06f), new Vector3(0.08f, 0.05f, 0.46f), ScoutTint);
+            Cylinder("IvPole", root.transform, new Vector3(-0.22f, 1.18f, -0.72f), new Vector3(0.04f, 0.30f, 0.04f), Steel);
+            Sphere("IvBag", root.transform, new Vector3(-0.22f, 1.50f, -0.72f), new Vector3(0.12f, 0.16f, 0.10f), ScoutTint);
+            for (int i = 0; i < 4; i++)
+            {
+                float x = i < 2 ? -0.38f : 0.38f;
+                float z = i % 2 == 0 ? 0.52f : -0.52f;
+                Cylinder("Thruster_" + i, root.transform, new Vector3(x, 0.18f, z), new Vector3(0.26f, 0.04f, 0.26f), ScoutTint);
+            }
             return root;
         }
 
@@ -107,12 +135,18 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadHarvester(), "Unit_HarvesterBot");
             if (mesh != null) return mesh;
 
+            // LO-HAR-1 tracked hopper — orange blade, rear hopper, side arm.
             var root = new GameObject("Unit_HarvesterBot");
-            Capsule("Body", root.transform, new Vector3(0f, 0.88f, 0f), new Vector3(1.05f, 0.78f, 1.05f), HarvesterTint);
-            Cylinder("Band", root.transform, new Vector3(0f, 0.78f, 0f), new Vector3(1.15f, 0.1f, 1.15f), BlackBand);
-            Cube("Hopper", root.transform, new Vector3(0f, 1.25f, -0.35f), new Vector3(0.7f, 0.42f, 0.55f), Steel);
-            Cube("Scoop", root.transform, new Vector3(0f, 0.55f, 0.62f), new Vector3(0.85f, 0.18f, 0.42f), OrangeAccent);
-            Cube("Visor", root.transform, new Vector3(0f, 1.22f, 0.48f), new Vector3(0.5f, 0.12f, 0.08f), new Color(0.25f, 0.85f, 1f));
+            Cube("Chassis", root.transform, new Vector3(0f, 0.42f, 0.02f), new Vector3(1.08f, 0.36f, 1.32f), BlackBand);
+            Cube("Cab", root.transform, new Vector3(0f, 0.98f, 0.22f), new Vector3(0.82f, 0.62f, 0.72f), WhiteShell);
+            Cube("Visor", root.transform, new Vector3(0f, 1.08f, 0.60f), new Vector3(0.58f, 0.16f, 0.05f), ScoutTint);
+            Cube("Hopper", root.transform, new Vector3(0f, 1.05f, -0.62f), new Vector3(0.88f, 0.62f, 0.52f), Steel);
+            Cube("HopLip", root.transform, new Vector3(0f, 1.38f, -0.62f), new Vector3(0.82f, 0.08f, 0.46f), OrangeAccent);
+            Cube("Blade", root.transform, new Vector3(0f, 0.48f, 0.98f), new Vector3(1.18f, 0.58f, 0.12f), OrangeAccent);
+            Cube("Arm", root.transform, new Vector3(-0.68f, 1.02f, 0.08f), new Vector3(0.10f, 0.10f, 0.42f), BlackBand);
+            Cube("Bucket", root.transform, new Vector3(-0.68f, 0.42f, 0.58f), new Vector3(0.16f, 0.12f, 0.22f), OrangeAccent);
+            Cube("TrackL", root.transform, new Vector3(-0.62f, 0.18f, 0.02f), new Vector3(0.28f, 0.28f, 1.42f), BlackBand);
+            Cube("TrackR", root.transform, new Vector3(0.62f, 0.18f, 0.02f), new Vector3(0.28f, 0.28f, 1.42f), BlackBand);
             return root;
         }
 
@@ -121,12 +155,20 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadSurveyor(), "Unit_SurveyorBot");
             if (mesh != null) return mesh;
 
+            // LO-SRV-1 tripod mast — not a Scout hover, not a six-wheel rover.
             var root = new GameObject("Unit_SurveyorBot");
-            Capsule("Body", root.transform, new Vector3(0f, 1.2f, 0f), new Vector3(0.55f, 1.12f, 0.55f), SurveyorTint);
-            Cylinder("Band", root.transform, new Vector3(0f, 1.35f, 0f), new Vector3(0.62f, 0.08f, 0.62f), BlackBand);
-            Sphere("Dish", root.transform, new Vector3(0f, 2.35f, 0f), new Vector3(0.55f, 0.12f, 0.55f), WhiteShell);
-            Cylinder("Mast", root.transform, new Vector3(0f, 2.05f, 0f), new Vector3(0.06f, 0.42f, 0.06f), Steel);
-            Cube("Lens", root.transform, new Vector3(0f, 1.55f, 0.28f), new Vector3(0.32f, 0.12f, 0.1f), ScoutTint);
+            Cylinder("Body", root.transform, new Vector3(0f, 0.92f, 0f), new Vector3(0.60f, 0.29f, 0.60f), WhiteShell);
+            Cylinder("Band", root.transform, new Vector3(0f, 0.78f, 0f), new Vector3(0.68f, 0.04f, 0.68f), BlackBand);
+            Cylinder("Mast", root.transform, new Vector3(0f, 1.82f, 0f), new Vector3(0.08f, 0.64f, 0.08f), Steel);
+            Sphere("Dish", root.transform, new Vector3(0f, 2.48f, 0f), new Vector3(0.84f, 0.14f, 0.84f), WhiteShell);
+            Cube("Lens", root.transform, new Vector3(0f, 0.98f, 0.32f), new Vector3(0.16f, 0.12f, 0.06f), ScoutTint);
+            Sphere("Cluster", root.transform, new Vector3(0f, 2.55f, 0.08f), new Vector3(0.16f, 0.16f, 0.16f), ScoutTint);
+            Cube("FootA", root.transform, new Vector3(0.78f, 0.04f, 0.28f), new Vector3(0.22f, 0.06f, 0.22f), BlackBand);
+            Cube("FootB", root.transform, new Vector3(-0.62f, 0.04f, 0.52f), new Vector3(0.22f, 0.06f, 0.22f), BlackBand);
+            Cube("FootC", root.transform, new Vector3(-0.14f, 0.04f, -0.80f), new Vector3(0.22f, 0.06f, 0.22f), BlackBand);
+            Cube("LegA", root.transform, new Vector3(0.38f, 0.42f, 0.14f), new Vector3(0.08f, 0.55f, 0.08f), Steel);
+            Cube("LegB", root.transform, new Vector3(-0.30f, 0.42f, 0.26f), new Vector3(0.08f, 0.55f, 0.08f), Steel);
+            Cube("LegC", root.transform, new Vector3(-0.08f, 0.42f, -0.40f), new Vector3(0.08f, 0.55f, 0.08f), Steel);
             return root;
         }
 
@@ -135,19 +177,23 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadStalker(), "Unit_DustStalker");
             if (mesh != null) return mesh;
 
-            // Low predator — dark carapace, glowing eyes, spine ridges.
+            // Imagine predator — four eyes, wrapping bone plates, serrated spine, 3-toe feet.
             var root = new GameObject("Unit_DustStalker");
-            Sphere("Body", root.transform, new Vector3(0f, 0.38f, 0f), new Vector3(1.7f, 0.55f, 1.15f), StalkerTint);
-            Sphere("Head", root.transform, new Vector3(0f, 0.48f, 0.7f), new Vector3(0.55f, 0.4f, 0.55f), StalkerTint * 1.15f);
-            Cube("Spine", root.transform, new Vector3(0f, 0.58f, -0.35f), new Vector3(0.22f, 0.18f, 0.95f), BlackBand);
-            Cube("RidgeA", root.transform, new Vector3(0f, 0.72f, 0.05f), new Vector3(0.12f, 0.28f, 0.18f), BlackBand);
-            Cube("RidgeB", root.transform, new Vector3(0f, 0.68f, -0.35f), new Vector3(0.1f, 0.22f, 0.16f), BlackBand);
-            Sphere("EyeL", root.transform, new Vector3(-0.16f, 0.55f, 0.92f), new Vector3(0.12f, 0.1f, 0.1f), OrangeAccent);
-            Sphere("EyeR", root.transform, new Vector3(0.16f, 0.55f, 0.92f), new Vector3(0.12f, 0.1f, 0.1f), OrangeAccent);
-            Cube("LegFL", root.transform, new Vector3(-0.55f, 0.18f, 0.35f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
-            Cube("LegFR", root.transform, new Vector3(0.55f, 0.18f, 0.35f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
-            Cube("LegBL", root.transform, new Vector3(-0.5f, 0.18f, -0.4f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
-            Cube("LegBR", root.transform, new Vector3(0.5f, 0.18f, -0.4f), new Vector3(0.12f, 0.35f, 0.12f), BlackBand);
+            Sphere("Body", root.transform, new Vector3(0f, 0.50f, 0.06f), new Vector3(1.22f, 0.78f, 2.65f), StalkerTint);
+            Sphere("Head", root.transform, new Vector3(0f, 0.58f, 1.32f), new Vector3(0.52f, 0.48f, 0.82f), StalkerTint * 1.15f);
+            Cube("Plate", root.transform, new Vector3(0f, 0.82f, 0.12f), new Vector3(0.72f, 0.18f, 1.15f), WhiteShell);
+            Cube("Spine", root.transform, new Vector3(0f, 1.12f, 0.08f), new Vector3(0.14f, 0.62f, 1.65f), BlackBand);
+            Cube("Tail", root.transform, new Vector3(0f, 0.40f, -1.55f), new Vector3(0.32f, 0.24f, 1.05f), StalkerTint);
+            Sphere("EyeL", root.transform, new Vector3(-0.14f, 0.70f, 1.50f), new Vector3(0.12f, 0.10f, 0.10f), OrangeAccent);
+            Sphere("EyeR", root.transform, new Vector3(0.14f, 0.70f, 1.50f), new Vector3(0.12f, 0.10f, 0.10f), OrangeAccent);
+            Sphere("EyeLo", root.transform, new Vector3(-0.22f, 0.62f, 1.42f), new Vector3(0.09f, 0.08f, 0.08f), OrangeAccent);
+            Sphere("EyeRo", root.transform, new Vector3(0.22f, 0.62f, 1.42f), new Vector3(0.09f, 0.08f, 0.08f), OrangeAccent);
+            Cube("BracerL", root.transform, new Vector3(-0.55f, 0.18f, 0.55f), new Vector3(0.18f, 0.14f, 0.18f), WhiteShell);
+            Cube("BracerR", root.transform, new Vector3(0.55f, 0.18f, 0.55f), new Vector3(0.18f, 0.14f, 0.18f), WhiteShell);
+            Cube("LegFL", root.transform, new Vector3(-0.55f, 0.22f, 0.55f), new Vector3(0.14f, 0.42f, 0.14f), BlackBand);
+            Cube("LegFR", root.transform, new Vector3(0.55f, 0.22f, 0.55f), new Vector3(0.14f, 0.42f, 0.14f), BlackBand);
+            Cube("LegBL", root.transform, new Vector3(-0.50f, 0.22f, -0.50f), new Vector3(0.14f, 0.42f, 0.14f), BlackBand);
+            Cube("LegBR", root.transform, new Vector3(0.50f, 0.22f, -0.50f), new Vector3(0.14f, 0.42f, 0.14f), BlackBand);
             return root;
         }
 
@@ -157,13 +203,16 @@ namespace SolarMajesty
             if (mesh != null) return mesh;
 
             var root = new GameObject("Unit_RegolithMite");
-            Sphere("Body", root.transform, new Vector3(0f, 0.28f, 0f), new Vector3(0.85f, 0.42f, 0.7f), MiteTint);
-            Cube("Mandible", root.transform, new Vector3(0f, 0.22f, 0.38f), new Vector3(0.28f, 0.12f, 0.22f), BlackBand);
-            Sphere("EyeL", root.transform, new Vector3(-0.14f, 0.34f, 0.28f), new Vector3(0.1f, 0.08f, 0.08f), OrangeAccent);
-            Sphere("EyeR", root.transform, new Vector3(0.14f, 0.34f, 0.28f), new Vector3(0.1f, 0.08f, 0.08f), OrangeAccent);
-            Cube("LegL", root.transform, new Vector3(-0.32f, 0.12f, 0.05f), new Vector3(0.08f, 0.22f, 0.08f), BlackBand);
-            Cube("LegR", root.transform, new Vector3(0.32f, 0.12f, 0.05f), new Vector3(0.08f, 0.22f, 0.08f), BlackBand);
-            Cube("Plate", root.transform, new Vector3(0f, 0.42f, -0.08f), new Vector3(0.55f, 0.08f, 0.4f), new Color(0.42f, 0.34f, 0.28f));
+            Sphere("Body", root.transform, new Vector3(0f, 0.20f, 0.02f), new Vector3(0.46f, 0.34f, 0.82f), MiteTint);
+            Cube("Plate", root.transform, new Vector3(0f, 0.36f, 0f), new Vector3(0.42f, 0.08f, 0.55f), new Color(0.14f, 0.14f, 0.16f));
+            Cube("Mandible", root.transform, new Vector3(0f, 0.16f, 0.42f), new Vector3(0.16f, 0.08f, 0.14f), BlackBand);
+            Sphere("Eye", root.transform, new Vector3(0f, 0.24f, 0.44f), new Vector3(0.09f, 0.09f, 0.09f), ScoutTint);
+            Cube("LegFL", root.transform, new Vector3(-0.22f, 0.08f, 0.22f), new Vector3(0.16f, 0.08f, 0.08f), BlackBand);
+            Cube("LegFR", root.transform, new Vector3(0.22f, 0.08f, 0.22f), new Vector3(0.16f, 0.08f, 0.08f), BlackBand);
+            Cube("LegML", root.transform, new Vector3(-0.24f, 0.08f, 0f), new Vector3(0.16f, 0.08f, 0.08f), BlackBand);
+            Cube("LegMR", root.transform, new Vector3(0.24f, 0.08f, 0f), new Vector3(0.16f, 0.08f, 0.08f), BlackBand);
+            Cube("LegBL", root.transform, new Vector3(-0.20f, 0.08f, -0.22f), new Vector3(0.16f, 0.08f, 0.08f), BlackBand);
+            Cube("LegBR", root.transform, new Vector3(0.20f, 0.08f, -0.22f), new Vector3(0.16f, 0.08f, 0.08f), BlackBand);
             return root;
         }
 
@@ -173,10 +222,16 @@ namespace SolarMajesty
             if (mesh != null) return mesh;
 
             var root = new GameObject("Unit_WattLeech");
-            Capsule("Body", root.transform, new Vector3(0f, 0.22f, 0f), new Vector3(0.55f, 0.22f, 1.15f), LeechTint);
-            Sphere("Core", root.transform, new Vector3(0f, 0.32f, 0.15f), new Vector3(0.28f, 0.28f, 0.28f), new Color(0.55f, 1f, 1f));
-            Cube("Spark", root.transform, new Vector3(0f, 0.48f, 0.4f), new Vector3(0.12f, 0.18f, 0.12f), OrangeAccent);
-            Cube("Ridge", root.transform, new Vector3(0f, 0.38f, -0.15f), new Vector3(0.18f, 0.1f, 0.7f), new Color(0.72f, 0.9f, 0.98f));
+            Sphere("Body", root.transform, new Vector3(0f, 0.16f, 0f), new Vector3(0.92f, 0.28f, 1.50f), LeechTint);
+            Cube("Groove", root.transform, new Vector3(0f, 0.28f, 0.04f), new Vector3(0.10f, 0.05f, 1.22f), ScoutTint);
+            Cube("MandibleL", root.transform, new Vector3(-0.10f, 0.12f, 0.78f), new Vector3(0.08f, 0.08f, 0.18f), WhiteShell);
+            Cube("MandibleR", root.transform, new Vector3(0.10f, 0.12f, 0.78f), new Vector3(0.08f, 0.08f, 0.18f), WhiteShell);
+            Sphere("NubL", root.transform, new Vector3(-0.12f, 0.22f, 0.62f), new Vector3(0.07f, 0.07f, 0.07f), OrangeAccent);
+            Sphere("NubR", root.transform, new Vector3(0.12f, 0.22f, 0.62f), new Vector3(0.07f, 0.07f, 0.07f), OrangeAccent);
+            Cube("FinFL", root.transform, new Vector3(-0.48f, 0.14f, 0.32f), new Vector3(0.28f, 0.04f, 0.18f), WhiteShell);
+            Cube("FinFR", root.transform, new Vector3(0.48f, 0.14f, 0.32f), new Vector3(0.28f, 0.04f, 0.18f), WhiteShell);
+            Cube("DiscL", root.transform, new Vector3(-0.38f, 0.08f, 0f), new Vector3(0.14f, 0.04f, 0.14f), BlackBand);
+            Cube("DiscR", root.transform, new Vector3(0.38f, 0.08f, 0f), new Vector3(0.14f, 0.04f, 0.14f), BlackBand);
             return root;
         }
 
@@ -185,14 +240,21 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadTerraformer(), "Unit_TerraformerBot");
             if (mesh != null) return mesh;
 
+            // LO-TRF-1 tracked dozer — orange blade + rear rake, not a hopper scoop.
             var root = new GameObject("Unit_TerraformerBot");
-            Capsule("Body", root.transform, new Vector3(0f, 1.0f, 0f), new Vector3(0.85f, 0.9f, 0.85f), WhiteShell);
-            Cylinder("Band", root.transform, new Vector3(0f, 0.85f, 0f), new Vector3(0.95f, 0.08f, 0.95f), BlackBand);
-            Cylinder("TankL", root.transform, new Vector3(-0.38f, 1.15f, -0.28f), new Vector3(0.28f, 0.42f, 0.28f), Steel);
-            Cylinder("TankR", root.transform, new Vector3(0.38f, 1.15f, -0.28f), new Vector3(0.28f, 0.42f, 0.28f), Steel);
-            Cube("Boom", root.transform, new Vector3(0f, 1.15f, 0.55f), new Vector3(0.9f, 0.08f, 0.08f), Steel);
-            Cube("Nozzle", root.transform, new Vector3(0f, 1.0f, 0.62f), new Vector3(0.12f, 0.18f, 0.12f), OrangeAccent);
-            Cube("Visor", root.transform, new Vector3(0f, 1.45f, 0.38f), new Vector3(0.42f, 0.1f, 0.08f), ScoutTint);
+            Cube("Chassis", root.transform, new Vector3(0f, 0.72f, 0.02f), new Vector3(1.18f, 0.48f, 1.68f), WhiteShell);
+            Cube("Belly", root.transform, new Vector3(0f, 0.40f, 0.02f), new Vector3(1.28f, 0.16f, 1.78f), BlackBand);
+            Cube("Cab", root.transform, new Vector3(0f, 1.28f, 0.38f), new Vector3(0.78f, 0.52f, 0.58f), WhiteShell);
+            Cube("Blade", root.transform, new Vector3(0f, 0.58f, 1.22f), new Vector3(1.55f, 0.78f, 0.12f), OrangeAccent);
+            Cube("Rake", root.transform, new Vector3(0f, 0.42f, -1.12f), new Vector3(2.05f, 0.10f, 0.10f), OrangeAccent);
+            Cube("TineL", root.transform, new Vector3(-0.72f, 0.22f, -1.18f), new Vector3(0.06f, 0.28f, 0.06f), OrangeAccent);
+            Cube("TineC", root.transform, new Vector3(0f, 0.22f, -1.18f), new Vector3(0.06f, 0.28f, 0.06f), OrangeAccent);
+            Cube("TineR", root.transform, new Vector3(0.72f, 0.22f, -1.18f), new Vector3(0.06f, 0.28f, 0.06f), OrangeAccent);
+            Cube("Tanks", root.transform, new Vector3(0f, 1.22f, -0.48f), new Vector3(0.92f, 0.42f, 0.72f), WhiteShell);
+            Cube("Beacon", root.transform, new Vector3(0f, 1.62f, 0.28f), new Vector3(0.10f, 0.10f, 0.10f), OrangeAccent);
+            Cube("Visor", root.transform, new Vector3(0f, 1.38f, 0.68f), new Vector3(0.62f, 0.16f, 0.05f), ScoutTint);
+            Cube("TrackL", root.transform, new Vector3(-0.68f, 0.20f, 0.02f), new Vector3(0.32f, 0.32f, 1.52f), BlackBand);
+            Cube("TrackR", root.transform, new Vector3(0.68f, 0.20f, 0.02f), new Vector3(0.32f, 0.32f, 1.52f), BlackBand);
             return root;
         }
 
@@ -201,11 +263,25 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadCourier(), "Unit_CourierBot");
             if (mesh != null) return mesh;
 
+            // LO-COU-1 six-wheel hauler — white crate, orange corners, no drill.
             var root = new GameObject("Unit_CourierBot");
-            Cube("Chassis", root.transform, new Vector3(0f, 0.55f, 0f), new Vector3(0.7f, 0.45f, 0.85f), WhiteShell);
-            Cube("Crate", root.transform, new Vector3(0f, 1.05f, -0.18f), new Vector3(0.55f, 0.5f, 0.48f), Steel);
-            Cube("Stripe", root.transform, new Vector3(0f, 1.05f, -0.44f), new Vector3(0.42f, 0.08f, 0.06f), OrangeAccent);
-            Cube("Visor", root.transform, new Vector3(0f, 0.95f, 0.38f), new Vector3(0.36f, 0.1f, 0.08f), ScoutTint);
+            Cube("Chassis", root.transform, new Vector3(0f, 0.50f, 0.02f), new Vector3(0.78f, 0.32f, 1.58f), WhiteShell);
+            Cube("Belly", root.transform, new Vector3(0f, 0.26f, 0.02f), new Vector3(0.70f, 0.16f, 1.48f), BlackBand);
+            Cube("Crate", root.transform, new Vector3(0f, 1.00f, -0.28f), new Vector3(0.80f, 0.78f, 0.92f), WhiteShell);
+            Cube("Corner", root.transform, new Vector3(0.38f, 1.28f, -0.70f), new Vector3(0.10f, 0.10f, 0.10f), OrangeAccent);
+            Cube("Cab", root.transform, new Vector3(0f, 0.82f, 0.68f), new Vector3(0.64f, 0.44f, 0.42f), WhiteShell);
+            Cube("Grille", root.transform, new Vector3(0f, 0.62f, 0.90f), new Vector3(0.22f, 0.18f, 0.04f), BlackBand);
+            Cube("Visor", root.transform, new Vector3(0f, 0.92f, 0.90f), new Vector3(0.50f, 0.10f, 0.04f), ScoutTint);
+            Cube("Beacon", root.transform, new Vector3(0f, 1.12f, 0.58f), new Vector3(0.10f, 0.10f, 0.10f), OrangeAccent);
+            Cylinder("Antenna", root.transform, new Vector3(0.22f, 1.38f, 0.58f), new Vector3(0.04f, 0.40f, 0.04f), Steel);
+            for (int i = 0; i < 3; i++)
+            {
+                float z = -0.58f + i * 0.60f;
+                var wl = Cylinder("WheelL_" + i, root.transform, new Vector3(-0.46f, 0.18f, z), new Vector3(0.32f, 0.10f, 0.32f), BlackBand);
+                wl.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                var wr = Cylinder("WheelR_" + i, root.transform, new Vector3(0.46f, 0.18f, z), new Vector3(0.32f, 0.10f, 0.32f), BlackBand);
+                wr.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            }
             return root;
         }
 
@@ -214,21 +290,25 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadGeologist(), "Unit_GeologistBot");
             if (mesh != null) return mesh;
 
+            // LO-GEO-1 drill rover — vertical bit through orange collar, small crate.
             var root = new GameObject("Unit_GeologistBot");
-            Cube("Chassis", root.transform, new Vector3(0f, 0.42f, 0f), new Vector3(0.7f, 0.32f, 1.2f), WhiteShell);
-            Cube("Belly", root.transform, new Vector3(0f, 0.22f, 0f), new Vector3(0.55f, 0.16f, 1.05f), BlackBand);
-            Cube("Crate", root.transform, new Vector3(0f, 0.62f, -0.42f), new Vector3(0.45f, 0.28f, 0.38f), Steel);
-            Cube("Stripe", root.transform, new Vector3(0f, 0.52f, 0.48f), new Vector3(0.4f, 0.08f, 0.08f), OrangeAccent);
-            Cylinder("Mast", root.transform, new Vector3(0.12f, 0.85f, 0.2f), new Vector3(0.06f, 0.28f, 0.06f), Steel);
-            Sphere("Sensor", root.transform, new Vector3(0.12f, 1.18f, 0.2f), new Vector3(0.18f, 0.18f, 0.18f), ScoutTint);
-            Cube("Drill", root.transform, new Vector3(-0.12f, 0.55f, 0.7f), new Vector3(0.1f, 0.1f, 0.55f), Steel);
-            Cube("Bit", root.transform, new Vector3(-0.12f, 0.5f, 1.02f), new Vector3(0.1f, 0.1f, 0.16f), OrangeAccent);
+            Cube("Chassis", root.transform, new Vector3(0f, 0.44f, 0.04f), new Vector3(0.72f, 0.28f, 1.38f), WhiteShell);
+            Cube("Belly", root.transform, new Vector3(0f, 0.24f, 0.04f), new Vector3(0.62f, 0.14f, 1.22f), BlackBand);
+            Cube("Crate", root.transform, new Vector3(0f, 0.62f, -0.58f), new Vector3(0.46f, 0.26f, 0.36f), Steel);
+            Cube("StripeL", root.transform, new Vector3(-0.12f, 0.52f, 0.78f), new Vector3(0.05f, 0.22f, 0.04f), OrangeAccent);
+            Cube("StripeR", root.transform, new Vector3(0.12f, 0.52f, 0.78f), new Vector3(0.05f, 0.22f, 0.04f), OrangeAccent);
+            Cylinder("Mast", root.transform, new Vector3(-0.16f, 0.92f, 0.18f), new Vector3(0.06f, 0.32f, 0.06f), Steel);
+            Sphere("Sensor", root.transform, new Vector3(-0.16f, 1.26f, 0.18f), new Vector3(0.16f, 0.16f, 0.16f), ScoutTint);
+            Cube("DrillArm", root.transform, new Vector3(0f, 0.92f, 0.72f), new Vector3(0.10f, 0.36f, 0.12f), Steel);
+            Cylinder("Collar", root.transform, new Vector3(0f, 0.68f, 0.72f), new Vector3(0.22f, 0.08f, 0.22f), OrangeAccent);
+            Cylinder("Bit", root.transform, new Vector3(0f, 0.38f, 0.72f), new Vector3(0.08f, 0.22f, 0.08f), Steel);
+            Cylinder("Vial", root.transform, new Vector3(-0.12f, 0.90f, -0.50f), new Vector3(0.06f, 0.08f, 0.06f), ScoutTint);
             for (int i = 0; i < 3; i++)
             {
-                float z = -0.45f + i * 0.45f;
-                var wl = Cylinder("WheelL_" + i, root.transform, new Vector3(-0.42f, 0.16f, z), new Vector3(0.28f, 0.08f, 0.28f), BlackBand);
+                float z = -0.58f + i * 0.62f;
+                var wl = Cylinder("WheelL_" + i, root.transform, new Vector3(-0.44f, 0.16f, z), new Vector3(0.28f, 0.08f, 0.28f), BlackBand);
                 wl.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-                var wr = Cylinder("WheelR_" + i, root.transform, new Vector3(0.42f, 0.16f, z), new Vector3(0.28f, 0.08f, 0.28f), BlackBand);
+                var wr = Cylinder("WheelR_" + i, root.transform, new Vector3(0.44f, 0.16f, z), new Vector3(0.28f, 0.08f, 0.28f), BlackBand);
                 wr.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
             }
             return root;
@@ -239,13 +319,20 @@ namespace SolarMajesty
             var mesh = UnitMeshCatalog.InstantiateClean(UnitMeshCatalog.LoadSentinel(), "Unit_SentinelMech");
             if (mesh != null) return mesh;
 
+            // LO-SEN-1 tracked turret — continuous treads, cyan visor, no red viewport.
             var root = new GameObject("Unit_SentinelMech");
-            Cube("Hull", root.transform, new Vector3(0f, 0.55f, 0f), new Vector3(0.95f, 0.55f, 0.85f), WhiteShell);
-            Cube("Skirt", root.transform, new Vector3(0f, 0.22f, 0f), new Vector3(1.05f, 0.18f, 0.95f), BlackBand);
-            Cylinder("Turret", root.transform, new Vector3(0f, 1.05f, 0f), new Vector3(0.55f, 0.22f, 0.55f), SentinelTint);
-            Cube("Barrel", root.transform, new Vector3(0f, 1.12f, 0.42f), new Vector3(0.12f, 0.12f, 0.55f), Steel);
-            Cube("Shield", root.transform, new Vector3(-0.58f, 0.62f, 0.08f), new Vector3(0.08f, 0.7f, 0.7f), Steel);
-            Cube("Chevron", root.transform, new Vector3(0f, 0.72f, 0.42f), new Vector3(0.55f, 0.08f, 0.08f), OrangeAccent);
+            Cube("Hull", root.transform, new Vector3(0f, 0.72f, 0.02f), new Vector3(1.12f, 0.48f, 1.28f), WhiteShell);
+            Cube("Skirt", root.transform, new Vector3(0f, 0.38f, 0.02f), new Vector3(1.22f, 0.18f, 1.38f), BlackBand);
+            Cylinder("Turret", root.transform, new Vector3(0f, 1.28f, 0.08f), new Vector3(0.48f, 0.12f, 0.38f), WhiteShell);
+            Cube("BarrelL", root.transform, new Vector3(-0.12f, 1.28f, 0.52f), new Vector3(0.10f, 0.10f, 0.72f), BlackBand);
+            Cube("BarrelR", root.transform, new Vector3(0.12f, 1.28f, 0.52f), new Vector3(0.10f, 0.10f, 0.72f), BlackBand);
+            Cube("LensL", root.transform, new Vector3(-0.12f, 1.28f, 0.90f), new Vector3(0.08f, 0.08f, 0.08f), ScoutTint);
+            Cube("LensR", root.transform, new Vector3(0.12f, 1.28f, 0.90f), new Vector3(0.08f, 0.08f, 0.08f), ScoutTint);
+            Cube("ChevronL", root.transform, new Vector3(-0.16f, 1.00f, 0.18f), new Vector3(0.42f, 0.05f, 0.08f), OrangeAccent);
+            Cube("ChevronR", root.transform, new Vector3(0.16f, 1.00f, 0.18f), new Vector3(0.42f, 0.05f, 0.08f), OrangeAccent);
+            Cube("Visor", root.transform, new Vector3(0f, 0.78f, 0.66f), new Vector3(0.72f, 0.08f, 0.05f), ScoutTint);
+            Cube("TrackL", root.transform, new Vector3(-0.62f, 0.18f, 0.02f), new Vector3(0.30f, 0.28f, 1.42f), BlackBand);
+            Cube("TrackR", root.transform, new Vector3(0.62f, 0.18f, 0.02f), new Vector3(0.30f, 0.28f, 1.42f), BlackBand);
             return root;
         }
 
@@ -255,11 +342,17 @@ namespace SolarMajesty
             if (mesh != null) return mesh;
 
             var root = new GameObject("Unit_IceWisp");
-            Sphere("Core", root.transform, new Vector3(0f, 0.55f, 0f), new Vector3(0.32f, 0.32f, 0.32f), ScoutTint);
-            Sphere("Halo", root.transform, new Vector3(0f, 0.55f, 0f), new Vector3(0.55f, 0.38f, 0.55f), WispTint);
-            Cube("ShardA", root.transform, new Vector3(0.18f, 0.72f, 0.08f), new Vector3(0.08f, 0.28f, 0.06f), WhiteShell);
-            Cube("ShardB", root.transform, new Vector3(-0.14f, 0.42f, -0.1f), new Vector3(0.07f, 0.22f, 0.05f), Steel);
-            Cube("Spark", root.transform, new Vector3(0.08f, 0.82f, 0.12f), new Vector3(0.08f, 0.08f, 0.08f), OrangeAccent);
+            Cylinder("Pad", root.transform, new Vector3(0f, 0.03f, 0f), new Vector3(0.48f, 0.03f, 0.48f), ScoutTint);
+            Sphere("Core", root.transform, new Vector3(0f, 1.00f, 0f), new Vector3(0.24f, 0.24f, 0.24f), ScoutTint);
+            Cylinder("Hub", root.transform, new Vector3(0f, 1.00f, 0f), new Vector3(0.44f, 0.08f, 0.44f), BlackBand);
+            Cube("ShardA", root.transform, new Vector3(0f, 1.00f, 0.52f), new Vector3(0.08f, 0.08f, 0.62f), WispTint);
+            Cube("ShardB", root.transform, new Vector3(0.48f, 1.00f, 0.18f), new Vector3(0.62f, 0.08f, 0.08f), WispTint);
+            Cube("ShardC", root.transform, new Vector3(0.32f, 1.00f, -0.40f), new Vector3(0.08f, 0.08f, 0.52f), WispTint);
+            Cube("ShardD", root.transform, new Vector3(-0.32f, 1.00f, -0.40f), new Vector3(0.08f, 0.08f, 0.52f), WispTint);
+            Cube("ShardE", root.transform, new Vector3(-0.48f, 1.00f, 0.18f), new Vector3(0.62f, 0.08f, 0.08f), WispTint);
+            Cube("ShardF", root.transform, new Vector3(0.22f, 1.00f, 0.42f), new Vector3(0.08f, 0.08f, 0.42f), WispTint);
+            Cube("ShardG", root.transform, new Vector3(-0.22f, 1.00f, 0.42f), new Vector3(0.08f, 0.08f, 0.42f), WispTint);
+            Sphere("Nub", root.transform, new Vector3(0.18f, 1.06f, 0.28f), new Vector3(0.07f, 0.07f, 0.07f), OrangeAccent);
             return root;
         }
 
@@ -269,12 +362,14 @@ namespace SolarMajesty
             if (mesh != null) return mesh;
 
             var root = new GameObject("Unit_RockTick");
-            Sphere("Body", root.transform, new Vector3(0f, 0.16f, 0f), new Vector3(0.42f, 0.22f, 0.48f), TickTint);
-            Cube("Plate", root.transform, new Vector3(0f, 0.26f, -0.02f), new Vector3(0.32f, 0.06f, 0.28f), Steel);
-            Cube("PincerL", root.transform, new Vector3(-0.12f, 0.14f, 0.22f), new Vector3(0.05f, 0.05f, 0.14f), OrangeAccent);
-            Cube("PincerR", root.transform, new Vector3(0.12f, 0.14f, 0.22f), new Vector3(0.05f, 0.05f, 0.14f), OrangeAccent);
-            Cube("LegL", root.transform, new Vector3(-0.18f, 0.08f, 0.05f), new Vector3(0.04f, 0.12f, 0.04f), BlackBand);
-            Cube("LegR", root.transform, new Vector3(0.18f, 0.08f, 0.05f), new Vector3(0.04f, 0.12f, 0.04f), BlackBand);
+            Sphere("Body", root.transform, new Vector3(0f, 0.22f, 0f), new Vector3(0.82f, 0.28f, 0.46f), TickTint);
+            Cube("Spike", root.transform, new Vector3(0f, 0.48f, -0.04f), new Vector3(0.12f, 0.28f, 0.12f), Steel);
+            Cube("PincerL", root.transform, new Vector3(-0.18f, 0.2f, 0.42f), new Vector3(0.08f, 0.08f, 0.22f), BlackBand);
+            Cube("TipL", root.transform, new Vector3(-0.18f, 0.2f, 0.58f), new Vector3(0.08f, 0.08f, 0.12f), OrangeAccent);
+            Cube("PincerR", root.transform, new Vector3(0.18f, 0.2f, 0.42f), new Vector3(0.08f, 0.08f, 0.22f), BlackBand);
+            Cube("TipR", root.transform, new Vector3(0.18f, 0.2f, 0.58f), new Vector3(0.08f, 0.08f, 0.12f), OrangeAccent);
+            Cube("LegL", root.transform, new Vector3(-0.52f, 0.1f, 0.05f), new Vector3(0.32f, 0.08f, 0.08f), BlackBand);
+            Cube("LegR", root.transform, new Vector3(0.52f, 0.1f, 0.05f), new Vector3(0.32f, 0.08f, 0.08f), BlackBand);
             return root;
         }
 
@@ -284,11 +379,16 @@ namespace SolarMajesty
             if (mesh != null) return mesh;
 
             var root = new GameObject("Unit_SoilCreeper");
-            Sphere("Body", root.transform, new Vector3(0f, 0.14f, 0f), new Vector3(0.38f, 0.22f, 1.15f), CreeperTint);
-            Cube("Ridge", root.transform, new Vector3(0f, 0.24f, -0.08f), new Vector3(0.18f, 0.06f, 0.7f), Steel);
-            Cube("Tendril", root.transform, new Vector3(0f, 0.12f, -0.62f), new Vector3(0.08f, 0.08f, 0.28f), OrangeAccent);
-            Sphere("Sensor", root.transform, new Vector3(0.08f, 0.22f, 0.48f), new Vector3(0.1f, 0.1f, 0.1f), ScoutTint);
-            Cube("Nub", root.transform, new Vector3(-0.08f, 0.22f, 0.42f), new Vector3(0.08f, 0.08f, 0.08f), OrangeAccent);
+            Sphere("SegA", root.transform, new Vector3(0f, 0.18f, 0.78f), new Vector3(0.32f, 0.24f, 0.32f), Steel);
+            Sphere("SegOlive", root.transform, new Vector3(0f, 0.18f, 0.42f), new Vector3(0.3f, 0.22f, 0.3f), CreeperTint);
+            Sphere("SegC", root.transform, new Vector3(0f, 0.16f, 0.06f), new Vector3(0.28f, 0.2f, 0.28f), Steel);
+            Sphere("SegD", root.transform, new Vector3(0f, 0.14f, -0.32f), new Vector3(0.26f, 0.18f, 0.26f), Steel);
+            Sphere("SegE", root.transform, new Vector3(0f, 0.14f, -0.68f), new Vector3(0.24f, 0.16f, 0.24f), Steel);
+            Cube("Plate", root.transform, new Vector3(0f, 0.32f, 0.12f), new Vector3(0.22f, 0.06f, 1.35f), Steel);
+            Cube("CerciL", root.transform, new Vector3(-0.06f, 0.12f, -0.95f), new Vector3(0.06f, 0.06f, 0.22f), OrangeAccent);
+            Cube("CerciR", root.transform, new Vector3(0.06f, 0.12f, -0.95f), new Vector3(0.06f, 0.06f, 0.22f), OrangeAccent);
+            Sphere("EyeL", root.transform, new Vector3(-0.08f, 0.24f, 1.05f), new Vector3(0.08f, 0.08f, 0.08f), ScoutTint);
+            Sphere("EyeR", root.transform, new Vector3(0.08f, 0.24f, 1.05f), new Vector3(0.08f, 0.08f, 0.08f), ScoutTint);
             return root;
         }
 
@@ -298,14 +398,17 @@ namespace SolarMajesty
             if (mesh != null) return mesh;
 
             var root = new GameObject("Unit_AshHopper");
-            Sphere("Body", root.transform, new Vector3(0f, 0.62f, 0f), new Vector3(0.42f, 0.32f, 0.48f), HopperTint);
-            Cube("LegFL", root.transform, new Vector3(-0.22f, 0.32f, 0.16f), new Vector3(0.06f, 0.62f, 0.06f), BlackBand);
-            Cube("LegFR", root.transform, new Vector3(0.22f, 0.32f, 0.16f), new Vector3(0.06f, 0.62f, 0.06f), BlackBand);
-            Cube("LegBL", root.transform, new Vector3(-0.2f, 0.28f, -0.16f), new Vector3(0.06f, 0.52f, 0.06f), BlackBand);
-            Cube("LegBR", root.transform, new Vector3(0.2f, 0.28f, -0.16f), new Vector3(0.06f, 0.52f, 0.06f), BlackBand);
-            Sphere("EyeL", root.transform, new Vector3(-0.08f, 0.72f, 0.18f), new Vector3(0.1f, 0.1f, 0.1f), ScoutTint);
-            Sphere("EyeR", root.transform, new Vector3(0.08f, 0.72f, 0.18f), new Vector3(0.1f, 0.1f, 0.1f), ScoutTint);
-            Cube("Knee", root.transform, new Vector3(0.22f, 0.38f, 0.16f), new Vector3(0.08f, 0.08f, 0.08f), OrangeAccent);
+            Sphere("Body", root.transform, new Vector3(0f, 1.42f, 0.08f), new Vector3(0.46f, 0.42f, 0.60f), HopperTint);
+            Cube("LegFL", root.transform, new Vector3(-0.42f, 0.72f, 0.42f), new Vector3(0.06f, 1.35f, 0.06f), BlackBand);
+            Cube("LegFR", root.transform, new Vector3(0.42f, 0.72f, 0.42f), new Vector3(0.06f, 1.35f, 0.06f), BlackBand);
+            Cube("LegML", root.transform, new Vector3(-0.58f, 0.70f, 0.04f), new Vector3(0.06f, 1.28f, 0.06f), BlackBand);
+            Cube("LegMR", root.transform, new Vector3(0.58f, 0.70f, 0.04f), new Vector3(0.06f, 1.28f, 0.06f), BlackBand);
+            Cube("LegBL", root.transform, new Vector3(-0.44f, 0.66f, -0.38f), new Vector3(0.06f, 1.22f, 0.06f), BlackBand);
+            Cube("LegBR", root.transform, new Vector3(0.44f, 0.66f, -0.36f), new Vector3(0.06f, 1.22f, 0.06f), BlackBand);
+            Sphere("EyeL", root.transform, new Vector3(-0.1f, 1.48f, 0.28f), new Vector3(0.1f, 0.1f, 0.1f), ScoutTint);
+            Sphere("EyeR", root.transform, new Vector3(0.1f, 1.48f, 0.28f), new Vector3(0.1f, 0.1f, 0.1f), ScoutTint);
+            Cube("Knee", root.transform, new Vector3(0.48f, 0.62f, 0.04f), new Vector3(0.1f, 0.1f, 0.1f), OrangeAccent);
+            Cube("Face", root.transform, new Vector3(0f, 1.36f, 0.32f), new Vector3(0.20f, 0.06f, 0.04f), OrangeAccent);
             return root;
         }
 

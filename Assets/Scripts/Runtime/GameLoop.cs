@@ -296,7 +296,7 @@ namespace SolarMajesty
         {
             if (_radWarned) return;
             _radWarned = true;
-            LogOverseer("Radiation outside the keep — robots take damage far from campus.");
+            LogOverseer("Radiation outside the Commons — robots take damage far from campus.");
         }
 
         /// <summary>HUD helper for hold timer display.</summary>
@@ -495,7 +495,7 @@ namespace SolarMajesty
         {
             DemoSettings.ResetTutorial();
             TutorialStep = 0;
-            _overseerHud?.Notify("Tutorial reset — Palace first, then airlock, HAB, workshop, flag, TECH.", 4f);
+            _overseerHud?.Notify("Tutorial reset — COMMONS first, then airlock, HAB, workshop, flag, TECH.", 4f);
         }
 
         public void NotifyTechOpened()
@@ -585,7 +585,7 @@ namespace SolarMajesty
             for (int n = 0; n < TutorialCompleteStep; n++)
             {
                 int before = TutorialStep;
-                if (TutorialStep == 0 && Settlement != null && Settlement.HasPalace)
+                if (TutorialStep == 0 && Settlement != null && Settlement.HasCommons)
                     AdvanceTutorial();
                 else if (TutorialStep == 1 && HasAnyAirlock())
                     AdvanceTutorial();
@@ -674,41 +674,23 @@ namespace SolarMajesty
             if (campus)
             {
                 Placer.SeedCampusClaim(origin, footprint, footprint);
-                SpawnClaimBeacon(world, "DropZone_Claim", new Color(0.96f, 0.42f, 0.08f, 0.55f), 9.5f);
+                CampusDressing.DressClaimDisc(
+                    buildingRoot != null ? buildingRoot : transform,
+                    world,
+                    "DropZone_Claim",
+                    new Color(0.96f, 0.42f, 0.08f),
+                    9.5f);
             }
             else
             {
                 Placer.SeedOutpostClaim(origin, footprint, footprint);
-                _outpostBeacon = SpawnClaimBeacon(
+                _outpostBeacon = CampusDressing.DressClaimDisc(
+                    buildingRoot != null ? buildingRoot : transform,
                     world,
                     "DropZone_Outpost",
-                    new Color(0.22f, 0.62f, 0.72f, 0.32f),
+                    new Color(0.22f, 0.72f, 0.86f),
                     8.2f);
             }
-        }
-
-        private GameObject SpawnClaimBeacon(Vector3 world, string objectName, Color color, float diameter)
-        {
-            var root = buildingRoot != null ? buildingRoot : transform;
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            go.name = objectName;
-            go.transform.SetParent(root, true);
-            go.transform.position = world + Vector3.up * 0.04f;
-            go.transform.localScale = new Vector3(diameter, 0.04f, diameter);
-            var col = go.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-            ColonyVisualUtility.EnsureUrpMaterials(go);
-            var rend = go.GetComponent<Renderer>();
-            if (rend != null)
-            {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                       ?? Shader.Find("Sprites/Default"));
-                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
-                else if (mat.HasProperty("_Color")) mat.color = color;
-                if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 1f);
-                rend.sharedMaterial = mat;
-            }
-            return go;
         }
 
         private void BootstrapResearch()
@@ -915,15 +897,7 @@ namespace SolarMajesty
             float worldH = grid.WorldHeight;
             ground.transform.position = new Vector3(worldW * 0.5f, 0f, worldH * 0.5f);
             ground.transform.localScale = new Vector3(worldW / 10f, 1f, worldH / 10f);
-            var rend = ground.GetComponent<Renderer>();
-            if (rend != null)
-            {
-                var col = new Color(0.48f, 0.44f, 0.38f);
-                if (rend.material.HasProperty("_BaseColor"))
-                    rend.material.SetColor("_BaseColor", col);
-                else if (rend.material.HasProperty("_Color"))
-                    rend.material.color = col;
-            }
+            // Albedo / grade is owned by PlanetaryMapDressing — do not stamp a flat greybox tint.
         }
 
         private void BuildPureSystems()
@@ -936,7 +910,7 @@ namespace SolarMajesty
 
             Flags = new FlagManager();
             Placer = new BuildingPlacer(Resources);
-            Placer.HasPalace = () => Settlement != null && Settlement.HasPalace;
+            Placer.HasCommons = () => Settlement != null && Settlement.HasCommons;
             if (grid != null)
             {
                 // Reject if any footprint cell is off-map (not only the origin).
@@ -950,19 +924,19 @@ namespace SolarMajesty
                             return false;
                     }
 
-                    bool hasPalace = Settlement != null && Settlement.HasPalace;
+                    bool hasCommons = Settlement != null && Settlement.HasCommons;
 
-                    // Palace: first keep on the drop claim only.
-                    if (data.category == BuildingCategory.Palace)
+                    // Colony Commons: first civic landmark on the drop claim only.
+                    if (data.category == BuildingCategory.Commons)
                     {
-                        if (hasPalace) return false;
+                        if (hasCommons) return false;
                         return Placer.OverlapsSoftClaim(cell, data.footprintWidth, data.footprintHeight);
                     }
 
                     if (data.category == BuildingCategory.Inn)
                         return true;
 
-                    if (!hasPalace)
+                    if (!hasCommons)
                         return false;
 
                     // Airlocks: only on module face midlines (symmetry-axis ends).
@@ -992,7 +966,7 @@ namespace SolarMajesty
             if (_body != null)
                 Settlement.SetBodyYield(_body.FarmYieldScale, _body.MineYieldScale);
             // Rebind after Settlement exists (constructor order).
-            Placer.HasPalace = () => Settlement != null && Settlement.HasPalace;
+            Placer.HasCommons = () => Settlement != null && Settlement.HasCommons;
             Research = new ResearchManager(Resources);
             Research.TechUnlocked += OnTechUnlocked;
             Threat = new ThreatPressure { Ambient = 0.18f };
@@ -1204,13 +1178,13 @@ namespace SolarMajesty
                 {
                     starterBuildings = new[]
                     {
-                        CreateBuilding("Palace Keep", BuildingCategory.Palace, 70, 10, 18f, 6, 6),
+                        CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, 6, 6),
                         CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4),
                         CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4),
                         CreateBuilding("Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 4, 4),
                         CreateBuilding("Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4),
                         CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6),
-                        CreateBuilding("Command (CMD-1)", BuildingCategory.Defense, 60, 8, 16f, 4, 4)
+                        CreateBuilding("Defense Battery", BuildingCategory.Defense, 60, 8, 16f, 4, 4)
                     };
                 }
             }
@@ -1222,24 +1196,26 @@ namespace SolarMajesty
                     starterBuildings[i].prefab = BuildingVisualCatalog.LoadPrefab(starterBuildings[i].category);
             }
 
-            starterBuildings = EnsurePalaceFirst(starterBuildings);
+            starterBuildings = EnsureCommonsFirst(starterBuildings);
+            NormalizeCatalogNames(starterBuildings);
             starterBuildings = AppendEconomyBuildings(starterBuildings);
             ForceCardinalFootprints(starterBuildings);
         }
 
-        /// <summary>Palace keep is always catalog index 0 — Majesty first-build.</summary>
-        private static BuildingData[] EnsurePalaceFirst(BuildingData[] current)
+        /// <summary>Colony Commons is always catalog index 0 — Majesty first-build.</summary>
+        private static BuildingData[] EnsureCommonsFirst(BuildingData[] current)
         {
-            var palace = CreateBuilding("Palace Keep", BuildingCategory.Palace, 70, 10, 18f, 6, 6);
+            var commons = CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, 6, 6);
             if (current == null || current.Length == 0)
-                return new[] { palace };
+                return new[] { commons };
 
             int existing = -1;
             for (int i = 0; i < current.Length; i++)
             {
-                if (current[i] != null && current[i].category == BuildingCategory.Palace)
+                if (current[i] != null && current[i].category == BuildingCategory.Commons)
                 {
                     existing = i;
+                    ForceCommonsDisplayName(current[i]);
                     break;
                 }
             }
@@ -1261,9 +1237,38 @@ namespace SolarMajesty
             }
 
             var merged = new BuildingData[current.Length + 1];
-            merged[0] = palace;
+            merged[0] = commons;
             current.CopyTo(merged, 1);
             return merged;
+        }
+
+        private static void ForceCommonsDisplayName(BuildingData data)
+        {
+            if (data == null) return;
+            data.displayName = "Colony Commons";
+        }
+
+        /// <summary>CMD-1 sheet is Guild dress; Defense bunker is not "Command".</summary>
+        private static void NormalizeCatalogNames(BuildingData[] buildings)
+        {
+            if (buildings == null) return;
+            for (int i = 0; i < buildings.Length; i++)
+            {
+                var b = buildings[i];
+                if (b == null) continue;
+                switch (b.category)
+                {
+                    case BuildingCategory.Commons:
+                        b.displayName = "Colony Commons";
+                        break;
+                    case BuildingCategory.Defense:
+                        b.displayName = "Defense Battery";
+                        break;
+                    case BuildingCategory.Mining:
+                        b.displayName = "Ops Unit (OPS-1)";
+                        break;
+                }
+            }
         }
 
         private static void BindUnitPrefab(SpecialistData data, SpecialistClass cls)
@@ -1876,7 +1881,7 @@ namespace SolarMajesty
             switch (_body.Id)
             {
                 case CelestialBodyId.Mars: return "Dust hoppers at the airlocks — post Clear Threat.";
-                case CelestialBodyId.Belt: return "Shard hoppers on the keep — post Clear Threat.";
+                case CelestialBodyId.Belt: return "Shard hoppers on the Commons — post Clear Threat.";
                 default: return "Ash hoppers on the HAB — post Clear Threat.";
             }
         }
@@ -2475,7 +2480,7 @@ namespace SolarMajesty
                 int side = Mathf.Max(1, b.footprintWidth, b.footprintHeight);
                 switch (b.category)
                 {
-                    case BuildingCategory.Palace:
+                    case BuildingCategory.Commons:
                     case BuildingCategory.LandingPad:
                     case BuildingCategory.ClimateLoom:
                     case BuildingCategory.AegisSpire:
@@ -2527,7 +2532,7 @@ namespace SolarMajesty
             CampusDressing.RefreshTubes(Placer, grid, buildingRoot != null ? buildingRoot : transform);
             DemoVfx.BuildComplete(world);
             DemoAudio.PlayBuildComplete();
-            if (data.category == BuildingCategory.Palace ||
+            if (data.category == BuildingCategory.Commons ||
                 data.category == BuildingCategory.LandingPad)
                 GlanceAt(world);
             if (data.category == BuildingCategory.LandingPad)
@@ -2724,7 +2729,7 @@ namespace SolarMajesty
                 if (RestoreCampusSlot(slots[i]))
                 {
                     restored++;
-                    if (!glanceSet && slots[i].Category == BuildingCategory.Palace)
+                    if (!glanceSet && slots[i].Category == BuildingCategory.Commons)
                     {
                         glance = FootprintWorldCenter(new Vector2Int(slots[i].X, slots[i].Y), slots[i].W, slots[i].H);
                         glanceSet = true;
@@ -3062,7 +3067,7 @@ namespace SolarMajesty
                         if (piece.ResourcesPath.Contains("ModularTube"))
                             pieceCat = BuildingCategory.Utility;
                         else if (piece.ResourcesPath.Contains("CommandDome"))
-                            pieceCat = BuildingCategory.Palace;
+                            pieceCat = BuildingCategory.Commons;
                         else if (piece.ResourcesPath.Contains("HAB"))
                             pieceCat = BuildingCategory.Habitat;
                         else if (piece.ResourcesPath.Contains("LAB"))
@@ -3098,7 +3103,7 @@ namespace SolarMajesty
             else if (resourcesPath.Contains("LAB")) cat = BuildingCategory.Laboratory;
             else if (resourcesPath.Contains("CMD") || resourcesPath.Contains("CommandDome"))
                 cat = resourcesPath.Contains("CommandDome")
-                    ? BuildingCategory.Palace
+                    ? BuildingCategory.Commons
                     : BuildingCategory.Defense;
             else if (resourcesPath.Contains("OPS")) cat = BuildingCategory.Mining;
             else if (resourcesPath.Contains("PWR") || resourcesPath.Contains("Solar"))

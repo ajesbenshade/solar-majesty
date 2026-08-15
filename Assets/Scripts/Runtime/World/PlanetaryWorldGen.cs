@@ -32,14 +32,23 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Visual scatter (lakes/forests/rocks) can sit closer than gameplay nodes.
+        /// Earth drop camera is ortho 16 — 20 m exclusion hid the biome.
+        /// </summary>
+        private float VistaExclusion =>
+            _body != null && _body.Id == CelestialBodyId.Earth
+                ? 11.2f
+                : (_body != null ? _body.CampusExclusion : 20f);
+
         public void Generate(GameLoop loop, IsoGrid grid, int seed) =>
-            Generate(loop, grid, seed, _body ?? CelestialBodyCatalog.Luna());
+            Generate(loop, grid, seed, _body ?? CelestialBodyCatalog.Earth());
 
         public void Generate(GameLoop loop, IsoGrid grid, int seed, CelestialBodyProfile body)
         {
             _loop = loop;
             _grid = grid;
-            _body = body ?? CelestialBodyCatalog.Luna();
+            _body = body ?? CelestialBodyCatalog.Earth();
             _nodes.Clear();
             _lairs.Clear();
 
@@ -220,7 +229,7 @@ namespace SolarMajesty
 
             for (int i = 0; i < _body.LakeCount; i++)
             {
-                if (!TrySample(rng, placed, _body.CampusExclusion * 1.1f, _body.MinSpacing * 1.4f, out Vector3 pos))
+                if (!TrySample(rng, placed, VistaExclusion * 1.05f, _body.MinSpacing * 1.4f, out Vector3 pos))
                     continue;
 
                 float baseR = Mathf.Lerp(5.5f, 14f, (float)rng.NextDouble());
@@ -298,8 +307,8 @@ namespace SolarMajesty
                     p += side * wander;
                     p.y = 0f;
 
-                    if (FlatDist(p, ColonyLayout.CampusOrigin) < _body.CampusExclusion * 0.9f ||
-                        FlatDist(p, ColonyLayout.CampusBOrigin) < _body.CampusExclusion * 0.75f)
+                    if (FlatDist(p, ColonyLayout.CampusOrigin) < VistaExclusion * 0.85f ||
+                        FlatDist(p, ColonyLayout.CampusBOrigin) < VistaExclusion * 0.7f)
                     {
                         hasPrev = false;
                         continue;
@@ -385,7 +394,7 @@ namespace SolarMajesty
 
             for (int i = 0; i < _body.ForestPatchCount; i++)
             {
-                if (!TrySample(rng, placed, _body.CampusExclusion * 0.95f, _body.MinSpacing * 0.85f, out Vector3 pos))
+                if (!TrySample(rng, placed, VistaExclusion * 0.95f, _body.MinSpacing * 0.85f, out Vector3 pos))
                     continue;
 
                 float patchR = Mathf.Lerp(6f, 16f, (float)rng.NextDouble());
@@ -403,7 +412,7 @@ namespace SolarMajesty
                     if (dens < 0.28f && rng.NextDouble() < 0.55) continue;
 
                     Vector3 local = new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
-                    if (FlatDist(pos + local, ColonyLayout.CampusOrigin) < _body.CampusExclusion * 0.8f)
+                    if (FlatDist(pos + local, ColonyLayout.CampusOrigin) < VistaExclusion * 0.8f)
                         continue;
 
                     SpawnTree(patch.transform, local, rng);
@@ -575,7 +584,7 @@ namespace SolarMajesty
 
             for (int i = 0; i < _body.RockCount; i++)
             {
-                if (!TrySample(rng, placed, _body.CampusExclusion * 0.7f, 2.2f, out Vector3 pos))
+                if (!TrySample(rng, placed, VistaExclusion * 0.85f, 2.2f, out Vector3 pos))
                     continue;
 
                 var rock = GameObject.CreatePrimitive(PrimitiveType.Cube);

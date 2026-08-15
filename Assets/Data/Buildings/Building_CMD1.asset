@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad6cec0d07ef9498c83b1151499c4966, type: 3}
   m_Name: Building_CMD1
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.BuildingData
-  displayName: Command (CMD-1)
+  displayName: Defense Battery
   category: 4
   description: 
   footprintWidth: 4

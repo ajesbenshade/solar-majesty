@@ -16,7 +16,7 @@ namespace SolarMajesty
         public const int TaxPerCitizen = 2;
 
         public int Population { get; private set; }
-        public int PalaceCount { get; private set; }
+        public int CommonsCount { get; private set; }
         public int PadCount { get; private set; }
         public int CoreHabs { get; set; }
         public int VillageHabs { get; private set; }
@@ -35,7 +35,7 @@ namespace SolarMajesty
         /// <summary>Farm/mine/camp tick multiplier (power short pulls this down).</summary>
         public float ProductionScale { get; set; } = 1f;
 
-        public bool HasPalace => PalaceCount > 0;
+        public bool HasCommons => CommonsCount > 0;
         public bool HasGuild => GuildCount > 0;
 
         /// <summary>Preset conquest goal (set per body / campaign beat).</summary>
@@ -54,7 +54,7 @@ namespace SolarMajesty
 
         /// <summary>Overcrowded (or at cap) — village should grow a new HAB.</summary>
         public bool NeedsVillageHab =>
-            HasPalace && CoreHabs > 0 && Population >= Housing && VillageHabs < MaxVillageHabs;
+            HasCommons && CoreHabs > 0 && Population >= Housing && VillageHabs < MaxVillageHabs;
 
         public bool CanBirth => Population > 0 && Population < Housing;
 
@@ -63,7 +63,7 @@ namespace SolarMajesty
         public bool HasPad => PadCount > 0;
 
         public bool IsSustainable =>
-            HasPalace &&
+            HasCommons &&
             MeetsPopulationGoal &&
             Farms > 0 &&
             Mines > 0 &&
@@ -84,8 +84,8 @@ namespace SolarMajesty
         {
             get
             {
-                if (!HasPalace)
-                    return "raise the Palace keep first";
+                if (!HasCommons)
+                    return "raise Colony Commons first";
                 if (CoreHabs <= 0)
                     return "dock a Habitat for colonists";
                 if (Housing < PopulationGoal)
@@ -194,7 +194,7 @@ namespace SolarMajesty
         {
             switch (cat)
             {
-                case BuildingCategory.Palace: PalaceCount++; break;
+                case BuildingCategory.Commons: CommonsCount++; break;
                 case BuildingCategory.LandingPad: PadCount++; break;
                 case BuildingCategory.Farm: Farms++; break;
                 case BuildingCategory.Mine: Mines++; break;
@@ -209,8 +209,8 @@ namespace SolarMajesty
         {
             switch (cat)
             {
-                case BuildingCategory.Palace:
-                    PalaceCount = Mathf.Max(0, PalaceCount - 1);
+                case BuildingCategory.Commons:
+                    CommonsCount = Mathf.Max(0, CommonsCount - 1);
                     break;
                 case BuildingCategory.LandingPad:
                     PadCount = Mathf.Max(0, PadCount - 1);

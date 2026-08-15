@@ -18,7 +18,7 @@ Build infrastructure, post bounty flags, manage economy. Autonomous specialists
 Campaign spine: Earth tutorial → Luna → Mars → Belt → Europa with dens / sustain / launch gates
 (tech + Landing Pad) and an Alpha Centauri-style tech tree (TECH · T).
 Roadmap: Docs/Roadmap/ (Phase 3 complete: exit in PHASE_3_EXIT.md). Dust Stalkers raise ThreatPressure.
-After Phase 3: Phase 4 visual target (Mars mockup fidelity), then Phase 5 ship.
+After Phase 3: Phase 4 visual target (Mars mockup fidelity — Weeks 1–4 continued in, including Imagine-sheet unit refine, Earth New Game produced biome, Workshop/Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, a Mars dressing close, hero-building sheet-match, **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, and **airlock panel-line polish**; **not** exited). Then Phase 5 ship.
 Never add click-to-move to match mockup squad UI.
 
 ## Non-negotiables
@@ -53,9 +53,9 @@ Never add click-to-move to match mockup squad UI.
   BLENDER_WORKFLOW.md, ART_DIRECTION.md, NEXT_STEPS.md
 
 ## Suggested next work (priority order)
-1. Phase 4 visual target — Week 1 campus/HUD/Mars atmosphere, Week 2 HAB / keep / pad+ship / extractor hero kits, and Week 3 junction turrets + solar-field landmark are in (`Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md`). Next: remaining unit Imagine remesh (Defense walker still open), guild/lab/wonder dress, Mars sign-off. Do not add click-to-move. Square airlocks stay; tubes/domes/kits/turrets/solar are dressing.
+1. Phase 4 visual target — Week 1 campus/HUD/Mars atmosphere, Week 2 HAB / Colony Commons / pad+ship / extractor hero kits, Week 3 junction turrets + solar-field landmark, Week 4 remesh + hero building FBX, Earth New Game produced biome, Scout/Engineer/Defense/Stalker Imagine-sheet refine, Workshop/Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, a Mars dressing/HUD/lighting close, HAB/Commons/LAB/Power/pad sheet-match, **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, and **airlock panel-line polish** are in (`Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md`). Next: a human Mars side-by-side still. Do not add click-to-move. Square airlocks stay; tubes/domes/kits/turrets/solar are dressing. Defense stays tracked.
 2. Shift+F10 smoke: Earth soil creepers (**F5**), Luna ash hoppers (**F2**), Belt (`LOW-G`, rock mites/ticks **F5**, shard hoppers **F2**), Europa (`RAD`, fissure leeches / ice wisps **F2**, ice creepers **F5**). **T** Guild Charter → assign hall class (Horizon / Anvil / Aegis / Triage). ★ Climate Loom / Aegis Spire / Deep Archive landmarks. Settings: Mode / Challenge / Stance — Open Hands should take a $70 Build.
-3. Imagine turnarounds from `Docs/GROK_IMAGINE_UNIT_PROMPTS.md`, then refine Blender. Engineer biped / geologist rover / scout hover blockouts are in; Defense walker vs tracked guardian still open. Remaining classes + fauna next.
+3. Imagine turnarounds from `Docs/GROK_IMAGINE_UNIT_PROMPTS.md`. All ten specialists + seven fauna Blender meshes are sheet-matched blockouts against `ConceptSheets/` JPGs. Defense stays tracked (PNG walker still open). Building FBX pipeline (`SM_Hero_*`) is in.
 
 ## Controls reference
 Esc pause · G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
@@ -101,12 +101,19 @@ update Docs/NEXT_STEPS.md if milestones moved.
 - [x] Phase 3 Weeks 8–10 — replay doctrines, challenges, Endless, Overseer rating  
 - [x] Phase 3 Weeks 11–14 — balance / flavor / exit ([PHASE_3_EXIT.md](Roadmap/PHASE_3_EXIT.md))  
 - [x] Phase 4 Week 1 — Mars atmosphere, tube dressing, construction cranes, Overseer HUD chrome  
-- [x] Phase 4 Week 2 — HAB / keep-dome / pad+ship / water vs regolith extractor hero kits  
+- [x] Phase 4 Week 2 — HAB / Commons citadel / pad+ship / water vs regolith extractor hero kits  
 - [x] Phase 4 Week 3 — junction turrets + solar-field landmark (Defense bunker kit)  
+- [x] Phase 4 Week 4 start — Colony Commons rename; guild/lab/wonder dress; Medic/Harvester/Surveyor/Courier/Sentinel remesh  
+- [x] Phase 4 Week 4 continued — Terraformer dozer remesh; Stalker / Hopper / Creeper / Tick silhouettes; Mars mockup notes (Phase 4 still open)
+- [x] Phase 4 Week 4 continued — Mite / Leech / Wisp remesh; Courier/Geologist/Medic/Sentinel tighten; hero building FBX (Phase 4 still open)
+- [x] Phase 4 Imagine-sheet refine — Scout / Engineer / Defense / Stalker vs ConceptSheets; HUD/tube/pad/solar dressing (Phase 4 still open)
+- [x] Phase 4 Workshop / Inn FBX + campus clutter / HUD class readout (Phase 4 still open)
+- [x] Phase 4 remaining-class Imagine prompt sheets + Mars dressing/HUD/lighting close (Phase 4 still open)
+- [x] Phase 4 remaining-class + leftover-fauna Imagine JPGs + sheet-matched remesh (Phase 4 still open)  
 
 ### Known gaps
 
-- Unit meshes are Blender blockouts pending Imagine turnaround refinement (production look: [Phase 4 visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md)). HAB / keep / pad / extractor / solar / Defense bunker hero kits are in-engine procedural silhouettes (`HeroBuildingKits`); junction turrets dress airlock hubs. Engineer (small white biped), Geologist (six-wheel rover), and Scout (hover probe) blockouts were remeshed this slice; Defense stays the Imagine tracked guardian (biped walker still open). Remaining classes + fauna still need the same silhouette bar.  
+- Unit meshes are Blender blockouts. All ten specialists + seven fauna are sheet-matched against `ConceptSheets/` turnarounds (Scout keeps hover rotors; Defense stays the Imagine tracked guardian — PNG biped walker still open). Play Mode HAB / Colony Commons / pad / extractor / solar / Defense bunker / Guild / LAB / wonder / **workshop hangar / tall hangar / Inn** kits prefer `SM_Hero_*` FBX (`HeroBuildingKits` fallback). Junction turrets dress airlock hubs. Medic capsule / Harvester orange-blade hopper / Surveyor tripod / Courier white crate / Sentinel **treads** / Terraformer **orange blade + rear rake** silhouettes are in. Fauna: Stalker / six-leg Hopper / graphite Creeper / Tick / pillbug Mite / **white-ray Leech** / seven-point Wisp. Honest Mars mockup notes live in the Phase 4 doc — **Phase 4 is not exited**.  
 - Continue slot is campus + stockpile + research per body (flags/fauna/HP are not snapshotted)  
 - External Phase 1 playtest / exit review still open  
 - No multiplayer  

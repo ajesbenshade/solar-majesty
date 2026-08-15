@@ -7,6 +7,7 @@ namespace SolarMajesty
     /// <summary>
     /// Compact per-body campus blob for the continue slot (pieces + build progress).
     /// Not a full world snapshot — flags, fauna, and specialist HP are not stored.
+    /// BuildingCategory is stored as int (Commons = 15; formerly named Palace).
     /// </summary>
     public struct CampusSlot
     {
@@ -107,7 +108,7 @@ namespace SolarMajesty
 
         public static int Rank(BuildingCategory cat)
         {
-            if (cat == BuildingCategory.Palace) return 0;
+            if (cat == BuildingCategory.Commons) return 0;
             if (cat == BuildingCategory.Utility) return 1;
             return 2;
         }

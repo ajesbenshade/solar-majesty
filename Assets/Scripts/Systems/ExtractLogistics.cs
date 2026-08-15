@@ -22,7 +22,7 @@ namespace SolarMajesty
                 case BuildingCategory.RegolithCamp:
                 case BuildingCategory.Power:
                 case BuildingCategory.LandingPad:
-                case BuildingCategory.Palace:
+                case BuildingCategory.Commons:
                     return true;
                 default:
                     return false;

@@ -2,9 +2,13 @@
 Solar Majesty — hero unit blockouts.
 
 Readable Majesty-scale silhouettes with SpaceX white/black/orange palette.
-Scout / Engineer / Defense / Stalker refined against ConceptSheets turnarounds.
-Phase 3 adds Medic, Harvester, Surveyor, Terraformer, Courier, Geologist,
-Sentinel, Mite, Leech, Ice Wisp, Rock Tick, Soil Creeper, Ash Hopper.
+Scout / Engineer / Defense / Stalker matched to ConceptSheets turnarounds
+(hover Scout keeps rotors for the mockup + smoke test; Defense stays tracked).
+Remaining classes + leftover fauna are sheet-matched to ConceptSheets
+SM_Unit_*_Turnaround.jpg (Imagine LO-*-1). Keep in-game RTS sizes — do not
+shrink Soil Creeper / Ash Hopper to the sheet scale bars. No purple. Sensors cyan.
+Do not clone Engineer biped, Scout hover, or Defense Guardian (red viewport /
+huge shoulder pods). Sentinel uses continuous treads (sheet), not stub pads.
 
 Run:
   /Applications/Blender.app/Contents/MacOS/Blender --background \
@@ -15,6 +19,7 @@ from __future__ import annotations
 
 import math
 import shutil
+import sys
 from pathlib import Path
 
 import bpy
@@ -90,13 +95,15 @@ def create_palette() -> dict:
         "SM_Defense": make_principled("SM_Defense", (0.78, 0.18, 0.18), 0.12, 0.42),
         "SM_Stalker": make_principled("SM_Stalker", (0.28, 0.05, 0.07), 0.05, 0.55),
         "SM_Mite": make_principled("SM_Mite", (0.42, 0.32, 0.22), 0.08, 0.62),
-        "SM_Leech": make_principled("SM_Leech", (0.18, 0.55, 0.62), 0.12, 0.38),
+        "SM_Leech": make_principled("SM_Leech", (0.88, 0.90, 0.92), 0.10, 0.32),
+        "SM_Ice": make_principled("SM_Ice", (0.78, 0.92, 0.98), 0.02, 0.14),
+        "SM_DustBrown": make_principled("SM_DustBrown", (0.62, 0.48, 0.32), 0.06, 0.64),
         "SM_Geologist": make_principled("SM_Geologist", (0.62, 0.48, 0.28), 0.18, 0.48),
         "SM_Sentinel": make_principled("SM_Sentinel", (0.52, 0.16, 0.14), 0.14, 0.42),
         "SM_Wisp": make_principled("SM_Wisp", (0.62, 0.88, 0.96), 0.04, 0.22),
         "SM_Tick": make_principled("SM_Tick", (0.28, 0.24, 0.22), 0.22, 0.55),
         "SM_Creeper": make_principled("SM_Creeper", (0.32, 0.42, 0.18), 0.08, 0.62),
-        "SM_Hopper": make_principled("SM_Hopper", (0.48, 0.46, 0.42), 0.18, 0.48),
+        "SM_Hopper": make_principled("SM_Hopper", (0.52, 0.50, 0.46), 0.10, 0.52),
     }
 
 
@@ -149,6 +156,26 @@ def add_cone(name, radius1, depth, location, vertices=24):
     return obj
 
 
+def apply_rot(obj: bpy.types.Object):
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+
+
+def add_shaft(name, radius, start, end, vertices=8):
+    """Cylinder spanning start→end (Blender +Z aligned, then rotated)."""
+    s = Vector(start)
+    e = Vector(end)
+    delta = e - s
+    length = max(delta.length, 0.01)
+    mid = (s + e) * 0.5
+    obj = add_cylinder(name, radius, length, mid, vertices=vertices)
+    obj.rotation_euler = Vector((0.0, 0.0, 1.0)).rotation_difference(delta).to_euler()
+    apply_rot(obj)
+    return obj
+
+
 def set_origin_to_ground(obj: bpy.types.Object):
     bpy.context.view_layer.update()
     mat = obj.matrix_world
@@ -190,59 +217,72 @@ def remove_if_exists(name: str):
 
 def build_scout(mats: dict) -> bpy.types.Object:
     """
-    Scout drone — Imagine tall probe + Phase 4 hover read.
-    White thermal shell, cyan eye, whip antenna, four rotor rings, thin repulsor pad.
-    NavMesh still walks; the pad keeps origin on the ground. Height ~2.6 m.
+    Scout drone — Imagine LO-SCT-1 fuselage + Phase 4 hover.
+    Boxy cyan-lens head, orange neck ring, whip antenna, white thermal shell,
+    four rotor rings. Not a Surveyor tripod. NavMesh still walks. Height ~2.75 m.
     """
     name = "SM_Unit_ScoutDrone"
     remove_if_exists(name)
     parts = []
 
     # Ground-contact hover cushion so SnapToGround does not bury the rotors.
-    pad = add_cylinder("TMP", 0.22, 0.04, (0, 0, 0.04), vertices=16)
+    pad = add_cylinder("TMP", 0.24, 0.05, (0, 0, 0.04), vertices=16)
     assign_mat(pad, mats["SM_Graphite"])
     parts.append(pad)
-    stem = add_cylinder("TMP", 0.05, 0.7, (0, 0, 0.42), vertices=10)
+    stem = add_cylinder("TMP", 0.055, 0.78, (0, 0, 0.46), vertices=10)
     assign_mat(stem, mats["SM_Black"])
     parts.append(stem)
 
-    # Cruciform rotor arms + discs (hover silhouette)
+    # Cruciform rotor arms (hover read vs Imagine tripod / Surveyor mast).
     for i in range(4):
         ang = (math.pi * 0.25) + i * (math.pi * 0.5)
-        ax = math.cos(ang) * 0.42
-        ay = math.sin(ang) * 0.42
-        arm = add_cube("TMP", 1.0, (ax * 0.5, ay * 0.5, 0.92), scale=(0.38, 0.06, 0.06))
+        ax = math.cos(ang) * 0.48
+        ay = math.sin(ang) * 0.48
+        arm = add_cube("TMP", 1.0, (ax * 0.5, ay * 0.5, 0.98), scale=(0.44, 0.055, 0.055))
         arm.rotation_euler = (0.0, 0.0, ang)
+        apply_rot(arm)
         assign_mat(arm, mats["SM_White"])
         parts.append(arm)
-        ring = add_cylinder("TMP", 0.18, 0.04, (ax, ay, 0.92), vertices=16)
+        ring = add_cylinder("TMP", 0.20, 0.04, (ax, ay, 0.98), vertices=16)
         assign_mat(ring, mats["SM_Black"])
         parts.append(ring)
-        disc = add_cylinder("TMP", 0.14, 0.02, (ax, ay, 0.95), vertices=12)
+        disc = add_cylinder("TMP", 0.15, 0.02, (ax, ay, 1.01), vertices=12)
         assign_mat(disc, mats["SM_Steel"])
         parts.append(disc)
 
-    # Tall sensor probe (Imagine sheet)
-    torso = add_cylinder("TMP", 0.16, 0.85, (0, 0, 1.45), vertices=20)
+    # Tall thermal fuselage (sheet: white shell, black structural bands).
+    torso = add_cylinder("TMP", 0.18, 1.05, (0, 0, 1.55), vertices=20)
     assign_mat(torso, mats["SM_White"])
     parts.append(torso)
-    band = add_cylinder("TMP", 0.19, 0.08, (0, 0, 1.25), vertices=20)
-    assign_mat(band, mats["SM_Black"])
-    parts.append(band)
-    head = add_uv_sphere("TMP", 0.16, (0, 0.04, 1.95), segments=16, rings=10)
+    for z in (1.18, 1.52, 1.88):
+        band = add_cylinder("TMP", 0.205, 0.07, (0, 0, z), vertices=20)
+        assign_mat(band, mats["SM_Black"])
+        parts.append(band)
+    chevron = add_cube("TMP", 1.0, (0.19, 0.0, 1.62), scale=(0.04, 0.12, 0.16))
+    assign_mat(chevron, mats["SM_Black"])
+    parts.append(chevron)
+
+    # Orange neck collar + boxy sensor head + cyan circular lens.
+    collar = add_cylinder("TMP", 0.16, 0.10, (0, 0.02, 2.12), vertices=16)
+    assign_mat(collar, mats["SM_Orange"])
+    parts.append(collar)
+    head = add_cube("TMP", 1.0, (0, 0.06, 2.32), scale=(0.28, 0.32, 0.26))
     assign_mat(head, mats["SM_White"])
     parts.append(head)
-    eye = add_uv_sphere("TMP", 0.07, (0, 0.16, 1.95), segments=12, rings=8)
-    assign_mat(eye, mats["SM_Cyan"])
-    parts.append(eye)
-    for sx in (-0.14, 0.14):
-        beacon = add_uv_sphere("TMP", 0.045, (sx, 0.0, 1.72), segments=10, rings=6)
-        assign_mat(beacon, mats["SM_Orange"])
-        parts.append(beacon)
-    ant = add_cylinder("TMP", 0.02, 0.7, (0.06, -0.04, 2.42), vertices=8)
+    lens = add_cylinder(
+        "TMP", 0.09, 0.06, (0, 0.24, 2.32),
+        rotation=(math.pi / 2, 0, 0), vertices=16,
+    )
+    assign_mat(lens, mats["SM_Cyan"])
+    parts.append(lens)
+    beacon = add_uv_sphere("TMP", 0.05, (0.16, -0.04, 1.95), segments=10, rings=6)
+    assign_mat(beacon, mats["SM_Orange"])
+    parts.append(beacon)
+
+    ant = add_cylinder("TMP", 0.018, 0.85, (0.04, -0.08, 2.82), vertices=8)
     assign_mat(ant, mats["SM_Steel"])
     parts.append(ant)
-    tip = add_uv_sphere("TMP", 0.035, (0.06, -0.04, 2.78), segments=8, rings=6)
+    tip = add_uv_sphere("TMP", 0.032, (0.04, -0.08, 3.26), segments=8, rings=6)
     assign_mat(tip, mats["SM_Orange"])
     parts.append(tip)
 
@@ -256,77 +296,100 @@ def build_scout(mats: dict) -> bpy.types.Object:
 
 def build_engineer(mats: dict) -> bpy.types.Object:
     """
-    Engineer Bot — small white biped (Phase 4 + Imagine v2).
-    Rounded white shell, cyan visor, orange dock/toolbox, backpack. Height ~1.85 m.
+    Engineer Bot — Imagine v2 habitat-builder biped.
+    Hunched white dome, cyan visor, chest docks, crate backpack, orange arm
+    stripes, chunky three-finger hands, treaded boots. Height ~1.95 m.
     """
     name = "SM_Unit_EngineerBot"
     remove_if_exists(name)
     parts = []
 
-    hips = add_cylinder("TMP", 0.28, 0.22, (0, 0, 0.52), vertices=18)
+    hips = add_cylinder("TMP", 0.32, 0.24, (0, 0.02, 0.55), vertices=18)
     assign_mat(hips, mats["SM_Black"])
     parts.append(hips)
-    torso = add_uv_sphere("TMP", 0.38, (0, 0, 1.05), scale=(1.05, 0.85, 1.15), segments=20, rings=12)
+    torso = add_uv_sphere("TMP", 0.42, (0, 0.04, 1.12), scale=(1.12, 0.92, 1.18), segments=20, rings=12)
     assign_mat(torso, mats["SM_White"])
     parts.append(torso)
-    band = add_cylinder("TMP", 0.40, 0.08, (0, 0, 0.82), vertices=20)
+    band = add_cylinder("TMP", 0.44, 0.09, (0, 0.04, 0.88), vertices=20)
     assign_mat(band, mats["SM_Black"])
     parts.append(band)
 
-    dock = add_cylinder("TMP", 0.11, 0.06, (0, 0.36, 1.08), rotation=(math.pi / 2, 0, 0), vertices=16)
-    assign_mat(dock, mats["SM_Graphite"])
-    parts.append(dock)
-    dock_ring = add_cylinder("TMP", 0.14, 0.03, (0, 0.39, 1.08), rotation=(math.pi / 2, 0, 0), vertices=16)
-    assign_mat(dock_ring, mats["SM_Orange"])
-    parts.append(dock_ring)
+    for dx in (-0.12, 0.12):
+        dock = add_cylinder(
+            "TMP", 0.09, 0.05, (dx, 0.40, 1.12),
+            rotation=(math.pi / 2, 0, 0), vertices=14,
+        )
+        assign_mat(dock, mats["SM_Graphite"])
+        parts.append(dock)
+        ring = add_cylinder(
+            "TMP", 0.12, 0.03, (dx, 0.44, 1.12),
+            rotation=(math.pi / 2, 0, 0), vertices=14,
+        )
+        assign_mat(ring, mats["SM_Orange"])
+        parts.append(ring)
 
-    head = add_uv_sphere("TMP", 0.18, (0, 0.04, 1.52), segments=16, rings=10)
+    head = add_uv_sphere("TMP", 0.22, (0, 0.10, 1.62), scale=(1.05, 1.15, 0.92), segments=16, rings=10)
     assign_mat(head, mats["SM_White"])
     parts.append(head)
-    visor = add_cube("TMP", 1.0, (0, 0.18, 1.52), scale=(0.26, 0.04, 0.08))
+    visor = add_cube("TMP", 1.0, (0, 0.28, 1.62), scale=(0.34, 0.05, 0.10))
     assign_mat(visor, mats["SM_Cyan"])
     parts.append(visor)
 
-    pack = add_cube("TMP", 1.0, (0, -0.32, 1.05), scale=(0.38, 0.22, 0.48))
+    pack = add_cube("TMP", 1.0, (0, -0.38, 1.12), scale=(0.48, 0.28, 0.58))
     assign_mat(pack, mats["SM_Graphite"])
     parts.append(pack)
-    pack_stripe = add_cube("TMP", 1.0, (0, -0.44, 1.08), scale=(0.06, 0.03, 0.28))
+    pack_lid = add_cube("TMP", 1.0, (0, -0.38, 1.42), scale=(0.44, 0.24, 0.06))
+    assign_mat(pack_lid, mats["SM_White"])
+    parts.append(pack_lid)
+    pack_stripe = add_cube("TMP", 1.0, (0, -0.53, 1.12), scale=(0.08, 0.03, 0.36))
     assign_mat(pack_stripe, mats["SM_Orange"])
     parts.append(pack_stripe)
-    toolbox = add_cube("TMP", 1.0, (0.42, 0.02, 0.72), scale=(0.22, 0.16, 0.18))
+    for lz in (0.92, 1.22):
+        latch = add_cube("TMP", 1.0, (0.18, -0.54, lz), scale=(0.08, 0.04, 0.06))
+        assign_mat(latch, mats["SM_Steel"])
+        parts.append(latch)
+
+    toolbox = add_cube("TMP", 1.0, (0.48, 0.04, 0.78), scale=(0.24, 0.18, 0.20))
     assign_mat(toolbox, mats["SM_Black"])
     parts.append(toolbox)
-    tool_stripe = add_cube("TMP", 1.0, (0.42, 0.16, 0.72), scale=(0.18, 0.03, 0.04))
+    tool_stripe = add_cube("TMP", 1.0, (0.48, 0.20, 0.78), scale=(0.20, 0.03, 0.05))
     assign_mat(tool_stripe, mats["SM_Orange"])
     parts.append(tool_stripe)
 
-    for sx in (-0.48, 0.48):
-        shoulder = add_uv_sphere("TMP", 0.12, (sx, 0.02, 1.22), segments=12, rings=8)
+    for sx in (-0.52, 0.52):
+        shoulder = add_uv_sphere("TMP", 0.14, (sx, 0.04, 1.32), segments=12, rings=8)
         assign_mat(shoulder, mats["SM_White"])
         parts.append(shoulder)
-        upper = add_cube("TMP", 1.0, (sx * 1.08, 0.08, 0.95), scale=(0.12, 0.12, 0.28))
+        upper = add_cube("TMP", 1.0, (sx * 1.12, 0.12, 1.02), scale=(0.14, 0.14, 0.32))
         assign_mat(upper, mats["SM_Graphite"])
         parts.append(upper)
-        stripe = add_cube("TMP", 1.0, (sx * 1.18, 0.08, 0.98), scale=(0.04, 0.1, 0.18))
+        stripe = add_cube("TMP", 1.0, (sx * 1.24, 0.12, 1.08), scale=(0.04, 0.12, 0.20))
         assign_mat(stripe, mats["SM_Orange"])
         parts.append(stripe)
-        lower = add_cube("TMP", 1.0, (sx * 1.1, 0.16, 0.68), scale=(0.1, 0.1, 0.22))
+        lower = add_cube("TMP", 1.0, (sx * 1.14, 0.22, 0.72), scale=(0.12, 0.12, 0.24))
         assign_mat(lower, mats["SM_Steel"])
         parts.append(lower)
-        hand = add_cube("TMP", 1.0, (sx * 1.12, 0.22, 0.52), scale=(0.1, 0.12, 0.1))
+        hand = add_cube("TMP", 1.0, (sx * 1.16, 0.32, 0.54), scale=(0.12, 0.14, 0.12))
         assign_mat(hand, mats["SM_Black"])
         parts.append(hand)
+        for fy in (-0.05, 0.0, 0.05):
+            finger = add_cube("TMP", 1.0, (sx * 1.16, 0.42, 0.52 + fy * 0.4), scale=(0.03, 0.08, 0.03))
+            assign_mat(finger, mats["SM_Black"])
+            parts.append(finger)
 
-    for sx in (-0.16, 0.16):
-        thigh = add_cube("TMP", 1.0, (sx, 0.02, 0.34), scale=(0.14, 0.16, 0.28))
+    for sx in (-0.18, 0.18):
+        thigh = add_cube("TMP", 1.0, (sx, 0.04, 0.36), scale=(0.16, 0.18, 0.30))
         assign_mat(thigh, mats["SM_White"])
         parts.append(thigh)
-        shin = add_cube("TMP", 1.0, (sx, 0.04, 0.16), scale=(0.12, 0.14, 0.16))
+        shin = add_cube("TMP", 1.0, (sx, 0.06, 0.16), scale=(0.14, 0.16, 0.16))
         assign_mat(shin, mats["SM_Graphite"])
         parts.append(shin)
-        boot = add_cube("TMP", 1.0, (sx, 0.1, 0.05), scale=(0.18, 0.26, 0.08))
+        boot = add_cube("TMP", 1.0, (sx, 0.14, 0.05), scale=(0.20, 0.30, 0.08))
         assign_mat(boot, mats["SM_Black"])
         parts.append(boot)
+        tread = add_cube("TMP", 1.0, (sx, 0.16, 0.015), scale=(0.18, 0.26, 0.03))
+        assign_mat(tread, mats["SM_Graphite"])
+        parts.append(tread)
 
     obj = join_parts(parts, name)
     col = ensure_collection("11_Units_Engineer")
@@ -338,80 +401,74 @@ def build_engineer(mats: dict) -> bpy.types.Object:
 
 def build_defense(mats: dict) -> bpy.types.Object:
     """
-    Defense Mech — bulky tracked guardian (Imagine sheet + Phase 4 mass).
-    White/carbon hull, orange hazard, cyan optics, shield plate. Height ~2.15 m.
+    Defense Mech — Imagine Guardian Class tracked hull.
+    Continuous carbon treads, sloping white ceramic, large dark-red viewport,
+    massive shoulder pods with red ports, small roof turret. Not a biped.
+    Height ~2.05 m, width ~2.4 m.
     """
     name = "SM_Unit_DefenseMech"
     remove_if_exists(name)
     parts = []
 
-    belly = add_cube("TMP", 1.0, (0, 0, 0.48), scale=(0.95, 1.15, 0.4))
+    belly = add_cube("TMP", 1.0, (0, 0.02, 0.52), scale=(1.05, 1.28, 0.42))
     assign_mat(belly, mats["SM_Black"])
     parts.append(belly)
 
-    for sx, sy in ((-0.62, 0.5), (0.62, 0.5), (-0.62, -0.5), (0.62, -0.5)):
-        bogie = add_cube("TMP", 1.0, (sx, sy, 0.24), scale=(0.36, 0.48, 0.32))
-        assign_mat(bogie, mats["SM_Graphite"])
-        parts.append(bogie)
-        track = add_cube("TMP", 1.0, (sx, sy, 0.08), scale=(0.4, 0.55, 0.1))
+    for sx in (-0.78, 0.78):
+        track = add_cube("TMP", 1.0, (sx, 0.02, 0.22), scale=(0.42, 1.58, 0.32))
         assign_mat(track, mats["SM_Black"])
         parts.append(track)
-        for wy in (-0.14, 0.14):
+        skirt = add_cube("TMP", 1.0, (sx, 0.02, 0.42), scale=(0.36, 1.48, 0.10))
+        assign_mat(skirt, mats["SM_Graphite"])
+        parts.append(skirt)
+        for wy in (-0.52, -0.18, 0.18, 0.52):
             wh = add_cylinder(
-                "TMP", 0.11, 0.08,
-                (sx + (0.14 if sx > 0 else -0.14), sy + wy, 0.16),
+                "TMP", 0.13, 0.10,
+                (sx + (0.16 if sx > 0 else -0.16), wy, 0.20),
                 rotation=(0, math.pi / 2, 0),
                 vertices=12,
             )
             assign_mat(wh, mats["SM_Steel"])
             parts.append(wh)
 
-    hull = add_cube("TMP", 1.0, (0, 0.04, 1.12), scale=(1.05, 1.12, 0.85))
+    hull = add_cube("TMP", 1.0, (0, -0.04, 1.12), scale=(1.12, 1.18, 0.78))
     assign_mat(hull, mats["SM_White"])
     parts.append(hull)
-    face = add_cube("TMP", 1.0, (0, 0.62, 1.18), scale=(0.62, 0.08, 0.5))
+    slope = add_cube("TMP", 1.0, (0, 0.52, 1.02), scale=(0.92, 0.28, 0.62))
+    assign_mat(slope, mats["SM_White"])
+    parts.append(slope)
+    face = add_cube("TMP", 1.0, (0, 0.68, 1.08), scale=(0.72, 0.10, 0.48))
     assign_mat(face, mats["SM_Graphite"])
     parts.append(face)
-    visor = add_cube("TMP", 1.0, (0, 0.66, 1.22), scale=(0.42, 0.04, 0.12))
-    assign_mat(visor, mats["SM_Cyan"])
+    visor = add_cube("TMP", 1.0, (0, 0.74, 1.12), scale=(0.48, 0.06, 0.28))
+    assign_mat(visor, mats["SM_Defense"])
     parts.append(visor)
-    crest = add_cube("TMP", 1.0, (0, 0.58, 1.52), scale=(0.18, 0.06, 0.1))
-    assign_mat(crest, mats["SM_Orange"])
-    parts.append(crest)
+    emblem = add_cube("TMP", 1.0, (0, 0.62, 1.48), scale=(0.16, 0.06, 0.14))
+    assign_mat(emblem, mats["SM_Orange"])
+    parts.append(emblem)
 
-    shield = add_cube("TMP", 1.0, (-0.78, 0.22, 1.05), scale=(0.1, 0.7, 0.95))
-    assign_mat(shield, mats["SM_Steel"])
-    parts.append(shield)
-    shield_stripe = add_cube("TMP", 1.0, (-0.84, 0.22, 1.35), scale=(0.04, 0.45, 0.08))
-    assign_mat(shield_stripe, mats["SM_Orange"])
-    parts.append(shield_stripe)
-
-    for sx in (-0.92, 0.92):
-        shoulder = add_cube("TMP", 1.0, (sx, 0.0, 1.28), scale=(0.42, 0.65, 0.55))
+    for sx in (-1.08, 1.08):
+        shoulder = add_cube("TMP", 1.0, (sx, 0.02, 1.22), scale=(0.58, 0.88, 0.72))
         assign_mat(shoulder, mats["SM_White"])
         parts.append(shoulder)
-        haz = add_cube("TMP", 1.0, (sx, 0.36, 1.52), scale=(0.28, 0.06, 0.06))
+        port = add_cube("TMP", 1.0, (sx, 0.46, 1.22), scale=(0.28, 0.06, 0.32))
+        assign_mat(port, mats["SM_Defense"])
+        parts.append(port)
+        haz = add_cube("TMP", 1.0, (sx, 0.22, 1.58), scale=(0.38, 0.08, 0.06))
         assign_mat(haz, mats["SM_Orange"])
         parts.append(haz)
+        haz2 = add_cube("TMP", 1.0, (sx, 0.22, 1.48), scale=(0.38, 0.08, 0.06))
+        assign_mat(haz2, mats["SM_Orange"])
+        parts.append(haz2)
 
-    cannon = add_cylinder(
-        "TMP", 0.09, 0.7, (0.55, 0.55, 1.22),
-        rotation=(math.pi / 2, 0, 0), vertices=12,
-    )
-    assign_mat(cannon, mats["SM_Graphite"])
-    parts.append(cannon)
-
-    turret = add_cylinder("TMP", 0.24, 0.28, (0, -0.08, 1.68), vertices=16)
+    turret = add_cube("TMP", 1.0, (0, -0.06, 1.72), scale=(0.36, 0.32, 0.18))
     assign_mat(turret, mats["SM_Graphite"])
     parts.append(turret)
-    dome = add_uv_sphere("TMP", 0.16, (0, -0.08, 1.88), scale=(1.0, 1.0, 0.7), segments=14, rings=8)
-    assign_mat(dome, mats["SM_White"])
-    parts.append(dome)
-    optic = add_uv_sphere("TMP", 0.06, (0, 0.08, 1.9), segments=10, rings=6)
+    optic = add_uv_sphere("TMP", 0.055, (0, 0.12, 1.78), segments=10, rings=6)
     assign_mat(optic, mats["SM_Cyan"])
     parts.append(optic)
 
-    rear = add_cube("TMP", 1.0, (0, -0.62, 1.0), scale=(0.78, 0.12, 0.55))
+    rear = add_cube("TMP", 1.0, (0, -0.68, 1.05), scale=(0.88, 0.14, 0.58))
     assign_mat(rear, mats["SM_Black"])
     parts.append(rear)
 
@@ -425,74 +482,74 @@ def build_defense(mats: dict) -> bpy.types.Object:
 
 def build_stalker(mats: dict) -> bpy.types.Object:
     """
-    Dust Stalker — refined against ConceptSheets/SM_Unit_DustStalker_Turnaround.jpg.
-    Low quadruped predator: dark hide, bone-white dorsal plating, orange eyes/seams,
-    spine ridges, thick tapered tail. Game height ~0.95 m.
+    Dust Stalker — Imagine creature sheet, RTS predator.
+    Low quadruped, four orange eyes, serrated dorsal fins, wrapping bone plates,
+    white forearm armor, three-toed talons, thick tail. Not a beetle/tick.
+    Length ~2.8 m, shoulder ~1.15 m.
     """
     name = "SM_Unit_DustStalker"
     remove_if_exists(name)
     parts = []
 
-    # Main body — elongated dark carapace
-    body = add_uv_sphere("TMP", 0.55, (0, 0, 0.42), scale=(1.15, 1.7, 0.55), segments=24, rings=12)
+    body = add_uv_sphere("TMP", 0.58, (0, 0.06, 0.50), scale=(1.05, 2.35, 0.70), segments=24, rings=12)
     assign_mat(body, mats["SM_Stalker"])
     parts.append(body)
+    hump = add_uv_sphere("TMP", 0.34, (0, 0.18, 0.78), scale=(1.20, 1.40, 0.72), segments=16, rings=8)
+    assign_mat(hump, mats["SM_Stalker"])
+    parts.append(hump)
 
-    # White shoulder / dorsal armor plates
-    for y, scz in ((0.25, 0.22), (-0.15, 0.2), (-0.5, 0.16)):
-        plate = add_cube("TMP", 1.0, (0, y, 0.62), scale=(0.55, 0.35, scz))
+    # Wrapping bone plates (midsection + shoulders).
+    for y, sx, sz in ((0.42, 0.72, 0.20), (0.05, 0.64, 0.18), (-0.38, 0.54, 0.15)):
+        plate = add_cube("TMP", 1.0, (0, y, 0.78), scale=(sx, 0.30, sz))
         assign_mat(plate, mats["SM_White"])
         parts.append(plate)
+    for sx in (-0.42, 0.42):
+        wrap = add_cube("TMP", 1.0, (sx, 0.22, 0.62), scale=(0.16, 0.55, 0.28))
+        assign_mat(wrap, mats["SM_White"])
+        parts.append(wrap)
+        glow = add_uv_sphere("TMP", 0.05, (sx * 1.15, 0.08, 0.55), segments=8, rings=6)
+        assign_mat(glow, mats["SM_Orange"])
+        parts.append(glow)
 
-    # Head — tapered
-    head = add_uv_sphere("TMP", 0.28, (0, 0.95, 0.48), scale=(0.9, 1.15, 0.75), segments=20, rings=10)
+    head = add_uv_sphere("TMP", 0.30, (0, 1.32, 0.58), scale=(0.82, 1.28, 0.76), segments=20, rings=10)
     assign_mat(head, mats["SM_Stalker"])
     parts.append(head)
-
-    # Glowing orange eyes
-    for x in (-0.12, 0.12):
-        eye = add_uv_sphere("TMP", 0.06, (x, 1.15, 0.52), segments=12, rings=8)
+    snout = add_cube("TMP", 1.0, (0, 1.62, 0.48), scale=(0.26, 0.28, 0.14))
+    assign_mat(snout, mats["SM_Black"])
+    parts.append(snout)
+    # Two pairs of orange eyes.
+    for x, y, z in (
+        (-0.14, 1.48, 0.70), (0.14, 1.48, 0.70),
+        (-0.22, 1.40, 0.62), (0.22, 1.40, 0.62),
+    ):
+        eye = add_uv_sphere("TMP", 0.055, (x, y, z), segments=10, rings=6)
         assign_mat(eye, mats["SM_Orange"])
         parts.append(eye)
 
-    # Jaw glow seams
-    for x in (-0.1, 0.1):
-        seam = add_cube("TMP", 1.0, (x, 1.05, 0.35), scale=(0.04, 0.18, 0.04))
-        assign_mat(seam, mats["SM_Orange"])
-        parts.append(seam)
-
-    # Dorsal spines along back → tail
-    for i, y in enumerate((0.7, 0.35, 0.0, -0.35, -0.7, -1.0)):
-        h = 0.32 - i * 0.03
-        ridge = add_cone("TMP", 0.07, h, (0, y, 0.72 + h * 0.35))
+    for i, y in enumerate((0.95, 0.58, 0.22, -0.14, -0.50, -0.86, -1.18)):
+        h = 0.58 - i * 0.05
+        ridge = add_cone("TMP", 0.07, h, (0, y, 0.90 + h * 0.34))
         assign_mat(ridge, mats["SM_Black"])
         parts.append(ridge)
 
-    # Thick tapered tail
-    tail = add_uv_sphere("TMP", 0.22, (0, -1.15, 0.35), scale=(0.7, 1.6, 0.55), segments=16, rings=8)
+    tail = add_uv_sphere("TMP", 0.26, (0, -1.42, 0.40), scale=(0.62, 2.05, 0.52), segments=16, rings=8)
     assign_mat(tail, mats["SM_Stalker"])
     parts.append(tail)
-    tip = add_cone("TMP", 0.1, 0.35, (0, -1.65, 0.32))
+    tip = add_cone("TMP", 0.10, 0.48, (0, -2.05, 0.36))
     assign_mat(tip, mats["SM_Black"])
     parts.append(tip)
 
-    # Four legs with bracer plates + claws
-    for sx, sy in ((-0.42, 0.45), (0.42, 0.45), (-0.4, -0.4), (0.4, -0.4)):
-        upper = add_cube("TMP", 1.0, (sx, sy, 0.32), scale=(0.14, 0.14, 0.28))
+    for sx, sy in ((-0.55, 0.58), (0.55, 0.58), (-0.50, -0.50), (0.50, -0.50)):
+        upper = add_cube("TMP", 1.0, (sx, sy, 0.40), scale=(0.16, 0.16, 0.40))
         assign_mat(upper, mats["SM_Stalker"])
         parts.append(upper)
-        bracer = add_cube("TMP", 1.0, (sx * 1.05, sy, 0.18), scale=(0.16, 0.16, 0.12))
+        bracer = add_cube("TMP", 1.0, (sx * 1.10, sy, 0.18), scale=(0.20, 0.20, 0.14))
         assign_mat(bracer, mats["SM_White"])
         parts.append(bracer)
-        # claws
-        for cx in (-0.05, 0.05):
-            claw = add_cone("TMP", 0.03, 0.12, (sx + cx, sy + 0.08, 0.06))
+        for cx, cy in ((-0.07, 0.08), (0.0, 0.12), (0.07, 0.08)):
+            claw = add_cone("TMP", 0.032, 0.16, (sx + cx, sy + cy, 0.05))
             assign_mat(claw, mats["SM_Black"])
             parts.append(claw)
-        # orange joint glow
-        glow = add_uv_sphere("TMP", 0.04, (sx, sy, 0.38), segments=8, rings=6)
-        assign_mat(glow, mats["SM_Orange"])
-        parts.append(glow)
 
     obj = join_parts(parts, name)
     col = ensure_collection("13_Units_Stalker")
@@ -503,52 +560,83 @@ def build_stalker(mats: dict) -> bpy.types.Object:
 
 
 def build_medic(mats: dict) -> bpy.types.Object:
-    """Field medic — white shell, cyan cross, kit satchel, orange beacon. ~2.3 m."""
+    """
+    Medic LO-MED-1 — Imagine hover capsule sheet.
+    White ceramic top / black carbon belly, orange hazard stripes, cyan cross
+    and visor, IV pole + bag, four cyan hover discs (no rotors).
+    ~1.7 × 0.85 × 1.35 m. Not a biped, not Scout.
+    """
     name = "SM_Unit_Medic"
     remove_if_exists(name)
     parts = []
 
-    hips = add_cylinder("TMP", 0.28, 0.22, (0, 0, 0.62), vertices=18)
-    assign_mat(hips, mats["SM_Black"])
-    parts.append(hips)
-    torso = add_cylinder("TMP", 0.34, 1.05, (0, 0, 1.25), vertices=22)
-    assign_mat(torso, mats["SM_White"])
-    parts.append(torso)
-    band = add_cylinder("TMP", 0.38, 0.1, (0, 0, 1.05), vertices=22)
-    assign_mat(band, mats["SM_Black"])
-    parts.append(band)
-    head = add_uv_sphere("TMP", 0.22, (0, 0.04, 1.92), segments=16, rings=10)
-    assign_mat(head, mats["SM_White"])
-    parts.append(head)
-    visor = add_cube("TMP", 1.0, (0, 0.2, 1.92), scale=(0.28, 0.04, 0.08))
+    pad = add_cylinder("TMP", 0.28, 0.04, (0, 0.02, 0.03), vertices=16)
+    assign_mat(pad, mats["SM_Graphite"])
+    parts.append(pad)
+
+    hull = add_uv_sphere(
+        "TMP", 0.42, (0, 0.04, 0.72),
+        scale=(1.02, 2.02, 0.82), segments=22, rings=12,
+    )
+    assign_mat(hull, mats["SM_White"])
+    parts.append(hull)
+    belly = add_uv_sphere(
+        "TMP", 0.38, (0, 0.04, 0.50),
+        scale=(0.98, 1.92, 0.42), segments=20, rings=10,
+    )
+    assign_mat(belly, mats["SM_Black"])
+    parts.append(belly)
+
+    visor = add_cube("TMP", 1.0, (0, 0.82, 0.74), scale=(0.48, 0.04, 0.08))
     assign_mat(visor, mats["SM_Cyan"])
     parts.append(visor)
-    cross_h = add_cube("TMP", 1.0, (0, 0.36, 1.42), scale=(0.22, 0.04, 0.06))
+    for sx, yaw in ((-0.30, math.radians(38)), (0.30, math.radians(-38))):
+        stripe = add_cube("TMP", 1.0, (sx, 0.72, 0.52), scale=(0.10, 0.22, 0.07))
+        stripe.rotation_euler = (math.radians(18), 0.0, yaw)
+        apply_rot(stripe)
+        assign_mat(stripe, mats["SM_Orange"])
+        parts.append(stripe)
+
+    cross_h = add_cube("TMP", 1.0, (0, 0.06, 1.08), scale=(0.46, 0.08, 0.05))
     assign_mat(cross_h, mats["SM_Cyan"])
     parts.append(cross_h)
-    cross_v = add_cube("TMP", 1.0, (0, 0.36, 1.42), scale=(0.06, 0.04, 0.22))
+    cross_v = add_cube("TMP", 1.0, (0, 0.06, 1.08), scale=(0.08, 0.46, 0.05))
     assign_mat(cross_v, mats["SM_Cyan"])
     parts.append(cross_v)
-    kit = add_uv_sphere("TMP", 0.16, (0.38, 0.02, 1.05), scale=(1.1, 0.8, 0.85), segments=12, rings=8)
-    assign_mat(kit, mats["SM_White"])
-    parts.append(kit)
-    kit_stripe = add_cube("TMP", 1.0, (0.5, 0.02, 1.05), scale=(0.04, 0.12, 0.16))
-    assign_mat(kit_stripe, mats["SM_Orange"])
-    parts.append(kit_stripe)
-    beacon = add_cube("TMP", 1.0, (-0.18, 0.0, 2.22), scale=(0.07, 0.07, 0.08))
-    assign_mat(beacon, mats["SM_Orange"])
-    parts.append(beacon)
-    for sx in (-0.22, 0.22):
-        thigh = add_cube("TMP", 1.0, (sx, 0.02, 0.38), scale=(0.14, 0.16, 0.32))
-        assign_mat(thigh, mats["SM_White"])
-        parts.append(thigh)
-        boot = add_cube("TMP", 1.0, (sx, 0.08, 0.07), scale=(0.18, 0.26, 0.08))
-        assign_mat(boot, mats["SM_Black"])
-        parts.append(boot)
-    for sx in (-0.48, 0.48):
-        arm = add_cube("TMP", 1.0, (sx, 0.04, 1.28), scale=(0.12, 0.12, 0.42))
-        assign_mat(arm, mats["SM_Graphite"])
-        parts.append(arm)
+
+    for sx in (-0.44, 0.44):
+        housing = add_cylinder(
+            "TMP", 0.12, 0.06, (sx, -0.12, 0.70),
+            rotation=(0, math.pi / 2, 0), vertices=14,
+        )
+        assign_mat(housing, mats["SM_Graphite"])
+        parts.append(housing)
+        mark = add_cube("TMP", 1.0, (sx * 1.08, -0.12, 0.70), scale=(0.03, 0.08, 0.03))
+        assign_mat(mark, mats["SM_Orange"])
+        parts.append(mark)
+        mark2 = add_cube("TMP", 1.0, (sx * 1.08, -0.12, 0.70), scale=(0.03, 0.03, 0.08))
+        assign_mat(mark2, mats["SM_Orange"])
+        parts.append(mark2)
+
+    pole = add_cylinder("TMP", 0.018, 0.58, (-0.22, -0.72, 1.18), vertices=8)
+    assign_mat(pole, mats["SM_Steel"])
+    parts.append(pole)
+    bag = add_uv_sphere("TMP", 0.07, (-0.22, -0.72, 1.50), scale=(0.85, 0.70, 1.15), segments=10, rings=6)
+    assign_mat(bag, mats["SM_Cyan"])
+    parts.append(bag)
+    tube = add_cylinder("TMP", 0.012, 0.28, (-0.18, -0.62, 1.22), vertices=6)
+    tube.rotation_euler = (math.radians(35), 0.0, 0.0)
+    apply_rot(tube)
+    assign_mat(tube, mats["SM_Steel"])
+    parts.append(tube)
+
+    for sx, sy in ((-0.38, 0.52), (0.38, 0.52), (-0.38, -0.52), (0.38, -0.52)):
+        disc = add_cylinder("TMP", 0.14, 0.04, (sx, sy, 0.20), vertices=14)
+        assign_mat(disc, mats["SM_Black"])
+        parts.append(disc)
+        glow = add_cylinder("TMP", 0.11, 0.02, (sx, sy, 0.14), vertices=12)
+        assign_mat(glow, mats["SM_Cyan"])
+        parts.append(glow)
 
     obj = join_parts(parts, name)
     col = ensure_collection("14_Units_Medic")
@@ -559,39 +647,78 @@ def build_medic(mats: dict) -> bpy.types.Object:
 
 
 def build_harvester(mats: dict) -> bpy.types.Object:
-    """Ore harvester — squat hopper, scoop, cyan visor. ~1.8 m."""
+    """
+    Harvester LO-HAR-1 — Imagine tracked scoop hopper sheet.
+    White cab, cyan visor, orange front blade, rear hopper with orange lip,
+    small side excavator arm. Continuous treads. Not a Terraformer dozer.
+    ~1.55 m tall.
+    """
     name = "SM_Unit_HarvesterBot"
     remove_if_exists(name)
     parts = []
 
-    belly = add_cylinder("TMP", 0.55, 0.7, (0, 0, 0.72), vertices=20)
-    assign_mat(belly, mats["SM_White"])
-    parts.append(belly)
-    band = add_cylinder("TMP", 0.6, 0.1, (0, 0, 0.55), vertices=20)
-    assign_mat(band, mats["SM_Black"])
-    parts.append(band)
-    hopper = add_cube("TMP", 1.0, (0, -0.42, 1.15), scale=(0.7, 0.42, 0.55))
-    assign_mat(hopper, mats["SM_Steel"])
-    parts.append(hopper)
-    hop_lip = add_cube("TMP", 1.0, (0, -0.42, 1.42), scale=(0.62, 0.36, 0.06))
-    assign_mat(hop_lip, mats["SM_Orange"])
-    parts.append(hop_lip)
-    scoop = add_cube("TMP", 1.0, (0, 0.58, 0.42), scale=(0.85, 0.22, 0.14))
-    assign_mat(scoop, mats["SM_Orange"])
-    parts.append(scoop)
-    scoop_arm = add_cube("TMP", 1.0, (0, 0.38, 0.62), scale=(0.18, 0.32, 0.1))
-    assign_mat(scoop_arm, mats["SM_Graphite"])
-    parts.append(scoop_arm)
-    visor = add_cube("TMP", 1.0, (0, 0.5, 1.05), scale=(0.48, 0.06, 0.1))
+    chassis = add_cube("TMP", 1.0, (0, 0.02, 0.42), scale=(1.08, 1.32, 0.36))
+    assign_mat(chassis, mats["SM_Black"])
+    parts.append(chassis)
+    cab = add_cube("TMP", 1.0, (0, 0.22, 0.98), scale=(0.82, 0.72, 0.62))
+    assign_mat(cab, mats["SM_White"])
+    parts.append(cab)
+    visor = add_cube("TMP", 1.0, (0, 0.60, 1.08), scale=(0.58, 0.05, 0.16))
     assign_mat(visor, mats["SM_Cyan"])
     parts.append(visor)
-    head = add_cube("TMP", 1.0, (0, 0.28, 1.08), scale=(0.5, 0.28, 0.28))
-    assign_mat(head, mats["SM_White"])
-    parts.append(head)
-    for sx in (-0.38, 0.38):
-        track = add_cube("TMP", 1.0, (sx, 0.0, 0.16), scale=(0.22, 0.7, 0.18))
+    ant = add_cylinder("TMP", 0.016, 0.22, (0.22, 0.18, 1.38), vertices=6)
+    assign_mat(ant, mats["SM_Steel"])
+    parts.append(ant)
+    node = add_uv_sphere("TMP", 0.04, (-0.18, 0.12, 1.32), segments=8, rings=6)
+    assign_mat(node, mats["SM_Cyan"])
+    parts.append(node)
+
+    hopper = add_cube("TMP", 1.0, (0, -0.62, 1.05), scale=(0.88, 0.52, 0.62))
+    assign_mat(hopper, mats["SM_Graphite"])
+    parts.append(hopper)
+    hop_lip = add_cube("TMP", 1.0, (0, -0.62, 1.38), scale=(0.82, 0.46, 0.08))
+    assign_mat(hop_lip, mats["SM_Orange"])
+    parts.append(hop_lip)
+    ore = add_cube("TMP", 1.0, (0, -0.62, 1.18), scale=(0.64, 0.34, 0.18))
+    assign_mat(ore, mats["SM_Steel"])
+    parts.append(ore)
+
+    # Orange front scoop/blade — not a Terraformer V-plow.
+    blade = add_cube("TMP", 1.0, (0, 0.98, 0.48), scale=(1.18, 0.12, 0.58))
+    blade.rotation_euler = (math.radians(16), 0.0, 0.0)
+    apply_rot(blade)
+    assign_mat(blade, mats["SM_Orange"])
+    parts.append(blade)
+    for sx in (-0.28, 0.28):
+        brace = add_cube("TMP", 1.0, (sx, 0.62, 0.62), scale=(0.08, 0.38, 0.08))
+        assign_mat(brace, mats["SM_Graphite"])
+        parts.append(brace)
+
+    # Small side excavator (vehicle left / -X).
+    boom = add_cube("TMP", 1.0, (-0.68, 0.08, 1.02), scale=(0.10, 0.42, 0.10))
+    assign_mat(boom, mats["SM_Black"])
+    parts.append(boom)
+    fore = add_cube("TMP", 1.0, (-0.68, 0.42, 0.72), scale=(0.08, 0.10, 0.42))
+    assign_mat(fore, mats["SM_Black"])
+    parts.append(fore)
+    bucket = add_cube("TMP", 1.0, (-0.68, 0.58, 0.42), scale=(0.16, 0.22, 0.12))
+    assign_mat(bucket, mats["SM_Steel"])
+    parts.append(bucket)
+    lip = add_cube("TMP", 1.0, (-0.68, 0.70, 0.36), scale=(0.14, 0.04, 0.10))
+    assign_mat(lip, mats["SM_Orange"])
+    parts.append(lip)
+
+    for sx in (-0.62, 0.62):
+        track = add_cube("TMP", 1.0, (sx, 0.02, 0.18), scale=(0.28, 1.42, 0.28))
         assign_mat(track, mats["SM_Black"])
         parts.append(track)
+        for sy in (-0.52, -0.26, 0.0, 0.26, 0.52):
+            hub = add_cylinder(
+                "TMP", 0.09, 0.10, (sx, sy, 0.18),
+                rotation=(0, math.pi / 2, 0), vertices=10,
+            )
+            assign_mat(hub, mats["SM_Steel"])
+            parts.append(hub)
 
     obj = join_parts(parts, name)
     col = ensure_collection("15_Units_Harvester")
@@ -602,42 +729,70 @@ def build_harvester(mats: dict) -> bpy.types.Object:
 
 
 def build_surveyor(mats: dict) -> bpy.types.Object:
-    """Surveyor — tall mast, dish, cyan lens. ~2.8 m."""
+    """
+    Surveyor LO-SRV-1 — Imagine tripod mast sheet.
+    White cylinder on three black carbon legs with pad feet + white thigh armor,
+    cyan eye, white dish on mast, orange beacon. ~2.55 m tall. Not Scout.
+    """
     name = "SM_Unit_SurveyorBot"
     remove_if_exists(name)
     parts = []
 
-    hips = add_cylinder("TMP", 0.22, 0.2, (0, 0, 0.55), vertices=16)
-    assign_mat(hips, mats["SM_Black"])
-    parts.append(hips)
-    torso = add_cylinder("TMP", 0.24, 1.15, (0, 0, 1.25), vertices=20)
-    assign_mat(torso, mats["SM_White"])
-    parts.append(torso)
-    band = add_cylinder("TMP", 0.28, 0.08, (0, 0, 1.45), vertices=20)
+    body = add_cylinder("TMP", 0.32, 0.62, (0, 0, 0.95), vertices=18)
+    assign_mat(body, mats["SM_White"])
+    parts.append(body)
+    band = add_cylinder("TMP", 0.36, 0.10, (0, 0, 0.92), vertices=18)
     assign_mat(band, mats["SM_Black"])
     parts.append(band)
-    lens = add_cube("TMP", 1.0, (0, 0.26, 1.55), scale=(0.28, 0.08, 0.1))
+    lens = add_cube("TMP", 1.0, (0, 0.36, 0.92), scale=(0.16, 0.05, 0.14))
     assign_mat(lens, mats["SM_Cyan"])
     parts.append(lens)
-    mast = add_cylinder("TMP", 0.035, 0.7, (0, 0, 2.15), vertices=10)
+    tag = add_cube("TMP", 1.0, (0.33, 0.0, 0.78), scale=(0.03, 0.10, 0.06))
+    assign_mat(tag, mats["SM_Orange"])
+    parts.append(tag)
+
+    mast = add_cylinder("TMP", 0.040, 1.22, (0, 0, 1.86), vertices=10)
     assign_mat(mast, mats["SM_Steel"])
     parts.append(mast)
-    dish = add_uv_sphere("TMP", 0.32, (0, 0, 2.52), scale=(1.0, 1.0, 0.22), segments=20, rings=8)
-    assign_mat(dish, mats["SM_White"])
-    parts.append(dish)
-    dish_ring = add_cylinder("TMP", 0.34, 0.03, (0, 0, 2.52), vertices=20)
-    assign_mat(dish_ring, mats["SM_Orange"])
-    parts.append(dish_ring)
-    for sx in (-0.18, 0.18):
-        thigh = add_cube("TMP", 1.0, (sx, 0.02, 0.32), scale=(0.1, 0.12, 0.28))
-        assign_mat(thigh, mats["SM_Graphite"])
-        parts.append(thigh)
-        foot = add_cube("TMP", 1.0, (sx, 0.08, 0.05), scale=(0.14, 0.22, 0.06))
-        assign_mat(foot, mats["SM_Black"])
-        parts.append(foot)
-    beacon = add_uv_sphere("TMP", 0.045, (0.12, 0.0, 1.95), segments=10, rings=6)
+    beacon_stem = add_cylinder("TMP", 0.016, 0.22, (0.16, 0.0, 1.38), vertices=6)
+    assign_mat(beacon_stem, mats["SM_Black"])
+    parts.append(beacon_stem)
+    beacon = add_uv_sphere("TMP", 0.05, (0.16, 0.0, 1.52), segments=10, rings=6)
     assign_mat(beacon, mats["SM_Orange"])
     parts.append(beacon)
+
+    dish = add_uv_sphere("TMP", 0.42, (0, 0, 2.48), scale=(1.0, 1.0, 0.18), segments=20, rings=8)
+    assign_mat(dish, mats["SM_White"])
+    parts.append(dish)
+    cluster = add_cylinder("TMP", 0.08, 0.10, (0, 0, 2.56), vertices=12)
+    assign_mat(cluster, mats["SM_Graphite"])
+    parts.append(cluster)
+    glow = add_cylinder("TMP", 0.07, 0.04, (0, 0, 2.62), vertices=12)
+    assign_mat(glow, mats["SM_Cyan"])
+    parts.append(glow)
+
+    for ang_deg in (20.0, 140.0, 260.0):
+        rad = math.radians(ang_deg)
+        fx = math.cos(rad) * 0.86
+        fy = math.sin(rad) * 0.86
+        thigh = add_cube("TMP", 1.0, (fx * 0.38, fy * 0.38, 0.64), scale=(0.70, 0.09, 0.09))
+        thigh.rotation_euler = (0.0, math.radians(-40), rad)
+        apply_rot(thigh)
+        assign_mat(thigh, mats["SM_Black"])
+        parts.append(thigh)
+        plate = add_cube("TMP", 1.0, (fx * 0.42, fy * 0.42, 0.70), scale=(0.36, 0.14, 0.06))
+        plate.rotation_euler = (0.0, math.radians(-40), rad)
+        apply_rot(plate)
+        assign_mat(plate, mats["SM_White"])
+        parts.append(plate)
+        shin = add_cube("TMP", 1.0, (fx * 0.80, fy * 0.80, 0.24), scale=(0.48, 0.08, 0.08))
+        shin.rotation_euler = (0.0, math.radians(-55), rad)
+        apply_rot(shin)
+        assign_mat(shin, mats["SM_Black"])
+        parts.append(shin)
+        foot = add_cube("TMP", 1.0, (fx, fy, 0.04), scale=(0.22, 0.22, 0.06))
+        assign_mat(foot, mats["SM_Black"])
+        parts.append(foot)
 
     obj = join_parts(parts, name)
     col = ensure_collection("16_Units_Surveyor")
@@ -648,47 +803,83 @@ def build_surveyor(mats: dict) -> bpy.types.Object:
 
 
 def build_terraformer(mats: dict) -> bpy.types.Object:
-    """Terraformer — tank backpack, spray boom, orange nozzles. ~2.1 m."""
+    """
+    Terraformer LO-TRF-1 — Imagine tracked dozer sheet.
+    White ceramic cab, orange front blade, orange rear rake/tiller, cyan visor,
+    orange beacons, continuous treads. Not a front-scoop hopper.
+    RTS size ~2.5 m class (do not shrink to a toy).
+    """
     name = "SM_Unit_TerraformerBot"
     remove_if_exists(name)
     parts = []
 
-    hips = add_cylinder("TMP", 0.32, 0.24, (0, 0, 0.58), vertices=18)
-    assign_mat(hips, mats["SM_Black"])
-    parts.append(hips)
-    torso = add_cylinder("TMP", 0.38, 0.95, (0, 0, 1.18), vertices=22)
-    assign_mat(torso, mats["SM_White"])
-    parts.append(torso)
-    band = add_cylinder("TMP", 0.42, 0.1, (0, 0, 0.92), vertices=22)
-    assign_mat(band, mats["SM_Black"])
-    parts.append(band)
-    head = add_cube("TMP", 1.0, (0, 0.08, 1.78), scale=(0.32, 0.3, 0.24))
-    assign_mat(head, mats["SM_White"])
-    parts.append(head)
-    visor = add_cube("TMP", 1.0, (0, 0.24, 1.78), scale=(0.26, 0.04, 0.08))
+    chassis = add_cube("TMP", 1.0, (0, 0.02, 0.72), scale=(1.18, 1.68, 0.48))
+    assign_mat(chassis, mats["SM_White"])
+    parts.append(chassis)
+    belly = add_cube("TMP", 1.0, (0, 0.02, 0.40), scale=(1.28, 1.78, 0.16))
+    assign_mat(belly, mats["SM_Black"])
+    parts.append(belly)
+    cab = add_cube("TMP", 1.0, (0, 0.38, 1.28), scale=(0.78, 0.58, 0.52))
+    assign_mat(cab, mats["SM_White"])
+    parts.append(cab)
+    visor = add_cube("TMP", 1.0, (0, 0.68, 1.38), scale=(0.62, 0.05, 0.16))
     assign_mat(visor, mats["SM_Cyan"])
     parts.append(visor)
-    for sx in (-0.22, 0.22):
-        tank = add_cylinder("TMP", 0.14, 0.7, (sx, -0.38, 1.22), vertices=14)
-        assign_mat(tank, mats["SM_Steel"])
-        parts.append(tank)
-        cap = add_uv_sphere("TMP", 0.08, (sx, -0.38, 1.6), segments=10, rings=6)
+    lamp = add_uv_sphere("TMP", 0.055, (0.22, 0.68, 1.18), segments=8, rings=6)
+    assign_mat(lamp, mats["SM_Cyan"])
+    parts.append(lamp)
+    beacon = add_uv_sphere("TMP", 0.06, (0, 0.28, 1.62), segments=10, rings=6)
+    assign_mat(beacon, mats["SM_Orange"])
+    parts.append(beacon)
+    ant = add_cylinder("TMP", 0.016, 0.42, (0.22, 0.22, 1.72), vertices=6)
+    assign_mat(ant, mats["SM_Steel"])
+    parts.append(ant)
+
+    tanks = add_cube("TMP", 1.0, (0, -0.48, 1.22), scale=(0.92, 0.72, 0.42))
+    assign_mat(tanks, mats["SM_White"])
+    parts.append(tanks)
+    for sx in (-0.28, 0.28):
+        cap = add_uv_sphere("TMP", 0.055, (sx, -0.48, 1.48), segments=8, rings=6)
         assign_mat(cap, mats["SM_Orange"])
         parts.append(cap)
-    boom = add_cube("TMP", 1.0, (0, 0.55, 1.15), scale=(0.9, 0.08, 0.08))
-    assign_mat(boom, mats["SM_Graphite"])
-    parts.append(boom)
-    for sx in (-0.4, 0.4):
-        nozzle = add_cone("TMP", 0.06, 0.16, (sx, 0.62, 1.02), vertices=10)
-        assign_mat(nozzle, mats["SM_Orange"])
-        parts.append(nozzle)
-    for sx in (-0.22, 0.22):
-        thigh = add_cube("TMP", 1.0, (sx, 0.02, 0.34), scale=(0.14, 0.16, 0.28))
-        assign_mat(thigh, mats["SM_White"])
-        parts.append(thigh)
-        boot = add_cube("TMP", 1.0, (sx, 0.1, 0.06), scale=(0.18, 0.26, 0.08))
-        assign_mat(boot, mats["SM_Black"])
-        parts.append(boot)
+
+    # Orange dozer blade (full orange, not a steel V-plow with a lip).
+    blade = add_cube("TMP", 1.0, (0, 1.22, 0.58), scale=(1.55, 0.12, 0.78))
+    blade.rotation_euler = (math.radians(8), 0.0, 0.0)
+    apply_rot(blade)
+    assign_mat(blade, mats["SM_Orange"])
+    parts.append(blade)
+    for sx in (-0.38, 0.38):
+        arm = add_cube("TMP", 1.0, (sx, 0.82, 0.62), scale=(0.10, 0.48, 0.10))
+        assign_mat(arm, mats["SM_Black"])
+        parts.append(arm)
+
+    # Orange rear rake/tiller — wider than hull, many tines.
+    rake = add_cube("TMP", 1.0, (0, -1.12, 0.42), scale=(2.05, 0.10, 0.10))
+    assign_mat(rake, mats["SM_Orange"])
+    parts.append(rake)
+    hang = add_cube("TMP", 1.0, (0, -0.92, 0.72), scale=(0.12, 0.42, 0.10))
+    assign_mat(hang, mats["SM_Black"])
+    parts.append(hang)
+    for i in range(11):
+        tx = -0.95 + i * 0.19
+        tine = add_cone("TMP", 0.028, 0.28, (tx, -1.18, 0.22), vertices=8)
+        tine.rotation_euler = (math.radians(165), 0.0, 0.0)
+        apply_rot(tine)
+        assign_mat(tine, mats["SM_Orange"])
+        parts.append(tine)
+
+    for sx in (-0.68, 0.68):
+        track = add_cube("TMP", 1.0, (sx, 0.02, 0.20), scale=(0.32, 1.52, 0.32))
+        assign_mat(track, mats["SM_Black"])
+        parts.append(track)
+        for sy in (-0.55, -0.18, 0.18, 0.55):
+            hub = add_cylinder(
+                "TMP", 0.12, 0.11, (sx, sy, 0.20),
+                rotation=(0, math.pi / 2, 0), vertices=10,
+            )
+            assign_mat(hub, mats["SM_Steel"])
+            parts.append(hub)
 
     obj = join_parts(parts, name)
     col = ensure_collection("17_Units_Terraformer")
@@ -699,39 +890,78 @@ def build_terraformer(mats: dict) -> bpy.types.Object:
 
 
 def build_courier(mats: dict) -> bpy.types.Object:
-    """Courier — cargo crate back, compact chassis, orange stripe. ~1.9 m."""
+    """
+    Courier LO-COU-1 — Imagine six-wheel hauler sheet.
+    White cab + white crate with orange corners, cyan visor bar, orange roof
+    beacon, whip antenna, black grille. No drill, no vials. ~2.0 × 1.45 m.
+    """
     name = "SM_Unit_CourierBot"
     remove_if_exists(name)
     parts = []
 
-    chassis = add_cube("TMP", 1.0, (0, 0, 0.55), scale=(0.7, 0.85, 0.45))
+    chassis = add_cube("TMP", 1.0, (0, 0.02, 0.48), scale=(0.78, 1.58, 0.28))
     assign_mat(chassis, mats["SM_White"])
     parts.append(chassis)
-    belly = add_cube("TMP", 1.0, (0, 0, 0.28), scale=(0.62, 0.78, 0.18))
+    belly = add_cube("TMP", 1.0, (0, 0.02, 0.26), scale=(0.70, 1.48, 0.16))
     assign_mat(belly, mats["SM_Black"])
     parts.append(belly)
-    crate = add_cube("TMP", 1.0, (0, -0.22, 1.05), scale=(0.55, 0.48, 0.5))
-    assign_mat(crate, mats["SM_Steel"])
+    bumper = add_cube("TMP", 1.0, (0, 0.82, 0.22), scale=(0.72, 0.10, 0.12))
+    assign_mat(bumper, mats["SM_Black"])
+    parts.append(bumper)
+
+    crate = add_cube("TMP", 1.0, (0, -0.28, 1.00), scale=(0.80, 0.92, 0.78))
+    assign_mat(crate, mats["SM_White"])
     parts.append(crate)
-    stripe = add_cube("TMP", 1.0, (0, -0.48, 1.05), scale=(0.42, 0.04, 0.08))
-    assign_mat(stripe, mats["SM_Orange"])
-    parts.append(stripe)
-    head = add_cube("TMP", 1.0, (0, 0.32, 0.95), scale=(0.4, 0.28, 0.28))
-    assign_mat(head, mats["SM_White"])
-    parts.append(head)
-    visor = add_cube("TMP", 1.0, (0, 0.48, 0.95), scale=(0.32, 0.04, 0.1))
+    for sx, sy, sz in (
+        (-0.38, -0.70, 0.64), (0.38, -0.70, 0.64),
+        (-0.38, 0.14, 0.64), (0.38, 0.14, 0.64),
+        (-0.38, -0.70, 1.36), (0.38, -0.70, 1.36),
+        (-0.38, 0.14, 1.36), (0.38, 0.14, 1.36),
+    ):
+        corner = add_cube("TMP", 1.0, (sx, sy, sz), scale=(0.10, 0.10, 0.10))
+        assign_mat(corner, mats["SM_Orange"])
+        parts.append(corner)
+
+    cab = add_cube("TMP", 1.0, (0, 0.68, 0.82), scale=(0.64, 0.42, 0.44))
+    assign_mat(cab, mats["SM_White"])
+    parts.append(cab)
+    grille = add_cube("TMP", 1.0, (0, 0.90, 0.62), scale=(0.22, 0.04, 0.18))
+    assign_mat(grille, mats["SM_Black"])
+    parts.append(grille)
+    visor = add_cube("TMP", 1.0, (0, 0.90, 0.92), scale=(0.50, 0.04, 0.10))
     assign_mat(visor, mats["SM_Cyan"])
     parts.append(visor)
-    for sx, sy in ((-0.32, 0.28), (0.32, 0.28), (-0.32, -0.28), (0.32, -0.28)):
-        wheel = add_cylinder(
-            "TMP", 0.12, 0.08, (sx, sy, 0.14),
-            rotation=(0, math.pi / 2, 0), vertices=12,
-        )
-        assign_mat(wheel, mats["SM_Graphite"])
-        parts.append(wheel)
-    beacon = add_uv_sphere("TMP", 0.05, (0.22, 0.18, 1.22), segments=10, rings=6)
+    for sx in (-0.22, 0.22):
+        lamp = add_uv_sphere("TMP", 0.04, (sx, 0.90, 0.52), segments=8, rings=6)
+        assign_mat(lamp, mats["SM_Cyan"])
+        parts.append(lamp)
+    ant = add_cylinder("TMP", 0.016, 0.78, (0.22, 0.58, 1.38), vertices=8)
+    assign_mat(ant, mats["SM_Steel"])
+    parts.append(ant)
+    tip = add_uv_sphere("TMP", 0.032, (0.22, 0.58, 1.78), segments=8, rings=6)
+    assign_mat(tip, mats["SM_Orange"])
+    parts.append(tip)
+    beacon = add_uv_sphere("TMP", 0.055, (0, 0.58, 1.12), segments=10, rings=6)
     assign_mat(beacon, mats["SM_Orange"])
     parts.append(beacon)
+
+    for sx in (-0.46, 0.46):
+        for sy in (-0.58, 0.02, 0.62):
+            wheel = add_cylinder(
+                "TMP", 0.18, 0.11, (sx, sy, 0.18),
+                rotation=(0, math.pi / 2, 0), vertices=12,
+            )
+            assign_mat(wheel, mats["SM_Black"])
+            parts.append(wheel)
+            hub = add_cylinder(
+                "TMP", 0.07, 0.13, (sx, sy, 0.18),
+                rotation=(0, math.pi / 2, 0), vertices=10,
+            )
+            assign_mat(hub, mats["SM_Steel"])
+            parts.append(hub)
+            fender = add_cube("TMP", 1.0, (sx, sy, 0.38), scale=(0.16, 0.22, 0.06))
+            assign_mat(fender, mats["SM_Black"])
+            parts.append(fender)
 
     obj = join_parts(parts, name)
     col = ensure_collection("18_Units_Courier")
@@ -742,28 +972,82 @@ def build_courier(mats: dict) -> bpy.types.Object:
 
 
 def build_mite(mats: dict) -> bpy.types.Object:
-    """Regolith mite — low beetle, rock plates, orange eyes. ~0.55 m."""
+    """
+    Regolith mite — Imagine farm-scavenger pillbug sheet.
+    Dust-brown carapace, four overlapping graphite top plates, six pointed
+    graphite legs, central cyan eye + two orange nubs, downward mandibles,
+    side access panel. Longer than wide. ~0.95 m RTS. Not a Tick crab.
+    """
     name = "SM_Unit_RegolithMite"
     remove_if_exists(name)
     parts = []
 
-    body = add_uv_sphere("TMP", 0.28, (0, 0, 0.22), scale=(1.15, 1.45, 0.7), segments=18, rings=10)
-    assign_mat(body, mats["SM_Mite"])
+    body = add_uv_sphere(
+        "TMP", 0.19, (0, 0.02, 0.23),
+        scale=(1.22, 2.00, 1.02), segments=20, rings=12,
+    )
+    assign_mat(body, mats["SM_DustBrown"])
     parts.append(body)
-    plate = add_cube("TMP", 1.0, (0, -0.04, 0.36), scale=(0.42, 0.38, 0.08))
-    assign_mat(plate, mats["SM_Graphite"])
-    parts.append(plate)
-    mandible = add_cube("TMP", 1.0, (0, 0.32, 0.18), scale=(0.22, 0.16, 0.1))
-    assign_mat(mandible, mats["SM_Black"])
-    parts.append(mandible)
-    for x in (-0.1, 0.1):
-        eye = add_uv_sphere("TMP", 0.04, (x, 0.28, 0.28), segments=10, rings=6)
-        assign_mat(eye, mats["SM_Orange"])
-        parts.append(eye)
-    for sx, sy in ((-0.22, 0.12), (0.22, 0.12), (-0.2, -0.16), (0.2, -0.16)):
-        leg = add_cube("TMP", 1.0, (sx, sy, 0.1), scale=(0.06, 0.06, 0.16))
-        assign_mat(leg, mats["SM_Black"])
-        parts.append(leg)
+    for y, z, sx, sy, sz in (
+        (0.22, 0.40, 0.38, 0.16, 0.07),
+        (0.06, 0.42, 0.42, 0.18, 0.08),
+        (-0.10, 0.40, 0.38, 0.16, 0.07),
+        (-0.24, 0.36, 0.30, 0.14, 0.06),
+    ):
+        plate = add_cube("TMP", 1.0, (0, y, z), scale=(sx, sy, sz))
+        assign_mat(plate, mats["SM_Graphite"])
+        parts.append(plate)
+    panel = add_cube("TMP", 1.0, (0.22, 0.04, 0.21), scale=(0.02, 0.12, 0.08))
+    assign_mat(panel, mats["SM_Steel"])
+    parts.append(panel)
+    for gy in (-0.03, 0.04, 0.11):
+        grate = add_cube("TMP", 1.0, (0.235, gy, 0.21), scale=(0.01, 0.010, 0.06))
+        assign_mat(grate, mats["SM_Graphite"])
+        parts.append(grate)
+    for y, z in ((0.14, 0.28), (0.0, 0.26), (-0.14, 0.24)):
+        for sx in (-0.18, 0.18):
+            bolt = add_uv_sphere("TMP", 0.014, (sx, y, z), segments=6, rings=4)
+            assign_mat(bolt, mats["SM_Steel"])
+            parts.append(bolt)
+
+    eye = add_uv_sphere("TMP", 0.052, (0, 0.38, 0.27), segments=12, rings=8)
+    assign_mat(eye, mats["SM_Cyan"])
+    parts.append(eye)
+    for x in (-0.10, 0.10):
+        nub = add_uv_sphere("TMP", 0.030, (x, 0.34, 0.31), segments=8, rings=6)
+        assign_mat(nub, mats["SM_Orange"])
+        parts.append(nub)
+    for x, yaw in ((-0.05, 0.22), (0.05, -0.22)):
+        mandible = add_cone("TMP", 0.038, 0.12, (x, 0.42, 0.13), vertices=8)
+        mandible.rotation_euler = (math.pi * 0.72, 0.0, yaw)
+        apply_rot(mandible)
+        assign_mat(mandible, mats["SM_Graphite"])
+        parts.append(mandible)
+
+    for y, z, r, d in ((-0.38, 0.18, 0.048, 0.09), (-0.45, 0.11, 0.032, 0.08)):
+        tail = add_cone("TMP", r, d, (0, y, z), vertices=8)
+        tail.rotation_euler = (math.pi * 0.72, 0.0, math.pi)
+        apply_rot(tail)
+        assign_mat(tail, mats["SM_Graphite"])
+        parts.append(tail)
+
+    for sx, sy in (
+        (-1.0, 0.18), (1.0, 0.18),
+        (-1.0, 0.00), (1.0, 0.00),
+        (-1.0, -0.18), (1.0, -0.18),
+    ):
+        hip = (sx * 0.14, sy, 0.16)
+        knee = (sx * 0.24, sy, 0.10)
+        tip = (sx * 0.32, sy, 0.02)
+        thigh = add_shaft("TMP", 0.020, hip, knee, vertices=8)
+        assign_mat(thigh, mats["SM_Graphite"])
+        parts.append(thigh)
+        shin = add_shaft("TMP", 0.014, knee, tip, vertices=8)
+        assign_mat(shin, mats["SM_Graphite"])
+        parts.append(shin)
+        foot = add_cone("TMP", 0.018, 0.07, (sx * 0.32, sy, 0.03), vertices=6)
+        assign_mat(foot, mats["SM_Graphite"])
+        parts.append(foot)
 
     obj = join_parts(parts, name)
     col = ensure_collection("19_Fauna_Mite")
@@ -774,26 +1058,78 @@ def build_mite(mats: dict) -> bpy.types.Object:
 
 
 def build_leech(mats: dict) -> bpy.types.Object:
-    """Watt leech — long body, cyan core, ice ridge. ~1.2 m long."""
+    """
+    Watt leech — Imagine white ray/beetle sheet (not a segmented millipede).
+    White carapace, cyan dorsal groove, two orange front nubs, white mandibles,
+    four rearward fin-flippers, six black circular discs per side. Low profile.
+    Keep existing ~1.5 m RTS length.
+    """
     name = "SM_Unit_WattLeech"
     remove_if_exists(name)
     parts = []
 
-    body = add_uv_sphere("TMP", 0.22, (0, 0, 0.18), scale=(0.7, 2.2, 0.55), segments=18, rings=10)
-    assign_mat(body, mats["SM_Leech"])
+    body = add_uv_sphere(
+        "TMP", 0.32, (0, 0.0, 0.16),
+        scale=(1.42, 2.12, 0.46), segments=24, rings=12,
+    )
+    assign_mat(body, mats["SM_White"])
     parts.append(body)
-    core = add_uv_sphere("TMP", 0.12, (0, 0.12, 0.28), segments=12, rings=8)
+    groove = add_cube("TMP", 1.0, (0, 0.02, 0.30), scale=(0.11, 1.18, 0.055))
+    assign_mat(groove, mats["SM_Cyan"])
+    parts.append(groove)
+    core = add_cube("TMP", 1.0, (0, 0.02, 0.27), scale=(0.05, 1.08, 0.03))
     assign_mat(core, mats["SM_Cyan"])
     parts.append(core)
-    ridge = add_cube("TMP", 1.0, (0, -0.08, 0.32), scale=(0.1, 0.7, 0.06))
-    assign_mat(ridge, mats["SM_White"])
-    parts.append(ridge)
-    spark = add_cube("TMP", 1.0, (0, 0.38, 0.32), scale=(0.08, 0.1, 0.14))
-    assign_mat(spark, mats["SM_Orange"])
-    parts.append(spark)
-    head = add_uv_sphere("TMP", 0.12, (0, 0.48, 0.2), scale=(0.9, 1.1, 0.7), segments=12, rings=8)
-    assign_mat(head, mats["SM_Leech"])
-    parts.append(head)
+    for sx in (-0.15, 0.15):
+        lobe = add_uv_sphere(
+            "TMP", 0.14, (sx, 0.52, 0.15),
+            scale=(1.12, 1.20, 0.62), segments=14, rings=8,
+        )
+        assign_mat(lobe, mats["SM_White"])
+        parts.append(lobe)
+    tail = add_uv_sphere(
+        "TMP", 0.13, (0, -0.52, 0.13),
+        scale=(1.15, 1.28, 0.55), segments=14, rings=8,
+    )
+    assign_mat(tail, mats["SM_White"])
+    parts.append(tail)
+
+    for x, yaw in ((-0.08, 0.18), (0.08, -0.18)):
+        jaw = add_cone("TMP", 0.038, 0.18, (x, 0.76, 0.10), vertices=8)
+        jaw.rotation_euler = (math.pi * 0.62, 0.0, yaw)
+        apply_rot(jaw)
+        assign_mat(jaw, mats["SM_White"])
+        parts.append(jaw)
+    for x in (-0.13, 0.13):
+        nub = add_uv_sphere("TMP", 0.036, (x, 0.58, 0.22), segments=10, rings=6)
+        assign_mat(nub, mats["SM_Orange"])
+        parts.append(nub)
+
+    for sx, sy, yaw in (
+        (-0.50, 0.26, math.radians(16)),
+        (0.50, 0.26, math.radians(-16)),
+        (-0.44, -0.32, math.radians(-10)),
+        (0.44, -0.32, math.radians(10)),
+    ):
+        fin = add_cone("TMP", 0.11, 0.40, (sx, sy, 0.10), vertices=8)
+        fin.scale = (0.28, 1.0, 0.14)
+        bpy.ops.object.select_all(action="DESELECT")
+        fin.select_set(True)
+        bpy.context.view_layer.objects.active = fin
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+        fin.rotation_euler = (math.pi * 0.5, 0.0, math.pi + yaw)
+        apply_rot(fin)
+        assign_mat(fin, mats["SM_White"])
+        parts.append(fin)
+
+    for sx in (-0.40, 0.40):
+        for y in (0.22, 0.12, 0.02, -0.08, -0.18, -0.28):
+            disc = add_cylinder(
+                "TMP", 0.055, 0.028, (sx, y, 0.10),
+                rotation=(0, math.pi / 2, 0), vertices=12,
+            )
+            assign_mat(disc, mats["SM_Black"])
+            parts.append(disc)
 
     obj = join_parts(parts, name)
     col = ensure_collection("20_Fauna_Leech")
@@ -805,69 +1141,89 @@ def build_leech(mats: dict) -> bpy.types.Object:
 
 def build_geologist(mats: dict) -> bpy.types.Object:
     """
-    Geologist — six-wheel rover (Imagine + Phase 4). Core-drill arm, sample crate,
-    cyan sensor mast. Length ~2.1 m, height ~1.35 m. Not a biped.
+    Geologist LO-GEO-1 — Imagine six-wheel drill rover sheet.
+    White ceramic, two vertical orange nose stripes, vertical drill with orange
+    housing, sample vial rack (cyan+orange caps), sensor mast with cyan lens.
+    Not a Courier. ~2.1 × 1.35 m.
     """
     name = "SM_Unit_GeologistBot"
     remove_if_exists(name)
     parts = []
 
-    chassis = add_cube("TMP", 1.0, (0, 0, 0.42), scale=(0.7, 1.15, 0.28))
+    chassis = add_cube("TMP", 1.0, (0, 0.04, 0.44), scale=(0.72, 1.38, 0.28))
     assign_mat(chassis, mats["SM_White"])
     parts.append(chassis)
-    belly = add_cube("TMP", 1.0, (0, 0, 0.22), scale=(0.62, 1.05, 0.16))
+    belly = add_cube("TMP", 1.0, (0, 0.04, 0.24), scale=(0.62, 1.22, 0.14))
     assign_mat(belly, mats["SM_Black"])
     parts.append(belly)
-    stripe = add_cube("TMP", 1.0, (0, 0.58, 0.5), scale=(0.42, 0.04, 0.12))
-    assign_mat(stripe, mats["SM_Orange"])
-    parts.append(stripe)
+    nose = add_uv_sphere("TMP", 0.22, (0, 0.68, 0.48), scale=(1.35, 0.85, 0.72), segments=14, rings=8)
+    assign_mat(nose, mats["SM_White"])
+    parts.append(nose)
+    for sx in (-0.12, 0.12):
+        stripe = add_cube("TMP", 1.0, (sx, 0.78, 0.52), scale=(0.05, 0.04, 0.22))
+        assign_mat(stripe, mats["SM_Orange"])
+        parts.append(stripe)
+        lamp = add_cube("TMP", 1.0, (sx * 1.4, 0.78, 0.40), scale=(0.06, 0.03, 0.04))
+        assign_mat(lamp, mats["SM_Cyan"])
+        parts.append(lamp)
 
-    crate = add_cube("TMP", 1.0, (0, -0.55, 0.62), scale=(0.48, 0.38, 0.28))
-    assign_mat(crate, mats["SM_Graphite"])
-    parts.append(crate)
-    crate_cap = add_cube("TMP", 1.0, (0, -0.55, 0.78), scale=(0.36, 0.28, 0.06))
-    assign_mat(crate_cap, mats["SM_White"])
-    parts.append(crate_cap)
+    rack = add_cube("TMP", 1.0, (0, -0.52, 0.62), scale=(0.52, 0.40, 0.28))
+    assign_mat(rack, mats["SM_Graphite"])
+    parts.append(rack)
+    vials = (
+        (-0.14, -0.42, mats["SM_Cyan"]), (0.0, -0.42, mats["SM_Orange"]),
+        (0.14, -0.42, mats["SM_Cyan"]), (-0.14, -0.62, mats["SM_Orange"]),
+        (0.0, -0.62, mats["SM_Cyan"]), (0.14, -0.62, mats["SM_Orange"]),
+    )
+    for sx, sy, cap in vials:
+        vial = add_cylinder("TMP", 0.032, 0.16, (sx, sy, 0.86), vertices=8)
+        assign_mat(vial, mats["SM_Steel"])
+        parts.append(vial)
+        lid = add_cylinder("TMP", 0.034, 0.04, (sx, sy, 0.96), vertices=8)
+        assign_mat(lid, cap)
+        parts.append(lid)
 
-    mast = add_cylinder("TMP", 0.04, 0.55, (0.12, 0.22, 0.85), vertices=10)
-    assign_mat(mast, mats["SM_Steel"])
+    mast = add_cylinder("TMP", 0.04, 0.58, (0, 0.18, 0.92), vertices=10)
+    assign_mat(mast, mats["SM_White"])
     parts.append(mast)
-    cluster = add_uv_sphere("TMP", 0.1, (0.12, 0.22, 1.16), segments=12, rings=8)
-    assign_mat(cluster, mats["SM_White"])
-    parts.append(cluster)
-    eye = add_uv_sphere("TMP", 0.05, (0.12, 0.32, 1.16), segments=10, rings=6)
-    assign_mat(eye, mats["SM_Cyan"])
-    parts.append(eye)
-
-    arm = add_cube("TMP", 1.0, (-0.12, 0.72, 0.55), scale=(0.1, 0.55, 0.1))
-    assign_mat(arm, mats["SM_Graphite"])
-    parts.append(arm)
-    collar = add_cylinder(
-        "TMP", 0.08, 0.08, (-0.12, 1.05, 0.55),
+    head = add_cube("TMP", 1.0, (0, 0.18, 1.26), scale=(0.22, 0.16, 0.14))
+    assign_mat(head, mats["SM_Graphite"])
+    parts.append(head)
+    lens = add_cylinder(
+        "TMP", 0.055, 0.05, (0, 0.28, 1.26),
         rotation=(math.pi / 2, 0, 0), vertices=12,
     )
-    assign_mat(collar, mats["SM_Orange"])
-    parts.append(collar)
-    bit = add_cone("TMP", 0.06, 0.2, (-0.12, 1.22, 0.42), vertices=10)
+    assign_mat(lens, mats["SM_Cyan"])
+    parts.append(lens)
+    bar = add_cube("TMP", 1.0, (0, 0.28, 1.18), scale=(0.16, 0.03, 0.04))
+    assign_mat(bar, mats["SM_Cyan"])
+    parts.append(bar)
+
+    # Vertical core-drill, orange housing, bit toward ground.
+    arm = add_cube("TMP", 1.0, (0, 0.72, 0.92), scale=(0.10, 0.12, 0.36))
+    assign_mat(arm, mats["SM_Graphite"])
+    parts.append(arm)
+    housing = add_cylinder("TMP", 0.11, 0.16, (0, 0.72, 0.68), vertices=12)
+    assign_mat(housing, mats["SM_Orange"])
+    parts.append(housing)
+    bit = add_cylinder("TMP", 0.042, 0.42, (0, 0.72, 0.38), vertices=10)
     assign_mat(bit, mats["SM_Steel"])
     parts.append(bit)
+    tip = add_cone("TMP", 0.05, 0.14, (0, 0.72, 0.12), vertices=8)
+    assign_mat(tip, mats["SM_Steel"])
+    parts.append(tip)
 
-    # Six wheels: 3 per side, touching ground.
-    for sx in (-0.42, 0.42):
-        for i, sy in enumerate((-0.55, 0.0, 0.55)):
+    for sx in (-0.44, 0.44):
+        for sy in (-0.58, 0.04, 0.66):
             wheel = add_cylinder(
-                "TMP", 0.16, 0.1,
-                (sx, sy, 0.16),
-                rotation=(0, math.pi / 2, 0),
-                vertices=14,
+                "TMP", 0.16, 0.10, (sx, sy, 0.16),
+                rotation=(0, math.pi / 2, 0), vertices=14,
             )
             assign_mat(wheel, mats["SM_Black"])
             parts.append(wheel)
             hub = add_cylinder(
-                "TMP", 0.06, 0.12,
-                (sx, sy, 0.16),
-                rotation=(0, math.pi / 2, 0),
-                vertices=10,
+                "TMP", 0.06, 0.12, (sx, sy, 0.16),
+                rotation=(0, math.pi / 2, 0), vertices=10,
             )
             assign_mat(hub, mats["SM_Steel"])
             parts.append(hub)
@@ -881,39 +1237,60 @@ def build_geologist(mats: dict) -> bpy.types.Object:
 
 
 def build_sentinel(mats: dict) -> bpy.types.Object:
-    """Sentinel — squat turret chassis, chevrons, shield lip. ~1.7 m. Distinct from Defense."""
+    """
+    Sentinel LO-SEN-1 — Imagine tracked turret sheet.
+    Continuous tank treads (not stub pads). White ceramic hull, orange V chevron
+    on top, cyan visor, twin-barrel turret with cyan tips, black carbon tracks.
+    No red viewport, no huge shoulder pods, not Defense Guardian. ~1.55 m tall.
+    """
     name = "SM_Unit_SentinelMech"
     remove_if_exists(name)
     parts = []
 
-    hull = add_cube("TMP", 1.0, (0, 0, 0.55), scale=(0.95, 0.85, 0.55))
+    hull = add_cube("TMP", 1.0, (0, 0.02, 0.72), scale=(1.12, 1.28, 0.48))
     assign_mat(hull, mats["SM_White"])
     parts.append(hull)
-    skirt = add_cube("TMP", 1.0, (0, 0, 0.22), scale=(1.05, 0.95, 0.18))
+    skirt = add_cube("TMP", 1.0, (0, 0.02, 0.38), scale=(1.22, 1.38, 0.18))
     assign_mat(skirt, mats["SM_Black"])
     parts.append(skirt)
-    chevron = add_cube("TMP", 1.0, (0, 0.44, 0.72), scale=(0.55, 0.04, 0.12))
-    assign_mat(chevron, mats["SM_Orange"])
-    parts.append(chevron)
-    turret = add_cylinder("TMP", 0.28, 0.35, (0, 0, 1.05), vertices=16)
-    assign_mat(turret, mats["SM_Sentinel"])
-    parts.append(turret)
-    barrel = add_cylinder(
-        "TMP", 0.07, 0.55, (0, 0.38, 1.12),
-        rotation=(math.pi / 2, 0, 0), vertices=12,
-    )
-    assign_mat(barrel, mats["SM_Graphite"])
-    parts.append(barrel)
-    shield = add_cube("TMP", 1.0, (-0.58, 0.12, 0.62), scale=(0.08, 0.7, 0.7))
-    assign_mat(shield, mats["SM_Steel"])
-    parts.append(shield)
-    visor = add_cube("TMP", 1.0, (0, 0.22, 1.18), scale=(0.22, 0.04, 0.08))
+    visor = add_cube("TMP", 1.0, (0, 0.66, 0.78), scale=(0.72, 0.05, 0.08))
     assign_mat(visor, mats["SM_Cyan"])
     parts.append(visor)
-    for sx, sy in ((-0.38, 0.32), (0.38, 0.32), (-0.38, -0.32), (0.38, -0.32)):
-        track = add_cube("TMP", 1.0, (sx, sy, 0.10), scale=(0.22, 0.18, 0.12))
-        assign_mat(track, mats["SM_Graphite"])
+    for side, yaw in ((-1.0, math.radians(32)), (1.0, math.radians(-32))):
+        arm = add_cube("TMP", 1.0, (side * 0.16, 0.18, 1.00), scale=(0.42, 0.08, 0.05))
+        arm.rotation_euler = (0.0, 0.0, yaw)
+        apply_rot(arm)
+        assign_mat(arm, mats["SM_Orange"])
+        parts.append(arm)
+
+    neck = add_cylinder("TMP", 0.16, 0.18, (0, 0.04, 1.08), vertices=12)
+    assign_mat(neck, mats["SM_Black"])
+    parts.append(neck)
+    turret = add_cube("TMP", 1.0, (0, 0.08, 1.28), scale=(0.48, 0.38, 0.24))
+    assign_mat(turret, mats["SM_White"])
+    parts.append(turret)
+    for sx in (-0.12, 0.12):
+        barrel = add_cylinder(
+            "TMP", 0.055, 0.72, (sx, 0.52, 1.28),
+            rotation=(math.pi / 2, 0, 0), vertices=12,
+        )
+        assign_mat(barrel, mats["SM_Graphite"])
+        parts.append(barrel)
+        tip = add_uv_sphere("TMP", 0.048, (sx, 0.90, 1.28), segments=10, rings=6)
+        assign_mat(tip, mats["SM_Cyan"])
+        parts.append(tip)
+
+    for sx in (-0.62, 0.62):
+        track = add_cube("TMP", 1.0, (sx, 0.02, 0.18), scale=(0.30, 1.42, 0.28))
+        assign_mat(track, mats["SM_Black"])
         parts.append(track)
+        for sy in (-0.48, -0.16, 0.16, 0.48):
+            hub = add_cylinder(
+                "TMP", 0.10, 0.10, (sx, sy, 0.18),
+                rotation=(0, math.pi / 2, 0), vertices=10,
+            )
+            assign_mat(hub, mats["SM_Steel"])
+            parts.append(hub)
 
     obj = join_parts(parts, name)
     col = ensure_collection("22_Units_Sentinel")
@@ -924,29 +1301,45 @@ def build_sentinel(mats: dict) -> bpy.types.Object:
 
 
 def build_wisp(mats: dict) -> bpy.types.Object:
-    """Ice wisp — shard cluster, cyan core. ~0.85 m hover silhouette."""
+    """
+    Ice wisp — Imagine seven-point ice-star sheet.
+    Translucent white-cyan spikes, hexagonal hub with cyan core, black ridges
+    with orange nubs, hover glow ring. Not a Scout. No propellers.
+    ~1.15 m hover, ~1.6 m span (RTS-readable).
+    """
     name = "SM_Unit_IceWisp"
     remove_if_exists(name)
     parts = []
 
-    core = add_uv_sphere("TMP", 0.16, (0, 0, 0.55), segments=14, rings=8)
+    pad = add_cylinder("TMP", 0.28, 0.03, (0, 0, 0.03), vertices=16)
+    assign_mat(pad, mats["SM_Cyan"])
+    parts.append(pad)
+    hub = add_cylinder("TMP", 0.22, 0.16, (0, 0, 1.00), vertices=6)
+    assign_mat(hub, mats["SM_Black"])
+    parts.append(hub)
+    core = add_uv_sphere("TMP", 0.12, (0, 0, 1.00), segments=14, rings=8)
     assign_mat(core, mats["SM_Cyan"])
     parts.append(core)
-    halo = add_uv_sphere("TMP", 0.28, (0, 0, 0.55), scale=(1.0, 1.0, 0.7), segments=12, rings=8)
-    assign_mat(halo, mats["SM_Wisp"])
-    parts.append(halo)
-    for i, (x, y, z, sx, sy, sz) in enumerate((
-        (0.22, 0.08, 0.72, 0.08, 0.06, 0.28),
-        (-0.18, -0.12, 0.42, 0.07, 0.05, 0.24),
-        (0.05, 0.22, 0.38, 0.06, 0.18, 0.08),
-        (-0.12, 0.10, 0.78, 0.05, 0.05, 0.20),
-    )):
-        shard = add_cube("TMP", 1.0, (x, y, z), scale=(sx, sy, sz))
-        assign_mat(shard, mats["SM_White"] if i % 2 == 0 else mats["SM_Steel"])
+    for i in range(7):
+        ang = i * (2.0 * math.pi / 7.0)
+        ax = math.cos(ang) * 0.52
+        ay = math.sin(ang) * 0.52
+        shard = add_cone("TMP", 0.07, 0.62, (ax, ay, 1.00), vertices=8)
+        shard.rotation_euler = (math.pi * 0.5, 0.0, ang)
+        apply_rot(shard)
+        assign_mat(shard, mats["SM_Ice"])
         parts.append(shard)
-    spark = add_uv_sphere("TMP", 0.05, (0.08, 0.18, 0.82), segments=8, rings=6)
-    assign_mat(spark, mats["SM_Orange"])
-    parts.append(spark)
+        ridge = add_cube("TMP", 1.0, (ax * 0.72, ay * 0.72, 1.00), scale=(0.04, 0.36, 0.04))
+        ridge.rotation_euler = (0.0, 0.0, ang)
+        apply_rot(ridge)
+        assign_mat(ridge, mats["SM_Black"])
+        parts.append(ridge)
+        for t in (0.42, 0.62, 0.80):
+            nx = math.cos(ang) * t * 0.72
+            ny = math.sin(ang) * t * 0.72
+            nub = add_uv_sphere("TMP", 0.028, (nx, ny, 1.04), segments=6, rings=4)
+            assign_mat(nub, mats["SM_Orange"])
+            parts.append(nub)
 
     obj = join_parts(parts, name)
     col = ensure_collection("23_Fauna_Wisp")
@@ -957,32 +1350,50 @@ def build_wisp(mats: dict) -> bpy.types.Object:
 
 
 def build_tick(mats: dict) -> bpy.types.Object:
-    """Rock tick — spiky crab, iron plates, orange pincers. ~0.45 m."""
+    """
+    Rock tick — Imagine wide crab sheet.
+    Graphite shield carapace, dorsal fin spike, six black legs, orange pincer
+    tips, cyan eyes. Wider than long. ~1.15 m wide, ~0.55 m tall.
+    """
     name = "SM_Unit_RockTick"
     remove_if_exists(name)
     parts = []
 
-    body = add_uv_sphere("TMP", 0.18, (0, 0, 0.16), scale=(1.2, 1.35, 0.7), segments=14, rings=8)
+    body = add_uv_sphere("TMP", 0.24, (0, 0, 0.22), scale=(2.40, 1.05, 0.78), segments=16, rings=8)
     assign_mat(body, mats["SM_Tick"])
     parts.append(body)
-    plate = add_cube("TMP", 1.0, (0, -0.02, 0.26), scale=(0.32, 0.28, 0.06))
-    assign_mat(plate, mats["SM_Steel"])
-    parts.append(plate)
-    spike = add_cone("TMP", 0.06, 0.16, (0, -0.04, 0.36), vertices=8)
+    shield = add_cube("TMP", 1.0, (0, -0.02, 0.38), scale=(0.72, 0.42, 0.10))
+    assign_mat(shield, mats["SM_Graphite"])
+    parts.append(shield)
+    for y, sx in ((0.10, 0.68), (-0.08, 0.62), (-0.24, 0.52)):
+        tile = add_cube("TMP", 1.0, (0, y, 0.36), scale=(sx, 0.14, 0.06))
+        assign_mat(tile, mats["SM_Graphite"])
+        parts.append(tile)
+    spike = add_cone("TMP", 0.08, 0.28, (0, -0.04, 0.56), vertices=8)
     assign_mat(spike, mats["SM_Graphite"])
     parts.append(spike)
-    for x in (-0.12, 0.12):
-        pincer = add_cube("TMP", 1.0, (x, 0.22, 0.14), scale=(0.05, 0.14, 0.05))
-        assign_mat(pincer, mats["SM_Orange"])
-        parts.append(pincer)
-    for x in (-0.08, 0.08):
-        eye = add_uv_sphere("TMP", 0.03, (x, 0.16, 0.22), segments=8, rings=6)
-        assign_mat(eye, mats["SM_Orange"])
+    for x in (-0.18, 0.18):
+        arm = add_cube("TMP", 1.0, (x, 0.38, 0.20), scale=(0.08, 0.22, 0.08))
+        assign_mat(arm, mats["SM_Black"])
+        parts.append(arm)
+        claw = add_cone("TMP", 0.04, 0.14, (x, 0.58, 0.16), vertices=8)
+        assign_mat(claw, mats["SM_Orange"])
+        parts.append(claw)
+    for x in (-0.10, 0.10):
+        eye = add_uv_sphere("TMP", 0.04, (x, 0.22, 0.32), segments=8, rings=6)
+        assign_mat(eye, mats["SM_Cyan"])
         parts.append(eye)
-    for sx, sy in ((-0.18, 0.10), (0.18, 0.10), (-0.20, -0.08), (0.20, -0.08), (-0.12, -0.18), (0.12, -0.18)):
-        leg = add_cube("TMP", 1.0, (sx, sy, 0.08), scale=(0.04, 0.04, 0.12))
-        assign_mat(leg, mats["SM_Black"])
-        parts.append(leg)
+    for sx, sy in (
+        (-0.62, 0.22), (0.62, 0.22),
+        (-0.70, -0.04), (0.70, -0.04),
+        (-0.52, -0.32), (0.52, -0.32),
+    ):
+        thigh = add_cube("TMP", 1.0, (sx * 0.55, sy, 0.20), scale=(0.34, 0.06, 0.06))
+        assign_mat(thigh, mats["SM_Black"])
+        parts.append(thigh)
+        foot = add_cone("TMP", 0.035, 0.10, (sx, sy, 0.05), vertices=6)
+        assign_mat(foot, mats["SM_Black"])
+        parts.append(foot)
 
     obj = join_parts(parts, name)
     col = ensure_collection("24_Fauna_Tick")
@@ -993,38 +1404,51 @@ def build_tick(mats: dict) -> bpy.types.Object:
 
 
 def build_creeper(mats: dict) -> bpy.types.Object:
-    """Soil creeper — low millipede, soil plates, orange nubs. ~1.4 m long."""
+    """
+    Soil creeper — Imagine armored isopod/millipede sheet.
+    Overlapping graphite plates, one olive-brown segment, many black legs,
+    orange head nubs, cyan eyes, orange tail cerci.
+    Keep ~2 m long for RTS even if the sheet scale bar is tiny.
+    """
     name = "SM_Unit_SoilCreeper"
     remove_if_exists(name)
     parts = []
 
-    body = add_uv_sphere("TMP", 0.16, (0, 0, 0.14), scale=(0.7, 2.4, 0.55), segments=16, rings=10)
-    assign_mat(body, mats["SM_Creeper"])
-    parts.append(body)
-    mid = add_uv_sphere("TMP", 0.14, (0, -0.18, 0.16), scale=(0.75, 1.4, 0.5), segments=12, rings=8)
-    assign_mat(mid, mats["SM_Creeper"])
-    parts.append(mid)
-    plate = add_cube("TMP", 1.0, (0, -0.04, 0.26), scale=(0.22, 0.85, 0.06))
-    assign_mat(plate, mats["SM_Graphite"])
-    parts.append(plate)
-    tendril = add_cube("TMP", 1.0, (0, -0.55, 0.12), scale=(0.06, 0.28, 0.06))
-    assign_mat(tendril, mats["SM_Orange"])
-    parts.append(tendril)
-    head = add_uv_sphere("TMP", 0.11, (0, 0.42, 0.16), scale=(0.9, 1.1, 0.7), segments=12, rings=8)
-    assign_mat(head, mats["SM_Creeper"])
+    ys = (0.88, 0.62, 0.36, 0.10, -0.16, -0.42, -0.68, -0.92)
+    for i, y in enumerate(ys):
+        r = 0.20 - i * 0.008
+        seg = add_uv_sphere("TMP", r, (0, y, 0.24), scale=(1.05, 0.85, 0.78), segments=12, rings=8)
+        assign_mat(seg, mats["SM_Creeper"] if i == 1 else mats["SM_Graphite"])
+        parts.append(seg)
+        plate = add_cube("TMP", 1.0, (0, y, 0.40), scale=(0.28, 0.22, 0.07))
+        assign_mat(plate, mats["SM_Creeper"] if i == 1 else mats["SM_Graphite"])
+        parts.append(plate)
+        for sx in (-0.22, 0.22):
+            for yo in (-0.05, 0.05):
+                leg = add_cube("TMP", 1.0, (sx, y + yo, 0.08), scale=(0.08, 0.04, 0.14))
+                assign_mat(leg, mats["SM_Black"])
+                parts.append(leg)
+
+    head = add_uv_sphere("TMP", 0.16, (0, 1.12, 0.26), scale=(1.05, 1.10, 0.78), segments=12, rings=8)
+    assign_mat(head, mats["SM_Graphite"])
     parts.append(head)
-    for x in (-0.07, 0.07):
-        nub = add_uv_sphere("TMP", 0.035, (x, 0.48, 0.22), segments=8, rings=6)
+    for x in (-0.08, 0.08):
+        nub = add_uv_sphere("TMP", 0.04, (x, 1.18, 0.38), segments=8, rings=6)
         assign_mat(nub, mats["SM_Orange"])
         parts.append(nub)
-    sensor = add_uv_sphere("TMP", 0.03, (0, 0.52, 0.20), segments=8, rings=6)
-    assign_mat(sensor, mats["SM_Cyan"])
-    parts.append(sensor)
-    for sy in (0.28, 0.08, -0.12, -0.32):
-        for sx in (-0.14, 0.14):
-            leg = add_cube("TMP", 1.0, (sx, sy, 0.06), scale=(0.05, 0.05, 0.10))
-            assign_mat(leg, mats["SM_Black"])
-            parts.append(leg)
+        eye = add_uv_sphere("TMP", 0.035, (x, 1.24, 0.28), segments=8, rings=6)
+        assign_mat(eye, mats["SM_Cyan"])
+        parts.append(eye)
+    for x in (-0.06, 0.06):
+        jaw = add_cone("TMP", 0.025, 0.08, (x, 1.28, 0.16), vertices=6)
+        assign_mat(jaw, mats["SM_Black"])
+        parts.append(jaw)
+    for x in (-0.06, 0.06):
+        cerci = add_cone("TMP", 0.03, 0.22, (x, -1.12, 0.16), vertices=6)
+        cerci.rotation_euler = (math.pi * 0.5, 0.0, math.pi)
+        apply_rot(cerci)
+        assign_mat(cerci, mats["SM_Orange"])
+        parts.append(cerci)
 
     obj = join_parts(parts, name)
     col = ensure_collection("25_Fauna_Creeper")
@@ -1035,37 +1459,82 @@ def build_creeper(mats: dict) -> bpy.types.Object:
 
 
 def build_hopper(mats: dict) -> bpy.types.Object:
-    """Ash hopper — compact body, long legs, cyan eyes. ~1.1 m tall."""
+    """
+    Ash hopper — Imagine insectoid shrimp/flea sheet.
+    Ash-grey segmented carapace, graphite abdomen, six spindly black X-legs
+    with orange knees and sharp point feet, cyan eyes, orange brow stripe,
+    thin tail needles. NOT a robot / no propellers.
+    Keep ~1.6–1.7 m RTS height (ignore the sheet's ~0.45 m scale bar).
+    """
     name = "SM_Unit_AshHopper"
     remove_if_exists(name)
     parts = []
 
-    body = add_uv_sphere("TMP", 0.18, (0, 0, 0.72), scale=(1.05, 1.2, 0.85), segments=14, rings=8)
-    assign_mat(body, mats["SM_Hopper"])
-    parts.append(body)
-    abdomen = add_uv_sphere("TMP", 0.12, (0, -0.16, 0.58), scale=(1.0, 1.15, 0.8), segments=12, rings=8)
-    assign_mat(abdomen, mats["SM_Graphite"])
-    parts.append(abdomen)
+    # Arched shrimp segments — body held high for RTS read.
+    for y, z, r, sc, mat_key in (
+        (0.30, 1.30, 0.15, (1.05, 0.92, 0.88), "SM_Hopper"),
+        (0.12, 1.48, 0.20, (1.18, 1.08, 1.02), "SM_Hopper"),
+        (-0.06, 1.36, 0.17, (1.10, 1.00, 0.90), "SM_Hopper"),
+        (-0.24, 1.16, 0.15, (0.98, 1.08, 0.82), "SM_Graphite"),
+        (-0.40, 1.00, 0.12, (0.88, 1.12, 0.72), "SM_Graphite"),
+    ):
+        seg = add_uv_sphere("TMP", r, (0, y, z), scale=sc, segments=14, rings=8)
+        assign_mat(seg, mats[mat_key])
+        parts.append(seg)
+    for y, z, sx in (
+        (0.18, 1.56, 0.28),
+        (0.02, 1.50, 0.26),
+        (-0.14, 1.38, 0.24),
+        (-0.30, 1.20, 0.20),
+    ):
+        plate = add_cube("TMP", 1.0, (0, y, z), scale=(sx, 0.10, 0.055))
+        assign_mat(plate, mats["SM_Graphite"])
+        parts.append(plate)
+
     for x in (-0.08, 0.08):
-        eye = add_uv_sphere("TMP", 0.04, (x, 0.16, 0.82), segments=8, rings=6)
+        eye = add_uv_sphere("TMP", 0.048, (x, 0.42, 1.28), segments=10, rings=6)
         assign_mat(eye, mats["SM_Cyan"])
         parts.append(eye)
-    stripe = add_cube("TMP", 1.0, (0, 0.18, 0.70), scale=(0.16, 0.04, 0.08))
+    stripe = add_cube("TMP", 1.0, (0, 0.40, 1.40), scale=(0.22, 0.04, 0.045))
     assign_mat(stripe, mats["SM_Orange"])
     parts.append(stripe)
-    for sx, sy in ((-0.22, 0.16), (0.22, 0.16), (-0.20, -0.16), (0.20, -0.16)):
-        thigh = add_cube("TMP", 1.0, (sx * 0.55, sy * 0.45, 0.48), scale=(0.06, 0.06, 0.38))
-        assign_mat(thigh, mats["SM_Black"])
-        parts.append(thigh)
-        knee = add_uv_sphere("TMP", 0.04, (sx, sy, 0.28), segments=8, rings=6)
-        assign_mat(knee, mats["SM_Orange"])
-        parts.append(knee)
-        shin = add_cube("TMP", 1.0, (sx, sy, 0.16), scale=(0.05, 0.05, 0.22))
-        assign_mat(shin, mats["SM_Steel"])
-        parts.append(shin)
-        foot = add_cube("TMP", 1.0, (sx * 1.15, sy * 1.15, 0.05), scale=(0.08, 0.10, 0.05))
-        assign_mat(foot, mats["SM_Black"])
-        parts.append(foot)
+    for x in (-0.05, -0.018, 0.018, 0.05):
+        jaw = add_cone("TMP", 0.016, 0.10, (x, 0.44, 1.18), vertices=6)
+        jaw.rotation_euler = (math.pi * 0.82, 0.0, 0.0)
+        apply_rot(jaw)
+        assign_mat(jaw, mats["SM_Black"])
+        parts.append(jaw)
+    for x in (-0.05, 0.0, 0.05):
+        spike = add_cone("TMP", 0.014, 0.28, (x, -0.58, 0.90), vertices=6)
+        spike.rotation_euler = (math.pi * 0.62, 0.0, 0.0)
+        apply_rot(spike)
+        assign_mat(spike, mats["SM_Graphite"])
+        parts.append(spike)
+
+    # Six spindly X-legs: hip → orange knee → shin → point foot.
+    for sx, sy, hip_y, hip_z in (
+        (-1.0, 0.58, 0.16, 1.22),
+        (1.0, 0.58, 0.16, 1.22),
+        (-1.0, 0.04, 0.02, 1.18),
+        (1.0, 0.04, 0.02, 1.18),
+        (-1.0, -0.52, -0.14, 1.10),
+        (1.0, -0.52, -0.14, 1.10),
+    ):
+        hip = (sx * 0.12, hip_y, hip_z)
+        knee = (sx * 0.55, sy * 0.72, 0.68)
+        foot = (sx * 0.78, sy, 0.04)
+        femur = add_shaft("TMP", 0.028, hip, knee, vertices=8)
+        assign_mat(femur, mats["SM_Black"])
+        parts.append(femur)
+        joint = add_uv_sphere("TMP", 0.055, knee, segments=8, rings=6)
+        assign_mat(joint, mats["SM_Orange"])
+        parts.append(joint)
+        tibia = add_shaft("TMP", 0.020, knee, foot, vertices=8)
+        assign_mat(tibia, mats["SM_Black"])
+        parts.append(tibia)
+        tip = add_cone("TMP", 0.022, 0.12, (sx * 0.78, sy, 0.05), vertices=6)
+        assign_mat(tip, mats["SM_Black"])
+        parts.append(tip)
 
     obj = join_parts(parts, name)
     col = ensure_collection("26_Fauna_Hopper")
@@ -1137,10 +1606,18 @@ def dims_report(obj: bpy.types.Object) -> str:
     )
 
 
+def parse_only() -> set[str] | None:
+    if "--" not in sys.argv:
+        return None
+    args = sys.argv[sys.argv.index("--") + 1 :]
+    return set(args) if args else None
+
+
 def main():
     print("[SM] === Unit hero blockouts ===")
     reset_scene()
     mats = create_palette()
+    only = parse_only()
     units = [
         build_scout(mats),
         build_engineer(mats),
@@ -1163,6 +1640,8 @@ def main():
     bpy.ops.wm.save_as_mainfile(filepath=str(BLEND_OUT))
     print(f"[SM] Saved {BLEND_OUT}")
     for u in units:
+        if only is not None and u.name not in only:
+            continue
         print(" ", dims_report(u))
         export_one(u)
         copy_to_unity(u.name)

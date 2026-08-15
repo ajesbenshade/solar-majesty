@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Majesty-style outpost graph: inn, palace, workshop, guardhouse, patrol ring.
+    /// Majesty-style outpost graph: inn, Commons, workshop, guardhouse, patrol ring.
     /// Specialists wander these landmarks when they are not on a bounty.
     /// </summary>
     public static class KingdomLife
@@ -13,7 +13,7 @@ namespace SolarMajesty
         public const float InnPartyRadius = 7.5f;
         public const float HuntRange = 3.4f;
 
-        public static Vector3 Palace(int campus) => ColonyLayout.CampusOriginFor(campus);
+        public static Vector3 Commons(int campus) => ColonyLayout.CampusOriginFor(campus);
 
         public static Vector3 Plaza(int campus) =>
             campus <= 0 ? ColonyLayout.PartySpawn : ColonyLayout.PartySpawnB;
@@ -75,7 +75,7 @@ namespace SolarMajesty
                 case SpecialistClass.EngineerBot:
                     if (construction.HasValue)
                         return construction.Value;
-                    return Pick(from, salt, Workshop(campus), Palace(campus), Pad(campus));
+                    return Pick(from, salt, Workshop(campus), Commons(campus), Pad(campus));
 
                 case SpecialistClass.DefenseMech:
                     return PatrolPost(campus, salt);

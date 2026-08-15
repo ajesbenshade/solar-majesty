@@ -15,8 +15,8 @@ MonoBehaviour:
   displayName: Ops Unit (OPS-1)
   category: 3
   description: 
-  footprintWidth: 3
-  footprintHeight: 3
+  footprintWidth: 4
+  footprintHeight: 4
   buildCost:
   - resource: 2
     amount: 45

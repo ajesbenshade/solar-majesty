@@ -3,9 +3,9 @@
 Captured from the current Earth → Luna → Mars slice (code + last play sessions). Not a substitute for an external playtest.
 
 ## Flow
-- Empty drop is correct but feels sparse until Palace + first airlock click. Tutorial beats help; briefing toast now names the body goal.
+- Empty drop is correct but feels sparse until Colony Commons + first airlock click. Tutorial beats help; briefing toast now names the body goal.
 - Launch gate used to fire on tech alone, so the pad felt unused. **Fix:** tech + placed Landing Pad; craft stages with an orange beacon and camera focus.
-- Sustain could complete without a Palace. **Fix:** Palace required. Hints now split housing vs population vs farm vs mine vs stockpile.
+- Sustain could complete without Colony Commons. **Fix:** Commons required. Hints now split housing vs population vs farm vs mine vs stockpile.
 - Win/fail banners were generic. **Fix:** per-body VictoryLog / FailLog + TO LUNA / TO MARS copy.
 - Body hops had no voice. **Fix:** travel log queued across reload + arrival line in the command panel.
 
@@ -15,7 +15,7 @@ Captured from the current Earth → Luna → Mars slice (code + last play sessio
 - External 45–90 min playtest not yet run.
 
 ## Presentation (Week 4)
-Transparent construction / extract / launch VFX. Ambient beds crossfade and retune per body. Camera **glances** at Palace, pad, and first campus pest (creeper / hopper / mite / leech). Earth / Luna / Mars get distinct sun angle + color grade; placed modules sprout crate/pylon scatter. Specialist cards use class color tabs and action tints. Flag popup shows posted/claimed counts.
+Transparent construction / extract / launch VFX. Ambient beds crossfade and retune per body. Camera **glances** at Colony Commons, pad, and first campus pest (creeper / hopper / mite / leech). Earth / Luna / Mars get distinct sun angle + color grade; placed modules sprout crate/pylon scatter. Specialist cards use class color tabs and action tints. Flag popup shows posted/claimed counts.
 
 ## Economy & threat (Week 3)
 Command panel flashes REG/ICE/MET/PWR when below the sustain floor (10 / 8 / 12 / 8) or when grid **draw > gen**. BEDS line alarms when full or short of the pop goal. `PWR gen/draw · upkeep · ship` plus last extract/camp tick.
@@ -32,7 +32,7 @@ Nodes show remaining yield (`MET 24`). Farm/Mine ticks print on the command stri
 | Ice Creeper (Europa) | Farm | Steals ICE | **F5 Defend Area** |
 | Ash Hopper (Luna) | HAB | Raids habitats, steals ICE | **F2 Clear Threat** |
 | Dust Hopper (Mars) | HAB | Raids airlocks | **F2 Clear Threat** |
-| Shard Hopper (Belt) | HAB | Raids keep / HABs | **F2 Clear Threat** |
+| Shard Hopper (Belt) | HAB | Raids Commons / HABs | **F2 Clear Threat** |
 | Regolith Mite | Farm / Mine | Steals ICE/MET from camps | **F5 Defend Area** |
 | Rock Mite (Belt) | Mines first | Steals MET | **F5 Defend Area** |
 | Rock Tick (Belt) | Mines | Fast swarm steal | **F5 Defend Area** |
@@ -75,7 +75,7 @@ S rating cannot be bought with a fat stockpile while dens stand (letter S requir
 ## Gate summary (current)
 | Body | Dens | Sustain | Launch |
 |------|------|---------|--------|
-| Earth | 3 lairs | Palace + pop 8 + farm + mine + stockpile, 25s | Lunar Rocket + Landing Pad |
+| Earth | 3 lairs | Colony Commons + pop 8 + farm + mine + stockpile, 25s | Lunar Rocket + Landing Pad |
 | Luna | 8 lairs | pop 12, 40s | Mars Ship + Landing Pad |
 | Mars | 10 lairs | pop 16, 50s | Belt Hauler + Landing Pad |
 | Belt | 7 lairs | pop 10, 35s | Icebreaker + Landing Pad |

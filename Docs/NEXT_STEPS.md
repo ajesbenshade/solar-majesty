@@ -21,8 +21,19 @@
 - [x] Phase 3 Weeks 8–10 — doctrines (Open Hands / Aegis Watch / Survey First), challenges (Austere / Swarm / Tight Purse), Endless, Overseer rating
 - [x] Phase 3 Weeks 11–14 — balance / flavor / exit review ([PHASE_3_EXIT.md](Roadmap/PHASE_3_EXIT.md))
 - [x] Phase 4 Week 1 — Mars atmosphere, tube dressing on square docks, construction cranes, Overseer HUD chrome
-- [x] Phase 4 Week 2 — HAB / keep-dome / landing pad+ship / water vs regolith extractor hero kits
+- [x] Phase 4 Week 2 — HAB / Commons citadel / landing pad+ship / water vs regolith extractor hero kits
 - [x] Phase 4 Week 3 — junction turrets + solar-field landmark (Defense bunker kit; Engineer/Geologist/Scout blockout remesh started)
+- [x] Phase 4 Week 4 start — Colony Commons rename; guild/lab/wonder dress; Medic/Harvester/Surveyor/Courier/Sentinel remesh
+- [x] Phase 4 Week 4 continued — Terraformer dozer remesh; Stalker / Hopper / Creeper / Tick fauna silhouettes; honest Mars mockup notes (Phase 4 still open)
+- [x] Phase 4 Week 4 continued — Mite / Leech / Wisp remesh; Courier/Geologist/Medic/Sentinel tighten; hero building FBX (`SM_Hero_*`) with procedural fallback (Phase 4 still open)
+- [x] Phase 4 Earth New Game look — meadow albedo + cobalt sky + in-frustum grass/trees/pond; hero-kit overlay removed; LoadHeroKit miss logs; workshop/Inn hangar kits (Phase 4 still open)
+- [x] Phase 4 Imagine-sheet unit refine — Scout / Engineer / Defense / Stalker vs ConceptSheets; HUD/tube/pad/solar dressing vs Mars mockup (Phase 4 still open)
+- [x] Phase 4 Workshop / Inn FBX (`SM_Hero_Workshop` / `WorkshopTall` / `Inn`) + campus clutter / HUD class readout (Phase 4 still open)
+- [x] Phase 4 remaining-class Imagine prompt sheets + Mars mockup dressing/HUD/lighting close (Phase 4 still open)
+- [x] Phase 4 remaining-class + leftover-fauna Imagine JPGs in `ConceptSheets/` + sheet-matched remesh (Phase 4 still open)
+- [x] Phase 4 hero-building sheet-match — HAB-1 cylinder, command-dome Colony Commons, LAB-1 cylinder, PWR-1 + solar field, pad + Starship stack vs existing ConceptSheets (Phase 4 still open)
+- [x] Phase 4 CMD-1 / OPS-1 / guild / wonders / extractor remesh — Guild = CMD-1 civic, Mining = OPS-1 annex, Farm greenhouse + ice, Camp drum, Mine A-frame, Loom / Spire / Archive distinct (Phase 4 still open)
+- [x] Phase 4 airlock panel-line polish — square hub (carbon corners / recessed orange doors) + white dock sleeves with orange collars (Phase 4 still open)
 
 ## Month roadmap
 
@@ -36,7 +47,7 @@
 
 Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 is packaged. Phase 2 is complete** ([exit review](Roadmap/PHASE_2_EXIT.md)). **Phase 3 is complete** ([exit review](Roadmap/PHASE_3_EXIT.md)). Next: [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md), then [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
 
-1. Phase 4 visual target — **Week 1–3 are in** (Mars sky/ground, pressurized tubes on Lego docks, cranes, HUD chrome, HAB / keep / pad+ship / extractor hero kits, junction turrets, solar-field Power landmark, Defense bunker kit). Next: remaining unit Imagine remesh (Defense walker vs tracked guardian; Medic/Harvester/etc.), guild/lab/wonder dress, Mars sign-off still. Square Lego airlocks stay; tubes/domes/cranes/kits/turrets/solar are dressing. Mockup squad bars are HUD chrome only. Do not add click-to-move.
+1. Phase 4 visual target — **Weeks 1–4 continued are in**, plus Earth New Game produced biome, Imagine-sheet refine for Scout / Engineer / Defense / Stalker, Workshop / Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, a Mars dressing/HUD/lighting close, hero-building sheet-match (HAB / Commons / LAB / Power / pad), **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, and **airlock panel-line polish**. Next: a human Mars Game-tab still for Phase 4 exit review. **Do not stamp Phase 4 complete.** Square Lego airlocks stay; tubes/domes/cranes/kits/turrets/solar are dressing. Mockup squad bars are HUD chrome only. Do not add click-to-move. Defense stays the tracked Guardian.
 2. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes. Guild Hall: assign SCOUT/ENG/DEF/MED (Horizon / Anvil / Aegis / Triage).
 3. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`.
 
