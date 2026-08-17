@@ -211,14 +211,75 @@ namespace SolarMajesty
             order.ProgressSeconds += workSeconds;
         }
 
+        /// <summary>Re-fab a scrapped robot at an existing workshop. Does not occupy new cells.</summary>
+        public bool TryEnqueueRefab(
+            BuildingData data,
+            Vector2Int gridCell,
+            Vector3 worldPosition,
+            int metalsCost,
+            float seconds,
+            SpecialistClass cls,
+            out ConstructionOrder order)
+        {
+            order = null;
+            if (data == null || _resources == null) return false;
+            int cost = Mathf.Max(1, metalsCost);
+            if (!_resources.TrySpend(ResourceId.Metals, cost)) return false;
+
+            order = new ConstructionOrder
+            {
+                Id = _nextId++,
+                Data = data,
+                GridCell = gridCell,
+                WorldPosition = worldPosition,
+                ProgressSeconds = 0f,
+                RequiredSeconds = Mathf.Max(0.1f, seconds),
+                RefabClass = cls
+            };
+            _orders.Add(order);
+            return true;
+        }
+
+        public bool HasRefabOrder
+        {
+            get
+            {
+                for (int i = 0; i < _orders.Count; i++)
+                {
+                    if (_orders[i] != null && _orders[i].IsRefab && !_orders[i].IsComplete)
+                        return true;
+                }
+                return false;
+            }
+        }
+
+        public ConstructionOrder FindRefabAt(Vector3 world, float maxDist)
+        {
+            ConstructionOrder best = null;
+            float bestD = maxDist;
+            for (int i = 0; i < _orders.Count; i++)
+            {
+                var o = _orders[i];
+                if (o == null || !o.IsRefab || o.IsComplete) continue;
+                float d = Vector3.Distance(world, o.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = o;
+                }
+            }
+            return best;
+        }
+
         public bool Cancel(ConstructionOrder order, bool refund)
         {
             if (order == null || !_orders.Remove(order))
                 return false;
 
-            MarkFootprint(order.Data, order.GridCell, occupied: false);
+            if (!order.IsRefab)
+                MarkFootprint(order.Data, order.GridCell, occupied: false);
 
-            if (refund && order.Data?.buildCost != null)
+            if (refund && !order.IsRefab && order.Data?.buildCost != null)
             {
                 for (int i = 0; i < order.Data.buildCost.Length; i++)
                 {
@@ -596,6 +657,32 @@ namespace SolarMajesty
                     }
                 }
             }
+        }
+
+        /// <summary>Free a destroyed module so airlocks can redock a replacement.</summary>
+        public bool TryReleaseContaining(Vector2Int cell, BuildingCategory category)
+        {
+            for (int i = _pieces.Count - 1; i >= 0; i--)
+            {
+                var p = _pieces[i];
+                if (p.Category != category) continue;
+                if (cell.x < p.Origin.x || cell.y < p.Origin.y) continue;
+                if (cell.x >= p.Origin.x + p.Width || cell.y >= p.Origin.y + p.Height) continue;
+
+                bool campus = RequiresCampusLink(p.Category);
+                for (int x = 0; x < p.Width; x++)
+                for (int y = 0; y < p.Height; y++)
+                {
+                    long key = Pack(p.Origin.x + x, p.Origin.y + y);
+                    _occupiedCells.Remove(key);
+                    if (campus) _campusCells.Remove(key);
+                }
+
+                _pieces.RemoveAt(i);
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>Align a child span on a parent span midline (Lego centering).</summary>

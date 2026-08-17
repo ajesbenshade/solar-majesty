@@ -101,6 +101,16 @@ namespace SolarMajesty
 
         public const float CameraOrthoSize = 16f;
 
+        /// <summary>
+        /// Tight iso after Commons/HAB so the white square hub fills a short Game tab.
+        /// Empty drop stays at CameraOrthoSize 16. Wide Game-tab aspect still shows
+        /// dirt at the sides — 5.5 is the closest that keeps HAB + Commons in frame.
+        /// </summary>
+        public const float CampusOrthoSize = 5.5f;
+
+        public static float PlayOrtho(bool campusPlaced) =>
+            campusPlaced ? CampusOrthoSize : CameraOrthoSize;
+
         /// <summary>Distance within which stalkers contribute to a specialist's bodyDanger.</summary>
         public const float LocalThreatRadius = 16f;
 

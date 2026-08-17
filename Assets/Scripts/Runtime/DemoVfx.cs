@@ -32,6 +32,52 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Persistent wreck after a raid — charred debris, not an orange pad.
+        /// </summary>
+        public static void StructureWreck(Vector3 worldPos)
+        {
+            Color ash = new Color(0.12f, 0.11f, 0.10f);
+            Color carbon = new Color(0.08f, 0.08f, 0.09f);
+            Color ember = new Color(0.55f, 0.22f, 0.08f);
+
+            SpawnRing(worldPos, ember, 0.45f, 3.2f);
+            for (int i = 0; i < 6; i++)
+            {
+                float ang = (Mathf.PI * 2f * i) / 6f;
+                SpawnBit(
+                    worldPos + Vector3.up * 0.4f,
+                    new Vector3(Mathf.Cos(ang), 1.4f, Mathf.Sin(ang)) * 2.8f,
+                    Color.Lerp(ash, ember, 0.35f),
+                    0.18f,
+                    0.55f);
+            }
+
+            var scorch = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            scorch.name = "Wreck_Scorch";
+            Object.Destroy(scorch.GetComponent<Collider>());
+            scorch.transform.position = worldPos + Vector3.up * 0.02f;
+            scorch.transform.localScale = new Vector3(2.4f, 0.018f, 1.7f);
+            scorch.transform.rotation = Quaternion.Euler(0f, 28f, 0f);
+            Paint(scorch, ash);
+
+            for (int i = 0; i < 4; i++)
+            {
+                float ang = 40f + i * 55f;
+                var bit = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                bit.name = "Wreck_Hull_" + i;
+                Object.Destroy(bit.GetComponent<Collider>());
+                float rad = 0.45f + i * 0.22f;
+                bit.transform.position = worldPos + new Vector3(
+                    Mathf.Cos(ang * Mathf.Deg2Rad) * rad,
+                    0.12f + i * 0.04f,
+                    Mathf.Sin(ang * Mathf.Deg2Rad) * rad);
+                bit.transform.localScale = new Vector3(0.55f - i * 0.06f, 0.12f, 0.32f);
+                bit.transform.rotation = Quaternion.Euler(8f * i, ang, 12f - i * 4f);
+                Paint(bit, i % 2 == 0 ? carbon : ash);
+            }
+        }
+
         public static void ClaimRing(Vector3 worldPos, Color color)
         {
             SpawnRing(worldPos, color, 0.5f, 5.2f);

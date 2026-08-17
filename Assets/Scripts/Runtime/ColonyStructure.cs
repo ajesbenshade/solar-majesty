@@ -25,6 +25,7 @@ namespace SolarMajesty
         [SerializeField] private float maxHealth = 48f;
 
         private float _health;
+        private float _siphonUntil;
         private VillageExpansion _village;
         private GameObject _selectRing;
         private bool _selected;
@@ -51,6 +52,8 @@ namespace SolarMajesty
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
         public Vector3 WorldPosition => transform.position;
         public bool IsSelected => _selected;
+        /// <summary>Watt leeches / wisps are on this node — gen is stolen until they leave.</summary>
+        public bool IsPowerSiphoned => Time.time < _siphonUntil;
         public int WorkerSlots => IsWorkshop || IsGuild ? 2 : 1;
         public IReadOnlyList<SpecialistAgent> Workers => _workers;
         public int WorkerCount
@@ -185,6 +188,13 @@ namespace SolarMajesty
                 Collapse();
         }
 
+        /// <summary>Leech/wisp latch — RefreshPowerBudget treats this node as 0 gen while latched.</summary>
+        public void NotePowerSiphon(float seconds = 1.25f)
+        {
+            if (!IsAlive || Category != BuildingCategory.Power) return;
+            _siphonUntil = Time.time + Mathf.Max(0.2f, seconds);
+        }
+
         /// <summary>Engineer patch. Returns HP actually restored.</summary>
         public float Repair(float amount)
         {
@@ -296,6 +306,8 @@ namespace SolarMajesty
         public bool RobotFabricated { get; private set; }
 
         public void MarkRobotFabricated() => RobotFabricated = true;
+
+        public void ClearRobotFabricated() => RobotFabricated = false;
 
         public static SpecialistClass? RobotClassForWorkshop(BuildingCategory cat)
         {
@@ -520,7 +532,7 @@ namespace SolarMajesty
                 _workers[i]?.SetWorkplace(null);
             _workers.Clear();
             _village?.NotifyCollapsed(this);
-            DemoVfx.DeathBurst(transform.position, new Color(0.95f, 0.42f, 0.08f));
+            DemoVfx.StructureWreck(transform.position);
             Destroy(gameObject);
         }
 

@@ -8,12 +8,13 @@ namespace SolarMajesty
     /// HAB / Commons / pad / extractor / solar field / Defense bunker live in HeroBuildingKits.
     /// Junction turrets sit on airlock hubs (ColonyVisualUtility).
     /// Airlock hubs are panel-lined square primitives; docks stay Lego.
-    /// Tube cladding spans the hub-frame → module-face joint only (flush collars).
+    /// Round tube cladding spans hub → module hull on a shared DockY / DockBore.
+    /// RefreshTubes hides every stub first, then enables docked faces only.
+    /// Live dock sleeves start off so FindPieceGo misses cannot leave orange stubs showing.
     /// </summary>
     public static class CampusDressing
     {
         private const int MaxProps = 96;
-        private const int MaxTubes = 40;
         private const string TubeRootName = "CampusTubeRoot";
 
         private static int _count;
@@ -47,8 +48,11 @@ namespace SolarMajesty
                 SpawnStatusPip(go.transform, data.category);
 
             Vector3 origin = go.transform.position;
-            Transform parent = go.transform.parent;
-            SpawnApron(origin, body, parent, data.category);
+            // Dressing must die with the module — parent to the building, not the campus root.
+            // Hoppers raiding a HAB used to leave an orange packed-dust disc behind.
+            Transform parent = go.transform;
+            if (data.category != BuildingCategory.Commons)
+                SpawnApron(origin, body, parent, data.category);
 
             if (_count >= MaxProps) return;
 
@@ -71,8 +75,7 @@ namespace SolarMajesty
                 _count++;
             }
 
-            if (data.category == BuildingCategory.Commons ||
-                data.category == BuildingCategory.LandingPad)
+            if (data.category == BuildingCategory.LandingPad)
             {
                 SpawnPylon(origin - offset * 0.55f, body, parent);
                 SpawnBollard(origin + offset * 1.15f, body, parent);
@@ -88,8 +91,7 @@ namespace SolarMajesty
                 _count += 2;
             }
 
-            if (data.category == BuildingCategory.Habitat ||
-                data.category == BuildingCategory.Farm ||
+            if (data.category == BuildingCategory.Farm ||
                 data.category == BuildingCategory.Mine ||
                 data.category == BuildingCategory.RegolithCamp ||
                 data.category == BuildingCategory.Mining)
@@ -119,9 +121,7 @@ namespace SolarMajesty
                 SpawnPallet(origin + offsetB * 1.25f, body, parent);
                 SpawnCone(origin - offset * 1.2f, body, parent);
                 _count += 2;
-                if (data.category == BuildingCategory.Commons ||
-                    data.category == BuildingCategory.LandingPad ||
-                    data.category == BuildingCategory.Habitat)
+                if (data.category == BuildingCategory.LandingPad)
                 {
                     SpawnCrate(origin - offsetB * 1.15f, body, parent);
                     _count++;
@@ -146,34 +146,26 @@ namespace SolarMajesty
             var pieces = placer.Pieces;
             if (pieces == null || pieces.Count == 0) return;
 
-            var root = new GameObject(TubeRootName).transform;
-            if (parent != null) root.SetParent(parent, false);
-
-            int spawned = 0;
-            for (int a = 0; a < pieces.Count && spawned < MaxTubes; a++)
+            HideUnusedDockSleeves(placer, grid, parent);
+            int docks = 0;
+            for (int a = 0; a < pieces.Count; a++)
             {
-                var airlock = pieces[a];
-                if (!airlock.IsAirlock) continue;
-                Vector3 airCenter = PieceCenter(grid, airlock);
-
-                for (int m = 0; m < pieces.Count && spawned < MaxTubes; m++)
+                if (!pieces[a].IsAirlock) continue;
+                for (int m = 0; m < pieces.Count; m++)
                 {
-                    var module = pieces[m];
-                    if (!module.IsModule) continue;
+                    if (!pieces[m].IsModule) continue;
                     for (int f = 0; f < 4; f++)
                     {
-                        var face = (BuildingPlacer.Cardinal)f;
-                        if (BuildingPlacer.AirlockOriginOnModuleFace(module, face) != airlock.Origin)
-                            continue;
-                        Vector3 modCenter = PieceCenter(grid, module);
-                        SpawnDockTube(root, airCenter, modCenter);
-                        spawned++;
-                        break;
+                        if (BuildingPlacer.AirlockOriginOnModuleFace(
+                                pieces[m], (BuildingPlacer.Cardinal)f) == pieces[a].Origin)
+                        {
+                            docks++;
+                            break;
+                        }
                     }
                 }
             }
-
-            Debug.Log($"[CampusDressing] tubes={spawned} pieces={pieces.Count}");
+            Debug.Log($"[CampusDressing] docks={docks} pieces={pieces.Count}");
         }
 
         private static Vector3 PieceCenter(IsoGrid grid, BuildingPlacer.CampusPiece piece)
@@ -183,63 +175,145 @@ namespace SolarMajesty
             return (a + b) * 0.5f;
         }
 
-        private static void SpawnDockTube(Transform parent, Vector3 from, Vector3 to)
+        /// <summary>
+        /// Unused cardinal sleeves read as orange hatches / leftover tubes. Hide every
+        /// stub first, then enable only faces that actually dock. Find-misses leave
+        /// unused arms off so the white square hub can read.
+        /// </summary>
+        private static void HideUnusedDockSleeves(BuildingPlacer placer, IsoGrid grid, Transform parent)
         {
-            Vector3 delta = to - from;
-            delta.y = 0f;
-            float span = delta.magnitude;
-            if (span < 0.4f) return;
+            if (placer == null || grid == null || parent == null) return;
+            var pieces = placer.Pieces;
+            if (pieces == null) return;
 
-            Vector3 dir = delta / span;
-            // Clad the hub-frame → module-face joint only. Do not run tubes through hulls.
-            // 2×2 airlock half-extent is one cell; hub orange frame sits 0.92 m from origin.
-            float airlockHalf = ColonyLayout.DefaultCellSize;
-            const float hubReach = 0.92f;
-            const float bite = 0.08f;
-            float gap = airlockHalf - hubReach;
-            if (gap < 0.2f) return;
-            float length = gap + bite * 2f;
-            Vector3 mid = from + dir * ((hubReach + airlockHalf) * 0.5f);
-            mid.y = 0.85f;
-            const float dia = 1.42f;
+            HideAllDockDress(parent);
 
-            var tube = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            tube.name = "Dress_Tube";
-            tube.transform.SetParent(parent, false);
-            tube.transform.position = mid;
-            tube.transform.rotation = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
-            tube.transform.localScale = new Vector3(dia, length * 0.5f, dia);
-            Object.Destroy(tube.GetComponent<Collider>());
-            Tint(tube, new Color(0.86f, 0.87f, 0.89f), 0.18f);
-
-            int ribs = 3;
-            for (int i = 0; i < ribs; i++)
+            for (int m = 0; m < pieces.Count; m++)
             {
-                float t = (i + 0.5f) / ribs - 0.5f;
-                var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                rib.name = "Dress_Rib";
-                rib.transform.SetParent(parent, false);
-                rib.transform.position = mid + dir * (t * length * 0.72f);
-                rib.transform.rotation = tube.transform.rotation;
-                rib.transform.localScale = new Vector3(dia * 1.14f, 0.07f, dia * 1.14f);
-                Object.Destroy(rib.GetComponent<Collider>());
-                // Mockup tubes: orange structural rings on a regular cadence, carbon in between.
-                bool orangeRing = i % 3 == 1;
-                Tint(rib, orangeRing
-                    ? new Color(0.96f, 0.42f, 0.08f)
-                    : new Color(0.22f, 0.23f, 0.24f), orangeRing ? 0.14f : 0.16f);
+                var module = pieces[m];
+                if (!module.IsModule) continue;
+
+                bool east = false, west = false, north = false, south = false;
+                for (int a = 0; a < pieces.Count; a++)
+                {
+                    var airlock = pieces[a];
+                    if (!airlock.IsAirlock) continue;
+                    if (BuildingPlacer.AirlockOriginOnModuleFace(module, BuildingPlacer.Cardinal.East) == airlock.Origin)
+                        east = true;
+                    if (BuildingPlacer.AirlockOriginOnModuleFace(module, BuildingPlacer.Cardinal.West) == airlock.Origin)
+                        west = true;
+                    if (BuildingPlacer.AirlockOriginOnModuleFace(module, BuildingPlacer.Cardinal.North) == airlock.Origin)
+                        north = true;
+                    if (BuildingPlacer.AirlockOriginOnModuleFace(module, BuildingPlacer.Cardinal.South) == airlock.Origin)
+                        south = true;
+                }
+
+                GameObject go = FindPieceGo(parent, PieceCenter(grid, module), null);
+                if (go == null) continue;
+                SetPrefixActive(go.transform, "DockSleeve_E", east);
+                SetPrefixActive(go.transform, "DockSleeve_W", west);
+                SetPrefixActive(go.transform, "DockSleeve_N", north);
+                SetPrefixActive(go.transform, "DockSleeve_S", south);
+                // CommonsStub stays off. DockSleeve is the module-side tube; enabling
+                // the baked cardinal stubs was the unused orange rib on campus v4.
             }
 
-            for (int e = -1; e <= 1; e += 2)
+            for (int a = 0; a < pieces.Count; a++)
             {
-                var collar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                collar.name = "Dress_TubeCollar";
-                collar.transform.SetParent(parent, false);
-                collar.transform.position = mid + dir * (e * (length * 0.5f - 0.04f));
-                collar.transform.rotation = tube.transform.rotation;
-                collar.transform.localScale = new Vector3(dia * 1.22f, 0.06f, dia * 1.22f);
-                Object.Destroy(collar.GetComponent<Collider>());
-                Tint(collar, new Color(0.96f, 0.42f, 0.08f), 0.12f);
+                var airlock = pieces[a];
+                if (!airlock.IsAirlock) continue;
+
+                bool east = false, west = false, north = false, south = false;
+                for (int m = 0; m < pieces.Count; m++)
+                {
+                    var module = pieces[m];
+                    if (!module.IsModule) continue;
+                    if (BuildingPlacer.ModuleOriginOnAirlockFace(
+                            airlock, module.Width, module.Height, BuildingPlacer.Cardinal.East) == module.Origin)
+                        east = true;
+                    if (BuildingPlacer.ModuleOriginOnAirlockFace(
+                            airlock, module.Width, module.Height, BuildingPlacer.Cardinal.West) == module.Origin)
+                        west = true;
+                    if (BuildingPlacer.ModuleOriginOnAirlockFace(
+                            airlock, module.Width, module.Height, BuildingPlacer.Cardinal.North) == module.Origin)
+                        north = true;
+                    if (BuildingPlacer.ModuleOriginOnAirlockFace(
+                            airlock, module.Width, module.Height, BuildingPlacer.Cardinal.South) == module.Origin)
+                        south = true;
+                }
+
+                GameObject go = FindPieceGo(parent, PieceCenter(grid, airlock), "Airlock");
+                if (go == null)
+                    go = FindPieceGo(parent, PieceCenter(grid, airlock), "Junction");
+                if (go == null)
+                    go = FindPieceGo(parent, PieceCenter(grid, airlock), "PlusConnector");
+                if (go == null) continue;
+                SetPrefixActive(go.transform, "Dress_TubeArm_E", east);
+                SetPrefixActive(go.transform, "Dress_TubeArm_W", west);
+                SetPrefixActive(go.transform, "Dress_TubeArm_N", north);
+                SetPrefixActive(go.transform, "Dress_TubeArm_S", south);
+            }
+        }
+
+        private static void HideAllDockDress(Transform parent)
+        {
+            var ts = parent.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < ts.Length; i++)
+            {
+                Transform t = ts[i];
+                if (t == null || t == parent) continue;
+                string n = t.name;
+                if (n.StartsWith("Dress_TubeArm") || n.StartsWith("DockSleeve") || n.StartsWith("CommonsStub"))
+                    t.gameObject.SetActive(false);
+            }
+        }
+
+        private static GameObject FindPieceGo(Transform parent, Vector3 center, string preferContains)
+        {
+            GameObject best = null;
+            float maxSq = 8f * 8f;
+            float bestSq = maxSq;
+            int bestRank = 0;
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform t = parent.GetChild(i);
+                if (t == null) continue;
+                string n = t.name;
+                if (n.StartsWith("CampusTube") || n.StartsWith("DropZone") || n.StartsWith("Dress_") ||
+                    n.StartsWith("Site_") || n.StartsWith("Ghost") || n.StartsWith("Claim"))
+                    continue;
+                float dx = t.position.x - center.x;
+                float dz = t.position.z - center.z;
+                float sq = dx * dx + dz * dz;
+                if (sq > maxSq) continue;
+                if (!string.IsNullOrEmpty(preferContains) &&
+                    n.IndexOf(preferContains, System.StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+                int rank = 1;
+                if (n.StartsWith("Bld_") || n.StartsWith("Airlock") || n.StartsWith("Mod_") ||
+                    n.StartsWith("PlusConnector"))
+                    rank = 3;
+                else if (n.Contains("Commons") || n.Contains("Habitat") || n.Contains("Junction"))
+                    rank = 2;
+                if (best == null || rank > bestRank || (rank == bestRank && sq < bestSq))
+                {
+                    best = t.gameObject;
+                    bestSq = sq;
+                    bestRank = rank;
+                }
+            }
+            return best;
+        }
+
+        private static void SetPrefixActive(Transform root, string prefix, bool on)
+        {
+            var ts = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < ts.Length; i++)
+            {
+                Transform t = ts[i];
+                if (t == null || t == root) continue;
+                if (t.name.StartsWith(prefix))
+                    t.gameObject.SetActive(on);
             }
         }
 
@@ -274,11 +348,11 @@ namespace SolarMajesty
             Vector3 origin, CelestialBodyProfile body, Transform parent, BuildingCategory cat)
         {
             bool mars = body != null && body.Id == CelestialBodyId.Mars;
-            float dia = cat == BuildingCategory.Commons ? 7.2f
-                : cat == BuildingCategory.LandingPad ? 6.4f
-                : 4.6f;
-            if (mars)
-                dia *= 1.22f;
+            float dia = cat == BuildingCategory.LandingPad ? 6.4f
+                : cat == BuildingCategory.Commons ? 5.1f
+                : 4.2f;
+            if (mars && cat != BuildingCategory.Commons)
+                dia *= 1.12f;
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = "Dress_Apron";
             if (parent != null) go.transform.SetParent(parent, true);
@@ -289,18 +363,6 @@ namespace SolarMajesty
                 ? Color.Lerp(body.GroundDark, body.GroundLight, 0.18f) * 0.82f
                 : new Color(0.18f, 0.18f, 0.19f);
             Tint(go, packed, 0.05f);
-
-            if (!mars) return;
-            // Overview isometric: raised grey paved slab under Mars campus only.
-            var slab = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            slab.name = "Dress_ApronSlab";
-            if (parent != null) slab.transform.SetParent(parent, true);
-            float side = dia * 0.72f;
-            if (cat == BuildingCategory.Commons) side = dia * 0.82f;
-            slab.transform.position = origin + Vector3.up * 0.045f;
-            slab.transform.localScale = new Vector3(side, 0.04f, side);
-            Object.Destroy(slab.GetComponent<Collider>());
-            Tint(slab, new Color(0.40f, 0.41f, 0.43f), 0.12f);
         }
 
         /// <summary>

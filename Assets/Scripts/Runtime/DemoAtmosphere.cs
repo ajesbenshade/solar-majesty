@@ -73,7 +73,7 @@ namespace SolarMajesty
             if (fill == null) fill = go.AddComponent<Light>();
             fill.type = LightType.Directional;
             fill.color = body.FillColor;
-            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.12f
+            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.50f
                 : body.Id == CelestialBodyId.Earth ? 0.34f : 0.28f;
             fill.shadows = LightShadows.None;
         }
@@ -144,9 +144,9 @@ namespace SolarMajesty
             }
             else if (body.Id == CelestialBodyId.Mars)
             {
-                color.contrast.Override(14f);
-                color.saturation.Override(16f);
-                color.postExposure.Override(0.10f);
+                color.contrast.Override(11f);
+                color.saturation.Override(4f);
+                color.postExposure.Override(0.22f);
             }
             else
             {

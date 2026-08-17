@@ -11,7 +11,6 @@ namespace SolarMajesty
     {
         public float ConsiderRange = 80f;
         public float CurrentFlagHysteresis = 0.15f;
-        public float RestThreshold = 0.72f;
 
         public BrainDecision Evaluate(
             in SpecialistContext ctx,
@@ -161,6 +160,55 @@ namespace SolarMajesty
             acceptance = Mathf.Clamp(acceptance, 0.22f, 0.72f);
             if (score < acceptance) return false;
             return PassesGreedGate(ctx.Data, flag.CurrentBounty, ctx.GreedHunger);
+        }
+
+        /// <summary>
+        /// Why WouldTakeFlag is false. Reads the same gates as Evaluate; does not change ScoreFlag.
+        /// </summary>
+        public FlagRefusalKind ExplainFlag(in SpecialistContext ctx, FlagHandle flag, float bodyDanger)
+        {
+            if (ctx.Data == null || flag?.Data == null) return FlagRefusalKind.Ignored;
+
+            float injury = 1f - ctx.HealthNormalized;
+            float courage = EffectiveCourage(ctx);
+            bool panicked = injury > 0.55f ||
+                            (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
+            if (panicked && ctx.HealthNormalized < 0.62f) return FlagRefusalKind.Hurt;
+            if (CalculateRestScore(ctx) > 0.78f) return FlagRefusalKind.Hurt;
+
+            float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
+            float consider = 40f + ctx.Data.explorePreference * 35f;
+            if (ConsiderRange > 0f)
+                consider = Mathf.Max(consider, ConsiderRange * 0.7f);
+            if (consider > 0f && dist > consider) return FlagRefusalKind.TooFar;
+
+            float score = ScoreFlag(ctx, flag, dist, bodyDanger);
+            float acceptance = 0.38f + ctx.Data.baseGreed * 0.25f - ctx.GreedHunger * 0.22f;
+            acceptance = Mathf.Clamp(acceptance, 0.22f, 0.72f);
+
+            float huntScore = -1f;
+            if (ctx.HasHunt && ctx.Data.specialistClass != SpecialistClass.Medic &&
+                ctx.Data.combatPreference >= 0.2f && ctx.HealthNormalized > 0.38f)
+            {
+                huntScore = ScoreHunt(ctx, bodyDanger);
+                if (ctx.CurrentAction == SpecialistAction.Hunt)
+                    huntScore += 0.12f;
+            }
+
+            if (huntScore >= acceptance && huntScore > score)
+                return FlagRefusalKind.Hunting;
+
+            if (score < acceptance)
+            {
+                if (ctx.Data.GetPreference(flag.Data.flagType) < 0.25f)
+                    return FlagRefusalKind.NotMyJob;
+                return FlagRefusalKind.Ignored;
+            }
+
+            if (!PassesGreedGate(ctx.Data, flag.CurrentBounty, ctx.GreedHunger))
+                return FlagRefusalKind.Greed;
+
+            return FlagRefusalKind.WouldTake;
         }
 
         /// <summary>Greedy heroes skip underpaid jobs unless starving. Does not change ScoreFlag weights.</summary>

@@ -138,7 +138,7 @@ namespace SolarMajesty
             if (reason != null)
             {
                 if (reason.IndexOf("workshop", System.StringComparison.Ordinal) >= 0)
-                    return "At the shop. Flags nearby pull harder.";
+                    return "At the workshop. Flags nearby pull harder.";
                 if (reason.IndexOf("patrol", System.StringComparison.Ordinal) >= 0)
                     return "Patrolling the Commons.";
                 if (reason.IndexOf("tinker", System.StringComparison.Ordinal) >= 0)

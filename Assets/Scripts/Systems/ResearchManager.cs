@@ -20,10 +20,12 @@ namespace SolarMajesty
         public float CurrentRate { get; private set; }
         public int LabCount { get; private set; }
         public string LastEvent { get; private set; } = "idle";
+        public float BankedScience { get; private set; }
 
         public event Action<TechId> TechUnlocked;
 
-        private const string PrefsKey = "SM_ResearchUnlocks";
+        private const string PrefsKey = "SM_CampaignResearch";
+        private const string LegacyPrefsKey = "SM_ResearchUnlocks";
 
         public ResearchManager(ResourceManager resources)
         {
@@ -34,12 +36,23 @@ namespace SolarMajesty
         public static void WipeUnlocks()
         {
             PlayerPrefs.DeleteKey(PrefsKey);
+            PlayerPrefs.DeleteKey(LegacyPrefsKey);
             PlayerPrefs.Save();
         }
 
         private void Load()
         {
             string raw = PlayerPrefs.GetString(PrefsKey, "");
+            if (string.IsNullOrEmpty(raw))
+            {
+                raw = PlayerPrefs.GetString(LegacyPrefsKey, "");
+                if (!string.IsNullOrEmpty(raw))
+                {
+                    PlayerPrefs.SetString(PrefsKey, raw);
+                    PlayerPrefs.DeleteKey(LegacyPrefsKey);
+                    PlayerPrefs.Save();
+                }
+            }
             if (string.IsNullOrEmpty(raw)) return;
             var parts = raw.Split(',');
             for (int i = 0; i < parts.Length; i++)
@@ -117,6 +130,12 @@ namespace SolarMajesty
             var def = TechCatalog.Get(id);
             ActiveCost = def != null ? def.ScienceCost : 1f;
             ActiveProgress = _progress.TryGetValue(id, out float p) ? p : 0f;
+            if (BankedScience > 0f)
+            {
+                ActiveProgress += BankedScience;
+                BankedScience = 0f;
+                _progress[id] = ActiveProgress;
+            }
             LastEvent = $"researching_{id}";
             return true;
         }
@@ -151,7 +170,13 @@ namespace SolarMajesty
         /// <summary>Research Site flags dump science into the active tech.</summary>
         public void AddScience(float amount)
         {
-            if (amount <= 0f || ActiveTech == TechId.None) return;
+            if (amount <= 0f) return;
+            if (ActiveTech == TechId.None)
+            {
+                BankedScience += amount;
+                LastEvent = $"banked_+{amount:F0}";
+                return;
+            }
             var def = TechCatalog.Get(ActiveTech);
             if (def == null || IsUnlocked(ActiveTech)) return;
             ActiveProgress += amount;
@@ -176,7 +201,7 @@ namespace SolarMajesty
             return IsUnlocked(profile.LaunchTech);
         }
 
-        public void Tick(float dt, int labCount, int labWorkers, float rateMultiplier = 1f)
+        public void Tick(float dt, int labCount, int labWorkers, float rateMultiplier = 1f, float extraRate = 0f)
         {
             if (dt <= 0f) return;
             LabCount = Mathf.Max(0, labCount);
@@ -185,9 +210,11 @@ namespace SolarMajesty
             var techs = TechCatalog.All;
             for (int i = 0; i < techs.Count; i++)
             {
-                if (IsUnlocked(techs[i].Id) && techs[i].ResearchRateBonus > 0f)
+                if (IsUnlocked(techs[i].Id) && techs[i].ResearchRateBonus > 0f &&
+                    techs[i].Id != TechId.DeepArchive)
                     rate += techs[i].ResearchRateBonus;
             }
+            rate += Mathf.Max(0f, extraRate);
             rate *= Mathf.Max(0.25f, rateMultiplier);
             CurrentRate = rate;
 
@@ -234,11 +261,6 @@ namespace SolarMajesty
             Save();
             TechUnlocked?.Invoke(def.Id);
             Debug.Log($"[Research] Unlocked {def.DisplayName}");
-
-            // Keep the queue moving toward launch tech without forcing tip picks.
-            var next = RecommendedNext();
-            if (next != TechId.None)
-                TrySelect(next);
         }
     }
 }

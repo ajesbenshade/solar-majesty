@@ -36,7 +36,7 @@
 - [x] Phase 4 airlock panel-line polish — square hub (carbon corners / recessed orange doors) + white dock sleeves with orange collars (Phase 4 still open)
 - [x] Phase 4 HAB / Commons / LAB / CMD-1 / OPS-1 panel-bevel pass — carbon rings, spine seams, civic wrap bands, bevelled box hulls (Phase 4 still open)
 - [x] Phase 4 dock sockets flush — square airlock plus-arms + module sleeves + orange collars mate at the Lego face; Commons cardinal stubs / Guild E/W ports reach the footprint (Phase 4 still open)
-- [x] Phase 4 editor Mars still (`Docs/Roadmap/SM_MarsCampaign_EditorStill.png`) + Game-tab empty-Sol-1 still (`Docs/Roadmap/SM_MarsCampaign_PlayModeStill.png`) + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)) — **not** complete
+- [x] Phase 4 editor Mars still + empty Game-tab still + campus v1 + v2 + v3 + **campus v4** (`Docs/Roadmap/SM_MarsCampaign_PlayModeCampusStill4.png`) + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)) — **not** complete
 
 ## Month roadmap
 
@@ -50,7 +50,7 @@
 
 Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 is packaged. Phase 2 is complete** ([exit review](Roadmap/PHASE_2_EXIT.md)). **Phase 3 is complete** ([exit review](Roadmap/PHASE_3_EXIT.md)). Current: [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) ([exit blocked](Roadmap/PHASE_4_EXIT.md)). After Phase 4: [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
 
-1. Phase 4 visual target — **Weeks 1–4 continued are in**. Exit review is **blocked** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)): editor still of Commons+airlock+HAB exists; Game-tab still saved at `Docs/Roadmap/SM_MarsCampaign_PlayModeStill.png` (empty Mars Sol 1 + HUD — **not** a campus match). Next human step: **Shift+click MARS?** (Playing, tutorial 1/6) or **Shift+F10** then **F10** again, then place Commons + airlock + HAB for a campus still. **Do not stamp Phase 4 complete. Do not start Phase 5.** Square Lego airlocks stay; tubes/domes/cranes/kits/turrets/solar are dressing. Mockup squad bars are HUD chrome only. Do not add click-to-move. Defense stays the tracked Guardian.
+1. Phase 4 visual target — **Weeks 1–4 continued are in**. Exit review is **blocked** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)): latest campus Game-tab still is `SM_MarsCampaign_PlayModeCampusStill4.png` (orange box airlock + unused orange stub — **not** a mockup match). Code after v4 is not in that PNG. Next human step: re-enter Play Mode on Mars, place Commons + airlock + HAB, look for a **smaller white paneled square hub**, **short white tubes + one orange collar on docked faces only**, **no unused CommonsStub**, **readable white hulls**, camera snapping to ortho **5.5** (hopper must not pan or zoom out). Then a fresh Game-tab still. **Do not stamp Phase 4 complete. Do not start Phase 5.** Square Lego airlocks stay; tubes/domes/cranes/kits/turrets/solar are dressing. Mockup squad bars are HUD chrome only. Do not add click-to-move. Defense stays the tracked Guardian.
 2. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes. Guild Hall: assign SCOUT/ENG/DEF/MED (Horizon / Anvil / Aegis / Triage).
 3. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`.
 

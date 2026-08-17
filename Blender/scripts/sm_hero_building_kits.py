@@ -608,41 +608,9 @@ def build_commons(mats: dict) -> bpy.types.Object:
         assign_mat(vis, mats["SM_Cyan"])
         parts.append(vis)
 
-    # Radial tube stubs — dressing. Cardinals mate Unity square sleeves at the 6×6 face.
-    face = FOOT_6 * 0.5
-    for i in range(8):
-        ang = i * math.pi / 4.0
-        cardinal = (i % 2) == 0
-        if cardinal:
-            stub_len = face - radius * 0.96
-            dist = radius * 0.96 + stub_len * 0.5
-        else:
-            stub_len = 0.52
-            dist = radius * 0.98 + stub_len * 0.42
-        stub_r = 0.50 if cardinal else 0.36
-        pos = (math.sin(ang) * dist, math.cos(ang) * dist, 1.18)
-        stub = add_cylinder("TMP", stub_r, stub_len, pos, vertices=16)
-        orient_along_xy(stub, ang)
-        assign_mat(stub, mats["SM_White"])
-        parts.append(stub)
-        tip_dist = dist + stub_len * 0.5 - 0.04
-        tip = add_cylinder(
-            "TMP", stub_r * 1.12, 0.08,
-            (math.sin(ang) * tip_dist, math.cos(ang) * tip_dist, 1.18),
-            vertices=16,
-        )
-        orient_along_xy(tip, ang)
-        assign_mat(tip, mats["SM_Orange"])
-        parts.append(tip)
-        if cardinal:
-            collar = add_cylinder(
-                "TMP", stub_r * 1.06, 0.10,
-                (math.sin(ang) * (dist - stub_len * 0.18), math.cos(ang) * (dist - stub_len * 0.18), 1.18),
-                vertices=16,
-            )
-            orient_along_xy(collar, ang)
-            assign_mat(collar, mats["SM_Black"])
-            parts.append(collar)
+    # Radial stubs stay in Unity (DockSleeve + CampusDressing) so unused faces
+    # can hide. Joined FBX stubs cannot be toggled per dock.
+
     commons_panel_lines(parts, mats, radius)
     return finish(parts, name, "31_Hero_Commons", (14.0, 0.0, 0.0))
 

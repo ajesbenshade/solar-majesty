@@ -227,7 +227,7 @@ namespace SolarMajesty
         public void OnStructureDestroyed(ColonyStructure st)
         {
             if (st == null) return;
-            _structures.Remove(st);
+            if (!_structures.Remove(st)) return;
             _loop?.NotifyStructureDestroyed(st);
         }
 

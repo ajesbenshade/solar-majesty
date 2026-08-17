@@ -31,15 +31,16 @@ Play opens on the **title screen** (frozen drop behind the menu). **New Game** w
 | Input | Action |
 |-------|--------|
 | **Esc** | Pause / resume (Settings from pause or title) |
-| **WASD** / edge pan / **LMB–MMB–RMB drag** / scroll | Isometric camera |
-| **G** / **B** / **Q** / **Tab** | Open Flag popup / Build popup / close tool / cycle (also bottom dock) |
+| **WASD** | Pan the isometric camera |
+| **Q** / **E** | Zoom out / zoom in (mouse does not pan or zoom) |
+| **G** / **B** / **Tab** | Open Flag / Build catalog / cycle. After picking a flag or module the list minimizes (B/G re-opens it). Click the dock button again to close |
 | **F1** Explore · **F2** ClearThreat · **F3** Build · **F4** Extract · **F5** Defend · **I** Research Site · **O** Outpost · **U** Terraform | Flag type (in Flag popup when open) |
 | **1–9 / 0** | Select building (COMMONS · HAB · PWR · OPS · LAB · Pad · Defense Battery · …; Airlock + workshops in Build popup) |
-| **LMB** | Inspect: select specialist or building (info / workers / FLAG HERE). Flag/Build: empty ground places · drag pans |
+| **LMB** | Inspect: select specialist or building (info / workers / FLAG HERE). Flag/Build: empty ground places |
 | **RMB** on a flag | Cancel that bounty and **refund escrowed MET** |
 | **P** | Form a party from the current selection (2+), else 2+ heroes at the inn (max 4) |
 | **[** | Disband selected party (or the last party) |
-| **T** | Toggle research / tech tree panel |
+| **T** | Toggle research / tech tree panel (starts a tech, then closes) |
 | **F6** / **F7** | Camera → Campus A / Campus B (HUD A/B chips on bottom dock) |
 | **F9** | Seed Explore attractor at Campus B + focus B |
 | **F10** | Debug: cycle any body (reload). **Shift+F10** also unlocks all campaign worlds |
@@ -51,7 +52,7 @@ Play opens on the **title screen** (frozen drop behind the menu). **New Game** w
 
 **Procedural worlds / campaign:** fresh play starts on **Earth** (tutorial). Body chips show unlocked worlds only (`BELT?` while locked). Conquest win unlocks the next body — win banner **TO LUNA** / **TO MARS** / **TO BELT** / **TO EURO**. Each body keeps its own seed on a **384 m** sandbox. **F4 Extract** near a node harvests that deposit into the nearest drop-off (haul % on the HUD). **F2 ClearThreat** clears lair fauna. Cyan disc at Campus B is a forward outpost after Colony Commons. Earth ships need a Landing Pad. **Shift+F10** unlocks all bodies for debug. Campus A landing stays fixed. Same body+seed → same map.
 
-**No click-to-move on specialists.** Outdoor units are **robots** fabricated when their **workshop** finishes building (Scout / Engineer / Defense / Medic / Harvester / Surveyor / Terraformer / Courier / Geologist / Sentinel). **Humans live only in HABs** (tax, births, beds) — never as outdoor agents. Raise **Colony Commons** first (HUD **COMMONS**). **Airlock Junctions** are panel-lined square hubs (orange frames/doors) that snap only to module face midlines (symmetry axes); every other module must Lego-dock onto an airlock end. Robots take bounties they want, **flee to the rest beacon** when hurt, **hunt** nearby fauna if brave, and hang out at workshops when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. **Guild Hall** (after Guild Charter) is a class hall: assign SCOUT/ENG/DEF/MED (or it inherits the nearest workshop). Flags near the hall pull that class. **P** parties the current selection or inn. Bounties escrow **MET** from the stockpile; robots keep **$**. **Conquest gates** (HUD): clear all dens · sustain pop goal with Commons+farm+mine · research the body's launch tech (TECH · **T**) **and place a Landing Pad**. Labs tick science into one active tech; ★ rows are Secret Projects. Flag/Build menus are popups above the bottom dock — click the dock button again (or **Q**) to close. The command panel shows the last Overseer log lines (drop, dens, sustain, launch, travel).
+**No click-to-move on specialists.** Outdoor units are **robots** fabricated when their **workshop** finishes building (Scout / Engineer / Defense / Medic / Harvester / Surveyor / Terraformer / Courier / Geologist / Sentinel). **Humans live only in HABs** (tax, births, beds) — never as outdoor agents. Raise **Colony Commons** first (HUD **COMMONS**). **Airlock Junctions** are panel-lined square hubs (orange frames/doors) that snap only to module face midlines (symmetry axes); every other module must Lego-dock onto an airlock end. Robots take bounties they want, **flee to the rest beacon** when hurt, **hunt** nearby fauna if brave, and hang out at workshops when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. **Guild Hall** (after Guild Charter) is a class hall: assign SCOUT/ENG/DEF/MED (or it inherits the nearest workshop). Flags near the hall pull that class. **P** parties the current selection or inn. Bounties escrow **MET** from the stockpile; robots keep **$**. **Conquest gates** (HUD): clear all dens · sustain pop goal with Commons+farm+mine · research the body's launch tech (TECH · **T**) **and place a Landing Pad**. Labs tick science into one active tech; ★ rows are Secret Projects. Flag/Build menus are popups above the bottom dock — click the dock button again (or **B** / **G**) to close. The command panel shows the last Overseer log lines (drop, dens, sustain, launch, travel).
 
 ---
 

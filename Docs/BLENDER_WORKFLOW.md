@@ -180,7 +180,7 @@ Creates `Blender/SolarMajesty_HeroBuildings.blend`, exports `SM_Hero_*.fbx` to `
 | Mesh | Silhouette (footprint) |
 |------|------------------------|
 | `SM_Hero_HAB` | HAB-1 horizontal cylinder on skids (4×4 / 6 m) |
-| `SM_Hero_Commons` | Command-dome citadel + radial tube stubs (6×6 / 9 m) |
+| `SM_Hero_Commons` | Command-dome citadel (6×6 / 9 m). Radial stubs are Unity DockSleeves, not baked into the FBX. |
 | `SM_Hero_Power` | PWR-1 node + solar field (4×4 / 6 m) |
 | `SM_Hero_Farm` | Water-ice tanks + scaffold (4×4 / 6 m) |
 | `SM_Hero_Camp` | Low regolith hopper + pipes (4×4 / 6 m) |

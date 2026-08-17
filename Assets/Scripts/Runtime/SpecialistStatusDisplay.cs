@@ -67,7 +67,21 @@ namespace SolarMajesty
 
             Color c;
             string text;
-            switch (_agent.CurrentAction)
+            if (_agent.IsIncapacitated)
+            {
+                c = new Color(0.95f, 0.32f, 0.26f);
+                text = _agent.RecoverSecondsLeft > 0.05f
+                    ? $"DOWN {_agent.RecoverSecondsLeft:F0}s"
+                    : "DOWN";
+            }
+            else if (!string.IsNullOrEmpty(_agent.RefusalChip))
+            {
+                c = new Color(0.96f, 0.42f, 0.08f);
+                text = _agent.RefusalChip;
+            }
+            else
+            {
+                switch (_agent.CurrentAction)
             {
                 case SpecialistAction.Rest:
                     c = new Color(0.45f, 0.75f, 1f);
@@ -88,7 +102,7 @@ namespace SolarMajesty
                 case SpecialistAction.Wander:
                     c = new Color(0.72f, 0.78f, 0.55f);
                     text = _agent.LastReason != null && _agent.LastReason.Contains("party_follow") ? "PARTY"
-                        : _agent.LastReason != null && _agent.LastReason.Contains("workshop") ? "SHOP"
+                        : _agent.LastReason != null && _agent.LastReason.Contains("workshop") ? "DUTY"
                         : _agent.LastReason != null && _agent.LastReason.Contains("patrol") ? "PATROL"
                         : _agent.LastReason != null && _agent.LastReason.Contains("tinker") ? "TOWN"
                         : _agent.LastReason != null && _agent.LastReason.Contains("triage") ? "HEAL"
@@ -104,6 +118,7 @@ namespace SolarMajesty
                     c = new Color(0.7f, 0.7f, 0.75f);
                     text = "IDLE";
                     break;
+            }
             }
 
             SetColor(_orbRend, c);

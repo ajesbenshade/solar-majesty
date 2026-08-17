@@ -35,7 +35,7 @@ namespace SolarMajesty
 
         [Header("Phase 2A combat")]
         [SerializeField] private float incapacitateThreshold = 0.02f;
-        [SerializeField] private float recoverySeconds = 8f;
+        [SerializeField] private float recoverySeconds = 12f;
         [SerializeField] private float restHealPerSecond = 0.08f;
 
         [Header("Debug force (playtesting only — not player commands)")]
@@ -79,6 +79,14 @@ namespace SolarMajesty
         private bool _radExposed;
         private float _radFlash;
         private bool _radToast;
+        private float _stoodUpAt = -999f;
+        private bool _scrapRiskLogged;
+        private bool _buildLaborHit;
+        private float _refusalUntil;
+        private float _refusalGate;
+        private string _refusalChip;
+        private float _terraformerPulseTimer;
+        private bool _scrapped;
 
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
@@ -100,7 +108,16 @@ namespace SolarMajesty
         public FlagHandle ActiveFlag => _activeFlag;
         public float BodyDanger => bodyDanger;
         public bool IsIncapacitated => _incapacitated;
-        public bool IsAlive => !_incapacitated || healthNormalized > incapacitateThreshold;
+        public bool IsAlive => !_scrapped && (!_incapacitated || healthNormalized > incapacitateThreshold);
+        public bool IsClaiming => _claimedActive;
+        public int HireMin => OverseerRules.GreedAsk(data);
+        public float RecoverSecondsLeft => _incapacitated ? Mathf.Max(0f, _recoverTimer) : 0f;
+        public bool ScrapRisk =>
+            !_incapacitated && _stoodUpAt > 0f &&
+            Time.time - _stoodUpAt < OverseerRules.ScrapWindow &&
+            healthNormalized < 0.55f;
+        public string RefusalChip =>
+            Time.time < _refusalUntil ? _refusalChip : null;
         public bool IsSelected => _selected;
         public HeroParty Party { get; private set; }
         public bool IsPartyLeader => Party != null && Party.IsLeader(this);
@@ -111,8 +128,16 @@ namespace SolarMajesty
             (1f + _geneSpeed + SuitSpeedBonus()) *
             BodyMoveScale();
 
-        public float EffectiveWorkRate =>
-            (data != null ? data.workRate : 1f) * (1f + _geneWork);
+        public float EffectiveWorkRate
+        {
+            get
+            {
+                float r = (data != null ? data.workRate : 1f) * (1f + _geneWork);
+                if (_loop != null && _loop.Economy != null && _loop.Economy.PowerShort)
+                    r *= OverseerRules.PowerShortWork;
+                return r;
+            }
+        }
 
         public float EffectiveCourage =>
             Mathf.Clamp01(((data != null ? data.courage : 0.5f) + _geneCourage) * ReplayRules.CourageScale);
@@ -182,13 +207,52 @@ namespace SolarMajesty
 
         public void ReviveFull()
         {
+            if (_scrapped) return;
             _incapacitated = false;
             _recoverTimer = 0f;
             healthNormalized = 1f;
             fatigue = 0.1f;
             _status = "revived";
+            _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
             SetAgentStopped(false);
+        }
+
+        public void FieldRevive()
+        {
+            if (_scrapped || !_incapacitated) return;
+            _incapacitated = false;
+            _recoverTimer = 0f;
+            healthNormalized = OverseerRules.ReviveHp;
+            fatigue = OverseerRules.ReviveFatigue;
+            _status = "field_revive";
+            _stoodUpAt = Time.time;
+            IndustrialArtDressing.ClearTintOverlay(gameObject);
+            SetAgentStopped(false);
+        }
+
+        public void ShowRefusal(string chip)
+        {
+            if (string.IsNullOrEmpty(chip)) return;
+            if (Time.time < _refusalGate) return;
+            _refusalChip = chip;
+            _refusalUntil = Time.time + OverseerRules.RefusalChipSeconds;
+            _refusalGate = Time.time + OverseerRules.RefusalRetrigger;
+        }
+
+        public int CollectTithe()
+        {
+            if (_scrapped || _incapacitated || credits <= OverseerRules.TitheFloor) return 0;
+            int tithe = Mathf.Min(OverseerRules.TitheCap, Mathf.FloorToInt(credits * OverseerRules.TitheRate));
+            if (tithe <= 0) return 0;
+            credits -= tithe;
+            return tithe;
+        }
+
+        public void AccelerateRecover(float dt)
+        {
+            if (!_incapacitated || dt <= 0f) return;
+            _recoverTimer -= dt;
         }
 
         public void Initialize(
@@ -367,8 +431,16 @@ namespace SolarMajesty
 
         private void EnterIncapacitated()
         {
+            if (_scrapped) return;
+            bool secondDown = _stoodUpAt > 0f && Time.time - _stoodUpAt < OverseerRules.ScrapWindow;
+            if (secondDown && Random.value < OverseerRules.ScrapChance)
+            {
+                ScrapSelf();
+                return;
+            }
+
             _incapacitated = true;
-            _recoverTimer = recoverySeconds;
+            _recoverTimer = OverseerRules.RecoverSeconds;
             ReleaseClaim();
             _activeFlag = null;
             _lastDecision = BrainDecision.Idle(0f, "incapacitated");
@@ -376,7 +448,26 @@ namespace SolarMajesty
             SetAgentStopped(true);
             IndustrialArtDressing.SetTintOverlay(gameObject, new Color(0.38f, 0.38f, 0.4f));
             DemoVfx.DeathBurst(transform.position, bodyTint);
-            Debug.Log($"[Specialist] {data.displayName} incapacitated — recovering in {recoverySeconds:F0}s");
+            Debug.Log($"[Specialist] {data.displayName} incapacitated — recovering in {OverseerRules.RecoverSeconds:F0}s");
+        }
+
+        private void ScrapSelf()
+        {
+            if (_scrapped) return;
+            _scrapped = true;
+            _incapacitated = true;
+            ReleaseClaim();
+            _activeFlag = null;
+            SetWorkplace(null);
+            int salvage = Mathf.FloorToInt(credits * OverseerRules.SalvageCreditFrac);
+            credits = 0f;
+            if (salvage > 0)
+                _loop?.Resources?.Add(ResourceId.Metals, salvage);
+            string label = ColonyStructure.ClassLabel(data != null ? data.specialistClass : SpecialistClass.ScoutDrone);
+            _loop?.OnRobotScrapped(this, salvage);
+            DemoVfx.DeathBurst(transform.position, bodyTint);
+            Debug.Log($"[Specialist] {data?.displayName} SCRAPPED — salvage {salvage} MET");
+            Destroy(gameObject);
         }
 
         private void TickIncapacitated(float dt)
@@ -387,10 +478,18 @@ namespace SolarMajesty
             if (_recoverTimer <= 0f && healthNormalized > 0.25f)
             {
                 _incapacitated = false;
-                fatigue = Mathf.Max(fatigue, 0.55f);
+                healthNormalized = OverseerRules.RecoverHp;
+                fatigue = Mathf.Max(fatigue, OverseerRules.RecoverFatigue);
+                _stoodUpAt = Time.time;
+                _scrapRiskLogged = false;
                 _status = "recovered";
                 IndustrialArtDressing.ClearTintOverlay(gameObject);
                 SetAgentStopped(false);
+                if (!_scrapRiskLogged)
+                {
+                    _scrapRiskLogged = true;
+                    _loop?.LogOverseer($"SCRAP RISK — {data.displayName} just stood up. Another down in 90 s can scrap them.");
+                }
                 Debug.Log($"[Specialist] {data.displayName} recovered");
             }
         }
@@ -543,6 +642,13 @@ namespace SolarMajesty
                     data.specialistClass, transform.position, site, node, salt);
             }
 
+            if (data.specialistClass == SpecialistClass.ScoutDrone && _world != null)
+            {
+                var lair = NearestUnscoutedLair();
+                if (lair != null)
+                    vocation = lair.WorldPosition;
+            }
+
             Vector3 patient = Vector3.zero;
             bool hasPatient = data.specialistClass == SpecialistClass.Medic &&
                               TryNearestWounded(out patient, out _);
@@ -559,12 +665,17 @@ namespace SolarMajesty
             float repairDist = hasRepair ? FlatDistance(transform.position, repairPos) : 99f;
             float repairNeed = hasRepair ? (1f - damaged.Health01) : 0f;
 
+            float hunger = Mathf.Clamp01(greedHunger + ReplayRules.GreedHungerBias);
+            if (_loop != null && _loop.Resources != null &&
+                _loop.Resources.Get(ResourceId.Metals) < OverseerRules.ThinMetals)
+                hunger = Mathf.Clamp01(hunger + OverseerRules.ThinMetalsHunger);
+
             return new SpecialistContext
             {
                 Data = data,
                 Position = transform.position,
                 Fatigue = fatigue,
-                GreedHunger = Mathf.Clamp01(greedHunger + ReplayRules.GreedHungerBias),
+                GreedHunger = hunger,
                 CurrentFlag = _activeFlag,
                 HealthNormalized = healthNormalized,
                 SafetyPosition = KingdomLife.RestNear(transform.position, OutpostClaimed),
@@ -605,6 +716,7 @@ namespace SolarMajesty
                     _activeFlag = decision.TargetFlag;
                     _flags.AddClaim(_activeFlag);
                     _claimedActive = true;
+                    _buildLaborHit = false;
                     DemoAudio.PlayClaim();
                     DemoVfx.ClaimRing(_activeFlag.WorldPosition, new Color(1f, 0.85f, 0.2f));
                     if (decision.TargetFlag.Data != null)
@@ -706,7 +818,11 @@ namespace SolarMajesty
             SetAgentStopped(true);
             _status = $"working_{_activeFlag.Data.flagType}";
             _workPulse = 1f;
-            float work = EffectiveWorkRate * dt;
+            float share = _loop != null ? _loop.FlagStackShare(_activeFlag, this) : 1f;
+            float work = EffectiveWorkRate * share * dt;
+            if (data != null && data.specialistClass == SpecialistClass.CourierBot &&
+                _activeFlag.Data.flagType == FlagType.EstablishOutpost)
+                work *= OverseerRules.CourierOutpostWork;
             bool done = _flags.ApplyWork(_activeFlag, work);
 
             if (_activeFlag.Data.flagType == FlagType.Build && _placer != null)
@@ -724,7 +840,7 @@ namespace SolarMajesty
                         ? _world.FindNearestNode(transform.position, 10f)
                         : null;
                     if (_loop != null)
-                        _loop.ApplyExtractYield(transform.position, node);
+                        _loop.ApplyExtractYield(transform.position, node, this);
                     else
                     {
                         int campus = ColonyLayout.NearestCampusIndex(transform.position);
@@ -736,11 +852,24 @@ namespace SolarMajesty
                     var lair = _world.FindNearestLair(transform.position, 12f);
                     lair?.ForceClear();
                 }
+                else if (completedType == FlagType.Explore)
+                {
+                    _loop?.NotifySpecialFlag(completedType, transform.position, this);
+                }
+                else if (completedType == FlagType.DefendArea)
+                {
+                    _loop?.NotifySpecialFlag(completedType, transform.position, this);
+                }
+                else if (completedType == FlagType.Build)
+                {
+                    if (!_buildLaborHit)
+                        _loop?.LogOverseer("No site in 28 m — paid for showing up.");
+                }
                 else if (completedType == FlagType.ResearchSite ||
                          completedType == FlagType.EstablishOutpost ||
                          completedType == FlagType.Terraform)
                 {
-                    _loop?.NotifySpecialFlag(completedType, transform.position);
+                    _loop?.NotifySpecialFlag(completedType, transform.position, this);
                 }
                 greedHunger = Mathf.Clamp01(greedHunger - 0.25f);
                 if (completedType == FlagType.Extract)
@@ -808,7 +937,7 @@ namespace SolarMajesty
             if (_placer == null || _activeFlag == null) return;
             var orders = _placer.Orders;
             ConstructionOrder best = null;
-            float bestDist = 6f;
+            float bestDist = OverseerRules.BuildLabourRadius;
             Vector3 me = transform.position;
             for (int i = 0; i < orders.Count; i++)
             {
@@ -822,7 +951,10 @@ namespace SolarMajesty
                 }
             }
             if (best != null)
+            {
                 _placer.ApplyLabor(best, workSeconds);
+                _buildLaborHit = true;
+            }
         }
 
         private void TickRest(float dt)
@@ -930,7 +1062,10 @@ namespace SolarMajesty
             _workPulse = 1f;
             var stalker = NearestStalkerAgent();
             if (stalker != null)
-                stalker.ApplyCombatDamage(EffectiveWorkRate * 8f * dt);
+            {
+                float mul = HuntDpsMul(stalker.Kind);
+                stalker.ApplyCombatDamage(EffectiveWorkRate * 8f * dt * mul);
+            }
         }
 
         private void TickWanderTown(float dt)
@@ -944,12 +1079,16 @@ namespace SolarMajesty
             {
                 _status = _lastDecision.Reason ?? "wandering";
                 SetAgentStopped(true);
+                TryPartyFollowWork(dt);
+                TickTerraformerVocation(dt);
                 return;
             }
 
             SetDestination(dest);
             MoveFallback(dest, EffectiveMoveSpeed * 0.72f * dt);
             _status = _lastDecision.Reason ?? "wandering";
+            TryPartyFollowWork(dt);
+            TickTerraformerVocation(dt);
         }
 
         private void TickIdle(float dt)
@@ -980,9 +1119,11 @@ namespace SolarMajesty
             {
                 var ally = agents[i];
                 if (ally == null || ally == this) continue;
-                if (ally.HealthNormalized >= 0.98f) continue;
                 if (FlatDistance(transform.position, ally.transform.position) > range) continue;
-                ally.ReceiveHeal(dt * 0.14f);
+                if (ally.IsIncapacitated)
+                    ally.AccelerateRecover(dt);
+                else if (ally.HealthNormalized < 0.98f)
+                    ally.ReceiveHeal(dt * 0.14f);
             }
         }
 
@@ -999,7 +1140,7 @@ namespace SolarMajesty
             {
                 var ally = agents[i];
                 if (ally == null || ally == this) continue;
-                if (ally.HealthNormalized >= 0.82f) continue;
+                if (!ally.IsIncapacitated && ally.HealthNormalized >= 0.82f) continue;
                 float d = FlatDistance(me, ally.transform.position);
                 if (d >= 28f || d >= dist) continue;
                 dist = d;
@@ -1049,6 +1190,66 @@ namespace SolarMajesty
                 }
             }
             return best != null ? best.WorldPosition : (Vector3?)null;
+        }
+
+        private void TryPartyFollowWork(float dt)
+        {
+            if (Party == null || Party.IsLeader(this)) return;
+            var lead = Party.Leader;
+            if (lead == null || lead.ActiveFlag == null || _flags == null) return;
+            if (FlatDistance(transform.position, lead.ActiveFlag.WorldPosition) > OverseerRules.PartyFollowerRange)
+                return;
+
+            float work = EffectiveWorkRate * OverseerRules.PartyFollowerWork * dt;
+            if (data != null && data.specialistClass == SpecialistClass.CourierBot &&
+                lead.ActiveFlag.Data != null &&
+                lead.ActiveFlag.Data.flagType == FlagType.EstablishOutpost)
+                work *= OverseerRules.CourierOutpostWork;
+            if (_flags.ApplyWork(lead.ActiveFlag, work))
+                _status = "party_work";
+        }
+
+        private void TickTerraformerVocation(float dt)
+        {
+            if (data == null || data.specialistClass != SpecialistClass.TerraformerBot) return;
+            if (_loop?.Village == null || _loop.Settlement == null) return;
+            var farm = _loop.Village.NearestByCategory(transform.position, OverseerRules.TerraformerFarmRange, BuildingCategory.Farm);
+            if (farm == null) return;
+            _terraformerPulseTimer += dt;
+            if (_terraformerPulseTimer < OverseerRules.TerraformerPulseInterval) return;
+            _terraformerPulseTimer = 0f;
+            _loop.Settlement.AddTerraformPulse(OverseerRules.TerraformerPulse);
+        }
+
+        private float HuntDpsMul(FaunaKind kind)
+        {
+            if (data == null) return 1f;
+            if (data.specialistClass == SpecialistClass.DefenseMech &&
+                (kind == FaunaKind.Stalker || kind == FaunaKind.Hopper))
+                return OverseerRules.DefenseStalkerDpsMul;
+            if (data.specialistClass == SpecialistClass.SentinelMech && kind == FaunaKind.Stalker)
+                return OverseerRules.SentinelStalkerDpsMul;
+            return 1f;
+        }
+
+        private StalkerLair NearestUnscoutedLair()
+        {
+            if (_world == null) return null;
+            var lairs = _world.Lairs;
+            StalkerLair best = null;
+            float bestD = 80f;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                var l = lairs[i];
+                if (l == null || l.IsCleared || l.IsScouted) continue;
+                float d = FlatDistance(transform.position, l.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = l;
+                }
+            }
+            return best;
         }
 
         private void SetDestination(Vector3 world)

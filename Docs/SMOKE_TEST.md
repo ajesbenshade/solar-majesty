@@ -8,11 +8,11 @@ Continue restores **campus + stockpile + research + body**. Flags and fauna resp
 
 ## 10-minute boot (must pass)
 
-- [ ] Title over a frozen drop. WASD pans. Tagline names the Overseer fantasy.
+- [ ] Title over a frozen drop. WASD pans, **Q** zooms out, **E** zooms in. Mouse does not pan or zoom. Tagline names the Overseer fantasy.
 - [ ] **New Game** (confirm wipe if a save exists) → Earth empty drop: **produced meadow**, **cobalt sky**, grass/trees/pond + cumulus around the orange claim disc, HUD REG/ICE/MET/PWR/BEDS, carbon/gold chrome. No starter robots. Not the old grey-tan plane. Not Mars orange.
 - [ ] Yield labels on resource nodes (`REG` / `MET` / `ICE`) — no `MissingComponentException`.
 - [ ] Tutorial 1/6: **B**, key **1**, Colony Commons on the claim — **domed command-hub citadel** (FBX or procedural hero kit), not a grey box. Console `[HeroKit] Attached SM_Hero_Commons` if the FBX imported. HUD **COMMONS**, never Palace.
-- [ ] 2/6: Airlock Junction on a Commons face socket — **panel-lined** white square hub (carbon corners, recessed orange doors, orange frames) + dual-barrel turret; corrugated tube cladding appears **on the hub→face joint only**. Module docks are white square tubes with orange collars **flush to the connector** (no gap, no punch-through). Not solid orange boxes.
+- [ ] 2/6: Airlock Junction on a Commons face socket — **panel-lined** white square hub (smaller than the 2×2 cell so short white tubes read) + dual-barrel turret; unused Commons / airlock stubs stay hidden. Module docks are white round tubes with **one orange collar at the Lego face** (no punch-through, no stacked orange box).
 - [ ] 3/6: HAB on that airlock (humans indoor) — **horizontal white/black/orange cylinder** on skids (HAB-1 living module) with carbon rings + a spine seam, tube to Commons. Dock collar meets the airlock at the HAB face (no gap). Not a box.
 - [ ] 4/6: Engineer (or Scout / Defense) workshop → hangar FBX (tall hangar if Defense) → robot fabricates when the site finishes. Console `[HeroKit] Attached SM_Hero_Workshop` (or `WorkshopTall`).
 - [ ] Empty ground click does **not** repath the robot.
@@ -81,7 +81,7 @@ Continue restores **campus + stockpile + research + body**. Flags and fauna resp
 
 ## Phase 4 Week 3 (turrets + solar)
 
-- [ ] Airlock Junction: dual-barrel white/orange turret with cyan lenses on the **panel-lined** square hub (recessed orange doors). Dressing only — no click-to-fire, not a selectable unit. Cardinal module sleeves read as white tubes + orange collars **flush to the hub** (no gap / overlap through the hull).
+- [ ] Airlock Junction: dual-barrel white/orange turret with cyan lenses on the **panel-lined** square hub (inset carbon hatches, orange collars at docked joints only). Dressing only — no click-to-fire, not a selectable unit. Cardinal module sleeves read as white tubes + orange collars **flush to the hub** (no gap / overlap through the hull).
 - [ ] Power Node: **PWR-1 hut** plus a **field** of tilted blue-cyan panels with orange corner brackets on the 4×4 footprint, not a single panel beside the building. Ghost in **B** matches.
 - [ ] Command / Defense: **Defense Battery** angular bunker + roof turret, not a Commons citadel-dome. Week 1 shield bubble still wraps it. B menu says Defense Battery, never Command / CMD-1.
 - [ ] Engineer reads as a small white biped with backpack; Geologist as a six-wheel rover; Scout as a hovering probe with rotors and a boxy cyan-lens head. Defense mech is still the bulky tracked guardian (red viewport, not a biped walker).

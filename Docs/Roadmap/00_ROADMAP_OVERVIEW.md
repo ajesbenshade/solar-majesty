@@ -50,4 +50,4 @@
 ---
 
 *Last updated: 2026-08-15*  
-*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 visual target in progress (exit blocked: Game-tab still is empty Sol 1, not a campus match). Phase 5 (ship) after Phase 4.*
+*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 visual target in progress (exit blocked: campus Game-tab still exists, not a mockup match). Phase 5 (ship) after Phase 4.*

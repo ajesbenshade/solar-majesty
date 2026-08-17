@@ -63,13 +63,19 @@ namespace SolarMajesty
                 e.FarmYieldBonus += 0.12f;
             }
 
-            if (research.IsUnlocked(TechId.ClimateLoom))
+            return e;
+        }
+
+        public static TechEffects From(ResearchManager research, bool climateLoomStanding, bool aegisSpireStanding)
+        {
+            var e = From(research);
+            if (climateLoomStanding)
             {
                 e.FarmYieldBonus += 0.18f;
                 e.GrowIntervalScale *= 0.85f;
             }
 
-            if (research.IsUnlocked(TechId.AegisSpire))
+            if (aegisSpireStanding)
             {
                 e.PowerDrawScale *= 0.88f;
                 e.AmbientThreatScale *= 0.72f;

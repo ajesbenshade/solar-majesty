@@ -78,6 +78,7 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
             PlayerPrefs.SetInt(FreshKey, 1);
             PlayerPrefs.DeleteKey(TravelLogKey);
+            ResearchManager.WipeUnlocks();
             BodySeed.SetBody(CelestialBodyId.Earth);
             PlayerPrefs.Save();
         }

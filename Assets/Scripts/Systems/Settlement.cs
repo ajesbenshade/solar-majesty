@@ -56,18 +56,26 @@ namespace SolarMajesty
         public bool NeedsVillageHab =>
             HasCommons && CoreHabs > 0 && Population >= Housing && VillageHabs < MaxVillageHabs;
 
-        public bool CanBirth => Population > 0 && Population < Housing;
+        public bool CanBirth =>
+            Population > 0 &&
+            Population < Housing &&
+            (_resources == null || _resources.Get(ResourceId.WaterIce) >= OverseerRules.IceDeathThreshold);
 
         public bool MeetsPopulationGoal => Population >= PopulationGoal && Housing >= Population;
 
         public bool HasPad => PadCount > 0;
+        public bool EverHadHab { get; private set; }
+        public float NetMetalsPerMin { get; private set; }
+        public float IceIncomePerMin { get; private set; }
+        public bool LastLifeSupportFail { get; private set; }
+        public bool LifeSupportToastPending { get; private set; }
 
         public bool IsSustainable =>
             HasCommons &&
             MeetsPopulationGoal &&
-            Farms > 0 &&
-            Mines > 0 &&
-            StockpileHealthy;
+            StockpileHealthy &&
+            NetMetalsPerMin >= OverseerRules.SustainMetPerMin &&
+            IceIncomePerMin >= OverseerRules.SustainIcePerMin;
 
         public bool StockpileHealthy
         {
@@ -92,14 +100,14 @@ namespace SolarMajesty
                     return $"need {PopulationGoal} beds (housing {Housing} — dock more HAB)";
                 if (Population < PopulationGoal)
                     return $"grow to {PopulationGoal} (now {Population}) — births need vacant beds";
-                if (Farms <= 0)
+                if (IceIncomePerMin < OverseerRules.SustainIcePerMin)
                     return FarmYieldScale < 0.8f
-                        ? "place a Greenhouse Farm (thin soil here — extract metals too)"
-                        : "place a Greenhouse Farm (dock via airlock)";
-                if (Mines <= 0)
+                        ? "ICE income low — Extract ice or add a Greenhouse Farm"
+                        : "need ICE income ≥ 1.0/min (farm ticks or Extract)";
+                if (NetMetalsPerMin < OverseerRules.SustainMetPerMin)
                     return MineYieldScale < 0.8f
-                        ? "place an Ore Mine (poor ore here — ice farms help)"
-                        : "place an Ore Mine (dock via airlock)";
+                        ? "MET income low — Extract metal nodes or add an Ore Mine"
+                        : "need net MET ≥ 1.5/min (mine ticks + tax + payroll)";
                 if (!StockpileHealthy)
                     return FarmYieldScale < 0.8f
                         ? "stockpile low — Extract metal/ice nodes; farms are thin on this body"
@@ -151,9 +159,15 @@ namespace SolarMajesty
             RefreshYield();
         }
 
-        public void AddTerraformPulse()
+        public void SetIncomeRates(float metPerMin, float icePerMin)
         {
-            _terraformFarm = Mathf.Min(0.6f, _terraformFarm + 0.08f);
+            NetMetalsPerMin = metPerMin;
+            IceIncomePerMin = icePerMin;
+        }
+
+        public void AddTerraformPulse(float amount = 0.08f)
+        {
+            _terraformFarm = Mathf.Min(0.6f, _terraformFarm + Mathf.Max(0f, amount));
             RefreshYield();
         }
 
@@ -179,6 +193,7 @@ namespace SolarMajesty
             {
                 _taxTimer += TaxInterval;
                 CollectTax();
+                TickLifeSupport();
             }
 
             _growTimer -= dt;
@@ -199,7 +214,7 @@ namespace SolarMajesty
                 case BuildingCategory.Farm: Farms++; break;
                 case BuildingCategory.Mine: Mines++; break;
                 case BuildingCategory.RegolithCamp: RegolithCamps++; break;
-                case BuildingCategory.Habitat: CoreHabs++; break;
+                case BuildingCategory.Habitat: CoreHabs++; EverHadHab = true; break;
                 case BuildingCategory.Power: PowerPlants++; break;
                 case BuildingCategory.GuildHall: GuildCount++; break;
             }
@@ -248,6 +263,7 @@ namespace SolarMajesty
             if (Population > 0) return 0;
             int n = Mathf.Min(StarterColonists, Housing);
             Population = n;
+            if (n > 0) EverHadHab = true;
             return n;
         }
 
@@ -263,6 +279,7 @@ namespace SolarMajesty
         public void AddVillageHab()
         {
             VillageHabs++;
+            EverHadHab = true;
         }
 
         public bool TryBirth()
@@ -310,6 +327,27 @@ namespace SolarMajesty
 
             LastProductionLine = $"camps +{ice} ICE +{met} MET +{reg} REG";
         }
+
+        private void TickLifeSupport()
+        {
+            LastLifeSupportFail = false;
+            if (_resources == null) return;
+            if (_resources.Get(ResourceId.WaterIce) >= OverseerRules.IceDeathThreshold) return;
+            if (Population <= 0) return;
+            KillResidents(1);
+            LastLifeSupportFail = true;
+            if (!LifeSupportToastPending)
+                LifeSupportToastPending = true;
+        }
+
+        public bool ConsumeLifeSupportFail()
+        {
+            bool fail = LastLifeSupportFail;
+            LastLifeSupportFail = false;
+            return fail;
+        }
+
+        public void ClearLifeSupportToast() => LifeSupportToastPending = false;
 
         private void CollectTax()
         {

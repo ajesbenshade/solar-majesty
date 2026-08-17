@@ -112,6 +112,13 @@ namespace SolarMajesty
                 return true;
             if (n.Contains("Vfx") || n.StartsWith("Dress_") || n.Contains("YieldLabel"))
                 return true;
+            // Cardinal sockets already have a round white tube + orange collar. "airlock" in the
+            // old name mapped the whole sleeve to solid orange.
+            if (n.StartsWith("DockSleeve") || n.StartsWith("Airlock_") ||
+                n.StartsWith("Dress_TubeArm") || n.StartsWith("CommonsStub") ||
+                n.StartsWith("CommonsPort") ||
+                n.Contains("AirlockHub"))
+                return true;
             if (n.Contains("GroundPlane") || n.Contains("HorizonSkirt") || n.Contains("Footprint"))
                 return true;
             Transform t = rend.transform;
@@ -174,7 +181,7 @@ namespace SolarMajesty
             if (ContainsAny(n, "sm_solar", "solarcell", "pv_cell")) { slot = Slot.Solar; return true; }
 
             if (ContainsAny(n, "visor", "eyel", "eyer", "eye")) { slot = Slot.Cyan; return true; }
-            if (ContainsAny(n, "beacon", "stripe", "hatch", "hazard", "accent", "airlock")) { slot = Slot.Orange; return true; }
+            if (ContainsAny(n, "beacon", "stripe", "hatch", "hazard", "accent")) { slot = Slot.Orange; return true; }
             if (ContainsAny(n, "band", "skid", "tread", "boot", "spine", "ridge", "leg")) { slot = Slot.BlackCarbon; return true; }
             if (ContainsAny(n, "toolbox", "pack", "vent", "plinth", "bogie")) { slot = Slot.Graphite; return true; }
             if (ContainsAny(n, "shield", "plating", "face")) { slot = Slot.DefenseRed; return true; }
@@ -385,7 +392,7 @@ namespace SolarMajesty
         {
             var tex = NewTex(size, "SM_Art_WhiteHull");
             var px = new Color[size * size];
-            Color shell = new Color(0.86f, 0.88f, 0.90f);
+            Color shell = new Color(0.99f, 0.99f, 1f);
             Color seam = new Color(0.22f, 0.23f, 0.25f);
             Color rivet = new Color(0.12f, 0.12f, 0.13f);
             int panel = 16;
@@ -394,7 +401,7 @@ namespace SolarMajesty
             {
                 float grit = Frac(Mathf.Sin(x * 12.9898f + y * 78.233f) * 43758.5453f);
                 float dirt = Mathf.PerlinNoise(x * 0.07f, y * 0.07f);
-                Color c = shell * (0.94f + grit * 0.08f - dirt * 0.06f);
+                Color c = shell * (0.97f + grit * 0.04f - dirt * 0.02f);
                 bool line = (x % panel) == 0 || (y % panel) == 0;
                 if (line) c = Color.Lerp(c, seam, 0.7f);
                 int mx = x % panel;

@@ -82,7 +82,7 @@ namespace SolarMajesty.EditorTools
             WriteBuilding("Building_LandingPad", "Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6);
             WriteBuilding("Building_HAB1", "Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4);
             WriteBuilding("Building_PWR1", "Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4);
-            WriteBuilding("Building_OPS1", "Ops Unit (OPS-1)", BuildingCategory.Mining, 45, 6, 14f, 4, 4);
+            WriteBuilding("Building_OPS1", "OPS Drop-off", BuildingCategory.Mining, 45, 6, 14f, 4, 4);
             WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4);
             WriteBuilding("Building_CMD1", "Defense Battery", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
             WriteBuilding("Building_GuildHall", "Guild Hall", BuildingCategory.GuildHall, 56, 6, 14f, 4, 4);
@@ -97,7 +97,7 @@ namespace SolarMajesty.EditorTools
             WriteBuilding("Building_DeepArchive", "Deep Archive", BuildingCategory.DeepArchive, 88, 10, 16f, 6, 6);
             WriteBuilding(
                 "Building_SolarArray",
-                "Solar Array",
+                "Power Node",
                 BuildingCategory.Power,
                 30,
                 0,
@@ -169,11 +169,14 @@ namespace SolarMajesty.EditorTools
             var asset = LoadOrCreate<BuildingData>(resPath);
             asset.displayName = display;
             asset.category = cat;
+            asset.description = BuildingBlurb(cat);
             asset.footprintWidth = fw;
             asset.footprintHeight = fh;
             asset.buildTimeSeconds = time;
             asset.housingSlots = cat == BuildingCategory.Habitat ? 3 : 0;
-            asset.powerDraw = cat == BuildingCategory.Power ? 0 : (power > 0 ? 2 : 0);
+            asset.powerDraw = cat == BuildingCategory.Power
+                ? 0
+                : cat == BuildingCategory.Defense ? 4 : (power > 0 ? 2 : 0);
             asset.powerGen = cat != BuildingCategory.Power
                 ? 0
                 : (display.IndexOf("Solar", System.StringComparison.OrdinalIgnoreCase) >= 0 ? 8 : 6);
@@ -188,6 +191,21 @@ namespace SolarMajesty.EditorTools
             EditorUtility.SetDirty(asset);
 
             MirrorAsset(asset, $"{DataRoot}/Buildings/{fileName}.asset");
+        }
+
+        private static string BuildingBlurb(BuildingCategory cat)
+        {
+            switch (cat)
+            {
+                case BuildingCategory.Defense: return "auto-fires 18 m";
+                case BuildingCategory.Mining: return "does not grow MET";
+                case BuildingCategory.ClimateLoom:
+                case BuildingCategory.AegisSpire:
+                case BuildingCategory.DeepArchive:
+                    return "unlock from ★ tech — bonus while standing";
+                case BuildingCategory.GuildHall: return "Guild Hall — assign a class";
+                default: return "";
+            }
         }
 
         private static T LoadOrCreate<T>(string path) where T : ScriptableObject
@@ -412,7 +430,7 @@ namespace SolarMajesty.EditorTools
             camGo.tag = "MainCamera";
             var cam = camGo.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = ColonyLayout.CameraOrthoSize;
+            cam.orthographicSize = ColonyLayout.CampusOrthoSize;
             cam.nearClipPlane = 0.3f;
             cam.farClipPlane = 900f;
             cam.allowHDR = true;

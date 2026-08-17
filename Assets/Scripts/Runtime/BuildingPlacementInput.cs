@@ -114,7 +114,7 @@ namespace SolarMajesty
             ColonyVisualUtility.ApplyGhostTint(_ghost, valid);
             UpdateFootprint(cell, valid);
 
-            // Place on release so LMB drag-pan does not also commit a building.
+            // Place on release so a held LMB does not also commit a building.
             if (Input.GetMouseButtonUp(0) && valid && !Input.GetMouseButton(1) &&
                 (_cam == null || !_cam.SuppressWorldClick) &&
                 (_loop == null || !_loop.WorldClickUsedBySelection))
@@ -139,6 +139,7 @@ namespace SolarMajesty
                 return;
             selectedIndex = index;
             enabledPlacement = true;
+            _loop?.NotifyCatalogPicked();
         }
 
         private void SpawnBuildingVisual(ConstructionOrder order)

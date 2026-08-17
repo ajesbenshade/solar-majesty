@@ -31,7 +31,8 @@ namespace SolarMajesty
                     _bodyHull = new Color(0.68f, 0.70f, 0.72f);
                     break;
                 case CelestialBodyId.Mars:
-                    _bodyHull = new Color(0.72f, 0.52f, 0.42f);
+                    // Sheet is white/black/orange. Do not lerp Mars dirt into the hull.
+                    _bodyHull = new Color(0.98f, 0.98f, 0.99f);
                     break;
                 case CelestialBodyId.Belt:
                     _bodyHull = new Color(0.42f, 0.40f, 0.38f);
@@ -75,7 +76,8 @@ namespace SolarMajesty
 
             if (category == BuildingCategory.Utility)
             {
-                var airlock = ColonyVisualUtility.SpawnPlusConnector(position, parent, Mathf.Min(worldW, worldD));
+                var airlock = ColonyVisualUtility.SpawnPlusConnector(
+                    position, parent, Mathf.Min(worldW, worldD), showAllArms: ghost);
                 airlock.name = ghost ? $"Ghost_{category}" : "AirlockJunction";
                 if (ghost)
                     StripColliders(airlock);
@@ -90,7 +92,9 @@ namespace SolarMajesty
             if (!HeroBuildingKits.IsHero(category))
                 BuildDeck(root.transform, worldW, worldD);
             BuildCore(root.transform, category, worldW * HullFill, worldD * HullFill);
-            AttachCardinalAirlocks(root.transform, worldW * 0.5f, worldD * 0.5f);
+            AttachCardinalAirlocks(root.transform, category, worldW * 0.5f, worldD * 0.5f, ghost);
+            if (!ghost)
+                HideLiveDockDress(root.transform);
 
             ColonyVisualUtility.EnsureUrpMaterials(root);
             // Do not SetTintOverlay here — MPB _BaseColor replaces orange/cyan/carbon
@@ -226,6 +230,11 @@ namespace SolarMajesty
 
         private static GameObject UniqueMeshPrefab(BuildingCategory cat)
         {
+            // Joined Commons FBX bakes eight radial stubs. Unused ones read as orange
+            // ribbed modules on empty faces and cannot be toggled per dock.
+            if (cat == BuildingCategory.Commons)
+                return null;
+
             GameObject hero = BuildingVisualCatalog.LoadHeroKit(cat);
             if (hero != null)
                 return hero;
@@ -311,19 +320,60 @@ namespace SolarMajesty
                 new Color(0.82f, 0.48f, 0.18f));
         }
 
-        private static void AttachCardinalAirlocks(Transform root, float halfW, float halfD)
+        private static void HideLiveDockDress(Transform root)
         {
-            // Square sockets sit on the footprint faces and mate the 2×2 airlock at the
-            // cell boundary. Inset bites cylinder/dome hulls; outset stays on the face
-            // so sleeves do not overlap the hub.
-            const float bore = 1.38f;
-            const float inset = 1.35f;
-            const float outset = 0.10f;
-            const float y = 0.85f;
-            DockSleeve(root, "Airlock_N", new Vector3(0f, y, halfD), Vector3.forward, bore, inset, outset);
-            DockSleeve(root, "Airlock_S", new Vector3(0f, y, -halfD), Vector3.back, bore, inset, outset);
-            DockSleeve(root, "Airlock_E", new Vector3(halfW, y, 0f), Vector3.right, bore, inset, outset);
-            DockSleeve(root, "Airlock_W", new Vector3(-halfW, y, 0f), Vector3.left, bore, inset, outset);
+            var ts = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < ts.Length; i++)
+            {
+                Transform t = ts[i];
+                if (t == null || t == root) continue;
+                string n = t.name;
+                if (n.StartsWith("CommonsStub"))
+                    t.gameObject.SetActive(false);
+            }
+        }
+
+        private static void AttachCardinalAirlocks(
+            Transform root, BuildingCategory cat, float halfW, float halfD, bool ghost)
+        {
+            // Round hulls (Commons drum = 0.38 × span) sit inside the square footprint.
+            // Sleeves must start on that hull and end at the Lego face or the isometric
+            // shot reads as a missed orange port. Live sleeves start hidden; RefreshTubes
+            // enables only faces that actually dock.
+            float y = ColonyVisualUtility.DockY;
+            float bore = ColonyVisualUtility.DockBore;
+            float hullR = RoundHullRadius(cat, halfW, halfD);
+            PlaceDockSleeve(root, "DockSleeve_N", Vector3.forward, halfD, y, bore, hullR, ghost);
+            PlaceDockSleeve(root, "DockSleeve_S", Vector3.back, halfD, y, bore, hullR, ghost);
+            PlaceDockSleeve(root, "DockSleeve_E", Vector3.right, halfW, y, bore, hullR, ghost);
+            PlaceDockSleeve(root, "DockSleeve_W", Vector3.left, halfW, y, bore, hullR, ghost);
+        }
+
+        /// <summary>Commons drum radius. Box kits return 0 so the sleeve sits on the wall.</summary>
+        private static float RoundHullRadius(BuildingCategory cat, float halfW, float halfD)
+        {
+            if (cat == BuildingCategory.Commons)
+                return Mathf.Min(halfW, halfD) * 2f * 0.38f;
+            return 0f;
+        }
+
+        private static void PlaceDockSleeve(
+            Transform root,
+            string name,
+            Vector3 outward,
+            float face,
+            float y,
+            float bore,
+            float hullR,
+            bool ghost)
+        {
+            Vector3 dir = outward.normalized;
+            float inset = hullR > 0.2f
+                ? Mathf.Max(0.2f, face - hullR + 0.08f)
+                : 0.36f;
+            const float outset = 0.06f;
+            Vector3 facePos = dir * face + new Vector3(0f, y, 0f);
+            DockSleeve(root, name, facePos, dir, bore, inset, outset, hullR > 0.2f, ghost);
         }
 
         private static void DockSleeve(
@@ -333,47 +383,51 @@ namespace SolarMajesty
             Vector3 outward,
             float bore,
             float inset,
-            float outset)
+            float outset,
+            bool hullHasPort,
+            bool ghost)
         {
+            var group = new GameObject(name);
+            group.transform.SetParent(parent, false);
+            group.transform.localPosition = Vector3.zero;
+            group.transform.localRotation = Quaternion.identity;
+
             float length = inset + outset;
             Vector3 dir = outward.normalized;
             Vector3 center = facePos + dir * ((outset - inset) * 0.5f);
-            bool ns = Mathf.Abs(outward.z) >= Mathf.Abs(outward.x);
             Color carbon = new Color(0.16f, 0.17f, 0.19f);
-            // White square tube + orange collars — not a solid orange box. Grid docks stay square.
-            Vector3 tubeScale = ns
-                ? new Vector3(bore * 0.92f, bore * 0.92f, length)
-                : new Vector3(length, bore * 0.92f, bore * 0.92f);
-            Part(parent, name, PrimitiveType.Cube, center, tubeScale, new Color(0.86f, 0.87f, 0.89f));
+            Quaternion along = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
+            var tube = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            tube.name = name + "_Tube";
+            tube.transform.SetParent(group.transform, false);
+            tube.transform.localPosition = center;
+            tube.transform.localRotation = along;
+            tube.transform.localScale = new Vector3(bore, length * 0.5f, bore);
+            Object.Destroy(tube.GetComponent<Collider>());
+            ApplyColor(tube, new Color(0.98f, 0.98f, 0.99f));
 
-            Vector3 outerScale = ns
-                ? new Vector3(bore * 1.14f, bore * 1.14f, 0.10f)
-                : new Vector3(0.10f, bore * 1.14f, bore * 1.14f);
-            DressPart(parent, name + "_Collar", facePos + dir * 0.05f, outerScale, AirlockColor());
+            Vector3 hullEnd = facePos - dir * inset;
+            DressCyl(group.transform, name + "_Lip", hullEnd + dir * 0.05f, along,
+                new Vector3(bore * 1.04f, 0.035f, bore * 1.04f), carbon);
+            // Round kits already wear CommonsPort rings. Box walls need the orange here.
+            if (!hullHasPort)
+            {
+                DressCyl(group.transform, name + "_Collar", hullEnd + dir * 0.02f, along,
+                    new Vector3(bore * 1.16f, 0.045f, bore * 1.16f), AirlockColor());
+            }
 
-            Vector3 lipScale = ns
-                ? new Vector3(bore * 1.04f, bore * 1.04f, 0.08f)
-                : new Vector3(0.08f, bore * 1.04f, bore * 1.04f);
-            DressPart(parent, name + "_Lip", facePos - dir * 0.04f, lipScale, carbon);
-
-            Vector3 innerScale = ns
-                ? new Vector3(bore * 1.08f, bore * 1.08f, 0.10f)
-                : new Vector3(0.10f, bore * 1.08f, bore * 1.08f);
-            DressPart(parent, name + "_Inner", facePos - dir * (inset * 0.42f), innerScale, carbon);
-
-            Vector3 ringScale = ns
-                ? new Vector3(bore * 1.00f, bore * 1.00f, 0.06f)
-                : new Vector3(0.06f, bore * 1.00f, bore * 1.00f);
-            DressPart(parent, name + "_Ring", facePos - dir * (inset * 0.18f), ringScale, AirlockColor());
+            if (!ghost)
+                group.SetActive(false);
         }
 
-        private static void DressPart(Transform parent, string name, Vector3 localPos, Vector3 localScale, Color color)
+        private static void DressCyl(
+            Transform parent, string name, Vector3 localPos, Quaternion rot, Vector3 localScale, Color color)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = name;
             go.transform.SetParent(parent, false);
             go.transform.localPosition = localPos;
-            go.transform.localRotation = Quaternion.identity;
+            go.transform.localRotation = rot;
             go.transform.localScale = localScale;
             Object.Destroy(go.GetComponent<Collider>());
             ApplyColor(go, color);
@@ -420,7 +474,13 @@ namespace SolarMajesty
         }
 
         private static Color HullColor() => _bodyHull;
-        private static Color HeroHull() => Color.Lerp(new Color(0.88f, 0.90f, 0.93f), _bodyHull, 0.18f);
+        private static Color HeroHull()
+        {
+            Color sheet = new Color(0.98f, 0.98f, 0.99f);
+            // Mars BindBody is already sheet-white. Other bodies may lean a little.
+            float t = _bodyHull.g > 0.9f ? 0f : 0.16f;
+            return Color.Lerp(sheet, _bodyHull, t);
+        }
         private static Color AirlockColor() => new Color(0.96f, 0.42f, 0.08f);
 
         private static Color AccentFor(BuildingCategory cat)

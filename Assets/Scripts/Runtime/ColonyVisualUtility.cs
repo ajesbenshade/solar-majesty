@@ -13,6 +13,13 @@ namespace SolarMajesty
         private static Material _footprintValid;
         private static Material _footprintInvalid;
 
+        /// <summary>
+        /// Shared Lego dock axis. Module sleeves, hull ports, and airlock arms must
+        /// share this height and bore or the isometric view reads as a miss.
+        /// </summary>
+        public const float DockY = 1.12f;
+        public const float DockBore = 1.42f;
+
         public static void EnsureUrpMaterials(GameObject root)
         {
             IndustrialArtDressing.Apply(root);
@@ -71,6 +78,36 @@ namespace SolarMajesty
         }
 
         /// <summary>
+        /// Uniform scale so renderer bounds hit targetHeight. Does not use instance IDs.
+        /// </summary>
+        public static void ScaleToHeight(GameObject root, float targetHeight)
+        {
+            if (root == null || targetHeight < 0.2f) return;
+            var rends = root.GetComponentsInChildren<Renderer>();
+            if (rends == null || rends.Length == 0) return;
+
+            Bounds b = default;
+            bool any = false;
+            for (int i = 0; i < rends.Length; i++)
+            {
+                if (rends[i] == null || rends[i] is ParticleSystemRenderer) continue;
+                if (!any)
+                {
+                    b = rends[i].bounds;
+                    any = true;
+                }
+                else b.Encapsulate(rends[i].bounds);
+            }
+            if (!any) return;
+
+            float h = b.size.y;
+            if (h < 0.15f) return;
+            float s = Mathf.Clamp(targetHeight / h, 0.7f, 6f);
+            if (Mathf.Abs(s - 1f) < 0.04f) return;
+            root.transform.localScale *= s;
+        }
+
+        /// <summary>
         /// Parent an FBX/unit prefab under an upright locomotion root.
         /// Import axis correction (-90° X) stays on the visual child so NavMeshAgent
         /// on the root cannot wipe it (which lays bots on their sides).
@@ -111,11 +148,11 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// 2-axis-symmetric airlock junction sized in world meters to fill its 2×2 footprint.
-        /// Plus-arms end on the cell faces so orange collars mate module sockets flush
-        /// (no punch-through into paneled hulls).
+        /// White paneled 2×2 square hub. Round white stubs + orange collars only on
+        /// docked faces (live arms start hidden). Not a hex, not an orange box.
         /// </summary>
-        public static GameObject SpawnPlusConnector(Vector3 position, Transform parent, float worldSpan)
+        public static GameObject SpawnPlusConnector(
+            Vector3 position, Transform parent, float worldSpan, bool showAllArms = false)
         {
             var root = new GameObject("PlusConnector");
             if (parent != null)
@@ -123,30 +160,20 @@ namespace SolarMajesty
             root.transform.SetPositionAndRotation(position, Quaternion.identity);
 
             float span = Mathf.Max(ColonyLayout.DefaultCellSize * 2f, worldSpan);
-            float length = span; // 3 m plus fills the 2×2 cell; collars sit on the module faces
-            float diameter = 1.38f;
 
             SpawnAirlockHub(root.transform);
-            CorrugatedArm(root.transform, "Dress_Collar_NS", Vector3.forward, length, diameter);
-            CorrugatedArm(root.transform, "Dress_Collar_EW", Vector3.right, length, diameter);
+            SpawnDockStub(root.transform, "Dress_TubeArm_N", Vector3.forward, span, DockBore, showAllArms);
+            SpawnDockStub(root.transform, "Dress_TubeArm_S", Vector3.back, span, DockBore, showAllArms);
+            SpawnDockStub(root.transform, "Dress_TubeArm_E", Vector3.right, span, DockBore, showAllArms);
+            SpawnDockStub(root.transform, "Dress_TubeArm_W", Vector3.left, span, DockBore, showAllArms);
+            // Do not overlay SM_ModularTubeConnector and do not run IndustrialArtDressing
+            // here — "airlock" in a mesh name was painting the hub solid orange.
 
-            GameObject prefab = BuildingVisualCatalog.LoadConnector();
-            if (prefab != null)
-            {
-                var a = InstantiateOriented(prefab, position, root.transform, 0f);
-                a.name = "Arm_NS";
-                FitTubeToSpan(a, length * 0.96f, diameter * 0.85f);
-                var b = InstantiateOriented(prefab, position, root.transform, 90f);
-                b.name = "Arm_EW";
-                FitTubeToSpan(b, length * 0.96f, diameter * 0.85f);
-            }
-
-            EnsureUrpMaterials(root);
             SnapToGround(root);
             return root;
         }
 
-        private static readonly Color HubWhite = new Color(0.88f, 0.89f, 0.91f);
+        private static readonly Color HubWhite = new Color(0.99f, 0.99f, 1f);
         private static readonly Color HubOrange = new Color(0.96f, 0.42f, 0.08f);
         private static readonly Color HubCarbon = new Color(0.12f, 0.13f, 0.14f);
         private static readonly Color HubGraphite = new Color(0.20f, 0.21f, 0.22f);
@@ -154,132 +181,135 @@ namespace SolarMajesty
 
         private static void SpawnAirlockHub(Transform parent)
         {
-            const float y = 0.88f;
-            DressCube(parent, "Dress_HubPlinth", new Vector3(0f, 0.10f, 0f), new Vector3(1.95f, 0.18f, 1.95f), HubCarbon);
-            DressCube(parent, "Dress_HubSkirt", new Vector3(0f, 0.24f, 0f), new Vector3(1.82f, 0.10f, 1.82f), HubGraphite);
+            // Stay smaller than the 3 m cell so docked faces have room for a short
+            // white tube. A 2.4 m cube filled the cell and read as an orange/white box.
+            const float y = 0.96f;
+            const float side = 1.68f;
+            const float tall = 1.70f;
+            float half = side * 0.5f;
 
-            // Click volume stays on the white hull. Square airlock — not a hex hub.
+            DressCube(parent, "Dress_HubPlinth", new Vector3(0f, 0.08f, 0f),
+                new Vector3(side + 0.22f, 0.14f, side + 0.22f), HubCarbon);
+            DressCube(parent, "Dress_HubSkirt", new Vector3(0f, 0.18f, 0f),
+                new Vector3(side + 0.08f, 0.07f, side + 0.08f), HubGraphite);
+
             var hub = GameObject.CreatePrimitive(PrimitiveType.Cube);
             hub.name = "Dress_AirlockHub";
             hub.transform.SetParent(parent, false);
             hub.transform.localPosition = new Vector3(0f, y, 0f);
-            hub.transform.localScale = new Vector3(1.58f, 1.42f, 1.58f);
+            hub.transform.localScale = new Vector3(side, tall, side);
             TintPrimitive(hub, HubWhite);
 
-            DressCube(parent, "Dress_HubRoof", new Vector3(0f, 1.62f, 0f), new Vector3(1.68f, 0.08f, 1.68f), HubCarbon);
-            DressCube(parent, "Dress_HubHatch", new Vector3(0f, 1.70f, 0f), new Vector3(0.55f, 0.08f, 0.55f), HubOrange);
-            DressCube(parent, "Dress_HubVisor", new Vector3(0f, 1.58f, 0.72f), new Vector3(0.62f, 0.08f, 0.06f), HubCyan);
+            // Recessed face plates so the square reads paneled, not a flat fridge.
+            float inset = 0.035f;
+            Vector3[] plates =
+            {
+                new Vector3(0f, y, half + inset),
+                new Vector3(0f, y, -half - inset),
+                new Vector3(half + inset, y, 0f),
+                new Vector3(-half - inset, y, 0f)
+            };
+            for (int i = 0; i < 4; i++)
+            {
+                bool ns = Mathf.Abs(plates[i].z) >= Mathf.Abs(plates[i].x);
+                Vector3 plate = ns
+                    ? new Vector3(side * 0.72f, tall * 0.72f, 0.04f)
+                    : new Vector3(0.04f, tall * 0.72f, side * 0.72f);
+                DressCube(parent, "Dress_HubPanel_" + i, plates[i], plate, HubWhite);
+            }
 
-            float[] cx = { -0.72f, -0.72f, 0.72f, 0.72f };
-            float[] cz = { -0.72f, 0.72f, -0.72f, 0.72f };
+            DressCube(parent, "Dress_HubRoof", new Vector3(0f, y + tall * 0.5f + 0.04f, 0f),
+                new Vector3(side + 0.08f, 0.07f, side + 0.08f), HubCarbon);
+            DressCube(parent, "Dress_HubHatch", new Vector3(0f, y + tall * 0.5f + 0.10f, 0f),
+                new Vector3(0.44f, 0.05f, 0.44f), HubGraphite);
+            DressCube(parent, "Dress_HubVisor", new Vector3(0f, y + 0.48f, half + 0.06f),
+                new Vector3(0.52f, 0.06f, 0.04f), HubCyan);
+
+            float[] cx = { -half + 0.06f, -half + 0.06f, half - 0.06f, half - 0.06f };
+            float[] cz = { -half + 0.06f, half - 0.06f, -half + 0.06f, half - 0.06f };
             for (int i = 0; i < 4; i++)
             {
                 DressCube(parent, "Dress_HubCorner_" + i,
                     new Vector3(cx[i], y, cz[i]),
-                    new Vector3(0.16f, 1.48f, 0.16f), HubCarbon);
+                    new Vector3(0.12f, tall + 0.04f, 0.12f), HubCarbon);
             }
 
             Vector3[] faces =
             {
-                new Vector3(0f, 0f, 0.80f),
-                new Vector3(0f, 0f, -0.80f),
-                new Vector3(0.80f, 0f, 0f),
-                new Vector3(-0.80f, 0f, 0f)
+                new Vector3(0f, 0f, half),
+                new Vector3(0f, 0f, -half),
+                new Vector3(half, 0f, 0f),
+                new Vector3(-half, 0f, 0f)
             };
             for (int i = 0; i < 4; i++)
             {
                 bool ns = Mathf.Abs(faces[i].z) >= Mathf.Abs(faces[i].x);
                 Vector3 p = faces[i];
-                Vector3 panel = ns ? new Vector3(1.12f, 1.12f, 0.06f) : new Vector3(0.06f, 1.12f, 1.12f);
-                Vector3 lip = ns ? new Vector3(0.78f, 0.88f, 0.04f) : new Vector3(0.04f, 0.88f, 0.78f);
-                Vector3 door = ns ? new Vector3(0.62f, 0.72f, 0.10f) : new Vector3(0.10f, 0.72f, 0.62f);
-                Vector3 seam = ns ? new Vector3(1.20f, 0.05f, 0.08f) : new Vector3(0.08f, 0.05f, 1.20f);
-                DressCube(parent, "Dress_HubPanel_" + i, new Vector3(p.x, y, p.z), panel, HubGraphite);
-                DressCube(parent, "Dress_HubLip_" + i, new Vector3(p.x * 1.04f, y, p.z * 1.04f), lip, HubWhite);
-                DressCube(parent, "Dress_HubDoor_" + i, new Vector3(p.x * 1.06f, y - 0.06f, p.z * 1.06f), door, HubOrange);
-                DressCube(parent, "Dress_HubSeam_" + i, new Vector3(p.x * 0.95f, y + 0.28f, p.z * 0.95f), seam, HubCarbon);
+                Vector3 door = ns ? new Vector3(0.58f, 0.68f, 0.04f) : new Vector3(0.04f, 0.68f, 0.58f);
+                Vector3 hSeam = ns ? new Vector3(side * 0.78f, 0.035f, 0.05f) : new Vector3(0.05f, 0.035f, side * 0.78f);
+                Vector3 vSeam = ns ? new Vector3(0.035f, tall * 0.78f, 0.05f) : new Vector3(0.05f, tall * 0.78f, 0.035f);
+                DressCube(parent, "Dress_HubDoor_" + i, new Vector3(p.x * 1.01f, DockY, p.z * 1.01f), door, HubCarbon);
+                DressCube(parent, "Dress_HubSeamH_" + i, new Vector3(p.x * 1.02f, y + 0.22f, p.z * 1.02f), hSeam, HubCarbon);
+                DressCube(parent, "Dress_HubSeamV_" + i, new Vector3(p.x * 1.02f, y, p.z * 1.02f), vSeam, HubCarbon);
             }
-
-            // Orange edge frame (hollow) — mockup square airlock, not a solid orange box.
-            OrangeStrip(parent, "Dress_Frame_N", new Vector3(0f, y, 0.92f), new Vector3(1.92f, 1.62f, 0.10f));
-            OrangeStrip(parent, "Dress_Frame_S", new Vector3(0f, y, -0.92f), new Vector3(1.92f, 1.62f, 0.10f));
-            OrangeStrip(parent, "Dress_Frame_E", new Vector3(0.92f, y, 0f), new Vector3(0.10f, 1.62f, 1.92f));
-            OrangeStrip(parent, "Dress_Frame_W", new Vector3(-0.92f, y, 0f), new Vector3(0.10f, 1.62f, 1.92f));
 
             float yaw = 40f + (parent.position.x + parent.position.z) * 13f;
-            HeroBuildingKits.BuildJunctionTurret(parent, new Vector3(0f, 1.78f, 0f), yaw, 0.92f);
+            HeroBuildingKits.BuildJunctionTurret(parent, new Vector3(0f, y + tall * 0.5f + 0.10f, 0f), yaw, 0.72f);
         }
 
-        private static void OrangeStrip(Transform parent, string name, Vector3 pos, Vector3 scale)
+        /// <summary>
+        /// Round white stub from the square hub to one cell face. Orange collar at the joint only.
+        /// Live unused faces stay off so they do not read as orange stubs.
+        /// </summary>
+        private static void SpawnDockStub(
+            Transform parent, string name, Vector3 axis, float cellSpan, float diameter, bool startActive)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = pos;
-            go.transform.localScale = scale;
-            Object.Destroy(go.GetComponent<Collider>());
-            TintPrimitive(go, new Color(0.96f, 0.42f, 0.08f));
-        }
+            Vector3 dir = axis.normalized;
+            const float y = DockY;
+            // Hub half is 0.84 m — leave a visible white corridor to the 1.5 m cell face.
+            const float hubClear = 0.86f;
+            float face = cellSpan * 0.5f;
+            float stubLen = Mathf.Max(0.36f, face - hubClear);
+            Vector3 mid = dir * (hubClear + stubLen * 0.5f) + new Vector3(0f, y, 0f);
+            Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
 
-        private static void CorrugatedArm(
-            Transform parent, string name, Vector3 axis, float length, float diameter)
-        {
-            bool ns = Mathf.Abs(axis.z) >= Mathf.Abs(axis.x);
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = new Vector3(0f, 0.85f, 0f);
-            go.transform.localScale = ns
-                ? new Vector3(diameter, diameter, length)
-                : new Vector3(length, diameter, diameter);
-            TintPrimitive(go, new Color(0.82f, 0.84f, 0.86f));
+            var group = new GameObject(name);
+            group.transform.SetParent(parent, false);
+            group.transform.localPosition = Vector3.zero;
+            group.transform.localRotation = Quaternion.identity;
 
-            // Carbon top seam so the plus-arm is not a raw box against the paneled hub.
-            Vector3 seamPos = new Vector3(0f, 0.85f + diameter * 0.50f, 0f);
-            Vector3 seamScale = ns
-                ? new Vector3(diameter * 0.22f, 0.035f, length * 0.62f)
-                : new Vector3(length * 0.62f, 0.035f, diameter * 0.22f);
-            DressCube(parent, name + "_Seam", seamPos, seamScale, HubCarbon);
+            var tube = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            tube.name = name + "_Tube";
+            tube.transform.SetParent(group.transform, false);
+            tube.transform.localPosition = mid;
+            tube.transform.localRotation = rot;
+            tube.transform.localScale = new Vector3(diameter, stubLen * 0.5f, diameter);
+            Object.Destroy(tube.GetComponent<Collider>());
+            TintPrimitive(tube, HubWhite);
 
-            int ribs = 7;
-            for (int i = 0; i < ribs; i++)
-            {
-                float t = (i + 0.5f) / ribs - 0.5f;
-                var rib = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                rib.name = name + "_Rib";
-                rib.transform.SetParent(parent, false);
-                rib.transform.localPosition = ns
-                    ? new Vector3(0f, 0.85f, t * length * 0.72f)
-                    : new Vector3(t * length * 0.72f, 0.85f, 0f);
-                rib.transform.localScale = ns
-                    ? new Vector3(diameter * 1.14f, diameter * 1.14f, 0.12f)
-                    : new Vector3(0.12f, diameter * 1.14f, diameter * 1.14f);
-                Object.Destroy(rib.GetComponent<Collider>());
-                bool orangeRing = i % 3 == 1;
-                TintPrimitive(rib, orangeRing
-                    ? new Color(0.96f, 0.42f, 0.08f)
-                    : new Color(0.20f, 0.21f, 0.22f));
-            }
+            var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            rib.name = name + "_Rib";
+            rib.transform.SetParent(group.transform, false);
+            rib.transform.localPosition = mid;
+            rib.transform.localRotation = rot;
+            rib.transform.localScale = new Vector3(diameter * 1.08f, 0.04f, diameter * 1.08f);
+            Object.Destroy(rib.GetComponent<Collider>());
+            TintPrimitive(rib, HubCarbon);
 
-            float half = length * 0.5f;
-            for (int e = -1; e <= 1; e += 2)
-            {
-                // Collar sits on the airlock side of the Lego face (half - 0.05).
-                Vector3 collarPos = ns
-                    ? new Vector3(0f, 0.85f, e * (half - 0.05f))
-                    : new Vector3(e * (half - 0.05f), 0.85f, 0f);
-                Vector3 collarScale = ns
-                    ? new Vector3(diameter * 1.22f, diameter * 1.22f, 0.10f)
-                    : new Vector3(0.10f, diameter * 1.22f, diameter * 1.22f);
-                DressCube(parent, name + "_Collar", collarPos, collarScale, new Color(0.96f, 0.42f, 0.08f));
-                Vector3 lipPos = ns
-                    ? new Vector3(0f, 0.85f, e * (half - 0.14f))
-                    : new Vector3(e * (half - 0.14f), 0.85f, 0f);
-                Vector3 lipScale = ns
-                    ? new Vector3(diameter * 1.06f, diameter * 1.06f, 0.06f)
-                    : new Vector3(0.06f, diameter * 1.06f, diameter * 1.06f);
-                DressCube(parent, name + "_Lip", lipPos, lipScale, HubCarbon);
-            }
+            // Gasket at the hub, not a second orange ring at the cell face — that
+            // ring sat off the round hull and read as a missed port in isometric.
+            Vector3 gasketPos = dir * (hubClear + 0.03f) + new Vector3(0f, y, 0f);
+            var collar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            collar.name = name + "_Collar";
+            collar.transform.SetParent(group.transform, false);
+            collar.transform.localPosition = gasketPos;
+            collar.transform.localRotation = rot;
+            collar.transform.localScale = new Vector3(diameter * 1.12f, 0.04f, diameter * 1.12f);
+            Object.Destroy(collar.GetComponent<Collider>());
+            TintPrimitive(collar, HubOrange);
+
+            if (!startActive)
+                group.SetActive(false);
         }
 
         private static void DressCube(Transform parent, string name, Vector3 pos, Vector3 scale, Color color)
@@ -304,26 +334,6 @@ namespace SolarMajesty
             if (mat.HasProperty("_Color")) mat.color = color;
             if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.32f);
             rend.sharedMaterial = mat;
-        }
-
-        private static void FitTubeToSpan(GameObject tube, float length, float diameter)
-        {
-            if (tube == null) return;
-            var rends = tube.GetComponentsInChildren<Renderer>();
-            if (rends == null || rends.Length == 0) return;
-
-            Bounds b = rends[0].bounds;
-            for (int i = 1; i < rends.Length; i++)
-            {
-                if (rends[i] != null)
-                    b.Encapsulate(rends[i].bounds);
-            }
-
-            float sx = diameter / Mathf.Max(0.05f, b.size.x);
-            float sy = diameter / Mathf.Max(0.05f, b.size.y);
-            float sz = length / Mathf.Max(0.05f, b.size.z);
-            Vector3 ls = tube.transform.localScale;
-            tube.transform.localScale = new Vector3(ls.x * sx, ls.y * sy, ls.z * sz);
         }
 
         private static void EnsureLitShader()

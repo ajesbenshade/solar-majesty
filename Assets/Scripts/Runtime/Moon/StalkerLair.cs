@@ -17,6 +17,7 @@ namespace SolarMajesty
         private bool _expansionSpawned;
 
         public bool IsCleared => cleared;
+        public bool IsScouted { get; private set; }
         public int StalkerBudget => stalkerBudget;
         public float ClearRadius => clearRadius;
         public Vector3 WorldPosition => transform.position;
@@ -116,10 +117,27 @@ namespace SolarMajesty
                 float dz = f.WorldPosition.z - me.z;
                 if (dx * dx + dz * dz > rSq) continue;
                 // Only deplete once a specialist is actually working the den, not on claim alone.
-                if (_loop.Flags.GetWorkRemaining(f) < f.Data.workRequired - 0.05f)
+                if (_loop.Flags.GetWorkRemaining(f) < f.PostedWork - 0.05f)
                     return true;
             }
             return false;
+        }
+
+        public void MarkScouted()
+        {
+            if (cleared || IsScouted) return;
+            IsScouted = true;
+            ApplyScoutedLook();
+        }
+
+        private void ApplyScoutedLook()
+        {
+            var rends = GetComponentsInChildren<Renderer>();
+            for (int i = 0; i < rends.Length; i++)
+            {
+                if (rends[i] == null) continue;
+                SetColor(rends[i].gameObject, new Color(0.28f, 0.78f, 0.92f));
+            }
         }
 
         private void MarkCleared()

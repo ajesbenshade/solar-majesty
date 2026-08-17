@@ -54,6 +54,8 @@ namespace SolarMajesty
 
         public void NudgeBounty(float delta)
         {
+            if (TryRepriceHovered(delta))
+                return;
             bounty += delta;
             if (_selected != null)
                 bounty = Mathf.Clamp(bounty, _selected.minBounty, _selected.maxBounty);
@@ -109,8 +111,12 @@ namespace SolarMajesty
 
         private void Update()
         {
-            if (!enabledPlacement || _flags == null) return;
+            if (_flags == null) return;
             if (_loop != null && !_loop.IsPlaying) return;
+
+            HandleBountyKeys();
+
+            if (!enabledPlacement) return;
 
             if (Input.GetKeyDown(KeyCode.F1) && exploreFlag != null)
                 Select(exploreFlag);
@@ -129,16 +135,8 @@ namespace SolarMajesty
             if (Input.GetKeyDown(KeyCode.U) && terraformFlag != null)
                 Select(terraformFlag);
 
-            if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))
-                bounty += bountyStep;
-            if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))
-                bounty -= bountyStep;
-
-            if (_selected != null)
-                bounty = Mathf.Clamp(bounty, _selected.minBounty, _selected.maxBounty);
-
             if (_selected == null) return;
-            // Place on release so LMB drag-pan does not also post a flag.
+            // Place on release so a held LMB does not also post a flag.
             if (placeKey == KeyCode.Mouse0)
             {
                 if (!Input.GetMouseButtonUp(0)) return;
@@ -176,6 +174,12 @@ namespace SolarMajesty
             handle.EscrowMetals = escrow;
             if (_loop != null)
                 handle.Risk = Mathf.Clamp01(data.baseRisk + _loop.LocalThreatAt(world) * 0.5f);
+            if (data.flagType == FlagType.ClearThreat && _loop?.World != null)
+            {
+                var lair = _loop.World.FindNearestLair(world, OverseerRules.ScoutedDenPostRange);
+                if (lair != null && lair.IsScouted)
+                    _flags.ScalePostedWork(handle, OverseerRules.ScoutedDenWorkMul);
+            }
             SpawnMarker(handle, world);
             DemoAudio.PlayFlagPost();
             _loop?.NotifyFlagPosted(handle);
@@ -183,10 +187,44 @@ namespace SolarMajesty
             return handle;
         }
 
+        private void HandleBountyKeys()
+        {
+            if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))
+                NudgeBounty(bountyStep);
+            if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))
+                NudgeBounty(-bountyStep);
+            if (_selected != null)
+                bounty = Mathf.Clamp(bounty, _selected.minBounty, _selected.maxBounty);
+        }
+
+        private bool TryRepriceHovered(float delta)
+        {
+            if (_loop?.Economy == null || _flags == null) return false;
+            var cam = Camera.main;
+            if (cam == null) return false;
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (!Physics.Raycast(ray, out RaycastHit hit, 400f)) return false;
+            var marker = hit.collider.GetComponentInParent<FlagMarker>();
+            if (marker == null || marker.Handle == null || marker.Handle.Data == null) return false;
+
+            var flag = marker.Handle;
+            float next = Mathf.Clamp(flag.CurrentBounty + delta, flag.Data.minBounty, flag.Data.maxBounty);
+            if (Mathf.Approximately(next, flag.CurrentBounty)) return true;
+            if (!_loop.Economy.TryAdjustBountyEscrow(flag, next))
+            {
+                _loop.LogOverseer("Not enough MET to raise that bounty.");
+                return true;
+            }
+            _flags.SetBounty(flag, next);
+            _loop.NotifyFlagPosted(flag);
+            return true;
+        }
+
         private void Select(FlagData data)
         {
             _selected = data;
             bounty = Mathf.Clamp(bounty, data.minBounty, data.maxBounty);
+            _loop?.NotifyCatalogPicked();
         }
 
         private void SpawnMarker(FlagHandle handle, Vector3 world)

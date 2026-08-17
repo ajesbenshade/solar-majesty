@@ -104,14 +104,16 @@ namespace SolarMajesty
     }
 
     /// <summary>Queued construction after a successful BuildingPlacer.TryPlace.</summary>
-    public sealed class ConstructionOrder
-    {
-        public int Id;
-        public BuildingData Data;
-        public Vector3 WorldPosition;
-        public Vector2Int GridCell;
-        public float ProgressSeconds;
-        public float RequiredSeconds;
-        public bool IsComplete => ProgressSeconds >= RequiredSeconds;
-    }
+        public sealed class ConstructionOrder
+        {
+            public int Id;
+            public BuildingData Data;
+            public Vector3 WorldPosition;
+            public Vector2Int GridCell;
+            public float ProgressSeconds;
+            public float RequiredSeconds;
+            public SpecialistClass? RefabClass;
+            public bool IsComplete => ProgressSeconds >= RequiredSeconds;
+            public bool IsRefab => RefabClass.HasValue;
+        }
 }

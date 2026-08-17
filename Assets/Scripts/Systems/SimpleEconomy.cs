@@ -60,6 +60,7 @@ namespace SolarMajesty
         public int LastExtractAmount { get; private set; }
         public string LastResupplyLine { get; private set; } = "";
         public bool LastResupplyDocked { get; private set; }
+        public int LastMetalsUpkeep { get; private set; }
 
         public SimpleEconomy(ResourceManager resources)
         {
@@ -147,6 +148,27 @@ namespace SolarMajesty
         {
             if (metals <= 0) return;
             EscrowedMetals = Mathf.Max(0, EscrowedMetals - metals);
+        }
+
+        /// <summary>Live re-price: spend or refund the metals delta for a posted flag.</summary>
+        public bool TryAdjustBountyEscrow(FlagHandle flag, float newBounty)
+        {
+            if (flag == null || _resources == null) return false;
+            int want = BountyMetalsCost(newBounty);
+            int have = flag.EscrowMetals;
+            int delta = want - have;
+            if (delta > 0)
+            {
+                if (!_resources.TrySpend(ResourceId.Metals, delta)) return false;
+                EscrowedMetals += delta;
+            }
+            else if (delta < 0)
+            {
+                RefundBountyEscrow(-delta);
+            }
+
+            flag.EscrowMetals = want;
+            return true;
         }
 
         /// <summary>Phase 4B: Extract flags yield regolith + a bit of metals beyond bounty pay.</summary>
@@ -284,6 +306,7 @@ namespace SolarMajesty
                 }
             }
 
+            LastMetalsUpkeep = spentMet;
             LastUpkeepLine = PowerGen > 0
                 ? $"grid +{PowerGen}/−{spentPower} PWR"
                 : $"upkeep −{spentPower} PWR";

@@ -58,7 +58,7 @@ Never add click-to-move to match mockup squad UI.
 3. Imagine turnarounds from `Docs/GROK_IMAGINE_UNIT_PROMPTS.md`. All ten specialists + seven fauna Blender meshes are sheet-matched blockouts against `ConceptSheets/` JPGs. Defense stays tracked (PNG walker still open). Building FBX pipeline (`SM_Hero_*`) is in.
 
 ## Controls reference
-Esc pause · G flag · B build · Q none · Tab cycle · F1 Explore · F2 ClearThreat · F3 Build ·
+Esc pause · G flag · B build · Tab cycle · WASD pan · Q zoom out · E zoom in · F1 Explore · F2 ClearThreat · F3 Build ·
 F4 Extract · F5 Defend · +/- bounty · I Research Site · O Outpost · U Terraform · LMB post/place · RMB cancel flag · 1–7 buildings ·
 P party (selection or inn) · R force fatigue Rest · F8 debug · Y revive.
 

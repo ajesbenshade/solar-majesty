@@ -38,6 +38,7 @@ namespace SolarMajesty
         public float MeanHealth;
         public float MissionElapsed;
         public bool GatesMet;
+        public int RevivePenalty;
     }
 
     public static class OverseerScore
@@ -76,7 +77,9 @@ namespace SolarMajesty
             else if (i.MissionElapsed > 60f)
                 pace = Mathf.Clamp(6 - Mathf.FloorToInt(i.MissionElapsed / 240f), 0, 6);
 
-            int total = Mathf.Clamp(dens + sustain + launch + economy + roster + pace, 0, 100);
+            int total = Mathf.Clamp(
+                dens + sustain + launch + economy + roster + pace - Mathf.Max(0, i.RevivePenalty),
+                0, 100);
             string letter = total >= 90 ? "S" : total >= 75 ? "A" : total >= 60 ? "B" : total >= 45 ? "C" : "D";
             // S wants gates + pace + a living roster. Uncleared dens cannot buy S from stockpile.
             if (letter == "S" &&

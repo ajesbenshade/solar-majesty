@@ -5,7 +5,7 @@ namespace SolarMajesty
     /// <summary>
     /// Orthographic isometric pan/zoom. Presentation only — never commands specialists.
     /// Suggested camera rotation: (30, 45, 0).
-    /// LMB / MMB / RMB drag pans; LMB click (no drag) is left for tools/selection.
+    /// WASD pans. Q zooms out, E zooms in. Mouse does not pan or zoom.
     /// </summary>
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Camera))]
@@ -14,53 +14,28 @@ namespace SolarMajesty
         [Header("Pan")]
         [SerializeField] private float panSpeed = 36f;
         [SerializeField] private float panSmooth = 12f;
-        [SerializeField] private bool edgePan = true;
-        [SerializeField] private float edgeBorder = 14f;
         [SerializeField] private Vector2 panBoundsMin = new Vector2(-5f, -5f);
         [SerializeField] private Vector2 panBoundsMax = new Vector2(70f, 70f);
 
         [Header("Zoom")]
-        [SerializeField] private float zoomSpeed = 6f;
-        [SerializeField] private float minZoom = 6f;
+        [SerializeField] private float zoomSpeed = 14f;
+        [SerializeField] private float minZoom = 4.5f;
         [SerializeField] private float maxZoom = 52f;
         [SerializeField] private float zoomSmooth = 10f;
-
-        [Header("Drag")]
-        [SerializeField] private bool leftMouseDrag = true;
-        [SerializeField] private bool middleMouseDrag = true;
-        [SerializeField] private bool rightMouseDrag = true;
-        [SerializeField] private float leftDragThresholdPixels = 6f;
 
         private Camera _cam;
         private Vector3 _targetPos;
         private float _targetZoom;
-        private bool _dragging;
-        private Vector3 _dragOrigin;
-
-        private bool _lmbTracking;
-        private Vector2 _lmbScreenStart;
-        private bool _lmbBecameDrag;
-        private bool _suppressWorldClick;
-        private bool _clearSuppressNextFrame;
         private GameLoop _loop;
 
-        private bool _suppressFlagCancel;
-        private bool _clearFlagSuppressNext;
-        private bool _rmbTracking;
-        private Vector2 _rmbScreenStart;
-        private bool _rmbBecameDrag;
+        /// <summary>Mouse never pans this camera.</summary>
+        public bool IsDragging => false;
 
-        /// <summary>True while any mouse-button pan drag is active.</summary>
-        public bool IsDragging => _dragging;
+        /// <summary>LMB is always a world click — no drag-pan to swallow it.</summary>
+        public bool SuppressWorldClick => false;
 
-        /// <summary>
-        /// True when the current/just-finished LMB gesture exceeded the drag threshold.
-        /// Flag/build placement and unit selection should ignore the click.
-        /// </summary>
-        public bool SuppressWorldClick => _suppressWorldClick;
-
-        /// <summary>True on the RMB-up frame after a pan drag — skip flag cancel.</summary>
-        public bool SuppressFlagCancel => _suppressFlagCancel;
+        /// <summary>RMB is always flag-cancel — no drag-pan to swallow it.</summary>
+        public bool SuppressFlagCancel => false;
 
         private void Awake()
         {
@@ -69,6 +44,8 @@ namespace SolarMajesty
             _targetPos = transform.position;
             _targetZoom = _cam.orthographicSize;
             _loop = FindAnyObjectByType<GameLoop>();
+            if (minZoom > 4.5f)
+                minZoom = 4.5f;
         }
 
         /// <summary>Clamp pan to sandbox / showcase extents (XZ → Vector2 x/y).</summary>
@@ -147,29 +124,19 @@ namespace SolarMajesty
             _loop = loop;
             if (loop != null && !loop.AllowsCamera) return;
 
-            if (_clearSuppressNextFrame)
-            {
-                _suppressWorldClick = false;
-                _clearSuppressNextFrame = false;
-            }
-
-            if (_clearFlagSuppressNext)
-            {
-                _suppressFlagCancel = false;
-                _clearFlagSuppressNext = false;
-            }
-
             HandleKeyboardPan();
-            HandleEdgePan();
-            HandleDragPan();
             HandleZoom();
             Apply();
         }
 
         private void HandleKeyboardPan()
         {
-            float h = Input.GetAxisRaw("Horizontal");
-            float v = Input.GetAxisRaw("Vertical");
+            float h = 0f;
+            float v = 0f;
+            if (Input.GetKey(KeyCode.D)) h += 1f;
+            if (Input.GetKey(KeyCode.A)) h -= 1f;
+            if (Input.GetKey(KeyCode.W)) v += 1f;
+            if (Input.GetKey(KeyCode.S)) v -= 1f;
             if (Mathf.Abs(h) < 0.01f && Mathf.Abs(v) < 0.01f) return;
 
             Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
@@ -183,121 +150,14 @@ namespace SolarMajesty
             _targetPos += (right * h + forward * v) * scale;
         }
 
-        private void HandleEdgePan()
-        {
-            if (!edgePan || !Application.isFocused) return;
-
-            Vector3 m = Input.mousePosition;
-            Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-            Vector3 right = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
-            float scale = panSpeed * Time.unscaledDeltaTime * (_targetZoom / 12f);
-            if (DemoSettings.InvertPan) scale = -scale;
-
-            if (m.x <= edgeBorder) _targetPos -= right * scale;
-            if (m.x >= Screen.width - edgeBorder) _targetPos += right * scale;
-            if (m.y <= edgeBorder) _targetPos -= forward * scale;
-            if (m.y >= Screen.height - edgeBorder) _targetPos += forward * scale;
-        }
-
-        private void HandleDragPan()
-        {
-            TrackLeftMouseGesture();
-            TrackRightMouseGesture();
-
-            bool want = (middleMouseDrag && Input.GetMouseButton(2)) ||
-                        (rightMouseDrag && Input.GetMouseButton(1)) ||
-                        (leftMouseDrag && _lmbBecameDrag && Input.GetMouseButton(0));
-
-            if (want)
-            {
-                if (!_dragging)
-                {
-                    _dragging = true;
-                    _dragOrigin = GroundPoint(Input.mousePosition);
-                }
-                else
-                {
-                    Vector3 cur = GroundPoint(Input.mousePosition);
-                    _targetPos += _dragOrigin - cur;
-                }
-            }
-            else if (!Input.GetMouseButton(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
-            {
-                _dragging = false;
-            }
-        }
-
-        private void TrackLeftMouseGesture()
-        {
-            if (!leftMouseDrag) return;
-
-            if (Input.GetMouseButtonDown(0))
-            {
-                _lmbTracking = true;
-                _lmbBecameDrag = false;
-                _lmbScreenStart = Input.mousePosition;
-                _suppressWorldClick = false;
-            }
-
-            if (_lmbTracking && Input.GetMouseButton(0) && !_lmbBecameDrag)
-            {
-                float dist = Vector2.Distance(_lmbScreenStart, (Vector2)Input.mousePosition);
-                if (dist >= leftDragThresholdPixels)
-                {
-                    _lmbBecameDrag = true;
-                    _suppressWorldClick = true;
-                    _dragging = false; // force re-seed origin on next want pass
-                }
-            }
-
-            if (Input.GetMouseButtonUp(0))
-            {
-                if (_lmbBecameDrag)
-                {
-                    _suppressWorldClick = true;
-                    _clearSuppressNextFrame = true;
-                }
-                _lmbTracking = false;
-                _lmbBecameDrag = false;
-            }
-        }
-
-        private void TrackRightMouseGesture()
-        {
-            if (!rightMouseDrag) return;
-
-            if (Input.GetMouseButtonDown(1))
-            {
-                _rmbTracking = true;
-                _rmbBecameDrag = false;
-                _rmbScreenStart = Input.mousePosition;
-                _suppressFlagCancel = false;
-            }
-
-            if (_rmbTracking && Input.GetMouseButton(1) && !_rmbBecameDrag)
-            {
-                float dist = Vector2.Distance(_rmbScreenStart, (Vector2)Input.mousePosition);
-                if (dist >= leftDragThresholdPixels)
-                    _rmbBecameDrag = true;
-            }
-
-            if (Input.GetMouseButtonUp(1))
-            {
-                if (_rmbBecameDrag)
-                {
-                    _suppressFlagCancel = true;
-                    _clearFlagSuppressNext = true;
-                }
-                _rmbTracking = false;
-                _rmbBecameDrag = false;
-            }
-        }
-
         private void HandleZoom()
         {
-            float scroll = Input.mouseScrollDelta.y;
-            if (Mathf.Abs(scroll) > 0.01f)
-                _targetZoom = Mathf.Clamp(_targetZoom - scroll * zoomSpeed * 0.35f, minZoom, maxZoom);
+            float dir = 0f;
+            if (Input.GetKey(KeyCode.Q)) dir += 1f;
+            if (Input.GetKey(KeyCode.E)) dir -= 1f;
+            if (Mathf.Abs(dir) < 0.01f) return;
+            _targetZoom = Mathf.Clamp(
+                _targetZoom + dir * zoomSpeed * Time.unscaledDeltaTime, minZoom, maxZoom);
         }
 
         private void Apply()

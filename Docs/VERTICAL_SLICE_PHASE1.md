@@ -32,7 +32,8 @@ Spawn: `GameLoop.spawnFullParty = true` (default).
 
 | Input | Action |
 |-------|--------|
-| G / B / Q / Tab | Flag / Build / None / cycle |
+| WASD pan · Q zoom out · E zoom in | Camera (no mouse pan/zoom) |
+| G / B / Tab | Flag / Build / cycle |
 | F1 Explore · F2 ClearThreat · F3 Build | Flag type |
 | +/- | Bounty |
 | LMB | Post / place |

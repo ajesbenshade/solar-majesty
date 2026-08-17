@@ -68,6 +68,7 @@ namespace SolarMajesty
         {
             if (!IsAlive || amount <= 0f) return;
             _health -= amount;
+            _lastCombatTime = Time.time;
             transform.localScale = _baseScale * (1f + Mathf.Sin(Time.time * 18f) * 0.08f);
             if (_health <= 0f)
                 Die();
@@ -89,6 +90,10 @@ namespace SolarMajesty
         private float _retreatTimer;
         private string _roleNoun;
         private string _roleVerb;
+        private float _lastCombatTime;
+        private float _baseMoveSpeed;
+        private float _baseBite;
+        private bool _frenzy;
 
         public void Initialize(ThreatPressure threat, FlagManager flags, Vector3 home, GameLoop loop = null)
         {
@@ -98,6 +103,8 @@ namespace SolarMajesty
             _home = home;
             _sourceId = _nextSourceId++;
             _health = maxHealth;
+            _baseMoveSpeed = moveSpeed;
+            _baseBite = biteDamagePerSecond;
             _baseScale = transform.localScale;
             transform.position = home;
             ColonyVisualUtility.SnapToGround(gameObject);
@@ -353,6 +360,23 @@ namespace SolarMajesty
 
             if (_rend != null && !IndustrialArtDressing.HasArt(gameObject))
                 SetColor(_rend, stalkerColor);
+            _baseMoveSpeed = moveSpeed;
+            _baseBite = biteDamagePerSecond;
+            ApplyFrenzyScale();
+        }
+
+        public void SetFrenzy(bool on)
+        {
+            _frenzy = on;
+            ApplyFrenzyScale();
+        }
+
+        private void ApplyFrenzyScale()
+        {
+            float speed = _baseMoveSpeed > 0.01f ? _baseMoveSpeed : moveSpeed;
+            float bite = _baseBite > 0.01f ? _baseBite : biteDamagePerSecond;
+            moveSpeed = speed * (_frenzy ? OverseerRules.FrenzySpeed : 1f);
+            biteDamagePerSecond = bite * (_frenzy ? OverseerRules.FrenzyBite : 1f);
         }
 
         /// <summary>Scatter after dens go quiet. Despawns off-campus without a death burst.</summary>
@@ -423,17 +447,8 @@ namespace SolarMajesty
             dest.y = transform.position.y;
             float dist = Vector3.Distance(Flat(transform.position), Flat(dest));
 
-            var specialists = _loop.Agents;
-            if (specialists != null)
-            {
-                for (int i = 0; i < specialists.Count; i++)
-                {
-                    var s = specialists[i];
-                    if (s == null || s.IsIncapacitated) continue;
-                    if ((Flat(s.transform.position) - Flat(transform.position)).sqrMagnitude < 16f)
-                        return false;
-                }
-            }
+            if (ShouldAbortRaid())
+                return false;
 
             _aggro = true;
             _threat?.Report(_sourceId, aggroPressure);
@@ -460,7 +475,7 @@ namespace SolarMajesty
             if (camp == null)
                 camp = _loop.Village.NearestExtractor(transform.position, 42f);
             if (camp == null || !camp.IsAlive) return false;
-            return TickRaidStructure(dt, camp, StealFromCamp);
+            return TickRaidStructure(dt, camp, StealFromCamp, collapse: false);
         }
 
         private bool TickRaidHabitat(float dt)
@@ -470,7 +485,7 @@ namespace SolarMajesty
             if (hab == null || !hab.IsAlive)
                 hab = _loop.Village.NearestVillageHab(transform.position, 42f);
             if (hab == null || !hab.IsAlive) return false;
-            return TickRaidStructure(dt, hab, StealLifeSupport);
+            return TickRaidStructure(dt, hab, StealLifeSupport, collapse: true);
         }
 
         private void TickRetreat(float dt)
@@ -489,11 +504,22 @@ namespace SolarMajesty
             if (_loop?.Village == null) return false;
             var node = _loop.Village.NearestPower(transform.position, 42f);
             if (node == null || !node.IsAlive) return false;
-            return TickRaidStructure(dt, node, DrainPower);
+            return TickRaidStructure(dt, node, DrainPower, collapse: false);
         }
 
-        private bool TickRaidStructure(float dt, ColonyStructure target, System.Action steal)
+        /// <summary>
+        /// Latch onto a module. Hoppers/stalkers collapse housing; leeches/wisps/mites steal
+        /// without flattening the building (that read as friendly robots demolishing campus).
+        /// </summary>
+        private bool TickRaidStructure(
+            float dt, ColonyStructure target, System.Action steal, bool collapse)
         {
+            if (ShouldAbortRaid())
+            {
+                _raiding = false;
+                return false;
+            }
+
             Vector3 dest = target.WorldPosition;
             dest.y = transform.position.y;
             float dist = Vector3.Distance(Flat(transform.position), Flat(dest));
@@ -507,7 +533,11 @@ namespace SolarMajesty
                 return true;
             }
 
-            target.ApplyRaidDamage(4f * dt);
+            if (collapse)
+                target.ApplyRaidDamage(4f * dt);
+            else if (target.Category == BuildingCategory.Power)
+                target.NotePowerSiphon();
+
             _stealTimer += dt;
             if (_stealTimer >= 0.8f)
             {
@@ -515,6 +545,13 @@ namespace SolarMajesty
                 steal?.Invoke();
             }
             return true;
+        }
+
+        private bool ShouldAbortRaid()
+        {
+            if (Health01 < OverseerRules.RaidAbortHealth) return true;
+            return _lastCombatTime > 0.01f &&
+                   Time.time - _lastCombatTime <= OverseerRules.RaidAbortDamageWindow;
         }
 
         private void StealFromCamp()
@@ -631,7 +668,7 @@ namespace SolarMajesty
                 if ((Flat(f.WorldPosition) - me).sqrMagnitude > linkSq) continue;
 
                 // Claimed or any remaining work in range = player posted a clear job here.
-                if (f.ClaimCount > 0 || _flags.GetWorkRemaining(f) < f.Data.workRequired - 0.05f)
+                if (f.ClaimCount > 0 || _flags.GetWorkRemaining(f) < f.PostedWork - 0.05f)
                 {
                     beingCleared = true;
                     break;
@@ -641,6 +678,7 @@ namespace SolarMajesty
             if (!beingCleared) return;
 
             _health -= damagePerSecondWhileCleared * dt;
+            _lastCombatTime = Time.time;
             // Hurt feedback
             transform.localScale = _baseScale * (1f + Mathf.Sin(Time.time * 18f) * 0.08f);
 
@@ -657,7 +695,7 @@ namespace SolarMajesty
 
             if (_label != null)
             {
-                bool show = _aggro || _retreating || Kind != FaunaKind.Stalker;
+                bool show = _aggro || _retreating || _raiding;
                 _label.gameObject.SetActive(show);
                 if (show)
                 {
@@ -763,8 +801,8 @@ namespace SolarMajesty
                 _label = go.AddComponent<TextMesh>();
                 _label.anchor = TextAnchor.MiddleCenter;
                 _label.alignment = TextAlignment.Center;
-                _label.characterSize = 0.14f;
-                _label.fontSize = 40;
+                _label.characterSize = 0.08f;
+                _label.fontSize = 28;
                 _label.fontStyle = FontStyle.Bold;
                 _label.color = new Color(1f, 0.45f, 0.4f);
             }
@@ -776,7 +814,7 @@ namespace SolarMajesty
         {
             switch (kind)
             {
-                case FaunaKind.Hopper: return 2.05f;
+                case FaunaKind.Hopper: return 1.85f;
                 case FaunaKind.Stalker: return 1.85f;
                 case FaunaKind.Wisp: return 1.45f;
                 case FaunaKind.Creeper: return 1.15f;

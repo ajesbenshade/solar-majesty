@@ -37,11 +37,12 @@ namespace SolarMajesty
                 CurrentBounty = clamped,
                 Risk = data.baseRisk,
                 ClaimCount = 0,
-                RuntimeId = id
+                RuntimeId = id,
+                PostedWork = data.workRequired
             };
 
             _flags.Add(flag);
-            _workRemaining[id] = data.workRequired;
+            _workRemaining[id] = flag.PostedWork;
             return flag;
         }
 
@@ -122,6 +123,15 @@ namespace SolarMajesty
         {
             if (flag == null || flag.Data == null) return;
             flag.CurrentBounty = Mathf.Clamp(bounty, flag.Data.minBounty, flag.Data.maxBounty);
+        }
+
+        /// <summary>Scouted-den Clear Threat: shrink remaining work without changing FlagData.</summary>
+        public void ScalePostedWork(FlagHandle flag, float mul)
+        {
+            if (flag?.RuntimeId == null || mul <= 0f) return;
+            if (!_workRemaining.TryGetValue(flag.RuntimeId, out float remaining)) return;
+            flag.PostedWork = Mathf.Max(0.1f, flag.PostedWork * mul);
+            _workRemaining[flag.RuntimeId] = Mathf.Max(0.1f, remaining * mul);
         }
 
         public void ClearAll()

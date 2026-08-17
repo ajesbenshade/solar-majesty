@@ -26,7 +26,7 @@ namespace SolarMajesty
         [Header("Optional pressure")]
         [SerializeField] private bool spawnPressureFromLairs = true;
         [SerializeField] private int pressureStalkerCount = 2;
-        [SerializeField] private float pressureCooldown = 90f;
+        [SerializeField] private float pressureCooldown = 75f;
 
         [Header("Deadline (off for campaign)")]
         [SerializeField] private bool enforceDeadline = false;
@@ -45,6 +45,8 @@ namespace SolarMajesty
 
         private bool _loggedDens;
         private bool _loggedSustain;
+        private bool _loggedFrenzy;
+        private bool _frenzy;
 
         public MissionState State => _state;
         public int StalkersRemaining { get; private set; }
@@ -55,6 +57,18 @@ namespace SolarMajesty
         public bool SustainComplete => _sustainElapsed >= sustainHoldSeconds;
         public bool LaunchReady => _launchReady;
         public bool AllGatesMet => DensCleared && SustainComplete && LaunchReady;
+        public bool FrenzyActive => _frenzy;
+        public int GatesComplete
+        {
+            get
+            {
+                int n = 0;
+                if (DensCleared) n++;
+                if (SustainComplete) n++;
+                if (LaunchReady) n++;
+                return n;
+            }
+        }
 
         public float SustainElapsed => _sustainElapsed;
         public float SustainRequired => sustainHoldSeconds;
@@ -165,7 +179,7 @@ namespace SolarMajesty
             }
         }
 
-        public string FailHeadline => WasDeadlineFail ? "MISSION TIME EXPIRED" : "OUTPOST OVERWHELMED";
+        public string FailHeadline => WasDeadlineFail ? "MISSION TIME EXPIRED" : "OUTPOST LOST";
 
         public string FailDetail
         {
@@ -174,6 +188,10 @@ namespace SolarMajesty
                 var body = _loop != null ? _loop.BodyProfile : null;
                 if (WasDeadlineFail)
                     return "The window to secure the outpost closed. Restart for a tighter run.";
+                if (_loop != null && _loop.ColonyExtinct)
+                    return "The last colonist is gone. Retry this body, or New Game.";
+                if (_loop != null && _loop.RobotCount == 0)
+                    return "No robots left and no re-fab in the shop. Rebuild a workshop, or retry.";
                 if (body != null && !string.IsNullOrEmpty(body.FailLog))
                     return body.FailLog;
                 return "Every specialist is incapacitated. Revive the party to retake the plaza.";
@@ -193,6 +211,8 @@ namespace SolarMajesty
             _deadlineFail = false;
             _loggedDens = false;
             _loggedSustain = false;
+            _loggedFrenzy = false;
+            _frenzy = false;
             DensCleared = false;
             UnclearedLairs = 0;
             LairCount = 0;
@@ -228,7 +248,7 @@ namespace SolarMajesty
 
             if (_state == MissionState.Won) return;
 
-            if (_loop.IsOutpostOverwhelmed)
+            if (_loop.ColonyExtinct || _loop.EmptyRosterFailed)
             {
                 if (_state != MissionState.Lost)
                     EnterLost();
@@ -240,6 +260,7 @@ namespace SolarMajesty
 
             _missionElapsed += Time.deltaTime;
             TickSustain(Time.deltaTime);
+            TickFrenzy();
             TickPressure(Time.deltaTime);
 
             if (enforceDeadline && _missionElapsed >= missionDeadlineSeconds && !AllGatesMet)
@@ -310,6 +331,19 @@ namespace SolarMajesty
             }
         }
 
+        private void TickFrenzy()
+        {
+            if (_frenzy || DensCleared) return;
+            if (GatesComplete < 2) return;
+            _frenzy = true;
+            _loop?.ApplyFaunaFrenzy(true);
+            if (!_loggedFrenzy)
+            {
+                _loggedFrenzy = true;
+                _loop?.LogOverseer("Dens frenzy — they know you're leaving.");
+            }
+        }
+
         private void TickPressure(float dt)
         {
             if (!spawnPressureFromLairs || DensCleared) return;
@@ -317,7 +351,7 @@ namespace SolarMajesty
 
             _pressureTimer -= dt;
             if (_pressureTimer > 0f) return;
-            _pressureTimer = pressureCooldown;
+            _pressureTimer = _frenzy ? OverseerRules.FrenzyPressure : OverseerRules.PressureInterval;
 
             Vector3 origin = ColonyLayout.CampusOrigin;
             var lairs = _loop.World.Lairs;

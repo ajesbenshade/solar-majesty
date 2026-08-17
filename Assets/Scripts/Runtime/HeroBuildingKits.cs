@@ -11,7 +11,7 @@ namespace SolarMajesty
     /// </summary>
     public static class HeroBuildingKits
     {
-        private static readonly Color White = new Color(0.88f, 0.90f, 0.93f);
+        private static readonly Color White = new Color(0.97f, 0.97f, 0.99f);
         private static readonly Color Carbon = new Color(0.07f, 0.07f, 0.08f);
         private static readonly Color Graphite = new Color(0.16f, 0.17f, 0.19f);
         private static readonly Color Steel = new Color(0.42f, 0.44f, 0.48f);
@@ -210,31 +210,22 @@ namespace SolarMajesty
                     Cyan, Quaternion.Euler(0f, i * 45f, 0f), CyanEmit);
             }
 
-            // Radial tube stubs are dressing. Cardinals mate Unity square sleeves at the 6×6 face.
-            float face = Mathf.Min(w, d) * 0.5f;
-            for (int i = 0; i < 8; i++)
+            // Cardinal hull ports on the drum — same Y/bore as DockSleeve and the airlock
+            // arms. Unused faces keep the orange sockets; tubes only appear when docked.
+            float dockY = ColonyVisualUtility.DockY;
+            float bore = ColonyVisualUtility.DockBore;
+            for (int i = 0; i < 4; i++)
             {
-                float ang = i * 45f * Mathf.Deg2Rad;
-                bool cardinal = i % 2 == 0;
-                float stubLen = cardinal ? face - radius * 0.96f : 0.52f;
-                float stubR = cardinal ? 0.50f : 0.36f;
-                float dist = cardinal
-                    ? radius * 0.96f + stubLen * 0.5f
-                    : radius * 0.98f + stubLen * 0.42f;
+                float ang = i * 90f * Mathf.Deg2Rad;
                 Vector3 dir = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang));
                 Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
-                Prim(root, "CommonsStub_" + i, PrimitiveType.Cylinder,
-                    dir * dist + new Vector3(0f, 1.18f, 0f),
-                    new Vector3(stubR * 2f, stubLen * 0.5f, stubR * 2f), White, rot);
-                Prim(root, "CommonsStubTip_" + i, PrimitiveType.Cylinder,
-                    dir * (dist + stubLen * 0.5f - 0.04f) + new Vector3(0f, 1.18f, 0f),
-                    new Vector3(stubR * 2.24f, 0.04f, stubR * 2.24f), Orange, rot);
-                if (cardinal)
-                {
-                    Prim(root, "CommonsStubCollar_" + i, PrimitiveType.Cylinder,
-                        dir * (dist - stubLen * 0.18f) + new Vector3(0f, 1.18f, 0f),
-                        new Vector3(stubR * 2.12f, 0.05f, stubR * 2.12f), Carbon, rot);
-                }
+                Vector3 at = dir * radius + new Vector3(0f, dockY, 0f);
+                Prim(root, "CommonsPortWell_" + i, PrimitiveType.Cylinder,
+                    at - dir * 0.04f,
+                    new Vector3(bore * 0.92f, 0.07f, bore * 0.92f), Graphite, rot);
+                Prim(root, "CommonsPortRing_" + i, PrimitiveType.Cylinder,
+                    at + dir * 0.03f,
+                    new Vector3(bore * 1.18f, 0.045f, bore * 1.18f), Orange, rot);
             }
 
             Prim(root, "CommonsSeamRing_0", PrimitiveType.Cylinder,

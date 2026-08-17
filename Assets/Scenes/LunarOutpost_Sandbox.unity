@@ -208,8 +208,8 @@ MonoBehaviour:
   panBoundsMin: {x: -5, y: -5}
   panBoundsMax: {x: 70, y: 70}
   zoomSpeed: 6
-  minZoom: 6
-  maxZoom: 30
+  minZoom: 4.5
+  maxZoom: 52
   zoomSmooth: 10
   middleMouseDrag: 1
   rightMouseDrag: 1

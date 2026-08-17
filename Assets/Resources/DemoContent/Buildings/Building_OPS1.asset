@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad6cec0d07ef9498c83b1151499c4966, type: 3}
   m_Name: Building_OPS1
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.BuildingData
-  displayName: Ops Unit (OPS-1)
+  displayName: OPS Drop-off
   category: 3
-  description: 
+  description: does not grow MET 
   footprintWidth: 4
   footprintHeight: 4
   buildCost:
