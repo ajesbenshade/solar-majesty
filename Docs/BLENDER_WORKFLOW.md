@@ -285,6 +285,166 @@ Parked pad ship is authored on `SM_Hero_LandingPad` (white/black stack). Launch 
 
 ---
 
+## Copilot 3D acceleration (hybrid pipeline)
+
+Use [Copilot 3D](https://copilot.microsoft.com) (Copilot Labs) to turn a **clean single-subject hero image** from Grok Imagine into a rough GLB, then finish in Blender before FBX export. **Turnaround sheet crops do not work well** — use dedicated hero prompts in [`Docs/GROK_IMAGINE_COPILOT3D_PROMPTS.md`](GROK_IMAGINE_COPILOT3D_PROMPTS.md).
+
+```mermaid
+flowchart LR
+  Imagine[Grok Imagine clean hero PNG]
+  Copilot3D[Copilot 3D GLB]
+  Import[sm_import_copilot3d.py]
+  Manual[Manual Blender cleanup]
+  FBX[FBX export]
+  Unity[Assets/Resources]
+  Imagine --> Copilot3D --> Import --> Manual --> FBX --> Unity
+```
+
+### Folder layout
+
+```
+ConceptSheets/
+├── SM_Unit_*_Turnaround.jpg       # Blender art bible (multi-view sheets)
+└── Copilot3D_Input/               # clean Imagine hero PNGs for Copilot 3D
+    └── SM_Unit_CourierBot_Hero.png
+
+Blender/
+├── imports/copilot3d/             # downloaded GLBs (28-day Copilot storage — archive locally)
+│   └── SM_Unit_CourierBot.glb
+├── exports/                       # FBX output (same as blockout scripts)
+└── scripts/
+    ├── sm_crop_turnaround.py      # legacy — turnaround crops; prefer hero shots
+    └── sm_import_copilot3d.py     # import GLB → scale → SM materials → FBX
+```
+
+### Input images (required)
+
+Copilot 3D needs **one clean subject on a plain background** — not turnaround sheet crops.
+
+| Source | Use |
+|--------|-----|
+| **Grok Imagine hero shot** | Preferred — see [`GROK_IMAGINE_COPILOT3D_PROMPTS.md`](GROK_IMAGINE_COPILOT3D_PROMPTS.md) |
+| Turnaround crop (`sm_crop_turnaround.py`) | Legacy fallback — often poor results |
+
+Hero shot rules: white or seamless grey background, single three-quarter view, no text/labels/panels, full subject visible, soft studio lighting.
+
+Save hero PNGs to `ConceptSheets/Copilot3D_Input/` as `SM_Unit_{Name}_Hero.png`.
+
+Legacy batch crop (not recommended for Copilot 3D; requires `pip install Pillow`):
+
+```powershell
+python Blender/scripts/sm_crop_turnaround.py
+python Blender/scripts/sm_crop_turnaround.py --only SM_Unit_CourierBot
+```
+
+### Per-asset workflow
+
+1. Crop → upload to Copilot Labs → Copilot 3D → **download GLB immediately** (cloud copies expire ~28 days).
+2. Save GLB to `Blender/imports/copilot3d/{Name}.glb` (e.g. `SM_Unit_CourierBot.glb`).
+3. Run import helper (metric scale, SM palette stub, ground origin, FBX export):
+
+```powershell
+& "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background `
+  --python Blender/scripts/sm_import_copilot3d.py -- `
+  --name SM_Unit_CourierBot --target-height 1.45 --category units
+```
+
+4. Open the saved `.blend` in `Blender/` and **manual cleanup** (15–45 min):
+   - Panel lines, treads, docking collars, orange hatch rings
+   - Remap materials to SM palette (do not ship Copilot baked colors)
+   - Decimate if poly count is too high for RTS isometric view
+5. Re-export FBX (selection-only, `-Z` forward, `Y` up — same as blockout scripts).
+6. Unity: **Solar Majesty → Build Demo Content Assets**; verify silhouette at isometric zoom ~5.5 vs `SM_MarsCampaign_VisualTarget.png`.
+
+### Target dimensions (units)
+
+Use documented RTS sizes from the unit table above — not Imagine scale bars when they disagree.
+
+| Asset | Target (approx) |
+|-------|-----------------|
+| `SM_Unit_CourierBot` | H ~1.45 m, L ~2.0 m |
+| `SM_Unit_RegolithMite` | L ~0.95 m |
+| `SM_Unit_IceWisp` | span ~1.6 m, hover H ~1.15 m |
+| `SM_Unit_ScoutDrone` | H ~2.8 m |
+| `SM_Unit_Medic` | ~1.7 × 0.85 × 1.35 m |
+| `SM_Hero_HAB` | Ø 8 m × L 12 m (buildings — use `--category buildings`) |
+
+Pass `--target-width` / `--target-depth` when height alone is not the primary read.
+
+### Material remap checklist
+
+After import, replace Copilot textures with Principled BSDF from the palette above:
+
+- [ ] Hull → `SM_White` / `SM_Black` bands
+- [ ] Access / warning → `SM_Orange` only (no invented accent colors)
+- [ ] Sensors / visors → `SM_Cyan` (Defense red viewport is the only red hull exception)
+- [ ] Trim / treads → `SM_Graphite` / `SM_Steel`
+- [ ] No purple hulls; no baked shadow textures in shipping assets
+
+### Pilot order and fallback
+
+| Tier | Assets |
+|------|--------|
+| Pilot | Courier, Regolith Mite, Ice Wisp, Scout Drone |
+| Second wave | Medic, Harvester, Surveyor, Sentinel, Geologist |
+| Heavy Blender | Engineer, Defense, Terraformer, Stalker, Rock Tick |
+| Mood reference only | HAB-1, Command Dome, Landing Pad — keep `sm_hero_building_kits.py` |
+
+**Fallback:** If Copilot cleanup takes longer than rebuilding from `sm_unit_blockouts.py`, discard the GLB and stay procedural.
+
+See also: [`Docs/COPILOT3D_PILOT_EVAL.md`](COPILOT3D_PILOT_EVAL.md) for pilot comparison notes.
+
+---
+
+## Environment landscape (Earth + Mars)
+
+Flat `GroundPlane` stays. Authored textures + scatter FBX props — see [`Docs/GROK_IMAGINE_ENVIRONMENT_PROMPTS.md`](GROK_IMAGINE_ENVIRONMENT_PROMPTS.md).
+
+### Ground textures
+
+```
+Assets/Resources/Environment/Textures/
+  SM_Ground_Earth_Albedo.png
+  SM_Ground_Earth_Normal.png
+  SM_Ground_Mars_Albedo.png
+  SM_Ground_Mars_Normal.png
+```
+
+Bake without Imagine:
+
+```powershell
+python Blender/scripts/sm_bake_ground_textures.py
+```
+
+`PlanetaryMapDressing.DressGround` loads these for Earth/Mars; Perlin fallback if missing.
+
+### Prop FBX (`--category environment`)
+
+| Name | Native size | Used by |
+|------|-------------|---------|
+| `SM_Tree_Broadleaf_A` / `_B` | H 2.4 m | Earth vista + forests |
+| `SM_Rock_Boulder_A` / `_B` | ~1 m | Mars vista + rock scatter |
+| `SM_Crater_Vista` | Ø 10 m | Mars vista crater |
+| `SM_Crater_Small/Medium/Large` | Ø 5 / 9 / 14 m | World-gen craters |
+| `SM_Dune_Low` | L 6 m | Mars dunes + vista |
+
+```powershell
+& "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background `
+  --python Blender/scripts/sm_import_copilot3d.py -- `
+  --name SM_Tree_Broadleaf_A --target-height 2.4 --category environment
+```
+
+Blender stand-ins (no Copilot):
+
+```powershell
+& "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background `
+  --python Blender/scripts/sm_environment_blockouts.py
+```
+
+Runtime: [`EnvironmentMeshCatalog`](../Assets/Scripts/Runtime/EnvironmentMeshCatalog.cs).
+
+---
+
 ## Git note
 
 Consider tracking:

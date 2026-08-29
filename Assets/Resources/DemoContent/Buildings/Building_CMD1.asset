@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.BuildingData
   displayName: Defense Battery
   category: 4
-  description: auto-fires 18 m 
+  description: auto-fires 18 m
   footprintWidth: 4
   footprintHeight: 4
   buildCost:
@@ -24,7 +24,8 @@ MonoBehaviour:
     amount: 8
   buildTimeSeconds: 16
   powerDraw: 4
+  powerGen: 0
   housingSlots: 0
   attractionWeight: 1
   preferredOccupants: 
-  prefab: {fileID: 919132149155446097, guid: 940a4e78f7bc9417f8d1673481526ee1, type: 3}
+  prefab: {fileID: 919132149155446097, guid: 7a1289ea19a4442a8100f65651f3d522, type: 3}

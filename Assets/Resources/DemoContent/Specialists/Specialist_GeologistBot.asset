@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37ce58c0ee1a24e63ba3aaa2ca65c298, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.SpecialistData
+  specialistClass: 8
+  displayName: Geologist Bot
+  description: Core. Takes Extract and Research Site cheap; shy of dens.
+  baseGreed: 0.36
+  courage: 0.4
+  workaholicBias: 0.58
+  explorePreference: 0.7
+  buildPreference: 0.14
+  combatPreference: 0.08
+  extractPreference: 0.92
+  defendPreference: 0.14
+  moveSpeed: 3.3
+  workRate: 1.18
+  maxEnergy: 100
+  upkeepPerMinute:
+  - resource: 2
+    amount: 1
+  prefab: {fileID: 3770566681595597327, guid: c99c3d5700d27bb4e80aef5013e78f6e, type: 3}

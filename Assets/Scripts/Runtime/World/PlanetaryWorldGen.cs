@@ -181,7 +181,7 @@ namespace SolarMajesty
 
                 float radius = Mathf.Lerp(2.2f, 9.5f, (float)rng.NextDouble());
                 int sizeClass = radius < 4f ? 0 : radius < 7f ? 1 : 2;
-                GameObject prefab = BuildingVisualCatalog.LoadCrater(sizeClass);
+                GameObject prefab = EnvironmentMeshCatalog.LoadCrater(sizeClass);
                 GameObject crater;
                 if (prefab != null)
                 {
@@ -251,9 +251,9 @@ namespace SolarMajesty
                     lobe.transform.SetParent(lake.transform, false);
                     lobe.transform.localPosition = new Vector3(Mathf.Cos(ang) * dist, 0.015f, Mathf.Sin(ang) * dist);
                     lobe.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
-                    lobe.transform.localScale = new Vector3(rx * 2f, 0.025f, rz * 2f);
+                    lobe.transform.localScale = new Vector3(rx * 2f, 0.04f, rz * 2f);
                     Object.Destroy(lobe.GetComponent<Collider>());
-                    Tint(lobe, water, 0.72f);
+                    StylizedWaterVisual.Apply(lobe, _body.WaterDeep, water);
 
                     // Soft shoreline under the water rim.
                     var shore = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -330,11 +330,11 @@ namespace SolarMajesty
                             seg.transform.SetParent(river.transform, false);
                             seg.transform.position = mid + Vector3.up * 0.02f;
                             seg.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-                            seg.transform.localScale = new Vector3(width, 0.04f, len * 1.08f);
+                            seg.transform.localScale = new Vector3(width, 0.05f, len * 1.08f);
                             Object.Destroy(seg.GetComponent<Collider>());
                             Color water = Color.Lerp(_body.WaterDeep, _body.WaterShallow,
                                 0.25f + 0.5f * Mathf.PerlinNoise(seedX + t, seedZ));
-                            Tint(seg, water, 0.7f);
+                            StylizedWaterVisual.Apply(seg, _body.WaterDeep, water);
                         }
                     }
 
@@ -425,11 +425,28 @@ namespace SolarMajesty
 
         private void SpawnTree(Transform parent, Vector3 local, System.Random rng)
         {
+            float h = Mathf.Lerp(1.1f, 2.6f, (float)rng.NextDouble());
+            int variant = rng.Next(0, 2);
+            var meshPrefab = EnvironmentMeshCatalog.LoadTree(variant);
+            if (meshPrefab != null)
+            {
+                var mesh = EnvironmentMeshCatalog.InstantiateClean(meshPrefab, "Tree");
+                if (mesh != null)
+                {
+                    mesh.transform.SetParent(parent, false);
+                    mesh.transform.localPosition = local;
+                    ColonyVisualUtility.SetYawKeepingImport(
+                        mesh.transform, mesh.transform.rotation, (float)rng.NextDouble() * 360f);
+                    float s = h / EnvironmentMeshCatalog.TreeNativeHeight;
+                    mesh.transform.localScale = Vector3.one * s;
+                    return;
+                }
+            }
+
             var tree = new GameObject("Tree");
             tree.transform.SetParent(parent, false);
             tree.transform.localPosition = local;
 
-            float h = Mathf.Lerp(1.1f, 2.6f, (float)rng.NextDouble());
             float trunkR = Mathf.Lerp(0.12f, 0.28f, (float)rng.NextDouble());
 
             var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -476,17 +493,33 @@ namespace SolarMajesty
                 if (!TrySample(rng, placed, VistaExclusion * 0.9f, _body.MinSpacing * 0.55f, out Vector3 pos))
                     continue;
 
+                float yaw = (float)rng.NextDouble() * 180f;
+                float len = Mathf.Lerp(3.2f, 6.5f, (float)rng.NextDouble());
+                var meshPrefab = EnvironmentMeshCatalog.LoadDune();
+                if (meshPrefab != null)
+                {
+                    var mesh = ColonyVisualUtility.InstantiateOriented(meshPrefab, pos, root, yaw);
+                    mesh.name = $"Dune_{i}";
+                    float s = len / EnvironmentMeshCatalog.DuneNativeLength;
+                    mesh.transform.localScale = Vector3.one * s;
+                    ColonyVisualUtility.EnsureUrpMaterials(mesh);
+                    Tint(mesh, _body.DuneColor);
+                    ColonyVisualUtility.SnapToGround(mesh);
+                    placed.Add(pos);
+                    continue;
+                }
+
                 var dune = new GameObject($"Dune_{i}");
                 dune.transform.SetParent(root, false);
                 dune.transform.position = pos;
-                dune.transform.rotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 180f, 0f);
+                dune.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
 
                 var mound = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 mound.name = "Ridge";
                 mound.transform.SetParent(dune.transform, false);
                 mound.transform.localPosition = new Vector3(0f, 0.18f, 0f);
                 mound.transform.localScale = new Vector3(
-                    Mathf.Lerp(3.2f, 6.5f, (float)rng.NextDouble()),
+                    len,
                     Mathf.Lerp(0.25f, 0.55f, (float)rng.NextDouble()),
                     Mathf.Lerp(1.1f, 2.2f, (float)rng.NextDouble()));
                 Object.Destroy(mound.GetComponent<Collider>());
@@ -587,6 +620,25 @@ namespace SolarMajesty
                 if (!TrySample(rng, placed, VistaExclusion * 0.85f, 2.2f, out Vector3 pos))
                     continue;
 
+                float s = Mathf.Lerp(0.28f, 0.92f, (float)rng.NextDouble());
+                var meshPrefab = EnvironmentMeshCatalog.LoadRock(i);
+                if (meshPrefab != null)
+                {
+                    var mesh = ColonyVisualUtility.InstantiateOriented(
+                        meshPrefab, pos, root, (float)rng.NextDouble() * 360f);
+                    mesh.name = $"Rock_{i}";
+                    float scale = s / EnvironmentMeshCatalog.RockNativeSize;
+                    mesh.transform.localScale = Vector3.one * scale;
+                    ColonyVisualUtility.EnsureUrpMaterials(mesh);
+                    Tint(
+                        mesh,
+                        Color.Lerp(_body.RockColor, _body.GroundDark, (float)rng.NextDouble() * 0.4f),
+                        0.08f,
+                        ShadowCastingMode.On);
+                    ColonyVisualUtility.SnapToGround(mesh);
+                    continue;
+                }
+
                 bool cluster = _body.Id == CelestialBodyId.Mars && rng.NextDouble() < 0.32;
                 int lobes = cluster ? 2 + rng.Next(0, 2) : 1;
                 var rock = new GameObject($"Rock_{i}");
@@ -605,11 +657,11 @@ namespace SolarMajesty
                         Mathf.Cos(ang) * dist,
                         0.12f,
                         Mathf.Sin(ang) * dist);
-                    float s = Mathf.Lerp(0.28f, 0.92f, (float)rng.NextDouble());
+                    float cs = Mathf.Lerp(0.28f, 0.92f, (float)rng.NextDouble());
                     chunk.transform.localScale = new Vector3(
-                        s * Mathf.Lerp(0.7f, 1.35f, (float)rng.NextDouble()),
-                        s * Mathf.Lerp(0.35f, 0.85f, (float)rng.NextDouble()),
-                        s * Mathf.Lerp(0.65f, 1.25f, (float)rng.NextDouble()));
+                        cs * Mathf.Lerp(0.7f, 1.35f, (float)rng.NextDouble()),
+                        cs * Mathf.Lerp(0.35f, 0.85f, (float)rng.NextDouble()),
+                        cs * Mathf.Lerp(0.65f, 1.25f, (float)rng.NextDouble()));
                     chunk.transform.localRotation = Quaternion.Euler(
                         (float)rng.NextDouble() * 28f,
                         (float)rng.NextDouble() * 360f,
@@ -763,15 +815,21 @@ namespace SolarMajesty
             float smoothness = 0.06f,
             ShadowCastingMode shadows = ShadowCastingMode.Off)
         {
-            var rend = go.GetComponent<Renderer>();
-            if (rend == null) return;
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Sprites/Default"));
+            if (go == null) return;
+            var shader = Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Sprites/Default");
+            if (shader == null) return;
+            var rendList = go.GetComponentsInChildren<Renderer>(true);
+            if (rendList == null || rendList.Length == 0) return;
+            var mat = new Material(shader);
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             else if (mat.HasProperty("_Color")) mat.color = c;
             if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
-            rend.sharedMaterial = mat;
-            rend.shadowCastingMode = shadows;
+            foreach (var rend in rendList)
+            {
+                rend.sharedMaterial = mat;
+                rend.shadowCastingMode = shadows;
+            }
         }
     }
 }

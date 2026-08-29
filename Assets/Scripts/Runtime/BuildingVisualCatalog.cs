@@ -128,14 +128,7 @@ namespace SolarMajesty
         public static GameObject LoadConnector() => LoadByPath("Buildings/SM_ModularTubeConnector");
         public static GameObject LoadLaboratory() => LoadByPath("Buildings/SM_LAB1_LaboratoryModule");
 
-        public static GameObject LoadCrater(int sizeClass)
-        {
-            switch (Mathf.Clamp(sizeClass, 0, 2))
-            {
-                case 0: return LoadByPath("Environment/SM_Crater_Small");
-                case 1: return LoadByPath("Environment/SM_Crater_Medium");
-                default: return LoadByPath("Environment/SM_Crater_Large");
-            }
-        }
+        /// <summary>Prefer <see cref="EnvironmentMeshCatalog.LoadCrater"/>; kept for callers.</summary>
+        public static GameObject LoadCrater(int sizeClass) => EnvironmentMeshCatalog.LoadCrater(sizeClass);
     }
 }

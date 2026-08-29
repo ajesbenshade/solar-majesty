@@ -90,6 +90,20 @@ namespace SolarMajesty
         /// <summary>When set, non-Commons buildings are rejected until Colony Commons exists.</summary>
         public Func<bool> HasCommons { get; set; }
 
+        /// <summary>True once a Commons footprint is on the campus graph (construction or complete).</summary>
+        public bool HasCommonsModule
+        {
+            get
+            {
+                for (int i = 0; i < _pieces.Count; i++)
+                {
+                    if (_pieces[i].Category == BuildingCategory.Commons)
+                        return true;
+                }
+                return false;
+            }
+        }
+
         public BuildingPlacer(ResourceManager resources)
         {
             _resources = resources ?? throw new ArgumentNullException(nameof(resources));
@@ -223,8 +237,8 @@ namespace SolarMajesty
         {
             order = null;
             if (data == null || _resources == null) return false;
-            int cost = Mathf.Max(1, metalsCost);
-            if (!_resources.TrySpend(ResourceId.Metals, cost)) return false;
+            int cost = Mathf.Max(0, metalsCost);
+            if (cost > 0 && !_resources.TrySpend(ResourceId.Metals, cost)) return false;
 
             order = new ConstructionOrder
             {

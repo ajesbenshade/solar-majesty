@@ -72,7 +72,7 @@ namespace SolarMajesty
                 c = new Color(0.95f, 0.32f, 0.26f);
                 text = _agent.RecoverSecondsLeft > 0.05f
                     ? $"DOWN {_agent.RecoverSecondsLeft:F0}s"
-                    : "DOWN";
+                    : $"L{_agent.Level} DOWN";
             }
             else if (!string.IsNullOrEmpty(_agent.RefusalChip))
             {

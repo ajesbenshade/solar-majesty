@@ -107,7 +107,7 @@ namespace SolarMajesty
             var body = _loop.BodyProfile;
             string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
                 ? body.Briefing
-                : "Raise Colony Commons first, then dock modules via airlocks.";
+                : "Colony Commons is down. Dock modules via airlocks.";
             Toast(briefing, 6.5f);
         }
 
@@ -1290,7 +1290,8 @@ namespace SolarMajesty
                 Fill(new Rect(rect.x, rect.y, 3f, rect.height), ClassTint(a.Data != null ? a.Data.specialistClass : SpecialistClass.ScoutDrone));
 
                 float row = c.y;
-                GUI.Label(new Rect(c.x, row, c.width - 50f, 16f), a.Data?.displayName ?? "Specialist", _value);
+                GUI.Label(new Rect(c.x, row, c.width - 50f, 16f),
+                    $"{a.Data?.displayName ?? "Specialist"}  L{a.Level}", _value);
                 {
                     string tagLabel = a.IsIncapacitated ? "DOWN" : RosterStatus(a);
                     Color tagFill = a.IsIncapacitated ? Alarm
@@ -1308,7 +1309,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{ColonyLayout.CampusLabel(campus)} · Hire: {a.HireMin} MET min · Purse: {a.Credits:F0}", _micro);
+                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Hire {a.HireMin} MET · Purse {a.Credits:F0}", _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -1372,8 +1373,8 @@ namespace SolarMajesty
                 }
             }
             return posted <= 0
-                ? "Bounty escrowed from METALS. Heroes keep $."
-                : $"Posted {posted}  ·  claimed {claimed}  ·  heroes keep $";
+                ? "Bounty escrowed from MET. Heroes keep a purse; colony tithes."
+                : $"Posted {posted}  ·  claimed {claimed}  ·  heroes keep MET purse";
         }
 
         private static Color ActionTint(SpecialistAction action) => action switch
@@ -1420,7 +1421,7 @@ namespace SolarMajesty
                 Fill(hint, PanelBg);
                 Outline(hint, Hairline);
                 GUI.Label(new Rect(hint.x + 10f, hint.y, hint.width - 16f, hint.height),
-                    "Build Colony Commons first · dock via airlocks · HABs house colonists", _micro);
+                    "Dock airlocks onto Commons · HAB houses colonists · workshop fabricates robots", _micro);
                 return;
             }
 
@@ -1442,10 +1443,11 @@ namespace SolarMajesty
                 Fill(new Rect(row.x, row.y + 3f, 3f, 10f), ClassTint(cls));
                 if (GUI.Button(row, GUIContent.none, _rowOff))
                     _loop.SelectOnly(a);
-                GUI.Label(new Rect(row.x + 8f, row.y, 52f, 16f), ColonyStructure.ClassLabel(cls), _micro);
-                GUI.Label(new Rect(row.x + 62f, row.y, 50f, 16f), status, _body);
-                GUI.Label(new Rect(row.x + 114f, row.y, row.width - 114f, 16f),
-                    Truncate(a.FlavorLine, 16), _micro);
+                GUI.Label(new Rect(row.x + 8f, row.y, 70f, 16f),
+                    $"{ColonyStructure.ClassLabel(cls)} L{a.Level}", _micro);
+                GUI.Label(new Rect(row.x + 80f, row.y, 44f, 16f), status, _body);
+                GUI.Label(new Rect(row.x + 126f, row.y, row.width - 126f, 16f),
+                    Truncate(a.FlavorLine, 14), _micro);
                 y += 18f;
                 drawn++;
             }
@@ -1611,8 +1613,8 @@ namespace SolarMajesty
             {
                 float u = (mouse.x - disc.x) / disc.width;
                 float v = 1f - (mouse.y - disc.y) / disc.height;
-                var world = new Vector3(u * worldW, 0f, v * worldH);
-                _loop.GlanceAt(world, force: true);
+                var glanceWorld = new Vector3(u * worldW, 0f, v * worldH);
+                _loop.GlanceAt(glanceWorld, force: true);
                 e.Use();
             }
         }
@@ -1773,13 +1775,15 @@ namespace SolarMajesty
             }
             else
             {
+                int met = _loop.FieldReviveMet;
+                int ice = _loop.FieldReviveIce;
                 GUI.Label(new Rect(c.x, c.y + 32f, c.width, 36f),
-                    "FIELD REVIVE  40 MET  8 ICE  (120s)", _body);
+                    $"SCRAPYARD REVIVE  {met} MET  {ice} ICE  (120s)", _body);
                 GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
                     _loop.FieldReviveReadyIn > 0.5f
-                        ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Scrapped robots are not restored."
-                        : "Stalkers hold the plaza. Scrapped robots stay gone.", _muted);
-                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 200f, 28f), "FIELD REVIVE  ·  Y", _chipOn))
+                        ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Cost rises each revive."
+                        : "Paid from the workshop scrapyard. Cost rises each revive.", _muted);
+                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "SCRAPYARD REVIVE  ·  Y", _chipOn))
                     _loop.RetryParty();
             }
         }
@@ -1825,7 +1829,7 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f), "EARTH  →  LUNA  →  MARS  →  BELT  →  EUROPA", _wrap);
             GUI.Label(new Rect(c.x, c.y + 68f, c.width, 14f), ReplayRules.HudTag, _micro);
             GUI.Label(new Rect(c.x, c.y + 86f, c.width, 40f),
-                "Raise Colony Commons, post bounties, let greedy robots choose. Three gates: clear dens, sustain the colony, launch.",
+                "Colony Commons is down. Post bounties, let greedy robots choose. Three gates: clear dens, sustain the colony, launch.",
                 _wrap);
 
             if (_confirmNewGame)
@@ -1998,7 +2002,7 @@ namespace SolarMajesty
 
             string[] beats =
             {
-                "1/6  COMMONS — B, key 1. Raise Colony Commons on the orange claim.",
+                "1/6  COMMONS — Colony Commons is already on the claim.",
                 "2/6  Airlock — snap an Airlock Junction onto a Commons face socket.",
                 "3/6  HAB — dock housing onto that airlock. Humans live indoors only.",
                 "4/6  Workshop — dock Scout / Engineer / Defense. A robot fabricates when it finishes.",

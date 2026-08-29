@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.SpecialistData
   specialistClass: 2
   displayName: Defense Mech
-  description: Duty-bound. Cheap Clear Threat is fine; will not wander or tinker.
+  description: Aegis. Cheap Clear Threat is fine; will not wander or tinker.
   baseGreed: 0.22
   courage: 0.94
   workaholicBias: 0.48
@@ -26,5 +26,7 @@ MonoBehaviour:
   moveSpeed: 3
   workRate: 1.15
   maxEnergy: 100
-  upkeepPerMinute: []
+  upkeepPerMinute:
+  - resource: 3
+    amount: 2
   prefab: {fileID: 726628615724448344, guid: ab7709849b2a3411caa2a978cc5dc752, type: 3}

@@ -119,6 +119,7 @@ namespace SolarMajesty
         private float _taxTimer;
         private float _prodTimer;
         private float _growTimer;
+        private float _lifeSupportHold;
         private readonly ResourceManager _resources;
 
         public float TaxInterval { get; set; } = 24f;
@@ -193,8 +194,9 @@ namespace SolarMajesty
             {
                 _taxTimer += TaxInterval;
                 CollectTax();
-                TickLifeSupport();
             }
+
+            TickLifeSupport(dt);
 
             _growTimer -= dt;
             if (_growTimer <= 0f)
@@ -328,12 +330,24 @@ namespace SolarMajesty
             LastProductionLine = $"camps +{ice} ICE +{met} MET +{reg} REG";
         }
 
-        private void TickLifeSupport()
+        private void TickLifeSupport(float dt)
         {
             LastLifeSupportFail = false;
-            if (_resources == null) return;
-            if (_resources.Get(ResourceId.WaterIce) >= OverseerRules.IceDeathThreshold) return;
-            if (Population <= 0) return;
+            if (_resources == null || Population <= 0)
+            {
+                _lifeSupportHold = 0f;
+                return;
+            }
+
+            if (_resources.Get(ResourceId.WaterIce) >= OverseerRules.IceDeathThreshold)
+            {
+                _lifeSupportHold = 0f;
+                return;
+            }
+
+            _lifeSupportHold += dt;
+            if (_lifeSupportHold < OverseerRules.LifeSupportFailSeconds) return;
+            _lifeSupportHold = 0f;
             KillResidents(1);
             LastLifeSupportFail = true;
             if (!LifeSupportToastPending)

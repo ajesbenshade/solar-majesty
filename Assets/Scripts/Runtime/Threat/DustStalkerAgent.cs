@@ -51,6 +51,7 @@ namespace SolarMajesty
 
         public bool IsAlive => _health > 0f;
         public bool IsAggro => _aggro;
+        public bool IsRaiding => _raiding && IsAlive;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
         public FaunaKind Kind { get; private set; } = FaunaKind.Stalker;
         public string RoleLabel => string.IsNullOrEmpty(_roleNoun) ? Kind.ToString() : _roleNoun;
@@ -59,6 +60,8 @@ namespace SolarMajesty
             kind == FaunaKind.Mite || kind == FaunaKind.Leech ||
             kind == FaunaKind.Wisp || kind == FaunaKind.Tick ||
             kind == FaunaKind.Creeper || kind == FaunaKind.Hopper;
+
+        public static bool IsJunk(FaunaKind kind) => kind == FaunaKind.JunkBot;
 
         public static bool UsesDefendCounter(FaunaKind kind) =>
             kind == FaunaKind.Mite || kind == FaunaKind.Tick || kind == FaunaKind.Creeper;
@@ -209,7 +212,25 @@ namespace SolarMajesty
                     bobAmp = 0.18f;
                     bobSpeed = 5.1f;
                     _roleNoun = "HOPPER";
-                    _roleVerb = "HAB RAID";
+                    _roleVerb = "RAID";
+                    break;
+                case FaunaKind.JunkBot:
+                    gameObject.name = "JunkBot";
+                    stalkerColor = UnitPlaceholderFactory.JunkTint;
+                    maxHealth = 10f;
+                    _health = maxHealth;
+                    moveSpeed = 1.85f;
+                    wanderRadius = 6f;
+                    aggroPressure = 0.22f;
+                    idlePressure = 0.04f;
+                    aggroRange = 14f;
+                    defeatLinkRadius = 5f;
+                    biteDamagePerSecond = OverseerRules.JunkBotBiteDps;
+                    biteRange = 2.6f;
+                    bobAmp = 0.10f;
+                    bobSpeed = 4.4f;
+                    _roleNoun = "JUNK";
+                    _roleVerb = "JUNK";
                     break;
                 default:
                     gameObject.name = "DustStalker";
@@ -220,7 +241,9 @@ namespace SolarMajesty
             // Authored Blender scale lives on the visual child (AttachImportVisual).
             // Never flatten transform.localScale here — that squash was placeholder-only.
             _baseScale = transform.localScale;
-            if (_rend != null && !IndustrialArtDressing.HasArt(gameObject))
+            if (kind == FaunaKind.JunkBot && IndustrialArtDressing.HasArt(gameObject))
+                IndustrialArtDressing.SetTintOverlay(gameObject, stalkerColor);
+            else if (_rend != null && !IndustrialArtDressing.HasArt(gameObject))
                 SetColor(_rend, stalkerColor);
             if (_label != null)
             {
@@ -331,6 +354,11 @@ namespace SolarMajesty
                     if (_label != null) _label.color = new Color(0.62f, 0.82f, 0.32f);
                 }
             }
+            else if (Kind == FaunaKind.JunkBot)
+            {
+                stalkerColor = UnitPlaceholderFactory.JunkTint;
+                if (_label != null) _label.color = new Color(0.78f, 0.62f, 0.38f);
+            }
             else if (Kind == FaunaKind.Hopper)
             {
                 if (body.FaunaHopperTint.a > 0.05f)
@@ -339,21 +367,21 @@ namespace SolarMajesty
                 {
                     gameObject.name = "DustHopper";
                     _roleNoun = "DUST HOPPER";
-                    _roleVerb = "HAB RAID";
+                    _roleVerb = "RAID";
                     if (_label != null) _label.color = new Color(1f, 0.68f, 0.38f);
                 }
                 else if (body.Id == CelestialBodyId.Belt)
                 {
                     gameObject.name = "ShardHopper";
                     _roleNoun = "SHARD HOPPER";
-                    _roleVerb = "HAB RAID";
+                    _roleVerb = "RAID";
                     if (_label != null) _label.color = new Color(0.82f, 0.78f, 0.62f);
                 }
                 else
                 {
                     gameObject.name = "AshHopper";
                     _roleNoun = "ASH HOPPER";
-                    _roleVerb = "HAB RAID";
+                    _roleVerb = "RAID";
                     if (_label != null) _label.color = new Color(0.85f, 0.82f, 0.72f);
                 }
             }
@@ -421,6 +449,8 @@ namespace SolarMajesty
         private bool TickRole(float dt)
         {
             _raiding = false;
+            if (_loop != null && _loop.InFaunaGrace)
+                return false;
             switch (Kind)
             {
                 case FaunaKind.Mite:
@@ -432,8 +462,65 @@ namespace SolarMajesty
                     return TickRaidPower(dt);
                 case FaunaKind.Hopper:
                     return TickRaidHabitat(dt);
+                case FaunaKind.JunkBot:
+                    return TickJunkHarass(dt);
                 default: return TickRaidVillage(dt);
             }
+        }
+
+        /// <summary>
+        /// Scrapyard ghost: chase nearby mechs, nibble, steal a little MET.
+        /// Never siphons PWR, never collapses housing.
+        /// </summary>
+        private bool TickJunkHarass(float dt)
+        {
+            if (_loop == null) return false;
+            var prey = NearestLivingMech(22f);
+            if (prey == null) return false;
+
+            Vector3 dest = prey.transform.position;
+            dest.y = transform.position.y;
+            float dist = Vector3.Distance(Flat(transform.position), Flat(dest));
+            _aggro = true;
+            _raiding = false;
+            _threat?.Report(_sourceId, aggroPressure);
+            if (dist > biteRange)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, dest, moveSpeed * 1.15f * dt);
+                return true;
+            }
+
+            prey.ApplyDamage(biteDamagePerSecond * dt);
+            _stealTimer += dt;
+            if (_stealTimer >= OverseerRules.JunkBotStealSeconds)
+            {
+                _stealTimer = 0f;
+                int stole = prey.StealCredits(OverseerRules.JunkBotStealMet);
+                if (stole <= 0)
+                    _loop.Resources?.SpendUpTo(ResourceId.Metals, OverseerRules.JunkBotStealMet);
+            }
+            return true;
+        }
+
+        private SpecialistAgent NearestLivingMech(float range)
+        {
+            var agents = _loop != null ? _loop.Agents : null;
+            if (agents == null) return null;
+            SpecialistAgent best = null;
+            float bestD = range;
+            Vector3 me = Flat(transform.position);
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var a = agents[i];
+                if (a == null || a.IsIncapacitated || !a.IsAlive) continue;
+                float d = Vector3.Distance(me, Flat(a.transform.position));
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = a;
+                }
+            }
+            return best;
         }
 
         /// <summary>Village HABs are the outer ring — raid those before the main campus.</summary>
@@ -569,7 +656,9 @@ namespace SolarMajesty
 
         private void DrainPower()
         {
-            _loop?.Resources?.SpendUpTo(ResourceId.Power, 1);
+            var node = _loop?.Village?.NearestPower(transform.position, 4f);
+            if (node == null || !node.IsAlive) return;
+            node.TrySiphonStockpile(_loop.Resources);
         }
 
         private void StealLifeSupport()
@@ -701,6 +790,8 @@ namespace SolarMajesty
                 {
                     if (_retreating)
                         _label.text = "SCATTER";
+                    else if (Kind == FaunaKind.JunkBot)
+                        _label.text = _roleVerb ?? "JUNK";
                     else if (IsCampusPest(Kind))
                         _label.text = _raiding ? (_roleVerb ?? "RAID") : (_roleNoun ?? "PEST");
                     else
@@ -742,8 +833,10 @@ namespace SolarMajesty
                 FaunaKind.Tick => string.IsNullOrEmpty(_roleNoun) ? "Rock Tick" : _roleNoun,
                 FaunaKind.Creeper => string.IsNullOrEmpty(_roleNoun) ? "Soil Creeper" : _roleNoun,
                 FaunaKind.Hopper => string.IsNullOrEmpty(_roleNoun) ? "Ash Hopper" : _roleNoun,
+                FaunaKind.JunkBot => "Junk Bot",
                 _ => "Dust Stalker"
             };
+            _loop?.OnFaunaKilled(Kind, transform.position);
             Debug.Log($"[Threat] {who} defeated — pressure contribution removed.");
             Destroy(gameObject);
         }
@@ -815,6 +908,7 @@ namespace SolarMajesty
             switch (kind)
             {
                 case FaunaKind.Hopper: return 1.85f;
+                case FaunaKind.JunkBot: return 0.95f;
                 case FaunaKind.Stalker: return 1.85f;
                 case FaunaKind.Wisp: return 1.45f;
                 case FaunaKind.Creeper: return 1.15f;
@@ -835,6 +929,7 @@ namespace SolarMajesty
                 case FaunaKind.Tick: return new Color(0.88f, 0.68f, 0.38f);
                 case FaunaKind.Creeper: return new Color(0.62f, 0.82f, 0.32f);
                 case FaunaKind.Hopper: return new Color(0.85f, 0.82f, 0.68f);
+                case FaunaKind.JunkBot: return new Color(0.78f, 0.62f, 0.38f);
                 default: return new Color(1f, 0.45f, 0.4f);
             }
         }

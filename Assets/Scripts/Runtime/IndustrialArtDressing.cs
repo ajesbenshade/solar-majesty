@@ -116,10 +116,12 @@ namespace SolarMajesty
             // old name mapped the whole sleeve to solid orange.
             if (n.StartsWith("DockSleeve") || n.StartsWith("Airlock_") ||
                 n.StartsWith("Dress_TubeArm") || n.StartsWith("CommonsStub") ||
-                n.StartsWith("CommonsPort") ||
+                n.StartsWith("CommonsPort") || n.StartsWith("HabPort") ||
+                n.StartsWith("LabPort") || n.StartsWith("PwrPort") ||
                 n.Contains("AirlockHub"))
                 return true;
-            if (n.Contains("GroundPlane") || n.Contains("HorizonSkirt") || n.Contains("Footprint"))
+            if (n.Contains("GroundPlane") || n.Contains("HorizonSkirt") ||
+                n.Contains("HorizonDeepFloor") || n.Contains("Footprint"))
                 return true;
             Transform t = rend.transform;
             while (t != null)

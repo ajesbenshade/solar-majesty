@@ -72,6 +72,7 @@ namespace SolarMajesty
                 case FaunaKind.Tick: return LoadTick();
                 case FaunaKind.Creeper: return LoadCreeper();
                 case FaunaKind.Hopper: return LoadHopper();
+                case FaunaKind.JunkBot: return LoadMite();
                 default: return LoadStalker();
             }
         }

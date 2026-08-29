@@ -508,6 +508,131 @@ namespace SolarMajesty.EditorTools
             Object.DestroyImmediate(sunGo);
             Object.DestroyImmediate(camGo);
         }
+        private const string PackedStillRel = "Docs/Roadmap/SM_MarsCampaign_PackedCampusStill.png";
+
+        /// <summary>
+        /// Edit-mode Camera.Render of a packed Mars campus: Commons + airlock + HAB + pad + solar + extractors.
+        /// Capture density for the visual target. Does not flip spawnShowcaseColony.
+        /// Not a Game-tab HUD still. CLI: -executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CapturePackedMarsStill
+        /// </summary>
+        [MenuItem("Solar Majesty/Capture Packed Mars Campus Still")]
+        public static void CapturePackedMarsStill()
+        {
+            string abs = Path.GetFullPath(Path.Combine(Application.dataPath, "..", PackedStillRel));
+            Directory.CreateDirectory(Path.GetDirectoryName(abs));
+
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            var mars = CelestialBodyCatalog.Get(CelestialBodyId.Mars);
+            ModularBuildingFactory.BindBody(mars);
+            CampusDressing.Reset();
+
+            var root = new GameObject("CaptureRoot");
+            var gridGo = new GameObject("IsoGrid");
+            gridGo.transform.SetParent(root.transform);
+            var grid = gridGo.AddComponent<IsoGrid>();
+            grid.Resize(ColonyLayout.MapCells, ColonyLayout.MapCells);
+
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            ground.name = "GroundPlane";
+            ground.transform.SetParent(root.transform);
+            float worldW = grid.WorldWidth;
+            float worldH = grid.WorldHeight;
+            ground.transform.position = new Vector3(worldW * 0.5f, 0f, worldH * 0.5f);
+            ground.transform.localScale = new Vector3(worldW / 10f, 1f, worldH / 10f);
+
+            var sunGo = new GameObject("Directional Light");
+            var sun = sunGo.AddComponent<Light>();
+            sun.type = LightType.Directional;
+            sun.shadows = LightShadows.Soft;
+
+            var camGo = new GameObject("Main Camera");
+            camGo.tag = "MainCamera";
+            var cam = camGo.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.orthographicSize = 10f;
+            cam.nearClipPlane = 0.3f;
+            cam.farClipPlane = 900f;
+            cam.allowHDR = true;
+            Vector3 focus = ColonyLayout.CampusOrigin + new Vector3(0f, 0f, 4f);
+            camGo.transform.position = focus + new Vector3(-22f, 26f, -22f);
+            camGo.transform.rotation = Quaternion.Euler(30f, 45f, 0f);
+
+            DemoAtmosphere.Apply(cam, root.transform, mars);
+            PlanetaryMapDressing.Apply(root.transform, grid, mars);
+
+            Vector3 o = ColonyLayout.CampusOrigin;
+            var buildings = new GameObject("Buildings");
+            buildings.transform.SetParent(root.transform);
+            var commons = ModularBuildingFactory.Spawn(BuildingCategory.Commons, o, buildings.transform);
+            var airlock = ModularBuildingFactory.Spawn(BuildingCategory.Utility, o + new Vector3(0f, 0f, 6f), buildings.transform);
+            var hab = ModularBuildingFactory.Spawn(BuildingCategory.Habitat, o + new Vector3(0f, 0f, 10.5f), buildings.transform);
+            var pad = ModularBuildingFactory.Spawn(BuildingCategory.LandingPad, o + new Vector3(14f, 0f, 2f), buildings.transform);
+            var pwr = ModularBuildingFactory.Spawn(BuildingCategory.Power, o + new Vector3(-12f, 0f, 2f), buildings.transform);
+            var farm = ModularBuildingFactory.Spawn(BuildingCategory.Farm, o + new Vector3(14f, 0f, 14f), buildings.transform);
+            var camp = ModularBuildingFactory.Spawn(BuildingCategory.RegolithCamp, o + new Vector3(-12f, 0f, 14f), buildings.transform);
+
+            void Dress(BuildingCategory cat, GameObject go)
+            {
+                if (go == null) return;
+                var data = ScriptableObject.CreateInstance<BuildingData>();
+                data.category = cat;
+                CampusDressing.DressPlaced(data, go, mars);
+                Object.DestroyImmediate(data);
+            }
+            Dress(BuildingCategory.Commons, commons);
+            Dress(BuildingCategory.Habitat, hab);
+            Dress(BuildingCategory.LandingPad, pad);
+            Dress(BuildingCategory.Power, pwr);
+            Dress(BuildingCategory.Farm, farm);
+            Dress(BuildingCategory.RegolithCamp, camp);
+
+            int w = 1920;
+            int h = 1080;
+            var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32)
+            {
+                antiAliasing = 1,
+                useMipMap = false
+            };
+            cam.targetTexture = rt;
+            cam.Render();
+            RenderTexture.active = rt;
+            var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            tex.Apply();
+            cam.targetTexture = null;
+            RenderTexture.active = null;
+
+            Color32[] px = tex.GetPixels32();
+            long sum = 0;
+            int samples = 0;
+            for (int i = 0; i < px.Length; i += 32)
+            {
+                sum += px[i].r + px[i].g + px[i].b;
+                samples++;
+            }
+            float avg = samples > 0 ? sum / (float)(samples * 3) : 0f;
+            bool live = avg >= 12f;
+            Debug.Log("[Capture] packed Mars still avgLum=" + avg.ToString("0.0") +
+                      " pad=" + (pad != null) + " pwr=" + (pwr != null) +
+                      " farm=" + (farm != null) + " camp=" + (camp != null) +
+                      (live ? " CAPTURE_OK" : " CAPTURE_BLACK"));
+
+            if (live)
+            {
+                File.WriteAllBytes(abs, tex.EncodeToPNG());
+                Debug.Log("[Capture] wrote " + abs);
+            }
+            else
+                Debug.LogWarning("[Capture] refused to write a black frame to " + PackedStillRel);
+
+            Object.DestroyImmediate(tex);
+            rt.Release();
+            Object.DestroyImmediate(rt);
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(sunGo);
+            Object.DestroyImmediate(camGo);
+        }
     }
 }
 #endif

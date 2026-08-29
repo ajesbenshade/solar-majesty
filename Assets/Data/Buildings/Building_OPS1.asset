@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.BuildingData
   displayName: OPS Drop-off
   category: 3
-  description: does not grow MET 
+  description: does not grow MET
   footprintWidth: 4
   footprintHeight: 4
   buildCost:
@@ -24,7 +24,8 @@ MonoBehaviour:
     amount: 6
   buildTimeSeconds: 14
   powerDraw: 2
+  powerGen: 0
   housingSlots: 0
   attractionWeight: 1
   preferredOccupants: 
-  prefab: {fileID: 919132149155446097, guid: cdb1eb2d14dd846a2b7633d0f9a3bce7, type: 3}
+  prefab: {fileID: 919132149155446097, guid: f4b6b18bd672a4abaabe774c21c264c9, type: 3}
