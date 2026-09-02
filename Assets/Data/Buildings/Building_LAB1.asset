@@ -15,8 +15,8 @@ MonoBehaviour:
   displayName: Lab Module (LAB-1)
   category: 6
   description: 
-  footprintWidth: 3
-  footprintHeight: 2
+  footprintWidth: 4
+  footprintHeight: 4
   buildCost:
   - resource: 2
     amount: 55
@@ -24,7 +24,8 @@ MonoBehaviour:
     amount: 10
   buildTimeSeconds: 14
   powerDraw: 2
+  powerGen: 0
   housingSlots: 0
   attractionWeight: 1
   preferredOccupants: 
-  prefab: {fileID: 919132149155446097, guid: 5cd764b29e9f4efa9ea8645374996021, type: 3}
+  prefab: {fileID: 919132149155446097, guid: 083b47aa368e40ab9c08fcfa882d4926, type: 3}

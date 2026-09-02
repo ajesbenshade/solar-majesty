@@ -5,7 +5,7 @@
 
 Phase 4 pushed the Mars-campaign mockup into engine: atmosphere, square-dock tube campus, hero kits / FBX, Imagine-sheet units, carbon HUD chrome. Core systems were not rewritten: `SpecialistBrain` scoring is unchanged; the player still never path-commands units. Colony Commons is the civic name (never Palace).
 
-Six real stills now exist. The latest Game-tab **campus** shot (`SM_MarsCampaign_PlayModeCampusStill4.png`) is the follow-up after the post-v3 Play Mode pass (hidden unused stubs, larger square hub, snap zoom 7, no fauna zoom-out). It still does **not** stamp exit. Code after v4 is not in that PNG. Leftovers below are visual-target gaps, not Phase 5 ship polish.
+Nine real stills now exist. The latest Game-tab shot is **`SM_MarsCampaign_PlayModeCampusStill6.png`** — Mars Sol 1 HUD, empty start, pad in the corner, not a packed campus. `SM_MarsCampaign_PlayModeCampusStill5.png` also exists (Commons + HAB Game-tab). Packed editor still is **`SM_MarsCampaign_PackedCampusStill.png`** (`Camera.Render`, not Game-tab HUD). None of these stamp exit. Leftovers below are visual-target gaps, not Phase 5 ship polish.
 
 ---
 
@@ -19,8 +19,11 @@ Six real stills now exist. The latest Game-tab **campus** shot (`SM_MarsCampaign
 | **Game-tab Play Mode (campus v2)** | [`SM_MarsCampaign_PlayModeCampusStill2.png`](SM_MarsCampaign_PlayModeCampusStill2.png) — **real PNG**, human Game-tab capture (1024×419). Follow-up after re-entering Play Mode for white hub / joint tubes / white hulls / closer camera. Tutorial **4/5 Workshop**. `spawnShowcaseColony` stayed false. **Not** a mockup match. |
 | **Game-tab Play Mode (campus v3)** | [`SM_MarsCampaign_PlayModeCampusStill3.png`](SM_MarsCampaign_PlayModeCampusStill3.png) — **real PNG**, human Game-tab capture (1024×418). After re-entering Play Mode for the post-v2 pass. Tutorial **4/6 Workshop**. **POP 3/16**, **BEDS 3/3**. `spawnShowcaseColony` stayed false. **Not** a mockup match. |
 | **Game-tab Play Mode (campus v4)** | [`SM_MarsCampaign_PlayModeCampusStill4.png`](SM_MarsCampaign_PlayModeCampusStill4.png) — **real PNG**, human Game-tab capture (1024×421). After re-entering Play Mode for white square hub / tubes on docked faces only / closer camera that fauna does not yank out. Tutorial **4/5 Workshop**. **POP 3/16**, **BEDS 3/3**. `spawnShowcaseColony` stayed false. **Not** a mockup match. |
+| **Game-tab Play Mode (campus v5)** | [`SM_MarsCampaign_PlayModeCampusStill5.png`](SM_MarsCampaign_PlayModeCampusStill5.png) — **real PNG**, human Game-tab capture. Commons dome + HAB + airlock on Mars Sol 1. Tutorial **4/6 Workshop**. **POP 2/16**, **BEDS 2/3**. Unused Commons cardinal still shows an orange port ring in this PNG. `spawnShowcaseColony` stayed false. **Not** a mockup match. |
+| **Game-tab Play Mode (latest — empty Sol 1)** | [`SM_MarsCampaign_PlayModeCampusStill6.png`](SM_MarsCampaign_PlayModeCampusStill6.png) — **real PNG**, human Game-tab capture. **Latest Game-tab still.** Mars · Sol 1 · CAMPAIGN. **POP 0/16**, **BEDS 0/0**, tutorial **1/6 Commons**. Pad in the corner; not a packed campus. HUD chips **REG / ICE / MET / PWR / BEDS**. Arrival log: Dust wisps on Power, Dust creepers on the farm. Clear dens 10 left. `spawnShowcaseColony` stayed false. **Not** a campus sign-off. |
+| **Editor Camera.Render (packed campus)** | [`SM_MarsCampaign_PackedCampusStill.png`](SM_MarsCampaign_PackedCampusStill.png) — **real PNG**, `DemoContentBuilder.CapturePackedMarsStill` (`Camera.Render`, **not** Game-tab HUD). Packed Commons + HAB + pad/Starship + extractors. No IMGUI HUD. **Not** a Game-tab still. |
 
-Do not treat the editor PNG, the empty Play Mode PNG, or campus v1–v3 as the Phase 4 campus sign-off shot. Campus v4 **is** the requested post-v3 still; it still fails the mockup bar (see below). Code after v4 is not in that PNG.
+Do not treat the editor PNG, the empty Play Mode PNG, campus v1–v5, **still6**, or the packed `Camera.Render` PNG as the Phase 4 campus sign-off shot. Still6 is the latest Game-tab still and it is an empty Sol 1 drop, not a mockup campus. Exit stays blocked.
 
 ---
 
@@ -71,7 +74,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 | Week 3 | Junction turrets; PWR-1 + solar-field landmark; Defense Battery bunker (not Commons) |
 | Week 4 | Commons rename; guild/lab/wonder dress; all ten specialists + seven fauna sheet-matched; Terraformer dozer |
 | Week 4 continued | Earth New Game meadow + cobalt sky; Workshop / Inn FBX; remaining Imagine JPGs; HAB/Commons/LAB/Power/pad sheet-match; **CMD-1 Guild / OPS-1 Mining**; airlock panel lines; HAB/LAB/Commons/CMD/OPS **panel bevels**; **dock sockets flush** at the Lego face |
-| This review | Editor Mars still + empty-Sol-1 Game-tab still + campus v1 + v2 + v3 + **campus v4** + Play Mode fixes aimed at v4 (see below). Gameplay remains Overseer-only |
+| This review | Editor Mars still + empty-Sol-1 Game-tab still + campus v1–v5 + **still6** (latest Game-tab: empty Sol 1, pad in corner) + packed editor `Camera.Render` still. Gameplay remains Overseer-only. **Not exited.** |
 
 **Play Mode fixes after campus v1 (visible in v2 only as geodesic dome + HUD; tubes/pads/hulls still failed)**
 - Stop overlaying greybox `SM_ModularTubeConnector` on the paneled airlock hub
@@ -133,7 +136,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 - Flat albedo + scatter vs mockup crater **heightmap** (Phase 4 non-goal)
 
 **Not the PNG (leftovers even after the post-v4 Play Mode pass)**
-- **Fresh Game-tab still required** — this pass is not in campus v4
+- Latest Game-tab is still6 (empty Sol 1), not a mockup campus close-up. Still5/packed exist; exit stays blocked.
 - Tracked Defense Guardian vs the mockup’s bulky **biped walker**
 - Construction cranes are runtime dressing, not authored FBX
 - Status pips / aprons / dust-devils are primitive dressing
@@ -144,7 +147,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Fresh Game-tab still** after this pass (smaller paneled hub, no unused CommonsStub, no stacked orange collars, snap zoom 5.5 that actually lands). Campus v4 is the before-shot.
+- **Campus Game-tab still vs mockup** — latest Game-tab is still6 (empty Sol 1, pad in the corner), not a packed campus close-up. Still5 has Commons but unused orange ports in that PNG. Packed still is editor `Camera.Render`, not HUD.
 - Mockup **density**: pad + Starship, solar field, extractors, units in the same frame
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; tubes are dressing)
@@ -164,4 +167,4 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 
 ## Ready for Phase 5
 
-**No.** Campus v4 is still the latest Game-tab still and it fails the mockup (orange box airlock, unused orange stub, dirt vista). Code after v4 is not in that PNG. Remaining work is still visual-target, not ship polish. Next work stays [`05_PHASE_4_VISUAL_TARGET.md`](05_PHASE_4_VISUAL_TARGET.md). Do not start Phase 5 as the main slice. After a true exit: [`06_PHASE_5_PRODUCTION_VALUES_SHIP.md`](06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
+**No.** Latest Game-tab still is `SM_MarsCampaign_PlayModeCampusStill6.png` (empty Mars Sol 1, pad in the corner — not a packed campus). Still5 exists; packed editor still is `SM_MarsCampaign_PackedCampusStill.png` (`Camera.Render`, no HUD). None of these stamp exit. Remaining work is still visual-target, not ship polish. Next work stays [`05_PHASE_4_VISUAL_TARGET.md`](05_PHASE_4_VISUAL_TARGET.md). Do not start Phase 5 as the main slice. After a true exit: [`06_PHASE_5_PRODUCTION_VALUES_SHIP.md`](06_PHASE_5_PRODUCTION_VALUES_SHIP.md).

@@ -52,7 +52,9 @@ namespace SolarMajesty
         Wisp = 3,
         Tick = 4,
         Creeper = 5,
-        Hopper = 6
+        Hopper = 6,
+        /// <summary>Scrapyard ghost. Nibbles mechs / steals MET. Clear Threat, not HAB raid.</summary>
+        JunkBot = 7
     }
 
     public enum BuildingCategory

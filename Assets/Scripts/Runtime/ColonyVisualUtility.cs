@@ -16,9 +16,12 @@ namespace SolarMajesty
         /// <summary>
         /// Shared Lego dock axis. Module sleeves, hull ports, and airlock arms must
         /// share this height and bore or the isometric view reads as a miss.
+        /// White tube hits the orange collar at this Y / diameter — no step, no gap.
         /// </summary>
         public const float DockY = 1.12f;
         public const float DockBore = 1.42f;
+        /// <summary>Orange ring sits this far outside the hull so the tube meets it flush.</summary>
+        public const float DockCollarOut = 0.03f;
 
         public static void EnsureUrpMaterials(GameObject root)
         {
@@ -75,6 +78,47 @@ namespace SolarMajesty
             float dy = groundY - b.min.y;
             if (Mathf.Abs(dy) < 0.001f) return;
             root.transform.position += new Vector3(0f, dy, 0f);
+        }
+
+        /// <summary>
+        /// Rotate so the thinnest world AABB axis becomes up — seats Copilot rocks with a
+        /// flat cut face down instead of standing that face vertical.
+        /// </summary>
+        public static void SeatFlatOnGround(GameObject root)
+        {
+            if (root == null) return;
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                if (!TryWorldBounds(root, out Bounds b)) return;
+                Vector3 e = b.size;
+                // Already sitting flat (height is the thin axis).
+                if (e.y <= e.x * 1.08f && e.y <= e.z * 1.08f)
+                    return;
+
+                if (e.x <= e.z)
+                    root.transform.rotation = Quaternion.Euler(0f, 0f, 90f) * root.transform.rotation;
+                else
+                    root.transform.rotation = Quaternion.Euler(90f, 0f, 0f) * root.transform.rotation;
+            }
+        }
+
+        private static bool TryWorldBounds(GameObject root, out Bounds b)
+        {
+            b = default;
+            var rends = root.GetComponentsInChildren<Renderer>();
+            if (rends == null || rends.Length == 0) return false;
+            bool any = false;
+            for (int i = 0; i < rends.Length; i++)
+            {
+                if (rends[i] == null || rends[i] is ParticleSystemRenderer) continue;
+                if (!any)
+                {
+                    b = rends[i].bounds;
+                    any = true;
+                }
+                else b.Encapsulate(rends[i].bounds);
+            }
+            return any;
         }
 
         /// <summary>
@@ -188,7 +232,7 @@ namespace SolarMajesty
             const float tall = 1.70f;
             float half = side * 0.5f;
 
-            DressCube(parent, "Dress_HubPlinth", new Vector3(0f, 0.08f, 0f),
+            DressCube(parent, "Dress_HubPlinth", new Vector3(0f, 0.07f, 0f),
                 new Vector3(side + 0.22f, 0.14f, side + 0.22f), HubCarbon);
             DressCube(parent, "Dress_HubSkirt", new Vector3(0f, 0.18f, 0f),
                 new Vector3(side + 0.08f, 0.07f, side + 0.08f), HubGraphite);
@@ -245,7 +289,7 @@ namespace SolarMajesty
             {
                 bool ns = Mathf.Abs(faces[i].z) >= Mathf.Abs(faces[i].x);
                 Vector3 p = faces[i];
-                Vector3 door = ns ? new Vector3(0.58f, 0.68f, 0.04f) : new Vector3(0.04f, 0.68f, 0.58f);
+                Vector3 door = ns ? new Vector3(0.92f, 0.92f, 0.04f) : new Vector3(0.04f, 0.92f, 0.92f);
                 Vector3 hSeam = ns ? new Vector3(side * 0.78f, 0.035f, 0.05f) : new Vector3(0.05f, 0.035f, side * 0.78f);
                 Vector3 vSeam = ns ? new Vector3(0.035f, tall * 0.78f, 0.05f) : new Vector3(0.05f, tall * 0.78f, 0.035f);
                 DressCube(parent, "Dress_HubDoor_" + i, new Vector3(p.x * 1.01f, DockY, p.z * 1.01f), door, HubCarbon);
@@ -310,6 +354,45 @@ namespace SolarMajesty
 
             if (!startActive)
                 group.SetActive(false);
+        }
+
+        /// <summary>
+        /// Orange collar + graphite well on a hull face at DockY / DockBore.
+        /// Group name is the toggle prefix (HabPort_N, CommonsPort_E, …).
+        /// </summary>
+        public static GameObject PlaceHullPort(
+            Transform parent, string name, Vector3 outward, float hullDist, bool startActive = true)
+        {
+            Vector3 dir = outward.normalized;
+            Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
+            Vector3 at = dir * hullDist + new Vector3(0f, DockY, 0f);
+
+            var group = new GameObject(name);
+            group.transform.SetParent(parent, false);
+            group.transform.localPosition = Vector3.zero;
+            group.transform.localRotation = Quaternion.identity;
+
+            var well = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            well.name = name + "_Well";
+            well.transform.SetParent(group.transform, false);
+            well.transform.localPosition = at - dir * 0.04f;
+            well.transform.localRotation = rot;
+            well.transform.localScale = new Vector3(DockBore * 0.92f, 0.07f, DockBore * 0.92f);
+            Object.Destroy(well.GetComponent<Collider>());
+            TintPrimitive(well, HubGraphite);
+
+            var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            ring.name = name + "_Ring";
+            ring.transform.SetParent(group.transform, false);
+            ring.transform.localPosition = at + dir * DockCollarOut;
+            ring.transform.localRotation = rot;
+            ring.transform.localScale = new Vector3(DockBore * 1.18f, 0.045f, DockBore * 1.18f);
+            Object.Destroy(ring.GetComponent<Collider>());
+            TintPrimitive(ring, HubOrange);
+
+            if (!startActive)
+                group.SetActive(false);
+            return group;
         }
 
         private static void DressCube(Transform parent, string name, Vector3 pos, Vector3 scale, Color color)

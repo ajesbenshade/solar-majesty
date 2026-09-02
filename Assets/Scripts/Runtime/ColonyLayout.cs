@@ -8,14 +8,22 @@ namespace SolarMajesty
     /// </summary>
     public static class ColonyLayout
     {
-        /// <summary>World-space campus A center (ground).</summary>
-        public static readonly Vector3 CampusOrigin = new Vector3(24f, 0f, 22f);
-
-        /// <summary>World-space campus B center (NE outpost).</summary>
-        public static readonly Vector3 CampusBOrigin = new Vector3(54f, 0f, 48f);
-
         /// <summary>Must match IsoGrid default so Lego docks and visuals share one meter grid.</summary>
         public const float DefaultCellSize = 1.5f;
+
+        /// <summary>Original sandbox was 64 cells (96 m). 256 cells at 1.5 m = 384 m → 16× area.</summary>
+        public const int MapCells = 256;
+
+        /// <summary>
+        /// World-space campus A center (ground). Map is MapCells × cellSize (384 m);
+        /// the drop sits at the geometric center so the camera is not parked on a corner.
+        /// </summary>
+        public static readonly Vector3 CampusOrigin = new Vector3(
+            MapCells * DefaultCellSize * 0.5f, 0f, MapCells * DefaultCellSize * 0.5f);
+
+        /// <summary>World-space campus B center (NE outpost, same offset as the old 24/54 pair).</summary>
+        public static readonly Vector3 CampusBOrigin = new Vector3(
+            CampusOrigin.x + 30f, 0f, CampusOrigin.z + 26f);
 
         /// <summary>Legacy uniform mesh scale — visuals now fit footprints instead.</summary>
         public const float ModuleScale = 0.36f;
@@ -96,17 +104,13 @@ namespace SolarMajesty
 
         public static Vector3 GroundCenter => (CampusOrigin + CampusBOrigin) * 0.5f;
 
-        /// <summary>Original sandbox was 64 cells (96 m). 256 cells at 1.5 m = 384 m → 16× area.</summary>
-        public const int MapCells = 256;
-
         public const float CameraOrthoSize = 16f;
 
         /// <summary>
-        /// Tight iso after Commons/HAB so the white square hub fills a short Game tab.
-        /// Empty drop stays at CameraOrthoSize 16. Wide Game-tab aspect still shows
-        /// dirt at the sides — 5.5 is the closest that keeps HAB + Commons in frame.
+        /// Iso on Commons plus room to place pad/solar/airlock. Empty-drop ortho 16 is
+        /// only the pre-Commons fallback — first drop and Continue snap here, never 16.
         /// </summary>
-        public const float CampusOrthoSize = 5.5f;
+        public const float CampusOrthoSize = 10f;
 
         public static float PlayOrtho(bool campusPlaced) =>
             campusPlaced ? CampusOrthoSize : CameraOrthoSize;

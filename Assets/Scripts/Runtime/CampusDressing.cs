@@ -9,7 +9,8 @@ namespace SolarMajesty
     /// Junction turrets sit on airlock hubs (ColonyVisualUtility).
     /// Airlock hubs are panel-lined square primitives; docks stay Lego.
     /// Round tube cladding spans hub → module hull on a shared DockY / DockBore.
-    /// RefreshTubes hides every stub first, then enables docked faces only.
+    /// RefreshTubes hides every stub and hull port first, then enables docked faces only
+    /// (white tube + one orange collar). Unused Commons / HAB / LAB / PWR sockets stay clean.
     /// Live dock sleeves start off so FindPieceGo misses cannot leave orange stubs showing.
     /// </summary>
     public static class CampusDressing
@@ -214,12 +215,12 @@ namespace SolarMajesty
                 SetPrefixActive(go.transform, "DockSleeve_W", west);
                 SetPrefixActive(go.transform, "DockSleeve_N", north);
                 SetPrefixActive(go.transform, "DockSleeve_S", south);
-                // CommonsStub and CommonsPort stay off. The airlock arm carries the
-                // single orange collar; unused Commons rings were the v4 orange stub.
-                SetPrefixActive(go.transform, "HabDockAccent_1", !east);
-                SetPrefixActive(go.transform, "HabRing_1", !east);
-                SetPrefixActive(go.transform, "HabDockAccent_-1", !west);
-                SetPrefixActive(go.transform, "HabRing_-1", !west);
+                // Hull ports + DockSleeve: white tube hits the orange collar on docked
+                // faces only. Unused Commons / HAB / LAB / PWR sockets stay hidden.
+                SetDockPorts(go.transform, "CommonsPort", north, east, south, west);
+                SetDockPorts(go.transform, "HabPort", north, east, south, west);
+                SetDockPorts(go.transform, "LabPort", north, east, south, west);
+                SetDockPorts(go.transform, "PwrPort", north, east, south, west);
             }
 
             for (int a = 0; a < pieces.Count; a++)
@@ -268,7 +269,9 @@ namespace SolarMajesty
                 if (t == null || t == parent) continue;
                 string n = t.name;
                 if (n.StartsWith("Dress_TubeArm") || n.StartsWith("DockSleeve") ||
-                    n.StartsWith("CommonsStub") || n.StartsWith("CommonsPort"))
+                    n.StartsWith("CommonsStub") || n.StartsWith("CommonsPort") ||
+                    n.StartsWith("HabPort") || n.StartsWith("LabPort") ||
+                    n.StartsWith("PwrPort"))
                     t.gameObject.SetActive(false);
             }
         }
@@ -308,6 +311,14 @@ namespace SolarMajesty
                 }
             }
             return best;
+        }
+
+        private static void SetDockPorts(Transform root, string prefix, bool north, bool east, bool south, bool west)
+        {
+            SetPrefixActive(root, prefix + "_N", north);
+            SetPrefixActive(root, prefix + "_E", east);
+            SetPrefixActive(root, prefix + "_S", south);
+            SetPrefixActive(root, prefix + "_W", west);
         }
 
         private static void SetPrefixActive(Transform root, string prefix, bool on)

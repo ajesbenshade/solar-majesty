@@ -6,7 +6,8 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Compact per-body campus blob for the continue slot (pieces + build progress).
-    /// Not a full world snapshot — flags, fauna, and specialist HP are not stored.
+    /// Not a full world snapshot — flags and fauna are not stored.
+    /// Specialist level / XP / purse / revive count live in SpecialistRoster.
     /// BuildingCategory is stored as int (Commons = 15; formerly named Palace).
     /// </summary>
     public struct CampusSlot

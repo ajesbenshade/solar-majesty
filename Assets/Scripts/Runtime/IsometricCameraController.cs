@@ -3,14 +3,18 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Orthographic isometric pan/zoom. Presentation only — never commands specialists.
+    /// Orthographic isometric pan/zoom/orbit. Presentation only — never commands specialists.
     /// Suggested camera rotation: (30, 45, 0).
-    /// WASD pans. Q zooms out, E zooms in. Mouse does not pan or zoom.
+    /// WASD pans. Q zooms out, E zooms in. Wheel zooms. MMB drag orbits yaw (and a little pitch).
+    /// LMB is world click. RMB is flag-cancel. Mouse does not pan.
     /// </summary>
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Camera))]
     public class IsometricCameraController : MonoBehaviour
     {
+        /// <summary>Shared with horizon floor sizing — keep in sync with serialized maxZoom default.</summary>
+        public const float MaxOrthoSize = 52f;
+
         [Header("Pan")]
         [SerializeField] private float panSpeed = 36f;
         [SerializeField] private float panSmooth = 12f;
@@ -20,8 +24,15 @@ namespace SolarMajesty
         [Header("Zoom")]
         [SerializeField] private float zoomSpeed = 14f;
         [SerializeField] private float minZoom = 4.5f;
-        [SerializeField] private float maxZoom = 52f;
+        [SerializeField] private float maxZoom = MaxOrthoSize;
         [SerializeField] private float zoomSmooth = 10f;
+        [SerializeField] private float wheelZoomScale = 18f;
+
+        [Header("Orbit (MMB)")]
+        [SerializeField] private float yawSensitivity = 0.22f;
+        [SerializeField] private float pitchSensitivity = 0.12f;
+        [SerializeField] private float minPitch = 22f;
+        [SerializeField] private float maxPitch = 42f;
 
         private const float EdgeMargin = 6f;
         private const float MaxShake = 1.4f;
@@ -34,14 +45,19 @@ namespace SolarMajesty
         private float _shake;
         private float _targetZoom;
         private GameLoop _loop;
+        private bool _orbiting;
+        private Vector3 _lastMouse;
+        private Vector3 _orbitFocus;
+        private float _yaw = 45f;
+        private float _pitch = 30f;
 
-        /// <summary>Mouse never pans this camera.</summary>
-        public bool IsDragging => false;
+        /// <summary>True while middle-mouse orbit is held. LMB/RMB stay free.</summary>
+        public bool IsDragging => _orbiting;
 
-        /// <summary>LMB is always a world click — no drag-pan to swallow it.</summary>
+        /// <summary>LMB is always a world click — MMB orbit does not swallow it.</summary>
         public bool SuppressWorldClick => false;
 
-        /// <summary>RMB is always flag-cancel — no drag-pan to swallow it.</summary>
+        /// <summary>RMB is always flag-cancel — MMB orbit does not swallow it.</summary>
         public bool SuppressFlagCancel => false;
 
         private void Awake()
@@ -54,6 +70,7 @@ namespace SolarMajesty
             _loop = FindAnyObjectByType<GameLoop>();
             if (minZoom > 4.5f)
                 minZoom = 4.5f;
+            ReadAnglesFromTransform();
         }
 
         /// <summary>Clamp pan to sandbox / showcase extents (XZ → Vector2 x/y).</summary>
@@ -116,6 +133,7 @@ namespace SolarMajesty
                 if (_cam != null)
                     _cam.orthographicSize = _targetZoom;
             }
+            KeepViewAboveGround();
         }
 
         /// <summary>Hard-set transform to the current pan/zoom targets (skip smoothing).</summary>
@@ -126,6 +144,7 @@ namespace SolarMajesty
             transform.position = _targetPos;
             if (_cam != null)
                 _cam.orthographicSize = _targetZoom;
+            KeepViewAboveGround();
         }
 
         private void Update()
@@ -134,6 +153,7 @@ namespace SolarMajesty
             _loop = loop;
             if (loop != null && !loop.AllowsCamera) return;
 
+            HandleMouseOrbit();
             HandleKeyboardPan();
             HandleEdgeScroll();
             HandleZoom();
@@ -194,6 +214,64 @@ namespace SolarMajesty
             _shakeOffset = new Vector3(x, 0f, z) * scale;
         }
 
+        private void ReadAnglesFromTransform()
+        {
+            Vector3 e = transform.eulerAngles;
+            _pitch = e.x > 180f ? e.x - 360f : e.x;
+            _yaw = e.y;
+            _pitch = Mathf.Clamp(_pitch, minPitch, maxPitch);
+        }
+
+        private Vector3 GroundLookAt()
+        {
+            if (_cam == null) _cam = GetComponent<Camera>();
+            var plane = new Plane(Vector3.up, Vector3.zero);
+            var ray = new Ray(transform.position, transform.forward);
+            if (plane.Raycast(ray, out float t) && t > 0f)
+                return ray.GetPoint(t);
+            return new Vector3(transform.position.x, 0f, transform.position.z);
+        }
+
+        private void HandleMouseOrbit()
+        {
+            if (Input.GetMouseButtonDown(2))
+            {
+                ReadAnglesFromTransform();
+                _orbiting = true;
+                _lastMouse = Input.mousePosition;
+                _orbitFocus = GroundLookAt();
+            }
+
+            if (Input.GetMouseButton(2) && _orbiting)
+            {
+                Vector3 mouse = Input.mousePosition;
+                Vector3 delta = mouse - _lastMouse;
+                _lastMouse = mouse;
+                if (delta.sqrMagnitude > 0.01f)
+                {
+                    _yaw += delta.x * yawSensitivity;
+                    _pitch = Mathf.Clamp(
+                        _pitch - delta.y * pitchSensitivity, minPitch, maxPitch);
+                    ApplyOrbit();
+                }
+            }
+            else
+            {
+                _orbiting = false;
+            }
+        }
+
+        private void ApplyOrbit()
+        {
+            float dist = Vector3.Distance(transform.position, _orbitFocus);
+            if (dist < 2f) dist = 28f;
+            Quaternion rot = Quaternion.Euler(_pitch, _yaw, 0f);
+            transform.rotation = rot;
+            transform.position = _orbitFocus - rot * Vector3.forward * dist;
+            _targetPos = transform.position;
+            _smoothedPos = transform.position;
+        }
+
         private void HandleKeyboardPan()
         {
             float h = 0f;
@@ -216,7 +294,13 @@ namespace SolarMajesty
                 h = -h;
                 v = -v;
             }
-            _targetPos += (right * h + forward * v) * scale;
+            Vector3 step = (right * h + forward * v) * scale;
+            _targetPos += step;
+            if (_orbiting)
+            {
+                _orbitFocus += step;
+                ApplyOrbit();
+            }
         }
 
         private void HandleZoom()
@@ -230,10 +314,12 @@ namespace SolarMajesty
                     _targetZoom + dir * zoomSpeed * Time.unscaledDeltaTime, minZoom, maxZoom);
             }
 
-            // Wheel zoom. Every strategy player reaches for this first; its absence reads as broken.
-            float wheel = Input.mouseScrollDelta.y;
-            if (Mathf.Abs(wheel) > 0.01f)
-                _targetZoom = Mathf.Clamp(_targetZoom - wheel * zoomSpeed * 0.14f, minZoom, maxZoom);
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (Mathf.Abs(scroll) > 0.0001f)
+            {
+                _targetZoom = Mathf.Clamp(
+                    _targetZoom - scroll * wheelZoomScale, minZoom, maxZoom);
+            }
         }
 
         private void Apply()
@@ -244,9 +330,33 @@ namespace SolarMajesty
 
             float tPan = 1f - Mathf.Exp(-panSmooth * Time.unscaledDeltaTime);
             float tZoom = 1f - Mathf.Exp(-zoomSmooth * Time.unscaledDeltaTime);
-            _smoothedPos = Vector3.Lerp(_smoothedPos, _targetPos, tPan);
-            transform.position = _smoothedPos + _shakeOffset;
+            if (!_orbiting)
+            {
+                _smoothedPos = Vector3.Lerp(_smoothedPos, _targetPos, tPan);
+                transform.position = _smoothedPos + _shakeOffset;
+            }
             _cam.orthographicSize = Mathf.Lerp(_cam.orthographicSize, _targetZoom, tZoom);
+            KeepViewAboveGround();
+        }
+
+        /// <summary>
+        /// Ortho rays are parallel to forward. The bottom of the screen samples
+        /// position + up * (-orthoSize). When that origin is under y=0 and forward.y &lt; 0,
+        /// the ray never hits the ground and the skybox mustard band appears.
+        /// Lift so the lowest sample stays above the playable ground plane.
+        /// </summary>
+        private void KeepViewAboveGround()
+        {
+            if (_cam == null) return;
+            float upY = transform.up.y;
+            if (upY < 0.05f) return;
+            // Keep bottom-row ray origins at y >= 1.5 so they still hit GroundPlane / near skirt.
+            float minCamY = _cam.orthographicSize * upY + 1.5f;
+            Vector3 p = transform.position;
+            if (p.y >= minCamY - 0.01f) return;
+            p.y = minCamY;
+            transform.position = p;
+            _targetPos.y = minCamY;
         }
 
         public bool TryGetMouseGroundPoint(out Vector3 world)

@@ -59,27 +59,69 @@ namespace SolarMajesty
             }
 
             var mat = new Material(shader) { name = $"SM_Ground_{body.ShortCode}" };
-            Texture2D albedo = BuildAlbedo(body.Id == CelestialBodyId.Mars || body.Id == CelestialBodyId.Earth ? 256 : 128, body);
-            Texture2D normal = BuildNormal(body.Id == CelestialBodyId.Earth ? 192 : 128);
+            Texture2D albedo = null;
+            Texture2D normal = null;
+            bool authored = false;
+            if (body.Id == CelestialBodyId.Earth)
+            {
+                albedo = EnvironmentMeshCatalog.LoadEarthAlbedo();
+                normal = EnvironmentMeshCatalog.LoadEarthNormal();
+                authored = albedo != null;
+            }
+            else if (body.Id == CelestialBodyId.Mars)
+            {
+                albedo = EnvironmentMeshCatalog.LoadMarsAlbedo();
+                normal = EnvironmentMeshCatalog.LoadMarsNormal();
+                authored = albedo != null;
+            }
+
+            if (!authored)
+            {
+                albedo = BuildAlbedo(body.Id == CelestialBodyId.Mars || body.Id == CelestialBodyId.Earth ? 256 : 128, body);
+                normal = BuildNormal(body.Id == CelestialBodyId.Earth ? 192 : 128);
+            }
+            else if (normal == null)
+            {
+                normal = BuildNormal(body.Id == CelestialBodyId.Earth ? 192 : 128);
+            }
+
             albedo.wrapMode = TextureWrapMode.Repeat;
             normal.wrapMode = TextureWrapMode.Repeat;
+            if (authored)
+            {
+                albedo.filterMode = FilterMode.Bilinear;
+                normal.filterMode = FilterMode.Bilinear;
+            }
 
             float worldW = grid != null ? grid.WorldWidth : 384f;
-            float tiles = body.Id == CelestialBodyId.Earth
-                ? Mathf.Max(12f, worldW / 22f)
-                : body.Id == CelestialBodyId.Mars
-                    ? Mathf.Max(16f, worldW / 14f)
-                    : Mathf.Max(24f, worldW / 8f);
+            // Dense tiles so authored meadow/regolith detail matches water foam scale.
+            // Slightly non-square UV scale breaks iso-aligned checker banding.
+            Vector2 tileScale;
+            if (body.Id == CelestialBodyId.Earth)
+            {
+                float t = Mathf.Max(22f, worldW / 14f);
+                tileScale = new Vector2(t * 1.07f, t * 0.91f);
+            }
+            else if (body.Id == CelestialBodyId.Mars)
+            {
+                float t = Mathf.Max(20f, worldW / 16f);
+                tileScale = new Vector2(t * 0.94f, t * 1.08f);
+            }
+            else
+            {
+                float t = Mathf.Max(24f, worldW / 8f);
+                tileScale = new Vector2(t, t);
+            }
 
             if (mat.HasProperty("_BaseMap"))
             {
                 mat.SetTexture("_BaseMap", albedo);
-                mat.SetTextureScale("_BaseMap", new Vector2(tiles, tiles));
+                mat.SetTextureScale("_BaseMap", tileScale);
             }
             if (mat.HasProperty("_BumpMap"))
             {
                 mat.SetTexture("_BumpMap", normal);
-                mat.SetTextureScale("_BumpMap", new Vector2(tiles, tiles));
+                mat.SetTextureScale("_BumpMap", tileScale);
                 mat.EnableKeyword("_NORMALMAP");
             }
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", Color.white);
@@ -90,28 +132,76 @@ namespace SolarMajesty
             rend.sharedMaterial = mat;
             rend.shadowCastingMode = ShadowCastingMode.Off;
             rend.receiveShadows = true;
+            if (authored)
+                Debug.Log($"[MapDressing] Authored ground textures for {body.ShortCode} tiles={tileScale.x:F1}x{tileScale.y:F1}");
+        }
+
+        /// <summary>
+        /// Flat void fill when ortho zoom puts camera-local view corners below y=0.
+        /// Those rays never hit GroundPlane/HorizonSkirt (origins already under the world) and
+        /// would otherwise show Skybox/Procedural default mustard ground.
+        /// </summary>
+        public static Color VoidFillColor(CelestialBodyProfile body)
+        {
+            if (body == null) body = CelestialBodyCatalog.Earth();
+            if (body.Id == CelestialBodyId.Earth)
+                return Color.Lerp(body.GroundDark, body.GroundLight, 0.18f);
+            if (body.Id == CelestialBodyId.Mars)
+                return Color.Lerp(body.GroundDark, body.Horizon, 0.35f);
+            return Color.Lerp(body.GroundDark, body.GroundLight, 0.12f);
         }
 
         private static void EnsureHorizon(Transform parent, IsoGrid grid, CelestialBodyProfile body)
         {
             var existing = GameObject.Find("HorizonSkirt");
             if (existing != null) Object.Destroy(existing);
+            var existingDeep = GameObject.Find("HorizonDeepFloor");
+            if (existingDeep != null) Object.Destroy(existingDeep);
 
             float worldW = grid != null ? grid.WorldWidth : 384f;
             float worldH = grid != null ? grid.WorldHeight : 384f;
-            float scale = Mathf.Max(worldW, worldH) / 10f * 1.35f;
+            float mapSpan = Mathf.Max(worldW, worldH);
+            // Plane is 10×10; must cover map + max-ortho frustum even when camera pans to a corner.
+            // Deep floor sits far below so rays that start under y=0 still hit geometry.
+            float diameter = Mathf.Max(mapSpan * 10f, IsometricCameraController.MaxOrthoSize * 40f);
+            Color skirtColor = VoidFillColor(body);
+            Vector3 center = new Vector3(worldW * 0.5f, 0f, worldH * 0.5f);
 
-            var skirt = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            skirt.name = "HorizonSkirt";
-            if (parent != null) skirt.transform.SetParent(parent, false);
-            skirt.transform.position = new Vector3(worldW * 0.5f, -0.15f, worldH * 0.5f);
-            skirt.transform.localScale = new Vector3(scale, 0.05f, scale);
-            Object.Destroy(skirt.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(skirt, body.Horizon, 0.05f, ShadowCastingMode.Off);
+            // Near skirt just under GroundPlane (catches rays that miss the map horizontally).
+            SpawnHorizonPlane("HorizonSkirt", parent, center + Vector3.down * 0.35f, diameter, skirtColor);
+            // Deep floor: ortho zoom > ~camY/up.y puts bottom-row ray origins under the world;
+            // a plane at y=-80 is still in front of those rays (forward.y < 0).
+            SpawnHorizonPlane("HorizonDeepFloor", parent, center + Vector3.down * 80f, diameter * 1.6f, skirtColor);
+        }
+
+        private static void SpawnHorizonPlane(
+            string name, Transform parent, Vector3 worldPos, float worldSize, Color color)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            go.name = name;
+            if (parent != null) go.transform.SetParent(parent, false);
+            go.transform.position = worldPos;
+            // Unity plane mesh is 10×10 on XZ.
+            float s = Mathf.Max(1f, worldSize / 10f);
+            go.transform.localScale = new Vector3(s, 1f, s);
+            Object.Destroy(go.GetComponent<Collider>());
+            PlanetaryWorldGen.Tint(go, color, 0.04f, ShadowCastingMode.Off);
+            var rend = go.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                rend.receiveShadows = false;
+                rend.enabled = true;
+                // Huge scaled planes can get bad bounds; force always-draw.
+                rend.forceRenderingOff = false;
+                var mf = go.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null)
+                    rend.localBounds = new Bounds(Vector3.zero, Vector3.one * 100f);
+            }
         }
 
         private static void EnsureSky(CelestialBodyProfile body)
         {
+            Color voidFill = VoidFillColor(body);
             var shader = Shader.Find("Skybox/Procedural");
             if (shader != null)
             {
@@ -122,11 +212,9 @@ namespace SolarMajesty
                     : body.Id == CelestialBodyId.Mars
                         ? new Color(0.95f, 0.58f, 0.32f)
                         : body.SkyTop;
-                Color ground = body.Id == CelestialBodyId.Earth
-                    ? new Color(0.78f, 0.86f, 0.72f)
-                    : body.SkyHorizon;
+                // Must match terrain void — default Procedural ground is mustard/olive yellow.
                 if (sky.HasProperty("_SkyTint")) sky.SetColor("_SkyTint", tint);
-                if (sky.HasProperty("_GroundColor")) sky.SetColor("_GroundColor", ground);
+                sky.SetColor("_GroundColor", voidFill);
                 if (sky.HasProperty("_AtmosphereThickness"))
                     sky.SetFloat("_AtmosphereThickness", body.AtmosphereThickness);
                 if (sky.HasProperty("_Exposure")) sky.SetFloat("_Exposure", body.SkyExposure);
@@ -138,13 +226,19 @@ namespace SolarMajesty
                 DynamicGI.UpdateEnvironment();
             }
 
-            if (Camera.main != null)
-            {
-                Camera.main.clearFlags = shader != null
-                    ? CameraClearFlags.Skybox
-                    : CameraClearFlags.SolidColor;
-                Camera.main.backgroundColor = body.SkyTop;
-            }
+            ApplyCameraVoidFill(Camera.main, body, shader != null);
+        }
+
+        /// <summary>
+        /// Clear color must match ground void. SkyTop blue is wrong when rays miss all geometry.
+        /// </summary>
+        public static void ApplyCameraVoidFill(Camera cam, CelestialBodyProfile body, bool hasSkybox)
+        {
+            if (cam == null) return;
+            Color voidFill = VoidFillColor(body);
+            cam.backgroundColor = voidFill;
+            // Keep skybox for the upper hemisphere when present; voidFill backs any miss.
+            cam.clearFlags = hasSkybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
         }
 
         private static Texture2D BuildAlbedo(int size, CelestialBodyProfile body)
@@ -356,9 +450,19 @@ namespace SolarMajesty
                 campus + new Vector3(-16.5f, 0f, 2.4f)
             };
             for (int i = 0; i < treeSpots.Length; i++)
+            {
+                if (WorldHasWater(treeSpots[i], 1.2f)) continue;
                 SpawnVistaTree(root, treeSpots[i], body, i);
+            }
 
-            SpawnVistaPond(root, campus + new Vector3(14.5f, 0f, 6.2f), body);
+            Vector3 pondAt = campus + new Vector3(14.5f, 0f, 6.2f);
+            SpawnVistaPond(root, pondAt, body);
+        }
+
+        private static bool WorldHasWater(Vector3 world, float margin)
+        {
+            var gen = Object.FindFirstObjectByType<PlanetaryWorldGen>();
+            return gen != null && gen.IsOverWater(world, margin);
         }
 
         /// <summary>
@@ -410,6 +514,24 @@ namespace SolarMajesty
         private static void SpawnVistaBoulder(
             Transform parent, Vector3 world, CelestialBodyProfile body, int salt, float scale)
         {
+            var prefab = EnvironmentMeshCatalog.LoadRock(salt);
+            var mesh = EnvironmentMeshCatalog.InstantiateClean(prefab, "Dress_MarsBoulder");
+            if (mesh != null)
+            {
+                mesh.transform.SetParent(parent, false);
+                mesh.transform.position = world;
+                float s = scale / EnvironmentMeshCatalog.RockNativeSize;
+                mesh.transform.localScale = Vector3.one * s * (0.9f + (salt % 3) * 0.08f);
+                // Keep FBX import axis, yaw only — Euler(tip,yaw,tip) stood the flat base upright.
+                Quaternion importRot = prefab != null ? prefab.transform.rotation : mesh.transform.rotation;
+                ColonyVisualUtility.SetYawKeepingImport(mesh.transform, importRot, salt * 37f);
+                ColonyVisualUtility.SeatFlatOnGround(mesh);
+                Color c = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
+                PlanetaryWorldGen.Tint(mesh, c, 0.08f, ShadowCastingMode.On);
+                ColonyVisualUtility.SnapToGround(mesh);
+                return;
+            }
+
             var go = GameObject.CreatePrimitive(salt % 3 == 0 ? PrimitiveType.Sphere : PrimitiveType.Capsule);
             go.name = "Dress_MarsBoulder";
             go.transform.SetParent(parent, false);
@@ -420,13 +542,27 @@ namespace SolarMajesty
                 scale * (0.72f + (salt % 4) * 0.1f));
             go.transform.rotation = Quaternion.Euler(12f * (salt % 5), salt * 37f, 8f * (salt % 3));
             Object.Destroy(go.GetComponent<Collider>());
-            Color c = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
-            PlanetaryWorldGen.Tint(go, c, 0.08f, ShadowCastingMode.On);
+            Color tint = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
+            PlanetaryWorldGen.Tint(go, tint, 0.08f, ShadowCastingMode.On);
             ColonyVisualUtility.SnapToGround(go);
         }
 
         private static void SpawnVistaCrater(Transform parent, Vector3 world, CelestialBodyProfile body)
         {
+            var mesh = EnvironmentMeshCatalog.InstantiateClean(
+                EnvironmentMeshCatalog.LoadCraterVista(), "Dress_MarsCrater");
+            if (mesh != null)
+            {
+                mesh.transform.SetParent(parent, false);
+                mesh.transform.position = world;
+                float diameter = 7.2f;
+                float s = diameter / EnvironmentMeshCatalog.CraterVistaNativeDiameter;
+                mesh.transform.localScale = Vector3.one * s;
+                mesh.transform.rotation = Quaternion.Euler(0f, 22f, 0f);
+                ColonyVisualUtility.SnapToGround(mesh);
+                return;
+            }
+
             var crater = new GameObject("Dress_MarsCrater");
             crater.transform.SetParent(parent, false);
             crater.transform.position = world;
@@ -452,6 +588,20 @@ namespace SolarMajesty
 
         private static void SpawnVistaDune(Transform parent, Vector3 world, CelestialBodyProfile body)
         {
+            var mesh = EnvironmentMeshCatalog.InstantiateClean(
+                EnvironmentMeshCatalog.LoadDune(), "Dress_MarsDune");
+            if (mesh != null)
+            {
+                mesh.transform.SetParent(parent, false);
+                mesh.transform.position = world;
+                mesh.transform.rotation = Quaternion.Euler(0f, 38f, 0f);
+                float s = 6.8f / EnvironmentMeshCatalog.DuneNativeLength;
+                mesh.transform.localScale = Vector3.one * s;
+                PlanetaryWorldGen.Tint(mesh, body.DuneColor, 0.06f);
+                ColonyVisualUtility.SnapToGround(mesh);
+                return;
+            }
+
             var dune = new GameObject("Dress_MarsDune");
             dune.transform.SetParent(parent, false);
             dune.transform.position = world;
@@ -482,10 +632,29 @@ namespace SolarMajesty
 
         private static void SpawnVistaTree(Transform parent, Vector3 world, CelestialBodyProfile body, int salt)
         {
+            float h = 1.55f + (salt % 4) * 0.28f;
+            var mesh = EnvironmentMeshCatalog.InstantiateClean(
+                EnvironmentMeshCatalog.LoadTree(salt), "Dress_Tree");
+            if (mesh != null)
+            {
+                mesh.transform.SetParent(parent, false);
+                mesh.transform.position = world;
+                // Keep import orientation (FBX -90 X) then yaw — identity rotation flattens trees.
+                ColonyVisualUtility.SetYawKeepingImport(
+                    mesh.transform, mesh.transform.rotation, salt * 41f);
+                float s = h / EnvironmentMeshCatalog.TreeNativeHeight;
+                mesh.transform.localScale = Vector3.one * s;
+                ColonyVisualUtility.SnapToGround(mesh);
+                if (salt == 0)
+                    Debug.Log("[MapDressing] Earth vista trees using SM_Tree FBX");
+                return;
+            }
+            if (salt == 0)
+                Debug.LogWarning("[MapDressing] SM_Tree FBX missing — primitive tree fallback");
+
             var tree = new GameObject("Dress_Tree");
             tree.transform.SetParent(parent, false);
             tree.transform.position = world;
-            float h = 1.55f + (salt % 4) * 0.28f;
 
             var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             trunk.name = "Trunk";
@@ -510,21 +679,28 @@ namespace SolarMajesty
             pond.transform.SetParent(parent, false);
             pond.transform.position = world;
 
-            var shore = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            shore.name = "Shore";
-            shore.transform.SetParent(pond.transform, false);
-            shore.transform.localPosition = new Vector3(0f, 0.01f, 0f);
-            shore.transform.localScale = new Vector3(5.6f, 0.02f, 4.4f);
-            Object.Destroy(shore.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(shore, Color.Lerp(body.GroundDark, body.WaterDeep, 0.28f), 0.05f);
-
-            var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            water.name = "Water";
-            water.transform.SetParent(pond.transform, false);
-            water.transform.localPosition = new Vector3(0.15f, 0.025f, -0.1f);
-            water.transform.localScale = new Vector3(4.6f, 0.03f, 3.5f);
-            Object.Destroy(water.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(water, Color.Lerp(body.WaterDeep, body.WaterShallow, 0.4f), 0.72f);
+            // Overlapping elliptical discs — soft shoreline, same language as lakes/rivers.
+            var world = Object.FindFirstObjectByType<PlanetaryWorldGen>();
+            for (int i = 0; i < 3; i++)
+            {
+                var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                water.name = i == 0 ? "Water" : $"Water_{i}";
+                water.transform.SetParent(pond.transform, false);
+                water.transform.localPosition = new Vector3(
+                    0.15f + (i - 1) * 0.55f,
+                    0.02f,
+                    -0.1f + (i % 2) * 0.35f);
+                water.transform.localRotation = Quaternion.Euler(0f, 18f + i * 40f, 0f);
+                float sx = 4.2f - i * 0.55f;
+                float sz = 3.2f - i * 0.35f;
+                water.transform.localScale = new Vector3(sx, 0.035f, sz);
+                Object.Destroy(water.GetComponent<Collider>());
+                StylizedWaterVisual.Apply(
+                    water,
+                    body.WaterDeep,
+                    Color.Lerp(body.WaterDeep, body.WaterShallow, 0.35f + i * 0.1f));
+                world?.RegisterExternalWater(water.transform, sx * 0.5f, sz * 0.5f);
+            }
         }
 
         private static void SpawnCumulus(Transform parent, Vector3 pos, float scale)

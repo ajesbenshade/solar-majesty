@@ -26,6 +26,7 @@ namespace SolarMajesty
         public const string ReduceMotionKey = "SM_Set_ReduceMotion";
         public const string ColorBlindKey = "SM_Set_ColorBlind";
         public const string FrameCapKey = "SM_Set_FrameCap";
+        public const string RosterKeyPrefix = "SM_Roster_";
 
         public static float Master = 1f;
         public static float Sfx = 1f;
@@ -158,6 +159,7 @@ namespace SolarMajesty
             PlayerPrefs.DeleteKey(SaveMetKey);
             PlayerPrefs.DeleteKey(SavePwrKey);
             ClearCampus();
+            ClearRoster();
             PlayerPrefs.Save();
         }
 
@@ -180,6 +182,27 @@ namespace SolarMajesty
             var bodies = CelestialBodyCatalog.All;
             for (int i = 0; i < bodies.Length; i++)
                 PlayerPrefs.DeleteKey(CampusKey(bodies[i]));
+        }
+
+        public static string RosterKey(CelestialBodyId body) => RosterKeyPrefix + (int)body;
+
+        public static void WriteRoster(CelestialBodyId body, string blob)
+        {
+            if (string.IsNullOrEmpty(blob))
+                PlayerPrefs.DeleteKey(RosterKey(body));
+            else
+                PlayerPrefs.SetString(RosterKey(body), blob);
+            PlayerPrefs.Save();
+        }
+
+        public static string LoadRoster(CelestialBodyId body) =>
+            PlayerPrefs.GetString(RosterKey(body), "");
+
+        public static void ClearRoster()
+        {
+            var bodies = CelestialBodyCatalog.All;
+            for (int i = 0; i < bodies.Length; i++)
+                PlayerPrefs.DeleteKey(RosterKey(bodies[i]));
         }
 
         public static void RequestBootIntoPlay()

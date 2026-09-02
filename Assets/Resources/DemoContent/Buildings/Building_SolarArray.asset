@@ -22,7 +22,7 @@ MonoBehaviour:
     amount: 30
   buildTimeSeconds: 9
   powerDraw: 0
-  powerGen: 8
+  powerGen: 6
   housingSlots: 0
   attractionWeight: 1
   preferredOccupants: 

@@ -113,8 +113,10 @@ namespace SolarMajesty
         private static void ConfigureCamera(Camera cam, CelestialBodyProfile body)
         {
             if (cam == null) return;
-            cam.backgroundColor = body.SkyTop;
-            cam.farClipPlane = Mathf.Max(cam.farClipPlane, 200f);
+            // Void fill must match terrain — SkyTop blue/`Default-Skybox` mustard show when
+            // ortho zoom puts ray origins under the ground plane (see IsometricCameraController).
+            cam.backgroundColor = PlanetaryMapDressing.VoidFillColor(body);
+            cam.farClipPlane = Mathf.Max(cam.farClipPlane, 2000f);
             if (cam.clearFlags != CameraClearFlags.Skybox)
                 cam.clearFlags = CameraClearFlags.SolidColor;
 

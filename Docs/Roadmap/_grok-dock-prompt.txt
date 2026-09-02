@@ -1,0 +1,26 @@
+Solar Majesty LOOK: dock alignment. Working directory is this Unity repo.
+
+Aaron: "I don't like how the airlocks and buildings don't lineup quite when they connect."
+
+LIVE CONSTRAINTS:
+- Square Lego airlocks stay. Tubes/domes are dressing only.
+- Shared constants: ColonyVisualUtility.DockY = 1.12f, DockBore = 1.42f.
+- CampusDressing.RefreshTubes hides unused stubs, enables docked DockSleeve + CommonsPort on docked faces only.
+- Do not rewrite SpecialistBrain. No click-to-move. spawnShowcaseColony stays false. Do not stamp Phase 4. Do not revert Majesty 2 / grace / siphon / CampusOrthoSize 10 / auto Commons.
+
+LOOK at live kits, not guess:
+- HeroBuildingKits (Commons cardinals, HAB, LAB, PWR, pad)
+- ColonyVisualUtility airlock hubs (Dress_HubDoor, Dress_TubeArm)
+- ModularBuildingFactory UniqueMesh / baked stubs
+- BuildingPlacer.TrySnapDock / cell facing
+- CampusDressing tube span (hub to module hull)
+
+Open Docs/Roadmap/SM_MarsCampaign_PlayModeCampusStill9.png (and Still10 if present). The campus tubes do not meet hulls cleanly.
+
+FIX:
+- Every live dock (airlock hub, module DockSleeve, CommonsPortRing/Well, HAB/LAB/PWR ports) must share one Y and one bore so the white tube hits the orange collar flush. No step, no gap, no tube punching through the hull.
+- Snap stays grid-cardinal. Do not rotate airlocks off-square.
+- Ghost placement should preview the same alignment.
+- Keep unused Commons sockets hidden.
+
+Edit the kits/dressing/snap. Print which Y/bore each piece used before vs after, and files changed.

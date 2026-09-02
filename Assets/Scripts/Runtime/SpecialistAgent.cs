@@ -32,6 +32,9 @@ namespace SolarMajesty
         [Header("Personal wallet / gear")]
         [SerializeField] private float credits;
         [SerializeField] private ShopItemId equippedSuit = ShopItemId.None;
+        [SerializeField] private int level = 1;
+        [SerializeField] private int xp;
+        [SerializeField] private int reviveCount;
 
         [Header("Phase 2A combat")]
         [SerializeField] private float incapacitateThreshold = 0.02f;
@@ -88,6 +91,9 @@ namespace SolarMajesty
         private string _refusalChip;
         private float _terraformerPulseTimer;
         private bool _scrapped;
+        private float _innFeeTimer;
+        private float _workshopRepairCooldown;
+        private bool _innPaid;
 
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
@@ -98,6 +104,11 @@ namespace SolarMajesty
         public float GreedHunger => greedHunger;
         public float Credits => credits;
         public ShopItemId EquippedSuit => equippedSuit;
+        public int Level => Mathf.Clamp(level, 1, OverseerRules.LevelCap);
+        public int Xp => Mathf.Max(0, xp);
+        public int ReviveCount => Mathf.Max(0, reviveCount);
+        public float LevelHpMul => OverseerRules.LevelHpMul(Level);
+        public float LevelDpsMul => OverseerRules.LevelDpsMul(Level);
         public float GeneSecondsLeft => _geneTimer;
         public string SuitLabel =>
             equippedSuit == ShopItemId.None
@@ -174,7 +185,7 @@ namespace SolarMajesty
         public void ApplyDamage(float amount01, bool feedback = true)
         {
             if (amount01 <= 0f || _incapacitated) return;
-            float mitigated = amount01 * (1f - ArmorMitigation);
+            float mitigated = amount01 * (1f - ArmorMitigation) / LevelHpMul;
             healthNormalized = Mathf.Clamp01(healthNormalized - mitigated);
             if (feedback)
             {
@@ -191,7 +202,68 @@ namespace SolarMajesty
             credits += amount;
             greedHunger = Mathf.Clamp01(greedHunger - Mathf.Clamp01(amount / 120f) * 0.35f);
             if (!string.IsNullOrEmpty(reason))
-                Debug.Log($"[Credits] {data?.displayName} +${amount:F0} ({reason}) → ${credits:F0}");
+                Debug.Log($"[Credits] {data?.displayName} +{amount:F0} MET ({reason}) → {credits:F0}");
+        }
+
+        public bool TrySpendCredits(int amount, string reason = null)
+        {
+            if (amount <= 0) return true;
+            if (credits < amount) return false;
+            credits -= amount;
+            if (!string.IsNullOrEmpty(reason))
+                Debug.Log($"[Credits] {data?.displayName} −{amount} MET ({reason}) → {credits:F0}");
+            return true;
+        }
+
+        public int StealCredits(int amount)
+        {
+            if (amount <= 0 || credits <= 0f) return 0;
+            int take = Mathf.Min(amount, Mathf.FloorToInt(credits));
+            credits -= take;
+            return take;
+        }
+
+        public void GrantXp(int amount, string reason = null)
+        {
+            if (amount <= 0 || _scrapped) return;
+            xp = Mathf.Max(0, xp + amount);
+            int gained = 0;
+            while (level < OverseerRules.LevelCap && xp >= OverseerRules.XpToReach(level + 1))
+            {
+                level++;
+                gained++;
+            }
+            if (gained > 0)
+            {
+                DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.78f, 0.22f));
+                _loop?.LogOverseer($"{data?.displayName} reached L{level}.");
+                Debug.Log($"[XP] {data?.displayName} level {level} ({reason}) xp={xp}");
+            }
+        }
+
+        public void NoteRevivePaid() => reviveCount = Mathf.Max(0, reviveCount + 1);
+
+        public void ApplyRecord(SpecialistRecord record)
+        {
+            level = Mathf.Clamp(record.Level, 1, OverseerRules.LevelCap);
+            xp = Mathf.Max(0, record.Xp);
+            credits = Mathf.Max(0, record.Credits);
+            reviveCount = Mathf.Max(0, record.ReviveCount);
+            equippedSuit = record.Suit;
+        }
+
+        public SpecialistRecord ToRecord(bool corpse)
+        {
+            return new SpecialistRecord
+            {
+                Class = data != null ? data.specialistClass : SpecialistClass.ScoutDrone,
+                Level = Level,
+                Xp = xp,
+                Credits = Mathf.FloorToInt(credits),
+                ReviveCount = reviveCount,
+                Suit = equippedSuit,
+                Corpse = corpse
+            };
         }
 
         private float SuitSpeedBonus()
@@ -243,8 +315,8 @@ namespace SolarMajesty
 
         public int CollectTithe()
         {
-            if (_scrapped || _incapacitated || credits <= OverseerRules.TitheFloor) return 0;
-            int tithe = Mathf.Min(OverseerRules.TitheCap, Mathf.FloorToInt(credits * OverseerRules.TitheRate));
+            if (_scrapped || _incapacitated) return 0;
+            int tithe = SimpleEconomy.TitheFromPurse(credits);
             if (tithe <= 0) return 0;
             credits -= tithe;
             return tithe;
@@ -279,6 +351,9 @@ namespace SolarMajesty
             greedHunger = 0.55f;
             credits = 20f;
             equippedSuit = ShopItemId.None;
+            level = OverseerRules.LevelStart;
+            xp = 0;
+            reviveCount = 0;
             _geneTimer = 0f;
             _geneCourage = _geneSpeed = _geneWork = 0f;
             _incapacitated = false;
@@ -444,7 +519,8 @@ namespace SolarMajesty
             }
 
             _incapacitated = true;
-            _recoverTimer = OverseerRules.RecoverSeconds;
+            float recover = recoverySeconds > 0.01f ? recoverySeconds : OverseerRules.RecoverSeconds;
+            _recoverTimer = recover;
             ReleaseClaim();
             _activeFlag = null;
             _lastDecision = BrainDecision.Idle(0f, "incapacitated");
@@ -452,7 +528,8 @@ namespace SolarMajesty
             SetAgentStopped(true);
             IndustrialArtDressing.SetTintOverlay(gameObject, new Color(0.38f, 0.38f, 0.4f));
             DemoVfx.DeathBurst(transform.position, bodyTint);
-            Debug.Log($"[Specialist] {data.displayName} incapacitated — recovering in {OverseerRules.RecoverSeconds:F0}s");
+            _loop?.NoteMechDeath(transform.position);
+            Debug.Log($"[Specialist] {data.displayName} incapacitated — recovering in {recover:F0}s");
         }
 
         private void ScrapSelf()
@@ -512,7 +589,8 @@ namespace SolarMajesty
                     fatigue = Mathf.Clamp01(fatigue + dt * 0.02f);
                     break;
                 case SpecialistAction.Rest:
-                    float innBoost = KingdomLife.AtRest(transform.position, OutpostClaimed) ? 1.45f : 0.55f;
+                    bool atInn = KingdomLife.AtRest(transform.position, OutpostClaimed);
+                    float innBoost = atInn && _innPaid ? 1.45f : 0.55f;
                     fatigue = Mathf.Clamp01(fatigue - dt * 0.12f * innBoost);
                     healthNormalized = Mathf.Clamp01(healthNormalized + dt * restHealPerSecond * innBoost);
                     break;
@@ -837,6 +915,7 @@ namespace SolarMajesty
                 float bounty = _activeFlag.CurrentBounty;
                 var completedType = _activeFlag.Data.flagType;
                 EarnCredits(bounty, $"flag_{completedType}");
+                GrantXp(OverseerRules.XpForFlag(completedType), completedType.ToString());
                 _economy?.ReleaseBountyEscrow(_activeFlag.EscrowMetals);
                 if (completedType == FlagType.Extract)
                 {
@@ -844,7 +923,10 @@ namespace SolarMajesty
                         ? _world.FindNearestNode(transform.position, 10f)
                         : null;
                     if (_loop != null)
+                    {
                         _loop.ApplyExtractYield(transform.position, node, this);
+                        EarnCredits(SimpleEconomy.PersonalExtractMetals(node), "extract");
+                    }
                     else
                     {
                         int campus = ColonyLayout.NearestCampusIndex(transform.position);
@@ -854,7 +936,11 @@ namespace SolarMajesty
                 else if (completedType == FlagType.ClearThreat && _world != null)
                 {
                     var lair = _world.FindNearestLair(transform.position, 12f);
-                    lair?.ForceClear();
+                    if (lair != null && !lair.IsCleared)
+                    {
+                        lair.ForceClear();
+                        GrantXp(OverseerRules.XpDen, "den");
+                    }
                 }
                 else if (completedType == FlagType.Explore)
                 {
@@ -975,6 +1061,7 @@ namespace SolarMajesty
             SetAgentStopped(true);
             _restTimer += dt;
             _status = "resting_at_inn";
+            TickInnStay(dt);
             ConsiderShopPurchase();
             if (_restTimer > 3f && fatigue < 0.35f)
                 _restTimer = 0f;
@@ -993,6 +1080,7 @@ namespace SolarMajesty
 
             SetAgentStopped(true);
             _status = "refuge_inn";
+            TickInnStay(dt);
             fatigue = Mathf.Clamp01(fatigue - dt * 0.08f);
             healthNormalized = Mathf.Clamp01(healthNormalized + dt * restHealPerSecond);
             ConsiderShopPurchase();
@@ -1018,6 +1106,40 @@ namespace SolarMajesty
                 if (gene != null && (greedHunger < 0.7f || bodyDanger > 0.35f || fatigue > 0.4f))
                     TryBuy(gene);
             }
+        }
+
+        private void TickInnStay(float dt)
+        {
+            if (!_innPaid)
+                _innPaid = TrySpendCredits(OverseerRules.InnStayMet, "inn");
+            _innFeeTimer += dt;
+            if (_innFeeTimer < OverseerRules.InnStaySeconds) return;
+            _innFeeTimer = 0f;
+            _innPaid = TrySpendCredits(OverseerRules.InnStayMet, "inn");
+            if (!_innPaid)
+                _status = "inn_broke";
+        }
+
+        private void TickWorkshopRepair(float dt)
+        {
+            _workshopRepairCooldown = Mathf.Max(0f, _workshopRepairCooldown - dt);
+            if (_workshopRepairCooldown > 0f) return;
+            if (Workplace == null || !Workplace.IsAlive) return;
+            if (!Workplace.IsWorkshop && !Workplace.IsGuild) return;
+            if (FlatDistance(transform.position, Workplace.WorldPosition) > 5f) return;
+            if (healthNormalized >= 0.92f && fatigue <= 0.22f) return;
+            if (!TrySpendCredits(OverseerRules.WorkshopRepairMet, "workshop"))
+            {
+                _status = "workshop_broke";
+                _workshopRepairCooldown = 4f;
+                return;
+            }
+
+            healthNormalized = Mathf.Clamp01(healthNormalized + OverseerRules.WorkshopRepairHp);
+            fatigue = Mathf.Clamp01(fatigue - OverseerRules.WorkshopRepairFatigue);
+            _workshopRepairCooldown = 6f;
+            _status = "workshop_repair";
+            DemoVfx.ClaimRing(transform.position, new Color(0.55f, 0.82f, 1f));
         }
 
         private bool TryBuy(ShopItemDef item)
@@ -1067,7 +1189,7 @@ namespace SolarMajesty
             var stalker = NearestStalkerAgent();
             if (stalker != null)
             {
-                float mul = HuntDpsMul(stalker.Kind);
+                float mul = HuntDpsMul(stalker.Kind) * LevelDpsMul;
                 stalker.ApplyCombatDamage(EffectiveWorkRate * 8f * dt * mul);
             }
         }
@@ -1085,6 +1207,7 @@ namespace SolarMajesty
                 SetAgentStopped(true);
                 TryPartyFollowWork(dt);
                 TickTerraformerVocation(dt);
+                TickWorkshopRepair(dt);
                 return;
             }
 
@@ -1093,6 +1216,7 @@ namespace SolarMajesty
             _status = _lastDecision.Reason ?? "wandering";
             TryPartyFollowWork(dt);
             TickTerraformerVocation(dt);
+            TickWorkshopRepair(dt);
         }
 
         private void TickIdle(float dt)
@@ -1374,9 +1498,9 @@ namespace SolarMajesty
                 ? $"{_activeFlag.Data.flagType} b={_activeFlag.CurrentBounty:F0}"
                 : "-";
             string nav = _agent != null && _agent.isOnNavMesh ? "nav" : "direct";
-            return $"{data?.displayName ?? "?"} | {_lastDecision.Action} | " +
+            return $"{data?.displayName ?? "?"} L{Level} | {_lastDecision.Action} | " +
                    $"score={_lastDecision.Score:F2} | {_lastDecision.Reason} | " +
-                   $"hp={healthNormalized:F2} fat={fatigue:F2} danger={bodyDanger:F2} | " +
+                   $"hp={healthNormalized:F2} fat={fatigue:F2} purse={credits:F0} | " +
                    $"flag={flagInfo} | {_status} | {nav}" +
                    (_incapacitated ? " [DOWN]" : "");
         }

@@ -348,6 +348,11 @@ namespace SolarMajesty
         {
             if (!spawnPressureFromLairs || DensCleared) return;
             if (_loop.World == null || UnclearedLairs <= 0) return;
+            if (_loop.InFaunaGrace)
+            {
+                _pressureTimer = Mathf.Max(_pressureTimer, pressureCooldown);
+                return;
+            }
 
             _pressureTimer -= dt;
             if (_pressureTimer > 0f) return;

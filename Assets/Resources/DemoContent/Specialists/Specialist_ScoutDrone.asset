@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.SpecialistData
   specialistClass: 1
   displayName: Scout Drone
-  description: Curious cheapskate. Takes modest Explore; ignores fights.
+  description: Horizon. Cheap Explore. Ignores fights.
   baseGreed: 0.32
   courage: 0.52
   workaholicBias: 0.28
@@ -26,5 +26,7 @@ MonoBehaviour:
   moveSpeed: 4.4
   workRate: 1
   maxEnergy: 100
-  upkeepPerMinute: []
+  upkeepPerMinute:
+  - resource: 3
+    amount: 1
   prefab: {fileID: 4980624048737865076, guid: 59bc82a924467445eaeb213eb926125d, type: 3}

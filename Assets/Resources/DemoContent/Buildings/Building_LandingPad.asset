@@ -24,7 +24,8 @@ MonoBehaviour:
     amount: 5
   buildTimeSeconds: 10
   powerDraw: 2
+  powerGen: 0
   housingSlots: 0
   attractionWeight: 1
   preferredOccupants: 
-  prefab: {fileID: 919132149155446097, guid: b82290c61f68b42c2b6e491f9f4bd030, type: 3}
+  prefab: {fileID: 919132149155446097, guid: c2cbe315cece47c1bd9e1b48001119a2, type: 3}

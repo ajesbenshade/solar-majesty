@@ -62,7 +62,7 @@ namespace SolarMajesty
                     var s = _loop.Stalkers[i];
                     if (s == null) continue;
                     string ag = s.IsAggro ? "AGGRO" : "wander";
-                    GUILayout.Label($"  Stalker {i + 1}: {ag}  HP={s.Health01:P0}");
+                    GUILayout.Label($"  {s.Kind} {i + 1}: {ag}  HP={s.Health01:P0}");
                 }
             }
 

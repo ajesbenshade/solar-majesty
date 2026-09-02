@@ -144,10 +144,12 @@ namespace SolarMajesty
             // old name mapped the whole sleeve to solid orange.
             if (n.StartsWith("DockSleeve") || n.StartsWith("Airlock_") ||
                 n.StartsWith("Dress_TubeArm") || n.StartsWith("CommonsStub") ||
-                n.StartsWith("CommonsPort") ||
+                n.StartsWith("CommonsPort") || n.StartsWith("HabPort") ||
+                n.StartsWith("LabPort") || n.StartsWith("PwrPort") ||
                 n.Contains("AirlockHub"))
                 return true;
-            if (n.Contains("GroundPlane") || n.Contains("HorizonSkirt") || n.Contains("Footprint"))
+            if (n.Contains("GroundPlane") || n.Contains("HorizonSkirt") ||
+                n.Contains("HorizonDeepFloor") || n.Contains("Footprint"))
                 return true;
             Transform t = rend.transform;
             while (t != null)
@@ -201,6 +203,17 @@ namespace SolarMajesty
             if (ContainsAny(n, "sm_hopper", "ashhopper")) { slot = Slot.HopperHide; return true; }
             if (ContainsAny(n, "sm_tick", "rocktick")) { slot = Slot.TickHide; return true; }
             if (ContainsAny(n, "sm_dust")) { slot = Slot.MiteHide; return true; }
+            if (ContainsAny(n, "sm_leaf", "sm_trunk", "leaf", "trunk", "bark", "canopy", "tree"))
+            {
+                // Handled as foliage in EnvironmentMeshCatalog — still map if industrial path hits a tree.
+                slot = Slot.CreeperHide; // green-ish stand-in if this path is used
+                return true;
+            }
+            if (ContainsAny(n, "sm_rock", "sm_dune", "boulder"))
+            {
+                slot = Slot.Graphite;
+                return true;
+            }
             if (ContainsAny(n, "sm_plant")) { slot = Slot.CreeperHide; return true; }
             if (ContainsAny(n, "sm_ice")) { slot = Slot.Cyan; return true; }
             if (ContainsAny(n, "sm_yellow")) { slot = Slot.Orange; return true; }

@@ -26,6 +26,7 @@ namespace SolarMajesty
 
         private float _health;
         private float _siphonUntil;
+        private float _nextStockpileSiphon;
         private VillageExpansion _village;
         private GameObject _selectRing;
         private bool _selected;
@@ -188,11 +189,23 @@ namespace SolarMajesty
                 Collapse();
         }
 
-        /// <summary>Leech/wisp latch — RefreshPowerBudget treats this node as 0 gen while latched.</summary>
+        /// <summary>Leech/wisp is on this node this frame (HUD / latch lifetime). Gen drain is stacked in GameLoop.</summary>
         public void NotePowerSiphon(float seconds = 1.25f)
         {
             if (!IsAlive || Category != BuildingCategory.Power) return;
             _siphonUntil = Time.time + Mathf.Max(0.2f, seconds);
+        }
+
+        /// <summary>
+        /// Stockpile snk while latched. Rate-limited per node so stacked leeches cannot
+        /// dump the battery before a specialist walks over and posts Clear Threat.
+        /// </summary>
+        public void TrySiphonStockpile(ResourceManager resources)
+        {
+            if (resources == null || !IsAlive || Category != BuildingCategory.Power) return;
+            if (Time.time < _nextStockpileSiphon) return;
+            _nextStockpileSiphon = Time.time + OverseerRules.PowerSiphonStockpileInterval;
+            resources.SpendUpTo(ResourceId.Power, OverseerRules.PowerSiphonStockpileAmount);
         }
 
         /// <summary>Engineer patch. Returns HP actually restored.</summary>

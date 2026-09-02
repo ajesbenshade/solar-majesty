@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37ce58c0ee1a24e63ba3aaa2ca65c298, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.SpecialistData
+  specialistClass: 4
+  displayName: Harvester Bot
+  description: Strip. Ore-hungry. Takes Extract cheap; ignores dens and tubes.
+  baseGreed: 0.42
+  courage: 0.38
+  workaholicBias: 0.64
+  explorePreference: 0.22
+  buildPreference: 0.18
+  combatPreference: 0.08
+  extractPreference: 1
+  defendPreference: 0.12
+  moveSpeed: 3.4
+  workRate: 1.28
+  maxEnergy: 100
+  upkeepPerMinute:
+  - resource: 2
+    amount: 1
+  prefab: {fileID: 25468492929601333, guid: c6ebd36cdb1b3cb4386f4223023170b9, type: 3}

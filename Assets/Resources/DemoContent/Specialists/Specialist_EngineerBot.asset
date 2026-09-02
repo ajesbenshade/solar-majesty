@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.SpecialistData
   specialistClass: 0
   displayName: Engineer Bot
-  description: Greedy builder. Ignores cheap flags. Loves Build once pay is right.
+  description: Anvil. Greedy builder. Ignores cheap flags until pay is right.
   baseGreed: 0.88
   courage: 0.22
   workaholicBias: 0.72
@@ -26,5 +26,7 @@ MonoBehaviour:
   moveSpeed: 3.1
   workRate: 1.35
   maxEnergy: 100
-  upkeepPerMinute: []
+  upkeepPerMinute:
+  - resource: 2
+    amount: 1
   prefab: {fileID: 1910505529883587072, guid: f26339dcc5bd14a9fba1146e2d1e4356, type: 3}

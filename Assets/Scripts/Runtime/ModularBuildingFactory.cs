@@ -230,9 +230,13 @@ namespace SolarMajesty
 
         private static GameObject UniqueMeshPrefab(BuildingCategory cat)
         {
-            // Joined Commons FBX bakes eight radial stubs. Unused ones read as orange
-            // ribbed modules on empty faces and cannot be toggled per dock.
-            if (cat == BuildingCategory.Commons)
+            // Joined Commons / HAB / LAB / PWR FBX bake docks on the cylinder axis
+            // at a smaller bore. Live sleeves are DockY / DockBore and must toggle
+            // per face — same reason Commons skipped the joined dome.
+            if (cat == BuildingCategory.Commons ||
+                cat == BuildingCategory.Habitat ||
+                cat == BuildingCategory.Laboratory ||
+                cat == BuildingCategory.Power)
                 return null;
 
             GameObject hero = BuildingVisualCatalog.LoadHeroKit(cat);
@@ -328,7 +332,9 @@ namespace SolarMajesty
                 Transform t = ts[i];
                 if (t == null || t == root) continue;
                 string n = t.name;
-                if (n.StartsWith("CommonsStub"))
+                if (n.StartsWith("CommonsStub") || n.StartsWith("CommonsPort") ||
+                    n.StartsWith("HabPort") || n.StartsWith("LabPort") ||
+                    n.StartsWith("PwrPort"))
                     t.gameObject.SetActive(false);
             }
         }
@@ -336,25 +342,22 @@ namespace SolarMajesty
         private static void AttachCardinalAirlocks(
             Transform root, BuildingCategory cat, float halfW, float halfD, bool ghost)
         {
-            // Round hulls (Commons drum = 0.38 × span) sit inside the square footprint.
-            // Sleeves must start on that hull and end at the Lego face or the isometric
-            // shot reads as a missed orange port. Live sleeves start hidden; RefreshTubes
+            // Sleeves span hull → Lego face at DockY / DockBore so the white tube
+            // hits the orange collar flush. Live sleeves start hidden; RefreshTubes
             // enables only faces that actually dock.
             float y = ColonyVisualUtility.DockY;
             float bore = ColonyVisualUtility.DockBore;
-            float hullR = RoundHullRadius(cat, halfW, halfD);
-            PlaceDockSleeve(root, "DockSleeve_N", Vector3.forward, halfD, y, bore, hullR, ghost);
-            PlaceDockSleeve(root, "DockSleeve_S", Vector3.back, halfD, y, bore, hullR, ghost);
-            PlaceDockSleeve(root, "DockSleeve_E", Vector3.right, halfW, y, bore, hullR, ghost);
-            PlaceDockSleeve(root, "DockSleeve_W", Vector3.left, halfW, y, bore, hullR, ghost);
-        }
-
-        /// <summary>Commons drum radius. Box kits return 0 so the sleeve sits on the wall.</summary>
-        private static float RoundHullRadius(BuildingCategory cat, float halfW, float halfD)
-        {
-            if (cat == BuildingCategory.Commons)
-                return Mathf.Min(halfW, halfD) * 2f * 0.38f;
-            return 0f;
+            float w = halfW * 2f;
+            float d = halfD * 2f;
+            bool hullPort = HeroBuildingKits.HasHullPort(cat);
+            PlaceDockSleeve(root, "DockSleeve_N", Vector3.forward, halfD, y, bore,
+                HeroBuildingKits.HullDistance(cat, w, d, Vector3.forward), hullPort, ghost);
+            PlaceDockSleeve(root, "DockSleeve_S", Vector3.back, halfD, y, bore,
+                HeroBuildingKits.HullDistance(cat, w, d, Vector3.back), hullPort, ghost);
+            PlaceDockSleeve(root, "DockSleeve_E", Vector3.right, halfW, y, bore,
+                HeroBuildingKits.HullDistance(cat, w, d, Vector3.right), hullPort, ghost);
+            PlaceDockSleeve(root, "DockSleeve_W", Vector3.left, halfW, y, bore,
+                HeroBuildingKits.HullDistance(cat, w, d, Vector3.left), hullPort, ghost);
         }
 
         private static void PlaceDockSleeve(
@@ -365,15 +368,20 @@ namespace SolarMajesty
             float y,
             float bore,
             float hullR,
+            bool hullHasPort,
             bool ghost)
         {
             Vector3 dir = outward.normalized;
-            float inset = hullR > 0.2f
-                ? Mathf.Max(0.2f, face - hullR + 0.08f)
-                : 0.36f;
-            const float outset = 0.06f;
+            // Collar sits DockCollarOut outside the hull. Stop the tube there (no punch-through).
+            // Full-footprint boxes (hullR ~ 0) keep a short wall socket at the cell face.
+            float inset;
+            if (hullR > 0.15f && hullR < face - 0.08f)
+                inset = Mathf.Max(0.08f, face - hullR - ColonyVisualUtility.DockCollarOut);
+            else
+                inset = 0.36f;
+            const float outset = 0.04f;
             Vector3 facePos = dir * face + new Vector3(0f, y, 0f);
-            DockSleeve(root, name, facePos, dir, bore, inset, outset, ghost);
+            DockSleeve(root, name, facePos, dir, bore, inset, outset, hullHasPort && hullR > 0.15f, ghost);
         }
 
         private static void DockSleeve(
@@ -384,6 +392,7 @@ namespace SolarMajesty
             float bore,
             float inset,
             float outset,
+            bool hullHasPort,
             bool ghost)
         {
             var group = new GameObject(name);
@@ -408,8 +417,12 @@ namespace SolarMajesty
             Vector3 hullEnd = facePos - dir * inset;
             DressCyl(group.transform, name + "_Lip", hullEnd + dir * 0.05f, along,
                 new Vector3(bore * 1.04f, 0.035f, bore * 1.04f), carbon);
-            // One orange collar lives on the airlock Dress_TubeArm. A second ring here
-            // stacked in the 0.3 m gap and read as the v4 orange-box join.
+            // Round kits already wear hull port rings. Box walls need the orange here.
+            if (!hullHasPort)
+            {
+                DressCyl(group.transform, name + "_Collar", hullEnd + dir * 0.02f, along,
+                    new Vector3(bore * 1.16f, 0.045f, bore * 1.16f), AirlockColor());
+            }
 
             if (!ghost)
                 group.SetActive(false);

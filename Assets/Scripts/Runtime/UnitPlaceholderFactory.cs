@@ -25,6 +25,7 @@ namespace SolarMajesty
         public static readonly Color TickTint = new Color(0.32f, 0.28f, 0.24f);
         public static readonly Color CreeperTint = new Color(0.38f, 0.48f, 0.20f);
         public static readonly Color HopperTint = new Color(0.52f, 0.50f, 0.46f);
+        public static readonly Color JunkTint = new Color(0.55f, 0.42f, 0.28f);
 
         private static readonly Color WhiteShell = new Color(0.86f, 0.88f, 0.9f);
         private static readonly Color BlackBand = new Color(0.06f, 0.06f, 0.07f);
@@ -422,6 +423,7 @@ namespace SolarMajesty
                 case FaunaKind.Tick: return BuildRockTick();
                 case FaunaKind.Creeper: return BuildSoilCreeper();
                 case FaunaKind.Hopper: return BuildAshHopper();
+                case FaunaKind.JunkBot: return BuildRegolithMite();
                 default: return BuildDustStalker();
             }
         }

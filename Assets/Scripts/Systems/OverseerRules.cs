@@ -17,6 +17,9 @@ namespace SolarMajesty
 
         public const int ReviveMet = 40;
         public const int ReviveIce = 8;
+        /// <summary>Each successful revive of that mech multiplies the scrapyard bill (Majesty temple tax).</summary>
+        public const float ReviveCostGrowth = 1.5f;
+        public const int ReviveCostMaxSteps = 8;
         public const float ReviveCooldown = 120f;
         public const float ReviveHp = 0.50f;
         public const float ReviveFatigue = 0.40f;
@@ -30,6 +33,37 @@ namespace SolarMajesty
         public const float TitheFloor = 25f;
         public const int ThinMetals = 20;
         public const float ThinMetalsHunger = 0.15f;
+
+        /// <summary>Personal MET the specialist keeps from an extract haul (stockpile still gets GrantExtractYield).</summary>
+        public const int ExtractPurseMet = 4;
+        public const int ExtractPurseMetBonus = 2;
+        public const int PestKillMet = 3;
+        public const int StalkerKillMet = 8;
+        public const int JunkKillMet = 2;
+        public const int InnStayMet = 2;
+        public const float InnStaySeconds = 8f;
+        public const int WorkshopRepairMet = 4;
+        public const float WorkshopRepairHp = 0.22f;
+        public const float WorkshopRepairFatigue = 0.18f;
+
+        public const int LevelCap = 10;
+        public const int LevelStart = 1;
+        public const float LevelHpPerStep = 0.08f;
+        public const float LevelDpsPerStep = 0.07f;
+        public const int XpFlag = 12;
+        public const int XpClearThreat = 18;
+        public const int XpExtract = 10;
+        public const int XpDen = 25;
+        public const int XpPest = 8;
+        public const int XpStalker = 14;
+        public const int XpJunk = 5;
+
+        public const int JunkBotCap = 3;
+        public const float JunkBotSpawnInterval = 12f;
+        public const float JunkDeathMemory = 36f;
+        public const float JunkBotBiteDps = 0.035f;
+        public const int JunkBotStealMet = 1;
+        public const float JunkBotStealSeconds = 2.4f;
 
         public const float PowerShortWork = 0.70f;
         public const int IceDeathThreshold = 4;
@@ -81,6 +115,40 @@ namespace SolarMajesty
         public const float RaidAbortDamageWindow = 1.5f;
         public const float RaidAbortHealth = 0.50f;
 
+        /// <summary>
+        /// Empty-start drop window. Dens still generate and wander at the rim; campus
+        /// pests and structure raids wait so Commons (18s) or a Battery (16s) can finish.
+        /// </summary>
+        public const float FaunaGraceSeconds = 90f;
+        /// <summary>After a module completes, wait before attracting a campus pest onto it.</summary>
+        public const float FaunaExpandDelay = 18f;
+        /// <summary>
+        /// Continue/load with a standing Commons: dens stay on the rim, but leeches/wisps
+        /// wait this long so the player can read the board and post Clear Threat.
+        /// </summary>
+        public const float ContinueReentrySeconds = 30f;
+
+        /// <summary>
+        /// One leech/wisp latch steals this fraction of that Power Node's gen.
+        /// Stacked latches add; <see cref="PowerSiphonStackCap"/> keeps the node SICK, not 0.
+        /// </summary>
+        public const float PowerSiphonPerLatch = 0.35f;
+        /// <summary>Max fraction of a node's gen stolen no matter how many leeches/wisps stack.</summary>
+        public const float PowerSiphonStackCap = 0.65f;
+        /// <summary>
+        /// Stockpile snk while latched, per Power Node (not per pest). 1 PWR / 1.2s.
+        /// Three stacked leeches used to dump 120 PWR in ~32s at 1/0.8s each.
+        /// </summary>
+        public const float PowerSiphonStockpileInterval = 1.2f;
+        public const int PowerSiphonStockpileAmount = 1;
+
+        /// <summary>
+        /// First colonist death after ICE drops below <see cref="IceDeathThreshold"/>.
+        /// Was hitchhiked on the 24s tax tick (could fire the same frame ICE went critical).
+        /// 28s covers post-F2 + ~20s walk/clear at 3.5 m/s.
+        /// </summary>
+        public const float LifeSupportFailSeconds = 28f;
+
         public const float RefusalChipSeconds = 2.4f;
         public const float RefusalRetrigger = 4f;
 
@@ -112,6 +180,79 @@ namespace SolarMajesty
                     met += data.buildCost[i].amount;
             }
             return Mathf.Max(1, Mathf.RoundToInt(met * RefabCostScale));
+        }
+
+        /// <summary>Scrapyard MET for the next revive of this mech. n=0 → 40, then ×1.5 each success.</summary>
+        public static int ReviveMetals(int reviveCount)
+        {
+            int n = Mathf.Clamp(reviveCount, 0, ReviveCostMaxSteps);
+            return Mathf.Max(ReviveMet, Mathf.RoundToInt(ReviveMet * Mathf.Pow(ReviveCostGrowth, n)));
+        }
+
+        public static int ReviveIceCost(int reviveCount)
+        {
+            int n = Mathf.Clamp(reviveCount, 0, ReviveCostMaxSteps);
+            return Mathf.Max(ReviveIce, Mathf.RoundToInt(ReviveIce * Mathf.Pow(ReviveCostGrowth, n)));
+        }
+
+        /// <summary>Cumulative XP required to stand at this level (L1 = 0).</summary>
+        public static int XpToReach(int level)
+        {
+            if (level <= 1) return 0;
+            int cap = Mathf.Min(level, LevelCap);
+            int xp = 0;
+            for (int l = 1; l < cap; l++)
+                xp += XpForNext(l);
+            return xp;
+        }
+
+        /// <summary>XP to go from <paramref name="fromLevel"/> to fromLevel+1. L1→2 = 40.</summary>
+        public static int XpForNext(int fromLevel)
+        {
+            int l = Mathf.Clamp(fromLevel, 1, LevelCap - 1);
+            return 25 + l * 15;
+        }
+
+        public static float LevelHpMul(int level)
+        {
+            int steps = Mathf.Max(0, Mathf.Min(level, LevelCap) - 1);
+            return 1f + steps * LevelHpPerStep;
+        }
+
+        public static float LevelDpsMul(int level)
+        {
+            int steps = Mathf.Max(0, Mathf.Min(level, LevelCap) - 1);
+            return 1f + steps * LevelDpsPerStep;
+        }
+
+        public static int XpForFlag(FlagType type)
+        {
+            switch (type)
+            {
+                case FlagType.ClearThreat: return XpClearThreat;
+                case FlagType.Extract: return XpExtract;
+                default: return XpFlag;
+            }
+        }
+
+        public static int XpForFauna(FaunaKind kind)
+        {
+            switch (kind)
+            {
+                case FaunaKind.JunkBot: return XpJunk;
+                case FaunaKind.Stalker: return XpStalker;
+                default: return XpPest;
+            }
+        }
+
+        public static int KillPurse(FaunaKind kind)
+        {
+            switch (kind)
+            {
+                case FaunaKind.JunkBot: return JunkKillMet;
+                case FaunaKind.Stalker: return StalkerKillMet;
+                default: return PestKillMet;
+            }
         }
     }
 

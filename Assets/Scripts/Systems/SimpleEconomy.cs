@@ -150,6 +150,38 @@ namespace SolarMajesty
             EscrowedMetals = Mathf.Max(0, EscrowedMetals - metals);
         }
 
+        /// <summary>Personal MET a specialist keeps from an extract (colony haul is separate).</summary>
+        public static int PersonalExtractMetals(ResourceNode node)
+        {
+            int purse = OverseerRules.ExtractPurseMet;
+            if (node != null && node.NodeType == ResourceNodeType.Metals)
+                purse += OverseerRules.ExtractPurseMetBonus;
+            return purse;
+        }
+
+        /// <summary>Scrapyard resurrection paid from the colony stockpile (MET is gold).</summary>
+        public bool CanAffordRevive(int metals, int ice)
+        {
+            if (_resources == null) return false;
+            return _resources.Get(ResourceId.Metals) >= metals &&
+                   _resources.Get(ResourceId.WaterIce) >= ice;
+        }
+
+        public bool TrySpendRevive(int metals, int ice)
+        {
+            if (!CanAffordRevive(metals, ice)) return false;
+            if (metals > 0 && !_resources.TrySpend(ResourceId.Metals, metals)) return false;
+            if (ice > 0) _resources.TrySpend(ResourceId.WaterIce, ice);
+            return true;
+        }
+
+        /// <summary>Marketplace tax preview — matches agent CollectTithe.</summary>
+        public static int TitheFromPurse(float credits)
+        {
+            if (credits <= OverseerRules.TitheFloor) return 0;
+            return Mathf.Min(OverseerRules.TitheCap, Mathf.FloorToInt(credits * OverseerRules.TitheRate));
+        }
+
         /// <summary>Live re-price: spend or refund the metals delta for a posted flag.</summary>
         public bool TryAdjustBountyEscrow(FlagHandle flag, float newBounty)
         {

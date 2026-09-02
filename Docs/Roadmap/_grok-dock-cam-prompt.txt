@@ -1,0 +1,18 @@
+Solar Majesty: dock lineup + iso camera mouse. Working directory is this Unity repo.
+
+KEEP: auto Commons, CampusOrthoSize 10, fauna grace 90, siphon cap, Majesty 2 loop, RAID label, unused Commons sockets hidden. spawnShowcaseColony false. No Phase 4 stamp. No click-to-move. Do not rewrite SpecialistBrain. Square Lego airlocks stay. Tubes/domes are dressing.
+
+TASK 1 — DOCKS
+Aaron: airlocks and buildings don't line up quite when they connect.
+Live: ColonyVisualUtility.DockY = 1.12f, DockBore = 1.42f. Look at HeroBuildingKits, ColonyVisualUtility hubs, ModularBuildingFactory, BuildingPlacer.TrySnapDock, CampusDressing tube span. Read Docs/Roadmap/SM_MarsCampaign_PlayModeCampusStill9.png.
+Every live dock (airlock hub, DockSleeve, CommonsPortRing/Well, HAB/LAB/PWR ports) must share one Y and one bore so the white tube hits the orange collar flush. No step, no gap, no tube through hull. Snap stays grid-cardinal. Ghosts preview the same. Unused Commons sockets stay hidden.
+
+TASK 2 — CAMERA MOUSE (presentation only)
+IsometricCameraController currently: WASD pan, Q/E zoom, "Mouse does not pan or zoom."
+Aaron wants:
+- Mouse wheel roll in/out to zoom (ortho size, clamp minZoom/maxZoom).
+- Middle-mouse click + drag to rotate the view (yaw around the look-at). Keep a readable iso pitch (do not flop into FPS). Optional small pitch from vertical drag, clamped.
+- LMB stays world click. RMB stays flag-cancel. Do not steal LMB/RMB for camera. Do not pan with mouse unless MMB.
+- Never command specialists from this camera.
+
+Edit the files. Print dock Y/bore before vs after, and the new mouse bindings.
