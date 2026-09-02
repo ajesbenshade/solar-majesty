@@ -88,6 +88,34 @@ namespace SolarMajesty
 
         public int UnlockedCount => _unlocked.Count;
 
+        /// <summary>Unlocked techs, for save capture.</summary>
+        public IReadOnlyCollection<TechId> Unlocked => _unlocked;
+
+        /// <summary>Restore from a save: replaces the unlocked set and the in-flight tech.</summary>
+        public void RestoreFrom(IReadOnlyList<int> unlockedIds, TechId active, float activeProgress, float banked)
+        {
+            _unlocked.Clear();
+            if (unlockedIds != null)
+            {
+                for (int i = 0; i < unlockedIds.Count; i++)
+                {
+                    if (!Enum.IsDefined(typeof(TechId), unlockedIds[i])) continue;
+                    var id = (TechId)unlockedIds[i];
+                    if (id != TechId.None)
+                        _unlocked.Add(id);
+                }
+            }
+
+            BankedScience = Mathf.Max(0f, banked);
+            ActiveTech = TechId.None;
+            ActiveProgress = 0f;
+
+            if (active != TechId.None && !_unlocked.Contains(active) && TrySelect(active))
+                ActiveProgress = Mathf.Max(0f, activeProgress);
+
+            Save();
+        }
+
         public static int SavedUnlockCount()
         {
             string raw = PlayerPrefs.GetString(PrefsKey, "");

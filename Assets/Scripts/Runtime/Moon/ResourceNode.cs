@@ -2,18 +2,10 @@ using UnityEngine;
 
 namespace SolarMajesty
 {
-    public enum ResourceNodeType
-    {
-        Regolith = 0,
-        Metals = 1,
-        Ice = 2,
-        Fissile = 3
-    }
-
     /// <summary>
     /// Harvestable world deposit. Extract flags near this node deplete remaining yield.
     /// </summary>
-    public class ResourceNode : MonoBehaviour
+    public class ResourceNode : MonoBehaviour, IHarvestable
     {
         [SerializeField] private ResourceNodeType nodeType = ResourceNodeType.Regolith;
         [SerializeField] private int remaining = 40;

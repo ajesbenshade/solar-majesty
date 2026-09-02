@@ -52,6 +52,7 @@ namespace SolarMajesty
         private CampusNavMesh _navMesh;
         private PlanetaryWorldGen _world;
         private NavMeshAgent _agent;
+        private UnitMotion _motion;
         private GameLoop _loop;
 
         private float _thinkTimer;
@@ -292,6 +293,9 @@ namespace SolarMajesty
             if (tint.HasValue) bodyTint = tint.Value;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
             EnsureNavAgent();
+
+            // Attach before rings, labels, and orbs exist so only the body mesh gets adopted.
+            _motion = UnitMotion.Attach(gameObject, UnitMotion.KindFor(data.specialistClass), 1f);
 
             _statusDisplay = GetComponent<SpecialistStatusDisplay>();
             if (_statusDisplay == null)
@@ -1280,6 +1284,9 @@ namespace SolarMajesty
 
         private void TickWorkPulse(float dt)
         {
+            // A downed robot sags and stops walking; the work pulse still composes on top.
+            if (_motion != null) _motion.SetSuspended(_incapacitated);
+
             if (_workPulse > 0f)
             {
                 _workPulse = Mathf.Max(0f, _workPulse - dt * 3f);

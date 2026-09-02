@@ -22,6 +22,10 @@ namespace SolarMajesty
         public const string QualityKey = "SM_Set_Quality";
         public const string FullscreenKey = "SM_Set_Fullscreen";
         public const string CampusKeyPrefix = "SM_Campus_";
+        public const string EdgeScrollKey = "SM_Set_EdgeScroll";
+        public const string ReduceMotionKey = "SM_Set_ReduceMotion";
+        public const string ColorBlindKey = "SM_Set_ColorBlind";
+        public const string FrameCapKey = "SM_Set_FrameCap";
 
         public static float Master = 1f;
         public static float Sfx = 1f;
@@ -32,6 +36,18 @@ namespace SolarMajesty
         public static bool SaveExists;
         public static int QualityIndex;
         public static bool Fullscreen = true;
+
+        /// <summary>Off by default: edge scroll fights flag placement near the screen border.</summary>
+        public static bool EdgeScroll;
+
+        /// <summary>Accessibility: suppresses camera shake and non-essential pulsing.</summary>
+        public static bool ReduceMotion;
+
+        /// <summary>Accessibility palette. 0 off, 1 deuteranopia, 2 protanopia, 3 tritanopia.</summary>
+        public static int ColorBlindMode;
+
+        /// <summary>0 uses the platform default; otherwise a target frame rate.</summary>
+        public static int FrameCap;
 
         /// <summary>When true, skip title after a New Game reload.</summary>
         public static bool BootStraightIntoPlay;
@@ -47,6 +63,10 @@ namespace SolarMajesty
             SaveExists = PlayerPrefs.GetInt(SaveFlagKey, 0) == 1;
             QualityIndex = PlayerPrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
             Fullscreen = PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) == 1;
+            EdgeScroll = PlayerPrefs.GetInt(EdgeScrollKey, 0) == 1;
+            ReduceMotion = PlayerPrefs.GetInt(ReduceMotionKey, 0) == 1;
+            ColorBlindMode = PlayerPrefs.GetInt(ColorBlindKey, 0);
+            FrameCap = PlayerPrefs.GetInt(FrameCapKey, 0);
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
             ReplayRules.Load();
             if (BootStraightIntoPlay)
@@ -69,6 +89,9 @@ namespace SolarMajesty
             }
             if (Screen.fullScreen != Fullscreen)
                 Screen.fullScreen = Fullscreen;
+
+            // 0 means "let the platform decide"; anything else is an explicit cap.
+            Application.targetFrameRate = FrameCap > 0 ? FrameCap : -1;
         }
 
         public static void SaveSettings()
@@ -80,6 +103,10 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(InvertKey, InvertPan ? 1 : 0);
             PlayerPrefs.SetInt(QualityKey, QualityIndex);
             PlayerPrefs.SetInt(FullscreenKey, Fullscreen ? 1 : 0);
+            PlayerPrefs.SetInt(EdgeScrollKey, EdgeScroll ? 1 : 0);
+            PlayerPrefs.SetInt(ReduceMotionKey, ReduceMotion ? 1 : 0);
+            PlayerPrefs.SetInt(ColorBlindKey, ColorBlindMode);
+            PlayerPrefs.SetInt(FrameCapKey, FrameCap);
             ReplayRules.Save();
             PlayerPrefs.Save();
         }

@@ -1,0 +1,154 @@
+/*
+ * Solar Majesty design tokens and components.
+ *
+ * The carbon-and-gold language from the Phase 4 HUD, expressed once here instead of as colour
+ * constants scattered through 2,000 lines of IMGUI. Restyling the whole interface is now a text
+ * edit rather than a code change, which is the point of moving to UI Toolkit.
+ */
+
+:root {
+    --sm-ink: rgb(14, 13, 12);
+    --sm-panel: rgba(18, 17, 16, 0.92);
+    --sm-panel-soft: rgba(38, 36, 33, 0.92);
+    --sm-hairline: rgba(0, 0, 0, 0.75);
+    --sm-gold: rgb(214, 162, 62);
+    --sm-accent: rgb(242, 138, 30);
+    --sm-text: rgb(238, 235, 228);
+    --sm-text-muted: rgb(158, 152, 142);
+    --sm-good: rgb(126, 205, 126);
+    --sm-warn: rgb(238, 182, 62);
+    --sm-critical: rgb(232, 84, 66);
+    --sm-radius: 3px;
+}
+
+/* ---- Alert feed ------------------------------------------------------- */
+
+.sm-alert-feed {
+    position: absolute;
+    top: 96px;
+    right: 12px;
+    width: 300px;
+    flex-direction: column;
+}
+
+.sm-alert {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 6px 8px 6px 6px;
+    background-color: var(--sm-panel);
+    border-left-width: 3px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-top-color: var(--sm-hairline);
+    border-right-color: var(--sm-hairline);
+    border-bottom-color: var(--sm-hairline);
+    border-radius: var(--sm-radius);
+    transition-property: opacity, translate;
+    transition-duration: 180ms;
+}
+
+/* Severity is carried by the left rule, so the feed is scannable by colour alone. */
+.sm-alert--good { border-left-color: var(--sm-good); }
+.sm-alert--info { border-left-color: var(--sm-gold); }
+.sm-alert--warning { border-left-color: var(--sm-warn); }
+.sm-alert--critical { border-left-color: var(--sm-critical); }
+
+/* Critical rows are tinted as well as ruled: colour alone fails for colourblind players. */
+.sm-alert--critical {
+    background-color: rgba(48, 18, 15, 0.94);
+}
+
+.sm-alert:hover {
+    background-color: var(--sm-panel-soft);
+}
+
+.sm-alert__icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.sm-alert__text {
+    flex-grow: 1;
+    color: var(--sm-text);
+    font-size: 12px;
+    white-space: normal;
+}
+
+.sm-alert__hint {
+    color: var(--sm-text-muted);
+    font-size: 10px;
+    margin-left: 6px;
+    flex-shrink: 0;
+}
+
+.sm-alert--entering {
+    opacity: 0;
+    translate: 24px 0;
+}
+
+/* ---- Overlay legend --------------------------------------------------- */
+
+.sm-legend {
+    position: absolute;
+    left: 12px;
+    bottom: 96px;
+    padding: 8px 10px;
+    background-color: var(--sm-panel);
+    border-width: 1px;
+    border-color: var(--sm-hairline);
+    border-top-color: var(--sm-gold);
+    border-top-width: 2px;
+    border-radius: var(--sm-radius);
+    flex-direction: column;
+}
+
+.sm-legend__title {
+    color: var(--sm-accent);
+    font-size: 10px;
+    -unity-font-style: bold;
+    margin-bottom: 5px;
+}
+
+.sm-legend__row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.sm-legend__swatch {
+    width: 10px;
+    height: 10px;
+    margin-right: 6px;
+    border-radius: 2px;
+}
+
+.sm-legend__label {
+    color: var(--sm-text-muted);
+    font-size: 10px;
+}
+
+/* ---- Tooltip ---------------------------------------------------------- */
+
+.sm-tooltip {
+    position: absolute;
+    max-width: 260px;
+    padding: 7px 9px;
+    background-color: rgba(10, 10, 9, 0.97);
+    border-width: 1px;
+    border-color: var(--sm-gold);
+    border-radius: var(--sm-radius);
+    color: var(--sm-text);
+    font-size: 11px;
+    white-space: normal;
+}
+
+.sm-tooltip__title {
+    color: var(--sm-accent);
+    -unity-font-style: bold;
+    font-size: 11px;
+    margin-bottom: 3px;
+}

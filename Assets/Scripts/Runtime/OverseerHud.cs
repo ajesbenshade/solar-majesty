@@ -63,6 +63,7 @@ namespace SolarMajesty
         private GUIStyle _muted;
         private GUIStyle _micro;
         private GUIStyle _microRight;
+        private GUIStyle _microAlarm;
         private GUIStyle _value;
         private GUIStyle _pill;
         private GUIStyle _chipOn;
@@ -204,6 +205,33 @@ namespace SolarMajesty
             Fill(new Rect(r.x, r.y, r.width * Mathf.Clamp01(t01), r.height), fill);
         }
 
+        /// <summary>
+        /// Speed readout plus four clickable notches. Space, comma, and period drive the same state,
+        /// but the notches make the feature discoverable to a player who never reads a key list.
+        /// </summary>
+        private void DrawSpeedControl(Rect r)
+        {
+            GUI.Label(new Rect(r.x, r.y, r.width, 14f),
+                SimSpeed.IsPaused ? "HOLD" : SimSpeed.Label,
+                SimSpeed.IsPaused ? _microAlarm : _microRight);
+
+            int count = SimSpeed.Multipliers.Length;
+            float notchW = (r.width - (count - 1) * 2f) / count;
+            var row = new Rect(r.x, r.y + 16f, notchW, 10f);
+
+            for (int i = 0; i < count; i++)
+            {
+                bool active = i == SimSpeed.Index;
+                Fill(row, active ? Accent : Track);
+                if (GUI.Button(row, GUIContent.none, GUIStyle.none))
+                {
+                    SimSpeed.Set(i);
+                    _loop.ApplySimSpeed();
+                }
+                row.x += notchW + 2f;
+            }
+        }
+
         private void Bar(Rect r, string label, float t01, Color fill)
         {
             const float labelW = 46f;
@@ -239,6 +267,7 @@ namespace SolarMajesty
             _muted = Label(11, FontStyle.Normal, TextMuted, TextAnchor.MiddleLeft);
             _micro = Label(10, FontStyle.Normal, TextMuted, TextAnchor.MiddleLeft);
             _microRight = Label(10, FontStyle.Normal, TextMuted, TextAnchor.MiddleRight);
+            _microAlarm = Label(10, FontStyle.Bold, Accent, TextAnchor.MiddleRight);
             _value = Label(14, FontStyle.Bold, TextPrimary, TextAnchor.MiddleLeft);
             _pill = Label(10, FontStyle.Bold, Ink, TextAnchor.MiddleCenter);
             _banner = Label(20, FontStyle.Bold, TextPrimary, TextAnchor.MiddleLeft);
@@ -406,8 +435,10 @@ namespace SolarMajesty
             int posted = 0;
             var flags = _loop.Flags != null ? _loop.Flags.Flags : null;
             if (flags != null) posted = flags.Count;
-            GUI.Label(new Rect(c.xMax - 120f, c.y + 4f, 120f, 28f),
+            GUI.Label(new Rect(c.xMax - 190f, c.y + 4f, 120f, 28f),
                 posted <= 0 ? "Bounties  ·  none" : $"Bounties  ·  {posted}", _microRight);
+
+            DrawSpeedControl(new Rect(c.xMax - 62f, c.y + 2f, 62f, 32f));
 
             return rect.yMax + 6f;
         }
@@ -608,15 +639,32 @@ namespace SolarMajesty
             Fill(r, fill);
             Outline(r, Gold, 1.5f);
             Fill(new Rect(r.x, r.y, 3f, r.height), Gold);
-            var swatch = new Rect(r.x + 5f, r.y + 13f, 10f, 10f);
-            Fill(swatch, ChipSwatch(label));
-            Outline(swatch, Gold, 1f);
+            // A drawn glyph reads instantly where a coloured square only reads once learned.
+            var swatch = new Rect(r.x + 4f, r.y + 10f, 16f, 16f);
+            Texture2D icon = ChipIcon(label);
+            if (icon != null) GUI.DrawTexture(swatch, icon, ScaleMode.ScaleToFit);
+            else
+            {
+                Fill(swatch, ChipSwatch(label));
+                Outline(swatch, Gold, 1f);
+            }
+
             // Label sits on its own row and stops before the rate column so "BEDS"
             // cannot clip into "0/0" (that composite read as REDSK).
-            GUI.Label(new Rect(r.x + 20f, r.y + 1f, r.width - 24f, 14f), label, _chipLabel);
-            GUI.Label(new Rect(r.x + 20f, r.y + 16f, r.width - 58f, 18f), amount.ToString(), _value);
+            GUI.Label(new Rect(r.x + 24f, r.y + 1f, r.width - 28f, 14f), label, _chipLabel);
+            GUI.Label(new Rect(r.x + 24f, r.y + 16f, r.width - 62f, 18f), amount.ToString(), _value);
             if (!string.IsNullOrEmpty(rate))
                 GUI.Label(new Rect(r.xMax - 40f, r.y + 18f, 36f, 14f), rate, _microRight);
+        }
+
+        private static Texture2D ChipIcon(string label)
+        {
+            if (label.StartsWith("REG")) return UiIcons.Get(IconId.Regolith);
+            if (label.StartsWith("ICE")) return UiIcons.Get(IconId.Ice);
+            if (label.StartsWith("PAYROLL") || label.StartsWith("MET")) return UiIcons.Get(IconId.Metals);
+            if (label.StartsWith("PWR")) return UiIcons.Get(IconId.Power);
+            if (label.StartsWith("BEDS")) return UiIcons.Get(IconId.Beds);
+            return null;
         }
 
         private static Color ChipSwatch(string label)
@@ -1611,8 +1659,8 @@ namespace SolarMajesty
             {
                 float u = (mouse.x - disc.x) / disc.width;
                 float v = 1f - (mouse.y - disc.y) / disc.height;
-                var world = new Vector3(u * worldW, 0f, v * worldH);
-                _loop.GlanceAt(world, force: true);
+                var glanceTarget = new Vector3(u * worldW, 0f, v * worldH);
+                _loop.GlanceAt(glanceTarget, force: true);
                 e.Use();
             }
         }
@@ -1940,6 +1988,43 @@ namespace SolarMajesty
                 DemoSettings.ApplyDisplay();
             }
             y += 32f;
+
+            int[] caps = { 0, 30, 60, 120, 144 };
+            int capIndex = System.Array.IndexOf(caps, DemoSettings.FrameCap);
+            if (capIndex < 0) capIndex = 0;
+            string capLabel = DemoSettings.FrameCap <= 0 ? "UNCAPPED" : $"{DemoSettings.FrameCap} FPS";
+            if (Chip(new Rect(c.x, y, c.width, 26f), $"FRAME CAP  ·  {capLabel}", DemoSettings.FrameCap > 0))
+            {
+                DemoSettings.FrameCap = caps[(capIndex + 1) % caps.Length];
+                DemoSettings.ApplyDisplay();
+            }
+            y += 36f;
+
+            Fill(new Rect(c.x, y, c.width, 1f), Hairline);
+            y += 8f;
+            GUI.Label(new Rect(c.x, y, c.width, 14f), "ACCESSIBILITY", _section);
+            y += 18f;
+
+            float halfW = (c.width - 8f) * 0.5f;
+            if (Chip(new Rect(c.x, y, halfW, 26f), "EDGE SCROLL", DemoSettings.EdgeScroll))
+                DemoSettings.EdgeScroll = !DemoSettings.EdgeScroll;
+            if (Chip(new Rect(c.x + halfW + 8f, y, halfW, 26f), "REDUCE MOTION", DemoSettings.ReduceMotion))
+                DemoSettings.ReduceMotion = !DemoSettings.ReduceMotion;
+            y += 32f;
+
+            var cbMode = Accessibility.Mode;
+            if (Chip(new Rect(c.x, y, c.width, 26f),
+                    $"COLOUR VISION  ·  {Accessibility.ModeLabel(cbMode).ToUpperInvariant()}",
+                    cbMode != ColorBlindMode.Off))
+            {
+                Accessibility.Mode = (ColorBlindMode)(((int)cbMode + 1) % 4);
+            }
+            y += 32f;
+
+            GUI.Label(new Rect(c.x, y, c.width, 30f),
+                "Severity is also shown by icon and prefix, so colour is never the only cue.",
+                _wrap);
+            y += 34f;
 
             string tutLabel = _loop.IsTutorialActive ? "TUTORIAL  ·  ON" : "REPLAY TUTORIAL";
             if (Chip(new Rect(c.x, y, 220f, 26f), tutLabel, _loop.IsTutorialActive))

@@ -373,7 +373,7 @@ namespace SolarMajesty
                 : 0.36f;
             const float outset = 0.06f;
             Vector3 facePos = dir * face + new Vector3(0f, y, 0f);
-            DockSleeve(root, name, facePos, dir, bore, inset, outset, hullR > 0.2f, ghost);
+            DockSleeve(root, name, facePos, dir, bore, inset, outset, ghost);
         }
 
         private static void DockSleeve(
@@ -384,7 +384,6 @@ namespace SolarMajesty
             float bore,
             float inset,
             float outset,
-            bool hullHasPort,
             bool ghost)
         {
             var group = new GameObject(name);
@@ -409,12 +408,8 @@ namespace SolarMajesty
             Vector3 hullEnd = facePos - dir * inset;
             DressCyl(group.transform, name + "_Lip", hullEnd + dir * 0.05f, along,
                 new Vector3(bore * 1.04f, 0.035f, bore * 1.04f), carbon);
-            // Round kits already wear CommonsPort rings. Box walls need the orange here.
-            if (!hullHasPort)
-            {
-                DressCyl(group.transform, name + "_Collar", hullEnd + dir * 0.02f, along,
-                    new Vector3(bore * 1.16f, 0.045f, bore * 1.16f), AirlockColor());
-            }
+            // One orange collar lives on the airlock Dress_TubeArm. A second ring here
+            // stacked in the 0.3 m gap and read as the v4 orange-box join.
 
             if (!ghost)
                 group.SetActive(false);

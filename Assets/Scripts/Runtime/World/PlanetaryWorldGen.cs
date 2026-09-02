@@ -51,6 +51,7 @@ namespace SolarMajesty
             _body = body ?? CelestialBodyCatalog.Earth();
             _nodes.Clear();
             _lairs.Clear();
+            ClearTintCache();
 
             if (_worldRoot != null)
                 Destroy(_worldRoot.gameObject);
@@ -757,6 +758,16 @@ namespace SolarMajesty
             return Mathf.Sqrt(dx * dx + dz * dz);
         }
 
+        /// <summary>
+        /// Shared tint materials, keyed by colour and smoothness. Mars scatters roughly 330 props;
+        /// allocating a material per prop meant 330 unique materials, no batching, and a draw call
+        /// each. Cached instancing-enabled materials collapse that to a handful of batches.
+        /// </summary>
+        private static readonly Dictionary<long, Material> TintCache = new Dictionary<long, Material>(64);
+
+        /// <summary>Cleared on world regeneration so a body change does not keep the old palette.</summary>
+        public static void ClearTintCache() => TintCache.Clear();
+
         public static void Tint(
             GameObject go,
             Color c,
@@ -765,13 +776,32 @@ namespace SolarMajesty
         {
             var rend = go.GetComponent<Renderer>();
             if (rend == null) return;
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Sprites/Default"));
+
+            rend.sharedMaterial = TintMaterial(c, smoothness);
+            rend.shadowCastingMode = shadows;
+        }
+
+        private static Material TintMaterial(Color c, float smoothness)
+        {
+            // Quantise so near-identical scatter tints share one material instead of near-misses.
+            int r = Mathf.RoundToInt(Mathf.Clamp01(c.r) * 63f);
+            int g = Mathf.RoundToInt(Mathf.Clamp01(c.g) * 63f);
+            int b = Mathf.RoundToInt(Mathf.Clamp01(c.b) * 63f);
+            int s = Mathf.RoundToInt(Mathf.Clamp01(smoothness) * 31f);
+            long key = ((long)r << 24) | ((long)g << 16) | ((long)b << 8) | (long)s;
+
+            if (TintCache.TryGetValue(key, out Material cached) && cached != null)
+                return cached;
+
+            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Sprites/Default");
+            var mat = new Material(shader) { name = $"SM_Tint_{key:X}" };
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             else if (mat.HasProperty("_Color")) mat.color = c;
             if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
-            rend.sharedMaterial = mat;
-            rend.shadowCastingMode = shadows;
+            mat.enableInstancing = true;
+
+            TintCache[key] = mat;
+            return mat;
         }
     }
 }

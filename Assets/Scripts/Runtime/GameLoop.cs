@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -311,6 +312,9 @@ namespace SolarMajesty
         private IsometricCameraController _isoCam;
         private Transform _threatRoot;
         private float _constructionTick;
+        private readonly SimClock _sim = new SimClock();
+        private AdaptiveMusic _music;
+        private double _playSeconds;
         private DebugHud _debugHud;
         private OverseerHud _overseerHud;
         private int _focusedCampus;
@@ -369,10 +373,83 @@ namespace SolarMajesty
             _glanceCooldown = campusPlaced ? 8f : 5.5f;
         }
 
+        /// <summary>Prioritised, deduplicated notifications. Distinct from the flat Overseer log.</summary>
+        public AlertFeed Alerts { get; } = new AlertFeed();
+
+        /// <summary>Per-run tallies for the end-of-run summary and achievement checks.</summary>
+        public RunStats Stats { get; } = new RunStats();
+
+        /// <summary>Active ground overlay. Cycled with V.</summary>
+        public MapOverlayMode OverlayMode { get; private set; } = MapOverlayMode.None;
+
         public void LogOverseer(string line)
         {
             Log.Push(line);
             _overseerHud?.Notify(line, 4.2f);
+        }
+
+        /// <summary>
+        /// Raise an alert as well as logging. Use a stable key so repeats collapse into one row
+        /// rather than flooding the feed.
+        /// </summary>
+        public void RaiseAlert(string key, string message, AlertSeverity severity)
+        {
+            Alerts.Push(key, message, severity, Time.unscaledTime);
+            Log.Push(message);
+            if (severity >= AlertSeverity.Warning)
+                OverseerVoice.Speak(message, severity);
+        }
+
+        public void RaiseAlert(string key, string message, AlertSeverity severity, Vector3 at)
+        {
+            Alerts.Push(key, message, severity, Time.unscaledTime, at);
+            Log.Push(message);
+            if (severity >= AlertSeverity.Warning)
+                OverseerVoice.Speak(message, severity);
+        }
+
+        private void OnAchievementEarned(AchievementDef def)
+        {
+            if (def == null) return;
+            RaiseAlert($"ach_{def.Id}", $"Achievement — {def.Title}", AlertSeverity.Good);
+            PlaytestTelemetry.Record("achievement", "id", def.Id.ToString());
+        }
+
+        private void HandleOverlayHotkeys()
+        {
+            if (Input.GetKeyDown(KeyCode.V))
+            {
+                OverlayMode = (MapOverlayMode)(((int)OverlayMode + 1) % 4);
+                LogOverseer(OverlayMode == MapOverlayMode.None
+                    ? "Overlays off."
+                    : $"Overlay: {MapOverlay.TitleFor(OverlayMode)}.");
+            }
+
+            // Jump to whatever is going most wrong right now.
+            if (Input.GetKeyDown(KeyCode.Backspace))
+            {
+                Alert urgent = Alerts.MostUrgentWithPosition();
+                if (urgent != null)
+                {
+                    GlanceAt(urgent.WorldPosition, force: true);
+                    Alerts.Acknowledge(urgent);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Camera shake for impacts and launches, scaled down with distance from the view centre so
+        /// something happening off-screen does not rattle what the player is actually looking at.
+        /// </summary>
+        public void ShakeCamera(float strength, Vector3 at)
+        {
+            if (_isoCam == null || !IsPlaying) return;
+
+            float dist = FlatDist(at, mainCamera != null ? mainCamera.transform.position : at);
+            float falloff = Mathf.Clamp01(1f - dist / 90f);
+            if (falloff <= 0.01f) return;
+
+            _isoCam.AddShake(strength * falloff);
         }
 
         public void NoteRadiationExposure()
@@ -392,12 +469,17 @@ namespace SolarMajesty
         private void Awake()
         {
             DemoSettings.Load();
+            SimSpeed.Load();
+            PlaytestTelemetry.Begin(Application.version);
+            Achievements.BeginRun();
+            Achievements.Earned += OnAchievementEarned;
             CampaignProgress.Ensure();
             celestialBody = BodySeed.LoadSavedBody();
             if (!CampaignProgress.IsUnlocked(celestialBody))
                 celestialBody = CelestialBodyId.Earth;
             _body = CelestialBodyCatalog.Get(celestialBody);
             ModularBuildingFactory.BindBody(_body);
+            IndustrialArtDressing.BindBody(_body);
             BodySeed.Ensure(celestialBody, worldSeedOverride);
 
             EnsureSceneRefs();
@@ -422,6 +504,8 @@ namespace SolarMajesty
             CampusDressing.Reset();
             CampusDressing.RefreshTubes(Placer, grid, buildingRoot != null ? buildingRoot : transform);
             EnsureHud();
+            TryInit("alerts", () => OverseerAlertView.Ensure(this));
+            TryInit("map overlay", () => MapOverlay.Ensure(this));
             EnsureMission();
             LaunchSite.ClearSession();
             _launchCraftStaged = false;
@@ -431,6 +515,9 @@ namespace SolarMajesty
             DemoAudio.SetBody(_body);
             DemoAudio.ApplyVolumes();
             DemoAudio.SetCampusAmbient(0);
+            TryInit("spatial audio", () => SpatialAudio.Ensure());
+            // Adaptive music synthesises several seconds of audio on the main thread — do it after
+            // the first frame so the title screen is visible while it warms up.
 
             string travel = CampaignProgress.ConsumeTravelLog();
             if (!string.IsNullOrEmpty(travel))
@@ -447,10 +534,33 @@ namespace SolarMajesty
                       (StartsEmpty ? " (empty start)." : "."));
         }
 
+        private IEnumerator Start()
+        {
+            yield return null;
+            TryInit("adaptive music", () => { _music = AdaptiveMusic.Ensure(); });
+        }
+
+        private static void TryInit(string label, System.Action action)
+        {
+            try { action(); }
+            catch (System.Exception e)
+            {
+                Debug.LogException(e);
+                Debug.LogError($"[GameLoop] Optional init failed ({label}); continuing so Play Mode still shows.");
+            }
+        }
+
         private void OnDestroy()
         {
             if (Economy != null)
                 Economy.UpkeepApplied -= OnUpkeepTithe;
+            Achievements.Earned -= OnAchievementEarned;
+            PlaytestTelemetry.RecordQuit(
+                Screen.ToString(),
+                celestialBody,
+                Settlement != null ? Settlement.Population : 0,
+                Placer != null ? Placer.Pieces.Count : 0,
+                _playSeconds);
             Time.timeScale = 1f;
         }
 
@@ -464,11 +574,19 @@ namespace SolarMajesty
         public void EnterPlaying(bool loadStockpile)
         {
             Screen = DemoScreen.Playing;
-            Time.timeScale = 1f;
+            Time.timeScale = SimSpeed.Multiplier;
             if (loadStockpile)
             {
-                DemoSettings.TryLoadStockpile(Resources);
-                RestoreCampus();
+                // Prefer the full snapshot; fall back to the legacy blob for pre-save-system runs.
+                if (SaveSystem.TryRead(SaveSystem.AutosaveSlot, out SaveGame save))
+                {
+                    ApplySave(save);
+                }
+                else
+                {
+                    DemoSettings.TryLoadStockpile(Resources);
+                    RestoreCampus();
+                }
             }
             PersistSession();
             TutorialStep = DemoSettings.TutorialDone ? TutorialCompleteStep : 0;
@@ -485,6 +603,8 @@ namespace SolarMajesty
         {
             ResearchManager.WipeUnlocks();
             CampaignProgress.ResetCampaign();
+            SaveSystem.DeleteAll();
+            SimSpeed.ResetToNormal();
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
             ReplayRules.Save();
@@ -524,7 +644,10 @@ namespace SolarMajesty
         public void ResumePlay()
         {
             Screen = DemoScreen.Playing;
-            Time.timeScale = 1f;
+            // Leaving the modal pause resumes at the speed the player was running, not always 1x.
+            if (SimSpeed.IsPaused)
+                SimSpeed.Resume();
+            Time.timeScale = SimSpeed.Multiplier;
         }
 
         public void OpenSettings()
@@ -877,30 +1000,35 @@ namespace SolarMajesty
             if (!IsPlaying) return;
 
             HandleToolHotkeys();
+            HandleSpeedHotkeys();
+            HandleOverlayHotkeys();
             HandleSelection();
             TryCancelFlagUnderCursor();
             PushThreatToSpecialists();
             _world?.TickLairs(Placer != null ? Placer.Pieces.Count : 0);
             RefreshPowerBudget();
-            if (Settlement != null)
-            {
-                Settlement.ProductionScale = Economy != null && Economy.PowerShort ? 0.45f : 1f;
-                Settlement.Tick(Time.deltaTime);
-            }
-            Village?.Tick(Time.deltaTime);
-            TickResearch(Time.deltaTime);
-            TickEmptyRosterFail(Time.deltaTime);
+
+            _playSeconds += Time.unscaledDeltaTime;
+            _music?.Evaluate(this, Time.unscaledDeltaTime);
+
+            Stats.Tick(Time.deltaTime);
+            if (Settlement != null) Stats.NotePopulation(Settlement.Population);
+            if (Placer != null) Stats.NoteModules(Placer.Pieces.Count);
+
+            // Time.deltaTime is already scaled by SimSpeed, so a fixed-step loop gives the pure
+            // systems identical results at any frame rate or game speed.
+            int steps = _sim.Advance(Time.deltaTime);
+            for (int s = 0; s < steps; s++)
+                TickSimulation(_sim.StepSeconds);
+
             RefreshSustainRates();
             TickCourierPad();
             _mission?.Tick();
             TickTutorial();
             TickAutosave();
-            TickFlagInterest(Time.deltaTime);
-            TickCampusEcology(Time.deltaTime);
-            TickCampusBoard(Time.deltaTime);
             if (Settlement != null && Settlement.ConsumeLifeSupportFail())
             {
-                LogOverseer("Life support failing — 1 colonist lost.");
+                RaiseAlert("life_support", "Life support failing — colonists dying.", AlertSeverity.Critical);
                 if (Settlement.LifeSupportToastPending)
                 {
                     Settlement.ClearLifeSupportToast();
@@ -910,7 +1038,38 @@ namespace SolarMajesty
             if (_glanceCooldown > 0f)
                 _glanceCooldown -= Time.deltaTime;
 
-            _constructionTick += Time.deltaTime;
+            // Prune destroyed stalkers / robots from lists
+            for (int i = _stalkers.Count - 1; i >= 0; i--)
+            {
+                if (_stalkers[i] == null)
+                    _stalkers.RemoveAt(i);
+            }
+            for (int i = _agents.Count - 1; i >= 0; i--)
+            {
+                if (_agents[i] == null)
+                    _agents.RemoveAt(i);
+            }
+        }
+
+        /// <summary>
+        /// One fixed simulation step. Everything in here must be safe to run several times in a
+        /// single frame (catch-up) and zero times in a frame (paused or a very fast frame).
+        /// </summary>
+        private void TickSimulation(float dt)
+        {
+            if (Settlement != null)
+            {
+                Settlement.ProductionScale = Economy != null && Economy.PowerShort ? 0.45f : 1f;
+                Settlement.Tick(dt);
+            }
+            Village?.Tick(dt);
+            TickResearch(dt);
+            TickEmptyRosterFail(dt);
+            TickFlagInterest(dt);
+            TickCampusEcology(dt);
+            TickCampusBoard(dt);
+
+            _constructionTick += dt;
             if (_constructionTick >= 0.25f)
             {
                 ProcessCompletedConstruction();
@@ -924,18 +1083,45 @@ namespace SolarMajesty
                 Economy?.Tick(_constructionTick, living);
                 _constructionTick = 0f;
             }
+        }
 
-            // Prune destroyed stalkers / robots from lists
-            for (int i = _stalkers.Count - 1; i >= 0; i--)
+        /// <summary>Space holds the world; comma and period step the speed down and up.</summary>
+        private void HandleSpeedHotkeys()
+        {
+            bool changed = false;
+
+            if (Input.GetKeyDown(KeyCode.Space))
             {
-                if (_stalkers[i] == null)
-                    _stalkers.RemoveAt(i);
+                SimSpeed.TogglePause();
+                changed = true;
             }
-            for (int i = _agents.Count - 1; i >= 0; i--)
+            else if (Input.GetKeyDown(KeyCode.Period))
             {
-                if (_agents[i] == null)
-                    _agents.RemoveAt(i);
+                SimSpeed.Faster();
+                changed = true;
             }
+            else if (Input.GetKeyDown(KeyCode.Comma))
+            {
+                SimSpeed.Slower();
+                changed = true;
+            }
+
+            if (!changed) return;
+
+            ApplySimSpeed();
+            LogOverseer(SimSpeed.IsPaused ? "World held." : $"Speed {SimSpeed.Label}.");
+            PlaytestTelemetry.Record("speed_change", "speed", SimSpeed.Label);
+        }
+
+        /// <summary>
+        /// Push the chosen speed onto Time.timeScale so NavMesh movement and every deltaTime
+        /// consumer scale together. The modal pause screen overrides this while it is open.
+        /// </summary>
+        public void ApplySimSpeed()
+        {
+            if (!IsPlaying)
+                return;
+            Time.timeScale = SimSpeed.Multiplier;
         }
 
         /// <summary>
@@ -1081,8 +1267,37 @@ namespace SolarMajesty
 
             float worldW = grid.WorldWidth;
             float worldH = grid.WorldHeight;
-            ground.transform.position = new Vector3(worldW * 0.5f, 0f, worldH * 0.5f);
-            ground.transform.localScale = new Vector3(worldW / 10f, 1f, worldH / 10f);
+
+            // Displaced surface replaces the flat 10x10 primitive. Campus pads stay level, so
+            // placement, docking, and NavMesh are unaffected.
+            Mesh mesh;
+            try
+            {
+                mesh = TerrainMeshBuilder.Build(worldW, worldH, BodySeed.Current, _body);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogException(e);
+                mesh = null;
+            }
+
+            if (mesh != null)
+            {
+                var filter = ground.GetComponent<MeshFilter>();
+                if (filter != null) filter.sharedMesh = mesh;
+                var collider = ground.GetComponent<MeshCollider>();
+                if (collider == null)
+                {
+                    var box = ground.GetComponent<Collider>();
+                    if (box != null) Destroy(box);
+                    collider = ground.AddComponent<MeshCollider>();
+                }
+                collider.sharedMesh = mesh;
+            }
+
+            // The mesh is authored in world units already, so the transform stays identity.
+            ground.transform.position = Vector3.zero;
+            ground.transform.localScale = Vector3.one;
             // Albedo / grade is owned by PlanetaryMapDressing — do not stamp a flat greybox tint.
         }
 
@@ -2830,7 +3045,10 @@ namespace SolarMajesty
             Village?.RegisterPlacedBuilding(data, data.category, go, world);
             CampusDressing.DressPlaced(data, go, _body);
             CampusDressing.RefreshTubes(Placer, grid, buildingRoot != null ? buildingRoot : transform);
+            if (ShouldSnapCampusCamera(data.category))
+                SnapCampusCamera();
             DemoVfx.BuildComplete(world);
+            ShakeCamera(0.30f, world);
             DemoAudio.PlayBuildComplete();
             if (data.category == BuildingCategory.LandingPad)
                 SyncLaunchGate();
@@ -2849,8 +3067,8 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Frame a restored campus at CampusOrthoSize. Placement never calls this —
-        /// the player owns zoom (Q/E) and pan (WASD).
+        /// Frame Commons / airlock / HAB / workshop at CampusOrthoSize 5.5.
+        /// Fauna GlanceAt must not undo this (null zoom once pieces exist).
         /// </summary>
         private void SnapCampusCamera()
         {
@@ -2870,6 +3088,19 @@ namespace SolarMajesty
             _isoCam.FocusOn(sum / n, ColonyLayout.CampusOrthoSize);
             _isoCam.SnapToTarget();
             _glanceCooldown = 8f;
+        }
+
+        private static bool ShouldSnapCampusCamera(BuildingCategory cat)
+        {
+            switch (cat)
+            {
+                case BuildingCategory.Commons:
+                case BuildingCategory.Habitat:
+                case BuildingCategory.Utility:
+                    return true;
+                default:
+                    return ColonyStructure.IsWorkshopCategory(cat);
+            }
         }
 
         /// <summary>
@@ -3029,10 +3260,207 @@ namespace SolarMajesty
         private void PersistSession()
         {
             DemoSettings.WriteStockpile(Resources);
-            if (Placer == null) return;
+            if (Placer != null)
+            {
+                var slots = CaptureCampusSlots();
+                int pop = Settlement != null ? Settlement.Population : 0;
+                DemoSettings.WriteCampus(celestialBody, CampusSnapshot.Encode(pop, slots));
+            }
+
+            SaveSystem.Write(SaveSystem.AutosaveSlot, CaptureSave("autosave"));
+        }
+
+        /// <summary>Player-triggered save into one of the numbered slots.</summary>
+        public bool SaveToSlot(int slot)
+        {
+            bool ok = SaveSystem.Write(slot, CaptureSave($"slot {slot}"));
+            LogOverseer(ok ? $"Colony recorded to slot {slot}." : $"Slot {slot} write failed.");
+            PlaytestTelemetry.Record("save", "slot", slot);
+            return ok;
+        }
+
+        /// <summary>
+        /// Full-world capture. Everything the legacy continue slot dropped — posted flags with their
+        /// escrow, robot health and purse, fauna, den state, node depletion — is recorded here.
+        /// </summary>
+        public SaveGame CaptureSave(string label)
+        {
+            var save = new SaveGame
+            {
+                label = label ?? "",
+                playSeconds = _playSeconds,
+                simSteps = _sim.TotalSteps,
+                body = (int)celestialBody,
+                seed = BodySeed.Current,
+                highestUnlocked = (int)CampaignProgress.HighestUnlocked
+            };
+
+            if (Resources != null)
+            {
+                save.stockpile.regolith = Resources.Get(ResourceId.Regolith);
+                save.stockpile.waterIce = Resources.Get(ResourceId.WaterIce);
+                save.stockpile.metals = Resources.Get(ResourceId.Metals);
+                save.stockpile.power = Resources.Get(ResourceId.Power);
+            }
+
+            if (Settlement != null)
+            {
+                save.settlement.population = Settlement.Population;
+                save.settlement.populationGoal = Settlement.PopulationGoal;
+                save.settlement.villageHabs = Settlement.VillageHabs;
+                save.settlement.bonusBeds = Settlement.BonusBeds;
+                save.settlement.hasOutpost = Settlement.HasOutpost;
+                save.settlement.everHadHab = Settlement.EverHadHab;
+            }
+
+            if (Research != null)
+            {
+                foreach (var id in Research.Unlocked)
+                    save.research.unlocked.Add((int)id);
+                save.research.activeTech = (int)Research.ActiveTech;
+                save.research.activeProgress = Research.ActiveProgress;
+                save.research.bankedScience = Research.BankedScience;
+            }
+
+            save.replay.mode = (int)ReplayRules.Mode;
+            save.replay.challenge = (int)ReplayRules.Challenge;
+            save.replay.stance = (int)ReplayRules.Stance;
+
             var slots = CaptureCampusSlots();
-            int pop = Settlement != null ? Settlement.Population : 0;
-            DemoSettings.WriteCampus(celestialBody, CampusSnapshot.Encode(pop, slots));
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var s = slots[i];
+                save.buildings.Add(new SaveBuilding
+                {
+                    category = (int)s.Category,
+                    x = s.X,
+                    y = s.Y,
+                    w = s.W,
+                    h = s.H,
+                    progressMilli = s.ProgressMilli,
+                    villageHab = s.VillageHab,
+                    health = 1f
+                });
+            }
+
+            if (Flags != null)
+            {
+                var open = Flags.Flags;
+                for (int i = 0; i < open.Count; i++)
+                {
+                    var f = open[i];
+                    if (f?.Data == null) continue;
+                    save.flags.Add(new SaveFlag
+                    {
+                        flagType = (int)f.Data.flagType,
+                        px = f.WorldPosition.x,
+                        py = f.WorldPosition.y,
+                        pz = f.WorldPosition.z,
+                        bounty = f.CurrentBounty,
+                        escrowMetals = f.EscrowMetals,
+                        postedWork = f.PostedWork,
+                        workDone = Mathf.Max(0f, f.PostedWork - Flags.GetWorkRemaining(f))
+                    });
+                }
+            }
+
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                var a = _agents[i];
+                if (a == null || a.Data == null) continue;
+                Vector3 p = a.transform.position;
+                save.agents.Add(new SaveAgent
+                {
+                    specialistClass = (int)a.Data.specialistClass,
+                    px = p.x,
+                    py = p.y,
+                    pz = p.z,
+                    health = a.HealthNormalized,
+                    fatigue = a.Fatigue,
+                    credits = Mathf.RoundToInt(a.Credits),
+                    downed = a.IsIncapacitated,
+                    downedTimer = a.RecoverSecondsLeft
+                });
+            }
+
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                var s = _stalkers[i];
+                if (s == null) continue;
+                Vector3 p = s.transform.position;
+                save.fauna.Add(new SaveFauna
+                {
+                    kind = (int)s.Kind,
+                    px = p.x,
+                    py = p.y,
+                    pz = p.z,
+                    health = s.Health01
+                });
+            }
+
+            return save;
+        }
+
+        /// <summary>
+        /// Restore the parts of a save that can be re-established without respawning the scene:
+        /// stockpile, campus, settlement census, research, replay rules, and posted bounties.
+        /// Robots re-fabricate from workshops and fauna respawn from dens, so those are recorded
+        /// for continuity reporting but not force-placed back into the world.
+        /// </summary>
+        public bool ApplySave(SaveGame save)
+        {
+            if (save == null) return false;
+
+            if (Resources != null)
+            {
+                Resources.Set(ResourceId.Regolith, save.stockpile.regolith);
+                Resources.Set(ResourceId.WaterIce, save.stockpile.waterIce);
+                Resources.Set(ResourceId.Metals, save.stockpile.metals);
+                Resources.Set(ResourceId.Power, save.stockpile.power);
+            }
+
+            Research?.RestoreFrom(
+                save.research.unlocked,
+                (TechId)save.research.activeTech,
+                save.research.activeProgress,
+                save.research.bankedScience);
+
+            if (Settlement != null)
+            {
+                if (save.settlement.populationGoal > 0)
+                    Settlement.SetPopulationGoal(save.settlement.populationGoal);
+                Settlement.BonusBeds = save.settlement.bonusBeds;
+                if (save.settlement.hasOutpost)
+                    Settlement.ClaimOutpost();
+            }
+
+            RestoreCampus();
+
+            if (Settlement != null && save.settlement.population > 0)
+                Settlement.RestorePopulation(save.settlement.population);
+
+            RestoreFlags(save.flags);
+
+            _playSeconds = save.playSeconds;
+            RefreshTechEffects();
+            SyncLaunchGate();
+
+            LogOverseer($"Colony restored — {save.buildings.Count} modules, {save.flags.Count} bounties standing.");
+            PlaytestTelemetry.Record("load", "modules", save.buildings.Count);
+            return true;
+        }
+
+        private void RestoreFlags(List<SaveFlag> saved)
+        {
+            if (_flagInput == null || saved == null) return;
+
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                var data = _flagInput.FlagFor((FlagType)s.flagType);
+                if (data == null) continue;
+                _flagInput.RestoreFlag(data, new Vector3(s.px, s.py, s.pz), s.bounty, s.escrowMetals);
+            }
         }
 
         private List<CampusSlot> CaptureCampusSlots()
@@ -3524,14 +3952,15 @@ namespace SolarMajesty
             if (flag == null || agent == null) return 1f;
             int better = 0;
             float mine = agent.EffectiveWorkRate;
-            int id = agent.GetInstanceID();
+            int myIndex = _agents.IndexOf(agent);
             for (int i = 0; i < _agents.Count; i++)
             {
                 var a = _agents[i];
                 if (a == null || a == agent || !a.IsClaiming) continue;
                 if (!ReferenceEquals(a.ActiveFlag, flag)) continue;
                 float other = a.EffectiveWorkRate;
-                if (other > mine + 0.0001f || (Mathf.Abs(other - mine) <= 0.0001f && a.GetInstanceID() < id))
+                // Roster order breaks work-rate ties so the stack ranking is stable frame to frame.
+                if (other > mine + 0.0001f || (Mathf.Abs(other - mine) <= 0.0001f && i < myIndex))
                     better++;
             }
             return OverseerRules.StackShare(better);

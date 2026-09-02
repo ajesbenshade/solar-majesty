@@ -84,11 +84,14 @@ namespace SolarMajesty
         public const float RefusalChipSeconds = 2.4f;
         public const float RefusalRetrigger = 4f;
 
-        /// <summary>Smallest integer bounty that matches the greed-gate display (Engineer ~79).</summary>
+        /// <summary>
+        /// Smallest integer bounty that matches the greed-gate display (Engineer ~79).
+        /// Must ceil, not round: rounding down produces an ask the hero then refuses.
+        /// </summary>
         public static int GreedAsk(SpecialistData data)
         {
             if (data == null) return 18;
-            return Mathf.Max(1, Mathf.RoundToInt((18f + data.baseGreed * 95f) * 0.78f));
+            return Mathf.Max(1, Mathf.CeilToInt((18f + data.baseGreed * 95f) * 0.78f));
         }
 
         public static float StackShare(int rank)

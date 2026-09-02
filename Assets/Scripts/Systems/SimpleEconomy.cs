@@ -187,10 +187,10 @@ namespace SolarMajesty
         /// Phase 6A: if a resource node is in range, harvest from it; otherwise campus fallback.
         /// Efficiency is haul delivered to stockpile (node still loses the full take).
         /// </summary>
-        public void GrantExtractYield(int campusIndex, ResourceNode node) =>
+        public void GrantExtractYield(int campusIndex, IHarvestable node) =>
             GrantExtractYield(campusIndex, node, 1f, null);
 
-        public void GrantExtractYield(int campusIndex, ResourceNode node, float efficiency, string via)
+        public void GrantExtractYield(int campusIndex, IHarvestable node, float efficiency, string via)
         {
             float haul = Mathf.Clamp(efficiency, 0.05f, 1.25f);
             string tag = HaulTag(via, haul);

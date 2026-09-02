@@ -23,8 +23,15 @@ namespace SolarMajesty
         [SerializeField] private float maxZoom = 52f;
         [SerializeField] private float zoomSmooth = 10f;
 
+        private const float EdgeMargin = 6f;
+        private const float MaxShake = 1.4f;
+        private const float ShakeDecay = 2.2f;
+
         private Camera _cam;
         private Vector3 _targetPos;
+        private Vector3 _smoothedPos;
+        private Vector3 _shakeOffset;
+        private float _shake;
         private float _targetZoom;
         private GameLoop _loop;
 
@@ -42,6 +49,7 @@ namespace SolarMajesty
             _cam = GetComponent<Camera>();
             _cam.orthographic = true;
             _targetPos = transform.position;
+            _smoothedPos = transform.position;
             _targetZoom = _cam.orthographicSize;
             _loop = FindAnyObjectByType<GameLoop>();
             if (minZoom > 4.5f)
@@ -100,6 +108,7 @@ namespace SolarMajesty
             }
 
             transform.position = _targetPos;
+            _smoothedPos = _targetPos;
 
             if (orthoSize.HasValue)
             {
@@ -113,6 +122,7 @@ namespace SolarMajesty
         public void SnapToTarget()
         {
             if (_cam == null) _cam = GetComponent<Camera>();
+            _smoothedPos = _targetPos;
             transform.position = _targetPos;
             if (_cam != null)
                 _cam.orthographicSize = _targetZoom;
@@ -125,8 +135,63 @@ namespace SolarMajesty
             if (loop != null && !loop.AllowsCamera) return;
 
             HandleKeyboardPan();
+            HandleEdgeScroll();
             HandleZoom();
+            TickShake();
             Apply();
+        }
+
+        /// <summary>
+        /// Edge scroll, off by default because it fights flag placement near the screen border.
+        /// Enabled from Settings.
+        /// </summary>
+        private void HandleEdgeScroll()
+        {
+            if (!DemoSettings.EdgeScroll) return;
+
+            Vector3 mouse = Input.mousePosition;
+            if (mouse.x < 0f || mouse.y < 0f || mouse.x > Screen.width || mouse.y > Screen.height)
+                return;
+
+            float h = 0f;
+            float v = 0f;
+            if (mouse.x <= EdgeMargin) h -= 1f;
+            else if (mouse.x >= Screen.width - EdgeMargin) h += 1f;
+            if (mouse.y <= EdgeMargin) v -= 1f;
+            else if (mouse.y >= Screen.height - EdgeMargin) v += 1f;
+
+            if (Mathf.Abs(h) < 0.01f && Mathf.Abs(v) < 0.01f) return;
+            PanBy(h, v);
+        }
+
+        /// <summary>
+        /// Decaying positional shake. Applied as a render offset after smoothing so it never
+        /// pollutes the pan target — a shake must not permanently move the camera.
+        /// </summary>
+        public void AddShake(float strength)
+        {
+            if (DemoSettings.ReduceMotion) return;
+            _shake = Mathf.Min(_shake + Mathf.Abs(strength), MaxShake);
+        }
+
+        private void TickShake()
+        {
+            if (_shake <= 0f)
+            {
+                _shakeOffset = Vector3.zero;
+                return;
+            }
+
+            _shake = Mathf.Max(0f, _shake - Time.unscaledDeltaTime * ShakeDecay);
+
+            // Perlin rather than random keeps it a smooth rumble instead of a per-frame jitter.
+            float t = Time.unscaledTime * 26f;
+            float x = (Mathf.PerlinNoise(t, 0.37f) - 0.5f) * 2f;
+            float z = (Mathf.PerlinNoise(0.71f, t) - 0.5f) * 2f;
+
+            // Falls off with zoom so a shake at max zoom-out is not a screen-wide lurch.
+            float scale = _shake * _shake * Mathf.Clamp(_targetZoom / 12f, 0.35f, 2.5f) * 0.22f;
+            _shakeOffset = new Vector3(x, 0f, z) * scale;
         }
 
         private void HandleKeyboardPan()
@@ -138,7 +203,11 @@ namespace SolarMajesty
             if (Input.GetKey(KeyCode.W)) v += 1f;
             if (Input.GetKey(KeyCode.S)) v -= 1f;
             if (Mathf.Abs(h) < 0.01f && Mathf.Abs(v) < 0.01f) return;
+            PanBy(h, v);
+        }
 
+        private void PanBy(float h, float v)
+        {
             Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
             Vector3 right = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
             float scale = panSpeed * Time.unscaledDeltaTime * (_targetZoom / 12f);
@@ -155,9 +224,16 @@ namespace SolarMajesty
             float dir = 0f;
             if (Input.GetKey(KeyCode.Q)) dir += 1f;
             if (Input.GetKey(KeyCode.E)) dir -= 1f;
-            if (Mathf.Abs(dir) < 0.01f) return;
-            _targetZoom = Mathf.Clamp(
-                _targetZoom + dir * zoomSpeed * Time.unscaledDeltaTime, minZoom, maxZoom);
+            if (Mathf.Abs(dir) > 0.01f)
+            {
+                _targetZoom = Mathf.Clamp(
+                    _targetZoom + dir * zoomSpeed * Time.unscaledDeltaTime, minZoom, maxZoom);
+            }
+
+            // Wheel zoom. Every strategy player reaches for this first; its absence reads as broken.
+            float wheel = Input.mouseScrollDelta.y;
+            if (Mathf.Abs(wheel) > 0.01f)
+                _targetZoom = Mathf.Clamp(_targetZoom - wheel * zoomSpeed * 0.14f, minZoom, maxZoom);
         }
 
         private void Apply()
@@ -168,7 +244,8 @@ namespace SolarMajesty
 
             float tPan = 1f - Mathf.Exp(-panSmooth * Time.unscaledDeltaTime);
             float tZoom = 1f - Mathf.Exp(-zoomSmooth * Time.unscaledDeltaTime);
-            transform.position = Vector3.Lerp(transform.position, _targetPos, tPan);
+            _smoothedPos = Vector3.Lerp(_smoothedPos, _targetPos, tPan);
+            transform.position = _smoothedPos + _shakeOffset;
             _cam.orthographicSize = Mathf.Lerp(_cam.orthographicSize, _targetZoom, tZoom);
         }
 

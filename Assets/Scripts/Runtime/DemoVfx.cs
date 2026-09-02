@@ -162,43 +162,46 @@ namespace SolarMajesty
 
         private static void SpawnRing(Vector3 worldPos, Color color, float lifetime, float expand)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            var go = VfxPool.Rent(PrimitiveType.Cylinder);
+            if (go == null) return;
             go.name = "VfxRing";
-            Object.Destroy(go.GetComponent<Collider>());
             go.transform.position = worldPos + Vector3.up * 0.05f;
             go.transform.localScale = new Vector3(0.45f, 0.02f, 0.45f);
             Paint(go, color);
-            var pulse = go.AddComponent<VfxPulse>();
-            pulse.lifetime = lifetime;
-            pulse.expand = expand;
-            Object.Destroy(go, lifetime);
+            Pulse(go).Restart(lifetime, expand, 0f);
         }
 
         private static void SpawnPulse(Vector3 worldPos, Vector3 scale, Color color, float lifetime, float expand)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var go = VfxPool.Rent(PrimitiveType.Sphere);
+            if (go == null) return;
             go.name = "VfxPulse";
-            Object.Destroy(go.GetComponent<Collider>());
             go.transform.position = worldPos;
             go.transform.localScale = scale;
             Paint(go, color);
-            var pulse = go.AddComponent<VfxPulse>();
-            pulse.lifetime = lifetime;
-            pulse.expand = expand;
-            Object.Destroy(go, lifetime);
+            Pulse(go).Restart(lifetime, expand, 0f);
         }
 
         private static void SpawnBit(Vector3 worldPos, Vector3 velocity, Color color, float size, float lifetime)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var go = VfxPool.Rent(PrimitiveType.Sphere);
+            if (go == null) return;
             go.name = "VfxBit";
-            Object.Destroy(go.GetComponent<Collider>());
             go.transform.position = worldPos;
             go.transform.localScale = Vector3.one * size;
             Paint(go, color);
-            var bit = go.AddComponent<VfxBurstBit>();
-            bit.velocity = velocity;
-            bit.lifetime = lifetime;
+
+            var bit = go.GetComponent<VfxBurstBit>();
+            if (bit == null) bit = go.AddComponent<VfxBurstBit>();
+            bit.Restart(velocity, lifetime);
+        }
+
+        /// <summary>Pooled objects keep their components, so reuse rather than re-add.</summary>
+        private static VfxPulse Pulse(GameObject go)
+        {
+            var pulse = go.GetComponent<VfxPulse>();
+            if (pulse == null) pulse = go.AddComponent<VfxPulse>();
+            return pulse;
         }
 
         private static void Paint(GameObject go, Color c)
@@ -239,11 +242,24 @@ namespace SolarMajesty
         private MaterialPropertyBlock _block;
         private Color _start;
 
-        private void Awake()
+        /// <summary>Re-arm a pooled instance. Awake only runs the first time an object is created.</summary>
+        public void Restart(float life, float grow, float stretch)
+        {
+            lifetime = Mathf.Max(0.01f, life);
+            expand = grow;
+            stretchY = stretch;
+            _t = 0f;
+            Capture();
+            enabled = true;
+        }
+
+        private void Awake() => Capture();
+
+        private void Capture()
         {
             _base = transform.localScale;
             _rend = GetComponent<Renderer>();
-            _block = new MaterialPropertyBlock();
+            if (_block == null) _block = new MaterialPropertyBlock();
             if (_rend != null)
             {
                 _rend.GetPropertyBlock(_block);
@@ -287,11 +303,23 @@ namespace SolarMajesty
         private Color _start;
         private Vector3 _base;
 
-        private void Awake()
+        /// <summary>Re-arm a pooled instance.</summary>
+        public void Restart(Vector3 initialVelocity, float life)
+        {
+            velocity = initialVelocity;
+            lifetime = Mathf.Max(0.01f, life);
+            _t = 0f;
+            Capture();
+            enabled = true;
+        }
+
+        private void Awake() => Capture();
+
+        private void Capture()
         {
             _base = transform.localScale;
             _rend = GetComponent<Renderer>();
-            _block = new MaterialPropertyBlock();
+            if (_block == null) _block = new MaterialPropertyBlock();
             if (_rend != null)
             {
                 _rend.GetPropertyBlock(_block);
@@ -316,7 +344,11 @@ namespace SolarMajesty
                 _block.SetColor("_Color", c);
                 _rend.SetPropertyBlock(_block);
             }
-            if (_t >= lifetime) Destroy(gameObject);
+            if (_t >= lifetime)
+            {
+                enabled = false;
+                VfxPool.Release(gameObject);
+            }
         }
     }
 }

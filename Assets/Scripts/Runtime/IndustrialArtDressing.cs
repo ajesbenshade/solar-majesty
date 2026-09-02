@@ -33,6 +33,34 @@ namespace SolarMajesty
 
         private static readonly Dictionary<Slot, Material> Mats = new Dictionary<Slot, Material>(16);
         private static Shader _lit;
+        private static Shader _hull;
+        private static Color _dustColor = new Color(0.55f, 0.34f, 0.20f);
+        private static float _dustAmount = 0.24f;
+
+        /// <summary>
+        /// Match settled dust to the body so a module reads as standing on this planet. Call before
+        /// any dressing; changing bodies rebuilds the library.
+        /// </summary>
+        public static void BindBody(CelestialBodyProfile body)
+        {
+            Color next = body != null ? body.GroundLight : new Color(0.55f, 0.34f, 0.20f);
+            // Mars sheet is white/black/orange. 0.24 of GroundLight was the wash that
+            // turned campus hulls orange in the Play Mode stills.
+            float amount = 0.18f;
+            if (body != null)
+            {
+                if (body.Id == CelestialBodyId.Mars) amount = 0.04f;
+                else if (body.Id == CelestialBodyId.Europa) amount = 0.12f;
+                else if (body.Id == CelestialBodyId.Earth) amount = 0.10f;
+            }
+            if (_ready && next == _dustColor && Mathf.Approximately(amount, _dustAmount))
+                return;
+
+            _dustColor = next;
+            _dustAmount = amount;
+            Mats.Clear();
+            _ready = false;
+        }
         private static Texture2D _whiteAlbedo;
         private static Texture2D _whiteNormal;
         private static Texture2D _blackAlbedo;
@@ -217,6 +245,10 @@ namespace SolarMajesty
                    ?? Shader.Find("Universal Render Pipeline/Simple Lit");
             if (_lit == null) return;
 
+            // Procedural panel lines and dust beat a 256px generated tile at isometric distance.
+            // Null is fine: every slot falls back to the generated-texture path below.
+            _hull = Shader.Find("SolarMajesty/Hull");
+
             _whiteAlbedo = BuildWhiteHull(256);
             _whiteNormal = BuildPanelNormal(256, 0.55f);
             _blackAlbedo = BuildCarbon(128);
@@ -230,8 +262,94 @@ namespace SolarMajesty
             _ready = true;
         }
 
+        /// <summary>Slots that are structural hull surfaces and benefit from procedural panelling.</summary>
+        private static bool UsesHullShader(Slot slot)
+        {
+            switch (slot)
+            {
+                case Slot.WhiteHull:
+                case Slot.BlackCarbon:
+                case Slot.Graphite:
+                case Slot.Steel:
+                case Slot.Orange:
+                case Slot.DefenseRed:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static Material BuildHullMaterial(Slot slot)
+        {
+            var mat = new Material(_hull) { name = "SM_Art_" + slot };
+
+            Color baseColor;
+            float metallic;
+            float smooth;
+            float panelScale;
+            float dust = _dustAmount;
+            Color emission = Color.black;
+
+            switch (slot)
+            {
+                case Slot.BlackCarbon:
+                    baseColor = new Color(0.11f, 0.11f, 0.12f);
+                    metallic = 0.35f; smooth = 0.26f; panelScale = 0.85f;
+                    dust *= 0.8f;
+                    break;
+                case Slot.Graphite:
+                    baseColor = new Color(0.26f, 0.27f, 0.29f);
+                    metallic = 0.48f; smooth = 0.34f; panelScale = 0.75f;
+                    break;
+                case Slot.Steel:
+                    baseColor = new Color(0.54f, 0.56f, 0.59f);
+                    metallic = 0.74f; smooth = 0.56f; panelScale = 0.6f;
+                    break;
+                case Slot.Orange:
+                    baseColor = new Color(0.92f, 0.42f, 0.08f);
+                    metallic = 0.06f; smooth = 0.42f; panelScale = 0.5f;
+                    emission = new Color(0.55f, 0.16f, 0.02f);
+                    dust *= 0.7f;
+                    break;
+                case Slot.DefenseRed:
+                    baseColor = new Color(0.66f, 0.15f, 0.13f);
+                    metallic = 0.12f; smooth = 0.38f; panelScale = 0.7f;
+                    break;
+                default: // WhiteHull
+                    baseColor = new Color(0.98f, 0.98f, 0.97f);
+                    metallic = 0.07f; smooth = 0.40f; panelScale = 1.0f;
+                    break;
+            }
+
+            mat.SetColor("_BaseColor", baseColor);
+            mat.SetFloat("_Metallic", metallic);
+            mat.SetFloat("_Smoothness", smooth);
+            mat.SetFloat("_PanelScale", panelScale);
+            mat.SetFloat("_PanelWidth", 0.020f);
+            mat.SetFloat("_PanelDarken", slot == Slot.WhiteHull ? 0.42f : 0.30f);
+            mat.SetFloat("_PanelBevel", 0.40f);
+            mat.SetColor("_WearColor", new Color(0.30f, 0.29f, 0.28f));
+            mat.SetFloat("_WearAmount", slot == Slot.Steel ? 0.26f : 0.16f);
+            mat.SetFloat("_WearScale", 5.5f);
+            mat.SetColor("_DustColor", _dustColor);
+            mat.SetFloat("_DustAmount", dust);
+            mat.SetFloat("_DustSharpness", 3.6f);
+
+            if (emission.maxColorComponent > 0.01f)
+            {
+                mat.SetColor("_EmissionColor", emission);
+                mat.SetFloat("_EmissionBandWidth", 0f);
+                mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            }
+
+            return mat;
+        }
+
         private static Material BuildMaterial(Slot slot)
         {
+            if (_hull != null && UsesHullShader(slot))
+                return BuildHullMaterial(slot);
+
             var mat = new Material(_lit) { name = "SM_Art_" + slot };
             Texture2D albedo = _whiteAlbedo;
             Texture2D normal = _whiteNormal;

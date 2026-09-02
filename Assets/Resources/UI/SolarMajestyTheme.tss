@@ -1,0 +1,5 @@
+/* Runtime theme for the Solar Majesty UI Toolkit panel.
+ * A PanelSettings with no theme renders unstyled controls, so this pulls in Unity's default
+ * runtime theme and layers the project stylesheet on top. */
+@import url("unity-theme://default");
+@import url("/Assets/Resources/UI/SolarMajesty.uss");

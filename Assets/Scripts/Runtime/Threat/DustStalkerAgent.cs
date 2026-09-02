@@ -217,6 +217,10 @@ namespace SolarMajesty
                     _roleVerb = "AGGRO";
                     break;
             }
+            // Leg count and gait follow the kind, which is only known here — Initialize ran as a
+            // default stalker, so the rig is rebuilt now that we know what this creature is.
+            EnsureMotion();
+
             // Authored Blender scale lives on the visual child (AttachImportVisual).
             // Never flatten transform.localScale here — that squash was placeholder-only.
             _baseScale = transform.localScale;
@@ -734,6 +738,7 @@ namespace SolarMajesty
             _threat?.Clear(_sourceId);
             DemoAudio.PlayStalkerDeath();
             DemoVfx.DeathBurst(transform.position, stalkerColor);
+            _loop?.ShakeCamera(0.22f, transform.position);
             string who = Kind switch
             {
                 FaunaKind.Mite => string.IsNullOrEmpty(_roleNoun) ? "Regolith Mite" : _roleNoun,
@@ -766,6 +771,45 @@ namespace SolarMajesty
             _wanderTarget = _home + new Vector3(r.x, 0f, r.y);
         }
 
+        /// <summary>
+        /// Procedural locomotion, plus IK legs for the arthropod fauna. Scuttling legs are the
+        /// single biggest readability win on these silhouettes: a sliding blob does not register
+        /// as alive, a stepping one does.
+        /// </summary>
+        private void EnsureMotion()
+        {
+            var motion = UnitMotion.Attach(gameObject, UnitMotion.KindFor(Kind), 0.6f);
+            if (motion == null) return;
+
+            int legs = LegCountFor(Kind);
+            if (legs <= 0)
+            {
+                ProceduralLegs.Remove(gameObject);
+                return;
+            }
+
+            ProceduralLegs.Attach(
+                gameObject,
+                legs,
+                bodyRadius: 0.40f,
+                hipHeight: 0.34f,
+                legLength: 0.62f,
+                color: stalkerColor * 0.55f);
+        }
+
+        private static int LegCountFor(FaunaKind kind)
+        {
+            switch (kind)
+            {
+                case FaunaKind.Stalker: return 6;
+                case FaunaKind.Mite: return 6;
+                case FaunaKind.Tick: return 8;
+                case FaunaKind.Creeper: return 8;
+                case FaunaKind.Hopper: return 4;
+                default: return 0;   // Wisps and leeches hover
+            }
+        }
+
         private void EnsureVisual()
         {
             _rend = GetComponentInChildren<Renderer>();
@@ -792,6 +836,8 @@ namespace SolarMajesty
             if (placeholderSphere && transform.localScale == Vector3.one)
                 transform.localScale = new Vector3(1.1f, 0.55f, 1.3f);
             _baseScale = transform.localScale;
+
+            EnsureMotion();
 
             if (_label == null)
             {

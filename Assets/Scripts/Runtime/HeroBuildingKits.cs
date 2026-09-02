@@ -72,13 +72,13 @@ namespace SolarMajesty
                     new Vector3(radius * 1.98f, 0.39f, radius * 1.98f), Carbon, alongX);
                 Prim(root, "HabRing_" + s, PrimitiveType.Cylinder,
                     new Vector3(x + s * 0.38f, z, 0f),
-                    new Vector3(radius * 2.1f, 0.05f, radius * 2.1f), Orange, alongX);
+                    new Vector3(radius * 2.1f, 0.05f, radius * 2.1f), Carbon, alongX);
                 Prim(root, "HabDock_" + s, PrimitiveType.Cylinder,
                     new Vector3(s * (length * 0.50f), z, 0f),
                     new Vector3(1.24f, 0.21f, 1.24f), Graphite, alongX);
                 Prim(root, "HabDockAccent_" + s, PrimitiveType.Cylinder,
                     new Vector3(s * (length * 0.52f), z, 0f),
-                    new Vector3(1.40f, 0.035f, 1.40f), Orange, alongX);
+                    new Vector3(1.40f, 0.035f, 1.40f), Carbon, alongX);
             }
 
             Prim(root, "HabFront", PrimitiveType.Cylinder,
@@ -210,8 +210,8 @@ namespace SolarMajesty
                     Cyan, Quaternion.Euler(0f, i * 45f, 0f), CyanEmit);
             }
 
-            // Cardinal hull ports on the drum — same Y/bore as DockSleeve and the airlock
-            // arms. Unused faces keep the orange sockets; tubes only appear when docked.
+            // Cardinal hull wells only — graphite, no orange rings. Unused orange
+            // sockets were the v4 ribbed stub. Docked faces get a white DockSleeve.
             float dockY = ColonyVisualUtility.DockY;
             float bore = ColonyVisualUtility.DockBore;
             for (int i = 0; i < 4; i++)
@@ -223,9 +223,6 @@ namespace SolarMajesty
                 Prim(root, "CommonsPortWell_" + i, PrimitiveType.Cylinder,
                     at - dir * 0.04f,
                     new Vector3(bore * 0.92f, 0.07f, bore * 0.92f), Graphite, rot);
-                Prim(root, "CommonsPortRing_" + i, PrimitiveType.Cylinder,
-                    at + dir * 0.03f,
-                    new Vector3(bore * 1.18f, 0.045f, bore * 1.18f), Orange, rot);
             }
 
             Prim(root, "CommonsSeamRing_0", PrimitiveType.Cylinder,

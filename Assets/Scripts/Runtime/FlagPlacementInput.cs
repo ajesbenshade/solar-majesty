@@ -72,6 +72,42 @@ namespace SolarMajesty
             return handle;
         }
 
+        /// <summary>Palette lookup by type, for save restore.</summary>
+        public FlagData FlagFor(FlagType type)
+        {
+            switch (type)
+            {
+                case FlagType.Explore: return exploreFlag;
+                case FlagType.ClearThreat: return clearThreatFlag;
+                case FlagType.Build: return buildFlag;
+                case FlagType.Extract: return extractFlag;
+                case FlagType.DefendArea: return defendFlag;
+                case FlagType.ResearchSite: return researchSiteFlag;
+                case FlagType.EstablishOutpost: return outpostFlag;
+                case FlagType.Terraform: return terraformFlag;
+                default: return null;
+            }
+        }
+
+        /// <summary>
+        /// Re-post a flag from a save with its marker. Deliberately skips escrow: the metals were
+        /// already reserved before the save was written, so charging again would double-bill.
+        /// </summary>
+        public FlagHandle RestoreFlag(FlagData data, Vector3 world, float bountyAmount, int escrow)
+        {
+            if (_flags == null || data == null) return null;
+
+            FlagData prev = _selected;
+            _selected = data;
+            FlagHandle handle = _flags.Post(data, world, bountyAmount);
+            handle.EscrowMetals = escrow;
+            if (_loop != null)
+                handle.Risk = Mathf.Clamp01(data.baseRisk + _loop.LocalThreatAt(world) * 0.5f);
+            SpawnMarker(handle, world);
+            _selected = prev;
+            return handle;
+        }
+
         public bool CanAffordSelectedBounty()
         {
             if (_loop?.Economy == null) return true;

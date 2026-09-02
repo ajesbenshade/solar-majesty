@@ -28,6 +28,27 @@ namespace SolarMajesty
             var rend = ground.GetComponent<Renderer>();
             if (rend == null) return;
 
+            // Procedural ground reads the displaced mesh's slope and vertex exposure, so it shows
+            // rock on ridges and dust on flats instead of one tiled tint across the whole map.
+            var ground0 = Shader.Find("SolarMajesty/PlanetGround");
+            if (ground0 != null)
+            {
+                var groundMat = new Material(ground0) { name = $"SM_Ground_{body.ShortCode}" };
+                groundMat.SetColor("_BaseColor", body.GroundLight);
+                groundMat.SetColor("_DarkColor", body.GroundDark);
+                groundMat.SetColor("_RockColor", body.RockColor);
+                groundMat.SetFloat("_MacroScale", body.Id == CelestialBodyId.Earth ? 34f : 46f);
+                groundMat.SetFloat("_MacroStrength", 0.38f);
+                groundMat.SetFloat("_DetailScale", 2.4f);
+                groundMat.SetFloat("_DetailStrength", body.Id == CelestialBodyId.Europa ? 0.12f : 0.24f);
+                groundMat.SetFloat("_Smoothness", body.Id == CelestialBodyId.Europa ? 0.30f : 0.06f);
+
+                rend.sharedMaterial = groundMat;
+                rend.shadowCastingMode = ShadowCastingMode.Off;
+                rend.receiveShadows = true;
+                return;
+            }
+
             var shader = Shader.Find("Universal Render Pipeline/Lit")
                          ?? Shader.Find("Universal Render Pipeline/Simple Lit")
                          ?? Shader.Find("Sprites/Default");

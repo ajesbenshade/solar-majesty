@@ -43,3 +43,15 @@ Thumbs.db
 Blender/*.blend1
 Blender/*.blend2
 Temp/
+
+# Python
+__pycache__/
+*.pyc
+
+# Test + build output
+/test-results/
+/Builds/
+/build/
+
+# Unity crash dumps
+mono_crash.*.json

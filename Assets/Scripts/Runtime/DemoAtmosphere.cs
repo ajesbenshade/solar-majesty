@@ -87,10 +87,27 @@ namespace SolarMajesty
             RenderSettings.ambientIntensity = 1f;
 
             RenderSettings.fog = true;
-            RenderSettings.fogMode = FogMode.Linear;
+
+            // Exponential-squared fog holds off until the horizon instead of linearly tinting
+            // everything past the start distance. Linear fog starting at 28 m was washing the whole
+            // campus into one hue, which is why white hulls rendered orange in the Mars stills.
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
             RenderSettings.fogColor = body.FogColor;
-            RenderSettings.fogStartDistance = body.FogStart;
+            RenderSettings.fogDensity = FogDensityFor(body);
+
+            // Kept in sync so anything reading linear fog (or a quality tier that forces it) agrees.
+            RenderSettings.fogStartDistance = Mathf.Max(body.FogStart, body.FogEnd * 0.45f);
             RenderSettings.fogEndDistance = body.FogEnd;
+        }
+
+        /// <summary>
+        /// Density chosen so fog reaches roughly half strength at the body's FogEnd, keeping the
+        /// campus itself unfogged while the far vista still recedes.
+        /// </summary>
+        private static float FogDensityFor(CelestialBodyProfile body)
+        {
+            float horizon = Mathf.Max(60f, body.FogEnd);
+            return Mathf.Clamp(0.9f / horizon, 0.0015f, 0.02f);
         }
 
         private static void ConfigureCamera(Camera cam, CelestialBodyProfile body)
@@ -133,6 +150,10 @@ namespace SolarMajesty
             if (volume == null || body == null) return;
             var profile = volume.profile;
             if (profile == null) return;
+
+            EnsureTonemapping(profile);
+            EnsureWhiteBalance(profile, body);
+
             if (!profile.TryGet(out ColorAdjustments color))
                 color = profile.Add<ColorAdjustments>(true);
             color.colorFilter.Override(body.GradeFilter);
@@ -153,6 +174,50 @@ namespace SolarMajesty
                 color.contrast.Override(8f);
                 color.saturation.Override(6f);
                 color.postExposure.Override(0.05f);
+            }
+        }
+
+        /// <summary>
+        /// Without a tonemapper, HDR values above 1 clip per channel, which turns a lit white hull
+        /// under a warm sun into flat orange. ACES rolls the highlights off and keeps hue.
+        /// </summary>
+        private static void EnsureTonemapping(VolumeProfile profile)
+        {
+            if (!profile.TryGet(out Tonemapping tonemapping))
+                tonemapping = profile.Add<Tonemapping>(true);
+            tonemapping.active = true;
+            tonemapping.mode.Override(TonemappingMode.ACES);
+        }
+
+        /// <summary>
+        /// Pulls the body's colour cast out of the neutrals so ceramic hulls read as white against
+        /// the local ground instead of taking its hue. This is the difference between "on Mars"
+        /// and "everything is orange".
+        /// </summary>
+        private static void EnsureWhiteBalance(VolumeProfile profile, CelestialBodyProfile body)
+        {
+            if (!profile.TryGet(out WhiteBalance balance))
+                balance = profile.Add<WhiteBalance>(true);
+            balance.active = true;
+
+            switch (body.Id)
+            {
+                case CelestialBodyId.Mars:
+                    balance.temperature.Override(-16f);
+                    balance.tint.Override(-6f);
+                    break;
+                case CelestialBodyId.Europa:
+                    balance.temperature.Override(8f);
+                    balance.tint.Override(2f);
+                    break;
+                case CelestialBodyId.Belt:
+                    balance.temperature.Override(4f);
+                    balance.tint.Override(0f);
+                    break;
+                default:
+                    balance.temperature.Override(0f);
+                    balance.tint.Override(0f);
+                    break;
             }
         }
 

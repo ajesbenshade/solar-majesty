@@ -533,6 +533,14 @@ namespace SolarMajesty
             _workers.Clear();
             _village?.NotifyCollapsed(this);
             DemoVfx.StructureWreck(transform.position);
+            // Losing a module is the loudest thing that can happen to a colony; it should be felt.
+            var loop = FindAnyObjectByType<GameLoop>();
+            if (loop != null)
+            {
+                loop.ShakeCamera(0.85f, transform.position);
+                loop.RaiseAlert("module_lost", $"{DisplayName} destroyed.",
+                    AlertSeverity.Critical, transform.position);
+            }
             Destroy(gameObject);
         }
 

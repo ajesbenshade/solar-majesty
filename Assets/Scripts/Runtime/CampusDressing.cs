@@ -214,8 +214,12 @@ namespace SolarMajesty
                 SetPrefixActive(go.transform, "DockSleeve_W", west);
                 SetPrefixActive(go.transform, "DockSleeve_N", north);
                 SetPrefixActive(go.transform, "DockSleeve_S", south);
-                // CommonsStub stays off. DockSleeve is the module-side tube; enabling
-                // the baked cardinal stubs was the unused orange rib on campus v4.
+                // CommonsStub and CommonsPort stay off. The airlock arm carries the
+                // single orange collar; unused Commons rings were the v4 orange stub.
+                SetPrefixActive(go.transform, "HabDockAccent_1", !east);
+                SetPrefixActive(go.transform, "HabRing_1", !east);
+                SetPrefixActive(go.transform, "HabDockAccent_-1", !west);
+                SetPrefixActive(go.transform, "HabRing_-1", !west);
             }
 
             for (int a = 0; a < pieces.Count; a++)
@@ -263,7 +267,8 @@ namespace SolarMajesty
                 Transform t = ts[i];
                 if (t == null || t == parent) continue;
                 string n = t.name;
-                if (n.StartsWith("Dress_TubeArm") || n.StartsWith("DockSleeve") || n.StartsWith("CommonsStub"))
+                if (n.StartsWith("Dress_TubeArm") || n.StartsWith("DockSleeve") ||
+                    n.StartsWith("CommonsStub") || n.StartsWith("CommonsPort"))
                     t.gameObject.SetActive(false);
             }
         }
