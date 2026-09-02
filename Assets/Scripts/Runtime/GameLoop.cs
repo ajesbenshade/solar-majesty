@@ -456,6 +456,13 @@ namespace SolarMajesty
             EnsureNavMesh();
             DemoAtmosphere.Apply(mainCamera, transform, _body);
             PlanetaryMapDressing.Apply(transform, grid, _body);
+            // Vista ponds add NavMesh carve obstacles after the first bake — rebuild once.
+            if (_campusNav != null && grid != null)
+            {
+                _campusNav.Build(grid);
+                for (int i = 0; i < _agents.Count; i++)
+                    _agents[i]?.BindNavMesh(_campusNav);
+            }
             // Dressing owns sky + void fill; re-assert on GameLoop's camera (Awake may run before MainCamera tag resolves).
             if (mainCamera != null && _body != null)
                 PlanetaryMapDressing.ApplyCameraVoidFill(mainCamera, _body, RenderSettings.skybox != null);

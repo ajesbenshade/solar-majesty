@@ -175,6 +175,17 @@ namespace SolarMajesty
             if (ContainsAny(n, "sm_hopper", "ashhopper")) { slot = Slot.HopperHide; return true; }
             if (ContainsAny(n, "sm_tick", "rocktick")) { slot = Slot.TickHide; return true; }
             if (ContainsAny(n, "sm_dust")) { slot = Slot.MiteHide; return true; }
+            if (ContainsAny(n, "sm_leaf", "sm_trunk", "leaf", "trunk", "bark", "canopy", "tree"))
+            {
+                // Handled as foliage in EnvironmentMeshCatalog — still map if industrial path hits a tree.
+                slot = Slot.CreeperHide; // green-ish stand-in if this path is used
+                return true;
+            }
+            if (ContainsAny(n, "sm_rock", "sm_dune", "boulder"))
+            {
+                slot = Slot.Graphite;
+                return true;
+            }
             if (ContainsAny(n, "sm_plant")) { slot = Slot.CreeperHide; return true; }
             if (ContainsAny(n, "sm_ice")) { slot = Slot.Cyan; return true; }
             if (ContainsAny(n, "sm_yellow")) { slot = Slot.Orange; return true; }

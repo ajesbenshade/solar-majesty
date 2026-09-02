@@ -13,10 +13,19 @@ namespace SolarMajesty
     {
         private readonly List<ResourceNode> _nodes = new List<ResourceNode>(16);
         private readonly List<StalkerLair> _lairs = new List<StalkerLair>(8);
+        private readonly List<WaterFootprint> _water = new List<WaterFootprint>(128);
         private Transform _worldRoot;
         private GameLoop _loop;
         private IsoGrid _grid;
         private CelestialBodyProfile _body;
+
+        private struct WaterFootprint
+        {
+            public Vector3 Center;
+            public float RadiusX;
+            public float RadiusZ;
+            public float YawRad;
+        }
 
         public CelestialBodyProfile Body => _body;
         public IReadOnlyList<ResourceNode> Nodes => _nodes;
@@ -51,6 +60,7 @@ namespace SolarMajesty
             _body = body ?? CelestialBodyCatalog.Earth();
             _nodes.Clear();
             _lairs.Clear();
+            _water.Clear();
 
             if (_worldRoot != null)
                 Destroy(_worldRoot.gameObject);
@@ -189,7 +199,7 @@ namespace SolarMajesty
                     crater.name = $"Crater_{i}";
                     float native = sizeClass == 0 ? 5f : sizeClass == 1 ? 9f : 14f;
                     crater.transform.localScale = Vector3.one * (radius * 2f / native);
-                    ColonyVisualUtility.EnsureUrpMaterials(crater);
+                    EnvironmentMeshCatalog.RemapEnvironmentMaterials(crater);
                 }
                 else
                 {
@@ -237,33 +247,27 @@ namespace SolarMajesty
                 lake.transform.SetParent(root, false);
                 lake.transform.position = pos;
 
-                int lobes = 4 + rng.Next(0, 5);
+                // Flat cylinders (elliptical discs) — cubes read as hard angular ponds.
+                // No separate shore mesh; Uber shore-fade softens against the ground.
+                int lobes = 5 + rng.Next(0, 6);
                 for (int L = 0; L < lobes; L++)
                 {
                     float ang = (L / (float)lobes) * Mathf.PI * 2f + (float)rng.NextDouble() * 0.7f;
-                    float dist = baseR * Mathf.Lerp(0.05f, 0.55f, (float)rng.NextDouble());
-                    float rx = baseR * Mathf.Lerp(0.45f, 1.15f, (float)rng.NextDouble());
-                    float rz = baseR * Mathf.Lerp(0.35f, 1.05f, (float)rng.NextDouble());
+                    float dist = baseR * Mathf.Lerp(0.02f, 0.48f, (float)rng.NextDouble());
+                    float rx = baseR * Mathf.Lerp(0.55f, 1.2f, (float)rng.NextDouble());
+                    float rz = baseR * Mathf.Lerp(0.45f, 1.1f, (float)rng.NextDouble());
                     Color water = Color.Lerp(_body.WaterDeep, _body.WaterShallow, (float)rng.NextDouble() * 0.7f);
 
                     var lobe = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                     lobe.name = $"Lobe_{L}";
                     lobe.transform.SetParent(lake.transform, false);
-                    lobe.transform.localPosition = new Vector3(Mathf.Cos(ang) * dist, 0.015f, Mathf.Sin(ang) * dist);
+                    lobe.transform.localPosition = new Vector3(Mathf.Cos(ang) * dist, 0.02f, Mathf.Sin(ang) * dist);
                     lobe.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
-                    lobe.transform.localScale = new Vector3(rx * 2f, 0.04f, rz * 2f);
+                    // Unity cylinder: Y = height, XZ = diameter — keep very flat.
+                    lobe.transform.localScale = new Vector3(rx * 2f, 0.035f, rz * 2f);
                     Object.Destroy(lobe.GetComponent<Collider>());
                     StylizedWaterVisual.Apply(lobe, _body.WaterDeep, water);
-
-                    // Soft shoreline under the water rim.
-                    var shore = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    shore.name = $"Shore_{L}";
-                    shore.transform.SetParent(lake.transform, false);
-                    shore.transform.localPosition = lobe.transform.localPosition + new Vector3(0f, -0.01f, 0f);
-                    shore.transform.localRotation = lobe.transform.localRotation;
-                    shore.transform.localScale = new Vector3(rx * 2.25f, 0.02f, rz * 2.25f);
-                    Object.Destroy(shore.GetComponent<Collider>());
-                    Tint(shore, Color.Lerp(_body.GroundDark, _body.WaterDeep, 0.25f), 0.05f);
+                    RegisterWaterDisc(lobe.transform, rx, rz);
                 }
 
                 ColonyVisualUtility.SnapToGround(lake);
@@ -289,7 +293,7 @@ namespace SolarMajesty
                 var river = new GameObject($"River_{i}");
                 river.transform.SetParent(root, false);
 
-                int segs = 14 + rng.Next(0, 10);
+                int segs = 18 + rng.Next(0, 12);
                 float seedX = (float)rng.NextDouble() * 100f;
                 float seedZ = (float)rng.NextDouble() * 100f;
                 float amp = Mathf.Lerp(6f, 18f, (float)rng.NextDouble());
@@ -319,22 +323,34 @@ namespace SolarMajesty
                         Vector3 mid = (prev + p) * 0.5f;
                         Vector3 delta = p - prev;
                         float len = delta.magnitude;
-                        if (len > 0.4f)
+                        if (len > 0.35f)
                         {
                             float yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
                             float width = Mathf.Lerp(1.6f, 3.4f, Mathf.PerlinNoise(seedX + t * 5f, seedZ + 2f));
                             width *= Mathf.Lerp(0.75f, 1.35f, (float)rng.NextDouble());
+                            Color water = Color.Lerp(_body.WaterDeep, _body.WaterShallow,
+                                0.25f + 0.5f * Mathf.PerlinNoise(seedX + t, seedZ));
 
-                            var seg = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                            // Elliptical disc along the path — soft river silhouette, no box corners.
+                            var seg = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                             seg.name = $"Seg_{s}";
                             seg.transform.SetParent(river.transform, false);
                             seg.transform.position = mid + Vector3.up * 0.02f;
                             seg.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-                            seg.transform.localScale = new Vector3(width, 0.05f, len * 1.08f);
+                            seg.transform.localScale = new Vector3(width, 0.035f, len * 1.15f);
                             Object.Destroy(seg.GetComponent<Collider>());
-                            Color water = Color.Lerp(_body.WaterDeep, _body.WaterShallow,
-                                0.25f + 0.5f * Mathf.PerlinNoise(seedX + t, seedZ));
                             StylizedWaterVisual.Apply(seg, _body.WaterDeep, water);
+                            RegisterWaterDisc(seg.transform, width * 0.5f, len * 0.575f);
+
+                            // Round joint disc softens the elbow between segments.
+                            var joint = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                            joint.name = $"Joint_{s}";
+                            joint.transform.SetParent(river.transform, false);
+                            joint.transform.position = p + Vector3.up * 0.02f;
+                            joint.transform.localScale = new Vector3(width * 1.05f, 0.035f, width * 1.05f);
+                            Object.Destroy(joint.GetComponent<Collider>());
+                            StylizedWaterVisual.Apply(joint, _body.WaterDeep, water);
+                            RegisterWaterDisc(joint.transform, width * 0.525f, width * 0.525f);
                         }
                     }
 
@@ -398,6 +414,9 @@ namespace SolarMajesty
                     continue;
 
                 float patchR = Mathf.Lerp(6f, 16f, (float)rng.NextDouble());
+                if (IsOverWater(pos, patchR * 0.35f))
+                    continue;
+
                 var patch = new GameObject($"Forest_{i}");
                 patch.transform.SetParent(root, false);
                 patch.transform.position = pos;
@@ -412,7 +431,10 @@ namespace SolarMajesty
                     if (dens < 0.28f && rng.NextDouble() < 0.55) continue;
 
                     Vector3 local = new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
-                    if (FlatDist(pos + local, ColonyLayout.CampusOrigin) < VistaExclusion * 0.8f)
+                    Vector3 world = pos + local;
+                    if (FlatDist(world, ColonyLayout.CampusOrigin) < VistaExclusion * 0.8f)
+                        continue;
+                    if (IsOverWater(world, 1.1f))
                         continue;
 
                     SpawnTree(patch.transform, local, rng);
@@ -502,7 +524,7 @@ namespace SolarMajesty
                     mesh.name = $"Dune_{i}";
                     float s = len / EnvironmentMeshCatalog.DuneNativeLength;
                     mesh.transform.localScale = Vector3.one * s;
-                    ColonyVisualUtility.EnsureUrpMaterials(mesh);
+                    EnvironmentMeshCatalog.RemapEnvironmentMaterials(mesh);
                     Tint(mesh, _body.DuneColor);
                     ColonyVisualUtility.SnapToGround(mesh);
                     placed.Add(pos);
@@ -629,7 +651,8 @@ namespace SolarMajesty
                     mesh.name = $"Rock_{i}";
                     float scale = s / EnvironmentMeshCatalog.RockNativeSize;
                     mesh.transform.localScale = Vector3.one * scale;
-                    ColonyVisualUtility.EnsureUrpMaterials(mesh);
+                    EnvironmentMeshCatalog.RemapEnvironmentMaterials(mesh);
+                    ColonyVisualUtility.SeatFlatOnGround(mesh);
                     Tint(
                         mesh,
                         Color.Lerp(_body.RockColor, _body.GroundDark, (float)rng.NextDouble() * 0.4f),
@@ -807,6 +830,73 @@ namespace SolarMajesty
             float dx = a.x - b.x;
             float dz = a.z - b.z;
             return Mathf.Sqrt(dx * dx + dz * dz);
+        }
+
+        /// <summary>True if world XZ sits inside a lake/river footprint (plus margin in meters).</summary>
+        public bool IsOverWater(Vector3 world, float margin = 0.5f)
+        {
+            for (int i = 0; i < _water.Count; i++)
+            {
+                if (ContainsWater(_water[i], world, margin))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>Walk from a wet point toward a hint until dry land, or return hint.</summary>
+        public Vector3 FindNearestLand(Vector3 from, Vector3 hint)
+        {
+            if (!IsOverWater(from, 0.2f)) return from;
+            Vector3 dir = hint - from;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.01f)
+                dir = Vector3.forward;
+            dir.Normalize();
+            for (float d = 1.5f; d <= 28f; d += 1.5f)
+            {
+                Vector3 p = from + dir * d;
+                if (!IsOverWater(p, 0.4f)) return p;
+                Vector3 side = new Vector3(-dir.z, 0f, dir.x);
+                Vector3 l = from + side * d;
+                if (!IsOverWater(l, 0.4f)) return l;
+                Vector3 r = from - side * d;
+                if (!IsOverWater(r, 0.4f)) return r;
+            }
+            return hint;
+        }
+
+        /// <summary>Register a vista/dressing water disc so trees/fauna respect it.</summary>
+        public void RegisterExternalWater(Transform disc, float radiusX, float radiusZ)
+        {
+            RegisterWaterDisc(disc, radiusX, radiusZ);
+        }
+
+        private void RegisterWaterDisc(Transform disc, float radiusX, float radiusZ)
+        {
+            if (disc == null) return;
+            _water.Add(new WaterFootprint
+            {
+                Center = disc.position,
+                RadiusX = Mathf.Max(0.4f, radiusX),
+                RadiusZ = Mathf.Max(0.4f, radiusZ),
+                YawRad = disc.eulerAngles.y * Mathf.Deg2Rad
+            });
+            // Carve NavMesh so specialists cannot path through; fauna use IsOverWater.
+            CampusNavMesh.AddObstacle(disc.gameObject, minHeight: 2.4f);
+        }
+
+        private static bool ContainsWater(WaterFootprint w, Vector3 world, float margin)
+        {
+            float dx = world.x - w.Center.x;
+            float dz = world.z - w.Center.z;
+            float c = Mathf.Cos(-w.YawRad);
+            float s = Mathf.Sin(-w.YawRad);
+            float lx = dx * c - dz * s;
+            float lz = dx * s + dz * c;
+            float rx = w.RadiusX + margin;
+            float rz = w.RadiusZ + margin;
+            if (rx < 0.01f || rz < 0.01f) return false;
+            return (lx * lx) / (rx * rx) + (lz * lz) / (rz * rz) <= 1f;
         }
 
         public static void Tint(

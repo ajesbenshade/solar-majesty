@@ -73,17 +73,17 @@ namespace SolarMajesty
             }
 
             float worldW = grid != null ? grid.WorldWidth : 384f;
-            // Fewer, larger tiles so seams don't read as a square grid over the Lego campus.
+            // Dense tiles so authored meadow/regolith detail matches water foam scale.
             // Slightly non-square UV scale breaks iso-aligned checker banding.
             Vector2 tileScale;
             if (body.Id == CelestialBodyId.Earth)
             {
-                float t = Mathf.Max(5.5f, worldW / 58f);
+                float t = Mathf.Max(22f, worldW / 14f);
                 tileScale = new Vector2(t * 1.07f, t * 0.91f);
             }
             else if (body.Id == CelestialBodyId.Mars)
             {
-                float t = Mathf.Max(7f, worldW / 42f);
+                float t = Mathf.Max(20f, worldW / 16f);
                 tileScale = new Vector2(t * 0.94f, t * 1.08f);
             }
             else
@@ -429,9 +429,19 @@ namespace SolarMajesty
                 campus + new Vector3(-16.5f, 0f, 2.4f)
             };
             for (int i = 0; i < treeSpots.Length; i++)
+            {
+                if (WorldHasWater(treeSpots[i], 1.2f)) continue;
                 SpawnVistaTree(root, treeSpots[i], body, i);
+            }
 
-            SpawnVistaPond(root, campus + new Vector3(14.5f, 0f, 6.2f), body);
+            Vector3 pondAt = campus + new Vector3(14.5f, 0f, 6.2f);
+            SpawnVistaPond(root, pondAt, body);
+        }
+
+        private static bool WorldHasWater(Vector3 world, float margin)
+        {
+            var gen = Object.FindFirstObjectByType<PlanetaryWorldGen>();
+            return gen != null && gen.IsOverWater(world, margin);
         }
 
         /// <summary>
@@ -483,15 +493,18 @@ namespace SolarMajesty
         private static void SpawnVistaBoulder(
             Transform parent, Vector3 world, CelestialBodyProfile body, int salt, float scale)
         {
-            var mesh = EnvironmentMeshCatalog.InstantiateClean(
-                EnvironmentMeshCatalog.LoadRock(salt), "Dress_MarsBoulder");
+            var prefab = EnvironmentMeshCatalog.LoadRock(salt);
+            var mesh = EnvironmentMeshCatalog.InstantiateClean(prefab, "Dress_MarsBoulder");
             if (mesh != null)
             {
                 mesh.transform.SetParent(parent, false);
                 mesh.transform.position = world;
                 float s = scale / EnvironmentMeshCatalog.RockNativeSize;
                 mesh.transform.localScale = Vector3.one * s * (0.9f + (salt % 3) * 0.08f);
-                mesh.transform.rotation = Quaternion.Euler(8f * (salt % 5), salt * 37f, 5f * (salt % 3));
+                // Keep FBX import axis, yaw only — Euler(tip,yaw,tip) stood the flat base upright.
+                Quaternion importRot = prefab != null ? prefab.transform.rotation : mesh.transform.rotation;
+                ColonyVisualUtility.SetYawKeepingImport(mesh.transform, importRot, salt * 37f);
+                ColonyVisualUtility.SeatFlatOnGround(mesh);
                 Color c = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
                 PlanetaryWorldGen.Tint(mesh, c, 0.08f, ShadowCastingMode.On);
                 ColonyVisualUtility.SnapToGround(mesh);
@@ -645,24 +658,28 @@ namespace SolarMajesty
             pond.transform.SetParent(parent, false);
             pond.transform.position = world;
 
-            var shore = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            shore.name = "Shore";
-            shore.transform.SetParent(pond.transform, false);
-            shore.transform.localPosition = new Vector3(0f, 0.01f, 0f);
-            shore.transform.localScale = new Vector3(5.6f, 0.02f, 4.4f);
-            Object.Destroy(shore.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(shore, Color.Lerp(body.GroundDark, body.WaterDeep, 0.28f), 0.05f);
-
-            var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            water.name = "Water";
-            water.transform.SetParent(pond.transform, false);
-            water.transform.localPosition = new Vector3(0.15f, 0.025f, -0.1f);
-            water.transform.localScale = new Vector3(4.6f, 0.05f, 3.5f);
-            Object.Destroy(water.GetComponent<Collider>());
-            StylizedWaterVisual.Apply(
-                water,
-                body.WaterDeep,
-                Color.Lerp(body.WaterDeep, body.WaterShallow, 0.4f));
+            // Overlapping elliptical discs — soft shoreline, same language as lakes/rivers.
+            var world = Object.FindFirstObjectByType<PlanetaryWorldGen>();
+            for (int i = 0; i < 3; i++)
+            {
+                var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                water.name = i == 0 ? "Water" : $"Water_{i}";
+                water.transform.SetParent(pond.transform, false);
+                water.transform.localPosition = new Vector3(
+                    0.15f + (i - 1) * 0.55f,
+                    0.02f,
+                    -0.1f + (i % 2) * 0.35f);
+                water.transform.localRotation = Quaternion.Euler(0f, 18f + i * 40f, 0f);
+                float sx = 4.2f - i * 0.55f;
+                float sz = 3.2f - i * 0.35f;
+                water.transform.localScale = new Vector3(sx, 0.035f, sz);
+                Object.Destroy(water.GetComponent<Collider>());
+                StylizedWaterVisual.Apply(
+                    water,
+                    body.WaterDeep,
+                    Color.Lerp(body.WaterDeep, body.WaterShallow, 0.35f + i * 0.1f));
+                world?.RegisterExternalWater(water.transform, sx * 0.5f, sz * 0.5f);
+            }
         }
 
         private static void SpawnCumulus(Transform parent, Vector3 pos, float scale)

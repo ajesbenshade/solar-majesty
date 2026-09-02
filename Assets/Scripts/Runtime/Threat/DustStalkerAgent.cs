@@ -486,7 +486,7 @@ namespace SolarMajesty
             _threat?.Report(_sourceId, aggroPressure);
             if (dist > biteRange)
             {
-                transform.position = Vector3.MoveTowards(transform.position, dest, moveSpeed * 1.15f * dt);
+                transform.position = MoveFlatToward(dest, moveSpeed * 1.15f * dt);
                 return true;
             }
 
@@ -541,7 +541,7 @@ namespace SolarMajesty
             _threat?.Report(_sourceId, aggroPressure);
             if (dist > 2.4f)
             {
-                transform.position = Vector3.MoveTowards(transform.position, dest, moveSpeed * 1.15f * dt);
+                transform.position = MoveFlatToward(dest, moveSpeed * 1.15f * dt);
                 return true;
             }
 
@@ -579,7 +579,7 @@ namespace SolarMajesty
         {
             Vector3 dest = _wanderTarget;
             dest.y = transform.position.y;
-            transform.position = Vector3.MoveTowards(transform.position, dest, moveSpeed * 1.45f * dt);
+            transform.position = MoveFlatToward(dest, moveSpeed * 1.45f * dt);
             _retreatTimer -= dt;
             if (_retreatTimer <= 0f ||
                 Vector3.Distance(Flat(transform.position), Flat(_wanderTarget)) < 1.2f)
@@ -616,7 +616,7 @@ namespace SolarMajesty
             _threat?.Report(_sourceId, aggroPressure);
             if (dist > 2.4f)
             {
-                transform.position = Vector3.MoveTowards(transform.position, dest, moveSpeed * 1.2f * dt);
+                transform.position = MoveFlatToward(dest, moveSpeed * 1.2f * dt);
                 return true;
             }
 
@@ -672,13 +672,10 @@ namespace SolarMajesty
             if (_wanderTimer <= 0f || Vector3.Distance(Flat(transform.position), Flat(_wanderTarget)) < 0.4f)
                 PickWanderTarget();
 
-            Vector3 pos = transform.position;
             Vector3 target = _wanderTarget;
-            target.y = pos.y;
-
             // Slow, readable crawl; slightly faster when aggro (harassing).
             float speed = _aggro ? moveSpeed * 1.25f : moveSpeed;
-            transform.position = Vector3.MoveTowards(pos, target, speed * dt);
+            transform.position = MoveFlatToward(target, speed * dt);
         }
 
         private void TickAggroAndPressure()
@@ -732,7 +729,7 @@ namespace SolarMajesty
             // Crawl toward prey while biting.
             Vector3 prey = nearest.transform.position;
             prey.y = transform.position.y;
-            transform.position = Vector3.MoveTowards(transform.position, prey, moveSpeed * 0.85f * dt);
+            transform.position = MoveFlatToward(prey, moveSpeed * 0.85f * dt);
             nearest.ApplyDamage(biteDamagePerSecond * dt);
         }
 
@@ -855,8 +852,55 @@ namespace SolarMajesty
         private void PickWanderTarget()
         {
             _wanderTimer = wanderRetargetSeconds * Random.Range(0.7f, 1.3f);
-            Vector2 r = Random.insideUnitCircle * wanderRadius;
-            _wanderTarget = _home + new Vector3(r.x, 0f, r.y);
+            var world = _loop != null ? _loop.World : null;
+            for (int attempt = 0; attempt < 10; attempt++)
+            {
+                Vector2 r = Random.insideUnitCircle * wanderRadius;
+                Vector3 candidate = _home + new Vector3(r.x, 0f, r.y);
+                if (world == null || !world.IsOverWater(candidate, 1.0f))
+                {
+                    _wanderTarget = candidate;
+                    return;
+                }
+            }
+            _wanderTarget = world != null ? world.FindNearestLand(_home, _home) : _home;
+        }
+
+        /// <summary>XZ move that will not step into lake/river footprints.</summary>
+        private Vector3 MoveFlatToward(Vector3 dest, float maxDelta)
+        {
+            Vector3 from = transform.position;
+            dest.y = from.y;
+            var world = _loop != null ? _loop.World : null;
+            if (world == null)
+                return Vector3.MoveTowards(from, dest, maxDelta);
+
+            if (world.IsOverWater(from, 0.2f))
+            {
+                Vector3 land = world.FindNearestLand(from, _home);
+                land.y = from.y;
+                return Vector3.MoveTowards(from, land, maxDelta);
+            }
+
+            Vector3 next = Vector3.MoveTowards(from, dest, maxDelta);
+            if (!world.IsOverWater(next, 0.7f))
+                return next;
+
+            Vector3 dir = dest - from;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.01f)
+                return from;
+            dir.Normalize();
+            Vector3 side = new Vector3(-dir.z, 0f, dir.x);
+            Vector3 left = from + side * Mathf.Max(maxDelta * 1.6f, 1.2f);
+            left.y = from.y;
+            Vector3 right = from - side * Mathf.Max(maxDelta * 1.6f, 1.2f);
+            right.y = from.y;
+            if (!world.IsOverWater(left, 0.7f))
+                return Vector3.MoveTowards(from, left, maxDelta);
+            if (!world.IsOverWater(right, 0.7f))
+                return Vector3.MoveTowards(from, right, maxDelta);
+            return from;
         }
 
         private void EnsureVisual()

@@ -74,9 +74,86 @@ namespace SolarMajesty
             var go = Object.Instantiate(meshPrefab);
             go.name = name;
             StripImportJunk(go);
-            ColonyVisualUtility.EnsureUrpMaterials(go);
+            // Do not run IndustrialArtDressing — it maps unknown SM_Leaf/SM_Trunk to white hull.
+            RemapEnvironmentMaterials(go);
             ColonyVisualUtility.SnapToGround(go);
             return go;
+        }
+
+        /// <summary>
+        /// URP Lit remap for trees/rocks/dunes using imported SM_* environment names.
+        /// </summary>
+        public static void RemapEnvironmentMaterials(GameObject root)
+        {
+            if (root == null) return;
+            var lit = Shader.Find("Universal Render Pipeline/Lit")
+                      ?? Shader.Find("Universal Render Pipeline/Simple Lit");
+            if (lit == null) return;
+
+            var rends = root.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < rends.Length; i++)
+            {
+                var rend = rends[i];
+                if (rend == null) continue;
+                var src = rend.sharedMaterials;
+                if (src == null || src.Length == 0)
+                {
+                    rend.sharedMaterial = MakeEnvMat(lit, "SM_Leaf", EnvColorFor("sm_leaf"));
+                    continue;
+                }
+
+                var next = new Material[src.Length];
+                for (int m = 0; m < src.Length; m++)
+                {
+                    string token = src[m] != null ? src[m].name : rend.name;
+                    Color c = EnvColorFor(token);
+                    // Prefer authored BaseColor when present and not near-white stub.
+                    if (src[m] != null)
+                    {
+                        Color authored = src[m].HasProperty("_BaseColor")
+                            ? src[m].GetColor("_BaseColor")
+                            : src[m].HasProperty("_Color") ? src[m].color : c;
+                        if (authored.r + authored.g + authored.b < 2.55f)
+                            c = authored;
+                    }
+                    next[m] = MakeEnvMat(lit, token, c);
+                }
+                rend.sharedMaterials = next;
+                rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                rend.receiveShadows = true;
+            }
+        }
+
+        private static Material MakeEnvMat(Shader lit, string name, Color c)
+        {
+            var mat = new Material(lit) { name = "SM_Env_" + (string.IsNullOrEmpty(name) ? "Prop" : name) };
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+            else if (mat.HasProperty("_Color")) mat.color = c;
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.18f);
+            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
+            return mat;
+        }
+
+        private static Color EnvColorFor(string name)
+        {
+            string n = (name ?? "").ToLowerInvariant();
+            if (n.Contains("trunk") || n.Contains("bark"))
+                return new Color(0.32f, 0.18f, 0.08f);
+            if (n.Contains("leafdark") || n.Contains("leaf_dark"))
+                return new Color(0.14f, 0.32f, 0.12f);
+            if (n.Contains("leaf") || n.Contains("canopy") || n.Contains("tree"))
+                return new Color(0.22f, 0.42f, 0.16f);
+            if (n.Contains("rockdark") || n.Contains("rock_dark"))
+                return new Color(0.35f, 0.22f, 0.14f);
+            if (n.Contains("rock") || n.Contains("boulder"))
+                return new Color(0.55f, 0.32f, 0.18f);
+            if (n.Contains("dune"))
+                return new Color(0.72f, 0.42f, 0.22f);
+            if (n.Contains("craterfloor"))
+                return new Color(0.34f, 0.14f, 0.07f);
+            if (n.Contains("crater") || n.Contains("rim"))
+                return new Color(0.58f, 0.30f, 0.14f);
+            return new Color(0.22f, 0.42f, 0.16f);
         }
 
         private static void StripImportJunk(GameObject root)

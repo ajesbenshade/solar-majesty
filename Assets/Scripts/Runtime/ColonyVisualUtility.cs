@@ -81,6 +81,47 @@ namespace SolarMajesty
         }
 
         /// <summary>
+        /// Rotate so the thinnest world AABB axis becomes up — seats Copilot rocks with a
+        /// flat cut face down instead of standing that face vertical.
+        /// </summary>
+        public static void SeatFlatOnGround(GameObject root)
+        {
+            if (root == null) return;
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                if (!TryWorldBounds(root, out Bounds b)) return;
+                Vector3 e = b.size;
+                // Already sitting flat (height is the thin axis).
+                if (e.y <= e.x * 1.08f && e.y <= e.z * 1.08f)
+                    return;
+
+                if (e.x <= e.z)
+                    root.transform.rotation = Quaternion.Euler(0f, 0f, 90f) * root.transform.rotation;
+                else
+                    root.transform.rotation = Quaternion.Euler(90f, 0f, 0f) * root.transform.rotation;
+            }
+        }
+
+        private static bool TryWorldBounds(GameObject root, out Bounds b)
+        {
+            b = default;
+            var rends = root.GetComponentsInChildren<Renderer>();
+            if (rends == null || rends.Length == 0) return false;
+            bool any = false;
+            for (int i = 0; i < rends.Length; i++)
+            {
+                if (rends[i] == null || rends[i] is ParticleSystemRenderer) continue;
+                if (!any)
+                {
+                    b = rends[i].bounds;
+                    any = true;
+                }
+                else b.Encapsulate(rends[i].bounds);
+            }
+            return any;
+        }
+
+        /// <summary>
         /// Uniform scale so renderer bounds hit targetHeight. Does not use instance IDs.
         /// </summary>
         public static void ScaleToHeight(GameObject root, float targetHeight)
