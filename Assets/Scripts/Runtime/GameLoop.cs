@@ -433,6 +433,7 @@ namespace SolarMajesty
 
         public void LogOverseer(string line, float seconds)
         {
+            if (StillCaptureHold.Active) return;
             Log.Push(line);
             _overseerHud?.Notify(line, seconds);
         }
@@ -515,8 +516,22 @@ namespace SolarMajesty
             return $"{s / 60}:{s % 60:00}";
         }
 
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void RearmEditorStillHold() => RearmStillHoldIfEditorShutter();
+#endif
+
+        private static void RearmStillHoldIfEditorShutter()
+        {
+#if UNITY_EDITOR
+            if (UnityEditor.SessionState.GetBool(StillCaptureHold.EditorSessionKey, false))
+                StillCaptureHold.Arm();
+#endif
+        }
+
         private void Awake()
         {
+            RearmStillHoldIfEditorShutter();
             DemoSettings.Load();
             SimSpeed.Load();
             PlaytestTelemetry.Begin(Application.version);
@@ -580,10 +595,11 @@ namespace SolarMajesty
 
             string travel = CampaignProgress.ConsumeTravelLog();
             _consumedTravelLog = travel;
-            if (!string.IsNullOrEmpty(travel))
+            if (!StillCaptureHold.Active && !string.IsNullOrEmpty(travel))
                 Log.Push(travel);
             // W2 arrival cuts replace stale Earth ArrivalLog and overlay Luna/Mars fauna tees.
-            if (_body != null &&
+            if (!StillCaptureHold.Active &&
+                _body != null &&
                 !CampaignCutsceneCatalog.TryGetArrival(_body.Id, out _) &&
                 !string.IsNullOrEmpty(_body.ArrivalLog))
             {
@@ -676,6 +692,7 @@ namespace SolarMajesty
             PersistSession();
             TutorialStep = DemoSettings.TutorialDone ? TutorialCompleteStep : 0;
             TickTutorial();
+            RearmStillHoldIfEditorShutter();
             _overseerHud?.OnSessionPlaying();
             BeginNarrativeSession();
             if (ReplayRules.Mode != ColonyRunMode.Campaign ||
@@ -938,6 +955,7 @@ namespace SolarMajesty
 
         private void SyncNarrativeCivic()
         {
+            if (StillCaptureHold.Active) return;
             EnsureNarrative();
             bool charter = Research != null && Research.IsUnlocked(TechId.GuildCharter);
             _narrative.SyncCivic(celestialBody, CurrentNarrativeHint(), charter, _launchCraftStaged);
@@ -946,6 +964,7 @@ namespace SolarMajesty
         private void BeginNarrativeSession()
         {
             EnsureNarrative();
+            if (StillCaptureHold.Active) return;
             SyncNarrativeCivic();
 
             string arrivalKey = CampaignCutsceneCatalog.ArrivalKey(celestialBody);
@@ -955,17 +974,12 @@ namespace SolarMajesty
                 (hop || freshDrop) &&
                 !CampaignProgress.WasCutShown(arrivalKey))
             {
-                // CaptureStill shutter: still20 floated Mars-descent text over the campus.
-                // TryPeekCutscene already no-ops while StillCaptureHold is armed — skip
-                // enqueue so we do not rewrite AdvisorToastCatalog / FlagManager.
-                if (!StillCaptureHold.Active)
-                    _narrative.EnqueueCut(arrivalKey);
+                _narrative.EnqueueCut(arrivalKey);
             }
 
             string travelKey = AdvisorToastCatalog.TravelKeyForArrival(celestialBody);
             if ((hop || freshDrop) &&
                 !string.IsNullOrEmpty(travelKey) &&
-                !StillCaptureHold.Active &&
                 _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
                 LogOverseer(toast.Line, 6.8f);
@@ -2680,10 +2694,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// CaptureStill only: freeze life-support / colony-extinct so OUTPOST LOST cannot cover the shutter.
+        /// CaptureStill only: freeze life-support / colony-extinct so OUTPOST LOST cannot cover the shutter,
+        /// and drop queued W2 cut / ArrivalLog / travel-toast overlays so they cannot cover the campus.
         /// Stamp HAB latches EverHadHab without a census — that is the still15 fail overlay.
-        /// still20 Mars-descent toast / cutscene: HUD DrawToast + TryPeekCutscene no-op
-        /// while this hold is armed (do not rewrite AdvisorToastCatalog / FlagManager).
         /// </summary>
         public void PrepareStillCaptureWorld()
         {
@@ -2705,6 +2718,9 @@ namespace SolarMajesty
             EmptyRosterFailed = false;
             _emptyRosterTimer = 0f;
             _mission?.ClearLossForStill();
+            EnsureNarrative();
+            _narrative.ClearPendingCuts();
+            _overseerHud?.ClearToast();
         }
 
         /// <summary>Rebuild walkable mesh after village HABs / connectors expand the campus.</summary>

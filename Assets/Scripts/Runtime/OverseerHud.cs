@@ -101,9 +101,16 @@ namespace SolarMajesty
             }
         }
 
+        public void ClearToast()
+        {
+            _toast = null;
+            _toastUntil = 0f;
+        }
+
         public void OnSessionPlaying()
         {
             _confirmNewGame = false;
+            if (StillCaptureHold.Active) return;
             if (_loop == null || !_loop.StartsEmpty) return;
             // W2 arrival cuts + advisor travel toasts replace the stale Earth briefing.
             if (CampaignCutsceneCatalog.TryGetArrival(_loop.ActiveBody, out _))
@@ -115,7 +122,11 @@ namespace SolarMajesty
             Toast(briefing, 6.5f);
         }
 
-        public void Notify(string message, float seconds) => Toast(message, seconds);
+        public void Notify(string message, float seconds)
+        {
+            if (StillCaptureHold.Active) return;
+            Toast(message, seconds);
+        }
 
         private void OnResupply()
         {
@@ -151,6 +162,7 @@ namespace SolarMajesty
 
         private void Toast(string message, float seconds)
         {
+            if (StillCaptureHold.Active) return;
             _toast = message;
             _toastUntil = Time.unscaledTime + seconds;
         }
@@ -1719,7 +1731,6 @@ namespace SolarMajesty
 
         private void DrawToast()
         {
-            // Same spirit as OUTPOST LOST hold — still20 Mars-descent toast covered the campus.
             if (StillCaptureHold.Active) return;
             if (string.IsNullOrEmpty(_toast) || Time.unscaledTime > _toastUntil)
             {
@@ -1782,6 +1793,7 @@ namespace SolarMajesty
 
         private void DrawWinBanner()
         {
+            if (StillCaptureHold.Active) return;
             var mission = _loop.Mission;
             if (mission == null || !mission.IsWon || _winDismissed) return;
 

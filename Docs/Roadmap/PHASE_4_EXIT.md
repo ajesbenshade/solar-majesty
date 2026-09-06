@@ -136,12 +136,12 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
 
 **Play Mode fixes after still20 (code only — do not stamp exit)**
-- still20 shuttered `workshop=True inn=False wonder=False leftover=workshop extraHab=True extraSolar=False defense=False ortho=10 hold=True` plus floating Mars-descent toast
+- still20 shuttered `workshop=True inn=False wonder=False leftover=workshop extraHab=True extraSolar=False defense=False ortho=10 hold=True` plus **W2 campaign cut / narrative text covering the campus**
 - `PlanLeftovers` no longer stamps a second hangar that eats leftover sockets — Village Inn + a wonder still place when they **CanFit**
-- Extra solar bank + Defense Battery + a second under-construction HAB socket when they CanFit (packed pockets around existing yards)
-- CaptureStill / `StillCaptureHold` suppress the Mars-descent toast and cutscene overlay (same spirit as OUTPOST LOST). No AdvisorToastCatalog / FlagManager rewrite
+- Extra solar bank + Defense Battery + a second under-construction HAB socket when they CanFit (packed pockets; `MaxCenterSeparationCells` 12)
+- `StillCaptureHold` suppresses arrival/mid-act cut modals, ArrivalLog / VictoryLog modal UI, and travel-toast overlays for the shutter (fail banner stay). Re-arms from editor SessionState before `BeginNarrativeSession`. `PrepareStillCaptureWorld` clears pending cuts + toast. Disarm on play exit unchanged
 - Play `CampusOrthoSize` stays 10. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite
-- **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
+- **Reshoot still21+ after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
 
 ---
 
@@ -181,7 +181,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Campus Game-tab still vs mockup** — latest archived Game-tab is still6 (empty Sol 1). still20 signed extra HAB + workshop but leftover=workshop (Inn / wonder / extraSolar / defense missed) plus Mars-descent toast. This pass is **code only**: leftovers keep Inn + wonder when they CanFit; extra solar + Defense Battery pack remaining sockets; shutter suppresses narrative toast. Play snap stays 10. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
+- **Campus Game-tab still vs mockup** — latest archived Game-tab is still6 (empty Sol 1). still20 signed leftover=workshop + extraHab plus W2 cut / narrative text. This pass is **code only**: leftovers keep Inn + wonder when they CanFit; extra solar + Defense Battery pack remaining sockets; shutter hold (SessionState re-arm) suppresses cut/narrative modals. Play snap stays 10. **Reshoot still21+ after merge. Do not stamp exit.**
 - Mockup **density**: pad + Starship, solar field, extractors, leftover Workshop / Inn / wonder, extra HAB sockets, junction turrets. Units remain optional (do not invent new unit systems). Fidelity vs the visual target still needs a GD still.
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; tubes are dressing)

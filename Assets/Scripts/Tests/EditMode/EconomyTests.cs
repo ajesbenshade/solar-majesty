@@ -322,6 +322,12 @@ namespace SolarMajesty.Tests
             StillCaptureHold.Disarm();
             Assert.IsFalse(StillCaptureHold.Active);
         }
+
+        [Test]
+        public void EditorSessionKey_MatchesCaptureStillHold()
+        {
+            Assert.AreEqual("SM_CaptureStill_Hold", StillCaptureHold.EditorSessionKey);
+        }
     }
 
     public class OverseerRulesTests
