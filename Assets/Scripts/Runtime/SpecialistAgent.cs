@@ -252,6 +252,54 @@ namespace SolarMajesty
             equippedSuit = record.Suit;
         }
 
+        /// <summary>Continue restore of combat state. No death VFX — the down already happened.</summary>
+        public void RestoreCombatState(float health01, float fatigue01, int purse, bool downed, float downedTimer)
+        {
+            healthNormalized = Mathf.Clamp01(health01);
+            fatigue = Mathf.Clamp01(fatigue01);
+            credits = Mathf.Max(0, purse);
+            if (!downed)
+            {
+                _incapacitated = false;
+                _recoverTimer = 0f;
+                return;
+            }
+
+            _incapacitated = true;
+            _recoverTimer = Mathf.Max(0.1f, downedTimer);
+            _status = "incapacitated";
+            ReleaseClaim();
+            _activeFlag = null;
+            _lastDecision = BrainDecision.Idle(0f, "incapacitated");
+            SetAgentStopped(true);
+            IndustrialArtDressing.SetTintOverlay(gameObject, new Color(0.38f, 0.38f, 0.4f));
+        }
+
+        /// <summary>Place a restored robot without a new fabrication burst.</summary>
+        public void RestoreWorldPose(Vector3 world)
+        {
+            transform.position = world;
+            ColonyVisualUtility.SnapToGround(gameObject);
+            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
+                _agent.Warp(transform.position);
+            else
+                BindNavMesh(_navMesh);
+        }
+
+        /// <summary>Rebind a soft claim after Continue. Silent — no claim SFX.</summary>
+        public void RestoreActiveFlag(FlagHandle flag)
+        {
+            if (flag == null || _flags == null || _incapacitated || _scrapped) return;
+            ReleaseClaim();
+            _activeFlag = flag;
+            _flags.AddClaim(flag);
+            _claimedActive = true;
+            _idleTarget = flag.WorldPosition;
+            _hasIdleTarget = true;
+            _lastDecision = BrainDecision.Pursue(flag, 0.45f, "continue_claim");
+            _status = flag.Data != null ? $"pursue_{flag.Data.flagType}" : "pursue";
+        }
+
         public SpecialistRecord ToRecord(bool corpse)
         {
             return new SpecialistRecord

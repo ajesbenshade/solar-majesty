@@ -153,7 +153,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 - Circular HAB cluster vs square docks (placement model stays square; tubes are dressing)
 - IMGUI HUD vs painted mockup chrome (material language shipped; painted fidelity is leftover)
 - Heightmap terrain (explicit Phase 4 non-goal unless iso readability fails)
-- Titan / Continue snapshot gaps / external 45–90 min playtest (same leftovers as Phase 2 / 3)
+- Titan / external 45–90 min playtest (same leftovers as Phase 2 / 3). Continue now restores flags / fauna / specialist HP; dens / node yield / mission timer still omitted.
 
 ---
 

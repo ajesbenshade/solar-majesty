@@ -123,7 +123,7 @@ namespace SolarMajesty.EditorTools
             "\n" +
             "Notes for testers\n" +
             "-----------------\n" +
-            "- Continue restores campus + stockpile + research on that world. Flags and fauna reset.\n" +
+            "- Continue restores campus + stockpile + research + open flags + fauna + specialist HP on that world.\n" +
             "- Engineer ignores a cheap Build flag; raise $ with + until they take it.\n" +
             "- Shift+F10 (debug) hops bodies. Shift+F10 with Shift held unlocks the campaign.\n" +
             "- Greybox / blockout art. Please note crashes, unreadable UI, and \"I didn't know what to do\".\n";

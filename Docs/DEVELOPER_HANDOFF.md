@@ -116,7 +116,7 @@ update Docs/NEXT_STEPS.md if milestones moved.
 ### Known gaps
 
 - Unit meshes are Blender blockouts. All ten specialists + seven fauna are sheet-matched against `ConceptSheets/` turnarounds (Scout keeps hover rotors; Defense stays the Imagine tracked guardian — PNG biped walker still open). Play Mode HAB / Colony Commons / pad / extractor / solar / Defense bunker / Guild / LAB / wonder / **workshop hangar / tall hangar / Inn** kits prefer `SM_Hero_*` FBX (`HeroBuildingKits` fallback). Junction turrets dress airlock hubs. Medic capsule / Harvester orange-blade hopper / Surveyor tripod / Courier white crate / Sentinel **treads** / Terraformer **orange blade + rear rake** silhouettes are in. Fauna: Stalker / six-leg Hopper / graphite Creeper / Tick / pillbug Mite / **white-ray Leech** / seven-point Wisp. Honest Mars mockup notes live in the Phase 4 doc — **Phase 4 is not exited** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md): Game-tab still is empty Sol 1, not a campus stamp).  
-- Continue slot is campus + stockpile + research per body (flags/fauna/HP are not snapshotted)  
+- Continue slot is campus + stockpile + research + open flags + living fauna + specialist HP per body (dens / node yield / mission timer / parties are not snapshotted)  
 - External Phase 1 playtest / exit review still open  
 - No multiplayer  
 - Roadmap: [Docs/Roadmap/00_ROADMAP_OVERVIEW.md](Roadmap/00_ROADMAP_OVERVIEW.md) — Phase 2 complete ([exit](Roadmap/PHASE_2_EXIT.md)); Phase 3 complete ([exit](Roadmap/PHASE_3_EXIT.md)); then [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) → [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md)  

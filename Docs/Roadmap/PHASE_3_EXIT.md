@@ -82,7 +82,7 @@ If a live 45–90 min session finds one of these dead, note it in `PHASE_1_FRICT
 
 - Titan / outer system (Phase 2 stretch).
 - Imagine→Blender unit remesh (production look is [Phase 4 – Visual Target](05_PHASE_4_VISUAL_TARGET.md)). Prompt sheets are in `Docs/GROK_IMAGINE_UNIT_PROMPTS.md`.
-- Continue still omits flags, fauna, and specialist HP.
+- Continue omitted flags, fauna, and specialist HP at Phase 3 exit (restored later in Phase 4 W1 continue integrity).
 - External 45–90 min playtest not yet run (same as Phase 1 / 2). Desktop balance pass only.
 - Full combat sim / multiplayer / heightmap terrain.
 

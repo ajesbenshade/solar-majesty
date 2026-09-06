@@ -176,7 +176,8 @@ namespace SolarMajesty.Tests
                 bounty = 95f,
                 escrowMetals = 95,
                 postedWork = 40f,
-                workDone = 12.5f
+                workDone = 12.5f,
+                claimCount = 2
             });
             save.agents.Add(new SaveAgent
             {
@@ -185,7 +186,8 @@ namespace SolarMajesty.Tests
                 fatigue = 0.66f,
                 credits = 210,
                 downed = true,
-                downedTimer = 7.5f
+                downedTimer = 7.5f,
+                claimedFlagIndex = 0
             });
             save.fauna.Add(new SaveFauna { kind = (int)FaunaKind.Stalker, health = 0.3f });
 
@@ -199,11 +201,13 @@ namespace SolarMajesty.Tests
             Assert.AreEqual((int)FlagType.ClearThreat, copy.flags[0].flagType);
             Assert.AreEqual(95, copy.flags[0].escrowMetals);
             Assert.AreEqual(12.5f, copy.flags[0].workDone, 1e-4f);
+            Assert.AreEqual(2, copy.flags[0].claimCount);
 
             Assert.AreEqual(1, copy.agents.Count);
             Assert.AreEqual(0.42f, copy.agents[0].health, 1e-4f);
             Assert.AreEqual(210, copy.agents[0].credits);
             Assert.IsTrue(copy.agents[0].downed);
+            Assert.AreEqual(0, copy.agents[0].claimedFlagIndex);
 
             Assert.AreEqual(1, copy.fauna.Count);
             Assert.AreEqual(0.3f, copy.fauna[0].health, 1e-4f);
@@ -247,6 +251,62 @@ namespace SolarMajesty.Tests
             Assert.AreNotEqual(SaveSystem.SlotPath(0), SaveSystem.SlotPath(1));
             Assert.AreEqual(SaveSystem.SlotPath(SaveSystem.SlotCount - 1), SaveSystem.SlotPath(999));
             Assert.AreEqual(SaveSystem.SlotPath(0), SaveSystem.SlotPath(-3));
+        }
+
+        [Test]
+        public void NewAgent_DefaultsClaimedFlagToNone()
+        {
+            Assert.AreEqual(-1, new SaveAgent().claimedFlagIndex);
+        }
+    }
+
+    public class FlagManagerTests
+    {
+        private static FlagData MakeFlag(FlagType type, float work)
+        {
+            var data = ScriptableObject.CreateInstance<FlagData>();
+            data.flagType = type;
+            data.workRequired = work;
+            data.minBounty = 10;
+            data.maxBounty = 500;
+            data.defaultBounty = 50;
+            return data;
+        }
+
+        [Test]
+        public void RestoreProgress_KeepsPostedWorkAndRemainingLabor()
+        {
+            var flags = new FlagManager();
+            var handle = flags.Post(MakeFlag(FlagType.ClearThreat, 40f), Vector3.zero, 95f);
+
+            flags.RestoreProgress(handle, 40f, 27.5f);
+
+            Assert.AreEqual(40f, handle.PostedWork, 1e-4f);
+            Assert.AreEqual(27.5f, flags.GetWorkRemaining(handle), 1e-4f);
+        }
+
+        [Test]
+        public void RestoreProgress_UsesExistingPostedWorkWhenSaveOmitsIt()
+        {
+            var flags = new FlagManager();
+            var handle = flags.Post(MakeFlag(FlagType.Extract, 12f), Vector3.right, 40f);
+
+            flags.RestoreProgress(handle, 0f, 4f);
+
+            Assert.AreEqual(12f, handle.PostedWork, 1e-4f);
+            Assert.AreEqual(4f, flags.GetWorkRemaining(handle), 1e-4f);
+        }
+
+        [Test]
+        public void ApplyWork_AfterRestore_CompletesAtRemainingLabor()
+        {
+            var flags = new FlagManager();
+            var handle = flags.Post(MakeFlag(FlagType.Explore, 10f), Vector3.forward, 30f);
+            flags.RestoreProgress(handle, 10f, 2f);
+
+            Assert.IsFalse(flags.ApplyWork(handle, 1.5f));
+            Assert.IsTrue(flags.ApplyWork(handle, 1f));
+            Assert.AreEqual(0, flags.Flags.Count);
         }
     }
 }
