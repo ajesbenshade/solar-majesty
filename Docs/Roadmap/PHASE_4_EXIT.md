@@ -111,6 +111,13 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - Mars `BindBody` is sheet-white (no dirt lerp). WhiteHull albedo dirt reduced
 - `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite
 
+**Play Mode fixes after still16 (code only — do not stamp exit)**
+- Removed wrap-around `Dress_HubDoor` carbon plates that painted the 2×2 as a dark box
+- Hub is a smaller white paneled square (`AirlockHubSide` 1.56 m) with white roof, thin carbon corners, small inset hatches
+- One orange collar per docked `Dress_TubeArm` at the Lego face; unused arms stay hidden so unused faces stay clean
+- Short white stub + white hub lip is the HAB join (not a flush black box)
+- `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite
+
 ---
 
 ## Match vs `SM_MarsCampaign_VisualTarget.png`
@@ -138,6 +145,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 **Not the PNG (leftovers even after the post-v4 Play Mode pass)**
 - Latest Game-tab is still6 (empty Sol 1), not a mockup campus close-up. Still5/packed exist; exit stays blocked.
 - **still5 failure modes this look-kit pass targets (code only — no new Game-tab still):** unused Commons cardinal orange **port ring** (`CommonsPort_*` hull-drum collar, not covered by the old `Dress_TubeArm` / `DockSleeve` / `CommonsStub` hide list); v4 orange box airlock + unused ribbed stub. Airlock hub stays a white paneled square; orange only at docked collars; no fourth `CampusTubeRoot` in the HAB gap. Needs a **fresh** Game-tab campus still before anyone restamps this review.
+- **still16 look fail (signed capture gate, code pass only):** the 2×2 joint still read as a **dark rectangular box** (wrap `Dress_HubDoor` carbon plates + carbon roof), not a white paneled square. This pass removes wrap doors, keeps a smaller white hub, puts **one orange collar at the Lego face** on docked `Dress_TubeArm` only, and leaves unused faces as clean white plates. **Do not stamp exit.** A denser Commons+airlock+HAB Game-tab still is still required.
 - Tracked Defense Guardian vs the mockup’s bulky **biped walker**
 - Construction cranes are runtime dressing, not authored FBX
 - Status pips / aprons / dust-devils are primitive dressing
@@ -148,7 +156,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Campus Game-tab still vs mockup** — latest Game-tab is still6 (empty Sol 1, pad in the corner), not a packed campus close-up. Still5 has Commons but unused orange port rings in that PNG (hull-drum `CommonsPort` leftover; hide list now covers those names). Packed still is editor `Camera.Render`, not HUD. **Do not treat this look-kit pass as exit.**
+- **Campus Game-tab still vs mockup** — latest Game-tab is still6 (empty Sol 1, pad in the corner), not a packed campus close-up. Still5 has Commons but unused orange port rings in that PNG (hull-drum `CommonsPort` leftover; hide list now covers those names). still16 signed the look fail as a **dark box airlock** (wrap doors). Hub/collar code now targets that; a denser Commons+airlock+HAB Game-tab still is still required. Packed still is editor `Camera.Render`, not HUD. **Do not treat this look-kit pass as exit.**
 - Mockup **density**: pad + Starship, solar field, extractors, units in the same frame
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; tubes are dressing)

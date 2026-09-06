@@ -191,11 +191,16 @@ namespace SolarMajesty
             t.rotation = Quaternion.Euler(0f, yawDegrees, 0f) * importRotation;
         }
 
+        /// <summary>White paneled 2×2 hub side in meters. Must stay under the 3 m cell.</summary>
+        public const float AirlockHubSide = 1.56f;
+
         /// <summary>
-        /// White paneled 2×2 square hub (cell-safe ~1.68 m). Round white stubs + one
-        /// orange collar only on docked faces (live arms start hidden). Not a hex,
-        /// not a wrap-around orange door box. RefreshTubes never stacks a fourth
-        /// CampusTubeRoot corridor in the HAB gap.
+        /// White paneled 2×2 square hub (cell-safe <see cref="AirlockHubSide"/>).
+        /// Round white stubs + one orange collar only on docked faces (live arms
+        /// start hidden). Not a hex, not a wrap-around carbon/orange door box —
+        /// still16 read as a dark rectangular joint because Dress_HubDoor covered
+        /// the white plates. RefreshTubes never stacks a fourth CampusTubeRoot
+        /// corridor in the HAB gap.
         /// </summary>
         public static GameObject SpawnPlusConnector(
             Vector3 position, Transform parent, float worldSpan, bool showAllArms = false)
@@ -224,30 +229,33 @@ namespace SolarMajesty
         private static readonly Color HubCarbon = new Color(0.12f, 0.13f, 0.14f);
         private static readonly Color HubGraphite = new Color(0.20f, 0.21f, 0.22f);
         private static readonly Color HubCyan = new Color(0.22f, 0.84f, 0.98f);
+        private static readonly Color HubWhiteEmit = new Color(0.22f, 0.22f, 0.24f);
 
         private static void SpawnAirlockHub(Transform parent)
         {
             // Stay smaller than the 3 m cell so docked faces have room for a short
-            // white tube. A 2.4 m cube filled the cell and read as an orange/white box.
+            // white tube. Wrap-around carbon doors (0.92 m) painted the hub as the
+            // still16 dark box — unused faces are clean white plates now.
             const float y = 0.96f;
-            const float side = 1.68f;
-            const float tall = 1.70f;
+            const float side = AirlockHubSide;
+            const float tall = 1.52f;
             float half = side * 0.5f;
 
-            DressCube(parent, "Dress_HubPlinth", new Vector3(0f, 0.07f, 0f),
-                new Vector3(side + 0.22f, 0.14f, side + 0.22f), HubCarbon);
-            DressCube(parent, "Dress_HubSkirt", new Vector3(0f, 0.18f, 0f),
-                new Vector3(side + 0.08f, 0.07f, side + 0.08f), HubGraphite);
+            DressCube(parent, "Dress_HubPlinth", new Vector3(0f, 0.06f, 0f),
+                new Vector3(side + 0.10f, 0.10f, side + 0.10f), HubGraphite);
+            DressCube(parent, "Dress_HubSkirt", new Vector3(0f, 0.14f, 0f),
+                new Vector3(side + 0.04f, 0.05f, side + 0.04f), HubWhite, HubWhiteEmit);
 
             var hub = GameObject.CreatePrimitive(PrimitiveType.Cube);
             hub.name = "Dress_AirlockHub";
             hub.transform.SetParent(parent, false);
             hub.transform.localPosition = new Vector3(0f, y, 0f);
             hub.transform.localScale = new Vector3(side, tall, side);
-            TintPrimitive(hub, HubWhite);
+            TintPrimitive(hub, HubWhite, HubWhiteEmit);
 
             // Recessed face plates so the square reads paneled, not a flat fridge.
-            float inset = 0.035f;
+            // No Dress_HubDoor — those wrap plates ate the white language.
+            float inset = 0.03f;
             Vector3[] plates =
             {
                 new Vector3(0f, y, half + inset),
@@ -259,63 +267,63 @@ namespace SolarMajesty
             {
                 bool ns = Mathf.Abs(plates[i].z) >= Mathf.Abs(plates[i].x);
                 Vector3 plate = ns
-                    ? new Vector3(side * 0.72f, tall * 0.72f, 0.04f)
-                    : new Vector3(0.04f, tall * 0.72f, side * 0.72f);
-                DressCube(parent, "Dress_HubPanel_" + i, plates[i], plate, HubWhite);
+                    ? new Vector3(side * 0.82f, tall * 0.78f, 0.045f)
+                    : new Vector3(0.045f, tall * 0.78f, side * 0.82f);
+                DressCube(parent, "Dress_HubPanel_" + i, plates[i], plate, HubWhite, HubWhiteEmit);
+
+                Vector3 p = plates[i];
+                Vector3 hSeam = ns
+                    ? new Vector3(side * 0.74f, 0.028f, 0.05f)
+                    : new Vector3(0.05f, 0.028f, side * 0.74f);
+                Vector3 vSeam = ns
+                    ? new Vector3(0.028f, tall * 0.70f, 0.05f)
+                    : new Vector3(0.05f, tall * 0.70f, 0.028f);
+                DressCube(parent, "Dress_HubSeamH_" + i,
+                    new Vector3(p.x * 1.02f, y + 0.16f, p.z * 1.02f), hSeam, HubCarbon);
+                DressCube(parent, "Dress_HubSeamV_" + i,
+                    new Vector3(p.x * 1.02f, y, p.z * 1.02f), vSeam, HubCarbon);
+
+                // Small inset hatch — panel language, not a wrap door / unused stub.
+                Vector3 hatch = ns
+                    ? new Vector3(0.28f, 0.28f, 0.03f)
+                    : new Vector3(0.03f, 0.28f, 0.28f);
+                DressCube(parent, "Dress_HubInset_" + i,
+                    new Vector3(p.x * 1.04f, y - 0.18f, p.z * 1.04f), hatch, HubCarbon);
             }
 
-            DressCube(parent, "Dress_HubRoof", new Vector3(0f, y + tall * 0.5f + 0.04f, 0f),
-                new Vector3(side + 0.08f, 0.07f, side + 0.08f), HubCarbon);
-            DressCube(parent, "Dress_HubHatch", new Vector3(0f, y + tall * 0.5f + 0.10f, 0f),
-                new Vector3(0.44f, 0.05f, 0.44f), HubGraphite);
-            DressCube(parent, "Dress_HubVisor", new Vector3(0f, y + 0.48f, half + 0.06f),
-                new Vector3(0.52f, 0.06f, 0.04f), HubCyan);
+            DressCube(parent, "Dress_HubRoof", new Vector3(0f, y + tall * 0.5f + 0.035f, 0f),
+                new Vector3(side + 0.04f, 0.06f, side + 0.04f), HubWhite, HubWhiteEmit);
+            DressCube(parent, "Dress_HubHatch", new Vector3(0f, y + tall * 0.5f + 0.09f, 0f),
+                new Vector3(0.36f, 0.045f, 0.36f), HubCarbon);
+            DressCube(parent, "Dress_HubVisor", new Vector3(0f, y + 0.42f, half + 0.055f),
+                new Vector3(0.48f, 0.055f, 0.035f), HubCyan);
 
-            float[] cx = { -half + 0.06f, -half + 0.06f, half - 0.06f, half - 0.06f };
-            float[] cz = { -half + 0.06f, half - 0.06f, -half + 0.06f, half - 0.06f };
+            float[] cx = { -half + 0.05f, -half + 0.05f, half - 0.05f, half - 0.05f };
+            float[] cz = { -half + 0.05f, half - 0.05f, -half + 0.05f, half - 0.05f };
             for (int i = 0; i < 4; i++)
             {
                 DressCube(parent, "Dress_HubCorner_" + i,
                     new Vector3(cx[i], y, cz[i]),
-                    new Vector3(0.12f, tall + 0.04f, 0.12f), HubCarbon);
-            }
-
-            Vector3[] faces =
-            {
-                new Vector3(0f, 0f, half),
-                new Vector3(0f, 0f, -half),
-                new Vector3(half, 0f, 0f),
-                new Vector3(-half, 0f, 0f)
-            };
-            for (int i = 0; i < 4; i++)
-            {
-                bool ns = Mathf.Abs(faces[i].z) >= Mathf.Abs(faces[i].x);
-                Vector3 p = faces[i];
-                Vector3 door = ns ? new Vector3(0.92f, 0.92f, 0.04f) : new Vector3(0.04f, 0.92f, 0.92f);
-                Vector3 hSeam = ns ? new Vector3(side * 0.78f, 0.035f, 0.05f) : new Vector3(0.05f, 0.035f, side * 0.78f);
-                Vector3 vSeam = ns ? new Vector3(0.035f, tall * 0.78f, 0.05f) : new Vector3(0.05f, tall * 0.78f, 0.035f);
-                DressCube(parent, "Dress_HubDoor_" + i, new Vector3(p.x * 1.01f, DockY, p.z * 1.01f), door, HubCarbon);
-                DressCube(parent, "Dress_HubSeamH_" + i, new Vector3(p.x * 1.02f, y + 0.22f, p.z * 1.02f), hSeam, HubCarbon);
-                DressCube(parent, "Dress_HubSeamV_" + i, new Vector3(p.x * 1.02f, y, p.z * 1.02f), vSeam, HubCarbon);
+                    new Vector3(0.09f, tall + 0.02f, 0.09f), HubCarbon);
             }
 
             float yaw = 40f + (parent.position.x + parent.position.z) * 13f;
-            HeroBuildingKits.BuildJunctionTurret(parent, new Vector3(0f, y + tall * 0.5f + 0.10f, 0f), yaw, 0.72f);
+            HeroBuildingKits.BuildJunctionTurret(parent, new Vector3(0f, y + tall * 0.5f + 0.09f, 0f), yaw, 0.68f);
         }
 
         /// <summary>
-        /// Round white stub from the square hub to one cell face. Orange collar at the joint only.
-        /// Live unused faces stay off so they do not read as orange stubs.
+        /// Round white stub from the square hub to one cell face. One orange collar
+        /// at the Lego face (the docked joint). Live unused faces stay off so they
+        /// do not read as dark unused stubs.
         /// </summary>
         private static void SpawnDockStub(
             Transform parent, string name, Vector3 axis, float cellSpan, float diameter, bool startActive)
         {
             Vector3 dir = axis.normalized;
             const float y = DockY;
-            // Hub half is 0.84 m — leave a visible white corridor to the 1.5 m cell face.
-            const float hubClear = 0.86f;
+            float hubClear = AirlockHubSide * 0.5f + 0.03f;
             float face = cellSpan * 0.5f;
-            float stubLen = Mathf.Max(0.36f, face - hubClear);
+            float stubLen = Mathf.Max(0.40f, face - hubClear);
             Vector3 mid = dir * (hubClear + stubLen * 0.5f) + new Vector3(0f, y, 0f);
             Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
 
@@ -331,26 +339,36 @@ namespace SolarMajesty
             tube.transform.localRotation = rot;
             tube.transform.localScale = new Vector3(diameter, stubLen * 0.5f, diameter);
             Object.Destroy(tube.GetComponent<Collider>());
-            TintPrimitive(tube, HubWhite);
+            TintPrimitive(tube, HubWhite, HubWhiteEmit);
 
             var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             rib.name = name + "_Rib";
             rib.transform.SetParent(group.transform, false);
             rib.transform.localPosition = mid;
             rib.transform.localRotation = rot;
-            rib.transform.localScale = new Vector3(diameter * 1.08f, 0.04f, diameter * 1.08f);
+            rib.transform.localScale = new Vector3(diameter * 1.06f, 0.035f, diameter * 1.06f);
             Object.Destroy(rib.GetComponent<Collider>());
             TintPrimitive(rib, HubCarbon);
 
-            // Gasket at the hub, not a second orange ring at the cell face — that
-            // ring sat off the round hull and read as a missed port in isometric.
-            Vector3 gasketPos = dir * (hubClear + 0.03f) + new Vector3(0f, y, 0f);
+            // White lip at the hub so the tube reads as attached, not a dark slot.
+            Vector3 lipPos = dir * (hubClear + 0.02f) + new Vector3(0f, y, 0f);
+            var lip = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            lip.name = name + "_Lip";
+            lip.transform.SetParent(group.transform, false);
+            lip.transform.localPosition = lipPos;
+            lip.transform.localRotation = rot;
+            lip.transform.localScale = new Vector3(diameter * 1.05f, 0.03f, diameter * 1.05f);
+            Object.Destroy(lip.GetComponent<Collider>());
+            TintPrimitive(lip, HubWhite, HubWhiteEmit);
+
+            // One orange collar at the cell face — the docked Lego joint.
+            Vector3 collarPos = dir * (face - 0.04f) + new Vector3(0f, y, 0f);
             var collar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             collar.name = name + "_Collar";
             collar.transform.SetParent(group.transform, false);
-            collar.transform.localPosition = gasketPos;
+            collar.transform.localPosition = collarPos;
             collar.transform.localRotation = rot;
-            collar.transform.localScale = new Vector3(diameter * 1.12f, 0.04f, diameter * 1.12f);
+            collar.transform.localScale = new Vector3(diameter * 1.16f, 0.045f, diameter * 1.16f);
             Object.Destroy(collar.GetComponent<Collider>());
             TintPrimitive(collar, HubOrange);
 
@@ -399,7 +417,8 @@ namespace SolarMajesty
             return group;
         }
 
-        private static void DressCube(Transform parent, string name, Vector3 pos, Vector3 scale, Color color)
+        private static void DressCube(
+            Transform parent, string name, Vector3 pos, Vector3 scale, Color color, Color emission = default)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
@@ -407,10 +426,10 @@ namespace SolarMajesty
             go.transform.localPosition = pos;
             go.transform.localScale = scale;
             Object.Destroy(go.GetComponent<Collider>());
-            TintPrimitive(go, color);
+            TintPrimitive(go, color, emission);
         }
 
-        private static void TintPrimitive(GameObject go, Color color)
+        private static void TintPrimitive(GameObject go, Color color, Color emission = default)
         {
             var rend = go.GetComponent<Renderer>();
             if (rend == null) return;
@@ -419,7 +438,13 @@ namespace SolarMajesty
             var mat = new Material(_lit);
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
             if (mat.HasProperty("_Color")) mat.color = color;
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.32f);
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.38f);
+            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.06f);
+            if (emission.maxColorComponent > 0.01f && mat.HasProperty("_EmissionColor"))
+            {
+                mat.EnableKeyword("_EMISSION");
+                mat.SetColor("_EmissionColor", emission);
+            }
             rend.sharedMaterial = mat;
         }
 

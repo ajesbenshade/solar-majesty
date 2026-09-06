@@ -12,7 +12,9 @@ namespace SolarMajesty
     /// RefreshTubes hides every stub and hull-drum port first, then enables docked faces only
     /// (white tube + one orange collar). Unused Commons / HAB / LAB / PWR sockets stay clean.
     /// Live dock sleeves and CommonsPort groups start off so FindPieceGo misses cannot
-    /// leave still5-style orange rings showing. No CampusTubeRoot corridor is spawned.
+    /// leave still5-style orange rings showing. still16 dark-box leftover was wrap
+    /// Dress_HubDoor on the hub itself (ColonyVisualUtility) — unused faces stay
+    /// clean white plates. No CampusTubeRoot corridor is spawned.
     /// </summary>
     public static class CampusDressing
     {
