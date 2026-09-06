@@ -43,6 +43,7 @@ Assets/
     └── Systems/               # pure C# simulation (no scene assumption)
         ├── BuildingPlacer.cs
         ├── FlagManager.cs
+        ├── FlagDecreeIds.cs   # Earth→Luna→Mars decree ids (Narrative / LP)
         ├── GameTypes.cs       # enums + ConstructionOrder + ResourceAmount
         ├── ResourceManager.cs
         ├── SimpleEconomy.cs
@@ -98,6 +99,7 @@ Low bounties at long range intentionally score below threshold → **ignored** (
 |-------|------|
 | `FlagData` (SO) | Flag type, default/min/max bounty, base risk, work required |
 | `FlagManager` | Posts, lists, completes, and cancels runtime `FlagHandle`s |
+| `FlagDecreeIds` | Shared Earth→Luna→Mars decree string ids mapped to `FlagType` — [flag-type map](FLAG_TYPE_MAP_EARTH_LUNA_MARS.md) |
 
 The player posts a flag with a bounty. Specialists discover flags only by evaluating the manager’s list. Completing work reduces `WorkRemaining`; on complete, the brain (or caller) can grant a reward via the economy.
 
