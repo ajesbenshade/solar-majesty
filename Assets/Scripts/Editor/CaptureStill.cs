@@ -146,6 +146,8 @@ namespace SolarMajesty.EditorTools
                     if (loop != null)
                     {
                         bool stamped = loop.StampPhase4StillCampus();
+                        if (!stamped)
+                            stamped = loop.StampPhase4StillCampus();
                         Debug.Log($"[Capture] StampPhase4StillCampus => {stamped}");
                     }
                     else
