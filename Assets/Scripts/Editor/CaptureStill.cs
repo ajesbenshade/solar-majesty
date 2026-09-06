@@ -190,13 +190,18 @@ namespace SolarMajesty.EditorTools
                     var ready = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
                     ready?.PrepareStillCaptureWorld();
                     ForceGameViewScaleOne();
-                    Directory.CreateDirectory(Path.GetDirectoryName(_outPath) ?? "Docs");
                     Vector2 size = GetMainGameViewSize();
+                    float aspect = size.y > 1f ? size.x / size.y : StillCampusDensity.GameTabAspect;
+                    ready?.SnapStillCampusCamera(aspect);
+                    Directory.CreateDirectory(Path.GetDirectoryName(_outPath) ?? "Docs");
                     float scale = ReadGameViewScale();
                     ScreenCapture.CaptureScreenshot(_outPath, 1);
                     Debug.Log(
                         $"[Capture] Shutter body={_body} scale={scale:0.###}x " +
                         $"hold={StillCaptureHold.Active} " +
+                        $"stamp={(ready != null ? ready.LastStillStamp.ToString() : "none")} " +
+                        $"ortho={(ready != null ? ready.LastStillOrtho.ToString("0.##") : "?")} " +
+                        $"aspect={aspect:0.##} " +
                         $"gameView={size.x:0}x{size.y:0} -> {_outPath}");
                     _state = 2;
                     _frames = 0;

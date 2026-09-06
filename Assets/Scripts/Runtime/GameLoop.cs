@@ -118,6 +118,7 @@ namespace SolarMajesty
         public bool IsTutorialActive => !DemoSettings.TutorialDone && TutorialStep < TutorialCompleteStep;
         public BuildingData[] StarterBuildings => starterBuildings;
         public StillCampusDensity.StampLog LastStillStamp { get; private set; }
+        public float LastStillOrtho { get; private set; }
         public CelestialBodyProfile BodyProfile => _body;
         public PlanetaryWorldGen World => _world;
         public int MoonSeedValue => BodySeed.Current;
@@ -342,6 +343,7 @@ namespace SolarMajesty
         private FlagPlacementInput _flagInput;
         private BuildingPlacementInput _buildInput;
         private IsometricCameraController _isoCam;
+        private string _stillLeftoverNote = "none";
         private Transform _threatRoot;
         private float _constructionTick;
         private readonly SimClock _sim = new SimClock();
@@ -2227,13 +2229,24 @@ namespace SolarMajesty
             PlaceDropCommons();
             bool chain = Village != null && Village.StampStillCampusChain();
             StampStillDensityPack();
-            LastStillStamp = StillCampusDensity.StampLog.FromPieces(Placer);
+            StampStillLeftoverPack();
+            LastStillStamp = StillCampusDensity.StampLog.FromPieces(Placer, _stillLeftoverNote);
             PrepareStillCaptureWorld();
-            Debug.Log($"[GameLoop] StampPhase4DenseCampus {LastStillStamp} hold={StillCaptureHold.Active}");
+            float aspect = StillCampusDensity.GameTabAspect;
+            if (_isoCam != null)
+            {
+                var cam = _isoCam.GetComponent<Camera>();
+                if (cam != null && cam.aspect > 1.05f)
+                    aspect = cam.aspect;
+            }
+
             if (chain)
-                SnapCampusCamera();
+                SnapStillCampusCamera(aspect);
             else
                 Debug.LogWarning("[GameLoop] StampPhase4StillCampus failed — Commons face may be blocked.");
+            Debug.Log(
+                $"[GameLoop] StampPhase4DenseCampus {LastStillStamp} " +
+                $"ortho={LastStillOrtho:0.##} aspect={aspect:0.##} hold={StillCaptureHold.Active}");
             return chain;
         }
 
@@ -2260,6 +2273,41 @@ namespace SolarMajesty
             TryStampStillYard(BuildingCategory.Farm, StillCampusDensity.YardSize, commons, habFace, Bounds);
             TryStampStillYard(BuildingCategory.RegolithCamp, StillCampusDensity.YardSize, commons, habFace, Bounds);
             NotifyCampusExpanded();
+        }
+
+        /// <summary>
+        /// Workshop / Inn / one wonder only when they stay inside the tight still frame.
+        /// still18-class packs skip them — south leftovers grow the AABB back toward ortho 10.
+        /// </summary>
+        private void StampStillLeftoverPack()
+        {
+            _stillLeftoverNote = "none";
+            if (Placer == null || grid == null) return;
+            if (!StillCampusDensity.TryGetCommons(Placer, out var commons))
+                return;
+
+            var habFace = StillCampusDensity.InferHabFace(Placer, commons);
+            bool Bounds(Vector2Int origin, int width, int height) =>
+                grid.InBounds(origin) &&
+                grid.InBounds(new Vector2Int(origin.x + width - 1, origin.y + height - 1));
+
+            float cell = grid.CellSize > 0.01f ? grid.CellSize : ColonyLayout.DefaultCellSize;
+            var leftovers = StillCampusDensity.PlanLeftovers(
+                Placer, commons, habFace, Bounds, cell, StillCampusDensity.GameTabAspect);
+            _stillLeftoverNote = leftovers.SkipReason ?? "none";
+
+            if (leftovers.Workshop)
+                TryStampStillYard(BuildingCategory.EngineerWorkshop, StillCampusDensity.YardSize, commons, habFace, Bounds);
+            if (leftovers.Inn)
+                TryStampStillYard(BuildingCategory.Inn, StillCampusDensity.YardSize, commons, habFace, Bounds);
+            if (leftovers.Wonder)
+                TryStampStillYard(BuildingCategory.AegisSpire, StillCampusDensity.PadSize, commons, habFace, Bounds);
+
+            Debug.Log(
+                $"[GameLoop] Stamp leftover workshop={leftovers.Workshop} inn={leftovers.Inn} " +
+                $"wonder={leftovers.Wonder} skip={_stillLeftoverNote}");
+            if (leftovers.PlacedCount > 0)
+                NotifyCampusExpanded();
         }
 
         private void TryStampStillYard(
@@ -2293,6 +2341,9 @@ namespace SolarMajesty
                 case BuildingCategory.Power: return "pwr";
                 case BuildingCategory.Farm: return "water";
                 case BuildingCategory.RegolithCamp: return "regolith";
+                case BuildingCategory.EngineerWorkshop: return "workshop";
+                case BuildingCategory.Inn: return "inn";
+                case BuildingCategory.AegisSpire: return "wonder";
                 default: return cat.ToString();
             }
         }
@@ -3405,8 +3456,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Frame Commons / airlock / HAB / workshop at CampusOrthoSize 5.5.
-        /// First drop and Continue call this so the camera is not left at empty-drop ortho 16.
+        /// Play snap: CampusOrthoSize 10 so the player still has room to place yards.
+        /// CaptureStill uses <see cref="SnapStillCampusCamera"/> — still18 dirt was this
+        /// 10-ortho on a short-wide Game tab, not a missing pad.
         /// Fauna GlanceAt must not undo this (null zoom once pieces exist).
         /// </summary>
         private void SnapCampusCamera()
@@ -3427,6 +3479,45 @@ namespace SolarMajesty
             _isoCam.FocusOn(sum / n, ColonyLayout.CampusOrthoSize);
             _isoCam.SnapToTarget();
             _glanceCooldown = 8f;
+        }
+
+        /// <summary>
+        /// CaptureStill shutter: fit the stamped AABB to the Game-tab aspect so dense
+        /// yards fill the frame. Does not change play <see cref="ColonyLayout.CampusOrthoSize"/>.
+        /// </summary>
+        public void SnapStillCampusCamera(float aspect = 0f)
+        {
+            if (Placer == null) return;
+            if (aspect < 1.05f)
+                aspect = StillCampusDensity.GameTabAspect;
+
+            float cell = grid != null && grid.CellSize > 0.01f
+                ? grid.CellSize
+                : ColonyLayout.DefaultCellSize;
+            float ortho = StillCampusDensity.FitStillOrtho(Placer, cell, aspect);
+            LastStillOrtho = ortho;
+
+            if (!StillCampusDensity.TryCampusAabb(Placer, out Vector2Int min, out Vector2Int max))
+                return;
+
+            Vector3 a = FootprintWorldCenter(min, 1, 1);
+            Vector3 b = FootprintWorldCenter(
+                new Vector2Int(Mathf.Max(min.x, max.x - 1), Mathf.Max(min.y, max.y - 1)), 1, 1);
+            Vector3 focus = (a + b) * 0.5f;
+            if (grid == null)
+            {
+                Vector2 center = StillCampusDensity.AabbCenterCells(min, max);
+                focus = new Vector3((center.x - 0.5f) * cell, 0f, (center.y - 0.5f) * cell);
+            }
+
+            if (_isoCam != null)
+            {
+                _isoCam.FocusOn(focus, ortho);
+                _isoCam.SnapToTarget();
+            }
+
+            _glanceCooldown = 8f;
+            Debug.Log($"[GameLoop] SnapStillCampusCamera ortho={ortho:0.##} aspect={aspect:0.##} aabb={min}->{max}");
         }
 
         private static bool ShouldSnapCampusCamera(BuildingCategory cat)
