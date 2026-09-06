@@ -135,6 +135,12 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - `StillCaptureHold` stays. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
 
+**Play Mode fixes after still20 (code only — do not stamp exit)**
+- still20 leftover=workshop + extraHab True; GD signed **W2 campaign cut / narrative text covering the campus** in the shutter
+- `StillCaptureHold` now also suppresses arrival/mid-act cut modals, ArrivalLog / VictoryLog modal UI, and travel-toast overlays for the shutter (fail banner stay). Re-arms from editor SessionState before `BeginNarrativeSession`. Disarm on play exit unchanged
+- `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite. No denser stamp packing in this pass
+- **Reshoot still20+ after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
+
 ---
 
 ## Match vs `SM_MarsCampaign_VisualTarget.png`

@@ -18,7 +18,7 @@ namespace SolarMajesty.EditorTools
         private const string DefaultOut = "Docs/Roadmap/SM_Capture.png";
         private const string PendingOutKey = "SM_CaptureStill_Out";
         private const string PendingBodyKey = "SM_CaptureStill_Body";
-        private const string PendingHoldKey = "SM_CaptureStill_Hold";
+        private const string PendingHoldKey = StillCaptureHold.EditorSessionKey;
 
         [MenuItem("Solar Majesty/Render/Capture Mars Still", priority = 110)]
         public static void CaptureMars() => Begin(CelestialBodyId.Mars, DefaultOut);
