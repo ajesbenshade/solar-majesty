@@ -55,3 +55,6 @@ __pycache__/
 
 # Unity crash dumps
 mono_crash.*.json
+
+# Unity crash recovery copies (do not commit)
+Assets/_Recovery/
