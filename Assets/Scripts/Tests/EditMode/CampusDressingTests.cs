@@ -7,6 +7,7 @@ namespace SolarMajesty.Tests
     /// still5 leftover: unused Commons cardinal showed an orange hull-port ring.
     /// still16 leftover: wrap carbon doors painted the 2×2 as a dark box joint.
     /// Live kits must spawn dock groups off; RefreshTubes enables docked faces only.
+    /// Packed still campuses also get interior HAB sockets + tube-run dressing.
     /// The hub stays a smaller white paneled square; orange only on docked collars.
     /// </summary>
     public class CampusDressingTests
@@ -109,6 +110,8 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(FindChild(airlock.transform, "Dress_AirlockHub"));
             Assert.IsNull(GameObject.Find("CampusTubeRoot"),
                 "no fourth CampusTubeRoot stacking collars in the HAB gap");
+            Assert.IsNull(GameObject.Find(CampusDressing.TubeRunRootName),
+                "Commons↔HAB is airlock-linked — no extra tube run in the join");
             AssertAirlockReadsAsWhiteHub(airlock.transform);
             Assert.IsTrue(IsRootActive(hab.transform, "HabPort_S"),
                 "HAB south hull port is the module-side orange collar");
@@ -389,13 +392,13 @@ namespace SolarMajesty.Tests
 
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
             float ortho = StillCampusDensity.FitStillOrtho(
-                min, max, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
             Assert.Less(ortho, ColonyLayout.CampusOrthoSize,
                 "still18 dirt was play ortho 10 on a short-wide Game tab");
             Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
             Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
-            Assert.AreEqual(8.41f, ortho, 0.2f,
-                "east-HAB dense pack should snap ~8.4, not play 10");
+            Assert.Less(ortho, 8.2f,
+                "still21 inset frame must hug the pack tighter than the old 8.4 snap");
             Assert.Greater(max.x - min.x, 10, "AABB must span pad→HAB");
             Assert.Greater(max.y - min.y, 6, "AABB must span Commons→north yards");
         }
@@ -436,10 +439,10 @@ namespace SolarMajesty.Tests
 
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
             float ortho = StillCampusDensity.FitStillOrtho(
-                min, max, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
             Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
             Assert.LessOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize);
-            Assert.Greater(ortho, 8.2f, "leftover pack fills more of the still frame than pad-only");
+            Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
         }
 
         [Test]
@@ -480,6 +483,7 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(cues.Defense, "Defense Battery when it CanFit");
             Assert.GreaterOrEqual(StillCampusDensity.CountCategory(placer, BuildingCategory.Power), 2);
             Assert.GreaterOrEqual(StillCampusDensity.CountCategory(placer, BuildingCategory.Defense), 1);
+            Assert.GreaterOrEqual(cues.HabSocketCount, 0);
 
             var log = StillCampusDensity.StampLog.FromPieces(placer, leftovers.SkipReason);
             Assert.IsTrue(log.Inn && log.Wonder && log.ExtraSolar && log.Defense);
@@ -487,10 +491,10 @@ namespace SolarMajesty.Tests
 
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
             float ortho = StillCampusDensity.FitStillOrtho(
-                min, max, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
             Assert.LessOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize);
             Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
-            Assert.Greater(ortho, 8.2f, "packed leftover+cue campus fills the still frame");
+            Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
         }
 
         [Test]
@@ -543,6 +547,125 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void DensePack_InteriorHabSockets_FillDirtBetweenPadAndExtractor()
+        {
+            var placer = StampEastChain(out var commons);
+            Vector2Int pad = StillCampusDensity.FlushOrigin(
+                commons, BuildingPlacer.Cardinal.West, 6, 6);
+            placer.MarkCampusRect(pad, 6, 6);
+            placer.RegisterPiece(pad, 6, 6, BuildingCategory.LandingPad);
+            // 4-cell dirt north of the pad — still21 empty dirt between pad and extractors.
+            var extractor = new Vector2Int(pad.x, pad.y + 6 + 4);
+            placer.MarkCampusRect(extractor, 4, 4);
+            placer.RegisterPiece(extractor, 4, 4, BuildingCategory.Farm);
+
+            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
+            int habsBefore = StillCampusDensity.CountCategory(placer, BuildingCategory.Habitat);
+            int sockets = StillCampusDensity.FillInteriorSockets(
+                placer, commons, StillCampusDensity.MaxInteriorHabSockets, null, out Vector2Int first);
+            Assert.GreaterOrEqual(sockets, 2, "interior 4×4 dirt between pad and extractor must fill");
+            Assert.IsTrue(first.x >= min.x && first.y >= min.y);
+            Assert.IsTrue(first.x + 4 <= max.x && first.y + 4 <= max.y);
+            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min2, out var max2));
+            Assert.AreEqual(min, min2, "interior sockets must not grow the still AABB");
+            Assert.AreEqual(max, max2);
+            Assert.AreEqual(
+                habsBefore + sockets,
+                StillCampusDensity.CountCategory(placer, BuildingCategory.Habitat));
+        }
+
+        [Test]
+        public void DensePack_Still21Order_KeepsLeftoversAndFillsSockets()
+        {
+            var placer = StampStill20Order(out var commons, out var leftovers, out var cues);
+            Assert.IsTrue(leftovers.Inn && leftovers.Wonder, "still21 leftover=inn+wonder must stay");
+            Assert.IsTrue(cues.ExtraSolar && cues.Defense && leftovers.SkipReason.IndexOf("inn") >= 0);
+            Assert.IsTrue(StillCampusDensity.StampLog.FromPieces(placer, leftovers.SkipReason).ExtraHab);
+
+            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
+            StillCampusDensity.FillInteriorSockets(
+                placer, commons, StillCampusDensity.MaxInteriorHabSockets, null, out _);
+            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min2, out var max2));
+            Assert.AreEqual(min, min2, "a second interior pass must not expand the pack");
+            Assert.AreEqual(max, max2);
+            float ortho = StillCampusDensity.FitStillOrtho(
+                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+            Assert.LessOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize);
+            Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
+            Assert.IsTrue(leftovers.SkipReason.IndexOf("inn") >= 0);
+            Assert.IsTrue(leftovers.SkipReason.IndexOf("wonder") >= 0);
+        }
+
+        [Test]
+        public void RefreshTubes_PackedCampus_EnablesDockedArmsAndTubeRuns()
+        {
+            var buildings = new GameObject("Buildings");
+            buildings.transform.SetParent(_root.transform);
+            Vector3 o = new Vector3(48f, 0f, 48f);
+            var commons = ModularBuildingFactory.Spawn(
+                BuildingCategory.Commons, o, buildings.transform);
+            commons.name = "Bld_ColonyCommons_drop";
+            var airlock = ModularBuildingFactory.Spawn(
+                BuildingCategory.Utility, o + new Vector3(0f, 0f, 6f), buildings.transform);
+            var hab = ModularBuildingFactory.Spawn(
+                BuildingCategory.Habitat, o + new Vector3(0f, 0f, 10.5f), buildings.transform);
+            hab.name = "Mod_Habitat";
+
+            var placer = new BuildingPlacer(new ResourceManager());
+            Vector2Int c0 = OriginFromCenter(o, 6);
+            Vector2Int a0 = OriginFromCenter(o + new Vector3(0f, 0f, 6f), 2);
+            Vector2Int h0 = OriginFromCenter(o + new Vector3(0f, 0f, 10.5f), 4);
+            placer.RegisterPiece(c0, 6, 6, BuildingCategory.Commons);
+            placer.RegisterPiece(a0, 2, 2, BuildingCategory.Utility);
+            placer.RegisterPiece(h0, 4, 4, BuildingCategory.Habitat);
+
+            var commonsPiece = placer.Pieces[0];
+            Vector2Int pad = StillCampusDensity.FlushOrigin(
+                commonsPiece, BuildingPlacer.Cardinal.West, 6, 6);
+            placer.MarkCampusRect(pad, 6, 6);
+            placer.RegisterPiece(pad, 6, 6, BuildingCategory.LandingPad);
+            Vector3 padWorld = FootprintCenter(pad, 6);
+            var padGo = ModularBuildingFactory.Spawn(
+                BuildingCategory.LandingPad, padWorld, buildings.transform);
+            padGo.name = "Bld_LandingPad_still";
+
+            Assert.IsTrue(StillCampusDensity.TryCardinalNeighbor(
+                placer.Pieces[0], placer.Pieces[placer.Pieces.Count - 1],
+                CampusDressing.MaxTubeRunGapCells, out _, out bool eastWest));
+            Assert.IsTrue(eastWest, "west pad is an E/W neighbor of Commons");
+            Assert.IsFalse(StillCampusDensity.AreAirlockLinked(
+                placer, placer.Pieces[0], placer.Pieces[placer.Pieces.Count - 1]));
+
+            CampusDressing.RefreshTubes(placer, _grid, buildings.transform);
+
+            Assert.IsTrue(IsRootActive(commons.transform, "CommonsPort_N"),
+                "docked Commons north must stay enabled on a packed still campus");
+            Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_N"));
+            Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_S"));
+            Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_E"),
+                "unused Commons east ring stays off");
+            Assert.IsNull(GameObject.Find("CampusTubeRoot"),
+                "tube runs must not revive CampusTubeRoot in the HAB gap");
+            Transform runs = GameObject.Find(CampusDressing.TubeRunRootName)?.transform;
+            Assert.IsNotNull(runs, "RefreshTubes must spawn CampusDress_TubeRuns");
+            Assert.Greater(runs.childCount, 0, "packed campus needs a visual tube run");
+            Transform run0 = runs.GetChild(0);
+            Assert.IsNotNull(FindChild(run0, run0.name + "_Tube"));
+            Assert.Greater(Albedo(FindChild(run0, run0.name + "_Tube")).grayscale, 0.88f);
+            Assert.IsNotNull(FindChild(run0, run0.name + "_CollarA"));
+            Color collarC = Albedo(FindChild(run0, run0.name + "_CollarA"));
+            Assert.Greater(collarC.r, 0.85f);
+            Assert.Less(collarC.g, 0.55f);
+        }
+
+        private Vector3 FootprintCenter(Vector2Int origin, int side)
+        {
+            Vector3 a = _grid.CellToWorld(origin);
+            Vector3 b = _grid.CellToWorld(origin + new Vector2Int(side - 1, side - 1));
+            return (a + b) * 0.5f;
+        }
+
+        [Test]
         public void InferHabFace_ReadsEastChain()
         {
             var placer = StampEastChain(out var commons);
@@ -561,6 +684,8 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(ColonyLayout.CampusOrthoSize, StillCampusDensity.PlayCampusOrthoSize);
             Assert.AreEqual(1.5f, StillCampusDensity.DefaultCellSize);
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
+            Assert.AreEqual(1, StillCampusDensity.StillFrameInsetCells);
+            Assert.AreEqual(6, StillCampusDensity.MaxInteriorHabSockets);
         }
 
         [Test]

@@ -11,8 +11,11 @@ namespace SolarMajesty
     /// an airlock dock, both of which miss play ortho 10. still20 leftover=workshop
     /// left Inn / wonder / extraSolar / defense off the pack (second hangar ate the
     /// sockets). Leftovers now keep placing Village Inn + a wonder when they CanFit;
-    /// cues stamp extra solar + Defense Battery in packed pockets. Still camera fits
-    /// the packed AABB (play snap stays <see cref="PlayCampusOrthoSize"/>).
+    /// cues stamp extra solar + Defense Battery in packed pockets. still21 leftover
+    /// inn+wonder + extraHab/solar/defense signed the density gate, but empty dirt
+    /// still sat between pad and extractors. Interior HAB sockets fill those cells
+    /// without growing the AABB; still camera insets the packed frame (play snap
+    /// stays <see cref="PlayCampusOrthoSize"/>).
     /// Does not flip spawnShowcaseColony. Does not reference Runtime ColonyLayout.
     /// </summary>
     public static class StillCampusDensity
@@ -45,8 +48,17 @@ namespace SolarMajesty
         /// </summary>
         public const float PlayCampusOrthoSize = 10f;
 
+        /// <summary>
+        /// still21 empty-dirt vista: crop one cell of AABB dirt so the still hugs
+        /// the packed campus. Play snap stays <see cref="PlayCampusOrthoSize"/>.
+        /// </summary>
+        public const int StillFrameInsetCells = 1;
+
         /// <summary>Floor so a Commons-only AABB cannot punch through minZoom.</summary>
         public const float StillMinOrtho = 7.25f;
+
+        /// <summary>Interior under-construction HAB sockets that fill packed dirt.</summary>
+        public const int MaxInteriorHabSockets = 6;
 
         /// <summary>
         /// Ceiling for the still snap. Play snap stays <see cref="PlayCampusOrthoSize"/>.
@@ -172,10 +184,11 @@ namespace SolarMajesty
             public Vector2Int DefenseOrigin;
             public bool HabSocket;
             public Vector2Int HabSocketOrigin;
+            public int HabSocketCount;
 
             public int PlacedCount =>
                 (ExtraAirlock ? 1 : 0) + (ExtraHab ? 1 : 0) + (ExtraSolar ? 1 : 0) +
-                (Defense ? 1 : 0) + (HabSocket ? 1 : 0);
+                (Defense ? 1 : 0) + HabSocketCount;
         }
 
         public struct PackPlan
@@ -545,8 +558,9 @@ namespace SolarMajesty
 
         /// <summary>
         /// Extra HAB chain (new airlock + HAB), second solar bank, Defense Battery,
-        /// and an under-construction HAB socket when they CanFit. Occupies like
-        /// <see cref="Plan"/>. GameLoop InstantStamps visuals independently.
+        /// then interior HAB sockets that fill empty dirt inside the packed AABB.
+        /// still21 leftover=inn+wonder extraSolar/defense stay — sockets do not
+        /// steal those yards. Occupies like <see cref="Plan"/>.
         /// </summary>
         public static CuePlan PlanCues(
             BuildingPlacer placer,
@@ -588,15 +602,156 @@ namespace SolarMajesty
                 cues.DefenseOrigin = def;
             }
 
-            if (TryNext(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int socket))
+            cues.HabSocketCount = FillInteriorSockets(
+                placer, commons, MaxInteriorHabSockets, bounds, out cues.HabSocketOrigin);
+            cues.HabSocket = cues.HabSocketCount > 0;
+            return cues;
+        }
+
+        /// <summary>
+        /// still21 empty dirt between pad and extractors: occupy 4×4 HAB sockets
+        /// that sit entirely inside the current campus AABB. Does not grow the
+        /// still frame. Prefers cells boxed in by existing yards.
+        /// </summary>
+        public static int FillInteriorSockets(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece commons,
+            int max,
+            BoundsOk bounds,
+            out Vector2Int firstOrigin)
+        {
+            firstOrigin = default;
+            int n = 0;
+            if (placer == null || max <= 0) return 0;
+
+            while (n < max && TryInteriorSocket(placer, commons, bounds, out Vector2Int origin))
             {
-                placer.MarkCampusRect(socket, YardSize, YardSize);
-                placer.RegisterPiece(socket, YardSize, YardSize, BuildingCategory.Habitat);
-                cues.HabSocket = true;
-                cues.HabSocketOrigin = socket;
+                placer.MarkCampusRect(origin, YardSize, YardSize);
+                placer.RegisterPiece(origin, YardSize, YardSize, BuildingCategory.Habitat);
+                if (n == 0) firstOrigin = origin;
+                n++;
             }
 
-            return cues;
+            return n;
+        }
+
+        /// <summary>
+        /// Next 4×4 that CanFit inside the live AABB. Prefer cells with occupied
+        /// neighbors (dirt between pad / extractors / HAB) over rim pockets.
+        /// </summary>
+        public static bool TryInteriorSocket(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece commons,
+            BoundsOk bounds,
+            out Vector2Int origin)
+        {
+            origin = default;
+            if (placer == null || !TryCampusAabb(placer, out Vector2Int min, out Vector2Int max))
+                return false;
+
+            int bestScore = -1;
+            float bestDist = float.MaxValue;
+            Vector2Int best = default;
+            Vector2 center = AabbCenterCells(min, max);
+
+            for (int y = min.y; y <= max.y - YardSize; y++)
+            {
+                for (int x = min.x; x <= max.x - YardSize; x++)
+                {
+                    var cell = new Vector2Int(x, y);
+                    if (!placer.CanFitRect(cell, YardSize, YardSize)) continue;
+                    if (bounds != null && !bounds(cell, YardSize, YardSize)) continue;
+                    if (!NearCommons(commons, cell, YardSize, YardSize)) continue;
+                    int score = EnclosedSides(placer, cell, YardSize, YardSize);
+                    float px = cell.x + YardSize * 0.5f;
+                    float py = cell.y + YardSize * 0.5f;
+                    float dx = px - center.x;
+                    float dy = py - center.y;
+                    float dist = dx * dx + dy * dy;
+                    if (score > bestScore || (score == bestScore && dist < bestDist))
+                    {
+                        bestScore = score;
+                        bestDist = dist;
+                        best = cell;
+                    }
+                }
+            }
+
+            if (bestScore < 0) return false;
+            origin = best;
+            return true;
+        }
+
+        /// <summary>
+        /// True when an airlock already joins the pair (RefreshTubes docked arms).
+        /// Tube-run dressing must skip these so it does not stack in the HAB gap.
+        /// </summary>
+        public static bool AreAirlockLinked(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece a,
+            BuildingPlacer.CampusPiece b)
+        {
+            if (placer == null) return false;
+            if (a.IsAirlock && ModuleDocksAirlock(b, a)) return true;
+            if (b.IsAirlock && ModuleDocksAirlock(a, b)) return true;
+            var pieces = placer.Pieces;
+            if (pieces == null) return false;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                if (!pieces[i].IsAirlock) continue;
+                if (ModuleDocksAirlock(a, pieces[i]) && ModuleDocksAirlock(b, pieces[i]))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Cardinal neighbor with a short gap (still21 tube runs). Overlap keeps
+        /// the corridor on the square grid; gap 0 is flush yards.
+        /// </summary>
+        public static bool TryCardinalNeighbor(
+            BuildingPlacer.CampusPiece a,
+            BuildingPlacer.CampusPiece b,
+            int maxGapCells,
+            out int gapCells,
+            out bool eastWest)
+        {
+            gapCells = 0;
+            eastWest = true;
+            maxGapCells = Mathf.Max(0, maxGapCells);
+
+            int ax0 = a.Origin.x, ax1 = a.Origin.x + a.Width;
+            int ay0 = a.Origin.y, ay1 = a.Origin.y + a.Height;
+            int bx0 = b.Origin.x, bx1 = b.Origin.x + b.Width;
+            int by0 = b.Origin.y, by1 = b.Origin.y + b.Height;
+
+            int overlapY = Mathf.Min(ay1, by1) - Mathf.Max(ay0, by0);
+            int overlapX = Mathf.Min(ax1, bx1) - Mathf.Max(ax0, bx0);
+
+            if (overlapY > 0)
+            {
+                int gap = bx0 >= ax1 ? bx0 - ax1 : ax0 >= bx1 ? ax0 - bx1 : int.MaxValue;
+                if (gap <= maxGapCells)
+                {
+                    gapCells = gap;
+                    eastWest = true;
+                    return true;
+                }
+            }
+
+            if (overlapX > 0)
+            {
+                int gap = by0 >= ay1 ? by0 - ay1 : ay0 >= by1 ? ay0 - by1 : int.MaxValue;
+                if (gap <= maxGapCells)
+                {
+                    gapCells = gap;
+                    eastWest = false;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>Inclusive min / exclusive max cell of every registered piece.</summary>
@@ -625,6 +780,35 @@ namespace SolarMajesty
             return true;
         }
 
+        /// <summary>
+        /// Packed still frame: inset the campus AABB so Game-tab dirt around the
+        /// cluster is cropped. Does not change play <see cref="PlayCampusOrthoSize"/>.
+        /// </summary>
+        public static bool TryStillFrameAabb(
+            BuildingPlacer placer, out Vector2Int min, out Vector2Int maxExclusive)
+        {
+            if (!TryCampusAabb(placer, out min, out maxExclusive))
+                return false;
+            InsetAabb(ref min, ref maxExclusive, StillFrameInsetCells);
+            return true;
+        }
+
+        public static void InsetAabb(ref Vector2Int min, ref Vector2Int maxExclusive, int inset)
+        {
+            inset = Mathf.Max(0, inset);
+            if (maxExclusive.x - min.x > inset * 2 + 4)
+            {
+                min.x += inset;
+                maxExclusive.x -= inset;
+            }
+
+            if (maxExclusive.y - min.y > inset * 2 + 4)
+            {
+                min.y += inset;
+                maxExclusive.y -= inset;
+            }
+        }
+
         public static Vector2 AabbCenterCells(Vector2Int min, Vector2Int maxExclusive) =>
             new Vector2((min.x + maxExclusive.x) * 0.5f, (min.y + maxExclusive.y) * 0.5f);
 
@@ -645,7 +829,7 @@ namespace SolarMajesty
 
         public static float FitStillOrtho(BuildingPlacer placer, float cellSize, float aspect)
         {
-            if (!TryCampusAabb(placer, out Vector2Int min, out Vector2Int max))
+            if (!TryStillFrameAabb(placer, out Vector2Int min, out Vector2Int max))
                 return PlayCampusOrthoSize;
             return FitStillOrtho(min, max, cellSize, aspect);
         }
@@ -690,7 +874,8 @@ namespace SolarMajesty
             // Unity iso (30, 45, 0): camera.up.xz ≈ 0.35, camera.right.xz ≈ 0.71.
             const float isoUp = 0.36f;
             const float isoRight = 0.707f;
-            const float pad = 0.85f;
+            // still21 dirt vista: tighter pad so the packed AABB fills the Game tab.
+            const float pad = 0.48f;
             float byHeight = isoUp * (halfX + halfZ) + pad;
             aspect = Mathf.Max(1.05f, aspect);
             float byWidth = (isoRight * (halfX + halfZ) + pad) / aspect;
@@ -915,6 +1100,46 @@ namespace SolarMajesty
             float dx = px - cx;
             float dy = py - cy;
             return dx * dx + dy * dy <= MaxCenterSeparationCells * MaxCenterSeparationCells;
+        }
+
+        private static int EnclosedSides(
+            BuildingPlacer placer, Vector2Int origin, int width, int height)
+        {
+            int n = 0;
+            if (EdgeOccupied(placer, origin.x - 1, origin.y, 1, height)) n++;
+            if (EdgeOccupied(placer, origin.x + width, origin.y, 1, height)) n++;
+            if (EdgeOccupied(placer, origin.x, origin.y - 1, width, 1)) n++;
+            if (EdgeOccupied(placer, origin.x, origin.y + height, width, 1)) n++;
+            return n;
+        }
+
+        private static bool EdgeOccupied(
+            BuildingPlacer placer, int x, int y, int width, int height)
+        {
+            for (int dx = 0; dx < width; dx++)
+            {
+                for (int dy = 0; dy < height; dy++)
+                {
+                    if (placer.IsCellOccupied(new Vector2Int(x + dx, y + dy)))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ModuleDocksAirlock(
+            BuildingPlacer.CampusPiece module, BuildingPlacer.CampusPiece airlock)
+        {
+            if (!airlock.IsAirlock || !module.IsModule) return false;
+            for (int f = 0; f < 4; f++)
+            {
+                if (BuildingPlacer.AirlockOriginOnModuleFace(
+                        module, (BuildingPlacer.Cardinal)f) == airlock.Origin)
+                    return true;
+            }
+
+            return false;
         }
 
         private static int CenterOffset(int parentSpan, int childSpan) =>
