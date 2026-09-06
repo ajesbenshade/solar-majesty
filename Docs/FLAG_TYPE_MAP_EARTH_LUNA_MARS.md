@@ -4,6 +4,8 @@
 **Not:** a quest graph, a new `FlagType` enum, or App Store copy.  
 **Status:** Design + data. Game Designer still-capture gate is signed (still16). Phase 4 **EXIT** stays art-blocked (`PHASE_4_EXIT.md`). Do this in parallel with leftover buildings.
 
+**W2 advisor copy:** [`W2_ADVISOR_AND_CHAIN_BEATS.md`](W2_ADVISOR_AND_CHAIN_BEATS.md) — toasts / travel logs / claim asides against the ids below. Phase 4 EXIT still art-blocked.
+
 Narrative can draft advisor lines from this doc alone. Flags stay **decrees**: the royal overseer posts them; ego specialists take or ignore them; the wry advisor comments. Do **not** copy Majesty 2 guild/flag names or Paradox assets.
 
 ---
@@ -12,7 +14,7 @@ Narrative can draft advisor lines from this doc alone. Flags stay **decrees**: t
 
 | Role | Use |
 |------|-----|
-| **Narrative** | Write advisor toasts / travel logs / claim asides against **decree ids** (`earth.build.raise_the_commons`). One line of intent per title is enough to start W2. |
+| **Narrative** | Write advisor toasts / travel logs / claim asides against **decree ids** (`earth.build.raise_the_commons`). W2 draft copy: [`W2_ADVISOR_AND_CHAIN_BEATS.md`](W2_ADVISOR_AND_CHAIN_BEATS.md). |
 | **LP** | Keep posting the existing eight `FlagType`s. A decree is a **title + body + beat**, not a new mechanic. Look up ids in `FlagDecreeIds`. |
 | **Code** | `FlagManager.Post` still takes `FlagData`. `CampaignProgress` still unlocks bodies. No click-to-move. Do not rewrite `SpecialistBrain`. |
 
