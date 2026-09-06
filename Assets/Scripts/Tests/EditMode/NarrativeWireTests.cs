@@ -180,7 +180,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void InferBuild_UsesCommonsThenHabThenRocket()
+        public void InferBuild_Earth_CommonsThenHabThenRocketOnlyWhenPadOrLaunchLive()
         {
             Assert.IsTrue(NarrativeBeatTracker.TryInferBuild(
                 CelestialBodyId.Earth, new NarrativeWorldHint(), out string empty));
@@ -192,11 +192,71 @@ namespace SolarMajesty.Tests
                 out string hab));
             Assert.AreEqual(FlagDecreeIds.EarthDockTheFirstHab, hab);
 
+            var afterHab = new NarrativeWorldHint { HasCommons = true, HasHab = true };
+            Assert.IsFalse(NarrativeBeatTracker.TryInferBuild(
+                CelestialBodyId.Earth, afterHab, out _));
+
+            afterHab.HasWorkshopOrder = true;
+            Assert.IsFalse(NarrativeBeatTracker.TryInferBuild(
+                CelestialBodyId.Earth, afterHab, out _),
+                "workshop labour must not title-match Stage the Lunar Rocket");
+
+            afterHab.HasWorkshopOrder = false;
+            afterHab.HasPadOrder = true;
             Assert.IsTrue(NarrativeBeatTracker.TryInferBuild(
-                CelestialBodyId.Earth,
-                new NarrativeWorldHint { HasCommons = true, HasHab = true },
-                out string rocket));
-            Assert.AreEqual(FlagDecreeIds.EarthStageTheLunarRocket, rocket);
+                CelestialBodyId.Earth, afterHab, out string padOrder));
+            Assert.AreEqual(FlagDecreeIds.EarthStageTheLunarRocket, padOrder);
+
+            afterHab.HasPadOrder = false;
+            afterHab.HasPadPiece = true;
+            Assert.IsTrue(NarrativeBeatTracker.TryInferBuild(
+                CelestialBodyId.Earth, afterHab, out string padPiece));
+            Assert.AreEqual(FlagDecreeIds.EarthStageTheLunarRocket, padPiece);
+
+            afterHab.HasPadPiece = false;
+            afterHab.LaunchPathLive = true;
+            Assert.IsTrue(NarrativeBeatTracker.TryInferBuild(
+                CelestialBodyId.Earth, afterHab, out string launch));
+            Assert.AreEqual(FlagDecreeIds.EarthStageTheLunarRocket, launch);
+
+            afterHab.HasWorkshopOrder = true;
+            Assert.IsFalse(NarrativeBeatTracker.TryInferBuild(
+                CelestialBodyId.Earth, afterHab, out _),
+                "launch-path tee must not steal a live workshop Build");
+
+            afterHab.HasPadOrder = true;
+            Assert.IsTrue(NarrativeBeatTracker.TryInferBuild(
+                CelestialBodyId.Earth, afterHab, out string padWins));
+            Assert.AreEqual(FlagDecreeIds.EarthStageTheLunarRocket, padWins);
+
+            afterHab.HasPadOrder = false;
+            afterHab.HasWorkshopOrder = false;
+            afterHab.HasPad = true;
+            afterHab.HasPadPiece = true;
+            afterHab.LaunchPathLive = true;
+            Assert.IsFalse(NarrativeBeatTracker.TryInferBuild(
+                CelestialBodyId.Earth, afterHab, out _),
+                "completed pad is not more Stage Rocket labour");
+        }
+
+        [Test]
+        public void TryResolvePosted_UntitledEarthBuildAfterHab_DoesNotStampRocket()
+        {
+            var data = UnityEngine.ScriptableObject.CreateInstance<FlagData>();
+            data.flagType = FlagType.Build;
+            data.displayName = "Build";
+            var handle = new FlagHandle { Data = data, Title = "Build" };
+            var hint = new NarrativeWorldHint { HasCommons = true, HasHab = true };
+
+            Assert.IsFalse(NarrativeBeatTracker.TryResolvePosted(
+                handle, CelestialBodyId.Earth, hint, out _));
+            Assert.AreEqual("Build", handle.Title);
+
+            hint.HasPadOrder = true;
+            Assert.IsTrue(NarrativeBeatTracker.TryResolvePosted(
+                handle, CelestialBodyId.Earth, hint, out var decree));
+            Assert.AreEqual(FlagDecreeIds.EarthStageTheLunarRocket, decree.Id);
+            Assert.AreEqual("Stage the Lunar Rocket", handle.Title);
         }
 
         [Test]

@@ -11,6 +11,14 @@ namespace SolarMajesty
         public bool HasHab;
         public bool HasPad;
         public bool HasPower;
+        /// <summary>Landing Pad footprint on campus (construction or complete).</summary>
+        public bool HasPadPiece;
+        /// <summary>Live Landing Pad construction order — the Stage Rocket Build target.</summary>
+        public bool HasPadOrder;
+        /// <summary>Live workshop construction / refab. Must not steal the rocket toast.</summary>
+        public bool HasWorkshopOrder;
+        /// <summary>Body launch tech is researching or unlocked.</summary>
+        public bool LaunchPathLive;
     }
 
     /// <summary>
@@ -135,8 +143,15 @@ namespace SolarMajesty
                         id = FlagDecreeIds.EarthDockTheFirstHab;
                         return true;
                     }
-                    id = FlagDecreeIds.EarthStageTheLunarRocket;
-                    return true;
+                    // Commons → HAB → rocket only when pad labour or the launch path is live.
+                    // Untitled workshop / other Builds stay unmatched until a title stamps.
+                    if (EarthRocketBuildLive(hint))
+                    {
+                        id = FlagDecreeIds.EarthStageTheLunarRocket;
+                        return true;
+                    }
+                    id = null;
+                    return false;
                 case CelestialBodyId.Luna:
                     if (!hint.HasCommons)
                     {
@@ -157,6 +172,21 @@ namespace SolarMajesty
                     id = null;
                     return false;
             }
+        }
+
+        /// <summary>
+        /// Pad construction (order or unfinished piece) is the Stage Rocket Build.
+        /// Launch tech in flight / unlocked tees the same toast only when no pad stands
+        /// and a workshop order is not the live target.
+        /// </summary>
+        public static bool EarthRocketBuildLive(NarrativeWorldHint hint)
+        {
+            bool padLabour = hint.HasPadOrder || (hint.HasPadPiece && !hint.HasPad);
+            if (padLabour)
+                return true;
+            if (hint.HasWorkshopOrder)
+                return false;
+            return hint.LaunchPathLive && !hint.HasPad;
         }
 
         public bool TryTakePostToast(string decreeId, out AdvisorToast toast)
