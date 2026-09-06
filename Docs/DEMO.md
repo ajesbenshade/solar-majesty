@@ -24,7 +24,7 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 ---
 
-Play opens on the **title screen** (frozen drop behind the menu). **New Game** wipes campaign prefs (confirms if a save exists) and starts the Earth empty drop. **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, and population. Flags and fauna are not snapshotted. **Esc** pauses (Resume / Settings / Title / Quit). Tutorial is six skippable beats (Colony Commons → airlock → HAB → workshop → flag → TECH); Settings can replay it.
+Play opens on the **title screen** (frozen drop behind the menu). **New Game** wipes campaign prefs (confirms if a save exists) and starts the Earth empty drop. **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna, and specialist HP. Dens / node yield / mission timer are not snapshotted. **Esc** pauses (Resume / Settings / Title / Quit). Tutorial is six skippable beats (Colony Commons → airlock → HAB → workshop → flag → TECH); Settings can replay it.
 
 ## Controls
 
@@ -95,7 +95,7 @@ Run **[SMOKE_TEST.md](SMOKE_TEST.md)** (10-minute boot, then 20-minute Earth, th
 
 ### Must-pass
 
-- [ ] Title → New Game → Earth empty drop; Continue restores that body's campus + stockpile/research
+- [ ] Title → New Game → Earth empty drop; Continue restores that body's campus + stockpile/research + flags/fauna/HP
 - [ ] Six skippable tutorial beats, including workshop robots
 - [ ] No click-to-move; greed gate (Engineer ignores cheap Build)
 - [ ] Three conquest gates: dens, sustain (Colony Commons + pop + farm + mine), launch (tech + Landing Pad)
@@ -111,7 +111,7 @@ Run **[SMOKE_TEST.md](SMOKE_TEST.md)** (10-minute boot, then 20-minute Earth, th
 | Is | Isn’t |
 |----|--------|
 | Playable overseer loop + Earth → … → Europa campaign | Finished commercial game |
-| Personality + greed + **local** threat + NavMesh campus pathing | Full save (continue is campus + stockpile + research per body; flags/fauna reset) |
+| Personality + greed + **local** threat + NavMesh campus pathing | Full sim dump (continue is campus + stockpile + research + flags + fauna + HP; dens/nodes/mission timer reset) |
 | Mesh building kit + Luna/Mars lighting + Campus A/B framing | Final Blender hero unit art / animation |
 
 See also: `Docs/VERTICAL_SLICE_PHASE1.md`, `Docs/PHASE_1_6_THREAT.md`, `Docs/PHASE_2A_BITE_AND_BOUNTY.md`, `Docs/PHASE_2B_NAVMESH_AND_JUICE.md`, `Docs/PHASE_3A_PRESENTATION_AND_MISSION.md`, `Docs/PHASE_3B_UNITS_VOLUME_WAVES.md`, `Docs/PHASE_4A_MISSION_STAKES.md`, `Docs/PHASE_4B_CONTENT_SCALE.md`, `Docs/PHASE_5A_MAP_DEADLINE_AMBIENT.md`, `Docs/PHASE_5C_MULTI_BODY.md`, `Docs/PHASE_5D_BODY_FRAMING.md`, `Docs/ART_DIRECTION.md`.

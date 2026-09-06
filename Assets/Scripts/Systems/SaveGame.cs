@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Versioned full-world snapshot. Unlike the legacy continue slot (stockpile + campus blob),
-    /// this carries the things the old format silently dropped: posted flags and their escrow,
-    /// living robots with their health and purse, fauna, dens, and node depletion.
+    /// Versioned full-world snapshot. Continue applies flags (with remaining work), specialist
+    /// combat state, and living fauna. Campus / stockpile / research still also live in the
+    /// legacy PlayerPrefs blobs so an older slot without this file still loads the settlement.
     /// Shape is JsonUtility-friendly: concrete [Serializable] classes and Lists only, no dictionaries.
     /// </summary>
     [Serializable]
@@ -136,6 +136,8 @@ namespace SolarMajesty
         public int escrowMetals;
         public float workDone;
         public float postedWork;
+        /// <summary>Soft-claim count at save time. Restored by rebinding specialists, not copied blindly.</summary>
+        public int claimCount;
     }
 
     [Serializable]
@@ -151,6 +153,8 @@ namespace SolarMajesty
         public bool downed;
         public float downedTimer;
         public int downCount;
+        /// <summary>Index into <see cref="SaveGame.flags"/> the robot was soft-claiming, or -1.</summary>
+        public int claimedFlagIndex = -1;
     }
 
     [Serializable]

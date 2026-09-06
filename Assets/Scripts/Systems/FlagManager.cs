@@ -134,6 +134,18 @@ namespace SolarMajesty
             _workRemaining[flag.RuntimeId] = Mathf.Max(0.1f, remaining * mul);
         }
 
+        /// <summary>
+        /// Continue restore: keep the posted work snapshot and remaining labor.
+        /// Soft claims are rebound by living specialists; pass 0 and let them AddClaim.
+        /// </summary>
+        public void RestoreProgress(FlagHandle flag, float postedWork, float workRemaining)
+        {
+            if (flag?.RuntimeId == null) return;
+            float posted = postedWork > 0.01f ? postedWork : flag.PostedWork;
+            flag.PostedWork = Mathf.Max(0.1f, posted);
+            _workRemaining[flag.RuntimeId] = Mathf.Clamp(workRemaining, 0.01f, flag.PostedWork);
+        }
+
         public void ClearAll()
         {
             _flags.Clear();

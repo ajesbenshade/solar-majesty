@@ -2,7 +2,7 @@
 
 Run this before showing the demo. Unity **Game** tab, not Scene view. Menu **Solar Majesty → Play Demo** (or Open Demo Scene → Play).
 
-Continue restores **campus + stockpile + research + body**. Flags and fauna respawn. Campus is per-world (Earth Commons stays on Earth).
+Continue restores **campus + stockpile + research + body + open flags + living fauna + specialist HP**. Campus is per-world (Earth Commons stays on Earth).
 
 ---
 
@@ -21,6 +21,7 @@ Continue restores **campus + stockpile + research + body**. Flags and fauna resp
 - [ ] 6/6: **T** opens research. **SKIP** dismisses the bar. Settings → **Replay tutorial** brings it back.
 - [ ] **Esc** pause → Resume / Settings / Title / Quit. Title **Continue** shows body + MET + module count.
 - [ ] Build Colony Commons + airlock, Title → Continue: Commons and airlock are back; workshop robots refabricate.
+- [ ] After a short session (post a flag, fight fauna, damage a robot): Title → Continue restores that flag (bounty + remaining work), living fauna, and specialist HP. Empty ground click still does not repath.
 
 ## 20-minute Earth loop
 

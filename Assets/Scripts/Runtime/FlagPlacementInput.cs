@@ -92,6 +92,7 @@ namespace SolarMajesty
         /// <summary>
         /// Re-post a flag from a save with its marker. Deliberately skips escrow: the metals were
         /// already reserved before the save was written, so charging again would double-bill.
+        /// Remaining work is applied by <see cref="FlagManager.RestoreProgress"/> after this returns.
         /// </summary>
         public FlagHandle RestoreFlag(FlagData data, Vector3 world, float bountyAmount, int escrow)
         {

@@ -40,7 +40,7 @@ Phase 2 turned the Earth → Luna → Mars demo into a five-body overseer sandbo
 
 - Titan / outer system (Phase 2 stretch; still listed in the body table).
 - Imagine→Blender unit remesh (Phase 0 art debt; production look is [Phase 4 – Visual Target](05_PHASE_4_VISUAL_TARGET.md)).
-- Continue still omits flags, fauna, and specialist HP.
+- Continue omitted flags, fauna, and specialist HP at Phase 2 exit (restored later in Phase 4 W1 continue integrity).
 - External 45–90 min playtest not yet run (same as Phase 1).
 - Full combat sim / multiplayer / heightmap terrain.
 

@@ -3497,8 +3497,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Full-world capture. Everything the legacy continue slot dropped — posted flags with their
-        /// escrow, robot health and purse, fauna, den state, node depletion — is recorded here.
+        /// Continue autosave / numbered-slot capture: campus, stockpile, research, posted flags
+        /// (escrow + remaining work), specialist combat state, and living fauna.
+        /// Den cleared/scouted flags and node depletion are schema-ready but not written yet.
         /// </summary>
         public SaveGame CaptureSave(string label)
         {
@@ -3576,7 +3577,8 @@ namespace SolarMajesty
                         bounty = f.CurrentBounty,
                         escrowMetals = f.EscrowMetals,
                         postedWork = f.PostedWork,
-                        workDone = Mathf.Max(0f, f.PostedWork - Flags.GetWorkRemaining(f))
+                        workDone = Mathf.Max(0f, f.PostedWork - Flags.GetWorkRemaining(f)),
+                        claimCount = Mathf.Max(0, f.ClaimCount)
                     });
                 }
             }
@@ -3596,7 +3598,8 @@ namespace SolarMajesty
                     fatigue = a.Fatigue,
                     credits = Mathf.RoundToInt(a.Credits),
                     downed = a.IsIncapacitated,
-                    downedTimer = a.RecoverSecondsLeft
+                    downedTimer = a.RecoverSecondsLeft,
+                    claimedFlagIndex = IndexOfSavedFlag(a.ActiveFlag, Flags)
                 });
             }
 
@@ -3619,10 +3622,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Restore the parts of a save that can be re-established without respawning the scene:
-        /// stockpile, campus, settlement census, research, replay rules, and posted bounties.
-        /// Robots re-fabricate from workshops and fauna respawn from dens, so those are recorded
-        /// for continuity reporting but not force-placed back into the world.
+        /// Restore campus, stockpile, research, posted flags (including remaining work),
+        /// specialist combat state, and living fauna. Soft claims rebind by flag index;
+        /// specialists still re-evaluate through SpecialistBrain after load.
         /// </summary>
         public bool ApplySave(SaveGame save)
         {
@@ -3651,32 +3653,142 @@ namespace SolarMajesty
                     Settlement.ClaimOutpost();
             }
 
+            LoadRosterMemory();
             RestoreCampus();
+            RetryUnpaidCorpses();
 
             if (Settlement != null && save.settlement.population > 0)
                 Settlement.RestorePopulation(save.settlement.population);
 
-            RestoreFlags(save.flags);
+            var restoredFlags = RestoreFlags(save.flags);
+            RestoreAgents(save.agents, restoredFlags);
+            RestoreFauna(save.fauna);
 
             _playSeconds = save.playSeconds;
             RefreshTechEffects();
             SyncLaunchGate();
 
-            LogOverseer($"Colony restored — {save.buildings.Count} modules, {save.flags.Count} bounties standing.");
-            PlaytestTelemetry.Record("load", "modules", save.buildings.Count);
+            int modules = save.buildings != null ? save.buildings.Count : 0;
+            int bounties = save.flags != null ? save.flags.Count : 0;
+            int robots = save.agents != null ? save.agents.Count : 0;
+            int fauna = save.fauna != null ? save.fauna.Count : 0;
+            LogOverseer($"Colony restored — {modules} modules, {bounties} bounties, {robots} robots, {fauna} fauna.");
+            PlaytestTelemetry.Record("load", "modules", modules);
             return true;
         }
 
-        private void RestoreFlags(List<SaveFlag> saved)
+        private static int IndexOfSavedFlag(FlagHandle flag, FlagManager flags)
         {
-            if (_flagInput == null || saved == null) return;
+            if (flag == null || flags == null) return -1;
+            var open = flags.Flags;
+            int ord = 0;
+            for (int i = 0; i < open.Count; i++)
+            {
+                if (open[i]?.Data == null) continue;
+                if (ReferenceEquals(open[i], flag))
+                    return ord;
+                ord++;
+            }
+            return -1;
+        }
+
+        private List<FlagHandle> RestoreFlags(List<SaveFlag> saved)
+        {
+            ClearPostedFlagMarkers();
+            Flags?.ClearAll();
+            var restored = new List<FlagHandle>(saved != null ? saved.Count : 0);
+            if (_flagInput == null || saved == null || Flags == null)
+                return restored;
 
             for (int i = 0; i < saved.Count; i++)
             {
                 var s = saved[i];
                 var data = _flagInput.FlagFor((FlagType)s.flagType);
-                if (data == null) continue;
-                _flagInput.RestoreFlag(data, new Vector3(s.px, s.py, s.pz), s.bounty, s.escrowMetals);
+                if (data == null)
+                {
+                    restored.Add(null);
+                    continue;
+                }
+
+                float posted = s.postedWork > 0.01f ? s.postedWork : data.workRequired;
+                float remaining = posted - Mathf.Max(0f, s.workDone);
+                if (remaining <= 0.01f)
+                {
+                    restored.Add(null);
+                    continue;
+                }
+
+                var handle = _flagInput.RestoreFlag(
+                    data, new Vector3(s.px, s.py, s.pz), s.bounty, s.escrowMetals);
+                if (handle == null)
+                {
+                    restored.Add(null);
+                    continue;
+                }
+
+                Flags.RestoreProgress(handle, posted, remaining);
+                restored.Add(handle);
+            }
+
+            return restored;
+        }
+
+        private void ClearPostedFlagMarkers()
+        {
+            var markers = Object.FindObjectsByType<FlagMarker>(FindObjectsSortMode.None);
+            for (int i = 0; i < markers.Length; i++)
+            {
+                if (markers[i] != null)
+                    Destroy(markers[i].gameObject);
+            }
+        }
+
+        private void RestoreAgents(List<SaveAgent> saved, List<FlagHandle> restoredFlags)
+        {
+            if (saved == null) return;
+            var used = new HashSet<SpecialistAgent>();
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                var cls = (SpecialistClass)s.specialistClass;
+                SpecialistAgent agent = null;
+                for (int a = 0; a < _agents.Count; a++)
+                {
+                    var cand = _agents[a];
+                    if (cand == null || cand.Data == null) continue;
+                    if (used.Contains(cand)) continue;
+                    if (cand.Data.specialistClass != cls) continue;
+                    agent = cand;
+                    break;
+                }
+
+                if (agent == null) continue;
+                used.Add(agent);
+                agent.RestoreWorldPose(new Vector3(s.px, s.py, s.pz));
+                agent.RestoreCombatState(s.health, s.fatigue, s.credits, s.downed, s.downedTimer);
+                if (s.downed) continue;
+                int idx = s.claimedFlagIndex;
+                if (idx >= 0 && restoredFlags != null && idx < restoredFlags.Count)
+                    agent.RestoreActiveFlag(restoredFlags[idx]);
+            }
+        }
+
+        private void RestoreFauna(List<SaveFauna> saved)
+        {
+            for (int i = _stalkers.Count - 1; i >= 0; i--)
+            {
+                if (_stalkers[i] != null)
+                    _stalkers[i].DespawnQuiet();
+            }
+            _stalkers.Clear();
+
+            if (saved == null) return;
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                if (s.health <= 0.001f) continue;
+                var agent = SpawnFaunaAt((FaunaKind)s.kind, new Vector3(s.px, s.py, s.pz));
+                agent?.RestoreHealth01(s.health);
             }
         }
 

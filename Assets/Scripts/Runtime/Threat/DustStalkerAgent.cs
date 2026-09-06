@@ -256,6 +256,14 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>Continue restore. Call after <see cref="SetKind"/> / <see cref="ApplyBodyTune"/>.</summary>
+        public void RestoreHealth01(float health01)
+        {
+            _health = Mathf.Clamp01(health01) * Mathf.Max(0.01f, maxHealth);
+            if (_health <= 0f)
+                _health = 0.01f;
+        }
+
         /// <summary>Body-native speed, aggro, and tints. Does not change SpecialistBrain.</summary>
         public void ApplyBodyTune(CelestialBodyProfile body)
         {
@@ -843,7 +851,8 @@ namespace SolarMajesty
             Destroy(gameObject);
         }
 
-        private void DespawnQuiet()
+        /// <summary>Remove without a kill burst (Continue replace, quiet retreat).</summary>
+        public void DespawnQuiet()
         {
             _threat?.Clear(_sourceId);
             Destroy(gameObject);
