@@ -175,10 +175,10 @@ namespace SolarMajesty.EditorTools
                         loop.PrepareStillCaptureWorld();
                         Debug.Log(
                             $"[Capture] StampPhase4StillCampus => {stamped} " +
-                            $"hold={StillCaptureHold.Active}");
+                            $"{loop.LastStillStamp} hold={StillCaptureHold.Active}");
                     }
                     else
-                        Debug.LogWarning("[Capture] GameLoop missing — cannot stamp airlock/HAB");
+                        Debug.LogWarning("[Capture] GameLoop missing — cannot stamp dense campus");
                     _state = 3;
                     _frames = 0;
                     return;

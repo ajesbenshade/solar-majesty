@@ -263,6 +263,120 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(placer.CanFitRect(hab, 4, 4));
         }
 
+        [Test]
+        public void DensePack_EastHab_PlacesPadPowerWaterRegolith_WithoutOverlap()
+        {
+            var placer = StampEastChain(out var commons);
+
+            Vector2Int westPad = StillCampusDensity.FlushOrigin(
+                commons, BuildingPlacer.Cardinal.West, 6, 6);
+            Assert.AreEqual(new Vector2Int(4, 10), westPad);
+            Assert.IsTrue(placer.CanFitRect(westPad, 6, 6), "west pad must CanFit beside east HAB");
+
+            var plan = StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
+
+            Assert.IsTrue(plan.Pad, "pad");
+            Assert.IsTrue(plan.Power, "pwr");
+            Assert.IsTrue(plan.Water, "water");
+            Assert.IsTrue(plan.Regolith, "regolith");
+            Assert.AreEqual(4, plan.PlacedCount);
+            Assert.AreEqual(westPad, plan.PadOrigin, "HAB east → pad west (E/W/N pack)");
+            Assert.AreEqual(
+                StillCampusDensity.FlushOrigin(commons, BuildingPlacer.Cardinal.North, 4, 4),
+                plan.PowerOrigin,
+                "PWR-1 north of Commons");
+            Assert.AreEqual(new Vector2Int(16, 16), plan.WaterOrigin, "water NE corner");
+            Assert.AreEqual(new Vector2Int(6, 16), plan.RegolithOrigin, "regolith NW corner");
+
+            var log = StillCampusDensity.StampLog.FromPieces(placer);
+            Assert.IsTrue(log.Commons && log.Airlock && log.Hab);
+            Assert.IsTrue(log.Pad && log.Power && log.Water && log.Regolith);
+            Assert.AreEqual(
+                "commons=True airlock=True hab=True pad=True pwr=True water=True regolith=True",
+                log.ToString());
+
+            Assert.IsFalse(
+                RectsOverlap(plan.PadOrigin, 6, 6, commons.Origin, 6, 6));
+            Assert.IsFalse(
+                RectsOverlap(plan.PowerOrigin, 4, 4, plan.PadOrigin, 6, 6));
+            Assert.IsFalse(
+                RectsOverlap(plan.WaterOrigin, 4, 4, plan.PowerOrigin, 4, 4));
+            Assert.IsFalse(
+                RectsOverlap(plan.RegolithOrigin, 4, 4, plan.WaterOrigin, 4, 4));
+            Assert.IsFalse(
+                RectsOverlap(plan.WaterOrigin, 4, 4, new Vector2Int(18, 11), 4, 4),
+                "water must not sit on east HAB");
+            Assert.AreEqual(7, placer.Pieces.Count);
+        }
+
+        [Test]
+        public void DensePack_ForwardYards_CanFitNearCommons_ButExtraRuleWouldReject()
+        {
+            var placer = StampEastChain(out var commons);
+            Vector2Int westPad = StillCampusDensity.FlushOrigin(
+                commons, BuildingPlacer.Cardinal.West, 6, 6);
+
+            Assert.IsTrue(placer.CanFitRect(westPad, 6, 6));
+            Assert.IsFalse(
+                placer.IsValidModuleDock(westPad, 6, 6),
+                "pad is a forward yard, not an airlock dock");
+            Assert.IsFalse(
+                placer.OverlapsOutpostClaim(westPad, 6, 6),
+                "Campus B claim is ~30 m off — still pack must not require it");
+        }
+
+        [Test]
+        public void DensePack_SkipsHabFace_ThenTakesNorthWhenWestBlocked()
+        {
+            var placer = StampEastChain(out var commons);
+
+            Vector2Int westPad = StillCampusDensity.FlushOrigin(
+                commons, BuildingPlacer.Cardinal.West, 6, 6);
+            placer.MarkCampusRect(westPad, 6, 6);
+            placer.RegisterPiece(westPad, 6, 6, BuildingCategory.Defense);
+
+            Assert.IsTrue(StillCampusDensity.TryNext(
+                placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null, out Vector2Int picked));
+            Assert.AreNotEqual(westPad, picked);
+            Assert.AreEqual(
+                StillCampusDensity.FlushOrigin(commons, BuildingPlacer.Cardinal.North, 6, 6),
+                picked,
+                "west blocked → north pad (South last)");
+        }
+
+        [Test]
+        public void InferHabFace_ReadsEastChain()
+        {
+            var placer = StampEastChain(out var commons);
+            Assert.AreEqual(
+                BuildingPlacer.Cardinal.East,
+                StillCampusDensity.InferHabFace(placer, commons));
+            Assert.AreEqual(
+                BuildingPlacer.Cardinal.West,
+                StillCampusDensity.Opposite(BuildingPlacer.Cardinal.East));
+        }
+
+        private static BuildingPlacer StampEastChain(out BuildingPlacer.CampusPiece commons)
+        {
+            var placer = new BuildingPlacer(new ResourceManager());
+            var commonsOrigin = new Vector2Int(10, 10);
+            placer.MarkCampusRect(commonsOrigin, 6, 6);
+            placer.RegisterPiece(commonsOrigin, 6, 6, BuildingCategory.Commons);
+            commons = placer.Pieces[0];
+
+            BuildingPlacer.CardinalExpansionOrigins(
+                commons,
+                BuildingPlacer.Cardinal.East,
+                4, 4,
+                out Vector2Int airlock,
+                out Vector2Int hab);
+            placer.MarkCampusRect(airlock, 2, 2);
+            placer.RegisterPiece(airlock, 2, 2, BuildingCategory.Utility);
+            placer.MarkCampusRect(hab, 4, 4);
+            placer.RegisterPiece(hab, 4, 4, BuildingCategory.Habitat);
+            return placer;
+        }
+
         private static BuildingPlacer.Cardinal Opposite(BuildingPlacer.Cardinal face)
         {
             switch (face)

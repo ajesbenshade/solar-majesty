@@ -117,6 +117,7 @@ namespace SolarMajesty
         public int TutorialStep { get; private set; }
         public bool IsTutorialActive => !DemoSettings.TutorialDone && TutorialStep < TutorialCompleteStep;
         public BuildingData[] StarterBuildings => starterBuildings;
+        public StillCampusDensity.StampLog LastStillStamp { get; private set; }
         public CelestialBodyProfile BodyProfile => _body;
         public PlanetaryWorldGen World => _world;
         public int MoonSeedValue => BodySeed.Current;
@@ -2212,19 +2213,111 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// CaptureStill / Phase 4: ensure Commons then dock airlock + HAB for the Mars campus frame.
+        /// CaptureStill / Phase 4: Commons→airlock→HAB plus a CanFit-packed pad / PWR-1 /
+        /// water + regolith yard for a denser Game-tab still. Does not stamp Phase 4 exit.
         /// </summary>
-        public bool StampPhase4StillCampus()
+        public bool StampPhase4StillCampus() => StampPhase4DenseCampus();
+
+        /// <summary>
+        /// Sibling of <see cref="StampPhase4StillCampus"/> — same hold + chain, then density yards.
+        /// </summary>
+        public bool StampPhase4DenseCampus()
         {
             StillCaptureHold.Arm();
             PlaceDropCommons();
-            bool ok = Village != null && Village.StampStillCampusChain();
+            bool chain = Village != null && Village.StampStillCampusChain();
+            StampStillDensityPack();
+            LastStillStamp = StillCampusDensity.StampLog.FromPieces(Placer);
             PrepareStillCaptureWorld();
-            if (ok)
+            Debug.Log($"[GameLoop] StampPhase4DenseCampus {LastStillStamp} hold={StillCaptureHold.Active}");
+            if (chain)
                 SnapCampusCamera();
             else
                 Debug.LogWarning("[GameLoop] StampPhase4StillCampus failed — Commons face may be blocked.");
-            return ok;
+            return chain;
+        }
+
+        /// <summary>
+        /// Pad + Starship, PWR-1/solar, water farm, regolith camp. CanFit only — ExtraPlacementRule
+        /// would park forward yards on Campus B or demand extra airlocks.
+        /// </summary>
+        private void StampStillDensityPack()
+        {
+            if (Placer == null || grid == null) return;
+            if (!StillCampusDensity.TryGetCommons(Placer, out var commons))
+            {
+                Debug.LogWarning("[GameLoop] Stamp density skipped — no Commons piece.");
+                return;
+            }
+
+            var habFace = StillCampusDensity.InferHabFace(Placer, commons);
+            bool Bounds(Vector2Int origin, int width, int height) =>
+                grid.InBounds(origin) &&
+                grid.InBounds(new Vector2Int(origin.x + width - 1, origin.y + height - 1));
+
+            TryStampStillYard(BuildingCategory.LandingPad, StillCampusDensity.PadSize, commons, habFace, Bounds);
+            TryStampStillYard(BuildingCategory.Power, StillCampusDensity.YardSize, commons, habFace, Bounds);
+            TryStampStillYard(BuildingCategory.Farm, StillCampusDensity.YardSize, commons, habFace, Bounds);
+            TryStampStillYard(BuildingCategory.RegolithCamp, StillCampusDensity.YardSize, commons, habFace, Bounds);
+            NotifyCampusExpanded();
+        }
+
+        private void TryStampStillYard(
+            BuildingCategory cat,
+            int side,
+            BuildingPlacer.CampusPiece commons,
+            BuildingPlacer.Cardinal habFace,
+            StillCampusDensity.BoundsOk bounds)
+        {
+            if (DataForCategory(cat) == null)
+            {
+                Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}=False (no catalog)");
+                return;
+            }
+
+            if (!StillCampusDensity.TryNext(Placer, commons, habFace, side, side, bounds, out Vector2Int origin))
+            {
+                Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}=False (CanFit)");
+                return;
+            }
+
+            bool ok = InstantStampStillBuilding(cat, origin);
+            Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}={ok} origin={origin}");
+        }
+
+        private static string DensityLabel(BuildingCategory cat)
+        {
+            switch (cat)
+            {
+                case BuildingCategory.LandingPad: return "pad";
+                case BuildingCategory.Power: return "pwr";
+                case BuildingCategory.Farm: return "water";
+                case BuildingCategory.RegolithCamp: return "regolith";
+                default: return cat.ToString();
+            }
+        }
+
+        private bool InstantStampStillBuilding(BuildingCategory cat, Vector2Int origin)
+        {
+            var data = DataForCategory(cat);
+            if (data == null || Placer == null || grid == null) return false;
+
+            int fw = Mathf.Max(1, data.footprintWidth);
+            int fh = Mathf.Max(1, data.footprintHeight);
+            Vector3 world = FootprintWorldCenter(origin, fw, fh);
+            if (!Placer.TryRestore(data, origin, world, 1f, out _))
+                return false;
+
+            Transform root = buildingRoot != null ? buildingRoot : transform;
+            GameObject go = ModularBuildingFactory.Spawn(
+                data.category, world, root, fw, fh, grid.CellSize);
+            go.name = $"Bld_{data.displayName}_still";
+            CampusNavMesh.AddObstacle(go);
+            Village?.RegisterPlacedBuilding(data, data.category, go, world);
+            CampusDressing.DressPlaced(data, go, _body);
+            if (data.category == BuildingCategory.LandingPad)
+                SyncLaunchGate();
+            return true;
         }
 
         /// <summary>
