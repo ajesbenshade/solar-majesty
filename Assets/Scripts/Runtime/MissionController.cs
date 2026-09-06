@@ -239,6 +239,12 @@ namespace SolarMajesty
             StalkersRemaining = CountLivingStalkers();
             RefreshGates();
 
+            if (StillCaptureHold.Active)
+            {
+                ClearLossForStill();
+                return;
+            }
+
             if (!_armed)
             {
                 if (Time.timeSinceLevelLoad > 1f)
@@ -286,6 +292,19 @@ namespace SolarMajesty
         public void DismissWinToSandbox()
         {
             _winLatched = true;
+        }
+
+        /// <summary>
+        /// CaptureStill shutter: drop a latched OUTPOST LOST so the fail modal cannot cover the campus.
+        /// No-op unless <see cref="StillCaptureHold"/> is armed.
+        /// </summary>
+        public void ClearLossForStill()
+        {
+            if (!StillCaptureHold.Active) return;
+            if (_state != MissionState.Lost) return;
+            _state = MissionState.Active;
+            _loseLatched = false;
+            _deadlineFail = false;
         }
 
         private void RefreshGates()

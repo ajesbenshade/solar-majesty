@@ -274,6 +274,7 @@ namespace SolarMajesty
         }
 
         public bool ColonyExtinct =>
+            !StillCaptureHold.Active &&
             Settlement != null && Settlement.EverHadHab && Settlement.Population <= 0;
 
         /// <summary>
@@ -1146,7 +1147,8 @@ namespace SolarMajesty
             TickCampusEcology(Time.deltaTime);
             TickJunkYard(Time.deltaTime);
             TickCampusBoard(Time.deltaTime);
-            if (Settlement != null && Settlement.ConsumeLifeSupportFail())
+            if (!StillCaptureHold.Active &&
+                Settlement != null && Settlement.ConsumeLifeSupportFail())
             {
                 RaiseAlert("life_support", "Life support failing — colonists dying.", AlertSeverity.Critical);
                 if (Settlement.LifeSupportToastPending)
@@ -2214,13 +2216,41 @@ namespace SolarMajesty
         /// </summary>
         public bool StampPhase4StillCampus()
         {
+            StillCaptureHold.Arm();
             PlaceDropCommons();
             bool ok = Village != null && Village.StampStillCampusChain();
+            PrepareStillCaptureWorld();
             if (ok)
                 SnapCampusCamera();
             else
                 Debug.LogWarning("[GameLoop] StampPhase4StillCampus failed — Commons face may be blocked.");
             return ok;
+        }
+
+        /// <summary>
+        /// CaptureStill only: freeze life-support / colony-extinct so OUTPOST LOST cannot cover the shutter.
+        /// Stamp HAB latches EverHadHab without a census — that is the still15 fail overlay.
+        /// </summary>
+        public void PrepareStillCaptureWorld()
+        {
+            StillCaptureHold.Arm();
+            if (Resources != null &&
+                Resources.Get(ResourceId.WaterIce) < OverseerRules.IceDeathThreshold)
+            {
+                Resources.Set(ResourceId.WaterIce, OverseerRules.IceDeathThreshold);
+            }
+
+            if (Settlement != null)
+            {
+                if (Settlement.Housing > 0 && Settlement.Population <= 0)
+                    Settlement.SeedStarterCrew();
+                Settlement.ClearLifeSupportToast();
+                Settlement.ConsumeLifeSupportFail();
+            }
+
+            EmptyRosterFailed = false;
+            _emptyRosterTimer = 0f;
+            _mission?.ClearLossForStill();
         }
 
         /// <summary>Rebuild walkable mesh after village HABs / connectors expand the campus.</summary>
@@ -4449,6 +4479,11 @@ namespace SolarMajesty
         private void TickEmptyRosterFail(float dt)
         {
             EmptyRosterFailed = false;
+            if (StillCaptureHold.Active)
+            {
+                _emptyRosterTimer = 0f;
+                return;
+            }
             if (!_everHadRobot)
             {
                 _emptyRosterTimer = 0f;

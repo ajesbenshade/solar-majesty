@@ -1787,6 +1787,8 @@ namespace SolarMajesty
 
         private void DrawFailBanner()
         {
+            if (StillCaptureHold.Active) return;
+
             var mission = _loop.Mission;
             bool lost = mission != null && mission.IsLost;
             bool deadline = lost && mission.WasDeadlineFail && !_deadlineDismissed;
