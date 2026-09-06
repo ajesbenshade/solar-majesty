@@ -80,8 +80,11 @@ namespace SolarMajesty
             }
         }
 
+        public void ClearPendingCuts() => _pendingCuts.Clear();
+
         public bool EnqueueCut(string id)
         {
+            if (StillCaptureHold.Active) return false;
             if (string.IsNullOrEmpty(id) || _shownCuts.Contains(id))
                 return false;
             for (int i = 0; i < _pendingCuts.Count; i++)

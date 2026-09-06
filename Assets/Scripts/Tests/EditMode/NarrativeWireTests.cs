@@ -268,4 +268,57 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(n.TryTakePostToast(FlagDecreeIds.EarthSurveyTheClaim, out _));
         }
     }
+
+    public class StillCaptureNarrativeSuppressTests
+    {
+        [TearDown]
+        public void TearDown() => StillCaptureHold.Disarm();
+
+        [Test]
+        public void HoldActive_EnqueueCut_DoesNotQueueModal()
+        {
+            StillCaptureHold.Arm();
+            var n = new NarrativeBeatTracker();
+            Assert.IsFalse(n.EnqueueCut(CampaignCutsceneCatalog.MarsArrival));
+            Assert.AreEqual(0, n.PendingCutCount);
+            Assert.IsFalse(n.PeekCut(out _));
+        }
+
+        [Test]
+        public void HoldActive_QueuedCut_IsNotPresentableAsModal()
+        {
+            var n = new NarrativeBeatTracker();
+            Assert.IsTrue(n.EnqueueCut(CampaignCutsceneCatalog.MarsArrival));
+            StillCaptureHold.Arm();
+            Assert.IsFalse(CanPresentCutModal(n),
+                "DrawCutsceneModal / TryPeekCutscene must hide a queued arrival while the shutter hold is armed");
+        }
+
+        [Test]
+        public void HoldOff_ArrivalCut_IsPresentableAsModal()
+        {
+            var n = new NarrativeBeatTracker();
+            Assert.IsTrue(n.EnqueueCut(CampaignCutsceneCatalog.MarsArrival));
+            Assert.IsTrue(CanPresentCutModal(n));
+        }
+
+        [Test]
+        public void ClearPendingCuts_DropsQueuedModalWithoutRemembering()
+        {
+            var n = new NarrativeBeatTracker();
+            n.EnqueueCut(CampaignCutsceneCatalog.MarsArrival);
+            n.ClearPendingCuts();
+            Assert.AreEqual(0, n.PendingCutCount);
+            Assert.IsFalse(n.WasCutShown(CampaignCutsceneCatalog.MarsArrival));
+            Assert.IsTrue(n.EnqueueCut(CampaignCutsceneCatalog.MarsArrival));
+        }
+
+        /// <summary>Mirrors GameLoop.TryPeekCutscene + OverseerHud.DrawCutsceneModal hold gate.</summary>
+        private static bool CanPresentCutModal(NarrativeBeatTracker n)
+        {
+            if (StillCaptureHold.Active) return false;
+            if (!n.PeekCut(out string id)) return false;
+            return CampaignCutsceneCatalog.TryGet(id, out var cut) && cut.Kind == CutsceneKind.Modal;
+        }
+    }
 }
