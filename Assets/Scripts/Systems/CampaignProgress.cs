@@ -11,6 +11,7 @@ namespace SolarMajesty
         private const string MaxKey = "SM_CampaignMaxBody";
         private const string FreshKey = "SM_CampaignInitialized";
         private const string TravelLogKey = "SM_PendingTravelLog";
+        private const string CutsKey = "SM_NarrativeCutsShown";
 
         public static CelestialBodyId HighestUnlocked { get; private set; } = CelestialBodyId.Earth;
 
@@ -78,8 +79,31 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
             PlayerPrefs.SetInt(FreshKey, 1);
             PlayerPrefs.DeleteKey(TravelLogKey);
+            PlayerPrefs.DeleteKey(CutsKey);
             ResearchManager.WipeUnlocks();
             BodySeed.SetBody(CelestialBodyId.Earth);
+            PlayerPrefs.Save();
+        }
+
+        public static bool WasCutShown(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return false;
+            string raw = PlayerPrefs.GetString(CutsKey, "");
+            if (string.IsNullOrEmpty(raw)) return false;
+            string[] parts = raw.Split('|');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (parts[i] == id) return true;
+            }
+            return false;
+        }
+
+        public static void NoteCutShown(string id)
+        {
+            if (string.IsNullOrEmpty(id) || WasCutShown(id)) return;
+            string raw = PlayerPrefs.GetString(CutsKey, "");
+            raw = string.IsNullOrEmpty(raw) ? id : raw + "|" + id;
+            PlayerPrefs.SetString(CutsKey, raw);
             PlayerPrefs.Save();
         }
 

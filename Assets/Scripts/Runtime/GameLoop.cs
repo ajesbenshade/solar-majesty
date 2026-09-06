@@ -385,6 +385,9 @@ namespace SolarMajesty
             new Dictionary<SpecialistClass, SpecialistRecord>(8);
         private float _junkTimer;
         private float _lastMechDeathAt = -999f;
+        private NarrativeBeatTracker _narrative;
+        private string _consumedTravelLog;
+        private bool _continuedColony;
 
         private struct TimedDisc
         {
@@ -395,6 +398,8 @@ namespace SolarMajesty
 
         public MissionController Mission => _mission;
         public OverseerLog Log { get; } = new OverseerLog();
+        public NarrativeBeatTracker Narrative => _narrative;
+        public bool ContinuedColony => _continuedColony;
 
         /// <summary>
         /// Soft camera pan toward a world event. Rate-limited so it never fights the player.
@@ -422,10 +427,12 @@ namespace SolarMajesty
         /// <summary>Active ground overlay. Cycled with V.</summary>
         public MapOverlayMode OverlayMode { get; private set; } = MapOverlayMode.None;
 
-        public void LogOverseer(string line)
+        public void LogOverseer(string line) => LogOverseer(line, 4.2f);
+
+        public void LogOverseer(string line, float seconds)
         {
             Log.Push(line);
-            _overseerHud?.Notify(line, 4.2f);
+            _overseerHud?.Notify(line, seconds);
         }
 
         /// <summary>
@@ -570,10 +577,16 @@ namespace SolarMajesty
             // the first frame so the title screen is visible while it warms up.
 
             string travel = CampaignProgress.ConsumeTravelLog();
+            _consumedTravelLog = travel;
             if (!string.IsNullOrEmpty(travel))
                 Log.Push(travel);
-            if (_body != null && !string.IsNullOrEmpty(_body.ArrivalLog))
+            // W2 arrival cuts replace stale Earth ArrivalLog and overlay Luna/Mars fauna tees.
+            if (_body != null &&
+                !CampaignCutsceneCatalog.TryGetArrival(_body.Id, out _) &&
+                !string.IsNullOrEmpty(_body.ArrivalLog))
+            {
                 Log.Push(_body.ArrivalLog);
+            }
 
             if (DemoSettings.BootStraightIntoPlay)
                 EnterPlaying(loadStockpile: DemoSettings.SaveExists);
@@ -648,6 +661,7 @@ namespace SolarMajesty
             bool continuedColony = restoredCampus &&
                                    Settlement != null &&
                                    Settlement.HasCommons;
+            _continuedColony = continuedColony;
             if (continuedColony)
             {
                 _skipFaunaGrace = true;
@@ -661,6 +675,7 @@ namespace SolarMajesty
             TutorialStep = DemoSettings.TutorialDone ? TutorialCompleteStep : 0;
             TickTutorial();
             _overseerHud?.OnSessionPlaying();
+            BeginNarrativeSession();
             if (ReplayRules.Mode != ColonyRunMode.Campaign ||
                 ReplayRules.Challenge != ChallengeId.None ||
                 ReplayRules.Stance != DoctrineStance.Balanced)
@@ -795,15 +810,148 @@ namespace SolarMajesty
             RefreshFlagInterest();
             if (handle == null) return;
             BroadcastRefusalChips(handle);
-            if (_agents.Count == 0)
+
+            string advisor = null;
+            EnsureNarrative();
+            if (NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree) &&
+                _narrative.TryTakePostToast(decree.Id, out var toast))
             {
-                LogOverseer("Flag posted — fabricate a workshop robot before anyone can take it.");
+                advisor = toast.Line;
+            }
+
+            bool greed = celestialBody == CelestialBodyId.Earth &&
+                         handle.Data != null &&
+                         handle.Data.flagType == FlagType.Build &&
+                         (TutorialWantsPriceLesson ||
+                          (Mathf.Approximately(handle.CurrentBounty, 70f) && handle.InterestCount <= 0));
+            if (greed && _narrative.TryTakeGreedToast(out var greedToast))
+            {
+                if (advisor != null) Log.Push(advisor);
+                advisor = greedToast.Line;
+            }
+
+            if (advisor != null)
+                LogOverseer(advisor, 6.5f);
+
+            string interest = InterestLine(handle);
+            if (!string.IsNullOrEmpty(interest))
+            {
+                if (advisor != null) Log.Push(interest);
+                else LogOverseer(interest);
+            }
+        }
+
+        public void NotifyFlagClaimed(FlagHandle handle)
+        {
+            EnsureNarrative();
+            if (!NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree))
+                return;
+            _narrative.NoteClaimed(decree.Id);
+            if (_narrative.TryTakeClaimToast(decree.Id, out var toast))
+                LogOverseer(toast.Line, 6.5f);
+            if (_narrative.TryTakeClaimAside(decree.Id, out string aside))
+                Log.Push(aside);
+        }
+
+        public void NotifyFlagCompleted(FlagHandle handle)
+        {
+            EnsureNarrative();
+            if (!NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree))
+            {
+                SyncNarrativeCivic();
                 return;
             }
+            _narrative.NoteCompleted(decree.Id);
+            SyncNarrativeCivic();
+        }
+
+        private void OnFlagWorkCompleted(FlagHandle handle) => NotifyFlagCompleted(handle);
+
+        private string InterestLine(FlagHandle handle)
+        {
+            if (_agents.Count == 0)
+                return "Flag posted — fabricate a workshop robot before anyone can take it.";
             if (handle.InterestCount <= 0)
-                LogOverseer(handle.InterestLabel);
-            else
-                LogOverseer($"{handle.InterestCount} tempted: {handle.InterestLabel}");
+                return handle.InterestLabel;
+            return $"{handle.InterestCount} tempted: {handle.InterestLabel}";
+        }
+
+        private void EnsureNarrative()
+        {
+            if (_narrative != null) return;
+            _narrative = new NarrativeBeatTracker();
+        }
+
+        private NarrativeWorldHint CurrentNarrativeHint()
+        {
+            return new NarrativeWorldHint
+            {
+                HasCommons = Settlement != null && Settlement.HasCommons,
+                HasHab = Settlement != null && Settlement.CoreHabs > 0,
+                HasPad = Settlement != null && Settlement.HasPad,
+                HasPower = Settlement != null && Settlement.PowerPlants > 0
+            };
+        }
+
+        private void SyncNarrativeCivic()
+        {
+            EnsureNarrative();
+            bool charter = Research != null && Research.IsUnlocked(TechId.GuildCharter);
+            _narrative.SyncCivic(celestialBody, CurrentNarrativeHint(), charter, _launchCraftStaged);
+        }
+
+        private void BeginNarrativeSession()
+        {
+            EnsureNarrative();
+            SyncNarrativeCivic();
+
+            string arrivalKey = CampaignCutsceneCatalog.ArrivalKey(celestialBody);
+            bool hop = !string.IsNullOrEmpty(_consumedTravelLog);
+            bool freshDrop = !_continuedColony;
+            if (!string.IsNullOrEmpty(arrivalKey) &&
+                (hop || freshDrop) &&
+                !CampaignProgress.WasCutShown(arrivalKey))
+            {
+                _narrative.EnqueueCut(arrivalKey);
+            }
+
+            string travelKey = AdvisorToastCatalog.TravelKeyForArrival(celestialBody);
+            if ((hop || freshDrop) &&
+                !string.IsNullOrEmpty(travelKey) &&
+                _narrative.TryTakeTravelToast(travelKey, out var toast))
+            {
+                LogOverseer(toast.Line, 6.8f);
+            }
+        }
+
+        public bool TryPeekCutscene(out CampaignCutscene cut)
+        {
+            cut = default;
+            if (StillCaptureHold.Active) return false;
+            if (_mission != null && _mission.IsLost) return false;
+            EnsureNarrative();
+            while (_narrative.PeekCut(out string id))
+            {
+                if (CampaignProgress.WasCutShown(id) ||
+                    !CampaignCutsceneCatalog.TryGet(id, out cut) ||
+                    cut.Kind != CutsceneKind.Modal)
+                {
+                    _narrative.DismissCut();
+                    continue;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public void DismissCutscene()
+        {
+            EnsureNarrative();
+            if (_narrative.PeekCut(out string id))
+            {
+                CampaignProgress.NoteCutShown(id);
+                _narrative.DismissCut();
+            }
         }
 
         private void TickFlagInterest(float dt)
@@ -1433,6 +1581,7 @@ namespace SolarMajesty
                 DemoSettings.TryLoadStockpile(Resources);
 
             Flags = new FlagManager();
+            Flags.FlagCompleted += OnFlagWorkCompleted;
             Placer = new BuildingPlacer(Resources);
             Placer.HasCommons = () =>
                 (Settlement != null && Settlement.HasCommons) || Placer.HasCommonsModule;
@@ -1521,7 +1670,14 @@ namespace SolarMajesty
             if (def != null && def.SecretProject)
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
             else if (id == TechId.GuildCharter)
+            {
                 LogOverseer("Guild Charter signed. Dock a hall and assign SCOUT/ENG/DEF/MED — Horizon, Anvil, Aegis, or Triage. Flags near the hall pull that class.");
+                EnsureNarrative();
+                _narrative.NoteCompleted(FlagDecreeIds.EarthCharterTheHall);
+                if (_narrative.TryTakeCompleteToast(AdvisorToastCatalog.CompleteCharterTheHall, out var charterToast))
+                    Log.Push(charterToast.Line);
+                SyncNarrativeCivic();
+            }
             else if (id == TechId.HarvestDoctrine)
                 LogOverseer("Harvest Doctrine. Strip Guild is licensed. Mines and haul improve.");
             else if (id == TechId.SurveyDoctrine)
@@ -1621,6 +1777,14 @@ namespace SolarMajesty
             {
                 string craft = Research.LaunchTechLabel(celestialBody);
                 LogOverseer($"{craft} staged on the Landing Pad. Launch gate is open.");
+                EnsureNarrative();
+                string completeKey = AdvisorToastCatalog.CompleteKeyForCraft(celestialBody);
+                if (!string.IsNullOrEmpty(completeKey) &&
+                    _narrative.TryTakeCompleteToast(completeKey, out var stagedToast))
+                {
+                    Log.Push(stagedToast.Line);
+                }
+                SyncNarrativeCivic();
             }
         }
 
@@ -1994,6 +2158,8 @@ namespace SolarMajesty
                 if (st != null && st.Category == order.Data.category)
                     TryFabricateRobot(st);
             }
+            if (_completedBuilds.Count > 0)
+                SyncNarrativeCivic();
         }
 
         public bool IsSelected(SpecialistAgent agent) =>
@@ -2955,7 +3121,9 @@ namespace SolarMajesty
 
             string from = _body != null ? _body.DisplayName : celestialBody.ToString();
             string to = CelestialBodyCatalog.Get(next.Value).DisplayName;
-            string hop = $"Departure from {from}. Trajectory locked: {to}.";
+            string hop = CampaignCutsceneCatalog.TryGetVictory(celestialBody, out var cut)
+                ? cut.LogParagraph
+                : $"Departure from {from}. Trajectory locked: {to}.";
             if (!string.IsNullOrEmpty(freight))
                 hop += " " + freight;
             CampaignProgress.QueueTravelLog(hop);

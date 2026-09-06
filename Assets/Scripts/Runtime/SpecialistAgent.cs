@@ -850,8 +850,11 @@ namespace SolarMajesty
                     DemoAudio.PlayClaim();
                     DemoVfx.ClaimRing(_activeFlag.WorldPosition, new Color(1f, 0.85f, 0.2f));
                     if (decision.TargetFlag.Data != null)
+                    {
                         _loop?.LogOverseer(SpecialistFlavor.ClaimLine(
                             data.displayName, data.specialistClass, decision.TargetFlag.Data.flagType));
+                        _loop?.NotifyFlagClaimed(decision.TargetFlag);
+                    }
                 }
                 _idleTarget = _activeFlag.WorldPosition;
                 _hasIdleTarget = true;

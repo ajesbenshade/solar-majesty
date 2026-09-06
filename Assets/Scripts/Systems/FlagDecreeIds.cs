@@ -169,6 +169,58 @@ namespace SolarMajesty
             return false;
         }
 
+        /// <summary>
+        /// Title + body match until a decree id is stamped on <see cref="FlagHandle"/>.
+        /// Case-insensitive; trims. Does not invent slugs.
+        /// </summary>
+        public static bool TryMatchTitle(string title, CelestialBodyId body, out FlagDecree decree)
+        {
+            if (!string.IsNullOrEmpty(title))
+            {
+                for (int i = 0; i < Table.Length; i++)
+                {
+                    if (Table[i].Body != body) continue;
+                    if (string.Equals(Table[i].Title, title.Trim(), System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        decree = Table[i];
+                        return true;
+                    }
+                }
+            }
+
+            decree = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Posted-flag hook: title + body first, then the unique type on that body.
+        /// Ambiguous types (multiple Builds) stay unmatched unless the title hits.
+        /// </summary>
+        public static bool TryMatchPosted(FlagType type, string title, CelestialBodyId body, out FlagDecree decree)
+        {
+            if (TryMatchTitle(title, body, out decree))
+                return true;
+
+            int hit = -1;
+            int count = 0;
+            for (int i = 0; i < Table.Length; i++)
+            {
+                if (Table[i].Body != body || Table[i].Type != type) continue;
+                hit = i;
+                count++;
+                if (count > 1) break;
+            }
+
+            if (count == 1)
+            {
+                decree = Table[hit];
+                return true;
+            }
+
+            decree = default;
+            return false;
+        }
+
         public static List<FlagDecree> ForBody(CelestialBodyId body)
         {
             var list = new List<FlagDecree>(8);

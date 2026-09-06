@@ -19,8 +19,12 @@ namespace SolarMajesty
 
         public IReadOnlyList<FlagHandle> Flags => _flags;
 
+        /// <summary>Fires once when work hits zero and the handle is removed. Restore does not complete.</summary>
+        public event Action<FlagHandle> FlagCompleted;
+
         /// <summary>
         /// Player posts a bounty flag. Bounty is clamped to FlagData min/max.
+        /// Toast-on-Post is a runtime subscriber — restore re-posts without announcing.
         /// </summary>
         public FlagHandle Post(FlagData data, Vector3 worldPosition, float bounty)
         {
@@ -38,7 +42,8 @@ namespace SolarMajesty
                 Risk = data.baseRisk,
                 ClaimCount = 0,
                 RuntimeId = id,
-                PostedWork = data.workRequired
+                PostedWork = data.workRequired,
+                Title = data.displayName
             };
 
             _flags.Add(flag);
@@ -89,6 +94,7 @@ namespace SolarMajesty
 
             _workRemaining.Remove(flag.RuntimeId);
             _flags.Remove(flag);
+            FlagCompleted?.Invoke(flag);
             return true;
         }
 

@@ -157,6 +157,8 @@ namespace SolarMajesty
                     return "Gates met. Stay on this world — rating stands while you keep expanding.";
                 }
                 var body = _loop != null ? _loop.BodyProfile : null;
+                if (body != null && CampaignCutsceneCatalog.TryGetVictory(body.Id, out var cut))
+                    return cut.LogParagraph;
                 if (body != null && !string.IsNullOrEmpty(body.VictoryLog))
                     return body.VictoryLog;
                 return "Dens cleared · colony sustained · launch ready.";
@@ -406,7 +408,16 @@ namespace SolarMajesty
                 DemoVfx.ClaimRing(
                     ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
                     new Color(0.35f, 0.95f, 0.55f));
-                _loop.LogOverseer(WinDetail);
+                string travelKey = AdvisorToastCatalog.TravelKeyForVictory(_loop.ActiveBody);
+                if (!ReplayRules.IsEndless &&
+                    !string.IsNullOrEmpty(travelKey) &&
+                    AdvisorToastCatalog.TryGetTravel(travelKey, out var travelToast))
+                {
+                    _loop.Log.Push(WinDetail);
+                    _loop.LogOverseer(travelToast.Line);
+                }
+                else
+                    _loop.LogOverseer(WinDetail);
                 if (ReplayRules.IsEndless)
                     Debug.Log("[Mission] Victory — keep colonizing. Rating stands.");
                 else

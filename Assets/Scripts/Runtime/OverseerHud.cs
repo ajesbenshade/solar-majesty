@@ -105,6 +105,9 @@ namespace SolarMajesty
         {
             _confirmNewGame = false;
             if (_loop == null || !_loop.StartsEmpty) return;
+            // W2 arrival cuts + advisor travel toasts replace the stale Earth briefing.
+            if (CampaignCutsceneCatalog.TryGetArrival(_loop.ActiveBody, out _))
+                return;
             var body = _loop.BodyProfile;
             string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
                 ? body.Briefing
@@ -358,6 +361,7 @@ namespace SolarMajesty
                 DrawRoster();
                 DrawTutorial();
                 DrawToast();
+                DrawCutsceneModal();
                 DrawWinBanner();
                 DrawFailBanner();
             }
@@ -1723,14 +1727,55 @@ namespace SolarMajesty
 
             float left = M + TopW + 10f;
             float right = _sw - M - 286f - 10f;
-            float w = Mathf.Min(380f, Mathf.Max(200f, right - left));
+            float w = Mathf.Min(420f, Mathf.Max(200f, right - left));
             float x = Mathf.Clamp((_sw - w) * 0.5f, left, Mathf.Max(left, right - w));
-            var rect = new Rect(x, _playTop > 1f ? _playTop : M, w, 32f);
+            float textH = _wrap != null ? Mathf.Clamp(_wrap.CalcHeight(new GUIContent(_toast), w - 20f), 28f, 64f) : 32f;
+            var rect = new Rect(x, _playTop > 1f ? _playTop : M, w, textH + 8f);
             _hitRects.Add(rect);
             Fill(rect, PanelBg);
             Outline(rect, Hairline);
             Fill(new Rect(rect.x, rect.y, 2f, rect.height), Accent);
-            GUI.Label(new Rect(rect.x + 12f, rect.y, rect.width - 20f, rect.height), _toast, _body);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 4f, rect.width - 20f, textH), _toast, _wrap != null ? _wrap : _body);
+        }
+
+        private void DrawCutsceneModal()
+        {
+            if (StillCaptureHold.Active) return;
+            if (_loop == null || !_loop.TryPeekCutscene(out var cut)) return;
+
+            Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.03f, 0.05f, 0.55f));
+
+            int lines = cut.Body != null ? cut.Body.Length : 0;
+            float h = 92f + lines * 28f;
+            var rect = new Rect((_sw - 520f) * 0.5f, _sh * 0.22f, 520f, h);
+            var c = Panel(rect, null, false);
+            Fill(new Rect(rect.x, rect.y, rect.width, 2f), Gold);
+            _hitRects.Add(rect);
+
+            var prev = _banner.normal.textColor;
+            _banner.normal.textColor = Gold;
+            GUI.Label(new Rect(c.x, c.y, c.width, 26f), cut.Title, _banner);
+            _banner.normal.textColor = prev;
+
+            float y = c.y + 34f;
+            if (cut.Body != null)
+            {
+                for (int i = 0; i < cut.Body.Length; i++)
+                {
+                    GUI.Label(new Rect(c.x, y, c.width, 26f), cut.Body[i], _body);
+                    y += 28f;
+                }
+            }
+
+            if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), "CONTINUE  ·  SPACE", _chipOn))
+                _loop.DismissCutscene();
+
+            if (Event.current.type == EventType.KeyDown &&
+                (Event.current.keyCode == KeyCode.Space || Event.current.keyCode == KeyCode.Return))
+            {
+                _loop.DismissCutscene();
+                Event.current.Use();
+            }
         }
 
         private void DrawWinBanner()
@@ -1740,7 +1785,9 @@ namespace SolarMajesty
 
             Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.05f, 0.03f, 0.55f));
 
-            var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.26f, 460f, 216f);
+            bool travelCut = CampaignCutsceneCatalog.TryGetVictory(_loop.ActiveBody, out _);
+            float detailH = travelCut ? 72f : 32f;
+            var rect = new Rect((_sw - 500f) * 0.5f, _sh * 0.22f, 500f, travelCut ? 268f : 216f);
             var c = Panel(rect, null, false);
             Fill(new Rect(rect.x, rect.y, rect.width, 2f), Good);
 
@@ -1749,11 +1796,12 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, c.y, c.width, 26f), mission.WinHeadline, _banner);
             _banner.normal.textColor = prev;
 
-            GUI.Label(new Rect(c.x, c.y + 32f, c.width, 32f), mission.WinDetail, _body);
-            GUI.Label(new Rect(c.x, c.y + 64f, c.width, 24f), mission.WinSubline, _muted);
+            GUI.Label(new Rect(c.x, c.y + 32f, c.width, detailH), mission.WinDetail, _wrap != null ? _wrap : _body);
+            GUI.Label(new Rect(c.x, c.y + 32f + detailH, c.width, 24f), mission.WinSubline, _muted);
             var rating = _loop.CurrentRating;
-            GUI.Label(new Rect(c.x, c.y + 90f, c.width, 16f), rating.Summary, _value);
-            GUI.Label(new Rect(c.x, c.y + 108f, c.width, 14f), rating.Breakdown, _micro);
+            float ratingY = c.y + 56f + detailH;
+            GUI.Label(new Rect(c.x, ratingY, c.width, 16f), rating.Summary, _value);
+            GUI.Label(new Rect(c.x, ratingY + 18f, c.width, 14f), rating.Breakdown, _micro);
 
             if (GUI.Button(new Rect(c.x, c.yMax - 30f, 190f, 28f), "CONTINUE OVERSEEING  ·  Y", _chipOn))
             {
@@ -1847,6 +1895,12 @@ namespace SolarMajesty
             if (!_loop.NeedsFieldRevive &&
                 !(_loop.Mission != null && _loop.Mission.IsLost))
                 _failLatched = false;
+
+            if (_loop.TryPeekCutscene(out _) &&
+                (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)))
+            {
+                _loop.DismissCutscene();
+            }
 
             if (_loop.Mission != null && _loop.Mission.IsWon && Input.GetKeyDown(KeyCode.Y) && !_loop.IsOutpostOverwhelmed)
             {
