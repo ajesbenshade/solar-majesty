@@ -55,7 +55,14 @@ namespace SolarMajesty.EditorTools
             }
 
             ForceGameViewScaleOne();
+            // GameLoop.Awake clamps BodySeed to Earth when the body is campaign-locked.
+            // Mars stills need the spine open or the shutter logs Mars while the world is Earth.
+            CampaignProgress.DebugUnlockAll();
+            // Don't ApplySave an Earth continue over a Mars BodySeed.
+            DemoSettings.ClearSave();
+            DemoSettings.MarkTutorialDone();
             BodySeed.SetBody(body);
+            BodySeed.Ensure(body, 0);
             DemoSettings.RequestBootIntoPlay();
             SessionState.SetString(PendingOutKey, outPath);
             SessionState.SetString(PendingBodyKey, body.ToString());
@@ -63,7 +70,7 @@ namespace SolarMajesty.EditorTools
             Vector2 size = GetMainGameViewSize();
             float scale = ReadGameViewScale();
             Debug.Log(
-                $"[Capture] Begin body={body} scale={scale:0.###}x gameView={size.x:0}x{size.y:0} out={outPath}");
+                $"[Capture] Begin body={body} unlockedThrough={CampaignProgress.HighestUnlocked} scale={scale:0.###}x gameView={size.x:0}x{size.y:0} out={outPath}");
 
             EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             _state = 0;
@@ -96,7 +103,9 @@ namespace SolarMajesty.EditorTools
 
             // Domain reload can drop BodySeed / GameView zoom — re-assert before the shutter.
             ForceGameViewScaleOne();
+            CampaignProgress.DebugUnlockAll();
             BodySeed.SetBody(_body);
+            BodySeed.Ensure(_body, 0);
 
             _state = 0;
             _frames = 0;
