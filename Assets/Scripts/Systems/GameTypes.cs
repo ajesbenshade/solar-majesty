@@ -14,6 +14,12 @@ namespace SolarMajesty
         Power = 3
     }
 
+    /// <summary>
+    /// Mechanical bounty kinds posted through <see cref="FlagManager"/>.
+    /// Narrative decree titles map onto these via <see cref="FlagDecreeIds"/> —
+    /// see Docs/FLAG_TYPE_MAP_EARTH_LUNA_MARS.md. Do not add FlagType values
+    /// for story beats; add a decree id instead.
+    /// </summary>
     public enum FlagType
     {
         Explore = 0,
