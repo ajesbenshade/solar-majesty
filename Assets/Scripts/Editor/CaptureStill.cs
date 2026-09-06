@@ -138,8 +138,25 @@ namespace SolarMajesty.EditorTools
                     return;
 
                 case 1:
-                    // Let world gen, dressing, and the camera snap settle before the shutter.
-                    if (++_frames < 180) return;
+                    // Let world gen, dressing, and drop-Commons settle.
+                    if (++_frames < 120) return;
+                    ForceGameViewScaleOne();
+                    BodySeed.SetBody(_body);
+                    var loop = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
+                    if (loop != null)
+                    {
+                        bool stamped = loop.StampPhase4StillCampus();
+                        Debug.Log($"[Capture] StampPhase4StillCampus => {stamped}");
+                    }
+                    else
+                        Debug.LogWarning("[Capture] GameLoop missing — cannot stamp airlock/HAB");
+                    _state = 3;
+                    _frames = 0;
+                    return;
+
+                case 3:
+                    // Tubes / camera snap after the stamp.
+                    if (++_frames < 90) return;
                     ForceGameViewScaleOne();
                     Directory.CreateDirectory(Path.GetDirectoryName(_outPath) ?? "Docs");
                     Vector2 size = GetMainGameViewSize();

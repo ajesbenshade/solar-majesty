@@ -390,7 +390,29 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Phase 4 still helper: dock one airlock + HAB onto Commons without spending stockpile.
+        /// </summary>
+        public bool StampStillCampusChain()
+        {
+            if (_loop == null || _loop.Placer == null || _loop.Grid == null) return false;
+            if (!TryNextSlot(out Vector2Int airlockCell, out Vector2Int habCell))
+            {
+                Debug.LogWarning("[Village] StampStillCampusChain: no free Commons face for airlock+HAB.");
+                return false;
+            }
+
+            SpawnConnector(airlockCell);
+            SpawnHab(habCell);
+            if (_loop.Settlement != null)
+                _loop.Settlement.AddVillageHab();
+            _loop.NotifyCampusExpanded();
+            Debug.Log($"[Village] Still campus stamped — airlock {airlockCell} HAB {habCell}");
+            return true;
+        }
+
         private void TryExpandVillage()
+
         {
             if (_loop.Resources == null) return;
             var cost = new[]
