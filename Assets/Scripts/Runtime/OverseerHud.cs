@@ -1719,6 +1719,8 @@ namespace SolarMajesty
 
         private void DrawToast()
         {
+            // Same spirit as OUTPOST LOST hold — still20 Mars-descent toast covered the campus.
+            if (StillCaptureHold.Active) return;
             if (string.IsNullOrEmpty(_toast) || Time.unscaledTime > _toastUntil)
             {
                 _toast = null;
