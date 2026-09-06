@@ -390,7 +390,107 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Phase 4 still helper: dock one airlock + HAB onto Commons without spending stockpile.
+        /// Prefer East/West/North (South hugs the Inn). Skips village Inn/CampusB distance filters
+        /// that were rejecting every face on a fresh Mars drop.
+        /// </summary>
+        public bool StampStillCampusChain()
+        {
+            if (_loop == null || _loop.Placer == null || _loop.Grid == null) return false;
+
+            if (!TryFindStillSlot(out Vector2Int airlockCell, out Vector2Int habCell, out var face))
+            {
+                Debug.LogWarning(
+                    $"[Village] StampStillCampusChain failed — pieces={_loop.Placer.Pieces.Count} " +
+                    $"hasCommonsModule={_loop.Placer.HasCommonsModule}");
+                return false;
+            }
+
+            SpawnConnector(airlockCell);
+            SpawnHab(habCell);
+            if (_loop.Settlement != null)
+                _loop.Settlement.AddVillageHab();
+            _loop.NotifyCampusExpanded();
+            Debug.Log($"[Village] Still campus stamped — {face} airlock {airlockCell} HAB {habCell}");
+            return true;
+        }
+
+        private bool TryFindStillSlot(
+            out Vector2Int airlockCell,
+            out Vector2Int habCell,
+            out BuildingPlacer.Cardinal face)
+        {
+            airlockCell = default;
+            habCell = default;
+            face = BuildingPlacer.Cardinal.East;
+
+            BuildingPlacer.Cardinal[] order =
+            {
+                BuildingPlacer.Cardinal.East,
+                BuildingPlacer.Cardinal.West,
+                BuildingPlacer.Cardinal.North,
+                BuildingPlacer.Cardinal.South
+            };
+
+            var pieces = _loop.Placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                var module = pieces[i];
+                if (module.Category != BuildingCategory.Commons && !module.IsModule)
+                    continue;
+                // Prefer Commons; allow any module as fallback.
+                bool isCommons = module.Category == BuildingCategory.Commons;
+                if (!isCommons && HasCommonsPiece(pieces))
+                    continue;
+
+                for (int f = 0; f < order.Length; f++)
+                {
+                    face = order[f];
+                    Vector2Int aCell = BuildingPlacer.AirlockOriginOnModuleFace(module, face);
+                    if (!_loop.Placer.CanFitRect(aCell, 2, 2))
+                    {
+                        Debug.Log($"[Village] StampStill skip {face}: airlock CanFit {aCell}");
+                        continue;
+                    }
+                    if (!_loop.Grid.InBounds(aCell) ||
+                        !_loop.Grid.InBounds(new Vector2Int(aCell.x + 1, aCell.y + 1)))
+                        continue;
+
+                    var outFace = Opposite(face);
+                    Vector2Int hCell = BuildingPlacer.ModuleOriginOnAirlockFace(
+                        new BuildingPlacer.CampusPiece(aCell, 2, 2, BuildingCategory.Utility),
+                        4, 4, outFace);
+                    if (!_loop.Placer.CanFitRect(hCell, 4, 4))
+                    {
+                        Debug.Log($"[Village] StampStill skip {face}: HAB CanFit {hCell}");
+                        continue;
+                    }
+                    if (!_loop.Grid.InBounds(hCell) ||
+                        !_loop.Grid.InBounds(new Vector2Int(hCell.x + 3, hCell.y + 3)))
+                        continue;
+
+                    airlockCell = aCell;
+                    habCell = hCell;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasCommonsPiece(System.Collections.Generic.IReadOnlyList<BuildingPlacer.CampusPiece> pieces)
+        {
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                if (pieces[i].Category == BuildingCategory.Commons)
+                    return true;
+            }
+            return false;
+        }
+
         private void TryExpandVillage()
+
         {
             if (_loop.Resources == null) return;
             var cost = new[]

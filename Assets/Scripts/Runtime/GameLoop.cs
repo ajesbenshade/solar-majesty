@@ -2209,8 +2209,23 @@ namespace SolarMajesty
                 _agents[i]?.BindNavMesh(_campusNav);
         }
 
+        /// <summary>
+        /// CaptureStill / Phase 4: ensure Commons then dock airlock + HAB for the Mars campus frame.
+        /// </summary>
+        public bool StampPhase4StillCampus()
+        {
+            PlaceDropCommons();
+            bool ok = Village != null && Village.StampStillCampusChain();
+            if (ok)
+                SnapCampusCamera();
+            else
+                Debug.LogWarning("[GameLoop] StampPhase4StillCampus failed — Commons face may be blocked.");
+            return ok;
+        }
+
         /// <summary>Rebuild walkable mesh after village HABs / connectors expand the campus.</summary>
         public void NotifyCampusExpanded()
+
         {
             if (_campusNav != null && grid != null)
             {
