@@ -92,5 +92,10 @@ namespace SolarMajesty
         public int InterestCount;
         /// <summary>Short class names currently tempted (empty if ignored).</summary>
         public string InterestLabel;
+        /// <summary>
+        /// Optional decree title for title-match advisor toasts.
+        /// Until a decree id is stamped here, <see cref="FlagDecreeIds.TryMatchTitle"/> uses this, then <see cref="FlagData.displayName"/>.
+        /// </summary>
+        public string Title;
     }
 }
