@@ -393,7 +393,8 @@ namespace SolarMajesty
         /// <summary>
         /// Phase 4 still helper: dock one airlock + HAB onto Commons without spending stockpile.
         /// Prefer East/West/North (South hugs the Inn). Skips village Inn/CampusB distance filters
-        /// that were rejecting every face on a fresh Mars drop.
+        /// that were rejecting every face on a fresh Mars drop. HAB continues in the same
+        /// cardinal as the Commons dock — Opposite(face) sat the 4×4 on Commons and failed CanFit.
         /// </summary>
         public bool StampStillCampusChain()
         {
@@ -447,28 +448,34 @@ namespace SolarMajesty
                 for (int f = 0; f < order.Length; f++)
                 {
                     face = order[f];
-                    Vector2Int aCell = BuildingPlacer.AirlockOriginOnModuleFace(module, face);
+                    BuildingPlacer.CardinalExpansionOrigins(module, face, 4, 4, out Vector2Int aCell, out Vector2Int hCell);
                     if (!_loop.Placer.CanFitRect(aCell, 2, 2))
                     {
-                        Debug.Log($"[Village] StampStill skip {face}: airlock CanFit {aCell}");
+                        Debug.Log(
+                            $"[Village] StampStill skip {face}: airlock CanFit {aCell} " +
+                            DescribeBlocked(aCell, 2, 2));
                         continue;
                     }
                     if (!_loop.Grid.InBounds(aCell) ||
                         !_loop.Grid.InBounds(new Vector2Int(aCell.x + 1, aCell.y + 1)))
+                    {
+                        Debug.Log($"[Village] StampStill skip {face}: airlock OOB {aCell}");
                         continue;
+                    }
 
-                    var outFace = Opposite(face);
-                    Vector2Int hCell = BuildingPlacer.ModuleOriginOnAirlockFace(
-                        new BuildingPlacer.CampusPiece(aCell, 2, 2, BuildingCategory.Utility),
-                        4, 4, outFace);
                     if (!_loop.Placer.CanFitRect(hCell, 4, 4))
                     {
-                        Debug.Log($"[Village] StampStill skip {face}: HAB CanFit {hCell}");
+                        Debug.Log(
+                            $"[Village] StampStill skip {face}: HAB CanFit {hCell} " +
+                            DescribeBlocked(hCell, 4, 4));
                         continue;
                     }
                     if (!_loop.Grid.InBounds(hCell) ||
                         !_loop.Grid.InBounds(new Vector2Int(hCell.x + 3, hCell.y + 3)))
+                    {
+                        Debug.Log($"[Village] StampStill skip {face}: HAB OOB {hCell}");
                         continue;
+                    }
 
                     airlockCell = aCell;
                     habCell = hCell;
@@ -525,16 +532,12 @@ namespace SolarMajesty
                 for (int f = 0; f < 4; f++)
                 {
                     var face = (BuildingPlacer.Cardinal)f;
-                    Vector2Int aCell = BuildingPlacer.AirlockOriginOnModuleFace(module, face);
+                    BuildingPlacer.CardinalExpansionOrigins(module, face, 4, 4, out Vector2Int aCell, out Vector2Int hCell);
                     if (!_loop.Placer.CanFitRect(aCell, 2, 2)) continue;
                     if (!_loop.Grid.InBounds(aCell) ||
                         !_loop.Grid.InBounds(new Vector2Int(aCell.x + 1, aCell.y + 1)))
                         continue;
 
-                    var outFace = Opposite(face);
-                    Vector2Int hCell = BuildingPlacer.ModuleOriginOnAirlockFace(
-                        new BuildingPlacer.CampusPiece(aCell, 2, 2, BuildingCategory.Utility),
-                        4, 4, outFace);
                     if (!_loop.Placer.CanFitRect(hCell, 4, 4)) continue;
                     if (!_loop.Grid.InBounds(hCell) ||
                         !_loop.Grid.InBounds(new Vector2Int(hCell.x + 3, hCell.y + 3)))
@@ -553,15 +556,15 @@ namespace SolarMajesty
             return false;
         }
 
-        private static BuildingPlacer.Cardinal Opposite(BuildingPlacer.Cardinal face)
+        private string DescribeBlocked(Vector2Int origin, int width, int height)
         {
-            switch (face)
-            {
-                case BuildingPlacer.Cardinal.East: return BuildingPlacer.Cardinal.West;
-                case BuildingPlacer.Cardinal.West: return BuildingPlacer.Cardinal.East;
-                case BuildingPlacer.Cardinal.North: return BuildingPlacer.Cardinal.South;
-                default: return BuildingPlacer.Cardinal.North;
-            }
+            if (_loop?.Placer == null)
+                return "no placer";
+            if (!_loop.Placer.TryFirstOccupiedCell(origin, width, height, out Vector2Int cell))
+                return "no occupied cell";
+            if (_loop.Placer.TryGetPieceAt(cell, out var piece))
+                return $"occupied {cell} overlaps {piece.Category} {piece.Origin} {piece.Width}x{piece.Height}";
+            return $"occupied {cell}";
         }
 
         private Vector3 FootprintCenterOffset(int w, int h)
