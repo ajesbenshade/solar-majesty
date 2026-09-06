@@ -480,6 +480,58 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Commons/module → airlock → HAB continuing in the same cardinal.
+        /// HAB must use <paramref name="face"/> (not Opposite): Opposite puts the 4×4
+        /// back on the parent module and CanFit fails on every dock.
+        /// </summary>
+        public static void CardinalExpansionOrigins(
+            CampusPiece module,
+            Cardinal face,
+            int habW,
+            int habH,
+            out Vector2Int airlockOrigin,
+            out Vector2Int habOrigin)
+        {
+            airlockOrigin = AirlockOriginOnModuleFace(module, face);
+            habOrigin = ModuleOriginOnAirlockFace(
+                new CampusPiece(airlockOrigin, AirlockSize, AirlockSize, BuildingCategory.Utility),
+                habW,
+                habH,
+                face);
+        }
+
+        public bool TryFirstOccupiedCell(Vector2Int origin, int width, int height, out Vector2Int cell)
+        {
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                cell = new Vector2Int(origin.x + x, origin.y + y);
+                if (_occupiedCells.Contains(Pack(cell.x, cell.y)))
+                    return true;
+            }
+
+            cell = default;
+            return false;
+        }
+
+        public bool TryGetPieceAt(Vector2Int cell, out CampusPiece piece)
+        {
+            for (int i = 0; i < _pieces.Count; i++)
+            {
+                var p = _pieces[i];
+                if (cell.x < p.Origin.x || cell.y < p.Origin.y) continue;
+                if (cell.x >= p.Origin.x + p.Width || cell.y >= p.Origin.y + p.Height) continue;
+                piece = p;
+                return true;
+            }
+
+            piece = default;
+            return false;
+        }
+
         /// <summary>True if this airlock origin is exactly on a module symmetry-axis socket.</summary>
         public bool IsValidAirlockDock(Vector2Int origin)
         {

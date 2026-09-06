@@ -109,6 +109,140 @@ namespace SolarMajesty.Tests
                 "no fourth CampusTubeRoot stacking collars in the HAB gap");
         }
 
+        [Test]
+        public void CardinalExpansion_PlacesHabBeyondAirlock_NotOnCommons()
+        {
+            var commons = new BuildingPlacer.CampusPiece(
+                new Vector2Int(10, 10), 6, 6, BuildingCategory.Commons);
+            var faces = new[]
+            {
+                BuildingPlacer.Cardinal.East,
+                BuildingPlacer.Cardinal.West,
+                BuildingPlacer.Cardinal.North,
+                BuildingPlacer.Cardinal.South
+            };
+
+            for (int i = 0; i < faces.Length; i++)
+            {
+                var face = faces[i];
+                BuildingPlacer.CardinalExpansionOrigins(
+                    commons, face, 4, 4, out Vector2Int airlock, out Vector2Int hab);
+
+                Assert.IsFalse(
+                    RectsOverlap(hab, 4, 4, commons.Origin, 6, 6),
+                    $"{face} HAB {hab} must not sit on Commons {commons.Origin}");
+                Assert.IsFalse(
+                    RectsOverlap(hab, 4, 4, airlock, 2, 2),
+                    $"{face} HAB {hab} must not sit on airlock {airlock}");
+                Assert.AreEqual(
+                    BuildingPlacer.AirlockOriginOnModuleFace(commons, face),
+                    airlock);
+                Assert.AreEqual(
+                    BuildingPlacer.ModuleOriginOnAirlockFace(
+                        new BuildingPlacer.CampusPiece(airlock, 2, 2, BuildingCategory.Utility),
+                        4, 4, face),
+                    hab,
+                    $"{face} HAB must continue in the same cardinal as the Commons dock");
+            }
+        }
+
+        [Test]
+        public void OppositeFaceHab_OverlapsCommons_AndFailsCanFit()
+        {
+            var placer = new BuildingPlacer(new ResourceManager());
+            var commonsOrigin = new Vector2Int(10, 10);
+            placer.MarkCampusRect(commonsOrigin, 6, 6);
+            placer.RegisterPiece(commonsOrigin, 6, 6, BuildingCategory.Commons);
+            var commons = placer.Pieces[0];
+
+            var faces = new[]
+            {
+                BuildingPlacer.Cardinal.East,
+                BuildingPlacer.Cardinal.West,
+                BuildingPlacer.Cardinal.North,
+                BuildingPlacer.Cardinal.South
+            };
+
+            int outwardFits = 0;
+            for (int i = 0; i < faces.Length; i++)
+            {
+                var face = faces[i];
+                Vector2Int aCell = BuildingPlacer.AirlockOriginOnModuleFace(commons, face);
+                Assert.IsTrue(placer.CanFitRect(aCell, 2, 2), $"{face} airlock {aCell} must be free");
+
+                BuildingPlacer.CardinalExpansionOrigins(
+                    commons, face, 4, 4, out Vector2Int _, out Vector2Int outwardHab);
+                Assert.IsTrue(
+                    placer.CanFitRect(outwardHab, 4, 4),
+                    $"{face} outward HAB {outwardHab} must CanFit on an empty Commons drop");
+                outwardFits++;
+
+                var inward = Opposite(face);
+                Vector2Int inwardHab = BuildingPlacer.ModuleOriginOnAirlockFace(
+                    new BuildingPlacer.CampusPiece(aCell, 2, 2, BuildingCategory.Utility),
+                    4, 4, inward);
+                Assert.IsFalse(
+                    placer.CanFitRect(inwardHab, 4, 4),
+                    $"{face} Opposite HAB {inwardHab} is the still-stamp miss (overlaps Commons)");
+                Assert.IsTrue(
+                    placer.TryFirstOccupiedCell(inwardHab, 4, 4, out Vector2Int blocked));
+                Assert.IsTrue(
+                    placer.TryGetPieceAt(blocked, out var piece) &&
+                    piece.Category == BuildingCategory.Commons,
+                    $"{face} inward miss must report Commons overlap, got {blocked}");
+            }
+
+            Assert.AreEqual(4, outwardFits);
+        }
+
+        [Test]
+        public void EmptyCommonsDrop_EastChainFitsAndDoesNotOverlap()
+        {
+            var placer = new BuildingPlacer(new ResourceManager());
+            var commonsOrigin = new Vector2Int(10, 10);
+            placer.MarkCampusRect(commonsOrigin, 6, 6);
+            placer.RegisterPiece(commonsOrigin, 6, 6, BuildingCategory.Commons);
+
+            BuildingPlacer.CardinalExpansionOrigins(
+                placer.Pieces[0],
+                BuildingPlacer.Cardinal.East,
+                4, 4,
+                out Vector2Int airlock,
+                out Vector2Int hab);
+
+            Assert.AreEqual(new Vector2Int(16, 12), airlock);
+            Assert.AreEqual(new Vector2Int(18, 11), hab);
+            Assert.IsTrue(placer.CanFitRect(airlock, 2, 2));
+            Assert.IsTrue(placer.CanFitRect(hab, 4, 4));
+
+            placer.MarkCampusRect(airlock, 2, 2);
+            placer.RegisterPiece(airlock, 2, 2, BuildingCategory.Utility);
+            placer.MarkCampusRect(hab, 4, 4);
+            placer.RegisterPiece(hab, 4, 4, BuildingCategory.Habitat);
+
+            Assert.AreEqual(3, placer.Pieces.Count);
+            Assert.IsTrue(placer.HasCommonsModule);
+            Assert.IsFalse(placer.CanFitRect(airlock, 2, 2));
+            Assert.IsFalse(placer.CanFitRect(hab, 4, 4));
+        }
+
+        private static BuildingPlacer.Cardinal Opposite(BuildingPlacer.Cardinal face)
+        {
+            switch (face)
+            {
+                case BuildingPlacer.Cardinal.East: return BuildingPlacer.Cardinal.West;
+                case BuildingPlacer.Cardinal.West: return BuildingPlacer.Cardinal.East;
+                case BuildingPlacer.Cardinal.North: return BuildingPlacer.Cardinal.South;
+                default: return BuildingPlacer.Cardinal.North;
+            }
+        }
+
+        private static bool RectsOverlap(
+            Vector2Int a, int aw, int ah, Vector2Int b, int bw, int bh)
+        {
+            return a.x < b.x + bw && a.x + aw > b.x && a.y < b.y + bh && a.y + ah > b.y;
+        }
+
         private Vector2Int OriginFromCenter(Vector3 center, int side)
         {
             float cs = _grid.CellSize;
