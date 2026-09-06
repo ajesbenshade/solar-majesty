@@ -5,7 +5,9 @@ namespace SolarMajesty.Tests
 {
     /// <summary>
     /// still5 leftover: unused Commons cardinal showed an orange hull-port ring.
-    /// Live kits must spawn those groups off; RefreshTubes enables docked faces only.
+    /// still16 leftover: wrap carbon doors painted the 2×2 as a dark box joint.
+    /// Live kits must spawn dock groups off; RefreshTubes enables docked faces only.
+    /// The hub stays a smaller white paneled square; orange only on docked collars.
     /// </summary>
     public class CampusDressingTests
     {
@@ -107,6 +109,41 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(FindChild(airlock.transform, "Dress_AirlockHub"));
             Assert.IsNull(GameObject.Find("CampusTubeRoot"),
                 "no fourth CampusTubeRoot stacking collars in the HAB gap");
+            AssertAirlockReadsAsWhiteHub(airlock.transform);
+            Assert.IsTrue(IsRootActive(hab.transform, "HabPort_S"),
+                "HAB south hull port is the module-side orange collar");
+            Assert.IsFalse(IsRootActive(hab.transform, "HabPort_N"));
+            Assert.IsFalse(IsRootActive(hab.transform, "HabPort_E"));
+            Assert.IsFalse(IsRootActive(hab.transform, "HabPort_W"));
+            AssertDockedArmIsWhiteTubePlusCollar(airlock.transform, "Dress_TubeArm_S");
+            AssertDockedArmIsWhiteTubePlusCollar(airlock.transform, "Dress_TubeArm_N");
+        }
+
+        [Test]
+        public void AirlockHub_IsSmallWhiteSquare_NoWrapDoors()
+        {
+            var airlock = ModularBuildingFactory.Spawn(
+                BuildingCategory.Utility, Vector3.zero, _root.transform);
+            AssertAirlockReadsAsWhiteHub(airlock.transform);
+            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_N"),
+                "live unused north arm must start hidden");
+            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_E"));
+            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_S"));
+            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_W"));
+        }
+
+        [Test]
+        public void GhostAirlock_ShowsAllArms_EachWithOneOrangeCollar()
+        {
+            var ghost = ModularBuildingFactory.Spawn(
+                BuildingCategory.Utility, Vector3.zero, _root.transform, ghost: true);
+            AssertAirlockReadsAsWhiteHub(ghost.transform);
+            string[] arms = { "Dress_TubeArm_N", "Dress_TubeArm_E", "Dress_TubeArm_S", "Dress_TubeArm_W" };
+            for (int i = 0; i < arms.Length; i++)
+            {
+                Assert.IsTrue(IsRootActive(ghost.transform, arms[i]), arms[i] + " ghost arm");
+                AssertDockedArmIsWhiteTubePlusCollar(ghost.transform, arms[i]);
+            }
         }
 
         [Test]
@@ -266,6 +303,71 @@ namespace SolarMajesty.Tests
         {
             Transform t = FindChild(root, name);
             return t != null && t.gameObject.activeSelf;
+        }
+
+        /// <summary>
+        /// still16 fail: wrap carbon doors + carbon roof made the 2×2 a dark box.
+        /// Hub must stay a cell-safe white square; unused faces stay clean plates.
+        /// </summary>
+        private static void AssertAirlockReadsAsWhiteHub(Transform airlock)
+        {
+            Transform hub = FindChild(airlock, "Dress_AirlockHub");
+            Assert.IsNotNull(hub, "Dress_AirlockHub");
+            Vector3 scale = hub.localScale;
+            Assert.AreEqual(ColonyVisualUtility.AirlockHubSide, scale.x, 0.02f);
+            Assert.AreEqual(ColonyVisualUtility.AirlockHubSide, scale.z, 0.02f);
+            Assert.Less(scale.x, ColonyLayout.DefaultCellSize * 2f,
+                "hub must stay smaller than the 2×2 cell so the white tube reads");
+            Assert.Greater(Albedo(hub).grayscale, 0.88f, "hub hull must be sheet-white");
+            Assert.IsNotNull(FindChild(airlock, "Dress_HubPanel_0"));
+            Assert.Greater(Albedo(FindChild(airlock, "Dress_HubPanel_0")).grayscale, 0.88f);
+            Assert.Greater(Albedo(FindChild(airlock, "Dress_HubRoof")).grayscale, 0.88f,
+                "carbon roof was the still16 dark lid — roof stays white");
+            Assert.IsNull(FindChild(airlock, "Dress_HubDoor_0"),
+                "wrap doors painted the hub as a dark box");
+            Assert.IsNull(FindChild(airlock, "Dress_HubDoor_1"));
+            Assert.IsNotNull(FindChild(airlock, "Dress_HubInset_0"),
+                "small inset hatch is panel language, not a wrap door");
+            Assert.Less(FindChild(airlock, "Dress_HubInset_0").localScale.x
+                        + FindChild(airlock, "Dress_HubInset_0").localScale.z, 0.70f,
+                "inset hatch must stay much smaller than a wrap door");
+        }
+
+        private static void AssertDockedArmIsWhiteTubePlusCollar(Transform airlock, string arm)
+        {
+            Transform group = FindChild(airlock, arm);
+            Assert.IsNotNull(group, arm);
+            Transform tube = FindChild(group, arm + "_Tube");
+            Transform collar = FindChild(group, arm + "_Collar");
+            Transform lip = FindChild(group, arm + "_Lip");
+            Assert.IsNotNull(tube, arm + " white tube");
+            Assert.IsNotNull(collar, arm + " orange collar");
+            Assert.IsNotNull(lip, arm + " white hub lip");
+            Assert.Greater(Albedo(tube).grayscale, 0.88f, arm + " tube must be white");
+            Assert.Greater(Albedo(lip).grayscale, 0.88f, arm + " lip must be white");
+            Color collarC = Albedo(collar);
+            Assert.Greater(collarC.r, 0.85f, arm + " collar stays safety orange");
+            Assert.Less(collarC.g, 0.55f);
+            Assert.Less(collarC.b, 0.25f);
+            float tubeLen = tube.localScale.y * 2f;
+            Assert.Greater(tubeLen, 0.39f, arm + " stub must read as a short white tube");
+            float face = ColonyLayout.DefaultCellSize;
+            Vector3 collarFlat = collar.localPosition;
+            collarFlat.y = 0f;
+            Assert.Greater(collarFlat.magnitude, face * 0.85f,
+                arm + " orange collar sits at the Lego face, not as a hub-gasket dark ring");
+        }
+
+        private static Color Albedo(Transform t)
+        {
+            Assert.IsNotNull(t);
+            var rend = t.GetComponent<Renderer>();
+            Assert.IsNotNull(rend, t.name + " renderer");
+            var mat = rend.sharedMaterial;
+            Assert.IsNotNull(mat, t.name + " material");
+            if (mat.HasProperty("_BaseColor"))
+                return mat.GetColor("_BaseColor");
+            return mat.color;
         }
     }
 }
