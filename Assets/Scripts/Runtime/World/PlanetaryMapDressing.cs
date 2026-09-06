@@ -680,7 +680,7 @@ namespace SolarMajesty
             pond.transform.position = world;
 
             // Overlapping elliptical discs — soft shoreline, same language as lakes/rivers.
-            var world = Object.FindFirstObjectByType<PlanetaryWorldGen>();
+            var worldGen = Object.FindFirstObjectByType<PlanetaryWorldGen>();
             for (int i = 0; i < 3; i++)
             {
                 var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -699,7 +699,7 @@ namespace SolarMajesty
                     water,
                     body.WaterDeep,
                     Color.Lerp(body.WaterDeep, body.WaterShallow, 0.35f + i * 0.1f));
-                world?.RegisterExternalWater(water.transform, sx * 0.5f, sz * 0.5f);
+                worldGen?.RegisterExternalWater(water.transform, sx * 0.5f, sz * 0.5f);
             }
         }
 

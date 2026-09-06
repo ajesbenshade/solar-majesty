@@ -151,7 +151,7 @@ namespace SolarMajesty
         }
 
         /// <summary>Personal MET a specialist keeps from an extract (colony haul is separate).</summary>
-        public static int PersonalExtractMetals(ResourceNode node)
+        public static int PersonalExtractMetals(IHarvestable node)
         {
             int purse = OverseerRules.ExtractPurseMet;
             if (node != null && node.NodeType == ResourceNodeType.Metals)
