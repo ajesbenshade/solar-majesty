@@ -281,7 +281,7 @@ Parked pad ship is authored on `SM_Hero_LandingPad` (white/black stack). Launch 
 
 1. ~~Subdivide/bevel HAB-1 / LAB-1 / dome / CMD-1 / OPS-1 panel lines~~ (in — carbon rings, spine seams, civic wrap bands; box hulls bevelled)
 2. ~~Mate docking sockets to **connector** flush~~ (in — plus-arms end on the 2×2 cell face; module sleeves + orange collars sit on the footprint face; Commons cardinal stubs / Guild E/W ports reach that face)
-3. Human Mars Game-tab still vs `SM_MarsCampaign_VisualTarget.png`  
+3. Human Mars Game-tab still vs the spaced overseer look in `05_PHASE_4_VISUAL_TARGET.md` (retired packed PNG is not the bar)  
 
 ---
 
@@ -354,7 +354,7 @@ python Blender/scripts/sm_crop_turnaround.py --only SM_Unit_CourierBot
    - Remap materials to SM palette (do not ship Copilot baked colors)
    - Decimate if poly count is too high for RTS isometric view
 5. Re-export FBX (selection-only, `-Z` forward, `Y` up — same as blockout scripts).
-6. Unity: **Solar Majesty → Build Demo Content Assets**; verify silhouette at isometric zoom ~5.5 vs `SM_MarsCampaign_VisualTarget.png`.
+6. Unity: **Solar Majesty → Build Demo Content Assets**; verify silhouette at isometric campus zoom (play ortho 10) against the spaced overseer look.
 
 ### Target dimensions (units)
 

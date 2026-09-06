@@ -2441,14 +2441,14 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// CaptureStill / Phase 4: Commons→airlock→HAB plus a CanFit-packed pad / PWR-1 /
-        /// water + regolith yard, leftover Inn / wonder, extra HAB / solar / defense,
-        /// and interior HAB sockets filling still21 dirt. Does not stamp Phase 4 exit.
+        /// CaptureStill / Phase 4: Commons→airlock→HAB plus CanFit pad / PWR-1 /
+        /// water + regolith yard and leftover Inn / wonder when they fit.
+        /// Spaced campus — empty dirt stays. Does not stamp Phase 4 exit.
         /// </summary>
         public bool StampPhase4StillCampus() => StampPhase4DenseCampus();
 
         /// <summary>
-        /// Sibling of <see cref="StampPhase4StillCampus"/> — same hold + chain, then density yards.
+        /// Sibling of <see cref="StampPhase4StillCampus"/> — same hold + chain, then landmark yards.
         /// </summary>
         public bool StampPhase4DenseCampus()
         {
@@ -2458,7 +2458,6 @@ namespace SolarMajesty
             StampStillHubNeighbors();
             StampStillDensityPack();
             StampStillLeftoverPack();
-            StampStillDensityCues();
             LastStillStamp = StillCampusDensity.StampLog.FromPieces(Placer, _stillLeftoverNote);
             PrepareStillCaptureWorld();
             float aspect = StillCampusDensity.GameTabAspect;
@@ -2571,36 +2570,6 @@ namespace SolarMajesty
             NotifyCampusExpanded();
         }
 
-        /// <summary>
-        /// Extra solar bank, Defense Battery, then interior HAB sockets that fill
-        /// still21 empty dirt between pad and extractors (no new building types).
-        /// </summary>
-        private void StampStillDensityCues()
-        {
-            if (Placer == null || grid == null) return;
-            if (!StillCampusDensity.TryGetCommons(Placer, out var commons))
-                return;
-
-            var habFace = StillCampusDensity.InferHabFace(Placer, commons);
-            var bounds = StillBounds();
-
-            TryStampStillYard(
-                BuildingCategory.Power, StillCampusDensity.YardSize,
-                commons, habFace, bounds, preferDock: true);
-            TryStampStillYard(
-                BuildingCategory.Defense, StillCampusDensity.YardSize,
-                commons, habFace, bounds, preferDock: true);
-
-            int sockets = 0;
-            while (sockets < StillCampusDensity.MaxInteriorHabSockets &&
-                   StampStillHabSocket(commons, habFace, bounds, interiorOnly: true))
-                sockets++;
-            if (sockets == 0)
-                StampStillHabSocket(commons, habFace, bounds, interiorOnly: false);
-            Debug.Log($"[GameLoop] Stamp density habSockets={sockets}");
-            NotifyCampusExpanded();
-        }
-
         private StillCampusDensity.BoundsOk StillBounds()
         {
             return (origin, width, height) =>
@@ -2634,36 +2603,6 @@ namespace SolarMajesty
 
             bool ok = InstantStampStillBuilding(cat, origin);
             Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}={ok} origin={origin}");
-        }
-
-        private bool StampStillHabSocket(
-            BuildingPlacer.CampusPiece commons,
-            BuildingPlacer.Cardinal habFace,
-            StillCampusDensity.BoundsOk bounds,
-            bool interiorOnly)
-        {
-            Vector2Int origin;
-            bool found = interiorOnly
-                ? StillCampusDensity.TryInteriorSocket(Placer, commons, bounds, out origin)
-                : StillCampusDensity.TryNext(
-                    Placer, commons, habFace,
-                    StillCampusDensity.YardSize, StillCampusDensity.YardSize,
-                    bounds, out origin);
-            if (!found)
-            {
-                if (!interiorOnly)
-                    Debug.Log("[GameLoop] Stamp density habSocket=False (CanFit)");
-                return false;
-            }
-
-            Placer.MarkCampusRect(origin, StillCampusDensity.YardSize, StillCampusDensity.YardSize);
-            Placer.RegisterPiece(
-                origin, StillCampusDensity.YardSize, StillCampusDensity.YardSize, BuildingCategory.Habitat);
-            Vector3 world = FootprintWorldCenter(origin, StillCampusDensity.YardSize, StillCampusDensity.YardSize);
-            Transform root = buildingRoot != null ? buildingRoot : transform;
-            CampusDressing.SpawnStillHabSocket(world, root);
-            Debug.Log($"[GameLoop] Stamp density habSocket=True origin={origin} interior={interiorOnly}");
-            return true;
         }
 
         private static string DensityLabel(BuildingCategory cat)
@@ -3825,8 +3764,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// CaptureStill shutter: fit the stamped AABB to the Game-tab aspect so dense
-        /// yards fill the frame. Does not change play <see cref="ColonyLayout.CampusOrthoSize"/>.
+        /// CaptureStill shutter: play campus ortho so the still is a readable
+        /// spaced campus. Does not zoom-to-pack the AABB. Does not change play
+        /// <see cref="ColonyLayout.CampusOrthoSize"/>.
         /// </summary>
         public void SnapStillCampusCamera(float aspect = 0f)
         {

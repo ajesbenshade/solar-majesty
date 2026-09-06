@@ -513,7 +513,7 @@ namespace SolarMajesty.EditorTools
 
         /// <summary>
         /// Edit-mode Camera.Render of a packed Mars campus: Commons + airlock + HAB + pad + solar + extractors.
-        /// Capture density for the visual target. Does not flip spawnShowcaseColony.
+        /// Archive packed Camera.Render still only — not the Phase 4 EXIT look claim. Does not flip spawnShowcaseColony.
         /// Not a Game-tab HUD still. CLI: -executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CapturePackedMarsStill
         /// </summary>
         [MenuItem("Solar Majesty/Capture Packed Mars Campus Still")]

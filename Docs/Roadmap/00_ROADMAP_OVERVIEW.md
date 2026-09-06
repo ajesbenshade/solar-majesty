@@ -8,7 +8,7 @@
 - **Age of Empires 2** — Clear progression ages, economic clarity, expansion pressure, counter systems, readable feedback
 - **Alpha Centauri** — Planetary uniqueness, deep tech choices, terraforming fantasy, narrative weight, secret projects
 
-**Visual north star:** The Mars-campaign concept-art mockup in [Phase 4 – Visual Target](05_PHASE_4_VISUAL_TARGET.md). Current greybox is not that look. Mockup squad bars are HUD chrome only — never click-to-move.
+**Visual north star:** A spaced Majesty-2 overseer campus — see [Phase 4 – Visual Target](05_PHASE_4_VISUAL_TARGET.md). Empty dirt is OK. The packed `SM_MarsCampaign_VisualTarget.png` mockup is retired. Squad bars are HUD chrome only — never click-to-move.
 
 ---
 
@@ -20,7 +20,7 @@
 | **1** | Campaign-Quality Demo | 4–6 weeks | 45–90 min polished Earth → Luna → Mars experience that sells the fantasy. |
 | **2** | Systems Depth & Solar Expansion | 8–12 weeks | Full multi-body sandbox with real strategic depth. |
 | **3** | Content Explosion & Replayability | 10–14 weeks | Rich roster, doctrines, secret projects, high replay value. |
-| **4** | Visual Target (Art Production) | 8–12 weeks | Make the concept-art mockup the real in-game look (campus, units, HUD). |
+| **4** | Visual Target (Art Production) | 8–12 weeks | Spaced overseer campus look (campus, units, HUD). Packed mockup PNG retired. |
 | **5** | Production Values & Ship | 8–12 weeks | Animation, audio, accessibility, packaging, launch readiness. |
 
 ---
@@ -28,7 +28,7 @@
 ## Non-Negotiables (All Phases)
 - Never add direct unit control or click-to-move that bypasses `SpecialistBrain`.
 - Keep pure C# systems under `Assets/Scripts/Systems/`. Runtime only under `Runtime/`.
-- All new art must follow locked Grok Imagine style keywords (Phase 0), extended by the Phase 4 visual target sheet — not replaced by it.
+- All new art must follow locked Grok Imagine style keywords (Phase 0), extended by the Phase 4 spaced-overseer look — not replaced by it.
 - Data-driven via ScriptableObjects.
 - Namespace: `SolarMajesty`.
 
@@ -50,4 +50,4 @@
 ---
 
 *Last updated: 2026-08-15*  
-*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 visual target in progress (exit blocked: campus Game-tab still exists, not a mockup match). Phase 5 (ship) after Phase 4.*
+*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 visual target in progress (exit blocked: spaced overseer still still required; packed VisualTarget PNG retired). Phase 5 (ship) after Phase 4.*

@@ -43,7 +43,7 @@ When ready for the real Copilot 3D mesh:
 1. Upload `ConceptSheets/Copilot3D_Input/SM_Unit_CourierBot_ThreeQuarter.png` to [Copilot Labs → Copilot 3D](https://copilot.microsoft.com)
 3. Replace `Blender/imports/copilot3d/SM_Unit_CourierBot.glb` with the download
 4. Re-run import script; open `.blend` for material remap + silhouette polish
-5. Unity: **Solar Majesty → Build Demo Content Assets**; compare Play Mode at zoom ~5.5 vs `SM_MarsCampaign_VisualTarget.png`
+5. Unity: **Solar Majesty → Build Demo Content Assets**; compare Play Mode at campus ortho 10 against the spaced overseer look (`05_PHASE_4_VISUAL_TARGET.md`)
 
 ## Comparison: Copilot path vs `sm_unit_blockouts.py`
 

@@ -172,7 +172,7 @@ Sustain also needs Commons, housing ≥ goal, ≥1 Farm, ≥1 Mine, floors ICE �
 
 **Theme:** The red campus is the Compact’s stronghold, not a second Earth court. Commons is the Compact seat; Guild Hall is the Compact charter made stone; wonders are prestige, not Palace.  
 **Fauna:** Dust Wisp on Power (`ClearThreat`, F2). Dust Creeper on farms (`DefendArea`, F5). Ten dens.  
-**Look note:** Phase 4 EXIT is still art-blocked (airlock panels, pad / Starship / solar density). Narrative writes against the **campus that will be**, not the empty Sol 1 still.
+**Look note:** Phase 4 EXIT is still art-blocked (airlock panels; spaced overseer still). Narrative writes against the **campus that will be**, not the empty Sol 1 still. Do not chase retired VisualTarget packed density.
 
 ### Types in play
 

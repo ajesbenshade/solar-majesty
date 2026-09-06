@@ -9,8 +9,8 @@ namespace SolarMajesty.EditorTools
 {
     /// <summary>
     /// Enters play mode, lets the world settle, and writes a PNG. This is the evidence loop for the
-    /// Phase 4 exit review: every look milestone ends with a fresh still compared against the mockup,
-    /// captured the same way each time rather than by hand at an arbitrary camera.
+    /// Phase 4 exit review: every look milestone ends with a fresh spaced-overseer still
+    /// (empty dirt OK), captured the same way each time rather than by hand at an arbitrary camera.
     /// </summary>
     public static class CaptureStill
     {
@@ -178,7 +178,7 @@ namespace SolarMajesty.EditorTools
                             $"{loop.LastStillStamp} hold={StillCaptureHold.Active}");
                     }
                     else
-                        Debug.LogWarning("[Capture] GameLoop missing — cannot stamp dense campus");
+                        Debug.LogWarning("[Capture] GameLoop missing — cannot stamp still campus");
                     _state = 3;
                     _frames = 0;
                     return;

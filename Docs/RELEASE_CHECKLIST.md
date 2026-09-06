@@ -39,8 +39,8 @@ is in it being honest, not in it being all ticked.
 - [x] `SM_PlanetGround` slope-aware ground shader
 - [x] Displaced terrain with level campus pads ([TerrainMeshBuilder.cs](../Assets/Scripts/Runtime/World/TerrainMeshBuilder.cs))
 - [x] Scatter props share cached instanced materials instead of one material each
-- [ ] Fresh Mars still captured and compared against the mockup (run **Solar Majesty > Render > Capture Mars Still** in the editor; batch mode cannot drive play mode)
-- [ ] Campus density pass: pad, Starship, solar field, extractors, and units in one frame
+- [ ] Fresh Mars still captured as a spaced overseer campus (run **Solar Majesty > Render > Capture Mars Still** in the editor; batch mode cannot drive play mode). Do not score vs the retired VisualTarget PNG.
+- [ ] Campus landmark pass: pad, Starship, solar, extractors readable when placed — empty dirt OK, not fill-every-patch
 - [ ] LOD chains on the hero building meshes
 
 ## Motion
