@@ -9,7 +9,7 @@ namespace SolarMajesty
     /// history the player recognises.
     /// </summary>
     [Serializable]
-    public sealed class SpecialistRecord
+    public sealed class SpecialistServiceRecord
     {
         public string Name;
         public string Designation;
@@ -81,11 +81,11 @@ namespace SolarMajesty
             "Groundloop", "Hardline", "Sunward", "Deepcut"
         };
 
-        private static readonly List<SpecialistRecord> Roster = new List<SpecialistRecord>(24);
+        private static readonly List<SpecialistServiceRecord> Roster = new List<SpecialistServiceRecord>(24);
         private static readonly HashSet<string> UsedNames = new HashSet<string>();
         private static System.Random _rng = new System.Random(7717);
 
-        public static IReadOnlyList<SpecialistRecord> All => Roster;
+        public static IReadOnlyList<SpecialistServiceRecord> All => Roster;
 
         /// <summary>New run: forget everyone.</summary>
         public static void Reset(int seed = 7717)
@@ -95,9 +95,9 @@ namespace SolarMajesty
             _rng = new System.Random(seed);
         }
 
-        public static SpecialistRecord Create(SpecialistClass cls)
+        public static SpecialistServiceRecord Create(SpecialistClass cls)
         {
-            var record = new SpecialistRecord
+            var record = new SpecialistServiceRecord
             {
                 Name = NextName(),
                 Designation = Designations[_rng.Next(Designations.Length)],
@@ -129,9 +129,9 @@ namespace SolarMajesty
         }
 
         /// <summary>The unit with the strongest record; the one a player is most likely to miss.</summary>
-        public static SpecialistRecord MostDecorated()
+        public static SpecialistServiceRecord MostDecorated()
         {
-            SpecialistRecord best = null;
+            SpecialistServiceRecord best = null;
             int bestWeight = -1;
             for (int i = 0; i < Roster.Count; i++)
             {
