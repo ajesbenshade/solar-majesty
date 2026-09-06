@@ -8,9 +8,11 @@ namespace SolarMajesty
     /// around Commons→airlock→HAB, then leftover Workshop / Inn / wonder when they
     /// <see cref="BuildingPlacer.CanFitRect"/>. Forward yards use CanFit only —
     /// ExtraPlacementRule would send pad/solar/extract to Campus B (~30 m) or demand
-    /// an airlock dock, both of which miss play ortho 10. still19 leftover=skip-frame
-    /// left empty-dirt framing; leftovers now stamp when they CanFit and the still
-    /// camera fits the packed AABB (play snap stays <see cref="PlayCampusOrthoSize"/>).
+    /// an airlock dock, both of which miss play ortho 10. still20 leftover=workshop
+    /// left Inn / wonder / extraSolar / defense off the pack (second hangar ate the
+    /// sockets). Leftovers now keep placing Village Inn + a wonder when they CanFit;
+    /// cues stamp extra solar + Defense Battery in packed pockets. Still camera fits
+    /// the packed AABB (play snap stays <see cref="PlayCampusOrthoSize"/>).
     /// Does not flip spawnShowcaseColony. Does not reference Runtime ColonyLayout.
     /// </summary>
     public static class StillCampusDensity
@@ -18,8 +20,12 @@ namespace SolarMajesty
         public const int PadSize = 6;
         public const int YardSize = 4;
 
-        /// <summary>Keep yards inside the campus ortho: ~9 cells × 1.5 m ≈ 13.5 m from Commons.</summary>
-        public const float MaxCenterSeparationCells = 9f;
+        /// <summary>
+        /// Keep yards inside the campus ortho. still20 leftover Inn / wonder /
+        /// extraSolar / Defense sit ~11 cells out after extra HAB + pad; 9
+        /// dropped those sockets. Play snap stays <see cref="PlayCampusOrthoSize"/>.
+        /// </summary>
+        public const float MaxCenterSeparationCells = 12f;
 
         /// <summary>
         /// CaptureStill Game-tab is short-wide (~2.4). Play snap stays
@@ -408,8 +414,10 @@ namespace SolarMajesty
             height = Mathf.Max(1, height);
 
             var faces = PreferFaces(habFace);
-            var candidates = new List<Vector2Int>(32);
+            var candidates = new List<Vector2Int>(96);
             CollectCandidates(commons, width, height, faces, candidates);
+            CollectAroundPieces(placer, width, height, candidates);
+            CollectSpiral(commons, width, height, candidates);
 
             var seen = new HashSet<long>();
             for (int i = 0; i < candidates.Count; i++)
@@ -479,7 +487,9 @@ namespace SolarMajesty
         /// Workshop hangar / Inn / one 6×6 wonder when they CanFit. Workshop and
         /// wonder prefer a free airlock face so the hub reads as a multi-face joint.
         /// Occupies like <see cref="Plan"/> so later leftover slots do not collide.
-        /// still19 skip-frame is gone — empty-dirt south of Commons is the leftover zone.
+        /// still20 leftover=workshop: a second hangar must not eat the Inn / wonder
+        /// sockets — skip workshop when one is already registered, then still place
+        /// Village Inn and a wonder independently.
         /// </summary>
         public static LeftoverPlan PlanLeftovers(
             BuildingPlacer placer,
@@ -496,15 +506,9 @@ namespace SolarMajesty
 
             bool canFitYard = CanFitNear(placer, commons, habFace, YardSize, bounds);
             bool canFitWonder = CanFitNear(placer, commons, habFace, PadSize, bounds);
+            leftovers.Workshop = HasWorkshop(placer);
 
-            if (TryDockOrNext(placer, commons, habFace, YardSize, YardSize, bounds, out leftovers.WorkshopOrigin))
-            {
-                placer.MarkCampusRect(leftovers.WorkshopOrigin, YardSize, YardSize);
-                placer.RegisterPiece(
-                    leftovers.WorkshopOrigin, YardSize, YardSize, BuildingCategory.EngineerWorkshop);
-                leftovers.Workshop = true;
-            }
-
+            // Inn + wonder first — still20 leftover=workshop ate those sockets.
             if (TryNext(placer, commons, habFace, YardSize, YardSize, bounds, out leftovers.InnOrigin))
             {
                 placer.MarkCampusRect(leftovers.InnOrigin, YardSize, YardSize);
@@ -520,7 +524,20 @@ namespace SolarMajesty
                 leftovers.Wonder = true;
             }
 
-            leftovers.SkipReason = leftovers.PlacedCount > 0
+            // Extra HAB packs are already tight — a leftover hangar yard would
+            // steal extraSolar / Defense Battery (still20). Dock-or-next only
+            // when the first HAB chain is the only housing.
+            if (!leftovers.Workshop &&
+                CountCategory(placer, BuildingCategory.Habitat) < 2 &&
+                TryDockOrNext(placer, commons, habFace, YardSize, YardSize, bounds, out leftovers.WorkshopOrigin))
+            {
+                placer.MarkCampusRect(leftovers.WorkshopOrigin, YardSize, YardSize);
+                placer.RegisterPiece(
+                    leftovers.WorkshopOrigin, YardSize, YardSize, BuildingCategory.EngineerWorkshop);
+                leftovers.Workshop = true;
+            }
+
+            leftovers.SkipReason = leftovers.PlacedCount > 0 || leftovers.Workshop
                 ? StampLog.LeftoverLabel(leftovers.Workshop, leftovers.Inn, leftovers.Wonder)
                 : (canFitYard || canFitWonder) ? "CanFit" : "none";
             return leftovers;
@@ -540,7 +557,10 @@ namespace SolarMajesty
             var cues = new CuePlan();
             if (placer == null) return cues;
 
-            if (TryExtraHabChain(placer, commons, habFace, bounds, out Vector2Int airlock, out Vector2Int hab))
+            // still20 extraHab=True already filled south — a third HAB chain
+            // would steal extraSolar / Defense Battery sockets.
+            if (CountCategory(placer, BuildingCategory.Habitat) < 2 &&
+                TryExtraHabChain(placer, commons, habFace, bounds, out Vector2Int airlock, out Vector2Int hab))
             {
                 placer.MarkCampusRect(airlock, 2, 2);
                 placer.RegisterPiece(airlock, 2, 2, BuildingCategory.Utility);
@@ -754,9 +774,74 @@ namespace SolarMajesty
                 dest.Add(FlushOrigin(commons, BuildingPlacer.Cardinal.South, width, height, gap));
             }
 
-            int[] slides = { 1, -1, 2, -2 };
+            int[] slides = { 1, -1, 2, -2, 3, -3 };
             AddSlides(commons, width, height, faces, dest, slides, skipSouth: true);
             AddSlides(commons, width, height, faces, dest, slides, skipSouth: false, onlySouth: true);
+        }
+
+        /// <summary>
+        /// Pockets flush to already-stamped yards (HAB / pad / workshop) so leftover
+        /// Inn / wonder / extra solar / Defense stay inside the packed AABB.
+        /// Appended after Commons-first candidates so <see cref="Plan"/> origins stay put.
+        /// </summary>
+        private static void CollectAroundPieces(
+            BuildingPlacer placer, int width, int height, List<Vector2Int> dest)
+        {
+            if (placer?.Pieces == null || dest == null) return;
+            var faces = new[]
+            {
+                BuildingPlacer.Cardinal.East,
+                BuildingPlacer.Cardinal.West,
+                BuildingPlacer.Cardinal.North,
+                BuildingPlacer.Cardinal.South
+            };
+            var pieces = placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                var piece = pieces[i];
+                CollectCandidates(piece, width, height, faces, dest);
+            }
+        }
+
+        /// <summary>Last-resort packed ring so a CanFit leftover is not missed.</summary>
+        private static void CollectSpiral(
+            BuildingPlacer.CampusPiece commons, int width, int height, List<Vector2Int> dest)
+        {
+            int ox = commons.Origin.x + CenterOffset(commons.Width, width);
+            int oy = commons.Origin.y + CenterOffset(commons.Height, height);
+            for (int r = 3; r <= 8; r++)
+            {
+                for (int dx = -r; dx <= r; dx++)
+                {
+                    dest.Add(new Vector2Int(ox + dx, oy + r));
+                    dest.Add(new Vector2Int(ox + dx, oy - r));
+                }
+
+                for (int dy = -r + 1; dy <= r - 1; dy++)
+                {
+                    dest.Add(new Vector2Int(ox + r, oy + dy));
+                    dest.Add(new Vector2Int(ox - r, oy + dy));
+                }
+            }
+        }
+
+        public static bool HasWorkshop(BuildingPlacer placer) =>
+            CountCategory(placer, BuildingCategory.EngineerWorkshop) > 0 ||
+            CountCategory(placer, BuildingCategory.ScoutWorkshop) > 0 ||
+            CountCategory(placer, BuildingCategory.DefenseWorkshop) > 0;
+
+        public static int CountCategory(BuildingPlacer placer, BuildingCategory cat)
+        {
+            if (placer?.Pieces == null) return 0;
+            int n = 0;
+            var pieces = placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                if (pieces[i].Category == cat)
+                    n++;
+            }
+
+            return n;
         }
 
         private static void AddFlushFaces(

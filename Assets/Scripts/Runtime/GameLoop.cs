@@ -2499,9 +2499,16 @@ namespace SolarMajesty
                 Debug.Log($"[GameLoop] Stamp extra HAB chain airlock={aOk} hab={hOk} {airlock}->{hab}");
             }
 
-            TryStampStillYard(
-                BuildingCategory.EngineerWorkshop, StillCampusDensity.YardSize,
-                commons, habFace, bounds, preferDock: true);
+            // Only a real airlock dock — TryDockOrNext would park the hangar west
+            // and steal the pad / 6×6 wonder sockets (still20 leftover=workshop).
+            if (StillCampusDensity.TryDockOnAirlock(
+                    Placer, commons, StillCampusDensity.YardSize, StillCampusDensity.YardSize,
+                    bounds, out Vector2Int shop))
+            {
+                bool ok = InstantStampStillBuilding(BuildingCategory.EngineerWorkshop, shop);
+                Debug.Log($"[GameLoop] Stamp density workshop={ok} origin={shop} (dock)");
+            }
+
             NotifyCampusExpanded();
         }
 
@@ -2529,8 +2536,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Workshop (if the hub pass missed) / Inn / one wonder when they CanFit.
-        /// still19 skip-frame left these off the still — they now fill empty dirt.
+        /// Village Inn + one wonder when they CanFit. Workshop only if the hub pass
+        /// missed — still20 leftover=workshop ate the Inn / wonder sockets by
+        /// stamping a second hangar first.
         /// </summary>
         private void StampStillLeftoverPack()
         {
@@ -2542,13 +2550,17 @@ namespace SolarMajesty
             var habFace = StillCampusDensity.InferHabFace(Placer, commons);
             var bounds = StillBounds();
 
-            TryStampStillYard(
-                BuildingCategory.EngineerWorkshop, StillCampusDensity.YardSize,
-                commons, habFace, bounds, preferDock: true);
             TryStampStillYard(BuildingCategory.Inn, StillCampusDensity.YardSize, commons, habFace, bounds);
             TryStampStillYard(
                 BuildingCategory.AegisSpire, StillCampusDensity.PadSize,
                 commons, habFace, bounds, preferDock: true);
+            if (!StillCampusDensity.HasWorkshop(Placer) &&
+                StillCampusDensity.CountCategory(Placer, BuildingCategory.Habitat) < 2)
+            {
+                TryStampStillYard(
+                    BuildingCategory.EngineerWorkshop, StillCampusDensity.YardSize,
+                    commons, habFace, bounds, preferDock: true);
+            }
 
             var log = StillCampusDensity.StampLog.FromPieces(Placer);
             _stillLeftoverNote = StillCampusDensity.StampLog.LeftoverLabel(
@@ -2577,6 +2589,7 @@ namespace SolarMajesty
             TryStampStillYard(
                 BuildingCategory.Defense, StillCampusDensity.YardSize,
                 commons, habFace, bounds, preferDock: true);
+            StampStillHabSocket(commons, habFace, bounds);
             StampStillHabSocket(commons, habFace, bounds);
             NotifyCampusExpanded();
         }

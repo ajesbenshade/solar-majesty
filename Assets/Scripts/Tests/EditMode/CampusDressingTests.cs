@@ -443,6 +443,57 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void DensePack_Leftovers_AfterWorkshop_StillPlaceInnAndWonder()
+        {
+            var placer = StampEastChain(out var commons);
+            StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
+            Assert.IsTrue(StillCampusDensity.TryDockOrNext(
+                placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out Vector2Int shop));
+            placer.MarkCampusRect(shop, 4, 4);
+            placer.RegisterPiece(shop, 4, 4, BuildingCategory.EngineerWorkshop);
+
+            var leftovers = StillCampusDensity.PlanLeftovers(
+                placer, commons, BuildingPlacer.Cardinal.East);
+            Assert.IsTrue(leftovers.Workshop, "existing hangar stays on the leftover label");
+            Assert.IsTrue(leftovers.Inn, "still20 must not stop after workshop — Inn when CanFit");
+            Assert.IsTrue(leftovers.Wonder, "still20 must not stop after workshop — wonder when CanFit");
+            Assert.AreEqual("workshop+inn+wonder", leftovers.SkipReason);
+            Assert.AreNotEqual(shop, leftovers.InnOrigin);
+            Assert.IsFalse(
+                RectsOverlap(leftovers.InnOrigin, 4, 4, leftovers.WonderOrigin, 6, 6));
+        }
+
+        [Test]
+        public void DensePack_Still20Order_PlacesInnWonderExtraSolarDefense()
+        {
+            var placer = StampStill20Order(out var commons, out var leftovers, out var cues);
+
+            Assert.IsTrue(leftovers.Inn, "Village Inn when CanFit after extra HAB + yards");
+            Assert.IsTrue(leftovers.Wonder, "wonder when CanFit after extra HAB + yards");
+            Assert.AreNotEqual("skip-frame", leftovers.SkipReason);
+            Assert.AreNotEqual("workshop", leftovers.SkipReason,
+                "still20 leftover=workshop — Inn + wonder must still stamp");
+            Assert.IsTrue(leftovers.SkipReason.IndexOf("inn") >= 0);
+            Assert.IsTrue(leftovers.SkipReason.IndexOf("wonder") >= 0);
+
+            Assert.IsTrue(cues.ExtraSolar, "second solar bank when it CanFit");
+            Assert.IsTrue(cues.Defense, "Defense Battery when it CanFit");
+            Assert.GreaterOrEqual(StillCampusDensity.CountCategory(placer, BuildingCategory.Power), 2);
+            Assert.GreaterOrEqual(StillCampusDensity.CountCategory(placer, BuildingCategory.Defense), 1);
+
+            var log = StillCampusDensity.StampLog.FromPieces(placer, leftovers.SkipReason);
+            Assert.IsTrue(log.Inn && log.Wonder && log.ExtraSolar && log.Defense);
+            Assert.IsTrue(log.ExtraHab);
+
+            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
+            float ortho = StillCampusDensity.FitStillOrtho(
+                min, max, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+            Assert.LessOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize);
+            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
+            Assert.Greater(ortho, 8.2f, "packed leftover+cue campus fills the still frame");
+        }
+
+        [Test]
         public void DensePack_WorkshopPrefersAirlockDock_BeforeYardsFillIt()
         {
             var placer = StampEastChain(out var commons);
@@ -539,6 +590,37 @@ namespace SolarMajesty.Tests
             placer.RegisterPiece(airlock, 2, 2, BuildingCategory.Utility);
             placer.MarkCampusRect(hab, 4, 4);
             placer.RegisterPiece(hab, 4, 4, BuildingCategory.Habitat);
+            return placer;
+        }
+
+        /// <summary>
+        /// still20 shutter order: extra HAB + workshop, then pad/yards, leftovers, cues.
+        /// </summary>
+        private static BuildingPlacer StampStill20Order(
+            out BuildingPlacer.CampusPiece commons,
+            out StillCampusDensity.LeftoverPlan leftovers,
+            out StillCampusDensity.CuePlan cues)
+        {
+            var placer = StampEastChain(out commons);
+            Assert.IsTrue(StillCampusDensity.TryExtraHabChain(
+                placer, commons, BuildingPlacer.Cardinal.East, null,
+                out Vector2Int extraAirlock, out Vector2Int extraHab));
+            placer.MarkCampusRect(extraAirlock, 2, 2);
+            placer.RegisterPiece(extraAirlock, 2, 2, BuildingCategory.Utility);
+            placer.MarkCampusRect(extraHab, 4, 4);
+            placer.RegisterPiece(extraHab, 4, 4, BuildingCategory.Habitat);
+
+            if (StillCampusDensity.TryDockOnAirlock(
+                    placer, commons, 4, 4, null, out Vector2Int shop))
+            {
+                placer.MarkCampusRect(shop, 4, 4);
+                placer.RegisterPiece(shop, 4, 4, BuildingCategory.EngineerWorkshop);
+            }
+
+            StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
+            leftovers = StillCampusDensity.PlanLeftovers(
+                placer, commons, BuildingPlacer.Cardinal.East);
+            cues = StillCampusDensity.PlanCues(placer, commons, BuildingPlacer.Cardinal.East);
             return placer;
         }
 
