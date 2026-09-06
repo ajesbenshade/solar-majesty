@@ -143,6 +143,14 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - Play `CampusOrthoSize` stays 10. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite
 - **Reshoot still21+ after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
 
+**Play Mode fixes after still21 (code only — do not stamp exit)**
+- still21 shuttered `leftover=inn+wonder extraHab=True extraSolar=True defense=True hold=True` Mars Scale 1x — density kit gate OK; GD rejected empty-dirt framing vs the visual target
+- Interior HAB sockets fill empty 4×4 cells **inside** the packed AABB (between pad and extractors). Does not invent new building types. Leftover inn+wonder + extraSolar + Defense stamps stay
+- `RefreshTubes` still enables docked Lego arms only; `CampusDress_TubeRuns` adds white pressurized runs between cardinal neighbors that are **not** airlock-linked (no `CampusTubeRoot` in the HAB gap)
+- Still camera insets the packed AABB one cell and uses a tighter ortho pad. Play `CampusOrthoSize` stays 10
+- `StillCaptureHold` narrative/cut suppress from #19 stays. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite
+- **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
+
 ---
 
 ## Match vs `SM_MarsCampaign_VisualTarget.png`
@@ -181,7 +189,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Campus Game-tab still vs mockup** — latest archived Game-tab is still6 (empty Sol 1). still20 signed leftover=workshop + extraHab plus W2 cut / narrative text. This pass is **code only**: leftovers keep Inn + wonder when they CanFit; extra solar + Defense Battery pack remaining sockets; shutter hold (SessionState re-arm) suppresses cut/narrative modals. Play snap stays 10. **Reshoot still21+ after merge. Do not stamp exit.**
+- **Campus Game-tab still vs mockup** — latest archived Game-tab is still6 (empty Sol 1). still21 signed leftover=inn+wonder extraHab/solar/defense (density kit OK) but GD rejected empty-dirt framing vs the visual target. This pass is **code only**: interior HAB sockets + tube-run dressing pack the dirt; still camera insets the AABB (play snap stays 10). `StillCaptureHold` stays. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
 - Mockup **density**: pad + Starship, solar field, extractors, leftover Workshop / Inn / wonder, extra HAB sockets, junction turrets. Units remain optional (do not invent new unit systems). Fidelity vs the visual target still needs a GD still.
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; tubes are dressing)

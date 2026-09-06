@@ -2442,8 +2442,8 @@ namespace SolarMajesty
 
         /// <summary>
         /// CaptureStill / Phase 4: Commons→airlock→HAB plus a CanFit-packed pad / PWR-1 /
-        /// water + regolith yard, leftover Workshop / Inn / wonder, and extra HAB / solar /
-        /// defense cues. Does not stamp Phase 4 exit.
+        /// water + regolith yard, leftover Inn / wonder, extra HAB / solar / defense,
+        /// and interior HAB sockets filling still21 dirt. Does not stamp Phase 4 exit.
         /// </summary>
         public bool StampPhase4StillCampus() => StampPhase4DenseCampus();
 
@@ -2572,7 +2572,8 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Extra solar bank, Defense Battery, under-construction HAB socket.
+        /// Extra solar bank, Defense Battery, then interior HAB sockets that fill
+        /// still21 empty dirt between pad and extractors (no new building types).
         /// </summary>
         private void StampStillDensityCues()
         {
@@ -2589,8 +2590,14 @@ namespace SolarMajesty
             TryStampStillYard(
                 BuildingCategory.Defense, StillCampusDensity.YardSize,
                 commons, habFace, bounds, preferDock: true);
-            StampStillHabSocket(commons, habFace, bounds);
-            StampStillHabSocket(commons, habFace, bounds);
+
+            int sockets = 0;
+            while (sockets < StillCampusDensity.MaxInteriorHabSockets &&
+                   StampStillHabSocket(commons, habFace, bounds, interiorOnly: true))
+                sockets++;
+            if (sockets == 0)
+                StampStillHabSocket(commons, habFace, bounds, interiorOnly: false);
+            Debug.Log($"[GameLoop] Stamp density habSockets={sockets}");
             NotifyCampusExpanded();
         }
 
@@ -2629,18 +2636,24 @@ namespace SolarMajesty
             Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}={ok} origin={origin}");
         }
 
-        private void StampStillHabSocket(
+        private bool StampStillHabSocket(
             BuildingPlacer.CampusPiece commons,
             BuildingPlacer.Cardinal habFace,
-            StillCampusDensity.BoundsOk bounds)
+            StillCampusDensity.BoundsOk bounds,
+            bool interiorOnly)
         {
-            if (!StillCampusDensity.TryNext(
+            Vector2Int origin;
+            bool found = interiorOnly
+                ? StillCampusDensity.TryInteriorSocket(Placer, commons, bounds, out origin)
+                : StillCampusDensity.TryNext(
                     Placer, commons, habFace,
                     StillCampusDensity.YardSize, StillCampusDensity.YardSize,
-                    bounds, out Vector2Int origin))
+                    bounds, out origin);
+            if (!found)
             {
-                Debug.Log("[GameLoop] Stamp density habSocket=False (CanFit)");
-                return;
+                if (!interiorOnly)
+                    Debug.Log("[GameLoop] Stamp density habSocket=False (CanFit)");
+                return false;
             }
 
             Placer.MarkCampusRect(origin, StillCampusDensity.YardSize, StillCampusDensity.YardSize);
@@ -2649,7 +2662,8 @@ namespace SolarMajesty
             Vector3 world = FootprintWorldCenter(origin, StillCampusDensity.YardSize, StillCampusDensity.YardSize);
             Transform root = buildingRoot != null ? buildingRoot : transform;
             CampusDressing.SpawnStillHabSocket(world, root);
-            Debug.Log($"[GameLoop] Stamp density habSocket=True origin={origin}");
+            Debug.Log($"[GameLoop] Stamp density habSocket=True origin={origin} interior={interiorOnly}");
+            return true;
         }
 
         private static string DensityLabel(BuildingCategory cat)
@@ -3826,7 +3840,7 @@ namespace SolarMajesty
             float ortho = StillCampusDensity.FitStillOrtho(Placer, cell, aspect);
             LastStillOrtho = ortho;
 
-            if (!StillCampusDensity.TryCampusAabb(Placer, out Vector2Int min, out Vector2Int max))
+            if (!StillCampusDensity.TryStillFrameAabb(Placer, out Vector2Int min, out Vector2Int max))
                 return;
 
             Vector3 a = FootprintWorldCenter(min, 1, 1);
