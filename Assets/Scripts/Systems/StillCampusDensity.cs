@@ -21,6 +21,18 @@ namespace SolarMajesty
         public const float MaxCenterSeparationCells = 9f;
 
         /// <summary>
+        /// Must match IsoGrid / Runtime ColonyLayout.DefaultCellSize (1.5).
+        /// Local copy — Systems cannot see Runtime ColonyLayout (circular asmdef).
+        /// </summary>
+        public const float DefaultCellSize = 1.5f;
+
+        /// <summary>
+        /// Play campus ortho fallback. Must match ColonyLayout.CampusOrthoSize (10).
+        /// Still snap clamps to <see cref="StillMaxOrtho"/>, not this.
+        /// </summary>
+        public const float PlayCampusOrthoSize = 10f;
+
+        /// <summary>
         /// CaptureStill Game-tab is short-wide (~2.4). Play snap stays
         /// <see cref="ColonyLayout.CampusOrthoSize"/> (10) so the player can place yards.
         /// </summary>
@@ -312,7 +324,7 @@ namespace SolarMajesty
             BuildingPlacer.CampusPiece commons,
             BuildingPlacer.Cardinal habFace,
             BoundsOk bounds = null,
-            float cellSize = ColonyLayout.DefaultCellSize,
+            float cellSize = DefaultCellSize,
             float aspect = GameTabAspect)
         {
             var leftovers = new LeftoverPlan { SkipReason = "none" };
@@ -382,7 +394,7 @@ namespace SolarMajesty
         public static float FitStillOrtho(BuildingPlacer placer, float cellSize, float aspect)
         {
             if (!TryCampusAabb(placer, out Vector2Int min, out Vector2Int max))
-                return ColonyLayout.CampusOrthoSize;
+                return PlayCampusOrthoSize;
             return FitStillOrtho(min, max, cellSize, aspect);
         }
 
