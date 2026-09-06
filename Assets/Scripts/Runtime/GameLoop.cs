@@ -561,7 +561,7 @@ namespace SolarMajesty
                 PlanetaryMapDressing.ApplyCameraVoidFill(mainCamera, _body, RenderSettings.skybox != null);
             KingdomLife.Dress(transform, emptyStart: StartsEmpty);
             CampusDressing.Reset();
-            CampusDressing.RefreshTubes(Placer, grid, buildingRoot != null ? buildingRoot : transform);
+            CampusDressing.RefreshTubes(Placer, grid, transform);
             EnsureHud();
             TryInit("alerts", () => OverseerAlertView.Ensure(this));
             TryInit("map overlay", () => MapOverlay.Ensure(this));
@@ -1213,7 +1213,7 @@ namespace SolarMajesty
             CampusNavMesh.AddObstacle(go);
             Village?.RegisterPlacedBuilding(data, data.category, go, world);
             CampusDressing.DressPlaced(data, go, _body);
-            CampusDressing.RefreshTubes(Placer, grid, root);
+            CampusDressing.RefreshTubes(Placer, grid, transform);
             HideDropClaimIfSettled();
             if (_campusNav != null)
                 NotifyCampusExpanded();
@@ -2382,7 +2382,8 @@ namespace SolarMajesty
 
         /// <summary>
         /// CaptureStill / Phase 4: Commons→airlock→HAB plus a CanFit-packed pad / PWR-1 /
-        /// water + regolith yard for a denser Game-tab still. Does not stamp Phase 4 exit.
+        /// water + regolith yard, leftover Workshop / Inn / wonder, and extra HAB / solar /
+        /// defense cues. Does not stamp Phase 4 exit.
         /// </summary>
         public bool StampPhase4StillCampus() => StampPhase4DenseCampus();
 
@@ -2394,8 +2395,10 @@ namespace SolarMajesty
             StillCaptureHold.Arm();
             PlaceDropCommons();
             bool chain = Village != null && Village.StampStillCampusChain();
+            StampStillHubNeighbors();
             StampStillDensityPack();
             StampStillLeftoverPack();
+            StampStillDensityCues();
             LastStillStamp = StillCampusDensity.StampLog.FromPieces(Placer, _stillLeftoverNote);
             PrepareStillCaptureWorld();
             float aspect = StillCampusDensity.GameTabAspect;
@@ -2417,6 +2420,32 @@ namespace SolarMajesty
         }
 
         /// <summary>
+        /// Extra HAB chain + workshop docked on a free airlock face so the hub
+        /// reads as a multi-face joint before yards fill those sockets.
+        /// </summary>
+        private void StampStillHubNeighbors()
+        {
+            if (Placer == null || grid == null) return;
+            if (!StillCampusDensity.TryGetCommons(Placer, out var commons))
+                return;
+
+            var habFace = StillCampusDensity.InferHabFace(Placer, commons);
+            var bounds = StillBounds();
+
+            if (StillCampusDensity.TryExtraHabChain(Placer, commons, habFace, bounds, out Vector2Int airlock, out Vector2Int hab))
+            {
+                bool aOk = InstantStampStillBuilding(BuildingCategory.Utility, airlock);
+                bool hOk = InstantStampStillBuilding(BuildingCategory.Habitat, hab);
+                Debug.Log($"[GameLoop] Stamp extra HAB chain airlock={aOk} hab={hOk} {airlock}->{hab}");
+            }
+
+            TryStampStillYard(
+                BuildingCategory.EngineerWorkshop, StillCampusDensity.YardSize,
+                commons, habFace, bounds, preferDock: true);
+            NotifyCampusExpanded();
+        }
+
+        /// <summary>
         /// Pad + Starship, PWR-1/solar, water farm, regolith camp. CanFit only — ExtraPlacementRule
         /// would park forward yards on Campus B or demand extra airlocks.
         /// </summary>
@@ -2430,20 +2459,18 @@ namespace SolarMajesty
             }
 
             var habFace = StillCampusDensity.InferHabFace(Placer, commons);
-            bool Bounds(Vector2Int origin, int width, int height) =>
-                grid.InBounds(origin) &&
-                grid.InBounds(new Vector2Int(origin.x + width - 1, origin.y + height - 1));
+            var bounds = StillBounds();
 
-            TryStampStillYard(BuildingCategory.LandingPad, StillCampusDensity.PadSize, commons, habFace, Bounds);
-            TryStampStillYard(BuildingCategory.Power, StillCampusDensity.YardSize, commons, habFace, Bounds);
-            TryStampStillYard(BuildingCategory.Farm, StillCampusDensity.YardSize, commons, habFace, Bounds);
-            TryStampStillYard(BuildingCategory.RegolithCamp, StillCampusDensity.YardSize, commons, habFace, Bounds);
+            TryStampStillYard(BuildingCategory.LandingPad, StillCampusDensity.PadSize, commons, habFace, bounds);
+            TryStampStillYard(BuildingCategory.Power, StillCampusDensity.YardSize, commons, habFace, bounds);
+            TryStampStillYard(BuildingCategory.Farm, StillCampusDensity.YardSize, commons, habFace, bounds);
+            TryStampStillYard(BuildingCategory.RegolithCamp, StillCampusDensity.YardSize, commons, habFace, bounds);
             NotifyCampusExpanded();
         }
 
         /// <summary>
-        /// Workshop / Inn / one wonder only when they stay inside the tight still frame.
-        /// still18-class packs skip them — south leftovers grow the AABB back toward ortho 10.
+        /// Workshop (if the hub pass missed) / Inn / one wonder when they CanFit.
+        /// still19 skip-frame left these off the still — they now fill empty dirt.
         /// </summary>
         private void StampStillLeftoverPack()
         {
@@ -2453,27 +2480,52 @@ namespace SolarMajesty
                 return;
 
             var habFace = StillCampusDensity.InferHabFace(Placer, commons);
-            bool Bounds(Vector2Int origin, int width, int height) =>
+            var bounds = StillBounds();
+
+            TryStampStillYard(
+                BuildingCategory.EngineerWorkshop, StillCampusDensity.YardSize,
+                commons, habFace, bounds, preferDock: true);
+            TryStampStillYard(BuildingCategory.Inn, StillCampusDensity.YardSize, commons, habFace, bounds);
+            TryStampStillYard(
+                BuildingCategory.AegisSpire, StillCampusDensity.PadSize,
+                commons, habFace, bounds, preferDock: true);
+
+            var log = StillCampusDensity.StampLog.FromPieces(Placer);
+            _stillLeftoverNote = StillCampusDensity.StampLog.LeftoverLabel(
+                log.Workshop, log.Inn, log.Wonder);
+            Debug.Log(
+                $"[GameLoop] Stamp leftover workshop={log.Workshop} inn={log.Inn} " +
+                $"wonder={log.Wonder} leftover={_stillLeftoverNote}");
+            NotifyCampusExpanded();
+        }
+
+        /// <summary>
+        /// Extra solar bank, Defense Battery, under-construction HAB socket.
+        /// </summary>
+        private void StampStillDensityCues()
+        {
+            if (Placer == null || grid == null) return;
+            if (!StillCampusDensity.TryGetCommons(Placer, out var commons))
+                return;
+
+            var habFace = StillCampusDensity.InferHabFace(Placer, commons);
+            var bounds = StillBounds();
+
+            TryStampStillYard(
+                BuildingCategory.Power, StillCampusDensity.YardSize,
+                commons, habFace, bounds, preferDock: true);
+            TryStampStillYard(
+                BuildingCategory.Defense, StillCampusDensity.YardSize,
+                commons, habFace, bounds, preferDock: true);
+            StampStillHabSocket(commons, habFace, bounds);
+            NotifyCampusExpanded();
+        }
+
+        private StillCampusDensity.BoundsOk StillBounds()
+        {
+            return (origin, width, height) =>
                 grid.InBounds(origin) &&
                 grid.InBounds(new Vector2Int(origin.x + width - 1, origin.y + height - 1));
-
-            float cell = grid.CellSize > 0.01f ? grid.CellSize : ColonyLayout.DefaultCellSize;
-            var leftovers = StillCampusDensity.PlanLeftovers(
-                Placer, commons, habFace, Bounds, cell, StillCampusDensity.GameTabAspect);
-            _stillLeftoverNote = leftovers.SkipReason ?? "none";
-
-            if (leftovers.Workshop)
-                TryStampStillYard(BuildingCategory.EngineerWorkshop, StillCampusDensity.YardSize, commons, habFace, Bounds);
-            if (leftovers.Inn)
-                TryStampStillYard(BuildingCategory.Inn, StillCampusDensity.YardSize, commons, habFace, Bounds);
-            if (leftovers.Wonder)
-                TryStampStillYard(BuildingCategory.AegisSpire, StillCampusDensity.PadSize, commons, habFace, Bounds);
-
-            Debug.Log(
-                $"[GameLoop] Stamp leftover workshop={leftovers.Workshop} inn={leftovers.Inn} " +
-                $"wonder={leftovers.Wonder} skip={_stillLeftoverNote}");
-            if (leftovers.PlacedCount > 0)
-                NotifyCampusExpanded();
         }
 
         private void TryStampStillYard(
@@ -2481,7 +2533,8 @@ namespace SolarMajesty
             int side,
             BuildingPlacer.CampusPiece commons,
             BuildingPlacer.Cardinal habFace,
-            StillCampusDensity.BoundsOk bounds)
+            StillCampusDensity.BoundsOk bounds,
+            bool preferDock = false)
         {
             if (DataForCategory(cat) == null)
             {
@@ -2489,7 +2542,11 @@ namespace SolarMajesty
                 return;
             }
 
-            if (!StillCampusDensity.TryNext(Placer, commons, habFace, side, side, bounds, out Vector2Int origin))
+            Vector2Int origin;
+            bool found = preferDock
+                ? StillCampusDensity.TryDockOrNext(Placer, commons, habFace, side, side, bounds, out origin)
+                : StillCampusDensity.TryNext(Placer, commons, habFace, side, side, bounds, out origin);
+            if (!found)
             {
                 Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}=False (CanFit)");
                 return;
@@ -2497,6 +2554,29 @@ namespace SolarMajesty
 
             bool ok = InstantStampStillBuilding(cat, origin);
             Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}={ok} origin={origin}");
+        }
+
+        private void StampStillHabSocket(
+            BuildingPlacer.CampusPiece commons,
+            BuildingPlacer.Cardinal habFace,
+            StillCampusDensity.BoundsOk bounds)
+        {
+            if (!StillCampusDensity.TryNext(
+                    Placer, commons, habFace,
+                    StillCampusDensity.YardSize, StillCampusDensity.YardSize,
+                    bounds, out Vector2Int origin))
+            {
+                Debug.Log("[GameLoop] Stamp density habSocket=False (CanFit)");
+                return;
+            }
+
+            Placer.MarkCampusRect(origin, StillCampusDensity.YardSize, StillCampusDensity.YardSize);
+            Placer.RegisterPiece(
+                origin, StillCampusDensity.YardSize, StillCampusDensity.YardSize, BuildingCategory.Habitat);
+            Vector3 world = FootprintWorldCenter(origin, StillCampusDensity.YardSize, StillCampusDensity.YardSize);
+            Transform root = buildingRoot != null ? buildingRoot : transform;
+            CampusDressing.SpawnStillHabSocket(world, root);
+            Debug.Log($"[GameLoop] Stamp density habSocket=True origin={origin}");
         }
 
         private static string DensityLabel(BuildingCategory cat)
@@ -2510,6 +2590,9 @@ namespace SolarMajesty
                 case BuildingCategory.EngineerWorkshop: return "workshop";
                 case BuildingCategory.Inn: return "inn";
                 case BuildingCategory.AegisSpire: return "wonder";
+                case BuildingCategory.Utility: return "airlock";
+                case BuildingCategory.Habitat: return "hab";
+                case BuildingCategory.Defense: return "defense";
                 default: return cat.ToString();
             }
         }
@@ -2574,7 +2657,7 @@ namespace SolarMajesty
                     _agents[i]?.BindNavMesh(_campusNav);
             }
 
-            CampusDressing.RefreshTubes(Placer, grid, buildingRoot != null ? buildingRoot : transform);
+            CampusDressing.RefreshTubes(Placer, grid, transform);
 
             if (InFaunaGrace)
                 return;
@@ -3522,6 +3605,7 @@ namespace SolarMajesty
                 CreateBuilding("Regolith Camp", BuildingCategory.RegolithCamp, 22, 0, 9f, 4, 4),
                 CreateBuilding("Scout Workshop", BuildingCategory.ScoutWorkshop, 36, 4, 12f, 4, 4),
                 CreateBuilding("Engineer Workshop", BuildingCategory.EngineerWorkshop, 36, 4, 12f, 4, 4),
+                CreateBuilding("Village Inn", BuildingCategory.Inn, 30, 3, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
                 CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
                 CreateBuilding("Guild Hall", BuildingCategory.GuildHall, 56, 6, 14f, 4, 4),
@@ -3601,7 +3685,7 @@ namespace SolarMajesty
             if (data == null) return;
             Village?.RegisterPlacedBuilding(data, data.category, go, world);
             CampusDressing.DressPlaced(data, go, _body);
-            CampusDressing.RefreshTubes(Placer, grid, buildingRoot != null ? buildingRoot : transform);
+            CampusDressing.RefreshTubes(Placer, grid, transform);
             if (ShouldSnapCampusCamera(data.category))
                 SnapCampusCamera();
             DemoVfx.BuildComplete(world);
@@ -4243,7 +4327,7 @@ namespace SolarMajesty
 
             NotifyCampusExpanded();
             SyncLaunchGate();
-            CampusDressing.RefreshTubes(Placer, grid, buildingRoot != null ? buildingRoot : transform);
+            CampusDressing.RefreshTubes(Placer, grid, transform);
             SnapCampusCamera();
             HideDropClaimIfSettled();
             LogOverseer($"Campus restored — {restored} modules on {(_body != null ? _body.DisplayName : celestialBody.ToString())}.");
@@ -4390,7 +4474,7 @@ namespace SolarMajesty
             if (Placer != null && grid != null)
                 Placer.TryReleaseContaining(grid.WorldToCell(world), cat);
 
-            CampusDressing.RefreshTubes(Placer, grid, buildingRoot != null ? buildingRoot : transform);
+            CampusDressing.RefreshTubes(Placer, grid, transform);
             NotifyCampusExpanded();
             PersistSession();
             LogOverseer($"{st.DisplayName} destroyed — rebuild before the next raid.");

@@ -390,7 +390,6 @@ namespace SolarMajesty
         /// <summary>Register a pre-built module/airlock so Lego docks work (village / showcase).</summary>
         public void RegisterPiece(Vector2Int origin, int width, int height, BuildingCategory category)
         {
-            if (category == BuildingCategory.Inn) return;
             _pieces.Add(new CampusPiece(origin, width, height, category));
             if (RequiresCampusLink(category))
                 SeedCampusClaim(origin, width, height);
@@ -702,9 +701,6 @@ namespace SolarMajesty
                     }
                 }
             }
-
-            if (data.category == BuildingCategory.Inn)
-                return;
 
             if (occupied)
             {

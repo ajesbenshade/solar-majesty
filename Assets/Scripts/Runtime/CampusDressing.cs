@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -14,7 +15,8 @@ namespace SolarMajesty
     /// Live dock sleeves and CommonsPort groups start off so FindPieceGo misses cannot
     /// leave still5-style orange rings showing. still16 dark-box leftover was wrap
     /// Dress_HubDoor on the hub itself (ColonyVisualUtility) — unused faces stay
-    /// clean white plates. No CampusTubeRoot corridor is spawned.
+    /// clean white plates. FindPieceGo walks VillageRing / Buildings so still-chain
+    /// airlocks get docked collars. No CampusTubeRoot corridor is spawned.
     /// </summary>
     public static class CampusDressing
     {
@@ -337,14 +339,13 @@ namespace SolarMajesty
             float maxSq = 8f * 8f;
             float bestSq = maxSq;
             int bestRank = 0;
-            for (int i = 0; i < parent.childCount; i++)
+            var roots = new List<Transform>(32);
+            CollectPieceRoots(parent, roots);
+            for (int i = 0; i < roots.Count; i++)
             {
-                Transform t = parent.GetChild(i);
+                Transform t = roots[i];
                 if (t == null) continue;
                 string n = t.name;
-                if (n.StartsWith("CampusTube") || n.StartsWith("DropZone") || n.StartsWith("Dress_") ||
-                    n.StartsWith("Site_") || n.StartsWith("Ghost") || n.StartsWith("Claim"))
-                    continue;
                 float dx = t.position.x - center.x;
                 float dz = t.position.z - center.z;
                 float sq = dx * dx + dz * dz;
@@ -352,12 +353,7 @@ namespace SolarMajesty
                 if (!string.IsNullOrEmpty(preferContains) &&
                     n.IndexOf(preferContains, System.StringComparison.OrdinalIgnoreCase) < 0)
                     continue;
-                int rank = 1;
-                if (n.StartsWith("Bld_") || n.StartsWith("Airlock") || n.StartsWith("Mod_") ||
-                    n.StartsWith("PlusConnector"))
-                    rank = 3;
-                else if (n.Contains("Commons") || n.Contains("Habitat") || n.Contains("Junction"))
-                    rank = 2;
+                int rank = PieceRank(n);
                 if (best == null || rank > bestRank || (rank == bestRank && sq < bestSq))
                 {
                     best = t.gameObject;
@@ -366,6 +362,44 @@ namespace SolarMajesty
                 }
             }
             return best;
+        }
+
+        /// <summary>
+        /// Still-chain airlock/HAB live under VillageRing (sibling of Buildings).
+        /// Walk those containers so RefreshTubes can enable docked collars.
+        /// </summary>
+        private static void CollectPieceRoots(Transform parent, List<Transform> dest)
+        {
+            if (parent == null || dest == null) return;
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform t = parent.GetChild(i);
+                if (t == null) continue;
+                string n = t.name;
+                if (n == "VillageRing" || n == "Buildings" || n.StartsWith("CampusDress"))
+                {
+                    CollectPieceRoots(t, dest);
+                    continue;
+                }
+                if (n == "IsoGrid" || n == "Flags" || n == "SpecialistSpawn" || n == "Main Camera")
+                    continue;
+                if (n.StartsWith("CampusTube") || n.StartsWith("DropZone") || n.StartsWith("Dress_") ||
+                    n.StartsWith("Site_") || n.StartsWith("Ghost") || n.StartsWith("Claim"))
+                    continue;
+                dest.Add(t);
+            }
+        }
+
+        private static int PieceRank(string n)
+        {
+            if (n.StartsWith("Bld_") || n.StartsWith("Airlock") || n.StartsWith("Mod_") ||
+                n.StartsWith("PlusConnector") || n.StartsWith("VillageAirlock") ||
+                n.StartsWith("VillageHAB"))
+                return 3;
+            if (n.Contains("Commons") || n.Contains("Habitat") || n.Contains("Junction") ||
+                n.Contains("Airlock"))
+                return 2;
+            return 1;
         }
 
         private static void SetDockPorts(Transform root, string prefix, bool north, bool east, bool south, bool west)
@@ -700,6 +734,73 @@ namespace SolarMajesty
                 var glow = Color.Lerp(accent, new Color(0.22f, 0.84f, 0.98f), 0.35f);
                 Tint(lamp, glow, 0.55f, glow * 1.4f);
             }
+
+            ColonyVisualUtility.SnapToGround(root);
+            return root;
+        }
+
+        /// <summary>
+        /// still19 density cue: under-construction HAB socket (white foundation +
+        /// yellow crane + incomplete cladding). Visual only — caller occupies the cells.
+        /// </summary>
+        public static GameObject SpawnStillHabSocket(Vector3 world, Transform parent)
+        {
+            var root = new GameObject("Site_StillHabSocket");
+            if (parent != null) root.transform.SetParent(parent, true);
+            root.transform.position = world;
+
+            var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            disc.name = "SocketDisc";
+            disc.transform.SetParent(root.transform, false);
+            disc.transform.localPosition = new Vector3(0f, 0.06f, 0f);
+            disc.transform.localScale = new Vector3(5.1f, 0.05f, 5.1f);
+            Object.Destroy(disc.GetComponent<Collider>());
+            Tint(disc, new Color(0.94f, 0.94f, 0.96f), 0.18f);
+
+            var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            ring.name = "SocketRing";
+            ring.transform.SetParent(root.transform, false);
+            ring.transform.localPosition = new Vector3(0f, 0.10f, 0f);
+            ring.transform.localScale = new Vector3(5.35f, 0.03f, 5.35f);
+            Object.Destroy(ring.GetComponent<Collider>());
+            Tint(ring, new Color(0.96f, 0.42f, 0.08f), 0.28f);
+
+            var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            rib.name = "SocketFrame";
+            rib.transform.SetParent(root.transform, false);
+            rib.transform.localPosition = new Vector3(0f, 0.55f, 0f);
+            rib.transform.localScale = new Vector3(3.4f, 0.08f, 3.4f);
+            Object.Destroy(rib.GetComponent<Collider>());
+            Tint(rib, new Color(0.18f, 0.18f, 0.19f), 0.22f);
+
+            for (int i = 0; i < 4; i++)
+            {
+                float ang = i * 90f * Mathf.Deg2Rad;
+                var panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                panel.name = "SocketClad_" + i;
+                panel.transform.SetParent(root.transform, false);
+                panel.transform.localPosition = new Vector3(Mathf.Cos(ang) * 1.55f, 1.05f, Mathf.Sin(ang) * 1.55f);
+                panel.transform.localScale = new Vector3(0.08f, 1.7f, 1.55f);
+                panel.transform.localRotation = Quaternion.Euler(0f, -i * 90f, 0f);
+                Object.Destroy(panel.GetComponent<Collider>());
+                Tint(panel, i % 2 == 0 ? new Color(0.86f, 0.87f, 0.89f) : new Color(0.12f, 0.12f, 0.13f));
+            }
+
+            var mast = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            mast.name = "SocketCraneMast";
+            mast.transform.SetParent(root.transform, false);
+            mast.transform.localPosition = new Vector3(1.7f, 2.15f, 1.3f);
+            mast.transform.localScale = new Vector3(0.16f, 4.2f, 0.16f);
+            Object.Destroy(mast.GetComponent<Collider>());
+            Tint(mast, new Color(0.95f, 0.82f, 0.12f), 0.32f);
+
+            var jib = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            jib.name = "SocketCraneJib";
+            jib.transform.SetParent(root.transform, false);
+            jib.transform.localPosition = new Vector3(0.15f, 4.15f, 1.3f);
+            jib.transform.localScale = new Vector3(3.1f, 0.12f, 0.16f);
+            Object.Destroy(jib.GetComponent<Collider>());
+            Tint(jib, new Color(0.95f, 0.82f, 0.12f), 0.32f);
 
             ColonyVisualUtility.SnapToGround(root);
             return root;
