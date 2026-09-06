@@ -886,12 +886,53 @@ namespace SolarMajesty
 
         private NarrativeWorldHint CurrentNarrativeHint()
         {
+            bool hasPad = Settlement != null && Settlement.HasPad;
+            bool padOrder = false;
+            bool workshopOrder = false;
+            bool padPiece = hasPad;
+            if (Placer != null)
+            {
+                var orders = Placer.Orders;
+                for (int i = 0; i < orders.Count; i++)
+                {
+                    var o = orders[i];
+                    if (o == null || o.IsComplete || o.Data == null) continue;
+                    if (o.Data.category == BuildingCategory.LandingPad)
+                        padOrder = true;
+                    if (o.IsRefab || ColonyStructure.IsWorkshopCategory(o.Data.category))
+                        workshopOrder = true;
+                }
+
+                var pieces = Placer.Pieces;
+                for (int i = 0; i < pieces.Count; i++)
+                {
+                    if (pieces[i].Category == BuildingCategory.LandingPad)
+                    {
+                        padPiece = true;
+                        break;
+                    }
+                }
+            }
+
+            bool launchLive = false;
+            if (Research != null)
+            {
+                var profile = _body != null ? _body : CelestialBodyCatalog.Get(celestialBody);
+                TechId launch = profile != null ? profile.LaunchTech : TechId.None;
+                if (launch != TechId.None)
+                    launchLive = Research.ActiveTech == launch || Research.IsUnlocked(launch);
+            }
+
             return new NarrativeWorldHint
             {
                 HasCommons = Settlement != null && Settlement.HasCommons,
                 HasHab = Settlement != null && Settlement.CoreHabs > 0,
-                HasPad = Settlement != null && Settlement.HasPad,
-                HasPower = Settlement != null && Settlement.PowerPlants > 0
+                HasPad = hasPad,
+                HasPower = Settlement != null && Settlement.PowerPlants > 0,
+                HasPadPiece = padPiece,
+                HasPadOrder = padOrder,
+                HasWorkshopOrder = workshopOrder,
+                LaunchPathLive = launchLive
             };
         }
 
