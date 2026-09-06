@@ -18,6 +18,7 @@ namespace SolarMajesty.EditorTools
         private const string DefaultOut = "Docs/Roadmap/SM_Capture.png";
         private const string PendingOutKey = "SM_CaptureStill_Out";
         private const string PendingBodyKey = "SM_CaptureStill_Body";
+        private const string PendingHoldKey = "SM_CaptureStill_Hold";
 
         [MenuItem("Solar Majesty/Render/Capture Mars Still", priority = 110)]
         public static void CaptureMars() => Begin(CelestialBodyId.Mars, DefaultOut);
@@ -64,8 +65,10 @@ namespace SolarMajesty.EditorTools
             BodySeed.SetBody(body);
             BodySeed.Ensure(body, 0);
             DemoSettings.RequestBootIntoPlay();
+            ArmStillHold();
             SessionState.SetString(PendingOutKey, outPath);
             SessionState.SetString(PendingBodyKey, body.ToString());
+            SessionState.SetBool(PendingHoldKey, true);
 
             Vector2 size = GetMainGameViewSize();
             float scale = ReadGameViewScale();
@@ -84,8 +87,19 @@ namespace SolarMajesty.EditorTools
         [InitializeOnLoadMethod]
         private static void ResumeAfterDomainReload()
         {
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+
             string pending = SessionState.GetString(PendingOutKey, "");
-            if (string.IsNullOrEmpty(pending)) return;
+            if (string.IsNullOrEmpty(pending))
+            {
+                if (SessionState.GetBool(PendingHoldKey, false))
+                {
+                    SessionState.EraseBool(PendingHoldKey);
+                    DisarmStillHold();
+                }
+                return;
+            }
 
             // A hung capture leaves this key set. If the editor is not already entering Play
             // for that capture, drop it — otherwise the user's next Play is force-exited.
@@ -93,6 +107,8 @@ namespace SolarMajesty.EditorTools
             {
                 SessionState.EraseString(PendingOutKey);
                 SessionState.EraseString(PendingBodyKey);
+                SessionState.EraseBool(PendingHoldKey);
+                DisarmStillHold();
                 return;
             }
 
@@ -100,6 +116,10 @@ namespace SolarMajesty.EditorTools
             string bodyRaw = SessionState.GetString(PendingBodyKey, CelestialBodyId.Mars.ToString());
             if (!Enum.TryParse(bodyRaw, true, out _body))
                 _body = CelestialBodyId.Mars;
+
+            // Domain reload drops static hold — re-arm before GameLoop ticks fail.
+            ArmStillHold();
+            SessionState.SetBool(PendingHoldKey, true);
 
             // Domain reload can drop BodySeed / GameView zoom — re-assert before the shutter.
             ForceGameViewScaleOne();
@@ -131,6 +151,7 @@ namespace SolarMajesty.EditorTools
             {
                 case 0:
                     if (!EditorApplication.isPlaying) return;
+                    ArmStillHold();
                     ForceGameViewScaleOne();
                     BodySeed.SetBody(_body);
                     _state = 1;
@@ -140,15 +161,21 @@ namespace SolarMajesty.EditorTools
                 case 1:
                     // Let world gen, dressing, and drop-Commons settle.
                     if (++_frames < 120) return;
+                    ArmStillHold();
                     ForceGameViewScaleOne();
                     BodySeed.SetBody(_body);
                     var loop = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
                     if (loop != null)
                     {
+                        // Freeze fail BEFORE stamp — HAB latch + empty census is OUTPOST LOST.
+                        loop.PrepareStillCaptureWorld();
                         bool stamped = loop.StampPhase4StillCampus();
                         if (!stamped)
                             stamped = loop.StampPhase4StillCampus();
-                        Debug.Log($"[Capture] StampPhase4StillCampus => {stamped}");
+                        loop.PrepareStillCaptureWorld();
+                        Debug.Log(
+                            $"[Capture] StampPhase4StillCampus => {stamped} " +
+                            $"hold={StillCaptureHold.Active}");
                     }
                     else
                         Debug.LogWarning("[Capture] GameLoop missing — cannot stamp airlock/HAB");
@@ -159,6 +186,9 @@ namespace SolarMajesty.EditorTools
                 case 3:
                     // Tubes / camera snap after the stamp.
                     if (++_frames < 90) return;
+                    ArmStillHold();
+                    var ready = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
+                    ready?.PrepareStillCaptureWorld();
                     ForceGameViewScaleOne();
                     Directory.CreateDirectory(Path.GetDirectoryName(_outPath) ?? "Docs");
                     Vector2 size = GetMainGameViewSize();
@@ -166,6 +196,7 @@ namespace SolarMajesty.EditorTools
                     ScreenCapture.CaptureScreenshot(_outPath, 1);
                     Debug.Log(
                         $"[Capture] Shutter body={_body} scale={scale:0.###}x " +
+                        $"hold={StillCaptureHold.Active} " +
                         $"gameView={size.x:0}x{size.y:0} -> {_outPath}");
                     _state = 2;
                     _frames = 0;
@@ -176,6 +207,8 @@ namespace SolarMajesty.EditorTools
                     EditorApplication.update -= Pump;
                     SessionState.EraseString(PendingOutKey);
                     SessionState.EraseString(PendingBodyKey);
+                    SessionState.EraseBool(PendingHoldKey);
+                    DisarmStillHold();
                     EditorApplication.ExitPlaymode();
                     Debug.Log("[Capture] Done.");
                     if (Application.isBatchMode)
@@ -305,6 +338,24 @@ namespace SolarMajesty.EditorTools
             }
 
             return Vector2.zero;
+        }
+
+        private static void ArmStillHold()
+        {
+            StillCaptureHold.Arm();
+            SessionState.SetBool(PendingHoldKey, true);
+        }
+
+        private static void DisarmStillHold()
+        {
+            StillCaptureHold.Disarm();
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state != PlayModeStateChange.EnteredEditMode) return;
+            SessionState.EraseBool(PendingHoldKey);
+            DisarmStillHold();
         }
     }
 }

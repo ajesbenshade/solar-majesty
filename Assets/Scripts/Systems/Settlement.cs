@@ -333,6 +333,12 @@ namespace SolarMajesty
         private void TickLifeSupport(float dt)
         {
             LastLifeSupportFail = false;
+            if (StillCaptureHold.Active)
+            {
+                _lifeSupportHold = 0f;
+                LifeSupportToastPending = false;
+                return;
+            }
             if (_resources == null || Population <= 0)
             {
                 _lifeSupportHold = 0f;

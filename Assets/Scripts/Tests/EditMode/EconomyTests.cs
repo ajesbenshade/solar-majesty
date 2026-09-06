@@ -271,6 +271,57 @@ namespace SolarMajesty.Tests
             s.Unregister(BuildingCategory.Habitat);
             Assert.IsTrue(s.EverHadHab, "losing the last HAB must still count as having had one");
         }
+
+        [Test]
+        public void AddVillageHab_WithoutCrew_MatchesTheStillExtinctLatch()
+        {
+            var s = Make(out _);
+            s.AddVillageHab();
+
+            Assert.IsTrue(s.EverHadHab, "stamp HAB latches EverHadHab");
+            Assert.AreEqual(0, s.Population, "stamp used to skip SeedStarterCrew — extinct");
+            Assert.Greater(s.Housing, 0);
+            Assert.AreEqual(Settlement.StarterColonists, s.SeedStarterCrew());
+            Assert.Greater(s.Population, 0);
+        }
+
+        [Test]
+        public void StillCaptureHold_FreezesLifeSupportDeaths()
+        {
+            StillCaptureHold.Arm();
+            try
+            {
+                var s = Make(out ResourceManager res, coreHabs: 1);
+                res.Set(ResourceId.WaterIce, 0);
+                s.SeedStarterCrew();
+                int before = s.Population;
+
+                s.Tick(OverseerRules.LifeSupportFailSeconds + 5f);
+
+                Assert.AreEqual(before, s.Population, "still shutter must not kill colonists");
+                Assert.IsFalse(s.ConsumeLifeSupportFail());
+            }
+            finally
+            {
+                StillCaptureHold.Disarm();
+            }
+        }
+    }
+
+    public class StillCaptureHoldTests
+    {
+        [TearDown]
+        public void TearDown() => StillCaptureHold.Disarm();
+
+        [Test]
+        public void Arm_StaysActiveUntilDisarm()
+        {
+            Assert.IsFalse(StillCaptureHold.Active);
+            StillCaptureHold.Arm();
+            Assert.IsTrue(StillCaptureHold.Active);
+            StillCaptureHold.Disarm();
+            Assert.IsFalse(StillCaptureHold.Active);
+        }
     }
 
     public class OverseerRulesTests
