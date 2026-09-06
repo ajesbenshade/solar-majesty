@@ -226,10 +226,12 @@ namespace SolarMajesty
 
         private static readonly Color HubWhite = new Color(0.99f, 0.99f, 1f);
         private static readonly Color HubOrange = new Color(0.96f, 0.42f, 0.08f);
-        private static readonly Color HubCarbon = new Color(0.12f, 0.13f, 0.14f);
+        private static readonly Color HubCarbon = new Color(0.10f, 0.11f, 0.12f);
         private static readonly Color HubGraphite = new Color(0.20f, 0.21f, 0.22f);
         private static readonly Color HubCyan = new Color(0.22f, 0.84f, 0.98f);
-        private static readonly Color HubWhiteEmit = new Color(0.22f, 0.22f, 0.24f);
+        /// <summary>Hold sheet-white at Game-tab distance so the 2×2 does not flatten into dirt.</summary>
+        private static readonly Color HubWhiteEmit = new Color(0.34f, 0.34f, 0.36f);
+        private static readonly Color HubOrangeEmit = new Color(0.55f, 0.16f, 0.02f);
 
         private static void SpawnAirlockHub(Transform parent)
         {
@@ -273,15 +275,15 @@ namespace SolarMajesty
 
                 Vector3 p = plates[i];
                 Vector3 hSeam = ns
-                    ? new Vector3(side * 0.74f, 0.028f, 0.05f)
-                    : new Vector3(0.05f, 0.028f, side * 0.74f);
+                    ? new Vector3(side * 0.78f, 0.048f, 0.07f)
+                    : new Vector3(0.07f, 0.048f, side * 0.78f);
                 Vector3 vSeam = ns
-                    ? new Vector3(0.028f, tall * 0.70f, 0.05f)
-                    : new Vector3(0.05f, tall * 0.70f, 0.028f);
+                    ? new Vector3(0.048f, tall * 0.74f, 0.07f)
+                    : new Vector3(0.07f, tall * 0.74f, 0.048f);
                 DressCube(parent, "Dress_HubSeamH_" + i,
-                    new Vector3(p.x * 1.02f, y + 0.16f, p.z * 1.02f), hSeam, HubCarbon);
+                    new Vector3(p.x * 1.05f, y + 0.16f, p.z * 1.05f), hSeam, HubCarbon);
                 DressCube(parent, "Dress_HubSeamV_" + i,
-                    new Vector3(p.x * 1.02f, y, p.z * 1.02f), vSeam, HubCarbon);
+                    new Vector3(p.x * 1.05f, y, p.z * 1.05f), vSeam, HubCarbon);
 
                 // Small inset hatch — panel language, not a wrap door / unused stub.
                 Vector3 hatch = ns
@@ -361,6 +363,18 @@ namespace SolarMajesty
             Object.Destroy(lip.GetComponent<Collider>());
             TintPrimitive(lip, HubWhite, HubWhiteEmit);
 
+            // Proud orange ring on the hub face — still18 hid the Lego-face sliver
+            // in the HAB join. Child of the arm so unused faces stay clean plates.
+            Vector3 hubRingPos = dir * (hubClear + 0.03f) + new Vector3(0f, y, 0f);
+            var hubRing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            hubRing.name = name + "_HubCollar";
+            hubRing.transform.SetParent(group.transform, false);
+            hubRing.transform.localPosition = hubRingPos;
+            hubRing.transform.localRotation = rot;
+            hubRing.transform.localScale = new Vector3(diameter * 1.38f, 0.085f, diameter * 1.38f);
+            Object.Destroy(hubRing.GetComponent<Collider>());
+            TintPrimitive(hubRing, HubOrange, HubOrangeEmit);
+
             // One orange collar at the cell face — the docked Lego joint.
             Vector3 collarPos = dir * (face - 0.04f) + new Vector3(0f, y, 0f);
             var collar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -368,9 +382,9 @@ namespace SolarMajesty
             collar.transform.SetParent(group.transform, false);
             collar.transform.localPosition = collarPos;
             collar.transform.localRotation = rot;
-            collar.transform.localScale = new Vector3(diameter * 1.16f, 0.045f, diameter * 1.16f);
+            collar.transform.localScale = new Vector3(diameter * 1.32f, 0.08f, diameter * 1.32f);
             Object.Destroy(collar.GetComponent<Collider>());
-            TintPrimitive(collar, HubOrange);
+            TintPrimitive(collar, HubOrange, HubOrangeEmit);
 
             if (!startActive)
                 group.SetActive(false);

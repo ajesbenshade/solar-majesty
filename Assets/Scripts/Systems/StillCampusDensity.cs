@@ -8,7 +8,9 @@ namespace SolarMajesty
     /// around Commons→airlock→HAB. Forward yards use <see cref="BuildingPlacer.CanFitRect"/>
     /// only (same as the still HAB stamp) — ExtraPlacementRule would send pad/solar/extract
     /// to Campus B (~30 m) or demand an airlock dock, both of which miss CampusOrthoSize ~10.
-    /// Does not flip spawnShowcaseColony.
+    /// still18 signed that density gate; leftover Workshop / Inn / 6×6 wonders CanFit
+    /// south of Commons but grow the AABB past <see cref="StillMaxOrtho"/>, so they stay
+    /// off the still pack (see <see cref="PlanLeftovers"/>). Does not flip spawnShowcaseColony.
     /// </summary>
     public static class StillCampusDensity
     {
@@ -17,6 +19,22 @@ namespace SolarMajesty
 
         /// <summary>Keep yards inside the campus ortho: ~9 cells × 1.5 m ≈ 13.5 m from Commons.</summary>
         public const float MaxCenterSeparationCells = 9f;
+
+        /// <summary>
+        /// CaptureStill Game-tab is short-wide (~2.4). Play snap stays
+        /// <see cref="ColonyLayout.CampusOrthoSize"/> (10) so the player can place yards.
+        /// </summary>
+        public const float GameTabAspect = 2.4f;
+
+        /// <summary>Floor so a Commons-only AABB cannot punch through minZoom.</summary>
+        public const float StillMinOrtho = 7.25f;
+
+        /// <summary>
+        /// Ceiling for the still snap — tighter than play ortho 10 so still18-class
+        /// dirt margins close. Leftover 4×4 / 6×6 yards that push RawStillOrtho
+        /// above this are skipped (south of Commons grows the AABB).
+        /// </summary>
+        public const float StillMaxOrtho = 9f;
 
         public delegate bool BoundsOk(Vector2Int origin, int width, int height);
 
@@ -29,15 +47,25 @@ namespace SolarMajesty
             public bool Power;
             public bool Water;
             public bool Regolith;
+            public bool Workshop;
+            public bool Inn;
+            public bool Wonder;
+            public string Leftover;
 
             public override string ToString() =>
                 $"commons={Commons} airlock={Airlock} hab={Hab} " +
-                $"pad={Pad} pwr={Power} water={Water} regolith={Regolith}";
+                $"pad={Pad} pwr={Power} water={Water} regolith={Regolith} " +
+                $"workshop={Workshop} inn={Inn} wonder={Wonder} leftover={Leftover ?? "none"}";
 
-            public static StampLog FromPieces(BuildingPlacer placer)
+            public static StampLog FromPieces(BuildingPlacer placer, string leftover = null)
             {
                 var log = new StampLog();
-                if (placer == null) return log;
+                if (placer == null)
+                {
+                    log.Leftover = leftover ?? "none";
+                    return log;
+                }
+
                 var pieces = placer.Pieces;
                 for (int i = 0; i < pieces.Count; i++)
                 {
@@ -50,11 +78,47 @@ namespace SolarMajesty
                         case BuildingCategory.Power: log.Power = true; break;
                         case BuildingCategory.Farm: log.Water = true; break;
                         case BuildingCategory.RegolithCamp: log.Regolith = true; break;
+                        case BuildingCategory.EngineerWorkshop:
+                        case BuildingCategory.ScoutWorkshop:
+                        case BuildingCategory.DefenseWorkshop:
+                            log.Workshop = true; break;
+                        case BuildingCategory.Inn: log.Inn = true; break;
+                        case BuildingCategory.ClimateLoom:
+                        case BuildingCategory.AegisSpire:
+                        case BuildingCategory.DeepArchive:
+                            log.Wonder = true; break;
                     }
                 }
 
+                log.Leftover = leftover ?? LeftoverLabel(log);
                 return log;
             }
+
+            private static string LeftoverLabel(StampLog log)
+            {
+                if (log.Workshop && log.Inn && log.Wonder) return "workshop+inn+wonder";
+                if (log.Workshop && log.Inn) return "workshop+inn";
+                if (log.Workshop && log.Wonder) return "workshop+wonder";
+                if (log.Workshop) return "workshop";
+                if (log.Inn && log.Wonder) return "inn+wonder";
+                if (log.Inn) return "inn";
+                if (log.Wonder) return "wonder";
+                return "none";
+            }
+        }
+
+        public struct LeftoverPlan
+        {
+            public bool Workshop;
+            public Vector2Int WorkshopOrigin;
+            public bool Inn;
+            public Vector2Int InnOrigin;
+            public bool Wonder;
+            public Vector2Int WonderOrigin;
+            public string SkipReason;
+
+            public int PlacedCount =>
+                (Workshop ? 1 : 0) + (Inn ? 1 : 0) + (Wonder ? 1 : 0);
         }
 
         public struct PackPlan
@@ -235,6 +299,179 @@ namespace SolarMajesty
             }
 
             return plan;
+        }
+
+        /// <summary>
+        /// Workshop hangar / Inn / one 6×6 wonder only when they CanFit AND the
+        /// still-fit ortho stays ≤ <see cref="StillMaxOrtho"/>. still18-class packs
+        /// already fill that budget — leftover yards sit south of Commons and
+        /// re-open empty-dirt framing if we zoom back out to hold them.
+        /// </summary>
+        public static LeftoverPlan PlanLeftovers(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece commons,
+            BuildingPlacer.Cardinal habFace,
+            BoundsOk bounds = null,
+            float cellSize = ColonyLayout.DefaultCellSize,
+            float aspect = GameTabAspect)
+        {
+            var leftovers = new LeftoverPlan { SkipReason = "none" };
+            if (placer == null) return leftovers;
+
+            // Dry — do not Mark/Register. GameLoop InstantStamps only when a slot
+            // passes the frame gate. still18-class packs skip every leftover.
+            bool canFitYard = CanFitNear(placer, commons, habFace, YardSize, bounds);
+            bool canFitWonder = CanFitNear(placer, commons, habFace, PadSize, bounds);
+
+            leftovers.Workshop = TryLeftoverSlot(
+                placer, commons, habFace, YardSize, bounds, cellSize, aspect, out leftovers.WorkshopOrigin);
+            leftovers.Inn = TryLeftoverSlot(
+                placer, commons, habFace, YardSize, bounds, cellSize, aspect, out leftovers.InnOrigin);
+            leftovers.Wonder = TryLeftoverSlot(
+                placer, commons, habFace, PadSize, bounds, cellSize, aspect, out leftovers.WonderOrigin);
+
+            if (leftovers.PlacedCount == 0)
+                leftovers.SkipReason = (canFitYard || canFitWonder) ? "skip-frame" : "CanFit";
+            return leftovers;
+        }
+
+        /// <summary>Inclusive min / exclusive max cell of every registered piece.</summary>
+        public static bool TryCampusAabb(
+            BuildingPlacer placer, out Vector2Int min, out Vector2Int maxExclusive)
+        {
+            min = default;
+            maxExclusive = default;
+            if (placer == null || placer.Pieces == null || placer.Pieces.Count == 0)
+                return false;
+
+            int minX = int.MaxValue, minY = int.MaxValue;
+            int maxX = int.MinValue, maxY = int.MinValue;
+            var pieces = placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                var p = pieces[i];
+                minX = Mathf.Min(minX, p.Origin.x);
+                minY = Mathf.Min(minY, p.Origin.y);
+                maxX = Mathf.Max(maxX, p.Origin.x + p.Width);
+                maxY = Mathf.Max(maxY, p.Origin.y + p.Height);
+            }
+
+            min = new Vector2Int(minX, minY);
+            maxExclusive = new Vector2Int(maxX, maxY);
+            return true;
+        }
+
+        public static Vector2 AabbCenterCells(Vector2Int min, Vector2Int maxExclusive) =>
+            new Vector2((min.x + maxExclusive.x) * 0.5f, (min.y + maxExclusive.y) * 0.5f);
+
+        /// <summary>
+        /// still18 at play ortho 10 left a ~27×15 m pack in a ~48×20 m Game tab.
+        /// Fit the iso 30°/45° ground AABB with a tight pad; clamp so leftovers
+        /// cannot yank the shutter back to empty-drop dirt.
+        /// </summary>
+        public static float FitStillOrtho(
+            Vector2Int min,
+            Vector2Int maxExclusive,
+            float cellSize,
+            float aspect)
+        {
+            HalfExtents(min, maxExclusive, cellSize, out float halfX, out float halfZ);
+            return Mathf.Clamp(RawStillOrtho(halfX, halfZ, aspect), StillMinOrtho, StillMaxOrtho);
+        }
+
+        public static float FitStillOrtho(BuildingPlacer placer, float cellSize, float aspect)
+        {
+            if (!TryCampusAabb(placer, out Vector2Int min, out Vector2Int max))
+                return ColonyLayout.CampusOrthoSize;
+            return FitStillOrtho(min, max, cellSize, aspect);
+        }
+
+        /// <summary>Unclamped iso fit — leftover gate uses this so a south 6×6 cannot sneak in.</summary>
+        public static float RawStillOrtho(
+            Vector2Int min,
+            Vector2Int maxExclusive,
+            float cellSize,
+            float aspect)
+        {
+            HalfExtents(min, maxExclusive, cellSize, out float halfX, out float halfZ);
+            return RawStillOrtho(halfX, halfZ, aspect);
+        }
+
+        public static float RawStillOrthoIfAdded(
+            BuildingPlacer placer,
+            Vector2Int origin,
+            int width,
+            int height,
+            float cellSize,
+            float aspect)
+        {
+            if (!TryCampusAabb(placer, out Vector2Int min, out Vector2Int max))
+            {
+                min = origin;
+                max = origin + new Vector2Int(Mathf.Max(1, width), Mathf.Max(1, height));
+            }
+            else
+            {
+                min = new Vector2Int(Mathf.Min(min.x, origin.x), Mathf.Min(min.y, origin.y));
+                max = new Vector2Int(
+                    Mathf.Max(max.x, origin.x + Mathf.Max(1, width)),
+                    Mathf.Max(max.y, origin.y + Mathf.Max(1, height)));
+            }
+
+            return RawStillOrtho(min, max, cellSize, aspect);
+        }
+
+        public static float RawStillOrtho(float halfX, float halfZ, float aspect)
+        {
+            // Unity iso (30, 45, 0): camera.up.xz ≈ 0.35, camera.right.xz ≈ 0.71.
+            const float isoUp = 0.36f;
+            const float isoRight = 0.707f;
+            const float pad = 0.85f;
+            float byHeight = isoUp * (halfX + halfZ) + pad;
+            aspect = Mathf.Max(1.05f, aspect);
+            float byWidth = (isoRight * (halfX + halfZ) + pad) / aspect;
+            return Mathf.Max(byHeight, byWidth);
+        }
+
+        public static Vector3 FocusWorld(Vector2Int min, Vector2Int maxExclusive, float cellSize)
+        {
+            Vector2 c = AabbCenterCells(min, maxExclusive);
+            return new Vector3((c.x - 0.5f) * cellSize, 0f, (c.y - 0.5f) * cellSize);
+        }
+
+        private static void HalfExtents(
+            Vector2Int min, Vector2Int maxExclusive, float cellSize, out float halfX, out float halfZ)
+        {
+            cellSize = Mathf.Max(0.01f, cellSize);
+            halfX = Mathf.Max(1, maxExclusive.x - min.x) * cellSize * 0.5f;
+            halfZ = Mathf.Max(1, maxExclusive.y - min.y) * cellSize * 0.5f;
+        }
+
+        private static bool TryLeftoverSlot(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece commons,
+            BuildingPlacer.Cardinal habFace,
+            int side,
+            BoundsOk bounds,
+            float cellSize,
+            float aspect,
+            out Vector2Int origin)
+        {
+            origin = default;
+            if (!TryNext(placer, commons, habFace, side, side, bounds, out origin))
+                return false;
+            float raw = RawStillOrthoIfAdded(placer, origin, side, side, cellSize, aspect);
+            return raw <= StillMaxOrtho;
+        }
+
+        private static bool CanFitNear(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece commons,
+            BuildingPlacer.Cardinal habFace,
+            int side,
+            BoundsOk bounds)
+        {
+            return TryNext(placer, commons, habFace, side, side, bounds, out _);
         }
 
         public static Vector2Int FlushOrigin(

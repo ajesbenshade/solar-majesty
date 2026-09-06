@@ -292,7 +292,8 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(log.Commons && log.Airlock && log.Hab);
             Assert.IsTrue(log.Pad && log.Power && log.Water && log.Regolith);
             Assert.AreEqual(
-                "commons=True airlock=True hab=True pad=True pwr=True water=True regolith=True",
+                "commons=True airlock=True hab=True pad=True pwr=True water=True regolith=True " +
+                "workshop=False inn=False wonder=False leftover=none",
                 log.ToString());
 
             Assert.IsFalse(
@@ -342,6 +343,62 @@ namespace SolarMajesty.Tests
                 StillCampusDensity.FlushOrigin(commons, BuildingPlacer.Cardinal.North, 6, 6),
                 picked,
                 "west blocked → north pad (South last)");
+        }
+
+        [Test]
+        public void DensePack_StillFrame_IsTighterThanCampusOrtho10()
+        {
+            var placer = StampEastChain(out var commons);
+            StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
+
+            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
+            float ortho = StillCampusDensity.FitStillOrtho(
+                min, max, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+            Assert.Less(ortho, ColonyLayout.CampusOrthoSize,
+                "still18 dirt was play ortho 10 on a short-wide Game tab");
+            Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
+            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
+            Assert.AreEqual(8.41f, ortho, 0.2f,
+                "east-HAB dense pack should snap ~8.4, not play 10");
+            Assert.Greater(max.x - min.x, 10, "AABB must span pad→HAB");
+            Assert.Greater(max.y - min.y, 6, "AABB must span Commons→north yards");
+        }
+
+        [Test]
+        public void DensePack_LeftoverKits_CanFitSouth_ButBlowStillFrame()
+        {
+            var placer = StampEastChain(out var commons);
+            StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
+
+            Assert.IsTrue(StillCampusDensity.TryNext(
+                placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out Vector2Int shop),
+                "workshop 4×4 still CanFit south/SE after pad+yards");
+            Assert.IsTrue(StillCampusDensity.TryNext(
+                placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null, out Vector2Int wonder),
+                "a 6×6 wonder still CanFit near Commons");
+
+            float shopRaw = StillCampusDensity.RawStillOrthoIfAdded(
+                placer, shop, 4, 4, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+            float wonderRaw = StillCampusDensity.RawStillOrthoIfAdded(
+                placer, wonder, 6, 6, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+            Assert.Greater(shopRaw, StillCampusDensity.StillMaxOrtho,
+                "south 4×4 grows the AABB past the tight still cap");
+            Assert.Greater(wonderRaw, StillCampusDensity.StillMaxOrtho,
+                "south 6×6 wonder would yank the shutter back toward empty dirt");
+
+            var leftovers = StillCampusDensity.PlanLeftovers(
+                placer, commons, BuildingPlacer.Cardinal.East);
+            Assert.IsFalse(leftovers.Workshop);
+            Assert.IsFalse(leftovers.Inn);
+            Assert.IsFalse(leftovers.Wonder);
+            Assert.AreEqual("skip-frame", leftovers.SkipReason);
+            Assert.AreEqual(7, placer.Pieces.Count, "PlanLeftovers is dry — no leftover occupancy");
+
+            var log = StillCampusDensity.StampLog.FromPieces(placer, leftovers.SkipReason);
+            Assert.IsFalse(log.Workshop);
+            Assert.IsFalse(log.Inn);
+            Assert.IsFalse(log.Wonder);
+            Assert.AreEqual("skip-frame", log.Leftover);
         }
 
         [Test]
@@ -435,6 +492,9 @@ namespace SolarMajesty.Tests
             Assert.Greater(Albedo(hub).grayscale, 0.88f, "hub hull must be sheet-white");
             Assert.IsNotNull(FindChild(airlock, "Dress_HubPanel_0"));
             Assert.Greater(Albedo(FindChild(airlock, "Dress_HubPanel_0")).grayscale, 0.88f);
+            Assert.IsNotNull(FindChild(airlock, "Dress_HubSeamH_0"),
+                "carbon panel seams must stay — still18 cube-ish miss");
+            Assert.Less(Albedo(FindChild(airlock, "Dress_HubSeamH_0")).grayscale, 0.35f);
             Assert.Greater(Albedo(FindChild(airlock, "Dress_HubRoof")).grayscale, 0.88f,
                 "carbon roof was the still16 dark lid — roof stays white");
             Assert.IsNull(FindChild(airlock, "Dress_HubDoor_0"),
@@ -457,12 +517,17 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(tube, arm + " white tube");
             Assert.IsNotNull(collar, arm + " orange collar");
             Assert.IsNotNull(lip, arm + " white hub lip");
+            Transform hubCollar = FindChild(group, arm + "_HubCollar");
+            Assert.IsNotNull(hubCollar, arm + " hub-face collar (still18 cube-ish miss)");
             Assert.Greater(Albedo(tube).grayscale, 0.88f, arm + " tube must be white");
             Assert.Greater(Albedo(lip).grayscale, 0.88f, arm + " lip must be white");
             Color collarC = Albedo(collar);
             Assert.Greater(collarC.r, 0.85f, arm + " collar stays safety orange");
             Assert.Less(collarC.g, 0.55f);
             Assert.Less(collarC.b, 0.25f);
+            Color hubC = Albedo(hubCollar);
+            Assert.Greater(hubC.r, 0.85f, arm + " hub collar stays safety orange");
+            Assert.Less(hubC.g, 0.55f);
             float tubeLen = tube.localScale.y * 2f;
             Assert.Greater(tubeLen, 0.39f, arm + " stub must read as a short white tube");
             float face = ColonyLayout.DefaultCellSize;
@@ -470,6 +535,13 @@ namespace SolarMajesty.Tests
             collarFlat.y = 0f;
             Assert.Greater(collarFlat.magnitude, face * 0.85f,
                 arm + " orange collar sits at the Lego face, not as a hub-gasket dark ring");
+            Vector3 hubFlat = hubCollar.localPosition;
+            hubFlat.y = 0f;
+            Assert.Less(hubFlat.magnitude, ColonyVisualUtility.AirlockHubSide * 0.72f,
+                arm + " hub collar sits on the white square, readable at Game-tab distance");
+            Assert.Greater(collar.localScale.y, 0.06f, arm + " Lego-face collar must be thicker than a sliver");
+            Assert.Greater(hubCollar.localScale.x, ColonyVisualUtility.DockBore * 1.25f,
+                arm + " hub collar must read wider than the tube");
         }
 
         private static Color Albedo(Transform t)
