@@ -385,7 +385,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_StillFrame_IsTighterThanCampusOrtho10()
+        public void DensePack_StillFrame_UsesPlayCampusOrtho10()
         {
             var placer = StampEastChain(out var commons);
             StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
@@ -393,12 +393,10 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.Less(ortho, ColonyLayout.CampusOrthoSize,
-                "still18 dirt was play ortho 10 on a short-wide Game tab");
-            Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
-            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
-            Assert.Less(ortho, 8.2f,
-                "still21 inset frame must hug the pack tighter than the old 8.4 snap");
+            Assert.AreEqual(
+                ColonyLayout.CampusOrthoSize, ortho,
+                "spaced overseer still uses play ortho 10 — do not zoom-to-pack AABB");
+            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
             Assert.Greater(max.x - min.x, 10, "AABB must span pad→HAB");
             Assert.Greater(max.y - min.y, 6, "AABB must span Commons→north yards");
         }
@@ -437,12 +435,10 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(log.Wonder);
             Assert.AreEqual("workshop+inn+wonder", log.Leftover);
 
-            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
+            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
-            Assert.LessOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize);
-            Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
+            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
         }
 
         [Test]
@@ -489,12 +485,10 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(log.Inn && log.Wonder && log.ExtraSolar && log.Defense);
             Assert.IsTrue(log.ExtraHab);
 
-            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
+            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.LessOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize);
-            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
-            Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
+            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
         }
 
         [Test]
@@ -547,53 +541,39 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_InteriorHabSockets_FillDirtBetweenPadAndExtractor()
+        public void DensePack_InteriorDirt_MayStayEmpty_StillUsesPlayOrtho()
         {
             var placer = StampEastChain(out var commons);
             Vector2Int pad = StillCampusDensity.FlushOrigin(
                 commons, BuildingPlacer.Cardinal.West, 6, 6);
             placer.MarkCampusRect(pad, 6, 6);
             placer.RegisterPiece(pad, 6, 6, BuildingCategory.LandingPad);
-            // 4-cell dirt north of the pad — still21 empty dirt between pad and extractors.
             var extractor = new Vector2Int(pad.x, pad.y + 6 + 4);
             placer.MarkCampusRect(extractor, 4, 4);
             placer.RegisterPiece(extractor, 4, 4, BuildingCategory.Farm);
 
-            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
-            int habsBefore = StillCampusDensity.CountCategory(placer, BuildingCategory.Habitat);
-            int sockets = StillCampusDensity.FillInteriorSockets(
-                placer, commons, StillCampusDensity.MaxInteriorHabSockets, null, out Vector2Int first);
-            Assert.GreaterOrEqual(sockets, 2, "interior 4×4 dirt between pad and extractor must fill");
-            Assert.IsTrue(first.x >= min.x && first.y >= min.y);
-            Assert.IsTrue(first.x + 4 <= max.x && first.y + 4 <= max.y);
-            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min2, out var max2));
-            Assert.AreEqual(min, min2, "interior sockets must not grow the still AABB");
-            Assert.AreEqual(max, max2);
+            var cues = StillCampusDensity.PlanCues(placer, commons, BuildingPlacer.Cardinal.East);
+            Assert.AreEqual(0, cues.HabSocketCount, "PlanCues must not fill interior dirt");
+            Assert.IsFalse(cues.HabSocket);
             Assert.AreEqual(
-                habsBefore + sockets,
-                StillCampusDensity.CountCategory(placer, BuildingCategory.Habitat));
+                StillCampusDensity.PlayCampusOrthoSize,
+                StillCampusDensity.FitStillOrtho(
+                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
         }
 
         [Test]
-        public void DensePack_Still21Order_KeepsLeftoversAndFillsSockets()
+        public void DensePack_Still21Order_KeepsLeftoversWithoutInteriorFill()
         {
-            var placer = StampStill20Order(out var commons, out var leftovers, out var cues);
-            Assert.IsTrue(leftovers.Inn && leftovers.Wonder, "still21 leftover=inn+wonder must stay");
-            Assert.IsTrue(cues.ExtraSolar && cues.Defense && leftovers.SkipReason.IndexOf("inn") >= 0);
-            Assert.IsTrue(StillCampusDensity.StampLog.FromPieces(placer, leftovers.SkipReason).ExtraHab);
-
-            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
-            StillCampusDensity.FillInteriorSockets(
-                placer, commons, StillCampusDensity.MaxInteriorHabSockets, null, out _);
-            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min2, out var max2));
-            Assert.AreEqual(min, min2, "a second interior pass must not expand the pack");
-            Assert.AreEqual(max, max2);
-            float ortho = StillCampusDensity.FitStillOrtho(
-                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.LessOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize);
-            Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
+            var placer = StampStill20Order(out _, out var leftovers, out var cues);
+            Assert.IsTrue(leftovers.Inn && leftovers.Wonder, "leftover Inn / wonder may stay");
             Assert.IsTrue(leftovers.SkipReason.IndexOf("inn") >= 0);
             Assert.IsTrue(leftovers.SkipReason.IndexOf("wonder") >= 0);
+            Assert.AreEqual(0, cues.HabSocketCount, "do not force-fill interior sockets");
+            Assert.AreEqual(
+                StillCampusDensity.PlayCampusOrthoSize,
+                StillCampusDensity.FitStillOrtho(
+                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
+            Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
         }
 
         [Test]
@@ -684,7 +664,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(ColonyLayout.CampusOrthoSize, StillCampusDensity.PlayCampusOrthoSize);
             Assert.AreEqual(1.5f, StillCampusDensity.DefaultCellSize);
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
-            Assert.AreEqual(1, StillCampusDensity.StillFrameInsetCells);
+            Assert.AreEqual(0, StillCampusDensity.StillFrameInsetCells);
             Assert.AreEqual(6, StillCampusDensity.MaxInteriorHabSockets);
         }
 

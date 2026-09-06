@@ -3,9 +3,11 @@
 **Date:** 2026-08-15  
 **Status:** **EXIT BLOCKED.** Not complete. **Not ready for Phase 5.**
 
-Phase 4 pushed the Mars-campaign mockup into engine: atmosphere, square-dock tube campus, hero kits / FBX, Imagine-sheet units, carbon HUD chrome. Core systems were not rewritten: `SpecialistBrain` scoring is unchanged; the player still never path-commands units. Colony Commons is the civic name (never Palace).
+Phase 4 pushed the Mars campus into engine: atmosphere, square-dock tube campus, hero kits / FBX, Imagine-sheet units, carbon HUD chrome. Core systems were not rewritten: `SpecialistBrain` scoring is unchanged; the player still never path-commands units. Colony Commons is the civic name (never Palace).
 
-Nine real stills now exist. The latest Game-tab shot is **`SM_MarsCampaign_PlayModeCampusStill6.png`** — Mars Sol 1 HUD, empty start, pad in the corner, not a packed campus. `SM_MarsCampaign_PlayModeCampusStill5.png` also exists (Commons + HAB Game-tab). Packed editor still is **`SM_MarsCampaign_PackedCampusStill.png`** (`Camera.Render`, not Game-tab HUD). None of these stamp exit. Leftovers below are visual-target gaps, not Phase 5 ship polish.
+**Look redirect (Aaron + Chief of Staff):** `SM_MarsCampaign_VisualTarget.png` is **retired**. Phase 4 EXIT look is a **spaced campus** — empty dirt is OK, fun cartoon Majesty-2 overseer feel, room for rocks / foliage / creatures and discovery. Do **not** chase that PNG’s fill-every-dirt-patch packing. still21 / still22 do not have to match that density.
+
+Nine real stills now exist. The latest archived Game-tab shot is **`SM_MarsCampaign_PlayModeCampusStill6.png`** — Mars Sol 1 HUD, empty start, pad in the corner. `SM_MarsCampaign_PlayModeCampusStill5.png` also exists (Commons + HAB Game-tab). Packed editor still is **`SM_MarsCampaign_PackedCampusStill.png`** (`Camera.Render`, not Game-tab HUD) — archive only, not the look claim. None of these stamp exit. GD will reshoot a spaced overseer still after merge. Leftovers below are Phase 4 look gaps, not Phase 5 ship polish.
 
 ---
 
@@ -144,18 +146,19 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - **Reshoot still21+ after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
 
 **Play Mode fixes after still21 (code only — do not stamp exit)**
-- still21 shuttered `leftover=inn+wonder extraHab=True extraSolar=True defense=True hold=True` Mars Scale 1x — density kit gate OK; GD rejected empty-dirt framing vs the visual target
-- Interior HAB sockets fill empty 4×4 cells **inside** the packed AABB (between pad and extractors). Does not invent new building types. Leftover inn+wonder + extraSolar + Defense stamps stay
-- `RefreshTubes` still enables docked Lego arms only; `CampusDress_TubeRuns` adds white pressurized runs between cardinal neighbors that are **not** airlock-linked (no `CampusTubeRoot` in the HAB gap)
-- Still camera insets the packed AABB one cell and uses a tighter ortho pad. Play `CampusOrthoSize` stays 10
-- `StillCaptureHold` narrative/cut suppress from #19 stays. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite
+- still21 shuttered `leftover=inn+wonder extraHab=True extraSolar=True defense=True hold=True` Mars Scale 1x. That pass chased packed density vs the now-retired visual-target PNG. **Do not treat still21 / still22 as a density-match gate.**
+- Interior HAB sockets no longer fill every empty 4×4 inside the AABB. Empty dirt between pad / extractors / HAB is OK — room for rocks, foliage, creatures, discovery
+- Leftover Inn / wonder / workshop **can** stamp when they CanFit; they are not required to max-pack the frame
+- `RefreshTubes` still enables docked Lego arms only; `CampusDress_TubeRuns` may dress cardinal neighbors that are **not** airlock-linked (no `CampusTubeRoot` in the HAB gap)
+- Still camera uses play `CampusOrthoSize` **10** (readable spaced campus). No packed-AABB inset / tight crop. `StillCaptureHold` stays. Mars Scale 1x stays
+- `spawnShowcaseColony` stays false. Square airlocks stay. Five HUD chips stay. No click-to-move. No `SpecialistBrain` / FlagManager / Narrative / economy rewrite
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
 
 ---
 
-## Match vs `SM_MarsCampaign_VisualTarget.png`
+## Phase 4 EXIT look (spaced overseer — VisualTarget PNG retired)
 
-Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
+`SM_MarsCampaign_VisualTarget.png` is no longer the look north star. Honest split: HUD + Mars ground vs campus v4, judged against a **spaced Majesty-2 overseer** campus — not that PNG’s packed density.
 
 **Directionally in (campus v4)**
 - Orange-red Mars ground, isometric camera, long shadows
@@ -169,28 +172,28 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 - **Unused orange ribbed stub** + **orange box airlock** (white square hub does not read)
 - Docked HAB join is an orange box, not a white corridor with orange collars only at the joint
 - Hulls still Mars-washed vs sheet white (93 bright samples vs mockup 726)
-- Camera closer than v3 but still a dirt vista vs the mockup’s packed campus close-up
-- Mockup density (pad + Starship, solar field, extractors, units) is not in this early campus
+- Camera closer than v3; empty dirt around the cluster is now **allowed** (do not pack to hide it)
+- Landmark kits (pad + Starship, solar, extractors) may appear when they CanFit; they are not a fill-every-cell requirement
 - Mockup circular HAB cluster vs our square-dock graph (placement model stays square)
 - IMGUI carbon/gold vs the mockup’s painted HUD
 - Flat albedo + scatter vs mockup crater **heightmap** (Phase 4 non-goal)
 
-**Not the PNG (leftovers even after the post-v4 Play Mode pass)**
-- Latest Game-tab is still6 (empty Sol 1), not a mockup campus close-up. Still5/packed exist; exit stays blocked.
+**Still leftover (not a packed-PNG scorecard)**
+- Latest archived Game-tab is still6 (empty Sol 1), not a spaced overseer campus sign-off. Still5/packed exist; exit stays blocked.
 - **still5 failure modes this look-kit pass targets (code only — no new Game-tab still):** unused Commons cardinal orange **port ring** (`CommonsPort_*` hull-drum collar, not covered by the old `Dress_TubeArm` / `DockSleeve` / `CommonsStub` hide list); v4 orange box airlock + unused ribbed stub. Airlock hub stays a white paneled square; orange only at docked collars; no fourth `CampusTubeRoot` in the HAB gap. Needs a **fresh** Game-tab campus still before anyone restamps this review.
-- **still16 look fail (signed capture gate, code pass only):** the 2×2 joint still read as a **dark rectangular box** (wrap `Dress_HubDoor` carbon plates + carbon roof), not a white paneled square. This pass removes wrap doors, keeps a smaller white hub, puts **one orange collar at the Lego face** on docked `Dress_TubeArm` only, and leaves unused faces as clean white plates. **Do not stamp exit.** A denser Commons+airlock+HAB Game-tab still is still required.
+- **still16 look fail (signed capture gate, code pass only):** the 2×2 joint still read as a **dark rectangular box** (wrap `Dress_HubDoor` carbon plates + carbon roof), not a white paneled square. This pass removes wrap doors, keeps a smaller white hub, puts **one orange collar at the Lego face** on docked `Dress_TubeArm` only, and leaves unused faces as clean white plates. **Do not stamp exit.** A spaced Commons+airlock+HAB Game-tab still is still required.
 - Tracked Defense Guardian vs the mockup’s bulky **biped walker**
 - Construction cranes are runtime dressing, not authored FBX
 - Status pips / aprons / dust-devils are primitive dressing
-- Built-campus **density** (pad / solar / extractors / units in one shot) still needs a later Play Mode still
+- Built-campus **readability** (pad / solar / extractors visible when placed, units optional) still needs a later Play Mode still — not a packed-density match
 - Commons hero FBX skipped until a stub-free re-export; procedural geodesic is the live kit
 
 ---
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Campus Game-tab still vs mockup** — latest archived Game-tab is still6 (empty Sol 1). still21 signed leftover=inn+wonder extraHab/solar/defense (density kit OK) but GD rejected empty-dirt framing vs the visual target. This pass is **code only**: interior HAB sockets + tube-run dressing pack the dirt; still camera insets the AABB (play snap stays 10). `StillCaptureHold` stays. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
-- Mockup **density**: pad + Starship, solar field, extractors, leftover Workshop / Inn / wonder, extra HAB sockets, junction turrets. Units remain optional (do not invent new unit systems). Fidelity vs the visual target still needs a GD still.
+- **Campus Game-tab still (spaced overseer)** — latest archived Game-tab is still6 (empty Sol 1). still21 leftover=inn+wonder extraHab/solar/defense is **not** a VisualTarget density gate. This pass is **code only**: CaptureStill prefers play ortho 10; leftover kits may stamp; interior dirt is not force-filled. `StillCaptureHold` stays. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
+- Landmark kits (pad + Starship, solar, extractors, leftover Workshop / Inn / wonder) may appear when they CanFit. Do not fill every dirt patch. Units remain optional (do not invent new unit systems).
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; tubes are dressing)
 - IMGUI HUD vs painted mockup chrome (material language shipped; painted fidelity is leftover)
@@ -209,4 +212,4 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 
 ## Ready for Phase 5
 
-**No.** Latest Game-tab still is `SM_MarsCampaign_PlayModeCampusStill6.png` (empty Mars Sol 1, pad in the corner — not a packed campus). Still5 exists; packed editor still is `SM_MarsCampaign_PackedCampusStill.png` (`Camera.Render`, no HUD). None of these stamp exit. Remaining work is still visual-target, not ship polish. Next work stays [`05_PHASE_4_VISUAL_TARGET.md`](05_PHASE_4_VISUAL_TARGET.md). Do not start Phase 5 as the main slice. After a true exit: [`06_PHASE_5_PRODUCTION_VALUES_SHIP.md`](06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
+**No.** Latest archived Game-tab still is `SM_MarsCampaign_PlayModeCampusStill6.png` (empty Mars Sol 1). Still5 exists; packed editor still is `SM_MarsCampaign_PackedCampusStill.png` (`Camera.Render`, no HUD) — not the look claim. None of these stamp exit. Remaining work is the spaced overseer still, not ship polish. Next work stays [`05_PHASE_4_VISUAL_TARGET.md`](05_PHASE_4_VISUAL_TARGET.md). Do not start Phase 5 as the main slice. After a true exit: [`06_PHASE_5_PRODUCTION_VALUES_SHIP.md`](06_PHASE_5_PRODUCTION_VALUES_SHIP.md).

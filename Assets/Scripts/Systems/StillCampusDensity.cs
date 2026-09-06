@@ -4,18 +4,13 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Phase 4 CaptureStill density pack: pad + PWR-1 + water/regolith extractors
-    /// around Commons→airlock→HAB, then leftover Workshop / Inn / wonder when they
-    /// <see cref="BuildingPlacer.CanFitRect"/>. Forward yards use CanFit only —
-    /// ExtraPlacementRule would send pad/solar/extract to Campus B (~30 m) or demand
-    /// an airlock dock, both of which miss play ortho 10. still20 leftover=workshop
-    /// left Inn / wonder / extraSolar / defense off the pack (second hangar ate the
-    /// sockets). Leftovers now keep placing Village Inn + a wonder when they CanFit;
-    /// cues stamp extra solar + Defense Battery in packed pockets. still21 leftover
-    /// inn+wonder + extraHab/solar/defense signed the density gate, but empty dirt
-    /// still sat between pad and extractors. Interior HAB sockets fill those cells
-    /// without growing the AABB; still camera insets the packed frame (play snap
-    /// stays <see cref="PlayCampusOrthoSize"/>).
+    /// Phase 4 CaptureStill campus: Commons→airlock→HAB plus pad / PWR-1 /
+    /// water/regolith extractors when they <see cref="BuildingPlacer.CanFitRect"/>.
+    /// Leftover Workshop / Inn / wonder may stamp when they CanFit — they are not
+    /// required to max-pack the frame. Forward yards use CanFit only.
+    /// Empty dirt is OK (spaced Majesty-2 overseer still). Do not fill every
+    /// interior 4×4 or crop the AABB to chase retired VisualTarget density.
+    /// Play snap stays <see cref="PlayCampusOrthoSize"/>.
     /// Does not flip spawnShowcaseColony. Does not reference Runtime ColonyLayout.
     /// </summary>
     public static class StillCampusDensity
@@ -44,26 +39,27 @@ namespace SolarMajesty
 
         /// <summary>
         /// Play snap (Runtime aliases this as ColonyLayout.CampusOrthoSize).
-        /// Still snap clamps to <see cref="StillMaxOrtho"/>, not this.
+        /// CaptureStill uses this same ortho so the still is a readable spaced campus.
         /// </summary>
         public const float PlayCampusOrthoSize = 10f;
 
         /// <summary>
-        /// still21 empty-dirt vista: crop one cell of AABB dirt so the still hugs
-        /// the packed campus. Play snap stays <see cref="PlayCampusOrthoSize"/>.
+        /// No AABB crop — empty dirt around the cluster stays in frame.
+        /// Play snap stays <see cref="PlayCampusOrthoSize"/>.
         /// </summary>
-        public const int StillFrameInsetCells = 1;
+        public const int StillFrameInsetCells = 0;
 
         /// <summary>Floor so a Commons-only AABB cannot punch through minZoom.</summary>
         public const float StillMinOrtho = 7.25f;
 
-        /// <summary>Interior under-construction HAB sockets that fill packed dirt.</summary>
+        /// <summary>
+        /// Planner cap only. CaptureStill does not force-fill interior dirt.
+        /// </summary>
         public const int MaxInteriorHabSockets = 6;
 
         /// <summary>
-        /// Ceiling for the still snap. Play snap stays <see cref="PlayCampusOrthoSize"/>.
-        /// still19 skip-frame used 9 and left leftover kits off-camera; leftover
-        /// packs may fill this budget so Workshop / Inn / wonder stay in frame.
+        /// Ceiling for any leftover AABB math. CaptureStill stills use
+        /// <see cref="PlayCampusOrthoSize"/> (10).
         /// </summary>
         public const float StillMaxOrtho = 10f;
 
@@ -557,10 +553,10 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Extra HAB chain (new airlock + HAB), second solar bank, Defense Battery,
-        /// then interior HAB sockets that fill empty dirt inside the packed AABB.
-        /// still21 leftover=inn+wonder extraSolar/defense stay — sockets do not
-        /// steal those yards. Occupies like <see cref="Plan"/>.
+        /// Extra HAB chain (new airlock + HAB), optional second solar bank and
+        /// Defense Battery when they CanFit. Does <b>not</b> fill interior dirt
+        /// with HAB sockets — empty ground is the spaced-overseer look.
+        /// Occupies like <see cref="Plan"/>.
         /// </summary>
         public static CuePlan PlanCues(
             BuildingPlacer placer,
@@ -602,9 +598,8 @@ namespace SolarMajesty
                 cues.DefenseOrigin = def;
             }
 
-            cues.HabSocketCount = FillInteriorSockets(
-                placer, commons, MaxInteriorHabSockets, bounds, out cues.HabSocketOrigin);
-            cues.HabSocket = cues.HabSocketCount > 0;
+            cues.HabSocketCount = 0;
+            cues.HabSocket = false;
             return cues;
         }
 
@@ -781,8 +776,8 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Packed still frame: inset the campus AABB so Game-tab dirt around the
-        /// cluster is cropped. Does not change play <see cref="PlayCampusOrthoSize"/>.
+        /// Still frame is the live campus AABB. No dirt crop — play
+        /// <see cref="PlayCampusOrthoSize"/> keeps empty ground readable.
         /// </summary>
         public static bool TryStillFrameAabb(
             BuildingPlacer placer, out Vector2Int min, out Vector2Int maxExclusive)
@@ -813,9 +808,8 @@ namespace SolarMajesty
             new Vector2((min.x + maxExclusive.x) * 0.5f, (min.y + maxExclusive.y) * 0.5f);
 
         /// <summary>
-        /// still18 at play ortho 10 left a ~27×15 m pack in a ~48×20 m Game tab.
-        /// Fit the iso 30°/45° ground AABB with a tight pad. leftover packs may
-        /// reach <see cref="StillMaxOrtho"/> (play snap stays 10).
+        /// Spaced overseer still: use play campus ortho. Do not zoom in to pack
+        /// the AABB into the Game tab.
         /// </summary>
         public static float FitStillOrtho(
             Vector2Int min,
@@ -823,15 +817,19 @@ namespace SolarMajesty
             float cellSize,
             float aspect)
         {
-            HalfExtents(min, maxExclusive, cellSize, out float halfX, out float halfZ);
-            return Mathf.Clamp(RawStillOrtho(halfX, halfZ, aspect), StillMinOrtho, StillMaxOrtho);
+            _ = min;
+            _ = maxExclusive;
+            _ = cellSize;
+            _ = aspect;
+            return PlayCampusOrthoSize;
         }
 
         public static float FitStillOrtho(BuildingPlacer placer, float cellSize, float aspect)
         {
-            if (!TryStillFrameAabb(placer, out Vector2Int min, out Vector2Int max))
-                return PlayCampusOrthoSize;
-            return FitStillOrtho(min, max, cellSize, aspect);
+            _ = placer;
+            _ = cellSize;
+            _ = aspect;
+            return PlayCampusOrthoSize;
         }
 
         /// <summary>Unclamped iso fit — tests use this to describe leftover AABB growth.</summary>
@@ -874,8 +872,7 @@ namespace SolarMajesty
             // Unity iso (30, 45, 0): camera.up.xz ≈ 0.35, camera.right.xz ≈ 0.71.
             const float isoUp = 0.36f;
             const float isoRight = 0.707f;
-            // still21 dirt vista: tighter pad so the packed AABB fills the Game tab.
-            const float pad = 0.48f;
+            const float pad = 0.85f;
             float byHeight = isoUp * (halfX + halfZ) + pad;
             aspect = Mathf.Max(1.05f, aspect);
             float byWidth = (isoRight * (halfX + halfZ) + pad) / aspect;
