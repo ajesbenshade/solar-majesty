@@ -212,8 +212,10 @@ namespace SolarMajesty
                     Cyan, Quaternion.Euler(0f, i * 45f, 0f), CyanEmit);
             }
 
-            // Cardinal hull ports — same Y/bore as DockSleeve / airlock arms.
-            // RefreshTubes shows docked faces only. Unused cardinals stay clean.
+            // Cardinal hull ports (CommonsPort_N/E/S/W). Live groups start off.
+            // RefreshTubes shows docked faces only — still5 unused orange rings
+            // were these drum ports, not CommonsStub / DockSleeve leftovers.
+            // SM_Hero_Commons FBX is skipped (joined stubs cannot hide per face).
             PlaceCardinalHullPorts(root, "CommonsPort", w, d, BuildingCategory.Commons);
 
             Prim(root, "CommonsSeamRing_0", PrimitiveType.Cylinder,
@@ -1282,7 +1284,7 @@ namespace SolarMajesty
         {
             float hull = HullDistance(cat, w, d, dir);
             if (hull < 0.15f) return;
-            ColonyVisualUtility.PlaceHullPort(root, name, dir, hull);
+            ColonyVisualUtility.PlaceHullPort(root, name, dir, hull, startActive: false);
         }
 
         /// <summary>

@@ -9,9 +9,10 @@ namespace SolarMajesty
     /// Junction turrets sit on airlock hubs (ColonyVisualUtility).
     /// Airlock hubs are panel-lined square primitives; docks stay Lego.
     /// Round tube cladding spans hub → module hull on a shared DockY / DockBore.
-    /// RefreshTubes hides every stub and hull port first, then enables docked faces only
+    /// RefreshTubes hides every stub and hull-drum port first, then enables docked faces only
     /// (white tube + one orange collar). Unused Commons / HAB / LAB / PWR sockets stay clean.
-    /// Live dock sleeves start off so FindPieceGo misses cannot leave orange stubs showing.
+    /// Live dock sleeves and CommonsPort groups start off so FindPieceGo misses cannot
+    /// leave still5-style orange rings showing. No CampusTubeRoot corridor is spawned.
     /// </summary>
     public static class CampusDressing
     {
@@ -177,6 +178,50 @@ namespace SolarMajesty
         }
 
         /// <summary>
+        /// Group-root names RefreshTubes toggles. still5 leftover orange rings were
+        /// CommonsPort / HabPort hull-drum collars — not only Dress_TubeArm / DockSleeve
+        /// / CommonsStub. Children (_Tube / _Ring / _Well / _Collar) stay parented;
+        /// toggling them independently leaves Unity activeSelf stuck off when the group
+        /// turns back on.
+        /// </summary>
+        public static bool IsDockDressName(string n)
+        {
+            if (string.IsNullOrEmpty(n)) return false;
+            return n.StartsWith("Dress_TubeArm")
+                || n.StartsWith("DockSleeve")
+                || n.StartsWith("CommonsStub")
+                || n.StartsWith("CommonsPort")
+                || n.StartsWith("HabPort")
+                || n.StartsWith("LabPort")
+                || n.StartsWith("PwrPort")
+                || n.StartsWith("HullPort")
+                || n.StartsWith("DockPort")
+                || n.StartsWith("DrumPort")
+                || n.StartsWith("ModulePort")
+                || n.StartsWith("CardinalPort");
+        }
+
+        public static bool IsDockDressRoot(Transform t)
+        {
+            if (t == null || !IsDockDressName(t.name)) return false;
+            Transform p = t.parent;
+            return p == null || !IsDockDressName(p.name);
+        }
+
+        public static void SetLiveDockDressActive(Transform root, bool on)
+        {
+            if (root == null) return;
+            var ts = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < ts.Length; i++)
+            {
+                Transform t = ts[i];
+                if (t == null || t == root) continue;
+                if (IsDockDressRoot(t))
+                    t.gameObject.SetActive(on);
+            }
+        }
+
+        /// <summary>
         /// Unused cardinal sleeves read as orange hatches / leftover tubes. Hide every
         /// stub first, then enable only faces that actually dock. Find-misses leave
         /// unused arms off so the white square hub can read.
@@ -209,18 +254,25 @@ namespace SolarMajesty
                         south = true;
                 }
 
-                GameObject go = FindPieceGo(parent, PieceCenter(grid, module), null);
+                GameObject go = FindPieceGo(parent, PieceCenter(grid, module), ModuleHint(module.Category));
+                if (go == null)
+                    go = FindPieceGo(parent, PieceCenter(grid, module), null);
                 if (go == null) continue;
                 SetPrefixActive(go.transform, "DockSleeve_E", east);
                 SetPrefixActive(go.transform, "DockSleeve_W", west);
                 SetPrefixActive(go.transform, "DockSleeve_N", north);
                 SetPrefixActive(go.transform, "DockSleeve_S", south);
-                // Hull ports + DockSleeve: white tube hits the orange collar on docked
-                // faces only. Unused Commons / HAB / LAB / PWR sockets stay hidden.
+                // Hull drum ports + DockSleeve: white tube + one orange collar on
+                // docked faces only. still5 unused Commons rings were CommonsPort_*.
                 SetDockPorts(go.transform, "CommonsPort", north, east, south, west);
                 SetDockPorts(go.transform, "HabPort", north, east, south, west);
                 SetDockPorts(go.transform, "LabPort", north, east, south, west);
                 SetDockPorts(go.transform, "PwrPort", north, east, south, west);
+                SetDockPorts(go.transform, "HullPort", north, east, south, west);
+                SetDockPorts(go.transform, "DockPort", north, east, south, west);
+                SetDockPorts(go.transform, "DrumPort", north, east, south, west);
+                SetDockPorts(go.transform, "ModulePort", north, east, south, west);
+                SetDockPorts(go.transform, "CardinalPort", north, east, south, west);
             }
 
             for (int a = 0; a < pieces.Count; a++)
@@ -260,20 +312,21 @@ namespace SolarMajesty
             }
         }
 
+        private static string ModuleHint(BuildingCategory cat)
+        {
+            switch (cat)
+            {
+                case BuildingCategory.Commons: return "Commons";
+                case BuildingCategory.Habitat: return "Habitat";
+                case BuildingCategory.Laboratory: return "Lab";
+                case BuildingCategory.Power: return "Power";
+                default: return null;
+            }
+        }
+
         private static void HideAllDockDress(Transform parent)
         {
-            var ts = parent.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < ts.Length; i++)
-            {
-                Transform t = ts[i];
-                if (t == null || t == parent) continue;
-                string n = t.name;
-                if (n.StartsWith("Dress_TubeArm") || n.StartsWith("DockSleeve") ||
-                    n.StartsWith("CommonsStub") || n.StartsWith("CommonsPort") ||
-                    n.StartsWith("HabPort") || n.StartsWith("LabPort") ||
-                    n.StartsWith("PwrPort"))
-                    t.gameObject.SetActive(false);
-            }
+            SetLiveDockDressActive(parent, false);
         }
 
         private static GameObject FindPieceGo(Transform parent, Vector3 center, string preferContains)
@@ -328,7 +381,7 @@ namespace SolarMajesty
             {
                 Transform t = ts[i];
                 if (t == null || t == root) continue;
-                if (t.name.StartsWith(prefix))
+                if (t.name.StartsWith(prefix) && IsDockDressRoot(t))
                     t.gameObject.SetActive(on);
             }
         }

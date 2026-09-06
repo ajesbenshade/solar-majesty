@@ -74,7 +74,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 | Week 3 | Junction turrets; PWR-1 + solar-field landmark; Defense Battery bunker (not Commons) |
 | Week 4 | Commons rename; guild/lab/wonder dress; all ten specialists + seven fauna sheet-matched; Terraformer dozer |
 | Week 4 continued | Earth New Game meadow + cobalt sky; Workshop / Inn FBX; remaining Imagine JPGs; HAB/Commons/LAB/Power/pad sheet-match; **CMD-1 Guild / OPS-1 Mining**; airlock panel lines; HAB/LAB/Commons/CMD/OPS **panel bevels**; **dock sockets flush** at the Lego face |
-| This review | Editor Mars still + empty-Sol-1 Game-tab still + campus v1–v5 + **still6** (latest Game-tab: empty Sol 1, pad in corner) + packed editor `Camera.Render` still. Gameplay remains Overseer-only. **Not exited.** |
+| This review | Editor Mars still + empty-Sol-1 Game-tab still + campus v1–v5 + **still6** (latest Game-tab: empty Sol 1, pad in corner) + packed editor `Camera.Render` still. Look-kit hide pass for still5 unused `CommonsPort` rings (code only). Gameplay remains Overseer-only. **Not exited.** |
 
 **Play Mode fixes after campus v1 (visible in v2 only as geodesic dome + HUD; tubes/pads/hulls still failed)**
 - Stop overlaying greybox `SM_ModularTubeConnector` on the paneled airlock hub
@@ -103,7 +103,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 **Play Mode fixes after campus v4 (in code, not in that PNG)**
 - Airlock hub is a **smaller white paneled square** (~1.68 m in the 3 m cell) with inset face plates and carbon seams. The v4 2.4 m cube filled the cell and ate the tubes
 - Orange lives only on **one round collar at each docked Lego face**. Extra inset orange rings removed from `DockSleeve`
-- `RefreshTubes` **hides every** `Dress_TubeArm` / `DockSleeve` / `CommonsStub` first, then enables **only** docked `Dress_TubeArm` + `DockSleeve`. `CommonsStub` stays off for the life of the kit (that was the unused orange rib)
+- `RefreshTubes` **hides every** `Dress_TubeArm` / `DockSleeve` / `CommonsStub` / **hull drum port** (`CommonsPort` / `HabPort` / `LabPort` / `PwrPort` and aliases) first, then enables **only** docked faces. `CommonsStub` stays off. still5 unused orange rings were `CommonsPort_*` starting active — live groups now spawn hidden; only group roots toggle so `_Ring` children do not stick
 - No fourth `CampusTubeRoot` corridor — stacked orange collars in the 0.3 m gap were the HAB-join orange box
 - Short white joint = airlock stub (~0.64 m) + module sleeve lip (~0.30 m outset, 0.28 m inset — no punch-through)
 - Skip `IndustrialArtDressing` orange mapping on `airlock` names; `CommonsStub` / dock sleeves skipped
@@ -137,6 +137,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 
 **Not the PNG (leftovers even after the post-v4 Play Mode pass)**
 - Latest Game-tab is still6 (empty Sol 1), not a mockup campus close-up. Still5/packed exist; exit stays blocked.
+- **still5 failure modes this look-kit pass targets (code only — no new Game-tab still):** unused Commons cardinal orange **port ring** (`CommonsPort_*` hull-drum collar, not covered by the old `Dress_TubeArm` / `DockSleeve` / `CommonsStub` hide list); v4 orange box airlock + unused ribbed stub. Airlock hub stays a white paneled square; orange only at docked collars; no fourth `CampusTubeRoot` in the HAB gap. Needs a **fresh** Game-tab campus still before anyone restamps this review.
 - Tracked Defense Guardian vs the mockup’s bulky **biped walker**
 - Construction cranes are runtime dressing, not authored FBX
 - Status pips / aprons / dust-devils are primitive dressing
@@ -147,7 +148,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Campus Game-tab still vs mockup** — latest Game-tab is still6 (empty Sol 1, pad in the corner), not a packed campus close-up. Still5 has Commons but unused orange ports in that PNG. Packed still is editor `Camera.Render`, not HUD.
+- **Campus Game-tab still vs mockup** — latest Game-tab is still6 (empty Sol 1, pad in the corner), not a packed campus close-up. Still5 has Commons but unused orange port rings in that PNG (hull-drum `CommonsPort` leftover; hide list now covers those names). Packed still is editor `Camera.Render`, not HUD. **Do not treat this look-kit pass as exit.**
 - Mockup **density**: pad + Starship, solar field, extractors, units in the same frame
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; tubes are dressing)
@@ -160,7 +161,7 @@ Compared to the mockup. Honest split: HUD + Mars ground vs campus v4.
 ## How to smoke
 
 1. `Docs/SMOKE_TEST.md` Phase 4 sections (Earth meadow New Game, then **Shift+click MARS?** or Shift+F10 Mars). Empty Mars should show boulder/dune/crater vista + node outcrops + dens, not a tiled plane of cubes. `spawnShowcaseColony` stays false.
-2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **white paneled square hub** with **round white tubes + orange collars on docked faces only**, HAB cylinder + Commons dome that stay **readable white** against the red ground, **no grey hex slabs**, camera snapping to ortho 5.5 on the campus centroid (hopper spawn must not pan or zoom out). Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots.
+2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **white paneled square hub** with **round white tubes + orange collars on docked faces only**, **no unused CommonsPort / CommonsStub rings** on undocked cardinals, HAB cylinder + Commons dome that stay **readable white** against the red ground, **no grey hex slabs**, camera snapping to campus ortho **10** (hopper spawn must not pan or zoom out). Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots.
 3. Menu **Solar Majesty → Capture Mars Still** (or `-executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CaptureMarsStill`) regenerates the editor PNG only — not a HUD still.
 
 ---
