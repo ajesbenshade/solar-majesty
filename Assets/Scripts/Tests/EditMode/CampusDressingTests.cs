@@ -413,6 +413,24 @@ namespace SolarMajesty.Tests
                 StillCampusDensity.Opposite(BuildingPlacer.Cardinal.East));
         }
 
+        [Test]
+        public void StillCampusDensity_GridConstants_MatchColonyLayout()
+        {
+            Assert.AreEqual(ColonyLayout.DefaultCellSize, StillCampusDensity.DefaultCellSize);
+            Assert.AreEqual(ColonyLayout.CampusOrthoSize, StillCampusDensity.PlayCampusOrthoSize);
+            Assert.AreEqual(1.5f, StillCampusDensity.DefaultCellSize);
+            Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
+        }
+
+        [Test]
+        public void FitStillOrtho_EmptyPlacer_FallsBackToPlayCampusOrtho()
+        {
+            Assert.AreEqual(
+                StillCampusDensity.PlayCampusOrthoSize,
+                StillCampusDensity.FitStillOrtho(
+                    null, StillCampusDensity.DefaultCellSize, StillCampusDensity.GameTabAspect));
+        }
+
         private static BuildingPlacer StampEastChain(out BuildingPlacer.CampusPiece commons)
         {
             var placer = new BuildingPlacer(new ResourceManager());

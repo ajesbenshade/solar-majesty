@@ -9,7 +9,7 @@ namespace SolarMajesty
     public static class ColonyLayout
     {
         /// <summary>Must match IsoGrid default so Lego docks and visuals share one meter grid.</summary>
-        public const float DefaultCellSize = 1.5f;
+        public const float DefaultCellSize = StillCampusDensity.DefaultCellSize;
 
         /// <summary>Original sandbox was 64 cells (96 m). 256 cells at 1.5 m = 384 m → 16× area.</summary>
         public const int MapCells = 256;
@@ -110,7 +110,7 @@ namespace SolarMajesty
         /// Iso on Commons plus room to place pad/solar/airlock. Empty-drop ortho 16 is
         /// only the pre-Commons fallback — first drop and Continue snap here, never 16.
         /// </summary>
-        public const float CampusOrthoSize = 10f;
+        public const float CampusOrthoSize = StillCampusDensity.PlayCampusOrthoSize;
 
         public static float PlayOrtho(bool campusPlaced) =>
             campusPlaced ? CampusOrthoSize : CameraOrthoSize;

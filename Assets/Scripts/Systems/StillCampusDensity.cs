@@ -22,9 +22,21 @@ namespace SolarMajesty
 
         /// <summary>
         /// CaptureStill Game-tab is short-wide (~2.4). Play snap stays
-        /// <see cref="ColonyLayout.CampusOrthoSize"/> (10) so the player can place yards.
+        /// <see cref="PlayCampusOrthoSize"/> (10) so the player can place yards.
         /// </summary>
         public const float GameTabAspect = 2.4f;
+
+        /// <summary>
+        /// Must match IsoGrid default so still AABB math uses the same meter grid.
+        /// Lives here (Systems) — Runtime <c>ColonyLayout</c> is not visible to this assembly.
+        /// </summary>
+        public const float DefaultCellSize = 1.5f;
+
+        /// <summary>
+        /// Play snap (Runtime aliases this as ColonyLayout.CampusOrthoSize).
+        /// Still snap clamps to <see cref="StillMaxOrtho"/>, not this.
+        /// </summary>
+        public const float PlayCampusOrthoSize = 10f;
 
         /// <summary>Floor so a Commons-only AABB cannot punch through minZoom.</summary>
         public const float StillMinOrtho = 7.25f;
@@ -312,7 +324,7 @@ namespace SolarMajesty
             BuildingPlacer.CampusPiece commons,
             BuildingPlacer.Cardinal habFace,
             BoundsOk bounds = null,
-            float cellSize = ColonyLayout.DefaultCellSize,
+            float cellSize = DefaultCellSize,
             float aspect = GameTabAspect)
         {
             var leftovers = new LeftoverPlan { SkipReason = "none" };
@@ -382,7 +394,7 @@ namespace SolarMajesty
         public static float FitStillOrtho(BuildingPlacer placer, float cellSize, float aspect)
         {
             if (!TryCampusAabb(placer, out Vector2Int min, out Vector2Int max))
-                return ColonyLayout.CampusOrthoSize;
+                return PlayCampusOrthoSize;
             return FitStillOrtho(min, max, cellSize, aspect);
         }
 
