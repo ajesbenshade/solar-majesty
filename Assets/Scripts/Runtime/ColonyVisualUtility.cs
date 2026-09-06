@@ -365,15 +365,31 @@ namespace SolarMajesty
 
             // Proud orange ring on the hub face — still18 hid the Lego-face sliver
             // in the HAB join. Child of the arm so unused faces stay clean plates.
-            Vector3 hubRingPos = dir * (hubClear + 0.03f) + new Vector3(0f, y, 0f);
+            Vector3 hubRingPos = dir * (hubClear + 0.04f) + new Vector3(0f, y, 0f);
             var hubRing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             hubRing.name = name + "_HubCollar";
             hubRing.transform.SetParent(group.transform, false);
             hubRing.transform.localPosition = hubRingPos;
             hubRing.transform.localRotation = rot;
-            hubRing.transform.localScale = new Vector3(diameter * 1.38f, 0.085f, diameter * 1.38f);
+            hubRing.transform.localScale = new Vector3(diameter * 1.55f, 0.11f, diameter * 1.55f);
             Object.Destroy(hubRing.GetComponent<Collider>());
             TintPrimitive(hubRing, HubOrange, HubOrangeEmit);
+
+            // Square orange collar plate — still19 cube-ish miss: the hub must
+            // read as a multi-face joint, not a small white fridge.
+            Vector3 framePos = dir * (hubClear - 0.01f) + new Vector3(0f, y, 0f);
+            bool ns = Mathf.Abs(dir.z) >= Mathf.Abs(dir.x);
+            Vector3 frameScale = ns
+                ? new Vector3(diameter * 1.22f, diameter * 1.22f, 0.07f)
+                : new Vector3(0.07f, diameter * 1.22f, diameter * 1.22f);
+            var faceFrame = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            faceFrame.name = name + "_FaceFrame";
+            faceFrame.transform.SetParent(group.transform, false);
+            faceFrame.transform.localPosition = framePos;
+            faceFrame.transform.localRotation = Quaternion.identity;
+            faceFrame.transform.localScale = frameScale;
+            Object.Destroy(faceFrame.GetComponent<Collider>());
+            TintPrimitive(faceFrame, HubOrange, HubOrangeEmit);
 
             // One orange collar at the cell face — the docked Lego joint.
             Vector3 collarPos = dir * (face - 0.04f) + new Vector3(0f, y, 0f);
