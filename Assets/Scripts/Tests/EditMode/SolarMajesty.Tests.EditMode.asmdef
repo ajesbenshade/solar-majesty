@@ -3,6 +3,7 @@
     "rootNamespace": "SolarMajesty.Tests",
     "references": [
         "SolarMajesty.Systems",
+        "SolarMajesty.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

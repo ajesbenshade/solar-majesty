@@ -93,8 +93,10 @@ namespace SolarMajesty
                 BuildDeck(root.transform, worldW, worldD);
             BuildCore(root.transform, category, worldW * HullFill, worldD * HullFill);
             AttachCardinalAirlocks(root.transform, category, worldW * 0.5f, worldD * 0.5f, ghost);
-            if (!ghost)
-                HideLiveDockDress(root.transform);
+            if (ghost)
+                CampusDressing.SetLiveDockDressActive(root.transform, true);
+            else
+                CampusDressing.SetLiveDockDressActive(root.transform, false);
 
             ColonyVisualUtility.EnsureUrpMaterials(root);
             // Do not SetTintOverlay here — MPB _BaseColor replaces orange/cyan/carbon
@@ -322,21 +324,6 @@ namespace SolarMajesty
                 new Vector3(0f, 0.08f, 0f),
                 new Vector3(w, 0.16f, d),
                 new Color(0.82f, 0.48f, 0.18f));
-        }
-
-        private static void HideLiveDockDress(Transform root)
-        {
-            var ts = root.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < ts.Length; i++)
-            {
-                Transform t = ts[i];
-                if (t == null || t == root) continue;
-                string n = t.name;
-                if (n.StartsWith("CommonsStub") || n.StartsWith("CommonsPort") ||
-                    n.StartsWith("HabPort") || n.StartsWith("LabPort") ||
-                    n.StartsWith("PwrPort"))
-                    t.gameObject.SetActive(false);
-            }
         }
 
         private static void AttachCardinalAirlocks(

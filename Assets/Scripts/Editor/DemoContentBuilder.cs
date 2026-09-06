@@ -457,6 +457,7 @@ namespace SolarMajesty.EditorTools
             habData.category = BuildingCategory.Habitat;
             CampusDressing.DressPlaced(commonsData, commons, mars);
             CampusDressing.DressPlaced(habData, hab, mars);
+            RefreshCaptureDocks(grid, buildings.transform, o);
 
             int w = 1920;
             int h = 1080;
@@ -586,6 +587,7 @@ namespace SolarMajesty.EditorTools
             Dress(BuildingCategory.Power, pwr);
             Dress(BuildingCategory.Farm, farm);
             Dress(BuildingCategory.RegolithCamp, camp);
+            RefreshCaptureDocks(grid, buildings.transform, o);
 
             int w = 1920;
             int h = 1080;
@@ -632,6 +634,31 @@ namespace SolarMajesty.EditorTools
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(sunGo);
             Object.DestroyImmediate(camGo);
+        }
+
+        /// <summary>
+        /// Hide unused CommonsPort / sleeves, then enable the capture spine's
+        /// docked north face only. Does not write a Game-tab still.
+        /// </summary>
+        private static void RefreshCaptureDocks(IsoGrid grid, Transform buildings, Vector3 commonsCenter)
+        {
+            if (grid == null || buildings == null) return;
+            var placer = new BuildingPlacer(new ResourceManager());
+            Vector2Int c0 = OriginFromCenter(grid, commonsCenter, 6);
+            Vector2Int a0 = OriginFromCenter(grid, commonsCenter + new Vector3(0f, 0f, 6f), 2);
+            Vector2Int h0 = OriginFromCenter(grid, commonsCenter + new Vector3(0f, 0f, 10.5f), 4);
+            placer.RegisterPiece(c0, 6, 6, BuildingCategory.Commons);
+            placer.RegisterPiece(a0, 2, 2, BuildingCategory.Utility);
+            placer.RegisterPiece(h0, 4, 4, BuildingCategory.Habitat);
+            CampusDressing.RefreshTubes(placer, grid, buildings);
+        }
+
+        private static Vector2Int OriginFromCenter(IsoGrid grid, Vector3 center, int side)
+        {
+            float cs = grid.CellSize;
+            int span = Mathf.Max(1, side);
+            Vector3 corner = center - new Vector3((span - 1) * 0.5f * cs, 0f, (span - 1) * 0.5f * cs);
+            return grid.WorldToCell(corner);
         }
     }
 }

@@ -192,8 +192,10 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// White paneled 2×2 square hub. Round white stubs + orange collars only on
-        /// docked faces (live arms start hidden). Not a hex, not an orange box.
+        /// White paneled 2×2 square hub (cell-safe ~1.68 m). Round white stubs + one
+        /// orange collar only on docked faces (live arms start hidden). Not a hex,
+        /// not a wrap-around orange door box. RefreshTubes never stacks a fourth
+        /// CampusTubeRoot corridor in the HAB gap.
         /// </summary>
         public static GameObject SpawnPlusConnector(
             Vector3 position, Transform parent, float worldSpan, bool showAllArms = false)
@@ -359,9 +361,11 @@ namespace SolarMajesty
         /// <summary>
         /// Orange collar + graphite well on a hull face at DockY / DockBore.
         /// Group name is the toggle prefix (HabPort_N, CommonsPort_E, …).
+        /// Live groups start hidden — unused cardinals were the still5 orange rings.
+        /// RefreshTubes enables docked faces only (white sleeve + one collar).
         /// </summary>
         public static GameObject PlaceHullPort(
-            Transform parent, string name, Vector3 outward, float hullDist, bool startActive = true)
+            Transform parent, string name, Vector3 outward, float hullDist, bool startActive = false)
         {
             Vector3 dir = outward.normalized;
             Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);

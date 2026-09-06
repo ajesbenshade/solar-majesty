@@ -1,6 +1,6 @@
 # Phase 4 – Visual Target (Art Production)
 
-**Status:** In progress — **exit blocked** ([PHASE_4_EXIT.md](PHASE_4_EXIT.md)). Dock sockets flush; HAB / Commons / LAB / CMD-1 / OPS-1 panel bevels in. An **editor** Mars still exists (`SM_MarsCampaign_EditorStill.png`) — Commons + airlock + HAB, no HUD. Empty Game-tab still (`SM_MarsCampaign_PlayModeStill.png`) plus campus v1–**v4** (`SM_MarsCampaign_PlayModeCampusStill4.png`) — geodesic Commons + HAB cylinder, **no hex pads**, **no hopper chip**, whiter hulls; **orange box airlock** + unused orange stub + Game-tab vista still **fail** the mockup. Code after v4 (smaller paneled hub, no CommonsStub, snap 5.5) is **not** in that PNG. Phase 4 is **not** complete. **Not ready for Phase 5.**  
+**Status:** In progress — **exit blocked** ([PHASE_4_EXIT.md](PHASE_4_EXIT.md)). Dock sockets flush; HAB / Commons / LAB / CMD-1 / OPS-1 panel bevels in. An **editor** Mars still exists (`SM_MarsCampaign_EditorStill.png`) — Commons + airlock + HAB, no HUD. Empty Game-tab still (`SM_MarsCampaign_PlayModeStill.png`) plus campus v1–**v5** (`SM_MarsCampaign_PlayModeCampusStill5.png`) — geodesic Commons + HAB; **still5 unused orange Commons port rings** are the leftover this look-kit pass hides (`CommonsPort_*` start off; RefreshTubes enables docked faces only). Campus v4 showed orange box airlock + unused ribbed stub. Latest Game-tab is still6 (empty Sol 1). Phase 4 is **not** complete. **Not ready for Phase 5.**  
 **Duration:** 8–12 weeks  
 **Goal:** Make the Mars-campaign concept-art mockup the real in-game look — environment, modular campus, hero unit meshes, construction juice, and Overseer HUD chrome — without changing the control model.
 
@@ -12,7 +12,7 @@ Current greybox / Lego airlocks / blockout robots are **not** this look. Phase 4
 
 **Week 4 (in):** Player-facing **Palace → Colony Commons** (HUD **COMMONS**). Guild Hall / Laboratory / Climate Loom / Aegis Spire / Deep Archive industrial dress. Medic hover-stretcher, Harvester tracked scoop, Surveyor tripod, Courier six-wheel hauler, Sentinel dual-barrel turret remesh.
 
-**Week 4 continued (this slice):** Campus Game-tab stills v1–**v4** (`SM_MarsCampaign_PlayModeCampusStill4.png`) plus Play Mode fixes for v4 (white paneled hub, hide-all unused stubs, orange collars at joints only, snap zoom 5.5, no fauna pan). Empty-Sol-1 still stays archived. Honest notes below — **not** a Phase 4 exit.
+**Week 4 continued (this slice):** Campus Game-tab stills v1–**v6** plus a look-kit hide pass for still5 unused Commons hull-drum ports (`CommonsPort_*` / aliases). White paneled hub; orange collars on docked faces only; no fourth `CampusTubeRoot`. Empty-Sol-1 still6 stays archived. Honest notes below — **not** a Phase 4 exit.
 
 ---
 
@@ -196,7 +196,7 @@ Compared to `SM_MarsCampaign_VisualTarget.png`. Code/dressing was read against `
 - Landing pad: extra yellow tier ring under the Starship stack
 
 **Still greybox / not the PNG**
-- Campus Game-tab still v4 (`SM_MarsCampaign_PlayModeCampusStill4.png`): geodesic Commons + HAB cylinder, **no grey hex pads**, **no idle hopper chip**, hulls whiter than v3 — but **orange box airlock**, unused orange ribbed stub, square hub not readable, camera closer than v3 but still a Game-tab vista. Play Mode code after v4 (not in that PNG): **smaller** paneled hub so short white tubes can exist; CommonsStub never shown; no stacked orange corridor; scene minZoom 4.5 so snap 5.5 lands; Mars BindBody stays sheet-white. Needs a **fresh** Game-tab look — do not stamp v4.
+- Campus Game-tab still v4 (`SM_MarsCampaign_PlayModeCampusStill4.png`): geodesic Commons + HAB cylinder, **no grey hex pads**, **no idle hopper chip**, hulls whiter than v3 — but **orange box airlock**, unused orange ribbed stub, square hub not readable. still5 (`SM_MarsCampaign_PlayModeCampusStill5.png`): unused Commons cardinal still shows an orange **port ring**. Play Mode code after those PNGs: hull drum ports (`CommonsPort_*`) start hidden; RefreshTubes enables docked faces only (white sleeve + one collar); smaller paneled hub; no CommonsStub; no stacked `CampusTubeRoot`. Needs a **fresh** Game-tab look — do not stamp v4/v5.
 - Construction cranes stay runtime dressing (not authored FBX)
 - Earth vista trees/pond/grass are primitive dressing (readable at iso, not a heightmap / photogrammetry biome)
 - Hero building FBX (`SM_Hero_*`) now sits under the procedural kits. HAB / Commons / LAB / Power / pad match the ConceptSheets at RTS scale (not the sheet's 8×12 m / 40 m / 122 m numbers — footprints stay 4×4 / 6×6). HAB / Commons / LAB / CMD-1 / OPS-1 hulls are **panel-lined** (bevelled boxes + carbon seams), not smooth primitives. CMD-1 is **Guild Hall dress** (not Commons); OPS-1 is the **Mining** annex. Defense bunker is labeled **Defense Battery**, not Command.
