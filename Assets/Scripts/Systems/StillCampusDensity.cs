@@ -808,8 +808,22 @@ namespace SolarMajesty
             new Vector2((min.x + maxExclusive.x) * 0.5f, (min.y + maxExclusive.y) * 0.5f);
 
         /// <summary>
-        /// Spaced overseer still: use play campus ortho. Do not zoom in to pack
-        /// the AABB into the Game tab.
+        /// Widest the still may pull back. The locked concept frames ~60 m of regolith around
+        /// the campus; ortho 15 on a 1.5 Game tab is ~45 m wide, which keeps kits readable.
+        /// </summary>
+        public const float ConceptStillOrthoMax = 15f;
+
+        /// <summary>
+        /// Fraction of the frame the campus AABB should occupy (iso-projected). 0.55 leaves the
+        /// concept's empty dirt, rocks and yards on every side instead of hulls touching the edge.
+        /// </summary>
+        public const float ConceptCampusFill = 0.55f;
+
+        /// <summary>
+        /// Spaced overseer still: pull back so the campus fills ~55 % of the frame with dirt
+        /// around it (Dream Loop pass 2 — the ortho-10 capture had hulls touching every edge
+        /// and no ground in shot). Never zooms in past play <see cref="PlayCampusOrthoSize"/>;
+        /// never past <see cref="ConceptStillOrthoMax"/>.
         /// </summary>
         public static float FitStillOrtho(
             Vector2Int min,
@@ -817,19 +831,15 @@ namespace SolarMajesty
             float cellSize,
             float aspect)
         {
-            _ = min;
-            _ = maxExclusive;
-            _ = cellSize;
-            _ = aspect;
-            return PlayCampusOrthoSize;
+            float raw = RawStillOrtho(min, maxExclusive, cellSize, aspect);
+            return Mathf.Clamp(raw / ConceptCampusFill, PlayCampusOrthoSize, ConceptStillOrthoMax);
         }
 
         public static float FitStillOrtho(BuildingPlacer placer, float cellSize, float aspect)
         {
-            _ = placer;
-            _ = cellSize;
-            _ = aspect;
-            return PlayCampusOrthoSize;
+            if (!TryStillFrameAabb(placer, out Vector2Int min, out Vector2Int max))
+                return PlayCampusOrthoSize;
+            return FitStillOrtho(min, max, cellSize, aspect);
         }
 
         /// <summary>Unclamped iso fit — tests use this to describe leftover AABB growth.</summary>
