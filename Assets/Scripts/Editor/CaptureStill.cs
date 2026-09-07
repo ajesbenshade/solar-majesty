@@ -9,8 +9,9 @@ namespace SolarMajesty.EditorTools
 {
     /// <summary>
     /// Enters play mode, lets the world settle, and writes a PNG. This is the evidence loop for the
-    /// Phase 4 exit review: every look milestone ends with a fresh spaced-overseer still
-    /// (empty dirt OK), captured the same way each time rather than by hand at an arbitrary camera.
+    /// Phase 4 look brief (Aaron 2026-09-07): spaced-overseer still vs
+    /// SM_MarsCampus_SpacedOverseer_Concept.png — no interconnect tube webs,
+    /// empty dirt OK. Does not stamp Phase 4 EXIT. Same shutter each time.
     /// </summary>
     public static class CaptureStill
     {
@@ -184,7 +185,7 @@ namespace SolarMajesty.EditorTools
                     return;
 
                 case 3:
-                    // Tubes / camera snap after the stamp.
+                    // Dock ports / camera snap after the stamp. No tube-run webs.
                     if (++_frames < 90) return;
                     ArmStillHold();
                     var ready = UnityEngine.Object.FindFirstObjectByType<GameLoop>();

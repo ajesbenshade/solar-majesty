@@ -402,47 +402,41 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_LeftoverKits_StampWhenTheyCanFit()
+        public void DensePack_LeftoverKits_DoNotStampWhenTheyCanFit()
         {
             var placer = StampEastChain(out var commons);
             StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
 
             Assert.IsTrue(StillCampusDensity.TryNext(
-                placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out Vector2Int shop),
+                placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out _),
                 "workshop 4×4 still CanFit after pad+yards");
             Assert.IsTrue(StillCampusDensity.TryNext(
-                placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null, out Vector2Int wonder),
+                placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null, out _),
                 "a 6×6 wonder still CanFit near Commons");
 
             var leftovers = StillCampusDensity.PlanLeftovers(
                 placer, commons, BuildingPlacer.Cardinal.East);
-            Assert.IsTrue(leftovers.Workshop, "still19 skip-frame must not drop a CanFit workshop");
-            Assert.IsTrue(leftovers.Inn, "still19 skip-frame must not drop a CanFit inn");
-            Assert.IsTrue(leftovers.Wonder, "still19 skip-frame must not drop a CanFit wonder");
-            Assert.AreEqual("workshop+inn+wonder", leftovers.SkipReason);
-            Assert.AreNotEqual("skip-frame", leftovers.SkipReason);
-            Assert.Greater(placer.Pieces.Count, 7, "PlanLeftovers occupies leftover footprints");
-            Assert.IsFalse(
-                RectsOverlap(leftovers.WorkshopOrigin, 4, 4, leftovers.InnOrigin, 4, 4));
-            Assert.IsFalse(
-                RectsOverlap(leftovers.WorkshopOrigin, 4, 4, leftovers.WonderOrigin, 6, 6));
-            Assert.IsFalse(
-                RectsOverlap(leftovers.InnOrigin, 4, 4, leftovers.WonderOrigin, 6, 6));
+            Assert.IsFalse(leftovers.Inn, "Aaron 2026-09-07: leftover Inn is not a still density gate");
+            Assert.IsFalse(leftovers.Wonder, "Aaron 2026-09-07: leftover wonder is not a still density gate");
+            Assert.IsFalse(leftovers.Workshop, "Aaron 2026-09-07: leftover hangar is not a still density gate");
+            Assert.AreEqual("spaced", leftovers.SkipReason);
+            Assert.AreEqual(7, placer.Pieces.Count, "PlanLeftovers must not occupy leftover footprints");
 
             var log = StillCampusDensity.StampLog.FromPieces(placer, leftovers.SkipReason);
-            Assert.IsTrue(log.Workshop);
-            Assert.IsTrue(log.Inn);
-            Assert.IsTrue(log.Wonder);
-            Assert.AreEqual("workshop+inn+wonder", log.Leftover);
+            Assert.IsFalse(log.Workshop);
+            Assert.IsFalse(log.Inn);
+            Assert.IsFalse(log.Wonder);
+            Assert.AreEqual("spaced", log.Leftover);
 
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
             Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
+            Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
         }
 
         [Test]
-        public void DensePack_Leftovers_AfterWorkshop_StillPlaceInnAndWonder()
+        public void DensePack_Leftovers_AfterWorkshop_SkipInnAndWonder()
         {
             var placer = StampEastChain(out var commons);
             StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
@@ -454,41 +448,36 @@ namespace SolarMajesty.Tests
             var leftovers = StillCampusDensity.PlanLeftovers(
                 placer, commons, BuildingPlacer.Cardinal.East);
             Assert.IsTrue(leftovers.Workshop, "existing hangar stays on the leftover label");
-            Assert.IsTrue(leftovers.Inn, "still20 must not stop after workshop — Inn when CanFit");
-            Assert.IsTrue(leftovers.Wonder, "still20 must not stop after workshop — wonder when CanFit");
-            Assert.AreEqual("workshop+inn+wonder", leftovers.SkipReason);
-            Assert.AreNotEqual(shop, leftovers.InnOrigin);
-            Assert.IsFalse(
-                RectsOverlap(leftovers.InnOrigin, 4, 4, leftovers.WonderOrigin, 6, 6));
+            Assert.IsFalse(leftovers.Inn, "Aaron 2026-09-07: do not pack leftover Inn");
+            Assert.IsFalse(leftovers.Wonder, "Aaron 2026-09-07: do not pack leftover wonder");
+            Assert.AreEqual("spaced+workshop", leftovers.SkipReason);
         }
 
         [Test]
-        public void DensePack_Still20Order_PlacesInnWonderExtraSolarDefense()
+        public void DensePack_Still20Order_SkipsLeftoverDensityPressure()
         {
-            var placer = StampStill20Order(out var commons, out var leftovers, out var cues);
+            var placer = StampStill20Order(out _, out var leftovers, out var cues);
 
-            Assert.IsTrue(leftovers.Inn, "Village Inn when CanFit after extra HAB + yards");
-            Assert.IsTrue(leftovers.Wonder, "wonder when CanFit after extra HAB + yards");
-            Assert.AreNotEqual("skip-frame", leftovers.SkipReason);
-            Assert.AreNotEqual("workshop", leftovers.SkipReason,
-                "still20 leftover=workshop — Inn + wonder must still stamp");
-            Assert.IsTrue(leftovers.SkipReason.IndexOf("inn") >= 0);
-            Assert.IsTrue(leftovers.SkipReason.IndexOf("wonder") >= 0);
-
-            Assert.IsTrue(cues.ExtraSolar, "second solar bank when it CanFit");
-            Assert.IsTrue(cues.Defense, "Defense Battery when it CanFit");
-            Assert.GreaterOrEqual(StillCampusDensity.CountCategory(placer, BuildingCategory.Power), 2);
-            Assert.GreaterOrEqual(StillCampusDensity.CountCategory(placer, BuildingCategory.Defense), 1);
-            Assert.GreaterOrEqual(cues.HabSocketCount, 0);
+            Assert.IsFalse(leftovers.Inn, "Aaron 2026-09-07: leftover Inn is not a still density gate");
+            Assert.IsFalse(leftovers.Wonder, "Aaron 2026-09-07: leftover wonder is not a still density gate");
+            Assert.IsTrue(leftovers.SkipReason.StartsWith("spaced"), leftovers.SkipReason);
+            Assert.IsFalse(cues.ExtraSolar, "do not pack a second solar bank on the still");
+            Assert.IsFalse(cues.Defense, "do not pack Defense Battery leftover on the still");
+            Assert.AreEqual(0, cues.HabSocketCount);
+            Assert.AreEqual(1, StillCampusDensity.CountCategory(placer, BuildingCategory.Power));
+            Assert.AreEqual(0, StillCampusDensity.CountCategory(placer, BuildingCategory.Defense));
 
             var log = StillCampusDensity.StampLog.FromPieces(placer, leftovers.SkipReason);
-            Assert.IsTrue(log.Inn && log.Wonder && log.ExtraSolar && log.Defense);
-            Assert.IsTrue(log.ExtraHab);
+            Assert.IsFalse(log.Inn);
+            Assert.IsFalse(log.Wonder);
+            Assert.IsFalse(log.ExtraSolar);
+            Assert.IsFalse(log.Defense);
 
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
             Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
+            Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
         }
 
         [Test]
@@ -506,7 +495,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_ExtraHabChain_FillsSouthDirt()
+        public void DensePack_ExtraHabChain_CanFitSouth_ButPlanCuesSkips()
         {
             var placer = StampEastChain(out var commons);
             Assert.IsTrue(StillCampusDensity.TryExtraHabChain(
@@ -522,10 +511,9 @@ namespace SolarMajesty.Tests
 
             var cues = StillCampusDensity.PlanCues(
                 placer, commons, BuildingPlacer.Cardinal.East);
-            Assert.IsTrue(cues.ExtraHab);
-            Assert.IsTrue(cues.ExtraAirlock);
-            Assert.AreEqual(airlock, cues.ExtraAirlockOrigin);
-            Assert.GreaterOrEqual(cues.PlacedCount, 2);
+            Assert.IsFalse(cues.ExtraHab, "Aaron 2026-09-07: extra HAB is leftover density, not a still gate");
+            Assert.IsFalse(cues.ExtraAirlock);
+            Assert.AreEqual(0, cues.PlacedCount);
         }
 
         [Test]
@@ -562,12 +550,12 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_Still21Order_KeepsLeftoversWithoutInteriorFill()
+        public void DensePack_Still21Order_SkipsLeftoversWithoutInteriorFill()
         {
             var placer = StampStill20Order(out _, out var leftovers, out var cues);
-            Assert.IsTrue(leftovers.Inn && leftovers.Wonder, "leftover Inn / wonder may stay");
-            Assert.IsTrue(leftovers.SkipReason.IndexOf("inn") >= 0);
-            Assert.IsTrue(leftovers.SkipReason.IndexOf("wonder") >= 0);
+            Assert.IsFalse(leftovers.Inn, "do not pack leftover Inn");
+            Assert.IsFalse(leftovers.Wonder, "do not pack leftover wonder");
+            Assert.IsTrue(leftovers.SkipReason.StartsWith("spaced"), leftovers.SkipReason);
             Assert.AreEqual(0, cues.HabSocketCount, "do not force-fill interior sockets");
             Assert.AreEqual(
                 StillCampusDensity.PlayCampusOrthoSize,
@@ -577,7 +565,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void RefreshTubes_PackedCampus_EnablesDockedArms_NoTubeRuns()
+        public void RefreshTubes_SpacedCampus_EnablesDockedArmsWithoutTubeRuns()
         {
             var buildings = new GameObject("Buildings");
             buildings.transform.SetParent(_root.transform);
@@ -661,6 +649,9 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
             Assert.AreEqual(0, StillCampusDensity.StillFrameInsetCells);
             Assert.AreEqual(6, StillCampusDensity.MaxInteriorHabSockets);
+            Assert.AreEqual(
+                StillCampusDensity.PlayCampusOrthoSize, StillCampusDensity.StillMinOrtho,
+                "FitStillOrtho floor must not crop inside play ortho");
         }
 
         [Test]

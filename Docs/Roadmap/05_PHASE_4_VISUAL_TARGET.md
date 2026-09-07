@@ -2,7 +2,7 @@
 
 **Status:** In progress — **exit blocked** ([PHASE_4_EXIT.md](PHASE_4_EXIT.md)). Dock sockets flush; HAB / Commons / LAB / CMD-1 / OPS-1 panel bevels in. An **editor** Mars still exists (`SM_MarsCampaign_EditorStill.png`) — Commons + airlock + HAB, no HUD. Empty Game-tab still (`SM_MarsCampaign_PlayModeStill.png`) plus campus v1–**v5** (`SM_MarsCampaign_PlayModeCampusStill5.png`) — geodesic Commons + HAB; **still5 unused orange Commons port rings** are the leftover this look-kit pass hides (`CommonsPort_*` start off; RefreshTubes enables docked faces only). Campus v4 showed orange box airlock + unused ribbed stub. Latest Game-tab is still6 (empty Sol 1). Phase 4 is **not** complete. **Not ready for Phase 5.**  
 **Duration:** 8–12 weeks  
-**Goal:** Land a **spaced Majesty-2 overseer** Mars campus in engine — environment, modular kits, hero unit meshes, construction juice, and Overseer HUD chrome — without changing the control model. Empty dirt is OK. Do **not** pack every cell to match the retired `SM_MarsCampaign_VisualTarget.png`.
+**Goal:** Land Aaron’s **2026-09-07 spaced ITS campus** in engine vs [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — no interconnect tube webs, empty dirt OK, geodesic Commons, distant haze, spacesuited crossings — without changing the control model. Do **not** pack every cell to match the retired `SM_MarsCampaign_VisualTarget.png`. Bake-off PRs **#26 / #27 / #28** are **not** the EXIT claim. **Do not stamp Phase 4 EXIT.**
 
 Current greybox / Lego airlocks / blockout robots are **not** this look. Phase 4 is the production pass that closes that gap. Phase 3 still owns content (classes, fauna, doctrines, wonders). Phase 5 then ships audio, accessibility, packaging, and first-hour polish on top of this visual bar.
 
@@ -12,7 +12,7 @@ Current greybox / Lego airlocks / blockout robots are **not** this look. Phase 4
 
 **Week 4 (in):** Player-facing **Palace → Colony Commons** (HUD **COMMONS**). Guild Hall / Laboratory / Climate Loom / Aegis Spire / Deep Archive industrial dress. Medic hover-stretcher, Harvester tracked scoop, Surveyor tripod, Courier six-wheel hauler, Sentinel dual-barrel turret remesh.
 
-**Week 4 continued (this slice):** Campus Game-tab stills v1–**v6** plus a look-kit hide pass for still5 unused Commons hull-drum ports (`CommonsPort_*` / aliases). still16 signed the remaining look fail as a **dark rectangular airlock box** (wrap `Dress_HubDoor`). Hub is a smaller white paneled square; orange collars on docked faces only; no fourth `CampusTubeRoot`. still18 signed pad / solar / extractors. still19 leftover=skip-frame. still20 leftover=workshop. still21 leftover=inn+wonder extraHab/solar/defense is **not** a VisualTarget density gate. Aaron + Chief of Staff retired that PNG: CaptureStill now prefers a **readable spaced campus** (play ortho 10; leftover kits may stamp; interior dirt is not force-filled). Shutter hold still suppresses cut/narrative modals. Empty-Sol-1 still6 stays archived. Honest notes below — **not** a Phase 4 exit. **Needs a new Game-tab still from GD. Do not stamp exit.**
+**Week 4 continued (this slice):** Campus Game-tab stills v1–**v6** plus a look-kit hide pass for still5 unused Commons hull-drum ports (`CommonsPort_*` / aliases). still16 signed the remaining look fail as a **dark rectangular airlock box** (wrap `Dress_HubDoor`). Hub is a smaller white paneled square; orange collars on docked faces only; no fourth `CampusTubeRoot`. still18 signed pad / solar / extractors. still19 leftover=skip-frame. still20 leftover=workshop. still21 leftover=inn+wonder extraHab/solar/defense is **not** a VisualTarget density gate. Aaron 2026-09-07 locked the ITS concept and rejected bake-off Captures (#26/#27/#28): CaptureStill prefers a **readable spaced campus** (play ortho 10; leftover kits do **not** stamp; no `CampusDress_TubeRuns`; interior dirt is not force-filled). Shutter hold still suppresses cut/narrative modals. Empty-Sol-1 still6 stays archived. Honest notes below — **not** a Phase 4 exit. **Needs a new Game-tab still from GD. Do not stamp exit.**
 
 ---
 
@@ -20,13 +20,22 @@ Current greybox / Lego airlocks / blockout robots are **not** this look. Phase 4
 
 `SM_MarsCampaign_VisualTarget.png` is **retired**. It was a packed-density concept-art mockup and is no longer the Phase 4 EXIT look north star. still21 / still22 do **not** have to match that sheet’s fill-every-dirt-patch packing.
 
-**Dream Loop concept (this look pass):** [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — spaced overseer campus, empty dirt OK. GD capture / judge notes: [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md). **Not an exit stamp.**
+**Dream Loop concept (locked north star):** [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — ITS language, not the prior tube-web campus. GD capture / judge notes: [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md). Bake-off PRs **#26 / #27 / #28** are **not** EXIT. **Not an exit stamp.**
 
-Phase 4 EXIT look:
+**Aaron look brief (2026-09-07)**
+
+1. **Forgo interconnect tubes** between buildings. Square Lego airlocks may remain as ports. `SpawnTubeRuns` is **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed.
+2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill leftover sockets.
+3. **Distant haze** toward the horizon (concept language).
+4. **Polyhedron / geodesic Commons** silhouette — not a soft sphere-only kit if we can dress it.
+5. Open-ground crossings should **read as spacesuited**. Docs + still dressing notes only. No new `FlagTypes`. No `SpecialistBrain` rewrite.
+
+Phase 4 EXIT look (Aaron look-clear vs concept — not stamped):
 
 - **Spaced campus** — empty dirt is OK; leave room for rocks, foliage, creatures, and discovery
+- **No interconnect tube web** — docked Lego ports only
 - **Fun cartoon Majesty-2 overseer** — watch heroes, readable silhouettes, not a packed RTS wallpaper
-- Landmark kits (Commons dome, HAB cylinder, pad/Starship, solar, extractors) on the **square Lego** grid when they CanFit
+- Landmark kits (geodesic Commons, HAB cylinder, pad/Starship, solar, extractors) on the **square Lego** grid when they CanFit
 - Five HUD chips (**REG / ICE / MET / PWR / BEDS**); Colony Commons; `spawnShowcaseColony` false
 
 StarCraft/Anno-style squad bars and click-commands remain **presentation inspiration only** — the player remains the Overseer AI.
@@ -41,7 +50,7 @@ Phase 0 Grok Imagine keywords stay mandatory:
 
 Phase 4 **extends** them toward a spaced Mars overseer campus (append when prompting / briefing):
 
-> reddish Mars regolith and hazy orange sky, long low-angle shadows, white/black/orange industrial SpaceX-adjacent campus, pressurized corridor tubes linking habs, large central white command dome with orange trim, blue-glow solar arrays, circular landing pad with white Starship-like rocket, yellow gantry cranes on modules under construction, rugged extractors with piping tanks and scaffolding, junction defense turrets, translucent shield readability, dark metallic carbon HUD with gold/orange accents
+> reddish Mars regolith and hazy orange sky, distant horizon haze, long low-angle shadows, white/black/orange industrial SpaceX-adjacent campus, **no pressurized interconnect tubes**, separate dirt pads with empty yards, large central white **geodesic / polyhedron** command dome with orange trim, square Lego airlock ports only, blue-glow solar arrays, circular landing pad with white Starship-like rocket, spacesuited figures on open ground, yellow gantry cranes on modules under construction, rugged extractors with piping tanks and scaffolding, junction defense turrets, translucent shield readability, dark metallic carbon HUD with gold/orange accents
 
 Do not throw out the Phase 0 lock for a new art bible. Do not revive the retired packed-density PNG as a fidelity target.
 
@@ -50,7 +59,7 @@ Do not throw out the Phase 0 lock for a new art bible. Do not revive the retired
 ## Visual pillars (spaced overseer campus)
 
 1. **Mars atmosphere** — reddish-brown cratered regolith, dusty matte ground, hazy orange-to-pale sky, long soft shadows, distant dust-devil scale.
-2. **Tube campus** — pressurized white corridor/tube network linking habs; a large central **domed command hub** (Colony Commons visual), not a scatter of identical boxes.
+2. **Spaced pads, not a tube web** — separate dirt yards with empty ground between them; square Lego airlock **ports** only. A large central **geodesic / polyhedron** command hub (Colony Commons visual), not a pressurized corridor campus and not a scatter of identical boxes.
 3. **Power and arrival landmarks** — solar field with readable blue glow; circular tiered landing pad; white vertical Starship-like rocket with black heat-shielding.
 4. **Construction juice** — modules under construction carry **yellow gantry cranes** (and incomplete cladding) so build state is obvious at isometric range.
 5. **Rugged extractors** — standalone water / regolith kits with piping, tanks, and scaffolding — not the same Lego box as a HAB.
@@ -81,7 +90,7 @@ Non-negotiable: no click-to-move, no selected-unit commands, nothing that bypass
 
 - Footprints, docking, and placement stay square-cell Lego airlocks.
 - Tubes, corridor cladding, the command dome, pad rings, and extractor scaffolding are **meshes and dressing on that grid**.
-- Visual goal: a connected pressurized campus on today’s square modules — spaced enough for dirt, rocks, and fauna between yards.
+- Visual goal: separate ITS pads on today’s square modules — spaced enough for dirt, rocks, and fauna between yards. Airlock ports stay; interconnect tube webs do not.
 
 ---
 
@@ -118,9 +127,9 @@ HUD layout may use five industrial/pop chips (four resources + beds) in the same
 | Body | Grade in this phase |
 |------|---------------------|
 | **Mars** | **Hero example.** Sky, ground albedo, shadows, campus kit, pad/ship, extractors on a **spaced** isometric campus. Sign-off shot is a Majesty-2 overseer still — empty dirt OK — not a match to the retired packed PNG. |
-| **Earth / Luna** | Same architectural language (tubes, dome, pad, cranes) with body-correct sky, grade, and lighting. Earth New Game: meadow albedo + cobalt sky + grass/trees/pond in the ortho 16 shot (not the old olive plane, not Mars orange). Luna stays grey crater / black sky. |
+| **Earth / Luna** | Same architectural language (Lego ports, geodesic Commons, pad, cranes — no interconnect tube web) with body-correct sky, grade, and lighting. Earth New Game: meadow albedo + cobalt sky + grass/trees/pond in the ortho 16 shot (not the old olive plane, not Mars orange). Luna stays grey crater / black sky. |
 | **Belt / Europa** | Kit reuse + body tint / dressing already in Phase 2. Unique silhouette pieces only where ecology demands it (tethered Belt modules, insulated Europa). Do not block Mars hero look on full outer-system uniqueness. |
-| **Titan / outer** | Out of scope unless already in content; inherit the same chrome and tube language. |
+| **Titan / outer** | Out of scope unless already in content; inherit the same chrome and spaced-pad language. |
 
 ---
 
@@ -133,9 +142,9 @@ HUD layout may use five industrial/pop chips (four resources + beds) in the same
 - [x] Earth / Luna lighting grades using the same campus kit *(Earth drop: meadow albedo + cobalt sky via lifted SkyTint + grass/trees/pond in camera; still not Mars orange)*
 
 ### Corridor campus & building kits
-- [x] Pressurized corridor / tube dressing on existing square docks *(Airlock Junction: panel-lined white hub + orange frames/doors; module docks are white square tubes with orange collars **flush at the Lego face**)*
+- [x] Square Lego airlock **ports** on existing docks *(Airlock Junction: panel-lined white hub + orange frames/doors; docked faces only. Aaron 2026-09-07: **no** interconnect `CampusDress_TubeRuns`)*
 - [x] HAB kit: white/black/orange habs that read as living modules, not generic boxes *(HAB-1 horizontal cylinder on skids; square airlocks still attach; carbon rings + spine seams)*
-- [x] Central **domed command hub** as Colony Commons / CMD hero mesh *(smooth hemisphere + cupola + equatorial panel rings / meridians; player-facing **COMMONS**)*
+- [x] Central **geodesic / polyhedron** Colony Commons *(cupola + equatorial panel rings / meridians; player-facing **COMMONS** — not a soft sphere-only kit)*
 - [x] Power: solar array with blue status glow *(PWR-1 node + field)*
 - [x] Landing pad: circular tiered pad + white Starship-like upright stack *(orange rings + H; heat-shield belly)*
 - [x] Extractors: distinct **water** and **regolith** kits (piping, tanks, scaffolding), standalone from the tube spine *(Farm = AG-1 vaulted greenhouse + ice tanks; Camp = horizontal drum + hopper; Mine = twin silos + A-frame)*
@@ -206,11 +215,11 @@ HUD layout may use five industrial/pop chips (four resources + beds) in the same
 - Landing pad: extra yellow tier ring under the Starship stack
 
 **Still greybox / not an exit stamp**
-- Campus Game-tab still v4 (`SM_MarsCampaign_PlayModeCampusStill4.png`): geodesic Commons + HAB cylinder, **no grey hex pads**, **no idle hopper chip**, hulls whiter than v3 — but **orange box airlock**, unused orange ribbed stub, square hub not readable. still5 (`SM_MarsCampaign_PlayModeCampusStill5.png`): unused Commons cardinal still shows an orange **port ring**. still21 leftover=inn+wonder extraHab/solar/defense is **not** a packed-density fail. Empty dirt is OK. Play Mode code after those PNGs: hull drum ports (`CommonsPort_*`) start hidden; RefreshTubes enables docked faces only (white sleeve + one collar) and **does not** stamp `CampusDress_TubeRuns` between yards; still camera stays at play ortho 10; interior dirt is not force-filled; smaller paneled hub; no CommonsStub; no stacked `CampusTubeRoot`. Needs a **fresh** spaced Game-tab look — do not stamp v4/v5/still21.
+- Campus Game-tab still v4 (`SM_MarsCampaign_PlayModeCampusStill4.png`): geodesic Commons + HAB cylinder, **no grey hex pads**, **no idle hopper chip**, hulls whiter than v3 — but **orange box airlock**, unused orange ribbed stub, square hub not readable. still5 (`SM_MarsCampaign_PlayModeCampusStill5.png`): unused Commons cardinal still shows an orange **port ring**. still21 leftover=inn+wonder extraHab/solar/defense is **not** a packed-density fail. Bake-off PRs **#26 / #27 / #28** are **not** EXIT. Empty dirt is OK. Play Mode code after Aaron 2026-09-07: hull drum ports (`CommonsPort_*`) start hidden; RefreshTubes enables docked faces only (white sleeve + one collar) and **does not** stamp `CampusDress_TubeRuns` (`SpawnTubeRuns` removed); leftover Inn / wonder / extra HAB / extra solar / Defense do **not** stamp; still camera stays at play ortho 10 (`FitStillOrtho` must not crop); interior dirt is not force-filled; smaller paneled hub; no CommonsStub; no stacked `CampusTubeRoot`. Needs a **fresh** spaced Game-tab look vs the locked concept — do not stamp v4/v5/still21/bake-off.
 - Construction cranes stay runtime dressing (not authored FBX)
 - Earth vista trees/pond/grass are primitive dressing (readable at iso, not a heightmap / photogrammetry biome)
 - Hero building FBX (`SM_Hero_*`) now sits under the procedural kits. HAB / Commons / LAB / Power / pad match the ConceptSheets at RTS scale (not the sheet's 8×12 m / 40 m / 122 m numbers — footprints stay 4×4 / 6×6). HAB / Commons / LAB / CMD-1 / OPS-1 hulls are **panel-lined** (bevelled boxes + carbon seams), not smooth primitives. CMD-1 is **Guild Hall dress** (not Commons); OPS-1 is the **Mining** annex. Defense bunker is labeled **Defense Battery**, not Command.
-- Mockup circular HAB cluster vs our square-dock tube graph (tubes are dressing; round white corridors + orange collars/rings). Radial stubs on Commons are visual only (unused cardinals hide when undocked). Airlock Junction is a **panel-lined square hub** with round stubs (not authored FBX); docks stay square-grid and mate flush at the Lego face.
+- Mockup circular HAB cluster vs our square-dock graph (placement stays square). Aaron 2026-09-07: **no interconnect tube web** — docked Lego ports only. Radial stubs on Commons are visual only (unused cardinals hide when undocked). Airlock Junction is a **panel-lined square hub** (not authored FBX); docks stay square-grid and mate flush at the Lego face.
 - Defense in the PNG is a bulky **biped walker**; live mesh stays the Imagine **tracked** guardian so it does not clone the Engineer biped
 - Unit meshes are Majesty-readable **blockouts**. All ten specialists + seven fauna are sheet-matched to `ConceptSheets/` turnarounds (Scout keeps hover rotors; Defense stays the Imagine tracked guardian). Imagine scale bars that swapped length/height were ignored for Soil Creeper (~2 m) and Ash Hopper (~1.7 m)
 - Status pips / aprons / dust-devils are primitive dressing (spheres, cylinders), not painted mockup icons or VFX
@@ -236,7 +245,7 @@ HUD layout may use five industrial/pop chips (four resources + beds) in the same
 
 ## Success metrics
 
-- A still of the Mars campus reads as a spaced Majesty-2 overseer colony (tubes, dome, pad/ship, extractors, sky, empty dirt OK).
+- A still of the Mars campus reads as Aaron’s 2026-09-07 ITS campus (geodesic Commons, spaced pads, no tube web, distant haze, pad/ship, extractors, empty dirt OK). Bake-off #26/#27/#28 are not this metric.
 - A player can tell Engineer / Geologist / Scout / Defense apart at a glance without nameplates.
 - Construction and shield/power state are readable without opening a panel.
 - HUD feels like the mockup’s **material language** while every click still goes through build, flags, research, camera, or parties.
@@ -259,7 +268,7 @@ HUD layout may use five industrial/pop chips (four resources + beds) in the same
 ## Exit criteria
 
 - [ ] Mars in-engine matches the spaced overseer look on the pillars *(directionally in; do not score vs the retired packed PNG — see look notes)*
-- [x] Square-grid tube campus + unique HAB / power / extractor / pad / Commons-citadel kits
+- [x] Square-grid Lego docks + unique HAB / power / extractor / pad / geodesic Commons kits (interconnect tube webs retired for still campus)
 - [x] Construction cranes and shield/power readability in
 - [x] Hero silhouettes for core classes (Engineer biped, Geologist rover, Scout hover, Defense tracked guardian) — mockup biped walker still open; all ten specialists + seven fauna sheet-matched to `ConceptSheets/` JPGs
 - [x] HUD chrome shipped as Overseer presentation (resources mapped correctly; roster is status)

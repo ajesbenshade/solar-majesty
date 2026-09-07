@@ -6,12 +6,13 @@ namespace SolarMajesty
     /// <summary>
     /// Phase 4 CaptureStill campus: Commons→airlock→HAB plus pad / PWR-1 /
     /// water/regolith extractors when they <see cref="BuildingPlacer.CanFitRect"/>.
-    /// Leftover Workshop / Inn / wonder may stamp when they CanFit — they are not
-    /// required to max-pack the frame. Forward yards use CanFit only.
-    /// Empty dirt is OK (spaced Majesty-2 overseer still). Do not fill every
-    /// interior 4×4 or crop the AABB to chase retired VisualTarget density.
-    /// Play snap stays <see cref="PlayCampusOrthoSize"/>.
-    /// Does not flip spawnShowcaseColony. Does not reference Runtime ColonyLayout.
+    /// Landmark pad / PWR / extractors may stamp when they CanFit. Leftover
+    /// Workshop / Inn / wonder / extra HAB / extra solar / Defense are not a
+    /// density gate — still campus skips that leftover pressure (Aaron 2026-09-07).
+    /// Empty dirt is OK. Do not fill interior 4×4 sockets or crop the AABB.
+    /// Play snap stays <see cref="PlayCampusOrthoSize"/>. FitStillOrtho never
+    /// zooms inside that ortho. Does not flip spawnShowcaseColony.
+    /// Does not reference Runtime ColonyLayout.
     /// </summary>
     public static class StillCampusDensity
     {
@@ -49,8 +50,10 @@ namespace SolarMajesty
         /// </summary>
         public const int StillFrameInsetCells = 0;
 
-        /// <summary>Floor so a Commons-only AABB cannot punch through minZoom.</summary>
-        public const float StillMinOrtho = 7.25f;
+        /// <summary>
+        /// Floor matches play ortho so FitStillOrtho cannot crop into a packed look.
+        /// </summary>
+        public const float StillMinOrtho = PlayCampusOrthoSize;
 
         /// <summary>
         /// Planner cap only. CaptureStill does not force-fill interior dirt.
@@ -493,12 +496,8 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Workshop hangar / Inn / one 6×6 wonder when they CanFit. Workshop and
-        /// wonder prefer a free airlock face so the hub reads as a multi-face joint.
-        /// Occupies like <see cref="Plan"/> so later leftover slots do not collide.
-        /// still20 leftover=workshop: a second hangar must not eat the Inn / wonder
-        /// sockets — skip workshop when one is already registered, then still place
-        /// Village Inn and a wonder independently.
+        /// Aaron 2026-09-07: leftover Inn / wonder / workshop are not a still
+        /// density gate. Do not occupy those sockets — empty dirt stays.
         /// </summary>
         public static LeftoverPlan PlanLeftovers(
             BuildingPlacer placer,
@@ -508,55 +507,22 @@ namespace SolarMajesty
             float cellSize = DefaultCellSize,
             float aspect = GameTabAspect)
         {
-            var leftovers = new LeftoverPlan { SkipReason = "none" };
-            if (placer == null) return leftovers;
+            var leftovers = new LeftoverPlan { SkipReason = "spaced" };
+            _ = placer;
+            _ = commons;
+            _ = habFace;
+            _ = bounds;
             _ = cellSize;
             _ = aspect;
-
-            bool canFitYard = CanFitNear(placer, commons, habFace, YardSize, bounds);
-            bool canFitWonder = CanFitNear(placer, commons, habFace, PadSize, bounds);
             leftovers.Workshop = HasWorkshop(placer);
-
-            // Inn + wonder first — still20 leftover=workshop ate those sockets.
-            if (TryNext(placer, commons, habFace, YardSize, YardSize, bounds, out leftovers.InnOrigin))
-            {
-                placer.MarkCampusRect(leftovers.InnOrigin, YardSize, YardSize);
-                placer.RegisterPiece(leftovers.InnOrigin, YardSize, YardSize, BuildingCategory.Inn);
-                leftovers.Inn = true;
-            }
-
-            if (TryDockOrNext(placer, commons, habFace, PadSize, PadSize, bounds, out leftovers.WonderOrigin))
-            {
-                placer.MarkCampusRect(leftovers.WonderOrigin, PadSize, PadSize);
-                placer.RegisterPiece(
-                    leftovers.WonderOrigin, PadSize, PadSize, BuildingCategory.AegisSpire);
-                leftovers.Wonder = true;
-            }
-
-            // Extra HAB packs are already tight — a leftover hangar yard would
-            // steal extraSolar / Defense Battery (still20). Dock-or-next only
-            // when the first HAB chain is the only housing.
-            if (!leftovers.Workshop &&
-                CountCategory(placer, BuildingCategory.Habitat) < 2 &&
-                TryDockOrNext(placer, commons, habFace, YardSize, YardSize, bounds, out leftovers.WorkshopOrigin))
-            {
-                placer.MarkCampusRect(leftovers.WorkshopOrigin, YardSize, YardSize);
-                placer.RegisterPiece(
-                    leftovers.WorkshopOrigin, YardSize, YardSize, BuildingCategory.EngineerWorkshop);
-                leftovers.Workshop = true;
-            }
-
-            leftovers.SkipReason = leftovers.PlacedCount > 0 || leftovers.Workshop
-                ? StampLog.LeftoverLabel(leftovers.Workshop, leftovers.Inn, leftovers.Wonder)
-                : (canFitYard || canFitWonder) ? "CanFit" : "none";
+            leftovers.SkipReason = leftovers.Workshop ? "spaced+workshop" : "spaced";
             return leftovers;
         }
 
         /// <summary>
-        /// Extra HAB chain (new airlock + HAB), optional second solar bank and
-        /// Defense Battery when they CanFit. Does <b>not</b> fill interior dirt
-        /// with HAB sockets — empty ground is the spaced-overseer look.
-        /// Occupies like <see cref="Plan"/>.
+        /// Aaron 2026-09-07: extra HAB / extra solar / Defense are leftover
+        /// pressure, not a still density gate. Does not occupy those sockets
+        /// and does not fill interior dirt.
         /// </summary>
         public static CuePlan PlanCues(
             BuildingPlacer placer,
@@ -564,43 +530,11 @@ namespace SolarMajesty
             BuildingPlacer.Cardinal habFace,
             BoundsOk bounds = null)
         {
-            var cues = new CuePlan();
-            if (placer == null) return cues;
-
-            // still20 extraHab=True already filled south — a third HAB chain
-            // would steal extraSolar / Defense Battery sockets.
-            if (CountCategory(placer, BuildingCategory.Habitat) < 2 &&
-                TryExtraHabChain(placer, commons, habFace, bounds, out Vector2Int airlock, out Vector2Int hab))
-            {
-                placer.MarkCampusRect(airlock, 2, 2);
-                placer.RegisterPiece(airlock, 2, 2, BuildingCategory.Utility);
-                placer.MarkCampusRect(hab, YardSize, YardSize);
-                placer.RegisterPiece(hab, YardSize, YardSize, BuildingCategory.Habitat);
-                cues.ExtraAirlock = true;
-                cues.ExtraAirlockOrigin = airlock;
-                cues.ExtraHab = true;
-                cues.ExtraHabOrigin = hab;
-            }
-
-            if (TryDockOrNext(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int solar))
-            {
-                placer.MarkCampusRect(solar, YardSize, YardSize);
-                placer.RegisterPiece(solar, YardSize, YardSize, BuildingCategory.Power);
-                cues.ExtraSolar = true;
-                cues.ExtraSolarOrigin = solar;
-            }
-
-            if (TryDockOrNext(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int def))
-            {
-                placer.MarkCampusRect(def, YardSize, YardSize);
-                placer.RegisterPiece(def, YardSize, YardSize, BuildingCategory.Defense);
-                cues.Defense = true;
-                cues.DefenseOrigin = def;
-            }
-
-            cues.HabSocketCount = 0;
-            cues.HabSocket = false;
-            return cues;
+            _ = placer;
+            _ = commons;
+            _ = habFace;
+            _ = bounds;
+            return new CuePlan();
         }
 
         /// <summary>
@@ -808,8 +742,8 @@ namespace SolarMajesty
             new Vector2((min.x + maxExclusive.x) * 0.5f, (min.y + maxExclusive.y) * 0.5f);
 
         /// <summary>
-        /// Spaced overseer still: use play campus ortho. Do not zoom in to pack
-        /// the AABB into the Game tab.
+        /// Spaced overseer still: play campus ortho. Never zoom inside
+        /// <see cref="PlayCampusOrthoSize"/> — that crops into a packed look.
         /// </summary>
         public static float FitStillOrtho(
             Vector2Int min,
@@ -821,7 +755,7 @@ namespace SolarMajesty
             _ = maxExclusive;
             _ = cellSize;
             _ = aspect;
-            return PlayCampusOrthoSize;
+            return Mathf.Max(StillMinOrtho, PlayCampusOrthoSize);
         }
 
         public static float FitStillOrtho(BuildingPlacer placer, float cellSize, float aspect)
@@ -829,7 +763,7 @@ namespace SolarMajesty
             _ = placer;
             _ = cellSize;
             _ = aspect;
-            return PlayCampusOrthoSize;
+            return Mathf.Max(StillMinOrtho, PlayCampusOrthoSize);
         }
 
         /// <summary>Unclamped iso fit — tests use this to describe leftover AABB growth.</summary>

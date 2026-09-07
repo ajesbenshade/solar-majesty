@@ -5,7 +5,15 @@
 
 Phase 4 pushed the Mars campus into engine: atmosphere, square-dock tube campus, hero kits / FBX, Imagine-sheet units, carbon HUD chrome. Core systems were not rewritten: `SpecialistBrain` scoring is unchanged; the player still never path-commands units. Colony Commons is the civic name (never Palace).
 
-**Look redirect (Aaron + Chief of Staff):** `SM_MarsCampaign_VisualTarget.png` is **retired**. Phase 4 EXIT look is a **spaced campus** — empty dirt is OK, fun cartoon Majesty-2 overseer feel, room for rocks / foliage / creatures and discovery. Do **not** chase that PNG’s fill-every-dirt-patch packing. still21 / still22 do not have to match that density. Dream Loop concept for this pass: [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — **not an exit stamp**. GD still steps: [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md).
+**Look redirect (Aaron 2026-09-07):** `SM_MarsCampaign_VisualTarget.png` is **retired**. Locked north star is [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — ITS language, **not** the prior tube-web campus. EXIT = Aaron look-clear vs that concept under the brief below. Bake-off PRs **#26 / #27 / #28** (Sol / Fable / Opus Captures) are **not** the EXIT claim. Do **not** stamp Phase 4 EXIT. GD still steps: [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md).
+
+**Aaron look brief (2026-09-07)**
+
+1. **Forgo interconnect tubes** between buildings. `SpawnTubeRuns` / between-yard tube web are **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed. Square Lego airlocks may remain as building ports.
+2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill dirt with leftover sockets.
+3. **Distant haze** toward the horizon (concept language).
+4. **Polyhedron / geodesic Commons** silhouette (not a soft sphere-only kit if we can dress it).
+5. Colonists / specialists crossing open ground should **read as spacesuited** (vulnerable between buildings). Docs + still dressing notes only. Do **not** invent new `FlagTypes` or rewrite `SpecialistBrain`.
 
 Nine real stills now exist. The latest archived Game-tab shot is **`SM_MarsCampaign_PlayModeCampusStill6.png`** — Mars Sol 1 HUD, empty start, pad in the corner. `SM_MarsCampaign_PlayModeCampusStill5.png` also exists (Commons + HAB Game-tab). Packed editor still is **`SM_MarsCampaign_PackedCampusStill.png`** (`Camera.Render`, not Game-tab HUD) — archive only, not the look claim. None of these stamp exit. GD will reshoot a spaced overseer still after merge. Leftovers below are Phase 4 look gaps, not Phase 5 ship polish.
 
@@ -154,18 +162,22 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - `spawnShowcaseColony` stays false. Square airlocks stay. Five HUD chips stay. No click-to-move. No `SpecialistBrain` / FlagManager / Narrative / economy rewrite
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
 
-**Play Mode fixes after bake-off rejection (code only — do not stamp exit)**
-- Aaron rejected the look bake-off stills. `CampusDressing.RefreshTubes` / CaptureStill **no longer stamp** pressurized tube runs between cardinal yards (`CampusDress_TubeRuns` / `SpawnTubeRuns` removed)
-- Docked square Lego airlock arms / hub collars stay. Unused cardinal ports stay hidden. Play ortho 10 and empty interior dirt stay. No denser packing
+**Play Mode fixes after Aaron rejected bake-off Captures (code only — do not stamp exit)**
+- Aaron rejected Sol / Fable / Opus bake-off Captures (PRs **#26 / #27 / #28**). Those frames are **not** the EXIT claim.
+- Locked north star stays [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png). Keep that file.
+- CaptureStill / `StampPhase4*` skip leftover Inn / wonder / extra HAB / extra solar / Defense packing. Landmark pad / PWR / extractors may still CanFit.
+- `CampusDressing.RefreshTubes` / CaptureStill **do not stamp** pressurized tube runs between cardinal yards. `SpawnTubeRuns` / between-yard tube web are **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed. Docked square Lego airlock arms / hub collars stay.
+- `FitStillOrtho` stays at play `CampusOrthoSize` **10** (`StillMinOrtho` = 10). It must not crop into a packed look. Play snap stays 10. Empty interior dirt stays.
 - Distant haze / polyhedron Commons / spacesuited colonists stay a **GD art lane** — this pass does not invent FBX
-- `StillCaptureHold` stays. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` / FlagType / Narrative rewrite
-- **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
+- `StillCaptureHold` stays. Mars Scale 1x stays. `spawnShowcaseColony` stays false. Colony Commons name stays. Five HUD chips stay. No Palace. Square airlocks stay. No click-to-move. `SpecialistBrain` / FlagType / Narrative untouched.
+- Open-ground crossings should read as **spacesuited** in still dressing notes. No new `FlagTypes`.
+- **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look.
 
 ---
 
 ## Phase 4 EXIT look (spaced overseer — VisualTarget PNG retired)
 
-`SM_MarsCampaign_VisualTarget.png` is no longer the look north star. Honest split: HUD + Mars ground vs campus v4, judged against a **spaced Majesty-2 overseer** campus — not that PNG’s packed density.
+`SM_MarsCampaign_VisualTarget.png` is no longer the look north star. Honest split: HUD + Mars ground vs campus v4, judged against [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) and the Aaron 2026-09-07 brief — not bake-off #26/#27/#28, not that PNG’s packed density.
 
 **Directionally in (campus v4)**
 - Orange-red Mars ground, isometric camera, long shadows
@@ -199,10 +211,10 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Campus Game-tab still (spaced overseer)** — latest archived Game-tab is still6 (empty Sol 1). still21 leftover=inn+wonder extraHab/solar/defense is **not** a VisualTarget density gate. This pass is **code only**: CaptureStill prefers play ortho 10; leftover kits may stamp; interior dirt is not force-filled; **RefreshTubes no longer stamps `CampusDress_TubeRuns` between yards**. `StillCaptureHold` stays. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
-- Landmark kits (pad + Starship, solar, extractors, leftover Workshop / Inn / wonder) may appear when they CanFit. Do not fill every dirt patch. Units remain optional (do not invent new unit systems).
+- **Campus Game-tab still (Aaron 2026-09-07 vs concept)** — latest archived Game-tab is still6 (empty Sol 1). Bake-off #26/#27/#28 Captures are **not** EXIT. still21 leftover=inn+wonder extraHab/solar/defense is **not** a density gate. This pass is **code only**: CaptureStill prefers play ortho 10; leftover kits do **not** stamp; **RefreshTubes no longer stamps `CampusDress_TubeRuns` (`SpawnTubeRuns` removed)**; interior dirt is not force-filled. `StillCaptureHold` stays. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
+- Landmark kits (pad + Starship, solar, extractors) may appear when they CanFit. Leftover Workshop / Inn / wonder / extra HAB / extra solar / Defense do **not** stamp on `StampPhase4*`. Do not fill every dirt patch. Units remain optional (do not invent new unit systems).
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
-- Circular HAB cluster vs square docks (placement model stays square; tubes are dressing)
+- Circular HAB cluster vs square docks (placement model stays square; interconnect tube webs are retired — Lego ports only)
 - IMGUI HUD vs painted mockup chrome (material language shipped; painted fidelity is leftover)
 - Heightmap terrain (explicit Phase 4 non-goal unless iso readability fails)
 - Titan / external 45–90 min playtest (same leftovers as Phase 2 / 3). Continue now restores flags / fauna / specialist HP; dens / node yield / mission timer still omitted.
@@ -212,11 +224,11 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 ## How to smoke
 
 1. `Docs/SMOKE_TEST.md` Phase 4 sections (Earth meadow New Game, then **Shift+click MARS?** or Shift+F10 Mars). Empty Mars should show boulder/dune/crater vista + node outcrops + dens, not a tiled plane of cubes. `spawnShowcaseColony` stays false.
-2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **white paneled square hub** with **round white tubes + orange collars on docked faces only**, **no unused CommonsPort / CommonsStub rings** on undocked cardinals, HAB cylinder + Commons dome that stay **readable white** against the red ground, **no grey hex slabs**, camera snapping to campus ortho **10** (hopper spawn must not pan or zoom out). Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots.
+2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **geodesic / polyhedron Commons**, a **white paneled square hub** with **square Lego ports + orange collars on docked faces only** (no interconnect tube web across the dirt), **no unused CommonsPort / CommonsStub rings** on undocked cardinals, HAB cylinder that stays **readable white** against the red ground, **no grey hex slabs**, camera snapping to campus ortho **10** (hopper spawn must not pan or zoom out). Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots. Distant haze should recede toward the horizon.
 3. Menu **Solar Majesty → Capture Mars Still** (or `-executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CaptureMarsStill`) regenerates the editor PNG only — not a HUD still.
 
 ---
 
 ## Ready for Phase 5
 
-**No.** Latest archived Game-tab still is `SM_MarsCampaign_PlayModeCampusStill6.png` (empty Mars Sol 1). Still5 exists; packed editor still is `SM_MarsCampaign_PackedCampusStill.png` (`Camera.Render`, no HUD) — not the look claim. None of these stamp exit. Remaining work is the spaced overseer still, not ship polish. Next work stays [`05_PHASE_4_VISUAL_TARGET.md`](05_PHASE_4_VISUAL_TARGET.md). Do not start Phase 5 as the main slice. After a true exit: [`06_PHASE_5_PRODUCTION_VALUES_SHIP.md`](06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
+**No.** Latest archived Game-tab still is `SM_MarsCampaign_PlayModeCampusStill6.png` (empty Mars Sol 1). Bake-off PRs #26/#27/#28 are **not** EXIT. Still5 exists; packed editor still is `SM_MarsCampaign_PackedCampusStill.png` (`Camera.Render`, no HUD) — not the look claim. None of these stamp exit. Remaining work is Aaron look-clear vs [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png), not ship polish. Next work stays [`05_PHASE_4_VISUAL_TARGET.md`](05_PHASE_4_VISUAL_TARGET.md). Do not start Phase 5 as the main slice. After a true exit: [`06_PHASE_5_PRODUCTION_VALUES_SHIP.md`](06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
