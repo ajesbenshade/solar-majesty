@@ -48,8 +48,26 @@ Judged against still9 (`SM_MarsCampaign_PlayModeCampusStill9.png`, Earth meadow 
 
 Kept from the lock: spaced layout, play ortho 10, `spawnShowcaseColony` false, square airlocks, white hub + orange collars on docked faces only, Overseer-only control. No `SpecialistBrain` / FlagManager / economy edits.
 
+### Capture read (Sep 7 Game-tab `SM_Capture.png`, 1024×667, Mars Sol 1, Defense + pad + solar + 2 HAB)
+
+First real Capture against the concept. Tier-1 (shape) fails first, so those come first:
+
+| What the Capture shows | Why | Fix in this pass |
+|------------------------|-----|------------------|
+| Hulls touch every frame edge; no dirt, no rocks in shot | still at play ortho 10 on a 1.5 Game tab = 30 m wide; concept frames ~60 m | `FitStillOrtho` is a **concept fit**: campus fills ~55 % of the frame, clamped **10–15**. Play ortho stays 10; the still never zooms in past it |
+| Huge pale-cyan glowing disc + white flare in the foreground | Defense **shield bubble** (glossy translucent sphere, smoothness 0.82) catching the key + status pip at ×1.6 emission | `Dress_Shield` is a faint matte **ground ring** (α 0.10, no specular); pip emission ×0.55 |
+| Fat white tube from Commons running off-frame to the pad | still21 `CampusDress_TubeRuns` linked any cardinal neighbours, pad included | Runs only between **pressurized** modules (Commons / HAB / LAB / Guild / Inn / airlock) — pad, solar, extractors, workshop stand free |
+| Tubes ~40 % of HAB diameter, oversized orange collars | `DockBore` 1.42 m | `DockBore` **1.10** (≈30 % of HAB, concept). Every sleeve / port / collar keys off it |
+| Pad reads as one bright orange plate | ring "discs" were solid cylinders stacked on graphite | Each orange disc capped by a graphite disc → thin annuli, dark deck between |
+| Workshop / Inn read as black slabs; black square under Defense | carbon full-roof caps; Graphite slot at 0.26 | White roofs with carbon edge band + orange roof stripe; Graphite slot lifted to 0.40 concrete |
+| Cyan visors / solar / lenses bloom into white-cyan blobs | HDR emissives 1.6–2.2 under bloom | `CyanEmit` / `SolarEmit` / `IceEmit` and the Cyan / Solar art slots cut to dark-glass levels |
+| Dome and HAB sides go concrete grey | low Mars ambient + fill | AmbientSky / Equator lifted, fill 0.58; hub white emission 0.34 → 0.14 so it holds white without glowing |
+
+Save the next Game-tab shot as `SM_MarsCampaign_PlayModeCampusStill10.png` when reshooting (the Sep 7 Capture was not committed).
+
 ### GD still checklist for pass 2 (what to look for in `SM_Capture.png`)
 
+0. Campus sits in the middle ~55 % of the frame with regolith, stones and yards visible on every side (console: `SnapStillCampusCamera ortho=` between 10 and 15). No shield disc, no tube to the pad, pad shows dark deck between orange rings.
 1. Shadows fall **down-right**, roughly 1.4× the HAB height. If they fall up-left, `DemoAtmosphere.Apply` did not run (check `[Atmosphere] Mars` in the console).
 2. Far ground at the frame top is a shade paler than the near ground; hulls at frame centre are still white. If the whole frame is orange, check `RenderSettings.fogStartDistance` ≈ camera height / sin(pitch) + 4.
 3. Ground shows dark specks at ~0.3 m and a few real stones with shadows between yards. No specks → `PlanetGround._PebbleDensity` is 0 (material not rebuilt) or the shader failed to compile (check `_PebbleCell` in the inspector).
@@ -72,7 +90,7 @@ Unity Editor is required (this Cloud VM cannot run Play Mode). Shoot the same wa
 4. **Solar Majesty → Render → Capture Mars Still**.
    - Interactive editor only (batch mode refuses).
    - Menu writes `Docs/Roadmap/SM_Capture.png`.
-   - Uses play campus **ortho 10**, shutter hold, `spawnShowcaseColony` stays **false**.
+   - Still ortho is a **concept fit** (campus ≈ 55 % of frame, clamped 10–15; play snap stays 10), shutter hold, `spawnShowcaseColony` stays **false**.
    - Commons → airlock → HAB plus CanFit pad / PWR / extractors. Leftovers may stamp; interior dirt is **not** force-filled.
 5. Game view: **Scale 1x**. Do not free-orbit or zoom-to-pack.
 6. Compare `SM_Capture.png` to `SM_MarsCampus_SpacedOverseer_Concept.png` at the same aspect (concept is 16:9; Game tab is short-wide — match **layout language**, not pixel crop).

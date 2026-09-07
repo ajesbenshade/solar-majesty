@@ -160,6 +160,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - `PlanetGround` pebble speckle layer + 84 `Dress_MarsPebble` rocks between yards; `SolarMajesty/Hull` triplanar `SM_Mat_*` grit + ground-dust skirt (Mars strongest)
 - `Dress_Apron` → soft radial yard decal sized to the footprint (Commons included); Commons **geodesic strut lattice** + orange cupola collar; canvas awning on Workshop / Inn; regolith extractor **spherical tanks + column**; PWR-1 lattice comms mast
 - Checked-in URP asset matches **Configure URP For Look Target** (MSAA 4 / 4 cascades / 120 m / 4096)
+- **Sep 7 Capture read** (Defense + pad + solar + 2 HAB, 1024×667): hulls on every edge, glossy shield bubble flaring as a cyan disc, corridor run to the pad, 1.42 m tubes, solid-orange pad, black roof slabs, blown cyan emissives. Fixes: still ortho is a concept fit clamped **10–15** (play stays 10), shield cue is a flat matte ring, tube runs only between pressurized modules, `DockBore` 1.10, pad annuli, white roofs + graphite 0.40, emissives cut, Mars ambient lifted
 - Spaced layout, play ortho 10, square airlocks, docked-collar-only orange, `spawnShowcaseColony` false all unchanged. No click-to-move. No `SpecialistBrain` rewrite
 - Deltas table + GD still checklist: [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md). **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
 
