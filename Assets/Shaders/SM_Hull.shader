@@ -248,9 +248,10 @@ Shader "SolarMajesty/Hull"
                     SM_TriplanarDetail(positionWS, normalWS, detailMul, detailN);
                     // Normalise the tile around mid-grey so it adds texture, not a global tint.
                     float lum = dot(detailMul, float3(0.299, 0.587, 0.114));
+                    float3 one = float3(1.0, 1.0, 1.0);
                     float3 neutral = detailMul / max(lum, 0.05);
-                    neutral = lerp(1.0, neutral, 0.55) * lerp(1.0, lum * 1.15, 0.45);
-                    albedo *= lerp(1.0, neutral, _DetailAmount);
+                    neutral = lerp(one, neutral, 0.55) * lerp(1.0, lum * 1.15, 0.45);
+                    albedo *= lerp(one, neutral, _DetailAmount);
                     normalWS = normalize(normalWS + detailN * _DetailNormalAmount);
                 }
 
