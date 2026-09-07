@@ -18,6 +18,7 @@ namespace SolarMajesty
             EnsureDustDevils(parent, grid, body);
             EnsureEarthVista(parent, body);
             EnsureMarsVista(parent, body);
+            EnsureMarsHorizonHaze(parent, grid, body);
             Debug.Log("[MapDressing] " + body.DisplayName + " ground+sky applied.");
         }
 
@@ -187,7 +188,7 @@ namespace SolarMajesty
             if (body.Id == CelestialBodyId.Earth)
                 return Color.Lerp(body.GroundDark, body.GroundLight, 0.18f);
             if (body.Id == CelestialBodyId.Mars)
-                return Color.Lerp(body.GroundDark, body.Horizon, 0.35f);
+                return Color.Lerp(body.Horizon, body.SkyHorizon, 0.42f);
             return Color.Lerp(body.GroundDark, body.GroundLight, 0.12f);
         }
 
@@ -250,7 +251,7 @@ namespace SolarMajesty
                 Color tint = body.Id == CelestialBodyId.Earth
                     ? new Color(0.62f, 0.78f, 1f)
                     : body.Id == CelestialBodyId.Mars
-                        ? new Color(0.95f, 0.58f, 0.32f)
+                        ? new Color(0.98f, 0.62f, 0.34f)
                         : body.SkyTop;
                 // Must match terrain void — default Procedural ground is mustard/olive yellow.
                 if (sky.HasProperty("_SkyTint")) sky.SetColor("_SkyTint", tint);
@@ -549,6 +550,89 @@ namespace SolarMajesty
 
             SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
             SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
+        }
+
+        /// <summary>
+        /// Distant orange haze toward the horizon. Campus dirt stays readable;
+        /// cards sit well outside play ortho 10. Dressing only.
+        /// </summary>
+        public const string MarsHazeRootName = "MarsHazeRoot";
+
+        public static void EnsureMarsHorizonHaze(
+            Transform parent, IsoGrid grid, CelestialBodyProfile body)
+        {
+            var old = GameObject.Find(MarsHazeRootName);
+            if (old != null)
+            {
+                old.name = MarsHazeRootName + "_old";
+                Object.Destroy(old);
+            }
+
+            if (body == null || body.Id != CelestialBodyId.Mars) return;
+
+            Vector3 campus = ColonyLayout.CampusOrigin;
+            var root = new GameObject(MarsHazeRootName).transform;
+            if (parent != null) root.SetParent(parent, false);
+
+            float[] radii = { 34f, 48f, 64f };
+            float[] heights = { 5.5f, 8.5f, 12f };
+            float[] alphas = { 0.16f, 0.22f, 0.28f };
+            for (int i = 0; i < radii.Length; i++)
+            {
+                var bank = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                bank.name = "Dress_MarsHazeBank_" + i;
+                bank.transform.SetParent(root, false);
+                bank.transform.position = campus + new Vector3(0f, heights[i] * 0.35f, 0f);
+                bank.transform.localScale = new Vector3(radii[i] * 2f, heights[i], radii[i] * 2f);
+                Object.Destroy(bank.GetComponent<Collider>());
+                Color haze = Color.Lerp(body.FogColor, body.SkyHorizon, 0.45f + i * 0.12f);
+                haze.a = alphas[i];
+                TintHaze(bank, haze);
+            }
+
+            for (int i = 0; i < 6; i++)
+            {
+                float ang = i * 60f * Mathf.Deg2Rad;
+                Vector3 at = campus + new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang)) * 52f;
+                var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                card.name = "Dress_MarsHazeCard_" + i;
+                card.transform.SetParent(root, false);
+                card.transform.position = at + Vector3.up * 6.5f;
+                card.transform.rotation = Quaternion.LookRotation(
+                    (campus - at).normalized + Vector3.up * 0.08f, Vector3.up);
+                card.transform.localScale = new Vector3(28f, 11f, 1f);
+                Object.Destroy(card.GetComponent<Collider>());
+                Color haze = body.SkyHorizon;
+                haze.a = 0.24f;
+                TintHaze(card, haze);
+            }
+        }
+
+        private static void TintHaze(GameObject go, Color color)
+        {
+            var rend = go.GetComponent<Renderer>();
+            if (rend == null) return;
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit")
+                            ?? Shader.Find("Sprites/Default")
+                            ?? Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null) return;
+            var mat = new Material(shader) { name = go.name + "_Haze" };
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+            if (mat.HasProperty("_Color")) mat.color = color;
+            if (mat.HasProperty("_Surface"))
+            {
+                mat.SetFloat("_Surface", 1f);
+                mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            }
+
+            mat.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+            mat.SetInt("_ZWrite", 0);
+            mat.renderQueue = 3100;
+            mat.EnableKeyword("_ALPHABLEND_ON");
+            rend.sharedMaterial = mat;
+            rend.shadowCastingMode = ShadowCastingMode.Off;
+            rend.receiveShadows = false;
         }
 
         private static void SpawnVistaBoulder(
