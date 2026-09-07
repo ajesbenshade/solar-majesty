@@ -6,7 +6,8 @@
 
 **W2 advisor copy:** [`W2_ADVISOR_AND_CHAIN_BEATS.md`](W2_ADVISOR_AND_CHAIN_BEATS.md) — toasts / travel logs / claim asides against the ids below. Phase 4 EXIT still art-blocked.  
 **W2 campaign stakes:** [`W2_CAMPAIGN_STAKES.md`](W2_CAMPAIGN_STAKES.md) — text cutscenes / advisor beats (why leave Earth). LP hooks later; this is the stakes spine.  
-**Trade routes / finds:** [`W2_TRADE_ROUTES_AND_FINDS.md`](W2_TRADE_ROUTES_AND_FINDS.md) — PWR-as-favor / MET-as-tithe; Extract/Explore skins; no new `FlagType`. Campus look north star is a spaced overseer board, not packed `SM_MarsCampaign_VisualTarget.png` density.
+**Trade routes / finds:** [`W2_TRADE_ROUTES_AND_FINDS.md`](W2_TRADE_ROUTES_AND_FINDS.md) — PWR-as-favor / MET-as-tithe; Extract/Explore skins; no new `FlagType`. Campus look north star is a spaced overseer board, not packed `SM_MarsCampaign_VisualTarget.png` density.  
+**Hero personality quests:** [`W2_HERO_PERSONALITY_QUESTS.md`](W2_HERO_PERSONALITY_QUESTS.md) — ten callsign chains on the ids below. No new enum. First-ship: Anvil / Horizon / Strip / Aegis.
 
 Narrative can draft advisor lines from this doc alone. Flags stay **decrees**: the royal overseer posts them; ego specialists take or ignore them; the wry advisor comments. Do **not** copy Majesty 2 guild/flag names or Paradox assets.
 

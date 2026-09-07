@@ -4,7 +4,8 @@
 **Status:** W2 stakes draft. Copy only — not a quest graph, not a new `FlagType`, not App Store text, not art.  
 **Art:** Phase 4 **EXIT** is still art-blocked (`Docs/Roadmap/PHASE_4_EXIT.md`). This doc runs **in parallel**. Mars lines assume the Compact campus that will be, not the empty Sol 1 still.  
 **Ids:** Decree slugs from [`FLAG_TYPE_MAP_EARTH_LUNA_MARS.md`](FLAG_TYPE_MAP_EARTH_LUNA_MARS.md) and `FlagDecreeIds`. Toast / travel voice already drafted in [`W2_ADVISOR_AND_CHAIN_BEATS.md`](W2_ADVISOR_AND_CHAIN_BEATS.md). This file is the **stakes spine** those beats sit under. LP will later hook title-match toasts; do not invent slugs here.  
-**Trade routes / finds:** [`W2_TRADE_ROUTES_AND_FINDS.md`](W2_TRADE_ROUTES_AND_FINDS.md) — six named lanes + eight find hooks on the existing eight types; PWR/MET framing, not a fifth resource. Not Phase 4 EXIT.
+**Trade routes / finds:** [`W2_TRADE_ROUTES_AND_FINDS.md`](W2_TRADE_ROUTES_AND_FINDS.md) — six named lanes + eight find hooks on the existing eight types; PWR/MET framing, not a fifth resource. Not Phase 4 EXIT.  
+**Hero personality quests:** [`W2_HERO_PERSONALITY_QUESTS.md`](W2_HERO_PERSONALITY_QUESTS.md) — decree-chain egos (Horizon → Rim). Mid-cuts below stay optional beside a chain; not quest steps.
 
 Flags stay **decrees**. The royal overseer posts them. Ego heroes (Horizon, Anvil, Aegis, Triage, Strip, Chart, Bloom, Haul, Core, Rim) take or ignore them. The wry advisor briefs. COMMONS is the civic name — never Palace, never CMD as a place. No Majesty 2 / Paradox proper names. No click-to-move fantasy. Belt and Europa are **named destinations after a Mars win only** — no decree lists.
 
@@ -297,7 +298,7 @@ Twenty-four consts. No new rows. Lookup remains `FlagDecreeIds.TryGet(...)`.
 
 ### Out of scope
 
-- Gameplay code, new `FlagType`, new `FlagDecreeIds`, quest nodes, auto-posted story flags.
+- Gameplay code, new `FlagType`, new `FlagDecreeIds`, quest nodes, auto-posted story flags. Personality chains (copy only) live in [`W2_HERO_PERSONALITY_QUESTS.md`](W2_HERO_PERSONALITY_QUESTS.md).
 - Art, `CaptureStill`, Phase 4 EXIT stills, Phase 5 ship.
 - Belt / Europa decree lists or cutscene catalogs.
 - Rewriting `SpecialistFlavor`.
