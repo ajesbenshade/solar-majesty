@@ -354,8 +354,10 @@ namespace SolarMajesty
                     dust *= 0.8f;
                     break;
                 case Slot.Graphite:
-                    baseColor = new Color(0.26f, 0.27f, 0.29f);
-                    metallic = 0.48f; smooth = 0.34f; panelScale = 0.75f;
+                    // Plinths / mech rings. 0.26 read as black slabs under the Mars key in the
+                    // Capture; concept bases are mid-grey concrete.
+                    baseColor = new Color(0.40f, 0.41f, 0.43f);
+                    metallic = 0.30f; smooth = 0.30f; panelScale = 0.75f;
                     break;
                 case Slot.Steel:
                     baseColor = new Color(0.54f, 0.56f, 0.59f);
@@ -520,11 +522,13 @@ namespace SolarMajesty
                     tile = new Vector2(1.5f, 1.5f);
                     break;
                 case Slot.Cyan:
+                    // Visors / lenses: dark glass with a hint of light. The old (0.35, 1.6, 2.2)
+                    // emission flared under bloom in the Capture.
                     albedo = _whiteAlbedo;
-                    tint = new Color(0.22f, 0.82f, 0.98f);
+                    tint = new Color(0.16f, 0.46f, 0.58f);
                     metallic = 0.05f;
-                    smooth = 0.72f;
-                    emission = new Color(0.35f, 1.6f, 2.2f);
+                    smooth = 0.80f;
+                    emission = new Color(0.10f, 0.45f, 0.62f);
                     tile = new Vector2(1f, 1f);
                     break;
                 case Slot.Glass:
@@ -536,10 +540,11 @@ namespace SolarMajesty
                     tile = new Vector2(1f, 1f);
                     break;
                 case Slot.Solar:
+                    // Concept cells are near-black blue with a glossy sheen, not a blue glow.
                     albedo = _solarAlbedo;
-                    metallic = 0.35f;
-                    smooth = 0.62f;
-                    emission = new Color(0.10f, 0.28f, 0.85f);
+                    metallic = 0.40f;
+                    smooth = 0.70f;
+                    emission = new Color(0.02f, 0.06f, 0.20f);
                     tile = new Vector2(4f, 4f);
                     break;
                 case Slot.Canvas:

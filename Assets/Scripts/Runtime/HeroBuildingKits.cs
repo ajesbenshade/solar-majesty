@@ -19,12 +19,15 @@ namespace SolarMajesty
         private static readonly Color Yellow = new Color(0.95f, 0.82f, 0.12f);
         private static readonly Color Concrete = new Color(0.40f, 0.41f, 0.43f);
         private static readonly Color Cyan = new Color(0.22f, 0.84f, 0.98f);
-        private static readonly Color CyanEmit = new Color(0.20f, 1.15f, 1.65f);
+        // Emissives trimmed for the Dream Loop look: with bloom on, the old HDR values flared
+        // every visor / cell / lens into a white-cyan blob in the Capture. Concept windows are
+        // dark glass with a hint of light; solar cells are near-black blue.
+        private static readonly Color CyanEmit = new Color(0.08f, 0.42f, 0.60f);
         private static readonly Color Ice = new Color(0.52f, 0.76f, 0.86f);
-        private static readonly Color IceEmit = new Color(0.12f, 0.55f, 0.95f);
+        private static readonly Color IceEmit = new Color(0.06f, 0.28f, 0.48f);
         private static readonly Color Dust = new Color(0.52f, 0.36f, 0.22f);
-        private static readonly Color SolarCell = new Color(0.07f, 0.14f, 0.36f);
-        private static readonly Color SolarEmit = new Color(0.22f, 0.72f, 2.15f);
+        private static readonly Color SolarCell = new Color(0.06f, 0.10f, 0.24f);
+        private static readonly Color SolarEmit = new Color(0.04f, 0.12f, 0.36f);
         private static readonly Color Glass = new Color(0.48f, 0.72f, 0.82f);
         private static readonly Color GlassEmit = new Color(0.06f, 0.22f, 0.28f);
         private static readonly Color Plant = new Color(0.22f, 0.55f, 0.24f);
@@ -271,29 +274,42 @@ namespace SolarMajesty
             Prim(root, "Dress_PadLip", PrimitiveType.Cylinder,
                 new Vector3(0f, 0.06f, 0f),
                 new Vector3(dia * 1.04f, 0.05f, dia * 1.04f), Concrete);
+            // Rings are stacked discs, so each orange disc is capped by a graphite disc a hair
+            // higher to leave a thin annulus. The Capture read the pad as one solid orange
+            // plate because the 0.84 disc sat uncapped on the graphite.
+            Color padDeck = Color.Lerp(Graphite, Carbon, 0.35f);
             Prim(root, "Dress_PadYellow", PrimitiveType.Cylinder,
                 new Vector3(0f, 0.15f, 0f),
                 new Vector3(dia * 1.01f, 0.02f, dia * 1.01f), Yellow);
+            Prim(root, "Dress_PadDeck_0", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.155f, 0f),
+                new Vector3(dia * 0.96f, 0.02f, dia * 0.96f), padDeck);
             Prim(root, "Dress_PadRing_0", PrimitiveType.Cylinder,
                 new Vector3(0f, 0.17f, 0f),
                 new Vector3(dia * 0.84f, 0.02f, dia * 0.84f), Orange);
+            Prim(root, "Dress_PadDeck_1", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.175f, 0f),
+                new Vector3(dia * 0.79f, 0.02f, dia * 0.79f), padDeck);
             Prim(root, "Dress_PadRing_1", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.17f, 0f),
+                new Vector3(0f, 0.18f, 0f),
                 new Vector3(dia * 0.56f, 0.018f, dia * 0.56f), Orange);
+            Prim(root, "Dress_PadDeck_2", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.185f, 0f),
+                new Vector3(dia * 0.51f, 0.018f, dia * 0.51f), padDeck);
             Prim(root, "Dress_PadRing_2", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.17f, 0f),
+                new Vector3(0f, 0.19f, 0f),
                 new Vector3(dia * 0.32f, 0.015f, dia * 0.32f), Orange);
             Prim(root, "Dress_PadInner", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.18f, 0f),
+                new Vector3(0f, 0.195f, 0f),
                 new Vector3(dia * 0.22f, 0.015f, dia * 0.22f), Carbon);
             Prim(root, "Dress_PadH_L", PrimitiveType.Cube,
-                new Vector3(-0.42f, 0.20f, 0f),
+                new Vector3(-0.42f, 0.21f, 0f),
                 new Vector3(0.10f, 0.03f, 0.95f), Orange);
             Prim(root, "Dress_PadH_R", PrimitiveType.Cube,
-                new Vector3(0.42f, 0.20f, 0f),
+                new Vector3(0.42f, 0.21f, 0f),
                 new Vector3(0.10f, 0.03f, 0.95f), Orange);
             Prim(root, "Dress_PadH_Bar", PrimitiveType.Cube,
-                new Vector3(0f, 0.20f, 0f),
+                new Vector3(0f, 0.21f, 0f),
                 new Vector3(0.84f, 0.03f, 0.12f), Orange);
 
             for (int i = 0; i < 4; i++)
@@ -691,9 +707,17 @@ namespace SolarMajesty
             Prim(root, "ShopHull", PrimitiveType.Cube,
                 new Vector3(0f, h * 0.5f + 0.12f, -d * 0.08f),
                 new Vector3(w * 0.78f, h, d * 0.68f), White);
-            Prim(root, "ShopCap", PrimitiveType.Cube,
-                new Vector3(0f, h + 0.18f, -d * 0.08f),
-                new Vector3(w * 0.84f, 0.14f, d * 0.74f), Carbon);
+            // White roof with a carbon edge trim: the full carbon cap read as a black slab from
+            // the overseer camera in the Capture. Concept workshop is a white box, orange trim.
+            Prim(root, "ShopCapBand", PrimitiveType.Cube,
+                new Vector3(0f, h + 0.16f, -d * 0.08f),
+                new Vector3(w * 0.84f, 0.10f, d * 0.74f), Carbon);
+            Prim(root, "ShopRoof", PrimitiveType.Cube,
+                new Vector3(0f, h + 0.23f, -d * 0.08f),
+                new Vector3(w * 0.78f, 0.06f, d * 0.68f), White);
+            Prim(root, "ShopRoofStripe", PrimitiveType.Cube,
+                new Vector3(0f, h + 0.27f, -d * 0.08f),
+                new Vector3(w * 0.10f, 0.02f, d * 0.60f), Orange);
             Prim(root, "ShopStripe", PrimitiveType.Cube,
                 new Vector3(0f, h * 0.62f, d * 0.26f),
                 new Vector3(w * 0.55f, 0.10f, 0.08f), Orange);
@@ -765,9 +789,12 @@ namespace SolarMajesty
             Prim(root, "InnHall", PrimitiveType.Cube,
                 new Vector3(0f, 1.15f, -d * 0.04f),
                 new Vector3(w * 0.58f, 2.1f, d * 0.62f), White);
-            Prim(root, "InnCap", PrimitiveType.Cube,
+            Prim(root, "InnCapBand", PrimitiveType.Cube,
                 new Vector3(0f, 2.28f, -d * 0.04f),
                 new Vector3(w * 0.64f, 0.14f, d * 0.68f), Carbon);
+            Prim(root, "InnRoof", PrimitiveType.Cube,
+                new Vector3(0f, 2.38f, -d * 0.04f),
+                new Vector3(w * 0.58f, 0.06f, d * 0.62f), White);
             Prim(root, "InnStripe", PrimitiveType.Cube,
                 new Vector3(0f, 1.55f, d * 0.27f),
                 new Vector3(w * 0.42f, 0.10f, 0.08f), Orange);
