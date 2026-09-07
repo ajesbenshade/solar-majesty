@@ -24,6 +24,12 @@ Shader "SolarMajesty/PlanetGround"
         _DetailTexScale("Detail Tex Scale (m)", Range(0.5, 32)) = 8
         _DetailTexAmount("Detail Tex Amount", Range(0,1)) = 0
 
+        [Header(Pebbles)]
+        _PebbleColor("Pebble Color", Color) = (0.30, 0.16, 0.10, 1)
+        _PebbleCell("Pebble Cell (m)", Range(0.08, 2)) = 0.34
+        _PebbleDensity("Pebble Density", Range(0,1)) = 0
+        _PebbleSize("Pebble Size", Range(0.05, 0.6)) = 0.22
+
         _SlopeStart("Rock Slope Start", Range(0,1)) = 0.55
         _SlopeEnd("Rock Slope End", Range(0,1)) = 0.88
 
@@ -56,6 +62,10 @@ Shader "SolarMajesty/PlanetGround"
             float4 _DetailNormal_ST;
             float  _DetailTexScale;
             float  _DetailTexAmount;
+            float4 _PebbleColor;
+            float  _PebbleCell;
+            float  _PebbleDensity;
+            float  _PebbleSize;
             float  _SlopeStart;
             float  _SlopeEnd;
             float  _Smoothness;
@@ -95,6 +105,40 @@ Shader "SolarMajesty/PlanetGround"
                 a *= 0.5;
             }
             return v;
+        }
+
+        // Scattered pebbles: one jittered disc per grid cell, kept only where the cell's hash
+        // clears the density threshold. Returns 0..1 coverage with a soft lit rim on the sun side
+        // so each stone reads as a bump, not a paint fleck. Cheap enough to run per pixel.
+        float SM_Pebbles(float2 p, out float rim)
+        {
+            rim = 0.0;
+            if (_PebbleDensity <= 0.001) return 0.0;
+            float2 cellP = p / max(_PebbleCell, 0.02);
+            float2 cell = floor(cellP);
+            float2 f = frac(cellP);
+            float coverage = 0.0;
+            // Check the 3x3 neighbourhood so discs can straddle cell edges.
+            for (int oy = -1; oy <= 1; oy++)
+            for (int ox = -1; ox <= 1; ox++)
+            {
+                float2 c = cell + float2(ox, oy);
+                float h = SM_GHash(c);
+                if (h > _PebbleDensity) continue;
+                float2 jitter = float2(SM_GHash(c + 17.3), SM_GHash(c + 41.7));
+                float2 centre = float2(ox, oy) + 0.5 + (jitter - 0.5) * 0.7;
+                float radius = _PebbleSize * (0.55 + 0.9 * SM_GHash(c + 3.1));
+                float2 d = f - centre;
+                // Slight ellipse so stones are not all perfect discs.
+                d.x *= 1.0 + 0.5 * (SM_GHash(c + 7.7) - 0.5);
+                float dist = length(d);
+                float disc = 1.0 - smoothstep(radius * 0.72, radius, dist);
+                // Crescent faces the Mars key (sun yaw 148 → light travels +X/-Z on the ground).
+                float lit = saturate(dot(normalize(d + 1e-4), float2(-0.53, 0.85)));
+                rim = max(rim, disc * lit * (1.0 - smoothstep(radius * 0.25, radius * 0.8, dist)) * 0.5);
+                coverage = max(coverage, disc);
+            }
+            return coverage;
         }
         ENDHLSL
 
@@ -192,6 +236,14 @@ Shader "SolarMajesty/PlanetGround"
                 float rock = smoothstep(1.0 - _SlopeEnd, 1.0 - _SlopeStart, slope);
                 albedo = lerp(albedo, _RockColor.rgb, rock);
 
+                // Pebble field: dark stones with a lit crescent. Thinned out on the smooth low
+                // ground (macro < 0.5) so packed dust stays readable next to gravelly patches.
+                float pebbleRim;
+                float pebble = SM_Pebbles(p, pebbleRim);
+                pebble *= lerp(0.45, 1.0, saturate(macro * 1.6));
+                albedo = lerp(albedo, _PebbleColor.rgb, pebble * 0.85);
+                albedo += pebbleRim * pebble * 0.30 * _BaseColor.rgb;
+
                 InputData inputData = (InputData)0;
                 inputData.positionWS = input.positionWS;
                 inputData.normalWS = normalWS;
@@ -205,7 +257,7 @@ Shader "SolarMajesty/PlanetGround"
                 SurfaceData surfaceData = (SurfaceData)0;
                 surfaceData.albedo = albedo;
                 surfaceData.metallic = _Metallic;
-                surfaceData.smoothness = _Smoothness + rock * 0.06;
+                surfaceData.smoothness = _Smoothness + rock * 0.06 + pebble * 0.05;
                 surfaceData.normalTS = float3(0, 0, 1);
                 surfaceData.occlusion = 1.0;
                 surfaceData.alpha = 1.0;

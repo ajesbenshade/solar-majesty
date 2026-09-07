@@ -43,6 +43,7 @@ namespace SolarMajesty
                 groundMat.SetFloat("_DetailStrength", body.Id == CelestialBodyId.Europa ? 0.12f : 0.24f);
                 groundMat.SetFloat("_Smoothness", body.Id == CelestialBodyId.Europa ? 0.30f : 0.06f);
                 BindAuthoredGroundDetail(groundMat, body);
+                BindPebbleField(groundMat, body);
 
                 rend.sharedMaterial = groundMat;
                 rend.shadowCastingMode = ShadowCastingMode.Off;
@@ -174,6 +175,40 @@ namespace SolarMajesty
                 groundMat.SetFloat("_DetailTexScale", body.Id == CelestialBodyId.Mars ? 8.5f : 6.5f);
             if (groundMat.HasProperty("_DetailTexAmount"))
                 groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.52f : 0.40f);
+        }
+
+        /// <summary>Shader pebble density per body — Mars regolith is peppered with dark stones.</summary>
+        public static float PebbleDensityFor(CelestialBodyProfile body)
+        {
+            if (body == null) return 0f;
+            switch (body.Id)
+            {
+                case CelestialBodyId.Mars: return 0.34f;
+                case CelestialBodyId.Luna: return 0.26f;
+                case CelestialBodyId.Belt: return 0.30f;
+                case CelestialBodyId.Europa: return 0.06f;
+                default: return 0f;
+            }
+        }
+
+        /// <summary>
+        /// Dream Loop pass 2: the concept regolith is not a smooth tint — it is gritty with
+        /// scattered dark pebbles right up to the packed yards. Shader-side stones cost nothing
+        /// per object and keep the body colour lock (they only darken toward RockColor).
+        /// </summary>
+        private static void BindPebbleField(Material groundMat, CelestialBodyProfile body)
+        {
+            if (groundMat == null || body == null) return;
+            float density = PebbleDensityFor(body);
+            if (groundMat.HasProperty("_PebbleDensity"))
+                groundMat.SetFloat("_PebbleDensity", density);
+            if (density <= 0f) return;
+            if (groundMat.HasProperty("_PebbleColor"))
+                groundMat.SetColor("_PebbleColor", Color.Lerp(body.RockColor, Color.black, 0.42f));
+            if (groundMat.HasProperty("_PebbleCell"))
+                groundMat.SetFloat("_PebbleCell", body.Id == CelestialBodyId.Mars ? 0.36f : 0.44f);
+            if (groundMat.HasProperty("_PebbleSize"))
+                groundMat.SetFloat("_PebbleSize", body.Id == CelestialBodyId.Mars ? 0.21f : 0.18f);
         }
 
         /// <summary>
@@ -549,6 +584,60 @@ namespace SolarMajesty
 
             SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
             SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
+            SpawnPebbleField(root, campus, body);
+        }
+
+        /// <summary>Near-campus pebble count (Dream Loop pass 2). Kept modest for the SRP batcher.</summary>
+        public const int MarsPebbleCount = 84;
+        public const string MarsPebbleName = "Dress_MarsPebble";
+
+        /// <summary>
+        /// Fist-to-knee sized stones between the yards. The concept's open regolith is never
+        /// clean; this is the mesh layer over the shader speckle so the nearest stones cast
+        /// real shadows in the overseer view. Golden-angle spiral with jitter, 4.5–21 m out,
+        /// so pads placed later sit among stones rather than on a swept plaza.
+        /// </summary>
+        private static void SpawnPebbleField(Transform parent, Vector3 campus, CelestialBodyProfile body)
+        {
+            var prefab = EnvironmentMeshCatalog.LoadPebbleRock();
+            var field = new GameObject("MarsPebbleField").transform;
+            field.SetParent(parent, false);
+
+            for (int i = 0; i < MarsPebbleCount; i++)
+            {
+                float ang = i * 2.39996f + Mathf.Sin(i * 1.7f) * 0.35f;
+                float rad = 4.5f + Mathf.Sqrt(i / (float)MarsPebbleCount) * 16.5f;
+                rad += Mathf.Sin(i * 3.3f) * 0.9f;
+                Vector3 at = campus + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
+                float scale = 0.11f + Frac(Mathf.Sin(i * 12.9898f) * 43758.5453f) * 0.19f;
+                Color c = Color.Lerp(body.RockColor, body.GroundDark, 0.35f + (i % 5) * 0.09f);
+                c = Color.Lerp(c, Color.black, 0.18f);
+
+                var mesh = EnvironmentMeshCatalog.InstantiateClean(prefab, MarsPebbleName);
+                if (mesh != null)
+                {
+                    mesh.transform.SetParent(field, false);
+                    mesh.transform.position = at;
+                    mesh.transform.localScale = Vector3.one * (scale / EnvironmentMeshCatalog.RockNativeSize);
+                    Quaternion importRot = prefab != null ? prefab.transform.rotation : mesh.transform.rotation;
+                    ColonyVisualUtility.SetYawKeepingImport(mesh.transform, importRot, i * 53f);
+                    ColonyVisualUtility.SeatFlatOnGround(mesh);
+                    PlanetaryWorldGen.Tint(mesh, c, 0.10f, ShadowCastingMode.On);
+                    ColonyVisualUtility.SnapToGround(mesh);
+                    // Bury a little so no stone floats on the displaced terrain.
+                    mesh.transform.position += Vector3.down * (scale * 0.18f);
+                    continue;
+                }
+
+                var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                go.name = MarsPebbleName;
+                go.transform.SetParent(field, false);
+                go.transform.position = at + Vector3.up * (scale * 0.22f);
+                go.transform.localScale = new Vector3(scale, scale * 0.55f, scale * 0.8f);
+                go.transform.rotation = Quaternion.Euler(0f, i * 53f, 0f);
+                Object.Destroy(go.GetComponent<Collider>());
+                PlanetaryWorldGen.Tint(go, c, 0.10f, ShadowCastingMode.On);
+            }
         }
 
         private static void SpawnVistaBoulder(

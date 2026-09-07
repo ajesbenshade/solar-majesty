@@ -52,6 +52,12 @@ namespace SolarMajesty
                    ?? Resources.Load<GameObject>(RockBPath);
         }
 
+        /// <summary>
+        /// Low-poly boulder only. Boulder_B is a multi-MB Copilot scan — fine for a dozen vista
+        /// rocks, wrong for the near-campus pebble field which instances it ~80 times.
+        /// </summary>
+        public static GameObject LoadPebbleRock() => Resources.Load<GameObject>(RockAPath);
+
         public static GameObject LoadCrater(int sizeClass)
         {
             switch (Mathf.Clamp(sizeClass, 0, 2))
