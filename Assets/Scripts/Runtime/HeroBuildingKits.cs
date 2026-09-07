@@ -176,13 +176,26 @@ namespace SolarMajesty
             Prim(root, "CommonsDome", PrimitiveType.Sphere,
                 new Vector3(0f, 1.85f, 0f),
                 new Vector3(radius * 2.04f, radius * 1.47f, radius * 2.04f), hull);
+            // The geodesic struts carry the dome's pattern; mute the world-grid panel seams
+            // underneath so the two do not fight (per-renderer block, shared material intact).
+            SoftenPanels(root, "CommonsDome");
             Prim(root, "CommonsDomeBand", PrimitiveType.Cylinder,
                 new Vector3(0f, 3.05f, 0f),
                 new Vector3(radius * 1.44f, 0.05f, radius * 1.44f), Carbon);
 
+            // Dream Loop pass 2: the concept dome is a true geodesic — triangular panels with
+            // light struts — not a smooth sphere with two meridian rings. One combined mesh.
+            BuildGeodesicLattice(root, GeodesicLatticeName,
+                new Vector3(0f, 1.85f, 0f),
+                new Vector3(radius * 1.02f, radius * 0.735f, radius * 1.02f) * 1.012f,
+                minUnitY: -0.06f, strutWidth: 0.055f);
+
             Prim(root, "CommonsCupolaLo", PrimitiveType.Cylinder,
                 new Vector3(0f, 3.55f, 0f),
                 new Vector3(radius * 0.56f, 0.21f, radius * 0.56f), White);
+            Prim(root, "CommonsCupolaStripe", PrimitiveType.Cylinder,
+                new Vector3(0f, 3.50f, 0f),
+                new Vector3(radius * 0.60f, 0.035f, radius * 0.60f), Orange);
             Prim(root, "CommonsCupolaBand", PrimitiveType.Cylinder,
                 new Vector3(0f, 3.72f, 0f),
                 new Vector3(radius * 0.60f, 0.04f, radius * 0.60f), Carbon);
@@ -417,12 +430,42 @@ namespace SolarMajesty
                     i == 1 ? Yellow : Orange, alongX);
             }
 
-            Prim(root, "Dress_RegTank_L", PrimitiveType.Cylinder,
-                new Vector3(-w * 0.28f, 0.72f, d * 0.32f),
-                new Vector3(0.82f, 0.62f, 0.82f), Dust);
-            Prim(root, "Dress_RegTank_R", PrimitiveType.Cylinder,
-                new Vector3(w * 0.08f, 0.62f, d * 0.32f),
-                new Vector3(1.02f, 0.48f, 1.02f), Dust);
+            // Dream Loop pass 2: concept extractor is a chemical plant — spherical pressure
+            // tanks on ring stands plus one tall white column — not two dust drums.
+            // No Dress_ prefix so IndustrialArtDressing gives them panelled white hull.
+            Prim(root, "RegTankPlinth_L", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.28f, 0.22f, d * 0.36f),
+                new Vector3(0.78f, 0.08f, 0.78f), Graphite);
+            Prim(root, "RegSphereTank_L", PrimitiveType.Sphere,
+                new Vector3(-w * 0.28f, 0.92f, d * 0.36f),
+                new Vector3(1.18f, 1.18f, 1.18f), White);
+            Prim(root, "RegTankBand_L", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.28f, 0.92f, d * 0.36f),
+                new Vector3(1.20f, 0.03f, 1.20f), Carbon);
+            Prim(root, "RegTankPlinth_R", PrimitiveType.Cylinder,
+                new Vector3(w * 0.08f, 0.22f, d * 0.36f),
+                new Vector3(0.66f, 0.08f, 0.66f), Graphite);
+            Prim(root, "RegSphereTank_R", PrimitiveType.Sphere,
+                new Vector3(w * 0.08f, 0.82f, d * 0.36f),
+                new Vector3(0.98f, 0.98f, 0.98f), White);
+            Prim(root, "RegTankBand_R", PrimitiveType.Cylinder,
+                new Vector3(w * 0.08f, 0.82f, d * 0.36f),
+                new Vector3(1.00f, 0.03f, 1.00f), Carbon);
+            Prim(root, "RegTankSteelPipe", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.10f, 1.05f, d * 0.36f),
+                new Vector3(0.09f, w * 0.18f, 0.09f), Steel, alongX);
+            Prim(root, "RegColumnTank", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.40f, 1.75f, -d * 0.02f),
+                new Vector3(0.52f, 1.65f, 0.52f), White);
+            Prim(root, "RegColumnStripe", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.40f, 2.55f, -d * 0.02f),
+                new Vector3(0.55f, 0.035f, 0.55f), Orange);
+            Prim(root, "RegColumnBand", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.40f, 3.40f, -d * 0.02f),
+                new Vector3(0.44f, 0.06f, 0.44f), Carbon);
+            Prim(root, "RegColumnSteelLadder", PrimitiveType.Cube,
+                new Vector3(-w * 0.40f + 0.30f, 1.85f, -d * 0.02f),
+                new Vector3(0.05f, 3.1f, 0.22f), Steel);
 
             ScaffoldLow(root, "Dress_RegScaf", new Vector3(-w * 0.28f, 0f, -d * 0.28f), w * 0.7f);
             Prim(root, "Dress_RegBelt", PrimitiveType.Cube,
@@ -574,6 +617,10 @@ namespace SolarMajesty
                     new Vector3(w * 0.72f, 0.03f, 0.05f), Cyan, SolarEmit);
             }
 
+            // Dream Loop pass 2: the concept solar field has a tall lattice comms mast beside
+            // it — the one vertical accent in an otherwise low yard.
+            BuildLatticeMast(root, "PwrMast", new Vector3(w * 0.43f, 0f, -d * 0.43f), 5.6f);
+
             float arrZ = originZ + pitchZ;
             Prim(root, "SolarBracket_0", PrimitiveType.Cube,
                 new Vector3(-pitchX * 1.55f, 0.68f, arrZ - pitchZ * 1.15f),
@@ -695,6 +742,15 @@ namespace SolarMajesty
                     new Vector3(0f, 0.20f, d * 0.38f - i * 0.22f),
                     new Vector3(0.55f - i * 0.08f, 0.03f, 0.10f), Yellow);
             }
+
+            // Dream Loop pass 2: concept workshop has a canvas sun-awning off the front-left
+            // corner. Kept clear of the face centre so a docked tube never punches through it.
+            BuildCanvasAwning(root, "Shop",
+                new Vector3(-w * 0.28f, 0f, d * 0.385f),
+                w * 0.34f, d * 0.20f, 1.72f);
+            Prim(root, "ShopBenchToolbox", PrimitiveType.Cube,
+                new Vector3(-w * 0.30f, 0.30f, d * 0.40f),
+                new Vector3(0.62f, 0.34f, 0.42f), Graphite);
         }
 
         public static void BuildInn(Transform root, float w, float d)
@@ -736,9 +792,10 @@ namespace SolarMajesty
             Prim(root, "InnBeacon", PrimitiveType.Sphere,
                 new Vector3(0f, 2.72f, -d * 0.04f),
                 new Vector3(0.20f, 0.20f, 0.20f), Cyan, CyanEmit);
-            Prim(root, "InnCanopy", PrimitiveType.Cube,
-                new Vector3(0f, 1.55f, d * 0.38f),
-                new Vector3(w * 0.42f, 0.06f, d * 0.18f), Carbon);
+            // Dream Loop pass 2: porch canopy is stretched canvas, not a carbon slab.
+            BuildCanvasAwning(root, "Inn",
+                new Vector3(0f, 0f, d * 0.40f),
+                w * 0.44f, d * 0.20f, 2.08f);
             Prim(root, "InnLanternPost_L", PrimitiveType.Cylinder,
                 new Vector3(-w * 0.18f, 1.05f, d * 0.42f),
                 new Vector3(0.08f, 0.85f, 0.08f), Steel);
@@ -1355,6 +1412,281 @@ namespace SolarMajesty
             Prim(root, prefix + "Beam", PrimitiveType.Cube,
                 at + new Vector3(0f, height * 0.92f, 0f),
                 new Vector3(span * 2.1f, 0.08f, span * 2.1f), Yellow);
+        }
+
+        /// <summary>Combined-mesh geodesic strut lattice child name on Colony Commons.</summary>
+        public const string GeodesicLatticeName = "CommonsGeoSteelLattice";
+
+        private static void SoftenPanels(Transform root, string childName)
+        {
+            var child = root.Find(childName);
+            var rend = child != null ? child.GetComponent<Renderer>() : null;
+            if (rend == null) return;
+            var block = new MaterialPropertyBlock();
+            rend.GetPropertyBlock(block);
+            block.SetFloat("_PanelDarken", 0.10f);
+            block.SetFloat("_PanelBevel", 0.12f);
+            block.SetFloat("_PanelScale", 2.2f);
+            rend.SetPropertyBlock(block);
+        }
+
+        /// <summary>
+        /// Four steel poles and a slightly pitched khaki sheet with a hanging hem. Names carry
+        /// the "canvas" / "steel" tokens so IndustrialArtDressing binds SM_Mat_Canvas and steel.
+        /// Pitch runs down toward +Z (the open side) so the sheet catches the key light.
+        /// </summary>
+        public static void BuildCanvasAwning(
+            Transform root, string prefix, Vector3 centre, float sizeX, float sizeZ, float height)
+        {
+            float hx = sizeX * 0.5f - 0.06f;
+            float hz = sizeZ * 0.5f - 0.06f;
+            for (int i = 0; i < 4; i++)
+            {
+                float sx = (i & 1) == 0 ? -1f : 1f;
+                float sz = i < 2 ? -1f : 1f;
+                float poleH = height - (sz > 0f ? 0.16f : 0f);
+                Prim(root, prefix + "AwningSteelPole_" + i, PrimitiveType.Cylinder,
+                    centre + new Vector3(sx * hx, poleH * 0.5f, sz * hz),
+                    new Vector3(0.06f, poleH * 0.5f, 0.06f), Steel);
+                Prim(root, prefix + "AwningPolePlinth_" + i, PrimitiveType.Cylinder,
+                    centre + new Vector3(sx * hx, 0.04f, sz * hz),
+                    new Vector3(0.20f, 0.04f, 0.20f), Graphite);
+            }
+
+            Quaternion pitch = Quaternion.Euler(6.5f, 0f, 0f);
+            Prim(root, prefix + "CanvasAwning", PrimitiveType.Cube,
+                centre + new Vector3(0f, height - 0.06f, 0f),
+                new Vector3(sizeX + 0.16f, 0.035f, sizeZ + 0.12f), White, pitch);
+            // Sag: a second, narrower sheet a hair lower reads as fabric weight from the iso view.
+            Prim(root, prefix + "CanvasAwningSag", PrimitiveType.Cube,
+                centre + new Vector3(0f, height - 0.11f, 0f),
+                new Vector3(sizeX * 0.55f, 0.03f, sizeZ * 0.7f), White, pitch);
+            Prim(root, prefix + "CanvasAwningHem", PrimitiveType.Cube,
+                centre + new Vector3(0f, height - 0.22f, hz + 0.08f),
+                new Vector3(sizeX + 0.16f, 0.16f, 0.03f), White);
+            Prim(root, prefix + "AwningSteelRail", PrimitiveType.Cube,
+                centre + new Vector3(0f, height - 0.02f, -hz),
+                new Vector3(sizeX + 0.16f, 0.045f, 0.045f), Steel);
+        }
+
+        /// <summary>
+        /// Three-leg lattice comms mast: tapered legs, ring braces, dish and an orange beacon.
+        /// Vertical accent for the solar yard (concept). ~1.2 m base, height as given.
+        /// </summary>
+        public static void BuildLatticeMast(Transform root, string prefix, Vector3 at, float height)
+        {
+            float baseR = 0.55f;
+            float topR = 0.14f;
+            for (int i = 0; i < 3; i++)
+            {
+                float ang = i * 120f * Mathf.Deg2Rad;
+                Vector3 foot = at + new Vector3(Mathf.Cos(ang) * baseR, 0f, Mathf.Sin(ang) * baseR);
+                Vector3 head = at + new Vector3(Mathf.Cos(ang) * topR, height, Mathf.Sin(ang) * topR);
+                Vector3 mid = (foot + head) * 0.5f;
+                Vector3 dir = head - foot;
+                Quaternion lean = Quaternion.FromToRotation(Vector3.up, dir.normalized);
+                Prim(root, prefix + "SteelStrut_" + i, PrimitiveType.Cylinder,
+                    mid, new Vector3(0.07f, dir.magnitude * 0.5f, 0.07f), Steel, lean);
+                Prim(root, prefix + "FootPlinth_" + i, PrimitiveType.Cube,
+                    foot + Vector3.up * 0.06f, new Vector3(0.28f, 0.12f, 0.28f), Graphite);
+            }
+            for (int b = 0; b < 4; b++)
+            {
+                float t = (b + 1) / 5f;
+                float r = Mathf.Lerp(baseR, topR, t) + 0.04f;
+                Prim(root, prefix + "SteelBrace_" + b, PrimitiveType.Cylinder,
+                    at + Vector3.up * (height * t),
+                    new Vector3(r * 2f, 0.018f, r * 2f), Steel);
+            }
+            Prim(root, prefix + "SteelDish", PrimitiveType.Sphere,
+                at + new Vector3(0.22f, height * 0.82f, 0f),
+                new Vector3(0.62f, 0.62f, 0.18f), Steel,
+                Quaternion.Euler(0f, -55f, 0f));
+            Prim(root, prefix + "SteelWhip", PrimitiveType.Cylinder,
+                at + Vector3.up * (height + 0.45f),
+                new Vector3(0.035f, 0.45f, 0.035f), Steel);
+            Prim(root, prefix + "Beacon", PrimitiveType.Sphere,
+                at + Vector3.up * (height + 0.95f),
+                new Vector3(0.16f, 0.16f, 0.16f), Orange, new Color(1.6f, 0.45f, 0.08f));
+        }
+
+        /// <summary>
+        /// Frequency-2 icosphere edges as box struts on an ellipsoid, baked into one mesh.
+        /// Only edges whose endpoints sit above <paramref name="minUnitY"/> (unit-sphere Y) are
+        /// kept, so the lattice stops where the dome meets its drum. Struts sit mostly proud of
+        /// the surface so the triangles read from the overseer camera.
+        /// </summary>
+        public static void BuildGeodesicLattice(
+            Transform root, string name, Vector3 centre, Vector3 semiAxes, float minUnitY, float strutWidth)
+        {
+            var verts = new System.Collections.Generic.List<Vector3>(42);
+            var faces = new System.Collections.Generic.List<int>(240);
+            SeedIcosahedron(verts, faces);
+            SubdivideOnce(verts, faces);
+
+            var edges = new System.Collections.Generic.HashSet<long>();
+            for (int f = 0; f < faces.Count; f += 3)
+            {
+                AddEdge(edges, faces[f], faces[f + 1]);
+                AddEdge(edges, faces[f + 1], faces[f + 2]);
+                AddEdge(edges, faces[f + 2], faces[f]);
+            }
+
+            var mv = new System.Collections.Generic.List<Vector3>(edges.Count * 24);
+            var mn = new System.Collections.Generic.List<Vector3>(edges.Count * 24);
+            var mt = new System.Collections.Generic.List<int>(edges.Count * 36);
+            foreach (long key in edges)
+            {
+                int a = (int)(key >> 32);
+                int b = (int)(key & 0xffffffff);
+                Vector3 ua = verts[a];
+                Vector3 ub = verts[b];
+                if (ua.y < minUnitY || ub.y < minUnitY) continue;
+                Vector3 p0 = centre + Vector3.Scale(ua, semiAxes);
+                Vector3 p1 = centre + Vector3.Scale(ub, semiAxes);
+                Vector3 outward = (ua + ub).normalized;
+                AppendStrut(mv, mn, mt, p0, p1, outward, strutWidth);
+            }
+
+            if (mv.Count == 0) return;
+            var mesh = new Mesh { name = name };
+            mesh.SetVertices(mv);
+            mesh.SetNormals(mn);
+            mesh.SetTriangles(mt, 0);
+            mesh.RecalculateBounds();
+
+            var go = new GameObject(name);
+            go.transform.SetParent(root, false);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = Vector3.one;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>();
+            Tint(go, Steel);
+        }
+
+        private static void SeedIcosahedron(
+            System.Collections.Generic.List<Vector3> v, System.Collections.Generic.List<int> f)
+        {
+            // Pole-up orientation: one vertex at the apex so the cupola sits on a strut hub.
+            float ringY = 1f / Mathf.Sqrt(5f);
+            float ringR = 2f / Mathf.Sqrt(5f);
+            v.Add(Vector3.up);
+            for (int i = 0; i < 5; i++)
+            {
+                float ang = i * 72f * Mathf.Deg2Rad;
+                v.Add(new Vector3(Mathf.Cos(ang) * ringR, ringY, Mathf.Sin(ang) * ringR));
+            }
+            for (int i = 0; i < 5; i++)
+            {
+                float ang = (i * 72f + 36f) * Mathf.Deg2Rad;
+                v.Add(new Vector3(Mathf.Cos(ang) * ringR, -ringY, Mathf.Sin(ang) * ringR));
+            }
+            v.Add(Vector3.down);
+
+            for (int i = 0; i < 5; i++)
+            {
+                int u0 = 1 + i;
+                int u1 = 1 + (i + 1) % 5;
+                int l0 = 6 + i;
+                int l1 = 6 + (i + 1) % 5;
+                f.Add(0); f.Add(u1); f.Add(u0);
+                f.Add(u0); f.Add(u1); f.Add(l0);
+                f.Add(u1); f.Add(l1); f.Add(l0);
+                f.Add(11); f.Add(l0); f.Add(l1);
+            }
+        }
+
+        private static void SubdivideOnce(
+            System.Collections.Generic.List<Vector3> v, System.Collections.Generic.List<int> f)
+        {
+            var mids = new System.Collections.Generic.Dictionary<long, int>();
+            var next = new System.Collections.Generic.List<int>(f.Count * 4);
+            for (int i = 0; i < f.Count; i += 3)
+            {
+                int a = f[i], b = f[i + 1], c = f[i + 2];
+                int ab = Midpoint(v, mids, a, b);
+                int bc = Midpoint(v, mids, b, c);
+                int ca = Midpoint(v, mids, c, a);
+                next.Add(a); next.Add(ab); next.Add(ca);
+                next.Add(b); next.Add(bc); next.Add(ab);
+                next.Add(c); next.Add(ca); next.Add(bc);
+                next.Add(ab); next.Add(bc); next.Add(ca);
+            }
+            f.Clear();
+            f.AddRange(next);
+        }
+
+        private static int Midpoint(
+            System.Collections.Generic.List<Vector3> v,
+            System.Collections.Generic.Dictionary<long, int> mids, int a, int b)
+        {
+            long key = EdgeKey(a, b);
+            if (mids.TryGetValue(key, out int idx)) return idx;
+            idx = v.Count;
+            v.Add(((v[a] + v[b]) * 0.5f).normalized);
+            mids[key] = idx;
+            return idx;
+        }
+
+        private static long EdgeKey(int a, int b)
+        {
+            int lo = a < b ? a : b;
+            int hi = a < b ? b : a;
+            return ((long)lo << 32) | (uint)hi;
+        }
+
+        private static void AddEdge(System.Collections.Generic.HashSet<long> edges, int a, int b) =>
+            edges.Add(EdgeKey(a, b));
+
+        private static void AppendStrut(
+            System.Collections.Generic.List<Vector3> mv,
+            System.Collections.Generic.List<Vector3> mn,
+            System.Collections.Generic.List<int> mt,
+            Vector3 p0, Vector3 p1, Vector3 outward, float width)
+        {
+            Vector3 axis = (p1 - p0).normalized;
+            Vector3 side = Vector3.Cross(outward, axis).normalized;
+            if (side.sqrMagnitude < 0.5f) side = Vector3.Cross(Vector3.right, axis).normalized;
+            Vector3 up = Vector3.Cross(axis, side).normalized;
+            Vector3 s = side * (width * 0.5f);
+            // Sunk 30 % into the shell, 70 % proud — the panel between struts stays visible.
+            Vector3 lo = -up * (width * 0.3f);
+            Vector3 hi = up * (width * 0.7f);
+            // Extend a hair past the endpoints so adjacent struts overlap at the hubs.
+            Vector3 ext = axis * (width * 0.35f);
+            Vector3 a0 = p0 - ext;
+            Vector3 a1 = p1 + ext;
+
+            AppendQuad(mv, mn, mt, a0 - s + hi, a1 - s + hi, a1 + s + hi, a0 + s + hi, up);
+            AppendQuad(mv, mn, mt, a0 + s + lo, a1 + s + lo, a1 - s + lo, a0 - s + lo, -up);
+            AppendQuad(mv, mn, mt, a0 + s + hi, a1 + s + hi, a1 + s + lo, a0 + s + lo, side);
+            AppendQuad(mv, mn, mt, a0 - s + lo, a1 - s + lo, a1 - s + hi, a0 - s + hi, -side);
+            AppendQuad(mv, mn, mt, a0 - s + lo, a0 - s + hi, a0 + s + hi, a0 + s + lo, -axis);
+            AppendQuad(mv, mn, mt, a1 + s + lo, a1 + s + hi, a1 - s + hi, a1 - s + lo, axis);
+        }
+
+        private static void AppendQuad(
+            System.Collections.Generic.List<Vector3> mv,
+            System.Collections.Generic.List<Vector3> mn,
+            System.Collections.Generic.List<int> mt,
+            Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal)
+        {
+            int i = mv.Count;
+            mv.Add(a); mv.Add(b); mv.Add(c); mv.Add(d);
+            mn.Add(normal); mn.Add(normal); mn.Add(normal); mn.Add(normal);
+            // Winding chosen so the face is front-facing when viewed from +normal (Unity CW).
+            Vector3 n = Vector3.Cross(b - a, c - a);
+            if (Vector3.Dot(n, normal) < 0f)
+            {
+                mt.Add(i); mt.Add(i + 2); mt.Add(i + 1);
+                mt.Add(i); mt.Add(i + 3); mt.Add(i + 2);
+            }
+            else
+            {
+                mt.Add(i); mt.Add(i + 1); mt.Add(i + 2);
+                mt.Add(i); mt.Add(i + 2); mt.Add(i + 3);
+            }
         }
 
         private static void ScaffoldLow(Transform root, string prefix, Vector3 at, float width)

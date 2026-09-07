@@ -66,8 +66,8 @@ namespace SolarMajesty
             // Dressing must die with the module — parent to the building, not the campus root.
             // Hoppers raiding a HAB used to leave an orange packed-dust disc behind.
             Transform parent = go.transform;
-            if (data.category != BuildingCategory.Commons)
-                SpawnApron(origin, body, parent, data.category);
+            float span = Mathf.Max(data.footprintWidth, data.footprintHeight) * ColonyLayout.DefaultCellSize;
+            SpawnApron(origin, body, parent, data.category, span);
 
             if (_count >= MaxProps) return;
 
@@ -571,29 +571,105 @@ namespace SolarMajesty
             rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         }
 
+        /// <summary>Yard diameter as a multiple of the footprint span (Mars).</summary>
+        public const float MarsYardSpanScale = 1.75f;
+        public const float YardSpanScale = 1.45f;
+        public const string ApronName = "Dress_Apron";
+
+        private static Texture2D _yardMask;
+
+        /// <summary>Soft yard footprint for a building span; pads get a wider swept ring.</summary>
+        public static float YardDiameter(BuildingCategory cat, float span, bool mars)
+        {
+            float scale = mars ? MarsYardSpanScale : YardSpanScale;
+            if (cat == BuildingCategory.LandingPad) scale += 0.15f;
+            if (cat == BuildingCategory.Utility) scale = 1.1f;
+            return Mathf.Max(3.2f, span * scale);
+        }
+
         /// <summary>
-        /// Packed-dust apron under modules so campus reads as flattened paths vs wild regolith.
-        /// Visual only — colliders stripped.
+        /// Packed-dust yard under modules so the campus reads as flattened work pads in wild
+        /// regolith. Dream Loop pass 2: a soft-edged radial decal quad sized to the footprint
+        /// (concept yards are ~1.5–1.8× the module and fade into the pebble field), replacing
+        /// the hard 4.2 m disc that sat inside most hulls. Visual only — no collider.
         /// </summary>
         private static void SpawnApron(
-            Vector3 origin, CelestialBodyProfile body, Transform parent, BuildingCategory cat)
+            Vector3 origin, CelestialBodyProfile body, Transform parent, BuildingCategory cat, float span)
         {
             bool mars = body != null && body.Id == CelestialBodyId.Mars;
-            float dia = cat == BuildingCategory.LandingPad ? 6.4f
-                : cat == BuildingCategory.Commons ? 5.1f
-                : 4.2f;
-            if (mars && cat != BuildingCategory.Commons)
-                dia *= 1.12f;
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            go.name = "Dress_Apron";
+            float dia = YardDiameter(cat, span, mars);
+
+            var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            go.name = ApronName;
             if (parent != null) go.transform.SetParent(parent, true);
-            go.transform.position = origin + Vector3.up * 0.03f;
-            go.transform.localScale = new Vector3(dia, 0.025f, dia);
+            go.transform.position = origin + Vector3.up * 0.035f;
+            go.transform.rotation = Quaternion.Euler(90f, origin.x * 23f + origin.z * 11f, 0f);
+            // Slight ellipse so yards do not read as stamped circles.
+            go.transform.localScale = new Vector3(dia, dia * 0.90f, 1f);
             Object.Destroy(go.GetComponent<Collider>());
-            Color packed = body != null
-                ? Color.Lerp(body.GroundDark, body.GroundLight, 0.18f) * 0.82f
-                : new Color(0.18f, 0.18f, 0.19f);
-            Tint(go, packed, 0.05f);
+
+            Color packed;
+            if (body != null)
+            {
+                packed = Color.Lerp(body.GroundDark, body.GroundLight, 0.42f);
+                float lum = packed.r * 0.3f + packed.g * 0.59f + packed.b * 0.11f;
+                // Packed dust is flatter and greyer than the loose pebbly surface around it.
+                packed = Color.Lerp(packed, new Color(lum, lum, lum), 0.16f);
+            }
+            else
+            {
+                packed = new Color(0.22f, 0.21f, 0.21f);
+            }
+            packed.a = mars ? 0.88f : 0.78f;
+
+            var rend = go.GetComponent<Renderer>();
+            if (rend == null) return;
+            var mat = NewLit("SM_DressYard");
+            if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", YardMask());
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", packed);
+            else if (mat.HasProperty("_Color")) mat.color = packed;
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.04f);
+            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
+            ColonyVisualUtility.ApplyTransparent(mat);
+            rend.sharedMaterial = mat;
+            rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            rend.receiveShadows = true;
+        }
+
+        /// <summary>
+        /// Radial alpha with a noise-broken rim: opaque core, falling off from ~55 % radius, so
+        /// the yard blends into regolith instead of ending at a hard cylinder edge.
+        /// </summary>
+        private static Texture2D YardMask()
+        {
+            if (_yardMask != null) return _yardMask;
+            const int size = 128;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, true)
+            {
+                name = "SM_YardMask",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            var px = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float u = (x + 0.5f) / size * 2f - 1f;
+                float v = (y + 0.5f) / size * 2f - 1f;
+                float r = Mathf.Sqrt(u * u + v * v);
+                float ang = Mathf.Atan2(v, u);
+                float wobble = Mathf.PerlinNoise(Mathf.Cos(ang) * 2.2f + 3f, Mathf.Sin(ang) * 2.2f + 7f) - 0.5f;
+                float edge = 0.98f + wobble * 0.14f;
+                float a = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(edge * 0.55f, edge, r));
+                float grit = Mathf.PerlinNoise(x * 0.23f, y * 0.23f);
+                a *= 0.86f + grit * 0.14f;
+                float tone = 0.94f + grit * 0.08f;
+                px[y * size + x] = new Color(tone, tone, tone, Mathf.Clamp01(a));
+            }
+            tex.SetPixels(px);
+            tex.Apply(true);
+            _yardMask = tex;
+            return tex;
         }
 
         /// <summary>
