@@ -15,3 +15,21 @@ Phase 4 keyword extensions (append, do not replace the lock):
 > reddish Mars regolith and hazy orange sky, long low-angle shadows, white/black/orange industrial SpaceX-adjacent campus, pressurized corridor tubes linking habs, large central white command dome with orange trim, blue-glow solar arrays, circular landing pad with white Starship-like rocket, spacious campus pads, negative space, overseer strategy view
 
 Do not add “packed city / fill every dirt patch” to Imagine or Blender briefs.
+
+### Surface language (pass 2)
+
+- **One hull surface across the campus.** Every module, pad, extractor, and ship prim renders
+  through `SolarMajesty/Hull`: world-space panel seams, blotchy wear, settled dust on up-faces, and
+  a **neutral** splash-back grime that climbs the lower hull. Kits whose prims are named `Dress_*`
+  (and so skipped by the slot remap) build that material themselves via
+  `IndustrialArtDressing.BuildKitHullMaterial`. Do not add flat URP Lit surfaces to a hero kit.
+- **Grime is neutral warm grey, never the body's ground colour.** Tinting hulls with `GroundLight`
+  is what turned the Mars stills orange; Mars dust stays pinned at 0.04 for that reason.
+- **Ground is two taps of one tile.** `SM_PlanetGround` samples the authored `SM_Ground_*` map at
+  metre scale for ripple and again at pebble scale for grit, and darkens the crevices from the
+  tight tap. Authored ground tiles must be **seamless** — the tile repeats every 8.5 m and a
+  non-periodic lattice reads as a grid at overseer range.
+- **Solar is near-black PV glass with a sheen**, not an emissive strip. The blue-glow keyword is
+  carried by smoothness and a dim emissive, not HDR brightness.
+- **Canvas is the campus's one soft material.** The Canvas slot is name-driven: put `canvas`,
+  `awning`, `tarp`, or `fabric` in the mesh or material name and keep it off the `Dress_` prefix.

@@ -423,13 +423,15 @@ Assets/Resources/Environment/Textures/
 Bake without Imagine:
 
 ```powershell
-python Blender/scripts/sm_bake_ground_textures.py
+python Blender/scripts/sm_bake_ground_textures.py --mars --force
 python Blender/scripts/sm_bake_look_materials.py
 ```
 
-Ground bake skips existing PNGs (do not stomp Imagine tiles). `--force` only when replacing them.
+Ground bake skips existing PNGs (do not stomp Imagine tiles). `--force` is scoped per body (`--mars` / `--earth`): Mars runs the vectorised periodic regolith generator and is safe to force, the committed Earth tile is authored and a global force replaces it with flat scalar noise.
 
-`PlanetaryMapDressing` binds Mars/Earth tiles onto `SolarMajesty/PlanetGround` as **world-space detail** (body tint stays; grit/ripples come from the PNG). URP Lit fallback still uses them as `_BaseMap` when PlanetGround is missing.
+Authored ground tiles must be **seamless** — `PlanetGround` repeats them every 8.5 m — and their detail must be at real scale, since 1024² over 8.5 m is ~120 px/m and per-pixel noise mips away.
+
+`PlanetaryMapDressing` binds Mars/Earth tiles onto `SolarMajesty/PlanetGround` as **world-space detail** (body tint stays; grit/ripples come from the PNG). The tile is sampled **twice**: once at metre scale for ripple and blotching, once at ~2.3 m for pebbles, with the tight tap also driving a cavity occlusion term. URP Lit fallback still uses them as `_BaseMap` when PlanetGround is missing.
 
 Spaced-campus look target (Dream Loop): [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png). Still steps: [`Docs/Roadmap/DREAM_LOOP_MARS_LOOK.md`](Roadmap/DREAM_LOOP_MARS_LOOK.md). Do not pack dirt to match the retired VisualTarget PNG.
 

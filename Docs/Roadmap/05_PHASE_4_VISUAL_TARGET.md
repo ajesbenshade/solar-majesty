@@ -22,6 +22,8 @@ Current greybox / Lego airlocks / blockout robots are **not** this look. Phase 4
 
 **Dream Loop concept (this look pass):** [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — spaced overseer campus, empty dirt OK. GD capture / judge notes: [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md). **Not an exit stamp.**
 
+**Look pass 2 (code + bake, unseen in engine):** dual-tap pebble grit + cavity occlusion on `SM_PlanetGround`; Mars regolith tile rebaked **seamless** (the old lattice did not wrap — seam delta 16.1 vs 10.8 interior) with real 3–20 cm stones (pebble-scale contrast 7.5 → 11.0); `Dress_*` pad / extractor / ship prims finally reach `SolarMajesty/Hull` instead of flat Lit; neutral splash-back grime on lower hulls; solar de-neoned to PV glass; gravel litter; softer swept aprons; Mars haze lifted toward the sky horizon; Commons orange skirt + framed entries, HAB stair, four rocket legs, eight-post pad rim, solar comms mast, extractor pressure sphere, and **canvas awnings** on the extractor porch and Inn. **Needs a fresh Game-tab still from GD. Do not stamp exit.**
+
 Phase 4 EXIT look:
 
 - **Spaced campus** — empty dirt is OK; leave room for rocks, foliage, creatures, and discovery
@@ -205,7 +207,21 @@ HUD layout may use five industrial/pop chips (four resources + beds) in the same
 - Hero kits keep orange/cyan/carbon — building spawn no longer stomps `_BaseColor` via material property block
 - Landing pad: extra yellow tier ring under the Starship stack
 
+**Landed in look pass 2 (measured at code / bake level — not yet seen in a still)**
+- Ground: `SM_PlanetGround` samples the authored tile twice — metre scale for ripple, ~2.3 m for pebbles — and derives a cavity occlusion term from the tight tap so the gaps between stones hold shadow. Knobs are `_GritScale` / `_GritAmount` / `_GritCavity`, bound in `PlanetaryMapDressing.BindAuthoredGroundDetail`
+- `SM_Ground_Mars_*` rebaked vectorised and **periodic**. The previous tile's noise lattice did not wrap, so the ground showed a join every 8.5 m (seam delta **16.1** vs an interior adjacency of **10.8**); it is now at or below interior adjacency on both axes. Its "pebbles" were single-pixel hash noise (sub-millimetre at 120 px/m) and are now two sparse stone fields at ~10–20 cm and ~3–7 cm, lit from the Mars key-light side with cast shadows. Per-channel means held exactly, so the Mars grade is unchanged; high-frequency grain matched; pebble-scale contrast **7.5 → 11.0**
+- Pad / water + regolith + ore extractor / Starship prims are named `Dress_*`, which `IndustrialArtDressing.ShouldSkip` drops — they had **never** reached `SolarMajesty/Hull` and rendered as flat URP Lit blocks. Skipped prims with real surface area now build a hull material via `IndustrialArtDressing.BuildKitHullMaterial`, keeping their authored colour
+- `SolarMajesty/Hull` gains splash-back grime on vertical faces, fading out with height. **Neutral warm grey on purpose** — Mars dust stays at 0.04 because tinting hulls with `GroundLight` is the orange wash the stills already paid for
+- Solar dropped from a 2.15 HDR blue emissive to near-black PV glass with a sheen (glow now carried by smoothness); solar frames renamed `SolarSteelFrame_*` so they map to metal instead of falling through to the PV slot
+- 96 gravel chips on a jittered spiral (`MarsGravelRoot`); aprons darkened with a wider faint skirt so the edge sweeps instead of ending on a rim
+- Silhouette adds vs the sheet: Commons orange base skirt + orange-framed entries with stoop / tread / rail on the two free diagonals (cardinals stay dock ports), HAB external stair with steel rails, four splayed Starship landing legs, eight-post pad rim, solar lattice comms mast, regolith extractor pressure sphere on a cradle
+- **Canvas awning** — `IceCanvasShade` / `InnCanvasShade` on steel posts over a railed work deck. The Canvas slot and its authored tile existed; nothing was named to reach them (`InnCanopy` was carbon). Deliberately un-prefixed so the slot remap applies
+- Ground bake `--force` is now scoped per body (`--mars` / `--earth`): a global force replaced the authored Earth meadow with flat scalar noise
+
 **Still greybox / not an exit stamp**
+- **The concept's sky / horizon band is not reachable at the current still camera.** The concept is a perspective frame; both capture paths (`CaptureStill` play ortho 10, `DemoContentBuilder` ortho) are orthographic at ~30° and see only ground. Match layout language, not the crop. Reaching the concept's aerial perspective needs a second perspective hero shot — **Aaron's call**, not a bug. The Mars haze multiplier and sky-lifted fog colour landed regardless
+- Commons is a latitude/longitude dome with meridians, not a true geodesic; the sheet's triangulated facets are a mesh change in `sm_hero_building_kits.py`
+- Earth ground tile is still the authored non-periodic one — Mars only in this pass
 - Campus Game-tab still v4 (`SM_MarsCampaign_PlayModeCampusStill4.png`): geodesic Commons + HAB cylinder, **no grey hex pads**, **no idle hopper chip**, hulls whiter than v3 — but **orange box airlock**, unused orange ribbed stub, square hub not readable. still5 (`SM_MarsCampaign_PlayModeCampusStill5.png`): unused Commons cardinal still shows an orange **port ring**. still21 leftover=inn+wonder extraHab/solar/defense is **not** a packed-density fail. Empty dirt is OK. Play Mode code after those PNGs: hull drum ports (`CommonsPort_*`) start hidden; RefreshTubes enables docked faces only (white sleeve + one collar) plus `CampusDress_TubeRuns` between non-airlock neighbors; still camera stays at play ortho 10; interior dirt is not force-filled; smaller paneled hub; no CommonsStub; no stacked `CampusTubeRoot`. Needs a **fresh** spaced Game-tab look — do not stamp v4/v5/still21.
 - Construction cranes stay runtime dressing (not authored FBX)
 - Earth vista trees/pond/grass are primitive dressing (readable at iso, not a heightmap / photogrammetry biome)
