@@ -60,7 +60,7 @@ namespace SolarMajesty
         /// How much wider than the campus AABB the still frames. The concept is mostly regolith
         /// with the campus sitting in it, so the fit gets headroom rather than hugging the yards.
         /// </summary>
-        public const float StillDirtHeadroom = 1.35f;
+        public const float StillDirtHeadroom = 1.45f;
 
         /// <summary>
         /// Gap in cells the still leaves around standalone yards — pad, power, extractors,
@@ -78,7 +78,7 @@ namespace SolarMajesty
         /// Ceiling so a runaway AABB cannot shrink the campus to a speck in the middle of a
         /// dirt field. Above this the still stops pulling back.
         /// </summary>
-        public const float StillMaxOrtho = 26f;
+        public const float StillMaxOrtho = 30f;
 
         public delegate bool BoundsOk(Vector2Int origin, int width, int height);
 
@@ -874,15 +874,63 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Still frame is the live campus AABB. No dirt crop — <see cref="FitStillOrtho"/> adds
-        /// headroom around it so empty ground stays in shot.
+        /// Still frame is the **hero cluster** AABB, not every stamped piece.
+        ///
+        /// The concept has seven elements: dome, airlock, HAB, pad and rocket, solar, extractor,
+        /// canvas porch. Leftover Inn / wonder / Defense / extra banks are explicitly "not a
+        /// density gate", but they were still inflating the frame — one wonder eight cells out
+        /// pulls the camera back far enough to shrink the dome to a speck. Framing the hero
+        /// cluster keeps the landmarks at a readable size and lets a far-flung leftover sit
+        /// outside the shot, which is what "leftovers may stamp" was always supposed to mean.
+        ///
+        /// No dirt crop — <see cref="FitStillOrtho"/> adds headroom so ground stays in frame.
         /// </summary>
         public static bool TryStillFrameAabb(
             BuildingPlacer placer, out Vector2Int min, out Vector2Int maxExclusive)
         {
-            if (!TryCampusAabb(placer, out min, out maxExclusive))
+            if (!TryHeroAabb(placer, out min, out maxExclusive) &&
+                !TryCampusAabb(placer, out min, out maxExclusive))
                 return false;
             InsetAabb(ref min, ref maxExclusive, StillFrameInsetCells);
+            return true;
+        }
+
+        /// <summary>Categories the concept sheet actually shows. See <see cref="TryStillFrameAabb"/>.</summary>
+        public static bool IsHeroFrameCategory(BuildingCategory cat) =>
+            cat == BuildingCategory.Commons ||
+            cat == BuildingCategory.Utility ||
+            cat == BuildingCategory.Habitat ||
+            cat == BuildingCategory.LandingPad ||
+            cat == BuildingCategory.Power ||
+            cat == BuildingCategory.Farm ||
+            cat == BuildingCategory.RegolithCamp;
+
+        /// <summary>AABB over <see cref="IsHeroFrameCategory"/> pieces only.</summary>
+        public static bool TryHeroAabb(
+            BuildingPlacer placer, out Vector2Int min, out Vector2Int maxExclusive)
+        {
+            min = default;
+            maxExclusive = default;
+            if (placer?.Pieces == null) return false;
+
+            int minX = int.MaxValue, minY = int.MaxValue;
+            int maxX = int.MinValue, maxY = int.MinValue;
+            bool any = false;
+            var pieces = placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                var p = pieces[i];
+                if (!IsHeroFrameCategory(p.Category)) continue;
+                any = true;
+                minX = Mathf.Min(minX, p.Origin.x);
+                minY = Mathf.Min(minY, p.Origin.y);
+                maxX = Mathf.Max(maxX, p.Origin.x + p.Width);
+                maxY = Mathf.Max(maxY, p.Origin.y + p.Height);
+            }
+
+            if (!any) return false;
+            min = new Vector2Int(minX, minY);
+            maxExclusive = new Vector2Int(maxX, maxY);
             return true;
         }
 

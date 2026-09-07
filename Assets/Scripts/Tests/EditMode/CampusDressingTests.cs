@@ -727,6 +727,38 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void StillFrame_IgnoresLeftoversOutsideTheHeroCluster()
+        {
+            var placer = StampEastChain(out var commons);
+            StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
+            Assert.IsTrue(StillCampusDensity.TryStillFrameAabb(
+                placer, out var heroMin, out var heroMax));
+            float heroOrtho = StillCampusDensity.FitStillOrtho(
+                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+
+            // A wonder well outside the hero cluster is explicitly not a density gate. It must not
+            // pull the camera back either — that is how the dome ends up a speck in a dirt field.
+            var far = new Vector2Int(heroMax.x + 4, heroMax.y + 4);
+            placer.MarkCampusRect(far, StillCampusDensity.PadSize, StillCampusDensity.PadSize);
+            placer.RegisterPiece(
+                far, StillCampusDensity.PadSize, StillCampusDensity.PadSize,
+                BuildingCategory.AegisSpire);
+
+            Assert.IsTrue(StillCampusDensity.TryStillFrameAabb(
+                placer, out var afterMin, out var afterMax));
+            Assert.AreEqual(heroMin, afterMin, "hero frame must not follow a leftover");
+            Assert.AreEqual(heroMax, afterMax, "hero frame must not follow a leftover");
+            Assert.AreEqual(
+                heroOrtho,
+                StillCampusDensity.FitStillOrtho(
+                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
+
+            // The true campus AABB does grow — the still frame just does not follow it.
+            Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out var campusMax));
+            Assert.Greater(campusMax.x, heroMax.x);
+        }
+
+        [Test]
         public void StillOrtho_PullsBackAsTheCampusOutgrowsThePlayFrame()
         {
             var lone = new BuildingPlacer(new ResourceManager());
