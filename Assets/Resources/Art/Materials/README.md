@@ -1,6 +1,6 @@
 # Look-material tiles (Dream Loop)
 
-Seamless 512² PNGs for URP Lit fallback + `IndustrialArtDressing`. Bake:
+Seamless 512² PNGs for `IndustrialArtDressing`. Hull-shader slots (`SolarMajesty/Hull`: white / steel / graphite / carbon / orange) project the albedo + normal **triplanar** in world space (`_DetailAlbedo` / `_DetailNormal`, pass 2); Lit-fallback slots (solar / canvas) sample them by UV. Bake:
 
 ```
 python Blender/scripts/sm_bake_look_materials.py
