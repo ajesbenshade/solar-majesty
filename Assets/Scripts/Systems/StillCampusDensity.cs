@@ -679,7 +679,6 @@ namespace SolarMajesty
 
         /// <summary>
         /// True when an airlock already joins the pair (RefreshTubes docked arms).
-        /// Tube-run dressing must skip these so it does not stack in the HAB gap.
         /// </summary>
         public static bool AreAirlockLinked(
             BuildingPlacer placer,
@@ -702,8 +701,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Cardinal neighbor with a short gap (still21 tube runs). Overlap keeps
-        /// the corridor on the square grid; gap 0 is flush yards.
+        /// Cardinal neighbor with a short gap. Overlap keeps the pair on the
+        /// square grid; gap 0 is flush yards. Not a tube-run spawn signal —
+        /// RefreshTubes no longer webs cardinal neighbors.
         /// </summary>
         public static bool TryCardinalNeighbor(
             BuildingPlacer.CampusPiece a,

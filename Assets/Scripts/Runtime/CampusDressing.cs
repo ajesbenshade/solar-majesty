@@ -16,16 +16,15 @@ namespace SolarMajesty
     /// leave still5-style orange rings showing. still16 dark-box leftover was wrap
     /// Dress_HubDoor on the hub itself (ColonyVisualUtility) — unused faces stay
     /// clean white plates. FindPieceGo walks VillageRing / Buildings so still-chain
-    /// airlocks get docked collars. No CampusTubeRoot corridor is spawned in the
-    /// HAB gap — still21 tube runs live under <see cref="TubeRunRootName"/> and
-    /// skip airlock-linked pairs.
+    /// airlocks get docked collars. No CampusTubeRoot corridor and no between-yard
+    /// <see cref="TubeRunRootName"/> web — CaptureStill / play RefreshTubes only
+    /// enable docked Lego arms. Leftover still21 runs are destroyed if present.
     /// </summary>
     public static class CampusDressing
     {
         private const int MaxProps = 96;
         private const string TubeRootName = "CampusTubeRoot";
         public const string TubeRunRootName = "CampusDress_TubeRuns";
-        public const int MaxTubeRunGapCells = 8;
 
         private static int _count;
         private static Shader _lit;
@@ -158,7 +157,6 @@ namespace SolarMajesty
             if (pieces == null || pieces.Count == 0) return;
 
             HideUnusedDockSleeves(placer, grid, parent);
-            int runs = SpawnTubeRuns(placer, grid, parent);
             int docks = 0;
             for (int a = 0; a < pieces.Count; a++)
             {
@@ -177,127 +175,7 @@ namespace SolarMajesty
                     }
                 }
             }
-            Debug.Log($"[CampusDressing] docks={docks} runs={runs} pieces={pieces.Count}");
-        }
-
-        /// <summary>
-        /// still21 sparse cluster: white pressurized runs between cardinal neighbors
-        /// that are not already airlock-docked. Dressing only — not a pathing graph,
-        /// not a fourth CampusTubeRoot in the HAB join.
-        /// </summary>
-        private static int SpawnTubeRuns(BuildingPlacer placer, IsoGrid grid, Transform parent)
-        {
-            var pieces = placer.Pieces;
-            if (pieces == null || pieces.Count < 2) return 0;
-
-            var root = new GameObject(TubeRunRootName);
-            if (parent != null) root.transform.SetParent(parent, false);
-
-            int runs = 0;
-            var seen = new HashSet<long>();
-            for (int i = 0; i < pieces.Count; i++)
-            {
-                for (int j = i + 1; j < pieces.Count; j++)
-                {
-                    if (StillCampusDensity.AreAirlockLinked(placer, pieces[i], pieces[j]))
-                        continue;
-                    if (!StillCampusDensity.TryCardinalNeighbor(
-                            pieces[i], pieces[j], MaxTubeRunGapCells, out _, out bool eastWest))
-                        continue;
-                    long key = TubePairKey(i, j);
-                    if (!seen.Add(key)) continue;
-                    if (!SpawnTubeRun(grid, pieces[i], pieces[j], eastWest, root.transform, runs))
-                        continue;
-                    runs++;
-                }
-            }
-
-            if (runs == 0)
-            {
-                if (Application.isPlaying) Object.Destroy(root);
-                else Object.DestroyImmediate(root);
-            }
-            return runs;
-        }
-
-        private static long TubePairKey(int a, int b) =>
-            a < b ? ((long)a << 32) ^ (uint)b : ((long)b << 32) ^ (uint)a;
-
-        private static bool SpawnTubeRun(
-            IsoGrid grid,
-            BuildingPlacer.CampusPiece a,
-            BuildingPlacer.CampusPiece b,
-            bool eastWest,
-            Transform parent,
-            int index)
-        {
-            Vector3 aC = PieceCenter(grid, a);
-            Vector3 bC = PieceCenter(grid, b);
-            if (eastWest)
-            {
-                aC.z = (aC.z + bC.z) * 0.5f;
-                bC.z = aC.z;
-            }
-            else
-            {
-                aC.x = (aC.x + bC.x) * 0.5f;
-                bC.x = aC.x;
-            }
-
-            Vector3 delta = bC - aC;
-            delta.y = 0f;
-            float dist = delta.magnitude;
-            if (dist < 1.15f) return false;
-
-            // Stay off hulls so this is a corridor, not a stacked HAB-gap collar.
-            float inset = Mathf.Min(1.65f, dist * 0.28f);
-            float len = dist - inset * 2f;
-            if (len < 1.05f) return false;
-
-            Vector3 dir = delta / dist;
-            Vector3 mid = (aC + bC) * 0.5f + new Vector3(0f, ColonyVisualUtility.DockY, 0f);
-            Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
-            float bore = ColonyVisualUtility.DockBore * 0.78f;
-
-            var group = new GameObject("Dress_CampusTubeRun_" + index);
-            group.transform.SetParent(parent, false);
-            group.transform.position = mid;
-
-            var tube = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            tube.name = group.name + "_Tube";
-            tube.transform.SetParent(group.transform, false);
-            tube.transform.localPosition = Vector3.zero;
-            tube.transform.localRotation = rot;
-            tube.transform.localScale = new Vector3(bore, len * 0.5f, bore);
-            Object.Destroy(tube.GetComponent<Collider>());
-            Tint(tube, new Color(0.97f, 0.97f, 0.99f), 0.42f, new Color(0.22f, 0.22f, 0.24f));
-
-            var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            rib.name = group.name + "_Rib";
-            rib.transform.SetParent(group.transform, false);
-            rib.transform.localPosition = Vector3.zero;
-            rib.transform.localRotation = rot;
-            rib.transform.localScale = new Vector3(bore * 1.08f, 0.04f, bore * 1.08f);
-            Object.Destroy(rib.GetComponent<Collider>());
-            Tint(rib, new Color(0.12f, 0.12f, 0.13f), 0.22f);
-
-            Vector3 half = dir * (len * 0.5f);
-            SpawnTubeRunCollar(group.transform, group.name + "_CollarA", mid - half, rot, bore);
-            SpawnTubeRunCollar(group.transform, group.name + "_CollarB", mid + half, rot, bore);
-            return true;
-        }
-
-        private static void SpawnTubeRunCollar(
-            Transform parent, string name, Vector3 world, Quaternion rot, float bore)
-        {
-            var collar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            collar.name = name;
-            collar.transform.SetParent(parent, true);
-            collar.transform.position = world;
-            collar.transform.rotation = rot;
-            collar.transform.localScale = new Vector3(bore * 1.28f, 0.07f, bore * 1.28f);
-            Object.Destroy(collar.GetComponent<Collider>());
-            Tint(collar, new Color(0.96f, 0.42f, 0.08f), 0.32f, new Color(0.45f, 0.14f, 0.02f));
+            Debug.Log($"[CampusDressing] docks={docks} pieces={pieces.Count}");
         }
 
         private static Vector3 PieceCenter(IsoGrid grid, BuildingPlacer.CampusPiece piece)
