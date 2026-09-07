@@ -53,9 +53,6 @@ namespace SolarMajesty
         /// </summary>
         public const int StillFrameInsetCells = 0;
 
-        /// <summary>Floor so a Commons-only AABB cannot punch through minZoom.</summary>
-        public const float StillMinOrtho = 7.25f;
-
         /// <summary>
         /// How much wider than the campus AABB the still frames. The concept is mostly regolith
         /// with the campus sitting in it, so the fit gets headroom rather than hugging the yards.
