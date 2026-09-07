@@ -356,9 +356,11 @@ namespace SolarMajesty
                     metallic = 0.74f; smooth = 0.56f; panelScale = 0.6f;
                     break;
                 case Slot.Orange:
+                    // Safety orange is paint, not a light. The emissive made every collar, hatch,
+                    // and trim strip bloom, which is why the Capture reads as hot rings at each
+                    // joint where the concept has thin matte trim.
                     baseColor = new Color(0.92f, 0.42f, 0.08f);
                     metallic = 0.06f; smooth = 0.42f; panelScale = 0.5f;
-                    emission = new Color(0.55f, 0.16f, 0.02f);
                     dust *= 0.7f;
                     break;
                 case Slot.DefenseRed:
@@ -501,10 +503,11 @@ namespace SolarMajesty
                     tile = new Vector2(1.6f, 1.6f);
                     break;
                 case Slot.Orange:
+                    // No emissive — see the hull path. 1.4 HDR red bloomed every orange accent
+                    // on the campus into a glow.
                     albedo = _orangeAlbedo;
                     metallic = 0.06f;
                     smooth = 0.4f;
-                    emission = new Color(1.4f, 0.42f, 0.06f);
                     tile = new Vector2(1.5f, 1.5f);
                     break;
                 case Slot.Cyan:

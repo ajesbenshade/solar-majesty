@@ -10,7 +10,8 @@ namespace SolarMajesty
     /// required to max-pack the frame. Forward yards use CanFit only.
     /// Empty dirt is OK (spaced Majesty-2 overseer still). Do not fill every
     /// interior 4×4 or crop the AABB to chase retired VisualTarget density.
-    /// Play snap stays <see cref="PlayCampusOrthoSize"/>.
+    /// Standalone yards keep <see cref="SpacedYardGapCells"/> of dirt around them, and the still
+    /// ortho fits the campus plus headroom with <see cref="PlayCampusOrthoSize"/> as the floor.
     /// Does not flip spawnShowcaseColony. Does not reference Runtime ColonyLayout.
     /// </summary>
     public static class StillCampusDensity
@@ -21,9 +22,11 @@ namespace SolarMajesty
         /// <summary>
         /// Keep yards inside the campus ortho. still20 leftover Inn / wonder /
         /// extraSolar / Defense sit ~11 cells out after extra HAB + pad; 9
-        /// dropped those sockets. Play snap stays <see cref="PlayCampusOrthoSize"/>.
+        /// dropped those sockets. Raised to 15 for <see cref="SpacedYardGapCells"/>: a spaced pad
+        /// pushes its centre a gap further out, and the still ortho now fits the AABB rather than
+        /// cropping it, so a wider spread costs nothing.
         /// </summary>
-        public const float MaxCenterSeparationCells = 12f;
+        public const float MaxCenterSeparationCells = 15f;
 
         /// <summary>
         /// CaptureStill Game-tab is short-wide (~2.4). Play snap stays
@@ -38,8 +41,9 @@ namespace SolarMajesty
         public const float DefaultCellSize = 1.5f;
 
         /// <summary>
-        /// Play snap (Runtime aliases this as ColonyLayout.CampusOrthoSize).
-        /// CaptureStill uses this same ortho so the still is a readable spaced campus.
+        /// Play snap (Runtime aliases this as ColonyLayout.CampusOrthoSize), and the **floor** for
+        /// the still ortho — see <see cref="FitStillOrtho"/>. The still may pull back past this to
+        /// keep the whole campus in frame; it may never come inside it.
         /// </summary>
         public const float PlayCampusOrthoSize = 10f;
 
@@ -53,15 +57,28 @@ namespace SolarMajesty
         public const float StillMinOrtho = 7.25f;
 
         /// <summary>
+        /// How much wider than the campus AABB the still frames. The concept is mostly regolith
+        /// with the campus sitting in it, so the fit gets headroom rather than hugging the yards.
+        /// </summary>
+        public const float StillDirtHeadroom = 1.35f;
+
+        /// <summary>
+        /// Gap in cells the still leaves around standalone yards — pad, power, extractors,
+        /// Defense — so they read as separate pads with dirt between them the way the concept
+        /// does. HAB chains still dock flush; those are tube-linked, not free-standing.
+        /// </summary>
+        public const int SpacedYardGapCells = 2;
+
+        /// <summary>
         /// Planner cap only. CaptureStill does not force-fill interior dirt.
         /// </summary>
         public const int MaxInteriorHabSockets = 6;
 
         /// <summary>
-        /// Ceiling for any leftover AABB math. CaptureStill stills use
-        /// <see cref="PlayCampusOrthoSize"/> (10).
+        /// Ceiling so a runaway AABB cannot shrink the campus to a speck in the middle of a
+        /// dirt field. Above this the still stops pulling back.
         /// </summary>
-        public const float StillMaxOrtho = 10f;
+        public const float StillMaxOrtho = 26f;
 
         public delegate bool BoundsOk(Vector2Int origin, int width, int height);
 
@@ -427,7 +444,74 @@ namespace SolarMajesty
             CollectCandidates(commons, width, height, faces, candidates);
             CollectAroundPieces(placer, width, height, candidates);
             CollectSpiral(commons, width, height, candidates);
+            return FirstFit(placer, commons, candidates, width, height, bounds, out origin);
+        }
 
+        /// <summary>
+        /// Free-standing yard placement: try the spaced ring first so the yard lands with dirt
+        /// around it, and only fall back to flush docking if nothing spaced fits.
+        ///
+        /// Every candidate list in <see cref="CollectCandidates"/> leads with gap 0, so the still
+        /// campus came out as one contiguous mass butted against the Commons. The concept's
+        /// defining quality is six pads with open regolith between them.
+        /// </summary>
+        public static bool TryNextSpaced(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece commons,
+            BuildingPlacer.Cardinal habFace,
+            int width,
+            int height,
+            BoundsOk bounds,
+            out Vector2Int origin)
+        {
+            origin = default;
+            if (placer == null) return false;
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+
+            var faces = PreferFaces(habFace);
+            var spaced = new List<Vector2Int>(96);
+            for (int gap = SpacedYardGapCells; gap <= SpacedYardGapCells + 2; gap++)
+            {
+                AddFlushFaces(commons, width, height, faces, spaced, skipSouth: false, gap: gap);
+                AddDiagonals(commons, width, height, spaced, gap);
+            }
+
+            var pieces = placer.Pieces;
+            if (pieces != null)
+            {
+                var allFaces = new[]
+                {
+                    BuildingPlacer.Cardinal.East,
+                    BuildingPlacer.Cardinal.West,
+                    BuildingPlacer.Cardinal.North,
+                    BuildingPlacer.Cardinal.South
+                };
+                for (int gap = SpacedYardGapCells; gap <= SpacedYardGapCells + 1; gap++)
+                {
+                    for (int i = 0; i < pieces.Count; i++)
+                    {
+                        AddFlushFaces(pieces[i], width, height, allFaces, spaced,
+                            skipSouth: false, gap: gap);
+                    }
+                }
+            }
+
+            if (FirstFit(placer, commons, spaced, width, height, bounds, out origin))
+                return true;
+            return TryNext(placer, commons, habFace, width, height, bounds, out origin);
+        }
+
+        private static bool FirstFit(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece commons,
+            List<Vector2Int> candidates,
+            int width,
+            int height,
+            BoundsOk bounds,
+            out Vector2Int origin)
+        {
+            origin = default;
             var seen = new HashSet<long>();
             for (int i = 0; i < candidates.Count; i++)
             {
@@ -444,6 +528,20 @@ namespace SolarMajesty
             return false;
         }
 
+        private static void AddDiagonals(
+            BuildingPlacer.CampusPiece anchor, int width, int height, List<Vector2Int> dest, int gap)
+        {
+            int ax = anchor.Origin.x;
+            int ay = anchor.Origin.y;
+            int aw = anchor.Width;
+            int ah = anchor.Height;
+            gap = Mathf.Max(0, gap);
+            dest.Add(new Vector2Int(ax + aw + gap, ay + ah + gap));
+            dest.Add(new Vector2Int(ax - width - gap, ay + ah + gap));
+            dest.Add(new Vector2Int(ax + aw + gap, ay - height - gap));
+            dest.Add(new Vector2Int(ax - width - gap, ay - height - gap));
+        }
+
         /// <summary>
         /// Occupies pad / power / water / regolith in order so later yards see earlier footprints.
         /// Tests use this; GameLoop stamps visuals after <see cref="TryNext"/> + TryRestore.
@@ -457,7 +555,7 @@ namespace SolarMajesty
             var plan = new PackPlan();
             if (placer == null) return plan;
 
-            if (TryNext(placer, commons, habFace, PadSize, PadSize, bounds, out Vector2Int pad))
+            if (TryNextSpaced(placer, commons, habFace, PadSize, PadSize, bounds, out Vector2Int pad))
             {
                 placer.MarkCampusRect(pad, PadSize, PadSize);
                 placer.RegisterPiece(pad, PadSize, PadSize, BuildingCategory.LandingPad);
@@ -465,7 +563,7 @@ namespace SolarMajesty
                 plan.PadOrigin = pad;
             }
 
-            if (TryNext(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int pwr))
+            if (TryNextSpaced(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int pwr))
             {
                 placer.MarkCampusRect(pwr, YardSize, YardSize);
                 placer.RegisterPiece(pwr, YardSize, YardSize, BuildingCategory.Power);
@@ -473,7 +571,7 @@ namespace SolarMajesty
                 plan.PowerOrigin = pwr;
             }
 
-            if (TryNext(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int water))
+            if (TryNextSpaced(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int water))
             {
                 placer.MarkCampusRect(water, YardSize, YardSize);
                 placer.RegisterPiece(water, YardSize, YardSize, BuildingCategory.Farm);
@@ -481,7 +579,7 @@ namespace SolarMajesty
                 plan.WaterOrigin = water;
             }
 
-            if (TryNext(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int reg))
+            if (TryNextSpaced(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int reg))
             {
                 placer.MarkCampusRect(reg, YardSize, YardSize);
                 placer.RegisterPiece(reg, YardSize, YardSize, BuildingCategory.RegolithCamp);
@@ -518,14 +616,14 @@ namespace SolarMajesty
             leftovers.Workshop = HasWorkshop(placer);
 
             // Inn + wonder first — still20 leftover=workshop ate those sockets.
-            if (TryNext(placer, commons, habFace, YardSize, YardSize, bounds, out leftovers.InnOrigin))
+            if (TryNextSpaced(placer, commons, habFace, YardSize, YardSize, bounds, out leftovers.InnOrigin))
             {
                 placer.MarkCampusRect(leftovers.InnOrigin, YardSize, YardSize);
                 placer.RegisterPiece(leftovers.InnOrigin, YardSize, YardSize, BuildingCategory.Inn);
                 leftovers.Inn = true;
             }
 
-            if (TryDockOrNext(placer, commons, habFace, PadSize, PadSize, bounds, out leftovers.WonderOrigin))
+            if (TryNextSpaced(placer, commons, habFace, PadSize, PadSize, bounds, out leftovers.WonderOrigin))
             {
                 placer.MarkCampusRect(leftovers.WonderOrigin, PadSize, PadSize);
                 placer.RegisterPiece(
@@ -582,7 +680,7 @@ namespace SolarMajesty
                 cues.ExtraHabOrigin = hab;
             }
 
-            if (TryDockOrNext(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int solar))
+            if (TryNextSpaced(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int solar))
             {
                 placer.MarkCampusRect(solar, YardSize, YardSize);
                 placer.RegisterPiece(solar, YardSize, YardSize, BuildingCategory.Power);
@@ -590,7 +688,7 @@ namespace SolarMajesty
                 cues.ExtraSolarOrigin = solar;
             }
 
-            if (TryDockOrNext(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int def))
+            if (TryNextSpaced(placer, commons, habFace, YardSize, YardSize, bounds, out Vector2Int def))
             {
                 placer.MarkCampusRect(def, YardSize, YardSize);
                 placer.RegisterPiece(def, YardSize, YardSize, BuildingCategory.Defense);
@@ -776,8 +874,8 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Still frame is the live campus AABB. No dirt crop — play
-        /// <see cref="PlayCampusOrthoSize"/> keeps empty ground readable.
+        /// Still frame is the live campus AABB. No dirt crop — <see cref="FitStillOrtho"/> adds
+        /// headroom around it so empty ground stays in shot.
         /// </summary>
         public static bool TryStillFrameAabb(
             BuildingPlacer placer, out Vector2Int min, out Vector2Int maxExclusive)
@@ -808,8 +906,17 @@ namespace SolarMajesty
             new Vector2((min.x + maxExclusive.x) * 0.5f, (min.y + maxExclusive.y) * 0.5f);
 
         /// <summary>
-        /// Spaced overseer still: use play campus ortho. Do not zoom in to pack
-        /// the AABB into the Game tab.
+        /// Spaced overseer still: frame the whole campus with regolith around it.
+        ///
+        /// This used to return <see cref="PlayCampusOrthoSize"/> outright, which inverted its own
+        /// intent. The rule is "do not zoom **in** to pack the AABB" — but pinning the ortho while
+        /// the campus grows past 20 m of frame does not preserve empty dirt, it crops the campus
+        /// and squeezes every last pixel of dirt out. The Capture came back a close-up of the
+        /// Commons dome with the pad and rocket falling off the edge behind the HUD.
+        ///
+        /// So: fit the AABB, add <see cref="StillDirtHeadroom"/> so ground frames it, and floor at
+        /// the play ortho. The floor is what actually enforces the rule — the still can never be
+        /// tighter than what the player sees, only wider.
         /// </summary>
         public static float FitStillOrtho(
             Vector2Int min,
@@ -817,19 +924,16 @@ namespace SolarMajesty
             float cellSize,
             float aspect)
         {
-            _ = min;
-            _ = maxExclusive;
-            _ = cellSize;
-            _ = aspect;
-            return PlayCampusOrthoSize;
+            HalfExtents(min, maxExclusive, cellSize, out float halfX, out float halfZ);
+            float fit = RawStillOrtho(halfX, halfZ, aspect) * StillDirtHeadroom;
+            return Mathf.Clamp(fit, PlayCampusOrthoSize, StillMaxOrtho);
         }
 
         public static float FitStillOrtho(BuildingPlacer placer, float cellSize, float aspect)
         {
-            _ = placer;
-            _ = cellSize;
-            _ = aspect;
-            return PlayCampusOrthoSize;
+            if (!TryStillFrameAabb(placer, out Vector2Int min, out Vector2Int maxExclusive))
+                return PlayCampusOrthoSize;
+            return FitStillOrtho(min, maxExclusive, cellSize, aspect);
         }
 
         /// <summary>Unclamped iso fit — tests use this to describe leftover AABB growth.</summary>

@@ -385,7 +385,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_StillFrame_UsesPlayCampusOrtho10()
+        public void DensePack_StillFrame_FitsCampusAndNeverZoomsInsidePlayOrtho()
         {
             var placer = StampEastChain(out var commons);
             StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
@@ -393,10 +393,20 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.AreEqual(
-                ColonyLayout.CampusOrthoSize, ortho,
-                "spaced overseer still uses play ortho 10 — do not zoom-to-pack AABB");
-            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
+
+            // The rule is "never tighter than what the player sees", which is the floor. Pinning
+            // the ortho *at* the floor was the bug: the campus outgrew the frame and the Capture
+            // came back a close-up with the pad and rocket cropped off the edge.
+            Assert.GreaterOrEqual(
+                ortho, StillCampusDensity.PlayCampusOrthoSize,
+                "still must never zoom inside play ortho to pack the AABB");
+            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
+
+            float raw = StillCampusDensity.RawStillOrtho(
+                min, max, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+            Assert.Greater(
+                ortho, raw,
+                "the whole campus plus regolith headroom has to be in frame, not just the AABB");
             Assert.Greater(max.x - min.x, 10, "AABB must span pad→HAB");
             Assert.Greater(max.y - min.y, 6, "AABB must span Commons→north yards");
         }
@@ -438,7 +448,8 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
+            Assert.GreaterOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize);
+            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
         }
 
         [Test]
@@ -488,7 +499,8 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
+            Assert.GreaterOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize);
+            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
         }
 
         [Test]
@@ -555,10 +567,10 @@ namespace SolarMajesty.Tests
             var cues = StillCampusDensity.PlanCues(placer, commons, BuildingPlacer.Cardinal.East);
             Assert.AreEqual(0, cues.HabSocketCount, "PlanCues must not fill interior dirt");
             Assert.IsFalse(cues.HabSocket);
-            Assert.AreEqual(
-                StillCampusDensity.PlayCampusOrthoSize,
+            Assert.GreaterOrEqual(
                 StillCampusDensity.FitStillOrtho(
-                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
+                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect),
+                StillCampusDensity.PlayCampusOrthoSize);
         }
 
         [Test]
@@ -569,10 +581,10 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(leftovers.SkipReason.IndexOf("inn") >= 0);
             Assert.IsTrue(leftovers.SkipReason.IndexOf("wonder") >= 0);
             Assert.AreEqual(0, cues.HabSocketCount, "do not force-fill interior sockets");
-            Assert.AreEqual(
-                StillCampusDensity.PlayCampusOrthoSize,
+            Assert.GreaterOrEqual(
                 StillCampusDensity.FitStillOrtho(
-                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
+                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect),
+                StillCampusDensity.PlayCampusOrthoSize);
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
         }
 
@@ -675,6 +687,66 @@ namespace SolarMajesty.Tests
                 StillCampusDensity.PlayCampusOrthoSize,
                 StillCampusDensity.FitStillOrtho(
                     null, StillCampusDensity.DefaultCellSize, StillCampusDensity.GameTabAspect));
+        }
+
+        [Test]
+        public void DensePack_StandaloneYards_DoNotDockFlushToCommons()
+        {
+            var placer = StampEastChain(out var commons);
+            var plan = StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
+            Assert.IsTrue(plan.Pad, "pad must still stamp");
+
+            // Pad, power, and the extractors are free-standing pads on the concept sheet, with
+            // open regolith between them. Every candidate list leads with gap 0, so the still
+            // campus used to come out as one contiguous mass butted against the dome.
+            string[] names = { "pad", "power", "water", "regolith" };
+            bool[] placed = { plan.Pad, plan.Power, plan.Water, plan.Regolith };
+            Vector2Int[] origins =
+            {
+                plan.PadOrigin, plan.PowerOrigin, plan.WaterOrigin, plan.RegolithOrigin
+            };
+            int[] sides =
+            {
+                StillCampusDensity.PadSize,
+                StillCampusDensity.YardSize,
+                StillCampusDensity.YardSize,
+                StillCampusDensity.YardSize
+            };
+            for (int y = 0; y < names.Length; y++)
+            {
+                if (!placed[y]) continue;
+                for (int f = 0; f < 4; f++)
+                {
+                    Assert.AreNotEqual(
+                        StillCampusDensity.FlushOrigin(
+                            commons, (BuildingPlacer.Cardinal)f, sides[y], sides[y]),
+                        origins[y],
+                        names[y] + " must not dock flush to the Commons — spaced pads are the look");
+                }
+            }
+        }
+
+        [Test]
+        public void StillOrtho_PullsBackAsTheCampusOutgrowsThePlayFrame()
+        {
+            var lone = new BuildingPlacer(new ResourceManager());
+            var origin = new Vector2Int(10, 10);
+            lone.MarkCampusRect(origin, 6, 6);
+            lone.RegisterPiece(origin, 6, 6, BuildingCategory.Commons);
+            float commonsOnly = StillCampusDensity.FitStillOrtho(
+                lone, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+
+            var packed = StampEastChain(out var commons);
+            StillCampusDensity.Plan(packed, commons, BuildingPlacer.Cardinal.East);
+            float wide = StillCampusDensity.FitStillOrtho(
+                packed, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+
+            Assert.AreEqual(
+                StillCampusDensity.PlayCampusOrthoSize, commonsOnly,
+                "a lone Commons already fits the play frame — nothing to pull back from");
+            Assert.Greater(
+                wide, commonsOnly,
+                "a campus wider than the play frame must pull the camera back, not crop the yards");
         }
 
         private static BuildingPlacer StampEastChain(out BuildingPlacer.CampusPiece commons)

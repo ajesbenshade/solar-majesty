@@ -295,9 +295,11 @@ namespace SolarMajesty
             collar.transform.SetParent(parent, true);
             collar.transform.position = world;
             collar.transform.rotation = rot;
-            collar.transform.localScale = new Vector3(bore * 1.28f, 0.07f, bore * 1.28f);
+            collar.transform.localScale = new Vector3(bore * 1.14f, 0.05f, bore * 1.14f);
             Object.Destroy(collar.GetComponent<Collider>());
-            Tint(collar, new Color(0.96f, 0.42f, 0.08f), 0.32f, new Color(0.45f, 0.14f, 0.02f));
+            // Matte paint, and slimmer. Emissive collars at every tube joint were the hot orange
+            // rings all over the Capture; the concept uses orange as a thin band.
+            Tint(collar, new Color(0.96f, 0.42f, 0.08f), 0.32f);
         }
 
         private static Vector3 PieceCenter(IsoGrid grid, BuildingPlacer.CampusPiece piece)
@@ -561,11 +563,14 @@ namespace SolarMajesty
             var rend = bubble.GetComponent<Renderer>();
             if (rend == null) return;
             var mat = NewLit("SM_DressShield");
-            var c = new Color(0.35f, 0.72f, 1f, 0.16f);
+            // Faint and matte. At alpha 0.16 with 0.82 smoothness the bubble caught a broad
+            // specular sheet, and over the Commons that clipped to a solid white dome — the
+            // brightest thing in the Capture, sitting where the concept has a clean hull.
+            var c = new Color(0.35f, 0.72f, 1f, 0.07f);
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             if (mat.HasProperty("_Color")) mat.color = c;
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.82f);
-            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.05f);
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.22f);
+            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
             ColonyVisualUtility.ApplyTransparent(mat);
             rend.sharedMaterial = mat;
             rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -625,7 +630,9 @@ namespace SolarMajesty
             Color glow = commons
                 ? new Color(0.95f, 0.78f, 0.22f)
                 : new Color(0.28f, 0.72f, 1f);
-            Tint(pip, glow, 0.62f, glow * 1.6f);
+            // 1.6x HDR bloomed these pips into white blobs floating over the campus. They are
+            // status cues at overseer range, not lights.
+            Tint(pip, glow, 0.62f, glow * 0.55f);
 
             var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             ring.name = "Dress_StatusRing";
@@ -634,7 +641,7 @@ namespace SolarMajesty
             ring.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             ring.transform.localScale = new Vector3(1.55f, 0.08f, 1.55f);
             Object.Destroy(ring.GetComponent<Collider>());
-            Tint(ring, glow, 0.45f, glow * 0.8f);
+            Tint(ring, glow, 0.45f, glow * 0.28f);
         }
 
         private static void SpawnCone(Vector3 world, CelestialBodyProfile body, Transform parent)

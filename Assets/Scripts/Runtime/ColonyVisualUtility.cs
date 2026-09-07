@@ -373,7 +373,7 @@ namespace SolarMajesty
             hubRing.transform.localRotation = rot;
             hubRing.transform.localScale = new Vector3(diameter * 1.55f, 0.11f, diameter * 1.55f);
             Object.Destroy(hubRing.GetComponent<Collider>());
-            TintPrimitive(hubRing, HubOrange, HubOrangeEmit);
+            TintPrimitive(hubRing, HubOrange);
 
             // Square orange collar plate — still19 cube-ish miss: the hub must
             // read as a multi-face joint, not a small white fridge.
@@ -389,7 +389,7 @@ namespace SolarMajesty
             faceFrame.transform.localRotation = Quaternion.identity;
             faceFrame.transform.localScale = frameScale;
             Object.Destroy(faceFrame.GetComponent<Collider>());
-            TintPrimitive(faceFrame, HubOrange, HubOrangeEmit);
+            TintPrimitive(faceFrame, HubOrange);
 
             // One orange collar at the cell face — the docked Lego joint.
             Vector3 collarPos = dir * (face - 0.04f) + new Vector3(0f, y, 0f);
@@ -398,9 +398,9 @@ namespace SolarMajesty
             collar.transform.SetParent(group.transform, false);
             collar.transform.localPosition = collarPos;
             collar.transform.localRotation = rot;
-            collar.transform.localScale = new Vector3(diameter * 1.32f, 0.08f, diameter * 1.32f);
+            collar.transform.localScale = new Vector3(diameter * 1.16f, 0.055f, diameter * 1.16f);
             Object.Destroy(collar.GetComponent<Collider>());
-            TintPrimitive(collar, HubOrange, HubOrangeEmit);
+            TintPrimitive(collar, HubOrange);
 
             if (!startActive)
                 group.SetActive(false);
@@ -438,7 +438,7 @@ namespace SolarMajesty
             ring.transform.SetParent(group.transform, false);
             ring.transform.localPosition = at + dir * DockCollarOut;
             ring.transform.localRotation = rot;
-            ring.transform.localScale = new Vector3(DockBore * 1.18f, 0.045f, DockBore * 1.18f);
+            ring.transform.localScale = new Vector3(DockBore * 1.10f, 0.034f, DockBore * 1.10f);
             Object.Destroy(ring.GetComponent<Collider>());
             TintPrimitive(ring, HubOrange);
 

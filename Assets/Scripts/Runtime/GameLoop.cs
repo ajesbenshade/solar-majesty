@@ -3764,9 +3764,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// CaptureStill shutter: play campus ortho so the still is a readable
-        /// spaced campus. Does not zoom-to-pack the AABB. Does not change play
-        /// <see cref="ColonyLayout.CampusOrthoSize"/>.
+        /// CaptureStill shutter: frame the whole campus with regolith around it, floored at the
+        /// play ortho so the still is never tighter than what the player sees. Does not zoom-to-pack
+        /// the AABB. Does not change play <see cref="ColonyLayout.CampusOrthoSize"/>.
         /// </summary>
         public void SnapStillCampusCamera(float aspect = 0f)
         {

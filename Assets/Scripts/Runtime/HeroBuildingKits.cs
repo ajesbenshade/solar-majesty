@@ -34,6 +34,13 @@ namespace SolarMajesty
         // fabric tile; this is only what shows if the dressing pass never runs.
         private static readonly Color CanvasTan = new Color(0.86f, 0.76f, 0.56f);
 
+        /// <summary>
+        /// Foundation slabs sit this fraction of the footprint. At ~0.94 they reached the Lego
+        /// cell edge and read as black baseplates under every building — the concept has no slab
+        /// at all, just graded dirt, so the inset lets the dust apron show around the footing.
+        /// </summary>
+        private const float PlinthFill = 0.82f;
+
         private static Shader _lit;
 
         public static bool IsHero(BuildingCategory cat) =>
@@ -405,7 +412,7 @@ namespace SolarMajesty
             Quaternion alongX = Quaternion.Euler(0f, 0f, 90f);
             Prim(root, "Dress_IcePlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.10f, 0f),
-                new Vector3(w * 0.94f, 0.16f, d * 0.90f), Graphite);
+                new Vector3(w * PlinthFill, 0.16f, d * PlinthFill), Graphite);
             Prim(root, "Dress_IceSill", PrimitiveType.Cube,
                 new Vector3(-w * 0.08f, 0.28f, 0f),
                 new Vector3(w * 0.70f, 0.22f, d * 0.52f), Carbon);
@@ -519,7 +526,7 @@ namespace SolarMajesty
             Quaternion alongX = Quaternion.Euler(0f, 0f, 90f);
             Prim(root, "Dress_RegPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.08f, 0f),
-                new Vector3(w * 0.94f, 0.14f, d * 0.88f), Graphite);
+                new Vector3(w * PlinthFill, 0.14f, d * PlinthFill), Graphite);
             Prim(root, "Dress_RegChassis", PrimitiveType.Cylinder,
                 new Vector3(-w * 0.06f, 0.72f, 0f),
                 new Vector3(d * 0.58f, w * 0.38f, d * 0.58f), Carbon, alongX);
@@ -585,7 +592,7 @@ namespace SolarMajesty
             // Twin silos + A-frame headframe. Not a HAB, not the ice greenhouse.
             Prim(root, "Dress_OreDeck", PrimitiveType.Cube,
                 new Vector3(0f, 0.18f, 0f),
-                new Vector3(w * 0.95f, 0.32f, d * 0.90f), Graphite);
+                new Vector3(w * PlinthFill, 0.32f, d * PlinthFill), Graphite);
             Prim(root, "Dress_OreSilo_L", PrimitiveType.Cylinder,
                 new Vector3(-w * 0.24f, 1.55f, 0.08f),
                 new Vector3(w * 0.36f, 1.45f, w * 0.36f), Dust);
@@ -639,7 +646,7 @@ namespace SolarMajesty
             // PWR-1 node + solar field (sheet) on the existing Power footprint.
             Prim(root, "PwrPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.08f, 0f),
-                new Vector3(w * 0.94f, 0.14f, d * 0.94f), Graphite);
+                new Vector3(w * PlinthFill, 0.14f, d * PlinthFill), Graphite);
             Prim(root, "PwrStripe", PrimitiveType.Cube,
                 new Vector3(0f, 0.16f, 0f),
                 new Vector3(w * 0.14f, 0.03f, d * 0.92f), Orange);
@@ -771,7 +778,7 @@ namespace SolarMajesty
             // Angular bunker + roof gun — not a HAB/Commons dome. Shield bubble stays Week 1 dressing.
             Prim(root, "DefPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.12f, 0f),
-                new Vector3(w * 0.92f, 0.22f, d * 0.92f), Carbon);
+                new Vector3(w * PlinthFill, 0.22f, d * PlinthFill), Carbon);
             Prim(root, "DefHull", PrimitiveType.Cube,
                 new Vector3(0f, 0.95f, 0f),
                 new Vector3(w * 0.72f, 1.55f, d * 0.62f), hull);
@@ -812,7 +819,7 @@ namespace SolarMajesty
             float h = tall ? 2.55f : 2.05f;
             Prim(root, "ShopPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.10f, 0f),
-                new Vector3(w * 0.94f, 0.18f, d * 0.94f), Carbon);
+                new Vector3(w * PlinthFill, 0.18f, d * PlinthFill), Carbon);
             Prim(root, "ShopApron", PrimitiveType.Cube,
                 new Vector3(0f, 0.16f, d * 0.32f),
                 new Vector3(w * 0.72f, 0.08f, d * 0.28f), Concrete);
@@ -877,7 +884,7 @@ namespace SolarMajesty
             // Rest hall with porch lantern — not a three-box grey hall.
             Prim(root, "InnPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.10f, 0f),
-                new Vector3(w * 0.92f, 0.18f, d * 0.92f), Carbon);
+                new Vector3(w * PlinthFill, 0.18f, d * PlinthFill), Carbon);
             Prim(root, "InnPorch", PrimitiveType.Cube,
                 new Vector3(0f, 0.22f, d * 0.36f),
                 new Vector3(w * 0.48f, 0.12f, d * 0.22f), Concrete);
@@ -936,7 +943,7 @@ namespace SolarMajesty
             // CMD-1 civic hall (sheet) + guild banner. Not a Commons dome, not a HAB cylinder.
             Prim(root, "GuildPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.14f, 0f),
-                new Vector3(w * 0.96f, 0.26f, d * 0.92f), Carbon);
+                new Vector3(w * PlinthFill, 0.26f, d * PlinthFill), Carbon);
             Prim(root, "GuildMech", PrimitiveType.Cube,
                 new Vector3(0f, 0.42f, 0f),
                 new Vector3(w * 0.88f, 0.32f, d * 0.78f), Graphite);
@@ -1043,7 +1050,7 @@ namespace SolarMajesty
             // OPS-1 operations annex (sheet). Low elongated prism — not Commons, not Guild/CMD.
             Prim(root, "OpsPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.10f, 0f),
-                new Vector3(w * 0.94f, 0.18f, d * 0.88f), Carbon);
+                new Vector3(w * PlinthFill, 0.18f, d * PlinthFill), Carbon);
             Prim(root, "OpsHull", PrimitiveType.Cube,
                 new Vector3(0f, 0.72f, 0f),
                 new Vector3(w * 0.82f, 1.12f, d * 0.62f), hull);
@@ -1210,7 +1217,7 @@ namespace SolarMajesty
             // Weather lattice + cooling towers. Not a white cabin, not a HAB.
             Prim(root, "LoomPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.14f, 0f),
-                new Vector3(w * 0.94f, 0.26f, d * 0.94f), Graphite);
+                new Vector3(w * PlinthFill, 0.26f, d * PlinthFill), Graphite);
             Prim(root, "LoomBunker", PrimitiveType.Cube,
                 new Vector3(-w * 0.32f, 0.72f, -d * 0.30f),
                 new Vector3(w * 0.28f, 1.15f, d * 0.28f), Carbon);
@@ -1266,7 +1273,7 @@ namespace SolarMajesty
             // Tapered shield monument + rings. Not a Commons citadel, not stacked boxes.
             Prim(root, "SpirePlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.16f, 0f),
-                new Vector3(w * 0.88f, 0.28f, d * 0.88f), Carbon);
+                new Vector3(w * PlinthFill, 0.28f, d * PlinthFill), Carbon);
             for (int i = 0; i < 4; i++)
             {
                 float ang = (i * 90f + 45f) * Mathf.Deg2Rad;
@@ -1317,7 +1324,7 @@ namespace SolarMajesty
             Quaternion alongX = Quaternion.Euler(0f, 0f, 90f);
             Prim(root, "ArchPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.10f, 0f),
-                new Vector3(w * 0.94f, 0.18f, d * 0.94f), Carbon);
+                new Vector3(w * PlinthFill, 0.18f, d * PlinthFill), Carbon);
             Prim(root, "ArchLid", PrimitiveType.Cube,
                 new Vector3(-w * 0.06f, 1.55f, -d * 0.08f),
                 new Vector3(w * 0.62f, 0.14f, d * 0.58f), Graphite);
