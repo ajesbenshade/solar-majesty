@@ -76,7 +76,7 @@ namespace SolarMajesty
             if (fill == null) fill = go.AddComponent<Light>();
             fill.type = LightType.Directional;
             fill.color = body.FillColor;
-            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.50f
+            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.58f
                 : body.Id == CelestialBodyId.Earth ? 0.34f : 0.28f;
             fill.shadows = LightShadows.None;
         }

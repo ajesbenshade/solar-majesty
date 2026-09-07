@@ -95,7 +95,8 @@ Shader "SolarMajesty/Hull"
         void SM_TriplanarDetail(float3 worldPos, float3 worldNormal, out float3 albedoMul, out float3 normalTS)
         {
             float3 blend = abs(worldNormal);
-            blend = pow(blend, 4.0);
+            blend = blend * blend;
+            blend = blend * blend;
             blend /= max(blend.x + blend.y + blend.z, 1e-4);
 
             float inv = 1.0 / max(_DetailScale, 0.05);

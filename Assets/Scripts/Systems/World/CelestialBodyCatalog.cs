@@ -233,9 +233,11 @@ namespace SolarMajesty
                 GradeFilter = new Color(1.00f, 0.99f, 0.97f),
                 AmbientHum = 58f,
                 FillColor = new Color(0.90f, 0.88f, 0.86f),
-                AmbientSky = new Color(0.58f, 0.52f, 0.48f),
-                AmbientEquator = new Color(0.36f, 0.30f, 0.26f),
-                AmbientGround = new Color(0.16f, 0.08f, 0.05f),
+                // Lifted so the shaded side of the dome / HAB stays white-grey (Capture dome
+                // sides went concrete grey); concept skylight is bright dusty tan.
+                AmbientSky = new Color(0.70f, 0.62f, 0.56f),
+                AmbientEquator = new Color(0.48f, 0.40f, 0.34f),
+                AmbientGround = new Color(0.20f, 0.10f, 0.06f),
                 // Pale dust haze, not saturated orange — see DemoAtmosphere Mars linear fog.
                 FogColor = new Color(0.86f, 0.60f, 0.38f),
                 FogStart = 34f,
