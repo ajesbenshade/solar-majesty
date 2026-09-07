@@ -402,7 +402,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_LeftoverKits_StampWhenTheyCanFit()
+        public void DensePack_LeftoverKits_DoNotStampWhenTheyCanFit()
         {
             var placer = StampEastChain(out var commons);
             StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
@@ -436,7 +436,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_Leftovers_AfterWorkshop_StillPlaceInnAndWonder()
+        public void DensePack_Leftovers_AfterWorkshop_SkipInnAndWonder()
         {
             var placer = StampEastChain(out var commons);
             StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
@@ -495,7 +495,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_ExtraHabChain_FillsSouthDirt()
+        public void DensePack_ExtraHabChain_CanFitSouth_ButPlanCuesSkips()
         {
             var placer = StampEastChain(out var commons);
             Assert.IsTrue(StillCampusDensity.TryExtraHabChain(
@@ -550,7 +550,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_Still21Order_KeepsLeftoversWithoutInteriorFill()
+        public void DensePack_Still21Order_SkipsLeftoversWithoutInteriorFill()
         {
             var placer = StampStill20Order(out _, out var leftovers, out var cues);
             Assert.IsFalse(leftovers.Inn, "do not pack leftover Inn");
