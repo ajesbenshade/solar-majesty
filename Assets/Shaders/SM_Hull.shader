@@ -29,6 +29,15 @@ Shader "SolarMajesty/Hull"
         _DustColor("Dust Color", Color) = (0.55, 0.34, 0.20, 1)
         _DustAmount("Dust Amount", Range(0,1)) = 0.25
         _DustSharpness("Dust Sharpness", Range(1, 12)) = 3.5
+        _SkirtHeight("Ground Dust Skirt Height (m)", Range(0, 3)) = 0.0
+        _SkirtAmount("Ground Dust Skirt Amount", Range(0,1)) = 0.0
+
+        [Header(Authored Detail Tiles)]
+        [NoScaleOffset] _DetailAlbedo("Detail Albedo (triplanar)", 2D) = "white" {}
+        [NoScaleOffset] _DetailNormal("Detail Normal (triplanar)", 2D) = "bump" {}
+        _DetailScale("Detail Tile Size (m)", Range(0.25, 12)) = 2.4
+        _DetailAmount("Detail Albedo Amount", Range(0,1)) = 0.0
+        _DetailNormalAmount("Detail Normal Amount", Range(0,1)) = 0.0
 
         [Header(Emissive)]
         [HDR] _EmissionColor("Emission Color", Color) = (0,0,0,0)
@@ -63,10 +72,51 @@ Shader "SolarMajesty/Hull"
             float4 _DustColor;
             float  _DustAmount;
             float  _DustSharpness;
+            float  _SkirtHeight;
+            float  _SkirtAmount;
+            float4 _DetailAlbedo_ST;
+            float4 _DetailNormal_ST;
+            float  _DetailScale;
+            float  _DetailAmount;
+            float  _DetailNormalAmount;
             float4 _EmissionColor;
             float  _EmissionBandCenter;
             float  _EmissionBandWidth;
         CBUFFER_END
+
+        TEXTURE2D(_DetailAlbedo);
+        SAMPLER(sampler_DetailAlbedo);
+        TEXTURE2D(_DetailNormal);
+        SAMPLER(sampler_DetailNormal);
+
+        // World-space triplanar sample of the authored grit tile. Kit meshes have no UVs worth
+        // trusting (primitives + joined FBX), so the tile is projected along the dominant normal
+        // axis and blended — the same trick the panel seams use, so both stay in register.
+        void SM_TriplanarDetail(float3 worldPos, float3 worldNormal, out float3 albedoMul, out float3 normalTS)
+        {
+            float3 blend = abs(worldNormal);
+            blend = pow(blend, 4.0);
+            blend /= max(blend.x + blend.y + blend.z, 1e-4);
+
+            float inv = 1.0 / max(_DetailScale, 0.05);
+            float2 uvX = worldPos.zy * inv;
+            float2 uvY = worldPos.xz * inv;
+            float2 uvZ = worldPos.xy * inv;
+
+            float3 aX = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, uvX).rgb;
+            float3 aY = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, uvY).rgb;
+            float3 aZ = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, uvZ).rgb;
+            albedoMul = aX * blend.x + aY * blend.y + aZ * blend.z;
+
+            float3 nX = UnpackNormal(SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, uvX));
+            float3 nY = UnpackNormal(SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, uvY));
+            float3 nZ = UnpackNormal(SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, uvZ));
+            // Swizzle each projection's tangent-space XY into the world axes it perturbs.
+            float3 pX = float3(0.0, nX.y, nX.x);
+            float3 pY = float3(nY.x, 0.0, nY.y);
+            float3 pZ = float3(nZ.x, nZ.y, 0.0);
+            normalTS = pX * blend.x + pY * blend.y + pZ * blend.z;
+        }
 
         // Cheap value noise. Enough to break up flat panels; not trying to be a texture.
         float SM_Hash(float3 p)
@@ -190,6 +240,20 @@ Shader "SolarMajesty/Hull"
 
                 float3 albedo = _BaseColor.rgb;
 
+                // Authored grit tile (Dream Loop SM_Mat_* bakes) — multiplies the base colour so the
+                // body colour lock holds, and tilts the normal so panels catch light unevenly.
+                if (_DetailAmount > 0.001 || _DetailNormalAmount > 0.001)
+                {
+                    float3 detailMul, detailN;
+                    SM_TriplanarDetail(positionWS, normalWS, detailMul, detailN);
+                    // Normalise the tile around mid-grey so it adds texture, not a global tint.
+                    float lum = dot(detailMul, float3(0.299, 0.587, 0.114));
+                    float3 neutral = detailMul / max(lum, 0.05);
+                    neutral = lerp(1.0, neutral, 0.55) * lerp(1.0, lum * 1.15, 0.45);
+                    albedo *= lerp(1.0, neutral, _DetailAmount);
+                    normalWS = normalize(normalWS + detailN * _DetailNormalAmount);
+                }
+
                 // Panel seams: darken the groove, lift the bevel lip beside it.
                 float groove, bevel;
                 SM_Panels(positionWS, normalWS, groove, bevel);
@@ -206,6 +270,17 @@ Shader "SolarMajesty/Hull"
                 float up = saturate(dot(normalWS, float3(0, 1, 0)));
                 float dust = pow(up, _DustSharpness) * _DustAmount;
                 dust *= 0.65 + 0.35 * SM_Noise(positionWS * 1.7);
+
+                // Kicked-up dust skirt: the lowest metre or so of any hull takes the ground colour
+                // (thrown regolith, boot scuff), fading out with height. Concept hulls are white on
+                // top and dirty at the sill, which is what separates "landed" from "placed".
+                if (_SkirtHeight > 0.001 && _SkirtAmount > 0.001)
+                {
+                    float sill = 1.0 - smoothstep(0.0, _SkirtHeight, positionWS.y);
+                    sill *= sill;
+                    sill *= 0.7 + 0.3 * SM_Noise(positionWS * float3(2.3, 6.0, 2.3));
+                    dust = max(dust, sill * _SkirtAmount);
+                }
                 albedo = lerp(albedo, _DustColor.rgb, saturate(dust));
 
                 float smoothness = _Smoothness * (1.0 - saturate(dust) * 0.7) * (1.0 - wear * 0.5);

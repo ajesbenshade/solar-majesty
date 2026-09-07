@@ -37,6 +37,22 @@ namespace SolarMajesty
         private static Shader _hull;
         private static Color _dustColor = new Color(0.55f, 0.34f, 0.20f);
         private static float _dustAmount = 0.24f;
+        private static float _skirtScale = 0.5f;
+
+        /// <summary>Ground-dust skirt strength multiplier for the bound body (Mars = 1).</summary>
+        public static float SkirtScaleFor(CelestialBodyProfile body)
+        {
+            if (body == null) return 0.5f;
+            switch (body.Id)
+            {
+                case CelestialBodyId.Mars: return 1f;
+                case CelestialBodyId.Luna: return 0.7f;
+                case CelestialBodyId.Belt: return 0.6f;
+                case CelestialBodyId.Europa: return 0.35f;
+                case CelestialBodyId.Earth: return 0.25f;
+                default: return 0.5f;
+            }
+        }
 
         /// <summary>
         /// Match settled dust to the body so a module reads as standing on this planet. Call before
@@ -54,16 +70,22 @@ namespace SolarMajesty
                 else if (body.Id == CelestialBodyId.Europa) amount = 0.12f;
                 else if (body.Id == CelestialBodyId.Earth) amount = 0.10f;
             }
-            if (_ready && next == _dustColor && Mathf.Approximately(amount, _dustAmount))
+            float skirt = SkirtScaleFor(body);
+            if (_ready && next == _dustColor && Mathf.Approximately(amount, _dustAmount) &&
+                Mathf.Approximately(skirt, _skirtScale))
                 return;
 
             _dustColor = next;
             _dustAmount = amount;
+            _skirtScale = skirt;
             Mats.Clear();
             _ready = false;
         }
         private static Texture2D _whiteAlbedo;
         private static Texture2D _whiteNormal;
+        private static Texture2D _whiteDetailAlbedo;
+        private static Texture2D _whiteDetailNormal;
+        private static Texture2D _steelDetailAlbedo;
         private static Texture2D _blackAlbedo;
         private static Texture2D _graphiteAlbedo;
         private static Texture2D _steelAlbedo;
@@ -275,6 +297,9 @@ namespace SolarMajesty
 
             _whiteAlbedo = LoadOrBuild(EnvironmentMeshCatalog.WhiteHullAlbedoPath, () => BuildWhiteHull(256));
             _whiteNormal = LoadOrBuild(EnvironmentMeshCatalog.WhiteHullNormalPath, () => BuildPanelNormal(256, 0.55f));
+            _whiteDetailAlbedo = Resources.Load<Texture2D>(EnvironmentMeshCatalog.WhiteHullAlbedoPath);
+            _whiteDetailNormal = Resources.Load<Texture2D>(EnvironmentMeshCatalog.WhiteHullNormalPath);
+            _steelDetailAlbedo = Resources.Load<Texture2D>(EnvironmentMeshCatalog.SteelAlbedoPath);
             _blackAlbedo = BuildCarbon(128);
             _graphiteAlbedo = BuildBrushed(128, new Color(0.18f, 0.19f, 0.21f), new Color(0.32f, 0.33f, 0.35f));
             _steelAlbedo = LoadOrBuild(EnvironmentMeshCatalog.SteelAlbedoPath, () =>
@@ -365,6 +390,7 @@ namespace SolarMajesty
             mat.SetColor("_DustColor", _dustColor);
             mat.SetFloat("_DustAmount", dust);
             mat.SetFloat("_DustSharpness", 3.6f);
+            BindHullDetail(mat, slot);
 
             if (emission.maxColorComponent > 0.01f)
             {
@@ -374,6 +400,73 @@ namespace SolarMajesty
             }
 
             return mat;
+        }
+
+        /// <summary>Sill height (m) over which the ground-dust skirt fades out on hull slots.</summary>
+        public const float HullSkirtHeight = 0.85f;
+
+        /// <summary>
+        /// Dream Loop pass 2: the SM_Mat_* bakes were only reaching the URP Lit fallback path.
+        /// Hull-shader slots now project them triplanar (authored tiles only — the generated
+        /// 16 px panel grid would double the procedural seams) and take a ground-dust skirt so
+        /// white hulls read as landed on the regolith, not pasted over it.
+        /// </summary>
+        private static void BindHullDetail(Material mat, Slot slot)
+        {
+            if (mat == null) return;
+
+            Texture2D albedo = null;
+            Texture2D normal = null;
+            float albedoAmount = 0f;
+            float normalAmount = 0f;
+            float tile = 2.4f;
+            switch (slot)
+            {
+                case Slot.WhiteHull:
+                    albedo = _whiteDetailAlbedo;
+                    normal = _whiteDetailNormal;
+                    albedoAmount = 0.34f; normalAmount = 0.28f; tile = 2.6f;
+                    break;
+                case Slot.Steel:
+                    albedo = _steelDetailAlbedo;
+                    normal = _steelNormal;
+                    albedoAmount = 0.55f; normalAmount = 0.35f; tile = 1.4f;
+                    break;
+                case Slot.Graphite:
+                    albedo = _dustyMetalAlbedo != null ? _dustyMetalAlbedo : _steelDetailAlbedo;
+                    normal = _steelNormal;
+                    albedoAmount = 0.45f; normalAmount = 0.22f; tile = 1.6f;
+                    break;
+                case Slot.Orange:
+                    normal = _whiteDetailNormal;
+                    normalAmount = 0.18f; tile = 1.8f;
+                    break;
+                case Slot.BlackCarbon:
+                    normal = _steelNormal;
+                    normalAmount = 0.16f; tile = 1.2f;
+                    break;
+            }
+
+            if (albedo != null && mat.HasProperty("_DetailAlbedo"))
+            {
+                albedo.wrapMode = TextureWrapMode.Repeat;
+                mat.SetTexture("_DetailAlbedo", albedo);
+                mat.SetFloat("_DetailAmount", albedoAmount);
+            }
+            if (normal != null && mat.HasProperty("_DetailNormal"))
+            {
+                normal.wrapMode = TextureWrapMode.Repeat;
+                mat.SetTexture("_DetailNormal", normal);
+                mat.SetFloat("_DetailNormalAmount", normalAmount);
+            }
+            mat.SetFloat("_DetailScale", tile);
+
+            // Carbon is near-black already; a red skirt on it reads as a rendering error.
+            float skirt = slot == Slot.BlackCarbon ? 0.12f
+                : slot == Slot.DefenseRed ? 0.22f
+                : 0.42f;
+            mat.SetFloat("_SkirtHeight", HullSkirtHeight);
+            mat.SetFloat("_SkirtAmount", skirt * _skirtScale);
         }
 
         private static Material BuildMaterial(Slot slot)
@@ -452,9 +545,10 @@ namespace SolarMajesty
                 case Slot.Canvas:
                     albedo = _canvasAlbedo;
                     normal = _canvasNormal != null ? _canvasNormal : _whiteNormal;
-                    tint = new Color(0.90f, 0.82f, 0.64f);
+                    // Concept awning is sun-bleached khaki, not cream.
+                    tint = new Color(0.84f, 0.74f, 0.54f);
                     metallic = 0.02f;
-                    smooth = 0.28f;
+                    smooth = 0.22f;
                     tile = new Vector2(2.2f, 2.2f);
                     break;
                 case Slot.DefenseRed:
