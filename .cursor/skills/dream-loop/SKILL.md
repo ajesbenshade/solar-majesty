@@ -10,7 +10,7 @@ This is a process for you to autonomously build extremely impressive visuals, es
 
 Source: [achimala/dream-loop](https://github.com/achimala/dream-loop) (MIT). Vendor this file so Solar Majesty agents can reuse the loop without a network fetch.
 
-**Solar Majesty lock:** Phase 4 look is a **spaced Mars overseer campus** (empty red dirt OK). Do not chase packed-city density. Working files go in `.dream-loop/` (gitignored). Team-facing concept lives under `Docs/Roadmap/`.
+**Solar Majesty lock:** Phase 4 look is Aaron’s **2026-09-07 spaced ITS campus** vs `Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png` — no interconnect tube webs, empty red dirt OK, geodesic Commons, distant haze, spacesuited crossings. Bake-off PRs #26/#27/#28 are not EXIT. Do not chase packed-city density. Working files go in `.dream-loop/` (gitignored). Team-facing concept lives under `Docs/Roadmap/`.
 
 ## The target concept
 

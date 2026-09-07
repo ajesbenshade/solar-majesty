@@ -2442,8 +2442,9 @@ namespace SolarMajesty
 
         /// <summary>
         /// CaptureStill / Phase 4: Commons→airlock→HAB plus CanFit pad / PWR-1 /
-        /// water + regolith yard and leftover Inn / wonder when they fit.
-        /// Spaced campus — empty dirt stays. Does not stamp Phase 4 exit.
+        /// water + regolith yard. Aaron 2026-09-07: no leftover packing, no
+        /// interconnect tube webs. Spaced campus — empty dirt stays.
+        /// Does not stamp Phase 4 exit.
         /// </summary>
         public bool StampPhase4StillCampus() => StampPhase4DenseCampus();
 
@@ -2479,36 +2480,12 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Extra HAB chain + workshop docked on a free airlock face so the hub
-        /// reads as a multi-face joint before yards fill those sockets.
+        /// Aaron 2026-09-07: extra HAB + leftover workshop are leftover density
+        /// pressure. Still campus keeps the Commons→airlock→HAB chain only.
         /// </summary>
         private void StampStillHubNeighbors()
         {
-            if (Placer == null || grid == null) return;
-            if (!StillCampusDensity.TryGetCommons(Placer, out var commons))
-                return;
-
-            var habFace = StillCampusDensity.InferHabFace(Placer, commons);
-            var bounds = StillBounds();
-
-            if (StillCampusDensity.TryExtraHabChain(Placer, commons, habFace, bounds, out Vector2Int airlock, out Vector2Int hab))
-            {
-                bool aOk = InstantStampStillBuilding(BuildingCategory.Utility, airlock);
-                bool hOk = InstantStampStillBuilding(BuildingCategory.Habitat, hab);
-                Debug.Log($"[GameLoop] Stamp extra HAB chain airlock={aOk} hab={hOk} {airlock}->{hab}");
-            }
-
-            // Only a real airlock dock — TryDockOrNext would park the hangar west
-            // and steal the pad / 6×6 wonder sockets (still20 leftover=workshop).
-            if (StillCampusDensity.TryDockOnAirlock(
-                    Placer, commons, StillCampusDensity.YardSize, StillCampusDensity.YardSize,
-                    bounds, out Vector2Int shop))
-            {
-                bool ok = InstantStampStillBuilding(BuildingCategory.EngineerWorkshop, shop);
-                Debug.Log($"[GameLoop] Stamp density workshop={ok} origin={shop} (dock)");
-            }
-
-            NotifyCampusExpanded();
+            // Intentionally empty — do not pack extra HAB / hangar onto the still.
         }
 
         /// <summary>
@@ -2535,39 +2512,13 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Village Inn + one wonder when they CanFit. Workshop only if the hub pass
-        /// missed — still20 leftover=workshop ate the Inn / wonder sockets by
-        /// stamping a second hangar first.
+        /// Aaron 2026-09-07: leftover Inn / wonder / hangar are not a still
+        /// density gate. Empty dirt between landmark yards stays.
         /// </summary>
         private void StampStillLeftoverPack()
         {
-            _stillLeftoverNote = "none";
-            if (Placer == null || grid == null) return;
-            if (!StillCampusDensity.TryGetCommons(Placer, out var commons))
-                return;
-
-            var habFace = StillCampusDensity.InferHabFace(Placer, commons);
-            var bounds = StillBounds();
-
-            TryStampStillYard(BuildingCategory.Inn, StillCampusDensity.YardSize, commons, habFace, bounds);
-            TryStampStillYard(
-                BuildingCategory.AegisSpire, StillCampusDensity.PadSize,
-                commons, habFace, bounds, preferDock: true);
-            if (!StillCampusDensity.HasWorkshop(Placer) &&
-                StillCampusDensity.CountCategory(Placer, BuildingCategory.Habitat) < 2)
-            {
-                TryStampStillYard(
-                    BuildingCategory.EngineerWorkshop, StillCampusDensity.YardSize,
-                    commons, habFace, bounds, preferDock: true);
-            }
-
-            var log = StillCampusDensity.StampLog.FromPieces(Placer);
-            _stillLeftoverNote = StillCampusDensity.StampLog.LeftoverLabel(
-                log.Workshop, log.Inn, log.Wonder);
-            Debug.Log(
-                $"[GameLoop] Stamp leftover workshop={log.Workshop} inn={log.Inn} " +
-                $"wonder={log.Wonder} leftover={_stillLeftoverNote}");
-            NotifyCampusExpanded();
+            _stillLeftoverNote = "spaced";
+            Debug.Log("[GameLoop] Stamp leftover skipped leftover=spaced (Aaron 2026-09-07)");
         }
 
         private StillCampusDensity.BoundsOk StillBounds()

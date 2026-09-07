@@ -1,29 +1,41 @@
 # Dream Loop — Spaced Mars look target
 
-**Status:** first look pass. **Not a Phase 4 EXIT.** Do not stamp exit. Do not start Phase 5.
+**Status:** Aaron look brief 2026-09-07 locked. **Not a Phase 4 EXIT.** Do not stamp exit. Do not start Phase 5.
+
+Bake-off PRs **#26 / #27 / #28** (Sol / Fable / Opus Captures) were **rejected**. They are **not** the EXIT claim. EXIT = Aaron look-clear vs the locked concept under this brief.
 
 Working files (retries, judge notes) live in `.dream-loop/` and are gitignored. Reuse the skill at [`.cursor/skills/dream-loop/SKILL.md`](../../.cursor/skills/dream-loop/SKILL.md) ([achimala/dream-loop](https://github.com/achimala/dream-loop), MIT).
 
-## Concept (north star for this pass)
+## LOCKED concept (north star — keep this file)
 
-[`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — in-engine-style isometric overseer still.
+[`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — in-engine-style isometric overseer still. **ITS language**, not the prior tube-web campus.
 
-Judge stills against **this** image, not the retired packed `SM_MarsCampaign_VisualTarget.png`.
+Judge stills against **this** image, not the retired packed `SM_MarsCampaign_VisualTarget.png`, and not bake-off `SM_Capture.png` frames from #26 / #27 / #28. Do **not** regenerate, replace, or overwrite this PNG.
+
+### Aaron look brief (2026-09-07)
+
+1. **Forgo interconnect tubes** between buildings. `SpawnTubeRuns` / between-yard tube web are **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed. Square Lego airlocks may remain as building **ports**.
+2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill dirt with leftover sockets.
+3. **Distant haze** toward the horizon (concept language). Existing `DemoAtmosphere` exponential-squared fog is the live haze; do not wash the campus itself.
+4. **Polyhedron / geodesic Commons** silhouette — not a soft sphere-only kit if we can dress it.
+5. Colonists / specialists crossing open ground should **read as spacesuited** (vulnerable between buildings). Docs + still dressing notes only. Do **not** invent new `FlagTypes` or rewrite `SpecialistBrain`.
 
 ### What the concept is
 
 - High isometric / Majesty-2 overseer camera
-- **Spaced campus pads** with empty red regolith between yards
-- Hero cluster: Commons geodesic dome, HAB-1 cylinder, short tube + airlock, circular pad + Starship, small solar field, one extractor, optional canvas porch
-- Thin Mars haze, strong key light, long readable shadows
+- **Spaced campus pads** with empty red regolith between yards — no tube corridors linking pads
+- Hero cluster: Commons **geodesic / polyhedron** dome, HAB-1 cylinder on a short square airlock port, circular pad + Starship, small solar field, one industrial / extractor yard, optional canvas porch
+- Distant Mars haze toward the horizon, strong key light, long readable shadows
 - Dusty metal / white thermal / carbon / orange / solar glass / canvas — practical colony, not toy, not Elden Ring clutter
+- Open-ground crossings read as **spacesuited** (isolation between pads)
 
 ### What it is NOT
 
+- Do **not** stamp interconnect tube webs (`CampusDress_TubeRuns`, `CampusTubeRoot` corridors)
 - Do **not** pack every dirt patch
-- Do **not** fill interior 4×4 sockets to chase density
-- Do **not** zoom the still camera inside play ortho 10 to crop out empty ground
-- Do **not** treat leftover Inn / wonder / extra HAB as a density gate
+- Do **not** fill interior 4×4 sockets or leftover Inn / wonder / extra HAB / extra solar / Defense to chase density
+- Do **not** zoom `FitStillOrtho` inside play ortho 10 to crop out empty ground
+- Do **not** treat bake-off PRs #26 / #27 / #28 as EXIT or as a new north star
 
 ---
 
@@ -37,14 +49,15 @@ Unity Editor is required (this Cloud VM cannot run Play Mode). Shoot the same wa
 4. **Solar Majesty → Render → Capture Mars Still**.
    - Interactive editor only (batch mode refuses).
    - Menu writes `Docs/Roadmap/SM_Capture.png`.
-   - Uses play campus **ortho 10**, shutter hold, `spawnShowcaseColony` stays **false**.
-   - Commons → airlock → HAB plus CanFit pad / PWR / extractors. Leftovers may stamp; interior dirt is **not** force-filled.
+   - Uses play campus **ortho 10**, shutter hold, `spawnShowcaseColony` stays **false**. Mars Game view **Scale 1x**.
+   - Commons → airlock port → HAB plus CanFit pad / PWR / extractors. Leftovers do **not** stamp. Interior dirt is **not** force-filled. **No** `CampusDress_TubeRuns`.
+   - `FitStillOrtho` stays at play ortho 10 — it must not crop into a packed look.
 5. Game view: **Scale 1x**. Do not free-orbit or zoom-to-pack.
 6. Compare `SM_Capture.png` to `SM_MarsCampus_SpacedOverseer_Concept.png` at the same aspect (concept is 16:9; Game tab is short-wide — match **layout language**, not pixel crop).
 
 ### Judge ladder (when you have a still)
 
-Use the Dream Loop tiers in the skill (shape → light → materials → detail). Cap the score if a lower tier fails. Empty dirt is a **pass**, not a miss.
+Use the Dream Loop tiers in the skill (shape → light → materials → detail). Cap the score if a lower tier fails. Empty dirt is a **pass**, not a miss. A tube-web or packed-AABB frame **fails** shape against this concept.
 
 This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not invent a score.**
 
@@ -52,7 +65,8 @@ This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not 
 
 - If hulls wash orange: do not raise Mars dust on `IndustrialArtDressing.BindBody` (Mars dust amount stays low so white reads).
 - If ground looks flat: confirm `Assets/Resources/Environment/Textures/SM_Ground_Mars_*` imported (albedo Default, normal = Normal map, Repeat) and `PlanetGround` `_DetailTexAmount` is non-zero.
-- If solar / canvas look plastic: confirm `Assets/Resources/Art/Materials/SM_Mat_*` imported Repeat.
+- If the horizon does not recede: confirm Mars `DemoAtmosphere` fog is on (exponential-squared, campus unfogged, distant haze).
+- If interconnect tubes appear: `SpawnTubeRuns` must stay **gone**; `RefreshTubes` only enables docked Lego ports and destroys leftover `CampusDress_TubeRuns` roots.
 
 ### Bake (no Imagine required)
 

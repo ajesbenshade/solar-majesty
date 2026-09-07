@@ -18,7 +18,8 @@ namespace SolarMajesty
     /// clean white plates. FindPieceGo walks VillageRing / Buildings so still-chain
     /// airlocks get docked collars. No CampusTubeRoot corridor and no between-yard
     /// <see cref="TubeRunRootName"/> web — CaptureStill / play RefreshTubes only
-    /// enable docked Lego arms. Leftover still21 runs are destroyed if present.
+    /// enable docked Lego arms (Aaron 2026-09-07). Leftover still21 runs are
+    /// destroyed if present. Square Lego airlock ports stay; unused sockets stay hidden.
     /// </summary>
     public static class CampusDressing
     {
