@@ -147,6 +147,51 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void StillOrtho_PullsBackForWideCampus_NeverInsidePlayOrtho()
+        {
+            // Capture-sized campus (pad + solar + Commons + HABs ≈ 20×20 cells) on a 1.53 Game tab.
+            float wide = StillCampusDensity.FitStillOrtho(
+                new Vector2Int(0, 0), new Vector2Int(20, 20), StillCampusDensity.DefaultCellSize, 1.53f);
+            Assert.AreEqual(StillCampusDensity.ConceptStillOrthoMax, wide,
+                "the Capture had hulls on every edge — a wide campus must pull back to the concept ceiling");
+
+            // Commons + airlock + one HAB stays at play ortho: no zoom-in past 10.
+            float small = StillCampusDensity.FitStillOrtho(
+                new Vector2Int(0, 0), new Vector2Int(6, 10), StillCampusDensity.DefaultCellSize, 2.4f);
+            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, small);
+            Assert.That(StillCampusDensity.ConceptCampusFill, Is.InRange(0.45f, 0.65f));
+        }
+
+        [Test]
+        public void DockBore_IsAboutThirtyPercentOfHabDiameter()
+        {
+            // HAB shell radius for the 6 m footprint = 6 × 0.92 / 3.
+            float habDia = 2f * (6f * 0.92f / 3f);
+            float ratio = ColonyVisualUtility.DockBore / habDia;
+            Assert.That(ratio, Is.InRange(0.26f, 0.34f),
+                "Capture tubes were ~40 % of the HAB; concept corridors are ~30 %");
+        }
+
+        [Test]
+        public void ShieldCue_IsFlatGroundRing_NotGlossyBubble()
+        {
+            var defense = ModularBuildingFactory.Spawn(
+                BuildingCategory.Defense, Vector3.zero, _root.transform);
+            var data = ScriptableObject.CreateInstance<BuildingData>();
+            data.category = BuildingCategory.Defense;
+            data.footprintWidth = 4;
+            data.footprintHeight = 4;
+            CampusDressing.DressPlaced(data, defense, CelestialBodyCatalog.Mars());
+            var shield = defense.transform.Find("Dress_Shield");
+            Assert.IsNotNull(shield);
+            Assert.That(shield.localScale.y, Is.LessThan(0.05f), "coverage cue lies flat on the ground");
+            var mat = shield.GetComponent<Renderer>().sharedMaterial;
+            Assert.That(mat.GetColor("_BaseColor").a, Is.LessThan(0.2f));
+            Assert.That(mat.GetFloat("_Smoothness"), Is.LessThan(0.1f), "no specular flare under the key");
+            Object.DestroyImmediate(data);
+        }
+
+        [Test]
         public void GeodesicLattice_KeepsOnlyUpperStruts()
         {
             var go = new GameObject("LatticeHost");

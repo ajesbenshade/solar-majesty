@@ -393,10 +393,7 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.AreEqual(
-                ColonyLayout.CampusOrthoSize, ortho,
-                "spaced overseer still uses play ortho 10 — do not zoom-to-pack AABB");
-            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
+            AssertConceptStillOrtho(ortho);
             Assert.Greater(max.x - min.x, 10, "AABB must span pad→HAB");
             Assert.Greater(max.y - min.y, 6, "AABB must span Commons→north yards");
         }
@@ -438,7 +435,7 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
+            AssertConceptStillOrtho(ortho);
         }
 
         [Test]
@@ -488,7 +485,7 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
+            AssertConceptStillOrtho(ortho);
         }
 
         [Test]
@@ -555,10 +552,8 @@ namespace SolarMajesty.Tests
             var cues = StillCampusDensity.PlanCues(placer, commons, BuildingPlacer.Cardinal.East);
             Assert.AreEqual(0, cues.HabSocketCount, "PlanCues must not fill interior dirt");
             Assert.IsFalse(cues.HabSocket);
-            Assert.AreEqual(
-                StillCampusDensity.PlayCampusOrthoSize,
-                StillCampusDensity.FitStillOrtho(
-                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
+            AssertConceptStillOrtho(StillCampusDensity.FitStillOrtho(
+                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
         }
 
         [Test]
@@ -569,10 +564,8 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(leftovers.SkipReason.IndexOf("inn") >= 0);
             Assert.IsTrue(leftovers.SkipReason.IndexOf("wonder") >= 0);
             Assert.AreEqual(0, cues.HabSocketCount, "do not force-fill interior sockets");
-            Assert.AreEqual(
-                StillCampusDensity.PlayCampusOrthoSize,
-                StillCampusDensity.FitStillOrtho(
-                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
+            AssertConceptStillOrtho(StillCampusDensity.FitStillOrtho(
+                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
         }
 
@@ -600,21 +593,28 @@ namespace SolarMajesty.Tests
             placer.RegisterPiece(h0, 4, 4, BuildingCategory.Habitat);
 
             var commonsPiece = placer.Pieces[0];
-            Vector2Int pad = StillCampusDensity.FlushOrigin(
-                commonsPiece, BuildingPlacer.Cardinal.West, 6, 6);
-            placer.MarkCampusRect(pad, 6, 6);
-            placer.RegisterPiece(pad, 6, 6, BuildingCategory.LandingPad);
-            Vector3 padWorld = FootprintCenter(pad, 6);
-            var padGo = ModularBuildingFactory.Spawn(
-                BuildingCategory.LandingPad, padWorld, buildings.transform);
-            padGo.name = "Bld_LandingPad_still";
+            // West neighbour is a second HAB (pressurized → corridor run). A pad in the same
+            // slot must NOT get a run: the Capture showed a fat tube to the landing pad.
+            Vector2Int westHab = StillCampusDensity.FlushOrigin(
+                commonsPiece, BuildingPlacer.Cardinal.West, 4, 4);
+            placer.MarkCampusRect(westHab, 4, 4);
+            placer.RegisterPiece(westHab, 4, 4, BuildingCategory.Habitat);
+            Vector3 westWorld = FootprintCenter(westHab, 4);
+            var westGo = ModularBuildingFactory.Spawn(
+                BuildingCategory.Habitat, westWorld, buildings.transform);
+            westGo.name = "Mod_Habitat_west";
 
             Assert.IsTrue(StillCampusDensity.TryCardinalNeighbor(
                 placer.Pieces[0], placer.Pieces[placer.Pieces.Count - 1],
                 CampusDressing.MaxTubeRunGapCells, out _, out bool eastWest));
-            Assert.IsTrue(eastWest, "west pad is an E/W neighbor of Commons");
+            Assert.IsTrue(eastWest, "west HAB is an E/W neighbor of Commons");
             Assert.IsFalse(StillCampusDensity.AreAirlockLinked(
                 placer, placer.Pieces[0], placer.Pieces[placer.Pieces.Count - 1]));
+            Assert.IsFalse(CampusDressing.IsPressurized(BuildingCategory.LandingPad));
+            Assert.IsFalse(CampusDressing.IsPressurized(BuildingCategory.Power));
+            Assert.IsFalse(CampusDressing.IsPressurized(BuildingCategory.RegolithCamp));
+            Assert.IsTrue(CampusDressing.IsPressurized(BuildingCategory.Habitat));
+            Assert.IsTrue(CampusDressing.IsPressurized(BuildingCategory.Utility));
 
             CampusDressing.RefreshTubes(placer, _grid, buildings.transform);
 
@@ -675,6 +675,18 @@ namespace SolarMajesty.Tests
                 StillCampusDensity.PlayCampusOrthoSize,
                 StillCampusDensity.FitStillOrtho(
                     null, StillCampusDensity.DefaultCellSize, StillCampusDensity.GameTabAspect));
+        }
+
+        /// <summary>
+        /// Dream Loop pass 2: the still pulls back so the campus sits in dirt (concept), but
+        /// never zooms in past play ortho 10 and never past the concept ceiling.
+        /// </summary>
+        private static void AssertConceptStillOrtho(float ortho)
+        {
+            Assert.GreaterOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize,
+                "still must not zoom in past play ortho 10 to crop empty ground");
+            Assert.LessOrEqual(ortho, StillCampusDensity.ConceptStillOrthoMax,
+                "still must stay readable — ceiling is the concept ortho");
         }
 
         private static BuildingPlacer StampEastChain(out BuildingPlacer.CampusPiece commons)
