@@ -58,3 +58,6 @@ mono_crash.*.json
 
 # Unity crash recovery copies (do not commit)
 Assets/_Recovery/
+
+# Dream Loop working files (concept retries, judge notes, local stills)
+.dream-loop/

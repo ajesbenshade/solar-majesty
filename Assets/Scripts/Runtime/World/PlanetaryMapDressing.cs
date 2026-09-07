@@ -42,6 +42,7 @@ namespace SolarMajesty
                 groundMat.SetFloat("_DetailScale", 2.4f);
                 groundMat.SetFloat("_DetailStrength", body.Id == CelestialBodyId.Europa ? 0.12f : 0.24f);
                 groundMat.SetFloat("_Smoothness", body.Id == CelestialBodyId.Europa ? 0.30f : 0.06f);
+                BindAuthoredGroundDetail(groundMat, body);
 
                 rend.sharedMaterial = groundMat;
                 rend.shadowCastingMode = ShadowCastingMode.Off;
@@ -134,6 +135,45 @@ namespace SolarMajesty
             rend.receiveShadows = true;
             if (authored)
                 Debug.Log($"[MapDressing] Authored ground textures for {body.ShortCode} tiles={tileScale.x:F1}x{tileScale.y:F1}");
+        }
+
+        /// <summary>
+        /// PlanetGround keeps the body color lock; authored tiles add grit only.
+        /// Missing textures leave _DetailTexAmount at 0 (shader default).
+        /// </summary>
+        private static void BindAuthoredGroundDetail(Material groundMat, CelestialBodyProfile body)
+        {
+            if (groundMat == null || body == null) return;
+            Texture2D albedo = null;
+            Texture2D normal = null;
+            if (body.Id == CelestialBodyId.Earth)
+            {
+                albedo = EnvironmentMeshCatalog.LoadEarthAlbedo();
+                normal = EnvironmentMeshCatalog.LoadEarthNormal();
+            }
+            else if (body.Id == CelestialBodyId.Mars)
+            {
+                albedo = EnvironmentMeshCatalog.LoadMarsAlbedo();
+                normal = EnvironmentMeshCatalog.LoadMarsNormal();
+            }
+
+            if (albedo == null) return;
+            albedo.wrapMode = TextureWrapMode.Repeat;
+            albedo.filterMode = FilterMode.Bilinear;
+            if (groundMat.HasProperty("_DetailAlbedo"))
+                groundMat.SetTexture("_DetailAlbedo", albedo);
+            if (normal != null)
+            {
+                normal.wrapMode = TextureWrapMode.Repeat;
+                normal.filterMode = FilterMode.Bilinear;
+                if (groundMat.HasProperty("_DetailNormal"))
+                    groundMat.SetTexture("_DetailNormal", normal);
+            }
+
+            if (groundMat.HasProperty("_DetailTexScale"))
+                groundMat.SetFloat("_DetailTexScale", body.Id == CelestialBodyId.Mars ? 8.5f : 6.5f);
+            if (groundMat.HasProperty("_DetailTexAmount"))
+                groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.52f : 0.40f);
         }
 
         /// <summary>

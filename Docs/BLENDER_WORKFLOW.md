@@ -115,8 +115,18 @@ open /Users/aaronesbenshade/solar-conquest/Blender/SolarMajesty_Modules.blend
 | `SM_Orange` | 0.95, 0.38, 0.05 | 0.08 | 0.35 | Access / warning |
 | `SM_Steel` | 0.45, 0.47, 0.50 | 0.70 | 0.32 | Hatches / collars |
 | `SM_Glass` | 0.55, 0.62, 0.70 | 0.00 | 0.08 | Viewports later |
+| `SM_Canvas` | 0.82, 0.70, 0.48 | 0.02 | 0.55 | Inn porch / awning (tan weave) |
+| `SM_DustyMetal` | 0.38, 0.32, 0.26 | 0.62 | 0.38 | Extractor tanks / pylons with settled dust |
 
-Do **not** invent new accent colors; stick to the sheet legend.
+Do **not** invent new accent colors; stick to the sheet legend. Canvas and dusty metal are **material variants** of the lock (tan fabric / dust-filmed steel), not new accent hues.
+
+Importable tiles (bake, no Imagine):
+
+```
+python Blender/scripts/sm_bake_look_materials.py
+```
+
+Writes `Assets/Resources/Art/Materials/SM_Mat_{WhiteHull,Steel,Solar,Canvas,DustyMetal}_*`. `IndustrialArtDressing` prefers these over the 256px procedural tiles. Name Blender slots `SM_Canvas` / `SM_DustyMetal` so the remap hits.
 
 ---
 
@@ -414,9 +424,14 @@ Bake without Imagine:
 
 ```powershell
 python Blender/scripts/sm_bake_ground_textures.py
+python Blender/scripts/sm_bake_look_materials.py
 ```
 
-`PlanetaryMapDressing.DressGround` loads these for Earth/Mars; Perlin fallback if missing.
+Ground bake skips existing PNGs (do not stomp Imagine tiles). `--force` only when replacing them.
+
+`PlanetaryMapDressing` binds Mars/Earth tiles onto `SolarMajesty/PlanetGround` as **world-space detail** (body tint stays; grit/ripples come from the PNG). URP Lit fallback still uses them as `_BaseMap` when PlanetGround is missing.
+
+Spaced-campus look target (Dream Loop): [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png). Still steps: [`Docs/Roadmap/DREAM_LOOP_MARS_LOOK.md`](Roadmap/DREAM_LOOP_MARS_LOOK.md). Do not pack dirt to match the retired VisualTarget PNG.
 
 ### Prop FBX (`--category environment`)
 

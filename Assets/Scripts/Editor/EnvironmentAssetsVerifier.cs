@@ -52,6 +52,11 @@ namespace SolarMajesty.EditorTools
             Check(EnvironmentMeshCatalog.EarthNormalPath, "Earth normal");
             Check(EnvironmentMeshCatalog.MarsAlbedoPath, "Mars albedo");
             Check(EnvironmentMeshCatalog.MarsNormalPath, "Mars normal");
+            Check(EnvironmentMeshCatalog.WhiteHullAlbedoPath, "White hull albedo");
+            Check(EnvironmentMeshCatalog.SteelAlbedoPath, "Steel albedo");
+            Check(EnvironmentMeshCatalog.SolarAlbedoPath, "Solar albedo");
+            Check(EnvironmentMeshCatalog.CanvasAlbedoPath, "Canvas albedo");
+            Check(EnvironmentMeshCatalog.DustyMetalAlbedoPath, "Dusty metal albedo");
             Check(EnvironmentMeshCatalog.TreeAPath, "Tree A");
             Check(EnvironmentMeshCatalog.TreeBPath, "Tree B");
             Check(EnvironmentMeshCatalog.RockAPath, "Rock A");

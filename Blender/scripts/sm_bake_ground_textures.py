@@ -78,18 +78,44 @@ def earth_pixel(u: float, v: float) -> tuple[float, float, float]:
 
 
 def mars_pixel(u: float, v: float) -> tuple[float, float, float]:
-    wx = u + 0.14 * value_noise(u * 3.1 + 2.0, v * 3.1 + 6.0)
-    wy = v + 0.14 * value_noise(u * 2.8 + 7.0, v * 2.8 + 1.5)
-    n = fbm(wx * 4.0, wy * 4.0, 6)
-    mott = fbm(wx * 9.0 + 3, wy * 9.0 + 7, 5)
-    r = lerp(0.52, 0.76, n)
-    g = lerp(0.20, 0.36, n * 0.65 + mott * 0.35)
-    b = lerp(0.09, 0.18, mott)
-    if mott > 0.72:
-        r *= 0.88
-        g *= 0.82
-        b *= 0.78
-    return (r, g, b)
+    """Spaced-campus regolith: wind ripples, grit, pebbles. No large crater features
+    (those are mesh props). Seamless — uses only wrapped u/v."""
+    wx = u + 0.12 * value_noise(u * 3.1 + 2.0, v * 3.1 + 6.0)
+    wy = v + 0.12 * value_noise(u * 2.8 + 7.0, v * 2.8 + 1.5)
+    n = fbm(wx * 3.6, wy * 3.6, 6)
+    mott = fbm(wx * 8.4 + 3, wy * 8.4 + 7, 5)
+    # Anisotropic wind ripples — readable at iso without a grid tile.
+    ripple = value_noise(wx * 18.0 + wy * 2.4, wy * 3.2)
+    ripple2 = value_noise(wx * 7.0 + wy * 11.0, wy * 6.5 + 4.0)
+    grit = _hash2(int(u * 1024) & 1023, int(v * 1024) & 1023)
+
+    r = lerp(0.50, 0.78, n * 0.72 + ripple * 0.18)
+    g = lerp(0.18, 0.38, n * 0.55 + mott * 0.30 + ripple2 * 0.15)
+    b = lerp(0.08, 0.17, mott * 0.7 + ripple * 0.3)
+
+    # Iron-oxide dark veins (not craters).
+    if mott > 0.70:
+        r *= 0.86
+        g *= 0.80
+        b *= 0.76
+    # Packed-dust flats — slightly lighter, matte (campus aprons share this language).
+    if n > 0.62 and mott < 0.45:
+        r = lerp(r, 0.80, 0.18)
+        g = lerp(g, 0.40, 0.12)
+        b = lerp(b, 0.16, 0.08)
+    # Sparse pebbles.
+    if grit > 0.975:
+        r = lerp(r, 0.42, 0.55)
+        g = lerp(g, 0.22, 0.55)
+        b = lerp(b, 0.12, 0.55)
+    elif grit > 0.955:
+        r *= 0.92
+        g *= 0.90
+        b *= 0.88
+
+    # Fine dust sheen — keep midtones, do not blow out.
+    sheen = 0.97 + ripple * 0.04
+    return (max(0.08, min(0.92, r * sheen)), max(0.06, min(0.50, g * sheen)), max(0.04, min(0.24, b)))
 
 
 def height_from_rgb(r: float, g: float, b: float) -> float:
@@ -340,6 +366,8 @@ TextureImporter:
 
 
 def main():
+    import sys
+    force = "--force" in sys.argv
     print(f"[SM] Baking {SIZE}x{SIZE} ground textures -> {OUT}")
     earth = make_albedo(earth_pixel, SIZE)
     mars = make_albedo(mars_pixel, SIZE)
@@ -353,6 +381,9 @@ def main():
         (OUT / "SM_Ground_Mars_Normal.png", mars_n, True),
     ]
     for path, pix, is_normal in files:
+        if path.exists() and not force:
+            print(f"[SM] Skip existing {path.name} (pass --force to overwrite authored tiles)")
+            continue
         write_png(path, pix, SIZE)
         if is_normal:
             write_unity_meta_normal(path)

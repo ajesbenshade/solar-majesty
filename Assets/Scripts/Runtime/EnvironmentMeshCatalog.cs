@@ -23,6 +23,15 @@ namespace SolarMajesty
         public const string MarsAlbedoPath = "Environment/Textures/SM_Ground_Mars_Albedo";
         public const string MarsNormalPath = "Environment/Textures/SM_Ground_Mars_Normal";
 
+        public const string WhiteHullAlbedoPath = "Art/Materials/SM_Mat_WhiteHull_Albedo";
+        public const string WhiteHullNormalPath = "Art/Materials/SM_Mat_WhiteHull_Normal";
+        public const string SteelAlbedoPath = "Art/Materials/SM_Mat_Steel_Albedo";
+        public const string SteelNormalPath = "Art/Materials/SM_Mat_Steel_Normal";
+        public const string SolarAlbedoPath = "Art/Materials/SM_Mat_Solar_Albedo";
+        public const string CanvasAlbedoPath = "Art/Materials/SM_Mat_Canvas_Albedo";
+        public const string CanvasNormalPath = "Art/Materials/SM_Mat_Canvas_Normal";
+        public const string DustyMetalAlbedoPath = "Art/Materials/SM_Mat_DustyMetal_Albedo";
+
         /// <summary>Authored tree height in meters (Blender / Copilot export target).</summary>
         public const float TreeNativeHeight = 2.4f;
         public const float RockNativeSize = 1.0f;

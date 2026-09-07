@@ -1,8 +1,10 @@
-// Procedural planetary ground.
+// Procedural planetary ground + optional authored detail tiles.
 //
 // Blends a low-lying dust colour with an exposed rock colour by slope and height, then adds a
 // speckle and a broad mottle so the surface does not read as one flat tint at isometric distance.
-// Everything is world-space, so there is no tiling seam and no texture asset to author.
+// World-space UVs keep the grade seamless. When PlanetaryMapDressing binds
+// SM_Ground_* albedo/normal, those tiles add pebble / ripple grit without replacing the
+// body color lock (white hulls must stay white against Mars dirt).
 Shader "SolarMajesty/PlanetGround"
 {
     Properties
@@ -15,6 +17,12 @@ Shader "SolarMajesty/PlanetGround"
         _MacroStrength("Macro Blotch Strength", Range(0,1)) = 0.35
         _DetailScale("Speckle Scale (m)", Range(0.2, 12)) = 2.2
         _DetailStrength("Speckle Strength", Range(0,1)) = 0.22
+
+        [Header(Authored Detail Tiles)]
+        [NoScaleOffset] _DetailAlbedo("Detail Albedo", 2D) = "white" {}
+        [NoScaleOffset] _DetailNormal("Detail Normal", 2D) = "bump" {}
+        _DetailTexScale("Detail Tex Scale (m)", Range(0.5, 32)) = 8
+        _DetailTexAmount("Detail Tex Amount", Range(0,1)) = 0
 
         _SlopeStart("Rock Slope Start", Range(0,1)) = 0.55
         _SlopeEnd("Rock Slope End", Range(0,1)) = 0.88
@@ -44,11 +52,20 @@ Shader "SolarMajesty/PlanetGround"
             float  _MacroStrength;
             float  _DetailScale;
             float  _DetailStrength;
+            float4 _DetailAlbedo_ST;
+            float4 _DetailNormal_ST;
+            float  _DetailTexScale;
+            float  _DetailTexAmount;
             float  _SlopeStart;
             float  _SlopeEnd;
             float  _Smoothness;
             float  _Metallic;
         CBUFFER_END
+
+        TEXTURE2D(_DetailAlbedo);
+        SAMPLER(sampler_DetailAlbedo);
+        TEXTURE2D(_DetailNormal);
+        SAMPLER(sampler_DetailNormal);
 
         float SM_GHash(float2 p)
         {
@@ -157,6 +174,18 @@ Shader "SolarMajesty/PlanetGround"
                 float3 albedo = lerp(_DarkColor.rgb, _BaseColor.rgb, saturate(exposure * 0.7 + macro * 0.6));
                 albedo = lerp(albedo, albedo * 0.82, (1.0 - macro) * _MacroStrength);
                 albedo *= 1.0 + (speckle - 0.5) * _DetailStrength;
+
+                // Authored tile: grit / ripples. Multiplies the grade — does not replace body tint.
+                float amount = saturate(_DetailTexAmount);
+                if (amount > 0.001)
+                {
+                    float2 detailUV = p / max(_DetailTexScale, 0.25);
+                    half3 detailAlb = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, detailUV).rgb;
+                    albedo *= lerp(1.0, detailAlb, amount);
+                    half4 nS = SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, detailUV);
+                    float3 nTS = UnpackNormal(nS);
+                    normalWS = normalize(normalWS + float3(nTS.x, 0.0, nTS.y) * (amount * 0.65));
+                }
 
                 // Steep faces lose their dust cover and show rock.
                 float slope = 1.0 - saturate(dot(normalWS, float3(0, 1, 0)));
