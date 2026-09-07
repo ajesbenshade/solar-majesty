@@ -20,7 +20,7 @@ Current greybox / Lego airlocks / blockout robots are **not** this look. Phase 4
 
 `SM_MarsCampaign_VisualTarget.png` is **retired**. It was a packed-density concept-art mockup and is no longer the Phase 4 EXIT look north star. still21 / still22 do **not** have to match that sheet’s fill-every-dirt-patch packing.
 
-**Dream Loop concept (this look pass):** [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — spaced overseer campus, empty dirt OK. GD capture / judge notes: [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md). **Not an exit stamp.**
+**Dream Loop concept (this look pass):** [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — spaced overseer campus, empty dirt OK. GD capture / judge notes and the pass-2 Capture → concept deltas table (key light, haze, pebbles, yards, geodesic Commons, canvas, extractor spheres, mast): [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md). **Not an exit stamp.**
 
 Phase 4 EXIT look:
 

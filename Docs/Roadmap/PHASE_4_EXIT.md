@@ -154,6 +154,15 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - `spawnShowcaseColony` stays false. Square airlocks stay. Five HUD chips stay. No click-to-move. No `SpecialistBrain` / FlagManager / Narrative / economy rewrite
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
 
+**Dream Loop pass 2 — Capture → concept look pass (code only — do not stamp exit)**
+- Judged Capture stills against the **locked** [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png): flat ground, no haze, hard aprons inside hulls, smooth Commons sphere, dust-drum extractor, carbon canopy, raking 20° sun with up-left shadows
+- Mars key light **36° / yaw 148** (shadows down-right ~1.4×), fill opposite the key; **linear** pale haze anchored past the camera focal depth; dusty grade + soft vignette
+- `PlanetGround` pebble speckle layer + 84 `Dress_MarsPebble` rocks between yards; `SolarMajesty/Hull` triplanar `SM_Mat_*` grit + ground-dust skirt (Mars strongest)
+- `Dress_Apron` → soft radial yard decal sized to the footprint (Commons included); Commons **geodesic strut lattice** + orange cupola collar; canvas awning on Workshop / Inn; regolith extractor **spherical tanks + column**; PWR-1 lattice comms mast
+- Checked-in URP asset matches **Configure URP For Look Target** (MSAA 4 / 4 cascades / 120 m / 4096)
+- Spaced layout, play ortho 10, square airlocks, docked-collar-only orange, `spawnShowcaseColony` false all unchanged. No click-to-move. No `SpecialistBrain` rewrite
+- Deltas table + GD still checklist: [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md). **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
+
 ---
 
 ## Phase 4 EXIT look (spaced overseer — VisualTarget PNG retired)
