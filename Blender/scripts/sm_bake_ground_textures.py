@@ -262,7 +262,7 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-""",
+""".replace(" \n", "\n"),
         encoding="utf-8",
     )
 
@@ -360,7 +360,7 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-""",
+""".replace(" \n", "\n"),
         encoding="utf-8",
     )
 
