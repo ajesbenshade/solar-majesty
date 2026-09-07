@@ -62,6 +62,7 @@ namespace SolarMajesty
             Mats.Clear();
             _ready = false;
         }
+
         private static Texture2D _whiteAlbedo;
         private static Texture2D _whiteNormal;
         private static Texture2D _blackAlbedo;
@@ -138,9 +139,13 @@ namespace SolarMajesty
         public static void ClearTintOverlay(GameObject root) =>
             SetTintOverlay(root, Color.white);
 
-        private static bool ShouldSkip(Renderer rend)
+        /// <summary>
+        /// Names this library leaves alone. Public so procedural kits can tell whether their prim
+        /// will be remapped to a slot material or has to carry its own surface.
+        /// </summary>
+        public static bool IsSkippedName(string n)
         {
-            string n = rend.name;
+            if (string.IsNullOrEmpty(n)) return false;
             if (n.Contains("SelectRing") || n.Contains("StatusOrb") || n.Contains("Label"))
                 return true;
             if (n.Contains("Vfx") || n.StartsWith("Dress_") || n.Contains("YieldLabel"))
@@ -151,9 +156,13 @@ namespace SolarMajesty
             if (CampusDressing.IsDockDressName(n) || n.StartsWith("Airlock_") ||
                 n.Contains("AirlockHub"))
                 return true;
-            if (n.Contains("GroundPlane") || n.Contains("HorizonSkirt") ||
-                n.Contains("HorizonDeepFloor") || n.Contains("Footprint"))
-                return true;
+            return n.Contains("GroundPlane") || n.Contains("HorizonSkirt") ||
+                   n.Contains("HorizonDeepFloor") || n.Contains("Footprint");
+        }
+
+        private static bool ShouldSkip(Renderer rend)
+        {
+            if (IsSkippedName(rend.name)) return true;
             Transform t = rend.transform;
             while (t != null)
             {
@@ -167,6 +176,16 @@ namespace SolarMajesty
             }
             return false;
         }
+
+        /// <summary>
+        /// Slot a mesh or material name resolves to, as its enum name.
+        ///
+        /// Diagnostic hook. Several kit reads are carried entirely by naming — the canvas porch,
+        /// the steel solar frames, the orange Commons door — and a change to the token order here
+        /// is invisible until a still comes back with a white box where the awning should be.
+        /// </summary>
+        public static string SlotNameFor(string name) =>
+            (TryFromToken(name, out Slot slot) ? slot : Slot.WhiteHull).ToString();
 
         private static Slot GuessSlot(Renderer rend, Material src)
         {
@@ -365,6 +384,68 @@ namespace SolarMajesty
             mat.SetColor("_DustColor", _dustColor);
             mat.SetFloat("_DustAmount", dust);
             mat.SetFloat("_DustSharpness", 3.6f);
+            ApplyGrime(mat, slot == Slot.WhiteHull ? 0.30f
+                : slot == Slot.Steel ? 0.26f
+                : slot == Slot.Graphite || slot == Slot.DefenseRed ? 0.20f
+                : slot == Slot.Orange ? 0.16f
+                : 0.12f);
+
+            if (emission.maxColorComponent > 0.01f)
+            {
+                mat.SetColor("_EmissionColor", emission);
+                mat.SetFloat("_EmissionBandWidth", 0f);
+                mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            }
+
+            return mat;
+        }
+
+        /// <summary>
+        /// Weathering the lower hull grounds a module on the planet. Neutral warm grey, never the
+        /// body's ground colour — see the Mars orange-wash note on <see cref="BindBody"/>.
+        /// </summary>
+        private static void ApplyGrime(Material mat, float amount)
+        {
+            mat.SetColor("_GrimeColor", new Color(0.34f, 0.31f, 0.28f));
+            mat.SetFloat("_GrimeAmount", amount);
+            mat.SetFloat("_GrimeScale", 1.6f);
+            mat.SetFloat("_GrimeRise", 2.4f);
+        }
+
+        /// <summary>
+        /// Hull-shader material for a procedural hero-kit prim of a given colour.
+        ///
+        /// <see cref="HeroBuildingKits"/> names most of its geometry <c>Dress_*</c>, which
+        /// <see cref="ShouldSkip"/> drops, so the pad / extractor / ship kits never reached this
+        /// library and stayed on flat URP Lit with no seams, wear, or dust. Building their
+        /// materials here keeps one surface language across the campus while leaving each kit's
+        /// authored colour intact.
+        ///
+        /// Returns null when the hull shader is unavailable; callers fall back to URP Lit.
+        /// </summary>
+        public static Material BuildKitHullMaterial(Color baseColor, Color emission)
+        {
+            EnsureLibrary();
+            if (_hull == null) return null;
+
+            var mat = new Material(_hull) { name = "SM_Kit_Hull" };
+            float lum = baseColor.r * 0.299f + baseColor.g * 0.587f + baseColor.b * 0.114f;
+            bool dark = lum < 0.22f;
+
+            mat.SetColor("_BaseColor", baseColor);
+            mat.SetFloat("_Metallic", dark ? 0.40f : 0.08f);
+            mat.SetFloat("_Smoothness", dark ? 0.28f : 0.38f);
+            mat.SetFloat("_PanelScale", 0.95f);
+            mat.SetFloat("_PanelWidth", 0.016f);
+            mat.SetFloat("_PanelDarken", dark ? 0.24f : 0.36f);
+            mat.SetFloat("_PanelBevel", 0.36f);
+            mat.SetColor("_WearColor", new Color(0.30f, 0.29f, 0.28f));
+            mat.SetFloat("_WearAmount", 0.14f);
+            mat.SetFloat("_WearScale", 5.5f);
+            mat.SetColor("_DustColor", _dustColor);
+            mat.SetFloat("_DustAmount", _dustAmount);
+            mat.SetFloat("_DustSharpness", 3.6f);
+            ApplyGrime(mat, dark ? 0.12f : 0.26f);
 
             if (emission.maxColorComponent > 0.01f)
             {
@@ -443,10 +524,14 @@ namespace SolarMajesty
                     tile = new Vector2(1f, 1f);
                     break;
                 case Slot.Solar:
+                    // Near-black navy glass with a sky sheen. The status glow reads through
+                    // smoothness, not a bright emissive: the old 0.85 blue lit the panels like
+                    // neon strips instead of PV cells.
                     albedo = _solarAlbedo;
-                    metallic = 0.35f;
-                    smooth = 0.62f;
-                    emission = new Color(0.10f, 0.28f, 0.85f);
+                    tint = new Color(0.62f, 0.66f, 0.78f);
+                    metallic = 0.55f;
+                    smooth = 0.80f;
+                    emission = new Color(0.03f, 0.09f, 0.28f);
                     tile = new Vector2(4f, 4f);
                     break;
                 case Slot.Canvas:

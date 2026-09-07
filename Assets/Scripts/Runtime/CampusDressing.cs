@@ -590,10 +590,24 @@ namespace SolarMajesty
             go.transform.position = origin + Vector3.up * 0.03f;
             go.transform.localScale = new Vector3(dia, 0.025f, dia);
             Object.Destroy(go.GetComponent<Collider>());
+            // Concept aprons are darker than the wild regolith around them, not lighter, and their
+            // edge is swept rather than cut. One disc lerped toward GroundLight read as a grey slab.
             Color packed = body != null
-                ? Color.Lerp(body.GroundDark, body.GroundLight, 0.18f) * 0.82f
-                : new Color(0.18f, 0.18f, 0.19f);
-            Tint(go, packed, 0.05f);
+                ? Color.Lerp(body.GroundDark, body.GroundLight, 0.10f) * 0.74f
+                : new Color(0.15f, 0.15f, 0.16f);
+            Tint(go, packed, 0.04f);
+
+            // Wider, fainter skirt so the apron fades into the dirt instead of ending on a rim.
+            var skirt = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            skirt.name = "Dress_ApronSkirt";
+            if (parent != null) skirt.transform.SetParent(parent, true);
+            skirt.transform.position = origin + Vector3.up * 0.018f;
+            skirt.transform.localScale = new Vector3(dia * 1.34f, 0.02f, dia * 1.34f);
+            Object.Destroy(skirt.GetComponent<Collider>());
+            Color swept = body != null
+                ? Color.Lerp(body.GroundDark, body.GroundLight, 0.24f) * 0.88f
+                : new Color(0.2f, 0.2f, 0.21f);
+            Tint(skirt, swept, 0.04f);
         }
 
         /// <summary>

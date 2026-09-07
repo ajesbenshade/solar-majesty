@@ -92,7 +92,7 @@ namespace SolarMajesty
             // everything past the start distance. Linear fog starting at 28 m was washing the whole
             // campus into one hue, which is why white hulls rendered orange in the Mars stills.
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = body.FogColor;
+            RenderSettings.fogColor = HazeColorFor(body);
             RenderSettings.fogDensity = FogDensityFor(body);
 
             // Kept in sync so anything reading linear fog (or a quality tier that forces it) agrees.
@@ -102,12 +102,28 @@ namespace SolarMajesty
 
         /// <summary>
         /// Density chosen so fog reaches roughly half strength at the body's FogEnd, keeping the
-        /// campus itself unfogged while the far vista still recedes.
+        /// campus itself unfogged while the far vista still recedes. Dusty atmospheres get a
+        /// multiplier: on Mars the concept shows visible haze well inside the far plane, and at the
+        /// baseline density the whole map rendered at the same contrast.
         /// </summary>
         private static float FogDensityFor(CelestialBodyProfile body)
         {
             float horizon = Mathf.Max(60f, body.FogEnd);
-            return Mathf.Clamp(0.9f / horizon, 0.0015f, 0.02f);
+            float dustScale = body.Id == CelestialBodyId.Mars ? 1.85f
+                : body.Id == CelestialBodyId.Earth ? 1.15f
+                : 1f;
+            return Mathf.Clamp(0.9f * dustScale / horizon, 0.0015f, 0.02f);
+        }
+
+        /// <summary>
+        /// Haze has to settle toward the colour of the sky it is scattering, or distance reads as a
+        /// dirty filter instead of air. The catalog FogColor is a ground-side dust tone; lifting it
+        /// toward SkyHorizon is what lets the far ground recede.
+        /// </summary>
+        private static Color HazeColorFor(CelestialBodyProfile body)
+        {
+            if (body.Id != CelestialBodyId.Mars) return body.FogColor;
+            return Color.Lerp(body.FogColor, body.SkyHorizon, 0.55f) * 1.06f;
         }
 
         private static void ConfigureCamera(Camera cam, CelestialBodyProfile body)

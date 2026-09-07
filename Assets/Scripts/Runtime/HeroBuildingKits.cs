@@ -24,7 +24,9 @@ namespace SolarMajesty
         private static readonly Color IceEmit = new Color(0.12f, 0.55f, 0.95f);
         private static readonly Color Dust = new Color(0.52f, 0.36f, 0.22f);
         private static readonly Color SolarCell = new Color(0.07f, 0.14f, 0.36f);
-        private static readonly Color SolarEmit = new Color(0.22f, 0.72f, 2.15f);
+        // Blue status glow stays in the Phase 4 keyword lock, but at 2.15 HDR blue the panels lit
+        // like neon strips instead of reading as the concept's near-black PV glass.
+        private static readonly Color SolarEmit = new Color(0.06f, 0.19f, 0.62f);
         private static readonly Color Glass = new Color(0.48f, 0.72f, 0.82f);
         private static readonly Color GlassEmit = new Color(0.06f, 0.22f, 0.28f);
         private static readonly Color Plant = new Color(0.22f, 0.55f, 0.24f);
@@ -99,6 +101,26 @@ namespace SolarMajesty
             Prim(root, "HabSideDoor", PrimitiveType.Cube,
                 new Vector3(0.12f, z, -radius * 0.96f),
                 new Vector3(0.85f, 1.15f, 0.12f), Orange);
+
+            // External flight down from the side door. The concept HAB is legible as a raised
+            // living module because you can see how a crew reaches the hatch.
+            for (int i = 0; i < 4; i++)
+            {
+                float t = i / 3f;
+                Prim(root, "HabStairPlinth_" + i, PrimitiveType.Cube,
+                    new Vector3(0.12f,
+                                Mathf.Lerp(z - 0.62f, 0.14f, t),
+                                -radius * 1.06f - 0.16f - i * 0.30f),
+                    new Vector3(0.92f, 0.10f, 0.30f), Graphite);
+            }
+            for (int s = -1; s <= 1; s += 2)
+            {
+                Prim(root, "HabStairRailSteel_" + s, PrimitiveType.Cube,
+                    new Vector3(0.12f + s * 0.46f, z - 0.34f, -radius * 1.06f - 0.62f),
+                    new Vector3(0.05f, 0.05f, 1.15f), Steel,
+                    Quaternion.Euler(-26f, 0f, 0f));
+            }
+
             Prim(root, "HabToolbox", PrimitiveType.Cube,
                 new Vector3(-0.85f, z + radius * 0.82f, 0.05f),
                 new Vector3(1.05f, 0.38f, 0.62f), Graphite);
@@ -167,6 +189,11 @@ namespace SolarMajesty
             Prim(root, "CommonsDrum", PrimitiveType.Cylinder,
                 new Vector3(0f, 1.15f, 0f),
                 new Vector3(radius * 2f, 0.58f, radius * 2f), hull);
+            // Concept reads a bold orange skirt where the dome meets the ground, which is what
+            // separates a citadel from a white golf ball at isometric range.
+            Prim(root, "CommonsSkirtStripe", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.76f, 0f),
+                new Vector3(radius * 2.14f, 0.10f, radius * 2.14f), Orange);
             Prim(root, "CommonsBand", PrimitiveType.Cylinder,
                 new Vector3(0f, 1.35f, 0f),
                 new Vector3(radius * 2.08f, 0.07f, radius * 2.08f), Carbon);
@@ -204,12 +231,39 @@ namespace SolarMajesty
 
             for (int i = 0; i < 8; i++)
             {
-                if (i % 2 == 0) continue;
+                // Diagonals 3 and 5 carry the entries below — a door where a window was.
+                if (i % 2 == 0 || i == 3 || i == 5) continue;
                 float ang = i * 45f * Mathf.Deg2Rad;
                 Prim(root, "CommonsVisor_" + i, PrimitiveType.Cube,
                     new Vector3(Mathf.Sin(ang) * radius * 1.02f, 1.35f, Mathf.Cos(ang) * radius * 1.02f),
                     new Vector3(radius * 0.38f, 0.22f, 0.08f),
                     Cyan, Quaternion.Euler(0f, i * 45f, 0f), CyanEmit);
+            }
+
+            // Orange-framed entries with a stoop and handrail on the two free diagonals — the
+            // cardinals belong to the dock ports. The concept's dome reads as enterable because of
+            // these; a blank drum does not.
+            for (int i = 0; i < 2; i++)
+            {
+                float deg = 135f + i * 90f;
+                float ang = deg * Mathf.Deg2Rad;
+                Vector3 dir = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang));
+                Quaternion yaw = Quaternion.Euler(0f, deg, 0f);
+                Prim(root, "CommonsDoorBand_" + i, PrimitiveType.Cube,
+                    dir * (radius * 1.00f) + new Vector3(0f, 1.08f, 0f),
+                    new Vector3(0.92f, 1.60f, 0.10f), Carbon, yaw);
+                Prim(root, "CommonsDoorHatch_" + i, PrimitiveType.Cube,
+                    dir * (radius * 1.05f) + new Vector3(0f, 1.02f, 0f),
+                    new Vector3(0.66f, 1.34f, 0.08f), Orange, yaw);
+                Prim(root, "CommonsStoopPlinth_" + i, PrimitiveType.Cube,
+                    dir * (radius * 1.30f) + new Vector3(0f, 0.16f, 0f),
+                    new Vector3(1.05f, 0.22f, 0.62f), Concrete, yaw);
+                Prim(root, "CommonsStoopTread_" + i, PrimitiveType.Cube,
+                    dir * (radius * 1.52f) + new Vector3(0f, 0.08f, 0f),
+                    new Vector3(0.86f, 0.14f, 0.34f), Graphite, yaw);
+                Prim(root, "CommonsRailSteel_" + i, PrimitiveType.Cube,
+                    dir * (radius * 1.30f) + new Vector3(0f, 0.62f, 0f),
+                    new Vector3(1.05f, 0.05f, 0.05f), Steel, yaw);
             }
 
             // Cardinal hull ports (CommonsPort_N/E/S/W). Live groups start off.
@@ -304,6 +358,20 @@ namespace SolarMajesty
                     new Vector3(0.42f, 0.55f, 0.32f), Graphite);
             }
 
+            // Concept pad is ringed with edge markers, not lit at four points. Eight posts read as
+            // an approach circle from the overseer camera.
+            for (int i = 0; i < 8; i++)
+            {
+                float ang = (i * 45f + 22.5f) * Mathf.Deg2Rad;
+                Vector3 dir = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang));
+                Prim(root, "Dress_PadRimPost_" + i, PrimitiveType.Cylinder,
+                    dir * (dia * 0.51f) + new Vector3(0f, 0.30f, 0f),
+                    new Vector3(0.10f, 0.28f, 0.10f), Carbon);
+                Prim(root, "Dress_PadRimLamp_" + i, PrimitiveType.Sphere,
+                    dir * (dia * 0.51f) + new Vector3(0f, 0.60f, 0f),
+                    new Vector3(0.14f, 0.10f, 0.14f), Cyan, CyanEmit * 0.7f);
+            }
+
             SpawnParkedShip(root);
         }
 
@@ -380,6 +448,45 @@ namespace SolarMajesty
             Prim(root, "Dress_IceCondenser", PrimitiveType.Sphere,
                 new Vector3(w * 0.22f, 3.55f, d * 0.18f),
                 new Vector3(0.62f, 0.32f, 0.62f), Ice, IceEmit);
+
+            BuildCanvasPorch(root, w, d);
+        }
+
+        /// <summary>
+        /// Tan canvas shade on steel posts over a railed work deck — the one soft material in the
+        /// concept, and the only thing on that sheet with no counterpart in engine.
+        ///
+        /// Deliberately not <c>Dress_*</c> prefixed, unlike the rest of the extractor kit, so
+        /// <see cref="IndustrialArtDressing"/> maps the shade onto the authored canvas tile instead
+        /// of leaving it a flat tan box.
+        /// </summary>
+        private static void BuildCanvasPorch(Transform root, float w, float d)
+        {
+            float pz = d * 0.44f;
+            Prim(root, "IceDeckPlinth", PrimitiveType.Cube,
+                new Vector3(-w * 0.08f, 0.14f, pz),
+                new Vector3(w * 0.52f, 0.12f, d * 0.24f), Graphite);
+            Prim(root, "IceCanvasShade", PrimitiveType.Cube,
+                new Vector3(-w * 0.08f, 1.26f, pz),
+                new Vector3(w * 0.56f, 0.05f, d * 0.30f), Concrete,
+                Quaternion.Euler(-9f, 0f, 0f));
+            Prim(root, "IceRidgeBand", PrimitiveType.Cube,
+                new Vector3(-w * 0.08f, 1.34f, pz - d * 0.13f),
+                new Vector3(w * 0.56f, 0.05f, 0.05f), Carbon);
+
+            float[] px = { -w * 0.32f, w * 0.16f };
+            for (int i = 0; i < px.Length; i++)
+            {
+                Prim(root, "IcePorchPostSteel_" + i, PrimitiveType.Cylinder,
+                    new Vector3(px[i], 0.66f, pz + d * 0.11f),
+                    new Vector3(0.07f, 0.62f, 0.07f), Steel);
+                Prim(root, "IceDeckRailSteel_" + i, PrimitiveType.Cube,
+                    new Vector3(px[i], 0.52f, pz + d * 0.11f),
+                    new Vector3(0.06f, 0.05f, d * 0.20f), Steel);
+            }
+            Prim(root, "IceDeckRailSteel_front", PrimitiveType.Cube,
+                new Vector3(-w * 0.08f, 0.52f, pz + d * 0.11f),
+                new Vector3(w * 0.50f, 0.05f, 0.05f), Steel);
         }
 
         public static void BuildRegolithExtractor(Transform root, float w, float d, Color hull)
@@ -428,6 +535,25 @@ namespace SolarMajesty
             Prim(root, "Dress_RegBelt", PrimitiveType.Cube,
                 new Vector3(w * 0.08f, 0.28f, -d * 0.28f),
                 new Vector3(w * 0.7f, 0.16f, 0.35f), Yellow);
+
+            // Pressure sphere on a cradle. The concept extractor's silhouette is carried by a
+            // sphere among the pipes; an all-cylinder plant reads as more HAB.
+            Vector3 sphereAt = new Vector3(-w * 0.34f, 1.15f, -d * 0.24f);
+            Prim(root, "Dress_RegSphere", PrimitiveType.Sphere,
+                sphereAt, new Vector3(1.18f, 1.18f, 1.18f), Steel);
+            Prim(root, "Dress_RegSphereBand", PrimitiveType.Cylinder,
+                sphereAt, new Vector3(1.26f, 0.05f, 1.26f), Orange);
+            for (int i = 0; i < 4; i++)
+            {
+                float ang = (i * 90f + 45f) * Mathf.Deg2Rad;
+                Prim(root, "Dress_RegSphereLeg_" + i, PrimitiveType.Cylinder,
+                    sphereAt + new Vector3(Mathf.Sin(ang) * 0.42f, -0.85f, Mathf.Cos(ang) * 0.42f),
+                    new Vector3(0.09f, 0.32f, 0.09f), Carbon);
+            }
+            Prim(root, "Dress_RegSphereRiser", PrimitiveType.Cylinder,
+                sphereAt + new Vector3(0.62f, 0.38f, 0.30f),
+                new Vector3(0.10f, 0.55f, 0.10f), Carbon,
+                Quaternion.Euler(0f, 0f, 62f));
         }
 
         public static void BuildOreExtractor(Transform root, float w, float d, Color hull)
@@ -559,7 +685,9 @@ namespace SolarMajesty
                     Prim(root, "SolarSteelPylon_" + r + "_" + c, PrimitiveType.Cylinder,
                         new Vector3(at.x, 0.38f, at.z),
                         new Vector3(0.07f, 0.28f, 0.07f), Steel);
-                    Prim(root, "SolarFrame_" + r + "_" + c, PrimitiveType.Cube,
+                    // "SolarSteel" so the name maps to the metal slot: a plain "SolarFrame" fell
+                    // through to the PV slot and the frames rendered as more glass.
+                    Prim(root, "SolarSteelFrame_" + r + "_" + c, PrimitiveType.Cube,
                         new Vector3(at.x, 0.72f, at.z),
                         new Vector3(cellW * 1.08f, 0.05f, cellD * 1.08f), Graphite, tilt);
                     Prim(root, "SolarArray_" + r + "_" + c, PrimitiveType.Cube,
@@ -587,6 +715,29 @@ namespace SolarMajesty
             Prim(root, "SolarBracket_3", PrimitiveType.Cube,
                 new Vector3(pitchX * 1.55f, 0.68f, arrZ + pitchZ * 1.15f),
                 new Vector3(0.12f, 0.08f, 0.12f), Orange);
+
+            // Lattice comms mast beside the array, as in the concept. Gives the field a vertical
+            // read so it is not four flat rows of nothing on the horizon line.
+            float mastX = w * 0.38f;
+            float mastZ = arrZ - pitchZ * 0.4f;
+            Prim(root, "PwrMastSteel", PrimitiveType.Cylinder,
+                new Vector3(mastX, 1.55f, mastZ),
+                new Vector3(0.07f, 1.55f, 0.07f), Steel);
+            for (int i = 0; i < 3; i++)
+            {
+                float y = 0.65f + i * 0.85f;
+                Prim(root, "PwrMastBand_" + i, PrimitiveType.Cube,
+                    new Vector3(mastX, y, mastZ),
+                    new Vector3(0.34f, 0.04f, 0.34f), Carbon,
+                    Quaternion.Euler(0f, i * 30f, 0f));
+            }
+            Prim(root, "PwrMastAntenna", PrimitiveType.Cylinder,
+                new Vector3(mastX, 3.28f, mastZ),
+                new Vector3(0.04f, 0.42f, 0.04f), Steel);
+            Prim(root, "PwrMastDishSteel", PrimitiveType.Cylinder,
+                new Vector3(mastX + 0.20f, 2.95f, mastZ),
+                new Vector3(0.46f, 0.04f, 0.46f), Steel,
+                Quaternion.Euler(52f, 0f, 0f));
 
             PlaceCardinalHullPorts(root, "PwrPort", w, d, BuildingCategory.Power);
         }
@@ -736,9 +887,15 @@ namespace SolarMajesty
             Prim(root, "InnBeacon", PrimitiveType.Sphere,
                 new Vector3(0f, 2.72f, -d * 0.04f),
                 new Vector3(0.20f, 0.20f, 0.20f), Cyan, CyanEmit);
-            Prim(root, "InnCanopy", PrimitiveType.Cube,
-                new Vector3(0f, 1.55f, d * 0.38f),
-                new Vector3(w * 0.42f, 0.06f, d * 0.18f), Carbon);
+            // Canvas, not carbon: the porch is the Inn's warm read and the campus needs one soft
+            // material. "Canvas" in the name is what maps it onto the authored fabric tile.
+            Prim(root, "InnCanvasShade", PrimitiveType.Cube,
+                new Vector3(0f, 1.62f, d * 0.40f),
+                new Vector3(w * 0.50f, 0.05f, d * 0.24f), Concrete,
+                Quaternion.Euler(-11f, 0f, 0f));
+            Prim(root, "InnPorchRidgeBand", PrimitiveType.Cube,
+                new Vector3(0f, 1.72f, d * 0.29f),
+                new Vector3(w * 0.50f, 0.05f, 0.05f), Carbon);
             Prim(root, "InnLanternPost_L", PrimitiveType.Cylinder,
                 new Vector3(-w * 0.18f, 1.05f, d * 0.42f),
                 new Vector3(0.08f, 0.85f, 0.08f), Steel);
@@ -1424,6 +1581,22 @@ namespace SolarMajesty
             Prim(root, "Dress_StarshipFlap_R", PrimitiveType.Cube,
                 new Vector3(0.12f, 5.55f, -0.42f),
                 new Vector3(0.08f, 0.72f, 0.38f), Carbon);
+
+            // Four splayed landing legs. Two fins left the stack looking planted in the concrete
+            // rather than standing on the pad the way the concept ship does.
+            for (int i = 0; i < 4; i++)
+            {
+                float deg = 45f + i * 90f;
+                float ang = deg * Mathf.Deg2Rad;
+                Vector3 dir = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang));
+                Prim(root, "Dress_StarshipLeg_" + i, PrimitiveType.Cube,
+                    dir * 0.74f + new Vector3(0f, 0.62f, 0f),
+                    new Vector3(0.11f, 1.20f, 0.11f), Carbon,
+                    Quaternion.Euler(dir.z * 15f, deg, -dir.x * 15f));
+                Prim(root, "Dress_StarshipFoot_" + i, PrimitiveType.Cylinder,
+                    dir * 0.94f + new Vector3(0f, 0.06f, 0f),
+                    new Vector3(0.34f, 0.06f, 0.34f), Graphite);
+            }
         }
 
         private static void Prim(
@@ -1462,6 +1635,7 @@ namespace SolarMajesty
         {
             var rend = go.GetComponent<Renderer>();
             if (rend == null) return;
+            if (TryHullSurface(go, rend, c, emission)) return;
             EnsureLit();
             if (_lit == null) return;
             var mat = new Material(_lit) { name = go.name };
@@ -1477,6 +1651,35 @@ namespace SolarMajesty
             }
             rend.sharedMaterial = mat;
             rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+        }
+
+        /// <summary>
+        /// Pad / extractor / ship prims are named <c>Dress_*</c>, so
+        /// <see cref="IndustrialArtDressing"/> skips them and they used to render on flat URP Lit:
+        /// no panel seams, no wear, no settled dust, which is most of why those kits read as
+        /// untextured blocks next to the Commons dome. Give the skipped prims the hull surface
+        /// directly, keeping their authored colour.
+        ///
+        /// Only prims with real surface area take it. A world-space seam across a 3 cm pad marking,
+        /// a collar ring, or a lamp lens is noise, and emissive pieces want the flat lit path.
+        /// </summary>
+        private static bool TryHullSurface(GameObject go, Renderer rend, Color c, Color emission)
+        {
+            if (!IndustrialArtDressing.IsSkippedName(go.name)) return false;
+            if (emission.maxColorComponent > 0.01f) return false;
+
+            Vector3 s = go.transform.localScale;
+            float thinnest = Mathf.Min(s.x, Mathf.Min(s.y, s.z));
+            float widest = Mathf.Max(s.x, Mathf.Max(s.y, s.z));
+            if (widest < 0.45f || thinnest < 0.08f) return false;
+
+            var hull = IndustrialArtDressing.BuildKitHullMaterial(c, emission);
+            if (hull == null) return false;
+
+            rend.sharedMaterial = hull;
+            rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            rend.receiveShadows = true;
+            return true;
         }
 
         private static void StripColliders(GameObject root)

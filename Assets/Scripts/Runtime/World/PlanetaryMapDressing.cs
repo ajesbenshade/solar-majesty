@@ -170,10 +170,21 @@ namespace SolarMajesty
                     groundMat.SetTexture("_DetailNormal", normal);
             }
 
+            bool mars = body.Id == CelestialBodyId.Mars;
             if (groundMat.HasProperty("_DetailTexScale"))
-                groundMat.SetFloat("_DetailTexScale", body.Id == CelestialBodyId.Mars ? 8.5f : 6.5f);
+                groundMat.SetFloat("_DetailTexScale", mars ? 8.5f : 6.5f);
             if (groundMat.HasProperty("_DetailTexAmount"))
-                groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.52f : 0.40f);
+                groundMat.SetFloat("_DetailTexAmount", mars ? 0.52f : 0.40f);
+
+            // Second, tight tap of the same tile. At 8.5 m the grit only reads as broad ripple;
+            // the concept's regolith is pebbles all the way to the camera, and the cavity term is
+            // what keeps them from looking printed on.
+            if (groundMat.HasProperty("_GritScale"))
+                groundMat.SetFloat("_GritScale", mars ? 2.3f : 3.1f);
+            if (groundMat.HasProperty("_GritAmount"))
+                groundMat.SetFloat("_GritAmount", mars ? 0.55f : 0.32f);
+            if (groundMat.HasProperty("_GritCavity"))
+                groundMat.SetFloat("_GritCavity", mars ? 0.42f : 0.26f);
         }
 
         /// <summary>
@@ -549,6 +560,45 @@ namespace SolarMajesty
 
             SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
             SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
+            SpawnMarsGravel(root, campus, body);
+        }
+
+        /// <summary>
+        /// Loose chips and cobbles across the campus surrounds. The 24 ring boulders read as
+        /// deliberately placed props against bare dirt; the concept has a continuous litter of
+        /// small stone between the pads, which is what sells the ground as regolith at overseer
+        /// range. Visual only, colliders stripped, spaced layout untouched.
+        /// </summary>
+        private static void SpawnMarsGravel(Transform parent, Vector3 campus, CelestialBodyProfile body)
+        {
+            const int count = 96;
+            var chips = new GameObject("MarsGravelRoot").transform;
+            chips.SetParent(parent, false);
+
+            for (int i = 0; i < count; i++)
+            {
+                // Golden-angle spiral with a jittered radius: even coverage, no visible ring.
+                float ang = i * 2.39996f;
+                float rad = 5.2f + Mathf.Sqrt((i + 0.5f) / count) * 13.4f
+                            + Frac(Mathf.Sin(i * 91.7f) * 4231.7f) * 1.6f;
+                Vector3 at = campus + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
+
+                var go = GameObject.CreatePrimitive(
+                    i % 4 == 0 ? PrimitiveType.Cube : PrimitiveType.Sphere);
+                go.name = "Dress_MarsGravel";
+                go.transform.SetParent(chips, false);
+                float s = 0.11f + Frac(Mathf.Sin(i * 43.1f) * 1731.3f) * 0.20f;
+                go.transform.position = at + Vector3.up * (s * 0.28f);
+                go.transform.localScale = new Vector3(s * 1.35f, s * 0.55f, s);
+                go.transform.rotation = Quaternion.Euler(
+                    9f * (i % 4), i * 37f, 7f * (i % 3));
+                Object.Destroy(go.GetComponent<Collider>());
+                Color c = Color.Lerp(body.RockColor, body.GroundDark, 0.15f + (i % 5) * 0.09f);
+                // Chips this small cast shadow noise rather than shadow; the cavity term in
+                // PlanetGround already darkens what sits between them.
+                PlanetaryWorldGen.Tint(go, c, 0.07f, ShadowCastingMode.Off);
+                ColonyVisualUtility.SnapToGround(go);
+            }
         }
 
         private static void SpawnVistaBoulder(

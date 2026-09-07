@@ -5,6 +5,10 @@
 // World-space UVs keep the grade seamless. When PlanetaryMapDressing binds
 // SM_Ground_* albedo/normal, those tiles add pebble / ripple grit without replacing the
 // body color lock (white hulls must stay white against Mars dirt).
+//
+// The tile is sampled twice: once at metre scale for ripples and blotching, once much tighter for
+// pebbles that survive isometric range. The tight tap also drives a cavity occlusion term so the
+// gaps between pebbles hold shadow instead of reading as a printed pattern.
 Shader "SolarMajesty/PlanetGround"
 {
     Properties
@@ -23,6 +27,9 @@ Shader "SolarMajesty/PlanetGround"
         [NoScaleOffset] _DetailNormal("Detail Normal", 2D) = "bump" {}
         _DetailTexScale("Detail Tex Scale (m)", Range(0.5, 32)) = 8
         _DetailTexAmount("Detail Tex Amount", Range(0,1)) = 0
+        _GritScale("Grit Tex Scale (m)", Range(0.15, 6)) = 2.4
+        _GritAmount("Grit Tex Amount", Range(0,1)) = 0
+        _GritCavity("Grit Cavity Darken", Range(0,1)) = 0.35
 
         _SlopeStart("Rock Slope Start", Range(0,1)) = 0.55
         _SlopeEnd("Rock Slope End", Range(0,1)) = 0.88
@@ -56,6 +63,9 @@ Shader "SolarMajesty/PlanetGround"
             float4 _DetailNormal_ST;
             float  _DetailTexScale;
             float  _DetailTexAmount;
+            float  _GritScale;
+            float  _GritAmount;
+            float  _GritCavity;
             float  _SlopeStart;
             float  _SlopeEnd;
             float  _Smoothness;
@@ -187,6 +197,30 @@ Shader "SolarMajesty/PlanetGround"
                     normalWS = normalize(normalWS + float3(nTS.x, 0.0, nTS.y) * (amount * 0.65));
                 }
 
+                // Second, much tighter tap of the same tile so pebbles read at isometric range
+                // instead of the ground showing one 8 m frequency. Level-preserving: the tap is
+                // divided by a near-mean mip of itself, so this adds contrast without darkening
+                // the grade the way a second straight multiply would.
+                float occlusion = 1.0;
+                float gritAmount = saturate(_GritAmount);
+                if (gritAmount > 0.001)
+                {
+                    float2 gritUV = p / max(_GritScale, 0.1);
+                    half3 gritAlb = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, gritUV).rgb;
+                    half3 gritRef = SAMPLE_TEXTURE2D_LOD(_DetailAlbedo, sampler_DetailAlbedo, gritUV, 9).rgb;
+                    float3 lumW = float3(0.299, 0.587, 0.114);
+                    float grit = clamp(dot(gritAlb, lumW) / max(dot(gritRef, lumW), 1e-3), 0.35, 1.9);
+                    albedo *= lerp(1.0, grit, gritAmount);
+
+                    // Gaps between pebbles hold shadow. Without this the grit reads as a printed
+                    // pattern rather than loose regolith.
+                    occlusion = 1.0 - saturate((1.0 - grit) * 1.25) * saturate(_GritCavity) * gritAmount;
+
+                    half4 gritN = SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, gritUV);
+                    float3 gritTS = UnpackNormal(gritN);
+                    normalWS = normalize(normalWS + float3(gritTS.x, 0.0, gritTS.y) * (gritAmount * 0.45));
+                }
+
                 // Steep faces lose their dust cover and show rock.
                 float slope = 1.0 - saturate(dot(normalWS, float3(0, 1, 0)));
                 float rock = smoothstep(1.0 - _SlopeEnd, 1.0 - _SlopeStart, slope);
@@ -207,7 +241,7 @@ Shader "SolarMajesty/PlanetGround"
                 surfaceData.metallic = _Metallic;
                 surfaceData.smoothness = _Smoothness + rock * 0.06;
                 surfaceData.normalTS = float3(0, 0, 1);
-                surfaceData.occlusion = 1.0;
+                surfaceData.occlusion = occlusion;
                 surfaceData.alpha = 1.0;
 
                 half4 color = UniversalFragmentPBR(inputData, surfaceData);
