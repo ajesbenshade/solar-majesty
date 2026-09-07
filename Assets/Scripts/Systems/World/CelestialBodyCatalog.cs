@@ -210,8 +210,10 @@ namespace SolarMajesty
                 VictoryLog = "Mars holds. Belt Hauler is on the pad — trajectory into the rocks is open.",
                 FailLog = "Mars outpost overwhelmed. The red plaza is not yours until the party stands.",
                 EndlessLog = "Mars holds. Keep colonizing the red crust — rating stands, no hop.",
-                GroundLight = new Color(0.82f, 0.42f, 0.18f),
-                GroundDark = new Color(0.46f, 0.18f, 0.08f),
+                // Dream Loop pass 2: a touch more muted / pink-tan than the pure orange so the
+                // white hulls and dark stones carry the contrast, not the dirt.
+                GroundLight = new Color(0.80f, 0.43f, 0.21f),
+                GroundDark = new Color(0.48f, 0.21f, 0.10f),
                 Horizon = new Color(0.56f, 0.26f, 0.12f),
                 RockColor = new Color(0.50f, 0.24f, 0.12f),
                 CraterRim = new Color(0.64f, 0.32f, 0.14f),
@@ -222,18 +224,22 @@ namespace SolarMajesty
                 LairPit = new Color(0.10f, 0.03f, 0.02f),
                 SkyTop = new Color(0.62f, 0.36f, 0.18f),
                 SkyHorizon = new Color(0.92f, 0.58f, 0.28f),
-                SunColor = new Color(1f, 0.88f, 0.58f),
-                SunIntensity = 1.52f,
-                SunEuler = new Vector3(20f, -62f, 0f),
+                // Key from screen upper-left, shadows falling down-right at ~1.4× height
+                // (concept), instead of the 20° raking sun that threw 2.7× shadows up-left.
+                // Yaw 148 with the iso rig at yaw 45 lights the camera-facing -X faces.
+                SunColor = new Color(1f, 0.90f, 0.70f),
+                SunIntensity = 1.28f,
+                SunEuler = new Vector3(36f, 148f, 0f),
                 GradeFilter = new Color(1.00f, 0.99f, 0.97f),
                 AmbientHum = 58f,
                 FillColor = new Color(0.90f, 0.88f, 0.86f),
                 AmbientSky = new Color(0.58f, 0.52f, 0.48f),
                 AmbientEquator = new Color(0.36f, 0.30f, 0.26f),
                 AmbientGround = new Color(0.16f, 0.08f, 0.05f),
-                FogColor = new Color(0.80f, 0.46f, 0.22f),
-                FogStart = 28f,
-                FogEnd = 190f,
+                // Pale dust haze, not saturated orange — see DemoAtmosphere Mars linear fog.
+                FogColor = new Color(0.86f, 0.60f, 0.38f),
+                FogStart = 34f,
+                FogEnd = 130f,
                 AtmosphereThickness = 1.08f,
                 SkyExposure = 1.10f,
                 CraterCount = 56,
