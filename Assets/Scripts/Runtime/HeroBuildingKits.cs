@@ -30,6 +30,9 @@ namespace SolarMajesty
         private static readonly Color Glass = new Color(0.48f, 0.72f, 0.82f);
         private static readonly Color GlassEmit = new Color(0.06f, 0.22f, 0.28f);
         private static readonly Color Plant = new Color(0.22f, 0.55f, 0.24f);
+        // Fallback tan for canvas prims. The Canvas slot normally replaces this with the authored
+        // fabric tile; this is only what shows if the dressing pass never runs.
+        private static readonly Color CanvasTan = new Color(0.86f, 0.76f, 0.56f);
 
         private static Shader _lit;
 
@@ -104,21 +107,32 @@ namespace SolarMajesty
 
             // External flight down from the side door. The concept HAB is legible as a raised
             // living module because you can see how a crew reaches the hatch.
+            float stairTop = z - 0.62f;
+            const float stairFoot = 0.14f;
+            float stairNear = -radius * 1.06f - 0.16f;
+            const float stairRun = 0.90f;
             for (int i = 0; i < 4; i++)
             {
                 float t = i / 3f;
                 Prim(root, "HabStairPlinth_" + i, PrimitiveType.Cube,
                     new Vector3(0.12f,
-                                Mathf.Lerp(z - 0.62f, 0.14f, t),
-                                -radius * 1.06f - 0.16f - i * 0.30f),
+                                Mathf.Lerp(stairTop, stairFoot, t),
+                                stairNear - t * stairRun),
                     new Vector3(0.92f, 0.10f, 0.30f), Graphite);
             }
+
+            // Rails follow the flight. Pitched by eye they sat a clear half metre above the treads.
+            float rise = stairTop - stairFoot;
+            float railPitch = -Mathf.Atan2(rise, stairRun) * Mathf.Rad2Deg;
+            float railLen = Mathf.Sqrt(stairRun * stairRun + rise * rise);
             for (int s = -1; s <= 1; s += 2)
             {
-                Prim(root, "HabStairRailSteel_" + s, PrimitiveType.Cube,
-                    new Vector3(0.12f + s * 0.46f, z - 0.34f, -radius * 1.06f - 0.62f),
-                    new Vector3(0.05f, 0.05f, 1.15f), Steel,
-                    Quaternion.Euler(-26f, 0f, 0f));
+                Prim(root, "HabStairRailSteel_" + (s > 0 ? "R" : "L"), PrimitiveType.Cube,
+                    new Vector3(0.12f + s * 0.46f,
+                                (stairTop + stairFoot) * 0.5f + 0.50f,
+                                stairNear - stairRun * 0.5f),
+                    new Vector3(0.05f, 0.05f, railLen), Steel,
+                    Quaternion.Euler(railPitch, 0f, 0f));
             }
 
             Prim(root, "HabToolbox", PrimitiveType.Cube,
@@ -261,9 +275,19 @@ namespace SolarMajesty
                 Prim(root, "CommonsStoopTread_" + i, PrimitiveType.Cube,
                     dir * (radius * 1.52f) + new Vector3(0f, 0.08f, 0f),
                     new Vector3(0.86f, 0.14f, 0.34f), Graphite, yaw);
-                Prim(root, "CommonsRailSteel_" + i, PrimitiveType.Cube,
-                    dir * (radius * 1.30f) + new Vector3(0f, 0.62f, 0f),
-                    new Vector3(1.05f, 0.05f, 0.05f), Steel, yaw);
+
+                // Posts under the top bar. On its own the bar read as a stick floating beside
+                // the stoop.
+                for (int s = -1; s <= 1; s += 2)
+                {
+                    Prim(root, "CommonsRailSteel_" + i + (s > 0 ? "R" : "L"), PrimitiveType.Cube,
+                        dir * (radius * 1.30f) + yaw * new Vector3(s * 0.46f, 0f, 0f)
+                            + new Vector3(0f, 0.44f, 0f),
+                        new Vector3(0.05f, 0.62f, 0.05f), Steel, yaw);
+                }
+                Prim(root, "CommonsRailSteel_" + i + "Top", PrimitiveType.Cube,
+                    dir * (radius * 1.30f) + new Vector3(0f, 0.73f, 0f),
+                    new Vector3(0.97f, 0.05f, 0.05f), Steel, yaw);
             }
 
             // Cardinal hull ports (CommonsPort_N/E/S/W). Live groups start off.
@@ -468,7 +492,7 @@ namespace SolarMajesty
                 new Vector3(w * 0.52f, 0.12f, d * 0.24f), Graphite);
             Prim(root, "IceCanvasShade", PrimitiveType.Cube,
                 new Vector3(-w * 0.08f, 1.26f, pz),
-                new Vector3(w * 0.56f, 0.05f, d * 0.30f), Concrete,
+                new Vector3(w * 0.56f, 0.05f, d * 0.30f), CanvasTan,
                 Quaternion.Euler(-9f, 0f, 0f));
             Prim(root, "IceRidgeBand", PrimitiveType.Cube,
                 new Vector3(-w * 0.08f, 1.34f, pz - d * 0.13f),
@@ -891,7 +915,7 @@ namespace SolarMajesty
             // material. "Canvas" in the name is what maps it onto the authored fabric tile.
             Prim(root, "InnCanvasShade", PrimitiveType.Cube,
                 new Vector3(0f, 1.62f, d * 0.40f),
-                new Vector3(w * 0.50f, 0.05f, d * 0.24f), Concrete,
+                new Vector3(w * 0.50f, 0.05f, d * 0.24f), CanvasTan,
                 Quaternion.Euler(-11f, 0f, 0f));
             Prim(root, "InnPorchRidgeBand", PrimitiveType.Cube,
                 new Vector3(0f, 1.72f, d * 0.29f),

@@ -135,10 +135,11 @@ namespace SolarMajesty.Tests
             Assert.AreEqual("Orange", IndustrialArtDressing.SlotNameFor("CommonsSkirtStripe"));
             Assert.AreEqual("BlackCarbon", IndustrialArtDressing.SlotNameFor("CommonsDoorBand_0"));
             Assert.AreEqual("Graphite", IndustrialArtDressing.SlotNameFor("CommonsStoopPlinth_0"));
-            Assert.AreEqual("Steel", IndustrialArtDressing.SlotNameFor("CommonsRailSteel_0"));
+            Assert.AreEqual("Steel", IndustrialArtDressing.SlotNameFor("CommonsRailSteel_0L"));
+            Assert.AreEqual("Steel", IndustrialArtDressing.SlotNameFor("CommonsRailSteel_0Top"));
 
             Assert.AreEqual("Graphite", IndustrialArtDressing.SlotNameFor("HabStairPlinth_0"));
-            Assert.AreEqual("Steel", IndustrialArtDressing.SlotNameFor("HabStairRailSteel_1"));
+            Assert.AreEqual("Steel", IndustrialArtDressing.SlotNameFor("HabStairRailSteel_R"));
             Assert.AreEqual("Steel", IndustrialArtDressing.SlotNameFor("PwrMastSteel"));
             Assert.AreEqual("Steel", IndustrialArtDressing.SlotNameFor("PwrMastAntenna"));
         }
