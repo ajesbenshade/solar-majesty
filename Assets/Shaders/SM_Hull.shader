@@ -25,6 +25,11 @@ Shader "SolarMajesty/Hull"
         _WearAmount("Wear Amount", Range(0,1)) = 0.18
         _WearScale("Wear Scale", Range(0.5, 20)) = 5.0
 
+        [Header(Authored Surface Grit)]
+        [NoScaleOffset] _DetailAlbedo("Detail Albedo", 2D) = "white" {}
+        _DetailTexScale("Detail Tex Scale (m)", Range(0.1, 8)) = 1.2
+        _DetailTexAmount("Detail Tex Amount", Range(0,1)) = 0
+
         [Header(Dust)]
         _DustColor("Dust Color", Color) = (0.55, 0.34, 0.20, 1)
         _DustAmount("Dust Amount", Range(0,1)) = 0.25
@@ -60,6 +65,9 @@ Shader "SolarMajesty/Hull"
             float4 _WearColor;
             float  _WearAmount;
             float  _WearScale;
+            float4 _DetailAlbedo_ST;
+            float  _DetailTexScale;
+            float  _DetailTexAmount;
             float4 _DustColor;
             float  _DustAmount;
             float  _DustSharpness;
@@ -67,6 +75,9 @@ Shader "SolarMajesty/Hull"
             float  _EmissionBandCenter;
             float  _EmissionBandWidth;
         CBUFFER_END
+
+        TEXTURE2D(_DetailAlbedo);
+        SAMPLER(sampler_DetailAlbedo);
 
         // Cheap value noise. Enough to break up flat panels; not trying to be a texture.
         float SM_Hash(float3 p)
@@ -120,6 +131,17 @@ Shader "SolarMajesty/Hull"
             float w = max(_PanelWidth, 1e-4);
             groove = 1.0 - smoothstep(0.0, w, seam);
             bevel = smoothstep(w, w * 2.6, seam) * (1.0 - smoothstep(w * 2.6, w * 5.0, seam));
+        }
+
+        float3 SM_TriplanarDetail(float3 p, float3 n)
+        {
+            float3 blend = pow(abs(n), 4.0);
+            blend /= max(blend.x + blend.y + blend.z, 1e-4);
+            float scale = max(_DetailTexScale, 0.05);
+            float3 x = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, p.zy / scale).rgb;
+            float3 y = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, p.xz / scale).rgb;
+            float3 z = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, p.xy / scale).rgb;
+            return x * blend.x + y * blend.y + z * blend.z;
         }
         ENDHLSL
 
@@ -189,6 +211,17 @@ Shader "SolarMajesty/Hull"
                 float3 positionWS = input.positionWS;
 
                 float3 albedo = _BaseColor.rgb;
+
+                // Authored maps supply fabric/brush/grit without replacing the locked hull colors.
+                // Normalize around luminance 1 so detail does not turn white hulls grey or orange.
+                if (_DetailTexAmount > 0.001)
+                {
+                    float3 detail = SM_TriplanarDetail(positionWS, normalWS);
+                    float lum = max(dot(detail, float3(0.2126, 0.7152, 0.0722)), 0.08);
+                    float3 normalizedDetail = clamp(detail / lum, 0.65, 1.35);
+                    float micro = clamp(lum * 2.0, 0.72, 1.24);
+                    albedo *= lerp(1.0, normalizedDetail * micro, saturate(_DetailTexAmount));
+                }
 
                 // Panel seams: darken the groove, lift the bevel lip beside it.
                 float groove, bevel;

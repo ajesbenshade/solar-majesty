@@ -181,7 +181,11 @@ Shader "SolarMajesty/PlanetGround"
                 {
                     float2 detailUV = p / max(_DetailTexScale, 0.25);
                     half3 detailAlb = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, detailUV).rgb;
-                    albedo *= lerp(1.0, detailAlb, amount);
+                    // Preserve the body palette: the authored tile contributes relief/mottle,
+                    // not a second orange multiply that crushes the green/blue channels.
+                    float detailLum = dot(detailAlb, float3(0.2126, 0.7152, 0.0722));
+                    float detailRelief = clamp(detailLum * 2.15, 0.68, 1.28);
+                    albedo *= lerp(1.0, detailRelief, amount);
                     half4 nS = SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, detailUV);
                     float3 nTS = UnpackNormal(nS);
                     normalWS = normalize(normalWS + float3(nTS.x, 0.0, nTS.y) * (amount * 0.65));

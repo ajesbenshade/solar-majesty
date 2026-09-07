@@ -235,7 +235,8 @@ namespace SolarMajesty
             if (ContainsAny(n, "visor", "eyel", "eyer", "eye")) { slot = Slot.Cyan; return true; }
             if (ContainsAny(n, "beacon", "stripe", "hatch", "hazard", "accent")) { slot = Slot.Orange; return true; }
             if (ContainsAny(n, "band", "skid", "tread", "boot", "spine", "ridge", "leg")) { slot = Slot.BlackCarbon; return true; }
-            if (ContainsAny(n, "toolbox", "pack", "vent", "plinth", "bogie")) { slot = Slot.Graphite; return true; }
+            if (ContainsAny(n, "toolbox", "pack", "vent", "plinth", "bogie", "brace", "step"))
+            { slot = Slot.Graphite; return true; }
             if (ContainsAny(n, "shield", "plating", "face")) { slot = Slot.DefenseRed; return true; }
             if (ContainsAny(n, "steel", "antenna")) { slot = Slot.Steel; return true; }
             if (ContainsAny(n, "glass")) { slot = Slot.Glass; return true; }
@@ -320,6 +321,9 @@ namespace SolarMajesty
             float panelScale;
             float dust = _dustAmount;
             Color emission = Color.black;
+            Texture2D surfaceDetail = null;
+            float surfaceDetailScale = 1.2f;
+            float surfaceDetailAmount = 0f;
 
             switch (slot)
             {
@@ -331,10 +335,16 @@ namespace SolarMajesty
                 case Slot.Graphite:
                     baseColor = new Color(0.26f, 0.27f, 0.29f);
                     metallic = 0.48f; smooth = 0.34f; panelScale = 0.75f;
+                    surfaceDetail = _dustyMetalAlbedo;
+                    surfaceDetailScale = 0.85f;
+                    surfaceDetailAmount = 0.18f;
                     break;
                 case Slot.Steel:
                     baseColor = new Color(0.54f, 0.56f, 0.59f);
                     metallic = 0.74f; smooth = 0.56f; panelScale = 0.6f;
+                    surfaceDetail = _steelAlbedo;
+                    surfaceDetailScale = 0.65f;
+                    surfaceDetailAmount = 0.22f;
                     break;
                 case Slot.Orange:
                     baseColor = new Color(0.92f, 0.42f, 0.08f);
@@ -345,10 +355,16 @@ namespace SolarMajesty
                 case Slot.DefenseRed:
                     baseColor = new Color(0.66f, 0.15f, 0.13f);
                     metallic = 0.12f; smooth = 0.38f; panelScale = 0.7f;
+                    surfaceDetail = _dustyMetalAlbedo;
+                    surfaceDetailScale = 0.9f;
+                    surfaceDetailAmount = 0.12f;
                     break;
                 default: // WhiteHull
                     baseColor = new Color(0.98f, 0.98f, 0.97f);
                     metallic = 0.07f; smooth = 0.40f; panelScale = 1.0f;
+                    surfaceDetail = _whiteAlbedo;
+                    surfaceDetailScale = 1.25f;
+                    surfaceDetailAmount = 0.16f;
                     break;
             }
 
@@ -362,6 +378,12 @@ namespace SolarMajesty
             mat.SetColor("_WearColor", new Color(0.30f, 0.29f, 0.28f));
             mat.SetFloat("_WearAmount", slot == Slot.Steel ? 0.26f : 0.16f);
             mat.SetFloat("_WearScale", 5.5f);
+            if (surfaceDetail != null && mat.HasProperty("_DetailAlbedo"))
+            {
+                mat.SetTexture("_DetailAlbedo", surfaceDetail);
+                mat.SetFloat("_DetailTexScale", surfaceDetailScale);
+                mat.SetFloat("_DetailTexAmount", surfaceDetailAmount);
+            }
             mat.SetColor("_DustColor", _dustColor);
             mat.SetFloat("_DustAmount", dust);
             mat.SetFloat("_DustSharpness", 3.6f);

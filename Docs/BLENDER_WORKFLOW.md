@@ -126,7 +126,10 @@ Importable tiles (bake, no Imagine):
 python Blender/scripts/sm_bake_look_materials.py
 ```
 
-Writes `Assets/Resources/Art/Materials/SM_Mat_{WhiteHull,Steel,Solar,Canvas,DustyMetal}_*`. `IndustrialArtDressing` prefers these over the 256px procedural tiles. Name Blender slots `SM_Canvas` / `SM_DustyMetal` so the remap hits.
+Writes `Assets/Resources/Art/Materials/SM_Mat_{WhiteHull,Steel,Solar,Canvas,DustyMetal,MarsRock}_*`.
+`IndustrialArtDressing` prefers these over the 256px procedural tiles; environment rocks
+use the MarsRock pair. Name Blender slots `SM_Canvas` / `SM_DustyMetal` / `SM_Rock`
+so the remap hits.
 
 ---
 

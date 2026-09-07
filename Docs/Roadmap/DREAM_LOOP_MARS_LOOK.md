@@ -1,14 +1,16 @@
 # Dream Loop — Spaced Mars look target
 
-**Status:** first look pass. **Not a Phase 4 EXIT.** Do not stamp exit. Do not start Phase 5.
+**Status:** Dream Loop round 2. **Not a Phase 4 EXIT.** Do not stamp exit. Do not start Phase 5.
 
 Working files (retries, judge notes) live in `.dream-loop/` and are gitignored. Reuse the skill at [`.cursor/skills/dream-loop/SKILL.md`](../../.cursor/skills/dream-loop/SKILL.md) ([achimala/dream-loop](https://github.com/achimala/dream-loop), MIT).
 
-## Concept (north star for this pass)
+## LOCKED concept (north star — do not regenerate)
 
 [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — in-engine-style isometric overseer still.
 
-Judge stills against **this** image, not the retired packed `SM_MarsCampaign_VisualTarget.png`.
+Aaron approved this exact image. Judge every future still against **this** file. Do **not**
+regenerate, replace, overwrite, or derive a new north star from `SM_Capture.png`.
+`SM_MarsCampaign_VisualTarget.png` remains retired.
 
 ### What the concept is
 
@@ -24,6 +26,35 @@ Judge stills against **this** image, not the retired packed `SM_MarsCampaign_Vis
 - Do **not** fill interior 4×4 sockets to chase density
 - Do **not** zoom the still camera inside play ortho 10 to crop out empty ground
 - Do **not** treat leftover Inn / wonder / extra HAB as a density gate
+
+---
+
+## Round 2 — live Capture → locked concept
+
+Input: Aaron's 2026-09-07 Game-tab `SM_Capture.png` (HUD on). The spaced layout /
+empty dirt is already acceptable; density is not the gap.
+
+Observed gaps:
+
+- Ground reads as a flat saturated red field; concept has dusty mottle, grit, and relief
+- Live frame has little aerial separation; concept has warm thin haze and softer distance
+- Rocks are tiny / edge-only; concept has sparse but readable angular boulders
+- Inn reads as another dark roof; concept has a broad tan canvas awning
+- Commons / HAB surfaces need stronger silhouette cues (geodesic braces, access stair,
+  weathered panel / brushed-metal response)
+- Live highlights clip pale cyan-white while shadows fall near black
+
+Round-2 changes:
+
+- `SM_Hull` now accepts world-space authored surface grit while preserving locked hull colors
+- `PlanetGround` uses authored albedo as luminance relief, avoiding a second orange multiply
+- Mars grade lowers clipping/contrast/bloom and increases distant exponential haze
+- Sparse Mars vista rocks are larger; imported rock materials retain texture/normal detail
+- `SM_Mat_MarsRock_*` tiles join the importable look kit
+- Inn gets a visible tan `SM_Canvas` awning; HAB gets an exterior stair; Commons gets
+  alternating geodesic braces
+
+Cloud has no Unity Editor, so these changes are **not scored**. GD must reshoot after pull.
 
 ---
 
@@ -58,7 +89,7 @@ This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not 
 
 ```bash
 python Blender/scripts/sm_bake_ground_textures.py          # skips existing authored tiles
-python Blender/scripts/sm_bake_look_materials.py          # hull / steel / solar / canvas
+python Blender/scripts/sm_bake_look_materials.py          # hull / steel / solar / canvas / rock
 # python Blender/scripts/sm_bake_ground_textures.py --force  # only if replacing Imagine tiles
 ```
 

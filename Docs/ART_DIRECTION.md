@@ -10,6 +10,10 @@
 
 In-engine stills are judged against [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png) — an isometric overseer campus with **breathing room**. Capture protocol, bake commands, and “what NOT to do” live in [`Docs/Roadmap/DREAM_LOOP_MARS_LOOK.md`](Roadmap/DREAM_LOOP_MARS_LOOK.md). Skill copy: [`.cursor/skills/dream-loop/SKILL.md`](../.cursor/skills/dream-loop/SKILL.md).
 
+**Aaron locked this exact PNG on 2026-09-07. Do not regenerate, replace, or overwrite it.**
+New Dream Loop rounds improve the live Unity still toward that image; they do not create a
+new concept from `SM_Capture.png`.
+
 Phase 4 keyword extensions (append, do not replace the lock):
 
 > reddish Mars regolith and hazy orange sky, long low-angle shadows, white/black/orange industrial SpaceX-adjacent campus, pressurized corridor tubes linking habs, large central white command dome with orange trim, blue-glow solar arrays, circular landing pad with white Starship-like rocket, spacious campus pads, negative space, overseer strategy view

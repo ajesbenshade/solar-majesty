@@ -73,7 +73,7 @@ namespace SolarMajesty
             if (fill == null) fill = go.AddComponent<Light>();
             fill.type = LightType.Directional;
             fill.color = body.FillColor;
-            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.50f
+            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.40f
                 : body.Id == CelestialBodyId.Earth ? 0.34f : 0.28f;
             fill.shadows = LightShadows.None;
         }
@@ -107,7 +107,8 @@ namespace SolarMajesty
         private static float FogDensityFor(CelestialBodyProfile body)
         {
             float horizon = Mathf.Max(60f, body.FogEnd);
-            return Mathf.Clamp(0.9f / horizon, 0.0015f, 0.02f);
+            float reach = body.Id == CelestialBodyId.Mars ? 1.18f : 0.9f;
+            return Mathf.Clamp(reach / horizon, 0.0015f, 0.02f);
         }
 
         private static void ConfigureCamera(Camera cam, CelestialBodyProfile body)
@@ -167,9 +168,24 @@ namespace SolarMajesty
             }
             else if (body.Id == CelestialBodyId.Mars)
             {
-                color.contrast.Override(11f);
-                color.saturation.Override(4f);
-                color.postExposure.Override(0.22f);
+                // Locked concept is dusty and filmic, not the Capture's clipped white/cyan
+                // highlights against near-black shadows.
+                color.contrast.Override(6f);
+                color.saturation.Override(-2f);
+                color.postExposure.Override(0.04f);
+
+                if (!profile.TryGet(out Bloom bloom))
+                    bloom = profile.Add<Bloom>(true);
+                bloom.active = true;
+                bloom.threshold.Override(1.15f);
+                bloom.intensity.Override(0.10f);
+                bloom.scatter.Override(0.46f);
+
+                if (!profile.TryGet(out Vignette vignette))
+                    vignette = profile.Add<Vignette>(true);
+                vignette.active = true;
+                vignette.intensity.Override(0.14f);
+                vignette.smoothness.Override(0.34f);
             }
             else
             {

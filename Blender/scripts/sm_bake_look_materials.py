@@ -1,5 +1,5 @@
 """
-Bake seamless PBR look tiles for Solar Majesty hull / steel / solar / canvas / dusty metal.
+Bake seamless PBR look tiles for Solar Majesty hull / steel / solar / canvas / dusty metal / rock.
 
 Run from repo root:
   python Blender/scripts/sm_bake_look_materials.py
@@ -112,6 +112,29 @@ def canvas(u: float, v: float) -> tuple[float, float, float]:
     return (r, g, b)
 
 
+def mars_rock(u: float, v: float) -> tuple[float, float, float]:
+    coarse = fbm(u * 6.5 + 4.0, v * 6.5 + 9.0, 5)
+    a = value_noise(u * 32.0 + v * 3.0, v * 30.0)
+    b = value_noise(u * 29.0 + 7.0, v * 34.0 + u * 2.0 + 9.0)
+    fracture = abs(a - b)
+    mineral = fbm(u * 16.0, v * 16.0 + 5.0, 4)
+    # Neutral relief: runtime body tint supplies Mars rust / Luna grey / Europa ice.
+    value = lerp(0.62, 0.96, coarse * 0.72 + mineral * 0.28)
+    r = value
+    g = value * 0.99
+    b = value * 0.97
+    if fracture < 0.035:
+        r *= 0.52
+        g *= 0.51
+        b *= 0.50
+    grit = _hash2(int(u * 512) & 511, int(v * 512) & 511)
+    if grit > 0.975:
+        r = lerp(r, 1.0, 0.18)
+        g = lerp(g, 0.98, 0.16)
+        b = lerp(b, 0.94, 0.14)
+    return (r, g, b)
+
+
 def make_albedo(fn, size: int) -> list[tuple[float, float, float]]:
     pixels = []
     for y in range(size):
@@ -128,6 +151,7 @@ def main():
         ("SM_Mat_DustyMetal_Albedo.png", dusty_metal, False),
         ("SM_Mat_Solar_Albedo.png", solar, False),
         ("SM_Mat_Canvas_Albedo.png", canvas, False),
+        ("SM_Mat_MarsRock_Albedo.png", mars_rock, False),
     ]
     albedos = {}
     for name, fn, _ in jobs:
@@ -141,6 +165,7 @@ def main():
         ("SM_Mat_WhiteHull_Normal.png", "SM_Mat_WhiteHull_Albedo.png", 3.2),
         ("SM_Mat_Steel_Normal.png", "SM_Mat_Steel_Albedo.png", 2.8),
         ("SM_Mat_Canvas_Normal.png", "SM_Mat_Canvas_Albedo.png", 2.2),
+        ("SM_Mat_MarsRock_Normal.png", "SM_Mat_MarsRock_Albedo.png", 4.2),
     ]
     for name, src, strength in normals:
         n = make_normal(albedos[src], LOOK_SIZE, strength=strength)

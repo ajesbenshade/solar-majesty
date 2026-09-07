@@ -23,6 +23,7 @@ namespace SolarMajesty
         private static readonly Color Ice = new Color(0.52f, 0.76f, 0.86f);
         private static readonly Color IceEmit = new Color(0.12f, 0.55f, 0.95f);
         private static readonly Color Dust = new Color(0.52f, 0.36f, 0.22f);
+        private static readonly Color Canvas = new Color(0.82f, 0.70f, 0.48f);
         private static readonly Color SolarCell = new Color(0.07f, 0.14f, 0.36f);
         private static readonly Color SolarEmit = new Color(0.22f, 0.72f, 2.15f);
         private static readonly Color Glass = new Color(0.48f, 0.72f, 0.82f);
@@ -99,6 +100,14 @@ namespace SolarMajesty
             Prim(root, "HabSideDoor", PrimitiveType.Cube,
                 new Vector3(0.12f, z, -radius * 0.96f),
                 new Vector3(0.85f, 1.15f, 0.12f), Orange);
+            // Concept silhouette: obvious external stair at the side access, readable from iso.
+            for (int i = 0; i < 4; i++)
+            {
+                float stepHeight = 1.36f - i * 0.28f;
+                Prim(root, "HabAccessStep_" + i, PrimitiveType.Cube,
+                    new Vector3(0.12f, stepHeight * 0.5f, -radius * (1.08f + i * 0.15f)),
+                    new Vector3(1.20f, stepHeight, 0.42f), Graphite);
+            }
             Prim(root, "HabToolbox", PrimitiveType.Cube,
                 new Vector3(-0.85f, z + radius * 0.82f, 0.05f),
                 new Vector3(1.05f, 0.38f, 0.62f), Graphite);
@@ -244,6 +253,12 @@ namespace SolarMajesty
                 Prim(root, "CommonsMeridianHi_" + i, PrimitiveType.Cube,
                     dir * (radius * 1.012f) + new Vector3(0f, 1.62f, 0f),
                     new Vector3(0.032f, 0.28f, 0.032f), Carbon, yaw);
+
+                // Alternating diagonal braces give the Commons the concept's geodesic read.
+                Quaternion diagonal = Quaternion.Euler(i % 2 == 0 ? 52f : -52f, i * 45f, 0f);
+                Prim(root, "CommonsGeoBrace_" + i, PrimitiveType.Cube,
+                    dir * (radius * 0.78f) + new Vector3(0f, 2.32f, 0f),
+                    new Vector3(0.036f, radius * 0.56f, 0.036f), Graphite, diagonal);
             }
         }
 
@@ -736,9 +751,19 @@ namespace SolarMajesty
             Prim(root, "InnBeacon", PrimitiveType.Sphere,
                 new Vector3(0f, 2.72f, -d * 0.04f),
                 new Vector3(0.20f, 0.20f, 0.20f), Cyan, CyanEmit);
-            Prim(root, "InnCanopy", PrimitiveType.Cube,
-                new Vector3(0f, 1.55f, d * 0.38f),
-                new Vector3(w * 0.42f, 0.06f, d * 0.18f), Carbon);
+            // Locked concept: a broad tan canvas awning, not another black roof slab.
+            Prim(root, "InnCanvasAwning", PrimitiveType.Cube,
+                new Vector3(0f, 1.58f, d * 0.41f),
+                new Vector3(w * 0.54f, 0.055f, d * 0.26f), Canvas,
+                Quaternion.Euler(8f, 0f, 0f));
+            Prim(root, "InnCanvasAwningSeam_L", PrimitiveType.Cube,
+                new Vector3(-w * 0.18f, 1.59f, d * 0.41f),
+                new Vector3(0.035f, 0.065f, d * 0.26f), Graphite,
+                Quaternion.Euler(8f, 0f, 0f));
+            Prim(root, "InnCanvasAwningSeam_R", PrimitiveType.Cube,
+                new Vector3(w * 0.18f, 1.59f, d * 0.41f),
+                new Vector3(0.035f, 0.065f, d * 0.26f), Graphite,
+                Quaternion.Euler(8f, 0f, 0f));
             Prim(root, "InnLanternPost_L", PrimitiveType.Cylinder,
                 new Vector3(-w * 0.18f, 1.05f, d * 0.42f),
                 new Vector3(0.08f, 0.85f, 0.08f), Steel);
@@ -1454,7 +1479,12 @@ namespace SolarMajesty
             go.transform.localPosition = localPos;
             go.transform.localRotation = localRot;
             go.transform.localScale = localScale;
-            Object.Destroy(go.GetComponent<Collider>());
+            var collider = go.GetComponent<Collider>();
+            if (collider != null)
+            {
+                if (Application.isPlaying) Object.Destroy(collider);
+                else Object.DestroyImmediate(collider);
+            }
             Tint(go, color, emission);
         }
 
@@ -1485,7 +1515,11 @@ namespace SolarMajesty
             var cols = root.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < cols.Length; i++)
             {
-                if (cols[i] != null) Object.Destroy(cols[i]);
+                if (cols[i] != null)
+                {
+                    if (Application.isPlaying) Object.Destroy(cols[i]);
+                    else Object.DestroyImmediate(cols[i]);
+                }
             }
         }
 

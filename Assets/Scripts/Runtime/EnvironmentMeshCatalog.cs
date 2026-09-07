@@ -31,6 +31,8 @@ namespace SolarMajesty
         public const string CanvasAlbedoPath = "Art/Materials/SM_Mat_Canvas_Albedo";
         public const string CanvasNormalPath = "Art/Materials/SM_Mat_Canvas_Normal";
         public const string DustyMetalAlbedoPath = "Art/Materials/SM_Mat_DustyMetal_Albedo";
+        public const string MarsRockAlbedoPath = "Art/Materials/SM_Mat_MarsRock_Albedo";
+        public const string MarsRockNormalPath = "Art/Materials/SM_Mat_MarsRock_Normal";
 
         /// <summary>Authored tree height in meters (Blender / Copilot export target).</summary>
         public const float TreeNativeHeight = 2.4f;
@@ -136,9 +138,29 @@ namespace SolarMajesty
         private static Material MakeEnvMat(Shader lit, string name, Color c)
         {
             var mat = new Material(lit) { name = "SM_Env_" + (string.IsNullOrEmpty(name) ? "Prop" : name) };
+            string token = (name ?? "").ToLowerInvariant();
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             else if (mat.HasProperty("_Color")) mat.color = c;
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.18f);
+            if (token.Contains("rock") || token.Contains("boulder") || token.Contains("crater"))
+            {
+                var albedo = Resources.Load<Texture2D>(MarsRockAlbedoPath);
+                var normal = Resources.Load<Texture2D>(MarsRockNormalPath);
+                if (albedo != null && mat.HasProperty("_BaseMap"))
+                {
+                    albedo.wrapMode = TextureWrapMode.Repeat;
+                    mat.SetTexture("_BaseMap", albedo);
+                    mat.SetTextureScale("_BaseMap", new Vector2(2.2f, 2.2f));
+                }
+                if (normal != null && mat.HasProperty("_BumpMap"))
+                {
+                    normal.wrapMode = TextureWrapMode.Repeat;
+                    mat.SetTexture("_BumpMap", normal);
+                    mat.SetTextureScale("_BumpMap", new Vector2(2.2f, 2.2f));
+                    mat.EnableKeyword("_NORMALMAP");
+                }
+            }
+            if (mat.HasProperty("_Smoothness"))
+                mat.SetFloat("_Smoothness", token.Contains("rock") || token.Contains("boulder") ? 0.10f : 0.18f);
             if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
             return mat;
         }

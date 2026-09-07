@@ -523,12 +523,14 @@ namespace SolarMajesty
             var root = new GameObject("MarsVistaRoot").transform;
             if (parent != null) root.SetParent(parent, false);
 
+            // Curated sparse ring: enough rock silhouettes to make the negative space feel
+            // authored, never enough to turn the campus into packed clutter.
             for (int i = 0; i < 24; i++)
             {
                 float ang = i * 1.618f * Mathf.PI;
-                float rad = 7.4f + (i % 5) * 1.65f;
+                float rad = 8.6f + (i % 5) * 1.55f;
                 Vector3 at = campus + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
-                SpawnVistaBoulder(root, at, body, i, 0.48f + (i % 4) * 0.16f);
+                SpawnVistaBoulder(root, at, body, i, 0.62f + (i % 4) * 0.18f);
             }
 
             Vector3[] outcrops =
@@ -542,9 +544,9 @@ namespace SolarMajesty
             };
             for (int i = 0; i < outcrops.Length; i++)
             {
-                SpawnVistaBoulder(root, outcrops[i], body, i + 40, 1.15f + (i % 3) * 0.22f);
-                SpawnVistaBoulder(root, outcrops[i] + new Vector3(0.85f, 0f, -0.55f), body, i + 60, 0.62f);
-                SpawnVistaBoulder(root, outcrops[i] + new Vector3(-0.7f, 0f, 0.7f), body, i + 80, 0.48f);
+                SpawnVistaBoulder(root, outcrops[i], body, i + 40, 1.42f + (i % 3) * 0.24f);
+                SpawnVistaBoulder(root, outcrops[i] + new Vector3(0.95f, 0f, -0.65f), body, i + 60, 0.78f);
+                SpawnVistaBoulder(root, outcrops[i] + new Vector3(-0.82f, 0f, 0.78f), body, i + 80, 0.60f);
             }
 
             SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
@@ -567,7 +569,7 @@ namespace SolarMajesty
                 ColonyVisualUtility.SetYawKeepingImport(mesh.transform, importRot, salt * 37f);
                 ColonyVisualUtility.SeatFlatOnGround(mesh);
                 Color c = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
-                PlanetaryWorldGen.Tint(mesh, c, 0.08f, ShadowCastingMode.On);
+                TintPreservingMaterial(mesh, c, 0.10f, ShadowCastingMode.On);
                 ColonyVisualUtility.SnapToGround(mesh);
                 return;
             }
@@ -585,6 +587,27 @@ namespace SolarMajesty
             Color tint = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
             PlanetaryWorldGen.Tint(go, tint, 0.08f, ShadowCastingMode.On);
             ColonyVisualUtility.SnapToGround(go);
+        }
+
+        private static void TintPreservingMaterial(
+            GameObject root, Color tint, float smoothness, ShadowCastingMode shadows)
+        {
+            if (root == null) return;
+            var renderers = root.GetComponentsInChildren<Renderer>(true);
+            var block = new MaterialPropertyBlock();
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                var rend = renderers[i];
+                if (rend == null) continue;
+                rend.GetPropertyBlock(block);
+                block.SetColor("_BaseColor", tint);
+                block.SetColor("_Color", tint);
+                block.SetFloat("_Smoothness", smoothness);
+                rend.SetPropertyBlock(block);
+                rend.shadowCastingMode = shadows;
+                rend.receiveShadows = true;
+                block.Clear();
+            }
         }
 
         private static void SpawnVistaCrater(Transform parent, Vector3 world, CelestialBodyProfile body)
