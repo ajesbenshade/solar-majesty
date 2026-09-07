@@ -197,8 +197,10 @@ namespace SolarMajesty
             var seen = new HashSet<long>();
             for (int i = 0; i < pieces.Count; i++)
             {
+                if (!IsPressurized(pieces[i].Category)) continue;
                 for (int j = i + 1; j < pieces.Count; j++)
                 {
+                    if (!IsPressurized(pieces[j].Category)) continue;
                     if (StillCampusDensity.AreAirlockLinked(placer, pieces[i], pieces[j]))
                         continue;
                     if (!StillCampusDensity.TryCardinalNeighbor(
@@ -219,6 +221,19 @@ namespace SolarMajesty
             }
             return runs;
         }
+
+        /// <summary>
+        /// Only crewed, pressurized modules get corridor runs. The Capture showed a fat white
+        /// tube from Commons to the landing pad — the concept keeps pad / solar / extractor /
+        /// workshop free-standing in the dirt and links only dome, HAB and airlock.
+        /// </summary>
+        public static bool IsPressurized(BuildingCategory cat) =>
+            cat == BuildingCategory.Commons ||
+            cat == BuildingCategory.Habitat ||
+            cat == BuildingCategory.Laboratory ||
+            cat == BuildingCategory.GuildHall ||
+            cat == BuildingCategory.Inn ||
+            BuildingPlacer.IsAirlock(cat);
 
         private static long TubePairKey(int a, int b) =>
             a < b ? ((long)a << 32) ^ (uint)b : ((long)b << 32) ^ (uint)a;
@@ -548,27 +563,37 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Coverage cue for Commons / Defense. Was a glossy translucent sphere: in the Capture
+        /// it caught the key as a huge pale-cyan disc that dominated the foreground and has
+        /// no counterpart in the concept. Now a faint matte ground ring at the same radius —
+        /// still tells the player where the shield reaches, reads as a survey mark, not a dome.
+        /// </summary>
         private static void SpawnShieldBubble(Transform root, bool commons)
         {
-            var bubble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            bubble.name = "Dress_Shield";
-            bubble.transform.SetParent(root, false);
-            bubble.transform.localPosition = new Vector3(0f, commons ? 2.4f : 1.6f, 0f);
-            bubble.transform.localScale = commons
-                ? new Vector3(8.6f, 5.2f, 8.6f)
-                : new Vector3(5.4f, 3.2f, 5.4f);
-            Object.Destroy(bubble.GetComponent<Collider>());
-            var rend = bubble.GetComponent<Renderer>();
+            float dia = commons ? 8.6f : 5.4f;
+            var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            ring.name = "Dress_Shield";
+            ring.transform.SetParent(root, false);
+            ring.transform.localPosition = new Vector3(0f, 0.045f, 0f);
+            ring.transform.localScale = new Vector3(dia, 0.006f, dia);
+            Object.Destroy(ring.GetComponent<Collider>());
+            var rend = ring.GetComponent<Renderer>();
             if (rend == null) return;
             var mat = NewLit("SM_DressShield");
-            var c = new Color(0.35f, 0.72f, 1f, 0.16f);
+            var c = new Color(0.35f, 0.72f, 1f, 0.10f);
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             if (mat.HasProperty("_Color")) mat.color = c;
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.82f);
-            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.05f);
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0f);
+            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
+            if (mat.HasProperty("_SpecularHighlights")) mat.SetFloat("_SpecularHighlights", 0f);
+            mat.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+            if (mat.HasProperty("_EnvironmentReflections")) mat.SetFloat("_EnvironmentReflections", 0f);
+            mat.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
             ColonyVisualUtility.ApplyTransparent(mat);
             rend.sharedMaterial = mat;
             rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            rend.receiveShadows = false;
         }
 
         /// <summary>Yard diameter as a multiple of the footprint span (Mars).</summary>
@@ -687,7 +712,8 @@ namespace SolarMajesty
             Color glow = commons
                 ? new Color(0.95f, 0.78f, 0.22f)
                 : new Color(0.28f, 0.72f, 1f);
-            Tint(pip, glow, 0.62f, glow * 1.6f);
+            // Emission trimmed: with bloom on, ×1.6 turned the pip into a white flare.
+            Tint(pip, glow, 0.62f, glow * 0.55f);
 
             var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             ring.name = "Dress_StatusRing";
@@ -696,7 +722,7 @@ namespace SolarMajesty
             ring.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             ring.transform.localScale = new Vector3(1.55f, 0.08f, 1.55f);
             Object.Destroy(ring.GetComponent<Collider>());
-            Tint(ring, glow, 0.45f, glow * 0.8f);
+            Tint(ring, glow, 0.45f, glow * 0.3f);
         }
 
         private static void SpawnCone(Vector3 world, CelestialBodyProfile body, Transform parent)

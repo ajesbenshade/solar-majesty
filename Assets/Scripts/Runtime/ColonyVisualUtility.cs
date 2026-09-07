@@ -19,7 +19,11 @@ namespace SolarMajesty
         /// White tube hits the orange collar at this Y / diameter — no step, no gap.
         /// </summary>
         public const float DockY = 1.12f;
-        public const float DockBore = 1.42f;
+        /// <summary>
+        /// Tube bore. 1.42 read as ~40 % of the HAB diameter in the Capture (concept ≈ 30 %);
+        /// every sleeve / port / collar keys off this so the whole dock graph slims together.
+        /// </summary>
+        public const float DockBore = 1.10f;
         /// <summary>Orange ring sits this far outside the hull so the tube meets it flush.</summary>
         public const float DockCollarOut = 0.03f;
 
@@ -230,7 +234,8 @@ namespace SolarMajesty
         private static readonly Color HubGraphite = new Color(0.20f, 0.21f, 0.22f);
         private static readonly Color HubCyan = new Color(0.22f, 0.84f, 0.98f);
         /// <summary>Hold sheet-white at Game-tab distance so the 2×2 does not flatten into dirt.</summary>
-        private static readonly Color HubWhiteEmit = new Color(0.34f, 0.34f, 0.36f);
+        // 0.34 bloomed the hub and tubes into a glow in the Capture; the higher key now holds white.
+        private static readonly Color HubWhiteEmit = new Color(0.14f, 0.14f, 0.15f);
         private static readonly Color HubOrangeEmit = new Color(0.55f, 0.16f, 0.02f);
 
         private static void SpawnAirlockHub(Transform parent)
