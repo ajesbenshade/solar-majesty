@@ -408,10 +408,10 @@ namespace SolarMajesty.Tests
             StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
 
             Assert.IsTrue(StillCampusDensity.TryNext(
-                placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out Vector2Int shop),
+                placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out _),
                 "workshop 4×4 still CanFit after pad+yards");
             Assert.IsTrue(StillCampusDensity.TryNext(
-                placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null, out Vector2Int wonder),
+                placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null, out _),
                 "a 6×6 wonder still CanFit near Commons");
 
             var leftovers = StillCampusDensity.PlanLeftovers(
