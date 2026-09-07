@@ -105,6 +105,7 @@ Low bounties at long range intentionally score below threshold → **ignored** (
 | `FlagDecreeIds` | Shared Earth→Luna→Mars decree string ids mapped to `FlagType` — [flag-type map](FLAG_TYPE_MAP_EARTH_LUNA_MARS.md). Title-match via `TryMatchTitle` / `TryMatchPosted`. |
 | `AdvisorToastCatalog` | 24 decree toasts + travel / complete overlays — [W2 advisor](W2_ADVISOR_AND_CHAIN_BEATS.md) |
 | `CampaignCutsceneCatalog` | Nine `cut.*` text beats — [W2 stakes](W2_CAMPAIGN_STAKES.md) |
+| Hero personality quests (docs) | Ten callsign chains on existing decrees — [W2 hero quests](W2_HERO_PERSONALITY_QUESTS.md). No `QuestManager` yet. |
 
 The player posts a flag with a bounty. Specialists discover flags only by evaluating the manager’s list. Completing work reduces `WorkRemaining`; on complete, the brain (or caller) can grant a reward via the economy.
 

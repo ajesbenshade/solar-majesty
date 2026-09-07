@@ -4,7 +4,8 @@
 **Status:** W2 draft. Copy only — not a quest graph, not a new `FlagType`, not App Store text.  
 **Ids:** Use `Docs/FLAG_TYPE_MAP_EARTH_LUNA_MARS.md` and `FlagDecreeIds`. Do not invent slugs.  
 **Art:** Phase 4 **EXIT** is still art-blocked (`Docs/Roadmap/PHASE_4_EXIT.md`). Mars lines assume the Compact campus that will be (white hulls, square docks, geodesic Commons), not the empty Sol 1 still.  
-**Campaign stakes (cutscenes):** [`W2_CAMPAIGN_STAKES.md`](W2_CAMPAIGN_STAKES.md) — prologue / hop / arrival / win-log beats these toasts sit under. Toast-on-Post still waits on title-match.
+**Campaign stakes (cutscenes):** [`W2_CAMPAIGN_STAKES.md`](W2_CAMPAIGN_STAKES.md) — prologue / hop / arrival / win-log beats these toasts sit under. Toast-on-Post still waits on title-match.  
+**Hero personality quests:** [`W2_HERO_PERSONALITY_QUESTS.md`](W2_HERO_PERSONALITY_QUESTS.md) — ten callsign chains on these decrees (no new `FlagType`). First-ship: Anvil / Horizon / Strip / Aegis.
 
 Flags stay **decrees**. The overseer posts them. Ego specialists take or ignore them. The advisor comments. COMMONS is the civic name. Belt and Europa stay off this chain except as the named next body after Mars.
 
@@ -440,5 +441,6 @@ Suggested string keys for decree rows: `advisor.{body}.{slug}.{when}` — e.g. `
 - New `FlagDecreeIds` consts (map and code already match: 8 / 8 / 8).
 - Rewriting `SpecialistFlavor` (comment-only hooks above).
 - Phase 4 exit stills or art notes beyond “write the campus that will be.”
+- Hero personality quest chains — authored in [`W2_HERO_PERSONALITY_QUESTS.md`](W2_HERO_PERSONALITY_QUESTS.md). Same eight types; no quest graph here.
 
 Lookup remains `FlagDecreeIds.TryGet("luna.clearthreat.root_the_hopper_saboteurs", out var d)`. If a future beat needs a new title, add a const **and** a row in `FLAG_TYPE_MAP_EARTH_LUNA_MARS.md` first. Do not grow the enum.

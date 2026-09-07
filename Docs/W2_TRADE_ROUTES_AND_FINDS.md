@@ -3,7 +3,8 @@
 **Audience:** Narrative (route / discovery beats), LP (toast + decree-title skins), GD (board flavor), Producer (glance: four resources, no new `FlagType`).  
 **Status:** Sketch. Copy + hook ids only — not a quest graph, not a caravan sim, not a new `FlagType`, not App Store text, not art.  
 **Ids:** Decree slugs stay [`FLAG_TYPE_MAP_EARTH_LUNA_MARS.md`](FLAG_TYPE_MAP_EARTH_LUNA_MARS.md) / `FlagDecreeIds`. Route keys (`route.*`) and find keys (`find.*`) are localization handles. Do not mint `FlagDecreeIds` until a beat needs a new title.  
-**Stakes / voice:** [`W2_CAMPAIGN_STAKES.md`](W2_CAMPAIGN_STAKES.md) · [`W2_ADVISOR_AND_CHAIN_BEATS.md`](W2_ADVISOR_AND_CHAIN_BEATS.md). Advisor stays wry court counsel. COMMONS stays COMMONS. No Majesty 2 / Paradox proper names.
+**Stakes / voice:** [`W2_CAMPAIGN_STAKES.md`](W2_CAMPAIGN_STAKES.md) · [`W2_ADVISOR_AND_CHAIN_BEATS.md`](W2_ADVISOR_AND_CHAIN_BEATS.md). Advisor stays wry court counsel. COMMONS stays COMMONS. No Majesty 2 / Paradox proper names.  
+**Hero personality quests:** [`W2_HERO_PERSONALITY_QUESTS.md`](W2_HERO_PERSONALITY_QUESTS.md) — skins `route.*` / `find.*` as chain beats (cairn, rille cache, hopper warren, dead weigh, named haul).
 
 **North-star shift (look, not EXIT):** Phase 4 is **no longer** chasing packed density from `SM_MarsCampaign_VisualTarget.png` as look north star. Campus should read **spaced**, fun, cartoon-ish overseer — room between modules for foliage, rocks, fauna, and things to find. This doc invests that space with solar trade and discovery. It does **not** unblock `PHASE_4_EXIT.md`, and it does not touch `CaptureStill` or Phase 4 stills.
 
@@ -128,3 +129,4 @@ Spine and toast docs stay the stakes / voice source. This file only owns **lanes
 - Flag map: [`FLAG_TYPE_MAP_EARTH_LUNA_MARS.md`](FLAG_TYPE_MAP_EARTH_LUNA_MARS.md)
 - Stakes: [`W2_CAMPAIGN_STAKES.md`](W2_CAMPAIGN_STAKES.md)
 - Advisor: [`W2_ADVISOR_AND_CHAIN_BEATS.md`](W2_ADVISOR_AND_CHAIN_BEATS.md)
+- Hero quests: [`W2_HERO_PERSONALITY_QUESTS.md`](W2_HERO_PERSONALITY_QUESTS.md)
