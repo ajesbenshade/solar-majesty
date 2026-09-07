@@ -1,6 +1,6 @@
 # Dream Loop — Spaced Mars look target
 
-**Status:** look pass 2. **Not a Phase 4 EXIT.** Do not stamp exit. Do not start Phase 5.
+**Status:** look pass 3, read against a real Capture from Aaron. **Not a Phase 4 EXIT.** Do not stamp exit. Do not start Phase 5.
 
 Working files (retries, judge notes, local stills) live in `.dream-loop/` and are gitignored.
 Reuse the skill at [`.cursor/skills/dream-loop/SKILL.md`](../../.cursor/skills/dream-loop/SKILL.md)
@@ -73,10 +73,54 @@ lower tier fails. **Do not invent a score without a still** — this Cloud pass 
 
 ---
 
+## Read of Aaron's Capture (pass 3 input)
+
+Aaron shot `SM_Capture.png` (1024×667, Mars · Sol 1 · CAMPAIGN, POP 2/16, tutorial "Colony Commons
+is down"). **HUD chrome passes**: five chips REG/ICE/MET/PWR/BEDS with rates, OVERSEER panel with
+the body switcher, ACTIVE BOUNTIES with the three campaign beats, FLAG LOG, MAJESTY COLONY minimap,
+BLD/FLG/TEC/CAM/PTY/MENU dock, THREAT 23%. That part of the sheet is done.
+
+The world read did not, and the causes were code faults rather than missing art:
+
+1. **The frame was a close-up, not a campus.** `FitStillOrtho` discarded the fit math it already
+   had and returned `PlayCampusOrthoSize` outright. The rule is "do not zoom **in** to pack the
+   AABB" — but pinning the ortho while the campus grows past ~20 m of frame does not preserve empty
+   dirt, it crops the campus and squeezes the dirt out. The pad and rocket fell off the left edge
+   behind the OVERSEER panel. Now the ortho fits the AABB × `StillDirtHeadroom`, floored at the play
+   ortho; the floor is what enforces the rule.
+2. **The campus was one contiguous mass.** Every candidate list in `CollectCandidates` leads with
+   gap 0, so pad, power, and both extractors butted straight onto the dome. Free-standing yards now
+   try a spaced ring first (`TryNextSpaced`, `SpacedYardGapCells`). HAB chains still dock flush —
+   those are tube-linked.
+3. **Orange glowed.** Safety orange carried an emissive in *both* material paths (1.4 HDR red on
+   the lit path) and on every dock collar, so each tube joint read as a hot ring where the concept
+   has thin matte trim. Orange is paint now; collars are slimmer.
+4. **A blown-out white dome sat over the campus.** The shield bubble at alpha 0.16 with 0.82
+   smoothness caught a broad specular sheet that clipped to solid white — the brightest thing in
+   frame. Fainter and matte now, and the status pips drop from 1.6× HDR.
+5. **Black baseplates under every building.** Hero-kit foundation slabs ran to ~0.94 of the Lego
+   cell. Inset to `PlinthFill` so the graded dust apron shows around the footing; the concept has
+   no slab at all.
+
+Not yet addressed, and worth a decision: **the HUD covers roughly a third of the frame** (OVERSEER
+panel left, BOUNTIES right, minimap and dock bottom) and the left panel occludes whatever landmark
+sits west of the Commons. The concept has no HUD. Widening the frame helps, but if the look still is
+meant to sell the campus, a still-mode HUD dim or a panel-free variant is the lever.
+
 ## Capture vs concept — where the gap stands
 
 Pass 2 changes are code and asset level, verified by measurement and by reading the bake output
 directly. None of them have been seen in engine yet.
+
+### Closed in pass 3 (from the Capture read above)
+
+| Concept read | What was wrong | Change |
+|---|---|---|
+| Campus sitting in open regolith | `FitStillOrtho` returned the play ortho outright, so a campus wider than ~20 m of frame got cropped and the dirt squeezed out | Fits the AABB × `StillDirtHeadroom`, floored at `PlayCampusOrthoSize` |
+| Six separate pads with dirt between | Every candidate list leads with gap 0, so yards butted onto the dome as one mass | `TryNextSpaced` tries a spaced ring first for pad / power / extractors / Inn / wonder / solar / Defense |
+| Orange as thin matte trim | Safety orange was emissive in both material paths (1.4 HDR red on the lit path) and on every collar | Orange is paint; collars slimmer |
+| Clean hulls | Shield bubble at alpha 0.16 / smoothness 0.82 clipped to a solid white dome | Fainter, matte; status pips down from 1.6× HDR |
+| Buildings on graded dirt | Foundation slabs ran to ~0.94 of the Lego cell and read as black baseplates | Inset to `PlinthFill` (0.82) |
 
 ### Closed in pass 2
 
@@ -101,12 +145,15 @@ directly. None of them have been seen in engine yet.
 ### Still open
 
 - **No sky, horizon, or aerial-perspective gradient in frame.** The concept's hazy sky band and
-  distant mesas need a perspective camera; both capture paths are ortho at ~30° and see only
-  ground. Reaching it means changing the still camera, which the roadmap pins (`LookAssetPathTests`
-  asserts play ortho 10). Flagged for Aaron as a **decision**, not a bug: either accept the
-  layout-language match, or authorise a second perspective hero shot alongside the ortho still.
-  The Mars haze multiplier and sky-lifted fog colour landed anyway, so they pay off in any
-  perspective capture.
+  distant mesas need a **perspective** camera; both capture paths are orthographic pitched ~30° and
+  see ground and no sky at any zoom. Pulling the still ortho back widens the ground — it does not
+  bring a horizon into frame. An **Aaron decision**, not a bug: either accept the layout-language
+  match, or authorise a second perspective hero shot alongside the ortho still. The Mars haze
+  multiplier and sky-lifted fog colour landed anyway, so they pay off in any perspective capture.
+- **The HUD covers roughly a third of the Capture**, and the left OVERSEER panel occludes whatever
+  landmark sits west of the Commons. The concept has no HUD. Widening the frame helps; if the look
+  still has to sell the campus, the lever is a still-mode HUD dim or a panel-free capture variant.
+  Also an Aaron call — the roadmap wants the chrome verified in the same shot.
 - **Commons is a latitude/longitude dome, not a geodesic one.** The concept's triangulated facets
   are a mesh change (`sm_hero_building_kits.py`), not a dressing change.
 - **Ground relief is albedo + scatter, not a heightmap.** Unchanged Phase 4 non-goal.
