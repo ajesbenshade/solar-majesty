@@ -149,9 +149,16 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - still21 shuttered `leftover=inn+wonder extraHab=True extraSolar=True defense=True hold=True` Mars Scale 1x. That pass chased packed density vs the now-retired visual-target PNG. **Do not treat still21 / still22 as a density-match gate.**
 - Interior HAB sockets no longer fill every empty 4×4 inside the AABB. Empty dirt between pad / extractors / HAB is OK — room for rocks, foliage, creatures, discovery
 - Leftover Inn / wonder / workshop **can** stamp when they CanFit; they are not required to max-pack the frame
-- `RefreshTubes` still enables docked Lego arms only; `CampusDress_TubeRuns` may dress cardinal neighbors that are **not** airlock-linked (no `CampusTubeRoot` in the HAB gap)
+- `RefreshTubes` still enables docked Lego arms only. **No** `CampusDress_TubeRuns` between-yard web (Aaron rejected the bake-off stills). No `CampusTubeRoot` in the HAB gap
 - Still camera uses play `CampusOrthoSize` **10** (readable spaced campus). No packed-AABB inset / tight crop. `StillCaptureHold` stays. Mars Scale 1x stays
 - `spawnShowcaseColony` stays false. Square airlocks stay. Five HUD chips stay. No click-to-move. No `SpecialistBrain` / FlagManager / Narrative / economy rewrite
+- **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
+
+**Play Mode fixes after bake-off rejection (code only — do not stamp exit)**
+- Aaron rejected the look bake-off stills. `CampusDressing.RefreshTubes` / CaptureStill **no longer stamp** pressurized tube runs between cardinal yards (`CampusDress_TubeRuns` / `SpawnTubeRuns` removed)
+- Docked square Lego airlock arms / hub collars stay. Unused cardinal ports stay hidden. Play ortho 10 and empty interior dirt stay. No denser packing
+- Distant haze / polyhedron Commons / spacesuited colonists stay a **GD art lane** — this pass does not invent FBX
+- `StillCaptureHold` stays. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` / FlagType / Narrative rewrite
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
 
 ---
@@ -192,7 +199,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Campus Game-tab still (spaced overseer)** — latest archived Game-tab is still6 (empty Sol 1). still21 leftover=inn+wonder extraHab/solar/defense is **not** a VisualTarget density gate. This pass is **code only**: CaptureStill prefers play ortho 10; leftover kits may stamp; interior dirt is not force-filled. `StillCaptureHold` stays. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
+- **Campus Game-tab still (spaced overseer)** — latest archived Game-tab is still6 (empty Sol 1). still21 leftover=inn+wonder extraHab/solar/defense is **not** a VisualTarget density gate. This pass is **code only**: CaptureStill prefers play ortho 10; leftover kits may stamp; interior dirt is not force-filled; **RefreshTubes no longer stamps `CampusDress_TubeRuns` between yards**. `StillCaptureHold` stays. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
 - Landmark kits (pad + Starship, solar, extractors, leftover Workshop / Inn / wonder) may appear when they CanFit. Do not fill every dirt patch. Units remain optional (do not invent new unit systems).
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; tubes are dressing)

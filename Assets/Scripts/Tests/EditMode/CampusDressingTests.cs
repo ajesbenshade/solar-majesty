@@ -7,7 +7,7 @@ namespace SolarMajesty.Tests
     /// still5 leftover: unused Commons cardinal showed an orange hull-port ring.
     /// still16 leftover: wrap carbon doors painted the 2×2 as a dark box joint.
     /// Live kits must spawn dock groups off; RefreshTubes enables docked faces only.
-    /// Packed still campuses also get interior HAB sockets + tube-run dressing.
+    /// CaptureStill / RefreshTubes must not stamp a between-yard tube web.
     /// The hub stays a smaller white paneled square; orange only on docked collars.
     /// </summary>
     public class CampusDressingTests
@@ -111,7 +111,7 @@ namespace SolarMajesty.Tests
             Assert.IsNull(GameObject.Find("CampusTubeRoot"),
                 "no fourth CampusTubeRoot stacking collars in the HAB gap");
             Assert.IsNull(GameObject.Find(CampusDressing.TubeRunRootName),
-                "Commons↔HAB is airlock-linked — no extra tube run in the join");
+                "RefreshTubes must not stamp a between-yard CampusDress_TubeRuns web");
             AssertAirlockReadsAsWhiteHub(airlock.transform);
             Assert.IsTrue(IsRootActive(hab.transform, "HabPort_S"),
                 "HAB south hull port is the module-side orange collar");
@@ -577,7 +577,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void RefreshTubes_PackedCampus_EnablesDockedArmsAndTubeRuns()
+        public void RefreshTubes_PackedCampus_EnablesDockedArms_NoTubeRuns()
         {
             var buildings = new GameObject("Buildings");
             buildings.transform.SetParent(_root.transform);
@@ -609,9 +609,12 @@ namespace SolarMajesty.Tests
                 BuildingCategory.LandingPad, padWorld, buildings.transform);
             padGo.name = "Bld_LandingPad_still";
 
+            new GameObject(CampusDressing.TubeRunRootName).transform.SetParent(buildings.transform);
+
+            // West pad is a cardinal neighbor that still21 used to web with a tube run.
             Assert.IsTrue(StillCampusDensity.TryCardinalNeighbor(
                 placer.Pieces[0], placer.Pieces[placer.Pieces.Count - 1],
-                CampusDressing.MaxTubeRunGapCells, out _, out bool eastWest));
+                8, out _, out bool eastWest));
             Assert.IsTrue(eastWest, "west pad is an E/W neighbor of Commons");
             Assert.IsFalse(StillCampusDensity.AreAirlockLinked(
                 placer, placer.Pieces[0], placer.Pieces[placer.Pieces.Count - 1]));
@@ -619,23 +622,15 @@ namespace SolarMajesty.Tests
             CampusDressing.RefreshTubes(placer, _grid, buildings.transform);
 
             Assert.IsTrue(IsRootActive(commons.transform, "CommonsPort_N"),
-                "docked Commons north must stay enabled on a packed still campus");
+                "docked Commons north must stay enabled on a still campus");
             Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_N"));
             Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_S"));
             Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_E"),
                 "unused Commons east ring stays off");
             Assert.IsNull(GameObject.Find("CampusTubeRoot"),
-                "tube runs must not revive CampusTubeRoot in the HAB gap");
-            Transform runs = GameObject.Find(CampusDressing.TubeRunRootName)?.transform;
-            Assert.IsNotNull(runs, "RefreshTubes must spawn CampusDress_TubeRuns");
-            Assert.Greater(runs.childCount, 0, "packed campus needs a visual tube run");
-            Transform run0 = runs.GetChild(0);
-            Assert.IsNotNull(FindChild(run0, run0.name + "_Tube"));
-            Assert.Greater(Albedo(FindChild(run0, run0.name + "_Tube")).grayscale, 0.88f);
-            Assert.IsNotNull(FindChild(run0, run0.name + "_CollarA"));
-            Color collarC = Albedo(FindChild(run0, run0.name + "_CollarA"));
-            Assert.Greater(collarC.r, 0.85f);
-            Assert.Less(collarC.g, 0.55f);
+                "must not revive CampusTubeRoot in the HAB gap");
+            Assert.IsNull(GameObject.Find(CampusDressing.TubeRunRootName),
+                "RefreshTubes must not stamp a pressurized tube web between yards");
         }
 
         private Vector3 FootprintCenter(Vector2Int origin, int side)
