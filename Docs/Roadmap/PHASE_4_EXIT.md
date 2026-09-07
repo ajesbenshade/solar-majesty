@@ -5,7 +5,7 @@
 
 Phase 4 pushed the Mars campus into engine: atmosphere, square-dock tube campus, hero kits / FBX, Imagine-sheet units, carbon HUD chrome. Core systems were not rewritten: `SpecialistBrain` scoring is unchanged; the player still never path-commands units. Colony Commons is the civic name (never Palace).
 
-**Look redirect (Aaron + Chief of Staff):** `SM_MarsCampaign_VisualTarget.png` is **retired**. Phase 4 EXIT look is a **spaced campus** — empty dirt is OK, fun cartoon Majesty-2 overseer feel, room for rocks / foliage / creatures and discovery. Do **not** chase that PNG’s fill-every-dirt-patch packing. still21 / still22 do not have to match that density.
+**Look redirect (Aaron + Chief of Staff):** `SM_MarsCampaign_VisualTarget.png` is **retired**. Phase 4 EXIT look is a **spaced campus** — empty dirt is OK, fun cartoon Majesty-2 overseer feel, room for rocks / foliage / creatures and discovery. Do **not** chase that PNG’s fill-every-dirt-patch packing. still21 / still22 do not have to match that density. Dream Loop concept for this pass: [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — **not an exit stamp**. GD still steps: [`DREAM_LOOP_MARS_LOOK.md`](DREAM_LOOP_MARS_LOOK.md).
 
 Nine real stills now exist. The latest archived Game-tab shot is **`SM_MarsCampaign_PlayModeCampusStill6.png`** — Mars Sol 1 HUD, empty start, pad in the corner. `SM_MarsCampaign_PlayModeCampusStill5.png` also exists (Commons + HAB Game-tab). Packed editor still is **`SM_MarsCampaign_PackedCampusStill.png`** (`Camera.Render`, not Game-tab HUD) — archive only, not the look claim. None of these stamp exit. GD will reshoot a spaced overseer still after merge. Leftovers below are Phase 4 look gaps, not Phase 5 ship polish.
 

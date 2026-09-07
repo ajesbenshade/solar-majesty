@@ -21,6 +21,7 @@ namespace SolarMajesty
             Cyan,
             Glass,
             Solar,
+            Canvas,
             DefenseRed,
             StalkerHide,
             MiteHide,
@@ -66,8 +67,12 @@ namespace SolarMajesty
         private static Texture2D _blackAlbedo;
         private static Texture2D _graphiteAlbedo;
         private static Texture2D _steelAlbedo;
+        private static Texture2D _steelNormal;
         private static Texture2D _orangeAlbedo;
         private static Texture2D _solarAlbedo;
+        private static Texture2D _canvasAlbedo;
+        private static Texture2D _canvasNormal;
+        private static Texture2D _dustyMetalAlbedo;
         private static Texture2D _hideAlbedo;
         private static Texture2D _hideNormal;
         private static Texture2D _redAlbedo;
@@ -175,6 +180,9 @@ namespace SolarMajesty
             string local = rend.name.ToLowerInvariant();
             if (root.Contains("solar") || local.Contains("solar") || local.Contains("array"))
                 return Slot.Solar;
+            if (ContainsAny(local, "canvas", "awning", "tarp", "fabric") ||
+                ContainsAny(root, "canvas", "awning"))
+                return Slot.Canvas;
             if (root.Contains("stalker") && !ContainsAny(local, "plate", "bracer", "armor", "white"))
                 return Slot.StalkerHide;
             return Slot.WhiteHull;
@@ -219,6 +227,9 @@ namespace SolarMajesty
             if (ContainsAny(n, "sm_yellow")) { slot = Slot.Orange; return true; }
             if (ContainsAny(n, "sm_concrete")) { slot = Slot.Graphite; return true; }
             if (ContainsAny(n, "sm_regolith", "sm_crater", "crater")) { slot = Slot.Graphite; return true; }
+            if (ContainsAny(n, "sm_canvas", "canvas", "awning", "tarp", "fabric", "tent"))
+            { slot = Slot.Canvas; return true; }
+            if (ContainsAny(n, "sm_dustymetal", "dustymetal")) { slot = Slot.Steel; return true; }
             if (ContainsAny(n, "sm_solar", "solarcell", "pv_cell")) { slot = Slot.Solar; return true; }
 
             if (ContainsAny(n, "visor", "eyel", "eyer", "eye")) { slot = Slot.Cyan; return true; }
@@ -262,13 +273,20 @@ namespace SolarMajesty
             // Null is fine: every slot falls back to the generated-texture path below.
             _hull = Shader.Find("SolarMajesty/Hull");
 
-            _whiteAlbedo = BuildWhiteHull(256);
-            _whiteNormal = BuildPanelNormal(256, 0.55f);
+            _whiteAlbedo = LoadOrBuild(EnvironmentMeshCatalog.WhiteHullAlbedoPath, () => BuildWhiteHull(256));
+            _whiteNormal = LoadOrBuild(EnvironmentMeshCatalog.WhiteHullNormalPath, () => BuildPanelNormal(256, 0.55f));
             _blackAlbedo = BuildCarbon(128);
             _graphiteAlbedo = BuildBrushed(128, new Color(0.18f, 0.19f, 0.21f), new Color(0.32f, 0.33f, 0.35f));
-            _steelAlbedo = BuildBrushed(128, new Color(0.42f, 0.44f, 0.47f), new Color(0.62f, 0.64f, 0.67f));
+            _steelAlbedo = LoadOrBuild(EnvironmentMeshCatalog.SteelAlbedoPath, () =>
+                LoadOrBuild(EnvironmentMeshCatalog.DustyMetalAlbedoPath, () =>
+                    BuildBrushed(128, new Color(0.42f, 0.44f, 0.47f), new Color(0.62f, 0.64f, 0.67f))));
+            _steelNormal = Resources.Load<Texture2D>(EnvironmentMeshCatalog.SteelNormalPath);
             _orangeAlbedo = BuildHazard(128);
-            _solarAlbedo = BuildSolar(128);
+            _solarAlbedo = LoadOrBuild(EnvironmentMeshCatalog.SolarAlbedoPath, () => BuildSolar(128));
+            _canvasAlbedo = LoadOrBuild(EnvironmentMeshCatalog.CanvasAlbedoPath, () =>
+                BuildBrushed(128, new Color(0.72f, 0.62f, 0.42f), new Color(0.88f, 0.78f, 0.56f)));
+            _canvasNormal = Resources.Load<Texture2D>(EnvironmentMeshCatalog.CanvasNormalPath);
+            _dustyMetalAlbedo = Resources.Load<Texture2D>(EnvironmentMeshCatalog.DustyMetalAlbedoPath);
             _hideAlbedo = BuildHide(128);
             _hideNormal = BuildPebbleNormal(128);
             _redAlbedo = BuildPanelTint(128, new Color(0.72f, 0.16f, 0.14f), new Color(0.42f, 0.08f, 0.08f));
@@ -395,7 +413,8 @@ namespace SolarMajesty
                     smooth = 0.32f;
                     break;
                 case Slot.Steel:
-                    albedo = _steelAlbedo;
+                    albedo = _steelAlbedo != null ? _steelAlbedo : _dustyMetalAlbedo;
+                    normal = _steelNormal != null ? _steelNormal : _whiteNormal;
                     metallic = 0.72f;
                     smooth = 0.55f;
                     tile = new Vector2(1.6f, 1.6f);
@@ -429,6 +448,14 @@ namespace SolarMajesty
                     smooth = 0.62f;
                     emission = new Color(0.10f, 0.28f, 0.85f);
                     tile = new Vector2(4f, 4f);
+                    break;
+                case Slot.Canvas:
+                    albedo = _canvasAlbedo;
+                    normal = _canvasNormal != null ? _canvasNormal : _whiteNormal;
+                    tint = new Color(0.90f, 0.82f, 0.64f);
+                    metallic = 0.02f;
+                    smooth = 0.28f;
+                    tile = new Vector2(2.2f, 2.2f);
                     break;
                 case Slot.DefenseRed:
                     albedo = _redAlbedo;
@@ -714,6 +741,19 @@ namespace SolarMajesty
                 filterMode = FilterMode.Bilinear,
                 wrapMode = TextureWrapMode.Repeat
             };
+        }
+
+        private static Texture2D LoadOrBuild(string resourcesPath, System.Func<Texture2D> build)
+        {
+            var authored = Resources.Load<Texture2D>(resourcesPath);
+            if (authored != null)
+            {
+                authored.wrapMode = TextureWrapMode.Repeat;
+                authored.filterMode = FilterMode.Bilinear;
+                return authored;
+            }
+
+            return build != null ? build() : null;
         }
 
         private static float Frac(float v) => v - Mathf.Floor(v);

@@ -57,4 +57,4 @@ Every Grok Imagine prompt must include:
 
 > isometric view, Majesty 2 inspired readable silhouettes, SpaceX industrial aesthetic, clean white and black Starship materials with orange accents, modular habitat design, slightly exaggerated proportions for clarity, vibrant but grounded sci-fi lighting, high detail 3D render style
 
-See `Docs/ART_DIRECTION.md`. Production look (extends these keywords): [Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md](Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md).
+See `Docs/ART_DIRECTION.md`. Production look (extends these keywords): [Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md](Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md). Spaced Mars concept + GD still steps: [Docs/Roadmap/DREAM_LOOP_MARS_LOOK.md](Docs/Roadmap/DREAM_LOOP_MARS_LOOK.md).

@@ -25,7 +25,7 @@ Seamless tileable top-down ground texture, 1024x1024, soft meadow grass with pat
 ### Mars regolith albedo
 
 ```
-Seamless tileable top-down Mars regolith texture, 1024x1024, orange-red dusty soil with subtle darker mottling and tiny pebble noise, no buildings, no craters as large features, no text, even lighting, game-ready PBR albedo, seamless wrap on all edges
+Seamless tileable top-down Mars regolith texture, 1024x1024, orange-red dusty soil with subtle darker mottling, wind ripples, and tiny pebble noise, no buildings, no craters as large features, no text, even lighting, game-ready PBR albedo, seamless wrap on all edges. Spacious campus pads sit on this dirt — do not paint buildings into the tile.
 ```
 
 ### Normal maps
