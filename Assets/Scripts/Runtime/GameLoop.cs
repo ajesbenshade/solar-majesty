@@ -2442,9 +2442,9 @@ namespace SolarMajesty
 
         /// <summary>
         /// CaptureStill / Phase 4: Commons→airlock→HAB plus CanFit pad / PWR-1 /
-        /// water + regolith yard. Aaron 2026-09-07: no leftover packing, no
-        /// interconnect tube webs. Spaced campus — empty dirt stays.
-        /// Does not stamp Phase 4 exit.
+        /// water + regolith yard on island gaps (`MinYardGapCells` 4). Aaron
+        /// 2026-09-07: no leftover packing, no interconnect tube webs.
+        /// Spaced campus — empty dirt stays. Does not stamp Phase 4 exit.
         /// </summary>
         public bool StampPhase4StillCampus() => StampPhase4DenseCampus();
 
@@ -2543,9 +2543,12 @@ namespace SolarMajesty
             }
 
             Vector2Int origin;
+            bool island = StillCampusDensity.IsIslandYard(cat);
             bool found = preferDock
-                ? StillCampusDensity.TryDockOrNext(Placer, commons, habFace, side, side, bounds, out origin)
-                : StillCampusDensity.TryNext(Placer, commons, habFace, side, side, bounds, out origin);
+                ? StillCampusDensity.TryDockOrNext(
+                    Placer, commons, habFace, side, side, bounds, out origin, island)
+                : StillCampusDensity.TryNext(
+                    Placer, commons, habFace, side, side, bounds, out origin, island);
             if (!found)
             {
                 Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}=False (CanFit)");

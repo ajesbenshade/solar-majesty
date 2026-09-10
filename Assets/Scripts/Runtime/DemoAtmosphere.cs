@@ -103,10 +103,14 @@ namespace SolarMajesty
         /// <summary>
         /// Density chosen so fog reaches roughly half strength at the body's FogEnd, keeping the
         /// campus itself unfogged while the far vista still recedes.
+        /// Mars uses a thicker horizon band (Aaron after #29) so distant dirt reads as haze
+        /// without washing white hulls at campus range (~15 m).
         /// </summary>
-        private static float FogDensityFor(CelestialBodyProfile body)
+        public static float FogDensityFor(CelestialBodyProfile body)
         {
-            float horizon = Mathf.Max(60f, body.FogEnd);
+            if (body != null && body.Id == CelestialBodyId.Mars)
+                return 0.014f;
+            float horizon = Mathf.Max(60f, body != null ? body.FogEnd : 95f);
             return Mathf.Clamp(0.9f / horizon, 0.0015f, 0.02f);
         }
 
@@ -117,7 +121,9 @@ namespace SolarMajesty
             // ortho zoom puts ray origins under the ground plane (see IsometricCameraController).
             cam.backgroundColor = PlanetaryMapDressing.VoidFillColor(body);
             cam.farClipPlane = Mathf.Max(cam.farClipPlane, 2000f);
-            if (cam.clearFlags != CameraClearFlags.Skybox)
+            if (RenderSettings.skybox != null)
+                cam.clearFlags = CameraClearFlags.Skybox;
+            else if (cam.clearFlags != CameraClearFlags.Skybox)
                 cam.clearFlags = CameraClearFlags.SolidColor;
 
             var additional = cam.GetComponent<UniversalAdditionalCameraData>();

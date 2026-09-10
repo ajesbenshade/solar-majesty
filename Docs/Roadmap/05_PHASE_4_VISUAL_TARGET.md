@@ -1,6 +1,6 @@
 # Phase 4 – Visual Target (Art Production)
 
-**Status:** In progress — **exit blocked** ([PHASE_4_EXIT.md](PHASE_4_EXIT.md)). Dock sockets flush; HAB / Commons / LAB / CMD-1 / OPS-1 panel bevels in. An **editor** Mars still exists (`SM_MarsCampaign_EditorStill.png`) — Commons + airlock + HAB, no HUD. Empty Game-tab still (`SM_MarsCampaign_PlayModeStill.png`) plus campus v1–**v5** (`SM_MarsCampaign_PlayModeCampusStill5.png`) — geodesic Commons + HAB; **still5 unused orange Commons port rings** are the leftover this look-kit pass hides (`CommonsPort_*` start off; RefreshTubes enables docked faces only). Campus v4 showed orange box airlock + unused ribbed stub. Latest Game-tab is still6 (empty Sol 1). Phase 4 is **not** complete. **Not ready for Phase 5.**  
+**Status:** In progress — **exit blocked** ([PHASE_4_EXIT.md](PHASE_4_EXIT.md)). After #29 (tube web gone): Aaron brief is island yard gaps, geodesic Commons, distant Mars haze, spacesuit dressing. An **editor** Mars still exists (`SM_MarsCampaign_EditorStill.png`) — Commons + airlock + HAB, no HUD. Empty Game-tab still (`SM_MarsCampaign_PlayModeStill.png`) plus campus v1–**v5**. Latest Game-tab is still6 (empty Sol 1). `SM_Capture_NoTubes` is the post-#29 Capture (not a sign-off). Phase 4 is **not** complete. **Not ready for Phase 5.** **Do not stamp exit.**  
 **Duration:** 8–12 weeks  
 **Goal:** Land Aaron’s **2026-09-07 spaced ITS campus** in engine vs [`SM_MarsCampus_SpacedOverseer_Concept.png`](SM_MarsCampus_SpacedOverseer_Concept.png) — no interconnect tube webs, empty dirt OK, geodesic Commons, distant haze, spacesuited crossings — without changing the control model. Do **not** pack every cell to match the retired `SM_MarsCampaign_VisualTarget.png`. Bake-off PRs **#26 / #27 / #28** are **not** the EXIT claim. **Do not stamp Phase 4 EXIT.**
 
@@ -25,10 +25,12 @@ Current greybox / Lego airlocks / blockout robots are **not** this look. Phase 4
 **Aaron look brief (2026-09-07)**
 
 1. **Forgo interconnect tubes** between buildings. Square Lego airlocks may remain as ports. `SpawnTubeRuns` is **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed.
-2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill leftover sockets.
-3. **Distant haze** toward the horizon (concept language).
-4. **Polyhedron / geodesic Commons** silhouette — not a soft sphere-only kit if we can dress it.
-5. Open-ground crossings should **read as spacesuited**. Docs + still dressing notes only. No new `FlagTypes`. No `SpecialistBrain` rewrite.
+2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill leftover sockets. Landmark yards use `MinYardGapCells` **4**. Leftover Inn / wonder / extra HAB / extra solar / Defense do **not** stamp on `StampPhase4*`.
+3. **Distant haze** toward the horizon — Mars fog 0.014 + `MarsHazeRoot` cards.
+4. **Polyhedron / geodesic Commons** — faceted `SM_CommonsGeodesic` + carbon lattice, not a smooth hemisphere-only.
+5. Open-ground crossings **read as spacesuited** (`CampusDress_Colonists` dressing). No new `FlagTypes`. No `SpecialistBrain` rewrite.
+
+Keep `StillCaptureHold`, Mars Scale 1x, docked Lego airlock arms, `spawnShowcaseColony` false, Colony Commons, five HUD chips. Bake-off `#26` / `#27` / `#28` parked. **Do not stamp exit.**
 
 Phase 4 EXIT look (Aaron look-clear vs concept — not stamped):
 
@@ -138,13 +140,13 @@ HUD layout may use five industrial/pop chips (four resources + beds) in the same
 ### Terrain / sky / lighting
 - [x] Mars ground: reddish cratered regolith, rock scatter, matte dust (readable at iso camera)
 - [x] Hazy orange Martian sky + long low-angle shadows
-- [x] Distant dust-devil / haze scale (dressing or light VFX, not a new threat type unless Phase 3 already has it)
+- [x] Distant dust-devil / **horizon haze** (thicker Mars fog + `MarsHazeRoot` cards; campus hulls stay unwashed)
 - [x] Earth / Luna lighting grades using the same campus kit *(Earth drop: meadow albedo + cobalt sky via lifted SkyTint + grass/trees/pond in camera; still not Mars orange)*
 
 ### Corridor campus & building kits
 - [x] Square Lego airlock **ports** on existing docks *(Airlock Junction: panel-lined white hub + orange frames/doors; docked faces only. Aaron 2026-09-07: **no** interconnect `CampusDress_TubeRuns`)*
 - [x] HAB kit: white/black/orange habs that read as living modules, not generic boxes *(HAB-1 horizontal cylinder on skids; square airlocks still attach; carbon rings + spine seams)*
-- [x] Central **geodesic / polyhedron** Colony Commons *(cupola + equatorial panel rings / meridians; player-facing **COMMONS** — not a soft sphere-only kit)*
+- [x] Central **geodesic / polyhedron** Colony Commons *(faceted `SM_CommonsGeodesic` + carbon `CommonsLattice` + cupola + equatorial panel rings; player-facing **COMMONS** — not a smooth hemisphere-only)*
 - [x] Power: solar array with blue status glow *(PWR-1 node + field)*
 - [x] Landing pad: circular tiered pad + white Starship-like upright stack *(orange rings + H; heat-shield belly)*
 - [x] Extractors: distinct **water** and **regolith** kits (piping, tanks, scaffolding), standalone from the tube spine *(Farm = AG-1 vaulted greenhouse + ice tanks; Camp = horizontal drum + hopper; Mine = twin silos + A-frame)*
@@ -170,6 +172,7 @@ HUD layout may use five industrial/pop chips (four resources + beds) in the same
 - [x] Terraformer — tracked dozer *(Imagine LO-TRF-1 sheet-matched: orange front blade + orange rear rake; RTS ~2.5 m class)*
 - [x] Fauna RTS silhouettes — Stalker (long predator), Hopper (six-leg shrimp, ~1.7 m), Creeper (graphite isopod ~2 m), Tick (wide crab)
 - [x] Fauna leftover — Mite (pillbug), Leech (white ray + cyan groove), Wisp (seven-point ice-star) sheet-matched vs Tick / Creeper / Scout
+- [x] Spacesuited colonists on open dirt (`CampusDress_Colonists` walkers — still dressing only; no `SpecialistBrain` rewrite; no new FlagTypes)
 - [x] Grok Imagine turnarounds → Blender refine against sheets → `Assets/Resources/Units/SM_Unit_*` *(all ten specialists + seven fauna sheet-matched; Defense PNG biped walker still open)*
 
 ### HUD / presentation
@@ -193,7 +196,7 @@ HUD layout may use five industrial/pop chips (four resources + beds) in the same
 - Tube campus on the **square** Lego grid: corrugated **round** white corridors, **panel-lined square** airlock hubs (carbon corners, inset carbon hatches — not wrap-around orange doors), **orange collars at docked joints only**; unused cardinal sleeves stay hidden so they do not read as orange-hatch boxes; connected docks are **round white tubes** that meet the hub at the cell boundary (not a cube plus, not punched through the hull)
 - Packed-dust **aprons** under modules so campus reads as flattened paths vs wild regolith (circular packed dust only — grey cube slabs looked like leftover hex pads in iso and were removed). Earth meadow stays sparse. Landing-pad lights only spawn on a real Landing Pad.
 - HAB as a **horizontal HAB-1 cylinder** on skids (white/black/orange, carbon rings + spine seam, not a box, not a Commons dome)
-- Colony Commons as the large central **command-dome citadel** (player-facing **COMMONS**, not Palace / not mockup “Command Center” label) with equatorial panel rings and drum meridians
+- Colony Commons as the large central **geodesic command-dome citadel** (player-facing **COMMONS**, not Palace / not mockup “Command Center” label) with faceted lattice ribs, cupola, and drum meridians — not a smooth UV sphere
 - Solar field: **PWR-1 node** + tilted blue-cyan panels with orange corner brackets
 - Circular pad + white/black Starship-like stack (orange rings, H, heat-shield belly, forward flaps)
 - Distinct water-ice vs regolith extractor kits *(Farm = vaulted greenhouse + ice tanks; Camp = drum hopper; Mine = silos + A-frame)*; junction dual-barrel turrets (dressing, no click-to-fire)
