@@ -56,13 +56,21 @@ namespace SolarMajesty
             float radius = length / 3f;
             float z = radius + 0.22f;
             Quaternion alongX = Quaternion.Euler(0f, 0f, 90f);
+            // Dream-loop round 1: carbon mid-band ~22% of cylinder length (was a thin ring).
+            float midHalf = length * 0.11f;
 
             Prim(root, "HabShell", PrimitiveType.Cylinder,
                 new Vector3(0f, z, 0f),
                 new Vector3(radius * 2f, length * 0.36f, radius * 2f), hull, alongX);
             Prim(root, "HabMid", PrimitiveType.Cylinder,
                 new Vector3(0f, z, 0f),
-                new Vector3(radius * 2.06f, 0.36f, radius * 2.06f), Carbon, alongX);
+                new Vector3(radius * 2.08f, midHalf, radius * 2.08f), Carbon, alongX);
+            Prim(root, "HabMidLip_L", PrimitiveType.Cylinder,
+                new Vector3(-midHalf * 0.92f, z, 0f),
+                new Vector3(radius * 2.12f, 0.028f, radius * 2.12f), Graphite, alongX);
+            Prim(root, "HabMidLip_R", PrimitiveType.Cylinder,
+                new Vector3(midHalf * 0.92f, z, 0f),
+                new Vector3(radius * 2.12f, 0.028f, radius * 2.12f), Graphite, alongX);
 
             for (int s = -1; s <= 1; s += 2)
             {
@@ -87,12 +95,18 @@ namespace SolarMajesty
             Prim(root, "HabFrontSquare", PrimitiveType.Cube,
                 new Vector3(-length * 0.54f, z, 0f),
                 new Vector3(0.10f, 0.55f, 0.55f), White);
+            Prim(root, "HabFrontRim", PrimitiveType.Cube,
+                new Vector3(-length * 0.545f, z, 0f),
+                new Vector3(0.04f, 0.62f, 0.62f), Orange);
             Prim(root, "HabRearFrame", PrimitiveType.Cube,
                 new Vector3(length * 0.50f, z, 0f),
                 new Vector3(0.06f, 1.32f, 0.88f), Carbon);
             Prim(root, "HabRearDoor", PrimitiveType.Cube,
                 new Vector3(length * 0.48f, z, 0f),
                 new Vector3(0.10f, 1.15f, 0.72f), Orange);
+            Prim(root, "HabRearRim", PrimitiveType.Cube,
+                new Vector3(length * 0.505f, z, 0f),
+                new Vector3(0.04f, 1.40f, 0.96f), Orange);
             Prim(root, "HabSideFrame", PrimitiveType.Cube,
                 new Vector3(0.12f, z, -radius * 1.02f),
                 new Vector3(1.05f, 1.35f, 0.08f), Carbon);
@@ -148,7 +162,9 @@ namespace SolarMajesty
 
         public static void BuildCommons(Transform root, float w, float d, Color hull)
         {
-            // Command-dome civic citadel (sheet). Player-facing name stays Colony Commons.
+            // Command-dome civic citadel — geodesic / polyhedron read (Aaron 2026-09-07).
+            // Soft sphere + square tile wash failed the dream-loop materials gate; lattice
+            // facets + orange equatorial / cupola bands are the live silhouette.
             float radius = Mathf.Min(w, d) * 0.38f;
             Prim(root, "CommonsPlinth", PrimitiveType.Cylinder,
                 new Vector3(0f, 0.28f, 0f),
@@ -172,20 +188,27 @@ namespace SolarMajesty
                 new Vector3(radius * 2.08f, 0.07f, radius * 2.08f), Carbon);
             Prim(root, "CommonsStripe", PrimitiveType.Cylinder,
                 new Vector3(0f, 1.72f, 0f),
-                new Vector3(radius * 2.12f, 0.05f, radius * 2.12f), Orange);
+                new Vector3(radius * 2.12f, 0.06f, radius * 2.12f), Orange);
+
+            // Undershell stays slightly inset so geodesic facets own the silhouette.
             Prim(root, "CommonsDome", PrimitiveType.Sphere,
                 new Vector3(0f, 1.85f, 0f),
-                new Vector3(radius * 2.04f, radius * 1.47f, radius * 2.04f), hull);
+                new Vector3(radius * 1.92f, radius * 1.38f, radius * 1.92f), hull);
+            PlaceGeodesicLattice(root, radius, hull);
+
             Prim(root, "CommonsDomeBand", PrimitiveType.Cylinder,
                 new Vector3(0f, 3.05f, 0f),
-                new Vector3(radius * 1.44f, 0.05f, radius * 1.44f), Carbon);
+                new Vector3(radius * 1.44f, 0.055f, radius * 1.44f), Orange);
+            Prim(root, "CommonsDomeBandCarbon", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.98f, 0f),
+                new Vector3(radius * 1.48f, 0.03f, radius * 1.48f), Carbon);
 
             Prim(root, "CommonsCupolaLo", PrimitiveType.Cylinder,
                 new Vector3(0f, 3.55f, 0f),
                 new Vector3(radius * 0.56f, 0.21f, radius * 0.56f), White);
             Prim(root, "CommonsCupolaBand", PrimitiveType.Cylinder,
                 new Vector3(0f, 3.72f, 0f),
-                new Vector3(radius * 0.60f, 0.04f, radius * 0.60f), Carbon);
+                new Vector3(radius * 0.62f, 0.045f, radius * 0.62f), Orange);
             Prim(root, "CommonsCupolaHi", PrimitiveType.Cylinder,
                 new Vector3(0f, 3.95f, 0f),
                 new Vector3(radius * 0.36f, 0.16f, radius * 0.36f), White);
@@ -198,19 +221,10 @@ namespace SolarMajesty
             Prim(root, "CommonsPack", PrimitiveType.Sphere,
                 new Vector3(0.42f, 5.15f, 0f),
                 new Vector3(0.56f, 0.16f, 0.56f), Graphite);
+            // Cupola beacon only — cyan waist visors washed the sheet white at Game-tab range.
             Prim(root, "CommonsVisorBeacon", PrimitiveType.Sphere,
                 new Vector3(0f, 5.45f, 0f),
-                new Vector3(0.24f, 0.24f, 0.24f), Cyan, CyanEmit);
-
-            for (int i = 0; i < 8; i++)
-            {
-                if (i % 2 == 0) continue;
-                float ang = i * 45f * Mathf.Deg2Rad;
-                Prim(root, "CommonsVisor_" + i, PrimitiveType.Cube,
-                    new Vector3(Mathf.Sin(ang) * radius * 1.02f, 1.35f, Mathf.Cos(ang) * radius * 1.02f),
-                    new Vector3(radius * 0.38f, 0.22f, 0.08f),
-                    Cyan, Quaternion.Euler(0f, i * 45f, 0f), CyanEmit);
-            }
+                new Vector3(0.18f, 0.18f, 0.18f), Cyan, CyanEmit * 0.55f);
 
             // Cardinal hull ports (CommonsPort_N/E/S/W). Live groups start off.
             // RefreshTubes shows docked faces only — still5 unused orange rings
@@ -224,26 +238,63 @@ namespace SolarMajesty
             Prim(root, "CommonsSeamRing_1", PrimitiveType.Cylinder,
                 new Vector3(0f, 1.55f, 0f),
                 new Vector3(radius * 2.024f, 0.019f, radius * 2.024f), Carbon);
-            Prim(root, "CommonsSeamRing_2", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.22f, 0f),
-                new Vector3(radius * 1.88f, 0.019f, radius * 1.88f), Graphite);
-            Prim(root, "CommonsSeamRing_3", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.62f, 0f),
-                new Vector3(radius * 1.60f, 0.019f, radius * 1.60f), Carbon);
-            Prim(root, "CommonsSeamRing_4", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.92f, 0f),
-                new Vector3(radius * 1.28f, 0.019f, radius * 1.28f), Graphite);
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 12; i++)
             {
-                float ang = i * 45f * Mathf.Deg2Rad;
+                float ang = i * 30f * Mathf.Deg2Rad;
                 Vector3 dir = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang));
-                Quaternion yaw = Quaternion.Euler(0f, i * 45f, 0f);
+                Quaternion yaw = Quaternion.Euler(0f, i * 30f, 0f);
                 Prim(root, "CommonsMeridianLo_" + i, PrimitiveType.Cube,
-                    dir * (radius * 1.012f) + new Vector3(0f, 0.82f, 0f),
-                    new Vector3(0.032f, 0.38f, 0.032f), Carbon, yaw);
-                Prim(root, "CommonsMeridianHi_" + i, PrimitiveType.Cube,
-                    dir * (radius * 1.012f) + new Vector3(0f, 1.62f, 0f),
-                    new Vector3(0.032f, 0.28f, 0.032f), Carbon, yaw);
+                    dir * (radius * 1.012f) + new Vector3(0f, 0.92f, 0f),
+                    new Vector3(0.028f, 0.55f, 0.028f), Carbon, yaw);
+            }
+        }
+
+        /// <summary>
+        /// Triangular-ish geodesic panels on the Commons dome. Reads as a polyhedron at
+        /// ortho 10 instead of a soft sphere with a square tile wash.
+        /// </summary>
+        private static void PlaceGeodesicLattice(Transform root, float radius, Color hull)
+        {
+            Vector3 center = new Vector3(0f, 1.85f, 0f);
+            float rx = radius * 1.02f;
+            float ry = radius * 0.74f;
+            float rz = radius * 1.02f;
+            int panel = 0;
+            // Latitude rings (skip bottom under the drum) + staggered longitude so edges
+            // triangulate instead of reading as a square grid.
+            float[] lats = { 12f, 28f, 44f, 58f, 72f };
+            for (int li = 0; li < lats.Length; li++)
+            {
+                float lat = lats[li] * Mathf.Deg2Rad;
+                int segs = 10 + li * 2;
+                float yawOff = (li % 2) * (180f / segs);
+                float panelW = radius * (0.30f - li * 0.028f);
+                float panelH = radius * (0.22f - li * 0.018f);
+                for (int s = 0; s < segs; s++)
+                {
+                    float lon = (s * 360f / segs + yawOff) * Mathf.Deg2Rad;
+                    Vector3 n = new Vector3(
+                        Mathf.Cos(lat) * Mathf.Sin(lon),
+                        Mathf.Sin(lat),
+                        Mathf.Cos(lat) * Mathf.Cos(lon));
+                    Vector3 at = center + new Vector3(n.x * rx, n.y * ry, n.z * rz);
+                    Quaternion rot = Quaternion.LookRotation(n) * Quaternion.Euler(90f, (s + li) * 17f, 0f);
+                    Color panelCol = ((s + li) % 3 == 0) ? White : hull;
+                    Prim(root, "CommonsGeo_" + panel, PrimitiveType.Cube,
+                        at,
+                        new Vector3(panelW, 0.028f, panelH),
+                        panelCol, rot);
+                    panel++;
+                    // Thin carbon strut along the long edge so facets read triangular.
+                    if (s % 2 == 0)
+                    {
+                        Prim(root, "CommonsGeoStrut_" + panel, PrimitiveType.Cube,
+                            at + n * 0.02f,
+                            new Vector3(panelW * 0.92f, 0.018f, 0.022f),
+                            Carbon, rot);
+                        panel++;
+                    }
+                }
             }
         }
 

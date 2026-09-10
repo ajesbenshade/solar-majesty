@@ -549,6 +549,35 @@ namespace SolarMajesty
 
             SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
             SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
+            SpawnMarsHazeRidges(root, campus, body);
+        }
+
+        /// <summary>
+        /// Distant low ridges so the far third of the frame recedes into salmon haze
+        /// (dream-loop round 1 / spaced-overseer concept). Campus yards stay empty dirt.
+        /// </summary>
+        private static void SpawnMarsHazeRidges(Transform parent, Vector3 campus, CelestialBodyProfile body)
+        {
+            Color far = Color.Lerp(body.FogColor, body.Horizon, 0.55f);
+            far.a = 1f;
+            for (int i = 0; i < 10; i++)
+            {
+                float ang = i * 36f * Mathf.Deg2Rad + 0.35f;
+                float dist = 48f + (i % 3) * 9f;
+                Vector3 at = campus + new Vector3(Mathf.Cos(ang) * dist, 0f, Mathf.Sin(ang) * dist);
+                float span = 14f + (i % 4) * 3.5f;
+                float height = 2.2f + (i % 3) * 1.1f;
+                var ridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                ridge.name = "Dress_MarsHazeRidge_" + i;
+                ridge.transform.SetParent(parent, false);
+                ridge.transform.position = at + Vector3.up * (height * 0.42f);
+                ridge.transform.localScale = new Vector3(span, height, 4.5f + (i % 2) * 1.8f);
+                ridge.transform.rotation = Quaternion.Euler(0f, ang * Mathf.Rad2Deg + 90f, 0f);
+                Object.Destroy(ridge.GetComponent<Collider>());
+                PlanetaryWorldGen.Tint(ridge, far, 0.02f, ShadowCastingMode.Off);
+                var rend = ridge.GetComponent<Renderer>();
+                if (rend != null) rend.receiveShadows = false;
+            }
         }
 
         private static void SpawnVistaBoulder(

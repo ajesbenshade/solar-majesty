@@ -81,6 +81,67 @@ namespace SolarMajesty
         }
 
         /// <summary>
+        /// Seat a campus kit on the ground without sliding Lego docks off the shared
+        /// <see cref="DockY"/> axis. Aaron dock miss: SnapToGround alone lifted/dropped
+        /// floating FBX pivots so airlock arms and module sleeves no longer met at one height.
+        /// After seating, dock groups are re-aligned so tube / ring samples sit on DockY.
+        /// </summary>
+        public static void SnapToGroundKeepingDockAxis(GameObject root, float groundY = 0f)
+        {
+            if (root == null) return;
+            SnapToGround(root, groundY);
+            AlignDockGroupsToAxis(root.transform);
+        }
+
+        private static void AlignDockGroupsToAxis(Transform root)
+        {
+            if (root == null) return;
+            var ts = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < ts.Length; i++)
+            {
+                Transform t = ts[i];
+                if (t == null || t == root) continue;
+                if (!IsDockAxisGroup(t.name)) continue;
+                if (t.parent != null && IsDockAxisGroup(t.parent.name)) continue;
+                float sampleY = SampleDockWorldY(t);
+                float dy = DockY - sampleY;
+                if (Mathf.Abs(dy) < 0.001f) continue;
+                Vector3 p = t.localPosition;
+                p.y += dy;
+                t.localPosition = p;
+            }
+        }
+
+        private static float SampleDockWorldY(Transform group)
+        {
+            var ts = group.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < ts.Length; i++)
+            {
+                if (ts[i] == null) continue;
+                string n = ts[i].name;
+                if (n.EndsWith("_Tube") || n.EndsWith("_Ring") || n.EndsWith("_Well"))
+                    return ts[i].position.y;
+            }
+            return group.position.y + DockY;
+        }
+
+        private static bool IsDockAxisGroup(string n)
+        {
+            if (string.IsNullOrEmpty(n)) return false;
+            return n.StartsWith("Dress_TubeArm")
+                || n.StartsWith("DockSleeve")
+                || n.StartsWith("CommonsPort")
+                || n.StartsWith("HabPort")
+                || n.StartsWith("LabPort")
+                || n.StartsWith("PwrPort")
+                || n.StartsWith("HullPort")
+                || n.StartsWith("DockPort")
+                || n.StartsWith("DrumPort")
+                || n.StartsWith("ModulePort")
+                || n.StartsWith("CardinalPort");
+        }
+
+        /// <summary>
         /// Rotate so the thinnest world AABB axis becomes up — seats Copilot rocks with a
         /// flat cut face down instead of standing that face vertical.
         /// </summary>
@@ -220,7 +281,7 @@ namespace SolarMajesty
             // Do not overlay SM_ModularTubeConnector and do not run IndustrialArtDressing
             // here — "airlock" in a mesh name was painting the hub solid orange.
 
-            SnapToGround(root);
+            SnapToGroundKeepingDockAxis(root);
             return root;
         }
 

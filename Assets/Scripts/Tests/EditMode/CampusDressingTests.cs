@@ -63,6 +63,72 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void LiveCommons_GeodesicLattice_NoCyanWaistVisors()
+        {
+            var commons = ModularBuildingFactory.Spawn(
+                BuildingCategory.Commons, Vector3.zero, _root.transform);
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsGeo_0"),
+                "dream-loop: geodesic facets must dress the dome");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
+                "orange equatorial band");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsCupolaBand"),
+                "orange cupola band");
+            Assert.IsNull(FindChild(commons.transform, "CommonsVisor_1"),
+                "cyan waist visors washed the sheet white — removed");
+            Assert.IsNull(FindChild(commons.transform, "CommonsVisor_3"));
+            Color stripe = Albedo(FindChild(commons.transform, "CommonsStripe"));
+            Assert.Greater(stripe.r, 0.85f);
+            Assert.Less(stripe.g, 0.55f);
+        }
+
+        [Test]
+        public void LiveHab_ThickCarbonMidBand_AndOrangeRimHatches()
+        {
+            var hab = ModularBuildingFactory.Spawn(
+                BuildingCategory.Habitat, Vector3.zero, _root.transform);
+            Transform mid = FindChild(hab.transform, "HabMid");
+            Assert.IsNotNull(mid);
+            // Unity cylinder height = 2 * scale.y; band must cover ~22% of HAB length.
+            float length = 6f * 0.92f;
+            float midLen = mid.localScale.y * 2f;
+            Assert.Greater(midLen / length, 0.18f, "mid-band must read thick at ortho 10");
+            Assert.Less(midLen / length, 0.30f);
+            Assert.Less(Albedo(mid).grayscale, 0.25f, "mid-band stays carbon");
+            Assert.IsNotNull(FindChild(hab.transform, "HabFrontRim"));
+            Assert.IsNotNull(FindChild(hab.transform, "HabRearRim"));
+            Color rim = Albedo(FindChild(hab.transform, "HabFrontRim"));
+            Assert.Greater(rim.r, 0.85f);
+            Assert.Less(rim.g, 0.55f);
+        }
+
+        [Test]
+        public void SnapToGroundKeepingDockAxis_PreservesSharedDockY()
+        {
+            var airlock = ModularBuildingFactory.Spawn(
+                BuildingCategory.Utility, Vector3.zero, _root.transform);
+            Transform tube = FindChild(airlock.transform, "Dress_TubeArm_N_Tube");
+            Assert.IsNotNull(tube);
+            float before = tube.position.y;
+            // Force a ground seat that would otherwise slide docks off DockY.
+            airlock.transform.position += new Vector3(0f, 0.35f, 0f);
+            ColonyVisualUtility.SnapToGroundKeepingDockAxis(airlock);
+            Assert.AreEqual(before, tube.position.y, 0.04f,
+                "airlock arms must stay on ColonyVisualUtility.DockY after seating");
+            Assert.AreEqual(ColonyVisualUtility.DockY, tube.position.y, 0.08f);
+        }
+
+        [Test]
+        public void MarsCatalog_SalmonHorizonHaze()
+        {
+            var mars = CelestialBodyCatalog.Get(CelestialBodyId.Mars);
+            Assert.AreEqual(0.82f, mars.FogColor.r, 0.03f);
+            Assert.AreEqual(0.51f, mars.FogColor.g, 0.03f);
+            Assert.AreEqual(0.27f, mars.FogColor.b, 0.03f);
+            Assert.Greater(mars.FogStart, 30f);
+            Assert.Less(mars.FogEnd, 185f);
+        }
+
+        [Test]
         public void GhostCommons_ShowsAllCardinalPorts()
         {
             var ghost = ModularBuildingFactory.Spawn(

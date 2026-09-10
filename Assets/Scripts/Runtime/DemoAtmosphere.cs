@@ -47,8 +47,10 @@ namespace SolarMajesty
             sun.color = body.SunColor;
             sun.intensity = body.SunIntensity;
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = body.Id == CelestialBodyId.Mars || body.Id == CelestialBodyId.Luna
-                ? 0.90f
+            // Mars concept wants long readable shadows, not hard black plates.
+            sun.shadowStrength = body.Id == CelestialBodyId.Mars
+                ? 0.78f
+                : body.Id == CelestialBodyId.Luna ? 0.90f
                 : body.Id == CelestialBodyId.Earth ? 0.84f : 0.72f;
             sun.shadowBias = 0.04f;
             sun.shadowNormalBias = 0.55f;
@@ -102,12 +104,14 @@ namespace SolarMajesty
 
         /// <summary>
         /// Density chosen so fog reaches roughly half strength at the body's FogEnd, keeping the
-        /// campus itself unfogged while the far vista still recedes.
+        /// campus itself unfogged while the far vista still recedes. Mars pushes a touch denser
+        /// so the far third reads salmon haze (dream-loop round 1) without washing hulls.
         /// </summary>
         private static float FogDensityFor(CelestialBodyProfile body)
         {
             float horizon = Mathf.Max(60f, body.FogEnd);
-            return Mathf.Clamp(0.9f / horizon, 0.0015f, 0.02f);
+            float strength = body.Id == CelestialBodyId.Mars ? 1.15f : 0.9f;
+            return Mathf.Clamp(strength / horizon, 0.0015f, 0.02f);
         }
 
         private static void ConfigureCamera(Camera cam, CelestialBodyProfile body)

@@ -65,8 +65,14 @@ This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not 
 
 - If hulls wash orange: do not raise Mars dust on `IndustrialArtDressing.BindBody` (Mars dust amount stays low so white reads).
 - If ground looks flat: confirm `Assets/Resources/Environment/Textures/SM_Ground_Mars_*` imported (albedo Default, normal = Normal map, Repeat) and `PlanetGround` `_DetailTexAmount` is non-zero.
-- If the horizon does not recede: confirm Mars `DemoAtmosphere` fog is on (exponential-squared, campus unfogged, distant haze).
+- If the horizon does not recede: confirm Mars `DemoAtmosphere` fog is on (exponential-squared, campus unfogged, distant haze). Dream-loop round 1 pushed salmon fog (`FogColor` ~RGB 210/130/70) plus distant `Dress_MarsHazeRidge_*` skirts.
 - If interconnect tubes appear: `SpawnTubeRuns` must stay **gone**; `RefreshTubes` only enables docked Lego ports and destroys leftover `CampusDress_TubeRuns` roots.
+- If docks step / gap: kits must seat via `SnapToGroundKeepingDockAxis` so arms stay on `ColonyVisualUtility.DockY`.
+- If Commons reads soft-sphere / cyan waist: live kit now has `CommonsGeo_*` facets + orange cupola/equator bands; cyan waist visors are removed.
+
+### Cloud agents (no Unity)
+
+This Cloud VM cannot run Play Mode or write `SM_Capture.png`. Do the look pass in code/assets, leave `.dream-loop/` notes, and ask GD for **Solar Majesty → Capture Mars Still**. **Do not invent a judge score** from archived stills alone when claiming EXIT — archived stills may guide a round, but EXIT needs a fresh Capture.
 
 ### Bake (no Imagine required)
 

@@ -101,7 +101,8 @@ namespace SolarMajesty
             ColonyVisualUtility.EnsureUrpMaterials(root);
             // Do not SetTintOverlay here — MPB _BaseColor replaces orange/cyan/carbon
             // and flattens hero kits into greybox hulls. Body grade lives in atmosphere.
-            ColonyVisualUtility.SnapToGround(root);
+            // Keep DockY / DockBore flush after seating FBX or floating pivots.
+            ColonyVisualUtility.SnapToGroundKeepingDockAxis(root);
             if (ghost)
                 StripColliders(root);
             return root;
