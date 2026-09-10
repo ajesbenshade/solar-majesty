@@ -324,8 +324,9 @@ namespace SolarMajesty
             switch (slot)
             {
                 case Slot.BlackCarbon:
-                    baseColor = new Color(0.11f, 0.11f, 0.12f);
-                    metallic = 0.35f; smooth = 0.26f; panelScale = 0.85f;
+                    // Charcoal, not pure black: concept bands sit ~70/66/62 lit.
+                    baseColor = new Color(0.22f, 0.21f, 0.20f);
+                    metallic = 0.20f; smooth = 0.26f; panelScale = 0.85f;
                     dust *= 0.8f;
                     break;
                 case Slot.Graphite:
@@ -346,9 +347,11 @@ namespace SolarMajesty
                     baseColor = new Color(0.66f, 0.15f, 0.13f);
                     metallic = 0.12f; smooth = 0.38f; panelScale = 0.7f;
                     break;
-                default: // WhiteHull
-                    baseColor = new Color(0.98f, 0.98f, 0.97f);
-                    metallic = 0.07f; smooth = 0.40f; panelScale = 1.0f;
+                default: // WhiteHull — warm cream (concept whites R-B ~ +50), not cool white.
+                    // Kept under ~0.88 so sun-facing facets do not clip through ACES to neutral.
+                    baseColor = new Color(0.90f, 0.75f, 0.60f);
+                    // Matte: glossy whites mirrored the sky zenith and read cool/cyan.
+                    metallic = 0.03f; smooth = 0.18f; panelScale = 1.0f;
                     break;
             }
 
@@ -357,10 +360,10 @@ namespace SolarMajesty
             mat.SetFloat("_Smoothness", smooth);
             mat.SetFloat("_PanelScale", panelScale);
             mat.SetFloat("_PanelWidth", 0.020f);
-            mat.SetFloat("_PanelDarken", slot == Slot.WhiteHull ? 0.42f : 0.30f);
+            mat.SetFloat("_PanelDarken", slot == Slot.WhiteHull ? 0.30f : 0.30f);
             mat.SetFloat("_PanelBevel", 0.40f);
             mat.SetColor("_WearColor", new Color(0.30f, 0.29f, 0.28f));
-            mat.SetFloat("_WearAmount", slot == Slot.Steel ? 0.26f : 0.16f);
+            mat.SetFloat("_WearAmount", slot == Slot.Steel ? 0.26f : slot == Slot.WhiteHull ? 0.10f : 0.16f);
             mat.SetFloat("_WearScale", 5.5f);
             mat.SetColor("_DustColor", _dustColor);
             mat.SetFloat("_DustAmount", dust);

@@ -2547,6 +2547,19 @@ namespace SolarMajesty
             var farm = Village.NearestByCategory(campus, 80f, BuildingCategory.Farm);
             if (farm != null)
                 salt = StampCrossingPair(root, c, farm.transform.position, 0.48f, 0.60f, 1.6f, salt);
+            if (pad != null && farm != null)
+            {
+                // Fourth crossing on the yard→pad line, plus a cargo crate on the open dirt
+                // camera-side of the pad so the empty ground reads as worked, not vacant.
+                Vector3 toCam = new Vector3(-1f, 0f, -1f).normalized;
+                Vector3 mid = Vector3.Lerp(farm.transform.position, pad.transform.position, 0.55f) + toCam * 1.2f;
+                mid.y = 0f;
+                Vector3 dir = pad.transform.position - farm.transform.position;
+                HeroBuildingKits.BuildSpacesuitFigure(root, mid, Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg, salt++);
+                Vector3 crate = pad.transform.position + toCam * 6.4f + new Vector3(1.6f, 0f, -1.6f);
+                crate.y = 0f;
+                HeroBuildingKits.BuildCargoCrate(root, crate, 28f, 0);
+            }
             if (salt > 0)
                 Debug.Log($"[GameLoop] Stamp still suit crossings={salt}");
         }

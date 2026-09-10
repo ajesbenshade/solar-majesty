@@ -50,7 +50,7 @@ namespace SolarMajesty
             // Mars concept wants long readable shadows, not hard black plates: shadowed dirt
             // should hold >= 60 % of lit-dirt luminance (dream-loop round 6 Tier 2 gate).
             sun.shadowStrength = body.Id == CelestialBodyId.Mars
-                ? 0.60f
+                ? 0.62f
                 : body.Id == CelestialBodyId.Luna ? 0.90f
                 : body.Id == CelestialBodyId.Earth ? 0.84f : 0.72f;
             sun.shadowBias = 0.04f;
@@ -89,9 +89,22 @@ namespace SolarMajesty
             RenderSettings.ambientGroundColor = body.AmbientGround;
             RenderSettings.ambientIntensity = 1f;
 
-            // Glossy dark surfaces (PV cells, pad deck, carbon bands) mirror the procedural sky;
-            // on Mars that sky is saturated orange, so specular picks up a salmon cast. Halve it.
-            RenderSettings.reflectionIntensity = body.Id == CelestialBodyId.Mars ? 0.5f : 1f;
+            // Glossy surfaces mirror the environment. The Procedural skybox keeps a Rayleigh-blue
+            // zenith even with an orange tint, which put a cool cast on every white hull; Mars
+            // reflects a warm dust cubemap instead (salmon horizon, muted ochre zenith).
+            if (body.Id == CelestialBodyId.Mars)
+            {
+                RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Custom;
+                RenderSettings.customReflectionTexture = MarsReflectionCube(body);
+                RenderSettings.reflectionIntensity = 0.30f;
+                DynamicGI.UpdateEnvironment();
+            }
+            else
+            {
+                RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Skybox;
+                RenderSettings.customReflectionTexture = null;
+                RenderSettings.reflectionIntensity = 1f;
+            }
 
             RenderSettings.fog = true;
             RenderSettings.fogColor = body.FogColor;
@@ -128,6 +141,49 @@ namespace SolarMajesty
         {
             float horizon = Mathf.Max(60f, body.FogEnd);
             return Mathf.Clamp(0.9f / horizon, 0.0015f, 0.02f);
+        }
+
+        private static Cubemap _marsReflection;
+
+        /// <summary>Small warm dust-sky cubemap: horizon = fog colour, zenith = muted ochre.</summary>
+        private static Cubemap MarsReflectionCube(CelestialBodyProfile body)
+        {
+            if (_marsReflection != null) return _marsReflection;
+            const int size = 16;
+            var cube = new Cubemap(size, TextureFormat.RGBA32, false) { name = "SM_MarsReflection" };
+            Color zenith = new Color(0.62f, 0.40f, 0.24f);
+            Color horizon = body.FogColor;
+            Color ground = Color.Lerp(body.GroundLight, body.GroundDark, 0.5f);
+            var px = new Color[size * size];
+            for (int f = 0; f < 6; f++)
+            {
+                var face = (CubemapFace)f;
+                for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float u = (x + 0.5f) / size * 2f - 1f;
+                    float v = (y + 0.5f) / size * 2f - 1f;
+                    Vector3 dir = face switch
+                    {
+                        CubemapFace.PositiveX => new Vector3(1f, -v, -u),
+                        CubemapFace.NegativeX => new Vector3(-1f, -v, u),
+                        CubemapFace.PositiveY => new Vector3(u, 1f, v),
+                        CubemapFace.NegativeY => new Vector3(u, -1f, -v),
+                        CubemapFace.PositiveZ => new Vector3(u, -v, 1f),
+                        _ => new Vector3(-u, -v, -1f)
+                    };
+                    dir.Normalize();
+                    Color c = dir.y >= 0f
+                        ? Color.Lerp(horizon, zenith, Mathf.Pow(dir.y, 0.7f))
+                        : Color.Lerp(horizon, ground, Mathf.Pow(-dir.y, 0.5f));
+                    c.a = 1f;
+                    px[y * size + x] = c;
+                }
+                cube.SetPixels(px, face);
+            }
+            cube.Apply();
+            _marsReflection = cube;
+            return cube;
         }
 
         private static void ConfigureCamera(Camera cam, CelestialBodyProfile body)

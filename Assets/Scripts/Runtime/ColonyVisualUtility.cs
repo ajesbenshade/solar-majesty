@@ -499,7 +499,8 @@ namespace SolarMajesty
             ring.transform.SetParent(group.transform, false);
             ring.transform.localPosition = at + dir * DockCollarOut;
             ring.transform.localRotation = rot;
-            ring.transform.localScale = new Vector3(DockBore * 1.18f, 0.045f, DockBore * 1.18f);
+            // Thin ring: at 1.18x the disc face read as a fat orange crescent from the iso camera.
+            ring.transform.localScale = new Vector3(DockBore * 1.08f, 0.045f, DockBore * 1.08f);
             Object.Destroy(ring.GetComponent<Collider>());
             TintPrimitive(ring, HubOrange);
 

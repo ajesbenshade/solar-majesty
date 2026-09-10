@@ -40,7 +40,8 @@ namespace SolarMajesty
                 groundMat.SetFloat("_MacroScale", body.Id == CelestialBodyId.Earth ? 34f : 46f);
                 groundMat.SetFloat("_MacroStrength", 0.38f);
                 groundMat.SetFloat("_DetailScale", 2.4f);
-                groundMat.SetFloat("_DetailStrength", body.Id == CelestialBodyId.Europa ? 0.12f : 0.24f);
+                groundMat.SetFloat("_DetailStrength",
+                    body.Id == CelestialBodyId.Europa ? 0.12f : body.Id == CelestialBodyId.Mars ? 0.34f : 0.24f);
                 groundMat.SetFloat("_Smoothness", body.Id == CelestialBodyId.Europa ? 0.30f : 0.06f);
                 BindAuthoredGroundDetail(groundMat, body);
 
@@ -173,7 +174,7 @@ namespace SolarMajesty
             if (groundMat.HasProperty("_DetailTexScale"))
                 groundMat.SetFloat("_DetailTexScale", body.Id == CelestialBodyId.Mars ? 8.5f : 6.5f);
             if (groundMat.HasProperty("_DetailTexAmount"))
-                groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.52f : 0.40f);
+                groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.60f : 0.40f);
         }
 
         /// <summary>
@@ -537,6 +538,16 @@ namespace SolarMajesty
                 SpawnVistaBoulder(root, at, body, i, 0.48f + (i % 4) * 0.16f);
             }
 
+            // Pebble scatter between the yards (concept dirt is grainy, not a smooth field).
+            for (int i = 0; i < 30; i++)
+            {
+                float ang = i * 2.399f + 0.9f;
+                float rad = 4.5f + (i % 7) * 1.15f;
+                Vector3 at = campus + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
+                // Odd salt => polyhedral Boulder_B; Boulder_A is a rubble pile on a square patch.
+                SpawnVistaBoulder(root, at, body, 201 + i * 2, 0.16f + (i % 3) * 0.07f);
+            }
+
             Vector3[] outcrops =
             {
                 campus + new Vector3(12.8f, 0f, 7.6f),
@@ -557,6 +568,41 @@ namespace SolarMajesty
             SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
             SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
             SpawnMarsHazeRidges(root, campus, body);
+            SpawnFarMesas(root, campus, body);
+        }
+
+        /// <summary>
+        /// Three low mesas on the far side of the campus (along the iso view azimuth +x+z,
+        /// 13.5–15.5 m out — the top HUD bar hides anything past ~17 m). At that depth the
+        /// Game-tab fog is 65–85 %, so they read as faint silhouettes breaking the flat
+        /// far-ground strip — the concept's distant relief.
+        /// </summary>
+        private static void SpawnFarMesas(Transform parent, Vector3 campus, CelestialBodyProfile body)
+        {
+            Vector3 fwd = new Vector3(1f, 0f, 1f).normalized;
+            Vector3 right = new Vector3(1f, 0f, -1f).normalized;
+            // ~12 % darker than the fog they sit in, so they read as hazy relief, not a wall.
+            Color c = Color.Lerp(body.FogColor, body.Horizon, 0.45f);
+            c.a = 1f;
+            (float f, float r, float span, float h)[] mesas =
+            {
+                (14.0f, -9.0f, 7.5f, 1.8f),
+                (15.5f, 1.5f, 8.0f, 2.2f),
+                (13.5f, 10.0f, 6.0f, 1.5f),
+                (15.0f, -4.0f, 4.5f, 1.2f)
+            };
+            for (int i = 0; i < mesas.Length; i++)
+            {
+                var m = mesas[i];
+                var mesa = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                mesa.name = "Dress_MarsMesa_" + i;
+                mesa.transform.SetParent(parent, false);
+                mesa.transform.position = campus + fwd * m.f + right * m.r + Vector3.up * (m.h * 0.15f);
+                mesa.transform.localScale = new Vector3(m.span, m.h * 2f, m.span * 0.55f);
+                mesa.transform.rotation = Quaternion.Euler(0f, 45f + i * 9f, 0f);
+                Object.Destroy(mesa.GetComponent<Collider>());
+                PlanetaryWorldGen.Tint(mesa, c, 0.04f, ShadowCastingMode.Off);
+            }
         }
 
         /// <summary>

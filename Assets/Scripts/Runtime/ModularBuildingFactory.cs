@@ -31,8 +31,9 @@ namespace SolarMajesty
                     _bodyHull = new Color(0.68f, 0.70f, 0.72f);
                     break;
                 case CelestialBodyId.Mars:
-                    // Sheet is white/black/orange. Do not lerp Mars dirt into the hull.
-                    _bodyHull = new Color(0.98f, 0.98f, 0.99f);
+                    // Sheet is white/black/orange. Do not lerp Mars dirt into the hull — but the
+                    // white is warm cream (concept ~224/198/175 lit), never cool.
+                    _bodyHull = new Color(0.92f, 0.86f, 0.78f);
                     break;
                 case CelestialBodyId.Belt:
                     _bodyHull = new Color(0.42f, 0.40f, 0.38f);
@@ -418,7 +419,7 @@ namespace SolarMajesty
             if (!hullHasPort)
             {
                 DressCyl(group.transform, name + "_Collar", hullEnd + dir * 0.02f, along,
-                    new Vector3(bore * 1.16f, 0.045f, bore * 1.16f), AirlockColor());
+                    new Vector3(bore * 1.08f, 0.045f, bore * 1.08f), AirlockColor());
             }
 
             if (!ghost)
@@ -482,8 +483,9 @@ namespace SolarMajesty
         private static Color HeroHull()
         {
             Color sheet = new Color(0.98f, 0.98f, 0.99f);
-            // Mars BindBody is already sheet-white. Other bodies may lean a little.
-            float t = _bodyHull.g > 0.9f ? 0f : 0.16f;
+            // Mars BindBody is already sheet-white (warm). Other bodies may lean a little.
+            float t = _bodyHull.g > 0.85f ? 0f : 0.16f;
+            if (_bodyHull.g > 0.85f) return _bodyHull;
             return Color.Lerp(sheet, _bodyHull, t);
         }
         private static Color AirlockColor() => new Color(0.96f, 0.42f, 0.08f);

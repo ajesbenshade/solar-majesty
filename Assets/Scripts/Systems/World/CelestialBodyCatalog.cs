@@ -213,10 +213,10 @@ namespace SolarMajesty
                 // Dusty brown-orange, not blood-red: concept lit dirt is ~RGB 144/65/28 (G/R 0.45).
                 // ACES + the warm sun pull G down, so the albedo carries extra G/B headroom.
                 // Round 7 judge: lit dirt rendered 160/60/20 (B/R 0.12) — desaturate by lifting B.
-                GroundLight = new Color(0.66f, 0.45f, 0.33f),
+                GroundLight = new Color(0.66f, 0.52f, 0.38f),
                 GroundDark = new Color(0.44f, 0.27f, 0.18f),
                 Horizon = new Color(0.56f, 0.32f, 0.20f),
-                RockColor = new Color(0.46f, 0.31f, 0.22f),
+                RockColor = new Color(0.36f, 0.24f, 0.16f),
                 CraterRim = new Color(0.60f, 0.38f, 0.24f),
                 CraterFloor = new Color(0.32f, 0.19f, 0.12f),
                 DuneColor = new Color(0.70f, 0.47f, 0.34f),
@@ -228,9 +228,12 @@ namespace SolarMajesty
                 // Higher sun so flat dirt takes direct light and sun-facing rock walls stop
                 // out-shining it (round 7 "beige cube" boulders); less orange so hull whites
                 // read white rather than tan.
+                // Yaw -20: the iso camera looks along +x+z, so the sun must light -x / -z faces
+                // or every camera-facing hull side sits on its own terminator (round 9: HAB dark
+                // tan, rocket 40 % brown core). Shadows fall left and slightly up-frame.
                 SunColor = new Color(1f, 0.91f, 0.72f),
-                SunIntensity = 1.18f,
-                SunEuler = new Vector3(38f, -62f, 0f),
+                SunIntensity = 1.12f,
+                SunEuler = new Vector3(38f, -20f, 0f),
                 GradeFilter = new Color(1.00f, 0.99f, 0.97f),
                 AmbientHum = 58f,
                 FillColor = new Color(0.92f, 0.90f, 0.88f),
@@ -239,8 +242,9 @@ namespace SolarMajesty
                 AmbientSky = new Color(0.72f, 0.62f, 0.54f),
                 AmbientEquator = new Color(0.52f, 0.40f, 0.32f),
                 AmbientGround = new Color(0.30f, 0.17f, 0.10f),
-                // Pale dusty haze (concept far-ground edge ~RGB 222/140/80).
-                FogColor = new Color(0.87f, 0.55f, 0.31f),
+                // Pale dusty haze: concept far-ground edge ~RGB 222/140/80 *after* the ACES
+                // grade, which pulls 222/140/79 down to ~200/134/66, so the raw value sits higher.
+                FogColor = new Color(0.98f, 0.61f, 0.40f),
                 // Linear ramp tuned to the ortho-10 Game tab (IsometricCameraController: pitch
                 // 30°, camera y 22, focus on the centre ray => focus at 44 m view depth, ground
                 // spans ~27 m at the bottom edge to ~61 m at the top edge, ±20 m along the view

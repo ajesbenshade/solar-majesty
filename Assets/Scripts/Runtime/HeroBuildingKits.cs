@@ -11,10 +11,14 @@ namespace SolarMajesty
     /// </summary>
     public static class HeroBuildingKits
     {
-        private static readonly Color White = new Color(0.97f, 0.97f, 0.99f);
-        private static readonly Color Carbon = new Color(0.07f, 0.07f, 0.08f);
+        // Concept whites are warm cream (lit ~RGB 224/198/175), never cool; carbon reads as
+        // charcoal (~30/24/16 lit), never pure black (dream-loop round 8 Tier 3).
+        private static readonly Color White = new Color(0.88f, 0.82f, 0.74f);
+        private static readonly Color Carbon = new Color(0.20f, 0.19f, 0.18f);
         private static readonly Color Graphite = new Color(0.16f, 0.17f, 0.19f);
         private static readonly Color Steel = new Color(0.42f, 0.44f, 0.48f);
+        // Commons undershell seen through facet insets: concept seams ~150/135/120, not black.
+        private static readonly Color SeamGrey = new Color(0.40f, 0.36f, 0.32f);
         private static readonly Color Orange = new Color(0.96f, 0.42f, 0.08f);
         private static readonly Color Yellow = new Color(0.95f, 0.82f, 0.12f);
         private static readonly Color Concrete = new Color(0.40f, 0.41f, 0.43f);
@@ -27,7 +31,7 @@ namespace SolarMajesty
         private static readonly Color Dust = new Color(0.52f, 0.36f, 0.22f);
         // Navy-charcoal PV face. Max component >= 0.2 keeps Tint() at metallic 0.08 so the
         // cells do not mirror the orange Mars sky (the 0.05 charcoal at metallic 0.4 read salmon).
-        private static readonly Color SolarCell = new Color(0.12f, 0.14f, 0.21f);
+        private static readonly Color SolarCell = new Color(0.09f, 0.11f, 0.19f);
         private static readonly Color SolarEmit = new Color(0.04f, 0.18f, 0.55f);
         private static readonly Color Glass = new Color(0.48f, 0.72f, 0.82f);
         private static readonly Color GlassEmit = new Color(0.06f, 0.22f, 0.28f);
@@ -106,16 +110,18 @@ namespace SolarMajesty
                 new Vector3(0.10f, 0.55f, 0.55f), White);
             Prim(root, "HabFrontRim", PrimitiveType.Cube,
                 new Vector3(-length * 0.545f, z, 0f),
-                new Vector3(0.04f, 0.62f, 0.62f), Orange);
+                new Vector3(0.04f, 0.62f, 0.62f), Graphite);
             Prim(root, "HabRearFrame", PrimitiveType.Cube,
                 new Vector3(length * 0.50f, z, 0f),
                 new Vector3(0.06f, 1.32f, 0.88f), Carbon);
+            // Rear end keeps the dock sleeve's single orange collar; door + rim stay neutral so
+            // collars do not stack three deep (dream-loop round 8).
             Prim(root, "HabRearDoor", PrimitiveType.Cube,
                 new Vector3(length * 0.48f, z, 0f),
-                new Vector3(0.10f, 1.15f, 0.72f), Orange);
+                new Vector3(0.10f, 1.15f, 0.72f), Steel);
             Prim(root, "HabRearRim", PrimitiveType.Cube,
                 new Vector3(length * 0.505f, z, 0f),
-                new Vector3(0.04f, 1.40f, 0.96f), Orange);
+                new Vector3(0.04f, 1.40f, 0.96f), Graphite);
             Prim(root, "HabSideFrame", PrimitiveType.Cube,
                 new Vector3(0.12f, z, -radius * 1.02f),
                 new Vector3(1.05f, 1.35f, 0.08f), Carbon);
@@ -199,10 +205,11 @@ namespace SolarMajesty
                 new Vector3(0f, 1.72f, 0f),
                 new Vector3(radius * 2.12f, 0.06f, radius * 2.12f), Orange);
 
-            // Undershell stays slightly inset so geodesic facets own the silhouette.
-            Prim(root, "CommonsDome", PrimitiveType.Sphere,
+            // Dark undershell just under the facet shell: it shows only through the facet
+            // insets, which is what draws the seam lattice.
+            Prim(root, "Dress_CommonsDomeUnder", PrimitiveType.Sphere,
                 new Vector3(0f, 1.85f, 0f),
-                new Vector3(radius * 1.92f, radius * 1.38f, radius * 1.92f), hull);
+                new Vector3(radius * 1.96f, radius * 1.42f, radius * 1.96f), SeamGrey);
             PlaceGeodesicLattice(root, radius, hull);
 
             Prim(root, "CommonsDomeBand", PrimitiveType.Cylinder,
@@ -212,28 +219,25 @@ namespace SolarMajesty
                 new Vector3(0f, 2.98f, 0f),
                 new Vector3(radius * 1.48f, 0.03f, radius * 1.48f), Carbon);
 
+            // Cupola sits on the geodesic shell apex (1.85 + 0.74 r): a squat cream drum with
+            // one orange ring and a cream cap — the concept apex, not a tall black pole.
+            float domeTop = 1.85f + radius * 0.74f;
             Prim(root, "CommonsCupolaLo", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.55f, 0f),
-                new Vector3(radius * 0.56f, 0.21f, radius * 0.56f), White);
+                new Vector3(0f, domeTop + 0.04f, 0f),
+                new Vector3(radius * 0.30f, 0.12f, radius * 0.30f), White);
             Prim(root, "CommonsCupolaBand", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.72f, 0f),
-                new Vector3(radius * 0.62f, 0.045f, radius * 0.62f), Orange);
+                new Vector3(0f, domeTop + 0.16f, 0f),
+                new Vector3(radius * 0.32f, 0.035f, radius * 0.32f), Orange);
             Prim(root, "CommonsCupolaHi", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.95f, 0f),
-                new Vector3(radius * 0.36f, 0.16f, radius * 0.36f), White);
+                new Vector3(0f, domeTop + 0.26f, 0f),
+                new Vector3(radius * 0.22f, 0.07f, radius * 0.22f), White);
             Prim(root, "CommonsCupolaCap", PrimitiveType.Cylinder,
-                new Vector3(0f, 4.14f, 0f),
-                new Vector3(radius * 0.40f, 0.04f, radius * 0.40f), Carbon);
-            Prim(root, "CommonsAntenna", PrimitiveType.Cylinder,
-                new Vector3(0f, 4.75f, 0f),
-                new Vector3(0.09f, 0.58f, 0.09f), Steel);
-            Prim(root, "CommonsPack", PrimitiveType.Sphere,
-                new Vector3(0.42f, 5.15f, 0f),
-                new Vector3(0.56f, 0.16f, 0.56f), Graphite);
-            // Cupola beacon only — cyan waist visors washed the sheet white at Game-tab range.
+                new Vector3(0f, domeTop + 0.345f, 0f),
+                new Vector3(radius * 0.24f, 0.02f, radius * 0.24f), Graphite);
+            // Small warm beacon only — cyan waist visors washed the sheet white at Game-tab range.
             Prim(root, "CommonsVisorBeacon", PrimitiveType.Sphere,
-                new Vector3(0f, 5.45f, 0f),
-                new Vector3(0.18f, 0.18f, 0.18f), Cyan, CyanEmit * 0.55f);
+                new Vector3(0f, domeTop + 0.44f, 0f),
+                new Vector3(0.12f, 0.12f, 0.12f), Orange, new Color(0.9f, 0.35f, 0.05f));
 
             // Cardinal hull ports (CommonsPort_N/E/S/W). Live groups start off.
             // RefreshTubes shows docked faces only — still5 unused orange rings
@@ -259,52 +263,20 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Triangular-ish geodesic panels on the Commons dome. Reads as a polyhedron at
-        /// ortho 10 instead of a soft sphere with a square tile wash.
+        /// One flat-shaded geodesic shell (frequency-4 icosphere on the dome ellipsoid) whose
+        /// facets are inset so the dark undershell reads as a thin seam lattice. Coplanar
+        /// triangles replace the earlier scatter of tilted plates that read as shingles.
         /// </summary>
         private static void PlaceGeodesicLattice(Transform root, float radius, Color hull)
         {
-            Vector3 center = new Vector3(0f, 1.85f, 0f);
-            float rx = radius * 1.02f;
-            float ry = radius * 0.74f;
-            float rz = radius * 1.02f;
-            int panel = 0;
-            // Latitude rings (skip bottom under the drum) + staggered longitude so edges
-            // triangulate instead of reading as a square grid.
-            float[] lats = { 12f, 28f, 44f, 58f, 72f };
-            for (int li = 0; li < lats.Length; li++)
-            {
-                float lat = lats[li] * Mathf.Deg2Rad;
-                int segs = 10 + li * 2;
-                float yawOff = (li % 2) * (180f / segs);
-                float panelW = radius * (0.30f - li * 0.028f);
-                float panelH = radius * (0.22f - li * 0.018f);
-                for (int s = 0; s < segs; s++)
-                {
-                    float lon = (s * 360f / segs + yawOff) * Mathf.Deg2Rad;
-                    Vector3 n = new Vector3(
-                        Mathf.Cos(lat) * Mathf.Sin(lon),
-                        Mathf.Sin(lat),
-                        Mathf.Cos(lat) * Mathf.Cos(lon));
-                    Vector3 at = center + new Vector3(n.x * rx, n.y * ry, n.z * rz);
-                    Quaternion rot = Quaternion.LookRotation(n) * Quaternion.Euler(90f, (s + li) * 17f, 0f);
-                    Color panelCol = ((s + li) % 3 == 0) ? White : hull;
-                    Prim(root, "CommonsGeo_" + panel, PrimitiveType.Cube,
-                        at,
-                        new Vector3(panelW, 0.028f, panelH),
-                        panelCol, rot);
-                    panel++;
-                    // Thin carbon strut along the long edge so facets read triangular.
-                    if (s % 2 == 0)
-                    {
-                        Prim(root, "CommonsGeoStrut_" + panel, PrimitiveType.Cube,
-                            at + n * 0.02f,
-                            new Vector3(panelW * 0.92f, 0.018f, 0.022f),
-                            Carbon, rot);
-                        panel++;
-                    }
-                }
-            }
+            var radii = new Vector3(radius * 1.02f, radius * 0.74f, radius * 1.02f);
+            Mesh mesh = GeodesicDomeMesh.Build(4, radii, -0.22f, 0.06f);
+            var shell = new GameObject("CommonsGeo_0");
+            shell.transform.SetParent(root, false);
+            shell.transform.localPosition = new Vector3(0f, 1.85f, 0f);
+            shell.AddComponent<MeshFilter>().sharedMesh = mesh;
+            shell.AddComponent<MeshRenderer>();
+            Tint(shell, White);
         }
 
         public static void BuildLandingPad(Transform root, float w, float d, Color hull)
@@ -1426,7 +1398,7 @@ namespace SolarMajesty
             }
             Prim(root, prefix + "Beam", PrimitiveType.Cube,
                 at + new Vector3(0f, 2.2f, 0f),
-                new Vector3(width, 0.07f, 0.07f), Yellow);
+                new Vector3(width, 0.07f, 0.07f), Concrete);
         }
 
         private static void SpawnParkedShip(Transform root)
@@ -1440,12 +1412,54 @@ namespace SolarMajesty
                 ship.transform.localPosition = Vector3.zero;
                 StripColliders(ship);
                 ColonyVisualUtility.EnsureUrpMaterials(ship);
+                WarmShipSkin(ship);
                 ColonyVisualUtility.SnapToGround(ship, root.position.y + 0.16f);
                 AddShipCarbonBands(root, ship);
                 return;
             }
 
             BuildProceduralShip(root);
+        }
+
+        /// <summary>
+        /// Still-campus dressing: a cargo crate on the open dirt so the yards read as worked.
+        /// </summary>
+        public static GameObject BuildCargoCrate(Transform parent, Vector3 worldPos, float yawDeg, int salt)
+        {
+            var root = new GameObject("Dress_CargoCrate_" + salt);
+            root.transform.SetParent(parent, false);
+            root.transform.position = worldPos;
+            root.transform.rotation = Quaternion.Euler(0f, yawDeg, 0f);
+            Prim(root.transform, "Dress_CrateBase", PrimitiveType.Cube,
+                new Vector3(0f, 0.06f, 0f), new Vector3(1.25f, 0.12f, 0.95f), Graphite);
+            Prim(root.transform, "Dress_CrateBox", PrimitiveType.Cube,
+                new Vector3(0f, 0.46f, 0f), new Vector3(1.10f, 0.70f, 0.80f), White);
+            Prim(root.transform, "Dress_CrateStrap", PrimitiveType.Cube,
+                new Vector3(0f, 0.46f, 0f), new Vector3(1.12f, 0.72f, 0.16f), Orange);
+            Prim(root.transform, "Dress_CrateLid", PrimitiveType.Cube,
+                new Vector3(0f, 0.83f, 0f), new Vector3(1.14f, 0.05f, 0.84f), Carbon);
+            if (salt % 2 == 0)
+                Prim(root.transform, "Dress_CrateDrum", PrimitiveType.Cylinder,
+                    new Vector3(0.95f, 0.36f, -0.15f), new Vector3(0.48f, 0.36f, 0.48f), Steel);
+            return root;
+        }
+
+        /// <summary>
+        /// Placeholder Starship skin is cool white and its shaded flank drops to ~33 % of lit;
+        /// concept body is warm cream with a soft terminator (~55 %). Re-tint the bright
+        /// renderers dielectric warm white and leave dark parts (engines) alone.
+        /// </summary>
+        private static void WarmShipSkin(GameObject ship)
+        {
+            foreach (var rend in ship.GetComponentsInChildren<Renderer>())
+            {
+                var m = rend.sharedMaterial;
+                if (m == null) continue;
+                Color c = m.HasProperty("_BaseColor") ? m.GetColor("_BaseColor")
+                    : m.HasProperty("_Color") ? m.color : Color.white;
+                if (c.maxColorComponent < 0.6f) continue;
+                Tint(rend.gameObject, White);
+            }
         }
 
         /// <summary>
@@ -1468,7 +1482,7 @@ namespace SolarMajesty
                 float y = b.min.y + h * (i == 0 ? 0.30f : 0.58f);
                 Vector3 local = root.InverseTransformPoint(new Vector3(b.center.x, y, b.center.z));
                 Prim(root, "Dress_ShipBand_" + i, PrimitiveType.Cylinder,
-                    local, new Vector3(dia, h * 0.03f, dia), Carbon);
+                    local, new Vector3(dia, h * 0.045f, dia), Carbon);
             }
         }
 
