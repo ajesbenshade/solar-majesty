@@ -210,13 +210,15 @@ namespace SolarMajesty
                 VictoryLog = "Mars holds. Belt Hauler is on the pad — trajectory into the rocks is open.",
                 FailLog = "Mars outpost overwhelmed. The red plaza is not yours until the party stands.",
                 EndlessLog = "Mars holds. Keep colonizing the red crust — rating stands, no hop.",
-                GroundLight = new Color(0.82f, 0.42f, 0.18f),
-                GroundDark = new Color(0.46f, 0.18f, 0.08f),
-                Horizon = new Color(0.56f, 0.26f, 0.12f),
-                RockColor = new Color(0.50f, 0.24f, 0.12f),
-                CraterRim = new Color(0.64f, 0.32f, 0.14f),
-                CraterFloor = new Color(0.34f, 0.14f, 0.07f),
-                DuneColor = new Color(0.86f, 0.46f, 0.20f),
+                // Dusty brown-orange, not blood-red: concept lit dirt is ~RGB 144/65/28 (G/R 0.45).
+                // ACES + the warm sun pull G down, so the albedo carries extra G/B headroom.
+                GroundLight = new Color(0.80f, 0.48f, 0.26f),
+                GroundDark = new Color(0.46f, 0.24f, 0.13f),
+                Horizon = new Color(0.58f, 0.30f, 0.16f),
+                RockColor = new Color(0.50f, 0.30f, 0.18f),
+                CraterRim = new Color(0.64f, 0.36f, 0.18f),
+                CraterFloor = new Color(0.34f, 0.17f, 0.09f),
+                DuneColor = new Color(0.84f, 0.50f, 0.26f),
                 SoilNodeColor = new Color(0.62f, 0.32f, 0.16f),
                 LairRim = new Color(0.22f, 0.07f, 0.05f),
                 LairPit = new Color(0.10f, 0.03f, 0.02f),
@@ -228,13 +230,18 @@ namespace SolarMajesty
                 GradeFilter = new Color(1.00f, 0.99f, 0.97f),
                 AmbientHum = 58f,
                 FillColor = new Color(0.92f, 0.90f, 0.88f),
-                AmbientSky = new Color(0.62f, 0.54f, 0.48f),
-                AmbientEquator = new Color(0.40f, 0.32f, 0.26f),
-                AmbientGround = new Color(0.18f, 0.09f, 0.05f),
-                // Salmon haze toward the horizon (concept top-band ~RGB 210,130,70).
-                FogColor = new Color(0.82f, 0.51f, 0.27f),
-                FogStart = 36f,
-                FogEnd = 175f,
+                // Lifted sky/ground fill so shadowed dirt reads >= 60 % of lit dirt (concept
+                // shadows are soft tints, not two-tone plates). Sun shadowStrength drops with it.
+                AmbientSky = new Color(0.72f, 0.62f, 0.54f),
+                AmbientEquator = new Color(0.52f, 0.40f, 0.32f),
+                AmbientGround = new Color(0.30f, 0.17f, 0.10f),
+                // Pale dusty haze (concept far-ground edge ~RGB 222/140/80).
+                FogColor = new Color(0.87f, 0.55f, 0.31f),
+                // Linear ramp tuned to the ortho-10 Game tab, whose ground spans ~22 m (bottom
+                // edge) to ~45 m (top edge) of view depth: campus centre (~34 m) stays ~11 %
+                // hazed, back-of-campus yards (~40 m) ~35 %, top-of-frame ground ~60 %.
+                FogStart = 32f,
+                FogEnd = 54f,
                 AtmosphereThickness = 1.08f,
                 SkyExposure = 1.10f,
                 CraterCount = 56,

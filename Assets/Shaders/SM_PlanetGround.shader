@@ -119,6 +119,16 @@ Shader "SolarMajesty/PlanetGround"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
+            // URP's ComputeFogFactor(positionCS.z) remaps clip-z assuming a perspective projection
+            // and collapses to ~0 under orthographic cameras (the ortho-10 Game tab), so
+            // RenderSettings fog never reached the far ground in play stills. Linear view depth
+            // gives the same haze read in perspective editor stills and the ortho Game tab.
+            float SM_FogCoord(float3 positionWS)
+            {
+                float viewZ = -TransformWorldToView(positionWS).z;
+                return ComputeFogFactorZ0ToFar(viewZ);
+            }
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -133,7 +143,6 @@ Shader "SolarMajesty/PlanetGround"
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS   : TEXCOORD1;
                 float4 color      : COLOR;
-                float  fogCoord   : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -152,7 +161,6 @@ Shader "SolarMajesty/PlanetGround"
                 output.positionWS = pos.positionWS;
                 output.normalWS = nrm.normalWS;
                 output.color = input.color;
-                output.fogCoord = ComputeFogFactor(pos.positionCS.z);
                 return output;
             }
 
@@ -197,7 +205,7 @@ Shader "SolarMajesty/PlanetGround"
                 inputData.normalWS = normalWS;
                 inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                inputData.fogCoord = input.fogCoord;
+                inputData.fogCoord = SM_FogCoord(input.positionWS);
                 inputData.bakedGI = SampleSH(normalWS);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
                 inputData.shadowMask = half4(1, 1, 1, 1);

@@ -47,9 +47,10 @@ namespace SolarMajesty
             sun.color = body.SunColor;
             sun.intensity = body.SunIntensity;
             sun.shadows = LightShadows.Soft;
-            // Mars concept wants long readable shadows, not hard black plates.
+            // Mars concept wants long readable shadows, not hard black plates: shadowed dirt
+            // should hold >= 60 % of lit-dirt luminance (dream-loop round 6 Tier 2 gate).
             sun.shadowStrength = body.Id == CelestialBodyId.Mars
-                ? 0.78f
+                ? 0.60f
                 : body.Id == CelestialBodyId.Luna ? 0.90f
                 : body.Id == CelestialBodyId.Earth ? 0.84f : 0.72f;
             sun.shadowBias = 0.04f;
@@ -88,13 +89,30 @@ namespace SolarMajesty
             RenderSettings.ambientGroundColor = body.AmbientGround;
             RenderSettings.ambientIntensity = 1f;
 
+            // Glossy dark surfaces (PV cells, pad deck, carbon bands) mirror the procedural sky;
+            // on Mars that sky is saturated orange, so specular picks up a salmon cast. Halve it.
+            RenderSettings.reflectionIntensity = body.Id == CelestialBodyId.Mars ? 0.5f : 1f;
+
             RenderSettings.fog = true;
+            RenderSettings.fogColor = body.FogColor;
+
+            if (body.Id == CelestialBodyId.Mars)
+            {
+                // The ortho-10 Game tab only spans ~22–45 m of view depth, so a steep linear ramp
+                // (profile FogStart/FogEnd) is the only way the far ground at the top of frame
+                // softens into salmon haze while the campus centre stays near-clear. Exp2 cannot
+                // do that over a 2x depth range without washing the hulls.
+                RenderSettings.fogMode = FogMode.Linear;
+                RenderSettings.fogStartDistance = body.FogStart;
+                RenderSettings.fogEndDistance = body.FogEnd;
+                RenderSettings.fogDensity = FogDensityFor(body);
+                return;
+            }
 
             // Exponential-squared fog holds off until the horizon instead of linearly tinting
             // everything past the start distance. Linear fog starting at 28 m was washing the whole
             // campus into one hue, which is why white hulls rendered orange in the Mars stills.
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = body.FogColor;
             RenderSettings.fogDensity = FogDensityFor(body);
 
             // Kept in sync so anything reading linear fog (or a quality tier that forces it) agrees.
@@ -104,15 +122,10 @@ namespace SolarMajesty
 
         /// <summary>
         /// Density chosen so fog reaches roughly half strength at the body's FogEnd, keeping the
-        /// campus itself unfogged while the far vista still recedes. Mars pushes denser for
-        /// ortho-10 Game-tab so the horizon softens without washing hulls.
+        /// campus itself unfogged while the far vista still recedes.
         /// </summary>
         private static float FogDensityFor(CelestialBodyProfile body)
         {
-            // Mars ortho-10: far ground fills the upper frame — need strong Exp2 haze so
-            // distant dirt softens into FogColor instead of reading as a black cut.
-            if (body.Id == CelestialBodyId.Mars)
-                return 0.028f;
             float horizon = Mathf.Max(60f, body.FogEnd);
             return Mathf.Clamp(0.9f / horizon, 0.0015f, 0.02f);
         }

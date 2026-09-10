@@ -65,7 +65,9 @@ This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not 
 
 - If hulls wash orange: do not raise Mars dust on `IndustrialArtDressing.BindBody` (Mars dust amount stays low so white reads).
 - If ground looks flat: confirm `Assets/Resources/Environment/Textures/SM_Ground_Mars_*` imported (albedo Default, normal = Normal map, Repeat) and `PlanetGround` `_DetailTexAmount` is non-zero.
-- If the horizon does not recede: confirm Mars `DemoAtmosphere` fog is on (exponential-squared, campus unfogged, distant haze). Dream-loop round 1 pushed salmon fog (`FogColor` ~RGB 210/130/70) plus distant `Dress_MarsHazeRidge_*` skirts.
+- If the horizon does not recede: confirm Mars `DemoAtmosphere` fog is on. Mars uses a **Linear** ramp (`FogStart`/`FogEnd` on the body), other bodies Exp2. The ortho Game tab never shows sky (top of frame is ground ~45 m from the camera), so haze must come from ground fog; backdrop quads were removed. Custom shaders (`SM_PlanetGround`, `SM_Hull`) compute fog from **view depth** (`SM_FogCoord`) because URP's clip-space `ComputeFogFactor` is ~0 under orthographic cameras.
+- If a batch (`Camera.Render`) still shows every hull one colour (black / brown / orange): that is the SRP Batcher leaking one material's constants in edit mode. `DemoContentBuilder.RenderWithoutSrpBatcher` disables the batcher around the capture; Play Mode is unaffected.
+- If the pad deck or carbon bands read as salmon plates: dark prims must stay dielectric (`HeroBuildingKits.Tint` metallic 0.12); the LandingPad FBX is skipped for the procedural pad for the same reason.
 - If interconnect tubes appear: `SpawnTubeRuns` must stay **gone**; `RefreshTubes` only enables docked Lego ports and destroys leftover `CampusDress_TubeRuns` roots.
 - If docks step / gap: kits must seat via `SnapToGroundKeepingDockAxis` so arms stay on `ColonyVisualUtility.DockY`.
 - If Commons reads soft-sphere / cyan waist: live kit now has `CommonsGeo_*` facets + orange cupola/equator bands; cyan waist visors are removed.
@@ -84,7 +86,7 @@ Unity -projectPath . \
   -executeMethod SolarMajesty.EditorTools.CaptureStill.Run
 ```
 
-Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. **Do not stamp EXIT** until Aaron look-clear.
+Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. Local rounds so far (fresh judge each): r2 3, r4–5 3 (haze blocked), r6 4 (haze landed; pad/dirt/shadow/solar palette blocked), r7 **5** (pad, shadows, crossings landed; fog reach / dirt hue / beige blocks still block Tier 2). **Do not stamp EXIT** until Aaron look-clear.
 
 ### Cloud agents (no Unity)
 

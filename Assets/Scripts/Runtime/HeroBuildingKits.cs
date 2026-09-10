@@ -18,12 +18,16 @@ namespace SolarMajesty
         private static readonly Color Orange = new Color(0.96f, 0.42f, 0.08f);
         private static readonly Color Yellow = new Color(0.95f, 0.82f, 0.12f);
         private static readonly Color Concrete = new Color(0.40f, 0.41f, 0.43f);
+        // Warm dark concrete for the landing pad deck (concept ~RGB 97/66/41 after grade).
+        private static readonly Color PadDeck = new Color(0.30f, 0.26f, 0.23f);
         private static readonly Color Cyan = new Color(0.22f, 0.84f, 0.98f);
         private static readonly Color CyanEmit = new Color(0.20f, 1.15f, 1.65f);
         private static readonly Color Ice = new Color(0.52f, 0.76f, 0.86f);
         private static readonly Color IceEmit = new Color(0.12f, 0.55f, 0.95f);
         private static readonly Color Dust = new Color(0.52f, 0.36f, 0.22f);
-        private static readonly Color SolarCell = new Color(0.05f, 0.07f, 0.10f);
+        // Navy-charcoal PV face. Max component >= 0.2 keeps Tint() at metallic 0.08 so the
+        // cells do not mirror the orange Mars sky (the 0.05 charcoal at metallic 0.4 read salmon).
+        private static readonly Color SolarCell = new Color(0.12f, 0.14f, 0.21f);
         private static readonly Color SolarEmit = new Color(0.04f, 0.18f, 0.55f);
         private static readonly Color Glass = new Color(0.48f, 0.72f, 0.82f);
         private static readonly Color GlassEmit = new Color(0.06f, 0.22f, 0.28f);
@@ -308,27 +312,36 @@ namespace SolarMajesty
             float span = Mathf.Min(w, d);
             float dia = span * 0.92f;
 
-            Prim(root, "Dress_PadDisc", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.08f, 0f),
-                new Vector3(dia, 0.08f, dia), Graphite);
+            // Concept pad is dark concrete with thin orange markings. Cylinders are solid discs,
+            // so "rings" are alternating orange / deck discs stacked a few mm apart — each orange
+            // disc shows only as the rim past the smaller deck disc above it (~2 % of dia).
             Prim(root, "Dress_PadLip", PrimitiveType.Cylinder,
                 new Vector3(0f, 0.06f, 0f),
                 new Vector3(dia * 1.04f, 0.05f, dia * 1.04f), Concrete);
             Prim(root, "Dress_PadYellow", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.15f, 0f),
-                new Vector3(dia * 1.01f, 0.02f, dia * 1.01f), Yellow);
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(dia * 1.01f, 0.04f, dia * 1.01f), Yellow);
+            Prim(root, "Dress_PadDisc", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.14f, 0f),
+                new Vector3(dia, 0.08f, dia), PadDeck);
             Prim(root, "Dress_PadRing_0", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.17f, 0f),
-                new Vector3(dia * 0.84f, 0.02f, dia * 0.84f), Orange);
+                new Vector3(0f, 0.185f, 0f),
+                new Vector3(dia * 0.84f, 0.01f, dia * 0.84f), Orange);
+            Prim(root, "Dress_PadDeck_0", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.19f, 0f),
+                new Vector3(dia * 0.80f, 0.01f, dia * 0.80f), PadDeck);
             Prim(root, "Dress_PadRing_1", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.17f, 0f),
-                new Vector3(dia * 0.56f, 0.018f, dia * 0.56f), Orange);
+                new Vector3(0f, 0.195f, 0f),
+                new Vector3(dia * 0.56f, 0.01f, dia * 0.56f), Orange);
+            Prim(root, "Dress_PadDeck_1", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.20f, 0f),
+                new Vector3(dia * 0.52f, 0.01f, dia * 0.52f), PadDeck);
             Prim(root, "Dress_PadRing_2", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.17f, 0f),
-                new Vector3(dia * 0.32f, 0.015f, dia * 0.32f), Orange);
+                new Vector3(0f, 0.205f, 0f),
+                new Vector3(dia * 0.32f, 0.01f, dia * 0.32f), Orange);
             Prim(root, "Dress_PadInner", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.18f, 0f),
-                new Vector3(dia * 0.22f, 0.015f, dia * 0.22f), Carbon);
+                new Vector3(0f, 0.21f, 0f),
+                new Vector3(dia * 0.26f, 0.01f, dia * 0.26f), Carbon);
             Prim(root, "Dress_PadH_L", PrimitiveType.Cube,
                 new Vector3(-0.42f, 0.20f, 0f),
                 new Vector3(0.10f, 0.03f, 0.95f), Orange);
@@ -605,8 +618,9 @@ namespace SolarMajesty
                     Prim(root, "PwrCellFrame_" + r + "_" + c, PrimitiveType.Cube,
                         new Vector3(at.x, 0.72f, at.z),
                         new Vector3(cellW * 1.08f, 0.05f, cellD * 1.08f), Graphite, tilt);
-                    // Avoid names with "solar"/"array" — IndustrialArtDressing remaps those to bright blue.
-                    Prim(root, "PwrCellFace_" + r + "_" + c, PrimitiveType.Cube,
+                    // "Dress_" prefix opts the PV face out of IndustrialArtDressing's name remap:
+                    // "solar"/"array" → bright blue, and "face" → DefenseRed (the round-6 red tiles).
+                    Prim(root, "Dress_PwrCell_" + r + "_" + c, PrimitiveType.Cube,
                         at, new Vector3(cellW, 0.03f, cellD), SolarCell, tilt);
                     Prim(root, "PwrCellRail_" + r + "_" + c, PrimitiveType.Cube,
                         at + new Vector3(0f, 0.12f, cellD * 0.12f),
@@ -1470,6 +1484,52 @@ namespace SolarMajesty
                 new Vector3(0.08f, 0.72f, 0.38f), Carbon);
         }
 
+        /// <summary>
+        /// Static spacesuited figure (~1.2 m) for the concept's dirt crossings. Dressing only:
+        /// no agent, no brain, no collider — it is a look-kit mannequin for the still campus,
+        /// not a unit. White suit, carbon boots/band, orange trim, cyan visor, steel backpack.
+        /// </summary>
+        public static GameObject BuildSpacesuitFigure(Transform parent, Vector3 worldPos, float yawDeg, int salt)
+        {
+            var root = new GameObject("Dress_SuitCrossing_" + salt);
+            root.transform.SetParent(parent, false);
+            root.transform.position = worldPos;
+            root.transform.rotation = Quaternion.Euler(0f, yawDeg, 0f);
+            Transform t = root.transform;
+
+            // Stride: alternate legs a little so two figures do not read as clones.
+            float stride = (salt % 2 == 0) ? 0.11f : -0.11f;
+            Prim(t, "Dress_SuitBoot_L", PrimitiveType.Cube,
+                new Vector3(-0.11f, 0.06f, stride), new Vector3(0.14f, 0.12f, 0.24f), Carbon);
+            Prim(t, "Dress_SuitBoot_R", PrimitiveType.Cube,
+                new Vector3(0.11f, 0.06f, -stride), new Vector3(0.14f, 0.12f, 0.24f), Carbon);
+            Prim(t, "Dress_SuitLeg_L", PrimitiveType.Capsule,
+                new Vector3(-0.11f, 0.36f, stride * 0.5f), new Vector3(0.16f, 0.24f, 0.16f), White);
+            Prim(t, "Dress_SuitLeg_R", PrimitiveType.Capsule,
+                new Vector3(0.11f, 0.36f, -stride * 0.5f), new Vector3(0.16f, 0.24f, 0.16f), White);
+            Prim(t, "Dress_SuitBand", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.60f, 0f), new Vector3(0.40f, 0.03f, 0.30f), Carbon);
+            Prim(t, "Dress_SuitTorso", PrimitiveType.Capsule,
+                new Vector3(0f, 0.80f, 0f), new Vector3(0.42f, 0.26f, 0.32f), White);
+            Prim(t, "Dress_SuitTrim", PrimitiveType.Cube,
+                new Vector3(0f, 0.84f, 0.16f), new Vector3(0.10f, 0.22f, 0.03f), Orange);
+            Prim(t, "Dress_SuitPack", PrimitiveType.Cube,
+                new Vector3(0f, 0.82f, -0.20f), new Vector3(0.30f, 0.34f, 0.14f), Steel);
+            Prim(t, "Dress_SuitArm_L", PrimitiveType.Capsule,
+                new Vector3(-0.27f, 0.78f, -stride * 0.6f), new Vector3(0.12f, 0.22f, 0.12f), White);
+            Prim(t, "Dress_SuitArm_R", PrimitiveType.Capsule,
+                new Vector3(0.27f, 0.78f, stride * 0.6f), new Vector3(0.12f, 0.22f, 0.12f), White);
+            Prim(t, "Dress_SuitGlove_L", PrimitiveType.Sphere,
+                new Vector3(-0.27f, 0.56f, -stride * 0.7f), new Vector3(0.11f, 0.11f, 0.11f), Orange);
+            Prim(t, "Dress_SuitGlove_R", PrimitiveType.Sphere,
+                new Vector3(0.27f, 0.56f, stride * 0.7f), new Vector3(0.11f, 0.11f, 0.11f), Orange);
+            Prim(t, "Dress_SuitHelmet", PrimitiveType.Sphere,
+                new Vector3(0f, 1.08f, 0f), new Vector3(0.28f, 0.28f, 0.28f), White);
+            Prim(t, "Dress_SuitVisor", PrimitiveType.Sphere,
+                new Vector3(0f, 1.08f, 0.09f), new Vector3(0.20f, 0.14f, 0.14f), Cyan, CyanEmit * 0.35f);
+            return root;
+        }
+
         private static void Prim(
             Transform parent,
             string name,
@@ -1511,9 +1571,12 @@ namespace SolarMajesty
             var mat = new Material(_lit) { name = go.name };
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             if (mat.HasProperty("_Color")) mat.color = c;
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.38f);
+            // Dark prims stay dielectric and a touch rougher: at metallic 0.4 every carbon band,
+            // PV cell and deck disc mirrored the orange Mars sky and read as salmon plates.
+            bool dark = c.maxColorComponent < 0.2f;
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", dark ? 0.30f : 0.38f);
             if (mat.HasProperty("_Metallic"))
-                mat.SetFloat("_Metallic", c.maxColorComponent < 0.2f ? 0.4f : 0.08f);
+                mat.SetFloat("_Metallic", dark ? 0.12f : 0.08f);
             if (emission.maxColorComponent > 0.01f && mat.HasProperty("_EmissionColor"))
             {
                 mat.EnableKeyword("_EMISSION");

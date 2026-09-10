@@ -2514,10 +2514,58 @@ namespace SolarMajesty
             var bounds = StillBounds();
 
             TryStampStillYard(BuildingCategory.LandingPad, StillCampusDensity.PadSize, commons, habFace, bounds);
-            TryStampStillYard(BuildingCategory.Power, StillCampusDensity.YardSize, commons, habFace, bounds);
+            // Concept reads: industrial tank/stack yard on the open slot beside the Commons,
+            // PV rack on the next slot behind it (dream-loop round 6). Farm before Power.
             TryStampStillYard(BuildingCategory.Farm, StillCampusDensity.YardSize, commons, habFace, bounds);
+            TryStampStillYard(BuildingCategory.Power, StillCampusDensity.YardSize, commons, habFace, bounds);
             TryStampStillYard(BuildingCategory.RegolithCamp, StillCampusDensity.YardSize, commons, habFace, bounds);
             NotifyCampusExpanded();
+            StampStillSuitCrossings();
+        }
+
+        /// <summary>
+        /// Aaron 2026-09-07 concept: spacesuited figures crossing the open dirt between yards.
+        /// Still-campus dressing only (HeroBuildingKits mannequins) — no agents, no flags,
+        /// nothing bypasses SpecialistBrain. Cleared with the rest of the stamp.
+        /// </summary>
+        private void StampStillSuitCrossings()
+        {
+            if (Village == null) return;
+            Vector3 campus = ColonyLayout.CampusOrigin;
+            var commons = Village.NearestByCategory(campus, 80f, BuildingCategory.Commons);
+            if (commons == null) return;
+            Vector3 c = commons.transform.position;
+            Transform root = buildingRoot != null ? buildingRoot : transform;
+
+            int salt = 0;
+            var pad = Village.NearestByCategory(campus, 80f, BuildingCategory.LandingPad);
+            if (pad != null)
+                salt = StampCrossingPair(root, c, pad.transform.position, 0.46f, 0.62f, 1.4f, salt);
+            var hab = Village.NearestByCategory(campus, 80f, BuildingCategory.Habitat);
+            if (hab != null)
+                salt = StampCrossingPair(root, c, hab.transform.position, 0.50f, 0.50f, 2.2f, salt);
+            if (salt > 0)
+                Debug.Log($"[GameLoop] Stamp still suit crossings={salt}");
+        }
+
+        /// <summary>Two figures walking the line a→b, offset sideways so they clear dock arms.</summary>
+        private static int StampCrossingPair(
+            Transform root, Vector3 a, Vector3 b, float t0, float t1, float side, int salt)
+        {
+            Vector3 dir = b - a;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 1f) return salt;
+            dir.Normalize();
+            Vector3 perp = new Vector3(-dir.z, 0f, dir.x);
+            float yaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+
+            Vector3 p0 = Vector3.Lerp(a, b, t0) + perp * side;
+            p0.y = 0f;
+            HeroBuildingKits.BuildSpacesuitFigure(root, p0, yaw, salt++);
+            Vector3 p1 = Vector3.Lerp(a, b, t1) + perp * (side + 0.9f);
+            p1.y = 0f;
+            HeroBuildingKits.BuildSpacesuitFigure(root, p1, yaw + 180f, salt++);
+            return salt;
         }
 
         /// <summary>

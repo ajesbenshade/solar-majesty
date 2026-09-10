@@ -238,11 +238,14 @@ namespace SolarMajesty
             // per face — same reason Commons skipped the joined dome.
             // Farm FBX is the AG-1 greenhouse vault — dream-loop concept wants an
             // industrial tank/pipe/stack yard, so prefer procedural BuildWaterExtractor.
+            // LandingPad FBX is one graphite disc that mirrors the Mars sky as a solid
+            // orange plate; the procedural pad is dark concrete with thin orange markings.
             if (cat == BuildingCategory.Commons ||
                 cat == BuildingCategory.Habitat ||
                 cat == BuildingCategory.Laboratory ||
                 cat == BuildingCategory.Power ||
-                cat == BuildingCategory.Farm)
+                cat == BuildingCategory.Farm ||
+                cat == BuildingCategory.LandingPad)
                 return null;
 
             GameObject hero = BuildingVisualCatalog.LoadHeroKit(cat);

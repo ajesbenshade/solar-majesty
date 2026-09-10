@@ -405,6 +405,7 @@ namespace SolarMajesty.EditorTools
 
             var mars = CelestialBodyCatalog.Get(CelestialBodyId.Mars);
             ModularBuildingFactory.BindBody(mars);
+            IndustrialArtDressing.BindBody(mars); // match GameLoop: Mars dust 0.04, not the 0.24 default
             CampusDressing.Reset();
 
             var root = new GameObject("CaptureRoot");
@@ -467,7 +468,7 @@ namespace SolarMajesty.EditorTools
                 useMipMap = false
             };
             cam.targetTexture = rt;
-            cam.Render();
+            RenderWithoutSrpBatcher(cam);
             RenderTexture.active = rt;
             var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
             tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
@@ -526,6 +527,7 @@ namespace SolarMajesty.EditorTools
 
             var mars = CelestialBodyCatalog.Get(CelestialBodyId.Mars);
             ModularBuildingFactory.BindBody(mars);
+            IndustrialArtDressing.BindBody(mars); // match GameLoop: Mars dust 0.04, not the 0.24 default
             CampusDressing.Reset();
 
             var root = new GameObject("CaptureRoot");
@@ -597,7 +599,7 @@ namespace SolarMajesty.EditorTools
                 useMipMap = false
             };
             cam.targetTexture = rt;
-            cam.Render();
+            RenderWithoutSrpBatcher(cam);
             RenderTexture.active = rt;
             var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
             tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
@@ -651,6 +653,28 @@ namespace SolarMajesty.EditorTools
             placer.RegisterPiece(a0, 2, 2, BuildingCategory.Utility);
             placer.RegisterPiece(h0, 4, 4, BuildingCategory.Habitat);
             CampusDressing.RefreshTubes(placer, grid, buildings);
+        }
+
+        /// <summary>
+        /// Edit-mode Camera.Render of materials created in the same frame leaks one material's
+        /// UnityPerMaterial constants across every SM_Hull draw under the SRP Batcher (all hulls
+        /// render as one slot — orange/black/brown depending on upload order). Play mode is
+        /// unaffected. Batch stills render with the batcher off, then restore the asset setting.
+        /// </summary>
+        private static void RenderWithoutSrpBatcher(Camera cam)
+        {
+            var urp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline
+                as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            bool prior = urp != null && urp.useSRPBatcher;
+            if (urp != null) urp.useSRPBatcher = false;
+            try
+            {
+                cam.Render();
+            }
+            finally
+            {
+                if (urp != null) urp.useSRPBatcher = prior;
+            }
         }
 
         private static Vector2Int OriginFromCenter(IsoGrid grid, Vector3 center, int side)

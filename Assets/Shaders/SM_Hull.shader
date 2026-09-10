@@ -144,6 +144,13 @@ Shader "SolarMajesty/Hull"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
+            // See SM_PlanetGround: ComputeFogFactor(positionCS.z) is ~0 under orthographic cameras.
+            float SM_FogCoord(float3 positionWS)
+            {
+                float viewZ = -TransformWorldToView(positionWS).z;
+                return ComputeFogFactorZ0ToFar(viewZ);
+            }
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -157,7 +164,6 @@ Shader "SolarMajesty/Hull"
                 float3 positionWS  : TEXCOORD0;
                 float3 normalWS    : TEXCOORD1;
                 float3 positionOS  : TEXCOORD2;
-                float  fogCoord    : TEXCOORD3;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -176,7 +182,6 @@ Shader "SolarMajesty/Hull"
                 output.positionWS = pos.positionWS;
                 output.normalWS = nrm.normalWS;
                 output.positionOS = input.positionOS.xyz;
-                output.fogCoord = ComputeFogFactor(pos.positionCS.z);
                 return output;
             }
 
@@ -225,7 +230,7 @@ Shader "SolarMajesty/Hull"
                 inputData.normalWS = normalWS;
                 inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(positionWS);
                 inputData.shadowCoord = TransformWorldToShadowCoord(positionWS);
-                inputData.fogCoord = input.fogCoord;
+                inputData.fogCoord = SM_FogCoord(positionWS);
                 inputData.bakedGI = SampleSH(normalWS);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
                 inputData.shadowMask = half4(1, 1, 1, 1);

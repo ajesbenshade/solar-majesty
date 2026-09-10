@@ -125,11 +125,17 @@ namespace SolarMajesty.Tests
         public void MarsCatalog_SalmonHorizonHaze()
         {
             var mars = CelestialBodyCatalog.Get(CelestialBodyId.Mars);
-            Assert.AreEqual(0.82f, mars.FogColor.r, 0.03f);
-            Assert.AreEqual(0.51f, mars.FogColor.g, 0.03f);
-            Assert.AreEqual(0.27f, mars.FogColor.b, 0.03f);
+            // Pale dusty haze, concept far-ground edge ~RGB 222/140/80 (dream-loop round 6).
+            Assert.AreEqual(0.87f, mars.FogColor.r, 0.03f);
+            Assert.AreEqual(0.55f, mars.FogColor.g, 0.03f);
+            Assert.AreEqual(0.31f, mars.FogColor.b, 0.03f);
+            // Ortho-10 Game tab spans ~22–45 m of view depth: the linear ramp must start past
+            // the campus centre (~34 m stays near-clear) and end before the top-of-frame ground
+            // (~45 m) or the far dirt never softens.
             Assert.Greater(mars.FogStart, 30f);
-            Assert.Less(mars.FogEnd, 185f);
+            Assert.Less(mars.FogEnd, 60f);
+            // Dusty brown-orange dirt, not blood-red: concept lit dirt G/R ~0.45.
+            Assert.Greater(mars.GroundLight.g / mars.GroundLight.r, 0.55f);
         }
 
         [Test]

@@ -556,55 +556,13 @@ namespace SolarMajesty
             SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
             SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
             SpawnMarsHazeRidges(root, campus, body);
-            SpawnMarsHazeBackdrop(root, campus, body);
         }
 
         /// <summary>
-        /// Tall salmon backdrop in the camera far quadrant (iso looks NE). Ortho Game-tab
-        /// upper third is far ground, not sky clear — without this wall the horizon reads black.
-        /// </summary>
-        private static void SpawnMarsHazeBackdrop(Transform parent, Vector3 campus, CelestialBodyProfile body)
-        {
-            Color hi = Color.Lerp(body.FogColor, body.SkyHorizon, 0.55f);
-            Color lo = Color.Lerp(body.FogColor, body.Horizon, 0.35f);
-            // Camera sits SW of focus looking 45° — far sky is +X/+Z.
-            Vector3[] centers =
-            {
-                campus + new Vector3(26f, 8f, 26f),
-                campus + new Vector3(32f, 7f, 14f),
-                campus + new Vector3(14f, 7f, 32f),
-                campus + new Vector3(-8f, 6f, 30f),
-                campus + new Vector3(30f, 6f, -8f)
-            };
-            for (int i = 0; i < centers.Length; i++)
-            {
-                var wall = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                wall.name = "Dress_MarsHazeBackdrop_" + i;
-                wall.transform.SetParent(parent, false);
-                wall.transform.position = centers[i];
-                wall.transform.localScale = new Vector3(42f, 18f, 1f);
-                // Face the campus / camera.
-                Vector3 toCam = (campus + new Vector3(-12f, 10f, -12f)) - centers[i];
-                toCam.y = 0f;
-                if (toCam.sqrMagnitude > 0.01f)
-                    wall.transform.rotation = Quaternion.LookRotation(-toCam.normalized);
-                Object.Destroy(wall.GetComponent<Collider>());
-                Color c = Color.Lerp(lo, hi, (i % 3) * 0.2f);
-                PlanetaryWorldGen.Tint(wall, c, 0.01f, ShadowCastingMode.Off);
-                var rend = wall.GetComponent<Renderer>();
-                if (rend != null)
-                {
-                    rend.receiveShadows = false;
-                    if (rend.sharedMaterial != null && rend.sharedMaterial.HasProperty("_Smoothness"))
-                        rend.sharedMaterial.SetFloat("_Smoothness", 0.02f);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Distant low ridges so the far third of the frame recedes into salmon haze
-        /// (dream-loop). Must sit inside play ortho ~10 vista (~18–36 m), not 48 m+
-        /// past the Game-tab frustum.
+        /// Distant low ridges so the vista recedes into salmon haze when the player scrolls
+        /// off the campus. Note the ortho-10 Game tab only ever frames ground within ~15 m of
+        /// focus (top edge is far ground, never sky), so the on-campus horizon read comes from
+        /// the ground shader's depth fog, not from these.
         /// </summary>
         private static void SpawnMarsHazeRidges(Transform parent, Vector3 campus, CelestialBodyProfile body)
         {
