@@ -70,9 +70,25 @@ This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not 
 - If docks step / gap: kits must seat via `SnapToGroundKeepingDockAxis` so arms stay on `ColonyVisualUtility.DockY`.
 - If Commons reads soft-sphere / cyan waist: live kit now has `CommonsGeo_*` facets + orange cupola/equator bands; cyan waist visors are removed.
 
+### Local Mac Unity (preferred)
+
+Interactive CaptureStill works on Mac Unity 6000.5.x (batchmode refused for Game-tab). Sequence:
+
+```bash
+# GPU editor still (no -nographics)
+Unity -batchmode -quit -projectPath . \
+  -executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CapturePackedMarsStill
+
+# Game-tab (interactive — do not use -batchmode)
+Unity -projectPath . \
+  -executeMethod SolarMajesty.EditorTools.CaptureStill.Run
+```
+
+Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. **Do not stamp EXIT** until Aaron look-clear.
+
 ### Cloud agents (no Unity)
 
-This Cloud VM cannot run Play Mode or write `SM_Capture.png`. Do the look pass in code/assets, leave `.dream-loop/` notes, and ask GD for **Solar Majesty → Capture Mars Still**. **Do not invent a judge score** from archived stills alone when claiming EXIT — archived stills may guide a round, but EXIT needs a fresh Capture.
+Cloud VMs cannot run Play Mode. Prefer local CaptureStill. **Do not invent a judge score** from archived stills alone when claiming EXIT.
 
 ### Bake (no Imagine required)
 

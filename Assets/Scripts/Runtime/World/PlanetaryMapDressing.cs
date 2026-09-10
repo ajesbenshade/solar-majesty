@@ -186,8 +186,10 @@ namespace SolarMajesty
             if (body == null) body = CelestialBodyCatalog.Earth();
             if (body.Id == CelestialBodyId.Earth)
                 return Color.Lerp(body.GroundDark, body.GroundLight, 0.18f);
+            // Mars Game-tab was a hard black sky cut — use salmon haze as the miss/clear
+            // fill so the top of the ortho frame reads atmosphere, not void.
             if (body.Id == CelestialBodyId.Mars)
-                return Color.Lerp(body.GroundDark, body.Horizon, 0.35f);
+                return Color.Lerp(body.FogColor, body.SkyHorizon, 0.45f);
             return Color.Lerp(body.GroundDark, body.GroundLight, 0.12f);
         }
 
@@ -277,8 +279,12 @@ namespace SolarMajesty
             if (cam == null) return;
             Color voidFill = VoidFillColor(body);
             cam.backgroundColor = voidFill;
-            // Keep skybox for the upper hemisphere when present; voidFill backs any miss.
-            cam.clearFlags = hasSkybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
+            // Mars ortho overseer: procedural skybox often reads black in the upper
+            // third. Solid haze fill matches the dream-loop concept sky band.
+            if (body != null && body.Id == CelestialBodyId.Mars)
+                cam.clearFlags = CameraClearFlags.SolidColor;
+            else
+                cam.clearFlags = hasSkybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
         }
 
         private static Texture2D BuildAlbedo(int size, CelestialBodyProfile body)
@@ -550,28 +556,72 @@ namespace SolarMajesty
             SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
             SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
             SpawnMarsHazeRidges(root, campus, body);
+            SpawnMarsHazeBackdrop(root, campus, body);
+        }
+
+        /// <summary>
+        /// Tall salmon backdrop in the camera far quadrant (iso looks NE). Ortho Game-tab
+        /// upper third is far ground, not sky clear — without this wall the horizon reads black.
+        /// </summary>
+        private static void SpawnMarsHazeBackdrop(Transform parent, Vector3 campus, CelestialBodyProfile body)
+        {
+            Color hi = Color.Lerp(body.FogColor, body.SkyHorizon, 0.55f);
+            Color lo = Color.Lerp(body.FogColor, body.Horizon, 0.35f);
+            // Camera sits SW of focus looking 45° — far sky is +X/+Z.
+            Vector3[] centers =
+            {
+                campus + new Vector3(26f, 8f, 26f),
+                campus + new Vector3(32f, 7f, 14f),
+                campus + new Vector3(14f, 7f, 32f),
+                campus + new Vector3(-8f, 6f, 30f),
+                campus + new Vector3(30f, 6f, -8f)
+            };
+            for (int i = 0; i < centers.Length; i++)
+            {
+                var wall = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                wall.name = "Dress_MarsHazeBackdrop_" + i;
+                wall.transform.SetParent(parent, false);
+                wall.transform.position = centers[i];
+                wall.transform.localScale = new Vector3(42f, 18f, 1f);
+                // Face the campus / camera.
+                Vector3 toCam = (campus + new Vector3(-12f, 10f, -12f)) - centers[i];
+                toCam.y = 0f;
+                if (toCam.sqrMagnitude > 0.01f)
+                    wall.transform.rotation = Quaternion.LookRotation(-toCam.normalized);
+                Object.Destroy(wall.GetComponent<Collider>());
+                Color c = Color.Lerp(lo, hi, (i % 3) * 0.2f);
+                PlanetaryWorldGen.Tint(wall, c, 0.01f, ShadowCastingMode.Off);
+                var rend = wall.GetComponent<Renderer>();
+                if (rend != null)
+                {
+                    rend.receiveShadows = false;
+                    if (rend.sharedMaterial != null && rend.sharedMaterial.HasProperty("_Smoothness"))
+                        rend.sharedMaterial.SetFloat("_Smoothness", 0.02f);
+                }
+            }
         }
 
         /// <summary>
         /// Distant low ridges so the far third of the frame recedes into salmon haze
-        /// (dream-loop round 1 / spaced-overseer concept). Campus yards stay empty dirt.
+        /// (dream-loop). Must sit inside play ortho ~10 vista (~18–36 m), not 48 m+
+        /// past the Game-tab frustum.
         /// </summary>
         private static void SpawnMarsHazeRidges(Transform parent, Vector3 campus, CelestialBodyProfile body)
         {
-            Color far = Color.Lerp(body.FogColor, body.Horizon, 0.55f);
+            Color far = Color.Lerp(body.FogColor, body.Horizon, 0.40f);
             far.a = 1f;
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 12; i++)
             {
-                float ang = i * 36f * Mathf.Deg2Rad + 0.35f;
-                float dist = 48f + (i % 3) * 9f;
+                float ang = i * 30f * Mathf.Deg2Rad + 0.22f;
+                float dist = 18f + (i % 4) * 4.5f;
                 Vector3 at = campus + new Vector3(Mathf.Cos(ang) * dist, 0f, Mathf.Sin(ang) * dist);
-                float span = 14f + (i % 4) * 3.5f;
-                float height = 2.2f + (i % 3) * 1.1f;
+                float span = 9f + (i % 3) * 2.8f;
+                float height = 1.4f + (i % 3) * 0.85f;
                 var ridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 ridge.name = "Dress_MarsHazeRidge_" + i;
                 ridge.transform.SetParent(parent, false);
                 ridge.transform.position = at + Vector3.up * (height * 0.42f);
-                ridge.transform.localScale = new Vector3(span, height, 4.5f + (i % 2) * 1.8f);
+                ridge.transform.localScale = new Vector3(span, height, 3.2f + (i % 2) * 1.4f);
                 ridge.transform.rotation = Quaternion.Euler(0f, ang * Mathf.Rad2Deg + 90f, 0f);
                 Object.Destroy(ridge.GetComponent<Collider>());
                 PlanetaryWorldGen.Tint(ridge, far, 0.02f, ShadowCastingMode.Off);

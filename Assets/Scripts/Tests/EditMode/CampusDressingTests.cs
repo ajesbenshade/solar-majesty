@@ -86,14 +86,18 @@ namespace SolarMajesty.Tests
         {
             var hab = ModularBuildingFactory.Spawn(
                 BuildingCategory.Habitat, Vector3.zero, _root.transform);
-            Transform mid = FindChild(hab.transform, "HabMid");
+            Transform mid = FindChild(hab.transform, "HabCarbonBand");
             Assert.IsNotNull(mid);
-            // Unity cylinder height = 2 * scale.y; band must cover ~22% of HAB length.
+            // Unity cylinder height = 2 * scale.y; band must cover ~24% of HAB length.
             float length = 6f * 0.92f;
             float midLen = mid.localScale.y * 2f;
-            Assert.Greater(midLen / length, 0.18f, "mid-band must read thick at ortho 10");
-            Assert.Less(midLen / length, 0.30f);
-            Assert.Less(Albedo(mid).grayscale, 0.25f, "mid-band stays carbon");
+            Assert.Greater(midLen / length, 0.20f, "mid-band must read thick at ortho 10");
+            Assert.Less(midLen / length, 0.32f);
+            Assert.Less(Albedo(mid).grayscale, 0.20f, "mid-band stays near-black");
+            Assert.IsNotNull(FindChild(hab.transform, "HabCarbonBandCore"),
+                "darker core ring so the mid-band reads vs white hull");
+            Assert.IsNull(FindChild(hab.transform, "HabMid"),
+                "old HabMid name retired — was easy to confuse with orange trim");
             Assert.IsNotNull(FindChild(hab.transform, "HabFrontRim"));
             Assert.IsNotNull(FindChild(hab.transform, "HabRearRim"));
             Color rim = Albedo(FindChild(hab.transform, "HabFrontRim"));

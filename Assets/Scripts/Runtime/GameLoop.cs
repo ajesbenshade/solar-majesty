@@ -2083,9 +2083,18 @@ namespace SolarMajesty
             mainCamera.nearClipPlane = 0.3f;
             // Deep horizon floor lives near y=-80; far clip must reach it at max ortho.
             mainCamera.farClipPlane = 2000f;
-            mainCamera.clearFlags = CameraClearFlags.Skybox;
-            if (_body != null)
+            if (_body != null && _body.Id == CelestialBodyId.Mars)
+            {
+                // Dream-loop: salmon haze clear — Skybox was reading as a hard black cut.
+                mainCamera.clearFlags = CameraClearFlags.SolidColor;
                 mainCamera.backgroundColor = PlanetaryMapDressing.VoidFillColor(_body);
+            }
+            else
+            {
+                mainCamera.clearFlags = CameraClearFlags.Skybox;
+                if (_body != null)
+                    mainCamera.backgroundColor = PlanetaryMapDressing.VoidFillColor(_body);
+            }
             mainCamera.transform.rotation = Quaternion.Euler(30f, 45f, 0f);
             Vector3 focus = ColonyLayout.CameraFocus;
             mainCamera.transform.position = focus + new Vector3(-18f, 22f, -18f);

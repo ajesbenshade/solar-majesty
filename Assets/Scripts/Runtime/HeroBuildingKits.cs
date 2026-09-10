@@ -23,8 +23,8 @@ namespace SolarMajesty
         private static readonly Color Ice = new Color(0.52f, 0.76f, 0.86f);
         private static readonly Color IceEmit = new Color(0.12f, 0.55f, 0.95f);
         private static readonly Color Dust = new Color(0.52f, 0.36f, 0.22f);
-        private static readonly Color SolarCell = new Color(0.07f, 0.14f, 0.36f);
-        private static readonly Color SolarEmit = new Color(0.22f, 0.72f, 2.15f);
+        private static readonly Color SolarCell = new Color(0.05f, 0.07f, 0.10f);
+        private static readonly Color SolarEmit = new Color(0.04f, 0.18f, 0.55f);
         private static readonly Color Glass = new Color(0.48f, 0.72f, 0.82f);
         private static readonly Color GlassEmit = new Color(0.06f, 0.22f, 0.28f);
         private static readonly Color Plant = new Color(0.22f, 0.55f, 0.24f);
@@ -56,21 +56,26 @@ namespace SolarMajesty
             float radius = length / 3f;
             float z = radius + 0.22f;
             Quaternion alongX = Quaternion.Euler(0f, 0f, 90f);
-            // Dream-loop round 1: carbon mid-band ~22% of cylinder length (was a thin ring).
-            float midHalf = length * 0.11f;
+            // Dream-loop: bold BLACK mid-band ~24% of cylinder length (not orange rings).
+            float midHalf = length * 0.12f;
+            Color midBlack = new Color(0.04f, 0.04f, 0.045f);
 
             Prim(root, "HabShell", PrimitiveType.Cylinder,
                 new Vector3(0f, z, 0f),
                 new Vector3(radius * 2f, length * 0.36f, radius * 2f), hull, alongX);
-            Prim(root, "HabMid", PrimitiveType.Cylinder,
+            // Name avoids IndustrialArtDressing orange remaps (accent/stripe/hatch).
+            Prim(root, "HabCarbonBand", PrimitiveType.Cylinder,
                 new Vector3(0f, z, 0f),
-                new Vector3(radius * 2.08f, midHalf, radius * 2.08f), Carbon, alongX);
-            Prim(root, "HabMidLip_L", PrimitiveType.Cylinder,
-                new Vector3(-midHalf * 0.92f, z, 0f),
-                new Vector3(radius * 2.12f, 0.028f, radius * 2.12f), Graphite, alongX);
-            Prim(root, "HabMidLip_R", PrimitiveType.Cylinder,
-                new Vector3(midHalf * 0.92f, z, 0f),
-                new Vector3(radius * 2.12f, 0.028f, radius * 2.12f), Graphite, alongX);
+                new Vector3(radius * 2.18f, midHalf, radius * 2.18f), midBlack, alongX);
+            Prim(root, "HabCarbonBandCore", PrimitiveType.Cylinder,
+                new Vector3(0f, z, 0f),
+                new Vector3(radius * 2.26f, midHalf * 0.62f, radius * 2.26f), midBlack, alongX);
+            Prim(root, "HabCarbonBandLip_L", PrimitiveType.Cylinder,
+                new Vector3(-midHalf * 0.98f, z, 0f),
+                new Vector3(radius * 2.28f, 0.035f, radius * 2.28f), Graphite, alongX);
+            Prim(root, "HabCarbonBandLip_R", PrimitiveType.Cylinder,
+                new Vector3(midHalf * 0.98f, z, 0f),
+                new Vector3(radius * 2.28f, 0.035f, radius * 2.28f), Graphite, alongX);
 
             for (int s = -1; s <= 1; s += 2)
             {
@@ -360,77 +365,64 @@ namespace SolarMajesty
 
         public static void BuildWaterExtractor(Transform root, float w, float d, Color hull)
         {
-            // AG-1 vaulted greenhouse + ice plant. Not a HAB cylinder, not a cabin box.
-            Quaternion alongX = Quaternion.Euler(0f, 0f, 90f);
+            // Dream-loop: industrial tank/pipe/stack yard (concept left pad) — not a greenhouse vault.
             Prim(root, "Dress_IcePlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.10f, 0f),
-                new Vector3(w * 0.94f, 0.16f, d * 0.90f), Graphite);
-            Prim(root, "Dress_IceSill", PrimitiveType.Cube,
-                new Vector3(-w * 0.08f, 0.28f, 0f),
-                new Vector3(w * 0.70f, 0.22f, d * 0.52f), Carbon);
-            Prim(root, "Dress_IceHall", PrimitiveType.Cube,
-                new Vector3(-w * 0.08f, 0.82f, 0f),
-                new Vector3(w * 0.66f, 1.28f, d * 0.46f), hull);
-            for (int i = 0; i < 5; i++)
-            {
-                float x = -w * 0.34f + i * w * 0.13f;
-                Prim(root, "Dress_IceArch_" + i, PrimitiveType.Cube,
-                    new Vector3(x, 1.42f, 0f),
-                    new Vector3(0.08f, 1.05f, d * 0.52f), Carbon);
-            }
+                new Vector3(w * 0.92f, 0.16f, d * 0.88f), Graphite);
+            Prim(root, "Dress_IceDeck", PrimitiveType.Cube,
+                new Vector3(0f, 0.22f, 0f),
+                new Vector3(w * 0.78f, 0.08f, d * 0.70f), Concrete);
 
-            float vaultR = Mathf.Min(w, d) * 0.20f;
-            Prim(root, "Dress_IceVault", PrimitiveType.Cylinder,
-                new Vector3(-w * 0.08f, 1.48f, 0f),
-                new Vector3(vaultR * 2f, w * 0.32f, vaultR * 2f), Glass, alongX, GlassEmit);
-            Prim(root, "Dress_IceVaultRing_L", PrimitiveType.Cylinder,
-                new Vector3(-w * 0.36f, 1.48f, 0f),
-                new Vector3(vaultR * 2.08f, 0.04f, vaultR * 2.08f), Orange, alongX);
-            Prim(root, "Dress_IceVaultRing_R", PrimitiveType.Cylinder,
-                new Vector3(w * 0.18f, 1.48f, 0f),
-                new Vector3(vaultR * 2.08f, 0.04f, vaultR * 2.08f), Orange, alongX);
+            // Hero tanks: mix vertical cylinders + one sphere (concept silhouette).
+            Prim(root, "Dress_IceTank_0", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.22f, 1.55f, -d * 0.12f),
+                new Vector3(1.05f, 1.35f, 1.05f), White);
+            Prim(root, "Dress_IceBand_0", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.22f, 1.75f, -d * 0.12f),
+                new Vector3(1.14f, 0.07f, 1.14f), Orange);
+            Prim(root, "Dress_IceTank_1", PrimitiveType.Cylinder,
+                new Vector3(w * 0.08f, 1.35f, d * 0.18f),
+                new Vector3(0.92f, 1.15f, 0.92f), Steel);
+            Prim(root, "Dress_IceBand_1", PrimitiveType.Cylinder,
+                new Vector3(w * 0.08f, 1.55f, d * 0.18f),
+                new Vector3(1.00f, 0.06f, 1.00f), Carbon);
+            Prim(root, "Dress_IceSphere", PrimitiveType.Sphere,
+                new Vector3(w * 0.28f, 1.45f, -d * 0.18f),
+                new Vector3(1.35f, 1.35f, 1.35f), White);
+            Prim(root, "Dress_IceSphereBand", PrimitiveType.Cylinder,
+                new Vector3(w * 0.28f, 1.45f, -d * 0.18f),
+                new Vector3(1.42f, 0.05f, 1.42f), Orange);
 
-            for (int i = 0; i < 3; i++)
-            {
-                float x = -w * 0.28f + i * w * 0.16f;
-                Prim(root, "Dress_IceTray_" + i, PrimitiveType.Cube,
-                    new Vector3(x, 0.42f, 0f),
-                    new Vector3(w * 0.14f, 0.10f, d * 0.32f), Plant);
-                Prim(root, "Dress_IceGlow_" + i, PrimitiveType.Cube,
-                    new Vector3(x, 0.52f, 0f),
-                    new Vector3(w * 0.11f, 0.06f, d * 0.24f), Ice, IceEmit * 0.45f);
-            }
+            // Dense pipe runs + tall exhaust stack.
+            Prim(root, "Dress_IceStack", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.05f, 2.85f, -d * 0.05f),
+                new Vector3(0.28f, 2.05f, 0.28f), Carbon);
+            Prim(root, "Dress_IceStackCap", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.05f, 4.95f, -d * 0.05f),
+                new Vector3(0.38f, 0.08f, 0.38f), Graphite);
+            Prim(root, "Dress_IceStackLip", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.05f, 4.72f, -d * 0.05f),
+                new Vector3(0.42f, 0.05f, 0.42f), Orange);
 
+            Quaternion pipeAlongX = Quaternion.Euler(0f, 0f, 90f);
+            Prim(root, "Dress_IcePipe_0", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.15f, d * 0.05f),
+                new Vector3(0.14f, w * 0.28f, 0.14f), Carbon, pipeAlongX);
+            Prim(root, "Dress_IcePipe_1", PrimitiveType.Cylinder,
+                new Vector3(w * 0.12f, 1.85f, 0f),
+                new Vector3(0.12f, d * 0.28f, 0.12f), Steel, Quaternion.Euler(90f, 0f, 0f));
+            Prim(root, "Dress_IcePipe_2", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.10f, 2.45f, d * 0.10f),
+                new Vector3(0.11f, 0.85f, 0.11f), Carbon);
+            Prim(root, "Dress_IceManifold", PrimitiveType.Cube,
+                new Vector3(w * 0.02f, 1.05f, 0f),
+                new Vector3(w * 0.42f, 0.28f, d * 0.22f), Graphite);
             Prim(root, "Dress_IceHatch", PrimitiveType.Cube,
-                new Vector3(-w * 0.08f, 0.72f, d * 0.24f),
-                new Vector3(0.62f, 0.85f, 0.08f), Orange);
+                new Vector3(-w * 0.32f, 0.72f, d * 0.28f),
+                new Vector3(0.55f, 0.85f, 0.08f), Orange);
 
-            float[] tankH = { 2.35f, 1.85f };
-            float[] tankZ = { -d * 0.22f, d * 0.22f };
-            for (int i = 0; i < 2; i++)
-            {
-                float h = tankH[i];
-                Vector3 at = new Vector3(w * 0.34f, h * 0.5f + 0.18f, tankZ[i]);
-                Prim(root, "Dress_IceTank_" + i, PrimitiveType.Cylinder,
-                    at, new Vector3(0.78f, h * 0.5f, 0.78f), Steel);
-                Prim(root, "Dress_IceBand_" + i, PrimitiveType.Cylinder,
-                    at + new Vector3(0f, h * 0.10f, 0f),
-                    new Vector3(0.86f, 0.06f, 0.86f), Ice, IceEmit);
-                Prim(root, "Dress_IceCap_" + i, PrimitiveType.Cylinder,
-                    new Vector3(w * 0.34f, h + 0.22f, tankZ[i]),
-                    new Vector3(0.58f, 0.08f, 0.58f), Carbon);
-            }
-
-            Prim(root, "Dress_IceManifold", PrimitiveType.Cylinder,
-                new Vector3(w * 0.34f, 2.55f, 0f),
-                new Vector3(0.12f, 0.85f, 0.12f), Carbon, Quaternion.Euler(90f, 0f, 0f));
-            Prim(root, "Dress_IceRiser", PrimitiveType.Cylinder,
-                new Vector3(w * 0.34f, 2.05f, -d * 0.22f),
-                new Vector3(0.12f, 1.55f, 0.12f), Carbon);
-            ScaffoldTower(root, "Dress_IceScaf", new Vector3(w * 0.34f, 0f, 0f), 3.6f, 0.85f);
-            Prim(root, "Dress_IceCondenser", PrimitiveType.Sphere,
-                new Vector3(w * 0.22f, 3.55f, d * 0.18f),
-                new Vector3(0.62f, 0.32f, 0.62f), Ice, IceEmit);
+            ScaffoldTower(root, "Dress_IceScaf", new Vector3(w * 0.18f, 0f, d * 0.08f), 3.4f, 0.75f);
+            ScaffoldLow(root, "Dress_IceRail", new Vector3(-w * 0.18f, 0f, d * 0.22f), w * 0.40f);
         }
 
         public static void BuildRegolithExtractor(Transform root, float w, float d, Color hull)
@@ -600,29 +592,30 @@ namespace SolarMajesty
             float pitchZ = d * 0.17f;
             float originX = -pitchX * (cols - 1) * 0.5f;
             float originZ = -d * 0.18f - pitchZ * (rows - 1) * 0.5f;
-            Quaternion tilt = Quaternion.Euler(-18f, 0f, 0f);
+            Quaternion tilt = Quaternion.Euler(-38f, 0f, 0f);
 
             for (int r = 0; r < rows; r++)
             {
                 for (int c = 0; c < cols; c++)
                 {
                     Vector3 at = new Vector3(originX + c * pitchX, 0.76f, originZ + r * pitchZ);
-                    Prim(root, "SolarSteelPylon_" + r + "_" + c, PrimitiveType.Cylinder,
+                    Prim(root, "PwrCellPylon_" + r + "_" + c, PrimitiveType.Cylinder,
                         new Vector3(at.x, 0.38f, at.z),
                         new Vector3(0.07f, 0.28f, 0.07f), Steel);
-                    Prim(root, "SolarFrame_" + r + "_" + c, PrimitiveType.Cube,
+                    Prim(root, "PwrCellFrame_" + r + "_" + c, PrimitiveType.Cube,
                         new Vector3(at.x, 0.72f, at.z),
                         new Vector3(cellW * 1.08f, 0.05f, cellD * 1.08f), Graphite, tilt);
-                    Prim(root, "SolarArray_" + r + "_" + c, PrimitiveType.Cube,
-                        at, new Vector3(cellW, 0.03f, cellD), SolarCell, tilt, SolarEmit);
-                    Prim(root, "SolarVisor_" + r + "_" + c, PrimitiveType.Cube,
+                    // Avoid names with "solar"/"array" — IndustrialArtDressing remaps those to bright blue.
+                    Prim(root, "PwrCellFace_" + r + "_" + c, PrimitiveType.Cube,
+                        at, new Vector3(cellW, 0.03f, cellD), SolarCell, tilt);
+                    Prim(root, "PwrCellRail_" + r + "_" + c, PrimitiveType.Cube,
                         at + new Vector3(0f, 0.12f, cellD * 0.12f),
-                        new Vector3(cellW * 0.90f, 0.02f, 0.03f), Cyan, tilt, SolarEmit);
+                        new Vector3(cellW * 0.90f, 0.02f, 0.03f), Graphite, tilt);
                 }
 
-                Prim(root, "SolarVisorBus_" + r, PrimitiveType.Cube,
+                Prim(root, "PwrCellBus_" + r, PrimitiveType.Cube,
                     new Vector3(0f, 0.20f, originZ + r * pitchZ),
-                    new Vector3(w * 0.72f, 0.03f, 0.05f), Cyan, SolarEmit);
+                    new Vector3(w * 0.72f, 0.03f, 0.05f), Carbon);
             }
 
             float arrZ = originZ + pitchZ;

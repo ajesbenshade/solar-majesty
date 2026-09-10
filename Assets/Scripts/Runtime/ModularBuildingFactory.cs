@@ -236,10 +236,13 @@ namespace SolarMajesty
             // Joined Commons / HAB / LAB / PWR FBX bake docks on the cylinder axis
             // at a smaller bore. Live sleeves are DockY / DockBore and must toggle
             // per face — same reason Commons skipped the joined dome.
+            // Farm FBX is the AG-1 greenhouse vault — dream-loop concept wants an
+            // industrial tank/pipe/stack yard, so prefer procedural BuildWaterExtractor.
             if (cat == BuildingCategory.Commons ||
                 cat == BuildingCategory.Habitat ||
                 cat == BuildingCategory.Laboratory ||
-                cat == BuildingCategory.Power)
+                cat == BuildingCategory.Power ||
+                cat == BuildingCategory.Farm)
                 return null;
 
             GameObject hero = BuildingVisualCatalog.LoadHeroKit(cat);

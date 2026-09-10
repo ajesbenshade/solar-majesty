@@ -104,24 +104,30 @@ namespace SolarMajesty
 
         /// <summary>
         /// Density chosen so fog reaches roughly half strength at the body's FogEnd, keeping the
-        /// campus itself unfogged while the far vista still recedes. Mars pushes a touch denser
-        /// so the far third reads salmon haze (dream-loop round 1) without washing hulls.
+        /// campus itself unfogged while the far vista still recedes. Mars pushes denser for
+        /// ortho-10 Game-tab so the horizon softens without washing hulls.
         /// </summary>
         private static float FogDensityFor(CelestialBodyProfile body)
         {
+            // Mars ortho-10: far ground fills the upper frame — need strong Exp2 haze so
+            // distant dirt softens into FogColor instead of reading as a black cut.
+            if (body.Id == CelestialBodyId.Mars)
+                return 0.028f;
             float horizon = Mathf.Max(60f, body.FogEnd);
-            float strength = body.Id == CelestialBodyId.Mars ? 1.15f : 0.9f;
-            return Mathf.Clamp(strength / horizon, 0.0015f, 0.02f);
+            return Mathf.Clamp(0.9f / horizon, 0.0015f, 0.02f);
         }
 
         private static void ConfigureCamera(Camera cam, CelestialBodyProfile body)
         {
             if (cam == null) return;
-            // Void fill must match terrain — SkyTop blue/`Default-Skybox` mustard show when
-            // ortho zoom puts ray origins under the ground plane (see IsometricCameraController).
-            cam.backgroundColor = PlanetaryMapDressing.VoidFillColor(body);
+            // Mars: salmon haze clear (not dark void) so the upper ortho band never goes black.
+            cam.backgroundColor = body != null && body.Id == CelestialBodyId.Mars
+                ? PlanetaryMapDressing.VoidFillColor(body)
+                : PlanetaryMapDressing.VoidFillColor(body);
             cam.farClipPlane = Mathf.Max(cam.farClipPlane, 2000f);
-            if (cam.clearFlags != CameraClearFlags.Skybox)
+            if (body != null && body.Id == CelestialBodyId.Mars)
+                cam.clearFlags = CameraClearFlags.SolidColor;
+            else if (cam.clearFlags != CameraClearFlags.Skybox)
                 cam.clearFlags = CameraClearFlags.SolidColor;
 
             var additional = cam.GetComponent<UniversalAdditionalCameraData>();
