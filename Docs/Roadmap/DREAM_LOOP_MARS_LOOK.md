@@ -15,19 +15,24 @@ Judge stills against **this** image, not the retired packed `SM_MarsCampaign_Vis
 ### Aaron look brief (2026-09-07)
 
 1. **Forgo interconnect tubes** between buildings. `SpawnTubeRuns` / between-yard tube web are **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed. Square Lego airlocks may remain as building **ports**.
-2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill dirt with leftover sockets.
-3. **Distant haze** toward the horizon (concept language). Existing `DemoAtmosphere` exponential-squared fog is the live haze; do not wash the campus itself.
-4. **Polyhedron / geodesic Commons** silhouette — not a soft sphere-only kit if we can dress it.
-5. Colonists / specialists crossing open ground should **read as spacesuited** (vulnerable between buildings). Docs + still dressing notes only. Do **not** invent new `FlagTypes` or rewrite `SpecialistBrain`.
+2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill leftover sockets. Landmark yards use `MinYardGapCells` **4**. Leftover Inn / wonder / extra packing stays skipped on `StampPhase4*`.
+3. **Distant haze** toward the horizon. Live haze is Mars exp2 fog 0.014 plus `MarsHazeRoot` cards; do not wash campus hulls.
+4. **Polyhedron / geodesic Commons** — faceted `SM_CommonsGeodesic` + carbon lattice, not a smooth hemisphere-only.
+5. Colonists crossing open ground **read as spacesuited** (`CampusDress_Colonists` dressing). Do **not** invent new `FlagTypes` or rewrite `SpecialistBrain`.
 
 ### What the concept is
 
 - High isometric / Majesty-2 overseer camera
-- **Spaced campus pads** with empty red regolith between yards — no tube corridors linking pads
-- Hero cluster: Commons **geodesic / polyhedron** dome, HAB-1 cylinder on a short square airlock port, circular pad + Starship, small solar field, one industrial / extractor yard, optional canvas porch
-- Distant Mars haze toward the horizon, strong key light, long readable shadows
+- **Spaced campus pads** with empty red regolith between yards — no tube corridors; landmark yards use `MinYardGapCells` 4
+- Hero cluster: Commons **geodesic / polyhedron** dome (not a smooth hemisphere), HAB-1 cylinder on a short square airlock port, circular pad + Starship, small solar field, one extractor, optional canvas porch
+- **Distant orange haze** toward the horizon (fog 0.014 + `MarsHazeRoot`), strong key light, long readable shadows
+- **Spacesuited colonists** crossing open dirt between buildings (`CampusDress_Colonists` dressing — not SpecialistBrain, not FlagTypes)
 - Dusty metal / white thermal / carbon / orange / solar glass / canvas — practical colony, not toy, not Elden Ring clutter
 - Open-ground crossings read as **spacesuited** (isolation between pads)
+
+### Aaron brief after #29 (keep)
+
+`StillCaptureHold`, Mars Scale 1x, docked Lego airlock arms OK, `spawnShowcaseColony` false, Colony Commons name, five HUD chips. Bake-off `#26` / `#27` / `#28` stay parked. Do not reintroduce between-yard tubes. **Not a Phase 4 EXIT.**
 
 ### What it is NOT
 
@@ -50,7 +55,7 @@ Unity Editor is required (this Cloud VM cannot run Play Mode). Shoot the same wa
    - Interactive editor only (batch mode refuses).
    - Menu writes `Docs/Roadmap/SM_Capture.png`.
    - Uses play campus **ortho 10**, shutter hold, `spawnShowcaseColony` stays **false**. Mars Game view **Scale 1x**.
-   - Commons → airlock port → HAB plus CanFit pad / PWR / extractors. Leftovers do **not** stamp. Interior dirt is **not** force-filled. **No** `CampusDress_TubeRuns`.
+   - Commons → airlock port → HAB plus CanFit pad / PWR / extractors on **island gaps** (`MinYardGapCells` 4). Leftovers do **not** stamp. Interior dirt is **not** force-filled. **No** `CampusDress_TubeRuns`.
    - `FitStillOrtho` stays at play ortho 10 — it must not crop into a packed look.
 5. Game view: **Scale 1x**. Do not free-orbit or zoom-to-pack.
 6. Compare `SM_Capture.png` to `SM_MarsCampus_SpacedOverseer_Concept.png` at the same aspect (concept is 16:9; Game tab is short-wide — match **layout language**, not pixel crop).
