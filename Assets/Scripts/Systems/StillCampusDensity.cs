@@ -20,17 +20,11 @@ namespace SolarMajesty
         public const int YardSize = 4;
 
         /// <summary>
-        /// Empty dirt between Commons / HAB / pad / extractors (Aaron after #29).
-        /// Docked Lego airlock arms stay flush via TryDock / ExtraHabChain.
+        /// Keep yards inside the campus ortho. still20 leftover Inn / wonder /
+        /// extraSolar / Defense sit ~11 cells out after extra HAB + pad; 9
+        /// dropped those sockets. Play snap stays <see cref="PlayCampusOrthoSize"/>.
         /// </summary>
-        public const int MinYardGapCells = 4;
-
-        /// <summary>
-        /// Keep yards inside the campus ortho. Gap-4 islands sit farther out
-        /// than the old flush pack (~11 cells); 16 still fits play ortho 10.
-        /// Play snap stays <see cref="PlayCampusOrthoSize"/>.
-        /// </summary>
-        public const float MaxCenterSeparationCells = 16f;
+        public const float MaxCenterSeparationCells = 12f;
 
         /// <summary>
         /// CaptureStill Game-tab is short-wide (~2.4). Play snap stays
@@ -379,13 +373,11 @@ namespace SolarMajesty
             int width,
             int height,
             BoundsOk bounds,
-            out Vector2Int origin,
-            bool enforceIslandGap = true)
+            out Vector2Int origin)
         {
             if (TryDockOnAirlock(placer, commons, width, height, bounds, out origin))
                 return true;
-            return TryNext(
-                placer, commons, habFace, width, height, bounds, out origin, enforceIslandGap);
+            return TryNext(placer, commons, habFace, width, height, bounds, out origin);
         }
 
         public static bool TryExtraHabChain(
@@ -426,8 +418,7 @@ namespace SolarMajesty
             int width,
             int height,
             BoundsOk bounds,
-            out Vector2Int origin,
-            bool enforceIslandGap = true)
+            out Vector2Int origin)
         {
             origin = default;
             if (placer == null) return false;
@@ -447,7 +438,6 @@ namespace SolarMajesty
                 long key = Pack(cell.x, cell.y);
                 if (!seen.Add(key)) continue;
                 if (!NearCommons(commons, cell, width, height)) continue;
-                if (enforceIslandGap && !HasMinYardGap(placer, cell, width, height)) continue;
                 if (!placer.CanFitRect(cell, width, height)) continue;
                 if (bounds != null && !bounds(cell, width, height)) continue;
                 origin = cell;
@@ -884,46 +874,25 @@ namespace SolarMajesty
             int cw = commons.Width;
             int ch = commons.Height;
 
-            // Prefer island gaps first so pad / extractors do not hug Commons.
-            // Flush (gap 0) is last-resort only — docked HAB arms do not use TryNext.
-            for (int gap = MinYardGapCells; gap <= MinYardGapCells + 3; gap++)
-            {
-                AddFlushFaces(commons, width, height, faces, dest, skipSouth: true, gap: gap);
-                dest.Add(FlushOrigin(commons, BuildingPlacer.Cardinal.South, width, height, gap));
-                AddGappedCorners(commons, width, height, dest, gap);
-            }
+            // E/W/N flush first, then corners, South last — keep the still in CampusOrthoSize.
+            AddFlushFaces(commons, width, height, faces, dest, skipSouth: true, gap: 0);
 
-            dest.Add(new Vector2Int(cx + cw + MinYardGapCells, cy + ch + MinYardGapCells));
-            dest.Add(new Vector2Int(cx - width - MinYardGapCells, cy + ch + MinYardGapCells));
-            dest.Add(new Vector2Int(cx + cw + MinYardGapCells, cy - height - MinYardGapCells));
-            dest.Add(new Vector2Int(cx - width - MinYardGapCells, cy - height - MinYardGapCells));
+            dest.Add(new Vector2Int(cx + cw, cy + ch));
+            dest.Add(new Vector2Int(cx - width, cy + ch));
+            dest.Add(new Vector2Int(cx + cw, cy - height));
+            dest.Add(new Vector2Int(cx - width, cy - height));
 
-            for (int gap = 3; gap >= 0; gap--)
+            dest.Add(FlushOrigin(commons, BuildingPlacer.Cardinal.South, width, height, 0));
+
+            for (int gap = 1; gap <= 2; gap++)
             {
                 AddFlushFaces(commons, width, height, faces, dest, skipSouth: true, gap: gap);
                 dest.Add(FlushOrigin(commons, BuildingPlacer.Cardinal.South, width, height, gap));
             }
 
-            int[] slides = { 1, -1, 2, -2, 3, -3, 4, -4 };
+            int[] slides = { 1, -1, 2, -2, 3, -3 };
             AddSlides(commons, width, height, faces, dest, slides, skipSouth: true);
             AddSlides(commons, width, height, faces, dest, slides, skipSouth: false, onlySouth: true);
-        }
-
-        private static void AddGappedCorners(
-            BuildingPlacer.CampusPiece commons,
-            int width,
-            int height,
-            List<Vector2Int> dest,
-            int gap)
-        {
-            int cx = commons.Origin.x;
-            int cy = commons.Origin.y;
-            int cw = commons.Width;
-            int ch = commons.Height;
-            dest.Add(new Vector2Int(cx + cw + gap, cy + ch + gap));
-            dest.Add(new Vector2Int(cx - width - gap, cy + ch + gap));
-            dest.Add(new Vector2Int(cx + cw + gap, cy - height - gap));
-            dest.Add(new Vector2Int(cx - width - gap, cy - height - gap));
         }
 
         /// <summary>
@@ -956,7 +925,7 @@ namespace SolarMajesty
         {
             int ox = commons.Origin.x + CenterOffset(commons.Width, width);
             int oy = commons.Origin.y + CenterOffset(commons.Height, height);
-            for (int r = MinYardGapCells; r <= 16; r++)
+            for (int r = 3; r <= 8; r++)
             {
                 for (int dx = -r; dx <= r; dx++)
                 {
@@ -1047,61 +1016,6 @@ namespace SolarMajesty
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Cell gap between two axis-aligned footprints. 0 if they touch or
-        /// overlap; diagonal uses the smaller axis so islands stay open dirt.
-        /// </summary>
-        public static int RectGapCells(
-            Vector2Int a, int aw, int ah, Vector2Int b, int bw, int bh)
-        {
-            int ax1 = a.x + Mathf.Max(1, aw);
-            int ay1 = a.y + Mathf.Max(1, ah);
-            int bx1 = b.x + Mathf.Max(1, bw);
-            int by1 = b.y + Mathf.Max(1, bh);
-            int gapX = a.x >= bx1 ? a.x - bx1 : b.x >= ax1 ? b.x - ax1 : 0;
-            int gapY = a.y >= by1 ? a.y - by1 : b.y >= ay1 ? b.y - ay1 : 0;
-            bool overlapX = a.x < bx1 && ax1 > b.x;
-            bool overlapY = a.y < by1 && ay1 > b.y;
-            if (overlapX && overlapY) return 0;
-            if (overlapX) return gapY;
-            if (overlapY) return gapX;
-            return Mathf.Min(gapX, gapY);
-        }
-
-        public static bool IsIslandYard(BuildingCategory cat)
-        {
-            switch (cat)
-            {
-                case BuildingCategory.Commons:
-                case BuildingCategory.Habitat:
-                case BuildingCategory.LandingPad:
-                case BuildingCategory.Power:
-                case BuildingCategory.Farm:
-                case BuildingCategory.RegolithCamp:
-                case BuildingCategory.Mine:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        public static bool HasMinYardGap(
-            BuildingPlacer placer, Vector2Int origin, int width, int height)
-        {
-            if (placer?.Pieces == null) return true;
-            var pieces = placer.Pieces;
-            for (int i = 0; i < pieces.Count; i++)
-            {
-                var p = pieces[i];
-                if (!IsIslandYard(p.Category)) continue;
-                if (RectGapCells(origin, width, height, p.Origin, p.Width, p.Height)
-                    < MinYardGapCells)
-                    return false;
-            }
-
-            return true;
         }
 
         private static bool NearCommons(

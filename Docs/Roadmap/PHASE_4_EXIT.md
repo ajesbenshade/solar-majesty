@@ -10,22 +10,10 @@ Phase 4 pushed the Mars campus into engine: atmosphere, square-dock tube campus,
 **Aaron look brief (2026-09-07)**
 
 1. **Forgo interconnect tubes** between buildings. `SpawnTubeRuns` / between-yard tube web are **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed. Square Lego airlocks may remain as building ports.
-2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill leftover sockets. Landmark yards use `MinYardGapCells` **4**. Leftover Inn / wonder / extra packing stays skipped on `StampPhase4*` (#30).
-3. **Distant haze** toward the horizon — Mars exp2 fog 0.014 + `MarsHazeRoot` cards.
-4. **Polyhedron / geodesic Commons** — faceted `SM_CommonsGeodesic` + carbon lattice, not a smooth hemisphere-only.
-5. Colonists crossing open ground **read as spacesuited** (`CampusDress_Colonists` dressing). Do **not** invent new `FlagTypes` or rewrite `SpecialistBrain`.
-
-**Aaron brief after #29 (tube web gone — code only, do not stamp exit)**
-
-`SM_Capture_NoTubes` is the post-#29 Capture: civic cluster still hugs, Commons reads as a smooth hemisphere, far field falls to dark space, no outdoor suits. Concept stills want:
-
-1. **More yard spacing** — `MinYardGapCells` 4 islands between Commons / HAB / pad / extractors. Empty dirt intentional. Do not reintroduce `CampusDress_TubeRuns`.
-2. **Geodesic / polyhedron Commons** — faceted `SM_CommonsGeodesic` + carbon lattice ribs, not a UV-sphere hemisphere.
-3. **Distant haze** — thicker Mars exp2 fog at the horizon + `MarsHazeRoot` cards. Campus ~15 m stays mostly clear so hulls stay white.
-4. **Spacesuited colonists** — `CampusDress_Colonists` walkers on open dirt. Dressing only. No `SpecialistBrain` rewrite. No new FlagTypes.
-5. **Keep** — `StillCaptureHold`, Mars Scale 1x, docked Lego airlock arms, `spawnShowcaseColony` false, Colony Commons, five HUD chips. Bake-off `#26` / `#27` / `#28` parked.
-
-**CaptureStill immediately after merge.** EXIT stays blocked on Aaron look-clear. **Do not stamp exit.**
+2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill dirt with leftover sockets.
+3. **Distant haze** toward the horizon (concept language).
+4. **Polyhedron / geodesic Commons** silhouette (not a soft sphere-only kit if we can dress it).
+5. Colonists / specialists crossing open ground should **read as spacesuited** (vulnerable between buildings). Docs + still dressing notes only. Do **not** invent new `FlagTypes` or rewrite `SpecialistBrain`.
 
 Nine real stills now exist. The latest archived Game-tab shot is **`SM_MarsCampaign_PlayModeCampusStill6.png`** — Mars Sol 1 HUD, empty start, pad in the corner. `SM_MarsCampaign_PlayModeCampusStill5.png` also exists (Commons + HAB Game-tab). Packed editor still is **`SM_MarsCampaign_PackedCampusStill.png`** (`Camera.Render`, not Game-tab HUD) — archive only, not the look claim. None of these stamp exit. GD will reshoot a spaced overseer still after merge. Leftovers below are Phase 4 look gaps, not Phase 5 ship polish.
 
@@ -160,18 +148,10 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 **Play Mode fixes after still20 (code only — do not stamp exit)**
 - still20 shuttered `workshop=True inn=False wonder=False leftover=workshop extraHab=True extraSolar=False defense=False ortho=10 hold=True` plus **W2 campaign cut / narrative text covering the campus**
 - `PlanLeftovers` no longer stamps a second hangar that eats leftover sockets — Village Inn + a wonder still place when they **CanFit**
-- Extra solar bank + Defense Battery + a second under-construction HAB socket when they CanFit (spaced islands; `MaxCenterSeparationCells` 16)
+- Extra solar bank + Defense Battery + a second under-construction HAB socket when they CanFit (packed pockets; `MaxCenterSeparationCells` 12)
 - `StillCaptureHold` suppresses arrival/mid-act cut modals, ArrivalLog / VictoryLog modal UI, and travel-toast overlays for the shutter (fail banner stay). Re-arms from editor SessionState before `BeginNarrativeSession`. `PrepareStillCaptureWorld` clears pending cuts + toast. Disarm on play exit unchanged
 - Play `CampusOrthoSize` stays 10. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite
 - **Reshoot still21+ after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look
-
-**Play Mode fixes after #29 / Aaron brief (code only — do not stamp exit)**
-- Standalone still yards (pad / PWR / water / regolith) prefer `MinYardGapCells` 4 islands. Docked Commons↔airlock↔HAB arms stay flush. `MaxCenterSeparationCells` 16. No `CampusDress_TubeRuns`.
-- Procedural Commons dome is a flat-shaded geodesic (`SM_CommonsGeodesic`) plus carbon `CommonsLattice` ribs — not a UV sphere.
-- Mars fog density 0.014 (campus ~15 m stays clear; far vista hazes) + `MarsHazeRoot` banks/cards. Thicker procedural sky.
-- `CampusDress_Colonists` spacesuit walkers on open dirt. No `SpecialistBrain` / FlagType edits.
-- `StillCaptureHold` stays. Mars Scale 1x stays. `spawnShowcaseColony` stays false. Five HUD chips stay.
-- **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
 
 **Play Mode fixes after still21 (code only — do not stamp exit)**
 - still21 shuttered `leftover=inn+wonder extraHab=True extraSolar=True defense=True hold=True` Mars Scale 1x. That pass chased packed density vs the now-retired visual-target PNG. **Do not treat still21 / still22 as a density-match gate.**
@@ -188,7 +168,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - CaptureStill / `StampPhase4*` skip leftover Inn / wonder / extra HAB / extra solar / Defense packing. Landmark pad / PWR / extractors may still CanFit.
 - `CampusDressing.RefreshTubes` / CaptureStill **do not stamp** pressurized tube runs between cardinal yards. `SpawnTubeRuns` / between-yard tube web are **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed. Docked square Lego airlock arms / hub collars stay.
 - `FitStillOrtho` stays at play `CampusOrthoSize` **10** (`StillMinOrtho` = 10). It must not crop into a packed look. Play snap stays 10. Empty interior dirt stays.
-- Island yard gap 4, faceted geodesic Commons, Mars horizon haze, and `CampusDress_Colonists` spacesuit dressing are **in code** — CaptureStill immediately after merge. This pass does not invent new FBX.
+- Distant haze / polyhedron Commons / spacesuited colonists stay a **GD art lane** — this pass does not invent FBX
 - `StillCaptureHold` stays. Mars Scale 1x stays. `spawnShowcaseColony` stays false. Colony Commons name stays. Five HUD chips stay. No Palace. Square airlocks stay. No click-to-move. `SpecialistBrain` / FlagType / Narrative untouched.
 - Open-ground crossings should read as **spacesuited** in still dressing notes. No new `FlagTypes`.
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look.
@@ -231,8 +211,8 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Campus Game-tab still (Aaron 2026-09-07 vs concept)** — latest archived Game-tab is still6 (empty Sol 1). Bake-off #26/#27/#28 Captures are **not** EXIT. still21 leftover=inn+wonder extraHab/solar/defense is **not** a density gate. This pass is **code only**: CaptureStill prefers play ortho 10; leftover kits do **not** stamp; landmark yards use `MinYardGapCells` 4; geodesic Commons + Mars haze + spacesuit dressing are in; **RefreshTubes no longer stamps `CampusDress_TubeRuns` (`SpawnTubeRuns` removed)**; interior dirt is not force-filled. `StillCaptureHold` stays. **CaptureStill immediately after merge. Do not stamp exit.** EXIT stays blocked on Aaron look-clear.
-- Landmark kits (pad + Starship, solar, extractors) may appear when they CanFit, with empty dirt between Commons / HAB / pad / extractors. Leftover Workshop / Inn / wonder / extra HAB / extra solar / Defense do **not** stamp on `StampPhase4*`. Do not fill every dirt patch. Spacesuited colonists are still dressing (not a new unit system / not FlagTypes).
+- **Campus Game-tab still (Aaron 2026-09-07 vs concept)** — latest archived Game-tab is still6 (empty Sol 1). Bake-off #26/#27/#28 Captures are **not** EXIT. still21 leftover=inn+wonder extraHab/solar/defense is **not** a density gate. This pass is **code only**: CaptureStill prefers play ortho 10; leftover kits do **not** stamp; **RefreshTubes no longer stamps `CampusDress_TubeRuns` (`SpawnTubeRuns` removed)**; interior dirt is not force-filled. `StillCaptureHold` stays. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
+- Landmark kits (pad + Starship, solar, extractors) may appear when they CanFit. Leftover Workshop / Inn / wonder / extra HAB / extra solar / Defense do **not** stamp on `StampPhase4*`. Do not fill every dirt patch. Units remain optional (do not invent new unit systems).
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; interconnect tube webs are retired — Lego ports only)
 - IMGUI HUD vs painted mockup chrome (material language shipped; painted fidelity is leftover)
@@ -244,7 +224,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 ## How to smoke
 
 1. `Docs/SMOKE_TEST.md` Phase 4 sections (Earth meadow New Game, then **Shift+click MARS?** or Shift+F10 Mars). Empty Mars should show boulder/dune/crater vista + node outcrops + dens, not a tiled plane of cubes. `spawnShowcaseColony` stays false.
-2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **faceted geodesic / polyhedron Commons** (not a smooth hemisphere), a **white paneled square hub** with **square Lego ports + orange collars on docked faces only** (no interconnect tube web across the dirt), **no unused CommonsPort / CommonsStub rings** on undocked cardinals, HAB cylinder that stays **readable white** against the red ground, **no grey hex slabs**, camera snapping to campus ortho **10** (hopper spawn must not pan or zoom out). Pad / extractors sit on dirt islands (`MinYardGapCells` 4). Spacesuits may cross open ground (dressing). Distant haze should recede toward the horizon. Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots.
+2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **geodesic / polyhedron Commons**, a **white paneled square hub** with **square Lego ports + orange collars on docked faces only** (no interconnect tube web across the dirt), **no unused CommonsPort / CommonsStub rings** on undocked cardinals, HAB cylinder that stays **readable white** against the red ground, **no grey hex slabs**, camera snapping to campus ortho **10** (hopper spawn must not pan or zoom out). Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots. Distant haze should recede toward the horizon.
 3. Menu **Solar Majesty → Capture Mars Still** (or `-executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CaptureMarsStill`) regenerates the editor PNG only — not a HUD still.
 
 ---
