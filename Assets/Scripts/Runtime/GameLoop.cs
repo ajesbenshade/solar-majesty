@@ -2540,15 +2540,21 @@ namespace SolarMajesty
             int salt = 0;
             var pad = Village.NearestByCategory(campus, 80f, BuildingCategory.LandingPad);
             if (pad != null)
-                salt = StampCrossingPair(root, c, pad.transform.position, 0.46f, 0.62f, 1.4f, salt);
+                salt = StampCrossingPair(root, c, pad.transform.position, 0.40f, 0.56f, 1.4f, salt);
             var hab = Village.NearestByCategory(campus, 80f, BuildingCategory.Habitat);
             if (hab != null)
-                salt = StampCrossingPair(root, c, hab.transform.position, 0.50f, 0.50f, 2.2f, salt);
+                salt = StampCrossingPair(root, c, hab.transform.position, 0.44f, 0.58f, 2.6f, salt);
+            var farm = Village.NearestByCategory(campus, 80f, BuildingCategory.Farm);
+            if (farm != null)
+                salt = StampCrossingPair(root, c, farm.transform.position, 0.48f, 0.60f, 1.6f, salt);
             if (salt > 0)
                 Debug.Log($"[GameLoop] Stamp still suit crossings={salt}");
         }
 
-        /// <summary>Two figures walking the line a→b, offset sideways so they clear dock arms.</summary>
+        /// <summary>
+        /// Two figures walking the line a→b, offset toward the camera (-x,-z) so they clear
+        /// dock arms and stand on open dirt the ortho view can see.
+        /// </summary>
         private static int StampCrossingPair(
             Transform root, Vector3 a, Vector3 b, float t0, float t1, float side, int salt)
         {
@@ -2556,7 +2562,7 @@ namespace SolarMajesty
             dir.y = 0f;
             if (dir.sqrMagnitude < 1f) return salt;
             dir.Normalize();
-            Vector3 perp = new Vector3(-dir.z, 0f, dir.x);
+            Vector3 perp = new Vector3(-1f, 0f, -1f).normalized;
             float yaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
 
             Vector3 p0 = Vector3.Lerp(a, b, t0) + perp * side;

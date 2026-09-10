@@ -212,21 +212,25 @@ namespace SolarMajesty
                 EndlessLog = "Mars holds. Keep colonizing the red crust — rating stands, no hop.",
                 // Dusty brown-orange, not blood-red: concept lit dirt is ~RGB 144/65/28 (G/R 0.45).
                 // ACES + the warm sun pull G down, so the albedo carries extra G/B headroom.
-                GroundLight = new Color(0.80f, 0.48f, 0.26f),
-                GroundDark = new Color(0.46f, 0.24f, 0.13f),
-                Horizon = new Color(0.58f, 0.30f, 0.16f),
-                RockColor = new Color(0.50f, 0.30f, 0.18f),
-                CraterRim = new Color(0.64f, 0.36f, 0.18f),
-                CraterFloor = new Color(0.34f, 0.17f, 0.09f),
-                DuneColor = new Color(0.84f, 0.50f, 0.26f),
+                // Round 7 judge: lit dirt rendered 160/60/20 (B/R 0.12) — desaturate by lifting B.
+                GroundLight = new Color(0.66f, 0.45f, 0.33f),
+                GroundDark = new Color(0.44f, 0.27f, 0.18f),
+                Horizon = new Color(0.56f, 0.32f, 0.20f),
+                RockColor = new Color(0.46f, 0.31f, 0.22f),
+                CraterRim = new Color(0.60f, 0.38f, 0.24f),
+                CraterFloor = new Color(0.32f, 0.19f, 0.12f),
+                DuneColor = new Color(0.70f, 0.47f, 0.34f),
                 SoilNodeColor = new Color(0.62f, 0.32f, 0.16f),
                 LairRim = new Color(0.22f, 0.07f, 0.05f),
                 LairPit = new Color(0.10f, 0.03f, 0.02f),
                 SkyTop = new Color(0.68f, 0.40f, 0.20f),
                 SkyHorizon = new Color(0.94f, 0.62f, 0.32f),
-                SunColor = new Color(1f, 0.88f, 0.58f),
-                SunIntensity = 1.48f,
-                SunEuler = new Vector3(20f, -62f, 0f),
+                // Higher sun so flat dirt takes direct light and sun-facing rock walls stop
+                // out-shining it (round 7 "beige cube" boulders); less orange so hull whites
+                // read white rather than tan.
+                SunColor = new Color(1f, 0.91f, 0.72f),
+                SunIntensity = 1.18f,
+                SunEuler = new Vector3(38f, -62f, 0f),
                 GradeFilter = new Color(1.00f, 0.99f, 0.97f),
                 AmbientHum = 58f,
                 FillColor = new Color(0.92f, 0.90f, 0.88f),
@@ -237,11 +241,13 @@ namespace SolarMajesty
                 AmbientGround = new Color(0.30f, 0.17f, 0.10f),
                 // Pale dusty haze (concept far-ground edge ~RGB 222/140/80).
                 FogColor = new Color(0.87f, 0.55f, 0.31f),
-                // Linear ramp tuned to the ortho-10 Game tab, whose ground spans ~22 m (bottom
-                // edge) to ~45 m (top edge) of view depth: campus centre (~34 m) stays ~11 %
-                // hazed, back-of-campus yards (~40 m) ~35 %, top-of-frame ground ~60 %.
-                FogStart = 32f,
-                FogEnd = 54f,
+                // Linear ramp tuned to the ortho-10 Game tab (IsometricCameraController: pitch
+                // 30°, camera y 22, focus on the centre ray => focus at 44 m view depth, ground
+                // spans ~27 m at the bottom edge to ~61 m at the top edge, ±20 m along the view
+                // azimuth). Commons (44 m) and HAB (~48 m) stay <=10 % hazed, back-of-campus
+                // yards (~52 m) ~35 %, only the top ~5 % of the frame saturates to FogColor.
+                FogStart = 47f,
+                FogEnd = 61f,
                 AtmosphereThickness = 1.08f,
                 SkyExposure = 1.10f,
                 CraterCount = 56,

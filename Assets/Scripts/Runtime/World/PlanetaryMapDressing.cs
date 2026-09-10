@@ -548,9 +548,10 @@ namespace SolarMajesty
             };
             for (int i = 0; i < outcrops.Length; i++)
             {
-                SpawnVistaBoulder(root, outcrops[i], body, i + 40, 1.15f + (i % 3) * 0.22f);
-                SpawnVistaBoulder(root, outcrops[i] + new Vector3(0.85f, 0f, -0.55f), body, i + 60, 0.62f);
-                SpawnVistaBoulder(root, outcrops[i] + new Vector3(-0.7f, 0f, 0.7f), body, i + 80, 0.48f);
+                // Outcrops stay boulder-sized: at 1.15–1.6 m the blocky rock FBX read as beige cubes.
+                SpawnVistaBoulder(root, outcrops[i], body, i + 40, 0.58f + (i % 3) * 0.11f);
+                SpawnVistaBoulder(root, outcrops[i] + new Vector3(0.85f, 0f, -0.55f), body, i + 60, 0.40f);
+                SpawnVistaBoulder(root, outcrops[i] + new Vector3(-0.7f, 0f, 0.7f), body, i + 80, 0.32f);
             }
 
             SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
@@ -560,7 +561,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// Distant low ridges so the vista recedes into salmon haze when the player scrolls
-        /// off the campus. Note the ortho-10 Game tab only ever frames ground within ~15 m of
+        /// off the campus. Note the ortho-10 Game tab only ever frames ground within ~20 m of
         /// focus (top edge is far ground, never sky), so the on-campus horizon read comes from
         /// the ground shader's depth fog, not from these.
         /// </summary>
@@ -571,15 +572,19 @@ namespace SolarMajesty
             for (int i = 0; i < 12; i++)
             {
                 float ang = i * 30f * Mathf.Deg2Rad + 0.22f;
-                float dist = 18f + (i % 4) * 4.5f;
+                // The ortho-10 frame reaches ~20 m past focus along the view azimuth and ±15 m
+                // across; ridges start beyond it so no unshadowed beige slab enters the still.
+                float dist = 26f + (i % 4) * 4.5f;
                 Vector3 at = campus + new Vector3(Mathf.Cos(ang) * dist, 0f, Mathf.Sin(ang) * dist);
                 float span = 9f + (i % 3) * 2.8f;
                 float height = 1.4f + (i % 3) * 0.85f;
-                var ridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                // Half-buried ellipsoid, not a cube: at the scrolled edge of the map a cube reads
+                // as a beige slab with a lit top face.
+                var ridge = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 ridge.name = "Dress_MarsHazeRidge_" + i;
                 ridge.transform.SetParent(parent, false);
-                ridge.transform.position = at + Vector3.up * (height * 0.42f);
-                ridge.transform.localScale = new Vector3(span, height, 3.2f + (i % 2) * 1.4f);
+                ridge.transform.position = at + Vector3.up * (height * 0.10f);
+                ridge.transform.localScale = new Vector3(span, height * 2f, 3.2f + (i % 2) * 1.4f);
                 ridge.transform.rotation = Quaternion.Euler(0f, ang * Mathf.Rad2Deg + 90f, 0f);
                 Object.Destroy(ridge.GetComponent<Collider>());
                 PlanetaryWorldGen.Tint(ridge, far, 0.02f, ShadowCastingMode.Off);

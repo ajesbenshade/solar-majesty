@@ -1410,9 +1410,10 @@ namespace SolarMajesty
                     feet[i] + new Vector3(0f, height * 0.5f, 0f),
                     new Vector3(0.08f, height, 0.08f), Carbon);
             }
+            // Grey deck plate, not a yellow canopy slab (round 7 off-palette blob).
             Prim(root, prefix + "Beam", PrimitiveType.Cube,
                 at + new Vector3(0f, height * 0.92f, 0f),
-                new Vector3(span * 2.1f, 0.08f, span * 2.1f), Yellow);
+                new Vector3(span * 2.1f, 0.08f, span * 2.1f), Concrete);
         }
 
         private static void ScaffoldLow(Transform root, string prefix, Vector3 at, float width)
@@ -1440,10 +1441,35 @@ namespace SolarMajesty
                 StripColliders(ship);
                 ColonyVisualUtility.EnsureUrpMaterials(ship);
                 ColonyVisualUtility.SnapToGround(ship, root.position.y + 0.16f);
+                AddShipCarbonBands(root, ship);
                 return;
             }
 
             BuildProceduralShip(root);
+        }
+
+        /// <summary>
+        /// Concept Starship is white with two black bands; the FBX ships all-white, so wrap
+        /// two thin carbon rings around the stack at ~1/3 and ~2/3 height.
+        /// </summary>
+        private static void AddShipCarbonBands(Transform root, GameObject ship)
+        {
+            var rends = ship.GetComponentsInChildren<Renderer>();
+            if (rends == null || rends.Length == 0) return;
+            Bounds b = rends[0].bounds;
+            for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
+            float h = b.size.y;
+            if (h < 1f) return;
+            // Flaps widen the bounds along one axis only; the narrow axis is the hull diameter
+            // (SM_Starship_Placeholder: 1.74 m at ShipScale). Rings stand 5 % proud of the skin.
+            float dia = Mathf.Min(b.size.x, b.size.z) * 1.05f;
+            for (int i = 0; i < 2; i++)
+            {
+                float y = b.min.y + h * (i == 0 ? 0.30f : 0.58f);
+                Vector3 local = root.InverseTransformPoint(new Vector3(b.center.x, y, b.center.z));
+                Prim(root, "Dress_ShipBand_" + i, PrimitiveType.Cylinder,
+                    local, new Vector3(dia, h * 0.03f, dia), Carbon);
+            }
         }
 
         private static void BuildProceduralShip(Transform root)

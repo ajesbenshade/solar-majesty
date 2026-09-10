@@ -240,12 +240,15 @@ namespace SolarMajesty
             // industrial tank/pipe/stack yard, so prefer procedural BuildWaterExtractor.
             // LandingPad FBX is one graphite disc that mirrors the Mars sky as a solid
             // orange plate; the procedural pad is dark concrete with thin orange markings.
+            // RegolithCamp FBX sits on a ~6 m beige block plinth that reads as a giant cube
+            // at the frame edge; the procedural drum plant has no plinth.
             if (cat == BuildingCategory.Commons ||
                 cat == BuildingCategory.Habitat ||
                 cat == BuildingCategory.Laboratory ||
                 cat == BuildingCategory.Power ||
                 cat == BuildingCategory.Farm ||
-                cat == BuildingCategory.LandingPad)
+                cat == BuildingCategory.LandingPad ||
+                cat == BuildingCategory.RegolithCamp)
                 return null;
 
             GameObject hero = BuildingVisualCatalog.LoadHeroKit(cat);

@@ -86,7 +86,7 @@ Unity -projectPath . \
   -executeMethod SolarMajesty.EditorTools.CaptureStill.Run
 ```
 
-Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. Local rounds so far (fresh judge each): r2 3, r4–5 3 (haze blocked), r6 4 (haze landed; pad/dirt/shadow/solar palette blocked), r7 **5** (pad, shadows, crossings landed; fog reach / dirt hue / beige blocks still block Tier 2). **Do not stamp EXIT** until Aaron look-clear.
+Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. Local rounds so far (fresh judge each): r2 3, r4–5 3 (haze blocked), r6 4 (haze landed; pad/dirt/shadow/solar palette blocked), r7 5 (pad, shadows, crossings landed), r8 **6 / Tier 2 passed** (fog ramp retuned to the real 30° camera: focus 44 m, frame 27–61 m; dirt desaturated; camp/pad FBX skipped; rocket bands). Tier 3 blockers: warm-white hull albedo, Commons facet lattice, HAB band/collars, rocket terminator, far-ground relief. **Do not stamp EXIT** until Aaron look-clear.
 
 ### Cloud agents (no Unity)
 

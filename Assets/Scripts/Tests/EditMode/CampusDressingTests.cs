@@ -133,7 +133,7 @@ namespace SolarMajesty.Tests
             // the campus centre (~34 m stays near-clear) and end before the top-of-frame ground
             // (~45 m) or the far dirt never softens.
             Assert.Greater(mars.FogStart, 30f);
-            Assert.Less(mars.FogEnd, 60f);
+            Assert.Less(mars.FogEnd, 70f);
             // Dusty brown-orange dirt, not blood-red: concept lit dirt G/R ~0.45.
             Assert.Greater(mars.GroundLight.g / mars.GroundLight.r, 0.55f);
         }
