@@ -134,6 +134,7 @@ namespace SolarMajesty
                     _cam.orthographicSize = _targetZoom;
             }
             KeepViewAboveGround();
+            DemoAtmosphere.SyncFog(_cam);
         }
 
         /// <summary>Hard-set transform to the current pan/zoom targets (skip smoothing).</summary>
@@ -145,6 +146,7 @@ namespace SolarMajesty
             if (_cam != null)
                 _cam.orthographicSize = _targetZoom;
             KeepViewAboveGround();
+            DemoAtmosphere.SyncFog(_cam);
         }
 
         private void Update()
@@ -270,6 +272,7 @@ namespace SolarMajesty
             transform.position = _orbitFocus - rot * Vector3.forward * dist;
             _targetPos = transform.position;
             _smoothedPos = transform.position;
+            DemoAtmosphere.SyncFog(_cam);
         }
 
         private void HandleKeyboardPan()
@@ -337,6 +340,7 @@ namespace SolarMajesty
             }
             _cam.orthographicSize = Mathf.Lerp(_cam.orthographicSize, _targetZoom, tZoom);
             KeepViewAboveGround();
+            DemoAtmosphere.SyncFog(_cam);
         }
 
         /// <summary>

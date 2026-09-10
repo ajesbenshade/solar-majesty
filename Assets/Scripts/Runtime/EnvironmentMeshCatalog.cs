@@ -38,18 +38,161 @@ namespace SolarMajesty
         public const float CraterVistaNativeDiameter = 10f;
         public const float DuneNativeLength = 6f;
 
-        public static GameObject LoadTree(int variant)
+        public static GameObject LoadTree(int variant) => LoadTree(variant, CelestialBodyId.Mars);
+
+        public static GameObject LoadTree(int variant, CelestialBodyId body)
         {
+            if (body == CelestialBodyId.Earth)
+            {
+                var kit = VendorDressingKit.Load();
+                var vendor = kit != null ? VendorDressingKit.Pick(kit.earthTrees, variant) : null;
+                if (vendor != null) return vendor;
+            }
             return Resources.Load<GameObject>(variant % 2 == 0 ? TreeAPath : TreeBPath)
                    ?? Resources.Load<GameObject>(TreeAPath)
                    ?? Resources.Load<GameObject>(TreeBPath);
         }
 
-        public static GameObject LoadRock(int variant)
+        public static GameObject LoadRock(int variant) => LoadRock(variant, CelestialBodyId.Mars);
+
+        public static GameObject LoadRock(int variant, CelestialBodyId body)
         {
+            if (body == CelestialBodyId.Earth)
+            {
+                var kit = VendorDressingKit.Load();
+                var vendor = kit != null ? VendorDressingKit.Pick(kit.earthRocks, variant) : null;
+                if (vendor != null) return vendor;
+            }
             return Resources.Load<GameObject>(variant % 2 == 0 ? RockAPath : RockBPath)
                    ?? Resources.Load<GameObject>(RockAPath)
                    ?? Resources.Load<GameObject>(RockBPath);
+        }
+
+        public static GameObject LoadEarthShrub(int salt)
+        {
+            var kit = VendorDressingKit.Load();
+            return kit != null ? VendorDressingKit.Pick(kit.earthShrubs, salt) : null;
+        }
+
+        public static GameObject LoadEarthGrass(int salt)
+        {
+            var kit = VendorDressingKit.Load();
+            return kit != null ? VendorDressingKit.Pick(kit.earthGrass, salt) : null;
+        }
+
+        public static GameObject LoadEarthFlower(int salt)
+        {
+            var kit = VendorDressingKit.Load();
+            return kit != null ? VendorDressingKit.Pick(kit.earthFlowers, salt) : null;
+        }
+
+        public static bool IsVendorNature(GameObject prefab)
+        {
+            if (prefab == null) return false;
+            string n = prefab.name;
+            return n.StartsWith("PT_") || n.IndexOf("Polytope", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>
+        /// Instantiate a Polytope nature prefab. Keep authored textures; remap Built-in
+        /// surface shaders onto URP Lit so they are not magenta in this project's pipeline.
+        /// </summary>
+        public static GameObject InstantiateVendorNature(GameObject prefab, string name, float targetHeight = 0f)
+        {
+            if (prefab == null) return null;
+            var go = Object.Instantiate(prefab);
+            go.name = name;
+            StripImportJunk(go);
+            RemapVendorToUrp(go);
+            if (targetHeight > 0.05f)
+                FitHeight(go, targetHeight);
+            ColonyVisualUtility.SnapToGround(go);
+            return go;
+        }
+
+        public static void FitHeight(GameObject go, float targetHeight)
+        {
+            if (go == null || targetHeight <= 0.01f) return;
+            var rends = go.GetComponentsInChildren<Renderer>(true);
+            if (rends == null || rends.Length == 0) return;
+            Bounds b = rends[0].bounds;
+            for (int i = 1; i < rends.Length; i++)
+            {
+                if (rends[i] != null) b.Encapsulate(rends[i].bounds);
+            }
+            float h = b.size.y;
+            if (h < 0.05f) return;
+            go.transform.localScale *= targetHeight / h;
+        }
+
+        private static void RemapVendorToUrp(GameObject root)
+        {
+            if (root == null) return;
+            var lit = Shader.Find("Universal Render Pipeline/Lit")
+                      ?? Shader.Find("Universal Render Pipeline/Simple Lit");
+            if (lit == null) return;
+
+            var rends = root.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < rends.Length; i++)
+            {
+                var rend = rends[i];
+                if (rend == null) continue;
+                var src = rend.sharedMaterials;
+                if (src == null || src.Length == 0) continue;
+                var next = new Material[src.Length];
+                for (int m = 0; m < src.Length; m++)
+                {
+                    var old = src[m];
+                    if (old == null)
+                    {
+                        next[m] = MakeEnvMat(lit, rend.name, EnvColorFor(rend.name));
+                        continue;
+                    }
+                    string shaderName = old.shader != null ? old.shader.name : "";
+                    if (shaderName.IndexOf("Universal Render Pipeline", System.StringComparison.Ordinal) >= 0 ||
+                        shaderName.IndexOf("Shader Graphs", System.StringComparison.Ordinal) >= 0)
+                    {
+                        next[m] = old;
+                        continue;
+                    }
+
+                    Color c = EnvColorFor(old.name + " " + rend.name);
+                    if (old.HasProperty("_BaseColor"))
+                    {
+                        Color authored = old.GetColor("_BaseColor");
+                        if (authored.r + authored.g + authored.b < 2.7f) c = authored;
+                    }
+                    else if (old.HasProperty("_Color"))
+                    {
+                        Color authored = old.color;
+                        if (authored.r + authored.g + authored.b < 2.7f) c = authored;
+                    }
+                    Texture tex = null;
+                    if (old.HasProperty("_BaseTexture")) tex = old.GetTexture("_BaseTexture");
+                    if (tex == null && old.HasProperty("_MainTex")) tex = old.GetTexture("_MainTex");
+                    if (tex == null && old.HasProperty("_BaseMap")) tex = old.GetTexture("_BaseMap");
+                    var mat = MakeEnvMat(lit, old.name, c);
+                    if (tex != null && mat.HasProperty("_BaseMap"))
+                        mat.SetTexture("_BaseMap", tex);
+                    string token = (old.name + " " + rend.name).ToLowerInvariant();
+                    bool cutout = token.Contains("leaf") || token.Contains("grass") || token.Contains("flower") ||
+                                  token.Contains("foliage") || token.Contains("plant") || token.Contains("poppy");
+                    if (old.HasProperty("_Cutoff") && mat.HasProperty("_Cutoff"))
+                    {
+                        mat.SetFloat("_Cutoff", old.GetFloat("_Cutoff"));
+                        cutout = true;
+                    }
+                    if (cutout && mat.HasProperty("_AlphaClip"))
+                    {
+                        mat.SetFloat("_AlphaClip", 1f);
+                        mat.EnableKeyword("_ALPHATEST_ON");
+                    }
+                    next[m] = mat;
+                }
+                rend.sharedMaterials = next;
+                rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                rend.receiveShadows = true;
+            }
         }
 
         public static GameObject LoadCrater(int sizeClass)

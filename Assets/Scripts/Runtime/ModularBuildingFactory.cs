@@ -419,7 +419,7 @@ namespace SolarMajesty
             if (!hullHasPort)
             {
                 DressCyl(group.transform, name + "_Collar", hullEnd + dir * 0.02f, along,
-                    new Vector3(bore * 1.08f, 0.045f, bore * 1.08f), AirlockColor());
+                    new Vector3(bore * 1.04f, 0.03f, bore * 1.04f), AirlockColor());
             }
 
             if (!ghost)

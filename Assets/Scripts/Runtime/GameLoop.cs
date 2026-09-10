@@ -577,6 +577,7 @@ namespace SolarMajesty
             KingdomLife.Dress(transform, emptyStart: StartsEmpty);
             CampusDressing.Reset();
             CampusDressing.RefreshTubes(Placer, grid, transform);
+            RefreshSuitCrossings();
             EnsureHud();
             TryInit("alerts", () => OverseerAlertView.Ensure(this));
             TryInit("map overlay", () => MapOverlay.Ensure(this));
@@ -1604,9 +1605,11 @@ namespace SolarMajesty
             // Displaced surface replaces the flat 10x10 primitive. Campus pads stay level, so
             // placement, docking, and NavMesh are unaffected.
             Mesh mesh;
+            TerrainBake bake = null;
             try
             {
-                mesh = TerrainMeshBuilder.Build(worldW, worldH, BodySeed.Current, _body);
+                bake = TerrainDataBake.Generate(worldW, worldH, BodySeed.Current, _body);
+                mesh = TerrainMeshBuilder.Build(bake);
             }
             catch (System.Exception e)
             {
@@ -1626,6 +1629,9 @@ namespace SolarMajesty
                     collider = ground.AddComponent<MeshCollider>();
                 }
                 collider.sharedMesh = mesh;
+                var holder = ground.GetComponent<TerrainBakeHolder>();
+                if (holder == null) holder = ground.AddComponent<TerrainBakeHolder>();
+                holder.Bake = bake;
             }
 
             // The mesh is authored in world units already, so the transform stays identity.
@@ -2525,43 +2531,77 @@ namespace SolarMajesty
 
         /// <summary>
         /// Aaron 2026-09-07 concept: spacesuited figures crossing the open dirt between yards.
-        /// Still-campus dressing only (HeroBuildingKits mannequins) — no agents, no flags,
-        /// nothing bypasses SpecialistBrain. Cleared with the rest of the stamp.
+        /// Dressing only — Human Basic Motions walk/idle, no agents, no flags,
+        /// nothing bypasses SpecialistBrain.
         /// </summary>
         private void StampStillSuitCrossings()
         {
+            int salt = RefreshSuitCrossings();
             if (Village == null) return;
             Vector3 campus = ColonyLayout.CampusOrigin;
-            var commons = Village.NearestByCategory(campus, 80f, BuildingCategory.Commons);
-            if (commons == null) return;
-            Vector3 c = commons.transform.position;
-            Transform root = buildingRoot != null ? buildingRoot : transform;
-
-            int salt = 0;
             var pad = Village.NearestByCategory(campus, 80f, BuildingCategory.LandingPad);
-            if (pad != null)
-                salt = StampCrossingPair(root, c, pad.transform.position, 0.40f, 0.56f, 1.4f, salt);
-            var hab = Village.NearestByCategory(campus, 80f, BuildingCategory.Habitat);
-            if (hab != null)
-                salt = StampCrossingPair(root, c, hab.transform.position, 0.44f, 0.58f, 2.6f, salt);
             var farm = Village.NearestByCategory(campus, 80f, BuildingCategory.Farm);
-            if (farm != null)
-                salt = StampCrossingPair(root, c, farm.transform.position, 0.48f, 0.60f, 1.6f, salt);
             if (pad != null && farm != null)
             {
-                // Fourth crossing on the yard→pad line, plus a cargo crate on the open dirt
-                // camera-side of the pad so the empty ground reads as worked, not vacant.
+                Transform host = buildingRoot != null ? buildingRoot : transform;
                 Vector3 toCam = new Vector3(-1f, 0f, -1f).normalized;
-                Vector3 mid = Vector3.Lerp(farm.transform.position, pad.transform.position, 0.55f) + toCam * 1.2f;
-                mid.y = 0f;
-                Vector3 dir = pad.transform.position - farm.transform.position;
-                HeroBuildingKits.BuildSpacesuitFigure(root, mid, Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg, salt++);
                 Vector3 crate = pad.transform.position + toCam * 6.4f + new Vector3(1.6f, 0f, -1.6f);
                 crate.y = 0f;
-                HeroBuildingKits.BuildCargoCrate(root, crate, 28f, 0);
+                HeroBuildingKits.BuildCargoCrate(host, crate, 28f, 0);
             }
             if (salt > 0)
                 Debug.Log($"[GameLoop] Stamp still suit crossings={salt}");
+        }
+
+        /// <summary>
+        /// Rebuild dressing walkers on Commons↔HAB / pad / farm dirt. Safe to call after
+        /// campus expand. Destroys the previous Dress_SuitCrossings folder first.
+        /// </summary>
+        private int RefreshSuitCrossings()
+        {
+            Transform host = buildingRoot != null ? buildingRoot : transform;
+            Transform old = host.Find("Dress_SuitCrossings");
+            if (old != null)
+            {
+                if (Application.isPlaying) Object.Destroy(old.gameObject);
+                else Object.DestroyImmediate(old.gameObject);
+            }
+
+            if (Village == null) return 0;
+            Vector3 campus = ColonyLayout.CampusOrigin;
+            var commons = Village.NearestByCategory(campus, 80f, BuildingCategory.Commons);
+            if (commons == null) return 0;
+
+            var folder = new GameObject("Dress_SuitCrossings").transform;
+            folder.SetParent(host, false);
+
+            int salt = 0;
+            Vector3 c = commons.transform.position;
+            var pad = Village.NearestByCategory(campus, 80f, BuildingCategory.LandingPad);
+            if (pad != null)
+                salt = StampCrossingPair(folder, c, pad.transform.position, 0.40f, 0.56f, 1.4f, salt);
+            var hab = Village.NearestByCategory(campus, 80f, BuildingCategory.Habitat);
+            if (hab != null)
+                salt = StampCrossingPair(folder, c, hab.transform.position, 0.44f, 0.58f, 2.6f, salt);
+            var farm = Village.NearestByCategory(campus, 80f, BuildingCategory.Farm);
+            if (farm != null)
+                salt = StampCrossingPair(folder, c, farm.transform.position, 0.48f, 0.60f, 1.6f, salt);
+            if (pad != null && farm != null)
+            {
+                Vector3 toCam = new Vector3(-1f, 0f, -1f).normalized;
+                Vector3 mid = Vector3.Lerp(farm.transform.position, pad.transform.position, 0.72f) + toCam * 2.2f;
+                mid.y = 0f;
+                Vector3 along = pad.transform.position - farm.transform.position;
+                along.y = 0f;
+                if (along.sqrMagnitude > 1f)
+                {
+                    along.Normalize();
+                    float yaw = Mathf.Atan2(along.x, along.z) * Mathf.Rad2Deg;
+                    var fig = HeroBuildingKits.BuildSpacesuitFigure(folder, mid, yaw, salt++);
+                    fig?.GetComponent<SuitCrossingWalker>()?.SetPath(mid - along * 2.2f, mid + along * 2.2f);
+                }
+            }
+            return salt;
         }
 
         /// <summary>
@@ -2580,10 +2620,17 @@ namespace SolarMajesty
 
             Vector3 p0 = Vector3.Lerp(a, b, t0) + perp * side;
             p0.y = 0f;
-            HeroBuildingKits.BuildSpacesuitFigure(root, p0, yaw, salt++);
+            Vector3 p0b = Vector3.Lerp(a, b, t1) + perp * side;
+            p0b.y = 0f;
+            var fig0 = HeroBuildingKits.BuildSpacesuitFigure(root, p0, yaw, salt++);
+            fig0?.GetComponent<SuitCrossingWalker>()?.SetPath(p0, p0b);
+
             Vector3 p1 = Vector3.Lerp(a, b, t1) + perp * (side + 0.9f);
             p1.y = 0f;
-            HeroBuildingKits.BuildSpacesuitFigure(root, p1, yaw + 180f, salt++);
+            Vector3 p1b = Vector3.Lerp(a, b, t0) + perp * (side + 0.9f);
+            p1b.y = 0f;
+            var fig1 = HeroBuildingKits.BuildSpacesuitFigure(root, p1, yaw + 180f, salt++);
+            fig1?.GetComponent<SuitCrossingWalker>()?.SetPath(p1, p1b);
             return salt;
         }
 
@@ -2715,6 +2762,7 @@ namespace SolarMajesty
             }
 
             CampusDressing.RefreshTubes(Placer, grid, transform);
+            RefreshSuitCrossings();
 
             if (InFaunaGrace)
                 return;

@@ -285,13 +285,13 @@ namespace SolarMajesty
             return root;
         }
 
-        private static readonly Color HubWhite = new Color(0.99f, 0.99f, 1f);
+        private static readonly Color HubWhite = new Color(0.80f, 0.72f, 0.64f);
         private static readonly Color HubOrange = new Color(0.96f, 0.42f, 0.08f);
-        private static readonly Color HubCarbon = new Color(0.10f, 0.11f, 0.12f);
+        private static readonly Color HubCarbon = new Color(0.32f, 0.30f, 0.28f);
         private static readonly Color HubGraphite = new Color(0.20f, 0.21f, 0.22f);
         private static readonly Color HubCyan = new Color(0.22f, 0.84f, 0.98f);
         /// <summary>Hold sheet-white at Game-tab distance so the 2×2 does not flatten into dirt.</summary>
-        private static readonly Color HubWhiteEmit = new Color(0.34f, 0.34f, 0.36f);
+        private static readonly Color HubWhiteEmit = new Color(0.10f, 0.07f, 0.05f);
         private static readonly Color HubOrangeEmit = new Color(0.55f, 0.16f, 0.02f);
 
         private static void SpawnAirlockHub(Transform parent)
@@ -432,9 +432,11 @@ namespace SolarMajesty
             hubRing.transform.SetParent(group.transform, false);
             hubRing.transform.localPosition = hubRingPos;
             hubRing.transform.localRotation = rot;
-            hubRing.transform.localScale = new Vector3(diameter * 1.55f, 0.11f, diameter * 1.55f);
+            hubRing.transform.localScale = new Vector3(diameter * 1.40f, 0.08f, diameter * 1.40f);
             Object.Destroy(hubRing.GetComponent<Collider>());
-            TintPrimitive(hubRing, HubOrange, HubOrangeEmit);
+            // Graphite: with the square face frame and the hull port ring both orange,
+            // a third orange band per join read as stacked collars (dream-loop r10/r11).
+            TintPrimitive(hubRing, HubGraphite);
 
             // Square orange collar plate — still19 cube-ish miss: the hub must
             // read as a multi-face joint, not a small white fridge.
@@ -459,9 +461,10 @@ namespace SolarMajesty
             collar.transform.SetParent(group.transform, false);
             collar.transform.localPosition = collarPos;
             collar.transform.localRotation = rot;
-            collar.transform.localScale = new Vector3(diameter * 1.32f, 0.08f, diameter * 1.32f);
+            collar.transform.localScale = new Vector3(diameter * 1.18f, 0.05f, diameter * 1.18f);
             Object.Destroy(collar.GetComponent<Collider>());
-            TintPrimitive(collar, HubOrange, HubOrangeEmit);
+            // Sits against the hull port ring; only the ring stays orange (one per hull end).
+            TintPrimitive(collar, HubGraphite);
 
             if (!startActive)
                 group.SetActive(false);

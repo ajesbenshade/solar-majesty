@@ -16,7 +16,7 @@ Judge stills against **this** image, not the retired packed `SM_MarsCampaign_Vis
 
 1. **Forgo interconnect tubes** between buildings. `SpawnTubeRuns` / between-yard tube web are **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed. Square Lego airlocks may remain as building **ports**.
 2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill dirt with leftover sockets.
-3. **Distant haze** toward the horizon (concept language). Existing `DemoAtmosphere` exponential-squared fog is the live haze; do not wash the campus itself.
+3. **Distant haze** toward the horizon (concept language). Mars uses **Linear** fog (`FogStart` 48 / `FogEnd` 95 at play ortho 10); `DemoAtmosphere.SyncFog` stretches that ramp with live ortho so zoom-out is a hint, not a salmon wall. Do not wash the campus itself.
 4. **Polyhedron / geodesic Commons** silhouette — not a soft sphere-only kit if we can dress it.
 5. Colonists / specialists crossing open ground should **read as spacesuited** (vulnerable between buildings). Docs + still dressing notes only. Do **not** invent new `FlagTypes` or rewrite `SpecialistBrain`.
 
@@ -65,7 +65,7 @@ This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not 
 
 - If hulls wash orange: do not raise Mars dust on `IndustrialArtDressing.BindBody` (Mars dust amount stays low so white reads).
 - If ground looks flat: confirm `Assets/Resources/Environment/Textures/SM_Ground_Mars_*` imported (albedo Default, normal = Normal map, Repeat) and `PlanetGround` `_DetailTexAmount` is non-zero.
-- If the horizon does not recede: confirm Mars `DemoAtmosphere` fog is on. Mars uses a **Linear** ramp (`FogStart`/`FogEnd` on the body), other bodies Exp2. The ortho Game tab never shows sky (top of frame is ground ~45 m from the camera), so haze must come from ground fog; backdrop quads were removed. Custom shaders (`SM_PlanetGround`, `SM_Hull`) compute fog from **view depth** (`SM_FogCoord`) because URP's clip-space `ComputeFogFactor` is ~0 under orthographic cameras.
+- If the horizon does not recede: confirm Mars `DemoAtmosphere` fog is on. Mars uses a **Linear** ramp (`FogStart` 48 / `FogEnd` 95 on the body at play ortho 10 — far edge ~28 % haze, not opaque). Other bodies Exp2. `SyncFog` remaps start/end from the live camera so a zoomed-out overseer view cannot park FogEnd inside the frame (the old 47–61 ramp became a solid salmon wall past ~61 m). The ortho Game tab never shows sky (top of frame is far ground), so haze must come from ground fog; backdrop quads were removed. Custom shaders (`SM_PlanetGround`, `SM_Hull`) compute fog from **view depth** (`SM_FogCoord`) because URP's clip-space `ComputeFogFactor` is ~0 under orthographic cameras.
 - If a batch (`Camera.Render`) still shows every hull one colour (black / brown / orange): that is the SRP Batcher leaking one material's constants in edit mode. `DemoContentBuilder.RenderWithoutSrpBatcher` disables the batcher around the capture; Play Mode is unaffected.
 - If the pad deck or carbon bands read as salmon plates: dark prims must stay dielectric (`HeroBuildingKits.Tint` metallic 0.12); the LandingPad FBX is skipped for the procedural pad for the same reason.
 - If interconnect tubes appear: `SpawnTubeRuns` must stay **gone**; `RefreshTubes` only enables docked Lego ports and destroys leftover `CampusDress_TubeRuns` roots.
@@ -86,7 +86,7 @@ Unity -projectPath . \
   -executeMethod SolarMajesty.EditorTools.CaptureStill.Run
 ```
 
-Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. Local rounds so far (fresh judge each): r2 3, r4–5 3 (haze blocked), r6 4 (haze landed; pad/dirt/shadow/solar palette blocked), r7 5 (pad, shadows, crossings landed), r8 **6 / Tier 2 passed** (fog ramp retuned to the real 30° camera: focus 44 m, frame 27–61 m; dirt desaturated; camp/pad FBX skipped; rocket bands). Tier 3 blockers: warm-white hull albedo, Commons facet lattice, HAB band/collars, rocket terminator, far-ground relief. **Do not stamp EXIT** until Aaron look-clear.
+Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. Local rounds so far (fresh judge each): r2 3, r4–5 3 (haze blocked), r6 4 (haze landed; pad/dirt/shadow/solar palette blocked), r7 5 (pad, shadows, crossings landed), r8 **6 / Tier 2 passed** (fog ramp retuned to the real 30° camera: focus 44 m, frame 27–61 m; dirt desaturated; camp/pad FBX skipped; rocket bands). Later: play-ortho FogEnd pushed to 95 m and `SyncFog` scales with ortho so zoomed-out Game-tab is dirt + hint, not a 61 m fog wall. Tier 3 blockers: warm-white hull albedo, Commons facet lattice, HAB band/collars, rocket terminator, far-ground relief. **Do not stamp EXIT** until Aaron look-clear.
 
 ### Cloud agents (no Unity)
 

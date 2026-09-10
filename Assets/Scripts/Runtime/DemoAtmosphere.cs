@@ -10,18 +10,29 @@ namespace SolarMajesty
     /// </summary>
     public static class DemoAtmosphere
     {
+        /// <summary>
+        /// Play-ortho 10 + 30° iso: focus ~44 m, far ground ~61 m. Catalog FogStart/FogEnd
+        /// are authored against this frustum as a haze hint, not an opaque wall.
+        /// </summary>
+        public const float MarsPlayFocusDepth = 44f;
+        public const float MarsPlayFarDepth = 61f;
+
+        private static CelestialBodyProfile _appliedBody;
+
         public static void Apply(Camera cam, Transform groundParent) =>
             Apply(cam, groundParent, CelestialBodyCatalog.Earth());
 
         public static void Apply(Camera cam, Transform groundParent, CelestialBodyProfile body)
         {
             if (body == null) body = CelestialBodyCatalog.Earth();
+            _appliedBody = body;
             ConfigureSun(body);
             EnsureFillLight(groundParent, body);
             ConfigureAmbientAndFog(body);
             ConfigureCamera(cam, body);
+            SyncFog(cam, body);
             EnsureVolume(groundParent, body);
-            Debug.Log($"[Atmosphere] {body.DisplayName} sun={body.SunIntensity:0.00} fog={body.FogStart:0}/{body.FogEnd:0}");
+            Debug.Log($"[Atmosphere] {body.DisplayName} sun={body.SunIntensity:0.00} fog={RenderSettings.fogStartDistance:0}/{RenderSettings.fogEndDistance:0}");
         }
 
         private static void ConfigureSun(CelestialBodyProfile body)
@@ -50,7 +61,7 @@ namespace SolarMajesty
             // Mars concept wants long readable shadows, not hard black plates: shadowed dirt
             // should hold >= 60 % of lit-dirt luminance (dream-loop round 6 Tier 2 gate).
             sun.shadowStrength = body.Id == CelestialBodyId.Mars
-                ? 0.62f
+                ? 0.46f
                 : body.Id == CelestialBodyId.Luna ? 0.90f
                 : body.Id == CelestialBodyId.Earth ? 0.84f : 0.72f;
             sun.shadowBias = 0.04f;
@@ -111,10 +122,9 @@ namespace SolarMajesty
 
             if (body.Id == CelestialBodyId.Mars)
             {
-                // The ortho-10 Game tab only spans ~22–45 m of view depth, so a steep linear ramp
-                // (profile FogStart/FogEnd) is the only way the far ground at the top of frame
-                // softens into salmon haze while the campus centre stays near-clear. Exp2 cannot
-                // do that over a 2x depth range without washing the hulls.
+                // Linear so the far ground tints without washing hulls. Catalog FogStart/FogEnd
+                // are the play-ortho 10 hint; SyncFog stretches them with live camera depth so
+                // zoom-out cannot park FogEnd inside the frame (that was the salmon wall).
                 RenderSettings.fogMode = FogMode.Linear;
                 RenderSettings.fogStartDistance = body.FogStart;
                 RenderSettings.fogEndDistance = body.FogEnd;
@@ -131,6 +141,64 @@ namespace SolarMajesty
             // Kept in sync so anything reading linear fog (or a quality tier that forces it) agrees.
             RenderSettings.fogStartDistance = Mathf.Max(body.FogStart, body.FogEnd * 0.45f);
             RenderSettings.fogEndDistance = body.FogEnd;
+        }
+
+        /// <summary>
+        /// Stretch Mars Linear fog to the current ortho frustum. Call after zoom / orbit / lift
+        /// so the far edge of the *visible* ground stays a haze hint instead of FogColor.
+        /// </summary>
+        public static void SyncFog(Camera cam) => SyncFog(cam, _appliedBody);
+
+        public static void SyncFog(Camera cam, CelestialBodyProfile body)
+        {
+            if (cam == null || body == null) return;
+            if (body.Id != CelestialBodyId.Mars) return;
+            if (!cam.orthographic) return;
+
+            ComputeMarsLinearFog(
+                body,
+                cam.transform.position.y,
+                cam.transform.forward.y,
+                cam.transform.up.y,
+                cam.orthographicSize,
+                out float fogStart,
+                out float fogEnd);
+            RenderSettings.fogMode = FogMode.Linear;
+            RenderSettings.fogStartDistance = fogStart;
+            RenderSettings.fogEndDistance = fogEnd;
+        }
+
+        /// <summary>
+        /// Map catalog FogStart/FogEnd (play-ortho 10) onto a live iso view. Keeps the same
+        /// far-edge haze fraction at every zoom: campus/focus stays clear, top of frame is a
+        /// hint, never opaque. cameraForwardY is transform.forward.y (negative when looking down).
+        /// </summary>
+        public static void ComputeMarsLinearFog(
+            CelestialBodyProfile body,
+            float cameraY,
+            float cameraForwardY,
+            float cameraUpY,
+            float orthoSize,
+            out float fogStart,
+            out float fogEnd)
+        {
+            float catalogStart = body != null ? body.FogStart : 48f;
+            float catalogEnd = body != null ? body.FogEnd : 95f;
+            float sinPitch = Mathf.Max(0.08f, -cameraForwardY);
+            float h = Mathf.Max(0.5f, cameraY);
+            float ortho = Mathf.Max(0.5f, orthoSize);
+            float depthFocus = h / sinPitch;
+            float depthFar = (h + cameraUpY * ortho) / sinPitch;
+
+            // Fog factor at the top of the play-ortho frame. Clamp so a stale FogEnd=61 catalog
+            // still cannot saturate the live far edge.
+            float playHint = Mathf.Clamp(
+                (MarsPlayFarDepth - catalogStart) / Mathf.Max(8f, catalogEnd - catalogStart),
+                0.12f, 0.40f);
+            float startPad = catalogStart - MarsPlayFocusDepth;
+            fogStart = depthFocus + startPad;
+            float far = Mathf.Max(depthFar, fogStart + 4f);
+            fogEnd = fogStart + (far - fogStart) / playHint;
         }
 
         /// <summary>

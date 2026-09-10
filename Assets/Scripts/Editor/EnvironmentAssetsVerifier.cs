@@ -66,6 +66,26 @@ namespace SolarMajesty.EditorTools
             Check(EnvironmentMeshCatalog.CraterSmallPath, "Crater small");
             Check(EnvironmentMeshCatalog.CraterMediumPath, "Crater medium");
             Check(EnvironmentMeshCatalog.CraterLargePath, "Crater large");
+            Check(TerrainSplatLayers.ResourcePath, "TDB splat layers");
+
+            void CheckAsset(string path, string label)
+            {
+                Object asset = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (asset != null)
+                {
+                    Debug.Log($"[EnvVerify] OK  {label}: {path}");
+                    ok++;
+                }
+                else
+                {
+                    Debug.LogWarning($"[EnvVerify] MISSING {label}: {path}");
+                    miss++;
+                }
+            }
+
+            CheckAsset(TerrainSplatLayers.SandAssetPath, "TDB Sand albedo");
+            CheckAsset(TerrainSplatLayers.GrassAssetPath, "TDB Grass albedo");
+            CheckAsset(TerrainSplatLayers.SnowAssetPath, "TDB Snow albedo");
             Debug.Log($"[EnvVerify] Summary OK={ok} MISSING={miss}");
             return miss;
         }

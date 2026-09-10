@@ -441,6 +441,27 @@ namespace SolarMajesty
                     SpawnTree(patch.transform, local, rng);
                 }
 
+                if (_body.Id == CelestialBodyId.Earth)
+                {
+                    int shrubs = 4 + rng.Next(0, 6);
+                    for (int s = 0; s < shrubs; s++)
+                    {
+                        float ang = (float)rng.NextDouble() * Mathf.PI * 2f;
+                        float rad = patchR * 0.85f * Mathf.Sqrt((float)rng.NextDouble());
+                        Vector3 local = new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
+                        Vector3 world = pos + local;
+                        if (IsOverWater(world, 0.8f)) continue;
+                        var shrubPrefab = EnvironmentMeshCatalog.LoadEarthShrub(i * 17 + s);
+                        if (shrubPrefab == null) break;
+                        var shrub = EnvironmentMeshCatalog.InstantiateVendorNature(
+                            shrubPrefab, "Shrub", Mathf.Lerp(0.45f, 0.95f, (float)rng.NextDouble()));
+                        if (shrub == null) continue;
+                        shrub.transform.SetParent(patch.transform, false);
+                        shrub.transform.localPosition = local;
+                        shrub.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
+                    }
+                }
+
                 ColonyVisualUtility.SnapToGround(patch);
                 placed.Add(pos);
             }
@@ -449,19 +470,26 @@ namespace SolarMajesty
         private void SpawnTree(Transform parent, Vector3 local, System.Random rng)
         {
             float h = Mathf.Lerp(1.1f, 2.6f, (float)rng.NextDouble());
-            int variant = rng.Next(0, 2);
-            var meshPrefab = EnvironmentMeshCatalog.LoadTree(variant);
+            int variant = _body.Id == CelestialBodyId.Earth ? rng.Next(0, 8) : rng.Next(0, 2);
+            var meshPrefab = EnvironmentMeshCatalog.LoadTree(variant, _body.Id);
             if (meshPrefab != null)
             {
-                var mesh = EnvironmentMeshCatalog.InstantiateClean(meshPrefab, "Tree");
+                GameObject mesh = EnvironmentMeshCatalog.IsVendorNature(meshPrefab)
+                    ? EnvironmentMeshCatalog.InstantiateVendorNature(meshPrefab, "Tree", h * 1.35f)
+                    : EnvironmentMeshCatalog.InstantiateClean(meshPrefab, "Tree");
                 if (mesh != null)
                 {
                     mesh.transform.SetParent(parent, false);
                     mesh.transform.localPosition = local;
-                    ColonyVisualUtility.SetYawKeepingImport(
-                        mesh.transform, mesh.transform.rotation, (float)rng.NextDouble() * 360f);
-                    float s = h / EnvironmentMeshCatalog.TreeNativeHeight;
-                    mesh.transform.localScale = Vector3.one * s;
+                    if (EnvironmentMeshCatalog.IsVendorNature(meshPrefab))
+                        mesh.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
+                    else
+                    {
+                        ColonyVisualUtility.SetYawKeepingImport(
+                            mesh.transform, mesh.transform.rotation, (float)rng.NextDouble() * 360f);
+                        float s = h / EnvironmentMeshCatalog.TreeNativeHeight;
+                        mesh.transform.localScale = Vector3.one * s;
+                    }
                     return;
                 }
             }
@@ -644,21 +672,36 @@ namespace SolarMajesty
                     continue;
 
                 float s = Mathf.Lerp(0.28f, 0.92f, (float)rng.NextDouble());
-                var meshPrefab = EnvironmentMeshCatalog.LoadRock(i);
+                var meshPrefab = EnvironmentMeshCatalog.LoadRock(i, _body.Id);
                 if (meshPrefab != null)
                 {
-                    var mesh = ColonyVisualUtility.InstantiateOriented(
-                        meshPrefab, pos, root, (float)rng.NextDouble() * 360f);
-                    mesh.name = $"Rock_{i}";
-                    float scale = s / EnvironmentMeshCatalog.RockNativeSize;
-                    mesh.transform.localScale = Vector3.one * scale;
-                    EnvironmentMeshCatalog.RemapEnvironmentMaterials(mesh);
+                    GameObject mesh;
+                    if (EnvironmentMeshCatalog.IsVendorNature(meshPrefab))
+                    {
+                        mesh = EnvironmentMeshCatalog.InstantiateVendorNature(
+                            meshPrefab, $"Rock_{i}", Mathf.Lerp(0.45f, 1.35f, (float)rng.NextDouble()));
+                        mesh.transform.SetParent(root, false);
+                        mesh.transform.position = pos;
+                        mesh.transform.rotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
+                    }
+                    else
+                    {
+                        mesh = ColonyVisualUtility.InstantiateOriented(
+                            meshPrefab, pos, root, (float)rng.NextDouble() * 360f);
+                        mesh.name = $"Rock_{i}";
+                        float scale = s / EnvironmentMeshCatalog.RockNativeSize;
+                        mesh.transform.localScale = Vector3.one * scale;
+                        EnvironmentMeshCatalog.RemapEnvironmentMaterials(mesh);
+                    }
                     ColonyVisualUtility.SeatFlatOnGround(mesh);
-                    Tint(
-                        mesh,
-                        Color.Lerp(_body.RockColor, _body.GroundDark, (float)rng.NextDouble() * 0.4f),
-                        0.08f,
-                        ShadowCastingMode.On);
+                    if (!EnvironmentMeshCatalog.IsVendorNature(meshPrefab))
+                    {
+                        Tint(
+                            mesh,
+                            Color.Lerp(_body.RockColor, _body.GroundDark, (float)rng.NextDouble() * 0.4f),
+                            0.08f,
+                            ShadowCastingMode.On);
+                    }
                     ColonyVisualUtility.SnapToGround(mesh);
                     continue;
                 }
@@ -927,7 +970,7 @@ namespace SolarMajesty
             }
         }
 
-        private static Material TintMaterial(Color c, float smoothness)
+        public static Material TintMaterial(Color c, float smoothness)
         {
             // Quantise so near-identical scatter tints share one material instead of near-misses.
             int r = Mathf.RoundToInt(Mathf.Clamp01(c.r) * 63f);

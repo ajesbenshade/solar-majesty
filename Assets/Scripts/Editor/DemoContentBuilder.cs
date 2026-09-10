@@ -39,6 +39,7 @@ namespace SolarMajesty.EditorTools
             EnsureFolder("Assets/Resources/DemoContent/Flags");
             EnsureFolder("Assets/Resources/DemoContent/Buildings");
             EnsureFolder("Assets/Resources/Units");
+            VendorDressingKitBuilder.Build();
 
             var scoutPrefab = SaveUnitPrefab("Unit_ScoutDrone", UnitPlaceholderFactory.BuildScout);
             var engPrefab = SaveUnitPrefab("Unit_EngineerBot", UnitPlaceholderFactory.BuildEngineer);

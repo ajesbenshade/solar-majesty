@@ -213,8 +213,8 @@ namespace SolarMajesty
                 // Dusty brown-orange, not blood-red: concept lit dirt is ~RGB 144/65/28 (G/R 0.45).
                 // ACES + the warm sun pull G down, so the albedo carries extra G/B headroom.
                 // Round 7 judge: lit dirt rendered 160/60/20 (B/R 0.12) — desaturate by lifting B.
-                GroundLight = new Color(0.66f, 0.52f, 0.38f),
-                GroundDark = new Color(0.44f, 0.27f, 0.18f),
+                GroundLight = new Color(0.66f, 0.53f, 0.40f),
+                GroundDark = new Color(0.44f, 0.29f, 0.20f),
                 Horizon = new Color(0.56f, 0.32f, 0.20f),
                 RockColor = new Color(0.36f, 0.24f, 0.16f),
                 CraterRim = new Color(0.60f, 0.38f, 0.24f),
@@ -240,18 +240,17 @@ namespace SolarMajesty
                 // Lifted sky/ground fill so shadowed dirt reads >= 60 % of lit dirt (concept
                 // shadows are soft tints, not two-tone plates). Sun shadowStrength drops with it.
                 AmbientSky = new Color(0.72f, 0.62f, 0.54f),
-                AmbientEquator = new Color(0.52f, 0.40f, 0.32f),
-                AmbientGround = new Color(0.30f, 0.17f, 0.10f),
+                AmbientEquator = new Color(0.58f, 0.46f, 0.38f),
+                AmbientGround = new Color(0.34f, 0.22f, 0.14f),
                 // Pale dusty haze: concept far-ground edge ~RGB 222/140/80 *after* the ACES
                 // grade, which pulls 222/140/79 down to ~200/134/66, so the raw value sits higher.
                 FogColor = new Color(0.98f, 0.61f, 0.40f),
-                // Linear ramp tuned to the ortho-10 Game tab (IsometricCameraController: pitch
-                // 30°, camera y 22, focus on the centre ray => focus at 44 m view depth, ground
-                // spans ~27 m at the bottom edge to ~61 m at the top edge, ±20 m along the view
-                // azimuth). Commons (44 m) and HAB (~48 m) stay <=10 % hazed, back-of-campus
-                // yards (~52 m) ~35 %, only the top ~5 % of the frame saturates to FogColor.
-                FogStart = 47f,
-                FogEnd = 61f,
+                // Play-ortho 10 reference (pitch 30°, cam y 22): focus 44 m, ground 27–61 m.
+                // FogEnd sits well past the top of that frame so the far dirt is a salmon *hint*
+                // (~28 %), not an opaque wall. DemoAtmosphere.SyncFog stretches this ramp with
+                // live ortho / camera height — a fixed FogEnd of 61 m filled zoomed-out shots.
+                FogStart = 48f,
+                FogEnd = 95f,
                 AtmosphereThickness = 1.08f,
                 SkyExposure = 1.10f,
                 CraterCount = 56,

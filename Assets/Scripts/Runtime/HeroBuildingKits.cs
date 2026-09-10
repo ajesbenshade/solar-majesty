@@ -14,7 +14,10 @@ namespace SolarMajesty
         // Concept whites are warm cream (lit ~RGB 224/198/175), never cool; carbon reads as
         // charcoal (~30/24/16 lit), never pure black (dream-loop round 8 Tier 3).
         private static readonly Color White = new Color(0.88f, 0.82f, 0.74f);
-        private static readonly Color Carbon = new Color(0.20f, 0.19f, 0.18f);
+        // Concept "black" bands read as lit charcoal (~70/66/62 sRGB after ACES), not ink.
+        private static readonly Color Carbon = new Color(0.26f, 0.24f, 0.22f);
+        // Geodesic facets run a shade warmer than the HAB/rocket hull in the concept.
+        private static readonly Color DomeCream = new Color(0.80f, 0.62f, 0.50f);
         private static readonly Color Graphite = new Color(0.16f, 0.17f, 0.19f);
         private static readonly Color Steel = new Color(0.42f, 0.44f, 0.48f);
         // Commons undershell seen through facet insets: concept seams ~150/135/120, not black.
@@ -23,7 +26,7 @@ namespace SolarMajesty
         private static readonly Color Yellow = new Color(0.95f, 0.82f, 0.12f);
         private static readonly Color Concrete = new Color(0.40f, 0.41f, 0.43f);
         // Warm dark concrete for the landing pad deck (concept ~RGB 97/66/41 after grade).
-        private static readonly Color PadDeck = new Color(0.30f, 0.26f, 0.23f);
+        private static readonly Color PadDeck = new Color(0.34f, 0.30f, 0.26f);
         private static readonly Color Cyan = new Color(0.22f, 0.84f, 0.98f);
         private static readonly Color CyanEmit = new Color(0.20f, 1.15f, 1.65f);
         private static readonly Color Ice = new Color(0.52f, 0.76f, 0.86f);
@@ -31,13 +34,14 @@ namespace SolarMajesty
         private static readonly Color Dust = new Color(0.52f, 0.36f, 0.22f);
         // Navy-charcoal PV face. Max component >= 0.2 keeps Tint() at metallic 0.08 so the
         // cells do not mirror the orange Mars sky (the 0.05 charcoal at metallic 0.4 read salmon).
-        private static readonly Color SolarCell = new Color(0.09f, 0.11f, 0.19f);
+        private static readonly Color SolarCell = new Color(0.10f, 0.16f, 0.30f);
         private static readonly Color SolarEmit = new Color(0.04f, 0.18f, 0.55f);
         private static readonly Color Glass = new Color(0.48f, 0.72f, 0.82f);
         private static readonly Color GlassEmit = new Color(0.06f, 0.22f, 0.28f);
         private static readonly Color Plant = new Color(0.22f, 0.55f, 0.24f);
 
         private static Shader _lit;
+        private static Shader _hull;
 
         public static bool IsHero(BuildingCategory cat) =>
             cat == BuildingCategory.Habitat ||
@@ -88,9 +92,9 @@ namespace SolarMajesty
             for (int s = -1; s <= 1; s += 2)
             {
                 float x = s * (length * 0.36f);
-                Prim(root, "HabCap_" + s, PrimitiveType.Cylinder,
+                Prim(root, "Dress_HabCap_" + s, PrimitiveType.Cylinder,
                     new Vector3(x, z, 0f),
-                    new Vector3(radius * 1.98f, 0.39f, radius * 1.98f), Carbon, alongX);
+                    new Vector3(radius * 1.98f, 0.39f, radius * 1.98f), White, alongX);
                 Prim(root, "HabRing_" + s, PrimitiveType.Cylinder,
                     new Vector3(x + s * 0.38f, z, 0f),
                     new Vector3(radius * 2.1f, 0.05f, radius * 2.1f), Carbon, alongX);
@@ -225,7 +229,7 @@ namespace SolarMajesty
             Prim(root, "CommonsCupolaLo", PrimitiveType.Cylinder,
                 new Vector3(0f, domeTop + 0.04f, 0f),
                 new Vector3(radius * 0.30f, 0.12f, radius * 0.30f), White);
-            Prim(root, "CommonsCupolaBand", PrimitiveType.Cylinder,
+            Prim(root, "Dress_CommonsCupolaBand", PrimitiveType.Cylinder,
                 new Vector3(0f, domeTop + 0.16f, 0f),
                 new Vector3(radius * 0.32f, 0.035f, radius * 0.32f), Orange);
             Prim(root, "CommonsCupolaHi", PrimitiveType.Cylinder,
@@ -235,7 +239,7 @@ namespace SolarMajesty
                 new Vector3(0f, domeTop + 0.345f, 0f),
                 new Vector3(radius * 0.24f, 0.02f, radius * 0.24f), Graphite);
             // Small warm beacon only — cyan waist visors washed the sheet white at Game-tab range.
-            Prim(root, "CommonsVisorBeacon", PrimitiveType.Sphere,
+            Prim(root, "Dress_CommonsBeacon", PrimitiveType.Sphere,
                 new Vector3(0f, domeTop + 0.44f, 0f),
                 new Vector3(0.12f, 0.12f, 0.12f), Orange, new Color(0.9f, 0.35f, 0.05f));
 
@@ -271,12 +275,12 @@ namespace SolarMajesty
         {
             var radii = new Vector3(radius * 1.02f, radius * 0.74f, radius * 1.02f);
             Mesh mesh = GeodesicDomeMesh.Build(4, radii, -0.22f, 0.06f);
-            var shell = new GameObject("CommonsGeo_0");
+            var shell = new GameObject("Dress_CommonsGeo_0");
             shell.transform.SetParent(root, false);
             shell.transform.localPosition = new Vector3(0f, 1.85f, 0f);
             shell.AddComponent<MeshFilter>().sharedMesh = mesh;
             shell.AddComponent<MeshRenderer>();
-            Tint(shell, White);
+            Tint(shell, DomeCream);
         }
 
         public static void BuildLandingPad(Transform root, float w, float d, Color hull)
@@ -442,7 +446,7 @@ namespace SolarMajesty
                 Prim(root, "Dress_RegPipe_" + i, PrimitiveType.Cylinder,
                     new Vector3(0.02f, 1.28f, z),
                     new Vector3(0.12f, w * 0.36f, 0.12f),
-                    i == 1 ? Yellow : Orange, alongX);
+                    i == 1 ? Steel : Orange, alongX);
             }
 
             Prim(root, "Dress_RegTank_L", PrimitiveType.Cylinder,
@@ -455,7 +459,7 @@ namespace SolarMajesty
             ScaffoldLow(root, "Dress_RegScaf", new Vector3(-w * 0.28f, 0f, -d * 0.28f), w * 0.7f);
             Prim(root, "Dress_RegBelt", PrimitiveType.Cube,
                 new Vector3(w * 0.08f, 0.28f, -d * 0.28f),
-                new Vector3(w * 0.7f, 0.16f, 0.35f), Yellow);
+                new Vector3(w * 0.7f, 0.16f, 0.35f), Graphite);
         }
 
         public static void BuildOreExtractor(Transform root, float w, float d, Color hull)
@@ -565,7 +569,7 @@ namespace SolarMajesty
             Prim(root, "PwrVent_3", PrimitiveType.Cube,
                 new Vector3(0.42f, 1.88f, ny + 0.22f),
                 new Vector3(0.38f, 0.04f, 0.32f), Carbon);
-            Prim(root, "SolarVisorBeacon", PrimitiveType.Sphere,
+            Prim(root, "Dress_SolarBeacon", PrimitiveType.Sphere,
                 new Vector3(0f, 3.05f, ny),
                 new Vector3(0.24f, 0.24f, 0.24f), Cyan, SolarEmit);
 
@@ -1482,7 +1486,7 @@ namespace SolarMajesty
                 float y = b.min.y + h * (i == 0 ? 0.30f : 0.58f);
                 Vector3 local = root.InverseTransformPoint(new Vector3(b.center.x, y, b.center.z));
                 Prim(root, "Dress_ShipBand_" + i, PrimitiveType.Cylinder,
-                    local, new Vector3(dia, h * 0.045f, dia), Carbon);
+                    local, new Vector3(dia, h * 0.055f, dia), Carbon);
             }
         }
 
@@ -1525,12 +1529,16 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Static spacesuited figure (~1.2 m) for the concept's dirt crossings. Dressing only:
-        /// no agent, no brain, no collider — it is a look-kit mannequin for the still campus,
-        /// not a unit. White suit, carbon boots/band, orange trim, cyan visor, steel backpack.
+        /// Spacesuited figure (~1.2 m) for the concept's dirt crossings. Dressing only:
+        /// no agent, no brain, no collider. Prefers Human Basic Motions dummy + walk/idle;
+        /// falls back to a capsule mannequin if the vendor kit is missing.
         /// </summary>
         public static GameObject BuildSpacesuitFigure(Transform parent, Vector3 worldPos, float yawDeg, int salt)
         {
+            var kit = VendorDressingKit.Load();
+            var animated = SuitCrossingWalker.Spawn(parent, worldPos, yawDeg, salt, kit);
+            if (animated != null) return animated;
+
             var root = new GameObject("Dress_SuitCrossing_" + salt);
             root.transform.SetParent(parent, false);
             root.transform.position = worldPos;
@@ -1608,15 +1616,38 @@ namespace SolarMajesty
             if (rend == null) return;
             EnsureLit();
             if (_lit == null) return;
-            var mat = new Material(_lit) { name = go.name };
+            // Prefer the world-space SM_Hull shader: flat URP Lit prims measured sd 0.0 inside
+            // dome facets / pad deck (dream-loop r13 Tier 3 gate wants seams, wear, grain).
+            bool hull = _hull != null;
+            var mat = new Material(hull ? _hull : _lit) { name = go.name };
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             if (mat.HasProperty("_Color")) mat.color = c;
             // Dark prims stay dielectric and a touch rougher: at metallic 0.4 every carbon band,
             // PV cell and deck disc mirrored the orange Mars sky and read as salmon plates.
+            // Bright prims stay matte (0.22): 0.38 threw cyan-white sun hotspots on the dome.
             bool dark = c.maxColorComponent < 0.2f;
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", dark ? 0.30f : 0.38f);
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", dark ? 0.30f : 0.22f);
             if (mat.HasProperty("_Metallic"))
-                mat.SetFloat("_Metallic", dark ? 0.12f : 0.08f);
+                mat.SetFloat("_Metallic", dark ? 0.12f : 0.06f);
+            if (hull)
+            {
+                // Panel seams only on pieces big enough to hold one (~0.6 m+); bands, rings,
+                // struts and figures just get faint wear grain.
+                Vector3 size = rend.bounds.size;
+                float major = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+                bool plated = major >= 0.6f;
+                mat.SetFloat("_PanelScale", plated ? Mathf.Clamp(major * 0.28f, 0.45f, 1.4f) : 6f);
+                mat.SetFloat("_PanelWidth", 0.018f);
+                mat.SetFloat("_PanelDarken", plated ? 0.30f : 0f);
+                mat.SetFloat("_PanelBevel", plated ? 0.22f : 0f);
+                mat.SetColor("_WearColor", new Color(0.42f, 0.37f, 0.32f, 1f));
+                mat.SetFloat("_WearAmount", dark ? 0.10f : 0.16f);
+                mat.SetFloat("_WearScale", 6.5f);
+                mat.SetColor("_DustColor", new Color(0.58f, 0.36f, 0.22f, 1f));
+                mat.SetFloat("_DustAmount", dark ? 0.06f : 0.14f);
+                mat.SetFloat("_DustSharpness", 3.6f);
+                mat.SetFloat("_EmissionBandWidth", 0f);
+            }
             if (emission.maxColorComponent > 0.01f && mat.HasProperty("_EmissionColor"))
             {
                 mat.EnableKeyword("_EMISSION");
@@ -1639,6 +1670,7 @@ namespace SolarMajesty
         private static void EnsureLit()
         {
             if (_lit != null) return;
+            _hull = Shader.Find("SolarMajesty/Hull");
             _lit = Shader.Find("Universal Render Pipeline/Lit")
                    ?? Shader.Find("Universal Render Pipeline/Simple Lit")
                    ?? Shader.Find("Sprites/Default");

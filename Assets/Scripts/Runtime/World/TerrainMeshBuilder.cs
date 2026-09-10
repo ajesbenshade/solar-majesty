@@ -3,57 +3,53 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Replaces the flat Unity plane with a displaced surface: broad dunes, ridge lines, and a
-    /// grain pass. The visual target has rock relief and crater rims; a flat plane with half-buried
-    /// spheres for boulders is the single largest reason the in-engine stills read as greybox.
-    ///
-    /// Campus footprints stay perfectly level. Building placement, docking, and NavMesh all assume
-    /// y = 0 under the colony, so relief is faded out around each campus origin.
+    /// Displaces GroundPlane from a <see cref="TerrainBake"/> (Terrain Data Baker-style height
+    /// field). Campus footprints stay level so placement, docking, and NavMesh stay at y = 0.
     /// </summary>
     public static class TerrainMeshBuilder
     {
-        /// <summary>Vertices per side. 160 gives ~2.4 m spacing on a 384 m map for ~25k tris.</summary>
-        private const int Resolution = 160;
-
-        /// <summary>Radius around a campus origin held dead flat, before the blend ring.</summary>
-        private const float FlatRadius = 26f;
-
-        /// <summary>Distance over which relief fades back in beyond the flat radius.</summary>
-        private const float BlendRadius = 22f;
+        /// <summary>Vertices per side. 192 on a 384 m map is ~2 m spacing.</summary>
+        public const int Resolution = 192;
 
         public static Mesh Build(float worldWidth, float worldHeight, int seed, CelestialBodyProfile body)
         {
+            return Build(TerrainDataBake.Generate(worldWidth, worldHeight, seed, body));
+        }
+
+        public static Mesh Build(TerrainBake bake)
+        {
+            if (bake == null || bake.Heights == null)
+                return Build(384f, 384f, 1, CelestialBodyCatalog.Mars());
+
             int n = Resolution;
-            float amp = AmplitudeFor(body);
+            float worldWidth = bake.WorldWidth;
+            float worldHeight = bake.WorldHeight;
+            float amp = Mathf.Max(0.01f, bake.Amplitude);
 
             var verts = new Vector3[n * n];
             var uvs = new Vector2[n * n];
             var colors = new Color[n * n];
 
-            // Offsetting by seed keeps each conquest of a body visually distinct.
-            float ox = (seed % 977) * 0.37f;
-            float oz = (seed % 691) * 0.53f;
-
             for (int z = 0; z < n; z++)
             {
                 float tz = z / (float)(n - 1);
                 float wz = tz * worldHeight;
-
                 for (int x = 0; x < n; x++)
                 {
                     float tx = x / (float)(n - 1);
                     float wx = tx * worldWidth;
                     int i = z * n + x;
-
-                    float h = Height(wx + ox, wz + oz) * amp;
-                    h *= CampusFlatten(wx, wz);
-
+                    float h = bake.SampleHeight(wx, wz);
                     verts[i] = new Vector3(wx, h, wz);
                     uvs[i] = new Vector2(tx, tz);
 
-                    // Red channel carries height for the ground shader's rock/dust blend.
                     float exposure = Mathf.InverseLerp(-amp * 0.6f, amp * 0.9f, h);
-                    colors[i] = new Color(exposure, 0f, 0f, 1f);
+                    float slope = EstimateSlope(bake, wx, wz, worldWidth, worldHeight);
+                    Color splat = TerrainDataBake.SplatFor(
+                        bake.BodyId,
+                        Mathf.InverseLerp(-amp, amp, h),
+                        slope);
+                    colors[i] = new Color(exposure, splat.g, splat.b, splat.a);
                 }
             }
 
@@ -75,7 +71,7 @@ namespace SolarMajesty
 
             var mesh = new Mesh
             {
-                name = $"SM_Terrain_{(body != null ? body.ShortCode : "GEN")}",
+                name = "SM_Terrain_Bake",
                 indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
             };
             mesh.SetVertices(verts);
@@ -88,50 +84,15 @@ namespace SolarMajesty
             return mesh;
         }
 
-        private static float AmplitudeFor(CelestialBodyProfile body)
+        private static float EstimateSlope(TerrainBake bake, float wx, float wz, float worldW, float worldH)
         {
-            if (body == null) return 1.6f;
-            switch (body.Id)
-            {
-                case CelestialBodyId.Mars: return 2.4f;
-                case CelestialBodyId.Luna: return 2.0f;
-                case CelestialBodyId.Belt: return 2.8f;
-                case CelestialBodyId.Europa: return 1.2f;
-                default: return 1.5f;   // Earth: gentle meadow relief
-            }
-        }
-
-        /// <summary>Layered noise: broad dunes, a ridge band, and fine grain.</summary>
-        private static float Height(float x, float z)
-        {
-            float dunes = Mathf.PerlinNoise(x * 0.010f, z * 0.010f) - 0.5f;
-
-            // Absolute-valued noise makes creases that read as ridge and crater-rim lines.
-            float ridged = 0.5f - Mathf.Abs(Mathf.PerlinNoise(x * 0.028f, z * 0.028f) - 0.5f) * 2f;
-            ridged *= ridged;
-
-            float grain = (Mathf.PerlinNoise(x * 0.11f, z * 0.11f) - 0.5f) * 0.25f;
-
-            return dunes * 2.2f + ridged * 0.9f + grain;
-        }
-
-        /// <summary>0 inside a campus pad, 1 well outside it, smooth in between.</summary>
-        private static float CampusFlatten(float x, float z)
-        {
-            float keep = 1f;
-            keep = Mathf.Min(keep, FalloffAt(x, z, ColonyLayout.CampusOrigin));
-            keep = Mathf.Min(keep, FalloffAt(x, z, ColonyLayout.CampusBOrigin));
-            return keep;
-        }
-
-        private static float FalloffAt(float x, float z, Vector3 origin)
-        {
-            float dx = x - origin.x;
-            float dz = z - origin.z;
-            float d = Mathf.Sqrt(dx * dx + dz * dz);
-            if (d <= FlatRadius) return 0f;
-            if (d >= FlatRadius + BlendRadius) return 1f;
-            return Mathf.SmoothStep(0f, 1f, (d - FlatRadius) / BlendRadius);
+            const float e = 1.6f;
+            float hL = bake.SampleHeight(Mathf.Max(0f, wx - e), wz);
+            float hR = bake.SampleHeight(Mathf.Min(worldW, wx + e), wz);
+            float hD = bake.SampleHeight(wx, Mathf.Max(0f, wz - e));
+            float hU = bake.SampleHeight(wx, Mathf.Min(worldH, wz + e));
+            Vector3 n = new Vector3(hL - hR, e * 2f, hD - hU).normalized;
+            return 1f - Mathf.Clamp01(n.y);
         }
     }
 }
