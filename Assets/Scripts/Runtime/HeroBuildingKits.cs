@@ -173,13 +173,9 @@ namespace SolarMajesty
             Prim(root, "CommonsStripe", PrimitiveType.Cylinder,
                 new Vector3(0f, 1.72f, 0f),
                 new Vector3(radius * 2.12f, 0.05f, radius * 2.12f), Orange);
-            // Faceted geodesic / polyhedron — not a smooth UV sphere. Aaron after #29.
-            MeshPrim(root, "CommonsDome", GeodesicDomeMesh(),
+            Prim(root, "CommonsDome", PrimitiveType.Sphere,
                 new Vector3(0f, 1.85f, 0f),
                 new Vector3(radius * 2.04f, radius * 1.47f, radius * 2.04f), hull);
-            AttachGeodesicRibs(root, "CommonsLattice",
-                new Vector3(0f, 1.85f, 0f),
-                new Vector3(radius * 2.04f, radius * 1.47f, radius * 2.04f), Carbon);
             Prim(root, "CommonsDomeBand", PrimitiveType.Cylinder,
                 new Vector3(0f, 3.05f, 0f),
                 new Vector3(radius * 1.44f, 0.05f, radius * 1.44f), Carbon);
@@ -228,6 +224,15 @@ namespace SolarMajesty
             Prim(root, "CommonsSeamRing_1", PrimitiveType.Cylinder,
                 new Vector3(0f, 1.55f, 0f),
                 new Vector3(radius * 2.024f, 0.019f, radius * 2.024f), Carbon);
+            Prim(root, "CommonsSeamRing_2", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.22f, 0f),
+                new Vector3(radius * 1.88f, 0.019f, radius * 1.88f), Graphite);
+            Prim(root, "CommonsSeamRing_3", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.62f, 0f),
+                new Vector3(radius * 1.60f, 0.019f, radius * 1.60f), Carbon);
+            Prim(root, "CommonsSeamRing_4", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.92f, 0f),
+                new Vector3(radius * 1.28f, 0.019f, radius * 1.28f), Graphite);
             for (int i = 0; i < 8; i++)
             {
                 float ang = i * 45f * Mathf.Deg2Rad;
@@ -1419,175 +1424,6 @@ namespace SolarMajesty
             Prim(root, "Dress_StarshipFlap_R", PrimitiveType.Cube,
                 new Vector3(0.12f, 5.55f, -0.42f),
                 new Vector3(0.08f, 0.72f, 0.38f), Carbon);
-        }
-
-        public const string CommonsGeodesicMeshName = "SM_CommonsGeodesic";
-
-        private static Mesh _geodesicDome;
-        private static Vector3[] _icosaVerts;
-        private static int[] _icosaEdges;
-
-        private static readonly int[] IcosaFaces =
-        {
-            0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11,
-            1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
-            3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9,
-            4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1
-        };
-
-        private static Mesh GeodesicDomeMesh()
-        {
-            if (_geodesicDome != null) return _geodesicDome;
-            EnsureIcosahedron();
-
-            var verts = new System.Collections.Generic.List<Vector3>(12);
-            for (int i = 0; i < _icosaVerts.Length; i++)
-                verts.Add(_icosaVerts[i]);
-
-            var faces = new System.Collections.Generic.List<int>(IcosaFaces);
-            var midCache = new System.Collections.Generic.Dictionary<long, int>();
-            faces = Subdivide(verts, faces, midCache);
-
-            var flat = new Vector3[faces.Count];
-            var tris = new int[faces.Count];
-            for (int i = 0; i < faces.Count; i++)
-            {
-                flat[i] = verts[faces[i]];
-                tris[i] = i;
-            }
-
-            _geodesicDome = new Mesh
-            {
-                name = CommonsGeodesicMeshName,
-                vertices = flat,
-                triangles = tris
-            };
-            _geodesicDome.RecalculateNormals();
-            _geodesicDome.RecalculateBounds();
-            return _geodesicDome;
-        }
-
-        private static void EnsureIcosahedron()
-        {
-            if (_icosaVerts != null) return;
-            float t = (1f + Mathf.Sqrt(5f)) * 0.5f;
-            var raw = new[]
-            {
-                new Vector3(-1f, t, 0f), new Vector3(1f, t, 0f),
-                new Vector3(-1f, -t, 0f), new Vector3(1f, -t, 0f),
-                new Vector3(0f, -1f, t), new Vector3(0f, 1f, t),
-                new Vector3(0f, -1f, -t), new Vector3(0f, 1f, -t),
-                new Vector3(t, 0f, -1f), new Vector3(t, 0f, 1f),
-                new Vector3(-t, 0f, -1f), new Vector3(-t, 0f, 1f)
-            };
-            _icosaVerts = new Vector3[raw.Length];
-            for (int i = 0; i < raw.Length; i++)
-                _icosaVerts[i] = raw[i].normalized;
-
-            var edges = new System.Collections.Generic.List<int>(60);
-            var seen = new System.Collections.Generic.HashSet<long>();
-            for (int i = 0; i < IcosaFaces.Length; i += 3)
-            {
-                AddIcosaEdge(edges, seen, IcosaFaces[i], IcosaFaces[i + 1]);
-                AddIcosaEdge(edges, seen, IcosaFaces[i + 1], IcosaFaces[i + 2]);
-                AddIcosaEdge(edges, seen, IcosaFaces[i + 2], IcosaFaces[i]);
-            }
-
-            _icosaEdges = edges.ToArray();
-        }
-
-        private static void AddIcosaEdge(
-            System.Collections.Generic.List<int> edges,
-            System.Collections.Generic.HashSet<long> seen,
-            int a, int b)
-        {
-            int lo = Mathf.Min(a, b);
-            int hi = Mathf.Max(a, b);
-            if (!seen.Add(((long)lo << 32) ^ (uint)hi)) return;
-            edges.Add(lo);
-            edges.Add(hi);
-        }
-
-        private static System.Collections.Generic.List<int> Subdivide(
-            System.Collections.Generic.List<Vector3> verts,
-            System.Collections.Generic.List<int> faces,
-            System.Collections.Generic.Dictionary<long, int> midCache)
-        {
-            var next = new System.Collections.Generic.List<int>(faces.Count * 4);
-            for (int i = 0; i < faces.Count; i += 3)
-            {
-                int a = faces[i];
-                int b = faces[i + 1];
-                int c = faces[i + 2];
-                int ab = Midpoint(verts, midCache, a, b);
-                int bc = Midpoint(verts, midCache, b, c);
-                int ca = Midpoint(verts, midCache, c, a);
-                next.Add(a); next.Add(ab); next.Add(ca);
-                next.Add(b); next.Add(bc); next.Add(ab);
-                next.Add(c); next.Add(ca); next.Add(bc);
-                next.Add(ab); next.Add(bc); next.Add(ca);
-            }
-
-            return next;
-        }
-
-        private static int Midpoint(
-            System.Collections.Generic.List<Vector3> verts,
-            System.Collections.Generic.Dictionary<long, int> cache,
-            int a, int b)
-        {
-            int lo = Mathf.Min(a, b);
-            int hi = Mathf.Max(a, b);
-            long key = ((long)lo << 32) ^ (uint)hi;
-            if (cache.TryGetValue(key, out int existing))
-                return existing;
-            Vector3 mid = (verts[a] + verts[b]).normalized;
-            int idx = verts.Count;
-            verts.Add(mid);
-            cache[key] = idx;
-            return idx;
-        }
-
-        private static void AttachGeodesicRibs(
-            Transform root, string name, Vector3 localPos, Vector3 localScale, Color color)
-        {
-            EnsureIcosahedron();
-            var lattice = new GameObject(name);
-            lattice.transform.SetParent(root, false);
-            lattice.transform.localPosition = localPos;
-            lattice.transform.localScale = localScale;
-            for (int i = 0; i < _icosaEdges.Length; i += 2)
-            {
-                Vector3 a = _icosaVerts[_icosaEdges[i]];
-                Vector3 b = _icosaVerts[_icosaEdges[i + 1]];
-                Vector3 mid = (a + b) * 0.5f;
-                Vector3 dir = b - a;
-                float len = dir.magnitude;
-                if (len < 0.01f) continue;
-                Prim(lattice.transform, "CommonsRib_" + (i / 2), PrimitiveType.Cylinder,
-                    mid,
-                    new Vector3(0.028f, len * 0.5f, 0.028f),
-                    color,
-                    Quaternion.FromToRotation(Vector3.up, dir.normalized));
-            }
-        }
-
-        private static void MeshPrim(
-            Transform parent,
-            string name,
-            Mesh mesh,
-            Vector3 localPos,
-            Vector3 localScale,
-            Color color)
-        {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = localPos;
-            go.transform.localScale = localScale;
-            var filter = go.AddComponent<MeshFilter>();
-            filter.sharedMesh = mesh;
-            go.AddComponent<MeshRenderer>();
-            Tint(go, color);
         }
 
         private static void Prim(

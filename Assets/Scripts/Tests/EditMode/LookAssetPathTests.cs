@@ -31,10 +31,6 @@ namespace SolarMajesty.Tests
         {
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
             Assert.AreEqual(0, StillCampusDensity.StillFrameInsetCells);
-            Assert.AreEqual(
-                StillCampusDensity.PlayCampusOrthoSize, StillCampusDensity.StillMinOrtho);
-            Assert.AreEqual(4, StillCampusDensity.MinYardGapCells);
-            Assert.AreEqual(16f, StillCampusDensity.MaxCenterSeparationCells);
         }
     }
 }

@@ -26,7 +26,6 @@ namespace SolarMajesty
         private const int MaxProps = 96;
         private const string TubeRootName = "CampusTubeRoot";
         public const string TubeRunRootName = "CampusDress_TubeRuns";
-        public const string ColonistRootName = "CampusDress_Colonists";
 
         private static int _count;
         private static Shader _lit;
@@ -36,7 +35,6 @@ namespace SolarMajesty
             _count = 0;
             DestroyNamed(TubeRootName);
             DestroyNamed(TubeRunRootName);
-            DestroyNamed(ColonistRootName);
         }
 
         private static void DestroyNamed(string name)
@@ -160,7 +158,6 @@ namespace SolarMajesty
             if (pieces == null || pieces.Count == 0) return;
 
             HideUnusedDockSleeves(placer, grid, parent);
-            DressColonists(placer, grid, parent);
             int docks = 0;
             for (int a = 0; a < pieces.Count; a++)
             {
@@ -812,140 +809,6 @@ namespace SolarMajesty
 
             ColonyVisualUtility.SnapToGround(root);
             return root;
-        }
-
-        /// <summary>
-        /// Spacesuited colonists on open dirt between yards. Still / play dressing
-        /// only — no FlagTypes, no SpecialistBrain, no click-to-move.
-        /// </summary>
-        public static void DressColonists(BuildingPlacer placer, IsoGrid grid, Transform parent)
-        {
-            DestroyNamed(ColonistRootName);
-            if (placer?.Pieces == null || grid == null) return;
-            if (CountCategory(placer, BuildingCategory.Commons) == 0) return;
-            if (placer.Pieces.Count < 2) return;
-
-            var root = new GameObject(ColonistRootName);
-            if (parent != null) root.transform.SetParent(parent, false);
-
-            Vector3 commons = default;
-            Vector3 hab = default;
-            Vector3 pad = default;
-            Vector3 farm = default;
-            Vector3 camp = default;
-            bool hasCommons = false, hasHab = false, hasPad = false, hasFarm = false, hasCamp = false;
-            var pieces = placer.Pieces;
-            for (int i = 0; i < pieces.Count; i++)
-            {
-                Vector3 c = PieceCenter(grid, pieces[i]);
-                switch (pieces[i].Category)
-                {
-                    case BuildingCategory.Commons:
-                        commons = c; hasCommons = true; break;
-                    case BuildingCategory.Habitat:
-                        if (!hasHab) { hab = c; hasHab = true; }
-                        break;
-                    case BuildingCategory.LandingPad:
-                        pad = c; hasPad = true; break;
-                    case BuildingCategory.Farm:
-                        farm = c; hasFarm = true; break;
-                    case BuildingCategory.RegolithCamp:
-                        camp = c; hasCamp = true; break;
-                }
-            }
-
-            int n = 0;
-            if (hasCommons && hasHab)
-                n += SpawnWalker(root.transform, commons, hab, n, 2.15f);
-            if (hasCommons && hasPad)
-                n += SpawnWalker(root.transform, commons, pad, n, -2.35f);
-            if (hasCommons && hasFarm)
-                n += SpawnWalker(root.transform, commons, farm, n, 1.85f);
-            if (hasHab && hasPad)
-                n += SpawnWalker(root.transform, hab, pad, n, 1.55f);
-            if (hasCommons && hasCamp && n < 5)
-                n += SpawnWalker(root.transform, commons, camp, n, -1.65f);
-            if (n == 0 && hasCommons)
-            {
-                Vector3 a = commons + new Vector3(3.4f, 0f, 1.2f);
-                Vector3 b = commons + new Vector3(6.8f, 0f, -1.6f);
-                SpawnWalkerAt(root.transform, a, b, 0);
-            }
-        }
-
-        private static int CountCategory(BuildingPlacer placer, BuildingCategory cat)
-        {
-            int n = 0;
-            var pieces = placer.Pieces;
-            for (int i = 0; i < pieces.Count; i++)
-            {
-                if (pieces[i].Category == cat) n++;
-            }
-
-            return n;
-        }
-
-        private static int SpawnWalker(
-            Transform parent, Vector3 from, Vector3 to, int index, float side)
-        {
-            Vector3 dir = to - from;
-            dir.y = 0f;
-            if (dir.sqrMagnitude < 8f) return 0;
-            Vector3 nrm = dir.normalized;
-            Vector3 perp = Vector3.Cross(Vector3.up, nrm);
-            Vector3 a = from + nrm * 3.1f + perp * side;
-            Vector3 b = to - nrm * 3.1f + perp * side;
-            a.y = 0f;
-            b.y = 0f;
-            SpawnWalkerAt(parent, a, b, index);
-            return 1;
-        }
-
-        private static void SpawnWalkerAt(Transform parent, Vector3 a, Vector3 b, int index)
-        {
-            var go = BuildColonistSuit("Dress_Colonist_" + index);
-            go.transform.SetParent(parent, false);
-            go.transform.position = a + Vector3.up * 0.02f;
-            var walk = go.AddComponent<CampusColonistWalk>();
-            walk.PointA = a;
-            walk.PointB = b;
-            walk.Phase = index * 0.27f;
-        }
-
-        private static GameObject BuildColonistSuit(string name)
-        {
-            var white = new Color(0.94f, 0.95f, 0.97f);
-            var carbon = new Color(0.08f, 0.08f, 0.09f);
-            var orange = new Color(0.96f, 0.42f, 0.08f);
-            var visor = new Color(0.12f, 0.72f, 0.92f);
-            var root = new GameObject(name);
-            PrimColonist(root.transform, "SuitTorso", PrimitiveType.Capsule,
-                new Vector3(0f, 0.92f, 0f), new Vector3(0.38f, 0.38f, 0.32f), white);
-            PrimColonist(root.transform, "SuitPack", PrimitiveType.Cube,
-                new Vector3(0f, 1.02f, -0.16f), new Vector3(0.22f, 0.28f, 0.12f), carbon);
-            PrimColonist(root.transform, "SuitStripe", PrimitiveType.Cube,
-                new Vector3(0f, 0.98f, 0.14f), new Vector3(0.08f, 0.22f, 0.04f), orange);
-            PrimColonist(root.transform, "SuitHelm", PrimitiveType.Sphere,
-                new Vector3(0f, 1.42f, 0.02f), new Vector3(0.26f, 0.26f, 0.26f), white);
-            PrimColonist(root.transform, "SuitVisor", PrimitiveType.Cube,
-                new Vector3(0f, 1.42f, 0.10f), new Vector3(0.16f, 0.10f, 0.06f), visor);
-            PrimColonist(root.transform, "SuitBootL", PrimitiveType.Cube,
-                new Vector3(-0.08f, 0.08f, 0.04f), new Vector3(0.10f, 0.12f, 0.16f), carbon);
-            PrimColonist(root.transform, "SuitBootR", PrimitiveType.Cube,
-                new Vector3(0.08f, 0.08f, 0.04f), new Vector3(0.10f, 0.12f, 0.16f), carbon);
-            return root;
-        }
-
-        private static void PrimColonist(
-            Transform parent, string name, PrimitiveType type, Vector3 pos, Vector3 scale, Color color)
-        {
-            var go = GameObject.CreatePrimitive(type);
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = pos;
-            go.transform.localScale = scale;
-            Object.Destroy(go.GetComponent<Collider>());
-            Tint(go, color, 0.34f);
         }
 
         private static void Tint(GameObject go, Color c, float smooth = 0.28f, Color emission = default)
