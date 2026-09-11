@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5264a711bad40f144b592e9a902f0126
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 8574412962073106934
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 205053
+  packageName: Terrain Data Baker
+  packageVersion: 2.3.0
+  assetPath: Assets/BOXOPHOBIC/Terrain Data Baker/Demo/Terrain/Terrain - Grass.terrainlayer
+  uploadId: 991520

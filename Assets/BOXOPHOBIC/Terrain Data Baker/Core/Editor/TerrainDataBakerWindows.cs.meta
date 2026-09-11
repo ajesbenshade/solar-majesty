@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 4b0428733a6598243b4687ee7973445c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 205053
+  packageName: Terrain Data Baker
+  packageVersion: 2.3.0
+  assetPath: Assets/BOXOPHOBIC/Terrain Data Baker/Core/Editor/TerrainDataBakerWindows.cs
+  uploadId: 991520

@@ -11,7 +11,9 @@ namespace SolarMajesty
         /// <summary>Tracked or wheeled: no bounce, pitches under acceleration, treads scroll.</summary>
         Tracked = 2,
         /// <summary>Many-legged fauna: faster, looser gait with a side-to-side scuttle.</summary>
-        Scuttle = 3
+        Scuttle = 3,
+        /// <summary>Ash hopper: ballistic hops, not a walk bob.</summary>
+        Hop = 4
     }
 
     /// <summary>
@@ -96,9 +98,10 @@ namespace SolarMajesty
             switch (fauna)
             {
                 case FaunaKind.Wisp:
+                case FaunaKind.Leech:
                     return LocomotionKind.Hover;
                 case FaunaKind.Hopper:
-                    return LocomotionKind.Walker;
+                    return LocomotionKind.Hop;
                 default:
                     return LocomotionKind.Scuttle;
             }
@@ -204,7 +207,10 @@ namespace SolarMajesty
                     ApplyTracked(dt, distance);
                     break;
                 case LocomotionKind.Scuttle:
-                    ApplyGait(dt, bounce: 0.055f, scuttle: 0.09f);
+                    ApplyGait(dt, bounce: 0.085f, scuttle: 0.14f);
+                    break;
+                case LocomotionKind.Hop:
+                    ApplyHop(dt);
                     break;
                 default:
                     ApplyGait(dt, bounce: 0.075f, scuttle: 0.02f);
@@ -217,6 +223,7 @@ namespace SolarMajesty
             switch (kind)
             {
                 case LocomotionKind.Scuttle: return 3.2f;
+                case LocomotionKind.Hop: return 1.15f;
                 case LocomotionKind.Hover: return 0.9f;
                 case LocomotionKind.Tracked: return 1.4f;
                 default: return 1.7f;
@@ -278,6 +285,23 @@ namespace SolarMajesty
             _root.localPosition = _rootBaseLocalPos + Vector3.up * ((float1 + float2) * bodyHeight + lift);
             _root.localRotation = Quaternion.Euler(_lean.x, 0f, _lean.y);
             _root.localScale = _rootBaseScale;
+        }
+
+        /// <summary>One ballistic bounce per stride so hoppers read as hoppers, not walkers.</summary>
+        private void ApplyHop(float dt)
+        {
+            float moving = Mathf.Clamp01(_speedSmoothed / 1.8f);
+            float phase = _gaitPhase * Mathf.PI * 2f;
+            float hop = Mathf.Max(0f, Mathf.Sin(phase)) * 0.42f * moving * bodyHeight;
+            float idle = Mathf.Sin(Time.time * 2.2f + _idleSeed) * 0.02f * bodyHeight * (1f - moving);
+            float squash = 1f - Mathf.Max(0f, -Mathf.Sin(phase)) * 0.12f * moving;
+
+            _root.localPosition = _rootBaseLocalPos + new Vector3(0f, hop + idle, 0f);
+            _root.localRotation = Quaternion.Euler(_lean.x * 0.6f - hop * 18f, 0f, _lean.y);
+            _root.localScale = new Vector3(
+                _rootBaseScale.x * (2f - squash),
+                _rootBaseScale.y * squash,
+                _rootBaseScale.z * (2f - squash));
         }
 
         private void ApplyTracked(float dt, float distance)

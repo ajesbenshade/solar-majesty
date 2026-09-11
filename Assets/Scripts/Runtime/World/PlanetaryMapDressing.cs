@@ -40,9 +40,14 @@ namespace SolarMajesty
                 groundMat.SetFloat("_MacroScale", body.Id == CelestialBodyId.Earth ? 34f : 46f);
                 groundMat.SetFloat("_MacroStrength", 0.38f);
                 groundMat.SetFloat("_DetailScale", 2.4f);
-                groundMat.SetFloat("_DetailStrength", body.Id == CelestialBodyId.Europa ? 0.12f : 0.24f);
+                groundMat.SetFloat("_DetailStrength",
+                    body.Id == CelestialBodyId.Europa ? 0.12f
+                    : body.Id == CelestialBodyId.Mars ? 0.40f
+                    : body.Id == CelestialBodyId.Luna ? 0.38f
+                    : 0.24f);
                 groundMat.SetFloat("_Smoothness", body.Id == CelestialBodyId.Europa ? 0.30f : 0.06f);
                 BindAuthoredGroundDetail(groundMat, body);
+                BindTerrainBake(groundMat, ground, body);
 
                 rend.sharedMaterial = groundMat;
                 rend.shadowCastingMode = ShadowCastingMode.Off;
@@ -172,8 +177,151 @@ namespace SolarMajesty
 
             if (groundMat.HasProperty("_DetailTexScale"))
                 groundMat.SetFloat("_DetailTexScale", body.Id == CelestialBodyId.Mars ? 8.5f : 6.5f);
+            // TDB splat albedo dominates; authored Mars grit stays as a secondary multiply.
             if (groundMat.HasProperty("_DetailTexAmount"))
-                groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.52f : 0.40f);
+                groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.32f : 0.40f);
+        }
+
+        /// <summary>
+        /// Bind Terrain Data Baker-style maps (height / world normal / splat / mask) produced
+        /// by TerrainDataBake. Missing holder leaves _SplatAmount at 0 (mesh-only grade).
+        /// </summary>
+        private static void BindTerrainBake(Material groundMat, GameObject ground, CelestialBodyProfile body)
+        {
+            if (groundMat == null || ground == null) return;
+            var holder = ground.GetComponent<TerrainBakeHolder>();
+            var bake = holder != null ? holder.Bake : null;
+            if (bake == null || bake.SplatMap == null) return;
+
+            if (groundMat.HasProperty("_HeightMap")) groundMat.SetTexture("_HeightMap", bake.HeightMap);
+            if (groundMat.HasProperty("_NormalMap")) groundMat.SetTexture("_NormalMap", bake.NormalMap);
+            if (groundMat.HasProperty("_SplatMap")) groundMat.SetTexture("_SplatMap", bake.SplatMap);
+            if (groundMat.HasProperty("_MaskMap")) groundMat.SetTexture("_MaskMap", bake.MaskMap);
+            if (groundMat.HasProperty("_BakeSize"))
+                groundMat.SetVector("_BakeSize", new Vector4(bake.WorldWidth, bake.WorldHeight, 0f, 0f));
+            if (groundMat.HasProperty("_BakeNormalAmount")) groundMat.SetFloat("_BakeNormalAmount", 0.88f);
+            if (groundMat.HasProperty("_SplatAmount")) groundMat.SetFloat("_SplatAmount", 0.90f);
+
+            Color grass;
+            Color wet;
+            CelestialBodyId id = body != null ? body.Id : CelestialBodyId.Mars;
+            switch (id)
+            {
+                case CelestialBodyId.Earth:
+                    grass = body.ForestCanopy;
+                    wet = Color.Lerp(body.WaterShallow, body.GroundDark, 0.35f);
+                    break;
+                case CelestialBodyId.Europa:
+                    grass = body.GroundLight;
+                    wet = body.WaterShallow;
+                    break;
+                case CelestialBodyId.Luna:
+                    grass = Color.Lerp(body.GroundLight, body.RockColor, 0.4f);
+                    wet = body.CraterFloor;
+                    break;
+                default:
+                    grass = Color.Lerp(body.GroundDark, body.RockColor, 0.45f);
+                    wet = body.CraterFloor;
+                    break;
+            }
+            if (groundMat.HasProperty("_GrassColor")) groundMat.SetColor("_GrassColor", grass);
+            if (groundMat.HasProperty("_WetColor")) groundMat.SetColor("_WetColor", wet);
+
+            BindSplatAlbedoTiles(groundMat, id);
+        }
+
+        /// <summary>
+        /// TDB Sand/Grass/Snow as world-XZ splat albedo. Mars desaturates then colorizes
+        /// so Grass grit reads as rock, not a lawn. Missing kit leaves _SplatAlbedoAmount 0.
+        /// </summary>
+        private static void BindSplatAlbedoTiles(Material groundMat, CelestialBodyId id)
+        {
+            if (groundMat == null) return;
+            var layers = TerrainSplatLayers.Load();
+            if (layers == null || !layers.HasAny) return;
+
+            void BindLayer(string prop, Texture2D tex)
+            {
+                if (tex == null || !groundMat.HasProperty(prop)) return;
+                tex.wrapMode = TextureWrapMode.Repeat;
+                tex.filterMode = FilterMode.Bilinear;
+                groundMat.SetTexture(prop, tex);
+            }
+
+            BindLayer("_SplatAlbedo0", layers.sand);
+            BindLayer("_SplatAlbedo1", layers.grass);
+            BindLayer("_SplatAlbedo2", layers.snow);
+            BindLayer("_SplatAlbedo3", layers.sand);
+
+            if (groundMat.HasProperty("_SplatAlbedoAmount"))
+                groundMat.SetFloat("_SplatAlbedoAmount", 1f);
+            if (groundMat.HasProperty("_SplatTexScale"))
+                groundMat.SetFloat("_SplatTexScale", id == CelestialBodyId.Mars ? 5.8f : 7.5f);
+            if (groundMat.HasProperty("_SplatAmount"))
+                groundMat.SetFloat("_SplatAmount", 0.92f);
+            if (groundMat.HasProperty("_MacroStrength"))
+                groundMat.SetFloat("_MacroStrength", id == CelestialBodyId.Mars ? 0.16f : 0.28f);
+
+            Vector4 desat;
+            switch (id)
+            {
+                case CelestialBodyId.Earth:
+                    desat = new Vector4(0f, 0f, 0f, 0.12f);
+                    break;
+                case CelestialBodyId.Europa:
+                    desat = new Vector4(0.35f, 0.55f, 0.05f, 0.20f);
+                    break;
+                default:
+                    // Mars / Luna / Belt: kill TDB Earth chroma, keep luma grain.
+                    desat = new Vector4(1f, 1f, 1f, 0.95f);
+                    break;
+            }
+            if (groundMat.HasProperty("_SplatDesat"))
+                groundMat.SetVector("_SplatDesat", desat);
+
+            // r15 still: TDB Sand * GroundLight read peach (186/112/54). Rust lock
+            // ~150/68/30 so white hulls stay white against dirt, not washed sand.
+            if (id == CelestialBodyId.Mars)
+            {
+                if (groundMat.HasProperty("_BaseColor"))
+                    groundMat.SetColor("_BaseColor", new Color(0.58f, 0.26f, 0.11f, 1f));
+                if (groundMat.HasProperty("_DarkColor"))
+                    groundMat.SetColor("_DarkColor", new Color(0.36f, 0.14f, 0.06f, 1f));
+                if (groundMat.HasProperty("_RockColor"))
+                    groundMat.SetColor("_RockColor", new Color(0.42f, 0.20f, 0.10f, 1f));
+                if (groundMat.HasProperty("_SlopeStart"))
+                    groundMat.SetFloat("_SlopeStart", 0.18f);
+                if (groundMat.HasProperty("_SlopeEnd"))
+                    groundMat.SetFloat("_SlopeEnd", 0.58f);
+                if (groundMat.HasProperty("_BakeNormalAmount"))
+                    groundMat.SetFloat("_BakeNormalAmount", 1f);
+                if (groundMat.HasProperty("_MacroStrength"))
+                    groundMat.SetFloat("_MacroStrength", 0.22f);
+            }
+            else if (id == CelestialBodyId.Luna)
+            {
+                // Highland anorthosite dust, shadowed mare bowls, pale ejecta rims.
+                if (groundMat.HasProperty("_BaseColor"))
+                    groundMat.SetColor("_BaseColor", new Color(0.62f, 0.58f, 0.52f, 1f));
+                if (groundMat.HasProperty("_DarkColor"))
+                    groundMat.SetColor("_DarkColor", new Color(0.18f, 0.17f, 0.16f, 1f));
+                if (groundMat.HasProperty("_RockColor"))
+                    groundMat.SetColor("_RockColor", new Color(0.38f, 0.36f, 0.34f, 1f));
+                if (groundMat.HasProperty("_GrassColor"))
+                    groundMat.SetColor("_GrassColor", new Color(0.72f, 0.68f, 0.62f, 1f));
+                if (groundMat.HasProperty("_WetColor"))
+                    groundMat.SetColor("_WetColor", new Color(0.14f, 0.13f, 0.12f, 1f));
+                if (groundMat.HasProperty("_SlopeStart"))
+                    groundMat.SetFloat("_SlopeStart", 0.16f);
+                if (groundMat.HasProperty("_SlopeEnd"))
+                    groundMat.SetFloat("_SlopeEnd", 0.52f);
+                if (groundMat.HasProperty("_BakeNormalAmount"))
+                    groundMat.SetFloat("_BakeNormalAmount", 1f);
+                if (groundMat.HasProperty("_MacroStrength"))
+                    groundMat.SetFloat("_MacroStrength", 0.18f);
+                if (groundMat.HasProperty("_SplatTexScale"))
+                    groundMat.SetFloat("_SplatTexScale", 6.4f);
+            }
         }
 
         /// <summary>
@@ -186,8 +334,12 @@ namespace SolarMajesty
             if (body == null) body = CelestialBodyCatalog.Earth();
             if (body.Id == CelestialBodyId.Earth)
                 return Color.Lerp(body.GroundDark, body.GroundLight, 0.18f);
+            // Mars Game-tab was a hard black sky cut — use salmon haze as the miss/clear
+            // fill so the top of the ortho frame reads atmosphere, not void.
             if (body.Id == CelestialBodyId.Mars)
-                return Color.Lerp(body.GroundDark, body.Horizon, 0.35f);
+                return Color.Lerp(body.FogColor, body.SkyHorizon, 0.45f);
+            if (body.Id == CelestialBodyId.Luna)
+                return Color.Lerp(body.GroundDark, body.SkyTop, 0.35f);
             return Color.Lerp(body.GroundDark, body.GroundLight, 0.12f);
         }
 
@@ -251,7 +403,9 @@ namespace SolarMajesty
                     ? new Color(0.62f, 0.78f, 1f)
                     : body.Id == CelestialBodyId.Mars
                         ? new Color(0.95f, 0.58f, 0.32f)
-                        : body.SkyTop;
+                        : body.Id == CelestialBodyId.Luna
+                            ? new Color(0.06f, 0.06f, 0.08f)
+                            : body.SkyTop;
                 // Must match terrain void — default Procedural ground is mustard/olive yellow.
                 if (sky.HasProperty("_SkyTint")) sky.SetColor("_SkyTint", tint);
                 sky.SetColor("_GroundColor", voidFill);
@@ -277,8 +431,12 @@ namespace SolarMajesty
             if (cam == null) return;
             Color voidFill = VoidFillColor(body);
             cam.backgroundColor = voidFill;
-            // Keep skybox for the upper hemisphere when present; voidFill backs any miss.
-            cam.clearFlags = hasSkybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
+            // Mars ortho overseer: procedural skybox often reads black in the upper
+            // third. Solid haze fill matches the dream-loop concept sky band.
+            if (body != null && (body.Id == CelestialBodyId.Mars || body.Id == CelestialBodyId.Luna))
+                cam.clearFlags = CameraClearFlags.SolidColor;
+            else
+                cam.clearFlags = hasSkybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
         }
 
         private static Texture2D BuildAlbedo(int size, CelestialBodyProfile body)
@@ -304,9 +462,6 @@ namespace SolarMajesty
                 {
                     float dust = Mathf.PerlinNoise(x * 0.045f + 2f, y * 0.045f);
                     c = Color.Lerp(c, body.DuneColor, dust * 0.34f);
-                    c += CraterMark(x, y, size, 0.22f, 0.18f, body.CraterRim, body.CraterFloor);
-                    c += CraterMark(x, y, size, 0.68f, 0.71f, body.CraterRim, body.CraterFloor);
-                    c += CraterMark(x, y, size, 0.80f, 0.32f, body.CraterRim, body.CraterFloor);
                     float grit = Frac(Mathf.Sin(x * 19.1f + y * 81.3f) * 23421.7f);
                     if (grit > 0.93f)
                         c = Color.Lerp(c, body.RockColor, 0.55f);
@@ -358,21 +513,6 @@ namespace SolarMajesty
             tex.SetPixels(pixels);
             tex.Apply(true);
             return tex;
-        }
-
-        private static Color CraterMark(
-            int x, int y, int size, float cx, float cy, Color rim, Color floor)
-        {
-            float u = x / (float)size;
-            float v = y / (float)size;
-            float dx = u - cx;
-            float dy = v - cy;
-            float d = Mathf.Sqrt(dx * dx + dy * dy);
-            float r = 0.11f;
-            if (d > r) return Color.clear;
-            if (d < r * 0.55f)
-                return (floor - Color.white * 0.08f) * 0.35f - new Color(0.08f, 0.04f, 0.02f, 0f);
-            return (rim - Color.white * 0.04f) * 0.28f;
         }
 
         private static void EnsureDustDevils(Transform parent, IsoGrid grid, CelestialBodyProfile body)
@@ -506,8 +646,8 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Empty Mars drop: boulder field + a crater bowl + a dune ridge in the ortho 16 shot.
-        /// Visual only — does not spawn a campus. Nodes/lairs stay world-gen.
+        /// Empty Mars drop: boulder scatter on the baked grade. Mesa / canyon / crater
+        /// come from TerrainDataBake — no sphere ridges or crater/dune props.
         /// </summary>
         private static void EnsureMarsVista(Transform parent, CelestialBodyProfile body)
         {
@@ -531,6 +671,25 @@ namespace SolarMajesty
                 SpawnVistaBoulder(root, at, body, i, 0.48f + (i % 4) * 0.16f);
             }
 
+            // Pebble scatter between the yards (concept dirt is grainy, not a smooth field).
+            for (int i = 0; i < 30; i++)
+            {
+                float ang = i * 2.399f + 0.9f;
+                float rad = 4.5f + (i % 7) * 1.15f;
+                Vector3 at = campus + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
+                // Odd salt => polyhedral Boulder_B; Boulder_A is a rubble pile on a square patch.
+                SpawnVistaBoulder(root, at, body, 201 + i * 2, 0.16f + (i % 3) * 0.07f);
+            }
+            // Extra grain on the camera-side half (world -z), which fills the lower-right
+            // dirt of the Game-tab still; the concept shows ~40+ pebbles there.
+            for (int i = 0; i < 90; i++)
+            {
+                float ang = Mathf.PI + (i + 0.5f) / 90f * Mathf.PI + Mathf.Sin(i * 1.7f) * 0.08f;
+                float rad = 5.0f + (i % 11) * 0.85f;
+                Vector3 at = campus + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
+                SpawnVistaBoulder(root, at, body, 301 + i * 2, 0.14f + (i % 4) * 0.05f);
+            }
+
             Vector3[] outcrops =
             {
                 campus + new Vector3(12.8f, 0f, 7.6f),
@@ -542,24 +701,35 @@ namespace SolarMajesty
             };
             for (int i = 0; i < outcrops.Length; i++)
             {
-                SpawnVistaBoulder(root, outcrops[i], body, i + 40, 1.15f + (i % 3) * 0.22f);
-                SpawnVistaBoulder(root, outcrops[i] + new Vector3(0.85f, 0f, -0.55f), body, i + 60, 0.62f);
-                SpawnVistaBoulder(root, outcrops[i] + new Vector3(-0.7f, 0f, 0.7f), body, i + 80, 0.48f);
+                // Outcrops stay boulder-sized: at 1.15–1.6 m the blocky rock FBX read as beige cubes.
+                SpawnVistaBoulder(root, outcrops[i], body, i + 40, 0.58f + (i % 3) * 0.11f);
+                SpawnVistaBoulder(root, outcrops[i] + new Vector3(0.85f, 0f, -0.55f), body, i + 60, 0.40f);
+                SpawnVistaBoulder(root, outcrops[i] + new Vector3(-0.7f, 0f, 0.7f), body, i + 80, 0.32f);
             }
 
-            SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
-            SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
+            // Mesa / canyon / crater live in TerrainDataBake.Height — no sphere ridges,
+            // no crater/dune props sitting in the bowls they would double.
+        }
+
+        private static float SampleBakeY(float wx, float wz)
+        {
+            var ground = GameObject.Find("GroundPlane");
+            var holder = ground != null ? ground.GetComponent<TerrainBakeHolder>() : null;
+            if (holder != null && holder.Bake != null)
+                return holder.Bake.SampleHeight(wx, wz);
+            return 0f;
         }
 
         private static void SpawnVistaBoulder(
             Transform parent, Vector3 world, CelestialBodyProfile body, int salt, float scale)
         {
+            float gy = SampleBakeY(world.x, world.z);
             var prefab = EnvironmentMeshCatalog.LoadRock(salt);
             var mesh = EnvironmentMeshCatalog.InstantiateClean(prefab, "Dress_MarsBoulder");
             if (mesh != null)
             {
                 mesh.transform.SetParent(parent, false);
-                mesh.transform.position = world;
+                mesh.transform.position = new Vector3(world.x, gy, world.z);
                 float s = scale / EnvironmentMeshCatalog.RockNativeSize;
                 mesh.transform.localScale = Vector3.one * s * (0.9f + (salt % 3) * 0.08f);
                 // Keep FBX import axis, yaw only — Euler(tip,yaw,tip) stood the flat base upright.
@@ -568,14 +738,14 @@ namespace SolarMajesty
                 ColonyVisualUtility.SeatFlatOnGround(mesh);
                 Color c = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
                 PlanetaryWorldGen.Tint(mesh, c, 0.08f, ShadowCastingMode.On);
-                ColonyVisualUtility.SnapToGround(mesh);
+                ColonyVisualUtility.SnapToGround(mesh, gy);
                 return;
             }
 
             var go = GameObject.CreatePrimitive(salt % 3 == 0 ? PrimitiveType.Sphere : PrimitiveType.Capsule);
             go.name = "Dress_MarsBoulder";
             go.transform.SetParent(parent, false);
-            go.transform.position = world + Vector3.up * (0.18f * scale);
+            go.transform.position = new Vector3(world.x, gy + 0.18f * scale, world.z);
             go.transform.localScale = new Vector3(
                 scale * (0.85f + (salt % 3) * 0.12f),
                 scale * (0.42f + (salt % 2) * 0.18f),
@@ -584,81 +754,43 @@ namespace SolarMajesty
             Object.Destroy(go.GetComponent<Collider>());
             Color tint = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
             PlanetaryWorldGen.Tint(go, tint, 0.08f, ShadowCastingMode.On);
-            ColonyVisualUtility.SnapToGround(go);
-        }
-
-        private static void SpawnVistaCrater(Transform parent, Vector3 world, CelestialBodyProfile body)
-        {
-            var mesh = EnvironmentMeshCatalog.InstantiateClean(
-                EnvironmentMeshCatalog.LoadCraterVista(), "Dress_MarsCrater");
-            if (mesh != null)
-            {
-                mesh.transform.SetParent(parent, false);
-                mesh.transform.position = world;
-                float diameter = 7.2f;
-                float s = diameter / EnvironmentMeshCatalog.CraterVistaNativeDiameter;
-                mesh.transform.localScale = Vector3.one * s;
-                mesh.transform.rotation = Quaternion.Euler(0f, 22f, 0f);
-                ColonyVisualUtility.SnapToGround(mesh);
-                return;
-            }
-
-            var crater = new GameObject("Dress_MarsCrater");
-            crater.transform.SetParent(parent, false);
-            crater.transform.position = world;
-
-            var rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            rim.name = "Rim";
-            rim.transform.SetParent(crater.transform, false);
-            rim.transform.localPosition = new Vector3(0f, 0.05f, 0f);
-            rim.transform.localScale = new Vector3(7.2f, 0.08f, 6.4f);
-            Object.Destroy(rim.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(rim, body.CraterRim, 0.06f);
-
-            var floor = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            floor.name = "Floor";
-            floor.transform.SetParent(crater.transform, false);
-            floor.transform.localPosition = new Vector3(0.15f, 0.02f, -0.1f);
-            floor.transform.localScale = new Vector3(4.8f, 0.04f, 4.2f);
-            Object.Destroy(floor.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(floor, body.CraterFloor, 0.05f);
-
-            ColonyVisualUtility.SnapToGround(crater);
-        }
-
-        private static void SpawnVistaDune(Transform parent, Vector3 world, CelestialBodyProfile body)
-        {
-            var mesh = EnvironmentMeshCatalog.InstantiateClean(
-                EnvironmentMeshCatalog.LoadDune(), "Dress_MarsDune");
-            if (mesh != null)
-            {
-                mesh.transform.SetParent(parent, false);
-                mesh.transform.position = world;
-                mesh.transform.rotation = Quaternion.Euler(0f, 38f, 0f);
-                float s = 6.8f / EnvironmentMeshCatalog.DuneNativeLength;
-                mesh.transform.localScale = Vector3.one * s;
-                PlanetaryWorldGen.Tint(mesh, body.DuneColor, 0.06f);
-                ColonyVisualUtility.SnapToGround(mesh);
-                return;
-            }
-
-            var dune = new GameObject("Dress_MarsDune");
-            dune.transform.SetParent(parent, false);
-            dune.transform.position = world;
-            dune.transform.rotation = Quaternion.Euler(0f, 38f, 0f);
-
-            var ridge = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            ridge.name = "Ridge";
-            ridge.transform.SetParent(dune.transform, false);
-            ridge.transform.localPosition = new Vector3(0f, 0.22f, 0f);
-            ridge.transform.localScale = new Vector3(6.8f, 0.55f, 2.4f);
-            Object.Destroy(ridge.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(ridge, body.DuneColor, 0.06f);
-            ColonyVisualUtility.SnapToGround(dune);
+            ColonyVisualUtility.SnapToGround(go, gy);
         }
 
         private static void SpawnGrassTuft(Transform parent, Vector3 world, CelestialBodyProfile body, int salt)
         {
+            var grassPrefab = body != null && body.Id == CelestialBodyId.Earth
+                ? EnvironmentMeshCatalog.LoadEarthGrass(salt)
+                : null;
+            if (grassPrefab != null)
+            {
+                var clump = EnvironmentMeshCatalog.InstantiateVendorNature(
+                    grassPrefab, "Dress_Grass", 0.35f + (salt % 4) * 0.08f);
+                if (clump != null)
+                {
+                    clump.transform.SetParent(parent, false);
+                    clump.transform.position = world;
+                    clump.transform.rotation = Quaternion.Euler(0f, salt * 37f, 0f);
+                    ColonyVisualUtility.SnapToGround(clump);
+                    if (salt % 5 == 0)
+                    {
+                        var flowerPrefab = EnvironmentMeshCatalog.LoadEarthFlower(salt);
+                        if (flowerPrefab != null)
+                        {
+                            var bloom = EnvironmentMeshCatalog.InstantiateVendorNature(
+                                flowerPrefab, "Dress_Poppy", 0.22f);
+                            if (bloom != null)
+                            {
+                                bloom.transform.SetParent(parent, false);
+                                bloom.transform.position = world + new Vector3(0.18f, 0f, 0.12f);
+                                ColonyVisualUtility.SnapToGround(bloom);
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = "Dress_Grass";
             go.transform.SetParent(parent, false);
@@ -673,24 +805,35 @@ namespace SolarMajesty
         private static void SpawnVistaTree(Transform parent, Vector3 world, CelestialBodyProfile body, int salt)
         {
             float h = 1.55f + (salt % 4) * 0.28f;
-            var mesh = EnvironmentMeshCatalog.InstantiateClean(
-                EnvironmentMeshCatalog.LoadTree(salt), "Dress_Tree");
+            var prefab = EnvironmentMeshCatalog.LoadTree(salt, body != null ? body.Id : CelestialBodyId.Earth);
+            GameObject mesh = null;
+            if (prefab != null)
+            {
+                mesh = EnvironmentMeshCatalog.IsVendorNature(prefab)
+                    ? EnvironmentMeshCatalog.InstantiateVendorNature(prefab, "Dress_Tree", h * 1.6f)
+                    : EnvironmentMeshCatalog.InstantiateClean(prefab, "Dress_Tree");
+            }
             if (mesh != null)
             {
                 mesh.transform.SetParent(parent, false);
                 mesh.transform.position = world;
-                // Keep import orientation (FBX -90 X) then yaw — identity rotation flattens trees.
-                ColonyVisualUtility.SetYawKeepingImport(
-                    mesh.transform, mesh.transform.rotation, salt * 41f);
-                float s = h / EnvironmentMeshCatalog.TreeNativeHeight;
-                mesh.transform.localScale = Vector3.one * s;
+                if (EnvironmentMeshCatalog.IsVendorNature(prefab))
+                    mesh.transform.rotation = Quaternion.Euler(0f, salt * 41f, 0f);
+                else
+                {
+                    // Keep import orientation (FBX -90 X) then yaw — identity rotation flattens trees.
+                    ColonyVisualUtility.SetYawKeepingImport(
+                        mesh.transform, mesh.transform.rotation, salt * 41f);
+                    float s = h / EnvironmentMeshCatalog.TreeNativeHeight;
+                    mesh.transform.localScale = Vector3.one * s;
+                }
                 ColonyVisualUtility.SnapToGround(mesh);
                 if (salt == 0)
-                    Debug.Log("[MapDressing] Earth vista trees using SM_Tree FBX");
+                    Debug.Log("[MapDressing] Earth vista trees using " + prefab.name);
                 return;
             }
             if (salt == 0)
-                Debug.LogWarning("[MapDressing] SM_Tree FBX missing — primitive tree fallback");
+                Debug.LogWarning("[MapDressing] Earth tree prefab missing — primitive tree fallback");
 
             var tree = new GameObject("Dress_Tree");
             tree.transform.SetParent(parent, false);

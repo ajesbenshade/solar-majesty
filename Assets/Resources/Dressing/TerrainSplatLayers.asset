@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f4c2a81e6b14d3c9e07b5d8a1c4e6f2, type: 3}
+  m_Name: TerrainSplatLayers
+  m_EditorClassIdentifier: SolarMajesty.Runtime::SolarMajesty.TerrainSplatLayers
+  sand: {fileID: 2800000, guid: 9b556c1983078e543b304dede43f688c, type: 3}
+  grass: {fileID: 2800000, guid: 89a9ea174f62f5e419b8cf4477b412cf, type: 3}
+  snow: {fileID: 2800000, guid: b888644130727da4497975b98ee4a480, type: 3}

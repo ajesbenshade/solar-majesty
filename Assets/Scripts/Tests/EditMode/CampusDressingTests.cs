@@ -63,6 +63,223 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void LiveCommons_GeodesicLattice_NoCyanWaistVisors()
+        {
+            var commons = ModularBuildingFactory.Spawn(
+                BuildingCategory.Commons, Vector3.zero, _root.transform);
+            Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsGeo_0"),
+                "dream-loop: geodesic facets must dress the dome");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
+                "orange equatorial band");
+            Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsCupolaBand"),
+                "orange cupola band");
+            Assert.IsNull(FindChild(commons.transform, "CommonsVisor_1"),
+                "cyan waist visors washed the sheet white — removed");
+            Assert.IsNull(FindChild(commons.transform, "CommonsVisor_3"));
+            Color stripe = Albedo(FindChild(commons.transform, "CommonsStripe"));
+            Assert.Greater(stripe.r, 0.85f);
+            Assert.Less(stripe.g, 0.55f);
+        }
+
+        [Test]
+        public void LiveHab_ThickCarbonMidBand_AndOrangeRimHatches()
+        {
+            var hab = ModularBuildingFactory.Spawn(
+                BuildingCategory.Habitat, Vector3.zero, _root.transform);
+            Transform mid = FindChild(hab.transform, "HabCarbonBand");
+            Assert.IsNotNull(mid);
+            // Unity cylinder height = 2 * scale.y; band must cover ~24% of HAB length.
+            float length = 6f * 0.92f;
+            float midLen = mid.localScale.y * 2f;
+            Assert.Greater(midLen / length, 0.20f, "mid-band must read thick at ortho 10");
+            Assert.Less(midLen / length, 0.32f);
+            Assert.Less(Albedo(mid).grayscale, 0.20f, "mid-band stays near-black");
+            Assert.IsNotNull(FindChild(hab.transform, "HabCarbonBandCore"),
+                "darker core ring so the mid-band reads vs white hull");
+            Assert.IsNull(FindChild(hab.transform, "HabMid"),
+                "old HabMid name retired — was easy to confuse with orange trim");
+            Assert.IsNotNull(FindChild(hab.transform, "HabFrontRim"));
+            Assert.IsNotNull(FindChild(hab.transform, "HabRearRim"));
+            Color rim = Albedo(FindChild(hab.transform, "HabFrontRim"));
+            Assert.Greater(rim.r, 0.85f);
+            Assert.Less(rim.g, 0.55f);
+        }
+
+        [Test]
+        public void SnapToGroundKeepingDockAxis_PreservesSharedDockY()
+        {
+            var airlock = ModularBuildingFactory.Spawn(
+                BuildingCategory.Utility, Vector3.zero, _root.transform);
+            Transform tube = FindChild(airlock.transform, "Dress_TubeArm_N_Tube");
+            Assert.IsNotNull(tube);
+            float before = tube.position.y;
+            // Force a ground seat that would otherwise slide docks off DockY.
+            airlock.transform.position += new Vector3(0f, 0.35f, 0f);
+            ColonyVisualUtility.SnapToGroundKeepingDockAxis(airlock);
+            Assert.AreEqual(before, tube.position.y, 0.04f,
+                "airlock arms must stay on ColonyVisualUtility.DockY after seating");
+            Assert.AreEqual(ColonyVisualUtility.DockY, tube.position.y, 0.08f);
+        }
+
+        [Test]
+        public void MarsCatalog_SalmonHorizonHaze()
+        {
+            var mars = CelestialBodyCatalog.Get(CelestialBodyId.Mars);
+            // Pale dusty haze, concept far-ground edge ~RGB 222/140/80 (dream-loop round 6).
+            Assert.AreEqual(0.98f, mars.FogColor.r, 0.03f);
+            Assert.AreEqual(0.61f, mars.FogColor.g, 0.03f);
+            Assert.AreEqual(0.40f, mars.FogColor.b, 0.03f);
+            // Play-ortho 10: start past campus/focus (~44 m), FogEnd well past the 61 m far
+            // edge so the top of frame is a salmon hint (~28 %), not an opaque wall.
+            Assert.Greater(mars.FogStart, 30f);
+            Assert.Greater(mars.FogEnd, 80f);
+            Assert.Less(mars.FogEnd, 160f);
+            float playFarHint = (DemoAtmosphere.MarsPlayFarDepth - mars.FogStart)
+                / (mars.FogEnd - mars.FogStart);
+            Assert.Less(playFarHint, 0.45f);
+            Assert.Greater(playFarHint, 0.10f);
+            // Dusty brown-orange dirt, not blood-red: concept lit dirt G/R ~0.45.
+            Assert.Greater(mars.GroundLight.g / mars.GroundLight.r, 0.55f);
+        }
+
+        [Test]
+        public void MarsFog_ZoomedOutKeepsFarGroundAHint()
+        {
+            var mars = CelestialBodyCatalog.Get(CelestialBodyId.Mars);
+            float pitch = 30f * Mathf.Deg2Rad;
+            float sinP = Mathf.Sin(pitch);
+            float cosP = Mathf.Cos(pitch);
+            float ortho = IsometricCameraController.MaxOrthoSize;
+            float camY = ortho * cosP + 1.5f;
+            DemoAtmosphere.ComputeMarsLinearFog(
+                mars, camY, -sinP, cosP, ortho, out float start, out float end);
+            float depthFar = (camY + cosP * ortho) / sinP;
+            float depthFocus = camY / sinP;
+            float farHint = Mathf.InverseLerp(start, end, depthFar);
+            float focusHint = Mathf.InverseLerp(start, end, depthFocus);
+            Assert.Less(farHint, 0.45f, "zoomed-out far ground must stay a haze hint, not FogColor");
+            Assert.Greater(farHint, 0.10f, "zoomed-out far ground must still recede");
+            Assert.Less(focusHint, 0.08f, "zoomed-out focus must stay near-clear");
+            Assert.Greater(end, depthFar + 20f);
+        }
+
+        [Test]
+        public void FaunaHide_DoesNotUseCampusCream()
+        {
+            Assert.IsTrue(IndustrialArtDressing.IsFaunaAgentName("RegolithMite"));
+            Assert.IsTrue(IndustrialArtDressing.IsFaunaAgentName("WattLeech"));
+            Assert.IsTrue(IndustrialArtDressing.IsFaunaAgentName("DustStalker"));
+            Assert.IsTrue(IndustrialArtDressing.IsFaunaAgentName("AshHopper"));
+            Assert.IsTrue(IndustrialArtDressing.IsFaunaAgentName("DustHopper"));
+            Assert.IsTrue(IndustrialArtDressing.IsFaunaAgentName("DustWisp"));
+            Assert.IsFalse(IndustrialArtDressing.IsFaunaAgentName("ColonyCommons"));
+            Assert.IsFalse(IndustrialArtDressing.IsFaunaAgentName("Visual"));
+
+            GameObject mite = MakeFaunaStub("RegolithMite", new Vector3(0.45f, 0.9f, 0.4f));
+            AddAccentToken(mite.transform.Find("Visual"), "SM_Cyan");
+            IndustrialArtDressing.Apply(mite);
+            var hideMat = mite.transform.Find("Visual").GetComponent<Renderer>().sharedMaterial;
+            Assert.IsNotNull(hideMat);
+            Assert.IsFalse(hideMat.name.Contains("WhiteHull"), hideMat.name);
+            Assert.IsTrue(hideMat.name.Contains("MiteHide"), hideMat.name);
+            Transform cyan = FindChild(mite.transform, "SM_CyanToken");
+            Assert.IsNotNull(cyan);
+            Assert.IsTrue(cyan.GetComponent<Renderer>().sharedMaterial.name.Contains("Cyan"),
+                cyan.GetComponent<Renderer>().sharedMaterial.name);
+
+            GameObject hopper = MakeFaunaStub("DustHopper", new Vector3(0.4f, 1.1f, 0.35f));
+            IndustrialArtDressing.Apply(hopper);
+            string hopperMat = hopper.transform.Find("Visual").GetComponent<Renderer>().sharedMaterial.name;
+            Assert.IsTrue(hopperMat.Contains("HopperHide"), hopperMat);
+            Assert.IsFalse(hopperMat.Contains("MiteHide"), hopperMat);
+
+            GameObject wisp = MakeFaunaStub("DustWisp", Vector3.one * 0.6f);
+            IndustrialArtDressing.Apply(wisp);
+            string wispMat = wisp.transform.Find("Visual").GetComponent<Renderer>().sharedMaterial.name;
+            Assert.IsTrue(wispMat.Contains("WispHide"), wispMat);
+            Assert.IsFalse(wispMat.Contains("MiteHide"), wispMat);
+        }
+
+        [Test]
+        public void FaunaMotion_HopperHops_LeechHovers_MiteScuttles()
+        {
+            Assert.AreEqual(LocomotionKind.Hop, UnitMotion.KindFor(FaunaKind.Hopper));
+            Assert.AreEqual(LocomotionKind.Hover, UnitMotion.KindFor(FaunaKind.Leech));
+            Assert.AreEqual(LocomotionKind.Hover, UnitMotion.KindFor(FaunaKind.Wisp));
+            Assert.AreEqual(LocomotionKind.Scuttle, UnitMotion.KindFor(FaunaKind.Mite));
+            Assert.AreEqual(LocomotionKind.Scuttle, UnitMotion.KindFor(FaunaKind.Stalker));
+            Assert.AreEqual(6, DustStalkerAgent.LegCountFor(FaunaKind.Hopper));
+            Assert.AreEqual(6, DustStalkerAgent.LegCountFor(FaunaKind.Mite));
+            Assert.AreEqual(6, DustStalkerAgent.LegCountFor(FaunaKind.Stalker));
+            Assert.AreEqual(8, DustStalkerAgent.LegCountFor(FaunaKind.Tick));
+            Assert.AreEqual(0, DustStalkerAgent.LegCountFor(FaunaKind.Leech));
+            Assert.AreEqual(0, DustStalkerAgent.LegCountFor(FaunaKind.Wisp));
+        }
+
+        [Test]
+        public void FaunaHasArt_KeepsProceduralLegs()
+        {
+            GameObject mite = MakeFaunaStub("RegolithMite", new Vector3(0.45f, 0.9f, 0.4f));
+            InitFauna(mite, FaunaKind.Mite);
+            Assert.IsTrue(IndustrialArtDressing.HasArt(mite));
+            Assert.IsNotNull(mite.GetComponent<ProceduralLegs>(), "mite IK legs even when HasArt");
+            Assert.AreEqual(6, mite.GetComponent<ProceduralLegs>().LegCount);
+
+            GameObject hopper = MakeFaunaStub("AshHopper", new Vector3(0.4f, 1.2f, 0.35f));
+            InitFauna(hopper, FaunaKind.Hopper);
+            Assert.IsTrue(IndustrialArtDressing.HasArt(hopper));
+            Assert.IsNotNull(hopper.GetComponent<ProceduralLegs>());
+            Assert.AreEqual(6, hopper.GetComponent<ProceduralLegs>().LegCount);
+
+            GameObject stalker = MakeFaunaStub("DustStalker", new Vector3(0.5f, 1.1f, 0.7f));
+            InitFauna(stalker, FaunaKind.Stalker);
+            Assert.IsTrue(IndustrialArtDressing.HasArt(stalker));
+            Assert.IsNotNull(stalker.GetComponent<ProceduralLegs>());
+            Assert.AreEqual(6, stalker.GetComponent<ProceduralLegs>().LegCount);
+
+            GameObject leech = MakeFaunaStub("WattLeech", new Vector3(0.35f, 1.0f, 0.25f));
+            InitFauna(leech, FaunaKind.Leech);
+            Assert.IsNull(leech.GetComponent<ProceduralLegs>(), "leech hovers — no IK legs");
+        }
+
+        [Test]
+        public void FaunaMite_PaintAddsCyanOrangeDress()
+        {
+            GameObject mite = MakeFaunaStub("RegolithMite", new Vector3(0.45f, 0.9f, 0.4f));
+            InitFauna(mite, FaunaKind.Mite);
+            Transform eye = FindChild(mite.transform, "Dress_EyeL");
+            Transform nub = FindChild(mite.transform, "Dress_NubL");
+            Assert.IsNotNull(eye, "cyan eye dress");
+            Assert.IsNotNull(nub, "orange nub dress");
+            Color eyeC = Albedo(eye);
+            Assert.Greater(eyeC.b, 0.70f, "eye stays cyan");
+            Assert.Greater(eyeC.b, eyeC.r);
+            Color nubC = Albedo(nub);
+            Assert.Greater(nubC.r, 0.80f, "nub stays safety orange");
+            Assert.Less(nubC.b, 0.25f);
+        }
+
+        [Test]
+        public void FaunaAlignHead_LongestAxisOnPlusZ()
+        {
+            var go = new GameObject("RegolithMite");
+            go.transform.SetParent(_root.transform, false);
+            var vis = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            vis.name = "Visual";
+            vis.transform.SetParent(go.transform, false);
+            vis.transform.localRotation = Quaternion.identity;
+            vis.transform.localScale = new Vector3(2f, 0.3f, 0.4f);
+            var col = vis.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+
+            FaunaDressing.AlignHead(go);
+
+            Bounds b = vis.GetComponent<Renderer>().bounds;
+            Assert.Greater(b.size.z, b.size.x * 1.2f,
+                "longest horizontal mesh axis must map to parent +Z");
+        }
+
+        [Test]
         public void GhostCommons_ShowsAllCardinalPorts()
         {
             var ghost = ModularBuildingFactory.Spawn(
@@ -749,6 +966,46 @@ namespace SolarMajesty.Tests
                     return ts[i];
             }
             return null;
+        }
+
+        private GameObject MakeFaunaStub(string name, Vector3 visualScale)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(_root.transform, false);
+            var vis = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            vis.name = "Visual";
+            vis.transform.SetParent(go.transform, false);
+            vis.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            vis.transform.localScale = visualScale;
+            var col = vis.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+            var shader = Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Sprites/Default");
+            var mat = new Material(shader) { name = "SM_White" };
+            vis.GetComponent<Renderer>().sharedMaterial = mat;
+            return go;
+        }
+
+        private static void AddAccentToken(Transform visual, string token)
+        {
+            var eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            eye.name = token + "Token";
+            eye.transform.SetParent(visual, false);
+            eye.transform.localScale = Vector3.one * 0.15f;
+            var col = eye.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+            var shader = Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Sprites/Default");
+            var mat = new Material(shader) { name = token };
+            eye.GetComponent<Renderer>().sharedMaterial = mat;
+        }
+
+        private static void InitFauna(GameObject go, FaunaKind kind)
+        {
+            IndustrialArtDressing.Apply(go);
+            var agent = go.AddComponent<DustStalkerAgent>();
+            agent.Initialize(null, null, Vector3.zero);
+            agent.SetKind(kind);
         }
 
         private static bool IsRootActive(Transform root, string name)

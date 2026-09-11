@@ -32,12 +32,17 @@ namespace SolarMajesty
 
         private Leg[] _legs;
         private float _legLength = 0.55f;
-        private float _stepDistance = 0.55f;
-        private float _stepSpeed = 5.5f;
+        private float _stepDistance = 0.25f;
+        private float _stepSpeed = 8.5f;
         private float _stepHeight = 0.18f;
         private float _bodyRadius = 0.42f;
         private float _hipHeight = 0.45f;
+        private Color _legColor = new Color(0.14f, 0.13f, 0.13f);
+        private Color _kneeColor;
+        private float _thickness = 0.048f;
         private bool _suspended;
+
+        public int LegCount => _legs != null ? _legs.Length : 0;
 
         public void SetSuspended(bool suspended) => _suspended = suspended;
 
@@ -47,7 +52,11 @@ namespace SolarMajesty
             Transform parent = transform.Find("MotionRoot");
             if (parent == null) parent = transform;
             Transform root = parent.Find("Legs");
-            if (root != null) Destroy(root.gameObject);
+            if (root != null)
+            {
+                if (Application.isPlaying) Destroy(root.gameObject);
+                else DestroyImmediate(root.gameObject);
+            }
             _legs = null;
         }
 
@@ -58,7 +67,8 @@ namespace SolarMajesty
             var legs = go.GetComponent<ProceduralLegs>();
             if (legs == null) return;
             legs.Teardown();
-            Destroy(legs);
+            if (Application.isPlaying) Destroy(legs);
+            else DestroyImmediate(legs);
         }
 
         /// <summary>
@@ -71,32 +81,32 @@ namespace SolarMajesty
             float bodyRadius,
             float hipHeight,
             float legLength,
-            Color color)
+            Color color,
+            Color kneeColor = default,
+            float thickness = 0.048f)
         {
             if (go == null || legCount <= 0) return null;
 
-            // Fauna kind is assigned after the visual is built, so a rig may already exist with the
-            // wrong leg count. Rebuild rather than leaving a stalker's six legs on a tick.
-            var existing = go.GetComponent<ProceduralLegs>();
-            if (existing != null)
-            {
-                if (existing._legs != null && existing._legs.Length == legCount)
-                    return existing;
-                existing.Teardown();
-                Destroy(existing);
-            }
+            // Kind is assigned after the visual, so rebuild even when the count matches
+            // (stalker 6 → hopper 6 needs longer spindly legs).
+            var legs = go.GetComponent<ProceduralLegs>();
+            if (legs == null) legs = go.AddComponent<ProceduralLegs>();
+            else legs.Teardown();
 
-            var legs = go.AddComponent<ProceduralLegs>();
             legs._bodyRadius = Mathf.Max(0.1f, bodyRadius);
             legs._hipHeight = Mathf.Max(0.1f, hipHeight);
             legs._legLength = Mathf.Max(0.15f, legLength);
-            legs._stepDistance = legs._legLength * 0.85f;
-            legs._stepHeight = legs._legLength * 0.3f;
-            legs.Build(legCount, color);
+            legs._stepDistance = legs._legLength * 0.45f;
+            legs._stepHeight = legs._legLength * 0.28f;
+            legs._stepSpeed = 8.5f;
+            legs._legColor = color.a > 0.01f ? color : new Color(0.14f, 0.13f, 0.13f);
+            legs._kneeColor = kneeColor;
+            legs._thickness = Mathf.Max(0.012f, thickness);
+            legs.Build(legCount);
             return legs;
         }
 
-        private void Build(int legCount, Color color)
+        private void Build(int legCount)
         {
             Transform parent = transform.Find("MotionRoot");
             if (parent == null) parent = transform;
@@ -106,6 +116,7 @@ namespace SolarMajesty
 
             _legs = new Leg[legCount];
             float segment = _legLength * 0.5f;
+            Color lowerColor = _kneeColor.a > 0.05f ? _kneeColor : _legColor;
 
             for (int i = 0; i < legCount; i++)
             {
@@ -121,11 +132,15 @@ namespace SolarMajesty
                 hip.SetParent(root, false);
                 hip.localPosition = offset;
 
-                Transform upper = MakeSegment(hip, "Upper", segment, color, 0.055f);
-                Transform lower = MakeSegment(upper, "Lower", segment, color, 0.042f);
+                if (_kneeColor.a > 0.05f)
+                    MakeJoint(hip, "Joint", _kneeColor, _thickness * 1.7f);
+
+                Transform upper = MakeSegment(hip, "Upper", segment, _legColor, _thickness);
+                Transform lower = MakeSegment(upper, "Lower", segment, lowerColor, _thickness * 0.72f);
                 lower.localPosition = new Vector3(0f, -segment, 0f);
 
                 Vector3 foot = transform.TransformPoint(new Vector3(offset.x * 1.35f, 0f, offset.z * 1.35f));
+                foot.y = transform.position.y;
 
                 _legs[i] = new Leg
                 {
@@ -149,7 +164,11 @@ namespace SolarMajesty
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = name;
             var collider = go.GetComponent<Collider>();
-            if (collider != null) Destroy(collider);
+            if (collider != null)
+            {
+                if (Application.isPlaying) Destroy(collider);
+                else DestroyImmediate(collider);
+            }
 
             go.transform.SetParent(parent, false);
             go.transform.localPosition = Vector3.zero;
@@ -164,6 +183,37 @@ namespace SolarMajesty
                 if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
                 if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.55f);
                 if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.35f);
+                mat.enableInstancing = true;
+                rend.sharedMaterial = mat;
+            }
+
+            return go.transform;
+        }
+
+        private static Transform MakeJoint(Transform parent, string name, Color color, float radius)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            go.name = name;
+            var collider = go.GetComponent<Collider>();
+            if (collider != null)
+            {
+                if (Application.isPlaying) Destroy(collider);
+                else DestroyImmediate(collider);
+            }
+
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localScale = Vector3.one * (radius * 2f);
+
+            var rend = go.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Sprites/Default");
+                var mat = new Material(shader) { name = "SM_LegJoint" };
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+                if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.12f);
+                if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.42f);
                 mat.enableInstancing = true;
                 rend.sharedMaterial = mat;
             }
@@ -186,7 +236,7 @@ namespace SolarMajesty
                 Vector3 hipWorld = leg.Hip.position;
                 Vector3 rest = transform.TransformPoint(
                     new Vector3(leg.HipLocalOffset.x * 1.35f, 0f, leg.HipLocalOffset.z * 1.35f));
-                rest.y = 0f;
+                rest.y = transform.position.y;
 
                 if (leg.Stepping)
                 {
@@ -201,21 +251,24 @@ namespace SolarMajesty
                     {
                         // Parabolic arc so the foot lifts and lands rather than sliding.
                         Vector3 flat = Vector3.Lerp(leg.StepFrom, leg.StepTo, leg.StepT);
-                        flat.y += Mathf.Sin(leg.StepT * Mathf.PI) * _stepHeight;
+                        flat.y = transform.position.y + Mathf.Sin(leg.StepT * Mathf.PI) * _stepHeight;
                         leg.PlantedFoot = flat;
                     }
                 }
                 else if (!_suspended)
                 {
-                    float drift = Vector3.Distance(leg.PlantedFoot, rest);
-                    if (drift > _stepDistance && CanStep(i))
+                    float drift = Vector3.Distance(
+                        new Vector3(leg.PlantedFoot.x, rest.y, leg.PlantedFoot.z), rest);
+                    // PhaseOffset staggers the even/odd groups so opposite legs alternate.
+                    float threshold = _stepDistance * (leg.PhaseOffset > 0.25f ? 1.08f : 1f);
+                    if (drift > threshold && CanStep(i))
                     {
                         leg.Stepping = true;
                         leg.StepT = 0f;
                         leg.StepFrom = leg.PlantedFoot;
                         // Overshoot toward the rest point so the leg does not immediately re-step.
                         leg.StepTo = rest + (rest - leg.PlantedFoot).normalized * _stepDistance * 0.35f;
-                        leg.StepTo.y = 0f;
+                        leg.StepTo.y = transform.position.y;
                     }
                 }
 
@@ -226,6 +279,9 @@ namespace SolarMajesty
         /// <summary>Never lift opposing legs at once, or the body would have nothing to stand on.</summary>
         private bool CanStep(int index)
         {
+            int opposite = (index + _legs.Length / 2) % _legs.Length;
+            if (_legs[opposite].Stepping) return false;
+
             int stepping = 0;
             for (int i = 0; i < _legs.Length; i++)
             {

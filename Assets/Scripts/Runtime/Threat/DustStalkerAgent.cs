@@ -97,6 +97,7 @@ namespace SolarMajesty
         private float _baseMoveSpeed;
         private float _baseBite;
         private bool _frenzy;
+        private Vector3 _faceDir;
 
         public void Initialize(ThreatPressure threat, FlagManager flags, Vector3 home, GameLoop loop = null)
         {
@@ -786,10 +787,15 @@ namespace SolarMajesty
 
         private void TickPresentation(float dt)
         {
-            // Bob for silhouette readability on isometric view.
-            Vector3 p = transform.position;
-            p.y = _yBase + Mathf.Sin(Time.time * bobSpeed) * bobAmp;
-            transform.position = p;
+            FaceFlat(Vector3.zero);
+
+            // UnitMotion owns bob/hop/hover. Root Y bob here fought the gait and slid statues.
+            if (GetComponent<UnitMotion>() == null)
+            {
+                Vector3 p = transform.position;
+                p.y = _yBase + Mathf.Sin(Time.time * bobSpeed) * bobAmp;
+                transform.position = p;
+            }
 
             if (_label != null)
             {
@@ -820,12 +826,6 @@ namespace SolarMajesty
                     ? Color.Lerp(stalkerColor, new Color(1f, 0.15f, 0.1f), 0.55f)
                     : stalkerColor;
                 SetColor(_rend, c);
-            }
-            else if (IndustrialArtDressing.HasArt(gameObject))
-            {
-                IndustrialArtDressing.SetTintOverlay(
-                    gameObject,
-                    _aggro ? new Color(1.15f, 0.85f, 0.8f) : Color.white);
             }
         }
 
@@ -886,64 +886,102 @@ namespace SolarMajesty
             Vector3 from = transform.position;
             dest.y = from.y;
             var world = _loop != null ? _loop.World : null;
+            Vector3 next;
             if (world == null)
-                return Vector3.MoveTowards(from, dest, maxDelta);
-
-            if (world.IsOverWater(from, 0.2f))
+                next = Vector3.MoveTowards(from, dest, maxDelta);
+            else if (world.IsOverWater(from, 0.2f))
             {
                 Vector3 land = world.FindNearestLand(from, _home);
                 land.y = from.y;
-                return Vector3.MoveTowards(from, land, maxDelta);
+                next = Vector3.MoveTowards(from, land, maxDelta);
+            }
+            else
+            {
+                next = Vector3.MoveTowards(from, dest, maxDelta);
+                if (world.IsOverWater(next, 0.7f))
+                {
+                    Vector3 dir = dest - from;
+                    dir.y = 0f;
+                    if (dir.sqrMagnitude < 0.01f)
+                        return from;
+                    dir.Normalize();
+                    Vector3 side = new Vector3(-dir.z, 0f, dir.x);
+                    Vector3 left = from + side * Mathf.Max(maxDelta * 1.6f, 1.2f);
+                    left.y = from.y;
+                    Vector3 right = from - side * Mathf.Max(maxDelta * 1.6f, 1.2f);
+                    right.y = from.y;
+                    if (!world.IsOverWater(left, 0.7f))
+                        next = Vector3.MoveTowards(from, left, maxDelta);
+                    else if (!world.IsOverWater(right, 0.7f))
+                        next = Vector3.MoveTowards(from, right, maxDelta);
+                    else
+                        return from;
+                }
             }
 
-            Vector3 next = Vector3.MoveTowards(from, dest, maxDelta);
-            if (!world.IsOverWater(next, 0.7f))
-                return next;
+            FaceFlat(next - from);
+            return next;
+        }
 
-            Vector3 dir = dest - from;
-            dir.y = 0f;
-            if (dir.sqrMagnitude < 0.01f)
-                return from;
-            dir.Normalize();
-            Vector3 side = new Vector3(-dir.z, 0f, dir.x);
-            Vector3 left = from + side * Mathf.Max(maxDelta * 1.6f, 1.2f);
-            left.y = from.y;
-            Vector3 right = from - side * Mathf.Max(maxDelta * 1.6f, 1.2f);
-            right.y = from.y;
-            if (!world.IsOverWater(left, 0.7f))
-                return Vector3.MoveTowards(from, left, maxDelta);
-            if (!world.IsOverWater(right, 0.7f))
-                return Vector3.MoveTowards(from, right, maxDelta);
-            return from;
+        /// <summary>Yaw toward travel so UnitMotion lean/gait reads instead of a sliding statue.</summary>
+        private void FaceFlat(Vector3 delta)
+        {
+            delta.y = 0f;
+            if (delta.sqrMagnitude >= 0.0001f)
+                _faceDir = delta.normalized;
+            if (_faceDir.sqrMagnitude < 0.0001f) return;
+            Quaternion look = Quaternion.LookRotation(_faceDir, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation, look, 640f * Time.deltaTime);
         }
 
         /// <summary>
-        /// Procedural locomotion, plus IK legs for the arthropod fauna. Scuttling legs are the
-        /// single biggest readability win on these silhouettes: a sliding blob does not register
-        /// as alive, a stepping one does.
+        /// Procedural locomotion, plus IK legs for the arthropod fauna. Authored FBX still
+        /// needs IK: joined meshes have static sculpted legs and no skeleton.
         /// </summary>
         private void EnsureMotion()
         {
-            var motion = UnitMotion.Attach(gameObject, UnitMotion.KindFor(Kind), 0.6f);
+            float height = Kind == FaunaKind.Hopper ? 1.1f : Kind == FaunaKind.Stalker ? 0.85f : 0.55f;
+            var motion = UnitMotion.Attach(gameObject, UnitMotion.KindFor(Kind), height);
             if (motion == null) return;
 
             int legs = LegCountFor(Kind);
             if (legs <= 0)
             {
                 ProceduralLegs.Remove(gameObject);
-                return;
+            }
+            else
+            {
+                FaunaDressing.MeasureBody(gameObject, out float radius, out float hip, out float len);
+                if (Kind == FaunaKind.Hopper)
+                {
+                    // Spindly X-legs should dominate over the sculpted mesh legs.
+                    radius = Mathf.Max(radius, 0.32f) * 1.25f;
+                    hip = Mathf.Max(hip, 0.38f);
+                    len = Mathf.Max(len * 2.1f, 1.15f);
+                }
+
+                Color legColor = new Color(0.14f, 0.13f, 0.13f);
+                Color knee = Kind == FaunaKind.Hopper
+                    ? new Color(0.92f, 0.42f, 0.08f, 1f)
+                    : default;
+                float thick = Kind == FaunaKind.Hopper ? 0.026f : 0.046f;
+                ProceduralLegs.Attach(
+                    gameObject,
+                    legs,
+                    bodyRadius: radius,
+                    hipHeight: hip,
+                    legLength: len,
+                    color: legColor,
+                    kneeColor: knee,
+                    thickness: thick);
             }
 
-            ProceduralLegs.Attach(
-                gameObject,
-                legs,
-                bodyRadius: 0.40f,
-                hipHeight: 0.34f,
-                legLength: 0.62f,
-                color: stalkerColor * 0.55f);
+            FaunaDressing.AlignHead(gameObject);
+            FaunaDressing.Paint(gameObject, Kind);
         }
 
-        private static int LegCountFor(FaunaKind kind)
+        public static int LegCountFor(FaunaKind kind)
         {
             switch (kind)
             {
@@ -951,7 +989,7 @@ namespace SolarMajesty
                 case FaunaKind.Mite: return 6;
                 case FaunaKind.Tick: return 8;
                 case FaunaKind.Creeper: return 8;
-                case FaunaKind.Hopper: return 4;
+                case FaunaKind.Hopper: return 6;
                 default: return 0;   // Wisps and leeches hover
             }
         }

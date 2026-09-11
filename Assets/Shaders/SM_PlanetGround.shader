@@ -2,9 +2,10 @@
 //
 // Blends a low-lying dust colour with an exposed rock colour by slope and height, then adds a
 // speckle and a broad mottle so the surface does not read as one flat tint at isometric distance.
-// World-space UVs keep the grade seamless. When PlanetaryMapDressing binds
-// SM_Ground_* albedo/normal, those tiles add pebble / ripple grit without replacing the
-// body color lock (white hulls must stay white against Mars dirt).
+// World-space UVs keep the grade seamless. Terrain Data Baker Sand/Grass/Snow tiles
+// weight the splat mix (Mars remaps Grass → rock grit; never a green lawn). Authored
+// SM_Ground_* tiles add extra grit without replacing the body color lock (white hulls
+// must stay white against Mars dirt).
 Shader "SolarMajesty/PlanetGround"
 {
     Properties
@@ -26,6 +27,26 @@ Shader "SolarMajesty/PlanetGround"
 
         _SlopeStart("Rock Slope Start", Range(0,1)) = 0.55
         _SlopeEnd("Rock Slope End", Range(0,1)) = 0.88
+
+        [Header(Terrain Data Baker Maps)]
+        [NoScaleOffset] _HeightMap("Height Map", 2D) = "gray" {}
+        [NoScaleOffset] _NormalMap("World Normal (TDB)", 2D) = "bump" {}
+        [NoScaleOffset] _SplatMap("Splat Map", 2D) = "red" {}
+        [NoScaleOffset] _MaskMap("Mask Map", 2D) = "white" {}
+        _BakeSize("Bake Size (m)", Vector) = (384, 384, 0, 0)
+        _BakeNormalAmount("Bake Normal Amount", Range(0,1)) = 0
+        _SplatAmount("Splat Amount", Range(0,1)) = 0
+        _GrassColor("Grass / Dune Color", Color) = (0.22, 0.42, 0.16, 1)
+        _WetColor("Wet / Floor Color", Color) = (0.18, 0.22, 0.16, 1)
+
+        [Header(Splat Albedo Tiles)]
+        [NoScaleOffset] _SplatAlbedo0("Splat Albedo 0 (Sand / Dust)", 2D) = "white" {}
+        [NoScaleOffset] _SplatAlbedo1("Splat Albedo 1 (Grass / Rock)", 2D) = "white" {}
+        [NoScaleOffset] _SplatAlbedo2("Splat Albedo 2 (Snow / High)", 2D) = "white" {}
+        [NoScaleOffset] _SplatAlbedo3("Splat Albedo 3 (Wet / Floor)", 2D) = "white" {}
+        _SplatTexScale("Splat Tex Scale (m)", Range(1, 48)) = 8
+        _SplatAlbedoAmount("Splat Albedo Amount", Range(0,1)) = 0
+        _SplatDesat("Splat Desat (Sand/Grass/Snow/Wet)", Vector) = (0, 0, 0, 0)
 
         _Smoothness("Smoothness", Range(0,1)) = 0.06
         _Metallic("Metallic", Range(0,1)) = 0.0
@@ -58,6 +79,18 @@ Shader "SolarMajesty/PlanetGround"
             float  _DetailTexAmount;
             float  _SlopeStart;
             float  _SlopeEnd;
+            float4 _BakeSize;
+            float  _BakeNormalAmount;
+            float  _SplatAmount;
+            float4 _GrassColor;
+            float4 _WetColor;
+            float4 _SplatAlbedo0_ST;
+            float4 _SplatAlbedo1_ST;
+            float4 _SplatAlbedo2_ST;
+            float4 _SplatAlbedo3_ST;
+            float  _SplatTexScale;
+            float  _SplatAlbedoAmount;
+            float4 _SplatDesat;
             float  _Smoothness;
             float  _Metallic;
         CBUFFER_END
@@ -66,6 +99,31 @@ Shader "SolarMajesty/PlanetGround"
         SAMPLER(sampler_DetailAlbedo);
         TEXTURE2D(_DetailNormal);
         SAMPLER(sampler_DetailNormal);
+        TEXTURE2D(_HeightMap);
+        SAMPLER(sampler_HeightMap);
+        TEXTURE2D(_NormalMap);
+        SAMPLER(sampler_NormalMap);
+        TEXTURE2D(_SplatMap);
+        SAMPLER(sampler_SplatMap);
+        TEXTURE2D(_MaskMap);
+        SAMPLER(sampler_MaskMap);
+        TEXTURE2D(_SplatAlbedo0);
+        SAMPLER(sampler_SplatAlbedo0);
+        TEXTURE2D(_SplatAlbedo1);
+        TEXTURE2D(_SplatAlbedo2);
+        TEXTURE2D(_SplatAlbedo3);
+
+        // Earth keeps authored chroma (desat 0). Mars desaturates then colorizes so
+        // TDB Grass never reads as a lawn and Sand tufts do not stay olive.
+        half3 SM_SplatLayer(half3 texRgb, half3 tint, float desat)
+        {
+            float d = saturate(desat);
+            half luma = dot(texRgb, half3(0.299, 0.587, 0.114));
+            half3 dehued = lerp(texRgb, luma.xxx, d);
+            // Keep luma variation; do not lift mean above tint (r15 TDB sand went peach).
+            half3 colorized = tint * (0.22 + luma * 0.78);
+            return lerp(dehued, colorized, d);
+        }
 
         float SM_GHash(float2 p)
         {
@@ -119,6 +177,16 @@ Shader "SolarMajesty/PlanetGround"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
+            // URP's ComputeFogFactor(positionCS.z) remaps clip-z assuming a perspective projection
+            // and collapses to ~0 under orthographic cameras (the ortho-10 Game tab), so
+            // RenderSettings fog never reached the far ground in play stills. Linear view depth
+            // gives the same haze read in perspective editor stills and the ortho Game tab.
+            float SM_FogCoord(float3 positionWS)
+            {
+                float viewZ = -TransformWorldToView(positionWS).z;
+                return ComputeFogFactorZ0ToFar(viewZ);
+            }
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -133,7 +201,6 @@ Shader "SolarMajesty/PlanetGround"
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS   : TEXCOORD1;
                 float4 color      : COLOR;
-                float  fogCoord   : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -152,7 +219,6 @@ Shader "SolarMajesty/PlanetGround"
                 output.positionWS = pos.positionWS;
                 output.normalWS = nrm.normalWS;
                 output.color = input.color;
-                output.fogCoord = ComputeFogFactor(pos.positionCS.z);
                 return output;
             }
 
@@ -163,6 +229,20 @@ Shader "SolarMajesty/PlanetGround"
 
                 float3 normalWS = normalize(input.normalWS);
                 float2 p = input.positionWS.xz;
+                float2 bakeUV = p / max(_BakeSize.xy, float2(1, 1));
+                bakeUV = saturate(bakeUV);
+
+                float splatAmt = saturate(_SplatAmount);
+                if (splatAmt > 0.001)
+                {
+                    // TDB world-space packing: R = nx*0.5+0.5, G = 1, B = nz*0.5+0.5.
+                    half3 packedN = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, bakeUV).rgb;
+                    float3 bakeN;
+                    bakeN.x = packedN.r * 2.0 - 1.0;
+                    bakeN.z = packedN.b * 2.0 - 1.0;
+                    bakeN.y = sqrt(saturate(1.0 - bakeN.x * bakeN.x - bakeN.z * bakeN.z));
+                    normalWS = normalize(lerp(normalWS, bakeN, saturate(_BakeNormalAmount)));
+                }
 
                 // Broad blotches stop the open ground reading as one flat colour.
                 float macro = SM_Fbm(p / max(_MacroScale, 1.0));
@@ -174,6 +254,41 @@ Shader "SolarMajesty/PlanetGround"
                 float3 albedo = lerp(_DarkColor.rgb, _BaseColor.rgb, saturate(exposure * 0.7 + macro * 0.6));
                 albedo = lerp(albedo, albedo * 0.82, (1.0 - macro) * _MacroStrength);
                 albedo *= 1.0 + (speckle - 0.5) * _DetailStrength;
+
+                if (splatAmt > 0.001)
+                {
+                    float4 splat = SAMPLE_TEXTURE2D(_SplatMap, sampler_SplatMap, bakeUV);
+                    float3 splatSolid =
+                        _BaseColor.rgb * splat.r +
+                        _RockColor.rgb * splat.g +
+                        _GrassColor.rgb * splat.b +
+                        _WetColor.rgb * splat.a;
+
+                    float texAmt = saturate(_SplatAlbedoAmount);
+                    float3 splatAlb = splatSolid;
+                    if (texAmt > 0.001)
+                    {
+                        float2 splatUV = p / max(_SplatTexScale, 0.25);
+                        half3 l0 = SM_SplatLayer(
+                            SAMPLE_TEXTURE2D(_SplatAlbedo0, sampler_SplatAlbedo0, splatUV).rgb,
+                            _BaseColor.rgb, _SplatDesat.x);
+                        half3 l1 = SM_SplatLayer(
+                            SAMPLE_TEXTURE2D(_SplatAlbedo1, sampler_SplatAlbedo0, splatUV).rgb,
+                            _RockColor.rgb, _SplatDesat.y);
+                        half3 l2 = SM_SplatLayer(
+                            SAMPLE_TEXTURE2D(_SplatAlbedo2, sampler_SplatAlbedo0, splatUV).rgb,
+                            _GrassColor.rgb, _SplatDesat.z);
+                        half3 l3 = SM_SplatLayer(
+                            SAMPLE_TEXTURE2D(_SplatAlbedo3, sampler_SplatAlbedo0, splatUV).rgb,
+                            _WetColor.rgb, _SplatDesat.w);
+                        float3 splatTex = l0 * splat.r + l1 * splat.g + l2 * splat.b + l3 * splat.a;
+                        splatAlb = lerp(splatSolid, splatTex, texAmt);
+                    }
+
+                    albedo = lerp(albedo, splatAlb, splatAmt);
+                    half ao = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, bakeUV).r;
+                    albedo *= lerp(1.0, ao, 0.45);
+                }
 
                 // Authored tile: grit / ripples. Multiplies the grade — does not replace body tint.
                 float amount = saturate(_DetailTexAmount);
@@ -190,14 +305,14 @@ Shader "SolarMajesty/PlanetGround"
                 // Steep faces lose their dust cover and show rock.
                 float slope = 1.0 - saturate(dot(normalWS, float3(0, 1, 0)));
                 float rock = smoothstep(1.0 - _SlopeEnd, 1.0 - _SlopeStart, slope);
-                albedo = lerp(albedo, _RockColor.rgb, rock);
+                albedo = lerp(albedo, _RockColor.rgb, rock * (1.0 - splatAmt * 0.7));
 
                 InputData inputData = (InputData)0;
                 inputData.positionWS = input.positionWS;
                 inputData.normalWS = normalWS;
                 inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                inputData.fogCoord = input.fogCoord;
+                inputData.fogCoord = SM_FogCoord(input.positionWS);
                 inputData.bakedGI = SampleSH(normalWS);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
                 inputData.shadowMask = half4(1, 1, 1, 1);

@@ -31,8 +31,9 @@ namespace SolarMajesty
                     _bodyHull = new Color(0.68f, 0.70f, 0.72f);
                     break;
                 case CelestialBodyId.Mars:
-                    // Sheet is white/black/orange. Do not lerp Mars dirt into the hull.
-                    _bodyHull = new Color(0.98f, 0.98f, 0.99f);
+                    // Sheet is white/black/orange. Do not lerp Mars dirt into the hull — but the
+                    // white is warm cream (concept ~224/198/175 lit), never cool.
+                    _bodyHull = new Color(0.92f, 0.86f, 0.78f);
                     break;
                 case CelestialBodyId.Belt:
                     _bodyHull = new Color(0.42f, 0.40f, 0.38f);
@@ -101,7 +102,8 @@ namespace SolarMajesty
             ColonyVisualUtility.EnsureUrpMaterials(root);
             // Do not SetTintOverlay here — MPB _BaseColor replaces orange/cyan/carbon
             // and flattens hero kits into greybox hulls. Body grade lives in atmosphere.
-            ColonyVisualUtility.SnapToGround(root);
+            // Keep DockY / DockBore flush after seating FBX or floating pivots.
+            ColonyVisualUtility.SnapToGroundKeepingDockAxis(root);
             if (ghost)
                 StripColliders(root);
             return root;
@@ -235,10 +237,19 @@ namespace SolarMajesty
             // Joined Commons / HAB / LAB / PWR FBX bake docks on the cylinder axis
             // at a smaller bore. Live sleeves are DockY / DockBore and must toggle
             // per face — same reason Commons skipped the joined dome.
+            // Farm FBX is the AG-1 greenhouse vault — dream-loop concept wants an
+            // industrial tank/pipe/stack yard, so prefer procedural BuildWaterExtractor.
+            // LandingPad FBX is one graphite disc that mirrors the Mars sky as a solid
+            // orange plate; the procedural pad is dark concrete with thin orange markings.
+            // RegolithCamp FBX sits on a ~6 m beige block plinth that reads as a giant cube
+            // at the frame edge; the procedural drum plant has no plinth.
             if (cat == BuildingCategory.Commons ||
                 cat == BuildingCategory.Habitat ||
                 cat == BuildingCategory.Laboratory ||
-                cat == BuildingCategory.Power)
+                cat == BuildingCategory.Power ||
+                cat == BuildingCategory.Farm ||
+                cat == BuildingCategory.LandingPad ||
+                cat == BuildingCategory.RegolithCamp)
                 return null;
 
             GameObject hero = BuildingVisualCatalog.LoadHeroKit(cat);
@@ -408,7 +419,7 @@ namespace SolarMajesty
             if (!hullHasPort)
             {
                 DressCyl(group.transform, name + "_Collar", hullEnd + dir * 0.02f, along,
-                    new Vector3(bore * 1.16f, 0.045f, bore * 1.16f), AirlockColor());
+                    new Vector3(bore * 1.04f, 0.03f, bore * 1.04f), AirlockColor());
             }
 
             if (!ghost)
@@ -472,8 +483,9 @@ namespace SolarMajesty
         private static Color HeroHull()
         {
             Color sheet = new Color(0.98f, 0.98f, 0.99f);
-            // Mars BindBody is already sheet-white. Other bodies may lean a little.
-            float t = _bodyHull.g > 0.9f ? 0f : 0.16f;
+            // Mars BindBody is already sheet-white (warm). Other bodies may lean a little.
+            float t = _bodyHull.g > 0.85f ? 0f : 0.16f;
+            if (_bodyHull.g > 0.85f) return _bodyHull;
             return Color.Lerp(sheet, _bodyHull, t);
         }
         private static Color AirlockColor() => new Color(0.96f, 0.42f, 0.08f);

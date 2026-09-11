@@ -119,10 +119,19 @@ namespace SolarMajesty
             return false;
         }
 
-        /// <summary>Multiplies albedo via MPB so shared art materials stay intact (incap / aggro).</summary>
+        /// <summary>
+        /// Overlay via MPB. URP _BaseColor in a property block replaces albedo, so white
+        /// (or ClearTintOverlay) must drop the block rather than stamp Color.white.
+        /// </summary>
         public static void SetTintOverlay(GameObject root, Color multiply)
         {
             if (root == null) return;
+            if (multiply == Color.white)
+            {
+                ClearTintOverlay(root);
+                return;
+            }
+
             var block = new MaterialPropertyBlock();
             var rends = root.GetComponentsInChildren<Renderer>(true);
             for (int i = 0; i < rends.Length; i++)
@@ -135,8 +144,44 @@ namespace SolarMajesty
             }
         }
 
-        public static void ClearTintOverlay(GameObject root) =>
-            SetTintOverlay(root, Color.white);
+        public static void ClearTintOverlay(GameObject root)
+        {
+            if (root == null) return;
+            var rends = root.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < rends.Length; i++)
+            {
+                var rend = rends[i];
+                if (rend == null || ShouldSkip(rend)) continue;
+                rend.SetPropertyBlock(null);
+            }
+        }
+
+        /// <summary>Paint a Dress_ primitive; IndustrialArtDressing.Apply skips Dress_ names.</summary>
+        public static void Tint(GameObject go, Color c, float smooth = 0.28f, Color emission = default)
+        {
+            if (go == null) return;
+            var rend = go.GetComponent<Renderer>();
+            if (rend == null) return;
+            if (_lit == null)
+            {
+                _lit = Shader.Find("Universal Render Pipeline/Lit")
+                       ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                       ?? Shader.Find("Sprites/Default");
+            }
+            if (_lit == null) return;
+            var mat = new Material(_lit) { name = "SM_Dress_" + go.name };
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+            if (mat.HasProperty("_Color")) mat.color = c;
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smooth);
+            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.08f);
+            if (emission.maxColorComponent > 0.01f && mat.HasProperty("_EmissionColor"))
+            {
+                mat.EnableKeyword("_EMISSION");
+                mat.SetColor("_EmissionColor", emission);
+                mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            }
+            rend.sharedMaterial = mat;
+        }
 
         private static bool ShouldSkip(Renderer rend)
         {
@@ -171,21 +216,60 @@ namespace SolarMajesty
         private static Slot GuessSlot(Renderer rend, Material src)
         {
             // Prefer imported SM_* slot names so joined FBX submeshes keep hull vs trim vs accent.
-            if (TryFromToken(src != null ? src.name : null, out Slot fromMat))
-                return fromMat;
-            if (TryFromToken(rend.name, out Slot fromLocal))
-                return fromLocal;
+            bool fromMat = TryFromToken(src != null ? src.name : null, out Slot slot);
+            if (!fromMat)
+                TryFromToken(rend.name, out slot);
 
-            string root = rend.transform.root.name.ToLowerInvariant();
+            // Fauna sit under GameLoop, so transform.root is the scene root — walk parents
+            // for the agent name. Copilot3D / joined FBX often ships a single SM_White slot;
+            // campus WhiteHull is warm cream. Remap White/dust to the kind hide, but keep
+            // real SM_Cyan / SM_Orange / SM_Graphite / SM_Black accent tokens.
+            if (TryFaunaHide(rend.transform, out Slot hide))
+            {
+                if (fromMat && IsFaunaAccent(slot))
+                    return slot;
+                return hide;
+            }
+
             string local = rend.name.ToLowerInvariant();
-            if (root.Contains("solar") || local.Contains("solar") || local.Contains("array"))
+            if (local.Contains("solar") || local.Contains("array"))
                 return Slot.Solar;
-            if (ContainsAny(local, "canvas", "awning", "tarp", "fabric") ||
-                ContainsAny(root, "canvas", "awning"))
+            if (ContainsAny(local, "canvas", "awning", "tarp", "fabric"))
                 return Slot.Canvas;
-            if (root.Contains("stalker") && !ContainsAny(local, "plate", "bracer", "armor", "white"))
-                return Slot.StalkerHide;
-            return Slot.WhiteHull;
+            return fromMat ? slot : Slot.WhiteHull;
+        }
+
+        /// <summary>True when this GameObject name is a fauna agent (not a campus hull).</summary>
+        public static bool IsFaunaAgentName(string name) =>
+            TryFaunaHideFromName(name, out _);
+
+        /// <summary>Hide palette for a fauna agent name (not campus WhiteHull).</summary>
+        private static bool TryFaunaHideFromName(string name, out Slot slot)
+        {
+            slot = Slot.WhiteHull;
+            if (string.IsNullOrEmpty(name)) return false;
+            string n = name.ToLowerInvariant();
+            if (ContainsAny(n, "junkbot")) { slot = Slot.HopperHide; return true; }
+            if (ContainsAny(n, "stalker")) { slot = Slot.StalkerHide; return true; }
+            if (ContainsAny(n, "mite")) { slot = Slot.MiteHide; return true; }
+            if (ContainsAny(n, "leech")) { slot = Slot.LeechHide; return true; }
+            if (ContainsAny(n, "wisp")) { slot = Slot.WispHide; return true; }
+            if (ContainsAny(n, "creeper")) { slot = Slot.CreeperHide; return true; }
+            if (ContainsAny(n, "hopper")) { slot = Slot.HopperHide; return true; }
+            if (ContainsAny(n, "tick")) { slot = Slot.TickHide; return true; }
+            return false;
+        }
+
+        private static bool TryFaunaHide(Transform t, out Slot slot)
+        {
+            slot = Slot.WhiteHull;
+            while (t != null)
+            {
+                if (t.GetComponent<GameLoop>() != null) return false;
+                if (TryFaunaHideFromName(t.name, out slot)) return true;
+                t = t.parent;
+            }
+            return false;
         }
 
         private static bool TryFromToken(string name, out Slot slot)
@@ -210,7 +294,14 @@ namespace SolarMajesty
             if (ContainsAny(n, "sm_creeper", "soilcreeper")) { slot = Slot.CreeperHide; return true; }
             if (ContainsAny(n, "sm_hopper", "ashhopper")) { slot = Slot.HopperHide; return true; }
             if (ContainsAny(n, "sm_tick", "rocktick")) { slot = Slot.TickHide; return true; }
-            if (ContainsAny(n, "sm_dust")) { slot = Slot.MiteHide; return true; }
+            // Token SM_Dust only. "dust" would steal DustHopper / DustWisp onto mite hide
+            // if Apply runs again after ApplyBodyTune renames the agent.
+            if (ContainsAny(n, "sm_dust") &&
+                !ContainsAny(n, "hopper", "wisp", "tick", "creeper", "stalker"))
+            {
+                slot = Slot.MiteHide;
+                return true;
+            }
             if (ContainsAny(n, "sm_leaf", "sm_trunk", "leaf", "trunk", "bark", "canopy", "tree"))
             {
                 // Handled as foliage in EnvironmentMeshCatalog — still map if industrial path hits a tree.
@@ -293,6 +384,22 @@ namespace SolarMajesty
             _ready = true;
         }
 
+        /// <summary>Authored cyan/orange/graphite/black (and glass) stay as accents on fauna.</summary>
+        private static bool IsFaunaAccent(Slot slot)
+        {
+            switch (slot)
+            {
+                case Slot.Cyan:
+                case Slot.Orange:
+                case Slot.Graphite:
+                case Slot.BlackCarbon:
+                case Slot.Glass:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         /// <summary>Slots that are structural hull surfaces and benefit from procedural panelling.</summary>
         private static bool UsesHullShader(Slot slot)
         {
@@ -304,6 +411,12 @@ namespace SolarMajesty
                 case Slot.Steel:
                 case Slot.Orange:
                 case Slot.DefenseRed:
+                case Slot.MiteHide:
+                case Slot.HopperHide:
+                case Slot.TickHide:
+                case Slot.CreeperHide:
+                case Slot.LeechHide:
+                case Slot.StalkerHide:
                     return true;
                 default:
                     return false;
@@ -324,8 +437,10 @@ namespace SolarMajesty
             switch (slot)
             {
                 case Slot.BlackCarbon:
-                    baseColor = new Color(0.11f, 0.11f, 0.12f);
-                    metallic = 0.35f; smooth = 0.26f; panelScale = 0.85f;
+                    // Charcoal, not pure black: concept bands sit ~70/66/62 lit.
+                    // 0.22 rendered ~11/7/6 through SM_Hull + ACES toe; needs mid-grey albedo.
+                    baseColor = new Color(0.42f, 0.40f, 0.38f);
+                    metallic = 0.10f; smooth = 0.26f; panelScale = 0.85f;
                     dust *= 0.8f;
                     break;
                 case Slot.Graphite:
@@ -346,9 +461,41 @@ namespace SolarMajesty
                     baseColor = new Color(0.66f, 0.15f, 0.13f);
                     metallic = 0.12f; smooth = 0.38f; panelScale = 0.7f;
                     break;
-                default: // WhiteHull
-                    baseColor = new Color(0.98f, 0.98f, 0.97f);
-                    metallic = 0.07f; smooth = 0.40f; panelScale = 1.0f;
+                case Slot.MiteHide:
+                    // Imagine dust-brown carapace (not campus cream, not dark leather hide).
+                    baseColor = new Color(0.70f, 0.60f, 0.46f);
+                    metallic = 0.05f; smooth = 0.20f; panelScale = 1.15f;
+                    dust *= 1.15f;
+                    break;
+                case Slot.HopperHide:
+                    baseColor = new Color(0.32f, 0.30f, 0.28f);
+                    metallic = 0.22f; smooth = 0.28f; panelScale = 0.9f;
+                    break;
+                case Slot.TickHide:
+                    baseColor = new Color(0.28f, 0.24f, 0.20f);
+                    metallic = 0.18f; smooth = 0.22f; panelScale = 1.05f;
+                    break;
+                case Slot.CreeperHide:
+                    baseColor = new Color(0.30f, 0.36f, 0.18f);
+                    metallic = 0.06f; smooth = 0.20f; panelScale = 1.1f;
+                    break;
+                case Slot.LeechHide:
+                    baseColor = new Color(0.82f, 0.86f, 0.90f);
+                    metallic = 0.04f; smooth = 0.48f; panelScale = 0.55f;
+                    emission = new Color(0.04f, 0.14f, 0.18f);
+                    dust *= 0.4f;
+                    break;
+                case Slot.StalkerHide:
+                    baseColor = new Color(0.16f, 0.13f, 0.12f);
+                    metallic = 0.08f; smooth = 0.16f; panelScale = 1.2f;
+                    break;
+                default: // WhiteHull — warm cream (concept whites R-B ~ +50), not cool white.
+                    // Kept under ~0.88 so sun-facing facets do not clip through ACES to neutral.
+                    // Sun-up faces see ~1.6x light; 0.90 albedo clipped through ACES to
+                    // neutral 233/232/213, 0.60 fell to tan 198/171/130. Calibrated for ~226/206/170.
+                    baseColor = new Color(0.82f, 0.68f, 0.55f);
+                    // Matte: glossy whites mirrored the sky zenith and read cool/cyan.
+                    metallic = 0.03f; smooth = 0.18f; panelScale = 1.0f;
                     break;
             }
 
@@ -357,10 +504,10 @@ namespace SolarMajesty
             mat.SetFloat("_Smoothness", smooth);
             mat.SetFloat("_PanelScale", panelScale);
             mat.SetFloat("_PanelWidth", 0.020f);
-            mat.SetFloat("_PanelDarken", slot == Slot.WhiteHull ? 0.42f : 0.30f);
+            mat.SetFloat("_PanelDarken", slot == Slot.WhiteHull ? 0.38f : 0.30f);
             mat.SetFloat("_PanelBevel", 0.40f);
             mat.SetColor("_WearColor", new Color(0.30f, 0.29f, 0.28f));
-            mat.SetFloat("_WearAmount", slot == Slot.Steel ? 0.26f : 0.16f);
+            mat.SetFloat("_WearAmount", slot == Slot.Steel ? 0.26f : slot == Slot.WhiteHull ? 0.18f : 0.16f);
             mat.SetFloat("_WearScale", 5.5f);
             mat.SetColor("_DustColor", _dustColor);
             mat.SetFloat("_DustAmount", dust);
@@ -472,21 +619,22 @@ namespace SolarMajesty
                     tile = new Vector2(2.2f, 2.2f);
                     break;
                 case Slot.MiteHide:
-                    albedo = _hideAlbedo;
-                    normal = _hideNormal;
-                    tint = new Color(0.62f, 0.48f, 0.32f);
+                    albedo = _whiteAlbedo;
+                    normal = _whiteNormal;
+                    // Imagine dust-brown carapace, not campus cream or dark clay hide.
+                    tint = new Color(0.70f, 0.60f, 0.46f);
                     metallic = 0.06f;
-                    smooth = 0.18f;
+                    smooth = 0.22f;
                     tile = new Vector2(2.4f, 2.4f);
                     break;
                 case Slot.LeechHide:
-                    albedo = _hideAlbedo;
-                    normal = _hideNormal;
-                    tint = new Color(0.28f, 0.78f, 0.82f);
-                    metallic = 0.12f;
-                    smooth = 0.32f;
-                    emission = new Color(0.08f, 0.32f, 0.38f);
-                    tile = new Vector2(2.0f, 2.0f);
+                    albedo = _whiteAlbedo;
+                    // Cool white ray (sheet), not cyan blob / not HAB cream.
+                    tint = new Color(0.90f, 0.93f, 0.96f);
+                    metallic = 0.04f;
+                    smooth = 0.48f;
+                    emission = new Color(0.06f, 0.22f, 0.28f);
+                    tile = new Vector2(1.4f, 1.4f);
                     break;
                 case Slot.WispHide:
                     albedo = _whiteAlbedo;
@@ -506,7 +654,7 @@ namespace SolarMajesty
                     break;
                 case Slot.HopperHide:
                     albedo = _graphiteAlbedo;
-                    tint = new Color(0.56f, 0.54f, 0.50f);
+                    tint = new Color(0.42f, 0.40f, 0.38f);
                     metallic = 0.18f;
                     smooth = 0.28f;
                     tile = new Vector2(1.8f, 1.8f);

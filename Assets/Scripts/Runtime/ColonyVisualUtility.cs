@@ -81,6 +81,67 @@ namespace SolarMajesty
         }
 
         /// <summary>
+        /// Seat a campus kit on the ground without sliding Lego docks off the shared
+        /// <see cref="DockY"/> axis. Aaron dock miss: SnapToGround alone lifted/dropped
+        /// floating FBX pivots so airlock arms and module sleeves no longer met at one height.
+        /// After seating, dock groups are re-aligned so tube / ring samples sit on DockY.
+        /// </summary>
+        public static void SnapToGroundKeepingDockAxis(GameObject root, float groundY = 0f)
+        {
+            if (root == null) return;
+            SnapToGround(root, groundY);
+            AlignDockGroupsToAxis(root.transform);
+        }
+
+        private static void AlignDockGroupsToAxis(Transform root)
+        {
+            if (root == null) return;
+            var ts = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < ts.Length; i++)
+            {
+                Transform t = ts[i];
+                if (t == null || t == root) continue;
+                if (!IsDockAxisGroup(t.name)) continue;
+                if (t.parent != null && IsDockAxisGroup(t.parent.name)) continue;
+                float sampleY = SampleDockWorldY(t);
+                float dy = DockY - sampleY;
+                if (Mathf.Abs(dy) < 0.001f) continue;
+                Vector3 p = t.localPosition;
+                p.y += dy;
+                t.localPosition = p;
+            }
+        }
+
+        private static float SampleDockWorldY(Transform group)
+        {
+            var ts = group.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < ts.Length; i++)
+            {
+                if (ts[i] == null) continue;
+                string n = ts[i].name;
+                if (n.EndsWith("_Tube") || n.EndsWith("_Ring") || n.EndsWith("_Well"))
+                    return ts[i].position.y;
+            }
+            return group.position.y + DockY;
+        }
+
+        private static bool IsDockAxisGroup(string n)
+        {
+            if (string.IsNullOrEmpty(n)) return false;
+            return n.StartsWith("Dress_TubeArm")
+                || n.StartsWith("DockSleeve")
+                || n.StartsWith("CommonsPort")
+                || n.StartsWith("HabPort")
+                || n.StartsWith("LabPort")
+                || n.StartsWith("PwrPort")
+                || n.StartsWith("HullPort")
+                || n.StartsWith("DockPort")
+                || n.StartsWith("DrumPort")
+                || n.StartsWith("ModulePort")
+                || n.StartsWith("CardinalPort");
+        }
+
+        /// <summary>
         /// Rotate so the thinnest world AABB axis becomes up — seats Copilot rocks with a
         /// flat cut face down instead of standing that face vertical.
         /// </summary>
@@ -220,17 +281,17 @@ namespace SolarMajesty
             // Do not overlay SM_ModularTubeConnector and do not run IndustrialArtDressing
             // here — "airlock" in a mesh name was painting the hub solid orange.
 
-            SnapToGround(root);
+            SnapToGroundKeepingDockAxis(root);
             return root;
         }
 
-        private static readonly Color HubWhite = new Color(0.99f, 0.99f, 1f);
+        private static readonly Color HubWhite = new Color(0.80f, 0.72f, 0.64f);
         private static readonly Color HubOrange = new Color(0.96f, 0.42f, 0.08f);
-        private static readonly Color HubCarbon = new Color(0.10f, 0.11f, 0.12f);
+        private static readonly Color HubCarbon = new Color(0.32f, 0.30f, 0.28f);
         private static readonly Color HubGraphite = new Color(0.20f, 0.21f, 0.22f);
         private static readonly Color HubCyan = new Color(0.22f, 0.84f, 0.98f);
         /// <summary>Hold sheet-white at Game-tab distance so the 2×2 does not flatten into dirt.</summary>
-        private static readonly Color HubWhiteEmit = new Color(0.34f, 0.34f, 0.36f);
+        private static readonly Color HubWhiteEmit = new Color(0.10f, 0.07f, 0.05f);
         private static readonly Color HubOrangeEmit = new Color(0.55f, 0.16f, 0.02f);
 
         private static void SpawnAirlockHub(Transform parent)
@@ -371,9 +432,11 @@ namespace SolarMajesty
             hubRing.transform.SetParent(group.transform, false);
             hubRing.transform.localPosition = hubRingPos;
             hubRing.transform.localRotation = rot;
-            hubRing.transform.localScale = new Vector3(diameter * 1.55f, 0.11f, diameter * 1.55f);
+            hubRing.transform.localScale = new Vector3(diameter * 1.40f, 0.08f, diameter * 1.40f);
             Object.Destroy(hubRing.GetComponent<Collider>());
-            TintPrimitive(hubRing, HubOrange, HubOrangeEmit);
+            // Graphite: with the square face frame and the hull port ring both orange,
+            // a third orange band per join read as stacked collars (dream-loop r10/r11).
+            TintPrimitive(hubRing, HubGraphite);
 
             // Square orange collar plate — still19 cube-ish miss: the hub must
             // read as a multi-face joint, not a small white fridge.
@@ -398,9 +461,10 @@ namespace SolarMajesty
             collar.transform.SetParent(group.transform, false);
             collar.transform.localPosition = collarPos;
             collar.transform.localRotation = rot;
-            collar.transform.localScale = new Vector3(diameter * 1.32f, 0.08f, diameter * 1.32f);
+            collar.transform.localScale = new Vector3(diameter * 1.18f, 0.05f, diameter * 1.18f);
             Object.Destroy(collar.GetComponent<Collider>());
-            TintPrimitive(collar, HubOrange, HubOrangeEmit);
+            // Sits against the hull port ring; only the ring stays orange (one per hull end).
+            TintPrimitive(collar, HubGraphite);
 
             if (!startActive)
                 group.SetActive(false);
@@ -438,7 +502,8 @@ namespace SolarMajesty
             ring.transform.SetParent(group.transform, false);
             ring.transform.localPosition = at + dir * DockCollarOut;
             ring.transform.localRotation = rot;
-            ring.transform.localScale = new Vector3(DockBore * 1.18f, 0.045f, DockBore * 1.18f);
+            // Thin ring: at 1.18x the disc face read as a fat orange crescent from the iso camera.
+            ring.transform.localScale = new Vector3(DockBore * 1.08f, 0.045f, DockBore * 1.08f);
             Object.Destroy(ring.GetComponent<Collider>());
             TintPrimitive(ring, HubOrange);
 

@@ -10,6 +10,8 @@
 
 **Visual north star:** A spaced Majesty-2 overseer campus — see [Phase 4 – Visual Target](05_PHASE_4_VISUAL_TARGET.md). Empty dirt is OK. The packed `SM_MarsCampaign_VisualTarget.png` mockup is retired. Squad bars are HUD chrome only — never click-to-move.
 
+**Gameplay north star (after Phase 4):** Luna is the skipable tutorial; Mars is the game — watchable levy, Fobot Yard resurrection, pad market, Grok as sarcastic advisor. See [Mars colony — Majesty loops](../MARS_COLONY_MAJESTY_LOOPS.md). This does **not** stamp Phase 4 EXIT and does **not** start Phase 5. Earth / Belt / Europa stay parked content.
+
 ---
 
 ## Phase Summary
@@ -46,8 +48,9 @@
 - [Phase 4 – Visual Target (Art Production)](05_PHASE_4_VISUAL_TARGET.md)
 - [Phase 4 exit review (blocked)](PHASE_4_EXIT.md)
 - [Phase 5 – Production Values & Ship](06_PHASE_5_PRODUCTION_VALUES_SHIP.md)
+- [Mars colony — Majesty loops](../MARS_COLONY_MAJESTY_LOOPS.md) (gameplay north star after Phase 4; not EXIT)
 
 ---
 
-*Last updated: 2026-08-15*  
-*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 visual target in progress (exit blocked: spaced overseer still still required; packed VisualTarget PNG retired). Phase 5 (ship) after Phase 4.*
+*Last updated: 2026-09-10*  
+*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 visual target in progress (exit blocked: spaced overseer still still required; packed VisualTarget PNG retired). Phase 5 (ship) after Phase 4. Proposed post-Phase-4 campaign: Luna tutorial → Mars colony ([MARS_COLONY_MAJESTY_LOOPS.md](../MARS_COLONY_MAJESTY_LOOPS.md)); not started.*

@@ -35,10 +35,11 @@ The look of the world is **not** invented here. Phase 4 already targeted [the Ma
 - Voice / text flavor for Overseer and specialist status (optional VO).
 
 ### 3. First-Hour & Tutorial
-- Seamless title → New Game → Earth tutorial that teaches every core system by doing.
-- No walls of text. The player learns by posting flags, watching specialists react, and expanding.
+- **Proposed (not started):** seamless title → New Game → **Luna** tutorial, then the rest of the game is a self-sustaining **Mars** colony. Earth is no longer the first-hour path. Design: [`Docs/MARS_COLONY_MAJESTY_LOOPS.md`](../MARS_COLONY_MAJESTY_LOOPS.md). Do not implement until Phase 4 EXIT is stamped.
+- Grok is the named sarcastic advisor (scripted catalog, training wheels on Luna). No live LLM. No click-to-move.
+- No walls of text. The player learns by posting flags, watching specialists react, watching the levy walk home, and paying the Fobot Yard once.
 - Clear onboarding for the unique indirect-control fantasy (the mockup’s squad chrome must not teach click-to-move).
-- Optional advanced tips for returning players.
+- Optional advanced tips / skip-to-Mars for returning players.
 
 ### 4. Systems Polish
 - Robust save / load (full world snapshot preferred over current limited continue).
@@ -115,7 +116,7 @@ The look of the world is **not** invented here. Phase 4 already targeted [the Ma
 | Art/audio scope explosion | Visual direction is closed in Phase 4; this phase is motion, sound, and packaging |
 | Save system complexity | Start from current continue slot and expand carefully |
 | Performance regression with content | Continuous profiling; budget specialists and threats |
-| Tutorial still confuses indirect control | Multiple external playtests focused only on the first hour; do not teach squad micro |
+| Tutorial still confuses indirect control | Multiple external playtests focused only on the first hour (proposed: Luna, then Mars — see [`MARS_COLONY_MAJESTY_LOOPS.md`](../MARS_COLONY_MAJESTY_LOOPS.md)); do not teach squad micro. Not started until Phase 4 EXIT. |
 
 ---
 
