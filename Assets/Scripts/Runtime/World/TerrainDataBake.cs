@@ -237,11 +237,11 @@ namespace SolarMajesty
                     wet = (1f - rock) * 0.65f;
                     break;
                 case CelestialBodyId.Mars:
-                    // Canyon / mesa faces pick up rock earlier. Valley beds get dust + a little
-                    // wet/floor (A), never a green B lawn. High flats stay dusty sand.
+                    // Canyon / mesa faces pick up rock. Bowls darken slightly; never a snow
+                    // cap or beach-sand shelf. High flats stay the same rust dust.
                     rock = SmoothRange(0.16f, 0.46f, slope);
-                    grass = high * (1f - rock) * 0.04f;
-                    wet = low * (1f - rock) * 0.52f;
+                    grass = 0f;
+                    wet = low * (1f - rock) * 0.18f;
                     break;
                 case CelestialBodyId.Luna:
                     // Anorthosite blocks on walls, dark mare/floor in bowls, pale ejecta on flats.

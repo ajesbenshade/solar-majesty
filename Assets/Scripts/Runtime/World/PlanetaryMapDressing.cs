@@ -179,7 +179,7 @@ namespace SolarMajesty
                 groundMat.SetFloat("_DetailTexScale", body.Id == CelestialBodyId.Mars ? 8.5f : 6.5f);
             // TDB splat albedo dominates; authored Mars grit stays as a secondary multiply.
             if (groundMat.HasProperty("_DetailTexAmount"))
-                groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.32f : 0.40f);
+                groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.52f : 0.40f);
         }
 
         /// <summary>
@@ -219,6 +219,11 @@ namespace SolarMajesty
                     grass = Color.Lerp(body.GroundLight, body.RockColor, 0.4f);
                     wet = body.CraterFloor;
                     break;
+                case CelestialBodyId.Mars:
+                    // Same rust family as dust — bowls darken, they do not become ice or sand.
+                    grass = new Color(0.42f, 0.20f, 0.10f, 1f);
+                    wet = new Color(0.28f, 0.12f, 0.06f, 1f);
+                    break;
                 default:
                     grass = Color.Lerp(body.GroundDark, body.RockColor, 0.45f);
                     wet = body.CraterFloor;
@@ -231,14 +236,18 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// TDB Sand/Grass/Snow as world-XZ splat albedo. Mars desaturates then colorizes
-        /// so Grass grit reads as rock, not a lawn. Missing kit leaves _SplatAlbedoAmount 0.
+        /// World-XZ splat albedo. Mars uses the rust ground tile — TDB Sand/Snow are
+        /// Earth beach and cyan ice and must not paint highs yellow or bowls blue.
+        /// Missing kit leaves _SplatAlbedoAmount 0.
         /// </summary>
         private static void BindSplatAlbedoTiles(Material groundMat, CelestialBodyId id)
         {
             if (groundMat == null) return;
             var layers = TerrainSplatLayers.Load();
-            if (layers == null || !layers.HasAny) return;
+            Texture2D marsAlb = id == CelestialBodyId.Mars
+                ? EnvironmentMeshCatalog.LoadMarsAlbedo()
+                : null;
+            if (marsAlb == null && (layers == null || !layers.HasAny)) return;
 
             void BindLayer(string prop, Texture2D tex)
             {
@@ -248,15 +257,27 @@ namespace SolarMajesty
                 groundMat.SetTexture(prop, tex);
             }
 
-            BindLayer("_SplatAlbedo0", layers.sand);
-            BindLayer("_SplatAlbedo1", layers.grass);
-            BindLayer("_SplatAlbedo2", layers.snow);
-            BindLayer("_SplatAlbedo3", layers.sand);
+            if (marsAlb != null)
+            {
+                // TDB Sand is beach-yellow with grass tufts; TDB Snow is cyan ice.
+                // Mars grit must stay the rust tile so highs do not go mustard.
+                BindLayer("_SplatAlbedo0", marsAlb);
+                BindLayer("_SplatAlbedo1", marsAlb);
+                BindLayer("_SplatAlbedo2", marsAlb);
+                BindLayer("_SplatAlbedo3", marsAlb);
+            }
+            else
+            {
+                BindLayer("_SplatAlbedo0", layers.sand);
+                BindLayer("_SplatAlbedo1", layers.grass);
+                BindLayer("_SplatAlbedo2", layers.snow);
+                BindLayer("_SplatAlbedo3", layers.sand);
+            }
 
             if (groundMat.HasProperty("_SplatAlbedoAmount"))
-                groundMat.SetFloat("_SplatAlbedoAmount", 1f);
+                groundMat.SetFloat("_SplatAlbedoAmount", id == CelestialBodyId.Mars ? 0.42f : 1f);
             if (groundMat.HasProperty("_SplatTexScale"))
-                groundMat.SetFloat("_SplatTexScale", id == CelestialBodyId.Mars ? 5.8f : 7.5f);
+                groundMat.SetFloat("_SplatTexScale", id == CelestialBodyId.Mars ? 8.5f : 7.5f);
             if (groundMat.HasProperty("_SplatAmount"))
                 groundMat.SetFloat("_SplatAmount", 0.92f);
             if (groundMat.HasProperty("_MacroStrength"))
@@ -289,6 +310,10 @@ namespace SolarMajesty
                     groundMat.SetColor("_DarkColor", new Color(0.36f, 0.14f, 0.06f, 1f));
                 if (groundMat.HasProperty("_RockColor"))
                     groundMat.SetColor("_RockColor", new Color(0.42f, 0.20f, 0.10f, 1f));
+                if (groundMat.HasProperty("_GrassColor"))
+                    groundMat.SetColor("_GrassColor", new Color(0.42f, 0.20f, 0.10f, 1f));
+                if (groundMat.HasProperty("_WetColor"))
+                    groundMat.SetColor("_WetColor", new Color(0.28f, 0.12f, 0.06f, 1f));
                 if (groundMat.HasProperty("_SlopeStart"))
                     groundMat.SetFloat("_SlopeStart", 0.18f);
                 if (groundMat.HasProperty("_SlopeEnd"))

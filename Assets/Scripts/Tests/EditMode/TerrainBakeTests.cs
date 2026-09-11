@@ -117,8 +117,14 @@ namespace SolarMajesty.Tests
             Assert.Greater(rock.g, 0.45f, "steep Mars should read rock");
 
             Color ridge = TerrainDataBake.SplatFor(CelestialBodyId.Mars, 0.9f, 0.1f);
-            Assert.Less(ridge.b, 0.12f, "Mars must not lay a snow/grass cap on high flats");
-            Assert.Greater(ridge.r, 0.55f, "Mars high flats stay dusty sand");
+            Assert.Less(ridge.b, 0.02f, "Mars must not lay a snow/grass cap on high flats");
+            Assert.Greater(ridge.r, 0.55f, "Mars high flats stay dusty rust");
+            Assert.Less(ridge.a, 0.08f, "high flats are not crater-floor wet");
+
+            Color bowl = TerrainDataBake.SplatFor(CelestialBodyId.Mars, 0.08f, 0.1f);
+            Assert.Less(bowl.b, 0.02f, "Mars bowls must not pick up snow/grass");
+            Assert.Greater(bowl.r, 0.55f, "Mars bowls stay rust dust, not a cyan wet cap");
+            Assert.Less(bowl.a, 0.28f);
         }
 
         [Test]
