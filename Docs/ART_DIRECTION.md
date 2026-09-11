@@ -8,7 +8,7 @@
 
 ## Dream Loop look target (spaced Mars — Aaron 2026-09-07)
 
-Locked north star: [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png) — ITS language, not the prior tube-web campus. Capture protocol and “what NOT to do” live in [`Docs/Roadmap/DREAM_LOOP_MARS_LOOK.md`](Roadmap/DREAM_LOOP_MARS_LOOK.md). Skill copy: [`.cursor/skills/dream-loop/SKILL.md`](../.cursor/skills/dream-loop/SKILL.md).
+Locked north star: [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png) — ITS language, not the prior tube-web campus. Capture protocol and “what NOT to do” live in [`Docs/Roadmap/DREAM_LOOP_MARS_LOOK.md`](Roadmap/DREAM_LOOP_MARS_LOOK.md). Skill tree: [`.cursor/skills/dream-loop/`](../.cursor/skills/dream-loop/) (vendored [achimala/dream-loop](https://github.com/achimala/dream-loop); Pro by default).
 
 **Aaron look brief (2026-09-07)**
 

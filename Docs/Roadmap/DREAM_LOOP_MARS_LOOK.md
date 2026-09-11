@@ -4,7 +4,7 @@
 
 Bake-off PRs **#26 / #27 / #28** (Sol / Fable / Opus Captures) were **rejected**. They are **not** the EXIT claim. EXIT = Aaron look-clear vs the locked concept under this brief.
 
-Working files (retries, judge notes) live in `.dream-loop/` and are gitignored. Reuse the skill at [`.cursor/skills/dream-loop/SKILL.md`](../../.cursor/skills/dream-loop/SKILL.md) ([achimala/dream-loop](https://github.com/achimala/dream-loop), MIT).
+Working files (retries, judge notes) live in `.dream-loop/` and are gitignored. Reuse the skill at [`.cursor/skills/dream-loop/`](../../.cursor/skills/dream-loop/) ([achimala/dream-loop](https://github.com/achimala/dream-loop), MIT) — Pro workflow by default; pin in `UPSTREAM_COMMIT`. For Phase 4, copy/symlink this locked concept to `.dream-loop/target.png` (do not regenerate).
 
 ## LOCKED concept (north star — keep this file)
 
@@ -57,7 +57,7 @@ Unity Editor is required (this Cloud VM cannot run Play Mode). Shoot the same wa
 
 ### Judge ladder (when you have a still)
 
-Use the Dream Loop tiers in the skill (shape → light → materials → detail). Cap the score if a lower tier fails. Empty dirt is a **pass**, not a miss. A tube-web or packed-AABB frame **fails** shape against this concept.
+Use the Dream Loop Pro judge in the skill (Composition 0–3 → Lighting 0–3 → Materials 0–3 → Details 0–1; sum /10). Empty dirt is a **pass**, not a miss. A tube-web or packed-AABB frame **fails** Composition against this concept.
 
 This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not invent a score.**
 
