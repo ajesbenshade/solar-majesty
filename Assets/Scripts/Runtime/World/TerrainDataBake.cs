@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -6,6 +7,7 @@ namespace SolarMajesty
     /// Runtime analogue of BOXOPHOBIC Terrain Data Baker outputs: height, world-space
     /// normals (TDB packing), splat weights, and a cavity mask. Campus pads stay flat.
     /// </summary>
+    [Serializable]
     public sealed class TerrainBake
     {
         public int Resolution;
@@ -190,8 +192,11 @@ namespace SolarMajesty
             if (body == null) return 1.6f;
             switch (body.Id)
             {
-                case CelestialBodyId.Mars: return 10f;
-                case CelestialBodyId.Luna: return 2.6f;
+                case CelestialBodyId.Mars:
+                case CelestialBodyId.Luna:
+                    // DEM heights are metres (heightRange 32, 0.5 = grade). Do not use the
+                    // old procedural-crater 2.6 m scale — cavity/exposure would saturate.
+                    return 10f;
                 case CelestialBodyId.Belt: return 3.4f;
                 case CelestialBodyId.Europa: return 1.15f;
                 default: return 1.85f;

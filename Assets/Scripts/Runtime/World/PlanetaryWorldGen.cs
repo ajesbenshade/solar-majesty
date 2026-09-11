@@ -46,7 +46,9 @@ namespace SolarMajesty
         /// Drop camera is ortho 16 — 20 m exclusion hid the Earth biome and left Mars a tiled plane.
         /// </summary>
         private float VistaExclusion =>
-            _body != null && (_body.Id == CelestialBodyId.Earth || _body.Id == CelestialBodyId.Mars)
+            _body != null && (_body.Id == CelestialBodyId.Earth
+                || _body.Id == CelestialBodyId.Mars
+                || _body.Id == CelestialBodyId.Luna)
                 ? 11.2f
                 : (_body != null ? _body.CampusExclusion : 20f);
 
