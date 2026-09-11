@@ -12,7 +12,53 @@ namespace SolarMajesty.Tests
             Vector3 origin = ColonyLayout.CampusOrigin;
             Assert.AreEqual(0f, Mathf.Abs(bake.SampleHeight(origin.x, origin.z)), 0.02f);
             Assert.AreEqual(0f, TerrainDataBake.CampusFlatten(origin.x, origin.z), 0.001f);
+            Assert.AreEqual(0f, Mathf.Abs(bake.SampleHeight(LaunchSite.PadWorld.x, LaunchSite.PadWorld.z)), 0.05f);
             Assert.Greater(TerrainDataBake.CampusFlatten(origin.x + 80f, origin.z + 80f), 0.85f);
+        }
+
+        [Test]
+        public void StillFarThird_HasReliefOutsideYards()
+        {
+            var bake = TerrainDataBake.Generate(384f, 384f, 7, CelestialBodyCatalog.Mars());
+            Vector3 origin = ColonyLayout.CampusOrigin;
+            float north = bake.SampleHeight(origin.x, origin.z + 20f);
+            Assert.Greater(Mathf.Abs(north), 1.5f, "20 m north of Commons is inside the still, outside yard pads");
+            Assert.Greater(TerrainDataBake.CampusFlatten(origin.x, origin.z + 20f), 0.85f);
+        }
+
+        [Test]
+        public void Mars_MesaIsHigh_CanyonIsDeep()
+        {
+            var bake = TerrainDataBake.Generate(384f, 384f, 11, CelestialBodyCatalog.Mars());
+            Vector3 origin = ColonyLayout.CampusOrigin;
+            Vector3 mesa = origin + TerrainDataBake.MesaLipLocal;
+            Vector3 crater = origin + TerrainDataBake.SignatureCraterLocal;
+            Vector3 canyon = origin + TerrainDataBake.CanyonLocal;
+
+            Assert.Greater(bake.SampleHeight(mesa.x, mesa.z), 4f, "DEM mesa lip");
+            float craterH = bake.SampleHeight(crater.x, crater.z);
+            Assert.Less(craterH, -2f, $"DEM crater bowl sampled={craterH:0.###}");
+            float canyonH = bake.SampleHeight(canyon.x, canyon.z);
+            float canyonRaw = TerrainDataBake.Height(canyon.x, canyon.z, 11, CelestialBodyId.Mars);
+            Assert.Less(canyonH, -2f, $"DEM canyon sampled={canyonH:0.###} raw={canyonRaw:0.###}");
+
+            Vector3 wall = crater + new Vector3(0.53f, 0f, -0.85f) * 3.2f;
+            const float e = 1.6f;
+            float hL = bake.SampleHeight(wall.x - e, wall.z);
+            float hR = bake.SampleHeight(wall.x + e, wall.z);
+            float hD = bake.SampleHeight(wall.x, wall.z - e);
+            float hU = bake.SampleHeight(wall.x, wall.z + e);
+            Vector3 n = new Vector3(hL - hR, e * 2f, hD - hU).normalized;
+            float slope = 1f - Mathf.Clamp01(n.y);
+            float h01 = Mathf.InverseLerp(-bake.Amplitude, bake.Amplitude, bake.SampleHeight(wall.x, wall.z));
+            Color splat = TerrainDataBake.SplatFor(CelestialBodyId.Mars, h01, slope);
+            Assert.Greater(splat.g, 0.45f, "crater / canyon walls read rock");
+        }
+
+        [Test]
+        public void Mars_HasNoCraterMeshes()
+        {
+            Assert.AreEqual(0, CelestialBodyCatalog.Mars().CraterCount);
         }
 
         [Test]

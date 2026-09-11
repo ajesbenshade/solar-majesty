@@ -278,8 +278,23 @@ namespace SolarMajesty
 
             // r15 still: TDB Sand * GroundLight read peach (186/112/54). Rust lock
             // ~150/68/30 so white hulls stay white against dirt, not washed sand.
-            if (id == CelestialBodyId.Mars && groundMat.HasProperty("_BaseColor"))
-                groundMat.SetColor("_BaseColor", new Color(0.58f, 0.26f, 0.11f, 1f));
+            if (id == CelestialBodyId.Mars)
+            {
+                if (groundMat.HasProperty("_BaseColor"))
+                    groundMat.SetColor("_BaseColor", new Color(0.58f, 0.26f, 0.11f, 1f));
+                if (groundMat.HasProperty("_DarkColor"))
+                    groundMat.SetColor("_DarkColor", new Color(0.36f, 0.14f, 0.06f, 1f));
+                if (groundMat.HasProperty("_RockColor"))
+                    groundMat.SetColor("_RockColor", new Color(0.42f, 0.20f, 0.10f, 1f));
+                if (groundMat.HasProperty("_SlopeStart"))
+                    groundMat.SetFloat("_SlopeStart", 0.18f);
+                if (groundMat.HasProperty("_SlopeEnd"))
+                    groundMat.SetFloat("_SlopeEnd", 0.58f);
+                if (groundMat.HasProperty("_BakeNormalAmount"))
+                    groundMat.SetFloat("_BakeNormalAmount", 1f);
+                if (groundMat.HasProperty("_MacroStrength"))
+                    groundMat.SetFloat("_MacroStrength", 0.22f);
+            }
         }
 
         /// <summary>
@@ -416,9 +431,6 @@ namespace SolarMajesty
                 {
                     float dust = Mathf.PerlinNoise(x * 0.045f + 2f, y * 0.045f);
                     c = Color.Lerp(c, body.DuneColor, dust * 0.34f);
-                    c += CraterMark(x, y, size, 0.22f, 0.18f, body.CraterRim, body.CraterFloor);
-                    c += CraterMark(x, y, size, 0.68f, 0.71f, body.CraterRim, body.CraterFloor);
-                    c += CraterMark(x, y, size, 0.80f, 0.32f, body.CraterRim, body.CraterFloor);
                     float grit = Frac(Mathf.Sin(x * 19.1f + y * 81.3f) * 23421.7f);
                     if (grit > 0.93f)
                         c = Color.Lerp(c, body.RockColor, 0.55f);
@@ -470,21 +482,6 @@ namespace SolarMajesty
             tex.SetPixels(pixels);
             tex.Apply(true);
             return tex;
-        }
-
-        private static Color CraterMark(
-            int x, int y, int size, float cx, float cy, Color rim, Color floor)
-        {
-            float u = x / (float)size;
-            float v = y / (float)size;
-            float dx = u - cx;
-            float dy = v - cy;
-            float d = Mathf.Sqrt(dx * dx + dy * dy);
-            float r = 0.11f;
-            if (d > r) return Color.clear;
-            if (d < r * 0.55f)
-                return (floor - Color.white * 0.08f) * 0.35f - new Color(0.08f, 0.04f, 0.02f, 0f);
-            return (rim - Color.white * 0.04f) * 0.28f;
         }
 
         private static void EnsureDustDevils(Transform parent, IsoGrid grid, CelestialBodyProfile body)
@@ -618,8 +615,8 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Empty Mars drop: boulder field + a crater bowl + a dune ridge in the ortho 16 shot.
-        /// Visual only — does not spawn a campus. Nodes/lairs stay world-gen.
+        /// Empty Mars drop: boulder scatter on the baked grade. Mesa / canyon / crater
+        /// come from TerrainDataBake — no sphere ridges or crater/dune props.
         /// </summary>
         private static void EnsureMarsVista(Transform parent, CelestialBodyProfile body)
         {
@@ -679,88 +676,29 @@ namespace SolarMajesty
                 SpawnVistaBoulder(root, outcrops[i] + new Vector3(-0.7f, 0f, 0.7f), body, i + 80, 0.32f);
             }
 
-            SpawnVistaCrater(root, campus + new Vector3(13.2f, 0f, -9.4f), body);
-            SpawnVistaDune(root, campus + new Vector3(-12.6f, 0f, 10.8f), body);
-            SpawnMarsHazeRidges(root, campus, body);
-            SpawnFarMesas(root, campus, body);
+            // Mesa / canyon / crater live in TerrainDataBake.Height — no sphere ridges,
+            // no crater/dune props sitting in the bowls they would double.
         }
 
-        /// <summary>
-        /// Three low mesas on the far side of the campus (along the iso view azimuth +x+z,
-        /// 13.5–15.5 m out — the top HUD bar hides anything past ~17 m). Play-ortho fog is
-        /// only a hint there now, so they read as low relief breaking the far-ground strip.
-        /// </summary>
-        private static void SpawnFarMesas(Transform parent, Vector3 campus, CelestialBodyProfile body)
+        private static float SampleBakeY(float wx, float wz)
         {
-            Vector3 fwd = new Vector3(1f, 0f, 1f).normalized;
-            Vector3 right = new Vector3(1f, 0f, -1f).normalized;
-            // Mesas sit a shade darker than the fog they rise from (concept ~190/120/65).
-            Color c = Color.Lerp(body.FogColor, body.Horizon, 0.85f);
-            c.a = 1f;
-            (float f, float r, float span, float h)[] mesas =
-            {
-                (14.0f, -9.0f, 7.5f, 1.8f),
-                (15.5f, 1.5f, 8.0f, 2.2f),
-                (13.5f, 10.0f, 6.0f, 1.5f),
-                (15.0f, -4.0f, 4.5f, 1.2f)
-            };
-            for (int i = 0; i < mesas.Length; i++)
-            {
-                var m = mesas[i];
-                var mesa = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                mesa.name = "Dress_MarsMesa_" + i;
-                mesa.transform.SetParent(parent, false);
-                mesa.transform.position = campus + fwd * m.f + right * m.r + Vector3.up * (m.h * 0.15f);
-                mesa.transform.localScale = new Vector3(m.span, m.h * 2f, m.span * 0.55f);
-                mesa.transform.rotation = Quaternion.Euler(0f, 45f + i * 9f, 0f);
-                Object.Destroy(mesa.GetComponent<Collider>());
-                PlanetaryWorldGen.Tint(mesa, c, 0.04f, ShadowCastingMode.Off);
-            }
-        }
-
-        /// <summary>
-        /// Distant low ridges so the vista recedes into salmon haze when the player scrolls
-        /// off the campus. Note the ortho-10 Game tab only ever frames ground within ~20 m of
-        /// focus (top edge is far ground, never sky), so the on-campus horizon read comes from
-        /// the ground shader's depth fog, not from these.
-        /// </summary>
-        private static void SpawnMarsHazeRidges(Transform parent, Vector3 campus, CelestialBodyProfile body)
-        {
-            Color far = Color.Lerp(body.FogColor, body.Horizon, 0.40f);
-            far.a = 1f;
-            for (int i = 0; i < 12; i++)
-            {
-                float ang = i * 30f * Mathf.Deg2Rad + 0.22f;
-                // The ortho-10 frame reaches ~20 m past focus along the view azimuth and ±15 m
-                // across; ridges start beyond it so no unshadowed beige slab enters the still.
-                float dist = 26f + (i % 4) * 4.5f;
-                Vector3 at = campus + new Vector3(Mathf.Cos(ang) * dist, 0f, Mathf.Sin(ang) * dist);
-                float span = 9f + (i % 3) * 2.8f;
-                float height = 1.4f + (i % 3) * 0.85f;
-                // Half-buried ellipsoid, not a cube: at the scrolled edge of the map a cube reads
-                // as a beige slab with a lit top face.
-                var ridge = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                ridge.name = "Dress_MarsHazeRidge_" + i;
-                ridge.transform.SetParent(parent, false);
-                ridge.transform.position = at + Vector3.up * (height * 0.10f);
-                ridge.transform.localScale = new Vector3(span, height * 2f, 3.2f + (i % 2) * 1.4f);
-                ridge.transform.rotation = Quaternion.Euler(0f, ang * Mathf.Rad2Deg + 90f, 0f);
-                Object.Destroy(ridge.GetComponent<Collider>());
-                PlanetaryWorldGen.Tint(ridge, far, 0.02f, ShadowCastingMode.Off);
-                var rend = ridge.GetComponent<Renderer>();
-                if (rend != null) rend.receiveShadows = false;
-            }
+            var ground = GameObject.Find("GroundPlane");
+            var holder = ground != null ? ground.GetComponent<TerrainBakeHolder>() : null;
+            if (holder != null && holder.Bake != null)
+                return holder.Bake.SampleHeight(wx, wz);
+            return 0f;
         }
 
         private static void SpawnVistaBoulder(
             Transform parent, Vector3 world, CelestialBodyProfile body, int salt, float scale)
         {
+            float gy = SampleBakeY(world.x, world.z);
             var prefab = EnvironmentMeshCatalog.LoadRock(salt);
             var mesh = EnvironmentMeshCatalog.InstantiateClean(prefab, "Dress_MarsBoulder");
             if (mesh != null)
             {
                 mesh.transform.SetParent(parent, false);
-                mesh.transform.position = world;
+                mesh.transform.position = new Vector3(world.x, gy, world.z);
                 float s = scale / EnvironmentMeshCatalog.RockNativeSize;
                 mesh.transform.localScale = Vector3.one * s * (0.9f + (salt % 3) * 0.08f);
                 // Keep FBX import axis, yaw only — Euler(tip,yaw,tip) stood the flat base upright.
@@ -769,14 +707,14 @@ namespace SolarMajesty
                 ColonyVisualUtility.SeatFlatOnGround(mesh);
                 Color c = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
                 PlanetaryWorldGen.Tint(mesh, c, 0.08f, ShadowCastingMode.On);
-                ColonyVisualUtility.SnapToGround(mesh);
+                ColonyVisualUtility.SnapToGround(mesh, gy);
                 return;
             }
 
             var go = GameObject.CreatePrimitive(salt % 3 == 0 ? PrimitiveType.Sphere : PrimitiveType.Capsule);
             go.name = "Dress_MarsBoulder";
             go.transform.SetParent(parent, false);
-            go.transform.position = world + Vector3.up * (0.18f * scale);
+            go.transform.position = new Vector3(world.x, gy + 0.18f * scale, world.z);
             go.transform.localScale = new Vector3(
                 scale * (0.85f + (salt % 3) * 0.12f),
                 scale * (0.42f + (salt % 2) * 0.18f),
@@ -785,89 +723,7 @@ namespace SolarMajesty
             Object.Destroy(go.GetComponent<Collider>());
             Color tint = Color.Lerp(body.RockColor, body.GroundDark, 0.22f + (salt % 4) * 0.08f);
             PlanetaryWorldGen.Tint(go, tint, 0.08f, ShadowCastingMode.On);
-            ColonyVisualUtility.SnapToGround(go);
-        }
-
-        private static void SpawnVistaCrater(Transform parent, Vector3 world, CelestialBodyProfile body)
-        {
-            var mesh = EnvironmentMeshCatalog.InstantiateClean(
-                EnvironmentMeshCatalog.LoadCraterVista(), "Dress_MarsCrater");
-            if (mesh != null)
-            {
-                mesh.transform.SetParent(parent, false);
-                mesh.transform.position = world;
-                float diameter = 7.2f;
-                float s = diameter / EnvironmentMeshCatalog.CraterVistaNativeDiameter;
-                // Native FBX mats + full height read as a flat orange mound casting a hard
-                // shadow at the right edge of the Game-tab still. Flatten, dirt-tint, no shadow.
-                mesh.transform.localScale = new Vector3(s, s * 0.35f, s);
-                mesh.transform.rotation = Quaternion.Euler(0f, 22f, 0f);
-                var mats = mesh.GetComponentsInChildren<Renderer>(true);
-                var craterMat = PlanetaryWorldGen.TintMaterial(
-                    Color.Lerp(body.GroundDark, body.GroundLight, 0.55f), 0.06f);
-                foreach (var r in mats)
-                {
-                    var arr = r.sharedMaterials;
-                    for (int m = 0; m < arr.Length; m++) arr[m] = craterMat;
-                    r.sharedMaterials = arr;
-                    r.shadowCastingMode = ShadowCastingMode.Off;
-                }
-                ColonyVisualUtility.SnapToGround(mesh);
-                return;
-            }
-
-            var crater = new GameObject("Dress_MarsCrater");
-            crater.transform.SetParent(parent, false);
-            crater.transform.position = world;
-
-            var rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            rim.name = "Rim";
-            rim.transform.SetParent(crater.transform, false);
-            rim.transform.localPosition = new Vector3(0f, 0.05f, 0f);
-            rim.transform.localScale = new Vector3(7.2f, 0.08f, 6.4f);
-            Object.Destroy(rim.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(rim, body.CraterRim, 0.06f);
-
-            var floor = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            floor.name = "Floor";
-            floor.transform.SetParent(crater.transform, false);
-            floor.transform.localPosition = new Vector3(0.15f, 0.02f, -0.1f);
-            floor.transform.localScale = new Vector3(4.8f, 0.04f, 4.2f);
-            Object.Destroy(floor.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(floor, body.CraterFloor, 0.05f);
-
-            ColonyVisualUtility.SnapToGround(crater);
-        }
-
-        private static void SpawnVistaDune(Transform parent, Vector3 world, CelestialBodyProfile body)
-        {
-            var mesh = EnvironmentMeshCatalog.InstantiateClean(
-                EnvironmentMeshCatalog.LoadDune(), "Dress_MarsDune");
-            if (mesh != null)
-            {
-                mesh.transform.SetParent(parent, false);
-                mesh.transform.position = world;
-                mesh.transform.rotation = Quaternion.Euler(0f, 38f, 0f);
-                float s = 6.8f / EnvironmentMeshCatalog.DuneNativeLength;
-                mesh.transform.localScale = Vector3.one * s;
-                PlanetaryWorldGen.Tint(mesh, body.DuneColor, 0.06f);
-                ColonyVisualUtility.SnapToGround(mesh);
-                return;
-            }
-
-            var dune = new GameObject("Dress_MarsDune");
-            dune.transform.SetParent(parent, false);
-            dune.transform.position = world;
-            dune.transform.rotation = Quaternion.Euler(0f, 38f, 0f);
-
-            var ridge = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            ridge.name = "Ridge";
-            ridge.transform.SetParent(dune.transform, false);
-            ridge.transform.localPosition = new Vector3(0f, 0.22f, 0f);
-            ridge.transform.localScale = new Vector3(6.8f, 0.55f, 2.4f);
-            Object.Destroy(ridge.GetComponent<Collider>());
-            PlanetaryWorldGen.Tint(ridge, body.DuneColor, 0.06f);
-            ColonyVisualUtility.SnapToGround(dune);
+            ColonyVisualUtility.SnapToGround(go, gy);
         }
 
         private static void SpawnGrassTuft(Transform parent, Vector3 world, CelestialBodyProfile body, int salt)

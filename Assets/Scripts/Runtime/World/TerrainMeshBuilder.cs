@@ -8,8 +8,8 @@ namespace SolarMajesty
     /// </summary>
     public static class TerrainMeshBuilder
     {
-        /// <summary>Vertices per side. 192 on a 384 m map is ~2 m spacing.</summary>
-        public const int Resolution = 192;
+        /// <summary>Vertices per side. 256 on a 384 m map is ~1.5 m — crater rims stay sharp.</summary>
+        public const int Resolution = 256;
 
         public static Mesh Build(float worldWidth, float worldHeight, int seed, CelestialBodyProfile body)
         {

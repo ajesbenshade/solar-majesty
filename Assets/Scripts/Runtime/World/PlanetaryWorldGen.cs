@@ -180,7 +180,7 @@ namespace SolarMajesty
 
         private void SpawnCraters(System.Random rng, List<Vector3> placed)
         {
-            if (_body.CraterCount <= 0) return;
+            if (_body.CraterCount <= 0 || _body.Id == CelestialBodyId.Mars) return;
 
             var root = new GameObject("Craters").transform;
             root.SetParent(_worldRoot, false);

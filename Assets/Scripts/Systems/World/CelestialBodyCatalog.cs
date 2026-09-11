@@ -253,7 +253,7 @@ namespace SolarMajesty
                 FogEnd = 95f,
                 AtmosphereThickness = 1.08f,
                 SkyExposure = 1.10f,
-                CraterCount = 56,
+                CraterCount = 0,
                 RockCount = 210,
                 DuneCount = 64,
                 ResourceNodeCount = 24,

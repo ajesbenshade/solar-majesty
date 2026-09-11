@@ -52,8 +52,25 @@ namespace SolarMajesty
     public static class TerrainDataBake
     {
         public const int MapResolution = 256;
-        public const float FlatRadius = 26f;
-        public const float BlendRadius = 22f;
+
+        /// <summary>Commons + HAB + airlock disk. Relief may begin just outside this.</summary>
+        public const float ClusterFlatRadius = 12f;
+        public const float PadFlatRadius = 8f;
+        public const float CampusBFlatRadius = 10f;
+        public const float YardBlendRadius = 5f;
+
+        /// <summary>Legacy aliases — cluster pad, not the old 48 m still-covering disk.</summary>
+        public const float FlatRadius = ClusterFlatRadius;
+        public const float BlendRadius = YardBlendRadius;
+
+        /// <summary>Mesa lip in the far third of the ortho-10 still (iso +x+z).</summary>
+        public static readonly Vector3 MesaLipLocal = new Vector3(16f, 0f, 18f);
+
+        /// <summary>Canyon trench center; misses yard pads.</summary>
+        public static readonly Vector3 CanyonLocal = new Vector3(-8f, 0f, 18f);
+
+        /// <summary>Concept left-rear bowl, ~18 m from Commons.</summary>
+        public static readonly Vector3 SignatureCraterLocal = new Vector3(-14f, 0f, 12f);
 
         public static TerrainBake Generate(float worldWidth, float worldHeight, int seed, CelestialBodyProfile body)
         {
@@ -69,8 +86,6 @@ namespace SolarMajesty
             };
 
             CelestialBodyId id = body != null ? body.Id : CelestialBodyId.Earth;
-            float ox = (seed % 977) * 0.37f;
-            float oz = (seed % 691) * 0.53f;
             float amp = bake.Amplitude;
 
             float minH = float.MaxValue;
@@ -81,7 +96,9 @@ namespace SolarMajesty
                 for (int x = 0; x < n; x++)
                 {
                     float wx = (x / (float)(n - 1)) * worldWidth;
-                    float h = Height(wx + ox, wz + oz, seed, id) * amp;
+                    float h = Height(wx, wz, seed, id);
+                    if (id != CelestialBodyId.Mars)
+                        h *= amp;
                     h *= CampusFlatten(wx, wz);
                     bake.Heights[z * n + x] = h;
                     if (h < minH) minH = h;
@@ -173,7 +190,7 @@ namespace SolarMajesty
             if (body == null) return 1.6f;
             switch (body.Id)
             {
-                case CelestialBodyId.Mars: return 3.2f;
+                case CelestialBodyId.Mars: return 10f;
                 case CelestialBodyId.Luna: return 2.6f;
                 case CelestialBodyId.Belt: return 3.4f;
                 case CelestialBodyId.Europa: return 1.15f;
@@ -181,11 +198,16 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// 0 under yard pads (docks / NavMesh / suit crossings), 1 in open land.
+        /// Empty dirt between yards may roll; the ortho-10 far third is outside the disks.
+        /// </summary>
         public static float CampusFlatten(float x, float z)
         {
             float keep = 1f;
-            keep = Mathf.Min(keep, FalloffAt(x, z, ColonyLayout.CampusOrigin));
-            keep = Mathf.Min(keep, FalloffAt(x, z, ColonyLayout.CampusBOrigin));
+            keep = Mathf.Min(keep, FalloffAt(x, z, ColonyLayout.CampusOrigin, ClusterFlatRadius, YardBlendRadius));
+            keep = Mathf.Min(keep, FalloffAt(x, z, LaunchSite.PadWorld, PadFlatRadius, YardBlendRadius));
+            keep = Mathf.Min(keep, FalloffAt(x, z, ColonyLayout.CampusBOrigin, CampusBFlatRadius, YardBlendRadius));
             return keep;
         }
 
@@ -194,9 +216,9 @@ namespace SolarMajesty
         /// </summary>
         public static Color SplatFor(CelestialBodyId id, float height01, float slope)
         {
-            float rock = Mathf.SmoothStep(0.22f, 0.62f, slope);
-            float low = 1f - Mathf.SmoothStep(0.28f, 0.48f, height01);
-            float high = Mathf.SmoothStep(0.58f, 0.82f, height01);
+            float rock = SmoothRange(0.22f, 0.62f, slope);
+            float low = 1f - SmoothRange(0.28f, 0.48f, height01);
+            float high = SmoothRange(0.58f, 0.82f, height01);
             float grass;
             float wet;
             switch (id)
@@ -209,8 +231,14 @@ namespace SolarMajesty
                     grass = 0f;
                     wet = (1f - rock) * 0.65f;
                     break;
+                case CelestialBodyId.Mars:
+                    // Canyon / mesa faces pick up rock earlier. Valley beds get dust + a little
+                    // wet/floor (A), never a green B lawn. High flats stay dusty sand.
+                    rock = SmoothRange(0.16f, 0.46f, slope);
+                    grass = high * (1f - rock) * 0.04f;
+                    wet = low * (1f - rock) * 0.52f;
+                    break;
                 default:
-                    // B is TDB Snow on Mars — keep it a sparse pale-ridge hint, never a cap.
                     grass = high * (1f - rock) * 0.06f;
                     wet = low * (1f - rock) * 0.42f;
                     break;
@@ -224,21 +252,23 @@ namespace SolarMajesty
 
         public static float Height(float x, float z, int seed, CelestialBodyId id)
         {
+            if (id == CelestialBodyId.Mars)
+                return SampleMarsDem(x, z);
+
             float warp = 14f;
-            float xw = x + (Mathf.PerlinNoise(x * 0.0065f, z * 0.0065f) - 0.5f) * warp;
-            float zw = z + (Mathf.PerlinNoise(x * 0.0065f + 19.1f, z * 0.0065f) - 0.5f) * warp;
+            float ox = (seed % 977) * 0.37f;
+            float oz = (seed % 691) * 0.53f;
+            float xw = x + ox + (Mathf.PerlinNoise((x + ox) * 0.0065f, (z + oz) * 0.0065f) - 0.5f) * warp;
+            float zw = z + oz + (Mathf.PerlinNoise((x + ox) * 0.0065f + 19.1f, (z + oz) * 0.0065f) - 0.5f) * warp;
 
             float dunes = Fbm(xw * 0.0085f, zw * 0.0085f, 5) - 0.5f;
-            float ridged = 0.5f - Mathf.Abs(Mathf.PerlinNoise(xw * 0.026f, zw * 0.026f) - 0.5f) * 2f;
-            ridged *= ridged;
+            float ridged = Ridged(xw * 0.026f, zw * 0.026f);
             float grain = (Mathf.PerlinNoise(xw * 0.10f, zw * 0.10f) - 0.5f) * 0.22f;
 
             switch (id)
             {
                 case CelestialBodyId.Earth:
                     return dunes * 1.55f + ridged * 0.28f + grain * 0.7f;
-                case CelestialBodyId.Mars:
-                    return dunes * 2.15f + ridged * 1.05f + grain + Craters(x, z, seed, 0.58f) * 1.55f;
                 case CelestialBodyId.Luna:
                     return dunes * 1.2f + ridged * 0.7f + grain + Craters(x, z, seed, 0.84f) * 2.05f;
                 case CelestialBodyId.Belt:
@@ -248,6 +278,52 @@ namespace SolarMajesty
                 default:
                     return dunes * 2.0f + ridged * 0.9f + grain;
             }
+        }
+
+        /// <summary>
+        /// Metres from the vendored HiRISE heightmap. 0.5 in the texture is campus grade.
+        /// Yards are flattened after this in <see cref="Generate"/>.
+        /// </summary>
+        public static float SampleMarsDem(float x, float z)
+        {
+            MarsDemSettings settings = MarsDemSettings.Load();
+            Texture2D tex = settings != null
+                ? settings.HeightTexture
+                : Resources.Load<Texture2D>(MarsDemSettings.HeightResourcePath);
+            if (tex == null) return 0f;
+
+            float coverage = settings != null && settings.coverageMetres > 1f
+                ? settings.coverageMetres
+                : 80f;
+            Vector2 uv0 = settings != null ? settings.campusUv : new Vector2(0.5f, 0.5f);
+            float yaw = settings != null ? settings.yawDegrees * Mathf.Deg2Rad : 0f;
+            float range = settings != null && settings.heightRange > 1f ? settings.heightRange : 32f;
+            float vert = settings != null ? settings.verticalScale : 1f;
+
+            Vector3 campus = ColonyLayout.CampusOrigin;
+            float lx = x - campus.x;
+            float lz = z - campus.z;
+            float c = Mathf.Cos(yaw);
+            float s = Mathf.Sin(yaw);
+            float rx = lx * c - lz * s;
+            float rz = lx * s + lz * c;
+            float u = uv0.x + rx / coverage;
+            float v = uv0.y + rz / coverage;
+            u = Mathf.Clamp01(u);
+            v = Mathf.Clamp01(v);
+
+            float encoded = tex.GetPixelBilinear(u, v).r;
+            float h = (encoded - 0.5f) * range * vert;
+            // Fine grit so the HiRISE crop does not go plastic at isometric range.
+            float grain = (Mathf.PerlinNoise(x * 0.17f, z * 0.17f) - 0.5f) * 0.28f;
+            return h + grain;
+        }
+
+        private static float Ridged(float x, float z)
+        {
+            float n = Mathf.Clamp01(Mathf.PerlinNoise(x, z));
+            float r = 1f - Mathf.Abs(n * 2f - 1f);
+            return r * r;
         }
 
         private static float Craters(float x, float z, int seed, float density)
@@ -271,7 +347,6 @@ namespace SolarMajesty
                 float d = Mathf.Sqrt(dxw * dxw + dzw * dzw);
                 if (d >= radius) continue;
                 float t = d / radius;
-                // Bowl + a raised rim so craters read at isometric distance.
                 float bowl = (1f - t * t) * -1f;
                 float rim = Mathf.Exp(-Mathf.Pow((t - 0.78f) * 7f, 2f)) * 0.28f;
                 acc += (bowl + rim) * Mathf.Lerp(0.55f, 1f, Hash(cx, cz, seed + 71));
@@ -283,7 +358,7 @@ namespace SolarMajesty
         {
             float a = Mathf.Abs(Mathf.PerlinNoise(x * 0.04f, z * 0.011f) - 0.5f);
             float b = Mathf.Abs(Mathf.PerlinNoise(x * 0.012f, z * 0.038f) - 0.5f);
-            float crack = 1f - Mathf.SmoothStep(0.0f, 0.08f, Mathf.Min(a, b));
+            float crack = 1f - SmoothRange(0.0f, 0.08f, Mathf.Min(a, b));
             return -crack * 0.55f;
         }
 
@@ -308,14 +383,23 @@ namespace SolarMajesty
             return (n & 0x7fffffff) / (float)int.MaxValue;
         }
 
-        private static float FalloffAt(float x, float z, Vector3 origin)
+        /// <summary>
+        /// HLSL-style smoothstep: 0 below <paramref name="edge0"/>, 1 above <paramref name="edge1"/>.
+        /// Unity's Mathf.SmoothStep interpolates from→to with a 0–1 t instead.
+        /// </summary>
+        private static float SmoothRange(float edge0, float edge1, float x)
+        {
+            return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(edge0, edge1, x));
+        }
+
+        private static float FalloffAt(float x, float z, Vector3 origin, float radius, float blend)
         {
             float dx = x - origin.x;
             float dz = z - origin.z;
             float d = Mathf.Sqrt(dx * dx + dz * dz);
-            if (d <= FlatRadius) return 0f;
-            if (d >= FlatRadius + BlendRadius) return 1f;
-            return Mathf.SmoothStep(0f, 1f, (d - FlatRadius) / BlendRadius);
+            if (d <= radius) return 0f;
+            if (d >= radius + blend) return 1f;
+            return Mathf.SmoothStep(0f, 1f, (d - radius) / blend);
         }
     }
 }
