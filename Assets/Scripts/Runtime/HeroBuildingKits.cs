@@ -784,7 +784,36 @@ namespace SolarMajesty
                 new Vector3(w * 0.28f, 0.12f, 0.18f), Graphite);
         }
 
+        public static void PaintGuildAccents(Transform root, Color banner)
+        {
+            if (root == null) return;
+            string[] names =
+            {
+                "GuildBanner", "GuildCol_L", "GuildCol_R", "GuildHatch",
+                "GuildPortRing_E", "GuildPortRing_W"
+            };
+            for (int i = 0; i < names.Length; i++)
+            {
+                var t = FindDeep(root, names[i]);
+                if (t == null) continue;
+                TintRenderer(t.GetComponent<Renderer>(), banner);
+            }
+
+            if (FindDeep(root, "GuildBanner") != null) return;
+            Prim(root, "GuildMast", PrimitiveType.Cylinder,
+                new Vector3(0.85f, 3.35f, -0.55f),
+                new Vector3(0.08f, 0.85f, 0.08f), Steel);
+            Prim(root, "GuildBanner", PrimitiveType.Cube,
+                new Vector3(1.13f, 3.55f, -0.55f),
+                new Vector3(0.52f, 0.38f, 0.05f), banner);
+        }
+
         public static void BuildGuildHall(Transform root, float w, float d, Color hull)
+        {
+            BuildGuildHall(root, w, d, hull, Orange);
+        }
+
+        public static void BuildGuildHall(Transform root, float w, float d, Color hull, Color banner)
         {
             // CMD-1 civic hall (sheet) + guild banner. Not a Commons dome, not a HAB cylinder.
             Prim(root, "GuildPlinth", PrimitiveType.Cube,
@@ -804,16 +833,16 @@ namespace SolarMajesty
                 new Vector3(w * 0.68f, 0.12f, d * 0.56f), Carbon);
             Prim(root, "GuildCol_L", PrimitiveType.Cube,
                 new Vector3(-w * 0.16f, 1.15f, d * 0.28f),
-                new Vector3(0.14f, 1.85f, 0.12f), Orange);
+                new Vector3(0.14f, 1.85f, 0.12f), banner);
             Prim(root, "GuildCol_R", PrimitiveType.Cube,
                 new Vector3(w * 0.16f, 1.15f, d * 0.28f),
-                new Vector3(0.14f, 1.85f, 0.12f), Orange);
+                new Vector3(0.14f, 1.85f, 0.12f), banner);
             Prim(root, "GuildDoorFrame", PrimitiveType.Cube,
                 new Vector3(0f, 0.95f, d * 0.30f),
                 new Vector3(0.72f, 1.15f, 0.10f), Carbon);
             Prim(root, "GuildHatch", PrimitiveType.Cube,
                 new Vector3(0f, 0.95f, d * 0.32f),
-                new Vector3(0.52f, 0.95f, 0.08f), Orange);
+                new Vector3(0.52f, 0.95f, 0.08f), banner);
             Prim(root, "GuildSteps", PrimitiveType.Cube,
                 new Vector3(0f, 0.22f, d * 0.42f),
                 new Vector3(w * 0.36f, 0.16f, d * 0.18f), Concrete);
@@ -840,19 +869,19 @@ namespace SolarMajesty
                 new Vector3(0.30f, 0.62f, 0.62f), White);
             Prim(root, "GuildPortRing_E", PrimitiveType.Cube,
                 new Vector3(w * 0.5f - 0.04f, 0.85f, 0f),
-                new Vector3(0.08f, 0.70f, 0.70f), Orange);
+                new Vector3(0.08f, 0.70f, 0.70f), banner);
             Prim(root, "GuildPort_W", PrimitiveType.Cube,
                 new Vector3(-(w * 0.5f - 0.15f), 0.85f, 0f),
                 new Vector3(0.30f, 0.62f, 0.62f), White);
             Prim(root, "GuildPortRing_W", PrimitiveType.Cube,
                 new Vector3(-(w * 0.5f - 0.04f), 0.85f, 0f),
-                new Vector3(0.08f, 0.70f, 0.70f), Orange);
+                new Vector3(0.08f, 0.70f, 0.70f), banner);
             Prim(root, "GuildMast", PrimitiveType.Cylinder,
                 new Vector3(w * 0.22f, 3.35f, -d * 0.18f),
                 new Vector3(0.08f, 0.85f, 0.08f), Steel);
             Prim(root, "GuildBanner", PrimitiveType.Cube,
                 new Vector3(w * 0.22f + 0.28f, 3.55f, -d * 0.18f),
-                new Vector3(0.52f, 0.38f, 0.05f), Orange);
+                new Vector3(0.52f, 0.38f, 0.05f), banner);
             Prim(root, "GuildBeacon", PrimitiveType.Sphere,
                 new Vector3(w * 0.22f, 4.25f, -d * 0.18f),
                 new Vector3(0.18f, 0.18f, 0.18f), Cyan, CyanEmit);
@@ -1606,7 +1635,7 @@ namespace SolarMajesty
             go.transform.localPosition = localPos;
             go.transform.localRotation = localRot;
             go.transform.localScale = localScale;
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, color, emission);
         }
 
@@ -1663,8 +1692,30 @@ namespace SolarMajesty
             var cols = root.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < cols.Length; i++)
             {
-                if (cols[i] != null) Object.Destroy(cols[i]);
+                if (cols[i] != null) ColonyVisualUtility.DestroyNow(cols[i]);
             }
+        }
+
+        private static Transform FindDeep(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return null;
+            if (root.name == name) return root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                var hit = FindDeep(root.GetChild(i), name);
+                if (hit != null) return hit;
+            }
+
+            return null;
+        }
+
+        private static void TintRenderer(Renderer rend, Color color)
+        {
+            if (rend == null) return;
+            var mat = rend.material;
+            if (mat == null) return;
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+            else if (mat.HasProperty("_Color")) mat.color = color;
         }
 
         private static void EnsureLit()

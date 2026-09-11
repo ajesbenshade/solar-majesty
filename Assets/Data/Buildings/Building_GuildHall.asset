@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad6cec0d07ef9498c83b1151499c4966, type: 3}
   m_Name: Building_GuildHall
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.BuildingData
-  displayName: Guild Hall
+  displayName: Horizon Lodge
   category: 16
-  description: "Guild Hall \u2014 assign a class"
+  description: Scout hall · cheap Explore
   footprintWidth: 4
   footprintHeight: 4
   buildCost:
@@ -27,5 +27,6 @@ MonoBehaviour:
   powerGen: 0
   housingSlots: 0
   attractionWeight: 1
-  preferredOccupants: 
+  preferredOccupants:
+  - 1
   prefab: {fileID: 919132149155446097, guid: 51585ae4afb5448583ba7b05e2f8b1a6, type: 3}

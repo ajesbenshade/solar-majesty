@@ -146,7 +146,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.GuildCharter,
                     "Guild Charter",
-                    "License a Guild Hall (Horizon / Anvil / Aegis / Triage). Flags near the hall pull that class.",
+                    "License Horizon Lodge, Anvil Compact, Aegis Lodge, and Triage Compact. Flags near a hall pull that class.",
                     32f,
                     new[] { TechId.HabOps }),
 

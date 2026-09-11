@@ -36,7 +36,7 @@ The look of the world is **not** invented here. Phase 4 already targeted [the Ma
 
 ### 3. First-Hour & Tutorial
 - **Proposed (not started):** seamless title → New Game → **Luna** tutorial, then the rest of the game is a self-sustaining **Mars** colony. Earth is no longer the first-hour path. Design: [`Docs/MARS_COLONY_MAJESTY_LOOPS.md`](../MARS_COLONY_MAJESTY_LOOPS.md). Do not implement until Phase 4 EXIT is stamped.
-- Grok is the named sarcastic advisor (scripted catalog, training wheels on Luna). No live LLM. No click-to-move.
+- Grok is the named sarcastic advisor (scripted catalog, training wheels on Luna). No live LLM for advisor copy. No click-to-move. Typed flag-order LLM is a **parked** packet ([FLAG_HERO_LOCAL_LLM.md](FLAG_HERO_LOCAL_LLM.md)), not this phase.
 - No walls of text. The player learns by posting flags, watching specialists react, watching the levy walk home, and paying the Fobot Yard once.
 - Clear onboarding for the unique indirect-control fantasy (the mockup’s squad chrome must not teach click-to-move).
 - Optional advanced tips / skip-to-Mars for returning players.
@@ -138,5 +138,6 @@ The look of the world is **not** invented here. Phase 4 already targeted [the Ma
 - Additional bodies or specialist classes as DLC / updates
 - Community mod support expansion
 - Multiplayer experiments (if ever desired)
+- Flag-hero local LLM (typed orders, bundled llama.cpp) — [FLAG_HERO_LOCAL_LLM.md](FLAG_HERO_LOCAL_LLM.md). Parked until Phase 4 EXIT; not part of ship polish.
 
 The core fantasy remains sacred: the player is the Overseer AI. Specialists remain autonomous. The Solar System is the board. Everything in Phase 5 exists to make that fantasy feel premium.

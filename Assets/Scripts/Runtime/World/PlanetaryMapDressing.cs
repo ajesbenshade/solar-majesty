@@ -672,7 +672,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// Empty Mars drop: boulder scatter on the baked grade. Mesa / canyon / crater
-        /// come from TerrainDataBake — no sphere ridges or crater/dune props.
+        /// bowls live in the seeded height field (AoE2-style random map), not a DEM crop.
         /// </summary>
         private static void EnsureMarsVista(Transform parent, CelestialBodyProfile body)
         {

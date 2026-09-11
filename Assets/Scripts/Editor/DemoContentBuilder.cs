@@ -86,7 +86,7 @@ namespace SolarMajesty.EditorTools
             WriteBuilding("Building_OPS1", "OPS Drop-off", BuildingCategory.Mining, 45, 6, 14f, 4, 4);
             WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4);
             WriteBuilding("Building_CMD1", "Defense Battery", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
-            WriteBuilding("Building_GuildHall", "Guild Hall", BuildingCategory.GuildHall, 56, 6, 14f, 4, 4);
+            WriteStarterGuilds();
             WriteBuilding("Building_HarvesterWorkshop", "Harvester Workshop", BuildingCategory.HarvesterWorkshop, 40, 5, 12f, 4, 4);
             WriteBuilding("Building_SurveyorWorkshop", "Surveyor Workshop", BuildingCategory.SurveyorWorkshop, 38, 4, 12f, 4, 4);
             WriteBuilding("Building_TerraformerWorkshop", "Terraformer Workshop", BuildingCategory.TerraformerWorkshop, 42, 5, 12f, 4, 4);
@@ -191,6 +191,46 @@ namespace SolarMajesty.EditorTools
             asset.prefab = prefabOverride != null ? prefabOverride : BuildingVisualCatalog.LoadPrefab(cat);
             EditorUtility.SetDirty(asset);
 
+            MirrorAsset(asset, $"{DataRoot}/Buildings/{fileName}.asset");
+        }
+
+        private static void WriteStarterGuilds()
+        {
+            var starter = RobotGuildCatalog.Starter;
+            string[] files =
+            {
+                "Building_GuildHall",
+                "Building_AnvilCompact",
+                "Building_AegisLodge",
+                "Building_TriageCompact"
+            };
+            for (int i = 0; i < starter.Length && i < files.Length; i++)
+                WriteGuild(files[i], starter[i]);
+        }
+
+        private static void WriteGuild(string fileName, RobotGuildDef guild)
+        {
+            if (guild == null) return;
+            string resPath = $"{ResourcesDemo}/Buildings/{fileName}.asset";
+            var asset = LoadOrCreate<BuildingData>(resPath);
+            asset.displayName = guild.HallName;
+            asset.category = BuildingCategory.GuildHall;
+            asset.description = guild.CatalogLine;
+            asset.footprintWidth = 4;
+            asset.footprintHeight = 4;
+            asset.buildTimeSeconds = 14f;
+            asset.housingSlots = 0;
+            asset.powerDraw = 2;
+            asset.powerGen = 0;
+            asset.attractionWeight = 1f;
+            asset.preferredOccupants = guild.Occupants;
+            asset.buildCost = new[]
+            {
+                new ResourceAmount(ResourceId.Metals, 56),
+                new ResourceAmount(ResourceId.Power, 6)
+            };
+            asset.prefab = BuildingVisualCatalog.LoadPrefab(BuildingCategory.GuildHall);
+            EditorUtility.SetDirty(asset);
             MirrorAsset(asset, $"{DataRoot}/Buildings/{fileName}.asset");
         }
 

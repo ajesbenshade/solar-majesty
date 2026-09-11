@@ -1,0 +1,9 @@
+Orrery albedo maps (equirectangular).
+
+Earth, Moon, Mars, Jupiter, Sun, Ceres, Earth clouds:
+  Solar System Scope textures (https://www.solarsystemscope.com/textures/)
+  CC BY 4.0 — based on NASA elevation and imagery.
+
+Europa:
+  NASA 3D Resources / USGS Voyager mosaic (public domain).
+  https://science.nasa.gov/3d-resources/jupiter-europa/

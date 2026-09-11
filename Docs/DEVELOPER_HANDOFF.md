@@ -30,7 +30,7 @@ Never add click-to-move to match mockup squad UI.
 
 ## Open & verify first (mandatory)
 1. Unity Hub → Open the repo root (needs Unity 6000.5.x).
-2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (title screen; New Game is Earth if prefs fresh).
+2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (title orrery; click Earth to drop).
 3. If scene missing: menu Solar Majesty → Build Demo Scene.
 4. Run Docs/SMOKE_TEST.md (10-minute boot, then Earth loop). DEMO.md has the talk-track.
 5. Confirm: no free starter robots; HAB = humans; workshops fabricate outdoor robots; empty drop + conquest gates + research.
@@ -54,7 +54,7 @@ Never add click-to-move to match mockup squad UI.
 
 ## Suggested next work (priority order)
 1. Phase 4 visual target — Week 1–4 continued are in (`Docs/Roadmap/05_PHASE_4_VISUAL_TARGET.md`), including flush docks. Exit is **blocked** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)): editor still `SM_MarsCampaign_EditorStill.png` exists; next is a **human Game-tab** Mars still. Do not add click-to-move. Do not start Phase 5. Square airlocks stay; tubes/domes/kits/turrets/solar are dressing. Defense stays tracked.
-2. Shift+F10 smoke: Earth soil creepers (**F5**), Luna ash hoppers (**F2**), Belt (`LOW-G`, rock mites/ticks **F5**, shard hoppers **F2**), Europa (`RAD`, fissure leeches / ice wisps **F2**, ice creepers **F5**). **T** Guild Charter → assign hall class (Horizon / Anvil / Aegis / Triage). ★ Climate Loom / Aegis Spire / Deep Archive landmarks. Settings: Mode / Challenge / Stance — Open Hands should take a $70 Build.
+2. Title orrery is live: click a world to drop (Shift+click unlocks). Four starter halls: Horizon Lodge / Anvil Compact / Aegis Lodge / Triage Compact (class-locked). Shift+F10 smoke: Earth soil creepers (**F5**), Luna ash hoppers (**F2**), Belt (`LOW-G`, rock mites/ticks **F5**, shard hoppers **F2**), Europa (`RAD`, fissure leeches / ice wisps **F2**, ice creepers **F5**). **T** Guild Charter → dock a named hall. ★ Climate Loom / Aegis Spire / Deep Archive landmarks. Settings: Mode / Challenge / Stance — Open Hands should take a $70 Build.
 3. Imagine turnarounds from `Docs/GROK_IMAGINE_UNIT_PROMPTS.md`. All ten specialists + seven fauna Blender meshes are sheet-matched blockouts against `ConceptSheets/` JPGs. Defense stays tracked (PNG walker still open). Building FBX pipeline (`SM_Hero_*`) is in.
 
 ## Controls reference

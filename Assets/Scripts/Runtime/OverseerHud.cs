@@ -79,6 +79,21 @@ namespace SolarMajesty
         /// <summary>True when the cursor is over a HUD panel (blocks world select).</summary>
         public bool PointerBlocksWorld { get; private set; }
 
+        /// <summary>IMGUI chrome under the cursor (title orrery skips these clicks).</summary>
+        public bool HitsHudPanels()
+        {
+            float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
+            Vector2 imguiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y) / s;
+            for (int i = 0; i < _hitRects.Count; i++)
+            {
+                if (_hitRects[i].Contains(imguiMouse))
+                    return true;
+            }
+            return false;
+        }
+
+        public bool TitleConfirmOpen => _confirmNewGame;
+
         private readonly List<Rect> _hitRects = new List<Rect>(12);
 
         public void Bind(GameLoop loop)
@@ -1208,7 +1223,7 @@ namespace SolarMajesty
         private void DrawBuildingCard(ColonyStructure st)
         {
             const float cardW = 340f;
-            float cardH = st.IsGuild ? 172f : 148f;
+            float cardH = st.IsGuild ? 196f : 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
             var c = Panel(rect, null);
@@ -1221,7 +1236,9 @@ namespace SolarMajesty
             string role = st.IsWorkshop
                 ? (RefabLabel(st) ?? (st.RobotFabricated ? "Workshop · robot online" : "Workshop · fabricating…"))
                 : st.IsGuild
-                    ? (st.HasPreferredClass ? st.DisplayName : "Guild Hall · assign a class")
+                    ? (st.HasPreferredClass
+                        ? (RobotGuildCatalog.ForClass(st.PreferredClass)?.CatalogLine ?? st.DisplayName)
+                        : "Guild Hall · assign a class")
                     : st.IsWonder ? "Secret Project landmark"
                     : st.IsResidential ? "Habitat · colonists"
                     : st.Role.ToString();
@@ -1256,21 +1273,42 @@ namespace SolarMajesty
             }
             else if (st.IsGuild)
             {
-                GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    "Assign a class. Flags near this hall pull them (no new robot).", _micro);
-                row += 14f;
-                if (Chip(new Rect(c.x, row, 54f, 22f), "SCOUT",
-                        st.HasPreferredClass && st.PreferredClass == SpecialistClass.ScoutDrone))
-                    _loop.SetSelectedWorkplaceClass(SpecialistClass.ScoutDrone);
-                if (Chip(new Rect(c.x + 58f, row, 54f, 22f), "ENG",
-                        st.HasPreferredClass && st.PreferredClass == SpecialistClass.EngineerBot))
-                    _loop.SetSelectedWorkplaceClass(SpecialistClass.EngineerBot);
-                if (Chip(new Rect(c.x + 116f, row, 54f, 22f), "DEF",
-                        st.HasPreferredClass && st.PreferredClass == SpecialistClass.DefenseMech))
-                    _loop.SetSelectedWorkplaceClass(SpecialistClass.DefenseMech);
-                if (Chip(new Rect(c.x + 174f, row, 54f, 22f), "MED",
-                        st.HasPreferredClass && st.PreferredClass == SpecialistClass.Medic))
-                    _loop.SetSelectedWorkplaceClass(SpecialistClass.Medic);
+                var guild = st.HasPreferredClass
+                    ? RobotGuildCatalog.ForClass(st.PreferredClass)
+                    : null;
+                if (guild != null)
+                {
+                    GUI.Label(new Rect(c.x, row, c.width, 13f), guild.Motto, _micro);
+                    row += 14f;
+                    GUI.Label(new Rect(c.x, row, c.width, 13f),
+                        $"Wants {guild.Wants} · ignores {guild.Ignores}", _micro);
+                    row += 14f;
+                    GUI.Label(new Rect(c.x, row, c.width, 13f),
+                        "Flags near this hall pull them (no new robot).", _micro);
+                    row += 14f;
+                }
+                else
+                {
+                    GUI.Label(new Rect(c.x, row, c.width, 13f),
+                        "Assign a class. Flags near this hall pull them (no new robot).", _micro);
+                    row += 14f;
+                }
+
+                if (!st.ClassLocked)
+                {
+                    if (Chip(new Rect(c.x, row, 54f, 22f), "SCOUT",
+                            st.HasPreferredClass && st.PreferredClass == SpecialistClass.ScoutDrone))
+                        _loop.SetSelectedWorkplaceClass(SpecialistClass.ScoutDrone);
+                    if (Chip(new Rect(c.x + 58f, row, 54f, 22f), "ENG",
+                            st.HasPreferredClass && st.PreferredClass == SpecialistClass.EngineerBot))
+                        _loop.SetSelectedWorkplaceClass(SpecialistClass.EngineerBot);
+                    if (Chip(new Rect(c.x + 116f, row, 54f, 22f), "DEF",
+                            st.HasPreferredClass && st.PreferredClass == SpecialistClass.DefenseMech))
+                        _loop.SetSelectedWorkplaceClass(SpecialistClass.DefenseMech);
+                    if (Chip(new Rect(c.x + 174f, row, 54f, 22f), "MED",
+                            st.HasPreferredClass && st.PreferredClass == SpecialistClass.Medic))
+                        _loop.SetSelectedWorkplaceClass(SpecialistClass.Medic);
+                }
             }
             else if (!st.ClassLocked)
             {
@@ -1937,30 +1975,26 @@ namespace SolarMajesty
 
         private void DrawTitle()
         {
-            Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.03f, 0.04f, 0.86f));
-            var rect = new Rect((_sw - 480f) * 0.5f, _sh * 0.10f, 480f, 520f);
+            var rect = new Rect(M, M, 320f, Mathf.Min(500f, _sh - M * 2f));
             var c = Panel(rect, null, false);
             Fill(new Rect(rect.x, rect.y, rect.width, 3f), Accent);
 
             GUI.Label(new Rect(c.x, c.y, c.width, 32f), "SOLAR MAJESTY", _banner);
-            GUI.Label(new Rect(c.x, c.y + 34f, c.width, 16f), "You are the Overseer. Never command the heroes.", _muted);
-            GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f), "EARTH  →  LUNA  →  MARS  →  BELT  →  EUROPA", _wrap);
-            GUI.Label(new Rect(c.x, c.y + 68f, c.width, 14f), ReplayRules.HudTag, _micro);
-            GUI.Label(new Rect(c.x, c.y + 86f, c.width, 40f),
-                "Colony Commons is down. Post bounties, let greedy robots choose. Three gates: clear dens, sustain the colony, launch.",
-                _wrap);
+            GUI.Label(new Rect(c.x, c.y + 34f, c.width, 32f), "You are the Overseer. Never command the heroes.", _muted);
+            GUI.Label(new Rect(c.x, c.y + 68f, c.width, 28f), "Click a world to drop.", _wrap);
+            GUI.Label(new Rect(c.x, c.y + 98f, c.width, 14f), ReplayRules.HudTag, _micro);
 
             if (_confirmNewGame)
             {
-                GUI.Label(new Rect(c.x, c.y + 130f, c.width, 48f),
-                    "This wipes the continue slot and campaign unlocks, then drops you on Earth.",
+                GUI.Label(new Rect(c.x, c.y + 124f, c.width, 56f),
+                    "This wipes the continue slot and campaign unlocks. Then click a world to drop.",
                     _wrap);
-                if (GUI.Button(new Rect(c.x, c.y + 186f, c.width, 40f), "WIPE AND DROP EARTH", _chipOn))
+                if (GUI.Button(new Rect(c.x, c.y + 188f, c.width, 40f), "WIPE AND RETURN TO SYSTEM", _chipOn))
                 {
                     _confirmNewGame = false;
-                    _loop.StartNewGame();
+                    _loop.WipeCampaignToTitle();
                 }
-                if (GUI.Button(new Rect(c.x, c.y + 234f, c.width, 36f), "BACK", _chipOff))
+                if (GUI.Button(new Rect(c.x, c.y + 236f, c.width, 36f), "BACK", _chipOff))
                     _confirmNewGame = false;
                 GUI.Label(new Rect(c.x, c.yMax - 18f, c.width, 16f), "Esc also cancels.", _micro);
                 if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
@@ -1968,16 +2002,17 @@ namespace SolarMajesty
                     _confirmNewGame = false;
                     Event.current.Use();
                 }
+                DrawToast();
                 return;
             }
 
-            float y = c.y + 130f;
-            if (GUI.Button(new Rect(c.x, y, c.width, 40f), "NEW GAME  ·  Earth drop", _chipOn))
+            float y = c.y + 124f;
+            if (GUI.Button(new Rect(c.x, y, c.width, 40f), "NEW GAME", _chipOn))
             {
                 if (DemoSettings.SaveExists)
                     _confirmNewGame = true;
                 else
-                    _loop.StartNewGame();
+                    Notify("Click a world to drop.", 2.4f);
             }
             y += 48f;
 
@@ -1995,9 +2030,20 @@ namespace SolarMajesty
                 _loop.QuitDemo();
 
             GUI.Label(new Rect(c.x, c.yMax - 36f, c.width, 16f),
-                "B build  ·  G flag  ·  T tech  ·  Esc pause  ·  RMB cancel flag", _micro);
+                "Shift+click a locked world to unlock.", _micro);
             GUI.Label(new Rect(c.x, c.yMax - 18f, c.width, 16f),
-                "WASD pan  ·  Q zoom out  ·  E zoom in. Heroes choose their own work.", _micro);
+                "Heroes choose their own work.", _micro);
+
+            string hover = SolarSystemTitleView.Instance != null
+                ? SolarSystemTitleView.Instance.HoverCaption
+                : null;
+            if (!string.IsNullOrEmpty(hover))
+            {
+                var hr = new Rect((_sw - 420f) * 0.5f, _sh - 48f, 420f, 24f);
+                GUI.Label(hr, hover.ToUpperInvariant(), _section);
+            }
+
+            DrawToast();
         }
 
         private void DrawPause()

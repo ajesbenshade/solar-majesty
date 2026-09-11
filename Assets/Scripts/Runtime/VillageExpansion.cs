@@ -99,7 +99,7 @@ namespace SolarMajesty
 
         private void InheritGuildClass(ColonyStructure hall)
         {
-            if (hall == null) return;
+            if (hall == null || hall.ClassLocked || hall.HasPreferredClass) return;
             ColonyStructure best = null;
             float bestD = 36f;
             for (int i = 0; i < _structures.Count; i++)

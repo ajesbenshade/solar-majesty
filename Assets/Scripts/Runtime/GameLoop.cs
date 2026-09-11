@@ -112,7 +112,11 @@ namespace SolarMajesty
         public bool SpawnWaystationInn => spawnWaystationInn;
         public DemoScreen Screen { get; private set; } = DemoScreen.Title;
         public bool IsPlaying => Screen == DemoScreen.Playing;
-        public bool AllowsCamera => Screen == DemoScreen.Playing || Screen == DemoScreen.Title;
+        public bool AllowsCamera => Screen == DemoScreen.Playing;
+        public bool TitlePointerBlocksWorld =>
+            _overseerHud != null && _overseerHud.HitsHudPanels();
+        public bool TitleConfirmOpen =>
+            _overseerHud != null && _overseerHud.TitleConfirmOpen;
         public const int TutorialCompleteStep = 6;
         public int TutorialStep { get; private set; }
         public bool IsTutorialActive => !DemoSettings.TutorialDone && TutorialStep < TutorialCompleteStep;
@@ -643,6 +647,7 @@ namespace SolarMajesty
                 Settlement != null ? Settlement.Population : 0,
                 Placer != null ? Placer.Pieces.Count : 0,
                 _playSeconds);
+            SolarSystemTitleView.Instance?.Hide();
             Time.timeScale = 1f;
         }
 
@@ -651,10 +656,12 @@ namespace SolarMajesty
             Screen = DemoScreen.Title;
             Time.timeScale = 0f;
             ApplyTool(OverseerTool.None);
+            SolarSystemTitleView.Ensure(this, mainCamera)?.Show();
         }
 
         public void EnterPlaying(bool loadStockpile)
         {
+            SolarSystemTitleView.Instance?.Hide();
             Screen = DemoScreen.Playing;
             Time.timeScale = SimSpeed.Multiplier;
             int piecesBefore = Placer != null ? Placer.Pieces.Count : 0;
@@ -704,7 +711,10 @@ namespace SolarMajesty
             }
         }
 
-        public void StartNewGame()
+        /// <summary>Wipes the continue slot and returns to the solar-system title.</summary>
+        public void StartNewGame() => WipeCampaignToTitle();
+
+        public void WipeCampaignToTitle()
         {
             ResearchManager.WipeUnlocks();
             CampaignProgress.ResetCampaign();
@@ -713,9 +723,55 @@ namespace SolarMajesty
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
             ReplayRules.Save();
-            DemoSettings.RequestBootIntoPlay();
             BodySeed.SetBody(CelestialBodyId.Earth);
             ReloadActiveScene();
+        }
+
+        public void StartNewGameOn(CelestialBodyId body)
+        {
+            ResearchManager.WipeUnlocks();
+            CampaignProgress.ResetCampaign();
+            CampaignProgress.UnlockThrough(body);
+            SaveSystem.DeleteAll();
+            SimSpeed.ResetToNormal();
+            DemoSettings.ClearSave();
+            DemoSettings.ResetTutorial();
+            ReplayRules.Save();
+            DemoSettings.RequestBootIntoPlay();
+            BodySeed.SetBody(body);
+            ReloadActiveScene();
+        }
+
+        /// <summary>Title orrery click. Never posts flags or specialist orders.</summary>
+        public void PlayBodyFromTitle(CelestialBodyId body, bool cheatUnlock)
+        {
+            var profile = CelestialBodyCatalog.Get(body);
+            var outcome = SolarSystemTitlePick.Resolve(
+                body,
+                celestialBody,
+                DemoSettings.SaveExists,
+                CampaignProgress.IsUnlocked(body),
+                cheatUnlock);
+
+            switch (outcome)
+            {
+                case SolarSystemTitlePick.Outcome.Locked:
+                    _overseerHud?.Notify(
+                        $"{profile.DisplayName} is locked. Conquer the inner worlds first — or Shift+click.",
+                        3.5f);
+                    return;
+                case SolarSystemTitlePick.Outcome.StartNewOnBody:
+                    StartNewGameOn(body);
+                    return;
+                case SolarSystemTitlePick.Outcome.ContinueCurrent:
+                    ContinueGame();
+                    return;
+                case SolarSystemTitlePick.Outcome.SwitchBody:
+                    if (cheatUnlock)
+                        CampaignProgress.UnlockThrough(body);
+                    SelectBody(body, allowLocked: true);
+                    return;
+            }
         }
 
         public void ContinueGame()
@@ -1739,7 +1795,7 @@ namespace SolarMajesty
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
             else if (id == TechId.GuildCharter)
             {
-                LogOverseer("Guild Charter signed. Dock a hall and assign SCOUT/ENG/DEF/MED — Horizon, Anvil, Aegis, or Triage. Flags near the hall pull that class.");
+                LogOverseer("Guild Charter signed. Dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact. Flags near the hall pull that class.");
                 EnsureNarrative();
                 _narrative.NoteCompleted(FlagDecreeIds.EarthCharterTheHall);
                 if (_narrative.TryTakeCompleteToast(AdvisorToastCatalog.CompleteCharterTheHall, out var charterToast))
@@ -2045,7 +2101,15 @@ namespace SolarMajesty
                         b.description = "unlock from ★ tech — bonus while standing";
                         break;
                     case BuildingCategory.GuildHall:
-                        b.description = "Guild Hall — assign a class";
+                        if (RobotGuildCatalog.TryMatch(b, out var guild))
+                        {
+                            b.displayName = guild.HallName;
+                            b.description = guild.CatalogLine;
+                            if (b.preferredOccupants == null || b.preferredOccupants.Length == 0)
+                                b.preferredOccupants = guild.Occupants;
+                        }
+                        else
+                            b.description = "Guild Hall — assign a class";
                         break;
                 }
             }
@@ -3692,6 +3756,15 @@ namespace SolarMajesty
             return b;
         }
 
+        private static BuildingData CreateGuildHall(RobotGuildId id)
+        {
+            var g = RobotGuildCatalog.Get(id);
+            var b = CreateBuilding(g.HallName, BuildingCategory.GuildHall, 56, 6, 14f, 4, 4);
+            b.description = g.CatalogLine;
+            b.preferredOccupants = g.Occupants;
+            return b;
+        }
+
         private static int PowerGenFor(BuildingCategory cat, string name)
         {
             if (cat != BuildingCategory.Power) return 0;
@@ -3713,7 +3786,10 @@ namespace SolarMajesty
                 CreateBuilding("Village Inn", BuildingCategory.Inn, 30, 3, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
                 CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
-                CreateBuilding("Guild Hall", BuildingCategory.GuildHall, 56, 6, 14f, 4, 4),
+                CreateGuildHall(RobotGuildId.Horizon),
+                CreateGuildHall(RobotGuildId.Anvil),
+                CreateGuildHall(RobotGuildId.Aegis),
+                CreateGuildHall(RobotGuildId.Triage),
                 CreateBuilding("Harvester Workshop", BuildingCategory.HarvesterWorkshop, 40, 5, 12f, 4, 4),
                 CreateBuilding("Surveyor Workshop", BuildingCategory.SurveyorWorkshop, 38, 4, 12f, 4, 4),
                 CreateBuilding("Terraformer Workshop", BuildingCategory.TerraformerWorkshop, 42, 5, 12f, 4, 4),

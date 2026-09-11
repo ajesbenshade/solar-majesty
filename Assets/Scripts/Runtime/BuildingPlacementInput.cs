@@ -172,7 +172,7 @@ namespace SolarMajesty
         {
             if (_ghost != null)
             {
-                if (Selected != null && _ghost.name == $"Ghost_{Selected.category}")
+                if (Selected != null && _ghost.name == GhostName(Selected))
                     return;
                 Destroy(_ghost);
                 _ghost = null;
@@ -189,6 +189,8 @@ namespace SolarMajesty
                 Selected.footprintHeight,
                 cell,
                 ghost: true);
+            _ghost.name = GhostName(Selected);
+            RobotGuildDress.Apply(_ghost, Selected);
             ColonyVisualUtility.ApplyGhostTint(_ghost, true);
         }
 
@@ -251,6 +253,12 @@ namespace SolarMajesty
             if (!plane.Raycast(ray, out float enter)) return false;
             world = ray.GetPoint(enter);
             return true;
+        }
+
+        private static string GhostName(BuildingData data)
+        {
+            if (data == null) return "Ghost";
+            return $"Ghost_{data.category}_{data.displayName}";
         }
     }
 }

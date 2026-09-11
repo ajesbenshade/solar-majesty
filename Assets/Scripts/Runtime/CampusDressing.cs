@@ -50,6 +50,8 @@ namespace SolarMajesty
         {
             if (data == null || go == null) return;
 
+            RobotGuildDress.Apply(go, data);
+
             if (data.category == BuildingCategory.Utility)
                 return;
 

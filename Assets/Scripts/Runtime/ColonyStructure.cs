@@ -15,8 +15,9 @@ namespace SolarMajesty
 
     /// <summary>
     /// Selectable colony piece. Village HABs take raids first.
-    /// Workshops fabricate robots. Guild halls are assignable class hangouts — flags nearby
-    /// pull that class via the same workshop-bonus path (no SpecialistBrain rewrite).
+    /// Workshops fabricate robots. Named guild halls (Horizon / Anvil / Aegis / Triage)
+    /// lock a class; flags nearby pull that class via the same workshop-bonus path
+    /// (no SpecialistBrain rewrite). A generic hall can still assign SCOUT/ENG/DEF/MED.
     /// Progression is via research / campaign gates, not per-building upgrade levels.
     /// </summary>
     public class ColonyStructure : MonoBehaviour
@@ -300,11 +301,11 @@ namespace SolarMajesty
 
         public static string GuildNameFor(SpecialistClass cls)
         {
+            var starter = RobotGuildCatalog.ForClass(cls);
+            if (starter != null)
+                return starter.HallName;
             switch (cls)
             {
-                case SpecialistClass.EngineerBot: return "Anvil Compact";
-                case SpecialistClass.DefenseMech: return "Aegis Lodge";
-                case SpecialistClass.Medic: return "Triage Compact";
                 case SpecialistClass.HarvesterBot: return "Strip Guild";
                 case SpecialistClass.SurveyorBot: return "Chart Lodge";
                 case SpecialistClass.TerraformerBot: return "Bloom Compact";
@@ -347,7 +348,9 @@ namespace SolarMajesty
             {
                 PreferredClass = SourceData.preferredOccupants[0];
                 HasPreferredClass = true;
-                ClassLocked = IsWorkshop;
+                ClassLocked = IsWorkshop || IsGuild;
+                if (IsGuild)
+                    DisplayName = GuildNameFor(PreferredClass);
                 return;
             }
 
@@ -516,7 +519,7 @@ namespace SolarMajesty
             _selectRing.transform.SetParent(transform, false);
             _selectRing.transform.localPosition = new Vector3(0f, 0.05f, 0f);
             _selectRing.transform.localScale = new Vector3(3.2f, 0.025f, 3.2f);
-            Object.Destroy(_selectRing.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(_selectRing.GetComponent<Collider>());
             var rend = _selectRing.GetComponent<Renderer>();
             if (rend != null)
             {
