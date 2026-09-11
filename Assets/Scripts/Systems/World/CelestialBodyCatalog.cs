@@ -219,7 +219,7 @@ namespace SolarMajesty
                 RockColor = new Color(0.36f, 0.24f, 0.16f),
                 CraterRim = new Color(0.60f, 0.38f, 0.24f),
                 CraterFloor = new Color(0.32f, 0.19f, 0.12f),
-                DuneColor = new Color(0.70f, 0.47f, 0.34f),
+                DuneColor = new Color(0.52f, 0.28f, 0.14f),
                 SoilNodeColor = new Color(0.62f, 0.32f, 0.16f),
                 LairRim = new Color(0.22f, 0.07f, 0.05f),
                 LairPit = new Color(0.10f, 0.03f, 0.02f),

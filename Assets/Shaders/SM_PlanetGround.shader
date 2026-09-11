@@ -120,8 +120,8 @@ Shader "SolarMajesty/PlanetGround"
             float d = saturate(desat);
             half luma = dot(texRgb, half3(0.299, 0.587, 0.114));
             half3 dehued = lerp(texRgb, luma.xxx, d);
-            // Keep luma variation; do not lift mean above tint (r15 TDB sand went peach).
-            half3 colorized = tint * (0.22 + luma * 0.78);
+            // Grit only — do not let bright beach-sand luma lift the tint into mustard.
+            half3 colorized = tint * lerp(0.82, 1.08, saturate(luma));
             return lerp(dehued, colorized, d);
         }
 

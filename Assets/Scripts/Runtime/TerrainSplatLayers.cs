@@ -3,9 +3,9 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// BOXOPHOBIC Terrain Data Baker demo albedo tiles (Sand / Grass / Snow) wired
-    /// from outside Resources. PlanetGround samples them as splat layers.
-    /// Mars remaps: Sand → dust, Grass → rock grit, Snow → sparse high ridges only.
+        /// BOXOPHOBIC Terrain Data Baker demo albedo tiles (Sand / Grass / Snow) wired
+        /// from outside Resources. PlanetGround samples them as splat layers on Earth.
+        /// Mars ignores these and uses SM_Ground_Mars_Albedo so highs stay rust.
     /// </summary>
     [CreateAssetMenu(menuName = "Solar Majesty/Terrain Splat Layers", fileName = "TerrainSplatLayers")]
     public sealed class TerrainSplatLayers : ScriptableObject
