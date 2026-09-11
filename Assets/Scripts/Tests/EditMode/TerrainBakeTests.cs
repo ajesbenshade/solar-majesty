@@ -65,6 +65,10 @@ namespace SolarMajesty.Tests
         public void Luna_CampusPadStaysFlat_AndBowlIsDeep()
         {
             Assert.AreEqual(0, CelestialBodyCatalog.Luna().CraterCount);
+            Assert.AreEqual(
+                TerrainDataBake.AmplitudeFor(CelestialBodyCatalog.Mars()),
+                TerrainDataBake.AmplitudeFor(CelestialBodyCatalog.Luna()),
+                "Luna DEM metres must share Mars amplitude so cavity/exposure do not clamp");
             Assert.IsNotNull(
                 Resources.Load<Texture2D>(LunaDemSettings.HeightResourcePath),
                 "LunaHeight must be a readable Resources texture");
