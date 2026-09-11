@@ -97,7 +97,7 @@ namespace SolarMajesty
                 {
                     float wx = (x / (float)(n - 1)) * worldWidth;
                     float h = Height(wx, wz, seed, id);
-                    if (id != CelestialBodyId.Mars)
+                    if (id != CelestialBodyId.Mars && id != CelestialBodyId.Luna)
                         h *= amp;
                     h *= CampusFlatten(wx, wz);
                     bake.Heights[z * n + x] = h;
@@ -238,6 +238,12 @@ namespace SolarMajesty
                     grass = high * (1f - rock) * 0.04f;
                     wet = low * (1f - rock) * 0.52f;
                     break;
+                case CelestialBodyId.Luna:
+                    // Anorthosite blocks on walls, dark mare/floor in bowls, pale ejecta on flats.
+                    rock = SmoothRange(0.14f, 0.42f, slope);
+                    grass = high * (1f - rock) * 0.03f;
+                    wet = low * (1f - rock) * 0.62f;
+                    break;
                 default:
                     grass = high * (1f - rock) * 0.06f;
                     wet = low * (1f - rock) * 0.42f;
@@ -254,6 +260,8 @@ namespace SolarMajesty
         {
             if (id == CelestialBodyId.Mars)
                 return SampleMarsDem(x, z);
+            if (id == CelestialBodyId.Luna)
+                return SampleLunaDem(x, z);
 
             float warp = 14f;
             float ox = (seed % 977) * 0.37f;
@@ -269,8 +277,6 @@ namespace SolarMajesty
             {
                 case CelestialBodyId.Earth:
                     return dunes * 1.55f + ridged * 0.28f + grain * 0.7f;
-                case CelestialBodyId.Luna:
-                    return dunes * 1.2f + ridged * 0.7f + grain + Craters(x, z, seed, 0.84f) * 2.05f;
                 case CelestialBodyId.Belt:
                     return dunes * 1.8f + ridged * 1.45f + grain * 1.4f;
                 case CelestialBodyId.Europa:
@@ -319,39 +325,46 @@ namespace SolarMajesty
             return h + grain;
         }
 
+        /// <summary>
+        /// Metres from the vendored LROC Linné heightmap. 0.5 in the texture is campus grade.
+        /// </summary>
+        public static float SampleLunaDem(float x, float z)
+        {
+            LunaDemSettings settings = LunaDemSettings.Load();
+            Texture2D tex = settings != null
+                ? settings.HeightTexture
+                : Resources.Load<Texture2D>(LunaDemSettings.HeightResourcePath);
+            if (tex == null) return 0f;
+
+            float coverage = settings != null && settings.coverageMetres > 1f
+                ? settings.coverageMetres
+                : 80f;
+            Vector2 uv0 = settings != null ? settings.campusUv : new Vector2(0.5f, 0.5f);
+            float yaw = settings != null ? settings.yawDegrees * Mathf.Deg2Rad : 0f;
+            float range = settings != null && settings.heightRange > 1f ? settings.heightRange : 32f;
+            float vert = settings != null ? settings.verticalScale : 1f;
+
+            Vector3 campus = ColonyLayout.CampusOrigin;
+            float lx = x - campus.x;
+            float lz = z - campus.z;
+            float c = Mathf.Cos(yaw);
+            float s = Mathf.Sin(yaw);
+            float rx = lx * c - lz * s;
+            float rz = lx * s + lz * c;
+            float u = Mathf.Clamp01(uv0.x + rx / coverage);
+            float v = Mathf.Clamp01(uv0.y + rz / coverage);
+
+            float encoded = tex.GetPixelBilinear(u, v).r;
+            float h = (encoded - 0.5f) * range * vert;
+            float grain = (Mathf.PerlinNoise(x * 0.21f + 3.1f, z * 0.21f) - 0.5f) * 0.22f;
+            return h + grain;
+        }
+
         private static float Ridged(float x, float z)
         {
             float n = Mathf.Clamp01(Mathf.PerlinNoise(x, z));
             float r = 1f - Mathf.Abs(n * 2f - 1f);
             return r * r;
-        }
-
-        private static float Craters(float x, float z, int seed, float density)
-        {
-            const float cell = 38f;
-            int ix = Mathf.FloorToInt(x / cell);
-            int iz = Mathf.FloorToInt(z / cell);
-            float acc = 0f;
-            for (int dz = -1; dz <= 1; dz++)
-            for (int dx = -1; dx <= 1; dx++)
-            {
-                int cx = ix + dx;
-                int cz = iz + dz;
-                float hx = Hash(cx, cz, seed);
-                if (hx > density) continue;
-                float px = (cx + 0.18f + Hash(cx, cz, seed + 11) * 0.64f) * cell;
-                float pz = (cz + 0.18f + Hash(cx, cz, seed + 29) * 0.64f) * cell;
-                float radius = Mathf.Lerp(4.5f, 13.5f, Hash(cx, cz, seed + 47));
-                float dxw = x - px;
-                float dzw = z - pz;
-                float d = Mathf.Sqrt(dxw * dxw + dzw * dzw);
-                if (d >= radius) continue;
-                float t = d / radius;
-                float bowl = (1f - t * t) * -1f;
-                float rim = Mathf.Exp(-Mathf.Pow((t - 0.78f) * 7f, 2f)) * 0.28f;
-                acc += (bowl + rim) * Mathf.Lerp(0.55f, 1f, Hash(cx, cz, seed + 71));
-            }
-            return acc;
         }
 
         private static float IceCracks(float x, float z)
@@ -374,13 +387,6 @@ namespace SolarMajesty
                 a *= 0.5f;
             }
             return v;
-        }
-
-        private static float Hash(int x, int z, int seed)
-        {
-            int n = x * 374761393 + z * 668265263 + seed * 1274126177;
-            n = (n ^ (n >> 13)) * 1274126177;
-            return (n & 0x7fffffff) / (float)int.MaxValue;
         }
 
         /// <summary>

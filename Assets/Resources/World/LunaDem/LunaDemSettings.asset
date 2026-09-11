@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e15a6238fc148d0e3c57f9a1d4e6b8c0, type: 3}
+  m_Name: LunaDemSettings
+  m_EditorClassIdentifier: SolarMajesty.Runtime::SolarMajesty.LunaDemSettings
+  height: {fileID: 2800000, guid: a47c8e19d0b27f3a4e59c1d2f4a6b8c0, type: 3}
+  campusUv: {x: 0.5, y: 0.5}
+  yawDegrees: 0
+  metresPerPixel: 0.15625
+  verticalScale: 1
+  coverageMetres: 80
+  heightRange: 32

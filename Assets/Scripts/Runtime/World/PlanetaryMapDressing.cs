@@ -41,7 +41,10 @@ namespace SolarMajesty
                 groundMat.SetFloat("_MacroStrength", 0.38f);
                 groundMat.SetFloat("_DetailScale", 2.4f);
                 groundMat.SetFloat("_DetailStrength",
-                    body.Id == CelestialBodyId.Europa ? 0.12f : body.Id == CelestialBodyId.Mars ? 0.40f : 0.24f);
+                    body.Id == CelestialBodyId.Europa ? 0.12f
+                    : body.Id == CelestialBodyId.Mars ? 0.40f
+                    : body.Id == CelestialBodyId.Luna ? 0.38f
+                    : 0.24f);
                 groundMat.SetFloat("_Smoothness", body.Id == CelestialBodyId.Europa ? 0.30f : 0.06f);
                 BindAuthoredGroundDetail(groundMat, body);
                 BindTerrainBake(groundMat, ground, body);
@@ -295,6 +298,30 @@ namespace SolarMajesty
                 if (groundMat.HasProperty("_MacroStrength"))
                     groundMat.SetFloat("_MacroStrength", 0.22f);
             }
+            else if (id == CelestialBodyId.Luna)
+            {
+                // Highland anorthosite dust, shadowed mare bowls, pale ejecta rims.
+                if (groundMat.HasProperty("_BaseColor"))
+                    groundMat.SetColor("_BaseColor", new Color(0.62f, 0.58f, 0.52f, 1f));
+                if (groundMat.HasProperty("_DarkColor"))
+                    groundMat.SetColor("_DarkColor", new Color(0.18f, 0.17f, 0.16f, 1f));
+                if (groundMat.HasProperty("_RockColor"))
+                    groundMat.SetColor("_RockColor", new Color(0.38f, 0.36f, 0.34f, 1f));
+                if (groundMat.HasProperty("_GrassColor"))
+                    groundMat.SetColor("_GrassColor", new Color(0.72f, 0.68f, 0.62f, 1f));
+                if (groundMat.HasProperty("_WetColor"))
+                    groundMat.SetColor("_WetColor", new Color(0.14f, 0.13f, 0.12f, 1f));
+                if (groundMat.HasProperty("_SlopeStart"))
+                    groundMat.SetFloat("_SlopeStart", 0.16f);
+                if (groundMat.HasProperty("_SlopeEnd"))
+                    groundMat.SetFloat("_SlopeEnd", 0.52f);
+                if (groundMat.HasProperty("_BakeNormalAmount"))
+                    groundMat.SetFloat("_BakeNormalAmount", 1f);
+                if (groundMat.HasProperty("_MacroStrength"))
+                    groundMat.SetFloat("_MacroStrength", 0.18f);
+                if (groundMat.HasProperty("_SplatTexScale"))
+                    groundMat.SetFloat("_SplatTexScale", 6.4f);
+            }
         }
 
         /// <summary>
@@ -311,6 +338,8 @@ namespace SolarMajesty
             // fill so the top of the ortho frame reads atmosphere, not void.
             if (body.Id == CelestialBodyId.Mars)
                 return Color.Lerp(body.FogColor, body.SkyHorizon, 0.45f);
+            if (body.Id == CelestialBodyId.Luna)
+                return Color.Lerp(body.GroundDark, body.SkyTop, 0.35f);
             return Color.Lerp(body.GroundDark, body.GroundLight, 0.12f);
         }
 
@@ -374,7 +403,9 @@ namespace SolarMajesty
                     ? new Color(0.62f, 0.78f, 1f)
                     : body.Id == CelestialBodyId.Mars
                         ? new Color(0.95f, 0.58f, 0.32f)
-                        : body.SkyTop;
+                        : body.Id == CelestialBodyId.Luna
+                            ? new Color(0.06f, 0.06f, 0.08f)
+                            : body.SkyTop;
                 // Must match terrain void — default Procedural ground is mustard/olive yellow.
                 if (sky.HasProperty("_SkyTint")) sky.SetColor("_SkyTint", tint);
                 sky.SetColor("_GroundColor", voidFill);
@@ -402,7 +433,7 @@ namespace SolarMajesty
             cam.backgroundColor = voidFill;
             // Mars ortho overseer: procedural skybox often reads black in the upper
             // third. Solid haze fill matches the dream-loop concept sky band.
-            if (body != null && body.Id == CelestialBodyId.Mars)
+            if (body != null && (body.Id == CelestialBodyId.Mars || body.Id == CelestialBodyId.Luna))
                 cam.clearFlags = CameraClearFlags.SolidColor;
             else
                 cam.clearFlags = hasSkybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;

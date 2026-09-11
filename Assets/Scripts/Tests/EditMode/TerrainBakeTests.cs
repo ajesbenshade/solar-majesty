@@ -62,6 +62,27 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void Luna_CampusPadStaysFlat_AndBowlIsDeep()
+        {
+            Assert.AreEqual(0, CelestialBodyCatalog.Luna().CraterCount);
+            Assert.IsNotNull(
+                Resources.Load<Texture2D>(LunaDemSettings.HeightResourcePath),
+                "LunaHeight must be a readable Resources texture");
+            var bake = TerrainDataBake.Generate(384f, 384f, 7, CelestialBodyCatalog.Luna());
+            Vector3 origin = ColonyLayout.CampusOrigin;
+            Assert.AreEqual(0f, Mathf.Abs(bake.SampleHeight(origin.x, origin.z)), 0.05f);
+            Assert.AreEqual(0f, Mathf.Abs(bake.SampleHeight(LaunchSite.PadWorld.x, LaunchSite.PadWorld.z)), 0.08f);
+            Vector3 crater = origin + TerrainDataBake.SignatureCraterLocal;
+            Assert.Less(bake.SampleHeight(crater.x, crater.z), -2f, "Linné bowl");
+            float far = bake.SampleHeight(origin.x + 16f, origin.z + 18f);
+            Assert.Greater(Mathf.Abs(far), 1.5f, "Luna far-third has relief");
+
+            Color ridge = TerrainDataBake.SplatFor(CelestialBodyId.Luna, 0.9f, 0.1f);
+            Assert.Less(ridge.b, 0.12f, "Luna must not lay a grass cap on high flats");
+            Assert.Greater(ridge.r, 0.50f, "Luna high flats stay pale ejecta");
+        }
+
+        [Test]
         public void Bake_EmitsTdbStyleMaps()
         {
             var bake = TerrainDataBake.Generate(128f, 128f, 3, CelestialBodyCatalog.Earth());
