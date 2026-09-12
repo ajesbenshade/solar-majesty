@@ -30,7 +30,7 @@ namespace SolarMajesty
         /// Empty dirt between Commons and still landmark yards (pad / PWR / extractors).
         /// SM_Capture 2026-09-11 packed pad onto the Commons apron; concept wants separate pads.
         /// </summary>
-        public const int LandmarkGapCells = 2;
+        public const int LandmarkGapCells = 3;
 
         /// <summary>
         /// CaptureStill Game-tab is short-wide (~2.4). Play snap stays

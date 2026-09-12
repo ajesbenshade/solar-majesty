@@ -2632,9 +2632,8 @@ namespace SolarMajesty
             var bounds = StillBounds();
 
             TryStampStillYard(BuildingCategory.LandingPad, StillCampusDensity.PadSize, commons, habFace, bounds);
-            // Concept reads: industrial tank/stack yard on the open slot beside the Commons,
-            // PV rack on the next slot behind it (dream-loop round 6). Farm before Power.
-            TryStampStillYard(BuildingCategory.Farm, StillCampusDensity.YardSize, commons, habFace, bounds);
+            // Concept: pad + rocket, solar field, industrial tank yard. No greenhouse on the
+            // still — farm packed the 2026-09-11 SM_Capture onto the Commons apron.
             TryStampStillYard(BuildingCategory.Power, StillCampusDensity.YardSize, commons, habFace, bounds);
             TryStampStillYard(BuildingCategory.RegolithCamp, StillCampusDensity.YardSize, commons, habFace, bounds);
             NotifyCampusExpanded();
