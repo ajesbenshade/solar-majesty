@@ -4088,7 +4088,12 @@ namespace SolarMajesty
             {
                 _isoCam.FocusOn(focus, ortho);
                 _isoCam.SnapToTarget();
+                var cam = _isoCam.GetComponent<Camera>();
+                DemoAtmosphere.SyncFog(cam);
             }
+
+            CampusDressing.RefreshTubes(Placer, grid, transform);
+            RefreshSuitCrossings();
 
             _glanceCooldown = 8f;
             Debug.Log($"[GameLoop] SnapStillCampusCamera ortho={ortho:0.##} aspect={aspect:0.##} aabb={min}->{max}");
