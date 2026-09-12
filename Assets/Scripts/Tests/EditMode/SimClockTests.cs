@@ -190,6 +190,26 @@ namespace SolarMajesty.Tests
                 claimedFlagIndex = 0
             });
             save.fauna.Add(new SaveFauna { kind = (int)FaunaKind.Stalker, health = 0.3f });
+            save.lairs.Add(new SaveLair { px = 40f, pz = -8f, scouted = true, cleared = false });
+            save.nodes.Add(new SaveNode { nodeType = (int)ResourceNodeType.Ice, px = 22f, pz = 6f, remaining = 11 });
+            save.mission.elapsed = 88f;
+            save.mission.sustainHold = 12.5f;
+            save.mission.densCleared = true;
+            save.parties.Add(new SaveParty
+            {
+                leaderClass = (int)SpecialistClass.DefenseMech,
+                memberClasses = new System.Collections.Generic.List<int>
+                {
+                    (int)SpecialistClass.DefenseMech,
+                    (int)SpecialistClass.Medic
+                }
+            });
+            save.buildings.Add(new SaveBuilding
+            {
+                category = (int)BuildingCategory.Watchtower,
+                laserArmed = true,
+                levyPurse = 9
+            });
 
             var copy = JsonUtility.FromJson<SaveGame>(JsonUtility.ToJson(save));
 
@@ -211,6 +231,16 @@ namespace SolarMajesty.Tests
 
             Assert.AreEqual(1, copy.fauna.Count);
             Assert.AreEqual(0.3f, copy.fauna[0].health, 1e-4f);
+
+            Assert.IsTrue(copy.lairs[0].scouted);
+            Assert.IsFalse(copy.lairs[0].cleared);
+            Assert.AreEqual(11, copy.nodes[0].remaining);
+            Assert.AreEqual(88f, copy.mission.elapsed, 1e-4f);
+            Assert.AreEqual(12.5f, copy.mission.sustainHold, 1e-4f);
+            Assert.IsTrue(copy.mission.densCleared);
+            Assert.AreEqual(2, copy.parties[0].memberClasses.Count);
+            Assert.IsTrue(copy.buildings[0].laserArmed);
+            Assert.AreEqual(9, copy.buildings[0].levyPurse);
         }
 
         [Test]
@@ -242,7 +272,22 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(save.flags);
             Assert.IsNotNull(save.agents);
             Assert.IsNotNull(save.fauna);
+            Assert.IsNotNull(save.nodes);
+            Assert.IsNotNull(save.lairs);
+            Assert.IsNotNull(save.parties);
             Assert.IsNotNull(save.research.unlocked);
+        }
+
+        [Test]
+        public void WorldSaveMatch_PicksNearestWithinRadius()
+        {
+            var pts = new[]
+            {
+                new Vector3(10f, 0f, 0f),
+                new Vector3(0f, 0f, 8f)
+            };
+            Assert.AreEqual(1, WorldSaveMatch.Nearest(new Vector3(0f, 0f, 7f), pts, 12f));
+            Assert.AreEqual(-1, WorldSaveMatch.Nearest(new Vector3(80f, 0f, 0f), pts, 12f));
         }
 
         [Test]

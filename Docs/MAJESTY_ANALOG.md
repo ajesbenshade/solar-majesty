@@ -25,3 +25,5 @@ Player-facing names stay Compact / robot. Do not use Paradox guild or temple nam
 Code: `MajestyAnalog` in `Assets/Scripts/Systems/MajestyAnalog.cs`.
 
 Hard locks: no click-to-move, no `SpecialistBrain.ScoreFlag` rewrite, no 11th class, no new `FlagType` for these toys.
+
+Continue keeps charted dens, depleted nodes, the sustain timer, parties, HAB purses, and armed watchtowers. Fear/Avoid decrees stay parked.

@@ -137,6 +137,12 @@ namespace SolarMajesty
             return true;
         }
 
+        public void RestoreLevy(int amount)
+        {
+            LevyPurse = Mathf.Max(0, amount);
+            LevySitSeconds = 0f;
+        }
+
         public void AddLevy(int amount)
         {
             if (amount <= 0 || !IsAlive) return;

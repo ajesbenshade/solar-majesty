@@ -89,6 +89,20 @@ namespace SolarMajesty
                 _spawned.Add(extra);
         }
 
+        /// <summary>Continue restore. Does not kill fauna — RestoreFauna owns living threats.</summary>
+        public void RestoreChart(bool wasCleared, bool wasScouted)
+        {
+            if (wasCleared)
+            {
+                _spawned.Clear();
+                MarkCleared();
+                return;
+            }
+
+            if (wasScouted)
+                MarkScouted();
+        }
+
         /// <summary>ClearThreat near this den — kill remaining fauna and silence the lair.</summary>
         public void ForceClear()
         {

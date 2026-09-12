@@ -234,6 +234,19 @@ namespace SolarMajesty
         /// <summary>Week 2+: call when rocket tech is researched and craft is built.</summary>
         public void SetLaunchReady(bool ready) => _launchReady = ready;
 
+        public void Restore(SaveMissionState s)
+        {
+            if (s == null) return;
+            _armed = true;
+            _state = (MissionState)Mathf.Clamp(s.state, 0, 2);
+            _missionElapsed = Mathf.Max(0f, s.elapsed);
+            _sustainElapsed = Mathf.Max(0f, s.sustainHold);
+            DensCleared = s.densCleared;
+            _launchReady = s.launchReady;
+            if (s.sustainMet)
+                _sustainElapsed = Mathf.Max(_sustainElapsed, sustainHoldSeconds);
+        }
+
         public void Tick()
         {
             if (_loop == null) return;

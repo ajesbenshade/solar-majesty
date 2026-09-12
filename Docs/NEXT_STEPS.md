@@ -60,7 +60,8 @@ Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0
 7. **Watchtowers in:** rim guard post + levy chest. Aegis / Rim Watch clock in. If Commons is far, Haul drops CRED at the tower. Inspect the tower and spend CRED to arm lasers (18 m, like a battery).
 8. **Majesty analog pack in:** Market siphon (surplus ICE/REG → CRED, reserve held). Aid Station (Life Support) — paid patches, Triage clocks in. Map: [`Docs/MAJESTY_ANALOG.md`](MAJESTY_ANALOG.md).
 9. **Dens-as-dungeons in:** unscouted dens are fog smudges. Explore charts every den in the 22 m disc. Horizon / Chart walking within 16 m charts one. Fobot Yard shows wreck chassis on the dirt.
-10. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
+10. **Continue board in:** dens scouted/cleared, node remaining, mission elapsed/sustain/gates, parties, HAB levy purses, watchtower lasers. Wrecks respawn at the yard after load. Legacy PlayerPrefs-only slots still load settlement; they never had dens/nodes.
+11. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`.
 
 ## Still out of scope (for now)
 

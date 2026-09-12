@@ -4341,6 +4341,8 @@ namespace SolarMajesty
                 });
             }
 
+            OverlayBuildingBoard(save);
+
             if (Flags != null)
             {
                 var open = Flags.Flags;
@@ -4398,6 +4400,9 @@ namespace SolarMajesty
                 });
             }
 
+            CaptureWorldBoard(save);
+            CaptureMission(save);
+            CaptureParties(save);
             return save;
         }
 
@@ -4443,6 +4448,11 @@ namespace SolarMajesty
             var restoredFlags = RestoreFlags(save.flags);
             RestoreAgents(save.agents, restoredFlags);
             RestoreFauna(save.fauna);
+            RestoreWorldBoard(save);
+            RestoreBuildingBoard(save);
+            RestoreParties(save.parties);
+            _mission?.Restore(save.mission);
+            RefreshWreckVisuals();
 
             _playSeconds = save.playSeconds;
             RefreshTechEffects();
@@ -4570,6 +4580,198 @@ namespace SolarMajesty
                 var agent = SpawnFaunaAt((FaunaKind)s.kind, new Vector3(s.px, s.py, s.pz));
                 agent?.RestoreHealth01(s.health);
             }
+        }
+
+        private void OverlayBuildingBoard(SaveGame save)
+        {
+            if (save?.buildings == null || Village == null || grid == null) return;
+            for (int i = 0; i < save.buildings.Count; i++)
+            {
+                var b = save.buildings[i];
+                Vector3 world = FootprintWorldCenter(new Vector2Int(b.x, b.y), b.w, b.h);
+                var st = Village.FindNear(world, 3f);
+                if (st == null || (int)st.Category != b.category) continue;
+                b.levyPurse = st.LevyPurse;
+                b.laserArmed = st.LaserArmed;
+            }
+        }
+
+        private void CaptureWorldBoard(SaveGame save)
+        {
+            if (save == null || _world == null) return;
+            var nodes = _world.Nodes;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var n = nodes[i];
+                if (n == null) continue;
+                Vector3 p = n.WorldPosition;
+                save.nodes.Add(new SaveNode
+                {
+                    nodeType = (int)n.NodeType,
+                    px = p.x,
+                    py = p.y,
+                    pz = p.z,
+                    remaining = n.Remaining
+                });
+            }
+
+            var lairs = _world.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                var l = lairs[i];
+                if (l == null) continue;
+                Vector3 p = l.WorldPosition;
+                save.lairs.Add(new SaveLair
+                {
+                    px = p.x,
+                    py = p.y,
+                    pz = p.z,
+                    cleared = l.IsCleared,
+                    scouted = l.IsScouted
+                });
+            }
+        }
+
+        private void CaptureMission(SaveGame save)
+        {
+            if (save == null || _mission == null) return;
+            save.mission.state = (int)_mission.State;
+            save.mission.elapsed = _mission.MissionElapsed;
+            save.mission.sustainHold = _mission.SustainElapsed;
+            save.mission.densCleared = _mission.DensCleared;
+            save.mission.sustainMet = _mission.SustainComplete;
+            save.mission.launchReady = _mission.LaunchReady;
+        }
+
+        private void CaptureParties(SaveGame save)
+        {
+            if (save == null) return;
+            for (int i = 0; i < _parties.Count; i++)
+            {
+                var p = _parties[i];
+                if (p == null || p.Leader == null || p.Leader.Data == null) continue;
+                var row = new SaveParty { leaderClass = (int)p.Leader.Data.specialistClass };
+                for (int m = 0; m < p.Members.Count; m++)
+                {
+                    var a = p.Members[m];
+                    if (a?.Data == null) continue;
+                    row.memberClasses.Add((int)a.Data.specialistClass);
+                }
+
+                if (row.memberClasses.Count >= 2)
+                    save.parties.Add(row);
+            }
+        }
+
+        private void RestoreWorldBoard(SaveGame save)
+        {
+            if (save == null || _world == null) return;
+            RestoreNodes(save.nodes);
+            RestoreLairs(save.lairs);
+        }
+
+        private void RestoreNodes(List<SaveNode> saved)
+        {
+            if (saved == null || saved.Count == 0 || _world == null) return;
+            var live = _world.Nodes;
+            var pts = new Vector3[live.Count];
+            for (int i = 0; i < live.Count; i++)
+                pts[i] = live[i] != null ? live[i].WorldPosition : new Vector3(9999f, 0f, 9999f);
+
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                int idx = WorldSaveMatch.Nearest(new Vector3(s.px, s.py, s.pz), pts, WorldSaveMatch.MaxDist);
+                if (idx < 0) continue;
+                var node = live[idx];
+                if (node == null || (int)node.NodeType != s.nodeType) continue;
+                node.RestoreRemaining(s.remaining);
+                pts[idx] = new Vector3(9999f, 0f, 9999f);
+            }
+        }
+
+        private void RestoreLairs(List<SaveLair> saved)
+        {
+            if (saved == null || saved.Count == 0 || _world == null) return;
+            var live = _world.Lairs;
+            var pts = new Vector3[live.Count];
+            for (int i = 0; i < live.Count; i++)
+                pts[i] = live[i] != null ? live[i].WorldPosition : new Vector3(9999f, 0f, 9999f);
+
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                int idx = WorldSaveMatch.Nearest(new Vector3(s.px, s.py, s.pz), pts, WorldSaveMatch.MaxDist);
+                if (idx < 0) continue;
+                live[idx]?.RestoreChart(s.cleared, s.scouted);
+                pts[idx] = new Vector3(9999f, 0f, 9999f);
+            }
+        }
+
+        private void RestoreBuildingBoard(SaveGame save)
+        {
+            if (save?.buildings == null || Village == null || grid == null) return;
+            for (int i = 0; i < save.buildings.Count; i++)
+            {
+                var b = save.buildings[i];
+                Vector3 world = FootprintWorldCenter(new Vector2Int(b.x, b.y), b.w, b.h);
+                var st = Village.FindNear(world, 3f);
+                if (st == null || (int)st.Category != b.category) continue;
+                st.RestoreLevy(b.levyPurse);
+                if (b.laserArmed)
+                    st.ArmLasers();
+            }
+        }
+
+        private void RestoreParties(List<SaveParty> saved)
+        {
+            if (saved == null) return;
+            for (int i = 0; i < _parties.Count; i++)
+                _parties[i]?.Disband();
+            _parties.Clear();
+
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                if (s?.memberClasses == null || s.memberClasses.Count < 2) continue;
+                var members = new List<SpecialistAgent>(4);
+                for (int m = 0; m < s.memberClasses.Count && members.Count < HeroParty.MaxSize; m++)
+                {
+                    var cls = (SpecialistClass)s.memberClasses[m];
+                    var agent = FindLivingByClass(cls, members);
+                    if (agent != null)
+                        members.Add(agent);
+                }
+
+                if (members.Count < 2) continue;
+                var leader = FindLivingByClass((SpecialistClass)s.leaderClass, null) ?? members[0];
+                if (!members.Contains(leader))
+                    members[0] = leader;
+
+                var party = new HeroParty(_nextPartyId++, leader);
+                for (int m = 0; m < members.Count; m++)
+                {
+                    party.Members.Add(members[m]);
+                    members[m].SetParty(party);
+                }
+
+                _parties.Add(party);
+            }
+        }
+
+        private SpecialistAgent FindLivingByClass(SpecialistClass cls, List<SpecialistAgent> skip)
+        {
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                var a = _agents[i];
+                if (a == null || a.Data == null || !a.IsAlive) continue;
+                if (a.Data.specialistClass != cls) continue;
+                if (skip != null && skip.Contains(a)) continue;
+                if (a.Party != null) continue;
+                return a;
+            }
+
+            return null;
         }
 
         private List<CampusSlot> CaptureCampusSlots()
