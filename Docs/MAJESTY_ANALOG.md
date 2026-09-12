@@ -11,14 +11,14 @@ Player-facing names stay Compact / robot. Do not use Paradox guild or temple nam
 | Marketplace | Market Stall | Potions + necklace. Surplus ICE/REG → CRED above reserve. |
 | Blacksmith | Blacksmith | Lodge arms and armor. |
 | Guardhouse | Watchtower | Posted guard. Levy chest. Arm lasers. |
-| Temple resurrect | Fobot Yard | CRED stand-up. Level-scaled bill. |
+| Temple resurrect | Fobot Yard | CRED stand-up. Level-scaled bill. Wrecks sit on the dirt. |
 | Temple heal | Aid Station | Hurt robots pay CRED for a patch. |
 | Inn | Waystation Inn | Rest only. |
 | Warrior / Ranger / Cleric / Dwarf halls | Aegis / Horizon / Triage / Anvil | Kits, pulses, flag pull. |
 | Wizard tower | Lab + TECH | Science. Secret Projects = monuments. |
 | Magic tower | Defense Battery / armed Watchtower | Campus and rim lasers. |
 | Trading post | Landing Pad + Market | Dock fee + siphon. |
-| Dungeons | Dens | Clear Threat. |
+| Dungeons | Dens (fogged until charted) | Explore disc, Horizon pulse, or a scout walking up charts them. Unscouted dens are a smudge. |
 | Hero recruit | Workshops | Fabricate outdoor robots. |
 | Flags | Decrees | Eight `FlagType`s. No click-to-move. |
 

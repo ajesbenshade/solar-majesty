@@ -312,6 +312,7 @@ namespace SolarMajesty
         }
 
         public bool HasScrapCorpse => _corpses.Count > 0;
+        public IReadOnlyList<SpecialistRecord> Corpses => _corpses;
 
         public int FieldReviveMet
         {
@@ -387,6 +388,7 @@ namespace SolarMajesty
         private DustStalkerAgent _batteryLock;
         private float _batteryLockUntil;
         private readonly List<SpecialistRecord> _corpses = new List<SpecialistRecord>(8);
+        private readonly List<GameObject> _wreckVisuals = new List<GameObject>(8);
         private readonly List<SpecialistRecord> _rosterSaved = new List<SpecialistRecord>(8);
         private readonly Dictionary<SpecialistClass, SpecialistRecord> _pendingVeterans =
             new Dictionary<SpecialistClass, SpecialistRecord>(8);
@@ -4000,6 +4002,8 @@ namespace SolarMajesty
             DemoAudio.PlayBuildComplete();
             if (data.category == BuildingCategory.LandingPad)
                 SyncLaunchGate();
+            if (data.category == BuildingCategory.FobotYard)
+                RefreshWreckVisuals();
             TryClaimOutpost(world, data.category);
             HideDropClaimIfSettled();
             PersistSession();
@@ -4162,8 +4166,10 @@ namespace SolarMajesty
             {
                 case FlagType.Explore:
                     AddSurveyDisc(at);
-                    ScoutDensInDisc(at);
-                    LogOverseer("Survey disc 22 m / 90 s — Extract and Research Site pay extra inside.");
+                    int charted = ScoutDensInDisc(at);
+                    LogOverseer(charted > 0
+                        ? $"Survey disc 22 m — charted {charted} den(s). Extract and Research Site pay extra inside."
+                        : "Survey disc 22 m / 90 s — Extract and Research Site pay extra inside.");
                     break;
                 case FlagType.DefendArea:
                     float extra = 0f;
@@ -5406,9 +5412,11 @@ namespace SolarMajesty
             {
                 if (_corpses[i].Class != rec.Class) continue;
                 _corpses[i] = rec;
+                RefreshWreckVisuals();
                 return;
             }
             _corpses.Add(rec);
+            RefreshWreckVisuals();
         }
 
         private void RemoveCorpse(SpecialistClass cls)
@@ -5417,6 +5425,25 @@ namespace SolarMajesty
             {
                 if (_corpses[i].Class == cls)
                     _corpses.RemoveAt(i);
+            }
+            RefreshWreckVisuals();
+        }
+
+        private void RefreshWreckVisuals()
+        {
+            for (int i = 0; i < _wreckVisuals.Count; i++)
+            {
+                if (_wreckVisuals[i] != null)
+                    Destroy(_wreckVisuals[i]);
+            }
+            _wreckVisuals.Clear();
+            Vector3 yard = ScrapyardPosition();
+            Transform parent = buildingRoot != null ? buildingRoot : transform;
+            for (int i = 0; i < _corpses.Count; i++)
+            {
+                float ang = i * 0.9f;
+                Vector3 at = yard + new Vector3(Mathf.Cos(ang) * 1.6f, 0f, Mathf.Sin(ang) * 1.6f);
+                _wreckVisuals.Add(FobotWreck.Spawn(_corpses[i], at, parent));
             }
         }
 
@@ -5553,6 +5580,7 @@ namespace SolarMajesty
             ExpireDiscs(_watches);
             TickWatches(dt);
             TickBatteries(dt);
+            TickDenChart();
         }
 
         private static void ExpireDiscs(List<TimedDisc> list)
@@ -5611,24 +5639,43 @@ namespace SolarMajesty
             return FlatDist(world, commons.WorldPosition) <= OverseerRules.CommonsShadeRadius;
         }
 
-        private void ScoutDensInDisc(Vector3 at)
+        private int ScoutDensInDisc(Vector3 at)
         {
-            if (_world == null) return;
-            StalkerLair best = null;
-            float bestD = OverseerRules.SurveyRadius;
+            if (_world == null) return 0;
+            int n = 0;
             var lairs = _world.Lairs;
             for (int i = 0; i < lairs.Count; i++)
             {
                 var l = lairs[i];
                 if (l == null || l.IsCleared || l.IsScouted) continue;
-                float d = FlatDist(at, l.WorldPosition);
-                if (d < bestD)
+                if (!DenChart.InDisc(at, l.WorldPosition, OverseerRules.SurveyRadius)) continue;
+                l.MarkScouted();
+                n++;
+            }
+
+            return n;
+        }
+
+        private void TickDenChart()
+        {
+            if (_world == null) return;
+            var lairs = _world.Lairs;
+            for (int a = 0; a < _agents.Count; a++)
+            {
+                var agent = _agents[a];
+                if (agent == null || !agent.IsAlive || agent.IsIncapacitated || agent.Data == null)
+                    continue;
+                if (!DenChart.IsChartClass(agent.Data.specialistClass)) continue;
+                Vector3 at = agent.transform.position;
+                for (int i = 0; i < lairs.Count; i++)
                 {
-                    bestD = d;
-                    best = l;
+                    var l = lairs[i];
+                    if (l == null || l.IsCleared || l.IsScouted) continue;
+                    if (!DenChart.InDisc(at, l.WorldPosition, DenChart.PassiveChartRadius)) continue;
+                    l.MarkScouted();
+                    LogOverseer($"Den charted — {ColonyStructure.ClassLabel(agent.Data.specialistClass)} walked the fog.");
                 }
             }
-            best?.MarkScouted();
         }
 
         private void TickWatches(float dt)

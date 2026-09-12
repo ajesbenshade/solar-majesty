@@ -736,6 +736,19 @@ namespace SolarMajesty
             }
         }
 
+        public static void BuildWreck(Transform root)
+        {
+            Prim(root, "WreckHull", PrimitiveType.Cube,
+                new Vector3(0f, 0.28f, 0f),
+                new Vector3(0.85f, 0.32f, 0.55f), Carbon);
+            Prim(root, "WreckArm", PrimitiveType.Cube,
+                new Vector3(0.42f, 0.22f, 0.08f),
+                new Vector3(0.45f, 0.12f, 0.12f), Steel);
+            Prim(root, "WreckLens", PrimitiveType.Sphere,
+                new Vector3(-0.22f, 0.38f, 0.18f),
+                new Vector3(0.16f, 0.16f, 0.16f), Orange);
+        }
+
         public static void BuildAidStation(Transform root, float w, float d)
         {
             Prim(root, "AidPlinth", PrimitiveType.Cube,

@@ -184,6 +184,16 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void DenChart_DiscAndChartClasses()
+        {
+            Assert.IsTrue(DenChart.InDisc(Vector3.zero, new Vector3(10f, 0f, 0f), 12f));
+            Assert.IsFalse(DenChart.InDisc(Vector3.zero, new Vector3(20f, 0f, 0f), 12f));
+            Assert.IsTrue(DenChart.IsChartClass(SpecialistClass.ScoutDrone));
+            Assert.IsTrue(DenChart.IsChartClass(SpecialistClass.SurveyorBot));
+            Assert.IsFalse(DenChart.IsChartClass(SpecialistClass.EngineerBot));
+        }
+
+        [Test]
         public void AnalogCatalog_CoversTheMajestyLoops()
         {
             Assert.GreaterOrEqual(MajestyAnalog.All.Length, 16);

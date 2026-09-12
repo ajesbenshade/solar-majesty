@@ -1348,6 +1348,20 @@ namespace SolarMajesty
                     _loop.NeedsFieldRevive
                         ? $"Stand-up bill {met} CRED. Cost scales with level."
                         : "No wrecks. Dock this yard before anyone goes down.", _micro);
+                var wrecks = _loop.Corpses;
+                if (wrecks != null && wrecks.Count > 0)
+                {
+                    row += 14f;
+                    var names = new System.Text.StringBuilder();
+                    for (int i = 0; i < wrecks.Count && i < 3; i++)
+                    {
+                        if (i > 0) names.Append(" · ");
+                        names.Append(ColonyStructure.ClassLabel(wrecks[i].Class));
+                        names.Append(" L");
+                        names.Append(Mathf.Max(1, wrecks[i].Level));
+                    }
+                    GUI.Label(new Rect(c.x, row, c.width, 13f), names.ToString(), _micro);
+                }
                 row += 16f;
                 bool canPay = _loop.NeedsFieldRevive && _loop.HasFobotYard &&
                               _loop.FieldReviveReadyIn <= 0.5f;
@@ -1724,8 +1738,8 @@ namespace SolarMajesty
                 for (int i = 0; i < lairs.Count; i++)
                 {
                     var l = lairs[i];
-                    if (l == null || l.IsCleared) continue;
-                    Pip(l.WorldPosition, l.IsScouted ? new Color(0.35f, 0.9f, 1f) : Alarm, 4f);
+                    if (l == null || l.IsCleared || !l.IsScouted) continue;
+                    Pip(l.WorldPosition, new Color(0.35f, 0.9f, 1f), 4f);
                 }
             }
 
