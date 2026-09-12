@@ -37,7 +37,10 @@ namespace SolarMajesty
             var set = _loop.Settlement;
             int pending = set.TakeUncollectedLevy();
             if (pending > 0)
+            {
                 DepositLevy(pending);
+                _loop.NotifyLevySitting(TotalSittingLevy());
+            }
             TickLevySit(dt);
 
             if (set.BirthDue)

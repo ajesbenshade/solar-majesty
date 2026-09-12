@@ -383,6 +383,8 @@ namespace SolarMajesty
         private float _reviveReadyAt;
         private bool _revivePenaltyApplied;
         private int _lastTithe;
+        private float _siphonBlockToastAt;
+        private float _purseToastAt;
         private readonly List<TimedDisc> _surveys = new List<TimedDisc>(4);
         private readonly List<TimedDisc> _watches = new List<TimedDisc>(4);
         private DustStalkerAgent _batteryLock;
@@ -3412,10 +3414,18 @@ namespace SolarMajesty
             }
         }
 
+        public void NotifyLevySitting(int amount)
+        {
+            if (amount <= 0 || HasLivingCourier) return;
+            if (Time.time < _purseToastAt) return;
+            _purseToastAt = Time.time + 48f;
+            LogOverseer(CompactGrok.PurseSitting(amount));
+        }
+
         public void NotifyLevyStolen(int amount, string where)
         {
             if (amount <= 0) return;
-            LogOverseer($"Levy stolen at {where} — {amount} CRED. Junk or the wait got there first.");
+            LogOverseer(CompactGrok.LevyStolen(amount, where));
         }
 
         public bool TryArmWatchtower(ColonyStructure tower)
@@ -3449,7 +3459,7 @@ namespace SolarMajesty
         {
             if (amount <= 0 || Settlement == null) return;
             Settlement.NoteLevyDelivered(amount);
-            LogOverseer($"Haul delivered {amount} CRED to Commons.");
+            LogOverseer(CompactGrok.LevyDelivered(amount));
         }
 
         public void RetryParty()
@@ -3461,7 +3471,7 @@ namespace SolarMajesty
             }
             if (!HasFobotYard)
             {
-                LogOverseer("Dock a Fobot Yard. Y does not skip the building.");
+                LogOverseer(CompactGrok.YardNeedsBuilding());
                 return;
             }
             if (Time.time < _reviveReadyAt)
@@ -3473,7 +3483,7 @@ namespace SolarMajesty
             ComputeReviveBill(out int met, out int ice);
             if (Economy == null || !Economy.CanAffordRevive(met, ice))
             {
-                LogOverseer($"Fobot Yard needs {met} CRED.");
+                LogOverseer(CompactGrok.YardBill(met));
                 return;
             }
 
@@ -3496,7 +3506,7 @@ namespace SolarMajesty
             if (!_revivePenaltyApplied)
                 _revivePenaltyApplied = true;
             _mission?.OnPartyRevived();
-            LogOverseer($"Fobot Yard stand-up — {met} CRED. Next bill rises with level.");
+            LogOverseer(CompactGrok.YardBill(met));
             Debug.Log("[GameLoop] Fobot Yard revive paid.");
         }
 
@@ -5443,8 +5453,15 @@ namespace SolarMajesty
                 return;
             if (!MarketSiphon.TrySiphon(
                     Resources, Settlement.Population, out int credits, out int ice, out int reg))
+            {
+                if (Time.time >= _siphonBlockToastAt)
+                {
+                    _siphonBlockToastAt = Time.time + 90f;
+                    LogOverseer(CompactGrok.SiphonBlocked(MarketSiphon.IceReserve(Settlement.Population)));
+                }
                 return;
-            LogOverseer($"Market siphon +{credits} CRED (−{ice} ICE −{reg} REG). Tank reserve held.");
+            }
+            LogOverseer(CompactGrok.SiphonPaid(credits, ice, reg));
         }
 
         private void RefreshSustainRates()
@@ -5875,7 +5892,8 @@ namespace SolarMajesty
                     if (l == null || l.IsCleared || l.IsScouted) continue;
                     if (!DenChart.InDisc(at, l.WorldPosition, DenChart.PassiveChartRadius)) continue;
                     l.MarkScouted();
-                    LogOverseer($"Den charted — {ColonyStructure.ClassLabel(agent.Data.specialistClass)} walked the fog.");
+                    LogOverseer(CompactGrok.DenCharted(
+                        ColonyStructure.ClassLabel(agent.Data.specialistClass)));
                 }
             }
         }

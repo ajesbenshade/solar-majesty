@@ -55,7 +55,7 @@ Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0
 2. Title orrery + four starter guilds **in**. Click a world to drop (Shift+click unlocks). Horizon / Anvil / Aegis / Triage replace the generic Guild Hall.
 3. Majesty wallet **in**: CRED only for flags / buildings / techs / revive / gear. ICE lungs, PWR grid. Guild halls sell class kits. Market Stall (Extract Basics) sells potions + regen necklace. Lodge pulses research-then-activate.
 4. **Blacksmith** (Ore Refining) sells guild arms and armor. **Fobot Yard** (Med Protocols) is the paid revive building — Y will not skip it. Yard bill scales with hero level.
-5. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes.
+5. Settings chips cycle Mode / Challenge / Stance. Open Hands hunger +0.26 clears the 0.75 cheap-flag greed gate (EditMode covered). Compact Grok asides cover levy steal/sit, yard invoice, siphon closed, den chart.
 6. **Levy Courier walks in:** tax no longer teleports into CRED. Occupied HABs accrue a purse; Haul (Courier) walks it to Commons. Sitting too long or a downed Haul can lose the purse. No new FlagType. SpecialistBrain scoring unchanged.
 7. **Watchtowers in:** rim guard post + levy chest. Aegis / Rim Watch clock in. If Commons is far, Haul drops CRED at the tower. Inspect the tower and spend CRED to arm lasers (18 m, like a battery).
 8. **Majesty analog pack in:** Market siphon (surplus ICE/REG → CRED, reserve held). Aid Station (Life Support) — paid patches, Triage clocks in. Map: [`Docs/MAJESTY_ANALOG.md`](MAJESTY_ANALOG.md).

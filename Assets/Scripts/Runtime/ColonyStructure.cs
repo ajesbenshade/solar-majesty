@@ -141,6 +141,7 @@ namespace SolarMajesty
         {
             LevyPurse = Mathf.Max(0, amount);
             LevySitSeconds = 0f;
+            RefreshLevyPip();
         }
 
         public void AddLevy(int amount)
@@ -148,6 +149,7 @@ namespace SolarMajesty
             if (amount <= 0 || !IsAlive) return;
             LevyPurse += amount;
             LevySitSeconds = 0f;
+            RefreshLevyPip();
         }
 
         public int TakeLevy()
@@ -155,6 +157,7 @@ namespace SolarMajesty
             int n = LevyPurse;
             LevyPurse = 0;
             LevySitSeconds = 0f;
+            RefreshLevyPip();
             return n;
         }
 
@@ -164,6 +167,7 @@ namespace SolarMajesty
             int take = Mathf.Min(amount, LevyPurse);
             LevyPurse -= take;
             LevySitSeconds = 0f;
+            RefreshLevyPip();
             return take;
         }
 
@@ -206,6 +210,39 @@ namespace SolarMajesty
                     else if (mat.HasProperty("_Color")) mat.color = c;
                     rend.sharedMaterial = mat;
                 }
+            }
+        }
+
+        private void RefreshLevyPip()
+        {
+            Transform existing = transform.Find("LevyPip");
+            if (LevyPurse <= 0)
+            {
+                if (existing != null)
+                    ColonyVisualUtility.DestroyNow(existing.gameObject);
+                return;
+            }
+
+            if (existing == null)
+            {
+                var pip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                pip.name = "LevyPip";
+                pip.transform.SetParent(transform, false);
+                pip.transform.localPosition = new Vector3(0f, 4.15f, 0f);
+                pip.transform.localScale = Vector3.one * 0.28f;
+                ColonyVisualUtility.DestroyNow(pip.GetComponent<Collider>());
+                existing = pip.transform;
+            }
+
+            var rend = existing.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                       ?? Shader.Find("Sprites/Default"));
+                var c = new Color(0.98f, 0.82f, 0.22f);
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+                else if (mat.HasProperty("_Color")) mat.color = c;
+                rend.sharedMaterial = mat;
             }
         }
 
