@@ -58,7 +58,8 @@ Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0
 5. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes.
 6. **Levy Courier walks in:** tax no longer teleports into CRED. Occupied HABs accrue a purse; Haul (Courier) walks it to Commons. Sitting too long or a downed Haul can lose the purse. No new FlagType. SpecialistBrain scoring unchanged.
 7. **Watchtowers in:** rim guard post + levy chest. Aegis / Rim Watch clock in. If Commons is far, Haul drops CRED at the tower. Inspect the tower and spend CRED to arm lasers (18 m, like a battery).
-8. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
+8. **Majesty analog pack in:** Market siphon (surplus ICE/REG → CRED, reserve held). Aid Station (Life Support) — paid patches, Triage clocks in. Map: [`Docs/MAJESTY_ANALOG.md`](MAJESTY_ANALOG.md).
+9. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
 
 ## Still out of scope (for now)
 
@@ -66,4 +67,4 @@ Full combat sim rewrite, multiplayer, heightmap terrain.
 
 Typed natural-language flags + bundled local LLM ([Flag-hero local LLM](Roadmap/FLAG_HERO_LOCAL_LLM.md)) is a **parked stretch**. Do not start it during Phase 4. It is not Phase 5 ship work. Grok-the-advisor stays a scripted catalog.
 
-Market ICE→CRED siphon (reserve floor) is the next Majesty gold loop after levy walks.
+Fear/Avoid decrees and dens-as-fog still need design sign-off (`SpecialistBrain`). Do not add a FlagType for them yet.

@@ -79,6 +79,7 @@ namespace SolarMajesty
                 BuildingCategory.Blacksmith => StructureRole.Core,
                 BuildingCategory.FobotYard => StructureRole.Core,
                 BuildingCategory.Watchtower => StructureRole.Core,
+                BuildingCategory.AidStation => StructureRole.Core,
                 BuildingCategory.Commons => StructureRole.Core,
                 BuildingCategory.Habitat => StructureRole.Core,
                 _ => StructureRole.Core
@@ -149,7 +150,8 @@ namespace SolarMajesty
                 var s = _structures[i];
                 if (s == null || !s.IsAlive) continue;
                 bool match = (s.HasPreferredClass && s.PreferredClass == cls) ||
-                             s.AcceptsGuard(cls);
+                             s.AcceptsGuard(cls) ||
+                             s.AcceptsHealer(cls);
                 if (!match) continue;
                 float d = Flat(from, s.WorldPosition);
                 if ((s.IsWorkshop || s.IsGuild) && d < bestShopD)

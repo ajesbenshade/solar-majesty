@@ -63,6 +63,7 @@ namespace SolarMajesty
             cat == BuildingCategory.Blacksmith ||
             cat == BuildingCategory.FobotYard ||
             cat == BuildingCategory.Watchtower ||
+            cat == BuildingCategory.AidStation ||
             ColonyStructure.IsWorkshopCategory(cat);
 
         public static void BuildHabitat(Transform root, float w, float d, Color hull)
@@ -733,6 +734,28 @@ namespace SolarMajesty
                     new Vector3(0f, 0.20f, d * 0.38f - i * 0.22f),
                     new Vector3(0.55f - i * 0.08f, 0.03f, 0.10f), Yellow);
             }
+        }
+
+        public static void BuildAidStation(Transform root, float w, float d)
+        {
+            Prim(root, "AidPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.88f, 0.16f, d * 0.80f), Carbon);
+            Prim(root, "AidHall", PrimitiveType.Cube,
+                new Vector3(0f, 0.95f, 0f),
+                new Vector3(w * 0.70f, 1.35f, d * 0.58f), White);
+            Prim(root, "AidCross", PrimitiveType.Cube,
+                new Vector3(0f, 1.55f, d * 0.30f),
+                new Vector3(0.55f, 0.12f, 0.12f), Orange);
+            Prim(root, "AidCrossV", PrimitiveType.Cube,
+                new Vector3(0f, 1.55f, d * 0.30f),
+                new Vector3(0.12f, 0.55f, 0.12f), Orange);
+            Prim(root, "AidCot", PrimitiveType.Cube,
+                new Vector3(-0.35f, 0.42f, -0.05f),
+                new Vector3(0.70f, 0.16f, 0.38f), Steel);
+            Prim(root, "AidLamp", PrimitiveType.Sphere,
+                new Vector3(0.40f, 1.55f, -0.10f),
+                new Vector3(0.16f, 0.16f, 0.16f), Cyan, CyanEmit);
         }
 
         public static void BuildWatchtower(Transform root, float w, float d)
@@ -1416,7 +1439,8 @@ namespace SolarMajesty
                     }
                     if (cat == BuildingCategory.Inn || cat == BuildingCategory.Market ||
                         cat == BuildingCategory.Blacksmith || cat == BuildingCategory.FobotYard ||
-                        cat == BuildingCategory.Watchtower)
+                        cat == BuildingCategory.Watchtower ||
+                        cat == BuildingCategory.AidStation)
                     {
                         if (dir.z > 0.5f) return d * 0.27f;
                         if (dir.z < -0.5f) return d * 0.35f;

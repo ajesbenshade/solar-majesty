@@ -1290,6 +1290,43 @@ namespace SolarMajesty
             return true;
         }
 
+        private bool TickAidStation(float dt)
+        {
+            if (_incapacitated || _scrapped || data == null) return false;
+            if (healthNormalized > 0.72f) return false;
+            if (_loop?.Village == null) return false;
+            if (_lastDecision.Action == SpecialistAction.PursueFlag ||
+                _lastDecision.Action == SpecialistAction.Hunt ||
+                _lastDecision.Action == SpecialistAction.Flee)
+                return false;
+
+            var aid = _loop.Village.NearestByCategory(
+                transform.position, 70f, BuildingCategory.AidStation);
+            if (aid == null || !aid.IsAlive) return false;
+            if (FlatDistance(transform.position, aid.WorldPosition) > OverseerRules.AidArrive)
+            {
+                SetDestination(aid.WorldPosition);
+                MoveFallback(aid.WorldPosition, EffectiveMoveSpeed * dt);
+                _status = "seeking_aid";
+                return true;
+            }
+
+            if (credits < OverseerRules.AidStationHealCost)
+            {
+                _status = "aid_broke";
+                return true;
+            }
+
+            if (!TrySpendCredits(OverseerRules.AidStationHealCost, "aid"))
+                return true;
+            healthNormalized = Mathf.Clamp01(healthNormalized + OverseerRules.AidStationHealHp);
+            fatigue = Mathf.Clamp01(fatigue - 0.15f);
+            _status = "aid_patched";
+            DemoVfx.ClaimRing(transform.position, new Color(0.45f, 0.95f, 0.62f));
+            DemoAudio.PlayClaim();
+            return true;
+        }
+
         private void TickWatchPost()
         {
             if (Workplace == null || !Workplace.IsAlive || !Workplace.IsWatchtower) return;
@@ -1438,10 +1475,13 @@ namespace SolarMajesty
                 TickGuildAndMarket(dt);
                 TickLevy(dt);
                 TickWatchPost();
+                TickAidStation(dt);
                 return;
             }
 
             if (TickLevy(dt))
+                return;
+            if (TickAidStation(dt))
                 return;
 
             SetDestination(dest);

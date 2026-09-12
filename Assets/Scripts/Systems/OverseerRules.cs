@@ -91,6 +91,9 @@ namespace SolarMajesty
         public const float BatteryRetarget = 0.5f;
         public const int BatteryExtraPwr = 2;
         public const int WatchtowerLaserCost = 40;
+        public const int AidStationHealCost = 8;
+        public const float AidStationHealHp = 0.42f;
+        public const float AidArrive = 3.6f;
 
         public const float CommonsShadeRadius = 20f;
         public const float CommonsShadeDanger = 0.85f;

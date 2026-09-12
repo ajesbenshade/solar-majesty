@@ -1247,7 +1247,7 @@ namespace SolarMajesty
         {
             const float cardW = 340f;
             float cardH = st.IsGuild ? 228f
-                : st.Category == BuildingCategory.FobotYard || st.IsWatchtower ? 176f
+                : st.Category == BuildingCategory.FobotYard || st.IsWatchtower || st.IsAidStation ? 176f
                 : 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
@@ -1267,6 +1267,7 @@ namespace SolarMajesty
                     : st.IsWonder ? "Secret Project landmark"
                     : st.IsWatchtower
                         ? (st.LaserArmed ? "Watchtower · lasers armed" : "Watchtower · guard post")
+                    : st.IsAidStation ? "Aid Station · paid patch"
                     : st.IsResidential ? "Habitat · colonists"
                     : st.Role.ToString();
             string worker = st.IsResidential
@@ -1374,6 +1375,20 @@ namespace SolarMajesty
                             $"ARM LASERS {OverseerRules.WatchtowerLaserCost} CRED", can) && can)
                         _loop.TryArmWatchtower(st);
                 }
+            }
+            else if (st.IsAidStation)
+            {
+                GUI.Label(new Rect(c.x, row, c.width, 22f),
+                    st.WorkerCount > 0
+                        ? $"Triage posted. Patch {OverseerRules.AidStationHealCost} CRED."
+                        : $"Empty bay. Hurt robots pay {OverseerRules.AidStationHealCost} CRED.", _micro);
+            }
+            else if (st.Category == BuildingCategory.Market)
+            {
+                int reserve = MarketSiphon.IceReserve(
+                    _loop.Settlement != null ? _loop.Settlement.Population : 0);
+                GUI.Label(new Rect(c.x, row, c.width, 22f),
+                    $"Potions + necklace. Surplus ICE above {reserve} siphons to CRED.", _micro);
             }
             else if (st.Category == BuildingCategory.Blacksmith)
             {

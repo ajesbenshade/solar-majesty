@@ -65,6 +65,7 @@ namespace SolarMajesty
                 case BuildingCategory.Blacksmith:
                 case BuildingCategory.FobotYard:
                 case BuildingCategory.Watchtower:
+                case BuildingCategory.AidStation:
                     return 4;
                 case BuildingCategory.Power:
                 case BuildingCategory.Mining:

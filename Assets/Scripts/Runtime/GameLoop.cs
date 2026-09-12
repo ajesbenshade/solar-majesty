@@ -1802,6 +1802,8 @@ namespace SolarMajesty
                 LogOverseer("Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in CRED.");
             else if (id == TechId.MedProtocols)
                 LogOverseer("Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in CRED.");
+            else if (id == TechId.LifeSupport)
+                LogOverseer("Life Support. Dock an Aid Station — hurt robots pay CRED for a patch.");
             else if (id == TechId.HorizonPulse)
                 LogOverseer("Horizon Pulse researched. Inspect Horizon Lodge and spend CRED to mark dens.");
             else if (id == TechId.AnvilOvertime)
@@ -1862,6 +1864,7 @@ namespace SolarMajesty
                 case BuildingCategory.Market: return TechId.ExtractBasics;
                 case BuildingCategory.Blacksmith: return TechId.OreRefining;
                 case BuildingCategory.FobotYard: return TechId.MedProtocols;
+                case BuildingCategory.AidStation: return TechId.LifeSupport;
                 case BuildingCategory.HarvesterWorkshop: return TechId.HarvestDoctrine;
                 case BuildingCategory.SurveyorWorkshop: return TechId.SurveyDoctrine;
                 case BuildingCategory.TerraformerWorkshop: return TechId.TerraformCharter;
@@ -2134,7 +2137,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Market:
                         b.displayName = "Market Stall";
-                        b.description = "Potions and a regen necklace. Heroes buy with CRED.";
+                        b.description = "Potions, necklace, and surplus ICE/REG siphon to CRED.";
                         break;
                     case BuildingCategory.Blacksmith:
                         b.displayName = "Blacksmith";
@@ -2147,6 +2150,10 @@ namespace SolarMajesty
                     case BuildingCategory.Watchtower:
                         b.displayName = "Watchtower";
                         b.description = "Guard post and levy chest. Arm lasers for CRED.";
+                        break;
+                    case BuildingCategory.AidStation:
+                        b.displayName = "Aid Station";
+                        b.description = "Hurt robots pay CRED for a patch. Triage clocks in.";
                         break;
                 }
             }
@@ -3848,6 +3855,7 @@ namespace SolarMajesty
                 BuildingCategory.Blacksmith => "Guild arms and armor. Heroes buy with CRED.",
                 BuildingCategory.FobotYard => "Pay CRED here to stand wrecks up.",
                 BuildingCategory.Watchtower => "Guard post and levy chest. Arm lasers for CRED.",
+                BuildingCategory.AidStation => "Hurt robots pay CRED for a patch. Triage clocks in.",
                 _ => b.description
             };
             b.preferredOccupants = DefaultOccupants(cat);
@@ -3889,6 +3897,7 @@ namespace SolarMajesty
                 CreateBuilding("Blacksmith", BuildingCategory.Blacksmith, 48, 4, 12f, 4, 4),
                 CreateBuilding("Fobot Yard", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4),
                 CreateBuilding("Watchtower", BuildingCategory.Watchtower, 36, 2, 10f, 4, 4),
+                CreateBuilding("Aid Station", BuildingCategory.AidStation, 38, 2, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
                 CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
                 CreateGuildHall(RobotGuildId.Horizon),
@@ -3950,6 +3959,7 @@ namespace SolarMajesty
                     case BuildingCategory.Mining:
                     case BuildingCategory.Laboratory:
                     case BuildingCategory.Watchtower:
+                    case BuildingCategory.AidStation:
                         side = 4;
                         break;
                     case BuildingCategory.Utility:
@@ -4712,6 +4722,7 @@ namespace SolarMajesty
                 case BuildingCategory.LandingPad:
                     return new[] { SpecialistClass.ScoutDrone };
                 case BuildingCategory.MedicWorkshop:
+                case BuildingCategory.AidStation:
                     return new[] { SpecialistClass.Medic };
                 case BuildingCategory.Habitat:
                     return null;
@@ -5214,6 +5225,18 @@ namespace SolarMajesty
                 Resources?.Add(ResourceId.Metals, total);
                 LogOverseer($"Payroll returned {total} CRED.");
             }
+
+            TryMarketSiphon();
+        }
+
+        private void TryMarketSiphon()
+        {
+            if (!HasAliveCategory(BuildingCategory.Market) || Resources == null || Settlement == null)
+                return;
+            if (!MarketSiphon.TrySiphon(
+                    Resources, Settlement.Population, out int credits, out int ice, out int reg))
+                return;
+            LogOverseer($"Market siphon +{credits} CRED (−{ice} ICE −{reg} REG). Tank reserve held.");
         }
 
         private void RefreshSustainRates()

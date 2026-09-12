@@ -103,7 +103,9 @@ namespace SolarMajesty
         /// <summary>Player-facing Fobot Yard — paid revive. Saved as int 28.</summary>
         FobotYard = 28,
         /// <summary>Rim guard post + levy chest. Lasers after CRED upgrade. Saved as int 29.</summary>
-        Watchtower = 29
+        Watchtower = 29,
+        /// <summary>Paid heal kiosk. Triage clocks in. Saved as int 30.</summary>
+        AidStation = 30
     }
 
     [Serializable]

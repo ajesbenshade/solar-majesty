@@ -151,6 +151,48 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void MarketSiphon_HoldsTheIceReserve()
+        {
+            var res = new ResourceManager();
+            res.Set(ResourceId.WaterIce, 40);
+            res.Set(ResourceId.Regolith, 40);
+            res.Set(ResourceId.Metals, 0);
+            Assert.AreEqual(12, MarketSiphon.IceReserve(2));
+            Assert.IsTrue(MarketSiphon.TrySiphon(res, 2, out int credits, out int ice, out int reg));
+            Assert.Greater(credits, 0);
+            Assert.GreaterOrEqual(res.Get(ResourceId.WaterIce), MarketSiphon.IceReserve(2));
+            Assert.AreEqual(credits, res.Get(ResourceId.Metals));
+            Assert.Greater(ice + reg, 0);
+        }
+
+        [Test]
+        public void MarketSiphon_DoesNotTouchADryTank()
+        {
+            var res = new ResourceManager();
+            res.Set(ResourceId.WaterIce, 10);
+            res.Set(ResourceId.Regolith, 10);
+            Assert.IsFalse(MarketSiphon.TrySiphon(res, 4, out _, out _, out _));
+            Assert.AreEqual(10, res.Get(ResourceId.WaterIce));
+        }
+
+        [Test]
+        public void AidStation_UnlocksFromLifeSupport()
+        {
+            Assert.AreEqual(30, (int)BuildingCategory.AidStation);
+            Assert.AreEqual(TechId.LifeSupport, GameLoop.TechRequiredFor(BuildingCategory.AidStation));
+            Assert.Greater(OverseerRules.AidStationHealCost, 0);
+        }
+
+        [Test]
+        public void AnalogCatalog_CoversTheMajestyLoops()
+        {
+            Assert.GreaterOrEqual(MajestyAnalog.All.Length, 16);
+            Assert.IsNotNull(MajestyAnalog.ForCompactName("Colony Commons"));
+            Assert.IsNotNull(MajestyAnalog.ForCompactName("Aid Station"));
+            Assert.IsNotNull(MajestyAnalog.ForCompactName("Watchtower"));
+        }
+
+        [Test]
         public void Watchtower_IsLevyChestWhenCommonsIsFar()
         {
             Assert.AreEqual(29, (int)BuildingCategory.Watchtower);
