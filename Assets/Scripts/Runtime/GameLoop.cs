@@ -2780,7 +2780,9 @@ namespace SolarMajesty
             Vector2Int origin;
             bool found = preferDock
                 ? StillCampusDensity.TryDockOrNext(Placer, commons, habFace, side, side, bounds, out origin)
-                : StillCampusDensity.TryNext(Placer, commons, habFace, side, side, bounds, out origin);
+                : StillCampusDensity.TryNext(
+                    Placer, commons, habFace, side, side, bounds, out origin,
+                    StillCampusDensity.LandmarkGapCells);
             if (!found)
             {
                 Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}=False (CanFit)");

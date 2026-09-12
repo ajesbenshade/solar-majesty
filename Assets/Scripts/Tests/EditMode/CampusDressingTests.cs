@@ -653,6 +653,21 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void LandmarkGap_IsNotFlushToCommons()
+        {
+            var placer = StampEastChain(out var commons);
+            Assert.IsTrue(StillCampusDensity.TryNext(
+                placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null,
+                out Vector2Int spaced, StillCampusDensity.LandmarkGapCells));
+            Vector2Int flush = StillCampusDensity.FlushOrigin(
+                commons, BuildingPlacer.Cardinal.West, 6, 6, 0);
+            Assert.AreNotEqual(flush, spaced, "pad must sit off the Commons apron");
+            Vector2Int gapped = StillCampusDensity.FlushOrigin(
+                commons, BuildingPlacer.Cardinal.West, 6, 6, StillCampusDensity.LandmarkGapCells);
+            Assert.AreEqual(gapped, spaced);
+        }
+
+        [Test]
         public void DensePack_Leftovers_AfterWorkshop_SkipInnAndWonder()
         {
             var placer = StampEastChain(out var commons);
