@@ -2144,6 +2144,10 @@ namespace SolarMajesty
                         b.displayName = "Fobot Yard";
                         b.description = "Pay CRED here to stand wrecks up.";
                         break;
+                    case BuildingCategory.Watchtower:
+                        b.displayName = "Watchtower";
+                        b.description = "Guard post and levy chest. Arm lasers for CRED.";
+                        break;
                 }
             }
         }
@@ -2900,7 +2904,8 @@ namespace SolarMajesty
                     }
                     if (st.Category == BuildingCategory.Utility) continue;
                     int add = data != null && data.powerDraw > 0 ? data.powerDraw : 1;
-                    if (st.Category == BuildingCategory.Defense && add < 4)
+                    if ((st.Category == BuildingCategory.Defense ||
+                         (st.IsWatchtower && st.LaserArmed)) && add < 4)
                         add += OverseerRules.BatteryExtraPwr;
                     draw += add;
                 }
@@ -3404,6 +3409,33 @@ namespace SolarMajesty
             LogOverseer($"Levy stolen at {where} — {amount} CRED. Junk or the wait got there first.");
         }
 
+        public bool TryArmWatchtower(ColonyStructure tower)
+        {
+            if (tower == null || !tower.IsWatchtower || !tower.IsAlive)
+            {
+                LogOverseer("Pick a Watchtower.");
+                return false;
+            }
+
+            if (tower.LaserArmed)
+            {
+                LogOverseer("Lasers already armed.");
+                return false;
+            }
+
+            if (Resources == null ||
+                !Resources.TrySpend(ResourceId.Metals, OverseerRules.WatchtowerLaserCost))
+            {
+                LogOverseer($"Arming lasers needs {OverseerRules.WatchtowerLaserCost} CRED.");
+                return false;
+            }
+
+            tower.ArmLasers();
+            LogOverseer($"Watchtower lasers armed — {OverseerRules.WatchtowerLaserCost} CRED.");
+            DemoVfx.ClaimRing(tower.WorldPosition, new Color(0.95f, 0.35f, 0.2f));
+            return true;
+        }
+
         public void DeliverLevy(int amount)
         {
             if (amount <= 0 || Settlement == null) return;
@@ -3815,6 +3847,7 @@ namespace SolarMajesty
                 BuildingCategory.Market => "Potions and a regen necklace. Heroes buy with CRED.",
                 BuildingCategory.Blacksmith => "Guild arms and armor. Heroes buy with CRED.",
                 BuildingCategory.FobotYard => "Pay CRED here to stand wrecks up.",
+                BuildingCategory.Watchtower => "Guard post and levy chest. Arm lasers for CRED.",
                 _ => b.description
             };
             b.preferredOccupants = DefaultOccupants(cat);
@@ -3855,6 +3888,7 @@ namespace SolarMajesty
                 CreateBuilding("Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4),
                 CreateBuilding("Blacksmith", BuildingCategory.Blacksmith, 48, 4, 12f, 4, 4),
                 CreateBuilding("Fobot Yard", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4),
+                CreateBuilding("Watchtower", BuildingCategory.Watchtower, 36, 2, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
                 CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
                 CreateGuildHall(RobotGuildId.Horizon),
@@ -3915,6 +3949,7 @@ namespace SolarMajesty
                     case BuildingCategory.Power:
                     case BuildingCategory.Mining:
                     case BuildingCategory.Laboratory:
+                    case BuildingCategory.Watchtower:
                         side = 4;
                         break;
                     case BuildingCategory.Utility:
@@ -4682,6 +4717,7 @@ namespace SolarMajesty
                     return null;
                 case BuildingCategory.DefenseWorkshop:
                 case BuildingCategory.Defense:
+                case BuildingCategory.Watchtower:
                     return new[] { SpecialistClass.DefenseMech };
                 case BuildingCategory.EngineerWorkshop:
                 case BuildingCategory.Farm:
@@ -5599,7 +5635,10 @@ namespace SolarMajesty
             for (int i = 0; i < list.Count; i++)
             {
                 var st = list[i];
-                if (st == null || !st.IsAlive || st.Category != BuildingCategory.Defense) continue;
+                if (st == null || !st.IsAlive) continue;
+                bool battery = st.Category == BuildingCategory.Defense ||
+                               (st.IsWatchtower && st.LaserArmed);
+                if (!battery) continue;
                 DustStalkerAgent target = _batteryLock;
                 if (target == null || !target.IsAlive ||
                     FlatDist(st.WorldPosition, target.transform.position) > OverseerRules.BatteryRange)

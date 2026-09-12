@@ -64,6 +64,7 @@ namespace SolarMajesty
                 case BuildingCategory.Market:
                 case BuildingCategory.Blacksmith:
                 case BuildingCategory.FobotYard:
+                case BuildingCategory.Watchtower:
                     return 4;
                 case BuildingCategory.Power:
                 case BuildingCategory.Mining:

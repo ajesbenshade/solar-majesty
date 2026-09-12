@@ -57,7 +57,8 @@ Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0
 4. **Blacksmith** (Ore Refining) sells guild arms and armor. **Fobot Yard** (Med Protocols) is the paid revive building — Y will not skip it. Yard bill scales with hero level.
 5. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes.
 6. **Levy Courier walks in:** tax no longer teleports into CRED. Occupied HABs accrue a purse; Haul (Courier) walks it to Commons. Sitting too long or a downed Haul can lose the purse. No new FlagType. SpecialistBrain scoring unchanged.
-7. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
+7. **Watchtowers in:** rim guard post + levy chest. Aegis / Rim Watch clock in. If Commons is far, Haul drops CRED at the tower. Inspect the tower and spend CRED to arm lasers (18 m, like a battery).
+8. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
 
 ## Still out of scope (for now)
 

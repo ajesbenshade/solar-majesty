@@ -101,7 +101,9 @@ namespace SolarMajesty
         /// <summary>Guild arms and armor. Saved as int 27.</summary>
         Blacksmith = 27,
         /// <summary>Player-facing Fobot Yard — paid revive. Saved as int 28.</summary>
-        FobotYard = 28
+        FobotYard = 28,
+        /// <summary>Rim guard post + levy chest. Lasers after CRED upgrade. Saved as int 29.</summary>
+        Watchtower = 29
     }
 
     [Serializable]

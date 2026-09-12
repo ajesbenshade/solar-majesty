@@ -44,6 +44,8 @@ namespace SolarMajesty
         public bool IsVillageHab => role == StructureRole.VillageHab;
         public bool IsWorkshop => role == StructureRole.Workshop;
         public bool IsGuild => role == StructureRole.Guild || Category == BuildingCategory.GuildHall;
+        public bool IsWatchtower => Category == BuildingCategory.Watchtower;
+        public bool LaserArmed { get; private set; }
         public bool IsWonder => IsWonderCategory(Category);
         public bool IsResidential =>
             role == StructureRole.VillageHab || Category == BuildingCategory.Habitat;
@@ -58,7 +60,7 @@ namespace SolarMajesty
         public bool IsSelected => _selected;
         /// <summary>Watt leeches / wisps are on this node — gen is stolen until they leave.</summary>
         public bool IsPowerSiphoned => Time.time < _siphonUntil;
-        public int WorkerSlots => IsWorkshop || IsGuild ? 2 : 1;
+        public int WorkerSlots => IsWorkshop || IsGuild ? 2 : IsWatchtower ? 1 : 1;
         public IReadOnlyList<SpecialistAgent> Workers => _workers;
         public int WorkerCount
         {
@@ -116,6 +118,18 @@ namespace SolarMajesty
             if (!HasVacancy) return false;
             Residents++;
             RefreshResidentPips();
+            return true;
+        }
+
+        public bool AcceptsGuard(SpecialistClass cls) =>
+            IsWatchtower &&
+            (cls == SpecialistClass.DefenseMech || cls == SpecialistClass.SentinelMech);
+
+        public bool ArmLasers()
+        {
+            if (!IsWatchtower || !IsAlive || LaserArmed) return false;
+            LaserArmed = true;
+            HeroBuildingKits.ShowWatchtowerLasers(transform, true);
             return true;
         }
 
@@ -206,7 +220,9 @@ namespace SolarMajesty
             PruneWorkers();
             if (_workers.Contains(agent)) return true;
             if (_workers.Count >= WorkerSlots) return false;
-            if (HasPreferredClass && agent.Data != null && agent.Data.specialistClass != PreferredClass)
+            if (HasPreferredClass && agent.Data != null &&
+                agent.Data.specialistClass != PreferredClass &&
+                !AcceptsGuard(agent.Data.specialistClass))
                 return false;
             _workers.Add(agent);
             return true;
@@ -385,7 +401,7 @@ namespace SolarMajesty
             {
                 PreferredClass = SourceData.preferredOccupants[0];
                 HasPreferredClass = true;
-                ClassLocked = IsWorkshop || IsGuild;
+                ClassLocked = IsWorkshop || IsGuild || IsWatchtower;
                 if (IsGuild)
                     DisplayName = GuildNameFor(PreferredClass);
                 return;
@@ -453,6 +469,12 @@ namespace SolarMajesty
                     ClassLocked = true;
                     role = StructureRole.Workshop;
                     break;
+                case BuildingCategory.Watchtower:
+                    PreferredClass = SpecialistClass.DefenseMech;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Core;
+                    break;
                 case BuildingCategory.GuildHall:
                     HasPreferredClass = false;
                     ClassLocked = false;
@@ -516,6 +538,7 @@ namespace SolarMajesty
                 case BuildingCategory.Market: return "Market Stall";
                 case BuildingCategory.Blacksmith: return "Blacksmith";
                 case BuildingCategory.FobotYard: return "Fobot Yard";
+                case BuildingCategory.Watchtower: return "Watchtower";
                 case BuildingCategory.ClimateLoom: return "Climate Loom";
                 case BuildingCategory.AegisSpire: return "Aegis Spire";
                 case BuildingCategory.DeepArchive: return "Deep Archive";

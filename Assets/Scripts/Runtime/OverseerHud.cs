@@ -1246,7 +1246,9 @@ namespace SolarMajesty
         private void DrawBuildingCard(ColonyStructure st)
         {
             const float cardW = 340f;
-            float cardH = st.IsGuild ? 228f : st.Category == BuildingCategory.FobotYard ? 176f : 148f;
+            float cardH = st.IsGuild ? 228f
+                : st.Category == BuildingCategory.FobotYard || st.IsWatchtower ? 176f
+                : 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
             var c = Panel(rect, null);
@@ -1263,6 +1265,8 @@ namespace SolarMajesty
                         ? (RobotGuildCatalog.ForClass(st.PreferredClass)?.CatalogLine ?? st.DisplayName)
                         : "Guild Hall · assign a class")
                     : st.IsWonder ? "Secret Project landmark"
+                    : st.IsWatchtower
+                        ? (st.LaserArmed ? "Watchtower · lasers armed" : "Watchtower · guard post")
                     : st.IsResidential ? "Habitat · colonists"
                     : st.Role.ToString();
             string worker = st.IsResidential
@@ -1349,6 +1353,27 @@ namespace SolarMajesty
                 if (Chip(new Rect(c.x, row, 220f, 22f),
                         canPay ? $"PAY {met} CRED" : "YARD IDLE", canPay) && canPay)
                     _loop.RetryParty();
+            }
+            else if (st.IsWatchtower)
+            {
+                int guards = st.WorkerCount;
+                GUI.Label(new Rect(c.x, row, c.width, 13f),
+                    guards > 0
+                        ? "Guard posted. Haul can drop CRED here when Commons is far."
+                        : "Empty post. Aegis / Rim Watch will clock in.", _micro);
+                row += 16f;
+                if (st.LaserArmed)
+                {
+                    GUI.Label(new Rect(c.x, row, c.width, 22f), "Lasers armed — 18 m.", _micro);
+                }
+                else
+                {
+                    bool can = _loop.Resources != null &&
+                               _loop.Resources.Get(ResourceId.Metals) >= OverseerRules.WatchtowerLaserCost;
+                    if (Chip(new Rect(c.x, row, 220f, 22f),
+                            $"ARM LASERS {OverseerRules.WatchtowerLaserCost} CRED", can) && can)
+                        _loop.TryArmWatchtower(st);
+                }
             }
             else if (st.Category == BuildingCategory.Blacksmith)
             {

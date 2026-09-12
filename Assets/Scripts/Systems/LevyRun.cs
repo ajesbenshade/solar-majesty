@@ -12,6 +12,9 @@ namespace SolarMajesty
         public const int SitStealAmount = 2;
         public const float CollectArrive = 3.4f;
         public const float DepositArrive = 4.2f;
+        /// <summary>Haul may drop at a watchtower when Commons is farther than this.</summary>
+        public const float FarFromCommons = 24f;
+        public const float TowerPreferSlack = 4f;
 
         public static int Accrue(int population, bool overcrowded)
         {
@@ -51,6 +54,17 @@ namespace SolarMajesty
 
             dest[heaviest] += total - used;
             return dest;
+        }
+
+        /// <summary>
+        /// Drop at the tower when Commons is far and the tower is meaningfully closer.
+        /// Distances &lt; 0 mean that chest is missing.
+        /// </summary>
+        public static bool PreferWatchtower(float distCommons, float distTower)
+        {
+            if (distTower < 0f) return false;
+            if (distCommons < 0f) return true;
+            return distCommons > FarFromCommons && distTower + TowerPreferSlack < distCommons;
         }
     }
 }

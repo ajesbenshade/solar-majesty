@@ -56,6 +56,7 @@ namespace SolarMajesty
                 return;
 
             if (data.category == BuildingCategory.Defense ||
+                data.category == BuildingCategory.Watchtower ||
                 data.category == BuildingCategory.Commons)
                 SpawnShieldBubble(go.transform, data.category == BuildingCategory.Commons);
 

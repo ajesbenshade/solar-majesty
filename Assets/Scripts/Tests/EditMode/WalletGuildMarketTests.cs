@@ -151,6 +151,16 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void Watchtower_IsLevyChestWhenCommonsIsFar()
+        {
+            Assert.AreEqual(29, (int)BuildingCategory.Watchtower);
+            Assert.IsTrue(LevyRun.PreferWatchtower(40f, 12f));
+            Assert.IsFalse(LevyRun.PreferWatchtower(10f, 8f), "near Commons, walk home");
+            Assert.IsFalse(LevyRun.PreferWatchtower(40f, 38f), "tower not closer enough");
+            Assert.AreEqual(TechId.None, GameLoop.TechRequiredFor(BuildingCategory.Watchtower));
+        }
+
+        [Test]
         public void LevyAccrue_MatchesOldTaxRate()
         {
             Assert.AreEqual(4, LevyRun.Accrue(2, false));

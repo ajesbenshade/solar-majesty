@@ -62,6 +62,7 @@ namespace SolarMajesty
             cat == BuildingCategory.Market ||
             cat == BuildingCategory.Blacksmith ||
             cat == BuildingCategory.FobotYard ||
+            cat == BuildingCategory.Watchtower ||
             ColonyStructure.IsWorkshopCategory(cat);
 
         public static void BuildHabitat(Transform root, float w, float d, Color hull)
@@ -734,6 +735,48 @@ namespace SolarMajesty
             }
         }
 
+        public static void BuildWatchtower(Transform root, float w, float d)
+        {
+            Prim(root, "TowPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.62f, 0.16f, d * 0.62f), Carbon);
+            Prim(root, "TowShaft", PrimitiveType.Cylinder,
+                new Vector3(0f, 1.55f, 0f),
+                new Vector3(0.55f, 1.45f, 0.55f), White);
+            Prim(root, "TowCollar", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.55f, 0f),
+                new Vector3(0.72f, 0.10f, 0.72f), Orange);
+            Prim(root, "TowDeck", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.85f, 0f),
+                new Vector3(1.15f, 0.12f, 1.15f), White);
+            Prim(root, "TowRail", PrimitiveType.Cylinder,
+                new Vector3(0f, 3.15f, 0f),
+                new Vector3(1.05f, 0.06f, 1.05f), Steel);
+            Prim(root, "TowBeacon", PrimitiveType.Sphere,
+                new Vector3(0f, 3.45f, 0f),
+                new Vector3(0.22f, 0.22f, 0.22f), Cyan, CyanEmit);
+            Prim(root, "Dress_TowerLaser", PrimitiveType.Cube,
+                new Vector3(0f, 3.05f, 0.42f),
+                new Vector3(0.18f, 0.12f, 0.55f), Orange);
+            ShowWatchtowerLasers(root, false);
+        }
+
+        public static void ShowWatchtowerLasers(Transform root, bool on)
+        {
+            if (root == null) return;
+            var t = FindDeep(root, "Dress_TowerLaser");
+            if (t == null && on)
+            {
+                Prim(root, "Dress_TowerLaser", PrimitiveType.Cube,
+                    new Vector3(0f, 3.05f, 0.42f),
+                    new Vector3(0.18f, 0.12f, 0.55f), Orange);
+                t = root.Find("Dress_TowerLaser");
+            }
+
+            if (t != null)
+                t.gameObject.SetActive(on);
+        }
+
         public static void BuildBlacksmith(Transform root, float w, float d)
         {
             Prim(root, "SmithPlinth", PrimitiveType.Cube,
@@ -1372,7 +1415,8 @@ namespace SolarMajesty
                         return w * 0.41f;
                     }
                     if (cat == BuildingCategory.Inn || cat == BuildingCategory.Market ||
-                        cat == BuildingCategory.Blacksmith || cat == BuildingCategory.FobotYard)
+                        cat == BuildingCategory.Blacksmith || cat == BuildingCategory.FobotYard ||
+                        cat == BuildingCategory.Watchtower)
                     {
                         if (dir.z > 0.5f) return d * 0.27f;
                         if (dir.z < -0.5f) return d * 0.35f;

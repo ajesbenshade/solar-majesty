@@ -78,6 +78,7 @@ namespace SolarMajesty
                 BuildingCategory.Market => StructureRole.Core,
                 BuildingCategory.Blacksmith => StructureRole.Core,
                 BuildingCategory.FobotYard => StructureRole.Core,
+                BuildingCategory.Watchtower => StructureRole.Core,
                 BuildingCategory.Commons => StructureRole.Core,
                 BuildingCategory.Habitat => StructureRole.Core,
                 _ => StructureRole.Core
@@ -146,8 +147,10 @@ namespace SolarMajesty
             for (int i = 0; i < _structures.Count; i++)
             {
                 var s = _structures[i];
-                if (s == null || !s.IsAlive || !s.HasPreferredClass) continue;
-                if (s.PreferredClass != cls) continue;
+                if (s == null || !s.IsAlive) continue;
+                bool match = (s.HasPreferredClass && s.PreferredClass == cls) ||
+                             s.AcceptsGuard(cls);
+                if (!match) continue;
                 float d = Flat(from, s.WorldPosition);
                 if ((s.IsWorkshop || s.IsGuild) && d < bestShopD)
                 {
@@ -317,6 +320,34 @@ namespace SolarMajesty
             }
 
             return best;
+        }
+
+        public ColonyStructure NearestWatchtower(Vector3 from, float maxDist)
+        {
+            ColonyStructure best = null;
+            float bestD = maxDist;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive || !s.IsWatchtower) continue;
+                float d = Flat(from, s.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = s;
+                }
+            }
+
+            return best;
+        }
+
+        public ColonyStructure NearestLevyChest(Vector3 from)
+        {
+            var commons = CommonsHub();
+            var tower = NearestWatchtower(from, 120f);
+            float dc = commons != null ? Flat(from, commons.WorldPosition) : -1f;
+            float dt = tower != null ? Flat(from, tower.WorldPosition) : -1f;
+            return LevyRun.PreferWatchtower(dc, dt) ? tower : commons;
         }
 
         public ColonyStructure CommonsHub()

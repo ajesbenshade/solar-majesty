@@ -1255,13 +1255,13 @@ namespace SolarMajesty
 
             if (_levyCarried > 0)
             {
-                var commons = _loop.Village.CommonsHub();
-                if (commons == null) return false;
-                if (FlatDistance(transform.position, commons.WorldPosition) > LevyRun.DepositArrive)
+                var chest = _loop.Village.NearestLevyChest(transform.position);
+                if (chest == null) return false;
+                if (FlatDistance(transform.position, chest.WorldPosition) > LevyRun.DepositArrive)
                 {
-                    SetDestination(commons.WorldPosition);
-                    MoveFallback(commons.WorldPosition, EffectiveMoveSpeed * dt);
-                    _status = "levy_home";
+                    SetDestination(chest.WorldPosition);
+                    MoveFallback(chest.WorldPosition, EffectiveMoveSpeed * dt);
+                    _status = chest.IsWatchtower ? "levy_tower" : "levy_home";
                     return true;
                 }
 
@@ -1288,6 +1288,14 @@ namespace SolarMajesty
             _levyCarried += take;
             _status = "levy_loaded";
             return true;
+        }
+
+        private void TickWatchPost()
+        {
+            if (Workplace == null || !Workplace.IsAlive || !Workplace.IsWatchtower) return;
+            if (data == null || !Workplace.AcceptsGuard(data.specialistClass)) return;
+            if (FlatDistance(transform.position, Workplace.WorldPosition) > 6f) return;
+            _status = Workplace.LaserArmed ? "tower_lasers" : "posted_watch";
         }
 
         private void DropLevy(string reason)
@@ -1429,6 +1437,7 @@ namespace SolarMajesty
                 TickWorkshopRepair(dt);
                 TickGuildAndMarket(dt);
                 TickLevy(dt);
+                TickWatchPost();
                 return;
             }
 

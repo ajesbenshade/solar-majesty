@@ -188,6 +188,9 @@ namespace SolarMajesty
                 case BuildingCategory.FobotYard:
                     HeroBuildingKits.BuildFobotYard(root, w, d);
                     break;
+                case BuildingCategory.Watchtower:
+                    HeroBuildingKits.BuildWatchtower(root, w, d);
+                    break;
                 case BuildingCategory.Laboratory:
                     HeroBuildingKits.BuildLaboratory(root, w, d, HeroHull());
                     break;
@@ -511,6 +514,7 @@ namespace SolarMajesty
                 case BuildingCategory.Market: return new Color(0.96f, 0.72f, 0.22f);
                 case BuildingCategory.Blacksmith: return new Color(0.72f, 0.55f, 0.32f);
                 case BuildingCategory.FobotYard: return new Color(0.55f, 0.62f, 0.58f);
+                case BuildingCategory.Watchtower: return new Color(0.96f, 0.42f, 0.18f);
                 case BuildingCategory.Laboratory: return new Color(0.45f, 0.7f, 1f);
                 case BuildingCategory.Power: return new Color(1f, 0.85f, 0.25f);
                 case BuildingCategory.GuildHall: return new Color(0.92f, 0.78f, 0.28f);
