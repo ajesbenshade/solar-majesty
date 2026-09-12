@@ -96,6 +96,7 @@ namespace SolarMajesty
         private float _innFeeTimer;
         private float _workshopRepairCooldown;
         private bool _innPaid;
+        private int _levyCarried;
 
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
@@ -108,6 +109,7 @@ namespace SolarMajesty
         public ShopItemId EquippedSuit => equippedSuit;
         public ShopItemId EquippedAccessory => equippedAccessory;
         public ShopItemId EquippedWeapon => equippedWeapon;
+        public int LevyCarried => _levyCarried;
         public int Level => Mathf.Clamp(level, 1, OverseerRules.LevelCap);
         public int Xp => Mathf.Max(0, xp);
         public int ReviveCount => Mathf.Max(0, reviveCount);
@@ -630,6 +632,7 @@ namespace SolarMajesty
                 return;
             }
 
+            DropLevy("downed");
             _incapacitated = true;
             float recover = recoverySeconds > 0.01f ? recoverySeconds : OverseerRules.RecoverSeconds;
             _recoverTimer = recover;
@@ -652,6 +655,7 @@ namespace SolarMajesty
             ReleaseClaim();
             _activeFlag = null;
             SetWorkplace(null);
+            DropLevy("scrapped");
             int salvage = Mathf.FloorToInt(credits * OverseerRules.SalvageCreditFrac);
             credits = 0f;
             if (salvage > 0)
@@ -1238,6 +1242,62 @@ namespace SolarMajesty
             ConsiderGuildUpgrade();
         }
 
+        private bool TickLevy(float dt)
+        {
+            if (data == null || data.specialistClass != SpecialistClass.CourierBot) return false;
+            if (_incapacitated || _scrapped) return false;
+            if (_loop?.Village == null) return false;
+            if (_lastDecision.Action == SpecialistAction.PursueFlag ||
+                _lastDecision.Action == SpecialistAction.Hunt ||
+                _lastDecision.Action == SpecialistAction.Flee ||
+                _lastDecision.Action == SpecialistAction.Rest)
+                return false;
+
+            if (_levyCarried > 0)
+            {
+                var commons = _loop.Village.CommonsHub();
+                if (commons == null) return false;
+                if (FlatDistance(transform.position, commons.WorldPosition) > LevyRun.DepositArrive)
+                {
+                    SetDestination(commons.WorldPosition);
+                    MoveFallback(commons.WorldPosition, EffectiveMoveSpeed * dt);
+                    _status = "levy_home";
+                    return true;
+                }
+
+                int n = _levyCarried;
+                _levyCarried = 0;
+                _loop.DeliverLevy(n);
+                _status = "levy_delivered";
+                DemoVfx.ClaimRing(transform.position, new Color(0.96f, 0.78f, 0.22f));
+                return true;
+            }
+
+            var stop = _loop.Village.NearestLevyStop(transform.position, 80f);
+            if (stop == null) return false;
+            if (FlatDistance(transform.position, stop.WorldPosition) > LevyRun.CollectArrive)
+            {
+                SetDestination(stop.WorldPosition);
+                MoveFallback(stop.WorldPosition, EffectiveMoveSpeed * dt);
+                _status = "levy_collect";
+                return true;
+            }
+
+            int take = stop.TakeLevy();
+            if (take <= 0) return false;
+            _levyCarried += take;
+            _status = "levy_loaded";
+            return true;
+        }
+
+        private void DropLevy(string reason)
+        {
+            if (_levyCarried <= 0) return;
+            int n = _levyCarried;
+            _levyCarried = 0;
+            _loop?.NotifyLevyStolen(n, reason);
+        }
+
         private void TickGuildAndMarket(float dt)
         {
             _shopCooldown = Mathf.Max(0f, _shopCooldown - dt);
@@ -1368,8 +1428,12 @@ namespace SolarMajesty
                 TickTerraformerVocation(dt);
                 TickWorkshopRepair(dt);
                 TickGuildAndMarket(dt);
+                TickLevy(dt);
                 return;
             }
+
+            if (TickLevy(dt))
+                return;
 
             SetDestination(dest);
             MoveFallback(dest, EffectiveMoveSpeed * 0.72f * dt);

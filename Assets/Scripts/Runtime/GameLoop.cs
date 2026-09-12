@@ -3380,6 +3380,37 @@ namespace SolarMajesty
 
         public bool HasFobotYard => HasAliveCategory(BuildingCategory.FobotYard);
 
+        public int SittingLevy => Village != null ? Village.TotalSittingLevy() : 0;
+
+        public bool HasLivingCourier
+        {
+            get
+            {
+                for (int i = 0; i < _agents.Count; i++)
+                {
+                    var a = _agents[i];
+                    if (a != null && a.IsAlive && !a.IsIncapacitated &&
+                        a.Data != null && a.Data.specialistClass == SpecialistClass.CourierBot)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        public void NotifyLevyStolen(int amount, string where)
+        {
+            if (amount <= 0) return;
+            LogOverseer($"Levy stolen at {where} — {amount} CRED. Junk or the wait got there first.");
+        }
+
+        public void DeliverLevy(int amount)
+        {
+            if (amount <= 0 || Settlement == null) return;
+            Settlement.NoteLevyDelivered(amount);
+            LogOverseer($"Haul delivered {amount} CRED to Commons.");
+        }
+
         public void RetryParty()
         {
             if (!NeedsFieldRevive)
@@ -5156,7 +5187,7 @@ namespace SolarMajesty
                         Mathf.Max(0.1f, Settlement.ProductionInterval) * 60f;
             float met = Settlement.Mines * 4f * Settlement.MineYieldScale * Settlement.ProductionScale /
                         Mathf.Max(0.1f, Settlement.ProductionInterval) * 60f;
-            met += Settlement.LastTax / Mathf.Max(0.1f, Settlement.TaxInterval) * 60f;
+            met += Settlement.LastDelivered / Mathf.Max(0.1f, Settlement.TaxInterval) * 60f;
             met += _lastTithe / 30f * 60f;
             if (Economy != null)
                 met -= Economy.LastMetalsUpkeep / 30f * 60f;

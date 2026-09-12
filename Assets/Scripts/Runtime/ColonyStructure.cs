@@ -49,6 +49,8 @@ namespace SolarMajesty
             role == StructureRole.VillageHab || Category == BuildingCategory.Habitat;
         public int ResidentCapacity => IsResidential ? Settlement.HousingPerHab : 0;
         public int Residents { get; private set; }
+        public int LevyPurse { get; private set; }
+        public float LevySitSeconds { get; private set; }
         public bool HasVacancy => IsResidential && IsAlive && Residents < ResidentCapacity;
         public bool IsAlive => _health > 0f;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
@@ -115,6 +117,41 @@ namespace SolarMajesty
             Residents++;
             RefreshResidentPips();
             return true;
+        }
+
+        public void AddLevy(int amount)
+        {
+            if (amount <= 0 || !IsAlive) return;
+            LevyPurse += amount;
+            LevySitSeconds = 0f;
+        }
+
+        public int TakeLevy()
+        {
+            int n = LevyPurse;
+            LevyPurse = 0;
+            LevySitSeconds = 0f;
+            return n;
+        }
+
+        public int StealLevy(int amount)
+        {
+            if (amount <= 0 || LevyPurse <= 0) return 0;
+            int take = Mathf.Min(amount, LevyPurse);
+            LevyPurse -= take;
+            LevySitSeconds = 0f;
+            return take;
+        }
+
+        public void TickLevySit(float dt)
+        {
+            if (LevyPurse <= 0 || dt <= 0f)
+            {
+                LevySitSeconds = 0f;
+                return;
+            }
+
+            LevySitSeconds += dt;
         }
 
         private void RefreshResidentPips()

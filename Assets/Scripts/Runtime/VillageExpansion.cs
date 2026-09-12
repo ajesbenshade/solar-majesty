@@ -35,6 +35,11 @@ namespace SolarMajesty
             Prune();
 
             var set = _loop.Settlement;
+            int pending = set.TakeUncollectedLevy();
+            if (pending > 0)
+                DepositLevy(pending);
+            TickLevySit(dt);
+
             if (set.BirthDue)
                 TryBirth(set);
             if (set.NeedsVillageHab && _expandCooldown <= 0f)
@@ -279,6 +284,103 @@ namespace SolarMajesty
 
         public ColonyStructure NearestExtractor(Vector3 from, float maxDist) =>
             NearestByCategory(from, maxDist, BuildingCategory.Farm, BuildingCategory.Mine, BuildingCategory.RegolithCamp);
+
+        public int TotalSittingLevy()
+        {
+            int n = 0;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s != null && s.IsAlive)
+                    n += s.LevyPurse;
+            }
+
+            return n;
+        }
+
+        public ColonyStructure NearestLevyStop(Vector3 from, float maxDist)
+        {
+            ColonyStructure best = null;
+            float bestD = maxDist;
+            int bestPurse = 0;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive || !s.IsResidential || s.LevyPurse <= 0) continue;
+                float d = Flat(from, s.WorldPosition);
+                if (d > bestD) continue;
+                if (best != null && Mathf.Abs(d - bestD) < 0.5f && s.LevyPurse < bestPurse)
+                    continue;
+                best = s;
+                bestD = d;
+                bestPurse = s.LevyPurse;
+            }
+
+            return best;
+        }
+
+        public ColonyStructure CommonsHub()
+        {
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s != null && s.IsAlive && s.Category == BuildingCategory.Commons)
+                    return s;
+            }
+
+            return null;
+        }
+
+        public int DepositLevy(int total)
+        {
+            if (total <= 0) return 0;
+            var stops = new System.Collections.Generic.List<ColonyStructure>(8);
+            var weights = new System.Collections.Generic.List<int>(8);
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive || !s.IsResidential) continue;
+                int w = Mathf.Max(1, s.Residents);
+                if (s.Residents <= 0 && _loop.Settlement != null && _loop.Settlement.Population > 0)
+                    w = 1;
+                else if (s.Residents <= 0)
+                    continue;
+                stops.Add(s);
+                weights.Add(w);
+            }
+
+            if (stops.Count == 0)
+            {
+                var commons = CommonsHub();
+                if (commons == null) return 0;
+                commons.AddLevy(total);
+                return total;
+            }
+
+            int[] split = LevyRun.SplitByWeights(total, weights.ToArray());
+            int used = 0;
+            for (int i = 0; i < stops.Count && i < split.Length; i++)
+            {
+                stops[i].AddLevy(split[i]);
+                used += split[i];
+            }
+
+            return used;
+        }
+
+        private void TickLevySit(float dt)
+        {
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive) continue;
+                s.TickLevySit(dt);
+                if (s.LevyPurse <= 0 || s.LevySitSeconds < LevyRun.SitStealSeconds) continue;
+                int stole = s.StealLevy(LevyRun.SitStealAmount);
+                if (stole > 0)
+                    _loop.NotifyLevyStolen(stole, s.DisplayName);
+            }
+        }
 
         public ColonyStructure NearestPower(Vector3 from, float maxDist) =>
             NearestByCategory(from, maxDist, BuildingCategory.Power);

@@ -25,6 +25,8 @@ namespace SolarMajesty
         public int RegolithCamps { get; private set; }
         public int PowerPlants { get; private set; }
         public int LastTax { get; private set; }
+        public int LastDelivered { get; private set; }
+        public int UncollectedLevy { get; private set; }
         public int LastBirths { get; private set; }
         public int LastDeaths { get; private set; }
         public string LastProductionLine { get; private set; } = "";
@@ -371,10 +373,23 @@ namespace SolarMajesty
 
         private void CollectTax()
         {
-            float scale = Overcrowded ? 0.65f : 1f;
-            LastTax = Mathf.Max(0, Mathf.RoundToInt(Population * TaxPerCitizen * scale));
+            LastTax = LevyRun.Accrue(Population, Overcrowded);
             if (LastTax > 0)
-                _resources.Add(ResourceId.Metals, LastTax);
+                UncollectedLevy += LastTax;
+        }
+
+        public int TakeUncollectedLevy()
+        {
+            int n = UncollectedLevy;
+            UncollectedLevy = 0;
+            return n;
+        }
+
+        public void NoteLevyDelivered(int amount)
+        {
+            LastDelivered = Mathf.Max(0, amount);
+            if (amount > 0 && _resources != null)
+                _resources.Add(ResourceId.Metals, amount);
         }
     }
 }

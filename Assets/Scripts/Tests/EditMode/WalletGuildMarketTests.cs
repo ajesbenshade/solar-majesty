@@ -141,6 +141,22 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(TechId.ExtractBasics, GameLoop.TechRequiredFor(BuildingCategory.Market));
         }
 
+        [Test]
+        public void LevySplit_PutsLeftoverOnTheHeaviestStop()
+        {
+            int[] split = LevyRun.SplitByWeights(5, new[] { 2, 1 });
+            Assert.AreEqual(2, split.Length);
+            Assert.AreEqual(5, split[0] + split[1]);
+            Assert.GreaterOrEqual(split[0], split[1]);
+        }
+
+        [Test]
+        public void LevyAccrue_MatchesOldTaxRate()
+        {
+            Assert.AreEqual(4, LevyRun.Accrue(2, false));
+            Assert.AreEqual(Mathf.RoundToInt(3 * 2 * 0.65f), LevyRun.Accrue(3, true));
+        }
+
         [TearDown]
         public void TearDown()
         {

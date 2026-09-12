@@ -590,7 +590,7 @@ namespace SolarMajesty
                     popExtra += $"  ·  PROD {Mathf.RoundToInt(set.ProductionScale * 100f)}%";
                 GUI.Label(
                     new Rect(c.x, y, c.width, 14f),
-                    $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}  ·  TAX +{set.LastTax} MET{popExtra}",
+                    $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}  ·  LEVY +{set.LastTax}  sit {_loop.SittingLevy}  haul +{set.LastDelivered}{popExtra}",
                     _micro);
                 _micro.normal.textColor = prevPop;
                 y += 15f;
@@ -1292,7 +1292,9 @@ namespace SolarMajesty
             if (st.IsResidential)
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    "Humans stay in HABs. Outdoor work is robots from workshops.", _micro);
+                    st.LevyPurse > 0
+                        ? $"Levy purse {st.LevyPurse} CRED — Haul walks it to Commons."
+                        : "Humans stay in HABs. Outdoor work is robots from workshops.", _micro);
             }
             else if (st.IsGuild)
             {
@@ -1476,9 +1478,11 @@ namespace SolarMajesty
                     $"MOVE {a.EffectiveMoveSpeed:F1}  ·  WORK {a.EffectiveWorkRate:F2}  ·  status", _micro);
                 row += 15f;
 
-                string gene = a.GeneSecondsLeft > 0.5f
-                    ? $"gene {a.GeneSecondsLeft:F0}s"
-                    : "shop at rest beacon";
+                string gene = a.LevyCarried > 0
+                    ? $"levy {a.LevyCarried} CRED"
+                    : a.GeneSecondsLeft > 0.5f
+                        ? $"gene {a.GeneSecondsLeft:F0}s"
+                        : "shop at rest beacon";
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
                     Truncate($"{Truncate(a.LastReason, 14)} · {a.SuitLabel} · {gene}", 42), _micro);
             }

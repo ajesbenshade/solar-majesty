@@ -56,7 +56,8 @@ Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0
 3. Majesty wallet **in**: CRED only for flags / buildings / techs / revive / gear. ICE lungs, PWR grid. Guild halls sell class kits. Market Stall (Extract Basics) sells potions + regen necklace. Lodge pulses research-then-activate.
 4. **Blacksmith** (Ore Refining) sells guild arms and armor. **Fobot Yard** (Med Protocols) is the paid revive building — Y will not skip it. Yard bill scales with hero level.
 5. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes.
-6. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
+6. **Levy Courier walks in:** tax no longer teleports into CRED. Occupied HABs accrue a purse; Haul (Courier) walks it to Commons. Sitting too long or a downed Haul can lose the purse. No new FlagType. SpecialistBrain scoring unchanged.
+7. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
 
 ## Still out of scope (for now)
 
@@ -64,4 +65,4 @@ Full combat sim rewrite, multiplayer, heightmap terrain.
 
 Typed natural-language flags + bundled local LLM ([Flag-hero local LLM](Roadmap/FLAG_HERO_LOCAL_LLM.md)) is a **parked stretch**. Do not start it during Phase 4. It is not Phase 5 ship work. Grok-the-advisor stays a scripted catalog.
 
-Levy Courier walks (HAB purses) are the next Majesty gold loop after the yard.
+Market ICE→CRED siphon (reserve floor) is the next Majesty gold loop after levy walks.
