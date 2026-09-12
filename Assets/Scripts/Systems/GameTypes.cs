@@ -97,7 +97,11 @@ namespace SolarMajesty
         AegisSpire = 24,
         DeepArchive = 25,
         /// <summary>Majesty market stall — potions and the regen necklace. Saved as int 26.</summary>
-        Market = 26
+        Market = 26,
+        /// <summary>Guild arms and armor. Saved as int 27.</summary>
+        Blacksmith = 27,
+        /// <summary>Player-facing Fobot Yard — paid revive. Saved as int 28.</summary>
+        FobotYard = 28
     }
 
     [Serializable]

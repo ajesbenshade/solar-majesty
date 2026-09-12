@@ -88,6 +88,8 @@ namespace SolarMajesty.EditorTools
             WriteBuilding("Building_CMD1", "Defense Battery", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
             WriteStarterGuilds();
             WriteBuilding("Building_Market", "Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4);
+            WriteBuilding("Building_Blacksmith", "Blacksmith", BuildingCategory.Blacksmith, 48, 4, 12f, 4, 4);
+            WriteBuilding("Building_FobotYard", "Fobot Yard", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4);
             WriteBuilding("Building_HarvesterWorkshop", "Harvester Workshop", BuildingCategory.HarvesterWorkshop, 40, 5, 12f, 4, 4);
             WriteBuilding("Building_SurveyorWorkshop", "Surveyor Workshop", BuildingCategory.SurveyorWorkshop, 38, 4, 12f, 4, 4);
             WriteBuilding("Building_TerraformerWorkshop", "Terraformer Workshop", BuildingCategory.TerraformerWorkshop, 42, 5, 12f, 4, 4);
@@ -237,6 +239,8 @@ namespace SolarMajesty.EditorTools
                     return "unlock from ★ tech — bonus while standing";
                 case BuildingCategory.GuildHall: return "Guild Hall — assign a class";
                 case BuildingCategory.Market: return "Potions and a regen necklace. Heroes buy with CRED.";
+                case BuildingCategory.Blacksmith: return "Guild arms and armor. Heroes buy with CRED.";
+                case BuildingCategory.FobotYard: return "Pay CRED here to stand wrecks up.";
                 default: return "";
             }
         }

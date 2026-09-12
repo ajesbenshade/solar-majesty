@@ -182,12 +182,16 @@ namespace SolarMajesty
             return Mathf.Max(1, Mathf.RoundToInt(met * RefabCostScale));
         }
 
-        /// <summary>Scrapyard MET for the next revive of this mech. n=0 → 40, then ×1.5 each success.</summary>
+        /// <summary>Scrapyard CRED for this mech. n=0 → 40, then ×1.5 each step.</summary>
         public static int ReviveMetals(int reviveCount)
         {
             int n = Mathf.Clamp(reviveCount, 0, ReviveCostMaxSteps);
             return Mathf.Max(ReviveMet, Mathf.RoundToInt(ReviveMet * Mathf.Pow(ReviveCostGrowth, n)));
         }
+
+        /// <summary>Yard bill scales with hero level (L1 = base).</summary>
+        public static int ReviveMetalsForLevel(int level) =>
+            ReviveMetals(Mathf.Max(0, level - 1));
 
         public static int ReviveIceCost(int reviveCount) => 0;
 

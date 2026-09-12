@@ -1246,7 +1246,7 @@ namespace SolarMajesty
         private void DrawBuildingCard(ColonyStructure st)
         {
             const float cardW = 340f;
-            float cardH = st.IsGuild ? 228f : 148f;
+            float cardH = st.IsGuild ? 228f : st.Category == BuildingCategory.FobotYard ? 176f : 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
             var c = Panel(rect, null);
@@ -1333,6 +1333,25 @@ namespace SolarMajesty
                             st.HasPreferredClass && st.PreferredClass == SpecialistClass.Medic))
                         _loop.SetSelectedWorkplaceClass(SpecialistClass.Medic);
                 }
+            }
+            else if (st.Category == BuildingCategory.FobotYard)
+            {
+                int met = _loop.FieldReviveMet;
+                GUI.Label(new Rect(c.x, row, c.width, 13f),
+                    _loop.NeedsFieldRevive
+                        ? $"Stand-up bill {met} CRED. Cost scales with level."
+                        : "No wrecks. Dock this yard before anyone goes down.", _micro);
+                row += 16f;
+                bool canPay = _loop.NeedsFieldRevive && _loop.HasFobotYard &&
+                              _loop.FieldReviveReadyIn <= 0.5f;
+                if (Chip(new Rect(c.x, row, 220f, 22f),
+                        canPay ? $"PAY {met} CRED" : "YARD IDLE", canPay) && canPay)
+                    _loop.RetryParty();
+            }
+            else if (st.Category == BuildingCategory.Blacksmith)
+            {
+                GUI.Label(new Rect(c.x, row, c.width, 22f),
+                    "Lodge arms and armor. Heroes buy with their CRED.", _micro);
             }
             else if (!st.ClassLocked)
             {
@@ -1950,14 +1969,22 @@ namespace SolarMajesty
             else
             {
                 int met = _loop.FieldReviveMet;
-                GUI.Label(new Rect(c.x, c.y + 32f, c.width, 36f),
-                    $"SCRAPYARD REVIVE  {met} CRED  (120s)", _body);
-                GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
-                    _loop.FieldReviveReadyIn > 0.5f
-                        ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Cost rises each revive."
-                        : "Paid from the workshop scrapyard. Cost rises each revive.", _muted);
-                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "SCRAPYARD REVIVE  ·  Y", _chipOn))
-                    _loop.RetryParty();
+                if (!_loop.HasFobotYard)
+                {
+                    GUI.Label(new Rect(c.x, c.y + 32f, c.width, 48f),
+                        "Dock a Fobot Yard. Wrecks stand up there — Y will not skip the building.", _body);
+                }
+                else
+                {
+                    GUI.Label(new Rect(c.x, c.y + 32f, c.width, 36f),
+                        $"FOBOT YARD  {met} CRED  (120s)", _body);
+                    GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
+                        _loop.FieldReviveReadyIn > 0.5f
+                            ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Cost scales with level."
+                            : "Inspect the yard or press Y. Cost scales with level.", _muted);
+                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "PAY YARD  ·  Y", _chipOn))
+                        _loop.RetryParty();
+                }
             }
         }
 

@@ -1798,6 +1798,10 @@ namespace SolarMajesty
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
             else if (id == TechId.ExtractBasics)
                 LogOverseer("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in CRED.");
+            else if (id == TechId.OreRefining)
+                LogOverseer("Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in CRED.");
+            else if (id == TechId.MedProtocols)
+                LogOverseer("Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in CRED.");
             else if (id == TechId.HorizonPulse)
                 LogOverseer("Horizon Pulse researched. Inspect Horizon Lodge and spend CRED to mark dens.");
             else if (id == TechId.AnvilOvertime)
@@ -1856,6 +1860,8 @@ namespace SolarMajesty
             {
                 case BuildingCategory.GuildHall: return TechId.GuildCharter;
                 case BuildingCategory.Market: return TechId.ExtractBasics;
+                case BuildingCategory.Blacksmith: return TechId.OreRefining;
+                case BuildingCategory.FobotYard: return TechId.MedProtocols;
                 case BuildingCategory.HarvesterWorkshop: return TechId.HarvestDoctrine;
                 case BuildingCategory.SurveyorWorkshop: return TechId.SurveyDoctrine;
                 case BuildingCategory.TerraformerWorkshop: return TechId.TerraformCharter;
@@ -2129,6 +2135,14 @@ namespace SolarMajesty
                     case BuildingCategory.Market:
                         b.displayName = "Market Stall";
                         b.description = "Potions and a regen necklace. Heroes buy with CRED.";
+                        break;
+                    case BuildingCategory.Blacksmith:
+                        b.displayName = "Blacksmith";
+                        b.description = "Guild arms and armor. Heroes buy with CRED.";
+                        break;
+                    case BuildingCategory.FobotYard:
+                        b.displayName = "Fobot Yard";
+                        b.description = "Pay CRED here to stand wrecks up.";
                         break;
                 }
             }
@@ -3364,29 +3378,36 @@ namespace SolarMajesty
             SyncLaunchGate();
         }
 
+        public bool HasFobotYard => HasAliveCategory(BuildingCategory.FobotYard);
+
         public void RetryParty()
         {
             if (!NeedsFieldRevive)
             {
-                LogOverseer("No one is down — field revive is for incapacitated robots.");
+                LogOverseer("No one is down — the Fobot Yard is for incapacitated robots.");
+                return;
+            }
+            if (!HasFobotYard)
+            {
+                LogOverseer("Dock a Fobot Yard. Y does not skip the building.");
                 return;
             }
             if (Time.time < _reviveReadyAt)
             {
-                LogOverseer($"Field revive cooling down — {FieldReviveReadyIn:F0}s.");
+                LogOverseer($"Fobot Yard cooling down — {FieldReviveReadyIn:F0}s.");
                 return;
             }
 
             ComputeReviveBill(out int met, out int ice);
             if (Economy == null || !Economy.CanAffordRevive(met, ice))
             {
-                LogOverseer($"Scrapyard revive needs {met} MET and {ice} ICE.");
+                LogOverseer($"Fobot Yard needs {met} CRED.");
                 return;
             }
 
             if (!Economy.TrySpendRevive(met, ice))
             {
-                LogOverseer($"Scrapyard revive needs {met} MET and {ice} ICE.");
+                LogOverseer($"Fobot Yard needs {met} CRED.");
                 return;
             }
 
@@ -3403,8 +3424,8 @@ namespace SolarMajesty
             if (!_revivePenaltyApplied)
                 _revivePenaltyApplied = true;
             _mission?.OnPartyRevived();
-            LogOverseer($"Scrapyard revive — {met} MET {ice} ICE. Next bill rises.");
-            Debug.Log("[GameLoop] Scrapyard revive paid.");
+            LogOverseer($"Fobot Yard stand-up — {met} CRED. Next bill rises with level.");
+            Debug.Log("[GameLoop] Fobot Yard revive paid.");
         }
 
         public void RestartMission()
@@ -3761,6 +3782,8 @@ namespace SolarMajesty
                 BuildingCategory.DeepArchive => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.GuildHall => "Guild Hall — assign a class",
                 BuildingCategory.Market => "Potions and a regen necklace. Heroes buy with CRED.",
+                BuildingCategory.Blacksmith => "Guild arms and armor. Heroes buy with CRED.",
+                BuildingCategory.FobotYard => "Pay CRED here to stand wrecks up.",
                 _ => b.description
             };
             b.preferredOccupants = DefaultOccupants(cat);
@@ -3799,6 +3822,8 @@ namespace SolarMajesty
                 CreateBuilding("Engineer Workshop", BuildingCategory.EngineerWorkshop, 36, 4, 12f, 4, 4),
                 CreateBuilding("Village Inn", BuildingCategory.Inn, 30, 3, 10f, 4, 4),
                 CreateBuilding("Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4),
+                CreateBuilding("Blacksmith", BuildingCategory.Blacksmith, 48, 4, 12f, 4, 4),
+                CreateBuilding("Fobot Yard", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
                 CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
                 CreateGuildHall(RobotGuildId.Horizon),
@@ -4979,7 +5004,7 @@ namespace SolarMajesty
             NoteMechDeath(agent.transform.position);
             string salvageTxt = salvage > 0 ? $" Salvage {salvage} MET." : "";
             if (TryPayScrapRefab(rec, out int met, out int ice, out string shopName))
-                LogOverseer($"{label} scrapped — scrapyard {met} MET / {ice} ICE / 40 s at {shopName}.{salvageTxt}");
+                LogOverseer($"{label} scrapped — Fobot Yard {met} CRED / 40 s at {shopName}.{salvageTxt}");
             else
                 LogOverseer($"{label} scrapped — corpse at the scrapyard.{salvageTxt}");
         }
@@ -5120,7 +5145,7 @@ namespace SolarMajesty
             if (total > 0)
             {
                 Resources?.Add(ResourceId.Metals, total);
-                LogOverseer($"Payroll returned {total} MET.");
+                LogOverseer($"Payroll returned {total} CRED.");
             }
         }
 
@@ -5203,19 +5228,14 @@ namespace SolarMajesty
             {
                 var a = _agents[i];
                 if (a == null || !a.IsIncapacitated) continue;
-                met += OverseerRules.ReviveMetals(a.ReviveCount);
-                ice += OverseerRules.ReviveIceCost(a.ReviveCount);
+                met += OverseerRules.ReviveMetalsForLevel(a.Level);
             }
             for (int i = 0; i < _corpses.Count; i++)
             {
-                met += OverseerRules.ReviveMetals(_corpses[i].ReviveCount);
-                ice += OverseerRules.ReviveIceCost(_corpses[i].ReviveCount);
+                met += OverseerRules.ReviveMetalsForLevel(_corpses[i].Level);
             }
-            if (met <= 0 && ice <= 0)
-            {
+            if (met <= 0)
                 met = OverseerRules.ReviveMet;
-                ice = OverseerRules.ReviveIce;
-            }
         }
 
         private List<SpecialistRecord> CaptureRoster()
@@ -5392,6 +5412,12 @@ namespace SolarMajesty
 
         private Vector3 ScrapyardPosition()
         {
+            if (Village != null)
+            {
+                var yard = Village.NearestByCategory(ColonyLayout.CampusOrigin, 200f, BuildingCategory.FobotYard);
+                if (yard != null && yard.IsAlive)
+                    return yard.WorldPosition;
+            }
             for (int i = 0; i < _corpses.Count; i++)
             {
                 var shop = FindWorkshopFor(_corpses[i].Class);

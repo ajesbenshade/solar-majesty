@@ -33,7 +33,34 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(ShopVendor.Market, ShopCatalog.Get(ShopItemId.MagicPotion).Vendor);
             Assert.AreEqual(ShopVendor.Market, ShopCatalog.Get(ShopItemId.RegenNecklace).Vendor);
             Assert.AreEqual(ShopVendor.GuildHall, ShopCatalog.Get(ShopItemId.AnvilRig).Vendor);
-            Assert.AreEqual(ShopVendor.Blacksmith, ShopVendor.Blacksmith);
+            Assert.AreEqual(ShopVendor.Blacksmith, ShopCatalog.Get(ShopItemId.AnvilSledge).Vendor);
+            Assert.AreEqual(ShopItemKind.Weapon, ShopCatalog.Get(ShopItemId.HorizonNeedle).Kind);
+        }
+
+        [Test]
+        public void Blacksmith_IsClassLockedAndBeatsGuildKit()
+        {
+            var sledge = ShopCatalog.BestBlacksmithBuy(
+                SpecialistClass.EngineerBot, 200, ShopItemId.AnvilRig, ShopItemId.None);
+            Assert.IsNotNull(sledge);
+            Assert.AreEqual(ShopVendor.Blacksmith, sledge.Vendor);
+            Assert.AreEqual(SpecialistClass.EngineerBot, sledge.ForClass);
+        }
+
+        [Test]
+        public void SmithAndYard_UnlockFromTech()
+        {
+            Assert.AreEqual(27, (int)BuildingCategory.Blacksmith);
+            Assert.AreEqual(28, (int)BuildingCategory.FobotYard);
+            Assert.AreEqual(TechId.OreRefining, GameLoop.TechRequiredFor(BuildingCategory.Blacksmith));
+            Assert.AreEqual(TechId.MedProtocols, GameLoop.TechRequiredFor(BuildingCategory.FobotYard));
+        }
+
+        [Test]
+        public void YardBill_ScalesWithLevel()
+        {
+            Assert.AreEqual(OverseerRules.ReviveMet, OverseerRules.ReviveMetalsForLevel(1));
+            Assert.Greater(OverseerRules.ReviveMetalsForLevel(4), OverseerRules.ReviveMetalsForLevel(1));
         }
 
         [Test]

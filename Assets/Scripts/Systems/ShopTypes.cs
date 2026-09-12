@@ -5,7 +5,8 @@ namespace SolarMajesty
         PermanentSuit = 0,
         ConsumableGene = 1,
         ConsumablePotion = 2,
-        Accessory = 3
+        Accessory = 3,
+        Weapon = 4
     }
 
     public enum ShopVendor
@@ -13,7 +14,6 @@ namespace SolarMajesty
         Inn = 0,
         GuildHall = 1,
         Market = 2,
-        /// <summary>Parked. Guild-specific arms land here later — do not sell yet.</summary>
         Blacksmith = 3
     }
 
@@ -31,7 +31,15 @@ namespace SolarMajesty
         TriagePack = 23,
         HealthPotion = 30,
         MagicPotion = 31,
-        RegenNecklace = 32
+        RegenNecklace = 32,
+        HorizonNeedle = 40,
+        HorizonWeave = 41,
+        AnvilSledge = 42,
+        AnvilPlate = 43,
+        AegisPike = 44,
+        AegisMail = 45,
+        TriageInjector = 46,
+        TriageMail = 47
     }
 
     /// <summary>Catalog entry. Heroes spend personal credits; the colony spends Metals (CRED).</summary>
@@ -51,5 +59,6 @@ namespace SolarMajesty
         public float HealAmount;
         public float RegenPerSecond;
         public float DurationSeconds;
+        public float DamageBonus;
     }
 }

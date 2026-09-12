@@ -60,6 +60,8 @@ namespace SolarMajesty
             cat == BuildingCategory.DeepArchive ||
             cat == BuildingCategory.Inn ||
             cat == BuildingCategory.Market ||
+            cat == BuildingCategory.Blacksmith ||
+            cat == BuildingCategory.FobotYard ||
             ColonyStructure.IsWorkshopCategory(cat);
 
         public static void BuildHabitat(Transform root, float w, float d, Color hull)
@@ -732,6 +734,50 @@ namespace SolarMajesty
             }
         }
 
+        public static void BuildBlacksmith(Transform root, float w, float d)
+        {
+            Prim(root, "SmithPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.90f, 0.16f, d * 0.86f), Carbon);
+            Prim(root, "SmithHall", PrimitiveType.Cube,
+                new Vector3(0f, 1.05f, -0.08f),
+                new Vector3(w * 0.72f, 1.55f, d * 0.62f), White);
+            Prim(root, "SmithForge", PrimitiveType.Cube,
+                new Vector3(0.15f, 0.55f, d * 0.22f),
+                new Vector3(0.70f, 0.55f, 0.48f), Carbon);
+            Prim(root, "SmithAnvil", PrimitiveType.Cube,
+                new Vector3(-0.55f, 0.48f, d * 0.18f),
+                new Vector3(0.42f, 0.38f, 0.28f), Steel);
+            Prim(root, "SmithChimney", PrimitiveType.Cylinder,
+                new Vector3(0.22f, 2.35f, 0.10f),
+                new Vector3(0.22f, 0.85f, 0.22f), Carbon);
+            Prim(root, "SmithGlow", PrimitiveType.Sphere,
+                new Vector3(0.15f, 0.72f, d * 0.22f),
+                new Vector3(0.28f, 0.22f, 0.28f), Orange, new Color(1.4f, 0.45f, 0.12f));
+        }
+
+        public static void BuildFobotYard(Transform root, float w, float d)
+        {
+            Prim(root, "YardPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.92f, 0.16f, d * 0.88f), Carbon);
+            Prim(root, "YardHangar", PrimitiveType.Cube,
+                new Vector3(0f, 1.15f, -0.06f),
+                new Vector3(w * 0.78f, 1.70f, d * 0.66f), White);
+            Prim(root, "YardDoor", PrimitiveType.Cube,
+                new Vector3(0f, 0.95f, d * 0.32f),
+                new Vector3(w * 0.42f, 1.15f, 0.08f), Orange);
+            Prim(root, "YardRack", PrimitiveType.Cube,
+                new Vector3(-w * 0.28f, 0.55f, 0.12f),
+                new Vector3(0.22f, 0.70f, 0.55f), Steel);
+            Prim(root, "YardWreck", PrimitiveType.Cube,
+                new Vector3(w * 0.22f, 0.42f, 0.18f),
+                new Vector3(0.55f, 0.38f, 0.40f), Carbon);
+            Prim(root, "YardBeacon", PrimitiveType.Sphere,
+                new Vector3(0f, 2.22f, -0.06f),
+                new Vector3(0.18f, 0.18f, 0.18f), Cyan, CyanEmit);
+        }
+
         public static void BuildMarket(Transform root, float w, float d)
         {
             Prim(root, "MktPlinth", PrimitiveType.Cube,
@@ -1325,7 +1371,8 @@ namespace SolarMajesty
                         if (Mathf.Abs(dir.z) >= Mathf.Abs(dir.x)) return d * 0.31f;
                         return w * 0.41f;
                     }
-                    if (cat == BuildingCategory.Inn || cat == BuildingCategory.Market)
+                    if (cat == BuildingCategory.Inn || cat == BuildingCategory.Market ||
+                        cat == BuildingCategory.Blacksmith || cat == BuildingCategory.FobotYard)
                     {
                         if (dir.z > 0.5f) return d * 0.27f;
                         if (dir.z < -0.5f) return d * 0.35f;

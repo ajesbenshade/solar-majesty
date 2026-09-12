@@ -33,6 +33,7 @@ namespace SolarMajesty
         [SerializeField] private float credits;
         [SerializeField] private ShopItemId equippedSuit = ShopItemId.None;
         [SerializeField] private ShopItemId equippedAccessory = ShopItemId.None;
+        [SerializeField] private ShopItemId equippedWeapon = ShopItemId.None;
         [SerializeField] private int level = 1;
         [SerializeField] private int xp;
         [SerializeField] private int reviveCount;
@@ -106,6 +107,7 @@ namespace SolarMajesty
         public float Credits => credits;
         public ShopItemId EquippedSuit => equippedSuit;
         public ShopItemId EquippedAccessory => equippedAccessory;
+        public ShopItemId EquippedWeapon => equippedWeapon;
         public int Level => Mathf.Clamp(level, 1, OverseerRules.LevelCap);
         public int Xp => Mathf.Max(0, xp);
         public int ReviveCount => Mathf.Max(0, reviveCount);
@@ -146,7 +148,8 @@ namespace SolarMajesty
         {
             get
             {
-                float r = (data != null ? data.workRate : 1f) * (1f + _geneWork + SuitWorkBonus());
+                float r = (data != null ? data.workRate : 1f) *
+                    (1f + _geneWork + SuitWorkBonus() + WeaponWorkBonus());
                 if (_loop != null && _loop.Economy != null && _loop.Economy.PowerShort)
                     r *= OverseerRules.PowerShortWork;
                 if (_loop != null &&
@@ -263,6 +266,7 @@ namespace SolarMajesty
             reviveCount = Mathf.Max(0, record.ReviveCount);
             equippedSuit = record.Suit;
             equippedAccessory = record.Accessory;
+            equippedWeapon = record.Weapon;
         }
 
         /// <summary>Continue restore of combat state. No death VFX — the down already happened.</summary>
@@ -324,6 +328,7 @@ namespace SolarMajesty
                 ReviveCount = reviveCount,
                 Suit = equippedSuit,
                 Accessory = equippedAccessory,
+                Weapon = equippedWeapon,
                 Corpse = corpse
             };
         }
@@ -332,6 +337,8 @@ namespace SolarMajesty
         {
             var suit = ShopCatalog.Get(equippedSuit);
             float bonus = suit != null ? suit.SpeedBonus : 0f;
+            var wep = ShopCatalog.Get(equippedWeapon);
+            if (wep != null) bonus += wep.SpeedBonus;
             if (_loop != null &&
                 _loop.GuildBenefits != null &&
                 _loop.GuildBenefits.IsActive(RobotGuildId.Horizon) &&
@@ -347,6 +354,18 @@ namespace SolarMajesty
             return suit != null ? suit.WorkBonus : 0f;
         }
 
+        private float WeaponWorkBonus()
+        {
+            var w = ShopCatalog.Get(equippedWeapon);
+            return w != null ? w.WorkBonus : 0f;
+        }
+
+        private float WeaponDamageBonus()
+        {
+            var w = ShopCatalog.Get(equippedWeapon);
+            return w != null ? w.DamageBonus : 0f;
+        }
+
         private float GearRegenPerSecond()
         {
             float r = 0f;
@@ -354,6 +373,8 @@ namespace SolarMajesty
             if (suit != null) r += suit.RegenPerSecond;
             var acc = ShopCatalog.Get(equippedAccessory);
             if (acc != null) r += acc.RegenPerSecond;
+            var wep = ShopCatalog.Get(equippedWeapon);
+            if (wep != null) r += wep.RegenPerSecond;
             if (_loop != null &&
                 _loop.GuildBenefits != null &&
                 _loop.GuildBenefits.IsActive(RobotGuildId.Triage))
@@ -441,6 +462,7 @@ namespace SolarMajesty
             credits = 20f;
             equippedSuit = ShopItemId.None;
             equippedAccessory = ShopItemId.None;
+            equippedWeapon = ShopItemId.None;
             level = OverseerRules.LevelStart;
             xp = 0;
             reviveCount = 0;
@@ -1221,6 +1243,7 @@ namespace SolarMajesty
             _shopCooldown = Mathf.Max(0f, _shopCooldown - dt);
             ConsiderGuildUpgrade();
             ConsiderMarketBuy();
+            ConsiderBlacksmithBuy();
         }
 
         private void ConsiderGuildUpgrade()
@@ -1245,6 +1268,18 @@ namespace SolarMajesty
                 TryBuy(item);
         }
 
+        private void ConsiderBlacksmithBuy()
+        {
+            if (_shopCooldown > 0f || data == null) return;
+            if (_loop?.Village == null) return;
+            var smith = _loop.Village.NearestByCategory(transform.position, 6f, BuildingCategory.Blacksmith);
+            if (smith == null) return;
+            var item = ShopCatalog.BestBlacksmithBuy(
+                data.specialistClass, Mathf.FloorToInt(credits), equippedSuit, equippedWeapon);
+            if (item != null)
+                TryBuy(item);
+        }
+
         private bool TryBuy(ShopItemDef item)
         {
             if (item == null || credits < item.Cost) return false;
@@ -1264,6 +1299,15 @@ namespace SolarMajesty
             {
                 equippedAccessory = item.Id;
                 DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.82f, 0.28f));
+                DemoAudio.PlayClaim();
+                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} CRED");
+                return true;
+            }
+
+            if (item.Kind == ShopItemKind.Weapon)
+            {
+                equippedWeapon = item.Id;
+                DemoVfx.ClaimRing(transform.position, new Color(0.92f, 0.55f, 0.18f));
                 DemoAudio.PlayClaim();
                 Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} CRED");
                 return true;
@@ -1304,7 +1348,7 @@ namespace SolarMajesty
             var stalker = NearestStalkerAgent();
             if (stalker != null)
             {
-                float mul = HuntDpsMul(stalker.Kind) * LevelDpsMul;
+                float mul = HuntDpsMul(stalker.Kind) * LevelDpsMul * (1f + WeaponDamageBonus());
                 stalker.ApplyCombatDamage(EffectiveWorkRate * 8f * dt * mul);
             }
         }

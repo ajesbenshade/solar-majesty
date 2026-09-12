@@ -71,6 +71,8 @@ namespace SolarMajesty
                 BuildingCategory.SentinelWorkshop => StructureRole.Workshop,
                 BuildingCategory.GuildHall => StructureRole.Guild,
                 BuildingCategory.Market => StructureRole.Core,
+                BuildingCategory.Blacksmith => StructureRole.Core,
+                BuildingCategory.FobotYard => StructureRole.Core,
                 BuildingCategory.Commons => StructureRole.Core,
                 BuildingCategory.Habitat => StructureRole.Core,
                 _ => StructureRole.Core
