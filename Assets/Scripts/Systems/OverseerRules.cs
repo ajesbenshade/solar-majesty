@@ -16,7 +16,7 @@ namespace SolarMajesty
         public const float SalvageCreditFrac = 0.40f;
 
         public const int ReviveMet = 40;
-        public const int ReviveIce = 8;
+        public const int ReviveIce = 0;
         /// <summary>Each successful revive of that mech multiplies the scrapyard bill (Majesty temple tax).</summary>
         public const float ReviveCostGrowth = 1.5f;
         public const int ReviveCostMaxSteps = 8;
@@ -90,6 +90,10 @@ namespace SolarMajesty
         public const float BatteryDps = 4f;
         public const float BatteryRetarget = 0.5f;
         public const int BatteryExtraPwr = 2;
+        public const int WatchtowerLaserCost = 40;
+        public const int AidStationHealCost = 8;
+        public const float AidStationHealHp = 0.42f;
+        public const float AidArrive = 3.6f;
 
         public const float CommonsShadeRadius = 20f;
         public const float CommonsShadeDanger = 0.85f;
@@ -182,18 +186,18 @@ namespace SolarMajesty
             return Mathf.Max(1, Mathf.RoundToInt(met * RefabCostScale));
         }
 
-        /// <summary>Scrapyard MET for the next revive of this mech. n=0 → 40, then ×1.5 each success.</summary>
+        /// <summary>Scrapyard CRED for this mech. n=0 → 40, then ×1.5 each step.</summary>
         public static int ReviveMetals(int reviveCount)
         {
             int n = Mathf.Clamp(reviveCount, 0, ReviveCostMaxSteps);
             return Mathf.Max(ReviveMet, Mathf.RoundToInt(ReviveMet * Mathf.Pow(ReviveCostGrowth, n)));
         }
 
-        public static int ReviveIceCost(int reviveCount)
-        {
-            int n = Mathf.Clamp(reviveCount, 0, ReviveCostMaxSteps);
-            return Mathf.Max(ReviveIce, Mathf.RoundToInt(ReviveIce * Mathf.Pow(ReviveCostGrowth, n)));
-        }
+        /// <summary>Yard bill scales with hero level (L1 = base).</summary>
+        public static int ReviveMetalsForLevel(int level) =>
+            ReviveMetals(Mathf.Max(0, level - 1));
+
+        public static int ReviveIceCost(int reviveCount) => 0;
 
         /// <summary>Cumulative XP required to stand at this level (L1 = 0).</summary>
         public static int XpToReach(int level)

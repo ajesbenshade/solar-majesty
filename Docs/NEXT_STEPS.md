@@ -51,10 +51,22 @@
 
 Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 is packaged. Phase 2 is complete** ([exit review](Roadmap/PHASE_2_EXIT.md)). **Phase 3 is complete** ([exit review](Roadmap/PHASE_3_EXIT.md)). Current: [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) ([exit blocked](Roadmap/PHASE_4_EXIT.md)). After Phase 4: [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
 
-1. Phase 4 visual target — **Weeks 1–4 continued are in**. Exit review is **blocked** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)): still16 signed the look fail as a **dark rectangular airlock box** (wrap `Dress_HubDoor`). Hub/collar code now drops those doors, keeps a smaller white paneled square, and puts **one orange collar at the Lego face** on docked arms only. Latest in-repo Game-tab is still6 (empty Sol 1). `SM_MarsCampaign_VisualTarget.png` is **retired** — do not chase packed density. Next human step: re-enter Play Mode on Mars, place Commons + airlock + HAB, look for a **white paneled square hub**, **short white tubes + one orange collar on docked faces only**, **no unused CommonsPort rings**, **readable white hulls**, **spaced campus (empty dirt OK)**. Then a **spaced overseer** Game-tab still. **Do not stamp Phase 4 complete. Do not start Phase 5.** Square Lego airlocks stay; tubes/domes/cranes/kits/turrets/solar are dressing. Mockup squad bars are HUD chrome only. Do not add click-to-move. Defense stays the tracked Guardian.
-2. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes. Guild Hall: assign SCOUT/ENG/DEF/MED (Horizon / Anvil / Aegis / Triage).
-3. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
+1. Phase 4 visual target — **EXIT blocked**. Latest `SM_Capture.png` (2026-09-11) is **packed**. Recapture after **3-cell landmark gap**, still skips farm, CRED HUD, SyncFog. Menu: **Solar Majesty → Render → Capture Mars Still**. Judge vs [`SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png). Empty dirt is a pass. **Do not stamp Phase 4 complete.**
+2. Title orrery + four starter guilds **in**. Click a world to drop (Shift+click unlocks). Horizon / Anvil / Aegis / Triage replace the generic Guild Hall.
+3. Majesty wallet **in**: CRED only for flags / buildings / techs / revive / gear. ICE lungs, PWR grid. Guild halls sell class kits. Market Stall (Extract Basics) sells potions + regen necklace. Lodge pulses research-then-activate.
+4. **Blacksmith** (Ore Refining) sells guild arms and armor. **Fobot Yard** (Med Protocols) is the paid revive building — Y will not skip it. Yard bill scales with hero level.
+5. Settings chips cycle Mode / Challenge / Stance. Open Hands hunger +0.26 clears the 0.75 cheap-flag greed gate (EditMode covered). Compact Grok asides cover levy steal/sit, yard invoice, siphon closed, den chart.
+6. **Levy Courier walks in:** tax no longer teleports into CRED. Occupied HABs accrue a purse; Haul (Courier) walks it to Commons. Sitting too long or a downed Haul can lose the purse. No new FlagType. SpecialistBrain scoring unchanged.
+7. **Watchtowers in:** rim guard post + levy chest. Aegis / Rim Watch clock in. If Commons is far, Haul drops CRED at the tower. Inspect the tower and spend CRED to arm lasers (18 m, like a battery).
+8. **Majesty analog pack in:** Market siphon (surplus ICE/REG → CRED, reserve held). Aid Station (Life Support) — paid patches, Triage clocks in. Map: [`Docs/MAJESTY_ANALOG.md`](MAJESTY_ANALOG.md).
+9. **Dens-as-dungeons in:** unscouted dens are fog smudges. Explore charts every den in the 22 m disc. Horizon / Chart walking within 16 m charts one. Fobot Yard shows wreck chassis on the dirt.
+10. **Continue board in:** dens scouted/cleared, node remaining, mission elapsed/sustain/gates, parties, HAB levy purses, watchtower lasers. Wrecks respawn at the yard after load. Legacy PlayerPrefs-only slots still load settlement; they never had dens/nodes.
+11. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`.
 
 ## Still out of scope (for now)
 
 Full combat sim rewrite, multiplayer, heightmap terrain.
+
+Typed natural-language flags + bundled local LLM ([Flag-hero local LLM](Roadmap/FLAG_HERO_LOCAL_LLM.md)) is a **parked stretch**. Do not start it during Phase 4. It is not Phase 5 ship work. Grok-the-advisor stays a scripted catalog.
+
+Fear/Avoid decrees still need design sign-off (`SpecialistBrain`). Do not add a FlagType for them yet.

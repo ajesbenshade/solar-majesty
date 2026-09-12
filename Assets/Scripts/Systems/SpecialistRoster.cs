@@ -16,6 +16,8 @@ namespace SolarMajesty
         public int Credits;
         public int ReviveCount;
         public ShopItemId Suit;
+        public ShopItemId Accessory;
+        public ShopItemId Weapon;
         public bool Corpse;
     }
 
@@ -48,6 +50,10 @@ namespace SolarMajesty
                 sb.Append((int)r.Suit);
                 sb.Append(':');
                 sb.Append(r.Corpse ? 1 : 0);
+                sb.Append(':');
+                sb.Append((int)r.Accessory);
+                sb.Append(':');
+                sb.Append((int)r.Weapon);
             }
 
             return sb.ToString();
@@ -79,6 +85,12 @@ namespace SolarMajesty
                 if (!int.TryParse(f[4], out int revives)) continue;
                 if (!int.TryParse(f[5], out int suit)) continue;
                 int.TryParse(f[6], out int corpse);
+                int accessory = 0;
+                if (f.Length >= 8)
+                    int.TryParse(f[7], out accessory);
+                int weapon = 0;
+                if (f.Length >= 9)
+                    int.TryParse(f[8], out weapon);
                 records.Add(new SpecialistRecord
                 {
                     Class = (SpecialistClass)cls,
@@ -87,6 +99,8 @@ namespace SolarMajesty
                     Credits = Mathf.Max(0, credits),
                     ReviveCount = Mathf.Max(0, revives),
                     Suit = (ShopItemId)suit,
+                    Accessory = (ShopItemId)accessory,
+                    Weapon = (ShopItemId)weapon,
                     Corpse = corpse == 1
                 });
             }

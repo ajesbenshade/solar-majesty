@@ -15,8 +15,9 @@ namespace SolarMajesty
 
     /// <summary>
     /// Selectable colony piece. Village HABs take raids first.
-    /// Workshops fabricate robots. Guild halls are assignable class hangouts — flags nearby
-    /// pull that class via the same workshop-bonus path (no SpecialistBrain rewrite).
+    /// Workshops fabricate robots. Named guild halls (Horizon / Anvil / Aegis / Triage)
+    /// lock a class; flags nearby pull that class via the same workshop-bonus path
+    /// (no SpecialistBrain rewrite). A generic hall can still assign SCOUT/ENG/DEF/MED.
     /// Progression is via research / campaign gates, not per-building upgrade levels.
     /// </summary>
     public class ColonyStructure : MonoBehaviour
@@ -43,11 +44,16 @@ namespace SolarMajesty
         public bool IsVillageHab => role == StructureRole.VillageHab;
         public bool IsWorkshop => role == StructureRole.Workshop;
         public bool IsGuild => role == StructureRole.Guild || Category == BuildingCategory.GuildHall;
+        public bool IsWatchtower => Category == BuildingCategory.Watchtower;
+        public bool IsAidStation => Category == BuildingCategory.AidStation;
+        public bool LaserArmed { get; private set; }
         public bool IsWonder => IsWonderCategory(Category);
         public bool IsResidential =>
             role == StructureRole.VillageHab || Category == BuildingCategory.Habitat;
         public int ResidentCapacity => IsResidential ? Settlement.HousingPerHab : 0;
         public int Residents { get; private set; }
+        public int LevyPurse { get; private set; }
+        public float LevySitSeconds { get; private set; }
         public bool HasVacancy => IsResidential && IsAlive && Residents < ResidentCapacity;
         public bool IsAlive => _health > 0f;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
@@ -55,7 +61,7 @@ namespace SolarMajesty
         public bool IsSelected => _selected;
         /// <summary>Watt leeches / wisps are on this node — gen is stolen until they leave.</summary>
         public bool IsPowerSiphoned => Time.time < _siphonUntil;
-        public int WorkerSlots => IsWorkshop || IsGuild ? 2 : 1;
+        public int WorkerSlots => IsWorkshop || IsGuild ? 2 : (IsWatchtower || IsAidStation) ? 1 : 1;
         public IReadOnlyList<SpecialistAgent> Workers => _workers;
         public int WorkerCount
         {
@@ -116,6 +122,66 @@ namespace SolarMajesty
             return true;
         }
 
+        public bool AcceptsGuard(SpecialistClass cls) =>
+            IsWatchtower &&
+            (cls == SpecialistClass.DefenseMech || cls == SpecialistClass.SentinelMech);
+
+        public bool AcceptsHealer(SpecialistClass cls) =>
+            IsAidStation && cls == SpecialistClass.Medic;
+
+        public bool ArmLasers()
+        {
+            if (!IsWatchtower || !IsAlive || LaserArmed) return false;
+            LaserArmed = true;
+            HeroBuildingKits.ShowWatchtowerLasers(transform, true);
+            return true;
+        }
+
+        public void RestoreLevy(int amount)
+        {
+            LevyPurse = Mathf.Max(0, amount);
+            LevySitSeconds = 0f;
+            RefreshLevyPip();
+        }
+
+        public void AddLevy(int amount)
+        {
+            if (amount <= 0 || !IsAlive) return;
+            LevyPurse += amount;
+            LevySitSeconds = 0f;
+            RefreshLevyPip();
+        }
+
+        public int TakeLevy()
+        {
+            int n = LevyPurse;
+            LevyPurse = 0;
+            LevySitSeconds = 0f;
+            RefreshLevyPip();
+            return n;
+        }
+
+        public int StealLevy(int amount)
+        {
+            if (amount <= 0 || LevyPurse <= 0) return 0;
+            int take = Mathf.Min(amount, LevyPurse);
+            LevyPurse -= take;
+            LevySitSeconds = 0f;
+            RefreshLevyPip();
+            return take;
+        }
+
+        public void TickLevySit(float dt)
+        {
+            if (LevyPurse <= 0 || dt <= 0f)
+            {
+                LevySitSeconds = 0f;
+                return;
+            }
+
+            LevySitSeconds += dt;
+        }
+
         private void RefreshResidentPips()
         {
             Transform existing = transform.Find("ResidentPips");
@@ -147,6 +213,39 @@ namespace SolarMajesty
             }
         }
 
+        private void RefreshLevyPip()
+        {
+            Transform existing = transform.Find("LevyPip");
+            if (LevyPurse <= 0)
+            {
+                if (existing != null)
+                    ColonyVisualUtility.DestroyNow(existing.gameObject);
+                return;
+            }
+
+            if (existing == null)
+            {
+                var pip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                pip.name = "LevyPip";
+                pip.transform.SetParent(transform, false);
+                pip.transform.localPosition = new Vector3(0f, 4.15f, 0f);
+                pip.transform.localScale = Vector3.one * 0.28f;
+                ColonyVisualUtility.DestroyNow(pip.GetComponent<Collider>());
+                existing = pip.transform;
+            }
+
+            var rend = existing.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                       ?? Shader.Find("Sprites/Default"));
+                var c = new Color(0.98f, 0.82f, 0.22f);
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+                else if (mat.HasProperty("_Color")) mat.color = c;
+                rend.sharedMaterial = mat;
+            }
+        }
+
         public void SetPreferredClass(SpecialistClass cls)
         {
             if (ClassLocked) return;
@@ -168,7 +267,10 @@ namespace SolarMajesty
             PruneWorkers();
             if (_workers.Contains(agent)) return true;
             if (_workers.Count >= WorkerSlots) return false;
-            if (HasPreferredClass && agent.Data != null && agent.Data.specialistClass != PreferredClass)
+            if (HasPreferredClass && agent.Data != null &&
+                agent.Data.specialistClass != PreferredClass &&
+                !AcceptsGuard(agent.Data.specialistClass) &&
+                !AcceptsHealer(agent.Data.specialistClass))
                 return false;
             _workers.Add(agent);
             return true;
@@ -300,11 +402,11 @@ namespace SolarMajesty
 
         public static string GuildNameFor(SpecialistClass cls)
         {
+            var starter = RobotGuildCatalog.ForClass(cls);
+            if (starter != null)
+                return starter.HallName;
             switch (cls)
             {
-                case SpecialistClass.EngineerBot: return "Anvil Compact";
-                case SpecialistClass.DefenseMech: return "Aegis Lodge";
-                case SpecialistClass.Medic: return "Triage Compact";
                 case SpecialistClass.HarvesterBot: return "Strip Guild";
                 case SpecialistClass.SurveyorBot: return "Chart Lodge";
                 case SpecialistClass.TerraformerBot: return "Bloom Compact";
@@ -347,7 +449,9 @@ namespace SolarMajesty
             {
                 PreferredClass = SourceData.preferredOccupants[0];
                 HasPreferredClass = true;
-                ClassLocked = IsWorkshop;
+                ClassLocked = IsWorkshop || IsGuild || IsWatchtower || IsAidStation;
+                if (IsGuild)
+                    DisplayName = GuildNameFor(PreferredClass);
                 return;
             }
 
@@ -413,6 +517,18 @@ namespace SolarMajesty
                     ClassLocked = true;
                     role = StructureRole.Workshop;
                     break;
+                case BuildingCategory.Watchtower:
+                    PreferredClass = SpecialistClass.DefenseMech;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Core;
+                    break;
+                case BuildingCategory.AidStation:
+                    PreferredClass = SpecialistClass.Medic;
+                    HasPreferredClass = true;
+                    ClassLocked = true;
+                    role = StructureRole.Core;
+                    break;
                 case BuildingCategory.GuildHall:
                     HasPreferredClass = false;
                     ClassLocked = false;
@@ -473,6 +589,11 @@ namespace SolarMajesty
                 case BuildingCategory.GeologistWorkshop: return "Geologist Workshop";
                 case BuildingCategory.SentinelWorkshop: return "Sentinel Workshop";
                 case BuildingCategory.GuildHall: return "Guild Hall";
+                case BuildingCategory.Market: return "Market Stall";
+                case BuildingCategory.Blacksmith: return "Blacksmith";
+                case BuildingCategory.FobotYard: return "Fobot Yard";
+                case BuildingCategory.Watchtower: return "Watchtower";
+                case BuildingCategory.AidStation: return "Aid Station";
                 case BuildingCategory.ClimateLoom: return "Climate Loom";
                 case BuildingCategory.AegisSpire: return "Aegis Spire";
                 case BuildingCategory.DeepArchive: return "Deep Archive";
@@ -516,7 +637,7 @@ namespace SolarMajesty
             _selectRing.transform.SetParent(transform, false);
             _selectRing.transform.localPosition = new Vector3(0f, 0.05f, 0f);
             _selectRing.transform.localScale = new Vector3(3.2f, 0.025f, 3.2f);
-            Object.Destroy(_selectRing.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(_selectRing.GetComponent<Collider>());
             var rend = _selectRing.GetComponent<Renderer>();
             if (rend != null)
             {

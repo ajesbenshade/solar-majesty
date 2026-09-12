@@ -136,7 +136,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void Tax_PaysTwoMetalsPerCitizen()
+        public void Tax_AccruesWithoutPayingTheStockpile()
         {
             var s = Make(out ResourceManager res, coreHabs: 2);
             res.Set(ResourceId.WaterIce, 100);
@@ -145,7 +145,8 @@ namespace SolarMajesty.Tests
             s.Tick(s.TaxInterval);
 
             Assert.AreEqual(Settlement.StarterColonists * Settlement.TaxPerCitizen, s.LastTax);
-            Assert.AreEqual(s.LastTax, res.Get(ResourceId.Metals));
+            Assert.AreEqual(s.LastTax, s.UncollectedLevy);
+            Assert.AreEqual(0, res.Get(ResourceId.Metals), "levy sits until Haul walks it home");
         }
 
         [Test]
@@ -159,6 +160,21 @@ namespace SolarMajesty.Tests
             s.Tick(s.TaxInterval);
 
             Assert.AreEqual(Mathf.RoundToInt(3 * Settlement.TaxPerCitizen * 0.65f), s.LastTax);
+            Assert.AreEqual(s.LastTax, s.UncollectedLevy);
+            Assert.AreEqual(0, res.Get(ResourceId.Metals));
+        }
+
+        [Test]
+        public void Levy_DeliversIntoTheStockpile()
+        {
+            var s = Make(out ResourceManager res, coreHabs: 1);
+            s.SeedStarterCrew();
+            s.Tick(s.TaxInterval);
+            int sitting = s.TakeUncollectedLevy();
+            s.NoteLevyDelivered(sitting);
+            Assert.AreEqual(sitting, res.Get(ResourceId.Metals));
+            Assert.AreEqual(sitting, s.LastDelivered);
+            Assert.AreEqual(0, s.UncollectedLevy);
         }
 
         [Test]
@@ -169,7 +185,7 @@ namespace SolarMajesty.Tests
             s.SeedStarterCrew();
             int before = s.Population;
 
-            s.Tick(s.TaxInterval);
+            s.Tick(OverseerRules.LifeSupportFailSeconds);
 
             Assert.AreEqual(before - 1, s.Population);
             Assert.IsTrue(s.ConsumeLifeSupportFail());

@@ -31,7 +31,11 @@ namespace SolarMajesty
         PerimeterDoctrine = 24,
         ClimateLoom = 25,
         AegisSpire = 26,
-        DeepArchive = 27
+        DeepArchive = 27,
+        HorizonPulse = 28,
+        AnvilOvertime = 29,
+        AegisWatchfire = 30,
+        TriageFieldAid = 31
     }
 
     /// <summary>Static tech definition used by <see cref="ResearchManager"/>.</summary>

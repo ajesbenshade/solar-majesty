@@ -61,6 +61,11 @@ namespace SolarMajesty
                 case BuildingCategory.GeologistWorkshop:
                 case BuildingCategory.SentinelWorkshop:
                 case BuildingCategory.GuildHall:
+                case BuildingCategory.Market:
+                case BuildingCategory.Blacksmith:
+                case BuildingCategory.FobotYard:
+                case BuildingCategory.Watchtower:
+                case BuildingCategory.AidStation:
                     return 4;
                 case BuildingCategory.Power:
                 case BuildingCategory.Mining:

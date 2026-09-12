@@ -59,6 +59,11 @@ namespace SolarMajesty
             cat == BuildingCategory.AegisSpire ||
             cat == BuildingCategory.DeepArchive ||
             cat == BuildingCategory.Inn ||
+            cat == BuildingCategory.Market ||
+            cat == BuildingCategory.Blacksmith ||
+            cat == BuildingCategory.FobotYard ||
+            cat == BuildingCategory.Watchtower ||
+            cat == BuildingCategory.AidStation ||
             ColonyStructure.IsWorkshopCategory(cat);
 
         public static void BuildHabitat(Transform root, float w, float d, Color hull)
@@ -731,6 +736,155 @@ namespace SolarMajesty
             }
         }
 
+        public static void BuildWreck(Transform root)
+        {
+            Prim(root, "WreckHull", PrimitiveType.Cube,
+                new Vector3(0f, 0.28f, 0f),
+                new Vector3(0.85f, 0.32f, 0.55f), Carbon);
+            Prim(root, "WreckArm", PrimitiveType.Cube,
+                new Vector3(0.42f, 0.22f, 0.08f),
+                new Vector3(0.45f, 0.12f, 0.12f), Steel);
+            Prim(root, "WreckLens", PrimitiveType.Sphere,
+                new Vector3(-0.22f, 0.38f, 0.18f),
+                new Vector3(0.16f, 0.16f, 0.16f), Orange);
+        }
+
+        public static void BuildAidStation(Transform root, float w, float d)
+        {
+            Prim(root, "AidPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.88f, 0.16f, d * 0.80f), Carbon);
+            Prim(root, "AidHall", PrimitiveType.Cube,
+                new Vector3(0f, 0.95f, 0f),
+                new Vector3(w * 0.70f, 1.35f, d * 0.58f), White);
+            Prim(root, "AidCross", PrimitiveType.Cube,
+                new Vector3(0f, 1.55f, d * 0.30f),
+                new Vector3(0.55f, 0.12f, 0.12f), Orange);
+            Prim(root, "AidCrossV", PrimitiveType.Cube,
+                new Vector3(0f, 1.55f, d * 0.30f),
+                new Vector3(0.12f, 0.55f, 0.12f), Orange);
+            Prim(root, "AidCot", PrimitiveType.Cube,
+                new Vector3(-0.35f, 0.42f, -0.05f),
+                new Vector3(0.70f, 0.16f, 0.38f), Steel);
+            Prim(root, "AidLamp", PrimitiveType.Sphere,
+                new Vector3(0.40f, 1.55f, -0.10f),
+                new Vector3(0.16f, 0.16f, 0.16f), Cyan, CyanEmit);
+        }
+
+        public static void BuildWatchtower(Transform root, float w, float d)
+        {
+            Prim(root, "TowPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.62f, 0.16f, d * 0.62f), Carbon);
+            Prim(root, "TowShaft", PrimitiveType.Cylinder,
+                new Vector3(0f, 1.55f, 0f),
+                new Vector3(0.55f, 1.45f, 0.55f), White);
+            Prim(root, "TowCollar", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.55f, 0f),
+                new Vector3(0.72f, 0.10f, 0.72f), Orange);
+            Prim(root, "TowDeck", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.85f, 0f),
+                new Vector3(1.15f, 0.12f, 1.15f), White);
+            Prim(root, "TowRail", PrimitiveType.Cylinder,
+                new Vector3(0f, 3.15f, 0f),
+                new Vector3(1.05f, 0.06f, 1.05f), Steel);
+            Prim(root, "TowBeacon", PrimitiveType.Sphere,
+                new Vector3(0f, 3.45f, 0f),
+                new Vector3(0.22f, 0.22f, 0.22f), Cyan, CyanEmit);
+            Prim(root, "Dress_TowerLaser", PrimitiveType.Cube,
+                new Vector3(0f, 3.05f, 0.42f),
+                new Vector3(0.18f, 0.12f, 0.55f), Orange);
+            ShowWatchtowerLasers(root, false);
+        }
+
+        public static void ShowWatchtowerLasers(Transform root, bool on)
+        {
+            if (root == null) return;
+            var t = FindDeep(root, "Dress_TowerLaser");
+            if (t == null && on)
+            {
+                Prim(root, "Dress_TowerLaser", PrimitiveType.Cube,
+                    new Vector3(0f, 3.05f, 0.42f),
+                    new Vector3(0.18f, 0.12f, 0.55f), Orange);
+                t = root.Find("Dress_TowerLaser");
+            }
+
+            if (t != null)
+                t.gameObject.SetActive(on);
+        }
+
+        public static void BuildBlacksmith(Transform root, float w, float d)
+        {
+            Prim(root, "SmithPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.90f, 0.16f, d * 0.86f), Carbon);
+            Prim(root, "SmithHall", PrimitiveType.Cube,
+                new Vector3(0f, 1.05f, -0.08f),
+                new Vector3(w * 0.72f, 1.55f, d * 0.62f), White);
+            Prim(root, "SmithForge", PrimitiveType.Cube,
+                new Vector3(0.15f, 0.55f, d * 0.22f),
+                new Vector3(0.70f, 0.55f, 0.48f), Carbon);
+            Prim(root, "SmithAnvil", PrimitiveType.Cube,
+                new Vector3(-0.55f, 0.48f, d * 0.18f),
+                new Vector3(0.42f, 0.38f, 0.28f), Steel);
+            Prim(root, "SmithChimney", PrimitiveType.Cylinder,
+                new Vector3(0.22f, 2.35f, 0.10f),
+                new Vector3(0.22f, 0.85f, 0.22f), Carbon);
+            Prim(root, "SmithGlow", PrimitiveType.Sphere,
+                new Vector3(0.15f, 0.72f, d * 0.22f),
+                new Vector3(0.28f, 0.22f, 0.28f), Orange, new Color(1.4f, 0.45f, 0.12f));
+        }
+
+        public static void BuildFobotYard(Transform root, float w, float d)
+        {
+            Prim(root, "YardPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.92f, 0.16f, d * 0.88f), Carbon);
+            Prim(root, "YardHangar", PrimitiveType.Cube,
+                new Vector3(0f, 1.15f, -0.06f),
+                new Vector3(w * 0.78f, 1.70f, d * 0.66f), White);
+            Prim(root, "YardDoor", PrimitiveType.Cube,
+                new Vector3(0f, 0.95f, d * 0.32f),
+                new Vector3(w * 0.42f, 1.15f, 0.08f), Orange);
+            Prim(root, "YardRack", PrimitiveType.Cube,
+                new Vector3(-w * 0.28f, 0.55f, 0.12f),
+                new Vector3(0.22f, 0.70f, 0.55f), Steel);
+            Prim(root, "YardWreck", PrimitiveType.Cube,
+                new Vector3(w * 0.22f, 0.42f, 0.18f),
+                new Vector3(0.55f, 0.38f, 0.40f), Carbon);
+            Prim(root, "YardBeacon", PrimitiveType.Sphere,
+                new Vector3(0f, 2.22f, -0.06f),
+                new Vector3(0.18f, 0.18f, 0.18f), Cyan, CyanEmit);
+        }
+
+        public static void BuildMarket(Transform root, float w, float d)
+        {
+            Prim(root, "MktPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.90f, 0.16f, d * 0.78f), Carbon);
+            Prim(root, "MktDeck", PrimitiveType.Cube,
+                new Vector3(0f, 0.28f, 0.08f),
+                new Vector3(w * 0.72f, 0.10f, d * 0.52f), Concrete);
+            Prim(root, "MktAwning", PrimitiveType.Cube,
+                new Vector3(0f, 1.55f, 0.12f),
+                new Vector3(w * 0.78f, 0.06f, d * 0.58f), Orange);
+            Prim(root, "MktPost_L", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.28f, 0.85f, d * 0.22f),
+                new Vector3(0.08f, 0.72f, 0.08f), Steel);
+            Prim(root, "MktPost_R", PrimitiveType.Cylinder,
+                new Vector3(w * 0.28f, 0.85f, d * 0.22f),
+                new Vector3(0.08f, 0.72f, 0.08f), Steel);
+            Prim(root, "MktCrate", PrimitiveType.Cube,
+                new Vector3(-0.35f, 0.55f, 0.05f),
+                new Vector3(0.42f, 0.38f, 0.38f), White);
+            Prim(root, "MktBarrel", PrimitiveType.Cylinder,
+                new Vector3(0.42f, 0.48f, -0.08f),
+                new Vector3(0.28f, 0.28f, 0.28f), Orange);
+            Prim(root, "MktLantern", PrimitiveType.Sphere,
+                new Vector3(0f, 1.78f, 0.12f),
+                new Vector3(0.16f, 0.16f, 0.16f), Cyan, CyanEmit);
+        }
+
         public static void BuildInn(Transform root, float w, float d)
         {
             // Rest hall with porch lantern — not a three-box grey hall.
@@ -784,7 +938,36 @@ namespace SolarMajesty
                 new Vector3(w * 0.28f, 0.12f, 0.18f), Graphite);
         }
 
+        public static void PaintGuildAccents(Transform root, Color banner)
+        {
+            if (root == null) return;
+            string[] names =
+            {
+                "GuildBanner", "GuildCol_L", "GuildCol_R", "GuildHatch",
+                "GuildPortRing_E", "GuildPortRing_W"
+            };
+            for (int i = 0; i < names.Length; i++)
+            {
+                var t = FindDeep(root, names[i]);
+                if (t == null) continue;
+                TintRenderer(t.GetComponent<Renderer>(), banner);
+            }
+
+            if (FindDeep(root, "GuildBanner") != null) return;
+            Prim(root, "GuildMast", PrimitiveType.Cylinder,
+                new Vector3(0.85f, 3.35f, -0.55f),
+                new Vector3(0.08f, 0.85f, 0.08f), Steel);
+            Prim(root, "GuildBanner", PrimitiveType.Cube,
+                new Vector3(1.13f, 3.55f, -0.55f),
+                new Vector3(0.52f, 0.38f, 0.05f), banner);
+        }
+
         public static void BuildGuildHall(Transform root, float w, float d, Color hull)
+        {
+            BuildGuildHall(root, w, d, hull, Orange);
+        }
+
+        public static void BuildGuildHall(Transform root, float w, float d, Color hull, Color banner)
         {
             // CMD-1 civic hall (sheet) + guild banner. Not a Commons dome, not a HAB cylinder.
             Prim(root, "GuildPlinth", PrimitiveType.Cube,
@@ -804,16 +987,16 @@ namespace SolarMajesty
                 new Vector3(w * 0.68f, 0.12f, d * 0.56f), Carbon);
             Prim(root, "GuildCol_L", PrimitiveType.Cube,
                 new Vector3(-w * 0.16f, 1.15f, d * 0.28f),
-                new Vector3(0.14f, 1.85f, 0.12f), Orange);
+                new Vector3(0.14f, 1.85f, 0.12f), banner);
             Prim(root, "GuildCol_R", PrimitiveType.Cube,
                 new Vector3(w * 0.16f, 1.15f, d * 0.28f),
-                new Vector3(0.14f, 1.85f, 0.12f), Orange);
+                new Vector3(0.14f, 1.85f, 0.12f), banner);
             Prim(root, "GuildDoorFrame", PrimitiveType.Cube,
                 new Vector3(0f, 0.95f, d * 0.30f),
                 new Vector3(0.72f, 1.15f, 0.10f), Carbon);
             Prim(root, "GuildHatch", PrimitiveType.Cube,
                 new Vector3(0f, 0.95f, d * 0.32f),
-                new Vector3(0.52f, 0.95f, 0.08f), Orange);
+                new Vector3(0.52f, 0.95f, 0.08f), banner);
             Prim(root, "GuildSteps", PrimitiveType.Cube,
                 new Vector3(0f, 0.22f, d * 0.42f),
                 new Vector3(w * 0.36f, 0.16f, d * 0.18f), Concrete);
@@ -840,19 +1023,19 @@ namespace SolarMajesty
                 new Vector3(0.30f, 0.62f, 0.62f), White);
             Prim(root, "GuildPortRing_E", PrimitiveType.Cube,
                 new Vector3(w * 0.5f - 0.04f, 0.85f, 0f),
-                new Vector3(0.08f, 0.70f, 0.70f), Orange);
+                new Vector3(0.08f, 0.70f, 0.70f), banner);
             Prim(root, "GuildPort_W", PrimitiveType.Cube,
                 new Vector3(-(w * 0.5f - 0.15f), 0.85f, 0f),
                 new Vector3(0.30f, 0.62f, 0.62f), White);
             Prim(root, "GuildPortRing_W", PrimitiveType.Cube,
                 new Vector3(-(w * 0.5f - 0.04f), 0.85f, 0f),
-                new Vector3(0.08f, 0.70f, 0.70f), Orange);
+                new Vector3(0.08f, 0.70f, 0.70f), banner);
             Prim(root, "GuildMast", PrimitiveType.Cylinder,
                 new Vector3(w * 0.22f, 3.35f, -d * 0.18f),
                 new Vector3(0.08f, 0.85f, 0.08f), Steel);
             Prim(root, "GuildBanner", PrimitiveType.Cube,
                 new Vector3(w * 0.22f + 0.28f, 3.55f, -d * 0.18f),
-                new Vector3(0.52f, 0.38f, 0.05f), Orange);
+                new Vector3(0.52f, 0.38f, 0.05f), banner);
             Prim(root, "GuildBeacon", PrimitiveType.Sphere,
                 new Vector3(w * 0.22f, 4.25f, -d * 0.18f),
                 new Vector3(0.18f, 0.18f, 0.18f), Cyan, CyanEmit);
@@ -1267,7 +1450,10 @@ namespace SolarMajesty
                         if (Mathf.Abs(dir.z) >= Mathf.Abs(dir.x)) return d * 0.31f;
                         return w * 0.41f;
                     }
-                    if (cat == BuildingCategory.Inn)
+                    if (cat == BuildingCategory.Inn || cat == BuildingCategory.Market ||
+                        cat == BuildingCategory.Blacksmith || cat == BuildingCategory.FobotYard ||
+                        cat == BuildingCategory.Watchtower ||
+                        cat == BuildingCategory.AidStation)
                     {
                         if (dir.z > 0.5f) return d * 0.27f;
                         if (dir.z < -0.5f) return d * 0.35f;
@@ -1606,7 +1792,7 @@ namespace SolarMajesty
             go.transform.localPosition = localPos;
             go.transform.localRotation = localRot;
             go.transform.localScale = localScale;
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, color, emission);
         }
 
@@ -1663,8 +1849,30 @@ namespace SolarMajesty
             var cols = root.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < cols.Length; i++)
             {
-                if (cols[i] != null) Object.Destroy(cols[i]);
+                if (cols[i] != null) ColonyVisualUtility.DestroyNow(cols[i]);
             }
+        }
+
+        private static Transform FindDeep(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return null;
+            if (root.name == name) return root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                var hit = FindDeep(root.GetChild(i), name);
+                if (hit != null) return hit;
+            }
+
+            return null;
+        }
+
+        private static void TintRenderer(Renderer rend, Color color)
+        {
+            if (rend == null) return;
+            var mat = rend.material;
+            if (mat == null) return;
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+            else if (mat.HasProperty("_Color")) mat.color = color;
         }
 
         private static void EnsureLit()

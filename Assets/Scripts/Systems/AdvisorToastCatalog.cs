@@ -58,7 +58,7 @@ namespace SolarMajesty
             new AdvisorToast("advisor.earth.levy_the_meadow_farm.post", FlagDecreeIds.EarthLevyTheMeadowFarm, AdvisorFireWhen.Post,
                 "Levy the meadow farm. ICE is life support, not a beverage program. Creepers will RSVP."),
             new AdvisorToast("advisor.earth.charter_the_hall.post", FlagDecreeIds.EarthCharterTheHall, AdvisorFireWhen.Post,
-                "Charter the hall. A court without a guild is stationery. Field Survey, then Hab Ops, then the Charter — dock CMD-1 dress and assign Horizon / Anvil / Aegis / Triage."),
+                "Charter the hall. A court without a guild is stationery. Field Survey, then Hab Ops, then the Charter — dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact."),
             new AdvisorToast("advisor.earth.seal_the_near_dens.post", FlagDecreeIds.EarthSealTheNearDens, AdvisorFireWhen.Post,
                 "The court does not share the meadow. Three dens. Seal them before the creepers start charging rent."),
             new AdvisorToast("advisor.earth.ward_the_furrows.post", FlagDecreeIds.EarthWardTheFurrows, AdvisorFireWhen.Post,
@@ -150,7 +150,7 @@ namespace SolarMajesty
         private static readonly Dictionary<string, AdvisorToast> Completes = new Dictionary<string, AdvisorToast>
         {
             { CompleteCharterTheHall, new AdvisorToast(CompleteCharterTheHall, FlagDecreeIds.EarthCharterTheHall, AdvisorFireWhen.Complete,
-                "Guild Charter signed. Dock the hall. Assign a class. Flags near CMD-1 dress pull that ego.") },
+                "Guild Charter signed. Dock Horizon, Anvil, Aegis, or Triage. Flags near CMD-1 dress pull that ego.") },
             { CompleteStageTheLunarRocket, new AdvisorToast(CompleteStageTheLunarRocket, FlagDecreeIds.EarthStageTheLunarRocket, AdvisorFireWhen.Complete,
                 "Lunar Rocket is on the pad. The meadow just became a departure lounge.") },
             { CompleteCommissionTheMarsShip, new AdvisorToast(CompleteCommissionTheMarsShip, FlagDecreeIds.LunaCommissionTheMarsShip, AdvisorFireWhen.Complete,

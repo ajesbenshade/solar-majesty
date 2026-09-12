@@ -104,7 +104,7 @@ namespace SolarMajesty.EditorTools
             "\n" +
             "What to try (Earth tutorial)\n" +
             "----------------------------\n" +
-            "Title → New Game. Empty Earth drop, no starter robots.\n" +
+            "Title → click Earth (or another world). Empty drop, no starter robots.\n" +
             "B, key 1: Colony Commons on the orange claim disc.\n" +
             "Airlock Junction on a Commons face, then HAB + a workshop on airlock ends.\n" +
             "Workshop finishes → a robot fabricates. G to post a flag. T for research.\n" +

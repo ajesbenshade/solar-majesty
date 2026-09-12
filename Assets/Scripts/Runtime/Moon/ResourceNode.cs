@@ -27,6 +27,14 @@ namespace SolarMajesty
         }
 
         /// <summary>Consume up to amount; returns what was actually taken.</summary>
+        public void RestoreRemaining(int value)
+        {
+            remaining = Mathf.Max(0, value);
+            if (remaining <= 0)
+                ApplyDepletedLook();
+            RefreshYieldLabel();
+        }
+
         public int Harvest(int amount)
         {
             if (amount <= 0 || remaining <= 0) return 0;

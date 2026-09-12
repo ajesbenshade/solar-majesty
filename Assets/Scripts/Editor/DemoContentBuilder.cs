@@ -86,7 +86,12 @@ namespace SolarMajesty.EditorTools
             WriteBuilding("Building_OPS1", "OPS Drop-off", BuildingCategory.Mining, 45, 6, 14f, 4, 4);
             WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4);
             WriteBuilding("Building_CMD1", "Defense Battery", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
-            WriteBuilding("Building_GuildHall", "Guild Hall", BuildingCategory.GuildHall, 56, 6, 14f, 4, 4);
+            WriteStarterGuilds();
+            WriteBuilding("Building_Market", "Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4);
+            WriteBuilding("Building_Blacksmith", "Blacksmith", BuildingCategory.Blacksmith, 48, 4, 12f, 4, 4);
+            WriteBuilding("Building_FobotYard", "Fobot Yard", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4);
+            WriteBuilding("Building_Watchtower", "Watchtower", BuildingCategory.Watchtower, 36, 2, 10f, 4, 4);
+            WriteBuilding("Building_AidStation", "Aid Station", BuildingCategory.AidStation, 38, 2, 10f, 4, 4);
             WriteBuilding("Building_HarvesterWorkshop", "Harvester Workshop", BuildingCategory.HarvesterWorkshop, 40, 5, 12f, 4, 4);
             WriteBuilding("Building_SurveyorWorkshop", "Surveyor Workshop", BuildingCategory.SurveyorWorkshop, 38, 4, 12f, 4, 4);
             WriteBuilding("Building_TerraformerWorkshop", "Terraformer Workshop", BuildingCategory.TerraformerWorkshop, 42, 5, 12f, 4, 4);
@@ -181,16 +186,46 @@ namespace SolarMajesty.EditorTools
             asset.powerGen = cat != BuildingCategory.Power
                 ? 0
                 : (display.IndexOf("Solar", System.StringComparison.OrdinalIgnoreCase) >= 0 ? 8 : 6);
-            asset.buildCost = power > 0
-                ? new[]
-                {
-                    new ResourceAmount(ResourceId.Metals, metals),
-                    new ResourceAmount(ResourceId.Power, power)
-                }
-                : new[] { new ResourceAmount(ResourceId.Metals, metals) };
+            asset.buildCost = Wallet.Credits(metals);
             asset.prefab = prefabOverride != null ? prefabOverride : BuildingVisualCatalog.LoadPrefab(cat);
             EditorUtility.SetDirty(asset);
 
+            MirrorAsset(asset, $"{DataRoot}/Buildings/{fileName}.asset");
+        }
+
+        private static void WriteStarterGuilds()
+        {
+            var starter = RobotGuildCatalog.Starter;
+            string[] files =
+            {
+                "Building_GuildHall",
+                "Building_AnvilCompact",
+                "Building_AegisLodge",
+                "Building_TriageCompact"
+            };
+            for (int i = 0; i < starter.Length && i < files.Length; i++)
+                WriteGuild(files[i], starter[i]);
+        }
+
+        private static void WriteGuild(string fileName, RobotGuildDef guild)
+        {
+            if (guild == null) return;
+            string resPath = $"{ResourcesDemo}/Buildings/{fileName}.asset";
+            var asset = LoadOrCreate<BuildingData>(resPath);
+            asset.displayName = guild.HallName;
+            asset.category = BuildingCategory.GuildHall;
+            asset.description = guild.CatalogLine;
+            asset.footprintWidth = 4;
+            asset.footprintHeight = 4;
+            asset.buildTimeSeconds = 14f;
+            asset.housingSlots = 0;
+            asset.powerDraw = 2;
+            asset.powerGen = 0;
+            asset.attractionWeight = 1f;
+            asset.preferredOccupants = guild.Occupants;
+            asset.buildCost = Wallet.Credits(56);
+            asset.prefab = BuildingVisualCatalog.LoadPrefab(BuildingCategory.GuildHall);
+            EditorUtility.SetDirty(asset);
             MirrorAsset(asset, $"{DataRoot}/Buildings/{fileName}.asset");
         }
 
@@ -205,6 +240,11 @@ namespace SolarMajesty.EditorTools
                 case BuildingCategory.DeepArchive:
                     return "unlock from ★ tech — bonus while standing";
                 case BuildingCategory.GuildHall: return "Guild Hall — assign a class";
+                case BuildingCategory.Market: return "Potions and a regen necklace. Heroes buy with CRED.";
+                case BuildingCategory.Blacksmith: return "Guild arms and armor. Heroes buy with CRED.";
+                case BuildingCategory.FobotYard: return "Pay CRED here to stand wrecks up.";
+                case BuildingCategory.Watchtower: return "Guard post and levy chest. Arm lasers for CRED.";
+                case BuildingCategory.AidStation: return "Hurt robots pay CRED for a patch. Triage clocks in.";
                 default: return "";
             }
         }

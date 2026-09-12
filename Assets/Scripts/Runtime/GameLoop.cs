@@ -106,13 +106,18 @@ namespace SolarMajesty
         public Settlement Settlement { get; private set; }
         public VillageExpansion Village { get; private set; }
         public ResearchManager Research { get; private set; }
+        public GuildBenefitDirector GuildBenefits { get; private set; }
         public IReadOnlyList<HeroParty> Parties => _parties;
         public CelestialBodyId ActiveBody => celestialBody;
         public bool StartsEmpty => !spawnShowcaseColony;
         public bool SpawnWaystationInn => spawnWaystationInn;
         public DemoScreen Screen { get; private set; } = DemoScreen.Title;
         public bool IsPlaying => Screen == DemoScreen.Playing;
-        public bool AllowsCamera => Screen == DemoScreen.Playing || Screen == DemoScreen.Title;
+        public bool AllowsCamera => Screen == DemoScreen.Playing;
+        public bool TitlePointerBlocksWorld =>
+            _overseerHud != null && _overseerHud.HitsHudPanels();
+        public bool TitleConfirmOpen =>
+            _overseerHud != null && _overseerHud.TitleConfirmOpen;
         public const int TutorialCompleteStep = 6;
         public int TutorialStep { get; private set; }
         public bool IsTutorialActive => !DemoSettings.TutorialDone && TutorialStep < TutorialCompleteStep;
@@ -307,6 +312,7 @@ namespace SolarMajesty
         }
 
         public bool HasScrapCorpse => _corpses.Count > 0;
+        public IReadOnlyList<SpecialistRecord> Corpses => _corpses;
 
         public int FieldReviveMet
         {
@@ -377,11 +383,14 @@ namespace SolarMajesty
         private float _reviveReadyAt;
         private bool _revivePenaltyApplied;
         private int _lastTithe;
+        private float _siphonBlockToastAt;
+        private float _purseToastAt;
         private readonly List<TimedDisc> _surveys = new List<TimedDisc>(4);
         private readonly List<TimedDisc> _watches = new List<TimedDisc>(4);
         private DustStalkerAgent _batteryLock;
         private float _batteryLockUntil;
         private readonly List<SpecialistRecord> _corpses = new List<SpecialistRecord>(8);
+        private readonly List<GameObject> _wreckVisuals = new List<GameObject>(8);
         private readonly List<SpecialistRecord> _rosterSaved = new List<SpecialistRecord>(8);
         private readonly Dictionary<SpecialistClass, SpecialistRecord> _pendingVeterans =
             new Dictionary<SpecialistClass, SpecialistRecord>(8);
@@ -643,6 +652,7 @@ namespace SolarMajesty
                 Settlement != null ? Settlement.Population : 0,
                 Placer != null ? Placer.Pieces.Count : 0,
                 _playSeconds);
+            SolarSystemTitleView.Instance?.Hide();
             Time.timeScale = 1f;
         }
 
@@ -651,10 +661,12 @@ namespace SolarMajesty
             Screen = DemoScreen.Title;
             Time.timeScale = 0f;
             ApplyTool(OverseerTool.None);
+            SolarSystemTitleView.Ensure(this, mainCamera)?.Show();
         }
 
         public void EnterPlaying(bool loadStockpile)
         {
+            SolarSystemTitleView.Instance?.Hide();
             Screen = DemoScreen.Playing;
             Time.timeScale = SimSpeed.Multiplier;
             int piecesBefore = Placer != null ? Placer.Pieces.Count : 0;
@@ -704,7 +716,10 @@ namespace SolarMajesty
             }
         }
 
-        public void StartNewGame()
+        /// <summary>Wipes the continue slot and returns to the solar-system title.</summary>
+        public void StartNewGame() => WipeCampaignToTitle();
+
+        public void WipeCampaignToTitle()
         {
             ResearchManager.WipeUnlocks();
             CampaignProgress.ResetCampaign();
@@ -713,9 +728,55 @@ namespace SolarMajesty
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
             ReplayRules.Save();
-            DemoSettings.RequestBootIntoPlay();
             BodySeed.SetBody(CelestialBodyId.Earth);
             ReloadActiveScene();
+        }
+
+        public void StartNewGameOn(CelestialBodyId body)
+        {
+            ResearchManager.WipeUnlocks();
+            CampaignProgress.ResetCampaign();
+            CampaignProgress.UnlockThrough(body);
+            SaveSystem.DeleteAll();
+            SimSpeed.ResetToNormal();
+            DemoSettings.ClearSave();
+            DemoSettings.ResetTutorial();
+            ReplayRules.Save();
+            DemoSettings.RequestBootIntoPlay();
+            BodySeed.SetBody(body);
+            ReloadActiveScene();
+        }
+
+        /// <summary>Title orrery click. Never posts flags or specialist orders.</summary>
+        public void PlayBodyFromTitle(CelestialBodyId body, bool cheatUnlock)
+        {
+            var profile = CelestialBodyCatalog.Get(body);
+            var outcome = SolarSystemTitlePick.Resolve(
+                body,
+                celestialBody,
+                DemoSettings.SaveExists,
+                CampaignProgress.IsUnlocked(body),
+                cheatUnlock);
+
+            switch (outcome)
+            {
+                case SolarSystemTitlePick.Outcome.Locked:
+                    _overseerHud?.Notify(
+                        $"{profile.DisplayName} is locked. Conquer the inner worlds first — or Shift+click.",
+                        3.5f);
+                    return;
+                case SolarSystemTitlePick.Outcome.StartNewOnBody:
+                    StartNewGameOn(body);
+                    return;
+                case SolarSystemTitlePick.Outcome.ContinueCurrent:
+                    ContinueGame();
+                    return;
+                case SolarSystemTitlePick.Outcome.SwitchBody:
+                    if (cheatUnlock)
+                        CampaignProgress.UnlockThrough(body);
+                    SelectBody(body, allowLocked: true);
+                    return;
+            }
         }
 
         public void ContinueGame()
@@ -1398,6 +1459,7 @@ namespace SolarMajesty
             }
             Village?.Tick(dt);
             TickResearch(dt);
+            GuildBenefits?.Tick(dt);
             TickEmptyRosterFail(dt);
             TickFlagInterest(dt);
             TickCampusEcology(dt);
@@ -1713,6 +1775,7 @@ namespace SolarMajesty
                 (Settlement != null && Settlement.HasCommons) || Placer.HasCommonsModule;
             Research = new ResearchManager(Resources);
             Research.TechUnlocked += OnTechUnlocked;
+            GuildBenefits = new GuildBenefitDirector();
             Economy.UpkeepApplied += OnUpkeepTithe;
             Threat = new ThreatPressure { Ambient = 0.18f };
         }
@@ -1737,9 +1800,25 @@ namespace SolarMajesty
             var def = TechCatalog.Get(id);
             if (def != null && def.SecretProject)
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
+            else if (id == TechId.ExtractBasics)
+                LogOverseer("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in CRED.");
+            else if (id == TechId.OreRefining)
+                LogOverseer("Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in CRED.");
+            else if (id == TechId.MedProtocols)
+                LogOverseer("Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in CRED.");
+            else if (id == TechId.LifeSupport)
+                LogOverseer("Life Support. Dock an Aid Station — hurt robots pay CRED for a patch.");
+            else if (id == TechId.HorizonPulse)
+                LogOverseer("Horizon Pulse researched. Inspect Horizon Lodge and spend CRED to mark dens.");
+            else if (id == TechId.AnvilOvertime)
+                LogOverseer("Anvil Overtime researched. Inspect Anvil Compact and spend CRED to weld faster.");
+            else if (id == TechId.AegisWatchfire)
+                LogOverseer("Aegis Watchfire researched. Inspect Aegis Lodge and spend CRED to harden the roster.");
+            else if (id == TechId.TriageFieldAid)
+                LogOverseer("Triage Field Aid researched. Inspect Triage Compact and spend CRED to patch the dirt.");
             else if (id == TechId.GuildCharter)
             {
-                LogOverseer("Guild Charter signed. Dock a hall and assign SCOUT/ENG/DEF/MED — Horizon, Anvil, Aegis, or Triage. Flags near the hall pull that class.");
+                LogOverseer("Guild Charter signed. Dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact. Flags near the hall pull that class.");
                 EnsureNarrative();
                 _narrative.NoteCompleted(FlagDecreeIds.EarthCharterTheHall);
                 if (_narrative.TryTakeCompleteToast(AdvisorToastCatalog.CompleteCharterTheHall, out var charterToast))
@@ -1786,6 +1865,10 @@ namespace SolarMajesty
             switch (cat)
             {
                 case BuildingCategory.GuildHall: return TechId.GuildCharter;
+                case BuildingCategory.Market: return TechId.ExtractBasics;
+                case BuildingCategory.Blacksmith: return TechId.OreRefining;
+                case BuildingCategory.FobotYard: return TechId.MedProtocols;
+                case BuildingCategory.AidStation: return TechId.LifeSupport;
                 case BuildingCategory.HarvesterWorkshop: return TechId.HarvestDoctrine;
                 case BuildingCategory.SurveyorWorkshop: return TechId.SurveyDoctrine;
                 case BuildingCategory.TerraformerWorkshop: return TechId.TerraformCharter;
@@ -1963,6 +2046,7 @@ namespace SolarMajesty
             NormalizeCatalogNames(starterBuildings);
             starterBuildings = AppendEconomyBuildings(starterBuildings);
             ForceCardinalFootprints(starterBuildings);
+            StripShopCostsToCredits(starterBuildings);
         }
 
         /// <summary>Colony Commons is always catalog index 0 — Majesty first-build.</summary>
@@ -2045,7 +2129,35 @@ namespace SolarMajesty
                         b.description = "unlock from ★ tech — bonus while standing";
                         break;
                     case BuildingCategory.GuildHall:
-                        b.description = "Guild Hall — assign a class";
+                        if (RobotGuildCatalog.TryMatch(b, out var guild))
+                        {
+                            b.displayName = guild.HallName;
+                            b.description = guild.CatalogLine;
+                            if (b.preferredOccupants == null || b.preferredOccupants.Length == 0)
+                                b.preferredOccupants = guild.Occupants;
+                        }
+                        else
+                            b.description = "Guild Hall — assign a class";
+                        break;
+                    case BuildingCategory.Market:
+                        b.displayName = "Market Stall";
+                        b.description = "Potions, necklace, and surplus ICE/REG siphon to CRED.";
+                        break;
+                    case BuildingCategory.Blacksmith:
+                        b.displayName = "Blacksmith";
+                        b.description = "Guild arms and armor. Heroes buy with CRED.";
+                        break;
+                    case BuildingCategory.FobotYard:
+                        b.displayName = "Fobot Yard";
+                        b.description = "Pay CRED here to stand wrecks up.";
+                        break;
+                    case BuildingCategory.Watchtower:
+                        b.displayName = "Watchtower";
+                        b.description = "Guard post and levy chest. Arm lasers for CRED.";
+                        break;
+                    case BuildingCategory.AidStation:
+                        b.displayName = "Aid Station";
+                        b.description = "Hurt robots pay CRED for a patch. Triage clocks in.";
                         break;
                 }
             }
@@ -2520,9 +2632,8 @@ namespace SolarMajesty
             var bounds = StillBounds();
 
             TryStampStillYard(BuildingCategory.LandingPad, StillCampusDensity.PadSize, commons, habFace, bounds);
-            // Concept reads: industrial tank/stack yard on the open slot beside the Commons,
-            // PV rack on the next slot behind it (dream-loop round 6). Farm before Power.
-            TryStampStillYard(BuildingCategory.Farm, StillCampusDensity.YardSize, commons, habFace, bounds);
+            // Concept: pad + rocket, solar field, industrial tank yard. No greenhouse on the
+            // still — farm packed the 2026-09-11 SM_Capture onto the Commons apron.
             TryStampStillYard(BuildingCategory.Power, StillCampusDensity.YardSize, commons, habFace, bounds);
             TryStampStillYard(BuildingCategory.RegolithCamp, StillCampusDensity.YardSize, commons, habFace, bounds);
             NotifyCampusExpanded();
@@ -2668,7 +2779,9 @@ namespace SolarMajesty
             Vector2Int origin;
             bool found = preferDock
                 ? StillCampusDensity.TryDockOrNext(Placer, commons, habFace, side, side, bounds, out origin)
-                : StillCampusDensity.TryNext(Placer, commons, habFace, side, side, bounds, out origin);
+                : StillCampusDensity.TryNext(
+                    Placer, commons, habFace, side, side, bounds, out origin,
+                    StillCampusDensity.LandmarkGapCells);
             if (!found)
             {
                 Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}=False (CanFit)");
@@ -2803,7 +2916,8 @@ namespace SolarMajesty
                     }
                     if (st.Category == BuildingCategory.Utility) continue;
                     int add = data != null && data.powerDraw > 0 ? data.powerDraw : 1;
-                    if (st.Category == BuildingCategory.Defense && add < 4)
+                    if ((st.Category == BuildingCategory.Defense ||
+                         (st.IsWatchtower && st.LaserArmed)) && add < 4)
                         add += OverseerRules.BatteryExtraPwr;
                     draw += add;
                 }
@@ -3281,29 +3395,102 @@ namespace SolarMajesty
             SyncLaunchGate();
         }
 
+        public bool HasFobotYard => HasAliveCategory(BuildingCategory.FobotYard);
+
+        public int SittingLevy => Village != null ? Village.TotalSittingLevy() : 0;
+
+        public bool HasLivingCourier
+        {
+            get
+            {
+                for (int i = 0; i < _agents.Count; i++)
+                {
+                    var a = _agents[i];
+                    if (a != null && a.IsAlive && !a.IsIncapacitated &&
+                        a.Data != null && a.Data.specialistClass == SpecialistClass.CourierBot)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        public void NotifyLevySitting(int amount)
+        {
+            if (amount <= 0 || HasLivingCourier) return;
+            if (Time.time < _purseToastAt) return;
+            _purseToastAt = Time.time + 48f;
+            LogOverseer(CompactGrok.PurseSitting(amount));
+        }
+
+        public void NotifyLevyStolen(int amount, string where)
+        {
+            if (amount <= 0) return;
+            LogOverseer(CompactGrok.LevyStolen(amount, where));
+        }
+
+        public bool TryArmWatchtower(ColonyStructure tower)
+        {
+            if (tower == null || !tower.IsWatchtower || !tower.IsAlive)
+            {
+                LogOverseer("Pick a Watchtower.");
+                return false;
+            }
+
+            if (tower.LaserArmed)
+            {
+                LogOverseer("Lasers already armed.");
+                return false;
+            }
+
+            if (Resources == null ||
+                !Resources.TrySpend(ResourceId.Metals, OverseerRules.WatchtowerLaserCost))
+            {
+                LogOverseer($"Arming lasers needs {OverseerRules.WatchtowerLaserCost} CRED.");
+                return false;
+            }
+
+            tower.ArmLasers();
+            LogOverseer($"Watchtower lasers armed — {OverseerRules.WatchtowerLaserCost} CRED.");
+            DemoVfx.ClaimRing(tower.WorldPosition, new Color(0.95f, 0.35f, 0.2f));
+            return true;
+        }
+
+        public void DeliverLevy(int amount)
+        {
+            if (amount <= 0 || Settlement == null) return;
+            Settlement.NoteLevyDelivered(amount);
+            LogOverseer(CompactGrok.LevyDelivered(amount));
+        }
+
         public void RetryParty()
         {
             if (!NeedsFieldRevive)
             {
-                LogOverseer("No one is down — field revive is for incapacitated robots.");
+                LogOverseer("No one is down — the Fobot Yard is for incapacitated robots.");
+                return;
+            }
+            if (!HasFobotYard)
+            {
+                LogOverseer(CompactGrok.YardNeedsBuilding());
                 return;
             }
             if (Time.time < _reviveReadyAt)
             {
-                LogOverseer($"Field revive cooling down — {FieldReviveReadyIn:F0}s.");
+                LogOverseer($"Fobot Yard cooling down — {FieldReviveReadyIn:F0}s.");
                 return;
             }
 
             ComputeReviveBill(out int met, out int ice);
             if (Economy == null || !Economy.CanAffordRevive(met, ice))
             {
-                LogOverseer($"Scrapyard revive needs {met} MET and {ice} ICE.");
+                LogOverseer(CompactGrok.YardBill(met));
                 return;
             }
 
             if (!Economy.TrySpendRevive(met, ice))
             {
-                LogOverseer($"Scrapyard revive needs {met} MET and {ice} ICE.");
+                LogOverseer($"Fobot Yard needs {met} CRED.");
                 return;
             }
 
@@ -3320,8 +3507,8 @@ namespace SolarMajesty
             if (!_revivePenaltyApplied)
                 _revivePenaltyApplied = true;
             _mission?.OnPartyRevived();
-            LogOverseer($"Scrapyard revive — {met} MET {ice} ICE. Next bill rises.");
-            Debug.Log("[GameLoop] Scrapyard revive paid.");
+            LogOverseer(CompactGrok.YardBill(met));
+            Debug.Log("[GameLoop] Fobot Yard revive paid.");
         }
 
         public void RestartMission()
@@ -3677,18 +3864,26 @@ namespace SolarMajesty
                 BuildingCategory.AegisSpire => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.DeepArchive => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.GuildHall => "Guild Hall — assign a class",
+                BuildingCategory.Market => "Potions and a regen necklace. Heroes buy with CRED.",
+                BuildingCategory.Blacksmith => "Guild arms and armor. Heroes buy with CRED.",
+                BuildingCategory.FobotYard => "Pay CRED here to stand wrecks up.",
+                BuildingCategory.Watchtower => "Guard post and levy chest. Arm lasers for CRED.",
+                BuildingCategory.AidStation => "Hurt robots pay CRED for a patch. Triage clocks in.",
                 _ => b.description
             };
             b.preferredOccupants = DefaultOccupants(cat);
             b.attractionWeight = ColonyStructure.IsWorkshopCategory(cat) ? 1.4f : 1f;
-            b.buildCost = power > 0
-                ? new[]
-                {
-                    new ResourceAmount(ResourceId.Metals, metals),
-                    new ResourceAmount(ResourceId.Power, power)
-                }
-                : new[] { new ResourceAmount(ResourceId.Metals, metals) };
+            b.buildCost = Wallet.Credits(metals);
             b.prefab = BuildingVisualCatalog.LoadPrefab(cat);
+            return b;
+        }
+
+        private static BuildingData CreateGuildHall(RobotGuildId id)
+        {
+            var g = RobotGuildCatalog.Get(id);
+            var b = CreateBuilding(g.HallName, BuildingCategory.GuildHall, 56, 6, 14f, 4, 4);
+            b.description = g.CatalogLine;
+            b.preferredOccupants = g.Occupants;
             return b;
         }
 
@@ -3711,9 +3906,17 @@ namespace SolarMajesty
                 CreateBuilding("Scout Workshop", BuildingCategory.ScoutWorkshop, 36, 4, 12f, 4, 4),
                 CreateBuilding("Engineer Workshop", BuildingCategory.EngineerWorkshop, 36, 4, 12f, 4, 4),
                 CreateBuilding("Village Inn", BuildingCategory.Inn, 30, 3, 10f, 4, 4),
+                CreateBuilding("Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4),
+                CreateBuilding("Blacksmith", BuildingCategory.Blacksmith, 48, 4, 12f, 4, 4),
+                CreateBuilding("Fobot Yard", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4),
+                CreateBuilding("Watchtower", BuildingCategory.Watchtower, 36, 2, 10f, 4, 4),
+                CreateBuilding("Aid Station", BuildingCategory.AidStation, 38, 2, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
                 CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
-                CreateBuilding("Guild Hall", BuildingCategory.GuildHall, 56, 6, 14f, 4, 4),
+                CreateGuildHall(RobotGuildId.Horizon),
+                CreateGuildHall(RobotGuildId.Anvil),
+                CreateGuildHall(RobotGuildId.Aegis),
+                CreateGuildHall(RobotGuildId.Triage),
                 CreateBuilding("Harvester Workshop", BuildingCategory.HarvesterWorkshop, 40, 5, 12f, 4, 4),
                 CreateBuilding("Surveyor Workshop", BuildingCategory.SurveyorWorkshop, 38, 4, 12f, 4, 4),
                 CreateBuilding("Terraformer Workshop", BuildingCategory.TerraformerWorkshop, 42, 5, 12f, 4, 4),
@@ -3768,6 +3971,8 @@ namespace SolarMajesty
                     case BuildingCategory.Power:
                     case BuildingCategory.Mining:
                     case BuildingCategory.Laboratory:
+                    case BuildingCategory.Watchtower:
+                    case BuildingCategory.AidStation:
                         side = 4;
                         break;
                     case BuildingCategory.Utility:
@@ -3785,6 +3990,16 @@ namespace SolarMajesty
             }
         }
 
+        private static void StripShopCostsToCredits(BuildingData[] buildings)
+        {
+            if (buildings == null) return;
+            for (int i = 0; i < buildings.Length; i++)
+            {
+                if (buildings[i] == null) continue;
+                buildings[i].buildCost = Wallet.MetalsOnly(buildings[i].buildCost);
+            }
+        }
+
         public void NotifyBuildingPlaced(BuildingData data, GameObject go, Vector3 world)
         {
             if (data == null) return;
@@ -3798,6 +4013,8 @@ namespace SolarMajesty
             DemoAudio.PlayBuildComplete();
             if (data.category == BuildingCategory.LandingPad)
                 SyncLaunchGate();
+            if (data.category == BuildingCategory.FobotYard)
+                RefreshWreckVisuals();
             TryClaimOutpost(world, data.category);
             HideDropClaimIfSettled();
             PersistSession();
@@ -3872,7 +4089,12 @@ namespace SolarMajesty
             {
                 _isoCam.FocusOn(focus, ortho);
                 _isoCam.SnapToTarget();
+                var cam = _isoCam.GetComponent<Camera>();
+                DemoAtmosphere.SyncFog(cam);
             }
+
+            CampusDressing.RefreshTubes(Placer, grid, transform);
+            RefreshSuitCrossings();
 
             _glanceCooldown = 8f;
             Debug.Log($"[GameLoop] SnapStillCampusCamera ortho={ortho:0.##} aspect={aspect:0.##} aabb={min}->{max}");
@@ -3960,8 +4182,10 @@ namespace SolarMajesty
             {
                 case FlagType.Explore:
                     AddSurveyDisc(at);
-                    ScoutDensInDisc(at);
-                    LogOverseer("Survey disc 22 m / 90 s — Extract and Research Site pay extra inside.");
+                    int charted = ScoutDensInDisc(at);
+                    LogOverseer(charted > 0
+                        ? $"Survey disc 22 m — charted {charted} den(s). Extract and Research Site pay extra inside."
+                        : "Survey disc 22 m / 90 s — Extract and Research Site pay extra inside.");
                     break;
                 case FlagType.DefendArea:
                     float extra = 0f;
@@ -4133,6 +4357,8 @@ namespace SolarMajesty
                 });
             }
 
+            OverlayBuildingBoard(save);
+
             if (Flags != null)
             {
                 var open = Flags.Flags;
@@ -4190,6 +4416,9 @@ namespace SolarMajesty
                 });
             }
 
+            CaptureWorldBoard(save);
+            CaptureMission(save);
+            CaptureParties(save);
             return save;
         }
 
@@ -4235,6 +4464,11 @@ namespace SolarMajesty
             var restoredFlags = RestoreFlags(save.flags);
             RestoreAgents(save.agents, restoredFlags);
             RestoreFauna(save.fauna);
+            RestoreWorldBoard(save);
+            RestoreBuildingBoard(save);
+            RestoreParties(save.parties);
+            _mission?.Restore(save.mission);
+            RefreshWreckVisuals();
 
             _playSeconds = save.playSeconds;
             RefreshTechEffects();
@@ -4362,6 +4596,198 @@ namespace SolarMajesty
                 var agent = SpawnFaunaAt((FaunaKind)s.kind, new Vector3(s.px, s.py, s.pz));
                 agent?.RestoreHealth01(s.health);
             }
+        }
+
+        private void OverlayBuildingBoard(SaveGame save)
+        {
+            if (save?.buildings == null || Village == null || grid == null) return;
+            for (int i = 0; i < save.buildings.Count; i++)
+            {
+                var b = save.buildings[i];
+                Vector3 world = FootprintWorldCenter(new Vector2Int(b.x, b.y), b.w, b.h);
+                var st = Village.FindNear(world, 3f);
+                if (st == null || (int)st.Category != b.category) continue;
+                b.levyPurse = st.LevyPurse;
+                b.laserArmed = st.LaserArmed;
+            }
+        }
+
+        private void CaptureWorldBoard(SaveGame save)
+        {
+            if (save == null || _world == null) return;
+            var nodes = _world.Nodes;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var n = nodes[i];
+                if (n == null) continue;
+                Vector3 p = n.WorldPosition;
+                save.nodes.Add(new SaveNode
+                {
+                    nodeType = (int)n.NodeType,
+                    px = p.x,
+                    py = p.y,
+                    pz = p.z,
+                    remaining = n.Remaining
+                });
+            }
+
+            var lairs = _world.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                var l = lairs[i];
+                if (l == null) continue;
+                Vector3 p = l.WorldPosition;
+                save.lairs.Add(new SaveLair
+                {
+                    px = p.x,
+                    py = p.y,
+                    pz = p.z,
+                    cleared = l.IsCleared,
+                    scouted = l.IsScouted
+                });
+            }
+        }
+
+        private void CaptureMission(SaveGame save)
+        {
+            if (save == null || _mission == null) return;
+            save.mission.state = (int)_mission.State;
+            save.mission.elapsed = _mission.MissionElapsed;
+            save.mission.sustainHold = _mission.SustainElapsed;
+            save.mission.densCleared = _mission.DensCleared;
+            save.mission.sustainMet = _mission.SustainComplete;
+            save.mission.launchReady = _mission.LaunchReady;
+        }
+
+        private void CaptureParties(SaveGame save)
+        {
+            if (save == null) return;
+            for (int i = 0; i < _parties.Count; i++)
+            {
+                var p = _parties[i];
+                if (p == null || p.Leader == null || p.Leader.Data == null) continue;
+                var row = new SaveParty { leaderClass = (int)p.Leader.Data.specialistClass };
+                for (int m = 0; m < p.Members.Count; m++)
+                {
+                    var a = p.Members[m];
+                    if (a?.Data == null) continue;
+                    row.memberClasses.Add((int)a.Data.specialistClass);
+                }
+
+                if (row.memberClasses.Count >= 2)
+                    save.parties.Add(row);
+            }
+        }
+
+        private void RestoreWorldBoard(SaveGame save)
+        {
+            if (save == null || _world == null) return;
+            RestoreNodes(save.nodes);
+            RestoreLairs(save.lairs);
+        }
+
+        private void RestoreNodes(List<SaveNode> saved)
+        {
+            if (saved == null || saved.Count == 0 || _world == null) return;
+            var live = _world.Nodes;
+            var pts = new Vector3[live.Count];
+            for (int i = 0; i < live.Count; i++)
+                pts[i] = live[i] != null ? live[i].WorldPosition : new Vector3(9999f, 0f, 9999f);
+
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                int idx = WorldSaveMatch.Nearest(new Vector3(s.px, s.py, s.pz), pts, WorldSaveMatch.MaxDist);
+                if (idx < 0) continue;
+                var node = live[idx];
+                if (node == null || (int)node.NodeType != s.nodeType) continue;
+                node.RestoreRemaining(s.remaining);
+                pts[idx] = new Vector3(9999f, 0f, 9999f);
+            }
+        }
+
+        private void RestoreLairs(List<SaveLair> saved)
+        {
+            if (saved == null || saved.Count == 0 || _world == null) return;
+            var live = _world.Lairs;
+            var pts = new Vector3[live.Count];
+            for (int i = 0; i < live.Count; i++)
+                pts[i] = live[i] != null ? live[i].WorldPosition : new Vector3(9999f, 0f, 9999f);
+
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                int idx = WorldSaveMatch.Nearest(new Vector3(s.px, s.py, s.pz), pts, WorldSaveMatch.MaxDist);
+                if (idx < 0) continue;
+                live[idx]?.RestoreChart(s.cleared, s.scouted);
+                pts[idx] = new Vector3(9999f, 0f, 9999f);
+            }
+        }
+
+        private void RestoreBuildingBoard(SaveGame save)
+        {
+            if (save?.buildings == null || Village == null || grid == null) return;
+            for (int i = 0; i < save.buildings.Count; i++)
+            {
+                var b = save.buildings[i];
+                Vector3 world = FootprintWorldCenter(new Vector2Int(b.x, b.y), b.w, b.h);
+                var st = Village.FindNear(world, 3f);
+                if (st == null || (int)st.Category != b.category) continue;
+                st.RestoreLevy(b.levyPurse);
+                if (b.laserArmed)
+                    st.ArmLasers();
+            }
+        }
+
+        private void RestoreParties(List<SaveParty> saved)
+        {
+            if (saved == null) return;
+            for (int i = 0; i < _parties.Count; i++)
+                _parties[i]?.Disband();
+            _parties.Clear();
+
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                if (s?.memberClasses == null || s.memberClasses.Count < 2) continue;
+                var members = new List<SpecialistAgent>(4);
+                for (int m = 0; m < s.memberClasses.Count && members.Count < HeroParty.MaxSize; m++)
+                {
+                    var cls = (SpecialistClass)s.memberClasses[m];
+                    var agent = FindLivingByClass(cls, members);
+                    if (agent != null)
+                        members.Add(agent);
+                }
+
+                if (members.Count < 2) continue;
+                var leader = FindLivingByClass((SpecialistClass)s.leaderClass, null) ?? members[0];
+                if (!members.Contains(leader))
+                    members[0] = leader;
+
+                var party = new HeroParty(_nextPartyId++, leader);
+                for (int m = 0; m < members.Count; m++)
+                {
+                    party.Members.Add(members[m]);
+                    members[m].SetParty(party);
+                }
+
+                _parties.Add(party);
+            }
+        }
+
+        private SpecialistAgent FindLivingByClass(SpecialistClass cls, List<SpecialistAgent> skip)
+        {
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                var a = _agents[i];
+                if (a == null || a.Data == null || !a.IsAlive) continue;
+                if (a.Data.specialistClass != cls) continue;
+                if (skip != null && skip.Contains(a)) continue;
+                if (a.Party != null) continue;
+                return a;
+            }
+
+            return null;
         }
 
         private List<CampusSlot> CaptureCampusSlots()
@@ -4520,11 +4946,13 @@ namespace SolarMajesty
                 case BuildingCategory.LandingPad:
                     return new[] { SpecialistClass.ScoutDrone };
                 case BuildingCategory.MedicWorkshop:
+                case BuildingCategory.AidStation:
                     return new[] { SpecialistClass.Medic };
                 case BuildingCategory.Habitat:
                     return null;
                 case BuildingCategory.DefenseWorkshop:
                 case BuildingCategory.Defense:
+                case BuildingCategory.Watchtower:
                     return new[] { SpecialistClass.DefenseMech };
                 case BuildingCategory.EngineerWorkshop:
                 case BuildingCategory.Farm:
@@ -4878,7 +5306,7 @@ namespace SolarMajesty
             NoteMechDeath(agent.transform.position);
             string salvageTxt = salvage > 0 ? $" Salvage {salvage} MET." : "";
             if (TryPayScrapRefab(rec, out int met, out int ice, out string shopName))
-                LogOverseer($"{label} scrapped — scrapyard {met} MET / {ice} ICE / 40 s at {shopName}.{salvageTxt}");
+                LogOverseer($"{label} scrapped — Fobot Yard {met} CRED / 40 s at {shopName}.{salvageTxt}");
             else
                 LogOverseer($"{label} scrapped — corpse at the scrapyard.{salvageTxt}");
         }
@@ -4947,6 +5375,59 @@ namespace SolarMajesty
             return false;
         }
 
+        public ColonyStructure FindGuildHall(RobotGuildId id)
+        {
+            if (Village == null) return null;
+            var list = Village.Structures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive || !s.IsGuild) continue;
+                if (RobotGuildCatalog.TryMatch(s.SourceData, out var matched) && matched.Id == id)
+                    return s;
+                if (s.HasPreferredClass)
+                {
+                    var byClass = RobotGuildCatalog.ForClass(s.PreferredClass);
+                    if (byClass != null && byClass.Id == id)
+                        return s;
+                }
+            }
+
+            return null;
+        }
+
+        public bool TryActivateGuildBenefit(RobotGuildId id)
+        {
+            if (GuildBenefits == null) return false;
+            bool hall = FindGuildHall(id) != null;
+            if (!GuildBenefits.TryActivate(id, Research, Resources, hall, out string line))
+            {
+                if (!string.IsNullOrEmpty(line))
+                    LogOverseer(line);
+                return false;
+            }
+
+            LogOverseer(line);
+            if (id == RobotGuildId.Horizon)
+                PulseHorizonScout();
+            return true;
+        }
+
+        private void PulseHorizonScout()
+        {
+            if (_world == null) return;
+            var hall = FindGuildHall(RobotGuildId.Horizon);
+            Vector3 at = hall != null ? hall.WorldPosition : ColonyLayout.CampusOrigin;
+            var lairs = _world.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                var l = lairs[i];
+                if (l == null || l.IsCleared || l.IsScouted) continue;
+                if (FlatDist(at, l.WorldPosition) <= 48f)
+                    l.MarkScouted();
+            }
+        }
+
         public ConstructionOrder RefabAt(ColonyStructure st)
         {
             if (st == null || Placer == null) return null;
@@ -4966,8 +5447,27 @@ namespace SolarMajesty
             if (total > 0)
             {
                 Resources?.Add(ResourceId.Metals, total);
-                LogOverseer($"Payroll returned {total} MET.");
+                LogOverseer($"Payroll returned {total} CRED.");
             }
+
+            TryMarketSiphon();
+        }
+
+        private void TryMarketSiphon()
+        {
+            if (!HasAliveCategory(BuildingCategory.Market) || Resources == null || Settlement == null)
+                return;
+            if (!MarketSiphon.TrySiphon(
+                    Resources, Settlement.Population, out int credits, out int ice, out int reg))
+            {
+                if (Time.time >= _siphonBlockToastAt)
+                {
+                    _siphonBlockToastAt = Time.time + 90f;
+                    LogOverseer(CompactGrok.SiphonBlocked(MarketSiphon.IceReserve(Settlement.Population)));
+                }
+                return;
+            }
+            LogOverseer(CompactGrok.SiphonPaid(credits, ice, reg));
         }
 
         private void RefreshSustainRates()
@@ -4977,7 +5477,7 @@ namespace SolarMajesty
                         Mathf.Max(0.1f, Settlement.ProductionInterval) * 60f;
             float met = Settlement.Mines * 4f * Settlement.MineYieldScale * Settlement.ProductionScale /
                         Mathf.Max(0.1f, Settlement.ProductionInterval) * 60f;
-            met += Settlement.LastTax / Mathf.Max(0.1f, Settlement.TaxInterval) * 60f;
+            met += Settlement.LastDelivered / Mathf.Max(0.1f, Settlement.TaxInterval) * 60f;
             met += _lastTithe / 30f * 60f;
             if (Economy != null)
                 met -= Economy.LastMetalsUpkeep / 30f * 60f;
@@ -5049,19 +5549,14 @@ namespace SolarMajesty
             {
                 var a = _agents[i];
                 if (a == null || !a.IsIncapacitated) continue;
-                met += OverseerRules.ReviveMetals(a.ReviveCount);
-                ice += OverseerRules.ReviveIceCost(a.ReviveCount);
+                met += OverseerRules.ReviveMetalsForLevel(a.Level);
             }
             for (int i = 0; i < _corpses.Count; i++)
             {
-                met += OverseerRules.ReviveMetals(_corpses[i].ReviveCount);
-                ice += OverseerRules.ReviveIceCost(_corpses[i].ReviveCount);
+                met += OverseerRules.ReviveMetalsForLevel(_corpses[i].Level);
             }
-            if (met <= 0 && ice <= 0)
-            {
+            if (met <= 0)
                 met = OverseerRules.ReviveMet;
-                ice = OverseerRules.ReviveIce;
-            }
         }
 
         private List<SpecialistRecord> CaptureRoster()
@@ -5142,9 +5637,11 @@ namespace SolarMajesty
             {
                 if (_corpses[i].Class != rec.Class) continue;
                 _corpses[i] = rec;
+                RefreshWreckVisuals();
                 return;
             }
             _corpses.Add(rec);
+            RefreshWreckVisuals();
         }
 
         private void RemoveCorpse(SpecialistClass cls)
@@ -5153,6 +5650,25 @@ namespace SolarMajesty
             {
                 if (_corpses[i].Class == cls)
                     _corpses.RemoveAt(i);
+            }
+            RefreshWreckVisuals();
+        }
+
+        private void RefreshWreckVisuals()
+        {
+            for (int i = 0; i < _wreckVisuals.Count; i++)
+            {
+                if (_wreckVisuals[i] != null)
+                    Destroy(_wreckVisuals[i]);
+            }
+            _wreckVisuals.Clear();
+            Vector3 yard = ScrapyardPosition();
+            Transform parent = buildingRoot != null ? buildingRoot : transform;
+            for (int i = 0; i < _corpses.Count; i++)
+            {
+                float ang = i * 0.9f;
+                Vector3 at = yard + new Vector3(Mathf.Cos(ang) * 1.6f, 0f, Mathf.Sin(ang) * 1.6f);
+                _wreckVisuals.Add(FobotWreck.Spawn(_corpses[i], at, parent));
             }
         }
 
@@ -5238,6 +5754,12 @@ namespace SolarMajesty
 
         private Vector3 ScrapyardPosition()
         {
+            if (Village != null)
+            {
+                var yard = Village.NearestByCategory(ColonyLayout.CampusOrigin, 200f, BuildingCategory.FobotYard);
+                if (yard != null && yard.IsAlive)
+                    return yard.WorldPosition;
+            }
             for (int i = 0; i < _corpses.Count; i++)
             {
                 var shop = FindWorkshopFor(_corpses[i].Class);
@@ -5283,6 +5805,7 @@ namespace SolarMajesty
             ExpireDiscs(_watches);
             TickWatches(dt);
             TickBatteries(dt);
+            TickDenChart();
         }
 
         private static void ExpireDiscs(List<TimedDisc> list)
@@ -5341,24 +5864,44 @@ namespace SolarMajesty
             return FlatDist(world, commons.WorldPosition) <= OverseerRules.CommonsShadeRadius;
         }
 
-        private void ScoutDensInDisc(Vector3 at)
+        private int ScoutDensInDisc(Vector3 at)
         {
-            if (_world == null) return;
-            StalkerLair best = null;
-            float bestD = OverseerRules.SurveyRadius;
+            if (_world == null) return 0;
+            int n = 0;
             var lairs = _world.Lairs;
             for (int i = 0; i < lairs.Count; i++)
             {
                 var l = lairs[i];
                 if (l == null || l.IsCleared || l.IsScouted) continue;
-                float d = FlatDist(at, l.WorldPosition);
-                if (d < bestD)
+                if (!DenChart.InDisc(at, l.WorldPosition, OverseerRules.SurveyRadius)) continue;
+                l.MarkScouted();
+                n++;
+            }
+
+            return n;
+        }
+
+        private void TickDenChart()
+        {
+            if (_world == null) return;
+            var lairs = _world.Lairs;
+            for (int a = 0; a < _agents.Count; a++)
+            {
+                var agent = _agents[a];
+                if (agent == null || !agent.IsAlive || agent.IsIncapacitated || agent.Data == null)
+                    continue;
+                if (!DenChart.IsChartClass(agent.Data.specialistClass)) continue;
+                Vector3 at = agent.transform.position;
+                for (int i = 0; i < lairs.Count; i++)
                 {
-                    bestD = d;
-                    best = l;
+                    var l = lairs[i];
+                    if (l == null || l.IsCleared || l.IsScouted) continue;
+                    if (!DenChart.InDisc(at, l.WorldPosition, DenChart.PassiveChartRadius)) continue;
+                    l.MarkScouted();
+                    LogOverseer(CompactGrok.DenCharted(
+                        ColonyStructure.ClassLabel(agent.Data.specialistClass)));
                 }
             }
-            best?.MarkScouted();
         }
 
         private void TickWatches(float dt)
@@ -5388,7 +5931,10 @@ namespace SolarMajesty
             for (int i = 0; i < list.Count; i++)
             {
                 var st = list[i];
-                if (st == null || !st.IsAlive || st.Category != BuildingCategory.Defense) continue;
+                if (st == null || !st.IsAlive) continue;
+                bool battery = st.Category == BuildingCategory.Defense ||
+                               (st.IsWatchtower && st.LaserArmed);
+                if (!battery) continue;
                 DustStalkerAgent target = _batteryLock;
                 if (target == null || !target.IsAlive ||
                     FlatDist(st.WorldPosition, target.transform.position) > OverseerRules.BatteryRange)
@@ -5398,7 +5944,10 @@ namespace SolarMajesty
                     _batteryLockUntil = Time.time + OverseerRules.BatteryRetarget;
                 }
                 if (target == null) continue;
-                target.ApplyCombatDamage(OverseerRules.BatteryDps * dt);
+                float dps = OverseerRules.BatteryDps;
+                if (GuildBenefits != null && GuildBenefits.IsActive(RobotGuildId.Aegis))
+                    dps *= 1.25f;
+                target.ApplyCombatDamage(dps * dt);
             }
         }
 

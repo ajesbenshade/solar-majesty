@@ -9,7 +9,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 ## 10-minute boot (must pass)
 
 - [ ] Title over a frozen drop. WASD pans, **Q** zooms out, **E** zooms in. Mouse does not pan or zoom. Tagline names the Overseer fantasy.
-- [ ] **New Game** (confirm wipe if a save exists) → Earth empty drop: **produced meadow**, **cobalt sky**, grass/trees/pond + cumulus around the orange claim disc, HUD REG/ICE/MET/PWR/BEDS, carbon/gold chrome. No starter robots. Not the old grey-tan plane. Not Mars orange.
+- [ ] **Title orrery** → click **Earth** (New Game only wipes back to the system if a save exists) → Earth empty drop: **produced meadow**, **cobalt sky**, grass/trees/pond + cumulus around the orange claim disc, HUD REG/ICE/MET/PWR/BEDS, carbon/gold chrome. No starter robots. Not the old grey-tan plane. Not Mars orange.
 - [ ] Yield labels on resource nodes (`REG` / `MET` / `ICE`) — no `MissingComponentException`.
 - [ ] Tutorial 1/6: **B**, key **1**, Colony Commons on the claim — **domed command-hub citadel** (FBX or procedural hero kit), not a grey box. Console `[HeroKit] Attached SM_Hero_Commons` if the FBX imported. HUD **COMMONS**, never Palace.
 - [ ] 2/6: Airlock Junction on a Commons face socket — **panel-lined** white square hub (smaller than the 2×2 cell so short white tubes read) + dual-barrel turret; unused Commons / airlock stubs stay hidden. Module docks are white round tubes with **one orange collar at the Lego face** (no punch-through, no stacked orange box).
@@ -123,7 +123,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 
 - Play Mode throws on world gen (yield labels, NavMesh, missing GameLoop).
 - A specialist walks to an empty-ground click.
-- New Game does not land on Earth, or Continue silently does nothing with a save present.
+- Title orrery click on Earth does not land the empty drop, or Continue silently does nothing with a save present.
 - New Game Earth looks like the pre-Phase-4 olive/grey plane (no meadow, no cobalt sky, no claim chevrons, no HUD chips).
 - Launch gate completes from tech alone (Landing Pad required).
 
