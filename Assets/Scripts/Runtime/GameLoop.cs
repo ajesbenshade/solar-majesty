@@ -2631,11 +2631,16 @@ namespace SolarMajesty
             var habFace = StillCampusDensity.InferHabFace(Placer, commons);
             var bounds = StillBounds();
 
-            TryStampStillYard(BuildingCategory.LandingPad, StillCampusDensity.PadSize, commons, habFace, bounds);
-            // Concept: pad + rocket, solar field, industrial tank yard. No greenhouse on the
-            // still — farm packed the 2026-09-11 SM_Capture onto the Commons apron.
-            TryStampStillYard(BuildingCategory.Power, StillCampusDensity.YardSize, commons, habFace, bounds);
-            TryStampStillYard(BuildingCategory.RegolithCamp, StillCampusDensity.YardSize, commons, habFace, bounds);
+            // Concept: HAB chain, pad past the HAB, solar behind Commons, industrial opposite.
+            if (StillCampusDensity.TryConceptPad(
+                    Placer, commons, habFace, bounds, out Vector2Int padCell))
+                InstantStampStillBuilding(BuildingCategory.LandingPad, padCell);
+            TryStampStillYardOnFace(
+                BuildingCategory.Power, StillCampusDensity.YardSize,
+                commons, BuildingPlacer.Cardinal.North, bounds);
+            TryStampStillYardOnFace(
+                BuildingCategory.RegolithCamp, StillCampusDensity.YardSize,
+                commons, StillCampusDensity.Opposite(habFace), bounds);
             NotifyCampusExpanded();
             StampStillSuitCrossings();
         }
@@ -2760,6 +2765,26 @@ namespace SolarMajesty
             return (origin, width, height) =>
                 grid.InBounds(origin) &&
                 grid.InBounds(new Vector2Int(origin.x + width - 1, origin.y + height - 1));
+        }
+
+        private void TryStampStillYardOnFace(
+            BuildingCategory cat,
+            int side,
+            BuildingPlacer.CampusPiece commons,
+            BuildingPlacer.Cardinal face,
+            StillCampusDensity.BoundsOk bounds)
+        {
+            Vector2Int origin = StillCampusDensity.FlushOrigin(
+                commons, face, side, side, StillCampusDensity.LandmarkGapCells);
+            if (!Placer.CanFitRect(origin, side, side) ||
+                (bounds != null && !bounds(origin, side, side)))
+            {
+                TryStampStillYard(cat, side, commons, face, bounds);
+                return;
+            }
+
+            bool ok = InstantStampStillBuilding(cat, origin);
+            Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}={ok} origin={origin} face={face}");
         }
 
         private void TryStampStillYard(

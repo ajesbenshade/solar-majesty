@@ -845,6 +845,61 @@ namespace SolarMajesty
             return TryNext(placer, commons, habFace, side, side, bounds, out _);
         }
 
+        public static bool TryFindHab(BuildingPlacer placer, out BuildingPlacer.CampusPiece hab)
+        {
+            hab = default;
+            if (placer == null) return false;
+            var pieces = placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                if (pieces[i].Category == BuildingCategory.Habitat)
+                {
+                    hab = pieces[i];
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Origin past <paramref name="piece"/> on <paramref name="face"/>, with dirt gap.</summary>
+        public static Vector2Int FlushBeyond(
+            BuildingPlacer.CampusPiece piece,
+            BuildingPlacer.Cardinal face,
+            int width,
+            int height,
+            int gap = 0) =>
+            FlushOrigin(piece, face, width, height, gap);
+
+        /// <summary>
+        /// Concept layout: pad past the HAB, solar north of Commons, industrial opposite HAB.
+        /// Empty dirt between yards. No greenhouse.
+        /// </summary>
+        public static bool TryConceptPad(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece commons,
+            BuildingPlacer.Cardinal habFace,
+            BoundsOk bounds,
+            out Vector2Int origin)
+        {
+            origin = default;
+            if (placer == null) return false;
+            int gap = LandmarkGapCells;
+            if (TryFindHab(placer, out var hab))
+            {
+                origin = FlushBeyond(hab, habFace, PadSize, PadSize, gap);
+                if (placer.CanFitRect(origin, PadSize, PadSize) &&
+                    (bounds == null || bounds(origin, PadSize, PadSize)))
+                    return true;
+            }
+
+            origin = FlushOrigin(commons, habFace, PadSize, PadSize, gap);
+            if (placer.CanFitRect(origin, PadSize, PadSize) &&
+                (bounds == null || bounds(origin, PadSize, PadSize)))
+                return true;
+            return TryNext(placer, commons, habFace, PadSize, PadSize, bounds, out origin, gap);
+        }
+
         public static Vector2Int FlushOrigin(
             BuildingPlacer.CampusPiece commons,
             BuildingPlacer.Cardinal face,

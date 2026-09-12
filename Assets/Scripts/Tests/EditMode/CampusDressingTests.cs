@@ -668,6 +668,21 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void ConceptPad_SitsPastTheHabNotOnCommonsWest()
+        {
+            var placer = StampEastChain(out var commons);
+            Assert.IsTrue(StillCampusDensity.TryConceptPad(
+                placer, commons, BuildingPlacer.Cardinal.East, null, out Vector2Int pad));
+            Assert.IsTrue(StillCampusDensity.TryFindHab(placer, out var hab));
+            Vector2Int west = StillCampusDensity.FlushOrigin(
+                commons, BuildingPlacer.Cardinal.West, 6, 6, 0);
+            Assert.AreNotEqual(west, pad);
+            Vector2Int pastHab = StillCampusDensity.FlushBeyond(
+                hab, BuildingPlacer.Cardinal.East, 6, 6, StillCampusDensity.LandmarkGapCells);
+            Assert.AreEqual(pastHab, pad);
+        }
+
+        [Test]
         public void DensePack_Leftovers_AfterWorkshop_SkipInnAndWonder()
         {
             var placer = StampEastChain(out var commons);
