@@ -95,11 +95,7 @@ namespace SolarMajesty
                     "Craft strong enough to leave this body.",
                     70f,
                     new[] { TechId.LifeSupport, TechId.OreRefining, TechId.PowerSystems },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 40),
-                        new ResourceAmount(ResourceId.WaterIce, 15)
-                    },
+                    Wallet.Credits(55),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -108,12 +104,7 @@ namespace SolarMajesty
                     "Heavy transfer ship for the next conquest.",
                     100f,
                     new[] { TechId.LunarRocket, TechId.DeepSurvey, TechId.MedProtocols },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 80),
-                        new ResourceAmount(ResourceId.WaterIce, 30),
-                        new ResourceAmount(ResourceId.Power, 20)
-                    },
+                    Wallet.Credits(110),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -122,11 +113,7 @@ namespace SolarMajesty
                     "Tethered ore barge for the asteroid belt.",
                     120f,
                     new[] { TechId.MarsShip, TechId.OreRefining },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 90),
-                        new ResourceAmount(ResourceId.Power, 25)
-                    },
+                    Wallet.Credits(90),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -135,12 +122,7 @@ namespace SolarMajesty
                     "Radiation-hardened lander for Europa's crust.",
                     140f,
                     new[] { TechId.BeltHauler, TechId.LifeSupport, TechId.PowerSystems },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 70),
-                        new ResourceAmount(ResourceId.WaterIce, 50),
-                        new ResourceAmount(ResourceId.Power, 30)
-                    },
+                    Wallet.Credits(120),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -178,11 +160,7 @@ namespace SolarMajesty
                     "Secret Project. A foundry that never cools — mines and haul surge. Extract/haul rush.",
                     160f,
                     new[] { TechId.HarvestDoctrine, TechId.OreRefining },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 120),
-                        new ResourceAmount(ResourceId.Power, 40)
-                    },
+                    Wallet.Credits(120),
                     secretProject: true),
 
                 new TechDef(
@@ -191,11 +169,7 @@ namespace SolarMajesty
                     "Secret Project. Cheap freight and free Earth dockings. Extract/haul rush.",
                     160f,
                     new[] { TechId.AegisDoctrine, TechId.LunarRocket },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 100),
-                        new ResourceAmount(ResourceId.Power, 50)
-                    },
+                    Wallet.Credits(100),
                     secretProject: true),
 
                 new TechDef(
@@ -204,11 +178,7 @@ namespace SolarMajesty
                     "Secret Project. Spare beds, faster births, greener farms. Growth path.",
                     150f,
                     new[] { TechId.LifeSupport, TechId.MedProtocols },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 60),
-                        new ResourceAmount(ResourceId.WaterIce, 80)
-                    },
+                    Wallet.Credits(140),
                     secretProject: true),
 
                 new TechDef(
@@ -245,11 +215,7 @@ namespace SolarMajesty
                     "Secret Project. Weave weather for the crust — farms surge. Place the Loom landmark.",
                     155f,
                     new[] { TechId.TerraformCharter, TechId.LifeSupport },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 70),
-                        new ResourceAmount(ResourceId.WaterIce, 90)
-                    },
+                    Wallet.Credits(160),
                     secretProject: true),
 
                 new TechDef(
@@ -258,11 +224,7 @@ namespace SolarMajesty
                     "Secret Project. A tower that calms the grid and the rim. Place the Spire landmark.",
                     165f,
                     new[] { TechId.PerimeterDoctrine, TechId.AegisDoctrine },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 110),
-                        new ResourceAmount(ResourceId.Power, 45)
-                    },
+                    Wallet.Credits(110),
                     secretProject: true),
 
                 new TechDef(
@@ -271,13 +233,41 @@ namespace SolarMajesty
                     "Secret Project. Labs remember every sample. Place the Archive landmark.",
                     150f,
                     new[] { TechId.SurveyDoctrine, TechId.DeepSurvey },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 80),
-                        new ResourceAmount(ResourceId.Power, 30)
-                    },
+                    Wallet.Credits(80),
                     researchRateBonus: 0.55f,
-                    secretProject: true)
+                    secretProject: true),
+
+                new TechDef(
+                    TechId.HorizonPulse,
+                    "Horizon Pulse",
+                    "Activate at Horizon Lodge: scouts run hot and mark dens. Costs CRED.",
+                    36f,
+                    new[] { TechId.GuildCharter },
+                    Wallet.Credits(20)),
+
+                new TechDef(
+                    TechId.AnvilOvertime,
+                    "Anvil Overtime",
+                    "Activate at Anvil Compact: engineers weld faster. Costs CRED.",
+                    36f,
+                    new[] { TechId.GuildCharter },
+                    Wallet.Credits(24)),
+
+                new TechDef(
+                    TechId.AegisWatchfire,
+                    "Aegis Watchfire",
+                    "Activate at Aegis Lodge: robots shrug bites, batteries hit harder. Costs CRED.",
+                    40f,
+                    new[] { TechId.GuildCharter },
+                    Wallet.Credits(28)),
+
+                new TechDef(
+                    TechId.TriageFieldAid,
+                    "Triage Field Aid",
+                    "Activate at Triage Compact: everyone on the dirt patches HP. Costs CRED.",
+                    36f,
+                    new[] { TechId.GuildCharter },
+                    Wallet.Credits(22))
             };
         }
     }

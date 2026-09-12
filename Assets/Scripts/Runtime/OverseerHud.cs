@@ -454,7 +454,7 @@ namespace SolarMajesty
                     ice < OverseerRules.IceDeathThreshold ? "ICE LS" : "ICE",
                     ice, ice < 8, ice < OverseerRules.IceDeathThreshold ? "life" : FormatRate(iceRate));
                 ResourceChip(new Rect(x0 + (chipW + 4f) * 2f, c.y, chipW, 36f),
-                    _loop.PayrollThin ? "PAYROLL" : (escrow > 0 ? $"MET −{escrow}" : "MET"),
+                    _loop.PayrollThin ? "PAYROLL" : (escrow > 0 ? $"CRED −{escrow}" : "CRED"),
                     metals, metals < 12 || _loop.PayrollThin, FormatRate(metRate));
                 ResourceChip(new Rect(x0 + (chipW + 4f) * 3f, c.y, chipW, 36f), "PWR", pwr, pwrAlarm,
                     pwrAlarm && _loop.Economy != null && _loop.Economy.PowerShort ? "work 70%" : FormatRate(pwrRate));
@@ -1119,7 +1119,7 @@ namespace SolarMajesty
         {
             ResourceId.Regolith => "REG",
             ResourceId.WaterIce => "ICE",
-            ResourceId.Metals => "MET",
+            ResourceId.Metals => "CRED",
             ResourceId.Power => "PWR",
             _ => id.ToString().ToUpperInvariant()
         };
@@ -1220,10 +1220,33 @@ namespace SolarMajesty
             DrawSpecialistCards();
         }
 
+        private float DrawGuildBenefit(float x, float y, float width, RobotGuildDef guild)
+        {
+            if (guild == null || _loop.GuildBenefits == null) return y;
+            var dir = _loop.GuildBenefits;
+            bool researched = _loop.Research != null && _loop.Research.IsUnlocked(guild.BenefitTech);
+            GUI.Label(new Rect(x, y, width, 13f), guild.BenefitBlurb, _micro);
+            y += 14f;
+            string label;
+            if (!researched)
+                label = $"Research {guild.BenefitName}";
+            else if (dir.IsActive(guild.Id))
+                label = $"{guild.BenefitName} {dir.Remaining(guild.Id):F0}s";
+            else if (dir.CooldownLeft(guild.Id) > 0.5f)
+                label = $"Cooldown {dir.CooldownLeft(guild.Id):F0}s";
+            else
+                label = $"ACTIVATE {guild.ActivateCost} CRED";
+            bool can = researched &&
+                       dir.CanActivate(guild.Id, _loop.Research, _loop.Resources, true);
+            if (Chip(new Rect(x, y, Mathf.Min(220f, width), 22f), label, can) && can)
+                _loop.TryActivateGuildBenefit(guild.Id);
+            return y + 24f;
+        }
+
         private void DrawBuildingCard(ColonyStructure st)
         {
             const float cardW = 340f;
-            float cardH = st.IsGuild ? 196f : 148f;
+            float cardH = st.IsGuild ? 228f : 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
             var c = Panel(rect, null);
@@ -1286,6 +1309,7 @@ namespace SolarMajesty
                     GUI.Label(new Rect(c.x, row, c.width, 13f),
                         "Flags near this hall pull them (no new robot).", _micro);
                     row += 14f;
+                    row = DrawGuildBenefit(c.x, row, c.width, guild);
                 }
                 else
                 {
@@ -1926,9 +1950,8 @@ namespace SolarMajesty
             else
             {
                 int met = _loop.FieldReviveMet;
-                int ice = _loop.FieldReviveIce;
                 GUI.Label(new Rect(c.x, c.y + 32f, c.width, 36f),
-                    $"SCRAPYARD REVIVE  {met} MET  {ice} ICE  (120s)", _body);
+                    $"SCRAPYARD REVIVE  {met} CRED  (120s)", _body);
                 GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
                     _loop.FieldReviveReadyIn > 0.5f
                         ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Cost rises each revive."

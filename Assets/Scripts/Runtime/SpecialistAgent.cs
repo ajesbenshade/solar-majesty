@@ -32,6 +32,7 @@ namespace SolarMajesty
         [Header("Personal wallet / gear")]
         [SerializeField] private float credits;
         [SerializeField] private ShopItemId equippedSuit = ShopItemId.None;
+        [SerializeField] private ShopItemId equippedAccessory = ShopItemId.None;
         [SerializeField] private int level = 1;
         [SerializeField] private int xp;
         [SerializeField] private int reviveCount;
@@ -104,6 +105,7 @@ namespace SolarMajesty
         public float GreedHunger => greedHunger;
         public float Credits => credits;
         public ShopItemId EquippedSuit => equippedSuit;
+        public ShopItemId EquippedAccessory => equippedAccessory;
         public int Level => Mathf.Clamp(level, 1, OverseerRules.LevelCap);
         public int Xp => Mathf.Max(0, xp);
         public int ReviveCount => Mathf.Max(0, reviveCount);
@@ -144,9 +146,15 @@ namespace SolarMajesty
         {
             get
             {
-                float r = (data != null ? data.workRate : 1f) * (1f + _geneWork);
+                float r = (data != null ? data.workRate : 1f) * (1f + _geneWork + SuitWorkBonus());
                 if (_loop != null && _loop.Economy != null && _loop.Economy.PowerShort)
                     r *= OverseerRules.PowerShortWork;
+                if (_loop != null &&
+                    _loop.GuildBenefits != null &&
+                    _loop.GuildBenefits.IsActive(RobotGuildId.Anvil) &&
+                    data != null &&
+                    data.specialistClass == SpecialistClass.EngineerBot)
+                    r *= 1.4f;
                 return r;
             }
         }
@@ -186,6 +194,10 @@ namespace SolarMajesty
         {
             if (amount01 <= 0f || _incapacitated) return;
             float mitigated = amount01 * (1f - ArmorMitigation) / LevelHpMul;
+            if (_loop != null &&
+                _loop.GuildBenefits != null &&
+                _loop.GuildBenefits.IsActive(RobotGuildId.Aegis))
+                mitigated *= 0.7f;
             healthNormalized = Mathf.Clamp01(healthNormalized - mitigated);
             if (feedback)
             {
@@ -250,6 +262,7 @@ namespace SolarMajesty
             credits = Mathf.Max(0, record.Credits);
             reviveCount = Mathf.Max(0, record.ReviveCount);
             equippedSuit = record.Suit;
+            equippedAccessory = record.Accessory;
         }
 
         /// <summary>Continue restore of combat state. No death VFX — the down already happened.</summary>
@@ -310,6 +323,7 @@ namespace SolarMajesty
                 Credits = Mathf.FloorToInt(credits),
                 ReviveCount = reviveCount,
                 Suit = equippedSuit,
+                Accessory = equippedAccessory,
                 Corpse = corpse
             };
         }
@@ -317,7 +331,34 @@ namespace SolarMajesty
         private float SuitSpeedBonus()
         {
             var suit = ShopCatalog.Get(equippedSuit);
-            return suit != null ? suit.SpeedBonus : 0f;
+            float bonus = suit != null ? suit.SpeedBonus : 0f;
+            if (_loop != null &&
+                _loop.GuildBenefits != null &&
+                _loop.GuildBenefits.IsActive(RobotGuildId.Horizon) &&
+                data != null &&
+                data.specialistClass == SpecialistClass.ScoutDrone)
+                bonus += 0.35f;
+            return bonus;
+        }
+
+        private float SuitWorkBonus()
+        {
+            var suit = ShopCatalog.Get(equippedSuit);
+            return suit != null ? suit.WorkBonus : 0f;
+        }
+
+        private float GearRegenPerSecond()
+        {
+            float r = 0f;
+            var suit = ShopCatalog.Get(equippedSuit);
+            if (suit != null) r += suit.RegenPerSecond;
+            var acc = ShopCatalog.Get(equippedAccessory);
+            if (acc != null) r += acc.RegenPerSecond;
+            if (_loop != null &&
+                _loop.GuildBenefits != null &&
+                _loop.GuildBenefits.IsActive(RobotGuildId.Triage))
+                r += 0.08f;
+            return r;
         }
 
         public void ReceiveHeal(float amount01)
@@ -399,6 +440,7 @@ namespace SolarMajesty
             greedHunger = 0.55f;
             credits = 20f;
             equippedSuit = ShopItemId.None;
+            equippedAccessory = ShopItemId.None;
             level = OverseerRules.LevelStart;
             xp = 0;
             reviveCount = 0;
@@ -651,6 +693,10 @@ namespace SolarMajesty
                     fatigue = Mathf.Clamp01(fatigue - dt * 0.015f);
                     break;
             }
+
+            float regen = GearRegenPerSecond();
+            if (regen > 0f && !_incapacitated)
+                healthNormalized = Mathf.Clamp01(healthNormalized + dt * regen);
         }
 
         private void TickThink(float dt)
@@ -1113,7 +1159,6 @@ namespace SolarMajesty
             _restTimer += dt;
             _status = "resting_at_inn";
             TickInnStay(dt);
-            ConsiderShopPurchase();
             if (_restTimer > 3f && fatigue < 0.35f)
                 _restTimer = 0f;
         }
@@ -1134,29 +1179,6 @@ namespace SolarMajesty
             TickInnStay(dt);
             fatigue = Mathf.Clamp01(fatigue - dt * 0.08f);
             healthNormalized = Mathf.Clamp01(healthNormalized + dt * restHealPerSecond);
-            ConsiderShopPurchase();
-        }
-
-        private void ConsiderShopPurchase()
-        {
-            if (_shopCooldown > 0f || data == null) return;
-            int purse = Mathf.FloorToInt(credits);
-
-            // Prefer permanent armor when unprotected and funded.
-            var suit = ShopCatalog.BestAffordableSuit(purse, equippedSuit);
-            if (suit != null && (equippedSuit == ShopItemId.None || healthNormalized < 0.85f || greedHunger < 0.55f))
-            {
-                if (TryBuy(suit))
-                    return;
-            }
-
-            // Consumable gene when none active and wallet allows.
-            if (_geneTimer <= 1f)
-            {
-                var gene = ShopCatalog.PreferredGene(data.specialistClass, purse);
-                if (gene != null && (greedHunger < 0.7f || bodyDanger > 0.35f || fatigue > 0.4f))
-                    TryBuy(gene);
-            }
         }
 
         private void TickInnStay(float dt)
@@ -1191,6 +1213,36 @@ namespace SolarMajesty
             _workshopRepairCooldown = 6f;
             _status = "workshop_repair";
             DemoVfx.ClaimRing(transform.position, new Color(0.55f, 0.82f, 1f));
+            ConsiderGuildUpgrade();
+        }
+
+        private void TickGuildAndMarket(float dt)
+        {
+            _shopCooldown = Mathf.Max(0f, _shopCooldown - dt);
+            ConsiderGuildUpgrade();
+            ConsiderMarketBuy();
+        }
+
+        private void ConsiderGuildUpgrade()
+        {
+            if (_shopCooldown > 0f || data == null) return;
+            if (Workplace == null || !Workplace.IsAlive || !Workplace.IsGuild) return;
+            if (FlatDistance(transform.position, Workplace.WorldPosition) > 6f) return;
+            var item = ShopCatalog.BestGuildUpgrade(data.specialistClass, Mathf.FloorToInt(credits), equippedSuit);
+            if (item != null)
+                TryBuy(item);
+        }
+
+        private void ConsiderMarketBuy()
+        {
+            if (_shopCooldown > 0f || data == null) return;
+            if (_loop?.Village == null) return;
+            var market = _loop.Village.NearestByCategory(transform.position, 6f, BuildingCategory.Market);
+            if (market == null) return;
+            var item = ShopCatalog.PreferredMarketBuy(
+                data.specialistClass, Mathf.FloorToInt(credits), healthNormalized, equippedAccessory);
+            if (item != null)
+                TryBuy(item);
         }
 
         private bool TryBuy(ShopItemDef item)
@@ -1204,9 +1256,21 @@ namespace SolarMajesty
                 equippedSuit = item.Id;
                 DemoVfx.ClaimRing(transform.position, new Color(0.7f, 0.85f, 1f));
                 DemoAudio.PlayClaim();
-                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for ${item.Cost} (armor {item.ArmorMitigation:P0})");
+                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} CRED");
                 return true;
             }
+
+            if (item.Kind == ShopItemKind.Accessory)
+            {
+                equippedAccessory = item.Id;
+                DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.82f, 0.28f));
+                DemoAudio.PlayClaim();
+                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} CRED");
+                return true;
+            }
+
+            if (item.HealAmount > 0f)
+                healthNormalized = Mathf.Clamp01(healthNormalized + item.HealAmount);
 
             _geneTimer = Mathf.Max(_geneTimer, item.DurationSeconds);
             _geneCourage = Mathf.Max(_geneCourage, item.CourageBonus);
@@ -1214,7 +1278,7 @@ namespace SolarMajesty
             _geneWork = Mathf.Max(_geneWork, item.WorkBonus);
             DemoVfx.ClaimRing(transform.position, new Color(0.55f, 1f, 0.45f));
             DemoAudio.PlayClaim();
-            Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for ${item.Cost}");
+            Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} CRED");
             return true;
         }
 
@@ -1259,6 +1323,7 @@ namespace SolarMajesty
                 TryPartyFollowWork(dt);
                 TickTerraformerVocation(dt);
                 TickWorkshopRepair(dt);
+                TickGuildAndMarket(dt);
                 return;
             }
 
@@ -1268,6 +1333,7 @@ namespace SolarMajesty
             TryPartyFollowWork(dt);
             TickTerraformerVocation(dt);
             TickWorkshopRepair(dt);
+            TickGuildAndMarket(dt);
         }
 
         private void TickIdle(float dt)

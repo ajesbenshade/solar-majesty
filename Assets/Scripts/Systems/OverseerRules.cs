@@ -16,7 +16,7 @@ namespace SolarMajesty
         public const float SalvageCreditFrac = 0.40f;
 
         public const int ReviveMet = 40;
-        public const int ReviveIce = 8;
+        public const int ReviveIce = 0;
         /// <summary>Each successful revive of that mech multiplies the scrapyard bill (Majesty temple tax).</summary>
         public const float ReviveCostGrowth = 1.5f;
         public const int ReviveCostMaxSteps = 8;
@@ -189,11 +189,7 @@ namespace SolarMajesty
             return Mathf.Max(ReviveMet, Mathf.RoundToInt(ReviveMet * Mathf.Pow(ReviveCostGrowth, n)));
         }
 
-        public static int ReviveIceCost(int reviveCount)
-        {
-            int n = Mathf.Clamp(reviveCount, 0, ReviveCostMaxSteps);
-            return Mathf.Max(ReviveIce, Mathf.RoundToInt(ReviveIce * Mathf.Pow(ReviveCostGrowth, n)));
-        }
+        public static int ReviveIceCost(int reviveCount) => 0;
 
         /// <summary>Cumulative XP required to stand at this level (L1 = 0).</summary>
         public static int XpToReach(int level)

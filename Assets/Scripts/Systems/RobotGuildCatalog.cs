@@ -26,6 +26,12 @@ namespace SolarMajesty
         public string Ignores;
         public string CatalogLine;
         public Color Banner;
+        public TechId BenefitTech;
+        public string BenefitName;
+        public string BenefitBlurb;
+        public int ActivateCost;
+        public float DurationSeconds;
+        public float CooldownSeconds;
 
         public SpecialistClass[] Occupants => new[] { Class };
     }
@@ -108,7 +114,13 @@ namespace SolarMajesty
                     Wants = "Explore",
                     Ignores = "fights",
                     CatalogLine = "Scout hall · cheap Explore",
-                    Banner = new Color(0.22f, 0.84f, 0.98f)
+                    Banner = new Color(0.22f, 0.84f, 0.98f),
+                    BenefitTech = TechId.HorizonPulse,
+                    BenefitName = "Horizon Pulse",
+                    BenefitBlurb = "Scouts run hot and mark dens in a wide disc.",
+                    ActivateCost = 36,
+                    DurationSeconds = 40f,
+                    CooldownSeconds = 90f
                 },
                 new RobotGuildDef
                 {
@@ -120,7 +132,13 @@ namespace SolarMajesty
                     Wants = "Build",
                     Ignores = "cheap flags, dens",
                     CatalogLine = "Engineer hall · greedy Build",
-                    Banner = new Color(0.96f, 0.42f, 0.08f)
+                    Banner = new Color(0.96f, 0.42f, 0.08f),
+                    BenefitTech = TechId.AnvilOvertime,
+                    BenefitName = "Anvil Overtime",
+                    BenefitBlurb = "Engineers weld 40% faster while the pulse lasts.",
+                    ActivateCost = 42,
+                    DurationSeconds = 35f,
+                    CooldownSeconds = 90f
                 },
                 new RobotGuildDef
                 {
@@ -132,7 +150,13 @@ namespace SolarMajesty
                     Wants = "Clear Threat / Defend",
                     Ignores = "Explore / Build",
                     CatalogLine = "Defense hall · Clear / Defend",
-                    Banner = new Color(0.45f, 0.72f, 1f)
+                    Banner = new Color(0.45f, 0.72f, 1f),
+                    BenefitTech = TechId.AegisWatchfire,
+                    BenefitName = "Aegis Watchfire",
+                    BenefitBlurb = "Colony robots take less bite. Batteries hit harder.",
+                    ActivateCost = 48,
+                    DurationSeconds = 40f,
+                    CooldownSeconds = 110f
                 },
                 new RobotGuildDef
                 {
@@ -144,7 +168,13 @@ namespace SolarMajesty
                     Wants = "Defend",
                     Ignores = "dens",
                     CatalogLine = "Medic hall · Defend, no dens",
-                    Banner = new Color(0.52f, 0.76f, 0.86f)
+                    Banner = new Color(0.52f, 0.76f, 0.86f),
+                    BenefitTech = TechId.TriageFieldAid,
+                    BenefitName = "Triage Field Aid",
+                    BenefitBlurb = "Everyone on the dirt patches HP for a short window.",
+                    ActivateCost = 40,
+                    DurationSeconds = 30f,
+                    CooldownSeconds = 100f
                 }
             };
         }

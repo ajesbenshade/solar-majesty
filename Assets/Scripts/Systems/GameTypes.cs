@@ -95,7 +95,9 @@ namespace SolarMajesty
         SentinelWorkshop = 22,
         ClimateLoom = 23,
         AegisSpire = 24,
-        DeepArchive = 25
+        DeepArchive = 25,
+        /// <summary>Majesty market stall — potions and the regen necklace. Saved as int 26.</summary>
+        Market = 26
     }
 
     [Serializable]
@@ -108,6 +110,45 @@ namespace SolarMajesty
         {
             this.resource = resource;
             this.amount = amount;
+        }
+    }
+
+    /// <summary>
+    /// Majesty gold. Flags, buildings, techs, and heroes spend Metals only.
+    /// ICE and Power stay life-support / grid constraints, never shop currency.
+    /// </summary>
+    public static class Wallet
+    {
+        public static ResourceAmount[] Credits(int metals)
+        {
+            if (metals <= 0) return Array.Empty<ResourceAmount>();
+            return new[] { new ResourceAmount(ResourceId.Metals, metals) };
+        }
+
+        public static ResourceAmount[] MetalsOnly(ResourceAmount[] costs)
+        {
+            if (costs == null || costs.Length == 0) return costs;
+            int met = 0;
+            for (int i = 0; i < costs.Length; i++)
+            {
+                if (costs[i].amount <= 0) continue;
+                if (costs[i].resource == ResourceId.Metals || costs[i].resource == ResourceId.WaterIce)
+                    met += costs[i].amount;
+            }
+
+            return Credits(met);
+        }
+
+        public static bool IsCreditsOnly(ResourceAmount[] costs)
+        {
+            if (costs == null) return true;
+            for (int i = 0; i < costs.Length; i++)
+            {
+                if (costs[i].amount > 0 && costs[i].resource != ResourceId.Metals)
+                    return false;
+            }
+
+            return true;
         }
     }
 

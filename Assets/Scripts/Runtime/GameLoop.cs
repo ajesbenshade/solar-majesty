@@ -106,6 +106,7 @@ namespace SolarMajesty
         public Settlement Settlement { get; private set; }
         public VillageExpansion Village { get; private set; }
         public ResearchManager Research { get; private set; }
+        public GuildBenefitDirector GuildBenefits { get; private set; }
         public IReadOnlyList<HeroParty> Parties => _parties;
         public CelestialBodyId ActiveBody => celestialBody;
         public bool StartsEmpty => !spawnShowcaseColony;
@@ -1454,6 +1455,7 @@ namespace SolarMajesty
             }
             Village?.Tick(dt);
             TickResearch(dt);
+            GuildBenefits?.Tick(dt);
             TickEmptyRosterFail(dt);
             TickFlagInterest(dt);
             TickCampusEcology(dt);
@@ -1769,6 +1771,7 @@ namespace SolarMajesty
                 (Settlement != null && Settlement.HasCommons) || Placer.HasCommonsModule;
             Research = new ResearchManager(Resources);
             Research.TechUnlocked += OnTechUnlocked;
+            GuildBenefits = new GuildBenefitDirector();
             Economy.UpkeepApplied += OnUpkeepTithe;
             Threat = new ThreatPressure { Ambient = 0.18f };
         }
@@ -1793,6 +1796,16 @@ namespace SolarMajesty
             var def = TechCatalog.Get(id);
             if (def != null && def.SecretProject)
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
+            else if (id == TechId.ExtractBasics)
+                LogOverseer("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in CRED.");
+            else if (id == TechId.HorizonPulse)
+                LogOverseer("Horizon Pulse researched. Inspect Horizon Lodge and spend CRED to mark dens.");
+            else if (id == TechId.AnvilOvertime)
+                LogOverseer("Anvil Overtime researched. Inspect Anvil Compact and spend CRED to weld faster.");
+            else if (id == TechId.AegisWatchfire)
+                LogOverseer("Aegis Watchfire researched. Inspect Aegis Lodge and spend CRED to harden the roster.");
+            else if (id == TechId.TriageFieldAid)
+                LogOverseer("Triage Field Aid researched. Inspect Triage Compact and spend CRED to patch the dirt.");
             else if (id == TechId.GuildCharter)
             {
                 LogOverseer("Guild Charter signed. Dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact. Flags near the hall pull that class.");
@@ -1842,6 +1855,7 @@ namespace SolarMajesty
             switch (cat)
             {
                 case BuildingCategory.GuildHall: return TechId.GuildCharter;
+                case BuildingCategory.Market: return TechId.ExtractBasics;
                 case BuildingCategory.HarvesterWorkshop: return TechId.HarvestDoctrine;
                 case BuildingCategory.SurveyorWorkshop: return TechId.SurveyDoctrine;
                 case BuildingCategory.TerraformerWorkshop: return TechId.TerraformCharter;
@@ -2019,6 +2033,7 @@ namespace SolarMajesty
             NormalizeCatalogNames(starterBuildings);
             starterBuildings = AppendEconomyBuildings(starterBuildings);
             ForceCardinalFootprints(starterBuildings);
+            StripShopCostsToCredits(starterBuildings);
         }
 
         /// <summary>Colony Commons is always catalog index 0 — Majesty first-build.</summary>
@@ -2110,6 +2125,10 @@ namespace SolarMajesty
                         }
                         else
                             b.description = "Guild Hall — assign a class";
+                        break;
+                    case BuildingCategory.Market:
+                        b.displayName = "Market Stall";
+                        b.description = "Potions and a regen necklace. Heroes buy with CRED.";
                         break;
                 }
             }
@@ -3741,17 +3760,12 @@ namespace SolarMajesty
                 BuildingCategory.AegisSpire => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.DeepArchive => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.GuildHall => "Guild Hall — assign a class",
+                BuildingCategory.Market => "Potions and a regen necklace. Heroes buy with CRED.",
                 _ => b.description
             };
             b.preferredOccupants = DefaultOccupants(cat);
             b.attractionWeight = ColonyStructure.IsWorkshopCategory(cat) ? 1.4f : 1f;
-            b.buildCost = power > 0
-                ? new[]
-                {
-                    new ResourceAmount(ResourceId.Metals, metals),
-                    new ResourceAmount(ResourceId.Power, power)
-                }
-                : new[] { new ResourceAmount(ResourceId.Metals, metals) };
+            b.buildCost = Wallet.Credits(metals);
             b.prefab = BuildingVisualCatalog.LoadPrefab(cat);
             return b;
         }
@@ -3784,6 +3798,7 @@ namespace SolarMajesty
                 CreateBuilding("Scout Workshop", BuildingCategory.ScoutWorkshop, 36, 4, 12f, 4, 4),
                 CreateBuilding("Engineer Workshop", BuildingCategory.EngineerWorkshop, 36, 4, 12f, 4, 4),
                 CreateBuilding("Village Inn", BuildingCategory.Inn, 30, 3, 10f, 4, 4),
+                CreateBuilding("Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
                 CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
                 CreateGuildHall(RobotGuildId.Horizon),
@@ -3858,6 +3873,16 @@ namespace SolarMajesty
                 b.footprintHeight = side;
                 if (b.category == BuildingCategory.Power && b.powerGen <= 0)
                     b.powerGen = PowerGenFor(b.category, b.displayName);
+            }
+        }
+
+        private static void StripShopCostsToCredits(BuildingData[] buildings)
+        {
+            if (buildings == null) return;
+            for (int i = 0; i < buildings.Length; i++)
+            {
+                if (buildings[i] == null) continue;
+                buildings[i].buildCost = Wallet.MetalsOnly(buildings[i].buildCost);
             }
         }
 
@@ -5023,6 +5048,59 @@ namespace SolarMajesty
             return false;
         }
 
+        public ColonyStructure FindGuildHall(RobotGuildId id)
+        {
+            if (Village == null) return null;
+            var list = Village.Structures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive || !s.IsGuild) continue;
+                if (RobotGuildCatalog.TryMatch(s.SourceData, out var matched) && matched.Id == id)
+                    return s;
+                if (s.HasPreferredClass)
+                {
+                    var byClass = RobotGuildCatalog.ForClass(s.PreferredClass);
+                    if (byClass != null && byClass.Id == id)
+                        return s;
+                }
+            }
+
+            return null;
+        }
+
+        public bool TryActivateGuildBenefit(RobotGuildId id)
+        {
+            if (GuildBenefits == null) return false;
+            bool hall = FindGuildHall(id) != null;
+            if (!GuildBenefits.TryActivate(id, Research, Resources, hall, out string line))
+            {
+                if (!string.IsNullOrEmpty(line))
+                    LogOverseer(line);
+                return false;
+            }
+
+            LogOverseer(line);
+            if (id == RobotGuildId.Horizon)
+                PulseHorizonScout();
+            return true;
+        }
+
+        private void PulseHorizonScout()
+        {
+            if (_world == null) return;
+            var hall = FindGuildHall(RobotGuildId.Horizon);
+            Vector3 at = hall != null ? hall.WorldPosition : ColonyLayout.CampusOrigin;
+            var lairs = _world.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                var l = lairs[i];
+                if (l == null || l.IsCleared || l.IsScouted) continue;
+                if (FlatDist(at, l.WorldPosition) <= 48f)
+                    l.MarkScouted();
+            }
+        }
+
         public ConstructionOrder RefabAt(ColonyStructure st)
         {
             if (st == null || Placer == null) return null;
@@ -5474,7 +5552,10 @@ namespace SolarMajesty
                     _batteryLockUntil = Time.time + OverseerRules.BatteryRetarget;
                 }
                 if (target == null) continue;
-                target.ApplyCombatDamage(OverseerRules.BatteryDps * dt);
+                float dps = OverseerRules.BatteryDps;
+                if (GuildBenefits != null && GuildBenefits.IsActive(RobotGuildId.Aegis))
+                    dps *= 1.25f;
+                target.ApplyCombatDamage(dps * dt);
             }
         }
 

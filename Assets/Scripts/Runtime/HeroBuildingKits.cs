@@ -59,6 +59,7 @@ namespace SolarMajesty
             cat == BuildingCategory.AegisSpire ||
             cat == BuildingCategory.DeepArchive ||
             cat == BuildingCategory.Inn ||
+            cat == BuildingCategory.Market ||
             ColonyStructure.IsWorkshopCategory(cat);
 
         public static void BuildHabitat(Transform root, float w, float d, Color hull)
@@ -731,6 +732,34 @@ namespace SolarMajesty
             }
         }
 
+        public static void BuildMarket(Transform root, float w, float d)
+        {
+            Prim(root, "MktPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.10f, 0f),
+                new Vector3(w * 0.90f, 0.16f, d * 0.78f), Carbon);
+            Prim(root, "MktDeck", PrimitiveType.Cube,
+                new Vector3(0f, 0.28f, 0.08f),
+                new Vector3(w * 0.72f, 0.10f, d * 0.52f), Concrete);
+            Prim(root, "MktAwning", PrimitiveType.Cube,
+                new Vector3(0f, 1.55f, 0.12f),
+                new Vector3(w * 0.78f, 0.06f, d * 0.58f), Orange);
+            Prim(root, "MktPost_L", PrimitiveType.Cylinder,
+                new Vector3(-w * 0.28f, 0.85f, d * 0.22f),
+                new Vector3(0.08f, 0.72f, 0.08f), Steel);
+            Prim(root, "MktPost_R", PrimitiveType.Cylinder,
+                new Vector3(w * 0.28f, 0.85f, d * 0.22f),
+                new Vector3(0.08f, 0.72f, 0.08f), Steel);
+            Prim(root, "MktCrate", PrimitiveType.Cube,
+                new Vector3(-0.35f, 0.55f, 0.05f),
+                new Vector3(0.42f, 0.38f, 0.38f), White);
+            Prim(root, "MktBarrel", PrimitiveType.Cylinder,
+                new Vector3(0.42f, 0.48f, -0.08f),
+                new Vector3(0.28f, 0.28f, 0.28f), Orange);
+            Prim(root, "MktLantern", PrimitiveType.Sphere,
+                new Vector3(0f, 1.78f, 0.12f),
+                new Vector3(0.16f, 0.16f, 0.16f), Cyan, CyanEmit);
+        }
+
         public static void BuildInn(Transform root, float w, float d)
         {
             // Rest hall with porch lantern — not a three-box grey hall.
@@ -1296,7 +1325,7 @@ namespace SolarMajesty
                         if (Mathf.Abs(dir.z) >= Mathf.Abs(dir.x)) return d * 0.31f;
                         return w * 0.41f;
                     }
-                    if (cat == BuildingCategory.Inn)
+                    if (cat == BuildingCategory.Inn || cat == BuildingCategory.Market)
                     {
                         if (dir.z > 0.5f) return d * 0.27f;
                         if (dir.z < -0.5f) return d * 0.35f;

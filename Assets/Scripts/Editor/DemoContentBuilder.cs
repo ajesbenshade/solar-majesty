@@ -87,6 +87,7 @@ namespace SolarMajesty.EditorTools
             WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4);
             WriteBuilding("Building_CMD1", "Defense Battery", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
             WriteStarterGuilds();
+            WriteBuilding("Building_Market", "Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4);
             WriteBuilding("Building_HarvesterWorkshop", "Harvester Workshop", BuildingCategory.HarvesterWorkshop, 40, 5, 12f, 4, 4);
             WriteBuilding("Building_SurveyorWorkshop", "Surveyor Workshop", BuildingCategory.SurveyorWorkshop, 38, 4, 12f, 4, 4);
             WriteBuilding("Building_TerraformerWorkshop", "Terraformer Workshop", BuildingCategory.TerraformerWorkshop, 42, 5, 12f, 4, 4);
@@ -181,13 +182,7 @@ namespace SolarMajesty.EditorTools
             asset.powerGen = cat != BuildingCategory.Power
                 ? 0
                 : (display.IndexOf("Solar", System.StringComparison.OrdinalIgnoreCase) >= 0 ? 8 : 6);
-            asset.buildCost = power > 0
-                ? new[]
-                {
-                    new ResourceAmount(ResourceId.Metals, metals),
-                    new ResourceAmount(ResourceId.Power, power)
-                }
-                : new[] { new ResourceAmount(ResourceId.Metals, metals) };
+            asset.buildCost = Wallet.Credits(metals);
             asset.prefab = prefabOverride != null ? prefabOverride : BuildingVisualCatalog.LoadPrefab(cat);
             EditorUtility.SetDirty(asset);
 
@@ -224,11 +219,7 @@ namespace SolarMajesty.EditorTools
             asset.powerGen = 0;
             asset.attractionWeight = 1f;
             asset.preferredOccupants = guild.Occupants;
-            asset.buildCost = new[]
-            {
-                new ResourceAmount(ResourceId.Metals, 56),
-                new ResourceAmount(ResourceId.Power, 6)
-            };
+            asset.buildCost = Wallet.Credits(56);
             asset.prefab = BuildingVisualCatalog.LoadPrefab(BuildingCategory.GuildHall);
             EditorUtility.SetDirty(asset);
             MirrorAsset(asset, $"{DataRoot}/Buildings/{fileName}.asset");
@@ -245,6 +236,7 @@ namespace SolarMajesty.EditorTools
                 case BuildingCategory.DeepArchive:
                     return "unlock from ★ tech — bonus while standing";
                 case BuildingCategory.GuildHall: return "Guild Hall — assign a class";
+                case BuildingCategory.Market: return "Potions and a regen necklace. Heroes buy with CRED.";
                 default: return "";
             }
         }

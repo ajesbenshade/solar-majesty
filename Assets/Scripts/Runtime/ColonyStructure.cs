@@ -476,6 +476,7 @@ namespace SolarMajesty
                 case BuildingCategory.GeologistWorkshop: return "Geologist Workshop";
                 case BuildingCategory.SentinelWorkshop: return "Sentinel Workshop";
                 case BuildingCategory.GuildHall: return "Guild Hall";
+                case BuildingCategory.Market: return "Market Stall";
                 case BuildingCategory.ClimateLoom: return "Climate Loom";
                 case BuildingCategory.AegisSpire: return "Aegis Spire";
                 case BuildingCategory.DeepArchive: return "Deep Archive";

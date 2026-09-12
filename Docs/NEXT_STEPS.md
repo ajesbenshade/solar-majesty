@@ -52,8 +52,9 @@
 Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 is packaged. Phase 2 is complete** ([exit review](Roadmap/PHASE_2_EXIT.md)). **Phase 3 is complete** ([exit review](Roadmap/PHASE_3_EXIT.md)). Current: [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) ([exit blocked](Roadmap/PHASE_4_EXIT.md)). After Phase 4: [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
 
 1. Phase 4 visual target — **Weeks 1–4 continued are in**. Exit review is **blocked** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)). **Do not stamp Phase 4 complete. Do not start Phase 5 ship.** Next human step is still a spaced overseer Game-tab still vs [`SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png).
-2. Title orrery + four starter guilds **in** (this slice): click a world on the title screen to drop (Shift+click unlocks). Horizon Lodge / Anvil Compact / Aegis Lodge / Triage Compact replace the one assignable Guild Hall. SpecialistBrain scoring is unchanged. New Game wipes back to the system, not a forced Earth drop.
-3. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes.
+2. Title orrery + four starter guilds **in**. Click a world to drop (Shift+click unlocks). Horizon / Anvil / Aegis / Triage replace the generic Guild Hall.
+3. Majesty wallet **in**: flags, buildings, techs, revive, and hero gear spend **CRED (Metals)** only. ICE stays lungs; PWR stays the grid. Guild halls sell class upgrades. **Market Stall** (unlock Extract Basics) sells health / magic potions and a regen necklace. Each lodge has a researchable pulse (Horizon Pulse / Anvil Overtime / Aegis Watchfire / Triage Field Aid) activated from the hall card for CRED. Blacksmith guild arms are **parked**.
+4. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes.
 3. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
 
 ## Still out of scope (for now)
@@ -61,3 +62,5 @@ Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0
 Full combat sim rewrite, multiplayer, heightmap terrain.
 
 Typed natural-language flags + bundled local LLM ([Flag-hero local LLM](Roadmap/FLAG_HERO_LOCAL_LLM.md)) is a **parked stretch**. Do not start it during Phase 4. It is not Phase 5 ship work. Grok-the-advisor stays a scripted catalog.
+
+Blacksmith (guild-specific armor and weapons) is the next Majesty shop after the market. Do not start it in this slice.
