@@ -173,6 +173,13 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - Open-ground crossings should read as **spacesuited** in still dressing notes. No new `FlagTypes`.
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look.
 
+**Play Mode fixes after rust-dirt (#39) — island yards + geodesic lattice (code only — do not stamp exit)**
+- CaptureStill landmark yards keep **`MinYardGapCells` 4** of empty dirt from Commons / HAB / pad / extractors (`HasMinYardGap`). Flush gap-0 is last-resort only. Docked HAB arms stay flush on the Lego chain.
+- `MaxCenterSeparationCells` 16 so gap-4 islands still sit inside play ortho 10. Leftover Inn / wonder / extra HAB / extra solar / Defense still do **not** stamp.
+- Commons geodesic is frequency-3 inset facets (`CommonsGeodesicInset` 0.12) with square `SM_Hull` panels off the shell so the lattice reads at Game-tab range. Facets stay warm cream, not salmon. Orange equator / cupola bands stay.
+- `StillCaptureHold` stays. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite.
+- **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look.
+
 ---
 
 ## Phase 4 EXIT look (spaced overseer — VisualTarget PNG retired)
@@ -224,7 +231,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 ## How to smoke
 
 1. `Docs/SMOKE_TEST.md` Phase 4 sections (Earth meadow New Game, then **Shift+click MARS?** or Shift+F10 Mars). Empty Mars should show boulder/dune/crater vista + node outcrops + dens, not a tiled plane of cubes. `spawnShowcaseColony` stays false.
-2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **geodesic / polyhedron Commons**, a **white paneled square hub** with **square Lego ports + orange collars on docked faces only** (no interconnect tube web across the dirt), **no unused CommonsPort / CommonsStub rings** on undocked cardinals, HAB cylinder that stays **readable white** against the red ground, **no grey hex slabs**, camera snapping to campus ortho **10** (hopper spawn must not pan or zoom out). Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots. Distant haze should recede toward the horizon.
+2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **geodesic / polyhedron Commons**, a **white paneled square hub** with **square Lego ports + orange collars on docked faces only** (no interconnect tube web across the dirt), **no unused CommonsPort / CommonsStub rings** on undocked cardinals, HAB cylinder that stays **readable white** against the red ground, **no grey hex slabs**, camera snapping to campus ortho **10** (hopper spawn must not pan or zoom out). CaptureStill pad / solar / extractors should sit on **separate dirt islands** (~4 cells of empty ground from Commons), not flush against the dome. Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots. Distant haze should recede toward the horizon.
 3. Menu **Solar Majesty → Capture Mars Still** (or `-executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CaptureMarsStill`) regenerates the editor PNG only — not a HUD still.
 
 ---

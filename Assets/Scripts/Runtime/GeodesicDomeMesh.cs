@@ -10,7 +10,7 @@ namespace SolarMajesty
     /// </summary>
     public static class GeodesicDomeMesh
     {
-        /// <param name="frequency">Subdivisions per icosahedron edge (4 → 320 sphere faces).</param>
+        /// <param name="frequency">Subdivisions per icosahedron edge (3 → 180 sphere faces).</param>
         /// <param name="radii">Ellipsoid radii (x, y, z).</param>
         /// <param name="minY01">Keep facets whose centroid y / radii.y is at least this (-1..1).</param>
         /// <param name="inset">Fraction each facet shrinks toward its centroid (seam width).</param>

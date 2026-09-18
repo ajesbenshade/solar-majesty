@@ -16,12 +16,12 @@ namespace SolarMajesty
         private static readonly Color White = new Color(0.88f, 0.82f, 0.74f);
         // Concept "black" bands read as lit charcoal (~70/66/62 sRGB after ACES), not ink.
         private static readonly Color Carbon = new Color(0.26f, 0.24f, 0.22f);
-        // Geodesic facets run a shade warmer than the HAB/rocket hull in the concept.
-        private static readonly Color DomeCream = new Color(0.80f, 0.62f, 0.50f);
+        // Geodesic facets stay warm cream like the HAB hull — slightly warmer, never salmon.
+        private static readonly Color DomeCream = new Color(0.86f, 0.79f, 0.70f);
         private static readonly Color Graphite = new Color(0.16f, 0.17f, 0.19f);
         private static readonly Color Steel = new Color(0.42f, 0.44f, 0.48f);
-        // Commons undershell seen through facet insets: concept seams ~150/135/120, not black.
-        private static readonly Color SeamGrey = new Color(0.40f, 0.36f, 0.32f);
+        // Commons undershell seen through facet insets: dark enough to read as lattice at ortho 10.
+        private static readonly Color SeamGrey = new Color(0.22f, 0.20f, 0.18f);
         private static readonly Color Orange = new Color(0.96f, 0.42f, 0.08f);
         private static readonly Color Yellow = new Color(0.95f, 0.82f, 0.12f);
         private static readonly Color Concrete = new Color(0.40f, 0.41f, 0.43f);
@@ -39,6 +39,10 @@ namespace SolarMajesty
         private static readonly Color Glass = new Color(0.48f, 0.72f, 0.82f);
         private static readonly Color GlassEmit = new Color(0.06f, 0.22f, 0.28f);
         private static readonly Color Plant = new Color(0.22f, 0.55f, 0.24f);
+
+        public const string CommonsGeodesicMeshName = "SM_GeodesicDome";
+        public const int CommonsGeodesicFrequency = 3;
+        public const float CommonsGeodesicInset = 0.12f;
 
         private static Shader _lit;
         private static Shader _hull;
@@ -267,20 +271,37 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// One flat-shaded geodesic shell (frequency-4 icosphere on the dome ellipsoid) whose
-        /// facets are inset so the dark undershell reads as a thin seam lattice. Coplanar
-        /// triangles replace the earlier scatter of tilted plates that read as shingles.
+        /// One flat-shaded geodesic shell (frequency-3 icosphere on the dome ellipsoid) whose
+        /// facets are inset so the dark undershell reads as a seam lattice at play ortho 10.
+        /// Frequency 4 looked like a bumpy sphere; square SM_Hull panels washed the triangles.
         /// </summary>
         private static void PlaceGeodesicLattice(Transform root, float radius, Color hull)
         {
             var radii = new Vector3(radius * 1.02f, radius * 0.74f, radius * 1.02f);
-            Mesh mesh = GeodesicDomeMesh.Build(4, radii, -0.22f, 0.06f);
+            Mesh mesh = GeodesicDomeMesh.Build(
+                CommonsGeodesicFrequency, radii, -0.22f, CommonsGeodesicInset);
+            mesh.name = CommonsGeodesicMeshName;
             var shell = new GameObject("Dress_CommonsGeo_0");
             shell.transform.SetParent(root, false);
             shell.transform.localPosition = new Vector3(0f, 1.85f, 0f);
             shell.AddComponent<MeshFilter>().sharedMesh = mesh;
             shell.AddComponent<MeshRenderer>();
-            Tint(shell, DomeCream);
+            TintGeodesicFacet(shell, DomeCream);
+        }
+
+        /// <summary>
+        /// Facet geometry is the lattice. World-space square hull panels would paint over
+        /// the triangles and read as a soft paneled sphere at Game-tab range.
+        /// </summary>
+        private static void TintGeodesicFacet(GameObject go, Color c)
+        {
+            Tint(go, c);
+            var rend = go.GetComponent<Renderer>();
+            var mat = rend != null ? rend.sharedMaterial : null;
+            if (mat == null) return;
+            if (mat.HasProperty("_PanelDarken")) mat.SetFloat("_PanelDarken", 0f);
+            if (mat.HasProperty("_PanelBevel")) mat.SetFloat("_PanelBevel", 0f);
+            if (mat.HasProperty("_PanelWidth")) mat.SetFloat("_PanelWidth", 0.001f);
         }
 
         public static void BuildLandingPad(Transform root, float w, float d, Color hull)

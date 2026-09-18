@@ -67,8 +67,23 @@ namespace SolarMajesty.Tests
         {
             var commons = ModularBuildingFactory.Spawn(
                 BuildingCategory.Commons, Vector3.zero, _root.transform);
-            Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsGeo_0"),
-                "dream-loop: geodesic facets must dress the dome");
+            Transform geo = FindChild(commons.transform, "Dress_CommonsGeo_0");
+            Assert.IsNotNull(geo, "dream-loop: geodesic facets must dress the dome");
+            var filter = geo.GetComponent<MeshFilter>();
+            Assert.IsNotNull(filter);
+            Assert.IsNotNull(filter.sharedMesh);
+            Assert.AreEqual(HeroBuildingKits.CommonsGeodesicMeshName, filter.sharedMesh.name);
+            Assert.AreEqual(0, filter.sharedMesh.vertexCount % 3,
+                "flat-shaded geodesic emits 3 verts per triangular facet");
+            Assert.Greater(filter.sharedMesh.vertexCount, 80);
+            var geoMat = geo.GetComponent<Renderer>().sharedMaterial;
+            Assert.IsNotNull(geoMat);
+            if (geoMat.HasProperty("_PanelDarken"))
+                Assert.AreEqual(0f, geoMat.GetFloat("_PanelDarken"), 0.01f,
+                    "square hull panels must not wash the triangular lattice");
+            Color facet = Albedo(geo);
+            Assert.Greater(facet.r, 0.80f, "facets stay warm cream, not salmon");
+            Assert.Greater(facet.g / facet.r, 0.85f, "facets must not shift orange vs HAB hull");
             Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
                 "orange equatorial band");
             Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsCupolaBand"),
@@ -525,9 +540,14 @@ namespace SolarMajesty.Tests
             var placer = StampEastChain(out var commons);
 
             Vector2Int westPad = StillCampusDensity.FlushOrigin(
-                commons, BuildingPlacer.Cardinal.West, 6, 6);
-            Assert.AreEqual(new Vector2Int(4, 10), westPad);
-            Assert.IsTrue(placer.CanFitRect(westPad, 6, 6), "west pad must CanFit beside east HAB");
+                commons, BuildingPlacer.Cardinal.West, 6, 6,
+                StillCampusDensity.MinYardGapCells);
+            Assert.AreEqual(
+                StillCampusDensity.FlushOrigin(
+                    commons, BuildingPlacer.Cardinal.West, 6, 6,
+                    StillCampusDensity.MinYardGapCells),
+                westPad);
+            Assert.IsTrue(placer.CanFitRect(westPad, 6, 6), "gapped west pad must CanFit");
 
             var plan = StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
 
@@ -536,13 +556,23 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(plan.Water, "water");
             Assert.IsTrue(plan.Regolith, "regolith");
             Assert.AreEqual(4, plan.PlacedCount);
-            Assert.AreEqual(westPad, plan.PadOrigin, "HAB east → pad west (E/W/N pack)");
-            Assert.AreEqual(
-                StillCampusDensity.FlushOrigin(commons, BuildingPlacer.Cardinal.North, 4, 4),
-                plan.PowerOrigin,
-                "PWR-1 north of Commons");
-            Assert.AreEqual(new Vector2Int(16, 16), plan.WaterOrigin, "water NE corner");
-            Assert.AreEqual(new Vector2Int(6, 16), plan.RegolithOrigin, "regolith NW corner");
+            Assert.AreEqual(westPad, plan.PadOrigin, "HAB east → pad west with yard gap");
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(plan.PadOrigin, 6, 6, commons.Origin, 6, 6),
+                StillCampusDensity.MinYardGapCells);
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(plan.PadOrigin, 6, 6, new Vector2Int(18, 11), 4, 4),
+                StillCampusDensity.MinYardGapCells,
+                "pad must not hug east HAB");
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(plan.PowerOrigin, 4, 4, commons.Origin, 6, 6),
+                StillCampusDensity.MinYardGapCells);
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(plan.WaterOrigin, 4, 4, commons.Origin, 6, 6),
+                StillCampusDensity.MinYardGapCells);
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(plan.RegolithOrigin, 4, 4, commons.Origin, 6, 6),
+                StillCampusDensity.MinYardGapCells);
 
             var log = StillCampusDensity.StampLog.FromPieces(placer);
             Assert.IsTrue(log.Commons && log.Airlock && log.Hab);
@@ -588,17 +618,22 @@ namespace SolarMajesty.Tests
             var placer = StampEastChain(out var commons);
 
             Vector2Int westPad = StillCampusDensity.FlushOrigin(
-                commons, BuildingPlacer.Cardinal.West, 6, 6);
+                commons, BuildingPlacer.Cardinal.West, 6, 6,
+                StillCampusDensity.MinYardGapCells);
             placer.MarkCampusRect(westPad, 6, 6);
             placer.RegisterPiece(westPad, 6, 6, BuildingCategory.Defense);
 
             Assert.IsTrue(StillCampusDensity.TryNext(
                 placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null, out Vector2Int picked));
             Assert.AreNotEqual(westPad, picked);
-            Assert.AreEqual(
-                StillCampusDensity.FlushOrigin(commons, BuildingPlacer.Cardinal.North, 6, 6),
-                picked,
-                "west blocked → north pad (South last)");
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(picked, 6, 6, commons.Origin, 6, 6),
+                StillCampusDensity.MinYardGapCells,
+                "spaced west blocked → next island still keeps the yard gap");
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(picked, 6, 6, new Vector2Int(18, 11), 4, 4),
+                StillCampusDensity.MinYardGapCells,
+                "replacement pad must not hug east HAB");
         }
 
         [Test]
@@ -625,10 +660,12 @@ namespace SolarMajesty.Tests
             StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
 
             Assert.IsTrue(StillCampusDensity.TryNext(
-                placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out _),
+                placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null,
+                out _, enforceIslandGap: false),
                 "workshop 4×4 still CanFit after pad+yards");
             Assert.IsTrue(StillCampusDensity.TryNext(
-                placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null, out _),
+                placer, commons, BuildingPlacer.Cardinal.East, 6, 6, null,
+                out _, enforceIslandGap: false),
                 "a 6×6 wonder still CanFit near Commons");
 
             var leftovers = StillCampusDensity.PlanLeftovers(
@@ -838,6 +875,44 @@ namespace SolarMajesty.Tests
                 "RefreshTubes must not stamp a pressurized tube web between yards");
         }
 
+        [Test]
+        public void GeodesicDomeMesh_InsetShrinksFacets()
+        {
+            var tight = GeodesicDomeMesh.Build(2, Vector3.one, -1f, 0f);
+            var open = GeodesicDomeMesh.Build(
+                HeroBuildingKits.CommonsGeodesicFrequency, Vector3.one, -1f,
+                HeroBuildingKits.CommonsGeodesicInset);
+            Assert.AreEqual(0, tight.vertexCount % 3);
+            Assert.AreEqual(0, open.vertexCount % 3);
+            Assert.Greater(tight.bounds.size.x, open.bounds.size.x,
+                "inset must open a seam so the undershell lattice reads");
+            Assert.Greater(open.vertexCount, 80);
+        }
+
+        [Test]
+        public void DensePack_YardsKeepMinGap_NoFlushIslands()
+        {
+            var placer = StampEastChain(out var commons);
+            var plan = StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
+            Assert.IsTrue(plan.Pad && plan.Power && plan.Water && plan.Regolith);
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(plan.PadOrigin, 6, 6, plan.PowerOrigin, 4, 4),
+                StillCampusDensity.MinYardGapCells);
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(plan.WaterOrigin, 4, 4, plan.RegolithOrigin, 4, 4),
+                StillCampusDensity.MinYardGapCells);
+            Assert.GreaterOrEqual(
+                StillCampusDensity.RectGapCells(plan.PowerOrigin, 4, 4, plan.WaterOrigin, 4, 4),
+                StillCampusDensity.MinYardGapCells);
+            Assert.IsFalse(
+                StillCampusDensity.TryCardinalNeighbor(
+                    new BuildingPlacer.CampusPiece(commons.Origin, 6, 6, BuildingCategory.Commons),
+                    new BuildingPlacer.CampusPiece(
+                        plan.PadOrigin, 6, 6, BuildingCategory.LandingPad),
+                    1, out _, out _),
+                "pad must not sit flush (gap 0–1) against Commons");
+        }
+
         private Vector3 FootprintCenter(Vector2Int origin, int side)
         {
             Vector3 a = _grid.CellToWorld(origin);
@@ -869,6 +944,8 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(
                 StillCampusDensity.PlayCampusOrthoSize, StillCampusDensity.StillMinOrtho,
                 "FitStillOrtho floor must not crop inside play ortho");
+            Assert.AreEqual(4, StillCampusDensity.MinYardGapCells);
+            Assert.AreEqual(16f, StillCampusDensity.MaxCenterSeparationCells);
         }
 
         [Test]

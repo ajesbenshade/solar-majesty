@@ -2504,8 +2504,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Pad + Starship, PWR-1/solar, water farm, regolith camp. CanFit only — ExtraPlacementRule
-        /// would park forward yards on Campus B or demand extra airlocks.
+        /// Pad + Starship, PWR-1/solar, water farm, regolith camp. Island yards
+        /// (MinYardGapCells 4) — ExtraPlacementRule would park forward yards on
+        /// Campus B or demand extra airlocks.
         /// </summary>
         private void StampStillDensityPack()
         {
