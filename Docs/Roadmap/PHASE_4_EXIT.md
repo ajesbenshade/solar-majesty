@@ -173,6 +173,15 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 - Open-ground crossings should read as **spacesuited** in still dressing notes. No new `FlagTypes`.
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look.
 
+**Play Mode fixes after locked HAB still (code only — do not stamp exit)**
+- Aaron locked a Play-mode still as the HAB look: **boxy beige/tan hull**, **roof solar array**, **orange ribbed Commons-to-HAB collar with orange torus rings**, **white cube airlock with dark square windows**
+- Procedural `BuildHabitat` is that box, not HAB-1 graphite-rim (`HabCarbonBand` / `HabFrontRim`). `Dress_` prefix keeps IndustrialArtDressing from stomping tan onto WhiteHull
+- Airlock hub is a white cube with 2×2 dark square windows per face. No roof turret, no cyan visor, no wrap `Dress_HubDoor`
+- Docked `Dress_TubeArm` is orange ribbed + two torus rings + Lego-face collar. HAB `DockSleeve` is orange so the join does not flash white. Unused arms stay hidden
+- Commons geodesic restyle is **PR 41** — this slice does not retune the dome
+- `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite
+- **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
+
 ---
 
 ## Phase 4 EXIT look (spaced overseer — VisualTarget PNG retired)
@@ -211,7 +220,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
-- **Campus Game-tab still (Aaron 2026-09-07 vs concept)** — latest archived Game-tab is still6 (empty Sol 1). Bake-off #26/#27/#28 Captures are **not** EXIT. still21 leftover=inn+wonder extraHab/solar/defense is **not** a density gate. This pass is **code only**: CaptureStill prefers play ortho 10; leftover kits do **not** stamp; **RefreshTubes no longer stamps `CampusDress_TubeRuns` (`SpawnTubeRuns` removed)**; interior dirt is not force-filled. `StillCaptureHold` stays. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
+- **Locked HAB still (Aaron)** — boxy beige/tan hull + roof solar + orange ribbed Commons-HAB collar + white cube airlock with dark square windows. Graphite-rim HAB-1 cylinder is **rejected**. Commons geodesic restyle stays PR 41. Code pass only. **Needs a new Game-tab still from GD after merge. Do not stamp exit.**
 - Landmark kits (pad + Starship, solar, extractors) may appear when they CanFit. Leftover Workshop / Inn / wonder / extra HAB / extra solar / Defense do **not** stamp on `StampPhase4*`. Do not fill every dirt patch. Units remain optional (do not invent new unit systems).
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; interconnect tube webs are retired — Lego ports only)
@@ -224,7 +233,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 ## How to smoke
 
 1. `Docs/SMOKE_TEST.md` Phase 4 sections (Earth meadow New Game, then **Shift+click MARS?** or Shift+F10 Mars). Empty Mars should show boulder/dune/crater vista + node outcrops + dens, not a tiled plane of cubes. `spawnShowcaseColony` stays false.
-2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **geodesic / polyhedron Commons**, a **white paneled square hub** with **square Lego ports + orange collars on docked faces only** (no interconnect tube web across the dirt), **no unused CommonsPort / CommonsStub rings** on undocked cardinals, HAB cylinder that stays **readable white** against the red ground, **no grey hex slabs**, camera snapping to campus ortho **10** (hopper spawn must not pan or zoom out). Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots. Distant haze should recede toward the horizon.
+2. On Mars: **B**, key **1**, Colony Commons on the orange claim → airlock on a face socket → HAB. Look for a **geodesic / polyhedron Commons**, a **white cube hub with dark square windows**, **orange ribbed Commons-to-HAB collar with torus rings** on docked faces only (no interconnect tube web across the dirt), **no unused CommonsPort / CommonsStub rings** on undocked cardinals, **boxy beige/tan HAB with roof solar** (not graphite-rim HAB-1), **no grey hex slabs**, camera snapping to campus ortho **10** (hopper spawn must not pan or zoom out). Hopper should not wear a giant idle **DUST HOPPER** chip. Empty ground click still must not repath robots. Distant haze should recede toward the horizon.
 3. Menu **Solar Majesty → Capture Mars Still** (or `-executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CaptureMarsStill`) regenerates the editor PNG only — not a HUD still.
 
 ---

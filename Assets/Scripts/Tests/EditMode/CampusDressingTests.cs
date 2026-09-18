@@ -8,7 +8,9 @@ namespace SolarMajesty.Tests
     /// still16 leftover: wrap carbon doors painted the 2×2 as a dark box joint.
     /// Live kits must spawn dock groups off; RefreshTubes enables docked faces only.
     /// CaptureStill / RefreshTubes must not stamp a between-yard tube web.
-    /// The hub stays a smaller white paneled square; orange only on docked collars.
+    /// Locked HAB still: boxy tan hull + roof solar; white cube hub with dark
+    /// square windows; orange ribbed dock stubs with torus rings. Graphite-rim
+    /// HAB-1 cylinder is rejected.
     /// </summary>
     public class CampusDressingTests
     {
@@ -82,27 +84,35 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void LiveHab_ThickCarbonMidBand_AndOrangeRimHatches()
+        public void LiveHab_BoxyTanHull_RoofSolar_NoGraphiteRim()
         {
             var hab = ModularBuildingFactory.Spawn(
                 BuildingCategory.Habitat, Vector3.zero, _root.transform);
-            Transform mid = FindChild(hab.transform, "HabCarbonBand");
-            Assert.IsNotNull(mid);
-            // Unity cylinder height = 2 * scale.y; band must cover ~24% of HAB length.
-            float length = 6f * 0.92f;
-            float midLen = mid.localScale.y * 2f;
-            Assert.Greater(midLen / length, 0.20f, "mid-band must read thick at ortho 10");
-            Assert.Less(midLen / length, 0.32f);
-            Assert.Less(Albedo(mid).grayscale, 0.20f, "mid-band stays near-black");
-            Assert.IsNotNull(FindChild(hab.transform, "HabCarbonBandCore"),
-                "darker core ring so the mid-band reads vs white hull");
-            Assert.IsNull(FindChild(hab.transform, "HabMid"),
-                "old HabMid name retired — was easy to confuse with orange trim");
-            Assert.IsNotNull(FindChild(hab.transform, "HabFrontRim"));
-            Assert.IsNotNull(FindChild(hab.transform, "HabRearRim"));
-            Color rim = Albedo(FindChild(hab.transform, "HabFrontRim"));
-            Assert.Greater(rim.r, 0.85f);
-            Assert.Less(rim.g, 0.55f);
+            Transform shell = FindChild(hab.transform, "Dress_HabShell");
+            Assert.IsNotNull(shell, "locked still HAB is a boxy hull, not HAB-1 cylinder");
+            Color tan = Albedo(shell);
+            Assert.Greater(tan.r, 0.70f, "HAB hull stays beige/tan");
+            Assert.Greater(tan.g, 0.50f);
+            Assert.Less(tan.g, 0.72f);
+            Assert.Less(tan.b, 0.55f);
+            Assert.Less(tan.grayscale, 0.80f, "tan must not flatten to sheet-white");
+            Assert.Greater(shell.localScale.x, shell.localScale.y,
+                "HAB reads as a box fill of the 4×4, not a lying cylinder");
+            Assert.AreEqual(shell.localScale.x, shell.localScale.z, 0.08f);
+            Assert.IsNotNull(FindChild(hab.transform, "Dress_HabSolarCell_0_0"),
+                "roof solar array from the locked still");
+            Assert.IsNotNull(FindChild(hab.transform, "Dress_HabSolarFrame_0_0"));
+            Assert.IsNull(FindChild(hab.transform, "HabCarbonBand"),
+                "graphite-rim HAB-1 mid-band is rejected");
+            Assert.IsNull(FindChild(hab.transform, "HabCarbonBandCore"));
+            Assert.IsNull(FindChild(hab.transform, "HabFrontRim"),
+                "graphite/orange rim hatches are the rejected variant");
+            Assert.IsNull(FindChild(hab.transform, "HabRearRim"));
+            Transform sleeve = FindChild(hab.transform, "DockSleeve_S_Tube");
+            Assert.IsNotNull(sleeve, "HAB south sleeve meets the airlock at the Lego face");
+            Color sleeveC = Albedo(sleeve);
+            Assert.Greater(sleeveC.r, 0.85f, "HAB sleeve stays orange, not a white gap");
+            Assert.Less(sleeveC.g, 0.55f);
         }
 
         [Test]
@@ -335,8 +345,8 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(IsRootActive(hab.transform, "HabPort_N"));
             Assert.IsFalse(IsRootActive(hab.transform, "HabPort_E"));
             Assert.IsFalse(IsRootActive(hab.transform, "HabPort_W"));
-            AssertDockedArmIsWhiteTubePlusCollar(airlock.transform, "Dress_TubeArm_S");
-            AssertDockedArmIsWhiteTubePlusCollar(airlock.transform, "Dress_TubeArm_N");
+            AssertDockedArmIsOrangeRibbedCollar(airlock.transform, "Dress_TubeArm_S");
+            AssertDockedArmIsOrangeRibbedCollar(airlock.transform, "Dress_TubeArm_N");
         }
 
         [Test]
@@ -398,7 +408,7 @@ namespace SolarMajesty.Tests
             for (int i = 0; i < arms.Length; i++)
             {
                 Assert.IsTrue(IsRootActive(ghost.transform, arms[i]), arms[i] + " ghost arm");
-                AssertDockedArmIsWhiteTubePlusCollar(ghost.transform, arms[i]);
+                AssertDockedArmIsOrangeRibbedCollar(ghost.transform, arms[i]);
             }
         }
 
@@ -1015,8 +1025,8 @@ namespace SolarMajesty.Tests
         }
 
         /// <summary>
-        /// still16 fail: wrap carbon doors + carbon roof made the 2×2 a dark box.
-        /// Hub must stay a cell-safe white square; unused faces stay clean plates.
+        /// Locked still: white cube hub with dark square windows. No wrap doors,
+        /// no inset-hatch-only language, no roof turret / cyan visor.
         /// </summary>
         private static void AssertAirlockReadsAsWhiteHub(Transform airlock)
         {
@@ -1026,7 +1036,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(ColonyVisualUtility.AirlockHubSide, scale.x, 0.02f);
             Assert.AreEqual(ColonyVisualUtility.AirlockHubSide, scale.z, 0.02f);
             Assert.Less(scale.x, ColonyLayout.DefaultCellSize * 2f,
-                "hub must stay smaller than the 2×2 cell so the white tube reads");
+                "hub must stay smaller than the 2×2 cell so the orange collar reads");
             Assert.Greater(Albedo(hub).grayscale, 0.88f, "hub hull must be sheet-white");
             Assert.IsNotNull(FindChild(airlock, "Dress_HubPanel_0"));
             Assert.Greater(Albedo(FindChild(airlock, "Dress_HubPanel_0")).grayscale, 0.88f);
@@ -1038,53 +1048,59 @@ namespace SolarMajesty.Tests
             Assert.IsNull(FindChild(airlock, "Dress_HubDoor_0"),
                 "wrap doors painted the hub as a dark box");
             Assert.IsNull(FindChild(airlock, "Dress_HubDoor_1"));
-            Assert.IsNotNull(FindChild(airlock, "Dress_HubInset_0"),
-                "small inset hatch is panel language, not a wrap door");
-            Assert.Less(FindChild(airlock, "Dress_HubInset_0").localScale.x
-                        + FindChild(airlock, "Dress_HubInset_0").localScale.z, 0.70f,
-                "inset hatch must stay much smaller than a wrap door");
+            Assert.IsNull(FindChild(airlock, "Dress_HubInset_0"),
+                "inset hatch is not the locked still — dark square windows are");
+            Assert.IsNull(FindChild(airlock, "Dress_JunctionTurret"),
+                "locked still airlock is a white cube, not a turreted hub");
+            Transform window = FindChild(airlock, "Dress_HubWindow_0_00");
+            Assert.IsNotNull(window, "2×2 dark square windows per face");
+            Assert.Less(Albedo(window).grayscale, 0.25f, "windows stay dark, not cyan visor");
+            Assert.IsNotNull(FindChild(airlock, "Dress_HubWindow_0_11"));
         }
 
-        private static void AssertDockedArmIsWhiteTubePlusCollar(Transform airlock, string arm)
+        private static void AssertDockedArmIsOrangeRibbedCollar(Transform airlock, string arm)
         {
             Transform group = FindChild(airlock, arm);
             Assert.IsNotNull(group, arm);
             Transform tube = FindChild(group, arm + "_Tube");
             Transform collar = FindChild(group, arm + "_Collar");
-            Transform lip = FindChild(group, arm + "_Lip");
-            Assert.IsNotNull(tube, arm + " white tube");
+            Transform torus0 = FindChild(group, arm + "_Torus_0");
+            Transform torus1 = FindChild(group, arm + "_Torus_1");
+            Transform rib = FindChild(group, arm + "_Rib_0");
+            Assert.IsNotNull(tube, arm + " orange ribbed tube");
             Assert.IsNotNull(collar, arm + " orange collar");
-            Assert.IsNotNull(lip, arm + " white hub lip");
-            Transform hubCollar = FindChild(group, arm + "_HubCollar");
-            Assert.IsNotNull(hubCollar, arm + " hub-face collar (still18 cube-ish miss)");
+            Assert.IsNotNull(torus0, arm + " torus ring 0");
+            Assert.IsNotNull(torus1, arm + " torus ring 1");
+            Assert.IsNotNull(rib, arm + " rib");
+            Assert.IsNull(FindChild(group, arm + "_Lip"),
+                arm + " white hub lip is the rejected white-tube kit");
+            Assert.IsNull(FindChild(group, arm + "_HubCollar"),
+                arm + " graphite hub collar is the rejected variant");
             Transform faceFrame = FindChild(group, arm + "_FaceFrame");
-            Assert.IsNotNull(faceFrame, arm + " square orange face frame (still19 cube-ish miss)");
-            Assert.Greater(Albedo(tube).grayscale, 0.88f, arm + " tube must be white");
-            Assert.Greater(Albedo(lip).grayscale, 0.88f, arm + " lip must be white");
+            Assert.IsNotNull(faceFrame, arm + " square orange face frame");
+            Color tubeC = Albedo(tube);
+            Assert.Greater(tubeC.r, 0.85f, arm + " tube stays safety orange");
+            Assert.Less(tubeC.g, 0.55f);
+            Assert.Less(tubeC.b, 0.25f);
             Color collarC = Albedo(collar);
             Assert.Greater(collarC.r, 0.85f, arm + " collar stays safety orange");
             Assert.Less(collarC.g, 0.55f);
-            Assert.Less(collarC.b, 0.25f);
-            Color hubC = Albedo(hubCollar);
-            Assert.Greater(hubC.r, 0.85f, arm + " hub collar stays safety orange");
-            Assert.Less(hubC.g, 0.55f);
+            Color torusC = Albedo(torus0);
+            Assert.Greater(torusC.r, 0.85f, arm + " torus stays safety orange");
+            Assert.Less(torusC.g, 0.55f);
             Color frameC = Albedo(faceFrame);
             Assert.Greater(frameC.r, 0.85f, arm + " face frame stays safety orange");
             Assert.Less(frameC.g, 0.55f);
             float tubeLen = tube.localScale.y * 2f;
-            Assert.Greater(tubeLen, 0.39f, arm + " stub must read as a short white tube");
+            Assert.Greater(tubeLen, 0.39f, arm + " stub must read as a short orange tube");
             float face = ColonyLayout.DefaultCellSize;
             Vector3 collarFlat = collar.localPosition;
             collarFlat.y = 0f;
             Assert.Greater(collarFlat.magnitude, face * 0.85f,
-                arm + " orange collar sits at the Lego face, not as a hub-gasket dark ring");
-            Vector3 hubFlat = hubCollar.localPosition;
-            hubFlat.y = 0f;
-            Assert.Less(hubFlat.magnitude, ColonyVisualUtility.AirlockHubSide * 0.72f,
-                arm + " hub collar sits on the white square, readable at Game-tab distance");
+                arm + " orange collar sits at the Lego face");
             Assert.Greater(collar.localScale.y, 0.06f, arm + " Lego-face collar must be thicker than a sliver");
-            Assert.Greater(hubCollar.localScale.x, ColonyVisualUtility.DockBore * 1.25f,
-                arm + " hub collar must read wider than the tube");
+            Assert.Greater(torus0.localScale.x, ColonyVisualUtility.DockBore * 1.25f,
+                arm + " torus must read wider than the tube");
         }
 
         private static Color Albedo(Transform t)

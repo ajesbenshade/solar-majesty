@@ -24,7 +24,7 @@ Judge stills against **this** image, not the retired packed `SM_MarsCampaign_Vis
 
 - High isometric / Majesty-2 overseer camera
 - **Spaced campus pads** with empty red regolith between yards — no tube corridors linking pads
-- Hero cluster: Commons **geodesic / polyhedron** dome, HAB-1 cylinder on a short square airlock port, circular pad + Starship, small solar field, one industrial / extractor yard, optional canvas porch
+- Hero cluster: Commons **geodesic / polyhedron** dome (PR 41), **boxy beige/tan HAB** with roof solar on a short square airlock (locked Play-mode still — not HAB-1 graphite-rim), circular pad + Starship, small solar field, one industrial / extractor yard, optional canvas porch
 - Distant Mars haze toward the horizon, strong key light, long readable shadows
 - Dusty metal / white thermal / carbon / orange / solar glass / canvas — practical colony, not toy, not Elden Ring clutter
 - Open-ground crossings read as **spacesuited** (isolation between pads)
