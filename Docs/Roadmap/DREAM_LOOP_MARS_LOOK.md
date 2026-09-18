@@ -71,7 +71,7 @@ This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not 
 - If interconnect tubes appear: `SpawnTubeRuns` must stay **gone**; `RefreshTubes` only enables docked Lego ports and destroys leftover `CampusDress_TubeRuns` roots.
 - If pad / solar / extractors hug Commons: `StillCampusDensity.MinYardGapCells` must stay **4** (`HasMinYardGap` on island yards). Docked HAB arms stay flush.
 - If docks step / gap: kits must seat via `SnapToGroundKeepingDockAxis` so arms stay on `ColonyVisualUtility.DockY`.
-- If Commons reads soft-sphere / cyan waist: live kit now has `CommonsGeo_*` frequency-3 inset facets (no square hull panels on the shell) + orange cupola/equator bands; cyan waist visors are removed.
+- If Commons reads soft-sphere / cyan waist: live kit now has `CommonsGeo_*` frequency-4 cream facets plus proud dark `CommonsGeo_Ribs` (no square hull panels on the shell, ribs, or undershell) + orange cupola/equator bands; cyan waist visors are removed.
 
 ### Local Mac Unity (preferred)
 
@@ -87,7 +87,7 @@ Unity -projectPath . \
   -executeMethod SolarMajesty.EditorTools.CaptureStill.Run
 ```
 
-Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. Local rounds so far (fresh judge each): r2 3, r4–5 3 (haze blocked), r6 4 (haze landed; pad/dirt/shadow/solar palette blocked), r7 5 (pad, shadows, crossings landed), r8 **6 / Tier 2 passed** (fog ramp retuned to the real 30° camera: focus 44 m, frame 27–61 m; dirt desaturated; camp/pad FBX skipped; rocket bands). Later: play-ortho FogEnd pushed to 95 m and `SyncFog` scales with ortho so zoomed-out Game-tab is dirt + hint, not a 61 m fog wall. This slice restores **island yard gaps** (`MinYardGapCells` 4) after the #33 revert of #31 and retunes the Commons geodesic (frequency 3, 12 % inset, no square hull panels). Tier 3 leftover: rocket terminator, HAB collar stack, far-ground relief. **Do not stamp EXIT** until Aaron look-clear.
+Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. Local rounds so far (fresh judge each): r2 3, r4–5 3 (haze blocked), r6 4 (haze landed; pad/dirt/shadow/solar palette blocked), r7 5 (pad, shadows, crossings landed), r8 **6 / Tier 2 passed** (fog ramp retuned to the real 30° camera: focus 44 m, frame 27–61 m; dirt desaturated; camp/pad FBX skipped; rocket bands). Later: play-ortho FogEnd pushed to 95 m and `SyncFog` scales with ortho so zoomed-out Game-tab is dirt + hint, not a 61 m fog wall. This slice restores **island yard gaps** (`MinYardGapCells` 4) after the #33 revert of #31 and retunes the Commons geodesic to the locked Play-mode still (frequency 4 cream plates, proud dark triangular ribs, no square hull panels). HAB kit is a separate slice. Tier 3 leftover: rocket terminator, HAB collar stack, far-ground relief. **Do not stamp EXIT** until Aaron look-clear.
 
 ### Cloud agents (no Unity)
 

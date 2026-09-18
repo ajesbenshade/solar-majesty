@@ -76,14 +76,28 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(0, filter.sharedMesh.vertexCount % 3,
                 "flat-shaded geodesic emits 3 verts per triangular facet");
             Assert.Greater(filter.sharedMesh.vertexCount, 80);
-            var geoMat = geo.GetComponent<Renderer>().sharedMaterial;
-            Assert.IsNotNull(geoMat);
-            if (geoMat.HasProperty("_PanelDarken"))
-                Assert.AreEqual(0f, geoMat.GetFloat("_PanelDarken"), 0.01f,
-                    "square hull panels must not wash the triangular lattice");
+            AssertNoSquareHullPanels(geo, "square hull panels must not wash the triangular lattice");
             Color facet = Albedo(geo);
             Assert.Greater(facet.r, 0.80f, "facets stay warm cream, not salmon");
             Assert.Greater(facet.g / facet.r, 0.85f, "facets must not shift orange vs HAB hull");
+
+            Transform ribs = FindChild(commons.transform, "Dress_CommonsGeo_Ribs");
+            Assert.IsNotNull(ribs, "locked still: proud dark geodesic struts on the cream shell");
+            var ribFilter = ribs.GetComponent<MeshFilter>();
+            Assert.IsNotNull(ribFilter);
+            Assert.IsNotNull(ribFilter.sharedMesh);
+            Assert.AreEqual(HeroBuildingKits.CommonsGeodesicRibMeshName, ribFilter.sharedMesh.name);
+            Assert.Greater(ribFilter.sharedMesh.vertexCount, 200,
+                "rib mesh must emit a full triangle grid, not a handful of struts");
+            AssertNoSquareHullPanels(ribs, "ribs stay dark struts, not square hull tiles");
+            Color ribColor = Albedo(ribs);
+            Assert.Less(ribColor.grayscale, 0.20f, "geodesic grid stays charcoal vs cream plates");
+
+            Transform under = FindChild(commons.transform, "Dress_CommonsDomeUnder");
+            Assert.IsNotNull(under, "undershell fills inset seams");
+            AssertNoSquareHullPanels(under, "undershell must not show square hull panels through the lattice");
+            Assert.Less(Albedo(under).grayscale, 0.20f, "undershell stays dark in the facet gaps");
+
             Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
                 "orange equatorial band");
             Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsCupolaBand"),
@@ -893,6 +907,22 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void GeodesicDomeMesh_BuildRibs_EmitsProudStruts()
+        {
+            var ribs = GeodesicDomeMesh.BuildRibs(
+                HeroBuildingKits.CommonsGeodesicFrequency, Vector3.one, -1f,
+                HeroBuildingKits.CommonsGeodesicRibHalfWidth);
+            Assert.AreEqual(HeroBuildingKits.CommonsGeodesicRibMeshName, ribs.name);
+            Assert.Greater(ribs.vertexCount, 200);
+            Assert.Greater(ribs.triangles.Length, 400);
+            var shell = GeodesicDomeMesh.Build(
+                HeroBuildingKits.CommonsGeodesicFrequency, Vector3.one, -1f,
+                HeroBuildingKits.CommonsGeodesicInset);
+            Assert.Greater(ribs.bounds.size.x, shell.bounds.size.x * 0.92f,
+                "ribs follow the shell so the triangle grid reads at play ortho");
+        }
+
+        [Test]
         public void DensePack_YardsKeepMinGap_NoFlushIslands()
         {
             var placer = StampEastChain(out var commons);
@@ -1165,6 +1195,19 @@ namespace SolarMajesty.Tests
             Assert.Greater(collar.localScale.y, 0.06f, arm + " Lego-face collar must be thicker than a sliver");
             Assert.Greater(hubCollar.localScale.x, ColonyVisualUtility.DockBore * 1.25f,
                 arm + " hub collar must read wider than the tube");
+        }
+
+        private static void AssertNoSquareHullPanels(Transform t, string message)
+        {
+            Assert.IsNotNull(t);
+            var rend = t.GetComponent<Renderer>();
+            Assert.IsNotNull(rend, t.name + " renderer");
+            var mat = rend.sharedMaterial;
+            Assert.IsNotNull(mat, t.name + " material");
+            if (mat.HasProperty("_PanelDarken"))
+                Assert.AreEqual(0f, mat.GetFloat("_PanelDarken"), 0.01f, message);
+            if (mat.HasProperty("_PanelBevel"))
+                Assert.AreEqual(0f, mat.GetFloat("_PanelBevel"), 0.01f, message);
         }
 
         private static Color Albedo(Transform t)
