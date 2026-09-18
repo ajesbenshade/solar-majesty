@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -76,26 +77,31 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(0, filter.sharedMesh.vertexCount % 3,
                 "flat-shaded geodesic emits 3 verts per triangular facet");
             Assert.Greater(filter.sharedMesh.vertexCount, 80);
+            Assert.Less(filter.sharedMesh.vertexCount, 650,
+                "frequency 3 stays readable at ortho; frequency 4 plates vanished");
+            Assert.AreEqual(3, HeroBuildingKits.CommonsGeodesicFrequency);
+            Assert.Greater(HeroBuildingKits.CommonsGeodesicInset, 0.18f,
+                "inset must be a real seam, not a 5% hairline");
             AssertNoSquareHullPanels(geo, "square hull panels must not wash the triangular lattice");
+            Assert.IsFalse(UsesHullShader(geo), "SM_Hull square tiles hide the triangles");
             Color facet = Albedo(geo);
             Assert.Greater(facet.r, 0.80f, "facets stay warm cream, not salmon");
             Assert.Greater(facet.g / facet.r, 0.85f, "facets must not shift orange vs HAB hull");
 
-            Transform ribs = FindChild(commons.transform, "Dress_CommonsGeo_Ribs");
-            Assert.IsNotNull(ribs, "locked still: proud dark geodesic struts on the cream shell");
-            var ribFilter = ribs.GetComponent<MeshFilter>();
-            Assert.IsNotNull(ribFilter);
-            Assert.IsNotNull(ribFilter.sharedMesh);
-            Assert.AreEqual(HeroBuildingKits.CommonsGeodesicRibMeshName, ribFilter.sharedMesh.name);
-            Assert.Greater(ribFilter.sharedMesh.vertexCount, 200,
-                "rib mesh must emit a full triangle grid, not a handful of struts");
-            AssertNoSquareHullPanels(ribs, "ribs stay dark struts, not square hull tiles");
-            Color ribColor = Albedo(ribs);
-            Assert.Less(ribColor.grayscale, 0.20f, "geodesic grid stays charcoal vs cream plates");
+            Assert.IsNull(FindChild(commons.transform, "Dress_CommonsGeo_Ribs"),
+                "proud box-ribs hid/replaced the triangles on PR 41");
+            Assert.IsNull(FindChild(commons.transform, "Dress_CommonsDomeUnder"),
+                "smooth sphere undershell is not a triangular lattice");
 
-            Transform under = FindChild(commons.transform, "Dress_CommonsDomeUnder");
-            Assert.IsNotNull(under, "undershell fills inset seams");
+            Transform under = FindChild(commons.transform, "Dress_CommonsGeo_Under");
+            Assert.IsNotNull(under, "dark geodesic undershell fills inset seams");
+            var underFilter = under.GetComponent<MeshFilter>();
+            Assert.IsNotNull(underFilter);
+            Assert.IsNotNull(underFilter.sharedMesh);
+            Assert.AreEqual(HeroBuildingKits.CommonsGeodesicUnderMeshName, underFilter.sharedMesh.name);
+            Assert.AreEqual(0, underFilter.sharedMesh.vertexCount % 3);
             AssertNoSquareHullPanels(under, "undershell must not show square hull panels through the lattice");
+            Assert.IsFalse(UsesHullShader(under), "undershell stays Lit triangles");
             Assert.Less(Albedo(under).grayscale, 0.20f, "undershell stays dark in the facet gaps");
 
             Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
@@ -904,22 +910,7 @@ namespace SolarMajesty.Tests
             Assert.Greater(tight.bounds.size.x, open.bounds.size.x,
                 "inset must open a seam so the undershell lattice reads");
             Assert.Greater(open.vertexCount, 80);
-        }
-
-        [Test]
-        public void GeodesicDomeMesh_BuildRibs_EmitsProudStruts()
-        {
-            var ribs = GeodesicDomeMesh.BuildRibs(
-                HeroBuildingKits.CommonsGeodesicFrequency, Vector3.one, -1f,
-                HeroBuildingKits.CommonsGeodesicRibHalfWidth);
-            Assert.AreEqual(HeroBuildingKits.CommonsGeodesicRibMeshName, ribs.name);
-            Assert.Greater(ribs.vertexCount, 200);
-            Assert.Greater(ribs.triangles.Length, 400);
-            var shell = GeodesicDomeMesh.Build(
-                HeroBuildingKits.CommonsGeodesicFrequency, Vector3.one, -1f,
-                HeroBuildingKits.CommonsGeodesicInset);
-            Assert.Greater(ribs.bounds.size.x, shell.bounds.size.x * 0.92f,
-                "ribs follow the shell so the triangle grid reads at play ortho");
+            Assert.Less(open.vertexCount, 650, "frequency 3, not a vanishing frequency-4 shell");
         }
 
         [Test]
@@ -1208,6 +1199,15 @@ namespace SolarMajesty.Tests
                 Assert.AreEqual(0f, mat.GetFloat("_PanelDarken"), 0.01f, message);
             if (mat.HasProperty("_PanelBevel"))
                 Assert.AreEqual(0f, mat.GetFloat("_PanelBevel"), 0.01f, message);
+        }
+
+        private static bool UsesHullShader(Transform t)
+        {
+            var rend = t.GetComponent<Renderer>();
+            if (rend == null || rend.sharedMaterial == null || rend.sharedMaterial.shader == null)
+                return false;
+            string n = rend.sharedMaterial.shader.name;
+            return n.IndexOf("Hull", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static Color Albedo(Transform t)

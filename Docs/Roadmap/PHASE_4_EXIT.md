@@ -176,7 +176,7 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 **Play Mode fixes after rust-dirt (#39) — island yards + geodesic lattice (code only — do not stamp exit)**
 - CaptureStill landmark yards keep **`MinYardGapCells` 4** of empty dirt from Commons / HAB / pad / extractors (`HasMinYardGap`). Flush gap-0 is last-resort only. Docked HAB arms stay flush on the Lego chain.
 - `MaxCenterSeparationCells` 16 so gap-4 islands still sit inside play ortho 10. Leftover Inn / wonder / extra HAB / extra solar / Defense still do **not** stamp.
-- Commons geodesic is frequency-4 cream facets plus proud dark triangular ribs (`Dress_CommonsGeo_Ribs` / `SM_GeodesicRibs`) with square `SM_Hull` panels off the shell, ribs, and undershell so the lattice reads at Game-tab range. Facets stay warm cream, not salmon. Orange equator / cupola bands stay. HAB kit is unchanged on this slice.
+- Commons geodesic is **frequency-3 cream triangular plates** (22% inset) over a **dark geodesic undershell**. Proud box-ribs and the smooth sphere undershell were a miss — they hid the triangles. Facets use URP Lit (no `SM_Hull` square tiles). Orange equator / cupola bands stay. HAB kit is unchanged on this slice.
 - `StillCaptureHold` stays. `spawnShowcaseColony` stays false. Square airlocks stay. No click-to-move. No `SpecialistBrain` rewrite.
 - **Needs a new Game-tab still from GD after merge. Do not stamp exit.** Phase 4 EXIT stays blocked on look.
 

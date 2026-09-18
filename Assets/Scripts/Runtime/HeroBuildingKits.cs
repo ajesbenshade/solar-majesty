@@ -41,10 +41,11 @@ namespace SolarMajesty
         private static readonly Color Plant = new Color(0.22f, 0.55f, 0.24f);
 
         public const string CommonsGeodesicMeshName = "SM_GeodesicDome";
-        public const string CommonsGeodesicRibMeshName = "SM_GeodesicRibs";
-        public const int CommonsGeodesicFrequency = 4;
-        public const float CommonsGeodesicInset = 0.055f;
-        public const float CommonsGeodesicRibHalfWidth = 0.055f;
+        public const string CommonsGeodesicUnderMeshName = "SM_GeodesicUnder";
+        /// <summary>Frequency 3 so each cream triangle is large at play ortho 10.</summary>
+        public const int CommonsGeodesicFrequency = 3;
+        /// <summary>Wide inset so the dark triangular lattice reads (5% was a hairline).</summary>
+        public const float CommonsGeodesicInset = 0.22f;
 
         private static Shader _lit;
         private static Shader _hull;
@@ -215,14 +216,8 @@ namespace SolarMajesty
                 new Vector3(0f, 1.72f, 0f),
                 new Vector3(radius * 2.12f, 0.06f, radius * 2.12f), Orange);
 
-            // Dark undershell just under the facet shell: it shows only through the facet
-            // insets. Square SM_Hull panels must stay off or they read through the gaps
-            // and hide the triangle grid (locked Play-mode still).
-            Prim(root, "Dress_CommonsDomeUnder", PrimitiveType.Sphere,
-                new Vector3(0f, 1.85f, 0f),
-                new Vector3(radius * 1.96f, radius * 1.42f, radius * 1.96f), SeamGrey);
-            Transform under = root.Find("Dress_CommonsDomeUnder");
-            if (under != null) ClearHullPanels(under.gameObject, 0.04f);
+            // Cream triangular plates over a dark geodesic undershell (locked still).
+            // Do not put a smooth sphere or proud box-ribs here — those hid the triangles.
             PlaceGeodesicLattice(root, radius, hull);
 
             Prim(root, "CommonsDomeBand", PrimitiveType.Cylinder,
@@ -276,42 +271,54 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Cream geodesic plates plus a proud dark rib grid (locked Play-mode still).
-        /// Square SM_Hull panels stay off the shell, ribs, and undershell.
+        /// Locked still: cream triangular plates with a dark triangular lattice in the
+        /// seams. URP Lit only — SM_Hull square panels wash the dome into a soft sphere.
+        /// No proud box-rib overlay (that replaced the triangles on PR 41).
         /// </summary>
         private static void PlaceGeodesicLattice(Transform root, float radius, Color hull)
         {
+            _ = hull;
             var radii = new Vector3(radius * 1.02f, radius * 0.74f, radius * 1.02f);
             Vector3 at = new Vector3(0f, 1.85f, 0f);
-            Mesh mesh = GeodesicDomeMesh.Build(
-                CommonsGeodesicFrequency, radii, -0.22f, CommonsGeodesicInset);
-            mesh.name = CommonsGeodesicMeshName;
-            var shell = new GameObject("Dress_CommonsGeo_0");
-            shell.transform.SetParent(root, false);
-            shell.transform.localPosition = at;
-            shell.AddComponent<MeshFilter>().sharedMesh = mesh;
-            shell.AddComponent<MeshRenderer>();
-            TintGeodesicFacet(shell, DomeCream);
+            // Dark geodesic sits inside the cream plates so inset gaps are triangles.
+            PlaceGeodesicShell(root, "Dress_CommonsGeo_Under", CommonsGeodesicUnderMeshName,
+                at, radii * 0.96f, 0f, SeamGrey);
+            PlaceGeodesicShell(root, "Dress_CommonsGeo_0", CommonsGeodesicMeshName,
+                at, radii, CommonsGeodesicInset, DomeCream);
+        }
 
-            Mesh ribs = GeodesicDomeMesh.BuildRibs(
-                CommonsGeodesicFrequency, radii, -0.22f, CommonsGeodesicRibHalfWidth);
-            ribs.name = CommonsGeodesicRibMeshName;
-            var ribGo = new GameObject("Dress_CommonsGeo_Ribs");
-            ribGo.transform.SetParent(root, false);
-            ribGo.transform.localPosition = at;
-            ribGo.AddComponent<MeshFilter>().sharedMesh = ribs;
-            ribGo.AddComponent<MeshRenderer>();
-            TintGeodesicFacet(ribGo, SeamGrey);
+        private static void PlaceGeodesicShell(
+            Transform root, string goName, string meshName, Vector3 at, Vector3 radii, float inset, Color color)
+        {
+            Mesh mesh = GeodesicDomeMesh.Build(CommonsGeodesicFrequency, radii, -0.22f, inset);
+            mesh.name = meshName;
+            var go = new GameObject(goName);
+            go.transform.SetParent(root, false);
+            go.transform.localPosition = at;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>();
+            TintGeodesicFacet(go, color);
         }
 
         /// <summary>
-        /// Facet / rib geometry is the lattice. World-space square hull panels would paint
+        /// Facet geometry is the lattice. World-space square hull panels would paint
         /// over the triangles and read as a soft paneled sphere at Game-tab range.
         /// </summary>
         private static void TintGeodesicFacet(GameObject go, Color c)
         {
-            Tint(go, c);
-            ClearHullPanels(go, c.maxColorComponent < 0.2f ? 0.04f : 0.05f);
+            var rend = go.GetComponent<Renderer>();
+            if (rend == null) return;
+            EnsureLit();
+            if (_lit == null) return;
+            var mat = new Material(_lit) { name = go.name };
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+            if (mat.HasProperty("_Color")) mat.color = c;
+            bool dark = c.maxColorComponent < 0.2f;
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", dark ? 0.18f : 0.16f);
+            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.04f);
+            rend.sharedMaterial = mat;
+            rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            ClearHullPanels(go, dark ? 0.04f : 0.05f);
         }
 
         private static void ClearHullPanels(GameObject go, float dust)

@@ -74,7 +74,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 ## Phase 4 Week 2 (hero kits)
 
 - [ ] HAB: **horizontal cylinder** on black skids, white shell, black bands, orange access, **carbon panel rings + spine seam** — living module, not a box. Same 4×4 footprint.
-- [ ] Colony Commons: **geodesic / polyhedron command dome** (frequency-4 cream plates + dark triangular ribs, orange equator / cupola bands) on a dark mechanical ring — not a smooth sphere, not a grey box, not square hull tiles over the triangles. Same 6×6 footprint. HUD **COMMONS**. CaptureStill pad / solar / extractors sit ~4 cells of empty dirt off Commons.
+- [ ] Colony Commons: **geodesic / polyhedron command dome** (frequency-3 cream triangular plates over a dark geodesic lattice, orange equator / cupola bands) on a dark mechanical ring — not a smooth sphere, not a grey box, not square hull tiles, not box-ribs over the triangles. Same 6×6 footprint. HUD **COMMONS**. CaptureStill pad / solar / extractors sit ~4 cells of empty dirt off Commons.
 - [ ] Landing Pad: dark circular disc, **orange concentric rings + H**, cardinal ticks, parked white/black Starship stack with heat-shield belly + forward flaps (visual only). Launch gate still needs the pad + tech.
 - [ ] Farm = **AG-1 vaulted greenhouse** + ice tanks/scaffold (water-ice extractor, not a HAB). Regolith Camp = low **drum + hopper**. Mine = twin silos + **A-frame** headframe.
 - [ ] Ghosts in **B** show the same silhouettes. Empty ground click still does not repath robots.
