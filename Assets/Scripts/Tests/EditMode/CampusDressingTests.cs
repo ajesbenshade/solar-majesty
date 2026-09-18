@@ -1,4 +1,3 @@
-using System;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -1207,7 +1206,7 @@ namespace SolarMajesty.Tests
             if (rend == null || rend.sharedMaterial == null || rend.sharedMaterial.shader == null)
                 return false;
             string n = rend.sharedMaterial.shader.name;
-            return n.IndexOf("Hull", StringComparison.OrdinalIgnoreCase) >= 0;
+            return n.ToLowerInvariant().Contains("hull");
         }
 
         private static Color Albedo(Transform t)
