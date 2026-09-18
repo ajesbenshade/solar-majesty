@@ -115,9 +115,12 @@ namespace SolarMajesty.Tests
                 "old HabMid name retired — was easy to confuse with orange trim");
             Assert.IsNotNull(FindChild(hab.transform, "HabFrontRim"));
             Assert.IsNotNull(FindChild(hab.transform, "HabRearRim"));
+            // Dream-loop r8: rims stay graphite so orange lives on the dock collar only.
             Color rim = Albedo(FindChild(hab.transform, "HabFrontRim"));
-            Assert.Greater(rim.r, 0.85f);
-            Assert.Less(rim.g, 0.55f);
+            Assert.Less(rim.grayscale, 0.35f, "front rim stays graphite, not a stacked orange collar");
+            Color hatch = Albedo(FindChild(hab.transform, "HabSideDoor"));
+            Assert.Greater(hatch.r, 0.85f);
+            Assert.Less(hatch.g, 0.55f);
         }
 
         [Test]
