@@ -3,7 +3,8 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Phase 4 hero silhouettes. HAB / Commons / LAB / Power / pad stay sheet-matched.
+    /// Phase 4 hero silhouettes. Locked HAB still is boxy beige/tan + roof solar
+    /// (not HAB-1 graphite-rim cylinder). Commons geodesic is a separate slice.
     /// Guild is CMD-1 civic dress; Mining is OPS-1 annex; Farm / Camp / Mine and wonders
     /// use distinct industrial kits. HAB / Commons / LAB / CMD / OPS carry panel seams.
     /// Dressing on the square Lego grid — no new pathing,
@@ -68,119 +69,105 @@ namespace SolarMajesty
             cat == BuildingCategory.Inn ||
             ColonyStructure.IsWorkshopCategory(cat);
 
+        /// <summary>
+        /// Locked Play-mode HAB: boxy beige/tan hull fill of the 4×4. Dress_ prefix
+        /// keeps IndustrialArtDressing from stomping tan onto WhiteHull.
+        /// </summary>
+        public const float HabBoxFill = 0.88f;
+
+        /// <summary>Beige/tan hull from the locked campus still — not sheet-white, not graphite-rim.</summary>
+        public static readonly Color HabTan = new Color(0.78f, 0.62f, 0.46f);
+
         public static void BuildHabitat(Transform root, float w, float d, Color hull)
         {
-            // HAB-1 living module: horizontal cylinder on skids (sheet Ø8×L12 → 4×4 / 6 m).
-            float length = Mathf.Min(w, d) * 0.92f;
-            float radius = length / 3f;
-            float z = radius + 0.22f;
-            Quaternion alongX = Quaternion.Euler(0f, 0f, 90f);
-            // Dream-loop: bold BLACK mid-band ~24% of cylinder length (not orange rings).
-            float midHalf = length * 0.12f;
-            Color midBlack = new Color(0.04f, 0.04f, 0.045f);
+            // Locked still: boxy beige/tan HAB with roof solar. Do not restore the
+            // graphite-rim HAB-1 cylinder (HabCarbonBand / HabFrontRim).
+            _ = hull;
+            Color tan = HabTan;
+            Color tanSeam = new Color(0.54f, 0.40f, 0.28f);
+            Color pv = new Color(0.10f, 0.16f, 0.30f);
+            float bx = w * HabBoxFill;
+            float bz = d * HabBoxFill;
+            const float tall = 2.28f;
+            float y = 0.18f + tall * 0.5f;
 
-            Prim(root, "HabShell", PrimitiveType.Cylinder,
-                new Vector3(0f, z, 0f),
-                new Vector3(radius * 2f, length * 0.36f, radius * 2f), hull, alongX);
-            // Name avoids IndustrialArtDressing orange remaps (accent/stripe/hatch).
-            Prim(root, "HabCarbonBand", PrimitiveType.Cylinder,
-                new Vector3(0f, z, 0f),
-                new Vector3(radius * 2.18f, midHalf, radius * 2.18f), midBlack, alongX);
-            Prim(root, "HabCarbonBandCore", PrimitiveType.Cylinder,
-                new Vector3(0f, z, 0f),
-                new Vector3(radius * 2.26f, midHalf * 0.62f, radius * 2.26f), midBlack, alongX);
-            Prim(root, "HabCarbonBandLip_L", PrimitiveType.Cylinder,
-                new Vector3(-midHalf * 0.98f, z, 0f),
-                new Vector3(radius * 2.28f, 0.035f, radius * 2.28f), Graphite, alongX);
-            Prim(root, "HabCarbonBandLip_R", PrimitiveType.Cylinder,
-                new Vector3(midHalf * 0.98f, z, 0f),
-                new Vector3(radius * 2.28f, 0.035f, radius * 2.28f), Graphite, alongX);
+            Prim(root, "Dress_HabPlinth", PrimitiveType.Cube,
+                new Vector3(0f, 0.08f, 0f),
+                new Vector3(bx * 1.06f, 0.16f, bz * 1.06f), Graphite);
+            Prim(root, "Dress_HabShell", PrimitiveType.Cube,
+                new Vector3(0f, y, 0f),
+                new Vector3(bx, tall, bz), tan);
+            Prim(root, "Dress_HabBelt", PrimitiveType.Cube,
+                new Vector3(0f, y + 0.12f, 0f),
+                new Vector3(bx + 0.04f, 0.10f, bz + 0.04f), tanSeam);
+            Prim(root, "Dress_HabSeamH", PrimitiveType.Cube,
+                new Vector3(0f, y + tall * 0.18f, 0f),
+                new Vector3(bx + 0.03f, 0.045f, bz + 0.03f), tanSeam);
+            Prim(root, "Dress_HabSeamV_X", PrimitiveType.Cube,
+                new Vector3(0f, y, 0f),
+                new Vector3(0.05f, tall + 0.02f, bz + 0.03f), tanSeam);
+            Prim(root, "Dress_HabSeamV_Z", PrimitiveType.Cube,
+                new Vector3(0f, y, 0f),
+                new Vector3(bx + 0.03f, tall + 0.02f, 0.05f), tanSeam);
 
-            for (int s = -1; s <= 1; s += 2)
+            // Orange portholes on the camera-facing long sides (locked still).
+            for (int i = 0; i < 3; i++)
             {
-                float x = s * (length * 0.36f);
-                Prim(root, "Dress_HabCap_" + s, PrimitiveType.Cylinder,
-                    new Vector3(x, z, 0f),
-                    new Vector3(radius * 1.98f, 0.39f, radius * 1.98f), White, alongX);
-                Prim(root, "HabRing_" + s, PrimitiveType.Cylinder,
-                    new Vector3(x + s * 0.38f, z, 0f),
-                    new Vector3(radius * 2.1f, 0.05f, radius * 2.1f), Carbon, alongX);
-                Prim(root, "HabDock_" + s, PrimitiveType.Cylinder,
-                    new Vector3(s * (length * 0.50f), z, 0f),
-                    new Vector3(1.24f, 0.21f, 1.24f), Graphite, alongX);
-                Prim(root, "HabDockAccent_" + s, PrimitiveType.Cylinder,
-                    new Vector3(s * (length * 0.52f), z, 0f),
-                    new Vector3(1.40f, 0.035f, 1.40f), Carbon, alongX);
+                float px = (i - 1) * bx * 0.28f;
+                Prim(root, "Dress_HabPorthole_" + i, PrimitiveType.Cylinder,
+                    new Vector3(px, y + 0.22f, bz * 0.51f),
+                    new Vector3(0.38f, 0.05f, 0.38f), Orange,
+                    Quaternion.Euler(90f, 0f, 0f));
+                Prim(root, "Dress_HabPortholeB_" + i, PrimitiveType.Cylinder,
+                    new Vector3(px, y + 0.22f, -bz * 0.51f),
+                    new Vector3(0.38f, 0.05f, 0.38f), Orange,
+                    Quaternion.Euler(90f, 0f, 0f));
             }
 
-            Prim(root, "HabFront", PrimitiveType.Cylinder,
-                new Vector3(-length * 0.50f, z, 0f),
-                new Vector3(1.56f, 0.04f, 1.56f), Steel, alongX);
-            Prim(root, "HabFrontSquare", PrimitiveType.Cube,
-                new Vector3(-length * 0.54f, z, 0f),
-                new Vector3(0.10f, 0.55f, 0.55f), White);
-            Prim(root, "HabFrontRim", PrimitiveType.Cube,
-                new Vector3(-length * 0.545f, z, 0f),
-                new Vector3(0.04f, 0.62f, 0.62f), Graphite);
-            Prim(root, "HabRearFrame", PrimitiveType.Cube,
-                new Vector3(length * 0.50f, z, 0f),
-                new Vector3(0.06f, 1.32f, 0.88f), Carbon);
-            // Rear end keeps the dock sleeve's single orange collar; door + rim stay neutral so
-            // collars do not stack three deep (dream-loop round 8).
-            Prim(root, "HabRearDoor", PrimitiveType.Cube,
-                new Vector3(length * 0.48f, z, 0f),
-                new Vector3(0.10f, 1.15f, 0.72f), Steel);
-            Prim(root, "HabRearRim", PrimitiveType.Cube,
-                new Vector3(length * 0.505f, z, 0f),
-                new Vector3(0.04f, 1.40f, 0.96f), Graphite);
-            Prim(root, "HabSideFrame", PrimitiveType.Cube,
-                new Vector3(0.12f, z, -radius * 1.02f),
-                new Vector3(1.05f, 1.35f, 0.08f), Carbon);
-            Prim(root, "HabSideDoor", PrimitiveType.Cube,
-                new Vector3(0.12f, z, -radius * 0.96f),
-                new Vector3(0.85f, 1.15f, 0.12f), Orange);
-            Prim(root, "HabToolbox", PrimitiveType.Cube,
-                new Vector3(-0.85f, z + radius * 0.82f, 0.05f),
-                new Vector3(1.05f, 0.38f, 0.62f), Graphite);
-            Prim(root, "HabUtil", PrimitiveType.Cube,
-                new Vector3(0.55f, z + radius * 0.78f, -0.08f),
-                new Vector3(0.72f, 0.28f, 0.48f), White);
-            Prim(root, "HabUtilCap", PrimitiveType.Cube,
-                new Vector3(0.55f, z + radius * 0.96f, -0.08f),
-                new Vector3(0.55f, 0.10f, 0.36f), Carbon);
-            Prim(root, "HabAntenna", PrimitiveType.Cylinder,
-                new Vector3(-0.85f, z + radius * 1.15f, 0.2f),
-                new Vector3(0.06f, 0.35f, 0.06f), Steel);
-            Prim(root, "HabVisor_L", PrimitiveType.Cube,
-                new Vector3(-1.35f, z + 0.12f, radius * 0.92f),
-                new Vector3(0.55f, 0.22f, 0.06f), Cyan, CyanEmit);
-            Prim(root, "HabVisor_R", PrimitiveType.Cube,
-                new Vector3(1.15f, z + 0.12f, radius * 0.92f),
-                new Vector3(0.55f, 0.22f, 0.06f), Cyan, CyanEmit);
+            Prim(root, "Dress_HabHatchFrame", PrimitiveType.Cube,
+                new Vector3(bx * 0.51f, y - 0.15f, 0f),
+                new Vector3(0.08f, 1.15f, 0.72f), Carbon);
+            Prim(root, "Dress_HabHatch", PrimitiveType.Cube,
+                new Vector3(bx * 0.50f, y - 0.15f, 0f),
+                new Vector3(0.06f, 0.95f, 0.55f), Orange);
 
-            Prim(root, "HabSeamRing_L", PrimitiveType.Cylinder,
-                new Vector3(-length * 0.18f, z, 0f),
-                new Vector3(radius * 2.036f, 0.016f, radius * 2.036f), Graphite, alongX);
-            Prim(root, "HabSeamRing_R", PrimitiveType.Cylinder,
-                new Vector3(length * 0.18f, z, 0f),
-                new Vector3(radius * 2.036f, 0.016f, radius * 2.036f), Graphite, alongX);
-            Prim(root, "HabSpine", PrimitiveType.Cube,
-                new Vector3(0f, z + radius * 1.012f, 0f),
-                new Vector3(length * 0.58f, 0.028f, 0.035f), Carbon);
-            Prim(root, "HabSeam_N", PrimitiveType.Cube,
-                new Vector3(0f, z + radius * 0.50f, radius * 0.70f),
-                new Vector3(length * 0.46f, 0.028f, 0.028f), Graphite);
+            float roofY = y + tall * 0.5f;
+            Prim(root, "Dress_HabSolarDeck", PrimitiveType.Cube,
+                new Vector3(0f, roofY + 0.04f, -bz * 0.06f),
+                new Vector3(bx * 0.90f, 0.06f, bz * 0.62f), Graphite);
+            Quaternion tilt = Quaternion.Euler(-28f, 0f, 0f);
+            const int cols = 4;
+            const int rows = 2;
+            float cellW = bx * 0.18f;
+            float cellD = bz * 0.22f;
+            float pitchX = bx * 0.21f;
+            float pitchZ = bz * 0.24f;
+            float originX = -pitchX * (cols - 1) * 0.5f;
+            float originZ = -bz * 0.08f - pitchZ * (rows - 1) * 0.5f;
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    Vector3 at = new Vector3(
+                        originX + c * pitchX, roofY + 0.18f, originZ + r * pitchZ);
+                    Prim(root, "Dress_HabSolarFrame_" + r + "_" + c, PrimitiveType.Cube,
+                        at, new Vector3(cellW * 1.08f, 0.04f, cellD * 1.08f), Orange, tilt);
+                    Prim(root, "Dress_HabSolarCell_" + r + "_" + c, PrimitiveType.Cube,
+                        at + new Vector3(0f, 0.03f, 0f),
+                        new Vector3(cellW, 0.03f, cellD), pv, tilt);
+                }
+            }
 
-            float[] sx = { -1.85f, -1.85f, 1.85f, 1.85f };
-            float[] sz = { -1.15f, 1.15f, -1.15f, 1.15f };
+            float[] sx = { -bx * 0.42f, -bx * 0.42f, bx * 0.42f, bx * 0.42f };
+            float[] sz = { -bz * 0.42f, bz * 0.42f, -bz * 0.42f, bz * 0.42f };
             for (int i = 0; i < 4; i++)
             {
-                Prim(root, "HabLeg_" + i, PrimitiveType.Cube,
-                    new Vector3(sx[i], 0.42f, sz[i]),
-                    new Vector3(0.55f, 0.72f, 0.38f), Carbon);
-                Prim(root, "HabPad_" + i, PrimitiveType.Cube,
+                Prim(root, "Dress_HabLeg_" + i, PrimitiveType.Cube,
+                    new Vector3(sx[i], 0.28f, sz[i]),
+                    new Vector3(0.38f, 0.42f, 0.32f), Carbon);
+                Prim(root, "Dress_HabPad_" + i, PrimitiveType.Cube,
                     new Vector3(sx[i], 0.08f, sz[i]),
-                    new Vector3(0.82f, 0.16f, 0.58f), Graphite);
+                    new Vector3(0.55f, 0.12f, 0.46f), Graphite);
             }
 
             PlaceCardinalHullPorts(root, "HabPort", w, d, BuildingCategory.Habitat);
@@ -1268,8 +1255,8 @@ namespace SolarMajesty
 
         /// <summary>
         /// Distance from module origin to the visual hull along a cardinal, at DockY.
-        /// DockSleeve uses this so the white tube meets the orange collar instead of
-        /// stopping at the cell face or punching through the shell.
+        /// DockSleeve uses this so the tube meets the collar instead of stopping at
+        /// the cell face or punching through the shell.
         /// </summary>
         public static float HullDistance(BuildingCategory cat, float worldW, float worldD, Vector3 outward)
         {
@@ -1281,7 +1268,9 @@ namespace SolarMajesty
                 case BuildingCategory.Commons:
                     return Mathf.Min(w, d) * 0.38f;
                 case BuildingCategory.Habitat:
-                    return CylinderHullDistance(w, d, 0.92f, 3f, 0.22f, dir);
+                    if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.z))
+                        return w * HabBoxFill * 0.5f;
+                    return d * HabBoxFill * 0.5f;
                 case BuildingCategory.Laboratory:
                     return CylinderHullDistance(w, d, 0.90f, 3.86f, 0.20f, dir);
                 case BuildingCategory.Power:
