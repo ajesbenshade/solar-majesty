@@ -41,7 +41,10 @@ namespace SolarMajesty
         public bool ClassLocked { get; private set; }
         public bool HasPreferredClass { get; private set; }
 
-        public bool IsFobotYard => role == StructureRole.Inn || Category == BuildingCategory.Inn;
+        public bool IsFobotYard =>
+            role == StructureRole.Inn ||
+            Category == BuildingCategory.Inn ||
+            Category == BuildingCategory.FobotYard;
         public bool IsVillageHab => role == StructureRole.VillageHab;
         public bool IsWorkshop => role == StructureRole.Workshop;
         public bool IsGuild => role == StructureRole.Guild || Category == BuildingCategory.GuildHall;

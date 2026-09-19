@@ -557,4 +557,118 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(0, LevyMath.Steal(ref purse, 1));
         }
     }
+
+    public class IceShopSpendTests
+    {
+        [Test]
+        public void TechCompleteCost_NeverChargesIce()
+        {
+            var list = TechCatalog.All;
+            Assert.Greater(list.Count, 10);
+            for (int i = 0; i < list.Count; i++)
+            {
+                var cost = list[i].CompleteCost;
+                if (cost == null) continue;
+                for (int c = 0; c < cost.Length; c++)
+                {
+                    Assert.AreNotEqual(ResourceId.WaterIce, cost[c].resource,
+                        $"{list[i].DisplayName} still prices ICE as shop currency");
+                }
+            }
+        }
+
+        [Test]
+        public void TechIcePrices_FoldedIntoMetals()
+        {
+            AssertMetals(TechId.LunarRocket, 55);
+            AssertMetals(TechId.MarsShip, 110);
+            AssertMetals(TechId.Icebreaker, 120);
+            AssertMetals(TechId.GeneVault, 140);
+            AssertMetals(TechId.ClimateLoom, 160);
+        }
+
+        [Test]
+        public void ShipAndSecretPowerTax_Stays()
+        {
+            AssertPower(TechId.MarsShip, 20);
+            AssertPower(TechId.Icebreaker, 30);
+            AssertPower(TechId.BeltHauler, 25);
+        }
+
+        [Test]
+        public void SpecialistUpkeep_NeverChargesIce()
+        {
+            foreach (SpecialistClass cls in System.Enum.GetValues(typeof(SpecialistClass)))
+            {
+                var data = ScriptableObject.CreateInstance<SpecialistData>();
+                try
+                {
+                    data.specialistClass = cls;
+                    data.upkeepPerMinute = new[] { new ResourceAmount(ResourceId.WaterIce, 9) };
+                    SpecialistPersonality.Apply(data);
+                    var upkeep = data.upkeepPerMinute;
+                    if (upkeep == null) continue;
+                    for (int i = 0; i < upkeep.Length; i++)
+                    {
+                        Assert.AreNotEqual(ResourceId.WaterIce, upkeep[i].resource,
+                            $"{cls} payroll still spends the ICE tank");
+                    }
+                }
+                finally
+                {
+                    Object.DestroyImmediate(data);
+                }
+            }
+        }
+
+        [Test]
+        public void MedicAndTerraformer_PayMetalsNotIce()
+        {
+            AssertUpkeepMetals(SpecialistClass.Medic, 1);
+            AssertUpkeepMetals(SpecialistClass.TerraformerBot, 1);
+        }
+
+        private static void AssertMetals(TechId id, int metals)
+        {
+            var def = TechCatalog.Get(id);
+            Assert.IsNotNull(def);
+            Assert.AreEqual(metals, Amount(def.CompleteCost, ResourceId.Metals), id.ToString());
+            Assert.AreEqual(0, Amount(def.CompleteCost, ResourceId.WaterIce), id.ToString());
+        }
+
+        private static void AssertPower(TechId id, int power)
+        {
+            var def = TechCatalog.Get(id);
+            Assert.IsNotNull(def);
+            Assert.AreEqual(power, Amount(def.CompleteCost, ResourceId.Power), id.ToString());
+        }
+
+        private static int Amount(ResourceAmount[] cost, ResourceId id)
+        {
+            if (cost == null) return 0;
+            int n = 0;
+            for (int i = 0; i < cost.Length; i++)
+            {
+                if (cost[i].resource == id)
+                    n += cost[i].amount;
+            }
+            return n;
+        }
+
+        private static void AssertUpkeepMetals(SpecialistClass cls, int metals)
+        {
+            var data = ScriptableObject.CreateInstance<SpecialistData>();
+            try
+            {
+                data.specialistClass = cls;
+                SpecialistPersonality.Apply(data);
+                Assert.AreEqual(metals, Amount(data.upkeepPerMinute, ResourceId.Metals), cls.ToString());
+                Assert.AreEqual(0, Amount(data.upkeepPerMinute, ResourceId.WaterIce), cls.ToString());
+            }
+            finally
+            {
+                Object.DestroyImmediate(data);
+            }
+        }
+    }
 }
