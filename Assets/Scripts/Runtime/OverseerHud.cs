@@ -2311,7 +2311,20 @@ namespace SolarMajesty
             string tutLabel = _loop.IsTutorialActive ? "TUTORIAL  ·  ON" : "REPLAY TUTORIAL";
             if (Chip(new Rect(c.x, y, 220f, 26f), tutLabel, _loop.IsTutorialActive))
                 _loop.RestartTutorial();
-            y += 36f;
+            y += 32f;
+
+            bool marsLessons = DemoSettings.MarsGrokLessons;
+            if (Chip(new Rect(c.x, y, c.width, 26f),
+                    marsLessons ? "MARS GROK LESSONS  ·  ON" : "MARS GROK LESSONS  ·  OFF",
+                    marsLessons))
+            {
+                DemoSettings.MarsGrokLessons = !DemoSettings.MarsGrokLessons;
+                DemoSettings.SaveSettings();
+            }
+            y += 22f;
+            GUI.Label(new Rect(c.x, y, c.width, 16f),
+                "Luna: Grok lectures. Mars: failure asides unless lessons are on.", _micro);
+            y += 28f;
 
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 8f;

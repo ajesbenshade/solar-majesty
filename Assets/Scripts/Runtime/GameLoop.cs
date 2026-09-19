@@ -414,6 +414,7 @@ namespace SolarMajesty
         private bool _revivePenaltyApplied;
         private bool _yardBillLogged;
         private bool _marketPayoutLogged;
+        private readonly GrokSession _grok = new GrokSession();
         private int _lastTithe;
         private float _siphonBlockToastAt;
         private float _purseToastAt;
@@ -478,6 +479,35 @@ namespace SolarMajesty
             if (StillCaptureHold.Active) return;
             Log.Push(line);
             _overseerHud?.Notify(line, seconds);
+        }
+
+        public bool GrokLessonsOn => GrokAdvisor.TrainingWheels(celestialBody);
+
+        /// <summary>Stalker drank the tank. Failure aside, not a sale.</summary>
+        public void NoteIceSiphon() => TryGrok(GrokBeat.StalkerSiphon, true);
+
+        private bool TryGrok(GrokBeat beat, bool condition = true)
+        {
+            if (StillCaptureHold.Active) return false;
+            bool wheels = GrokAdvisor.TrainingWheels(celestialBody);
+            if (!_grok.TrySpeak(beat, wheels, condition)) return false;
+            LogOverseer(GrokCatalog.Say(beat), 6.2f);
+            return true;
+        }
+
+        private void TickGrok()
+        {
+            if (StillCaptureHold.Active) return;
+            if (Settlement != null && Settlement.CoreHabs > 0)
+                TryGrok(GrokBeat.FirstHab);
+            bool iceLow = Resources != null &&
+                          Resources.Get(ResourceId.WaterIce) < 8 &&
+                          Resources.Get(ResourceId.WaterIce) >= OverseerRules.IceDeathThreshold;
+            TryGrok(GrokBeat.TankVsWallet, iceLow);
+            TryGrok(GrokBeat.PowerShort, Economy != null && Economy.PowerShort);
+            bool rosterTicking = _everHadRobot && RobotCount <= 0 &&
+                                 _emptyRosterTimer > 0.05f && !EmptyRosterFailed;
+            TryGrok(GrokBeat.EmptyRoster, rosterTicking);
         }
 
         /// <summary>
@@ -960,33 +990,32 @@ namespace SolarMajesty
             if (handle == null) return;
             BroadcastRefusalChips(handle);
 
-            string advisor = null;
             EnsureNarrative();
-            if (NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree) &&
-                _narrative.TryTakePostToast(decree.Id, out var toast))
+            bool wheels = GrokAdvisor.TrainingWheels(celestialBody);
+
+            if (TryGrok(GrokBeat.FirstFlag))
             {
-                advisor = toast.Line;
+                // first-flag lesson; decree copy waits for the next post
+            }
+            else if (wheels &&
+                     NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree) &&
+                     _narrative.TryTakePostToast(decree.Id, out var toast))
+            {
+                LogOverseer(toast.Line, 6.5f);
             }
 
-            bool greed = celestialBody == CelestialBodyId.Earth &&
-                         handle.Data != null &&
-                         handle.Data.flagType == FlagType.Build &&
-                         (TutorialWantsPriceLesson ||
-                          (Mathf.Approximately(handle.CurrentBounty, 70f) && handle.InterestCount <= 0));
-            if (greed && _narrative.TryTakeGreedToast(out var greedToast))
+            if (handle.InterestCount <= 0)
             {
-                if (advisor != null) Log.Push(advisor);
-                advisor = greedToast.Line;
+                if (wheels)
+                    TryGrok(GrokBeat.GreedAsk);
+                else
+                    TryGrok(GrokBeat.Refusal);
             }
-
-            if (advisor != null)
-                LogOverseer(advisor, 6.5f);
 
             string interest = InterestLine(handle);
             if (!string.IsNullOrEmpty(interest))
             {
-                if (advisor != null) Log.Push(interest);
-                else LogOverseer(interest);
+                LogOverseer(interest);
             }
         }
 
@@ -1108,9 +1137,15 @@ namespace SolarMajesty
             }
 
             string travelKey = AdvisorToastCatalog.TravelKeyForArrival(celestialBody);
-            if ((hop || freshDrop) &&
-                !string.IsNullOrEmpty(travelKey) &&
-                _narrative.TryTakeTravelToast(travelKey, out var toast))
+            bool announce = hop || freshDrop;
+            if (announce && celestialBody == CelestialBodyId.Luna && TryGrok(GrokBeat.Drop))
+            {
+                // Luna training-wheels drop. W2 arrival copy stays in the catalog.
+            }
+            else if (announce &&
+                     GrokAdvisor.TrainingWheels(celestialBody) &&
+                     !string.IsNullOrEmpty(travelKey) &&
+                     _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
                 LogOverseer(toast.Line, 6.8f);
             }
@@ -1488,6 +1523,7 @@ namespace SolarMajesty
             TickCampusEcology(Time.deltaTime);
             TickJunkYard(Time.deltaTime);
             TickCampusBoard(Time.deltaTime);
+            TickGrok();
             if (!StillCaptureHold.Active &&
                 Settlement != null && Settlement.ConsumeLifeSupportFail())
             {
@@ -1495,7 +1531,7 @@ namespace SolarMajesty
                 if (Settlement.LifeSupportToastPending)
                 {
                     Settlement.ClearLifeSupportToast();
-                    LogOverseer("Colonists die if ICE is under 4.");
+                    TryGrok(GrokBeat.IceCritical, true);
                 }
             }
             if (_glanceCooldown > 0f)
@@ -3600,19 +3636,22 @@ namespace SolarMajesty
             ComputeReviveBill(out int met, out _);
             if (met <= 0)
             {
-                LogOverseer(CompactGrok.YardBill(met));
+                if (!TryGrok(GrokBeat.YardUnaffordable, true))
+                    LogOverseer(CompactGrok.YardBill(met));
                 return;
             }
 
             if (Economy == null || !Economy.CanAffordRevive(met))
             {
-                LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
+                if (!TryGrok(GrokBeat.YardUnaffordable, true))
+                    LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
                 return;
             }
 
             if (!Economy.TrySpendRevive(met))
             {
-                LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
+                if (!TryGrok(GrokBeat.YardUnaffordable, true))
+                    LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
                 return;
             }
 
@@ -3633,9 +3672,10 @@ namespace SolarMajesty
             if (!_yardBillLogged)
             {
                 _yardBillLogged = true;
-                LogOverseer(OverseerRules.GrokYardFirstBill, 6.4f);
+                if (!TryGrok(GrokBeat.YardBill))
+                    LogOverseer(OverseerRules.GrokYardFirstBill, 6.4f);
             }
-            else
+            else if (!TryGrok(GrokBeat.YardBill))
                 LogOverseer(CompactGrok.YardBill(met));
             Debug.Log("[GameLoop] Fobot Yard paid.");
         }

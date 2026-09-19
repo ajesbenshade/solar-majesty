@@ -765,6 +765,7 @@ namespace SolarMajesty
         private void StealLifeSupport()
         {
             _loop?.Resources?.SpendUpTo(ResourceId.WaterIce, 1);
+            _loop?.NoteIceSiphon();
         }
 
         private void TickWander(float dt)
