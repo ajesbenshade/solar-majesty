@@ -263,12 +263,10 @@ namespace SolarMajesty
         public const float AirlockHubSide = 1.56f;
 
         /// <summary>
-        /// White paneled 2×2 square hub (cell-safe <see cref="AirlockHubSide"/>).
-        /// Round white stubs + one orange collar only on docked faces (live arms
-        /// start hidden). Not a hex, not a wrap-around carbon/orange door box —
-        /// still16 read as a dark rectangular joint because Dress_HubDoor covered
-        /// the white plates. RefreshTubes never stacks a fourth CampusTubeRoot
-        /// corridor in the HAB gap.
+        /// White cube 2×2 hub with dark square windows (locked campus still).
+        /// Orange ribbed stubs + torus rings on docked faces only (live arms start
+        /// hidden). Not a wrap-around carbon/orange door box. RefreshTubes never
+        /// stacks a fourth CampusTubeRoot corridor in the HAB gap.
         /// </summary>
         public static GameObject SpawnPlusConnector(
             Vector3 position, Transform parent, float worldSpan, bool showAllArms = false)
@@ -292,20 +290,19 @@ namespace SolarMajesty
             return root;
         }
 
-        private static readonly Color HubWhite = new Color(0.80f, 0.72f, 0.64f);
+        private static readonly Color HubWhite = new Color(0.94f, 0.92f, 0.88f);
         private static readonly Color HubOrange = new Color(0.96f, 0.42f, 0.08f);
         private static readonly Color HubCarbon = new Color(0.32f, 0.30f, 0.28f);
         private static readonly Color HubGraphite = new Color(0.20f, 0.21f, 0.22f);
-        private static readonly Color HubCyan = new Color(0.22f, 0.84f, 0.98f);
+        private static readonly Color HubWindow = new Color(0.10f, 0.11f, 0.13f);
         /// <summary>Hold sheet-white at Game-tab distance so the 2×2 does not flatten into dirt.</summary>
-        private static readonly Color HubWhiteEmit = new Color(0.10f, 0.07f, 0.05f);
+        private static readonly Color HubWhiteEmit = new Color(0.08f, 0.07f, 0.06f);
         private static readonly Color HubOrangeEmit = new Color(0.55f, 0.16f, 0.02f);
 
         private static void SpawnAirlockHub(Transform parent)
         {
-            // Stay smaller than the 3 m cell so docked faces have room for a short
-            // white tube. Wrap-around carbon doors (0.92 m) painted the hub as the
-            // still16 dark box — unused faces are clean white plates now.
+            // White cube with dark square windows — locked campus still.
+            // No roof turret, no cyan visor strip.
             const float y = 0.96f;
             const float side = AirlockHubSide;
             const float tall = 1.52f;
@@ -353,20 +350,28 @@ namespace SolarMajesty
                 DressCube(parent, "Dress_HubSeamV_" + i,
                     new Vector3(p.x * 1.05f, y, p.z * 1.05f), vSeam, HubCarbon);
 
-                // Small inset hatch — panel language, not a wrap door / unused stub.
-                Vector3 hatch = ns
-                    ? new Vector3(0.28f, 0.28f, 0.03f)
-                    : new Vector3(0.03f, 0.28f, 0.28f);
-                DressCube(parent, "Dress_HubInset_" + i,
-                    new Vector3(p.x * 1.04f, y - 0.18f, p.z * 1.04f), hatch, HubCarbon);
+                // 2×2 dark square windows per face (locked still).
+                float[] ox = { -0.22f, 0.22f };
+                float[] oy = { -0.22f, 0.22f };
+                for (int row = 0; row < 2; row++)
+                {
+                    for (int col = 0; col < 2; col++)
+                    {
+                        Vector3 wp = ns
+                            ? new Vector3(p.x + ox[col], y + oy[row], p.z * 1.08f)
+                            : new Vector3(p.x * 1.08f, y + oy[row], p.z + ox[col]);
+                        Vector3 ws = ns
+                            ? new Vector3(0.28f, 0.28f, 0.04f)
+                            : new Vector3(0.04f, 0.28f, 0.28f);
+                        DressCube(parent, "Dress_HubWindow_" + i + "_" + row + col, wp, ws, HubWindow);
+                    }
+                }
             }
 
             DressCube(parent, "Dress_HubRoof", new Vector3(0f, y + tall * 0.5f + 0.035f, 0f),
                 new Vector3(side + 0.04f, 0.06f, side + 0.04f), HubWhite, HubWhiteEmit);
             DressCube(parent, "Dress_HubHatch", new Vector3(0f, y + tall * 0.5f + 0.09f, 0f),
                 new Vector3(0.36f, 0.045f, 0.36f), HubCarbon);
-            DressCube(parent, "Dress_HubVisor", new Vector3(0f, y + 0.42f, half + 0.055f),
-                new Vector3(0.48f, 0.055f, 0.035f), HubCyan);
 
             float[] cx = { -half + 0.05f, -half + 0.05f, half - 0.05f, half - 0.05f };
             float[] cz = { -half + 0.05f, half - 0.05f, -half + 0.05f, half - 0.05f };
@@ -376,15 +381,11 @@ namespace SolarMajesty
                     new Vector3(cx[i], y, cz[i]),
                     new Vector3(0.09f, tall + 0.02f, 0.09f), HubCarbon);
             }
-
-            float yaw = 40f + (parent.position.x + parent.position.z) * 13f;
-            HeroBuildingKits.BuildJunctionTurret(parent, new Vector3(0f, y + tall * 0.5f + 0.09f, 0f), yaw, 0.68f);
         }
 
         /// <summary>
-        /// Round white stub from the square hub to one cell face. One orange collar
-        /// at the Lego face (the docked joint). Live unused faces stay off so they
-        /// do not read as dark unused stubs.
+        /// Orange ribbed stub + torus rings from the white cube to one Lego face.
+        /// Live unused faces stay off.
         /// </summary>
         private static void SpawnDockStub(
             Transform parent, string name, Vector3 axis, float cellSpan, float diameter, bool startActive)
@@ -402,76 +403,35 @@ namespace SolarMajesty
             group.transform.localPosition = Vector3.zero;
             group.transform.localRotation = Quaternion.identity;
 
-            var tube = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            tube.name = name + "_Tube";
-            tube.transform.SetParent(group.transform, false);
-            tube.transform.localPosition = mid;
-            tube.transform.localRotation = rot;
-            tube.transform.localScale = new Vector3(diameter, stubLen * 0.5f, diameter);
-            Object.Destroy(tube.GetComponent<Collider>());
-            TintPrimitive(tube, HubWhite, HubWhiteEmit);
+            DressCyl(group.transform, name + "_Tube", mid, rot,
+                new Vector3(diameter, stubLen * 0.5f, diameter), HubOrange, HubOrangeEmit);
 
-            var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            rib.name = name + "_Rib";
-            rib.transform.SetParent(group.transform, false);
-            rib.transform.localPosition = mid;
-            rib.transform.localRotation = rot;
-            rib.transform.localScale = new Vector3(diameter * 1.06f, 0.035f, diameter * 1.06f);
-            Object.Destroy(rib.GetComponent<Collider>());
-            TintPrimitive(rib, HubCarbon);
+            const int ribs = 5;
+            for (int i = 0; i < ribs; i++)
+            {
+                float t = (i + 0.5f) / ribs;
+                Vector3 ribPos = dir * (hubClear + stubLen * t) + new Vector3(0f, y, 0f);
+                DressCyl(group.transform, name + "_Rib_" + i, ribPos, rot,
+                    new Vector3(diameter * 1.12f, 0.032f, diameter * 1.12f), HubOrange, HubOrangeEmit);
+            }
 
-            // White lip at the hub so the tube reads as attached, not a dark slot.
-            Vector3 lipPos = dir * (hubClear + 0.02f) + new Vector3(0f, y, 0f);
-            var lip = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            lip.name = name + "_Lip";
-            lip.transform.SetParent(group.transform, false);
-            lip.transform.localPosition = lipPos;
-            lip.transform.localRotation = rot;
-            lip.transform.localScale = new Vector3(diameter * 1.05f, 0.03f, diameter * 1.05f);
-            Object.Destroy(lip.GetComponent<Collider>());
-            TintPrimitive(lip, HubWhite, HubWhiteEmit);
+            Vector3 torus0 = dir * (hubClear + stubLen * 0.22f) + new Vector3(0f, y, 0f);
+            Vector3 torus1 = dir * (hubClear + stubLen * 0.72f) + new Vector3(0f, y, 0f);
+            DressCyl(group.transform, name + "_Torus_0", torus0, rot,
+                new Vector3(diameter * 1.55f, 0.11f, diameter * 1.55f), HubOrange, HubOrangeEmit);
+            DressCyl(group.transform, name + "_Torus_1", torus1, rot,
+                new Vector3(diameter * 1.48f, 0.10f, diameter * 1.48f), HubOrange, HubOrangeEmit);
 
-            // Proud orange ring on the hub face — still18 hid the Lego-face sliver
-            // in the HAB join. Child of the arm so unused faces stay clean plates.
-            Vector3 hubRingPos = dir * (hubClear + 0.04f) + new Vector3(0f, y, 0f);
-            var hubRing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            hubRing.name = name + "_HubCollar";
-            hubRing.transform.SetParent(group.transform, false);
-            hubRing.transform.localPosition = hubRingPos;
-            hubRing.transform.localRotation = rot;
-            hubRing.transform.localScale = new Vector3(diameter * 1.40f, 0.08f, diameter * 1.40f);
-            Object.Destroy(hubRing.GetComponent<Collider>());
-            // Graphite: with the square face frame and the hull port ring both orange,
-            // a third orange band per join read as stacked collars (dream-loop r10/r11).
-            TintPrimitive(hubRing, HubGraphite);
-
-            // Square orange collar plate — still19 cube-ish miss: the hub must
-            // read as a multi-face joint, not a small white fridge.
             Vector3 framePos = dir * (hubClear - 0.01f) + new Vector3(0f, y, 0f);
             bool ns = Mathf.Abs(dir.z) >= Mathf.Abs(dir.x);
             Vector3 frameScale = ns
                 ? new Vector3(diameter * 1.22f, diameter * 1.22f, 0.07f)
                 : new Vector3(0.07f, diameter * 1.22f, diameter * 1.22f);
-            var faceFrame = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            faceFrame.name = name + "_FaceFrame";
-            faceFrame.transform.SetParent(group.transform, false);
-            faceFrame.transform.localPosition = framePos;
-            faceFrame.transform.localRotation = Quaternion.identity;
-            faceFrame.transform.localScale = frameScale;
-            Object.Destroy(faceFrame.GetComponent<Collider>());
-            TintPrimitive(faceFrame, HubOrange, HubOrangeEmit);
+            DressCube(group.transform, name + "_FaceFrame", framePos, frameScale, HubOrange, HubOrangeEmit);
 
-            // One orange collar at the cell face — the docked Lego joint.
             Vector3 collarPos = dir * (face - 0.04f) + new Vector3(0f, y, 0f);
-            var collar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            collar.name = name + "_Collar";
-            collar.transform.SetParent(group.transform, false);
-            collar.transform.localPosition = collarPos;
-            collar.transform.localRotation = rot;
-            collar.transform.localScale = new Vector3(diameter * 1.18f, 0.05f, diameter * 1.18f);
-            Object.Destroy(collar.GetComponent<Collider>());
-            // Sits against the hull port ring; only the ring stays orange (one per hull end).
-            TintPrimitive(collar, HubGraphite);
+            DressCyl(group.transform, name + "_Collar", collarPos, rot,
+                new Vector3(diameter * 1.42f, 0.09f, diameter * 1.42f), HubOrange, HubOrangeEmit);
 
             if (!startActive)
                 group.SetActive(false);
@@ -480,8 +440,8 @@ namespace SolarMajesty
         /// <summary>
         /// Orange collar + graphite well on a hull face at DockY / DockBore.
         /// Group name is the toggle prefix (HabPort_N, CommonsPort_E, …).
-        /// Live groups start hidden — unused cardinals were the still5 orange rings.
-        /// RefreshTubes enables docked faces only (white sleeve + one collar).
+        /// Live groups start hidden — unused faces were the still5 orange rings.
+        /// RefreshTubes enables docked faces only.
         /// </summary>
         public static GameObject PlaceHullPort(
             Transform parent, string name, Vector3 outward, float hullDist, bool startActive = false)
@@ -526,6 +486,19 @@ namespace SolarMajesty
             go.name = name;
             go.transform.SetParent(parent, false);
             go.transform.localPosition = pos;
+            go.transform.localScale = scale;
+            Object.Destroy(go.GetComponent<Collider>());
+            TintPrimitive(go, color, emission);
+        }
+
+        private static void DressCyl(
+            Transform parent, string name, Vector3 pos, Quaternion rot, Vector3 scale, Color color, Color emission = default)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = pos;
+            go.transform.localRotation = rot;
             go.transform.localScale = scale;
             Object.Destroy(go.GetComponent<Collider>());
             TintPrimitive(go, color, emission);

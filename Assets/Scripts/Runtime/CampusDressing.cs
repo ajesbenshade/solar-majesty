@@ -7,11 +7,11 @@ namespace SolarMajesty
     /// Phase 4 campus kit: pressurized tube cladding on the square Lego docks,
     /// shield bubbles — visuals only, not a pathing graph.
     /// HAB / Commons / pad / extractor / solar field / Defense bunker live in HeroBuildingKits.
-    /// Junction turrets sit on airlock hubs (ColonyVisualUtility).
-    /// Airlock hubs are panel-lined square primitives; docks stay Lego.
+    /// Airlock hubs are white cubes with dark square windows (ColonyVisualUtility).
+    /// Docks stay Lego. Commons-to-HAB join is an orange ribbed stub + torus rings.
     /// Round tube cladding spans hub → module hull on a shared DockY / DockBore.
     /// RefreshTubes hides every stub and hull-drum port first, then enables docked faces only
-    /// (white tube + one orange collar). Unused Commons / HAB / LAB / PWR sockets stay clean.
+    /// (orange ribbed HAB join; unused Commons / HAB / LAB / PWR sockets stay clean).
     /// Live dock sleeves and CommonsPort groups start off so FindPieceGo misses cannot
     /// leave still5-style orange rings showing. still16 dark-box leftover was wrap
     /// Dress_HubDoor on the hub itself (ColonyVisualUtility) — unused faces stay
@@ -274,8 +274,8 @@ namespace SolarMajesty
                 SetPrefixActive(go.transform, "DockSleeve_W", west);
                 SetPrefixActive(go.transform, "DockSleeve_N", north);
                 SetPrefixActive(go.transform, "DockSleeve_S", south);
-                // Hull drum ports + DockSleeve: white tube + one orange collar on
-                // docked faces only. still5 unused Commons rings were CommonsPort_*.
+                // Hull drum ports + DockSleeve on docked faces only.
+                // still5 unused Commons rings were CommonsPort_*.
                 SetDockPorts(go.transform, "CommonsPort", north, east, south, west);
                 SetDockPorts(go.transform, "HabPort", north, east, south, west);
                 SetDockPorts(go.transform, "LabPort", north, east, south, west);
