@@ -30,7 +30,7 @@ Never add click-to-move to match mockup squad UI.
 
 ## Open & verify first (mandatory)
 1. Unity Hub → Open the repo root (needs Unity 6000.5.x).
-2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (title screen; New Game is Earth if prefs fresh).
+2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (title screen; New Game is Luna if prefs fresh).
 3. If scene missing: menu Solar Majesty → Build Demo Scene.
 4. Run Docs/SMOKE_TEST.md (10-minute boot, then Earth loop). DEMO.md has the talk-track.
 5. Confirm: no free starter robots; HAB = humans; workshops fabricate outdoor robots; empty drop + conquest gates + research.

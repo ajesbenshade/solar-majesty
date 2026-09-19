@@ -172,7 +172,7 @@ namespace SolarMajesty
                 if (ReplayRules.IsEndless)
                     return "Campaign hop is off. Shift+F10 still unlocks body chips.";
                 if (_loop == null || !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "Outer system open. Rematch this world, or oversee in sandbox.";
+                    return "Mars holds. Earth, Belt, and Europa stay parked — Shift+click chips to load them.";
                 var next = CampaignProgress.NextAfter(_loop.ActiveBody);
                 string name = next.HasValue
                     ? CelestialBodyCatalog.Get(next.Value).DisplayName

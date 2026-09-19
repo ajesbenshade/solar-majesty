@@ -102,9 +102,10 @@ namespace SolarMajesty.EditorTools
             "3. Windows SmartScreen may warn (unsigned build). More info → Run anyway.\n" +
             "4. Alt+Enter toggles fullscreen. Esc pauses (Resume / Settings / Title / Quit).\n" +
             "\n" +
-            "What to try (Earth tutorial)\n" +
-            "----------------------------\n" +
-            "Title → New Game. Empty Earth drop, no starter robots.\n" +
+            "What to try (Luna first hour)\n" +
+            "-----------------------------\n" +
+            "Title → New Game. Empty Luna drop, no starter robots.\n" +
+            "Skip Luna hour on the title if you want Mars immediately.\n" +
             "B, key 1: Colony Commons on the orange claim disc.\n" +
             "Airlock Junction on a Commons face, then HAB + a workshop on airlock ends.\n" +
             "Workshop finishes → a robot fabricates. G to post a flag. T for research.\n" +

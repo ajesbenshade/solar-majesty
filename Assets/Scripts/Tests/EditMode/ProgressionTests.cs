@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 
 namespace SolarMajesty.Tests
 {
@@ -278,6 +279,91 @@ namespace SolarMajesty.Tests
         public void Evaluate_NullStats_IsSafe()
         {
             Assert.DoesNotThrow(() => Achievements.Evaluate(null));
+        }
+    }
+
+    public class CampaignProgressTests
+    {
+        [SetUp]
+        public void SetUp() => CampaignProgress.ResetAllForTests();
+
+        [TearDown]
+        public void TearDown() => CampaignProgress.ResetAllForTests();
+
+        [Test]
+        public void FreshEnsure_UnlocksLuna_ParksEarth()
+        {
+            CampaignProgress.Ensure();
+
+            Assert.AreEqual(CelestialBodyId.Luna, CampaignProgress.HighestUnlocked);
+            Assert.AreEqual(CelestialBodyId.Luna, CampaignProgress.NewGameBody);
+            Assert.IsTrue(CampaignProgress.IsUnlocked(CelestialBodyId.Luna));
+            Assert.IsFalse(CampaignProgress.IsUnlocked(CelestialBodyId.Earth), "Earth picnic is parked");
+            Assert.IsFalse(CampaignProgress.IsUnlocked(CelestialBodyId.Mars));
+            Assert.IsFalse(CampaignProgress.IsUnlocked(CelestialBodyId.Belt));
+            Assert.IsTrue(CampaignProgress.IsParked(CelestialBodyId.Earth));
+            Assert.IsTrue(CampaignProgress.IsParked(CelestialBodyId.Europa));
+            Assert.IsFalse(CampaignProgress.IsParked(CelestialBodyId.Luna));
+        }
+
+        [Test]
+        public void MigrateHighest_OldEarthPrefsBecomeLuna()
+        {
+            Assert.AreEqual(CelestialBodyId.Luna, CampaignProgress.MigrateHighest(CelestialBodyId.Earth));
+            Assert.AreEqual(CelestialBodyId.Mars, CampaignProgress.MigrateHighest(CelestialBodyId.Mars));
+        }
+
+        [Test]
+        public void NextAfter_LunaGoesToMars_MarsEndsTheSpine()
+        {
+            Assert.AreEqual(CelestialBodyId.Mars, CampaignProgress.NextAfter(CelestialBodyId.Luna));
+            Assert.AreEqual(CelestialBodyId.Mars, CampaignProgress.NextAfter(CelestialBodyId.Earth));
+            Assert.IsFalse(CampaignProgress.NextAfter(CelestialBodyId.Mars).HasValue);
+            Assert.IsFalse(CampaignProgress.NextAfter(CelestialBodyId.Belt).HasValue);
+        }
+
+        [Test]
+        public void UnlockLuna_OpensMars_AndClearsTheHour()
+        {
+            CampaignProgress.Ensure();
+            CampaignProgress.UnlockNextFrom(CelestialBodyId.Luna);
+
+            Assert.AreEqual(CelestialBodyId.Mars, CampaignProgress.HighestUnlocked);
+            Assert.IsTrue(CampaignProgress.IsUnlocked(CelestialBodyId.Mars));
+            Assert.IsTrue(CampaignProgress.HasClearedLunaHour);
+            Assert.AreEqual(CelestialBodyId.Mars, CampaignProgress.NewGameBody);
+            Assert.IsFalse(CampaignProgress.IsUnlocked(CelestialBodyId.Belt));
+        }
+
+        [Test]
+        public void BeginNewGameMars_SkipsLunaHourForReturningPlayers()
+        {
+            CampaignProgress.BeginNewGame(CelestialBodyId.Mars);
+
+            Assert.AreEqual(CelestialBodyId.Mars, CampaignProgress.HighestUnlocked);
+            Assert.AreEqual(CelestialBodyId.Mars, CampaignProgress.NewGameBody);
+            Assert.IsTrue(CampaignProgress.HasClearedLunaHour);
+            Assert.IsFalse(CampaignProgress.IsUnlocked(CelestialBodyId.Earth));
+        }
+
+        [Test]
+        public void ResetCampaign_KeepsVeteranMarsDrop()
+        {
+            CampaignProgress.NoteLunaHourCleared();
+            CampaignProgress.ResetCampaign();
+
+            Assert.AreEqual(CelestialBodyId.Mars, CampaignProgress.NewGameBody);
+            Assert.AreEqual(CelestialBodyId.Mars, CampaignProgress.HighestUnlocked);
+        }
+
+        [Test]
+        public void DebugUnlockAll_OpensParkedBodies()
+        {
+            CampaignProgress.Ensure();
+            CampaignProgress.DebugUnlockAll();
+
+            Assert.IsTrue(CampaignProgress.IsUnlocked(CelestialBodyId.Earth));
+            Assert.IsTrue(CampaignProgress.IsUnlocked(CelestialBodyId.Europa));
         }
     }
 }

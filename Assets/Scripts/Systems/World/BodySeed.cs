@@ -11,7 +11,7 @@ namespace SolarMajesty
         private const string BodyPrefsKey = "SM_CelestialBody";
         private const string SeedPrefix = "SM_BodySeed_";
 
-        public static CelestialBodyId Body { get; private set; } = CelestialBodyId.Earth;
+        public static CelestialBodyId Body { get; private set; } = CelestialBodyId.Luna;
         public static int Current { get; private set; } = 10007;
 
         public static void Ensure(
@@ -43,7 +43,7 @@ namespace SolarMajesty
 
         /// <summary>Load last selected body from prefs (Earth if unset).</summary>
         public static CelestialBodyId LoadSavedBody() =>
-            (CelestialBodyId)PlayerPrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Earth);
+            (CelestialBodyId)PlayerPrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Luna);
 
         public static void SetBody(CelestialBodyId body)
         {

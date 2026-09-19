@@ -3,7 +3,8 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Built-in world profiles. Campaign order: Earth → Luna → Mars → Belt → Europa.
+    /// Built-in world profiles. Campaign spine: Luna → Mars.
+    /// Earth, Belt, and Europa are parked (debug / later expansion), not deleted.
     /// </summary>
     public static class CelestialBodyCatalog
     {

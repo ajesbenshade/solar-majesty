@@ -9,7 +9,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 ## 10-minute boot (must pass)
 
 - [ ] Title over a frozen drop. WASD pans, **Q** zooms out, **E** zooms in. Mouse does not pan or zoom. Tagline names the Overseer fantasy.
-- [ ] **New Game** (confirm wipe if a save exists) → Earth empty drop: **produced meadow**, **cobalt sky**, grass/trees/pond + cumulus around the orange claim disc, HUD REG/ICE/MET/PWR/BEDS, carbon/gold chrome. No starter robots. Not the old grey-tan plane. Not Mars orange.
+- [ ] **New Game** (confirm wipe if a save exists) → Luna empty drop: crater field, HUD REG/ICE/MET/PWR/BEDS. No starter robots. Not the Earth picnic meadow. **Skip Luna hour** drops Mars. Earth / Belt / Europa stay parked (Shift+click).
 - [ ] Yield labels on resource nodes (`REG` / `MET` / `ICE`) — no `MissingComponentException`.
 - [ ] Tutorial 1/6: **B**, key **1**, Colony Commons on the claim — **domed command-hub citadel** (FBX or procedural hero kit), not a grey box. Console `[HeroKit] Attached SM_Hero_Commons` if the FBX imported. HUD **COMMONS**, never Palace.
 - [ ] 2/6: Airlock Junction on a Commons face socket — **panel-lined** white square hub (smaller than the 2×2 cell so short white tubes read) + dual-barrel turret; unused Commons / airlock stubs stay hidden. Module docks are white round tubes with **one orange collar at the Lego face** (no punch-through, no stacked orange box).
@@ -65,7 +65,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 ## Phase 4 Week 1 (visual)
 
 - [ ] Mars: reddish cratered ground, hazy orange sky, long shadows; distant dust-devil dressing (not a new threat).
-- [ ] Earth New Game (not Mars): lush meadow albedo, cobalt sky, long shadows, distant cumulus, carbon/orange claim chevrons. Must not look like the pre-Phase-4 olive plane. Dust-devils stay Mars-only.
+- [ ] Shift+click **EARTH·** (parked, not New Game): lush meadow albedo, cobalt sky, long shadows, distant cumulus, carbon/orange claim chevrons. Must not look like the pre-Phase-4 olive plane. Dust-devils stay Mars-only. New Game is Luna.
 - [ ] Colony Commons + airlock: **panel-lined** orange-framed square hub (not a flat cube), junction turret, corrugated tube cladding on the joint (not through the dome). Extra tubes are dressing — pathing is still the Lego grid. Commons is a white/orange **command-dome citadel** (hero FBX or procedural), not a pale grey box. Orange collars meet module faces flush.
 - [ ] While a module is building: yellow gantry crane + incomplete cladding; site clears on complete.
 - [ ] HUD: top strip REG / ICE / MET / PWR / BEDS with rates and color swatches; Sol counter; gold-carbon chrome; bounty log on conquest gates; roster is IDLE/WORK/REST status (click inspects only). Minimap titled MAJESTY COLONY, click pans camera, never path-commands.
@@ -123,8 +123,8 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 
 - Play Mode throws on world gen (yield labels, NavMesh, missing GameLoop).
 - A specialist walks to an empty-ground click.
-- New Game does not land on Earth, or Continue silently does nothing with a save present.
-- New Game Earth looks like the pre-Phase-4 olive/grey plane (no meadow, no cobalt sky, no claim chevrons, no HUD chips).
+- New Game does not land on Luna, or Continue silently does nothing with a save present.
+- New Game is the Earth picnic meadow (Earth is parked — Shift+click only).
 - Launch gate completes from tech alone (Landing Pad required).
 
-Debug: **Shift+click MARS?** on the Earth drop (tutorial OK) hops to Mars; Game-tab empty-Sol-1 still saved at `Docs/Roadmap/SM_MarsCampaign_PlayModeStill.png`. **Shift+F10** unlocks all then cycles Earth→Luna→Mars (macOS may steal F10 — use the chip). **F8** score HUD. **Y** revive / dismiss win.
+Debug: **Shift+click MARS?** on the Luna drop (tutorial OK) hops to Mars; Game-tab empty-Sol-1 still saved at `Docs/Roadmap/SM_MarsCampaign_PlayModeStill.png`. **Shift+F10** unlocks all then cycles including parked Earth/Belt/Europa (macOS may steal F10 — use the chip). **F8** score HUD. **Y** revive / dismiss win.
