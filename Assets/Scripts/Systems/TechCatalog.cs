@@ -95,11 +95,7 @@ namespace SolarMajesty
                     "Craft strong enough to leave this body.",
                     70f,
                     new[] { TechId.LifeSupport, TechId.OreRefining, TechId.PowerSystems },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 40),
-                        new ResourceAmount(ResourceId.WaterIce, 15)
-                    },
+                    Wallet(55),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -108,12 +104,7 @@ namespace SolarMajesty
                     "Heavy transfer ship for the next conquest.",
                     100f,
                     new[] { TechId.LunarRocket, TechId.DeepSurvey, TechId.MedProtocols },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 80),
-                        new ResourceAmount(ResourceId.WaterIce, 30),
-                        new ResourceAmount(ResourceId.Power, 20)
-                    },
+                    Wallet(110, 20),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -135,12 +126,7 @@ namespace SolarMajesty
                     "Radiation-hardened lander for Europa's crust.",
                     140f,
                     new[] { TechId.BeltHauler, TechId.LifeSupport, TechId.PowerSystems },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 70),
-                        new ResourceAmount(ResourceId.WaterIce, 50),
-                        new ResourceAmount(ResourceId.Power, 30)
-                    },
+                    Wallet(120, 30),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -204,11 +190,7 @@ namespace SolarMajesty
                     "Secret Project. Spare beds, faster births, greener farms. Growth path.",
                     150f,
                     new[] { TechId.LifeSupport, TechId.MedProtocols },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 60),
-                        new ResourceAmount(ResourceId.WaterIce, 80)
-                    },
+                    Wallet(140),
                     secretProject: true),
 
                 new TechDef(
@@ -245,11 +227,7 @@ namespace SolarMajesty
                     "Secret Project. Weave weather for the crust — farms surge. Place the Loom landmark.",
                     155f,
                     new[] { TechId.TerraformCharter, TechId.LifeSupport },
-                    new[]
-                    {
-                        new ResourceAmount(ResourceId.Metals, 70),
-                        new ResourceAmount(ResourceId.WaterIce, 90)
-                    },
+                    Wallet(160),
                     secretProject: true),
 
                 new TechDef(
@@ -279,6 +257,24 @@ namespace SolarMajesty
                     researchRateBonus: 0.55f,
                     secretProject: true)
             };
+        }
+
+        /// <summary>
+        /// Shop wallet is Compact scrip (MET). ICE is the life-support tank, not a tech price.
+        /// PWR stays as a constraint tax on ships / secrets.
+        /// </summary>
+        private static ResourceAmount[] Wallet(int metals, int power = 0)
+        {
+            if (power > 0)
+            {
+                return new[]
+                {
+                    new ResourceAmount(ResourceId.Metals, metals),
+                    new ResourceAmount(ResourceId.Power, power)
+                };
+            }
+
+            return new[] { new ResourceAmount(ResourceId.Metals, metals) };
         }
     }
 }

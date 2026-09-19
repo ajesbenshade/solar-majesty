@@ -64,7 +64,7 @@ namespace SolarMajesty
             new AdvisorToast("advisor.earth.ward_the_furrows.post", FlagDecreeIds.EarthWardTheFurrows, AdvisorFireWhen.Post,
                 "Ward the furrows. Soil creepers chew farms. Aegis and Triage will hold a field cheaper than they will hunt a den. Tempt them accordingly."),
             new AdvisorToast("advisor.earth.stage_the_lunar_rocket.post", FlagDecreeIds.EarthStageTheLunarRocket, AdvisorFireWhen.Post,
-                "Stage the Lunar Rocket. Pad labour is a Build on the order. Science is 70 + 40 MET + 15 ICE. A trajectory without a pad is a toast to vacuum."),
+                "Stage the Lunar Rocket. Pad labour is a Build on the order. Science is 70 + 55 MET. A trajectory without a pad is a toast to vacuum."),
 
             new AdvisorToast("advisor.luna.chart_the_tariff_rille.post", FlagDecreeIds.LunaChartTheTariffRille, AdvisorFireWhen.Post,
                 "Chart the rille. Horizon marks the lanes the Freeholds tax. Smugglers use the same lines. So will we."),
@@ -81,7 +81,7 @@ namespace SolarMajesty
             new AdvisorToast("advisor.luna.fortify_the_airlocks.post", FlagDecreeIds.LunaFortifyTheAirlocks, AdvisorFireWhen.Post,
                 "Fortify the airlocks. Junction turrets are dressing — they look like courage. The labour is still a Build on a Battery or workshop order."),
             new AdvisorToast("advisor.luna.commission_the_mars_ship.post", FlagDecreeIds.LunaCommissionTheMarsShip, AdvisorFireWhen.Post,
-                "Commission the Mars Ship. The Compact is not a rumor. It is 100 science, 80 MET, 30 ICE, 20 PWR, and a pad you still have to weld."),
+                "Commission the Mars Ship. The Compact is not a rumor. It is 100 science, 110 MET, 20 PWR, and a pad you still have to weld."),
 
             new AdvisorToast("advisor.mars.survey_the_red_apron.post", FlagDecreeIds.MarsSurveyTheRedApron, AdvisorFireWhen.Post,
                 "Survey the red apron. Chart the packed-dust plaza the Compact will actually sit on — white hulls, square docks, a Commons that is not a rumor."),
