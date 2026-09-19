@@ -488,9 +488,24 @@ namespace SolarMajesty
         private bool TickJunkHarass(float dt)
         {
             if (_loop == null) return false;
-            var prey = NearestLivingMech(22f);
-            if (prey == null) return false;
 
+            var downed = NearestDownedLevyCourier(22f);
+            if (downed != null)
+                return ChaseAndStealDownedLevy(dt, downed);
+
+            var prey = NearestLivingMech(22f);
+            if (prey != null)
+                return ChaseAndNibbleMech(dt, prey);
+
+            var hab = _loop.Village != null
+                ? _loop.Village.NearestStaleLevyHab(transform.position, 28f)
+                : null;
+            if (hab == null) return false;
+            return ChaseAndStealHabPurse(dt, hab);
+        }
+
+        private bool ChaseAndNibbleMech(float dt, SpecialistAgent prey)
+        {
             Vector3 dest = prey.transform.position;
             dest.y = transform.position.y;
             float dist = Vector3.Distance(Flat(transform.position), Flat(dest));
@@ -508,11 +523,80 @@ namespace SolarMajesty
             if (_stealTimer >= OverseerRules.JunkBotStealSeconds)
             {
                 _stealTimer = 0f;
-                int stole = prey.StealCredits(OverseerRules.JunkBotStealMet);
+                int levy = prey.StealLevyCarry(OverseerRules.JunkBotStealMet);
+                int stole = levy > 0 ? levy : prey.StealCredits(OverseerRules.JunkBotStealMet);
                 if (stole <= 0)
                     _loop.Resources?.SpendUpTo(ResourceId.Metals, OverseerRules.JunkBotStealMet);
             }
             return true;
+        }
+
+        private bool ChaseAndStealDownedLevy(float dt, SpecialistAgent prey)
+        {
+            Vector3 dest = prey.transform.position;
+            dest.y = transform.position.y;
+            float dist = Vector3.Distance(Flat(transform.position), Flat(dest));
+            _aggro = true;
+            _raiding = false;
+            _threat?.Report(_sourceId, aggroPressure);
+            if (dist > biteRange)
+            {
+                transform.position = MoveFlatToward(dest, moveSpeed * 1.15f * dt);
+                return true;
+            }
+
+            int stole = prey.StealLevyCarry(prey.LevyCarry);
+            if (stole > 0)
+                _loop.NoteLevyStolen(stole, prey.transform.position, fromHab: false);
+            return true;
+        }
+
+        private bool ChaseAndStealHabPurse(float dt, ColonyStructure hab)
+        {
+            Vector3 dest = hab.WorldPosition;
+            dest.y = transform.position.y;
+            float dist = Vector3.Distance(Flat(transform.position), Flat(dest));
+            _aggro = true;
+            _raiding = false;
+            _threat?.Report(_sourceId, aggroPressure);
+            if (dist > 2.4f)
+            {
+                transform.position = MoveFlatToward(dest, moveSpeed * 1.15f * dt);
+                return true;
+            }
+
+            TryStealStaleHab(hab);
+            return true;
+        }
+
+        private SpecialistAgent NearestDownedLevyCourier(float range)
+        {
+            var agents = _loop != null ? _loop.Agents : null;
+            if (agents == null) return null;
+            SpecialistAgent best = null;
+            float bestD = range;
+            Vector3 me = Flat(transform.position);
+            for (int i = 0; i < agents.Count; i++)
+            {
+                var a = agents[i];
+                if (a == null || !a.IsIncapacitated || a.LevyCarry <= 0) continue;
+                float d = Vector3.Distance(me, Flat(a.transform.position));
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = a;
+                }
+            }
+
+            return best;
+        }
+
+        private void TryStealStaleHab(ColonyStructure hab)
+        {
+            if (hab == null || !hab.LevyStale || hab.LevyPurse <= 0) return;
+            int stole = hab.StealLevy(hab.LevyPurse);
+            if (stole > 0)
+                _loop.NoteLevyStolen(stole, hab.WorldPosition, fromHab: true);
         }
 
         private SpecialistAgent NearestLivingMech(float range)
@@ -558,6 +642,7 @@ namespace SolarMajesty
                 return true;
             }
 
+            TryStealStaleHab(hab);
             hab.ApplyRaidDamage(7f * dt);
             _raiding = true;
             return true;
@@ -632,6 +717,9 @@ namespace SolarMajesty
                 transform.position = MoveFlatToward(dest, moveSpeed * 1.2f * dt);
                 return true;
             }
+
+            if (target.IsResidential)
+                TryStealStaleHab(target);
 
             if (collapse)
                 target.ApplyRaidDamage(4f * dt);

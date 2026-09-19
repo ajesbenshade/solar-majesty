@@ -124,6 +124,7 @@ namespace SolarMajesty
         public int progressMilli;
         public bool villageHab;
         public float health;
+        /// <summary>Credits sitting on this HAB until a Courier walks them home.</summary>
         public int levyPurse;
         public bool laserArmed;
     }
@@ -158,6 +159,8 @@ namespace SolarMajesty
         public int downCount;
         /// <summary>Index into <see cref="SaveGame.flags"/> the robot was soft-claiming, or -1.</summary>
         public int claimedFlagIndex = -1;
+        /// <summary>HAB tax the Courier is carrying to Commons. Distinct from personal credits.</summary>
+        public int levyCarry;
     }
 
     [Serializable]

@@ -53,7 +53,11 @@ namespace SolarMajesty
         public int ResidentCapacity => IsResidential ? Settlement.HousingPerHab : 0;
         public int Residents { get; private set; }
         public int LevyPurse { get; private set; }
-        public float LevySitSeconds { get; private set; }
+        public float LevyIdleSeconds { get; private set; }
+        public float LevySitSeconds => LevyIdleSeconds;
+        public bool LevyStale =>
+            IsResidential && IsAlive && LevyPurse > 0 &&
+            LevyIdleSeconds >= OverseerRules.LevyHabStaleSeconds;
         public bool HasVacancy => IsResidential && IsAlive && Residents < ResidentCapacity;
         public bool IsAlive => _health > 0f;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
@@ -137,49 +141,62 @@ namespace SolarMajesty
             return true;
         }
 
-        public void RestoreLevy(int amount)
-        {
-            LevyPurse = Mathf.Max(0, amount);
-            LevySitSeconds = 0f;
-            RefreshLevyPip();
-        }
+        public void RestoreLevy(int amount) => SetLevyPurse(amount);
 
-        public void AddLevy(int amount)
+        public void AddLevy(int amount) => AccrueLevy(amount);
+
+        public int TakeLevy() => CollectLevy();
+
+        public void AccrueLevy(int amount)
         {
             if (amount <= 0 || !IsAlive) return;
-            LevyPurse += amount;
-            LevySitSeconds = 0f;
-            RefreshLevyPip();
+            if (IsResidential || Category == BuildingCategory.Commons || IsWatchtower)
+            {
+                LevyPurse += amount;
+                LevyIdleSeconds = 0f;
+                RefreshLevyPip();
+            }
         }
 
-        public int TakeLevy()
+        public void TickLevy(float dt)
         {
-            int n = LevyPurse;
+            if (!IsAlive || LevyPurse <= 0)
+            {
+                LevyIdleSeconds = 0f;
+                return;
+            }
+
+            LevyIdleSeconds += Mathf.Max(0f, dt);
+        }
+
+        public int CollectLevy()
+        {
+            int take = LevyPurse;
             LevyPurse = 0;
-            LevySitSeconds = 0f;
-            RefreshLevyPip();
-            return n;
-        }
-
-        public int StealLevy(int amount)
-        {
-            if (amount <= 0 || LevyPurse <= 0) return 0;
-            int take = Mathf.Min(amount, LevyPurse);
-            LevyPurse -= take;
-            LevySitSeconds = 0f;
+            LevyIdleSeconds = 0f;
             RefreshLevyPip();
             return take;
         }
 
-        public void TickLevySit(float dt)
+        public int StealLevy(int amount)
         {
-            if (LevyPurse <= 0 || dt <= 0f)
-            {
-                LevySitSeconds = 0f;
-                return;
-            }
+            int purse = LevyPurse;
+            int take = LevyMath.Steal(ref purse, amount);
+            LevyPurse = purse;
+            if (LevyPurse <= 0)
+                LevyIdleSeconds = 0f;
+            RefreshLevyPip();
+            return take;
+        }
 
-            LevySitSeconds += dt;
+        public void TickLevySit(float dt) => TickLevy(dt);
+
+        public void SetLevyPurse(int amount)
+        {
+            LevyPurse = Mathf.Max(0, amount);
+            if (LevyPurse <= 0)
+                LevyIdleSeconds = 0f;
+            RefreshLevyPip();
         }
 
         private void RefreshResidentPips()

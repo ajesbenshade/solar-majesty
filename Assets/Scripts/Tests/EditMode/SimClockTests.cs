@@ -187,7 +187,8 @@ namespace SolarMajesty.Tests
                 credits = 210,
                 downed = true,
                 downedTimer = 7.5f,
-                claimedFlagIndex = 0
+                claimedFlagIndex = 0,
+                levyCarry = 11
             });
             save.fauna.Add(new SaveFauna { kind = (int)FaunaKind.Stalker, health = 0.3f });
             save.lairs.Add(new SaveLair { px = 40f, pz = -8f, scouted = true, cleared = false });
@@ -210,6 +211,15 @@ namespace SolarMajesty.Tests
                 laserArmed = true,
                 levyPurse = 9
             });
+            save.buildings.Add(new SaveBuilding
+            {
+                category = (int)BuildingCategory.Habitat,
+                x = 4,
+                y = 6,
+                w = 4,
+                h = 4,
+                levyPurse = 8
+            });
 
             var copy = JsonUtility.FromJson<SaveGame>(JsonUtility.ToJson(save));
 
@@ -228,6 +238,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(210, copy.agents[0].credits);
             Assert.IsTrue(copy.agents[0].downed);
             Assert.AreEqual(0, copy.agents[0].claimedFlagIndex);
+            Assert.AreEqual(11, copy.agents[0].levyCarry);
 
             Assert.AreEqual(1, copy.fauna.Count);
             Assert.AreEqual(0.3f, copy.fauna[0].health, 1e-4f);
@@ -241,6 +252,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(2, copy.parties[0].memberClasses.Count);
             Assert.IsTrue(copy.buildings[0].laserArmed);
             Assert.AreEqual(9, copy.buildings[0].levyPurse);
+            Assert.AreEqual(8, copy.buildings[1].levyPurse);
         }
 
         [Test]
