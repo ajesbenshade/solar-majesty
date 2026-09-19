@@ -671,4 +671,130 @@ namespace SolarMajesty.Tests
             }
         }
     }
+
+    public class MarketMathTests
+    {
+        [Test]
+        public void IceReserve_IsAtLeastTwelveAndThreePerColonist()
+        {
+            Assert.AreEqual(12, MarketMath.IceReserve(0));
+            Assert.AreEqual(12, MarketMath.IceReserve(2));
+            Assert.AreEqual(12, MarketMath.IceReserve(4));
+            Assert.AreEqual(15, MarketMath.IceReserve(5));
+            Assert.AreEqual(30, MarketMath.IceReserve(10));
+        }
+
+        [Test]
+        public void IceToSiphon_IdlesAtOrBelowReserve()
+        {
+            Assert.AreEqual(0, MarketMath.IceToSiphon(12, 0));
+            Assert.AreEqual(0, MarketMath.IceToSiphon(11, 0));
+            Assert.AreEqual(0, MarketMath.IceToSiphon(15, 5));
+        }
+
+        [Test]
+        public void IceToSiphon_TakesOneFromSurplusAndNeverCutsReserve()
+        {
+            Assert.AreEqual(1, MarketMath.IceToSiphon(13, 0));
+            Assert.AreEqual(1, MarketMath.IceToSiphon(80, 0));
+            Assert.AreEqual(1, MarketMath.IceToSiphon(16, 5));
+        }
+
+        [Test]
+        public void RegToSiphon_IsSilentAndRequiresAFatTank()
+        {
+            Assert.AreEqual(0, MarketMath.RegToSiphon(12, 0, 40), "closed stall must not dump REG");
+            Assert.AreEqual(0, MarketMath.RegToSiphon(20, 0, 10));
+            Assert.AreEqual(2, MarketMath.RegToSiphon(20, 0, 40));
+        }
+
+        [Test]
+        public void CreditsFrom_PaysMetalsForIceAndReg()
+        {
+            Assert.AreEqual(2, MarketMath.CreditsFrom(1, 0));
+            Assert.AreEqual(4, MarketMath.CreditsFrom(1, 2));
+        }
+    }
+
+    public class MarketTrickleTests
+    {
+        private static SimpleEconomy Stall(out ResourceManager res, int ice, int met, int reg, int pop)
+        {
+            res = new ResourceManager();
+            res.Set(ResourceId.WaterIce, ice);
+            res.Set(ResourceId.Metals, met);
+            res.Set(ResourceId.Regolith, reg);
+            var eco = new SimpleEconomy(res)
+            {
+                ResupplyEnabled = false,
+                HasDock = true,
+                MarketPopulation = pop
+            };
+            return eco;
+        }
+
+        [Test]
+        public void Tick_ExportsOneIceAboveReserve()
+        {
+            var eco = Stall(out var res, ice: 13, met: 0, reg: 10, pop: 0);
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.IsTrue(eco.MarketOpen);
+            Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(2, res.Get(ResourceId.Metals));
+            Assert.AreEqual(10, res.Get(ResourceId.Regolith), "REG at reserve stays");
+        }
+
+        [Test]
+        public void Tick_IdlesWhenTankIsNotFat()
+        {
+            var eco = Stall(out var res, ice: 12, met: 5, reg: 40, pop: 0);
+            int blocked = 0;
+            eco.MarketBlocked += () => blocked++;
+            eco.Tick(MarketMath.IntervalSeconds);
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.IsFalse(eco.MarketOpen);
+            Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(5, res.Get(ResourceId.Metals), "idle stall must not print credits");
+            Assert.AreEqual(40, res.Get(ResourceId.Regolith), "no floor means no REG dump");
+            Assert.AreEqual(1, blocked, "blocked toast latches once per idle stretch");
+        }
+
+        [Test]
+        public void Tick_WithoutPad_DoesNotSiphon()
+        {
+            var eco = Stall(out var res, ice: 40, met: 0, reg: 40, pop: 0);
+            eco.HasDock = false;
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.IsFalse(eco.MarketOpen);
+            Assert.AreEqual(40, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(0, res.Get(ResourceId.Metals));
+        }
+
+        [Test]
+        public void Tick_ReserveScalesWithPopulation()
+        {
+            var eco = Stall(out var res, ice: 15, met: 0, reg: 10, pop: 5);
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.IsFalse(eco.MarketOpen);
+            Assert.AreEqual(15, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(0, res.Get(ResourceId.Metals));
+        }
+
+        [Test]
+        public void Tick_NeverDrainsIceThroughTheReserve()
+        {
+            var eco = Stall(out var res, ice: 14, met: 0, reg: 10, pop: 0);
+            eco.Tick(MarketMath.IntervalSeconds);
+            eco.Tick(MarketMath.IntervalSeconds);
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.GreaterOrEqual(res.Get(ResourceId.WaterIce), 12);
+            Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(4, res.Get(ResourceId.Metals));
+        }
+    }
 }

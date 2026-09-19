@@ -45,6 +45,7 @@ namespace SolarMajesty
             role == StructureRole.Inn ||
             Category == BuildingCategory.Inn ||
             Category == BuildingCategory.FobotYard;
+        public bool IsLandingPad => Category == BuildingCategory.LandingPad;
         public bool IsVillageHab => role == StructureRole.VillageHab;
         public bool IsWorkshop => role == StructureRole.Workshop;
         public bool IsGuild => role == StructureRole.Guild || Category == BuildingCategory.GuildHall;

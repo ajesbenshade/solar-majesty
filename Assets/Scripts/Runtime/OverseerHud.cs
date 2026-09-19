@@ -1249,8 +1249,9 @@ namespace SolarMajesty
             bool yard = st.IsFobotYard || st.Category == BuildingCategory.FobotYard;
             bool wreckShop = st.IsWorkshop && st.HasPreferredClass &&
                              _loop.HasWreckFor(st.PreferredClass);
+            bool padStall = st.IsLandingPad;
             float cardH = st.IsGuild ? 228f
-                : yard || wreckShop || st.IsWatchtower || st.IsAidStation ? 188f
+                : yard || wreckShop || st.IsWatchtower || st.IsAidStation || padStall ? 188f
                 : 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
@@ -1272,6 +1273,7 @@ namespace SolarMajesty
                     : st.IsWatchtower
                         ? (st.LaserArmed ? "Watchtower · lasers armed" : "Watchtower · guard post")
                     : st.IsAidStation ? "Aid Station · paid patch"
+                    : st.IsLandingPad ? "Weigh-station · tank vs wallet"
                     : st.IsResidential ? "Habitat · colonists"
                     : st.Role.ToString();
             string worker = st.IsResidential
@@ -1322,6 +1324,16 @@ namespace SolarMajesty
                     _loop.PayFobotYard();
                 GUI.Label(new Rect(c.x + 148f, row + 4f, c.width - 148f, 16f),
                     "Y  ·  no ICE  ·  120s", _micro);
+            }
+            else if (st.IsLandingPad)
+            {
+                int reserve = _loop.MarketIceReserve;
+                string line = _loop.MarketStallOpen
+                    ? (string.IsNullOrEmpty(_loop.MarketStatusLine)
+                        ? $"Exporting surplus. Reserve {reserve} ICE. Credits only."
+                        : _loop.MarketStatusLine)
+                    : $"Stall idle. Reserve {reserve} ICE — we do not export lunch.";
+                GUI.Label(new Rect(c.x, row, c.width, 22f), line, _micro);
             }
             else if (st.IsGuild)
             {
