@@ -179,13 +179,20 @@ namespace SolarMajesty.Tests
         [SetUp]
         public void SetUp()
         {
+            ReplayRules.ResetForTests();
             Achievements.ResetAll();
+            Achievements.IronmanActive = false;
             Achievements.BeginRun();
             SpecialistIdentity.Reset();
         }
 
         [TearDown]
-        public void TearDown() => Achievements.ResetAll();
+        public void TearDown()
+        {
+            Achievements.ResetAll();
+            Achievements.IronmanActive = false;
+            ReplayRules.ResetForTests();
+        }
 
         [Test]
         public void Evaluate_UnlocksTheFirstContract()
@@ -279,6 +286,151 @@ namespace SolarMajesty.Tests
         public void Evaluate_NullStats_IsSafe()
         {
             Assert.DoesNotThrow(() => Achievements.Evaluate(null));
+        }
+
+        [Test]
+        public void Ironman_UnlocksWhenABodyClearsUnderTheLatch()
+        {
+            Achievements.IronmanActive = true;
+            Achievements.Evaluate(new RunStats { BodiesConquered = 1 });
+
+            Assert.IsTrue(Achievements.IsUnlocked(AchievementId.Ironman));
+        }
+
+        [Test]
+        public void Ironman_DoesNotUnlockWithoutTheLatch()
+        {
+            Achievements.IronmanActive = false;
+            Achievements.Evaluate(new RunStats { BodiesConquered = 1 });
+
+            Assert.IsFalse(Achievements.IsUnlocked(AchievementId.Ironman));
+        }
+
+        [Test]
+        public void Ironman_DoesNotUnlockWithoutAClearedBody()
+        {
+            Achievements.IronmanActive = true;
+            Achievements.Evaluate(new RunStats());
+
+            Assert.IsFalse(Achievements.IsUnlocked(AchievementId.Ironman));
+        }
+    }
+
+    public class ReplayRulesTests
+    {
+        [SetUp]
+        public void SetUp() => ReplayRules.ResetForTests();
+
+        [TearDown]
+        public void TearDown() => ReplayRules.ResetForTests();
+
+        [Test]
+        public void CycleIronman_TogglesThePreference()
+        {
+            Assert.IsFalse(ReplayRules.Ironman);
+            ReplayRules.CycleIronman();
+            Assert.IsTrue(ReplayRules.Ironman);
+            ReplayRules.CycleIronman();
+            Assert.IsFalse(ReplayRules.Ironman);
+        }
+
+        [Test]
+        public void HudTag_IncludesIronmanWhenPreferred()
+        {
+            ReplayRules.Ironman = true;
+            StringAssert.Contains("IRONMAN", ReplayRules.HudTag);
+        }
+
+        [Test]
+        public void HudTag_OmitsIronmanWhenOpen()
+        {
+            Assert.IsFalse(ReplayRules.HudTag.Contains("IRONMAN"));
+        }
+
+        [Test]
+        public void HudTag_KeepsIronmanWhenOnlyTheRunIsLatched()
+        {
+            ReplayRules.ApplyIronmanFromSave(new SaveReplayState { ironman = true });
+            ReplayRules.Ironman = false;
+
+            StringAssert.Contains("IRONMAN", ReplayRules.HudTag);
+        }
+
+        [Test]
+        public void LatchRun_CopiesPreferenceIntoTheLiveRun()
+        {
+            ReplayRules.Ironman = true;
+            ReplayRules.LatchRun();
+
+            Assert.IsTrue(ReplayRules.IronmanRun);
+            Assert.IsTrue(ReplayRules.BlocksManualSavesAndReloads);
+        }
+
+        [Test]
+        public void MidSessionPreferenceFlip_DoesNotClearTheLatch()
+        {
+            ReplayRules.Ironman = true;
+            ReplayRules.LatchRun();
+            ReplayRules.Ironman = false;
+
+            Assert.IsTrue(ReplayRules.IronmanRun, "turning the chip off mid-run must not un-ironman the attempt");
+            Assert.IsTrue(ReplayRules.BlocksManualSavesAndReloads);
+            Assert.IsFalse(ReplayRules.Ironman);
+        }
+
+        [Test]
+        public void ApplyIronmanFromSave_RestoresTheLatchEvenIfPrefsAreOff()
+        {
+            ReplayRules.Ironman = false;
+            ReplayRules.LatchRun();
+            ReplayRules.ApplyIronmanFromSave(new SaveReplayState { ironman = true });
+
+            Assert.IsTrue(ReplayRules.Ironman);
+            Assert.IsTrue(ReplayRules.IronmanRun);
+            Assert.IsTrue(ReplayRules.BlocksManualSavesAndReloads);
+        }
+
+        [Test]
+        public void ApplyIronmanFromSave_NullReplay_IsOpen()
+        {
+            ReplayRules.Ironman = true;
+            ReplayRules.LatchRun();
+            ReplayRules.ApplyIronmanFromSave(null);
+
+            Assert.IsFalse(ReplayRules.Ironman);
+            Assert.IsFalse(ReplayRules.IronmanRun);
+            Assert.IsFalse(ReplayRules.BlocksManualSavesAndReloads);
+        }
+
+        [Test]
+        public void SaveAndLoad_RoundTripsIronman()
+        {
+            ReplayRules.Ironman = true;
+            ReplayRules.Save();
+            ReplayRules.Ironman = false;
+            ReplayRules.Load();
+
+            Assert.IsTrue(ReplayRules.Ironman);
+        }
+
+        [Test]
+        public void ModeAndIronman_CanCoexistOnTheTag()
+        {
+            ReplayRules.Mode = ColonyRunMode.Endless;
+            ReplayRules.Ironman = true;
+
+            StringAssert.Contains("ENDLESS", ReplayRules.HudTag);
+            StringAssert.Contains("IRONMAN", ReplayRules.HudTag);
+        }
+
+        [Test]
+        public void SaveReplayState_JsonRoundTripsIronman()
+        {
+            var json = UnityEngine.JsonUtility.ToJson(new SaveReplayState { ironman = true, mode = 1 });
+            var loaded = UnityEngine.JsonUtility.FromJson<SaveReplayState>(json);
+
+            Assert.IsTrue(loaded.ironman);
+            Assert.AreEqual(1, loaded.mode);
         }
     }
 

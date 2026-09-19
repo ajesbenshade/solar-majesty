@@ -112,6 +112,8 @@ namespace SolarMajesty
         public int mode;
         public int challenge;
         public int stance;
+        /// <summary>Latched Ironman for this slot. Missing on v2 saves means open (false).</summary>
+        public bool ironman;
     }
 
     [Serializable]
