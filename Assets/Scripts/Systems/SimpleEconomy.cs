@@ -39,6 +39,8 @@ namespace SolarMajesty
         public event Action UpkeepApplied;
         public event Action ResupplyArrived;
         public event Action ResupplyWavedOff;
+        public event Action MarketExported;
+        public event Action MarketBlocked;
 
         /// <summary>Seconds until the next specialist/grid upkeep tick.</summary>
         public float UpkeepSecondsLeft => Mathf.Max(0f, _upkeepTimer);
@@ -62,11 +64,25 @@ namespace SolarMajesty
         public bool LastResupplyDocked { get; private set; }
         public int LastMetalsUpkeep { get; private set; }
 
+        /// <summary>Census for the ICE reserve. Runtime sets this from Settlement.</summary>
+        public int MarketPopulation { get; set; }
+
+        public bool MarketOpen { get; private set; }
+        public string LastMarketLine { get; private set; } = "";
+        public int LastMarketCredits { get; private set; }
+        public int LastMarketIce { get; private set; }
+        public int LastMarketReg { get; private set; }
+        public int MarketReserve => MarketMath.IceReserve(MarketPopulation);
+
+        private float _marketTimer;
+        private bool _marketBlockedLatched;
+
         public SimpleEconomy(ResourceManager resources)
         {
             _resources = resources ?? throw new ArgumentNullException(nameof(resources));
             _upkeepTimer = UpkeepIntervalSeconds;
             _resupplyTimer = ResupplyIntervalSeconds;
+            _marketTimer = MarketMath.IntervalSeconds;
         }
 
         /// <summary>
@@ -83,6 +99,8 @@ namespace SolarMajesty
                 ApplyUpkeep(livingSpecialists);
                 UpkeepApplied?.Invoke();
             }
+
+            TickMarket(deltaTime);
 
             if (!ResupplyEnabled) return;
 
@@ -373,9 +391,61 @@ namespace SolarMajesty
 
             LastResupplyDocked = true;
             LastResupplyLine = ResupplyDockFee > 0
-                ? $"Earth resupply docked (−{ResupplyDockFee} MET fee)"
-                : "Earth resupply docked";
+                ? $"Pad paid out. Dock fee {ResupplyDockFee} MET already left. ICE is tank; MET is scrip."
+                : "Pad paid out. ICE is tank; MET is scrip.";
             return true;
+        }
+
+        private void TickMarket(float deltaTime)
+        {
+            if (!HasDock)
+            {
+                MarketOpen = false;
+                _marketTimer = MarketMath.IntervalSeconds;
+                _marketBlockedLatched = false;
+                return;
+            }
+
+            _marketTimer -= deltaTime;
+            if (_marketTimer > 0f) return;
+            _marketTimer += MarketMath.IntervalSeconds;
+
+            int ice = _resources.Get(ResourceId.WaterIce);
+            int reg = _resources.Get(ResourceId.Regolith);
+            int iceTake = MarketMath.IceToSiphon(ice, MarketPopulation);
+            int regTake = MarketMath.RegToSiphon(ice, MarketPopulation, reg);
+            int credits = MarketMath.CreditsFrom(iceTake, regTake);
+
+            if (credits <= 0)
+            {
+                MarketOpen = false;
+                LastMarketIce = 0;
+                LastMarketReg = 0;
+                LastMarketCredits = 0;
+                LastMarketLine = $"Stall idle — reserve {MarketReserve} ICE.";
+                if (!_marketBlockedLatched)
+                {
+                    _marketBlockedLatched = true;
+                    MarketBlocked?.Invoke();
+                }
+                return;
+            }
+
+            if (iceTake > 0)
+                _resources.SpendUpTo(ResourceId.WaterIce, iceTake);
+            if (regTake > 0)
+                _resources.SpendUpTo(ResourceId.Regolith, regTake);
+            _resources.Add(ResourceId.Metals, credits);
+
+            MarketOpen = true;
+            _marketBlockedLatched = false;
+            LastMarketIce = iceTake;
+            LastMarketReg = regTake;
+            LastMarketCredits = credits;
+            LastMarketLine = iceTake > 0
+                ? $"Stall exported {iceTake} ICE → {credits} MET."
+                : $"Stall exported {credits} MET.";
+            MarketExported?.Invoke();
         }
     }
 }

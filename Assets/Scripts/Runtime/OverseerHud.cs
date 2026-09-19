@@ -1208,7 +1208,8 @@ namespace SolarMajesty
         private void DrawBuildingCard(ColonyStructure st)
         {
             const float cardW = 340f;
-            float cardH = st.IsGuild ? 172f : 148f;
+            bool padStall = st.IsLandingPad;
+            float cardH = st.IsGuild || padStall ? 172f : 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
             var c = Panel(rect, null);
@@ -1223,6 +1224,7 @@ namespace SolarMajesty
                 : st.IsGuild
                     ? (st.HasPreferredClass ? st.DisplayName : "Guild Hall · assign a class")
                     : st.IsWonder ? "Secret Project landmark"
+                    : st.IsLandingPad ? "Weigh-station · tank vs wallet"
                     : st.IsResidential ? "Habitat · colonists"
                     : st.Role.ToString();
             string worker = st.IsResidential
@@ -1253,6 +1255,16 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     "Humans stay in HABs. Outdoor work is robots from workshops.", _micro);
+            }
+            else if (st.IsLandingPad)
+            {
+                int reserve = _loop.MarketIceReserve;
+                string line = _loop.MarketStallOpen
+                    ? (string.IsNullOrEmpty(_loop.MarketStatusLine)
+                        ? $"Exporting surplus. Reserve {reserve} ICE. Credits only."
+                        : _loop.MarketStatusLine)
+                    : $"Stall idle. Reserve {reserve} ICE — we do not export lunch.";
+                GUI.Label(new Rect(c.x, row, c.width, 22f), line, _micro);
             }
             else if (st.IsGuild)
             {

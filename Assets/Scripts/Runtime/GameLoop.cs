@@ -89,6 +89,16 @@ namespace SolarMajesty
         public SpecialistBrain Brain { get; private set; }
         public SimpleEconomy Economy { get; private set; }
 
+        public int MarketIceReserve =>
+            MarketMath.IceReserve(Settlement != null ? Settlement.Population : 0);
+
+        public bool MarketStallOpen => Economy != null && Economy.MarketOpen;
+
+        public string MarketStatusLine =>
+            Economy != null && !string.IsNullOrEmpty(Economy.LastMarketLine)
+                ? Economy.LastMarketLine
+                : "";
+
         // Runtime threat service (not in Systems/)
         public ThreatPressure Threat { get; private set; }
 
@@ -376,6 +386,7 @@ namespace SolarMajesty
         private float _emptyRosterTimer;
         private float _reviveReadyAt;
         private bool _revivePenaltyApplied;
+        private bool _marketPayoutLogged;
         private int _lastTithe;
         private readonly List<TimedDisc> _surveys = new List<TimedDisc>(4);
         private readonly List<TimedDisc> _watches = new List<TimedDisc>(4);
@@ -635,7 +646,11 @@ namespace SolarMajesty
         private void OnDestroy()
         {
             if (Economy != null)
+            {
                 Economy.UpkeepApplied -= OnUpkeepTithe;
+                Economy.MarketExported -= OnMarketExported;
+                Economy.MarketBlocked -= OnMarketBlocked;
+            }
             Achievements.Earned -= OnAchievementEarned;
             PlaytestTelemetry.RecordQuit(
                 Screen.ToString(),
@@ -1414,7 +1429,11 @@ namespace SolarMajesty
                     if (_agents[i] != null && _agents[i].Data != null)
                         living.Add(_agents[i].Data);
                 }
-                Economy?.Tick(_constructionTick, living);
+                if (Economy != null)
+                {
+                    Economy.MarketPopulation = Settlement != null ? Settlement.Population : 0;
+                    Economy.Tick(_constructionTick, living);
+                }
                 _constructionTick = 0f;
             }
         }
@@ -1714,6 +1733,8 @@ namespace SolarMajesty
             Research = new ResearchManager(Resources);
             Research.TechUnlocked += OnTechUnlocked;
             Economy.UpkeepApplied += OnUpkeepTithe;
+            Economy.MarketExported += OnMarketExported;
+            Economy.MarketBlocked += OnMarketBlocked;
             Threat = new ThreatPressure { Ambient = 0.18f };
         }
 
@@ -2827,6 +2848,7 @@ namespace SolarMajesty
             Economy.PowerGen = gen;
             Economy.PowerDraw = Mathf.Max(0, Mathf.RoundToInt(draw * pwrScale));
             Economy.HasDock = Settlement != null && Settlement.HasPad;
+            Economy.MarketPopulation = Settlement != null ? Settlement.Population : 0;
         }
 
         private int CountPowerSiphons(ColonyStructure node)
@@ -4982,6 +5004,25 @@ namespace SolarMajesty
             if (Economy != null)
                 met -= Economy.LastMetalsUpkeep / 30f * 60f;
             Settlement.SetIncomeRates(met, ice);
+        }
+
+        private void OnMarketExported()
+        {
+            if (Economy == null) return;
+            if (!_marketPayoutLogged)
+            {
+                _marketPayoutLogged = true;
+                LogOverseer(MarketMath.GrokPayout, 6.2f);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(Economy.LastMarketLine))
+                LogOverseer(Economy.LastMarketLine);
+        }
+
+        private void OnMarketBlocked()
+        {
+            LogOverseer(MarketMath.GrokBlocked, 6.2f);
         }
 
         private void TickCourierPad()
