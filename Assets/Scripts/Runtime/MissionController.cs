@@ -234,6 +234,40 @@ namespace SolarMajesty
         /// <summary>Week 2+: call when rocket tech is researched and craft is built.</summary>
         public void SetLaunchReady(bool ready) => _launchReady = ready;
 
+        /// <summary>
+        /// Continue restore of mission elapsed / sustain hold / win-loss latch.
+        /// DensCleared is refreshed from restored lairs on the next Tick.
+        /// </summary>
+        public void RestoreFrom(SaveMissionState saved)
+        {
+            if (saved == null) return;
+            _armed = true;
+            _missionElapsed = Mathf.Max(0f, saved.elapsed);
+            _sustainElapsed = Mathf.Max(0f, saved.sustainHold);
+            _launchReady = saved.launchReady;
+            DensCleared = saved.densCleared;
+            if (saved.densCleared)
+                _loggedDens = true;
+            if (saved.sustainMet || _sustainElapsed >= sustainHoldSeconds)
+                _loggedSustain = true;
+
+            var state = (MissionState)saved.state;
+            if (state == MissionState.Won)
+            {
+                _state = MissionState.Won;
+                _winLatched = true;
+            }
+            else if (state == MissionState.Lost)
+            {
+                _state = MissionState.Lost;
+                _loseLatched = true;
+            }
+            else
+            {
+                _state = MissionState.Active;
+            }
+        }
+
         public void Tick()
         {
             if (_loop == null) return;

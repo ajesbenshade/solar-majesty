@@ -182,14 +182,23 @@ namespace SolarMajesty.Tests
             save.agents.Add(new SaveAgent
             {
                 specialistClass = (int)SpecialistClass.EngineerBot,
+                px = 40f, py = 0f, pz = -8f,
                 health = 0.42f,
                 fatigue = 0.66f,
                 credits = 210,
                 downed = true,
                 downedTimer = 7.5f,
-                claimedFlagIndex = 0
+                claimedFlagIndex = 0,
+                level = 3,
+                xp = 80,
+                reviveCount = 2
             });
-            save.fauna.Add(new SaveFauna { kind = (int)FaunaKind.Stalker, health = 0.3f });
+            save.fauna.Add(new SaveFauna
+            {
+                kind = (int)FaunaKind.Stalker,
+                px = 22f, py = 0f, pz = 6f,
+                health = 0.3f
+            });
 
             var copy = JsonUtility.FromJson<SaveGame>(JsonUtility.ToJson(save));
 
@@ -208,9 +217,59 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(210, copy.agents[0].credits);
             Assert.IsTrue(copy.agents[0].downed);
             Assert.AreEqual(0, copy.agents[0].claimedFlagIndex);
+            Assert.AreEqual(40f, copy.agents[0].px, 1e-4f);
+            Assert.AreEqual(3, copy.agents[0].level);
+            Assert.AreEqual(2, copy.agents[0].reviveCount);
 
             Assert.AreEqual(1, copy.fauna.Count);
             Assert.AreEqual(0.3f, copy.fauna[0].health, 1e-4f);
+            Assert.AreEqual(22f, copy.fauna[0].px, 1e-4f);
+        }
+
+        [Test]
+        public void RoundTrip_PreservesDensNodesMissionHoldAndParties()
+        {
+            var save = new SaveGame { body = (int)CelestialBodyId.Luna, seed = 9 };
+            save.nodes.Add(new SaveNode
+            {
+                nodeType = (int)ResourceNodeType.Ice,
+                px = 30f, pz = 12f,
+                remaining = 7
+            });
+            save.lairs.Add(new SaveLair { px = 50f, pz = -20f, cleared = true, scouted = true });
+            save.mission.elapsed = 412f;
+            save.mission.sustainHold = 27.5f;
+            save.mission.densCleared = true;
+            save.mission.sustainMet = false;
+            save.mission.state = (int)MissionState.Active;
+            save.agents.Add(new SaveAgent { specialistClass = (int)SpecialistClass.ScoutDrone, partyId = 4 });
+            save.agents.Add(new SaveAgent { specialistClass = (int)SpecialistClass.DefenseMech, partyId = 4 });
+            save.parties.Add(new SaveParty
+            {
+                id = 4,
+                leaderIndex = 1,
+                memberIndices = new System.Collections.Generic.List<int> { 0, 1 }
+            });
+            save.roster.Add(new SaveRosterEntry
+            {
+                specialistClass = (int)SpecialistClass.Medic,
+                corpse = true,
+                reviveCount = 1
+            });
+
+            var copy = JsonUtility.FromJson<SaveGame>(JsonUtility.ToJson(save));
+
+            Assert.AreEqual(7, copy.nodes[0].remaining);
+            Assert.IsTrue(copy.lairs[0].cleared);
+            Assert.IsTrue(copy.lairs[0].scouted);
+            Assert.AreEqual(27.5f, copy.mission.sustainHold, 1e-4f);
+            Assert.AreEqual(412f, copy.mission.elapsed, 1e-4f);
+            Assert.AreEqual(1, copy.parties.Count);
+            Assert.AreEqual(4, copy.parties[0].id);
+            Assert.AreEqual(1, copy.parties[0].leaderIndex);
+            Assert.AreEqual(2, copy.parties[0].memberIndices.Count);
+            Assert.IsTrue(copy.roster[0].corpse);
+            Assert.AreEqual(SaveGame.CurrentVersion, copy.version);
         }
 
         [Test]
@@ -242,7 +301,12 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(save.flags);
             Assert.IsNotNull(save.agents);
             Assert.IsNotNull(save.fauna);
+            Assert.IsNotNull(save.nodes);
+            Assert.IsNotNull(save.lairs);
+            Assert.IsNotNull(save.parties);
+            Assert.IsNotNull(save.roster);
             Assert.IsNotNull(save.research.unlocked);
+            Assert.IsNotNull(save.mission);
         }
 
         [Test]
@@ -257,6 +321,46 @@ namespace SolarMajesty.Tests
         public void NewAgent_DefaultsClaimedFlagToNone()
         {
             Assert.AreEqual(-1, new SaveAgent().claimedFlagIndex);
+            Assert.AreEqual(-1, new SaveAgent().partyId);
+            Assert.AreEqual(1, new SaveAgent().level);
+        }
+    }
+
+    public class SaveWorldMatchTests
+    {
+        [Test]
+        public void Pick_LocksIndexWhenTheSeededPropDidNotMove()
+        {
+            var world = new[]
+            {
+                new Vector3(10f, 0f, 0f),
+                new Vector3(40f, 0f, 8f),
+                new Vector3(80f, 0f, -4f)
+            };
+            var used = new bool[3];
+
+            Assert.AreEqual(1, SaveWorldMatch.Pick(world, new Vector3(41f, 0f, 8.5f), 1, used));
+        }
+
+        [Test]
+        public void Pick_FallsBackToNearestUnusedWhenIndexMoved()
+        {
+            var world = new[]
+            {
+                new Vector3(10f, 0f, 0f),
+                new Vector3(40f, 0f, 8f)
+            };
+            var used = new bool[2];
+            used[0] = true;
+
+            Assert.AreEqual(1, SaveWorldMatch.Pick(world, new Vector3(12f, 0f, 1f), 0, used));
+        }
+
+        [Test]
+        public void Pick_ReturnsNoneWhenEverythingIsTooFar()
+        {
+            var world = new[] { new Vector3(0f, 0f, 0f) };
+            Assert.AreEqual(-1, SaveWorldMatch.Pick(world, new Vector3(80f, 0f, 80f), 0, new bool[1]));
         }
     }
 

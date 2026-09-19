@@ -37,7 +37,7 @@
 - [x] Phase 4 HAB / Commons / LAB / CMD-1 / OPS-1 panel-bevel pass — carbon rings, spine seams, civic wrap bands, bevelled box hulls (Phase 4 still open)
 - [x] Phase 4 dock sockets flush — square airlock plus-arms + module sleeves + orange collars mate at the Lego face; Commons cardinal stubs / Guild E/W ports reach the footprint (Phase 4 still open)
 - [x] Phase 4 editor Mars still + empty Game-tab still + campus v1 + v2 + v3 + **campus v4** (`Docs/Roadmap/SM_MarsCampaign_PlayModeCampusStill4.png`) + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)) — **not** complete
-- [x] Phase 4 W1 continue integrity — Continue autosave now restores open flags (type / position / bounty / remaining work), living fauna, and specialist HP / downed / pose; campus + stockpile + research unchanged. Soft claims rebind by flag index; dens / node yield / mission timer / parties still out of scope.
+- [x] Phase 4 W1 continue integrity — Continue autosave restores open flags, living fauna poses, specialist HP / downed / pose, den scouted/cleared, node remaining, mission hold, and formed parties. Soft claims rebind by flag index.
 
 ## Month roadmap
 
@@ -53,7 +53,7 @@ Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0
 
 1. Phase 4 visual target — **Weeks 1–4 continued are in**. Exit review is **blocked** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)): still16 signed the look fail as a **dark rectangular airlock box** (wrap `Dress_HubDoor`). Hub/collar code now drops those doors, keeps a smaller white paneled square, and puts **one orange collar at the Lego face** on docked arms only. Latest in-repo Game-tab is still6 (empty Sol 1). `SM_MarsCampaign_VisualTarget.png` is **retired** — do not chase packed density. Next human step: re-enter Play Mode on Mars, place Commons + airlock + HAB, look for a **white paneled square hub**, **short white tubes + one orange collar on docked faces only**, **no unused CommonsPort rings**, **readable white hulls**, **spaced campus (empty dirt OK)**. Then a **spaced overseer** Game-tab still. **Do not stamp Phase 4 complete. Do not start Phase 5.** Square Lego airlocks stay; tubes/domes/cranes/kits/turrets/solar are dressing. Mockup squad bars are HUD chrome only. Do not add click-to-move. Defense stays the tracked Guardian.
 2. Settings chips still cycle Mode / Challenge / Stance. Open Hands should take cheaper flags in ~5 minutes. Guild Hall: assign SCOUT/ENG/DEF/MED (Horizon / Anvil / Aegis / Triage).
-3. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots the overseer board (flags / fauna / specialist HP). Still not snapshotted: den cleared/scouted flags, resource-node depletion, mission hold timer, parties, and a PlayerPrefs-only slot from before the autosave file existed.
+3. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`. Continue now snapshots dens / node remaining / mission hold / parties / live robot and fauna poses. A PlayerPrefs-only slot from before the autosave file existed still cannot restore those fields.
 
 ## Still out of scope (for now)
 

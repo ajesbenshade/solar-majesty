@@ -24,7 +24,7 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 ---
 
-Play opens on the **title screen** (frozen drop behind the menu). **New Game** wipes campaign prefs (confirms if a save exists) and starts the Earth empty drop. **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna, and specialist HP. Dens / node yield / mission timer are not snapshotted. **Esc** pauses (Resume / Settings / Title / Quit). Tutorial is six skippable beats (Colony Commons → airlock → HAB → workshop → flag → TECH); Settings can replay it.
+Play opens on the **title screen** (frozen drop behind the menu). **New Game** wipes campaign prefs (confirms if a save exists) and starts the Earth empty drop. **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna poses, specialist HP/poses, den scouted/cleared, node remaining, mission hold, and formed parties. **Esc** pauses (Resume / Settings / Title / Quit). Tutorial is six skippable beats (Colony Commons → airlock → HAB → workshop → flag → TECH); Settings can replay it.
 
 ## Controls
 
