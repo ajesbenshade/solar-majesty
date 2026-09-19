@@ -229,7 +229,7 @@ namespace SolarMajesty
         public static string ContinueDetail()
         {
             if (!SaveExists)
-                return "No continue slot yet. New Game drops Earth; Continue restores that body's campus.";
+                return "No continue slot yet. New Game drops Luna (Mars if you already skipped or cleared the hour). Continue restores that body's campus.";
             int reg = PlayerPrefs.GetInt(SaveRegKey, 0);
             int ice = PlayerPrefs.GetInt(SaveIceKey, 0);
             int met = PlayerPrefs.GetInt(SaveMetKey, 0);

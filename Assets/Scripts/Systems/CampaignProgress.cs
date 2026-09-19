@@ -3,8 +3,9 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Campaign unlock spine: Earth → Luna → Mars → Belt → Europa.
-    /// Persists highest unlocked body; free body-hopping is limited to unlocked worlds.
+    /// Campaign spine is Luna (skipable first hour) → Mars (the colony).
+    /// Earth, Belt, and Europa stay in the catalog for debug / later expansion — parked, not deleted.
+    /// Title orrery can still drop onto an unlocked world.
     /// </summary>
     public static class CampaignProgress
     {
@@ -12,35 +13,77 @@ namespace SolarMajesty
         private const string FreshKey = "SM_CampaignInitialized";
         private const string TravelLogKey = "SM_PendingTravelLog";
         private const string CutsKey = "SM_NarrativeCutsShown";
+        private const string LunaHourKey = "SM_LunaHourCleared";
 
-        public static CelestialBodyId HighestUnlocked { get; private set; } = CelestialBodyId.Earth;
+        public static CelestialBodyId HighestUnlocked { get; private set; } = CelestialBodyId.Luna;
+
+        public static bool IsOnSpine(CelestialBodyId id) =>
+            id == CelestialBodyId.Luna || id == CelestialBodyId.Mars;
+
+        public static bool IsParked(CelestialBodyId id) => !IsOnSpine(id);
+
+        /// <summary>Survives New Game. Returning players skip the Luna hour.</summary>
+        public static bool HasClearedLunaHour =>
+            PlayerPrefs.GetInt(LunaHourKey, 0) == 1;
+
+        public static CelestialBodyId NewGameBody =>
+            HasClearedLunaHour ? CelestialBodyId.Mars : CelestialBodyId.Luna;
 
         public static void Ensure()
         {
             if (!PlayerPrefs.HasKey(FreshKey))
             {
-                HighestUnlocked = CelestialBodyId.Earth;
-                PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
+                HighestUnlocked = CelestialBodyId.Luna;
+                PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Luna);
                 PlayerPrefs.SetInt(FreshKey, 1);
-                BodySeed.SetBody(CelestialBodyId.Earth);
+                BodySeed.SetBody(CelestialBodyId.Luna);
                 PlayerPrefs.Save();
                 return;
             }
 
-            HighestUnlocked = (CelestialBodyId)PlayerPrefs.GetInt(MaxKey, (int)CelestialBodyId.Earth);
+            HighestUnlocked = (CelestialBodyId)PlayerPrefs.GetInt(MaxKey, (int)CelestialBodyId.Luna);
+            HighestUnlocked = MigrateHighest(HighestUnlocked);
             int last = (int)CelestialBodyCatalog.Last;
-            if ((int)HighestUnlocked < (int)CelestialBodyId.Earth || (int)HighestUnlocked > last)
-                HighestUnlocked = CelestialBodyId.Earth;
+            if ((int)HighestUnlocked < 0 || (int)HighestUnlocked > last)
+                HighestUnlocked = CelestialBodyId.Luna;
+            PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
         }
 
-        public static bool IsUnlocked(CelestialBodyId id) =>
-            (int)id <= (int)HighestUnlocked;
+        /// <summary>
+        /// Old first-run prefs stored Earth as the default unlock. That picnic is parked.
+        /// Debug-all (Belt/Europa) is left alone.
+        /// </summary>
+        public static CelestialBodyId MigrateHighest(CelestialBodyId stored)
+        {
+            if (stored == CelestialBodyId.Earth)
+                return CelestialBodyId.Luna;
+            return stored;
+        }
+
+        public static bool IsUnlocked(CelestialBodyId id)
+        {
+            if (DebugUnlockedAll)
+                return true;
+            if (IsParked(id))
+                return false;
+            return SpineRank(id) <= SpineRank(HighestUnlocked);
+        }
+
+        public static int SpineRank(CelestialBodyId id)
+        {
+            switch (id)
+            {
+                case CelestialBodyId.Luna: return 0;
+                case CelestialBodyId.Mars: return 1;
+                default: return -1;
+            }
+        }
 
         public static CelestialBodyId? NextAfter(CelestialBodyId current)
         {
-            int n = (int)current + 1;
-            if (n > (int)CelestialBodyCatalog.Last) return null;
-            return (CelestialBodyId)n;
+            if (current == CelestialBodyId.Earth || current == CelestialBodyId.Luna)
+                return CelestialBodyId.Mars;
+            return null;
         }
 
         /// <summary>
@@ -61,15 +104,25 @@ namespace SolarMajesty
         /// <summary>Call when the current body is conquered (all gates met / win dismissed into next).</summary>
         public static void UnlockNextFrom(CelestialBodyId conquered)
         {
+            if (conquered == CelestialBodyId.Luna || conquered == CelestialBodyId.Earth)
+                NoteLunaHourCleared();
+
             var next = NextAfter(conquered);
             if (!next.HasValue) return;
-            if ((int)next.Value > (int)HighestUnlocked)
+            if (DebugUnlockedAll) return;
+            if (SpineRank(next.Value) > SpineRank(HighestUnlocked))
             {
                 HighestUnlocked = next.Value;
                 PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
                 PlayerPrefs.Save();
                 Debug.Log($"[Campaign] Unlocked {HighestUnlocked}");
             }
+        }
+
+        public static void NoteLunaHourCleared()
+        {
+            PlayerPrefs.SetInt(LunaHourKey, 1);
+            PlayerPrefs.Save();
         }
 
         public static void QueueTravelLog(string line)
@@ -88,15 +141,32 @@ namespace SolarMajesty
             return string.IsNullOrEmpty(line) ? null : line;
         }
 
+        /// <summary>Wipe campaign unlocks and cuts. Does not clear the Luna-hour veteran flag.</summary>
         public static void ResetCampaign()
         {
-            HighestUnlocked = CelestialBodyId.Earth;
-            PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
+            HighestUnlocked = NewGameBody;
+            PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
             PlayerPrefs.SetInt(FreshKey, 1);
             PlayerPrefs.DeleteKey(TravelLogKey);
             PlayerPrefs.DeleteKey(CutsKey);
             ResearchManager.WipeUnlocks();
-            BodySeed.SetBody(CelestialBodyId.Earth);
+            BodySeed.SetBody(HighestUnlocked);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>New Game drop. Mars notes the Luna hour so the next New Game stays on Mars.</summary>
+        public static void BeginNewGame(CelestialBodyId drop)
+        {
+            if (drop == CelestialBodyId.Mars)
+                NoteLunaHourCleared();
+
+            HighestUnlocked = IsOnSpine(drop) ? drop : NewGameBody;
+            PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
+            PlayerPrefs.SetInt(FreshKey, 1);
+            PlayerPrefs.DeleteKey(TravelLogKey);
+            PlayerPrefs.DeleteKey(CutsKey);
+            ResearchManager.WipeUnlocks();
+            BodySeed.SetBody(drop);
             PlayerPrefs.Save();
         }
 
@@ -122,7 +192,7 @@ namespace SolarMajesty
             PlayerPrefs.Save();
         }
 
-        /// <summary>Debug cheat (Shift+F10): unlock the full campaign spine.</summary>
+        /// <summary>Debug cheat (Shift+F10): unlock the full catalog including parked bodies.</summary>
         public static void DebugUnlockAll()
         {
             HighestUnlocked = CelestialBodyCatalog.Last;
@@ -130,6 +200,33 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(FreshKey, 1);
             PlayerPrefs.Save();
             Debug.Log($"[Campaign] Debug unlocked all bodies through {HighestUnlocked}.");
+        }
+
+        private static bool DebugUnlockedAll =>
+            HighestUnlocked == CelestialBodyId.Belt || HighestUnlocked == CelestialBodyId.Europa;
+
+        public static string DropButtonLabel(CelestialBodyId drop) =>
+            drop == CelestialBodyId.Mars ? "NEW GAME  ·  Mars drop" : "NEW GAME  ·  Luna drop";
+
+        public static string DropConfirmLabel(CelestialBodyId drop) =>
+            drop == CelestialBodyId.Mars ? "WIPE AND DROP MARS" : "WIPE AND DROP LUNA";
+
+        public static string DropConfirmDetail(CelestialBodyId drop) =>
+            drop == CelestialBodyId.Mars
+                ? "This wipes the continue slot and campaign unlocks, then drops you on Mars. Earth picnic is parked."
+                : "This wipes the continue slot and campaign unlocks, then drops you on Luna. Earth picnic is parked.";
+
+        /// <summary>EditMode helper. Clears campaign prefs including the veteran Luna-hour flag.</summary>
+        public static void ResetAllForTests()
+        {
+            HighestUnlocked = CelestialBodyId.Luna;
+            PlayerPrefs.DeleteKey(MaxKey);
+            PlayerPrefs.DeleteKey(FreshKey);
+            PlayerPrefs.DeleteKey(TravelLogKey);
+            PlayerPrefs.DeleteKey(CutsKey);
+            PlayerPrefs.DeleteKey(LunaHourKey);
+            PlayerPrefs.DeleteKey("SM_CelestialBody");
+            PlayerPrefs.Save();
         }
     }
 }

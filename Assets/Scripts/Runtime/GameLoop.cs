@@ -77,7 +77,7 @@ namespace SolarMajesty
         [SerializeField] private bool spawnWaystationInn = false;
 
         [Header("Procedural world")]
-        [SerializeField] private CelestialBodyId celestialBody = CelestialBodyId.Earth;
+        [SerializeField] private CelestialBodyId celestialBody = CelestialBodyId.Luna;
         [Tooltip("0 = use persisted BodySeed for this world; non-zero forces that seed for this Play.")]
         [SerializeField] private int worldSeedOverride = 0;
         [SerializeField] private bool advanceSeedOnRestart = true;
@@ -642,8 +642,11 @@ namespace SolarMajesty
             Achievements.Earned += OnAchievementEarned;
             CampaignProgress.Ensure();
             celestialBody = BodySeed.LoadSavedBody();
-            if (!CampaignProgress.IsUnlocked(celestialBody))
-                celestialBody = CelestialBodyId.Earth;
+            if (!CampaignProgress.IsUnlocked(celestialBody) && !DemoSettings.SaveExists)
+            {
+                celestialBody = CampaignProgress.NewGameBody;
+                BodySeed.SetBody(celestialBody);
+            }
             _body = CelestialBodyCatalog.Get(celestialBody);
             ModularBuildingFactory.BindBody(_body);
             IndustrialArtDressing.BindBody(_body);
@@ -814,19 +817,36 @@ namespace SolarMajesty
             }
         }
 
-        /// <summary>Wipes the continue slot and returns to the solar-system title.</summary>
-        public void StartNewGame() => WipeCampaignToTitle();
+        public void StartNewGame() => StartNewGame(CampaignProgress.NewGameBody);
 
+        /// <summary>Wipes the continue slot and returns to the solar-system title.</summary>
         public void WipeCampaignToTitle()
         {
-            ResearchManager.WipeUnlocks();
             CampaignProgress.ResetCampaign();
             SaveSystem.DeleteAll();
             SimSpeed.ResetToNormal();
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
             ReplayRules.Save();
-            BodySeed.SetBody(CelestialBodyId.Earth);
+            ReloadActiveScene();
+        }
+
+        /// <summary>Luna is the first hour. Mars for returning players or an explicit skip. Earth picnic is parked.</summary>
+        public void StartNewGame(CelestialBodyId drop)
+        {
+            if (!CampaignProgress.IsOnSpine(drop))
+                drop = CampaignProgress.NewGameBody;
+            CampaignProgress.BeginNewGame(drop);
+            SaveSystem.DeleteAll();
+            SimSpeed.ResetToNormal();
+            DemoSettings.ClearSave();
+            if (drop == CelestialBodyId.Mars)
+                DemoSettings.MarkTutorialDone();
+            else
+                DemoSettings.ResetTutorial();
+            ReplayRules.Save();
+            DemoSettings.RequestBootIntoPlay();
+            BodySeed.SetBody(drop);
             ReloadActiveScene();
         }
 

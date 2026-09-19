@@ -53,6 +53,7 @@ namespace SolarMajesty
         private float _hudScale = 1f;
         private bool _powerAlarmLatched;
         private bool _confirmNewGame;
+        private CelestialBodyId _pendingNewGameBody = CelestialBodyId.Luna;
         private Texture2D _minimapDisc;
 
 
@@ -556,9 +557,12 @@ namespace SolarMajesty
                 var id = bodies[i];
                 var profile = CelestialBodyCatalog.Get(id);
                 bool unlocked = CampaignProgress.IsUnlocked(id);
+                bool parked = CampaignProgress.IsParked(id);
                 if (!unlocked) anyLocked = true;
                 var chipRect = new Rect(c.x + col * (chipW + 3f), y + row * 22f, chipW, 20f);
-                string label = unlocked ? profile.ShortCode : $"{profile.ShortCode}?";
+                string label = unlocked
+                    ? profile.ShortCode
+                    : parked ? $"{profile.ShortCode}·" : $"{profile.ShortCode}?";
                 if (Chip(chipRect, label, _loop.ActiveBody == id))
                 {
                     if (unlocked)
@@ -566,14 +570,16 @@ namespace SolarMajesty
                     else if (shiftHeld)
                         _loop.RequestDebugHop(id, unlockAll: true);
                     else
-                        Notify("Locked — Shift+click this chip (or Shift+F10) to unlock.", 3.5f);
+                        Notify(parked
+                            ? "Parked — Shift+click to load for debug."
+                            : "Locked — Shift+click this chip (or Shift+F10) to unlock.", 3.5f);
                 }
             }
             int rows = (bodies.Length + cols - 1) / cols;
             y += 22f * rows;
             GUI.Label(
                 new Rect(c.x, y, c.width, 13f),
-                anyLocked ? "Shift+click locked  ·  Shift+F10 unlocks" : "F10 cycles worlds",
+                anyLocked ? "Luna→Mars spine  ·  parked Shift+click  ·  Shift+F10" : "F10 cycles worlds  ·  parked Shift+click",
                 _micro);
             y += 14f;
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
@@ -2137,24 +2143,29 @@ namespace SolarMajesty
 
         private void DrawTitle()
         {
-            var rect = new Rect(M, M, 320f, Mathf.Min(500f, _sh - M * 2f));
+            Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.03f, 0.04f, 0.55f));
+            var rect = new Rect((_sw - 480f) * 0.5f, _sh * 0.08f, 480f, 560f);
             var c = Panel(rect, null, false);
             Fill(new Rect(rect.x, rect.y, rect.width, 3f), Accent);
 
             GUI.Label(new Rect(c.x, c.y, c.width, 32f), "SOLAR MAJESTY", _banner);
-            GUI.Label(new Rect(c.x, c.y + 34f, c.width, 32f), "You are the Overseer. Never command the heroes.", _muted);
-            GUI.Label(new Rect(c.x, c.y + 68f, c.width, 28f), "Click a world to drop.", _wrap);
-            GUI.Label(new Rect(c.x, c.y + 98f, c.width, 14f), ReplayRules.HudTag, _micro);
+            GUI.Label(new Rect(c.x, c.y + 34f, c.width, 16f), "You are the Overseer. Never command the heroes.", _muted);
+            GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f), "LUNA  →  MARS    ·    click the orrery    ·    Earth / Belt / Europa parked", _wrap);
+            GUI.Label(new Rect(c.x, c.y + 68f, c.width, 14f), ReplayRules.HudTag, _micro);
+            GUI.Label(new Rect(c.x, c.y + 86f, c.width, 40f),
+                "Luna is the first hour. Mars is the colony. Or click a world on the orrery. Post bounties, let greedy robots choose.",
+                _wrap);
 
             if (_confirmNewGame)
             {
-                GUI.Label(new Rect(c.x, c.y + 124f, c.width, 56f),
-                    "This wipes the continue slot and campaign unlocks. Then click a world to drop.",
+                GUI.Label(new Rect(c.x, c.y + 130f, c.width, 48f),
+                    CampaignProgress.DropConfirmDetail(_pendingNewGameBody),
                     _wrap);
-                if (GUI.Button(new Rect(c.x, c.y + 188f, c.width, 40f), "WIPE AND RETURN TO SYSTEM", _chipOn))
+                if (GUI.Button(new Rect(c.x, c.y + 186f, c.width, 40f),
+                        CampaignProgress.DropConfirmLabel(_pendingNewGameBody), _chipOn))
                 {
                     _confirmNewGame = false;
-                    _loop.WipeCampaignToTitle();
+                    _loop.StartNewGame(_pendingNewGameBody);
                 }
                 if (GUI.Button(new Rect(c.x, c.y + 236f, c.width, 36f), "BACK", _chipOff))
                     _confirmNewGame = false;
@@ -2168,15 +2179,46 @@ namespace SolarMajesty
                 return;
             }
 
-            float y = c.y + 124f;
-            if (GUI.Button(new Rect(c.x, y, c.width, 40f), "NEW GAME", _chipOn))
+            float y = c.y + 130f;
+            var drop = CampaignProgress.NewGameBody;
+            if (GUI.Button(new Rect(c.x, y, c.width, 40f), CampaignProgress.DropButtonLabel(drop), _chipOn))
             {
                 if (DemoSettings.SaveExists)
+                {
+                    _pendingNewGameBody = drop;
                     _confirmNewGame = true;
+                }
                 else
-                    Notify("Click a world to drop.", 2.4f);
+                    _loop.StartNewGame(drop);
             }
-            y += 48f;
+            y += 44f;
+            if (drop == CelestialBodyId.Luna)
+            {
+                if (GUI.Button(new Rect(c.x, y, c.width, 32f), "SKIP LUNA HOUR  ·  Mars drop", _chipOff))
+                {
+                    if (DemoSettings.SaveExists)
+                    {
+                        _pendingNewGameBody = CelestialBodyId.Mars;
+                        _confirmNewGame = true;
+                    }
+                    else
+                        _loop.StartNewGame(CelestialBodyId.Mars);
+                }
+            }
+            else
+            {
+                if (GUI.Button(new Rect(c.x, y, c.width, 32f), "REPLAY LUNA HOUR", _chipOff))
+                {
+                    if (DemoSettings.SaveExists)
+                    {
+                        _pendingNewGameBody = CelestialBodyId.Luna;
+                        _confirmNewGame = true;
+                    }
+                    else
+                        _loop.StartNewGame(CelestialBodyId.Luna);
+                }
+            }
+            y += 40f;
 
             GUI.enabled = DemoSettings.SaveExists;
             if (GUI.Button(new Rect(c.x, y, c.width, 40f), DemoSettings.ContinueButtonLabel(), _chipOff))

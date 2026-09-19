@@ -24,7 +24,7 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 ---
 
-Play opens on the **title screen** — a solar-system orrery, not a frozen drop. **Click a world** to drop there (Shift+click a locked outer world). **New Game** wipes the continue slot and returns to the system (confirms if a save exists). **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna poses, specialist HP/poses, den scouted/cleared, node remaining, mission hold, formed parties, HAB levy purses, and watchtower lasers. **Esc** pauses (Resume / Settings / Title / Quit). Tutorial is six skippable beats (Colony Commons → airlock → HAB → workshop → flag → TECH); Settings can replay it.
+Play opens on the **title screen** — a solar-system orrery. **Click a world** to drop (Shift+click a locked outer world). **New Game** starts the **Luna** empty drop (skipable first hour; confirms wipe if a save exists). Returning players, or **Skip Luna hour**, drop **Mars**. Earth / Belt / Europa are parked (Shift+click chips). **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna poses, specialist HP/poses, den scouted/cleared, node remaining, mission hold, formed parties, HAB levy purses, and watchtower lasers. **Esc** pauses (Resume / Settings / Title / Quit). Tutorial is six skippable beats (Colony Commons → airlock → HAB → workshop → flag → TECH); Settings can replay it.
 
 ## Controls
 
@@ -60,7 +60,7 @@ Play opens on the **title screen** — a solar-system orrery, not a frozen drop.
 
 Speak while playing (fresh prefs / Earth):
 
-1. **Title** — click Earth on the orrery (or New Game if you need a wipe). Empty drop: produced meadow + cobalt sky + carbon/orange claim chevrons; no buildings. Starter stockpile is loaded. First-run beats (Colony Commons → airlock → HAB → workshop robot → flag → TECH) are skippable.
+1. **Title** — New Game for the **Luna** hour, or click a world on the orrery. Empty drop, no starter robots. First-run beats (Colony Commons → airlock → HAB → workshop robot → flag → TECH) are skippable. Skip Luna hour drops Mars. Earth picnic is parked (Shift+click).
 2. **Build (B)** — **Colony Commons** (key 1, HUD **COMMONS**) on the claim → **Airlock Junction** snapped to a face socket → dock **HAB** then a **workshop** onto airlock ends (Lego campus). Humans stay in HABs; robots fabricate from workshops.
 3. **TECH · T** — once the LAB is up, Field Survey ticks; completions auto-queue toward **Lunar Rocket**.
 4. **Threat** — **F2 ClearThreat** on a den; dens checkbox fills as lairs go quiet.
@@ -95,7 +95,7 @@ Run **[SMOKE_TEST.md](SMOKE_TEST.md)** (10-minute boot, then 20-minute Earth, th
 
 ### Must-pass
 
-- [ ] Title → click Earth → empty drop; Continue restores that body's campus + stockpile/research + flags/fauna/HP
+- [ ] Title → New Game → Luna empty drop; Skip Luna hour → Mars; orrery click still drops an unlocked world; Continue restores that body's campus + stockpile/research + flags/fauna/HP
 - [ ] Six skippable tutorial beats, including workshop robots
 - [ ] No click-to-move; greed gate (Engineer ignores cheap Build)
 - [ ] Three conquest gates: dens, sustain (Colony Commons + pop + farm + mine), launch (tech + Landing Pad)
