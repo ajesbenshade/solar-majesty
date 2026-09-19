@@ -80,7 +80,7 @@ namespace SolarMajesty
             new FlagDecree(EarthSealTheNearDens, CelestialBodyId.Earth, FlagType.ClearThreat,
                 "Seal the Near Dens", "Combat gate — three dens."),
             new FlagDecree(EarthCharterTheHall, CelestialBodyId.Earth, FlagType.ResearchSite,
-                "Charter the Hall", "Science toward Guild Charter, then assign a class."),
+                "Charter the Hall", "Science toward Guild Charter, then dock Horizon, Anvil, Aegis, or Triage."),
             new FlagDecree(EarthStageTheLunarRocket, CelestialBodyId.Earth, FlagType.Build,
                 "Stage the Lunar Rocket", "Pad labour. Pair with Lunar Rocket research."),
 

@@ -27,6 +27,12 @@ namespace SolarMajesty
         public const float MaxCenterSeparationCells = 12f;
 
         /// <summary>
+        /// Empty dirt between Commons and still landmark yards (pad / PWR / extractors).
+        /// SM_Capture 2026-09-11 packed pad onto the Commons apron; concept wants separate pads.
+        /// </summary>
+        public const int LandmarkGapCells = 3;
+
+        /// <summary>
         /// CaptureStill Game-tab is short-wide (~2.4). Play snap stays
         /// <see cref="PlayCampusOrthoSize"/> (10) so the player can place yards.
         /// </summary>
@@ -418,7 +424,8 @@ namespace SolarMajesty
             int width,
             int height,
             BoundsOk bounds,
-            out Vector2Int origin)
+            out Vector2Int origin,
+            int minGap = 0)
         {
             origin = default;
             if (placer == null) return false;
@@ -427,8 +434,9 @@ namespace SolarMajesty
 
             var faces = PreferFaces(habFace);
             var candidates = new List<Vector2Int>(96);
-            CollectCandidates(commons, width, height, faces, candidates);
-            CollectAroundPieces(placer, width, height, candidates);
+            CollectCandidates(commons, width, height, faces, candidates, minGap);
+            if (minGap <= 0)
+                CollectAroundPieces(placer, width, height, candidates);
             CollectSpiral(commons, width, height, candidates);
 
             var seen = new HashSet<long>();
@@ -837,6 +845,61 @@ namespace SolarMajesty
             return TryNext(placer, commons, habFace, side, side, bounds, out _);
         }
 
+        public static bool TryFindHab(BuildingPlacer placer, out BuildingPlacer.CampusPiece hab)
+        {
+            hab = default;
+            if (placer == null) return false;
+            var pieces = placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                if (pieces[i].Category == BuildingCategory.Habitat)
+                {
+                    hab = pieces[i];
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Origin past <paramref name="piece"/> on <paramref name="face"/>, with dirt gap.</summary>
+        public static Vector2Int FlushBeyond(
+            BuildingPlacer.CampusPiece piece,
+            BuildingPlacer.Cardinal face,
+            int width,
+            int height,
+            int gap = 0) =>
+            FlushOrigin(piece, face, width, height, gap);
+
+        /// <summary>
+        /// Concept layout: pad past the HAB, solar north of Commons, industrial opposite HAB.
+        /// Empty dirt between yards. No greenhouse.
+        /// </summary>
+        public static bool TryConceptPad(
+            BuildingPlacer placer,
+            BuildingPlacer.CampusPiece commons,
+            BuildingPlacer.Cardinal habFace,
+            BoundsOk bounds,
+            out Vector2Int origin)
+        {
+            origin = default;
+            if (placer == null) return false;
+            int gap = LandmarkGapCells;
+            if (TryFindHab(placer, out var hab))
+            {
+                origin = FlushBeyond(hab, habFace, PadSize, PadSize, gap);
+                if (placer.CanFitRect(origin, PadSize, PadSize) &&
+                    (bounds == null || bounds(origin, PadSize, PadSize)))
+                    return true;
+            }
+
+            origin = FlushOrigin(commons, habFace, PadSize, PadSize, gap);
+            if (placer.CanFitRect(origin, PadSize, PadSize) &&
+                (bounds == null || bounds(origin, PadSize, PadSize)))
+                return true;
+            return TryNext(placer, commons, habFace, PadSize, PadSize, bounds, out origin, gap);
+        }
+
         public static Vector2Int FlushOrigin(
             BuildingPlacer.CampusPiece commons,
             BuildingPlacer.Cardinal face,
@@ -867,24 +930,28 @@ namespace SolarMajesty
             int width,
             int height,
             BuildingPlacer.Cardinal[] faces,
-            List<Vector2Int> dest)
+            List<Vector2Int> dest,
+            int minGap = 0)
         {
             int cx = commons.Origin.x;
             int cy = commons.Origin.y;
             int cw = commons.Width;
             int ch = commons.Height;
+            minGap = Mathf.Max(0, minGap);
 
             // E/W/N flush first, then corners, South last — keep the still in CampusOrthoSize.
-            AddFlushFaces(commons, width, height, faces, dest, skipSouth: true, gap: 0);
+            if (minGap <= 0)
+            {
+                AddFlushFaces(commons, width, height, faces, dest, skipSouth: true, gap: 0);
+                dest.Add(new Vector2Int(cx + cw, cy + ch));
+                dest.Add(new Vector2Int(cx - width, cy + ch));
+                dest.Add(new Vector2Int(cx + cw, cy - height));
+                dest.Add(new Vector2Int(cx - width, cy - height));
+                dest.Add(FlushOrigin(commons, BuildingPlacer.Cardinal.South, width, height, 0));
+            }
 
-            dest.Add(new Vector2Int(cx + cw, cy + ch));
-            dest.Add(new Vector2Int(cx - width, cy + ch));
-            dest.Add(new Vector2Int(cx + cw, cy - height));
-            dest.Add(new Vector2Int(cx - width, cy - height));
-
-            dest.Add(FlushOrigin(commons, BuildingPlacer.Cardinal.South, width, height, 0));
-
-            for (int gap = 1; gap <= 2; gap++)
+            int gapMax = Mathf.Max(2, minGap + 1);
+            for (int gap = Mathf.Max(1, minGap); gap <= gapMax; gap++)
             {
                 AddFlushFaces(commons, width, height, faces, dest, skipSouth: true, gap: gap);
                 dest.Add(FlushOrigin(commons, BuildingPlacer.Cardinal.South, width, height, gap));

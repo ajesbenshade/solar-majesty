@@ -330,10 +330,11 @@ namespace SolarMajesty
                         ResourceAmount c = data.upkeepPerMinute[i];
                         int amt = Mathf.Max(0, Mathf.RoundToInt(c.amount * scale));
                         if (amt <= 0) continue;
+                        if (c.resource == ResourceId.WaterIce)
+                            continue;
                         int paid = _resources.SpendUpTo(c.resource, amt);
                         if (c.resource == ResourceId.Power) spentPower += paid;
                         else if (c.resource == ResourceId.Metals) spentMet += paid;
-                        else if (c.resource == ResourceId.WaterIce) spentIce += paid;
                     }
                 }
             }

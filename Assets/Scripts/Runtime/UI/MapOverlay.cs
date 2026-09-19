@@ -175,7 +175,9 @@ namespace SolarMajesty
             {
                 var s = structures[i];
                 if (s == null || !s.IsAlive) continue;
-                if (s.Category != BuildingCategory.Defense) continue;
+                bool cover = s.Category == BuildingCategory.Defense ||
+                             (s.IsWatchtower && s.LaserArmed);
+                if (!cover) continue;
                 Disc(s.WorldPosition, OverseerRules.BatteryRange, CoverGood);
                 covered.Add(s.WorldPosition);
             }
@@ -183,7 +185,9 @@ namespace SolarMajesty
             for (int i = 0; i < structures.Count; i++)
             {
                 var s = structures[i];
-                if (s == null || !s.IsAlive || s.Category == BuildingCategory.Defense) continue;
+                if (s == null || !s.IsAlive) continue;
+                if (s.Category == BuildingCategory.Defense || (s.IsWatchtower && s.LaserArmed))
+                    continue;
 
                 bool safe = false;
                 for (int c = 0; c < covered.Count; c++)

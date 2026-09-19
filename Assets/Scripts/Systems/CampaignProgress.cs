@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Campaign unlock spine: Earth tutorial → Luna → Mars.
+    /// Campaign unlock spine: Earth → Luna → Mars → Belt → Europa.
     /// Persists highest unlocked body; free body-hopping is limited to unlocked worlds.
     /// </summary>
     public static class CampaignProgress
@@ -41,6 +41,21 @@ namespace SolarMajesty
             int n = (int)current + 1;
             if (n > (int)CelestialBodyCatalog.Last) return null;
             return (CelestialBodyId)n;
+        }
+
+        /// <summary>
+        /// Raise the campaign spine through <paramref name="id"/> (inclusive). Used when a
+        /// fresh title click starts on an outer world so Earth…id are all playable.
+        /// </summary>
+        public static void UnlockThrough(CelestialBodyId id)
+        {
+            if ((int)id <= (int)HighestUnlocked) return;
+            int last = (int)CelestialBodyCatalog.Last;
+            int next = Mathf.Clamp((int)id, (int)CelestialBodyId.Earth, last);
+            HighestUnlocked = (CelestialBodyId)next;
+            PlayerPrefs.SetInt(MaxKey, next);
+            PlayerPrefs.SetInt(FreshKey, 1);
+            PlayerPrefs.Save();
         }
 
         /// <summary>Call when the current body is conquered (all gates met / win dismissed into next).</summary>

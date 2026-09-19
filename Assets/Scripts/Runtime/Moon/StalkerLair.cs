@@ -33,6 +33,7 @@ namespace SolarMajesty
             BuildMarker(
                 rimColor ?? new Color(0.18f, 0.08f, 0.08f),
                 pitColor ?? new Color(0.08f, 0.04f, 0.05f));
+            ApplyFoggedLook();
         }
 
         public void SpawnInitial(Transform parent)
@@ -88,6 +89,20 @@ namespace SolarMajesty
                 _spawned.Add(extra);
         }
 
+        /// <summary>Continue restore. Does not kill fauna — RestoreFauna owns living threats.</summary>
+        public void RestoreChart(bool wasCleared, bool wasScouted)
+        {
+            if (wasCleared)
+            {
+                _spawned.Clear();
+                MarkCleared();
+                return;
+            }
+
+            if (wasScouted)
+                MarkScouted();
+        }
+
         /// <summary>ClearThreat near this den — kill remaining fauna and silence the lair.</summary>
         public void ForceClear()
         {
@@ -127,7 +142,41 @@ namespace SolarMajesty
         {
             if (cleared || IsScouted) return;
             IsScouted = true;
+            SetMarkerVisible(true);
             ApplyScoutedLook();
+        }
+
+        private void ApplyFoggedLook()
+        {
+            if (IsScouted || cleared) return;
+            SetMarkerVisible(false);
+            var hint = transform.Find("FogHint");
+            if (hint == null)
+            {
+                var go = Prim(PrimitiveType.Sphere, "FogHint",
+                    new Vector3(0f, 0.12f, 0f),
+                    new Vector3(1.1f, 0.18f, 0.95f),
+                    Quaternion.identity);
+                hint = go.transform;
+            }
+
+            hint.gameObject.SetActive(true);
+            SetColor(hint.gameObject, new Color(0.12f, 0.10f, 0.11f, 0.55f));
+        }
+
+        private void SetMarkerVisible(bool on)
+        {
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                var child = transform.GetChild(i);
+                if (child.name == "FogHint")
+                {
+                    child.gameObject.SetActive(!on);
+                    continue;
+                }
+
+                child.gameObject.SetActive(on);
+            }
         }
 
         private void ApplyScoutedLook()
@@ -145,6 +194,9 @@ namespace SolarMajesty
             if (cleared) return;
             cleared = true;
             gameObject.name = "StalkerLair_Cleared";
+            SetMarkerVisible(true);
+            var hint = transform.Find("FogHint");
+            if (hint != null) hint.gameObject.SetActive(false);
             ApplyClearedLook();
             DemoVfx.ClaimRing(transform.position, new Color(0.35f, 0.9f, 0.55f));
             Debug.Log("[Lair] Cleared stalker den.");

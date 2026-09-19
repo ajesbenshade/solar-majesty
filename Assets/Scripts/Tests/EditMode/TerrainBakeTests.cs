@@ -35,12 +35,12 @@ namespace SolarMajesty.Tests
             Vector3 crater = origin + TerrainDataBake.SignatureCraterLocal;
             Vector3 canyon = origin + TerrainDataBake.CanyonLocal;
 
-            Assert.Greater(bake.SampleHeight(mesa.x, mesa.z), 4f, "DEM mesa lip");
+            Assert.Greater(bake.SampleHeight(mesa.x, mesa.z), 4f, "seeded mesa lip");
             float craterH = bake.SampleHeight(crater.x, crater.z);
-            Assert.Less(craterH, -2f, $"DEM crater bowl sampled={craterH:0.###}");
+            Assert.Less(craterH, -2f, $"signature crater bowl sampled={craterH:0.###}");
             float canyonH = bake.SampleHeight(canyon.x, canyon.z);
             float canyonRaw = TerrainDataBake.Height(canyon.x, canyon.z, 11, CelestialBodyId.Mars);
-            Assert.Less(canyonH, -2f, $"DEM canyon sampled={canyonH:0.###} raw={canyonRaw:0.###}");
+            Assert.Less(canyonH, -2f, $"seeded canyon sampled={canyonH:0.###} raw={canyonRaw:0.###}");
 
             Vector3 wall = crater + new Vector3(0.53f, 0f, -0.85f) * 3.2f;
             const float e = 1.6f;
@@ -56,30 +56,40 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void Mars_HasNoCraterMeshes()
+        public void MarsAndLuna_ScatterCraters()
         {
-            Assert.AreEqual(0, CelestialBodyCatalog.Mars().CraterCount);
+            Assert.Greater(CelestialBodyCatalog.Mars().CraterCount, 0);
+            Assert.Greater(CelestialBodyCatalog.Luna().CraterCount, 0);
+        }
+
+        [Test]
+        public void DifferentSeeds_ChangeFarRelief()
+        {
+            var a = TerrainDataBake.Generate(384f, 384f, 7, CelestialBodyCatalog.Mars());
+            var b = TerrainDataBake.Generate(384f, 384f, 99, CelestialBodyCatalog.Mars());
+            Vector3 far = ColonyLayout.CampusOrigin + new Vector3(64f, 0f, 48f);
+            float ha = a.SampleHeight(far.x, far.z);
+            float hb = b.SampleHeight(far.x, far.z);
+            Assert.Greater(Mathf.Abs(ha - hb), 0.05f, "AoE2-style maps must reroll off-campus terrain with the seed");
         }
 
         [Test]
         public void Luna_CampusPadStaysFlat_AndBowlIsDeep()
         {
-            Assert.AreEqual(0, CelestialBodyCatalog.Luna().CraterCount);
-            Assert.AreEqual(
-                TerrainDataBake.AmplitudeFor(CelestialBodyCatalog.Mars()),
-                TerrainDataBake.AmplitudeFor(CelestialBodyCatalog.Luna()),
-                "Luna DEM metres must share Mars amplitude so cavity/exposure do not clamp");
-            Assert.IsNotNull(
-                Resources.Load<Texture2D>(LunaDemSettings.HeightResourcePath),
-                "LunaHeight must be a readable Resources texture");
             var bake = TerrainDataBake.Generate(384f, 384f, 7, CelestialBodyCatalog.Luna());
             Vector3 origin = ColonyLayout.CampusOrigin;
             Assert.AreEqual(0f, Mathf.Abs(bake.SampleHeight(origin.x, origin.z)), 0.05f);
             Assert.AreEqual(0f, Mathf.Abs(bake.SampleHeight(LaunchSite.PadWorld.x, LaunchSite.PadWorld.z)), 0.08f);
             Vector3 crater = origin + TerrainDataBake.SignatureCraterLocal;
-            Assert.Less(bake.SampleHeight(crater.x, crater.z), -2f, "Linné bowl");
-            float far = bake.SampleHeight(origin.x + 16f, origin.z + 18f);
-            Assert.Greater(Mathf.Abs(far), 1.5f, "Luna far-third has relief");
+            Assert.Less(bake.SampleHeight(crater.x, crater.z), -2f, "signature Luna bowl");
+            float minH = float.MaxValue;
+            float maxH = float.MinValue;
+            for (int i = 0; i < bake.Heights.Length; i++)
+            {
+                if (bake.Heights[i] < minH) minH = bake.Heights[i];
+                if (bake.Heights[i] > maxH) maxH = bake.Heights[i];
+            }
+            Assert.Greater(maxH - minH, 2.5f, "Luna height field has AoE2-style relief");
 
             Color ridge = TerrainDataBake.SplatFor(CelestialBodyId.Luna, 0.9f, 0.1f);
             Assert.Less(ridge.b, 0.12f, "Luna must not lay a grass cap on high flats");

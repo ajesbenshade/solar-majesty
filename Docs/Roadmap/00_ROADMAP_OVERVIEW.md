@@ -49,8 +49,9 @@
 - [Phase 4 exit review (blocked)](PHASE_4_EXIT.md)
 - [Phase 5 – Production Values & Ship](06_PHASE_5_PRODUCTION_VALUES_SHIP.md)
 - [Mars colony — Majesty loops](../MARS_COLONY_MAJESTY_LOOPS.md) (gameplay north star after Phase 4; not EXIT)
+- [Flag-hero local LLM](FLAG_HERO_LOCAL_LLM.md) (parked stretch; typed flag orders + bundled llama.cpp. Not Phase 4. Not Phase 5 ship. Grok advisor stays catalog.)
 
 ---
 
-*Last updated: 2026-09-10*  
-*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 visual target in progress (exit blocked: spaced overseer still still required; packed VisualTarget PNG retired). Phase 5 (ship) after Phase 4. Proposed post-Phase-4 campaign: Luna tutorial → Mars colony ([MARS_COLONY_MAJESTY_LOOPS.md](../MARS_COLONY_MAJESTY_LOOPS.md)); not started.*
+*Last updated: 2026-09-11*  
+*Status: Phase 3 complete. Phase 2 complete. Phase 0 locked. Phase 1 packaged. Phase 4 visual target in progress (exit blocked: spaced overseer still still required; packed VisualTarget PNG retired). Phase 5 (ship) after Phase 4. Proposed post-Phase-4 campaign: Luna tutorial → Mars colony ([MARS_COLONY_MAJESTY_LOOPS.md](../MARS_COLONY_MAJESTY_LOOPS.md)); not started. Flag-hero local LLM packet parked ([FLAG_HERO_LOCAL_LLM.md](FLAG_HERO_LOCAL_LLM.md)).*

@@ -74,6 +74,11 @@ namespace SolarMajesty
                     ? $"DOWN {_agent.RecoverSecondsLeft:F0}s"
                     : $"L{_agent.Level} DOWN";
             }
+            else if (_agent.LevyCarried > 0)
+            {
+                c = new Color(0.98f, 0.82f, 0.22f);
+                text = $"LEVY {_agent.LevyCarried}";
+            }
             else if (!string.IsNullOrEmpty(_agent.RefusalChip))
             {
                 c = new Color(0.96f, 0.42f, 0.08f);

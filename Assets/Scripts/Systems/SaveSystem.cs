@@ -127,6 +127,7 @@ namespace SolarMajesty
             save.fauna ??= new List<SaveFauna>();
             save.nodes ??= new List<SaveNode>();
             save.lairs ??= new List<SaveLair>();
+            save.parties ??= new List<SaveParty>();
             save.research.unlocked ??= new List<int>();
             return true;
         }

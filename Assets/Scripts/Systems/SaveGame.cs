@@ -38,6 +38,7 @@ namespace SolarMajesty
         public List<SaveFauna> fauna = new List<SaveFauna>();
         public List<SaveNode> nodes = new List<SaveNode>();
         public List<SaveLair> lairs = new List<SaveLair>();
+        public List<SaveParty> parties = new List<SaveParty>();
 
         /// <summary>Human-readable one-liner for a load menu row.</summary>
         public string Describe()
@@ -123,6 +124,8 @@ namespace SolarMajesty
         public int progressMilli;
         public bool villageHab;
         public float health;
+        public int levyPurse;
+        public bool laserArmed;
     }
 
     [Serializable]
@@ -185,5 +188,12 @@ namespace SolarMajesty
         public float pz;
         public bool cleared;
         public bool scouted;
+    }
+
+    [Serializable]
+    public sealed class SaveParty
+    {
+        public int leaderClass;
+        public List<int> memberClasses = new List<int>();
     }
 }

@@ -23,6 +23,13 @@ namespace SolarMajesty
         /// <summary>Orange ring sits this far outside the hull so the tube meets it flush.</summary>
         public const float DockCollarOut = 0.03f;
 
+        public static void DestroyNow(Object obj)
+        {
+            if (obj == null) return;
+            if (Application.isPlaying) Object.Destroy(obj);
+            else Object.DestroyImmediate(obj);
+        }
+
         public static void EnsureUrpMaterials(GameObject root)
         {
             IndustrialArtDressing.Apply(root);
