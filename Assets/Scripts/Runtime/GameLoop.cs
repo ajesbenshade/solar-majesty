@@ -113,6 +113,15 @@ namespace SolarMajesty
         public DemoScreen Screen { get; private set; } = DemoScreen.Title;
         public bool IsPlaying => Screen == DemoScreen.Playing;
         public bool AllowsCamera => Screen == DemoScreen.Playing || Screen == DemoScreen.Title;
+
+        /// <summary>
+        /// True while a colony is in progress (or settings opened from pause). Ironman cannot
+        /// be flipped mid-run; the title screen still edits the next New Game preference.
+        /// </summary>
+        public bool RunConfigLocked =>
+            Screen == DemoScreen.Playing
+            || Screen == DemoScreen.Paused
+            || (Screen == DemoScreen.Settings && _settingsReturn == DemoScreen.Paused);
         public const int TutorialCompleteStep = 6;
         public int TutorialStep { get; private set; }
         public bool IsTutorialActive => !DemoSettings.TutorialDone && TutorialStep < TutorialCompleteStep;
@@ -658,11 +667,13 @@ namespace SolarMajesty
             Screen = DemoScreen.Playing;
             Time.timeScale = SimSpeed.Multiplier;
             int piecesBefore = Placer != null ? Placer.Pieces.Count : 0;
+            bool restoredSave = false;
             if (loadStockpile)
             {
                 if (SaveSystem.TryRead(SaveSystem.AutosaveSlot, out SaveGame save))
                 {
                     ApplySave(save);
+                    restoredSave = true;
                 }
                 else
                 {
@@ -672,6 +683,9 @@ namespace SolarMajesty
                     RetryUnpaidCorpses();
                 }
             }
+            if (!restoredSave)
+                ReplayRules.LatchRun();
+            Achievements.IronmanActive = ReplayRules.IronmanRun;
             bool restoredCampus = loadStockpile &&
                                   Placer != null &&
                                   Placer.Pieces.Count > piecesBefore;
@@ -698,7 +712,8 @@ namespace SolarMajesty
             BeginNarrativeSession();
             if (ReplayRules.Mode != ColonyRunMode.Campaign ||
                 ReplayRules.Challenge != ChallengeId.None ||
-                ReplayRules.Stance != DoctrineStance.Balanced)
+                ReplayRules.Stance != DoctrineStance.Balanced ||
+                ReplayRules.IronmanRun)
             {
                 LogOverseer($"Replay: {ReplayRules.HudTag}. Doctrine nudges hunger/courage/workshop pull only.");
             }
@@ -3326,11 +3341,23 @@ namespace SolarMajesty
 
         public void RestartMission()
         {
+            if (ReplayRules.BlocksManualSavesAndReloads)
+            {
+                LogOverseer("Ironman — no second draft. This body cannot be restarted.");
+                return;
+            }
             if (advanceSeedOnRestart)
                 BodySeed.AdvanceForNextConquest();
             DemoAudio.PlayRetry();
             DemoSettings.RequestBootIntoPlay();
             ReloadActiveScene();
+        }
+
+        /// <summary>Body gate met — increment conquest count and evaluate achievements (Ironman, Skinflint, Clean Sheet).</summary>
+        public void NoteBodyConquered()
+        {
+            Stats.BodiesConquered++;
+            Achievements.Evaluate(Stats);
         }
 
         /// <summary>Same-body reseed (sandbox rematch).</summary>
@@ -4062,6 +4089,11 @@ namespace SolarMajesty
         /// <summary>Player-triggered save into one of the numbered slots.</summary>
         public bool SaveToSlot(int slot)
         {
+            if (ReplayRules.BlocksManualSavesAndReloads)
+            {
+                LogOverseer("Ironman — manual saves are closed. Autosave still covers a crash.");
+                return false;
+            }
             bool ok = SaveSystem.Write(slot, CaptureSave($"slot {slot}"));
             LogOverseer(ok ? $"Colony recorded to slot {slot}." : $"Slot {slot} write failed.");
             PlaytestTelemetry.Record("save", "slot", slot);
@@ -4112,9 +4144,10 @@ namespace SolarMajesty
                 save.research.bankedScience = Research.BankedScience;
             }
 
-            save.replay.mode = (int)ReplayRules.Mode;
-            save.replay.challenge = (int)ReplayRules.Challenge;
-            save.replay.stance = (int)ReplayRules.Stance;
+                save.replay.mode = (int)ReplayRules.Mode;
+                save.replay.challenge = (int)ReplayRules.Challenge;
+                save.replay.stance = (int)ReplayRules.Stance;
+                save.replay.ironman = ReplayRules.IronmanRun;
 
             var slots = CaptureCampusSlots();
             for (int i = 0; i < slots.Count; i++)
@@ -4224,6 +4257,9 @@ namespace SolarMajesty
                 if (save.settlement.hasOutpost)
                     Settlement.ClaimOutpost();
             }
+
+            ReplayRules.ApplyIronmanFromSave(save.replay);
+            Achievements.IronmanActive = ReplayRules.IronmanRun;
 
             LoadRosterMemory();
             RestoreCampus();

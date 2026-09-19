@@ -404,6 +404,7 @@ namespace SolarMajesty
             if (!_winLatched)
             {
                 _winLatched = true;
+                _loop?.NoteBodyConquered();
                 DemoAudio.PlayVictory();
                 DemoVfx.ClaimRing(
                     ColonyLayout.CampusOriginFor(_loop.FocusedCampus),

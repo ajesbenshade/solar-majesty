@@ -27,7 +27,7 @@ is in it being honest, not in it being all ticked.
 - [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs))
 - [x] Named robots with service records ([SpecialistIdentity.cs](../Assets/Scripts/Systems/SpecialistIdentity.cs))
 - [ ] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`)
-- [ ] Ironman wired to the run configuration (the achievement hook exists, the mode toggle does not)
+- [x] Ironman wired to the run configuration (`ReplayRules.Ironman` chip, latched at New Game / Continue; blocks manual saves and body restarts; No Second Draft evaluates on body conquest)
 
 ## Look
 

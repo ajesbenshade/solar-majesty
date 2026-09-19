@@ -37,12 +37,25 @@ namespace SolarMajesty
         public const string ModeKey = "SM_Replay_Mode";
         public const string ChallengeKey = "SM_Replay_Challenge";
         public const string StanceKey = "SM_Replay_Stance";
+        public const string IronmanKey = "SM_Replay_Ironman";
 
         public static ColonyRunMode Mode = ColonyRunMode.Campaign;
         public static ChallengeId Challenge = ChallengeId.None;
         public static DoctrineStance Stance = DoctrineStance.Balanced;
 
+        /// <summary>PlayerPrefs preference. Latches into <see cref="IronmanRun"/> at New Game / Continue.</summary>
+        public static bool Ironman;
+
+        /// <summary>
+        /// In-progress run latch. Manual saves and body restarts consult this so a mid-session
+        /// settings flip cannot cheese No Second Draft or un-ironman a live attempt.
+        /// </summary>
+        public static bool IronmanRun { get; private set; }
+
         public static bool IsEndless => Mode == ColonyRunMode.Endless;
+
+        /// <summary>True once the current run latched Ironman — blocks SaveToSlot and RestartMission.</summary>
+        public static bool BlocksManualSavesAndReloads => IronmanRun;
 
         /// <summary>
         /// Austere Earth: 340 MET × 0.55 = 187. Commons 70 + airlock 8 + HAB 50 + workshop 36 = 164.
@@ -94,6 +107,8 @@ namespace SolarMajesty
             _ => "BALANCED"
         };
 
+        public static string IronmanLabel => Ironman ? "IRONMAN" : "OPEN";
+
         public static string HudTag
         {
             get
@@ -101,6 +116,7 @@ namespace SolarMajesty
                 string tag = ModeLabel;
                 if (Challenge != ChallengeId.None) tag += "  ·  " + ChallengeLabel;
                 if (Stance != DoctrineStance.Balanced) tag += "  ·  " + StanceLabel;
+                if (IronmanRun || Ironman) tag += "  ·  IRONMAN";
                 return tag;
             }
         }
@@ -121,11 +137,17 @@ namespace SolarMajesty
             _ => "Standard: no challenge modifiers."
         };
 
+        public static string IronmanHint =>
+            Ironman
+                ? "Ironman: no manual saves, no body restart or abandon. Autosave still covers a crash. Latches at New Game / Continue."
+                : "Open run: manual slot saves and body restarts stay available.";
+
         public static void Load()
         {
             Mode = (ColonyRunMode)Mathf.Clamp(PlayerPrefs.GetInt(ModeKey, 0), 0, 1);
             Challenge = (ChallengeId)Mathf.Clamp(PlayerPrefs.GetInt(ChallengeKey, 0), 0, 3);
             Stance = (DoctrineStance)Mathf.Clamp(PlayerPrefs.GetInt(StanceKey, 0), 0, 3);
+            Ironman = PlayerPrefs.GetInt(IronmanKey, 0) == 1;
         }
 
         public static void Save()
@@ -133,7 +155,22 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(ModeKey, (int)Mode);
             PlayerPrefs.SetInt(ChallengeKey, (int)Challenge);
             PlayerPrefs.SetInt(StanceKey, (int)Stance);
+            PlayerPrefs.SetInt(IronmanKey, Ironman ? 1 : 0);
             PlayerPrefs.Save();
+        }
+
+        /// <summary>Copy the title-screen preference into the live run. Call from EnterPlaying when not restoring a save.</summary>
+        public static void LatchRun()
+        {
+            IronmanRun = Ironman;
+        }
+
+        /// <summary>Continue restores the saved latch so toggling the chip on title cannot un-ironman a slot.</summary>
+        public static void ApplyIronmanFromSave(SaveReplayState replay)
+        {
+            bool on = replay != null && replay.ironman;
+            Ironman = on;
+            IronmanRun = on;
         }
 
         public static void CycleMode() =>
@@ -144,5 +181,22 @@ namespace SolarMajesty
 
         public static void CycleStance() =>
             Stance = (DoctrineStance)(((int)Stance + 1) % 4);
+
+        public static void CycleIronman() => Ironman = !Ironman;
+
+        /// <summary>EditMode hygiene — does not wipe a player's live prefs unless tests call Save afterwards.</summary>
+        public static void ResetForTests()
+        {
+            Mode = ColonyRunMode.Campaign;
+            Challenge = ChallengeId.None;
+            Stance = DoctrineStance.Balanced;
+            Ironman = false;
+            IronmanRun = false;
+            PlayerPrefs.DeleteKey(ModeKey);
+            PlayerPrefs.DeleteKey(ChallengeKey);
+            PlayerPrefs.DeleteKey(StanceKey);
+            PlayerPrefs.DeleteKey(IronmanKey);
+            PlayerPrefs.Save();
+        }
     }
 }

@@ -1878,12 +1878,22 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, c.y + 32f, c.width, 32f),
                     mission != null ? mission.FailDetail : "The outpost is gone.", _body);
-                GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
-                    ReplayRules.IsEndless ? "TRY AGAIN — this body is lost." : "Retry this body, or return to title.", _muted);
-                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), "RESTART MISSION", _chipOn))
-                    _loop.RestartMission();
-                if (GUI.Button(new Rect(c.x + 176f, c.yMax - 30f, 140f, 28f), "TITLE", _chipOff))
-                    _loop.ReturnToTitle();
+                if (ReplayRules.BlocksManualSavesAndReloads)
+                {
+                    GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
+                        "Ironman — this body is lost. No restart.", _muted);
+                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 140f, 28f), "TITLE", _chipOff))
+                        _loop.ReturnToTitle();
+                }
+                else
+                {
+                    GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
+                        ReplayRules.IsEndless ? "TRY AGAIN — this body is lost." : "Retry this body, or return to title.", _muted);
+                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), "RESTART MISSION", _chipOn))
+                        _loop.RestartMission();
+                    if (GUI.Button(new Rect(c.x + 176f, c.yMax - 30f, 140f, 28f), "TITLE", _chipOff))
+                        _loop.ReturnToTitle();
+                }
             }
             else
             {
@@ -2014,7 +2024,12 @@ namespace SolarMajesty
                 _loop.OpenSettings();
             if (GUI.Button(new Rect(c.x, c.y + 116f, c.width, 32f), "TITLE", _chipOff))
                 _loop.ReturnToTitle();
-            if (GUI.Button(new Rect(c.x, c.y + 156f, c.width, 32f), "ABANDON BODY  ·  new seed", _chipOff))
+            if (ReplayRules.BlocksManualSavesAndReloads)
+            {
+                GUI.Label(new Rect(c.x, c.y + 162f, c.width, 20f),
+                    "IRONMAN — no abandon, no new seed.", _muted);
+            }
+            else if (GUI.Button(new Rect(c.x, c.y + 156f, c.width, 32f), "ABANDON BODY  ·  new seed", _chipOff))
             {
                 DemoSettings.RequestBootIntoPlay();
                 _loop.RestartMission();
@@ -2026,7 +2041,7 @@ namespace SolarMajesty
         private void DrawSettings()
         {
             Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f, 0.78f));
-            float h = Mathf.Min(640f, Mathf.Max(420f, _sh - 36f));
+            float h = Mathf.Min(700f, Mathf.Max(460f, _sh - 24f));
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
             var c = Panel(rect, "Settings");
             float y = c.y;
@@ -2107,7 +2122,7 @@ namespace SolarMajesty
 
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 8f;
-            GUI.Label(new Rect(c.x, y, c.width, 14f), "REPLAY  ·  MODE / CHALLENGE / STANCE", _section);
+            GUI.Label(new Rect(c.x, y, c.width, 14f), "REPLAY  ·  MODE / CHALLENGE / STANCE / IRONMAN", _section);
             y += 18f;
 
             float half = (c.width - 8f) * 0.5f;
@@ -2119,17 +2134,28 @@ namespace SolarMajesty
                 ReplayRules.CycleChallenge();
             y += 32f;
 
-            if (Chip(new Rect(c.x, y, c.width, 26f),
+            if (Chip(new Rect(c.x, y, half, 26f),
                     $"STANCE  ·  {ReplayRules.StanceLabel}", ReplayRules.Stance != DoctrineStance.Balanced))
                 ReplayRules.CycleStance();
+            bool ironmanOn = _loop.RunConfigLocked ? ReplayRules.IronmanRun : ReplayRules.Ironman;
+            if (Chip(new Rect(c.x + half + 8f, y, half, 26f),
+                    $"IRON  ·  {(ironmanOn ? "ON" : "OFF")}", ironmanOn))
+            {
+                if (_loop.RunConfigLocked)
+                    Notify("Ironman latches at New Game. This run stays as started.", 3.5f);
+                else
+                    ReplayRules.CycleIronman();
+            }
             y += 30f;
 
             GUI.Label(new Rect(c.x, y, c.width, 48f),
                 ReplayRules.StanceHint + " " + ReplayRules.ChallengeHint,
                 _wrap);
-            y += 50f;
+            y += 48f;
+            GUI.Label(new Rect(c.x, y, c.width, 32f), ReplayRules.IronmanHint, _wrap);
+            y += 34f;
             GUI.Label(new Rect(c.x, y, c.width, 36f),
-                "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings.",
+                "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue.",
                 _wrap);
 
             if (GUI.Button(new Rect(c.x, c.yMax - 36f, c.width, 32f), "BACK  ·  Esc", _chipOn))
