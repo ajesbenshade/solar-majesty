@@ -1208,7 +1208,10 @@ namespace SolarMajesty
         private void DrawBuildingCard(ColonyStructure st)
         {
             const float cardW = 340f;
-            float cardH = st.IsGuild ? 172f : 148f;
+            bool yard = st.IsFobotYard;
+            bool wreckShop = st.IsWorkshop && st.HasPreferredClass &&
+                             _loop.HasWreckFor(st.PreferredClass);
+            float cardH = st.IsGuild || yard || wreckShop ? 188f : 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
             var c = Panel(rect, null);
@@ -1223,6 +1226,7 @@ namespace SolarMajesty
                 : st.IsGuild
                     ? (st.HasPreferredClass ? st.DisplayName : "Guild Hall · assign a class")
                     : st.IsWonder ? "Secret Project landmark"
+                    : st.IsFobotYard ? "Fobot Yard · wrecks wait"
                     : st.IsResidential ? "Habitat · colonists"
                     : st.Role.ToString();
             string worker = st.IsResidential
@@ -1253,6 +1257,22 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     "Humans stay in HABs. Outdoor work is robots from workshops.", _micro);
+            }
+            else if (st.IsFobotYard)
+            {
+                string wrecks = _loop.WreckSummary();
+                GUI.Label(new Rect(c.x, row, c.width, 22f),
+                    string.IsNullOrEmpty(wrecks)
+                        ? "Wrecks wait here. Pay credits to stand THIS ego up."
+                        : wrecks,
+                    _micro);
+                row += 24f;
+                int bill = _loop.FieldReviveMet;
+                if (Chip(new Rect(c.x, row, 140f, 22f), bill > 0 ? $"PAY {bill} MET" : "PAY YARD",
+                        bill > 0 && _loop.CanPayYard))
+                    _loop.PayFobotYard();
+                GUI.Label(new Rect(c.x + 148f, row + 4f, c.width - 148f, 16f),
+                    "Y  ·  no ICE  ·  120s", _micro);
             }
             else if (st.IsGuild)
             {
@@ -1296,6 +1316,16 @@ namespace SolarMajesty
                             ? $"Fabricates {ColonyStructure.ClassLabel(st.PreferredClass)} — flags nearby pull them."
                             : $"Building a {ColonyStructure.ClassLabel(st.PreferredClass)} robot…",
                     _micro);
+                var wreckClass = ColonyStructure.RobotClassForWorkshop(st.Category);
+                if (wreckClass.HasValue && _loop.HasWreckFor(wreckClass.Value))
+                {
+                    row += 24f;
+                    int met = OverseerRules.RefabMetals(st.SourceData);
+                    if (Chip(new Rect(c.x, row, 150f, 22f), $"RE-FAB L1 {met} MET", true))
+                        _loop.TryRefabRookie(st);
+                    GUI.Label(new Rect(c.x + 158f, row + 4f, c.width - 158f, 16f),
+                        "new chassis · wreck gone", _micro);
+                }
             }
             row += 26f;
 
@@ -1888,24 +1918,26 @@ namespace SolarMajesty
             else
             {
                 int met = _loop.FieldReviveMet;
-                int ice = _loop.FieldReviveIce;
                 GUI.Label(new Rect(c.x, c.y + 32f, c.width, 36f),
-                    $"SCRAPYARD REVIVE  {met} MET  {ice} ICE  (120s)", _body);
+                    $"FOBOT YARD  {met} MET  (120s)  ·  credits only", _body);
                 GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
-                    _loop.FieldReviveReadyIn > 0.5f
-                        ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Cost rises each revive."
-                        : "Paid from the workshop scrapyard. Cost rises each revive.", _muted);
-                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "SCRAPYARD REVIVE  ·  Y", _chipOn))
-                    _loop.RetryParty();
+                    !_loop.HasFobotYard
+                        ? "Dock a Fobot Yard (Inn). Y does not skip the building."
+                        : _loop.FieldReviveReadyIn > 0.5f
+                            ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Bill is by level, MET only."
+                            : "Inspect the yard or press Y. ICE is not on the bill.", _muted);
+                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "FOBOT YARD  ·  Y", _chipOn))
+                    _loop.PayFobotYard();
             }
         }
 
         private void Update()
         {
             if (_loop == null || !_loop.IsPlaying) return;
-            if (_loop.NeedsFieldRevive && !(_loop.Mission != null && _loop.Mission.IsLost) &&
+            if ((_loop.NeedsFieldRevive || _loop.CanPayYard) &&
+                !(_loop.Mission != null && _loop.Mission.IsLost) &&
                 Input.GetKeyDown(KeyCode.Y))
-                _loop.RetryParty();
+                _loop.PayFobotYard();
             if (!_loop.NeedsFieldRevive &&
                 !(_loop.Mission != null && _loop.Mission.IsLost))
                 _failLatched = false;

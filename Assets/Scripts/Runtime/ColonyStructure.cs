@@ -40,6 +40,7 @@ namespace SolarMajesty
         public bool ClassLocked { get; private set; }
         public bool HasPreferredClass { get; private set; }
 
+        public bool IsFobotYard => role == StructureRole.Inn || Category == BuildingCategory.Inn;
         public bool IsVillageHab => role == StructureRole.VillageHab;
         public bool IsWorkshop => role == StructureRole.Workshop;
         public bool IsGuild => role == StructureRole.Guild || Category == BuildingCategory.GuildHall;
@@ -454,9 +455,10 @@ namespace SolarMajesty
         private static string DefaultName(BuildingCategory cat, StructureRole role)
         {
             if (role == StructureRole.VillageHab) return "Village HAB";
-            if (role == StructureRole.Inn) return "Waystation Inn";
+            if (role == StructureRole.Inn) return "Fobot Yard";
             switch (cat)
             {
+                case BuildingCategory.Inn: return "Fobot Yard";
                 case BuildingCategory.Commons: return "Colony Commons";
                 case BuildingCategory.Habitat: return "Habitat";
                 case BuildingCategory.Farm: return "Greenhouse Farm";

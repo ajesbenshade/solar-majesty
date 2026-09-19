@@ -341,7 +341,7 @@ namespace SolarMajesty
 
         public void FieldRevive()
         {
-            if (_scrapped || !_incapacitated) return;
+            if (_scrapped) return;
             _incapacitated = false;
             _recoverTimer = 0f;
             healthNormalized = OverseerRules.ReviveHp;

@@ -392,5 +392,67 @@ namespace SolarMajesty.Tests
         {
             Assert.AreEqual(25, OverseerRules.RefabMetals(null));
         }
+
+        [Test]
+        public void YardBill_IsBaseAtLevelOneThenGrowsByOnePointFive()
+        {
+            Assert.AreEqual(40, OverseerRules.YardBill(1));
+            Assert.AreEqual(40, OverseerRules.YardBill(0), "level 0 clamps to L1");
+            Assert.AreEqual(60, OverseerRules.YardBill(2));
+            Assert.AreEqual(90, OverseerRules.YardBill(3));
+        }
+
+        [Test]
+        public void YardBill_CapsAtReviveCostMaxSteps()
+        {
+            int capped = OverseerRules.YardBill(1 + OverseerRules.ReviveCostMaxSteps);
+            Assert.AreEqual(capped, OverseerRules.YardBill(99));
+            Assert.Greater(capped, OverseerRules.YardBill(1));
+        }
+
+        [Test]
+        public void YardBill_UsesLevelNotReviveCountAlias()
+        {
+            Assert.AreEqual(OverseerRules.YardBill(4), OverseerRules.ReviveMetals(4));
+            Assert.AreNotEqual(OverseerRules.YardBill(1), OverseerRules.YardBill(4));
+        }
+
+        [Test]
+        public void ReviveIce_IsDroppedFromTheYardBill()
+        {
+            Assert.AreEqual(0, OverseerRules.ReviveIce);
+            Assert.AreEqual(0, OverseerRules.ReviveIceCost(0));
+            Assert.AreEqual(0, OverseerRules.ReviveIceCost(8));
+            Assert.AreEqual(0, OverseerRules.ReviveIceCost(99));
+        }
+    }
+
+    public class FobotYardEconomyTests
+    {
+        [Test]
+        public void CanAffordRevive_IsMetalsOnly_EvenWithEmptyIce()
+        {
+            var res = new ResourceManager();
+            res.Set(ResourceId.Metals, 40);
+            res.Set(ResourceId.WaterIce, 0);
+            var eco = new SimpleEconomy(res);
+
+            Assert.IsTrue(eco.CanAffordRevive(40));
+            Assert.IsTrue(eco.CanAffordRevive(40, 8), "ICE on the call is ignored");
+            Assert.IsFalse(eco.CanAffordRevive(41));
+        }
+
+        [Test]
+        public void TrySpendRevive_DoesNotDebitIce()
+        {
+            var res = new ResourceManager();
+            res.Set(ResourceId.Metals, 60);
+            res.Set(ResourceId.WaterIce, 12);
+            var eco = new SimpleEconomy(res);
+
+            Assert.IsTrue(eco.TrySpendRevive(60, 8));
+            Assert.AreEqual(0, res.Get(ResourceId.Metals));
+            Assert.AreEqual(12, res.Get(ResourceId.WaterIce), "yard/re-fab must not spend the tank");
+        }
     }
 }

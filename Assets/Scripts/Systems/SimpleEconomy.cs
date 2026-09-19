@@ -159,19 +159,19 @@ namespace SolarMajesty
             return purse;
         }
 
-        /// <summary>Scrapyard resurrection paid from the colony stockpile (MET is gold).</summary>
-        public bool CanAffordRevive(int metals, int ice)
+        /// <summary>Fobot Yard / re-fab — credits (MET) only. ICE argument is ignored.</summary>
+        public bool CanAffordRevive(int metals, int ice = 0)
         {
+            _ = ice;
             if (_resources == null) return false;
-            return _resources.Get(ResourceId.Metals) >= metals &&
-                   _resources.Get(ResourceId.WaterIce) >= ice;
+            return _resources.Get(ResourceId.Metals) >= metals;
         }
 
-        public bool TrySpendRevive(int metals, int ice)
+        public bool TrySpendRevive(int metals, int ice = 0)
         {
-            if (!CanAffordRevive(metals, ice)) return false;
+            _ = ice;
+            if (!CanAffordRevive(metals)) return false;
             if (metals > 0 && !_resources.TrySpend(ResourceId.Metals, metals)) return false;
-            if (ice > 0) _resources.TrySpend(ResourceId.WaterIce, ice);
             return true;
         }
 
