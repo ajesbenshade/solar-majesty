@@ -26,6 +26,7 @@ namespace SolarMajesty
         public const string ReduceMotionKey = "SM_Set_ReduceMotion";
         public const string ColorBlindKey = "SM_Set_ColorBlind";
         public const string FrameCapKey = "SM_Set_FrameCap";
+        public const string MarsGrokLessonsKey = "SM_Set_MarsGrokLessons";
         public const string RosterKeyPrefix = "SM_Roster_";
 
         public static float Master = 1f;
@@ -53,6 +54,9 @@ namespace SolarMajesty
         /// <summary>When true, skip title after a New Game reload.</summary>
         public static bool BootStraightIntoPlay;
 
+        /// <summary>Mars optional training wheels. Default off — failure asides only.</summary>
+        public static bool MarsGrokLessons;
+
         public static void Load()
         {
             Master = PlayerPrefs.GetFloat(MasterKey, 1f);
@@ -68,6 +72,7 @@ namespace SolarMajesty
             ReduceMotion = PlayerPrefs.GetInt(ReduceMotionKey, 0) == 1;
             ColorBlindMode = PlayerPrefs.GetInt(ColorBlindKey, 0);
             FrameCap = PlayerPrefs.GetInt(FrameCapKey, 0);
+            MarsGrokLessons = PlayerPrefs.GetInt(MarsGrokLessonsKey, 0) == 1;
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
             ReplayRules.Load();
             if (BootStraightIntoPlay)
@@ -108,6 +113,7 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(ReduceMotionKey, ReduceMotion ? 1 : 0);
             PlayerPrefs.SetInt(ColorBlindKey, ColorBlindMode);
             PlayerPrefs.SetInt(FrameCapKey, FrameCap);
+            PlayerPrefs.SetInt(MarsGrokLessonsKey, MarsGrokLessons ? 1 : 0);
             ReplayRules.Save();
             PlayerPrefs.Save();
         }
