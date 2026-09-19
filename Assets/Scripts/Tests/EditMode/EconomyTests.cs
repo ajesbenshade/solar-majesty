@@ -136,7 +136,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void Tax_PaysTwoMetalsPerCitizen()
+        public void Tax_AccruesToPendingLevy_NotTheStockpile()
         {
             var s = Make(out ResourceManager res, coreHabs: 2);
             res.Set(ResourceId.WaterIce, 100);
@@ -145,7 +145,8 @@ namespace SolarMajesty.Tests
             s.Tick(s.TaxInterval);
 
             Assert.AreEqual(Settlement.StarterColonists * Settlement.TaxPerCitizen, s.LastTax);
-            Assert.AreEqual(s.LastTax, res.Get(ResourceId.Metals));
+            Assert.AreEqual(s.LastTax, s.PendingLevy, "tax sits as a HAB purse, it does not teleport");
+            Assert.AreEqual(0, res.Get(ResourceId.Metals), "stockpile stays empty until a Courier walks home");
         }
 
         [Test]
@@ -159,6 +160,35 @@ namespace SolarMajesty.Tests
             s.Tick(s.TaxInterval);
 
             Assert.AreEqual(Mathf.RoundToInt(3 * Settlement.TaxPerCitizen * 0.65f), s.LastTax);
+            Assert.AreEqual(s.LastTax, s.PendingLevy);
+            Assert.AreEqual(0, res.Get(ResourceId.Metals));
+        }
+
+        [Test]
+        public void LevyDeposit_AddsMetalsToTheStockpile()
+        {
+            var s = Make(out ResourceManager res, coreHabs: 1);
+            s.SeedStarterCrew();
+            s.Tick(s.TaxInterval);
+            int pending = s.TakePendingLevy();
+
+            s.NoteLevyDeposited(pending);
+
+            Assert.AreEqual(0, s.PendingLevy);
+            Assert.AreEqual(pending, s.LastLevyDeposited);
+            Assert.AreEqual(pending, res.Get(ResourceId.Metals));
+        }
+
+        [Test]
+        public void UnplacedLevy_ReturnsToPending()
+        {
+            var s = Make(out _, coreHabs: 1);
+            s.SeedStarterCrew();
+            s.Tick(s.TaxInterval);
+            int pending = s.TakePendingLevy();
+            s.ReturnUnplacedLevy(pending);
+
+            Assert.AreEqual(pending, s.PendingLevy);
         }
 
         [Test]
@@ -391,6 +421,76 @@ namespace SolarMajesty.Tests
         public void RefabMetals_NullData_HasASafeFloor()
         {
             Assert.AreEqual(25, OverseerRules.RefabMetals(null));
+        }
+    }
+
+    public class LevyMathTests
+    {
+        [Test]
+        public void Accrue_SplitsByResidentCount()
+        {
+            var residents = new[] { 2, 1 };
+            var purses = new[] { 0, 0 };
+
+            int given = LevyMath.Accrue(6, residents, purses);
+
+            Assert.AreEqual(6, given);
+            Assert.AreEqual(4, purses[0]);
+            Assert.AreEqual(2, purses[1]);
+        }
+
+        [Test]
+        public void Accrue_RemainderGoesToTheFullestHab()
+        {
+            var residents = new[] { 2, 1 };
+            var purses = new[] { 0, 0 };
+
+            LevyMath.Accrue(5, residents, purses);
+
+            Assert.AreEqual(4, purses[0], "2/3 of 5 is 3, plus remainder 1");
+            Assert.AreEqual(1, purses[1]);
+        }
+
+        [Test]
+        public void Accrue_EmptyHabsGetNothing()
+        {
+            var residents = new[] { 0, 3, 0 };
+            var purses = new[] { 9, 0, 4 };
+
+            int given = LevyMath.Accrue(3, residents, purses);
+
+            Assert.AreEqual(3, given);
+            Assert.AreEqual(9, purses[0]);
+            Assert.AreEqual(3, purses[1]);
+            Assert.AreEqual(4, purses[2]);
+        }
+
+        [Test]
+        public void Accrue_NoOccupiedHabs_PlacesNothing()
+        {
+            var purses = new[] { 0, 0 };
+            Assert.AreEqual(0, LevyMath.Accrue(8, new[] { 0, 0 }, purses));
+            Assert.AreEqual(0, purses[0]);
+        }
+
+        [Test]
+        public void Collect_EmptiesThePurse()
+        {
+            int purse = 7;
+            Assert.AreEqual(7, LevyMath.Collect(ref purse));
+            Assert.AreEqual(0, purse);
+            Assert.AreEqual(0, LevyMath.Collect(ref purse));
+        }
+
+        [Test]
+        public void Steal_TakesUpToWhatIsThere()
+        {
+            int purse = 5;
+            Assert.AreEqual(3, LevyMath.Steal(ref purse, 3));
+            Assert.AreEqual(2, purse);
+            Assert.AreEqual(2, LevyMath.Steal(ref purse, 10));
+            Assert.AreEqual(0, purse);
+            Assert.AreEqual(0, LevyMath.Steal(ref purse, 1));
         }
     }
 }

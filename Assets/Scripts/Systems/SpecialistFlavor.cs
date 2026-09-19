@@ -147,6 +147,10 @@ namespace SolarMajesty
                     return "Triage at the inn.";
                 if (reason.IndexOf("party", System.StringComparison.Ordinal) >= 0)
                     return "Following the party.";
+                if (reason.IndexOf("levy_home", System.StringComparison.Ordinal) >= 0)
+                    return "Walking the purse home. Do not click me.";
+                if (reason.IndexOf("levy_collect", System.StringComparison.Ordinal) >= 0)
+                    return "Credits are napping on the HAB. Haul will get around to it.";
                 if (reason.IndexOf("frontier", System.StringComparison.Ordinal) >= 0)
                     return "Wandering the apron.";
             }
@@ -160,7 +164,7 @@ namespace SolarMajesty
                 case SpecialistClass.HarvesterBot: return "Idle. Extract is cheap.";
                 case SpecialistClass.GeologistBot: return "Idle. Extract or Research Site.";
                 case SpecialistClass.SurveyorBot: return "Idle. Explore or Research Site.";
-                case SpecialistClass.CourierBot: return "Idle. Explore or Outpost.";
+                case SpecialistClass.CourierBot: return "Idle. Explore, Outpost, or walk the levy.";
                 case SpecialistClass.TerraformerBot: return "Idle. Terraform is cheap.";
                 default: return "Idle. Cheap Explore will do.";
             }

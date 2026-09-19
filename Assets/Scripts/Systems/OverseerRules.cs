@@ -108,6 +108,18 @@ namespace SolarMajesty
         public const float CourierResupplyScale = 0.85f;
         public const float CourierOutpostWork = 1.20f;
 
+        /// <summary>Courier picks up / deposits when this close to a HAB or Commons center.</summary>
+        public const float LevyArrive = 4.2f;
+        /// <summary>HAB purse left this long can be stolen by fauna at the door. 3 tax ticks.</summary>
+        public const float LevyHabStaleSeconds = 72f;
+
+        public const string GrokLevyStolenCourier =
+            "Junk-bot ate the levy. Congratulations, you have invented charity.";
+        public const string GrokLevyStolenHab =
+            "Credits were napping on the HAB. A mite just made a withdrawal.";
+        public const string GrokLevyHome =
+            "Haul walked the purse home. That is your tax collector. We are not calling it that.";
+
         public const float PressureInterval = 75f;
         public const float FrenzyPressure = 50f;
         public const float FrenzySpeed = 1.25f;

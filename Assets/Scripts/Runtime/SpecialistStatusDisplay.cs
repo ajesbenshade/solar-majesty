@@ -106,6 +106,7 @@ namespace SolarMajesty
                         : _agent.LastReason != null && _agent.LastReason.Contains("patrol") ? "PATROL"
                         : _agent.LastReason != null && _agent.LastReason.Contains("tinker") ? "TOWN"
                         : _agent.LastReason != null && _agent.LastReason.Contains("triage") ? "HEAL"
+                        : _agent.LastReason != null && _agent.LastReason.Contains("levy_") ? "LEVY"
                         : "SCOUT";
                     break;
                 case SpecialistAction.PursueFlag:

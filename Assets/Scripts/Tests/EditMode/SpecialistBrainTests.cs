@@ -373,6 +373,52 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void Evaluate_CourierWithLevyWalk_WandersToThePurse()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeSpecialist(SpecialistClass.CourierBot));
+            ctx.HasLevyWalk = true;
+            ctx.LevyPosition = new Vector3(12f, 0f, 4f);
+            ctx.LevyCarrying = false;
+
+            var decision = brain.Evaluate(ctx, new List<FlagHandle>());
+
+            Assert.AreEqual(SpecialistAction.Wander, decision.Action);
+            Assert.AreEqual("levy_collect", decision.Reason);
+            Assert.AreEqual(ctx.LevyPosition, decision.TargetPosition);
+        }
+
+        [Test]
+        public void Evaluate_CourierCarryingLevy_WandersHome()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeSpecialist(SpecialistClass.CourierBot));
+            ctx.HasLevyWalk = true;
+            ctx.LevyCarrying = true;
+            ctx.LevyPosition = new Vector3(0f, 0f, 8f);
+
+            var decision = brain.Evaluate(ctx, new List<FlagHandle>());
+
+            Assert.AreEqual("levy_home", decision.Reason);
+            Assert.AreEqual(ctx.LevyPosition, decision.TargetPosition);
+        }
+
+        [Test]
+        public void Evaluate_CourierLevyWalk_DoesNotBeatAPaidFlag()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeSpecialist(SpecialistClass.CourierBot));
+            ctx.HasLevyWalk = true;
+            ctx.LevyPosition = new Vector3(40f, 0f, 0f);
+            var flag = MakeFlag(MakeFlagData(FlagType.EstablishOutpost), 90f, new Vector3(10f, 0f, 0f));
+
+            var decision = brain.Evaluate(ctx, new List<FlagHandle> { flag });
+
+            Assert.AreEqual(SpecialistAction.PursueFlag, decision.Action);
+            Assert.AreSame(flag, decision.TargetFlag);
+        }
+
+        [Test]
         public void Evaluate_WellPaidFlag_IsPursued()
         {
             var brain = new SpecialistBrain();

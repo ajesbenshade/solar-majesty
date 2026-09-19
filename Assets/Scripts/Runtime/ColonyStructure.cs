@@ -48,6 +48,11 @@ namespace SolarMajesty
             role == StructureRole.VillageHab || Category == BuildingCategory.Habitat;
         public int ResidentCapacity => IsResidential ? Settlement.HousingPerHab : 0;
         public int Residents { get; private set; }
+        public int LevyPurse { get; private set; }
+        public float LevyIdleSeconds { get; private set; }
+        public bool LevyStale =>
+            IsResidential && IsAlive && LevyPurse > 0 &&
+            LevyIdleSeconds >= OverseerRules.LevyHabStaleSeconds;
         public bool HasVacancy => IsResidential && IsAlive && Residents < ResidentCapacity;
         public bool IsAlive => _health > 0f;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
@@ -114,6 +119,48 @@ namespace SolarMajesty
             Residents++;
             RefreshResidentPips();
             return true;
+        }
+
+        public void AccrueLevy(int amount)
+        {
+            if (amount <= 0 || !IsResidential || !IsAlive) return;
+            LevyPurse += amount;
+        }
+
+        public void TickLevy(float dt)
+        {
+            if (!IsResidential || !IsAlive || LevyPurse <= 0)
+            {
+                LevyIdleSeconds = 0f;
+                return;
+            }
+
+            LevyIdleSeconds += Mathf.Max(0f, dt);
+        }
+
+        public int CollectLevy()
+        {
+            int take = LevyPurse;
+            LevyPurse = 0;
+            LevyIdleSeconds = 0f;
+            return take;
+        }
+
+        public int StealLevy(int amount)
+        {
+            int purse = LevyPurse;
+            int take = LevyMath.Steal(ref purse, amount);
+            LevyPurse = purse;
+            if (LevyPurse <= 0)
+                LevyIdleSeconds = 0f;
+            return take;
+        }
+
+        public void SetLevyPurse(int amount)
+        {
+            LevyPurse = Mathf.Max(0, amount);
+            if (LevyPurse <= 0)
+                LevyIdleSeconds = 0f;
         }
 
         private void RefreshResidentPips()

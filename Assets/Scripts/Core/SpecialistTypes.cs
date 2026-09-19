@@ -39,6 +39,13 @@ namespace SolarMajesty
         public float RepairDistance;
         public float RepairNeed;
         public float CourageEffective;
+        /// <summary>
+        /// Courier idle walk to a HAB purse or Commons deposit. Wander dest only —
+        /// does not change ScoreFlag.
+        /// </summary>
+        public bool HasLevyWalk;
+        public Vector3 LevyPosition;
+        public bool LevyCarrying;
     }
 
     public struct BrainDecision

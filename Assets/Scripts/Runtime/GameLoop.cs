@@ -390,6 +390,7 @@ namespace SolarMajesty
         private NarrativeBeatTracker _narrative;
         private string _consumedTravelLog;
         private bool _continuedColony;
+        private bool _levyHomeLogged;
 
         private struct TimedDisc
         {
@@ -456,6 +457,37 @@ namespace SolarMajesty
             Log.Push(message);
             if (severity >= AlertSeverity.Warning)
                 OverseerVoice.Speak(message, severity);
+        }
+
+        public void NoteLevyDeposited(int amount, Vector3 at)
+        {
+            if (amount <= 0) return;
+            Settlement?.NoteLevyDeposited(amount);
+            if (!_levyHomeLogged)
+            {
+                _levyHomeLogged = true;
+                LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
+            }
+            else
+                LogOverseer($"Haul deposited {amount} MET at Commons.");
+            Alerts.Push("levy_home", $"Levy walked home · {amount} MET", AlertSeverity.Good, Time.unscaledTime, at);
+        }
+
+        public void NoteLevyStolen(int amount, Vector3 at, bool fromHab)
+        {
+            if (amount <= 0) return;
+            Settlement?.NoteLevyStolen(amount);
+            string line = fromHab
+                ? OverseerRules.GrokLevyStolenHab
+                : OverseerRules.GrokLevyStolenCourier;
+            LogOverseer(line, 6.2f);
+            Alerts.Push(
+                fromHab ? "levy_stolen_hab" : "levy_stolen_courier",
+                line,
+                AlertSeverity.Warning,
+                Time.unscaledTime,
+                at);
+            OverseerVoice.Speak(line, AlertSeverity.Warning);
         }
 
         private void OnAchievementEarned(AchievementDef def)
@@ -4120,6 +4152,8 @@ namespace SolarMajesty
             for (int i = 0; i < slots.Count; i++)
             {
                 var s = slots[i];
+                Vector3 world = FootprintWorldCenter(new Vector2Int(s.X, s.Y), s.W, s.H);
+                var st = Village != null ? Village.FindNear(world, 3f) : null;
                 save.buildings.Add(new SaveBuilding
                 {
                     category = (int)s.Category,
@@ -4129,7 +4163,8 @@ namespace SolarMajesty
                     h = s.H,
                     progressMilli = s.ProgressMilli,
                     villageHab = s.VillageHab,
-                    health = 1f
+                    health = 1f,
+                    levyPurse = st != null && st.IsResidential ? st.LevyPurse : 0
                 });
             }
 
@@ -4171,7 +4206,8 @@ namespace SolarMajesty
                     credits = Mathf.RoundToInt(a.Credits),
                     downed = a.IsIncapacitated,
                     downedTimer = a.RecoverSecondsLeft,
-                    claimedFlagIndex = IndexOfSavedFlag(a.ActiveFlag, Flags)
+                    claimedFlagIndex = IndexOfSavedFlag(a.ActiveFlag, Flags),
+                    levyCarry = a.LevyCarry
                 });
             }
 
@@ -4235,6 +4271,7 @@ namespace SolarMajesty
             var restoredFlags = RestoreFlags(save.flags);
             RestoreAgents(save.agents, restoredFlags);
             RestoreFauna(save.fauna);
+            RestoreLevyPurses(save.buildings);
 
             _playSeconds = save.playSeconds;
             RefreshTechEffects();
@@ -4338,6 +4375,7 @@ namespace SolarMajesty
                 used.Add(agent);
                 agent.RestoreWorldPose(new Vector3(s.px, s.py, s.pz));
                 agent.RestoreCombatState(s.health, s.fatigue, s.credits, s.downed, s.downedTimer);
+                agent.RestoreLevyCarry(s.levyCarry);
                 if (s.downed) continue;
                 int idx = s.claimedFlagIndex;
                 if (idx >= 0 && restoredFlags != null && idx < restoredFlags.Count)
@@ -4361,6 +4399,20 @@ namespace SolarMajesty
                 if (s.health <= 0.001f) continue;
                 var agent = SpawnFaunaAt((FaunaKind)s.kind, new Vector3(s.px, s.py, s.pz));
                 agent?.RestoreHealth01(s.health);
+            }
+        }
+
+        private void RestoreLevyPurses(List<SaveBuilding> saved)
+        {
+            if (saved == null || Village == null || grid == null) return;
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                if (s.levyPurse <= 0) continue;
+                Vector3 world = FootprintWorldCenter(new Vector2Int(s.x, s.y), Mathf.Max(1, s.w), Mathf.Max(1, s.h));
+                var st = Village.FindNear(world, 3f);
+                if (st != null && st.IsResidential)
+                    st.SetLevyPurse(s.levyPurse);
             }
         }
 

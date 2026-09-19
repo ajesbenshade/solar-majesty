@@ -575,7 +575,7 @@ namespace SolarMajesty
                     popExtra += $"  ·  PROD {Mathf.RoundToInt(set.ProductionScale * 100f)}%";
                 GUI.Label(
                     new Rect(c.x, y, c.width, 14f),
-                    $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}  ·  TAX +{set.LastTax} MET{popExtra}",
+                    $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}  ·  TAX +{set.LastTax} MET{LevySittingLine()}{popExtra}",
                     _micro);
                 _micro.normal.textColor = prevPop;
                 y += 15f;
@@ -1243,7 +1243,9 @@ namespace SolarMajesty
 
             string workers = st.IsResidential
                 ? (st.Residents > 0
-                    ? $"Colonists indoors — tax + births, no outdoor villagers."
+                    ? (st.LevyPurse > 0
+                        ? $"Levy {st.LevyPurse} MET sitting — Haul walks it home."
+                        : "Colonists indoors — levy sits until Haul walks it home.")
                     : "Empty beds — seed crew arrives with the first HAB.")
                 : FormatWorkers(st);
             GUI.Label(new Rect(c.x, row, c.width, 13f), workers, _micro);
@@ -1373,7 +1375,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Hire {a.HireMin} MET · Purse {a.Credits:F0}", _micro);
+                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Hire {a.HireMin} MET · Purse {a.Credits:F0}{LevyCarryLine(a)}", _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -1416,10 +1418,25 @@ namespace SolarMajesty
                 SpecialistAction.Repair => "Repairing module",
                 SpecialistAction.Wander => a.LastReason != null && a.LastReason.Contains("workshop")
                     ? "At workshop"
-                    : "Kingdom vocation",
+                    : a.LastReason != null && a.LastReason.Contains("levy_home")
+                        ? "Walking levy home"
+                        : a.LastReason != null && a.LastReason.Contains("levy_collect")
+                            ? "Collecting HAB levy"
+                            : "Kingdom vocation",
                 _ => "Idle"
             };
             return string.IsNullOrEmpty(a.Status) ? action : $"{action} — {a.Status}";
+        }
+
+        private string LevySittingLine()
+        {
+            int sitting = _loop.Village != null ? _loop.Village.SittingLevy() : 0;
+            return sitting > 0 ? $"  ·  {sitting} sitting" : "";
+        }
+
+        private static string LevyCarryLine(SpecialistAgent a)
+        {
+            return a != null && a.LevyCarry > 0 ? $" · levy {a.LevyCarry}" : "";
         }
 
         private string FlagBoardLine()

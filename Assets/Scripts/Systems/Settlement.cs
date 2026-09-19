@@ -4,7 +4,8 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Population, housing, HAB tax, and camp production.
-    /// Citizens live in HABs: tax is per person; births need spare beds;
+    /// Citizens live in HABs: tax accrues as a purse on each occupied HAB;
+    /// a Courier walks it to Commons. Births need spare beds;
     /// destroyed housing kills occupants (runtime reports the deaths).
     /// </summary>
     public sealed class Settlement
@@ -25,6 +26,12 @@ namespace SolarMajesty
         public int RegolithCamps { get; private set; }
         public int PowerPlants { get; private set; }
         public int LastTax { get; private set; }
+        /// <summary>MET that accrued onto HAB purses this tax tick (not yet in the stockpile).</summary>
+        public int PendingLevy { get; private set; }
+        /// <summary>Last Courier deposit into the stockpile.</summary>
+        public int LastLevyDeposited { get; private set; }
+        /// <summary>Last purse stolen from a HAB or a downed Courier.</summary>
+        public int LastLevyStolen { get; private set; }
         public int LastBirths { get; private set; }
         public int LastDeaths { get; private set; }
         public string LastProductionLine { get; private set; } = "";
@@ -374,7 +381,34 @@ namespace SolarMajesty
             float scale = Overcrowded ? 0.65f : 1f;
             LastTax = Mathf.Max(0, Mathf.RoundToInt(Population * TaxPerCitizen * scale));
             if (LastTax > 0)
-                _resources.Add(ResourceId.Metals, LastTax);
+                PendingLevy += LastTax;
+        }
+
+        /// <summary>Runtime distributes this onto occupied HAB purses. Returns the taken amount.</summary>
+        public int TakePendingLevy()
+        {
+            int n = PendingLevy;
+            PendingLevy = 0;
+            return n;
+        }
+
+        /// <summary>No occupied HAB to sit on — keep the tick until one exists.</summary>
+        public void ReturnUnplacedLevy(int amount)
+        {
+            if (amount > 0)
+                PendingLevy += amount;
+        }
+
+        public void NoteLevyDeposited(int amount)
+        {
+            LastLevyDeposited = Mathf.Max(0, amount);
+            if (amount > 0)
+                _resources?.Add(ResourceId.Metals, amount);
+        }
+
+        public void NoteLevyStolen(int amount)
+        {
+            LastLevyStolen = Mathf.Max(0, amount);
         }
     }
 }

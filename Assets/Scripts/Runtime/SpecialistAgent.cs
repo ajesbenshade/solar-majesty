@@ -94,6 +94,7 @@ namespace SolarMajesty
         private float _innFeeTimer;
         private float _workshopRepairCooldown;
         private bool _innPaid;
+        private int _levyCarry;
 
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
@@ -103,6 +104,7 @@ namespace SolarMajesty
         public float HealthNormalized => healthNormalized;
         public float GreedHunger => greedHunger;
         public float Credits => credits;
+        public int LevyCarry => _levyCarry;
         public ShopItemId EquippedSuit => equippedSuit;
         public int Level => Mathf.Clamp(level, 1, OverseerRules.LevelCap);
         public int Xp => Mathf.Max(0, xp);
@@ -222,6 +224,29 @@ namespace SolarMajesty
             credits -= take;
             return take;
         }
+
+        public void AddLevyCarry(int amount)
+        {
+            if (amount <= 0 || _scrapped) return;
+            _levyCarry += amount;
+        }
+
+        public int TakeLevyCarry()
+        {
+            int take = _levyCarry;
+            _levyCarry = 0;
+            return take;
+        }
+
+        public int StealLevyCarry(int amount)
+        {
+            int purse = _levyCarry;
+            int take = LevyMath.Steal(ref purse, amount);
+            _levyCarry = purse;
+            return take;
+        }
+
+        public void RestoreLevyCarry(int amount) => _levyCarry = Mathf.Max(0, amount);
 
         public void GrantXp(int amount, string reason = null)
         {
@@ -590,6 +615,13 @@ namespace SolarMajesty
             SetWorkplace(null);
             int salvage = Mathf.FloorToInt(credits * OverseerRules.SalvageCreditFrac);
             credits = 0f;
+            if (_levyCarry > 0)
+            {
+                var hab = _loop?.Village?.NearestResidential(transform.position, 80f);
+                if (hab != null)
+                    hab.AccrueLevy(_levyCarry);
+                _levyCarry = 0;
+            }
             if (salvage > 0)
                 _loop?.Resources?.Add(ResourceId.Metals, salvage);
             string label = ColonyStructure.ClassLabel(data != null ? data.specialistClass : SpecialistClass.ScoutDrone);
@@ -795,6 +827,32 @@ namespace SolarMajesty
             float repairDist = hasRepair ? FlatDistance(transform.position, repairPos) : 99f;
             float repairNeed = hasRepair ? (1f - damaged.Health01) : 0f;
 
+            bool carryingLevy = _levyCarry > 0;
+            bool hasLevy = false;
+            Vector3 levyPos = vocation;
+            if (data.specialistClass == SpecialistClass.CourierBot && _loop?.Village != null)
+            {
+                if (carryingLevy)
+                {
+                    var commons = _loop.Village.NearestByCategory(
+                        transform.position, 80f, BuildingCategory.Commons);
+                    if (commons != null)
+                    {
+                        hasLevy = true;
+                        levyPos = commons.WorldPosition;
+                    }
+                }
+                else
+                {
+                    var hab = _loop.Village.RichestLevyHab(transform.position);
+                    if (hab != null)
+                    {
+                        hasLevy = true;
+                        levyPos = hab.WorldPosition;
+                    }
+                }
+            }
+
             float hunger = Mathf.Clamp01(greedHunger + ReplayRules.GreedHungerBias);
             if (_loop != null && _loop.Resources != null &&
                 _loop.Resources.Get(ResourceId.Metals) < OverseerRules.ThinMetals)
@@ -826,7 +884,10 @@ namespace SolarMajesty
                 RepairPosition = repairPos,
                 RepairDistance = repairDist,
                 RepairNeed = repairNeed,
-                CourageEffective = EffectiveCourage
+                CourageEffective = EffectiveCourage,
+                HasLevyWalk = hasLevy,
+                LevyPosition = levyPos,
+                LevyCarrying = carryingLevy
             };
         }
 
@@ -895,6 +956,9 @@ namespace SolarMajesty
 
         private void TickBehaviour(float dt)
         {
+            if (!_incapacitated && !_scrapped)
+                TryLevyExchange();
+
             switch (_lastDecision.Action)
             {
                 case SpecialistAction.PursueFlag:
@@ -1273,6 +1337,12 @@ namespace SolarMajesty
         private void TickIdle(float dt)
         {
             TickWanderTown(dt);
+        }
+
+        private void TryLevyExchange()
+        {
+            if (data == null || data.specialistClass != SpecialistClass.CourierBot) return;
+            _loop?.Village?.TryCourierLevy(this);
         }
 
         private bool TryNearestStalker(out Vector3 pos, out float dist)

@@ -121,6 +121,13 @@ namespace SolarMajesty
             if (restScore > 0.45f)
                 return BrainDecision.Rest(restScore, "mild_fatigue", inn);
 
+            // Courier levy is a wander bias, not a flag. ScoreFlag is untouched.
+            if (data.specialistClass == SpecialistClass.CourierBot && ctx.HasLevyWalk)
+            {
+                string levyReason = ctx.LevyCarrying ? "levy_home" : "levy_collect";
+                return BrainDecision.Wander(ctx.LevyPosition, 0.36f, levyReason);
+            }
+
             string vocation = data.specialistClass switch
             {
                 SpecialistClass.DefenseMech => ctx.HasWorkshop ? "workshop_duty" : "patrolling",
