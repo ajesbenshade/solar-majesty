@@ -67,7 +67,7 @@ namespace SolarMajesty
             }
 
             GUILayout.Space(6);
-            GUILayout.Label("R = force fatigue · Y = revive when overwhelmed");
+            GUILayout.Label("R = force fatigue · Y = Fobot Yard bill (MET only)");
             GUILayout.EndArea();
         }
     }

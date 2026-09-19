@@ -323,14 +323,34 @@ namespace SolarMajesty
             }
         }
 
-        public int FieldReviveIce
+        public bool HasFobotYard
         {
             get
             {
-                ComputeReviveBill(out _, out int ice);
-                return ice;
+                var yard = FindFobotYard();
+                return yard != null && yard.IsAlive;
             }
         }
+
+        public bool CanPayYard =>
+            HasFobotYard && (HasScrapCorpse || HasDownedRobot);
+
+        public bool HasDownedRobot
+        {
+            get
+            {
+                for (int i = 0; i < _agents.Count; i++)
+                {
+                    if (_agents[i] != null && _agents[i].IsIncapacitated)
+                        return true;
+                }
+                return false;
+            }
+        }
+
+        public int WreckCount => _corpses.Count;
+
+        public int FieldReviveIce => 0;
 
         public bool HasRefabInProgress => Placer != null && Placer.HasRefabOrder;
 
@@ -382,6 +402,7 @@ namespace SolarMajesty
         private float _emptyRosterTimer;
         private float _reviveReadyAt;
         private bool _revivePenaltyApplied;
+        private bool _yardBillLogged;
         private int _lastTithe;
         private float _siphonBlockToastAt;
         private float _purseToastAt;
@@ -2275,7 +2296,7 @@ namespace SolarMajesty
         }
 
         /// <summary>Fabricate one outdoor robot when a workshop finishes building.</summary>
-        public bool TryFabricateRobot(ColonyStructure workshop, bool announce = true)
+        public bool TryFabricateRobot(ColonyStructure workshop, bool announce = true, bool restoreVeteran = true)
         {
             if (workshop == null || !workshop.IsAlive || !workshop.IsWorkshop) return false;
             if (workshop.RobotFabricated) return false;
@@ -2298,14 +2319,17 @@ namespace SolarMajesty
             var agent = SpawnOne(data, pos, TintForClass(cls.Value));
             if (agent == null) return false;
 
-            if (_pendingVeterans.TryGetValue(cls.Value, out var pending))
+            if (restoreVeteran)
             {
-                agent.ApplyRecord(pending);
-                _pendingVeterans.Remove(cls.Value);
-            }
-            else if (SpecialistRoster.TryGet(_rosterSaved, cls.Value, out var saved) && !saved.Corpse)
-            {
-                agent.ApplyRecord(saved);
+                if (_pendingVeterans.TryGetValue(cls.Value, out var pending))
+                {
+                    agent.ApplyRecord(pending);
+                    _pendingVeterans.Remove(cls.Value);
+                }
+                else if (SpecialistRoster.TryGet(_rosterSaved, cls.Value, out var saved) && !saved.Corpse)
+                {
+                    agent.ApplyRecord(saved);
+                }
             }
 
             workshop.MarkRobotFabricated();
@@ -2364,16 +2388,16 @@ namespace SolarMajesty
             {
                 var order = _completedBuilds[i];
                 if (order?.Data == null) continue;
-                if (order.IsRefab)
-                {
-                    var shop = Village?.FindNear(order.WorldPosition, 6f);
-                    if (shop != null && shop.IsWorkshop)
+            if (order.IsRefab)
                     {
-                        shop.ClearRobotFabricated();
-                        TryFabricateRobot(shop);
+                        var shop = Village?.FindNear(order.WorldPosition, 6f);
+                        if (shop != null && shop.IsWorkshop)
+                        {
+                            shop.ClearRobotFabricated();
+                            TryFabricateRobot(shop, restoreVeteran: false);
+                        }
+                        continue;
                     }
-                    continue;
-                }
                 if (!ColonyStructure.IsWorkshopCategory(order.Data.category)) continue;
                 var st = Village?.FindNear(order.WorldPosition, 4f);
                 if (st != null && st.Category == order.Data.category)
@@ -3453,8 +3477,6 @@ namespace SolarMajesty
             SyncLaunchGate();
         }
 
-        public bool HasFobotYard => HasAliveCategory(BuildingCategory.FobotYard);
-
         public int SittingLevy => Village != null ? Village.TotalSittingLevy() : 0;
 
         public bool HasLivingCourier
@@ -3521,11 +3543,17 @@ namespace SolarMajesty
             LogOverseer(CompactGrok.LevyDelivered(amount));
         }
 
-        public void RetryParty()
+        public void RetryParty() => PayFobotYard();
+
+        /// <summary>
+        /// Y / inspect pay. Requires a living Fobot Yard (Inn or dedicated yard). Credits only.
+        /// Stands downed robots and resurrects yard wrecks as the same ego.
+        /// </summary>
+        public void PayFobotYard()
         {
-            if (!NeedsFieldRevive)
+            if (!HasDownedRobot && !HasScrapCorpse)
             {
-                LogOverseer("No one is down — the Fobot Yard is for incapacitated robots.");
+                LogOverseer("No one is down — the Fobot Yard is for wrecks and incapacitated robots.");
                 return;
             }
             if (!HasFobotYard)
@@ -3533,22 +3561,36 @@ namespace SolarMajesty
                 LogOverseer(CompactGrok.YardNeedsBuilding());
                 return;
             }
+
+            var yard = FindFobotYard();
+            if (yard == null || !yard.IsAlive)
+            {
+                LogOverseer(OverseerRules.GrokYardMissing, 6.2f);
+                return;
+            }
+
             if (Time.time < _reviveReadyAt)
             {
                 LogOverseer($"Fobot Yard cooling down — {FieldReviveReadyIn:F0}s.");
                 return;
             }
 
-            ComputeReviveBill(out int met, out int ice);
-            if (Economy == null || !Economy.CanAffordRevive(met, ice))
+            ComputeReviveBill(out int met, out _);
+            if (met <= 0)
             {
                 LogOverseer(CompactGrok.YardBill(met));
                 return;
             }
 
-            if (!Economy.TrySpendRevive(met, ice))
+            if (Economy == null || !Economy.CanAffordRevive(met))
             {
-                LogOverseer($"Fobot Yard needs {met} CRED.");
+                LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
+                return;
+            }
+
+            if (!Economy.TrySpendRevive(met))
+            {
+                LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
                 return;
             }
 
@@ -3560,13 +3602,20 @@ namespace SolarMajesty
                 a.FieldRevive();
                 a.NoteRevivePaid();
             }
-            EnqueueCorpsesAlreadyPaid();
+
+            ResurrectWrecksAtYard(yard);
             _reviveReadyAt = Time.time + OverseerRules.ReviveCooldown;
             if (!_revivePenaltyApplied)
                 _revivePenaltyApplied = true;
             _mission?.OnPartyRevived();
-            LogOverseer(CompactGrok.YardBill(met));
-            Debug.Log("[GameLoop] Fobot Yard revive paid.");
+            if (!_yardBillLogged)
+            {
+                _yardBillLogged = true;
+                LogOverseer(OverseerRules.GrokYardFirstBill, 6.4f);
+            }
+            else
+                LogOverseer(CompactGrok.YardBill(met));
+            Debug.Log("[GameLoop] Fobot Yard paid.");
         }
 
         public void RestartMission()
@@ -3916,6 +3965,7 @@ namespace SolarMajesty
             b.powerGen = PowerGenFor(cat, name);
             b.description = cat switch
             {
+                BuildingCategory.Inn => "wrecks wait — credits only",
                 BuildingCategory.Defense => "auto-fires 18 m",
                 BuildingCategory.Mining => "does not grow MET",
                 BuildingCategory.ClimateLoom => "unlock from ★ tech — bonus while standing",
@@ -3963,10 +4013,10 @@ namespace SolarMajesty
                 CreateBuilding("Regolith Camp", BuildingCategory.RegolithCamp, 22, 0, 9f, 4, 4),
                 CreateBuilding("Scout Workshop", BuildingCategory.ScoutWorkshop, 36, 4, 12f, 4, 4),
                 CreateBuilding("Engineer Workshop", BuildingCategory.EngineerWorkshop, 36, 4, 12f, 4, 4),
-                CreateBuilding("Village Inn", BuildingCategory.Inn, 30, 3, 10f, 4, 4),
+                CreateBuilding("Fobot Yard", BuildingCategory.Inn, 30, 3, 10f, 4, 4),
                 CreateBuilding("Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4),
                 CreateBuilding("Blacksmith", BuildingCategory.Blacksmith, 48, 4, 12f, 4, 4),
-                CreateBuilding("Fobot Yard", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4),
+                CreateBuilding("Fobot Yard Bay", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4),
                 CreateBuilding("Watchtower", BuildingCategory.Watchtower, 36, 2, 10f, 4, 4),
                 CreateBuilding("Aid Station", BuildingCategory.AidStation, 38, 2, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
@@ -5382,11 +5432,12 @@ namespace SolarMajesty
             if (Agent == agent) Agent = _agents.Count > 0 ? _agents[0] : null;
             RegisterCorpse(rec);
             NoteMechDeath(agent.transform.position);
+            var shop = FindWorkshopFor(cls);
+            if (shop != null && shop.IsAlive)
+                shop.ClearRobotFabricated();
             string salvageTxt = salvage > 0 ? $" Salvage {salvage} MET." : "";
-            if (TryPayScrapRefab(rec, out int met, out int ice, out string shopName))
-                LogOverseer($"{label} scrapped — Fobot Yard {met} CRED / 40 s at {shopName}.{salvageTxt}");
-            else
-                LogOverseer($"{label} scrapped — corpse at the scrapyard.{salvageTxt}");
+            int bill = OverseerRules.YardBill(rec.Level);
+            LogOverseer($"{label} scrapped — wreck in the Fobot Yard. Stand-up {bill} MET (L{rec.Level}).{salvageTxt}");
         }
 
         public void NoteMechDeath(Vector3 world)
@@ -5627,12 +5678,10 @@ namespace SolarMajesty
             {
                 var a = _agents[i];
                 if (a == null || !a.IsIncapacitated) continue;
-                met += OverseerRules.ReviveMetalsForLevel(a.Level);
+                met += OverseerRules.YardBill(a.Level);
             }
             for (int i = 0; i < _corpses.Count; i++)
-            {
-                met += OverseerRules.ReviveMetalsForLevel(_corpses[i].Level);
-            }
+                met += OverseerRules.YardBill(_corpses[i].Level);
             if (met <= 0)
                 met = OverseerRules.ReviveMet;
         }
@@ -5695,8 +5744,7 @@ namespace SolarMajesty
 
         private void RetryUnpaidCorpses()
         {
-            for (int i = _corpses.Count - 1; i >= 0; i--)
-                TryPayScrapRefab(_corpses[i], out _, out _, out _);
+            // Wrecks wait in the Fobot Yard. Continue does not auto-pay or auto-refab.
         }
 
         private bool HasCorpse(SpecialistClass cls)
@@ -5750,35 +5798,76 @@ namespace SolarMajesty
             }
         }
 
-        private bool TryPayScrapRefab(SpecialistRecord rec, out int met, out int ice, out string shopName) =>
-            TryEnqueueScrapRefab(rec, alreadyPaid: false, out met, out ice, out shopName);
-
-        private void EnqueueCorpsesAlreadyPaid()
+        /// <summary>
+        /// True scrap: new chassis at level 1, 70% workshop MET, 40 s. Consumes the wreck.
+        /// Distinct from Fobot Yard, which resurrects this ego.
+        /// </summary>
+        public bool TryRefabRookie(ColonyStructure shop)
         {
-            for (int i = _corpses.Count - 1; i >= 0; i--)
-                TryEnqueueScrapRefab(_corpses[i], alreadyPaid: true, out _, out _, out _);
+            if (shop == null || !shop.IsAlive || !shop.IsWorkshop) return false;
+            var cls = ColonyStructure.RobotClassForWorkshop(shop.Category);
+            if (!cls.HasValue) return false;
+            if (!TryGetCorpse(cls.Value, out var rec))
+            {
+                LogOverseer("No wreck for this shop. Pay the Fobot Yard to stand this ego up.");
+                return false;
+            }
+
+            if (!TryEnqueueScrapRefab(rec, alreadyPaid: false, out int met, out _, out string shopName))
+            {
+                LogOverseer($"Re-fab needs {OverseerRules.RefabMetals(shop.SourceData)} MET at {shopName}.");
+                return false;
+            }
+
+            LogOverseer($"Re-fab queued — new {ColonyStructure.ClassLabel(cls.Value)} at L1, {met} MET / 40 s. The wreck is gone.");
+            return true;
+        }
+
+        public bool HasWreckFor(SpecialistClass cls) => HasCorpse(cls);
+
+        public string WreckSummary()
+        {
+            if (_corpses.Count <= 0) return "";
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < _corpses.Count; i++)
+            {
+                if (i > 0) sb.Append(" · ");
+                var rec = _corpses[i];
+                sb.Append(ColonyStructure.ClassLabel(rec.Class));
+                sb.Append(" L");
+                sb.Append(Mathf.Max(1, rec.Level));
+                sb.Append(" ");
+                sb.Append(OverseerRules.YardBill(rec.Level));
+                sb.Append(" MET");
+            }
+            return sb.ToString();
+        }
+
+        private bool TryGetCorpse(SpecialistClass cls, out SpecialistRecord rec)
+        {
+            for (int i = 0; i < _corpses.Count; i++)
+            {
+                if (_corpses[i].Class != cls) continue;
+                rec = _corpses[i];
+                return true;
+            }
+            rec = default;
+            return false;
         }
 
         private bool TryEnqueueScrapRefab(
             SpecialistRecord rec, bool alreadyPaid, out int met, out int ice, out string shopName)
         {
-            met = OverseerRules.ReviveMetals(rec.ReviveCount);
-            ice = OverseerRules.ReviveIceCost(rec.ReviveCount);
+            ice = 0;
             shopName = ClassWorkshopName(rec.Class);
             var shop = FindWorkshopFor(rec.Class);
+            met = OverseerRules.RefabMetals(shop != null ? shop.SourceData : null);
             if (shop == null || !shop.IsAlive)
-            {
-                if (alreadyPaid)
-                {
-                    Resources?.Add(ResourceId.Metals, met);
-                    Resources?.Add(ResourceId.WaterIce, ice);
-                }
                 return false;
-            }
             shopName = shop.DisplayName;
             if (!alreadyPaid)
             {
-                if (Economy == null || !Economy.CanAffordRevive(met, ice))
+                if (Economy == null || !Economy.CanAffordRevive(met))
                     return false;
             }
 
@@ -5787,20 +5876,61 @@ namespace SolarMajesty
             if (grid != null)
                 cell = grid.WorldToCell(shop.WorldPosition);
             if (Placer == null) return false;
-            if (!alreadyPaid && !Economy.TrySpendRevive(met, ice))
+            if (!alreadyPaid && !Economy.TrySpendRevive(met))
                 return false;
             if (!Placer.TryEnqueueRefab(data, cell, shop.WorldPosition, 0, OverseerRules.RefabSeconds, rec.Class, out _))
             {
                 Resources?.Add(ResourceId.Metals, met);
-                Resources?.Add(ResourceId.WaterIce, ice);
                 return false;
             }
 
-            rec.ReviveCount = rec.ReviveCount + 1;
-            rec.Corpse = false;
-            _pendingVeterans[rec.Class] = rec;
             RemoveCorpse(rec.Class);
+            _pendingVeterans.Remove(rec.Class);
             return true;
+        }
+
+        private void ResurrectWrecksAtYard(ColonyStructure yard)
+        {
+            if (yard == null) return;
+            var waiting = new List<SpecialistRecord>(_corpses);
+            for (int i = 0; i < waiting.Count; i++)
+                ResurrectWreck(waiting[i], yard);
+        }
+
+        private void ResurrectWreck(SpecialistRecord rec, ColonyStructure yard)
+        {
+            var data = DataForClass(rec.Class);
+            if (data == null) return;
+            Vector3 pos = yard.WorldPosition + new Vector3(1.6f, 0f, 0.8f);
+            if (grid != null)
+                pos = grid.SnapToCellCenter(pos);
+            var agent = SpawnOne(data, pos, TintForClass(rec.Class));
+            if (agent == null) return;
+            rec.Corpse = false;
+            rec.ReviveCount = rec.ReviveCount + 1;
+            agent.ApplyRecord(rec);
+            agent.FieldRevive();
+            agent.NoteRevivePaid();
+            var shop = FindWorkshopFor(rec.Class);
+            if (shop != null && shop.IsAlive)
+            {
+                shop.MarkRobotFabricated();
+                shop.TryClockIn(agent);
+            }
+            _everHadRobot = true;
+            _agents.Add(agent);
+            if (Agent == null)
+                Agent = agent;
+            agent.BindNavMesh(_campusNav);
+            RemoveCorpse(rec.Class);
+        }
+
+        private ColonyStructure FindFobotYard()
+        {
+            if (Village == null) return null;
+            var dedicated = Village.NearestByCategory(ColonyLayout.CampusOrigin, 240f, BuildingCategory.FobotYard);
+            if (dedicated != null && dedicated.IsAlive) return dedicated;
+            return Village.NearestByCategory(ColonyLayout.CampusOrigin, 240f, BuildingCategory.Inn);
         }
 
         private void TickJunkYard(float dt)
@@ -5832,12 +5962,9 @@ namespace SolarMajesty
 
         private Vector3 ScrapyardPosition()
         {
-            if (Village != null)
-            {
-                var yard = Village.NearestByCategory(ColonyLayout.CampusOrigin, 200f, BuildingCategory.FobotYard);
-                if (yard != null && yard.IsAlive)
-                    return yard.WorldPosition;
-            }
+            var yard = FindFobotYard();
+            if (yard != null && yard.IsAlive)
+                return yard.WorldPosition;
             for (int i = 0; i < _corpses.Count; i++)
             {
                 var shop = FindWorkshopFor(_corpses[i].Class);
