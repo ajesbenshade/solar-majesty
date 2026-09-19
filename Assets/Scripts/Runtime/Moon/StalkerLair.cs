@@ -146,6 +146,20 @@ namespace SolarMajesty
             ApplyScoutedLook();
         }
 
+        /// <summary>Continue restore. No claim ring — the clear already happened.</summary>
+        public void RestoreFromSave(bool wasCleared, bool wasScouted)
+        {
+            RestoreChart(wasCleared, wasScouted);
+        }
+
+        /// <summary>Rebind a restored stalker so Tick does not treat the den as empty.</summary>
+        public void BindRestored(DustStalkerAgent agent)
+        {
+            if (cleared || agent == null || !agent.IsAlive) return;
+            if (!_spawned.Contains(agent))
+                _spawned.Add(agent);
+        }
+
         private void ApplyFoggedLook()
         {
             if (IsScouted || cleared) return;

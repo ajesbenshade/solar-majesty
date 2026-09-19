@@ -24,7 +24,7 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 ---
 
-Play opens on the **title screen** — a solar-system orrery, not a frozen drop. **Click a world** to drop there (Shift+click a locked outer world). **New Game** wipes the continue slot and returns to the system (confirms if a save exists). **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna, and specialist HP. Dens / node yield / mission timer are not snapshotted. **Esc** pauses (Resume / Settings / Title / Quit). Tutorial is six skippable beats (Colony Commons → airlock → HAB → workshop → flag → TECH); Settings can replay it.
+Play opens on the **title screen** — a solar-system orrery, not a frozen drop. **Click a world** to drop there (Shift+click a locked outer world). **New Game** wipes the continue slot and returns to the system (confirms if a save exists). **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna poses, specialist HP/poses, den scouted/cleared, node remaining, mission hold, formed parties, HAB levy purses, and watchtower lasers. **Esc** pauses (Resume / Settings / Title / Quit). Tutorial is six skippable beats (Colony Commons → airlock → HAB → workshop → flag → TECH); Settings can replay it.
 
 ## Controls
 

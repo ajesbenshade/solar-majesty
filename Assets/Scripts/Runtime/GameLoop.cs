@@ -4464,8 +4464,8 @@ namespace SolarMajesty
 
         /// <summary>
         /// Continue autosave / numbered-slot capture: campus, stockpile, research, posted flags
-        /// (escrow + remaining work), specialist combat state, and living fauna.
-        /// Den cleared/scouted flags and node depletion are schema-ready but not written yet.
+        /// (escrow + remaining work), specialist combat state and poses, living fauna poses,
+        /// den scouted/cleared, node remaining, mission hold, formed parties, and roster corpses.
         /// </summary>
         public SaveGame CaptureSave(string label)
         {
@@ -4571,7 +4571,13 @@ namespace SolarMajesty
                     downed = a.IsIncapacitated,
                     downedTimer = a.RecoverSecondsLeft,
                     claimedFlagIndex = IndexOfSavedFlag(a.ActiveFlag, Flags),
-                    levyCarry = a.LevyCarry
+                    levyCarry = a.LevyCarry,
+                    level = a.Level,
+                    xp = a.Xp,
+                    suit = (int)a.EquippedSuit,
+                    reviveCount = a.ReviveCount,
+                    downCount = a.ReviveCount,
+                    partyId = a.Party != null ? a.Party.Id : -1
                 });
             }
 
@@ -4590,15 +4596,91 @@ namespace SolarMajesty
                 });
             }
 
-            CaptureWorldBoard(save);
-            CaptureMission(save);
-            CaptureParties(save);
+            if (_world != null)
+            {
+                var nodes = _world.Nodes;
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    var n = nodes[i];
+                    if (n == null) continue;
+                    Vector3 p = n.WorldPosition;
+                    save.nodes.Add(new SaveNode
+                    {
+                        nodeType = (int)n.NodeType,
+                        px = p.x,
+                        py = p.y,
+                        pz = p.z,
+                        remaining = n.Remaining
+                    });
+                }
+
+                var lairs = _world.Lairs;
+                for (int i = 0; i < lairs.Count; i++)
+                {
+                    var l = lairs[i];
+                    if (l == null) continue;
+                    Vector3 p = l.WorldPosition;
+                    save.lairs.Add(new SaveLair
+                    {
+                        px = p.x,
+                        py = p.y,
+                        pz = p.z,
+                        cleared = l.IsCleared,
+                        scouted = l.IsScouted
+                    });
+                }
+            }
+
+            if (_mission != null)
+            {
+                save.mission.state = (int)_mission.State;
+                save.mission.elapsed = _mission.MissionElapsed;
+                save.mission.sustainHold = _mission.SustainElapsed;
+                save.mission.densCleared = _mission.DensCleared;
+                save.mission.sustainMet = _mission.SustainComplete;
+                save.mission.launchReady = _mission.LaunchReady;
+            }
+
+            var roster = CaptureRoster();
+            for (int i = 0; i < roster.Count; i++)
+            {
+                var r = roster[i];
+                save.roster.Add(new SaveRosterEntry
+                {
+                    specialistClass = (int)r.Class,
+                    level = r.Level,
+                    xp = r.Xp,
+                    credits = r.Credits,
+                    reviveCount = r.ReviveCount,
+                    suit = (int)r.Suit,
+                    corpse = r.Corpse
+                });
+            }
+
+            for (int p = 0; p < _parties.Count; p++)
+            {
+                var party = _parties[p];
+                if (party == null || party.Count < 2) continue;
+                var row = new SaveParty { id = party.Id };
+                for (int m = 0; m < party.Members.Count; m++)
+                {
+                    int idx = IndexOfSavedAgent(party.Members[m], save.agents, _agents);
+                    if (idx < 0) continue;
+                    row.memberIndices.Add(idx);
+                    if (party.IsLeader(party.Members[m]))
+                        row.leaderIndex = idx;
+                }
+                if (row.memberIndices.Count >= 2)
+                    save.parties.Add(row);
+            }
+
             return save;
         }
 
         /// <summary>
         /// Restore campus, stockpile, research, posted flags (including remaining work),
-        /// specialist combat state, and living fauna. Soft claims rebind by flag index;
+        /// specialist combat state and world poses, living fauna poses, den scouted/cleared,
+        /// node remaining, mission hold, and formed parties. Soft claims rebind by flag index;
         /// specialists still re-evaluate through SpecialistBrain after load.
         /// </summary>
         public bool ApplySave(SaveGame save)
@@ -4628,7 +4710,10 @@ namespace SolarMajesty
                     Settlement.ClaimOutpost();
             }
 
-            LoadRosterMemory();
+            if (save.roster != null && save.roster.Count > 0)
+                LoadRosterFromSave(save.roster);
+            else
+                LoadRosterMemory();
             RestoreCampus();
             RetryUnpaidCorpses();
 
@@ -4636,14 +4721,22 @@ namespace SolarMajesty
                 Settlement.RestorePopulation(save.settlement.population);
 
             var restoredFlags = RestoreFlags(save.flags);
-            RestoreAgents(save.agents, restoredFlags);
+            var restoredAgents = RestoreAgents(save.agents, restoredFlags);
+            RestoreParties(save.parties, restoredAgents);
+            RestoreNodes(save.nodes);
+            RestoreLairs(save.lairs);
             RestoreFauna(save.fauna);
-            RestoreWorldBoard(save);
             RestoreBuildingBoard(save);
             RestoreLevyPurses(save.buildings);
-            RestoreParties(save.parties);
-            _mission?.Restore(save.mission);
+            RebindLairFauna();
             RefreshWreckVisuals();
+
+            if (_mission != null)
+            {
+                _mission.RestoreFrom(save.mission);
+                if (save.mission != null && save.mission.launchReady)
+                    _launchCraftStaged = true;
+            }
 
             _playSeconds = save.playSeconds;
             RefreshTechEffects();
@@ -4653,9 +4746,29 @@ namespace SolarMajesty
             int bounties = save.flags != null ? save.flags.Count : 0;
             int robots = save.agents != null ? save.agents.Count : 0;
             int fauna = save.fauna != null ? save.fauna.Count : 0;
-            LogOverseer($"Colony restored — {modules} modules, {bounties} bounties, {robots} robots, {fauna} fauna.");
+            int dens = save.lairs != null ? save.lairs.Count : 0;
+            int parties = save.parties != null ? save.parties.Count : 0;
+            LogOverseer(
+                $"Colony restored — {modules} modules, {bounties} bounties, {robots} robots, " +
+                $"{fauna} fauna, {dens} dens, {parties} parties.");
             PlaytestTelemetry.Record("load", "modules", modules);
             return true;
+        }
+
+        private static int IndexOfSavedAgent(
+            SpecialistAgent agent, List<SaveAgent> saved, List<SpecialistAgent> live)
+        {
+            if (agent == null || saved == null || live == null) return -1;
+            int ord = 0;
+            for (int i = 0; i < live.Count; i++)
+            {
+                var a = live[i];
+                if (a == null || a.Data == null) continue;
+                if (ReferenceEquals(a, agent))
+                    return ord < saved.Count ? ord : -1;
+                ord++;
+            }
+            return -1;
         }
 
         private static int IndexOfSavedFlag(FlagHandle flag, FlagManager flags)
@@ -4724,9 +4837,11 @@ namespace SolarMajesty
             }
         }
 
-        private void RestoreAgents(List<SaveAgent> saved, List<FlagHandle> restoredFlags)
+        private List<SpecialistAgent> RestoreAgents(List<SaveAgent> saved, List<FlagHandle> restoredFlags)
         {
-            if (saved == null) return;
+            var restored = new List<SpecialistAgent>(saved != null ? saved.Count : 0);
+            if (saved == null) return restored;
+
             var used = new HashSet<SpecialistAgent>();
             for (int i = 0; i < saved.Count; i++)
             {
@@ -4743,15 +4858,190 @@ namespace SolarMajesty
                     break;
                 }
 
-                if (agent == null) continue;
+                Vector3 pose = new Vector3(s.px, s.py, s.pz);
+                if (agent == null)
+                {
+                    var data = DataForClass(cls);
+                    if (data == null)
+                    {
+                        restored.Add(null);
+                        continue;
+                    }
+
+                    agent = SpawnOne(data, pose, TintForClass(cls));
+                    if (agent == null)
+                    {
+                        restored.Add(null);
+                        continue;
+                    }
+
+                    _agents.Add(agent);
+                    _everHadRobot = true;
+                    if (Agent == null) Agent = agent;
+                    FindWorkshopFor(cls)?.MarkRobotFabricated();
+                }
+
                 used.Add(agent);
-                agent.RestoreWorldPose(new Vector3(s.px, s.py, s.pz));
+                restored.Add(agent);
+                agent.RestoreWorldPose(pose);
+                int revive = s.reviveCount > 0 ? s.reviveCount : s.downCount;
+                agent.ApplyRecord(new SpecialistRecord
+                {
+                    Class = cls,
+                    Level = s.level > 0 ? s.level : 1,
+                    Xp = Mathf.Max(0, s.xp),
+                    Credits = Mathf.Max(0, s.credits),
+                    ReviveCount = Mathf.Max(0, revive),
+                    Suit = (ShopItemId)s.suit,
+                    Corpse = false
+                });
                 agent.RestoreCombatState(s.health, s.fatigue, s.credits, s.downed, s.downedTimer);
                 agent.RestoreLevyCarry(s.levyCarry);
-                if (s.downed) continue;
+                agent.BindNavMesh(_campusNav);
+                RemoveCorpse(cls);
+                _pendingVeterans.Remove(cls);
+                if (s.downed)
+                    continue;
                 int idx = s.claimedFlagIndex;
                 if (idx >= 0 && restoredFlags != null && idx < restoredFlags.Count)
                     agent.RestoreActiveFlag(restoredFlags[idx]);
+            }
+
+            return restored;
+        }
+
+        private void RestoreParties(List<SaveParty> saved, List<SpecialistAgent> restoredAgents)
+        {
+            for (int i = _parties.Count - 1; i >= 0; i--)
+                _parties[i]?.Disband();
+            _parties.Clear();
+            if (saved == null || restoredAgents == null) return;
+
+            int maxId = 0;
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var row = saved[i];
+                if (row == null || row.memberIndices == null) continue;
+                var members = new List<SpecialistAgent>(HeroParty.MaxSize);
+                SpecialistAgent leader = null;
+                for (int m = 0; m < row.memberIndices.Count && members.Count < HeroParty.MaxSize; m++)
+                {
+                    int idx = row.memberIndices[m];
+                    if (idx < 0 || idx >= restoredAgents.Count) continue;
+                    var agent = restoredAgents[idx];
+                    if (agent == null || !agent.IsAlive || agent.Party != null) continue;
+                    members.Add(agent);
+                    if (idx == row.leaderIndex)
+                        leader = agent;
+                }
+                if (members.Count < 2) continue;
+                if (leader == null || !members.Contains(leader))
+                    leader = members[0];
+
+                int id = row.id > 0 ? row.id : _nextPartyId;
+                var party = new HeroParty(id, leader);
+                for (int m = 0; m < members.Count; m++)
+                {
+                    party.Members.Add(members[m]);
+                    members[m].SetParty(party);
+                }
+                _parties.Add(party);
+                if (id > maxId) maxId = id;
+            }
+
+            if (maxId >= _nextPartyId)
+                _nextPartyId = maxId + 1;
+        }
+
+        private void RestoreNodes(List<SaveNode> saved)
+        {
+            if (saved == null || _world == null) return;
+            var world = _world.Nodes;
+            if (world == null || world.Count == 0) return;
+
+            var positions = new List<Vector3>(world.Count);
+            for (int i = 0; i < world.Count; i++)
+                positions.Add(world[i] != null ? world[i].WorldPosition : Vector3.zero);
+
+            var used = new bool[world.Count];
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                var type = (ResourceNodeType)s.nodeType;
+                int pick = SaveWorldMatch.Pick(
+                    positions, new Vector3(s.px, s.py, s.pz), i, used);
+                if (pick < 0) continue;
+                var node = world[pick];
+                if (node == null || node.NodeType != type)
+                {
+                    pick = -1;
+                    float bestSq = SaveWorldMatch.NearestMeters * SaveWorldMatch.NearestMeters;
+                    for (int n = 0; n < world.Count; n++)
+                    {
+                        if (used[n] || world[n] == null || world[n].NodeType != type) continue;
+                        float dSq = SaveWorldMatch.FlatSq(positions[n], new Vector3(s.px, s.py, s.pz));
+                        if (dSq > bestSq) continue;
+                        bestSq = dSq;
+                        pick = n;
+                    }
+                    if (pick < 0) continue;
+                }
+
+                used[pick] = true;
+                world[pick].RestoreRemaining(s.remaining);
+            }
+        }
+
+        private void RestoreLairs(List<SaveLair> saved)
+        {
+            if (saved == null || _world == null) return;
+            var world = _world.Lairs;
+            if (world == null || world.Count == 0) return;
+
+            var positions = new List<Vector3>(world.Count);
+            for (int i = 0; i < world.Count; i++)
+                positions.Add(world[i] != null ? world[i].WorldPosition : Vector3.zero);
+
+            var used = new bool[world.Count];
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var s = saved[i];
+                int pick = SaveWorldMatch.Pick(
+                    positions, new Vector3(s.px, s.py, s.pz), i, used);
+                if (pick < 0) continue;
+                used[pick] = true;
+                world[pick]?.RestoreFromSave(s.cleared, s.scouted);
+            }
+        }
+
+        private void RebindLairFauna()
+        {
+            if (_world == null) return;
+            var lairs = _world.Lairs;
+            var used = new HashSet<DustStalkerAgent>();
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                var lair = lairs[i];
+                if (lair == null || lair.IsCleared) continue;
+                int budget = Mathf.Max(1, lair.StalkerBudget);
+                for (int n = 0; n < budget; n++)
+                {
+                    DustStalkerAgent best = null;
+                    float bestSq = 24f * 24f;
+                    for (int s = 0; s < _stalkers.Count; s++)
+                    {
+                        var fauna = _stalkers[s];
+                        if (fauna == null || !fauna.IsAlive || fauna.Kind != FaunaKind.Stalker) continue;
+                        if (used.Contains(fauna)) continue;
+                        float dSq = SaveWorldMatch.FlatSq(fauna.transform.position, lair.WorldPosition);
+                        if (dSq > bestSq) continue;
+                        bestSq = dSq;
+                        best = fauna;
+                    }
+                    if (best == null) break;
+                    used.Add(best);
+                    lair.BindRestored(best);
+                }
             }
         }
 
@@ -4852,51 +5142,6 @@ namespace SolarMajesty
 
                 if (row.memberClasses.Count >= 2)
                     save.parties.Add(row);
-            }
-        }
-
-        private void RestoreWorldBoard(SaveGame save)
-        {
-            if (save == null || _world == null) return;
-            RestoreNodes(save.nodes);
-            RestoreLairs(save.lairs);
-        }
-
-        private void RestoreNodes(List<SaveNode> saved)
-        {
-            if (saved == null || saved.Count == 0 || _world == null) return;
-            var live = _world.Nodes;
-            var pts = new Vector3[live.Count];
-            for (int i = 0; i < live.Count; i++)
-                pts[i] = live[i] != null ? live[i].WorldPosition : new Vector3(9999f, 0f, 9999f);
-
-            for (int i = 0; i < saved.Count; i++)
-            {
-                var s = saved[i];
-                int idx = WorldSaveMatch.Nearest(new Vector3(s.px, s.py, s.pz), pts, WorldSaveMatch.MaxDist);
-                if (idx < 0) continue;
-                var node = live[idx];
-                if (node == null || (int)node.NodeType != s.nodeType) continue;
-                node.RestoreRemaining(s.remaining);
-                pts[idx] = new Vector3(9999f, 0f, 9999f);
-            }
-        }
-
-        private void RestoreLairs(List<SaveLair> saved)
-        {
-            if (saved == null || saved.Count == 0 || _world == null) return;
-            var live = _world.Lairs;
-            var pts = new Vector3[live.Count];
-            for (int i = 0; i < live.Count; i++)
-                pts[i] = live[i] != null ? live[i].WorldPosition : new Vector3(9999f, 0f, 9999f);
-
-            for (int i = 0; i < saved.Count; i++)
-            {
-                var s = saved[i];
-                int idx = WorldSaveMatch.Nearest(new Vector3(s.px, s.py, s.pz), pts, WorldSaveMatch.MaxDist);
-                if (idx < 0) continue;
-                live[idx]?.RestoreChart(s.cleared, s.scouted);
-                pts[idx] = new Vector3(9999f, 0f, 9999f);
             }
         }
 
@@ -5813,9 +6058,38 @@ namespace SolarMajesty
             _corpses.Clear();
             _pendingVeterans.Clear();
             SpecialistRoster.TryDecode(DemoSettings.LoadRoster(celestialBody), _rosterSaved);
-            for (int i = 0; i < _rosterSaved.Count; i++)
+            ApplyRosterRecords(_rosterSaved);
+        }
+
+        private void LoadRosterFromSave(List<SaveRosterEntry> saved)
+        {
+            _rosterSaved.Clear();
+            _corpses.Clear();
+            _pendingVeterans.Clear();
+            if (saved == null) return;
+            for (int i = 0; i < saved.Count; i++)
             {
-                var rec = _rosterSaved[i];
+                var s = saved[i];
+                _rosterSaved.Add(new SpecialistRecord
+                {
+                    Class = (SpecialistClass)s.specialistClass,
+                    Level = Mathf.Clamp(s.level > 0 ? s.level : 1, 1, OverseerRules.LevelCap),
+                    Xp = Mathf.Max(0, s.xp),
+                    Credits = Mathf.Max(0, s.credits),
+                    ReviveCount = Mathf.Max(0, s.reviveCount),
+                    Suit = (ShopItemId)s.suit,
+                    Corpse = s.corpse
+                });
+            }
+            ApplyRosterRecords(_rosterSaved);
+        }
+
+        private void ApplyRosterRecords(List<SpecialistRecord> records)
+        {
+            if (records == null) return;
+            for (int i = 0; i < records.Count; i++)
+            {
+                var rec = records[i];
                 if (rec.Corpse)
                     RegisterCorpse(rec);
                 else

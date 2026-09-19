@@ -5,7 +5,8 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Versioned full-world snapshot. Continue applies flags (with remaining work), specialist
-    /// combat state, and living fauna. Campus / stockpile / research still also live in the
+    /// combat state and poses, living fauna poses, den scouted/cleared, node remaining,
+    /// mission hold, and formed parties. Campus / stockpile / research still also live in the
     /// legacy PlayerPrefs blobs so an older slot without this file still loads the settlement.
     /// Shape is JsonUtility-friendly: concrete [Serializable] classes and Lists only, no dictionaries.
     /// </summary>
@@ -13,7 +14,7 @@ namespace SolarMajesty
     public sealed class SaveGame
     {
         /// <summary>Bump when a field's meaning changes. Readers reject unknown future versions.</summary>
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         public int version = CurrentVersion;
         public string gameVersion = "";
@@ -39,6 +40,7 @@ namespace SolarMajesty
         public List<SaveNode> nodes = new List<SaveNode>();
         public List<SaveLair> lairs = new List<SaveLair>();
         public List<SaveParty> parties = new List<SaveParty>();
+        public List<SaveRosterEntry> roster = new List<SaveRosterEntry>();
 
         /// <summary>Human-readable one-liner for a load menu row.</summary>
         public string Describe()
@@ -161,6 +163,34 @@ namespace SolarMajesty
         public int claimedFlagIndex = -1;
         /// <summary>HAB tax the Courier is carrying to Commons. Distinct from personal credits.</summary>
         public int levyCarry;
+        public int level = 1;
+        public int xp;
+        public int suit;
+        public int reviveCount;
+        /// <summary>Formed party id, or -1 when unpartied.</summary>
+        public int partyId = -1;
+    }
+
+    [Serializable]
+    public sealed class SaveParty
+    {
+        public int id;
+        public int leaderIndex = -1;
+        public List<int> memberIndices = new List<int>();
+        public int leaderClass;
+        public List<int> memberClasses = new List<int>();
+    }
+
+    [Serializable]
+    public sealed class SaveRosterEntry
+    {
+        public int specialistClass;
+        public int level = 1;
+        public int xp;
+        public int credits;
+        public int reviveCount;
+        public int suit;
+        public bool corpse;
     }
 
     [Serializable]
@@ -191,12 +221,5 @@ namespace SolarMajesty
         public float pz;
         public bool cleared;
         public bool scouted;
-    }
-
-    [Serializable]
-    public sealed class SaveParty
-    {
-        public int leaderClass;
-        public List<int> memberClasses = new List<int>();
     }
 }

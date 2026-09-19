@@ -21,7 +21,7 @@ is in it being honest, not in it being all ticked.
 - [x] Game speed: hold, 1x, 2x, 3x ([SimSpeed.cs](../Assets/Scripts/Systems/SimSpeed.cs))
 - [x] Versioned full-world save with atomic writes ([SaveSystem.cs](../Assets/Scripts/Systems/SaveSystem.cs))
 - [x] Save covers flags, escrow, robot health and purse, fauna — the gaps the old continue slot had
-- [ ] Restore of live robots and fauna positions (captured in the file, not yet re-placed on load)
+- [x] Restore of live robots and fauna positions, den scouted/cleared, node remaining, mission hold, and formed parties
 - [x] Alert feed with dedupe, severity, and jump-to ([AlertFeed.cs](../Assets/Scripts/Systems/AlertFeed.cs))
 - [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs))
 - [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs))

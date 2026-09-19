@@ -37,7 +37,7 @@
 - [x] Phase 4 HAB / Commons / LAB / CMD-1 / OPS-1 panel-bevel pass — carbon rings, spine seams, civic wrap bands, bevelled box hulls (Phase 4 still open)
 - [x] Phase 4 dock sockets flush — square airlock plus-arms + module sleeves + orange collars mate at the Lego face; Commons cardinal stubs / Guild E/W ports reach the footprint (Phase 4 still open)
 - [x] Phase 4 editor Mars still + empty Game-tab still + campus v1 + v2 + v3 + **campus v4** (`Docs/Roadmap/SM_MarsCampaign_PlayModeCampusStill4.png`) + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)) — **not** complete
-- [x] Phase 4 W1 continue integrity — Continue autosave now restores open flags (type / position / bounty / remaining work), living fauna, and specialist HP / downed / pose; campus + stockpile + research unchanged. Soft claims rebind by flag index; dens / node yield / mission timer / parties still out of scope.
+- [x] Phase 4 W1 continue integrity — Continue autosave restores open flags, living fauna poses, specialist HP / downed / pose, den scouted/cleared, node remaining, mission hold, and formed parties. Soft claims rebind by flag index.
 
 ## Month roadmap
 
@@ -60,7 +60,7 @@ Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0
 7. **Watchtowers in:** rim guard post + levy chest. Aegis / Rim Watch clock in. If Commons is far, Haul drops CRED at the tower. Inspect the tower and spend CRED to arm lasers (18 m, like a battery).
 8. **Majesty analog pack in:** Market siphon (surplus ICE/REG → CRED, reserve held). Aid Station (Life Support) — paid patches, Triage clocks in. Map: [`Docs/MAJESTY_ANALOG.md`](MAJESTY_ANALOG.md).
 9. **Dens-as-dungeons in:** unscouted dens are fog smudges. Explore charts every den in the 22 m disc. Horizon / Chart walking within 16 m charts one. Fobot Yard shows wreck chassis on the dirt.
-10. **Continue board in:** dens scouted/cleared, node remaining, mission elapsed/sustain/gates, parties, HAB levy purses, watchtower lasers. Wrecks respawn at the yard after load. Legacy PlayerPrefs-only slots still load settlement; they never had dens/nodes.
+10. **Continue board in:** dens scouted/cleared, node remaining, mission elapsed/sustain/gates, parties, HAB levy purses, watchtower lasers, live robot and fauna poses. Wrecks respawn at the yard after load. Legacy PlayerPrefs-only slots still load settlement; they never had dens/nodes.
 11. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`.
 
 ## Still out of scope (for now)

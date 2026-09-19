@@ -26,6 +26,16 @@ namespace SolarMajesty
             BuildMarker(soilColor ?? new Color(0.52f, 0.48f, 0.4f));
         }
 
+        /// <summary>Continue restore of remaining yield. Applies the depleted look when empty.</summary>
+        public void RestoreRemaining(int value)
+        {
+            remaining = Mathf.Max(0, value);
+            if (remaining <= 0)
+                ApplyDepletedLook();
+            else
+                RefreshYieldLabel();
+        }
+
         /// <summary>Consume up to amount; returns what was actually taken.</summary>
         public void RestoreRemaining(int value)
         {
