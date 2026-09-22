@@ -107,7 +107,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void Engineer_RefusesDefaultBuild70_TakesNinety()
+        public void Engineer_RefusesDefaultBuild_TakesNineHundred()
         {
             var data = ScriptableObject.CreateInstance<SpecialistData>();
             data.specialistClass = SpecialistClass.EngineerBot;
@@ -128,12 +128,12 @@ namespace SolarMajesty.Tests
             flagData.flagType = FlagType.Build;
             flagData.stronglyAttracts = null;
 
-            var cheap = Flag(flagData, 70f);
-            var dear = Flag(flagData, 90f);
+            var cheap = Flag(flagData, MajestyEconomy.FlagDefaultBounty(FlagType.Build));
+            var dear = Flag(flagData, 900f);
 
-            Assert.IsFalse(brain.WouldTakeFlag(ctx, cheap, 0f, out _), "default $70 Build must be ignored");
+            Assert.IsFalse(brain.WouldTakeFlag(ctx, cheap, 0f, out _), "default $700 Build must be ignored");
             Assert.AreEqual(FlagRefusalKind.Greed, brain.ExplainFlag(ctx, cheap, 0f));
-            Assert.IsTrue(brain.WouldTakeFlag(ctx, dear, 0f, out _), "+ toward $90 should tempt Anvil");
+            Assert.IsTrue(brain.WouldTakeFlag(ctx, dear, 0f, out _), "+ toward $900 should tempt Anvil");
 
             Object.DestroyImmediate(data);
             Object.DestroyImmediate(flagData);
@@ -154,7 +154,7 @@ namespace SolarMajesty.Tests
                     Data = data, Position = Vector3.zero, HealthNormalized = 1f,
                     GreedHunger = 0.81f, CurrentAction = SpecialistAction.Idle
                 };
-                bool accepted = new SpecialistBrain().WouldTakeFlag(ctx, Flag(flagData, 70f), 0f, out _);
+                bool accepted = new SpecialistBrain().WouldTakeFlag(ctx, Flag(flagData, MajestyEconomy.FlagDefaultBounty(FlagType.Build)), 0f, out _);
                 Assert.IsTrue(accepted, "the real greed gate legitimately accepts after hunger rises");
                 Assert.AreEqual(FirstHourTutorial.PestStep,
                     FirstHourTutorial.Advance(1, true, !accepted, accepted, false));

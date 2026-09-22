@@ -56,6 +56,9 @@ namespace SolarMajesty.Tests
             return data;
         }
 
+        /// <summary>Bounties below are written in the brain's tuning units; flags carry CRED.</summary>
+        private static float Gold(float brainUnits) => brainUnits * MajestyEconomy.GoldScale;
+
         private FlagHandle MakeFlag(FlagData data, float bounty, Vector3 pos, float risk = 0f, int claims = 0)
         {
             return new FlagHandle
@@ -97,7 +100,7 @@ namespace SolarMajesty.Tests
             var brain = new SpecialistBrain();
             var data = MakeSpecialist();
             var ctx = MakeContext(data);
-            var flag = MakeFlag(MakeFlagData(), 30f, new Vector3(10f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(), Gold(30f), new Vector3(10f, 0f, 0f));
 
             brain.WouldTakeFlag(ctx, flag, 0f, out float score);
 
@@ -111,7 +114,7 @@ namespace SolarMajesty.Tests
             var brain = new SpecialistBrain();
             var data = MakeSpecialist();
             var ctx = MakeContext(data);
-            var flag = MakeFlag(MakeFlagData(), 59f, new Vector3(10f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(), Gold(59f), new Vector3(10f, 0f, 0f));
 
             brain.WouldTakeFlag(ctx, flag, 0f, out float score);
 
@@ -124,7 +127,7 @@ namespace SolarMajesty.Tests
             var brain = new SpecialistBrain();
             var data = MakeSpecialist();
             var ctx = MakeContext(data);
-            var rich = MakeFlag(MakeFlagData(), 100000f, Vector3.zero);
+            var rich = MakeFlag(MakeFlagData(), Gold(100000f), Vector3.zero);
 
             brain.WouldTakeFlag(ctx, rich, 0f, out float score);
 
@@ -146,7 +149,7 @@ namespace SolarMajesty.Tests
             var brain = new SpecialistBrain();
             var data = MakeSpecialist();
             var ctx = MakeContext(data);
-            var flag = MakeFlag(MakeFlagData(), 30f, new Vector3(10f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(), Gold(30f), new Vector3(10f, 0f, 0f));
 
             bool would = brain.WouldTakeFlag(ctx, flag, 0f, out float score);
             var reason = brain.ExplainFlag(ctx, flag, 0f);
@@ -163,7 +166,7 @@ namespace SolarMajesty.Tests
             var brain = new SpecialistBrain();
             var data = MakeSpecialist();
             var ctx = MakeContext(data);
-            var flag = MakeFlag(MakeFlagData(), 59f, new Vector3(10f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(), Gold(59f), new Vector3(10f, 0f, 0f));
 
             Assert.IsTrue(brain.WouldTakeFlag(ctx, flag, 0f, out _));
             Assert.AreEqual(FlagRefusalKind.WouldTake, brain.ExplainFlag(ctx, flag, 0f));
@@ -178,8 +181,8 @@ namespace SolarMajesty.Tests
             var ctx = MakeContext(data);
             var pos = new Vector3(10f, 0f, 0f);
 
-            Assert.IsFalse(brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), 58.0f, pos), 0f, out _));
-            Assert.IsTrue(brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), 58.5f, pos), 0f, out _));
+            Assert.IsFalse(brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), Gold(58.0f), pos), 0f, out _));
+            Assert.IsTrue(brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), Gold(58.5f), pos), 0f, out _));
         }
 
         /// <summary>A starving hero takes work it would otherwise refuse.</summary>
@@ -190,7 +193,7 @@ namespace SolarMajesty.Tests
             var data = MakeSpecialist();
             var ctx = MakeContext(data);
             ctx.GreedHunger = 0.8f;
-            var flag = MakeFlag(MakeFlagData(), 30f, new Vector3(10f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(), Gold(30f), new Vector3(10f, 0f, 0f));
 
             Assert.IsTrue(brain.WouldTakeFlag(ctx, flag, 0f, out _));
         }
@@ -218,7 +221,7 @@ namespace SolarMajesty.Tests
             var brain = new SpecialistBrain();
             var data = MakeSpecialist();
             var ctx = MakeContext(data);
-            var flag = MakeFlag(MakeFlagData(), 500f, new Vector3(5000f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(), Gold(500f), new Vector3(5000f, 0f, 0f));
 
             Assert.IsFalse(brain.WouldTakeFlag(ctx, flag, 0f, out _));
             Assert.AreEqual(FlagRefusalKind.TooFar, brain.ExplainFlag(ctx, flag, 0f));
@@ -231,7 +234,7 @@ namespace SolarMajesty.Tests
             var data = MakeSpecialist();
             var ctx = MakeContext(data);
             ctx.HealthNormalized = 0.2f;
-            var flag = MakeFlag(MakeFlagData(), 500f, new Vector3(10f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(), Gold(500f), new Vector3(10f, 0f, 0f));
 
             Assert.AreEqual(FlagRefusalKind.Hurt, brain.ExplainFlag(ctx, flag, 0f));
         }
@@ -244,7 +247,7 @@ namespace SolarMajesty.Tests
             data.combatPreference = 0.05f;
             data.defendPreference = 0.05f;
             var ctx = MakeContext(data);
-            var flag = MakeFlag(MakeFlagData(FlagType.ClearThreat), 1f, new Vector3(30f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(FlagType.ClearThreat), Gold(1f), new Vector3(30f, 0f, 0f));
 
             Assert.AreEqual(FlagRefusalKind.NotMyJob, brain.ExplainFlag(ctx, flag, 0f));
         }
@@ -286,8 +289,8 @@ namespace SolarMajesty.Tests
             var data = MakeSpecialist();
             var ctx = MakeContext(data);
 
-            brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), 60f, new Vector3(5f, 0f, 0f)), 0f, out float near);
-            brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), 60f, new Vector3(40f, 0f, 0f)), 0f, out float far);
+            brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), Gold(60f), new Vector3(5f, 0f, 0f)), 0f, out float near);
+            brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), Gold(60f), new Vector3(40f, 0f, 0f)), 0f, out float far);
 
             Assert.Greater(near, far);
         }
@@ -300,8 +303,8 @@ namespace SolarMajesty.Tests
             var ctx = MakeContext(data);
             var pos = new Vector3(10f, 0f, 0f);
 
-            brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), 60f, pos, 0f, 0), 0f, out float alone);
-            brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), 60f, pos, 0f, 3), 0f, out float crowded);
+            brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), Gold(60f), pos, 0f, 0), 0f, out float alone);
+            brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), Gold(60f), pos, 0f, 3), 0f, out float crowded);
 
             Assert.Greater(alone, crowded, "crowd penalty should spread heroes across flags");
         }
@@ -312,7 +315,7 @@ namespace SolarMajesty.Tests
             var brain = new SpecialistBrain();
             var data = MakeSpecialist(courage: 0.2f);
             var ctx = MakeContext(data);
-            var flag = MakeFlag(MakeFlagData(), 60f, new Vector3(10f, 0f, 0f), 0.5f);
+            var flag = MakeFlag(MakeFlagData(), Gold(60f), new Vector3(10f, 0f, 0f), 0.5f);
 
             brain.WouldTakeFlag(ctx, flag, 0f, out float calm);
             brain.WouldTakeFlag(ctx, flag, 1f, out float dangerous);
@@ -410,7 +413,7 @@ namespace SolarMajesty.Tests
             var ctx = MakeContext(MakeSpecialist(SpecialistClass.CourierBot));
             ctx.HasLevyWalk = true;
             ctx.LevyPosition = new Vector3(40f, 0f, 0f);
-            var flag = MakeFlag(MakeFlagData(FlagType.EstablishOutpost), 90f, new Vector3(10f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(FlagType.EstablishOutpost), Gold(90f), new Vector3(10f, 0f, 0f));
 
             var decision = brain.Evaluate(ctx, new List<FlagHandle> { flag });
 
@@ -423,7 +426,7 @@ namespace SolarMajesty.Tests
         {
             var brain = new SpecialistBrain();
             var ctx = MakeContext(MakeSpecialist());
-            var flag = MakeFlag(MakeFlagData(), 90f, new Vector3(10f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(), Gold(90f), new Vector3(10f, 0f, 0f));
 
             var decision = brain.Evaluate(ctx, new List<FlagHandle> { flag });
 
@@ -436,7 +439,7 @@ namespace SolarMajesty.Tests
         {
             var brain = new SpecialistBrain();
             var ctx = MakeContext(MakeSpecialist());
-            var flag = MakeFlag(MakeFlagData(), 5f, new Vector3(10f, 0f, 0f));
+            var flag = MakeFlag(MakeFlagData(), Gold(5f), new Vector3(10f, 0f, 0f));
 
             var decision = brain.Evaluate(ctx, new List<FlagHandle> { flag });
 
@@ -449,8 +452,8 @@ namespace SolarMajesty.Tests
         {
             var brain = new SpecialistBrain();
             var ctx = MakeContext(MakeSpecialist());
-            var a = MakeFlag(MakeFlagData(), 90f, new Vector3(10f, 0f, 0f));
-            var b = MakeFlag(MakeFlagData(), 90f, new Vector3(-10f, 0f, 0f));
+            var a = MakeFlag(MakeFlagData(), Gold(90f), new Vector3(10f, 0f, 0f));
+            var b = MakeFlag(MakeFlagData(), Gold(90f), new Vector3(-10f, 0f, 0f));
             ctx.CurrentFlag = b;
 
             var decision = brain.Evaluate(ctx, new List<FlagHandle> { a, b });
@@ -464,7 +467,7 @@ namespace SolarMajesty.Tests
         {
             var brain = new SpecialistBrain();
             var ctx = MakeContext(MakeSpecialist());
-            var flags = new List<FlagHandle> { null, new FlagHandle(), MakeFlag(MakeFlagData(), 90f, Vector3.right) };
+            var flags = new List<FlagHandle> { null, new FlagHandle(), MakeFlag(MakeFlagData(), Gold(90f), Vector3.right) };
 
             Assert.DoesNotThrow(() => brain.Evaluate(ctx, flags));
             Assert.DoesNotThrow(() => brain.Evaluate(ctx, null));
