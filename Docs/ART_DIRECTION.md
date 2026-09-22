@@ -1,5 +1,7 @@
 # Art Direction
 
+**Integration note — 2026-09-22 (heroes):** Outdoor specialists are now **bipedal anthropomorphic Optimus-language robots**, not rovers / hovers / tracked vehicles. Lock + roster + Imagine template: [`Docs/ART_ANTHROPOMORPHIC_HEROES.md`](ART_ANTHROPOMORPHIC_HEROES.md). Sheets: `ConceptSheets/AnthropomorphicHeroes/`. Ten-class roster unchanged. Do not rewrite `SpecialistBrain`.
+
 **Integration note — 2026-09-22:** The later Commons lock is the smooth command-dome citadel (2026-09-17); older geodesic instructions and screenshots below are historical. The boxy tan HAB, orange ribbed airlocks, four-cell landmark yards, and animated units are retained. Phase 4 exit remains blocked pending a fresh visual review.
 
 
