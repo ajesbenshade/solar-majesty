@@ -169,6 +169,8 @@ namespace SolarMajesty
         private void LateUpdate()
         {
             if (_root == null) return;
+            // Authored Idle/Walk/Strike clips own the body. Procedural bob would fight the rig.
+            if (GetComponentInChildren<UnitClipPlayer>(true) != null) return;
 
             float dt = Time.deltaTime;
             if (dt <= 0f) return;

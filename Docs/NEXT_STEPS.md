@@ -1,5 +1,8 @@
 # Next Steps
 
+**Integration note — 2026-09-22:** The later Commons lock is the smooth command-dome citadel (2026-09-17); older geodesic instructions and screenshots below are historical. The boxy tan HAB, orange ribbed airlocks, four-cell landmark yards, and animated units are retained. Phase 4 exit remains blocked pending a fresh visual review.
+
+
 ## Done
 
 - [x] Pure C# systems + SO definitions through Phase 6E (see git history / prior checklists)
@@ -37,7 +40,7 @@
 - [x] Phase 4 HAB / Commons / LAB / CMD-1 / OPS-1 panel-bevel pass — carbon rings, spine seams, civic wrap bands, bevelled box hulls (Phase 4 still open)
 - [x] Phase 4 dock sockets flush — square airlock plus-arms + module sleeves + orange collars mate at the Lego face; Commons cardinal stubs / Guild E/W ports reach the footprint (Phase 4 still open)
 - [x] Phase 4 editor Mars still + empty Game-tab still + campus v1 + v2 + v3 + **campus v4** (`Docs/Roadmap/SM_MarsCampaign_PlayModeCampusStill4.png`) + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)) — **not** complete
-- [x] Phase 4 W1 continue integrity — Continue autosave now restores open flags (type / position / bounty / remaining work), living fauna, and specialist HP / downed / pose; campus + stockpile + research unchanged. Soft claims rebind by flag index; dens / node yield / mission timer / parties still out of scope.
+- [x] Phase 4 W1 continue integrity — Continue autosave restores open flags, living fauna poses, specialist HP / downed / pose, den scouted/cleared, node remaining, mission hold, and formed parties. Soft claims rebind by flag index.
 
 ## Month roadmap
 
@@ -53,16 +56,16 @@
 
 Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 is packaged. Phase 2 is complete** ([exit review](Roadmap/PHASE_2_EXIT.md)). **Phase 3 is complete** ([exit review](Roadmap/PHASE_3_EXIT.md)). Current: [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) ([exit blocked](Roadmap/PHASE_4_EXIT.md)). After Phase 4: [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
 
-1. Phase 4 visual target — **EXIT blocked**. Latest `SM_Capture.png` (2026-09-11) is **packed**. Recapture: pad sits **past the HAB**, solar north of Commons, industrial opposite, 3-cell dirt gaps, no farm. Menu: **Solar Majesty → Render → Capture Mars Still**. Judge vs [`SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png). Empty dirt is a pass. **Do not stamp Phase 4 complete.**
+1. Phase 4 visual target — **Weeks 1–4 continued are in**. Exit review is **blocked** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)). Locked HAB still: **boxy beige/tan hull**, roof solar, orange ribbed Commons-to-HAB collar with torus rings, white cube airlock with dark square windows. Do **not** restore HAB-1 graphite-rim. Commons geodesic is frequency-3 cream triangles over a dark undershell; landmark yards keep 4-cell dirt islands. Latest in-repo Game-tab is still6 (empty Sol 1). `SM_MarsCampaign_VisualTarget.png` is **retired** — do not chase packed density. Next human step: re-enter Play Mode on Mars, place Commons + airlock + HAB, look for that locked HAB kit. Then a **spaced overseer** Game-tab still. **Do not stamp Phase 4 complete. Do not start Phase 5.** Square Lego airlocks stay; tubes/domes/cranes/kits/turrets/solar are dressing. Mockup squad bars are HUD chrome only. Do not add click-to-move. Defense stays the tracked Guardian.
 2. Title orrery + four starter guilds **in**. Click a world to drop (Shift+click unlocks). Horizon / Anvil / Aegis / Triage replace the generic Guild Hall.
 3. Majesty wallet **in**: CRED only for flags / buildings / techs / revive / gear. ICE lungs, PWR grid. Guild halls sell class kits. Market Stall (Extract Basics) sells potions + regen necklace. Lodge pulses research-then-activate.
 4. **Blacksmith** (Ore Refining) sells guild arms and armor. **Fobot Yard** (Med Protocols) is the paid revive building — Y will not skip it. Yard bill scales with hero level.
-5. Settings chips cycle Mode / Challenge / Stance. Open Hands hunger +0.26 clears the 0.75 cheap-flag greed gate (EditMode covered). Compact Grok asides cover levy steal/sit, yard invoice, siphon closed, den chart.
+5. Settings chips cycle Mode / Challenge / Stance. Open Hands hunger +0.26 clears the 0.75 cheap-flag greed gate (EditMode covered). Compact Grok asides cover levy steal/sit, yard invoice, siphon closed, den chart. Guild Hall: assign SCOUT/ENG/DEF/MED (Horizon / Anvil / Aegis / Triage).
 6. **Levy Courier walks in:** tax no longer teleports into CRED. Occupied HABs accrue a purse; Haul (Courier) walks it to Commons. Sitting too long or a downed Haul can lose the purse. No new FlagType. SpecialistBrain scoring unchanged.
 7. **Watchtowers in:** rim guard post + levy chest. Aegis / Rim Watch clock in. If Commons is far, Haul drops CRED at the tower. Inspect the tower and spend CRED to arm lasers (18 m, like a battery).
 8. **Majesty analog pack in:** Market siphon (surplus ICE/REG → CRED, reserve held). Aid Station (Life Support) — paid patches, Triage clocks in. Map: [`Docs/MAJESTY_ANALOG.md`](MAJESTY_ANALOG.md).
 9. **Dens-as-dungeons in:** unscouted dens are fog smudges. Explore charts every den in the 22 m disc. Horizon / Chart walking within 16 m charts one. Fobot Yard shows wreck chassis on the dirt.
-10. **Continue board in:** dens scouted/cleared, node remaining, mission elapsed/sustain/gates, parties, HAB levy purses, watchtower lasers. Wrecks respawn at the yard after load. Legacy PlayerPrefs-only slots still load settlement; they never had dens/nodes.
+10. **Continue board in:** dens scouted/cleared, node remaining, mission elapsed/sustain/gates, parties, HAB levy purses, watchtower lasers, live robot and fauna poses. Wrecks respawn at the yard after load. Legacy PlayerPrefs-only slots still load settlement; they never had dens/nodes.
 11. Optional leftover: Titan; 45–90 min playtest; Imagine→Blender remesh; note friction in `Docs/Roadmap/PHASE_1_FRICTION.md`.
 
 ## Still out of scope (for now)

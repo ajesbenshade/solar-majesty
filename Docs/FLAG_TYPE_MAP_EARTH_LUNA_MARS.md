@@ -78,7 +78,7 @@ All eight types are **playable on every body from drop**. Narrative “unlocks�
 
 ## Unlock / gate spine
 
-`CampaignProgress` persists `SM_CampaignMaxBody`. New Game = Earth. Conquest win unlocks the next body. Debug: Shift+F10 / Shift+click a locked chip.
+`CampaignProgress` persists `SM_CampaignMaxBody`. New Game = **Luna** (Mars if the Luna hour is cleared or skipped). Conquest win unlocks Mars. Earth / Belt / Europa are parked (Shift+F10 / Shift+click). Debug: Shift+F10 / Shift+click a locked chip.
 
 | Body | Faction frame | Dens | Pop / hold | Launch tech + pad | On win |
 |------|---------------|------|------------|-------------------|--------|
@@ -88,7 +88,7 @@ All eight types are **playable on every body from drop**. Narrative “unlocks�
 
 Sustain also needs Commons, housing ≥ goal, ≥1 Farm, ≥1 Mine, floors ICE ≥ 8 / MET ≥ 12 / REG ≥ 10 (`MissionController` + `Settlement`).
 
-**Tutorial (Earth, six skippable beats):** Commons → airlock → HAB → workshop → flag → TECH (`OverseerHud`). Teach **Build $70** greed (Anvil refuses cheap weld) on beat 5.
+**Tutorial (Luna, six skippable beats; Earth copy stays parked):** Commons → airlock → HAB → workshop → flag → TECH (`OverseerHud`). Teach **Build $70** greed (Anvil refuses cheap weld) on beat 5.
 
 **Research tees (advisor, not auto-quest):**
 

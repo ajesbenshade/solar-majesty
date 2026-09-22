@@ -123,7 +123,12 @@ namespace SolarMajesty
 
             try
             {
-                var loaded = JsonUtility.FromJson<SaveGame>(File.ReadAllText(path));
+                string json = File.ReadAllText(path);
+                // The stabilization branch used an encoded string; main used a structured array.
+                // Preserve both v3/v4 formats without asking JsonUtility to parse the wrong type.
+                json = System.Text.RegularExpressions.Regex.Replace(json,
+                    @"""roster""\s*:\s*(?="")", "\"rosterBlob\":");
+                var loaded = JsonUtility.FromJson<SaveGame>(json);
                 if (loaded == null)
                 {
                     Debug.LogWarning($"[SaveSystem] Save {path} did not parse.");
@@ -184,6 +189,7 @@ namespace SolarMajesty
             save.nodes ??= new List<SaveNode>();
             save.lairs ??= new List<SaveLair>();
             save.parties ??= new List<SaveParty>();
+            save.roster ??= new List<SaveRosterEntry>();
             save.research.unlocked ??= new List<int>();
             save.research.progress ??= new List<SaveResearchProgress>();
             if (save.buildings.Exists(b => b == null || !Enum.IsDefined(typeof(BuildingCategory), b.category) || b.w < 1 || b.h < 1) ||
@@ -215,6 +221,11 @@ namespace SolarMajesty
                         fauna.lairIndex = i;
                     }
                 }
+            }
+            foreach (var party in save.parties)
+            {
+                party.memberIndices ??= new List<int>();
+                party.memberClasses ??= new List<int>();
             }
             return true;
         }

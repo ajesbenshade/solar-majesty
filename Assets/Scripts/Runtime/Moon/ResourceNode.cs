@@ -26,7 +26,7 @@ namespace SolarMajesty
             BuildMarker(soilColor ?? new Color(0.52f, 0.48f, 0.4f));
         }
 
-        /// <summary>Consume up to amount; returns what was actually taken.</summary>
+        /// <summary>Restore yield and refresh its label and depleted appearance.</summary>
         public void RestoreRemaining(int value)
         {
             remaining = Mathf.Max(0, value);

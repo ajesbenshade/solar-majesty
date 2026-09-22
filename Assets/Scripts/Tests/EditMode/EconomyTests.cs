@@ -136,7 +136,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void Tax_AccruesWithoutPayingTheStockpile()
+        public void Tax_AccruesToPendingLevy_NotTheStockpile()
         {
             var s = Make(out ResourceManager res, coreHabs: 2);
             res.Set(ResourceId.WaterIce, 100);
@@ -145,8 +145,9 @@ namespace SolarMajesty.Tests
             s.Tick(s.TaxInterval);
 
             Assert.AreEqual(Settlement.StarterColonists * Settlement.TaxPerCitizen, s.LastTax);
+            Assert.AreEqual(s.LastTax, s.PendingLevy, "tax sits as a HAB purse, it does not teleport");
             Assert.AreEqual(s.LastTax, s.UncollectedLevy);
-            Assert.AreEqual(0, res.Get(ResourceId.Metals), "levy sits until Haul walks it home");
+            Assert.AreEqual(0, res.Get(ResourceId.Metals), "stockpile stays empty until a Courier walks home");
         }
 
         [Test]
@@ -160,21 +161,36 @@ namespace SolarMajesty.Tests
             s.Tick(s.TaxInterval);
 
             Assert.AreEqual(Mathf.RoundToInt(3 * Settlement.TaxPerCitizen * 0.65f), s.LastTax);
-            Assert.AreEqual(s.LastTax, s.UncollectedLevy);
+            Assert.AreEqual(s.LastTax, s.PendingLevy);
             Assert.AreEqual(0, res.Get(ResourceId.Metals));
         }
 
         [Test]
-        public void Levy_DeliversIntoTheStockpile()
+        public void LevyDeposit_AddsMetalsToTheStockpile()
         {
             var s = Make(out ResourceManager res, coreHabs: 1);
             s.SeedStarterCrew();
             s.Tick(s.TaxInterval);
-            int sitting = s.TakeUncollectedLevy();
-            s.NoteLevyDelivered(sitting);
-            Assert.AreEqual(sitting, res.Get(ResourceId.Metals));
-            Assert.AreEqual(sitting, s.LastDelivered);
-            Assert.AreEqual(0, s.UncollectedLevy);
+            int pending = s.TakePendingLevy();
+
+            s.NoteLevyDeposited(pending);
+
+            Assert.AreEqual(0, s.PendingLevy);
+            Assert.AreEqual(pending, s.LastLevyDeposited);
+            Assert.AreEqual(pending, s.LastDelivered);
+            Assert.AreEqual(pending, res.Get(ResourceId.Metals));
+        }
+
+        [Test]
+        public void UnplacedLevy_ReturnsToPending()
+        {
+            var s = Make(out _, coreHabs: 1);
+            s.SeedStarterCrew();
+            s.Tick(s.TaxInterval);
+            int pending = s.TakePendingLevy();
+            s.ReturnUnplacedLevy(pending);
+
+            Assert.AreEqual(pending, s.PendingLevy);
         }
 
         [Test]
@@ -407,6 +423,378 @@ namespace SolarMajesty.Tests
         public void RefabMetals_NullData_HasASafeFloor()
         {
             Assert.AreEqual(25, OverseerRules.RefabMetals(null));
+        }
+
+        [Test]
+        public void YardBill_IsBaseAtLevelOneThenGrowsByOnePointFive()
+        {
+            Assert.AreEqual(40, OverseerRules.YardBill(1));
+            Assert.AreEqual(40, OverseerRules.YardBill(0), "level 0 clamps to L1");
+            Assert.AreEqual(60, OverseerRules.YardBill(2));
+            Assert.AreEqual(90, OverseerRules.YardBill(3));
+        }
+
+        [Test]
+        public void YardBill_CapsAtReviveCostMaxSteps()
+        {
+            int capped = OverseerRules.YardBill(1 + OverseerRules.ReviveCostMaxSteps);
+            Assert.AreEqual(capped, OverseerRules.YardBill(99));
+            Assert.Greater(capped, OverseerRules.YardBill(1));
+        }
+
+        [Test]
+        public void YardBill_UsesLevelNotReviveCountAlias()
+        {
+            Assert.AreEqual(OverseerRules.YardBill(4), OverseerRules.ReviveMetals(4));
+            Assert.AreNotEqual(OverseerRules.YardBill(1), OverseerRules.YardBill(4));
+        }
+
+        [Test]
+        public void ReviveIce_IsDroppedFromTheYardBill()
+        {
+            Assert.AreEqual(0, OverseerRules.ReviveIce);
+            Assert.AreEqual(0, OverseerRules.ReviveIceCost(0));
+            Assert.AreEqual(0, OverseerRules.ReviveIceCost(8));
+            Assert.AreEqual(0, OverseerRules.ReviveIceCost(99));
+        }
+    }
+
+    public class FobotYardEconomyTests
+    {
+        [Test]
+        public void CanAffordRevive_IsMetalsOnly_EvenWithEmptyIce()
+        {
+            var res = new ResourceManager();
+            res.Set(ResourceId.Metals, 40);
+            res.Set(ResourceId.WaterIce, 0);
+            var eco = new SimpleEconomy(res);
+
+            Assert.IsTrue(eco.CanAffordRevive(40));
+            Assert.IsTrue(eco.CanAffordRevive(40, 8), "ICE on the call is ignored");
+            Assert.IsFalse(eco.CanAffordRevive(41));
+        }
+
+        [Test]
+        public void TrySpendRevive_DoesNotDebitIce()
+        {
+            var res = new ResourceManager();
+            res.Set(ResourceId.Metals, 60);
+            res.Set(ResourceId.WaterIce, 12);
+            var eco = new SimpleEconomy(res);
+
+            Assert.IsTrue(eco.TrySpendRevive(60, 8));
+            Assert.AreEqual(0, res.Get(ResourceId.Metals));
+            Assert.AreEqual(12, res.Get(ResourceId.WaterIce), "yard/re-fab must not spend the tank");
+        }
+    }
+
+    public class LevyMathTests
+    {
+        [Test]
+        public void Accrue_SplitsByResidentCount()
+        {
+            var residents = new[] { 2, 1 };
+            var purses = new[] { 0, 0 };
+
+            int given = LevyMath.Accrue(6, residents, purses);
+
+            Assert.AreEqual(6, given);
+            Assert.AreEqual(4, purses[0]);
+            Assert.AreEqual(2, purses[1]);
+        }
+
+        [Test]
+        public void Accrue_RemainderGoesToTheFullestHab()
+        {
+            var residents = new[] { 2, 1 };
+            var purses = new[] { 0, 0 };
+
+            LevyMath.Accrue(5, residents, purses);
+
+            Assert.AreEqual(4, purses[0], "2/3 of 5 is 3, plus remainder 1");
+            Assert.AreEqual(1, purses[1]);
+        }
+
+        [Test]
+        public void Accrue_EmptyHabsGetNothing()
+        {
+            var residents = new[] { 0, 3, 0 };
+            var purses = new[] { 9, 0, 4 };
+
+            int given = LevyMath.Accrue(3, residents, purses);
+
+            Assert.AreEqual(3, given);
+            Assert.AreEqual(9, purses[0]);
+            Assert.AreEqual(3, purses[1]);
+            Assert.AreEqual(4, purses[2]);
+        }
+
+        [Test]
+        public void Accrue_NoOccupiedHabs_PlacesNothing()
+        {
+            var purses = new[] { 0, 0 };
+            Assert.AreEqual(0, LevyMath.Accrue(8, new[] { 0, 0 }, purses));
+            Assert.AreEqual(0, purses[0]);
+        }
+
+        [Test]
+        public void Collect_EmptiesThePurse()
+        {
+            int purse = 7;
+            Assert.AreEqual(7, LevyMath.Collect(ref purse));
+            Assert.AreEqual(0, purse);
+            Assert.AreEqual(0, LevyMath.Collect(ref purse));
+        }
+
+        [Test]
+        public void Steal_TakesUpToWhatIsThere()
+        {
+            int purse = 5;
+            Assert.AreEqual(3, LevyMath.Steal(ref purse, 3));
+            Assert.AreEqual(2, purse);
+            Assert.AreEqual(2, LevyMath.Steal(ref purse, 10));
+            Assert.AreEqual(0, purse);
+            Assert.AreEqual(0, LevyMath.Steal(ref purse, 1));
+        }
+    }
+
+    public class IceShopSpendTests
+    {
+        [Test]
+        public void TechCompleteCost_NeverChargesIce()
+        {
+            var list = TechCatalog.All;
+            Assert.Greater(list.Count, 10);
+            for (int i = 0; i < list.Count; i++)
+            {
+                var cost = list[i].CompleteCost;
+                if (cost == null) continue;
+                for (int c = 0; c < cost.Length; c++)
+                {
+                    Assert.AreNotEqual(ResourceId.WaterIce, cost[c].resource,
+                        $"{list[i].DisplayName} still prices ICE as shop currency");
+                }
+            }
+        }
+
+        [Test]
+        public void TechIcePrices_FoldedIntoMetals()
+        {
+            AssertMetals(TechId.LunarRocket, 55);
+            AssertMetals(TechId.MarsShip, 110);
+            AssertMetals(TechId.Icebreaker, 120);
+            AssertMetals(TechId.GeneVault, 140);
+            AssertMetals(TechId.ClimateLoom, 160);
+        }
+
+        [Test]
+        public void ShipAndSecretPowerTax_Stays()
+        {
+            AssertPower(TechId.MarsShip, 20);
+            AssertPower(TechId.Icebreaker, 30);
+            AssertPower(TechId.BeltHauler, 25);
+        }
+
+        [Test]
+        public void SpecialistUpkeep_NeverChargesIce()
+        {
+            foreach (SpecialistClass cls in System.Enum.GetValues(typeof(SpecialistClass)))
+            {
+                var data = ScriptableObject.CreateInstance<SpecialistData>();
+                try
+                {
+                    data.specialistClass = cls;
+                    data.upkeepPerMinute = new[] { new ResourceAmount(ResourceId.WaterIce, 9) };
+                    SpecialistPersonality.Apply(data);
+                    var upkeep = data.upkeepPerMinute;
+                    if (upkeep == null) continue;
+                    for (int i = 0; i < upkeep.Length; i++)
+                    {
+                        Assert.AreNotEqual(ResourceId.WaterIce, upkeep[i].resource,
+                            $"{cls} payroll still spends the ICE tank");
+                    }
+                }
+                finally
+                {
+                    Object.DestroyImmediate(data);
+                }
+            }
+        }
+
+        [Test]
+        public void MedicAndTerraformer_PayMetalsNotIce()
+        {
+            AssertUpkeepMetals(SpecialistClass.Medic, 1);
+            AssertUpkeepMetals(SpecialistClass.TerraformerBot, 1);
+        }
+
+        private static void AssertMetals(TechId id, int metals)
+        {
+            var def = TechCatalog.Get(id);
+            Assert.IsNotNull(def);
+            Assert.AreEqual(metals, Amount(def.CompleteCost, ResourceId.Metals), id.ToString());
+            Assert.AreEqual(0, Amount(def.CompleteCost, ResourceId.WaterIce), id.ToString());
+        }
+
+        private static void AssertPower(TechId id, int power)
+        {
+            var def = TechCatalog.Get(id);
+            Assert.IsNotNull(def);
+            Assert.AreEqual(power, Amount(def.CompleteCost, ResourceId.Power), id.ToString());
+        }
+
+        private static int Amount(ResourceAmount[] cost, ResourceId id)
+        {
+            if (cost == null) return 0;
+            int n = 0;
+            for (int i = 0; i < cost.Length; i++)
+            {
+                if (cost[i].resource == id)
+                    n += cost[i].amount;
+            }
+            return n;
+        }
+
+        private static void AssertUpkeepMetals(SpecialistClass cls, int metals)
+        {
+            var data = ScriptableObject.CreateInstance<SpecialistData>();
+            try
+            {
+                data.specialistClass = cls;
+                SpecialistPersonality.Apply(data);
+                Assert.AreEqual(metals, Amount(data.upkeepPerMinute, ResourceId.Metals), cls.ToString());
+                Assert.AreEqual(0, Amount(data.upkeepPerMinute, ResourceId.WaterIce), cls.ToString());
+            }
+            finally
+            {
+                Object.DestroyImmediate(data);
+            }
+        }
+    }
+
+    public class MarketMathTests
+    {
+        [Test]
+        public void IceReserve_IsAtLeastTwelveAndThreePerColonist()
+        {
+            Assert.AreEqual(12, MarketMath.IceReserve(0));
+            Assert.AreEqual(12, MarketMath.IceReserve(2));
+            Assert.AreEqual(12, MarketMath.IceReserve(4));
+            Assert.AreEqual(15, MarketMath.IceReserve(5));
+            Assert.AreEqual(30, MarketMath.IceReserve(10));
+        }
+
+        [Test]
+        public void IceToSiphon_IdlesAtOrBelowReserve()
+        {
+            Assert.AreEqual(0, MarketMath.IceToSiphon(12, 0));
+            Assert.AreEqual(0, MarketMath.IceToSiphon(11, 0));
+            Assert.AreEqual(0, MarketMath.IceToSiphon(15, 5));
+        }
+
+        [Test]
+        public void IceToSiphon_TakesOneFromSurplusAndNeverCutsReserve()
+        {
+            Assert.AreEqual(1, MarketMath.IceToSiphon(13, 0));
+            Assert.AreEqual(1, MarketMath.IceToSiphon(80, 0));
+            Assert.AreEqual(1, MarketMath.IceToSiphon(16, 5));
+        }
+
+        [Test]
+        public void RegToSiphon_IsSilentAndRequiresAFatTank()
+        {
+            Assert.AreEqual(0, MarketMath.RegToSiphon(12, 0, 40), "closed stall must not dump REG");
+            Assert.AreEqual(0, MarketMath.RegToSiphon(20, 0, 10));
+            Assert.AreEqual(2, MarketMath.RegToSiphon(20, 0, 40));
+        }
+
+        [Test]
+        public void CreditsFrom_PaysMetalsForIceAndReg()
+        {
+            Assert.AreEqual(2, MarketMath.CreditsFrom(1, 0));
+            Assert.AreEqual(4, MarketMath.CreditsFrom(1, 2));
+        }
+    }
+
+    public class MarketTrickleTests
+    {
+        private static SimpleEconomy Stall(out ResourceManager res, int ice, int met, int reg, int pop)
+        {
+            res = new ResourceManager();
+            res.Set(ResourceId.WaterIce, ice);
+            res.Set(ResourceId.Metals, met);
+            res.Set(ResourceId.Regolith, reg);
+            var eco = new SimpleEconomy(res)
+            {
+                ResupplyEnabled = false,
+                HasDock = true,
+                MarketPopulation = pop
+            };
+            return eco;
+        }
+
+        [Test]
+        public void Tick_ExportsOneIceAboveReserve()
+        {
+            var eco = Stall(out var res, ice: 13, met: 0, reg: 10, pop: 0);
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.IsTrue(eco.MarketOpen);
+            Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(2, res.Get(ResourceId.Metals));
+            Assert.AreEqual(10, res.Get(ResourceId.Regolith), "REG at reserve stays");
+        }
+
+        [Test]
+        public void Tick_IdlesWhenTankIsNotFat()
+        {
+            var eco = Stall(out var res, ice: 12, met: 5, reg: 40, pop: 0);
+            int blocked = 0;
+            eco.MarketBlocked += () => blocked++;
+            eco.Tick(MarketMath.IntervalSeconds);
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.IsFalse(eco.MarketOpen);
+            Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(5, res.Get(ResourceId.Metals), "idle stall must not print credits");
+            Assert.AreEqual(40, res.Get(ResourceId.Regolith), "no floor means no REG dump");
+            Assert.AreEqual(1, blocked, "blocked toast latches once per idle stretch");
+        }
+
+        [Test]
+        public void Tick_WithoutPad_DoesNotSiphon()
+        {
+            var eco = Stall(out var res, ice: 40, met: 0, reg: 40, pop: 0);
+            eco.HasDock = false;
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.IsFalse(eco.MarketOpen);
+            Assert.AreEqual(40, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(0, res.Get(ResourceId.Metals));
+        }
+
+        [Test]
+        public void Tick_ReserveScalesWithPopulation()
+        {
+            var eco = Stall(out var res, ice: 15, met: 0, reg: 10, pop: 5);
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.IsFalse(eco.MarketOpen);
+            Assert.AreEqual(15, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(0, res.Get(ResourceId.Metals));
+        }
+
+        [Test]
+        public void Tick_NeverDrainsIceThroughTheReserve()
+        {
+            var eco = Stall(out var res, ice: 14, met: 0, reg: 10, pop: 0);
+            eco.Tick(MarketMath.IntervalSeconds);
+            eco.Tick(MarketMath.IntervalSeconds);
+            eco.Tick(MarketMath.IntervalSeconds);
+
+            Assert.GreaterOrEqual(res.Get(ResourceId.WaterIce), 12);
+            Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
+            Assert.AreEqual(4, res.Get(ResourceId.Metals));
         }
     }
 }

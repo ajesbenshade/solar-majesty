@@ -53,6 +53,7 @@ namespace SolarMajesty
         private float _hudScale = 1f;
         private bool _powerAlarmLatched;
         private bool _confirmNewGame;
+        private CelestialBodyId _pendingNewGameBody = CelestialBodyId.Earth;
         private Texture2D _minimapDisc;
 
 
@@ -568,9 +569,12 @@ namespace SolarMajesty
                 slot++;
                 var profile = CelestialBodyCatalog.Get(id);
                 bool unlocked = CampaignProgress.IsUnlocked(id);
+                bool parked = CampaignProgress.IsParked(id);
                 if (!unlocked) anyLocked = true;
                 var chipRect = new Rect(c.x + col * (chipW + 3f), y + row * 22f, chipW, 20f);
-                string label = unlocked ? profile.ShortCode : $"{profile.ShortCode}?";
+                string label = unlocked
+                    ? profile.ShortCode
+                    : parked ? $"{profile.ShortCode}·" : $"{profile.ShortCode}?";
                 if (Chip(chipRect, label, _loop.ActiveBody == id))
                 {
                     if (unlocked)
@@ -580,7 +584,9 @@ namespace SolarMajesty
                     else if (shiftHeld)
                         _loop.RequestDebugHop(id, unlockAll: true);
                     else
-                        Notify("Locked — Shift+click this chip (or Shift+F10) to unlock.", 3.5f);
+                        Notify(parked
+                            ? "Parked — Shift+click to load for debug."
+                            : "Locked — Shift+click this chip (or Shift+F10) to unlock.", 3.5f);
                 }
             }
             int rows = shownBodies == 0 ? 0 : (shownBodies + cols - 1) / cols;
@@ -607,7 +613,7 @@ namespace SolarMajesty
                     : $"  ·  LEVY +{set.LastTax}  sit {_loop.SittingLevy}  haul +{set.LastDelivered}";
                 GUI.Label(
                     new Rect(c.x, y, c.width, 14f),
-                    $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}{levy}{popExtra}",
+                    $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}  ·  TAX +{set.LastTax} MET  sit {_loop.SittingLevy}  haul +{set.LastLevyDeposited}{LevySittingLine()}{popExtra}",
                     _micro);
                 _micro.normal.textColor = prevPop;
                 y += 15f;
@@ -1276,8 +1282,12 @@ namespace SolarMajesty
         private void DrawBuildingCard(ColonyStructure st)
         {
             const float cardW = 340f;
+            bool yard = st.IsFobotYard || st.Category == BuildingCategory.FobotYard;
+            bool wreckShop = st.IsWorkshop && st.HasPreferredClass &&
+                             _loop.HasWreckFor(st.PreferredClass);
+            bool padStall = st.IsLandingPad;
             float cardH = st.IsGuild ? 228f
-                : st.Category == BuildingCategory.FobotYard || st.IsWatchtower || st.IsAidStation ? 176f
+                : yard || wreckShop || st.IsWatchtower || st.IsAidStation || padStall ? 188f
                 : 148f;
             float y0 = _contentBottom - 8f - cardH;
             var rect = new Rect(M, y0, cardW, cardH);
@@ -1295,9 +1305,11 @@ namespace SolarMajesty
                         ? (RobotGuildCatalog.ForClass(st.PreferredClass)?.CatalogLine ?? st.DisplayName)
                         : "Guild Hall · assign a class")
                     : st.IsWonder ? "Secret Project landmark"
+                    : st.IsFobotYard || st.Category == BuildingCategory.FobotYard ? "Fobot Yard · wrecks wait"
                     : st.IsWatchtower
                         ? (st.LaserArmed ? "Watchtower · lasers armed" : "Watchtower · guard post")
                     : st.IsAidStation ? "Aid Station · paid patch"
+                    : st.IsLandingPad ? "Weigh-station · tank vs wallet"
                     : st.IsResidential ? "Habitat · colonists"
                     : st.Role.ToString();
             string worker = st.IsResidential
@@ -1318,7 +1330,9 @@ namespace SolarMajesty
 
             string workers = st.IsResidential
                 ? (st.Residents > 0
-                    ? $"Colonists indoors — tax + births, no outdoor villagers."
+                    ? (st.LevyPurse > 0
+                        ? $"Levy {st.LevyPurse} MET sitting — Haul walks it home."
+                        : "Colonists indoors — levy sits until Haul walks it home.")
                     : "Empty beds — seed crew arrives with the first HAB.")
                 : FormatWorkers(st);
             GUI.Label(new Rect(c.x, row, c.width, 13f), workers, _micro);
@@ -1330,6 +1344,32 @@ namespace SolarMajesty
                     st.LevyPurse > 0
                         ? $"Levy purse {st.LevyPurse} CRED — Haul walks it to Commons."
                         : "Humans stay in HABs. Outdoor work is robots from workshops.", _micro);
+            }
+            else if (st.IsFobotYard)
+            {
+                string wrecks = _loop.WreckSummary();
+                GUI.Label(new Rect(c.x, row, c.width, 22f),
+                    string.IsNullOrEmpty(wrecks)
+                        ? "Wrecks wait here. Pay credits to stand THIS ego up."
+                        : wrecks,
+                    _micro);
+                row += 24f;
+                int bill = _loop.FieldReviveMet;
+                if (Chip(new Rect(c.x, row, 140f, 22f), bill > 0 ? $"PAY {bill} MET" : "PAY YARD",
+                        bill > 0 && _loop.CanPayYard))
+                    _loop.PayFobotYard();
+                GUI.Label(new Rect(c.x + 148f, row + 4f, c.width - 148f, 16f),
+                    "Y  ·  no ICE  ·  120s", _micro);
+            }
+            else if (st.IsLandingPad)
+            {
+                int reserve = _loop.MarketIceReserve;
+                string line = _loop.MarketStallOpen
+                    ? (string.IsNullOrEmpty(_loop.MarketStatusLine)
+                        ? $"Exporting surplus. Reserve {reserve} ICE. Credits only."
+                        : _loop.MarketStatusLine)
+                    : $"Stall idle. Reserve {reserve} ICE — we do not export lunch.";
+                GUI.Label(new Rect(c.x, row, c.width, 22f), line, _micro);
             }
             else if (st.IsGuild)
             {
@@ -1463,6 +1503,16 @@ namespace SolarMajesty
                             ? $"Fabricates {ColonyStructure.ClassLabel(st.PreferredClass)} — flags nearby pull them."
                             : $"Building a {ColonyStructure.ClassLabel(st.PreferredClass)} robot…",
                     _micro);
+                var wreckClass = ColonyStructure.RobotClassForWorkshop(st.Category);
+                if (wreckClass.HasValue && _loop.HasWreckFor(wreckClass.Value))
+                {
+                    row += 24f;
+                    int met = OverseerRules.RefabMetals(st.SourceData);
+                    if (Chip(new Rect(c.x, row, 150f, 22f), $"RE-FAB L1 {met} MET", true))
+                        _loop.TryRefabRookie(st);
+                    GUI.Label(new Rect(c.x + 158f, row + 4f, c.width - 158f, 16f),
+                        "new chassis · wreck gone", _micro);
+                }
             }
             row += 26f;
 
@@ -1540,7 +1590,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Hire {a.HireMin} CRED · Purse {a.Credits:F0}", _micro);
+                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Hire {a.HireMin} MET · Purse {a.Credits:F0}{LevyCarryLine(a)}", _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -1585,10 +1635,25 @@ namespace SolarMajesty
                 SpecialistAction.Repair => "Repairing module",
                 SpecialistAction.Wander => a.LastReason != null && a.LastReason.Contains("workshop")
                     ? "At workshop"
-                    : "Kingdom vocation",
+                    : a.LastReason != null && a.LastReason.Contains("levy_home")
+                        ? "Walking levy home"
+                        : a.LastReason != null && a.LastReason.Contains("levy_collect")
+                            ? "Collecting HAB levy"
+                            : "Kingdom vocation",
                 _ => "Idle"
             };
             return string.IsNullOrEmpty(a.Status) ? action : $"{action} — {a.Status}";
+        }
+
+        private string LevySittingLine()
+        {
+            int sitting = _loop.Village != null ? _loop.Village.SittingLevy() : 0;
+            return sitting > 0 ? $"  ·  {sitting} sitting" : "";
+        }
+
+        private static string LevyCarryLine(SpecialistAgent a)
+        {
+            return a != null && a.LevyCarry > 0 ? $" · levy {a.LevyCarry}" : "";
         }
 
         private string FlagBoardLine()
@@ -2047,41 +2112,46 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, c.y + 32f, c.width, 32f),
                     mission != null ? mission.FailDetail : "The outpost is gone.", _body);
-                GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
-                    ReplayRules.IsEndless ? "TRY AGAIN — this body is lost." : "Retry this body, or return to title.", _muted);
-                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), "RESTART MISSION", _chipOn))
-                    _loop.RestartMission();
-                if (GUI.Button(new Rect(c.x + 176f, c.yMax - 30f, 140f, 28f), "TITLE", _chipOff))
-                    _loop.ReturnToTitle();
+                if (ReplayRules.BlocksManualSavesAndReloads)
+                {
+                    GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
+                        "Ironman — this body is lost. No restart.", _muted);
+                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 140f, 28f), "TITLE", _chipOff))
+                        _loop.ReturnToTitle();
+                }
+                else
+                {
+                    GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
+                        ReplayRules.IsEndless ? "TRY AGAIN — this body is lost." : "Retry this body, or return to title.", _muted);
+                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), "RESTART MISSION", _chipOn))
+                        _loop.RestartMission();
+                    if (GUI.Button(new Rect(c.x + 176f, c.yMax - 30f, 140f, 28f), "TITLE", _chipOff))
+                        _loop.ReturnToTitle();
+                }
             }
             else
             {
                 int met = _loop.FieldReviveMet;
-                if (!_loop.HasFobotYard)
-                {
-                    GUI.Label(new Rect(c.x, c.y + 32f, c.width, 48f),
-                        "Dock a Fobot Yard. Wrecks stand up there — Y will not skip the building.", _body);
-                }
-                else
-                {
-                    GUI.Label(new Rect(c.x, c.y + 32f, c.width, 36f),
-                        $"FOBOT YARD  {met} CRED  (120s)", _body);
-                    GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
-                        _loop.FieldReviveReadyIn > 0.5f
-                            ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Cost scales with level."
-                            : "Inspect the yard or press Y. Cost scales with level.", _muted);
-                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "PAY YARD  ·  Y", _chipOn))
-                        _loop.RetryParty();
-                }
+                GUI.Label(new Rect(c.x, c.y + 32f, c.width, 36f),
+                    $"FOBOT YARD  {met} MET  (120s)  ·  credits only", _body);
+                GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
+                    !_loop.HasFobotYard
+                        ? "Dock a Fobot Yard. Y does not skip the building."
+                        : _loop.FieldReviveReadyIn > 0.5f
+                            ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Bill is by level, MET only."
+                            : "Inspect the yard or press Y. ICE is not on the bill.", _muted);
+                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "FOBOT YARD  ·  Y", _chipOn))
+                    _loop.PayFobotYard();
             }
         }
 
         private void Update()
         {
             if (_loop == null || !_loop.IsPlaying) return;
-            if (_loop.NeedsFieldRevive && !(_loop.Mission != null && _loop.Mission.IsLost) &&
+            if ((_loop.NeedsFieldRevive || _loop.CanPayYard) &&
+                !(_loop.Mission != null && _loop.Mission.IsLost) &&
                 Input.GetKeyDown(KeyCode.Y))
-                _loop.RetryParty();
+                _loop.PayFobotYard();
             if (!_loop.NeedsFieldRevive &&
                 !(_loop.Mission != null && _loop.Mission.IsLost))
                 _failLatched = false;
@@ -2113,24 +2183,29 @@ namespace SolarMajesty
 
         private void DrawTitle()
         {
-            var rect = new Rect(M, M, 320f, Mathf.Min(500f, _sh - M * 2f));
+            Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.03f, 0.04f, 0.55f));
+            var rect = new Rect((_sw - 480f) * 0.5f, _sh * 0.08f, 480f, 560f);
             var c = Panel(rect, null, false);
             Fill(new Rect(rect.x, rect.y, rect.width, 3f), Accent);
 
             GUI.Label(new Rect(c.x, c.y, c.width, 32f), "SOLAR MAJESTY", _banner);
-            GUI.Label(new Rect(c.x, c.y + 34f, c.width, 32f), "You are the Overseer. Never command the heroes.", _muted);
-            GUI.Label(new Rect(c.x, c.y + 68f, c.width, 28f), "Click a world to drop.", _wrap);
-            GUI.Label(new Rect(c.x, c.y + 98f, c.width, 14f), ReplayRules.HudTag, _micro);
+            GUI.Label(new Rect(c.x, c.y + 34f, c.width, 16f), "You are the Overseer. Never command the heroes.", _muted);
+            GUI.Label(new Rect(c.x, c.y + 52f, c.width, 16f), "LUNA  →  MARS    ·    click the orrery    ·    Earth / Belt / Europa parked", _wrap);
+            GUI.Label(new Rect(c.x, c.y + 68f, c.width, 14f), ReplayRules.HudTag, _micro);
+            GUI.Label(new Rect(c.x, c.y + 86f, c.width, 40f),
+                "Start on Earth and conquer Luna, Mars, the Belt, and Europa. Post bounties and let greedy robots choose.",
+                _wrap);
 
             if (_confirmNewGame)
             {
-                GUI.Label(new Rect(c.x, c.y + 124f, c.width, 56f),
-                    "This wipes the continue slot and campaign unlocks. Then click a world to drop.",
+                GUI.Label(new Rect(c.x, c.y + 130f, c.width, 48f),
+                    CampaignProgress.DropConfirmDetail(_pendingNewGameBody),
                     _wrap);
-                if (GUI.Button(new Rect(c.x, c.y + 188f, c.width, 40f), "WIPE AND RETURN TO SYSTEM", _chipOn))
+                if (GUI.Button(new Rect(c.x, c.y + 186f, c.width, 40f),
+                        CampaignProgress.DropConfirmLabel(_pendingNewGameBody), _chipOn))
                 {
                     _confirmNewGame = false;
-                    _loop.WipeCampaignToTitle();
+                    _loop.StartNewGame(_pendingNewGameBody);
                 }
                 if (GUI.Button(new Rect(c.x, c.y + 236f, c.width, 36f), "BACK", _chipOff))
                     _confirmNewGame = false;
@@ -2144,16 +2219,19 @@ namespace SolarMajesty
                 return;
             }
 
-            float y = c.y + 124f;
-            if (GUI.Button(new Rect(c.x, y, c.width, 40f), "NEW GAME", _chipOn))
+            float y = c.y + 130f;
+            var drop = CampaignProgress.NewGameBody;
+            if (GUI.Button(new Rect(c.x, y, c.width, 40f), CampaignProgress.DropButtonLabel(drop), _chipOn))
             {
                 if (DemoSettings.SaveExists)
+                {
+                    _pendingNewGameBody = drop;
                     _confirmNewGame = true;
+                }
                 else
-                    Notify("Click a world to drop.", 2.4f);
+                    _loop.StartNewGame(drop);
             }
-            y += 48f;
-
+            y += 44f;
             GUI.enabled = DemoSettings.SaveExists;
             if (GUI.Button(new Rect(c.x, y, c.width, 40f), DemoSettings.ContinueButtonLabel(), _chipOff))
                 _loop.ContinueGame();
@@ -2200,7 +2278,12 @@ namespace SolarMajesty
                 _loop.OpenSettings();
             if (GUI.Button(new Rect(c.x, c.y + 116f, c.width, 32f), "TITLE", _chipOff))
                 _loop.ReturnToTitle();
-            if (GUI.Button(new Rect(c.x, c.y + 156f, c.width, 32f), "ABANDON BODY  ·  new seed", _chipOff))
+            if (ReplayRules.BlocksManualSavesAndReloads)
+            {
+                GUI.Label(new Rect(c.x, c.y + 162f, c.width, 20f),
+                    "IRONMAN — no abandon, no new seed.", _muted);
+            }
+            else if (GUI.Button(new Rect(c.x, c.y + 156f, c.width, 32f), "ABANDON BODY  ·  new seed", _chipOff))
             {
                 DemoSettings.RequestBootIntoPlay();
                 _loop.RestartMission();
@@ -2212,7 +2295,7 @@ namespace SolarMajesty
         private void DrawSettings()
         {
             Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f, 0.78f));
-            float h = Mathf.Min(640f, Mathf.Max(420f, _sh - 36f));
+            float h = Mathf.Min(700f, Mathf.Max(460f, _sh - 24f));
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
             var c = Panel(rect, "Settings");
             float y = c.y;
@@ -2289,7 +2372,20 @@ namespace SolarMajesty
             string tutLabel = _loop.IsTutorialActive ? "TUTORIAL  ·  ON" : "REPLAY TUTORIAL";
             if (Chip(new Rect(c.x, y, 220f, 26f), tutLabel, _loop.IsTutorialActive))
                 _loop.RestartTutorial();
-            y += 36f;
+            y += 32f;
+
+            bool marsLessons = DemoSettings.MarsGrokLessons;
+            if (Chip(new Rect(c.x, y, c.width, 26f),
+                    marsLessons ? "MARS GROK LESSONS  ·  ON" : "MARS GROK LESSONS  ·  OFF",
+                    marsLessons))
+            {
+                DemoSettings.MarsGrokLessons = !DemoSettings.MarsGrokLessons;
+                DemoSettings.SaveSettings();
+            }
+            y += 22f;
+            GUI.Label(new Rect(c.x, y, c.width, 16f),
+                "Luna: Grok lectures. Mars: failure asides unless lessons are on.", _micro);
+            y += 28f;
 
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 8f;
@@ -2301,12 +2397,12 @@ namespace SolarMajesty
                     _loop.SetFirstHourDemo(false);
                 y += 30f;
                 GUI.Label(new Rect(c.x, y, c.width, 48f),
-                    "Earth only. The Engineer refuses a cheap Build flag. Guilds, Belt, and Europa stay hidden until you turn the full campaign on.",
+                    "Earth only. Learn how bounties influence the Engineer. Guilds, Belt, and Europa stay hidden until you turn the full campaign on.",
                     _wrap);
             }
             else
             {
-                GUI.Label(new Rect(c.x, y, c.width, 14f), "REPLAY  ·  MODE / CHALLENGE / STANCE", _section);
+                GUI.Label(new Rect(c.x, y, c.width, 14f), "REPLAY  ·  MODE / CHALLENGE / STANCE / IRONMAN", _section);
                 y += 18f;
 
                 float half = (c.width - 8f) * 0.5f;
@@ -2318,17 +2414,28 @@ namespace SolarMajesty
                     ReplayRules.CycleChallenge();
                 y += 32f;
 
-                if (Chip(new Rect(c.x, y, c.width, 26f),
+                if (Chip(new Rect(c.x, y, half, 26f),
                         $"STANCE  ·  {ReplayRules.StanceLabel}", ReplayRules.Stance != DoctrineStance.Balanced))
                     ReplayRules.CycleStance();
+                bool ironmanOn = _loop.RunConfigLocked ? ReplayRules.IronmanRun : ReplayRules.Ironman;
+                if (Chip(new Rect(c.x + half + 8f, y, half, 26f),
+                        $"IRON  ·  {(ironmanOn ? "ON" : "OFF")}", ironmanOn))
+                {
+                    if (_loop.RunConfigLocked)
+                        Notify("Ironman latches at New Game. This run stays as started.", 3.5f);
+                    else
+                        ReplayRules.CycleIronman();
+                }
                 y += 30f;
 
                 GUI.Label(new Rect(c.x, y, c.width, 48f),
                     ReplayRules.StanceHint + " " + ReplayRules.ChallengeHint,
                     _wrap);
-                y += 50f;
+                y += 48f;
+                GUI.Label(new Rect(c.x, y, c.width, 32f), ReplayRules.IronmanHint, _wrap);
+                y += 34f;
                 GUI.Label(new Rect(c.x, y, c.width, 36f),
-                    "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings.",
+                    "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue.",
                     _wrap);
                 y += 40f;
                 if (Chip(new Rect(c.x, y, c.width, 26f), "EARTH DEMO", false))

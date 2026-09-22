@@ -350,22 +350,23 @@ namespace SolarMajesty
         private static void AttachCardinalAirlocks(
             Transform root, BuildingCategory cat, float halfW, float halfD, bool ghost)
         {
-            // Sleeves span hull → Lego face at DockY / DockBore so the white tube
-            // hits the orange collar flush. Live sleeves start hidden; RefreshTubes
-            // enables only faces that actually dock.
+            // Sleeves span hull → Lego face at DockY / DockBore. HAB sleeves stay
+            // orange so the Commons-to-HAB join matches the locked still. Live
+            // sleeves start hidden; RefreshTubes enables only faces that dock.
             float y = ColonyVisualUtility.DockY;
             float bore = ColonyVisualUtility.DockBore;
             float w = halfW * 2f;
             float d = halfD * 2f;
             bool hullPort = HeroBuildingKits.HasHullPort(cat);
+            bool orangeJoin = cat == BuildingCategory.Habitat;
             PlaceDockSleeve(root, "DockSleeve_N", Vector3.forward, halfD, y, bore,
-                HeroBuildingKits.HullDistance(cat, w, d, Vector3.forward), hullPort, ghost);
+                HeroBuildingKits.HullDistance(cat, w, d, Vector3.forward), hullPort, orangeJoin, ghost);
             PlaceDockSleeve(root, "DockSleeve_S", Vector3.back, halfD, y, bore,
-                HeroBuildingKits.HullDistance(cat, w, d, Vector3.back), hullPort, ghost);
+                HeroBuildingKits.HullDistance(cat, w, d, Vector3.back), hullPort, orangeJoin, ghost);
             PlaceDockSleeve(root, "DockSleeve_E", Vector3.right, halfW, y, bore,
-                HeroBuildingKits.HullDistance(cat, w, d, Vector3.right), hullPort, ghost);
+                HeroBuildingKits.HullDistance(cat, w, d, Vector3.right), hullPort, orangeJoin, ghost);
             PlaceDockSleeve(root, "DockSleeve_W", Vector3.left, halfW, y, bore,
-                HeroBuildingKits.HullDistance(cat, w, d, Vector3.left), hullPort, ghost);
+                HeroBuildingKits.HullDistance(cat, w, d, Vector3.left), hullPort, orangeJoin, ghost);
         }
 
         private static void PlaceDockSleeve(
@@ -377,6 +378,7 @@ namespace SolarMajesty
             float bore,
             float hullR,
             bool hullHasPort,
+            bool orangeJoin,
             bool ghost)
         {
             Vector3 dir = outward.normalized;
@@ -389,7 +391,8 @@ namespace SolarMajesty
                 inset = 0.36f;
             const float outset = 0.04f;
             Vector3 facePos = dir * face + new Vector3(0f, y, 0f);
-            DockSleeve(root, name, facePos, dir, bore, inset, outset, hullHasPort && hullR > 0.15f, ghost);
+            DockSleeve(root, name, facePos, dir, bore, inset, outset,
+                hullHasPort && hullR > 0.15f, orangeJoin, ghost);
         }
 
         private static void DockSleeve(
@@ -401,6 +404,7 @@ namespace SolarMajesty
             float inset,
             float outset,
             bool hullHasPort,
+            bool orangeJoin,
             bool ghost)
         {
             var group = new GameObject(name);
@@ -411,7 +415,7 @@ namespace SolarMajesty
             float length = inset + outset;
             Vector3 dir = outward.normalized;
             Vector3 center = facePos + dir * ((outset - inset) * 0.5f);
-            Color carbon = new Color(0.16f, 0.17f, 0.19f);
+            Color orange = AirlockColor();
             Quaternion along = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
             var tube = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             tube.name = name + "_Tube";
@@ -420,16 +424,21 @@ namespace SolarMajesty
             tube.transform.localRotation = along;
             tube.transform.localScale = new Vector3(bore, length * 0.5f, bore);
             ColonyVisualUtility.DestroyNow(tube.GetComponent<Collider>());
-            ApplyColor(tube, new Color(0.98f, 0.98f, 0.99f));
+            // Locked HAB still: Commons-to-HAB join is orange, not a white sleeve.
+            ApplyColor(tube, orangeJoin ? orange : new Color(0.98f, 0.98f, 0.99f));
 
             Vector3 hullEnd = facePos - dir * inset;
-            DressCyl(group.transform, name + "_Lip", hullEnd + dir * 0.05f, along,
-                new Vector3(bore * 1.04f, 0.035f, bore * 1.04f), carbon);
+            if (!orangeJoin)
+            {
+                Color carbon = new Color(0.16f, 0.17f, 0.19f);
+                DressCyl(group.transform, name + "_Lip", hullEnd + dir * 0.05f, along,
+                    new Vector3(bore * 1.04f, 0.035f, bore * 1.04f), carbon);
+            }
             // Round kits already wear hull port rings. Box walls need the orange here.
             if (!hullHasPort)
             {
                 DressCyl(group.transform, name + "_Collar", hullEnd + dir * 0.02f, along,
-                    new Vector3(bore * 1.04f, 0.03f, bore * 1.04f), AirlockColor());
+                    new Vector3(bore * 1.04f, 0.03f, bore * 1.04f), orange);
             }
 
             if (!ghost)

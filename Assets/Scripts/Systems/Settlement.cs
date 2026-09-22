@@ -4,7 +4,8 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Population, housing, HAB tax, and camp production.
-    /// Citizens live in HABs: tax is per person; births need spare beds;
+    /// Citizens live in HABs: tax accrues as a purse on each occupied HAB;
+    /// a Courier walks it to Commons. Births need spare beds;
     /// destroyed housing kills occupants (runtime reports the deaths).
     /// </summary>
     public sealed class Settlement
@@ -25,8 +26,14 @@ namespace SolarMajesty
         public int RegolithCamps { get; private set; }
         public int PowerPlants { get; private set; }
         public int LastTax { get; private set; }
-        public int LastDelivered { get; private set; }
-        public int UncollectedLevy { get; private set; }
+        /// <summary>MET that accrued onto HAB purses this tax tick (not yet in the stockpile).</summary>
+        public int PendingLevy { get; private set; }
+        public int UncollectedLevy => PendingLevy;
+        /// <summary>Last Courier deposit into the stockpile.</summary>
+        public int LastLevyDeposited { get; private set; }
+        public int LastDelivered => LastLevyDeposited;
+        /// <summary>Last purse stolen from a HAB or a downed Courier.</summary>
+        public int LastLevyStolen { get; private set; }
         public int LastBirths { get; private set; }
         public int LastDeaths { get; private set; }
         public string LastProductionLine { get; private set; } = "";
@@ -382,21 +389,38 @@ namespace SolarMajesty
 
             LastTax = LevyRun.Accrue(Population, Overcrowded);
             if (LastTax > 0)
-                UncollectedLevy += LastTax;
+                PendingLevy += LastTax;
         }
 
-        public int TakeUncollectedLevy()
+        public int TakeUncollectedLevy() => TakePendingLevy();
+
+        /// <summary>Runtime distributes this onto occupied HAB purses. Returns the taken amount.</summary>
+        public int TakePendingLevy()
         {
-            int n = UncollectedLevy;
-            UncollectedLevy = 0;
+            int n = PendingLevy;
+            PendingLevy = 0;
             return n;
         }
 
-        public void NoteLevyDelivered(int amount)
+        /// <summary>No occupied HAB to sit on — keep the tick until one exists.</summary>
+        public void ReturnUnplacedLevy(int amount)
         {
-            LastDelivered = Mathf.Max(0, amount);
-            if (amount > 0 && _resources != null)
-                _resources.Add(ResourceId.Metals, amount);
+            if (amount > 0)
+                PendingLevy += amount;
+        }
+
+        public void NoteLevyDelivered(int amount) => NoteLevyDeposited(amount);
+
+        public void NoteLevyDeposited(int amount)
+        {
+            LastLevyDeposited = Mathf.Max(0, amount);
+            if (amount > 0)
+                _resources?.Add(ResourceId.Metals, amount);
+        }
+
+        public void NoteLevyStolen(int amount)
+        {
+            LastLevyStolen = Mathf.Max(0, amount);
         }
     }
 }

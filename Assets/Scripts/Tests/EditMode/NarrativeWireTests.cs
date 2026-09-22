@@ -136,6 +136,85 @@ namespace SolarMajesty.Tests
         }
     }
 
+    public class GrokAdvisorTests
+    {
+        [TearDown]
+        public void TearDown() => DemoSettings.MarsGrokLessons = false;
+
+        [Test]
+        public void LunaAndEarth_DefaultLessonsOn_MarsOff()
+        {
+            Assert.IsTrue(GrokAdvisor.DefaultTrainingWheels(CelestialBodyId.Luna));
+            Assert.IsTrue(GrokAdvisor.DefaultTrainingWheels(CelestialBodyId.Earth));
+            Assert.IsFalse(GrokAdvisor.DefaultTrainingWheels(CelestialBodyId.Mars));
+            Assert.IsFalse(GrokAdvisor.TrainingWheels(CelestialBodyId.Mars));
+            Assert.IsFalse(GrokAdvisor.TrainingWheels(CelestialBodyId.Belt));
+        }
+
+        [Test]
+        public void MarsLessonsToggle_TurnsWheelsOn()
+        {
+            DemoSettings.MarsGrokLessons = true;
+            Assert.IsTrue(GrokAdvisor.TrainingWheels(CelestialBodyId.Mars));
+            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.FirstFlag));
+        }
+
+        [Test]
+        public void MarsDefault_BlocksLessons_AllowsFailures()
+        {
+            Assert.IsFalse(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.Drop));
+            Assert.IsFalse(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.GreedAsk));
+            Assert.IsFalse(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.MarketPayout));
+            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.Refusal));
+            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.IceCritical));
+            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.EmptyRoster));
+            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.MarketBlocked));
+            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.StalkerSiphon));
+        }
+
+        [Test]
+        public void Lessons_AreWheelsOnly_FailuresAlwaysAllowed()
+        {
+            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.Drop));
+            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.GreedAsk));
+            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.YardBill));
+            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.TankVsWallet));
+            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.LevyWalk));
+            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.MarketPayout));
+            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.Refusal));
+            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.PurseStolen));
+            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.YardUnaffordable));
+            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.MarketBlocked));
+            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.StalkerSiphon));
+        }
+
+        [Test]
+        public void Catalog_HasEveryBeatAndNeverSellsIce()
+        {
+            foreach (GrokBeat beat in System.Enum.GetValues(typeof(GrokBeat)))
+            {
+                string line = GrokCatalog.Line(beat);
+                Assert.IsFalse(string.IsNullOrEmpty(line), beat.ToString());
+                StringAssert.StartsWith("Grok — ", GrokCatalog.Say(beat));
+                StringAssert.DoesNotContain("spend 15 ice", line.ToLowerInvariant());
+            }
+        }
+
+        [Test]
+        public void Session_LessonsNeedWheels_FailuresRisingEdge()
+        {
+            var grok = new GrokSession();
+            Assert.IsFalse(grok.TrySpeak(GrokBeat.FirstFlag, wheels: false, condition: true));
+            Assert.IsTrue(grok.TrySpeak(GrokBeat.FirstFlag, wheels: true, condition: true));
+            Assert.IsFalse(grok.TrySpeak(GrokBeat.FirstFlag, wheels: true, condition: true), "once");
+
+            Assert.IsTrue(grok.TrySpeak(GrokBeat.PowerShort, wheels: false, condition: true));
+            Assert.IsFalse(grok.TrySpeak(GrokBeat.PowerShort, wheels: false, condition: true));
+            Assert.IsFalse(grok.TrySpeak(GrokBeat.PowerShort, wheels: false, condition: false));
+            Assert.IsTrue(grok.TrySpeak(GrokBeat.PowerShort, wheels: false, condition: true), "clears when the grid recovers");
+        }
+    }
+
     public class NarrativeBeatTrackerTests
     {
         [Test]

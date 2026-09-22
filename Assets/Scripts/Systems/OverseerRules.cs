@@ -16,10 +16,19 @@ namespace SolarMajesty
         public const float SalvageCreditFrac = 0.40f;
 
         public const int ReviveMet = 40;
+        /// <summary>ICE is not a shop currency. Yard bills are credits (MET) only.</summary>
         public const int ReviveIce = 0;
-        /// <summary>Each successful revive of that mech multiplies the scrapyard bill (Majesty temple tax).</summary>
+        /// <summary>Yard bill grows by mech level: L1 = base, then ×1.5 per step.</summary>
         public const float ReviveCostGrowth = 1.5f;
         public const int ReviveCostMaxSteps = 8;
+        public const float FobotYardArrive = 28f;
+
+        public const string GrokYardFirstBill =
+            "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.";
+        public const string GrokYardUnaffordable =
+            "Compact scrip insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
+        public const string GrokYardMissing =
+            "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building.";
         public const float ReviveCooldown = 120f;
         public const float ReviveHp = 0.50f;
         public const float ReviveFatigue = 0.40f;
@@ -112,6 +121,18 @@ namespace SolarMajesty
         public const float CourierResupplyScale = 0.85f;
         public const float CourierOutpostWork = 1.20f;
 
+        /// <summary>Courier picks up / deposits when this close to a HAB or Commons center.</summary>
+        public const float LevyArrive = 4.2f;
+        /// <summary>HAB purse left this long can be stolen by fauna at the door. 3 tax ticks.</summary>
+        public const float LevyHabStaleSeconds = 72f;
+
+        public const string GrokLevyStolenCourier =
+            "Junk-bot ate the levy. Congratulations, you have invented charity.";
+        public const string GrokLevyStolenHab =
+            "Credits were napping on the HAB. A mite just made a withdrawal.";
+        public const string GrokLevyHome =
+            "Haul walked the purse home. That is your tax collector. We are not calling it that.";
+
         public const float PressureInterval = 75f;
         public const float FrenzyPressure = 50f;
         public const float FrenzySpeed = 1.25f;
@@ -186,18 +207,20 @@ namespace SolarMajesty
             return Mathf.Max(1, Mathf.RoundToInt(met * RefabCostScale));
         }
 
-        /// <summary>Scrapyard CRED for this mech. n=0 → 40, then ×1.5 each step.</summary>
-        public static int ReviveMetals(int reviveCount)
+        /// <summary>Fobot Yard MET to stand this ego up. L1 = 40, then ×1.5 per level. No ICE.</summary>
+        public static int YardBill(int level)
         {
-            int n = Mathf.Clamp(reviveCount, 0, ReviveCostMaxSteps);
+            int n = Mathf.Clamp(Mathf.Max(1, level) - 1, 0, ReviveCostMaxSteps);
             return Mathf.Max(ReviveMet, Mathf.RoundToInt(ReviveMet * Mathf.Pow(ReviveCostGrowth, n)));
         }
 
-        /// <summary>Yard bill scales with hero level (L1 = base).</summary>
-        public static int ReviveMetalsForLevel(int level) =>
-            ReviveMetals(Mathf.Max(0, level - 1));
+        /// <summary>Legacy name — yard bills use level, not revive count.</summary>
+        public static int ReviveMetals(int level) => YardBill(level);
 
-        public static int ReviveIceCost(int reviveCount) => 0;
+        /// <summary>Yard bill scales with hero level (L1 = base).</summary>
+        public static int ReviveMetalsForLevel(int level) => YardBill(level);
+
+        public static int ReviveIceCost(int _) => 0;
 
         /// <summary>Cumulative XP required to stand at this level (L1 = 0).</summary>
         public static int XpToReach(int level)

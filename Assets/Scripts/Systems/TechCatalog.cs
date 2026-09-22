@@ -104,7 +104,7 @@ namespace SolarMajesty
                     "Heavy transfer ship for the next conquest.",
                     100f,
                     new[] { TechId.LunarRocket, TechId.DeepSurvey, TechId.MedProtocols },
-                    Wallet.Credits(110),
+                    ResearchCost(110, 20),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -113,7 +113,7 @@ namespace SolarMajesty
                     "Tethered ore barge for the asteroid belt.",
                     120f,
                     new[] { TechId.MarsShip, TechId.OreRefining },
-                    Wallet.Credits(90),
+                    ResearchCost(90, 25),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -122,7 +122,7 @@ namespace SolarMajesty
                     "Radiation-hardened lander for Europa's crust.",
                     140f,
                     new[] { TechId.BeltHauler, TechId.LifeSupport, TechId.PowerSystems },
-                    Wallet.Credits(120),
+                    ResearchCost(120, 30),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -269,6 +269,24 @@ namespace SolarMajesty
                     new[] { TechId.GuildCharter },
                     Wallet.Credits(22))
             };
+        }
+
+        /// <summary>
+        /// Shop wallet is Compact scrip (MET). ICE is the life-support tank, not a tech price.
+        /// PWR stays as a constraint tax on ships / secrets.
+        /// </summary>
+        private static ResourceAmount[] ResearchCost(int metals, int power = 0)
+        {
+            if (power > 0)
+            {
+                return new[]
+                {
+                    new ResourceAmount(ResourceId.Metals, metals),
+                    new ResourceAmount(ResourceId.Power, power)
+                };
+            }
+
+            return new[] { new ResourceAmount(ResourceId.Metals, metals) };
         }
     }
 }

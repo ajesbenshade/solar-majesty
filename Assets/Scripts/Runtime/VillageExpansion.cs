@@ -35,12 +35,17 @@ namespace SolarMajesty
             Prune();
 
             var set = _loop.Settlement;
-            int pending = set.TakeUncollectedLevy();
+            int pending = set.TakePendingLevy();
             if (pending > 0)
             {
-                DepositLevy(pending);
+                int placed = AccrueLevy(pending);
+                if (placed <= 0)
+                    placed = DepositLevy(pending);
+                if (placed < pending)
+                    set.ReturnUnplacedLevy(pending - placed);
                 _loop.NotifyLevySitting(TotalSittingLevy());
             }
+            TickLevyPurses(dt);
             TickLevySit(dt);
 
             if (set.BirthDue)
@@ -234,6 +239,12 @@ namespace SolarMajesty
                 int killed = set.KillResidents(st.Residents);
                 if (killed > 0)
                     st.SetResidents(0);
+                int lost = st.CollectLevy();
+                if (lost > 0)
+                {
+                    set.NoteLevyStolen(lost);
+                    _loop?.NoteLevyStolen(lost, st.WorldPosition, fromHab: true);
+                }
                 set.Unregister(st.Category, st.IsVillageHab);
             }
             _structures.Remove(st);
@@ -759,6 +770,157 @@ namespace SolarMajesty
             float halfH = (h * cell) * 0.5f;
             Vector3 corner = world - new Vector3(halfW, 0f, halfH) + new Vector3(cell * 0.5f, 0f, cell * 0.5f);
             return _loop.Grid.WorldToCell(corner);
+        }
+
+        public int AccrueLevy(int total)
+        {
+            if (total <= 0) return 0;
+            int n = 0;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive || !s.IsResidential || s.Residents <= 0) continue;
+                n++;
+            }
+
+            if (n <= 0) return 0;
+
+            var habs = new ColonyStructure[n];
+            var residents = new int[n];
+            var purses = new int[n];
+            int w = 0;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive || !s.IsResidential || s.Residents <= 0) continue;
+                habs[w] = s;
+                residents[w] = s.Residents;
+                purses[w] = s.LevyPurse;
+                w++;
+            }
+
+            int given = LevyMath.Accrue(total, residents, purses);
+            for (int i = 0; i < n; i++)
+                habs[i].SetLevyPurse(purses[i]);
+            return given;
+        }
+
+        public int SittingLevy()
+        {
+            int sum = 0;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive) continue;
+                sum += s.LevyPurse;
+            }
+            return sum;
+        }
+
+        public ColonyStructure RichestLevyHab(Vector3 from)
+        {
+            ColonyStructure best = null;
+            int bestPurse = 0;
+            float bestD = 999f;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive || !s.IsResidential || s.LevyPurse <= 0) continue;
+                float d = Flat(from, s.WorldPosition);
+                if (s.LevyPurse > bestPurse || (s.LevyPurse == bestPurse && d < bestD))
+                {
+                    bestPurse = s.LevyPurse;
+                    bestD = d;
+                    best = s;
+                }
+            }
+
+            return best;
+        }
+
+        public ColonyStructure NearestStaleLevyHab(Vector3 from, float maxDist)
+        {
+            ColonyStructure best = null;
+            float bestD = maxDist;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.LevyStale) continue;
+                float d = Flat(from, s.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = s;
+                }
+            }
+
+            return best;
+        }
+
+        public ColonyStructure NearestResidential(Vector3 from, float maxDist)
+        {
+            ColonyStructure best = null;
+            float bestD = maxDist;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive || !s.IsResidential) continue;
+                float d = Flat(from, s.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = s;
+                }
+            }
+
+            return best;
+        }
+
+        /// <summary>
+        /// Idle Courier: pick up a HAB purse or drop it at Commons. No player order.
+        /// </summary>
+        public bool TryCourierLevy(SpecialistAgent courier)
+        {
+            if (courier == null || _loop == null) return false;
+            if (courier.IsIncapacitated) return false;
+            Vector3 at = courier.transform.position;
+
+            if (courier.LevyCarry <= 0)
+            {
+                ColonyStructure hab = null;
+                float bestD = OverseerRules.LevyArrive;
+                for (int i = 0; i < _structures.Count; i++)
+                {
+                    var s = _structures[i];
+                    if (s == null || !s.IsAlive || !s.IsResidential || s.LevyPurse <= 0) continue;
+                    float d = Flat(at, s.WorldPosition);
+                    if (d < bestD)
+                    {
+                        bestD = d;
+                        hab = s;
+                    }
+                }
+
+                if (hab == null) return false;
+                int take = hab.CollectLevy();
+                if (take <= 0) return false;
+                courier.AddLevyCarry(take);
+                return true;
+            }
+
+            var commons = NearestByCategory(at, 80f, BuildingCategory.Commons);
+            if (commons == null || !commons.IsAlive) return false;
+            if (Flat(at, commons.WorldPosition) > OverseerRules.LevyArrive) return false;
+            int carried = courier.TakeLevyCarry();
+            if (carried <= 0) return false;
+            _loop.NoteLevyDeposited(carried, commons.WorldPosition);
+            return true;
+        }
+
+        private void TickLevyPurses(float dt)
+        {
+            for (int i = 0; i < _structures.Count; i++)
+                _structures[i]?.TickLevy(dt);
         }
 
         private void Prune()

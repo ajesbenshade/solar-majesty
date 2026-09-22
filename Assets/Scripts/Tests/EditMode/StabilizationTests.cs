@@ -86,7 +86,7 @@ namespace SolarMajesty.Tests
             for (int i = 0; i < paths.Count; i++) backups[i] = File.Exists(paths[i]) ? File.ReadAllBytes(paths[i]) : null;
             try
             {
-                var earth = new SaveGame { body = (int)CelestialBodyId.Earth, seed = 123, roster = "1|", label = "Earth" };
+                var earth = new SaveGame { body = (int)CelestialBodyId.Earth, seed = 123, rosterBlob = "1|", label = "Earth" };
                 earth.buildings.Add(new SaveBuilding { category = (int)BuildingCategory.Commons, x = 2, y = 3, w = 6, h = 6, progressMilli = 1000 });
                 var luna = new SaveGame { body = (int)CelestialBodyId.Luna, seed = 456, label = "Luna" };
                 Assert.IsTrue(SaveSystem.WriteWorld(earth));
@@ -98,7 +98,7 @@ namespace SolarMajesty.Tests
                 Assert.IsFalse(restored.MatchesWorld(CelestialBodyId.Earth, 124));
                 Assert.AreEqual(1, restored.buildings.Count);
                 Assert.AreEqual(2, restored.buildings[0].x);
-                Assert.AreEqual("1|", restored.roster);
+                Assert.AreEqual("1|", restored.rosterBlob);
                 Assert.IsTrue(SaveSystem.TryRead(0, out var latest));
                 Assert.AreEqual("Luna", latest.label);
                 luna.label = "Luna newer";
@@ -115,6 +115,38 @@ namespace SolarMajesty.Tests
                 for (int i = 0; i < paths.Count; i++)
                     if (backups[i] != null) File.WriteAllBytes(paths[i], backups[i]);
                     else if (File.Exists(paths[i])) File.Delete(paths[i]);
+            }
+        }
+
+        [TestCase(3, true)]
+        [TestCase(4, true)]
+        [TestCase(3, false)]
+        public void LegacyRosterFormats_LoadWithoutLosingVeterans(int version, bool encoded)
+        {
+            string path = SaveSystem.SlotPath(3);
+            byte[] previous = File.Exists(path) ? File.ReadAllBytes(path) : null;
+            try
+            {
+                Directory.CreateDirectory(SaveSystem.SaveDirectory);
+                string roster = encoded ? "\"1|\"" : "[{\"specialistClass\":0,\"level\":4,\"xp\":23,\"corpse\":true}]";
+                File.WriteAllText(path, "{\"version\":" + version + ",\"body\":0,\"seed\":123,\"roster\":" + roster + "}");
+                Assert.IsTrue(SaveSystem.TryRead(3, out var saved));
+                Assert.AreEqual(SaveGame.CurrentVersion, saved.version);
+                if (encoded)
+                    Assert.AreEqual("1|", saved.rosterBlob);
+                else
+                {
+                    Assert.AreEqual(1, saved.roster.Count);
+                    Assert.AreEqual(4, saved.roster[0].level);
+                    Assert.AreEqual(23, saved.roster[0].xp);
+                    Assert.IsTrue(saved.roster[0].corpse);
+                    Assert.IsTrue(string.IsNullOrEmpty(saved.rosterBlob));
+                }
+            }
+            finally
+            {
+                if (previous != null) File.WriteAllBytes(path, previous);
+                else File.Delete(path);
             }
         }
 

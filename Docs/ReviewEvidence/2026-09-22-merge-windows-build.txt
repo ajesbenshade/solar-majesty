@@ -1,0 +1,2 @@
+[Solar Majesty] Windows playtest ready: /private/tmp/solar-stabilization-project/Builds/WindowsPlaytest bytes=145756031
+Exiting batchmode successfully now!

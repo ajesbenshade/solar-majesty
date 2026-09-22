@@ -28,6 +28,7 @@ namespace SolarMajesty.Tests
             var saved = loop.CaptureSave("developed fixture");
             saved.tutorialDone = true;
             saved.replay.stance = (int)DoctrineStance.AegisWatch;
+            saved.replay.ironman = true;
             saved.stockpile.metals = 456;
             saved.buildings[0].health = 0.63f;
             saved.buildings.Add(Building(BuildingCategory.EngineerWorkshop, 30, 30, 1000));
@@ -43,7 +44,7 @@ namespace SolarMajesty.Tests
                 new SaveResearchProgress { tech = (int)TechId.HabOps, science = 7f },
                 new SaveResearchProgress { tech = (int)TechId.ExtractBasics, science = 9f }
             };
-            saved.roster = SpecialistRoster.Encode(new[]
+            saved.rosterBlob = SpecialistRoster.Encode(new[]
             {
                 new SpecialistRecord { Class = SpecialistClass.EngineerBot, Level = 3, Xp = 90, Credits = 67,
                     ReviveCount = 2, Suit = ShopItemId.SuitHardplate, Accessory = ShopItemId.AnvilRig, Weapon = ShopItemId.AnvilSledge },
@@ -59,6 +60,10 @@ namespace SolarMajesty.Tests
                 health = 0.91f, credits = 99, hasVeteranRecord = true,
                 veteran = new SpecialistRecord { Class = SpecialistClass.EngineerBot, Level = 6, Xp = 310,
                     Credits = 99, ReviveCount = 4, Suit = ShopItemId.SuitFieldShell } });
+            int firstEngineer = saved.agents.FindIndex(a => a.credits == 67);
+            int secondEngineer = saved.agents.FindIndex(a => a.credits == 99);
+            saved.parties.Add(new SaveParty { id = 7, leaderIndex = secondEngineer,
+                memberIndices = new List<int> { firstEngineer, secondEngineer } });
             // The first Engineer exercises old-save fallback on the first load, then its own record on the second.
             if (saved.nodes.Count > 0) saved.nodes[0].remaining = 0;
             if (saved.lairs.Count > 0) { saved.lairs[0].cleared = true; saved.lairs[0].scouted = true; }
@@ -86,6 +91,12 @@ namespace SolarMajesty.Tests
                 loop.ContinueGame();
                 loop.PausePlay();
                 var actual = loop.CaptureSave("roundtrip");
+                Assert.IsTrue(ReplayRules.BlocksManualSavesAndReloads, "Continue preserves the saved Ironman latch");
+                Assert.AreEqual(1, actual.parties.Count);
+                Assert.AreEqual(7, actual.parties[0].id);
+                Assert.AreEqual(2, actual.parties[0].memberIndices.Count);
+                Assert.AreEqual(99, actual.agents[actual.parties[0].leaderIndex].credits,
+                    "Same-class party members retain the correct leader");
                 Assert.AreEqual(saved.buildings.Count, actual.buildings.Count);
                 Assert.AreEqual(375, actual.buildings.Single(b => b.category == (int)BuildingCategory.Habitat).progressMilli);
                 Assert.AreEqual(0.63f, actual.buildings.Single(b => b.category == (int)BuildingCategory.Commons).health, 0.001f);
@@ -105,7 +116,7 @@ namespace SolarMajesty.Tests
                 Assert.AreEqual(120, actual.flags[0].escrowMetals);
                 Assert.AreEqual(1, actual.flags[0].claimCount);
                 var roster = new List<SpecialistRecord>();
-                Assert.IsTrue(SpecialistRoster.TryDecode(actual.roster, roster));
+                Assert.IsTrue(SpecialistRoster.TryDecode(actual.rosterBlob, roster));
                 var veteran = engineer.veteran;
                 Assert.IsTrue(engineer.hasVeteranRecord);
                 var second = actual.agents.Single(a => a.specialistClass == (int)SpecialistClass.EngineerBot && a.credits == 99);

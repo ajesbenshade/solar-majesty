@@ -71,7 +71,7 @@ namespace SolarMajesty
                     s.extractPreference = 0.12f;
                     s.moveSpeed = 3.6f;
                     s.workRate = 1.1f;
-                    s.upkeepPerMinute = Upkeep(ResourceId.WaterIce, 1);
+                    s.upkeepPerMinute = Upkeep(ResourceId.Metals, 1);
                     break;
                 case SpecialistClass.HarvesterBot:
                     s.displayName = "Harvester Bot";
@@ -116,7 +116,7 @@ namespace SolarMajesty
                     s.extractPreference = 0.55f;
                     s.moveSpeed = 3.0f;
                     s.workRate = 1.22f;
-                    s.upkeepPerMinute = Upkeep(ResourceId.WaterIce, 1);
+                    s.upkeepPerMinute = Upkeep(ResourceId.Metals, 1);
                     break;
                 case SpecialistClass.CourierBot:
                     s.displayName = "Courier Bot";

@@ -10,7 +10,7 @@ Captured from the current Earth → Luna → Mars slice (code + last play sessio
 - Body hops had no voice. **Fix:** travel log queued across reload + arrival line in the command panel.
 
 ## Still open (Phase 1 exit)
-- Continue is campus + stockpile + research + open flags + living fauna + specialist HP per body (dens / node yield / mission timer / parties still omitted).
+- Continue is campus + stockpile + research + open flags + living fauna poses + specialist HP/poses + dens + node remaining + mission hold + parties per body.
 - Unit FBX are still Phase 0 blockouts (Imagine sheets exist; Blender remesh not run).
 - External 45–90 min playtest not yet run.
 

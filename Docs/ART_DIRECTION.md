@@ -1,5 +1,8 @@
 # Art Direction
 
+**Integration note — 2026-09-22:** The later Commons lock is the smooth command-dome citadel (2026-09-17); older geodesic instructions and screenshots below are historical. The boxy tan HAB, orange ribbed airlocks, four-cell landmark yards, and animated units are retained. Phase 4 exit remains blocked pending a fresh visual review.
+
+
 **Mandatory keywords in every prompt:**
 
 > isometric view, Majesty 2 inspired readable silhouettes, SpaceX industrial aesthetic, clean white and black Starship materials with orange accents, modular habitat design, slightly exaggerated proportions for clarity, vibrant but grounded sci-fi lighting, high detail 3D render style
@@ -8,7 +11,7 @@
 
 ## Dream Loop look target (spaced Mars — Aaron 2026-09-07)
 
-Locked north star: [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png) — ITS language, not the prior tube-web campus. Capture protocol and “what NOT to do” live in [`Docs/Roadmap/DREAM_LOOP_MARS_LOOK.md`](Roadmap/DREAM_LOOP_MARS_LOOK.md). Skill copy: [`.cursor/skills/dream-loop/SKILL.md`](../.cursor/skills/dream-loop/SKILL.md).
+Locked north star: [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png) — ITS language, not the prior tube-web campus. Capture protocol and “what NOT to do” live in [`Docs/Roadmap/DREAM_LOOP_MARS_LOOK.md`](Roadmap/DREAM_LOOP_MARS_LOOK.md). Skill tree: [`.cursor/skills/dream-loop/`](../.cursor/skills/dream-loop/) (vendored [achimala/dream-loop](https://github.com/achimala/dream-loop); Pro by default).
 
 **Aaron look brief (2026-09-07)**
 

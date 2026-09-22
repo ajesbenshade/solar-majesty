@@ -27,6 +27,7 @@ namespace SolarMajesty
         public const string ReduceMotionKey = "SM_Set_ReduceMotion";
         public const string ColorBlindKey = "SM_Set_ColorBlind";
         public const string FrameCapKey = "SM_Set_FrameCap";
+        public const string MarsGrokLessonsKey = "SM_Set_MarsGrokLessons";
         public const string RosterKeyPrefix = "SM_Roster_";
 
         public static float Master = 1f;
@@ -60,6 +61,8 @@ namespace SolarMajesty
         /// without deleting guilds, Belt, or Europa from the repo.
         /// </summary>
         public static bool FirstHourDemo;
+        /// <summary>Mars optional training wheels. Default off — failure asides only.</summary>
+        public static bool MarsGrokLessons;
 
         public static void Load()
         {
@@ -76,6 +79,7 @@ namespace SolarMajesty
             ReduceMotion = PlayerPrefs.GetInt(ReduceMotionKey, 0) == 1;
             ColorBlindMode = PlayerPrefs.GetInt(ColorBlindKey, 0);
             FrameCap = PlayerPrefs.GetInt(FrameCapKey, 0);
+            MarsGrokLessons = PlayerPrefs.GetInt(MarsGrokLessonsKey, 0) == 1;
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
             FirstHourDemo = PlayerPrefs.GetInt(FirstHourKey, 1) == 1;
             ReplayRules.Load();
@@ -124,6 +128,7 @@ namespace SolarMajesty
             // Do not write that over a saved full-campaign stance.
             if (!FirstHourDemo)
                 ReplayRules.Save();
+            PlayerPrefs.SetInt(MarsGrokLessonsKey, MarsGrokLessons ? 1 : 0);
             PlayerPrefs.Save();
         }
 
@@ -262,7 +267,7 @@ namespace SolarMajesty
         {
             if (!string.IsNullOrEmpty(SaveLoadNotice)) return SaveLoadNotice;
             if (!SaveExists)
-                return "No continue slot yet. New Game drops Earth; Continue restores that body's campus.";
+                return "No continue slot yet. New Game drops Luna (Mars if you already skipped or cleared the hour). Continue restores that body's campus.";
             int reg = PlayerPrefs.GetInt(SaveRegKey, 0);
             int ice = PlayerPrefs.GetInt(SaveIceKey, 0);
             int met = PlayerPrefs.GetInt(SaveMetKey, 0);

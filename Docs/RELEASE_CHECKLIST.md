@@ -21,13 +21,13 @@ is in it being honest, not in it being all ticked.
 - [x] Game speed: hold, 1x, 2x, 3x ([SimSpeed.cs](../Assets/Scripts/Systems/SimSpeed.cs))
 - [x] Versioned full-world save with atomic writes ([SaveSystem.cs](../Assets/Scripts/Systems/SaveSystem.cs))
 - [x] Save covers flags, escrow, robot health and purse, fauna — the gaps the old continue slot had
-- [x] Restore of live robots and fauna positions (Continue rebinds pose; workshops re-fabricate then rebind). Dens / node yield / mission timer still omitted.
+- [x] Restore of live robots and fauna positions, den scouted/cleared, node remaining, mission hold, and formed parties
 - [x] Alert feed with dedupe, severity, and jump-to ([AlertFeed.cs](../Assets/Scripts/Systems/AlertFeed.cs))
 - [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs))
 - [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs))
 - [x] Named robots with service records ([SpecialistIdentity.cs](../Assets/Scripts/Systems/SpecialistIdentity.cs))
 - [ ] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`)
-- [ ] Ironman wired to the run configuration (the achievement hook exists, the mode toggle does not)
+- [x] Ironman wired to the run configuration (`ReplayRules.Ironman` chip, latched at New Game / Continue; blocks manual saves and body restarts; No Second Draft evaluates on body conquest)
 
 ## Look
 

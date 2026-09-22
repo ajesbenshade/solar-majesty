@@ -1,10 +1,13 @@
 # Dream Loop — Spaced Mars look target
 
+**Integration note — 2026-09-22:** The later Commons lock is the smooth command-dome citadel (2026-09-17); older geodesic instructions and screenshots below are historical. The boxy tan HAB, orange ribbed airlocks, four-cell landmark yards, and animated units are retained. Phase 4 exit remains blocked pending a fresh visual review.
+
+
 **Status:** Aaron look brief 2026-09-07 locked. **Not a Phase 4 EXIT.** Do not stamp exit. Do not start Phase 5.
 
 Bake-off PRs **#26 / #27 / #28** (Sol / Fable / Opus Captures) were **rejected**. They are **not** the EXIT claim. EXIT = Aaron look-clear vs the locked concept under this brief.
 
-Working files (retries, judge notes) live in `.dream-loop/` and are gitignored. Reuse the skill at [`.cursor/skills/dream-loop/SKILL.md`](../../.cursor/skills/dream-loop/SKILL.md) ([achimala/dream-loop](https://github.com/achimala/dream-loop), MIT).
+Working files (retries, judge notes) live in `.dream-loop/` and are gitignored. Reuse the skill at [`.cursor/skills/dream-loop/`](../../.cursor/skills/dream-loop/) ([achimala/dream-loop](https://github.com/achimala/dream-loop), MIT) — Pro workflow by default; pin in `UPSTREAM_COMMIT`. For Phase 4, copy/symlink this locked concept to `.dream-loop/target.png` (do not regenerate).
 
 ## LOCKED concept (north star — keep this file)
 
@@ -24,7 +27,7 @@ Judge stills against **this** image, not the retired packed `SM_MarsCampaign_Vis
 
 - High isometric / Majesty-2 overseer camera
 - **Spaced campus pads** with empty red regolith between yards — no tube corridors linking pads
-- Hero cluster: Commons **geodesic / polyhedron** dome, HAB-1 cylinder on a short square airlock port, circular pad + Starship, small solar field, one industrial / extractor yard, optional canvas porch
+- Hero cluster: Commons **geodesic / polyhedron** dome (PR 41), **boxy beige/tan HAB** with roof solar on a short square airlock (locked Play-mode still — not HAB-1 graphite-rim), circular pad + Starship, small solar field, one industrial / extractor yard, optional canvas porch
 - Distant Mars haze toward the horizon, strong key light, long readable shadows
 - Dusty metal / white thermal / carbon / orange / solar glass / canvas — practical colony, not toy, not Elden Ring clutter
 - Open-ground crossings read as **spacesuited** (isolation between pads)
@@ -57,7 +60,7 @@ Unity Editor is required (this Cloud VM cannot run Play Mode). Shoot the same wa
 
 ### Judge ladder (when you have a still)
 
-Use the Dream Loop tiers in the skill (shape → light → materials → detail). Cap the score if a lower tier fails. Empty dirt is a **pass**, not a miss. A tube-web or packed-AABB frame **fails** shape against this concept.
+Use the Dream Loop Pro judge in the skill (Composition 0–3 → Lighting 0–3 → Materials 0–3 → Details 0–1; sum /10). Empty dirt is a **pass**, not a miss. A tube-web or packed-AABB frame **fails** Composition against this concept.
 
 This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not invent a score.**
 
@@ -69,8 +72,9 @@ This Cloud pass could not run an in-engine still (no Unity / Blender). **Do not 
 - If a batch (`Camera.Render`) still shows every hull one colour (black / brown / orange): that is the SRP Batcher leaking one material's constants in edit mode. `DemoContentBuilder.RenderWithoutSrpBatcher` disables the batcher around the capture; Play Mode is unaffected.
 - If the pad deck or carbon bands read as salmon plates: dark prims must stay dielectric (`HeroBuildingKits.Tint` metallic 0.12); the LandingPad FBX is skipped for the procedural pad for the same reason.
 - If interconnect tubes appear: `SpawnTubeRuns` must stay **gone**; `RefreshTubes` only enables docked Lego ports and destroys leftover `CampusDress_TubeRuns` roots.
+- If pad / solar / extractors hug Commons: `StillCampusDensity.MinYardGapCells` must stay **4** (`HasMinYardGap` on island yards). Docked HAB arms stay flush.
 - If docks step / gap: kits must seat via `SnapToGroundKeepingDockAxis` so arms stay on `ColonyVisualUtility.DockY`.
-- If Commons reads soft-sphere / cyan waist: live kit now has `CommonsGeo_*` facets + orange cupola/equator bands; cyan waist visors are removed.
+- If Commons reads soft-sphere / cyan waist: live kit now has frequency-3 cream `CommonsGeo_0` plates over a dark `CommonsGeo_Under` geodesic (22% inset seams, URP Lit, no square hull panels, no box-ribs) + orange cupola/equator bands; cyan waist visors are removed.
 
 ### Local Mac Unity (preferred)
 
@@ -86,7 +90,7 @@ Unity -projectPath . \
   -executeMethod SolarMajesty.EditorTools.CaptureStill.Run
 ```
 
-Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. Local rounds so far (fresh judge each): r2 3, r4–5 3 (haze blocked), r6 4 (haze landed; pad/dirt/shadow/solar palette blocked), r7 5 (pad, shadows, crossings landed), r8 **6 / Tier 2 passed** (fog ramp retuned to the real 30° camera: focus 44 m, frame 27–61 m; dirt desaturated; camp/pad FBX skipped; rocket bands). Later: play-ortho FogEnd pushed to 95 m and `SyncFog` scales with ortho so zoomed-out Game-tab is dirt + hint, not a 61 m fog wall. Tier 3 blockers: warm-white hull albedo, Commons facet lattice, HAB band/collars, rocket terminator, far-ground relief. **Do not stamp EXIT** until Aaron look-clear.
+Latest `SM_Capture.png` is the dream-loop Game-tab still (ortho 10, leftover=spaced). Judge vs locked concept. Local rounds so far (fresh judge each): r2 3, r4–5 3 (haze blocked), r6 4 (haze landed; pad/dirt/shadow/solar palette blocked), r7 5 (pad, shadows, crossings landed), r8 **6 / Tier 2 passed** (fog ramp retuned to the real 30° camera: focus 44 m, frame 27–61 m; dirt desaturated; camp/pad FBX skipped; rocket bands). Later: play-ortho FogEnd pushed to 95 m and `SyncFog` scales with ortho so zoomed-out Game-tab is dirt + hint, not a 61 m fog wall. This slice restores **island yard gaps** (`MinYardGapCells` 4) after the #33 revert of #31, retunes the Commons geodesic to frequency-3 cream triangular plates over a dark geodesic undershell, and lands the locked **boxy tan HAB** + orange ribbed collar. Tier 3 leftover: rocket terminator, far-ground relief, Aaron Game-tab look-clear. **Do not stamp EXIT** until Aaron look-clear.
 
 ### Cloud agents (no Unity)
 

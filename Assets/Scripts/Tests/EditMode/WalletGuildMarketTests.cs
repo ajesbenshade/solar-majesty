@@ -6,14 +6,17 @@ namespace SolarMajesty.Tests
     public class WalletGuildMarketTests
     {
         [Test]
-        public void TechCompleteCosts_AreCreditsOnly()
+        public void TechCompleteCosts_UseCreditsAndShipPower()
         {
             var techs = TechCatalog.All;
             for (int i = 0; i < techs.Count; i++)
             {
-                Assert.IsTrue(
-                    Wallet.IsCreditsOnly(techs[i].CompleteCost),
-                    techs[i].DisplayName);
+                if (techs[i].CompleteCost == null) continue;
+                foreach (var cost in techs[i].CompleteCost)
+                    Assert.IsTrue(cost.resource == ResourceId.Metals ||
+                        (cost.resource == ResourceId.Power &&
+                         (techs[i].Id == TechId.MarsShip || techs[i].Id == TechId.BeltHauler || techs[i].Id == TechId.Icebreaker)),
+                        techs[i].DisplayName);
             }
         }
 

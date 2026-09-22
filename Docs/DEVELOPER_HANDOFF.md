@@ -1,7 +1,7 @@
 # Solar Majesty — Developer Handoff
 
-**Repo:** https://github.com/ajesbenshade/solar-majesty  
-**Local path (origin machine):** `/Users/aaronesbenshade/solar-conquest`  
+**Repo:** https://github.com/ajesbenshade/solar-majesty
+**Local path (origin machine):** `/Users/aaronesbenshade/solar-conquest`
 **Unity:** 6000.5.x (tested 6000.5.6f1) · URP 17.5 · namespace `SolarMajesty`
 
 ---
@@ -30,7 +30,7 @@ Never add click-to-move to match mockup squad UI.
 
 ## Open & verify first (mandatory)
 1. Unity Hub → Open the repo root (needs Unity 6000.5.x).
-2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (title orrery; click Earth to drop).
+2. Open Assets/Scenes/LunarOutpost_Sandbox.unity → Play (title orrery; New Game is Luna if prefs fresh).
 3. If scene missing: menu Solar Majesty → Build Demo Scene.
 4. Run Docs/SMOKE_TEST.md (10-minute boot, then Earth loop). DEMO.md has the talk-track.
 5. Confirm: no free starter robots; HAB = humans; workshops fabricate outdoor robots; empty drop + conquest gates + research.
@@ -80,30 +80,30 @@ update Docs/NEXT_STEPS.md if milestones moved.
 
 ### Current milestone status
 
-- [x] Pure systems + SO definitions  
-- [x] Runtime vertical slice (party, flags, buildings, HUD)  
-- [x] Three personalities + Dust Stalker threat pressure  
-- [x] Blender modular blockouts + FBX exports  
-- [x] Unity 6 URP project + greybox demo scene  
-- [x] Demo content pass (Data SOs, unit placeholders, campus reservation)  
-- [x] Phase 2A Bite & Bounty (HP combat, OverseerHud, construction feedback)  
-- [x] Phase 2B NavMesh pathing + hit/death/claim VFX + richer SFX  
-- [x] Phase 3A lunar lighting + clear-stalkers mission win  
-- [x] Phase 3B industrial unit silhouettes + URP volume + two-wave mission  
-- [x] Phase 4A multi-stake mission (combat + hold + build)  
-- [x] Phase 4B content scale (Extract/Defend, LAB/CMD/Solar, denser campus)  
-- [x] Phase 5A larger map + deadline fail + ambient audio  
-- [x] Blender unit FBX blockouts (Scout / Engineer / Defense / Stalker)  
+- [x] Pure systems + SO definitions
+- [x] Runtime vertical slice (party, flags, buildings, HUD)
+- [x] Three personalities + Dust Stalker threat pressure
+- [x] Blender modular blockouts + FBX exports
+- [x] Unity 6 URP project + greybox demo scene
+- [x] Demo content pass (Data SOs, unit placeholders, campus reservation)
+- [x] Phase 2A Bite & Bounty (HP combat, OverseerHud, construction feedback)
+- [x] Phase 2B NavMesh pathing + hit/death/claim VFX + richer SFX
+- [x] Phase 3A lunar lighting + clear-stalkers mission win
+- [x] Phase 3B industrial unit silhouettes + URP volume + two-wave mission
+- [x] Phase 4A multi-stake mission (combat + hold + build)
+- [x] Phase 4B content scale (Extract/Defend, LAB/CMD/Solar, denser campus)
+- [x] Phase 5A larger map + deadline fail + ambient audio
+- [x] Blender unit FBX blockouts (Scout / Engineer / Defense / Stalker)
 - [x] Phase 5C multi-body scaffold (Campus A + B, F6/F7)
 - [x] Phase 5D body framing (local threat, campus extract yield, authored audio/VolumeProfile)
 - [x] Phase 5E dual deploy (B Scout detachment, F9 attractor, Ambient A/B beds)
-- [x] Phase 2 solar expansion (Belt + Europa, haul, doctrines, ecology — [exit](Roadmap/PHASE_2_EXIT.md))  
-- [x] Phase 3 Weeks 8–10 — replay doctrines, challenges, Endless, Overseer rating  
-- [x] Phase 3 Weeks 11–14 — balance / flavor / exit ([PHASE_3_EXIT.md](Roadmap/PHASE_3_EXIT.md))  
-- [x] Phase 4 Week 1 — Mars atmosphere, tube dressing, construction cranes, Overseer HUD chrome  
-- [x] Phase 4 Week 2 — HAB / Commons citadel / pad+ship / water vs regolith extractor hero kits  
-- [x] Phase 4 Week 3 — junction turrets + solar-field landmark (Defense bunker kit)  
-- [x] Phase 4 Week 4 start — Colony Commons rename; guild/lab/wonder dress; Medic/Harvester/Surveyor/Courier/Sentinel remesh  
+- [x] Phase 2 solar expansion (Belt + Europa, haul, doctrines, ecology — [exit](Roadmap/PHASE_2_EXIT.md))
+- [x] Phase 3 Weeks 8–10 — replay doctrines, challenges, Endless, Overseer rating
+- [x] Phase 3 Weeks 11–14 — balance / flavor / exit ([PHASE_3_EXIT.md](Roadmap/PHASE_3_EXIT.md))
+- [x] Phase 4 Week 1 — Mars atmosphere, tube dressing, construction cranes, Overseer HUD chrome
+- [x] Phase 4 Week 2 — HAB / Commons citadel / pad+ship / water vs regolith extractor hero kits
+- [x] Phase 4 Week 3 — junction turrets + solar-field landmark (Defense bunker kit)
+- [x] Phase 4 Week 4 start — Colony Commons rename; guild/lab/wonder dress; Medic/Harvester/Surveyor/Courier/Sentinel remesh
 - [x] Phase 4 Week 4 continued — Terraformer dozer remesh; Stalker / Hopper / Creeper / Tick silhouettes; Mars mockup notes (Phase 4 still open)
 - [x] Phase 4 Week 4 continued — Mite / Leech / Wisp remesh; Courier/Geologist/Medic/Sentinel tighten; hero building FBX (Phase 4 still open)
 - [x] Phase 4 Imagine-sheet refine — Scout / Engineer / Defense / Stalker vs ConceptSheets; HUD/tube/pad/solar dressing (Phase 4 still open)
@@ -111,15 +111,15 @@ update Docs/NEXT_STEPS.md if milestones moved.
 - [x] Phase 4 remaining-class Imagine prompt sheets + Mars dressing/HUD/lighting close (Phase 4 still open)
 - [x] Phase 4 remaining-class + leftover-fauna Imagine JPGs + sheet-matched remesh (Phase 4 still open)
 - [x] Phase 4 dock sockets flush to the square connector (Phase 4 still open)
-- [x] Phase 4 editor Mars still + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md))  
+- [x] Phase 4 editor Mars still + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md))
 
 ### Known gaps
 
-- Unit meshes are Blender blockouts. All ten specialists + seven fauna are sheet-matched against `ConceptSheets/` turnarounds (Scout keeps hover rotors; Defense stays the Imagine tracked guardian — PNG biped walker still open). Play Mode HAB / Colony Commons / pad / extractor / solar / Defense bunker / Guild / LAB / wonder / **workshop hangar / tall hangar / Inn** kits prefer `SM_Hero_*` FBX (`HeroBuildingKits` fallback). Junction turrets dress airlock hubs. Medic capsule / Harvester orange-blade hopper / Surveyor tripod / Courier white crate / Sentinel **treads** / Terraformer **orange blade + rear rake** silhouettes are in. Fauna: Stalker / six-leg Hopper / graphite Creeper / Tick / pillbug Mite / **white-ray Leech** / seven-point Wisp. Honest Mars mockup notes live in the Phase 4 doc — **Phase 4 is not exited** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md): Game-tab still is empty Sol 1, not a campus stamp).  
-- Continue slot is campus + stockpile + research + open flags + living fauna + specialist HP per body (dens / node yield / mission timer / parties are not snapshotted)  
-- External Phase 1 playtest / exit review still open  
-- No multiplayer  
-- Roadmap: [Docs/Roadmap/00_ROADMAP_OVERVIEW.md](Roadmap/00_ROADMAP_OVERVIEW.md) — Phase 2 complete ([exit](Roadmap/PHASE_2_EXIT.md)); Phase 3 complete ([exit](Roadmap/PHASE_3_EXIT.md)); then [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) → [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md)  
+- Unit meshes are Blender blockouts. All ten specialists + seven fauna are sheet-matched against `ConceptSheets/` turnarounds (Scout keeps hover rotors; Defense stays the Imagine tracked guardian — PNG biped walker still open). Play Mode HAB / Colony Commons / pad / extractor / solar / Defense bunker / Guild / LAB / wonder / **workshop hangar / tall hangar / Inn** kits prefer `SM_Hero_*` FBX (`HeroBuildingKits` fallback). Junction turrets dress airlock hubs. Medic capsule / Harvester orange-blade hopper / Surveyor tripod / Courier white crate / Sentinel **treads** / Terraformer **orange blade + rear rake** silhouettes are in. Fauna: Stalker / six-leg Hopper / graphite Creeper / Tick / pillbug Mite / **white-ray Leech** / seven-point Wisp. Honest Mars mockup notes live in the Phase 4 doc — **Phase 4 is not exited** ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md): Game-tab still is empty Sol 1, not a campus stamp).
+- Continue slot is campus + stockpile + research + open flags + living fauna poses + specialist HP/poses + dens + node remaining + mission hold + parties per body
+- External Phase 1 playtest / exit review still open
+- No multiplayer
+- Roadmap: [Docs/Roadmap/00_ROADMAP_OVERVIEW.md](Roadmap/00_ROADMAP_OVERVIEW.md) — Phase 2 complete ([exit](Roadmap/PHASE_2_EXIT.md)); Phase 3 complete ([exit](Roadmap/PHASE_3_EXIT.md)); then [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) → [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md)
 
 ---
 

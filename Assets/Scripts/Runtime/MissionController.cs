@@ -172,7 +172,7 @@ namespace SolarMajesty
                 if (ReplayRules.IsEndless)
                     return "Campaign hop is off. Shift+F10 still unlocks body chips.";
                 if (_loop == null || !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "Outer system open. Rematch this world, or oversee in sandbox.";
+                    return "Mars holds. Earth, Belt, and Europa stay parked — Shift+click chips to load them.";
                 var next = CampaignProgress.NextAfter(_loop.ActiveBody);
                 string name = next.HasValue
                     ? CelestialBodyCatalog.Get(next.Value).DisplayName
@@ -234,17 +234,40 @@ namespace SolarMajesty
         /// <summary>Week 2+: call when rocket tech is researched and craft is built.</summary>
         public void SetLaunchReady(bool ready) => _launchReady = ready;
 
-        public void Restore(SaveMissionState s)
+        public void Restore(SaveMissionState s) => RestoreFrom(s);
+
+        /// <summary>
+        /// Continue restore of mission elapsed / sustain hold / win-loss latch.
+        /// DensCleared is refreshed from restored lairs on the next Tick.
+        /// </summary>
+        public void RestoreFrom(SaveMissionState saved)
         {
-            if (s == null) return;
+            if (saved == null) return;
             _armed = true;
-            _state = (MissionState)Mathf.Clamp(s.state, 0, 2);
-            _missionElapsed = Mathf.Max(0f, s.elapsed);
-            _sustainElapsed = Mathf.Max(0f, s.sustainHold);
-            DensCleared = s.densCleared;
-            _launchReady = s.launchReady;
-            if (s.sustainMet)
-                _sustainElapsed = Mathf.Max(_sustainElapsed, sustainHoldSeconds);
+            _missionElapsed = Mathf.Max(0f, saved.elapsed);
+            _sustainElapsed = Mathf.Max(0f, saved.sustainHold);
+            _launchReady = saved.launchReady;
+            DensCleared = saved.densCleared;
+            if (saved.densCleared)
+                _loggedDens = true;
+            if (saved.sustainMet || _sustainElapsed >= sustainHoldSeconds)
+                _loggedSustain = true;
+
+            var state = (MissionState)saved.state;
+            if (state == MissionState.Won)
+            {
+                _state = MissionState.Won;
+                _winLatched = true;
+            }
+            else if (state == MissionState.Lost)
+            {
+                _state = MissionState.Lost;
+                _loseLatched = true;
+            }
+            else
+            {
+                _state = MissionState.Active;
+            }
         }
 
         public void Tick()
@@ -417,6 +440,7 @@ namespace SolarMajesty
             if (!_winLatched)
             {
                 _winLatched = true;
+                _loop?.NoteBodyConquered();
                 DemoAudio.PlayVictory();
                 DemoVfx.ClaimRing(
                     ColonyLayout.CampusOriginFor(_loop.FocusedCampus),

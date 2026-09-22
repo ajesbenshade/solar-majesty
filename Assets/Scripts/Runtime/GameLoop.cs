@@ -89,6 +89,16 @@ namespace SolarMajesty
         public SpecialistBrain Brain { get; private set; }
         public SimpleEconomy Economy { get; private set; }
 
+        public int MarketIceReserve =>
+            MarketMath.IceReserve(Settlement != null ? Settlement.Population : 0);
+
+        public bool MarketStallOpen => Economy != null && Economy.MarketOpen;
+
+        public string MarketStatusLine =>
+            Economy != null && !string.IsNullOrEmpty(Economy.LastMarketLine)
+                ? Economy.LastMarketLine
+                : "";
+
         // Runtime threat service (not in Systems/)
         public ThreatPressure Threat { get; private set; }
 
@@ -113,11 +123,20 @@ namespace SolarMajesty
         public bool SpawnWaystationInn => spawnWaystationInn;
         public DemoScreen Screen { get; private set; } = DemoScreen.Title;
         public bool IsPlaying => Screen == DemoScreen.Playing;
-        public bool AllowsCamera => Screen == DemoScreen.Playing;
+        public bool AllowsCamera => Screen == DemoScreen.Playing || Screen == DemoScreen.Title;
         public bool TitlePointerBlocksWorld =>
             _overseerHud != null && _overseerHud.HitsHudPanels();
         public bool TitleConfirmOpen =>
             _overseerHud != null && _overseerHud.TitleConfirmOpen;
+
+        /// <summary>
+        /// True while a colony is in progress (or settings opened from pause). Ironman cannot
+        /// be flipped mid-run; the title screen still edits the next New Game preference.
+        /// </summary>
+        public bool RunConfigLocked =>
+            Screen == DemoScreen.Playing
+            || Screen == DemoScreen.Paused
+            || (Screen == DemoScreen.Settings && _settingsReturn == DemoScreen.Paused);
         public const int TutorialCompleteStep = 6;
         public int TutorialStep { get; private set; }
         private int TutorialGoal =>
@@ -327,14 +346,34 @@ namespace SolarMajesty
             }
         }
 
-        public int FieldReviveIce
+        public bool HasFobotYard
         {
             get
             {
-                ComputeReviveBill(out _, out int ice);
-                return ice;
+                var yard = FindFobotYard();
+                return yard != null && yard.IsAlive;
             }
         }
+
+        public bool CanPayYard =>
+            HasFobotYard && (HasScrapCorpse || HasDownedRobot);
+
+        public bool HasDownedRobot
+        {
+            get
+            {
+                for (int i = 0; i < _agents.Count; i++)
+                {
+                    if (_agents[i] != null && _agents[i].IsIncapacitated)
+                        return true;
+                }
+                return false;
+            }
+        }
+
+        public int WreckCount => _corpses.Count;
+
+        public int FieldReviveIce => 0;
 
         public bool HasRefabInProgress => Placer != null && Placer.HasRefabOrder;
 
@@ -387,6 +426,9 @@ namespace SolarMajesty
         private float _emptyRosterTimer;
         private float _reviveReadyAt;
         private bool _revivePenaltyApplied;
+        private bool _yardBillLogged;
+        private bool _marketPayoutLogged;
+        private readonly GrokSession _grok = new GrokSession();
         private int _lastTithe;
         private float _siphonBlockToastAt;
         private float _purseToastAt;
@@ -404,6 +446,7 @@ namespace SolarMajesty
         private NarrativeBeatTracker _narrative;
         private string _consumedTravelLog;
         private bool _continuedColony;
+        private bool _levyHomeLogged;
 
         private struct TimedDisc
         {
@@ -452,6 +495,35 @@ namespace SolarMajesty
             _overseerHud?.Notify(line, seconds);
         }
 
+        public bool GrokLessonsOn => GrokAdvisor.TrainingWheels(celestialBody);
+
+        /// <summary>Stalker drank the tank. Failure aside, not a sale.</summary>
+        public void NoteIceSiphon() => TryGrok(GrokBeat.StalkerSiphon, true);
+
+        private bool TryGrok(GrokBeat beat, bool condition = true)
+        {
+            if (StillCaptureHold.Active) return false;
+            bool wheels = GrokAdvisor.TrainingWheels(celestialBody);
+            if (!_grok.TrySpeak(beat, wheels, condition)) return false;
+            LogOverseer(GrokCatalog.Say(beat), 6.2f);
+            return true;
+        }
+
+        private void TickGrok()
+        {
+            if (StillCaptureHold.Active) return;
+            if (Settlement != null && Settlement.CoreHabs > 0)
+                TryGrok(GrokBeat.FirstHab);
+            bool iceLow = Resources != null &&
+                          Resources.Get(ResourceId.WaterIce) < 8 &&
+                          Resources.Get(ResourceId.WaterIce) >= OverseerRules.IceDeathThreshold;
+            TryGrok(GrokBeat.TankVsWallet, iceLow);
+            TryGrok(GrokBeat.PowerShort, Economy != null && Economy.PowerShort);
+            bool rosterTicking = _everHadRobot && RobotCount <= 0 &&
+                                 _emptyRosterTimer > 0.05f && !EmptyRosterFailed;
+            TryGrok(GrokBeat.EmptyRoster, rosterTicking);
+        }
+
         /// <summary>
         /// Raise an alert as well as logging. Use a stable key so repeats collapse into one row
         /// rather than flooding the feed.
@@ -470,6 +542,37 @@ namespace SolarMajesty
             Log.Push(message);
             if (severity >= AlertSeverity.Warning)
                 OverseerVoice.Speak(message, severity);
+        }
+
+        public void NoteLevyDeposited(int amount, Vector3 at)
+        {
+            if (amount <= 0) return;
+            Settlement?.NoteLevyDeposited(amount);
+            if (!_levyHomeLogged)
+            {
+                _levyHomeLogged = true;
+                LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
+            }
+            else
+                LogOverseer($"Haul deposited {amount} MET at Commons.");
+            Alerts.Push("levy_home", $"Levy walked home · {amount} MET", AlertSeverity.Good, Time.unscaledTime, at);
+        }
+
+        public void NoteLevyStolen(int amount, Vector3 at, bool fromHab)
+        {
+            if (amount <= 0) return;
+            Settlement?.NoteLevyStolen(amount);
+            string line = fromHab
+                ? OverseerRules.GrokLevyStolenHab
+                : OverseerRules.GrokLevyStolenCourier;
+            LogOverseer(line, 6.2f);
+            Alerts.Push(
+                fromHab ? "levy_stolen_hab" : "levy_stolen_courier",
+                line,
+                AlertSeverity.Warning,
+                Time.unscaledTime,
+                at);
+            OverseerVoice.Speak(line, AlertSeverity.Warning);
         }
 
         private void OnAchievementEarned(AchievementDef def)
@@ -558,15 +661,18 @@ namespace SolarMajesty
             {
                 DemoSettings.SaveExists = true;
                 CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.highestUnlocked);
+                CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.body);
                 // An explicit travel/retry request takes precedence over the last active planet.
                 if (!DemoSettings.BootStraightIntoPlay)
                     celestialBody = (CelestialBodyId)bootSave.body;
                 ReplayRules.Restore(bootSave.replay);
-                if (bootSave.roster != null)
+                if (bootSave.rosterBlob != null)
                 {
                     DemoSettings.FirstHourDemo = bootSave.firstHourDemo;
                     DemoSettings.TutorialDone = bootSave.tutorialDone;
                 }
+                else if (celestialBody != CelestialBodyId.Earth)
+                    DemoSettings.FirstHourDemo = false;
             }
             else if (SaveSystem.IsNewerVersion(SaveSystem.AutosaveSlot))
             {
@@ -680,7 +786,11 @@ namespace SolarMajesty
         private void OnDestroy()
         {
             if (Economy != null)
+            {
                 Economy.UpkeepApplied -= OnUpkeepTithe;
+                Economy.MarketExported -= OnMarketExported;
+                Economy.MarketBlocked -= OnMarketBlocked;
+            }
             Achievements.Earned -= OnAchievementEarned;
             PlaytestTelemetry.RecordQuit(
                 Screen.ToString(),
@@ -720,6 +830,7 @@ namespace SolarMajesty
             Screen = DemoScreen.Playing;
             Time.timeScale = SimSpeed.Multiplier;
             int piecesBefore = Placer != null ? Placer.Pieces.Count : 0;
+            bool restoredSave = false;
             if (loadStockpile)
             {
                 SaveSystem.TryRead(SaveSystem.AutosaveSlot, out SaveGame latest);
@@ -736,7 +847,7 @@ namespace SolarMajesty
                     }
                 }
                 if (save != null)
-                    ApplySave(save);
+                    restoredSave = ApplySave(save);
                 else
                 {
                     if (latest != null)
@@ -755,6 +866,14 @@ namespace SolarMajesty
                     RetryUnpaidCorpses();
                 }
             }
+            if (!restoredSave)
+            {
+                if (loadStockpile && SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var campaignSave))
+                    ReplayRules.ApplyIronmanFromSave(campaignSave.replay);
+                else
+                    ReplayRules.LatchRun();
+            }
+            Achievements.IronmanActive = ReplayRules.IronmanRun;
             bool restoredCampus = loadStockpile &&
                                   Placer != null &&
                                   Placer.Pieces.Count > piecesBefore;
@@ -783,25 +902,43 @@ namespace SolarMajesty
             BeginNarrativeSession();
             if (ReplayRules.Mode != ColonyRunMode.Campaign ||
                 ReplayRules.Challenge != ChallengeId.None ||
-                ReplayRules.Stance != DoctrineStance.Balanced)
+                ReplayRules.Stance != DoctrineStance.Balanced ||
+                ReplayRules.IronmanRun)
             {
                 LogOverseer($"Replay: {ReplayRules.HudTag}. Doctrine nudges hunger/courage/workshop pull only.");
             }
         }
 
-        /// <summary>Wipes the continue slot and returns to the solar-system title.</summary>
-        public void StartNewGame() => WipeCampaignToTitle();
+        public void StartNewGame() => StartNewGame(CampaignProgress.NewGameBody);
 
+        /// <summary>Wipes the continue slot and returns to the solar-system title.</summary>
         public void WipeCampaignToTitle()
         {
-            ResearchManager.WipeUnlocks();
             CampaignProgress.ResetCampaign();
             SaveSystem.DeleteAll();
             SimSpeed.ResetToNormal();
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
             ReplayRules.Save();
-            BodySeed.SetBody(CelestialBodyId.Earth);
+            ReloadActiveScene();
+        }
+
+        /// <summary>Start a fresh campaign on the selected world; Earth is the default.</summary>
+        public void StartNewGame(CelestialBodyId drop)
+        {
+            if (!CampaignProgress.IsOnSpine(drop))
+                drop = CampaignProgress.NewGameBody;
+            CampaignProgress.BeginNewGame(drop);
+            SaveSystem.DeleteAll();
+            SimSpeed.ResetToNormal();
+            DemoSettings.ClearSave();
+            if (drop == CelestialBodyId.Mars)
+                DemoSettings.MarkTutorialDone();
+            else
+                DemoSettings.ResetTutorial();
+            ReplayRules.Save();
+            DemoSettings.RequestBootIntoPlay();
+            BodySeed.SetBody(drop);
             ReloadActiveScene();
         }
 
@@ -990,33 +1127,32 @@ namespace SolarMajesty
             if (handle == null) return;
             BroadcastRefusalChips(handle);
 
-            string advisor = null;
             EnsureNarrative();
-            if (NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree) &&
-                _narrative.TryTakePostToast(decree.Id, out var toast))
+            bool wheels = GrokAdvisor.TrainingWheels(celestialBody);
+
+            if (TryGrok(GrokBeat.FirstFlag))
             {
-                advisor = toast.Line;
+                // first-flag lesson; decree copy waits for the next post
+            }
+            else if (wheels &&
+                     NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree) &&
+                     _narrative.TryTakePostToast(decree.Id, out var toast))
+            {
+                LogOverseer(toast.Line, 6.5f);
             }
 
-            bool greed = celestialBody == CelestialBodyId.Earth &&
-                         handle.Data != null &&
-                         handle.Data.flagType == FlagType.Build &&
-                         (TutorialWantsPriceLesson ||
-                          (Mathf.Approximately(handle.CurrentBounty, 70f) && handle.InterestCount <= 0));
-            if (greed && _narrative.TryTakeGreedToast(out var greedToast))
+            if (handle.InterestCount <= 0)
             {
-                if (advisor != null) Log.Push(advisor);
-                advisor = greedToast.Line;
+                if (wheels)
+                    TryGrok(GrokBeat.GreedAsk);
+                else
+                    TryGrok(GrokBeat.Refusal);
             }
-
-            if (advisor != null)
-                LogOverseer(advisor, 6.5f);
 
             string interest = InterestLine(handle);
             if (!string.IsNullOrEmpty(interest))
             {
-                if (advisor != null) Log.Push(interest);
-                else LogOverseer(interest);
+                LogOverseer(interest);
             }
 
             if (DemoSettings.FirstHourDemo &&
@@ -1163,9 +1299,15 @@ namespace SolarMajesty
             }
 
             string travelKey = AdvisorToastCatalog.TravelKeyForArrival(celestialBody);
-            if ((hop || freshDrop) &&
-                !string.IsNullOrEmpty(travelKey) &&
-                _narrative.TryTakeTravelToast(travelKey, out var toast))
+            bool announce = hop || freshDrop;
+            if (announce && celestialBody == CelestialBodyId.Luna && TryGrok(GrokBeat.Drop))
+            {
+                // Luna training-wheels drop. W2 arrival copy stays in the catalog.
+            }
+            else if (announce &&
+                     GrokAdvisor.TrainingWheels(celestialBody) &&
+                     !string.IsNullOrEmpty(travelKey) &&
+                     _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
                 LogOverseer(toast.Line, 6.8f);
             }
@@ -1744,6 +1886,7 @@ namespace SolarMajesty
             TickTutorial();
             TickAutosave();
             TickJunkYard(Time.deltaTime);
+            TickGrok();
             if (!StillCaptureHold.Active &&
                 Settlement != null && Settlement.ConsumeLifeSupportFail())
             {
@@ -1751,7 +1894,7 @@ namespace SolarMajesty
                 if (Settlement.LifeSupportToastPending)
                 {
                     Settlement.ClearLifeSupportToast();
-                    LogOverseer("Colonists die if ICE is under 4.");
+                    TryGrok(GrokBeat.IceCritical, true);
                 }
             }
             if (_glanceCooldown > 0f)
@@ -1800,7 +1943,11 @@ namespace SolarMajesty
                     if (_agents[i] != null && _agents[i].Data != null)
                         living.Add(_agents[i].Data);
                 }
-                Economy?.Tick(_constructionTick, living);
+                if (Economy != null)
+                {
+                    Economy.MarketPopulation = Settlement != null ? Settlement.Population : 0;
+                    Economy.Tick(_constructionTick, living);
+                }
                 _constructionTick = 0f;
             }
         }
@@ -2101,6 +2248,8 @@ namespace SolarMajesty
             Research.TechUnlocked += OnTechUnlocked;
             GuildBenefits = new GuildBenefitDirector();
             Economy.UpkeepApplied += OnUpkeepTithe;
+            Economy.MarketExported += OnMarketExported;
+            Economy.MarketBlocked += OnMarketBlocked;
             Threat = new ThreatPressure { Ambient = 0.18f };
         }
 
@@ -2567,7 +2716,7 @@ namespace SolarMajesty
         }
 
         /// <summary>Fabricate one outdoor robot when a workshop finishes building.</summary>
-        public bool TryFabricateRobot(ColonyStructure workshop, bool announce = true)
+        public bool TryFabricateRobot(ColonyStructure workshop, bool announce = true, bool restoreVeteran = true)
         {
             if (workshop == null || !workshop.IsAlive || !workshop.IsWorkshop) return false;
             if (workshop.RobotFabricated) return false;
@@ -2590,14 +2739,17 @@ namespace SolarMajesty
             var agent = SpawnOne(data, pos, TintForClass(cls.Value));
             if (agent == null) return false;
 
-            if (_pendingVeterans.TryGetValue(cls.Value, out var pending))
+            if (restoreVeteran)
             {
-                agent.ApplyRecord(pending);
-                _pendingVeterans.Remove(cls.Value);
-            }
-            else if (SpecialistRoster.TryGet(_rosterSaved, cls.Value, out var saved) && !saved.Corpse)
-            {
-                agent.ApplyRecord(saved);
+                if (_pendingVeterans.TryGetValue(cls.Value, out var pending))
+                {
+                    agent.ApplyRecord(pending);
+                    _pendingVeterans.Remove(cls.Value);
+                }
+                else if (SpecialistRoster.TryGet(_rosterSaved, cls.Value, out var saved) && !saved.Corpse)
+                {
+                    agent.ApplyRecord(saved);
+                }
             }
 
             workshop.MarkRobotFabricated();
@@ -2656,16 +2808,16 @@ namespace SolarMajesty
             {
                 var order = _completedBuilds[i];
                 if (order?.Data == null) continue;
-                if (order.IsRefab)
-                {
-                    var shop = Village?.FindNear(order.WorldPosition, 6f);
-                    if (shop != null && shop.IsWorkshop)
+            if (order.IsRefab)
                     {
-                        shop.ClearRobotFabricated();
-                        TryFabricateRobot(shop);
+                        var shop = Village?.FindNear(order.WorldPosition, 6f);
+                        if (shop != null && shop.IsWorkshop)
+                        {
+                            shop.ClearRobotFabricated();
+                            TryFabricateRobot(shop, restoreVeteran: false);
+                        }
+                        continue;
                     }
-                    continue;
-                }
                 if (!ColonyStructure.IsWorkshopCategory(order.Data.category)) continue;
                 var st = Village?.FindNear(order.WorldPosition, 4f);
                 if (st != null && st.Category == order.Data.category)
@@ -2940,8 +3092,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Pad + Starship, PWR-1/solar, water farm, regolith camp. CanFit only — ExtraPlacementRule
-        /// would park forward yards on Campus B or demand extra airlocks.
+        /// Pad + Starship, PWR-1/solar, water farm, regolith camp. Island yards
+        /// (MinYardGapCells 4) — ExtraPlacementRule would park forward yards on
+        /// Campus B or demand extra airlocks.
         /// </summary>
         private void StampStillDensityPack()
         {
@@ -3290,6 +3443,7 @@ namespace SolarMajesty
             Economy.PowerGen = gen;
             Economy.PowerDraw = Mathf.Max(0, Mathf.RoundToInt(draw * pwrScale));
             Economy.HasDock = Settlement != null && Settlement.HasPad;
+            Economy.MarketPopulation = Settlement != null ? Settlement.Population : 0;
         }
 
         private int CountPowerSiphons(ColonyStructure node)
@@ -3744,8 +3898,6 @@ namespace SolarMajesty
             SyncLaunchGate();
         }
 
-        public bool HasFobotYard => HasAliveCategory(BuildingCategory.FobotYard);
-
         public int SittingLevy => Village != null ? Village.TotalSittingLevy() : 0;
 
         public bool HasLivingCourier
@@ -3812,11 +3964,17 @@ namespace SolarMajesty
             LogOverseer(CompactGrok.LevyDelivered(amount));
         }
 
-        public void RetryParty()
+        public void RetryParty() => PayFobotYard();
+
+        /// <summary>
+        /// Y / inspect pay. Requires a living Fobot Yard (Inn or dedicated yard). Credits only.
+        /// Stands downed robots and resurrects yard wrecks as the same ego.
+        /// </summary>
+        public void PayFobotYard()
         {
-            if (!NeedsFieldRevive)
+            if (!HasDownedRobot && !HasScrapCorpse)
             {
-                LogOverseer("No one is down — the Fobot Yard is for incapacitated robots.");
+                LogOverseer("No one is down — the Fobot Yard is for wrecks and incapacitated robots.");
                 return;
             }
             if (!HasFobotYard)
@@ -3824,22 +3982,39 @@ namespace SolarMajesty
                 LogOverseer(CompactGrok.YardNeedsBuilding());
                 return;
             }
+
+            var yard = FindFobotYard();
+            if (yard == null || !yard.IsAlive)
+            {
+                LogOverseer(OverseerRules.GrokYardMissing, 6.2f);
+                return;
+            }
+
             if (Time.time < _reviveReadyAt)
             {
                 LogOverseer($"Fobot Yard cooling down — {FieldReviveReadyIn:F0}s.");
                 return;
             }
 
-            ComputeReviveBill(out int met, out int ice);
-            if (Economy == null || !Economy.CanAffordRevive(met, ice))
+            ComputeReviveBill(out int met, out _);
+            if (met <= 0)
             {
-                LogOverseer(CompactGrok.YardBill(met));
+                if (!TryGrok(GrokBeat.YardUnaffordable, true))
+                    LogOverseer(CompactGrok.YardBill(met));
                 return;
             }
 
-            if (!Economy.TrySpendRevive(met, ice))
+            if (Economy == null || !Economy.CanAffordRevive(met))
             {
-                LogOverseer($"Fobot Yard needs {met} CRED.");
+                if (!TryGrok(GrokBeat.YardUnaffordable, true))
+                    LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
+                return;
+            }
+
+            if (!Economy.TrySpendRevive(met))
+            {
+                if (!TryGrok(GrokBeat.YardUnaffordable, true))
+                    LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
                 return;
             }
 
@@ -3851,13 +4026,21 @@ namespace SolarMajesty
                 a.FieldRevive();
                 a.NoteRevivePaid();
             }
-            EnqueueCorpsesAlreadyPaid();
+
+            ResurrectWrecksAtYard(yard);
             _reviveReadyAt = Time.time + OverseerRules.ReviveCooldown;
             if (!_revivePenaltyApplied)
                 _revivePenaltyApplied = true;
             _mission?.OnPartyRevived();
-            LogOverseer(CompactGrok.YardBill(met));
-            Debug.Log("[GameLoop] Fobot Yard revive paid.");
+            if (!_yardBillLogged)
+            {
+                _yardBillLogged = true;
+                if (!TryGrok(GrokBeat.YardBill))
+                    LogOverseer(OverseerRules.GrokYardFirstBill, 6.4f);
+            }
+            else if (!TryGrok(GrokBeat.YardBill))
+                LogOverseer(CompactGrok.YardBill(met));
+            Debug.Log("[GameLoop] Fobot Yard paid.");
         }
 
         private void ClearCurrentWorldForRetry()
@@ -3874,12 +4057,24 @@ namespace SolarMajesty
 
         public void RestartMission()
         {
+            if (ReplayRules.BlocksManualSavesAndReloads)
+            {
+                LogOverseer("Ironman — no second draft. This body cannot be restarted.");
+                return;
+            }
             ClearCurrentWorldForRetry();
             if (advanceSeedOnRestart)
                 BodySeed.AdvanceForNextConquest();
             DemoAudio.PlayRetry();
             DemoSettings.RequestBootIntoPlay();
             ReloadActiveScene();
+        }
+
+        /// <summary>Body gate met — increment conquest count and evaluate achievements (Ironman, Skinflint, Clean Sheet).</summary>
+        public void NoteBodyConquered()
+        {
+            Stats.BodiesConquered++;
+            Achievements.Evaluate(Stats);
         }
 
         /// <summary>Same-body reseed (sandbox rematch).</summary>
@@ -4228,6 +4423,7 @@ namespace SolarMajesty
             b.powerGen = PowerGenFor(cat, name);
             b.description = cat switch
             {
+                BuildingCategory.Inn => "wrecks wait — credits only",
                 BuildingCategory.Defense => "auto-fires 18 m",
                 BuildingCategory.Mining => "does not grow MET",
                 BuildingCategory.ClimateLoom => "unlock from ★ tech — bonus while standing",
@@ -4275,10 +4471,10 @@ namespace SolarMajesty
                 CreateBuilding("Regolith Camp", BuildingCategory.RegolithCamp, 22, 0, 9f, 4, 4),
                 CreateBuilding("Scout Workshop", BuildingCategory.ScoutWorkshop, 36, 4, 12f, 4, 4),
                 CreateBuilding("Engineer Workshop", BuildingCategory.EngineerWorkshop, 36, 4, 12f, 4, 4),
-                CreateBuilding("Village Inn", BuildingCategory.Inn, 30, 3, 10f, 4, 4),
+                CreateBuilding("Fobot Yard", BuildingCategory.Inn, 30, 3, 10f, 4, 4),
                 CreateBuilding("Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4),
                 CreateBuilding("Blacksmith", BuildingCategory.Blacksmith, 48, 4, 12f, 4, 4),
-                CreateBuilding("Fobot Yard", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4),
+                CreateBuilding("Fobot Yard Bay", BuildingCategory.FobotYard, 52, 4, 12f, 4, 4),
                 CreateBuilding("Watchtower", BuildingCategory.Watchtower, 36, 2, 10f, 4, 4),
                 CreateBuilding("Aid Station", BuildingCategory.AidStation, 38, 2, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
@@ -4658,6 +4854,11 @@ namespace SolarMajesty
         /// <summary>Player-triggered save into one of the numbered slots.</summary>
         public bool SaveToSlot(int slot)
         {
+            if (ReplayRules.BlocksManualSavesAndReloads)
+            {
+                LogOverseer("Ironman — manual saves are closed. Autosave still covers a crash.");
+                return false;
+            }
             bool ok = SaveSystem.Write(slot, CaptureSave($"slot {slot}"));
             LogOverseer(ok ? $"Colony recorded to slot {slot}." : $"Slot {slot} write failed.");
             PlaytestTelemetry.Record("save", "slot", slot);
@@ -4679,7 +4880,7 @@ namespace SolarMajesty
                 body = (int)celestialBody,
                 seed = BodySeed.Current,
                 highestUnlocked = (int)CampaignProgress.HighestUnlocked,
-                roster = SpecialistRoster.Encode(CaptureRoster()),
+                rosterBlob = SpecialistRoster.Encode(CaptureRoster()),
                 firstHourDemo = DemoSettings.FirstHourDemo,
                 tutorialDone = DemoSettings.TutorialDone
             };
@@ -4712,14 +4913,17 @@ namespace SolarMajesty
                 save.research.progress = Research.CaptureProgress();
             }
 
-            save.replay.mode = (int)ReplayRules.Mode;
-            save.replay.challenge = (int)ReplayRules.Challenge;
-            save.replay.stance = (int)ReplayRules.Stance;
+                save.replay.mode = (int)ReplayRules.Mode;
+                save.replay.challenge = (int)ReplayRules.Challenge;
+                save.replay.stance = (int)ReplayRules.Stance;
+                save.replay.ironman = ReplayRules.IronmanRun;
 
             var slots = CaptureCampusSlots();
             for (int i = 0; i < slots.Count; i++)
             {
                 var s = slots[i];
+                Vector3 world = FootprintWorldCenter(new Vector2Int(s.X, s.Y), s.W, s.H);
+                var st = Village != null ? Village.FindNear(world, 3f) : null;
                 save.buildings.Add(new SaveBuilding
                 {
                     category = (int)s.Category,
@@ -4729,7 +4933,8 @@ namespace SolarMajesty
                     h = s.H,
                     progressMilli = s.ProgressMilli,
                     villageHab = s.VillageHab,
-                    health = 1f
+                    health = 1f,
+                    levyPurse = st != null && st.IsResidential ? st.LevyPurse : 0
                 });
             }
 
@@ -4775,7 +4980,14 @@ namespace SolarMajesty
                     credits = Mathf.RoundToInt(a.Credits),
                     downed = a.IsIncapacitated,
                     downedTimer = a.RecoverSecondsLeft,
-                    claimedFlagIndex = IndexOfSavedFlag(a.ActiveFlag, Flags)
+                    claimedFlagIndex = IndexOfSavedFlag(a.ActiveFlag, Flags),
+                    levyCarry = a.LevyCarry,
+                    level = a.Level,
+                    xp = a.Xp,
+                    suit = (int)a.EquippedSuit,
+                    reviveCount = a.ReviveCount,
+                    downCount = a.ReviveCount,
+                    partyId = a.Party != null ? a.Party.Id : -1
                 });
             }
 
@@ -4795,15 +5007,92 @@ namespace SolarMajesty
                 });
             }
 
-            CaptureWorldBoard(save);
-            CaptureMission(save);
-            CaptureParties(save);
+            if (_world != null)
+            {
+                var nodes = _world.Nodes;
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    var n = nodes[i];
+                    if (n == null) continue;
+                    Vector3 p = n.WorldPosition;
+                    save.nodes.Add(new SaveNode
+                    {
+                        nodeType = (int)n.NodeType,
+                        px = p.x,
+                        py = p.y,
+                        pz = p.z,
+                        remaining = n.Remaining
+                    });
+                }
+
+                var lairs = _world.Lairs;
+                for (int i = 0; i < lairs.Count; i++)
+                {
+                    var l = lairs[i];
+                    if (l == null) continue;
+                    Vector3 p = l.WorldPosition;
+                    save.lairs.Add(new SaveLair
+                    {
+                        px = p.x,
+                        py = p.y,
+                        pz = p.z,
+                        cleared = l.IsCleared,
+                        scouted = l.IsScouted,
+                        expansionSpawned = l.ExpansionSpawned
+                    });
+                }
+            }
+
+            if (_mission != null)
+            {
+                save.mission.state = (int)_mission.State;
+                save.mission.elapsed = _mission.MissionElapsed;
+                save.mission.sustainHold = _mission.SustainElapsed;
+                save.mission.densCleared = _mission.DensCleared;
+                save.mission.sustainMet = _mission.SustainComplete;
+                save.mission.launchReady = _mission.LaunchReady;
+            }
+
+            var roster = CaptureRoster();
+            for (int i = 0; i < roster.Count; i++)
+            {
+                var r = roster[i];
+                save.roster.Add(new SaveRosterEntry
+                {
+                    specialistClass = (int)r.Class,
+                    level = r.Level,
+                    xp = r.Xp,
+                    credits = r.Credits,
+                    reviveCount = r.ReviveCount,
+                    suit = (int)r.Suit,
+                    corpse = r.Corpse
+                });
+            }
+
+            for (int p = 0; p < _parties.Count; p++)
+            {
+                var party = _parties[p];
+                if (party == null || party.Count < 2) continue;
+                var row = new SaveParty { id = party.Id };
+                for (int m = 0; m < party.Members.Count; m++)
+                {
+                    int idx = IndexOfSavedAgent(party.Members[m], save.agents, _agents);
+                    if (idx < 0) continue;
+                    row.memberIndices.Add(idx);
+                    if (party.IsLeader(party.Members[m]))
+                        row.leaderIndex = idx;
+                }
+                if (row.memberIndices.Count >= 2)
+                    save.parties.Add(row);
+            }
+
             return save;
         }
 
         /// <summary>
         /// Restore campus, stockpile, research, posted flags (including remaining work),
-        /// specialist combat state, and living fauna. Soft claims rebind by flag index;
+        /// specialist combat state and world poses, living fauna poses, den scouted/cleared,
+        /// node remaining, mission hold, and formed parties. Soft claims rebind by flag index;
         /// specialists still re-evaluate through SpecialistBrain after load.
         /// </summary>
         public bool ApplySave(SaveGame save)
@@ -4834,7 +5123,13 @@ namespace SolarMajesty
                     Settlement.ClaimOutpost();
             }
 
-            LoadRosterMemory(save.roster ?? DemoSettings.LoadRoster(celestialBody));
+            ReplayRules.Restore(save.replay);
+            ReplayRules.ApplyIronmanFromSave(save.replay);
+            Achievements.IronmanActive = ReplayRules.IronmanRun;
+            if (save.rosterBlob != null)
+                LoadRosterMemory(save.rosterBlob);
+            else
+                LoadRosterFromSave(save.roster);
             var savedCampus = new List<CampusSlot>();
             foreach (var building in save.buildings)
                 savedCampus.Add(new CampusSlot
@@ -4850,13 +5145,20 @@ namespace SolarMajesty
                 Settlement.RestorePopulation(save.settlement.population);
 
             var restoredFlags = RestoreFlags(save.flags);
-            RestoreAgents(save.agents, restoredFlags);
+            var restoredAgents = RestoreAgents(save.agents, restoredFlags, save.rosterBlob != null);
+            RestoreParties(save.parties, restoredAgents);
             var restoredLairs = RestoreWorldBoard(save);
             RestoreFauna(save.fauna, restoredLairs);
             RestoreBuildingBoard(save);
-            RestoreParties(save.parties);
-            _mission?.Restore(save.mission);
+            RestoreLevyPurses(save.buildings);
             RefreshWreckVisuals();
+
+            if (_mission != null)
+            {
+                _mission.RestoreFrom(save.mission);
+                if (save.mission != null && save.mission.launchReady)
+                    _launchCraftStaged = true;
+            }
 
             _playSeconds = save.playSeconds;
             _sim.Restore(save.simSteps);
@@ -4867,9 +5169,29 @@ namespace SolarMajesty
             int bounties = save.flags != null ? save.flags.Count : 0;
             int robots = save.agents != null ? save.agents.Count : 0;
             int fauna = save.fauna != null ? save.fauna.Count : 0;
-            LogOverseer($"Colony restored — {modules} modules, {bounties} bounties, {robots} robots, {fauna} fauna.");
+            int dens = save.lairs != null ? save.lairs.Count : 0;
+            int parties = save.parties != null ? save.parties.Count : 0;
+            LogOverseer(
+                $"Colony restored — {modules} modules, {bounties} bounties, {robots} robots, " +
+                $"{fauna} fauna, {dens} dens, {parties} parties.");
             PlaytestTelemetry.Record("load", "modules", modules);
             return true;
+        }
+
+        private static int IndexOfSavedAgent(
+            SpecialistAgent agent, List<SaveAgent> saved, List<SpecialistAgent> live)
+        {
+            if (agent == null || saved == null || live == null) return -1;
+            int ord = 0;
+            for (int i = 0; i < live.Count; i++)
+            {
+                var a = live[i];
+                if (a == null || a.Data == null) continue;
+                if (ReferenceEquals(a, agent))
+                    return ord < saved.Count ? ord : -1;
+                ord++;
+            }
+            return -1;
         }
 
         private static int IndexOfSavedFlag(FlagHandle flag, FlagManager flags)
@@ -4938,9 +5260,11 @@ namespace SolarMajesty
             }
         }
 
-        private void RestoreAgents(List<SaveAgent> saved, List<FlagHandle> restoredFlags)
+        private List<SpecialistAgent> RestoreAgents(List<SaveAgent> saved, List<FlagHandle> restoredFlags, bool hasEncodedRoster)
         {
-            if (saved == null) return;
+            var restored = new List<SpecialistAgent>(saved != null ? saved.Count : 0);
+            if (saved == null) return restored;
+
             var used = new HashSet<SpecialistAgent>();
             for (int i = 0; i < saved.Count; i++)
             {
@@ -4957,17 +5281,121 @@ namespace SolarMajesty
                     break;
                 }
 
-                if (agent == null) continue;
+                Vector3 pose = new Vector3(s.px, s.py, s.pz);
+                if (agent == null)
+                {
+                    var data = DataForClass(cls);
+                    if (data == null)
+                    {
+                        restored.Add(null);
+                        continue;
+                    }
+
+                    agent = SpawnOne(data, pose, TintForClass(cls));
+                    if (agent == null)
+                    {
+                        restored.Add(null);
+                        continue;
+                    }
+
+                    _agents.Add(agent);
+                    _everHadRobot = true;
+                    if (Agent == null) Agent = agent;
+                    FindWorkshopFor(cls)?.MarkRobotFabricated();
+                }
+
                 used.Add(agent);
+                restored.Add(agent);
+                agent.RestoreWorldPose(pose);
                 if (s.hasVeteranRecord)
                     agent.ApplyRecord(s.veteran);
-                agent.RestoreWorldPose(new Vector3(s.px, s.py, s.pz));
+                else if (!hasEncodedRoster)
+                {
+                    int revive = s.reviveCount > 0 ? s.reviveCount : s.downCount;
+                    agent.ApplyRecord(new SpecialistRecord
+                    {
+                        Class = cls,
+                        Level = s.level > 0 ? s.level : 1,
+                        Xp = Mathf.Max(0, s.xp),
+                        Credits = Mathf.Max(0, s.credits),
+                        ReviveCount = Mathf.Max(0, revive),
+                        Suit = (ShopItemId)s.suit,
+                        Corpse = false
+                    });
+                }
                 agent.RestoreCombatState(s.health, s.fatigue, s.credits, s.downed, s.downedTimer);
-                if (s.downed) continue;
+                agent.RestoreLevyCarry(s.levyCarry);
+                agent.BindNavMesh(_campusNav);
+                RemoveCorpse(cls);
+                _pendingVeterans.Remove(cls);
+                if (s.downed)
+                    continue;
                 int idx = s.claimedFlagIndex;
                 if (idx >= 0 && restoredFlags != null && idx < restoredFlags.Count)
                     agent.RestoreActiveFlag(restoredFlags[idx]);
             }
+
+            return restored;
+        }
+
+        private void RestoreParties(List<SaveParty> saved, List<SpecialistAgent> restoredAgents)
+        {
+            for (int i = _parties.Count - 1; i >= 0; i--)
+                _parties[i]?.Disband();
+            _parties.Clear();
+            if (saved == null || restoredAgents == null) return;
+
+            int maxId = 0;
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var row = saved[i];
+                if (row == null || row.memberIndices == null) continue;
+                // Earlier stabilization saves identified members by class. Convert once,
+                // then keep exact agent indices in all new snapshots.
+                if (row.memberIndices.Count == 0 && row.memberClasses != null)
+                {
+                    foreach (int cls in row.memberClasses)
+                    {
+                        for (int a = 0; a < restoredAgents.Count; a++)
+                        {
+                            var candidate = restoredAgents[a];
+                            if (candidate?.Data == null || !candidate.IsAlive || candidate.Party != null ||
+                                (int)candidate.Data.specialistClass != cls || row.memberIndices.Contains(a)) continue;
+                            row.memberIndices.Add(a);
+                            if (cls == row.leaderClass && row.leaderIndex < 0) row.leaderIndex = a;
+                            break;
+                        }
+                    }
+                }
+                var members = new List<SpecialistAgent>(HeroParty.MaxSize);
+                SpecialistAgent leader = null;
+                for (int m = 0; m < row.memberIndices.Count && members.Count < HeroParty.MaxSize; m++)
+                {
+                    int idx = row.memberIndices[m];
+                    if (idx < 0 || idx >= restoredAgents.Count) continue;
+                    var agent = restoredAgents[idx];
+                    if (agent == null || !agent.IsAlive || agent.Party != null) continue;
+                    members.Add(agent);
+                    if (idx == row.leaderIndex)
+                        leader = agent;
+                }
+                if (members.Count < 2) continue;
+                if (leader == null || !members.Contains(leader))
+                    leader = members[0];
+
+                int id = row.id > 0 ? row.id : _nextPartyId;
+                var party = new HeroParty(id, leader);
+                for (int m = 0; m < members.Count; m++)
+                {
+                    party.Members.Add(members[m]);
+                    members[m].SetParty(party);
+                }
+                _parties.Add(party);
+                if (id > maxId) maxId = id;
+            }
+
+            if (maxId >= _nextPartyId)
+                _nextPartyId = maxId + 1;
         }
 
         private int SavedLairIndex(DustStalkerAgent fauna)
@@ -5017,74 +5445,6 @@ namespace SolarMajesty
                 b.health = st.Health01;
                 b.levyPurse = st.LevyPurse;
                 b.laserArmed = st.LaserArmed;
-            }
-        }
-
-        private void CaptureWorldBoard(SaveGame save)
-        {
-            if (save == null || _world == null) return;
-            var nodes = _world.Nodes;
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                var n = nodes[i];
-                if (n == null) continue;
-                Vector3 p = n.WorldPosition;
-                save.nodes.Add(new SaveNode
-                {
-                    nodeType = (int)n.NodeType,
-                    px = p.x,
-                    py = p.y,
-                    pz = p.z,
-                    remaining = n.Remaining
-                });
-            }
-
-            var lairs = _world.Lairs;
-            for (int i = 0; i < lairs.Count; i++)
-            {
-                var l = lairs[i];
-                if (l == null) continue;
-                Vector3 p = l.WorldPosition;
-                save.lairs.Add(new SaveLair
-                {
-                    px = p.x,
-                    py = p.y,
-                    pz = p.z,
-                    cleared = l.IsCleared,
-                    scouted = l.IsScouted,
-                    expansionSpawned = l.ExpansionSpawned
-                });
-            }
-        }
-
-        private void CaptureMission(SaveGame save)
-        {
-            if (save == null || _mission == null) return;
-            save.mission.state = (int)_mission.State;
-            save.mission.elapsed = _mission.MissionElapsed;
-            save.mission.sustainHold = _mission.SustainElapsed;
-            save.mission.densCleared = _mission.DensCleared;
-            save.mission.sustainMet = _mission.SustainComplete;
-            save.mission.launchReady = _mission.LaunchReady;
-        }
-
-        private void CaptureParties(SaveGame save)
-        {
-            if (save == null) return;
-            for (int i = 0; i < _parties.Count; i++)
-            {
-                var p = _parties[i];
-                if (p == null || p.Leader == null || p.Leader.Data == null) continue;
-                var row = new SaveParty { leaderClass = (int)p.Leader.Data.specialistClass };
-                for (int m = 0; m < p.Members.Count; m++)
-                {
-                    var a = p.Members[m];
-                    if (a?.Data == null) continue;
-                    row.memberClasses.Add((int)a.Data.specialistClass);
-                }
-
-                if (row.memberClasses.Count >= 2)
-                    save.parties.Add(row);
             }
         }
 
@@ -5152,55 +5512,18 @@ namespace SolarMajesty
             }
         }
 
-        private void RestoreParties(List<SaveParty> saved)
+        private void RestoreLevyPurses(List<SaveBuilding> saved)
         {
-            if (saved == null) return;
-            for (int i = 0; i < _parties.Count; i++)
-                _parties[i]?.Disband();
-            _parties.Clear();
-
+            if (saved == null || Village == null || grid == null) return;
             for (int i = 0; i < saved.Count; i++)
             {
                 var s = saved[i];
-                if (s?.memberClasses == null || s.memberClasses.Count < 2) continue;
-                var members = new List<SpecialistAgent>(4);
-                for (int m = 0; m < s.memberClasses.Count && members.Count < HeroParty.MaxSize; m++)
-                {
-                    var cls = (SpecialistClass)s.memberClasses[m];
-                    var agent = FindLivingByClass(cls, members);
-                    if (agent != null)
-                        members.Add(agent);
-                }
-
-                if (members.Count < 2) continue;
-                var leader = FindLivingByClass((SpecialistClass)s.leaderClass, null) ?? members[0];
-                if (!members.Contains(leader))
-                    members[0] = leader;
-
-                var party = new HeroParty(_nextPartyId++, leader);
-                for (int m = 0; m < members.Count; m++)
-                {
-                    party.Members.Add(members[m]);
-                    members[m].SetParty(party);
-                }
-
-                _parties.Add(party);
+                if (s.levyPurse <= 0) continue;
+                Vector3 world = FootprintWorldCenter(new Vector2Int(s.x, s.y), Mathf.Max(1, s.w), Mathf.Max(1, s.h));
+                var st = Village.FindNear(world, 3f);
+                if (st != null && st.IsResidential)
+                    st.SetLevyPurse(s.levyPurse);
             }
-        }
-
-        private SpecialistAgent FindLivingByClass(SpecialistClass cls, List<SpecialistAgent> skip)
-        {
-            for (int i = 0; i < _agents.Count; i++)
-            {
-                var a = _agents[i];
-                if (a == null || a.Data == null || !a.IsAlive) continue;
-                if (a.Data.specialistClass != cls) continue;
-                if (skip != null && skip.Contains(a)) continue;
-                if (a.Party != null) continue;
-                return a;
-            }
-
-            return null;
         }
 
         private List<CampusSlot> CaptureCampusSlots()
@@ -5723,11 +6046,12 @@ namespace SolarMajesty
             if (Agent == agent) Agent = _agents.Count > 0 ? _agents[0] : null;
             RegisterCorpse(rec);
             NoteMechDeath(agent.transform.position);
+            var shop = FindWorkshopFor(cls);
+            if (shop != null && shop.IsAlive)
+                shop.ClearRobotFabricated();
             string salvageTxt = salvage > 0 ? $" Salvage {salvage} MET." : "";
-            if (TryPayScrapRefab(rec, out int met, out int ice, out string shopName))
-                LogOverseer($"{label} scrapped — Fobot Yard {met} CRED / 40 s at {shopName}.{salvageTxt}");
-            else
-                LogOverseer($"{label} scrapped — corpse at the scrapyard.{salvageTxt}");
+            int bill = OverseerRules.YardBill(rec.Level);
+            LogOverseer($"{label} scrapped — wreck in the Fobot Yard. Stand-up {bill} MET (L{rec.Level}).{salvageTxt}");
         }
 
         public void NoteMechDeath(Vector3 world)
@@ -5904,6 +6228,25 @@ namespace SolarMajesty
             Settlement.SetIncomeRates(met, ice);
         }
 
+        private void OnMarketExported()
+        {
+            if (Economy == null) return;
+            if (!_marketPayoutLogged)
+            {
+                _marketPayoutLogged = true;
+                LogOverseer(MarketMath.GrokPayout, 6.2f);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(Economy.LastMarketLine))
+                LogOverseer(Economy.LastMarketLine);
+        }
+
+        private void OnMarketBlocked()
+        {
+            LogOverseer(MarketMath.GrokBlocked, 6.2f);
+        }
+
         private void TickCourierPad()
         {
             if (Economy == null) return;
@@ -5969,12 +6312,10 @@ namespace SolarMajesty
             {
                 var a = _agents[i];
                 if (a == null || !a.IsIncapacitated) continue;
-                met += OverseerRules.ReviveMetalsForLevel(a.Level);
+                met += OverseerRules.YardBill(a.Level);
             }
             for (int i = 0; i < _corpses.Count; i++)
-            {
-                met += OverseerRules.ReviveMetalsForLevel(_corpses[i].Level);
-            }
+                met += OverseerRules.YardBill(_corpses[i].Level);
             if (met <= 0)
                 met = OverseerRules.ReviveMet;
         }
@@ -6027,9 +6368,38 @@ namespace SolarMajesty
             _corpses.Clear();
             _pendingVeterans.Clear();
             SpecialistRoster.TryDecode(snapshot, _rosterSaved);
-            for (int i = 0; i < _rosterSaved.Count; i++)
+            ApplyRosterRecords(_rosterSaved);
+        }
+
+        private void LoadRosterFromSave(List<SaveRosterEntry> saved)
+        {
+            _rosterSaved.Clear();
+            _corpses.Clear();
+            _pendingVeterans.Clear();
+            if (saved == null) return;
+            for (int i = 0; i < saved.Count; i++)
             {
-                var rec = _rosterSaved[i];
+                var s = saved[i];
+                _rosterSaved.Add(new SpecialistRecord
+                {
+                    Class = (SpecialistClass)s.specialistClass,
+                    Level = Mathf.Clamp(s.level > 0 ? s.level : 1, 1, OverseerRules.LevelCap),
+                    Xp = Mathf.Max(0, s.xp),
+                    Credits = Mathf.Max(0, s.credits),
+                    ReviveCount = Mathf.Max(0, s.reviveCount),
+                    Suit = (ShopItemId)s.suit,
+                    Corpse = s.corpse
+                });
+            }
+            ApplyRosterRecords(_rosterSaved);
+        }
+
+        private void ApplyRosterRecords(List<SpecialistRecord> records)
+        {
+            if (records == null) return;
+            for (int i = 0; i < records.Count; i++)
+            {
+                var rec = records[i];
                 if (rec.Corpse)
                     RegisterCorpse(rec);
                 else
@@ -6039,8 +6409,7 @@ namespace SolarMajesty
 
         private void RetryUnpaidCorpses()
         {
-            for (int i = _corpses.Count - 1; i >= 0; i--)
-                TryPayScrapRefab(_corpses[i], out _, out _, out _);
+            // Wrecks wait in the Fobot Yard. Continue does not auto-pay or auto-refab.
         }
 
         private bool HasCorpse(SpecialistClass cls)
@@ -6094,35 +6463,76 @@ namespace SolarMajesty
             }
         }
 
-        private bool TryPayScrapRefab(SpecialistRecord rec, out int met, out int ice, out string shopName) =>
-            TryEnqueueScrapRefab(rec, alreadyPaid: false, out met, out ice, out shopName);
-
-        private void EnqueueCorpsesAlreadyPaid()
+        /// <summary>
+        /// True scrap: new chassis at level 1, 70% workshop MET, 40 s. Consumes the wreck.
+        /// Distinct from Fobot Yard, which resurrects this ego.
+        /// </summary>
+        public bool TryRefabRookie(ColonyStructure shop)
         {
-            for (int i = _corpses.Count - 1; i >= 0; i--)
-                TryEnqueueScrapRefab(_corpses[i], alreadyPaid: true, out _, out _, out _);
+            if (shop == null || !shop.IsAlive || !shop.IsWorkshop) return false;
+            var cls = ColonyStructure.RobotClassForWorkshop(shop.Category);
+            if (!cls.HasValue) return false;
+            if (!TryGetCorpse(cls.Value, out var rec))
+            {
+                LogOverseer("No wreck for this shop. Pay the Fobot Yard to stand this ego up.");
+                return false;
+            }
+
+            if (!TryEnqueueScrapRefab(rec, alreadyPaid: false, out int met, out _, out string shopName))
+            {
+                LogOverseer($"Re-fab needs {OverseerRules.RefabMetals(shop.SourceData)} MET at {shopName}.");
+                return false;
+            }
+
+            LogOverseer($"Re-fab queued — new {ColonyStructure.ClassLabel(cls.Value)} at L1, {met} MET / 40 s. The wreck is gone.");
+            return true;
+        }
+
+        public bool HasWreckFor(SpecialistClass cls) => HasCorpse(cls);
+
+        public string WreckSummary()
+        {
+            if (_corpses.Count <= 0) return "";
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < _corpses.Count; i++)
+            {
+                if (i > 0) sb.Append(" · ");
+                var rec = _corpses[i];
+                sb.Append(ColonyStructure.ClassLabel(rec.Class));
+                sb.Append(" L");
+                sb.Append(Mathf.Max(1, rec.Level));
+                sb.Append(" ");
+                sb.Append(OverseerRules.YardBill(rec.Level));
+                sb.Append(" MET");
+            }
+            return sb.ToString();
+        }
+
+        private bool TryGetCorpse(SpecialistClass cls, out SpecialistRecord rec)
+        {
+            for (int i = 0; i < _corpses.Count; i++)
+            {
+                if (_corpses[i].Class != cls) continue;
+                rec = _corpses[i];
+                return true;
+            }
+            rec = default;
+            return false;
         }
 
         private bool TryEnqueueScrapRefab(
             SpecialistRecord rec, bool alreadyPaid, out int met, out int ice, out string shopName)
         {
-            met = OverseerRules.ReviveMetals(rec.ReviveCount);
-            ice = OverseerRules.ReviveIceCost(rec.ReviveCount);
+            ice = 0;
             shopName = ClassWorkshopName(rec.Class);
             var shop = FindWorkshopFor(rec.Class);
+            met = OverseerRules.RefabMetals(shop != null ? shop.SourceData : null);
             if (shop == null || !shop.IsAlive)
-            {
-                if (alreadyPaid)
-                {
-                    Resources?.Add(ResourceId.Metals, met);
-                    Resources?.Add(ResourceId.WaterIce, ice);
-                }
                 return false;
-            }
             shopName = shop.DisplayName;
             if (!alreadyPaid)
             {
-                if (Economy == null || !Economy.CanAffordRevive(met, ice))
+                if (Economy == null || !Economy.CanAffordRevive(met))
                     return false;
             }
 
@@ -6131,20 +6541,61 @@ namespace SolarMajesty
             if (grid != null)
                 cell = grid.WorldToCell(shop.WorldPosition);
             if (Placer == null) return false;
-            if (!alreadyPaid && !Economy.TrySpendRevive(met, ice))
+            if (!alreadyPaid && !Economy.TrySpendRevive(met))
                 return false;
             if (!Placer.TryEnqueueRefab(data, cell, shop.WorldPosition, 0, OverseerRules.RefabSeconds, rec.Class, out _))
             {
                 Resources?.Add(ResourceId.Metals, met);
-                Resources?.Add(ResourceId.WaterIce, ice);
                 return false;
             }
 
-            rec.ReviveCount = rec.ReviveCount + 1;
-            rec.Corpse = false;
-            _pendingVeterans[rec.Class] = rec;
             RemoveCorpse(rec.Class);
+            _pendingVeterans.Remove(rec.Class);
             return true;
+        }
+
+        private void ResurrectWrecksAtYard(ColonyStructure yard)
+        {
+            if (yard == null) return;
+            var waiting = new List<SpecialistRecord>(_corpses);
+            for (int i = 0; i < waiting.Count; i++)
+                ResurrectWreck(waiting[i], yard);
+        }
+
+        private void ResurrectWreck(SpecialistRecord rec, ColonyStructure yard)
+        {
+            var data = DataForClass(rec.Class);
+            if (data == null) return;
+            Vector3 pos = yard.WorldPosition + new Vector3(1.6f, 0f, 0.8f);
+            if (grid != null)
+                pos = grid.SnapToCellCenter(pos);
+            var agent = SpawnOne(data, pos, TintForClass(rec.Class));
+            if (agent == null) return;
+            rec.Corpse = false;
+            rec.ReviveCount = rec.ReviveCount + 1;
+            agent.ApplyRecord(rec);
+            agent.FieldRevive();
+            agent.NoteRevivePaid();
+            var shop = FindWorkshopFor(rec.Class);
+            if (shop != null && shop.IsAlive)
+            {
+                shop.MarkRobotFabricated();
+                shop.TryClockIn(agent);
+            }
+            _everHadRobot = true;
+            _agents.Add(agent);
+            if (Agent == null)
+                Agent = agent;
+            agent.BindNavMesh(_campusNav);
+            RemoveCorpse(rec.Class);
+        }
+
+        private ColonyStructure FindFobotYard()
+        {
+            if (Village == null) return null;
+            var dedicated = Village.NearestByCategory(ColonyLayout.CampusOrigin, 240f, BuildingCategory.FobotYard);
+            if (dedicated != null && dedicated.IsAlive) return dedicated;
+            return Village.NearestByCategory(ColonyLayout.CampusOrigin, 240f, BuildingCategory.Inn);
         }
 
         private void TickJunkYard(float dt)
@@ -6177,12 +6628,9 @@ namespace SolarMajesty
 
         private Vector3 ScrapyardPosition()
         {
-            if (Village != null)
-            {
-                var yard = Village.NearestByCategory(ColonyLayout.CampusOrigin, 200f, BuildingCategory.FobotYard);
-                if (yard != null && yard.IsAlive)
-                    return yard.WorldPosition;
-            }
+            var yard = FindFobotYard();
+            if (yard != null && yard.IsAlive)
+                return yard.WorldPosition;
             for (int i = 0; i < _corpses.Count; i++)
             {
                 var shop = FindWorkshopFor(_corpses[i].Class);

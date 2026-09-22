@@ -2,7 +2,7 @@
 
 Run this before showing the demo. Unity **Game** tab, not Scene view. Menu **Solar Majesty → Play Demo** (or Open Demo Scene → Play).
 
-Continue restores **campus + stockpile + research + body + open flags + living fauna + specialist HP**. Campus is per-world (Earth Commons stays on Earth).
+Continue restores **campus + stockpile + research + body + open flags + living fauna poses + specialist HP/poses + dens + node remaining + mission hold + parties**. Campus is per-world (Earth Commons stays on Earth).
 
 ---
 
@@ -19,7 +19,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 - [ ] Dens, sustain, and launch stay visible. You do not have to clear Earth.
 - [ ] **Esc** pause → Resume / Settings / Title / Quit. Title **Continue** shows body + CRED + module count.
 - [ ] Build Colony Commons + airlock, Title → Continue: Commons and airlock are back; workshop robots refabricate.
-- [ ] After a short session (post a flag, fight fauna, damage a robot): Title → Continue restores that flag (bounty + remaining work), living fauna, and specialist HP. Empty ground click still does not repath.
+- [ ] After a short session (post a flag, fight fauna, damage a robot, harvest a node, scout a den, form a party): Title → Continue restores that flag (bounty + remaining work), living fauna **at their saved poses**, specialist HP **and poses**, den scouted/cleared, node remaining, mission hold, and the formed party. Empty ground click still does not repath.
 
 ## 20-minute Earth loop
 
@@ -63,16 +63,16 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 ## Phase 4 Week 1 (visual)
 
 - [ ] Mars: reddish cratered ground, hazy orange sky, long shadows; distant dust-devil dressing (not a new threat).
-- [ ] Earth New Game (not Mars): lush meadow albedo, cobalt sky, long shadows, distant cumulus, carbon/orange claim chevrons. Must not look like the pre-Phase-4 olive plane. Dust-devils stay Mars-only.
-- [ ] Colony Commons + airlock: **panel-lined** orange-framed square hub (not a flat cube), junction turret, corrugated tube cladding on the joint (not through the dome). Extra tubes are dressing — pathing is still the Lego grid. Commons is a white/orange **command-dome citadel** (hero FBX or procedural), not a pale grey box. Orange collars meet module faces flush.
+- [ ] Shift+click **EARTH·** (parked, not New Game): lush meadow albedo, cobalt sky, long shadows, distant cumulus, carbon/orange claim chevrons. Must not look like the pre-Phase-4 olive plane. Dust-devils stay Mars-only. New Game is Luna.
+- [ ] Colony Commons + airlock: **white cube hub** with dark square windows, orange ribbed dock stubs with torus rings (not a flat fridge, not a wrap-door box). Unused stubs hidden. Commons geodesic restyle is a separate slice (PR 41). Orange collars meet module faces flush.
 - [ ] While a module is building: yellow gantry crane + incomplete cladding; site clears on complete.
 - [ ] HUD: top strip REG / ICE / CRED / PWR / BEDS with rates and color swatches; Sol counter; gold-carbon chrome; bounty log on conquest gates; roster is IDLE/WORK/REST status (click inspects only). Minimap titled MAJESTY COLONY, click pans camera, never path-commands.
 - [ ] Dock squares BLD / FLG / TEC / CAM / PTY / MENU map to B, G, T, campus focus, party, Esc — not unit orders.
 
 ## Phase 4 Week 2 (hero kits)
 
-- [ ] HAB: **horizontal cylinder** on black skids, white shell, black bands, orange access, **carbon panel rings + spine seam** — living module, not a box. Same 4×4 footprint.
-- [ ] Colony Commons: **smooth command dome** on a dark mechanical ring, two-tier cupola, equatorial panel rings + drum meridians, radial tube stubs (cardinals reach the 6×6 face; square airlocks still attach). Same 6×6 footprint. HUD **COMMONS**.
+- [ ] HAB: **boxy beige/tan hull** filling the 4×4, **roof solar array**, orange portholes — locked Play-mode still. **Not** HAB-1 graphite-rim cylinder. Same 4×4 footprint.
+- [ ] Colony Commons: **geodesic / polyhedron command dome** (frequency-3 cream triangular plates over a dark geodesic lattice, orange equator / cupola bands) on a dark mechanical ring — not a smooth sphere, not a grey box, not square hull tiles, not box-ribs over the triangles. Same 6×6 footprint. HUD **COMMONS**. CaptureStill pad / solar / extractors sit ~4 cells of empty dirt off Commons.
 - [ ] Landing Pad: dark circular disc, **orange concentric rings + H**, cardinal ticks, parked white/black Starship stack with heat-shield belly + forward flaps (visual only). Launch gate still needs the pad + tech.
 - [ ] Farm = **AG-1 vaulted greenhouse** + ice tanks/scaffold (water-ice extractor, not a HAB). Regolith Camp = low **drum + hopper**. Mine = twin silos + **A-frame** headframe.
 - [ ] Ghosts in **B** show the same silhouettes. Empty ground click still does not repath robots.
@@ -80,7 +80,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 
 ## Phase 4 Week 3 (turrets + solar)
 
-- [ ] Airlock Junction: dual-barrel white/orange turret with cyan lenses on the **panel-lined** square hub (inset carbon hatches, orange collars at docked joints only). Dressing only — no click-to-fire, not a selectable unit. Cardinal module sleeves read as white tubes + orange collars **flush to the hub** (no gap / overlap through the hull).
+- [ ] Airlock Junction: **white cube** with dark square windows; docked faces are **orange ribbed tubes + orange torus rings** flush to the hub. Dressing only — no click-to-fire. Locked still has **no** roof turret on this join.
 - [ ] Power Node: **PWR-1 hut** plus a **field** of tilted blue-cyan panels with orange corner brackets on the 4×4 footprint, not a single panel beside the building. Ghost in **B** matches.
 - [ ] Command / Defense: **Defense Battery** angular bunker + roof turret, not a Commons citadel-dome. Week 1 shield bubble still wraps it. B menu says Defense Battery, never Command / CMD-1.
 - [ ] Engineer reads as a small white biped with backpack; Geologist as a six-wheel rover; Scout as a hovering probe with rotors and a boxy cyan-lens head. Defense mech is still the bulky tracked guardian (red viewport, not a biped walker).
@@ -106,13 +106,13 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 ## Phase 4 hero building FBX
 
 - [ ] Play Mode HAB / Colony Commons / Power / Farm / Camp / Mine / Defense / pad / guild / LAB / wonders / **workshop / Inn** / **OPS-1** prefer `SM_Hero_*` FBX. HAB / Commons / LAB / Guild / OPS hulls show **panel lines** (rings, meridians, wrap bands). Console `[HeroKit] Attached …` on first place. Engineer workshop is the hangar; Defense/Sentinel workshop is the taller roof-turret hangar; Inn is the porch-lantern hall. If an FBX is missing, the procedural hero kit still appears (warning logged).
-- [ ] Cardinal **square airlocks** still attach **flush at the module face** (white sleeve + orange collar, no gap / hull punch-through). Commons stays the 6×6 first landmark.
+- [ ] Cardinal **square airlocks** still attach **flush at the module face** (orange ribbed HAB join + torus rings, no gap / hull punch-through). Commons stays the 6×6 first landmark.
 - [ ] Ghosts in **B** match the FBX silhouettes. Empty ground click still does not repath robots.
 
 ## Phase 4 remaining Imagine sheets + Mars close
 
 - [x] Remaining-class / fauna Imagine JPGs are in `ConceptSheets/` (`Docs/GROK_IMAGINE_UNIT_PROMPTS.md` table). Blender is sheet-matched. Do not invent an 11th class.
-- [x] Hero buildings sheet-matched to existing ConceptSheets: HAB-1 cylinder, command-dome Commons, LAB-1 cylinder, PWR-1 + solar field, pad + Starship stack. Units/fauna not redone this slice.
+- [x] Hero buildings sheet-matched to existing ConceptSheets: Commons command-dome, LAB-1 cylinder, PWR-1 + solar field, pad + Starship stack. **HAB locked to the Play-mode boxy tan kit** (not HAB-1 graphite-rim). Units/fauna not redone this slice.
 - [x] CMD-1 / OPS-1 vs `SM_CMD-1_OPS-1_CommandOps_Turnaround.jpg`: Guild Hall = CMD-1 civic dress (not Commons); Mining = OPS-1 annex (`SM_Hero_OPS`). Wonders + Farm/Camp/Mine remeshed. Defense bunker labeled **Defense Battery**.
 - [ ] Shift+F10 Mars: packed-dust **plus grey paved slabs** under modules, extra crates/cones, orange rings on dock tubes, gold/cyan status pips over Commons / Power / Defense, taller far-right dust devil, warmer orange sky + long shadows. Empty Mars (no buildings) should show boulder/dune/crater vista + node outcrops + dens, not a tiled plane of cubes. HUD chips show color swatches; minimap reads **MAJESTY COLONY**; dock has PTY (party, not a move order). Earth New Game stays meadow + cobalt (no Mars grey apron).
 - [ ] Empty ground click still does not repath robots. Do not treat this as Phase 4 exit — editor still `Docs/Roadmap/SM_MarsCampaign_EditorStill.png` and Game-tab empty-Sol-1 still `Docs/Roadmap/SM_MarsCampaign_PlayModeStill.png` exist; a **placed Commons+airlock+HAB** Game-tab still vs the PNG is still required. See [PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md).
@@ -121,8 +121,8 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 
 - Play Mode throws on world gen (yield labels, NavMesh, missing GameLoop).
 - A specialist walks to an empty-ground click.
-- Title orrery click on Earth does not land the empty drop, or Continue silently does nothing with a save present.
-- New Game Earth looks like the pre-Phase-4 olive/grey plane (no meadow, no cobalt sky, no claim chevrons, no HUD chips).
+- Title orrery / New Game does not land the Luna empty drop, or Continue silently does nothing with a save present.
+- New Game is the Earth picnic meadow (Earth is parked — Shift+click only).
 - Launch gate completes from tech alone (Landing Pad required).
 
-Debug: **Shift+click MARS?** on the Earth drop (tutorial OK) hops to Mars; Game-tab empty-Sol-1 still saved at `Docs/Roadmap/SM_MarsCampaign_PlayModeStill.png`. **Shift+F10** unlocks all then cycles Earth→Luna→Mars (macOS may steal F10 — use the chip). **F8** score HUD. **Y** revive / dismiss win.
+Debug: **Shift+click MARS?** on the Luna drop (tutorial OK) hops to Mars; Game-tab empty-Sol-1 still saved at `Docs/Roadmap/SM_MarsCampaign_PlayModeStill.png`. **Shift+F10** unlocks all then cycles including parked Earth/Belt/Europa (macOS may steal F10 — use the chip). **F8** score HUD. **Y** revive / dismiss win.
