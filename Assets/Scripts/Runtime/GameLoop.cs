@@ -649,8 +649,8 @@ namespace SolarMajesty
                 LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
             }
             else
-                LogOverseer($"Haul deposited {amount} MET at Commons.");
-            Alerts.Push("levy_home", $"Levy walked home · {amount} MET", AlertSeverity.Good, Time.unscaledTime, at);
+                LogOverseer($"Haul deposited {amount} CRED at Commons.");
+            Alerts.Push("levy_home", $"Levy walked home · {amount} CRED", AlertSeverity.Good, Time.unscaledTime, at);
         }
 
         public void NoteLevyStolen(int amount, Vector3 at, bool fromHab)
@@ -2695,7 +2695,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Mining:
                         b.displayName = "OPS Drop-off";
-                        b.description = "does not grow MET";
+                        b.description = "does not grow CRED";
                         break;
                     case BuildingCategory.Mine:
                         b.displayName = "Ore Mine";
@@ -4264,7 +4264,7 @@ namespace SolarMajesty
             {
                 Resources.TrySpend(ResourceId.Metals, met);
                 Resources.TrySpend(ResourceId.WaterIce, ice);
-                return $"Freight paid: −{met} MET −{ice} ICE.";
+                return $"Freight paid: −{met} CRED −{ice} ICE.";
             }
 
             Resources.ApplyLoss(0.12f);
@@ -4558,7 +4558,7 @@ namespace SolarMajesty
             {
                 BuildingCategory.Inn => "wrecks wait — credits only",
                 BuildingCategory.Defense => "auto-fires 18 m",
-                BuildingCategory.Mining => "does not grow MET",
+                BuildingCategory.Mining => "does not grow CRED",
                 BuildingCategory.ClimateLoom => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.AegisSpire => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.DeepArchive => "unlock from ★ tech — bonus while standing",
@@ -4871,7 +4871,7 @@ namespace SolarMajesty
                 (site.Category == BuildingCategory.Mine || site.Category == BuildingCategory.Mining))
             {
                 Resources?.Add(ResourceId.Metals, OverseerRules.GeologistExtractExtraMet);
-                LogOverseer($"Geologist bonus +{OverseerRules.GeologistExtractExtraMet} MET at the drop-off.");
+                LogOverseer($"Geologist bonus +{OverseerRules.GeologistExtractExtraMet} CRED at the drop-off.");
             }
         }
 
@@ -6182,9 +6182,9 @@ namespace SolarMajesty
             var shop = FindWorkshopFor(cls);
             if (shop != null && shop.IsAlive)
                 shop.ClearRobotFabricated();
-            string salvageTxt = salvage > 0 ? $" Salvage {salvage} MET." : "";
+            string salvageTxt = salvage > 0 ? $" Salvage {salvage} CRED." : "";
             int bill = OverseerRules.YardBill(rec.Level, rec.Class);
-            LogOverseer($"{label} scrapped — wreck in the Fobot Yard. Stand-up {bill} MET (L{rec.Level}).{salvageTxt}");
+            LogOverseer($"{label} scrapped — wreck in the Fobot Yard. Stand-up {bill} CRED (L{rec.Level}).{salvageTxt}");
         }
 
         public void NoteMechDeath(Vector3 world)
@@ -6604,11 +6604,11 @@ namespace SolarMajesty
 
             if (!TryEnqueueScrapRefab(rec, alreadyPaid: false, out int met, out _, out string shopName))
             {
-                LogOverseer($"Re-fab needs {OverseerRules.RefabMetals(shop.SourceData)} MET at {shopName}.");
+                LogOverseer($"Re-fab needs {OverseerRules.RefabMetals(shop.SourceData)} CRED at {shopName}.");
                 return false;
             }
 
-            LogOverseer($"Re-fab queued — new {ColonyStructure.ClassLabel(cls.Value)} at L1, {met} MET / 40 s. The wreck is gone.");
+            LogOverseer($"Re-fab queued — new {ColonyStructure.ClassLabel(cls.Value)} at L1, {met} CRED / 40 s. The wreck is gone.");
             return true;
         }
 

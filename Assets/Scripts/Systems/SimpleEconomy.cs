@@ -274,7 +274,7 @@ namespace SolarMajesty
                         int took = node.Harvest(8);
                         int got = Deliver(ResourceId.Metals, Gold(took), haul);
                         Deliver(ResourceId.Regolith, 2, haul);
-                        RecordExtract($"+{got} MET {tag}", got);
+                        RecordExtract($"+{got} CRED {tag}", got);
                         break;
                     }
                     case ResourceNodeType.Ice:
@@ -386,7 +386,7 @@ namespace SolarMajesty
             LastUpkeepLine = PowerGen > 0
                 ? $"grid +{PowerGen}/−{spentPower} PWR"
                 : $"upkeep −{spentPower} PWR";
-            if (spentMet > 0) LastUpkeepLine += $" −{spentMet} MET";
+            if (spentMet > 0) LastUpkeepLine += $" −{spentMet} CRED";
             if (spentIce > 0) LastUpkeepLine += $" −{spentIce} ICE";
         }
 
@@ -472,8 +472,8 @@ namespace SolarMajesty
             LastMarketReg = regTake;
             LastMarketCredits = credits;
             LastMarketLine = iceTake > 0
-                ? $"Stall exported {iceTake} ICE → {credits} MET."
-                : $"Stall exported {credits} MET.";
+                ? $"Stall exported {iceTake} ICE → {credits} CRED."
+                : $"Stall exported {credits} CRED.";
             MarketExported?.Invoke();
         }
     }

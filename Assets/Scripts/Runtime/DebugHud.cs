@@ -67,7 +67,7 @@ namespace SolarMajesty
             }
 
             GUILayout.Space(6);
-            GUILayout.Label("R = force fatigue · Y = Fobot Yard bill (MET only)");
+            GUILayout.Label("R = force fatigue · Y = Fobot Yard bill (CRED only)");
             GUILayout.EndArea();
         }
     }

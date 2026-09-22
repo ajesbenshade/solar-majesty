@@ -455,6 +455,18 @@ namespace SolarMajesty
         /// Majesty daily tax: Commons (Palace) 50, Market 250, Farm 50 land in their own tills each
         /// day; mine output waits in the Mine's till. Houses are paid through the Settlement levy.
         /// </summary>
+        /// <summary>Tax the standing buildings accrue into their tills each day (houses excluded).</summary>
+        public int DailyBuildingTax()
+        {
+            int total = 0;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s != null && s.IsAlive) total += MajestyEconomy.DailyTax(s.Category);
+            }
+            return total;
+        }
+
         private void PayDailyTaxes(Settlement set)
         {
             _collectors ??= new LevyCollectorDirector(this, _loop);

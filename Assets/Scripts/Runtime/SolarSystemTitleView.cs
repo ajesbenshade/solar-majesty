@@ -178,6 +178,28 @@ namespace SolarMajesty
             _loop?.PlayBodyFromTitle(_hover.Body, cheat);
         }
 
+        /// <summary>
+        /// Screen position (IMGUI, top-left origin, unscaled pixels) and on-screen radius of every
+        /// pickable world, so the title can label the planets instead of listing them in a menu.
+        /// </summary>
+        public void GetBodyAnchors(List<(CelestialBodyId body, Vector2 screen, float radius)> into)
+        {
+            into.Clear();
+            if (!_shown || _cam == null) return;
+            for (int i = 0; i < _picks.Count; i++)
+            {
+                var pick = _picks[i];
+                if (pick == null || !pick.gameObject.activeInHierarchy) continue;
+                Vector3 c = pick.transform.position;
+                Vector3 sp = _cam.WorldToScreenPoint(c);
+                if (sp.z <= 0f) continue;
+                float worldR = 0.5f * pick.transform.lossyScale.x;
+                Vector3 edge = _cam.WorldToScreenPoint(c + _cam.transform.right * worldR);
+                float px = Mathf.Max(6f, Mathf.Abs(edge.x - sp.x));
+                into.Add((pick.Body, new Vector2(sp.x, Screen.height - sp.y), px));
+            }
+        }
+
         private SolarSystemPickTarget PickUnderCursor()
         {
             Ray ray = _cam.ScreenPointToRay(Input.mousePosition);
