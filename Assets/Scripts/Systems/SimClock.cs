@@ -67,10 +67,12 @@ namespace SolarMajesty
             return steps;
         }
 
-        public void Reset()
+        public void Reset() => Restore(0);
+
+        public void Restore(long totalSteps)
         {
             _accumulator = 0f;
-            TotalSteps = 0;
+            TotalSteps = System.Math.Max(0, totalSteps);
             DroppedTime = false;
         }
     }

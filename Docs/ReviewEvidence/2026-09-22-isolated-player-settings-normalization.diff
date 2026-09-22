@@ -1,0 +1,11 @@
+--- workspace/ProjectSettings/ProjectSettings.asset
++++ isolated-build/ProjectSettings/ProjectSettings.asset
+@@ -592,7 +592,7 @@
+   webWasm2023: 1
+   webEnableSubmoduleStrippingCompatibility: 0
+   scriptingDefineSymbols:
+-    Standalone: APP_UI_EDITOR_ONLY
++    Standalone: APP_UI_EDITOR_ONLY;SENTIS_ANALYTICS_ENABLED
+   additionalCompilerArguments: {}
+   platformArchitecture: {}
+   scriptingBackend:

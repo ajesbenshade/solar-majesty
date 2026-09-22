@@ -42,6 +42,14 @@ namespace SolarMajesty
         public static ChallengeId Challenge = ChallengeId.None;
         public static DoctrineStance Stance = DoctrineStance.Balanced;
 
+        public static void Restore(SaveReplayState saved)
+        {
+            if (saved == null) return;
+            Mode = System.Enum.IsDefined(typeof(ColonyRunMode), saved.mode) ? (ColonyRunMode)saved.mode : ColonyRunMode.Campaign;
+            Challenge = System.Enum.IsDefined(typeof(ChallengeId), saved.challenge) ? (ChallengeId)saved.challenge : ChallengeId.None;
+            Stance = System.Enum.IsDefined(typeof(DoctrineStance), saved.stance) ? (DoctrineStance)saved.stance : DoctrineStance.Balanced;
+        }
+
         public static bool IsEndless => Mode == ColonyRunMode.Endless;
 
         /// <summary>

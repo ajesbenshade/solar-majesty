@@ -16,12 +16,8 @@ namespace SolarMajesty
         private static readonly Color White = new Color(0.88f, 0.82f, 0.74f);
         // Concept "black" bands read as lit charcoal (~70/66/62 sRGB after ACES), not ink.
         private static readonly Color Carbon = new Color(0.26f, 0.24f, 0.22f);
-        // Geodesic facets run a shade warmer than the HAB/rocket hull in the concept.
-        private static readonly Color DomeCream = new Color(0.80f, 0.62f, 0.50f);
         private static readonly Color Graphite = new Color(0.16f, 0.17f, 0.19f);
         private static readonly Color Steel = new Color(0.42f, 0.44f, 0.48f);
-        // Commons undershell seen through facet insets: concept seams ~150/135/120, not black.
-        private static readonly Color SeamGrey = new Color(0.40f, 0.36f, 0.32f);
         private static readonly Color Orange = new Color(0.96f, 0.42f, 0.08f);
         private static readonly Color Yellow = new Color(0.95f, 0.82f, 0.12f);
         private static readonly Color Concrete = new Color(0.40f, 0.41f, 0.43f);
@@ -186,9 +182,10 @@ namespace SolarMajesty
 
         public static void BuildCommons(Transform root, float w, float d, Color hull)
         {
-            // Command-dome civic citadel — geodesic / polyhedron read (Aaron 2026-09-07).
-            // Soft sphere + square tile wash failed the dream-loop materials gate; lattice
-            // facets + orange equatorial / cupola bands are the live silhouette.
+            // LOCK (Aaron 2026-09-17): Colony Commons is the smooth command-dome citadel
+            // (plinth + drum + orange equatorial band + sphere dome + cupola).
+            // Do not restore geodesic lattice (Dress_CommonsGeo_*) or attach
+            // SM_Hero_Commons / SM_CommandDome_CentralHub FBX (joined stubs).
             float radius = Mathf.Min(w, d) * 0.38f;
             Prim(root, "CommonsPlinth", PrimitiveType.Cylinder,
                 new Vector3(0f, 0.28f, 0f),
@@ -214,12 +211,9 @@ namespace SolarMajesty
                 new Vector3(0f, 1.72f, 0f),
                 new Vector3(radius * 2.12f, 0.06f, radius * 2.12f), Orange);
 
-            // Dark undershell just under the facet shell: it shows only through the facet
-            // insets, which is what draws the seam lattice.
-            Prim(root, "Dress_CommonsDomeUnder", PrimitiveType.Sphere,
+            Prim(root, "CommonsDome", PrimitiveType.Sphere,
                 new Vector3(0f, 1.85f, 0f),
-                new Vector3(radius * 1.96f, radius * 1.42f, radius * 1.96f), SeamGrey);
-            PlaceGeodesicLattice(root, radius, hull);
+                new Vector3(radius * 2.0f, radius * 1.48f, radius * 2.0f), White);
 
             Prim(root, "CommonsDomeBand", PrimitiveType.Cylinder,
                 new Vector3(0f, 3.05f, 0f),
@@ -228,8 +222,6 @@ namespace SolarMajesty
                 new Vector3(0f, 2.98f, 0f),
                 new Vector3(radius * 1.48f, 0.03f, radius * 1.48f), Carbon);
 
-            // Cupola sits on the geodesic shell apex (1.85 + 0.74 r): a squat cream drum with
-            // one orange ring and a cream cap — the concept apex, not a tall black pole.
             float domeTop = 1.85f + radius * 0.74f;
             Prim(root, "CommonsCupolaLo", PrimitiveType.Cylinder,
                 new Vector3(0f, domeTop + 0.04f, 0f),
@@ -243,15 +235,10 @@ namespace SolarMajesty
             Prim(root, "CommonsCupolaCap", PrimitiveType.Cylinder,
                 new Vector3(0f, domeTop + 0.345f, 0f),
                 new Vector3(radius * 0.24f, 0.02f, radius * 0.24f), Graphite);
-            // Small warm beacon only — cyan waist visors washed the sheet white at Game-tab range.
             Prim(root, "Dress_CommonsBeacon", PrimitiveType.Sphere,
                 new Vector3(0f, domeTop + 0.44f, 0f),
                 new Vector3(0.12f, 0.12f, 0.12f), Orange, new Color(0.9f, 0.35f, 0.05f));
 
-            // Cardinal hull ports (CommonsPort_N/E/S/W). Live groups start off.
-            // RefreshTubes shows docked faces only — still5 unused orange rings
-            // were these drum ports, not CommonsStub / DockSleeve leftovers.
-            // SM_Hero_Commons FBX is skipped (joined stubs cannot hide per face).
             PlaceCardinalHullPorts(root, "CommonsPort", w, d, BuildingCategory.Commons);
 
             Prim(root, "CommonsSeamRing_0", PrimitiveType.Cylinder,
@@ -269,23 +256,6 @@ namespace SolarMajesty
                     dir * (radius * 1.012f) + new Vector3(0f, 0.92f, 0f),
                     new Vector3(0.028f, 0.55f, 0.028f), Carbon, yaw);
             }
-        }
-
-        /// <summary>
-        /// One flat-shaded geodesic shell (frequency-4 icosphere on the dome ellipsoid) whose
-        /// facets are inset so the dark undershell reads as a thin seam lattice. Coplanar
-        /// triangles replace the earlier scatter of tilted plates that read as shingles.
-        /// </summary>
-        private static void PlaceGeodesicLattice(Transform root, float radius, Color hull)
-        {
-            var radii = new Vector3(radius * 1.02f, radius * 0.74f, radius * 1.02f);
-            Mesh mesh = GeodesicDomeMesh.Build(4, radii, -0.22f, 0.06f);
-            var shell = new GameObject("Dress_CommonsGeo_0");
-            shell.transform.SetParent(root, false);
-            shell.transform.localPosition = new Vector3(0f, 1.85f, 0f);
-            shell.AddComponent<MeshFilter>().sharedMesh = mesh;
-            shell.AddComponent<MeshRenderer>();
-            Tint(shell, DomeCream);
         }
 
         public static void BuildLandingPad(Transform root, float w, float d, Color hull)

@@ -56,7 +56,8 @@ namespace SolarMajesty
             new Dictionary<BuildingCategory, string>
             {
                 { BuildingCategory.Habitat, "Buildings/SM_Hero_HAB" },
-                { BuildingCategory.Commons, "Buildings/SM_Hero_Commons" },
+                // Commons is locked to the procedural command-dome citadel.
+                // Do not map SM_Hero_Commons or geodesic remesh here.
                 { BuildingCategory.Power, "Buildings/SM_Hero_Power" },
                 { BuildingCategory.Farm, "Buildings/SM_Hero_Farm" },
                 { BuildingCategory.RegolithCamp, "Buildings/SM_Hero_Camp" },

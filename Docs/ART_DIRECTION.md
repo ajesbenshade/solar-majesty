@@ -15,7 +15,7 @@ Locked north star: [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roa
 1. **Forgo interconnect tubes** between buildings. Square Lego airlocks may remain as building ports. `SpawnTubeRuns` / pressurized tube corridors are **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed.
 2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill dirt with leftover sockets.
 3. **Distant haze** toward the horizon (concept language).
-4. **Polyhedron / geodesic Commons** silhouette — not a soft sphere-only kit if we can dress it.
+4. **Colony Commons** is the locked smooth command-dome citadel (plinth + drum + orange band + sphere + cupola) — not geodesic lattice, not a grey box.
 5. Colonists / specialists crossing open ground should **read as spacesuited** (vulnerable between buildings). Docs + still dressing notes only. Do **not** invent new `FlagTypes` or rewrite `SpecialistBrain`.
 
 Phase 4 keyword extensions (append, do not replace the lock):

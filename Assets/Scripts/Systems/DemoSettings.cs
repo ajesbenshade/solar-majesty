@@ -19,6 +19,7 @@ namespace SolarMajesty
         public const string SaveMetKey = "SM_Save_Metals";
         public const string SavePwrKey = "SM_Save_Power";
         public const string BootPlayKey = "SM_BootPlay";
+        public const string FirstHourKey = "SM_FirstHourDemo";
         public const string QualityKey = "SM_Set_Quality";
         public const string FullscreenKey = "SM_Set_Fullscreen";
         public const string CampusKeyPrefix = "SM_Campus_";
@@ -35,6 +36,7 @@ namespace SolarMajesty
         public static bool InvertPan;
         public static bool TutorialDone;
         public static bool SaveExists;
+        public static string SaveLoadNotice = "";
         public static int QualityIndex;
         public static bool Fullscreen = true;
 
@@ -53,6 +55,12 @@ namespace SolarMajesty
         /// <summary>When true, skip title after a New Game reload.</summary>
         public static bool BootStraightIntoPlay;
 
+        /// <summary>
+        /// Earth greed-beat demo. Default on. Settings can open the full campaign
+        /// without deleting guilds, Belt, or Europa from the repo.
+        /// </summary>
+        public static bool FirstHourDemo;
+
         public static void Load()
         {
             Master = PlayerPrefs.GetFloat(MasterKey, 1f);
@@ -69,7 +77,10 @@ namespace SolarMajesty
             ColorBlindMode = PlayerPrefs.GetInt(ColorBlindKey, 0);
             FrameCap = PlayerPrefs.GetInt(FrameCapKey, 0);
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
+            FirstHourDemo = PlayerPrefs.GetInt(FirstHourKey, 1) == 1;
             ReplayRules.Load();
+            if (FirstHourDemo)
+                ClampReplayForDemo();
             if (BootStraightIntoPlay)
             {
                 PlayerPrefs.DeleteKey(BootPlayKey);
@@ -108,8 +119,35 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(ReduceMotionKey, ReduceMotion ? 1 : 0);
             PlayerPrefs.SetInt(ColorBlindKey, ColorBlindMode);
             PlayerPrefs.SetInt(FrameCapKey, FrameCap);
-            ReplayRules.Save();
+            PlayerPrefs.SetInt(FirstHourKey, FirstHourDemo ? 1 : 0);
+            // The demo forces campaign / no challenge / balanced in memory.
+            // Do not write that over a saved full-campaign stance.
+            if (!FirstHourDemo)
+                ReplayRules.Save();
             PlayerPrefs.Save();
+        }
+
+        /// <summary>Open or close the Earth demo. Does not wipe the continue slot.</summary>
+        public static void SetFirstHourDemo(bool on)
+        {
+            FirstHourDemo = on;
+            PlayerPrefs.SetInt(FirstHourKey, on ? 1 : 0);
+            PlayerPrefs.Save();
+            if (on)
+                ClampReplayForDemo();
+            else
+                ReplayRules.Load();
+        }
+
+        /// <summary>
+        /// Open Hands would let the Engineer take a $70 Build and skip the lesson.
+        /// Clamped in memory only.
+        /// </summary>
+        public static void ClampReplayForDemo()
+        {
+            ReplayRules.Mode = ColonyRunMode.Campaign;
+            ReplayRules.Challenge = ChallengeId.None;
+            ReplayRules.Stance = DoctrineStance.Balanced;
         }
 
         public static void MarkTutorialDone()
@@ -217,11 +255,12 @@ namespace SolarMajesty
             var body = CelestialBodyCatalog.Get(BodySeed.LoadSavedBody());
             string name = body != null ? body.DisplayName : "last drop";
             int met = PlayerPrefs.GetInt(SaveMetKey, 0);
-            return $"CONTINUE  ·  {name}  ·  MET {met}";
+            return $"CONTINUE  ·  {name}  ·  CRED {met}";
         }
 
         public static string ContinueDetail()
         {
+            if (!string.IsNullOrEmpty(SaveLoadNotice)) return SaveLoadNotice;
             if (!SaveExists)
                 return "No continue slot yet. New Game drops Earth; Continue restores that body's campus.";
             int reg = PlayerPrefs.GetInt(SaveRegKey, 0);
@@ -231,7 +270,7 @@ namespace SolarMajesty
             int tech = ResearchManager.SavedUnlockCount();
             int modules = CampusSnapshot.SlotCount(LoadCampus(BodySeed.LoadSavedBody()));
             string campus = modules > 0 ? $"{modules} modules" : "empty campus";
-            return $"REG {reg}  ICE {ice}  MET {met}  PWR {pwr}  ·  {campus}  ·  {tech} techs";
+            return $"REG {reg}  ICE {ice}  CRED {met}  PWR {pwr}  ·  {campus}  ·  {tech} techs";
         }
     }
 }

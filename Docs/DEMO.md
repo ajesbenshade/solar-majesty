@@ -24,7 +24,7 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 ---
 
-Play opens on the **title screen** — a solar-system orrery, not a frozen drop. **Click a world** to drop there (Shift+click a locked outer world). **New Game** wipes the continue slot and returns to the system (confirms if a save exists). **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna, and specialist HP. Dens / node yield / mission timer are not snapshotted. **Esc** pauses (Resume / Settings / Title / Quit). Tutorial is six skippable beats (Colony Commons → airlock → HAB → workshop → flag → TECH); Settings can replay it.
+Play opens on the **title screen** — a solar-system orrery, not a frozen drop. **Click Earth** to drop. The playable demo is Earth only; Settings → **Full campaign** shows the other worlds again. **New Game** wipes the continue slot and returns to the system (confirms if a save exists). **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna, and specialist HP. **Esc** pauses (Resume / Settings / Title / Quit). The Earth tutorial is four skippable beats (Engineer workshop → Build at $70 → raise the price → Defend the creeper). Commons, one airlock, and a HAB are already on the claim. Settings can replay it. Full campaign keeps the older six-beat dock tutorial.
 
 ## Controls
 
@@ -60,9 +60,11 @@ Play opens on the **title screen** — a solar-system orrery, not a frozen drop.
 
 Speak while playing (fresh prefs / Earth):
 
-1. **Title** — click Earth on the orrery (or New Game if you need a wipe). Empty drop: produced meadow + cobalt sky + carbon/orange claim chevrons; no buildings. Starter stockpile is loaded. First-run beats (Colony Commons → airlock → HAB → workshop robot → flag → TECH) are skippable.
-2. **Build (B)** — **Colony Commons** (key 1, HUD **COMMONS**) on the claim → **Airlock Junction** snapped to a face socket → dock **HAB** then a **workshop** onto airlock ends (Lego campus). Humans stay in HABs; robots fabricate from workshops.
-3. **TECH · T** — once the LAB is up, Field Survey ticks; completions auto-queue toward **Lunar Rocket**.
+1. **Title** — click Earth on the orrery (or New Game if you need a wipe). Meadow + cobalt sky. Commons, one airlock, and a HAB are already on the claim. No starter robots. Starter stockpile is loaded.
+2. **Build (B, then 1)** — dock the **Engineer workshop** on the open airlock face. Wait until the robot is standing. You never click the robot to move it. Humans stay in the HAB.
+3. **Flag (G, Build, $70)** — the Engineer ignores it. Select the flag and press **+** until the pole says tempted (~$90).
+4. **Pest** — a soil creeper walks onto the yard. **G**, **F5 Defend**, post it on the bug. If the pole says ignored, dock a Defense workshop (key 2).
+5. **Gates** — dens, sustain, and launch stay on the HUD. Finishing Earth is not required. **TECH · T** still starts Field Survey toward **Lunar Rocket** if you keep going.
 4. **Threat** — **F2 ClearThreat** on a den; dens checkbox fills as lairs go quiet.
 5. **Economy** — place **Farm** + **Mine**, grow POP toward goal 8; sustain holds when stockpile is healthy. Command chips flash when ICE/MET/REG/PWR are short. Dock a **Power Node** so gen covers draw.
 6. **Ecology** — a **Regolith Mite** (compact pillbug, **F5 Defend Area**) shows up at extractors; a **Watt Leech** (white ray + cyan groove, **F2 Clear Threat**) at the Power Node.
@@ -96,7 +98,7 @@ Run **[SMOKE_TEST.md](SMOKE_TEST.md)** (10-minute boot, then 20-minute Earth, th
 ### Must-pass
 
 - [ ] Title → click Earth → empty drop; Continue restores that body's campus + stockpile/research + flags/fauna/HP
-- [ ] Six skippable tutorial beats, including workshop robots
+- [ ] Four skippable Earth-demo beats: Engineer workshop, refused Build at $70, raised price, Defend on the creeper. Full campaign still has the six-beat dock tutorial.
 - [ ] No click-to-move; greed gate (Engineer ignores cheap Build)
 - [ ] Three conquest gates: dens, sustain (Colony Commons + pop + farm + mine), launch (tech + Landing Pad)
 - [ ] Body-native pest counters (**F5** Defend vs **F2** Clear Threat); resource chips flash when short

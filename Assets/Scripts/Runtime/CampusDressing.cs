@@ -439,7 +439,7 @@ namespace SolarMajesty
             bubble.transform.localScale = commons
                 ? new Vector3(8.6f, 5.2f, 8.6f)
                 : new Vector3(5.4f, 3.2f, 5.4f);
-            Object.Destroy(bubble.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(bubble.GetComponent<Collider>());
             var rend = bubble.GetComponent<Renderer>();
             if (rend == null) return;
             var mat = NewLit("SM_DressShield");
@@ -471,7 +471,7 @@ namespace SolarMajesty
             if (parent != null) go.transform.SetParent(parent, true);
             go.transform.position = origin + Vector3.up * 0.03f;
             go.transform.localScale = new Vector3(dia, 0.025f, dia);
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Color packed = body != null
                 ? Color.Lerp(body.GroundDark, body.GroundLight, 0.18f) * 0.82f
                 : new Color(0.18f, 0.18f, 0.19f);
@@ -489,7 +489,7 @@ namespace SolarMajesty
             pip.transform.SetParent(root, false);
             pip.transform.localPosition = new Vector3(0f, commons ? 5.85f : 3.35f, 0f);
             pip.transform.localScale = new Vector3(0.32f, 0.32f, 0.32f);
-            Object.Destroy(pip.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(pip.GetComponent<Collider>());
             Color glow = commons
                 ? new Color(0.95f, 0.78f, 0.22f)
                 : new Color(0.28f, 0.72f, 1f);
@@ -501,7 +501,7 @@ namespace SolarMajesty
             ring.transform.localPosition = Vector3.zero;
             ring.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             ring.transform.localScale = new Vector3(1.55f, 0.08f, 1.55f);
-            Object.Destroy(ring.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(ring.GetComponent<Collider>());
             Tint(ring, glow, 0.45f, glow * 0.8f);
         }
 
@@ -512,7 +512,7 @@ namespace SolarMajesty
             if (parent != null) go.transform.SetParent(parent, true);
             go.transform.position = world + Vector3.up * 0.28f;
             go.transform.localScale = new Vector3(0.18f, 0.26f, 0.18f);
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, body != null
                 ? Color.Lerp(new Color(0.96f, 0.42f, 0.08f), body.SunColor, 0.1f)
                 : new Color(0.96f, 0.42f, 0.08f), 0.22f);
@@ -523,7 +523,7 @@ namespace SolarMajesty
             cap.transform.SetParent(go.transform, false);
             cap.transform.localPosition = new Vector3(0f, 1.05f, 0f);
             cap.transform.localScale = new Vector3(0.55f, 0.35f, 0.55f);
-            Object.Destroy(cap.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(cap.GetComponent<Collider>());
             Tint(cap, new Color(0.92f, 0.93f, 0.94f));
         }
 
@@ -535,7 +535,7 @@ namespace SolarMajesty
             go.transform.position = world + Vector3.up * 0.28f;
             go.transform.localScale = new Vector3(0.55f, 0.42f, 0.7f);
             go.transform.rotation = Quaternion.Euler(0f, world.x * 17f, 0f);
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, body != null
                 ? Color.Lerp(new Color(0.78f, 0.8f, 0.82f), body.RockColor, body.Kit == TerrainKit.AsteroidField ? 0.55f : 0.35f)
                 : new Color(0.78f, 0.8f, 0.82f));
@@ -549,7 +549,7 @@ namespace SolarMajesty
             if (parent != null) go.transform.SetParent(parent, true);
             go.transform.position = world + Vector3.up * 0.38f;
             go.transform.localScale = new Vector3(0.38f, 0.36f, 0.38f);
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, body != null
                 ? Color.Lerp(new Color(0.88f, 0.90f, 0.92f), body.RockColor, 0.22f)
                 : new Color(0.88f, 0.90f, 0.92f));
@@ -560,7 +560,7 @@ namespace SolarMajesty
             band.transform.SetParent(go.transform, false);
             band.transform.localPosition = new Vector3(0f, 0.15f, 0f);
             band.transform.localScale = new Vector3(1.12f, 0.12f, 1.12f);
-            Object.Destroy(band.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(band.GetComponent<Collider>());
             Tint(band, new Color(0.96f, 0.42f, 0.08f));
         }
 
@@ -572,7 +572,7 @@ namespace SolarMajesty
             go.transform.position = world + Vector3.up * 0.22f;
             go.transform.localScale = new Vector3(0.72f, 0.16f, 0.72f);
             go.transform.rotation = Quaternion.Euler(90f, world.z * 13f, 0f);
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, new Color(0.12f, 0.12f, 0.13f), 0.22f);
             ColonyVisualUtility.SnapToGround(go);
 
@@ -581,7 +581,7 @@ namespace SolarMajesty
             hub.transform.SetParent(go.transform, false);
             hub.transform.localPosition = Vector3.zero;
             hub.transform.localScale = new Vector3(0.42f, 1.4f, 0.42f);
-            Object.Destroy(hub.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(hub.GetComponent<Collider>());
             Tint(hub, new Color(0.96f, 0.42f, 0.08f));
         }
 
@@ -593,7 +593,7 @@ namespace SolarMajesty
             deck.transform.position = world + Vector3.up * 0.08f;
             deck.transform.localScale = new Vector3(1.05f, 0.08f, 0.72f);
             deck.transform.rotation = Quaternion.Euler(0f, world.x * 11f, 0f);
-            Object.Destroy(deck.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(deck.GetComponent<Collider>());
             Tint(deck, new Color(0.18f, 0.18f, 0.19f), 0.18f);
 
             var crate = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -601,7 +601,7 @@ namespace SolarMajesty
             crate.transform.SetParent(deck.transform, false);
             crate.transform.localPosition = new Vector3(0f, 2.8f, 0f);
             crate.transform.localScale = new Vector3(0.72f, 4.2f, 0.78f);
-            Object.Destroy(crate.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(crate.GetComponent<Collider>());
             Tint(crate, new Color(0.86f, 0.87f, 0.89f));
             ColonyVisualUtility.SnapToGround(deck);
         }
@@ -613,7 +613,7 @@ namespace SolarMajesty
             if (parent != null) go.transform.SetParent(parent, true);
             go.transform.position = world + Vector3.up * 0.38f;
             go.transform.localScale = new Vector3(0.14f, 0.36f, 0.14f);
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, new Color(0.08f, 0.08f, 0.09f), 0.22f);
             ColonyVisualUtility.SnapToGround(go);
 
@@ -622,7 +622,7 @@ namespace SolarMajesty
             lamp.transform.SetParent(go.transform, false);
             lamp.transform.localPosition = new Vector3(0f, 1.05f, 0f);
             lamp.transform.localScale = new Vector3(1.15f, 0.42f, 1.15f);
-            Object.Destroy(lamp.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(lamp.GetComponent<Collider>());
             Color glow = new Color(0.22f, 0.84f, 0.98f);
             Tint(lamp, glow, 0.55f, glow * 1.2f);
         }
@@ -635,7 +635,7 @@ namespace SolarMajesty
             go.transform.position = world + Vector3.up * 0.08f;
             go.transform.localScale = new Vector3(1.15f, 0.08f, 0.85f);
             go.transform.rotation = Quaternion.Euler(0f, world.z * 11f, 0f);
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, Color.Lerp(new Color(0.78f, 0.9f, 0.96f), body != null ? body.GroundLight : Color.cyan, 0.35f));
             ColonyVisualUtility.SnapToGround(go);
         }
@@ -647,7 +647,7 @@ namespace SolarMajesty
             if (parent != null) go.transform.SetParent(parent, true);
             go.transform.position = world + Vector3.up * 0.22f;
             go.transform.localScale = new Vector3(0.48f, 0.32f, 0.42f);
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, body != null ? Color.Lerp(body.RockColor, new Color(0.55f, 0.42f, 0.28f), 0.4f) : new Color(0.4f, 0.32f, 0.22f));
             ColonyVisualUtility.SnapToGround(go);
         }
@@ -659,7 +659,7 @@ namespace SolarMajesty
             if (parent != null) go.transform.SetParent(parent, true);
             go.transform.position = world + Vector3.up * 0.55f;
             go.transform.localScale = new Vector3(0.18f, 0.55f, 0.18f);
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             Tint(go, body != null && body.Kit == TerrainKit.IceCrust
                 ? new Color(0.45f, 0.82f, 0.95f)
                 : new Color(0.96f, 0.42f, 0.08f));
@@ -670,7 +670,7 @@ namespace SolarMajesty
             cap.transform.SetParent(go.transform, false);
             cap.transform.localPosition = new Vector3(0f, 1.05f, 0f);
             cap.transform.localScale = new Vector3(1.4f, 0.45f, 1.4f);
-            Object.Destroy(cap.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(cap.GetComponent<Collider>());
             Color glow = body != null
                 ? Color.Lerp(new Color(0.96f, 0.42f, 0.08f), body.SunColor, 0.25f)
                 : new Color(0.96f, 0.42f, 0.08f);
@@ -693,7 +693,7 @@ namespace SolarMajesty
             disc.transform.SetParent(root.transform, false);
             disc.transform.localPosition = new Vector3(0f, 0.04f, 0f);
             disc.transform.localScale = new Vector3(diameter, 0.04f, diameter);
-            Object.Destroy(disc.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(disc.GetComponent<Collider>());
             Tint(disc, new Color(0.10f, 0.11f, 0.12f), 0.18f);
 
             var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -701,7 +701,7 @@ namespace SolarMajesty
             ring.transform.SetParent(root.transform, false);
             ring.transform.localPosition = new Vector3(0f, 0.07f, 0f);
             ring.transform.localScale = new Vector3(diameter * 1.06f, 0.02f, diameter * 1.06f);
-            Object.Destroy(ring.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(ring.GetComponent<Collider>());
             Tint(ring, accent, 0.32f, accent * 0.35f);
 
             var inner = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -709,7 +709,7 @@ namespace SolarMajesty
             inner.transform.SetParent(root.transform, false);
             inner.transform.localPosition = new Vector3(0f, 0.075f, 0f);
             inner.transform.localScale = new Vector3(diameter * 0.42f, 0.018f, diameter * 0.42f);
-            Object.Destroy(inner.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(inner.GetComponent<Collider>());
             Tint(inner, Color.Lerp(new Color(0.88f, 0.90f, 0.93f), accent, 0.15f), 0.22f);
 
             for (int i = 0; i < 4; i++)
@@ -722,7 +722,7 @@ namespace SolarMajesty
                 chevron.transform.localPosition = dir * (diameter * 0.28f) + new Vector3(0f, 0.09f, 0f);
                 chevron.transform.localRotation = Quaternion.Euler(0f, i * 90f, 0f);
                 chevron.transform.localScale = new Vector3(0.22f, 0.03f, diameter * 0.18f);
-                Object.Destroy(chevron.GetComponent<Collider>());
+                ColonyVisualUtility.DestroyNow(chevron.GetComponent<Collider>());
                 Tint(chevron, accent, 0.28f);
 
                 var bollard = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -730,7 +730,7 @@ namespace SolarMajesty
                 bollard.transform.SetParent(root.transform, false);
                 bollard.transform.localPosition = dir * (diameter * 0.48f) + new Vector3(0f, 0.42f, 0f);
                 bollard.transform.localScale = new Vector3(0.16f, 0.38f, 0.16f);
-                Object.Destroy(bollard.GetComponent<Collider>());
+                ColonyVisualUtility.DestroyNow(bollard.GetComponent<Collider>());
                 Tint(bollard, new Color(0.08f, 0.08f, 0.09f), 0.22f);
 
                 var lamp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -738,7 +738,7 @@ namespace SolarMajesty
                 lamp.transform.SetParent(root.transform, false);
                 lamp.transform.localPosition = dir * (diameter * 0.48f) + new Vector3(0f, 0.82f, 0f);
                 lamp.transform.localScale = new Vector3(0.18f, 0.12f, 0.18f);
-                Object.Destroy(lamp.GetComponent<Collider>());
+                ColonyVisualUtility.DestroyNow(lamp.GetComponent<Collider>());
                 var glow = Color.Lerp(accent, new Color(0.22f, 0.84f, 0.98f), 0.35f);
                 Tint(lamp, glow, 0.55f, glow * 1.4f);
             }
@@ -762,7 +762,7 @@ namespace SolarMajesty
             disc.transform.SetParent(root.transform, false);
             disc.transform.localPosition = new Vector3(0f, 0.06f, 0f);
             disc.transform.localScale = new Vector3(5.1f, 0.05f, 5.1f);
-            Object.Destroy(disc.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(disc.GetComponent<Collider>());
             Tint(disc, new Color(0.94f, 0.94f, 0.96f), 0.18f);
 
             var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -770,7 +770,7 @@ namespace SolarMajesty
             ring.transform.SetParent(root.transform, false);
             ring.transform.localPosition = new Vector3(0f, 0.10f, 0f);
             ring.transform.localScale = new Vector3(5.35f, 0.03f, 5.35f);
-            Object.Destroy(ring.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(ring.GetComponent<Collider>());
             Tint(ring, new Color(0.96f, 0.42f, 0.08f), 0.28f);
 
             var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -778,7 +778,7 @@ namespace SolarMajesty
             rib.transform.SetParent(root.transform, false);
             rib.transform.localPosition = new Vector3(0f, 0.55f, 0f);
             rib.transform.localScale = new Vector3(3.4f, 0.08f, 3.4f);
-            Object.Destroy(rib.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(rib.GetComponent<Collider>());
             Tint(rib, new Color(0.18f, 0.18f, 0.19f), 0.22f);
 
             for (int i = 0; i < 4; i++)
@@ -790,7 +790,7 @@ namespace SolarMajesty
                 panel.transform.localPosition = new Vector3(Mathf.Cos(ang) * 1.55f, 1.05f, Mathf.Sin(ang) * 1.55f);
                 panel.transform.localScale = new Vector3(0.08f, 1.7f, 1.55f);
                 panel.transform.localRotation = Quaternion.Euler(0f, -i * 90f, 0f);
-                Object.Destroy(panel.GetComponent<Collider>());
+                ColonyVisualUtility.DestroyNow(panel.GetComponent<Collider>());
                 Tint(panel, i % 2 == 0 ? new Color(0.86f, 0.87f, 0.89f) : new Color(0.12f, 0.12f, 0.13f));
             }
 
@@ -799,7 +799,7 @@ namespace SolarMajesty
             mast.transform.SetParent(root.transform, false);
             mast.transform.localPosition = new Vector3(1.7f, 2.15f, 1.3f);
             mast.transform.localScale = new Vector3(0.16f, 4.2f, 0.16f);
-            Object.Destroy(mast.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(mast.GetComponent<Collider>());
             Tint(mast, new Color(0.95f, 0.82f, 0.12f), 0.32f);
 
             var jib = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -807,7 +807,7 @@ namespace SolarMajesty
             jib.transform.SetParent(root.transform, false);
             jib.transform.localPosition = new Vector3(0.15f, 4.15f, 1.3f);
             jib.transform.localScale = new Vector3(3.1f, 0.12f, 0.16f);
-            Object.Destroy(jib.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(jib.GetComponent<Collider>());
             Tint(jib, new Color(0.95f, 0.82f, 0.12f), 0.32f);
 
             ColonyVisualUtility.SnapToGround(root);

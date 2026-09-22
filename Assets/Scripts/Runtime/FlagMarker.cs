@@ -178,7 +178,7 @@ namespace SolarMajesty
             {
                 string pay = $"$ {_handle.CurrentBounty:F0}";
                 if (_handle.EscrowMetals > 0)
-                    pay += $"  ·  {_handle.EscrowMetals} MET";
+                    pay += $"  ·  {_handle.EscrowMetals} CRED";
                 _bountyLabel.text = pay;
             }
 

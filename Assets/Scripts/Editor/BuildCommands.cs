@@ -70,6 +70,12 @@ namespace SolarMajesty.EditorTools
 
             if (summary.result == BuildResult.Succeeded)
             {
+                string folderPath = Path.GetDirectoryName(outputPath);
+                if (target == BuildTarget.StandaloneOSX)
+                    PlaytestHandoff.WriteMac(folderPath);
+                else if (target == BuildTarget.StandaloneWindows64)
+                    PlaytestHandoff.WriteWindows(folderPath);
+
                 Debug.Log(
                     $"[Build] Succeeded: {summary.totalSize / (1024 * 1024)} MB in " +
                     $"{summary.totalTime.TotalSeconds:F1}s -> {outputPath}");

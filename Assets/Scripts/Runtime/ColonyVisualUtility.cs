@@ -408,7 +408,7 @@ namespace SolarMajesty
             tube.transform.localPosition = mid;
             tube.transform.localRotation = rot;
             tube.transform.localScale = new Vector3(diameter, stubLen * 0.5f, diameter);
-            Object.Destroy(tube.GetComponent<Collider>());
+            DestroyNow(tube.GetComponent<Collider>());
             TintPrimitive(tube, HubWhite, HubWhiteEmit);
 
             var rib = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -417,7 +417,7 @@ namespace SolarMajesty
             rib.transform.localPosition = mid;
             rib.transform.localRotation = rot;
             rib.transform.localScale = new Vector3(diameter * 1.06f, 0.035f, diameter * 1.06f);
-            Object.Destroy(rib.GetComponent<Collider>());
+            DestroyNow(rib.GetComponent<Collider>());
             TintPrimitive(rib, HubCarbon);
 
             // White lip at the hub so the tube reads as attached, not a dark slot.
@@ -428,7 +428,7 @@ namespace SolarMajesty
             lip.transform.localPosition = lipPos;
             lip.transform.localRotation = rot;
             lip.transform.localScale = new Vector3(diameter * 1.05f, 0.03f, diameter * 1.05f);
-            Object.Destroy(lip.GetComponent<Collider>());
+            DestroyNow(lip.GetComponent<Collider>());
             TintPrimitive(lip, HubWhite, HubWhiteEmit);
 
             // Proud orange ring on the hub face — still18 hid the Lego-face sliver
@@ -440,7 +440,7 @@ namespace SolarMajesty
             hubRing.transform.localPosition = hubRingPos;
             hubRing.transform.localRotation = rot;
             hubRing.transform.localScale = new Vector3(diameter * 1.40f, 0.08f, diameter * 1.40f);
-            Object.Destroy(hubRing.GetComponent<Collider>());
+            DestroyNow(hubRing.GetComponent<Collider>());
             // Graphite: with the square face frame and the hull port ring both orange,
             // a third orange band per join read as stacked collars (dream-loop r10/r11).
             TintPrimitive(hubRing, HubGraphite);
@@ -458,7 +458,7 @@ namespace SolarMajesty
             faceFrame.transform.localPosition = framePos;
             faceFrame.transform.localRotation = Quaternion.identity;
             faceFrame.transform.localScale = frameScale;
-            Object.Destroy(faceFrame.GetComponent<Collider>());
+            DestroyNow(faceFrame.GetComponent<Collider>());
             TintPrimitive(faceFrame, HubOrange, HubOrangeEmit);
 
             // One orange collar at the cell face — the docked Lego joint.
@@ -469,7 +469,7 @@ namespace SolarMajesty
             collar.transform.localPosition = collarPos;
             collar.transform.localRotation = rot;
             collar.transform.localScale = new Vector3(diameter * 1.18f, 0.05f, diameter * 1.18f);
-            Object.Destroy(collar.GetComponent<Collider>());
+            DestroyNow(collar.GetComponent<Collider>());
             // Sits against the hull port ring; only the ring stays orange (one per hull end).
             TintPrimitive(collar, HubGraphite);
 
@@ -501,7 +501,7 @@ namespace SolarMajesty
             well.transform.localPosition = at - dir * 0.04f;
             well.transform.localRotation = rot;
             well.transform.localScale = new Vector3(DockBore * 0.92f, 0.07f, DockBore * 0.92f);
-            Object.Destroy(well.GetComponent<Collider>());
+            DestroyNow(well.GetComponent<Collider>());
             TintPrimitive(well, HubGraphite);
 
             var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -511,7 +511,7 @@ namespace SolarMajesty
             ring.transform.localRotation = rot;
             // Thin ring: at 1.18x the disc face read as a fat orange crescent from the iso camera.
             ring.transform.localScale = new Vector3(DockBore * 1.08f, 0.045f, DockBore * 1.08f);
-            Object.Destroy(ring.GetComponent<Collider>());
+            DestroyNow(ring.GetComponent<Collider>());
             TintPrimitive(ring, HubOrange);
 
             if (!startActive)
@@ -527,7 +527,7 @@ namespace SolarMajesty
             go.transform.SetParent(parent, false);
             go.transform.localPosition = pos;
             go.transform.localScale = scale;
-            Object.Destroy(go.GetComponent<Collider>());
+            DestroyNow(go.GetComponent<Collider>());
             TintPrimitive(go, color, emission);
         }
 

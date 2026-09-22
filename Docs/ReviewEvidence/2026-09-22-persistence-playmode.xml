@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 16:19:13Z" end-time="2026-09-22 16:19:20Z" duration="6.824189">
+  <test-suite type="TestSuite" id="1015" name="StabilizationTests" fullname="StabilizationTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-22 16:19:13Z" end-time="2026-09-22 16:19:20Z" duration="6.824189" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1010" name="SolarMajesty.Tests.PlayMode.dll" fullname="/private/tmp/solar-stabilization-project/Library/ScriptAssemblies/SolarMajesty.Tests.PlayMode.dll" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-22 16:19:13Z" end-time="2026-09-22 16:19:20Z" duration="6.820403" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="30646" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1011" name="SolarMajesty" fullname="SolarMajesty" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-22 16:19:13Z" end-time="2026-09-22 16:19:20Z" duration="6.820207" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1012" name="Tests" fullname="SolarMajesty.Tests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-22 16:19:13Z" end-time="2026-09-22 16:19:20Z" duration="6.820115" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="CampaignSmokeTests" fullname="SolarMajesty.Tests.CampaignSmokeTests" classname="SolarMajesty.Tests.CampaignSmokeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 16:19:13Z" end-time="2026-09-22 16:19:18Z" duration="5.258683" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1003" name="EarthLunaReturn_ContinueAndRetry_KeepWorldsSeparate" fullname="SolarMajesty.Tests.CampaignSmokeTests.EarthLunaReturn_ContinueAndRetry_KeepWorldsSeparate" methodname="EarthLunaReturn_ContinueAndRetry_KeepWorldsSeparate" classname="SolarMajesty.Tests.CampaignSmokeTests" runstate="Runnable" seed="807571702" result="Passed" start-time="2026-09-22 16:19:13Z" end-time="2026-09-22 16:19:15Z" duration="2.179917" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[GameLoop] Overseer tool → None
+[CampusDressing] docks=0 pieces=1
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[CampusDressing] docks=2 pieces=3
+[Overseer] Commons, airlock, and HAB are down. Dock an Engineer workshop on the open face.
+[GameLoop] First-hour shell placed (Commons, airlock, HAB).
+[WorldGen] Earth seed=1687248328 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=2 pieces=3
+[Overseer] The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic.
+[GameLoop] Demo ready — Earth seed=1687248328 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Luna seed=10007 craters=96 lakes=0 rivers=0 forests=0 dunes=0 rocks=40 nodes=12 lairs=8
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 18 Dust Stalker(s) from 8 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Luna sun=1.45 fog=189/420
+[MapDressing] Luna ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[Overseer] Colony Commons is down — dock airlocks, then HAB and workshops.
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[Overseer] Luna insertion. The Freeholds smile like a weigh-station. Dock fee is four MET. They call it hospitality. We call it a line item.
+[GameLoop] Demo ready — Luna seed=10007 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Earth seed=1687248328 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=2 pieces=3
+[CampusDressing] docks=2 pieces=3
+[Overseer] Campus restored — 3 modules on Earth.
+[GameLoop] Restored 3 campus pieces.
+[Overseer] Colony restored — 3 modules, 0 bounties, 0 robots, 7 fauna.
+[GameLoop] Demo ready — Earth seed=1687248328 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Earth seed=1687248328 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[GameLoop] Overseer tool → None
+[GameLoop] Demo ready — Earth seed=1687248328 (empty start).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=2 pieces=3
+[CampusDressing] docks=2 pieces=3
+[Overseer] Campus restored — 3 modules on Earth.
+[GameLoop] Restored 3 campus pieces.
+[Overseer] Colony restored — 3 modules, 0 bounties, 0 robots, 7 fauna.
+[GameLoop] Overseer tool → None
+[BodySeed] Next Earth seed = 1831341665
+[GameLoop] Overseer tool → None
+[CampusDressing] docks=0 pieces=1
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[CampusDressing] docks=2 pieces=3
+[Overseer] Commons, airlock, and HAB are down. Dock an Engineer workshop on the open face.
+[GameLoop] First-hour shell placed (Commons, airlock, HAB).
+[WorldGen] Earth seed=1831341665 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=2 pieces=3
+[Overseer] The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic.
+[GameLoop] Demo ready — Earth seed=1831341665 (empty start).
+[GameLoop] Overseer tool → None
+]]></output>
+            </test-case>
+            <test-case id="1002" name="FiveWorlds_BootAndRevisitWithIndependentSeedsAndColonies" fullname="SolarMajesty.Tests.CampaignSmokeTests.FiveWorlds_BootAndRevisitWithIndependentSeedsAndColonies" methodname="FiveWorlds_BootAndRevisitWithIndependentSeedsAndColonies" classname="SolarMajesty.Tests.CampaignSmokeTests" runstate="Runnable" seed="534158896" result="Passed" start-time="2026-09-22 16:19:15Z" end-time="2026-09-22 16:19:18Z" duration="3.073628" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[GameLoop] Overseer tool → None
+[CampusDressing] docks=0 pieces=1
+[Overseer] Colony Commons is down — dock airlocks, then HAB and workshops.
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[WorldGen] Earth seed=1831341665 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[Overseer] The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Earth seed=1831341665 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Luna seed=10007 craters=96 lakes=0 rivers=0 forests=0 dunes=0 rocks=40 nodes=12 lairs=8
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 18 Dust Stalker(s) from 8 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Luna sun=1.45 fog=189/420
+[MapDressing] Luna ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[Overseer] Colony Commons is down — dock airlocks, then HAB and workshops.
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[Overseer] Luna insertion. The Freeholds smile like a weigh-station. Dock fee is four MET. They call it hospitality. We call it a line item.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Luna seed=10007 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Mars seed=20011 craters=56 lakes=0 rivers=0 forests=0 dunes=64 rocks=40 nodes=12 lairs=10
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 23 Dust Stalker(s) from 10 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Mars sun=1.12 fog=48/134
+[MapDressing] Mars ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[Overseer] Colony Commons is down — dock airlocks, then HAB and workshops.
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[Overseer] Mars descent. Compact ground. Dust wisps already have opinions about Power. Raise the seat before the dust files a claim of its own.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Mars seed=20011 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Asteroid Belt seed=30013 craters=18 lakes=0 rivers=0 forests=0 dunes=0 rocks=220 nodes=15 lairs=7
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 17 Dust Stalker(s) from 7 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Asteroid Belt sun=1.55 fog=99/220
+[MapDressing] Asteroid Belt ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Overseer] Belt insertion. Tether the Commons. Rock mites and ticks follow the ore — Defend Area. Shard hoppers raid HABs — Clear Threat.
+[CampusDressing] docks=0 pieces=1
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[Overseer] Colony Commons is down — dock airlocks, then HAB and workshops.
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Asteroid Belt seed=30013 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Europa seed=40017 craters=24 lakes=6 rivers=5 forests=0 dunes=0 rocks=48 nodes=14 lairs=9
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 30 Dust Stalker(s) from 9 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Europa sun=0.85 fog=90/200
+[MapDressing] Europa ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Overseer] Europa descent. Radiation outside the Commons. Fissure leeches and ice wisps on Power — Clear Threat. Ice creepers chew greenhouses — Defend Area.
+[CampusDressing] docks=0 pieces=1
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[Overseer] Colony Commons is down — dock airlocks, then HAB and workshops.
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Europa seed=40017 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Asteroid Belt seed=30013 craters=18 lakes=0 rivers=0 forests=0 dunes=0 rocks=220 nodes=15 lairs=7
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 17 Dust Stalker(s) from 7 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Asteroid Belt sun=1.55 fog=99/220
+[MapDressing] Asteroid Belt ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Overseer] Belt insertion. Tether the Commons. Rock mites and ticks follow the ore — Defend Area. Shard hoppers raid HABs — Clear Threat.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[CampusDressing] docks=0 pieces=1
+[Overseer] Campus restored — 1 modules on Asteroid Belt.
+[GameLoop] Restored 1 campus pieces.
+[Overseer] Colony restored — 1 modules, 0 bounties, 0 robots, 17 fauna.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Asteroid Belt seed=30013 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Mars seed=20011 craters=56 lakes=0 rivers=0 forests=0 dunes=64 rocks=40 nodes=12 lairs=10
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 23 Dust Stalker(s) from 10 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Mars sun=1.12 fog=48/134
+[MapDressing] Mars ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[CampusDressing] docks=0 pieces=1
+[Overseer] Campus restored — 1 modules on Mars.
+[GameLoop] Restored 1 campus pieces.
+[Overseer] Colony restored — 1 modules, 0 bounties, 0 robots, 23 fauna.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Mars seed=20011 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Luna seed=10007 craters=96 lakes=0 rivers=0 forests=0 dunes=0 rocks=40 nodes=12 lairs=8
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 18 Dust Stalker(s) from 8 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Luna sun=1.45 fog=189/420
+[MapDressing] Luna ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[CampusDressing] docks=0 pieces=1
+[Overseer] Campus restored — 1 modules on Luna.
+[GameLoop] Restored 1 campus pieces.
+[Overseer] Colony restored — 1 modules, 0 bounties, 0 robots, 18 fauna.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Luna seed=10007 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Earth seed=1831341665 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[CampusDressing] docks=0 pieces=1
+[Overseer] Campus restored — 1 modules on Earth.
+[GameLoop] Restored 1 campus pieces.
+[Overseer] Colony restored — 1 modules, 0 bounties, 0 robots, 7 fauna.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Earth seed=1831341665 (empty start).
+[GameLoop] Overseer tool → None
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1004" name="DevelopedColonySaveTests" fullname="SolarMajesty.Tests.DevelopedColonySaveTests" classname="SolarMajesty.Tests.DevelopedColonySaveTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 16:19:18Z" end-time="2026-09-22 16:19:20Z" duration="1.557504" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1006" name="Continue_UnsupportedOrUnreadableSaveStaysOnTitleAndPreservesFile" fullname="SolarMajesty.Tests.DevelopedColonySaveTests.Continue_UnsupportedOrUnreadableSaveStaysOnTitleAndPreservesFile" methodname="Continue_UnsupportedOrUnreadableSaveStaysOnTitleAndPreservesFile" classname="SolarMajesty.Tests.DevelopedColonySaveTests" runstate="Runnable" seed="1218812544" result="Passed" start-time="2026-09-22 16:19:18Z" end-time="2026-09-22 16:19:18Z" duration="0.373401" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[GameLoop] Overseer tool → None
+[CampusDressing] docks=0 pieces=1
+[Overseer] Colony Commons is down — dock airlocks, then HAB and workshops.
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[WorldGen] Earth seed=1831341665 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[Overseer] The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Earth seed=1831341665 (empty start).
+[GameLoop] Overseer tool → None
+[SaveSystem] Slot /Users/aaronesbenshade/Library/Application Support/SolarMajestyValidation/StabilizationTests/Saves/slot0.json was written by a newer build (v5 > v4); refusing to load it.
+[GameLoop] Overseer tool → None
+[SaveSystem] Read of /Users/aaronesbenshade/Library/Application Support/SolarMajestyValidation/StabilizationTests/Saves/slot0.json failed: JSON parse error: Invalid value.
+[SaveSystem] Read of /Users/aaronesbenshade/Library/Application Support/SolarMajestyValidation/StabilizationTests/Saves/slot0.json failed: JSON parse error: Invalid value.
+[GameLoop] Overseer tool → None
+]]></output>
+            </test-case>
+            <test-case id="1005" name="DevelopedSnapshot_RoundTripsThroughSceneAndDiskTwice" fullname="SolarMajesty.Tests.DevelopedColonySaveTests.DevelopedSnapshot_RoundTripsThroughSceneAndDiskTwice" methodname="DevelopedSnapshot_RoundTripsThroughSceneAndDiskTwice" classname="SolarMajesty.Tests.DevelopedColonySaveTests" runstate="Runnable" seed="1213603501" result="Passed" start-time="2026-09-22 16:19:18Z" end-time="2026-09-22 16:19:20Z" duration="1.183393" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[GameLoop] Overseer tool → None
+[CampusDressing] docks=0 pieces=1
+[Overseer] Colony Commons is down — dock airlocks, then HAB and workshops.
+[GameLoop] Auto-placed Colony Commons on the Campus A claim.
+[WorldGen] Earth seed=1831341665 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=1
+[Overseer] The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic.
+[Overseer] Replay: CAMPAIGN  ·  OPEN HANDS. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Demo ready — Earth seed=1831341665 (empty start).
+[GameLoop] Overseer tool → None
+[GameLoop] Overseer tool → None
+[WorldGen] Earth seed=1831341665 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[GameLoop] Overseer tool → None
+[GameLoop] Demo ready — Earth seed=1831341665 (empty start).
+[HeroKit] Attached SM_Hero_Workshop for EngineerWorkshop.
+[GameLoop] Fabricated Engineer Bot from Engineer Workshop.
+[GameLoop] Fabricated Engineer Bot from Engineer Workshop.
+[HeroKit] Attached SM_Hero_WorkshopTall for DefenseWorkshop.
+[GameLoop] Fabricated Defense Mech from Defense Workshop.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=5
+[CampusDressing] docks=0 pieces=5
+[Overseer] Campus restored — 5 modules on Earth.
+[GameLoop] Restored 5 campus pieces.
+[Lair] Cleared stalker den.
+[Overseer] Colony restored — 5 modules, 1 bounties, 3 robots, 1 fauna.
+[Overseer] Replay: CAMPAIGN  ·  AEGIS WATCH. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Overseer tool → None
+[Lair] Cleared stalker den.
+[GameLoop] Overseer tool → None
+[WorldGen] Earth seed=1831341665 craters=0 lakes=8 rivers=5 forests=16 dunes=0 rocks=36 nodes=10 lairs=3
+[GameLoop] No starter robots — build workshops to fabricate outdoor robots.
+[GameLoop] Spawned 7 Dust Stalker(s) from 3 lair(s).
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[Atmosphere] Earth sun=1.42 fog=90/200
+[MapDressing] Earth vista trees using PT_Fruit_Tree_01_green
+[MapDressing] Earth ground+sky applied.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[GameLoop] Overseer tool → None
+[GameLoop] Demo ready — Earth seed=1831341665 (empty start).
+[GameLoop] Fabricated Engineer Bot from Engineer Workshop.
+[GameLoop] Fabricated Engineer Bot from Engineer Workshop.
+[GameLoop] Fabricated Defense Mech from Defense Workshop.
+[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).
+[CampusDressing] docks=0 pieces=5
+[CampusDressing] docks=0 pieces=5
+[Overseer] Campus restored — 5 modules on Earth.
+[GameLoop] Restored 5 campus pieces.
+[Lair] Cleared stalker den.
+[Overseer] Colony restored — 5 modules, 1 bounties, 3 robots, 1 fauna.
+[Overseer] Replay: CAMPAIGN  ·  AEGIS WATCH. Doctrine nudges hunger/courage/workshop pull only.
+[GameLoop] Overseer tool → None
+[Lair] Cleared stalker den.
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1007" name="SaveSafetyTests" fullname="SolarMajesty.Tests.SaveSafetyTests" classname="SolarMajesty.Tests.SaveSafetyTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 16:19:20Z" end-time="2026-09-22 16:19:20Z" duration="0.003339" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1008" name="ApplySave_RejectsWrongWorldBeforeChangingResources" fullname="SolarMajesty.Tests.SaveSafetyTests.ApplySave_RejectsWrongWorldBeforeChangingResources" methodname="ApplySave_RejectsWrongWorldBeforeChangingResources" classname="SolarMajesty.Tests.SaveSafetyTests" runstate="Runnable" seed="1320923875" result="Passed" start-time="2026-09-22 16:19:20Z" end-time="2026-09-22 16:19:20Z" duration="0.001073" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1009" name="DamagedStructure_RestoresWithoutBecomingFullyRepaired" fullname="SolarMajesty.Tests.SaveSafetyTests.DamagedStructure_RestoresWithoutBecomingFullyRepaired" methodname="DamagedStructure_RestoresWithoutBecomingFullyRepaired" classname="SolarMajesty.Tests.SaveSafetyTests" runstate="Runnable" seed="594446900" result="Passed" start-time="2026-09-22 16:19:20Z" end-time="2026-09-22 16:19:20Z" duration="0.000774" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/aaronesbenshade/Library/Application Support/SolarMajestyValidation/StabilizationTests/TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

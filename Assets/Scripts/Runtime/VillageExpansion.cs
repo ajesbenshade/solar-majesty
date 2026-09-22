@@ -242,9 +242,10 @@ namespace SolarMajesty
 
         public void OnStructureDestroyed(ColonyStructure st)
         {
-            if (st == null) return;
-            if (!_structures.Remove(st)) return;
-            _loop?.NotifyStructureDestroyed(st);
+            // OnDestroy also runs during travel, scene reload and application shutdown.
+            // Combat loss is reported explicitly by NotifyCollapsed before destruction.
+            // Treating teardown as a loss here rewrites saves with an emptying colony.
+            if (st != null) _structures.Remove(st);
         }
 
         public void RegisterShowcase(ColonyStructure st)

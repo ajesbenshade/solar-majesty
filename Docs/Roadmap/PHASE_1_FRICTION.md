@@ -80,3 +80,38 @@ S rating cannot be bought with a fat stockpile while dens stand (letter S requir
 | Mars | 10 lairs | pop 16, 50s | Belt Hauler + Landing Pad |
 | Belt | 7 lairs | pop 10, 35s | Icebreaker + Landing Pad |
 | Europa | 9 lairs | pop 14, 45s | pad only (spine finale) |
+
+## 2026-09-17 — first-hour friend zip (internal gate)
+
+Bar was 10–20 minutes, not the 45–90 min stranger protocol. Phase 4 EXIT still blocked.
+
+### Smoke-boot (code + EditMode; Game tab still a human)
+
+No hard stops found that should block a zip:
+
+- Title orrery → Earth meadow. Commons **auto-drops** on the claim (player docks airlock / HAB / workshop). No starter robots.
+- Empty ground click still does not repath (`BuildingPlacementInput` never issues specialist moves).
+- Engineer personality greed 0.88 refuses default **$70 Build** and takes **~$90** (`PlaytestReadyTests.Engineer_RefusesDefaultBuild70_TakesNinety`).
+- Continue blob round-trips Commons + airlock + HAB + completed Engineer workshop; restore order is Commons then Utility then the rest. Title **ReturnToTitle** persists first. Completed workshops `TryFabricateRobot`, then `RestoreAgents` rebinds pose. Dens / node yield / mission timer still omitted.
+- `BootStraightIntoPlay` stays off unless `SM_BootPlay` is set (editor still / CaptureStill). Player builds are not Development.
+
+Live first-hour confusion that *was* a copy wall (fixed this pass): HUD chip already said **CRED**, Continue / pause / flag escrow still said **MET**. Guild smoke line still said assign SCOUT/ENG/DEF/MED; halls are Horizon Lodge / Anvil Compact / Aegis Lodge / Triage Compact.
+
+### Player zips
+
+Friends get the zip + `PLAYTEST.txt` only (not DEMO.md).
+
+- macOS: `Builds/SolarMajesty-macOS-playtest.zip`
+- Windows: `Builds/SolarMajesty-Windows-playtest.zip` (this machine needed Hub `windows-mono` installed first)
+
+Telemetry: macOS `~/Library/Application Support/SolarMajesty/Solar Majesty/Playtest/`; Windows `%USERPROFILE%\AppData\LocalLow\SolarMajesty\Solar Majesty\Playtest/`. Sessions now also emit `tutorial_step`, `flag_posted`, `flag_refused`, `flag_claimed`.
+
+### Observed stops (zip boot)
+
+Self-play of `Builds/SolarMajesty-macOS-playtest.zip` (OSXPlayer, not Editor), 2026-09-17:
+
+- Booted to **Title** (not `BootStraightIntoPlay`). Telemetry `session-20260918-003813.jsonl` under `~/Library/Application Support/SolarMajesty/Solar Majesty/Playtest/`.
+- Earth drop auto-placed Colony Commons (`modules=1`, `pop=0`). Log: no starter robots, meadow dressing applied, no `MissingComponentException`.
+- Quit from Title after ~35s: `session_quit` screen=Title body=Earth. No crash.
+
+No first-hour wall from this boot. **Friend session not run in this pass** — send `Builds/SolarMajesty-Windows-playtest.zip` (or the macOS zip) + `PLAYTEST.txt` only. Ask for the Playtest folder + “where did you stop.” Fix only repeatable first-hour walls. Full 5–8 stranger protocol is the *next* gate.

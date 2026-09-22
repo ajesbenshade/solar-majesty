@@ -546,14 +546,26 @@ namespace SolarMajesty
 
             var bodies = CelestialBodyCatalog.All;
             const int cols = 3;
+            int shownBodies = 0;
+            if (bodies != null)
+            {
+                for (int i = 0; i < bodies.Length; i++)
+                {
+                    if (DemoSlice.ShowBody(bodies[i]))
+                        shownBodies++;
+                }
+            }
             float chipW = (c.width - 3f * (cols - 1)) / cols;
             bool anyLocked = false;
             bool shiftHeld = ShiftHeld();
-            for (int i = 0; i < bodies.Length; i++)
+            int slot = 0;
+            for (int i = 0; i < (bodies != null ? bodies.Length : 0); i++)
             {
-                int row = i / cols;
-                int col = i % cols;
                 var id = bodies[i];
+                if (!DemoSlice.ShowBody(id)) continue;
+                int row = slot / cols;
+                int col = slot % cols;
+                slot++;
                 var profile = CelestialBodyCatalog.Get(id);
                 bool unlocked = CampaignProgress.IsUnlocked(id);
                 if (!unlocked) anyLocked = true;
@@ -563,18 +575,20 @@ namespace SolarMajesty
                 {
                     if (unlocked)
                         _loop.SelectBody(id);
+                    else if (DemoSettings.FirstHourDemo)
+                        Notify("This demo stays on Earth. Settings → Full campaign opens the other worlds.", 3.5f);
                     else if (shiftHeld)
                         _loop.RequestDebugHop(id, unlockAll: true);
                     else
                         Notify("Locked — Shift+click this chip (or Shift+F10) to unlock.", 3.5f);
                 }
             }
-            int rows = (bodies.Length + cols - 1) / cols;
+            int rows = shownBodies == 0 ? 0 : (shownBodies + cols - 1) / cols;
             y += 22f * rows;
-            GUI.Label(
-                new Rect(c.x, y, c.width, 13f),
-                anyLocked ? "Shift+click locked  ·  Shift+F10 unlocks" : "F10 cycles worlds",
-                _micro);
+            string hopHint = DemoSettings.FirstHourDemo
+                ? "Demo is Earth. Full campaign is in Settings."
+                : anyLocked ? "Shift+click locked  ·  Shift+F10 unlocks" : "F10 cycles worlds";
+            GUI.Label(new Rect(c.x, y, c.width, 13f), hopHint, _micro);
             y += 14f;
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 6f;
@@ -588,9 +602,12 @@ namespace SolarMajesty
                 if (set.HasGuild) popExtra += "  ·  GUILD";
                 if (set.ProductionScale < 0.99f)
                     popExtra += $"  ·  PROD {Mathf.RoundToInt(set.ProductionScale * 100f)}%";
+                string levy = DemoSettings.FirstHourDemo
+                    ? ""
+                    : $"  ·  LEVY +{set.LastTax}  sit {_loop.SittingLevy}  haul +{set.LastDelivered}";
                 GUI.Label(
                     new Rect(c.x, y, c.width, 14f),
-                    $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}  ·  LEVY +{set.LastTax}  sit {_loop.SittingLevy}  haul +{set.LastDelivered}{popExtra}",
+                    $"POP {set.Population}/{set.PopulationGoal}  ·  BEDS {set.Population}/{set.Housing}{levy}{popExtra}",
                     _micro);
                 _micro.normal.textColor = prevPop;
                 y += 15f;
@@ -692,7 +709,7 @@ namespace SolarMajesty
         {
             if (label.StartsWith("REG")) return UiIcons.Get(IconId.Regolith);
             if (label.StartsWith("ICE")) return UiIcons.Get(IconId.Ice);
-            if (label.StartsWith("PAYROLL") || label.StartsWith("MET")) return UiIcons.Get(IconId.Metals);
+            if (label.StartsWith("PAYROLL") || label.StartsWith("MET") || label.StartsWith("CRED")) return UiIcons.Get(IconId.Metals);
             if (label.StartsWith("PWR")) return UiIcons.Get(IconId.Power);
             if (label.StartsWith("BEDS")) return UiIcons.Get(IconId.Beds);
             return null;
@@ -702,7 +719,7 @@ namespace SolarMajesty
         {
             if (label.StartsWith("REG")) return new Color(0.62f, 0.38f, 0.18f);
             if (label.StartsWith("ICE")) return new Color(0.35f, 0.78f, 0.92f);
-            if (label.StartsWith("PAYROLL") || label.StartsWith("MET")) return new Color(0.72f, 0.74f, 0.78f);
+            if (label.StartsWith("PAYROLL") || label.StartsWith("MET") || label.StartsWith("CRED")) return new Color(0.72f, 0.74f, 0.78f);
             if (label.StartsWith("PWR")) return new Color(0.92f, 0.78f, 0.22f);
             if (label.StartsWith("BEDS")) return new Color(0.96f, 0.42f, 0.08f);
             return Gold;
@@ -852,14 +869,21 @@ namespace SolarMajesty
 
             float listH = c.yMax - y;
             var view = new Rect(c.x, y, c.width, listH);
-            var content = new Rect(0f, 0f, c.width - 18f, TechCatalog.All.Count * 54f);
+            var techs = TechCatalog.All;
+            int visibleTechs = 0;
+            for (int i = 0; i < techs.Count; i++)
+            {
+                if (DemoSlice.ShowTech(techs[i].Id))
+                    visibleTechs++;
+            }
+            var content = new Rect(0f, 0f, c.width - 18f, Mathf.Max(54f, visibleTechs * 54f));
             _techScroll = GUI.BeginScrollView(view, _techScroll, content);
 
             float rowY = 0f;
-            var techs = TechCatalog.All;
             for (int i = 0; i < techs.Count; i++)
             {
                 var t = techs[i];
+                if (!DemoSlice.ShowTech(t.Id)) continue;
                 bool done = research.IsUnlocked(t.Id);
                 bool can = research.CanSelect(t.Id);
                 bool active = research.ActiveTech == t.Id;
@@ -946,7 +970,7 @@ namespace SolarMajesty
             var prevC = _micro.normal.textColor;
             _micro.normal.textColor = canPay ? TextMuted : Alarm;
             GUI.Label(new Rect(c.x, y, c.width, 13f),
-                canPay ? $"escrow {metCost} MET · LMB places · RMB flag refunds" : $"need {metCost} MET — raise stockpile",
+                canPay ? $"escrow {metCost} CRED · LMB places · RMB flag refunds" : $"need {metCost} CRED — raise stockpile",
                 _micro);
             _micro.normal.textColor = prevC;
         }
@@ -980,7 +1004,8 @@ namespace SolarMajesty
                 return;
             }
 
-            int count = bp.Catalog.Length;
+            var visible = bp.VisibleIndices;
+            int count = visible.Count;
             const float popupW = 320f;
             float fullH = count * 28f;
             float popupH = 58f + Mathf.Min(336f, fullH);
@@ -989,7 +1014,11 @@ namespace SolarMajesty
             _contentBottom = rect.y;
             var c = Panel(rect, "Build catalog");
 
-            GUI.Label(new Rect(c.x, c.y, c.width, 13f), "Pick a module · LMB on open ground", _micro);
+            GUI.Label(new Rect(c.x, c.y, c.width, 13f),
+                DemoSettings.FirstHourDemo
+                    ? "1 Engineer workshop · LMB on an airlock face"
+                    : "Pick a module · LMB on open ground",
+                _micro);
             float y = c.y + 17f;
 
             var view = new Rect(c.x, y, c.width, c.yMax - y);
@@ -997,8 +1026,9 @@ namespace SolarMajesty
             _buildScroll = GUI.BeginScrollView(view, _buildScroll, content);
 
             float rowY = 0f;
-            for (int i = 0; i < count; i++)
+            for (int slot = 0; slot < count; slot++)
             {
+                int i = visible[slot];
                 var b = bp.Catalog[i];
                 if (b == null) continue;
 
@@ -1013,7 +1043,7 @@ namespace SolarMajesty
                     bp.SelectBuilding(i);
                 }
 
-                GUI.Label(new Rect(r.x + 8f, r.y, 18f, r.height), BuildHotkeyLabel(i), on ? _onText : _micro);
+                GUI.Label(new Rect(r.x + 8f, r.y, 18f, r.height), BuildHotkeyLabel(slot), on ? _onText : _micro);
                 var nameStyle = on ? _onText : _action;
                 var prevColor = nameStyle.normal.textColor;
                 if (!on && (!canAfford || locked)) nameStyle.normal.textColor = TextMuted;
@@ -1510,7 +1540,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Hire {a.HireMin} MET · Purse {a.Credits:F0}", _micro);
+                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Hire {a.HireMin} CRED · Purse {a.Credits:F0}", _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -1576,8 +1606,8 @@ namespace SolarMajesty
                 }
             }
             return posted <= 0
-                ? "Bounty escrowed from MET. Heroes keep a purse; colony tithes."
-                : $"Posted {posted}  ·  claimed {claimed}  ·  heroes keep MET purse";
+                ? "Bounty escrowed from CRED. Heroes keep a purse; colony tithes."
+                : $"Posted {posted}  ·  claimed {claimed}  ·  heroes keep CRED purse";
         }
 
         private static Color ActionTint(SpecialistAction action) => action switch
@@ -2138,7 +2168,9 @@ namespace SolarMajesty
                 _loop.QuitDemo();
 
             GUI.Label(new Rect(c.x, c.yMax - 36f, c.width, 16f),
-                "Shift+click a locked world to unlock.", _micro);
+                DemoSettings.FirstHourDemo
+                    ? "Click Earth. This demo is one world."
+                    : "Shift+click a locked world to unlock.", _micro);
             GUI.Label(new Rect(c.x, c.yMax - 18f, c.width, 16f),
                 "Heroes choose their own work.", _micro);
 
@@ -2261,30 +2293,47 @@ namespace SolarMajesty
 
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 8f;
-            GUI.Label(new Rect(c.x, y, c.width, 14f), "REPLAY  ·  MODE / CHALLENGE / STANCE", _section);
-            y += 18f;
+            if (DemoSettings.FirstHourDemo)
+            {
+                GUI.Label(new Rect(c.x, y, c.width, 14f), "DEMO", _section);
+                y += 18f;
+                if (Chip(new Rect(c.x, y, c.width, 26f), "FULL CAMPAIGN", false))
+                    _loop.SetFirstHourDemo(false);
+                y += 30f;
+                GUI.Label(new Rect(c.x, y, c.width, 48f),
+                    "Earth only. The Engineer refuses a cheap Build flag. Guilds, Belt, and Europa stay hidden until you turn the full campaign on.",
+                    _wrap);
+            }
+            else
+            {
+                GUI.Label(new Rect(c.x, y, c.width, 14f), "REPLAY  ·  MODE / CHALLENGE / STANCE", _section);
+                y += 18f;
 
-            float half = (c.width - 8f) * 0.5f;
-            if (Chip(new Rect(c.x, y, half, 26f),
-                    $"MODE  ·  {ReplayRules.ModeLabel}", ReplayRules.IsEndless))
-                ReplayRules.CycleMode();
-            if (Chip(new Rect(c.x + half + 8f, y, half, 26f),
-                    $"CHAL  ·  {ReplayRules.ChallengeLabel}", ReplayRules.Challenge != ChallengeId.None))
-                ReplayRules.CycleChallenge();
-            y += 32f;
+                float half = (c.width - 8f) * 0.5f;
+                if (Chip(new Rect(c.x, y, half, 26f),
+                        $"MODE  ·  {ReplayRules.ModeLabel}", ReplayRules.IsEndless))
+                    ReplayRules.CycleMode();
+                if (Chip(new Rect(c.x + half + 8f, y, half, 26f),
+                        $"CHAL  ·  {ReplayRules.ChallengeLabel}", ReplayRules.Challenge != ChallengeId.None))
+                    ReplayRules.CycleChallenge();
+                y += 32f;
 
-            if (Chip(new Rect(c.x, y, c.width, 26f),
-                    $"STANCE  ·  {ReplayRules.StanceLabel}", ReplayRules.Stance != DoctrineStance.Balanced))
-                ReplayRules.CycleStance();
-            y += 30f;
+                if (Chip(new Rect(c.x, y, c.width, 26f),
+                        $"STANCE  ·  {ReplayRules.StanceLabel}", ReplayRules.Stance != DoctrineStance.Balanced))
+                    ReplayRules.CycleStance();
+                y += 30f;
 
-            GUI.Label(new Rect(c.x, y, c.width, 48f),
-                ReplayRules.StanceHint + " " + ReplayRules.ChallengeHint,
-                _wrap);
-            y += 50f;
-            GUI.Label(new Rect(c.x, y, c.width, 36f),
-                "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings.",
-                _wrap);
+                GUI.Label(new Rect(c.x, y, c.width, 48f),
+                    ReplayRules.StanceHint + " " + ReplayRules.ChallengeHint,
+                    _wrap);
+                y += 50f;
+                GUI.Label(new Rect(c.x, y, c.width, 36f),
+                    "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings.",
+                    _wrap);
+                y += 40f;
+                if (Chip(new Rect(c.x, y, c.width, 26f), "EARTH DEMO", false))
+                    _loop.SetFirstHourDemo(true);
+            }
 
             if (GUI.Button(new Rect(c.x, c.yMax - 36f, c.width, 32f), "BACK  ·  Esc", _chipOn))
                 _loop.CloseSettings();
@@ -2309,22 +2358,30 @@ namespace SolarMajesty
         {
             if (!_loop.IsTutorialActive) return;
 
-            string[] beats =
+            string line;
+            if (DemoSettings.FirstHourDemo)
+                line = FirstHourTutorial.Beat(_loop.TutorialStep, _loop.FirstHourBuildAlreadyTempting);
+            else
             {
-                "1/6  COMMONS — Colony Commons is already on the claim.",
-                "2/6  Airlock — snap an Airlock Junction onto a Commons face socket.",
-                "3/6  HAB — dock housing onto that airlock. Humans live indoors only.",
-                "4/6  Workshop — dock Scout / Engineer / Defense. A robot fabricates when it finishes.",
-                "5/6  G, Build, leave it at 70. Watch the Engineer.",
-                "6/6  They named a price. Select the flag and press + until the chip reads tempted."
-            };
-            int step = Mathf.Clamp(_loop.TutorialStep, 0, beats.Length - 1);
-            if (_loop.TutorialWantsPriceLesson)
-                step = 5;
-            float w = 640f;
-            var rect = new Rect((_sw - w) * 0.5f, _sh - M - DockH - 78f, w, 64f);
+                string[] beats =
+                {
+                    "1/6  COMMONS — Colony Commons is already on the claim.",
+                    "2/6  Airlock — snap an Airlock Junction onto a Commons face socket.",
+                    "3/6  HAB — dock housing onto that airlock. Humans live indoors only.",
+                    "4/6  Workshop — dock Scout / Engineer / Defense. A robot fabricates when it finishes.",
+                    "5/6  G, Build, leave it at 70. Watch the Engineer.",
+                    "6/6  They named a price. Select the flag and press + until the chip reads tempted."
+                };
+                int step = Mathf.Clamp(_loop.TutorialStep, 0, beats.Length - 1);
+                if (_loop.TutorialWantsPriceLesson)
+                    step = 5;
+                line = beats[step];
+            }
+            float w = 760f;
+            float barH = DemoSettings.FirstHourDemo ? 72f : 64f;
+            var rect = new Rect((_sw - w) * 0.5f, _sh - M - DockH - barH - 8f, w, barH);
             var c = Panel(rect, null);
-            GUI.Label(new Rect(c.x, c.y, c.width - 80f, 40f), beats[step], _wrap);
+            GUI.Label(new Rect(c.x, c.y, c.width - 80f, barH - 16f), line, _wrap);
             if (GUI.Button(new Rect(c.xMax - 72f, c.y + 8f, 72f, 24f), "SKIP", _chipOff))
                 _loop.SkipTutorial();
         }

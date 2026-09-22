@@ -17,6 +17,7 @@ namespace SolarMajesty
         private bool _expansionSpawned;
 
         public bool IsCleared => cleared;
+        public bool ExpansionSpawned => _expansionSpawned;
         public bool IsScouted { get; private set; }
         public int StalkerBudget => stalkerBudget;
         public float ClearRadius => clearRadius;
@@ -90,17 +91,23 @@ namespace SolarMajesty
         }
 
         /// <summary>Continue restore. Does not kill fauna — RestoreFauna owns living threats.</summary>
-        public void RestoreChart(bool wasCleared, bool wasScouted)
+        public void RestoreChart(bool wasCleared, bool wasScouted, bool expansionSpawned = false)
         {
-            if (wasCleared)
-            {
-                _spawned.Clear();
-                MarkCleared();
-                return;
-            }
+            _spawned.Clear();
+            _expansionSpawned = expansionSpawned;
+            cleared = false;
+            IsScouted = false;
+            gameObject.name = "StalkerLair";
+            // Scouting is independent history, even when the den was later cleared.
+            if (wasScouted) MarkScouted();
+            if (wasCleared) MarkCleared();
+            else if (!wasScouted) ApplyFoggedLook();
+        }
 
-            if (wasScouted)
-                MarkScouted();
+        public void TrackRestoredFauna(DustStalkerAgent agent)
+        {
+            if (!cleared && agent != null && agent.IsAlive && !_spawned.Contains(agent))
+                _spawned.Add(agent);
         }
 
         /// <summary>ClearThreat near this den — kill remaining fauna and silence the lair.</summary>

@@ -92,7 +92,8 @@ namespace SolarMajesty
         public IReadOnlyCollection<TechId> Unlocked => _unlocked;
 
         /// <summary>Restore from a save: replaces the unlocked set and the in-flight tech.</summary>
-        public void RestoreFrom(IReadOnlyList<int> unlockedIds, TechId active, float activeProgress, float banked)
+        public void RestoreFrom(IReadOnlyList<int> unlockedIds, TechId active, float activeProgress, float banked,
+            IReadOnlyList<SaveResearchProgress> progress = null)
         {
             _unlocked.Clear();
             if (unlockedIds != null)
@@ -110,10 +111,37 @@ namespace SolarMajesty
             ActiveTech = TechId.None;
             ActiveProgress = 0f;
 
-            if (active != TechId.None && !_unlocked.Contains(active) && TrySelect(active))
+            ActiveCost = 0f;
+            _progress.Clear();
+            if (progress != null)
+                foreach (var row in progress)
+                {
+                    if (row == null || float.IsNaN(row.science) || float.IsInfinity(row.science)) continue;
+                    var id = (TechId)row.tech;
+                    if (id == TechId.None || IsUnlocked(id) || TechCatalog.Get(id) == null) continue;
+                    _progress[id] = Mathf.Max(0f, row.science);
+                }
+            // Restoring is not a menu selection: demo visibility must never discard progress,
+            // and banked science must not be spent a second time during loading.
+            var def = TechCatalog.Get(active);
+            if (active != TechId.None && !_unlocked.Contains(active) && def != null && PrerequisitesMet(def))
+            {
+                ActiveTech = active;
+                ActiveCost = def.ScienceCost;
                 ActiveProgress = Mathf.Max(0f, activeProgress);
+                _progress[active] = ActiveProgress;
+            }
 
             Save();
+        }
+
+        public List<SaveResearchProgress> CaptureProgress()
+        {
+            var result = new List<SaveResearchProgress>();
+            foreach (var tech in TechCatalog.All)
+                if (!IsUnlocked(tech.Id) && _progress.TryGetValue(tech.Id, out float science) && science > 0f)
+                    result.Add(new SaveResearchProgress { tech = (int)tech.Id, science = science });
+            return result;
         }
 
         public static int SavedUnlockCount()
@@ -147,6 +175,7 @@ namespace SolarMajesty
         public bool CanSelect(TechId id)
         {
             if (IsUnlocked(id)) return false;
+            if (!DemoSlice.ShowTech(id)) return false;
             var def = TechCatalog.Get(id);
             return def != null && PrerequisitesMet(def);
         }

@@ -373,6 +373,13 @@ namespace SolarMajesty
 
         private void CollectTax()
         {
+            // The Earth demo hides the levy walk. Tax stays in the repo for the full campaign.
+            if (DemoSettings.FirstHourDemo)
+            {
+                LastTax = 0;
+                return;
+            }
+
             LastTax = LevyRun.Accrue(Population, Overcrowded);
             if (LastTax > 0)
                 UncollectedLevy += LastTax;

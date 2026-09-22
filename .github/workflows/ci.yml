@@ -15,12 +15,16 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  UNITY_VERSION: 6000.5.6f1
+  UNITY_VERSION: 6000.5.10f1
 
 jobs:
   tests:
-    name: EditMode tests
+    name: ${{ matrix.testMode }} tests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        testMode: [editmode, playmode]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +38,7 @@ jobs:
             Library-tests-
             Library-
 
-      - name: Run EditMode tests
+      - name: Run ${{ matrix.testMode }} tests
         uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -42,21 +46,19 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
-          testMode: editmode
+          testMode: ${{ matrix.testMode }}
           artifactsPath: test-results
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-          checkName: EditMode results
+          checkName: ${{ matrix.testMode }} results
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: test-results-${{ matrix.testMode }}
           path: test-results
 
   build:
     name: Build ${{ matrix.targetPlatform }}
-    # Nightly and manual runs produce players; PRs only need the test gate.
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     needs: tests
     runs-on: ubuntu-latest
     strategy:

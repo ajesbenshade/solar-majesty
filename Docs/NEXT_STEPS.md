@@ -49,6 +49,8 @@
 
 ## Next
 
+**Playable demo (current):** Earth only. Commons, one airlock, and a HAB are already down. The player docks an Engineer workshop, posts Build at $70, raises the price, then posts Defend on the tutorial creeper. Guilds, levy, market, blacksmith, Fobot Yard, watchtowers, Belt, Europa, doctrines, and secret projects stay in the repo and stay hidden until Settings → Full campaign. Do not add a system until a stranger finishes that beat. Phase 4 stills are frozen until then.
+
 Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 is packaged. Phase 2 is complete** ([exit review](Roadmap/PHASE_2_EXIT.md)). **Phase 3 is complete** ([exit review](Roadmap/PHASE_3_EXIT.md)). Current: [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) ([exit blocked](Roadmap/PHASE_4_EXIT.md)). After Phase 4: [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
 
 1. Phase 4 visual target — **EXIT blocked**. Latest `SM_Capture.png` (2026-09-11) is **packed**. Recapture: pad sits **past the HAB**, solar north of Commons, industrial opposite, 3-cell dirt gaps, no farm. Menu: **Solar Majesty → Render → Capture Mars Still**. Judge vs [`SM_MarsCampus_SpacedOverseer_Concept.png`](Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png). Empty dirt is a pass. **Do not stamp Phase 4 complete.**

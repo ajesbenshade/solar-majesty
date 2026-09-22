@@ -226,7 +226,7 @@ namespace SolarMajesty
             var core = ColonyVisualUtility.InstantiateOriented(uniqueMesh, root.position, wrap.transform);
             if (core == null)
             {
-                Object.Destroy(wrap);
+                ColonyVisualUtility.DestroyNow(wrap);
                 return false;
             }
 
@@ -236,7 +236,7 @@ namespace SolarMajesty
             var rends = wrap.GetComponentsInChildren<Renderer>(true);
             if (rends == null || rends.Length == 0)
             {
-                Object.Destroy(wrap);
+                ColonyVisualUtility.DestroyNow(wrap);
                 Debug.LogWarning("[HeroKit] " + cat + " FBX had no renderers — procedural fallback.");
                 return false;
             }
@@ -249,15 +249,10 @@ namespace SolarMajesty
 
         private static GameObject UniqueMeshPrefab(BuildingCategory cat)
         {
-            // Joined Commons / HAB / LAB / PWR FBX bake docks on the cylinder axis
-            // at a smaller bore. Live sleeves are DockY / DockBore and must toggle
-            // per face — same reason Commons skipped the joined dome.
-            // Farm FBX is the AG-1 greenhouse vault — dream-loop concept wants an
-            // industrial tank/pipe/stack yard, so prefer procedural BuildWaterExtractor.
-            // LandingPad FBX is one graphite disc that mirrors the Mars sky as a solid
-            // orange plate; the procedural pad is dark concrete with thin orange markings.
-            // RegolithCamp FBX sits on a ~6 m beige block plinth that reads as a giant cube
-            // at the frame edge; the procedural drum plant has no plinth.
+            // LOCK (Aaron 2026-09-17): Colony Commons is the procedural command-dome
+            // citadel in HeroBuildingKits.BuildCommons. Joined Commons FBX (SM_Hero_Commons
+            // / SM_CommandDome_CentralHub) bake unused stubs. Do not attach them. Do not
+            // restore geodesic lattice.
             if (cat == BuildingCategory.Commons ||
                 cat == BuildingCategory.Habitat ||
                 cat == BuildingCategory.Laboratory ||
@@ -286,16 +281,16 @@ namespace SolarMajesty
             {
                 if (cam == null || cam.gameObject == go) continue;
                 cam.enabled = false;
-                Object.Destroy(cam.gameObject);
+                ColonyVisualUtility.DestroyNow(cam.gameObject);
             }
             foreach (var light in go.GetComponentsInChildren<Light>(true))
             {
                 if (light == null || light.gameObject == go) continue;
                 light.enabled = false;
-                Object.Destroy(light.gameObject);
+                ColonyVisualUtility.DestroyNow(light.gameObject);
             }
             foreach (var col in go.GetComponentsInChildren<Collider>(true))
-                Object.Destroy(col);
+                ColonyVisualUtility.DestroyNow(col);
         }
 
         private static void FitToFootprint(GameObject go, float targetX, float targetZ)
@@ -424,7 +419,7 @@ namespace SolarMajesty
             tube.transform.localPosition = center;
             tube.transform.localRotation = along;
             tube.transform.localScale = new Vector3(bore, length * 0.5f, bore);
-            Object.Destroy(tube.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(tube.GetComponent<Collider>());
             ApplyColor(tube, new Color(0.98f, 0.98f, 0.99f));
 
             Vector3 hullEnd = facePos - dir * inset;
@@ -450,7 +445,7 @@ namespace SolarMajesty
             go.transform.localPosition = localPos;
             go.transform.localRotation = rot;
             go.transform.localScale = localScale;
-            Object.Destroy(go.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             ApplyColor(go, color);
         }
 
@@ -539,7 +534,7 @@ namespace SolarMajesty
         {
             if (root == null) return;
             foreach (var col in root.GetComponentsInChildren<Collider>())
-                Object.Destroy(col);
+                ColonyVisualUtility.DestroyNow(col);
         }
     }
 }

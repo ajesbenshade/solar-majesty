@@ -120,7 +120,11 @@ namespace SolarMajesty
             _overseerHud != null && _overseerHud.TitleConfirmOpen;
         public const int TutorialCompleteStep = 6;
         public int TutorialStep { get; private set; }
-        public bool IsTutorialActive => !DemoSettings.TutorialDone && TutorialStep < TutorialCompleteStep;
+        private int TutorialGoal =>
+            DemoSettings.FirstHourDemo ? FirstHourTutorial.Goal : TutorialCompleteStep;
+        public bool IsTutorialActive => !DemoSettings.TutorialDone && TutorialStep < TutorialGoal;
+        private bool _tutorialDefendPosted;
+        private bool _tutorialPestSpawned;
         public BuildingData[] StarterBuildings => starterBuildings;
         public StillCampusDensity.StampLog LastStillStamp { get; private set; }
         public float LastStillOrtho { get; private set; }
@@ -368,6 +372,7 @@ namespace SolarMajesty
         private float _autosaveTimer;
         private float _interestTimer;
         private float _ecologyCooldown = 5f;
+        private float _techRefreshCooldown;
         private bool _faunaRetreated;
         private bool _skipFaunaGrace;
         private bool _everHadRobot;
@@ -542,18 +547,49 @@ namespace SolarMajesty
         {
             RearmStillHoldIfEditorShutter();
             DemoSettings.Load();
+            DemoSettings.SaveLoadNotice = "";
             SimSpeed.Load();
             PlaytestTelemetry.Begin(Application.version);
             Achievements.BeginRun();
             Achievements.Earned += OnAchievementEarned;
             CampaignProgress.Ensure();
             celestialBody = BodySeed.LoadSavedBody();
+            if (SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var bootSave))
+            {
+                DemoSettings.SaveExists = true;
+                CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.highestUnlocked);
+                // An explicit travel/retry request takes precedence over the last active planet.
+                if (!DemoSettings.BootStraightIntoPlay)
+                    celestialBody = (CelestialBodyId)bootSave.body;
+                ReplayRules.Restore(bootSave.replay);
+                if (bootSave.roster != null)
+                {
+                    DemoSettings.FirstHourDemo = bootSave.firstHourDemo;
+                    DemoSettings.TutorialDone = bootSave.tutorialDone;
+                }
+            }
+            else if (SaveSystem.IsNewerVersion(SaveSystem.AutosaveSlot))
+            {
+                DemoSettings.SaveExists = true;
+                DemoSettings.SaveLoadNotice = "This colony was saved by a newer game version. Update the game to Continue; your save is unchanged.";
+            }
+            else if (SaveSystem.Exists(SaveSystem.AutosaveSlot))
+            {
+                DemoSettings.SaveExists = true;
+                DemoSettings.SaveLoadNotice = "We couldn't read this colony or its backup. Your save files are unchanged.";
+            }
             if (!CampaignProgress.IsUnlocked(celestialBody))
                 celestialBody = CelestialBodyId.Earth;
             _body = CelestialBodyCatalog.Get(celestialBody);
             ModularBuildingFactory.BindBody(_body);
             IndustrialArtDressing.BindBody(_body);
             BodySeed.Ensure(celestialBody, worldSeedOverride);
+            // Choose the world seed before generating its terrain, nodes and lairs.
+            if (worldSeedOverride == 0 && SaveSystem.TryReadWorld(celestialBody, out var worldSave))
+                BodySeed.SetAndPersist(worldSave.seed);
+            else if (worldSeedOverride == 0 && SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var latestSave)
+                     && latestSave.body == (int)celestialBody)
+                BodySeed.SetAndPersist(latestSave.seed);
 
             EnsureSceneRefs();
             BuildPureSystems();
@@ -666,19 +702,54 @@ namespace SolarMajesty
 
         public void EnterPlaying(bool loadStockpile)
         {
+            if (loadStockpile && SaveSystem.IsNewerVersion(SaveSystem.AutosaveSlot))
+            {
+                DemoSettings.SaveLoadNotice = "This colony was saved by a newer game version. Update the game to Continue; your save is unchanged.";
+                EnterTitle();
+                return;
+            }
+            if (loadStockpile && SaveSystem.Exists(SaveSystem.AutosaveSlot) &&
+                !SaveSystem.TryRead(SaveSystem.AutosaveSlot, out _))
+            {
+                DemoSettings.SaveLoadNotice = "We couldn't read this colony or its backup. Your save files are unchanged.";
+                EnterTitle();
+                return;
+            }
+            DemoSettings.SaveLoadNotice = "";
             SolarSystemTitleView.Instance?.Hide();
             Screen = DemoScreen.Playing;
             Time.timeScale = SimSpeed.Multiplier;
             int piecesBefore = Placer != null ? Placer.Pieces.Count : 0;
             if (loadStockpile)
             {
-                if (SaveSystem.TryRead(SaveSystem.AutosaveSlot, out SaveGame save))
+                SaveSystem.TryRead(SaveSystem.AutosaveSlot, out SaveGame latest);
+                SaveGame save = latest != null && latest.MatchesWorld(celestialBody, BodySeed.Current) ? latest : null;
+                if (save == null && SaveSystem.TryReadWorld(celestialBody, out var destination)
+                                 && destination.MatchesWorld(celestialBody, BodySeed.Current))
                 {
-                    ApplySave(save);
+                    save = destination;
+                    // Resources and research travel with the campaign; colony state stays on its world.
+                    if (latest != null)
+                    {
+                        save.stockpile = latest.stockpile;
+                        save.research = latest.research;
+                    }
                 }
+                if (save != null)
+                    ApplySave(save);
                 else
                 {
-                    DemoSettings.TryLoadStockpile(Resources);
+                    if (latest != null)
+                    {
+                        Research?.RestoreFrom(latest.research.unlocked, (TechId)latest.research.activeTech,
+                            latest.research.activeProgress, latest.research.bankedScience, latest.research.progress);
+                        Resources.Set(ResourceId.Regolith, latest.stockpile.regolith);
+                        Resources.Set(ResourceId.WaterIce, latest.stockpile.waterIce);
+                        Resources.Set(ResourceId.Metals, latest.stockpile.metals);
+                        Resources.Set(ResourceId.Power, latest.stockpile.power);
+                    }
+                    else
+                        DemoSettings.TryLoadStockpile(Resources);
                     LoadRosterMemory();
                     RestoreCampus();
                     RetryUnpaidCorpses();
@@ -687,8 +758,6 @@ namespace SolarMajesty
             bool restoredCampus = loadStockpile &&
                                   Placer != null &&
                                   Placer.Pieces.Count > piecesBefore;
-            if (!spawnShowcaseColony && (Settlement == null || !Settlement.HasCommons))
-                PlaceDropCommons();
             bool continuedColony = restoredCampus &&
                                    Settlement != null &&
                                    Settlement.HasCommons;
@@ -700,10 +769,14 @@ namespace SolarMajesty
             }
             else
                 _ecologyCooldown = OverseerRules.FaunaGraceSeconds;
+            if (!spawnShowcaseColony && !continuedColony)
+                PlaceFirstHourShell();
+            if (!spawnShowcaseColony && (Settlement == null || !Settlement.HasCommons))
+                PlaceDropCommons();
             if (Settlement != null && Settlement.HasCommons)
                 SnapCampusCamera();
             PersistSession();
-            TutorialStep = DemoSettings.TutorialDone ? TutorialCompleteStep : 0;
+            TutorialStep = DemoSettings.TutorialDone ? TutorialGoal : 0;
             TickTutorial();
             RearmStillHoldIfEditorShutter();
             _overseerHud?.OnSessionPlaying();
@@ -750,6 +823,14 @@ namespace SolarMajesty
         /// <summary>Title orrery click. Never posts flags or specialist orders.</summary>
         public void PlayBodyFromTitle(CelestialBodyId body, bool cheatUnlock)
         {
+            if (DemoSettings.FirstHourDemo && body != CelestialBodyId.Earth)
+            {
+                _overseerHud?.Notify(
+                    "This demo is Earth. Settings → Full campaign opens the other worlds.",
+                    3.5f);
+                return;
+            }
+
             var profile = CelestialBodyCatalog.Get(body);
             var outcome = SolarSystemTitlePick.Resolve(
                 body,
@@ -861,7 +942,7 @@ namespace SolarMajesty
 
         public void SkipTutorial()
         {
-            TutorialStep = TutorialCompleteStep;
+            TutorialStep = TutorialGoal;
             DemoSettings.MarkTutorialDone();
         }
 
@@ -869,7 +950,24 @@ namespace SolarMajesty
         {
             DemoSettings.ResetTutorial();
             TutorialStep = 0;
-            _overseerHud?.Notify("Tutorial reset — airlock onto Commons, then HAB, workshop, flag, bounty.", 4f);
+            _tutorialDefendPosted = false;
+            _tutorialPestSpawned = false;
+            _overseerHud?.Notify(
+                DemoSettings.FirstHourDemo
+                    ? "Tutorial reset — workshop, Build at 70, raise the price, then Defend."
+                    : "Tutorial reset — airlock onto Commons, then HAB, workshop, flag, bounty.",
+                4f);
+        }
+
+        public void SetFirstHourDemo(bool on)
+        {
+            DemoSettings.SetFirstHourDemo(on);
+            ApplyReplayToBrain();
+            _overseerHud?.Notify(
+                on
+                    ? "Earth demo on. Guilds, Belt, and Europa are hidden. New Game to start clean."
+                    : "Full campaign on. Other worlds, guilds, and replay rules are back.",
+                4f);
         }
 
         public void NotifyTechOpened()
@@ -882,7 +980,7 @@ namespace SolarMajesty
             int refund = handle.EscrowMetals;
             Economy?.RefundBountyEscrow(refund);
             Flags.Cancel(handle);
-            _overseerHud?.Notify(refund > 0 ? $"Flag cancelled — {refund} MET returned." : "Flag cancelled.", 2.4f);
+            _overseerHud?.Notify(refund > 0 ? $"Flag cancelled — {refund} CRED returned." : "Flag cancelled.", 2.4f);
             Debug.Log("[Flags] Cancelled — metals refunded.");
         }
 
@@ -920,10 +1018,35 @@ namespace SolarMajesty
                 if (advisor != null) Log.Push(interest);
                 else LogOverseer(interest);
             }
+
+            if (DemoSettings.FirstHourDemo &&
+                TutorialStep == FirstHourTutorial.PestStep &&
+                handle.Data != null &&
+                handle.Data.flagType == FlagType.DefendArea)
+            {
+                _tutorialDefendPosted = true;
+            }
+
+            PlaytestTelemetry.Record("flag_posted", new[]
+            {
+                ("type", handle.Data != null ? handle.Data.flagType.ToString() : ""),
+                ("bounty", handle.CurrentBounty.ToString("F0")),
+                ("escrow", handle.EscrowMetals.ToString()),
+                ("interest", handle.InterestCount.ToString())
+            });
         }
 
         public void NotifyFlagClaimed(FlagHandle handle)
         {
+            if (handle != null)
+            {
+                PlaytestTelemetry.Record("flag_claimed", new[]
+                {
+                    ("type", handle.Data != null ? handle.Data.flagType.ToString() : ""),
+                    ("bounty", handle.CurrentBounty.ToString("F0"))
+                });
+            }
+
             EnsureNarrative();
             if (!NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree))
                 return;
@@ -1177,7 +1300,15 @@ namespace SolarMajesty
                     _ => null
                 };
                 if (!string.IsNullOrEmpty(chip))
+                {
                     agent.ShowRefusal(chip);
+                    PlaytestTelemetry.Record("flag_refused", new[]
+                    {
+                        ("class", agent.Data.specialistClass.ToString()),
+                        ("kind", kind.ToString()),
+                        ("bounty", flag.CurrentBounty.ToString("F0"))
+                    });
+                }
             }
         }
 
@@ -1196,7 +1327,13 @@ namespace SolarMajesty
 
         private void TickTutorial()
         {
-            if (DemoSettings.TutorialDone || TutorialStep >= TutorialCompleteStep) return;
+            if (DemoSettings.TutorialDone || TutorialStep >= TutorialGoal) return;
+            if (DemoSettings.FirstHourDemo)
+            {
+                TickFirstHourTutorial();
+                return;
+            }
+
             for (int n = 0; n < TutorialCompleteStep; n++)
             {
                 int before = TutorialStep;
@@ -1215,6 +1352,63 @@ namespace SolarMajesty
                 if (TutorialStep == before || TutorialStep >= TutorialCompleteStep)
                     break;
             }
+        }
+
+        private void TickFirstHourTutorial()
+        {
+            bool engineer = HasLivingEngineer();
+            bool refused = HasBuildFlag(tempted: false);
+            bool tempted = HasBuildFlag(tempted: true);
+            for (int n = 0; n < FirstHourTutorial.Goal; n++)
+            {
+                int next = FirstHourTutorial.Advance(
+                    TutorialStep, engineer, refused, tempted, _tutorialDefendPosted);
+                if (next == TutorialStep) break;
+                TutorialStep = next;
+                PlaytestTelemetry.Record("tutorial_step", "step", TutorialStep);
+                if (TutorialStep == FirstHourTutorial.PestStep)
+                    SpawnTutorialPest();
+                if (TutorialStep >= FirstHourTutorial.Goal)
+                {
+                    DemoSettings.MarkTutorialDone();
+                    break;
+                }
+            }
+        }
+
+        private bool HasLivingEngineer()
+        {
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                var agent = _agents[i];
+                if (agent == null || !agent.IsAlive || agent.Data == null) continue;
+                if (agent.Data.specialistClass == SpecialistClass.EngineerBot)
+                    return true;
+            }
+            return false;
+        }
+
+        private bool HasBuildFlag(bool tempted)
+        {
+            if (Flags == null) return false;
+            var list = Flags.Flags;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var flag = list[i];
+                if (flag?.Data == null || flag.Data.flagType != FlagType.Build) continue;
+                bool interested = flag.InterestCount > 0;
+                if (interested == tempted) return true;
+            }
+            return false;
+        }
+
+        private void SpawnTutorialPest()
+        {
+            if (_tutorialPestSpawned) return;
+            Vector3 home = ColonyLayout.CampusOrigin + new Vector3(10f, 0f, 6f);
+            if (SpawnFaunaAt(FaunaKind.Creeper, home) == null) return;
+            _tutorialPestSpawned = true;
+            LogOverseer("Soil creeper on the yard — post Defend (F5).");
         }
 
         private bool HasAnyAirlock()
@@ -1252,13 +1446,22 @@ namespace SolarMajesty
             return false;
         }
 
+        public bool FirstHourBuildAlreadyTempting =>
+            DemoSettings.FirstHourDemo &&
+            TutorialStep == 1 &&
+            HasBuildFlag(tempted: true) &&
+            !HasBuildFlag(tempted: false);
+
         public bool TutorialWantsPriceLesson =>
-            TutorialStep == 5 && Flags != null && Flags.Flags.Count > 0 && !AnyRobotTempted();
+            DemoSettings.FirstHourDemo
+                ? TutorialStep == 2 && HasBuildFlag(tempted: false) && !HasBuildFlag(tempted: true)
+                : TutorialStep == 5 && Flags != null && Flags.Flags.Count > 0 && !AnyRobotTempted();
 
         private void AdvanceTutorial()
         {
             TutorialStep++;
-            if (TutorialStep >= TutorialCompleteStep)
+            PlaytestTelemetry.Record("tutorial_step", "step", TutorialStep);
+            if (TutorialStep >= TutorialGoal)
                 DemoSettings.MarkTutorialDone();
         }
 
@@ -1295,7 +1498,15 @@ namespace SolarMajesty
             SeedSoftClaim(ColonyLayout.CampusOrigin, campus: true);
             SeedSoftClaim(ColonyLayout.CampusBOrigin, campus: false);
             if (!DemoSettings.SaveExists)
-                PlaceDropCommons();
+            {
+                // Capture stills and non-Earth drops keep the Commons-only claim.
+                // The Earth demo also drops an airlock and a HAB.
+                if (!DemoSettings.FirstHourDemo ||
+                    celestialBody != CelestialBodyId.Earth ||
+                    StillCaptureHold.Active)
+                    PlaceDropCommons();
+                PlaceFirstHourShell();
+            }
         }
 
         /// <summary>
@@ -1340,8 +1551,124 @@ namespace SolarMajesty
             if (_campusNav != null)
                 NotifyCampusExpanded();
             SnapCampusCamera();
-            Log.Push("Colony Commons is down — dock airlocks, then HAB and workshops.");
+            bool demoShell = DemoSettings.FirstHourDemo &&
+                             celestialBody == CelestialBodyId.Earth &&
+                             !StillCaptureHold.Active;
+            if (!demoShell)
+                Log.Push("Colony Commons is down — dock airlocks, then HAB and workshops.");
             Debug.Log("[GameLoop] Auto-placed Colony Commons on the Campus A claim.");
+        }
+
+        /// <summary>
+        /// Earth demo start: Commons, one airlock, and a HAB are already finished.
+        /// The first thing the player docks is the Engineer workshop.
+        /// </summary>
+        private void PlaceFirstHourShell()
+        {
+            if (!DemoSettings.FirstHourDemo) return;
+            if (celestialBody != CelestialBodyId.Earth) return;
+            if (StillCaptureHold.Active || spawnShowcaseColony) return;
+
+            PlaceDropCommons();
+            if (HasAnyAirlock() && Settlement != null && Settlement.CoreHabs > 0)
+                return;
+            if (!TryCommonsPiece(out var commons)) return;
+
+            var airlockData = DataNamed(BuildingCategory.Utility, "Airlock");
+            var habData = DataForCategory(BuildingCategory.Habitat);
+            if (airlockData == null || habData == null) return;
+
+            int habW = Mathf.Max(1, habData.footprintWidth);
+            int habH = Mathf.Max(1, habData.footprintHeight);
+            for (int f = 0; f < 4; f++)
+            {
+                var face = (BuildingPlacer.Cardinal)f;
+                BuildingPlacer.CardinalExpansionOrigins(
+                    commons, face, habW, habH, out Vector2Int airlockCell, out Vector2Int habCell);
+                if (!RectInBounds(airlockCell, BuildingPlacer.AirlockSize, BuildingPlacer.AirlockSize))
+                    continue;
+                if (!RectInBounds(habCell, habW, habH)) continue;
+                if (!Placer.CanFitRect(airlockCell, BuildingPlacer.AirlockSize, BuildingPlacer.AirlockSize))
+                    continue;
+                if (!Placer.CanFitRect(habCell, habW, habH)) continue;
+                if (!PlaceComplete(airlockData, airlockCell, "Bld_Airlock_drop"))
+                    continue;
+                if (!PlaceComplete(habData, habCell, "Bld_HAB_drop"))
+                    break;
+
+                CampusDressing.RefreshTubes(Placer, grid, transform);
+                HideDropClaimIfSettled();
+                if (_campusNav != null)
+                    NotifyCampusExpanded();
+                SnapCampusCamera();
+                Log.Push("Commons, airlock, and HAB are down. Dock an Engineer workshop on the open face.");
+                Debug.Log("[GameLoop] First-hour shell placed (Commons, airlock, HAB).");
+                return;
+            }
+
+            Debug.LogWarning("[GameLoop] First-hour airlock and HAB could not fit on the claim.");
+        }
+
+        private bool TryCommonsPiece(out BuildingPlacer.CampusPiece piece)
+        {
+            piece = default;
+            if (Placer == null) return false;
+            var pieces = Placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                if (pieces[i].Category != BuildingCategory.Commons) continue;
+                piece = pieces[i];
+                return true;
+            }
+            return false;
+        }
+
+        private bool RectInBounds(Vector2Int origin, int width, int height)
+        {
+            if (grid == null) return false;
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                if (!grid.InBounds(new Vector2Int(origin.x + x, origin.y + y)))
+                    return false;
+            }
+            return true;
+        }
+
+        private bool PlaceComplete(BuildingData data, Vector2Int origin, string goName)
+        {
+            if (data == null || Placer == null || grid == null) return false;
+            int fw = Mathf.Max(1, data.footprintWidth);
+            int fh = Mathf.Max(1, data.footprintHeight);
+            Vector3 world = FootprintWorldCenter(origin, fw, fh);
+            if (!Placer.TryRestore(data, origin, world, 1f, out _))
+                return false;
+
+            Transform root = buildingRoot != null ? buildingRoot : transform;
+            GameObject go = ModularBuildingFactory.Spawn(
+                data.category, world, root, fw, fh, grid.CellSize);
+            go.name = goName;
+            CampusNavMesh.AddObstacle(go);
+            Village?.RegisterPlacedBuilding(data, data.category, go, world);
+            CampusDressing.DressPlaced(data, go, _body);
+            return true;
+        }
+
+        private BuildingData DataNamed(BuildingCategory cat, string namePart)
+        {
+            BuildingData fallback = null;
+            if (starterBuildings == null) return null;
+            for (int i = 0; i < starterBuildings.Length; i++)
+            {
+                var data = starterBuildings[i];
+                if (data == null || data.category != cat) continue;
+                if (!string.IsNullOrEmpty(namePart) &&
+                    !string.IsNullOrEmpty(data.displayName) &&
+                    data.displayName.IndexOf(namePart, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    return data;
+                if (fallback == null) fallback = data;
+            }
+            return fallback;
         }
 
         private void SeedSoftClaim(Vector3 world, bool campus)
@@ -1416,10 +1743,7 @@ namespace SolarMajesty
             _mission?.Tick();
             TickTutorial();
             TickAutosave();
-            TickFlagInterest(Time.deltaTime);
-            TickCampusEcology(Time.deltaTime);
             TickJunkYard(Time.deltaTime);
-            TickCampusBoard(Time.deltaTime);
             if (!StillCaptureHold.Active &&
                 Settlement != null && Settlement.ConsumeLifeSupportFail())
             {
@@ -1800,13 +2124,13 @@ namespace SolarMajesty
             var def = TechCatalog.Get(id);
             if (def != null && def.SecretProject)
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
-            else if (id == TechId.ExtractBasics)
+            else if (id == TechId.ExtractBasics && !DemoSettings.FirstHourDemo)
                 LogOverseer("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in CRED.");
-            else if (id == TechId.OreRefining)
+            else if (id == TechId.OreRefining && !DemoSettings.FirstHourDemo)
                 LogOverseer("Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in CRED.");
             else if (id == TechId.MedProtocols)
                 LogOverseer("Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in CRED.");
-            else if (id == TechId.LifeSupport)
+            else if (id == TechId.LifeSupport && !DemoSettings.FirstHourDemo)
                 LogOverseer("Life Support. Dock an Aid Station — hurt robots pay CRED for a patch.");
             else if (id == TechId.HorizonPulse)
                 LogOverseer("Horizon Pulse researched. Inspect Horizon Lodge and spend CRED to mark dens.");
@@ -3536,8 +3860,21 @@ namespace SolarMajesty
             Debug.Log("[GameLoop] Fobot Yard revive paid.");
         }
 
+        private void ClearCurrentWorldForRetry()
+        {
+            SaveSystem.DeleteWorld(celestialBody);
+            SaveSystem.Delete(SaveSystem.AutosaveSlot);
+            DemoSettings.WriteCampus(celestialBody, "");
+            DemoSettings.WriteRoster(celestialBody, "");
+            // A retry starts a funded new colony, not the previous losing stockpile.
+            DemoSettings.SaveExists = false;
+            PlayerPrefs.SetInt(DemoSettings.SaveFlagKey, 0);
+            PlayerPrefs.Save();
+        }
+
         public void RestartMission()
         {
+            ClearCurrentWorldForRetry();
             if (advanceSeedOnRestart)
                 BodySeed.AdvanceForNextConquest();
             DemoAudio.PlayRetry();
@@ -3548,6 +3885,7 @@ namespace SolarMajesty
         /// <summary>Same-body reseed (sandbox rematch).</summary>
         public void BeginNextConquest()
         {
+            ClearCurrentWorldForRetry();
             BodySeed.AdvanceForNextConquest();
             DemoSettings.RequestBootIntoPlay();
             DemoAudio.PlayRetry();
@@ -3628,6 +3966,13 @@ namespace SolarMajesty
         /// </summary>
         public void RequestDebugHop(CelestialBodyId body, bool unlockAll)
         {
+            if (DemoSettings.FirstHourDemo)
+            {
+                _overseerHud?.Notify(
+                    "This demo stays on Earth. Settings → Full campaign opens the other worlds.",
+                    3.5f);
+                return;
+            }
             if (_bodyHopQueued) return;
             _bodyHopQueued = true;
             _bodyHopTarget = body;
@@ -4305,7 +4650,9 @@ namespace SolarMajesty
                 DemoSettings.WriteCampus(celestialBody, CampusSnapshot.Encode(pop, slots));
             }
 
-            SaveSystem.Write(SaveSystem.AutosaveSlot, CaptureSave("autosave"));
+            var snapshot = CaptureSave("autosave");
+            SaveSystem.WriteWorld(snapshot);
+            SaveSystem.Write(SaveSystem.AutosaveSlot, snapshot);
         }
 
         /// <summary>Player-triggered save into one of the numbered slots.</summary>
@@ -4320,7 +4667,7 @@ namespace SolarMajesty
         /// <summary>
         /// Continue autosave / numbered-slot capture: campus, stockpile, research, posted flags
         /// (escrow + remaining work), specialist combat state, and living fauna.
-        /// Den cleared/scouted flags and node depletion are schema-ready but not written yet.
+        /// Includes world depletion/chart state, roster records and building damage.
         /// </summary>
         public SaveGame CaptureSave(string label)
         {
@@ -4331,7 +4678,10 @@ namespace SolarMajesty
                 simSteps = _sim.TotalSteps,
                 body = (int)celestialBody,
                 seed = BodySeed.Current,
-                highestUnlocked = (int)CampaignProgress.HighestUnlocked
+                highestUnlocked = (int)CampaignProgress.HighestUnlocked,
+                roster = SpecialistRoster.Encode(CaptureRoster()),
+                firstHourDemo = DemoSettings.FirstHourDemo,
+                tutorialDone = DemoSettings.TutorialDone
             };
 
             if (Resources != null)
@@ -4359,6 +4709,7 @@ namespace SolarMajesty
                 save.research.activeTech = (int)Research.ActiveTech;
                 save.research.activeProgress = Research.ActiveProgress;
                 save.research.bankedScience = Research.BankedScience;
+                save.research.progress = Research.CaptureProgress();
             }
 
             save.replay.mode = (int)ReplayRules.Mode;
@@ -4414,6 +4765,8 @@ namespace SolarMajesty
                 save.agents.Add(new SaveAgent
                 {
                     specialistClass = (int)a.Data.specialistClass,
+                    hasVeteranRecord = true,
+                    veteran = a.ToRecord(corpse: false),
                     px = p.x,
                     py = p.y,
                     pz = p.z,
@@ -4437,7 +4790,8 @@ namespace SolarMajesty
                     px = p.x,
                     py = p.y,
                     pz = p.z,
-                    health = s.Health01
+                    health = s.Health01,
+                    lairIndex = SavedLairIndex(s)
                 });
             }
 
@@ -4454,7 +4808,8 @@ namespace SolarMajesty
         /// </summary>
         public bool ApplySave(SaveGame save)
         {
-            if (save == null) return false;
+            // Never pour one planet's entities onto another planet (or a regenerated seed).
+            if (save == null || !save.MatchesWorld(celestialBody, BodySeed.Current)) return false;
 
             if (Resources != null)
             {
@@ -4468,7 +4823,7 @@ namespace SolarMajesty
                 save.research.unlocked,
                 (TechId)save.research.activeTech,
                 save.research.activeProgress,
-                save.research.bankedScience);
+                save.research.bankedScience, save.research.progress);
 
             if (Settlement != null)
             {
@@ -4479,23 +4834,32 @@ namespace SolarMajesty
                     Settlement.ClaimOutpost();
             }
 
-            LoadRosterMemory();
-            RestoreCampus();
+            LoadRosterMemory(save.roster ?? DemoSettings.LoadRoster(celestialBody));
+            var savedCampus = new List<CampusSlot>();
+            foreach (var building in save.buildings)
+                savedCampus.Add(new CampusSlot
+                {
+                    Category = (BuildingCategory)building.category, X = building.x, Y = building.y,
+                    W = building.w, H = building.h, ProgressMilli = building.progressMilli,
+                    VillageHab = building.villageHab
+                });
+            RestoreCampus(savedCampus, save.settlement.population);
             RetryUnpaidCorpses();
 
-            if (Settlement != null && save.settlement.population > 0)
+            if (Settlement != null)
                 Settlement.RestorePopulation(save.settlement.population);
 
             var restoredFlags = RestoreFlags(save.flags);
             RestoreAgents(save.agents, restoredFlags);
-            RestoreFauna(save.fauna);
-            RestoreWorldBoard(save);
+            var restoredLairs = RestoreWorldBoard(save);
+            RestoreFauna(save.fauna, restoredLairs);
             RestoreBuildingBoard(save);
             RestoreParties(save.parties);
             _mission?.Restore(save.mission);
             RefreshWreckVisuals();
 
             _playSeconds = save.playSeconds;
+            _sim.Restore(save.simSteps);
             RefreshTechEffects();
             SyncLaunchGate();
 
@@ -4595,6 +4959,8 @@ namespace SolarMajesty
 
                 if (agent == null) continue;
                 used.Add(agent);
+                if (s.hasVeteranRecord)
+                    agent.ApplyRecord(s.veteran);
                 agent.RestoreWorldPose(new Vector3(s.px, s.py, s.pz));
                 agent.RestoreCombatState(s.health, s.fatigue, s.credits, s.downed, s.downedTimer);
                 if (s.downed) continue;
@@ -4604,7 +4970,21 @@ namespace SolarMajesty
             }
         }
 
-        private void RestoreFauna(List<SaveFauna> saved)
+        private int SavedLairIndex(DustStalkerAgent fauna)
+        {
+            if (_world == null) return -1;
+            int savedIndex = 0;
+            foreach (var lair in _world.Lairs)
+            {
+                if (lair == null) continue;
+                foreach (var resident in lair.Spawned)
+                    if (resident == fauna) return savedIndex;
+                savedIndex++;
+            }
+            return -1;
+        }
+
+        private void RestoreFauna(List<SaveFauna> saved, Dictionary<int, StalkerLair> lairs)
         {
             for (int i = _stalkers.Count - 1; i >= 0; i--)
             {
@@ -4620,6 +5000,8 @@ namespace SolarMajesty
                 if (s.health <= 0.001f) continue;
                 var agent = SpawnFaunaAt((FaunaKind)s.kind, new Vector3(s.px, s.py, s.pz));
                 agent?.RestoreHealth01(s.health);
+                if (lairs != null && lairs.TryGetValue(s.lairIndex, out var owner))
+                    owner.TrackRestoredFauna(agent);
             }
         }
 
@@ -4632,6 +5014,7 @@ namespace SolarMajesty
                 Vector3 world = FootprintWorldCenter(new Vector2Int(b.x, b.y), b.w, b.h);
                 var st = Village.FindNear(world, 3f);
                 if (st == null || (int)st.Category != b.category) continue;
+                b.health = st.Health01;
                 b.levyPurse = st.LevyPurse;
                 b.laserArmed = st.LaserArmed;
             }
@@ -4668,7 +5051,8 @@ namespace SolarMajesty
                     py = p.y,
                     pz = p.z,
                     cleared = l.IsCleared,
-                    scouted = l.IsScouted
+                    scouted = l.IsScouted,
+                    expansionSpawned = l.ExpansionSpawned
                 });
             }
         }
@@ -4704,11 +5088,11 @@ namespace SolarMajesty
             }
         }
 
-        private void RestoreWorldBoard(SaveGame save)
+        private Dictionary<int, StalkerLair> RestoreWorldBoard(SaveGame save)
         {
-            if (save == null || _world == null) return;
+            if (save == null || _world == null) return null;
             RestoreNodes(save.nodes);
-            RestoreLairs(save.lairs);
+            return RestoreLairs(save.lairs);
         }
 
         private void RestoreNodes(List<SaveNode> saved)
@@ -4731,9 +5115,10 @@ namespace SolarMajesty
             }
         }
 
-        private void RestoreLairs(List<SaveLair> saved)
+        private Dictionary<int, StalkerLair> RestoreLairs(List<SaveLair> saved)
         {
-            if (saved == null || saved.Count == 0 || _world == null) return;
+            var restored = new Dictionary<int, StalkerLair>();
+            if (saved == null || saved.Count == 0 || _world == null) return restored;
             var live = _world.Lairs;
             var pts = new Vector3[live.Count];
             for (int i = 0; i < live.Count; i++)
@@ -4744,9 +5129,11 @@ namespace SolarMajesty
                 var s = saved[i];
                 int idx = WorldSaveMatch.Nearest(new Vector3(s.px, s.py, s.pz), pts, WorldSaveMatch.MaxDist);
                 if (idx < 0) continue;
-                live[idx]?.RestoreChart(s.cleared, s.scouted);
+                live[idx]?.RestoreChart(s.cleared, s.scouted, s.expansionSpawned);
+                if (live[idx] != null) restored[i] = live[idx];
                 pts[idx] = new Vector3(9999f, 0f, 9999f);
             }
+            return restored;
         }
 
         private void RestoreBuildingBoard(SaveGame save)
@@ -4758,6 +5145,7 @@ namespace SolarMajesty
                 Vector3 world = FootprintWorldCenter(new Vector2Int(b.x, b.y), b.w, b.h);
                 var st = Village.FindNear(world, 3f);
                 if (st == null || (int)st.Category != b.category) continue;
+                st.RestoreHealth01(b.health);
                 st.RestoreLevy(b.levyPurse);
                 if (b.laserArmed)
                     st.ArmLasers();
@@ -4868,6 +5256,12 @@ namespace SolarMajesty
             if (!CampusSnapshot.TryDecode(raw, out int pop, slots) || slots.Count == 0)
                 return;
 
+            RestoreCampus(slots, pop);
+        }
+
+        private void RestoreCampus(List<CampusSlot> slots, int pop)
+        {
+            if (Placer == null || grid == null || Placer.Pieces.Count > 0) return;
             slots.Sort((a, b) => CampusSnapshot.Rank(a.Category).CompareTo(CampusSnapshot.Rank(b.Category)));
 
             int restored = 0;
@@ -5480,6 +5874,7 @@ namespace SolarMajesty
 
         private void TryMarketSiphon()
         {
+            if (DemoSettings.FirstHourDemo) return;
             if (!HasAliveCategory(BuildingCategory.Market) || Resources == null || Settlement == null)
                 return;
             if (!MarketSiphon.TrySiphon(
@@ -5624,12 +6019,14 @@ namespace SolarMajesty
             return list;
         }
 
-        private void LoadRosterMemory()
+        private void LoadRosterMemory() => LoadRosterMemory(DemoSettings.LoadRoster(celestialBody));
+
+        private void LoadRosterMemory(string snapshot)
         {
             _rosterSaved.Clear();
             _corpses.Clear();
             _pendingVeterans.Clear();
-            SpecialistRoster.TryDecode(DemoSettings.LoadRoster(celestialBody), _rosterSaved);
+            SpecialistRoster.TryDecode(snapshot, _rosterSaved);
             for (int i = 0; i < _rosterSaved.Count; i++)
             {
                 var rec = _rosterSaved[i];
@@ -5752,6 +6149,7 @@ namespace SolarMajesty
 
         private void TickJunkYard(float dt)
         {
+            if (DemoSettings.FirstHourDemo) return;
             _junkTimer -= dt;
             if (_junkTimer > 0f) return;
             _junkTimer = OverseerRules.JunkBotSpawnInterval;
@@ -5824,8 +6222,12 @@ namespace SolarMajesty
 
         private void TickCampusBoard(float dt)
         {
-            if (Time.frameCount % 20 == 0)
+            _techRefreshCooldown -= dt;
+            if (_techRefreshCooldown <= 0f)
+            {
+                _techRefreshCooldown += 1f / 3f;
                 RefreshTechEffects();
+            }
             ExpireDiscs(_surveys);
             ExpireDiscs(_watches);
             TickWatches(dt);

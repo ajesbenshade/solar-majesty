@@ -6,7 +6,8 @@ namespace SolarMajesty
     /// <summary>
     /// Flat-shaded geodesic shell (subdivided icosahedron projected onto an ellipsoid) with
     /// every facet inset toward its centroid so a darker undershell shows through as seams.
-    /// Used for the Commons dome: coplanar triangular facets, not a scatter of tilted plates.
+    /// Unused for Colony Commons (locked to the smooth command-dome citadel).
+    /// Keep this mesh builder only if another landmark needs geodesic facets.
     /// </summary>
     public static class GeodesicDomeMesh
     {

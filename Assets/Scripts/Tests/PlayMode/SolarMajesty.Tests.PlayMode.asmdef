@@ -1,0 +1,8 @@
+{
+  "name": "SolarMajesty.Tests.PlayMode",
+  "rootNamespace": "SolarMajesty.Tests",
+  "references": ["SolarMajesty.Systems", "SolarMajesty.Runtime"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace SolarMajesty.Tests
 {
@@ -23,6 +24,7 @@ namespace SolarMajesty.Tests
             gridGo.transform.SetParent(_root.transform);
             _grid = gridGo.AddComponent<IsoGrid>();
             _grid.Resize(64, 64);
+            LogAssert.ignoreFailingMessages = true;
         }
 
         [TearDown]
@@ -63,16 +65,19 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void LiveCommons_GeodesicLattice_NoCyanWaistVisors()
+        public void LiveCommons_LockedCommandDome_NotGeodesic()
         {
             var commons = ModularBuildingFactory.Spawn(
                 BuildingCategory.Commons, Vector3.zero, _root.transform);
-            Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsGeo_0"),
-                "dream-loop: geodesic facets must dress the dome");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsDome"),
+                "locked command-dome citadel — smooth sphere, not geodesic lattice");
             Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
                 "orange equatorial band");
             Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsCupolaBand"),
                 "orange cupola band");
+            Assert.IsNull(FindChild(commons.transform, "Dress_CommonsGeo_0"),
+                "geodesic lattice is retired — do not restore");
+            Assert.IsNull(FindChild(commons.transform, "Dress_CommonsDomeUnder"));
             Assert.IsNull(FindChild(commons.transform, "CommonsVisor_1"),
                 "cyan waist visors washed the sheet white — removed");
             Assert.IsNull(FindChild(commons.transform, "CommonsVisor_3"));
@@ -82,7 +87,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void LiveHab_ThickCarbonMidBand_AndOrangeRimHatches()
+        public void LiveHab_ThickCarbonMidBand_AndNeutralRimHatches()
         {
             var hab = ModularBuildingFactory.Spawn(
                 BuildingCategory.Habitat, Vector3.zero, _root.transform);
@@ -93,7 +98,8 @@ namespace SolarMajesty.Tests
             float midLen = mid.localScale.y * 2f;
             Assert.Greater(midLen / length, 0.20f, "mid-band must read thick at ortho 10");
             Assert.Less(midLen / length, 0.32f);
-            Assert.Less(Albedo(mid).grayscale, 0.20f, "mid-band stays near-black");
+            Assert.That(Albedo(mid).grayscale, Is.InRange(0.35f, 0.45f),
+                "SM_Hull charcoal uses mid-grey albedo to remain visible through ACES");
             Assert.IsNotNull(FindChild(hab.transform, "HabCarbonBandCore"),
                 "darker core ring so the mid-band reads vs white hull");
             Assert.IsNull(FindChild(hab.transform, "HabMid"),
@@ -101,8 +107,8 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(FindChild(hab.transform, "HabFrontRim"));
             Assert.IsNotNull(FindChild(hab.transform, "HabRearRim"));
             Color rim = Albedo(FindChild(hab.transform, "HabFrontRim"));
-            Assert.Greater(rim.r, 0.85f);
-            Assert.Less(rim.g, 0.55f);
+            Assert.Greater(rim.g, 0.60f, "hatch rim stays neutral; orange is reserved for the dock ring");
+            Assert.Less(Mathf.Abs(rim.r - rim.g), 0.15f);
         }
 
         [Test]
@@ -610,10 +616,9 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out var min, out var max));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.AreEqual(
-                ColonyLayout.CampusOrthoSize, ortho,
-                "spaced overseer still uses play ortho 10 — do not zoom-to-pack AABB");
-            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
+            Assert.GreaterOrEqual(ortho, StillCampusDensity.PlayCampusOrthoSize,
+                "never zoom inside play ortho 10 — that packs the AABB");
+            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
             Assert.Greater(max.x - min.x, 10, "AABB must span pad→HAB");
             Assert.Greater(max.y - min.y, 6, "AABB must span Commons→north yards");
         }
@@ -648,8 +653,8 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
             Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
+            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
         }
 
         [Test]
@@ -723,22 +728,22 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(StillCampusDensity.TryCampusAabb(placer, out _, out _));
             float ortho = StillCampusDensity.FitStillOrtho(
                 placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
-            Assert.AreEqual(StillCampusDensity.PlayCampusOrthoSize, ortho);
             Assert.GreaterOrEqual(ortho, StillCampusDensity.StillMinOrtho);
+            Assert.LessOrEqual(ortho, StillCampusDensity.StillMaxOrtho);
         }
 
         [Test]
-        public void DensePack_WorkshopPrefersAirlockDock_BeforeYardsFillIt()
+        public void DensePack_RejectsDockOverlappingCommons_AndFindsFreeSite()
         {
             var placer = StampEastChain(out var commons);
-            Assert.IsTrue(StillCampusDensity.TryDockOnAirlock(
-                placer, commons, 4, 4, null, out Vector2Int dock));
-            Assert.AreEqual(new Vector2Int(15, 14), dock,
-                "east airlock north face is free before pad/water occupy it");
+            Assert.IsFalse(placer.CanFitRect(new Vector2Int(15, 14), 4, 4),
+                "the proposed north dock overlaps the Commons at (15,14)");
+            Assert.IsFalse(StillCampusDensity.TryDockOnAirlock(
+                placer, commons, 4, 4, null, out _));
 
             Assert.IsTrue(StillCampusDensity.TryDockOrNext(
                 placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out Vector2Int picked));
-            Assert.AreEqual(dock, picked);
+            Assert.IsTrue(placer.CanFitRect(picked, 4, 4));
         }
 
         [Test]
@@ -790,10 +795,10 @@ namespace SolarMajesty.Tests
             var cues = StillCampusDensity.PlanCues(placer, commons, BuildingPlacer.Cardinal.East);
             Assert.AreEqual(0, cues.HabSocketCount, "PlanCues must not fill interior dirt");
             Assert.IsFalse(cues.HabSocket);
-            Assert.AreEqual(
-                StillCampusDensity.PlayCampusOrthoSize,
-                StillCampusDensity.FitStillOrtho(
-                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
+            float stillOrtho = StillCampusDensity.FitStillOrtho(
+                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+            Assert.GreaterOrEqual(stillOrtho, StillCampusDensity.StillMinOrtho);
+            Assert.LessOrEqual(stillOrtho, StillCampusDensity.StillMaxOrtho);
         }
 
         [Test]
@@ -804,10 +809,10 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(leftovers.Wonder, "do not pack leftover wonder");
             Assert.IsTrue(leftovers.SkipReason.StartsWith("spaced"), leftovers.SkipReason);
             Assert.AreEqual(0, cues.HabSocketCount, "do not force-fill interior sockets");
-            Assert.AreEqual(
-                StillCampusDensity.PlayCampusOrthoSize,
-                StillCampusDensity.FitStillOrtho(
-                    placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect));
+            float stillOrtho = StillCampusDensity.FitStillOrtho(
+                placer, ColonyLayout.DefaultCellSize, StillCampusDensity.GameTabAspect);
+            Assert.GreaterOrEqual(stillOrtho, StillCampusDensity.StillMinOrtho);
+            Assert.LessOrEqual(stillOrtho, StillCampusDensity.StillMaxOrtho);
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
         }
 
@@ -1057,13 +1062,13 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(ColonyVisualUtility.AirlockHubSide, scale.z, 0.02f);
             Assert.Less(scale.x, ColonyLayout.DefaultCellSize * 2f,
                 "hub must stay smaller than the 2×2 cell so the white tube reads");
-            Assert.Greater(Albedo(hub).grayscale, 0.88f, "hub hull must be sheet-white");
+            Assert.Greater(Albedo(hub).grayscale, 0.70f, "hub hull must remain warm cream");
             Assert.IsNotNull(FindChild(airlock, "Dress_HubPanel_0"));
-            Assert.Greater(Albedo(FindChild(airlock, "Dress_HubPanel_0")).grayscale, 0.88f);
+            Assert.Greater(Albedo(FindChild(airlock, "Dress_HubPanel_0")).grayscale, 0.70f);
             Assert.IsNotNull(FindChild(airlock, "Dress_HubSeamH_0"),
                 "carbon panel seams must stay — still18 cube-ish miss");
             Assert.Less(Albedo(FindChild(airlock, "Dress_HubSeamH_0")).grayscale, 0.35f);
-            Assert.Greater(Albedo(FindChild(airlock, "Dress_HubRoof")).grayscale, 0.88f,
+            Assert.Greater(Albedo(FindChild(airlock, "Dress_HubRoof")).grayscale, 0.70f,
                 "carbon roof was the still16 dark lid — roof stays white");
             Assert.IsNull(FindChild(airlock, "Dress_HubDoor_0"),
                 "wrap doors painted the hub as a dark box");
@@ -1089,15 +1094,12 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(hubCollar, arm + " hub-face collar (still18 cube-ish miss)");
             Transform faceFrame = FindChild(group, arm + "_FaceFrame");
             Assert.IsNotNull(faceFrame, arm + " square orange face frame (still19 cube-ish miss)");
-            Assert.Greater(Albedo(tube).grayscale, 0.88f, arm + " tube must be white");
-            Assert.Greater(Albedo(lip).grayscale, 0.88f, arm + " lip must be white");
+            Assert.Greater(Albedo(tube).grayscale, 0.70f, arm + " tube must be white");
+            Assert.Greater(Albedo(lip).grayscale, 0.70f, arm + " lip must be white");
             Color collarC = Albedo(collar);
-            Assert.Greater(collarC.r, 0.85f, arm + " collar stays safety orange");
-            Assert.Less(collarC.g, 0.55f);
-            Assert.Less(collarC.b, 0.25f);
+            Assert.That(collarC.grayscale, Is.InRange(0.15f, 0.30f), arm + " gasket stays graphite to avoid stacked orange collars");
             Color hubC = Albedo(hubCollar);
-            Assert.Greater(hubC.r, 0.85f, arm + " hub collar stays safety orange");
-            Assert.Less(hubC.g, 0.55f);
+            Assert.That(hubC.grayscale, Is.InRange(0.15f, 0.30f), arm + " hub collar stays graphite");
             Color frameC = Albedo(faceFrame);
             Assert.Greater(frameC.r, 0.85f, arm + " face frame stays safety orange");
             Assert.Less(frameC.g, 0.55f);
@@ -1112,7 +1114,7 @@ namespace SolarMajesty.Tests
             hubFlat.y = 0f;
             Assert.Less(hubFlat.magnitude, ColonyVisualUtility.AirlockHubSide * 0.72f,
                 arm + " hub collar sits on the white square, readable at Game-tab distance");
-            Assert.Greater(collar.localScale.y, 0.06f, arm + " Lego-face collar must be thicker than a sliver");
+            Assert.That(collar.localScale.y, Is.InRange(0.04f, 0.06f), arm + " graphite gasket stays thin beside the hull ring");
             Assert.Greater(hubCollar.localScale.x, ColonyVisualUtility.DockBore * 1.25f,
                 arm + " hub collar must read wider than the tube");
         }

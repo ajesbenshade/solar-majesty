@@ -67,10 +67,10 @@ namespace SolarMajesty
         public const int MaxInteriorHabSockets = 6;
 
         /// <summary>
-        /// Ceiling for any leftover AABB math. CaptureStill stills use
-        /// <see cref="PlayCampusOrthoSize"/> (10).
+        /// Zoom-out ceiling so pad-past-HAB + rocket stay in the ultra-wide Game tab.
+        /// Never zoom inside <see cref="StillMinOrtho"/>.
         /// </summary>
-        public const float StillMaxOrtho = 10f;
+        public const float StillMaxOrtho = 16f;
 
         public delegate bool BoundsOk(Vector2Int origin, int width, int height);
 
@@ -759,19 +759,15 @@ namespace SolarMajesty
             float cellSize,
             float aspect)
         {
-            _ = min;
-            _ = maxExclusive;
-            _ = cellSize;
-            _ = aspect;
-            return Mathf.Max(StillMinOrtho, PlayCampusOrthoSize);
+            float raw = RawStillOrtho(min, maxExclusive, cellSize, aspect);
+            return Mathf.Clamp(raw, StillMinOrtho, StillMaxOrtho);
         }
 
         public static float FitStillOrtho(BuildingPlacer placer, float cellSize, float aspect)
         {
-            _ = placer;
-            _ = cellSize;
-            _ = aspect;
-            return Mathf.Max(StillMinOrtho, PlayCampusOrthoSize);
+            if (!TryStillFrameAabb(placer, out Vector2Int min, out Vector2Int maxExclusive))
+                return PlayCampusOrthoSize;
+            return FitStillOrtho(min, maxExclusive, cellSize, aspect);
         }
 
         /// <summary>Unclamped iso fit — tests use this to describe leftover AABB growth.</summary>

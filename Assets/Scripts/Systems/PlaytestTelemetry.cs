@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 using System.Text;
 using UnityEngine;
 
@@ -42,6 +43,7 @@ namespace SolarMajesty
                 Record("session_start", new[]
                 {
                     ("build", buildLabel),
+                    ("build_guid", Application.buildGUID),
                     ("unity", Application.unityVersion),
                     ("platform", Application.platform.ToString())
                 });
@@ -58,7 +60,7 @@ namespace SolarMajesty
         {
             if (!Enabled || string.IsNullOrEmpty(_path)) return;
 
-            Buffer.Append("{\"t\":").Append(Time.realtimeSinceStartup.ToString("F1"));
+            Buffer.Append("{\"t\":").Append(Time.realtimeSinceStartup.ToString("F1", CultureInfo.InvariantCulture));
             Buffer.Append(",\"e\":\"").Append(Escape(eventName)).Append('"');
 
             if (fields != null)
@@ -82,7 +84,7 @@ namespace SolarMajesty
             Record(eventName, new[] { (key, value) });
 
         public static void Record(string eventName, string key, float value) =>
-            Record(eventName, new[] { (key, value.ToString("F2")) });
+            Record(eventName, new[] { (key, value.ToString("F2", CultureInfo.InvariantCulture)) });
 
         public static void Record(string eventName, string key, int value) =>
             Record(eventName, new[] { (key, value.ToString()) });
@@ -96,7 +98,7 @@ namespace SolarMajesty
                 ("body", body.ToString()),
                 ("pop", population.ToString()),
                 ("modules", modules.ToString()),
-                ("play_seconds", playSeconds.ToString("F0"))
+                ("play_seconds", playSeconds.ToString("F0", CultureInfo.InvariantCulture))
             });
             Flush();
         }
@@ -123,7 +125,7 @@ namespace SolarMajesty
         private static string Escape(string raw)
         {
             if (string.IsNullOrEmpty(raw)) return "";
-            return raw.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", " ").Replace("\r", " ");
+            return raw.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", " ").Replace("\r", " ").Replace("\t", "\\t");
         }
     }
 }

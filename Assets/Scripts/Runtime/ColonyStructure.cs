@@ -320,6 +320,12 @@ namespace SolarMajesty
             return Mathf.Max(0f, _health - before);
         }
 
+        public void RestoreHealth01(float value)
+        {
+            _health = Mathf.Clamp01(value) * maxHealth;
+            RefreshDamageVisual();
+        }
+
         public bool NeedsRepair => IsAlive && Health01 < 0.985f;
 
         private Vector3 _baseScale = Vector3.one;

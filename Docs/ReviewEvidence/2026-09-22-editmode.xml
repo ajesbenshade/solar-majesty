@@ -1,0 +1,1940 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="283" result="Passed" total="283" passed="283" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:15Z" duration="0.7481761">
+  <test-suite type="TestSuite" id="1000" name="StabilizationTests" fullname="StabilizationTests" runstate="Runnable" testcasecount="283" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:15Z" duration="0.748176" total="283" passed="283" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1316" name="SolarMajesty.Tests.EditMode.dll" fullname="/private/tmp/solar-stabilization-project/Library/ScriptAssemblies/SolarMajesty.Tests.EditMode.dll" runstate="Runnable" testcasecount="283" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:15Z" duration="0.744196" total="283" passed="283" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13870" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1317" name="SolarMajesty" fullname="SolarMajesty" runstate="Runnable" testcasecount="283" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:15Z" duration="0.743823" total="283" passed="283" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1318" name="Tests" fullname="SolarMajesty.Tests" runstate="Runnable" testcasecount="283" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:15Z" duration="0.743609" total="283" passed="283" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1194" name="AccessibilityTests" fullname="SolarMajesty.Tests.AccessibilityTests" classname="SolarMajesty.Tests.AccessibilityTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.023352" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1195" name="Adapt_IsIdentityWhenOff" fullname="SolarMajesty.Tests.AccessibilityTests.Adapt_IsIdentityWhenOff" methodname="Adapt_IsIdentityWhenOff" classname="SolarMajesty.Tests.AccessibilityTests" runstate="Runnable" seed="1619751678" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.009585" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1197" name="Adapt_LeavesNeutralsAlone" fullname="SolarMajesty.Tests.AccessibilityTests.Adapt_LeavesNeutralsAlone" methodname="Adapt_LeavesNeutralsAlone" classname="SolarMajesty.Tests.AccessibilityTests" runstate="Runnable" seed="1608990183" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001167" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1198" name="Adapt_PreservesAlpha" fullname="SolarMajesty.Tests.AccessibilityTests.Adapt_PreservesAlpha" methodname="Adapt_PreservesAlpha" classname="SolarMajesty.Tests.AccessibilityTests" runstate="Runnable" seed="974647586" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000407" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1196" name="Adapt_SeparatesRedFromGreen" fullname="SolarMajesty.Tests.AccessibilityTests.Adapt_SeparatesRedFromGreen" methodname="Adapt_SeparatesRedFromGreen" classname="SolarMajesty.Tests.AccessibilityTests" runstate="Runnable" seed="1760379117" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001943" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1199" name="SeverityPrefix_DistinguishesLevelsInText" fullname="SolarMajesty.Tests.AccessibilityTests.SeverityPrefix_DistinguishesLevelsInText" methodname="SeverityPrefix_DistinguishesLevelsInText" classname="SolarMajesty.Tests.AccessibilityTests" runstate="Runnable" seed="353807312" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000931" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1166" name="AchievementTests" fullname="SolarMajesty.Tests.AchievementTests" classname="SolarMajesty.Tests.AchievementTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.019762" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1168" name="Evaluate_DoesNotUnlockUnearnedAchievements" fullname="SolarMajesty.Tests.AchievementTests.Evaluate_DoesNotUnlockUnearnedAchievements" methodname="Evaluate_DoesNotUnlockUnearnedAchievements" classname="SolarMajesty.Tests.AchievementTests" runstate="Runnable" seed="127721440" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.005442" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1174" name="Evaluate_NullStats_IsSafe" fullname="SolarMajesty.Tests.AchievementTests.Evaluate_NullStats_IsSafe" methodname="Evaluate_NullStats_IsSafe" classname="SolarMajesty.Tests.AchievementTests" runstate="Runnable" seed="1523275849" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001470" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1169" name="Evaluate_RaisesEarnedOncePerAchievement" fullname="SolarMajesty.Tests.AchievementTests.Evaluate_RaisesEarnedOncePerAchievement" methodname="Evaluate_RaisesEarnedOncePerAchievement" classname="SolarMajesty.Tests.AchievementTests" runstate="Runnable" seed="1403323286" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.002083" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1167" name="Evaluate_UnlocksTheFirstContract" fullname="SolarMajesty.Tests.AchievementTests.Evaluate_UnlocksTheFirstContract" methodname="Evaluate_UnlocksTheFirstContract" classname="SolarMajesty.Tests.AchievementTests" runstate="Runnable" seed="1107179689" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001206" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1173" name="EveryDefinitionHasTitleDescriptionAndTest" fullname="SolarMajesty.Tests.AchievementTests.EveryDefinitionHasTitleDescriptionAndTest" methodname="EveryDefinitionHasTitleDescriptionAndTest" classname="SolarMajesty.Tests.AchievementTests" runstate="Runnable" seed="929841904" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.002081" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1170" name="Skinflint_RequiresACheapRun" fullname="SolarMajesty.Tests.AchievementTests.Skinflint_RequiresACheapRun" methodname="Skinflint_RequiresACheapRun" classname="SolarMajesty.Tests.AchievementTests" runstate="Runnable" seed="973098261" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001360" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1172" name="UnlockedThisRun_TracksNewUnlocksOnly" fullname="SolarMajesty.Tests.AchievementTests.UnlockedThisRun_TracksNewUnlocksOnly" methodname="UnlockedThisRun_TracksNewUnlocksOnly" classname="SolarMajesty.Tests.AchievementTests" runstate="Runnable" seed="1534170119" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001330" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1171" name="Veteran_ReadsTheSpecialistRoster" fullname="SolarMajesty.Tests.AchievementTests.Veteran_ReadsTheSpecialistRoster" methodname="Veteran_ReadsTheSpecialistRoster" classname="SolarMajesty.Tests.AchievementTests" runstate="Runnable" seed="1207777925" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001685" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1125" name="AdvisorToastCatalogTests" fullname="SolarMajesty.Tests.AdvisorToastCatalogTests" classname="SolarMajesty.Tests.AdvisorToastCatalogTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.003805" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1127" name="HopperWarrant_FiresOnClaim" fullname="SolarMajesty.Tests.AdvisorToastCatalogTests.HopperWarrant_FiresOnClaim" methodname="HopperWarrant_FiresOnClaim" classname="SolarMajesty.Tests.AdvisorToastCatalogTests" runstate="Runnable" seed="1158899694" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001677" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1126" name="PrimaryTable_HasTwentyFourDecreeToasts" fullname="SolarMajesty.Tests.AdvisorToastCatalogTests.PrimaryTable_HasTwentyFourDecreeToasts" methodname="PrimaryTable_HasTwentyFourDecreeToasts" classname="SolarMajesty.Tests.AdvisorToastCatalogTests" runstate="Runnable" seed="1618695480" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000848" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1128" name="TravelKeys_ExistForW2Hops" fullname="SolarMajesty.Tests.AdvisorToastCatalogTests.TravelKeys_ExistForW2Hops" methodname="TravelKeys_ExistForW2Hops" classname="SolarMajesty.Tests.AdvisorToastCatalogTests" runstate="Runnable" seed="1591430429" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000691" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1001" name="AlertFeedTests" fullname="SolarMajesty.Tests.AlertFeedTests" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.003146" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1010" name="Capacity_DropsTheLeastImportantEntry" fullname="SolarMajesty.Tests.AlertFeedTests.Capacity_DropsTheLeastImportantEntry" methodname="Capacity_DropsTheLeastImportantEntry" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="1755232139" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000488" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1014" name="CriticalCount_IgnoresAcknowledged" fullname="SolarMajesty.Tests.AlertFeedTests.CriticalCount_IgnoresAcknowledged" methodname="CriticalCount_IgnoresAcknowledged" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="468349719" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000135" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1012" name="MostUrgentWithPosition_PicksTheWorstLocatableAlert" fullname="SolarMajesty.Tests.AlertFeedTests.MostUrgentWithPosition_PicksTheWorstLocatableAlert" methodname="MostUrgentWithPosition_PicksTheWorstLocatableAlert" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="477750904" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000216" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1013" name="MostUrgentWithPosition_SkipsAcknowledged" fullname="SolarMajesty.Tests.AlertFeedTests.MostUrgentWithPosition_SkipsAcknowledged" methodname="MostUrgentWithPosition_SkipsAcknowledged" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="82313602" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000127" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1002" name="Push_AddsARow" fullname="SolarMajesty.Tests.AlertFeedTests.Push_AddsARow" methodname="Push_AddsARow" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="141678059" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000080" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1006" name="Push_EmptyMessage_IsIgnored" fullname="SolarMajesty.Tests.AlertFeedTests.Push_EmptyMessage_IsIgnored" methodname="Push_EmptyMessage_IsIgnored" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="1996110579" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000070" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1005" name="Push_EscalatingSeverity_UpgradesAndUnacknowledges" fullname="SolarMajesty.Tests.AlertFeedTests.Push_EscalatingSeverity_UpgradesAndUnacknowledges" methodname="Push_EscalatingSeverity_UpgradesAndUnacknowledges" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="732148596" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000105" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1004" name="Push_SameKeyAfterTheWindow_StartsFresh" fullname="SolarMajesty.Tests.AlertFeedTests.Push_SameKeyAfterTheWindow_StartsFresh" methodname="Push_SameKeyAfterTheWindow_StartsFresh" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="637324444" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000084" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1003" name="Push_SameKeyCollapsesIntoACount" fullname="SolarMajesty.Tests.AlertFeedTests.Push_SameKeyCollapsesIntoACount" methodname="Push_SameKeyCollapsesIntoACount" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="294266010" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000131" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1011" name="Sorted_RanksBySeverityThenRecency" fullname="SolarMajesty.Tests.AlertFeedTests.Sorted_RanksBySeverityThenRecency" methodname="Sorted_RanksBySeverityThenRecency" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="1922202100" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000375" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1009" name="Tick_FadesAcknowledgedCriticalAlerts" fullname="SolarMajesty.Tests.AlertFeedTests.Tick_FadesAcknowledgedCriticalAlerts" methodname="Tick_FadesAcknowledgedCriticalAlerts" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="1136925282" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000113" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1007" name="Tick_FadesNonCriticalAlerts" fullname="SolarMajesty.Tests.AlertFeedTests.Tick_FadesNonCriticalAlerts" methodname="Tick_FadesNonCriticalAlerts" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="594214532" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000060" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1008" name="Tick_KeepsUnacknowledgedCriticalAlerts" fullname="SolarMajesty.Tests.AlertFeedTests.Tick_KeepsUnacknowledgedCriticalAlerts" methodname="Tick_KeepsUnacknowledgedCriticalAlerts" classname="SolarMajesty.Tests.AlertFeedTests" runstate="Runnable" seed="1878442254" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000054" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1121" name="CampaignCutsceneCatalogTests" fullname="SolarMajesty.Tests.CampaignCutsceneCatalogTests" classname="SolarMajesty.Tests.CampaignCutsceneCatalogTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001405" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1123" name="ArrivalAndVictory_MapW2BodiesOnly" fullname="SolarMajesty.Tests.CampaignCutsceneCatalogTests.ArrivalAndVictory_MapW2BodiesOnly" methodname="ArrivalAndVictory_MapW2BodiesOnly" classname="SolarMajesty.Tests.CampaignCutsceneCatalogTests" runstate="Runnable" seed="371826034" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000503" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1122" name="Catalog_HasNineStableKeys" fullname="SolarMajesty.Tests.CampaignCutsceneCatalogTests.Catalog_HasNineStableKeys" methodname="Catalog_HasNineStableKeys" classname="SolarMajesty.Tests.CampaignCutsceneCatalogTests" runstate="Runnable" seed="1212898272" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000350" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1124" name="TravelCuts_AreLogs_ArrivalAndMid_AreModals" fullname="SolarMajesty.Tests.CampaignCutsceneCatalogTests.TravelCuts_AreLogs_ArrivalAndMid_AreModals" methodname="TravelCuts_AreLogs_ArrivalAndMid_AreModals" classname="SolarMajesty.Tests.CampaignCutsceneCatalogTests" runstate="Runnable" seed="1640598940" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000099" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1015" name="CampusDressingTests" fullname="SolarMajesty.Tests.CampusDressingTests" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" testcasecount="38" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:15Z" duration="0.264077" total="38" passed="38" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1031" name="AirlockHub_IsSmallWhiteSquare_NoWrapDoors" fullname="SolarMajesty.Tests.CampusDressingTests.AirlockHub_IsSmallWhiteSquare_NoWrapDoors" methodname="AirlockHub_IsSmallWhiteSquare_NoWrapDoors" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="2013230533" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.019296" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1033" name="CardinalExpansion_PlacesHabBeyondAirlock_NotOnCommons" fullname="SolarMajesty.Tests.CampusDressingTests.CardinalExpansion_PlacesHabBeyondAirlock_NotOnCommons" methodname="CardinalExpansion_PlacesHabBeyondAirlock_NotOnCommons" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1319301453" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000903" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1042" name="ConceptPad_SitsPastTheHabNotOnCommonsWest" fullname="SolarMajesty.Tests.CampusDressingTests.ConceptPad_SitsPastTheHabNotOnCommonsWest" methodname="ConceptPad_SitsPastTheHabNotOnCommonsWest" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1182104213" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.002003" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1036" name="DensePack_EastHab_PlacesPadPowerWaterRegolith_WithoutOverlap" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_EastHab_PlacesPadPowerWaterRegolith_WithoutOverlap" methodname="DensePack_EastHab_PlacesPadPowerWaterRegolith_WithoutOverlap" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1857982566" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.001738" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1046" name="DensePack_ExtraHabChain_CanFitSouth_ButPlanCuesSkips" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_ExtraHabChain_CanFitSouth_ButPlanCuesSkips" methodname="DensePack_ExtraHabChain_CanFitSouth_ButPlanCuesSkips" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1360772100" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000378" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1037" name="DensePack_ForwardYards_CanFitNearCommons_ButExtraRuleWouldReject" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_ForwardYards_CanFitNearCommons_ButExtraRuleWouldReject" methodname="DensePack_ForwardYards_CanFitNearCommons_ButExtraRuleWouldReject" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1079447163" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000267" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1048" name="DensePack_InteriorDirt_MayStayEmpty_StillUsesPlayOrtho" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_InteriorDirt_MayStayEmpty_StillUsesPlayOrtho" methodname="DensePack_InteriorDirt_MayStayEmpty_StillUsesPlayOrtho" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1890545683" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000589" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1040" name="DensePack_LeftoverKits_DoNotStampWhenTheyCanFit" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_LeftoverKits_DoNotStampWhenTheyCanFit" methodname="DensePack_LeftoverKits_DoNotStampWhenTheyCanFit" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="824439624" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000395" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1043" name="DensePack_Leftovers_AfterWorkshop_SkipInnAndWonder" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_Leftovers_AfterWorkshop_SkipInnAndWonder" methodname="DensePack_Leftovers_AfterWorkshop_SkipInnAndWonder" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1091069069" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000306" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1045" name="DensePack_RejectsDockOverlappingCommons_AndFindsFreeSite" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_RejectsDockOverlappingCommons_AndFindsFreeSite" methodname="DensePack_RejectsDockOverlappingCommons_AndFindsFreeSite" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1713103508" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000147" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1038" name="DensePack_SkipsHabFace_ThenTakesNorthWhenWestBlocked" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_SkipsHabFace_ThenTakesNorthWhenWestBlocked" methodname="DensePack_SkipsHabFace_ThenTakesNorthWhenWestBlocked" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1812326965" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000155" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1044" name="DensePack_Still20Order_SkipsLeftoverDensityPressure" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_Still20Order_SkipsLeftoverDensityPressure" methodname="DensePack_Still20Order_SkipsLeftoverDensityPressure" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1683769945" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000662" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1049" name="DensePack_Still21Order_SkipsLeftoversWithoutInteriorFill" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_Still21Order_SkipsLeftoversWithoutInteriorFill" methodname="DensePack_Still21Order_SkipsLeftoversWithoutInteriorFill" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="798311435" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000596" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1039" name="DensePack_StillFrame_UsesPlayCampusOrtho10" fullname="SolarMajesty.Tests.CampusDressingTests.DensePack_StillFrame_UsesPlayCampusOrtho10" methodname="DensePack_StillFrame_UsesPlayCampusOrtho10" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1908350838" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000244" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1016" name="DockDressNames_CoverHullDrumPortsAndLegacyStubs" fullname="SolarMajesty.Tests.CampusDressingTests.DockDressNames_CoverHullDrumPortsAndLegacyStubs" methodname="DockDressNames_CoverHullDrumPortsAndLegacyStubs" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="2131854070" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000211" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1035" name="EmptyCommonsDrop_EastChainFitsAndDoesNotOverlap" fullname="SolarMajesty.Tests.CampusDressingTests.EmptyCommonsDrop_EastChainFitsAndDoesNotOverlap" methodname="EmptyCommonsDrop_EastChainFitsAndDoesNotOverlap" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1168354989" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.000270" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1027" name="FaunaAlignHead_LongestAxisOnPlusZ" fullname="SolarMajesty.Tests.CampusDressingTests.FaunaAlignHead_LongestAxisOnPlusZ" methodname="FaunaAlignHead_LongestAxisOnPlusZ" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="611463041" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:14Z" duration="0.005495" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1025" name="FaunaHasArt_KeepsProceduralLegs" fullname="SolarMajesty.Tests.CampusDressingTests.FaunaHasArt_KeepsProceduralLegs" methodname="FaunaHasArt_KeepsProceduralLegs" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="657222323" result="Passed" start-time="2026-09-22 03:25:14Z" end-time="2026-09-22 03:25:15Z" duration="0.101330" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1023" name="FaunaHide_DoesNotUseCampusCream" fullname="SolarMajesty.Tests.CampusDressingTests.FaunaHide_DoesNotUseCampusCream" methodname="FaunaHide_DoesNotUseCampusCream" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="2078466489" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.002671" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1026" name="FaunaMite_PaintAddsCyanOrangeDress" fullname="SolarMajesty.Tests.CampusDressingTests.FaunaMite_PaintAddsCyanOrangeDress" methodname="FaunaMite_PaintAddsCyanOrangeDress" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="599653574" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.004338" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1024" name="FaunaMotion_HopperHops_LeechHovers_MiteScuttles" fullname="SolarMajesty.Tests.CampusDressingTests.FaunaMotion_HopperHops_LeechHovers_MiteScuttles" methodname="FaunaMotion_HopperHops_LeechHovers_MiteScuttles" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="2039230305" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000609" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1053" name="FitStillOrtho_EmptyPlacer_FallsBackToPlayCampusOrtho" fullname="SolarMajesty.Tests.CampusDressingTests.FitStillOrtho_EmptyPlacer_FallsBackToPlayCampusOrtho" methodname="FitStillOrtho_EmptyPlacer_FallsBackToPlayCampusOrtho" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1410971038" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000194" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1032" name="GhostAirlock_ShowsAllArms_EachWithOneOrangeCollar" fullname="SolarMajesty.Tests.CampusDressingTests.GhostAirlock_ShowsAllArms_EachWithOneOrangeCollar" methodname="GhostAirlock_ShowsAllArms_EachWithOneOrangeCollar" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1080242540" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.006601" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1028" name="GhostCommons_ShowsAllCardinalPorts" fullname="SolarMajesty.Tests.CampusDressingTests.GhostCommons_ShowsAllCardinalPorts" methodname="GhostCommons_ShowsAllCardinalPorts" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="605010041" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.005540" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1051" name="InferHabFace_ReadsEastChain" fullname="SolarMajesty.Tests.CampusDressingTests.InferHabFace_ReadsEastChain" methodname="InferHabFace_ReadsEastChain" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="227783367" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000286" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1041" name="LandmarkGap_IsNotFlushToCommons" fullname="SolarMajesty.Tests.CampusDressingTests.LandmarkGap_IsNotFlushToCommons" methodname="LandmarkGap_IsNotFlushToCommons" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="2129974513" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000225" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1017" name="LiveCommons_HullPortsStartInactive" fullname="SolarMajesty.Tests.CampusDressingTests.LiveCommons_HullPortsStartInactive" methodname="LiveCommons_HullPortsStartInactive" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="136458826" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.003530" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1018" name="LiveCommons_LockedCommandDome_NotGeodesic" fullname="SolarMajesty.Tests.CampusDressingTests.LiveCommons_LockedCommandDome_NotGeodesic" methodname="LiveCommons_LockedCommandDome_NotGeodesic" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1387571758" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.003652" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1019" name="LiveHab_ThickCarbonMidBand_AndNeutralRimHatches" fullname="SolarMajesty.Tests.CampusDressingTests.LiveHab_ThickCarbonMidBand_AndNeutralRimHatches" methodname="LiveHab_ThickCarbonMidBand_AndNeutralRimHatches" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1067116611" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.007719" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1021" name="MarsCatalog_SalmonHorizonHaze" fullname="SolarMajesty.Tests.CampusDressingTests.MarsCatalog_SalmonHorizonHaze" methodname="MarsCatalog_SalmonHorizonHaze" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1490523916" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000798" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1022" name="MarsFog_ZoomedOutKeepsFarGroundAHint" fullname="SolarMajesty.Tests.CampusDressingTests.MarsFog_ZoomedOutKeepsFarGroundAHint" methodname="MarsFog_ZoomedOutKeepsFarGroundAHint" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="781440842" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000284" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1034" name="OppositeFaceHab_OverlapsCommons_AndFailsCanFit" fullname="SolarMajesty.Tests.CampusDressingTests.OppositeFaceHab_OverlapsCommons_AndFailsCanFit" methodname="OppositeFaceHab_OverlapsCommons_AndFailsCanFit" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="2132435398" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000517" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1029" name="RefreshTubes_EnablesOnlyDockedCommonsNorth" fullname="SolarMajesty.Tests.CampusDressingTests.RefreshTubes_EnablesOnlyDockedCommonsNorth" methodname="RefreshTubes_EnablesOnlyDockedCommonsNorth" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1759851474" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.052199" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+[CampusDressing] docks=2 pieces=3
+]]></output>
+            </test-case>
+            <test-case id="1030" name="RefreshTubes_FindsVillageRingAirlock" fullname="SolarMajesty.Tests.CampusDressingTests.RefreshTubes_FindsVillageRingAirlock" methodname="RefreshTubes_FindsVillageRingAirlock" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="758682007" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.012125" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+[CampusDressing] docks=2 pieces=3
+]]></output>
+            </test-case>
+            <test-case id="1050" name="RefreshTubes_SpacedCampus_EnablesDockedArmsWithoutTubeRuns" fullname="SolarMajesty.Tests.CampusDressingTests.RefreshTubes_SpacedCampus_EnablesDockedArmsWithoutTubeRuns" methodname="RefreshTubes_SpacedCampus_EnablesDockedArmsWithoutTubeRuns" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="924664903" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.019262" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+[CampusDressing] docks=2 pieces=4
+]]></output>
+            </test-case>
+            <test-case id="1020" name="SnapToGroundKeepingDockAxis_PreservesSharedDockY" fullname="SolarMajesty.Tests.CampusDressingTests.SnapToGroundKeepingDockAxis_PreservesSharedDockY" methodname="SnapToGroundKeepingDockAxis_PreservesSharedDockY" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="331868760" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.003329" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1052" name="StillCampusDensity_GridConstants_MatchColonyLayout" fullname="SolarMajesty.Tests.CampusDressingTests.StillCampusDensity_GridConstants_MatchColonyLayout" methodname="StillCampusDensity_GridConstants_MatchColonyLayout" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1049821879" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000222" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+            <test-case id="1047" name="StillHabSocket_SpawnsFoundationAndCrane" fullname="SolarMajesty.Tests.CampusDressingTests.StillHabSocket_SpawnsFoundationAndCrane" methodname="StillHabSocket_SpawnsFoundationAndCrane" classname="SolarMajesty.Tests.CampusDressingTests" runstate="Runnable" seed="1622240426" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001143" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[
+IgnoreFailingMessages:true
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1088" name="FirstHourDemoTests" fullname="SolarMajesty.Tests.FirstHourDemoTests" classname="SolarMajesty.Tests.FirstHourDemoTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.004111" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1091" name="AcceptedBuild_CompletesThePriceLessonWithoutReposting" fullname="SolarMajesty.Tests.FirstHourDemoTests.AcceptedBuild_CompletesThePriceLessonWithoutReposting" methodname="AcceptedBuild_CompletesThePriceLessonWithoutReposting" classname="SolarMajesty.Tests.FirstHourDemoTests" runstate="Runnable" seed="626418427" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000264" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1093" name="CancellingTheBuildFlag_ReturnsToTheCheapBeat" fullname="SolarMajesty.Tests.FirstHourDemoTests.CancellingTheBuildFlag_ReturnsToTheCheapBeat" methodname="CancellingTheBuildFlag_ReturnsToTheCheapBeat" classname="SolarMajesty.Tests.FirstHourDemoTests" runstate="Runnable" seed="709995923" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000054" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1094" name="DemoCatalog_HidesGuildsAndLeadsWithTheEngineer" fullname="SolarMajesty.Tests.FirstHourDemoTests.DemoCatalog_HidesGuildsAndLeadsWithTheEngineer" methodname="DemoCatalog_HidesGuildsAndLeadsWithTheEngineer" classname="SolarMajesty.Tests.FirstHourDemoTests" runstate="Runnable" seed="1558816261" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000583" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1095" name="DemoTechAndBodies_HideTheSecondHour" fullname="SolarMajesty.Tests.FirstHourDemoTests.DemoTechAndBodies_HideTheSecondHour" methodname="DemoTechAndBodies_HideTheSecondHour" classname="SolarMajesty.Tests.FirstHourDemoTests" runstate="Runnable" seed="501727269" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000104" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1090" name="ExploreFlag_DoesNotOpenThePriceLesson" fullname="SolarMajesty.Tests.FirstHourDemoTests.ExploreFlag_DoesNotOpenThePriceLesson" methodname="ExploreFlag_DoesNotOpenThePriceLesson" classname="SolarMajesty.Tests.FirstHourDemoTests" runstate="Runnable" seed="333836974" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000049" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1096" name="FullCampaign_ShowsTheHiddenBuilding" fullname="SolarMajesty.Tests.FirstHourDemoTests.FullCampaign_ShowsTheHiddenBuilding" methodname="FullCampaign_ShowsTheHiddenBuilding" classname="SolarMajesty.Tests.FirstHourDemoTests" runstate="Runnable" seed="1555650992" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000064" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1092" name="RefusedBuild_ThenRaisedPrice_ThenDefend" fullname="SolarMajesty.Tests.FirstHourDemoTests.RefusedBuild_ThenRaisedPrice_ThenDefend" methodname="RefusedBuild_ThenRaisedPrice_ThenDefend" classname="SolarMajesty.Tests.FirstHourDemoTests" runstate="Runnable" seed="747116869" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000081" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1089" name="WorkshopBeat_WaitsForALivingEngineer" fullname="SolarMajesty.Tests.FirstHourDemoTests.WorkshopBeat_WaitsForALivingEngineer" methodname="WorkshopBeat_WaitsForALivingEngineer" classname="SolarMajesty.Tests.FirstHourDemoTests" runstate="Runnable" seed="402947689" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000059" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1097" name="FlagDecreeTests" fullname="SolarMajesty.Tests.FlagDecreeTests" classname="SolarMajesty.Tests.FlagDecreeTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001346" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1099" name="Catalog_EightDecreesPerW2Body_AndNoneForBeltEuropa" fullname="SolarMajesty.Tests.FlagDecreeTests.Catalog_EightDecreesPerW2Body_AndNoneForBeltEuropa" methodname="Catalog_EightDecreesPerW2Body_AndNoneForBeltEuropa" classname="SolarMajesty.Tests.FlagDecreeTests" runstate="Runnable" seed="2082386231" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000197" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1098" name="Catalog_HasTwentyFourUniqueIds" fullname="SolarMajesty.Tests.FlagDecreeTests.Catalog_HasTwentyFourUniqueIds" methodname="Catalog_HasTwentyFourUniqueIds" classname="SolarMajesty.Tests.FlagDecreeTests" runstate="Runnable" seed="592239308" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000280" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1100" name="Catalog_IdsMatchBodyAndTypeTokens" fullname="SolarMajesty.Tests.FlagDecreeTests.Catalog_IdsMatchBodyAndTypeTokens" methodname="Catalog_IdsMatchBodyAndTypeTokens" classname="SolarMajesty.Tests.FlagDecreeTests" runstate="Runnable" seed="323837742" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000127" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1101" name="TryGet_FindsAKnownDecree" fullname="SolarMajesty.Tests.FlagDecreeTests.TryGet_FindsAKnownDecree" methodname="TryGet_FindsAKnownDecree" classname="SolarMajesty.Tests.FlagDecreeTests" runstate="Runnable" seed="1425748704" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000074" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1102" name="TryGet_RejectsUnknownAndEmpty" fullname="SolarMajesty.Tests.FlagDecreeTests.TryGet_RejectsUnknownAndEmpty" methodname="TryGet_RejectsUnknownAndEmpty" classname="SolarMajesty.Tests.FlagDecreeTests" runstate="Runnable" seed="56039101" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000038" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1103" name="TypeToken_CoversEveryFlagType" fullname="SolarMajesty.Tests.FlagDecreeTests.TypeToken_CoversEveryFlagType" methodname="TypeToken_CoversEveryFlagType" classname="SolarMajesty.Tests.FlagDecreeTests" runstate="Runnable" seed="292657280" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000161" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1114" name="FlagDecreeTitleMatchTests" fullname="SolarMajesty.Tests.FlagDecreeTitleMatchTests" classname="SolarMajesty.Tests.FlagDecreeTitleMatchTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000683" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1120" name="TryMatchPosted_AmbiguousBuildWithoutTitle_Fails" fullname="SolarMajesty.Tests.FlagDecreeTitleMatchTests.TryMatchPosted_AmbiguousBuildWithoutTitle_Fails" methodname="TryMatchPosted_AmbiguousBuildWithoutTitle_Fails" classname="SolarMajesty.Tests.FlagDecreeTitleMatchTests" runstate="Runnable" seed="458979197" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000115" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1119" name="TryMatchPosted_UniqueTypeWithoutTitle" fullname="SolarMajesty.Tests.FlagDecreeTitleMatchTests.TryMatchPosted_UniqueTypeWithoutTitle" methodname="TryMatchPosted_UniqueTypeWithoutTitle" classname="SolarMajesty.Tests.FlagDecreeTitleMatchTests" runstate="Runnable" seed="2069955718" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000039" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1118" name="TryMatchPosted_UsesTitleBeforeUniqueType" fullname="SolarMajesty.Tests.FlagDecreeTitleMatchTests.TryMatchPosted_UsesTitleBeforeUniqueType" methodname="TryMatchPosted_UsesTitleBeforeUniqueType" classname="SolarMajesty.Tests.FlagDecreeTitleMatchTests" runstate="Runnable" seed="1295813602" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000034" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1117" name="TryMatchTitle_DoesNotCrossBodies" fullname="SolarMajesty.Tests.FlagDecreeTitleMatchTests.TryMatchTitle_DoesNotCrossBodies" methodname="TryMatchTitle_DoesNotCrossBodies" classname="SolarMajesty.Tests.FlagDecreeTitleMatchTests" runstate="Runnable" seed="1859092949" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000035" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1115" name="TryMatchTitle_HitsBodyScopedTitle" fullname="SolarMajesty.Tests.FlagDecreeTitleMatchTests.TryMatchTitle_HitsBodyScopedTitle" methodname="TryMatchTitle_HitsBodyScopedTitle" classname="SolarMajesty.Tests.FlagDecreeTitleMatchTests" runstate="Runnable" seed="1417746152" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000042" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1116" name="TryMatchTitle_IsCaseInsensitiveAndTrimmed" fullname="SolarMajesty.Tests.FlagDecreeTitleMatchTests.TryMatchTitle_IsCaseInsensitiveAndTrimmed" methodname="TryMatchTitle_IsCaseInsensitiveAndTrimmed" classname="SolarMajesty.Tests.FlagDecreeTitleMatchTests" runstate="Runnable" seed="1346972107" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000034" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1228" name="FlagManagerTests" fullname="SolarMajesty.Tests.FlagManagerTests" classname="SolarMajesty.Tests.FlagManagerTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001300" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1231" name="ApplyWork_AfterRestore_CompletesAtRemainingLabor" fullname="SolarMajesty.Tests.FlagManagerTests.ApplyWork_AfterRestore_CompletesAtRemainingLabor" methodname="ApplyWork_AfterRestore_CompletesAtRemainingLabor" classname="SolarMajesty.Tests.FlagManagerTests" runstate="Runnable" seed="716746009" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000932" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1229" name="RestoreProgress_KeepsPostedWorkAndRemainingLabor" fullname="SolarMajesty.Tests.FlagManagerTests.RestoreProgress_KeepsPostedWorkAndRemainingLabor" methodname="RestoreProgress_KeepsPostedWorkAndRemainingLabor" classname="SolarMajesty.Tests.FlagManagerTests" runstate="Runnable" seed="691272211" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000084" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1230" name="RestoreProgress_UsesExistingPostedWorkWhenSaveOmitsIt" fullname="SolarMajesty.Tests.FlagManagerTests.RestoreProgress_UsesExistingPostedWorkWhenSaveOmitsIt" methodname="RestoreProgress_UsesExistingPostedWorkWhenSaveOmitsIt" classname="SolarMajesty.Tests.FlagManagerTests" runstate="Runnable" seed="1843588829" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000051" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1184" name="InputBindingsTests" fullname="SolarMajesty.Tests.InputBindingsTests" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.011038" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1190" name="Conflict_IgnoresTheActionsOwnKey" fullname="SolarMajesty.Tests.InputBindingsTests.Conflict_IgnoresTheActionsOwnKey" methodname="Conflict_IgnoresTheActionsOwnKey" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" seed="1676384440" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.002370" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1189" name="Conflict_NamesTheOffendingAction" fullname="SolarMajesty.Tests.InputBindingsTests.Conflict_NamesTheOffendingAction" methodname="Conflict_NamesTheOffendingAction" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" seed="511775639" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000835" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1186" name="DefaultsAreUnique" fullname="SolarMajesty.Tests.InputBindingsTests.DefaultsAreUnique" methodname="DefaultsAreUnique" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" seed="1718573685" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001382" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1192" name="DisplayName_SplitsCamelCase" fullname="SolarMajesty.Tests.InputBindingsTests.DisplayName_SplitsCamelCase" methodname="DisplayName_SplitsCamelCase" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" seed="342230659" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000821" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1185" name="EveryActionHasADefaultKey" fullname="SolarMajesty.Tests.InputBindingsTests.EveryActionHasADefaultKey" methodname="EveryActionHasADefaultKey" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" seed="608151673" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000838" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1193" name="Label_ReadsPunctuationKeys" fullname="SolarMajesty.Tests.InputBindingsTests.Label_ReadsPunctuationKeys" methodname="Label_ReadsPunctuationKeys" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" seed="189114278" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000784" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1191" name="ResetToDefaults_UndoesRebinds" fullname="SolarMajesty.Tests.InputBindingsTests.ResetToDefaults_UndoesRebinds" methodname="ResetToDefaults_UndoesRebinds" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" seed="1606779418" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001395" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1187" name="TryRebind_AssignsAFreeKey" fullname="SolarMajesty.Tests.InputBindingsTests.TryRebind_AssignsAFreeKey" methodname="TryRebind_AssignsAFreeKey" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" seed="929429843" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001191" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1188" name="TryRebind_RefusesAKeyAlreadyInUse" fullname="SolarMajesty.Tests.InputBindingsTests.TryRebind_RefusesAKeyAlreadyInUse" methodname="TryRebind_RefusesAKeyAlreadyInUse" classname="SolarMajesty.Tests.InputBindingsTests" runstate="Runnable" seed="47669193" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000769" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1200" name="LocalizationTests" fullname="SolarMajesty.Tests.LocalizationTests" classname="SolarMajesty.Tests.LocalizationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.003326" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1203" name="SetLanguage_MissingTable_StaysOnEnglish" fullname="SolarMajesty.Tests.LocalizationTests.SetLanguage_MissingTable_StaysOnEnglish" methodname="SetLanguage_MissingTable_StaysOnEnglish" classname="SolarMajesty.Tests.LocalizationTests" runstate="Runnable" seed="1014055962" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001329" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[Loc] No table for 'zz'; falling back to English.
+]]></output>
+            </test-case>
+            <test-case id="1204" name="SetLanguage_NullFallsBackToDefault" fullname="SolarMajesty.Tests.LocalizationTests.SetLanguage_NullFallsBackToDefault" methodname="SetLanguage_NullFallsBackToDefault" classname="SolarMajesty.Tests.LocalizationTests" runstate="Runnable" seed="1373761245" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000719" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1201" name="T_FallsBackToEnglish" fullname="SolarMajesty.Tests.LocalizationTests.T_FallsBackToEnglish" methodname="T_FallsBackToEnglish" classname="SolarMajesty.Tests.LocalizationTests" runstate="Runnable" seed="782515753" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000406" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1202" name="T_NullOrEmptyKey_ReturnsFallback" fullname="SolarMajesty.Tests.LocalizationTests.T_NullOrEmptyKey_ReturnsFallback" methodname="T_NullOrEmptyKey_ReturnsFallback" classname="SolarMajesty.Tests.LocalizationTests" runstate="Runnable" seed="493778015" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000413" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1104" name="LookAssetPathTests" fullname="SolarMajesty.Tests.LookAssetPathTests" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.011225" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1105" name="GroundTexturePaths_StayUnderEnvironmentTextures" fullname="SolarMajesty.Tests.LookAssetPathTests.GroundTexturePaths_StayUnderEnvironmentTextures" methodname="GroundTexturePaths_StayUnderEnvironmentTextures" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" seed="1593888585" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000043" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1106" name="LookMaterialPaths_StayUnderArtMaterials" fullname="SolarMajesty.Tests.LookAssetPathTests.LookMaterialPaths_StayUnderArtMaterials" methodname="LookMaterialPaths_StayUnderArtMaterials" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" seed="1637823300" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000046" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1107" name="StillCampus_KeepsSpacedPlayOrtho" fullname="SolarMajesty.Tests.LookAssetPathTests.StillCampus_KeepsSpacedPlayOrtho" methodname="StillCampus_KeepsSpacedPlayOrtho" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" seed="524902053" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000042" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1113" name="SuitCrossing_FallsBackToMannequinWithoutKit" fullname="SolarMajesty.Tests.LookAssetPathTests.SuitCrossing_FallsBackToMannequinWithoutKit" methodname="SuitCrossing_FallsBackToMannequinWithoutKit" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" seed="213249176" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.008259" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1110" name="TdbSplatAlbedo_GrassSandSnowAreDefaultSrgbRepeat" fullname="SolarMajesty.Tests.LookAssetPathTests.TdbSplatAlbedo_GrassSandSnowAreDefaultSrgbRepeat" methodname="TdbSplatAlbedo_GrassSandSnowAreDefaultSrgbRepeat" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" seed="357187907" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000968" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1109" name="TerrainSplatLayers_ResourcePathIsStable" fullname="SolarMajesty.Tests.LookAssetPathTests.TerrainSplatLayers_ResourcePathIsStable" methodname="TerrainSplatLayers_ResourcePathIsStable" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" seed="737252566" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000040" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1108" name="VendorDressingKit_ResourcePathIsStable" fullname="SolarMajesty.Tests.LookAssetPathTests.VendorDressingKit_ResourcePathIsStable" methodname="VendorDressingKit_ResourcePathIsStable" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" seed="1295724435" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000029" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1112" name="VendorEarthNature_PolytopeTreesExist" fullname="SolarMajesty.Tests.LookAssetPathTests.VendorEarthNature_PolytopeTreesExist" methodname="VendorEarthNature_PolytopeTreesExist" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" seed="1430376387" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000085" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1111" name="VendorHumanMotions_DummyAndWalkClipsExist" fullname="SolarMajesty.Tests.LookAssetPathTests.VendorHumanMotions_DummyAndWalkClipsExist" methodname="VendorHumanMotions_DummyAndWalkClipsExist" classname="SolarMajesty.Tests.LookAssetPathTests" runstate="Runnable" seed="2017764429" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001050" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1129" name="NarrativeBeatTrackerTests" fullname="SolarMajesty.Tests.NarrativeBeatTrackerTests" classname="SolarMajesty.Tests.NarrativeBeatTrackerTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001514" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1133" name="InferBuild_Earth_CommonsThenHabThenRocketOnlyWhenPadOrLaunchLive" fullname="SolarMajesty.Tests.NarrativeBeatTrackerTests.InferBuild_Earth_CommonsThenHabThenRocketOnlyWhenPadOrLaunchLive" methodname="InferBuild_Earth_CommonsThenHabThenRocketOnlyWhenPadOrLaunchLive" classname="SolarMajesty.Tests.NarrativeBeatTrackerTests" runstate="Runnable" seed="1254481093" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000250" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1130" name="MidCourt_FiresOnceAllThreeCivicDecreesComplete" fullname="SolarMajesty.Tests.NarrativeBeatTrackerTests.MidCourt_FiresOnceAllThreeCivicDecreesComplete" methodname="MidCourt_FiresOnceAllThreeCivicDecreesComplete" classname="SolarMajesty.Tests.NarrativeBeatTrackerTests" runstate="Runnable" seed="2015881459" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000342" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1132" name="MidCrust_FiresOnFirstOfSolarWispsOrCrust" fullname="SolarMajesty.Tests.NarrativeBeatTrackerTests.MidCrust_FiresOnFirstOfSolarWispsOrCrust" methodname="MidCrust_FiresOnFirstOfSolarWispsOrCrust" classname="SolarMajesty.Tests.NarrativeBeatTrackerTests" runstate="Runnable" seed="1957587222" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000054" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1131" name="MidWarrant_FiresOnFirstLevyOrHopperClaim" fullname="SolarMajesty.Tests.NarrativeBeatTrackerTests.MidWarrant_FiresOnFirstLevyOrHopperClaim" methodname="MidWarrant_FiresOnFirstLevyOrHopperClaim" classname="SolarMajesty.Tests.NarrativeBeatTrackerTests" runstate="Runnable" seed="1551636479" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000072" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1135" name="PostToast_FiresOncePerDecree" fullname="SolarMajesty.Tests.NarrativeBeatTrackerTests.PostToast_FiresOncePerDecree" methodname="PostToast_FiresOncePerDecree" classname="SolarMajesty.Tests.NarrativeBeatTrackerTests" runstate="Runnable" seed="292783884" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000085" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1134" name="TryResolvePosted_UntitledEarthBuildAfterHab_DoesNotStampRocket" fullname="SolarMajesty.Tests.NarrativeBeatTrackerTests.TryResolvePosted_UntitledEarthBuildAfterHab_DoesNotStampRocket" methodname="TryResolvePosted_UntitledEarthBuildAfterHab_DoesNotStampRocket" classname="SolarMajesty.Tests.NarrativeBeatTrackerTests" runstate="Runnable" seed="1864183618" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000157" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1082" name="OverseerRulesTests" fullname="SolarMajesty.Tests.OverseerRulesTests" classname="SolarMajesty.Tests.OverseerRulesTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000785" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1084" name="GreedAsk_NullData_HasASafeFloor" fullname="SolarMajesty.Tests.OverseerRulesTests.GreedAsk_NullData_HasASafeFloor" methodname="GreedAsk_NullData_HasASafeFloor" classname="SolarMajesty.Tests.OverseerRulesTests" runstate="Runnable" seed="522873251" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000063" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1083" name="GreedAsk_RisesWithGreed" fullname="SolarMajesty.Tests.OverseerRulesTests.GreedAsk_RisesWithGreed" methodname="GreedAsk_RisesWithGreed" classname="SolarMajesty.Tests.OverseerRulesTests" runstate="Runnable" seed="1950695069" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000125" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1086" name="RefabMetals_IsSeventyPercentOfTheMetalCost" fullname="SolarMajesty.Tests.OverseerRulesTests.RefabMetals_IsSeventyPercentOfTheMetalCost" methodname="RefabMetals_IsSeventyPercentOfTheMetalCost" classname="SolarMajesty.Tests.OverseerRulesTests" runstate="Runnable" seed="1192432957" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000144" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1087" name="RefabMetals_NullData_HasASafeFloor" fullname="SolarMajesty.Tests.OverseerRulesTests.RefabMetals_NullData_HasASafeFloor" methodname="RefabMetals_NullData_HasASafeFloor" classname="SolarMajesty.Tests.OverseerRulesTests" runstate="Runnable" seed="1532898404" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000030" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1085" name="StackShare_DegradesByRank" fullname="SolarMajesty.Tests.OverseerRulesTests.StackShare_DegradesByRank" methodname="StackShare_DegradesByRank" classname="SolarMajesty.Tests.OverseerRulesTests" runstate="Runnable" seed="1459826312" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000073" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1141" name="PlaytestReadyTests" fullname="SolarMajesty.Tests.PlaytestReadyTests" classname="SolarMajesty.Tests.PlaytestReadyTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.007170" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1143" name="BootStraightIntoPlay_UnsetPrefsMeansOff" fullname="SolarMajesty.Tests.PlaytestReadyTests.BootStraightIntoPlay_UnsetPrefsMeansOff" methodname="BootStraightIntoPlay_UnsetPrefsMeansOff" classname="SolarMajesty.Tests.PlaytestReadyTests" runstate="Runnable" seed="241376158" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000982" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1145" name="CampusSnapshot_RestoresCommonsBeforeWorkshops" fullname="SolarMajesty.Tests.PlaytestReadyTests.CampusSnapshot_RestoresCommonsBeforeWorkshops" methodname="CampusSnapshot_RestoresCommonsBeforeWorkshops" classname="SolarMajesty.Tests.PlaytestReadyTests" runstate="Runnable" seed="1622032387" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000502" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1144" name="CampusSnapshot_RoundtripsFirstHourPieces" fullname="SolarMajesty.Tests.PlaytestReadyTests.CampusSnapshot_RoundtripsFirstHourPieces" methodname="CampusSnapshot_RoundtripsFirstHourPieces" classname="SolarMajesty.Tests.PlaytestReadyTests" runstate="Runnable" seed="2143547339" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001046" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1142" name="ContinueCopy_SaysCredNotMet" fullname="SolarMajesty.Tests.PlaytestReadyTests.ContinueCopy_SaysCredNotMet" methodname="ContinueCopy_SaysCredNotMet" classname="SolarMajesty.Tests.PlaytestReadyTests" runstate="Runnable" seed="325387010" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001825" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1146" name="Engineer_RefusesDefaultBuild70_TakesNinety" fullname="SolarMajesty.Tests.PlaytestReadyTests.Engineer_RefusesDefaultBuild70_TakesNinety" methodname="Engineer_RefusesDefaultBuild70_TakesNinety" classname="SolarMajesty.Tests.PlaytestReadyTests" runstate="Runnable" seed="1496651561" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001152" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1147" name="SlowReader_HungryEngineerAcceptsCheapBuild_AndTutorialContinues" fullname="SolarMajesty.Tests.PlaytestReadyTests.SlowReader_HungryEngineerAcceptsCheapBuild_AndTutorialContinues" methodname="SlowReader_HungryEngineerAcceptsCheapBuild_AndTutorialContinues" classname="SolarMajesty.Tests.PlaytestReadyTests" runstate="Runnable" seed="2046824702" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000530" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1148" name="StarterGuilds_AreFourNamedHalls" fullname="SolarMajesty.Tests.PlaytestReadyTests.StarterGuilds_AreFourNamedHalls" methodname="StarterGuilds_AreFourNamedHalls" classname="SolarMajesty.Tests.PlaytestReadyTests" runstate="Runnable" seed="537503112" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000635" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1054" name="ResourceManagerTests" fullname="SolarMajesty.Tests.ResourceManagerTests" classname="SolarMajesty.Tests.ResourceManagerTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001502" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1060" name="ApplyLoss_JettisonsAFraction" fullname="SolarMajesty.Tests.ResourceManagerTests.ApplyLoss_JettisonsAFraction" methodname="ApplyLoss_JettisonsAFraction" classname="SolarMajesty.Tests.ResourceManagerTests" runstate="Runnable" seed="513656442" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000518" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1061" name="CanAfford_NullOrEmptyCost_IsFree" fullname="SolarMajesty.Tests.ResourceManagerTests.CanAfford_NullOrEmptyCost_IsFree" methodname="CanAfford_NullOrEmptyCost_IsFree" classname="SolarMajesty.Tests.ResourceManagerTests" runstate="Runnable" seed="889158073" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000065" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1055" name="NewStockpile_StartsEmpty" fullname="SolarMajesty.Tests.ResourceManagerTests.NewStockpile_StartsEmpty" methodname="NewStockpile_StartsEmpty" classname="SolarMajesty.Tests.ResourceManagerTests" runstate="Runnable" seed="363538488" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000064" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1058" name="SpendUpTo_ClampsToAvailable" fullname="SolarMajesty.Tests.ResourceManagerTests.SpendUpTo_ClampsToAvailable" methodname="SpendUpTo_ClampsToAvailable" classname="SolarMajesty.Tests.ResourceManagerTests" runstate="Runnable" seed="184664450" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000087" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1059" name="StockChanged_FiresOnAdd" fullname="SolarMajesty.Tests.ResourceManagerTests.StockChanged_FiresOnAdd" methodname="StockChanged_FiresOnAdd" classname="SolarMajesty.Tests.ResourceManagerTests" runstate="Runnable" seed="1767936403" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000115" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1056" name="TrySpend_FailsAndLeavesStockUntouched_WhenShort" fullname="SolarMajesty.Tests.ResourceManagerTests.TrySpend_FailsAndLeavesStockUntouched_WhenShort" methodname="TrySpend_FailsAndLeavesStockUntouched_WhenShort" classname="SolarMajesty.Tests.ResourceManagerTests" runstate="Runnable" seed="219855773" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000060" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1057" name="TrySpend_MultiCost_IsAllOrNothing" fullname="SolarMajesty.Tests.ResourceManagerTests.TrySpend_MultiCost_IsAllOrNothing" methodname="TrySpend_MultiCost_IsAllOrNothing" classname="SolarMajesty.Tests.ResourceManagerTests" runstate="Runnable" seed="241089692" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000108" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1175" name="RobotGuildTests" fullname="SolarMajesty.Tests.RobotGuildTests" classname="SolarMajesty.Tests.RobotGuildTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.002920" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1181" name="GenericHall_StaysAssignable" fullname="SolarMajesty.Tests.RobotGuildTests.GenericHall_StaysAssignable" methodname="GenericHall_StaysAssignable" classname="SolarMajesty.Tests.RobotGuildTests" runstate="Runnable" seed="942699516" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001138" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1178" name="HallNames_MatchColonyStructureCallsigns" fullname="SolarMajesty.Tests.RobotGuildTests.HallNames_MatchColonyStructureCallsigns" methodname="HallNames_MatchColonyStructureCallsigns" classname="SolarMajesty.Tests.RobotGuildTests" runstate="Runnable" seed="275531460" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000065" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1183" name="LaterCallsigns_AreNotStarterHalls" fullname="SolarMajesty.Tests.RobotGuildTests.LaterCallsigns_AreNotStarterHalls" methodname="LaterCallsigns_AreNotStarterHalls" classname="SolarMajesty.Tests.RobotGuildTests" runstate="Runnable" seed="1227748648" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000049" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1180" name="NamedHall_LocksClassAndKeepsCallsign" fullname="SolarMajesty.Tests.RobotGuildTests.NamedHall_LocksClassAndKeepsCallsign" methodname="NamedHall_LocksClassAndKeepsCallsign" classname="SolarMajesty.Tests.RobotGuildTests" runstate="Runnable" seed="364546718" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000220" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1182" name="PaintGuildAccents_AddsBannerWhenMissing" fullname="SolarMajesty.Tests.RobotGuildTests.PaintGuildAccents_AddsBannerWhenMissing" methodname="PaintGuildAccents_AddsBannerWhenMissing" classname="SolarMajesty.Tests.RobotGuildTests" runstate="Runnable" seed="883201488" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000279" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1177" name="Starter_CoversScoutEngineerDefenseMedic" fullname="SolarMajesty.Tests.RobotGuildTests.Starter_CoversScoutEngineerDefenseMedic" methodname="Starter_CoversScoutEngineerDefenseMedic" classname="SolarMajesty.Tests.RobotGuildTests" runstate="Runnable" seed="1928625178" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000057" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1176" name="Starter_HasFourDistinctHalls" fullname="SolarMajesty.Tests.RobotGuildTests.Starter_HasFourDistinctHalls" methodname="Starter_HasFourDistinctHalls" classname="SolarMajesty.Tests.RobotGuildTests" runstate="Runnable" seed="1476160554" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000512" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1179" name="TryMatch_ReadsPreferredOccupants" fullname="SolarMajesty.Tests.RobotGuildTests.TryMatch_ReadsPreferredOccupants" methodname="TryMatch_ReadsPreferredOccupants" classname="SolarMajesty.Tests.RobotGuildTests" runstate="Runnable" seed="1491496407" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000116" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1149" name="RunStatsTests" fullname="SolarMajesty.Tests.RunStatsTests" classname="SolarMajesty.Tests.RunStatsTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001649" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1152" name="CompletionRate_ClampsWhenCompletedExceedsPosted" fullname="SolarMajesty.Tests.RunStatsTests.CompletionRate_ClampsWhenCompletedExceedsPosted" methodname="CompletionRate_ClampsWhenCompletedExceedsPosted" classname="SolarMajesty.Tests.RunStatsTests" runstate="Runnable" seed="865117499" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000058" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1151" name="CompletionRate_IsCompletedOverPosted" fullname="SolarMajesty.Tests.RunStatsTests.CompletionRate_IsCompletedOverPosted" methodname="CompletionRate_IsCompletedOverPosted" classname="SolarMajesty.Tests.RunStatsTests" runstate="Runnable" seed="1286923259" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000035" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1150" name="CompletionRate_IsZeroWithNoPostings" fullname="SolarMajesty.Tests.RunStatsTests.CompletionRate_IsZeroWithNoPostings" methodname="CompletionRate_IsZeroWithNoPostings" classname="SolarMajesty.Tests.RunStatsTests" runstate="Runnable" seed="891064149" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000035" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1154" name="Duration_SwitchesToHoursPastSixtyMinutes" fullname="SolarMajesty.Tests.RunStatsTests.Duration_SwitchesToHoursPastSixtyMinutes" methodname="Duration_SwitchesToHoursPastSixtyMinutes" classname="SolarMajesty.Tests.RunStatsTests" runstate="Runnable" seed="456683956" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000109" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1153" name="Peaks_OnlyEverRise" fullname="SolarMajesty.Tests.RunStatsTests.Peaks_OnlyEverRise" methodname="Peaks_OnlyEverRise" classname="SolarMajesty.Tests.RunStatsTests" runstate="Runnable" seed="436601204" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000091" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1157" name="PlaystyleVerdict_CallsOutARefusedWorkforce" fullname="SolarMajesty.Tests.RunStatsTests.PlaystyleVerdict_CallsOutARefusedWorkforce" methodname="PlaystyleVerdict_CallsOutARefusedWorkforce" classname="SolarMajesty.Tests.RunStatsTests" runstate="Runnable" seed="139152556" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000075" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1156" name="PlaystyleVerdict_CallsOutHeavyLosses" fullname="SolarMajesty.Tests.RunStatsTests.PlaystyleVerdict_CallsOutHeavyLosses" methodname="PlaystyleVerdict_CallsOutHeavyLosses" classname="SolarMajesty.Tests.RunStatsTests" runstate="Runnable" seed="1847240172" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000032" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1155" name="SummaryRows_CoverEveryHeadlineStat" fullname="SolarMajesty.Tests.RunStatsTests.SummaryRows_CoverEveryHeadlineStat" methodname="SummaryRows_CoverEveryHeadlineStat" classname="SolarMajesty.Tests.RunStatsTests" runstate="Runnable" seed="899004780" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000694" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1220" name="SaveGameTests" fullname="SolarMajesty.Tests.SaveGameTests" classname="SolarMajesty.Tests.SaveGameTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.002667" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1223" name="Describe_MentionsBodyAndScale" fullname="SolarMajesty.Tests.SaveGameTests.Describe_MentionsBodyAndScale" methodname="Describe_MentionsBodyAndScale" classname="SolarMajesty.Tests.SaveGameTests" runstate="Runnable" seed="1689206435" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001002" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1224" name="EmptySave_HasNoNullCollections" fullname="SolarMajesty.Tests.SaveGameTests.EmptySave_HasNoNullCollections" methodname="EmptySave_HasNoNullCollections" classname="SolarMajesty.Tests.SaveGameTests" runstate="Runnable" seed="233362254" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000058" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1227" name="NewAgent_DefaultsClaimedFlagToNone" fullname="SolarMajesty.Tests.SaveGameTests.NewAgent_DefaultsClaimedFlagToNone" methodname="NewAgent_DefaultsClaimedFlagToNone" classname="SolarMajesty.Tests.SaveGameTests" runstate="Runnable" seed="639550569" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000034" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1222" name="NewSave_CarriesTheCurrentVersion" fullname="SolarMajesty.Tests.SaveGameTests.NewSave_CarriesTheCurrentVersion" methodname="NewSave_CarriesTheCurrentVersion" classname="SolarMajesty.Tests.SaveGameTests" runstate="Runnable" seed="1421036613" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000031" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1221" name="RoundTrip_PreservesWhatTheLegacySlotDropped" fullname="SolarMajesty.Tests.SaveGameTests.RoundTrip_PreservesWhatTheLegacySlotDropped" methodname="RoundTrip_PreservesWhatTheLegacySlotDropped" classname="SolarMajesty.Tests.SaveGameTests" runstate="Runnable" seed="1621769203" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000844" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1226" name="SlotPath_IsDistinctPerSlotAndClamped" fullname="SolarMajesty.Tests.SaveGameTests.SlotPath_IsDistinctPerSlotAndClamped" methodname="SlotPath_IsDistinctPerSlotAndClamped" classname="SolarMajesty.Tests.SaveGameTests" runstate="Runnable" seed="804344960" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000169" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1225" name="WorldSaveMatch_PicksNearestWithinRadius" fullname="SolarMajesty.Tests.SaveGameTests.WorldSaveMatch_PicksNearestWithinRadius" methodname="WorldSaveMatch_PicksNearestWithinRadius" classname="SolarMajesty.Tests.SaveGameTests" runstate="Runnable" seed="1217010366" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000129" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1062" name="SettlementTests" fullname="SolarMajesty.Tests.SettlementTests" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" testcasecount="16" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.002377" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1077" name="AddVillageHab_WithoutCrew_MatchesTheStillExtinctLatch" fullname="SolarMajesty.Tests.SettlementTests.AddVillageHab_WithoutCrew_MatchesTheStillExtinctLatch" methodname="AddVillageHab_WithoutCrew_MatchesTheStillExtinctLatch" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="930633986" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000217" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1073" name="Camps_ProduceLessWhenPowerIsShort" fullname="SolarMajesty.Tests.SettlementTests.Camps_ProduceLessWhenPowerIsShort" methodname="Camps_ProduceLessWhenPowerIsShort" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="1784850565" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000254" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1072" name="Camps_ProduceOnTheProductionTick" fullname="SolarMajesty.Tests.SettlementTests.Camps_ProduceOnTheProductionTick" methodname="Camps_ProduceOnTheProductionTick" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="1876321569" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000060" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1071" name="CanBirth_RequiresASpareBedAndIce" fullname="SolarMajesty.Tests.SettlementTests.CanBirth_RequiresASpareBedAndIce" methodname="CanBirth_RequiresASpareBedAndIce" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="415183197" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000102" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1074" name="Demolishing_HousingEvictsSurplusPopulation" fullname="SolarMajesty.Tests.SettlementTests.Demolishing_HousingEvictsSurplusPopulation" methodname="Demolishing_HousingEvictsSurplusPopulation" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="305667075" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000116" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1076" name="EverHadHab_LatchesForTheLossCondition" fullname="SolarMajesty.Tests.SettlementTests.EverHadHab_LatchesForTheLossCondition" methodname="EverHadHab_LatchesForTheLossCondition" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="188968312" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000051" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1063" name="Housing_IsThreeBedsPerHabPlusBonus" fullname="SolarMajesty.Tests.SettlementTests.Housing_IsThreeBedsPerHabPlusBonus" methodname="Housing_IsThreeBedsPerHabPlusBonus" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="1243155497" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000038" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1075" name="IsSustainable_NeedsCommonsPopulationStockpileAndIncome" fullname="SolarMajesty.Tests.SettlementTests.IsSustainable_NeedsCommonsPopulationStockpileAndIncome" methodname="IsSustainable_NeedsCommonsPopulationStockpileAndIncome" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="322398290" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000133" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1068" name="Levy_DeliversIntoTheStockpile" fullname="SolarMajesty.Tests.SettlementTests.Levy_DeliversIntoTheStockpile" methodname="Levy_DeliversIntoTheStockpile" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="1768187432" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000150" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1069" name="LifeSupport_KillsOneColonistWhenIceRunsOut" fullname="SolarMajesty.Tests.SettlementTests.LifeSupport_KillsOneColonistWhenIceRunsOut" methodname="LifeSupport_KillsOneColonistWhenIceRunsOut" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="1225578606" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000098" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1070" name="LifeSupport_LeavesColonistsAloneWhenIceIsStocked" fullname="SolarMajesty.Tests.SettlementTests.LifeSupport_LeavesColonistsAloneWhenIceIsStocked" methodname="LifeSupport_LeavesColonistsAloneWhenIceIsStocked" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="1306182365" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000044" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1064" name="SeedStarterCrew_DropsTwoColonistsOnce" fullname="SolarMajesty.Tests.SettlementTests.SeedStarterCrew_DropsTwoColonistsOnce" methodname="SeedStarterCrew_DropsTwoColonistsOnce" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="655028955" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000055" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1065" name="SeedStarterCrew_IsCappedByAvailableBeds" fullname="SolarMajesty.Tests.SettlementTests.SeedStarterCrew_IsCappedByAvailableBeds" methodname="SeedStarterCrew_IsCappedByAvailableBeds" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="1641358085" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000043" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1078" name="StillCaptureHold_FreezesLifeSupportDeaths" fullname="SolarMajesty.Tests.SettlementTests.StillCaptureHold_FreezesLifeSupportDeaths" methodname="StillCaptureHold_FreezesLifeSupportDeaths" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="569277082" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000068" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1066" name="Tax_AccruesWithoutPayingTheStockpile" fullname="SolarMajesty.Tests.SettlementTests.Tax_AccruesWithoutPayingTheStockpile" methodname="Tax_AccruesWithoutPayingTheStockpile" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="180536632" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000061" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1067" name="Tax_IsThinnerWhenOvercrowded" fullname="SolarMajesty.Tests.SettlementTests.Tax_IsThinnerWhenOvercrowded" methodname="Tax_IsThinnerWhenOvercrowded" classname="SolarMajesty.Tests.SettlementTests" runstate="Runnable" seed="544166857" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000065" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1205" name="SimClockTests" fullname="SolarMajesty.Tests.SimClockTests" classname="SolarMajesty.Tests.SimClockTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000983" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1209" name="Advance_CapsCatchUpAndFlagsDroppedTime" fullname="SolarMajesty.Tests.SimClockTests.Advance_CapsCatchUpAndFlagsDroppedTime" methodname="Advance_CapsCatchUpAndFlagsDroppedTime" classname="SolarMajesty.Tests.SimClockTests" runstate="Runnable" seed="1420038162" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000113" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1206" name="Advance_EmitsNoStepBeforeAFullStepHasElapsed" fullname="SolarMajesty.Tests.SimClockTests.Advance_EmitsNoStepBeforeAFullStepHasElapsed" methodname="Advance_EmitsNoStepBeforeAFullStepHasElapsed" classname="SolarMajesty.Tests.SimClockTests" runstate="Runnable" seed="232141973" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000055" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1207" name="Advance_EmitsWholeStepsAndKeepsTheRemainder" fullname="SolarMajesty.Tests.SimClockTests.Advance_EmitsWholeStepsAndKeepsTheRemainder" methodname="Advance_EmitsWholeStepsAndKeepsTheRemainder" classname="SolarMajesty.Tests.SimClockTests" runstate="Runnable" seed="1765986007" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000044" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1210" name="Advance_ZeroOrNegativeDelta_IsInert" fullname="SolarMajesty.Tests.SimClockTests.Advance_ZeroOrNegativeDelta_IsInert" methodname="Advance_ZeroOrNegativeDelta_IsInert" classname="SolarMajesty.Tests.SimClockTests" runstate="Runnable" seed="1109825504" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000211" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1212" name="ElapsedSeconds_TracksSteps" fullname="SolarMajesty.Tests.SimClockTests.ElapsedSeconds_TracksSteps" methodname="ElapsedSeconds_TracksSteps" classname="SolarMajesty.Tests.SimClockTests" runstate="Runnable" seed="493358501" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000045" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1211" name="Reset_ClearsAccumulationAndCount" fullname="SolarMajesty.Tests.SimClockTests.Reset_ClearsAccumulationAndCount" methodname="Reset_ClearsAccumulationAndCount" classname="SolarMajesty.Tests.SimClockTests" runstate="Runnable" seed="855801776" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000071" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1208" name="TotalSteps_MatchAcrossFrameRates" fullname="SolarMajesty.Tests.SimClockTests.TotalSteps_MatchAcrossFrameRates" methodname="TotalSteps_MatchAcrossFrameRates" classname="SolarMajesty.Tests.SimClockTests" runstate="Runnable" seed="564115369" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000066" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1213" name="SimSpeedTests" fullname="SolarMajesty.Tests.SimSpeedTests" classname="SolarMajesty.Tests.SimSpeedTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000905" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1215" name="Faster_ClampsAtTheTopSpeed" fullname="SolarMajesty.Tests.SimSpeedTests.Faster_ClampsAtTheTopSpeed" methodname="Faster_ClampsAtTheTopSpeed" classname="SolarMajesty.Tests.SimSpeedTests" runstate="Runnable" seed="1440395676" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000179" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1218" name="Label_ReadsAsHoldWhenPaused" fullname="SolarMajesty.Tests.SimSpeedTests.Label_ReadsAsHoldWhenPaused" methodname="Label_ReadsAsHoldWhenPaused" classname="SolarMajesty.Tests.SimSpeedTests" runstate="Runnable" seed="468573118" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000093" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1219" name="Set_ClampsOutOfRangeIndices" fullname="SolarMajesty.Tests.SimSpeedTests.Set_ClampsOutOfRangeIndices" methodname="Set_ClampsOutOfRangeIndices" classname="SolarMajesty.Tests.SimSpeedTests" runstate="Runnable" seed="1472001582" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000065" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1216" name="Slower_BottomsOutAtPause" fullname="SolarMajesty.Tests.SimSpeedTests.Slower_BottomsOutAtPause" methodname="Slower_BottomsOutAtPause" classname="SolarMajesty.Tests.SimSpeedTests" runstate="Runnable" seed="614417502" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000068" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1214" name="StartsAtNormalSpeed" fullname="SolarMajesty.Tests.SimSpeedTests.StartsAtNormalSpeed" methodname="StartsAtNormalSpeed" classname="SolarMajesty.Tests.SimSpeedTests" runstate="Runnable" seed="831465775" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000068" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1217" name="TogglePause_RestoresThePreviousSpeed" fullname="SolarMajesty.Tests.SimSpeedTests.TogglePause_RestoresThePreviousSpeed" methodname="TogglePause_RestoresThePreviousSpeed" classname="SolarMajesty.Tests.SimSpeedTests" runstate="Runnable" seed="25793637" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000084" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1232" name="SolarSystemTitleTests" fullname="SolarMajesty.Tests.SolarSystemTitleTests" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.012770" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1244" name="Catalog_EveryPlayableBodyIsInTheOrrerySpine" fullname="SolarMajesty.Tests.SolarSystemTitleTests.Catalog_EveryPlayableBodyIsInTheOrrerySpine" methodname="Catalog_EveryPlayableBodyIsInTheOrrerySpine" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="1619657418" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001010" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1234" name="OnOrbit_PlacesAlongXZ" fullname="SolarMajesty.Tests.SolarSystemTitleTests.OnOrbit_PlacesAlongXZ" methodname="OnOrbit_PlacesAlongXZ" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="698584499" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000810" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1233" name="Orbits_AreNestedSunward" fullname="SolarMajesty.Tests.SolarSystemTitleTests.Orbits_AreNestedSunward" methodname="Orbits_AreNestedSunward" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="21058507" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000721" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1243" name="OrreryMaps_ArePresentForEveryGlobe" fullname="SolarMajesty.Tests.SolarSystemTitleTests.OrreryMaps_ArePresentForEveryGlobe" methodname="OrreryMaps_ArePresentForEveryGlobe" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="13700912" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.002574" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1238" name="Pick_FreshClickStartsOnThatBody" fullname="SolarMajesty.Tests.SolarSystemTitleTests.Pick_FreshClickStartsOnThatBody" methodname="Pick_FreshClickStartsOnThatBody" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="1270528316" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000763" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1237" name="Pick_LockedWorldStaysMenuOnly" fullname="SolarMajesty.Tests.SolarSystemTitleTests.Pick_LockedWorldStaysMenuOnly" methodname="Pick_LockedWorldStaysMenuOnly" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="1867186215" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000709" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1241" name="Pick_SaveOnOtherBodySwitches" fullname="SolarMajesty.Tests.SolarSystemTitleTests.Pick_SaveOnOtherBodySwitches" methodname="Pick_SaveOnOtherBodySwitches" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="1592416767" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000788" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1240" name="Pick_SaveOnSameBodyContinues" fullname="SolarMajesty.Tests.SolarSystemTitleTests.Pick_SaveOnSameBodyContinues" methodname="Pick_SaveOnSameBodyContinues" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="874876831" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000826" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1239" name="Pick_ShiftClickOnLockedStartsFresh" fullname="SolarMajesty.Tests.SolarSystemTitleTests.Pick_ShiftClickOnLockedStartsFresh" methodname="Pick_ShiftClickOnLockedStartsFresh" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="161698665" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000741" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1242" name="RayHitsSphere_FollowsAMovingCenter" fullname="SolarMajesty.Tests.SolarSystemTitleTests.RayHitsSphere_FollowsAMovingCenter" methodname="RayHitsSphere_FollowsAMovingCenter" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="1109609647" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000927" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1236" name="UnlockThrough_DoesNotLowerTheSpine" fullname="SolarMajesty.Tests.SolarSystemTitleTests.UnlockThrough_DoesNotLowerTheSpine" methodname="UnlockThrough_DoesNotLowerTheSpine" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="629988238" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001076" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1235" name="UnlockThrough_OpensTheSpineInclusive" fullname="SolarMajesty.Tests.SolarSystemTitleTests.UnlockThrough_OpensTheSpineInclusive" methodname="UnlockThrough_OpensTheSpineInclusive" classname="SolarMajesty.Tests.SolarSystemTitleTests" runstate="Runnable" seed="1483714307" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001084" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1245" name="SoundBusTests" fullname="SolarMajesty.Tests.SoundBusTests" classname="SolarMajesty.Tests.SoundBusTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001303" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1251" name="Duck_DeeperRequestWins" fullname="SolarMajesty.Tests.SoundBusTests.Duck_DeeperRequestWins" methodname="Duck_DeeperRequestWins" classname="SolarMajesty.Tests.SoundBusTests" runstate="Runnable" seed="1983395975" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000267" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1250" name="Duck_RecoversAfterTheHold" fullname="SolarMajesty.Tests.SoundBusTests.Duck_RecoversAfterTheHold" methodname="Duck_RecoversAfterTheHold" classname="SolarMajesty.Tests.SoundBusTests" runstate="Runnable" seed="505754075" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000090" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1249" name="DuckBed_LowersAmbientAndMusic" fullname="SolarMajesty.Tests.SoundBusTests.DuckBed_LowersAmbientAndMusic" methodname="DuckBed_LowersAmbientAndMusic" classname="SolarMajesty.Tests.SoundBusTests" runstate="Runnable" seed="275800060" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000088" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1253" name="SetLevel_Clamps" fullname="SolarMajesty.Tests.SoundBusTests.SetLevel_Clamps" methodname="SetLevel_Clamps" classname="SolarMajesty.Tests.SoundBusTests" runstate="Runnable" seed="1613802718" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000081" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1252" name="Tick_ZeroDelta_IsInert" fullname="SolarMajesty.Tests.SoundBusTests.Tick_ZeroDelta_IsInert" methodname="Tick_ZeroDelta_IsInert" classname="SolarMajesty.Tests.SoundBusTests" runstate="Runnable" seed="185574749" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000057" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1247" name="Volume_AmbientFollowsTheAmbientSlider" fullname="SolarMajesty.Tests.SoundBusTests.Volume_AmbientFollowsTheAmbientSlider" methodname="Volume_AmbientFollowsTheAmbientSlider" classname="SolarMajesty.Tests.SoundBusTests" runstate="Runnable" seed="1397985869" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000064" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1248" name="Volume_IsAlwaysNormalised" fullname="SolarMajesty.Tests.SoundBusTests.Volume_IsAlwaysNormalised" methodname="Volume_IsAlwaysNormalised" classname="SolarMajesty.Tests.SoundBusTests" runstate="Runnable" seed="332984190" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000049" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1246" name="Volume_RespectsMasterSetting" fullname="SolarMajesty.Tests.SoundBusTests.Volume_RespectsMasterSetting" methodname="Volume_RespectsMasterSetting" classname="SolarMajesty.Tests.SoundBusTests" runstate="Runnable" seed="2057130706" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000072" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1254" name="SpecialistBrainTests" fullname="SolarMajesty.Tests.SpecialistBrainTests" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.004214" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1272" name="Evaluate_BadlyHurt_FleesToSafety" fullname="SolarMajesty.Tests.SpecialistBrainTests.Evaluate_BadlyHurt_FleesToSafety" methodname="Evaluate_BadlyHurt_FleesToSafety" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="730851452" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000737" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1273" name="Evaluate_Exhausted_Rests" fullname="SolarMajesty.Tests.SpecialistBrainTests.Evaluate_Exhausted_Rests" methodname="Evaluate_Exhausted_Rests" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="1158644821" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000101" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1274" name="Evaluate_NoFlags_FallsBackToVocation" fullname="SolarMajesty.Tests.SpecialistBrainTests.Evaluate_NoFlags_FallsBackToVocation" methodname="Evaluate_NoFlags_FallsBackToVocation" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="2095265401" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000095" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1271" name="Evaluate_NullData_IsIdle" fullname="SolarMajesty.Tests.SpecialistBrainTests.Evaluate_NullData_IsIdle" methodname="Evaluate_NullData_IsIdle" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="1005818302" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000082" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1277" name="Evaluate_PrefersCurrentFlagOnATie" fullname="SolarMajesty.Tests.SpecialistBrainTests.Evaluate_PrefersCurrentFlagOnATie" methodname="Evaluate_PrefersCurrentFlagOnATie" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="350052735" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000319" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1278" name="Evaluate_ToleratesNullEntriesInFlagList" fullname="SolarMajesty.Tests.SpecialistBrainTests.Evaluate_ToleratesNullEntriesInFlagList" methodname="Evaluate_ToleratesNullEntriesInFlagList" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="2078466974" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000199" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1276" name="Evaluate_UnderpaidFlag_IsNotPursued" fullname="SolarMajesty.Tests.SpecialistBrainTests.Evaluate_UnderpaidFlag_IsNotPursued" methodname="Evaluate_UnderpaidFlag_IsNotPursued" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="131994941" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000118" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1275" name="Evaluate_WellPaidFlag_IsPursued" fullname="SolarMajesty.Tests.SpecialistBrainTests.Evaluate_WellPaidFlag_IsPursued" methodname="Evaluate_WellPaidFlag_IsPursued" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="2139806880" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000109" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1268" name="GreaterDistance_LowersScore" fullname="SolarMajesty.Tests.SpecialistBrainTests.GreaterDistance_LowersScore" methodname="GreaterDistance_LowersScore" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="1826962295" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000101" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1262" name="GreedAsk_MatchesTheGateUsedByTheBrain" fullname="SolarMajesty.Tests.SpecialistBrainTests.GreedAsk_MatchesTheGateUsedByTheBrain" methodname="GreedAsk_MatchesTheGateUsedByTheBrain" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="1289970715" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000082" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1259" name="GreedGate_AcceptsOnceBountyClearsAsk" fullname="SolarMajesty.Tests.SpecialistBrainTests.GreedGate_AcceptsOnceBountyClearsAsk" methodname="GreedGate_AcceptsOnceBountyClearsAsk" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="397890448" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000083" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1260" name="GreedGate_BoundaryIsSeventyEightPercentOfAsk" fullname="SolarMajesty.Tests.SpecialistBrainTests.GreedGate_BoundaryIsSeventyEightPercentOfAsk" methodname="GreedGate_BoundaryIsSeventyEightPercentOfAsk" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="16083767" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000086" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1261" name="GreedGate_HungerAboveThreshold_BypassesTheGate" fullname="SolarMajesty.Tests.SpecialistBrainTests.GreedGate_HungerAboveThreshold_BypassesTheGate" methodname="GreedGate_HungerAboveThreshold_BypassesTheGate" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="1843853918" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000067" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1258" name="GreedGate_RefusesUnderpaidFlag_EvenWhenScoreIsHigh" fullname="SolarMajesty.Tests.SpecialistBrainTests.GreedGate_RefusesUnderpaidFlag_EvenWhenScoreIsHigh" methodname="GreedGate_RefusesUnderpaidFlag_EvenWhenScoreIsHigh" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="751792222" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000092" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1270" name="HigherBodyDanger_LowersScoreForCowards" fullname="SolarMajesty.Tests.SpecialistBrainTests.HigherBodyDanger_LowersScoreForCowards" methodname="HigherBodyDanger_LowersScoreForCowards" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="756922116" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000072" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1269" name="MoreClaims_LowersScore" fullname="SolarMajesty.Tests.SpecialistBrainTests.MoreClaims_LowersScore" methodname="MoreClaims_LowersScore" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="1814280134" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000080" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1267" name="RaisingBounty_NeverLowersScore" fullname="SolarMajesty.Tests.SpecialistBrainTests.RaisingBounty_NeverLowersScore" methodname="RaisingBounty_NeverLowersScore" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="1060737626" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000150" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1264" name="Refusal_BadlyHurt_IsHurt" fullname="SolarMajesty.Tests.SpecialistBrainTests.Refusal_BadlyHurt_IsHurt" methodname="Refusal_BadlyHurt_IsHurt" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="1106581148" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000076" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1263" name="Refusal_BeyondConsiderRange_IsTooFar" fullname="SolarMajesty.Tests.SpecialistBrainTests.Refusal_BeyondConsiderRange_IsTooFar" methodname="Refusal_BeyondConsiderRange_IsTooFar" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="726781121" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000075" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1265" name="Refusal_LowPreferenceAndLowScore_IsNotMyJob" fullname="SolarMajesty.Tests.SpecialistBrainTests.Refusal_LowPreferenceAndLowScore_IsNotMyJob" methodname="Refusal_LowPreferenceAndLowScore_IsNotMyJob" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="833738658" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000088" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1266" name="Refusal_NullFlag_IsIgnored" fullname="SolarMajesty.Tests.SpecialistBrainTests.Refusal_NullFlag_IsIgnored" methodname="Refusal_NullFlag_IsIgnored" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="662380565" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000063" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1257" name="ScoreFlag_IsAlwaysClamped" fullname="SolarMajesty.Tests.SpecialistBrainTests.ScoreFlag_IsAlwaysClamped" methodname="ScoreFlag_IsAlwaysClamped" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="187747128" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000079" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1256" name="ScoreFlag_PaidBuildFlag_ScoresExactly" fullname="SolarMajesty.Tests.SpecialistBrainTests.ScoreFlag_PaidBuildFlag_ScoresExactly" methodname="ScoreFlag_PaidBuildFlag_ScoresExactly" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="820529739" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000075" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1255" name="ScoreFlag_UnderpaidBuildFlag_ScoresExactly" fullname="SolarMajesty.Tests.SpecialistBrainTests.ScoreFlag_UnderpaidBuildFlag_ScoresExactly" methodname="ScoreFlag_UnderpaidBuildFlag_ScoresExactly" classname="SolarMajesty.Tests.SpecialistBrainTests" runstate="Runnable" seed="1457778283" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000069" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1158" name="SpecialistIdentityTests" fullname="SolarMajesty.Tests.SpecialistIdentityTests" classname="SolarMajesty.Tests.SpecialistIdentityTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001393" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1162" name="Citation_ReadsEmptyForANewUnit" fullname="SolarMajesty.Tests.SpecialistIdentityTests.Citation_ReadsEmptyForANewUnit" methodname="Citation_ReadsEmptyForANewUnit" classname="SolarMajesty.Tests.SpecialistIdentityTests" runstate="Runnable" seed="556024412" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000198" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1163" name="Citation_SingularisesCorrectly" fullname="SolarMajesty.Tests.SpecialistIdentityTests.Citation_SingularisesCorrectly" methodname="Citation_SingularisesCorrectly" classname="SolarMajesty.Tests.SpecialistIdentityTests" runstate="Runnable" seed="250590137" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000112" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1159" name="Create_GivesEachRobotADistinctName" fullname="SolarMajesty.Tests.SpecialistIdentityTests.Create_GivesEachRobotADistinctName" methodname="Create_GivesEachRobotADistinctName" classname="SolarMajesty.Tests.SpecialistIdentityTests" runstate="Runnable" seed="243565952" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000136" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1160" name="Create_KeepsGoingPastTheNamePool" fullname="SolarMajesty.Tests.SpecialistIdentityTests.Create_KeepsGoingPastTheNamePool" methodname="Create_KeepsGoingPastTheNamePool" classname="SolarMajesty.Tests.SpecialistIdentityTests" runstate="Runnable" seed="2128338232" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000214" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1164" name="MostDecorated_PrefersKillsOverContracts" fullname="SolarMajesty.Tests.SpecialistIdentityTests.MostDecorated_PrefersKillsOverContracts" methodname="MostDecorated_PrefersKillsOverContracts" classname="SolarMajesty.Tests.SpecialistIdentityTests" runstate="Runnable" seed="1754497126" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000068" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1161" name="Rank_ClimbsWithService" fullname="SolarMajesty.Tests.SpecialistIdentityTests.Rank_ClimbsWithService" methodname="Rank_ClimbsWithService" classname="SolarMajesty.Tests.SpecialistIdentityTests" runstate="Runnable" seed="1242978045" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000124" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1165" name="Reset_ClearsTheRoster" fullname="SolarMajesty.Tests.SpecialistIdentityTests.Reset_ClearsTheRoster" methodname="Reset_ClearsTheRoster" classname="SolarMajesty.Tests.SpecialistIdentityTests" runstate="Runnable" seed="1696871554" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000091" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1279" name="StabilizationTests" fullname="SolarMajesty.Tests.StabilizationTests" classname="SolarMajesty.Tests.StabilizationTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.011612" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1280" name="HiddenResearch_RestoresProgressAndBank_WithoutSpendingAgain" fullname="SolarMajesty.Tests.StabilizationTests.HiddenResearch_RestoresProgressAndBank_WithoutSpendingAgain" methodname="HiddenResearch_RestoresProgressAndBank_WithoutSpendingAgain" classname="SolarMajesty.Tests.StabilizationTests" runstate="Runnable" seed="199878023" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.003525" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1282" name="Telemetry_UsesValidJsonUnderCommaDecimalLocale" fullname="SolarMajesty.Tests.StabilizationTests.Telemetry_UsesValidJsonUnderCommaDecimalLocale" methodname="Telemetry_UsesValidJsonUnderCommaDecimalLocale" classname="SolarMajesty.Tests.StabilizationTests" runstate="Runnable" seed="1906083899" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001955" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1281" name="WorldSnapshots_RemainSeparateFromLatestAutosave" fullname="SolarMajesty.Tests.StabilizationTests.WorldSnapshots_RemainSeparateFromLatestAutosave" methodname="WorldSnapshots_RemainSeparateFromLatestAutosave" classname="SolarMajesty.Tests.StabilizationTests" runstate="Runnable" seed="1696022077" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.005641" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[SaveSystem] Read of /Users/aaronesbenshade/Library/Application Support/SolarMajestyValidation/StabilizationTests/Saves/slot0.json failed: JSON parse error: Invalid value.
+[SaveSystem] Recovered previous snapshot for /Users/aaronesbenshade/Library/Application Support/SolarMajestyValidation/StabilizationTests/Saves/slot0.json.
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1079" name="StillCaptureHoldTests" fullname="SolarMajesty.Tests.StillCaptureHoldTests" classname="SolarMajesty.Tests.StillCaptureHoldTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000524" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1080" name="Arm_StaysActiveUntilDisarm" fullname="SolarMajesty.Tests.StillCaptureHoldTests.Arm_StaysActiveUntilDisarm" methodname="Arm_StaysActiveUntilDisarm" classname="SolarMajesty.Tests.StillCaptureHoldTests" runstate="Runnable" seed="1922543799" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000103" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1081" name="EditorSessionKey_MatchesCaptureStillHold" fullname="SolarMajesty.Tests.StillCaptureHoldTests.EditorSessionKey_MatchesCaptureStillHold" methodname="EditorSessionKey_MatchesCaptureStillHold" classname="SolarMajesty.Tests.StillCaptureHoldTests" runstate="Runnable" seed="683893677" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000047" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1136" name="StillCaptureNarrativeSuppressTests" fullname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests" classname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000672" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1140" name="ClearPendingCuts_DropsQueuedModalWithoutRemembering" fullname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests.ClearPendingCuts_DropsQueuedModalWithoutRemembering" methodname="ClearPendingCuts_DropsQueuedModalWithoutRemembering" classname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests" runstate="Runnable" seed="5850449" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000146" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1137" name="HoldActive_EnqueueCut_DoesNotQueueModal" fullname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests.HoldActive_EnqueueCut_DoesNotQueueModal" methodname="HoldActive_EnqueueCut_DoesNotQueueModal" classname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests" runstate="Runnable" seed="1458136385" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000073" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1138" name="HoldActive_QueuedCut_IsNotPresentableAsModal" fullname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests.HoldActive_QueuedCut_IsNotPresentableAsModal" methodname="HoldActive_QueuedCut_IsNotPresentableAsModal" classname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests" runstate="Runnable" seed="1140223776" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000095" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1139" name="HoldOff_ArrivalCut_IsPresentableAsModal" fullname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests.HoldOff_ArrivalCut_IsPresentableAsModal" methodname="HoldOff_ArrivalCut_IsPresentableAsModal" classname="SolarMajesty.Tests.StillCaptureNarrativeSuppressTests" runstate="Runnable" seed="1418574365" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000049" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1283" name="TerrainBakeTests" fullname="SolarMajesty.Tests.TerrainBakeTests" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.323619" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1290" name="Bake_EmitsTdbStyleMaps" fullname="SolarMajesty.Tests.TerrainBakeTests.Bake_EmitsTdbStyleMaps" methodname="Bake_EmitsTdbStyleMaps" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" seed="1134109100" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.025809" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1284" name="CampusPad_StaysFlat" fullname="SolarMajesty.Tests.TerrainBakeTests.CampusPad_StaysFlat" methodname="CampusPad_StaysFlat" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" seed="158854848" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.037400" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1288" name="DifferentSeeds_ChangeFarRelief" fullname="SolarMajesty.Tests.TerrainBakeTests.DifferentSeeds_ChangeFarRelief" methodname="DifferentSeeds_ChangeFarRelief" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" seed="1565333966" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.073062" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1289" name="Luna_CampusPadStaysFlat_AndBowlIsDeep" fullname="SolarMajesty.Tests.TerrainBakeTests.Luna_CampusPadStaysFlat_AndBowlIsDeep" methodname="Luna_CampusPadStaysFlat_AndBowlIsDeep" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" seed="380344738" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.039242" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1286" name="Mars_MesaIsHigh_CanyonIsDeep" fullname="SolarMajesty.Tests.TerrainBakeTests.Mars_MesaIsHigh_CanyonIsDeep" methodname="Mars_MesaIsHigh_CanyonIsDeep" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" seed="2045073" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.037511" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1287" name="MarsAndLuna_ScatterCraters" fullname="SolarMajesty.Tests.TerrainBakeTests.MarsAndLuna_ScatterCraters" methodname="MarsAndLuna_ScatterCraters" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" seed="856914412" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000108" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1292" name="Mesh_CampusVertexOnGradeZero" fullname="SolarMajesty.Tests.TerrainBakeTests.Mesh_CampusVertexOnGradeZero" methodname="Mesh_CampusVertexOnGradeZero" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" seed="1888877823" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.073098" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1291" name="SplatWeights_SumToOne" fullname="SolarMajesty.Tests.TerrainBakeTests.SplatWeights_SumToOne" methodname="SplatWeights_SumToOne" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" seed="362190978" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000175" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1285" name="StillFarThird_HasReliefOutsideYards" fullname="SolarMajesty.Tests.TerrainBakeTests.StillFarThird_HasReliefOutsideYards" methodname="StillFarThird_HasReliefOutsideYards" classname="SolarMajesty.Tests.TerrainBakeTests" runstate="Runnable" seed="1970370302" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.036412" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1293" name="WalletGuildMarketTests" fullname="SolarMajesty.Tests.WalletGuildMarketTests" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" testcasecount="22" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.013005" total="22" passed="22" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1309" name="AidStation_UnlocksFromLifeSupport" fullname="SolarMajesty.Tests.WalletGuildMarketTests.AidStation_UnlocksFromLifeSupport" methodname="AidStation_UnlocksFromLifeSupport" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="2899106" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000642" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1313" name="AnalogCatalog_CoversTheMajestyLoops" fullname="SolarMajesty.Tests.WalletGuildMarketTests.AnalogCatalog_CoversTheMajestyLoops" methodname="AnalogCatalog_CoversTheMajestyLoops" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="28829031" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000739" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1297" name="Blacksmith_IsClassLockedAndBeatsGuildKit" fullname="SolarMajesty.Tests.WalletGuildMarketTests.Blacksmith_IsClassLockedAndBeatsGuildKit" methodname="Blacksmith_IsClassLockedAndBeatsGuildKit" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="2075342021" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001326" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1311" name="CompactGrok_HasTheBoardAsides" fullname="SolarMajesty.Tests.WalletGuildMarketTests.CompactGrok_HasTheBoardAsides" methodname="CompactGrok_HasTheBoardAsides" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="501322595" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000515" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1312" name="DenChart_DiscAndChartClasses" fullname="SolarMajesty.Tests.WalletGuildMarketTests.DenChart_DiscAndChartClasses" methodname="DenChart_DiscAndChartClasses" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="1597192011" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000442" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1302" name="GuildBenefit_RequiresResearchHallAndCredits" fullname="SolarMajesty.Tests.WalletGuildMarketTests.GuildBenefit_RequiresResearchHallAndCredits" methodname="GuildBenefit_RequiresResearchHallAndCredits" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="217759192" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.001642" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1303" name="GuildCharters_SitOnTheTechTree" fullname="SolarMajesty.Tests.WalletGuildMarketTests.GuildCharters_SitOnTheTechTree" methodname="GuildCharters_SitOnTheTechTree" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="1397039350" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000380" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1300" name="GuildUpgrade_IsClassLocked" fullname="SolarMajesty.Tests.WalletGuildMarketTests.GuildUpgrade_IsClassLocked" methodname="GuildUpgrade_IsClassLocked" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="843510830" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000461" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1315" name="LevyAccrue_MatchesOldTaxRate" fullname="SolarMajesty.Tests.WalletGuildMarketTests.LevyAccrue_MatchesOldTaxRate" methodname="LevyAccrue_MatchesOldTaxRate" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="569367883" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000368" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1306" name="LevySplit_PutsLeftoverOnTheHeaviestStop" fullname="SolarMajesty.Tests.WalletGuildMarketTests.LevySplit_PutsLeftoverOnTheHeaviestStop" methodname="LevySplit_PutsLeftoverOnTheHeaviestStop" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="1002726154" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000463" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1305" name="Market_IsCategoryTwentySix" fullname="SolarMajesty.Tests.WalletGuildMarketTests.Market_IsCategoryTwentySix" methodname="Market_IsCategoryTwentySix" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="1825777966" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000347" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1296" name="MarketItems_Exist" fullname="SolarMajesty.Tests.WalletGuildMarketTests.MarketItems_Exist" methodname="MarketItems_Exist" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="128918504" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000378" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1301" name="MarketPrefersHealthWhenHurt" fullname="SolarMajesty.Tests.WalletGuildMarketTests.MarketPrefersHealthWhenHurt" methodname="MarketPrefersHealthWhenHurt" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="1669423548" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000368" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1308" name="MarketSiphon_DoesNotTouchADryTank" fullname="SolarMajesty.Tests.WalletGuildMarketTests.MarketSiphon_DoesNotTouchADryTank" methodname="MarketSiphon_DoesNotTouchADryTank" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="1107349707" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000432" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1307" name="MarketSiphon_HoldsTheIceReserve" fullname="SolarMajesty.Tests.WalletGuildMarketTests.MarketSiphon_HoldsTheIceReserve" methodname="MarketSiphon_HoldsTheIceReserve" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="2002656302" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000395" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1304" name="MetalsOnly_DropsPowerAndFoldsIceIntoCredits" fullname="SolarMajesty.Tests.WalletGuildMarketTests.MetalsOnly_DropsPowerAndFoldsIceIntoCredits" methodname="MetalsOnly_DropsPowerAndFoldsIceIntoCredits" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="1906841944" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000418" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1310" name="OpenHands_ClearsTheCheapFlagGreedGate" fullname="SolarMajesty.Tests.WalletGuildMarketTests.OpenHands_ClearsTheCheapFlagGreedGate" methodname="OpenHands_ClearsTheCheapFlagGreedGate" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="963052936" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000364" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1295" name="Revive_IsCreditsOnly" fullname="SolarMajesty.Tests.WalletGuildMarketTests.Revive_IsCreditsOnly" methodname="Revive_IsCreditsOnly" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="2113236233" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000380" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1298" name="SmithAndYard_UnlockFromTech" fullname="SolarMajesty.Tests.WalletGuildMarketTests.SmithAndYard_UnlockFromTech" methodname="SmithAndYard_UnlockFromTech" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="228382251" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000358" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1294" name="TechCompleteCosts_AreCreditsOnly" fullname="SolarMajesty.Tests.WalletGuildMarketTests.TechCompleteCosts_AreCreditsOnly" methodname="TechCompleteCosts_AreCreditsOnly" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="1401558032" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000365" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1314" name="Watchtower_IsLevyChestWhenCommonsIsFar" fullname="SolarMajesty.Tests.WalletGuildMarketTests.Watchtower_IsLevyChestWhenCommonsIsFar" methodname="Watchtower_IsLevyChestWhenCommonsIsFar" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="740720164" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000370" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1299" name="YardBill_ScalesWithLevel" fullname="SolarMajesty.Tests.WalletGuildMarketTests.YardBill_ScalesWithLevel" methodname="YardBill_ScalesWithLevel" classname="SolarMajesty.Tests.WalletGuildMarketTests" runstate="Runnable" seed="1738451919" result="Passed" start-time="2026-09-22 03:25:15Z" end-time="2026-09-22 03:25:15Z" duration="0.000350" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/aaronesbenshade/Library/Application Support/SolarMajestyValidation/StabilizationTests/TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

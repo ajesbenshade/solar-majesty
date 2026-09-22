@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -20,6 +21,7 @@ namespace SolarMajesty
         private GameObject _ghost;
         private GameObject _footprint;
         private GameLoop _loop;
+        private readonly List<int> _visible = new List<int>();
 
         public bool EnabledPlacement
         {
@@ -42,6 +44,16 @@ namespace SolarMajesty
 
         public BuildingData[] Catalog => catalog;
         public int SelectedIndex => selectedIndex;
+
+        /// <summary>Build-menu rows in hotkey order. The list is reused; do not hold it.</summary>
+        public List<int> VisibleIndices
+        {
+            get
+            {
+                DemoSlice.CollectVisible(catalog, _visible);
+                return _visible;
+            }
+        }
 
         public void SelectBuilding(int index) => Select(index);
 
@@ -73,16 +85,33 @@ namespace SolarMajesty
             }
 
             // Hotkeys always switch selection; placement only when tool enabled.
-            if (Input.GetKeyDown(KeyCode.Alpha1)) Select(0);
-            if (Input.GetKeyDown(KeyCode.Alpha2)) Select(1);
-            if (Input.GetKeyDown(KeyCode.Alpha3)) Select(2);
-            if (Input.GetKeyDown(KeyCode.Alpha4)) Select(3);
-            if (Input.GetKeyDown(KeyCode.Alpha5)) Select(4);
-            if (Input.GetKeyDown(KeyCode.Alpha6)) Select(5);
-            if (Input.GetKeyDown(KeyCode.Alpha7)) Select(6);
-            if (Input.GetKeyDown(KeyCode.Alpha8)) Select(7);
-            if (Input.GetKeyDown(KeyCode.Alpha9)) Select(8);
-            if (Input.GetKeyDown(KeyCode.Alpha0)) Select(9);
+            // The Earth demo remaps 1–0 onto the short list (1 is the Engineer workshop).
+            if (DemoSettings.FirstHourDemo)
+            {
+                if (Input.GetKeyDown(KeyCode.Alpha1)) SelectVisibleSlot(0);
+                if (Input.GetKeyDown(KeyCode.Alpha2)) SelectVisibleSlot(1);
+                if (Input.GetKeyDown(KeyCode.Alpha3)) SelectVisibleSlot(2);
+                if (Input.GetKeyDown(KeyCode.Alpha4)) SelectVisibleSlot(3);
+                if (Input.GetKeyDown(KeyCode.Alpha5)) SelectVisibleSlot(4);
+                if (Input.GetKeyDown(KeyCode.Alpha6)) SelectVisibleSlot(5);
+                if (Input.GetKeyDown(KeyCode.Alpha7)) SelectVisibleSlot(6);
+                if (Input.GetKeyDown(KeyCode.Alpha8)) SelectVisibleSlot(7);
+                if (Input.GetKeyDown(KeyCode.Alpha9)) SelectVisibleSlot(8);
+                if (Input.GetKeyDown(KeyCode.Alpha0)) SelectVisibleSlot(9);
+            }
+            else
+            {
+                if (Input.GetKeyDown(KeyCode.Alpha1)) Select(0);
+                if (Input.GetKeyDown(KeyCode.Alpha2)) Select(1);
+                if (Input.GetKeyDown(KeyCode.Alpha3)) Select(2);
+                if (Input.GetKeyDown(KeyCode.Alpha4)) Select(3);
+                if (Input.GetKeyDown(KeyCode.Alpha5)) Select(4);
+                if (Input.GetKeyDown(KeyCode.Alpha6)) Select(5);
+                if (Input.GetKeyDown(KeyCode.Alpha7)) Select(6);
+                if (Input.GetKeyDown(KeyCode.Alpha8)) Select(7);
+                if (Input.GetKeyDown(KeyCode.Alpha9)) Select(8);
+                if (Input.GetKeyDown(KeyCode.Alpha0)) Select(9);
+            }
 
             if (!enabledPlacement || Selected == null)
             {
@@ -140,6 +169,13 @@ namespace SolarMajesty
             selectedIndex = index;
             enabledPlacement = true;
             _loop?.NotifyCatalogPicked();
+        }
+
+        private void SelectVisibleSlot(int slot)
+        {
+            DemoSlice.CollectVisible(catalog, _visible);
+            if (slot < 0 || slot >= _visible.Count) return;
+            Select(_visible[slot]);
         }
 
         private void SpawnBuildingVisual(ConstructionOrder order)

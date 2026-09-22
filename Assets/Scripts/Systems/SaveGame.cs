@@ -13,10 +13,11 @@ namespace SolarMajesty
     public sealed class SaveGame
     {
         /// <summary>Bump when a field's meaning changes. Readers reject unknown future versions.</summary>
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 4;
 
         public int version = CurrentVersion;
         public string gameVersion = "";
+        public string buildGuid = "";
         public string savedAtUtc = "";
         public string label = "";
         public double playSeconds;
@@ -25,6 +26,13 @@ namespace SolarMajesty
         public int body;
         public int seed;
         public int highestUnlocked;
+        // Null only on legacy saves; an empty encoded roster is a valid snapshot.
+        public string roster;
+        public bool firstHourDemo;
+        public bool tutorialDone;
+
+        public bool MatchesWorld(CelestialBodyId expectedBody, int expectedSeed) =>
+            body == (int)expectedBody && seed == expectedSeed;
 
         public SaveStockpile stockpile = new SaveStockpile();
         public SaveSettlementState settlement = new SaveSettlementState();
@@ -91,6 +99,14 @@ namespace SolarMajesty
         public int activeTech;
         public float activeProgress;
         public float bankedScience;
+        public List<SaveResearchProgress> progress = new List<SaveResearchProgress>();
+    }
+
+    [Serializable]
+    public sealed class SaveResearchProgress
+    {
+        public int tech;
+        public float science;
     }
 
     [Serializable]
@@ -146,6 +162,8 @@ namespace SolarMajesty
     [Serializable]
     public sealed class SaveAgent
     {
+        public bool hasVeteranRecord;
+        public SpecialistRecord veteran;
         public int specialistClass;
         public float px;
         public float py;
@@ -163,6 +181,8 @@ namespace SolarMajesty
     [Serializable]
     public sealed class SaveFauna
     {
+        // Index into this snapshot's lairs; -1 for roaming fauna.
+        public int lairIndex = -1;
         public int kind;
         public float px;
         public float py;
@@ -188,6 +208,7 @@ namespace SolarMajesty
         public float pz;
         public bool cleared;
         public bool scouted;
+        public bool expansionSpawned;
     }
 
     [Serializable]

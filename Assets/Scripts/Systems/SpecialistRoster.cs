@@ -8,6 +8,7 @@ namespace SolarMajesty
     /// Continue-slot specialist persist (level / XP / purse / revive count / corpse).
     /// One record per class — workshops fabricate at most one outdoor robot.
     /// </summary>
+    [System.Serializable]
     public struct SpecialistRecord
     {
         public SpecialistClass Class;
