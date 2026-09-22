@@ -833,6 +833,7 @@ namespace SolarMajesty
             prey.y = transform.position.y;
             transform.position = MoveFlatToward(prey, moveSpeed * 0.85f * dt);
             nearest.ApplyDamage(biteDamagePerSecond * dt);
+            GetComponentInChildren<UnitClipPlayer>()?.NotifyStrike();
         }
 
         private void TickDefeat(float dt)
@@ -1033,6 +1034,12 @@ namespace SolarMajesty
             float height = Kind == FaunaKind.Hopper ? 1.1f : Kind == FaunaKind.Stalker ? 0.85f : 0.55f;
             var motion = UnitMotion.Attach(gameObject, UnitMotion.KindFor(Kind), height);
             if (motion == null) return;
+
+            if (GetComponentInChildren<UnitClipPlayer>(true) != null)
+            {
+                ProceduralLegs.Remove(gameObject);
+                return;
+            }
 
             int legs = LegCountFor(Kind);
             if (legs <= 0)
