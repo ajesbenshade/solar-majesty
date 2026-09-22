@@ -123,7 +123,7 @@ namespace SolarMajesty
         public bool SpawnWaystationInn => spawnWaystationInn;
         public DemoScreen Screen { get; private set; } = DemoScreen.Title;
         public bool IsPlaying => Screen == DemoScreen.Playing;
-        public bool AllowsCamera => Screen == DemoScreen.Playing || Screen == DemoScreen.Title;
+        public bool AllowsCamera => Screen == DemoScreen.Playing;
         public bool TitlePointerBlocksWorld =>
             _overseerHud != null && _overseerHud.HitsHudPanels();
         public bool TitleConfirmOpen =>
