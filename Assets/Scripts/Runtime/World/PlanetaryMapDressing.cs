@@ -541,7 +541,12 @@ namespace SolarMajesty
             Vector3 center = new Vector3(worldW * 0.5f, 0f, worldH * 0.5f);
 
             // Near skirt just under GroundPlane (catches rays that miss the map horizontally).
-            SpawnHorizonPlane("HorizonSkirt", parent, center + Vector3.down * 0.35f, diameter, skirtColor);
+            // The baked terrain dips below y = 0 in valleys and lake basins; keep the skirt under
+            // its lowest point or this ground-tinted plane paints over the water there.
+            float skirtY = -0.35f;
+            var bake = TerrainDataBake.Current;
+            if (bake != null) skirtY = Mathf.Min(skirtY, bake.MinHeight - 0.35f);
+            SpawnHorizonPlane("HorizonSkirt", parent, center + Vector3.up * skirtY, diameter, skirtColor);
             // Deep floor: ortho zoom > ~camY/up.y puts bottom-row ray origins under the world;
             // a plane at y=-80 is still in front of those rays (forward.y < 0).
             SpawnHorizonPlane("HorizonDeepFloor", parent, center + Vector3.down * 80f, diameter * 1.6f, skirtColor);
