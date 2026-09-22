@@ -236,10 +236,10 @@ namespace SolarMajesty.Tests
         [Test]
         public void Skinflint_RequiresACheapRun()
         {
-            Achievements.Evaluate(new RunStats { BodiesConquered = 1, HighestBounty = 300 });
+            Achievements.Evaluate(new RunStats { BodiesConquered = 1, HighestBounty = 3000 });
             Assert.IsFalse(Achievements.IsUnlocked(AchievementId.Skinflint));
 
-            Achievements.Evaluate(new RunStats { BodiesConquered = 1, HighestBounty = 80 });
+            Achievements.Evaluate(new RunStats { BodiesConquered = 1, HighestBounty = 800 });
             Assert.IsTrue(Achievements.IsUnlocked(AchievementId.Skinflint));
         }
 

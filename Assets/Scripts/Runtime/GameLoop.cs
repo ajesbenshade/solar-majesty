@@ -1186,7 +1186,7 @@ namespace SolarMajesty
             _tutorialPestSpawned = false;
             _overseerHud?.Notify(
                 DemoSettings.FirstHourDemo
-                    ? "Tutorial reset — workshop, Build at 70, raise the price, then Defend."
+                    ? "Tutorial reset — workshop, Build at 700, raise the price, then Defend."
                     : "Tutorial reset — airlock onto Commons, then HAB, workshop, flag, bounty.",
                 4f);
         }
