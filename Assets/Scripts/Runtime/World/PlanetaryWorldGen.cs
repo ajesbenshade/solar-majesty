@@ -313,6 +313,60 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Triangle strip along a river centreline: two vertices per point at the water surface,
+        /// offset across the flow by <paramref name="widthScale"/> × the channel half-width.
+        /// </summary>
+        public static Mesh BuildRiverRibbon(TerrainRiver river, float widthScale)
+        {
+            if (river == null || river.Points.Count < 2) return null;
+            int count = river.Points.Count;
+            var verts = new Vector3[count * 2];
+            var uvs = new Vector2[count * 2];
+            var normals = new Vector3[count * 2];
+            var tris = new int[(count - 1) * 6];
+            float along = 0f;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 p = river.Points[i];
+                Vector3 prev = river.Points[Mathf.Max(0, i - 1)];
+                Vector3 next = river.Points[Mathf.Min(count - 1, i + 1)];
+                Vector3 dir = next - prev;
+                dir.y = 0f;
+                if (dir.sqrMagnitude < 1e-6f) dir = Vector3.forward;
+                dir.Normalize();
+                Vector3 side = new Vector3(dir.z, 0f, -dir.x);
+                float hw = river.HalfWidths[i] * widthScale;
+                if (i > 0)
+                {
+                    Vector3 step = p - river.Points[i - 1];
+                    step.y = 0f;
+                    along += step.magnitude;
+                }
+                verts[i * 2] = p - side * hw;
+                verts[i * 2 + 1] = p + side * hw;
+                uvs[i * 2] = new Vector2(0f, along / (hw * 2f));
+                uvs[i * 2 + 1] = new Vector2(1f, along / (hw * 2f));
+                normals[i * 2] = Vector3.up;
+                normals[i * 2 + 1] = Vector3.up;
+            }
+            for (int i = 0; i < count - 1; i++)
+            {
+                int a = i * 2, t = i * 6;
+                // Wound clockwise seen from above so the surface faces up.
+                tris[t] = a; tris[t + 1] = a + 2; tris[t + 2] = a + 1;
+                tris[t + 3] = a + 1; tris[t + 4] = a + 2; tris[t + 5] = a + 3;
+            }
+            var mesh = new Mesh { name = "RiverRibbon" };
+            mesh.vertices = verts;
+            mesh.uv = uvs;
+            mesh.normals = normals;
+            mesh.triangles = tris;
+            mesh.RecalculateBounds();
+            mesh.RecalculateTangents();
+            return mesh;
+        }
+
         /// <summary>Meandering river polylines made of irregular water segments.</summary>
         private void SpawnRivers(System.Random rng, List<Vector3> placed)
         {
@@ -323,21 +377,28 @@ namespace SolarMajesty
 
             if (_bake != null)
             {
+                // One continuous ribbon per river, following the carved channel's water level.
+                // Its edges run slightly past the waterline so the banks draw the shoreline.
+                for (int r = 0; r < _bake.Rivers.Count; r++)
+                {
+                    var mesh = BuildRiverRibbon(_bake.Rivers[r], 1.15f);
+                    if (mesh == null) continue;
+                    var ribbon = new GameObject($"River_{r}");
+                    ribbon.transform.SetParent(root, false);
+                    // Ribbon vertices are world-space, like the lake discs' positions.
+                    ribbon.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                    ribbon.AddComponent<MeshFilter>().sharedMesh = mesh;
+                    ribbon.AddComponent<MeshRenderer>();
+                    StylizedWaterVisual.Apply(ribbon, _body.WaterDeep, Color.Lerp(_body.WaterDeep, _body.WaterShallow, 0.55f));
+                }
+
                 int si = 0;
                 foreach (var w in _bake.Water)
                 {
                     if (w.IsLake) continue;
-                    var seg = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    seg.name = $"RiverSeg_{si++}";
-                    seg.transform.SetParent(root, false);
-                    seg.transform.position = w.Center;
-                    seg.transform.rotation = Quaternion.Euler(0f, w.YawDeg, 0f);
-                    seg.transform.localScale = new Vector3(w.Radius * 2f, 0.02f, Mathf.Max(w.Length, w.Radius * 2f));
-                    Object.Destroy(seg.GetComponent<Collider>());
-                    StylizedWaterVisual.Apply(seg, _body.WaterDeep, Color.Lerp(_body.WaterDeep, _body.WaterShallow, 0.55f));
                     RegisterWaterFootprint(w.Center, w.Radius * 0.55f, Mathf.Max(w.Length, w.Radius) * 0.5f,
                         w.YawDeg * Mathf.Deg2Rad);
-                    if (si % 6 == 0) placed.Add(w.Center);
+                    if (si++ % 6 == 0) placed.Add(w.Center);
                 }
                 return;
             }

@@ -116,13 +116,13 @@ namespace SolarMajesty
                         : "need ICE income ≥ 1.0/min (farm ticks or Extract)";
                 if (NetMetalsPerMin < OverseerRules.SustainMetPerMin)
                     return MineYieldScale < 0.8f
-                        ? "MET income low — Extract metal nodes or add an Ore Mine"
+                        ? "CRED income low — Extract ore nodes or add an Ore Mine"
                         : "need net CRED ≥ 15/min (tax collectors + mines + guild tax)";
                 if (!StockpileHealthy)
                     return FarmYieldScale < 0.8f
                         ? "stockpile low — Extract metal/ice nodes; farms are thin on this body"
                         : "stockpile low — Extract flags / wait on farm+mine ticks";
-                return "holding sustain — keep ICE/MET/REG above the floor";
+                return "holding sustain — keep ICE/CRED/REG above the floor";
             }
         }
 
@@ -342,7 +342,7 @@ namespace SolarMajesty
                 return;
             }
 
-            LastProductionLine = $"camps +{ice} ICE +{met} MET +{reg} REG";
+            LastProductionLine = $"camps +{ice} ICE +{met} CRED +{reg} REG";
         }
 
         private void TickLifeSupport(float dt)

@@ -159,7 +159,7 @@ namespace SolarMajesty
             if (_yieldLabel == null) return;
             string tag = nodeType switch
             {
-                ResourceNodeType.Metals => "MET",
+                ResourceNodeType.Metals => "CRED",
                 ResourceNodeType.Ice => "ICE",
                 ResourceNodeType.Fissile => "PWR",
                 _ => "REG"

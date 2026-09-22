@@ -72,20 +72,20 @@ namespace SolarMajesty
 
             new CampaignCutscene(EarthToLuna, "Trajectory Locked — Luna", CutsceneKind.TravelLog,
                 "Earth holds. The Lunar Rocket is on the pad, not in a toast.",
-                "The Freeholds already have a receipt prepared. Four MET at the dock. They call it hospitality.",
+                "The Freeholds already have a receipt prepared. Forty CRED at the dock. They call it hospitality.",
                 "We call it the first bill of a longer reign.",
                 "Do not wave at the trajectory. They will invoice the wave."),
 
             new CampaignCutscene(LunaArrival, "Hospitality, Itemized", CutsceneKind.Modal,
                 "Luna insertion. The Freeholds smile like a weigh-station.",
-                "Dock fee is four MET. Ice and ore have owners. The lanes have owners.",
+                "Dock fee is forty CRED. Ice and ore have owners. The lanes have owners.",
                 "Ash hoppers will test the HAB. Dust ticks will test the mines. Neither is the real tax.",
                 "The real tax is staying. Stay, and you pay forever."),
 
             new CampaignCutscene(LunaMidWarrant, "Receipt and Warrant", CutsceneKind.Modal,
                 "They call it a tariff. Strip and Core hauled the receipt. Do not lose it.",
                 "Someone cut the hoppers loose on the HAB. Aegis takes warrants, not sermons.",
-                "The lanes were spoken for before we arrived. Buy them with MET, or leave them behind.",
+                "The lanes were spoken for before we arrived. Buy them with CRED, or leave them behind.",
                 "A crater Commons that pays rent is a nicer picnic. We did not come for nicer."),
 
             new CampaignCutscene(LunaToMars, "Trajectory Locked — Mars", CutsceneKind.TravelLog,

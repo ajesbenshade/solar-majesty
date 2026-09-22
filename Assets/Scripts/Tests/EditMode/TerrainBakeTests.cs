@@ -188,6 +188,27 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void Earth_RiversRunAsOneUnbrokenChannel()
+        {
+            var earth = CelestialBodyCatalog.Earth();
+            var bake = TerrainDataBake.Generate(384f, 384f, 7, earth);
+            Assert.Greater(bake.Rivers.Count, 0, "Earth gets rivers");
+            foreach (var river in bake.Rivers)
+            {
+                Assert.GreaterOrEqual(river.Points.Count, 3);
+                for (int i = 0; i < river.Points.Count; i++)
+                {
+                    var p = river.Points[i];
+                    if (i > 0)
+                        Assert.LessOrEqual(p.y, river.Points[i - 1].y + 1e-4f, "water never climbs downstream");
+                    // A bank lip or a neighbouring stretch must never rise over the channel,
+                    // or the river breaks into disconnected pools.
+                    Assert.Less(bake.SampleHeight(p.x, p.z), p.y - 0.1f, $"channel open at point {i}");
+                }
+            }
+        }
+
+        [Test]
         public void Luna_FreshCratersBakeBrightEjecta()
         {
             var bake = TerrainDataBake.Generate(384f, 384f, 7, CelestialBodyCatalog.Luna());

@@ -16,6 +16,17 @@ namespace SolarMajesty
     }
 
     /// <summary>
+    /// One carved river as a continuous centreline (Earth). Point y is the water surface, which
+    /// only ever descends downstream; widths are the channel half-width at each point.
+    /// </summary>
+    [Serializable]
+    public sealed class TerrainRiver
+    {
+        public readonly List<Vector3> Points = new List<Vector3>(72);
+        public readonly List<float> HalfWidths = new List<float>(72);
+    }
+
+    /// <summary>
     /// Runtime analogue of BOXOPHOBIC Terrain Data Baker outputs: height, world-space normals
     /// (TDB packing), splat weights, and a mask map. Campus pads stay flat.
     ///
@@ -40,6 +51,7 @@ namespace SolarMajesty
         public Texture2D SplatMap;
         public Texture2D MaskMap;
         public readonly List<TerrainWater> Water = new List<TerrainWater>(64);
+        public readonly List<TerrainRiver> Rivers = new List<TerrainRiver>(8);
 
         public float SampleHeight(float wx, float wz) => Sample(Heights, wx, wz);
 
@@ -148,7 +160,7 @@ namespace SolarMajesty
                 case CelestialBodyId.Luna: GenLuna(g, seed, body); break;
                 case CelestialBodyId.Belt: GenBelt(g, seed); break;
                 case CelestialBodyId.Europa: GenEuropa(g, seed); break;
-                default: GenEarth(g, seed, body, bake.Water); break;
+                default: GenEarth(g, seed, body, bake.Water, bake.Rivers); break;
             }
 
             // Yard pads stay exactly level. Any non-finite sample (a float edge case in a generator)
@@ -470,7 +482,8 @@ namespace SolarMajesty
             return hills + medium + small + rocks;
         }
 
-        private static void GenEarth(Grid g, int seed, CelestialBodyProfile body, List<TerrainWater> water)
+        private static void GenEarth(Grid g, int seed, CelestialBodyProfile body, List<TerrainWater> water,
+            List<TerrainRiver> riverLines)
         {
             int n = g.N;
             for (int j = 0; j < n; j++)
@@ -486,7 +499,7 @@ namespace SolarMajesty
             int lakes = body != null ? body.LakeCount : 8;
             int rivers = body != null ? body.RiverCount : 5;
             CarveLakes(g, seed, lakes, water);
-            CarveRivers(g, seed, rivers, water);
+            CarveRivers(g, seed, rivers, water, riverLines);
 
             // Vista pond basin next to the drop (EnsureEarthVista seats the pond water in it).
             Vector3 pond = ColonyLayout.CampusOrigin + VistaPondLocal;
@@ -558,14 +571,31 @@ namespace SolarMajesty
             }
         }
 
-        private static void CarveRivers(Grid g, int seed, int rivers, List<TerrainWater> water)
+        private static void CarveRivers(Grid g, int seed, int rivers, List<TerrainWater> water,
+            List<TerrainRiver> riverLines)
         {
             int n = g.N;
             const int segs = 70;
             var pts = new Vector2[segs + 1];
             var bed = new float[segs + 1];
+            var width = new float[segs + 1];
             Vector3 campus = ColonyLayout.CampusOrigin;
             float half = g.W * 0.5f;
+            var lakes = new List<TerrainWater>(8);
+            foreach (var w in water)
+                if (w.IsLake) lakes.Add(w);
+
+            // Per-cell nearest point on any river's centreline. Carving every channel against its
+            // nearest point in one pass keeps a bank lip — from the next bend or a neighbouring
+            // river — from landing inside another channel and breaking it into pools.
+            var bestD = new float[n * n];
+            var bestBed = new float[n * n];
+            var bestW = new float[n * n];
+            var seen = new bool[n * n];
+            var inChannel = new bool[n * n];
+            var channelProf = new float[n * n];
+            var touched = new List<int>(16384);
+
             for (int k = 0; k < rivers; k++)
             {
                 float a0 = TerrainNoise.Hash01(k, 7, seed) * Mathf.PI * 2f;
@@ -576,9 +606,8 @@ namespace SolarMajesty
                 if (k % 2 == 0)
                 {
                     float best = float.MaxValue;
-                    foreach (var w in water)
+                    foreach (var w in lakes)
                     {
-                        if (!w.IsLake) continue;
                         float d = FlatDist(sx, sz, w.Center);
                         if (d < best) { best = d; target = w; }
                     }
@@ -614,23 +643,48 @@ namespace SolarMajesty
                         pz = campus.z + dcz / Mathf.Max(dd, 1e-3f) * 38f;
                     }
                     pts[s] = new Vector2(px, pz);
+                    width[s] = 2.2f + 1.0f * Mathf.Sin(s * 0.37f + k) + 1.4f * s / segs;
                 }
+
+                // A river ends where it reaches a lake; past the shore the lake owns the water.
+                int last = segs;
+                float mouthLevel = float.MaxValue;
+                for (int s = 1; s <= segs && last == segs; s++)
+                {
+                    foreach (var w in lakes)
+                    {
+                        if (FlatDist(pts[s].x, pts[s].y, w.Center) < w.Radius * 0.8f)
+                        {
+                            last = s;
+                            mouthLevel = w.Center.y;
+                            break;
+                        }
+                    }
+                }
+                if (last < 2) continue;
 
                 // Bed descends downstream (running minimum), so water never climbs a hill.
                 float cur = float.MaxValue;
-                for (int s = 0; s <= segs; s++)
+                for (int s = 0; s <= last; s++)
                 {
                     cur = Mathf.Min(cur, g.At(pts[s].x, pts[s].y));
-                    bed[s] = cur;
+                    bed[s] = cur - 0.9f;
+                }
+                // Meet the lake at or below its surface so the river cannot sit on top of it.
+                if (mouthLevel < float.MaxValue)
+                {
+                    for (int s = last; s >= 0; s--)
+                    {
+                        float cap = mouthLevel - 0.55f - 0.05f;
+                        if (bed[s] <= cap) break;
+                        bed[s] = cap;
+                    }
                 }
 
-                for (int s = 0; s < segs; s++)
+                for (int s = 0; s < last; s++)
                 {
                     Vector2 a = pts[s], b = pts[s + 1];
-                    float width = 2.2f + 1.0f * Mathf.Sin(s * 0.37f + k) + 1.4f * s / segs;
-                    float bedH = Mathf.Min(bed[s], bed[s + 1]) - 0.9f;
-                    float level = bedH + 0.55f;
-                    float reach = width * 3.5f;
+                    float reach = Mathf.Max(width[s], width[s + 1]) * 3.5f;
                     Vector2 mid = (a + b) * 0.5f;
                     Vector2 v = b - a;
                     float ll = Mathf.Max(v.sqrMagnitude, 1e-6f);
@@ -644,24 +698,76 @@ namespace SolarMajesty
                         float qx = a.x + v.x * tt - x, qz = a.y + v.y * tt - z;
                         float d = Mathf.Sqrt(qx * qx + qz * qz);
                         if (d > reach) continue;
-                        float prof = bedH + (d / width) * (d / width) * 0.9f;
-                        float blend = TerrainNoise.Smooth(width * 3.5f, width, d);
-                        float h = g.H[idx];
-                        h = Mathf.Min(h, h * (1f - blend) + Mathf.Min(h, prof) * blend);
-                        if (d > width * 1.05f && d < width * 2.6f) h = Mathf.Max(h, level + 0.08f);
-                        g.H[idx] = h;
-                        g.Wet[idx] = Mathf.Max(g.Wet[idx], TerrainNoise.Smooth(width * 2f, width * 0.7f, d));
+                        if (!seen[idx]) { seen[idx] = true; bestD[idx] = float.MaxValue; touched.Add(idx); }
+                        float candBed = Mathf.Lerp(bed[s], bed[s + 1], tt);
+                        float candW = Mathf.Lerp(width[s], width[s + 1], tt);
+                        // Inside any channel, the cell is at most that channel's profile — so where
+                        // two rivers meet or run side by side, neither fills the other in.
+                        if (d < candW * 1.05f)
+                        {
+                            float prof = candBed + (d / candW) * (d / candW) * 0.9f;
+                            if (!inChannel[idx] || prof < channelProf[idx]) channelProf[idx] = prof;
+                            inChannel[idx] = true;
+                        }
+                        if (d >= bestD[idx]) continue;
+                        bestD[idx] = d;
+                        bestBed[idx] = candBed;
+                        bestW[idx] = candW;
                     }
+                }
+
+                var line = new TerrainRiver();
+                for (int s = 0; s <= last; s++)
+                {
+                    line.Points.Add(new Vector3(pts[s].x, bed[s] + 0.55f, pts[s].y));
+                    line.HalfWidths.Add(width[s]);
+                }
+                riverLines?.Add(line);
+
+                // Segment footprints still feed IsOverWater and the NavMesh carve.
+                for (int s = 0; s < last; s++)
+                {
+                    Vector2 a = pts[s], b = pts[s + 1];
+                    Vector2 mid = (a + b) * 0.5f;
+                    Vector2 v = b - a;
+                    float wdt = (width[s] + width[s + 1]) * 0.5f;
                     water.Add(new TerrainWater
                     {
-                        Center = new Vector3(mid.x, level, mid.y),
-                        Radius = width * 0.95f,
+                        Center = new Vector3(mid.x, (bed[s] + bed[s + 1]) * 0.5f + 0.55f, mid.y),
+                        Radius = wdt * 0.95f,
                         Length = v.magnitude * 1.15f,
                         YawDeg = Mathf.Atan2(v.x, v.y) * Mathf.Rad2Deg,
                         IsLake = false
                     });
                 }
             }
+
+            foreach (int idx in touched)
+            {
+                float d = bestD[idx];
+                float wdt = bestW[idx];
+                float bedH = bestBed[idx];
+                float level = bedH + 0.55f;
+                if (d > wdt * 3.5f) continue;
+                float prof = bedH + (d / wdt) * (d / wdt) * 0.9f;
+                float blend = TerrainNoise.Smooth(wdt * 3.5f, wdt, d);
+                float h = g.H[idx];
+                h = Mathf.Min(h, h * (1f - blend) + Mathf.Min(h, prof) * blend);
+                if (inChannel[idx])
+                    h = Mathf.Min(h, channelProf[idx]);
+                else if (d > wdt * 1.05f && d < wdt * 2.6f && !InsideLake(g, idx, lakes))
+                    h = Mathf.Max(h, level + 0.08f);
+                g.H[idx] = h;
+                g.Wet[idx] = Mathf.Max(g.Wet[idx], TerrainNoise.Smooth(wdt * 2f, wdt * 0.7f, d));
+            }
+        }
+
+        private static bool InsideLake(Grid g, int idx, List<TerrainWater> lakes)
+        {
+            float x = g.X(idx % g.N), z = g.Z(idx / g.N);
+            foreach (var w in lakes)
+                if (FlatDist(x, z, w.Center) < w.Radius) return true;
+            return false;
         }
 
         // ---------------------------------------------------------------- Europa -------------
