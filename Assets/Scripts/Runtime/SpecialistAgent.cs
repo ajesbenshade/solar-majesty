@@ -1513,6 +1513,7 @@ namespace SolarMajesty
             SetAgentStopped(true);
             _status = "engaging";
             _workPulse = 1f;
+            GetComponentInChildren<UnitClipPlayer>()?.NotifyStrike();
             var stalker = NearestStalkerAgent();
             if (stalker != null)
             {

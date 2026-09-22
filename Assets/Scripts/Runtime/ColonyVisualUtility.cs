@@ -232,6 +232,8 @@ namespace SolarMajesty
             visual.transform.localPosition = Vector3.zero;
             visual.transform.localRotation = prefab.transform.localRotation;
             visual.transform.localScale = Vector3.one;
+            if (prefab.name.StartsWith("SM_Unit_"))
+                UnitClipPlayer.Bind(visual, prefab.name);
             return visual;
         }
 
