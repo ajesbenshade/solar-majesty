@@ -54,15 +54,15 @@ namespace SolarMajesty
             {
                 Id = AchievementId.HardBargain,
                 Title = "Hard Bargain",
-                Description = "Post a bounty of 250 MET or more.",
-                Test = s => s.HighestBounty >= 250
+                Description = "Post a bounty of 2,500 CRED or more.",
+                Test = s => s.HighestBounty >= 2500
             },
             new AchievementDef
             {
                 Id = AchievementId.Skinflint,
                 Title = "Skinflint",
-                Description = "Clear a body having never posted a bounty above 90 MET.",
-                Test = s => s.BodiesConquered >= 1 && s.HighestBounty > 0 && s.HighestBounty <= 90
+                Description = "Clear a body having never posted a bounty above 900 CRED.",
+                Test = s => s.BodiesConquered >= 1 && s.HighestBounty > 0 && s.HighestBounty <= 900
             },
             new AchievementDef
             {
@@ -89,8 +89,8 @@ namespace SolarMajesty
             {
                 Id = AchievementId.SelfSufficient,
                 Title = "Self-Sufficient",
-                Description = "Return 200 MET in payroll tithe.",
-                Test = s => s.TitheCollected >= 200
+                Description = "Collect 2,000 CRED in guild tax.",
+                Test = s => s.TitheCollected >= 2000
             },
             new AchievementDef
             {

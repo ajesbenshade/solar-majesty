@@ -222,6 +222,7 @@ namespace SolarMajesty
         static bool PassesGreedGate(SpecialistData data, float bounty, float hunger)
         {
             if (data == null) return false;
+            bounty = MajestyEconomy.ToBrain(bounty); // CRED → the 1/10 units this gate was tuned on
             float need = 18f + data.baseGreed * 95f;
             if (bounty + 0.01f >= need * 0.78f) return true;
             return hunger > 0.75f;
@@ -268,7 +269,7 @@ namespace SolarMajesty
             var fdata = flag.Data;
             float courage = EffectiveCourage(ctx);
 
-            float bountyFactor = Mathf.Clamp01(flag.CurrentBounty / 100f);
+            float bountyFactor = Mathf.Clamp01(MajestyEconomy.ToBrain(flag.CurrentBounty) / 100f);
             float greedScore = bountyFactor * (0.55f + data.baseGreed * 0.7f);
             greedScore += ctx.GreedHunger * 0.18f * bountyFactor;
 

@@ -45,8 +45,10 @@ namespace SolarMajesty
                     set.ReturnUnplacedLevy(pending - placed);
                 _loop.NotifyLevySitting(TotalSittingLevy());
             }
+            PayDailyTaxes(set);
             TickLevyPurses(dt);
             TickLevySit(dt);
+            _collectors?.Tick(dt);
 
             if (set.BirthDue)
                 TryBirth(set);
@@ -423,10 +425,73 @@ namespace SolarMajesty
                 var s = _structures[i];
                 if (s == null || !s.IsAlive) continue;
                 s.TickLevySit(dt);
+                // Only house purses get nibbled by pests; shop and guild tills are locked up.
+                if (!s.IsResidential) continue;
                 if (s.LevyPurse <= 0 || s.LevySitSeconds < LevyRun.SitStealSeconds) continue;
                 int stole = s.StealLevy(LevyRun.SitStealAmount);
                 if (stole > 0)
                     _loop.NotifyLevyStolen(stole, s.DisplayName);
+            }
+        }
+
+        private LevyCollectorDirector _collectors;
+
+        public LevyCollectorDirector Collectors => _collectors ??= new LevyCollectorDirector(this, _loop);
+
+        /// <summary>Alive structures of a category (Majesty duplicate pricing counts these).</summary>
+        public int CountAlive(BuildingCategory cat)
+        {
+            int n = 0;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s != null && s.IsAlive && s.Category == cat) n++;
+            }
+            return n;
+        }
+
+
+        /// <summary>
+        /// Majesty daily tax: Commons (Palace) 50, Market 250, Farm 50 land in their own tills each
+        /// day; mine output waits in the Mine's till. Houses are paid through the Settlement levy.
+        /// </summary>
+        private void PayDailyTaxes(Settlement set)
+        {
+            _collectors ??= new LevyCollectorDirector(this, _loop);
+            int days = set.TakePendingDays();
+            for (int d = 0; d < days; d++)
+            {
+                for (int i = 0; i < _structures.Count; i++)
+                {
+                    var s = _structures[i];
+                    if (s == null || !s.IsAlive) continue;
+                    int tax = MajestyEconomy.DailyTax(s.Category);
+                    if (tax > 0) s.AccrueLevy(tax);
+                }
+            }
+
+            int campGold = set.TakePendingCampGold();
+            if (campGold > 0)
+            {
+                var mines = new List<ColonyStructure>(4);
+                for (int i = 0; i < _structures.Count; i++)
+                {
+                    var s = _structures[i];
+                    if (s != null && s.IsAlive && s.Category == BuildingCategory.Mine) mines.Add(s);
+                }
+                if (mines.Count == 0)
+                {
+                    var hub = CommonsHub();
+                    if (hub != null) hub.AccrueLevy(campGold);
+                    else _loop.Resources?.Add(ResourceId.Metals, campGold);
+                }
+                else
+                {
+                    int each = campGold / mines.Count;
+                    int rest = campGold - each * mines.Count;
+                    for (int i = 0; i < mines.Count; i++)
+                        mines[i].AccrueLevy(each + (i == 0 ? rest : 0));
+                }
             }
         }
 
@@ -653,9 +718,9 @@ namespace SolarMajesty
 
         {
             if (_loop.Resources == null) return;
+            // Majesty houses cost the treasury nothing — settlers raise them. Only the regolith moves.
             var cost = new[]
             {
-                new ResourceAmount(ResourceId.Metals, 18),
                 new ResourceAmount(ResourceId.Regolith, 12)
             };
             if (!_loop.Resources.CanAfford(cost)) return;

@@ -81,6 +81,12 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>Grade a pad under the building so it sits on level ground off the yards.</summary>
+        private void Start()
+        {
+            TerrainGrading.LevelUnder(gameObject);
+        }
+
         public void Configure(
             StructureRole structureRole,
             VillageExpansion village,
@@ -152,16 +158,23 @@ namespace SolarMajesty
 
         public int TakeLevy() => CollectLevy();
 
+        /// <summary>
+        /// Majesty till: every building banks the gold it earns (house tax, sales, guild tax,
+        /// caravans) until a tax collector walks it to Commons or a Watchtower.
+        /// </summary>
         public void AccrueLevy(int amount)
         {
             if (amount <= 0 || !IsAlive) return;
-            if (IsResidential || Category == BuildingCategory.Commons || IsWatchtower)
-            {
-                LevyPurse += amount;
-                LevyIdleSeconds = 0f;
-                RefreshLevyPip();
-            }
+            LevyPurse += amount;
+            LevyIdleSeconds = 0f;
+            RefreshLevyPip();
         }
+
+        /// <summary>Alias for <see cref="LevyPurse"/> — gold waiting in this building's till.</summary>
+        public int Till => LevyPurse;
+
+        /// <summary>Tills are chests too: Commons and Watchtowers bank deposits straight into the treasury.</summary>
+        public bool IsTreasuryChest => IsAlive && (Category == BuildingCategory.Commons || IsWatchtower);
 
         public void TickLevy(float dt)
         {
@@ -235,6 +248,9 @@ namespace SolarMajesty
             }
         }
 
+        private static Material _levyPipMat;
+
+        /// <summary>Gold bead over the roof; it swells as the till fills so a fat till reads at a glance.</summary>
         private void RefreshLevyPip()
         {
             Transform existing = transform.Find("LevyPip");
@@ -251,21 +267,23 @@ namespace SolarMajesty
                 pip.name = "LevyPip";
                 pip.transform.SetParent(transform, false);
                 pip.transform.localPosition = new Vector3(0f, 4.15f, 0f);
-                pip.transform.localScale = Vector3.one * 0.28f;
                 ColonyVisualUtility.DestroyNow(pip.GetComponent<Collider>());
                 existing = pip.transform;
+
+                if (_levyPipMat == null)
+                {
+                    _levyPipMat = new Material(Shader.Find("Universal Render Pipeline/Lit")
+                                               ?? Shader.Find("Sprites/Default"));
+                    var c = new Color(0.98f, 0.82f, 0.22f);
+                    if (_levyPipMat.HasProperty("_BaseColor")) _levyPipMat.SetColor("_BaseColor", c);
+                    else if (_levyPipMat.HasProperty("_Color")) _levyPipMat.color = c;
+                }
+                var rend = existing.GetComponent<Renderer>();
+                if (rend != null) rend.sharedMaterial = _levyPipMat;
             }
 
-            var rend = existing.GetComponent<Renderer>();
-            if (rend != null)
-            {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                       ?? Shader.Find("Sprites/Default"));
-                var c = new Color(0.98f, 0.82f, 0.22f);
-                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
-                else if (mat.HasProperty("_Color")) mat.color = c;
-                rend.sharedMaterial = mat;
-            }
+            float s = Mathf.Clamp(0.22f + 0.1f * Mathf.Log10(1f + LevyPurse / 25f), 0.22f, 0.55f);
+            existing.localScale = Vector3.one * s;
         }
 
         public void SetPreferredClass(SpecialistClass cls)

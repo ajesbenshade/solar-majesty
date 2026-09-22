@@ -144,7 +144,7 @@ namespace SolarMajesty.Tests
 
             s.Tick(s.TaxInterval);
 
-            Assert.AreEqual(Settlement.StarterColonists * Settlement.TaxPerCitizen, s.LastTax);
+            Assert.AreEqual(MajestyEconomy.HousesDailyTax(2, Settlement.StarterColonists, false), s.LastTax, "Majesty house tax: 20 + 10 per resident");
             Assert.AreEqual(s.LastTax, s.PendingLevy, "tax sits as a HAB purse, it does not teleport");
             Assert.AreEqual(s.LastTax, s.UncollectedLevy);
             Assert.AreEqual(0, res.Get(ResourceId.Metals), "stockpile stays empty until a Courier walks home");
@@ -160,7 +160,7 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(s.Overcrowded);
             s.Tick(s.TaxInterval);
 
-            Assert.AreEqual(Mathf.RoundToInt(3 * Settlement.TaxPerCitizen * 0.65f), s.LastTax);
+            Assert.AreEqual(MajestyEconomy.HousesDailyTax(1, 3, true), s.LastTax);
             Assert.AreEqual(s.LastTax, s.PendingLevy);
             Assert.AreEqual(0, res.Get(ResourceId.Metals));
         }
@@ -246,7 +246,7 @@ namespace SolarMajesty.Tests
             s.Tick(s.ProductionInterval);
 
             Assert.AreEqual(3, res.Get(ResourceId.WaterIce), "one farm yields 3 ice");
-            Assert.AreEqual(4, res.Get(ResourceId.Metals), "one mine yields 4 metals");
+            Assert.AreEqual(40, res.Get(ResourceId.Metals), "one mine yields 40 CRED");
         }
 
         [Test]
@@ -258,7 +258,7 @@ namespace SolarMajesty.Tests
 
             s.Tick(s.ProductionInterval);
 
-            Assert.AreEqual(Mathf.RoundToInt(4 * OverseerRules.PowerShortWork), res.Get(ResourceId.Metals));
+            Assert.AreEqual(Mathf.RoundToInt(40 * OverseerRules.PowerShortWork), res.Get(ResourceId.Metals));
         }
 
         [Test]
@@ -278,7 +278,7 @@ namespace SolarMajesty.Tests
             var s = Make(out ResourceManager res, coreHabs: 4);
             s.SetPopulationGoal(4);
             res.Set(ResourceId.WaterIce, 50);
-            res.Set(ResourceId.Metals, 50);
+            res.Set(ResourceId.Metals, 500);
             res.Set(ResourceId.Regolith, 50);
             s.RestorePopulation(4);
             s.SetIncomeRates(OverseerRules.SustainMetPerMin, OverseerRules.SustainIcePerMin);
@@ -386,7 +386,7 @@ namespace SolarMajesty.Tests
         [Test]
         public void GreedAsk_NullData_HasASafeFloor()
         {
-            Assert.AreEqual(18, OverseerRules.GreedAsk(null));
+            Assert.AreEqual(180, OverseerRules.GreedAsk(null));
         }
 
         [Test]
@@ -422,22 +422,23 @@ namespace SolarMajesty.Tests
         [Test]
         public void RefabMetals_NullData_HasASafeFloor()
         {
-            Assert.AreEqual(25, OverseerRules.RefabMetals(null));
+            Assert.AreEqual(250, OverseerRules.RefabMetals(null));
         }
 
         [Test]
-        public void YardBill_IsBaseAtLevelOneThenGrowsByOnePointFive()
+        public void YardBill_IsHirePlusHalfPerLevel_Majesty2()
         {
-            Assert.AreEqual(40, OverseerRules.YardBill(1));
-            Assert.AreEqual(40, OverseerRules.YardBill(0), "level 0 clamps to L1");
-            Assert.AreEqual(60, OverseerRules.YardBill(2));
-            Assert.AreEqual(90, OverseerRules.YardBill(3));
+            Assert.AreEqual(400, OverseerRules.YardBill(1));
+            Assert.AreEqual(400, OverseerRules.YardBill(0), "level 0 clamps to L1");
+            Assert.AreEqual(600, OverseerRules.YardBill(2));
+            Assert.AreEqual(800, OverseerRules.YardBill(3));
+            Assert.AreEqual(500 + 250 * 3, OverseerRules.YardBill(4, SpecialistClass.DefenseMech), "warrior-tier hire 500");
         }
 
         [Test]
         public void YardBill_CapsAtReviveCostMaxSteps()
         {
-            int capped = OverseerRules.YardBill(1 + OverseerRules.ReviveCostMaxSteps);
+            int capped = OverseerRules.YardBill(OverseerRules.LevelCap);
             Assert.AreEqual(capped, OverseerRules.YardBill(99));
             Assert.Greater(capped, OverseerRules.YardBill(1));
         }
@@ -580,11 +581,11 @@ namespace SolarMajesty.Tests
         [Test]
         public void TechIcePrices_FoldedIntoMetals()
         {
-            AssertMetals(TechId.LunarRocket, 55);
-            AssertMetals(TechId.MarsShip, 110);
-            AssertMetals(TechId.Icebreaker, 120);
-            AssertMetals(TechId.GeneVault, 140);
-            AssertMetals(TechId.ClimateLoom, 160);
+            AssertMetals(TechId.LunarRocket, 550);
+            AssertMetals(TechId.MarsShip, 1100);
+            AssertMetals(TechId.Icebreaker, 1200);
+            AssertMetals(TechId.GeneVault, 1400);
+            AssertMetals(TechId.ClimateLoom, 1600);
         }
 
         [Test]
@@ -711,8 +712,8 @@ namespace SolarMajesty.Tests
         [Test]
         public void CreditsFrom_PaysMetalsForIceAndReg()
         {
-            Assert.AreEqual(2, MarketMath.CreditsFrom(1, 0));
-            Assert.AreEqual(4, MarketMath.CreditsFrom(1, 2));
+            Assert.AreEqual(20, MarketMath.CreditsFrom(1, 0));
+            Assert.AreEqual(40, MarketMath.CreditsFrom(1, 2));
         }
     }
 
@@ -741,7 +742,7 @@ namespace SolarMajesty.Tests
 
             Assert.IsTrue(eco.MarketOpen);
             Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
-            Assert.AreEqual(2, res.Get(ResourceId.Metals));
+            Assert.AreEqual(20, res.Get(ResourceId.Metals));
             Assert.AreEqual(10, res.Get(ResourceId.Regolith), "REG at reserve stays");
         }
 
@@ -794,7 +795,7 @@ namespace SolarMajesty.Tests
 
             Assert.GreaterOrEqual(res.Get(ResourceId.WaterIce), 12);
             Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
-            Assert.AreEqual(4, res.Get(ResourceId.Metals));
+            Assert.AreEqual(40, res.Get(ResourceId.Metals));
         }
     }
 }

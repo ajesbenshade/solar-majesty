@@ -1,0 +1,211 @@
+{
+  "units": [
+    {
+      "unit": "SM_Unit_AshHopper",
+      "walkSpeed": 0.0,
+      "height": 0.0,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike"
+      ],
+      "downHoldsLastFrame": false
+    },
+    {
+      "unit": "SM_Unit_CourierBot",
+      "walkSpeed": 4.3,
+      "height": 1.98,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_DefenseMech",
+      "walkSpeed": 3.024,
+      "height": 1.98,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_DustStalker",
+      "walkSpeed": 0.0,
+      "height": 0.0,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike"
+      ],
+      "downHoldsLastFrame": false
+    },
+    {
+      "unit": "SM_Unit_EngineerBot",
+      "walkSpeed": 3.022,
+      "height": 1.95,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_GeologistBot",
+      "walkSpeed": 3.255,
+      "height": 1.95,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_HarvesterBot",
+      "walkSpeed": 3.526,
+      "height": 1.95,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_IceWisp",
+      "walkSpeed": 0.0,
+      "height": 0.0,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike"
+      ],
+      "downHoldsLastFrame": false
+    },
+    {
+      "unit": "SM_Unit_Medic",
+      "walkSpeed": 3.686,
+      "height": 1.98,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_RegolithMite",
+      "walkSpeed": 0.0,
+      "height": 0.0,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike"
+      ],
+      "downHoldsLastFrame": false
+    },
+    {
+      "unit": "SM_Unit_RockTick",
+      "walkSpeed": 0.0,
+      "height": 0.0,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike"
+      ],
+      "downHoldsLastFrame": false
+    },
+    {
+      "unit": "SM_Unit_ScoutDrone",
+      "walkSpeed": 4.3,
+      "height": 1.98,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_SentinelMech",
+      "walkSpeed": 2.808,
+      "height": 1.98,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_SoilCreeper",
+      "walkSpeed": 0.0,
+      "height": 0.0,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike"
+      ],
+      "downHoldsLastFrame": false
+    },
+    {
+      "unit": "SM_Unit_SurveyorBot",
+      "walkSpeed": 3.969,
+      "height": 1.98,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_TerraformerBot",
+      "walkSpeed": 3.024,
+      "height": 1.98,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike",
+        "Work",
+        "Down"
+      ],
+      "downHoldsLastFrame": true
+    },
+    {
+      "unit": "SM_Unit_WattLeech",
+      "walkSpeed": 0.0,
+      "height": 0.0,
+      "clips": [
+        "Idle",
+        "Walk",
+        "Strike"
+      ],
+      "downHoldsLastFrame": false
+    }
+  ]
+}

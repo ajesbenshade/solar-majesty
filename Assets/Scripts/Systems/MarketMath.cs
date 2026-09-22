@@ -11,10 +11,10 @@ namespace SolarMajesty
         public const int IceReserveFloor = 12;
         public const int IcePerColonist = 3;
         public const int IceSiphonMax = 1;
-        public const int IceToMet = 2;
+        public const int IceToMet = 20;
         public const int RegReserve = 10;
         public const int RegSiphonMax = 2;
-        public const int RegToMet = 1;
+        public const int RegToMet = 10;
         public const float IntervalSeconds = 24f;
 
         public const string GrokPayout =

@@ -3,6 +3,8 @@
 **Integration note — 2026-09-22:** The later Commons lock is the smooth command-dome citadel (2026-09-17); older geodesic instructions and screenshots below are historical. The boxy tan HAB, orange ribbed airlocks, four-cell landmark yards, and animated units are retained. Phase 4 exit remains blocked pending a fresh visual review.
 
 
+**Hero roster v2 — 2026-09-22:** The ten specialist heroes are armoured humanoid knights (LO-COU/DEF/ENG/GEO/HAR/MED/SCT/SEN/SRV/TRF-1) per [`ConceptSheets/Heroes_v2/`](../ConceptSheets/Heroes_v2/). Drones, tracked chassis and rovers are retired for heroes. The pipeline, rig and clips are documented in [Docs/HERO_ROSTER_V2.md](HERO_ROSTER_V2.md).
+
 **Mandatory keywords in every prompt:**
 
 > isometric view, Majesty 2 inspired readable silhouettes, SpaceX industrial aesthetic, clean white and black Starship materials with orange accents, modular habitat design, slightly exaggerated proportions for clarity, vibrant but grounded sci-fi lighting, high detail 3D render style

@@ -14,7 +14,7 @@ namespace SolarMajesty
     public sealed class SaveGame
     {
         /// <summary>Bump when a field's meaning changes. Readers reject unknown future versions.</summary>
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6; // v6: gold on the Majesty 2 scale (×10)
 
         public int version = CurrentVersion;
         public string gameVersion = "";

@@ -50,7 +50,8 @@ namespace SolarMajesty
                 BindTerrainBake(groundMat, ground, body);
 
                 rend.sharedMaterial = groundMat;
-                rend.shadowCastingMode = ShadowCastingMode.Off;
+                // Terrain self-shadowing: crater walls, buttes and ridges shade the ground.
+                rend.shadowCastingMode = ShadowCastingMode.On;
                 rend.receiveShadows = true;
                 return;
             }
@@ -156,8 +157,10 @@ namespace SolarMajesty
                 albedo = EnvironmentMeshCatalog.LoadEarthAlbedo();
                 normal = EnvironmentMeshCatalog.LoadEarthNormal();
             }
-            else if (body.Id == CelestialBodyId.Mars)
+            else
             {
+                // Mars regolith tile doubles as luminance grit for Luna / Belt / Europa
+                // (PlanetGround v2 uses detail luminance only, so it carries no rust tint).
                 albedo = EnvironmentMeshCatalog.LoadMarsAlbedo();
                 normal = EnvironmentMeshCatalog.LoadMarsNormal();
             }
@@ -179,7 +182,12 @@ namespace SolarMajesty
                 groundMat.SetFloat("_DetailTexScale", body.Id == CelestialBodyId.Mars ? 8.5f : 6.5f);
             // TDB splat albedo dominates; authored Mars grit stays as a secondary multiply.
             if (groundMat.HasProperty("_DetailTexAmount"))
-                groundMat.SetFloat("_DetailTexAmount", body.Id == CelestialBodyId.Mars ? 0.52f : 0.40f);
+                groundMat.SetFloat("_DetailTexAmount",
+                    body.Id == CelestialBodyId.Mars ? 0.52f
+                    : body.Id == CelestialBodyId.Europa ? 0.14f
+                    : 0.40f);
+            if (groundMat.HasProperty("_DetailMeanLuma"))
+                groundMat.SetFloat("_DetailMeanLuma", body.Id == CelestialBodyId.Earth ? 0.41f : 0.44f);
         }
 
         /// <summary>
@@ -233,6 +241,154 @@ namespace SolarMajesty
             if (groundMat.HasProperty("_WetColor")) groundMat.SetColor("_WetColor", wet);
 
             BindSplatAlbedoTiles(groundMat, id);
+            ApplyNaturalPalette(groundMat, body);
+        }
+
+        /// <summary>
+        /// Natural-planet palette and PlanetGround v2 knobs (2026-09-22). Runs after the legacy
+        /// splat-tile binding and overrides its colours. Mars keeps the rust lock (~150/68/30) so
+        /// white hulls stay white against the dirt.
+        /// </summary>
+        private static void ApplyNaturalPalette(Material m, CelestialBodyProfile body)
+        {
+            if (m == null || body == null) return;
+            void C(string prop, Color c) { if (m.HasProperty(prop)) m.SetColor(prop, c); }
+            void F(string prop, float v) { if (m.HasProperty(prop)) m.SetFloat(prop, v); }
+
+            F("_BakeNormalAmount", 1f);
+            F("_SplatAmount", 1f);
+            F("_SlopeStart", 0.30f);
+            F("_SlopeEnd", 0.70f);
+            switch (body.Id)
+            {
+                case CelestialBodyId.Mars:
+                    C("_BaseColor", new Color(0.58f, 0.27f, 0.12f));
+                    C("_DarkColor", new Color(0.30f, 0.15f, 0.09f));
+                    C("_RockColor", new Color(0.44f, 0.25f, 0.14f));
+                    C("_GrassColor", new Color(0.31f, 0.16f, 0.10f));   // dark basaltic sand
+                    C("_WetColor", new Color(0.40f, 0.20f, 0.10f));     // crater floor fines
+                    C("_EjectaColor", new Color(0.68f, 0.40f, 0.21f));
+                    C("_StrataColor", new Color(0.58f, 0.36f, 0.20f));
+                    F("_StrataStrength", 0.55f);
+                    F("_StrataScale", 0.7f);
+                    F("_AOStrength", 0.65f);
+                    F("_FreshAmount", 0.45f);
+                    F("_FeatureAmount", 0.25f);
+                    F("_MacroScale", 70f);
+                    F("_MacroStrength", 0.28f);
+                    F("_Smoothness", 0.05f);
+                    break;
+                case CelestialBodyId.Luna:
+                    C("_BaseColor", new Color(0.50f, 0.49f, 0.47f));    // highland regolith
+                    C("_DarkColor", new Color(0.28f, 0.28f, 0.28f));
+                    C("_RockColor", new Color(0.40f, 0.39f, 0.38f));
+                    C("_GrassColor", new Color(0.46f, 0.45f, 0.43f));
+                    C("_WetColor", new Color(0.27f, 0.27f, 0.27f));     // mare basalt
+                    C("_EjectaColor", new Color(0.76f, 0.75f, 0.73f));
+                    F("_StrataStrength", 0f);
+                    F("_AOStrength", 0.7f);
+                    F("_FreshAmount", 0.85f);
+                    F("_FeatureAmount", 0.1f);
+                    F("_MacroScale", 60f);
+                    F("_MacroStrength", 0.22f);
+                    F("_Smoothness", 0.04f);
+                    break;
+                case CelestialBodyId.Earth:
+                    C("_BaseColor", new Color(0.36f, 0.29f, 0.19f));    // bare soil
+                    C("_DarkColor", new Color(0.19f, 0.30f, 0.11f));
+                    C("_RockColor", new Color(0.42f, 0.40f, 0.36f));
+                    C("_GrassColor", new Color(0.29f, 0.44f, 0.16f));
+                    C("_WetColor", new Color(0.30f, 0.27f, 0.19f));     // mud / shore
+                    C("_EjectaColor", new Color(0.42f, 0.40f, 0.36f));
+                    C("_StrataColor", new Color(0.50f, 0.46f, 0.40f));
+                    F("_StrataStrength", 0.25f);
+                    F("_StrataScale", 0.9f);
+                    F("_AOStrength", 0.55f);
+                    F("_FreshAmount", 0f);
+                    F("_FeatureAmount", 0.05f);
+                    F("_MacroScale", 55f);
+                    F("_MacroStrength", 0.35f);
+                    F("_Smoothness", 0.10f);
+                    break;
+                case CelestialBodyId.Europa:
+                    C("_BaseColor", new Color(0.84f, 0.87f, 0.90f));    // water ice
+                    C("_DarkColor", new Color(0.62f, 0.48f, 0.40f));
+                    C("_RockColor", new Color(0.70f, 0.75f, 0.80f));
+                    C("_GrassColor", new Color(0.58f, 0.40f, 0.30f));   // salt-stained lineae
+                    C("_WetColor", new Color(0.62f, 0.48f, 0.40f));     // chaos
+                    C("_EjectaColor", new Color(0.93f, 0.96f, 0.99f));
+                    F("_StrataStrength", 0f);
+                    F("_AOStrength", 0.5f);
+                    F("_FreshAmount", 0.8f);
+                    F("_FeatureAmount", 0.1f);
+                    F("_MacroScale", 80f);
+                    F("_MacroStrength", 0.14f);
+                    F("_Smoothness", 0.35f);
+                    break;
+                default: // Belt: dark carbonaceous regolith
+                    C("_BaseColor", new Color(0.20f, 0.19f, 0.18f));
+                    C("_DarkColor", new Color(0.12f, 0.115f, 0.11f));
+                    C("_RockColor", new Color(0.27f, 0.26f, 0.25f));
+                    C("_GrassColor", new Color(0.15f, 0.145f, 0.14f));  // ponded fines
+                    C("_WetColor", new Color(0.15f, 0.145f, 0.14f));
+                    C("_EjectaColor", new Color(0.36f, 0.34f, 0.32f));
+                    C("_StrataColor", new Color(0.24f, 0.23f, 0.22f));
+                    F("_StrataStrength", 0.2f);
+                    F("_AOStrength", 0.7f);
+                    F("_FreshAmount", 0.7f);
+                    F("_FeatureAmount", 0.1f);
+                    F("_MacroScale", 50f);
+                    F("_MacroStrength", 0.25f);
+                    F("_Smoothness", 0.05f);
+                    break;
+            }
+            BindNaturalSplatTiles(m, body.Id);
+        }
+
+        /// <summary>
+        /// Splat albedo tiles per v2 channel meaning. Earth: soil (TDB sand), rock grit, real
+        /// meadow grass (SM_Ground_Earth) for layer B, mud. Everywhere else the regolith tile is
+        /// desaturated and colourised into each layer, so no Earth grass/snow chroma leaks in.
+        /// </summary>
+        private static void BindNaturalSplatTiles(Material m, CelestialBodyId id)
+        {
+            Texture2D regolith = EnvironmentMeshCatalog.LoadMarsAlbedo();
+            Texture2D meadow = id == CelestialBodyId.Earth ? EnvironmentMeshCatalog.LoadEarthAlbedo() : null;
+            var layers = TerrainSplatLayers.Load();
+            Texture2D soil = layers != null && layers.sand != null ? layers.sand : regolith;
+
+            void Bind(string prop, Texture2D tex)
+            {
+                if (tex == null || !m.HasProperty(prop)) return;
+                tex.wrapMode = TextureWrapMode.Repeat;
+                tex.filterMode = FilterMode.Bilinear;
+                m.SetTexture(prop, tex);
+            }
+
+            if (id == CelestialBodyId.Earth && meadow != null)
+            {
+                Bind("_SplatAlbedo0", soil);
+                Bind("_SplatAlbedo1", regolith);
+                Bind("_SplatAlbedo2", meadow);
+                Bind("_SplatAlbedo3", soil);
+                if (m.HasProperty("_SplatDesat")) m.SetVector("_SplatDesat", new Vector4(0.6f, 1f, 0f, 0.75f));
+                if (m.HasProperty("_SplatAlbedoAmount")) m.SetFloat("_SplatAlbedoAmount", 0.9f);
+                if (m.HasProperty("_SplatTexScale")) m.SetFloat("_SplatTexScale", 6.5f);
+                return;
+            }
+            if (regolith == null)
+            {
+                if (m.HasProperty("_SplatAlbedoAmount")) m.SetFloat("_SplatAlbedoAmount", 0f);
+                return;
+            }
+            Bind("_SplatAlbedo0", regolith);
+            Bind("_SplatAlbedo1", regolith);
+            Bind("_SplatAlbedo2", regolith);
+            Bind("_SplatAlbedo3", regolith);
+            if (m.HasProperty("_SplatDesat")) m.SetVector("_SplatDesat", new Vector4(1f, 1f, 1f, 1f));
+            if (m.HasProperty("_SplatAlbedoAmount"))
+                m.SetFloat("_SplatAlbedoAmount", id == CelestialBodyId.Europa ? 0.2f : 0.42f);
+            if (m.HasProperty("_SplatTexScale")) m.SetFloat("_SplatTexScale", 8.5f);
         }
 
         /// <summary>
@@ -738,6 +894,8 @@ namespace SolarMajesty
 
         private static float SampleBakeY(float wx, float wz)
         {
+            if (TerrainDataBake.Current != null)
+                return TerrainDataBake.Current.SampleHeight(wx, wz);
             var ground = GameObject.Find("GroundPlane");
             var holder = ground != null ? ground.GetComponent<TerrainBakeHolder>() : null;
             if (holder != null && holder.Bake != null)
@@ -796,7 +954,7 @@ namespace SolarMajesty
                     clump.transform.SetParent(parent, false);
                     clump.transform.position = world;
                     clump.transform.rotation = Quaternion.Euler(0f, salt * 37f, 0f);
-                    ColonyVisualUtility.SnapToGround(clump);
+                    ColonyVisualUtility.SnapToGround(clump, SampleBakeY(world.x, world.z));
                     if (salt % 5 == 0)
                     {
                         var flowerPrefab = EnvironmentMeshCatalog.LoadEarthFlower(salt);
@@ -808,7 +966,7 @@ namespace SolarMajesty
                             {
                                 bloom.transform.SetParent(parent, false);
                                 bloom.transform.position = world + new Vector3(0.18f, 0f, 0.12f);
-                                ColonyVisualUtility.SnapToGround(bloom);
+                                ColonyVisualUtility.SnapToGround(bloom, SampleBakeY(world.x + 0.18f, world.z + 0.12f));
                             }
                         }
                     }
@@ -819,7 +977,7 @@ namespace SolarMajesty
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = "Dress_Grass";
             go.transform.SetParent(parent, false);
-            go.transform.position = world + Vector3.up * 0.12f;
+            go.transform.position = world + Vector3.up * (0.12f + SampleBakeY(world.x, world.z));
             go.transform.localScale = new Vector3(0.22f + (salt % 3) * 0.06f, 0.28f, 0.16f);
             go.transform.rotation = Quaternion.Euler(0f, salt * 37f, 8f);
             Object.Destroy(go.GetComponent<Collider>());
@@ -852,7 +1010,7 @@ namespace SolarMajesty
                     float s = h / EnvironmentMeshCatalog.TreeNativeHeight;
                     mesh.transform.localScale = Vector3.one * s;
                 }
-                ColonyVisualUtility.SnapToGround(mesh);
+                ColonyVisualUtility.SnapToGround(mesh, SampleBakeY(world.x, world.z));
                 if (salt == 0)
                     Debug.Log("[MapDressing] Earth vista trees using " + prefab.name);
                 return;
@@ -862,7 +1020,7 @@ namespace SolarMajesty
 
             var tree = new GameObject("Dress_Tree");
             tree.transform.SetParent(parent, false);
-            tree.transform.position = world;
+            tree.transform.position = world + Vector3.up * SampleBakeY(world.x, world.z);
 
             var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             trunk.name = "Trunk";
@@ -885,7 +1043,16 @@ namespace SolarMajesty
         {
             var pond = new GameObject("Dress_Pond");
             pond.transform.SetParent(parent, false);
-            pond.transform.position = world;
+            // The bake carves a basin here (TerrainDataBake.VistaPondLocal); fill it to just
+            // under the lowest point of its rim so the shoreline is the terrain itself.
+            float rimMin = float.MaxValue;
+            for (int k = 0; k < 12; k++)
+            {
+                float a = k / 12f * Mathf.PI * 2f;
+                rimMin = Mathf.Min(rimMin, SampleBakeY(world.x + Mathf.Cos(a) * 4.3f, world.z + Mathf.Sin(a) * 4.3f));
+            }
+            float level = rimMin < float.MaxValue ? rimMin - 0.12f : 0f;
+            pond.transform.position = new Vector3(world.x, level, world.z);
 
             // Overlapping elliptical discs — soft shoreline, same language as lakes/rivers.
             var worldGen = Object.FindFirstObjectByType<PlanetaryWorldGen>();

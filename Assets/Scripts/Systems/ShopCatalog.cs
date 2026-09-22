@@ -3,7 +3,8 @@ using System.Collections.Generic;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Majesty shops. Guild halls sell class kits. The market sells potions
+    /// Majesty shops (prices in Majesty 2 gold: potions 20, regeneration amulet 300,
+    /// blacksmith gear 300–480). Every sale lands in the vendor's till. Guild halls sell class kits. The market sells potions
     /// and the regen necklace. The blacksmith sells guild arms and armor.
     /// The inn is rest only.
     /// </summary>
@@ -19,7 +20,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.ScoutDrone,
                 DisplayName = "Horizon Optics",
                 Description = "Scout visor. Permanent speed.",
-                Cost = 40,
+                Cost = 150,
                 SpeedBonus = 0.18f
             },
             new ShopItemDef
@@ -30,7 +31,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.EngineerBot,
                 DisplayName = "Anvil Rig",
                 Description = "Tool harness. Permanent work rate.",
-                Cost = 48,
+                Cost = 200,
                 WorkBonus = 0.18f,
                 ArmorMitigation = 0.08f
             },
@@ -42,7 +43,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.DefenseMech,
                 DisplayName = "Aegis Shell",
                 Description = "Lodge plating. Permanent armor.",
-                Cost = 55,
+                Cost = 250,
                 ArmorMitigation = 0.22f
             },
             new ShopItemDef
@@ -53,7 +54,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.Medic,
                 DisplayName = "Triage Pack",
                 Description = "Field kit. Light armor, faster rest heal.",
-                Cost = 42,
+                Cost = 180,
                 ArmorMitigation = 0.10f,
                 RegenPerSecond = 0.02f
             },
@@ -65,7 +66,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.DefenseMech,
                 DisplayName = "Field Shell",
                 Description = "Light EVA plating. Permanent armor.",
-                Cost = 45,
+                Cost = 200,
                 ArmorMitigation = 0.18f
             },
             new ShopItemDef
@@ -76,7 +77,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.DefenseMech,
                 DisplayName = "Hardplate Suit",
                 Description = "Heavy armor. Permanent, slight speed cost.",
-                Cost = 90,
+                Cost = 400,
                 ArmorMitigation = 0.32f,
                 SpeedBonus = -0.06f
             },
@@ -87,7 +88,7 @@ namespace SolarMajesty
                 Vendor = ShopVendor.Market,
                 DisplayName = "Health Potion",
                 Description = "Instant chassis patch.",
-                Cost = 18,
+                Cost = 20,
                 HealAmount = 0.45f
             },
             new ShopItemDef
@@ -97,7 +98,7 @@ namespace SolarMajesty
                 Vendor = ShopVendor.Market,
                 DisplayName = "Magic Potion",
                 Description = "Temporary work and courage.",
-                Cost = 22,
+                Cost = 40,
                 WorkBonus = 0.22f,
                 CourageBonus = 0.16f,
                 DurationSeconds = 50f
@@ -109,7 +110,7 @@ namespace SolarMajesty
                 Vendor = ShopVendor.Market,
                 DisplayName = "Regen Necklace",
                 Description = "Slow HP regen while worn.",
-                Cost = 80,
+                Cost = 300,
                 RegenPerSecond = 0.035f
             },
             new ShopItemDef
@@ -120,7 +121,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.ScoutDrone,
                 DisplayName = "Horizon Needle",
                 Description = "Lodge carbine. Permanent damage.",
-                Cost = 70,
+                Cost = 350,
                 DamageBonus = 0.22f,
                 SpeedBonus = 0.06f
             },
@@ -132,7 +133,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.ScoutDrone,
                 DisplayName = "Horizon Weave",
                 Description = "Light scout mail.",
-                Cost = 62,
+                Cost = 300,
                 ArmorMitigation = 0.16f,
                 SpeedBonus = 0.08f
             },
@@ -144,7 +145,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.EngineerBot,
                 DisplayName = "Anvil Sledge",
                 Description = "Forge hammer. Damage and weld.",
-                Cost = 75,
+                Cost = 375,
                 DamageBonus = 0.18f,
                 WorkBonus = 0.12f
             },
@@ -156,7 +157,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.EngineerBot,
                 DisplayName = "Anvil Plate",
                 Description = "Welder plate. Heavy armor.",
-                Cost = 80,
+                Cost = 400,
                 ArmorMitigation = 0.28f,
                 SpeedBonus = -0.04f
             },
@@ -168,7 +169,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.DefenseMech,
                 DisplayName = "Aegis Pike",
                 Description = "Lodge spear. Permanent damage.",
-                Cost = 78,
+                Cost = 400,
                 DamageBonus = 0.28f
             },
             new ShopItemDef
@@ -179,7 +180,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.DefenseMech,
                 DisplayName = "Aegis Mail",
                 Description = "Watchmail. Heaviest lodge armor.",
-                Cost = 95,
+                Cost = 480,
                 ArmorMitigation = 0.38f,
                 SpeedBonus = -0.08f
             },
@@ -191,7 +192,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.Medic,
                 DisplayName = "Triage Injector",
                 Description = "Field lance. Light damage, extra regen.",
-                Cost = 68,
+                Cost = 340,
                 DamageBonus = 0.10f,
                 RegenPerSecond = 0.03f
             },
@@ -203,7 +204,7 @@ namespace SolarMajesty
                 ForClass = SpecialistClass.Medic,
                 DisplayName = "Triage Mail",
                 Description = "Softmail. Armor and regen.",
-                Cost = 70,
+                Cost = 350,
                 ArmorMitigation = 0.18f,
                 RegenPerSecond = 0.02f
             },
@@ -214,7 +215,7 @@ namespace SolarMajesty
                 Vendor = ShopVendor.Inn,
                 DisplayName = "Gene: Valor",
                 Description = "Legacy inn gene — unused.",
-                Cost = 35,
+                Cost = 350,
                 CourageBonus = 0.22f,
                 DurationSeconds = 90f
             },
@@ -225,7 +226,7 @@ namespace SolarMajesty
                 Vendor = ShopVendor.Inn,
                 DisplayName = "Gene: Focus",
                 Description = "Legacy inn gene — unused.",
-                Cost = 30,
+                Cost = 300,
                 WorkBonus = 0.28f,
                 DurationSeconds = 75f
             },
@@ -236,7 +237,7 @@ namespace SolarMajesty
                 Vendor = ShopVendor.Inn,
                 DisplayName = "Gene: Swift",
                 Description = "Legacy inn gene — unused.",
-                Cost = 28,
+                Cost = 280,
                 SpeedBonus = 0.22f,
                 DurationSeconds = 60f
             }

@@ -227,9 +227,9 @@ namespace SolarMajesty
         private void HandleBountyKeys()
         {
             if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))
-                NudgeBounty(bountyStep);
+                NudgeBounty(Mathf.Max(bountyStep, MajestyEconomy.FlagBountyStep));
             if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))
-                NudgeBounty(-bountyStep);
+                NudgeBounty(-Mathf.Max(bountyStep, MajestyEconomy.FlagBountyStep));
             if (_selected != null)
                 bounty = Mathf.Clamp(bounty, _selected.minBounty, _selected.maxBounty);
         }

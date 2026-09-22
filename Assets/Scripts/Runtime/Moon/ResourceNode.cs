@@ -116,7 +116,7 @@ namespace SolarMajesty
                 }
             }
 
-            ColonyVisualUtility.SnapToGround(gameObject);
+            ColonyVisualUtility.SnapToGround(gameObject, TerrainDataBake.GroundHeight(transform.position));
             EnsureYieldLabel();
         }
 

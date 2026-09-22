@@ -5,8 +5,8 @@ Player-facing names stay Compact / robot. Do not use Paradox guild or temple nam
 | Majesty 2 | Solar Majesty | Toy |
 |-----------|---------------|-----|
 | Palace | Colony Commons | First civic dock. Levy home. |
-| Houses | HAB purses | Colonists print CRED. Haul walks it. |
-| Tax collectors | Haul (Courier) | Walks purses to Commons or a far Watchtower. |
+| Houses | HAB purses | 20 + 10 CRED per resident per day (max 50). Collectors walk it. |
+| Tax collectors | Levy drones (2 per Commons, 1 per Watchtower) | Walk every building's till home. Haul (Courier) still walks HAB purses. |
 | Farms | Greenhouse Farm | ICE tank (lungs), not gold. |
 | Marketplace | Market Stall | Potions + necklace. Surplus ICE/REG → CRED above reserve. |
 | Blacksmith | Blacksmith | Lodge arms and armor. |
@@ -22,7 +22,7 @@ Player-facing names stay Compact / robot. Do not use Paradox guild or temple nam
 | Hero recruit | Workshops | Fabricate outdoor robots. |
 | Flags | Decrees | Eight `FlagType`s. No click-to-move. |
 
-Code: `MajestyAnalog` in `Assets/Scripts/Systems/MajestyAnalog.cs`.
+Code: `MajestyAnalog` in `Assets/Scripts/Systems/MajestyAnalog.cs`. Gold numbers and the Majesty 2 gold loop: `MajestyEconomy` — see [`ECONOMY_MAJESTY2.md`](ECONOMY_MAJESTY2.md).
 
 Hard locks: no click-to-move, no `SpecialistBrain.ScoreFlag` rewrite, no 11th class, no new `FlagType` for these toys.
 

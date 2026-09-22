@@ -140,13 +140,14 @@ namespace SolarMajesty
                 return false;
             }
 
-            if (!_resources.CanAfford(data.buildCost))
+            ResourceAmount[] cost = CostFor(data);
+            if (!_resources.CanAfford(cost))
             {
                 failReason = "cannot_afford";
                 return false;
             }
 
-            if (!_resources.TrySpend(data.buildCost))
+            if (!_resources.TrySpend(cost))
             {
                 failReason = "spend_failed";
                 return false;
@@ -161,11 +162,48 @@ namespace SolarMajesty
                 GridCell = gridCell,
                 WorldPosition = worldPosition,
                 ProgressSeconds = 0f,
-                RequiredSeconds = Mathf.Max(0.1f, data.buildTimeSeconds)
+                RequiredSeconds = Mathf.Max(0.1f, data.buildTimeSeconds),
+                PaidCost = cost
             };
 
             _orders.Add(order);
             return true;
+        }
+
+        /// <summary>How many of this category already stand (runtime supplies it from the village).</summary>
+        public System.Func<BuildingCategory, int> OwnedCount { get; set; }
+
+        /// <summary>Standing buildings of this category plus ones still under construction.</summary>
+        public int OwnedOrQueued(BuildingCategory cat)
+        {
+            int n = OwnedCount != null ? Mathf.Max(0, OwnedCount(cat)) : 0;
+            for (int i = 0; i < _orders.Count; i++)
+            {
+                var o = _orders[i];
+                if (o != null && !o.IsRefab && o.Data != null && o.Data.category == cat) n++;
+            }
+            return n;
+        }
+
+        /// <summary>
+        /// Majesty 2 price of the next building of this type: each extra one costs 150% of the
+        /// previous, rounded up to 10 (infrastructure stays flat — see MajestyEconomy).
+        /// </summary>
+        public ResourceAmount[] CostFor(BuildingData data)
+        {
+            if (data?.buildCost == null || data.buildCost.Length == 0) return data?.buildCost;
+            if (!MajestyEconomy.ScalesWithCount(data.category)) return data.buildCost;
+            int owned = OwnedOrQueued(data.category);
+            if (owned <= 0) return data.buildCost;
+            var cost = new ResourceAmount[data.buildCost.Length];
+            for (int i = 0; i < cost.Length; i++)
+            {
+                var c = data.buildCost[i];
+                cost[i] = c.resource == ResourceId.Metals
+                    ? new ResourceAmount(c.resource, MajestyEconomy.DuplicateCost(c.amount, owned))
+                    : c;
+            }
+            return cost;
         }
 
         /// <summary>Replay a saved piece without charging stockpile or dock rules.</summary>
@@ -293,11 +331,12 @@ namespace SolarMajesty
             if (!order.IsRefab)
                 MarkFootprint(order.Data, order.GridCell, occupied: false);
 
-            if (refund && !order.IsRefab && order.Data?.buildCost != null)
+            var paid = order.PaidCost ?? order.Data?.buildCost;
+            if (refund && !order.IsRefab && paid != null)
             {
-                for (int i = 0; i < order.Data.buildCost.Length; i++)
+                for (int i = 0; i < paid.Length; i++)
                 {
-                    ResourceAmount c = order.Data.buildCost[i];
+                    ResourceAmount c = paid[i];
                     _resources.Add(c.resource, c.amount);
                 }
             }

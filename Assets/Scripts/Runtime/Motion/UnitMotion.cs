@@ -19,10 +19,10 @@ namespace SolarMajesty
     /// <summary>
     /// Velocity-driven procedural locomotion.
     ///
-    /// The units are robots and machines, so believable motion does not need skeletal animation —
-    /// it needs weight. This reads the NavMeshAgent's velocity and drives bob, lean, bank, and
-    /// squash on a dedicated motion root, which is why an unrigged Blender export can still read
-    /// as walking, hovering, or driving without a single authored animation clip.
+    /// Fallback for meshes without authored clips (placeholders, unrigged kits): reads the
+    /// NavMeshAgent's velocity and drives bob, lean, bank, and squash on a dedicated motion root.
+    /// When a <see cref="UnitClipPlayer"/> is present the rig owns the joints and this component
+    /// only adds root lean/bank (and the downed sag if the unit has no Down clip).
     ///
     /// Gait phase advances with distance travelled rather than time, so steps stay locked to the
     /// ground at any speed (including 2x and 3x game speed) instead of sliding.
@@ -55,6 +55,11 @@ namespace SolarMajesty
         private float _treadOffset;
         private bool _suspended;
 
+        // Authored clips (UnitClipPlayer) own the joints; this component then only adds
+        // root lean/bank, and the downed sag when the unit has no Down clip.
+        private UnitClipPlayer _clips;
+        private float _clipsCheckTimer;
+
         public LocomotionKind Kind => kind;
 
         /// <summary>Freeze motion (downed robots should not keep jauntily bobbing).</summary>
@@ -76,22 +81,11 @@ namespace SolarMajesty
             return motion;
         }
 
-        public static LocomotionKind KindFor(SpecialistClass cls)
-        {
-            switch (cls)
-            {
-                case SpecialistClass.ScoutDrone:
-                case SpecialistClass.CourierBot:
-                    return LocomotionKind.Hover;
-                case SpecialistClass.GeologistBot:
-                case SpecialistClass.HarvesterBot:
-                case SpecialistClass.TerraformerBot:
-                case SpecialistClass.DefenseMech:
-                    return LocomotionKind.Tracked;
-                default:
-                    return LocomotionKind.Walker;
-            }
-        }
+        /// <summary>
+        /// Every hero class is a humanoid knight since the 2026-09-22 concept pass (Heroes_v2),
+        /// so the procedural fallback is always the biped gait.
+        /// </summary>
+        public static LocomotionKind KindFor(SpecialistClass cls) => LocomotionKind.Walker;
 
         public static LocomotionKind KindFor(FaunaKind fauna)
         {
@@ -169,11 +163,22 @@ namespace SolarMajesty
         private void LateUpdate()
         {
             if (_root == null) return;
-            // Authored Idle/Walk/Strike clips own the body. Procedural bob would fight the rig.
-            if (GetComponentInChildren<UnitClipPlayer>(true) != null) return;
 
             float dt = Time.deltaTime;
             if (dt <= 0f) return;
+
+            // Re-check occasionally rather than every frame: GetComponentInChildren is not free
+            // and the visual can be swapped after spawn.
+            if (_clips == null)
+            {
+                _clipsCheckTimer -= dt;
+                if (_clipsCheckTimer <= 0f)
+                {
+                    _clips = GetComponentInChildren<UnitClipPlayer>(true);
+                    _clipsCheckTimer = 0.5f;
+                }
+            }
+            bool clipDriven = _clips != null && _clips.Ready;
 
             Vector3 position = transform.position;
             Vector3 delta = position - _lastPosition;
@@ -190,7 +195,22 @@ namespace SolarMajesty
 
             if (_suspended)
             {
-                ApplyDowned(dt);
+                if (clipDriven && _clips.HasDownClip)
+                    SettleRoot(dt);
+                else
+                    ApplyDowned(dt);
+                return;
+            }
+
+            if (clipDriven)
+            {
+                // The clip already bobs, leans the spine and swings the arms. Add only the
+                // physical read of the root: a small lean into acceleration and a bank in turns.
+                UpdateLean(dt);
+                _root.localPosition = _rootBaseLocalPos;
+                _root.localRotation = Quaternion.Euler(
+                    Mathf.Clamp(_lean.x * 0.25f, -4f, 4f), 0f, Mathf.Clamp(_lean.y * 0.6f, -7f, 7f));
+                _root.localScale = _rootBaseScale;
                 return;
             }
 
@@ -339,6 +359,15 @@ namespace SolarMajesty
                 if (mat == null || !mat.HasProperty("_BaseMap")) continue;
                 mat.SetTextureOffset("_BaseMap", new Vector2(0f, -_treadOffset));
             }
+        }
+
+        /// <summary>Return the root to neutral while an authored clip plays (e.g. Down).</summary>
+        private void SettleRoot(float dt)
+        {
+            float t = 1f - Mathf.Exp(-8f * dt);
+            _root.localPosition = Vector3.Lerp(_root.localPosition, _rootBaseLocalPos, t);
+            _root.localRotation = Quaternion.Slerp(_root.localRotation, Quaternion.identity, t);
+            _root.localScale = Vector3.Lerp(_root.localScale, _rootBaseScale, t);
         }
 
         /// <summary>Downed: sag onto the ground and stay there.</summary>

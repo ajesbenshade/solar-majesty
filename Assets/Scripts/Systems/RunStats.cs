@@ -86,7 +86,7 @@ namespace SolarMajesty
                 ("Bounties refused", FlagsRefused.ToString()),
                 ("Highest bounty", $"{HighestBounty} MET"),
                 ("Paid out", $"{BountyPaid} MET"),
-                ("Tithe returned", $"{TitheCollected} MET"),
+                ("Guild tax", $"{TitheCollected} CRED"),
                 ("Modules built", ModulesBuilt.ToString()),
                 ("Modules lost", ModulesLost.ToString()),
                 ("Robots fabricated", RobotsFabricated.ToString()),
@@ -110,7 +110,7 @@ namespace SolarMajesty
                 return "You spent robots like ammunition.";
             if (FlagsRefused > FlagsCompleted && FlagsCompleted > 0)
                 return "Your workforce turned down more than it took. A tight purse, or a hard sell.";
-            if (CompletionRate > 0.85f && HighestBounty > 140)
+            if (CompletionRate > 0.85f && HighestBounty > 1400)
                 return "You paid whatever it cost and the work always got done.";
             if (ModulesLost == 0 && FaunaKilled > 10)
                 return "Nothing you built was ever lost.";

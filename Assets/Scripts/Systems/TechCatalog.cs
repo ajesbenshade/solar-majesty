@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SolarMajesty
 {
@@ -95,7 +96,7 @@ namespace SolarMajesty
                     "Craft strong enough to leave this body.",
                     70f,
                     new[] { TechId.LifeSupport, TechId.OreRefining, TechId.PowerSystems },
-                    Wallet.Credits(55),
+                    Wallet.Credits(550),
                     unlocksLaunch: true),
 
                 new TechDef(
@@ -160,7 +161,7 @@ namespace SolarMajesty
                     "Secret Project. A foundry that never cools — mines and haul surge. Extract/haul rush.",
                     160f,
                     new[] { TechId.HarvestDoctrine, TechId.OreRefining },
-                    Wallet.Credits(120),
+                    Wallet.Credits(1200),
                     secretProject: true),
 
                 new TechDef(
@@ -169,7 +170,7 @@ namespace SolarMajesty
                     "Secret Project. Cheap freight and free Earth dockings. Extract/haul rush.",
                     160f,
                     new[] { TechId.AegisDoctrine, TechId.LunarRocket },
-                    Wallet.Credits(100),
+                    Wallet.Credits(1000),
                     secretProject: true),
 
                 new TechDef(
@@ -178,7 +179,7 @@ namespace SolarMajesty
                     "Secret Project. Spare beds, faster births, greener farms. Growth path.",
                     150f,
                     new[] { TechId.LifeSupport, TechId.MedProtocols },
-                    Wallet.Credits(140),
+                    Wallet.Credits(1400),
                     secretProject: true),
 
                 new TechDef(
@@ -215,7 +216,7 @@ namespace SolarMajesty
                     "Secret Project. Weave weather for the crust — farms surge. Place the Loom landmark.",
                     155f,
                     new[] { TechId.TerraformCharter, TechId.LifeSupport },
-                    Wallet.Credits(160),
+                    Wallet.Credits(1600),
                     secretProject: true),
 
                 new TechDef(
@@ -224,7 +225,7 @@ namespace SolarMajesty
                     "Secret Project. A tower that calms the grid and the rim. Place the Spire landmark.",
                     165f,
                     new[] { TechId.PerimeterDoctrine, TechId.AegisDoctrine },
-                    Wallet.Credits(110),
+                    Wallet.Credits(1100),
                     secretProject: true),
 
                 new TechDef(
@@ -233,7 +234,7 @@ namespace SolarMajesty
                     "Secret Project. Labs remember every sample. Place the Archive landmark.",
                     150f,
                     new[] { TechId.SurveyDoctrine, TechId.DeepSurvey },
-                    Wallet.Credits(80),
+                    Wallet.Credits(800),
                     researchRateBonus: 0.55f,
                     secretProject: true),
 
@@ -243,7 +244,7 @@ namespace SolarMajesty
                     "Activate at Horizon Lodge: scouts run hot and mark dens. Costs CRED.",
                     36f,
                     new[] { TechId.GuildCharter },
-                    Wallet.Credits(20)),
+                    Wallet.Credits(250)),
 
                 new TechDef(
                     TechId.AnvilOvertime,
@@ -251,7 +252,7 @@ namespace SolarMajesty
                     "Activate at Anvil Compact: engineers weld faster. Costs CRED.",
                     36f,
                     new[] { TechId.GuildCharter },
-                    Wallet.Credits(24)),
+                    Wallet.Credits(250)),
 
                 new TechDef(
                     TechId.AegisWatchfire,
@@ -259,7 +260,7 @@ namespace SolarMajesty
                     "Activate at Aegis Lodge: robots shrug bites, batteries hit harder. Costs CRED.",
                     40f,
                     new[] { TechId.GuildCharter },
-                    Wallet.Credits(28)),
+                    Wallet.Credits(500)),
 
                 new TechDef(
                     TechId.TriageFieldAid,
@@ -267,7 +268,7 @@ namespace SolarMajesty
                     "Activate at Triage Compact: everyone on the dirt patches HP. Costs CRED.",
                     36f,
                     new[] { TechId.GuildCharter },
-                    Wallet.Credits(22))
+                    Wallet.Credits(250))
             };
         }
 
@@ -281,12 +282,15 @@ namespace SolarMajesty
             {
                 return new[]
                 {
-                    new ResourceAmount(ResourceId.Metals, metals),
+                    new ResourceAmount(ResourceId.Metals, Gold(metals)),
                     new ResourceAmount(ResourceId.Power, power)
                 };
             }
 
-            return new[] { new ResourceAmount(ResourceId.Metals, metals) };
+            return new[] { new ResourceAmount(ResourceId.Metals, Gold(metals)) };
         }
+
+        /// <summary>Research tables were authored on the old 1/10 scale.</summary>
+        private static int Gold(int oldScale) => Mathf.RoundToInt(oldScale * MajestyEconomy.GoldScale);
     }
 }

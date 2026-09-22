@@ -36,6 +36,18 @@ namespace SolarMajesty
             int population,
             out int credits,
             out int iceSpent,
+            out int regSpent) => TrySiphon(resources, population, true, out credits, out iceSpent, out regSpent);
+
+        /// <summary>
+        /// Sell surplus. With <paramref name="depositToStockpile"/> false the caller pays the
+        /// proceeds into the Market's till (Majesty: sales wait for a tax collector).
+        /// </summary>
+        public static bool TrySiphon(
+            ResourceManager resources,
+            int population,
+            bool depositToStockpile,
+            out int credits,
+            out int iceSpent,
             out int regSpent)
         {
             credits = 0;
@@ -61,9 +73,10 @@ namespace SolarMajesty
                 regPay = 0;
             }
 
-            credits = icePay + regPay;
+            credits = Mathf.RoundToInt((icePay + regPay) * MajestyEconomy.GoldScale);
             if (credits <= 0) return false;
-            resources.Add(ResourceId.Metals, credits);
+            if (depositToStockpile)
+                resources.Add(ResourceId.Metals, credits);
             return true;
         }
     }

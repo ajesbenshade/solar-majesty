@@ -1040,7 +1040,7 @@ namespace SolarMajesty
 
                 bool on = bp.SelectedIndex == i;
                 bool locked = !_loop.IsBuildingUnlocked(b.category);
-                bool canAfford = !locked && (_loop.Resources == null || _loop.Resources.CanAfford(b.buildCost));
+                bool canAfford = !locked && (_loop.Resources == null || _loop.Resources.CanAfford(CostOf(b)));
                 var r = new Rect(0f, rowY, content.width, 24f);
 
                 if (GUI.Button(r, GUIContent.none, on ? _rowOn : _rowOff) && !locked)
@@ -1062,7 +1062,7 @@ namespace SolarMajesty
                 if (locked) costStyle.normal.textColor = TextMuted;
                 else if (!canAfford) costStyle.normal.textColor = Alarm;
                 GUI.Label(new Rect(r.xMax - 92f, r.y, 86f, r.height),
-                    locked ? "NEED TECH" : FormatBuildCost(b), costStyle);
+                    locked ? "NEED TECH" : FormatBuildCost(CostOf(b)), costStyle);
                 costStyle.normal.textColor = prevCost;
 
                 rowY += 28f;
@@ -1137,16 +1137,20 @@ namespace SolarMajesty
             _loop.RequestDebugBodyCycle(ShiftHeld());
         }
 
-        private static string FormatBuildCost(BuildingData b)
+        /// <summary>Majesty duplicate pricing: the next building of a type costs 150% of the last.</summary>
+        private ResourceAmount[] CostOf(BuildingData b) =>
+            b == null ? null : (_loop != null && _loop.Placer != null ? _loop.Placer.CostFor(b) : b.buildCost);
+
+        private static string FormatBuildCost(ResourceAmount[] cost)
         {
-            if (b == null || b.buildCost == null || b.buildCost.Length == 0) return "free";
+            if (cost == null || cost.Length == 0) return "free";
             var parts = new System.Text.StringBuilder();
-            for (int i = 0; i < b.buildCost.Length; i++)
+            for (int i = 0; i < cost.Length; i++)
             {
                 if (i > 0) parts.Append(" · ");
-                parts.Append(b.buildCost[i].amount);
+                parts.Append(cost[i].amount);
                 parts.Append(' ');
-                parts.Append(ShortResource(b.buildCost[i].resource));
+                parts.Append(ShortResource(cost[i].resource));
             }
             return parts.ToString();
         }
@@ -1331,10 +1335,12 @@ namespace SolarMajesty
             string workers = st.IsResidential
                 ? (st.Residents > 0
                     ? (st.LevyPurse > 0
-                        ? $"Levy {st.LevyPurse} MET sitting — Haul walks it home."
-                        : "Colonists indoors — levy sits until Haul walks it home.")
+                        ? $"House tax {st.LevyPurse} CRED sitting — a tax collector walks it home."
+                        : "Colonists indoors — house tax sits until a tax collector walks it home.")
                     : "Empty beds — seed crew arrives with the first HAB.")
-                : FormatWorkers(st);
+                : (st.LevyPurse > 0 && !st.IsTreasuryChest
+                    ? $"{FormatWorkers(st)} · till {st.LevyPurse} CRED"
+                    : FormatWorkers(st));
             GUI.Label(new Rect(c.x, row, c.width, 13f), workers, _micro);
             row += 16f;
 
@@ -1342,7 +1348,7 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     st.LevyPurse > 0
-                        ? $"Levy purse {st.LevyPurse} CRED — Haul walks it to Commons."
+                        ? $"House tax {st.LevyPurse} CRED — tax collectors carry it to Commons."
                         : "Humans stay in HABs. Outdoor work is robots from workshops.", _micro);
             }
             else if (st.IsFobotYard)
@@ -1590,7 +1596,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Hire {a.HireMin} MET · Purse {a.Credits:F0}{LevyCarryLine(a)}", _micro);
+                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Asks {a.HireMin} CRED · Purse {a.Credits:F0}{LevyCarryLine(a)}", _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -2527,7 +2533,7 @@ namespace SolarMajesty
                 }
                 if (found == null) continue;
                 GUI.Label(new Rect(c.x, y, c.width, 14f),
-                    $"{found.displayName}  ·  {FormatBuildCost(found)}", _micro);
+                    $"{found.displayName}  ·  {FormatBuildCost(CostOf(found))}", _micro);
                 y += 15f;
             }
         }

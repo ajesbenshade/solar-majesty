@@ -15,7 +15,8 @@ namespace SolarMajesty
         public const float RefabSeconds = 40f;
         public const float SalvageCreditFrac = 0.40f;
 
-        public const int ReviveMet = 40;
+        /// <summary>Generic hire base for yard bills when the class is unknown (Majesty: hire + ½ per level).</summary>
+        public const int ReviveMet = 400;
         /// <summary>ICE is not a shop currency. Yard bills are credits (MET) only.</summary>
         public const int ReviveIce = 0;
         /// <summary>Yard bill grows by mech level: L1 = base, then ×1.5 per step.</summary>
@@ -38,20 +39,21 @@ namespace SolarMajesty
         public const float EmptyRosterFailSeconds = 20f;
 
         public const float TitheRate = 0.12f;
-        public const int TitheCap = 18;
-        public const float TitheFloor = 25f;
-        public const int ThinMetals = 20;
+        public const int TitheCap = 180;
+        public const float TitheFloor = 250f;
+        public const int ThinMetals = 200;
         public const float ThinMetalsHunger = 0.15f;
 
         /// <summary>Personal MET the specialist keeps from an extract haul (stockpile still gets GrantExtractYield).</summary>
-        public const int ExtractPurseMet = 4;
-        public const int ExtractPurseMetBonus = 2;
-        public const int PestKillMet = 3;
-        public const int StalkerKillMet = 8;
-        public const int JunkKillMet = 2;
-        public const int InnStayMet = 2;
+        public const int ExtractPurseMet = 40;
+        public const int ExtractPurseMetBonus = 20;
+        /// <summary>Majesty loot: small beasts ~20, bear-class 75 (Stalker), rats ~10 (junk-bots).</summary>
+        public const int PestKillMet = 20;
+        public const int StalkerKillMet = 75;
+        public const int JunkKillMet = 10;
+        public const int InnStayMet = 20;
         public const float InnStaySeconds = 8f;
-        public const int WorkshopRepairMet = 4;
+        public const int WorkshopRepairMet = 40;
         public const float WorkshopRepairHp = 0.22f;
         public const float WorkshopRepairFatigue = 0.18f;
 
@@ -71,12 +73,12 @@ namespace SolarMajesty
         public const float JunkBotSpawnInterval = 12f;
         public const float JunkDeathMemory = 36f;
         public const float JunkBotBiteDps = 0.035f;
-        public const int JunkBotStealMet = 1;
+        public const int JunkBotStealMet = 10;
         public const float JunkBotStealSeconds = 2.4f;
 
         public const float PowerShortWork = 0.70f;
         public const int IceDeathThreshold = 4;
-        public const float SustainMetPerMin = 1.5f;
+        public const float SustainMetPerMin = 15f;
         public const float SustainIcePerMin = 1.0f;
 
         public const float BuildLabourRadius = 28f;
@@ -99,8 +101,8 @@ namespace SolarMajesty
         public const float BatteryDps = 4f;
         public const float BatteryRetarget = 0.5f;
         public const int BatteryExtraPwr = 2;
-        public const int WatchtowerLaserCost = 40;
-        public const int AidStationHealCost = 8;
+        public const int WatchtowerLaserCost = 400;
+        public const int AidStationHealCost = 80;
         public const float AidStationHealHp = 0.42f;
         public const float AidArrive = 3.6f;
 
@@ -113,7 +115,7 @@ namespace SolarMajesty
         public const float MedicRange = 3.6f;
         public const float HarvesterExtractMul = 1.25f;
         public const float SurveyorScienceExtra = 8f;
-        public const int GeologistExtractExtraMet = 2;
+        public const int GeologistExtractExtraMet = 20;
         public const float TerraformerPulse = 0.02f;
         public const float TerraformerPulseInterval = 30f;
         public const float TerraformerFarmRange = 10f;
@@ -178,13 +180,14 @@ namespace SolarMajesty
         public const float RefusalRetrigger = 4f;
 
         /// <summary>
-        /// Smallest integer bounty that matches the greed-gate display (Engineer ~79).
+        /// Smallest integer bounty that matches the greed-gate display (Engineer ~790 CRED).
         /// Must ceil, not round: rounding down produces an ask the hero then refuses.
         /// </summary>
         public static int GreedAsk(SpecialistData data)
         {
-            if (data == null) return 18;
-            return Mathf.Max(1, Mathf.CeilToInt((18f + data.baseGreed * 95f) * 0.78f));
+            if (data == null) return Mathf.CeilToInt(18f * MajestyEconomy.GoldScale);
+            // The brain judges bounties in 1/10 units (MajestyEconomy.ToBrain); the ask is in CRED.
+            return Mathf.Max(1, Mathf.CeilToInt((18f + data.baseGreed * 95f) * 0.78f * MajestyEconomy.GoldScale));
         }
 
         public static float StackShare(int rank)
@@ -197,7 +200,9 @@ namespace SolarMajesty
 
         public static int RefabMetals(BuildingData data)
         {
-            if (data?.buildCost == null) return 25;
+            var cls = data != null ? MajestyEconomy.ClassForWorkshop(data.category) : null;
+            if (cls.HasValue) return MajestyEconomy.HireCost(cls.Value);
+            if (data?.buildCost == null) return 250;
             int met = 0;
             for (int i = 0; i < data.buildCost.Length; i++)
             {
@@ -207,12 +212,13 @@ namespace SolarMajesty
             return Mathf.Max(1, Mathf.RoundToInt(met * RefabCostScale));
         }
 
-        /// <summary>Fobot Yard MET to stand this ego up. L1 = 40, then ×1.5 per level. No ICE.</summary>
-        public static int YardBill(int level)
-        {
-            int n = Mathf.Clamp(Mathf.Max(1, level) - 1, 0, ReviveCostMaxSteps);
-            return Mathf.Max(ReviveMet, Mathf.RoundToInt(ReviveMet * Mathf.Pow(ReviveCostGrowth, n)));
-        }
+        /// <summary>
+        /// Fobot Yard bill, Majesty 2 rule: hire cost plus half of it per level gained. No ICE.
+        /// Class-less overload uses <see cref="ReviveMet"/> as the hire base.
+        /// </summary>
+        public static int YardBill(int level) => MajestyEconomy.ResurrectCost(ReviveMet, level);
+
+        public static int YardBill(int level, SpecialistClass cls) => MajestyEconomy.ResurrectCost(cls, level);
 
         /// <summary>Legacy name — yard bills use level, not revive count.</summary>
         public static int ReviveMetals(int level) => YardBill(level);

@@ -1,16 +1,25 @@
 #!/usr/bin/env python3
-"""Rigged, textured Idle / Walk / Strike roster for Solar Majesty.
+"""Rigged, animated unit roster for Solar Majesty.
 
-Existing classes only. Defense is the tracked guardian. Hopper has six legs.
-Wisp has seven points. Creeper is graphite. Leech is a white ray.
-Mite is a pillbug. Stalker is a four-eyed quadruped.
+Heroes (the ten specialist classes) are armoured humanoid knights built by
+sm_hero_humanoids.py from the 2026-09-22 concept art (ConceptSheets/Heroes_v2/). They
+ship Idle / Walk / Strike / Work / Down clips and a stride speed for Unity.
 
-Blender 5.2. Run:
+Fauna keep their bespoke rigs below: Hopper has six legs, Wisp has seven points,
+Creeper is graphite, Leech is a white ray, Mite is a pillbug, Stalker is a four-eyed
+quadruped. Every fauna clip now keys every bone (rest pose where a clip does not move
+a bone) so no clip inherits another clip's leftover pose on export.
+
+Blender 4.4+ (tested 5.0 / 5.2). Run:
   blender --background --python Blender/scripts/sm_animated_roster.py -- --export --render
+Flags: --export   write FBX to Blender/exports/units and Assets/Resources/Units + UnitClipMeta.json
+       --render   Cycles lineup still + frames      --still  still only      --preview  EEVEE
+       --only Engineer,Scout   limit to some keys
 """
 
 from __future__ import annotations
 
+import json
 import math
 import shutil
 import sys
@@ -20,11 +29,16 @@ import bmesh
 import bpy
 from mathutils import Euler, Matrix, Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sm_hero_humanoids as heroes  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 TEX_DIR = ROOT / ".dream-loop" / "textures"
 STILL_DIR = ROOT / ".dream-loop" / "stills"
 EXPORT_DIR = ROOT / "Blender" / "exports" / "units"
 UNITY_DIR = ROOT / "Assets" / "Resources" / "Units"
+META_PATH = UNITY_DIR / "UnitClipMeta.json"
+HERO_META: dict = {}
 
 UNIT_NAMES = {
     "Stalker": "SM_Unit_DustStalker",
@@ -91,12 +105,19 @@ def clear_scene() -> None:
                 datablocks.remove(block)
 
 
+_MISSING_TEX: set = set()
+
+
 def load_image(name: str, filename: str):
     if name in bpy.data.images:
         return bpy.data.images[name]
     path = TEX_DIR / filename
     if not path.is_file():
-        print(f"[SM] missing texture {path}")
+        # Dream-loop textures are optional render dressing (gitignored). Unity never sees them:
+        # IndustrialArtDressing remaps SM_* material names to the in-game hull library.
+        if name not in _MISSING_TEX:
+            _MISSING_TEX.add(name)
+            print(f"[SM] optional texture not found, using flat colour: {path.name}")
         return None
     img = bpy.data.images.load(str(path))
     img.name = name
@@ -145,8 +166,8 @@ def palette() -> dict:
         "white": make_mat("SM_White", (0.82, 0.78, 0.70), 0.08, 0.78, ceramic, uv_scale=3.2),
         "black": make_mat("SM_Black", (0.05, 0.05, 0.055), 0.35, 0.55, carbon, uv_scale=4.0),
         "graphite": make_mat("SM_Graphite", (0.16, 0.15, 0.14), 0.18, 0.62, chitin, uv_scale=3.4),
-        "orange": make_mat("SM_Orange", (0.81, 0.21, 0.08), 0.12, 0.55),
-        "cyan": make_mat("SM_Cyan", (0.20, 0.55, 0.62), 0.05, 0.45, emission=0.15),
+        "orange": make_mat("SM_Orange", (0.85, 0.30, 0.05), 0.08, 0.45, emission=0.25),
+        "cyan": make_mat("SM_Cyan", (0.20, 0.72, 0.95), 0.05, 0.35, emission=2.5),
         "red": make_mat("SM_Red", (0.55, 0.08, 0.05), 0.08, 0.5, emission=0.12),
         "steel": make_mat("SM_Steel", (0.55, 0.57, 0.60), 0.88, 0.32),
         "dust": make_mat("SM_Dust", (0.50, 0.38, 0.26), 0.05, 0.78),
@@ -154,6 +175,9 @@ def palette() -> dict:
         "ice": make_mat("SM_Ice", (0.86, 0.84, 0.80), 0.02, 0.42, emission=0.02, transmission=0.15),
         "ash": make_mat("SM_Ash", (0.55, 0.53, 0.50), 0.12, 0.58, chitin, uv_scale=2.2),
         "white_ray": make_mat("SM_WhiteRay", (0.93, 0.94, 0.95), 0.08, 0.35, ceramic, uv_scale=2.0),
+        # hero-only slots; names are the tokens IndustrialArtDressing maps in Unity
+        "glass": make_mat("SM_Glass", (0.55, 0.68, 0.76), 0.0, 0.08, transmission=0.4),
+        "defense": make_mat("SM_VisorRed", (0.95, 0.12, 0.06), 0.0, 0.35, emission=3.0),
     }
 
 
@@ -654,322 +678,64 @@ def build_wisp(mats, clips):
 
 
 # --- heroes ----------------------------------------------------------------
+# Humanoid knights live in sm_hero_humanoids.py. These wrappers keep the BUILDERS contract
+# (mats, clip names) -> (armature, mesh) and record the stride speed for Unity.
 
-def build_scout(mats, clips):
-    rig = Rig(UNIT_NAMES["Scout"])
-    rig.bone("Body", (0, 0, 1.1), (0, 0, 1.8), "Root")
-    rig.bone("Head", (0, 0.02, 2.05), (0, 0.2, 2.25), "Body")
-    rig.bone("Antenna", (0.04, -0.06, 2.35), (0.04, -0.06, 3.15), "Head")
-    parts = []
-    parts.append(cone("stem", 0.05, 0.05, 0.7, (0, 0, 0.45), Vector((0, 0, 1)), mats["black"], "Body", verts=10))
-    parts.append(cone("fuselage", 0.18, 0.18, 1.05, (0, 0, 1.5), Vector((0, 0, 1)), mats["white"], "Body", verts=20))
-    for z in (1.18, 1.52, 1.88):
-        parts.append(cone(f"band{z}", 0.2, 0.2, 0.06, (0, 0, z), Vector((0, 0, 1)), mats["black"], "Body", verts=20))
-    parts.append(cube("head", (0.28, 0.32, 0.24), (0, 0.06, 2.28), mats["white"], "Head", bevel=0.02))
-    parts.append(cone("lens", 0.08, 0.08, 0.05, (0, 0.24, 2.28), Vector((0, 1, 0)), mats["cyan"], "Head"))
-    parts.append(cone("collar", 0.15, 0.15, 0.08, (0, 0.02, 2.08), Vector((0, 0, 1)), mats["orange"], "Body", verts=16))
-    parts.append(uv_sphere("beacon", 0.045, (0.16, -0.02, 1.95), mats["orange"], "Body", u=8, v=6))
-    parts.append(cone("ant", 0.016, 0.01, 0.8, (0.04, -0.06, 2.75), Vector((0, 0, 1)), mats["steel"], "Antenna", verts=8))
-    parts.append(uv_sphere("tip", 0.03, (0.04, -0.06, 3.18), mats["orange"], "Antenna", u=8, v=5))
-    for i in range(4):
-        ang = math.pi * 0.25 + i * math.pi * 0.5
-        x, y = math.cos(ang) * 0.52, math.sin(ang) * 0.52
-        bone = f"Rotor{i}"
-        rig.bone(bone, (x, y, 0.98), (x, y, 1.12), "Body")
-        parts.append(cube(f"arm{i}", (0.48, 0.045, 0.035), (x * 0.5, y * 0.5, 0.98), mats["white"], "Body", bevel=0.006, rot_z=ang))
-        # arm cubes aren't rotated; a thin radial box is enough at this distance if we also drop a ring.
-        parts.append(cone(f"ring{i}", 0.18, 0.18, 0.035, (x, y, 0.98), Vector((0, 0, 1)), mats["black"], bone, verts=16))
-        parts.append(cone(f"disc{i}", 0.12, 0.12, 0.015, (x, y, 1.02), Vector((0, 0, 1)), mats["steel"], bone, verts=12))
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Scout"])
-    idle_sway(arm, clips[0], extras=(("Antenna", (0.0, 0, 0.15)), ("Head", (0.04, 0, 0))))
-    begin_action(arm, clips[1])
-    spin(arm, [f"Rotor{i}" for i in range(4)], 24, axis="y", turns=2.0, bob="Body")
-    strike_pose(arm, clips[2], {"Body": (0.35, 0, 0), "Head": (0.25, 0, 0), "Antenna": (0.4, 0, 0)})
-    return arm, mesh
+HERO_CLIPS = ("Idle", "Walk", "Strike", "Work", "Down")
 
 
-def build_engineer(mats, clips):
-    rig = Rig(UNIT_NAMES["Engineer"])
-    rig.bone("Body", (0, 0, 0.7), (0, 0.05, 1.35), "Root")
-    rig.bone("Head", (0, 0.08, 1.45), (0, 0.2, 1.7), "Body")
-    rig.bone("ArmL", (-0.42, 0.05, 1.2), (-0.72, 0.15, 0.85), "Body")
-    rig.bone("ArmR", (0.42, 0.05, 1.2), (0.72, 0.2, 0.85), "Body")
-    parts = []
-    parts.append(uv_sphere("torso", 0.38, (0, 0.02, 1.05), mats["white"], "Body", scale=(1.15, 0.95, 1.05), u=20, v=12))
-    parts.append(cone("band", 0.4, 0.4, 0.08, (0, 0.02, 0.82), Vector((0, 0, 1)), mats["black"], "Body", verts=18))
-    parts.append(cube("pack", (0.42, 0.26, 0.48), (0, -0.32, 1.12), mats["steel"], "Body", bevel=0.02))
-    parts.append(cube("stripe", (0.08, 0.04, 0.32), (0, -0.46, 1.12), mats["orange"], "Body", bevel=0.004))
-    parts.append(cube("box", (0.26, 0.2, 0.18), (0.48, 0.05, 0.78), mats["black"], "Body", bevel=0.012))
-    parts.append(cube("visor", (0.32, 0.04, 0.06), (0, 0.28, 1.5), mats["black"], "Head", bevel=0.004))
-    parts.append(cube("dock", (0.22, 0.05, 0.08), (0, 0.36, 1.15), mats["orange"], "Body", bevel=0.006))
-    parts.append(uv_sphere("dome", 0.22, (0, 0.06, 1.55), mats["white"], "Head", scale=(1.1, 0.9, 0.75)))
-    for side, x, bone in (("L", -1, "ArmL"), ("R", 1, "ArmR")):
-        parts.append(seg(f"arm{side}", (0.32 * x, 0.05, 1.2), (0.62 * x, 0.12, 0.85), 0.07, 0.05, mats["steel"], bone))
-        parts.append(cube(f"hand{side}", (0.12, 0.1, 0.08), (0.68 * x, 0.16, 0.78), mats["white"], bone, bevel=0.008))
-        parts.append(cube(f"ast{side}", (0.03, 0.08, 0.16), (0.5 * x, 0.08, 1.15), mats["orange"], bone, bevel=0.003))
-    for side, x, bone in (("L", -0.16, "LegL"), ("R", 0.16, "LegR")):
-        hip = (x, 0.02, 0.62)
-        knee = (x, 0.04, 0.32)
-        foot = (x, 0.1, 0.04)
-        leg_pair(rig, parts, bone, hip, knee, foot, 0.09, 0.07, mats["black"])
-        parts.append(cube(f"boot{side}", (0.16, 0.28, 0.08), (x, 0.12, 0.05), mats["black"], bone + "_Foot", bevel=0.008))
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Engineer"])
-    idle_sway(arm, clips[0], extras=(("Head", (0.05, 0, 0)),))
-    gait(arm, clips[1], [("LegL_Hip", 0.0), ("LegR_Hip", 0.5)])
-    # arms counter-swing on the walk action
-    for frame in range(1, 25):
-        t = (frame - 1) / 24
-        krot(arm, "ArmL", frame, x=math.sin(t * math.tau) * 0.4)
-        krot(arm, "ArmR", frame, x=math.sin(t * math.tau + math.pi) * 0.4)
-    strike_pose(arm, clips[2], {"ArmR": (-1.3, 0, 0.2), "Body": (0.12, 0, 0), "Head": (0.1, 0, 0)})
-    return arm, mesh
+def _hero_builder(key):
+    def build(mats, clips):
+        names = tuple(clips) + tuple(
+            (clips[0].rsplit("_", 1)[0] + "_" + extra) if "_" in clips[0] else extra
+            for extra in HERO_CLIPS[len(clips):]
+        )
+        arm, mesh, meta = heroes.build_hero(key, mats, UNIT_NAMES[key], names)
+        HERO_META[UNIT_NAMES[key]] = meta
+        return arm, mesh
+
+    build.__name__ = f"build_{key.lower()}"
+    return build
 
 
-def tread_side(rig, parts, name, x, length, radius, z, mat_tread, mat_wheel):
-    """Elongated housing plus three spinning road wheels. Continuous skirt, not legs."""
-    rig.bone(name, (x, 0, z), (x + 0.08, 0, z), "Body")
-    # Individual tread shoes, with a gap under the hull. Not one black plinth.
-    for i in range(8):
-        y = -length * 0.46 + i * (length * 0.92 / 7.0)
-        parts.append(cube(
-            f"{name}shoe{i}",
-            (radius * 1.35, length * 0.07, radius * 0.85),
-            (x, y, z * 0.72),
-            mat_tread,
-            "Body",
-            bevel=0.008,
-        ))
-    for i, y in enumerate((-length * 0.32, 0.0, length * 0.32)):
-        wheel(rig, parts, f"{name}W{i}", (x, y, z), radius * 0.55, mat_wheel)
+# --- clip hygiene ------------------------------------------------------------
+
+def fill_rest_keys(arm, clip_names):
+    """Key the rest pose on every bone a fauna clip leaves untouched.
+
+    Without this the FBX bake samples whatever pose the previous clip left on those bones,
+    so e.g. Idle exported with Walk's last leg pose."""
+    from bpy_extras import anim_utils
+
+    if arm.animation_data is None:
+        return
+    bpy.context.view_layer.objects.active = arm
+    for act in [bpy.data.actions.get(n) for n in clip_names]:
+        if act is None or not act.slots:
+            continue
+        slot = act.slots[0]
+        bag = anim_utils.action_get_channelbag_for_slot(act, slot)
+        if bag is None:
+            continue
+        keyed = {fc.data_path.split('"')[1] for fc in bag.fcurves if fc.data_path.startswith("pose.bones")}
+        start, end = act.frame_range
+        arm.animation_data.action = act
+        arm.animation_data.action_slot = slot
+        if bpy.context.mode != "POSE":
+            bpy.ops.object.mode_set(mode="POSE")
+        for pb in arm.pose.bones:
+            if pb.name in keyed:
+                continue
+            pb.rotation_mode = "XYZ"
+            pb.rotation_euler = (0.0, 0.0, 0.0)
+            pb.location = (0.0, 0.0, 0.0)
+            for f in (start, end):
+                pb.keyframe_insert("rotation_euler", frame=f)
+                pb.keyframe_insert("location", frame=f)
+    bpy.ops.object.mode_set(mode="OBJECT")
 
 
-def build_defense(mats, clips):
-    rig = Rig(UNIT_NAMES["Defense"])
-    rig.bone("Body", (0, 0, 0.45), (0, 0.1, 0.9), "Root")
-    rig.bone("Turret", (0, 0.05, 0.95), (0, 0.15, 1.25), "Body")
-    rig.bone("Shield", (-0.7, 0.05, 0.7), (-0.95, 0.1, 0.95), "Body")
-    parts = []
-    parts.append(cube("hull", (1.15, 1.55, 0.55), (0, 0, 0.72), mats["white"], "Body", bevel=0.06))
-    parts.append(cube("band", (1.2, 1.35, 0.12), (0, 0, 0.55), mats["black"], "Body", bevel=0.02))
-    parts.append(cube("viewport", (0.55, 0.06, 0.16), (0, 0.8, 0.82), mats["red"], "Body", bevel=0.008))
-    parts.append(cube("shield", (0.12, 0.7, 0.7), (-0.78, 0.1, 0.85), mats["steel"], "Shield", bevel=0.02))
-    parts.append(cube("shoulder", (0.38, 0.42, 0.32), (0.62, -0.15, 1.05), mats["white"], "Body", bevel=0.03))
-    parts.append(cube("shoulderO", (0.1, 0.36, 0.08), (0.84, -0.15, 1.05), mats["orange"], "Body", bevel=0.008))
-    parts.append(cube("turret", (0.36, 0.5, 0.22), (0, 0.15, 1.12), mats["white"], "Turret", bevel=0.02))
-    parts.append(cone("barrel", 0.05, 0.04, 0.45, (0.1, 0.45, 1.12), Vector((0, 1, 0)), mats["black"], "Turret", verts=10))
-    tread_side(rig, parts, "TrL", -0.62, 1.35, 0.22, 0.28, mats["black"], mats["steel"])
-    tread_side(rig, parts, "TrR", 0.62, 1.35, 0.22, 0.28, mats["black"], mats["steel"])
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Defense"])
-    idle_sway(arm, clips[0], extras=(("Turret", (0, 0, 0.12)),))
-    begin_action(arm, clips[1])
-    wheels = [f"Tr{s}W{i}" for s in ("L", "R") for i in range(3)]
-    spin(arm, wheels, 24, axis="y", turns=1.5, bob=None)
-    for frame in (1, 12, 24):
-        krot(arm, "Body", frame, x=0.02 if frame == 12 else 0)
-    strike_pose(arm, clips[2], {"Turret": (0, 0, 0.55), "Shield": (0, 0.2, 0), "Body": (0.05, 0, 0)})
-    return arm, mesh
-
-
-def build_medic(mats, clips):
-    rig = Rig(UNIT_NAMES["Medic"])
-    rig.bone("Body", (0, 0, 0.35), (0, 0.1, 0.7), "Root")
-    rig.bone("IV", (0.28, -0.45, 0.55), (0.28, -0.45, 1.15), "Body")
-    parts = []
-    parts.append(cube("hull", (0.7, 1.15, 0.32), (0, 0, 0.48), mats["white"], "Body", bevel=0.04))
-    parts.append(cube("belly", (0.62, 1.0, 0.12), (0, 0, 0.28), mats["black"], "Body", bevel=0.02))
-    parts.append(cube("nose", (0.5, 0.08, 0.08), (0, 0.6, 0.55), mats["orange"], "Body", bevel=0.008))
-    parts.append(cube("crossV", (0.08, 0.08, 0.22), (0, 0.05, 0.7), mats["cyan"], "Body", bevel=0.004))
-    parts.append(cube("crossH", (0.22, 0.08, 0.08), (0, 0.05, 0.7), mats["cyan"], "Body", bevel=0.004))
-    parts.append(cube("visor", (0.4, 0.04, 0.08), (0, 0.58, 0.58), mats["cyan"], "Body", bevel=0.004))
-    parts.append(cone("pole", 0.015, 0.015, 0.6, (0.28, -0.45, 0.85), Vector((0, 0, 1)), mats["steel"], "IV", verts=8))
-    parts.append(uv_sphere("bag", 0.06, (0.28, -0.45, 1.12), mats["cyan"], "IV", u=8, v=6))
-    parts.append(uv_sphere("kit", 0.1, (-0.32, -0.2, 0.62), mats["white"], "Body", u=10, v=8))
-    parts.append(cube("latch", (0.04, 0.06, 0.04), (-0.32, -0.1, 0.62), mats["orange"], "Body", bevel=0.003))
-    for i, (x, y) in enumerate(((-0.32, 0.35), (0.32, 0.35), (-0.32, -0.35), (0.32, -0.35))):
-        bone = f"Disc{i}"
-        rig.bone(bone, (x, y, 0.16), (x, y, 0.28), "Body")
-        parts.append(cone(bone + "m", 0.12, 0.12, 0.04, (x, y, 0.16), Vector((0, 0, 1)), mats["black"], bone, verts=14))
-        parts.append(cone(bone + "g", 0.05, 0.05, 0.02, (x, y, 0.19), Vector((0, 0, 1)), mats["cyan"], bone, verts=10))
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Medic"])
-    idle_sway(arm, clips[0], extras=(("IV", (0.08, 0, 0)),))
-    begin_action(arm, clips[1])
-    spin(arm, [f"Disc{i}" for i in range(4)], 24, axis="y", turns=1.2, bob="Body")
-    strike_pose(arm, clips[2], {"IV": (0.5, 0, 0), "Body": (0.08, 0, 0)})
-    return arm, mesh
-
-
-def build_harvester(mats, clips):
-    rig = Rig(UNIT_NAMES["Harvester"])
-    rig.bone("Body", (0, 0, 0.5), (0, 0.1, 0.95), "Root")
-    rig.bone("Scoop", (0, 0.7, 0.35), (0, 1.15, 0.22), "Body")
-    parts = []
-    parts.append(cube("hull", (0.9, 1.2, 0.5), (0, -0.05, 0.7), mats["white"], "Body", bevel=0.05))
-    parts.append(cube("band", (0.95, 1.05, 0.1), (0, -0.05, 0.48), mats["black"], "Body", bevel=0.02))
-    parts.append(cube("cab", (0.45, 0.35, 0.28), (0, 0.15, 1.05), mats["white"], "Body", bevel=0.02))
-    parts.append(cube("visor", (0.32, 0.04, 0.08), (0, 0.34, 1.1), mats["cyan"], "Body", bevel=0.004))
-    parts.append(cube("hopper", (0.7, 0.45, 0.4), (0, -0.55, 0.85), mats["steel"], "Body", bevel=0.02))
-    parts.append(cube("lip", (0.74, 0.06, 0.06), (0, -0.32, 1.02), mats["orange"], "Body", bevel=0.006))
-    parts.append(cube("blade", (0.85, 0.08, 0.22), (0, 0.95, 0.28), mats["orange"], "Scoop", bevel=0.01))
-    parts.append(seg("arm", (0, 0.55, 0.45), (0, 0.9, 0.32), 0.06, 0.05, mats["graphite"], "Scoop"))
-    tread_side(rig, parts, "TrL", -0.52, 1.15, 0.2, 0.26, mats["black"], mats["steel"])
-    tread_side(rig, parts, "TrR", 0.52, 1.15, 0.2, 0.26, mats["black"], mats["steel"])
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Harvester"])
-    idle_sway(arm, clips[0])
-    begin_action(arm, clips[1])
-    spin(arm, [f"Tr{s}W{i}" for s in ("L", "R") for i in range(3)], 24, axis="y", turns=1.4)
-    strike_pose(arm, clips[2], {"Scoop": (0.7, 0, 0), "Body": (0.08, 0, 0)})
-    return arm, mesh
-
-
-def build_surveyor(mats, clips):
-    rig = Rig(UNIT_NAMES["Surveyor"])
-    rig.bone("Body", (0, 0, 0.7), (0, 0, 1.15), "Root")
-    rig.bone("Mast", (0, 0, 1.2), (0, 0, 2.15), "Body")
-    rig.bone("Dish", (0, 0, 2.2), (0, 0.15, 2.45), "Mast")
-    parts = []
-    parts.append(cone("body", 0.16, 0.18, 0.7, (0, 0, 0.95), Vector((0, 0, 1)), mats["white"], "Body", verts=16))
-    parts.append(cone("band", 0.2, 0.2, 0.06, (0, 0, 0.85), Vector((0, 0, 1)), mats["black"], "Body", verts=16))
-    parts.append(cone("lens", 0.06, 0.06, 0.04, (0, 0.18, 1.0), Vector((0, 1, 0)), mats["cyan"], "Body"))
-    parts.append(cone("mast", 0.035, 0.03, 0.9, (0, 0, 1.7), Vector((0, 0, 1)), mats["steel"], "Mast", verts=8))
-    parts.append(uv_sphere("beacon", 0.04, (0.1, 0, 1.85), mats["orange"], "Mast", u=8, v=5))
-    parts.append(cone("dish", 0.28, 0.05, 0.08, (0, 0.02, 2.28), Vector((0, 0.15, 1)), mats["white"], "Dish", verts=20))
-    parts.append(cone("ring", 0.3, 0.3, 0.02, (0, 0.03, 2.26), Vector((0, 0.15, 1)), mats["orange"], "Dish", verts=20))
-    parts.append(uv_sphere("cluster", 0.05, (0, 0.08, 2.36), mats["cyan"], "Dish", u=8, v=6))
-    for i in range(3):
-        ang = i * math.tau / 3 + 0.4
-        hip = (math.cos(ang) * 0.12, math.sin(ang) * 0.12, 0.62)
-        foot = (math.cos(ang) * 0.55, math.sin(ang) * 0.55, 0.02)
-        knee = (math.cos(ang) * 0.4, math.sin(ang) * 0.4, 0.28)
-        leg_pair(rig, parts, f"P{i}", hip, knee, foot, 0.045, 0.035, mats["steel"])
-        parts.append(cube(f"pad{i}", (0.16, 0.16, 0.03), foot, mats["black"], f"P{i}_Foot", bevel=0.006))
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Surveyor"])
-    idle_sway(arm, clips[0], extras=(("Dish", (0.08, 0, 0.1)),))
-    gait(arm, clips[1], [(f"P{i}_Hip", i / 3) for i in range(3)], bob="Body")
-    strike_pose(arm, clips[2], {"Dish": (0.45, 0, 0), "Mast": (0.1, 0, 0)})
-    return arm, mesh
-
-
-def build_terraformer(mats, clips):
-    rig = Rig(UNIT_NAMES["Terraformer"])
-    rig.bone("Body", (0, 0, 0.55), (0, 0.1, 1.05), "Root")
-    rig.bone("Blade", (0, 0.85, 0.4), (0, 1.25, 0.35), "Body")
-    rig.bone("Rake", (0, -0.7, 0.45), (0, -1.15, 0.35), "Body")
-    parts = []
-    parts.append(cube("hull", (1.05, 1.5, 0.55), (0, 0, 0.75), mats["white"], "Body", bevel=0.05))
-    parts.append(cube("belly", (1.0, 1.35, 0.16), (0, 0, 0.42), mats["black"], "Body", bevel=0.02))
-    parts.append(cube("cab", (0.5, 0.4, 0.32), (0, 0.15, 1.15), mats["white"], "Body", bevel=0.02))
-    parts.append(cube("visor", (0.36, 0.04, 0.08), (0, 0.36, 1.22), mats["cyan"], "Body", bevel=0.004))
-    parts.append(uv_sphere("lamp", 0.04, (0.22, 0.2, 1.28), mats["cyan"], "Body", u=8, v=5))
-    parts.append(uv_sphere("beacon", 0.045, (-0.18, -0.1, 1.25), mats["orange"], "Body", u=8, v=5))
-    parts.append(cube("blade", (1.5, 0.08, 0.45), (0, 1.15, 0.4), mats["steel"], "Blade", bevel=0.015))
-    parts.append(cube("lip", (1.52, 0.05, 0.08), (0, 1.2, 0.58), mats["orange"], "Blade", bevel=0.006))
-    parts.append(cone("tankL", 0.16, 0.16, 0.4, (-0.28, -0.45, 1.05), Vector((0, 0, 1)), mats["steel"], "Body", verts=12))
-    parts.append(cone("tankR", 0.16, 0.16, 0.4, (0.28, -0.45, 1.05), Vector((0, 0, 1)), mats["steel"], "Body", verts=12))
-    parts.append(uv_sphere("capL", 0.08, (-0.28, -0.45, 1.28), mats["orange"], "Body", u=8, v=5))
-    parts.append(uv_sphere("capR", 0.08, (0.28, -0.45, 1.28), mats["orange"], "Body", u=8, v=5))
-    parts.append(cube("boom", (1.7, 0.06, 0.06), (0, -0.95, 0.55), mats["graphite"], "Rake", bevel=0.008))
-    for i, x in enumerate((-0.6, -0.2, 0.2, 0.6)):
-        parts.append(cube(f"noz{i}", (0.05, 0.05, 0.1), (x, -0.95, 0.46), mats["orange"], "Rake", bevel=0.004))
-    parts.append(cube("rake", (0.08, 0.35, 0.28), (0.7, -0.15, 0.4), mats["steel"], "Rake", bevel=0.01))
-    tread_side(rig, parts, "TrL", -0.58, 1.35, 0.22, 0.28, mats["black"], mats["steel"])
-    tread_side(rig, parts, "TrR", 0.58, 1.35, 0.22, 0.28, mats["black"], mats["steel"])
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Terraformer"])
-    idle_sway(arm, clips[0])
-    begin_action(arm, clips[1])
-    spin(arm, [f"Tr{s}W{i}" for s in ("L", "R") for i in range(3)], 24, axis="y", turns=1.2)
-    strike_pose(arm, clips[2], {"Blade": (0.45, 0, 0), "Rake": (-0.25, 0, 0)})
-    return arm, mesh
-
-
-def build_courier(mats, clips):
-    rig = Rig(UNIT_NAMES["Courier"])
-    rig.bone("Body", (0, 0, 0.4), (0, 0.1, 0.85), "Root")
-    rig.bone("Crate", (0, -0.25, 0.7), (0, -0.25, 1.05), "Body")
-    parts = []
-    parts.append(cube("chassis", (0.7, 1.35, 0.35), (0, 0.05, 0.48), mats["white"], "Body", bevel=0.04))
-    parts.append(cube("belly", (0.64, 1.2, 0.12), (0, 0.05, 0.28), mats["black"], "Body", bevel=0.015))
-    parts.append(cube("cab", (0.55, 0.4, 0.32), (0, 0.45, 0.78), mats["white"], "Body", bevel=0.02))
-    parts.append(cube("visor", (0.36, 0.04, 0.1), (0, 0.66, 0.82), mats["cyan"], "Body", bevel=0.004))
-    parts.append(uv_sphere("lamp", 0.035, (0.18, 0.66, 0.7), mats["cyan"], "Body", u=8, v=5))
-    parts.append(cube("crate", (0.55, 0.5, 0.4), (0, -0.35, 0.85), mats["steel"], "Crate", bevel=0.02))
-    parts.append(cube("cap", (0.55, 0.5, 0.06), (0, -0.35, 1.08), mats["white"], "Crate", bevel=0.008))
-    for x, y in ((-0.26, -0.15), (0.26, -0.15), (-0.26, -0.55), (0.26, -0.55)):
-        parts.append(cube("corner", (0.08, 0.08, 0.08), (x, y, 1.05), mats["orange"], "Crate", bevel=0.004))
-    parts.append(cone("ant", 0.012, 0.008, 0.55, (-0.15, 0.2, 1.15), Vector((0, 0, 1)), mats["steel"], "Body", verts=6))
-    parts.append(uv_sphere("atip", 0.025, (-0.15, 0.2, 1.45), mats["orange"], "Body", u=6, v=4))
-    parts.append(uv_sphere("beacon", 0.04, (0.15, 0.35, 1.05), mats["orange"], "Body", u=8, v=5))
-    wheels = []
-    for i, y in enumerate((0.45, 0.0, -0.45)):
-        for s, x in enumerate((-0.38, 0.38)):
-            name = f"W{i}{s}"
-            wheels.append(name)
-            wheel(rig, parts, name, (x, y, 0.16), 0.16, mats["black"])
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Courier"])
-    idle_sway(arm, clips[0])
-    begin_action(arm, clips[1])
-    spin(arm, wheels, 24, axis="y", turns=1.6)
-    strike_pose(arm, clips[2], {"Crate": (0.0, 0, 0.15), "Body": (0.1, 0, 0)})
-    return arm, mesh
-
-
-def build_geologist(mats, clips):
-    rig = Rig(UNIT_NAMES["Geologist"])
-    rig.bone("Body", (0, 0, 0.4), (0, 0.08, 0.8), "Root")
-    rig.bone("Drill", (0.35, 0.15, 0.7), (0.35, 0.15, 0.15), "Body")
-    parts = []
-    parts.append(cube("chassis", (0.65, 1.3, 0.32), (0, 0, 0.48), mats["white"], "Body", bevel=0.035))
-    parts.append(cube("belly", (0.58, 1.15, 0.1), (0, 0, 0.28), mats["black"], "Body", bevel=0.012))
-    parts.append(cube("nose", (0.4, 0.06, 0.08), (0, 0.66, 0.55), mats["orange"], "Body", bevel=0.006))
-    parts.append(cube("cab", (0.4, 0.32, 0.26), (0, 0.25, 0.75), mats["white"], "Body", bevel=0.015))
-    parts.append(cube("visor", (0.28, 0.04, 0.08), (0, 0.42, 0.8), mats["cyan"], "Body", bevel=0.004))
-    parts.append(cube("crate", (0.4, 0.32, 0.28), (0, -0.4, 0.7), mats["graphite"], "Body", bevel=0.012))
-    parts.append(uv_sphere("vialC", 0.04, (-0.08, -0.35, 0.9), mats["cyan"], "Body", u=8, v=5))
-    parts.append(uv_sphere("vialO", 0.04, (0.08, -0.42, 0.9), mats["orange"], "Body", u=8, v=5))
-    parts.append(cone("mast", 0.02, 0.02, 0.4, (-0.15, 0.05, 1.0), Vector((0, 0, 1)), mats["steel"], "Body", verts=8))
-    parts.append(uv_sphere("cluster", 0.045, (-0.15, 0.05, 1.22), mats["cyan"], "Body", u=8, v=5))
-    parts.append(seg("arm", (0.25, 0.1, 0.7), (0.4, 0.15, 0.55), 0.04, 0.035, mats["graphite"], "Drill"))
-    parts.append(cone("bit", 0.045, 0.02, 0.4, (0.4, 0.15, 0.32), Vector((0, 0, -1)), mats["steel"], "Drill", verts=8))
-    parts.append(cone("collar", 0.07, 0.07, 0.05, (0.4, 0.15, 0.5), Vector((0, 0, 1)), mats["orange"], "Drill", verts=10))
-    wheels = []
-    for i, y in enumerate((0.42, 0.0, -0.42)):
-        for s, x in enumerate((-0.36, 0.36)):
-            name = f"W{i}{s}"
-            wheels.append(name)
-            wheel(rig, parts, name, (x, y, 0.15), 0.15, mats["black"])
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Geologist"])
-    idle_sway(arm, clips[0])
-    begin_action(arm, clips[1])
-    spin(arm, wheels, 24, axis="y", turns=1.5)
-    strike_pose(arm, clips[2], {"Drill": (0.0, 0.8, 0), "Body": (0.06, 0, 0)})
-    return arm, mesh
-
-
-def build_sentinel(mats, clips):
-    rig = Rig(UNIT_NAMES["Sentinel"])
-    rig.bone("Body", (0, 0, 0.35), (0, 0.05, 0.7), "Root")
-    rig.bone("Turret", (0, 0, 0.85), (0, 0.1, 1.15), "Body")
-    parts = []
-    parts.append(cube("hull", (0.85, 0.95, 0.4), (0, 0, 0.55), mats["white"], "Body", bevel=0.04))
-    parts.append(cube("skirt", (0.95, 1.05, 0.16), (0, 0, 0.32), mats["black"], "Body", bevel=0.02))
-    parts.append(cube("chev", (0.55, 0.05, 0.12), (0, 0.5, 0.62), mats["orange"], "Body", bevel=0.006))
-    parts.append(cube("visor", (0.4, 0.04, 0.08), (0, 0.48, 0.78), mats["cyan"], "Body", bevel=0.004))
-    parts.append(cube("shield", (0.08, 0.4, 0.45), (-0.5, 0.05, 0.7), mats["steel"], "Body", bevel=0.012))
-    parts.append(cube("turret", (0.32, 0.4, 0.2), (0, 0.08, 1.0), mats["white"], "Turret", bevel=0.015))
-    parts.append(cone("b0", 0.035, 0.03, 0.35, (-0.08, 0.35, 1.02), Vector((0, 1, 0)), mats["graphite"], "Turret", verts=8))
-    parts.append(cone("b1", 0.035, 0.03, 0.35, (0.08, 0.35, 1.02), Vector((0, 1, 0)), mats["graphite"], "Turret", verts=8))
-    parts.append(uv_sphere("l0", 0.03, (-0.08, 0.52, 1.02), mats["cyan"], "Turret", u=6, v=4))
-    parts.append(uv_sphere("l1", 0.03, (0.08, 0.52, 1.02), mats["cyan"], "Turret", u=6, v=4))
-    tread_side(rig, parts, "TrL", -0.42, 0.85, 0.16, 0.2, mats["black"], mats["steel"])
-    tread_side(rig, parts, "TrR", 0.42, 0.85, 0.16, 0.2, mats["black"], mats["steel"])
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Sentinel"])
-    idle_sway(arm, clips[0], extras=(("Turret", (0, 0, 0.2)),))
-    begin_action(arm, clips[1])
-    spin(arm, [f"Tr{s}W{i}" for s in ("L", "R") for i in range(3)], 24, axis="y", turns=1.3)
-    strike_pose(arm, clips[2], {"Turret": (0.15, 0, 0.6)})
-    return arm, mesh
-
-
-BUILDERS = {
+FAUNA_BUILDERS = {
     "Stalker": build_stalker,
     "Hopper": build_hopper,
     "Creeper": build_creeper,
@@ -977,17 +743,23 @@ BUILDERS = {
     "Mite": build_mite,
     "Leech": build_leech,
     "Wisp": build_wisp,
-    "Scout": build_scout,
-    "Engineer": build_engineer,
-    "Defense": build_defense,
-    "Medic": build_medic,
-    "Harvester": build_harvester,
-    "Surveyor": build_surveyor,
-    "Terraformer": build_terraformer,
-    "Courier": build_courier,
-    "Geologist": build_geologist,
-    "Sentinel": build_sentinel,
 }
+
+
+def _fauna_builder(fn):
+    def build(mats, clips):
+        arm, mesh = fn(mats, clips)
+        fill_rest_keys(arm, clips)
+        return arm, mesh
+
+    build.__name__ = fn.__name__
+    return build
+
+
+BUILDERS = {key: _fauna_builder(fn) for key, fn in FAUNA_BUILDERS.items()}
+for _key in ("Scout", "Engineer", "Defense", "Medic", "Harvester", "Surveyor", "Terraformer", "Courier",
+             "Geologist", "Sentinel"):
+    BUILDERS[_key] = _hero_builder(_key)
 
 
 def export_fbx(arm, mesh, filename: str) -> Path:
@@ -1023,13 +795,50 @@ def export_fbx(arm, mesh, filename: str) -> Path:
     return dest
 
 
+def only_keys():
+    flags = args_after_dd()
+    if "--only" in flags:
+        i = flags.index("--only")
+        if i + 1 < len(flags):
+            return [k.strip() for k in flags[i + 1].split(",") if k.strip()]
+    return list(BUILDERS.keys())
+
+
+def write_meta():
+    """Stride speeds + clip lists for UnitClipPlayer (merged with any existing entries)."""
+    data = {}
+    if META_PATH.is_file():
+        try:
+            for row in json.loads(META_PATH.read_text()).get("units", []):
+                data[row["unit"]] = row
+        except (ValueError, KeyError):
+            data = {}
+    for unit, meta in HERO_META.items():
+        data[unit] = {
+            "unit": unit,
+            "walkSpeed": meta["walkSpeed"],
+            "height": meta["height"],
+            "clips": list(HERO_CLIPS),
+            "downHoldsLastFrame": True,
+        }
+    for key, unit in UNIT_NAMES.items():
+        if key in FAUNA_BUILDERS and unit not in data:
+            data[unit] = {"unit": unit, "walkSpeed": 0.0, "height": 0.0, "clips": ["Idle", "Walk", "Strike"],
+                          "downHoldsLastFrame": False}
+    META_PATH.parent.mkdir(parents=True, exist_ok=True)
+    META_PATH.write_text(json.dumps({"units": sorted(data.values(), key=lambda r: r["unit"])}, indent=2) + "\n")
+    print(f"[SM] meta {META_PATH}")
+
+
 def export_all():
-    for key, builder in BUILDERS.items():
+    for key in only_keys():
+        builder = BUILDERS[key]
         print(f"[SM] === {key} ===")
         clear_scene()
         mats = palette()
         arm, mesh = builder(mats, ("Idle", "Walk", "Strike"))
         export_fbx(arm, mesh, UNIT_NAMES[key])
+    write_meta()
 
 
 def build_world():

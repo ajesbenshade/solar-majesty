@@ -44,7 +44,7 @@ namespace SolarMajesty.Tests
         public void Blacksmith_IsClassLockedAndBeatsGuildKit()
         {
             var sledge = ShopCatalog.BestBlacksmithBuy(
-                SpecialistClass.EngineerBot, 200, ShopItemId.AnvilRig, ShopItemId.None);
+                SpecialistClass.EngineerBot, 500, ShopItemId.AnvilRig, ShopItemId.None);
             Assert.IsNotNull(sledge);
             Assert.AreEqual(ShopVendor.Blacksmith, sledge.Vendor);
             Assert.AreEqual(SpecialistClass.EngineerBot, sledge.ForClass);
@@ -235,10 +235,10 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void LevyAccrue_MatchesOldTaxRate()
+        public void LevyAccrue_UsesMajestyPerResidentRate()
         {
-            Assert.AreEqual(4, LevyRun.Accrue(2, false));
-            Assert.AreEqual(Mathf.RoundToInt(3 * 2 * 0.65f), LevyRun.Accrue(3, true));
+            Assert.AreEqual(2 * MajestyEconomy.HouseDailyPerResident, LevyRun.Accrue(2, false));
+            Assert.AreEqual(Mathf.RoundToInt(3 * MajestyEconomy.HouseDailyPerResident * 0.65f), LevyRun.Accrue(3, true));
         }
 
         [TearDown]

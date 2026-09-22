@@ -6,6 +6,8 @@
 //
 // World-space projection means the detail scale stays constant across every module regardless of
 // mesh scale, which is what keeps a campus of different-sized kits reading as one built thing.
+// Rigged units set _PanelSpace = 1 (IndustrialArtDressing does this for SkinnedMeshRenderers) so
+// their seams are projected in object space and stay glued to the body while it animates.
 Shader "SolarMajesty/Hull"
 {
     Properties
@@ -19,6 +21,7 @@ Shader "SolarMajesty/Hull"
         _PanelWidth("Line Width", Range(0.001, 0.2)) = 0.022
         _PanelDarken("Line Darken", Range(0,1)) = 0.45
         _PanelBevel("Bevel Highlight", Range(0,1)) = 0.35
+        [Toggle] _PanelSpace("Object-Space Panels (rigged units)", Float) = 0
 
         [Header(Wear)]
         _WearColor("Wear Color", Color) = (0.32, 0.31, 0.30, 1)
@@ -57,6 +60,7 @@ Shader "SolarMajesty/Hull"
             float  _PanelWidth;
             float  _PanelDarken;
             float  _PanelBevel;
+            float  _PanelSpace;
             float4 _WearColor;
             float  _WearAmount;
             float  _WearScale;
@@ -164,6 +168,7 @@ Shader "SolarMajesty/Hull"
                 float3 positionWS  : TEXCOORD0;
                 float3 normalWS    : TEXCOORD1;
                 float3 positionOS  : TEXCOORD2;
+                float3 normalOS    : TEXCOORD3;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -182,6 +187,7 @@ Shader "SolarMajesty/Hull"
                 output.positionWS = pos.positionWS;
                 output.normalWS = nrm.normalWS;
                 output.positionOS = input.positionOS.xyz;
+                output.normalOS = input.normalOS;
                 return output;
             }
 
@@ -196,13 +202,22 @@ Shader "SolarMajesty/Hull"
                 float3 albedo = _BaseColor.rgb;
 
                 // Panel seams: darken the groove, lift the bevel lip beside it.
+                // Static kits project in world space (one grid across the campus). Rigged units
+                // project in object space, scaled to metres, so seams ride along with the body
+                // instead of swimming over it as it walks.
+                float3 objScale = float3(length(UNITY_MATRIX_M._m00_m10_m20),
+                                         length(UNITY_MATRIX_M._m01_m11_m21),
+                                         length(UNITY_MATRIX_M._m02_m12_m22));
+                bool objectSpace = _PanelSpace > 0.5;
+                float3 panelPos = objectSpace ? input.positionOS * objScale : positionWS;
+                float3 panelNrm = objectSpace ? normalize(input.normalOS) : normalWS;
                 float groove, bevel;
-                SM_Panels(positionWS, normalWS, groove, bevel);
+                SM_Panels(panelPos, panelNrm, groove, bevel);
                 albedo *= 1.0 - groove * _PanelDarken;
                 albedo += bevel * _PanelBevel * 0.06;
 
                 // Blotchy wear so large flat hulls are not perfectly uniform.
-                float wear = SM_Noise(positionWS * _WearScale);
+                float wear = SM_Noise(panelPos * _WearScale);
                 wear = smoothstep(0.55, 0.95, wear) * _WearAmount;
                 albedo = lerp(albedo, _WearColor.rgb, wear);
 

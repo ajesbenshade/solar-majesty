@@ -29,10 +29,13 @@ namespace SolarMajesty
             WispHide,
             CreeperHide,
             HopperHide,
-            TickHide
+            TickHide,
+            VisorRed
         }
 
-        private static readonly Dictionary<Slot, Material> Mats = new Dictionary<Slot, Material>(16);
+        // Key = (int)slot, +1000 for the skinned-unit variant (object-space panels, finer scale).
+        private static readonly Dictionary<int, Material> Mats = new Dictionary<int, Material>(32);
+        private const int UnitVariant = 1000;
         private static Shader _lit;
         private static Shader _hull;
         private static Color _dustColor = new Color(0.55f, 0.34f, 0.20f);
@@ -91,15 +94,18 @@ namespace SolarMajesty
                 if (rend == null || ShouldSkip(rend)) continue;
 
                 var src = rend.sharedMaterials;
+                // Rigged units move: world-space panel lines would swim across them, so skinned
+                // renderers get an object-space variant with a finer panel grid.
+                bool unit = rend is SkinnedMeshRenderer;
                 if (src == null || src.Length == 0)
                 {
-                    rend.sharedMaterial = Get(Slot.WhiteHull);
+                    rend.sharedMaterial = Get(Slot.WhiteHull, unit);
                     continue;
                 }
 
                 var next = new Material[src.Length];
                 for (int m = 0; m < src.Length; m++)
-                    next[m] = Get(GuessSlot(rend, src[m]));
+                    next[m] = Get(GuessSlot(rend, src[m]), unit);
                 rend.sharedMaterials = next;
                 rend.shadowCastingMode = ShadowCastingMode.On;
                 rend.receiveShadows = true;
@@ -278,6 +284,7 @@ namespace SolarMajesty
             if (string.IsNullOrEmpty(name)) return false;
             string n = name.ToLowerInvariant();
 
+            if (ContainsAny(n, "sm_visorred")) { slot = Slot.VisorRed; return true; }
             if (ContainsAny(n, "sm_white")) { slot = Slot.WhiteHull; return true; }
             if (ContainsAny(n, "sm_black")) { slot = Slot.BlackCarbon; return true; }
             if (ContainsAny(n, "sm_graphite")) { slot = Slot.Graphite; return true; }
@@ -344,12 +351,13 @@ namespace SolarMajesty
             return false;
         }
 
-        private static Material Get(Slot slot)
+        private static Material Get(Slot slot, bool unit = false)
         {
-            if (Mats.TryGetValue(slot, out var mat) && mat != null)
+            int key = (int)slot + (unit ? UnitVariant : 0);
+            if (Mats.TryGetValue(key, out var mat) && mat != null)
                 return mat;
-            mat = BuildMaterial(slot);
-            Mats[slot] = mat;
+            mat = BuildMaterial(slot, unit);
+            Mats[key] = mat;
             return mat;
         }
 
@@ -423,9 +431,9 @@ namespace SolarMajesty
             }
         }
 
-        private static Material BuildHullMaterial(Slot slot)
+        private static Material BuildHullMaterial(Slot slot, bool unit = false)
         {
-            var mat = new Material(_hull) { name = "SM_Art_" + slot };
+            var mat = new Material(_hull) { name = "SM_Art_" + slot + (unit ? "_Unit" : "") };
 
             Color baseColor;
             float metallic;
@@ -502,8 +510,14 @@ namespace SolarMajesty
             mat.SetColor("_BaseColor", baseColor);
             mat.SetFloat("_Metallic", metallic);
             mat.SetFloat("_Smoothness", smooth);
+            if (unit)
+            {
+                // ~2 m heroes: 0.3x panels so plates read at isometric range, pinned to the rig.
+                panelScale *= 0.32f;
+                mat.SetFloat("_PanelSpace", 1f);
+            }
             mat.SetFloat("_PanelScale", panelScale);
-            mat.SetFloat("_PanelWidth", 0.020f);
+            mat.SetFloat("_PanelWidth", unit ? 0.035f : 0.020f);
             mat.SetFloat("_PanelDarken", slot == Slot.WhiteHull ? 0.38f : 0.30f);
             mat.SetFloat("_PanelBevel", 0.40f);
             mat.SetColor("_WearColor", new Color(0.30f, 0.29f, 0.28f));
@@ -523,12 +537,12 @@ namespace SolarMajesty
             return mat;
         }
 
-        private static Material BuildMaterial(Slot slot)
+        private static Material BuildMaterial(Slot slot, bool unit = false)
         {
             if (_hull != null && UsesHullShader(slot))
-                return BuildHullMaterial(slot);
+                return BuildHullMaterial(slot, unit);
 
-            var mat = new Material(_lit) { name = "SM_Art_" + slot };
+            var mat = new Material(_lit) { name = "SM_Art_" + slot + (unit ? "_Unit" : "") };
             Texture2D albedo = _whiteAlbedo;
             Texture2D normal = _whiteNormal;
             Color tint = Color.white;
@@ -665,6 +679,15 @@ namespace SolarMajesty
                     metallic = 0.28f;
                     smooth = 0.24f;
                     tile = new Vector2(2.2f, 2.2f);
+                    break;
+                case Slot.VisorRed:
+                    // Defense guardian slit visor: hot red glow, the class read at range.
+                    albedo = _whiteAlbedo;
+                    tint = new Color(0.95f, 0.16f, 0.08f);
+                    metallic = 0f;
+                    smooth = 0.7f;
+                    emission = new Color(2.4f, 0.28f, 0.1f);
+                    tile = new Vector2(1f, 1f);
                     break;
             }
 

@@ -14,7 +14,8 @@ namespace SolarMajesty
         public const int MaxVillageHabs = 12;
         public const int MaxVillagers = 8;
         public const int StarterColonists = 2;
-        public const int TaxPerCitizen = 2;
+        /// <summary>Majesty house tax per resident per day (house = 20 + 10/resident, max 50).</summary>
+        public const int TaxPerCitizen = MajestyEconomy.HouseDailyPerResident;
 
         public int Population { get; private set; }
         public int CommonsCount { get; private set; }
@@ -92,7 +93,7 @@ namespace SolarMajesty
             {
                 if (_resources == null) return false;
                 return _resources.Get(ResourceId.WaterIce) >= 8 &&
-                       _resources.Get(ResourceId.Metals) >= 12 &&
+                       _resources.Get(ResourceId.Metals) >= 120 &&
                        _resources.Get(ResourceId.Regolith) >= 10;
             }
         }
@@ -116,7 +117,7 @@ namespace SolarMajesty
                 if (NetMetalsPerMin < OverseerRules.SustainMetPerMin)
                     return MineYieldScale < 0.8f
                         ? "MET income low — Extract metal nodes or add an Ore Mine"
-                        : "need net MET ≥ 1.5/min (mine ticks + tax + payroll)";
+                        : "need net CRED ≥ 15/min (tax collectors + mines + guild tax)";
                 if (!StockpileHealthy)
                     return FarmYieldScale < 0.8f
                         ? "stockpile low — Extract metal/ice nodes; farms are thin on this body"
@@ -131,7 +132,8 @@ namespace SolarMajesty
         private float _lifeSupportHold;
         private readonly ResourceManager _resources;
 
-        public float TaxInterval { get; set; } = 24f;
+        /// <summary>One Majesty day: houses and civic buildings pay their daily tax into tills.</summary>
+        public float TaxInterval { get; set; } = MajestyEconomy.DaySeconds;
         public float ProductionInterval { get; set; } = 8f;
         public float GrowInterval { get; set; } = 18f;
         public float FarmYieldScale { get; set; } = 1f;
@@ -321,12 +323,16 @@ namespace SolarMajesty
         {
             float scale = Mathf.Clamp(ProductionScale, 0.15f, 1.5f);
             int ice = Mathf.Max(0, Mathf.RoundToInt(Farms * 3 * FarmYieldScale * scale));
-            int met = Mathf.Max(0, Mathf.RoundToInt(Mines * 4 * MineYieldScale * scale));
+            int met = Mathf.Max(0, Mathf.RoundToInt(Mines * 40 * MineYieldScale * scale));
             int reg = Mathf.Max(0, Mathf.RoundToInt(RegolithCamps * 6 * scale));
             if (ice > 0)
                 _resources.Add(ResourceId.WaterIce, ice);
             if (met > 0)
-                _resources.Add(ResourceId.Metals, met);
+            {
+                // Majesty: gold sits in the building until a tax collector walks it home.
+                if (RouteCampGoldToTills) PendingCampGold += met;
+                else _resources.Add(ResourceId.Metals, met);
+            }
             if (reg > 0)
                 _resources.Add(ResourceId.Regolith, reg);
 
@@ -387,9 +393,32 @@ namespace SolarMajesty
                 return;
             }
 
-            LastTax = LevyRun.Accrue(Population, Overcrowded);
+            PendingDays++;
+            LastTax = MajestyEconomy.HousesDailyTax(CoreHabs + VillageHabs, Population, Overcrowded);
             if (LastTax > 0)
                 PendingLevy += LastTax;
+        }
+
+        /// <summary>Majesty days elapsed since the runtime last paid civic daily tax into tills.</summary>
+        public int PendingDays { get; private set; }
+
+        public int TakePendingDays()
+        {
+            int n = PendingDays;
+            PendingDays = 0;
+            return n;
+        }
+
+        /// <summary>When true, mine gold waits in the Mine's till for a collector instead of teleporting.</summary>
+        public bool RouteCampGoldToTills { get; set; }
+
+        public int PendingCampGold { get; private set; }
+
+        public int TakePendingCampGold()
+        {
+            int n = PendingCampGold;
+            PendingCampGold = 0;
+            return n;
         }
 
         public int TakeUncollectedLevy() => TakePendingLevy();

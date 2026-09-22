@@ -153,6 +153,44 @@ namespace SolarMajesty
         /// Bring an older save forward. A save from a newer build is refused rather than guessed at —
         /// loading it with missing fields would silently corrupt a player's colony.
         /// </summary>
+        /// <summary>v5 → v6: every stored gold amount moves onto the Majesty 2 scale.</summary>
+        private static void MigrateGoldScale(SaveGame save)
+        {
+            save.stockpile.metals = MajestyEconomy.MigrateGold(save.stockpile.metals);
+            foreach (var b in save.buildings)
+                if (b != null) b.levyPurse = MajestyEconomy.MigrateGold(b.levyPurse);
+            foreach (var f in save.flags)
+            {
+                if (f == null) continue;
+                f.bounty = MajestyEconomy.MigrateGold(f.bounty);
+                f.escrowMetals = MajestyEconomy.MigrateGold(f.escrowMetals);
+            }
+            foreach (var a in save.agents)
+            {
+                if (a == null) continue;
+                a.credits = MajestyEconomy.MigrateGold(a.credits);
+                a.levyCarry = MajestyEconomy.MigrateGold(a.levyCarry);
+                if (a.hasVeteranRecord)
+                    a.veteran.Credits = MajestyEconomy.MigrateGold(a.veteran.Credits);
+            }
+            foreach (var r in save.roster)
+                if (r != null) r.credits = MajestyEconomy.MigrateGold(r.credits);
+            if (!string.IsNullOrEmpty(save.rosterBlob))
+            {
+                var records = new List<SpecialistRecord>();
+                if (SpecialistRoster.TryDecode(save.rosterBlob, records))
+                {
+                    for (int i = 0; i < records.Count; i++)
+                    {
+                        var rec = records[i];
+                        rec.Credits = MajestyEconomy.MigrateGold(rec.Credits);
+                        records[i] = rec;
+                    }
+                    save.rosterBlob = SpecialistRoster.Encode(records);
+                }
+            }
+        }
+
         private static bool TryMigrate(SaveGame save, string slot)
         {
             if (save.version > SaveGame.CurrentVersion)
@@ -171,6 +209,7 @@ namespace SolarMajesty
             }
 
             bool legacyFaunaOwnership = save.version < 4;
+            bool legacyGoldScale = save.version < MajestyEconomy.GoldScaleSaveVersion;
             if (save.version < SaveGame.CurrentVersion)
             {
                 Debug.Log($"[SaveSystem] Migrating slot {slot} from v{save.version} to v{SaveGame.CurrentVersion}.");
@@ -192,6 +231,8 @@ namespace SolarMajesty
             save.roster ??= new List<SaveRosterEntry>();
             save.research.unlocked ??= new List<int>();
             save.research.progress ??= new List<SaveResearchProgress>();
+            if (legacyGoldScale)
+                MigrateGoldScale(save);
             if (save.buildings.Exists(b => b == null || !Enum.IsDefined(typeof(BuildingCategory), b.category) || b.w < 1 || b.h < 1) ||
                 save.flags.Exists(f => f == null || !Enum.IsDefined(typeof(FlagType), f.flagType)) ||
                 save.agents.Exists(a => a == null || !Enum.IsDefined(typeof(SpecialistClass), a.specialistClass)) ||

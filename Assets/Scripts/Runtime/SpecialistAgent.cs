@@ -58,6 +58,8 @@ namespace SolarMajesty
         private PlanetaryWorldGen _world;
         private NavMeshAgent _agent;
         private UnitMotion _motion;
+        private UnitClipPlayer _clips;
+        private float _clipsLookup;
         private GameLoop _loop;
 
         private float _thinkTimer;
@@ -214,13 +216,49 @@ namespace SolarMajesty
                 EnterIncapacitated();
         }
 
-        public void EarnCredits(float amount, string reason = null)
+        /// <summary>
+        /// Hero earns gold. Majesty 2: half of every earning is taxed into the hero's guild
+        /// (workshop) till — Commons if the workshop is gone — for a tax collector to carry home.
+        /// </summary>
+        public void EarnCredits(float amount, string reason = null, bool taxed = true)
         {
             if (amount <= 0f) return;
-            credits += amount;
-            greedHunger = Mathf.Clamp01(greedHunger - Mathf.Clamp01(amount / 120f) * 0.35f);
+            int tax = taxed ? MajestyEconomy.HeroTax(amount) : 0;
+            if (tax > 0)
+            {
+                var till = GuildTill();
+                if (till != null)
+                {
+                    till.AccrueLevy(tax);
+                    _loop?.NoteGuildTax(tax);
+                }
+                else tax = 0;
+            }
+            float kept = amount - tax;
+            credits += kept;
+            greedHunger = Mathf.Clamp01(greedHunger - Mathf.Clamp01(MajestyEconomy.ToBrain(amount) / 120f) * 0.35f);
             if (!string.IsNullOrEmpty(reason))
-                Debug.Log($"[Credits] {data?.displayName} +{amount:F0} MET ({reason}) → {credits:F0}");
+                Debug.Log($"[Credits] {data?.displayName} +{kept:F0} CRED ({reason}; {tax} to guild) → {credits:F0}");
+        }
+
+        /// <summary>The till this hero's guild tax lands in: workshop / guild hall, else Commons.</summary>
+        private ColonyStructure GuildTill()
+        {
+            if (Workplace != null && Workplace.IsAlive && (Workplace.IsWorkshop || Workplace.IsGuild))
+                return Workplace;
+            return _loop?.Village?.CommonsHub();
+        }
+
+        /// <summary>Hero spending lands in the vendor's till (Majesty: shops keep the gold until collected).</summary>
+        private bool SpendAt(ColonyStructure vendor, int amount, string reason)
+        {
+            if (!TrySpendCredits(amount, reason)) return false;
+            if (amount > 0)
+            {
+                var till = vendor != null && vendor.IsAlive ? vendor : _loop?.Village?.CommonsHub();
+                till?.AccrueLevy(amount);
+            }
+            return true;
         }
 
         public bool TrySpendCredits(int amount, string reason = null)
@@ -509,6 +547,7 @@ namespace SolarMajesty
 
             // Attach before rings, labels, and orbs exist so only the body mesh gets adopted.
             _motion = UnitMotion.Attach(gameObject, UnitMotion.KindFor(data.specialistClass), 1f);
+            TerrainFollow.Attach(gameObject);
 
             _statusDisplay = GetComponent<SpecialistStatusDisplay>();
             if (_statusDisplay == null)
@@ -1197,7 +1236,7 @@ namespace SolarMajesty
             _workPulse = 1f;
             float healed = _repairTarget.Repair(EffectiveWorkRate * 6.5f * dt);
             if (healed > 0f)
-                EarnCredits(Mathf.Clamp(healed * 0.55f, 0.15f, 2.5f), "repair");
+                EarnCredits(Mathf.Clamp(healed * 5.5f, 1.5f, 25f), "repair");
 
             if (!_repairTarget.NeedsRepair)
             {
@@ -1272,12 +1311,14 @@ namespace SolarMajesty
 
         private void TickInnStay(float dt)
         {
+            var inn = _loop?.Village?.NearestByCategory(
+                transform.position, 12f, BuildingCategory.Inn, BuildingCategory.FobotYard);
             if (!_innPaid)
-                _innPaid = TrySpendCredits(OverseerRules.InnStayMet, "inn");
+                _innPaid = SpendAt(inn, OverseerRules.InnStayMet, "inn");
             _innFeeTimer += dt;
             if (_innFeeTimer < OverseerRules.InnStaySeconds) return;
             _innFeeTimer = 0f;
-            _innPaid = TrySpendCredits(OverseerRules.InnStayMet, "inn");
+            _innPaid = SpendAt(inn, OverseerRules.InnStayMet, "inn");
             if (!_innPaid)
                 _status = "inn_broke";
         }
@@ -1290,7 +1331,7 @@ namespace SolarMajesty
             if (!Workplace.IsWorkshop && !Workplace.IsGuild) return;
             if (FlatDistance(transform.position, Workplace.WorldPosition) > 5f) return;
             if (healthNormalized >= 0.92f && fatigue <= 0.22f) return;
-            if (!TrySpendCredits(OverseerRules.WorkshopRepairMet, "workshop"))
+            if (!SpendAt(Workplace, OverseerRules.WorkshopRepairMet, "workshop"))
             {
                 _status = "workshop_broke";
                 _workshopRepairCooldown = 4f;
@@ -1380,7 +1421,7 @@ namespace SolarMajesty
                 return true;
             }
 
-            if (!TrySpendCredits(OverseerRules.AidStationHealCost, "aid"))
+            if (!SpendAt(aid, OverseerRules.AidStationHealCost, "aid"))
                 return true;
             healthNormalized = Mathf.Clamp01(healthNormalized + OverseerRules.AidStationHealHp);
             fatigue = Mathf.Clamp01(fatigue - 0.15f);
@@ -1421,7 +1462,7 @@ namespace SolarMajesty
             if (FlatDistance(transform.position, Workplace.WorldPosition) > 6f) return;
             var item = ShopCatalog.BestGuildUpgrade(data.specialistClass, Mathf.FloorToInt(credits), equippedSuit);
             if (item != null)
-                TryBuy(item);
+                TryBuy(item, Workplace);
         }
 
         private void ConsiderMarketBuy()
@@ -1433,7 +1474,7 @@ namespace SolarMajesty
             var item = ShopCatalog.PreferredMarketBuy(
                 data.specialistClass, Mathf.FloorToInt(credits), healthNormalized, equippedAccessory);
             if (item != null)
-                TryBuy(item);
+                TryBuy(item, market);
         }
 
         private void ConsiderBlacksmithBuy()
@@ -1445,13 +1486,13 @@ namespace SolarMajesty
             var item = ShopCatalog.BestBlacksmithBuy(
                 data.specialistClass, Mathf.FloorToInt(credits), equippedSuit, equippedWeapon);
             if (item != null)
-                TryBuy(item);
+                TryBuy(item, smith);
         }
 
-        private bool TryBuy(ShopItemDef item)
+        private bool TryBuy(ShopItemDef item, ColonyStructure vendor)
         {
             if (item == null || credits < item.Cost) return false;
-            credits -= item.Cost;
+            if (!SpendAt(vendor, item.Cost, null)) return false;
             _shopCooldown = 8f;
 
             if (item.Kind == ShopItemKind.PermanentSuit)
@@ -1513,7 +1554,8 @@ namespace SolarMajesty
             SetAgentStopped(true);
             _status = "engaging";
             _workPulse = 1f;
-            GetComponentInChildren<UnitClipPlayer>()?.NotifyStrike();
+            var strikeClips = Clips;
+            if (strikeClips != null) strikeClips.NotifyStrike();
             var stalker = NearestStalkerAgent();
             if (stalker != null)
             {
@@ -1750,10 +1792,40 @@ namespace SolarMajesty
                 _agent.ResetPath();
         }
 
+        /// <summary>Authored clip player on the visual (cached; looked up at most twice a second).</summary>
+        private UnitClipPlayer Clips
+        {
+            get
+            {
+                if (_clips == null && Time.time >= _clipsLookup)
+                {
+                    _clips = GetComponentInChildren<UnitClipPlayer>();
+                    _clipsLookup = Time.time + 0.5f;
+                }
+                return _clips;
+            }
+        }
+
+        /// <summary>Statuses that should play the class Work loop (build, extract, repair ...).</summary>
+        public static bool IsLabourStatus(string status)
+        {
+            if (string.IsNullOrEmpty(status)) return false;
+            return status.StartsWith("working_", System.StringComparison.Ordinal)
+                   || status == "repairing"
+                   || status == "workshop_repair"
+                   || status == "party_work";
+        }
+
         private void TickWorkPulse(float dt)
         {
             // A downed robot sags and stops walking; the work pulse still composes on top.
             if (_motion != null) _motion.SetSuspended(_incapacitated);
+            var clips = Clips;
+            if (clips != null)
+            {
+                clips.SetDowned(_incapacitated);
+                clips.SetWorking(!_incapacitated && IsLabourStatus(_status));
+            }
 
             if (_workPulse > 0f)
             {

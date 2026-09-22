@@ -269,7 +269,7 @@ namespace SolarMajesty
                 SetColor(spine, bone);
             }
 
-            ColonyVisualUtility.SnapToGround(gameObject);
+            ColonyVisualUtility.SnapToGround(gameObject, TerrainDataBake.GroundHeight(transform.position));
         }
 
         private GameObject Prim(

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Rendering;
 
 namespace SolarMajesty
@@ -18,6 +19,13 @@ namespace SolarMajesty
         private GameLoop _loop;
         private IsoGrid _grid;
         private CelestialBodyProfile _body;
+
+        /// <summary>
+        /// Natural-terrain bake for this world. When present, craters, dunes, ice and water are
+        /// part of the height field (TerrainDataBake v2) and props are seated on the real surface.
+        /// </summary>
+        private TerrainBake _bake;
+        private float GroundY(Vector3 p) => _bake != null ? _bake.SampleHeight(p.x, p.z) : 0f;
 
         private struct WaterFootprint
         {
@@ -60,6 +68,8 @@ namespace SolarMajesty
             _loop = loop;
             _grid = grid;
             _body = body ?? CelestialBodyCatalog.Earth();
+            _bake = TerrainDataBake.Current;
+            if (_bake != null && _bake.BodyId != _body.Id) _bake = null;
             _nodes.Clear();
             _lairs.Clear();
             ClearTintCache();
@@ -184,6 +194,9 @@ namespace SolarMajesty
         {
             if (_body.CraterCount <= 0)
                 return;
+            // Craters are stamped into the height field with real morphology and power-law sizes.
+            if (_bake != null)
+                return;
 
             var root = new GameObject("Craters").transform;
             root.SetParent(_worldRoot, false);
@@ -241,6 +254,27 @@ namespace SolarMajesty
             var root = new GameObject("Lakes").transform;
             root.SetParent(_worldRoot, false);
 
+            if (_bake != null)
+            {
+                // Water fills basins the bake carved: a flat surface at the basin's level, with
+                // the terrain itself drawing the shoreline.
+                int li = 0;
+                foreach (var w in _bake.Water)
+                {
+                    if (!w.IsLake) continue;
+                    var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    disc.name = $"Lake_{li++}";
+                    disc.transform.SetParent(root, false);
+                    disc.transform.position = w.Center;
+                    disc.transform.localScale = new Vector3(w.Radius * 2f, 0.02f, w.Radius * 2f);
+                    Object.Destroy(disc.GetComponent<Collider>());
+                    StylizedWaterVisual.Apply(disc, _body.WaterDeep, Color.Lerp(_body.WaterDeep, _body.WaterShallow, 0.4f));
+                    RegisterWaterFootprint(w.Center, w.Radius * 0.62f, w.Radius * 0.62f, 0f);
+                    placed.Add(w.Center);
+                }
+                return;
+            }
+
             for (int i = 0; i < _body.LakeCount; i++)
             {
                 if (!TrySample(rng, placed, VistaExclusion * 1.05f, _body.MinSpacing * 1.4f, out Vector3 pos))
@@ -286,6 +320,27 @@ namespace SolarMajesty
 
             var root = new GameObject("Rivers").transform;
             root.SetParent(_worldRoot, false);
+
+            if (_bake != null)
+            {
+                int si = 0;
+                foreach (var w in _bake.Water)
+                {
+                    if (w.IsLake) continue;
+                    var seg = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    seg.name = $"RiverSeg_{si++}";
+                    seg.transform.SetParent(root, false);
+                    seg.transform.position = w.Center;
+                    seg.transform.rotation = Quaternion.Euler(0f, w.YawDeg, 0f);
+                    seg.transform.localScale = new Vector3(w.Radius * 2f, 0.02f, Mathf.Max(w.Length, w.Radius * 2f));
+                    Object.Destroy(seg.GetComponent<Collider>());
+                    StylizedWaterVisual.Apply(seg, _body.WaterDeep, Color.Lerp(_body.WaterDeep, _body.WaterShallow, 0.55f));
+                    RegisterWaterFootprint(w.Center, w.Radius * 0.55f, Mathf.Max(w.Length, w.Radius) * 0.5f,
+                        w.YawDeg * Mathf.Deg2Rad);
+                    if (si % 6 == 0) placed.Add(w.Center);
+                }
+                return;
+            }
             float maxX = _grid != null ? _grid.WorldWidth - 8f : 370f;
             float maxZ = _grid != null ? _grid.WorldHeight - 8f : 370f;
 
@@ -465,8 +520,19 @@ namespace SolarMajesty
                     }
                 }
 
-                ColonyVisualUtility.SnapToGround(patch);
+                if (_bake != null) SeatChildrenOnGround(patch.transform);
+                else ColonyVisualUtility.SnapToGround(patch);
                 placed.Add(pos);
+            }
+        }
+
+        /// <summary>Drop each direct child onto the terrain under it (trees, shrubs, chunks).</summary>
+        private void SeatChildrenOnGround(Transform root)
+        {
+            for (int c = 0; c < root.childCount; c++)
+            {
+                Transform child = root.GetChild(c);
+                ColonyVisualUtility.SnapToGround(child.gameObject, GroundY(child.position) - 0.03f);
             }
         }
 
@@ -538,6 +604,8 @@ namespace SolarMajesty
         private void SpawnDunes(System.Random rng, List<Vector3> placed)
         {
             if (_body.DuneCount <= 0) return;
+            // Aeolian ridges are part of the height field (fields of transverse dunes in the lows).
+            if (_bake != null) return;
 
             var root = new GameObject("Dunes").transform;
             root.SetParent(_worldRoot, false);
@@ -629,7 +697,8 @@ namespace SolarMajesty
                     Tint(chunk, tint);
                 }
 
-                ColonyVisualUtility.SnapToGround(islet);
+                if (_bake != null) SeatChildrenOnGround(islet.transform);
+                else ColonyVisualUtility.SnapToGround(islet);
                 placed.Add(pos);
             }
         }
@@ -637,6 +706,8 @@ namespace SolarMajesty
         private void SpawnIcePlates(System.Random rng, List<Vector3> placed)
         {
             if (_body.IcePlateCount <= 0) return;
+            // Europa's ice is the terrain itself (lineae, chaos rafts); no floating plates.
+            if (_bake != null) return;
 
             var root = new GameObject("IcePlates").transform;
             root.SetParent(_worldRoot, false);
@@ -669,10 +740,18 @@ namespace SolarMajesty
             var root = new GameObject("Rocks").transform;
             root.SetParent(_worldRoot, false);
 
-            for (int i = 0; i < _body.RockCount; i++)
+            int rockTarget = _body.RockCount;
+            int rocksPlaced = 0;
+            for (int i = 0; i < rockTarget * 3 && rocksPlaced < rockTarget; i++)
             {
                 if (!TrySample(rng, placed, VistaExclusion * 0.85f, 2.2f, out Vector3 pos))
                     continue;
+                // Boulders gather on slopes, crater rims and fresh ejecta; few lie on dune sand.
+                if (_bake != null && rng.NextDouble() > 0.3 + 0.7 * _bake.SampleRockiness(pos.x, pos.z))
+                    continue;
+                if (IsOverWater(pos, 0.6f))
+                    continue;
+                rocksPlaced++;
 
                 float s = Mathf.Lerp(0.28f, 0.92f, (float)rng.NextDouble());
                 var meshPrefab = EnvironmentMeshCatalog.LoadRock(i, _body.Id);
@@ -705,7 +784,8 @@ namespace SolarMajesty
                             0.08f,
                             ShadowCastingMode.On);
                     }
-                    ColonyVisualUtility.SnapToGround(mesh);
+                    // Sit slightly embedded, as real boulders do.
+                    ColonyVisualUtility.SnapToGround(mesh, GroundY(pos) - s * 0.12f);
                     continue;
                 }
 
@@ -744,7 +824,7 @@ namespace SolarMajesty
                         ShadowCastingMode.On);
                 }
 
-                ColonyVisualUtility.SnapToGround(rock);
+                ColonyVisualUtility.SnapToGround(rock, GroundY(pos) - 0.05f);
             }
         }
 
@@ -778,7 +858,7 @@ namespace SolarMajesty
 
                 var go = new GameObject($"Node_{type}_{i}");
                 go.transform.SetParent(root, false);
-                go.transform.position = pos;
+                go.transform.position = new Vector3(pos.x, GroundY(pos), pos.z);
                 var node = go.AddComponent<ResourceNode>();
                 node.Configure(type, yield, 7f, _body.SoilNodeColor);
                 _nodes.Add(node);
@@ -826,7 +906,7 @@ namespace SolarMajesty
                 int budget = Mathf.Max(1, _body.LairStalkerBudget) + (rng.NextDouble() < 0.28 ? 1 : 0);
                 var go = new GameObject($"Lair_{i}");
                 go.transform.SetParent(root, false);
-                go.transform.position = pos;
+                go.transform.position = new Vector3(pos.x, GroundY(pos), pos.z);
                 var lair = go.AddComponent<StalkerLair>();
                 lair.Configure(_loop, budget, 8f, _body.LairRim, _body.LairPit);
                 _lairs.Add(lair);
@@ -926,6 +1006,32 @@ namespace SolarMajesty
         public void RegisterExternalWater(Transform disc, float radiusX, float radiusZ)
         {
             RegisterWaterDisc(disc, radiusX, radiusZ);
+        }
+
+        /// <summary>
+        /// Register real water extent (for IsOverWater) and carve the NavMesh with a box of the
+        /// same size — the visual disc is larger than the water because terrain hides its edge.
+        /// </summary>
+        private void RegisterWaterFootprint(Vector3 center, float radiusX, float radiusZ, float yawRad)
+        {
+            _water.Add(new WaterFootprint
+            {
+                Center = center,
+                RadiusX = Mathf.Max(0.4f, radiusX),
+                RadiusZ = Mathf.Max(0.4f, radiusZ),
+                YawRad = yawRad
+            });
+            var carve = new GameObject("WaterCarve");
+            carve.transform.SetParent(_worldRoot, false);
+            carve.transform.position = center;
+            carve.transform.rotation = Quaternion.Euler(0f, yawRad * Mathf.Rad2Deg, 0f);
+            var obstacle = carve.AddComponent<NavMeshObstacle>();
+            obstacle.carving = true;
+            obstacle.carveOnlyStationary = true;
+            obstacle.shape = NavMeshObstacleShape.Box;
+            // The NavMesh is baked on the y = 0 plane; keep the carve box straddling it.
+            obstacle.center = new Vector3(0f, -center.y, 0f);
+            obstacle.size = new Vector3(radiusX * 2f, 4f, radiusZ * 2f);
         }
 
         private void RegisterWaterDisc(Transform disc, float radiusX, float radiusZ)

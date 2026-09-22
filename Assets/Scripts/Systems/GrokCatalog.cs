@@ -51,7 +51,7 @@ namespace SolarMajesty
                 case GrokBeat.FirstFlag:
                     return "That is a decree, not a leash. Post it. If nobody wants it, that is a you problem.";
                 case GrokBeat.GreedAsk:
-                    return "Anvil wants 79. He can count. Raise the bounty or enjoy the scenery.";
+                    return "Anvil wants 790. He can count. Raise the bounty or enjoy the scenery.";
                 case GrokBeat.LevyWalk:
                     return "See the crate on wheels? That is your tax collector. We are not calling it that. Do not click it.";
                 case GrokBeat.PurseSitting:

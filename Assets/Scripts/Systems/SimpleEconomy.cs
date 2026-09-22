@@ -28,13 +28,33 @@ namespace SolarMajesty
         /// <summary>Flat power drain each upkeep tick (base outpost draw).</summary>
         public int BasePowerUpkeep { get; set; } = 1;
 
-        /// <summary>Package delivered from Earth each resupply.</summary>
+        /// <summary>
+        /// Tank/grid cargo delivered each resupply. The gold side of a landing is a Majesty
+        /// trading-post caravan: <see cref="CaravanGold"/> CRED paid into the Market's till.
+        /// </summary>
         public ResourceAmount[] ResupplyPackage { get; set; } =
         {
-            new ResourceAmount(ResourceId.Metals, 25),
             new ResourceAmount(ResourceId.WaterIce, 15),
             new ResourceAmount(ResourceId.Power, 10)
         };
+
+        /// <summary>Caravan gold per landing (runtime sets it from the pad → market distance).</summary>
+        public int CaravanGold { get; set; } = MajestyEconomy.CaravanGoldBase;
+
+        /// <summary>
+        /// Where trade gold lands. Runtime points this at the Market (or Commons) till so a tax
+        /// collector has to walk it home; returns false to fall back to the stockpile.
+        /// </summary>
+        public Func<int, bool> TillSink { get; set; }
+
+        public int LastCaravanGold { get; private set; }
+
+        private void PayTrade(int gold)
+        {
+            if (gold <= 0) return;
+            if (TillSink != null && TillSink(gold)) return;
+            _resources.Add(ResourceId.Metals, gold);
+        }
 
         public event Action UpkeepApplied;
         public event Action ResupplyArrived;
@@ -252,7 +272,7 @@ namespace SolarMajesty
                     case ResourceNodeType.Metals:
                     {
                         int took = node.Harvest(8);
-                        int got = Deliver(ResourceId.Metals, took, haul);
+                        int got = Deliver(ResourceId.Metals, Gold(took), haul);
                         Deliver(ResourceId.Regolith, 2, haul);
                         RecordExtract($"+{got} MET {tag}", got);
                         break;
@@ -269,7 +289,7 @@ namespace SolarMajesty
                     {
                         int took = node.Harvest(5);
                         int got = Deliver(ResourceId.Power, took, haul);
-                        Deliver(ResourceId.Metals, 1, haul);
+                        Deliver(ResourceId.Metals, Gold(1), haul);
                         RecordExtract($"+{got} PWR {tag}", got);
                         break;
                     }
@@ -277,7 +297,7 @@ namespace SolarMajesty
                     {
                         int took = node.Harvest(10);
                         int got = Deliver(ResourceId.Regolith, took, haul);
-                        Deliver(ResourceId.Metals, 2, haul);
+                        Deliver(ResourceId.Metals, Gold(2), haul);
                         RecordExtract($"+{got} REG {tag}", got);
                         break;
                     }
@@ -288,18 +308,21 @@ namespace SolarMajesty
             if (campusIndex <= 0)
             {
                 int got = Deliver(ResourceId.Regolith, 12, haul);
-                Deliver(ResourceId.Metals, 4, haul);
+                Deliver(ResourceId.Metals, Gold(4), haul);
                 Deliver(ResourceId.WaterIce, 2, haul);
                 RecordExtract($"+{got} REG campus {tag}", got);
             }
             else
             {
                 int got = Deliver(ResourceId.Regolith, 16, haul);
-                Deliver(ResourceId.Metals, 3, haul);
+                Deliver(ResourceId.Metals, Gold(3), haul);
                 Deliver(ResourceId.WaterIce, 1, haul);
                 RecordExtract($"+{got} REG outpost {tag}", got);
             }
         }
+
+        /// <summary>Ore units → CRED (one ore chunk is worth <see cref="MajestyEconomy.GoldScale"/>).</summary>
+        private static int Gold(int oreUnits) => Mathf.RoundToInt(oreUnits * MajestyEconomy.GoldScale);
 
         private int Deliver(ResourceId id, int amount, float efficiency)
         {
@@ -348,7 +371,9 @@ namespace SolarMajesty
                         ResourceAmount c = data.upkeepPerMinute[i];
                         int amt = Mathf.Max(0, Mathf.RoundToInt(c.amount * scale));
                         if (amt <= 0) continue;
-                        if (c.resource == ResourceId.WaterIce)
+                        // Majesty heroes draw no wages (they live off bounties and loot) and ICE is
+                        // never payroll — only grid power is an upkeep.
+                        if (c.resource == ResourceId.WaterIce || c.resource == ResourceId.Metals)
                             continue;
                         int paid = _resources.SpendUpTo(c.resource, amt);
                         if (c.resource == ResourceId.Power) spentPower += paid;
@@ -390,10 +415,13 @@ namespace SolarMajesty
                     _resources.Add(p.resource, p.amount);
             }
 
+            LastCaravanGold = Mathf.Max(0, CaravanGold);
+            PayTrade(LastCaravanGold);
+
             LastResupplyDocked = true;
             LastResupplyLine = ResupplyDockFee > 0
-                ? $"Pad paid out. Dock fee {ResupplyDockFee} MET already left. ICE is tank; MET is scrip."
-                : "Pad paid out. ICE is tank; MET is scrip.";
+                ? $"Ship landed — caravan worth {LastCaravanGold} CRED to the Market till. Dock fee {ResupplyDockFee} CRED already left."
+                : $"Ship landed — caravan worth {LastCaravanGold} CRED to the Market till.";
             return true;
         }
 
@@ -436,7 +464,7 @@ namespace SolarMajesty
                 _resources.SpendUpTo(ResourceId.WaterIce, iceTake);
             if (regTake > 0)
                 _resources.SpendUpTo(ResourceId.Regolith, regTake);
-            _resources.Add(ResourceId.Metals, credits);
+            PayTrade(credits);
 
             MarketOpen = true;
             _marketBlockedLatched = false;

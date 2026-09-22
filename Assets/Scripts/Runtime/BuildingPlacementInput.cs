@@ -137,7 +137,7 @@ namespace SolarMajesty
             ColonyVisualUtility.SnapToGround(_ghost);
 
             bool valid = _placer.CanFit(Selected, cell) &&
-                         (_resources == null || _resources.CanAfford(Selected.buildCost));
+                         (_resources == null || _resources.CanAfford(_placer.CostFor(Selected)));
             if (valid && _placer.ExtraPlacementRule != null)
                 valid = _placer.ExtraPlacementRule(cell, Selected);
             ColonyVisualUtility.ApplyGhostTint(_ghost, valid);
@@ -190,6 +190,7 @@ namespace SolarMajesty
                 cell);
 
             go.name = $"Bld_{order.Data.displayName}_{order.Id}";
+            TerrainGrading.LevelUnder(go);
             CampusNavMesh.AddObstacle(go);
             _loop?.NotifyBuildingPlaced(order.Data, go, order.WorldPosition);
             _loop?.NotifyCampusExpanded();
@@ -197,6 +198,13 @@ namespace SolarMajesty
 
         private void SpawnConstructionSite(ConstructionOrder order)
         {
+            if (order.Data != null)
+            {
+                float cell = _grid != null ? _grid.CellSize : ColonyLayout.DefaultCellSize;
+                TerrainGrading.Request(order.WorldPosition, new Vector2(
+                    order.Data.footprintWidth * cell * 0.5f + 0.4f,
+                    order.Data.footprintHeight * cell * 0.5f + 0.4f));
+            }
             var site = new GameObject($"Site_{order.Id}");
             site.transform.SetParent(_buildingRoot, true);
             site.transform.position = order.WorldPosition + Vector3.up * 0.05f;

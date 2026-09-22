@@ -402,6 +402,100 @@ namespace SolarMajesty
         private OverseerHud _overseerHud;
         private int _focusedCampus;
         private CampusNavMesh _campusNav;
+
+        /// <summary>Campus NavMesh (tax collectors path on it too).</summary>
+        public CampusNavMesh CampusNav => _campusNav;
+
+        /// <summary>Finished workshops waiting for the treasury to afford their Majesty hire fee.</summary>
+        private readonly List<ColonyStructure> _awaitingHire = new List<ColonyStructure>(4);
+        private float _hireNagAt;
+
+        /// <summary>(time, gold) pairs of gold reaching the treasury — drives the income readout.</summary>
+        private readonly Queue<KeyValuePair<float, int>> _treasuryIncome = new Queue<KeyValuePair<float, int>>(64);
+        private int _treasuryIncomeSum;
+
+        /// <summary>Gold that reached the treasury over the last two minutes, per minute.</summary>
+        public float TreasuryIncomePerMin
+        {
+            get
+            {
+                PruneTreasuryIncome();
+                return _treasuryIncomeSum / 2f;
+            }
+        }
+
+        private void PruneTreasuryIncome()
+        {
+            float cutoff = Time.time - 120f;
+            while (_treasuryIncome.Count > 0 && _treasuryIncome.Peek().Key < cutoff)
+                _treasuryIncomeSum -= _treasuryIncome.Dequeue().Value;
+        }
+
+        public void NoteTreasuryIncome(int gold)
+        {
+            if (gold <= 0) return;
+            _treasuryIncome.Enqueue(new KeyValuePair<float, int>(Time.time, gold));
+            _treasuryIncomeSum += gold;
+            PruneTreasuryIncome();
+        }
+
+        /// <summary>A tax collector emptied its bag at Commons or a Watchtower.</summary>
+        public void NoteCollectorDeposit(int amount, Vector3 at)
+        {
+            if (amount <= 0) return;
+            Settlement?.NoteLevyDeposited(amount);
+            NoteTreasuryIncome(amount);
+            if (!_levyHomeLogged)
+            {
+                _levyHomeLogged = true;
+                LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
+                Alerts.Push("levy_home", $"Tax collector walked {amount} CRED home", AlertSeverity.Good, Time.unscaledTime, at);
+            }
+        }
+
+        /// <summary>Half of a hero's earning went into a guild till (Majesty 2 hero tax).</summary>
+        public void NoteGuildTax(int amount)
+        {
+            if (amount > 0) Stats.TitheCollected += amount;
+        }
+
+        /// <summary>Caravans and market sales land in the Market's till (Commons if there is no Market).</summary>
+        private bool PayTradeGold(int gold)
+        {
+            if (gold <= 0 || Village == null) return false;
+            var pad = Village.NearestByCategory(ColonyLayout.CampusOrigin, 400f, BuildingCategory.LandingPad);
+            Vector3 from = pad != null ? pad.WorldPosition : ColonyLayout.CampusOrigin;
+            var till = Village.NearestByCategory(from, 400f, BuildingCategory.Market) ?? Village.CommonsHub();
+            if (till == null || !till.IsAlive) return false;
+            till.AccrueLevy(gold);
+            return true;
+        }
+
+        /// <summary>Majesty trading post: the longer the pad → market road, the richer the caravan.</summary>
+        private void RefreshCaravanValue()
+        {
+            if (Economy == null || Village == null) return;
+            var pad = Village.NearestByCategory(ColonyLayout.CampusOrigin, 400f, BuildingCategory.LandingPad);
+            var market = pad != null ? Village.NearestByCategory(pad.WorldPosition, 400f, BuildingCategory.Market) : null;
+            float d = pad != null && market != null ? FlatDist(pad.WorldPosition, market.WorldPosition) : 0f;
+            Economy.CaravanGold = MajestyEconomy.CaravanGold(d);
+        }
+
+        /// <summary>Workshops that finished while the treasury was short hire as soon as it can pay.</summary>
+        private void TickAwaitingHires()
+        {
+            for (int i = _awaitingHire.Count - 1; i >= 0; i--)
+            {
+                var st = _awaitingHire[i];
+                if (st == null || !st.IsAlive || st.RobotFabricated)
+                {
+                    _awaitingHire.RemoveAt(i);
+                    continue;
+                }
+                if (TryFabricateRobot(st, chargeHire: true))
+                    _awaitingHire.RemoveAt(i);
+            }
+        }
         private MissionController _mission;
         private PlanetaryWorldGen _world;
         private CelestialBodyProfile _body;
@@ -548,6 +642,7 @@ namespace SolarMajesty
         {
             if (amount <= 0) return;
             Settlement?.NoteLevyDeposited(amount);
+            NoteTreasuryIncome(amount);
             if (!_levyHomeLogged)
             {
                 _levyHomeLogged = true;
@@ -1946,8 +2041,10 @@ namespace SolarMajesty
                 if (Economy != null)
                 {
                     Economy.MarketPopulation = Settlement != null ? Settlement.Population : 0;
+                    RefreshCaravanValue();
                     Economy.Tick(_constructionTick, living);
                 }
+                TickAwaitingHires();
                 _constructionTick = 0f;
             }
         }
@@ -2165,6 +2262,8 @@ namespace SolarMajesty
                 var holder = ground.GetComponent<TerrainBakeHolder>();
                 if (holder == null) holder = ground.AddComponent<TerrainBakeHolder>();
                 holder.Bake = bake;
+                // World gen, dressing, units and building pads read the live surface from here.
+                TerrainDataBake.Current = bake;
             }
 
             // The mesh is authored in world units already, so the transform stays identity.
@@ -2250,6 +2349,10 @@ namespace SolarMajesty
             Economy.UpkeepApplied += OnUpkeepTithe;
             Economy.MarketExported += OnMarketExported;
             Economy.MarketBlocked += OnMarketBlocked;
+            // Majesty gold loop: trade and mine gold sit in tills until a tax collector walks it home.
+            Economy.TillSink = PayTradeGold;
+            Settlement.RouteCampGoldToTills = true;
+            Placer.OwnedCount = cat => Village != null ? Village.CountAlive(cat) : 0;
             Threat = new ThreatPressure { Ambient = 0.18f };
         }
 
@@ -2489,6 +2592,9 @@ namespace SolarMajesty
             SpecialistPersonality.ApplyFlagAffinity(researchSiteFlagData);
             SpecialistPersonality.ApplyFlagAffinity(outpostFlagData);
             SpecialistPersonality.ApplyFlagAffinity(terraformFlagData);
+            foreach (var f in new[] { exploreFlagData, clearThreatFlagData, buildFlagData, extractFlagData,
+                         defendFlagData, researchSiteFlagData, outpostFlagData, terraformFlagData })
+                MajestyEconomy.ApplyFlagBounties(f);
 
             if (starterBuildings == null || starterBuildings.Length == 0)
             {
@@ -2520,6 +2626,7 @@ namespace SolarMajesty
             starterBuildings = AppendEconomyBuildings(starterBuildings);
             ForceCardinalFootprints(starterBuildings);
             StripShopCostsToCredits(starterBuildings);
+            MajestyEconomy.ApplyBuildingPrices(starterBuildings);
         }
 
         /// <summary>Colony Commons is always catalog index 0 — Majesty first-build.</summary>
@@ -2715,8 +2822,13 @@ namespace SolarMajesty
             Debug.Log("[GameLoop] No starter robots — build workshops to fabricate outdoor robots.");
         }
 
-        /// <summary>Fabricate one outdoor robot when a workshop finishes building.</summary>
-        public bool TryFabricateRobot(ColonyStructure workshop, bool announce = true, bool restoreVeteran = true)
+        /// <summary>
+        /// Fabricate one outdoor robot when a workshop finishes building. With
+        /// <paramref name="chargeHire"/> the treasury pays the Majesty 2 recruit fee first; a workshop
+        /// the treasury cannot afford yet waits and hires as soon as the gold is there.
+        /// </summary>
+        public bool TryFabricateRobot(ColonyStructure workshop, bool announce = true, bool restoreVeteran = true,
+            bool chargeHire = false)
         {
             if (workshop == null || !workshop.IsAlive || !workshop.IsWorkshop) return false;
             if (workshop.RobotFabricated) return false;
@@ -2736,8 +2848,26 @@ namespace SolarMajesty
             if (HasCorpse(cls.Value))
                 return false;
 
+            int hire = chargeHire ? MajestyEconomy.HireCost(cls.Value) : 0;
+            if (hire > 0 && (Resources == null || !Resources.TrySpend(ResourceId.Metals, hire)))
+            {
+                if (!_awaitingHire.Contains(workshop)) _awaitingHire.Add(workshop);
+                if (Time.time >= _hireNagAt)
+                {
+                    _hireNagAt = Time.time + 30f;
+                    LogOverseer($"{workshop.DisplayName} is ready — hiring its {ColonyStructure.ClassLabel(cls.Value)} costs {hire} CRED.");
+                }
+                return false;
+            }
+
             var agent = SpawnOne(data, pos, TintForClass(cls.Value));
-            if (agent == null) return false;
+            if (agent == null)
+            {
+                if (hire > 0) Resources.Add(ResourceId.Metals, hire);
+                return false;
+            }
+            if (chargeHire)
+                agent.EarnCredits(MajestyEconomy.HeroStartingPurse, null, taxed: false);
 
             if (restoreVeteran)
             {
@@ -2763,7 +2893,9 @@ namespace SolarMajesty
             string label = data.displayName ?? cls.Value.ToString();
             if (announce)
             {
-                _overseerHud?.Notify($"{label} fabricated at {workshop.DisplayName}.", 3.2f);
+                _overseerHud?.Notify(hire > 0
+                    ? $"{label} hired at {workshop.DisplayName} — {hire} CRED."
+                    : $"{label} fabricated at {workshop.DisplayName}.", 3.2f);
                 DemoAudio.PlayClaim();
                 DemoVfx.ClaimRing(pos, TintForClass(cls.Value));
             }
@@ -2821,7 +2953,7 @@ namespace SolarMajesty
                 if (!ColonyStructure.IsWorkshopCategory(order.Data.category)) continue;
                 var st = Village?.FindNear(order.WorldPosition, 4f);
                 if (st != null && st.Category == order.Data.category)
-                    TryFabricateRobot(st);
+                    TryFabricateRobot(st, chargeHire: true);
             }
             if (_completedBuilds.Count > 0)
                 SyncNarrativeCivic();
@@ -3961,6 +4093,7 @@ namespace SolarMajesty
         {
             if (amount <= 0 || Settlement == null) return;
             Settlement.NoteLevyDelivered(amount);
+            NoteTreasuryIncome(amount);
             LogOverseer(CompactGrok.LevyDelivered(amount));
         }
 
@@ -4252,7 +4385,7 @@ namespace SolarMajesty
             if (grid != null)
                 world = grid.SnapToCellCenter(world);
 
-            const float bounty = 160f;
+            const float bounty = 1600f; // Majesty gold scale
             if (_flagInput != null)
             {
                 _flagInput.PostFlagAt(exploreFlagData, world, bounty);
@@ -5780,7 +5913,7 @@ namespace SolarMajesty
                 st.Category == BuildingCategory.RegolithCamp)
                 data = extractFlagData;
             if (data == null) return;
-            float bounty = _flagInput.Bounty > 10f ? _flagInput.Bounty : 80f;
+            float bounty = _flagInput.Bounty >= MajestyEconomy.FlagMinBounty ? _flagInput.Bounty : data.defaultBounty;
             _flagInput.PostFlagAt(data, st.WorldPosition, bounty);
             DemoVfx.ClaimRing(st.WorldPosition, new Color(1f, 0.85f, 0.2f));
         }
@@ -6050,7 +6183,7 @@ namespace SolarMajesty
             if (shop != null && shop.IsAlive)
                 shop.ClearRobotFabricated();
             string salvageTxt = salvage > 0 ? $" Salvage {salvage} MET." : "";
-            int bill = OverseerRules.YardBill(rec.Level);
+            int bill = OverseerRules.YardBill(rec.Level, rec.Class);
             LogOverseer($"{label} scrapped — wreck in the Fobot Yard. Stand-up {bill} MET (L{rec.Level}).{salvageTxt}");
         }
 
@@ -6177,22 +6310,13 @@ namespace SolarMajesty
             return Placer.FindRefabAt(st.WorldPosition, 6f);
         }
 
+        /// <summary>
+        /// Upkeep tick. Majesty 2 has no payroll tithe: heroes already hand half of every earning
+        /// to their guild till (see SpecialistAgent.EarnCredits), and collectors walk it home.
+        /// </summary>
         private void OnUpkeepTithe()
         {
-            int total = 0;
-            for (int i = 0; i < _agents.Count; i++)
-            {
-                var a = _agents[i];
-                if (a == null) continue;
-                total += a.CollectTithe();
-            }
-            _lastTithe = total;
-            if (total > 0)
-            {
-                Resources?.Add(ResourceId.Metals, total);
-                LogOverseer($"Payroll returned {total} CRED.");
-            }
-
+            _lastTithe = 0;
             TryMarketSiphon();
         }
 
@@ -6202,7 +6326,7 @@ namespace SolarMajesty
             if (!HasAliveCategory(BuildingCategory.Market) || Resources == null || Settlement == null)
                 return;
             if (!MarketSiphon.TrySiphon(
-                    Resources, Settlement.Population, out int credits, out int ice, out int reg))
+                    Resources, Settlement.Population, false, out int credits, out int ice, out int reg))
             {
                 if (Time.time >= _siphonBlockToastAt)
                 {
@@ -6211,6 +6335,8 @@ namespace SolarMajesty
                 }
                 return;
             }
+            if (!PayTradeGold(credits))
+                Resources.Add(ResourceId.Metals, credits);
             LogOverseer(CompactGrok.SiphonPaid(credits, ice, reg));
         }
 
@@ -6219,12 +6345,8 @@ namespace SolarMajesty
             if (Settlement == null) return;
             float ice = Settlement.Farms * 3f * Settlement.FarmYieldScale * Settlement.ProductionScale /
                         Mathf.Max(0.1f, Settlement.ProductionInterval) * 60f;
-            float met = Settlement.Mines * 4f * Settlement.MineYieldScale * Settlement.ProductionScale /
-                        Mathf.Max(0.1f, Settlement.ProductionInterval) * 60f;
-            met += Settlement.LastDelivered / Mathf.Max(0.1f, Settlement.TaxInterval) * 60f;
-            met += _lastTithe / 30f * 60f;
-            if (Economy != null)
-                met -= Economy.LastMetalsUpkeep / 30f * 60f;
+            // Majesty: income is what the tax collectors actually carry into the treasury.
+            float met = TreasuryIncomePerMin;
             Settlement.SetIncomeRates(met, ice);
         }
 
@@ -6312,10 +6434,12 @@ namespace SolarMajesty
             {
                 var a = _agents[i];
                 if (a == null || !a.IsIncapacitated) continue;
-                met += OverseerRules.YardBill(a.Level);
+                met += a.Data != null
+                    ? OverseerRules.YardBill(a.Level, a.Data.specialistClass)
+                    : OverseerRules.YardBill(a.Level);
             }
             for (int i = 0; i < _corpses.Count; i++)
-                met += OverseerRules.YardBill(_corpses[i].Level);
+                met += OverseerRules.YardBill(_corpses[i].Level, _corpses[i].Class);
             if (met <= 0)
                 met = OverseerRules.ReviveMet;
         }
@@ -6502,8 +6626,8 @@ namespace SolarMajesty
                 sb.Append(" L");
                 sb.Append(Mathf.Max(1, rec.Level));
                 sb.Append(" ");
-                sb.Append(OverseerRules.YardBill(rec.Level));
-                sb.Append(" MET");
+                sb.Append(OverseerRules.YardBill(rec.Level, rec.Class));
+                sb.Append(" CRED");
             }
             return sb.ToString();
         }

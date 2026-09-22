@@ -42,17 +42,14 @@ namespace SolarMajesty.Tests
             float canyonRaw = TerrainDataBake.Height(canyon.x, canyon.z, 11, CelestialBodyId.Mars);
             Assert.Less(canyonH, -2f, $"seeded canyon sampled={canyonH:0.###} raw={canyonRaw:0.###}");
 
-            Vector3 wall = crater + new Vector3(0.53f, 0f, -0.85f) * 3.2f;
-            const float e = 1.6f;
-            float hL = bake.SampleHeight(wall.x - e, wall.z);
-            float hR = bake.SampleHeight(wall.x + e, wall.z);
-            float hD = bake.SampleHeight(wall.x, wall.z - e);
-            float hU = bake.SampleHeight(wall.x, wall.z + e);
-            Vector3 n = new Vector3(hL - hR, e * 2f, hD - hU).normalized;
-            float slope = 1f - Mathf.Clamp01(n.y);
-            float h01 = Mathf.InverseLerp(-bake.Amplitude, bake.Amplitude, bake.SampleHeight(wall.x, wall.z));
-            Color splat = TerrainDataBake.SplatFor(CelestialBodyId.Mars, h01, slope);
-            Assert.Greater(splat.g, 0.45f, "crater / canyon walls read rock");
+            // Natural bowl: the steep part of the wall is near the rim (~0.8 R), not mid-floor.
+            // West wall — away from the yard-pad blend and clear of the channel to the north.
+            Vector3 wall = crater + new Vector3(-0.97f, 0f, -0.24f) * (7.4f * 0.8f);
+            int n = bake.Resolution;
+            int px = Mathf.RoundToInt(wall.x / bake.WorldWidth * (n - 1));
+            int pz = Mathf.RoundToInt(wall.z / bake.WorldHeight * (n - 1));
+            Color splat = bake.SplatMap.GetPixel(px, pz);
+            Assert.Greater(splat.g, 0.45f, $"crater walls read rock (splat {splat})");
         }
 
         [Test]
@@ -161,6 +158,68 @@ namespace SolarMajesty.Tests
             }
             Assert.Less(closest, 9f, "a vertex should sit near the campus origin");
             Assert.AreEqual(0f, closestY, 0.05f);
+        }
+
+        [Test]
+        public void Europa_HasNoLiquidSurfaceWater()
+        {
+            var europa = CelestialBodyCatalog.Europa();
+            Assert.AreEqual(0, europa.LakeCount, "Europa's surface is frozen");
+            Assert.AreEqual(0, europa.RiverCount);
+            var bake = TerrainDataBake.Generate(384f, 384f, 7, europa);
+            Assert.AreEqual(0, bake.Water.Count);
+        }
+
+        [Test]
+        public void Earth_LakesFillCarvedBasins()
+        {
+            var earth = CelestialBodyCatalog.Earth();
+            var bake = TerrainDataBake.Generate(384f, 384f, 7, earth);
+            int lakes = 0;
+            foreach (var w in bake.Water)
+            {
+                if (!w.IsLake) continue;
+                lakes++;
+                float floor = bake.SampleHeight(w.Center.x, w.Center.z);
+                Assert.Less(floor, w.Center.y - 0.2f, "lake bed sits below its water level");
+            }
+            Assert.Greater(lakes, 0, "Earth gets lakes in natural low ground");
+            Assert.LessOrEqual(lakes, earth.LakeCount);
+        }
+
+        [Test]
+        public void Luna_FreshCratersBakeBrightEjecta()
+        {
+            var bake = TerrainDataBake.Generate(384f, 384f, 7, CelestialBodyCatalog.Luna());
+            float maxFresh = 0f;
+            for (int i = 0; i < bake.Fresh.Length; i++)
+                maxFresh = Mathf.Max(maxFresh, bake.Fresh[i]);
+            Assert.Greater(maxFresh, 0.5f, "young craters carry bright ejecta in MaskMap.G");
+        }
+
+        [Test]
+        public void LevelFootprint_GradesAFlatPad()
+        {
+            var bake = TerrainDataBake.Generate(384f, 384f, 7, CelestialBodyCatalog.Mars());
+            Vector3 site = ColonyLayout.CampusOrigin + new Vector3(-30f, 0f, -34f);
+            Assert.IsTrue(TerrainDataBake.LevelFootprint(bake, site, new Vector2(3f, 3f), 3f)
+                          || Mathf.Abs(bake.SampleHeight(site.x, site.z)) < 0.01f);
+            Assert.AreEqual(0f, bake.SampleHeight(site.x, site.z), 0.02f);
+            Assert.AreEqual(0f, bake.SampleHeight(site.x + 2.5f, site.z - 2.5f), 0.05f);
+        }
+
+        [Test]
+        public void Noise_IsSeededAndBounded()
+        {
+            float a = TerrainNoise.Fbm(12.3f, 45.6f, 7, 4);
+            float b = TerrainNoise.Fbm(12.3f, 45.6f, 8, 4);
+            Assert.AreNotEqual(a, b, "seed changes the field");
+            Assert.AreEqual(a, TerrainNoise.Fbm(12.3f, 45.6f, 7, 4), 1e-6f, "deterministic");
+            for (int i = 0; i < 200; i++)
+            {
+                float v = TerrainNoise.Gradient(i * 0.37f, i * 0.91f, 3);
+                Assert.LessOrEqual(Mathf.Abs(v), 1.05f);
+            }
         }
     }
 }

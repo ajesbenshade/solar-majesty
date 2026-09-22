@@ -1,21 +1,28 @@
-// Procedural planetary ground + optional authored detail tiles.
+// Natural planetary ground (v2, 2026-09-22).
 //
-// Blends a low-lying dust colour with an exposed rock colour by slope and height, then adds a
-// speckle and a broad mottle so the surface does not read as one flat tint at isometric distance.
-// World-space UVs keep the grade seamless. Terrain Data Baker Sand/Grass/Snow tiles
-// weight the splat mix (Mars remaps Grass → rock grit; never a green lawn). Authored
-// SM_Ground_* tiles add extra grit without replacing the body color lock (white hulls
-// must stay white against Mars dirt).
+// The per-texel "what is here" comes from TerrainDataBake (512² over the map): splat weights
+// (R dust / G rock / B vegetation-dark sand-lineae / A wet-mare-floor), world normals, and a mask
+// (R horizon AO, G crater freshness / ejecta / rays, B regional albedo feature, A height).
+// Per-pixel work adds what a 0.75 m bake cannot: anti-tiled grit from the authored detail tile,
+// triplanar projection on cliffs (no smeared stretch marks), layered strata on rock faces, a
+// correct tangent-frame detail normal, and multi-scale colour variation. The terrain casts and
+// receives shadows, so crater walls and butte faces shade the ground around them.
+//
+// Property names from v1 are kept so PlanetaryMapDressing stays source-compatible.
 Shader "SolarMajesty/PlanetGround"
 {
     Properties
     {
-        [MainColor] _BaseColor("Dust Color", Color) = (0.82, 0.42, 0.18, 1)
-        _DarkColor("Low Color", Color) = (0.46, 0.18, 0.08, 1)
-        _RockColor("Rock Color", Color) = (0.50, 0.24, 0.12, 1)
+        [MainColor] _BaseColor("Dust Color (splat R)", Color) = (0.82, 0.42, 0.18, 1)
+        _DarkColor("Low / Feature Color", Color) = (0.46, 0.18, 0.08, 1)
+        _RockColor("Rock Color (splat G)", Color) = (0.50, 0.24, 0.12, 1)
+        _GrassColor("Layer B Color (vegetation / dark sand / lineae)", Color) = (0.22, 0.42, 0.16, 1)
+        _WetColor("Layer A Color (wet / mare / floor)", Color) = (0.18, 0.22, 0.16, 1)
+        _EjectaColor("Fresh Ejecta Color", Color) = (0.75, 0.73, 0.70, 1)
+        _StrataColor("Strata Band Color", Color) = (0.56, 0.34, 0.19, 1)
 
-        _MacroScale("Macro Blotch Scale (m)", Range(4, 120)) = 42
-        _MacroStrength("Macro Blotch Strength", Range(0,1)) = 0.35
+        _MacroScale("Macro Variation Scale (m)", Range(4, 200)) = 60
+        _MacroStrength("Macro Variation Strength", Range(0,1)) = 0.35
         _DetailScale("Speckle Scale (m)", Range(0.2, 12)) = 2.2
         _DetailStrength("Speckle Strength", Range(0,1)) = 0.22
 
@@ -24,6 +31,8 @@ Shader "SolarMajesty/PlanetGround"
         [NoScaleOffset] _DetailNormal("Detail Normal", 2D) = "bump" {}
         _DetailTexScale("Detail Tex Scale (m)", Range(0.5, 32)) = 8
         _DetailTexAmount("Detail Tex Amount", Range(0,1)) = 0
+        _DetailMeanLuma("Detail Mean Luma", Range(0.05, 1)) = 0.4
+        _DetailNormalStrength("Detail Normal Strength", Range(0, 2)) = 0.8
 
         _SlopeStart("Rock Slope Start", Range(0,1)) = 0.55
         _SlopeEnd("Rock Slope End", Range(0,1)) = 0.88
@@ -36,8 +45,12 @@ Shader "SolarMajesty/PlanetGround"
         _BakeSize("Bake Size (m)", Vector) = (384, 384, 0, 0)
         _BakeNormalAmount("Bake Normal Amount", Range(0,1)) = 0
         _SplatAmount("Splat Amount", Range(0,1)) = 0
-        _GrassColor("Grass / Dune Color", Color) = (0.22, 0.42, 0.16, 1)
-        _WetColor("Wet / Floor Color", Color) = (0.18, 0.22, 0.16, 1)
+        _AOStrength("Baked AO Strength", Range(0,1)) = 0.6
+        _FreshAmount("Fresh Ejecta Amount", Range(0,1)) = 0.6
+        _FeatureAmount("Regional Feature Darkening", Range(0,1)) = 0.2
+        _StrataStrength("Strata Strength", Range(0,1)) = 0
+        _StrataScale("Strata Bands per Metre", Range(0.05, 4)) = 0.7
+        _BlendContrast("Layer Blend Contrast", Range(0, 2)) = 0.8
 
         [Header(Splat Albedo Tiles)]
         [NoScaleOffset] _SplatAlbedo0("Splat Albedo 0 (Sand / Dust)", 2D) = "white" {}
@@ -69,6 +82,10 @@ Shader "SolarMajesty/PlanetGround"
             float4 _BaseColor;
             float4 _DarkColor;
             float4 _RockColor;
+            float4 _GrassColor;
+            float4 _WetColor;
+            float4 _EjectaColor;
+            float4 _StrataColor;
             float  _MacroScale;
             float  _MacroStrength;
             float  _DetailScale;
@@ -77,13 +94,19 @@ Shader "SolarMajesty/PlanetGround"
             float4 _DetailNormal_ST;
             float  _DetailTexScale;
             float  _DetailTexAmount;
+            float  _DetailMeanLuma;
+            float  _DetailNormalStrength;
             float  _SlopeStart;
             float  _SlopeEnd;
             float4 _BakeSize;
             float  _BakeNormalAmount;
             float  _SplatAmount;
-            float4 _GrassColor;
-            float4 _WetColor;
+            float  _AOStrength;
+            float  _FreshAmount;
+            float  _FeatureAmount;
+            float  _StrataStrength;
+            float  _StrataScale;
+            float  _BlendContrast;
             float4 _SplatAlbedo0_ST;
             float4 _SplatAlbedo1_ST;
             float4 _SplatAlbedo2_ST;
@@ -95,20 +118,13 @@ Shader "SolarMajesty/PlanetGround"
             float  _Metallic;
         CBUFFER_END
 
-        TEXTURE2D(_DetailAlbedo);
-        SAMPLER(sampler_DetailAlbedo);
-        TEXTURE2D(_DetailNormal);
-        SAMPLER(sampler_DetailNormal);
-        TEXTURE2D(_HeightMap);
-        SAMPLER(sampler_HeightMap);
-        TEXTURE2D(_NormalMap);
-        SAMPLER(sampler_NormalMap);
-        TEXTURE2D(_SplatMap);
-        SAMPLER(sampler_SplatMap);
-        TEXTURE2D(_MaskMap);
-        SAMPLER(sampler_MaskMap);
-        TEXTURE2D(_SplatAlbedo0);
-        SAMPLER(sampler_SplatAlbedo0);
+        TEXTURE2D(_DetailAlbedo);   SAMPLER(sampler_DetailAlbedo);
+        TEXTURE2D(_DetailNormal);   SAMPLER(sampler_DetailNormal);
+        TEXTURE2D(_HeightMap);      SAMPLER(sampler_HeightMap);
+        TEXTURE2D(_NormalMap);      SAMPLER(sampler_NormalMap);
+        TEXTURE2D(_SplatMap);       SAMPLER(sampler_SplatMap);
+        TEXTURE2D(_MaskMap);        SAMPLER(sampler_MaskMap);
+        TEXTURE2D(_SplatAlbedo0);   SAMPLER(sampler_SplatAlbedo0);
         TEXTURE2D(_SplatAlbedo1);
         TEXTURE2D(_SplatAlbedo2);
         TEXTURE2D(_SplatAlbedo3);
@@ -120,14 +136,15 @@ Shader "SolarMajesty/PlanetGround"
             float d = saturate(desat);
             half luma = dot(texRgb, half3(0.299, 0.587, 0.114));
             half3 dehued = lerp(texRgb, luma.xxx, d);
-            // Grit only — do not let bright beach-sand luma lift the tint into mustard.
             half3 colorized = tint * lerp(0.82, 1.08, saturate(luma));
             return lerp(dehued, colorized, d);
         }
 
         float SM_GHash(float2 p)
         {
-            return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453123);
+            p = frac(p * float2(0.1031, 0.1030));
+            p += dot(p, p.yx + 33.33);
+            return frac((p.x + p.y) * p.x);
         }
 
         float SM_GNoise(float2 p)
@@ -146,13 +163,21 @@ Shader "SolarMajesty/PlanetGround"
         {
             float v = 0.0;
             float a = 0.5;
+            const float2x2 rot = float2x2(0.8, -0.6, 0.6, 0.8);
             for (int i = 0; i < 4; i++)
             {
                 v += a * SM_GNoise(p);
-                p *= 2.03;
+                p = mul(rot, p) * 2.03;
                 a *= 0.5;
             }
-            return v;
+            return v / 0.9375;   // 0..1, mean ~0.5
+        }
+
+        // Two rotated scales blended by noise: kills the visible grid of a repeating tile.
+        float2 SM_Rot(float2 p, float a)
+        {
+            float c = cos(a), s = sin(a);
+            return float2(c * p.x - s * p.y, s * p.x + c * p.y);
         }
         ENDHLSL
 
@@ -162,7 +187,7 @@ Shader "SolarMajesty/PlanetGround"
             Tags { "LightMode" = "UniversalForward" }
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 3.5
             #pragma vertex GroundVertex
             #pragma fragment GroundFragment
 
@@ -177,10 +202,8 @@ Shader "SolarMajesty/PlanetGround"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-            // URP's ComputeFogFactor(positionCS.z) remaps clip-z assuming a perspective projection
-            // and collapses to ~0 under orthographic cameras (the ortho-10 Game tab), so
-            // RenderSettings fog never reached the far ground in play stills. Linear view depth
-            // gives the same haze read in perspective editor stills and the ortho Game tab.
+            // URP's ComputeFogFactor(positionCS.z) collapses to ~0 under orthographic cameras;
+            // linear view depth gives the same haze in perspective editor stills and the ortho Game tab.
             float SM_FogCoord(float3 positionWS)
             {
                 float viewZ = -TransformWorldToView(positionWS).z;
@@ -211,10 +234,8 @@ Shader "SolarMajesty/PlanetGround"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-
                 VertexPositionInputs pos = GetVertexPositionInputs(input.positionOS.xyz);
                 VertexNormalInputs nrm = GetVertexNormalInputs(input.normalOS);
-
                 output.positionCS = pos.positionCS;
                 output.positionWS = pos.positionWS;
                 output.normalWS = nrm.normalWS;
@@ -222,107 +243,157 @@ Shader "SolarMajesty/PlanetGround"
                 return output;
             }
 
+            // Anti-tiled, triplanar-on-cliffs sample of the detail albedo.
+            half3 SampleDetail(float3 pw, float3 n, float scale)
+            {
+                float2 uvA = pw.xz / scale;
+                float2 uvB = SM_Rot(pw.xz, 0.9) / (scale * 2.7) + 0.37;
+                float mixAB = smoothstep(0.35, 0.65, SM_Fbm(pw.xz / 23.0));
+                half3 top = lerp(SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, uvA).rgb,
+                                 SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, uvB).rgb, mixAB);
+                float3 w = pow(abs(n), 4.0);
+                w /= max(w.x + w.y + w.z, 1e-4);
+                if (w.y > 0.97) return top;
+                half3 sx = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, pw.zy / scale).rgb;
+                half3 sz = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, pw.xy / scale).rgb;
+                return top * w.y + sx * w.x + sz * w.z;
+            }
+
+            half3 SampleSplatTex(TEXTURE2D_PARAM(tex, smp), float2 p, float scale)
+            {
+                float2 uvA = p / scale;
+                float2 uvB = SM_Rot(p, 1.3) / (scale * 2.3) + 0.61;
+                float mixAB = smoothstep(0.35, 0.65, SM_Fbm(p / 31.0 + 7.0));
+                return lerp(SAMPLE_TEXTURE2D(tex, smp, uvA).rgb, SAMPLE_TEXTURE2D(tex, smp, uvB).rgb, mixAB);
+            }
+
             half4 GroundFragment(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
+                float3 pw = input.positionWS;
                 float3 normalWS = normalize(input.normalWS);
-                float2 p = input.positionWS.xz;
-                float2 bakeUV = p / max(_BakeSize.xy, float2(1, 1));
-                bakeUV = saturate(bakeUV);
+                float2 p = pw.xz;
+                float2 bakeUV = saturate(p / max(_BakeSize.xy, float2(1, 1)));
 
                 float splatAmt = saturate(_SplatAmount);
+                float4 splat = float4(1, 0, 0, 0);
+                float4 mask = float4(1, 0, 0, 0.5);
                 if (splatAmt > 0.001)
                 {
-                    // TDB world-space packing: R = nx*0.5+0.5, G = 1, B = nz*0.5+0.5.
                     half3 packedN = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, bakeUV).rgb;
                     float3 bakeN;
                     bakeN.x = packedN.r * 2.0 - 1.0;
                     bakeN.z = packedN.b * 2.0 - 1.0;
                     bakeN.y = sqrt(saturate(1.0 - bakeN.x * bakeN.x - bakeN.z * bakeN.z));
                     normalWS = normalize(lerp(normalWS, bakeN, saturate(_BakeNormalAmount)));
+                    splat = SAMPLE_TEXTURE2D(_SplatMap, sampler_SplatMap, bakeUV);
+                    mask = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, bakeUV);
                 }
 
-                // Broad blotches stop the open ground reading as one flat colour.
-                float macro = SM_Fbm(p / max(_MacroScale, 1.0));
-                float speckle = SM_GNoise(p / max(_DetailScale, 0.05));
+                // --- detail grit (luminance, normalised around 1) -------------------------------
+                float detailAmt = saturate(_DetailTexAmount);
+                half3 detailRgb = half3(1, 1, 1);
+                float grit = 1.0;
+                if (detailAmt > 0.001)
+                {
+                    detailRgb = SampleDetail(pw, normalWS, max(_DetailTexScale, 0.25));
+                    grit = dot(detailRgb, half3(0.299, 0.587, 0.114)) / max(_DetailMeanLuma, 0.05);
+                }
 
-                // Vertex red channel is terrain exposure, written by TerrainMeshBuilder.
+                // --- layer colours ------------------------------------------------------------------
+                float3 c0 = _BaseColor.rgb;
+                float3 c1 = _RockColor.rgb;
+                float3 c2 = _GrassColor.rgb;
+                float3 c3 = _WetColor.rgb;
+
+                // Layered strata on rock faces (sedimentary buttes, crater walls, Earth outcrops).
+                if (_StrataStrength > 0.001)
+                {
+                    float warpY = pw.y + (SM_Fbm(p / 9.0) - 0.5) * 1.3 / max(_StrataScale, 0.05);
+                    float band = 0.5 + 0.5 * sin(warpY * _StrataScale * 6.2831853);
+                    band = smoothstep(0.15, 0.85, band);
+                    c1 = lerp(c1, _StrataColor.rgb, band * _StrataStrength);
+                }
+
+                float texAmt = saturate(_SplatAlbedoAmount);
+                if (texAmt > 0.001)
+                {
+                    float sc = max(_SplatTexScale, 0.25);
+                    half3 l0 = SM_SplatLayer(SampleSplatTex(TEXTURE2D_ARGS(_SplatAlbedo0, sampler_SplatAlbedo0), p, sc), c0, _SplatDesat.x);
+                    half3 l1 = SM_SplatLayer(SampleSplatTex(TEXTURE2D_ARGS(_SplatAlbedo1, sampler_SplatAlbedo0), p, sc), c1, _SplatDesat.y);
+                    half3 l2 = SM_SplatLayer(SampleSplatTex(TEXTURE2D_ARGS(_SplatAlbedo2, sampler_SplatAlbedo0), p, sc), c2, _SplatDesat.z);
+                    half3 l3 = SM_SplatLayer(SampleSplatTex(TEXTURE2D_ARGS(_SplatAlbedo3, sampler_SplatAlbedo0), p, sc), c3, _SplatDesat.w);
+                    c0 = lerp(c0, l0, texAmt);
+                    c1 = lerp(c1, l1, texAmt);
+                    c2 = lerp(c2, l2, texAmt);
+                    c3 = lerp(c3, l3, texAmt);
+                }
+
+                // Height-aware blend: rock pokes through dust where the grit is high, dust
+                // settles in the grit's low spots — crisp, natural transitions instead of fades.
+                float lift = (grit - 1.0) * _BlendContrast;
+                float4 wts = splat * float4(1.0 - lift * 0.5, 1.0 + lift, 1.0, 1.0 - lift * 0.5);
+                wts = max(wts, 0.0);
+                wts /= max(dot(wts, float4(1, 1, 1, 1)), 1e-4);
+                float3 layered = c0 * wts.r + c1 * wts.g + c2 * wts.b + c3 * wts.a;
+
+                // Without bake maps (edit-mode previews) fall back to the v1 exposure grade.
                 float exposure = saturate(input.color.r);
+                float3 graded = lerp(_DarkColor.rgb, _BaseColor.rgb, saturate(exposure * 0.7 + 0.3));
+                float3 albedo = lerp(graded, layered, splatAmt);
 
-                float3 albedo = lerp(_DarkColor.rgb, _BaseColor.rgb, saturate(exposure * 0.7 + macro * 0.6));
-                albedo = lerp(albedo, albedo * 0.82, (1.0 - macro) * _MacroStrength);
-                albedo *= 1.0 + (speckle - 0.5) * _DetailStrength;
+                // Steep faces lose their dust cover and show rock (v1 behaviour, softened with bakes).
+                float slope = 1.0 - saturate(normalWS.y);
+                float rockSlope = smoothstep(1.0 - _SlopeEnd, 1.0 - _SlopeStart, slope);
+                albedo = lerp(albedo, c1, rockSlope * (1.0 - splatAmt * 0.7));
 
-                if (splatAmt > 0.001)
+                // Regional albedo feature, fresh ejecta and rays.
+                albedo *= 1.0 - _FeatureAmount * mask.b * 0.25;
+                albedo = lerp(albedo, _EjectaColor.rgb, saturate(mask.g * _FreshAmount));
+
+                // Multi-scale variation: broad patches, mid mottling, fine speckle.
+                float macro = SM_Fbm(p / max(_MacroScale, 1.0));
+                float mid = SM_Fbm(p / max(_MacroScale * 0.2, 1.0) + 13.7);
+                float speckle = SM_GNoise(p / max(_DetailScale, 0.05));
+                albedo *= 1.0 + (macro - 0.5) * _MacroStrength * 0.7 + (mid - 0.5) * _MacroStrength * 0.35
+                              + (speckle - 0.5) * _DetailStrength * 0.35;
+
+                // Grit texture multiplies the grade (keeps the body colour lock).
+                albedo *= lerp(1.0, grit, detailAmt);
+
+                // Baked horizon AO darkens crater floors, channel beds, the feet of cliffs.
+                float ao = lerp(1.0, mask.r, _AOStrength * splatAmt);
+                albedo *= lerp(1.0, ao, 0.6);
+
+                // --- detail normal in a proper tangent frame (T = +X, B = +Z on the ground) ----
+                if (detailAmt > 0.001 && _DetailNormalStrength > 0.001)
                 {
-                    float4 splat = SAMPLE_TEXTURE2D(_SplatMap, sampler_SplatMap, bakeUV);
-                    float3 splatSolid =
-                        _BaseColor.rgb * splat.r +
-                        _RockColor.rgb * splat.g +
-                        _GrassColor.rgb * splat.b +
-                        _WetColor.rgb * splat.a;
-
-                    float texAmt = saturate(_SplatAlbedoAmount);
-                    float3 splatAlb = splatSolid;
-                    if (texAmt > 0.001)
-                    {
-                        float2 splatUV = p / max(_SplatTexScale, 0.25);
-                        half3 l0 = SM_SplatLayer(
-                            SAMPLE_TEXTURE2D(_SplatAlbedo0, sampler_SplatAlbedo0, splatUV).rgb,
-                            _BaseColor.rgb, _SplatDesat.x);
-                        half3 l1 = SM_SplatLayer(
-                            SAMPLE_TEXTURE2D(_SplatAlbedo1, sampler_SplatAlbedo0, splatUV).rgb,
-                            _RockColor.rgb, _SplatDesat.y);
-                        half3 l2 = SM_SplatLayer(
-                            SAMPLE_TEXTURE2D(_SplatAlbedo2, sampler_SplatAlbedo0, splatUV).rgb,
-                            _GrassColor.rgb, _SplatDesat.z);
-                        half3 l3 = SM_SplatLayer(
-                            SAMPLE_TEXTURE2D(_SplatAlbedo3, sampler_SplatAlbedo0, splatUV).rgb,
-                            _WetColor.rgb, _SplatDesat.w);
-                        float3 splatTex = l0 * splat.r + l1 * splat.g + l2 * splat.b + l3 * splat.a;
-                        splatAlb = lerp(splatSolid, splatTex, texAmt);
-                    }
-
-                    albedo = lerp(albedo, splatAlb, splatAmt);
-                    half ao = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, bakeUV).r;
-                    albedo *= lerp(1.0, ao, 0.45);
+                    float2 uvA = pw.xz / max(_DetailTexScale, 0.25);
+                    float3 nTS = UnpackNormal(SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, uvA));
+                    nTS.xy *= _DetailNormalStrength * detailAmt * (1.0 - slope);
+                    float3 T = normalize(float3(1, 0, 0) - normalWS * normalWS.x);
+                    float3 B = cross(T, normalWS);
+                    normalWS = normalize(T * nTS.x + B * nTS.y + normalWS * max(nTS.z, 0.2));
                 }
-
-                // Authored tile: grit / ripples. Multiplies the grade — does not replace body tint.
-                float amount = saturate(_DetailTexAmount);
-                if (amount > 0.001)
-                {
-                    float2 detailUV = p / max(_DetailTexScale, 0.25);
-                    half3 detailAlb = SAMPLE_TEXTURE2D(_DetailAlbedo, sampler_DetailAlbedo, detailUV).rgb;
-                    albedo *= lerp(1.0, detailAlb, amount);
-                    half4 nS = SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, detailUV);
-                    float3 nTS = UnpackNormal(nS);
-                    normalWS = normalize(normalWS + float3(nTS.x, 0.0, nTS.y) * (amount * 0.65));
-                }
-
-                // Steep faces lose their dust cover and show rock.
-                float slope = 1.0 - saturate(dot(normalWS, float3(0, 1, 0)));
-                float rock = smoothstep(1.0 - _SlopeEnd, 1.0 - _SlopeStart, slope);
-                albedo = lerp(albedo, _RockColor.rgb, rock * (1.0 - splatAmt * 0.7));
 
                 InputData inputData = (InputData)0;
-                inputData.positionWS = input.positionWS;
+                inputData.positionWS = pw;
                 inputData.normalWS = normalWS;
-                inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
-                inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                inputData.fogCoord = SM_FogCoord(input.positionWS);
+                inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(pw);
+                inputData.shadowCoord = TransformWorldToShadowCoord(pw);
+                inputData.fogCoord = SM_FogCoord(pw);
                 inputData.bakedGI = SampleSH(normalWS);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
                 inputData.shadowMask = half4(1, 1, 1, 1);
 
                 SurfaceData surfaceData = (SurfaceData)0;
-                surfaceData.albedo = albedo;
+                surfaceData.albedo = saturate(albedo);
                 surfaceData.metallic = _Metallic;
-                surfaceData.smoothness = _Smoothness + rock * 0.06;
+                surfaceData.smoothness = saturate(_Smoothness + (wts.g + rockSlope) * 0.04);
                 surfaceData.normalTS = float3(0, 0, 1);
-                surfaceData.occlusion = 1.0;
+                surfaceData.occlusion = ao;
                 surfaceData.alpha = 1.0;
 
                 half4 color = UniversalFragmentPBR(inputData, surfaceData);

@@ -9,6 +9,8 @@ namespace SolarMajesty
     /// </summary>
     public class DustStalkerAgent : MonoBehaviour
     {
+        private UnitClipPlayer _clips;
+
         [Header("Movement")]
         [SerializeField] private float moveSpeed = 1.35f;
         [SerializeField] private float wanderRadius = 10f;
@@ -750,7 +752,11 @@ namespace SolarMajesty
             if (camp.Category == BuildingCategory.Farm)
                 _loop.Resources.SpendUpTo(ResourceId.WaterIce, 1);
             else if (camp.Category == BuildingCategory.Mine)
-                _loop.Resources.SpendUpTo(ResourceId.Metals, 1);
+            {
+                // Gold waits in the Mine's till now — pests nibble that first.
+                if (camp.StealLevy(OverseerRules.JunkBotStealMet) <= 0)
+                    _loop.Resources.SpendUpTo(ResourceId.Metals, OverseerRules.JunkBotStealMet);
+            }
             else
                 _loop.Resources.SpendUpTo(ResourceId.Regolith, 1);
         }
@@ -833,7 +839,8 @@ namespace SolarMajesty
             prey.y = transform.position.y;
             transform.position = MoveFlatToward(prey, moveSpeed * 0.85f * dt);
             nearest.ApplyDamage(biteDamagePerSecond * dt);
-            GetComponentInChildren<UnitClipPlayer>()?.NotifyStrike();
+            if (_clips == null) _clips = GetComponentInChildren<UnitClipPlayer>();
+            if (_clips != null) _clips.NotifyStrike();
         }
 
         private void TickDefeat(float dt)
@@ -1034,6 +1041,7 @@ namespace SolarMajesty
             float height = Kind == FaunaKind.Hopper ? 1.1f : Kind == FaunaKind.Stalker ? 0.85f : 0.55f;
             var motion = UnitMotion.Attach(gameObject, UnitMotion.KindFor(Kind), height);
             if (motion == null) return;
+            TerrainFollow.Attach(gameObject);
 
             if (GetComponentInChildren<UnitClipPlayer>(true) != null)
             {

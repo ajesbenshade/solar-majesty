@@ -9,7 +9,7 @@ namespace SolarMajesty
     public static class LevyRun
     {
         public const float SitStealSeconds = 48f;
-        public const int SitStealAmount = 2;
+        public const int SitStealAmount = 20;
         public const float CollectArrive = 3.4f;
         public const float DepositArrive = 4.2f;
         /// <summary>Haul may drop at a watchtower when Commons is farther than this.</summary>

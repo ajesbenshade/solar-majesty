@@ -170,6 +170,8 @@ namespace SolarMajesty
             public float ProgressSeconds;
             public float RequiredSeconds;
             public SpecialistClass? RefabClass;
+            /// <summary>What was actually charged (Majesty duplicate pricing) — refunds return this.</summary>
+            public ResourceAmount[] PaidCost;
             public bool IsComplete => ProgressSeconds >= RequiredSeconds;
             public bool IsRefab => RefabClass.HasValue;
         }
