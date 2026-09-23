@@ -140,7 +140,7 @@ namespace SolarMajesty
         {
             ChallengeId.Austere => "Austere: 55% starting stockpile (New Game / reload). Commons + airlock + HAB + workshop still fit.",
             ChallengeId.Swarm => "Swarm: more fauna (cap ×1.50) at a slower spawn cadence (reload). Post F5/F2.",
-            ChallengeId.TightPurse => "Tight Purse: Earth ship ×1.55 slower and +80 CRED dock fee. Drop stockpile is unchanged.",
+            ChallengeId.TightPurse => "Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
             _ => "Standard: no challenge modifiers."
         };
 

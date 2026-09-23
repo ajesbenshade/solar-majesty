@@ -43,9 +43,33 @@ namespace SolarMajesty
             }
         }
 
+        private float _simTime;
+        private readonly List<float> _respawnAt = new List<float>(4);
+
+        /// <summary>Killed collectors waiting to be replaced (for the HUD).</summary>
+        public int Replacing => _respawnAt.Count;
+
+        /// <summary>A mob killed a collector on its round: the bag is gone, a replacement follows.</summary>
+        internal void NotifyCollectorKilled(LevyCollector c, int lostBag)
+        {
+            if (c == null) return;
+            _collectors.Remove(c);
+            Release(c.Target);
+            Vector3 at = c.transform.position;
+            Object.Destroy(c.gameObject);
+            _respawnAt.Add(_simTime + MajestyEconomy.CollectorRespawnSeconds);
+            _loop.LogOverseer(lostBag > 0
+                ? $"A tax collector was killed on the road — {lostBag} EU lost. The Commons sends another in {Mathf.RoundToInt(MajestyEconomy.CollectorRespawnSeconds)} s."
+                : $"A tax collector was killed on the road. The Commons sends another in {Mathf.RoundToInt(MajestyEconomy.CollectorRespawnSeconds)} s.");
+            _loop.RaiseAlert("collector_killed", "Tax collector killed on the road", AlertSeverity.Warning, at);
+        }
+
         public void Tick(float dt)
         {
             if (_village == null || _loop == null || dt <= 0f) return;
+            _simTime += dt;
+            for (int i = _respawnAt.Count - 1; i >= 0; i--)
+                if (_respawnAt[i] <= _simTime) _respawnAt.RemoveAt(i);
 
             FlushChestTills();
 
@@ -71,7 +95,7 @@ namespace SolarMajesty
             if (_logTimer <= 0f && _pendingLog > 0)
             {
                 _logTimer = 45f;
-                _loop.LogOverseer($"Tax collectors carried {_pendingLog} CRED home.");
+                _loop.LogOverseer($"Tax collectors carried {_pendingLog} EU home.");
                 _pendingLog = 0;
             }
         }
@@ -95,7 +119,7 @@ namespace SolarMajesty
         {
             int commons = _village.CountAlive(BuildingCategory.Commons);
             int towers = _village.CountAlive(BuildingCategory.Watchtower);
-            int want = MajestyEconomy.CollectorsFor(commons, towers);
+            int want = Mathf.Max(0, MajestyEconomy.CollectorsFor(commons, towers) - _respawnAt.Count);
 
             while (_collectors.Count > want)
             {
@@ -226,6 +250,10 @@ namespace SolarMajesty
         private float _bob;
 
         public int Carry { get; private set; }
+        public float Hp { get; private set; } = MajestyEconomy.CollectorHp;
+        public bool IsAlive => Hp > 0f;
+        /// <summary>Out between buildings — the stretch mobs ambush.</summary>
+        public bool IsTravelling => IsAlive && _state != State.Resting;
         public ColonyStructure Target { get; private set; }
         public string Status { get; private set; } = "resting";
 
@@ -339,15 +367,9 @@ namespace SolarMajesty
             if (_home == null || !_home.IsAlive)
                 _home = _director.ChestFor(transform.position);
 
-            if (Carry > 0)
-            {
-                _pestCheck -= dt;
-                if (_pestCheck <= 0f)
-                {
-                    _pestCheck = 0.5f;
-                    TryGetRobbed();
-                }
-            }
+            // Safe at a chest: patch up between rounds.
+            if (_state == State.Resting && Hp < MajestyEconomy.CollectorHp)
+                Hp = Mathf.Min(MajestyEconomy.CollectorHp, Hp + dt * 0.05f);
 
             switch (_state)
             {
@@ -382,7 +404,7 @@ namespace SolarMajesty
                         _state = State.Resting;
                         return;
                     }
-                    Status = $"carrying {Carry} CRED home";
+                    Status = $"carrying {Carry} EU home";
                     if (MoveTo(chest.WorldPosition, dt))
                     {
                         _director.Deposit(Carry, chest.WorldPosition);
@@ -429,17 +451,29 @@ namespace SolarMajesty
             _stuckTimer = 0f;
         }
 
-        private void TryGetRobbed()
+        /// <summary>
+        /// A mob bit this collector on the road. The first hit knocks half the bag loose and sends
+        /// it running for the nearest chest; at zero HP the collector falls and the rest is lost.
+        /// </summary>
+        public void TakeHit(float damage)
         {
-            if (_robCooldown > 0f || Carry <= 0) return;
-            var pest = _director.PestNear(transform.position, 2.6f);
-            if (pest == null) return;
-            int stolen = Mathf.Max(1, Mathf.RoundToInt(Carry * MajestyEconomy.CollectorRobShare));
-            Carry -= stolen;
-            RefreshBag();
-            _robCooldown = 8f;
-            _director.Loop.NoteLevyStolen(stolen, transform.position, false);
-            GoHome();
+            if (!IsAlive || damage <= 0f) return;
+            Hp -= damage;
+            if (Carry > 0 && _robCooldown <= 0f)
+            {
+                int stolen = Mathf.Max(1, Mathf.RoundToInt(Carry * MajestyEconomy.CollectorRobShare));
+                Carry -= stolen;
+                RefreshBag();
+                _robCooldown = 8f;
+                _director.Loop.NoteLevyStolen(stolen, transform.position, false);
+                GoHome();
+            }
+            if (Hp > 0f) return;
+
+            int lost = Carry;
+            Carry = 0;
+            if (lost > 0) _director.Loop.NoteLevyStolen(lost, transform.position, false);
+            _director.NotifyCollectorKilled(this, lost);
         }
 
         /// <summary>Walk toward a building; true when close enough to hand over gold.</summary>

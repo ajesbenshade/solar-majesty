@@ -3,9 +3,9 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Colony census for a gold-only economy: which buildings stand, the Majesty day clock that
-    /// pays their daily tax into tills, mine gold waiting for a collector, and the treasury goal
-    /// the sustain objective is measured against. There is no population, ICE, regolith or power.
+    /// Colony census for the energy economy: which buildings stand, the Majesty day clock that
+    /// pays their daily energy into tills, and the treasury goal the sustain objective measures.
+    /// All currency is energy units. Mines pay a daily load by distance (see VillageExpansion).
     /// </summary>
     public sealed class Settlement
     {
@@ -15,6 +15,7 @@ namespace SolarMajesty
         public int VillageHabs { get; private set; }
         public int Farms { get; private set; }
         public int Mines { get; private set; }
+        public int SolarFarms { get; private set; }
         /// <summary>House tax the HABs pay per day (paid into each HAB's till).</summary>
         public int LastTax { get; private set; }
         /// <summary>Last collector deposit into the treasury.</summary>
@@ -51,9 +52,9 @@ namespace SolarMajesty
                 if (!HasCommons)
                     return "raise Colony Commons first";
                 if (Treasury < TreasuryGoal)
-                    return $"grow the treasury to {TreasuryGoal:N0} CRED (now {Treasury:N0})";
+                    return $"grow the treasury to {TreasuryGoal:N0} EU (now {Treasury:N0})";
                 if (NetMetalsPerMin < IncomeGoalPerMin)
-                    return $"keep income at {IncomeGoalPerMin:N0}+ CRED/min — tax collectors, mines, guild tax";
+                    return $"keep income at {IncomeGoalPerMin:N0}+ EU/min — tax collectors, mines, guild tax";
                 return "holding — keep the treasury and income up";
             }
         }
@@ -112,13 +113,6 @@ namespace SolarMajesty
         {
             if (dt <= 0f || _resources == null) return;
 
-            _prodTimer -= dt;
-            if (_prodTimer <= 0f)
-            {
-                _prodTimer += ProductionInterval;
-                ProduceMines();
-            }
-
             _taxTimer -= dt;
             if (_taxTimer <= 0f)
             {
@@ -136,6 +130,7 @@ namespace SolarMajesty
                 case BuildingCategory.LandingPad: PadCount++; break;
                 case BuildingCategory.Farm: Farms++; break;
                 case BuildingCategory.Mine: Mines++; break;
+                case BuildingCategory.Power: SolarFarms++; break;
                 case BuildingCategory.Habitat: CoreHabs++; EverHadHab = true; break;
                 case BuildingCategory.GuildHall: GuildCount++; break;
             }
@@ -156,6 +151,9 @@ namespace SolarMajesty
                     break;
                 case BuildingCategory.Mine:
                     Mines = Mathf.Max(0, Mines - 1);
+                    break;
+                case BuildingCategory.Power:
+                    SolarFarms = Mathf.Max(0, SolarFarms - 1);
                     break;
                 case BuildingCategory.Habitat:
                     if (villageHab)
@@ -178,20 +176,6 @@ namespace SolarMajesty
         }
 
         public void LoseVillageHab() => VillageHabs = Mathf.Max(0, VillageHabs - 1);
-
-        private void ProduceMines()
-        {
-            int met = Mathf.Max(0, Mathf.RoundToInt(Mines * 40 * MineYieldScale));
-            if (met <= 0)
-            {
-                LastProductionLine = "";
-                return;
-            }
-            // Majesty: gold sits in the building until a tax collector walks it home.
-            if (RouteCampGoldToTills) PendingCampGold += met;
-            else _resources.Add(ResourceId.Metals, met);
-            LastProductionLine = $"mines +{met} CRED";
-        }
 
         /// <summary>Majesty days elapsed since the runtime last paid civic daily tax into tills.</summary>
         public int PendingDays { get; private set; }

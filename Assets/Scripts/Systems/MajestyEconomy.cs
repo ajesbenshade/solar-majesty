@@ -57,6 +57,16 @@ namespace SolarMajesty
         /// <summary>Collector setting: skip tills below this (Majesty "minimum to collect").</summary>
         public const int CollectMinimum = 40;
 
+        /// <summary>
+        /// Collector health on the heroes' normalized scale (a hero is 1). Mob bites run 0.03–0.18
+        /// a second, so a collector caught in the open lasts a few seconds to half a minute.
+        /// </summary>
+        public const float CollectorHp = 0.6f;
+        /// <summary>A mob this close to a travelling collector goes after it.</summary>
+        public const float CollectorAmbushRange = 14f;
+        /// <summary>Seconds before the Commons sends out a replacement for a killed collector.</summary>
+        public const float CollectorRespawnSeconds = 30f;
+
         /// <summary>Collector setting: walk home once carrying this much ("minimum to return").</summary>
         public const int ReturnAt = 300;
 
@@ -89,6 +99,16 @@ namespace SolarMajesty
         public const int HouseDailyPerResident = 10;
         public const int HouseDailyMax = 50;
 
+        /// <summary>Solar farm energy sold into its till each day (Majesty windmill-style producer).</summary>
+        public const int SolarFarmDailyTax = 60;
+
+        /// <summary>
+        /// A mine is the Majesty trading post: each day it refines a load of nuclear fuel worth
+        /// more energy the farther it sits from the Commons (300–1,000), and a tax collector has
+        /// to walk that load home past whatever lives in between.
+        /// </summary>
+        public static int MineDailyEnergy(float metersFromCommons) => CaravanGold(metersFromCommons);
+
         /// <summary>A HAB with no census pays a settled house's tax: 20 + two residents' 10.</summary>
         public const int HouseDailyFlat = HouseDailyBase + 2 * HouseDailyPerResident;
 
@@ -112,6 +132,7 @@ namespace SolarMajesty
                 case BuildingCategory.Market: return MarketDailyTax;
                 case BuildingCategory.Farm: return FarmDailyTax;
                 case BuildingCategory.Habitat: return HouseDailyFlat;
+                case BuildingCategory.Power: return SolarFarmDailyTax;
                 default: return 0;
             }
         }

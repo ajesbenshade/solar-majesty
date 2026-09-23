@@ -377,6 +377,16 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>Release a reservation made with <see cref="MarkOccupiedRect"/>.</summary>
+        public void ClearOccupiedRect(Vector2Int origin, int width, int height)
+        {
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+                _occupiedCells.Remove(Pack(origin.x + x, origin.y + y));
+        }
+
         public bool IsCellOccupied(Vector2Int cell) =>
             _occupiedCells.Contains(Pack(cell.x, cell.y));
 

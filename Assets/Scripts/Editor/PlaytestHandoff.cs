@@ -33,7 +33,7 @@ namespace SolarMajesty.EditorTools
             "B            Build catalog  G flag catalog     Tab cycle     T research\n" +
             "1-9 / 0      Pick a building while Build is open\n" +
             "F1 Explore   F2 Clear Threat   F3 Build   F4 Extract   F5 Defend\n" +
-            "LMB          Place / inspect     RMB on a flag: cancel + refund CRED\n" +
+            "LMB          Place / inspect     RMB on a flag: cancel + refund EU\n" +
             "+ / -        Raise / lower bounty\n" +
             "P            Form a party (max 4)     [ disband\n" +
             "\n" +
@@ -45,7 +45,7 @@ namespace SolarMajesty.EditorTools
             "\n" +
             "Notes\n" +
             "-----\n" +
-            "- Wallet chip is CRED (not MET). Flags escrow CRED. ICE is life support; PWR is the grid.\n" +
+            "- Wallet chip is EU (not MET). Flags escrow EU. ICE is life support; PWR is the grid.\n" +
             "- Continue restores campus + stockpile + research + open flags + fauna + specialist HP.\n" +
             "- If the Engineer ignores a cheap Build, raise its bounty. If already accepted, continue.\n" +
             "- This build is Earth only. Dens, sustain, and launch stay on the HUD. You do not have to finish Earth.\n" +

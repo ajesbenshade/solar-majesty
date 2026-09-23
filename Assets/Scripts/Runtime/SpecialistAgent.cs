@@ -236,7 +236,7 @@ namespace SolarMajesty
             credits += kept;
             greedHunger = Mathf.Clamp01(greedHunger - Mathf.Clamp01(MajestyEconomy.ToBrain(amount) / 120f) * 0.35f);
             if (!string.IsNullOrEmpty(reason))
-                Debug.Log($"[Credits] {data?.displayName} +{kept:F0} CRED ({reason}; {tax} to guild) → {credits:F0}");
+                Debug.Log($"[Credits] {data?.displayName} +{kept:F0} EU ({reason}; {tax} to guild) → {credits:F0}");
         }
 
         /// <summary>The till this hero's guild tax lands in: workshop / guild hall, else Commons.</summary>
@@ -1498,7 +1498,7 @@ namespace SolarMajesty
                 equippedSuit = item.Id;
                 DemoVfx.ClaimRing(transform.position, new Color(0.7f, 0.85f, 1f));
                 DemoAudio.PlayClaim();
-                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} CRED");
+                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} EU");
                 return true;
             }
 
@@ -1507,7 +1507,7 @@ namespace SolarMajesty
                 equippedAccessory = item.Id;
                 DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.82f, 0.28f));
                 DemoAudio.PlayClaim();
-                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} CRED");
+                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} EU");
                 return true;
             }
 
@@ -1516,7 +1516,7 @@ namespace SolarMajesty
                 equippedWeapon = item.Id;
                 DemoVfx.ClaimRing(transform.position, new Color(0.92f, 0.55f, 0.18f));
                 DemoAudio.PlayClaim();
-                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} CRED");
+                Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} EU");
                 return true;
             }
 
@@ -1529,7 +1529,7 @@ namespace SolarMajesty
             _geneWork = Mathf.Max(_geneWork, item.WorkBonus);
             DemoVfx.ClaimRing(transform.position, new Color(0.55f, 1f, 0.45f));
             DemoAudio.PlayClaim();
-            Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} CRED");
+            Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} EU");
             return true;
         }
 

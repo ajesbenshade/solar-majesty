@@ -240,11 +240,11 @@ namespace SolarMajesty.EditorTools
                 case BuildingCategory.DeepArchive:
                     return "unlock from ★ tech — bonus while standing";
                 case BuildingCategory.GuildHall: return "Guild Hall — assign a class";
-                case BuildingCategory.Market: return "Potions and a regen necklace. Heroes buy with CRED.";
-                case BuildingCategory.Blacksmith: return "Guild arms and armor. Heroes buy with CRED.";
-                case BuildingCategory.FobotYard: return "Pay CRED here to stand wrecks up.";
-                case BuildingCategory.Watchtower: return "Guard post and levy chest. Arm lasers for CRED.";
-                case BuildingCategory.AidStation: return "Hurt robots pay CRED for a patch. Triage clocks in.";
+                case BuildingCategory.Market: return "Potions and a regen necklace. Heroes buy with EU.";
+                case BuildingCategory.Blacksmith: return "Guild arms and armor. Heroes buy with EU.";
+                case BuildingCategory.FobotYard: return "Pay EU here to stand wrecks up.";
+                case BuildingCategory.Watchtower: return "Guard post and levy chest. Arm lasers for EU.";
+                case BuildingCategory.AidStation: return "Hurt robots pay EU for a patch. Triage clocks in.";
                 default: return "";
             }
         }

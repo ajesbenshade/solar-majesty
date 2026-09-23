@@ -4,9 +4,8 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Waystation inn (disconnected) plus cardinal HAB expansion through plus connectors.
-    /// Economy stays inside the campus graph — no outdoor villagers.
-    /// South is reserved for the inn outpost, so auto-growth walks east / west / north.
+    /// The colony's buildings and their tills: daily energy tax, tax collectors, and villagers
+    /// who slowly raise houses and solar farms around the Commons while the yard is safe.
     /// </summary>
     public class VillageExpansion : MonoBehaviour
     {
@@ -40,7 +39,130 @@ namespace SolarMajesty
             TickLevyPurses(dt);
             TickLevySit(dt);
             _collectors?.Tick(dt);
+            TickVillageGrowth(dt, set);
         }
+
+        // ---------------------------------------------------------------- villagers build
+
+        private BuildingData _projData;
+        private ConstructionOrder _proj;
+        private GameObject _projSite;
+        private readonly List<VillagerAgent> _builders = new List<VillagerAgent>(2);
+        private float _growCooldown = 20f;
+        private int _projSalt;
+
+        /// <summary>What the villagers are doing, for the HUD.</summary>
+        public string VillageStatus { get; private set; } = "villagers settling in";
+        public float VillageProgress01 => _proj != null && _proj.RequiredSeconds > 0f
+            ? Mathf.Clamp01(_proj.ProgressSeconds / _proj.RequiredSeconds) : 0f;
+        public bool VillageHalted { get; private set; }
+        public bool VillageBuilding => _proj != null;
+
+        private void TickVillageGrowth(float dt, Settlement set)
+        {
+            if (set == null || !set.HasCommons || _loop.Placer == null) return;
+
+            if (_proj == null)
+            {
+                VillageHalted = false;
+                _growCooldown -= dt;
+                if (_growCooldown > 0f)
+                {
+                    VillageStatus = "villagers resting";
+                    return;
+                }
+                var next = VillageGrowth.NextProject(set.Habs, set.SolarFarms);
+                if (!next.HasValue)
+                {
+                    VillageStatus = "village full";
+                    _growCooldown = 30f;
+                    return;
+                }
+                var data = _loop.VillageData(next.Value);
+                if (data == null || !_loop.TryFindVillagePlot(data, _projSalt++, out Vector2Int cell, out Vector3 world))
+                {
+                    VillageStatus = "no open ground near the Commons";
+                    _growCooldown = 10f;
+                    return;
+                }
+                if (!_loop.IsSettlementSafe(world))
+                {
+                    VillageStatus = "waiting — enemies near the settlement";
+                    VillageHalted = true;
+                    _growCooldown = 3f;
+                    return;
+                }
+                StartProject(data, cell, world);
+                return;
+            }
+
+            bool safe = _loop.IsSettlementSafe(_proj.WorldPosition);
+            VillageHalted = !safe;
+            string what = VillageName(_projData.category);
+            if (!safe)
+            {
+                VillageStatus = $"{what} halted — enemies near";
+                return;
+            }
+            _proj.ProgressSeconds += dt;
+            VillageStatus = $"raising a {what}";
+            if (!_proj.IsComplete) return;
+            FinishProject();
+        }
+
+        private void StartProject(BuildingData data, Vector2Int cell, Vector3 world)
+        {
+            _projData = data;
+            int w = Mathf.Max(1, data.footprintWidth), h = Mathf.Max(1, data.footprintHeight);
+            _loop.Placer.MarkOccupiedRect(cell, w, h);
+            _proj = new ConstructionOrder
+            {
+                Data = data,
+                GridCell = cell,
+                WorldPosition = world,
+                RequiredSeconds = VillageGrowth.BuildSeconds(data.category)
+            };
+            _projSite = new GameObject($"VillageSite_{data.category}");
+            _projSite.transform.SetParent(_root, true);
+            _projSite.transform.position = world + Vector3.up * 0.05f;
+            _projSite.AddComponent<ConstructionSiteVisual>().Bind(_proj);
+
+            var hub = CommonsHub();
+            Vector3 home = hub != null ? hub.WorldPosition : world;
+            for (int i = 0; i < 2; i++)
+            {
+                var v = VillagerAgent.Spawn(_root, home + new Vector3(i * 1.2f, 0f, 1.5f), world + new Vector3(i * 1.5f - 0.75f, 0f, 0f));
+                if (v != null) _builders.Add(v);
+            }
+            _loop.LogOverseer($"Villagers stake out a {VillageName(data.category)} — keep the yard clear.");
+        }
+
+        private void FinishProject()
+        {
+            var data = _projData;
+            var cell = _proj.GridCell;
+            int w = Mathf.Max(1, data.footprintWidth), h = Mathf.Max(1, data.footprintHeight);
+            _loop.Placer.ClearOccupiedRect(cell, w, h);
+            bool raised = _loop.RaiseVillageBuilding(data, cell);
+            ClearProject();
+            _growCooldown = VillageGrowth.CooldownSeconds;
+            if (raised)
+                _loop.LogOverseer($"Villagers raised a {VillageName(data.category)}. It pays {MajestyEconomy.DailyTax(data.category)} EU a day.");
+        }
+
+        private void ClearProject()
+        {
+            for (int i = 0; i < _builders.Count; i++)
+                if (_builders[i] != null) Object.Destroy(_builders[i].gameObject);
+            _builders.Clear();
+            if (_projSite != null) Object.Destroy(_projSite);
+            _projSite = null;
+            _proj = null;
+            _projData = null;
+        }
+
+        private static string VillageName(BuildingCategory cat) =>
+            cat == BuildingCategory.Power ? "solar farm" : "house";
 
         public void RegisterPlacedBuilding(BuildingCategory cat, GameObject go, Vector3 world) =>
             RegisterPlacedBuilding(null, cat, go, world);
@@ -449,12 +571,32 @@ namespace SolarMajesty
         public int DailyBuildingTax()
         {
             int total = 0;
+            var set = _loop != null ? _loop.Settlement : null;
             for (int i = 0; i < _structures.Count; i++)
             {
                 var s = _structures[i];
-                if (s != null && s.IsAlive) total += MajestyEconomy.DailyTax(s.Category);
+                if (s != null && s.IsAlive) total += DailyEnergy(s, set);
             }
             return total;
+        }
+
+        /// <summary>
+        /// Energy a building puts in its till each day. Mines are the trade posts: their load is
+        /// worth more the farther they stand from the Commons, and a collector must walk it home.
+        /// </summary>
+        private int DailyEnergy(ColonyStructure s, Settlement set)
+        {
+            if (s.Category == BuildingCategory.Mine)
+            {
+                var hub = CommonsHub();
+                float d = hub != null ? Flat(s.WorldPosition, hub.WorldPosition) : 0f;
+                float yield = set != null ? set.MineYieldScale : 1f;
+                return Mathf.RoundToInt(MajestyEconomy.MineDailyEnergy(d) * yield);
+            }
+            int tax = MajestyEconomy.DailyTax(s.Category);
+            if (s.Category == BuildingCategory.Farm && set != null)
+                tax = Mathf.RoundToInt(tax * set.FarmTaxScale);
+            return tax;
         }
 
         private void PayDailyTaxes(Settlement set)
@@ -467,9 +609,7 @@ namespace SolarMajesty
                 {
                     var s = _structures[i];
                     if (s == null || !s.IsAlive) continue;
-                    int tax = MajestyEconomy.DailyTax(s.Category);
-                    if (s.Category == BuildingCategory.Farm)
-                        tax = Mathf.RoundToInt(tax * set.FarmTaxScale);
+                    int tax = DailyEnergy(s, set);
                     if (tax > 0) s.AccrueLevy(tax);
                 }
             }

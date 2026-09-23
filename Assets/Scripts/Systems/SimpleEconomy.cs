@@ -235,12 +235,12 @@ namespace SolarMajesty
                     _ => node.Harvest(10) / 2
                 };
                 int got = Deliver(ResourceId.Metals, Gold(ore), haul);
-                RecordExtract($"+{got} CRED {tag}", got);
+                RecordExtract($"+{got} EU {tag}", got);
                 return;
             }
 
             int fallback = Deliver(ResourceId.Metals, Gold(campusIndex <= 0 ? 4 : 3), haul);
-            RecordExtract($"+{fallback} CRED {(campusIndex <= 0 ? "campus" : "outpost")} {tag}", fallback);
+            RecordExtract($"+{fallback} EU {(campusIndex <= 0 ? "campus" : "outpost")} {tag}", fallback);
         }
 
         /// <summary>Ore units → CRED (one ore chunk is worth <see cref="MajestyEconomy.GoldScale"/>).</summary>
@@ -284,8 +284,8 @@ namespace SolarMajesty
 
             LastResupplyDocked = true;
             LastResupplyLine = ResupplyDockFee > 0
-                ? $"Ship landed — caravan worth {LastCaravanGold} CRED to the Market till. Dock fee {ResupplyDockFee} CRED already left."
-                : $"Ship landed — caravan worth {LastCaravanGold} CRED to the Market till.";
+                ? $"Ship landed — caravan worth {LastCaravanGold} EU to the Market till. Dock fee {ResupplyDockFee} EU already left."
+                : $"Ship landed — caravan worth {LastCaravanGold} EU to the Market till.";
             return true;
         }
     }

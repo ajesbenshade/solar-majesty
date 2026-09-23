@@ -25,7 +25,7 @@ namespace SolarMajesty
             {
                 MajestyLoop = "Houses / gold",
                 CompactName = "HAB purses",
-                Toy = "Colonists print CRED. Haul walks it home."
+                Toy = "Colonists print EU. Haul walks it home."
             },
             new MajestyAnalogDef
             {
@@ -43,13 +43,13 @@ namespace SolarMajesty
             {
                 MajestyLoop = "Marketplace",
                 CompactName = "Market Stall",
-                Toy = "Heroes buy potions. Surplus ICE/REG siphons to CRED above reserve."
+                Toy = "Heroes buy potions. Surplus ICE/REG siphons to EU above reserve."
             },
             new MajestyAnalogDef
             {
                 MajestyLoop = "Blacksmith",
                 CompactName = "Blacksmith",
-                Toy = "Lodge arms and armor, paid in CRED."
+                Toy = "Lodge arms and armor, paid in EU."
             },
             new MajestyAnalogDef
             {
@@ -61,13 +61,13 @@ namespace SolarMajesty
             {
                 MajestyLoop = "Temple resurrect",
                 CompactName = "Fobot Yard",
-                Toy = "Pay CRED to stand wrecks. Bill scales with level."
+                Toy = "Pay EU to stand wrecks. Bill scales with level."
             },
             new MajestyAnalogDef
             {
                 MajestyLoop = "Temple heal",
                 CompactName = "Aid Station",
-                Toy = "Hurt robots pay CRED for a patch. Triage clocks in."
+                Toy = "Hurt robots pay EU for a patch. Triage clocks in."
             },
             new MajestyAnalogDef
             {

@@ -440,7 +440,7 @@ namespace SolarMajesty
             {
                 _levyHomeLogged = true;
                 LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
-                Alerts.Push("levy_home", $"Tax collector walked {amount} CRED home", AlertSeverity.Good, Time.unscaledTime, at);
+                Alerts.Push("levy_home", $"Tax collector walked {amount} EU home", AlertSeverity.Good, Time.unscaledTime, at);
             }
         }
 
@@ -633,8 +633,8 @@ namespace SolarMajesty
                 LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
             }
             else
-                LogOverseer($"Haul deposited {amount} CRED at Commons.");
-            Alerts.Push("levy_home", $"Levy walked home · {amount} CRED", AlertSeverity.Good, Time.unscaledTime, at);
+                LogOverseer($"Haul deposited {amount} EU at Commons.");
+            Alerts.Push("levy_home", $"Levy walked home · {amount} EU", AlertSeverity.Good, Time.unscaledTime, at);
         }
 
         public void NoteLevyStolen(int amount, Vector3 at, bool fromHab)
@@ -1200,7 +1200,7 @@ namespace SolarMajesty
             int refund = handle.EscrowMetals;
             Economy?.RefundBountyEscrow(refund);
             Flags.Cancel(handle);
-            _overseerHud?.Notify(refund > 0 ? $"Flag cancelled — {refund} CRED returned." : "Flag cancelled.", 2.4f);
+            _overseerHud?.Notify(refund > 0 ? $"Flag cancelled — {refund} EU returned." : "Flag cancelled.", 2.4f);
             Debug.Log("[Flags] Cancelled — metals refunded.");
         }
 
@@ -1566,7 +1566,7 @@ namespace SolarMajesty
                     AdvanceTutorial();
                 else if (TutorialStep == 1 && Village != null && Village.Collectors.Count > 0)
                     AdvanceTutorial();
-                else if (TutorialStep == 2 && Settlement != null && Settlement.CoreHabs > 0)
+                else if (TutorialStep == 2 && Settlement != null && Settlement.Habs > 0)
                     AdvanceTutorial();
                 else if (TutorialStep == 3 && HasAnyWorkshop())
                     AdvanceTutorial();
@@ -1845,6 +1845,90 @@ namespace SolarMajesty
                 return true;
             }
             return false;
+        }
+
+        // ---------------------------------------------------------------- village growth
+
+        /// <summary>Catalog entry villagers build for this category (house or solar farm).</summary>
+        public BuildingData VillageData(BuildingCategory cat) => DataForCategory(cat);
+
+        /// <summary>
+        /// Open ground in rings around the Commons, a cell of dirt clear on every side, in bounds,
+        /// dry, and off the launch pad. <paramref name="salt"/> turns the ring so the village
+        /// spreads around the Commons instead of stacking on one side.
+        /// </summary>
+        public bool TryFindVillagePlot(BuildingData data, int salt, out Vector2Int origin, out Vector3 world)
+        {
+            origin = default;
+            world = default;
+            if (data == null || Placer == null || grid == null) return false;
+            if (!TryCommonsPiece(out var commons)) return false;
+            int w = Mathf.Max(1, data.footprintWidth), h = Mathf.Max(1, data.footprintHeight);
+            Vector3 hub = FootprintWorldCenter(commons.Origin, commons.Width, commons.Height);
+            float cs = grid.CellSize;
+            Vector3 half = new Vector3((w - 1) * 0.5f * cs, 0f, (h - 1) * 0.5f * cs);
+            for (float r = VillageGrowth.MinRing; r <= VillageGrowth.MaxRing; r += 3f)
+            {
+                int n = Mathf.Max(8, Mathf.RoundToInt(r * 0.6f));
+                for (int k = 0; k < n; k++)
+                {
+                    float a = (k / (float)n + salt * 0.137f) * Mathf.PI * 2f;
+                    Vector3 c = hub + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                    Vector2Int o = grid.WorldToCell(c - half);
+                    var ring = new Vector2Int(o.x - 1, o.y - 1);
+                    if (!RectInBounds(ring, w + 2, h + 2)) continue;
+                    if (!Placer.CanFitRect(ring, w + 2, h + 2)) continue;
+                    if (FootprintOverWater(o, w, h)) continue;
+                    Vector3 at = FootprintWorldCenter(o, w, h);
+                    if (FlatDist(at, LaunchSite.PadWorld) < 10f) continue;
+                    origin = o;
+                    world = at;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>Villagers only build while no enemy is near the Commons or the site.</summary>
+        public bool IsSettlementSafe(Vector3 site)
+        {
+            if (StillCaptureHold.Active) return true;
+            Vector3 hub = Village != null && Village.CommonsHub() != null
+                ? Village.CommonsHub().WorldPosition
+                : ColonyLayout.CampusOrigin;
+            float r = VillageGrowth.SafeRadius;
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                var s = _stalkers[i];
+                if (s == null || !s.IsAlive) continue;
+                Vector3 p = s.transform.position;
+                if (FlatDist(p, hub) < r || FlatDist(p, site) < r) return false;
+            }
+            return true;
+        }
+
+        /// <summary>A villager project is finished: stand the building up and start its tax.</summary>
+        public bool RaiseVillageBuilding(BuildingData data, Vector2Int origin)
+        {
+            if (data == null || Placer == null || grid == null) return false;
+            int fw = Mathf.Max(1, data.footprintWidth);
+            int fh = Mathf.Max(1, data.footprintHeight);
+            Vector3 world = FootprintWorldCenter(origin, fw, fh);
+            if (!Placer.TryRestore(data, origin, world, 1f, out _))
+                return false;
+
+            Transform root = buildingRoot != null ? buildingRoot : transform;
+            GameObject go = ModularBuildingFactory.Spawn(data.category, world, root, fw, fh, grid.CellSize);
+            go.name = $"Bld_Village_{data.category}";
+            TerrainGrading.LevelUnder(go);
+            CampusNavMesh.AddObstacle(go);
+            Village?.RegisterPlacedBuilding(data, data.category, go, world);
+            CampusDressing.DressPlaced(data, go, _body);
+            DemoVfx.BuildComplete(world);
+            if (_campusNav != null)
+                NotifyCampusExpanded();
+            PersistSession();
+            return true;
         }
 
         /// <summary>True when any corner or the centre of the footprint sits on a lake or river.</summary>
@@ -2316,7 +2400,8 @@ namespace SolarMajesty
 
             Brain = new SpecialistBrain();
             ApplyReplayToBrain();
-            Economy = new SimpleEconomy(Resources);
+            // Mines are the trade posts now; no supply ships land with cargo.
+            Economy = new SimpleEconomy(Resources) { ResupplyEnabled = false };
             float resupply = 90f * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
             int fee = _body != null ? Mathf.Max(0, _body.ResupplyDockFee) : 0;
             Economy.ConfigureResupply(resupply, fee);
@@ -2359,21 +2444,21 @@ namespace SolarMajesty
             if (def != null && def.SecretProject)
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
             else if (id == TechId.ExtractBasics && !DemoSettings.FirstHourDemo)
-                LogOverseer("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in CRED.");
+                LogOverseer("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in EU.");
             else if (id == TechId.OreRefining && !DemoSettings.FirstHourDemo)
-                LogOverseer("Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in CRED.");
+                LogOverseer("Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in EU.");
             else if (id == TechId.MedProtocols)
-                LogOverseer("Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in CRED.");
+                LogOverseer("Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in EU.");
             else if (id == TechId.LifeSupport && !DemoSettings.FirstHourDemo)
-                LogOverseer("Life Support. Dock an Aid Station — hurt robots pay CRED for a patch.");
+                LogOverseer("Life Support. Dock an Aid Station — hurt robots pay EU for a patch.");
             else if (id == TechId.HorizonPulse)
-                LogOverseer("Horizon Pulse researched. Inspect Horizon Lodge and spend CRED to mark dens.");
+                LogOverseer("Horizon Pulse researched. Inspect Horizon Lodge and spend EU to mark dens.");
             else if (id == TechId.AnvilOvertime)
-                LogOverseer("Anvil Overtime researched. Inspect Anvil Compact and spend CRED to weld faster.");
+                LogOverseer("Anvil Overtime researched. Inspect Anvil Compact and spend EU to weld faster.");
             else if (id == TechId.AegisWatchfire)
-                LogOverseer("Aegis Watchfire researched. Inspect Aegis Lodge and spend CRED to harden the roster.");
+                LogOverseer("Aegis Watchfire researched. Inspect Aegis Lodge and spend EU to harden the roster.");
             else if (id == TechId.TriageFieldAid)
-                LogOverseer("Triage Field Aid researched. Inspect Triage Compact and spend CRED to patch the dirt.");
+                LogOverseer("Triage Field Aid researched. Inspect Triage Compact and spend EU to patch the dirt.");
             else if (id == TechId.GuildCharter)
             {
                 LogOverseer("Guild Charter signed. Dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact. Flags near the hall pull that class.");
@@ -2674,26 +2759,27 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Mining:
                         b.displayName = "OPS Drop-off";
-                        b.description = "does not grow CRED";
+                        b.description = "does not grow EU";
                         break;
                     case BuildingCategory.Mine:
-                        b.displayName = "Ore Mine";
-                        b.description = "digs CRED";
+                        b.displayName = "Nuclear Mine";
+                        b.description = "more energy farther out";
                         break;
                     case BuildingCategory.Habitat:
-                        b.description = $"tax {MajestyEconomy.HouseDailyFlat}/day";
+                        b.description = $"villagers build · {MajestyEconomy.HouseDailyFlat} EU/day";
                         break;
                     case BuildingCategory.Farm:
                         b.description = $"tax {MajestyEconomy.FarmDailyTax}/day";
                         break;
                     case BuildingCategory.LandingPad:
-                        b.description = "trade ships";
+                        b.description = "launch craft";
                         break;
                     case BuildingCategory.Laboratory:
                         b.description = "research";
                         break;
                     case BuildingCategory.Power:
-                        b.displayName = "Power Node";
+                        b.displayName = "Solar Farm";
+                        b.description = $"villagers build · {MajestyEconomy.SolarFarmDailyTax} EU/day";
                         break;
                     case BuildingCategory.ClimateLoom:
                     case BuildingCategory.AegisSpire:
@@ -2721,7 +2807,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.FobotYard:
                         b.displayName = "Fobot Yard";
-                        b.description = "Pay CRED here to stand wrecks up.";
+                        b.description = "Pay EU here to stand wrecks up.";
                         break;
                     case BuildingCategory.Watchtower:
                         b.displayName = "Watchtower";
@@ -2729,7 +2815,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.AidStation:
                         b.displayName = "Aid Station";
-                        b.description = "Hurt robots pay CRED for a patch. Triage clocks in.";
+                        b.description = "Hurt robots pay EU for a patch. Triage clocks in.";
                         break;
                 }
             }
@@ -2847,7 +2933,7 @@ namespace SolarMajesty
                 if (Time.time >= _hireNagAt)
                 {
                     _hireNagAt = Time.time + 30f;
-                    LogOverseer($"{workshop.DisplayName} is ready — hiring its {ColonyStructure.ClassLabel(cls.Value)} costs {hire} CRED.");
+                    LogOverseer($"{workshop.DisplayName} is ready — hiring its {ColonyStructure.ClassLabel(cls.Value)} costs {hire} EU.");
                 }
                 return false;
             }
@@ -2886,7 +2972,7 @@ namespace SolarMajesty
             if (announce)
             {
                 _overseerHud?.Notify(hire > 0
-                    ? $"{label} hired at {workshop.DisplayName} — {hire} CRED."
+                    ? $"{label} hired at {workshop.DisplayName} — {hire} EU."
                     : $"{label} fabricated at {workshop.DisplayName}.", 3.2f);
                 DemoAudio.PlayClaim();
                 DemoVfx.ClaimRing(pos, TintForClass(cls.Value));
@@ -3985,12 +4071,12 @@ namespace SolarMajesty
             if (Resources == null ||
                 !Resources.TrySpend(ResourceId.Metals, OverseerRules.WatchtowerLaserCost))
             {
-                LogOverseer($"Arming lasers needs {OverseerRules.WatchtowerLaserCost} CRED.");
+                LogOverseer($"Arming lasers needs {OverseerRules.WatchtowerLaserCost} EU.");
                 return false;
             }
 
             tower.ArmLasers();
-            LogOverseer($"Watchtower lasers armed — {OverseerRules.WatchtowerLaserCost} CRED.");
+            LogOverseer($"Watchtower lasers armed — {OverseerRules.WatchtowerLaserCost} EU.");
             DemoVfx.ClaimRing(tower.WorldPosition, new Color(0.95f, 0.35f, 0.2f));
             return true;
         }
@@ -4169,7 +4255,7 @@ namespace SolarMajesty
             if (paid)
             {
                 Resources.TrySpend(ResourceId.Metals, met);
-                return $"Freight paid: −{met} CRED.";
+                return $"Freight paid: −{met} EU.";
             }
 
             Resources.ApplyLoss(0.12f);
@@ -4463,16 +4549,16 @@ namespace SolarMajesty
             {
                 BuildingCategory.Inn => "wrecks wait — credits only",
                 BuildingCategory.Defense => "auto-fires 18 m",
-                BuildingCategory.Mining => "does not grow CRED",
+                BuildingCategory.Mining => "does not grow EU",
                 BuildingCategory.ClimateLoom => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.AegisSpire => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.DeepArchive => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.GuildHall => "Guild Hall — assign a class",
-                BuildingCategory.Market => "Potions and a regen necklace. Heroes buy with CRED.",
-                BuildingCategory.Blacksmith => "Guild arms and armor. Heroes buy with CRED.",
-                BuildingCategory.FobotYard => "Pay CRED here to stand wrecks up.",
-                BuildingCategory.Watchtower => "Guard post and levy chest. Arm lasers for CRED.",
-                BuildingCategory.AidStation => "Hurt robots pay CRED for a patch. Triage clocks in.",
+                BuildingCategory.Market => "Potions and a regen necklace. Heroes buy with EU.",
+                BuildingCategory.Blacksmith => "Guild arms and armor. Heroes buy with EU.",
+                BuildingCategory.FobotYard => "Pay EU here to stand wrecks up.",
+                BuildingCategory.Watchtower => "Guard post and levy chest. Arm lasers for EU.",
+                BuildingCategory.AidStation => "Hurt robots pay EU for a patch. Triage clocks in.",
                 _ => b.description
             };
             b.preferredOccupants = DefaultOccupants(cat);
@@ -4776,7 +4862,7 @@ namespace SolarMajesty
                 (site.Category == BuildingCategory.Mine || site.Category == BuildingCategory.Mining))
             {
                 Resources?.Add(ResourceId.Metals, OverseerRules.GeologistExtractExtraMet);
-                LogOverseer($"Geologist bonus +{OverseerRules.GeologistExtractExtraMet} CRED at the drop-off.");
+                LogOverseer($"Geologist bonus +{OverseerRules.GeologistExtractExtraMet} EU at the drop-off.");
             }
         }
 
@@ -4826,7 +4912,7 @@ namespace SolarMajesty
                     if (Settlement != null && Settlement.HasOutpost)
                     {
                         Resources?.Add(ResourceId.Metals, 80);
-                        LogOverseer("Outpost already claimed — the survey sells for +80 CRED.");
+                        LogOverseer("Outpost already claimed — the survey sells for +80 EU.");
                         return;
                     }
                     float dx = at.x - ColonyLayout.CampusBOrigin.x;
@@ -6074,9 +6160,9 @@ namespace SolarMajesty
             var shop = FindWorkshopFor(cls);
             if (shop != null && shop.IsAlive)
                 shop.ClearRobotFabricated();
-            string salvageTxt = salvage > 0 ? $" Salvage {salvage} CRED." : "";
+            string salvageTxt = salvage > 0 ? $" Salvage {salvage} EU." : "";
             int bill = OverseerRules.YardBill(rec.Level, rec.Class);
-            LogOverseer($"{label} scrapped — wreck in the Fobot Yard. Stand-up {bill} CRED (L{rec.Level}).{salvageTxt}");
+            LogOverseer($"{label} scrapped — wreck in the Fobot Yard. Stand-up {bill} EU (L{rec.Level}).{salvageTxt}");
         }
 
         public void NoteMechDeath(Vector3 world)
@@ -6453,11 +6539,11 @@ namespace SolarMajesty
 
             if (!TryEnqueueScrapRefab(rec, alreadyPaid: false, out int met, out _, out string shopName))
             {
-                LogOverseer($"Re-fab needs {OverseerRules.RefabMetals(shop.SourceData)} CRED at {shopName}.");
+                LogOverseer($"Re-fab needs {OverseerRules.RefabMetals(shop.SourceData)} EU at {shopName}.");
                 return false;
             }
 
-            LogOverseer($"Re-fab queued — new {ColonyStructure.ClassLabel(cls.Value)} at L1, {met} CRED / 40 s. The wreck is gone.");
+            LogOverseer($"Re-fab queued — new {ColonyStructure.ClassLabel(cls.Value)} at L1, {met} EU / 40 s. The wreck is gone.");
             return true;
         }
 
@@ -6476,7 +6562,7 @@ namespace SolarMajesty
                 sb.Append(Mathf.Max(1, rec.Level));
                 sb.Append(" ");
                 sb.Append(OverseerRules.YardBill(rec.Level, rec.Class));
-                sb.Append(" CRED");
+                sb.Append(" EU");
             }
             return sb.ToString();
         }

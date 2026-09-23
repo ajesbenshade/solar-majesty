@@ -468,7 +468,7 @@ namespace SolarMajesty
         {
             if (label.StartsWith("REG")) return UiIcons.Get(IconId.Regolith);
             if (label.StartsWith("ICE")) return UiIcons.Get(IconId.Ice);
-            if (label.StartsWith("CRED")) return UiIcons.Get(IconId.Metals);
+            if (label.StartsWith("EU")) return UiIcons.Get(IconId.Metals);
             if (label.StartsWith("PWR")) return UiIcons.Get(IconId.Power);
             if (label.StartsWith("BEDS")) return UiIcons.Get(IconId.Beds);
             return null;
@@ -478,13 +478,14 @@ namespace SolarMajesty
         {
             if (label.StartsWith("REG")) return new Color(0.62f, 0.38f, 0.18f);
             if (label.StartsWith("ICE")) return new Color(0.35f, 0.78f, 0.92f);
-            if (label.StartsWith("CRED")) return new Color(0.72f, 0.74f, 0.78f);
+            if (label.StartsWith("EU")) return new Color(0.72f, 0.74f, 0.78f);
             if (label.StartsWith("PWR")) return new Color(0.92f, 0.78f, 0.22f);
             if (label.StartsWith("BEDS")) return new Color(0.96f, 0.42f, 0.08f);
             if (label.StartsWith("HEROES")) return new Color(0.35f, 0.78f, 0.92f);
             if (label.StartsWith("HOUSES")) return new Color(0.96f, 0.42f, 0.08f);
             if (label.StartsWith("TAXMEN")) return new Color(0.82f, 0.62f, 0.22f);
             if (label.StartsWith("DENS")) return new Color(0.86f, 0.28f, 0.22f);
+            if (label.StartsWith("VILLAGE")) return new Color(0.62f, 0.86f, 0.66f);
             return Gold;
         }
 
@@ -567,7 +568,7 @@ namespace SolarMajesty
             GUI.Label(new Rect(r.x, r.y + 3f, r.width, 26f), $"{gold:N0}", _treasury);
 
             float perMin = _loop.TreasuryIncomePerMin;
-            string rate = perMin >= 1f ? $"+{perMin:F0} / min" : "no income yet";
+            string rate = perMin >= 1f ? $"+{perMin:F0} EU / min" : "ENERGY  ·  no income yet";
             if (escrow > 0) rate += $"   ·   {escrow:N0} in bounties";
             var prev = _treasuryRate.normal.textColor;
             _treasuryRate.normal.textColor = thin ? Alarm : (perMin >= 1f ? Good : TextMuted);
@@ -587,17 +588,21 @@ namespace SolarMajesty
             int houses = set != null ? set.Habs : 0;
             int collectors = village != null ? village.Collectors.Count : 0;
             int bags = village != null ? village.Collectors.GoldInTransit : 0;
-            var mission = _loop.Mission;
-            int dens = mission != null ? mission.UnclearedLairs : 0;
+            int solar = set != null ? set.SolarFarms : 0;
+            int replacing = village != null ? village.Collectors.Replacing : 0;
+            bool building = village != null && village.VillageBuilding;
+            bool halted = village != null && village.VillageHalted;
+            int pct = village != null ? Mathf.RoundToInt(village.VillageProgress01 * 100f) : 0;
 
             float cw = (r.width - 4f) * 0.5f;
             float ch = 34f;
             ResourceChip(new Rect(r.x, r.y, cw, ch), "HEROES", heroes, heroes <= 0);
             ResourceChip(new Rect(r.x + cw + 4f, r.y, cw, ch), "HOUSES", houses, false,
-                houses > 0 ? $"+{houses * MajestyEconomy.HouseDailyFlat}/d" : null);
-            ResourceChip(new Rect(r.x, r.y + ch + 4f, cw, ch), "TAXMEN", collectors, collectors <= 0,
-                bags > 0 ? $"{bags}" : null);
-            ResourceChip(new Rect(r.x + cw + 4f, r.y + ch + 4f, cw, ch), "DENS", dens, false);
+                solar > 0 ? $"{solar} solar" : null);
+            ResourceChip(new Rect(r.x, r.y + ch + 4f, cw, ch), "TAXMEN", collectors, collectors <= 0 || replacing > 0,
+                replacing > 0 ? $"-{replacing}" : (bags > 0 ? $"{bags}" : null));
+            ResourceChip(new Rect(r.x + cw + 4f, r.y + ch + 4f, cw, ch), halted ? "HALTED" : "VILLAGE",
+                building ? pct : 0, halted, building ? "%" : "idle");
         }
 
         /// <summary>Where the gold is on its way home: building tills, collector bags, daily tax.</summary>
@@ -865,7 +870,7 @@ namespace SolarMajesty
             var prevC = _micro.normal.textColor;
             _micro.normal.textColor = canPay ? TextMuted : Alarm;
             GUI.Label(new Rect(c.x, y, c.width, 13f),
-                canPay ? $"escrow {metCost} CRED · LMB places · RMB flag refunds" : $"need {metCost} CRED — raise stockpile",
+                canPay ? $"escrow {metCost} EU · LMB places · RMB flag refunds" : $"need {metCost} EU — raise stockpile",
                 _micro);
             _micro.normal.textColor = prevC;
         }
@@ -975,9 +980,9 @@ namespace SolarMajesty
             switch (b.category)
             {
                 case BuildingCategory.Defense: return "Defense Battery  ·  auto-fires 18 m";
-                case BuildingCategory.Mining: return "OPS Drop-off  ·  does not grow CRED";
-                case BuildingCategory.Mine: return "Ore Mine";
-                case BuildingCategory.Power: return "Power Node";
+                case BuildingCategory.Mining: return "OPS Drop-off  ·  does not grow EU";
+                case BuildingCategory.Mine: return "Nuclear Mine";
+                case BuildingCategory.Power: return "Solar Farm";
                 case BuildingCategory.ClimateLoom:
                 case BuildingCategory.AegisSpire:
                 case BuildingCategory.DeepArchive:
@@ -1048,7 +1053,7 @@ namespace SolarMajesty
         {
             ResourceId.Regolith => "REG",
             ResourceId.WaterIce => "ICE",
-            ResourceId.Metals => "CRED",
+            ResourceId.Metals => "EU",
             ResourceId.Power => "PWR",
             _ => id.ToString().ToUpperInvariant()
         };
@@ -1164,7 +1169,7 @@ namespace SolarMajesty
             else if (dir.CooldownLeft(guild.Id) > 0.5f)
                 label = $"Cooldown {dir.CooldownLeft(guild.Id):F0}s";
             else
-                label = $"ACTIVATE {guild.ActivateCost} CRED";
+                label = $"ACTIVATE {guild.ActivateCost} EU";
             bool can = researched &&
                        dir.CanActivate(guild.Id, _loop.Research, _loop.Resources, true);
             if (Chip(new Rect(x, y, Mathf.Min(220f, width), 22f), label, can) && can)
@@ -1224,11 +1229,11 @@ namespace SolarMajesty
             string workers = st.IsResidential
                 ? (st.Residents > 0
                     ? (st.LevyPurse > 0
-                        ? $"House tax {st.LevyPurse} CRED sitting — a tax collector walks it home."
+                        ? $"House tax {st.LevyPurse} EU sitting — a tax collector walks it home."
                         : "Colonists indoors — house tax sits until a tax collector walks it home.")
                     : "Empty beds — seed crew arrives with the first HAB.")
                 : (st.LevyPurse > 0 && !st.IsTreasuryChest
-                    ? $"{FormatWorkers(st)} · till {st.LevyPurse} CRED"
+                    ? $"{FormatWorkers(st)} · till {st.LevyPurse} EU"
                     : FormatWorkers(st));
             GUI.Label(new Rect(c.x, row, c.width, 13f), workers, _micro);
             row += 16f;
@@ -1237,7 +1242,7 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     st.LevyPurse > 0
-                        ? $"House tax {st.LevyPurse} CRED — tax collectors carry it to Commons."
+                        ? $"House tax {st.LevyPurse} EU — tax collectors carry it to Commons."
                         : "Humans stay in HABs. Outdoor work is robots from workshops.", _micro);
             }
             else if (st.IsFobotYard)
@@ -1250,7 +1255,7 @@ namespace SolarMajesty
                     _micro);
                 row += 24f;
                 int bill = _loop.FieldReviveMet;
-                if (Chip(new Rect(c.x, row, 140f, 22f), bill > 0 ? $"PAY {bill} CRED" : "PAY YARD",
+                if (Chip(new Rect(c.x, row, 140f, 22f), bill > 0 ? $"PAY {bill} EU" : "PAY YARD",
                         bill > 0 && _loop.CanPayYard))
                     _loop.PayFobotYard();
                 GUI.Label(new Rect(c.x + 148f, row + 4f, c.width - 148f, 16f),
@@ -1259,7 +1264,7 @@ namespace SolarMajesty
             else if (st.IsLandingPad)
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    "Trade ships land here. Each caravan pays CRED into the Market till.", _micro);
+                    "Trade ships land here. Each caravan pays EU into the Market till.", _micro);
             }
             else if (st.IsGuild)
             {
@@ -1306,7 +1311,7 @@ namespace SolarMajesty
                 int met = _loop.FieldReviveMet;
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
                     _loop.NeedsFieldRevive
-                        ? $"Stand-up bill {met} CRED. Cost scales with level."
+                        ? $"Stand-up bill {met} EU. Cost scales with level."
                         : "No wrecks. Dock this yard before anyone goes down.", _micro);
                 var wrecks = _loop.Corpses;
                 if (wrecks != null && wrecks.Count > 0)
@@ -1326,7 +1331,7 @@ namespace SolarMajesty
                 bool canPay = _loop.NeedsFieldRevive && _loop.HasFobotYard &&
                               _loop.FieldReviveReadyIn <= 0.5f;
                 if (Chip(new Rect(c.x, row, 220f, 22f),
-                        canPay ? $"PAY {met} CRED" : "YARD IDLE", canPay) && canPay)
+                        canPay ? $"PAY {met} EU" : "YARD IDLE", canPay) && canPay)
                     _loop.RetryParty();
             }
             else if (st.IsWatchtower)
@@ -1334,7 +1339,7 @@ namespace SolarMajesty
                 int guards = st.WorkerCount;
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
                     guards > 0
-                        ? "Guard posted. Haul can drop CRED here when Commons is far."
+                        ? "Guard posted. Haul can drop EU here when Commons is far."
                         : "Empty post. Aegis / Rim Watch will clock in.", _micro);
                 row += 16f;
                 if (st.LaserArmed)
@@ -1346,7 +1351,7 @@ namespace SolarMajesty
                     bool can = _loop.Resources != null &&
                                _loop.Resources.Get(ResourceId.Metals) >= OverseerRules.WatchtowerLaserCost;
                     if (Chip(new Rect(c.x, row, 220f, 22f),
-                            $"ARM LASERS {OverseerRules.WatchtowerLaserCost} CRED", can) && can)
+                            $"ARM LASERS {OverseerRules.WatchtowerLaserCost} EU", can) && can)
                         _loop.TryArmWatchtower(st);
                 }
             }
@@ -1354,18 +1359,18 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     st.WorkerCount > 0
-                        ? $"Triage posted. Patch {OverseerRules.AidStationHealCost} CRED."
-                        : $"Empty bay. Hurt robots pay {OverseerRules.AidStationHealCost} CRED.", _micro);
+                        ? $"Triage posted. Patch {OverseerRules.AidStationHealCost} EU."
+                        : $"Empty bay. Hurt robots pay {OverseerRules.AidStationHealCost} EU.", _micro);
             }
             else if (st.Category == BuildingCategory.Market)
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    $"Potions + necklace. Pays {MajestyEconomy.MarketDailyTax} CRED/day into its till.", _micro);
+                    $"Potions + necklace. Pays {MajestyEconomy.MarketDailyTax} EU/day into its till.", _micro);
             }
             else if (st.Category == BuildingCategory.Blacksmith)
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    "Lodge arms and armor. Heroes buy with their CRED.", _micro);
+                    "Lodge arms and armor. Heroes buy with their EU.", _micro);
             }
             else if (!st.ClassLocked)
             {
@@ -1396,7 +1401,7 @@ namespace SolarMajesty
                 {
                     row += 24f;
                     int met = OverseerRules.RefabMetals(st.SourceData);
-                    if (Chip(new Rect(c.x, row, 150f, 22f), $"RE-FAB L1 {met} CRED", true))
+                    if (Chip(new Rect(c.x, row, 150f, 22f), $"RE-FAB L1 {met} EU", true))
                         _loop.TryRefabRookie(st);
                     GUI.Label(new Rect(c.x + 158f, row + 4f, c.width - 158f, 16f),
                         "new chassis · wreck gone", _micro);
@@ -1478,7 +1483,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Asks {a.HireMin} CRED · Purse {a.Credits:F0}{LevyCarryLine(a)}", _micro);
+                    $"{ColonyLayout.CampusLabel(campus)} · L{a.Level} · Asks {a.HireMin} EU · Purse {a.Credits:F0}{LevyCarryLine(a)}", _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -1501,7 +1506,7 @@ namespace SolarMajesty
                 row += 15f;
 
                 string gene = a.LevyCarried > 0
-                    ? $"levy {a.LevyCarried} CRED"
+                    ? $"levy {a.LevyCarried} EU"
                     : a.GeneSecondsLeft > 0.5f
                         ? $"gene {a.GeneSecondsLeft:F0}s"
                         : "shop at rest beacon";
@@ -1553,8 +1558,8 @@ namespace SolarMajesty
                 }
             }
             return posted <= 0
-                ? "Bounty escrowed from CRED. Heroes keep a purse; colony tithes."
-                : $"Posted {posted}  ·  claimed {claimed}  ·  heroes keep CRED purse";
+                ? "Bounty escrowed from EU. Heroes keep a purse; colony tithes."
+                : $"Posted {posted}  ·  claimed {claimed}  ·  heroes keep EU purse";
         }
 
         private static Color ActionTint(SpecialistAction action) => action switch
@@ -2016,12 +2021,12 @@ namespace SolarMajesty
             {
                 int met = _loop.FieldReviveMet;
                 GUI.Label(new Rect(c.x, c.y + 32f, c.width, 36f),
-                    $"FOBOT YARD  {met} CRED  (120s)", _body);
+                    $"FOBOT YARD  {met} EU  (120s)", _body);
                 GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
                     !_loop.HasFobotYard
                         ? "Dock a Fobot Yard. Y does not skip the building."
                         : _loop.FieldReviveReadyIn > 0.5f
-                            ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Bill is by level, CRED only."
+                            ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Bill is by level, EU only."
                             : "Inspect the yard or press Y. ICE is not on the bill.", _muted);
                 if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "FOBOT YARD  ·  Y", _chipOn))
                     _loop.PayFobotYard();
@@ -2412,7 +2417,7 @@ namespace SolarMajesty
                 {
                     "1/6  COMMONS — Colony Commons is already on the claim. It holds the treasury.",
                     "2/6  Tax collectors walk out of the Commons and carry each building's till home.",
-                    "3/6  HAB — build a house anywhere nearby. Houses pay daily tax into their till.",
+                    "3/6  Keep the yard clear of mobs — villagers raise houses and solar farms that pay energy.",
                     "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
                     "5/6  G, Build, leave it at 700. Watch the Engineer.",
                     "6/6  They named a price. Select the flag and press + until the chip reads tempted."

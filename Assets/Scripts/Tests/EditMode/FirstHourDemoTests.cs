@@ -85,11 +85,12 @@ namespace SolarMajesty.Tests
                 Building(BuildingCategory.EngineerWorkshop),
                 Building(BuildingCategory.Habitat)
             };
+            catalog.Add(Building(BuildingCategory.Watchtower));
             var visible = new List<int>();
             DemoSlice.CollectVisible(catalog, visible);
-            Assert.AreEqual(2, visible.Count);
+            Assert.AreEqual(2, visible.Count, "villagers build houses; the player never places them");
             Assert.AreEqual(BuildingCategory.EngineerWorkshop, catalog[visible[0]].category);
-            Assert.AreEqual(BuildingCategory.Habitat, catalog[visible[1]].category);
+            Assert.AreEqual(BuildingCategory.Watchtower, catalog[visible[1]].category);
         }
 
         [Test]
@@ -99,7 +100,8 @@ namespace SolarMajesty.Tests
             try
             {
                 Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Utility), "airlock");
-                Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Power), "power node / solar array");
+                Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Power), "solar farms are villager-built");
+                Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Habitat), "houses are villager-built");
                 Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.RegolithCamp));
                 Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Mining), "OPS drop-off");
                 Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Commons), "placed for the player");

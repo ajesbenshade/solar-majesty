@@ -117,16 +117,40 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void Settlement_RoutesMineGoldToTills()
+        public void Mine_IsATradePost_PayingMoreEnergyFartherFromTheCommons()
         {
-            var res = new ResourceManager();
-            var s = new Settlement(res) { RouteCampGoldToTills = true };
-            s.RegisterPlaced(BuildingCategory.Mine);
-            s.Tick(s.ProductionInterval);
+            Assert.AreEqual(300, MajestyEconomy.MineDailyEnergy(0f));
+            Assert.AreEqual(600, MajestyEconomy.MineDailyEnergy(50f));
+            Assert.AreEqual(1000, MajestyEconomy.MineDailyEnergy(400f), "capped like a Majesty caravan");
+            Assert.Less(MajestyEconomy.MineDailyEnergy(20f), MajestyEconomy.MineDailyEnergy(60f));
+        }
 
-            Assert.AreEqual(0, res.Get(ResourceId.Metals));
-            Assert.AreEqual(40, s.TakePendingCampGold());
-            Assert.AreEqual(0, s.TakePendingCampGold());
+        [Test]
+        public void SolarFarm_PaysDailyEnergy()
+        {
+            Assert.AreEqual(MajestyEconomy.SolarFarmDailyTax, MajestyEconomy.DailyTax(BuildingCategory.Power));
+            Assert.Greater(MajestyEconomy.SolarFarmDailyTax, 0);
+        }
+
+        [Test]
+        public void VillageGrowth_AlternatesHousesAndSolarFarms_ThenStops()
+        {
+            Assert.AreEqual(BuildingCategory.Habitat, VillageGrowth.NextProject(0, 0));
+            Assert.AreEqual(BuildingCategory.Habitat, VillageGrowth.NextProject(2, 1));
+            Assert.AreEqual(BuildingCategory.Power, VillageGrowth.NextProject(3, 1), "one solar farm per two houses");
+            Assert.AreEqual(BuildingCategory.Power, VillageGrowth.NextProject(VillageGrowth.MaxHouses, 2));
+            Assert.IsNull(VillageGrowth.NextProject(VillageGrowth.MaxHouses, VillageGrowth.MaxSolarFarms));
+            Assert.IsTrue(VillageGrowth.IsVillageBuilt(BuildingCategory.Habitat));
+            Assert.IsTrue(VillageGrowth.IsVillageBuilt(BuildingCategory.Power));
+            Assert.IsFalse(VillageGrowth.IsVillageBuilt(BuildingCategory.Mine), "mines are player-built trade posts");
+        }
+
+        [Test]
+        public void Collector_DiesInSecondsUnderABite_NotMinutes()
+        {
+            // Mob bites run 0.03–0.18 hero-HP a second.
+            Assert.Less(MajestyEconomy.CollectorHp / 0.03f, 30f);
+            Assert.Greater(MajestyEconomy.CollectorHp / 0.18f, 2f, "a quick escape is still possible");
         }
 
         [Test]

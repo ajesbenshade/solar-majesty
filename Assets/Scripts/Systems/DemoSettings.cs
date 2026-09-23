@@ -260,7 +260,7 @@ namespace SolarMajesty
             var body = CelestialBodyCatalog.Get(BodySeed.LoadSavedBody());
             string name = body != null ? body.DisplayName : "last drop";
             int met = PlayerPrefs.GetInt(SaveMetKey, 0);
-            return $"CONTINUE  ·  {name}  ·  CRED {met}";
+            return $"CONTINUE  ·  {name}  ·  EU {met}";
         }
 
         public static string ContinueDetail()
@@ -275,7 +275,7 @@ namespace SolarMajesty
             int tech = ResearchManager.SavedUnlockCount();
             int modules = CampusSnapshot.SlotCount(LoadCampus(BodySeed.LoadSavedBody()));
             string campus = modules > 0 ? $"{modules} modules" : "empty campus";
-            return $"REG {reg}  ICE {ice}  CRED {met}  PWR {pwr}  ·  {campus}  ·  {tech} techs";
+            return $"REG {reg}  ICE {ice}  EU {met}  PWR {pwr}  ·  {campus}  ·  {tech} techs";
         }
     }
 }
