@@ -126,8 +126,7 @@ namespace SolarMajesty
 
         private void BuildPower()
         {
-            bool short0 = _loop.Economy != null && _loop.Economy.PowerShort;
-            Color c = short0 ? PowerShort : PowerOk;
+            Color c = PowerOk;
 
             var structures = _loop.Village != null ? _loop.Village.Structures : null;
             if (structures == null) return;

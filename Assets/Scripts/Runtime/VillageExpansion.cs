@@ -13,7 +13,6 @@ namespace SolarMajesty
         private readonly List<ColonyStructure> _structures = new List<ColonyStructure>(24);
         private GameLoop _loop;
         private Transform _root;
-        private float _expandCooldown;
 
         public IReadOnlyList<ColonyStructure> Structures => _structures;
         public Vector3 InnPosition => ColonyLayout.InnOutpost;
@@ -31,29 +30,16 @@ namespace SolarMajesty
         {
             if (_loop == null || _loop.Settlement == null) return;
             if (_loop.Placer == null || !_loop.Placer.HasCampus) return;
-            _expandCooldown = Mathf.Max(0f, _expandCooldown - dt);
             Prune();
 
             var set = _loop.Settlement;
-            int pending = set.TakePendingLevy();
-            if (pending > 0)
-            {
-                int placed = AccrueLevy(pending);
-                if (placed <= 0)
-                    placed = DepositLevy(pending);
-                if (placed < pending)
-                    set.ReturnUnplacedLevy(pending - placed);
-                _loop.NotifyLevySitting(TotalSittingLevy());
-            }
+            int before = TotalSittingLevy();
             PayDailyTaxes(set);
+            if (TotalSittingLevy() > before)
+                _loop.NotifyLevySitting(TotalSittingLevy());
             TickLevyPurses(dt);
             TickLevySit(dt);
             _collectors?.Tick(dt);
-
-            if (set.BirthDue)
-                TryBirth(set);
-            if (set.NeedsVillageHab && _expandCooldown <= 0f)
-                TryExpandVillage();
         }
 
         public void RegisterPlacedBuilding(BuildingCategory cat, GameObject go, Vector3 world) =>
@@ -108,13 +94,6 @@ namespace SolarMajesty
                 InheritGuildClass(st);
             if (!_structures.Contains(st))
                 _structures.Add(st);
-
-            if (st.IsResidential && _loop.Settlement.Population <= 0)
-            {
-                int n = _loop.Settlement.SeedStarterCrew();
-                if (n > 0)
-                    st.SetResidents(n);
-            }
         }
 
         private void InheritGuildClass(ColonyStructure hall)
@@ -238,9 +217,6 @@ namespace SolarMajesty
             var set = _loop?.Settlement;
             if (set != null)
             {
-                int killed = set.KillResidents(st.Residents);
-                if (killed > 0)
-                    st.SetResidents(0);
                 int lost = st.CollectLevy();
                 if (lost > 0)
                 {
@@ -369,6 +345,25 @@ namespace SolarMajesty
             return LevyRun.PreferWatchtower(dc, dt) ? tower : commons;
         }
 
+        /// <summary>Nearest standing building with gold in its till (pests rob these, not the treasury).</summary>
+        public ColonyStructure NearestTill(Vector3 from, float maxDist)
+        {
+            ColonyStructure best = null;
+            float bestD = maxDist;
+            for (int i = 0; i < _structures.Count; i++)
+            {
+                var s = _structures[i];
+                if (s == null || !s.IsAlive || s.LevyPurse <= 0 || s.IsTreasuryChest) continue;
+                float d = Flat(from, s.WorldPosition);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = s;
+                }
+            }
+            return best;
+        }
+
         public ColonyStructure CommonsHub()
         {
             for (int i = 0; i < _structures.Count; i++)
@@ -390,13 +385,8 @@ namespace SolarMajesty
             {
                 var s = _structures[i];
                 if (s == null || !s.IsAlive || !s.IsResidential) continue;
-                int w = Mathf.Max(1, s.Residents);
-                if (s.Residents <= 0 && _loop.Settlement != null && _loop.Settlement.Population > 0)
-                    w = 1;
-                else if (s.Residents <= 0)
-                    continue;
                 stops.Add(s);
-                weights.Add(w);
+                weights.Add(1);
             }
 
             if (stops.Count == 0)
@@ -455,7 +445,7 @@ namespace SolarMajesty
         /// Majesty daily tax: Commons (Palace) 50, Market 250, Farm 50 land in their own tills each
         /// day; mine output waits in the Mine's till. Houses are paid through the Settlement levy.
         /// </summary>
-        /// <summary>Tax the standing buildings accrue into their tills each day (houses excluded).</summary>
+        /// <summary>Tax the standing buildings, houses included, accrue into their tills each day.</summary>
         public int DailyBuildingTax()
         {
             int total = 0;
@@ -478,6 +468,8 @@ namespace SolarMajesty
                     var s = _structures[i];
                     if (s == null || !s.IsAlive) continue;
                     int tax = MajestyEconomy.DailyTax(s.Category);
+                    if (s.Category == BuildingCategory.Farm)
+                        tax = Mathf.RoundToInt(tax * set.FarmTaxScale);
                     if (tax > 0) s.AccrueLevy(tax);
                 }
             }
@@ -580,18 +572,6 @@ namespace SolarMajesty
         public void OnVillageHabDestroyed(ColonyStructure hab)
         {
             NotifyCollapsed(hab);
-        }
-
-        private void TryBirth(Settlement set)
-        {
-            if (set == null || !set.BirthDue) return;
-            var hab = FindVacantHab();
-            if (hab == null || !hab.TryAddResident())
-                return;
-            if (set.TryBirth())
-                Debug.Log($"[Village] Birth in {hab.DisplayName} — pop {set.Population}/{set.Housing}");
-            else
-                hab.SetResidents(Mathf.Max(0, hab.Residents - 1));
         }
 
         private void SpawnInn()
@@ -724,28 +704,6 @@ namespace SolarMajesty
                     return true;
             }
             return false;
-        }
-
-        private void TryExpandVillage()
-
-        {
-            if (_loop.Resources == null) return;
-            // Majesty houses cost the treasury nothing — settlers raise them. Only the regolith moves.
-            var cost = new[]
-            {
-                new ResourceAmount(ResourceId.Regolith, 12)
-            };
-            if (!_loop.Resources.CanAfford(cost)) return;
-            if (!TryNextSlot(out Vector2Int airlockCell, out Vector2Int habCell)) return;
-            if (!_loop.Resources.TrySpend(cost)) return;
-
-            SpawnConnector(airlockCell);
-            SpawnHab(habCell);
-            _loop.Settlement.AddVillageHab();
-            _loop.NotifyCampusExpanded();
-            _expandCooldown = 12f;
-
-            Debug.Log($"[Village] HAB + airlock @ {habCell}");
         }
 
         private bool TryNextSlot(out Vector2Int airlockCell, out Vector2Int habCell)

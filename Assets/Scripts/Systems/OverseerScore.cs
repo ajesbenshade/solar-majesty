@@ -59,9 +59,8 @@ namespace SolarMajesty
 
             int launch = i.LaunchReady ? 15 : 0;
 
-            float stock = Mathf.Clamp01(i.Metals / 220f) * 0.55f + Mathf.Clamp01(i.Ice / 80f) * 0.25f;
-            float pwr = i.PowerDraw <= 0 ? 1f : Mathf.Clamp01((i.PowerGen + 2f) / (i.PowerDraw + 2f));
-            int economy = Mathf.RoundToInt(15f * Mathf.Clamp01(stock * 0.7f + pwr * 0.3f));
+            // Economy is the treasury alone now (CRED is the only stock).
+            int economy = Mathf.RoundToInt(15f * Mathf.Clamp01(i.Metals / 5000f));
 
             int roster = Mathf.RoundToInt(
                 12f * Mathf.Clamp01(i.RobotCount / 4f) * Mathf.Clamp01(i.MeanHealth));

@@ -17,7 +17,7 @@ namespace SolarMajesty
     {
         [Header("Sustain gate")]
         [SerializeField] private float sustainHoldSeconds = 40f;
-        [SerializeField] private int populationGoal = 12;
+        [SerializeField] private int treasuryGoal = 5000;
 
         [Header("Launch gate (tech tree)")]
         [Tooltip("When true, Lunar Rocket (or other launch unlock) must be researched.")]
@@ -72,9 +72,9 @@ namespace SolarMajesty
 
         public float SustainElapsed => _sustainElapsed;
         public float SustainRequired => sustainHoldSeconds;
-        public int PopulationGoal => populationGoal;
-        public int PopulationCurrent =>
-            _loop != null && _loop.Settlement != null ? _loop.Settlement.Population : 0;
+        public int TreasuryGoal => treasuryGoal;
+        public int TreasuryCurrent =>
+            _loop != null && _loop.Settlement != null ? _loop.Settlement.Treasury : 0;
         public int UnclearedLairs { get; private set; }
         public int LairCount { get; private set; }
 
@@ -191,7 +191,7 @@ namespace SolarMajesty
                 if (WasDeadlineFail)
                     return "The window to secure the outpost closed. Restart for a tighter run.";
                 if (_loop != null && _loop.ColonyExtinct)
-                    return "The last colonist is gone. Retry this body, or New Game.";
+                    return "The Colony Commons fell and the treasury with it. Retry this body, or New Game.";
                 if (_loop != null && _loop.RobotCount == 0)
                     return "No robots left and no re-fab in the shop. Rebuild a workshop, or retry.";
                 if (body != null && !string.IsNullOrEmpty(body.FailLog))
@@ -222,14 +222,18 @@ namespace SolarMajesty
             var body = _loop.BodyProfile;
             if (body != null)
             {
-                populationGoal = Mathf.Max(1, body.PopulationGoal);
+                treasuryGoal = TreasuryGoalFor(body.StartMetals);
                 sustainHoldSeconds = Mathf.Max(5f, body.SustainHoldSeconds);
             }
 
             _launchReady = !requireLaunchTech;
             if (_loop.Settlement != null)
-                _loop.Settlement.SetPopulationGoal(populationGoal);
+                _loop.Settlement.SetTreasuryGoal(treasuryGoal, OverseerRules.SustainMetPerMin);
         }
+
+        /// <summary>Hold half again the starting treasury, rounded up to 500 CRED.</summary>
+        public static int TreasuryGoalFor(int startTreasury) =>
+            Mathf.Max(1000, Mathf.CeilToInt(startTreasury * 1.5f / 500f) * 500);
 
         /// <summary>Week 2+: call when rocket tech is researched and craft is built.</summary>
         public void SetLaunchReady(bool ready) => _launchReady = ready;
@@ -384,7 +388,7 @@ namespace SolarMajesty
             if (SustainComplete && !_loggedSustain)
             {
                 _loggedSustain = true;
-                _loop.LogOverseer($"Colony holding — pop {set.Population}/{populationGoal} for {Mathf.RoundToInt(sustainHoldSeconds)}s.");
+                _loop.LogOverseer($"Treasury holding — {set.Treasury:N0}/{treasuryGoal:N0} CRED for {Mathf.RoundToInt(sustainHoldSeconds)}s.");
             }
         }
 

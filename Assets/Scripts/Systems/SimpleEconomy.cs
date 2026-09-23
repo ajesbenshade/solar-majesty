@@ -1,4 +1,4 @@
-// Timed economy layer: specialist upkeep + periodic Earth Starship resupply.
+// Timed economy layer: bounty escrow, the upkeep clock and periodic trade-ship landings.
 // Pure C#: call Tick(deltaTime) from a future simulation driver.
 
 using System;
@@ -25,19 +25,6 @@ namespace SolarMajesty
         public bool HasDock { get; set; }
         public int ResupplyDockFee { get; set; }
 
-        /// <summary>Flat power drain each upkeep tick (base outpost draw).</summary>
-        public int BasePowerUpkeep { get; set; } = 1;
-
-        /// <summary>
-        /// Tank/grid cargo delivered each resupply. The gold side of a landing is a Majesty
-        /// trading-post caravan: <see cref="CaravanGold"/> CRED paid into the Market's till.
-        /// </summary>
-        public ResourceAmount[] ResupplyPackage { get; set; } =
-        {
-            new ResourceAmount(ResourceId.WaterIce, 15),
-            new ResourceAmount(ResourceId.Power, 10)
-        };
-
         /// <summary>Caravan gold per landing (runtime sets it from the pad → market distance).</summary>
         public int CaravanGold { get; set; } = MajestyEconomy.CaravanGoldBase;
 
@@ -59,23 +46,12 @@ namespace SolarMajesty
         public event Action UpkeepApplied;
         public event Action ResupplyArrived;
         public event Action ResupplyWavedOff;
-        public event Action MarketExported;
-        public event Action MarketBlocked;
 
         /// <summary>Seconds until the next specialist/grid upkeep tick.</summary>
         public float UpkeepSecondsLeft => Mathf.Max(0f, _upkeepTimer);
 
         /// <summary>Seconds until the next Earth resupply package.</summary>
         public float ResupplySecondsLeft => Mathf.Max(0f, _resupplyTimer);
-
-        /// <summary>Power generated each upkeep interval (from Power Nodes / arrays).</summary>
-        public int PowerGen { get; set; }
-
-        /// <summary>Power consumed each upkeep interval (modules + robots + base draw).</summary>
-        public int PowerDraw { get; set; }
-
-        public bool PowerShort =>
-            PowerDraw > PowerGen && _resources.Get(ResourceId.Power) < 8;
 
         public string LastUpkeepLine { get; private set; } = "";
         public string LastExtractLine { get; private set; } = "";
@@ -84,25 +60,11 @@ namespace SolarMajesty
         public bool LastResupplyDocked { get; private set; }
         public int LastMetalsUpkeep { get; private set; }
 
-        /// <summary>Census for the ICE reserve. Runtime sets this from Settlement.</summary>
-        public int MarketPopulation { get; set; }
-
-        public bool MarketOpen { get; private set; }
-        public string LastMarketLine { get; private set; } = "";
-        public int LastMarketCredits { get; private set; }
-        public int LastMarketIce { get; private set; }
-        public int LastMarketReg { get; private set; }
-        public int MarketReserve => MarketMath.IceReserve(MarketPopulation);
-
-        private float _marketTimer;
-        private bool _marketBlockedLatched;
-
         public SimpleEconomy(ResourceManager resources)
         {
             _resources = resources ?? throw new ArgumentNullException(nameof(resources));
             _upkeepTimer = UpkeepIntervalSeconds;
             _resupplyTimer = ResupplyIntervalSeconds;
-            _marketTimer = MarketMath.IntervalSeconds;
         }
 
         /// <summary>
@@ -116,11 +78,8 @@ namespace SolarMajesty
             if (_upkeepTimer <= 0f)
             {
                 _upkeepTimer += UpkeepIntervalSeconds;
-                ApplyUpkeep(livingSpecialists);
                 UpkeepApplied?.Invoke();
             }
-
-            TickMarket(deltaTime);
 
             if (!ResupplyEnabled) return;
 
@@ -265,60 +224,23 @@ namespace SolarMajesty
             float haul = Mathf.Clamp(efficiency, 0.05f, 1.25f);
             string tag = HaulTag(via, haul);
 
+            // Every deposit is worth CRED: ore pays best, ice and rock fields pay less.
             if (node != null && !node.IsDepleted)
             {
-                switch (node.NodeType)
+                int ore = node.NodeType switch
                 {
-                    case ResourceNodeType.Metals:
-                    {
-                        int took = node.Harvest(8);
-                        int got = Deliver(ResourceId.Metals, Gold(took), haul);
-                        Deliver(ResourceId.Regolith, 2, haul);
-                        RecordExtract($"+{got} CRED {tag}", got);
-                        break;
-                    }
-                    case ResourceNodeType.Ice:
-                    {
-                        int took = node.Harvest(7);
-                        int got = Deliver(ResourceId.WaterIce, took, haul);
-                        Deliver(ResourceId.Regolith, 3, haul);
-                        RecordExtract($"+{got} ICE {tag}", got);
-                        break;
-                    }
-                    case ResourceNodeType.Fissile:
-                    {
-                        int took = node.Harvest(5);
-                        int got = Deliver(ResourceId.Power, took, haul);
-                        Deliver(ResourceId.Metals, Gold(1), haul);
-                        RecordExtract($"+{got} PWR {tag}", got);
-                        break;
-                    }
-                    default:
-                    {
-                        int took = node.Harvest(10);
-                        int got = Deliver(ResourceId.Regolith, took, haul);
-                        Deliver(ResourceId.Metals, Gold(2), haul);
-                        RecordExtract($"+{got} REG {tag}", got);
-                        break;
-                    }
-                }
+                    ResourceNodeType.Metals => node.Harvest(8),
+                    ResourceNodeType.Ice => node.Harvest(7) * 3 / 4,
+                    ResourceNodeType.Fissile => node.Harvest(5),
+                    _ => node.Harvest(10) / 2
+                };
+                int got = Deliver(ResourceId.Metals, Gold(ore), haul);
+                RecordExtract($"+{got} CRED {tag}", got);
                 return;
             }
 
-            if (campusIndex <= 0)
-            {
-                int got = Deliver(ResourceId.Regolith, 12, haul);
-                Deliver(ResourceId.Metals, Gold(4), haul);
-                Deliver(ResourceId.WaterIce, 2, haul);
-                RecordExtract($"+{got} REG campus {tag}", got);
-            }
-            else
-            {
-                int got = Deliver(ResourceId.Regolith, 16, haul);
-                Deliver(ResourceId.Metals, Gold(3), haul);
-                Deliver(ResourceId.WaterIce, 1, haul);
-                RecordExtract($"+{got} REG outpost {tag}", got);
-            }
+            int fallback = Deliver(ResourceId.Metals, Gold(campusIndex <= 0 ? 4 : 3), haul);
+            RecordExtract($"+{fallback} CRED {(campusIndex <= 0 ? "campus" : "outpost")} {tag}", fallback);
         }
 
         /// <summary>Ore units → CRED (one ore chunk is worth <see cref="MajestyEconomy.GoldScale"/>).</summary>
@@ -345,60 +267,9 @@ namespace SolarMajesty
             LastExtractAmount = amount;
         }
 
-        private void ApplyUpkeep(IReadOnlyList<SpecialistData> livingSpecialists)
-        {
-            if (PowerGen > 0)
-                _resources.Add(ResourceId.Power, PowerGen);
-
-            int gridDraw = Mathf.Max(0, PowerDraw) + Mathf.Max(0, BasePowerUpkeep);
-            int spentPower = gridDraw > 0
-                ? _resources.SpendUpTo(ResourceId.Power, gridDraw)
-                : 0;
-
-            int spentMet = 0;
-            int spentIce = 0;
-            if (livingSpecialists != null)
-            {
-                float scale = UpkeepIntervalSeconds / 60f; // upkeepPerMinute → this interval
-
-                for (int s = 0; s < livingSpecialists.Count; s++)
-                {
-                    SpecialistData data = livingSpecialists[s];
-                    if (data == null || data.upkeepPerMinute == null) continue;
-
-                    for (int i = 0; i < data.upkeepPerMinute.Length; i++)
-                    {
-                        ResourceAmount c = data.upkeepPerMinute[i];
-                        int amt = Mathf.Max(0, Mathf.RoundToInt(c.amount * scale));
-                        if (amt <= 0) continue;
-                        // Majesty heroes draw no wages (they live off bounties and loot) and ICE is
-                        // never payroll — only grid power is an upkeep.
-                        if (c.resource == ResourceId.WaterIce || c.resource == ResourceId.Metals)
-                            continue;
-                        int paid = _resources.SpendUpTo(c.resource, amt);
-                        if (c.resource == ResourceId.Power) spentPower += paid;
-                        else if (c.resource == ResourceId.Metals) spentMet += paid;
-                    }
-                }
-            }
-
-            LastMetalsUpkeep = spentMet;
-            LastUpkeepLine = PowerGen > 0
-                ? $"grid +{PowerGen}/−{spentPower} PWR"
-                : $"upkeep −{spentPower} PWR";
-            if (spentMet > 0) LastUpkeepLine += $" −{spentMet} CRED";
-            if (spentIce > 0) LastUpkeepLine += $" −{spentIce} ICE";
-        }
-
         private bool DeliverResupply()
         {
             LastResupplyDocked = false;
-            if (ResupplyPackage == null)
-            {
-                LastResupplyLine = "Earth ship empty";
-                return false;
-            }
-
             if (ResupplyRequiresPad && !HasDock)
             {
                 LastResupplyLine = "Earth ship waved off — no Landing Pad";
@@ -408,13 +279,6 @@ namespace SolarMajesty
             if (ResupplyDockFee > 0)
                 _resources.SpendUpTo(ResourceId.Metals, ResupplyDockFee);
 
-            for (int i = 0; i < ResupplyPackage.Length; i++)
-            {
-                ResourceAmount p = ResupplyPackage[i];
-                if (p.amount > 0)
-                    _resources.Add(p.resource, p.amount);
-            }
-
             LastCaravanGold = Mathf.Max(0, CaravanGold);
             PayTrade(LastCaravanGold);
 
@@ -423,58 +287,6 @@ namespace SolarMajesty
                 ? $"Ship landed — caravan worth {LastCaravanGold} CRED to the Market till. Dock fee {ResupplyDockFee} CRED already left."
                 : $"Ship landed — caravan worth {LastCaravanGold} CRED to the Market till.";
             return true;
-        }
-
-        private void TickMarket(float deltaTime)
-        {
-            if (!HasDock)
-            {
-                MarketOpen = false;
-                _marketTimer = MarketMath.IntervalSeconds;
-                _marketBlockedLatched = false;
-                return;
-            }
-
-            _marketTimer -= deltaTime;
-            if (_marketTimer > 0f) return;
-            _marketTimer += MarketMath.IntervalSeconds;
-
-            int ice = _resources.Get(ResourceId.WaterIce);
-            int reg = _resources.Get(ResourceId.Regolith);
-            int iceTake = MarketMath.IceToSiphon(ice, MarketPopulation);
-            int regTake = MarketMath.RegToSiphon(ice, MarketPopulation, reg);
-            int credits = MarketMath.CreditsFrom(iceTake, regTake);
-
-            if (credits <= 0)
-            {
-                MarketOpen = false;
-                LastMarketIce = 0;
-                LastMarketReg = 0;
-                LastMarketCredits = 0;
-                LastMarketLine = $"Stall idle — reserve {MarketReserve} ICE.";
-                if (!_marketBlockedLatched)
-                {
-                    _marketBlockedLatched = true;
-                    MarketBlocked?.Invoke();
-                }
-                return;
-            }
-
-            if (iceTake > 0)
-                _resources.SpendUpTo(ResourceId.WaterIce, iceTake);
-            if (regTake > 0)
-                _resources.SpendUpTo(ResourceId.Regolith, regTake);
-            PayTrade(credits);
-
-            MarketOpen = true;
-            _marketBlockedLatched = false;
-            LastMarketIce = iceTake;
-            LastMarketReg = regTake;
-            LastMarketCredits = credits;
-            LastMarketLine = iceTake > 0
-                ? $"Stall exported {iceTake} ICE → {credits} CRED."
-                : $"Stall exported {credits} CRED.";
-            MarketExported?.Invoke();
         }
     }
 }

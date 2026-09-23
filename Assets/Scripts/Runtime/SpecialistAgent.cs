@@ -155,8 +155,6 @@ namespace SolarMajesty
             {
                 float r = (data != null ? data.workRate : 1f) *
                     (1f + _geneWork + SuitWorkBonus() + WeaponWorkBonus());
-                if (_loop != null && _loop.Economy != null && _loop.Economy.PowerShort)
-                    r *= OverseerRules.PowerShortWork;
                 if (_loop != null &&
                     _loop.GuildBenefits != null &&
                     _loop.GuildBenefits.IsActive(RobotGuildId.Anvil) &&

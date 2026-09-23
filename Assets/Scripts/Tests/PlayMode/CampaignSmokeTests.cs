@@ -79,7 +79,8 @@ namespace SolarMajesty.Tests
             earth.PausePlay();
             Assert.IsTrue(earth.Settlement.HasCommons, "Earth must start with Commons");
             var original = earth.CaptureSave("earth");
-            Assert.GreaterOrEqual(original.buildings.Count, 3, "Earth demo shell includes Commons, airlock and HAB");
+            Assert.GreaterOrEqual(original.buildings.Count, 2, "Earth demo shell includes Commons and a HAB");
+            Assert.IsTrue(earth.Settlement.CoreHabs > 0, "the starter HAB stands free of the Commons");
             earth.Resources.Set(ResourceId.Metals, 333);
             CampaignProgress.UnlockThrough(CelestialBodyId.Luna);
             earth.SelectBody(CelestialBodyId.Luna);

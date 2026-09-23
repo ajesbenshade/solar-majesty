@@ -106,16 +106,14 @@ namespace SolarMajesty.Tests
         public void Settlement_PaysHouseTaxOncePerMajestyDay()
         {
             var res = new ResourceManager();
-            res.Set(ResourceId.WaterIce, 100);
             var s = new Settlement(res);
             s.RegisterPlaced(BuildingCategory.Habitat);
-            s.SeedStarterCrew();
 
             Assert.AreEqual(MajestyEconomy.DaySeconds, s.TaxInterval);
             s.Tick(s.TaxInterval);
             Assert.AreEqual(1, s.TakePendingDays());
-            Assert.AreEqual(MajestyEconomy.HouseDailyTax(Settlement.StarterColonists), s.PendingLevy);
-            Assert.AreEqual(0, res.Get(ResourceId.Metals), "house tax waits for a collector");
+            Assert.AreEqual(MajestyEconomy.HouseDailyFlat, MajestyEconomy.DailyTax(BuildingCategory.Habitat));
+            Assert.AreEqual(0, res.Get(ResourceId.Metals), "house tax waits in the HAB till for a collector");
         }
 
         [Test]
@@ -147,7 +145,7 @@ namespace SolarMajesty.Tests
 
             Assert.AreEqual(420, till);
             Assert.AreEqual(0, res.Get(ResourceId.Metals));
-            Assert.AreEqual(15, res.Get(ResourceId.WaterIce), "tank cargo still lands directly");
+            Assert.AreEqual(0, res.Get(ResourceId.WaterIce), "ships carry trade gold only");
         }
 
         [Test]
@@ -155,7 +153,7 @@ namespace SolarMajesty.Tests
         {
             var res = new ResourceManager();
             res.Set(ResourceId.Metals, 100);
-            var eco = new SimpleEconomy(res) { ResupplyEnabled = false, BasePowerUpkeep = 0 };
+            var eco = new SimpleEconomy(res) { ResupplyEnabled = false };
             eco.Tick(eco.UpkeepIntervalSeconds);
             Assert.AreEqual(100, res.Get(ResourceId.Metals));
             Assert.AreEqual(0, eco.LastMetalsUpkeep);

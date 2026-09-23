@@ -123,8 +123,7 @@ namespace SolarMajesty
             if (threat > 0.55f) return MusicMood.Crisis;
             if (threat > 0.22f) return MusicMood.Tension;
 
-            bool ice = loop.Resources != null && loop.Resources.Get(ResourceId.WaterIce) < OverseerRules.IceDeathThreshold;
-            if (ice) return MusicMood.Tension;
+            if (loop.PayrollThin) return MusicMood.Tension;
 
             int modules = loop.Placer != null ? loop.Placer.Pieces.Count : 0;
             return modules > 2 ? MusicMood.Work : MusicMood.Calm;

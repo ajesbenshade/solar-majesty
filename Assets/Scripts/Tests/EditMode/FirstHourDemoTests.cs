@@ -71,16 +71,12 @@ namespace SolarMajesty.Tests
         public void DemoCatalog_HidesGuildsAndLeadsWithTheEngineer()
         {
             Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.GuildHall));
-            Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Market));
-            Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Blacksmith));
             Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.FobotYard));
-            Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Watchtower));
             Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.AidStation));
             Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.ClimateLoom));
             Assert.IsTrue(DemoSlice.ShowBuilding(BuildingCategory.EngineerWorkshop));
-            Assert.Less(
-                DemoSlice.DemoRank(BuildingCategory.EngineerWorkshop),
-                DemoSlice.DemoRank(BuildingCategory.Utility));
+            Assert.IsTrue(DemoSlice.ShowBuilding(BuildingCategory.Watchtower), "collectors need towers");
+            Assert.IsTrue(DemoSlice.ShowBuilding(BuildingCategory.Market));
 
             var catalog = new List<BuildingData>
             {
@@ -91,10 +87,27 @@ namespace SolarMajesty.Tests
             };
             var visible = new List<int>();
             DemoSlice.CollectVisible(catalog, visible);
-            Assert.AreEqual(3, visible.Count);
+            Assert.AreEqual(2, visible.Count);
             Assert.AreEqual(BuildingCategory.EngineerWorkshop, catalog[visible[0]].category);
-            Assert.AreEqual(BuildingCategory.Utility, catalog[visible[1]].category);
-            Assert.AreEqual(BuildingCategory.Habitat, catalog[visible[2]].category);
+            Assert.AreEqual(BuildingCategory.Habitat, catalog[visible[1]].category);
+        }
+
+        [Test]
+        public void BuildMenu_NeverShowsRetiredGridAirlockOrRegolithPieces([Values(true, false)] bool demo)
+        {
+            DemoSettings.FirstHourDemo = demo;
+            try
+            {
+                Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Utility), "airlock");
+                Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Power), "power node / solar array");
+                Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.RegolithCamp));
+                Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Mining), "OPS drop-off");
+                Assert.IsFalse(DemoSlice.ShowBuilding(BuildingCategory.Commons), "placed for the player");
+            }
+            finally
+            {
+                DemoSettings.FirstHourDemo = true;
+            }
         }
 
         [Test]

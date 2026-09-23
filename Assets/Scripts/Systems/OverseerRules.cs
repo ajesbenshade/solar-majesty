@@ -78,8 +78,8 @@ namespace SolarMajesty
 
         public const float PowerShortWork = 0.70f;
         public const int IceDeathThreshold = 4;
-        public const float SustainMetPerMin = 15f;
-        public const float SustainIcePerMin = 1.0f;
+        /// <summary>Sustain objective: CRED per minute the treasury must keep earning.</summary>
+        public const int SustainMetPerMin = 150;
 
         public const float BuildLabourRadius = 28f;
         public const float PartyFollowerWork = 0.55f;
