@@ -7,7 +7,8 @@ You never control units. You build infrastructure, post flags/bounties, and mana
 This repo is a **Unity 6 URP project** with a playable greybox demo scene.  
 See **[Docs/DEMO.md](Docs/DEMO.md)** for open → Play → 60-second demo script.  
 **Smoke test:** **[Docs/SMOKE_TEST.md](Docs/SMOKE_TEST.md)**  
-**Next developer pickup:** **[Docs/DEVELOPER_HANDOFF.md](Docs/DEVELOPER_HANDOFF.md)**
+**Next developer pickup:** **[Docs/DEVELOPER_HANDOFF.md](Docs/DEVELOPER_HANDOFF.md)**  
+**Optional local AI (Laya):** **[Docs/LAYA_LOCAL_AI.md](Docs/LAYA_LOCAL_AI.md)**
 
 ## Namespace
 
