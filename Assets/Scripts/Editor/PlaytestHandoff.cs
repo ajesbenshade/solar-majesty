@@ -16,13 +16,16 @@ namespace SolarMajesty.EditorTools
             "What to try (Earth, 10–20 minutes)\n" +
             "----------------------------------\n" +
             "Title is a solar-system orrery. Click Earth. Meadow drop, no starter robots.\n" +
-            "Colony Commons, one airlock, and a HAB are already on the claim.\n" +
-            "Press B, then 1, and dock the Engineer workshop on the open airlock face.\n" +
+            "The Colony Commons and one house are already standing.\n" +
+            "Press B, then 1, and place the Engineer workshop anywhere on open ground.\n" +
             "Wait until the robot is standing. You never click-to-move units.\n" +
-            "Press G, choose Build, leave the bounty at $70. Watch the Engineer respond.\n" +
+            "Press G, choose Build, leave the bounty at 700. Watch the Engineer respond.\n" +
             "If ignored, select the flag and press + until tempted. If accepted, continue.\n" +
             "A soil creeper shows up. Press G, F5 Defend, and post it on the bug.\n" +
-            "If the pole says ignored, dock a Defense workshop (key 2) and post F5 again.\n" +
+            "If the pole says ignored, build a Defense workshop (key 2) and post F5 again.\n" +
+            "Keep mobs away: villagers raise houses and solar farms only while the yard is safe.\n" +
+            "Build a Nuclear Mine (key 5) — farther from the Commons pays more energy, but tax\n" +
+            "collectors must walk it home and mobs ambush them on the way.\n" +
             "SKIP dismisses the tutorial bar. Esc → Title → Continue brings the campus back.\n" +
             "Stop whenever you get bored. That moment is the useful data.\n" +
             "\n" +
@@ -45,8 +48,9 @@ namespace SolarMajesty.EditorTools
             "\n" +
             "Notes\n" +
             "-----\n" +
-            "- Wallet chip is EU (not MET). Flags escrow EU. ICE is life support; PWR is the grid.\n" +
-            "- Continue restores campus + stockpile + research + open flags + fauna + specialist HP.\n" +
+            "- Energy units (EU) are the only currency. Buildings fill their tills; tax collectors\n" +
+            "  carry the energy to the Commons or a Watchtower. Flags escrow EU.\n" +
+            "- Continue restores campus + treasury + research + open flags + fauna + specialist HP.\n" +
             "- If the Engineer ignores a cheap Build, raise its bounty. If already accepted, continue.\n" +
             "- This build is Earth only. Dens, sustain, and launch stay on the HUD. You do not have to finish Earth.\n" +
             "- Settings → Full campaign shows the other worlds. Leave it off for this session.\n" +
