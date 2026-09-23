@@ -89,6 +89,9 @@ namespace SolarMajesty
         public const int HouseDailyPerResident = 10;
         public const int HouseDailyMax = 50;
 
+        /// <summary>A HAB with no census pays a settled house's tax: 20 + two residents' 10.</summary>
+        public const int HouseDailyFlat = HouseDailyBase + 2 * HouseDailyPerResident;
+
         public static int HouseDailyTax(int residents) =>
             Mathf.Min(HouseDailyMax, HouseDailyBase + Mathf.Max(0, residents) * HouseDailyPerResident);
 
@@ -100,7 +103,7 @@ namespace SolarMajesty
             return overcrowded ? Mathf.RoundToInt(raw * 0.65f) : raw;
         }
 
-        /// <summary>Non-house daily tax that lands in a building's till. Houses use <see cref="HouseDailyTax"/>.</summary>
+        /// <summary>Daily tax that lands in a building's till, houses included.</summary>
         public static int DailyTax(BuildingCategory cat)
         {
             switch (cat)
@@ -108,6 +111,7 @@ namespace SolarMajesty
                 case BuildingCategory.Commons: return CommonsDailyTax;
                 case BuildingCategory.Market: return MarketDailyTax;
                 case BuildingCategory.Farm: return FarmDailyTax;
+                case BuildingCategory.Habitat: return HouseDailyFlat;
                 default: return 0;
             }
         }

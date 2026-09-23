@@ -11,7 +11,7 @@ namespace SolarMajesty
         public const int PestStep = 3;
 
         public const string WorkshopBeat =
-            "1/4  WORKSHOP — press B, then 1. Dock the Engineer workshop on the open airlock. Wait until the robot is standing.";
+            "1/4  WORKSHOP — press B, then 1. Place the Engineer workshop anywhere near the Commons. Wait until the robot is standing.";
         public const string CheapBuildBeat =
             "2/4  Press G, choose Build, leave the bounty at 700. If the Engineer ignores it, raise the bounty.";
         public const string CancelHighBeat =
@@ -19,7 +19,7 @@ namespace SolarMajesty
         public const string RaisePriceBeat =
             "3/4  Select that flag and press + until the pole says tempted.";
         public const string PestBeat =
-            "4/4  A soil creeper is on the yard. Press G, F5 Defend, and post it on the bug. If the pole says ignored, dock a Defense workshop (key 2).";
+            "4/4  A soil creeper is on the yard. Press G, F5 Defend, and post it on the bug. If the pole says ignored, build a Defense workshop (key 2).";
 
         public static int Advance(
             int step,

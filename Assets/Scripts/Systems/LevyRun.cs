@@ -20,7 +20,7 @@ namespace SolarMajesty
         {
             if (population <= 0) return 0;
             float scale = overcrowded ? 0.65f : 1f;
-            return Mathf.Max(0, Mathf.RoundToInt(population * Settlement.TaxPerCitizen * scale));
+            return Mathf.Max(0, Mathf.RoundToInt(population * MajestyEconomy.HouseDailyPerResident * scale));
         }
 
         /// <summary>Split <paramref name="total"/> across stops by resident weights. Leftover goes to the heaviest stop.</summary>

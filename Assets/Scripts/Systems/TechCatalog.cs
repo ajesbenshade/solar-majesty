@@ -272,21 +272,10 @@ namespace SolarMajesty
             };
         }
 
-        /// <summary>
-        /// Shop wallet is Compact scrip (MET). ICE is the life-support tank, not a tech price.
-        /// PWR stays as a constraint tax on ships / secrets.
-        /// </summary>
+        /// <summary>Research is paid in CRED only. The power argument is from the retired grid.</summary>
         private static ResourceAmount[] ResearchCost(int metals, int power = 0)
         {
-            if (power > 0)
-            {
-                return new[]
-                {
-                    new ResourceAmount(ResourceId.Metals, Gold(metals)),
-                    new ResourceAmount(ResourceId.Power, power)
-                };
-            }
-
+            _ = power;
             return new[] { new ResourceAmount(ResourceId.Metals, Gold(metals)) };
         }
 

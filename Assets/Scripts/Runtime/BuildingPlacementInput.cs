@@ -84,34 +84,17 @@ namespace SolarMajesty
                 return;
             }
 
-            // Hotkeys always switch selection; placement only when tool enabled.
-            // The Earth demo remaps 1–0 onto the short list (1 is the Engineer workshop).
-            if (DemoSettings.FirstHourDemo)
-            {
-                if (Input.GetKeyDown(KeyCode.Alpha1)) SelectVisibleSlot(0);
-                if (Input.GetKeyDown(KeyCode.Alpha2)) SelectVisibleSlot(1);
-                if (Input.GetKeyDown(KeyCode.Alpha3)) SelectVisibleSlot(2);
-                if (Input.GetKeyDown(KeyCode.Alpha4)) SelectVisibleSlot(3);
-                if (Input.GetKeyDown(KeyCode.Alpha5)) SelectVisibleSlot(4);
-                if (Input.GetKeyDown(KeyCode.Alpha6)) SelectVisibleSlot(5);
-                if (Input.GetKeyDown(KeyCode.Alpha7)) SelectVisibleSlot(6);
-                if (Input.GetKeyDown(KeyCode.Alpha8)) SelectVisibleSlot(7);
-                if (Input.GetKeyDown(KeyCode.Alpha9)) SelectVisibleSlot(8);
-                if (Input.GetKeyDown(KeyCode.Alpha0)) SelectVisibleSlot(9);
-            }
-            else
-            {
-                if (Input.GetKeyDown(KeyCode.Alpha1)) Select(0);
-                if (Input.GetKeyDown(KeyCode.Alpha2)) Select(1);
-                if (Input.GetKeyDown(KeyCode.Alpha3)) Select(2);
-                if (Input.GetKeyDown(KeyCode.Alpha4)) Select(3);
-                if (Input.GetKeyDown(KeyCode.Alpha5)) Select(4);
-                if (Input.GetKeyDown(KeyCode.Alpha6)) Select(5);
-                if (Input.GetKeyDown(KeyCode.Alpha7)) Select(6);
-                if (Input.GetKeyDown(KeyCode.Alpha8)) Select(7);
-                if (Input.GetKeyDown(KeyCode.Alpha9)) Select(8);
-                if (Input.GetKeyDown(KeyCode.Alpha0)) Select(9);
-            }
+            // Hotkeys 1–0 pick the build menu's rows in order, in every mode.
+            if (Input.GetKeyDown(KeyCode.Alpha1)) SelectVisibleSlot(0);
+            if (Input.GetKeyDown(KeyCode.Alpha2)) SelectVisibleSlot(1);
+            if (Input.GetKeyDown(KeyCode.Alpha3)) SelectVisibleSlot(2);
+            if (Input.GetKeyDown(KeyCode.Alpha4)) SelectVisibleSlot(3);
+            if (Input.GetKeyDown(KeyCode.Alpha5)) SelectVisibleSlot(4);
+            if (Input.GetKeyDown(KeyCode.Alpha6)) SelectVisibleSlot(5);
+            if (Input.GetKeyDown(KeyCode.Alpha7)) SelectVisibleSlot(6);
+            if (Input.GetKeyDown(KeyCode.Alpha8)) SelectVisibleSlot(7);
+            if (Input.GetKeyDown(KeyCode.Alpha9)) SelectVisibleSlot(8);
+            if (Input.GetKeyDown(KeyCode.Alpha0)) SelectVisibleSlot(9);
 
             if (!enabledPlacement || Selected == null)
             {
@@ -123,10 +106,7 @@ namespace SolarMajesty
             if (!TryGround(out Vector3 world)) return;
             Vector2Int cell = _grid != null ? _grid.WorldToCell(world) : Vector2Int.zero;
 
-            // Lego snap: airlocks → module sockets; modules → airlock ends.
-            if (_placer.TrySnapDock(Selected, cell, out Vector2Int snappedCell))
-                cell = snappedCell;
-
+            // Free placement: the ghost follows the cursor cell; nothing snaps to sockets.
             Vector3 snapped = FootprintWorldCenter(cell, Selected);
 
             EnsureGhost();

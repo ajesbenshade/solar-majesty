@@ -55,7 +55,8 @@ namespace SolarMajesty
         public bool IsWonder => IsWonderCategory(Category);
         public bool IsResidential =>
             role == StructureRole.VillageHab || Category == BuildingCategory.Habitat;
-        public int ResidentCapacity => IsResidential ? Settlement.HousingPerHab : 0;
+        /// <summary>Houses are tax buildings; there is no census, so nobody moves in.</summary>
+        public int ResidentCapacity => 0;
         public int Residents { get; private set; }
         public int LevyPurse { get; private set; }
         public float LevyIdleSeconds { get; private set; }

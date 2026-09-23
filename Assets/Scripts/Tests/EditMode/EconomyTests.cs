@@ -108,136 +108,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void Housing_IsThreeBedsPerHabPlusBonus()
-        {
-            var s = Make(out _, coreHabs: 2);
-            s.BonusBeds = 4;
-
-            Assert.AreEqual(2 * Settlement.HousingPerHab + 4, s.Housing);
-        }
-
-        [Test]
-        public void SeedStarterCrew_DropsTwoColonistsOnce()
-        {
-            var s = Make(out _, coreHabs: 1);
-
-            Assert.AreEqual(Settlement.StarterColonists, s.SeedStarterCrew());
-            Assert.AreEqual(Settlement.StarterColonists, s.Population);
-            Assert.AreEqual(0, s.SeedStarterCrew(), "starter crew must not arrive twice");
-        }
-
-        [Test]
-        public void SeedStarterCrew_IsCappedByAvailableBeds()
-        {
-            var s = Make(out _);
-            s.BonusBeds = 1;
-
-            Assert.AreEqual(1, s.SeedStarterCrew());
-        }
-
-        [Test]
-        public void Tax_AccruesToPendingLevy_NotTheStockpile()
-        {
-            var s = Make(out ResourceManager res, coreHabs: 2);
-            res.Set(ResourceId.WaterIce, 100);
-            s.SeedStarterCrew();
-
-            s.Tick(s.TaxInterval);
-
-            Assert.AreEqual(MajestyEconomy.HousesDailyTax(2, Settlement.StarterColonists, false), s.LastTax, "Majesty house tax: 20 + 10 per resident");
-            Assert.AreEqual(s.LastTax, s.PendingLevy, "tax sits as a HAB purse, it does not teleport");
-            Assert.AreEqual(s.LastTax, s.UncollectedLevy);
-            Assert.AreEqual(0, res.Get(ResourceId.Metals), "stockpile stays empty until a Courier walks home");
-        }
-
-        [Test]
-        public void Tax_IsThinnerWhenOvercrowded()
-        {
-            var s = Make(out ResourceManager res, coreHabs: 1);
-            res.Set(ResourceId.WaterIce, 100);
-            s.RestorePopulation(3);
-
-            Assert.IsTrue(s.Overcrowded);
-            s.Tick(s.TaxInterval);
-
-            Assert.AreEqual(MajestyEconomy.HousesDailyTax(1, 3, true), s.LastTax);
-            Assert.AreEqual(s.LastTax, s.PendingLevy);
-            Assert.AreEqual(0, res.Get(ResourceId.Metals));
-        }
-
-        [Test]
-        public void LevyDeposit_AddsMetalsToTheStockpile()
-        {
-            var s = Make(out ResourceManager res, coreHabs: 1);
-            s.SeedStarterCrew();
-            s.Tick(s.TaxInterval);
-            int pending = s.TakePendingLevy();
-
-            s.NoteLevyDeposited(pending);
-
-            Assert.AreEqual(0, s.PendingLevy);
-            Assert.AreEqual(pending, s.LastLevyDeposited);
-            Assert.AreEqual(pending, s.LastDelivered);
-            Assert.AreEqual(pending, res.Get(ResourceId.Metals));
-        }
-
-        [Test]
-        public void UnplacedLevy_ReturnsToPending()
-        {
-            var s = Make(out _, coreHabs: 1);
-            s.SeedStarterCrew();
-            s.Tick(s.TaxInterval);
-            int pending = s.TakePendingLevy();
-            s.ReturnUnplacedLevy(pending);
-
-            Assert.AreEqual(pending, s.PendingLevy);
-        }
-
-        [Test]
-        public void LifeSupport_KillsOneColonistWhenIceRunsOut()
-        {
-            var s = Make(out ResourceManager res, coreHabs: 2);
-            res.Set(ResourceId.WaterIce, 0);
-            s.SeedStarterCrew();
-            int before = s.Population;
-
-            s.Tick(OverseerRules.LifeSupportFailSeconds);
-
-            Assert.AreEqual(before - 1, s.Population);
-            Assert.IsTrue(s.ConsumeLifeSupportFail());
-            Assert.IsFalse(s.ConsumeLifeSupportFail(), "the fail flag is consumed once");
-        }
-
-        [Test]
-        public void LifeSupport_LeavesColonistsAloneWhenIceIsStocked()
-        {
-            var s = Make(out ResourceManager res, coreHabs: 2);
-            res.Set(ResourceId.WaterIce, OverseerRules.IceDeathThreshold);
-            s.SeedStarterCrew();
-
-            s.Tick(s.TaxInterval);
-
-            Assert.AreEqual(Settlement.StarterColonists, s.Population);
-        }
-
-        [Test]
-        public void CanBirth_RequiresASpareBedAndIce()
-        {
-            var s = Make(out ResourceManager res, coreHabs: 1);
-            res.Set(ResourceId.WaterIce, 100);
-            s.RestorePopulation(3);
-
-            Assert.IsFalse(s.CanBirth, "full beds should halt births");
-
-            s.RegisterPlaced(BuildingCategory.Habitat);
-            Assert.IsTrue(s.CanBirth);
-
-            res.Set(ResourceId.WaterIce, 0);
-            Assert.IsFalse(s.CanBirth, "no ice should halt births");
-        }
-
-        [Test]
-        public void Camps_ProduceOnTheProductionTick()
+        public void Mines_ProduceCredOnTheProductionTick_AndFarmsProduceNothing()
         {
             var s = Make(out ResourceManager res);
             s.RegisterPlaced(BuildingCategory.Farm);
@@ -245,55 +116,68 @@ namespace SolarMajesty.Tests
 
             s.Tick(s.ProductionInterval);
 
-            Assert.AreEqual(3, res.Get(ResourceId.WaterIce), "one farm yields 3 ice");
+            Assert.AreEqual(0, res.Get(ResourceId.WaterIce), "farms pay daily tax; they grow no ICE");
             Assert.AreEqual(40, res.Get(ResourceId.Metals), "one mine yields 40 CRED");
         }
 
         [Test]
-        public void Camps_ProduceLessWhenPowerIsShort()
+        public void DailyTaxDays_CountInTheEarthDemoToo()
+        {
+            bool prior = DemoSettings.FirstHourDemo;
+            DemoSettings.FirstHourDemo = true;
+            try
+            {
+                var s = Make(out _, coreHabs: 2);
+                s.Tick(s.TaxInterval);
+                Assert.AreEqual(1, s.TakePendingDays(), "tax collectors need tills to empty in the demo");
+                Assert.AreEqual(2 * MajestyEconomy.HouseDailyFlat, s.LastTax);
+            }
+            finally
+            {
+                DemoSettings.FirstHourDemo = prior;
+            }
+        }
+
+        [Test]
+        public void LevyDeposit_AddsCredToTheTreasury()
         {
             var s = Make(out ResourceManager res);
-            s.RegisterPlaced(BuildingCategory.Mine);
-            s.ProductionScale = OverseerRules.PowerShortWork;
-
-            s.Tick(s.ProductionInterval);
-
-            Assert.AreEqual(Mathf.RoundToInt(40 * OverseerRules.PowerShortWork), res.Get(ResourceId.Metals));
+            s.NoteLevyDeposited(120);
+            Assert.AreEqual(120, res.Get(ResourceId.Metals));
+            Assert.AreEqual(120, s.LastLevyDeposited);
         }
 
         [Test]
-        public void Demolishing_HousingEvictsSurplusPopulation()
+        public void IsSustainable_NeedsCommonsTreasuryAndIncome()
         {
-            var s = Make(out _, coreHabs: 2);
-            s.RestorePopulation(6);
-
-            s.Unregister(BuildingCategory.Habitat);
-
-            Assert.AreEqual(3, s.Population, "colonists cannot outnumber beds");
-        }
-
-        [Test]
-        public void IsSustainable_NeedsCommonsPopulationStockpileAndIncome()
-        {
-            var s = Make(out ResourceManager res, coreHabs: 4);
-            s.SetPopulationGoal(4);
-            res.Set(ResourceId.WaterIce, 50);
-            res.Set(ResourceId.Metals, 500);
-            res.Set(ResourceId.Regolith, 50);
-            s.RestorePopulation(4);
-            s.SetIncomeRates(OverseerRules.SustainMetPerMin, OverseerRules.SustainIcePerMin);
-
-            Assert.IsFalse(s.IsSustainable, "no Commons means no sustain");
+            var s = Make(out ResourceManager res);
+            s.SetTreasuryGoal(5000, OverseerRules.SustainMetPerMin);
+            res.Set(ResourceId.Metals, 6000);
+            s.SetIncomeRate(OverseerRules.SustainMetPerMin);
+            Assert.IsFalse(s.IsSustainable, "no Commons yet");
 
             s.RegisterPlaced(BuildingCategory.Commons);
             Assert.IsTrue(s.IsSustainable);
 
-            s.SetIncomeRates(0f, OverseerRules.SustainIcePerMin);
-            Assert.IsFalse(s.IsSustainable, "metals income below the floor breaks sustain");
+            res.Set(ResourceId.Metals, 4999);
+            Assert.IsFalse(s.IsSustainable, "treasury under goal");
+            StringAssert.Contains("5,000", s.SustainHint);
+
+            res.Set(ResourceId.Metals, 6000);
+            s.SetIncomeRate(0f);
+            Assert.IsFalse(s.IsSustainable, "no income");
         }
 
         [Test]
-        public void EverHadHab_LatchesForTheLossCondition()
+        public void TerraformPulse_RaisesFarmTax_Capped()
+        {
+            var s = Make(out _);
+            for (int i = 0; i < 20; i++) s.AddTerraformPulse();
+            Assert.AreEqual(1.6f, s.FarmTaxScale, 1e-4f);
+        }
+
+        [Test]
+        public void EverHadHab_LatchesAfterTheLastHouseFalls()
         {
             var s = Make(out _);
 
@@ -301,42 +185,7 @@ namespace SolarMajesty.Tests
             s.RegisterPlaced(BuildingCategory.Habitat);
             Assert.IsTrue(s.EverHadHab);
             s.Unregister(BuildingCategory.Habitat);
-            Assert.IsTrue(s.EverHadHab, "losing the last HAB must still count as having had one");
-        }
-
-        [Test]
-        public void AddVillageHab_WithoutCrew_MatchesTheStillExtinctLatch()
-        {
-            var s = Make(out _);
-            s.AddVillageHab();
-
-            Assert.IsTrue(s.EverHadHab, "stamp HAB latches EverHadHab");
-            Assert.AreEqual(0, s.Population, "stamp used to skip SeedStarterCrew — extinct");
-            Assert.Greater(s.Housing, 0);
-            Assert.AreEqual(Settlement.StarterColonists, s.SeedStarterCrew());
-            Assert.Greater(s.Population, 0);
-        }
-
-        [Test]
-        public void StillCaptureHold_FreezesLifeSupportDeaths()
-        {
-            StillCaptureHold.Arm();
-            try
-            {
-                var s = Make(out ResourceManager res, coreHabs: 1);
-                res.Set(ResourceId.WaterIce, 0);
-                s.SeedStarterCrew();
-                int before = s.Population;
-
-                s.Tick(OverseerRules.LifeSupportFailSeconds + 5f);
-
-                Assert.AreEqual(before, s.Population, "still shutter must not kill colonists");
-                Assert.IsFalse(s.ConsumeLifeSupportFail());
-            }
-            finally
-            {
-                StillCaptureHold.Disarm();
-            }
+            Assert.IsTrue(s.EverHadHab);
         }
     }
 
@@ -589,11 +438,18 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void ShipAndSecretPowerTax_Stays()
+        public void Research_CostsCredOnly()
         {
-            AssertPower(TechId.MarsShip, 20);
-            AssertPower(TechId.Icebreaker, 30);
-            AssertPower(TechId.BeltHauler, 25);
+            AssertPower(TechId.MarsShip, 0);
+            AssertPower(TechId.Icebreaker, 0);
+            AssertPower(TechId.BeltHauler, 0);
+            foreach (TechId id in System.Enum.GetValues(typeof(TechId)))
+            {
+                var def = TechCatalog.Get(id);
+                if (def?.CompleteCost == null) continue;
+                foreach (var c in def.CompleteCost)
+                    Assert.AreEqual(ResourceId.Metals, c.resource, id.ToString());
+            }
         }
 
         [Test]
@@ -717,85 +573,4 @@ namespace SolarMajesty.Tests
         }
     }
 
-    public class MarketTrickleTests
-    {
-        private static SimpleEconomy Stall(out ResourceManager res, int ice, int met, int reg, int pop)
-        {
-            res = new ResourceManager();
-            res.Set(ResourceId.WaterIce, ice);
-            res.Set(ResourceId.Metals, met);
-            res.Set(ResourceId.Regolith, reg);
-            var eco = new SimpleEconomy(res)
-            {
-                ResupplyEnabled = false,
-                HasDock = true,
-                MarketPopulation = pop
-            };
-            return eco;
-        }
-
-        [Test]
-        public void Tick_ExportsOneIceAboveReserve()
-        {
-            var eco = Stall(out var res, ice: 13, met: 0, reg: 10, pop: 0);
-            eco.Tick(MarketMath.IntervalSeconds);
-
-            Assert.IsTrue(eco.MarketOpen);
-            Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
-            Assert.AreEqual(20, res.Get(ResourceId.Metals));
-            Assert.AreEqual(10, res.Get(ResourceId.Regolith), "REG at reserve stays");
-        }
-
-        [Test]
-        public void Tick_IdlesWhenTankIsNotFat()
-        {
-            var eco = Stall(out var res, ice: 12, met: 5, reg: 40, pop: 0);
-            int blocked = 0;
-            eco.MarketBlocked += () => blocked++;
-            eco.Tick(MarketMath.IntervalSeconds);
-            eco.Tick(MarketMath.IntervalSeconds);
-
-            Assert.IsFalse(eco.MarketOpen);
-            Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
-            Assert.AreEqual(5, res.Get(ResourceId.Metals), "idle stall must not print credits");
-            Assert.AreEqual(40, res.Get(ResourceId.Regolith), "no floor means no REG dump");
-            Assert.AreEqual(1, blocked, "blocked toast latches once per idle stretch");
-        }
-
-        [Test]
-        public void Tick_WithoutPad_DoesNotSiphon()
-        {
-            var eco = Stall(out var res, ice: 40, met: 0, reg: 40, pop: 0);
-            eco.HasDock = false;
-            eco.Tick(MarketMath.IntervalSeconds);
-
-            Assert.IsFalse(eco.MarketOpen);
-            Assert.AreEqual(40, res.Get(ResourceId.WaterIce));
-            Assert.AreEqual(0, res.Get(ResourceId.Metals));
-        }
-
-        [Test]
-        public void Tick_ReserveScalesWithPopulation()
-        {
-            var eco = Stall(out var res, ice: 15, met: 0, reg: 10, pop: 5);
-            eco.Tick(MarketMath.IntervalSeconds);
-
-            Assert.IsFalse(eco.MarketOpen);
-            Assert.AreEqual(15, res.Get(ResourceId.WaterIce));
-            Assert.AreEqual(0, res.Get(ResourceId.Metals));
-        }
-
-        [Test]
-        public void Tick_NeverDrainsIceThroughTheReserve()
-        {
-            var eco = Stall(out var res, ice: 14, met: 0, reg: 10, pop: 0);
-            eco.Tick(MarketMath.IntervalSeconds);
-            eco.Tick(MarketMath.IntervalSeconds);
-            eco.Tick(MarketMath.IntervalSeconds);
-
-            Assert.GreaterOrEqual(res.Get(ResourceId.WaterIce), 12);
-            Assert.AreEqual(12, res.Get(ResourceId.WaterIce));
-            Assert.AreEqual(40, res.Get(ResourceId.Metals));
-        }
-    }
 }

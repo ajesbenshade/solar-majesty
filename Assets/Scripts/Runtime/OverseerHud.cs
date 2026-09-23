@@ -160,7 +160,7 @@ namespace SolarMajesty
         {
             string line = _loop?.Economy != null && !string.IsNullOrEmpty(_loop.Economy.LastResupplyLine)
                 ? _loop.Economy.LastResupplyLine
-                : "Earth resupply docked at the Landing Pad — stockpile topped up.";
+                : "Trade ship landed — caravan gold waits in the Market till for a collector.";
             Toast(line, 4f);
             DemoAudio.PlayRetry();
         }
@@ -175,17 +175,7 @@ namespace SolarMajesty
 
         private void OnUpkeep()
         {
-            if (_loop?.Economy == null) return;
-            bool shortOnPower = _loop.Economy.PowerShort;
-            if (shortOnPower && !_powerAlarmLatched)
-            {
-                _powerAlarmLatched = true;
-                Toast("Power short — dock a Power Node. Grid draw exceeds generation.", 4f);
-            }
-            else if (!shortOnPower)
-            {
-                _powerAlarmLatched = false;
-            }
+            // No grid and no payroll: the upkeep clock has nothing to warn about.
         }
 
         private void Toast(string message, float seconds)
@@ -491,6 +481,10 @@ namespace SolarMajesty
             if (label.StartsWith("CRED")) return new Color(0.72f, 0.74f, 0.78f);
             if (label.StartsWith("PWR")) return new Color(0.92f, 0.78f, 0.22f);
             if (label.StartsWith("BEDS")) return new Color(0.96f, 0.42f, 0.08f);
+            if (label.StartsWith("HEROES")) return new Color(0.35f, 0.78f, 0.92f);
+            if (label.StartsWith("HOUSES")) return new Color(0.96f, 0.42f, 0.08f);
+            if (label.StartsWith("TAXMEN")) return new Color(0.82f, 0.62f, 0.22f);
+            if (label.StartsWith("DENS")) return new Color(0.86f, 0.28f, 0.22f);
             return Gold;
         }
 
@@ -581,35 +575,29 @@ namespace SolarMajesty
             _treasuryRate.normal.textColor = prev;
         }
 
-        /// <summary>Life support, grid, regolith, and beds — the constraints CRED cannot buy past.</summary>
+        /// <summary>The colony at a glance: heroes, tax houses, collectors on their rounds, dens left.</summary>
         private void DrawStockpile(Rect r)
         {
-            if (_loop.Resources == null) return;
             GUI.Label(new Rect(r.x, r.y - 16f, r.width, 14f),
-                $"{(_loop.BodyProfile != null ? _loop.BodyProfile.DisplayName.ToUpperInvariant() : "COLONY")}  ·  STOCKPILE", _section);
+                $"{(_loop.BodyProfile != null ? _loop.BodyProfile.DisplayName.ToUpperInvariant() : "COLONY")}  ·  COLONY", _section);
 
-            int ice = _loop.Resources.Get(ResourceId.WaterIce);
-            int reg = _loop.Resources.Get(ResourceId.Regolith);
-            int pwr = _loop.Resources.Get(ResourceId.Power);
             var set = _loop.Settlement;
-            var eco = _loop.Economy;
-            float scale = set != null ? set.ProductionScale : 1f;
-            int regRate = set != null ? Mathf.Max(0, Mathf.RoundToInt(set.RegolithCamps * 6 * scale)) : 0;
-            int iceRate = set != null ? Mathf.Max(0, Mathf.RoundToInt(set.Farms * 3 * set.FarmYieldScale * scale)) : 0;
-            int pwrNet = eco != null ? eco.PowerGen - eco.PowerDraw : 0;
-            bool pwrAlarm = pwr < 8 || (eco != null && eco.PowerDraw > eco.PowerGen);
-            int pop = set != null ? set.Population : 0;
+            var village = _loop.Village;
+            int heroes = _loop.RobotCount;
+            int houses = set != null ? set.Habs : 0;
+            int collectors = village != null ? village.Collectors.Count : 0;
+            int bags = village != null ? village.Collectors.GoldInTransit : 0;
+            var mission = _loop.Mission;
+            int dens = mission != null ? mission.UnclearedLairs : 0;
 
             float cw = (r.width - 4f) * 0.5f;
             float ch = 34f;
-            bool lifeLow = ice < OverseerRules.IceDeathThreshold;
-            ResourceChip(new Rect(r.x, r.y, cw, ch), lifeLow ? "ICE LS" : "ICE", ice, ice < 8,
-                lifeLow ? "life" : FormatRate(iceRate));
-            ResourceChip(new Rect(r.x + cw + 4f, r.y, cw, ch), "PWR", pwr, pwrAlarm,
-                pwrAlarm && eco != null && eco.PowerShort ? "work 70%" : FormatRate(pwrNet));
-            ResourceChip(new Rect(r.x, r.y + ch + 4f, cw, ch), "REG", reg, reg < 10, FormatRate(regRate));
-            ResourceChip(new Rect(r.x + cw + 4f, r.y + ch + 4f, cw, ch), "BEDS", pop,
-                set != null && set.HousingTight, set != null ? $"{pop}/{set.Housing}" : null);
+            ResourceChip(new Rect(r.x, r.y, cw, ch), "HEROES", heroes, heroes <= 0);
+            ResourceChip(new Rect(r.x + cw + 4f, r.y, cw, ch), "HOUSES", houses, false,
+                houses > 0 ? $"+{houses * MajestyEconomy.HouseDailyFlat}/d" : null);
+            ResourceChip(new Rect(r.x, r.y + ch + 4f, cw, ch), "TAXMEN", collectors, collectors <= 0,
+                bags > 0 ? $"{bags}" : null);
+            ResourceChip(new Rect(r.x + cw + 4f, r.y + ch + 4f, cw, ch), "DENS", dens, false);
         }
 
         /// <summary>Where the gold is on its way home: building tills, collector bags, daily tax.</summary>
@@ -620,7 +608,7 @@ namespace SolarMajesty
             int tills = _loop.SittingLevy;
             int bags = village != null ? village.Collectors.GoldInTransit : 0;
             int collectors = village != null ? village.Collectors.Count : 0;
-            int daily = (set != null ? set.LastTax : 0) + (village != null ? village.DailyBuildingTax() : 0);
+            int daily = village != null ? village.DailyBuildingTax() : 0;
             string line = $"TILLS {tills:N0}  ·  COLLECTORS {collectors} carrying {bags:N0}  ·  TAX {daily:N0}/day";
             GUI.Label(r, line, _microCenter);
         }
@@ -923,8 +911,8 @@ namespace SolarMajesty
 
             GUI.Label(new Rect(c.x, c.y, c.width, 13f),
                 DemoSettings.FirstHourDemo
-                    ? "1 Engineer workshop · LMB on an airlock face"
-                    : "Pick a module · LMB on open ground",
+                    ? "1 Engineer workshop · LMB on open ground"
+                    : "Pick a building · LMB on open ground",
                 _micro);
             float y = c.y + 17f;
 
@@ -1089,10 +1077,10 @@ namespace SolarMajesty
 
             var set = _loop.Settlement;
             string sustainVal = set != null
-                ? $"pop {mission.PopulationCurrent}/{mission.PopulationGoal} · {_loop.FormatHold(mission.SustainElapsed)}/{_loop.FormatHold(mission.SustainRequired)}"
+                ? $"{mission.TreasuryCurrent:N0}/{mission.TreasuryGoal:N0} · {_loop.FormatHold(mission.SustainElapsed)}/{_loop.FormatHold(mission.SustainRequired)}"
                 : _loop.FormatHold(mission.SustainElapsed);
             Stake(new Rect(c.x, y, c.width, 20f), mission.SustainComplete,
-                "Sustain colony",
+                "Grow the treasury",
                 sustainVal);
             y += 20f;
 
@@ -1147,8 +1135,8 @@ namespace SolarMajesty
         private void Stake(Rect r, bool done, string label, string value)
         {
             CheckBox(new Rect(r.x, r.y + 4f, 11f, 11f), done);
-            GUI.Label(new Rect(r.x + 19f, r.y, r.width - 110f, r.height), label, done ? _muted : _body);
-            GUI.Label(new Rect(r.xMax - 90f, r.y, 90f, r.height), value, _microRight);
+            GUI.Label(new Rect(r.x + 19f, r.y, r.width - 160f, r.height), label, done ? _muted : _body);
+            GUI.Label(new Rect(r.xMax - 140f, r.y, 140f, r.height), value, _microRight);
         }
 
         private void DrawInspectPanel()
@@ -1266,17 +1254,12 @@ namespace SolarMajesty
                         bill > 0 && _loop.CanPayYard))
                     _loop.PayFobotYard();
                 GUI.Label(new Rect(c.x + 148f, row + 4f, c.width - 148f, 16f),
-                    "Y  ·  no ICE  ·  120s", _micro);
+                    "Y  ·  120s", _micro);
             }
             else if (st.IsLandingPad)
             {
-                int reserve = _loop.MarketIceReserve;
-                string line = _loop.MarketStallOpen
-                    ? (string.IsNullOrEmpty(_loop.MarketStatusLine)
-                        ? $"Exporting surplus. Reserve {reserve} ICE. Credits only."
-                        : _loop.MarketStatusLine)
-                    : $"Stall idle. Reserve {reserve} ICE — we do not export lunch.";
-                GUI.Label(new Rect(c.x, row, c.width, 22f), line, _micro);
+                GUI.Label(new Rect(c.x, row, c.width, 22f),
+                    "Trade ships land here. Each caravan pays CRED into the Market till.", _micro);
             }
             else if (st.IsGuild)
             {
@@ -1376,10 +1359,8 @@ namespace SolarMajesty
             }
             else if (st.Category == BuildingCategory.Market)
             {
-                int reserve = MarketSiphon.IceReserve(
-                    _loop.Settlement != null ? _loop.Settlement.Population : 0);
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    $"Potions + necklace. Surplus ICE above {reserve} siphons to CRED.", _micro);
+                    $"Potions + necklace. Pays {MajestyEconomy.MarketDailyTax} CRED/day into its till.", _micro);
             }
             else if (st.Category == BuildingCategory.Blacksmith)
             {
@@ -1620,7 +1601,7 @@ namespace SolarMajesty
                 Fill(hint, PanelBg);
                 Outline(hint, Hairline);
                 GUI.Label(new Rect(hint.x + 10f, hint.y, hint.width - 16f, hint.height),
-                    "Dock airlocks onto Commons · HAB houses colonists · workshop fabricates robots", _micro);
+                    "Build anywhere on open ground · houses pay tax · a workshop fabricates a robot", _micro);
                 return;
             }
 
@@ -2429,10 +2410,10 @@ namespace SolarMajesty
             {
                 string[] beats =
                 {
-                    "1/6  COMMONS — Colony Commons is already on the claim.",
-                    "2/6  Airlock — snap an Airlock Junction onto a Commons face socket.",
-                    "3/6  HAB — dock housing onto that airlock. Humans live indoors only.",
-                    "4/6  Workshop — dock Scout / Engineer / Defense. A robot fabricates when it finishes.",
+                    "1/6  COMMONS — Colony Commons is already on the claim. It holds the treasury.",
+                    "2/6  Tax collectors walk out of the Commons and carry each building's till home.",
+                    "3/6  HAB — build a house anywhere nearby. Houses pay daily tax into their till.",
+                    "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
                     "5/6  G, Build, leave it at 700. Watch the Engineer.",
                     "6/6  They named a price. Select the flag and press + until the chip reads tempted."
                 };

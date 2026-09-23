@@ -89,15 +89,6 @@ namespace SolarMajesty
         public SpecialistBrain Brain { get; private set; }
         public SimpleEconomy Economy { get; private set; }
 
-        public int MarketIceReserve =>
-            MarketMath.IceReserve(Settlement != null ? Settlement.Population : 0);
-
-        public bool MarketStallOpen => Economy != null && Economy.MarketOpen;
-
-        public string MarketStatusLine =>
-            Economy != null && !string.IsNullOrEmpty(Economy.LastMarketLine)
-                ? Economy.LastMarketLine
-                : "";
 
         // Runtime threat service (not in Systems/)
         public ThreatPressure Threat { get; private set; }
@@ -216,9 +207,6 @@ namespace SolarMajesty
                     ? m.SustainElapsed / m.SustainRequired : 0f,
                 LaunchReady = launch,
                 Metals = Resources != null ? Resources.Get(ResourceId.Metals) : 0,
-                Ice = Resources != null ? Resources.Get(ResourceId.WaterIce) : 0,
-                PowerGen = Economy != null ? Economy.PowerGen : 0,
-                PowerDraw = Economy != null ? Economy.PowerDraw : 0,
                 RobotCount = robots,
                 MeanHealth = meanHp,
                 MissionElapsed = m != null ? m.MissionElapsed : 0f,
@@ -303,9 +291,12 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>The colony is lost when the Commons (the treasury) falls after it stood.</summary>
         public bool ColonyExtinct =>
             !StillCaptureHold.Active &&
-            Settlement != null && Settlement.EverHadHab && Settlement.Population <= 0;
+            _commonsEverStood && Settlement != null && !Settlement.HasCommons;
+
+        private bool _commonsEverStood;
 
         /// <summary>
         /// Dens exist from world gen; campus raids and pests stay off for
@@ -521,10 +512,8 @@ namespace SolarMajesty
         private float _reviveReadyAt;
         private bool _revivePenaltyApplied;
         private bool _yardBillLogged;
-        private bool _marketPayoutLogged;
         private readonly GrokSession _grok = new GrokSession();
         private int _lastTithe;
-        private float _siphonBlockToastAt;
         private float _purseToastAt;
         private readonly List<TimedDisc> _surveys = new List<TimedDisc>(4);
         private readonly List<TimedDisc> _watches = new List<TimedDisc>(4);
@@ -608,11 +597,6 @@ namespace SolarMajesty
             if (StillCaptureHold.Active) return;
             if (Settlement != null && Settlement.CoreHabs > 0)
                 TryGrok(GrokBeat.FirstHab);
-            bool iceLow = Resources != null &&
-                          Resources.Get(ResourceId.WaterIce) < 8 &&
-                          Resources.Get(ResourceId.WaterIce) >= OverseerRules.IceDeathThreshold;
-            TryGrok(GrokBeat.TankVsWallet, iceLow);
-            TryGrok(GrokBeat.PowerShort, Economy != null && Economy.PowerShort);
             bool rosterTicking = _everHadRobot && RobotCount <= 0 &&
                                  _emptyRosterTimer > 0.05f && !EmptyRosterFailed;
             TryGrok(GrokBeat.EmptyRoster, rosterTicking);
@@ -681,7 +665,13 @@ namespace SolarMajesty
         {
             if (Input.GetKeyDown(KeyCode.V))
             {
-                OverlayMode = (MapOverlayMode)(((int)OverlayMode + 1) % 4);
+                // V cycles off → danger → coverage. The power overlay retired with the grid.
+                OverlayMode = OverlayMode switch
+                {
+                    MapOverlayMode.None => MapOverlayMode.Danger,
+                    MapOverlayMode.Danger => MapOverlayMode.Coverage,
+                    _ => MapOverlayMode.None
+                };
                 LogOverseer(OverlayMode == MapOverlayMode.None
                     ? "Overlays off."
                     : $"Overlay: {MapOverlay.TitleFor(OverlayMode)}.");
@@ -883,14 +873,12 @@ namespace SolarMajesty
             if (Economy != null)
             {
                 Economy.UpkeepApplied -= OnUpkeepTithe;
-                Economy.MarketExported -= OnMarketExported;
-                Economy.MarketBlocked -= OnMarketBlocked;
             }
             Achievements.Earned -= OnAchievementEarned;
             PlaytestTelemetry.RecordQuit(
                 Screen.ToString(),
                 celestialBody,
-                Settlement != null ? Settlement.Population : 0,
+                0,
                 Placer != null ? Placer.Pieces.Count : 0,
                 _playSeconds);
             SolarSystemTitleView.Instance?.Hide();
@@ -1361,7 +1349,7 @@ namespace SolarMajesty
                 HasCommons = Settlement != null && Settlement.HasCommons,
                 HasHab = Settlement != null && Settlement.CoreHabs > 0,
                 HasPad = hasPad,
-                HasPower = Settlement != null && Settlement.PowerPlants > 0,
+                HasPower = true,
                 HasPadPiece = padPiece,
                 HasPadOrder = padOrder,
                 HasWorkshopOrder = workshopOrder,
@@ -1576,7 +1564,7 @@ namespace SolarMajesty
                 int before = TutorialStep;
                 if (TutorialStep == 0 && Settlement != null && Settlement.HasCommons)
                     AdvanceTutorial();
-                else if (TutorialStep == 1 && HasAnyAirlock())
+                else if (TutorialStep == 1 && Village != null && Village.Collectors.Count > 0)
                     AdvanceTutorial();
                 else if (TutorialStep == 2 && Settlement != null && Settlement.CoreHabs > 0)
                     AdvanceTutorial();
@@ -1737,7 +1725,7 @@ namespace SolarMajesty
             if (!DemoSettings.SaveExists)
             {
                 // Capture stills and non-Earth drops keep the Commons-only claim.
-                // The Earth demo also drops an airlock and a HAB.
+                // The Earth demo also drops a HAB.
                 if (!DemoSettings.FirstHourDemo ||
                     celestialBody != CelestialBodyId.Earth ||
                     StillCaptureHold.Active)
@@ -1792,13 +1780,13 @@ namespace SolarMajesty
                              celestialBody == CelestialBodyId.Earth &&
                              !StillCaptureHold.Active;
             if (!demoShell)
-                Log.Push("Colony Commons is down — dock airlocks, then HAB and workshops.");
+                Log.Push("Colony Commons is down — build workshops, houses and shops anywhere nearby.");
             Debug.Log("[GameLoop] Auto-placed Colony Commons on the Campus A claim.");
         }
 
         /// <summary>
-        /// Earth demo start: Commons, one airlock, and a HAB are already finished.
-        /// The first thing the player docks is the Engineer workshop.
+        /// Earth demo start: the Commons and one tax house (HAB) are already finished, standing
+        /// apart on open ground. The first thing the player builds is the Engineer workshop.
         /// </summary>
         private void PlaceFirstHourShell()
         {
@@ -1807,43 +1795,42 @@ namespace SolarMajesty
             if (StillCaptureHold.Active || spawnShowcaseColony) return;
 
             PlaceDropCommons();
-            if (HasAnyAirlock() && Settlement != null && Settlement.CoreHabs > 0)
+            if (Settlement != null && Settlement.CoreHabs > 0)
                 return;
             if (!TryCommonsPiece(out var commons)) return;
 
-            var airlockData = DataNamed(BuildingCategory.Utility, "Airlock");
             var habData = DataForCategory(BuildingCategory.Habitat);
-            if (airlockData == null || habData == null) return;
+            if (habData == null) return;
 
             int habW = Mathf.Max(1, habData.footprintWidth);
             int habH = Mathf.Max(1, habData.footprintHeight);
-            for (int f = 0; f < 4; f++)
+            const int gap = 3;
+            // East, west, north, south of the Commons, with a few cells of dirt between them.
+            var tries = new[]
             {
-                var face = (BuildingPlacer.Cardinal)f;
-                BuildingPlacer.CardinalExpansionOrigins(
-                    commons, face, habW, habH, out Vector2Int airlockCell, out Vector2Int habCell);
-                if (!RectInBounds(airlockCell, BuildingPlacer.AirlockSize, BuildingPlacer.AirlockSize))
-                    continue;
+                new Vector2Int(commons.Origin.x + commons.Width + gap, commons.Origin.y + (commons.Height - habH) / 2),
+                new Vector2Int(commons.Origin.x - gap - habW, commons.Origin.y + (commons.Height - habH) / 2),
+                new Vector2Int(commons.Origin.x + (commons.Width - habW) / 2, commons.Origin.y + commons.Height + gap),
+                new Vector2Int(commons.Origin.x + (commons.Width - habW) / 2, commons.Origin.y - gap - habH)
+            };
+            foreach (var habCell in tries)
+            {
                 if (!RectInBounds(habCell, habW, habH)) continue;
-                if (!Placer.CanFitRect(airlockCell, BuildingPlacer.AirlockSize, BuildingPlacer.AirlockSize))
-                    continue;
                 if (!Placer.CanFitRect(habCell, habW, habH)) continue;
-                if (!PlaceComplete(airlockData, airlockCell, "Bld_Airlock_drop"))
-                    continue;
+                if (FootprintOverWater(habCell, habW, habH)) continue;
                 if (!PlaceComplete(habData, habCell, "Bld_HAB_drop"))
-                    break;
+                    continue;
 
-                CampusDressing.RefreshTubes(Placer, grid, transform);
                 HideDropClaimIfSettled();
                 if (_campusNav != null)
                     NotifyCampusExpanded();
                 SnapCampusCamera();
-                Log.Push("Commons, airlock, and HAB are down. Dock an Engineer workshop on the open face.");
-                Debug.Log("[GameLoop] First-hour shell placed (Commons, airlock, HAB).");
+                Log.Push("The Commons and a house are down. Build an Engineer workshop anywhere nearby.");
+                Debug.Log("[GameLoop] First-hour shell placed (Commons, HAB).");
                 return;
             }
 
-            Debug.LogWarning("[GameLoop] First-hour airlock and HAB could not fit on the claim.");
+            Debug.LogWarning("[GameLoop] First-hour HAB could not fit beside the Commons.");
         }
 
         private bool TryCommonsPiece(out BuildingPlacer.CampusPiece piece)
@@ -1856,6 +1843,22 @@ namespace SolarMajesty
                 if (pieces[i].Category != BuildingCategory.Commons) continue;
                 piece = pieces[i];
                 return true;
+            }
+            return false;
+        }
+
+        /// <summary>True when any corner or the centre of the footprint sits on a lake or river.</summary>
+        private bool FootprintOverWater(Vector2Int origin, int width, int height)
+        {
+            if (_world == null || grid == null) return false;
+            float cs = grid.CellSize;
+            Vector3 corner = grid.CellToWorld(origin) - new Vector3(cs * 0.5f, 0f, cs * 0.5f);
+            float w = width * cs, h = height * cs;
+            for (int ix = 0; ix <= 2; ix++)
+            for (int iz = 0; iz <= 2; iz++)
+            {
+                var p = corner + new Vector3(w * ix * 0.5f, 0f, h * iz * 0.5f);
+                if (_world.IsOverWater(p, 0.2f)) return true;
             }
             return false;
         }
@@ -1966,7 +1969,7 @@ namespace SolarMajesty
             _music?.Evaluate(this, Time.unscaledDeltaTime);
 
             Stats.Tick(Time.deltaTime);
-            if (Settlement != null) Stats.NotePopulation(Settlement.Population);
+            if (Settlement != null && Settlement.HasCommons) _commonsEverStood = true;
             if (Placer != null) Stats.NoteModules(Placer.Pieces.Count);
 
             // Time.deltaTime is already scaled by SimSpeed, so a fixed-step loop gives the pure
@@ -1982,16 +1985,6 @@ namespace SolarMajesty
             TickAutosave();
             TickJunkYard(Time.deltaTime);
             TickGrok();
-            if (!StillCaptureHold.Active &&
-                Settlement != null && Settlement.ConsumeLifeSupportFail())
-            {
-                RaiseAlert("life_support", "Life support failing — colonists dying.", AlertSeverity.Critical);
-                if (Settlement.LifeSupportToastPending)
-                {
-                    Settlement.ClearLifeSupportToast();
-                    TryGrok(GrokBeat.IceCritical, true);
-                }
-            }
             if (_glanceCooldown > 0f)
                 _glanceCooldown -= Time.deltaTime;
 
@@ -2016,7 +2009,6 @@ namespace SolarMajesty
         {
             if (Settlement != null)
             {
-                Settlement.ProductionScale = Economy != null && Economy.PowerShort ? 0.45f : 1f;
                 Settlement.Tick(dt);
             }
             Village?.Tick(dt);
@@ -2040,7 +2032,6 @@ namespace SolarMajesty
                 }
                 if (Economy != null)
                 {
-                    Economy.MarketPopulation = Settlement != null ? Settlement.Population : 0;
                     RefreshCaravanValue();
                     Economy.Tick(_constructionTick, living);
                 }
@@ -2314,20 +2305,12 @@ namespace SolarMajesty
                     if (!hasCommons)
                         return false;
 
-                    // Airlocks: only on module face midlines (symmetry-axis ends).
-                    if (BuildingPlacer.IsAirlock(data.category))
-                        return Placer.IsValidAirlockDock(cell);
-
                     if (!IsBuildingUnlocked(data.category))
                         return false;
 
-                    // Campus B: pad / extract / power / defense without tubes.
-                    if (BuildingPlacer.IsForwardOutpost(data.category) &&
-                        Placer.OverlapsOutpostClaim(cell, data.footprintWidth, data.footprintHeight))
-                        return true;
-
-                    // Every other module must Lego-dock onto an airlock end.
-                    return Placer.IsValidModuleDock(cell, data.footprintWidth, data.footprintHeight);
+                    // Free placement, Majesty style: anywhere on open ground once the Commons
+                    // stands. No sockets, no airlocks between buildings — just keep out of water.
+                    return !FootprintOverWater(cell, data.footprintWidth, data.footprintHeight);
                 };
             }
 
@@ -2339,7 +2322,7 @@ namespace SolarMajesty
             Economy.ConfigureResupply(resupply, fee);
             Settlement = new Settlement(Resources);
             if (_body != null)
-                Settlement.SetBodyYield(_body.FarmYieldScale, _body.MineYieldScale);
+                Settlement.SetBodyYield(_body.MineYieldScale);
             // Rebind after Settlement exists (constructor order).
             Placer.HasCommons = () =>
                 (Settlement != null && Settlement.HasCommons) || Placer.HasCommonsModule;
@@ -2347,8 +2330,6 @@ namespace SolarMajesty
             Research.TechUnlocked += OnTechUnlocked;
             GuildBenefits = new GuildBenefitDirector();
             Economy.UpkeepApplied += OnUpkeepTithe;
-            Economy.MarketExported += OnMarketExported;
-            Economy.MarketBlocked += OnMarketBlocked;
             // Majesty gold loop: trade and mine gold sit in tills until a tax collector walks it home.
             Economy.TillSink = PayTradeGold;
             Settlement.RouteCampGoldToTills = true;
@@ -2360,10 +2341,11 @@ namespace SolarMajesty
         {
             var body = _body ?? CelestialBodyCatalog.Get(celestialBody);
             float scale = Mathf.Clamp(ReplayRules.StartStockpileScale, 0.35f, 1f);
-            Resources.Set(ResourceId.Regolith, Mathf.Max(0, Mathf.RoundToInt(body.StartRegolith * scale)));
-            Resources.Set(ResourceId.WaterIce, Mathf.Max(0, Mathf.RoundToInt(body.StartWaterIce * scale)));
+            // CRED is the only currency; the retired ICE / REG / PWR stocks stay at zero.
+            Resources.Set(ResourceId.Regolith, 0);
+            Resources.Set(ResourceId.WaterIce, 0);
             Resources.Set(ResourceId.Metals, Mathf.Max(0, Mathf.RoundToInt(body.StartMetals * scale)));
-            Resources.Set(ResourceId.Power, Mathf.Max(0, Mathf.RoundToInt(body.StartPower * scale)));
+            Resources.Set(ResourceId.Power, 0);
         }
 
         private void OnTechUnlocked(TechId id)
@@ -2465,9 +2447,7 @@ namespace SolarMajesty
             _tech = TechEffects.From(Research, loom, spire);
             if (Settlement != null)
             {
-                Settlement.BonusBeds = _tech.ExtraBeds;
-                Settlement.GrowInterval = 18f * Mathf.Max(0.4f, _tech.GrowIntervalScale);
-                Settlement.SetTechYieldBonus(_tech.FarmYieldBonus, _tech.MineYieldBonus);
+                Settlement.SetTechYieldBonus(_tech.MineYieldBonus);
             }
 
             if (Economy != null)
@@ -2622,8 +2602,8 @@ namespace SolarMajesty
             }
 
             starterBuildings = EnsureCommonsFirst(starterBuildings);
-            NormalizeCatalogNames(starterBuildings);
             starterBuildings = AppendEconomyBuildings(starterBuildings);
+            NormalizeCatalogNames(starterBuildings);
             ForceCardinalFootprints(starterBuildings);
             StripShopCostsToCredits(starterBuildings);
             MajestyEconomy.ApplyBuildingPrices(starterBuildings);
@@ -2691,7 +2671,6 @@ namespace SolarMajesty
                     case BuildingCategory.Defense:
                         b.displayName = "Defense Battery";
                         b.description = "auto-fires 18 m";
-                        b.powerDraw = 4;
                         break;
                     case BuildingCategory.Mining:
                         b.displayName = "OPS Drop-off";
@@ -2699,6 +2678,19 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Mine:
                         b.displayName = "Ore Mine";
+                        b.description = "digs CRED";
+                        break;
+                    case BuildingCategory.Habitat:
+                        b.description = $"tax {MajestyEconomy.HouseDailyFlat}/day";
+                        break;
+                    case BuildingCategory.Farm:
+                        b.description = $"tax {MajestyEconomy.FarmDailyTax}/day";
+                        break;
+                    case BuildingCategory.LandingPad:
+                        b.description = "trade ships";
+                        break;
+                    case BuildingCategory.Laboratory:
+                        b.description = "research";
                         break;
                     case BuildingCategory.Power:
                         b.displayName = "Power Node";
@@ -2721,11 +2713,11 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Market:
                         b.displayName = "Market Stall";
-                        b.description = "Potions, necklace, and surplus ICE/REG siphon to CRED.";
+                        b.description = $"tax {MajestyEconomy.MarketDailyTax}/day";
                         break;
                     case BuildingCategory.Blacksmith:
                         b.displayName = "Blacksmith";
-                        b.description = "Guild arms and armor. Heroes buy with CRED.";
+                        b.description = "hero gear";
                         break;
                     case BuildingCategory.FobotYard:
                         b.displayName = "Fobot Yard";
@@ -2733,7 +2725,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Watchtower:
                         b.displayName = "Watchtower";
-                        b.description = "Guard post and levy chest. Arm lasers for CRED.";
+                        b.description = "+1 tax collector";
                         break;
                     case BuildingCategory.AidStation:
                         b.displayName = "Aid Station";
@@ -3475,19 +3467,7 @@ namespace SolarMajesty
         public void PrepareStillCaptureWorld()
         {
             StillCaptureHold.Arm();
-            if (Resources != null &&
-                Resources.Get(ResourceId.WaterIce) < OverseerRules.IceDeathThreshold)
-            {
-                Resources.Set(ResourceId.WaterIce, OverseerRules.IceDeathThreshold);
-            }
 
-            if (Settlement != null)
-            {
-                if (Settlement.Housing > 0 && Settlement.Population <= 0)
-                    Settlement.SeedStarterCrew();
-                Settlement.ClearLifeSupportToast();
-                Settlement.ConsumeLifeSupportFail();
-            }
 
             EmptyRosterFailed = false;
             _emptyRosterTimer = 0f;
@@ -3517,85 +3497,11 @@ namespace SolarMajesty
                 _ecologyCooldown = OverseerRules.FaunaExpandDelay;
         }
 
+        /// <summary>Ships only land where there is a pad. There is no power grid.</summary>
         private void RefreshPowerBudget()
         {
             if (Economy == null) return;
-
-            int gen = 0;
-            int draw = 0;
-            var structures = Village != null ? Village.Structures : null;
-            if (structures != null)
-            {
-                for (int i = 0; i < structures.Count; i++)
-                {
-                    var st = structures[i];
-                    if (st == null || !st.IsAlive) continue;
-                    var data = st.SourceData;
-                    if (st.Category == BuildingCategory.Power)
-                    {
-                        int raw = data != null && data.powerGen > 0 ? data.powerGen : 6;
-                        int latched = CountPowerSiphons(st);
-                        if (latched <= 0)
-                        {
-                            gen += raw;
-                        }
-                        else
-                        {
-                            float stolen = Mathf.Min(
-                                OverseerRules.PowerSiphonStackCap,
-                                latched * OverseerRules.PowerSiphonPerLatch);
-                            gen += Mathf.Max(1, Mathf.RoundToInt(raw * (1f - stolen)));
-                        }
-                        continue;
-                    }
-                    if (st.Category == BuildingCategory.Utility) continue;
-                    int add = data != null && data.powerDraw > 0 ? data.powerDraw : 1;
-                    if ((st.Category == BuildingCategory.Defense ||
-                         (st.IsWatchtower && st.LaserArmed)) && add < 4)
-                        add += OverseerRules.BatteryExtraPwr;
-                    draw += add;
-                }
-            }
-
-            int robots = 0;
-            for (int i = 0; i < _agents.Count; i++)
-            {
-                if (_agents[i] != null) robots++;
-            }
-            draw += robots;
-
-            if (Settlement != null && Settlement.HasOutpost)
-            {
-                int extra = _body != null ? Mathf.Max(0, _body.OutpostPowerDraw) : 2;
-                draw += extra;
-            }
-
-            float pwrScale = _body != null ? Mathf.Max(0.25f, _body.PowerDrawScale) : 1f;
-            pwrScale *= Mathf.Max(0.4f, _tech.PowerDrawScale);
-            Economy.PowerGen = gen;
-            Economy.PowerDraw = Mathf.Max(0, Mathf.RoundToInt(draw * pwrScale));
             Economy.HasDock = Settlement != null && Settlement.HasPad;
-            Economy.MarketPopulation = Settlement != null ? Settlement.Population : 0;
-        }
-
-        private int CountPowerSiphons(ColonyStructure node)
-        {
-            if (node == null || !node.IsAlive) return 0;
-            const float latchRange = 3.2f;
-            float rSq = latchRange * latchRange;
-            Vector3 at = node.WorldPosition;
-            int n = 0;
-            for (int i = 0; i < _stalkers.Count; i++)
-            {
-                var s = _stalkers[i];
-                if (s == null || !s.IsRaiding) continue;
-                if (s.Kind != FaunaKind.Leech && s.Kind != FaunaKind.Wisp) continue;
-                Vector3 p = s.transform.position;
-                float dx = p.x - at.x;
-                float dz = p.z - at.z;
-                if (dx * dx + dz * dz <= rSq) n++;
-            }
-            return n;
         }
 
         private void TickCampusEcology(float dt)
@@ -4258,13 +4164,12 @@ namespace SolarMajesty
             int ice = Mathf.Max(0, Mathf.RoundToInt(_body.FreightIce * Mathf.Max(0.25f, _tech.FreightScale)));
             if (met <= 0 && ice <= 0) return "";
 
-            bool paid = Resources.Get(ResourceId.Metals) >= met &&
-                        Resources.Get(ResourceId.WaterIce) >= ice;
+            _ = ice;
+            bool paid = Resources.Get(ResourceId.Metals) >= met;
             if (paid)
             {
                 Resources.TrySpend(ResourceId.Metals, met);
-                Resources.TrySpend(ResourceId.WaterIce, ice);
-                return $"Freight paid: −{met} CRED −{ice} ICE.";
+                return $"Freight paid: −{met} CRED.";
             }
 
             Resources.ApplyLoss(0.12f);
@@ -4920,8 +4825,8 @@ namespace SolarMajesty
                 case FlagType.EstablishOutpost:
                     if (Settlement != null && Settlement.HasOutpost)
                     {
-                        Resources?.Add(ResourceId.Regolith, 8);
-                        LogOverseer("Outpost already claimed — survey dumps +8 REG.");
+                        Resources?.Add(ResourceId.Metals, 80);
+                        LogOverseer("Outpost already claimed — the survey sells for +80 CRED.");
                         return;
                     }
                     float dx = at.x - ColonyLayout.CampusBOrigin.x;
@@ -4975,8 +4880,7 @@ namespace SolarMajesty
             if (Placer != null)
             {
                 var slots = CaptureCampusSlots();
-                int pop = Settlement != null ? Settlement.Population : 0;
-                DemoSettings.WriteCampus(celestialBody, CampusSnapshot.Encode(pop, slots));
+                DemoSettings.WriteCampus(celestialBody, CampusSnapshot.Encode(0, slots));
             }
 
             var snapshot = CaptureSave("autosave");
@@ -5028,10 +4932,7 @@ namespace SolarMajesty
 
             if (Settlement != null)
             {
-                save.settlement.population = Settlement.Population;
-                save.settlement.populationGoal = Settlement.PopulationGoal;
                 save.settlement.villageHabs = Settlement.VillageHabs;
-                save.settlement.bonusBeds = Settlement.BonusBeds;
                 save.settlement.hasOutpost = Settlement.HasOutpost;
                 save.settlement.everHadHab = Settlement.EverHadHab;
             }
@@ -5249,9 +5150,6 @@ namespace SolarMajesty
 
             if (Settlement != null)
             {
-                if (save.settlement.populationGoal > 0)
-                    Settlement.SetPopulationGoal(save.settlement.populationGoal);
-                Settlement.BonusBeds = save.settlement.bonusBeds;
                 if (save.settlement.hasOutpost)
                     Settlement.ClaimOutpost();
             }
@@ -5273,9 +5171,6 @@ namespace SolarMajesty
                 });
             RestoreCampus(savedCampus, save.settlement.population);
             RetryUnpaidCorpses();
-
-            if (Settlement != null)
-                Settlement.RestorePopulation(save.settlement.population);
 
             var restoredFlags = RestoreFlags(save.flags);
             var restoredAgents = RestoreAgents(save.agents, restoredFlags, save.rosterBlob != null);
@@ -5726,9 +5621,6 @@ namespace SolarMajesty
                 if (RestoreCampusSlot(slots[i]))
                     restored++;
             }
-
-            if (pop > 0 && Settlement != null)
-                Settlement.RestorePopulation(pop);
 
             if (restored <= 0) return;
 
@@ -6317,56 +6209,13 @@ namespace SolarMajesty
         private void OnUpkeepTithe()
         {
             _lastTithe = 0;
-            TryMarketSiphon();
-        }
-
-        private void TryMarketSiphon()
-        {
-            if (DemoSettings.FirstHourDemo) return;
-            if (!HasAliveCategory(BuildingCategory.Market) || Resources == null || Settlement == null)
-                return;
-            if (!MarketSiphon.TrySiphon(
-                    Resources, Settlement.Population, false, out int credits, out int ice, out int reg))
-            {
-                if (Time.time >= _siphonBlockToastAt)
-                {
-                    _siphonBlockToastAt = Time.time + 90f;
-                    LogOverseer(CompactGrok.SiphonBlocked(MarketSiphon.IceReserve(Settlement.Population)));
-                }
-                return;
-            }
-            if (!PayTradeGold(credits))
-                Resources.Add(ResourceId.Metals, credits);
-            LogOverseer(CompactGrok.SiphonPaid(credits, ice, reg));
         }
 
         private void RefreshSustainRates()
         {
             if (Settlement == null) return;
-            float ice = Settlement.Farms * 3f * Settlement.FarmYieldScale * Settlement.ProductionScale /
-                        Mathf.Max(0.1f, Settlement.ProductionInterval) * 60f;
             // Majesty: income is what the tax collectors actually carry into the treasury.
-            float met = TreasuryIncomePerMin;
-            Settlement.SetIncomeRates(met, ice);
-        }
-
-        private void OnMarketExported()
-        {
-            if (Economy == null) return;
-            if (!_marketPayoutLogged)
-            {
-                _marketPayoutLogged = true;
-                LogOverseer(MarketMath.GrokPayout, 6.2f);
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(Economy.LastMarketLine))
-                LogOverseer(Economy.LastMarketLine);
-        }
-
-        private void OnMarketBlocked()
-        {
-            LogOverseer(MarketMath.GrokBlocked, 6.2f);
+            Settlement.SetIncomeRate(TreasuryIncomePerMin);
         }
 
         private void TickCourierPad()

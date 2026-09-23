@@ -744,34 +744,21 @@ namespace SolarMajesty
                    Time.time - _lastCombatTime <= OverseerRules.RaidAbortDamageWindow;
         }
 
-        private void StealFromCamp()
-        {
-            if (_loop?.Resources == null) return;
-            var camp = _loop.Village?.NearestExtractor(transform.position, 4f);
-            if (camp == null) return;
-            if (camp.Category == BuildingCategory.Farm)
-                _loop.Resources.SpendUpTo(ResourceId.WaterIce, 1);
-            else if (camp.Category == BuildingCategory.Mine)
-            {
-                // Gold waits in the Mine's till now — pests nibble that first.
-                if (camp.StealLevy(OverseerRules.JunkBotStealMet) <= 0)
-                    _loop.Resources.SpendUpTo(ResourceId.Metals, OverseerRules.JunkBotStealMet);
-            }
-            else
-                _loop.Resources.SpendUpTo(ResourceId.Regolith, 1);
-        }
+        private void StealFromCamp() => StealFromTill(4f);
 
-        private void DrainPower()
-        {
-            var node = _loop?.Village?.NearestPower(transform.position, 4f);
-            if (node == null || !node.IsAlive) return;
-            node.TrySiphonStockpile(_loop.Resources);
-        }
+        /// <summary>Watt leeches used to drain the grid; with no grid they nibble a till instead.</summary>
+        private void DrainPower() => StealFromTill(4f);
 
-        private void StealLifeSupport()
+        private void StealLifeSupport() => StealFromTill(6f);
+
+        /// <summary>Gold waits in building tills for a collector — pests nibble it there.</summary>
+        private void StealFromTill(float radius)
         {
-            _loop?.Resources?.SpendUpTo(ResourceId.WaterIce, 1);
-            _loop?.NoteIceSiphon();
+            var till = _loop?.Village?.NearestTill(transform.position, radius);
+            if (till == null) return;
+            int stole = till.StealLevy(OverseerRules.JunkBotStealMet);
+            if (stole > 0)
+                _loop.NotifyLevyStolen(stole, till.DisplayName);
         }
 
         private void TickWander(float dt)
