@@ -241,7 +241,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.HorizonPulse,
                     "Horizon Pulse",
-                    "Activate at Horizon Lodge: scouts run hot and mark dens. Costs CRED.",
+                    "Activate at Horizon Lodge: scouts run hot and mark dens. Costs EU.",
                     36f,
                     new[] { TechId.GuildCharter },
                     Wallet.Credits(250)),
@@ -249,7 +249,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.AnvilOvertime,
                     "Anvil Overtime",
-                    "Activate at Anvil Compact: engineers weld faster. Costs CRED.",
+                    "Activate at Anvil Compact: engineers weld faster. Costs EU.",
                     36f,
                     new[] { TechId.GuildCharter },
                     Wallet.Credits(250)),
@@ -257,7 +257,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.AegisWatchfire,
                     "Aegis Watchfire",
-                    "Activate at Aegis Lodge: robots shrug bites, batteries hit harder. Costs CRED.",
+                    "Activate at Aegis Lodge: robots shrug bites, batteries hit harder. Costs EU.",
                     40f,
                     new[] { TechId.GuildCharter },
                     Wallet.Credits(500)),
@@ -265,7 +265,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.TriageFieldAid,
                     "Triage Field Aid",
-                    "Activate at Triage Compact: everyone on the dirt patches HP. Costs CRED.",
+                    "Activate at Triage Compact: everyone on the dirt patches HP. Costs EU.",
                     36f,
                     new[] { TechId.GuildCharter },
                     Wallet.Credits(250))

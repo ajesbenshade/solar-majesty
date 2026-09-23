@@ -624,7 +624,7 @@ namespace SolarMajesty
                 case BuildingCategory.Commons: return "Colony Commons";
                 case BuildingCategory.Habitat: return "Habitat";
                 case BuildingCategory.Farm: return "Greenhouse Farm";
-                case BuildingCategory.Mine: return "Ore Mine";
+                case BuildingCategory.Mine: return "Nuclear Mine";
                 case BuildingCategory.RegolithCamp: return "Regolith Camp";
                 case BuildingCategory.ScoutWorkshop: return "Scout Workshop";
                 case BuildingCategory.EngineerWorkshop: return "Engineer Workshop";
@@ -645,7 +645,7 @@ namespace SolarMajesty
                 case BuildingCategory.ClimateLoom: return "Climate Loom";
                 case BuildingCategory.AegisSpire: return "Aegis Spire";
                 case BuildingCategory.DeepArchive: return "Deep Archive";
-                case BuildingCategory.Power: return "Power Node";
+                case BuildingCategory.Power: return "Solar Farm";
                 case BuildingCategory.Laboratory: return "Laboratory";
                 case BuildingCategory.Defense: return "Defense Battery";
                 case BuildingCategory.Mining: return "Ops Unit";

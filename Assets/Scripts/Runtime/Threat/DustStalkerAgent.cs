@@ -466,6 +466,8 @@ namespace SolarMajesty
             _raiding = false;
             if (_loop != null && _loop.InFaunaGrace)
                 return false;
+            if (TickAmbushCollector(dt))
+                return true;
             switch (Kind)
             {
                 case FaunaKind.Mite:
@@ -481,6 +483,47 @@ namespace SolarMajesty
                     return TickJunkHarass(dt);
                 default: return TickRaidVillage(dt);
             }
+        }
+
+        /// <summary>
+        /// Tax collectors are soft targets on the road between buildings. Any mob that sees one
+        /// travelling nearby goes after it; a collector resting at a chest is left alone.
+        /// </summary>
+        private bool TickAmbushCollector(float dt)
+        {
+            var director = _loop != null && _loop.Village != null ? _loop.Village.Collectors : null;
+            if (director == null) return false;
+            var list = director.Collectors;
+            Vector3 me = Flat(transform.position);
+            LevyCollector prey = null;
+            float best = MajestyEconomy.CollectorAmbushRange;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var c = list[i];
+                if (c == null || !c.IsTravelling) continue;
+                float d = Vector3.Distance(me, Flat(c.transform.position));
+                if (d < best)
+                {
+                    best = d;
+                    prey = c;
+                }
+            }
+            if (prey == null) return false;
+
+            _aggro = true;
+            _raiding = false;
+            _threat?.Report(_sourceId, aggroPressure);
+            Vector3 dest = prey.transform.position;
+            dest.y = transform.position.y;
+            if (best > biteRange)
+            {
+                transform.position = MoveFlatToward(dest, moveSpeed * 1.1f * dt);
+                return true;
+            }
+            prey.TakeHit(biteDamagePerSecond * dt);
+            if (_clips == null) _clips = GetComponentInChildren<UnitClipPlayer>();
+            if (_clips != null) _clips.NotifyStrike();
+            return true;
         }
 
         /// <summary>

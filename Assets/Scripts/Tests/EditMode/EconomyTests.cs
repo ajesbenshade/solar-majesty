@@ -108,16 +108,19 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void Mines_ProduceCredOnTheProductionTick_AndFarmsProduceNothing()
+        public void Buildings_PayIntoTills_NeverStraightIntoTheTreasury()
         {
             var s = Make(out ResourceManager res);
             s.RegisterPlaced(BuildingCategory.Farm);
             s.RegisterPlaced(BuildingCategory.Mine);
+            s.RegisterPlaced(BuildingCategory.Power);
 
-            s.Tick(s.ProductionInterval);
+            s.Tick(s.TaxInterval);
 
             Assert.AreEqual(0, res.Get(ResourceId.WaterIce), "farms pay daily tax; they grow no ICE");
-            Assert.AreEqual(40, res.Get(ResourceId.Metals), "one mine yields 40 CRED");
+            Assert.AreEqual(0, res.Get(ResourceId.Metals), "energy waits in tills for a tax collector");
+            Assert.AreEqual(1, s.SolarFarms);
+            Assert.AreEqual(1, s.TakePendingDays());
         }
 
         [Test]

@@ -55,8 +55,8 @@ namespace SolarMajesty.Tests
 
             string label = DemoSettings.ContinueButtonLabel();
             string detail = DemoSettings.ContinueDetail();
-            StringAssert.Contains("CRED", label);
-            StringAssert.Contains("CRED", detail);
+            StringAssert.Contains("EU", label);
+            StringAssert.Contains("EU", detail);
             Assert.IsFalse(label.Contains("MET"), label);
             Assert.IsFalse(detail.Contains("MET"), detail);
         }

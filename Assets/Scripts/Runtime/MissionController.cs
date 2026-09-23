@@ -388,7 +388,7 @@ namespace SolarMajesty
             if (SustainComplete && !_loggedSustain)
             {
                 _loggedSustain = true;
-                _loop.LogOverseer($"Treasury holding — {set.Treasury:N0}/{treasuryGoal:N0} CRED for {Mathf.RoundToInt(sustainHoldSeconds)}s.");
+                _loop.LogOverseer($"Treasury holding — {set.Treasury:N0}/{treasuryGoal:N0} EU for {Mathf.RoundToInt(sustainHoldSeconds)}s.");
             }
         }
 

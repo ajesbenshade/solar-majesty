@@ -220,7 +220,7 @@ namespace SolarMajesty
             SpawnMarker(handle, world);
             DemoAudio.PlayFlagPost();
             _loop?.NotifyFlagPosted(handle);
-            Debug.Log($"[Flags] Posted {data.flagType} bounty=${handle.CurrentBounty:F0} escrow={escrow} CRED at {world}");
+            Debug.Log($"[Flags] Posted {data.flagType} bounty=${handle.CurrentBounty:F0} escrow={escrow} EU at {world}");
             return handle;
         }
 
@@ -249,7 +249,7 @@ namespace SolarMajesty
             if (Mathf.Approximately(next, flag.CurrentBounty)) return true;
             if (!_loop.Economy.TryAdjustBountyEscrow(flag, next))
             {
-                _loop.LogOverseer("Not enough CRED to raise that bounty.");
+                _loop.LogOverseer("Not enough EU to raise that bounty.");
                 return true;
             }
             _flags.SetBounty(flag, next);

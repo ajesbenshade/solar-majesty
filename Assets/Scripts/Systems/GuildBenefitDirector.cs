@@ -90,13 +90,13 @@ namespace SolarMajesty
 
             if (resources == null || !resources.TrySpend(ResourceId.Metals, g.ActivateCost))
             {
-                line = $"{g.BenefitName} needs {g.ActivateCost} CRED.";
+                line = $"{g.BenefitName} needs {g.ActivateCost} EU.";
                 return false;
             }
 
             SetSlot(id, _remain, g.DurationSeconds);
             SetSlot(id, _cool, 0f);
-            line = $"{g.ShortName}: {g.BenefitName} — {g.ActivateCost} CRED.";
+            line = $"{g.ShortName}: {g.BenefitName} — {g.ActivateCost} EU.";
             return true;
         }
 
