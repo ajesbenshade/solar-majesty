@@ -85,16 +85,19 @@ namespace SolarMajesty
             }
 
             // Hotkeys 1–0 pick the build menu's rows in order, in every mode.
-            if (Input.GetKeyDown(KeyCode.Alpha1)) SelectVisibleSlot(0);
-            if (Input.GetKeyDown(KeyCode.Alpha2)) SelectVisibleSlot(1);
-            if (Input.GetKeyDown(KeyCode.Alpha3)) SelectVisibleSlot(2);
-            if (Input.GetKeyDown(KeyCode.Alpha4)) SelectVisibleSlot(3);
-            if (Input.GetKeyDown(KeyCode.Alpha5)) SelectVisibleSlot(4);
-            if (Input.GetKeyDown(KeyCode.Alpha6)) SelectVisibleSlot(5);
-            if (Input.GetKeyDown(KeyCode.Alpha7)) SelectVisibleSlot(6);
-            if (Input.GetKeyDown(KeyCode.Alpha8)) SelectVisibleSlot(7);
-            if (Input.GetKeyDown(KeyCode.Alpha9)) SelectVisibleSlot(8);
-            if (Input.GetKeyDown(KeyCode.Alpha0)) SelectVisibleSlot(9);
+            if (!InputBindings.TextEntryActive) // typing flag orders
+            {
+                if (Input.GetKeyDown(KeyCode.Alpha1)) SelectVisibleSlot(0);
+                if (Input.GetKeyDown(KeyCode.Alpha2)) SelectVisibleSlot(1);
+                if (Input.GetKeyDown(KeyCode.Alpha3)) SelectVisibleSlot(2);
+                if (Input.GetKeyDown(KeyCode.Alpha4)) SelectVisibleSlot(3);
+                if (Input.GetKeyDown(KeyCode.Alpha5)) SelectVisibleSlot(4);
+                if (Input.GetKeyDown(KeyCode.Alpha6)) SelectVisibleSlot(5);
+                if (Input.GetKeyDown(KeyCode.Alpha7)) SelectVisibleSlot(6);
+                if (Input.GetKeyDown(KeyCode.Alpha8)) SelectVisibleSlot(7);
+                if (Input.GetKeyDown(KeyCode.Alpha9)) SelectVisibleSlot(8);
+                if (Input.GetKeyDown(KeyCode.Alpha0)) SelectVisibleSlot(9);
+            }
 
             if (!enabledPlacement || Selected == null)
             {

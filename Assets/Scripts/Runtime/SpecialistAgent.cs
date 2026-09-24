@@ -64,6 +64,7 @@ namespace SolarMajesty
 
         private float _thinkTimer;
         private BrainDecision _lastDecision;
+        private LayaHeroDriver _laya;
         private FlagHandle _activeFlag;
         private bool _claimedActive;
         private Vector3 _idleTarget;
@@ -103,6 +104,8 @@ namespace SolarMajesty
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
         public string LastReason => _lastDecision.Reason ?? "none";
+        /// <summary>True when the current decision came from the local Laya model.</summary>
+        public bool LastDecisionFromLaya => _laya != null && _laya.LastFromLaya;
         public float LastScore => _lastDecision.Score;
         public float Fatigue => fatigue;
         public float HealthNormalized => healthNormalized;
@@ -125,6 +128,15 @@ namespace SolarMajesty
                 : (ShopCatalog.Get(equippedSuit)?.DisplayName ?? "suit");
         public string Status => _status;
         public string FlavorLine { get; private set; } = "Booting.";
+
+        /// <summary>Bumps on every decision change, so a late narration line can tell it is stale.</summary>
+        public int NarrationStamp { get; private set; }
+
+        /// <summary>A line from <see cref="HeroNarrator"/> replaces the template flavour line.</summary>
+        public void SetNarratedLine(string line)
+        {
+            if (!string.IsNullOrEmpty(line)) FlavorLine = line;
+        }
         public SpecialistAction CurrentAction => _lastDecision.Action;
         public FlagHandle ActiveFlag => _activeFlag;
         public float BodyDanger => bodyDanger;
@@ -315,6 +327,7 @@ namespace SolarMajesty
                 DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.78f, 0.22f));
                 _loop?.LogOverseer($"{data?.displayName} reached L{level}.");
                 Debug.Log($"[XP] {data?.displayName} level {level} ({reason}) xp={xp}");
+                HeroNarrator.Report(this, NarrationKind.LevelUp);
             }
         }
 
@@ -799,7 +812,17 @@ namespace SolarMajesty
             if (_thinkTimer > 0f) return;
             _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
 
-            BrainDecision decision = _brain.Evaluate(BuildContext(), _flags.Flags, bodyDanger);
+            // Optional local Laya model picks among the options the utility gates allow.
+            BrainDecision decision;
+            if (LayaBridge.Instance != null)
+            {
+                _laya ??= new LayaHeroDriver();
+                decision = _laya.Decide(_brain, BuildContext(), _flags.Flags, bodyDanger);
+            }
+            else
+            {
+                decision = _brain.Evaluate(BuildContext(), _flags.Flags, bodyDanger);
+            }
             if (decision.Action != SpecialistAction.Flee &&
                 _lastDecision.Action == SpecialistAction.Rest &&
                 KingdomLife.AtRest(transform.position, OutpostClaimed) &&
@@ -993,6 +1016,7 @@ namespace SolarMajesty
                 RepairDistance = repairDist,
                 RepairNeed = repairNeed,
                 CourageEffective = EffectiveCourage,
+                Level = Level,
                 HasLevyWalk = hasLevy,
                 LevyPosition = levyPos,
                 LevyCarrying = carryingLevy
@@ -1053,11 +1077,17 @@ namespace SolarMajesty
                     SetDestination(_idleTarget);
             }
 
+            if (changed)
+            {
+                NarrationStamp++;
+                HeroNarrator.Report(this, HeroNarrator.KindFor(decision));
+            }
+
             if (changed && logDecisions)
             {
                 Debug.Log(
                     $"[Specialist] {data.displayName} → {decision.Action} " +
-                    $"score={decision.Score:F2} reason={decision.Reason} " +
+                    $"score={decision.Score:F2} reason={decision.Reason}{(LastDecisionFromLaya ? " [laya]" : "")} " +
                     $"fatigue={fatigue:F2} hp={healthNormalized:F2}");
             }
         }

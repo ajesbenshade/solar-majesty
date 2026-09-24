@@ -61,3 +61,8 @@ Assets/_Recovery/
 
 # Dream Loop working files (concept retries, judge notes, local stills)
 .dream-loop/
+
+# Local AI launcher (Tools/local_ai)
+Tools/local_ai/models/
+Tools/local_ai/.venv/
+Tools/local_ai/*.log

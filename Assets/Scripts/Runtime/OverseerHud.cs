@@ -367,6 +367,7 @@ namespace SolarMajesty
             EnsureStyles();
             HandleDebugHopKeys();
             _hitRects.Clear();
+            _ordersFieldDrawn = false;
 
             float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
             _hudScale = s;
@@ -427,6 +428,22 @@ namespace SolarMajesty
             }
 
             GUI.matrix = prevMatrix;
+            SyncOrdersFocus();
+        }
+
+        /// <summary>
+        /// While the flag-orders box has focus, gameplay hotkeys stand down (typing "stay away"
+        /// must not pan the camera or open menus). Focus drops when the box is hidden.
+        /// </summary>
+        private void SyncOrdersFocus()
+        {
+            bool focused = GUI.GetNameOfFocusedControl() == OrdersControl;
+            if (focused && !_ordersFieldDrawn)
+            {
+                GUI.FocusControl(null);
+                focused = false;
+            }
+            InputBindings.TextEntryActive = focused;
         }
 
         private static string FormatRate(int rate)
@@ -840,7 +857,7 @@ namespace SolarMajesty
             }
 
             const float popupW = 300f;
-            const float popupH = 340f;
+            const float popupH = 398f;
             float left = DockLeft();
             var rect = new Rect(left, dockTop - 8f - popupH, popupW, popupH);
             _contentBottom = rect.y;
@@ -873,6 +890,47 @@ namespace SolarMajesty
                 canPay ? $"escrow {metCost} EU · LMB places · RMB flag refunds" : $"need {metCost} EU — raise stockpile",
                 _micro);
             _micro.normal.textColor = prevC;
+
+            y += 18f;
+            DrawOrdersField(fp, new Rect(c.x, y, c.width, 40f));
+        }
+
+        private const string OrdersControl = "sm_flag_orders";
+        private bool _ordersFieldDrawn;
+
+        /// <summary>
+        /// Optional written orders for the next flag ("stay away unless level 9+", "no scouts").
+        /// Parsed on the spot so the player sees what heroes will understand before posting.
+        /// </summary>
+        private void DrawOrdersField(FlagPlacementInput fp, Rect r)
+        {
+            _ordersFieldDrawn = true;
+            var field = new Rect(r.x + 52f, r.y, r.width - 52f, 20f);
+            GUI.Label(new Rect(r.x, r.y + 2f, 52f, 18f), "ORDERS", _micro);
+
+            var e = Event.current;
+            bool focused = GUI.GetNameOfFocusedControl() == OrdersControl;
+            if (focused && e.type == EventType.KeyDown &&
+                (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter || e.keyCode == KeyCode.Escape))
+            {
+                GUI.FocusControl(null);
+                e.Use();
+            }
+            else if (focused && e.type == EventType.MouseDown && !field.Contains(e.mousePosition))
+            {
+                GUI.FocusControl(null); // click-away returns the keyboard to the game
+            }
+
+            GUI.SetNextControlName(OrdersControl);
+            fp.PendingOrders = GUI.TextField(field, fp.PendingOrders ?? "", 120);
+
+            string read = fp.PendingOrdersSummary;
+            string line = string.IsNullOrWhiteSpace(fp.PendingOrders)
+                ? "optional · e.g. \"stay away unless level 9+\""
+                : !string.IsNullOrEmpty(read) ? "understood: " + read
+                : LayaBridge.Instance != null && LayaBridge.Instance.Online ? "not understood — local AI will try on post"
+                : "not understood — heroes will ignore it";
+            GUI.Label(new Rect(r.x, r.y + 22f, r.width, 14f), line, _micro);
         }
 
         private float FlagRow(FlagPlacementInput fp, Rect r, string label, FlagData data)
@@ -1130,8 +1188,9 @@ namespace SolarMajesty
                         : (string.IsNullOrEmpty(f.InterestLabel) ? "open" : f.InterestLabel);
                     Color col = f.Data != null ? f.Data.bannerColor : Gold;
                     Fill(new Rect(c.x, y + 3f, 8f, 8f), col);
+                    string orders = f.Orders != null && f.Orders.HasRules ? $"  ·  {f.Orders.Summary()}" : "";
                     GUI.Label(new Rect(c.x + 12f, y, c.width - 12f, 15f),
-                        $"{f.Data.displayName}  ${f.CurrentBounty:F0}  ·  {claim}", _micro);
+                        $"{f.Data.displayName}  ${f.CurrentBounty:F0}  ·  {claim}{orders}", _micro);
                     y += 15f;
                 }
             }
@@ -2238,7 +2297,7 @@ namespace SolarMajesty
         private void DrawSettings()
         {
             Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f, 0.78f));
-            float h = Mathf.Min(700f, Mathf.Max(460f, _sh - 24f));
+            float h = Mathf.Min(764f, Mathf.Max(460f, _sh - 24f));
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
             var c = Panel(rect, "Settings");
             float y = c.y;
@@ -2251,6 +2310,12 @@ namespace SolarMajesty
 
             if (Chip(new Rect(c.x, y, 200f, 26f), "INVERT CAMERA PAN", DemoSettings.InvertPan))
                 DemoSettings.InvertPan = !DemoSettings.InvertPan;
+            // Perspective camera: zoom out to see the horizon and the sky.
+            if (Chip(new Rect(c.x + 208f, y, c.width - 208f, 26f), "DIORAMA CAMERA", DemoSettings.DioramaCamera))
+            {
+                DemoSettings.DioramaCamera = !DemoSettings.DioramaCamera;
+                DemoSettings.SaveSettings();
+            }
             y += 32f;
 
             if (Chip(new Rect(c.x, y, 200f, 26f),
@@ -2258,6 +2323,11 @@ namespace SolarMajesty
             {
                 DemoSettings.Fullscreen = !DemoSettings.Fullscreen;
                 DemoSettings.ApplyDisplay();
+            }
+            if (Chip(new Rect(c.x + 208f, y, c.width - 208f, 26f), "DAY / NIGHT CYCLE", DemoSettings.DayCycle))
+            {
+                DemoSettings.DayCycle = !DemoSettings.DayCycle;
+                DemoSettings.SaveSettings();
             }
             y += 32f;
 
@@ -2283,6 +2353,27 @@ namespace SolarMajesty
             {
                 DemoSettings.FrameCap = caps[(capIndex + 1) % caps.Length];
                 DemoSettings.ApplyDisplay();
+            }
+            y += 32f;
+
+            float visHalf = (c.width - 8f) * 0.5f;
+            if (Chip(new Rect(c.x, y, visHalf, 26f), "TILT-SHIFT (DIORAMA)", DemoSettings.TiltShift))
+            {
+                DemoSettings.TiltShift = !DemoSettings.TiltShift;
+                DemoSettings.SaveSettings();
+            }
+            if (Chip(new Rect(c.x + visHalf + 8f, y, visHalf, 26f), "CLOUD SHADOWS", DemoSettings.CloudShadows))
+            {
+                DemoSettings.CloudShadows = !DemoSettings.CloudShadows;
+                DemoSettings.SaveSettings();
+                CloudShadows.Refresh();
+            }
+            y += 32f;
+
+            if (Chip(new Rect(c.x, y, c.width, 26f), "HERO VOICES  ·  LOCAL AI", DemoSettings.HeroVoices))
+            {
+                DemoSettings.HeroVoices = !DemoSettings.HeroVoices;
+                DemoSettings.SaveSettings();
             }
             y += 36f;
 

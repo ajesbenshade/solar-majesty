@@ -7,7 +7,11 @@ You never control units. You build infrastructure, post flags/bounties, and mana
 This repo is a **Unity 6 URP project** with a playable greybox demo scene.  
 See **[Docs/DEMO.md](Docs/DEMO.md)** for open → Play → 60-second demo script.  
 **Smoke test:** **[Docs/SMOKE_TEST.md](Docs/SMOKE_TEST.md)**  
-**Next developer pickup:** **[Docs/DEVELOPER_HANDOFF.md](Docs/DEVELOPER_HANDOFF.md)**
+**Next developer pickup:** **[Docs/DEVELOPER_HANDOFF.md](Docs/DEVELOPER_HANDOFF.md)**  
+**Optional local AI (Laya):** **[Docs/LAYA_LOCAL_AI.md](Docs/LAYA_LOCAL_AI.md)**  
+**Written flag orders:** **[Docs/FLAG_ORDERS.md](Docs/FLAG_ORDERS.md)**  
+**Golden hour, sky, diorama camera:** **[Docs/GOLDEN_HOUR_AND_SKY.md](Docs/GOLDEN_HOUR_AND_SKY.md)**  
+**Hero narration (local LLM):** **[Docs/HERO_NARRATION.md](Docs/HERO_NARRATION.md)** — one command: `Tools/local_ai/start_narrator.sh` (Windows: `start_narrator.ps1`)
 
 ## Namespace
 
@@ -34,6 +38,34 @@ See **[Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md)** for systems design, utility
 Vertical slice setup: **[Docs/VERTICAL_SLICE_PHASE1.md](Docs/VERTICAL_SLICE_PHASE1.md)**
 
 ---
+
+## Download and run locally
+
+**1. Get the code** (no Git LFS needed):
+
+```bash
+git clone https://github.com/ajesbenshade/solar-majesty.git
+cd solar-majesty
+```
+
+Or download the ZIP from GitHub (**Code → Download ZIP**) and unzip it.
+
+**2. Open in Unity:** install **Unity 6000.5.10f1** from Unity Hub, then **Hub → Add → this folder**. The first import takes a few minutes. Open `Assets/Scenes/LunarOutpost_Sandbox.unity` and press **Play**. If the scene is missing, run **Solar Majesty → Build Demo Scene**. Run **Solar Majesty → Render → Configure URP For Look Target** once, so the sky shaders ship in builds.
+
+**3. Optional local AI (hero voices):** in a terminal at the repo root:
+
+```bash
+Tools/local_ai/start_narrator.sh --no-game      # macOS / Linux
+```
+```powershell
+powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoGame   # Windows
+```
+
+Then in the game: **Settings → HERO VOICES · LOCAL AI**. The first run downloads a ~1.1 GB model. Details: [Docs/HERO_NARRATION.md](Docs/HERO_NARRATION.md).
+
+**4. Optional standalone build:** **Solar Majesty → Build → Windows / macOS / Linux** writes to `Builds/`. After that, `start_narrator.sh` / `.ps1` without `--no-game` / `-NoGame` starts the model *and* the built game with voices on.
+
+Other optional settings (Settings menu): **DIORAMA CAMERA** (sky and horizon when zoomed out), **DAY / NIGHT CYCLE**, **TILT-SHIFT**, **CLOUD SHADOWS**. Written flag orders go in the **ORDERS** box of the flag popup (G).
 
 ## How to open (Unity 6)
 

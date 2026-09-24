@@ -53,6 +53,7 @@ namespace SolarMajesty
                 {
                     var flag = openFlags[i];
                     if (flag == null || flag.Data == null) continue;
+                    if (!FlagOrdersRules.Permits(ctx, flag)) continue; // player's written orders
 
                     float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
                     if (consider > 0f && dist > consider) continue;
@@ -142,6 +143,88 @@ namespace SolarMajesty
         }
 
         /// <summary>
+        /// Every option the utility gates would allow right now, for an external chooser (the local
+        /// Laya model) to pick between. Always includes <see cref="Evaluate"/>'s own pick first.
+        /// Returns false when the choice is forced (panic flee / exhaustion) and must not be
+        /// overridden. Reuses the frozen scorers; does not change Evaluate.
+        /// </summary>
+        public bool CollectOptions(
+            in SpecialistContext ctx,
+            IReadOnlyList<FlagHandle> openFlags,
+            float bodyDanger,
+            List<BrainDecision> into,
+            int maxFlags = 3)
+        {
+            into.Clear();
+            var utility = Evaluate(ctx, openFlags, bodyDanger);
+            into.Add(utility);
+            if (ctx.Data == null) return false;
+            if (utility.Action == SpecialistAction.Flee || utility.Reason == "exhausted_or_hurt")
+                return false;
+
+            var data = ctx.Data;
+            Vector3 inn = ctx.SafetyPosition.sqrMagnitude > 0.01f ? ctx.SafetyPosition : ctx.Position;
+            float acceptance = 0.38f + data.baseGreed * 0.25f - ctx.GreedHunger * 0.22f;
+            acceptance = Mathf.Clamp(acceptance, 0.22f, 0.72f);
+
+            if (openFlags != null)
+            {
+                var taken = new List<BrainDecision>();
+                for (int i = 0; i < openFlags.Count; i++)
+                {
+                    var flag = openFlags[i];
+                    if (!WouldTakeFlag(ctx, flag, bodyDanger, out float score)) continue;
+                    taken.Add(BrainDecision.Pursue(flag, score, $"flag_{flag.Data.flagType}"));
+                }
+                taken.Sort((a, b) => b.Score.CompareTo(a.Score));
+                for (int i = 0; i < taken.Count && i < maxFlags; i++)
+                    AddUnique(into, taken[i]);
+            }
+
+            if (ctx.HasHunt && data.specialistClass != SpecialistClass.Medic &&
+                data.combatPreference >= 0.2f && ctx.HealthNormalized > 0.38f)
+            {
+                float hunt = ScoreHunt(ctx, bodyDanger);
+                if (hunt >= acceptance)
+                    AddUnique(into, BrainDecision.Hunt(ctx.HuntPosition, hunt, "hunt_fauna"));
+            }
+
+            if (data.specialistClass == SpecialistClass.EngineerBot && ctx.HasRepair)
+            {
+                float repair = ScoreRepair(ctx);
+                if (repair >= acceptance * 0.82f)
+                    AddUnique(into, BrainDecision.Repair(ctx.RepairPosition, repair, "repair_module"));
+            }
+
+            float rest = CalculateRestScore(ctx);
+            if (rest > 0.3f)
+                AddUnique(into, BrainDecision.Rest(rest, "mild_fatigue", inn));
+
+            if (utility.Action != SpecialistAction.Wander)
+            {
+                Vector3 dest = ctx.VocationPosition.sqrMagnitude > 0.01f ? ctx.VocationPosition : inn;
+                AddUnique(into, BrainDecision.Wander(dest, 0.28f, "wandering_frontier"));
+            }
+            return into.Count > 1;
+        }
+
+        static void AddUnique(List<BrainDecision> list, BrainDecision d)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                var o = list[i];
+                if (o.Action != d.Action) continue;
+                if (d.Action == SpecialistAction.PursueFlag)
+                {
+                    if (ReferenceEquals(o.TargetFlag, d.TargetFlag)) return;
+                    continue;
+                }
+                return; // one option per non-flag action
+            }
+            list.Add(d);
+        }
+
+        /// <summary>
         /// True if this hero would Pursue the flag right now. Uses the same score + greed gate as Evaluate.
         /// </summary>
         public bool WouldTakeFlag(in SpecialistContext ctx, FlagHandle flag, float bodyDanger, out float score)
@@ -155,6 +238,7 @@ namespace SolarMajesty
                             (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
             if (panicked && ctx.HealthNormalized < 0.62f) return false;
             if (CalculateRestScore(ctx) > 0.78f) return false;
+            if (!FlagOrdersRules.Permits(ctx, flag)) return false;
 
             float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
             float consider = 40f + ctx.Data.explorePreference * 35f;
@@ -182,6 +266,7 @@ namespace SolarMajesty
                             (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
             if (panicked && ctx.HealthNormalized < 0.62f) return FlagRefusalKind.Hurt;
             if (CalculateRestScore(ctx) > 0.78f) return FlagRefusalKind.Hurt;
+            if (!FlagOrdersRules.Permits(ctx, flag)) return FlagRefusalKind.Orders;
 
             float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
             float consider = 40f + ctx.Data.explorePreference * 35f;

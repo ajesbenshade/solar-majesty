@@ -663,6 +663,7 @@ namespace SolarMajesty
 
         private void HandleOverlayHotkeys()
         {
+            if (InputBindings.TextEntryActive) return; // typing flag orders
             if (Input.GetKeyDown(KeyCode.V))
             {
                 // V cycles off → danger → coverage. The power overlay retired with the grid.
@@ -1522,11 +1523,14 @@ namespace SolarMajesty
                     FlagRefusalKind.Hurt => "NOT NOW",
                     FlagRefusalKind.NotMyJob => "NO",
                     FlagRefusalKind.Hunting => "HUNTING",
+                    FlagRefusalKind.Orders => "ORDERS",
                     _ => null
                 };
                 if (!string.IsNullOrEmpty(chip))
                 {
                     agent.ShowRefusal(chip);
+                    if (kind == FlagRefusalKind.Orders)
+                        HeroNarrator.Report(agent, NarrationKind.Refused, flag);
                     PlaytestTelemetry.Record("flag_refused", new[]
                     {
                         ("class", agent.Data.specialistClass.ToString()),
@@ -1539,6 +1543,7 @@ namespace SolarMajesty
 
         private void HandleSessionHotkeys()
         {
+            if (InputBindings.TextEntryActive) return; // typing flag orders
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (Screen == DemoScreen.Settings)
@@ -2127,6 +2132,7 @@ namespace SolarMajesty
         /// <summary>Space holds the world; comma and period step the speed down and up.</summary>
         private void HandleSpeedHotkeys()
         {
+            if (InputBindings.TextEntryActive) return; // typing flag orders
             bool changed = false;
 
             if (Input.GetKeyDown(KeyCode.Space))
@@ -4303,6 +4309,7 @@ namespace SolarMajesty
 
         private void HandleBodyHopHotkeys()
         {
+            if (InputBindings.TextEntryActive) return; // typing flag orders
             if (Screen != DemoScreen.Playing && Screen != DemoScreen.Paused) return;
             if (!Input.GetKeyDown(KeyCode.F10)) return;
             bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
@@ -4331,6 +4338,7 @@ namespace SolarMajesty
 
         private void HandleToolHotkeys()
         {
+            if (InputBindings.TextEntryActive) return; // typing flag orders
             if (!IsPlaying) return;
 
             if (Input.GetKeyDown(KeyCode.Tab))
@@ -5077,7 +5085,8 @@ namespace SolarMajesty
                         escrowMetals = f.EscrowMetals,
                         postedWork = f.PostedWork,
                         workDone = Mathf.Max(0f, f.PostedWork - Flags.GetWorkRemaining(f)),
-                        claimCount = Mathf.Max(0, f.ClaimCount)
+                        claimCount = Mathf.Max(0, f.ClaimCount),
+                        orders = f.Orders
                     });
                 }
             }
@@ -5350,7 +5359,7 @@ namespace SolarMajesty
                 }
 
                 var handle = _flagInput.RestoreFlag(
-                    data, new Vector3(s.px, s.py, s.pz), s.bounty, s.escrowMetals);
+                    data, new Vector3(s.px, s.py, s.pz), s.bounty, s.escrowMetals, s.orders);
                 if (handle == null)
                 {
                     restored.Add(null);

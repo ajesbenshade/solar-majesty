@@ -26,16 +26,20 @@ namespace SolarMajesty
         {
             if (body == null) body = CelestialBodyCatalog.Earth();
             _appliedBody = body;
-            ConfigureSun(body);
-            EnsureFillLight(groundParent, body);
+            var sun = ConfigureSun(body);
+            var fill = EnsureFillLight(groundParent, body);
             ConfigureAmbientAndFog(body);
             ConfigureCamera(cam, body);
             SyncFog(cam, body);
-            EnsureVolume(groundParent, body);
+            var volume = EnsureVolume(groundParent, body);
+            // Light cycle scales the tuned values above; at mission start it matches them exactly.
+            SunCycle.Configure(body, sun, fill, cam, volume);
+            CloudShadows.Apply(sun, body);
+            DioramaFocus.Ensure();
             Debug.Log($"[Atmosphere] {body.DisplayName} sun={body.SunIntensity:0.00} fog={RenderSettings.fogStartDistance:0}/{RenderSettings.fogEndDistance:0}");
         }
 
-        private static void ConfigureSun(CelestialBodyProfile body)
+        private static Light ConfigureSun(CelestialBodyProfile body)
         {
             Light sun = null;
             var lights = Object.FindObjectsByType<Light>();
@@ -69,9 +73,10 @@ namespace SolarMajesty
             sun.shadowNearPlane = 0.2f;
             sun.transform.rotation = Quaternion.Euler(body.SunEuler);
             sun.name = "Directional Light";
+            return sun;
         }
 
-        private static void EnsureFillLight(Transform parent, CelestialBodyProfile body)
+        private static Light EnsureFillLight(Transform parent, CelestialBodyProfile body)
         {
             var existing = GameObject.Find("Fill Light");
             GameObject go = existing;
@@ -90,6 +95,7 @@ namespace SolarMajesty
             fill.intensity = body.Id == CelestialBodyId.Mars ? 0.50f
                 : body.Id == CelestialBodyId.Earth ? 0.34f : 0.28f;
             fill.shadows = LightShadows.None;
+            return fill;
         }
 
         private static void ConfigureAmbientAndFog(CelestialBodyProfile body)
@@ -149,11 +155,23 @@ namespace SolarMajesty
         /// </summary>
         public static void SyncFog(Camera cam) => SyncFog(cam, _appliedBody);
 
+        private static bool _dioramaFog;
+
         public static void SyncFog(Camera cam, CelestialBodyProfile body)
         {
             if (cam == null || body == null) return;
+            if (!cam.orthographic)
+            {
+                if (IsometricCameraController.DioramaActive) ApplyDioramaFog(cam);
+                return;
+            }
+            if (_dioramaFog)
+            {
+                // Back from the diorama camera: restore this body's tuned fog.
+                _dioramaFog = false;
+                ConfigureAmbientAndFog(body);
+            }
             if (body.Id != CelestialBodyId.Mars) return;
-            if (!cam.orthographic) return;
 
             ComputeMarsLinearFog(
                 body,
@@ -166,6 +184,23 @@ namespace SolarMajesty
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogStartDistance = fogStart;
             RenderSettings.fogEndDistance = fogEnd;
+        }
+
+        /// <summary>
+        /// Perspective view: linear fog that stays clear through the focus and hazes out to the
+        /// horizon, where the sky panorama's horizon band is the same fog colour.
+        /// </summary>
+        private static void ApplyDioramaFog(Camera cam)
+        {
+            var plane = new Plane(Vector3.up, Vector3.zero);
+            var ray = new Ray(cam.transform.position, cam.transform.forward);
+            float focus = plane.Raycast(ray, out float t) && t > 0f ? t : 120f;
+            DioramaRig.Fog(focus, out float start, out float end);
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.Linear;
+            RenderSettings.fogStartDistance = start;
+            RenderSettings.fogEndDistance = end;
+            _dioramaFog = true;
         }
 
         /// <summary>
@@ -272,7 +307,7 @@ namespace SolarMajesty
             additional.renderPostProcessing = true;
         }
 
-        private static void EnsureVolume(Transform parent, CelestialBodyProfile body)
+        private static Volume EnsureVolume(Transform parent, CelestialBodyProfile body)
         {
             var existing = GameObject.Find("DemoVolume");
             Volume volume;
@@ -292,6 +327,7 @@ namespace SolarMajesty
             }
 
             GradeVolume(volume, body);
+            return volume;
         }
 
         private static void GradeVolume(Volume volume, CelestialBodyProfile body)

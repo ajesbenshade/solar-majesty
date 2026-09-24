@@ -30,6 +30,28 @@ namespace SolarMajesty
 
         public float Bounty => bounty;
         public FlagData SelectedFlag => _selected;
+
+        /// <summary>
+        /// Written orders for the next flag posted (HUD text box). Parsed once at post time into
+        /// <see cref="FlagHandle.Orders"/>, then cleared so they do not leak onto later flags.
+        /// </summary>
+        public string PendingOrders
+        {
+            get => _pendingOrders;
+            set
+            {
+                value ??= "";
+                if (value == _pendingOrders) return;
+                _pendingOrders = value;
+                _pendingParsed = string.IsNullOrWhiteSpace(value) ? null : FlagOrdersParser.Parse(value);
+            }
+        }
+
+        /// <summary>Read-back of <see cref="PendingOrders"/> ("L9+ · no scouts"), empty if not understood.</summary>
+        public string PendingOrdersSummary => _pendingParsed != null ? _pendingParsed.Summary() : "";
+
+        private string _pendingOrders = "";
+        private FlagOrders _pendingParsed;
         public FlagData ExploreFlag => exploreFlag;
         public FlagData ClearThreatFlag => clearThreatFlag;
         public FlagData BuildFlag => buildFlag;
@@ -94,7 +116,8 @@ namespace SolarMajesty
         /// already reserved before the save was written, so charging again would double-bill.
         /// Remaining work is applied by <see cref="FlagManager.RestoreProgress"/> after this returns.
         /// </summary>
-        public FlagHandle RestoreFlag(FlagData data, Vector3 world, float bountyAmount, int escrow)
+        public FlagHandle RestoreFlag(
+            FlagData data, Vector3 world, float bountyAmount, int escrow, FlagOrders orders = null)
         {
             if (_flags == null || data == null) return null;
 
@@ -102,6 +125,8 @@ namespace SolarMajesty
             _selected = data;
             FlagHandle handle = _flags.Post(data, world, bountyAmount);
             handle.EscrowMetals = escrow;
+            if (orders != null && !string.IsNullOrWhiteSpace(orders.text))
+                handle.Orders = orders; // restored verbatim — never re-parsed or re-asked
             if (_loop != null)
                 handle.Risk = Mathf.Clamp01(data.baseRisk + _loop.LocalThreatAt(world) * 0.5f);
             SpawnMarker(handle, world);
@@ -151,26 +176,31 @@ namespace SolarMajesty
             if (_flags == null) return;
             if (_loop != null && !_loop.IsPlaying) return;
 
-            HandleBountyKeys();
+            if (!InputBindings.TextEntryActive)
+                HandleBountyKeys();
 
             if (!enabledPlacement) return;
 
-            if (Input.GetKeyDown(KeyCode.F1) && exploreFlag != null)
-                Select(exploreFlag);
-            if (Input.GetKeyDown(KeyCode.F2) && clearThreatFlag != null)
-                Select(clearThreatFlag);
-            if (Input.GetKeyDown(KeyCode.F3) && buildFlag != null)
-                Select(buildFlag);
-            if (Input.GetKeyDown(KeyCode.F4) && extractFlag != null)
-                Select(extractFlag);
-            if (Input.GetKeyDown(KeyCode.F5) && defendFlag != null)
-                Select(defendFlag);
-            if (Input.GetKeyDown(KeyCode.I) && researchSiteFlag != null)
-                Select(researchSiteFlag);
-            if (Input.GetKeyDown(KeyCode.O) && outpostFlag != null)
-                Select(outpostFlag);
-            if (Input.GetKeyDown(KeyCode.U) && terraformFlag != null)
-                Select(terraformFlag);
+            // Typing flag orders: no flag hotkeys; mouse placement below still works.
+            if (!InputBindings.TextEntryActive)
+            {
+                if (Input.GetKeyDown(KeyCode.F1) && exploreFlag != null)
+                    Select(exploreFlag);
+                if (Input.GetKeyDown(KeyCode.F2) && clearThreatFlag != null)
+                    Select(clearThreatFlag);
+                if (Input.GetKeyDown(KeyCode.F3) && buildFlag != null)
+                    Select(buildFlag);
+                if (Input.GetKeyDown(KeyCode.F4) && extractFlag != null)
+                    Select(extractFlag);
+                if (Input.GetKeyDown(KeyCode.F5) && defendFlag != null)
+                    Select(defendFlag);
+                if (Input.GetKeyDown(KeyCode.I) && researchSiteFlag != null)
+                    Select(researchSiteFlag);
+                if (Input.GetKeyDown(KeyCode.O) && outpostFlag != null)
+                    Select(outpostFlag);
+                if (Input.GetKeyDown(KeyCode.U) && terraformFlag != null)
+                    Select(terraformFlag);
+            }
 
             if (_selected == null) return;
             // Place on release so a held LMB does not also post a flag.
@@ -180,7 +210,7 @@ namespace SolarMajesty
                 if (_cam != null && _cam.SuppressWorldClick) return;
                 if (_loop != null && _loop.WorldClickUsedBySelection) return;
             }
-            else if (!Input.GetKeyDown(placeKey))
+            else if (InputBindings.TextEntryActive || !Input.GetKeyDown(placeKey))
             {
                 return;
             }
@@ -194,6 +224,19 @@ namespace SolarMajesty
             FlagHandle handle = TryPost(_selected, world, bounty);
             if (handle == null)
                 Debug.Log("[Flags] Cannot post — not enough metals in the stockpile.");
+        }
+
+        private void AttachPendingOrders(FlagHandle handle)
+        {
+            if (string.IsNullOrWhiteSpace(_pendingOrders)) return;
+            handle.Orders = _pendingParsed ?? FlagOrdersParser.Parse(_pendingOrders);
+            string read = handle.Orders.Summary();
+            _loop?.LogOverseer(string.IsNullOrEmpty(read)
+                ? $"Orders posted: \"{_pendingOrders}\" — not understood; heroes will ignore them."
+                : $"Orders posted: {read}");
+            if (!handle.Orders.HasRules)
+                LayaFlagOrders.TryUnderstand(handle, _loop); // optional local model, async
+            PendingOrders = "";
         }
 
         private FlagHandle TryPost(FlagData data, Vector3 world, float bountyAmount)
@@ -217,6 +260,7 @@ namespace SolarMajesty
                 if (lair != null && lair.IsScouted)
                     _flags.ScalePostedWork(handle, OverseerRules.ScoutedDenWorkMul);
             }
+            AttachPendingOrders(handle);
             SpawnMarker(handle, world);
             DemoAudio.PlayFlagPost();
             _loop?.NotifyFlagPosted(handle);

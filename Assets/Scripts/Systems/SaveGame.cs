@@ -162,6 +162,8 @@ namespace SolarMajesty
         public float postedWork;
         /// <summary>Soft-claim count at save time. Restored by rebinding specialists, not copied blindly.</summary>
         public int claimCount;
+        /// <summary>Player's written orders and their parsed rules. Empty text = none (older saves).</summary>
+        public FlagOrders orders;
     }
 
     [Serializable]

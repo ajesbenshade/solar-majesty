@@ -4,6 +4,9 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Orthographic isometric pan/zoom/orbit. Presentation only — never commands specialists.
+    /// Optional diorama mode (<see cref="DemoSettings.DioramaCamera"/>) renders the same rig through
+    /// a perspective lens: the orthographic pose stays the source of truth for pan, bounds, focus
+    /// and orbit, and the perspective camera is derived from it each frame (<see cref="DioramaRig"/>).
     /// Suggested camera rotation: (30, 45, 0).
     /// WASD pans. Q zooms out, E zooms in. Wheel zooms. MMB drag orbits yaw (and a little pitch).
     /// LMB is world click. RMB is flag-cancel. Mouse does not pan.
@@ -51,6 +54,26 @@ namespace SolarMajesty
         private float _yaw = 45f;
         private float _pitch = 30f;
 
+        // Diorama (perspective) mode. _smoothedPos/_targetPos stay the orthographic pose.
+        private bool _diorama;
+        private bool _hasApplied;
+        private Vector3 _lastAppliedPos;
+        private Quaternion _lastAppliedRot;
+        private float _focusDistance = 30f;
+
+        /// <summary>True while the perspective diorama camera is live.</summary>
+        public static bool DioramaActive { get; private set; }
+
+        /// <summary>Camera-to-ground distance at screen centre (depth-of-field focus).</summary>
+        public float FocusDistance => _focusDistance;
+
+        /// <summary>0 = closest zoom, 1 = farthest.</summary>
+        public float Zoom01 => Mathf.InverseLerp(minZoom, maxZoom, _targetZoom);
+
+        private Quaternion BaseRotation => Quaternion.Euler(_pitch, _yaw, 0f);
+        private Vector3 PosePosition => _diorama ? _smoothedPos : transform.position;
+        private Vector3 PoseForward => _diorama ? BaseRotation * Vector3.forward : transform.forward;
+
         /// <summary>True while middle-mouse orbit is held. LMB/RMB stay free.</summary>
         public bool IsDragging => _orbiting;
 
@@ -84,19 +107,20 @@ namespace SolarMajesty
         public void GlanceAt(Vector3 groundPoint, float? orthoSize = null)
         {
             if (_cam == null) _cam = GetComponent<Camera>();
+            AdoptExternalTransform();
 
-            Vector3 forward = transform.forward;
+            Vector3 forward = PoseForward;
             var plane = new Plane(Vector3.up, Vector3.zero);
-            var ray = new Ray(transform.position, forward);
+            var ray = new Ray(PosePosition, forward);
             if (plane.Raycast(ray, out float t) && t > 0f)
             {
                 Vector3 currentFocus = ray.GetPoint(t);
                 Vector3 delta = groundPoint - currentFocus;
-                _targetPos = transform.position + delta;
+                _targetPos = PosePosition + delta;
             }
             else
             {
-                float y = Mathf.Max(12f, transform.position.y);
+                float y = Mathf.Max(12f, PosePosition.y);
                 _targetPos = groundPoint + new Vector3(-22f, y, -22f);
             }
 
@@ -108,24 +132,25 @@ namespace SolarMajesty
         public void FocusOn(Vector3 groundPoint, float? orthoSize = null)
         {
             if (_cam == null) _cam = GetComponent<Camera>();
+            AdoptExternalTransform();
 
-            Vector3 forward = transform.forward;
+            Vector3 forward = PoseForward;
             var plane = new Plane(Vector3.up, Vector3.zero);
-            var ray = new Ray(transform.position, forward);
+            var ray = new Ray(PosePosition, forward);
             if (plane.Raycast(ray, out float t) && t > 0f)
             {
                 Vector3 currentFocus = ray.GetPoint(t);
                 Vector3 delta = groundPoint - currentFocus;
-                _targetPos = transform.position + delta;
+                _targetPos = PosePosition + delta;
             }
             else
             {
-                float y = Mathf.Max(12f, transform.position.y);
+                float y = Mathf.Max(12f, PosePosition.y);
                 _targetPos = groundPoint + new Vector3(-22f, y, -22f);
             }
 
-            transform.position = _targetPos;
             _smoothedPos = _targetPos;
+            if (!_diorama) transform.position = _targetPos;
 
             if (orthoSize.HasValue)
             {
@@ -133,19 +158,30 @@ namespace SolarMajesty
                 if (_cam != null)
                     _cam.orthographicSize = _targetZoom;
             }
-            KeepViewAboveGround();
-            DemoAtmosphere.SyncFog(_cam);
+            FinishPose();
         }
 
         /// <summary>Hard-set transform to the current pan/zoom targets (skip smoothing).</summary>
         public void SnapToTarget()
         {
             if (_cam == null) _cam = GetComponent<Camera>();
+            AdoptExternalTransform();
             _smoothedPos = _targetPos;
-            transform.position = _targetPos;
+            if (!_diorama) transform.position = _targetPos;
             if (_cam != null)
                 _cam.orthographicSize = _targetZoom;
-            KeepViewAboveGround();
+            FinishPose();
+        }
+
+        /// <summary>Ortho: keep the view above ground. Diorama: derive the perspective pose. Then fog.</summary>
+        private void FinishPose()
+        {
+            if (_diorama) ApplyDioramaPose();
+            else
+            {
+                KeepViewAboveGround();
+                _focusDistance = GroundDistance(transform.position, transform.forward);
+            }
             DemoAtmosphere.SyncFog(_cam);
         }
 
@@ -154,6 +190,20 @@ namespace SolarMajesty
             var loop = _loop != null ? _loop : FindAnyObjectByType<GameLoop>();
             _loop = loop;
             if (loop != null && !loop.AllowsCamera) return;
+
+            AdoptExternalTransform();
+            if (DemoSettings.DioramaCamera != _diorama) SetDiorama(DemoSettings.DioramaCamera, loop);
+            if (_diorama)
+            {
+                // Mission setup forces the classic ortho lens; keep the diorama lens while it is on.
+                if (_cam.orthographic)
+                {
+                    _cam.orthographic = false;
+                    _cam.fieldOfView = DioramaRig.FieldOfView;
+                    _cam.nearClipPlane = 0.5f;
+                }
+                if (loop != null) SkyPanorama.EnsureShowing(_cam, loop.BodyProfile);
+            }
 
             HandleMouseOrbit();
             HandleKeyboardPan();
@@ -228,17 +278,17 @@ namespace SolarMajesty
         {
             if (_cam == null) _cam = GetComponent<Camera>();
             var plane = new Plane(Vector3.up, Vector3.zero);
-            var ray = new Ray(transform.position, transform.forward);
+            var ray = new Ray(PosePosition, PoseForward);
             if (plane.Raycast(ray, out float t) && t > 0f)
                 return ray.GetPoint(t);
-            return new Vector3(transform.position.x, 0f, transform.position.z);
+            return new Vector3(PosePosition.x, 0f, PosePosition.z);
         }
 
         private void HandleMouseOrbit()
         {
             if (Input.GetMouseButtonDown(2))
             {
-                ReadAnglesFromTransform();
+                if (!_diorama) ReadAnglesFromTransform(); // diorama pitch is derived, not the orbit pitch
                 _orbiting = true;
                 _lastMouse = Input.mousePosition;
                 _orbitFocus = GroundLookAt();
@@ -265,18 +315,27 @@ namespace SolarMajesty
 
         private void ApplyOrbit()
         {
-            float dist = Vector3.Distance(transform.position, _orbitFocus);
+            float dist = Vector3.Distance(PosePosition, _orbitFocus);
             if (dist < 2f) dist = 28f;
             Quaternion rot = Quaternion.Euler(_pitch, _yaw, 0f);
-            transform.rotation = rot;
-            transform.position = _orbitFocus - rot * Vector3.forward * dist;
-            _targetPos = transform.position;
-            _smoothedPos = transform.position;
+            Vector3 pos = _orbitFocus - rot * Vector3.forward * dist;
+            _targetPos = pos;
+            _smoothedPos = pos;
+            if (_diorama)
+            {
+                ApplyDioramaPose();
+            }
+            else
+            {
+                transform.rotation = rot;
+                transform.position = pos;
+            }
             DemoAtmosphere.SyncFog(_cam);
         }
 
         private void HandleKeyboardPan()
         {
+            if (InputBindings.TextEntryActive) return; // typing flag orders
             float h = 0f;
             float v = 0f;
             if (Input.GetKey(KeyCode.D)) h += 1f;
@@ -309,8 +368,11 @@ namespace SolarMajesty
         private void HandleZoom()
         {
             float dir = 0f;
-            if (Input.GetKey(KeyCode.Q)) dir += 1f;
-            if (Input.GetKey(KeyCode.E)) dir -= 1f;
+            if (!InputBindings.TextEntryActive)
+            {
+                if (Input.GetKey(KeyCode.Q)) dir += 1f;
+                if (Input.GetKey(KeyCode.E)) dir -= 1f;
+            }
             if (Mathf.Abs(dir) > 0.01f)
             {
                 _targetZoom = Mathf.Clamp(
@@ -329,18 +391,98 @@ namespace SolarMajesty
         {
             _targetPos.x = Mathf.Clamp(_targetPos.x, panBoundsMin.x, panBoundsMax.x);
             _targetPos.z = Mathf.Clamp(_targetPos.z, panBoundsMin.y, panBoundsMax.y);
-            _targetPos.y = transform.position.y;
+            _targetPos.y = PosePosition.y;
 
             float tPan = 1f - Mathf.Exp(-panSmooth * Time.unscaledDeltaTime);
             float tZoom = 1f - Mathf.Exp(-zoomSmooth * Time.unscaledDeltaTime);
             if (!_orbiting)
             {
                 _smoothedPos = Vector3.Lerp(_smoothedPos, _targetPos, tPan);
-                transform.position = _smoothedPos + _shakeOffset;
+                if (!_diorama) transform.position = _smoothedPos + _shakeOffset;
             }
+            // Diorama keeps writing orthographicSize: it is the zoom value other systems read.
             _cam.orthographicSize = Mathf.Lerp(_cam.orthographicSize, _targetZoom, tZoom);
-            KeepViewAboveGround();
+            FinishPose();
+        }
+
+        private void SetDiorama(bool on, GameLoop loop)
+        {
+            if (_cam == null) _cam = GetComponent<Camera>();
+            var body = loop != null ? loop.BodyProfile : null;
+            _diorama = on;
+            DioramaActive = on;
+            if (on)
+            {
+                _smoothedPos = transform.position - _shakeOffset;
+                _targetPos = _smoothedPos;
+                _cam.orthographic = false;
+                _cam.fieldOfView = DioramaRig.FieldOfView;
+                _cam.nearClipPlane = 0.5f;
+                SkyPanorama.Install(_cam, body);
+                ApplyDioramaPose();
+            }
+            else
+            {
+                transform.SetPositionAndRotation(_smoothedPos, BaseRotation);
+                _cam.orthographic = true;
+                _cam.nearClipPlane = 0.3f;
+                SkyPanorama.Uninstall(_cam, body);
+                _hasApplied = false;
+                KeepViewAboveGround();
+            }
             DemoAtmosphere.SyncFog(_cam);
+        }
+
+        /// <summary>
+        /// Perspective pose from the orthographic one: same ground focus and yaw, distance from zoom,
+        /// pitch lifting toward the horizon as the player zooms out.
+        /// </summary>
+        private void ApplyDioramaPose()
+        {
+            if (_cam == null) return;
+            Vector3 fwd = BaseRotation * Vector3.forward;
+            Vector3 focus;
+            var plane = new Plane(Vector3.up, Vector3.zero);
+            var ray = new Ray(_smoothedPos, fwd);
+            focus = plane.Raycast(ray, out float t) && t > 0f
+                ? ray.GetPoint(t)
+                : new Vector3(_smoothedPos.x, 0f, _smoothedPos.z);
+
+            float zoom = _cam.orthographicSize;
+            float zoom01 = Mathf.InverseLerp(minZoom, maxZoom, zoom);
+            Quaternion rot = Quaternion.Euler(DioramaRig.Pitch(_pitch, zoom01), _yaw, 0f);
+            float dist = DioramaRig.Distance(zoom);
+            Vector3 pos = focus - rot * Vector3.forward * dist + _shakeOffset;
+            float ground = TerrainDataBake.GroundHeight(pos.x, pos.z);
+            pos.y = Mathf.Max(pos.y, ground + DioramaRig.MinClearance);
+
+            transform.SetPositionAndRotation(pos, rot);
+            _lastAppliedPos = pos;
+            _lastAppliedRot = rot;
+            _hasApplied = true;
+            _focusDistance = Vector3.Distance(pos, focus);
+        }
+
+        /// <summary>
+        /// Other systems (GameLoop setup, cinematics) position this camera as if it were the
+        /// orthographic rig. In diorama mode, treat such a write as a new orthographic pose.
+        /// </summary>
+        private void AdoptExternalTransform()
+        {
+            if (!_diorama || !_hasApplied) return;
+            if (transform.position == _lastAppliedPos && transform.rotation == _lastAppliedRot) return;
+            bool rotated = transform.rotation != _lastAppliedRot;
+            _smoothedPos = transform.position;
+            _targetPos = transform.position;
+            if (rotated) ReadAnglesFromTransform(); // a position-only write keeps the orbit angles
+            _hasApplied = false;
+        }
+
+        private static float GroundDistance(Vector3 origin, Vector3 forward)
+        {
+            var plane = new Plane(Vector3.up, Vector3.zero);
+            var ray = new Ray(origin, forward);
+            return plane.Raycast(ray, out float t) && t > 0f ? t : 30f;
         }
 
         /// <summary>
@@ -351,7 +493,7 @@ namespace SolarMajesty
         /// </summary>
         private void KeepViewAboveGround()
         {
-            if (_cam == null) return;
+            if (_cam == null || _diorama) return;
             float upY = transform.up.y;
             if (upY < 0.05f) return;
             // Keep bottom-row ray origins at y >= 1.5 so they still hit GroundPlane / near skirt.
