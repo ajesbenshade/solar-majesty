@@ -193,7 +193,10 @@ namespace SolarMajesty
                 string interest = string.IsNullOrEmpty(_handle.InterestLabel)
                     ? (claims > 0 ? claimTxt : "…")
                     : _handle.InterestLabel;
-                _metaLabel.text = $"{type}  ·  {interest}\n{claimTxt}  ·  RMB cancel  ·  w {work:F1}";
+                string orders = _handle.Orders != null && _handle.Orders.HasRules
+                    ? $"\nORDERS  {_handle.Orders.Summary()}"
+                    : "";
+                _metaLabel.text = $"{type}  ·  {interest}\n{claimTxt}  ·  RMB cancel  ·  w {work:F1}{orders}";
                 _metaLabel.color = _handle.InterestCount > 0
                     ? new Color(0.85f, 1f, 0.55f)
                     : new Color(1f, 0.55f, 0.35f);

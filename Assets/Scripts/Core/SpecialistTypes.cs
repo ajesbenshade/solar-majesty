@@ -39,6 +39,8 @@ namespace SolarMajesty
         public float RepairDistance;
         public float RepairNeed;
         public float CourageEffective;
+        /// <summary>Hero level (1-based). 0 = unknown, treated as 1. Read by flag orders only.</summary>
+        public int Level;
         /// <summary>
         /// Courier idle walk to a HAB purse or Commons deposit. Wander dest only —
         /// does not change ScoreFlag.
@@ -104,5 +106,10 @@ namespace SolarMajesty
         /// Until a decree id is stamped here, <see cref="FlagDecreeIds.TryMatchTitle"/> uses this, then <see cref="FlagData.displayName"/>.
         /// </summary>
         public string Title;
+        /// <summary>
+        /// Player's free-text orders, parsed once at post time ("L9+ only", "no scouts").
+        /// Null = no orders. Enforced by <see cref="FlagOrdersRules"/>.
+        /// </summary>
+        public FlagOrders Orders;
     }
 }

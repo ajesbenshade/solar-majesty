@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,6 +33,7 @@ namespace SolarMajesty
         static bool _resolved;
 
         HttpClient _http;
+        readonly ConcurrentQueue<Action> _mainThread = new ConcurrentQueue<Action>();
         volatile bool _online;
         volatile bool _probing;
         float _probeTimer;
@@ -107,6 +109,12 @@ namespace SolarMajesty
 
         void Update()
         {
+            while (_mainThread.TryDequeue(out var callback))
+            {
+                try { callback(); }
+                catch (Exception e) { Debug.LogException(e); }
+            }
+
             if (_online || _probing) return;
             _probeTimer -= Time.unscaledDeltaTime;
             if (_probeTimer > 0f) return;
@@ -142,6 +150,39 @@ namespace SolarMajesty
             System.Threading.Interlocked.Increment(ref _inFlight);
             _ = Send(requestJson, ticket);
             return ticket;
+        }
+
+        /// <summary>
+        /// One-off request whose raw JSON reply (null on failure) is handed to
+        /// <paramref name="onMainThread"/> from Update. For rare asks like reading flag orders.
+        /// </summary>
+        public bool AskRaw(string requestJson, Action<string> onMainThread)
+        {
+            if (!CanAsk || _http == null || onMainThread == null) return false;
+            System.Threading.Interlocked.Increment(ref _inFlight);
+            _ = SendRaw(requestJson, onMainThread);
+            return true;
+        }
+
+        async Task SendRaw(string body, Action<string> onMainThread)
+        {
+            string reply = null;
+            try
+            {
+                using var content = new StringContent(body, Encoding.UTF8, "application/json");
+                using var res = await _http.PostAsync(baseUrl + LayaProtocol.Route, content).ConfigureAwait(false);
+                string text = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
+                if (res.IsSuccessStatusCode) reply = text;
+            }
+            catch (Exception)
+            {
+                _online = false;
+            }
+            finally
+            {
+                System.Threading.Interlocked.Decrement(ref _inFlight);
+            }
+            _mainThread.Enqueue(() => onMainThread(reply));
         }
 
         async Task Send(string body, LayaTicket ticket)

@@ -1006,6 +1006,7 @@ namespace SolarMajesty
                 RepairDistance = repairDist,
                 RepairNeed = repairNeed,
                 CourageEffective = EffectiveCourage,
+                Level = Level,
                 HasLevyWalk = hasLevy,
                 LevyPosition = levyPos,
                 LevyCarrying = carryingLevy

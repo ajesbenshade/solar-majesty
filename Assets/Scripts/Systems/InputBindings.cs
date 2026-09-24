@@ -84,14 +84,22 @@ namespace SolarMajesty
 
         public static bool IsDefault(GameAction action) => Key(action) == DefaultKey(action);
 
+        /// <summary>
+        /// True while an in-game text box (flag orders) has keyboard focus. Every hotkey reader
+        /// stands down so typing does not trigger gameplay keys.
+        /// </summary>
+        public static bool TextEntryActive;
+
         public static bool Down(GameAction action)
         {
+            if (TextEntryActive) return false;
             KeyCode key = Key(action);
             return key != KeyCode.None && Input.GetKeyDown(key);
         }
 
         public static bool Held(GameAction action)
         {
+            if (TextEntryActive) return false;
             KeyCode key = Key(action);
             return key != KeyCode.None && Input.GetKey(key);
         }

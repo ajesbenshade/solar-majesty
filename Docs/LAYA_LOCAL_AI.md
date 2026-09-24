@@ -28,6 +28,8 @@ SpecialistBrain.CollectOptions  ──► legal options (Evaluate's pick is alwa
 | `LayaHeroDriver` | Runtime/Laya | Per-specialist glue called from `SpecialistAgent.TickThink`. |
 | `DustStalkerAgent.TickLaya` | Runtime/Threat | Mobs ask for a stance every ~2 s: `raid` (the scripted role), `ambush` (collectors only) or `prowl` (no raids). Each stance is a subset of the scripted role, so Laya can make a mob warier but never stronger. |
 
+Laya also reads written flag orders that the built-in parser can't understand. See [FLAG_ORDERS.md](FLAG_ORDERS.md).
+
 ## Run it
 
 **macOS on Apple Silicon (laya-mlx):**

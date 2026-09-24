@@ -53,6 +53,7 @@ namespace SolarMajesty
                 {
                     var flag = openFlags[i];
                     if (flag == null || flag.Data == null) continue;
+                    if (!FlagOrdersRules.Permits(ctx, flag)) continue; // player's written orders
 
                     float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
                     if (consider > 0f && dist > consider) continue;
@@ -237,6 +238,7 @@ namespace SolarMajesty
                             (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
             if (panicked && ctx.HealthNormalized < 0.62f) return false;
             if (CalculateRestScore(ctx) > 0.78f) return false;
+            if (!FlagOrdersRules.Permits(ctx, flag)) return false;
 
             float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
             float consider = 40f + ctx.Data.explorePreference * 35f;
@@ -264,6 +266,7 @@ namespace SolarMajesty
                             (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
             if (panicked && ctx.HealthNormalized < 0.62f) return FlagRefusalKind.Hurt;
             if (CalculateRestScore(ctx) > 0.78f) return FlagRefusalKind.Hurt;
+            if (!FlagOrdersRules.Permits(ctx, flag)) return FlagRefusalKind.Orders;
 
             float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
             float consider = 40f + ctx.Data.explorePreference * 35f;

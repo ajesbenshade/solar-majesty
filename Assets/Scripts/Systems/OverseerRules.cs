@@ -297,6 +297,8 @@ namespace SolarMajesty
         Hurt = 3,
         NotMyJob = 4,
         Hunting = 5,
-        Ignored = 6
+        Ignored = 6,
+        /// <summary>The flag's orders exclude this hero (level, class or health).</summary>
+        Orders = 7
     }
 }
