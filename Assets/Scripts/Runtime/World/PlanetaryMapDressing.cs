@@ -604,6 +604,7 @@ namespace SolarMajesty
                     sky.SetFloat("_SunSizeConvergence", body.Id == CelestialBodyId.Earth ? 5f : 5f);
                 RenderSettings.skybox = sky;
                 DynamicGI.UpdateEnvironment();
+                SkyPanorama.NoteTunedSky(sky); // diorama sky restores to this one
             }
 
             ApplyCameraVoidFill(Camera.main, body, shader != null);
@@ -623,6 +624,7 @@ namespace SolarMajesty
                 cam.clearFlags = CameraClearFlags.SolidColor;
             else
                 cam.clearFlags = hasSkybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
+            SunCycle.RebaseClearColor(cam);
         }
 
         private static Texture2D BuildAlbedo(int size, CelestialBodyProfile body)

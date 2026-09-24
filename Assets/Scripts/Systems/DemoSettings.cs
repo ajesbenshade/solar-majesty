@@ -28,6 +28,10 @@ namespace SolarMajesty
         public const string ColorBlindKey = "SM_Set_ColorBlind";
         public const string FrameCapKey = "SM_Set_FrameCap";
         public const string MarsGrokLessonsKey = "SM_Set_MarsGrokLessons";
+        public const string DayCycleKey = "SM_Set_DayCycle";
+        public const string DioramaCameraKey = "SM_Set_DioramaCamera";
+        public const string TiltShiftKey = "SM_Set_TiltShift";
+        public const string CloudShadowsKey = "SM_Set_CloudShadows";
         public const string RosterKeyPrefix = "SM_Roster_";
 
         public static float Master = 1f;
@@ -64,6 +68,21 @@ namespace SolarMajesty
         /// <summary>Mars optional training wheels. Default off — failure asides only.</summary>
         public static bool MarsGrokLessons;
 
+        /// <summary>Sun moves through golden hour and a blue-hour night. Off = the tuned still look.</summary>
+        public static bool DayCycle = true;
+
+        /// <summary>
+        /// Perspective "diorama" camera: the sky and horizon appear when zoomed out. Off = the classic
+        /// orthographic overseer view. Also forced on for one run by the <c>-diorama</c> argument.
+        /// </summary>
+        public static bool DioramaCamera;
+
+        /// <summary>Miniature-style depth of field when zoomed in.</summary>
+        public static bool TiltShift = true;
+
+        /// <summary>Drifting cloud shadows on worlds with weather.</summary>
+        public static bool CloudShadows = true;
+
         public static void Load()
         {
             Master = PlayerPrefs.GetFloat(MasterKey, 1f);
@@ -80,6 +99,10 @@ namespace SolarMajesty
             ColorBlindMode = PlayerPrefs.GetInt(ColorBlindKey, 0);
             FrameCap = PlayerPrefs.GetInt(FrameCapKey, 0);
             MarsGrokLessons = PlayerPrefs.GetInt(MarsGrokLessonsKey, 0) == 1;
+            DayCycle = PlayerPrefs.GetInt(DayCycleKey, 1) == 1;
+            DioramaCamera = PlayerPrefs.GetInt(DioramaCameraKey, 0) == 1 || HasArg("-diorama");
+            TiltShift = PlayerPrefs.GetInt(TiltShiftKey, 1) == 1;
+            CloudShadows = PlayerPrefs.GetInt(CloudShadowsKey, 1) == 1;
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
             FirstHourDemo = PlayerPrefs.GetInt(FirstHourKey, 1) == 1;
             ReplayRules.Load();
@@ -92,6 +115,14 @@ namespace SolarMajesty
                 BootStraightIntoPlay = true;
             }
             ApplyDisplay();
+        }
+
+        private static bool HasArg(string flag)
+        {
+            var args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++)
+                if (string.Equals(args[i], flag, System.StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
         }
 
         public static void ApplyDisplay()
@@ -123,6 +154,10 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(ReduceMotionKey, ReduceMotion ? 1 : 0);
             PlayerPrefs.SetInt(ColorBlindKey, ColorBlindMode);
             PlayerPrefs.SetInt(FrameCapKey, FrameCap);
+            PlayerPrefs.SetInt(DayCycleKey, DayCycle ? 1 : 0);
+            PlayerPrefs.SetInt(DioramaCameraKey, DioramaCamera ? 1 : 0);
+            PlayerPrefs.SetInt(TiltShiftKey, TiltShift ? 1 : 0);
+            PlayerPrefs.SetInt(CloudShadowsKey, CloudShadows ? 1 : 0);
             PlayerPrefs.SetInt(FirstHourKey, FirstHourDemo ? 1 : 0);
             // The demo forces campaign / no challenge / balanced in memory.
             // Do not write that over a saved full-campaign stance.
