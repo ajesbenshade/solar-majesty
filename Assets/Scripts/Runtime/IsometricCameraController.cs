@@ -277,6 +277,7 @@ namespace SolarMajesty
 
         private void HandleKeyboardPan()
         {
+            if (InputBindings.TextEntryActive) return; // typing flag orders
             float h = 0f;
             float v = 0f;
             if (Input.GetKey(KeyCode.D)) h += 1f;
@@ -309,8 +310,11 @@ namespace SolarMajesty
         private void HandleZoom()
         {
             float dir = 0f;
-            if (Input.GetKey(KeyCode.Q)) dir += 1f;
-            if (Input.GetKey(KeyCode.E)) dir -= 1f;
+            if (!InputBindings.TextEntryActive)
+            {
+                if (Input.GetKey(KeyCode.Q)) dir += 1f;
+                if (Input.GetKey(KeyCode.E)) dir -= 1f;
+            }
             if (Mathf.Abs(dir) > 0.01f)
             {
                 _targetZoom = Mathf.Clamp(

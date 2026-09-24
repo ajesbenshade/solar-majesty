@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -100,6 +101,16 @@ namespace SolarMajesty
         private float _baseBite;
         private bool _frenzy;
         private Vector3 _faceDir;
+
+        // Optional local Laya stance (see Docs/LAYA_LOCAL_AI.md). Role = scripted behaviour.
+        private const float LayaAskInterval = 2f;
+        private MobTactic _tactic = MobTactic.Role;
+        private float _layaTimer;
+        private LayaTicket _layaTicket;
+        private List<LayaOption> _layaOptions;
+        private readonly List<MobTactic> _layaTactics = new List<MobTactic>(3);
+
+        public MobTactic Tactic => _tactic;
 
         public void Initialize(ThreatPressure threat, FlagManager flags, Vector3 home, GameLoop loop = null)
         {
@@ -466,8 +477,13 @@ namespace SolarMajesty
             _raiding = false;
             if (_loop != null && _loop.InFaunaGrace)
                 return false;
+            TickLaya(dt);
+            if (_tactic == MobTactic.Prowl)
+                return false;
             if (TickAmbushCollector(dt))
                 return true;
+            if (_tactic == MobTactic.Ambush)
+                return false;
             switch (Kind)
             {
                 case FaunaKind.Mite:
@@ -483,6 +499,86 @@ namespace SolarMajesty
                     return TickJunkHarass(dt);
                 default: return TickRaidVillage(dt);
             }
+        }
+
+        /// <summary>
+        /// Polls the Laya stance answer and asks again every <see cref="LayaAskInterval"/> seconds.
+        /// Without a bridge (the default) the stance stays <see cref="MobTactic.Role"/>.
+        /// </summary>
+        private void TickLaya(float dt)
+        {
+            var bridge = LayaBridge.Instance;
+            if (bridge == null)
+            {
+                _tactic = MobTactic.Role;
+                return;
+            }
+
+            if (_layaTicket != null && _layaTicket.Done)
+            {
+                _tactic = LayaMobPolicy.Resolve(_layaOptions, _layaTactics, _layaTicket.Answer, bridge.minProbability);
+                _layaTicket = null;
+            }
+
+            _layaTimer -= dt;
+            if (_layaTimer > 0f || _layaTicket != null || !bridge.CanAsk) return;
+            _layaTimer = LayaAskInterval * Random.Range(0.8f, 1.2f);
+
+            var state = new LayaMobPolicy.MobState
+            {
+                Kind = RoleLabel,
+                RaidTarget = RaidTargetNoun(),
+                Health01 = Health01,
+                DistanceToCampus = Vector3.Distance(Flat(transform.position), Flat(ColonyLayout.CampusOrigin)),
+                Frenzy = _frenzy,
+                CollectorNearby = CollectorInAmbushRange(),
+                RaidTargetNearby = RaidTargetInReach(),
+                RecentlyHit = Time.time - _lastCombatTime < 3f
+            };
+            _layaOptions = LayaMobPolicy.BuildOptions(state, _layaTactics);
+            _layaTicket = bridge.Ask(LayaProtocol.BuildChoiceRequest(
+                LayaMobPolicy.BuildState(state), LayaMobPolicy.Instructions, _layaOptions));
+        }
+
+        private string RaidTargetNoun() => Kind switch
+        {
+            FaunaKind.Mite or FaunaKind.Tick or FaunaKind.Creeper => "mining camp",
+            FaunaKind.Leech or FaunaKind.Wisp => "power node",
+            FaunaKind.Hopper => "habitat",
+            FaunaKind.JunkBot => "colony robot",
+            _ => "village house"
+        };
+
+        private bool RaidTargetInReach()
+        {
+            var v = _loop != null ? _loop.Village : null;
+            if (v == null) return false;
+            Vector3 p = transform.position;
+            return Kind switch
+            {
+                FaunaKind.Mite or FaunaKind.Tick or FaunaKind.Creeper => v.NearestExtractor(p, 42f) != null,
+                FaunaKind.Leech or FaunaKind.Wisp => v.NearestPower(p, 42f) != null,
+                FaunaKind.Hopper => v.NearestByCategory(p, 42f, BuildingCategory.Habitat) != null ||
+                                    v.NearestVillageHab(p, 42f) != null,
+                FaunaKind.JunkBot => true,
+                _ => v.NearestVillageHab(p, 36f) != null
+            };
+        }
+
+        private bool CollectorInAmbushRange()
+        {
+            var director = _loop != null && _loop.Village != null ? _loop.Village.Collectors : null;
+            if (director == null) return false;
+            var list = director.Collectors;
+            Vector3 me = Flat(transform.position);
+            for (int i = 0; i < list.Count; i++)
+            {
+                var c = list[i];
+                if (c != null && c.IsTravelling &&
+                    Vector3.Distance(me, Flat(c.transform.position)) < MajestyEconomy.CollectorAmbushRange)
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>
