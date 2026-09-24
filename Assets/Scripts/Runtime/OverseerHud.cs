@@ -2297,7 +2297,7 @@ namespace SolarMajesty
         private void DrawSettings()
         {
             Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f, 0.78f));
-            float h = Mathf.Min(700f, Mathf.Max(460f, _sh - 24f));
+            float h = Mathf.Min(732f, Mathf.Max(460f, _sh - 24f));
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
             var c = Panel(rect, "Settings");
             float y = c.y;
@@ -2310,6 +2310,12 @@ namespace SolarMajesty
 
             if (Chip(new Rect(c.x, y, 200f, 26f), "INVERT CAMERA PAN", DemoSettings.InvertPan))
                 DemoSettings.InvertPan = !DemoSettings.InvertPan;
+            // Perspective camera: zoom out to see the horizon and the sky.
+            if (Chip(new Rect(c.x + 208f, y, c.width - 208f, 26f), "DIORAMA CAMERA", DemoSettings.DioramaCamera))
+            {
+                DemoSettings.DioramaCamera = !DemoSettings.DioramaCamera;
+                DemoSettings.SaveSettings();
+            }
             y += 32f;
 
             if (Chip(new Rect(c.x, y, 200f, 26f),
@@ -2317,6 +2323,11 @@ namespace SolarMajesty
             {
                 DemoSettings.Fullscreen = !DemoSettings.Fullscreen;
                 DemoSettings.ApplyDisplay();
+            }
+            if (Chip(new Rect(c.x + 208f, y, c.width - 208f, 26f), "DAY / NIGHT CYCLE", DemoSettings.DayCycle))
+            {
+                DemoSettings.DayCycle = !DemoSettings.DayCycle;
+                DemoSettings.SaveSettings();
             }
             y += 32f;
 
@@ -2342,6 +2353,20 @@ namespace SolarMajesty
             {
                 DemoSettings.FrameCap = caps[(capIndex + 1) % caps.Length];
                 DemoSettings.ApplyDisplay();
+            }
+            y += 32f;
+
+            float visHalf = (c.width - 8f) * 0.5f;
+            if (Chip(new Rect(c.x, y, visHalf, 26f), "TILT-SHIFT (DIORAMA)", DemoSettings.TiltShift))
+            {
+                DemoSettings.TiltShift = !DemoSettings.TiltShift;
+                DemoSettings.SaveSettings();
+            }
+            if (Chip(new Rect(c.x + visHalf + 8f, y, visHalf, 26f), "CLOUD SHADOWS", DemoSettings.CloudShadows))
+            {
+                DemoSettings.CloudShadows = !DemoSettings.CloudShadows;
+                DemoSettings.SaveSettings();
+                CloudShadows.Refresh();
             }
             y += 36f;
 

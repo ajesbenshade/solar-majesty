@@ -53,7 +53,12 @@ namespace SolarMajesty.EditorTools
         /// </summary>
         private static void EnsureAlwaysIncludedShaders()
         {
-            string[] required = { "SolarMajesty/Hull", "SolarMajesty/PlanetGround" };
+            // Skybox shaders are reached only through Shader.Find (tuned sky + diorama panorama).
+            string[] required =
+            {
+                "SolarMajesty/Hull", "SolarMajesty/PlanetGround",
+                "Skybox/Procedural", SkyPanorama.ShaderName
+            };
 
             var graphics = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/GraphicsSettings.asset");
             if (graphics == null || graphics.Length == 0)
