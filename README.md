@@ -39,6 +39,34 @@ Vertical slice setup: **[Docs/VERTICAL_SLICE_PHASE1.md](Docs/VERTICAL_SLICE_PHAS
 
 ---
 
+## Download and run locally
+
+**1. Get the code** (no Git LFS needed):
+
+```bash
+git clone https://github.com/ajesbenshade/solar-majesty.git
+cd solar-majesty
+```
+
+Or download the ZIP from GitHub (**Code → Download ZIP**) and unzip it.
+
+**2. Open in Unity:** install **Unity 6000.5.10f1** from Unity Hub, then **Hub → Add → this folder**. The first import takes a few minutes. Open `Assets/Scenes/LunarOutpost_Sandbox.unity` and press **Play**. If the scene is missing, run **Solar Majesty → Build Demo Scene**. Run **Solar Majesty → Render → Configure URP For Look Target** once, so the sky shaders ship in builds.
+
+**3. Optional local AI (hero voices):** in a terminal at the repo root:
+
+```bash
+Tools/local_ai/start_narrator.sh --no-game      # macOS / Linux
+```
+```powershell
+powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoGame   # Windows
+```
+
+Then in the game: **Settings → HERO VOICES · LOCAL AI**. The first run downloads a ~1.1 GB model. Details: [Docs/HERO_NARRATION.md](Docs/HERO_NARRATION.md).
+
+**4. Optional standalone build:** **Solar Majesty → Build → Windows / macOS / Linux** writes to `Builds/`. After that, `start_narrator.sh` / `.ps1` without `--no-game` / `-NoGame` starts the model *and* the built game with voices on.
+
+Other optional settings (Settings menu): **DIORAMA CAMERA** (sky and horizon when zoomed out), **DAY / NIGHT CYCLE**, **TILT-SHIFT**, **CLOUD SHADOWS**. Written flag orders go in the **ORDERS** box of the flag popup (G).
+
 ## How to open (Unity 6)
 
 1. **Unity Hub → Open** this folder (**Unity 6000.5.x**).
