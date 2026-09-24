@@ -2297,7 +2297,7 @@ namespace SolarMajesty
         private void DrawSettings()
         {
             Fill(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f, 0.78f));
-            float h = Mathf.Min(732f, Mathf.Max(460f, _sh - 24f));
+            float h = Mathf.Min(764f, Mathf.Max(460f, _sh - 24f));
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
             var c = Panel(rect, "Settings");
             float y = c.y;
@@ -2367,6 +2367,13 @@ namespace SolarMajesty
                 DemoSettings.CloudShadows = !DemoSettings.CloudShadows;
                 DemoSettings.SaveSettings();
                 CloudShadows.Refresh();
+            }
+            y += 32f;
+
+            if (Chip(new Rect(c.x, y, c.width, 26f), "HERO VOICES  ·  LOCAL AI", DemoSettings.HeroVoices))
+            {
+                DemoSettings.HeroVoices = !DemoSettings.HeroVoices;
+                DemoSettings.SaveSettings();
             }
             y += 36f;
 

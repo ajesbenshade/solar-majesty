@@ -128,6 +128,15 @@ namespace SolarMajesty
                 : (ShopCatalog.Get(equippedSuit)?.DisplayName ?? "suit");
         public string Status => _status;
         public string FlavorLine { get; private set; } = "Booting.";
+
+        /// <summary>Bumps on every decision change, so a late narration line can tell it is stale.</summary>
+        public int NarrationStamp { get; private set; }
+
+        /// <summary>A line from <see cref="HeroNarrator"/> replaces the template flavour line.</summary>
+        public void SetNarratedLine(string line)
+        {
+            if (!string.IsNullOrEmpty(line)) FlavorLine = line;
+        }
         public SpecialistAction CurrentAction => _lastDecision.Action;
         public FlagHandle ActiveFlag => _activeFlag;
         public float BodyDanger => bodyDanger;
@@ -318,6 +327,7 @@ namespace SolarMajesty
                 DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.78f, 0.22f));
                 _loop?.LogOverseer($"{data?.displayName} reached L{level}.");
                 Debug.Log($"[XP] {data?.displayName} level {level} ({reason}) xp={xp}");
+                HeroNarrator.Report(this, NarrationKind.LevelUp);
             }
         }
 
@@ -1065,6 +1075,12 @@ namespace SolarMajesty
                     SetAgentStopped(false);
                 if (_hasIdleTarget)
                     SetDestination(_idleTarget);
+            }
+
+            if (changed)
+            {
+                NarrationStamp++;
+                HeroNarrator.Report(this, HeroNarrator.KindFor(decision));
             }
 
             if (changed && logDecisions)

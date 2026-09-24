@@ -10,7 +10,8 @@ See **[Docs/DEMO.md](Docs/DEMO.md)** for open → Play → 60-second demo script
 **Next developer pickup:** **[Docs/DEVELOPER_HANDOFF.md](Docs/DEVELOPER_HANDOFF.md)**  
 **Optional local AI (Laya):** **[Docs/LAYA_LOCAL_AI.md](Docs/LAYA_LOCAL_AI.md)**  
 **Written flag orders:** **[Docs/FLAG_ORDERS.md](Docs/FLAG_ORDERS.md)**  
-**Golden hour, sky, diorama camera:** **[Docs/GOLDEN_HOUR_AND_SKY.md](Docs/GOLDEN_HOUR_AND_SKY.md)**
+**Golden hour, sky, diorama camera:** **[Docs/GOLDEN_HOUR_AND_SKY.md](Docs/GOLDEN_HOUR_AND_SKY.md)**  
+**Hero narration (local LLM):** **[Docs/HERO_NARRATION.md](Docs/HERO_NARRATION.md)**
 
 ## Namespace
 
