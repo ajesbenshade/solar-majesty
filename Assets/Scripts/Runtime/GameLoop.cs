@@ -1529,6 +1529,8 @@ namespace SolarMajesty
                 if (!string.IsNullOrEmpty(chip))
                 {
                     agent.ShowRefusal(chip);
+                    if (kind == FlagRefusalKind.Orders)
+                        HeroNarrator.Report(agent, NarrationKind.Refused, flag);
                     PlaytestTelemetry.Record("flag_refused", new[]
                     {
                         ("class", agent.Data.specialistClass.ToString()),
