@@ -4,7 +4,26 @@ Optional and off by default. Heroes mutter short, in-character lines about what 
 
 **The model voices decisions; it never makes them.** `SpecialistBrain` still decides everything. The narrator gets only the facts of the moment (class, level, dominant trait, health, purse, the bounty, the player's written orders) and returns one line.
 
-## Setup
+## Quick start (one command)
+
+```bash
+# macOS / Linux
+Tools/local_ai/start_narrator.sh            # starts the model, then launches Builds/macOS or Builds/Linux if present
+Tools/local_ai/start_narrator.sh --no-game  # model only; play in the Unity editor with Settings → HERO VOICES
+Tools/local_ai/start_narrator.sh --laya     # also starts the Laya decision model (Apple Silicon)
+```
+
+```powershell
+# Windows
+powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1          # launches Builds\WindowsPlaytest or Builds\Windows
+powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoGame  # model only (Unity editor)
+```
+
+The launcher uses the first backend it finds: **llama.cpp** (`llama-server`), then **Ollama**, then **MLX** on Apple Silicon, then a self-contained **Python** fallback that installs `llama-cpp-python` into `Tools/local_ai/.venv` and downloads the model to `Tools/local_ai/models/` once. It waits until the server answers, starts the built game with `-narrator …`, and stops the server when you quit (Ctrl+C or close the window). Logs go to `Tools/local_ai/narrator.log`.
+
+In the Unity editor, command-line flags don't apply. Run with `--no-game`, then turn on **Settings → HERO VOICES · LOCAL AI** (it talks to `http://127.0.0.1:8080`). With Ollama (port 11434), set `SOLAR_NARRATOR_URL=http://127.0.0.1:11434` and `SOLAR_NARRATOR_MODEL=qwen3:1.7b` before starting Unity.
+
+## Setup (manual)
 
 Any **OpenAI-compatible** local server works. The game talks to `POST /v1/chat/completions` and checks the server is up via `GET /v1/models`.
 
