@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Starts a local LLM for Solar Majesty's hero voices, then (optionally) the game.
+# Starts Solar Majesty's local AI for hero voices — a small LLM that writes each hero's line and a
+# Kokoro text-to-speech server that speaks it — then (optionally) the game.
 #
-#   Tools/local_ai/start_narrator.sh            # server + launch the built game if found
-#   Tools/local_ai/start_narrator.sh --no-game  # server only (play in the Unity editor)
-#   Tools/local_ai/start_narrator.sh --laya     # also start the Laya decision model (Apple Silicon)
-#   Tools/local_ai/start_narrator.sh --no-voices  # text only: skip the spoken-line TTS server
+#   Tools/local_ai/start_narrator.sh              # LLM + voices + launch the built game if found
+#   Tools/local_ai/start_narrator.sh --no-game    # servers only (play in the Unity editor)
+#   Tools/local_ai/start_narrator.sh --no-speech  # text lines only, no spoken voices
+#   Tools/local_ai/start_narrator.sh --laya       # also start the Laya decision model (Apple Silicon)
 #
-# Uses the first backend it finds: llama.cpp (llama-server) → Ollama → MLX (Apple Silicon)
-# → a self-contained Python fallback (llama-cpp-python, CPU). Model: Qwen3-1.7B, 4-bit (~1.1 GB).
-# If Tools/audio is set up (Tools/audio/setup.sh), also starts the Kokoro voice server on :8081
-# so LLM lines are spoken aloud. Ctrl+C stops everything this script started.
-# See Docs/HERO_NARRATION.md and Docs/AUDIO.md.
+# LLM: first backend found of llama.cpp (llama-server) → Ollama → MLX (Apple Silicon) → a
+# self-contained Python fallback (llama-cpp-python, CPU); model Qwen3-1.7B 4-bit (~1.1 GB).
+# Voices: Kokoro-82M via kokoro-onnx in a local venv (~340 MB, downloaded once), port 8880.
+# Ctrl+C stops everything this script started. See Docs/HERO_NARRATION.md.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,16 +23,18 @@ GGUF_FILE="Qwen3-1.7B-Q4_K_M.gguf"
 MLX_MODEL="mlx-community/Qwen3-1.7B-4bit"
 OLLAMA_MODEL="qwen3:1.7b"
 
+VOICE_PORT="${VOICE_PORT:-8880}"
+KOKORO_BASE="https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
+
 LAUNCH_GAME=1
 WITH_LAYA=0
-WITH_VOICES=1
-VOICE_PORT="${VOICE_PORT:-8081}"
+WITH_SPEECH=1
 for arg in "$@"; do
   case "$arg" in
     --no-game) LAUNCH_GAME=0 ;;
     --laya) WITH_LAYA=1 ;;
-    --no-voices) WITH_VOICES=0 ;;
-    -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
+    --no-speech) WITH_SPEECH=0 ;;
+    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
 done
@@ -54,14 +56,27 @@ venv_python() {
   echo "$VENV/bin/python"
 }
 
+# Resumable download with retries: big model files over flaky links should not restart from zero.
+download() {
+  local url="$1" dest="$2" label="$3"
+  [ -s "$dest" ] && return 0
+  mkdir -p "$(dirname "$dest")"
+  say "downloading $label (once)"
+  for attempt in 1 2 3 4 5; do
+    if curl -fL -C - --progress-bar -o "$dest.part" "$url"; then
+      mv "$dest.part" "$dest"
+      return 0
+    fi
+    say "download interrupted, resuming ($attempt/5)…"
+    sleep 3
+  done
+  echo "Could not download $url" >&2
+  return 1
+}
+
 fetch_gguf() {
-  mkdir -p "$MODELS"
   local dest="$MODELS/$GGUF_FILE"
-  if [ ! -s "$dest" ]; then
-    say "downloading $GGUF_FILE (~1.1 GB, once)"
-    curl -fL --progress-bar -o "$dest.part" "https://huggingface.co/$GGUF_REPO/resolve/main/$GGUF_FILE"
-    mv "$dest.part" "$dest"
-  fi
+  download "https://huggingface.co/$GGUF_REPO/resolve/main/$GGUF_FILE" "$dest" "$GGUF_FILE (~1.1 GB)"
   echo "$dest"
 }
 
@@ -129,30 +144,35 @@ if [ "$WITH_LAYA" = 1 ]; then
   fi
 fi
 
-GAME_ARGS=(-narrator "$URL" -narrator-model "$MODEL_NAME")
-[ "$WITH_LAYA" = 1 ] && GAME_ARGS+=(-laya)
-
-if [ "$WITH_VOICES" = 1 ]; then
-  AUDIO="$ROOT/Tools/audio"
-  VOICE_URL="http://127.0.0.1:$VOICE_PORT"
-  if [ -x "$AUDIO/.venv/bin/python" ] && [ -f "$AUDIO/models/kokoro-v1.0.int8.onnx" ]; then
-    say "starting spoken lines (Kokoro TTS) on :$VOICE_PORT"
-    (cd "$AUDIO" && exec .venv/bin/python voice_server.py --port "$VOICE_PORT") >"$HERE/voice.log" 2>&1 &
+VOICE_URL="http://127.0.0.1:$VOICE_PORT"
+if [ "$WITH_SPEECH" = 1 ]; then
+  if curl -fs "$VOICE_URL/v1/models" >/dev/null 2>&1; then
+    say "voices already running at $VOICE_URL"
+  elif command -v python3 >/dev/null 2>&1; then
+    PY="$(venv_python)"
+    "$PY" -c "import kokoro_onnx" 2>/dev/null || { say "installing kokoro-onnx (text-to-speech)"; "$PY" -m pip install --quiet kokoro-onnx; }
+    download "$KOKORO_BASE/kokoro-v1.0.onnx" "$MODELS/kokoro-v1.0.onnx" "Kokoro voice model (~310 MB)"
+    download "$KOKORO_BASE/voices-v1.0.bin" "$MODELS/voices-v1.0.bin" "Kokoro voices (~27 MB)"
+    say "starting voices on :$VOICE_PORT"
+    "$PY" "$HERE/voice_server.py" --model "$MODELS/kokoro-v1.0.onnx" --voices "$MODELS/voices-v1.0.bin" \
+      --port "$VOICE_PORT" >"$HERE/voice.log" 2>&1 &
     PIDS+=($!)
-    for _ in $(seq 1 60); do
-      curl -fs "$VOICE_URL/health" >/dev/null 2>&1 && break
-      sleep 1
-    done
-    if curl -fs "$VOICE_URL/health" >/dev/null 2>&1; then
-      say "spoken lines online at $VOICE_URL"
-      GAME_ARGS+=(-voice-server "$VOICE_URL")
+    for _ in $(seq 1 60); do curl -fs "$VOICE_URL/v1/models" >/dev/null 2>&1 && break; sleep 2; done
+    if curl -fs "$VOICE_URL/v1/models" >/dev/null 2>&1; then
+      say "voices online at $VOICE_URL"
     else
-      say "voice server did not come up; lines stay text (see $HERE/voice.log)"
+      say "voices did not start (see $HERE/voice.log) — continuing with text lines only"
+      WITH_SPEECH=0
     fi
   else
-    say "spoken LLM lines: run Tools/audio/setup.sh once (baked barks work without it)"
+    say "voices need Python 3 — continuing with text lines only"
+    WITH_SPEECH=0
   fi
 fi
+
+GAME_ARGS=(-narrator "$URL" -narrator-model "$MODEL_NAME")
+[ "$WITH_SPEECH" = 1 ] && GAME_ARGS+=(-voice "$VOICE_URL")
+[ "$WITH_LAYA" = 1 ] && GAME_ARGS+=(-laya)
 
 if [ "$LAUNCH_GAME" = 1 ]; then
   if [ -d "$ROOT/Builds/macOS/SolarMajesty.app" ]; then
@@ -167,7 +187,11 @@ if [ "$LAUNCH_GAME" = 1 ]; then
   say "no built game found (Solar Majesty → Build → macOS / Linux)."
 fi
 
-say "Playing in the Unity editor? Settings → HERO VOICES · LOCAL AI (it uses $URL)."
+if [ "$WITH_SPEECH" = 1 ]; then
+  say "Playing in the Unity editor? Settings → HERO LINES · LOCAL LLM and SPOKEN · LOCAL TTS (uses $URL and $VOICE_URL)."
+else
+  say "Playing in the Unity editor? Settings → HERO LINES · LOCAL LLM (uses $URL)."
+fi
 [ "$URL" != "http://127.0.0.1:8080" ] && say "Editor note: the chip uses :8080 — set SOLAR_NARRATOR_URL=$URL before starting Unity, or use llama.cpp / MLX."
 say "Server running. Ctrl+C to stop."
 if [ ${#PIDS[@]} -gt 0 ]; then

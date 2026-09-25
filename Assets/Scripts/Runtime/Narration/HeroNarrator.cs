@@ -51,7 +51,8 @@ namespace SolarMajesty
             get
             {
                 ReadArgs();
-                return DemoSettings.HeroVoices || _cliUrl != null;
+                // Spoken lines need text lines to speak, so SPOKEN implies the narrator.
+                return DemoSettings.HeroVoices || DemoSettings.HeroSpeech || _cliUrl != null;
             }
         }
 
@@ -84,6 +85,7 @@ namespace SolarMajesty
                 _instance = go.AddComponent<HeroNarrator>();
                 _instance._baseUrl = (_cliUrl ?? DefaultUrl).TrimEnd('/');
                 _instance._model = _cliModel ?? DefaultModel;
+                HeroSpeaker.Warm();
                 return _instance;
             }
         }
@@ -127,7 +129,7 @@ namespace SolarMajesty
                 bool stateful = kind != NarrationKind.LevelUp && kind != NarrationKind.Refused;
                 if (stateful && agent.NarrationStamp != stamp) return;
                 agent.SetNarratedLine(line);
-                CharacterVoice.SpeakNarrated(agent, line);
+                CharacterVoice.SpeakNarrated(agent, line); // aloud too, when SPOKEN · LOCAL TTS is up
                 n.Spoken++;
                 if (kind == NarrationKind.LevelUp || (selected && NarrationScheduler.IsBigMoment(kind)))
                     n._loop?.LogOverseer($"{agent.Data.displayName} L{agent.Level}: “{line}”");

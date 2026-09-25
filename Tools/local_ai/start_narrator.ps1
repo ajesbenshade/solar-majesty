@@ -1,16 +1,17 @@
 <#
-  Starts a local LLM for Solar Majesty's hero voices, then (optionally) the game.
+  Starts Solar Majesty's local AI for hero voices: a small LLM that writes each hero's line and a
+  Kokoro text-to-speech server that speaks it. Then (optionally) the game.
 
-    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1            # server + built game
-    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoGame    # server only (Unity editor)
-    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -Laya      # also Laya decisions (PyTorch)
-    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoVoices  # text only, no spoken lines
+    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1             # LLM + voices + built game
+    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoGame     # servers only (Unity editor)
+    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoSpeech   # text lines only
+    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -Laya       # also Laya decisions (PyTorch)
 
-  Backend order: llama.cpp (llama-server) -> Ollama -> Python fallback (llama-cpp-python, CPU).
-  Model: Qwen3-1.7B 4-bit (~1.1 GB). If Tools\audio is set up, also starts the Kokoro voice server on
-  :8081 so LLM lines are spoken. Closing this window stops the servers. See Docs/HERO_NARRATION.md, Docs/AUDIO.md.
+  LLM backend order: llama.cpp (llama-server) -> Ollama -> Python fallback (llama-cpp-python, CPU).
+  Models: Qwen3-1.7B 4-bit (~1.1 GB); Kokoro-82M voices (~340 MB, port 8880). Downloads resume.
+  Closing this window stops the servers. See Docs/HERO_NARRATION.md.
 #>
-param([switch]$NoGame, [switch]$Laya, [switch]$NoVoices, [int]$Port = 8080, [int]$VoicePort = 8081)
+param([switch]$NoGame, [switch]$Laya, [switch]$NoSpeech, [int]$Port = 8080, [int]$VoicePort = 8880)
 $ErrorActionPreference = 'Stop'
 
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -33,6 +34,19 @@ function VenvPython {
     & $py -m pip install --quiet --upgrade pip
   }
   return $py
+}
+function Download($url, $dest, $label) {
+  if ((Test-Path $dest) -and (Get-Item $dest).Length -gt 0) { return }
+  New-Item -ItemType Directory -Force (Split-Path -Parent $dest) | Out-Null
+  Say "downloading $label (once)"
+  for ($a = 1; $a -le 5; $a++) {
+    # curl.exe ships with Windows 10+; -C - resumes an interrupted download.
+    & curl.exe -fL -C - --progress-bar -o "$dest.part" $url
+    if ($LASTEXITCODE -eq 0) { Move-Item -Force "$dest.part" $dest; return }
+    Say "download interrupted, resuming ($a/5)..."
+    Start-Sleep 3
+  }
+  throw "Could not download $url"
 }
 function Up($url) {
   try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "$url/v1/models" | Out-Null; return $true } catch { return $false }
@@ -62,14 +76,8 @@ try {
       if ($LASTEXITCODE -ne 0) { & $py -m pip install --quiet llama-cpp-python }
       & $py -m pip install --quiet uvicorn fastapi sse-starlette starlette-context pydantic-settings
     }
-    New-Item -ItemType Directory -Force $Models | Out-Null
     $gguf = Join-Path $Models $GgufFile
-    if (-not (Test-Path $gguf) -or (Get-Item $gguf).Length -eq 0) {
-      Say "downloading $GgufFile (~1.1 GB, once)"
-      $ProgressPreference = 'SilentlyContinue'
-      Invoke-WebRequest -UseBasicParsing "https://huggingface.co/$GgufRepo/resolve/main/$GgufFile" -OutFile "$gguf.part"
-      Move-Item -Force "$gguf.part" $gguf
-    }
+    Download "https://huggingface.co/$GgufRepo/resolve/main/$GgufFile" $gguf "$GgufFile (~1.1 GB)"
     Say "backend: llama-cpp-python on :$Port"
     $Started += Start-Process $py -PassThru -WindowStyle Hidden -RedirectStandardError $Log `
       -ArgumentList @('-m', 'llama_cpp.server', '--model', $gguf, '--host', '127.0.0.1', '--port', $Port, '--n_ctx', '2048')
@@ -87,6 +95,26 @@ try {
   Say "hero voices online at $Url (model: $ModelName)"
 
   $gameArgs = @('-narrator', $Url, '-narrator-model', $ModelName)
+
+  $VoiceUrl = "http://127.0.0.1:$VoicePort"
+  $speech = -not $NoSpeech
+  if ($speech -and -not (Up $VoiceUrl)) {
+    if (Has 'python') {
+      $py = VenvPython
+      & $py -c "import kokoro_onnx" 2>$null
+      if ($LASTEXITCODE -ne 0) { Say 'installing kokoro-onnx (text-to-speech)'; & $py -m pip install --quiet kokoro-onnx }
+      $kb = 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0'
+      $onnx = Join-Path $Models 'kokoro-v1.0.onnx'; $vbin = Join-Path $Models 'voices-v1.0.bin'
+      Download "$kb/kokoro-v1.0.onnx" $onnx 'Kokoro voice model (~310 MB)'
+      Download "$kb/voices-v1.0.bin" $vbin 'Kokoro voices (~27 MB)'
+      Say "starting voices on :$VoicePort"
+      $Started += Start-Process $py -PassThru -WindowStyle Hidden -RedirectStandardError (Join-Path $Here 'voice.log') `
+        -ArgumentList @((Join-Path $Here 'voice_server.py'), '--model', $onnx, '--voices', $vbin, '--port', $VoicePort)
+      for ($i = 0; $i -lt 60 -and -not (Up $VoiceUrl); $i++) { Start-Sleep 2 }
+    }
+    if (-not (Up $VoiceUrl)) { Say 'voices did not start (needs Python 3; see voice.log) - text lines only'; $speech = $false }
+  }
+  if ($speech) { Say "voices online at $VoiceUrl"; $gameArgs += @('-voice', $VoiceUrl) }
   if ($Laya) {
     if (Has 'laya-serve') {
       Say 'starting Laya decisions on :8765'
@@ -94,23 +122,6 @@ try {
       $Started += Start-Process laya-serve -PassThru -WindowStyle Hidden
       $gameArgs += '-laya'
     } else { Say 'Laya: run  pip install "laya[serve]"  first (PyTorch; GPU recommended).' }
-  }
-
-  if (-not $NoVoices) {
-    $Audio = Join-Path $Root 'Tools\audio'
-    $AudioPy = Join-Path $Audio '.venv\Scripts\python.exe'
-    $VoiceUrl = "http://127.0.0.1:$VoicePort"
-    if ((Test-Path $AudioPy) -and (Test-Path (Join-Path $Audio 'models\kokoro-v1.0.int8.onnx'))) {
-      Say "starting spoken lines (Kokoro TTS) on :$VoicePort"
-      $Started += Start-Process $AudioPy -ArgumentList @('voice_server.py', '--port', $VoicePort) -WorkingDirectory $Audio `
-        -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $Here 'voice.log') -RedirectStandardError (Join-Path $Here 'voice.err.log')
-      $voiceUp = $false
-      for ($i = 0; $i -lt 60 -and -not $voiceUp; $i++) {
-        try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "$VoiceUrl/health" | Out-Null; $voiceUp = $true } catch { Start-Sleep 1 }
-      }
-      if ($voiceUp) { Say "spoken lines online at $VoiceUrl"; $gameArgs += @('-voice-server', $VoiceUrl) }
-      else { Say "voice server did not come up; lines stay text (see $Here\voice.err.log)" }
-    } else { Say 'spoken LLM lines: set up Tools\audio once (see Docs\AUDIO.md); baked barks work without it.' }
   }
 
   if (-not $NoGame) {
@@ -124,7 +135,8 @@ try {
     }
     Say 'no built game found (Solar Majesty -> Build -> Windows).'
   }
-  Say "Playing in the Unity editor? Settings -> HERO VOICES - LOCAL AI (it uses $Url)."
+  if ($speech) { Say "Playing in the Unity editor? Settings -> HERO LINES - LOCAL LLM and SPOKEN - LOCAL TTS (uses $Url and $VoiceUrl)." }
+  else { Say "Playing in the Unity editor? Settings -> HERO LINES - LOCAL LLM (uses $Url)." }
   if ($Url -ne 'http://127.0.0.1:8080') { Say "Editor note: set SOLAR_NARRATOR_URL=$Url before starting Unity, or use llama.cpp." }
   Say 'Server running. Press Ctrl+C to stop.'
   while ($true) { Start-Sleep 3600 }

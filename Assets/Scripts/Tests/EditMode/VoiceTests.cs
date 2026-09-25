@@ -7,8 +7,8 @@ using UnityEngine;
 namespace SolarMajesty.Tests
 {
     /// <summary>
-    /// Character voices: line keys shared with the Python bake, the voice bank, who gets to speak,
-    /// WAV decoding for live lines, and that the shipped bank covers every scripted line.
+    /// Character voices: line keys shared with the Python bake, the voice bank and its cast, who
+    /// gets to speak, and that the shipped bank covers every scripted line.
     /// </summary>
     public class VoiceTests
     {
@@ -135,40 +135,25 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(d.TryStartHero(2, VoiceCue.Claim, false, 5.1f, 1f));
         }
 
-        private static byte[] Wav16(short[] pcm, int channels, int rate)
-        {
-            var b = new List<byte>();
-            void Tag(string t) => b.AddRange(System.Text.Encoding.ASCII.GetBytes(t));
-            void U32(int v) => b.AddRange(BitConverter.GetBytes(v));
-            void U16(int v) => b.AddRange(BitConverter.GetBytes((short)v));
-            Tag("RIFF"); U32(36 + pcm.Length * 2); Tag("WAVE");
-            Tag("fmt "); U32(16); U16(1); U16(channels); U32(rate); U32(rate * channels * 2); U16(channels * 2); U16(16);
-            Tag("LIST"); U32(3); b.AddRange(new byte[] { 1, 2, 3 }); b.Add(0); // odd chunk + pad byte
-            Tag("data"); U32(pcm.Length * 2);
-            foreach (short s in pcm) b.AddRange(BitConverter.GetBytes(s));
-            return b.ToArray();
-        }
-
         [Test]
-        public void WavDecoder_ReadsPcm16AndSkipsExtraChunks()
+        public void Cast_ParsesAndMapsToALiveRequestThatKeepsPitchAndPace()
         {
-            byte[] wav = Wav16(new short[] { 0, 16384, -32768, 32767 }, 1, 24000);
-            Assert.IsTrue(WavDecoder.TryDecode(wav, out float[] s, out int ch, out int rate));
-            Assert.AreEqual(1, ch);
-            Assert.AreEqual(24000, rate);
-            Assert.AreEqual(4, s.Length);
-            Assert.AreEqual(0.5f, s[1], 1e-4f);
-            Assert.AreEqual(-1f, s[2], 1e-4f);
-        }
+            const string json = @"{""cast"":{""hero.SentinelMech"":{""voice"":""bm_daniel"",""speed"":0.94,""pitch"":-4.0,""fx"":""mech""},
+                ""broken"":{""speed"":1}},""clips"":[]}";
+            var bank = VoiceBank.Parse(json);
+            Assert.IsTrue(bank.TryGetCast("hero.SentinelMech", out VoiceCast cast));
+            Assert.IsFalse(bank.TryGetCast("broken", out _), "an entry without a voice is skipped");
 
-        [Test]
-        public void WavDecoder_RejectsGarbage()
-        {
-            Assert.IsFalse(WavDecoder.TryDecode(null, out _, out _, out _));
-            Assert.IsFalse(WavDecoder.TryDecode(new byte[64], out _, out _, out _));
-            byte[] wav = Wav16(new short[] { 1, 2 }, 1, 24000);
-            wav[22] = 6; // six channels
-            Assert.IsFalse(WavDecoder.TryDecode(wav, out _, out _, out _));
+            HeroVoiceSpec spec = VoiceBank.LiveSpec(cast, out float playback);
+            Assert.AreEqual("bm_daniel", spec.Voice);
+            Assert.AreEqual(0.7937f, playback, 1e-3f, "four semitones down");
+            // Asked for faster, played back slower: net speaking rate is the cast's 0.94.
+            Assert.AreEqual(0.94f, spec.Speed * playback, 1e-3f);
+            Assert.AreEqual(VoiceBank.RobotFor("mech"), spec.Robot);
+            Assert.Greater(VoiceBank.RobotFor("mech"), VoiceBank.RobotFor("overseer"));
+
+            var fast = new VoiceCast { Voice = "am_puck", Speed = 1.9f, Pitch = -12f };
+            Assert.AreEqual(2f, VoiceBank.LiveSpec(fast, out _).Speed, 1e-4f, "clamped to Kokoro's range");
         }
 
         // ---- the shipped bank ---------------------------------------------------------------
@@ -211,6 +196,15 @@ namespace SolarMajesty.Tests
                 if (!bank.TryGetLine((string)f.GetRawConstantValue(), out _)) missing.Add(f.Name);
             }
             Assert.IsEmpty(missing, "Unvoiced Grok lines (re-run Tools/audio/render_voices.py): " + string.Join(", ", missing));
+        }
+
+        [Test]
+        public void ShippedBank_CastsEverySpeaker()
+        {
+            var bank = Shipped();
+            Assert.IsTrue(bank.TryGetCast(VoiceBank.OverseerSpeaker, out _));
+            foreach (SpecialistClass cls in (SpecialistClass[])Enum.GetValues(typeof(SpecialistClass)))
+                Assert.IsTrue(bank.TryGetCast(VoiceBank.SpeakerFor(cls), out _), cls + " has no cast entry for live lines");
         }
 
         [Test]

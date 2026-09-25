@@ -1,5 +1,5 @@
 {
-  "_doc": "Voice casting for Solar Majesty. One entry per speaker. voice = Kokoro-82M voice id; speed = speaking rate; pitch = semitones (tempo is preserved); fx = robot processing preset in voice_fx.py. Used by render_voices.py (bark bank) and voice_server.py (live lines), so baked and live lines sound like the same character.",
+  "_doc": "Voice casting for Solar Majesty. One entry per speaker. voice = Kokoro-82M voice id; speed = speaking rate; pitch = semitones (tempo is preserved); fx = robot processing preset in voice_fx.py. Used by render_voices.py, which also copies it into voices.json so live TTS lines (HeroSpeaker) use the same voice, pitch and pace as the baked ones.",
   "overseer":            { "name": "Grok",    "voice": "af_heart",   "speed": 1.02, "pitch": 0.0,  "fx": "overseer" },
   "hero.EngineerBot":    { "name": "Anvil",   "voice": "am_onyx",    "speed": 1.05, "pitch": -1.0, "fx": "servo" },
   "hero.ScoutDrone":     { "name": "Horizon", "voice": "am_puck",    "speed": 1.18, "pitch": 3.0,  "fx": "drone" },

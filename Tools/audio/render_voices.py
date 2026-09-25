@@ -33,7 +33,10 @@ from voice_common import (BANK_DIR, HERE, MANIFEST, REPO, line_key, load_cast, l
 from voice_fx import SAMPLE_RATE, process, synth_speed
 
 SCRIPTS = REPO / "Assets" / "Scripts"
-FX_VERSION = hashlib.sha1((HERE / "voice_fx.py").read_bytes()).hexdigest()[:8]
+# Fingerprint of the processing code, without the module docstring, so a comment edit doesn't
+# make every clip look stale.
+FX_VERSION = hashlib.sha1(re.sub(r'\A\s*""".*?"""', "", (HERE / "voice_fx.py").read_text(encoding="utf-8"),
+                                 count=1, flags=re.S).encode("utf-8")).hexdigest()[:8]
 STRING = r'"((?:[^"\\]|\\.)*)"'
 
 
@@ -53,7 +56,7 @@ def extract_overseer_lines() -> list[str]:
         lines.append("".join(_unescape(p) for p in re.findall(STRING, m.group(1))))
 
     compact = (SCRIPTS / "Systems" / "CompactGrok.cs").read_text(encoding="utf-8")
-    # Only fixed lines; interpolated ($"...{amount}...") lines go to the live server or stay text.
+    # Only fixed lines; interpolated ($"...{amount}...") lines stay text (or go live via HeroSpeaker).
     lines += [_unescape(m) for m in re.findall(r"=>\s*" + STRING + r"\s*;", compact)]
 
     for path in (SCRIPTS / "Runtime").rglob("*.cs"):
@@ -176,7 +179,9 @@ def main() -> int:
             print(f"  removed stale {stale.name}")
 
     clips.sort(key=lambda c: (c["speaker"], c["cue"], c.get("take", 0), c.get("key", "")))
-    manifest = {"version": 1, "sampleRate": SAMPLE_RATE, "fx": FX_VERSION, "clips": clips}
+    # The cast rides along so live TTS lines (HeroSpeaker) use the same voice as the baked ones.
+    cast_out = {k: {f: v[f] for f in ("voice", "speed", "pitch", "fx")} for k, v in cast.items()}
+    manifest = {"version": 1, "sampleRate": SAMPLE_RATE, "fx": FX_VERSION, "cast": cast_out, "clips": clips}
     MANIFEST.write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"Baked {baked}, kept {kept}, total {len(clips)} clips in {time.time() - started:.0f}s → {MANIFEST.relative_to(REPO)}")
 

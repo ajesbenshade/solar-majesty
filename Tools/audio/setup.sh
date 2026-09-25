@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-time setup for Tools/audio: Python env + Kokoro-82M TTS weights (Apache-2.0, ~120 MB).
-# Needed only to re-bake audio or run the live voice server; the game ships the baked files.
+# Needed only to re-bake audio; the game ships the baked files. Live voices: Tools/local_ai/start_narrator.sh.
 set -euo pipefail
 cd "$(dirname "$0")"
 

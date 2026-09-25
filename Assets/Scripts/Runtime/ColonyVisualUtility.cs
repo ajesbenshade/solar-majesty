@@ -75,12 +75,16 @@ namespace SolarMajesty
             var rends = root.GetComponentsInChildren<Renderer>();
             if (rends == null || rends.Length == 0) return;
 
-            Bounds b = rends[0].bounds;
-            for (int i = 1; i < rends.Length; i++)
+            // Planet architecture (berms, skirts) is set into the ground on purpose; seat on the hull.
+            Bounds b = default;
+            bool any = false;
+            for (int i = 0; i < rends.Length; i++)
             {
-                if (rends[i] != null)
-                    b.Encapsulate(rends[i].bounds);
+                if (rends[i] == null || rends[i].name.StartsWith("Dress_Arch_")) continue;
+                if (!any) { b = rends[i].bounds; any = true; }
+                else b.Encapsulate(rends[i].bounds);
             }
+            if (!any) return;
 
             float dy = groundY - b.min.y;
             if (Mathf.Abs(dy) < 0.001f) return;

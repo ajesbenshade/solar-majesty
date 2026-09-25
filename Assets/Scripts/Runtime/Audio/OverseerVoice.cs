@@ -8,7 +8,7 @@ namespace SolarMajesty
     ///
     /// Scripted Grok lines are baked with Kokoro TTS (Tools/audio/render_voices.py) and found by
     /// their text, so anything that logs a catalogued line is spoken without knowing the bank
-    /// exists. Lines with numbers in them go to the live voice server when it is up. Warnings with
+    /// exists. Warnings with names or numbers in them go live through HeroSpeaker when SPOKEN is up. Warnings with
     /// no voiced line get a short generic alert, and a build with no bank at all falls back to the
     /// original vocoder babble: formant bursts whose count and pitch derive from the text.
     /// </summary>
@@ -63,13 +63,21 @@ namespace SolarMajesty
                 return;
             }
 
+            // Lines that couldn't be baked (names, numbers) go live in Grok's cast voice when SPOKEN is up.
             float asked = Time.unscaledTime;
-            bool sent = VoiceServerLink.Request(VoiceBank.OverseerSpeaker, line, clip =>
+            bool sent = false;
+            if (CharacterVoice.Bank.TryGetCast(VoiceBank.OverseerSpeaker, out VoiceCast cast))
             {
-                if (clip != null && Time.unscaledTime - asked < LiveStaleSeconds && Play(clip, priority, severity))
-                    return;
-                Fallback(line, severity, priority);
-            });
+                // Grok's cast pitch is 0, so the clip plays at its native rate.
+                HeroVoiceSpec voice = VoiceBank.LiveSpec(cast, out _);
+                sent = HeroSpeaker.Request(voice, line, clip =>
+                {
+                    if (clip != null) Object.Destroy(clip, clip.length + 1f);
+                    if (clip != null && Time.unscaledTime - asked < LiveStaleSeconds && Play(clip, priority, severity))
+                        return;
+                    Fallback(line, severity, priority);
+                });
+            }
             if (!sent) Fallback(line, severity, priority);
         }
 

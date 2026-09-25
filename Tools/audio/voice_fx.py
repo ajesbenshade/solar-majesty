@@ -1,5 +1,5 @@
-"""Robot voice processing shared by the bark bake (render_voices.py) and the live server
-(voice_server.py), so a baked bark and a live LLM line from the same character sound alike.
+"""Robot voice processing for the bark bake (render_voices.py). Live lines from the Kokoro server
+(Tools/local_ai/voice_server.py) get HeroSpeech.ApplyRobot in-game at a matching strength instead.
 
 Every speaker in Solar Majesty is a machine, so the processing is part of the character: the
 Overseer is clean with a digital sheen, workers get a servo box, mechs a heavy armoured

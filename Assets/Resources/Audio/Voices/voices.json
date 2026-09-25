@@ -1,7 +1,75 @@
 {
  "version": 1,
  "sampleRate": 24000,
- "fx": "05fde88f",
+ "fx": "02b5f02e",
+ "cast": {
+  "overseer": {
+   "voice": "af_heart",
+   "speed": 1.02,
+   "pitch": 0.0,
+   "fx": "overseer"
+  },
+  "hero.EngineerBot": {
+   "voice": "am_onyx",
+   "speed": 1.05,
+   "pitch": -1.0,
+   "fx": "servo"
+  },
+  "hero.ScoutDrone": {
+   "voice": "am_puck",
+   "speed": 1.18,
+   "pitch": 3.0,
+   "fx": "drone"
+  },
+  "hero.DefenseMech": {
+   "voice": "am_michael",
+   "speed": 0.98,
+   "pitch": -3.0,
+   "fx": "mech"
+  },
+  "hero.Medic": {
+   "voice": "af_sarah",
+   "speed": 1.0,
+   "pitch": 0.0,
+   "fx": "servo"
+  },
+  "hero.HarvesterBot": {
+   "voice": "am_echo",
+   "speed": 1.0,
+   "pitch": -2.0,
+   "fx": "servo"
+  },
+  "hero.SurveyorBot": {
+   "voice": "bf_alice",
+   "speed": 1.08,
+   "pitch": 1.0,
+   "fx": "drone"
+  },
+  "hero.TerraformerBot": {
+   "voice": "af_aoede",
+   "speed": 0.96,
+   "pitch": 0.0,
+   "fx": "servo"
+  },
+  "hero.CourierBot": {
+   "voice": "am_liam",
+   "speed": 1.12,
+   "pitch": 1.0,
+   "fx": "servo"
+  },
+  "hero.GeologistBot": {
+   "voice": "bm_lewis",
+   "speed": 1.04,
+   "pitch": -1.0,
+   "fx": "servo"
+  },
+  "hero.SentinelMech": {
+   "voice": "bm_daniel",
+   "speed": 0.94,
+   "pitch": -4.0,
+   "fx": "mech"
+  }
+ },
  "clips": [
   {
    "speaker": "hero.CourierBot",
@@ -9,7 +77,7 @@
    "take": 0,
    "text": "Hauling the flag. Keep the path clear.",
    "clip": "hero_courierbot_claim_0",
-   "hash": "78097df6a065",
+   "hash": "2ebabf5467cd",
    "seconds": 1.84,
    "peak_db": -4.3,
    "rms_db": -21.0
@@ -20,7 +88,7 @@
    "take": 1,
    "text": "Special delivery! On my way.",
    "clip": "hero_courierbot_claim_1",
-   "hash": "c006487970cf",
+   "hash": "8915f6d7fe31",
    "seconds": 1.68,
    "peak_db": -4.3,
    "rms_db": -20.8
@@ -31,7 +99,7 @@
    "take": 2,
    "text": "Signed, sealed, rolling.",
    "clip": "hero_courierbot_claim_2",
-   "hash": "4a68a747c872",
+   "hash": "17ebd280a9ef",
    "seconds": 1.37,
    "peak_db": -2.1,
    "rms_db": -20.8
@@ -42,7 +110,7 @@
    "take": 0,
    "text": "Delivery... failed...",
    "clip": "hero_courierbot_down_0",
-   "hash": "48a94106a9dd",
+   "hash": "e0713a616395",
    "seconds": 1.28,
    "peak_db": -5.4,
    "rms_db": -20.7
@@ -53,7 +121,7 @@
    "take": 1,
    "text": "Return to... sender...",
    "clip": "hero_courierbot_down_1",
-   "hash": "d494901ab887",
+   "hash": "d9ef7256556a",
    "seconds": 1.39,
    "peak_db": -2.6,
    "rms_db": -20.6
@@ -64,7 +132,7 @@
    "take": 2,
    "text": "Package... lost...",
    "clip": "hero_courierbot_down_2",
-   "hash": "c633e8679ce9",
+   "hash": "60c694e08ad3",
    "seconds": 1.17,
    "peak_db": -2.6,
    "rms_db": -20.7
@@ -75,7 +143,7 @@
    "take": 0,
    "text": "Cargo's precious! So am I!",
    "clip": "hero_courierbot_flee_0",
-   "hash": "9c8813301b0e",
+   "hash": "fbdf9cf9028f",
    "seconds": 1.54,
    "peak_db": -3.9,
    "rms_db": -20.6
@@ -86,7 +154,7 @@
    "take": 1,
    "text": "Express retreat!",
    "clip": "hero_courierbot_flee_1",
-   "hash": "be2a5ae8484f",
+   "hash": "433eaad9806f",
    "seconds": 1.29,
    "peak_db": -3.7,
    "rms_db": -20.8
@@ -97,7 +165,7 @@
    "take": 2,
    "text": "Full throttle, going home!",
    "clip": "hero_courierbot_flee_2",
-   "hash": "289ff937a0a2",
+   "hash": "1ed990fb1bb3",
    "seconds": 1.58,
    "peak_db": -4.2,
    "rms_db": -20.8
@@ -108,7 +176,7 @@
    "take": 0,
    "text": "I deliver packages, not punches.",
    "clip": "hero_courierbot_hunt_0",
-   "hash": "edeba7511a9f",
+   "hash": "cfe05bf189ad",
    "seconds": 2.03,
    "peak_db": -1.0,
    "rms_db": -19.0
@@ -119,7 +187,7 @@
    "take": 1,
    "text": "Is that thing a customer?",
    "clip": "hero_courierbot_hunt_1",
-   "hash": "2a9b6ac3c7de",
+   "hash": "e7d47860441f",
    "seconds": 1.42,
    "peak_db": -4.1,
    "rms_db": -20.9
@@ -130,7 +198,7 @@
    "take": 2,
    "text": "Detouring. Carefully.",
    "clip": "hero_courierbot_hunt_2",
-   "hash": "7ecb67d821a5",
+   "hash": "630d2bc5352e",
    "seconds": 1.33,
    "peak_db": -4.9,
    "rms_db": -20.7
@@ -141,7 +209,7 @@
    "take": 0,
    "text": "Hey! Fragile!",
    "clip": "hero_courierbot_hurt_0",
-   "hash": "cec4831ac05d",
+   "hash": "5b32f47e7bdb",
    "seconds": 1.1,
    "peak_db": -4.7,
    "rms_db": -21.0
@@ -152,7 +220,7 @@
    "take": 1,
    "text": "Ow! Handle with care!",
    "clip": "hero_courierbot_hurt_1",
-   "hash": "8b7d077512c4",
+   "hash": "313f0d968efd",
    "seconds": 1.31,
    "peak_db": -5.0,
    "rms_db": -20.8
@@ -163,7 +231,7 @@
    "take": 2,
    "text": "My cargo!",
    "clip": "hero_courierbot_hurt_2",
-   "hash": "2faf49894ea0",
+   "hash": "dc8aca650931",
    "seconds": 1.05,
    "peak_db": -5.3,
    "rms_db": -20.8
@@ -174,7 +242,7 @@
    "take": 0,
    "text": "Faster wheels! Priority shipping!",
    "clip": "hero_courierbot_levelup_0",
-   "hash": "e2234a2cbb63",
+   "hash": "794b8824bf72",
    "seconds": 1.8,
    "peak_db": -2.6,
    "rms_db": -21.0
@@ -185,7 +253,7 @@
    "take": 1,
    "text": "Bigger cargo bay!",
    "clip": "hero_courierbot_levelup_1",
-   "hash": "f4e767c8dfc2",
+   "hash": "a689590d4b58",
    "seconds": 1.3,
    "peak_db": -5.7,
    "rms_db": -20.7
@@ -196,7 +264,7 @@
    "take": 2,
    "text": "Premium courier now!",
    "clip": "hero_courierbot_levelup_2",
-   "hash": "8074336e7cc5",
+   "hash": "e6e840b22703",
    "seconds": 1.4,
    "peak_db": -4.5,
    "rms_db": -20.5
@@ -207,7 +275,7 @@
    "take": 0,
    "text": "Not on my route. Okay!",
    "clip": "hero_courierbot_refused_0",
-   "hash": "b544b597ab27",
+   "hash": "02a83117afb8",
    "seconds": 1.44,
    "peak_db": -4.0,
    "rms_db": -20.7
@@ -218,7 +286,7 @@
    "take": 1,
    "text": "Another courier's problem.",
    "clip": "hero_courierbot_refused_1",
-   "hash": "ea0fbffa17b2",
+   "hash": "84cd560cf9eb",
    "seconds": 1.53,
    "peak_db": -5.4,
    "rms_db": -20.7
@@ -229,7 +297,7 @@
    "take": 2,
    "text": "Denied delivery. Noted.",
    "clip": "hero_courierbot_refused_2",
-   "hash": "27d003935f37",
+   "hash": "5355e4a20ecf",
    "seconds": 1.57,
    "peak_db": -3.3,
    "rms_db": -20.5
@@ -240,7 +308,7 @@
    "take": 0,
    "text": "Delivering one patch.",
    "clip": "hero_courierbot_repair_0",
-   "hash": "f933542c0b0b",
+   "hash": "6986d312305c",
    "seconds": 1.41,
    "peak_db": -5.5,
    "rms_db": -20.6
@@ -251,7 +319,7 @@
    "take": 1,
    "text": "Parts incoming.",
    "clip": "hero_courierbot_repair_1",
-   "hash": "9fe3c0122e91",
+   "hash": "6b97e1c2ce8c",
    "seconds": 1.14,
    "peak_db": -4.0,
    "rms_db": -20.6
@@ -262,7 +330,7 @@
    "take": 2,
    "text": "Signed for one repair.",
    "clip": "hero_courierbot_repair_2",
-   "hash": "4e99bb93cb08",
+   "hash": "3e4edf36254d",
    "seconds": 1.38,
    "peak_db": -3.0,
    "rms_db": -20.8
@@ -273,7 +341,7 @@
    "take": 0,
    "text": "End of shift. Parking.",
    "clip": "hero_courierbot_rest_0",
-   "hash": "21cc733920ab",
+   "hash": "783d099606bc",
    "seconds": 1.35,
    "peak_db": -4.7,
    "rms_db": -20.8
@@ -284,7 +352,7 @@
    "take": 1,
    "text": "Tires need a rest.",
    "clip": "hero_courierbot_rest_1",
-   "hash": "f7a913c5c18f",
+   "hash": "2c6cc700b0b7",
    "seconds": 1.3,
    "peak_db": -4.4,
    "rms_db": -20.9
@@ -295,7 +363,7 @@
    "take": 2,
    "text": "Charging at the depot.",
    "clip": "hero_courierbot_rest_2",
-   "hash": "04d382f8de1c",
+   "hash": "710ecbb2488b",
    "seconds": 1.37,
    "peak_db": -3.4,
    "rms_db": -20.7
@@ -306,7 +374,7 @@
    "take": 0,
    "text": "Haul here! Deliveries?",
    "clip": "hero_courierbot_select_0",
-   "hash": "9f39ea957473",
+   "hash": "7a74e1810c22",
    "seconds": 1.36,
    "peak_db": -4.6,
    "rms_db": -20.5
@@ -317,7 +385,7 @@
    "take": 1,
    "text": "Package, pad, or purse?",
    "clip": "hero_courierbot_select_1",
-   "hash": "05994f86aa30",
+   "hash": "19e0bdf1f2ce",
    "seconds": 1.46,
    "peak_db": -4.7,
    "rms_db": -20.5
@@ -328,7 +396,7 @@
    "take": 2,
    "text": "Wheels ready!",
    "clip": "hero_courierbot_select_2",
-   "hash": "f093fad39d2e",
+   "hash": "13a1ed82a168",
    "seconds": 0.97,
    "peak_db": -4.4,
    "rms_db": -20.8
@@ -339,7 +407,7 @@
    "take": 0,
    "text": "No deliveries? Weird day.",
    "clip": "hero_courierbot_wander_0",
-   "hash": "fa6358f0d881",
+   "hash": "fecee7ec85d1",
    "seconds": 1.56,
    "peak_db": -3.7,
    "rms_db": -20.7
@@ -350,7 +418,7 @@
    "take": 1,
    "text": "Rolling the loop.",
    "clip": "hero_courierbot_wander_1",
-   "hash": "34b0e4b6f185",
+   "hash": "000b0e0cf634",
    "seconds": 1.14,
    "peak_db": -6.0,
    "rms_db": -21.3
@@ -361,7 +429,7 @@
    "take": 2,
    "text": "Any packages? Anyone?",
    "clip": "hero_courierbot_wander_2",
-   "hash": "48bd8e916ef5",
+   "hash": "5c0cdd7427d6",
    "seconds": 1.44,
    "peak_db": -2.6,
    "rms_db": -20.7
@@ -372,7 +440,7 @@
    "take": 0,
    "text": "Den marked. Stay behind the shield.",
    "clip": "hero_defensemech_claim_0",
-   "hash": "2e3c30b31023",
+   "hash": "b31413adf3b9",
    "seconds": 2.26,
    "peak_db": -5.3,
    "rms_db": -21.4
@@ -383,7 +451,7 @@
    "take": 1,
    "text": "Target accepted. Nothing gets past me.",
    "clip": "hero_defensemech_claim_1",
-   "hash": "bf6baf0831da",
+   "hash": "19d3563a4080",
    "seconds": 2.82,
    "peak_db": -5.3,
    "rms_db": -21.6
@@ -394,7 +462,7 @@
    "take": 2,
    "text": "I'll hold the line.",
    "clip": "hero_defensemech_claim_2",
-   "hash": "58de4eeb2506",
+   "hash": "de48bcc40c9d",
    "seconds": 1.33,
    "peak_db": -6.9,
    "rms_db": -21.4
@@ -405,7 +473,7 @@
    "take": 0,
    "text": "Shield... failing...",
    "clip": "hero_defensemech_down_0",
-   "hash": "594866381769",
+   "hash": "32ef99ed0e1a",
    "seconds": 1.29,
    "peak_db": -5.2,
    "rms_db": -21.0
@@ -416,7 +484,7 @@
    "take": 1,
    "text": "The line... hold the line...",
    "clip": "hero_defensemech_down_1",
-   "hash": "384a5be7967d",
+   "hash": "4cd0bb0bcdc0",
    "seconds": 1.6,
    "peak_db": -6.2,
    "rms_db": -20.9
@@ -427,7 +495,7 @@
    "take": 2,
    "text": "Mech down.",
    "clip": "hero_defensemech_down_2",
-   "hash": "f21ff75f7d2a",
+   "hash": "317de4714442",
    "seconds": 0.94,
    "peak_db": -7.6,
    "rms_db": -22.2
@@ -438,7 +506,7 @@
    "take": 0,
    "text": "Armor's cracked. Pulling back.",
    "clip": "hero_defensemech_flee_0",
-   "hash": "571091f27083",
+   "hash": "7b9b00fe4118",
    "seconds": 1.84,
    "peak_db": -6.9,
    "rms_db": -22.1
@@ -449,7 +517,7 @@
    "take": 1,
    "text": "Tactical withdrawal. Cover the colony.",
    "clip": "hero_defensemech_flee_1",
-   "hash": "adef0f11061e",
+   "hash": "e3238ac4e788",
    "seconds": 2.56,
    "peak_db": -3.8,
    "rms_db": -21.2
@@ -460,7 +528,7 @@
    "take": 2,
    "text": "Retreating to repair. I'll be back.",
    "clip": "hero_defensemech_flee_2",
-   "hash": "550abede9cc1",
+   "hash": "59471c2b323b",
    "seconds": 2.28,
    "peak_db": -5.0,
    "rms_db": -21.4
@@ -471,7 +539,7 @@
    "take": 0,
    "text": "Hostile contact. Engaging.",
    "clip": "hero_defensemech_hunt_0",
-   "hash": "1d6a0c4396a2",
+   "hash": "885faeb0baa6",
    "seconds": 2.32,
    "peak_db": -5.0,
    "rms_db": -21.5
@@ -482,7 +550,7 @@
    "take": 1,
    "text": "Something's out there. Not for long.",
    "clip": "hero_defensemech_hunt_1",
-   "hash": "3b496fdbe7f5",
+   "hash": "c1da765a89b8",
    "seconds": 2.25,
    "peak_db": -4.7,
    "rms_db": -21.8
@@ -493,7 +561,7 @@
    "take": 2,
    "text": "Sweeping the perimeter.",
    "clip": "hero_defensemech_hunt_2",
-   "hash": "74417bcb0a60",
+   "hash": "83aeda303909",
    "seconds": 1.37,
    "peak_db": -6.4,
    "rms_db": -20.9
@@ -504,7 +572,7 @@
    "take": 0,
    "text": "Taking fire!",
    "clip": "hero_defensemech_hurt_0",
-   "hash": "82959ddca287",
+   "hash": "778340faf5f5",
    "seconds": 1.07,
    "peak_db": -4.5,
    "rms_db": -21.0
@@ -515,7 +583,7 @@
    "take": 1,
    "text": "Just a scratch.",
    "clip": "hero_defensemech_hurt_1",
-   "hash": "256cacc46d1b",
+   "hash": "8e9bbdbc5b3f",
    "seconds": 1.14,
    "peak_db": -6.2,
    "rms_db": -22.0
@@ -526,7 +594,7 @@
    "take": 2,
    "text": "Hit! Still standing.",
    "clip": "hero_defensemech_hurt_2",
-   "hash": "c0ed63fd4a32",
+   "hash": "5e9f84eadd3d",
    "seconds": 1.31,
    "peak_db": -7.2,
    "rms_db": -21.6
@@ -537,7 +605,7 @@
    "take": 0,
    "text": "Stronger. Heavier. Ready.",
    "clip": "hero_defensemech_levelup_0",
-   "hash": "62ace000c79f",
+   "hash": "9a36234c7bd4",
    "seconds": 1.63,
    "peak_db": -5.1,
    "rms_db": -21.1
@@ -548,7 +616,7 @@
    "take": 1,
    "text": "Upgrade complete. Bring them on.",
    "clip": "hero_defensemech_levelup_1",
-   "hash": "3824bdc76e70",
+   "hash": "541050a4199c",
    "seconds": 2.27,
    "peak_db": -4.6,
    "rms_db": -21.9
@@ -559,7 +627,7 @@
    "take": 2,
    "text": "Combat rating up.",
    "clip": "hero_defensemech_levelup_2",
-   "hash": "288355796848",
+   "hash": "4923023f8bb2",
    "seconds": 1.4,
    "peak_db": -5.3,
    "rms_db": -21.1
@@ -570,7 +638,7 @@
    "take": 0,
    "text": "Orders say no. I obey.",
    "clip": "hero_defensemech_refused_0",
-   "hash": "32f8c6171920",
+   "hash": "bcdc04c1378a",
    "seconds": 2.0,
    "peak_db": -5.8,
    "rms_db": -21.5
@@ -581,7 +649,7 @@
    "take": 1,
    "text": "Understood. Standing down.",
    "clip": "hero_defensemech_refused_1",
-   "hash": "a78ef29057ef",
+   "hash": "9f5ce74120ed",
    "seconds": 1.86,
    "peak_db": -4.9,
    "rms_db": -21.6
@@ -592,7 +660,7 @@
    "take": 2,
    "text": "Not my fight today.",
    "clip": "hero_defensemech_refused_2",
-   "hash": "88ce63460a67",
+   "hash": "cfa6fb13b849",
    "seconds": 1.44,
    "peak_db": -4.4,
    "rms_db": -21.0
@@ -603,7 +671,7 @@
    "take": 0,
    "text": "Hull breach. Sealing it.",
    "clip": "hero_defensemech_repair_0",
-   "hash": "8e64df489e60",
+   "hash": "1404d6eabc2a",
    "seconds": 1.58,
    "peak_db": -5.0,
    "rms_db": -21.0
@@ -614,7 +682,7 @@
    "take": 1,
    "text": "Patching the wall. Walls matter.",
    "clip": "hero_defensemech_repair_1",
-   "hash": "8f25647ee4cf",
+   "hash": "fc7e624caf0b",
    "seconds": 2.07,
    "peak_db": -5.5,
    "rms_db": -21.5
@@ -625,7 +693,7 @@
    "take": 2,
    "text": "Structure first. Glory later.",
    "clip": "hero_defensemech_repair_2",
-   "hash": "fd40f3cb8ab7",
+   "hash": "8bb22cd8f9a3",
    "seconds": 2.27,
    "peak_db": -3.8,
    "rms_db": -21.9
@@ -636,7 +704,7 @@
    "take": 0,
    "text": "Servos need a minute.",
    "clip": "hero_defensemech_rest_0",
-   "hash": "58f5a27d1253",
+   "hash": "2bbe6a46ec36",
    "seconds": 1.43,
    "peak_db": -5.7,
    "rms_db": -20.9
@@ -647,7 +715,7 @@
    "take": 1,
    "text": "Resting. Stay sharp without me.",
    "clip": "hero_defensemech_rest_1",
-   "hash": "83e8590fb3b3",
+   "hash": "c34c6220a45f",
    "seconds": 2.01,
    "peak_db": -4.8,
    "rms_db": -21.2
@@ -658,7 +726,7 @@
    "take": 2,
    "text": "Recharging the shield.",
    "clip": "hero_defensemech_rest_2",
-   "hash": "4fd19a558fc5",
+   "hash": "eb42f81c7471",
    "seconds": 1.45,
    "peak_db": -5.3,
    "rms_db": -21.4
@@ -669,7 +737,7 @@
    "take": 0,
    "text": "Aegis online. Point me at trouble.",
    "clip": "hero_defensemech_select_0",
-   "hash": "a2abc61b2a7b",
+   "hash": "c920733024e3",
    "seconds": 2.34,
    "peak_db": -4.7,
    "rms_db": -21.1
@@ -680,7 +748,7 @@
    "take": 1,
    "text": "Shield up. Standing by.",
    "clip": "hero_defensemech_select_1",
-   "hash": "99b5a696c033",
+   "hash": "c1251e5ad372",
    "seconds": 1.77,
    "peak_db": -6.1,
    "rms_db": -21.5
@@ -691,7 +759,7 @@
    "take": 2,
    "text": "Say the word, Overseer.",
    "clip": "hero_defensemech_select_2",
-   "hash": "6194744482d2",
+   "hash": "f720f91eefc3",
    "seconds": 1.58,
    "peak_db": -5.6,
    "rms_db": -20.8
@@ -702,7 +770,7 @@
    "take": 0,
    "text": "Quiet. Too quiet.",
    "clip": "hero_defensemech_wander_0",
-   "hash": "59d27f2ea8e6",
+   "hash": "520ccd87ff5e",
    "seconds": 1.29,
    "peak_db": -6.3,
    "rms_db": -21.5
@@ -713,7 +781,7 @@
    "take": 1,
    "text": "Walking the rim. All clear.",
    "clip": "hero_defensemech_wander_1",
-   "hash": "a17c72ed3689",
+   "hash": "5bac2f2a3173",
    "seconds": 1.75,
    "peak_db": -3.7,
    "rms_db": -21.3
@@ -724,7 +792,7 @@
    "take": 2,
    "text": "No threats. For now.",
    "clip": "hero_defensemech_wander_2",
-   "hash": "8832d014d9b5",
+   "hash": "5ab06b911de8",
    "seconds": 1.45,
    "peak_db": -5.2,
    "rms_db": -21.2
@@ -735,7 +803,7 @@
    "take": 0,
    "text": "Now that's a bounty I can weld.",
    "clip": "hero_engineerbot_claim_0",
-   "hash": "a93370340603",
+   "hash": "b82507ef6f6f",
    "seconds": 2.4,
    "peak_db": -3.3,
    "rms_db": -22.2
@@ -746,7 +814,7 @@
    "take": 1,
    "text": "On the books. Don't cheap out on me.",
    "clip": "hero_engineerbot_claim_1",
-   "hash": "3be66871200a",
+   "hash": "89bd52a39523",
    "seconds": 2.31,
    "peak_db": -3.1,
    "rms_db": -23.3
@@ -757,7 +825,7 @@
    "take": 2,
    "text": "Paid work. Finally.",
    "clip": "hero_engineerbot_claim_2",
-   "hash": "fb1a714b82d1",
+   "hash": "85ee7bbb40f6",
    "seconds": 1.84,
    "peak_db": -4.9,
    "rms_db": -22.9
@@ -768,7 +836,7 @@
    "take": 0,
    "text": "Tell the yard I'm worth it.",
    "clip": "hero_engineerbot_down_0",
-   "hash": "73e63487b76d",
+   "hash": "b747c2d54ddf",
    "seconds": 1.97,
    "peak_db": -3.9,
    "rms_db": -22.0
@@ -779,7 +847,7 @@
    "take": 1,
    "text": "Systems... going... cheap.",
    "clip": "hero_engineerbot_down_1",
-   "hash": "e5f97e64a409",
+   "hash": "c6833b593b4c",
    "seconds": 2.18,
    "peak_db": -3.1,
    "rms_db": -22.8
@@ -790,7 +858,7 @@
    "take": 2,
    "text": "Somebody... pick me up...",
    "clip": "hero_engineerbot_down_2",
-   "hash": "a871da4bd99a",
+   "hash": "de5aa75c721f",
    "seconds": 1.81,
    "peak_db": -3.1,
    "rms_db": -23.0
@@ -801,7 +869,7 @@
    "take": 0,
    "text": "Nope! Too many teeth!",
    "clip": "hero_engineerbot_flee_0",
-   "hash": "77569d2f03b4",
+   "hash": "0661fc1f047d",
    "seconds": 1.47,
    "peak_db": -4.2,
    "rms_db": -22.7
@@ -812,7 +880,7 @@
    "take": 1,
    "text": "I'm an engineer, not a snack!",
    "clip": "hero_engineerbot_flee_1",
-   "hash": "34d675b9a9d7",
+   "hash": "fb636e12558a",
    "seconds": 2.05,
    "peak_db": -5.0,
    "rms_db": -21.7
@@ -823,7 +891,7 @@
    "take": 2,
    "text": "Falling back. Strategically. Quickly.",
    "clip": "hero_engineerbot_flee_2",
-   "hash": "63274c056845",
+   "hash": "d8c461125c9c",
    "seconds": 2.69,
    "peak_db": -4.0,
    "rms_db": -23.1
@@ -834,7 +902,7 @@
    "take": 0,
    "text": "Hunting? I'd rather be welding.",
    "clip": "hero_engineerbot_hunt_0",
-   "hash": "6aac4a7ffdc8",
+   "hash": "631d3e1f9c50",
    "seconds": 2.3,
    "peak_db": -2.2,
    "rms_db": -22.1
@@ -845,7 +913,7 @@
    "take": 1,
    "text": "Fine. Hazard pay better be real.",
    "clip": "hero_engineerbot_hunt_1",
-   "hash": "e3438321e6f5",
+   "hash": "f989fbb40bd9",
    "seconds": 2.69,
    "peak_db": -1.1,
    "rms_db": -20.3
@@ -856,7 +924,7 @@
    "take": 2,
    "text": "I'll poke it. From a distance.",
    "clip": "hero_engineerbot_hunt_2",
-   "hash": "5192b7b6e3ec",
+   "hash": "cc9aa083a1af",
    "seconds": 2.13,
    "peak_db": -4.6,
    "rms_db": -23.6
@@ -867,7 +935,7 @@
    "take": 0,
    "text": "Ow! That's my good arm!",
    "clip": "hero_engineerbot_hurt_0",
-   "hash": "0b31ceccc075",
+   "hash": "1c5892ce0dfb",
    "seconds": 1.93,
    "peak_db": -3.1,
    "rms_db": -22.5
@@ -878,7 +946,7 @@
    "take": 1,
    "text": "Hey! I'm billing you for that!",
    "clip": "hero_engineerbot_hurt_1",
-   "hash": "a0fe372e0d73",
+   "hash": "a59b09fbc9a7",
    "seconds": 2.16,
    "peak_db": -4.4,
    "rms_db": -22.1
@@ -889,7 +957,7 @@
    "take": 2,
    "text": "Paint job's ruined!",
    "clip": "hero_engineerbot_hurt_2",
-   "hash": "1ec684a4b867",
+   "hash": "4b46302bceca",
    "seconds": 1.92,
    "peak_db": -5.4,
    "rms_db": -23.2
@@ -900,7 +968,7 @@
    "take": 0,
    "text": "Promotion! That's a raise, right?",
    "clip": "hero_engineerbot_levelup_0",
-   "hash": "4f2a89e18e48",
+   "hash": "dcf363dd4246",
    "seconds": 2.28,
    "peak_db": -3.0,
    "rms_db": -22.5
@@ -911,7 +979,7 @@
    "take": 1,
    "text": "New level. New rates.",
    "clip": "hero_engineerbot_levelup_1",
-   "hash": "3d3bcdce2f64",
+   "hash": "9b8bf202f395",
    "seconds": 1.49,
    "peak_db": -2.9,
    "rms_db": -21.9
@@ -922,7 +990,7 @@
    "take": 2,
    "text": "Better welds. Bigger invoices.",
    "clip": "hero_engineerbot_levelup_2",
-   "hash": "20e64809b8b9",
+   "hash": "07b939fbeada",
    "seconds": 2.46,
    "peak_db": -4.8,
    "rms_db": -22.5
@@ -933,7 +1001,7 @@
    "take": 0,
    "text": "Not allowed? Fine. Your loss, not mine.",
    "clip": "hero_engineerbot_refused_0",
-   "hash": "0960e551b668",
+   "hash": "d3ad8ac77715",
    "seconds": 2.75,
    "peak_db": -3.8,
    "rms_db": -22.3
@@ -944,7 +1012,7 @@
    "take": 1,
    "text": "Orders say no. My wallet says ouch.",
    "clip": "hero_engineerbot_refused_1",
-   "hash": "32f9ef4c0de9",
+   "hash": "82834a91446a",
    "seconds": 2.78,
    "peak_db": -3.9,
    "rms_db": -22.1
@@ -955,7 +1023,7 @@
    "take": 2,
    "text": "Somebody else can have that one.",
    "clip": "hero_engineerbot_refused_2",
-   "hash": "fd3d202075d4",
+   "hash": "c0fc10390fc4",
    "seconds": 2.33,
    "peak_db": -6.1,
    "rms_db": -22.9
@@ -966,7 +1034,7 @@
    "take": 0,
    "text": "Leaky hull. My favorite kind of money.",
    "clip": "hero_engineerbot_repair_0",
-   "hash": "a94e51c75b05",
+   "hash": "e6f71edb28f4",
    "seconds": 2.64,
    "peak_db": -2.4,
    "rms_db": -22.8
@@ -977,7 +1045,7 @@
    "take": 1,
    "text": "I'll patch it. Invoice to follow.",
    "clip": "hero_engineerbot_repair_1",
-   "hash": "4df087859f93",
+   "hash": "a835a3b135f3",
    "seconds": 2.37,
    "peak_db": -1.7,
    "rms_db": -22.2
@@ -988,7 +1056,7 @@
    "take": 2,
    "text": "Hold still, you ugly module.",
    "clip": "hero_engineerbot_repair_2",
-   "hash": "7599f0803ab0",
+   "hash": "b3d6b815cbc5",
    "seconds": 2.37,
    "peak_db": -5.0,
    "rms_db": -22.6
@@ -999,7 +1067,7 @@
    "take": 0,
    "text": "Torque arm's shot. Inn time.",
    "clip": "hero_engineerbot_rest_0",
-   "hash": "91478e430b78",
+   "hash": "dd7f31634f62",
    "seconds": 2.33,
    "peak_db": -4.5,
    "rms_db": -22.5
@@ -1010,7 +1078,7 @@
    "take": 1,
    "text": "Recharge first. Then the overtime.",
    "clip": "hero_engineerbot_rest_1",
-   "hash": "8dab4a4b30d4",
+   "hash": "e36ed2122c4f",
    "seconds": 2.78,
    "peak_db": -3.8,
    "rms_db": -23.3
@@ -1021,7 +1089,7 @@
    "take": 2,
    "text": "Break. Paid break, ideally.",
    "clip": "hero_engineerbot_rest_2",
-   "hash": "3230da8cc77b",
+   "hash": "99e420c49cb5",
    "seconds": 2.33,
    "peak_db": -5.1,
    "rms_db": -22.7
@@ -1032,7 +1100,7 @@
    "take": 0,
    "text": "Clock's running, boss.",
    "clip": "hero_engineerbot_select_0",
-   "hash": "e196f45220c2",
+   "hash": "4e1f65f3457b",
    "seconds": 1.8,
    "peak_db": -4.4,
    "rms_db": -23.0
@@ -1043,7 +1111,7 @@
    "take": 1,
    "text": "Talk fast. I bill by the minute.",
    "clip": "hero_engineerbot_select_1",
-   "hash": "ba3a9c3dcec2",
+   "hash": "dbf4bc96d72d",
    "seconds": 2.49,
    "peak_db": -4.2,
    "rms_db": -22.8
@@ -1054,7 +1122,7 @@
    "take": 2,
    "text": "Got a job? Got credits?",
    "clip": "hero_engineerbot_select_2",
-   "hash": "4b06129c4702",
+   "hash": "5da8ab069666",
    "seconds": 2.16,
    "peak_db": -5.1,
    "rms_db": -23.2
@@ -1065,7 +1133,7 @@
    "take": 0,
    "text": "Nothing to build? Weird.",
    "clip": "hero_engineerbot_wander_0",
-   "hash": "821eb92d193d",
+   "hash": "c2a9cf5d6349",
    "seconds": 2.06,
    "peak_db": -3.1,
    "rms_db": -22.5
@@ -1076,7 +1144,7 @@
    "take": 1,
    "text": "Idle hands. Unpaid hands.",
    "clip": "hero_engineerbot_wander_1",
-   "hash": "bac9b6008bb4",
+   "hash": "b63c111e8f56",
    "seconds": 2.37,
    "peak_db": -4.8,
    "rms_db": -22.6
@@ -1087,7 +1155,7 @@
    "take": 2,
    "text": "Somebody post a flag already.",
    "clip": "hero_engineerbot_wander_2",
-   "hash": "c05244ffd265",
+   "hash": "3e21c0df68b3",
    "seconds": 2.56,
    "peak_db": -4.1,
    "rms_db": -22.6
@@ -1098,7 +1166,7 @@
    "take": 0,
    "text": "Core sample logged. The lab will love this.",
    "clip": "hero_geologistbot_claim_0",
-   "hash": "f1dfbaca1365",
+   "hash": "19eb1a57bd34",
    "seconds": 2.95,
    "peak_db": -0.4,
    "rms_db": -20.3
@@ -1109,7 +1177,7 @@
    "take": 1,
    "text": "Reading the crust. On my way.",
    "clip": "hero_geologistbot_claim_1",
-   "hash": "7039b61b48d3",
+   "hash": "9ee793f331bd",
    "seconds": 2.1,
    "peak_db": -1.4,
    "rms_db": -20.1
@@ -1120,7 +1188,7 @@
    "take": 2,
    "text": "Oh, promising layers there.",
    "clip": "hero_geologistbot_claim_2",
-   "hash": "ad7fc3cc6d17",
+   "hash": "b658bf141ed0",
    "seconds": 1.76,
    "peak_db": -2.1,
    "rms_db": -21.8
@@ -1131,7 +1199,7 @@
    "take": 0,
    "text": "Bury me... in good strata...",
    "clip": "hero_geologistbot_down_0",
-   "hash": "a9841827ab9e",
+   "hash": "7289fded2606",
    "seconds": 1.87,
    "peak_db": -3.4,
    "rms_db": -22.0
@@ -1142,7 +1210,7 @@
    "take": 1,
    "text": "Eroding...",
    "clip": "hero_geologistbot_down_1",
-   "hash": "10f95ab98bcd",
+   "hash": "8c070ff811a5",
    "seconds": 0.77,
    "peak_db": -1.3,
    "rms_db": -19.8
@@ -1153,7 +1221,7 @@
    "take": 2,
    "text": "Samples... safe?...",
    "clip": "hero_geologistbot_down_2",
-   "hash": "75a6e7a12b99",
+   "hash": "32dfe2aa96bb",
    "seconds": 1.26,
    "peak_db": -2.5,
    "rms_db": -22.6
@@ -1164,7 +1232,7 @@
    "take": 0,
    "text": "My samples! Run!",
    "clip": "hero_geologistbot_flee_0",
-   "hash": "7681afc98e37",
+   "hash": "74aef43faea5",
    "seconds": 1.42,
    "peak_db": -3.3,
    "rms_db": -22.2
@@ -1175,7 +1243,7 @@
    "take": 1,
    "text": "Unstable situation! Leaving!",
    "clip": "hero_geologistbot_flee_1",
-   "hash": "770ad4aab7bc",
+   "hash": "cb0f1df18b7c",
    "seconds": 2.33,
    "peak_db": -2.0,
    "rms_db": -22.1
@@ -1186,7 +1254,7 @@
    "take": 2,
    "text": "Retreating to solid ground!",
    "clip": "hero_geologistbot_flee_2",
-   "hash": "18266362e894",
+   "hash": "18e577b21fda",
    "seconds": 1.89,
    "peak_db": -3.1,
    "rms_db": -21.8
@@ -1197,7 +1265,7 @@
    "take": 0,
    "text": "That creature disturbed my samples.",
    "clip": "hero_geologistbot_hunt_0",
-   "hash": "635810d85f37",
+   "hash": "54cb787565d9",
    "seconds": 2.36,
    "peak_db": -2.1,
    "rms_db": -22.5
@@ -1208,7 +1276,7 @@
    "take": 1,
    "text": "Fine. Quick, before the dust settles.",
    "clip": "hero_geologistbot_hunt_1",
-   "hash": "00f9f6b26888",
+   "hash": "11a1462100dd",
    "seconds": 2.38,
    "peak_db": -1.3,
    "rms_db": -20.8
@@ -1219,7 +1287,7 @@
    "take": 2,
    "text": "Rocks are nicer than this.",
    "clip": "hero_geologistbot_hunt_2",
-   "hash": "41ab3dfebd1e",
+   "hash": "2a472bf4b364",
    "seconds": 1.56,
    "peak_db": -1.1,
    "rms_db": -19.7
@@ -1230,7 +1298,7 @@
    "take": 0,
    "text": "Ow! Igneous rudeness!",
    "clip": "hero_geologistbot_hurt_0",
-   "hash": "f75e2e58b81b",
+   "hash": "7be3d4b5ef56",
    "seconds": 1.64,
    "peak_db": -2.3,
    "rms_db": -21.9
@@ -1241,7 +1309,7 @@
    "take": 1,
    "text": "My spectrometer!",
    "clip": "hero_geologistbot_hurt_1",
-   "hash": "a0a1e95f4383",
+   "hash": "1de63819598f",
    "seconds": 1.19,
    "peak_db": -3.1,
    "rms_db": -21.3
@@ -1252,7 +1320,7 @@
    "take": 2,
    "text": "That cracked something!",
    "clip": "hero_geologistbot_hurt_2",
-   "hash": "74c716a53bb9",
+   "hash": "1b3bd84d2b96",
    "seconds": 1.19,
    "peak_db": -1.8,
    "rms_db": -21.6
@@ -1263,7 +1331,7 @@
    "take": 0,
    "text": "Deeper cores!",
    "clip": "hero_geologistbot_levelup_0",
-   "hash": "ca49e530d778",
+   "hash": "40ca3bcdd67b",
    "seconds": 0.98,
    "peak_db": -3.6,
    "rms_db": -21.7
@@ -1274,7 +1342,7 @@
    "take": 1,
    "text": "Better spectrometer!",
    "clip": "hero_geologistbot_levelup_1",
-   "hash": "4e00c07c46fd",
+   "hash": "a010037708e5",
    "seconds": 1.23,
    "peak_db": -2.8,
    "rms_db": -21.5
@@ -1285,7 +1353,7 @@
    "take": 2,
    "text": "I understand rocks even more now.",
    "clip": "hero_geologistbot_levelup_2",
-   "hash": "208e2e686dc8",
+   "hash": "f628cc0810fb",
    "seconds": 2.23,
    "peak_db": -1.0,
    "rms_db": -19.8
@@ -1296,7 +1364,7 @@
    "take": 0,
    "text": "Not cleared? The rocks will wait.",
    "clip": "hero_geologistbot_refused_0",
-   "hash": "93f37c000378",
+   "hash": "ba34a2625df1",
    "seconds": 2.22,
    "peak_db": -3.8,
    "rms_db": -22.3
@@ -1307,7 +1375,7 @@
    "take": 1,
    "text": "Orders say no. Sediment happens.",
    "clip": "hero_geologistbot_refused_1",
-   "hash": "b25fa5f5986d",
+   "hash": "75e049f3ea6e",
    "seconds": 2.38,
    "peak_db": -0.7,
    "rms_db": -20.3
@@ -1318,7 +1386,7 @@
    "take": 2,
    "text": "Fine. Other rocks exist.",
    "clip": "hero_geologistbot_refused_2",
-   "hash": "5ed722ae70ec",
+   "hash": "af46214cb1c3",
    "seconds": 1.79,
    "peak_db": -1.9,
    "rms_db": -21.8
@@ -1329,7 +1397,7 @@
    "take": 0,
    "text": "Fractured, like basalt. Fixable.",
    "clip": "hero_geologistbot_repair_0",
-   "hash": "067b618aca46",
+   "hash": "086b354f50ca",
    "seconds": 2.18,
    "peak_db": -1.4,
    "rms_db": -20.5
@@ -1340,7 +1408,7 @@
    "take": 1,
    "text": "Patching. Geologically sound.",
    "clip": "hero_geologistbot_repair_1",
-   "hash": "f8f42d92aba4",
+   "hash": "11556571a815",
    "seconds": 1.97,
    "peak_db": -2.1,
    "rms_db": -22.1
@@ -1351,7 +1419,7 @@
    "take": 2,
    "text": "Filling the fault line.",
    "clip": "hero_geologistbot_repair_2",
-   "hash": "745779161976",
+   "hash": "74e5decdeaf2",
    "seconds": 1.38,
    "peak_db": -4.9,
    "rms_db": -22.8
@@ -1362,7 +1430,7 @@
    "take": 0,
    "text": "Resting. Like sediment.",
    "clip": "hero_geologistbot_rest_0",
-   "hash": "9868e705a59e",
+   "hash": "fbeb9e7d9318",
    "seconds": 1.64,
    "peak_db": -1.6,
    "rms_db": -22.0
@@ -1373,7 +1441,7 @@
    "take": 1,
    "text": "Time to compress for a while.",
    "clip": "hero_geologistbot_rest_1",
-   "hash": "0c4b0553adc3",
+   "hash": "4070ea28b440",
    "seconds": 1.69,
    "peak_db": -1.3,
    "rms_db": -19.8
@@ -1384,7 +1452,7 @@
    "take": 2,
    "text": "Break. Rocks can wait.",
    "clip": "hero_geologistbot_rest_2",
-   "hash": "4a9320a7dd08",
+   "hash": "202b3c641e24",
    "seconds": 1.49,
    "peak_db": -2.9,
    "rms_db": -22.2
@@ -1395,7 +1463,7 @@
    "take": 0,
    "text": "Core here. Look at this rock!",
    "clip": "hero_geologistbot_select_0",
-   "hash": "b0ed8d429664",
+   "hash": "8470e91d28c4",
    "seconds": 1.81,
    "peak_db": -3.5,
    "rms_db": -22.2
@@ -1406,7 +1474,7 @@
    "take": 1,
    "text": "Geology on duty.",
    "clip": "hero_geologistbot_select_1",
-   "hash": "948d1fc8cd6b",
+   "hash": "cacc9d5d3bbf",
    "seconds": 1.51,
    "peak_db": -1.4,
    "rms_db": -20.5
@@ -1417,7 +1485,7 @@
    "take": 2,
    "text": "Have you seen this strata?",
    "clip": "hero_geologistbot_select_2",
-   "hash": "2a73cd843aab",
+   "hash": "f0a41883b1e6",
    "seconds": 1.48,
    "peak_db": -0.9,
    "rms_db": -20.0
@@ -1428,7 +1496,7 @@
    "take": 0,
    "text": "Ooh. Iron oxide.",
    "clip": "hero_geologistbot_wander_0",
-   "hash": "75d44f33b827",
+   "hash": "2af84d8212fa",
    "seconds": 1.44,
    "peak_db": -0.8,
    "rms_db": -19.9
@@ -1439,7 +1507,7 @@
    "take": 1,
    "text": "Every pebble has a story.",
    "clip": "hero_geologistbot_wander_1",
-   "hash": "201707a9aa86",
+   "hash": "a98b796fb6a5",
    "seconds": 1.74,
    "peak_db": -1.8,
    "rms_db": -22.3
@@ -1450,7 +1518,7 @@
    "take": 2,
    "text": "Tapping rocks. Scientifically.",
    "clip": "hero_geologistbot_wander_2",
-   "hash": "e79817ce64d3",
+   "hash": "b6e1744a2811",
    "seconds": 2.04,
    "peak_db": -1.4,
    "rms_db": -20.5
@@ -1461,7 +1529,7 @@
    "take": 0,
    "text": "Ore first. Everything else later.",
    "clip": "hero_harvesterbot_claim_0",
-   "hash": "11b3dbde7224",
+   "hash": "424d66b5dc62",
    "seconds": 2.32,
    "peak_db": -1.4,
    "rms_db": -20.1
@@ -1472,7 +1540,7 @@
    "take": 1,
    "text": "Good rocks there. I'm going.",
    "clip": "hero_harvesterbot_claim_1",
-   "hash": "ba0d827d89f3",
+   "hash": "e6e0d5fb5022",
    "seconds": 1.89,
    "peak_db": -3.2,
    "rms_db": -21.5
@@ -1483,7 +1551,7 @@
    "take": 2,
    "text": "That's a lot of ore. Yes.",
    "clip": "hero_harvesterbot_claim_2",
-   "hash": "c1ddd7e3b638",
+   "hash": "702439fc2517",
    "seconds": 1.88,
    "peak_db": -3.0,
    "rms_db": -21.3
@@ -1494,7 +1562,7 @@
    "take": 0,
    "text": "Ore... so close...",
    "clip": "hero_harvesterbot_down_0",
-   "hash": "c774ed761482",
+   "hash": "fce9f964372b",
    "seconds": 1.53,
    "peak_db": -4.1,
    "rms_db": -21.7
@@ -1505,7 +1573,7 @@
    "take": 1,
    "text": "Treads... stopping...",
    "clip": "hero_harvesterbot_down_1",
-   "hash": "bcfba45fb060",
+   "hash": "57d6d86d66c5",
    "seconds": 1.49,
    "peak_db": -3.3,
    "rms_db": -22.3
@@ -1516,7 +1584,7 @@
    "take": 2,
    "text": "Tell the rocks... goodbye...",
    "clip": "hero_harvesterbot_down_2",
-   "hash": "72c688b5cf7c",
+   "hash": "d7c34bd0149a",
    "seconds": 1.84,
    "peak_db": -4.7,
    "rms_db": -21.4
@@ -1527,7 +1595,7 @@
    "take": 0,
    "text": "Too spicy! Leaving!",
    "clip": "hero_harvesterbot_flee_0",
-   "hash": "bcb88780ebed",
+   "hash": "9249768e1a07",
    "seconds": 1.7,
    "peak_db": -2.6,
    "rms_db": -21.6
@@ -1538,7 +1606,7 @@
    "take": 1,
    "text": "Drill's not a weapon! Running!",
    "clip": "hero_harvesterbot_flee_1",
-   "hash": "c9f1374d70fe",
+   "hash": "c90f1e562013",
    "seconds": 2.04,
    "peak_db": -6.2,
    "rms_db": -21.7
@@ -1549,7 +1617,7 @@
    "take": 2,
    "text": "Back to the inn!",
    "clip": "hero_harvesterbot_flee_2",
-   "hash": "4971ce0f4304",
+   "hash": "b97e38c2e4c1",
    "seconds": 1.28,
    "peak_db": -3.5,
    "rms_db": -21.7
@@ -1560,7 +1628,7 @@
    "take": 0,
    "text": "Ore doesn't bite. That does.",
    "clip": "hero_harvesterbot_hunt_0",
-   "hash": "988a869fe5b6",
+   "hash": "ae11de6ea8fb",
    "seconds": 1.94,
    "peak_db": -3.4,
    "rms_db": -21.7
@@ -1571,7 +1639,7 @@
    "take": 1,
    "text": "I'll hit it with a drill.",
    "clip": "hero_harvesterbot_hunt_1",
-   "hash": "f45e19107d77",
+   "hash": "c61cc205d4c3",
    "seconds": 1.63,
    "peak_db": -4.9,
    "rms_db": -21.5
@@ -1582,7 +1650,7 @@
    "take": 2,
    "text": "Fine. Then back to digging.",
    "clip": "hero_harvesterbot_hunt_2",
-   "hash": "d419097b57cd",
+   "hash": "b6b4475ab390",
    "seconds": 1.81,
    "peak_db": -4.6,
    "rms_db": -21.7
@@ -1593,7 +1661,7 @@
    "take": 0,
    "text": "Ow! My hopper!",
    "clip": "hero_harvesterbot_hurt_0",
-   "hash": "4a83f8cbddf2",
+   "hash": "153ad486d34a",
    "seconds": 1.36,
    "peak_db": -6.4,
    "rms_db": -21.5
@@ -1604,7 +1672,7 @@
    "take": 1,
    "text": "Hey, I'm working here!",
    "clip": "hero_harvesterbot_hurt_1",
-   "hash": "a7f6518703b5",
+   "hash": "ab6c839cd8cd",
    "seconds": 1.59,
    "peak_db": -4.2,
    "rms_db": -21.8
@@ -1615,7 +1683,7 @@
    "take": 2,
    "text": "Rude!",
    "clip": "hero_harvesterbot_hurt_2",
-   "hash": "a69481f16d1d",
+   "hash": "2275328c36fb",
    "seconds": 0.93,
    "peak_db": -5.8,
    "rms_db": -22.9
@@ -1626,7 +1694,7 @@
    "take": 0,
    "text": "Bigger drill!",
    "clip": "hero_harvesterbot_levelup_0",
-   "hash": "16cb7d0bf575",
+   "hash": "571af2ef4f4b",
    "seconds": 1.12,
    "peak_db": -5.6,
    "rms_db": -21.1
@@ -1637,7 +1705,7 @@
    "take": 1,
    "text": "More ore per hour!",
    "clip": "hero_harvesterbot_levelup_1",
-   "hash": "1c925bcc197c",
+   "hash": "b0af671cdb40",
    "seconds": 1.55,
    "peak_db": -5.6,
    "rms_db": -21.4
@@ -1648,7 +1716,7 @@
    "take": 2,
    "text": "Harder rocks. Bring them.",
    "clip": "hero_harvesterbot_levelup_2",
-   "hash": "0621cc0ba7d7",
+   "hash": "dbbc05fdf5a2",
    "seconds": 1.73,
    "peak_db": -4.9,
    "rms_db": -21.8
@@ -1659,7 +1727,7 @@
    "take": 0,
    "text": "No rocks for me? Sad.",
    "clip": "hero_harvesterbot_refused_0",
-   "hash": "5476f46493af",
+   "hash": "4da5af72ffc6",
    "seconds": 1.87,
    "peak_db": -3.5,
    "rms_db": -21.7
@@ -1670,7 +1738,7 @@
    "take": 1,
    "text": "Okay. More ore for someone else.",
    "clip": "hero_harvesterbot_refused_1",
-   "hash": "3ebec6fbf609",
+   "hash": "03dcc7d24fb8",
    "seconds": 2.13,
    "peak_db": -1.6,
    "rms_db": -21.5
@@ -1681,7 +1749,7 @@
    "take": 2,
    "text": "Orders say no. I dig elsewhere.",
    "clip": "hero_harvesterbot_refused_2",
-   "hash": "d143e2679201",
+   "hash": "f5e37b2f7e83",
    "seconds": 2.29,
    "peak_db": -5.0,
    "rms_db": -21.3
@@ -1692,7 +1760,7 @@
    "take": 0,
    "text": "I dig holes. Fine, I'll fill one.",
    "clip": "hero_harvesterbot_repair_0",
-   "hash": "e08bf9656a13",
+   "hash": "190ae5d13bb4",
    "seconds": 2.34,
    "peak_db": -3.1,
    "rms_db": -21.4
@@ -1703,7 +1771,7 @@
    "take": 1,
    "text": "Patch now. Dig later.",
    "clip": "hero_harvesterbot_repair_1",
-   "hash": "4e7dffd697b4",
+   "hash": "41734f4a87ed",
    "seconds": 1.57,
    "peak_db": -2.6,
    "rms_db": -21.3
@@ -1714,7 +1782,7 @@
    "take": 2,
    "text": "Rock goes in the crack.",
    "clip": "hero_harvesterbot_repair_2",
-   "hash": "59916c623e58",
+   "hash": "c112803d3393",
    "seconds": 1.68,
    "peak_db": -4.3,
    "rms_db": -22.2
@@ -1725,7 +1793,7 @@
    "take": 0,
    "text": "Hopper's full. So am I.",
    "clip": "hero_harvesterbot_rest_0",
-   "hash": "d2348cca65cd",
+   "hash": "3b066b565e48",
    "seconds": 1.84,
    "peak_db": -2.7,
    "rms_db": -21.7
@@ -1736,7 +1804,7 @@
    "take": 1,
    "text": "Nap. Then rocks.",
    "clip": "hero_harvesterbot_rest_1",
-   "hash": "9dd758728f28",
+   "hash": "03811ca17794",
    "seconds": 1.48,
    "peak_db": -2.2,
    "rms_db": -21.0
@@ -1747,7 +1815,7 @@
    "take": 2,
    "text": "Treads need a break.",
    "clip": "hero_harvesterbot_rest_2",
-   "hash": "f5328ba92863",
+   "hash": "b392b0f31c9b",
    "seconds": 1.58,
    "peak_db": -2.4,
    "rms_db": -21.9
@@ -1758,7 +1826,7 @@
    "take": 0,
    "text": "Strip here. Ore to dig?",
    "clip": "hero_harvesterbot_select_0",
-   "hash": "77747df9423d",
+   "hash": "6e47684e30fe",
    "seconds": 1.76,
    "peak_db": -2.2,
    "rms_db": -22.2
@@ -1769,7 +1837,7 @@
    "take": 1,
    "text": "Dig. Haul. Repeat.",
    "clip": "hero_harvesterbot_select_1",
-   "hash": "026b2e519a53",
+   "hash": "e4b819739220",
    "seconds": 1.58,
    "peak_db": -3.3,
    "rms_db": -21.9
@@ -1780,7 +1848,7 @@
    "take": 2,
    "text": "Point me at rocks.",
    "clip": "hero_harvesterbot_select_2",
-   "hash": "b61b533e4914",
+   "hash": "0e4935bdaf8e",
    "seconds": 1.37,
    "peak_db": -4.9,
    "rms_db": -21.4
@@ -1791,7 +1859,7 @@
    "take": 0,
    "text": "Looking for shiny rocks.",
    "clip": "hero_harvesterbot_wander_0",
-   "hash": "e51e906d4178",
+   "hash": "4fd122acdcad",
    "seconds": 1.82,
    "peak_db": -5.9,
    "rms_db": -21.2
@@ -1802,7 +1870,7 @@
    "take": 1,
    "text": "Hmm. That one looks heavy.",
    "clip": "hero_harvesterbot_wander_1",
-   "hash": "450000b81d6c",
+   "hash": "2c44b1d0ff32",
    "seconds": 1.68,
    "peak_db": -4.0,
    "rms_db": -21.5
@@ -1813,7 +1881,7 @@
    "take": 2,
    "text": "Where's the ore?",
    "clip": "hero_harvesterbot_wander_2",
-   "hash": "0d64e695d693",
+   "hash": "51648ff30500",
    "seconds": 1.24,
    "peak_db": -5.1,
    "rms_db": -21.5
@@ -1824,7 +1892,7 @@
    "take": 0,
    "text": "On the wounded. Keep them breathing.",
    "clip": "hero_medic_claim_0",
-   "hash": "1c2b005401d7",
+   "hash": "f74f95521a87",
    "seconds": 1.74,
    "peak_db": -2.7,
    "rms_db": -21.4
@@ -1835,7 +1903,7 @@
    "take": 1,
    "text": "I'll take it. Gently.",
    "clip": "hero_medic_claim_1",
-   "hash": "1c5849d76413",
+   "hash": "8e4d25e1c2d0",
    "seconds": 1.41,
    "peak_db": -4.0,
    "rms_db": -21.5
@@ -1846,7 +1914,7 @@
    "take": 2,
    "text": "Patients first. Bounty second.",
    "clip": "hero_medic_claim_2",
-   "hash": "dafab8e0ec7b",
+   "hash": "4b61c7852c83",
    "seconds": 2.0,
    "peak_db": -3.9,
    "rms_db": -21.6
@@ -1857,7 +1925,7 @@
    "take": 0,
    "text": "Who heals the healer...",
    "clip": "hero_medic_down_0",
-   "hash": "4dee00ad8693",
+   "hash": "89ae02b28921",
    "seconds": 1.17,
    "peak_db": -7.2,
    "rms_db": -21.3
@@ -1868,7 +1936,7 @@
    "take": 1,
    "text": "Pulse... weak...",
    "clip": "hero_medic_down_1",
-   "hash": "a5d9b4a87b63",
+   "hash": "08f660b6a247",
    "seconds": 0.97,
    "peak_db": -4.4,
    "rms_db": -21.3
@@ -1879,7 +1947,7 @@
    "take": 2,
    "text": "Medic down. Irony noted.",
    "clip": "hero_medic_down_2",
-   "hash": "c8808e6165a1",
+   "hash": "9f4d9a5bd842",
    "seconds": 1.85,
    "peak_db": -2.6,
    "rms_db": -21.2
@@ -1890,7 +1958,7 @@
    "take": 0,
    "text": "I can't heal anyone if I'm scrap!",
    "clip": "hero_medic_flee_0",
-   "hash": "47b5bb97f847",
+   "hash": "0e485f39e909",
    "seconds": 1.7,
    "peak_db": -1.9,
    "rms_db": -21.3
@@ -1901,7 +1969,7 @@
    "take": 1,
    "text": "Falling back to the inn!",
    "clip": "hero_medic_flee_1",
-   "hash": "191efa6eafe8",
+   "hash": "8dc1d52a72b2",
    "seconds": 1.3,
    "peak_db": -4.1,
    "rms_db": -20.9
@@ -1912,7 +1980,7 @@
    "take": 2,
    "text": "Too hot here. Moving!",
    "clip": "hero_medic_flee_2",
-   "hash": "1c04631c1150",
+   "hash": "bb24accc77dd",
    "seconds": 1.49,
    "peak_db": -6.4,
    "rms_db": -21.4
@@ -1923,7 +1991,7 @@
    "take": 0,
    "text": "I am not a hunter. But fine.",
    "clip": "hero_medic_hunt_0",
-   "hash": "9302f4307150",
+   "hash": "893cd4b50d16",
    "seconds": 1.82,
    "peak_db": -1.4,
    "rms_db": -19.4
@@ -1934,7 +2002,7 @@
    "take": 1,
    "text": "Violence. Not my department.",
    "clip": "hero_medic_hunt_1",
-   "hash": "04de05fe0276",
+   "hash": "5544a098ba95",
    "seconds": 1.76,
    "peak_db": -3.2,
    "rms_db": -21.0
@@ -1945,7 +2013,7 @@
    "take": 2,
    "text": "Keep your distance, creature.",
    "clip": "hero_medic_hunt_2",
-   "hash": "b2a943108a5c",
+   "hash": "f3d9802fdfef",
    "seconds": 1.56,
    "peak_db": -5.6,
    "rms_db": -21.4
@@ -1956,7 +2024,7 @@
    "take": 0,
    "text": "Ow. Physician, heal thyself.",
    "clip": "hero_medic_hurt_0",
-   "hash": "c696c6e5cbf1",
+   "hash": "a8b475151876",
    "seconds": 1.73,
    "peak_db": -4.5,
    "rms_db": -21.3
@@ -1967,7 +2035,7 @@
    "take": 1,
    "text": "Hey! I'm the medic!",
    "clip": "hero_medic_hurt_1",
-   "hash": "ae3b393e4ad3",
+   "hash": "8b931344342b",
    "seconds": 1.15,
    "peak_db": -5.6,
    "rms_db": -21.7
@@ -1978,7 +2046,7 @@
    "take": 2,
    "text": "That will need a bandage.",
    "clip": "hero_medic_hurt_2",
-   "hash": "e31e6b667a35",
+   "hash": "401c1db072cb",
    "seconds": 1.2,
    "peak_db": -1.7,
    "rms_db": -20.8
@@ -1989,7 +2057,7 @@
    "take": 0,
    "text": "Better tools. Fewer funerals.",
    "clip": "hero_medic_levelup_0",
-   "hash": "54bdb780a565",
+   "hash": "cff372d7ccb4",
    "seconds": 1.86,
    "peak_db": -1.7,
    "rms_db": -21.2
@@ -2000,7 +2068,7 @@
    "take": 1,
    "text": "Certification updated.",
    "clip": "hero_medic_levelup_1",
-   "hash": "51858218da6a",
+   "hash": "bbf80e9295d6",
    "seconds": 1.59,
    "peak_db": -4.1,
    "rms_db": -21.4
@@ -2011,7 +2079,7 @@
    "take": 2,
    "text": "Faster hands. Steadier nerves.",
    "clip": "hero_medic_levelup_2",
-   "hash": "7e62c42a47fb",
+   "hash": "075b8e8a7a75",
    "seconds": 1.98,
    "peak_db": -1.7,
    "rms_db": -21.4
@@ -2022,7 +2090,7 @@
    "take": 0,
    "text": "Not cleared for that. Noted.",
    "clip": "hero_medic_refused_0",
-   "hash": "dc0fb1d826dd",
+   "hash": "910f1d835620",
    "seconds": 1.82,
    "peak_db": -3.5,
    "rms_db": -21.6
@@ -2033,7 +2101,7 @@
    "take": 1,
    "text": "Somebody else then. Carefully.",
    "clip": "hero_medic_refused_1",
-   "hash": "c760eca96227",
+   "hash": "6164851be67b",
    "seconds": 1.85,
    "peak_db": -3.5,
    "rms_db": -21.5
@@ -2044,7 +2112,7 @@
    "take": 2,
    "text": "Orders say no. I'll stay close.",
    "clip": "hero_medic_refused_2",
-   "hash": "4d6128d93ff3",
+   "hash": "ee5847e6761b",
    "seconds": 1.95,
    "peak_db": -4.4,
    "rms_db": -21.5
@@ -2055,7 +2123,7 @@
    "take": 0,
    "text": "Hulls are just patients with rivets.",
    "clip": "hero_medic_repair_0",
-   "hash": "2d928ae7e66c",
+   "hash": "5d564ab0df11",
    "seconds": 1.95,
    "peak_db": -3.8,
    "rms_db": -21.3
@@ -2066,7 +2134,7 @@
    "take": 1,
    "text": "Stitching the module.",
    "clip": "hero_medic_repair_1",
-   "hash": "01fde069ef90",
+   "hash": "bf0a9aee6bbb",
    "seconds": 1.22,
    "peak_db": -5.2,
    "rms_db": -20.7
@@ -2077,7 +2145,7 @@
    "take": 2,
    "text": "Hold still. This will sting.",
    "clip": "hero_medic_repair_2",
-   "hash": "65085175e03e",
+   "hash": "0a19e515ff5b",
    "seconds": 1.61,
    "peak_db": -4.4,
    "rms_db": -21.3
@@ -2088,7 +2156,7 @@
    "take": 0,
    "text": "Even medics need a checkup.",
    "clip": "hero_medic_rest_0",
-   "hash": "690bb5b6af2d",
+   "hash": "357236a36c1e",
    "seconds": 1.5,
    "peak_db": -4.5,
    "rms_db": -21.0
@@ -2099,7 +2167,7 @@
    "take": 1,
    "text": "Resting. Page me if it's serious.",
    "clip": "hero_medic_rest_1",
-   "hash": "a207737c00cc",
+   "hash": "324792d6202c",
    "seconds": 1.82,
    "peak_db": -1.1,
    "rms_db": -19.8
@@ -2110,7 +2178,7 @@
    "take": 2,
    "text": "Recharge. Then rounds.",
    "clip": "hero_medic_rest_2",
-   "hash": "81b1300fbedb",
+   "hash": "6e9450365009",
    "seconds": 1.59,
    "peak_db": -3.4,
    "rms_db": -21.1
@@ -2121,7 +2189,7 @@
    "take": 0,
    "text": "Triage here. Who's leaking?",
    "clip": "hero_medic_select_0",
-   "hash": "9db5688c0c08",
+   "hash": "05cc8c767c45",
    "seconds": 1.61,
    "peak_db": -6.1,
    "rms_db": -21.3
@@ -2132,7 +2200,7 @@
    "take": 1,
    "text": "Medic. Try not to need me.",
    "clip": "hero_medic_select_1",
-   "hash": "68fa8e0d9ea5",
+   "hash": "901ec6cdea4f",
    "seconds": 1.62,
    "peak_db": -2.3,
    "rms_db": -21.3
@@ -2143,7 +2211,7 @@
    "take": 2,
    "text": "Vitals look fine. For now.",
    "clip": "hero_medic_select_2",
-   "hash": "8716f5fdd2d6",
+   "hash": "f2ed856c8952",
    "seconds": 1.75,
    "peak_db": -2.9,
    "rms_db": -21.4
@@ -2154,7 +2222,7 @@
    "take": 0,
    "text": "Rounds. Nobody's bleeding. Good.",
    "clip": "hero_medic_wander_0",
-   "hash": "662e4db792ab",
+   "hash": "c1c8bdec72f1",
    "seconds": 2.07,
    "peak_db": -2.6,
    "rms_db": -21.3
@@ -2165,7 +2233,7 @@
    "take": 1,
    "text": "Checking on the colony.",
    "clip": "hero_medic_wander_1",
-   "hash": "8363e9b3d8bc",
+   "hash": "054a753f47b5",
    "seconds": 1.26,
    "peak_db": -2.0,
    "rms_db": -20.9
@@ -2176,7 +2244,7 @@
    "take": 2,
    "text": "Quiet shift. I'll take it.",
    "clip": "hero_medic_wander_2",
-   "hash": "ccf8b0dadad1",
+   "hash": "3e2f991aecbc",
    "seconds": 1.69,
    "peak_db": -4.1,
    "rms_db": -22.2
@@ -2187,7 +2255,7 @@
    "take": 0,
    "text": "Mapping it! Back before lunch.",
    "clip": "hero_scoutdrone_claim_0",
-   "hash": "90963a7acf64",
+   "hash": "4f5c327eff6b",
    "seconds": 1.2,
    "peak_db": -7.3,
    "rms_db": -21.7
@@ -2198,7 +2266,7 @@
    "take": 1,
    "text": "Explore flag? Say no more!",
    "clip": "hero_scoutdrone_claim_1",
-   "hash": "d6613d59e39e",
+   "hash": "f5bd4e4a3153",
    "seconds": 1.29,
    "peak_db": -8.4,
    "rms_db": -22.2
@@ -2209,7 +2277,7 @@
    "take": 2,
    "text": "Easy credits. Zoom!",
    "clip": "hero_scoutdrone_claim_2",
-   "hash": "eff5a017d296",
+   "hash": "af076ffbbb93",
    "seconds": 0.97,
    "peak_db": -8.3,
    "rms_db": -22.3
@@ -2220,7 +2288,7 @@
    "take": 0,
    "text": "Going down! Going... down...",
    "clip": "hero_scoutdrone_down_0",
-   "hash": "a2453dca36eb",
+   "hash": "62d1862c9580",
    "seconds": 1.41,
    "peak_db": -7.8,
    "rms_db": -21.5
@@ -2231,7 +2299,7 @@
    "take": 1,
    "text": "Mayday... mayday...",
    "clip": "hero_scoutdrone_down_1",
-   "hash": "2475c41c0751",
+   "hash": "1a42e0ea1091",
    "seconds": 0.95,
    "peak_db": -7.9,
    "rms_db": -21.4
@@ -2242,7 +2310,7 @@
    "take": 2,
    "text": "Tell my rotors... I tried...",
    "clip": "hero_scoutdrone_down_2",
-   "hash": "54a69e822c00",
+   "hash": "e13b4f5248bd",
    "seconds": 1.43,
    "peak_db": -7.6,
    "rms_db": -21.5
@@ -2253,7 +2321,7 @@
    "take": 0,
    "text": "Nope nope nope nope!",
    "clip": "hero_scoutdrone_flee_0",
-   "hash": "e103bfe8fca2",
+   "hash": "4a0813cfe03b",
    "seconds": 0.98,
    "peak_db": -7.5,
    "rms_db": -21.7
@@ -2264,7 +2332,7 @@
    "take": 1,
    "text": "Retreat! Retreat! Me first!",
    "clip": "hero_scoutdrone_flee_1",
-   "hash": "29b55fa3f85a",
+   "hash": "4c096997bbf4",
    "seconds": 1.26,
    "peak_db": -7.6,
    "rms_db": -21.8
@@ -2275,7 +2343,7 @@
    "take": 2,
    "text": "Rotors, don't fail me now!",
    "clip": "hero_scoutdrone_flee_2",
-   "hash": "3901f9573b16",
+   "hash": "d06427537e1a",
    "seconds": 1.19,
    "peak_db": -8.9,
    "rms_db": -21.3
@@ -2286,7 +2354,7 @@
    "take": 0,
    "text": "I'll point. Someone else bite.",
    "clip": "hero_scoutdrone_hunt_0",
-   "hash": "f2ac43903af8",
+   "hash": "301d692137c0",
    "seconds": 1.3,
    "peak_db": -7.1,
    "rms_db": -21.9
@@ -2297,7 +2365,7 @@
    "take": 1,
    "text": "Tagging the target! Probably.",
    "clip": "hero_scoutdrone_hunt_1",
-   "hash": "9a10ea4d822e",
+   "hash": "5d28e7482534",
    "seconds": 1.28,
    "peak_db": -6.8,
    "rms_db": -21.5
@@ -2308,7 +2376,7 @@
    "take": 2,
    "text": "Is this a scout job? It's not.",
    "clip": "hero_scoutdrone_hunt_2",
-   "hash": "523ed0f56b13",
+   "hash": "3cd10b696a02",
    "seconds": 1.51,
    "peak_db": -6.9,
    "rms_db": -21.8
@@ -2319,7 +2387,7 @@
    "take": 0,
    "text": "Ow! My rotor!",
    "clip": "hero_scoutdrone_hurt_0",
-   "hash": "dfacc0a1ea95",
+   "hash": "adf63c1879b2",
    "seconds": 0.81,
    "peak_db": -7.7,
    "rms_db": -21.5
@@ -2330,7 +2398,7 @@
    "take": 1,
    "text": "Hey! I'm small!",
    "clip": "hero_scoutdrone_hurt_1",
-   "hash": "b6497c5c7e4c",
+   "hash": "5c946fdb9037",
    "seconds": 0.8,
    "peak_db": -8.9,
    "rms_db": -22.2
@@ -2341,7 +2409,7 @@
    "take": 2,
    "text": "That really scratched!",
    "clip": "hero_scoutdrone_hurt_2",
-   "hash": "c38d2b58a89b",
+   "hash": "e86e0809d6cd",
    "seconds": 0.93,
    "peak_db": -9.3,
    "rms_db": -22.6
@@ -2352,7 +2420,7 @@
    "take": 0,
    "text": "Faster! I'm faster now!",
    "clip": "hero_scoutdrone_levelup_0",
-   "hash": "f1b837ddbc74",
+   "hash": "ee5356e6c1a5",
    "seconds": 1.08,
    "peak_db": -7.0,
    "rms_db": -21.6
@@ -2363,7 +2431,7 @@
    "take": 1,
    "text": "Level up! Did everyone see?",
    "clip": "hero_scoutdrone_levelup_1",
-   "hash": "0c57dc3303e2",
+   "hash": "e60788a6afc8",
    "seconds": 1.3,
    "peak_db": -8.0,
    "rms_db": -21.9
@@ -2374,7 +2442,7 @@
    "take": 2,
    "text": "New firmware! Wheee!",
    "clip": "hero_scoutdrone_levelup_2",
-   "hash": "e7281054ce39",
+   "hash": "3a5a83822c71",
    "seconds": 0.91,
    "peak_db": -7.5,
    "rms_db": -21.6
@@ -2385,7 +2453,7 @@
    "take": 0,
    "text": "Too junior? Rude.",
    "clip": "hero_scoutdrone_refused_0",
-   "hash": "3b9712c35e48",
+   "hash": "817b9fbe4e58",
    "seconds": 0.94,
    "peak_db": -7.3,
    "rms_db": -21.1
@@ -2396,7 +2464,7 @@
    "take": 1,
    "text": "Fine, I'll just hover here.",
    "clip": "hero_scoutdrone_refused_1",
-   "hash": "c739a5675c57",
+   "hash": "a8a9292a6860",
    "seconds": 1.12,
    "peak_db": -7.5,
    "rms_db": -21.4
@@ -2407,7 +2475,7 @@
    "take": 2,
    "text": "Nobody wants a scout. Story of my life.",
    "clip": "hero_scoutdrone_refused_2",
-   "hash": "17b394cbf607",
+   "hash": "9ff72df2fa63",
    "seconds": 2.02,
    "peak_db": -7.4,
    "rms_db": -21.8
@@ -2418,7 +2486,7 @@
    "take": 0,
    "text": "I have one tiny wrench.",
    "clip": "hero_scoutdrone_repair_0",
-   "hash": "ecbfe448f811",
+   "hash": "0fd23090ac84",
    "seconds": 1.04,
    "peak_db": -5.8,
    "rms_db": -20.9
@@ -2429,7 +2497,7 @@
    "take": 1,
    "text": "Patching. Badly. But patching.",
    "clip": "hero_scoutdrone_repair_1",
-   "hash": "6f5a4ca60ce9",
+   "hash": "fddc649426f7",
    "seconds": 1.28,
    "peak_db": -6.8,
    "rms_db": -21.2
@@ -2440,7 +2508,7 @@
    "take": 2,
    "text": "Tape counts as repair, right?",
    "clip": "hero_scoutdrone_repair_2",
-   "hash": "c27520a9f210",
+   "hash": "abe9a90285e7",
    "seconds": 1.2,
    "peak_db": -6.3,
    "rms_db": -21.5
@@ -2451,7 +2519,7 @@
    "take": 0,
    "text": "Battery at two percent. Nap time.",
    "clip": "hero_scoutdrone_rest_0",
-   "hash": "7a9d5777255f",
+   "hash": "0664f0f12221",
    "seconds": 1.62,
    "peak_db": -8.1,
    "rms_db": -22.0
@@ -2462,7 +2530,7 @@
    "take": 1,
    "text": "Landing. Do not disturb.",
    "clip": "hero_scoutdrone_rest_1",
-   "hash": "f720644690d2",
+   "hash": "3ed5079c76ce",
    "seconds": 1.17,
    "peak_db": -7.2,
    "rms_db": -21.9
@@ -2473,7 +2541,7 @@
    "take": 2,
    "text": "Five minutes. Or fifty.",
    "clip": "hero_scoutdrone_rest_2",
-   "hash": "51ba928614bb",
+   "hash": "2cdfd0c2509c",
    "seconds": 1.1,
    "peak_db": -8.1,
    "rms_db": -22.0
@@ -2484,7 +2552,7 @@
    "take": 0,
    "text": "Rotors hot! Where to?",
    "clip": "hero_scoutdrone_select_0",
-   "hash": "295da8a3b229",
+   "hash": "cd52d9c667bc",
    "seconds": 1.12,
    "peak_db": -7.5,
    "rms_db": -21.3
@@ -2495,7 +2563,7 @@
    "take": 1,
    "text": "Scout here. Make it quick.",
    "clip": "hero_scoutdrone_select_1",
-   "hash": "926d657da4fc",
+   "hash": "52a18e01095d",
    "seconds": 1.08,
    "peak_db": -8.2,
    "rms_db": -22.1
@@ -2506,7 +2574,7 @@
    "take": 2,
    "text": "Ooh, a task? Maybe?",
    "clip": "hero_scoutdrone_select_2",
-   "hash": "71d8331ce750",
+   "hash": "ef01ee0aba40",
    "seconds": 1.01,
    "peak_db": -7.4,
    "rms_db": -21.8
@@ -2517,7 +2585,7 @@
    "take": 0,
    "text": "Just seeing what's over there.",
    "clip": "hero_scoutdrone_wander_0",
-   "hash": "c54380b6557f",
+   "hash": "f86c615d70c6",
    "seconds": 1.08,
    "peak_db": -7.7,
    "rms_db": -21.8
@@ -2528,7 +2596,7 @@
    "take": 1,
    "text": "Horizon check. Still a horizon.",
    "clip": "hero_scoutdrone_wander_1",
-   "hash": "b3883f0f982f",
+   "hash": "b7e9895cb6cd",
    "seconds": 1.48,
    "peak_db": -6.9,
    "rms_db": -21.5
@@ -2539,7 +2607,7 @@
    "take": 2,
    "text": "Bored. So bored. Loop-de-loop.",
    "clip": "hero_scoutdrone_wander_2",
-   "hash": "e1b9d4684524",
+   "hash": "7b0cd0b552b2",
    "seconds": 1.4,
    "peak_db": -7.7,
    "rms_db": -21.9
@@ -2550,7 +2618,7 @@
    "take": 0,
    "text": "Perimeter locked. I hold.",
    "clip": "hero_sentinelmech_claim_0",
-   "hash": "88db36a029c5",
+   "hash": "9e91f406b7da",
    "seconds": 1.95,
    "peak_db": -6.7,
    "rms_db": -21.0
@@ -2561,7 +2629,7 @@
    "take": 1,
    "text": "This post is mine.",
    "clip": "hero_sentinelmech_claim_1",
-   "hash": "f785e8fac75d",
+   "hash": "7e1933060c14",
    "seconds": 1.59,
    "peak_db": -7.1,
    "rms_db": -21.1
@@ -2572,7 +2640,7 @@
    "take": 2,
    "text": "Nothing crosses.",
    "clip": "hero_sentinelmech_claim_2",
-   "hash": "fa3ffdcb3a9d",
+   "hash": "a79d69a8150c",
    "seconds": 1.49,
    "peak_db": -6.1,
    "rms_db": -20.9
@@ -2583,7 +2651,7 @@
    "take": 0,
    "text": "The rim... falls...",
    "clip": "hero_sentinelmech_down_0",
-   "hash": "178467b59984",
+   "hash": "de09bd888f57",
    "seconds": 1.54,
    "peak_db": -7.4,
    "rms_db": -21.3
@@ -2594,7 +2662,7 @@
    "take": 1,
    "text": "Post... abandoned...",
    "clip": "hero_sentinelmech_down_1",
-   "hash": "ab6fefc6d076",
+   "hash": "8ca6802bf630",
    "seconds": 1.48,
    "peak_db": -6.7,
    "rms_db": -21.0
@@ -2605,7 +2673,7 @@
    "take": 2,
    "text": "Sentinel down.",
    "clip": "hero_sentinelmech_down_2",
-   "hash": "05bc976465d3",
+   "hash": "ab84fc2b756e",
    "seconds": 1.33,
    "peak_db": -6.1,
    "rms_db": -20.8
@@ -2616,7 +2684,7 @@
    "take": 0,
    "text": "Falling back. Once.",
    "clip": "hero_sentinelmech_flee_0",
-   "hash": "bc8ec622c0bf",
+   "hash": "d62940742475",
    "seconds": 1.65,
    "peak_db": -7.7,
    "rms_db": -21.0
@@ -2627,7 +2695,7 @@
    "take": 1,
    "text": "Post compromised. Moving.",
    "clip": "hero_sentinelmech_flee_1",
-   "hash": "903c63cfc93f",
+   "hash": "afc9f00964d1",
    "seconds": 2.15,
    "peak_db": -7.4,
    "rms_db": -20.8
@@ -2638,7 +2706,7 @@
    "take": 2,
    "text": "Withdrawing to repair.",
    "clip": "hero_sentinelmech_flee_2",
-   "hash": "55ac813e3cb3",
+   "hash": "5b1b15e3fde0",
    "seconds": 1.78,
    "peak_db": -7.2,
    "rms_db": -20.8
@@ -2649,7 +2717,7 @@
    "take": 0,
    "text": "Contact at the rim.",
    "clip": "hero_sentinelmech_hunt_0",
-   "hash": "909414703f53",
+   "hash": "688e9c4518dc",
    "seconds": 1.66,
    "peak_db": -7.4,
    "rms_db": -21.0
@@ -2660,7 +2728,7 @@
    "take": 1,
    "text": "It approaches. It ends.",
    "clip": "hero_sentinelmech_hunt_1",
-   "hash": "c8bbde31e1d9",
+   "hash": "d5f2a49bcd68",
    "seconds": 1.83,
    "peak_db": -6.1,
    "rms_db": -20.8
@@ -2671,7 +2739,7 @@
    "take": 2,
    "text": "Engaging from position.",
    "clip": "hero_sentinelmech_hunt_2",
-   "hash": "9765a2bf171e",
+   "hash": "d8d27c1021ba",
    "seconds": 1.91,
    "peak_db": -7.1,
    "rms_db": -20.7
@@ -2682,7 +2750,7 @@
    "take": 0,
    "text": "Hit. Holding.",
    "clip": "hero_sentinelmech_hurt_0",
-   "hash": "75541e6db0d3",
+   "hash": "d96be6856bee",
    "seconds": 1.22,
    "peak_db": -7.2,
    "rms_db": -21.2
@@ -2693,7 +2761,7 @@
    "take": 1,
    "text": "Armor breached. Holding.",
    "clip": "hero_sentinelmech_hurt_1",
-   "hash": "9f91bdb68c91",
+   "hash": "82f568867eba",
    "seconds": 1.77,
    "peak_db": -8.1,
    "rms_db": -21.0
@@ -2704,7 +2772,7 @@
    "take": 2,
    "text": "Still standing.",
    "clip": "hero_sentinelmech_hurt_2",
-   "hash": "a2074c399ce4",
+   "hash": "3dfc8fe5ea18",
    "seconds": 1.35,
    "peak_db": -7.8,
    "rms_db": -21.2
@@ -2715,7 +2783,7 @@
    "take": 0,
    "text": "Stronger post.",
    "clip": "hero_sentinelmech_levelup_0",
-   "hash": "caf3a61892e0",
+   "hash": "62830f9c62d8",
    "seconds": 1.42,
    "peak_db": -8.0,
    "rms_db": -21.4
@@ -2726,7 +2794,7 @@
    "take": 1,
    "text": "Harder armor.",
    "clip": "hero_sentinelmech_levelup_1",
-   "hash": "7cafbdf9fdfe",
+   "hash": "99ed222ee008",
    "seconds": 1.33,
    "peak_db": -7.6,
    "rms_db": -21.3
@@ -2737,7 +2805,7 @@
    "take": 2,
    "text": "The rim grows safer.",
    "clip": "hero_sentinelmech_levelup_2",
-   "hash": "0dbd99e24d3c",
+   "hash": "b1f66bc8930b",
    "seconds": 1.73,
    "peak_db": -7.3,
    "rms_db": -20.7
@@ -2748,7 +2816,7 @@
    "take": 0,
    "text": "Not my post.",
    "clip": "hero_sentinelmech_refused_0",
-   "hash": "ba210b8cb482",
+   "hash": "36188c6e4fe8",
    "seconds": 1.48,
    "peak_db": -7.9,
    "rms_db": -21.0
@@ -2759,7 +2827,7 @@
    "take": 1,
    "text": "Understood.",
    "clip": "hero_sentinelmech_refused_1",
-   "hash": "3fab8e800fab",
+   "hash": "ecc92891ab6a",
    "seconds": 1.11,
    "peak_db": -8.4,
    "rms_db": -21.2
@@ -2770,7 +2838,7 @@
    "take": 2,
    "text": "I hold here instead.",
    "clip": "hero_sentinelmech_refused_2",
-   "hash": "4cf7704837f3",
+   "hash": "6841e72b152b",
    "seconds": 1.76,
    "peak_db": -6.3,
    "rms_db": -21.0
@@ -2781,7 +2849,7 @@
    "take": 0,
    "text": "Sealing the wall.",
    "clip": "hero_sentinelmech_repair_0",
-   "hash": "b9de2bc602a0",
+   "hash": "d150b2f25b1b",
    "seconds": 1.42,
    "peak_db": -7.8,
    "rms_db": -20.6
@@ -2792,7 +2860,7 @@
    "take": 1,
    "text": "The wall must hold.",
    "clip": "hero_sentinelmech_repair_1",
-   "hash": "40256df21d58",
+   "hash": "acd513f1e33d",
    "seconds": 1.67,
    "peak_db": -8.1,
    "rms_db": -20.9
@@ -2803,7 +2871,7 @@
    "take": 2,
    "text": "Repairing the rim.",
    "clip": "hero_sentinelmech_repair_2",
-   "hash": "23f90630f5cb",
+   "hash": "ba42a81ae335",
    "seconds": 1.54,
    "peak_db": -7.5,
    "rms_db": -21.1
@@ -2814,7 +2882,7 @@
    "take": 0,
    "text": "Brief rest. Eyes open.",
    "clip": "hero_sentinelmech_rest_0",
-   "hash": "219b2f18bb3d",
+   "hash": "a023e1c1fd7e",
    "seconds": 1.94,
    "peak_db": -7.3,
    "rms_db": -20.8
@@ -2825,7 +2893,7 @@
    "take": 1,
    "text": "Recharging. Still watching.",
    "clip": "hero_sentinelmech_rest_1",
-   "hash": "ee80b807f9f4",
+   "hash": "604608b5c965",
    "seconds": 2.09,
    "peak_db": -6.1,
    "rms_db": -20.9
@@ -2836,7 +2904,7 @@
    "take": 2,
    "text": "Standing down. Briefly.",
    "clip": "hero_sentinelmech_rest_2",
-   "hash": "5f42d7012adc",
+   "hash": "214c7f937b21",
    "seconds": 1.89,
    "peak_db": -5.9,
    "rms_db": -20.8
@@ -2847,7 +2915,7 @@
    "take": 0,
    "text": "Rim. Holding.",
    "clip": "hero_sentinelmech_select_0",
-   "hash": "00ed88af3806",
+   "hash": "29c50d437fa6",
    "seconds": 1.29,
    "peak_db": -7.4,
    "rms_db": -20.9
@@ -2858,7 +2926,7 @@
    "take": 1,
    "text": "Perimeter locked.",
    "clip": "hero_sentinelmech_select_1",
-   "hash": "99fb31b62a07",
+   "hash": "d21c7802e099",
    "seconds": 1.49,
    "peak_db": -7.4,
    "rms_db": -21.0
@@ -2869,7 +2937,7 @@
    "take": 2,
    "text": "I stand. I watch.",
    "clip": "hero_sentinelmech_select_2",
-   "hash": "e41de511f65c",
+   "hash": "e718c3d68c47",
    "seconds": 1.7,
    "peak_db": -6.5,
    "rms_db": -21.1
@@ -2880,7 +2948,7 @@
    "take": 0,
    "text": "All quiet on the rim.",
    "clip": "hero_sentinelmech_wander_0",
-   "hash": "b0a6264b3608",
+   "hash": "9f1d255ae09b",
    "seconds": 1.76,
    "peak_db": -7.2,
    "rms_db": -20.7
@@ -2891,7 +2959,7 @@
    "take": 1,
    "text": "Watching.",
    "clip": "hero_sentinelmech_wander_1",
-   "hash": "776137e83a50",
+   "hash": "01d4cfbdb501",
    "seconds": 1.01,
    "peak_db": -8.2,
    "rms_db": -21.5
@@ -2902,7 +2970,7 @@
    "take": 2,
    "text": "I do not wander. I patrol.",
    "clip": "hero_sentinelmech_wander_2",
-   "hash": "d5afbe5056b7",
+   "hash": "35e3f061e56e",
    "seconds": 2.16,
    "peak_db": -6.5,
    "rms_db": -20.9
@@ -2913,7 +2981,7 @@
    "take": 0,
    "text": "Site logged. Mapping now.",
    "clip": "hero_surveyorbot_claim_0",
-   "hash": "192a8fb909a7",
+   "hash": "f21a9135d3b0",
    "seconds": 1.73,
    "peak_db": -6.9,
    "rms_db": -21.3
@@ -2924,7 +2992,7 @@
    "take": 1,
    "text": "Survey accepted. No fights, please.",
    "clip": "hero_surveyorbot_claim_1",
-   "hash": "31619fda9ad8",
+   "hash": "59ad0c672981",
    "seconds": 2.25,
    "peak_db": -8.3,
    "rms_db": -22.2
@@ -2935,7 +3003,7 @@
    "take": 2,
    "text": "Charting the apron.",
    "clip": "hero_surveyorbot_claim_2",
-   "hash": "688027d66cb9",
+   "hash": "319ca8662c86",
    "seconds": 1.31,
    "peak_db": -7.1,
    "rms_db": -21.4
@@ -2946,7 +3014,7 @@
    "take": 0,
    "text": "Signal... lost...",
    "clip": "hero_surveyorbot_down_0",
-   "hash": "743667d888a4",
+   "hash": "ef9e7e6ce884",
    "seconds": 1.19,
    "peak_db": -7.8,
    "rms_db": -21.6
@@ -2957,7 +3025,7 @@
    "take": 1,
    "text": "Final reading... bad...",
    "clip": "hero_surveyorbot_down_1",
-   "hash": "a3171d304f07",
+   "hash": "d26092f2dafc",
    "seconds": 1.53,
    "peak_db": -7.1,
    "rms_db": -21.9
@@ -2968,7 +3036,7 @@
    "take": 2,
    "text": "Coordinates... fading...",
    "clip": "hero_surveyorbot_down_2",
-   "hash": "827dc57ab56d",
+   "hash": "621bc9aecc24",
    "seconds": 1.49,
    "peak_db": -8.0,
    "rms_db": -21.6
@@ -2979,7 +3047,7 @@
    "take": 0,
    "text": "Threat exceeds tolerance. Leaving!",
    "clip": "hero_surveyorbot_flee_0",
-   "hash": "bda5c29fc0a0",
+   "hash": "f656baec6ad3",
    "seconds": 2.18,
    "peak_db": -7.8,
    "rms_db": -21.8
@@ -2990,7 +3058,7 @@
    "take": 1,
    "text": "Abort survey! Abort!",
    "clip": "hero_surveyorbot_flee_1",
-   "hash": "f3f1c7cb285a",
+   "hash": "1bd46f957195",
    "seconds": 1.64,
    "peak_db": -8.7,
    "rms_db": -21.7
@@ -3001,7 +3069,7 @@
    "take": 2,
    "text": "Recalculating route. Away!",
    "clip": "hero_surveyorbot_flee_2",
-   "hash": "b88e34a6ad0d",
+   "hash": "4bf83cafddf3",
    "seconds": 1.89,
    "peak_db": -7.2,
    "rms_db": -21.6
@@ -3012,7 +3080,7 @@
    "take": 0,
    "text": "Hostile at forty meters. Roughly.",
    "clip": "hero_surveyorbot_hunt_0",
-   "hash": "01e3bd05a03f",
+   "hash": "0bde1bbe3a0a",
    "seconds": 2.27,
    "peak_db": -7.5,
    "rms_db": -21.6
@@ -3023,7 +3091,7 @@
    "take": 1,
    "text": "I'll mark it. Someone else shoot it.",
    "clip": "hero_surveyorbot_hunt_1",
-   "hash": "38149d6c8d2b",
+   "hash": "6bf72e256d34",
    "seconds": 1.83,
    "peak_db": -8.9,
    "rms_db": -21.5
@@ -3034,7 +3102,7 @@
    "take": 2,
    "text": "This is outside my job spec.",
    "clip": "hero_surveyorbot_hunt_2",
-   "hash": "3093ba121699",
+   "hash": "0ad4eac41c4d",
    "seconds": 1.95,
    "peak_db": -8.1,
    "rms_db": -22.0
@@ -3045,7 +3113,7 @@
    "take": 0,
    "text": "My lens! Unacceptable!",
    "clip": "hero_surveyorbot_hurt_0",
-   "hash": "5a9d3f8e6936",
+   "hash": "442baf14592d",
    "seconds": 1.71,
    "peak_db": -7.1,
    "rms_db": -21.3
@@ -3056,7 +3124,7 @@
    "take": 1,
    "text": "Impact detected!",
    "clip": "hero_surveyorbot_hurt_1",
-   "hash": "686420d18967",
+   "hash": "18c6e7c245df",
    "seconds": 1.41,
    "peak_db": -8.4,
    "rms_db": -21.9
@@ -3067,7 +3135,7 @@
    "take": 2,
    "text": "That was not in the plan.",
    "clip": "hero_surveyorbot_hurt_2",
-   "hash": "aa4374fda644",
+   "hash": "8b30a172b103",
    "seconds": 1.52,
    "peak_db": -7.8,
    "rms_db": -21.5
@@ -3078,7 +3146,7 @@
    "take": 0,
    "text": "Resolution improved.",
    "clip": "hero_surveyorbot_levelup_0",
-   "hash": "53f4195e2605",
+   "hash": "7c624728e007",
    "seconds": 1.56,
    "peak_db": -7.1,
    "rms_db": -21.5
@@ -3089,7 +3157,7 @@
    "take": 1,
    "text": "Sharper sensors. Excellent.",
    "clip": "hero_surveyorbot_levelup_1",
-   "hash": "2c5f332845f2",
+   "hash": "bda4ebf518cd",
    "seconds": 1.77,
    "peak_db": -7.6,
    "rms_db": -21.6
@@ -3100,7 +3168,7 @@
    "take": 2,
    "text": "New survey grade unlocked.",
    "clip": "hero_surveyorbot_levelup_2",
-   "hash": "85fdc63c283f",
+   "hash": "bacd80de751c",
    "seconds": 1.91,
    "peak_db": -8.8,
    "rms_db": -21.6
@@ -3111,7 +3179,7 @@
    "take": 0,
    "text": "Not authorized. Logged.",
    "clip": "hero_surveyorbot_refused_0",
-   "hash": "553559dca611",
+   "hash": "8fd4f9fe0487",
    "seconds": 1.7,
    "peak_db": -7.9,
    "rms_db": -21.4
@@ -3122,7 +3190,7 @@
    "take": 1,
    "text": "Denied. I'll annotate that.",
    "clip": "hero_surveyorbot_refused_1",
-   "hash": "93ad63be5c17",
+   "hash": "2b0229a71a34",
    "seconds": 1.74,
    "peak_db": -7.3,
    "rms_db": -21.6
@@ -3133,7 +3201,7 @@
    "take": 2,
    "text": "Understood. Recalculating.",
    "clip": "hero_surveyorbot_refused_2",
-   "hash": "d0dee3e4334b",
+   "hash": "af825b09ccc5",
    "seconds": 1.7,
    "peak_db": -7.5,
    "rms_db": -21.8
@@ -3144,7 +3212,7 @@
    "take": 0,
    "text": "Crack is point four meters. Sealing.",
    "clip": "hero_surveyorbot_repair_0",
-   "hash": "23c570096191",
+   "hash": "40a3ec46f4f7",
    "seconds": 2.21,
    "peak_db": -7.4,
    "rms_db": -21.6
@@ -3155,7 +3223,7 @@
    "take": 1,
    "text": "Patching to specification.",
    "clip": "hero_surveyorbot_repair_1",
-   "hash": "f7eebd6909b8",
+   "hash": "1fe913268fd0",
    "seconds": 1.72,
    "peak_db": -7.2,
    "rms_db": -21.4
@@ -3166,7 +3234,7 @@
    "take": 2,
    "text": "Structural tolerance restored.",
    "clip": "hero_surveyorbot_repair_2",
-   "hash": "334f04c98031",
+   "hash": "ae2064cfe97b",
    "seconds": 2.01,
    "peak_db": -8.4,
    "rms_db": -21.8
@@ -3177,7 +3245,7 @@
    "take": 0,
    "text": "Recalibrating sensors.",
    "clip": "hero_surveyorbot_rest_0",
-   "hash": "9e091e66f15e",
+   "hash": "e4fbdf93b687",
    "seconds": 1.58,
    "peak_db": -8.0,
    "rms_db": -21.7
@@ -3188,7 +3256,7 @@
    "take": 1,
    "text": "Resting. Precisely eight minutes.",
    "clip": "hero_surveyorbot_rest_1",
-   "hash": "59ae394ca9ab",
+   "hash": "c8f5eb584dd3",
    "seconds": 1.9,
    "peak_db": -7.4,
    "rms_db": -21.9
@@ -3199,7 +3267,7 @@
    "take": 2,
    "text": "Lenses need cleaning.",
    "clip": "hero_surveyorbot_rest_2",
-   "hash": "4bd1f9e53ae6",
+   "hash": "65efe3659d94",
    "seconds": 1.54,
    "peak_db": -6.6,
    "rms_db": -21.3
@@ -3210,7 +3278,7 @@
    "take": 0,
    "text": "Surveyor. Coordinates, please.",
    "clip": "hero_surveyorbot_select_0",
-   "hash": "216b3e87786f",
+   "hash": "3203de5bb34b",
    "seconds": 1.84,
    "peak_db": -8.2,
    "rms_db": -21.7
@@ -3221,7 +3289,7 @@
    "take": 1,
    "text": "Chart ready. Precisely ready.",
    "clip": "hero_surveyorbot_select_1",
-   "hash": "730e37bd92d2",
+   "hash": "18b27f4ae734",
    "seconds": 1.79,
    "peak_db": -8.1,
    "rms_db": -21.2
@@ -3232,7 +3300,7 @@
    "take": 2,
    "text": "Measuring. Always measuring.",
    "clip": "hero_surveyorbot_select_2",
-   "hash": "09a6846455ac",
+   "hash": "cdd8dc81e707",
    "seconds": 1.77,
    "peak_db": -7.7,
    "rms_db": -21.0
@@ -3243,7 +3311,7 @@
    "take": 0,
    "text": "Hm. That map is wrong.",
    "clip": "hero_surveyorbot_wander_0",
-   "hash": "48d487ad52af",
+   "hash": "c2f5b8113cc4",
    "seconds": 1.73,
    "peak_db": -7.4,
    "rms_db": -21.5
@@ -3254,7 +3322,7 @@
    "take": 1,
    "text": "Taking readings.",
    "clip": "hero_surveyorbot_wander_1",
-   "hash": "0ab04cf497e0",
+   "hash": "10f3df7048d4",
    "seconds": 1.26,
    "peak_db": -8.2,
    "rms_db": -21.7
@@ -3265,7 +3333,7 @@
    "take": 2,
    "text": "Every crater gets a name.",
    "clip": "hero_surveyorbot_wander_2",
-   "hash": "4fe9da540834",
+   "hash": "a14736d9dae7",
    "seconds": 1.67,
    "peak_db": -7.2,
    "rms_db": -21.4
@@ -3276,7 +3344,7 @@
    "take": 0,
    "text": "Greening this crust. Slow work. Worth it.",
    "clip": "hero_terraformerbot_claim_0",
-   "hash": "09734295577d",
+   "hash": "d29136658876",
    "seconds": 2.15,
    "peak_db": -5.5,
    "rms_db": -22.1
@@ -3287,7 +3355,7 @@
    "take": 1,
    "text": "I'll plant here.",
    "clip": "hero_terraformerbot_claim_1",
-   "hash": "695168bc816a",
+   "hash": "10120facbfed",
    "seconds": 0.98,
    "peak_db": -6.4,
    "rms_db": -21.3
@@ -3298,7 +3366,7 @@
    "take": 2,
    "text": "This dirt has potential.",
    "clip": "hero_terraformerbot_claim_2",
-   "hash": "0fe354dc9e32",
+   "hash": "e448bc4f09bb",
    "seconds": 1.35,
    "peak_db": -5.8,
    "rms_db": -21.9
@@ -3309,7 +3377,7 @@
    "take": 0,
    "text": "Plant me... somewhere nice...",
    "clip": "hero_terraformerbot_down_0",
-   "hash": "52dc485c7b23",
+   "hash": "3f2050a6103d",
    "seconds": 1.47,
    "peak_db": -4.6,
    "rms_db": -21.3
@@ -3320,7 +3388,7 @@
    "take": 1,
    "text": "Wilting...",
    "clip": "hero_terraformerbot_down_1",
-   "hash": "3c2fd4076bfa",
+   "hash": "5f9f2311ce92",
    "seconds": 0.8,
    "peak_db": -7.8,
    "rms_db": -21.7
@@ -3331,7 +3399,7 @@
    "take": 2,
    "text": "Tend... the garden...",
    "clip": "hero_terraformerbot_down_2",
-   "hash": "84037e506750",
+   "hash": "b07a681b96a2",
    "seconds": 1.19,
    "peak_db": -6.2,
    "rms_db": -21.2
@@ -3342,7 +3410,7 @@
    "take": 0,
    "text": "Seeds first! Running!",
    "clip": "hero_terraformerbot_flee_0",
-   "hash": "dc17cfc9a1d8",
+   "hash": "d65589098e77",
    "seconds": 1.25,
    "peak_db": -6.0,
    "rms_db": -21.4
@@ -3353,7 +3421,7 @@
    "take": 1,
    "text": "Not today, thank you!",
    "clip": "hero_terraformerbot_flee_1",
-   "hash": "9cc4ada13774",
+   "hash": "8a098b65a506",
    "seconds": 1.27,
    "peak_db": -4.8,
    "rms_db": -21.3
@@ -3364,7 +3432,7 @@
    "take": 2,
    "text": "Back to the greenhouse!",
    "clip": "hero_terraformerbot_flee_2",
-   "hash": "67999f9dae84",
+   "hash": "45b4d78068aa",
    "seconds": 1.24,
    "peak_db": -6.4,
    "rms_db": -21.7
@@ -3375,7 +3443,7 @@
    "take": 0,
    "text": "I'd rather plant than fight.",
    "clip": "hero_terraformerbot_hunt_0",
-   "hash": "923fecfa8fdd",
+   "hash": "0dbfb5768e98",
    "seconds": 1.36,
    "peak_db": -6.5,
    "rms_db": -21.5
@@ -3386,7 +3454,7 @@
    "take": 1,
    "text": "Shoo. Shoo, creature.",
    "clip": "hero_terraformerbot_hunt_1",
-   "hash": "cce8b4ccd863",
+   "hash": "a81518b75f19",
    "seconds": 1.18,
    "peak_db": -8.9,
    "rms_db": -21.8
@@ -3397,7 +3465,7 @@
    "take": 2,
    "text": "Gently. Very firmly. Gently.",
    "clip": "hero_terraformerbot_hunt_2",
-   "hash": "b5e4a4ae30dd",
+   "hash": "7741d920c43e",
    "seconds": 1.79,
    "peak_db": -5.8,
    "rms_db": -21.4
@@ -3408,7 +3476,7 @@
    "take": 0,
    "text": "Ow! My petals!",
    "clip": "hero_terraformerbot_hurt_0",
-   "hash": "4957aebb7df9",
+   "hash": "8ffc4d04afe3",
    "seconds": 1.04,
    "peak_db": -8.9,
    "rms_db": -21.4
@@ -3419,7 +3487,7 @@
    "take": 1,
    "text": "Oh, that stings.",
    "clip": "hero_terraformerbot_hurt_1",
-   "hash": "5c5ee42e5fc1",
+   "hash": "a6ce8d45b9cd",
    "seconds": 1.01,
    "peak_db": -7.4,
    "rms_db": -22.3
@@ -3430,7 +3498,7 @@
    "take": 2,
    "text": "Please don't stomp the seedlings!",
    "clip": "hero_terraformerbot_hurt_2",
-   "hash": "f853fb00ed10",
+   "hash": "fc49312bf41f",
    "seconds": 1.62,
    "peak_db": -4.6,
    "rms_db": -21.6
@@ -3441,7 +3509,7 @@
    "take": 0,
    "text": "Greener thumbs!",
    "clip": "hero_terraformerbot_levelup_0",
-   "hash": "b8d572668a64",
+   "hash": "8c5bbc74b3f7",
    "seconds": 0.97,
    "peak_db": -6.4,
    "rms_db": -21.9
@@ -3452,7 +3520,7 @@
    "take": 1,
    "text": "Growth feels good.",
    "clip": "hero_terraformerbot_levelup_1",
-   "hash": "65c4709eceeb",
+   "hash": "1dadec8fc9f7",
    "seconds": 1.11,
    "peak_db": -5.8,
    "rms_db": -21.5
@@ -3463,7 +3531,7 @@
    "take": 2,
    "text": "More seeds. More hope.",
    "clip": "hero_terraformerbot_levelup_2",
-   "hash": "d93c23816150",
+   "hash": "d04f037c8829",
    "seconds": 1.25,
    "peak_db": -6.5,
    "rms_db": -21.4
@@ -3474,7 +3542,7 @@
    "take": 0,
    "text": "Not my patch. That's alright.",
    "clip": "hero_terraformerbot_refused_0",
-   "hash": "08058e4ec769",
+   "hash": "a6a8efde3481",
    "seconds": 1.52,
    "peak_db": -7.5,
    "rms_db": -21.2
@@ -3485,7 +3553,7 @@
    "take": 1,
    "text": "Someone else will tend it.",
    "clip": "hero_terraformerbot_refused_1",
-   "hash": "f276701007c5",
+   "hash": "88dd637110cf",
    "seconds": 1.3,
    "peak_db": -7.9,
    "rms_db": -22.2
@@ -3496,7 +3564,7 @@
    "take": 2,
    "text": "Orders say no. I'll wait.",
    "clip": "hero_terraformerbot_refused_2",
-   "hash": "8d27349035e1",
+   "hash": "1cb76c0d54c6",
    "seconds": 1.53,
    "peak_db": -7.4,
    "rms_db": -21.0
@@ -3507,7 +3575,7 @@
    "take": 0,
    "text": "Everything heals, with care.",
    "clip": "hero_terraformerbot_repair_0",
-   "hash": "d656710e6b17",
+   "hash": "4fdb659ad2d1",
    "seconds": 1.44,
    "peak_db": -6.6,
    "rms_db": -21.4
@@ -3518,7 +3586,7 @@
    "take": 1,
    "text": "Patching. Like pruning.",
    "clip": "hero_terraformerbot_repair_1",
-   "hash": "1e5edbe33876",
+   "hash": "85ec2aff61dc",
    "seconds": 1.25,
    "peak_db": -6.6,
    "rms_db": -21.6
@@ -3529,7 +3597,7 @@
    "take": 2,
    "text": "There. Better already.",
    "clip": "hero_terraformerbot_repair_2",
-   "hash": "781f040ef5ba",
+   "hash": "5904d3180f2f",
    "seconds": 1.18,
    "peak_db": -6.3,
    "rms_db": -20.9
@@ -3540,7 +3608,7 @@
    "take": 0,
    "text": "Photosynthesis break.",
    "clip": "hero_terraformerbot_rest_0",
-   "hash": "3e869c2cc57d",
+   "hash": "bacc47684fd6",
    "seconds": 1.31,
    "peak_db": -6.9,
    "rms_db": -21.9
@@ -3551,7 +3619,7 @@
    "take": 1,
    "text": "Resting. Growing slowly.",
    "clip": "hero_terraformerbot_rest_1",
-   "hash": "a2241a99b4c3",
+   "hash": "70f5783a7c67",
    "seconds": 1.47,
    "peak_db": -5.7,
    "rms_db": -21.3
@@ -3562,7 +3630,7 @@
    "take": 2,
    "text": "Let the soil settle.",
    "clip": "hero_terraformerbot_rest_2",
-   "hash": "bfccda474eeb",
+   "hash": "81478eaa771f",
    "seconds": 1.1,
    "peak_db": -7.7,
    "rms_db": -21.5
@@ -3573,7 +3641,7 @@
    "take": 0,
    "text": "Bloom here. Something needs greening?",
    "clip": "hero_terraformerbot_select_0",
-   "hash": "b406bf59dc2f",
+   "hash": "ce8773498560",
    "seconds": 1.73,
    "peak_db": -4.1,
    "rms_db": -21.0
@@ -3584,7 +3652,7 @@
    "take": 1,
    "text": "Hello. Growing things today?",
    "clip": "hero_terraformerbot_select_1",
-   "hash": "34ba9778860b",
+   "hash": "b15f7fd24416",
    "seconds": 1.54,
    "peak_db": -4.7,
    "rms_db": -21.4
@@ -3595,7 +3663,7 @@
    "take": 2,
    "text": "Patience. Everything grows.",
    "clip": "hero_terraformerbot_select_2",
-   "hash": "228a1e16a29d",
+   "hash": "9742e3753e9a",
    "seconds": 1.6,
    "peak_db": -5.5,
    "rms_db": -21.3
@@ -3606,7 +3674,7 @@
    "take": 0,
    "text": "Just checking the sprouts.",
    "clip": "hero_terraformerbot_wander_0",
-   "hash": "ea1859cea377",
+   "hash": "17c20956b5ba",
    "seconds": 1.28,
    "peak_db": -7.4,
    "rms_db": -22.3
@@ -3617,7 +3685,7 @@
    "take": 1,
    "text": "One day, trees here.",
    "clip": "hero_terraformerbot_wander_1",
-   "hash": "d84e6eded311",
+   "hash": "b416176ed23f",
    "seconds": 1.19,
    "peak_db": -6.1,
    "rms_db": -21.7
@@ -3628,7 +3696,7 @@
    "take": 2,
    "text": "Smells like progress.",
    "clip": "hero_terraformerbot_wander_2",
-   "hash": "da0547659cfc",
+   "hash": "abb48a12c031",
    "seconds": 1.3,
    "peak_db": -7.4,
    "rms_db": -21.9
@@ -3639,7 +3707,7 @@
    "take": 0,
    "text": "Critical alert. This one matters.",
    "clip": "overseer_alert_critical_0",
-   "hash": "d261a213eeb4",
+   "hash": "7182bf3601a6",
    "seconds": 2.0,
    "peak_db": -3.9,
    "rms_db": -21.4
@@ -3650,7 +3718,7 @@
    "take": 1,
    "text": "We are losing something. Now.",
    "clip": "overseer_alert_critical_1",
-   "hash": "14e67e3f906f",
+   "hash": "55eca02df8d0",
    "seconds": 1.8,
    "peak_db": -4.4,
    "rms_db": -21.3
@@ -3661,7 +3729,7 @@
    "take": 2,
    "text": "Red alert. Please act before it becomes a lesson.",
    "clip": "overseer_alert_critical_2",
-   "hash": "96350b00ee69",
+   "hash": "715b32351334",
    "seconds": 2.83,
    "peak_db": -3.3,
    "rms_db": -21.2
@@ -3672,7 +3740,7 @@
    "take": 0,
    "text": "Overseer, heads up.",
    "clip": "overseer_alert_warning_0",
-   "hash": "5cd905993023",
+   "hash": "3275d3a6d02f",
    "seconds": 1.31,
    "peak_db": -4.4,
    "rms_db": -21.6
@@ -3683,7 +3751,7 @@
    "take": 1,
    "text": "Something needs your attention.",
    "clip": "overseer_alert_warning_1",
-   "hash": "7ccc1d111f2e",
+   "hash": "e68d2f249ec4",
    "seconds": 1.49,
    "peak_db": -1.9,
    "rms_db": -20.6
@@ -3694,7 +3762,7 @@
    "take": 2,
    "text": "Warning. Look sharp.",
    "clip": "overseer_alert_warning_2",
-   "hash": "b58a8e0a19c0",
+   "hash": "9d45d52d5cf9",
    "seconds": 1.26,
    "peak_db": -7.1,
    "rms_db": -21.2
@@ -3705,7 +3773,7 @@
    "take": 0,
    "text": "That went poorly. Again?",
    "clip": "overseer_defeat_0",
-   "hash": "cebd6fb60c95",
+   "hash": "da3fc3a77312",
    "seconds": 1.55,
    "peak_db": -5.4,
    "rms_db": -21.6
@@ -3716,7 +3784,7 @@
    "take": 1,
    "text": "Colony lost. We will call it a learning experience.",
    "clip": "overseer_defeat_1",
-   "hash": "3d6c3f7a6c3e",
+   "hash": "1b79e2a9a81f",
    "seconds": 2.8,
    "peak_db": -5.7,
    "rms_db": -20.9
@@ -3727,7 +3795,7 @@
    "take": 2,
    "text": "Well. That is one way to end it.",
    "clip": "overseer_defeat_2",
-   "hash": "467331c7d92c",
+   "hash": "44b3b8322c38",
    "seconds": 1.79,
    "peak_db": -4.5,
    "rms_db": -20.8
@@ -3738,7 +3806,7 @@
    "take": 0,
    "text": "Robot down.",
    "clip": "overseer_hero_down_0",
-   "hash": "264aae2d391d",
+   "hash": "b56f412acf19",
    "seconds": 0.97,
    "peak_db": -4.4,
    "rms_db": -20.9
@@ -3749,7 +3817,7 @@
    "take": 1,
    "text": "One of ours is down.",
    "clip": "overseer_hero_down_1",
-   "hash": "6ca5226631d6",
+   "hash": "4461dcf3303d",
    "seconds": 1.2,
    "peak_db": -4.1,
    "rms_db": -20.8
@@ -3760,7 +3828,7 @@
    "take": 2,
    "text": "Another one for the yard.",
    "clip": "overseer_hero_down_2",
-   "hash": "22eb5f2fe222",
+   "hash": "66e3f706df3a",
    "seconds": 1.33,
    "peak_db": -5.5,
    "rms_db": -20.6
@@ -3771,7 +3839,7 @@
    "key": "0f8712fb",
    "text": "Pad paid out. Dock fee already left. The Freeholds send their love. It is itemized.",
    "clip": "overseer_line_0f8712fb",
-   "hash": "6979df127229",
+   "hash": "6234da66462f",
    "seconds": 5.01,
    "peak_db": -2.7,
    "rms_db": -21.4
@@ -3782,7 +3850,7 @@
    "key": "15466bc2",
    "text": "Welcome to a rock that already has a landlord. Raise a Commons before the Freeholds invoice the crater.",
    "clip": "overseer_line_15466bc2",
-   "hash": "50ee397c10d4",
+   "hash": "0acc84cac419",
    "seconds": 6.05,
    "peak_db": -3.7,
    "rms_db": -21.7
@@ -3793,7 +3861,7 @@
    "key": "3140f16a",
    "text": "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building.",
    "clip": "overseer_line_3140f16a",
-   "hash": "d4a5755e7a06",
+   "hash": "715d5b51b824",
    "seconds": 5.56,
    "peak_db": -3.9,
    "rms_db": -21.5
@@ -3804,7 +3872,7 @@
    "key": "357528d9",
    "text": "That is a decree, not a leash. Post it. If nobody wants it, that is a you problem.",
    "clip": "overseer_line_357528d9",
-   "hash": "1f9393c52524",
+   "hash": "ab4307ec29aa",
    "seconds": 4.78,
    "peak_db": -4.6,
    "rms_db": -21.5
@@ -3815,7 +3883,7 @@
    "key": "3ae9c966",
    "text": "That red chip is water, not a coupon. Credits will not drink themselves. Build a farm or stop collecting roommates.",
    "clip": "overseer_line_3ae9c966",
-   "hash": "2c14582eb15c",
+   "hash": "692e7982493a",
    "seconds": 7.27,
    "peak_db": -3.7,
    "rms_db": -21.5
@@ -3826,7 +3894,7 @@
    "key": "4ee4328e",
    "text": "Dock a Fobot Yard. Y is not a miracle. It is an invoice.",
    "clip": "overseer_line_4ee4328e",
-   "hash": "f43f544a5063",
+   "hash": "c83453f1f1a0",
    "seconds": 3.72,
    "peak_db": -4.1,
    "rms_db": -21.4
@@ -3837,7 +3905,7 @@
    "key": "5ac8315c",
    "text": "Stall is closed. We do not export lunch until the tank is fat. Try twelve. Try not dying.",
    "clip": "overseer_line_5ac8315c",
-   "hash": "67263b6c2aec",
+   "hash": "01ecdc5eeaef",
    "seconds": 5.76,
    "peak_db": -4.0,
    "rms_db": -21.6
@@ -3848,7 +3916,7 @@
    "key": "5b89593f",
    "text": "Something just drank a unit of ice. That was not a sale.",
    "clip": "overseer_line_5b89593f",
-   "hash": "211e14cdb10a",
+   "hash": "1c03276706f9",
    "seconds": 3.2,
    "peak_db": -2.6,
    "rms_db": -21.1
@@ -3859,7 +3927,7 @@
    "key": "711b3750",
    "text": "Compact scrip insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
    "clip": "overseer_line_711b3750",
-   "hash": "4f9b574471fa",
+   "hash": "3a061a04d456",
    "seconds": 5.31,
    "peak_db": -2.8,
    "rms_db": -21.4
@@ -3870,7 +3938,7 @@
    "key": "7f201696",
    "text": "Anvil wants 790. He can count. Raise the bounty or enjoy the scenery.",
    "clip": "overseer_line_7f201696",
-   "hash": "d3d5075e3a91",
+   "hash": "ade4838bc660",
    "seconds": 5.25,
    "peak_db": -3.6,
    "rms_db": -21.2
@@ -3881,7 +3949,7 @@
    "key": "8090f602",
    "text": "Life support is a suggestion until it is not. The tank is at four. People first, Anvil second.",
    "clip": "overseer_line_8090f602",
-   "hash": "2bd2fa0e28af",
+   "hash": "e8796c9e7dda",
    "seconds": 6.17,
    "peak_db": -2.2,
    "rms_db": -21.5
@@ -3892,7 +3960,7 @@
    "key": "80b5f553",
    "text": "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.",
    "clip": "overseer_line_80b5f553",
-   "hash": "d7f7c9a14eb8",
+   "hash": "ff187624e286",
    "seconds": 6.14,
    "peak_db": -4.1,
    "rms_db": -21.4
@@ -3903,7 +3971,7 @@
    "key": "815b811e",
    "text": "Tax collector killed on the road",
    "clip": "overseer_line_815b811e",
-   "hash": "6129d9387657",
+   "hash": "754ded927d20",
    "seconds": 1.72,
    "peak_db": -3.0,
    "rms_db": -20.7
@@ -3914,7 +3982,7 @@
    "key": "90c9051c",
    "text": "Grid is skinny. Everyone is working at seventy percent, including your patience.",
    "clip": "overseer_line_90c9051c",
-   "hash": "c9725f1fdc38",
+   "hash": "43f9d62510cd",
    "seconds": 4.69,
    "peak_db": -2.0,
    "rms_db": -21.4
@@ -3925,7 +3993,7 @@
    "key": "9158d19f",
    "text": "See the crate on wheels? That is your tax collector. We are not calling it that. Do not click it.",
    "clip": "overseer_line_9158d19f",
-   "hash": "338edf96861d",
+   "hash": "93ee668db104",
    "seconds": 4.98,
    "peak_db": -5.1,
    "rms_db": -21.5
@@ -3936,7 +4004,7 @@
    "key": "91bbb142",
    "text": "Level 6 wreck, Compact scrip insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
    "clip": "overseer_line_91bbb142",
-   "hash": "8c5f244a99fb",
+   "hash": "e65dbce3a38f",
    "seconds": 6.29,
    "peak_db": -3.7,
    "rms_db": -21.4
@@ -3947,7 +4015,7 @@
    "key": "b2cd8f49",
    "text": "Credits were napping on the HAB. A mite just made a withdrawal.",
    "clip": "overseer_line_b2cd8f49",
-   "hash": "33ba9a5b2c39",
+   "hash": "45889aec7d4a",
    "seconds": 3.32,
    "peak_db": -4.0,
    "rms_db": -21.2
@@ -3958,7 +4026,7 @@
    "key": "b7c7de82",
    "text": "Humans stay indoors. Everything that walks is a robot. Try not to mix them up — it gets philosophical.",
    "clip": "overseer_line_b7c7de82",
-   "hash": "779ccd834abd",
+   "hash": "cedae0851c36",
    "seconds": 6.11,
    "peak_db": -3.9,
    "rms_db": -21.6
@@ -3969,7 +4037,7 @@
    "key": "b9f28637",
    "text": "Nobody is standing. You have twenty seconds of optimism left.",
    "clip": "overseer_line_b9f28637",
-   "hash": "88ab46a661bb",
+   "hash": "303a8ba70fad",
    "seconds": 3.78,
    "peak_db": -2.1,
    "rms_db": -21.3
@@ -3980,7 +4048,7 @@
    "key": "bf134132",
    "text": "Credits are napping on the HAB. Haul will get around to it. Or a mite will. Gambling!",
    "clip": "overseer_line_bf134132",
-   "hash": "7c05eb5d89a1",
+   "hash": "48a5835d5f4c",
    "seconds": 4.67,
    "peak_db": -3.8,
    "rms_db": -21.5
@@ -3991,7 +4059,7 @@
    "key": "c50b7429",
    "text": "Haul walked the purse home. That is your tax collector. We are not calling it that.",
    "clip": "overseer_line_c50b7429",
-   "hash": "16aceb666640",
+   "hash": "dd917e25f3eb",
    "seconds": 4.36,
    "peak_db": -4.0,
    "rms_db": -21.6
@@ -4002,7 +4070,7 @@
    "key": "c50c568a",
    "text": "Junk-bot ate the levy. Congratulations, you have invented charity.",
    "clip": "overseer_line_c50c568a",
-   "hash": "296b23c36333",
+   "hash": "97f6d26084fd",
    "seconds": 4.32,
    "peak_db": -3.0,
    "rms_db": -21.4
@@ -4013,7 +4081,7 @@
    "key": "c573fa67",
    "text": "Flag still unpaid. The Compact does not work for exposure.",
    "clip": "overseer_line_c573fa67",
-   "hash": "d4321674f09a",
+   "hash": "e1608505491a",
    "seconds": 3.6,
    "peak_db": -4.1,
    "rms_db": -21.8
@@ -4024,7 +4092,7 @@
    "key": "f5a04973",
    "text": "Open Hands: they will take a cheap flag. Hunger is past the greed gate. Courage is not.",
    "clip": "overseer_line_f5a04973",
-   "hash": "bff780b1fa94",
+   "hash": "0fd00cf2c7eb",
    "seconds": 5.37,
    "peak_db": -3.5,
    "rms_db": -21.7
@@ -4035,7 +4103,7 @@
    "take": 0,
    "text": "We lost a module.",
    "clip": "overseer_module_lost_0",
-   "hash": "ade3217c3691",
+   "hash": "49938d7c241b",
    "seconds": 1.19,
    "peak_db": -4.4,
    "rms_db": -20.8
@@ -4046,7 +4114,7 @@
    "take": 1,
    "text": "Module destroyed. That was load bearing.",
    "clip": "overseer_module_lost_1",
-   "hash": "8e2536247800",
+   "hash": "bb53679ac1b5",
    "seconds": 2.52,
    "peak_db": -2.9,
    "rms_db": -21.2
@@ -4057,7 +4125,7 @@
    "take": 2,
    "text": "One less building. Noted.",
    "clip": "overseer_module_lost_2",
-   "hash": "edd4c1a471ed",
+   "hash": "68fef8b4cce6",
    "seconds": 1.75,
    "peak_db": -5.1,
    "rms_db": -21.4
@@ -4068,7 +4136,7 @@
    "take": 0,
    "text": "Objective complete. I will pretend I expected this.",
    "clip": "overseer_victory_0",
-   "hash": "e783db05d9c2",
+   "hash": "b3c3a7530a08",
    "seconds": 3.18,
    "peak_db": -4.3,
    "rms_db": -21.5
@@ -4079,7 +4147,7 @@
    "take": 1,
    "text": "Victory. Try to look surprised.",
    "clip": "overseer_victory_1",
-   "hash": "4cb8cd2c7996",
+   "hash": "ef164ceed9a8",
    "seconds": 1.82,
    "peak_db": -3.2,
    "rms_db": -21.8
@@ -4090,7 +4158,7 @@
    "take": 2,
    "text": "Done. The Compact is almost impressed.",
    "clip": "overseer_victory_2",
-   "hash": "fecd5abaf5a2",
+   "hash": "7fa73f9c7056",
    "seconds": 2.18,
    "peak_db": -4.1,
    "rms_db": -21.4

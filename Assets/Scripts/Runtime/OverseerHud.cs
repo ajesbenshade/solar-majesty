@@ -2409,16 +2409,23 @@ namespace SolarMajesty
             }
             y += 32f;
 
-            // Baked barks need nothing running; LOCAL AI adds the LLM narrator and live TTS on top.
-            float voiceHalf = (c.width - 8f) * 0.5f;
-            if (Chip(new Rect(c.x, y, voiceHalf, 26f), "CHARACTER VOICES", DemoSettings.CharacterVoices))
+            // Baked voices need nothing running. The LOCAL rows add LLM-written lines and speak them.
+            if (Chip(new Rect(c.x, y, c.width, 26f), "CHARACTER VOICES  ·  BAKED BARKS + OVERSEER", DemoSettings.CharacterVoices))
             {
                 DemoSettings.CharacterVoices = !DemoSettings.CharacterVoices;
                 DemoSettings.SaveSettings();
             }
-            if (Chip(new Rect(c.x + voiceHalf + 8f, y, voiceHalf, 26f), "HERO VOICES  ·  LOCAL AI", DemoSettings.HeroVoices))
+            y += 32f;
+
+            // Lines come from a local LLM; SPOKEN reads them aloud through a local TTS server.
+            if (Chip(new Rect(c.x, y, visHalf, 26f), "HERO LINES · LOCAL LLM", DemoSettings.HeroVoices))
             {
                 DemoSettings.HeroVoices = !DemoSettings.HeroVoices;
+                DemoSettings.SaveSettings();
+            }
+            if (Chip(new Rect(c.x + visHalf + 8f, y, visHalf, 26f), "SPOKEN · LOCAL TTS", DemoSettings.HeroSpeech))
+            {
+                DemoSettings.HeroSpeech = !DemoSettings.HeroSpeech;
                 DemoSettings.SaveSettings();
             }
             y += 36f;

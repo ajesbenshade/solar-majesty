@@ -36,6 +36,8 @@ namespace SolarMajesty
         public const string MusicKey = "SM_Set_Music";
         public const string VoiceKey = "SM_Set_Voice";
         public const string CharacterVoicesKey = "SM_Set_CharacterVoices";
+        public const string HeroSpeechKey = "SM_Set_HeroSpeech";
+        public const string PlanetArchitectureKey = "SM_Set_PlanetArchitecture";
         public const string RosterKeyPrefix = "SM_Roster_";
 
         public static float Master = 1f;
@@ -94,6 +96,11 @@ namespace SolarMajesty
 
         /// <summary>Baked character voices: hero barks and the Overseer (Docs/AUDIO.md). No server needed.</summary>
         public static bool CharacterVoices = true;
+        /// <summary>Speak hero lines aloud via a local TTS server (see Docs/HERO_NARRATION.md).</summary>
+        public static bool HeroSpeech;
+
+        /// <summary>Per-world building architecture (see Docs/PLANET_ARCHITECTURE.md). <c>-classic-buildings</c> turns it off.</summary>
+        public static bool PlanetArchitecture = true;
 
         public static void Load()
         {
@@ -120,6 +127,8 @@ namespace SolarMajesty
             CloudShadows = PlayerPrefs.GetInt(CloudShadowsKey, 1) == 1;
             HeroVoices = PlayerPrefs.GetInt(HeroVoicesKey, 0) == 1;
             CharacterVoices = PlayerPrefs.GetInt(CharacterVoicesKey, 1) == 1;
+            HeroSpeech = PlayerPrefs.GetInt(HeroSpeechKey, 0) == 1;
+            PlanetArchitecture = PlayerPrefs.GetInt(PlanetArchitectureKey, 1) == 1 && !HasArg("-classic-buildings");
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
             FirstHourDemo = PlayerPrefs.GetInt(FirstHourKey, 1) == 1;
             ReplayRules.Load();
@@ -179,6 +188,7 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(CloudShadowsKey, CloudShadows ? 1 : 0);
             PlayerPrefs.SetInt(HeroVoicesKey, HeroVoices ? 1 : 0);
             PlayerPrefs.SetInt(CharacterVoicesKey, CharacterVoices ? 1 : 0);
+            PlayerPrefs.SetInt(HeroSpeechKey, HeroSpeech ? 1 : 0);
             PlayerPrefs.SetInt(FirstHourKey, FirstHourDemo ? 1 : 0);
             // The demo forces campaign / no challenge / balanced in memory.
             // Do not write that over a saved full-campaign stance.

@@ -1,4 +1,4 @@
-"""Shared bits for the voice bake and the live voice server: paths, cast, Kokoro, line keys."""
+"""Shared bits for the voice bake: paths, cast, Kokoro, line keys."""
 
 from __future__ import annotations
 

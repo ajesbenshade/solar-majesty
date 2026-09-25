@@ -41,6 +41,17 @@ namespace SolarMajesty
         public float Seconds;
     }
 
+    /// <summary>One speaker's casting from Tools/audio/cast.json, carried in the manifest.</summary>
+    public sealed class VoiceCast
+    {
+        public string Voice;
+        public float Speed = 1f;
+        /// <summary>Semitones; tempo is preserved.</summary>
+        public float Pitch;
+        /// <summary>Robot processing preset in voice_fx.py (overseer, servo, mech, drone).</summary>
+        public string Fx;
+    }
+
     /// <summary>
     /// The baked voice bank: barks per speaker and cue, plus Overseer lines keyed by their text.
     ///
@@ -57,6 +68,7 @@ namespace SolarMajesty
         private readonly Dictionary<string, List<VoiceClipInfo>> _barks = new Dictionary<string, List<VoiceClipInfo>>();
         private readonly Dictionary<string, VoiceClipInfo> _lines = new Dictionary<string, VoiceClipInfo>();
         private readonly Dictionary<string, int> _lastTake = new Dictionary<string, int>();
+        private readonly Dictionary<string, VoiceCast> _cast = new Dictionary<string, VoiceCast>();
 
         public int Count { get; private set; }
         public int LineCount => _lines.Count;
@@ -114,6 +126,23 @@ namespace SolarMajesty
             try { root = LocalJson.Parse(json); }
             catch (Exception) { return bank; }
 
+            if (root is Dictionary<string, object> top &&
+                top.TryGetValue("cast", out object castObj) && castObj is Dictionary<string, object> cast)
+            {
+                foreach (var kv in cast)
+                {
+                    if (!(kv.Value is Dictionary<string, object> e) || string.IsNullOrEmpty(Str(e, "voice"))) continue;
+                    double speed = Num(e, "speed");
+                    bank._cast[kv.Key] = new VoiceCast
+                    {
+                        Voice = Str(e, "voice"),
+                        Speed = speed > 0 ? (float)speed : 1f,
+                        Pitch = (float)Num(e, "pitch"),
+                        Fx = Str(e, "fx")
+                    };
+                }
+            }
+
             if (!(root is Dictionary<string, object> map) ||
                 !map.TryGetValue("clips", out object clipsObj) ||
                 !(clipsObj is List<object> clips))
@@ -160,6 +189,41 @@ namespace SolarMajesty
                 _barks[slot] = list;
             }
             list.Add(info);
+        }
+
+        public bool TryGetCast(string speaker, out VoiceCast cast) =>
+            _cast.TryGetValue(speaker ?? "", out cast) && cast != null;
+
+        public static float PitchRatio(float semitones) => (float)Math.Pow(2.0, semitones / 12.0);
+
+        /// <summary>How much of HeroSpeech's radio filter each baked FX preset corresponds to.</summary>
+        public static float RobotFor(string fx)
+        {
+            switch (fx)
+            {
+                case "overseer": return 0.12f;
+                case "servo": return 0.5f;
+                case "drone": return 0.65f;
+                case "mech": return 0.8f;
+                default: return 0f;
+            }
+        }
+
+        /// <summary>
+        /// Live-TTS request for a cast entry. The server can't pitch-shift, so, as in the bake, the
+        /// line is asked for at speed / pitch-ratio and played back at the pitch ratio: that lands on
+        /// the cast's pitch and speaking rate together. <paramref name="playbackPitch"/> is that ratio.
+        /// </summary>
+        public static HeroVoiceSpec LiveSpec(VoiceCast cast, out float playbackPitch)
+        {
+            playbackPitch = PitchRatio(cast.Pitch);
+            float speed = cast.Speed / playbackPitch;
+            return new HeroVoiceSpec
+            {
+                Voice = cast.Voice,
+                Speed = speed < 0.5f ? 0.5f : speed > 2f ? 2f : speed,
+                Robot = RobotFor(cast.Fx)
+            };
         }
 
         public bool HasBark(string speaker, VoiceCue cue) =>

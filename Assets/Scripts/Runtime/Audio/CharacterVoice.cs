@@ -107,7 +107,7 @@ namespace SolarMajesty
             if (cue != VoiceCue.Down && !agent.IsAlive) return;
             var self = Ensure();
 
-            if (awaitNarration && VoiceServerLink.Online)
+            if (awaitNarration && HeroSpeaker.Ready)
             {
                 self._pending[agent.GetHashCode()] = new Pending
                 {
@@ -133,8 +133,8 @@ namespace SolarMajesty
             if (!self._pending.TryGetValue(id, out Pending p)) return;
             self._pending.Remove(id);
 
-            string speaker = VoiceBank.SpeakerFor(agent.Data.specialistClass);
-            bool sent = VoiceServerLink.Request(speaker, line, clip =>
+            HeroVoiceSpec voice = LiveVoice(agent, out float playbackPitch);
+            bool sent = HeroSpeaker.Request(voice, line, clip =>
             {
                 if (agent == null) return;
                 if (clip == null)
@@ -142,9 +142,23 @@ namespace SolarMajesty
                     self.Bark(agent, p.Cue);
                     return;
                 }
-                self.Play(agent, p.Cue, clip, null);
+                self.Play(agent, p.Cue, clip, null, playbackPitch);
+                Destroy(clip, clip.length / playbackPitch + 1f);
             });
             if (!sent) self.Bark(agent, p.Cue);
+        }
+
+        /// <summary>
+        /// The live voice for a hero: the same cast entry the baked barks were rendered with, so a
+        /// robot sounds like itself either way. Without a cast in the manifest, HeroSpeech's own
+        /// casting is the fallback.
+        /// </summary>
+        private static HeroVoiceSpec LiveVoice(SpecialistAgent agent, out float playbackPitch)
+        {
+            if (Bank.TryGetCast(VoiceBank.SpeakerFor(agent.Data.specialistClass), out VoiceCast cast))
+                return VoiceBank.LiveSpec(cast, out playbackPitch);
+            playbackPitch = 1f;
+            return HeroSpeech.VoiceFor(agent.Data.specialistClass, agent.GetHashCode(), agent.Data.workaholicBias);
         }
 
         private void Bark(SpecialistAgent agent, VoiceCue cue)
@@ -157,12 +171,12 @@ namespace SolarMajesty
             Play(agent, cue, clip, info.Text);
         }
 
-        private void Play(SpecialistAgent agent, VoiceCue cue, AudioClip clip, string subtitle)
+        private void Play(SpecialistAgent agent, VoiceCue cue, AudioClip clip, string subtitle, float pitch = 1f)
         {
             if (_loop == null) _loop = FindAnyObjectByType<GameLoop>();
             bool selected = _loop != null && _loop.IsSelected(agent);
             float now = Time.unscaledTime;
-            if (!_director.TryStartHero(agent.GetHashCode(), cue, selected, now, clip.length)) return;
+            if (!_director.TryStartHero(agent.GetHashCode(), cue, selected, now, clip.length / pitch)) return;
 
             int slot = FreeSlot();
             AudioSource src = _sources[slot];
@@ -172,14 +186,14 @@ namespace SolarMajesty
             src.clip = clip;
             // Every robot of a class shares barks; a stable per-robot pitch keeps two Anvils apart.
             int h = agent.GetHashCode() * 7919;
-            src.pitch = 1f + (((h % 9) + 9) % 9 - 4) * 0.012f;
+            src.pitch = pitch * (1f + (((h % 9) + 9) % 9 - 4) * 0.012f);
             src.spatialBlend = selected ? 0.25f : 0.7f;
             src.volume = SoundBus.Volume(SoundChannel.Voice) * (selected ? 0.95f : 0.8f);
             src.transform.position = agent.transform.position;
             _following[slot] = agent.transform;
             src.Play();
 
-            SoundBus.DuckBed(selected ? 0.3f : 0.18f, clip.length + 0.2f);
+            SoundBus.DuckBed(selected ? 0.3f : 0.18f, clip.length / pitch + 0.2f);
 
             // The card line matches what was said, except for pain noises and hellos.
             if (!string.IsNullOrEmpty(subtitle) && cue != VoiceCue.Hurt && cue != VoiceCue.Select && cue != VoiceCue.Down)
