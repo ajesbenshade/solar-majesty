@@ -4,10 +4,10 @@ Solar Majesty — add remaining modular building blockouts to the EXISTING blend
 Does NOT modify:
   SM_ModularTubeConnector, SM_HAB1_HabitatModule, SM_LAB1_LaboratoryModule
 
-Run:
+Run from the repo root (macOS; on Windows use "C:\Program Files\Blender Foundation\Blender <version>\blender.exe" instead of the Blender path):
   /Applications/Blender.app/Contents/MacOS/Blender --background \
-    /Users/aaronesbenshade/solar-conquest/Blender/SolarMajesty_Modules.blend \
-    --python .../sm_add_remaining_blockouts.py
+    Blender/SolarMajesty_Modules.blend \
+    --python Blender/scripts/sm_add_remaining_blockouts.py
 """
 
 from __future__ import annotations

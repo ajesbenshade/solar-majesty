@@ -4,10 +4,10 @@ Solar Majesty — crater terrain meshes + a proper solar-array farm.
 Rebuilds SM_PWR1_SolarArray (replaces the flat-plane blockout).
 Adds SM_Crater_Small / Medium / Large.
 
-Run:
+Run from the repo root (macOS; on Windows use "C:\Program Files\Blender Foundation\Blender <version>\blender.exe" instead of the Blender path):
   /Applications/Blender.app/Contents/MacOS/Blender --background \
-    /Users/aaronesbenshade/solar-conquest/Blender/SolarMajesty_Modules.blend \
-    --python /Users/aaronesbenshade/solar-conquest/Blender/scripts/sm_craters_and_solar.py
+    Blender/SolarMajesty_Modules.blend \
+    --python Blender/scripts/sm_craters_and_solar.py
 """
 
 from __future__ import annotations

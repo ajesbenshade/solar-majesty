@@ -1,6 +1,6 @@
 # Solar Majesty — plan to production
 
-September 21, 2026. Based on the [production review](/Users/aaronesbenshade/solar-conquest/Docs/PRODUCTION_REVIEW_2026-09-21.md). This is the proposed delivery plan; it does not declare existing roadmap phases complete.
+September 21, 2026. Based on the [production review](../Docs/PRODUCTION_REVIEW_2026-09-21.md). This is the proposed delivery plan; it does not declare existing roadmap phases complete.
 
 ## Product contract
 

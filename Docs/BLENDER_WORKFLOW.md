@@ -2,10 +2,10 @@
 
 ## Confirmed image locations
 
-All concept sheets currently live under:
+All concept sheets currently live in the repo under:
 
 ```
-/Users/aaronesbenshade/solar-conquest/ConceptSheets/
+ConceptSheets/
 ```
 
 | File | Status |
@@ -71,11 +71,18 @@ solar-conquest/
 
 ### Option A — Auto setup (recommended)
 
-In Terminal:
+From the repo root — macOS (Terminal):
 
 ```bash
 /Applications/Blender.app/Contents/MacOS/Blender --background \
-  --python /Users/aaronesbenshade/solar-conquest/Blender/scripts/sm_setup_and_blockout.py
+  --python Blender/scripts/sm_setup_and_blockout.py
+```
+
+Windows (PowerShell):
+
+```powershell
+& "C:\Program Files\Blender Foundation\Blender <version>\blender.exe" --background `
+  --python Blender\scripts\sm_setup_and_blockout.py
 ```
 
 This will:
@@ -90,7 +97,8 @@ This will:
 Then open:
 
 ```bash
-open /Users/aaronesbenshade/solar-conquest/Blender/SolarMajesty_Modules.blend
+open Blender/SolarMajesty_Modules.blend        # macOS
+start Blender\SolarMajesty_Modules.blend      # Windows
 ```
 
 ### Option B — Manual reference load (if you prefer GUI)

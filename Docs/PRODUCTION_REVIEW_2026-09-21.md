@@ -13,7 +13,7 @@ Keep the current Unity project and its indirect-control foundation. A wholesale 
 ## Evidence and limits
 
 - Inspected the current gameplay, AI, economy, campaign, persistence, presentation, input, build, test, and planning code. Inventory: **158 C# files / 48,021 lines** under `Assets/Scripts`, including tests and editor tools. Counts are source inventory, not a quality score.
-- Ran the real **Unity 6000.5.10f1 EditMode suite: 279 tests, 270 passed, 9 failed, 0 skipped**. Results: [test report](/Users/aaronesbenshade/solar-conquest/Docs/ReviewEvidence/2026-09-21-editmode.xml). There is no PlayMode test assembly in the inspected project. Passing unit tests do not establish campaign correctness.
+- Ran the real **Unity 6000.5.10f1 EditMode suite: 279 tests, 270 passed, 9 failed, 0 skipped**. Results: [test report](../Docs/ReviewEvidence/2026-09-21-editmode.xml). There is no PlayMode test assembly in the inspected project. Passing unit tests do not establish campaign correctness.
 - Opened the existing macOS player and observed the live solar-system title screen. Continue/Settings did not visibly respond to automated clicks, even after activating the window. This may be an automation/input limitation; it is **not** classified as a confirmed game defect. A live first-hour or full-campaign playthrough was not completed.
 - Visually inspected archived `Docs/Roadmap/SM_Capture.png` and the locked spaced-campus concept. Archived imagery is not proof of the current build's appearance. The packaged player predates some working-tree edits and was not rebuilt during this review.
 - The requested Bugbot-specific service was unavailable. A code-review subagent performed the fallback review; its first run was interrupted by the app update, and one recovery pass completed. Its three regressions below were verified by tracing code, not runtime reproduction.
@@ -36,7 +36,7 @@ Priorities here distinguish player impact from delivery urgency. P1 findings bel
 
 ### F01 — P1: loading mixes a global snapshot with separate per-body colony data
 
-**Evidence:** [EnterPlaying](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/GameLoop.cs:679), [ApplySave](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/GameLoop.cs:4722), [RestoreCampus](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/GameLoop.cs:5128), [AdvanceCampaign](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/GameLoop.cs:3818).
+**Evidence:** [EnterPlaying](../Assets/Scripts/Runtime/GameLoop.cs:679), [ApplySave](../Assets/Scripts/Runtime/GameLoop.cs:4722), [RestoreCampus](../Assets/Scripts/Runtime/GameLoop.cs:5128), [AdvanceCampaign](../Assets/Scripts/Runtime/GameLoop.cs:3818).
 
 Every Continue uses global autosave slot 0. `ApplySave` reads stockpile, research, fauna and mission from that snapshot but reconstructs campus and hero progression from current per-body PlayerPrefs. It does not select/validate the snapshot's body and seed, or rebuild the campus from `save.buildings`. Travel saves the origin and then opens the destination through the same loader. The origin mission state/population goal/fauna can therefore be applied to a different generated world; an origin Won state is particularly serious. Restoring a numbered snapshot is also not independent of subsequent preferences changes.
 
@@ -46,7 +46,7 @@ Every Continue uses global autosave slot 0. `ApplySave` reads stockpile, researc
 
 ### F02 — P2, recent regression: demo filtering discards saved research progress
 
-**Evidence:** [ResearchManager.cs:150](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Systems/ResearchManager.cs:150), [RestoreFrom](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Systems/ResearchManager.cs:95).
+**Evidence:** [ResearchManager.cs:150](../Assets/Scripts/Systems/ResearchManager.cs:150), [RestoreFrom](../Assets/Scripts/Systems/ResearchManager.cs:95).
 
 `CanSelect` now checks `DemoSlice.ShowTech`. Restore clears the active technology/progress and calls `TrySelect`, which uses that visibility gate. The new first-hour setting defaults on. Continuing an older campaign with partially researched Mars Ship or another hidden technology loses that active progress, then `EnterPlaying` immediately persists the result.
 
@@ -54,7 +54,7 @@ Every Continue uses global autosave slot 0. `ApplySave` reads stockpile, researc
 
 ### F03 — P2, recent regression: a slow reader can miss the tutorial's required refusal
 
-**Evidence:** [FirstHourTutorial.cs:37](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Systems/FirstHourTutorial.cs:37), [SpecialistAgent.cs:463](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/SpecialistAgent.cs:463), [SpecialistBrain.cs:220](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Systems/SpecialistBrain.cs:220).
+**Evidence:** [FirstHourTutorial.cs:37](../Assets/Scripts/Systems/FirstHourTutorial.cs:37), [SpecialistAgent.cs:463](../Assets/Scripts/Runtime/SpecialistAgent.cs:463), [SpecialistBrain.cs:220](../Assets/Scripts/Systems/SpecialistBrain.cs:220).
 
 The tutorial requires a refused Build flag. A newly fabricated Engineer starts with hunger 0.55; vocation/wandering raises hunger by 0.012–0.018 per second. In roughly 12–17 seconds it can cross the 0.75 cheap-job bypass and accept the prescribed 70-CRED flag. The tutorial then instructs cancel/repost at the same price. Following those instructions repeats the mismatch. Completing work can alter hunger, and Skip exists, so this is not an unconditional permanent softlock.
 
@@ -62,7 +62,7 @@ The tutorial requires a refused Build flag. A newly fabricated Engineer starts w
 
 ### F04 — P2, recent regression: fresh campaign arrivals can omit the free Commons
 
-**Evidence:** [GameLoop.cs:705](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/GameLoop.cs:705).
+**Evidence:** [GameLoop.cs:705](../Assets/Scripts/Runtime/GameLoop.cs:705).
 
 First arrival on an unbuilt destination has no restored campus. `!continuedColony` calls `PlaceFirstHourShell`, which returns outside the Earth demo. The missing-Commons fallback is an `else if`, so it cannot run in this case. The player must discover and buy a Commons manually for 70 CRED and 10 PWR before normal docking works. This is recoverable, but breaks the expected opening and consumes unplanned resources.
 
@@ -70,7 +70,7 @@ First arrival on an unbuilt destination has no restored campus. `!continuedColon
 
 ### F05 — P2: ecology and defense-board time advance twice
 
-**Evidence:** [Update](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/GameLoop.cs:1679), [TickSimulation](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/GameLoop.cs:1724), [ecology cooldown](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/GameLoop.cs:3268).
+**Evidence:** [Update](../Assets/Scripts/Runtime/GameLoop.cs:1679), [TickSimulation](../Assets/Scripts/Runtime/GameLoop.cs:1724), [ecology cooldown](../Assets/Scripts/Runtime/GameLoop.cs:3268).
 
 `TickFlagInterest`, `TickCampusEcology` and `TickCampusBoard` run in both the fixed-step loop and the frame update. In ordinary play the dt-driven cooldowns receive approximately twice the intended elapsed time. Defense-board methods also mix frame-count work with simulation steps. This undermines tuning and the fixed-step guarantee; it is a pre-existing issue, separate from the latest regressions.
 
@@ -78,7 +78,7 @@ First arrival on an unbuilt destination has no restored campus. `!continuedColon
 
 ### F06 — P2: remapping and localization are disconnected scaffolds
 
-**Evidence:** [InputBindings](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Systems/InputBindings.cs:39), [runtime tool inputs](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/GameLoop.cs:3939), [Loc](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Systems/Localization.cs:16).
+**Evidence:** [InputBindings](../Assets/Scripts/Systems/InputBindings.cs:39), [runtime tool inputs](../Assets/Scripts/Runtime/GameLoop.cs:3939), [Loc](../Assets/Scripts/Systems/Localization.cs:16).
 
 A source scan found **68 literal runtime `Input.GetKey*` calls with `KeyCode`, zero runtime `InputBindings.` references and zero runtime `Loc.T(` calls**. Tests establish helper behavior, not usable rebinding or translated UI. Do not advertise these as completed player features.
 
@@ -86,7 +86,7 @@ A source scan found **68 literal runtime `Input.GetKey*` calls with `KeyCode`, z
 
 ### F07 — P2: local telemetry can produce invalid JSON on comma-decimal locales
 
-**Evidence:** [PlaytestTelemetry.cs:61](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Systems/PlaytestTelemetry.cs:61).
+**Evidence:** [PlaytestTelemetry.cs:61](../Assets/Scripts/Systems/PlaytestTelemetry.cs:61).
 
 The numeric `t` field uses current-culture `ToString("F1")` and is inserted unquoted. A comma-decimal culture produces invalid JSON such as `{"t":1,2,...}`. This can invalidate the playtest evidence used to tune the game.
 
@@ -94,9 +94,9 @@ The numeric `t` field uses current-culture `ToString("F1")` and is inserted unqu
 
 ### F08 — release gate: the test suite is red and CI uses a different editor
 
-**Evidence:** [CI](/Users/aaronesbenshade/solar-conquest/.github/workflows/ci.yml:18) pins **6000.5.6f1**; [ProjectVersion](/Users/aaronesbenshade/solar-conquest/ProjectSettings/ProjectVersion.txt:1) pins **6000.5.10f1**. The local run used the latter.
+**Evidence:** [CI](../.github/workflows/ci.yml:18) pins **6000.5.6f1**; [ProjectVersion](../ProjectSettings/ProjectVersion.txt:1) pins **6000.5.10f1**. The local run used the latter.
 
-All nine observed failures are in `CampusDressingTests`: three airlock white-color assertions, one HAB dark-band assertion, one dense-pack workshop docking assertion, and four tests encountering forbidden EditMode `Destroy` calls. The relevant destruction sites include [ColonyVisualUtility.cs:530](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/ColonyVisualUtility.cs:530) and [CampusDressing.cs:765](/Users/aaronesbenshade/solar-conquest/Assets/Scripts/Runtime/CampusDressing.cs:765). Do not weaken visual assertions automatically: resolve whether the expectation or implementation matches the accepted art direction.
+All nine observed failures are in `CampusDressingTests`: three airlock white-color assertions, one HAB dark-band assertion, one dense-pack workshop docking assertion, and four tests encountering forbidden EditMode `Destroy` calls. The relevant destruction sites include [ColonyVisualUtility.cs:530](../Assets/Scripts/Runtime/ColonyVisualUtility.cs:530) and [CampusDressing.cs:765](../Assets/Scripts/Runtime/CampusDressing.cs:765). Do not weaken visual assertions automatically: resolve whether the expectation or implementation matches the accepted art direction.
 
 The workflow has EditMode tests and scheduled/main-branch builds, but no player-smoke/PlayMode gate, and ordinary PR builds are skipped. Remote success was not verified.
 
@@ -138,4 +138,4 @@ The inspected custom scripts did not expose a network/backend requirement. Secur
 
 ## Delivery decision
 
-**Proceed to a stabilized external playtest, not a commercial launch.** Follow the accompanying [production plan](/Users/aaronesbenshade/solar-conquest/Docs/PRODUCTION_PLAN.md). First prove that strangers can finish Earth's meaningful opening without coaching, then validate complete travel/save continuity and distinct planet decisions. Visual completion and release packaging remain required gates; neither substitutes for those results.
+**Proceed to a stabilized external playtest, not a commercial launch.** Follow the accompanying [production plan](../Docs/PRODUCTION_PLAN.md). First prove that strangers can finish Earth's meaningful opening without coaching, then validate complete travel/save continuity and distinct planet decisions. Visual completion and release packaging remain required gates; neither substitutes for those results.

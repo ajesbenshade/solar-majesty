@@ -1,7 +1,7 @@
 # Solar Majesty — Developer Handoff
 
 **Repo:** https://github.com/ajesbenshade/solar-majesty
-**Local path (origin machine):** `/Users/aaronesbenshade/solar-conquest`
+**Local paths:** Mac `/Volumes/Storage/Projects/solar-conquest` (external SSD; `~/solar-conquest` links to it) · Windows: your own clone on a local drive, synced through GitHub (see README → Working on two machines)
 **Unity:** 6000.5.x (tested 6000.5.6f1) · URP 17.5 · namespace `SolarMajesty`
 
 ---

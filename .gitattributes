@@ -1,0 +1,7 @@
+# Line endings for the scripts that must run as-is on each OS. Everything else follows git's
+# defaults (Git for Windows checks text out as CRLF, which Unity and C# don't mind).
+*.sh    text eol=lf
+*.py    text eol=lf
+*.ps1   text eol=crlf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf

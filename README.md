@@ -53,6 +53,16 @@ Or download the ZIP from GitHub (**Code → Download ZIP**) and unzip it.
 
 **2. Open in Unity:** install **Unity 6000.5.10f1** from Unity Hub, then **Hub → Add → this folder**. The first import takes a few minutes. Open `Assets/Scenes/LunarOutpost_Sandbox.unity` and press **Play**. If the scene is missing, run **Solar Majesty → Build Demo Scene**. Run **Solar Majesty → Render → Configure URP For Look Target** once, so the sky shaders ship in builds.
 
+**Windows quick start from this folder:**
+
+```powershell
+.\start_editor.cmd
+.\start_game.cmd
+```
+
+`start_editor.cmd` opens the project in the Unity version pinned by `ProjectSettings/ProjectVersion.txt`.
+`start_game.cmd` launches the newest `SolarMajesty.exe` found under `Builds\` (make one with **Solar Majesty → Build → Windows 64-bit**).
+
 **3. Optional local AI (hero voices):** in a terminal at the repo root:
 
 ```bash
@@ -67,6 +77,29 @@ Then in the game: **Settings → HERO LINES · LOCAL LLM** (text) and **SPOKEN �
 **4. Optional standalone build:** **Solar Majesty → Build → Windows / macOS / Linux** writes to `Builds/`. After that, `start_narrator.sh` / `.ps1` without `--no-game` / `-NoGame` starts the model *and* the built game with voices on.
 
 Other optional settings (Settings menu): **DIORAMA CAMERA** (sky and horizon when zoomed out), **DAY / NIGHT CYCLE**, **TILT-SHIFT**, **CLOUD SHADOWS**. Written flag orders go in the **ORDERS** box of the flag popup (G).
+
+## Working on two machines (Mac + Windows)
+
+Give each machine **its own clone on a local drive** and move work between them with git. Don't open one shared copy over a network share or from a drive plugged into the other machine: Unity's `Library/` cache (several GB) is built per operating system, so every switch triggers a full reimport, two editors open on one folder can corrupt it, and imports over the network are slow. The Mac's external drive is APFS, which Windows can't read without extra software.
+
+**Windows, first time** (PowerShell, [Git for Windows](https://git-scm.com/download/win) installed, **Unity 6000.5.10f1** from Unity Hub with **Windows Build Support**):
+
+```powershell
+git clone https://github.com/ajesbenshade/solar-majesty.git C:\Projects\solar-conquest
+cd C:\Projects\solar-conquest
+.\start_editor.cmd        # first open imports for a while; later opens are quick
+```
+
+**Every session**, on whichever machine you sit down at:
+
+```bash
+git pull                       # before you start
+# ...work, save, close Unity...
+git add -A && git commit -m "What changed"
+git push                       # before you switch machines
+```
+
+Keep one machine's Unity closed while the other has unpushed work, and pull before opening. `.gitattributes` pins shell scripts to LF and Windows scripts to CRLF, so neither side breaks the other's launchers. Local AI works the same on both: `start_narrator.sh` on the Mac, `start_narrator.ps1` on Windows.
 
 ## How to open (Unity 6)
 
