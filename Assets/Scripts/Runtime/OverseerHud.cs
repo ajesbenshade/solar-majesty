@@ -2370,9 +2370,15 @@ namespace SolarMajesty
             }
             y += 32f;
 
-            if (Chip(new Rect(c.x, y, c.width, 26f), "HERO VOICES  ·  LOCAL AI", DemoSettings.HeroVoices))
+            // Lines come from a local LLM; SPOKEN reads them aloud through a local TTS server.
+            if (Chip(new Rect(c.x, y, visHalf, 26f), "HERO LINES · LOCAL LLM", DemoSettings.HeroVoices))
             {
                 DemoSettings.HeroVoices = !DemoSettings.HeroVoices;
+                DemoSettings.SaveSettings();
+            }
+            if (Chip(new Rect(c.x + visHalf + 8f, y, visHalf, 26f), "SPOKEN · LOCAL TTS", DemoSettings.HeroSpeech))
+            {
+                DemoSettings.HeroSpeech = !DemoSettings.HeroSpeech;
                 DemoSettings.SaveSettings();
             }
             y += 36f;

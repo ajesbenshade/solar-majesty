@@ -33,6 +33,7 @@ namespace SolarMajesty
         public const string TiltShiftKey = "SM_Set_TiltShift";
         public const string CloudShadowsKey = "SM_Set_CloudShadows";
         public const string HeroVoicesKey = "SM_Set_HeroVoices";
+        public const string HeroSpeechKey = "SM_Set_HeroSpeech";
         public const string RosterKeyPrefix = "SM_Roster_";
 
         public static float Master = 1f;
@@ -87,6 +88,9 @@ namespace SolarMajesty
         /// <summary>Hero lines from a small local LLM (needs a local server; see Docs/HERO_NARRATION.md).</summary>
         public static bool HeroVoices;
 
+        /// <summary>Speak hero lines aloud via a local TTS server (see Docs/HERO_NARRATION.md).</summary>
+        public static bool HeroSpeech;
+
         public static void Load()
         {
             Master = PlayerPrefs.GetFloat(MasterKey, 1f);
@@ -108,6 +112,7 @@ namespace SolarMajesty
             TiltShift = PlayerPrefs.GetInt(TiltShiftKey, 1) == 1;
             CloudShadows = PlayerPrefs.GetInt(CloudShadowsKey, 1) == 1;
             HeroVoices = PlayerPrefs.GetInt(HeroVoicesKey, 0) == 1;
+            HeroSpeech = PlayerPrefs.GetInt(HeroSpeechKey, 0) == 1;
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
             FirstHourDemo = PlayerPrefs.GetInt(FirstHourKey, 1) == 1;
             ReplayRules.Load();
@@ -164,6 +169,7 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(TiltShiftKey, TiltShift ? 1 : 0);
             PlayerPrefs.SetInt(CloudShadowsKey, CloudShadows ? 1 : 0);
             PlayerPrefs.SetInt(HeroVoicesKey, HeroVoices ? 1 : 0);
+            PlayerPrefs.SetInt(HeroSpeechKey, HeroSpeech ? 1 : 0);
             PlayerPrefs.SetInt(FirstHourKey, FirstHourDemo ? 1 : 0);
             // The demo forces campaign / no challenge / balanced in memory.
             // Do not write that over a saved full-campaign stance.
