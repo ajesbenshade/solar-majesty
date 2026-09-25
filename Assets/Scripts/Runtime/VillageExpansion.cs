@@ -58,6 +58,43 @@ namespace SolarMajesty
         public bool VillageHalted { get; private set; }
         public bool VillageBuilding => _proj != null;
 
+        public SaveVillageGrowth CaptureGrowth() => new SaveVillageGrowth
+        {
+            cooldown = _growCooldown,
+            plotSalt = _projSalt,
+            hasProject = _proj != null,
+            category = _projData != null ? (int)_projData.category : 0,
+            x = _proj != null ? _proj.GridCell.x : 0,
+            y = _proj != null ? _proj.GridCell.y : 0,
+            progress = _proj != null ? _proj.ProgressSeconds : 0f
+        };
+
+        public void RestoreGrowth(SaveVillageGrowth saved)
+        {
+            if (saved == null) return; // Legacy saves did not record village projects.
+            if (_proj != null)
+                _loop.Placer.ClearOccupiedRect(_proj.GridCell,
+                    Mathf.Max(1, _projData.footprintWidth), Mathf.Max(1, _projData.footprintHeight));
+            ClearProject();
+            _growCooldown = Mathf.Max(0f, saved.cooldown);
+            _projSalt = saved.plotSalt;
+            VillageHalted = false;
+            VillageStatus = "villagers resting";
+            if (!saved.hasProject) return;
+            var category = (BuildingCategory)saved.category;
+            if (!VillageGrowth.IsVillageBuilt(category)) return;
+            var data = _loop.VillageData(category);
+            var cell = new Vector2Int(saved.x, saved.y);
+            if (data == null || !_loop.Placer.CanFitRect(cell, data.footprintWidth, data.footprintHeight)) return;
+            var grid = _loop.Grid;
+            if (!grid.InBounds(cell) || !grid.InBounds(cell + new Vector2Int(data.footprintWidth - 1, data.footprintHeight - 1))) return;
+            Vector3 world = grid.CellToWorld(cell) + FootprintCenterOffset(data.footprintWidth, data.footprintHeight);
+            StartProject(data, cell, world, announce: false);
+            _proj.ProgressSeconds = Mathf.Clamp(saved.progress, 0f, _proj.RequiredSeconds);
+            VillageHalted = !_loop.IsSettlementSafe(world);
+            VillageStatus = VillageHalted ? $"{VillageName(category)} halted — enemies near" : $"raising a {VillageName(category)}";
+        }
+
         private void TickVillageGrowth(float dt, Settlement set)
         {
             if (set == null || !set.HasCommons || _loop.Placer == null) return;
@@ -110,7 +147,7 @@ namespace SolarMajesty
             FinishProject();
         }
 
-        private void StartProject(BuildingData data, Vector2Int cell, Vector3 world)
+        private void StartProject(BuildingData data, Vector2Int cell, Vector3 world, bool announce = true)
         {
             _projData = data;
             int w = Mathf.Max(1, data.footprintWidth), h = Mathf.Max(1, data.footprintHeight);
@@ -134,7 +171,7 @@ namespace SolarMajesty
                 var v = VillagerAgent.Spawn(_root, home + new Vector3(i * 1.2f, 0f, 1.5f), world + new Vector3(i * 1.5f - 0.75f, 0f, 0f));
                 if (v != null) _builders.Add(v);
             }
-            _loop.LogOverseer($"Villagers stake out a {VillageName(data.category)} — keep the yard clear.");
+            if (announce) _loop.LogOverseer($"Villagers stake out a {VillageName(data.category)} — keep the yard clear.");
         }
 
         private void FinishProject()

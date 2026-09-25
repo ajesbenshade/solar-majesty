@@ -6,12 +6,13 @@
     powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoGame     # servers only (Unity editor)
     powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoSpeech   # text lines only
     powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -Laya       # also Laya decisions (PyTorch)
+    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -Chat4b     # Ollama: also Qwen3-4B-Instruct for conversations (~2.5 GB)
 
   LLM backend order: llama.cpp (llama-server) -> Ollama -> Python fallback (llama-cpp-python, CPU).
   Models: Qwen3-1.7B 4-bit (~1.1 GB); Kokoro-82M voices (~340 MB, port 8880). Downloads resume.
   Closing this window stops the servers. See Docs/HERO_NARRATION.md.
 #>
-param([switch]$NoGame, [switch]$Laya, [switch]$NoSpeech, [int]$Port = 8080, [int]$VoicePort = 8880)
+param([switch]$NoGame, [switch]$Laya, [switch]$NoSpeech, [switch]$Chat4b, [int]$Port = 8080, [int]$VoicePort = 8880)
 $ErrorActionPreference = 'Stop'
 
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -21,6 +22,8 @@ $Venv = Join-Path $Here '.venv'
 $GgufRepo = 'unsloth/Qwen3-1.7B-GGUF'
 $GgufFile = 'Qwen3-1.7B-Q4_K_M.gguf'
 $OllamaModel = 'qwen3:1.7b'
+# Conversation model; the game uses it for chat when the server lists it. Not the plain qwen3:4b tag (thinking-only).
+$OllamaChatModel = 'qwen3:4b-instruct-2507-q4_K_M'
 $Log = Join-Path $Here 'narrator.log'
 $Started = @()
 
@@ -64,8 +67,14 @@ try {
   elseif (Has 'ollama') {
     $Url = 'http://127.0.0.1:11434'; $ModelName = $OllamaModel
     Say "backend: Ollama ($OllamaModel)"
-    if (-not (Up $Url)) { $Started += Start-Process ollama -ArgumentList 'serve' -PassThru -WindowStyle Hidden; Start-Sleep 2 }
+    if (-not (Up $Url)) { $env:OLLAMA_KEEP_ALIVE = '30m'; $Started += Start-Process ollama -ArgumentList 'serve' -PassThru -WindowStyle Hidden; Start-Sleep 2 }
     & ollama pull $OllamaModel
+    $warm = @($OllamaModel)
+    if ($Chat4b) { & ollama pull $OllamaChatModel; $warm += $OllamaChatModel }
+    # Load them now so the first hero line is not the one that pays for loading.
+    foreach ($m in $warm) {
+      try { Invoke-RestMethod -Method Post -Uri "$Url/api/generate" -Body (@{ model = $m; keep_alive = '30m' } | ConvertTo-Json) -ContentType 'application/json' | Out-Null } catch { }
+    }
   }
   elseif (Has 'python') {
     $py = VenvPython

@@ -64,6 +64,62 @@ namespace SolarMajesty
             _loop.RaiseAlert("collector_killed", "Tax collector killed on the road", AlertSeverity.Warning, at);
         }
 
+        public SaveCollectors Capture()
+        {
+            var saved = new SaveCollectors();
+            foreach (var collector in _collectors)
+                if (collector != null && collector.IsAlive) saved.agents.Add(collector.Capture());
+            foreach (float deadline in _respawnAt)
+                saved.replacementSeconds.Add(Mathf.Max(0f, deadline - _simTime));
+            return saved;
+        }
+
+        public void Restore(SaveCollectors saved)
+        {
+            if (saved == null) return;
+            foreach (var collector in _collectors)
+                if (collector != null) collector.Discard();
+            _collectors.Clear();
+            _claimed.Clear();
+            _respawnAt.Clear();
+            _simTime = 0f;
+            _rosterTimer = 0f;
+            _pendingLog = 0;
+            _logTimer = 0f;
+            if (saved.replacementSeconds != null)
+                foreach (float seconds in saved.replacementSeconds)
+                    if (seconds > 0f) _respawnAt.Add(seconds);
+            if (saved.agents == null) return;
+            foreach (var row in saved.agents)
+            {
+                if (row == null || row.health <= 0f) continue;
+                var home = ResolveBuilding(row.home) ?? ChestFor(new Vector3(row.px, row.py, row.pz));
+                if (home == null) continue;
+                EnsureRoot();
+                var collector = LevyCollector.Spawn(_root, this, home, _collectors.Count);
+                var target = ResolveBuilding(row.target);
+                // A till may only be claimed by one travelling collector.
+                if (row.state != 1 || target == null || !_claimed.Add(target)) target = null;
+                collector.Restore(row, target);
+                _collectors.Add(collector);
+            }
+        }
+
+        private ColonyStructure ResolveBuilding(SaveCollectorBuilding saved)
+        {
+            if (saved == null) return null;
+            var building = _village.FindNear(new Vector3(saved.px, saved.py, saved.pz), 0.5f);
+            return building != null && building.IsAlive && (int)building.Category == saved.category
+                ? building : null;
+        }
+
+        private void EnsureRoot()
+        {
+            if (_root != null) return;
+            _root = new GameObject("TaxCollectors").transform;
+            _root.SetParent(_village.transform, false);
+        }
+
         public void Tick(float dt)
         {
             if (_village == null || _loop == null || dt <= 0f) return;
@@ -138,11 +194,7 @@ namespace SolarMajesty
             {
                 var home = HomeFor(_collectors.Count, commons);
                 if (home == null) break;
-                if (_root == null)
-                {
-                    var go = new GameObject("TaxCollectors");
-                    _root = go.transform;
-                }
+                EnsureRoot();
                 var c = LevyCollector.Spawn(_root, this, home, _collectors.Count);
                 if (c == null) break;
                 _collectors.Add(c);
@@ -280,6 +332,53 @@ namespace SolarMajesty
             c.BindNav();
             TerrainFollow.Attach(go);
             return c;
+        }
+
+        public SaveCollector Capture() => new SaveCollector
+        {
+            px = transform.position.x, py = transform.position.y, pz = transform.position.z,
+            health = Hp, carry = Carry, state = (int)_state,
+            rest = _rest, robberyCooldown = _robCooldown,
+            home = SaveBuilding(_home), target = SaveBuilding(Target)
+        };
+
+        private static SaveCollectorBuilding SaveBuilding(ColonyStructure building) => building == null ? null : new SaveCollectorBuilding
+        {
+            category = (int)building.Category,
+            px = building.WorldPosition.x, py = building.WorldPosition.y, pz = building.WorldPosition.z
+        };
+
+        internal void Restore(SaveCollector saved, ColonyStructure target)
+        {
+            Hp = Mathf.Clamp(saved.health, 0f, MajestyEconomy.CollectorHp);
+            Carry = Mathf.Max(0, saved.carry);
+            _rest = Mathf.Max(0f, saved.rest);
+            _robCooldown = Mathf.Max(0f, saved.robberyCooldown);
+            _state = saved.state >= 0 && saved.state <= (int)State.ToChest ? (State)saved.state : State.Resting;
+            Target = target;
+            if (_state == State.ToTill && Target == null)
+                _state = Carry > 0 ? State.ToChest : State.Resting;
+            var position = new Vector3(saved.px, saved.py, saved.pz);
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                if (!_agent.Warp(position))
+                {
+                    _agent.enabled = false;
+                    _agent = null;
+                    transform.position = position;
+                }
+            }
+            else transform.position = position;
+            _lastPos = transform.position;
+            RefreshBag();
+        }
+
+        internal void Discard()
+        {
+            _director?.Release(Target);
+            // Destroy is deferred; it must not release a new collector's restored claim.
+            _director = null;
+            Object.Destroy(gameObject);
         }
 
         private void BuildVisual()

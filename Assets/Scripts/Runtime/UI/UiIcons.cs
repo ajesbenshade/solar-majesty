@@ -18,7 +18,23 @@ namespace SolarMajesty
         Alert,
         Speed,
         Commons,
-        Pad
+        Pad,
+        // HUD glyphs: drawn white, tinted where they are used.
+        GlyphBuild,
+        GlyphFlag,
+        GlyphTech,
+        Camp,
+        Party,
+        Menu,
+        Check,
+        Pause,
+        Play,
+        Sun,
+        // HUD colour icons.
+        Coin,
+        House,
+        Bag,
+        Hammer
     }
 
     /// <summary>
@@ -76,9 +92,24 @@ namespace SolarMajesty
                 case IconId.Speed: DrawSpeed(px); break;
                 case IconId.Commons: DrawCommons(px); break;
                 case IconId.Pad: DrawPad(px); break;
+                case IconId.GlyphBuild: DrawGlyphBuild(px); break;
+                case IconId.GlyphFlag: DrawGlyphFlag(px); break;
+                case IconId.GlyphTech: DrawGlyphTech(px); break;
+                case IconId.Camp: DrawCamp(px); break;
+                case IconId.Party: DrawParty(px); break;
+                case IconId.Menu: DrawMenu(px); break;
+                case IconId.Check: DrawCheck(px); break;
+                case IconId.Pause: DrawPause(px); break;
+                case IconId.Play: DrawPlay(px); break;
+                case IconId.Sun: DrawSun(px); break;
+                case IconId.Coin: DrawCoin(px); break;
+                case IconId.House: DrawHouse(px); break;
+                case IconId.Bag: DrawBag(px); break;
+                case IconId.Hammer: DrawHammer(px); break;
             }
 
-            var tex = new Texture2D(Size, Size, TextureFormat.RGBA32, false)
+            // Mips keep the glyphs smooth at the 16-24 px the HUD draws them.
+            var tex = new Texture2D(Size, Size, TextureFormat.RGBA32, true)
             {
                 name = "SM_Icon_" + id,
                 hideFlags = HideFlags.HideAndDontSave,
@@ -86,7 +117,7 @@ namespace SolarMajesty
                 wrapMode = TextureWrapMode.Clamp
             };
             tex.SetPixels(px);
-            tex.Apply();
+            tex.Apply(true);
             return tex;
         }
 
@@ -310,6 +341,171 @@ namespace SolarMajesty
             Ring(px, 32f, 32f, 12f, 3f, Bone);
             Box(px, 30f, 8f, 34f, 18f, Bone);
             Box(px, 30f, 46f, 34f, 56f, Bone);
+        }
+
+        // ---- HUD glyphs (monochrome white: tinted at draw time) ------------
+
+        /// <summary>Claw hammer, for the Build verb.</summary>
+        private static void DrawGlyphBuild(Color[] px)
+        {
+            DrawLine(px, new Vector2(16f, 10f), new Vector2(40f, 40f), 6f, Color.white);
+            DrawLine(px, new Vector2(31f, 51f), new Vector2(53f, 33f), 11f, Color.white);
+            Disc(px, 31f, 51f, 5.5f, Color.white);
+        }
+
+        /// <summary>Pennant on a pole, for the Flag verb.</summary>
+        private static void DrawGlyphFlag(Color[] px)
+        {
+            Box(px, 15f, 8f, 20f, 56f, Color.white);
+            Disc(px, 17.5f, 56f, 3.5f, Color.white);
+            Tri(px, new Vector2(20f, 54f), new Vector2(54f, 44f), new Vector2(20f, 30f), Color.white);
+        }
+
+        /// <summary>Atom: three orbits round a nucleus, for Research.</summary>
+        private static void DrawGlyphTech(Color[] px)
+        {
+            var c = new Vector2(32f, 32f);
+            Ellipse(px, c, 25f, 9f, 0f, 3.6f, Color.white);
+            Ellipse(px, c, 25f, 9f, 60f, 3.6f, Color.white);
+            Ellipse(px, c, 25f, 9f, 120f, 3.6f, Color.white);
+            Disc(px, 32f, 32f, 5.5f, Color.white);
+        }
+
+        /// <summary>Two opposed arrows: hop between campuses.</summary>
+        private static void DrawCamp(Color[] px)
+        {
+            DrawLine(px, new Vector2(10f, 42f), new Vector2(42f, 42f), 5f, Color.white);
+            Tri(px, new Vector2(40f, 52f), new Vector2(55f, 42f), new Vector2(40f, 32f), Color.white);
+            DrawLine(px, new Vector2(22f, 20f), new Vector2(54f, 20f), 5f, Color.white);
+            Tri(px, new Vector2(24f, 30f), new Vector2(9f, 20f), new Vector2(24f, 10f), Color.white);
+        }
+
+        /// <summary>Three figures: form a party.</summary>
+        private static void DrawParty(Color[] px)
+        {
+            var side = new Color(1f, 1f, 1f, 0.6f);
+            Disc(px, 15f, 38f, 6f, side);
+            Disc(px, 15f, 21f, 9f, side);
+            Box(px, 6f, 8f, 24f, 21f, side);
+            Disc(px, 49f, 38f, 6f, side);
+            Disc(px, 49f, 21f, 9f, side);
+            Box(px, 40f, 8f, 58f, 21f, side);
+            Disc(px, 32f, 43f, 8.5f, Color.white);
+            Disc(px, 32f, 22f, 12.5f, Color.white);
+            Box(px, 19.5f, 8f, 44.5f, 22f, Color.white);
+        }
+
+        /// <summary>Three bars: the pause menu.</summary>
+        private static void DrawMenu(Color[] px)
+        {
+            DrawLine(px, new Vector2(16f, 20f), new Vector2(48f, 20f), 5.5f, Color.white);
+            DrawLine(px, new Vector2(16f, 32f), new Vector2(48f, 32f), 5.5f, Color.white);
+            DrawLine(px, new Vector2(16f, 44f), new Vector2(48f, 44f), 5.5f, Color.white);
+        }
+
+        private static void DrawCheck(Color[] px)
+        {
+            DrawLine(px, new Vector2(13f, 33f), new Vector2(26f, 19f), 8f, Color.white);
+            DrawLine(px, new Vector2(26f, 19f), new Vector2(52f, 46f), 8f, Color.white);
+        }
+
+        private static void DrawPause(Color[] px)
+        {
+            Box(px, 17f, 13f, 27f, 51f, Color.white);
+            Box(px, 37f, 13f, 47f, 51f, Color.white);
+        }
+
+        private static void DrawPlay(Color[] px)
+        {
+            Tri(px, new Vector2(19f, 11f), new Vector2(19f, 53f), new Vector2(53f, 32f), Color.white);
+        }
+
+        /// <summary>Sun: the sol clock.</summary>
+        private static void DrawSun(Color[] px)
+        {
+            Disc(px, 32f, 32f, 10.5f, Color.white);
+            for (int i = 0; i < 8; i++)
+            {
+                float a = i * Mathf.PI / 4f;
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                DrawLine(px, new Vector2(32f, 32f) + d * 16f, new Vector2(32f, 32f) + d * 26f, 4.5f, Color.white);
+            }
+        }
+
+        // ---- HUD colour icons -----------------------------------------------
+
+        private static readonly Color CoinGold = new Color(1f, 0.81f, 0.38f);
+        private static readonly Color CoinDeep = new Color(0.70f, 0.47f, 0.15f);
+
+        /// <summary>Gold coin struck with the Solar Majesty sun — the treasury.</summary>
+        private static void DrawCoin(Color[] px)
+        {
+            Disc(px, 32f, 31f, 27f, CoinDeep);
+            Disc(px, 32f, 33f, 26f, CoinGold);
+            Ring(px, 32f, 33f, 21f, 2.5f, CoinDeep);
+            Disc(px, 32f, 33f, 6.5f, CoinDeep);
+            for (int i = 0; i < 8; i++)
+            {
+                float a = i * Mathf.PI / 4f + Mathf.PI / 8f;
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                DrawLine(px, new Vector2(32f, 33f) + d * 10f, new Vector2(32f, 33f) + d * 16f, 3f, CoinDeep);
+            }
+            Disc(px, 22f, 46f, 5f, new Color(1f, 1f, 1f, 0.45f));
+        }
+
+        /// <summary>Pitched-roof house: tax-paying homes.</summary>
+        private static void DrawHouse(Color[] px)
+        {
+            Box(px, 14f, 8f, 50f, 34f, Bone);
+            Tri(px, new Vector2(6f, 32f), new Vector2(32f, 56f), new Vector2(58f, 32f), new Color(0.96f, 0.52f, 0.20f));
+            Box(px, 28f, 8f, 36f, 22f, new Color(0.16f, 0.13f, 0.11f));
+            Box(px, 18f, 22f, 24f, 28f, Cyan);
+            Box(px, 40f, 22f, 46f, 28f, Cyan);
+        }
+
+        /// <summary>Tied coin sack: tax collectors on their rounds.</summary>
+        private static void DrawBag(Color[] px)
+        {
+            var sack = new Color(0.84f, 0.64f, 0.36f);
+            Disc(px, 32f, 24f, 18f, sack);
+            Tri(px, new Vector2(20f, 54f), new Vector2(32f, 40f), new Vector2(44f, 54f), sack * 0.92f);
+            Box(px, 26f, 36f, 38f, 44f, sack * 0.9f);
+            DrawLine(px, new Vector2(23f, 41f), new Vector2(41f, 41f), 3.5f, new Color(0.40f, 0.24f, 0.10f));
+            Ring(px, 32f, 23f, 7f, 3f, CoinGold);
+        }
+
+        /// <summary>Wood-and-steel hammer: the village raising buildings.</summary>
+        private static void DrawHammer(Color[] px)
+        {
+            DrawLine(px, new Vector2(16f, 10f), new Vector2(40f, 40f), 6f, new Color(0.70f, 0.48f, 0.28f));
+            DrawLine(px, new Vector2(31f, 51f), new Vector2(53f, 33f), 11f, Steel);
+            Disc(px, 31f, 51f, 5.5f, Steel);
+        }
+
+        private static void Ellipse(Color[] px, Vector2 c, float rx, float ry, float angleDeg, float thickness, Color col)
+        {
+            float a = angleDeg * Mathf.Deg2Rad;
+            float cos = Mathf.Cos(a);
+            float sin = Mathf.Sin(a);
+            float reach = Mathf.Max(rx, ry) + thickness + 1f;
+            int minX = Mathf.Max(0, (int)(c.x - reach));
+            int maxX = Mathf.Min(Size - 1, (int)(c.x + reach));
+            int minY = Mathf.Max(0, (int)(c.y - reach));
+            int maxY = Mathf.Min(Size - 1, (int)(c.y + reach));
+            for (int y = minY; y <= maxY; y++)
+            for (int x = minX; x <= maxX; x++)
+            {
+                float dx = x + 0.5f - c.x;
+                float dy = y + 0.5f - c.y;
+                float u = dx * cos + dy * sin;
+                float v = -dx * sin + dy * cos;
+                float k = Mathf.Sqrt(u * u / (rx * rx) + v * v / (ry * ry));
+                if (k < 0.0001f) continue;
+                float gx = u / (rx * rx * k);
+                float gy = v / (ry * ry * k);
+                float dist = Mathf.Abs(k - 1f) / Mathf.Max(0.0001f, Mathf.Sqrt(gx * gx + gy * gy));
+                Blend(px, x, y, col, Mathf.Clamp01(thickness * 0.5f - dist + 0.5f));
+            }
         }
 
         private static void DrawLine(Color[] px, Vector2 a, Vector2 b, float thickness, Color c)

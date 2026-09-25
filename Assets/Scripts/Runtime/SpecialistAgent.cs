@@ -129,6 +129,12 @@ namespace SolarMajesty
         public string Status => _status;
         public string FlavorLine { get; private set; } = "Booting.";
 
+        private SpecialistServiceRecord _record;
+
+        /// <summary>This robot's name and service record, drawn once — who the player talks to.</summary>
+        public SpecialistServiceRecord Record =>
+            _record ??= SpecialistIdentity.Create(data != null ? data.specialistClass : SpecialistClass.ScoutDrone);
+
         /// <summary>Bumps on every decision change, so a late narration line can tell it is stale.</summary>
         public int NarrationStamp { get; private set; }
 

@@ -48,6 +48,15 @@ namespace SolarMajesty
         public const int MaxChars = 64;
         public const int MaxTokens = 48;
 
+        /// <summary>
+        /// Every known way to turn Qwen3's thinking off. llama.cpp reads the template flag;
+        /// Ollama's OpenAI endpoint ignores it (and "/no_think") and only honours
+        /// <c>reasoning_effort</c> — without it every reply is spent thinking and comes back empty.
+        /// Servers ignore the fields they don't know.
+        /// </summary>
+        public const string NoThinkingFields =
+            ",\"chat_template_kwargs\":{\"enable_thinking\":false},\"reasoning_effort\":\"none\"";
+
         public const string SystemPrompt =
             "You voice autonomous specialists in a Majesty-style space colony game. Reply with ONE " +
             "punchy first-person line, at most 9 words, that the hero mutters right now. Speak in the " +
@@ -93,7 +102,8 @@ namespace SolarMajesty
             return m.Workaholic >= 0.5f ? "workaholic — lives for the job" : "lazy — would rather be napping";
         }
 
-        static string Situation(in HeroMoment m)
+        /// <summary>What the hero is doing, in words the model can speak from.</summary>
+        public static string Situation(in HeroMoment m)
         {
             string flag = Safe(m.FlagType, "a");
             switch (m.Kind)
@@ -140,7 +150,7 @@ namespace SolarMajesty
             sb.Append("}],\"max_tokens\":").Append(MaxTokens)
               .Append(",\"temperature\":1.0,\"top_p\":0.95,\"stream\":false")
               // No newline stop: Qwen3 opens with an empty <think> block; Sanitize keeps the first real line.
-              .Append(",\"chat_template_kwargs\":{\"enable_thinking\":false}}");
+              .Append(NoThinkingFields).Append('}');
             return sb.ToString();
         }
 

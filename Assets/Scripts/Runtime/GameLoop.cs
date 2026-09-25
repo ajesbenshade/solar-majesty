@@ -5067,6 +5067,8 @@ namespace SolarMajesty
             }
 
             OverlayBuildingBoard(save);
+            save.villageGrowth = Village?.CaptureGrowth();
+            save.collectors = Village?.Collectors.Capture();
 
             if (Flags != null)
             {
@@ -5274,6 +5276,8 @@ namespace SolarMajesty
             RestoreFauna(save.fauna, restoredLairs);
             RestoreBuildingBoard(save);
             RestoreLevyPurses(save.buildings);
+            Village?.RestoreGrowth(save.villageGrowth);
+            Village?.Collectors.Restore(save.collectors);
             RefreshWreckVisuals();
 
             if (_mission != null)

@@ -35,6 +35,7 @@ namespace SolarMajesty.Tests
         [TestCase(1)]
         [TestCase(2)]
         [TestCase(3)]
+        [TestCase(6)]
         public void OlderSnapshot_MigratesWithoutLosingActiveResearch(int version)
         {
             File.WriteAllText(_path, "{\"version\":" + version + ",\"body\":0,\"seed\":9001,\"research\":{\"activeTech\":1,\"activeProgress\":12.5,\"bankedScience\":3}}");
@@ -44,6 +45,8 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(3f, saved.research.bankedScience);
             Assert.IsNotNull(saved.research.progress);
             Assert.IsNotNull(saved.buildings);
+            Assert.IsNull(saved.villageGrowth);
+            Assert.IsNull(saved.collectors);
         }
 
         [TestCase("{}")]

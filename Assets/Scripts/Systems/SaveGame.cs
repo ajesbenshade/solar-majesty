@@ -14,7 +14,7 @@ namespace SolarMajesty
     public sealed class SaveGame
     {
         /// <summary>Bump when a field's meaning changes. Readers reject unknown future versions.</summary>
-        public const int CurrentVersion = 6; // v6: gold on the Majesty 2 scale (×10)
+        public const int CurrentVersion = 7; // v7: village projects and tax collectors
 
         public int version = CurrentVersion;
         public string gameVersion = "";
@@ -40,6 +40,9 @@ namespace SolarMajesty
         public SaveResearchState research = new SaveResearchState();
         public SaveMissionState mission = new SaveMissionState();
         public SaveReplayState replay = new SaveReplayState();
+        // Null in older saves: use the normal fresh village/collector defaults.
+        public SaveVillageGrowth villageGrowth;
+        public SaveCollectors collectors;
 
         public List<SaveBuilding> buildings = new List<SaveBuilding>();
         public List<SaveFlag> flags = new List<SaveFlag>();
@@ -71,6 +74,43 @@ namespace SolarMajesty
                 default: return id.ToString();
             }
         }
+    }
+
+    [Serializable]
+    public sealed class SaveVillageGrowth
+    {
+        public float cooldown;
+        public int plotSalt;
+        public bool hasProject;
+        public int category;
+        public int x, y;
+        public float progress;
+    }
+
+    [Serializable]
+    public sealed class SaveCollectors
+    {
+        public List<SaveCollector> agents = new List<SaveCollector>();
+        // Durations, not absolute simulation timestamps.
+        public List<float> replacementSeconds = new List<float>();
+    }
+
+    [Serializable]
+    public sealed class SaveCollectorBuilding
+    {
+        public int category;
+        public float px, py, pz;
+    }
+
+    [Serializable]
+    public sealed class SaveCollector
+    {
+        public float px, py, pz;
+        public float health;
+        public int carry;
+        public int state;
+        public float rest, robberyCooldown;
+        public SaveCollectorBuilding home, target;
     }
 
     [Serializable]

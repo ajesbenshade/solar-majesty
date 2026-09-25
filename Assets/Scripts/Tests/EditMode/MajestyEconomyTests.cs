@@ -209,7 +209,7 @@ namespace SolarMajesty.Tests
         [Test]
         public void SaveMigration_ScalesGoldTenfold()
         {
-            Assert.AreEqual(6, SaveGame.CurrentVersion);
+            Assert.GreaterOrEqual(SaveGame.CurrentVersion, MajestyEconomy.GoldScaleSaveVersion);
             Assert.AreEqual(3400, MajestyEconomy.MigrateGold(340));
             Assert.AreEqual(0, MajestyEconomy.MigrateGold(0));
             Assert.AreEqual(795f, MajestyEconomy.MigrateGold(79.5f), 0.001f);

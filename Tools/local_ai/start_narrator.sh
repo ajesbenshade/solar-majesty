@@ -6,6 +6,7 @@
 #   Tools/local_ai/start_narrator.sh --no-game    # servers only (play in the Unity editor)
 #   Tools/local_ai/start_narrator.sh --no-speech  # text lines only, no spoken voices
 #   Tools/local_ai/start_narrator.sh --laya       # also start the Laya decision model (Apple Silicon)
+#   Tools/local_ai/start_narrator.sh --chat4b     # Ollama: also fetch Qwen3-4B-Instruct (~2.5 GB) for conversations
 #
 # LLM: first backend found of llama.cpp (llama-server) → Ollama → MLX (Apple Silicon) → a
 # self-contained Python fallback (llama-cpp-python, CPU); model Qwen3-1.7B 4-bit (~1.1 GB).
@@ -22,6 +23,8 @@ GGUF_REPO="unsloth/Qwen3-1.7B-GGUF"
 GGUF_FILE="Qwen3-1.7B-Q4_K_M.gguf"
 MLX_MODEL="mlx-community/Qwen3-1.7B-4bit"
 OLLAMA_MODEL="qwen3:1.7b"
+# Conversation model; the game uses it for chat when the server lists it. Not the plain qwen3:4b tag (thinking-only).
+OLLAMA_CHAT_MODEL="qwen3:4b-instruct-2507-q4_K_M"
 
 VOICE_PORT="${VOICE_PORT:-8880}"
 KOKORO_BASE="https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
@@ -29,12 +32,14 @@ KOKORO_BASE="https://github.com/thewh1teagle/kokoro-onnx/releases/download/model
 LAUNCH_GAME=1
 WITH_LAYA=0
 WITH_SPEECH=1
+WITH_CHAT4B=0
 for arg in "$@"; do
   case "$arg" in
     --no-game) LAUNCH_GAME=0 ;;
     --laya) WITH_LAYA=1 ;;
     --no-speech) WITH_SPEECH=0 ;;
-    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
+    --chat4b) WITH_CHAT4B=1 ;;
+    -h|--help) sed -n "2,$(( $(grep -n '^set -euo' "$0" | cut -d: -f1) - 1 ))p" "$0"; exit 0 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
 done
@@ -92,11 +97,17 @@ elif command -v ollama >/dev/null 2>&1; then
   MODEL_NAME="$OLLAMA_MODEL"
   say "backend: Ollama ($OLLAMA_MODEL)"
   if ! curl -fs "$URL/v1/models" >/dev/null 2>&1; then
-    ollama serve >"$HERE/narrator.log" 2>&1 &
+    # Keep the model loaded between lines: a reload costs seconds on the next reply.
+    OLLAMA_KEEP_ALIVE=30m ollama serve >"$HERE/narrator.log" 2>&1 &
     PIDS+=($!)
     sleep 2
   fi
   ollama pull "$OLLAMA_MODEL"
+  [ "$WITH_CHAT4B" = 1 ] && ollama pull "$OLLAMA_CHAT_MODEL"
+  # Load them now so the first hero line is not the one that pays for loading.
+  for m in "$OLLAMA_MODEL" $([ "$WITH_CHAT4B" = 1 ] && echo "$OLLAMA_CHAT_MODEL"); do
+    curl -fs "$URL/api/generate" -d "{\"model\":\"$m\",\"keep_alive\":\"30m\"}" >/dev/null 2>&1 || true
+  done
 elif [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ] && command -v python3 >/dev/null 2>&1; then
   PY="$(venv_python)"
   "$PY" -c "import mlx_lm" 2>/dev/null || { say "installing mlx-lm"; "$PY" -m pip install --quiet mlx-lm; }

@@ -208,6 +208,13 @@ namespace SolarMajesty
                 return false;
             }
 
+            // JsonUtility creates inline objects even for absent fields. Use the schema
+            // version to distinguish missing legacy state from a saved empty roster.
+            if (save.version < 7)
+            {
+                save.villageGrowth = null;
+                save.collectors = null;
+            }
             bool legacyFaunaOwnership = save.version < 4;
             bool legacyGoldScale = save.version < MajestyEconomy.GoldScaleSaveVersion;
             if (save.version < SaveGame.CurrentVersion)
