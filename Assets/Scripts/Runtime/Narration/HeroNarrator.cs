@@ -101,17 +101,18 @@ namespace SolarMajesty
 
         /// <summary>
         /// Something happened to this hero. Cheap no-op when narration is off, the server is down,
-        /// or the scheduler decides this moment isn't worth the model's time.
+        /// or the scheduler decides this moment isn't worth the model's time. Returns true when a
+        /// line was requested, so the hero's voice can wait for it instead of barking.
         /// </summary>
-        public static void Report(SpecialistAgent agent, NarrationKind kind, FlagHandle flag = null)
+        public static bool Report(SpecialistAgent agent, NarrationKind kind, FlagHandle flag = null)
         {
-            if (agent == null || agent.Data == null || !agent.IsAlive) return;
+            if (agent == null || agent.Data == null || !agent.IsAlive) return false;
             var n = Instance;
-            if (n == null || !n._online || n._http == null) return;
+            if (n == null || !n._online || n._http == null) return false;
             if (n._loop == null) n._loop = FindAnyObjectByType<GameLoop>();
             bool selected = n._loop != null && n._loop.IsSelected(agent);
             int id = agent.GetHashCode();
-            if (!n._scheduler.TryStart(id, kind, selected, Time.unscaledTime)) return;
+            if (!n._scheduler.TryStart(id, kind, selected, Time.unscaledTime)) return false;
 
             var moment = BuildMoment(agent, kind, flag ?? agent.ActiveFlag, n._loop);
             int stamp = agent.NarrationStamp;
@@ -126,10 +127,12 @@ namespace SolarMajesty
                 bool stateful = kind != NarrationKind.LevelUp && kind != NarrationKind.Refused;
                 if (stateful && agent.NarrationStamp != stamp) return;
                 agent.SetNarratedLine(line);
+                CharacterVoice.SpeakNarrated(agent, line);
                 n.Spoken++;
                 if (kind == NarrationKind.LevelUp || (selected && NarrationScheduler.IsBigMoment(kind)))
                     n._loop?.LogOverseer($"{agent.Data.displayName} L{agent.Level}: “{line}”");
             });
+            return true;
         }
 
         private static HeroMoment BuildMoment(SpecialistAgent a, NarrationKind kind, FlagHandle flag, GameLoop loop)

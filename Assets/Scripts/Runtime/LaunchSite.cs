@@ -55,7 +55,9 @@ namespace SolarMajesty
         {
             DemoVfx.LaunchPlume(from);
             DemoVfx.ClaimRing(from, new Color(0.96f, 0.42f, 0.08f));
-            DemoAudio.PlayVictory();
+            // The victory stinger already played when the mission was won; departure is the
+            // engines. PlayLaunch is 2D so the whole screen rumbles, not just the pad.
+            DemoAudio.PlayLaunch();
         }
 
         public static void ClearSession()
@@ -92,7 +94,7 @@ namespace SolarMajesty
             if (_spawnedReadyFx) return;
             _spawnedReadyFx = true;
             DemoVfx.LaunchPlume(at);
-            DemoAudio.PlayClaim();
+            DemoAudio.PlayLaunchReady(at);
             Debug.Log("[Launch] Departure craft staged on the pad.");
         }
 

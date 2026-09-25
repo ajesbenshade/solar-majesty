@@ -109,6 +109,13 @@ namespace SolarMajesty
 
         private readonly List<Rect> _hitRects = new List<Rect>(12);
 
+        // UI sound bookkeeping. IMGUI has no per-button callbacks, so the click is detected once
+        // per OnGUI pass (a left mouse-up that some control consumed) instead of at each of the
+        // ~30 GUI.Button calls, and hover is tracked only on the big title and dock buttons.
+        private Rect _hoverRect;
+        private bool _hoverActive;
+        private bool _hoverSeenThisRepaint;
+
         public void Bind(GameLoop loop)
         {
             _loop = loop;
@@ -162,7 +169,7 @@ namespace SolarMajesty
                 ? _loop.Economy.LastResupplyLine
                 : "Trade ship landed — caravan gold waits in the Market till for a collector.";
             Toast(line, 4f);
-            DemoAudio.PlayRetry();
+            DemoAudio.PlayCredits(); // caravan gold landed, not a menu confirm
         }
 
         private void OnResupplyWavedOff()
@@ -366,6 +373,10 @@ namespace SolarMajesty
             if (_loop == null) return;
             EnsureStyles();
             HandleDebugHopKeys();
+            Event guiEvent = Event.current;
+            bool leftMouseUp = guiEvent != null && guiEvent.type == EventType.MouseUp && guiEvent.button == 0;
+            bool repaint = guiEvent != null && guiEvent.type == EventType.Repaint;
+            if (repaint) _hoverSeenThisRepaint = false;
             _hitRects.Clear();
             _ordersFieldDrawn = false;
 
@@ -429,6 +440,24 @@ namespace SolarMajesty
 
             GUI.matrix = prevMatrix;
             SyncOrdersFocus();
+
+            // A control used the release, so something was pressed. Buttons whose action has its
+            // own UI sound (restart, travel) suppress this inside DemoAudio.
+            if (leftMouseUp && guiEvent.type == EventType.Used)
+                DemoAudio.PlayUiClick();
+            if (repaint && !_hoverSeenThisRepaint)
+                _hoverActive = false;
+        }
+
+        /// <summary>Soft glint when the pointer first enters a button; silent while it stays.</summary>
+        private void NoteHover(Rect r, bool hot)
+        {
+            if (!hot || Event.current == null || Event.current.type != EventType.Repaint) return;
+            _hoverSeenThisRepaint = true;
+            if (_hoverActive && _hoverRect == r) return;
+            _hoverActive = true;
+            _hoverRect = r;
+            DemoAudio.PlayUiHover();
         }
 
         /// <summary>
@@ -682,6 +711,7 @@ namespace SolarMajesty
 
         private bool SquareAction(Rect r, string glyph, string hotkey, bool on)
         {
+            NoteHover(r, r.Contains(Event.current.mousePosition));
             bool hit = GUI.Button(r, GUIContent.none, on ? _chipOn : _chipOff);
             Outline(r, on ? Gold : Hairline);
             var prev = _pill.normal.textColor;
@@ -2041,7 +2071,10 @@ namespace SolarMajesty
             if (!_failLatched)
             {
                 _failLatched = true;
-                DemoAudio.PlayFail();
+                // A downed field party is recoverable; only a lost colony gets the stinger and eulogy.
+                bool sting = lost && AdaptiveMusic.PlayStinger(false);
+                if (!sting) DemoAudio.PlayFail();
+                if (lost) OverseerVoice.SpeakCue(VoiceCue.Defeat, AlertSeverity.Critical, sting ? 4.2f : 1f);
             }
 
             Fill(new Rect(0, 0, _sw, _sh), new Color(0.10f, 0.01f, 0.01f, 0.55f));
@@ -2191,6 +2224,7 @@ namespace SolarMajesty
         {
             _hitRects.Add(r);
             bool hot = r.Contains(Event.current.mousePosition);
+            NoteHover(r, hot);
             Fill(r, primary ? new Color(Accent.r, Accent.g, Accent.b, hot ? 0.95f : 0.82f)
                             : new Color(PanelBg.r, PanelBg.g, PanelBg.b, hot ? 0.9f : 0.6f));
             Fill(new Rect(r.x, r.y, 2f, r.height), primary ? Gold : (hot ? Accent : Hairline));
@@ -2302,10 +2336,15 @@ namespace SolarMajesty
             var c = Panel(rect, "Settings");
             float y = c.y;
 
-            y = SettingsSlider(c.x, y, c.width, "MASTER", ref DemoSettings.Master);
-            y = SettingsSlider(c.x, y, c.width, "SFX", ref DemoSettings.Sfx);
-            y = SettingsSlider(c.x, y, c.width, "AMBIENCE", ref DemoSettings.Ambient);
-            y = SettingsSlider(c.x, y, c.width, "HUD SCALE", ref DemoSettings.HudScale, 0.85f, 1.25f, applyAudio: false);
+            // Two columns: five mix sliders plus HUD scale fit in the height three rows used to.
+            float colW = (c.width - 16f) * 0.5f;
+            float colX = c.x + colW + 16f;
+            SettingsSlider(c.x, y, colW, "MASTER", ref DemoSettings.Master);
+            y = SettingsSlider(colX, y, colW, "MUSIC", ref DemoSettings.Music);
+            SettingsSlider(c.x, y, colW, "SFX", ref DemoSettings.Sfx);
+            y = SettingsSlider(colX, y, colW, "VOICES", ref DemoSettings.Voice);
+            SettingsSlider(c.x, y, colW, "AMBIENCE", ref DemoSettings.Ambient);
+            y = SettingsSlider(colX, y, colW, "HUD SCALE", ref DemoSettings.HudScale, 0.85f, 1.25f, applyAudio: false);
             y += 6f;
 
             if (Chip(new Rect(c.x, y, 200f, 26f), "INVERT CAMERA PAN", DemoSettings.InvertPan))
@@ -2370,7 +2409,14 @@ namespace SolarMajesty
             }
             y += 32f;
 
-            if (Chip(new Rect(c.x, y, c.width, 26f), "HERO VOICES  ·  LOCAL AI", DemoSettings.HeroVoices))
+            // Baked barks need nothing running; LOCAL AI adds the LLM narrator and live TTS on top.
+            float voiceHalf = (c.width - 8f) * 0.5f;
+            if (Chip(new Rect(c.x, y, voiceHalf, 26f), "CHARACTER VOICES", DemoSettings.CharacterVoices))
+            {
+                DemoSettings.CharacterVoices = !DemoSettings.CharacterVoices;
+                DemoSettings.SaveSettings();
+            }
+            if (Chip(new Rect(c.x + voiceHalf + 8f, y, voiceHalf, 26f), "HERO VOICES  ·  LOCAL AI", DemoSettings.HeroVoices))
             {
                 DemoSettings.HeroVoices = !DemoSettings.HeroVoices;
                 DemoSettings.SaveSettings();

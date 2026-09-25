@@ -445,7 +445,10 @@ namespace SolarMajesty
             {
                 _winLatched = true;
                 _loop?.NoteBodyConquered();
-                DemoAudio.PlayVictory();
+                // The score's stinger is the fanfare; the SFX one is the fallback, never both.
+                bool sting = AdaptiveMusic.PlayStinger(true);
+                if (!sting) DemoAudio.PlayVictory();
+                OverseerVoice.SpeakCue(VoiceCue.Victory, AlertSeverity.Critical, sting ? 4.2f : 0.8f);
                 DemoVfx.ClaimRing(
                     ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
                     new Color(0.35f, 0.95f, 0.55f));

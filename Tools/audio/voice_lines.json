@@ -1,0 +1,152 @@
+{
+  "_doc": "Authored barks, baked by render_voices.py into Assets/Resources/Audio/Voices/. Keys are speaker -> cue -> takes. Cues must match VoiceCue in Assets/Scripts/Systems/Voice/VoiceBank.cs. Keep hero barks short (<= 8 words) and name-free: every robot of a class shares them. Overseer lines from GrokCatalog/OverseerRules/CompactGrok are extracted from the C# sources automatically; the overseer entries here are the generic alert fallbacks.",
+
+  "hero.EngineerBot": {
+    "select":  ["Clock's running, boss.", "Talk fast. I bill by the minute.", "Got a job? Got credits?"],
+    "claim":   ["Now that's a bounty I can weld.", "On the books. Don't cheap out on me.", "Paid work. Finally."],
+    "refused": ["Not allowed? Fine. Your loss, not mine.", "Orders say no. My wallet says ouch.", "Somebody else can have that one."],
+    "hunt":    ["Hunting? I'd rather be welding.", "Fine. Hazard pay better be real.", "I'll poke it. From a distance."],
+    "flee":    ["Nope! Too many teeth!", "I'm an engineer, not a snack!", "Falling back. Strategically. Quickly."],
+    "repair":  ["Leaky hull. My favorite kind of money.", "I'll patch it. Invoice to follow.", "Hold still, you ugly module."],
+    "rest":    ["Torque arm's shot. Inn time.", "Recharge first. Then the overtime.", "Break. Paid break, ideally."],
+    "wander":  ["Nothing to build? Weird.", "Idle hands. Unpaid hands.", "Somebody post a flag already."],
+    "levelup": ["Promotion! That's a raise, right?", "New level. New rates.", "Better welds. Bigger invoices."],
+    "hurt":    ["Ow! That's my good arm!", "Hey! I'm billing you for that!", "Paint job's ruined!"],
+    "down":    ["Tell the yard I'm worth it.", "Systems... going... cheap.", "Somebody... pick me up..."]
+  },
+
+  "hero.ScoutDrone": {
+    "select":  ["Rotors hot! Where to?", "Scout here. Make it quick.", "Ooh, a task? Maybe?"],
+    "claim":   ["Mapping it! Back before lunch.", "Explore flag? Say no more!", "Easy credits. Zoom!"],
+    "refused": ["Too junior? Rude.", "Fine, I'll just hover here.", "Nobody wants a scout. Story of my life."],
+    "hunt":    ["I'll point. Someone else bite.", "Tagging the target! Probably.", "Is this a scout job? It's not."],
+    "flee":    ["Nope nope nope nope!", "Retreat! Retreat! Me first!", "Rotors, don't fail me now!"],
+    "repair":  ["I have one tiny wrench.", "Patching. Badly. But patching.", "Tape counts as repair, right?"],
+    "rest":    ["Battery at two percent. Nap time.", "Landing. Do not disturb.", "Five minutes. Or fifty."],
+    "wander":  ["Just seeing what's over there.", "Horizon check. Still a horizon.", "Bored. So bored. Loop-de-loop."],
+    "levelup": ["Faster! I'm faster now!", "Level up! Did everyone see?", "New firmware! Wheee!"],
+    "hurt":    ["Ow! My rotor!", "Hey! I'm small!", "That really scratched!"],
+    "down":    ["Going down! Going... down...", "Mayday... mayday...", "Tell my rotors... I tried..."]
+  },
+
+  "hero.DefenseMech": {
+    "select":  ["Aegis online. Point me at trouble.", "Shield up. Standing by.", "Say the word, Overseer."],
+    "claim":   ["Den marked. Stay behind the shield.", "Target accepted. Nothing gets past me.", "I'll hold the line."],
+    "refused": ["Orders say no. I obey.", "Understood. Standing down.", "Not my fight today."],
+    "hunt":    ["Hostile contact. Engaging.", "Something's out there. Not for long.", "Sweeping the perimeter."],
+    "flee":    ["Armor's cracked. Pulling back.", "Tactical withdrawal. Cover the colony.", "Retreating to repair. I'll be back."],
+    "repair":  ["Hull breach. Sealing it.", "Patching the wall. Walls matter.", "Structure first. Glory later."],
+    "rest":    ["Servos need a minute.", "Resting. Stay sharp without me.", "Recharging the shield."],
+    "wander":  ["Quiet. Too quiet.", "Walking the rim. All clear.", "No threats. For now."],
+    "levelup": ["Stronger. Heavier. Ready.", "Upgrade complete. Bring them on.", "Combat rating up."],
+    "hurt":    ["Taking fire!", "Just a scratch.", "Hit! Still standing."],
+    "down":    ["Shield... failing...", "The line... hold the line...", "Mech down."]
+  },
+
+  "hero.Medic": {
+    "select":  ["Triage here. Who's leaking?", "Medic. Try not to need me.", "Vitals look fine. For now."],
+    "claim":   ["On the wounded. Keep them breathing.", "I'll take it. Gently.", "Patients first. Bounty second."],
+    "refused": ["Not cleared for that. Noted.", "Somebody else then. Carefully.", "Orders say no. I'll stay close."],
+    "hunt":    ["I am not a hunter. But fine.", "Violence. Not my department.", "Keep your distance, creature."],
+    "flee":    ["I can't heal anyone if I'm scrap!", "Falling back to the inn!", "Too hot here. Moving!"],
+    "repair":  ["Hulls are just patients with rivets.", "Stitching the module.", "Hold still. This will sting."],
+    "rest":    ["Even medics need a checkup.", "Resting. Page me if it's serious.", "Recharge. Then rounds."],
+    "wander":  ["Rounds. Nobody's bleeding. Good.", "Checking on the colony.", "Quiet shift. I'll take it."],
+    "levelup": ["Better tools. Fewer funerals.", "Certification updated.", "Faster hands. Steadier nerves."],
+    "hurt":    ["Ow. Physician, heal thyself.", "Hey! I'm the medic!", "That will need a bandage."],
+    "down":    ["Who heals the healer...", "Pulse... weak...", "Medic down. Irony noted."]
+  },
+
+  "hero.HarvesterBot": {
+    "select":  ["Strip here. Ore to dig?", "Dig. Haul. Repeat.", "Point me at rocks."],
+    "claim":   ["Ore first. Everything else later.", "Good rocks there. I'm going.", "That's a lot of ore. Yes."],
+    "refused": ["No rocks for me? Sad.", "Okay. More ore for someone else.", "Orders say no. I dig elsewhere."],
+    "hunt":    ["Ore doesn't bite. That does.", "I'll hit it with a drill.", "Fine. Then back to digging."],
+    "flee":    ["Too spicy! Leaving!", "Drill's not a weapon! Running!", "Back to the inn!"],
+    "repair":  ["I dig holes. Fine, I'll fill one.", "Patch now. Dig later.", "Rock goes in the crack."],
+    "rest":    ["Hopper's full. So am I.", "Nap. Then rocks.", "Treads need a break."],
+    "wander":  ["Looking for shiny rocks.", "Hmm. That one looks heavy.", "Where's the ore?"],
+    "levelup": ["Bigger drill!", "More ore per hour!", "Harder rocks. Bring them."],
+    "hurt":    ["Ow! My hopper!", "Hey, I'm working here!", "Rude!"],
+    "down":    ["Ore... so close...", "Treads... stopping...", "Tell the rocks... goodbye..."]
+  },
+
+  "hero.SurveyorBot": {
+    "select":  ["Surveyor. Coordinates, please.", "Chart ready. Precisely ready.", "Measuring. Always measuring."],
+    "claim":   ["Site logged. Mapping now.", "Survey accepted. No fights, please.", "Charting the apron."],
+    "refused": ["Not authorized. Logged.", "Denied. I'll annotate that.", "Understood. Recalculating."],
+    "hunt":    ["Hostile at forty meters. Roughly.", "I'll mark it. Someone else shoot it.", "This is outside my job spec."],
+    "flee":    ["Threat exceeds tolerance. Leaving!", "Abort survey! Abort!", "Recalculating route. Away!"],
+    "repair":  ["Crack is point four meters. Sealing.", "Patching to specification.", "Structural tolerance restored."],
+    "rest":    ["Recalibrating sensors.", "Resting. Precisely eight minutes.", "Lenses need cleaning."],
+    "wander":  ["Hm. That map is wrong.", "Taking readings.", "Every crater gets a name."],
+    "levelup": ["Resolution improved.", "Sharper sensors. Excellent.", "New survey grade unlocked."],
+    "hurt":    ["My lens! Unacceptable!", "Impact detected!", "That was not in the plan."],
+    "down":    ["Signal... lost...", "Final reading... bad...", "Coordinates... fading..."]
+  },
+
+  "hero.TerraformerBot": {
+    "select":  ["Bloom here. Something needs greening?", "Hello. Growing things today?", "Patience. Everything grows."],
+    "claim":   ["Greening this crust. Slow work. Worth it.", "I'll plant here.", "This dirt has potential."],
+    "refused": ["Not my patch. That's alright.", "Someone else will tend it.", "Orders say no. I'll wait."],
+    "hunt":    ["I'd rather plant than fight.", "Shoo. Shoo, creature.", "Gently. Very firmly. Gently."],
+    "flee":    ["Seeds first! Running!", "Not today, thank you!", "Back to the greenhouse!"],
+    "repair":  ["Everything heals, with care.", "Patching. Like pruning.", "There. Better already."],
+    "rest":    ["Photosynthesis break.", "Resting. Growing slowly.", "Let the soil settle."],
+    "wander":  ["Just checking the sprouts.", "One day, trees here.", "Smells like progress."],
+    "levelup": ["Greener thumbs!", "Growth feels good.", "More seeds. More hope."],
+    "hurt":    ["Ow! My petals!", "Oh, that stings.", "Please don't stomp the seedlings!"],
+    "down":    ["Plant me... somewhere nice...", "Wilting...", "Tend... the garden..."]
+  },
+
+  "hero.CourierBot": {
+    "select":  ["Haul here! Deliveries?", "Package, pad, or purse?", "Wheels ready!"],
+    "claim":   ["Hauling the flag. Keep the path clear.", "Special delivery! On my way.", "Signed, sealed, rolling."],
+    "refused": ["Not on my route. Okay!", "Another courier's problem.", "Denied delivery. Noted."],
+    "hunt":    ["I deliver packages, not punches.", "Is that thing a customer?", "Detouring. Carefully."],
+    "flee":    ["Cargo's precious! So am I!", "Express retreat!", "Full throttle, going home!"],
+    "repair":  ["Delivering one patch.", "Parts incoming.", "Signed for one repair."],
+    "rest":    ["End of shift. Parking.", "Tires need a rest.", "Charging at the depot."],
+    "wander":  ["No deliveries? Weird day.", "Rolling the loop.", "Any packages? Anyone?"],
+    "levelup": ["Faster wheels! Priority shipping!", "Bigger cargo bay!", "Premium courier now!"],
+    "hurt":    ["Hey! Fragile!", "Ow! Handle with care!", "My cargo!"],
+    "down":    ["Delivery... failed...", "Return to... sender...", "Package... lost..."]
+  },
+
+  "hero.GeologistBot": {
+    "select":  ["Core here. Look at this rock!", "Geology on duty.", "Have you seen this strata?"],
+    "claim":   ["Core sample logged. The lab will love this.", "Reading the crust. On my way.", "Oh, promising layers there."],
+    "refused": ["Not cleared? The rocks will wait.", "Orders say no. Sediment happens.", "Fine. Other rocks exist."],
+    "hunt":    ["That creature disturbed my samples.", "Fine. Quick, before the dust settles.", "Rocks are nicer than this."],
+    "flee":    ["My samples! Run!", "Unstable situation! Leaving!", "Retreating to solid ground!"],
+    "repair":  ["Fractured, like basalt. Fixable.", "Patching. Geologically sound.", "Filling the fault line."],
+    "rest":    ["Resting. Like sediment.", "Time to compress for a while.", "Break. Rocks can wait."],
+    "wander":  ["Ooh. Iron oxide.", "Every pebble has a story.", "Tapping rocks. Scientifically."],
+    "levelup": ["Deeper cores!", "Better spectrometer!", "I understand rocks even more now."],
+    "hurt":    ["Ow! Igneous rudeness!", "My spectrometer!", "That cracked something!"],
+    "down":    ["Bury me... in good strata...", "Eroding...", "Samples... safe?..."]
+  },
+
+  "hero.SentinelMech": {
+    "select":  ["Rim. Holding.", "Perimeter locked.", "I stand. I watch."],
+    "claim":   ["Perimeter locked. I hold.", "This post is mine.", "Nothing crosses."],
+    "refused": ["Not my post.", "Understood.", "I hold here instead."],
+    "hunt":    ["Contact at the rim.", "It approaches. It ends.", "Engaging from position."],
+    "flee":    ["Falling back. Once.", "Post compromised. Moving.", "Withdrawing to repair."],
+    "repair":  ["Sealing the wall.", "The wall must hold.", "Repairing the rim."],
+    "rest":    ["Brief rest. Eyes open.", "Recharging. Still watching.", "Standing down. Briefly."],
+    "wander":  ["All quiet on the rim.", "Watching.", "I do not wander. I patrol."],
+    "levelup": ["Stronger post.", "Harder armor.", "The rim grows safer."],
+    "hurt":    ["Hit. Holding.", "Armor breached. Holding.", "Still standing."],
+    "down":    ["The rim... falls...", "Post... abandoned...", "Sentinel down."]
+  },
+
+  "overseer": {
+    "alert_warning":  ["Overseer, heads up.", "Something needs your attention.", "Warning. Look sharp."],
+    "alert_critical": ["Critical alert. This one matters.", "We are losing something. Now.", "Red alert. Please act before it becomes a lesson."],
+    "module_lost":    ["We lost a module.", "Module destroyed. That was load bearing.", "One less building. Noted."],
+    "hero_down":      ["Robot down.", "One of ours is down.", "Another one for the yard."],
+    "victory":        ["Objective complete. I will pretend I expected this.", "Victory. Try to look surprised.", "Done. The Compact is almost impressed."],
+    "defeat":         ["That went poorly. Again?", "Colony lost. We will call it a learning experience.", "Well. That is one way to end it."]
+  }
+}

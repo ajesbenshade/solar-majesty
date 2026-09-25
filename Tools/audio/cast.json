@@ -1,0 +1,14 @@
+{
+  "_doc": "Voice casting for Solar Majesty. One entry per speaker. voice = Kokoro-82M voice id; speed = speaking rate; pitch = semitones (tempo is preserved); fx = robot processing preset in voice_fx.py. Used by render_voices.py (bark bank) and voice_server.py (live lines), so baked and live lines sound like the same character.",
+  "overseer":            { "name": "Grok",    "voice": "af_heart",   "speed": 1.02, "pitch": 0.0,  "fx": "overseer" },
+  "hero.EngineerBot":    { "name": "Anvil",   "voice": "am_onyx",    "speed": 1.05, "pitch": -1.0, "fx": "servo" },
+  "hero.ScoutDrone":     { "name": "Horizon", "voice": "am_puck",    "speed": 1.18, "pitch": 3.0,  "fx": "drone" },
+  "hero.DefenseMech":    { "name": "Aegis",   "voice": "am_michael", "speed": 0.98, "pitch": -3.0, "fx": "mech" },
+  "hero.Medic":          { "name": "Triage",  "voice": "af_sarah",   "speed": 1.00, "pitch": 0.0,  "fx": "servo" },
+  "hero.HarvesterBot":   { "name": "Strip",   "voice": "am_echo",    "speed": 1.00, "pitch": -2.0, "fx": "servo" },
+  "hero.SurveyorBot":    { "name": "Chart",   "voice": "bf_alice",   "speed": 1.08, "pitch": 1.0,  "fx": "drone" },
+  "hero.TerraformerBot": { "name": "Bloom",   "voice": "af_aoede",   "speed": 0.96, "pitch": 0.0,  "fx": "servo" },
+  "hero.CourierBot":     { "name": "Haul",    "voice": "am_liam",    "speed": 1.12, "pitch": 1.0,  "fx": "servo" },
+  "hero.GeologistBot":   { "name": "Core",    "voice": "bm_lewis",   "speed": 1.04, "pitch": -1.0, "fx": "servo" },
+  "hero.SentinelMech":   { "name": "Rim",     "voice": "bm_daniel",  "speed": 0.94, "pitch": -4.0, "fx": "mech" }
+}

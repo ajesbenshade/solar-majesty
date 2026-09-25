@@ -75,6 +75,12 @@ namespace SolarMajesty
             if (!IsAlive || amount <= 0f) return;
             _health -= amount;
             _lastCombatTime = Time.time;
+            // Called every frame while a mech fights; one strike sound per swing-length is plenty.
+            if (Time.time >= _nextHitSfxAt)
+            {
+                _nextHitSfxAt = Time.time + HitSfxInterval;
+                DemoAudio.PlayRobotHit(transform.position);
+            }
             transform.localScale = _baseScale * (1f + Mathf.Sin(Time.time * 18f) * 0.08f);
             if (_health <= 0f)
                 Die();
@@ -100,6 +106,14 @@ namespace SolarMajesty
         private float _baseMoveSpeed;
         private float _baseBite;
         private bool _frenzy;
+
+        // Audio pacing. Aggro and combat damage are re-evaluated every frame, so the sounds are
+        // edge-triggered and throttled per stalker (DemoAudio also limits them globally).
+        private const float GrowlCooldown = 7f;
+        private const float HitSfxInterval = 0.45f;
+        private bool _wasAggro;
+        private float _nextGrowlAt;
+        private float _nextHitSfxAt;
         private Vector3 _faceDir;
 
         // Optional local Laya stance (see Docs/LAYA_LOCAL_AI.md). Role = scripted behaviour.
@@ -1012,6 +1026,14 @@ namespace SolarMajesty
         {
             FaceFlat(Vector3.zero);
 
+            // Growl on the rising edge of aggro: the "it has seen you" cue, not a loop.
+            if (_aggro && !_wasAggro && !_retreating && !IsJunk(Kind) && Time.time >= _nextGrowlAt)
+            {
+                _nextGrowlAt = Time.time + GrowlCooldown;
+                DemoAudio.PlayStalkerAggro(transform.position);
+            }
+            _wasAggro = _aggro;
+
             // UnitMotion owns bob/hop/hover. Root Y bob here fought the gait and slid statues.
             if (GetComponent<UnitMotion>() == null)
             {
@@ -1055,7 +1077,7 @@ namespace SolarMajesty
         private void Die()
         {
             _threat?.Clear(_sourceId);
-            DemoAudio.PlayStalkerDeath();
+            DemoAudio.PlayStalkerDeath(transform.position);
             DemoVfx.DeathBurst(transform.position, stalkerColor);
             _loop?.ShakeCamera(0.22f, transform.position);
             string who = Kind switch

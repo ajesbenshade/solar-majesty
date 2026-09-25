@@ -4,11 +4,13 @@
     powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1            # server + built game
     powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoGame    # server only (Unity editor)
     powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -Laya      # also Laya decisions (PyTorch)
+    powershell -ExecutionPolicy Bypass -File Tools\local_ai\start_narrator.ps1 -NoVoices  # text only, no spoken lines
 
   Backend order: llama.cpp (llama-server) -> Ollama -> Python fallback (llama-cpp-python, CPU).
-  Model: Qwen3-1.7B 4-bit (~1.1 GB). Closing this window stops the server. See Docs/HERO_NARRATION.md.
+  Model: Qwen3-1.7B 4-bit (~1.1 GB). If Tools\audio is set up, also starts the Kokoro voice server on
+  :8081 so LLM lines are spoken. Closing this window stops the servers. See Docs/HERO_NARRATION.md, Docs/AUDIO.md.
 #>
-param([switch]$NoGame, [switch]$Laya, [int]$Port = 8080)
+param([switch]$NoGame, [switch]$Laya, [switch]$NoVoices, [int]$Port = 8080, [int]$VoicePort = 8081)
 $ErrorActionPreference = 'Stop'
 
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -92,6 +94,23 @@ try {
       $Started += Start-Process laya-serve -PassThru -WindowStyle Hidden
       $gameArgs += '-laya'
     } else { Say 'Laya: run  pip install "laya[serve]"  first (PyTorch; GPU recommended).' }
+  }
+
+  if (-not $NoVoices) {
+    $Audio = Join-Path $Root 'Tools\audio'
+    $AudioPy = Join-Path $Audio '.venv\Scripts\python.exe'
+    $VoiceUrl = "http://127.0.0.1:$VoicePort"
+    if ((Test-Path $AudioPy) -and (Test-Path (Join-Path $Audio 'models\kokoro-v1.0.int8.onnx'))) {
+      Say "starting spoken lines (Kokoro TTS) on :$VoicePort"
+      $Started += Start-Process $AudioPy -ArgumentList @('voice_server.py', '--port', $VoicePort) -WorkingDirectory $Audio `
+        -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $Here 'voice.log') -RedirectStandardError (Join-Path $Here 'voice.err.log')
+      $voiceUp = $false
+      for ($i = 0; $i -lt 60 -and -not $voiceUp; $i++) {
+        try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "$VoiceUrl/health" | Out-Null; $voiceUp = $true } catch { Start-Sleep 1 }
+      }
+      if ($voiceUp) { Say "spoken lines online at $VoiceUrl"; $gameArgs += @('-voice-server', $VoiceUrl) }
+      else { Say "voice server did not come up; lines stay text (see $Here\voice.err.log)" }
+    } else { Say 'spoken LLM lines: set up Tools\audio once (see Docs\AUDIO.md); baked barks work without it.' }
   }
 
   if (-not $NoGame) {

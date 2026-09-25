@@ -4,10 +4,13 @@
 #   Tools/local_ai/start_narrator.sh            # server + launch the built game if found
 #   Tools/local_ai/start_narrator.sh --no-game  # server only (play in the Unity editor)
 #   Tools/local_ai/start_narrator.sh --laya     # also start the Laya decision model (Apple Silicon)
+#   Tools/local_ai/start_narrator.sh --no-voices  # text only: skip the spoken-line TTS server
 #
 # Uses the first backend it finds: llama.cpp (llama-server) → Ollama → MLX (Apple Silicon)
 # → a self-contained Python fallback (llama-cpp-python, CPU). Model: Qwen3-1.7B, 4-bit (~1.1 GB).
-# Ctrl+C stops everything this script started. See Docs/HERO_NARRATION.md.
+# If Tools/audio is set up (Tools/audio/setup.sh), also starts the Kokoro voice server on :8081
+# so LLM lines are spoken aloud. Ctrl+C stops everything this script started.
+# See Docs/HERO_NARRATION.md and Docs/AUDIO.md.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,11 +25,14 @@ OLLAMA_MODEL="qwen3:1.7b"
 
 LAUNCH_GAME=1
 WITH_LAYA=0
+WITH_VOICES=1
+VOICE_PORT="${VOICE_PORT:-8081}"
 for arg in "$@"; do
   case "$arg" in
     --no-game) LAUNCH_GAME=0 ;;
     --laya) WITH_LAYA=1 ;;
-    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    --no-voices) WITH_VOICES=0 ;;
+    -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
 done
@@ -125,6 +131,28 @@ fi
 
 GAME_ARGS=(-narrator "$URL" -narrator-model "$MODEL_NAME")
 [ "$WITH_LAYA" = 1 ] && GAME_ARGS+=(-laya)
+
+if [ "$WITH_VOICES" = 1 ]; then
+  AUDIO="$ROOT/Tools/audio"
+  VOICE_URL="http://127.0.0.1:$VOICE_PORT"
+  if [ -x "$AUDIO/.venv/bin/python" ] && [ -f "$AUDIO/models/kokoro-v1.0.int8.onnx" ]; then
+    say "starting spoken lines (Kokoro TTS) on :$VOICE_PORT"
+    (cd "$AUDIO" && exec .venv/bin/python voice_server.py --port "$VOICE_PORT") >"$HERE/voice.log" 2>&1 &
+    PIDS+=($!)
+    for _ in $(seq 1 60); do
+      curl -fs "$VOICE_URL/health" >/dev/null 2>&1 && break
+      sleep 1
+    done
+    if curl -fs "$VOICE_URL/health" >/dev/null 2>&1; then
+      say "spoken lines online at $VOICE_URL"
+      GAME_ARGS+=(-voice-server "$VOICE_URL")
+    else
+      say "voice server did not come up; lines stay text (see $HERE/voice.log)"
+    fi
+  else
+    say "spoken LLM lines: run Tools/audio/setup.sh once (baked barks work without it)"
+  fi
+fi
 
 if [ "$LAUNCH_GAME" = 1 ]; then
   if [ -d "$ROOT/Builds/macOS/SolarMajesty.app" ]; then
