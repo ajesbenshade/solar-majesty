@@ -137,6 +137,7 @@ namespace SolarMajesty
 
         /// <summary>Bumps on every decision change, so a late narration line can tell it is stale.</summary>
         public int NarrationStamp { get; private set; }
+        private float _nextWeldSfx;
 
         /// <summary>A line from <see cref="HeroNarrator"/> replaces the template flavour line.</summary>
         public void SetNarratedLine(string line)
@@ -225,8 +226,10 @@ namespace SolarMajesty
             healthNormalized = Mathf.Clamp01(healthNormalized - mitigated);
             if (feedback)
             {
-                DemoAudio.PlayBite();
+                DemoAudio.PlayBite(transform.position);
                 DemoVfx.HitFlash(transform, new Color(1f, 0.25f, 0.2f));
+                if (healthNormalized > incapacitateThreshold)
+                    CharacterVoice.Cue(this, VoiceCue.Hurt);
             }
             if (healthNormalized <= incapacitateThreshold)
                 EnterIncapacitated();
@@ -331,9 +334,10 @@ namespace SolarMajesty
             if (gained > 0)
             {
                 DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.78f, 0.22f));
+                DemoAudio.PlayLevelUp(transform.position);
                 _loop?.LogOverseer($"{data?.displayName} reached L{level}.");
                 Debug.Log($"[XP] {data?.displayName} level {level} ({reason}) xp={xp}");
-                HeroNarrator.Report(this, NarrationKind.LevelUp);
+                CharacterVoice.Cue(this, VoiceCue.LevelUp, HeroNarrator.Report(this, NarrationKind.LevelUp));
             }
         }
 
@@ -723,6 +727,8 @@ namespace SolarMajesty
             SetAgentStopped(true);
             IndustrialArtDressing.SetTintOverlay(gameObject, new Color(0.38f, 0.38f, 0.4f));
             DemoVfx.DeathBurst(transform.position, bodyTint);
+            DemoAudio.PlayRobotDown(transform.position);
+            CharacterVoice.Cue(this, VoiceCue.Down);
             _loop?.NoteMechDeath(transform.position);
             Debug.Log($"[Specialist] {data.displayName} incapacitated — recovering in {recover:F0}s");
         }
@@ -750,6 +756,7 @@ namespace SolarMajesty
             string label = ColonyStructure.ClassLabel(data != null ? data.specialistClass : SpecialistClass.ScoutDrone);
             _loop?.OnRobotScrapped(this, salvage);
             DemoVfx.DeathBurst(transform.position, bodyTint);
+            DemoAudio.PlayRobotDown(transform.position);
             Debug.Log($"[Specialist] {data?.displayName} SCRAPPED — salvage {salvage} MET");
             Destroy(gameObject);
         }
@@ -1046,7 +1053,7 @@ namespace SolarMajesty
                     _flags.AddClaim(_activeFlag);
                     _claimedActive = true;
                     _buildLaborHit = false;
-                    DemoAudio.PlayClaim();
+                    DemoAudio.PlayClaim(transform.position);
                     DemoVfx.ClaimRing(_activeFlag.WorldPosition, new Color(1f, 0.85f, 0.2f));
                     if (decision.TargetFlag.Data != null)
                     {
@@ -1086,7 +1093,8 @@ namespace SolarMajesty
             if (changed)
             {
                 NarrationStamp++;
-                HeroNarrator.Report(this, HeroNarrator.KindFor(decision));
+                NarrationKind kind = HeroNarrator.KindFor(decision);
+                CharacterVoice.Cue(this, VoiceBank.CueFor(kind), HeroNarrator.Report(this, kind));
             }
 
             if (changed && logDecisions)
@@ -1223,12 +1231,12 @@ namespace SolarMajesty
                 greedHunger = Mathf.Clamp01(greedHunger - 0.25f);
                 if (completedType == FlagType.Extract)
                 {
-                    DemoAudio.PlayExtract();
+                    DemoAudio.PlayExtract(transform.position);
                     DemoVfx.ExtractPing(transform.position);
                 }
                 else
                 {
-                    DemoAudio.PlayClaim();
+                    DemoAudio.PlayCredits(transform.position);
                     DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
                 }
                 Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty=${bounty:F0}");
@@ -1274,7 +1282,7 @@ namespace SolarMajesty
 
             if (!_repairTarget.NeedsRepair)
             {
-                DemoAudio.PlayClaim();
+                DemoAudio.PlayRepair(target);
                 DemoVfx.ClaimRing(target, new Color(0.45f, 0.85f, 1f));
                 _status = "repaired";
                 _repairTarget = null;
@@ -1303,6 +1311,11 @@ namespace SolarMajesty
             {
                 _placer.ApplyLabor(best, workSeconds);
                 _buildLaborHit = true;
+                if (Time.time >= _nextWeldSfx)
+                {
+                    _nextWeldSfx = Time.time + Random.Range(0.35f, 0.6f);
+                    DemoAudio.PlayConstructionTick(best.WorldPosition);
+                }
             }
         }
 
@@ -1461,7 +1474,7 @@ namespace SolarMajesty
             fatigue = Mathf.Clamp01(fatigue - 0.15f);
             _status = "aid_patched";
             DemoVfx.ClaimRing(transform.position, new Color(0.45f, 0.95f, 0.62f));
-            DemoAudio.PlayClaim();
+            DemoAudio.PlayHeal(transform.position);
             return true;
         }
 
@@ -1533,7 +1546,7 @@ namespace SolarMajesty
             {
                 equippedSuit = item.Id;
                 DemoVfx.ClaimRing(transform.position, new Color(0.7f, 0.85f, 1f));
-                DemoAudio.PlayClaim();
+                DemoAudio.PlayEquip(transform.position);
                 Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} EU");
                 return true;
             }
@@ -1542,7 +1555,7 @@ namespace SolarMajesty
             {
                 equippedAccessory = item.Id;
                 DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.82f, 0.28f));
-                DemoAudio.PlayClaim();
+                DemoAudio.PlayEquip(transform.position);
                 Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} EU");
                 return true;
             }
@@ -1551,7 +1564,7 @@ namespace SolarMajesty
             {
                 equippedWeapon = item.Id;
                 DemoVfx.ClaimRing(transform.position, new Color(0.92f, 0.55f, 0.18f));
-                DemoAudio.PlayClaim();
+                DemoAudio.PlayEquip(transform.position);
                 Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} EU");
                 return true;
             }
@@ -1564,7 +1577,7 @@ namespace SolarMajesty
             _geneSpeed = Mathf.Max(_geneSpeed, item.SpeedBonus);
             _geneWork = Mathf.Max(_geneWork, item.WorkBonus);
             DemoVfx.ClaimRing(transform.position, new Color(0.55f, 1f, 0.45f));
-            DemoAudio.PlayClaim();
+            DemoAudio.PlayHeal(transform.position);
             Debug.Log($"[Shop] {data.displayName} bought {item.DisplayName} for {item.Cost} EU");
             return true;
         }

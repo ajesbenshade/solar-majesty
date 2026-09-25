@@ -15,37 +15,123 @@ namespace SolarMajesty
     }
 
     /// <summary>
-    /// Layered generative score.
+    /// Layered adaptive score.
     ///
-    /// A composer is out of reach for this project, and silence reads as unfinished. Instead of
-    /// looping one track, this synthesises four stems once at startup — a drone, a pulse, a pad, and
-    /// a low brass swell — and crossfades their levels with the state of the colony. The result
-    /// responds to play rather than repeating, which is what a colony sim score is supposed to do.
+    /// Each world ships four authored stems rendered offline by Tools/audio/render_music.py:
+    /// bed (harmonic foundation), rhythm (work pulse), harmony (the hopeful leitmotif) and threat
+    /// (percussion and low swells). They share key, tempo and exact sample length, so they are
+    /// started on one DSP tick and crossfaded by the colony's mood. The score responds to play
+    /// instead of repeating one track, which is what a colony sim score is supposed to do.
     ///
-    /// All stems share a tempo and key so any combination is consonant.
+    /// The original procedural sine stems are kept as a fallback. A world with any stem missing
+    /// uses the whole procedural set, because mixing two keys would be worse than a thin score.
     /// </summary>
     public sealed class AdaptiveMusic : MonoBehaviour
     {
         private const int SampleRate = 44100;
         private const float LoopSeconds = 16f;
+        private const int StemCount = 4;
 
-        /// <summary>A minor: the "industrial but hopeful" brief lands between modal and minor.</summary>
+        private const string ResourceRoot = "Audio/Music/";
+        private const string TitleClip = "title_theme";
+        private const string ProceduralKey = "procedural";
+
+        /// <summary>Resource suffixes, in stem index order (bed, rhythm, harmony, threat).</summary>
+        private static readonly string[] StemNames = { "bed", "rhythm", "harmony", "threat" };
+
+        /// <summary>
+        /// Per-mood stem levels for the authored stems, rows Calm/Work/Tension/Crisis.
+        ///
+        /// Must match MOOD_LEVELS in Tools/audio/render_music.py. The renderer normalises a world so
+        /// the Work row lands near -17 LUFS, and proves that every layer subset at the per-stem
+        /// maximum of this table peaks under -1 dBFS. A mix is linear in these levels, so that also
+        /// covers every value a crossfade passes through: no mood change can clip.
+        /// </summary>
+        private static readonly float[,] AuthoredLevels =
+        {
+            { 1.00f, 0.00f, 0.70f, 0.00f },
+            { 0.90f, 0.90f, 0.75f, 0.00f },
+            { 0.85f, 0.60f, 0.45f, 0.65f },
+            { 0.75f, 1.00f, 0.25f, 1.00f }
+        };
+
+        /// <summary>The original balance, tuned for the quieter procedural stems.</summary>
+        private static readonly float[,] ProceduralLevels =
+        {
+            { 0.50f, 0.00f, 0.34f, 0.00f },
+            { 0.55f, 0.42f, 0.30f, 0.00f },
+            { 0.60f, 0.30f, 0.45f, 0.18f },
+            { 0.45f, 0.62f, 0.20f, 0.55f }
+        };
+
+        /// <summary>A world change is a scene change; a long overlap hides the key change.</summary>
+        private const float WorldFadeSeconds = 3f;
+        private const float TitleFadeSeconds = 2.5f;
+
+        /// <summary>
+        /// Head start for PlayScheduled. Streamed clips need their first buffer decoded before the
+        /// scheduled tick, or a stem that was late would start out of phase.
+        /// </summary>
+        private const double ScheduleLead = 0.25;
+        private const float LoadTimeout = 5f;
+
+        /// <summary>
+        /// Stems further apart than this are resynced. Far above any timeSamples readback jitter,
+        /// so it only fires when a stem really started late (a load hitch), never in steady state.
+        /// </summary>
+        private const int DriftToleranceSamples = SampleRate / 4;
+
+        /// <summary>Stinger over a ducked bed: 0.85 + 0.2 of two -1 dBFS files stays under 0 dBFS.</summary>
+        private const float StingLevel = 0.85f;
+        private const float StingDuck = 0.2f;
+
+        /// <summary>A, C, D, E, G around A2: the fallback set's A minor pentatonic.</summary>
         private static readonly float[] Scale = { 110.00f, 130.81f, 146.83f, 164.81f, 196.00f };
 
         private static AdaptiveMusic _instance;
+        private static AudioClip[] _proceduralClips;
 
-        private AudioSource _drone;
-        private AudioSource _pulse;
-        private AudioSource _pad;
-        private AudioSource _swell;
+        /// <summary>One world's four phase-locked stems and its share of a world crossfade.</summary>
+        private sealed class StemSet
+        {
+            public string Key;
+            public bool Authored;
+            public readonly AudioSource[] Sources = new AudioSource[StemCount];
+            public float Gain;
+            public bool Scheduled;
+            public double StartDsp;
+            public float WaitedSeconds;
+        }
 
-        private readonly float[] _targets = new float[4];
-        private readonly float[] _levels = new float[4];
+        private StemSet _active;
+        private StemSet _fading;
+        private bool _hasWorld;
+        private CelestialBodyId _world;
+
+        private AudioSource _title;
+        private bool _titleLoaded;
+        private float _titleGain;
+
+        private AudioSource _sting;
+        private AudioClip _victoryClip;
+        private AudioClip _defeatClip;
+        private float _stingDuck = 1f;
+        private float _stingHold;
+
+        private float _driftTimer;
+        private int _driftStrikes;
+
+        private readonly float[] _targets = new float[StemCount];
+        private readonly float[] _levels = new float[StemCount];
 
         private MusicMood _mood = MusicMood.Calm;
         private float _moodHold;
 
         public MusicMood Mood => _mood;
+
+        /// <summary>Whether a world has been chosen yet, and which one.</summary>
+        public bool HasWorld => _hasWorld;
+        public CelestialBodyId World => _world;
 
         public static AdaptiveMusic Ensure()
         {
@@ -63,38 +149,39 @@ namespace SolarMajesty
             return _instance;
         }
 
+        /// <summary>
+        /// Play the victory or defeat stinger over the score, ducking the stems while it sounds.
+        /// Safe to call before any world has loaded. Returns false if the stinger clip is missing, so
+        /// the caller can fall back to the SFX fanfare instead of playing both.
+        /// </summary>
+        public static bool PlayStinger(bool victory)
+        {
+            var music = Ensure();
+            return music != null && music.Stinger(victory);
+        }
+
         private void Awake()
         {
             _instance = this;
-            _drone = BuildStem("Drone", BuildDrone());
-            _pulse = BuildStem("Pulse", BuildPulse());
-            _pad = BuildStem("Pad", BuildPad());
-            _swell = BuildStem("Swell", BuildSwell());
+            _sting = CreateSource("Stinger", loop: false);
             SetMood(MusicMood.Calm, force: true);
         }
 
-        private AudioSource BuildStem(string label, AudioClip clip)
+        private void OnDestroy()
         {
-            var child = new GameObject(label);
-            child.transform.SetParent(transform, false);
-
-            var src = child.AddComponent<AudioSource>();
-            src.clip = clip;
-            src.loop = true;
-            src.playOnAwake = false;
-            src.spatialBlend = 0f;
-            src.volume = 0f;
-            src.Play();
-            return src;
+            if (_instance == this) _instance = null;
         }
 
         /// <summary>
-        /// Pick the mood from colony state. Hysteresis stops the score flapping between stems every
-        /// time a single mite wanders near the campus.
+        /// Pick the mood from colony state and follow the active world. Hysteresis stops the score
+        /// flapping between stems every time a single mite wanders near the campus.
         /// </summary>
         public void Evaluate(GameLoop loop, float dt)
         {
             if (loop == null) return;
+
+            var body = loop.BodyProfile;
+            if (body != null) SetWorld(body.Id);
 
             _moodHold -= dt;
             MusicMood next = Classify(loop);
@@ -110,8 +197,6 @@ namespace SolarMajesty
                 SetMood(next, force: false);
                 _moodHold = 4f;
             }
-
-            Apply(dt);
         }
 
         private static MusicMood Classify(GameLoop loop)
@@ -133,34 +218,284 @@ namespace SolarMajesty
         {
             _mood = mood;
 
-            switch (mood)
-            {
-                case MusicMood.Work:
-                    Set(0.55f, 0.42f, 0.30f, 0f);
-                    break;
-                case MusicMood.Tension:
-                    Set(0.60f, 0.30f, 0.45f, 0.18f);
-                    break;
-                case MusicMood.Crisis:
-                    Set(0.45f, 0.62f, 0.20f, 0.55f);
-                    break;
-                default:
-                    Set(0.50f, 0f, 0.34f, 0f);
-                    break;
-            }
+            float[,] table = _active != null && !_active.Authored ? ProceduralLevels : AuthoredLevels;
+            int row = (int)mood;
+            for (int i = 0; i < StemCount; i++)
+                _targets[i] = table[row, i];
 
             if (!force) return;
             for (int i = 0; i < _levels.Length; i++)
                 _levels[i] = _targets[i];
         }
 
-        private void Set(float drone, float pulse, float pad, float swell)
+        /// <summary>
+        /// Crossfade to a world's stems. Evaluate calls this every frame, so it does nothing unless
+        /// the world actually changed.
+        /// </summary>
+        public void SetWorld(CelestialBodyId world)
         {
-            _targets[0] = drone;
-            _targets[1] = pulse;
-            _targets[2] = pad;
-            _targets[3] = swell;
+            if (_hasWorld && _world == world && _active != null) return;
+            _hasWorld = true;
+            _world = world;
+
+            string key = WorldKey(world);
+            if (_active != null && _active.Key == key) return;
+
+            if (_fading != null && _fading.Key == key)
+            {
+                // Coming straight back: reverse the fade instead of loading the clips twice.
+                var back = _fading;
+                _fading = _active;
+                _active = back;
+                SetMood(_mood, force: false);
+                return;
+            }
+
+            BeginSet(LoadSet(key));
         }
+
+        private void Update()
+        {
+            float dt = Time.unscaledDeltaTime;
+
+            TickTitle(dt);
+            TrySchedule(_active, dt);
+            TrySchedule(_fading, dt);
+            TickCrossfade(dt);
+            TickStinger(dt);
+            GuardSync(dt);
+            Apply(dt);
+        }
+
+        // ---- world sets ---------------------------------------------------------------------
+
+        private static string WorldKey(CelestialBodyId world) => world.ToString().ToLowerInvariant();
+
+        private void BeginSet(StemSet set)
+        {
+            // Only two sets ever overlap; a third request drops the one already fading out.
+            if (_fading != null) Release(_fading);
+            _fading = _active;
+            _active = set;
+            _active.Gain = 0f;
+            SetMood(_mood, force: false);
+        }
+
+        private StemSet LoadSet(string key)
+        {
+            var clips = new AudioClip[StemCount];
+            bool complete = key != ProceduralKey;
+            for (int i = 0; complete && i < StemCount; i++)
+            {
+                clips[i] = Resources.Load<AudioClip>(ResourceRoot + key + "_" + StemNames[i]);
+                if (clips[i] == null) complete = false;
+            }
+
+            if (!complete)
+            {
+                for (int i = 0; i < StemCount; i++)
+                    if (clips[i] != null) Resources.UnloadAsset(clips[i]);
+                clips = ProceduralClips();
+                key = ProceduralKey;
+            }
+            else
+            {
+                for (int i = 1; i < StemCount; i++)
+                {
+                    if (clips[i].samples == clips[0].samples) continue;
+                    Debug.LogWarning($"[AdaptiveMusic] {key} stems differ in length " +
+                                     $"({clips[0].samples} vs {clips[i].samples}); they will drift.");
+                    break;
+                }
+            }
+
+            var set = new StemSet { Key = key, Authored = complete };
+            for (int i = 0; i < StemCount; i++)
+            {
+                var src = CreateSource($"{key}_{StemNames[i]}", loop: true);
+                src.clip = clips[i];
+                if (complete) clips[i].LoadAudioData();
+                set.Sources[i] = src;
+            }
+            return set;
+        }
+
+        /// <summary>
+        /// Start all four stems on the same future DSP tick once their audio data is ready. Play()
+        /// on each would start them in whichever audio frame each call landed in, so they would not
+        /// line up. PlayScheduled is sample-accurate.
+        /// </summary>
+        private static void TrySchedule(StemSet set, float dt)
+        {
+            if (set == null || set.Scheduled) return;
+
+            set.WaitedSeconds += dt;
+            if (set.WaitedSeconds < LoadTimeout)
+            {
+                for (int i = 0; i < StemCount; i++)
+                {
+                    var clip = set.Sources[i].clip;
+                    if (clip != null && clip.loadState == AudioDataLoadState.Loading) return;
+                }
+            }
+
+            double start = AudioSettings.dspTime + ScheduleLead;
+            for (int i = 0; i < StemCount; i++)
+                set.Sources[i].PlayScheduled(start);
+            set.Scheduled = true;
+            set.StartDsp = start;
+        }
+
+        private void TickCrossfade(float dt)
+        {
+            if (_active == null) return;
+
+            // The incoming set only starts fading in once it is actually sounding, so a slow load
+            // does not fade the old world out into silence.
+            if (_active.Scheduled && AudioSettings.dspTime >= _active.StartDsp)
+                _active.Gain = Mathf.MoveTowards(_active.Gain, 1f, dt / WorldFadeSeconds);
+
+            if (_fading == null) return;
+
+            // Gains always sum to at most 1: a linear crossfade can never peak above either world.
+            _fading.Gain = Mathf.Min(_fading.Gain, 1f - _active.Gain);
+            if (_fading.Gain <= 0f)
+            {
+                Release(_fading);
+                _fading = null;
+            }
+        }
+
+        private void Release(StemSet set)
+        {
+            if (set == null) return;
+            bool shared = (_active != null && _active != set && _active.Key == set.Key)
+                          || (_fading != null && _fading != set && _fading.Key == set.Key);
+
+            for (int i = 0; i < StemCount; i++)
+            {
+                var src = set.Sources[i];
+                if (src == null) continue;
+                var clip = src.clip;
+                src.Stop();
+                src.clip = null;
+                if (set.Authored && !shared && clip != null) Resources.UnloadAsset(clip);
+                Destroy(src.gameObject);
+            }
+        }
+
+        /// <summary>
+        /// Safety net only: resync stems that are grossly apart. Needs two consecutive strikes, so a
+        /// single coarse timeSamples readback on a streamed clip cannot trigger a seek.
+        /// </summary>
+        private void GuardSync(float dt)
+        {
+            var set = _active;
+            if (set == null || !set.Authored || !set.Scheduled) return;
+            if (AudioSettings.dspTime < set.StartDsp + 1.0) return;
+
+            _driftTimer -= dt;
+            if (_driftTimer > 0f) return;
+            _driftTimer = 2f;
+
+            var lead = set.Sources[0];
+            if (lead == null || lead.clip == null || !lead.isPlaying) return;
+
+            int length = lead.clip.samples;
+            int reference = lead.timeSamples;
+            bool drifted = false;
+            for (int i = 1; i < StemCount; i++)
+            {
+                var src = set.Sources[i];
+                if (src == null || !src.isPlaying) continue;
+                int d = Mathf.Abs(src.timeSamples - reference);
+                d = Mathf.Min(d, length - d);
+                if (d > DriftToleranceSamples) drifted = true;
+            }
+
+            if (!drifted)
+            {
+                _driftStrikes = 0;
+                return;
+            }
+
+            if (++_driftStrikes < 2) return;
+            _driftStrikes = 0;
+            reference = lead.timeSamples;
+            for (int i = 1; i < StemCount; i++)
+                if (set.Sources[i] != null) set.Sources[i].timeSamples = reference;
+            Debug.LogWarning($"[AdaptiveMusic] Resynced {set.Key} stems.");
+        }
+
+        // ---- title theme --------------------------------------------------------------------
+
+        /// <summary>
+        /// The orrery screen gets the full statement of the theme. This reads the title view rather
+        /// than being hooked into it, so the menu code does not need to know music exists.
+        /// </summary>
+        private void TickTitle(float dt)
+        {
+            var view = SolarSystemTitleView.Instance;
+            bool shown = view != null && view.IsShown;
+
+            if (shown && !_titleLoaded)
+            {
+                _titleLoaded = true;
+                var clip = Resources.Load<AudioClip>(ResourceRoot + TitleClip);
+                if (clip != null)
+                {
+                    _title = CreateSource("Title", loop: true);
+                    _title.clip = clip;
+                }
+            }
+
+            // No title theme: a quiet procedural bed beats a silent menu.
+            if (shown && _title == null && _active == null)
+                BeginSet(LoadSet(ProceduralKey));
+
+            float target = shown && _title != null ? 1f : 0f;
+            if (target > 0f && !_title.isPlaying) _title.Play();
+            _titleGain = Mathf.MoveTowards(_titleGain, target, dt / TitleFadeSeconds);
+            if (_title != null && _titleGain <= 0f && _title.isPlaying) _title.Stop();
+        }
+
+        // ---- stinger ------------------------------------------------------------------------
+
+        private bool Stinger(bool victory)
+        {
+            AudioClip clip = victory ? _victoryClip : _defeatClip;
+            if (clip == null)
+            {
+                clip = Resources.Load<AudioClip>(ResourceRoot + (victory ? "sting_victory" : "sting_defeat"));
+                if (victory) _victoryClip = clip;
+                else _defeatClip = clip;
+            }
+            if (clip == null || _sting == null) return false;
+
+            _sting.Stop();
+            _sting.clip = clip;
+            _sting.volume = StingLevel * SoundBus.Volume(SoundChannel.Music);
+            _sting.Play();
+
+            // Hold the duck for the body of the stinger and let the score swell back under its tail.
+            _stingHold = Mathf.Max(0.5f, clip.length - 1.5f);
+            return true;
+        }
+
+        private void TickStinger(float dt)
+        {
+            if (_stingHold > 0f)
+            {
+                _stingHold -= dt;
+                _stingDuck = Mathf.MoveTowards(_stingDuck, StingDuck, dt * 5f);
+            }
+            else
+            {
+                _stingDuck = Mathf.MoveTowards(_stingDuck, 1f, dt * 0.4f);
+            }
+        }
+
+        // ---- mix ----------------------------------------------------------------------------
 
         private void Apply(float dt)
         {
@@ -170,13 +505,49 @@ namespace SolarMajesty
                 _levels[i] = Mathf.MoveTowards(_levels[i], _targets[i], rate);
 
             float bus = SoundBus.Volume(SoundChannel.Music);
-            if (_drone != null) _drone.volume = _levels[0] * bus;
-            if (_pulse != null) _pulse.volume = _levels[1] * bus;
-            if (_pad != null) _pad.volume = _levels[2] * bus;
-            if (_swell != null) _swell.volume = _levels[3] * bus;
+            float music = bus * _stingDuck;
+            float worlds = music * (1f - _titleGain);
+
+            ApplySet(_active, worlds);
+            ApplySet(_fading, worlds);
+            if (_title != null) _title.volume = _titleGain * music;
+            if (_sting != null && _sting.isPlaying) _sting.volume = StingLevel * bus;
         }
 
-        // ---- stem synthesis --------------------------------------------------
+        private void ApplySet(StemSet set, float mul)
+        {
+            if (set == null) return;
+            for (int i = 0; i < StemCount; i++)
+            {
+                var src = set.Sources[i];
+                if (src != null) src.volume = _levels[i] * set.Gain * mul;
+            }
+        }
+
+        private AudioSource CreateSource(string label, bool loop)
+        {
+            var child = new GameObject(label);
+            child.transform.SetParent(transform, false);
+
+            var src = child.AddComponent<AudioSource>();
+            src.loop = loop;
+            src.playOnAwake = false;
+            src.spatialBlend = 0f;
+            src.volume = 0f;
+            // Music must never be the voice Unity steals when many SFX play at once.
+            src.priority = 0;
+            src.ignoreListenerPause = true;
+            return src;
+        }
+
+        // ---- procedural fallback stems ------------------------------------------------------
+
+        private static AudioClip[] ProceduralClips()
+        {
+            if (_proceduralClips != null) return _proceduralClips;
+            _proceduralClips = new[] { BuildDrone(), BuildPulse(), BuildPad(), BuildSwell() };
+            return _proceduralClips;
+        }
 
         private static AudioClip MakeClip(string name, System.Func<float, int, float> sample)
         {

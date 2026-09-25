@@ -66,3 +66,8 @@ Assets/_Recovery/
 Tools/local_ai/models/
 Tools/local_ai/.venv/
 Tools/local_ai/*.log
+
+# Audio tools (Tools/audio/setup.sh)
+Tools/audio/.venv/
+Tools/audio/models/
+Tools/audio/preview/

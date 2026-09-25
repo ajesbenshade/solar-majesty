@@ -1,6 +1,6 @@
 # Hero narration (small local LLM + text-to-speech)
 
-Optional and off by default. Heroes mutter short, in-character lines about what they're doing. A small language model on your machine writes the line, and a local text-to-speech model (Kokoro-82M) can also **speak it aloud**. Machines talk through a helmet-radio filter; the human Medic speaks clean. You can also **talk to them**: select a hero and press **Enter** (or **TALK** on their card). With no servers running, the template flavour lines stay and nothing else changes.
+Optional and off by default. Heroes mutter short, in-character lines about what they're doing. A small language model on your machine writes the line, and a local text-to-speech model (Kokoro-82M) can also **speak it aloud**. Each hero speaks in its class's cast voice, the same one as its baked barks ([AUDIO.md](AUDIO.md)). With no servers running, heroes use their baked barks and template lines, and nothing else changes. You can also talk to a hero: select one and press **Enter** (or **TALK** on their card).
 
 **The model voices decisions; it never makes them.** `SpecialistBrain` still decides everything. The narrator gets only the facts of the moment (class, level, dominant trait, health, purse, the bounty, the player's written orders) and returns one line.
 
@@ -50,8 +50,8 @@ Avoid Ollama's plain `qwen3:4b` tag: it is the thinking-only build, reasons in t
 ## Spoken lines (TTS)
 
 - **Server:** any server with the OpenAI-style `POST /v1/audio/speech` returning WAV. That's the bundled `Tools/local_ai/voice_server.py` (kokoro-onnx, CPU) or [Kokoro-FastAPI](https://github.com/remsky/Kokoro-FastAPI) (`docker run -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-cpu`). Enable with the SPOKEN chip, `-voice [url]` or `SOLAR_VOICE_URL`.
-- **Casting** (`HeroSpeech.VoiceFor`): two Kokoro voices per class, picked per hero, so the colony isn't one voice. Workaholics speak faster and lazy heroes drawl. Mechs get a heavy radio treatment, other bots a lighter one; the Medic is human and clean.
-- **Playback** (`HeroSpeaker`): the WAV is decoded and filtered off the main thread, then played at the hero's position on the **Voice** bus (it follows your volume settings and mutes with them) and ducks music and ambience while the line plays. One line at a time; lines longer than 5 s are skipped.
+- **Casting:** `Tools/audio/cast.json`, copied into `voices.json` by the voice bake. Each class has one Kokoro voice, pitch, pace and robot preset, and live lines use the same entry as the baked barks. Live lines get `HeroSpeech.ApplyRobot` at the preset's strength, and each robot gets a small individual pitch offset. `HeroSpeech.VoiceFor` is the fallback when no bank is baked.
+- **Playback:** `HeroSpeaker` fetches the WAV and decodes and filters it off the main thread. `CharacterVoice` plays it at the hero on the **Voice** bus, under the same `VoiceDirector` rules as the barks, and ducks music and ambience. When the narrator takes a moment, the hero waits up to 4.5 s for its line and otherwise plays its bark, so a moment is never voiced twice. Lines longer than 5 s are skipped.
 - **Intelligibility check:** real Kokoro output passed through the game's robot filter was transcribed by Whisper exactly like the clean audio (e.g. *"450 for a den, I'll claim the rest."*). Listen: `Docs/ReviewEvidence/2026-09-25-hero-voice-mech.wav` (Defense Mech, radio voice) and `2026-09-25-hero-voice-medic.wav` (Medic, clean).
 - **Latency:** Kokoro took ~0.8–1.6 s per line on a 4-core container CPU, on top of the LLM line (~1.5–4 s). Heroes speak a moment after they act, which reads as a mutter.
 

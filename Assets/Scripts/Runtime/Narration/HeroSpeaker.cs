@@ -8,11 +8,12 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Speaks hero narration aloud through a local Kokoro TTS server (Tools/local_ai/voice_server.py
-    /// or Kokoro-FastAPI; both serve <c>POST /v1/audio/speech</c>). Off unless enabled by
-    /// Settings → SPOKEN LINES, <c>-voice [url]</c>, or <c>SOLAR_VOICE_URL</c>. Without a server
-    /// the lines stay text only. Machines get a helmet-radio filter; the voice plays positionally
-    /// at the hero on the Voice bus and ducks the music/ambience bed. One line at a time.
+    /// Live text-to-speech link to a local Kokoro server (Tools/local_ai/voice_server.py or
+    /// Kokoro-FastAPI; both serve <c>POST /v1/audio/speech</c>). Off unless enabled by Settings →
+    /// SPOKEN · LOCAL TTS, <c>-voice [url]</c>, or <c>SOLAR_VOICE_URL</c>. Speaks what can't be
+    /// baked: the narrator's LLM lines and Overseer alerts with names in them. Machines get the
+    /// helmet-radio filter. One line in flight at a time; without a server, baked voices remain.
+    /// See Docs/AUDIO.md.
     /// </summary>
     public sealed class HeroSpeaker : MonoBehaviour
     {
@@ -29,7 +30,6 @@ namespace SolarMajesty
         private volatile bool _probing;
         private volatile bool _busy;
         private float _probeTimer;
-        private float _speakingUntil;
 
         public bool Online => _online;
         public int Spoken { get; private set; }
@@ -77,34 +77,38 @@ namespace SolarMajesty
         /// <summary>Makes sure the server probe is running (call when narration turns on).</summary>
         public static void Warm() => _ = Instance;
 
-        /// <summary>
-        /// Say a narrated line in this hero's voice. Dropped (text stays) when speech is off, the
-        /// server is down, another line is still playing, or the audio would be too long.
-        /// </summary>
-        public static void Speak(SpecialistAgent agent, string line)
-        {
-            if (agent == null || agent.Data == null || string.IsNullOrEmpty(line)) return;
-            var s = Instance;
-            if (s == null || !s._online || s._http == null || s._busy) return;
-            if (Time.unscaledTime < s._speakingUntil) return;
-            if (SoundBus.Volume(SoundChannel.Voice) <= 0.001f) return;
+        /// <summary>True once the TTS server has answered a probe.</summary>
+        public static bool Ready => Enabled && Instance != null && _instance._online && _instance._http != null;
 
-            var voice = HeroSpeech.VoiceFor(agent.Data.specialistClass, agent.GetHashCode(), agent.Data.workaholicBias);
+        /// <summary>
+        /// Synthesise <paramref name="line"/> in <paramref name="voice"/> and hand back a clip on the
+        /// main thread (null on failure). Playback, placement and rationing belong to the caller
+        /// (CharacterVoice for heroes, OverseerVoice for Grok), so live lines obey the same
+        /// VoiceDirector as baked barks and are never spoken twice. Returns false when nothing was
+        /// sent: speech off, server down, another line in flight, or voices muted.
+        /// </summary>
+        public static bool Request(in HeroVoiceSpec voice, string line, Action<AudioClip> onClip)
+        {
+            if (string.IsNullOrEmpty(line)) return false;
+            var s = Instance;
+            if (s == null || !s._online || s._http == null || s._busy) return false;
+            if (SoundBus.Volume(SoundChannel.Voice) <= 0.001f) return false;
+
             s._busy = true;
             _ = s.Fetch(HeroSpeech.BuildRequest(line, voice), voice.Robot, clipData =>
             {
                 s._busy = false;
-                if (clipData == null || agent == null || !agent.IsAlive) return;
-                var clip = AudioClip.Create("HeroLine", clipData.Samples.Length / clipData.Channels,
-                    clipData.Channels, clipData.Rate, false);
-                clip.SetData(clipData.Samples, 0);
-                // Voice the line where the hero is; pull music/ambience down so it reads.
-                SoundBus.DuckBed(0.35f, clip.length + 0.3f);
-                SpatialAudio.PlayAt(clip, agent.transform.position, 1f, SoundChannel.Voice, 0f);
-                s._speakingUntil = Time.unscaledTime + clip.length + 0.25f;
-                s.Spoken++;
-                Destroy(clip, clip.length + 1f);
+                AudioClip clip = null;
+                if (clipData != null)
+                {
+                    clip = AudioClip.Create("HeroLine", clipData.Samples.Length / clipData.Channels,
+                        clipData.Channels, clipData.Rate, false);
+                    clip.SetData(clipData.Samples, 0);
+                    s.Spoken++;
+                }
+                onClip?.Invoke(clip);
             });
+            return true;
         }
 
         private sealed class ClipData

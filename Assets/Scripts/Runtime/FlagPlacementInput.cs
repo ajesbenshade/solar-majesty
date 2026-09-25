@@ -262,7 +262,7 @@ namespace SolarMajesty
             }
             AttachPendingOrders(handle);
             SpawnMarker(handle, world);
-            DemoAudio.PlayFlagPost();
+            DemoAudio.PlayFlagPost(world);
             _loop?.NotifyFlagPosted(handle);
             Debug.Log($"[Flags] Posted {data.flagType} bounty=${handle.CurrentBounty:F0} escrow={escrow} EU at {world}");
             return handle;

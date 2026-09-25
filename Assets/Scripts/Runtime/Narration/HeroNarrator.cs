@@ -140,21 +140,22 @@ namespace SolarMajesty
         /// <summary>
         /// Something happened to this hero. Always remembered for conversation; voiced only when
         /// the server is up, nobody is mid-conversation, and the scheduler thinks it's worth it.
+        /// Returns true when a line was requested so baked voices can wait for it.
         /// </summary>
-        public static void Report(SpecialistAgent agent, NarrationKind kind, FlagHandle flag = null)
+        public static bool Report(SpecialistAgent agent, NarrationKind kind, FlagHandle flag = null)
         {
-            if (agent == null || agent.Data == null || !agent.IsAlive) return;
+            if (agent == null || agent.Data == null || !agent.IsAlive) return false;
             var n = Instance;
-            if (n == null) return;
+            if (n == null) return false;
             if (n._loop == null) n._loop = FindAnyObjectByType<GameLoop>();
             var moment = BuildMoment(agent, kind, flag ?? agent.ActiveFlag, n._loop);
             n.LogOf(agent).Remember(HeroConversation.EventLine(moment));
 
             // Conversation owns the model while it is open: ambient lines would queue ahead of replies.
-            if (!n._online || n._http == null || n._chatAgent != null) return;
+            if (!n._online || n._http == null || n._chatAgent != null) return false;
             bool selected = n._loop != null && n._loop.IsSelected(agent);
             int id = agent.GetHashCode();
-            if (!n._scheduler.TryStart(id, kind, selected, Time.unscaledTime)) return;
+            if (!n._scheduler.TryStart(id, kind, selected, Time.unscaledTime)) return false;
 
             int stamp = agent.NarrationStamp;
             string body = HeroNarration.BuildRequest(n._model, moment);
@@ -168,11 +169,12 @@ namespace SolarMajesty
                 bool stateful = kind != NarrationKind.LevelUp && kind != NarrationKind.Refused;
                 if (stateful && agent.NarrationStamp != stamp) return;
                 agent.SetNarratedLine(line);
-                HeroSpeaker.Speak(agent, line); // aloud too, when the local TTS server is up
+                CharacterVoice.SpeakNarrated(agent, line); // aloud too, when SPOKEN · LOCAL TTS is up
                 n.Spoken++;
                 if (kind == NarrationKind.LevelUp || (selected && NarrationScheduler.IsBigMoment(kind)))
                     n._loop?.LogOverseer($"{agent.Data.displayName} L{agent.Level}: “{line}”");
             });
+            return true;
         }
 
         // ---- conversation ------------------------------------------------------------------

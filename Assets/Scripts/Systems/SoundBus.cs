@@ -51,8 +51,11 @@ namespace SolarMajesty
             switch (channel)
             {
                 case SoundChannel.Ambient:
-                case SoundChannel.Music:
                     return Mathf.Clamp01(DemoSettings.Ambient);
+                case SoundChannel.Music:
+                    return Mathf.Clamp01(DemoSettings.Music);
+                case SoundChannel.Voice:
+                    return Mathf.Clamp01(DemoSettings.Voice);
                 default:
                     return Mathf.Clamp01(DemoSettings.Sfx);
             }

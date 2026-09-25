@@ -135,7 +135,7 @@ namespace SolarMajesty
                 {
                     SpawnBuildingVisual(order);
                     SpawnConstructionSite(order);
-                    DemoAudio.PlayBuildPlace();
+                    DemoAudio.PlayBuildPlace(snapped);
                     Debug.Log($"[Build] Placed {Selected.displayName} @ {cell}");
                 }
                 else

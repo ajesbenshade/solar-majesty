@@ -576,6 +576,8 @@ namespace SolarMajesty
             if (StillCaptureHold.Active) return;
             Log.Push(line);
             _overseerHud?.Notify(line, seconds);
+            // Scripted Grok lines are baked; everything else in the log stays text.
+            OverseerVoice.SpeakIfScripted(line);
         }
 
         public bool GrokLessonsOn => GrokAdvisor.TrainingWheels(celestialBody);
@@ -610,6 +612,7 @@ namespace SolarMajesty
         {
             Alerts.Push(key, message, severity, Time.unscaledTime);
             Log.Push(message);
+            DemoAudio.PlayAlert(severity);
             if (severity >= AlertSeverity.Warning)
                 OverseerVoice.Speak(message, severity);
         }
@@ -618,6 +621,7 @@ namespace SolarMajesty
         {
             Alerts.Push(key, message, severity, Time.unscaledTime, at);
             Log.Push(message);
+            DemoAudio.PlayAlert(severity);
             if (severity >= AlertSeverity.Warning)
                 OverseerVoice.Speak(message, severity);
         }
@@ -651,6 +655,7 @@ namespace SolarMajesty
                 AlertSeverity.Warning,
                 Time.unscaledTime,
                 at);
+            DemoAudio.PlayAlertWarning();
             OverseerVoice.Speak(line, AlertSeverity.Warning);
         }
 
@@ -828,6 +833,7 @@ namespace SolarMajesty
             DemoAudio.ApplyVolumes();
             DemoAudio.SetCampusAmbient(0);
             TryInit("spatial audio", () => SpatialAudio.Ensure());
+            TryInit("character voices", () => { CharacterVoice.Ensure(); _ = CharacterVoice.Bank; });
             // Adaptive music synthesises several seconds of audio on the main thread — do it after
             // the first frame so the title screen is visible while it warms up.
 
@@ -1530,7 +1536,7 @@ namespace SolarMajesty
                 {
                     agent.ShowRefusal(chip);
                     if (kind == FlagRefusalKind.Orders)
-                        HeroNarrator.Report(agent, NarrationKind.Refused, flag);
+                        CharacterVoice.Cue(agent, VoiceCue.Refused, HeroNarrator.Report(agent, NarrationKind.Refused, flag));
                     PlaytestTelemetry.Record("flag_refused", new[]
                     {
                         ("class", agent.Data.specialistClass.ToString()),
@@ -2980,7 +2986,7 @@ namespace SolarMajesty
                 _overseerHud?.Notify(hire > 0
                     ? $"{label} hired at {workshop.DisplayName} — {hire} EU."
                     : $"{label} fabricated at {workshop.DisplayName}.", 3.2f);
-                DemoAudio.PlayClaim();
+                DemoAudio.PlayRobotSpawn(pos);
                 DemoVfx.ClaimRing(pos, TintForClass(cls.Value));
             }
             Debug.Log($"[GameLoop] Fabricated {label} from {workshop.DisplayName}.");
@@ -3024,6 +3030,7 @@ namespace SolarMajesty
             {
                 var order = _completedBuilds[i];
                 if (order?.Data == null) continue;
+                if (!order.IsRefab) DemoAudio.PlayBuildComplete(order.WorldPosition);
             if (order.IsRefab)
                     {
                         var shop = Village?.FindNear(order.WorldPosition, 6f);
@@ -3060,6 +3067,7 @@ namespace SolarMajesty
             if (agent == null) return;
             _selected.Add(agent);
             agent.SetSelected(true);
+            CharacterVoice.Cue(agent, VoiceCue.Select);
         }
 
         public void ToggleSelect(SpecialistAgent agent)
@@ -3083,6 +3091,7 @@ namespace SolarMajesty
 
             _selected.Add(agent);
             agent.SetSelected(true);
+            CharacterVoice.Cue(agent, VoiceCue.Select);
         }
 
         private void HandleSelection()
@@ -4392,7 +4401,7 @@ namespace SolarMajesty
             else
             {
                 var handle = Flags.Post(exploreFlagData, world, bounty);
-                DemoAudio.PlayFlagPost();
+                DemoAudio.PlayFlagPost(world);
                 NotifyFlagPosted(handle);
             }
 
@@ -4708,7 +4717,7 @@ namespace SolarMajesty
                 SnapCampusCamera();
             DemoVfx.BuildComplete(world);
             ShakeCamera(0.30f, world);
-            DemoAudio.PlayBuildComplete();
+            // No completion sound here: this runs at placement. It plays in ProcessCompletedConstruction.
             if (data.category == BuildingCategory.LandingPad)
                 SyncLaunchGate();
             if (data.category == BuildingCategory.FobotYard)
@@ -5943,7 +5952,7 @@ namespace SolarMajesty
                 members[i].SetParty(party);
             }
             _parties.Add(party);
-            DemoAudio.PlayClaim();
+            DemoAudio.PlayPartyForm(leader.transform.position);
             DemoVfx.ClaimRing(leader.transform.position, new Color(0.96f, 0.42f, 0.08f));
             LogOverseer($"Party of {party.Count} — {ColonyStructure.ClassLabel(leader.Data != null ? leader.Data.specialistClass : SpecialistClass.ScoutDrone)} leads. Followers rest and hunt together.");
             Debug.Log($"[Party] Formed #{party.Id} from selection leader={leader.Data?.displayName} size={party.Count}");
@@ -5984,7 +5993,7 @@ namespace SolarMajesty
                 atInn[i].SetParty(party);
             }
             _parties.Add(party);
-            DemoAudio.PlayClaim();
+            DemoAudio.PlayPartyForm(ColonyLayout.InnOutpost);
             DemoVfx.ClaimRing(ColonyLayout.InnOutpost, new Color(0.96f, 0.42f, 0.08f));
             LogOverseer($"Party of {party.Count} formed at the rest beacon.");
             Debug.Log($"[Party] Formed #{party.Id} leader={leader.Data?.displayName} size={party.Count}");

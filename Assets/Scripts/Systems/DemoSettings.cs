@@ -33,6 +33,9 @@ namespace SolarMajesty
         public const string TiltShiftKey = "SM_Set_TiltShift";
         public const string CloudShadowsKey = "SM_Set_CloudShadows";
         public const string HeroVoicesKey = "SM_Set_HeroVoices";
+        public const string MusicKey = "SM_Set_Music";
+        public const string VoiceKey = "SM_Set_Voice";
+        public const string CharacterVoicesKey = "SM_Set_CharacterVoices";
         public const string HeroSpeechKey = "SM_Set_HeroSpeech";
         public const string PlanetArchitectureKey = "SM_Set_PlanetArchitecture";
         public const string RosterKeyPrefix = "SM_Roster_";
@@ -40,6 +43,8 @@ namespace SolarMajesty
         public static float Master = 1f;
         public static float Sfx = 1f;
         public static float Ambient = 1f;
+        public static float Music = 1f;
+        public static float Voice = 1f;
         public static float HudScale = 1f;
         public static bool InvertPan;
         public static bool TutorialDone;
@@ -89,6 +94,8 @@ namespace SolarMajesty
         /// <summary>Hero lines from a small local LLM (needs a local server; see Docs/HERO_NARRATION.md).</summary>
         public static bool HeroVoices;
 
+        /// <summary>Baked character voices: hero barks and the Overseer (Docs/AUDIO.md). No server needed.</summary>
+        public static bool CharacterVoices = true;
         /// <summary>Speak hero lines aloud via a local TTS server (see Docs/HERO_NARRATION.md).</summary>
         public static bool HeroSpeech;
 
@@ -100,6 +107,9 @@ namespace SolarMajesty
             Master = PlayerPrefs.GetFloat(MasterKey, 1f);
             Sfx = PlayerPrefs.GetFloat(SfxKey, 1f);
             Ambient = PlayerPrefs.GetFloat(AmbientKey, 1f);
+            // Music used to ride the ambience slider; inherit it so an old mute stays muted.
+            Music = PlayerPrefs.GetFloat(MusicKey, Ambient);
+            Voice = PlayerPrefs.GetFloat(VoiceKey, 1f);
             HudScale = Mathf.Clamp(PlayerPrefs.GetFloat(HudKey, 1f), 0.85f, 1.25f);
             InvertPan = PlayerPrefs.GetInt(InvertKey, 0) == 1;
             TutorialDone = PlayerPrefs.GetInt(TutorialKey, 0) == 1;
@@ -116,6 +126,7 @@ namespace SolarMajesty
             TiltShift = PlayerPrefs.GetInt(TiltShiftKey, 1) == 1;
             CloudShadows = PlayerPrefs.GetInt(CloudShadowsKey, 1) == 1;
             HeroVoices = PlayerPrefs.GetInt(HeroVoicesKey, 0) == 1;
+            CharacterVoices = PlayerPrefs.GetInt(CharacterVoicesKey, 1) == 1;
             HeroSpeech = PlayerPrefs.GetInt(HeroSpeechKey, 0) == 1;
             PlanetArchitecture = PlayerPrefs.GetInt(PlanetArchitectureKey, 1) == 1 && !HasArg("-classic-buildings");
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
@@ -161,6 +172,8 @@ namespace SolarMajesty
             PlayerPrefs.SetFloat(MasterKey, Master);
             PlayerPrefs.SetFloat(SfxKey, Sfx);
             PlayerPrefs.SetFloat(AmbientKey, Ambient);
+            PlayerPrefs.SetFloat(MusicKey, Music);
+            PlayerPrefs.SetFloat(VoiceKey, Voice);
             PlayerPrefs.SetFloat(HudKey, HudScale);
             PlayerPrefs.SetInt(InvertKey, InvertPan ? 1 : 0);
             PlayerPrefs.SetInt(QualityKey, QualityIndex);
@@ -174,6 +187,7 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(TiltShiftKey, TiltShift ? 1 : 0);
             PlayerPrefs.SetInt(CloudShadowsKey, CloudShadows ? 1 : 0);
             PlayerPrefs.SetInt(HeroVoicesKey, HeroVoices ? 1 : 0);
+            PlayerPrefs.SetInt(CharacterVoicesKey, CharacterVoices ? 1 : 0);
             PlayerPrefs.SetInt(HeroSpeechKey, HeroSpeech ? 1 : 0);
             PlayerPrefs.SetInt(FirstHourKey, FirstHourDemo ? 1 : 0);
             // The demo forces campaign / no challenge / balanced in memory.
