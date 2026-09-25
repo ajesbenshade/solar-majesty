@@ -34,6 +34,7 @@ namespace SolarMajesty
         public const string CloudShadowsKey = "SM_Set_CloudShadows";
         public const string HeroVoicesKey = "SM_Set_HeroVoices";
         public const string HeroSpeechKey = "SM_Set_HeroSpeech";
+        public const string PlanetArchitectureKey = "SM_Set_PlanetArchitecture";
         public const string RosterKeyPrefix = "SM_Roster_";
 
         public static float Master = 1f;
@@ -91,6 +92,9 @@ namespace SolarMajesty
         /// <summary>Speak hero lines aloud via a local TTS server (see Docs/HERO_NARRATION.md).</summary>
         public static bool HeroSpeech;
 
+        /// <summary>Per-world building architecture (see Docs/PLANET_ARCHITECTURE.md). <c>-classic-buildings</c> turns it off.</summary>
+        public static bool PlanetArchitecture = true;
+
         public static void Load()
         {
             Master = PlayerPrefs.GetFloat(MasterKey, 1f);
@@ -113,6 +117,7 @@ namespace SolarMajesty
             CloudShadows = PlayerPrefs.GetInt(CloudShadowsKey, 1) == 1;
             HeroVoices = PlayerPrefs.GetInt(HeroVoicesKey, 0) == 1;
             HeroSpeech = PlayerPrefs.GetInt(HeroSpeechKey, 0) == 1;
+            PlanetArchitecture = PlayerPrefs.GetInt(PlanetArchitectureKey, 1) == 1 && !HasArg("-classic-buildings");
             BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
             FirstHourDemo = PlayerPrefs.GetInt(FirstHourKey, 1) == 1;
             ReplayRules.Load();
