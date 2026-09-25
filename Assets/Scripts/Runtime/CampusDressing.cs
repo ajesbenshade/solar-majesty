@@ -4,28 +4,13 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Phase 4 campus kit: pressurized tube cladding on the square Lego docks,
-    /// shield bubbles — visuals only, not a pathing graph.
-    /// HAB / Commons / pad / extractor / solar field / Defense bunker live in HeroBuildingKits.
-    /// Airlock hubs are white cubes with dark square windows (ColonyVisualUtility).
-    /// Docks stay Lego. Commons-to-HAB join is an orange ribbed stub + torus rings.
-    /// Round tube cladding spans hub → module hull on a shared DockY / DockBore.
-    /// RefreshTubes hides every stub and hull-drum port first, then enables docked faces only
-    /// (orange ribbed HAB join; unused Commons / HAB / LAB / PWR sockets stay clean).
-    /// Live dock sleeves and CommonsPort groups start off so FindPieceGo misses cannot
-    /// leave still5-style orange rings showing. still16 dark-box leftover was wrap
-    /// Dress_HubDoor on the hub itself (ColonyVisualUtility) — unused faces stay
-    /// clean white plates. FindPieceGo walks VillageRing / Buildings so still-chain
-    /// airlocks get docked collars. No CampusTubeRoot corridor and no between-yard
-    /// <see cref="TubeRunRootName"/> web — CaptureStill / play RefreshTubes only
-    /// enable docked Lego arms (Aaron 2026-09-07). Leftover still21 runs are
-    /// destroyed if present. Square Lego airlock ports stay; unused sockets stay hidden.
+    /// Phase 4 campus kit: shield bubbles, aprons, status pips and yard props — visuals only,
+    /// not a pathing graph. HAB / Commons / pad / extractor / solar field / Defense bunker live in
+    /// HeroBuildingKits. Buildings stand on their own, with nothing linking them.
     /// </summary>
     public static class CampusDressing
     {
         private const int MaxProps = 96;
-        private const string TubeRootName = "CampusTubeRoot";
-        public const string TubeRunRootName = "CampusDress_TubeRuns";
 
         private static int _count;
         private static Shader _lit;
@@ -33,17 +18,6 @@ namespace SolarMajesty
         public static void Reset()
         {
             _count = 0;
-            DestroyNamed(TubeRootName);
-            DestroyNamed(TubeRunRootName);
-        }
-
-        private static void DestroyNamed(string name)
-        {
-            var existing = GameObject.Find(name);
-            if (existing == null) return;
-            existing.name = name + "_old";
-            if (Application.isPlaying) Object.Destroy(existing);
-            else Object.DestroyImmediate(existing);
         }
 
         public static void DressPlaced(BuildingData data, GameObject go, CelestialBodyProfile body)
@@ -52,7 +26,7 @@ namespace SolarMajesty
 
             RobotGuildDress.Apply(go, data);
 
-            if (data.category == BuildingCategory.Utility)
+            if (BuildingPlacer.IsRetired(data.category))
                 return;
 
             if (data.category == BuildingCategory.Defense ||
@@ -144,289 +118,6 @@ namespace SolarMajesty
                     SpawnCrate(origin - offsetB * 1.15f, body, parent);
                     _count++;
                 }
-            }
-        }
-
-        /// <summary>
-        /// Corrugated corridor cladding spanning each airlock ↔ module dock.
-        /// Dressing only — colliders stripped, NavMesh unchanged.
-        /// </summary>
-        public static void RefreshTubes(BuildingPlacer placer, IsoGrid grid, Transform parent)
-        {
-            DestroyNamed(TubeRootName);
-            DestroyNamed(TubeRunRootName);
-            if (placer == null || grid == null) return;
-
-            var pieces = placer.Pieces;
-            if (pieces == null || pieces.Count == 0) return;
-
-            HideUnusedDockSleeves(placer, grid, parent);
-            int docks = 0;
-            for (int a = 0; a < pieces.Count; a++)
-            {
-                if (!pieces[a].IsAirlock) continue;
-                for (int m = 0; m < pieces.Count; m++)
-                {
-                    if (!pieces[m].IsModule) continue;
-                    for (int f = 0; f < 4; f++)
-                    {
-                        if (BuildingPlacer.AirlockOriginOnModuleFace(
-                                pieces[m], (BuildingPlacer.Cardinal)f) == pieces[a].Origin)
-                        {
-                            docks++;
-                            break;
-                        }
-                    }
-                }
-            }
-            Debug.Log($"[CampusDressing] docks={docks} pieces={pieces.Count}");
-        }
-
-        private static Vector3 PieceCenter(IsoGrid grid, BuildingPlacer.CampusPiece piece)
-        {
-            Vector3 a = grid.CellToWorld(piece.Origin);
-            Vector3 b = grid.CellToWorld(piece.Origin + new Vector2Int(piece.Width - 1, piece.Height - 1));
-            return (a + b) * 0.5f;
-        }
-
-        /// <summary>
-        /// Group-root names RefreshTubes toggles. still5 leftover orange rings were
-        /// CommonsPort / HabPort hull-drum collars — not only Dress_TubeArm / DockSleeve
-        /// / CommonsStub. Children (_Tube / _Ring / _Well / _Collar) stay parented;
-        /// toggling them independently leaves Unity activeSelf stuck off when the group
-        /// turns back on.
-        /// </summary>
-        public static bool IsDockDressName(string n)
-        {
-            if (string.IsNullOrEmpty(n)) return false;
-            return n.StartsWith("Dress_TubeArm")
-                || n.StartsWith("DockSleeve")
-                || n.StartsWith("CommonsStub")
-                || n.StartsWith("CommonsPort")
-                || n.StartsWith("HabPort")
-                || n.StartsWith("LabPort")
-                || n.StartsWith("PwrPort")
-                || n.StartsWith("HullPort")
-                || n.StartsWith("DockPort")
-                || n.StartsWith("DrumPort")
-                || n.StartsWith("ModulePort")
-                || n.StartsWith("CardinalPort");
-        }
-
-        public static bool IsDockDressRoot(Transform t)
-        {
-            if (t == null || !IsDockDressName(t.name)) return false;
-            Transform p = t.parent;
-            return p == null || !IsDockDressName(p.name);
-        }
-
-        public static void SetLiveDockDressActive(Transform root, bool on)
-        {
-            if (root == null) return;
-            var ts = root.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < ts.Length; i++)
-            {
-                Transform t = ts[i];
-                if (t == null || t == root) continue;
-                if (IsDockDressRoot(t))
-                    t.gameObject.SetActive(on);
-            }
-        }
-
-        /// <summary>
-        /// Unused cardinal sleeves read as orange hatches / leftover tubes. Hide every
-        /// stub first, then enable only faces that actually dock. Find-misses leave
-        /// unused arms off so the white square hub can read.
-        /// </summary>
-        private static void HideUnusedDockSleeves(BuildingPlacer placer, IsoGrid grid, Transform parent)
-        {
-            if (placer == null || grid == null || parent == null) return;
-            var pieces = placer.Pieces;
-            if (pieces == null) return;
-
-            HideAllDockDress(parent);
-
-            for (int m = 0; m < pieces.Count; m++)
-            {
-                var module = pieces[m];
-                if (!module.IsModule) continue;
-
-                bool east = false, west = false, north = false, south = false;
-                for (int a = 0; a < pieces.Count; a++)
-                {
-                    var airlock = pieces[a];
-                    if (!airlock.IsAirlock) continue;
-                    if (BuildingPlacer.AirlockOriginOnModuleFace(module, BuildingPlacer.Cardinal.East) == airlock.Origin)
-                        east = true;
-                    if (BuildingPlacer.AirlockOriginOnModuleFace(module, BuildingPlacer.Cardinal.West) == airlock.Origin)
-                        west = true;
-                    if (BuildingPlacer.AirlockOriginOnModuleFace(module, BuildingPlacer.Cardinal.North) == airlock.Origin)
-                        north = true;
-                    if (BuildingPlacer.AirlockOriginOnModuleFace(module, BuildingPlacer.Cardinal.South) == airlock.Origin)
-                        south = true;
-                }
-
-                GameObject go = FindPieceGo(parent, PieceCenter(grid, module), ModuleHint(module.Category));
-                if (go == null)
-                    go = FindPieceGo(parent, PieceCenter(grid, module), null);
-                if (go == null) continue;
-                SetPrefixActive(go.transform, "DockSleeve_E", east);
-                SetPrefixActive(go.transform, "DockSleeve_W", west);
-                SetPrefixActive(go.transform, "DockSleeve_N", north);
-                SetPrefixActive(go.transform, "DockSleeve_S", south);
-                // Hull drum ports + DockSleeve on docked faces only.
-                // still5 unused Commons rings were CommonsPort_*.
-                SetDockPorts(go.transform, "CommonsPort", north, east, south, west);
-                SetDockPorts(go.transform, "HabPort", north, east, south, west);
-                SetDockPorts(go.transform, "LabPort", north, east, south, west);
-                SetDockPorts(go.transform, "PwrPort", north, east, south, west);
-                SetDockPorts(go.transform, "HullPort", north, east, south, west);
-                SetDockPorts(go.transform, "DockPort", north, east, south, west);
-                SetDockPorts(go.transform, "DrumPort", north, east, south, west);
-                SetDockPorts(go.transform, "ModulePort", north, east, south, west);
-                SetDockPorts(go.transform, "CardinalPort", north, east, south, west);
-            }
-
-            for (int a = 0; a < pieces.Count; a++)
-            {
-                var airlock = pieces[a];
-                if (!airlock.IsAirlock) continue;
-
-                bool east = false, west = false, north = false, south = false;
-                for (int m = 0; m < pieces.Count; m++)
-                {
-                    var module = pieces[m];
-                    if (!module.IsModule) continue;
-                    if (BuildingPlacer.ModuleOriginOnAirlockFace(
-                            airlock, module.Width, module.Height, BuildingPlacer.Cardinal.East) == module.Origin)
-                        east = true;
-                    if (BuildingPlacer.ModuleOriginOnAirlockFace(
-                            airlock, module.Width, module.Height, BuildingPlacer.Cardinal.West) == module.Origin)
-                        west = true;
-                    if (BuildingPlacer.ModuleOriginOnAirlockFace(
-                            airlock, module.Width, module.Height, BuildingPlacer.Cardinal.North) == module.Origin)
-                        north = true;
-                    if (BuildingPlacer.ModuleOriginOnAirlockFace(
-                            airlock, module.Width, module.Height, BuildingPlacer.Cardinal.South) == module.Origin)
-                        south = true;
-                }
-
-                GameObject go = FindPieceGo(parent, PieceCenter(grid, airlock), "Airlock");
-                if (go == null)
-                    go = FindPieceGo(parent, PieceCenter(grid, airlock), "Junction");
-                if (go == null)
-                    go = FindPieceGo(parent, PieceCenter(grid, airlock), "PlusConnector");
-                if (go == null) continue;
-                SetPrefixActive(go.transform, "Dress_TubeArm_E", east);
-                SetPrefixActive(go.transform, "Dress_TubeArm_W", west);
-                SetPrefixActive(go.transform, "Dress_TubeArm_N", north);
-                SetPrefixActive(go.transform, "Dress_TubeArm_S", south);
-            }
-        }
-
-        private static string ModuleHint(BuildingCategory cat)
-        {
-            switch (cat)
-            {
-                case BuildingCategory.Commons: return "Commons";
-                case BuildingCategory.Habitat: return "Habitat";
-                case BuildingCategory.Laboratory: return "Lab";
-                case BuildingCategory.Power: return "Power";
-                default: return null;
-            }
-        }
-
-        private static void HideAllDockDress(Transform parent)
-        {
-            SetLiveDockDressActive(parent, false);
-        }
-
-        private static GameObject FindPieceGo(Transform parent, Vector3 center, string preferContains)
-        {
-            GameObject best = null;
-            float maxSq = 8f * 8f;
-            float bestSq = maxSq;
-            int bestRank = 0;
-            var roots = new List<Transform>(32);
-            CollectPieceRoots(parent, roots);
-            for (int i = 0; i < roots.Count; i++)
-            {
-                Transform t = roots[i];
-                if (t == null) continue;
-                string n = t.name;
-                float dx = t.position.x - center.x;
-                float dz = t.position.z - center.z;
-                float sq = dx * dx + dz * dz;
-                if (sq > maxSq) continue;
-                if (!string.IsNullOrEmpty(preferContains) &&
-                    n.IndexOf(preferContains, System.StringComparison.OrdinalIgnoreCase) < 0)
-                    continue;
-                int rank = PieceRank(n);
-                if (best == null || rank > bestRank || (rank == bestRank && sq < bestSq))
-                {
-                    best = t.gameObject;
-                    bestSq = sq;
-                    bestRank = rank;
-                }
-            }
-            return best;
-        }
-
-        /// <summary>
-        /// Still-chain airlock/HAB live under VillageRing (sibling of Buildings).
-        /// Walk those containers so RefreshTubes can enable docked collars.
-        /// </summary>
-        private static void CollectPieceRoots(Transform parent, List<Transform> dest)
-        {
-            if (parent == null || dest == null) return;
-            for (int i = 0; i < parent.childCount; i++)
-            {
-                Transform t = parent.GetChild(i);
-                if (t == null) continue;
-                string n = t.name;
-                if (n == "VillageRing" || n == "Buildings" || n.StartsWith("CampusDress"))
-                {
-                    CollectPieceRoots(t, dest);
-                    continue;
-                }
-                if (n == "IsoGrid" || n == "Flags" || n == "SpecialistSpawn" || n == "Main Camera")
-                    continue;
-                if (n.StartsWith("CampusTube") || n.StartsWith("DropZone") || n.StartsWith("Dress_") ||
-                    n.StartsWith("Site_") || n.StartsWith("Ghost") || n.StartsWith("Claim"))
-                    continue;
-                dest.Add(t);
-            }
-        }
-
-        private static int PieceRank(string n)
-        {
-            if (n.StartsWith("Bld_") || n.StartsWith("Airlock") || n.StartsWith("Mod_") ||
-                n.StartsWith("PlusConnector") || n.StartsWith("VillageAirlock") ||
-                n.StartsWith("VillageHAB"))
-                return 3;
-            if (n.Contains("Commons") || n.Contains("Habitat") || n.Contains("Junction") ||
-                n.Contains("Airlock"))
-                return 2;
-            return 1;
-        }
-
-        private static void SetDockPorts(Transform root, string prefix, bool north, bool east, bool south, bool west)
-        {
-            SetPrefixActive(root, prefix + "_N", north);
-            SetPrefixActive(root, prefix + "_E", east);
-            SetPrefixActive(root, prefix + "_S", south);
-            SetPrefixActive(root, prefix + "_W", west);
-        }
-
-        private static void SetPrefixActive(Transform root, string prefix, bool on)
-        {
-            var ts = root.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < ts.Length; i++)
-            {
-                Transform t = ts[i];
-                if (t == null || t == root) continue;
-                if (t.name.StartsWith(prefix) && IsDockDressRoot(t))
-                    t.gameObject.SetActive(on);
             }
         }
 

@@ -214,7 +214,7 @@ Creates `Blender/SolarMajesty_HeroBuildings.blend`, exports `SM_Hero_*.fbx` to `
 | `SM_Hero_WorkshopTall` | Tall hangar + roof turret (4×4 / 6 m) |
 | `SM_Hero_Inn` | Porch-lantern rest hall (4×4 / 6 m) |
 
-Play Mode (`ModularBuildingFactory`) prefers these FBX, then falls back to `HeroBuildingKits`. Cardinal **square airlocks** still attach in Unity. Do **not** `SetTintOverlay` the whole kit (that replaced orange/cyan with a flat hull). HAB / Commons / LAB / Power / pad are sheet-matched to `ConceptSheets/`. Workshops / Inn stay hangar / porch-lantern kits.
+Play Mode (`ModularBuildingFactory`) prefers these FBX, then falls back to `HeroBuildingKits`. Nothing attaches to the kits in Unity — no airlocks or ports. Do **not** `SetTintOverlay` the whole kit (that replaced orange/cyan with a flat hull). HAB / Commons / LAB / Power / pad are sheet-matched to `ConceptSheets/`. Workshops / Inn stay hangar / porch-lantern kits.
 
 
 ### FBX (primary)
@@ -291,7 +291,7 @@ Writes `SM_Crater_Small/Medium/Large` to `Assets/Resources/Environment/` and rep
 
 ## In-engine hero kits (Phase 4 Weeks 2–4)
 
-Play Mode HAB / Colony Commons / landing pad / Farm (greenhouse + ice) / Regolith Camp / **Power solar field** / **Defense bunker** / **Guild Hall (CMD-1)** / **OPS-1 annex** / **LAB** / **wonders** / **workshop hangar** / **tall hangar** / **Inn** prefer `SM_Hero_*` FBX via `BuildingVisualCatalog.LoadHeroKit`, with `HeroBuildingKits` procedural fallback. Sized to the existing square footprints. HAB / Commons / LAB / Power / pad match ConceptSheets at RTS scale (not sheet meters). HAB / Commons / LAB / CMD-1 / OPS-1 hulls carry geometric panel lines (bevelled boxes + carbon seams). Junction dual-barrel turrets sit on square airlock hubs (`ColonyVisualUtility` → `BuildJunctionTurret`) — dressing only, no fire. Dock sleeves and plus-arms **mate flush at the Lego cell face**. The HAB-1 cylinder FBX remains in the catalog for other modules. Square airlocks stay; do not change footprints.
+Play Mode HAB / Colony Commons / landing pad / Farm (greenhouse + ice) / Regolith Camp / **Power solar field** / **Defense bunker** / **Guild Hall (CMD-1)** / **OPS-1 annex** / **LAB** / **wonders** / **workshop hangar** / **tall hangar** / **Inn** prefer `SM_Hero_*` FBX via `BuildingVisualCatalog.LoadHeroKit`, with `HeroBuildingKits` procedural fallback. Sized to the existing square footprints. HAB / Commons / LAB / Power / pad match ConceptSheets at RTS scale (not sheet meters). HAB / Commons / LAB / CMD-1 / OPS-1 hulls carry geometric panel lines (bevelled boxes + carbon seams). The HAB-1 cylinder FBX remains in the catalog for other modules. Do not change footprints.
 
 Parked pad ship is authored on `SM_Hero_LandingPad` (white/black stack). Launch still uses existing `LaunchSite` / `MissionController` logic.
 

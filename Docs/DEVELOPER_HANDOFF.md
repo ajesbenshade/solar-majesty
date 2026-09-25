@@ -18,7 +18,7 @@ Build infrastructure, post bounty flags, manage economy. Autonomous specialists
 Campaign spine: Earth tutorial → Luna → Mars → Belt → Europa with dens / sustain / launch gates
 (tech + Landing Pad) and an Alpha Centauri-style tech tree (TECH · T).
 Roadmap: Docs/Roadmap/ (Phase 3 complete: exit in PHASE_3_EXIT.md). Dust Stalkers raise ThreatPressure.
-After Phase 3: Phase 4 visual target (Mars mockup fidelity — Weeks 1–4 continued in, including Imagine-sheet unit refine, Earth New Game produced biome, Workshop/Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, a Mars dressing close, hero-building sheet-match, **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, **airlock panel-line polish**, **HAB/LAB/Commons/CMD/OPS panel bevels**, and **flush docks**; editor still + Game-tab empty-Sol-1 still in; exit **blocked** in PHASE_4_EXIT.md — **not** exited). Then Phase 5 ship.
+After Phase 3: Phase 4 visual target (Mars mockup fidelity — Weeks 1–4 continued in, including Imagine-sheet unit refine, Earth New Game produced biome, Workshop/Inn FBX, remaining-class Imagine JPGs + sheet-matched remesh, a Mars dressing close, hero-building sheet-match, **CMD-1 Guild / OPS-1 annex / wonder + extractor remesh**, **HAB/LAB/Commons/CMD/OPS panel bevels** (the airlocks and flush docks from that pass were removed 2026-09-25); editor still + Game-tab empty-Sol-1 still in; exit **blocked** in PHASE_4_EXIT.md — **not** exited). Then Phase 5 ship.
 Never add click-to-move to match mockup squad UI.
 
 ## Non-negotiables

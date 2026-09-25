@@ -109,7 +109,7 @@ namespace SolarMajesty
             {
                 MajestyLoop = "Hero recruit",
                 CompactName = "Workshops",
-                Toy = "Fabricate outdoor robots. Humans stay in HABs."
+                Toy = "Fabricate robots for contract work. Colonists run the village."
             },
             new MajestyAnalogDef
             {

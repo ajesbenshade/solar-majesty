@@ -54,7 +54,7 @@ namespace SolarMajesty
         public const string LunaRaiseTheCraterCommons = "luna.build.raise_the_crater_commons";
         public const string LunaStakeTheFarRim = "luna.establishoutpost.stake_the_far_rim";
         public const string LunaCommissionTheMarsShip = "luna.researchsite.commission_the_mars_ship";
-        public const string LunaFortifyTheAirlocks = "luna.build.fortify_the_airlocks";
+        public const string LunaFortifyThePerimeter = "luna.build.fortify_the_perimeter";
 
         public const string MarsSurveyTheRedApron = "mars.explore.survey_the_red_apron";
         public const string MarsRaiseTheCompactSeat = "mars.build.raise_the_compact_seat";
@@ -72,7 +72,7 @@ namespace SolarMajesty
             new FlagDecree(EarthRaiseTheCommons, CelestialBodyId.Earth, FlagType.Build,
                 "Raise the Commons", "First civic landmark; tutorial court opens."),
             new FlagDecree(EarthDockTheFirstHab, CelestialBodyId.Earth, FlagType.Build,
-                "Dock the First HAB", "Beds and tax. Humans stay indoors."),
+                "Raise the First HAB", "Beds and tax for the village."),
             new FlagDecree(EarthLevyTheMeadowFarm, CelestialBodyId.Earth, FlagType.Extract,
                 "Levy the Meadow Farm", "ICE for life support. Creepers follow the harvest."),
             new FlagDecree(EarthWardTheFurrows, CelestialBodyId.Earth, FlagType.DefendArea,
@@ -98,8 +98,8 @@ namespace SolarMajesty
                 "Stake the Far Rim", "Courier claims Campus B."),
             new FlagDecree(LunaCommissionTheMarsShip, CelestialBodyId.Luna, FlagType.ResearchSite,
                 "Commission the Mars Ship", "Science toward Mars Ship."),
-            new FlagDecree(LunaFortifyTheAirlocks, CelestialBodyId.Luna, FlagType.Build,
-                "Fortify the Airlocks", "Defense Battery / workshop labour."),
+            new FlagDecree(LunaFortifyThePerimeter, CelestialBodyId.Luna, FlagType.Build,
+                "Fortify the Perimeter", "Defense Battery / workshop labour."),
 
             new FlagDecree(MarsSurveyTheRedApron, CelestialBodyId.Mars, FlagType.Explore,
                 "Survey the Red Apron", "Chart the packed-dust plaza."),

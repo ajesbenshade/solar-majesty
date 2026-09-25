@@ -110,7 +110,6 @@ namespace SolarMajesty
         public static int Rank(BuildingCategory cat)
         {
             if (cat == BuildingCategory.Commons) return 0;
-            if (cat == BuildingCategory.Utility) return 1;
             return 2;
         }
     }

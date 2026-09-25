@@ -167,7 +167,6 @@ namespace SolarMajesty
                 case BuildingCategory.Laboratory: return 1000;        // Wizards Guild
                 case BuildingCategory.LandingPad: return 200;         // Trading Post
                 case BuildingCategory.Defense: return 300;            // Wizard Tower
-                case BuildingCategory.Utility: return 50;
                 case BuildingCategory.Farm: return 200;               // windmill
                 case BuildingCategory.Mine: return 300;
                 case BuildingCategory.RegolithCamp: return 200;
@@ -208,7 +207,6 @@ namespace SolarMajesty
             {
                 case BuildingCategory.Habitat:
                 case BuildingCategory.Power:
-                case BuildingCategory.Utility:
                 case BuildingCategory.Farm:
                 case BuildingCategory.Mine:
                 case BuildingCategory.RegolithCamp:

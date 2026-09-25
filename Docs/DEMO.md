@@ -24,7 +24,7 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 ---
 
-Play opens on the **title screen** — a solar-system orrery, not a frozen drop. **Click Earth** to drop. The playable demo is Earth only; Settings → **Full campaign** shows the other worlds again. **New Game** wipes the continue slot and returns to the system (confirms if a save exists). **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna, and specialist HP. **Esc** pauses (Resume / Settings / Title / Quit). The Earth tutorial is four skippable beats (Engineer workshop → Build at $70 → raise the price → Defend the creeper). Commons, one airlock, and a HAB are already on the claim. Settings can replay it. Full campaign keeps the older six-beat dock tutorial.
+Play opens on the **title screen** — a solar-system orrery, not a frozen drop. **Click Earth** to drop. The playable demo is Earth only; Settings → **Full campaign** shows the other worlds again. **New Game** wipes the continue slot and returns to the system (confirms if a save exists). **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna, and specialist HP. **Esc** pauses (Resume / Settings / Title / Quit). The Earth tutorial is four skippable beats (Engineer workshop → Build at $70 → raise the price → Defend the creeper). Commons and a HAB are already on the claim. Settings can replay it. Full campaign keeps the older six-beat dock tutorial.
 
 ## Controls
 
@@ -32,10 +32,11 @@ Play opens on the **title screen** — a solar-system orrery, not a frozen drop.
 |-------|--------|
 | **Esc** | Pause / resume (Settings from pause or title) |
 | **WASD** | Pan the isometric camera |
-| **Q** / **E** | Zoom out / zoom in (mouse does not pan or zoom) |
+| **Q** / **E** | Zoom out / zoom in on the screen centre |
+| **Mouse wheel** | Zoom toward the spot under the cursor (over a menu, it scrolls the menu instead) |
 | **G** / **B** / **Tab** | Open Flag / Build catalog / cycle. After picking a flag or module the list minimizes (B/G re-opens it). Click the dock button again to close |
 | **F1** Explore · **F2** ClearThreat · **F3** Build · **F4** Extract · **F5** Defend · **I** Research Site · **O** Outpost · **U** Terraform | Flag type (in Flag popup when open) |
-| **1–9 / 0** | Select building (COMMONS · HAB · PWR · OPS · LAB · Pad · Defense Battery · …; Airlock + workshops in Build popup) |
+| **1–9 / 0** | Select building (COMMONS · HAB · PWR · OPS · LAB · Pad · Defense Battery · …; workshops in Build popup) |
 | **LMB** | Inspect: select specialist or building (info / workers / FLAG HERE). Flag/Build: empty ground places |
 | **RMB** on a flag | Cancel that bounty and **refund escrowed MET** |
 | **P** | Form a party from the current selection (2+), else 2+ heroes at the inn (max 4) |
@@ -52,7 +53,7 @@ Play opens on the **title screen** — a solar-system orrery, not a frozen drop.
 
 **Procedural worlds / campaign:** fresh play starts on **Earth** (tutorial). Body chips show unlocked worlds only (`BELT?` while locked). Conquest win unlocks the next body — win banner **TO LUNA** / **TO MARS** / **TO BELT** / **TO EURO**. Each body keeps its own seed on a **384 m** sandbox. **F4 Extract** near a node harvests that deposit into the nearest drop-off (haul % on the HUD). **F2 ClearThreat** clears lair fauna. Cyan disc at Campus B is a forward outpost after Colony Commons. Earth ships need a Landing Pad. **Shift+F10** unlocks all bodies for debug. Campus A landing stays fixed. Same body+seed → same map.
 
-**No click-to-move on specialists.** Outdoor units are **robots** fabricated when their **workshop** finishes building (Scout / Engineer / Defense / Medic / Harvester / Surveyor / Terraformer / Courier / Geologist / Sentinel). **Humans live only in HABs** (tax, births, beds) — never as outdoor agents. Raise **Colony Commons** first (HUD **COMMONS**). **Airlock Junctions** are panel-lined square hubs (orange frames/doors) that snap only to module face midlines (symmetry axes); every other module must Lego-dock onto an airlock end. Robots take bounties they want, **flee to the rest beacon** when hurt, **hunt** nearby fauna if brave, and hang out at workshops when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. **Guild Hall** (after Guild Charter) is a class hall: assign SCOUT/ENG/DEF/MED (or it inherits the nearest workshop). Flags near the hall pull that class. **P** parties the current selection or inn. Bounties escrow **MET** from the stockpile; robots keep **$**. **Conquest gates** (HUD): clear all dens · sustain pop goal with Commons+farm+mine · research the body's launch tech (TECH · **T**) **and place a Landing Pad**. Labs tick science into one active tech; ★ rows are Secret Projects. Flag/Build menus are popups above the bottom dock — click the dock button again (or **B** / **G**) to close. The command panel shows the last Overseer log lines (drop, dens, sustain, launch, travel).
+**No click-to-move on specialists.** Outdoor units are **robots** fabricated when their **workshop** finishes building (Scout / Engineer / Defense / Medic / Harvester / Surveyor / Terraformer / Courier / Geologist / Sentinel). Colonists live in the village — HABs give them beds, births and tax — while bounty work falls to the robots. Raise **Colony Commons** first (HUD **COMMONS**); after that, build anywhere on open ground. Robots take bounties they want, **flee to the rest beacon** when hurt, **hunt** nearby fauna if brave, and hang out at workshops when idle. Post flags near a workshop — or **FLAG HERE** on a selected building — to pull that class. **Guild Hall** (after Guild Charter) is a class hall: assign SCOUT/ENG/DEF/MED (or it inherits the nearest workshop). Flags near the hall pull that class. **P** parties the current selection or inn. Bounties escrow **MET** from the stockpile; robots keep **$**. **Conquest gates** (HUD): clear all dens · sustain pop goal with Commons+farm+mine · research the body's launch tech (TECH · **T**) **and place a Landing Pad**. Labs tick science into one active tech; ★ rows are Secret Projects. Flag/Build menus are popups above the bottom dock — click the dock button again (or **B** / **G**) to close. The command panel shows the last Overseer log lines (drop, dens, sustain, launch, travel).
 
 ---
 
@@ -60,8 +61,8 @@ Play opens on the **title screen** — a solar-system orrery, not a frozen drop.
 
 Speak while playing (fresh prefs / Earth):
 
-1. **Title** — click Earth on the orrery (or New Game if you need a wipe). Meadow + cobalt sky. Commons, one airlock, and a HAB are already on the claim. No starter robots. Starter stockpile is loaded.
-2. **Build (B, then 1)** — dock the **Engineer workshop** on the open airlock face. Wait until the robot is standing. You never click the robot to move it. Humans stay in the HAB.
+1. **Title** — click Earth on the orrery (or New Game if you need a wipe). Meadow + cobalt sky. Commons and a HAB are already on the claim. No starter robots. Starter stockpile is loaded.
+2. **Build (B, then 1)** — place the **Engineer workshop** on open ground near the Commons. Wait until the robot is standing. You never click the robot to move it.
 3. **Flag (G, Build, $70)** — the Engineer ignores it. Select the flag and press **+** until the pole says tempted (~$90).
 4. **Pest** — a soil creeper walks onto the yard. **G**, **F5 Defend**, post it on the bug. If the pole says ignored, dock a Defense workshop (key 2).
 5. **Gates** — dens, sustain, and launch stay on the HUD. Finishing Earth is not required. **TECH · T** still starts Field Survey toward **Lunar Rocket** if you keep going.

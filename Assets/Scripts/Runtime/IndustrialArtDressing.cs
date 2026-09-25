@@ -196,12 +196,6 @@ namespace SolarMajesty
                 return true;
             if (n.Contains("Vfx") || n.StartsWith("Dress_") || n.Contains("YieldLabel"))
                 return true;
-            // Cardinal sockets already have a round white tube + orange collar. "airlock" in the
-            // old name mapped the whole sleeve to solid orange. Keep hull-port groups
-            // (CommonsPort / HabPort / …) off the orange name remap too.
-            if (CampusDressing.IsDockDressName(n) || n.StartsWith("Airlock_") ||
-                n.Contains("AirlockHub"))
-                return true;
             if (n.Contains("GroundPlane") || n.Contains("HorizonSkirt") ||
                 n.Contains("HorizonDeepFloor") || n.Contains("Footprint"))
                 return true;
@@ -211,8 +205,6 @@ namespace SolarMajesty
                 if (t.name.StartsWith("Ghost") || t.name.Contains("SelectProxy"))
                     return false;
                 if (t.name.Contains("StatusOrb") || t.name == "SelectRing")
-                    return true;
-                if (CampusDressing.IsDockDressName(t.name) || t.name.Contains("AirlockHub"))
                     return true;
                 t = t.parent;
             }

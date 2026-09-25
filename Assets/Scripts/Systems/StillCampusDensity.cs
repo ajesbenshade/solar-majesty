@@ -4,7 +4,7 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Phase 4 CaptureStill campus: Commons→airlock→HAB plus pad / PWR-1 /
+    /// Phase 4 CaptureStill campus: Commons + neighbouring HAB plus pad / PWR-1 /
     /// water/regolith extractors when they <see cref="BuildingPlacer.CanFitRect"/>.
     /// Landmark yards keep <see cref="MinYardGapCells"/> of empty dirt from
     /// Commons / HAB / each other. Leftover Workshop / Inn / wonder / extra HAB /
@@ -22,7 +22,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// Empty dirt between Commons / HAB / pad / extractors (Aaron 2026-09-07).
-        /// Docked Lego airlock arms stay flush via TryDock / ExtraHabChain.
+        /// The HAB beside Commons keeps the shorter <see cref="BuildingPlacer.NeighborGap"/>.
         /// </summary>
         public const int MinYardGapCells = 4;
 
@@ -84,7 +84,6 @@ namespace SolarMajesty
         public struct StampLog
         {
             public bool Commons;
-            public bool Airlock;
             public bool Hab;
             public bool Pad;
             public bool Power;
@@ -99,7 +98,7 @@ namespace SolarMajesty
             public string Leftover;
 
             public override string ToString() =>
-                $"commons={Commons} airlock={Airlock} hab={Hab} " +
+                $"commons={Commons} hab={Hab} " +
                 $"pad={Pad} pwr={Power} water={Water} regolith={Regolith} " +
                 $"workshop={Workshop} inn={Inn} wonder={Wonder} leftover={Leftover ?? "none"} " +
                 $"extraHab={ExtraHab} extraSolar={ExtraSolar} defense={Defense}";
@@ -121,9 +120,6 @@ namespace SolarMajesty
                     switch (pieces[i].Category)
                     {
                         case BuildingCategory.Commons: log.Commons = true; break;
-                        case BuildingCategory.Utility:
-                            log.Airlock = true;
-                            break;
                         case BuildingCategory.Habitat:
                             habs++;
                             log.Hab = true;
@@ -186,8 +182,6 @@ namespace SolarMajesty
 
         public struct CuePlan
         {
-            public bool ExtraAirlock;
-            public Vector2Int ExtraAirlockOrigin;
             public bool ExtraHab;
             public Vector2Int ExtraHabOrigin;
             public bool ExtraSolar;
@@ -199,7 +193,7 @@ namespace SolarMajesty
             public int HabSocketCount;
 
             public int PlacedCount =>
-                (ExtraAirlock ? 1 : 0) + (ExtraHab ? 1 : 0) + (ExtraSolar ? 1 : 0) +
+                (ExtraHab ? 1 : 0) + (ExtraSolar ? 1 : 0) +
                 (Defense ? 1 : 0) + HabSocketCount;
         }
 
@@ -248,9 +242,7 @@ namespace SolarMajesty
                 for (int f = 0; f < 4; f++)
                 {
                     var face = (BuildingPlacer.Cardinal)f;
-                    BuildingPlacer.CardinalExpansionOrigins(
-                        commons, face, p.Width, p.Height, out _, out Vector2Int hab);
-                    if (hab == p.Origin)
+                    if (BuildingPlacer.NeighborOrigin(commons, face, p.Width, p.Height) == p.Origin)
                         return face;
                 }
             }
@@ -339,86 +331,27 @@ namespace SolarMajesty
             return trimmed;
         }
 
-        public static bool TryDockOnAirlock(
-            BuildingPlacer placer,
-            BuildingPlacer.CampusPiece commons,
-            int width,
-            int height,
-            BoundsOk bounds,
-            out Vector2Int origin)
-        {
-            origin = default;
-            if (placer == null) return false;
-            width = Mathf.Max(1, width);
-            height = Mathf.Max(1, height);
-            var pieces = placer.Pieces;
-            if (pieces == null) return false;
-
-            var faces = new[]
-            {
-                BuildingPlacer.Cardinal.North,
-                BuildingPlacer.Cardinal.East,
-                BuildingPlacer.Cardinal.West,
-                BuildingPlacer.Cardinal.South
-            };
-            for (int i = 0; i < pieces.Count; i++)
-            {
-                if (!pieces[i].IsAirlock) continue;
-                for (int f = 0; f < faces.Length; f++)
-                {
-                    Vector2Int cell = BuildingPlacer.ModuleOriginOnAirlockFace(
-                        pieces[i], width, height, faces[f]);
-                    if (!NearCommons(commons, cell, width, height)) continue;
-                    if (!placer.CanFitRect(cell, width, height)) continue;
-                    if (bounds != null && !bounds(cell, width, height)) continue;
-                    origin = cell;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public static bool TryDockOrNext(
-            BuildingPlacer placer,
-            BuildingPlacer.CampusPiece commons,
-            BuildingPlacer.Cardinal habFace,
-            int width,
-            int height,
-            BoundsOk bounds,
-            out Vector2Int origin,
-            bool enforceIslandGap = true)
-        {
-            if (TryDockOnAirlock(placer, commons, width, height, bounds, out origin))
-                return true;
-            return TryNext(
-                placer, commons, habFace, width, height, bounds, out origin, enforceIslandGap);
-        }
-
-        public static bool TryExtraHabChain(
+        /// <summary>A second HAB beside Commons on one of <see cref="ExtraHabFaces"/>.</summary>
+        public static bool TryExtraHab(
             BuildingPlacer placer,
             BuildingPlacer.CampusPiece commons,
             BuildingPlacer.Cardinal habFace,
             BoundsOk bounds,
-            out Vector2Int airlock,
             out Vector2Int hab)
         {
-            airlock = default;
             hab = default;
             if (placer == null) return false;
 
             var faces = ExtraHabFaces(habFace);
             for (int i = 0; i < faces.Length; i++)
             {
-                BuildingPlacer.CardinalExpansionOrigins(
-                    commons, faces[i], YardSize, YardSize, out Vector2Int a, out Vector2Int h);
-                if (!placer.CanFitRect(a, 2, 2) || !placer.CanFitRect(h, YardSize, YardSize))
+                Vector2Int h = BuildingPlacer.NeighborOrigin(commons, faces[i], YardSize, YardSize);
+                if (!placer.CanFitRect(h, YardSize, YardSize))
                     continue;
-                if (bounds != null && (!bounds(a, 2, 2) || !bounds(h, YardSize, YardSize)))
+                if (bounds != null && !bounds(h, YardSize, YardSize))
                     continue;
                 if (!NearCommons(commons, h, YardSize, YardSize))
                     continue;
-                airlock = a;
                 hab = h;
                 return true;
             }
@@ -649,29 +582,6 @@ namespace SolarMajesty
             if (bestScore < 0) return false;
             origin = best;
             return true;
-        }
-
-        /// <summary>
-        /// True when an airlock already joins the pair (RefreshTubes docked arms).
-        /// </summary>
-        public static bool AreAirlockLinked(
-            BuildingPlacer placer,
-            BuildingPlacer.CampusPiece a,
-            BuildingPlacer.CampusPiece b)
-        {
-            if (placer == null) return false;
-            if (a.IsAirlock && ModuleDocksAirlock(b, a)) return true;
-            if (b.IsAirlock && ModuleDocksAirlock(a, b)) return true;
-            var pieces = placer.Pieces;
-            if (pieces == null) return false;
-            for (int i = 0; i < pieces.Count; i++)
-            {
-                if (!pieces[i].IsAirlock) continue;
-                if (ModuleDocksAirlock(a, pieces[i]) && ModuleDocksAirlock(b, pieces[i]))
-                    return true;
-            }
-
-            return false;
         }
 
         /// <summary>
@@ -1224,20 +1134,6 @@ namespace SolarMajesty
                     if (placer.IsCellOccupied(new Vector2Int(x + dx, y + dy)))
                         return true;
                 }
-            }
-
-            return false;
-        }
-
-        private static bool ModuleDocksAirlock(
-            BuildingPlacer.CampusPiece module, BuildingPlacer.CampusPiece airlock)
-        {
-            if (!airlock.IsAirlock || !module.IsModule) return false;
-            for (int f = 0; f < 4; f++)
-            {
-                if (BuildingPlacer.AirlockOriginOnModuleFace(
-                        module, (BuildingPlacer.Cardinal)f) == airlock.Origin)
-                    return true;
             }
 
             return false;

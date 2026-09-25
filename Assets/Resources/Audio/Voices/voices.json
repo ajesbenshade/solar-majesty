@@ -3891,6 +3891,17 @@
   {
    "speaker": "overseer",
    "cue": "line",
+   "key": "3b68d3ee",
+   "text": "Colonists run the village. Robots take the contracts. Try not to mix them up — it gets philosophical.",
+   "clip": "overseer_line_3b68d3ee",
+   "hash": "45cdb761a0e4",
+   "seconds": 6.21,
+   "peak_db": -3.3,
+   "rms_db": -21.7
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
    "key": "4ee4328e",
    "text": "Dock a Fobot Yard. Y is not a miracle. It is an invoice.",
    "clip": "overseer_line_4ee4328e",
@@ -4019,17 +4030,6 @@
    "seconds": 3.32,
    "peak_db": -4.0,
    "rms_db": -21.2
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "b7c7de82",
-   "text": "Humans stay indoors. Everything that walks is a robot. Try not to mix them up — it gets philosophical.",
-   "clip": "overseer_line_b7c7de82",
-   "hash": "cedae0851c36",
-   "seconds": 6.11,
-   "peak_db": -3.9,
-   "rms_db": -21.6
   },
   {
    "speaker": "overseer",

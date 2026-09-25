@@ -8,7 +8,8 @@ namespace SolarMajesty
     /// a perspective lens: the orthographic pose stays the source of truth for pan, bounds, focus
     /// and orbit, and the perspective camera is derived from it each frame (<see cref="DioramaRig"/>).
     /// Suggested camera rotation: (30, 45, 0).
-    /// WASD pans. Q zooms out, E zooms in. Wheel zooms. MMB drag orbits yaw (and a little pitch).
+    /// WASD pans. Q zooms out, E zooms in. The wheel zooms toward the ground point under the cursor.
+    /// MMB drag orbits yaw (and a little pitch).
     /// LMB is world click. RMB is flag-cancel. Mouse does not pan.
     /// </summary>
     [DefaultExecutionOrder(-100)]
@@ -380,11 +381,54 @@ namespace SolarMajesty
             }
 
             float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (Mathf.Abs(scroll) > 0.0001f)
+            // The wheel over a HUD panel scrolls that panel's list, not the map.
+            if (Mathf.Abs(scroll) > 0.0001f && !(_loop != null && _loop.PointerOverHud))
             {
+                float before = _targetZoom;
                 _targetZoom = Mathf.Clamp(
                     _targetZoom - scroll * wheelZoomScale, minZoom, maxZoom);
+                ZoomTowardCursor(before, _targetZoom);
             }
+        }
+
+        /// <summary>
+        /// Keep the ground point under the cursor under the cursor while zoom goes from
+        /// <paramref name="before"/> to <paramref name="after"/>. In an orthographic view a ground
+        /// point's offset from the view centre scales with the zoom size, so the pan that holds it
+        /// still is that offset × (before − after) / before. Diorama mode uses the same rule on its
+        /// perspective ray; it is close enough that the spot under the mouse stays put.
+        /// </summary>
+        private void ZoomTowardCursor(float before, float after) =>
+            ZoomTowardPoint(Input.mousePosition, before, after);
+
+        /// <summary>Zoom to <paramref name="orthoSize"/> keeping the ground under <paramref name="screenPoint"/> fixed.</summary>
+        public void ZoomAtScreenPoint(Vector2 screenPoint, float orthoSize)
+        {
+            float before = _targetZoom;
+            _targetZoom = Mathf.Clamp(orthoSize, minZoom, maxZoom);
+            ZoomTowardPoint(screenPoint, before, _targetZoom);
+        }
+
+        private void ZoomTowardPoint(Vector3 mouse, float before, float after)
+        {
+            if (_cam == null || before <= 0.001f || Mathf.Approximately(before, after)) return;
+            if (mouse.x < 0f || mouse.y < 0f || mouse.x > Screen.width || mouse.y > Screen.height) return;
+
+            var ground = new Plane(Vector3.up, Vector3.zero);
+            Ray cursorRay = _cam.ScreenPointToRay(mouse);
+            if (!ground.Raycast(cursorRay, out float tc) || tc <= 0f) return;
+            Vector3 underCursor = cursorRay.GetPoint(tc);
+
+            // Measure from the live view centre, scaled into the target pose's zoom, so a second
+            // wheel tick during the smoothing still lands on the right spot.
+            Ray centreRay = _cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+            if (!ground.Raycast(centreRay, out float tm) || tm <= 0f) return;
+            Vector3 centre = centreRay.GetPoint(tm);
+
+            float live = _diorama ? before : Mathf.Max(0.001f, _cam.orthographicSize);
+            Vector3 offset = underCursor - centre;
+            offset.y = 0f;
+            _targetPos += offset * ((before - after) / live);
         }
 
         private void Apply()

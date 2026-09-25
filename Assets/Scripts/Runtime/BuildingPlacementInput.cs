@@ -106,6 +106,15 @@ namespace SolarMajesty
                 return;
             }
 
+            // Over a HUD panel (e.g. the build list) there is no map under the cursor: hide the
+            // ghost, and the click that picks a building cannot also place one behind the list.
+            if (_loop != null && _loop.PointerOverHud)
+            {
+                if (_ghost != null) _ghost.SetActive(false);
+                if (_footprint != null) _footprint.SetActive(false);
+                return;
+            }
+
             if (!TryGround(out Vector3 world)) return;
             Vector2Int cell = _grid != null ? _grid.WorldToCell(world) : Vector2Int.zero;
 

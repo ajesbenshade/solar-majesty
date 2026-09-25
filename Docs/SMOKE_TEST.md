@@ -9,16 +9,16 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 ## 10-minute boot (must pass)
 
 - [ ] Title is the solar-system **orrery** (not a frozen drop). WASD pans, **Q** zooms out, **E** zooms in. Mouse does not pan or zoom. Tagline names the Overseer fantasy. Click Earth. Belt and Europa are not on the body chips. Shift+click does not leave Earth. Settings → **Full campaign** turns the other worlds back on.
-- [ ] Earth meadow drop: **produced meadow**, **cobalt sky**, HUD REG/ICE/**CRED**/PWR/BEDS. **Commons, one airlock, and a HAB** are already on the claim. No starter robots. Not the old grey-tan plane. Not Mars orange.
+- [ ] Earth meadow drop: **produced meadow**, **cobalt sky**, HUD REG/ICE/**CRED**/PWR/BEDS. **Commons and a HAB** are already on the claim. No starter robots. Not the old grey-tan plane. Not Mars orange.
 - [ ] Yield labels on resource nodes (`REG` / `MET` / `ICE`) — no `MissingComponentException`.
-- [ ] Tutorial 1/4: **B**, then **1**, dock the Engineer workshop on the open airlock face. Build list does not show guild halls, market, blacksmith, Fobot Yard, watchtower, aid station, or wonders. Wait until the Engineer is standing. Empty ground click does **not** repath the robot.
+- [ ] Tutorial 1/4: **B**, then **1**, place the Engineer workshop on open ground. Build list does not show guild halls, market, blacksmith, Fobot Yard, watchtower, aid station, or wonders. Wait until the Engineer is standing. Empty ground click does **not** repath the robot.
 - [ ] 2/4: **G**, Build, leave it at **$70**. An Explore flag does not advance this beat. A Build flag posted above $70 does not either — the bar says to right-click it and post 70 again.
 - [ ] 3/4: Select that flag and press **+** until the pole says tempted (~$90).
 - [ ] 4/4: A soil creeper is on the yard. **F5 Defend** on it. If the Engineer ignores it, dock a Defense workshop (key 2) and post F5 again.
 - [ ] **SKIP** dismisses the bar. Settings → **Replay tutorial** brings it back. **T** opens research and does not list Guild Charter, secret projects, Mars Ship, Belt Hauler, or Icebreaker.
 - [ ] Dens, sustain, and launch stay visible. You do not have to clear Earth.
 - [ ] **Esc** pause → Resume / Settings / Title / Quit. Title **Continue** shows body + CRED + module count.
-- [ ] Build Colony Commons + airlock, Title → Continue: Commons and airlock are back; workshop robots refabricate.
+- [ ] Build Colony Commons + a workshop, Title → Continue: both are back; workshop robots refabricate. No airlock or tube appears anywhere (old saves drop theirs).
 - [ ] After a short session (post a flag, fight fauna, damage a robot, harvest a node, scout a den, form a party): Title → Continue restores that flag (bounty + remaining work), living fauna **at their saved poses**, specialist HP **and poses**, den scouted/cleared, node remaining, mission hold, and the formed party. Empty ground click still does not repath.
 
 ## 20-minute Earth loop
@@ -29,7 +29,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 - [ ] **F4 Extract** on a node updates remaining yield. Near a matching Mine/Farm the HUD shows `via … · ~100%`; far from campus it reads `loose haul · ~40%`.
 - [ ] No Landing Pad: ship countdown tagged `(no pad)`; when the timer hits, toast **waved off** and stockpile does not jump.
 - [ ] After a pad: Earth package docks (Luna+ spends a MET fee).
-- [ ] Cyan disc NE of Commons (Campus B): after Colony Commons, place a Mine/Farm/Pad/Power/Defense **or Harvester/Defense workshop** on it without airlocks. HUD **OUTPOST**; PWR draw ticks up. **F7** — hurt robots rest at the cyan beacon, not the A inn.
+- [ ] Cyan disc NE of Commons (Campus B): after Colony Commons, place a Mine/Farm/Pad/Power/Defense **or Harvester/Defense workshop** on it. HUD **OUTPOST**; PWR draw ticks up. **F7** — hurt robots rest at the cyan beacon, not the A inn.
 - [ ] **T** research: Guild Charter → dock **Horizon Lodge / Anvil Compact / Aegis Lodge / Triage Compact** (HUD **GUILD**). Select the hall — flags nearby pull Scout / Engineer / Defense / Medic (inherits nearest workshop if you skip). Harvest Doctrine unlocks Harvester Workshop; Survey Doctrine unlocks Surveyor. **Terraform Charter** / **Freight Doctrine** unlock Terraformer / Courier. **Core Sampling** / **Perimeter Doctrine** unlock Geologist / Sentinel. Workshops still fabricate these robots (Blender silhouettes).
 - [ ] Flag **I** Research Site feeds the active tech. **O** on the cyan disc claims OUTPOST. **U** Terraform greener farms.
 - [ ] ★ Secret Projects spend stockpile on complete: Anvil (mines), Skyhook (freight), Gene Vault (beds), **Climate Loom** (farms — place 6×6 landmark), **Aegis Spire** (draw + rim pressure — landmark), **Deep Archive** (lab ticks — landmark).
@@ -43,7 +43,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 - [ ] Title and command strip show **CAMPAIGN** (or **ENDLESS** plus challenge/stance). Settings chips cycle Mode / Challenge / Stance.
 - [ ] Doctrine applies live: Open Hands takes cheaper flags (default $70 Build); Aegis Watch hunts/shops more; Survey First considers farther. Stockpile/fauna need **New Game** (Austere / Swarm). Tight Purse ship rules apply when you leave Settings.
 - [ ] **Continue** does not re-scale a saved stockpile after Austere.
-- [ ] Austere New Game: Colony Commons + airlock + HAB + one workshop still affordable.
+- [ ] Austere New Game: Colony Commons + HAB + one workshop still affordable.
 - [ ] Swarm: more F5/F2 after farm/power/HAB, not a wipe on the empty drop.
 - [ ] Endless win: body keep-colonizing line, rating letter + breakdown, no **TO {next}**. Shift+F10 still hops bodies.
 - [ ] Select a robot: card shows voice copy. Claim logs a class line (Anvil / Aegis / Horizon…).
@@ -64,7 +64,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 
 - [ ] Mars: reddish cratered ground, hazy orange sky, long shadows; distant dust-devil dressing (not a new threat).
 - [ ] Shift+click **EARTH·** (parked, not New Game): lush meadow albedo, cobalt sky, long shadows, distant cumulus, carbon/orange claim chevrons. Must not look like the pre-Phase-4 olive plane. Dust-devils stay Mars-only. New Game is Luna.
-- [ ] Colony Commons + airlock: **white cube hub** with dark square windows, orange ribbed dock stubs with torus rings (not a flat fridge, not a wrap-door box). Unused stubs hidden. Commons geodesic restyle is a separate slice (PR 41). Orange collars meet module faces flush.
+- [ ] Colony Commons stands alone: no airlock hub, dock stubs, hull ports or tubes on it or on any module — live or as the placement ghost.
 - [ ] While a module is building: yellow gantry crane + incomplete cladding; site clears on complete.
 - [ ] HUD: top strip REG / ICE / CRED / PWR / BEDS with rates and color swatches; Sol counter; gold-carbon chrome; bounty log on conquest gates; roster is IDLE/WORK/REST status (click inspects only). Minimap titled MAJESTY COLONY, click pans camera, never path-commands.
 - [ ] Dock squares BLD / FLG / TEC / CAM / PTY / MENU map to B, G, T, campus focus, party, Esc — not unit orders.
@@ -80,7 +80,6 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 
 ## Phase 4 Week 3 (turrets + solar)
 
-- [ ] Airlock Junction: **white cube** with dark square windows; docked faces are **orange ribbed tubes + orange torus rings** flush to the hub. Dressing only — no click-to-fire. Locked still has **no** roof turret on this join.
 - [ ] Power Node: **PWR-1 hut** plus a **field** of tilted blue-cyan panels with orange corner brackets on the 4×4 footprint, not a single panel beside the building. Ghost in **B** matches.
 - [ ] Command / Defense: **Defense Battery** angular bunker + roof turret, not a Commons citadel-dome. Week 1 shield bubble still wraps it. B menu says Defense Battery, never Command / CMD-1.
 - [ ] Engineer reads as a small white biped with backpack; Geologist as a six-wheel rover; Scout as a hovering probe with rotors and a boxy cyan-lens head. Defense mech is still the bulky tracked guardian (red viewport, not a biped walker).
@@ -106,7 +105,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 ## Phase 4 hero building FBX
 
 - [ ] Play Mode HAB / Colony Commons / Power / Farm / Camp / Mine / Defense / pad / guild / LAB / wonders / **workshop / Inn** / **OPS-1** prefer `SM_Hero_*` FBX. HAB / Commons / LAB / Guild / OPS hulls show **panel lines** (rings, meridians, wrap bands). Console `[HeroKit] Attached …` on first place. Engineer workshop is the hangar; Defense/Sentinel workshop is the taller roof-turret hangar; Inn is the porch-lantern hall. If an FBX is missing, the procedural hero kit still appears (warning logged).
-- [ ] Cardinal **square airlocks** still attach **flush at the module face** (orange ribbed HAB join + torus rings, no gap / hull punch-through). Commons stays the 6×6 first landmark.
+- [ ] Modules carry no cardinal ports or sleeves. Commons stays the 6×6 first landmark.
 - [ ] Ghosts in **B** match the FBX silhouettes. Empty ground click still does not repath robots.
 
 ## Phase 4 remaining Imagine sheets + Mars close

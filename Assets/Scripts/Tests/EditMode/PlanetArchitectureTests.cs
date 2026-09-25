@@ -5,8 +5,8 @@ using UnityEngine;
 namespace SolarMajesty.Tests
 {
     /// <summary>
-    /// Per-world building architecture: every world dresses every archetype, the four airlock
-    /// lanes stay clear so Utility junctions still dock, and Mars keeps its tuned kit colours.
+    /// Per-world building architecture: every world dresses every archetype, the four doorway
+    /// lanes stay clear, and Mars keeps its tuned kit colours.
     /// </summary>
     public class PlanetArchitectureTests
     {
@@ -19,8 +19,8 @@ namespace SolarMajesty.Tests
             ArchArchetype.Workshop, ArchArchetype.Defense, ArchArchetype.Pad, ArchArchetype.Wonder
         };
 
-        // Dock tube: axis at ColonyVisualUtility.DockY (1.12 m), bore 1.42 m, on each face centre.
-        private const float LaneHalfWidth = 0.72f; // bore radius 0.71
+        // Doorway lane on each face centre: ~1.4 m wide, from knee to head height.
+        private const float LaneHalfWidth = 0.72f;
         private const float LaneBottom = 0.35f;
         private const float LaneTop = 1.9f;
         private const float LaneReach = 3f;
@@ -47,7 +47,7 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void AirlockLanesStayClear()
+        public void DoorwayLanesStayClear()
         {
             var blocked = new List<string>();
             foreach (var id in Bodies)
@@ -71,7 +71,7 @@ namespace SolarMajesty.Tests
                         blocked.Add($"{id} {a} seed {seed}: {p.Name} x[{min.x:0.00},{max.x:0.00}] y[{min.y:0.00},{max.y:0.00}] z[{min.z:0.00},{max.z:0.00}]");
                 }
             }
-            Assert.IsEmpty(blocked, "Parts block airlock lanes:\n" + string.Join("\n", blocked));
+            Assert.IsEmpty(blocked, "Parts block doorway lanes:\n" + string.Join("\n", blocked));
         }
 
         [Test]

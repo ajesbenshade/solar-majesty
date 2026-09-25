@@ -190,7 +190,7 @@ Selected robot already shows `LastReason`. Add one line:
 | Promise | Verdict | Mechanic |
 |---------|---------|----------|
 | **Defense Battery** | **Keep. Make it fire.** | Auto-acquires one fauna in **18 m**, **4.0 dps**, 0.5 s retarget. Draw already paid in the 8 PWR build cost; add **+2 PWR** to `powerDraw` (total 4 if authored 2). Does **not** clear dens. Weaker than a Defense Mech (9.2 dps) so flags still matter. Placement is the decision (coverage), not a unit order. |
-| **Airlock junction turrets** | **Keep as dress.** | If they fire, every campus is a free kill-box and Clear Threat dies. Do not activate them. |
+| **Airlock junction turrets** | **Removed** with airlocks (2026-09-25). | — |
 | **Climate Loom / Aegis Spire / Deep Archive** | **Keep. Move the bonus to the building.** | ★ tech **unlocks placement** only. Bonus (`TechEffects`) applies **while the landmark is alive**. Destroyed wonder → bonus off until rebuilt. HUD line becomes `Landmark — bonuses while standing.` |
 | **Explore** | **Keep. Give it a survey disc.** | On complete: 22 m disc for **90 s**. Extract yield ×**1.25** from nodes inside. Research Site complete inside +**8** science (on top of 12). Nearest uncleared den inside is **scouted**: Clear Threat workRequired ×**0.70** on that den (applied when the Clear flag is posted in 12 m). Minimap: scouted den pip turns cyan. |
 | **Defend Area** | **Keep. Persist a watch.** | While claimed/worked: existing 9 dps + bodyDanger ×0.55 in 14 m. **On complete:** leave a 16 m watch for **50 s** that still deals **4 dps** to fauna (half) and keeps the bodyDanger reduction. Orange ring VFX (existing `ClaimRing`). Paying Defend is how you buy a quiet minute. |
@@ -214,7 +214,7 @@ All radii are flat XZ. No new nav graph.
 | Defend watch (new) | 16 m / 50 s | 4 dps, bodyDanger ×0.55 | `HasActiveDefendNear` (already ×0.55 in 14 m) — extend timer |
 | Battery coverage | 18 m | 4.0 dps | None (world sim) |
 | Haul (exists) | nearest drop-off | ExtractLogistics | Unchanged |
-| **Dock tax** | module not airlock-adjacent | N/A — illegal already | — |
+| **Dock tax** | — | N/A — airlocks removed; placement is free | — |
 | **Commons shade** | 20 m from Commons | `bodyDanger × 0.85` for robots inside (campus feels safer) | `PushThreatToSpecialists` context |
 
 Placement game: put workshops 14 m from the work, batteries 18 m over extractors, Commons in the middle for the shade, Defend flags on the rim that the battery does not cover.
@@ -376,7 +376,7 @@ Luna/Mars stretch the same shape: minute 8 is "economy under siphon/steal," minu
 | Tutorial "open T" as win for 6/6 | Cut. |
 | Full 10-class roster HUD | Not a cut of classes — but stop pretending the bottom roster must list 10. Keep SCT/ENG/DEF/MED + `+N`. |
 
-**Not cut:** 10 classes, 8 flag types, 3 wonders, Defense Battery, parties, Endless, doctrines, letter grade, Lego airlocks, inn shop.
+**Not cut:** 10 classes, 8 flag types, 3 wonders, Defense Battery, parties, Endless, doctrines, letter grade, inn shop. (Lego airlocks were later removed, 2026-09-25.)
 
 ---
 

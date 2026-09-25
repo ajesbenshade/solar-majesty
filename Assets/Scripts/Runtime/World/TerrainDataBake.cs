@@ -107,7 +107,7 @@ namespace SolarMajesty
     {
         public const int MapResolution = 512;
 
-        /// <summary>Commons + HAB + airlock disk. Relief may begin just outside this.</summary>
+        /// <summary>Commons + HAB disk. Relief may begin just outside this.</summary>
         public const float ClusterFlatRadius = 12f;
         public const float PadFlatRadius = 8f;
         public const float CampusBFlatRadius = 10f;

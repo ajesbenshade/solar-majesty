@@ -65,8 +65,8 @@ namespace SolarMajesty
         public static bool BlocksManualSavesAndReloads => IronmanRun;
 
         /// <summary>
-        /// Austere Earth: 3,400 CRED × 0.55 = 1,870. Commons 500 + airlock 50 + HAB 150 + a Rogues-tier
-        /// workshop 250 + hire 100 = 1,050. Leftover ~800 CRED for the first flags. Do not drop below 0.50.
+        /// Austere Earth: 3,400 CRED × 0.55 = 1,870. Commons 500 + HAB 150 + a Rogues-tier
+        /// workshop 250 + hire 100 = 1,000. Leftover ~870 CRED for the first flags. Do not drop below 0.50.
         /// </summary>
         public static float StartStockpileScale => Challenge == ChallengeId.Austere ? 0.55f : 1f;
         public static float ResupplyIntervalScale => Challenge == ChallengeId.TightPurse ? 1.55f : 1f;
@@ -138,7 +138,7 @@ namespace SolarMajesty
 
         public static string ChallengeHint => Challenge switch
         {
-            ChallengeId.Austere => "Austere: 55% starting stockpile (New Game / reload). Commons + airlock + HAB + workshop still fit.",
+            ChallengeId.Austere => "Austere: 55% starting stockpile (New Game / reload). Commons + HAB + workshop still fit.",
             ChallengeId.Swarm => "Swarm: more fauna (cap ×1.50) at a slower spawn cadence (reload). Post F5/F2.",
             ChallengeId.TightPurse => "Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
             _ => "Standard: no challenge modifiers."

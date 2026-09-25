@@ -1,6 +1,6 @@
 # Next Steps
 
-**Integration note — 2026-09-22:** The later Commons lock is the smooth command-dome citadel (2026-09-17); older geodesic instructions and screenshots below are historical. The boxy tan HAB, orange ribbed airlocks, four-cell landmark yards, and animated units are retained. Phase 4 exit remains blocked pending a fresh visual review.
+**Integration note — 2026-09-22:** The later Commons lock is the smooth command-dome citadel (2026-09-17); older geodesic instructions and screenshots below are historical. The boxy tan HAB, four-cell landmark yards, and animated units are retained. Phase 4 exit remains blocked pending a fresh visual review.
 
 
 ## Done
@@ -13,7 +13,7 @@
 - [x] Post-month polish — Earth starter Farm/Mine, research auto-queue, launch site reuses starship, NavMesh on place, clearer gate/toast copy
 - [x] Empty-start levels — map + dens only; claim disc; per-body starter stockpile; player places all buildings
 - [x] Demo shell — title / pause / settings / continue slot / skippable tutorial / flag MET escrow + RMB cancel
-- [x] Workshop-built robots — no free starter specialists; HAB = humans indoors; workshops fabricate outdoor robots
+- [x] Workshop-built robots — no free starter specialists; HABs house the colonists; workshops fabricate the robots that take bounties
 - [x] Week 5–6 demo package — smoke path, title/continue honesty, six-beat tutorial
 - [x] Phase 2 start — Asteroid Belt + Europa bodies, Belt Hauler / Icebreaker techs
 - [x] Phase 2 Weeks 4–6 — extract drop-off haul, pad-gated resupply, freight hops, Campus B outposts
@@ -36,9 +36,9 @@
 - [x] Phase 4 remaining-class + leftover-fauna Imagine JPGs in `ConceptSheets/` + sheet-matched remesh (Phase 4 still open)
 - [x] Phase 4 hero-building sheet-match — HAB-1 cylinder, command-dome Colony Commons, LAB-1 cylinder, PWR-1 + solar field, pad + Starship stack vs existing ConceptSheets (Phase 4 still open)
 - [x] Phase 4 CMD-1 / OPS-1 / guild / wonders / extractor remesh — Guild = CMD-1 civic, Mining = OPS-1 annex, Farm greenhouse + ice, Camp drum, Mine A-frame, Loom / Spire / Archive distinct (Phase 4 still open)
-- [x] Phase 4 airlock panel-line polish — square hub (carbon corners / recessed orange doors) + white dock sleeves with orange collars (Phase 4 still open)
+- [x] ~~Phase 4 airlock panel-line polish~~ — superseded: airlocks removed from the game 2026-09-25
 - [x] Phase 4 HAB / Commons / LAB / CMD-1 / OPS-1 panel-bevel pass — carbon rings, spine seams, civic wrap bands, bevelled box hulls (Phase 4 still open)
-- [x] Phase 4 dock sockets flush — square airlock plus-arms + module sleeves + orange collars mate at the Lego face; Commons cardinal stubs / Guild E/W ports reach the footprint (Phase 4 still open)
+- [x] ~~Phase 4 dock sockets flush~~ — superseded: airlocks, sleeves and hull ports removed 2026-09-25
 - [x] Phase 4 editor Mars still + empty Game-tab still + campus v1 + v2 + v3 + **campus v4** (`Docs/Roadmap/SM_MarsCampaign_PlayModeCampusStill4.png`) + blocked exit ([PHASE_4_EXIT.md](Roadmap/PHASE_4_EXIT.md)) — **not** complete
 - [x] Phase 4 W1 continue integrity — Continue autosave restores open flags, living fauna poses, specialist HP / downed / pose, den scouted/cleared, node remaining, mission hold, and formed parties. Soft claims rebind by flag index.
 
@@ -52,7 +52,7 @@
 
 ## Next
 
-**Playable demo (current):** Earth only. Commons, one airlock, and a HAB are already down. The player docks an Engineer workshop, posts Build at $70, raises the price, then posts Defend on the tutorial creeper. Guilds, levy, market, blacksmith, Fobot Yard, watchtowers, Belt, Europa, doctrines, and secret projects stay in the repo and stay hidden until Settings → Full campaign. Do not add a system until a stranger finishes that beat. Phase 4 stills are frozen until then.
+**Playable demo (current):** Earth only. Commons and a HAB are already down. The player places an Engineer workshop, posts Build at $70, raises the price, then posts Defend on the tutorial creeper. Guilds, levy, market, blacksmith, Fobot Yard, watchtowers, Belt, Europa, doctrines, and secret projects stay in the repo and stay hidden until Settings → Full campaign. Do not add a system until a stranger finishes that beat. Phase 4 stills are frozen until then.
 
 Phase plan lives in [`Docs/Roadmap/`](Roadmap/00_ROADMAP_OVERVIEW.md). **Phase 0 is locked. Phase 1 is packaged. Phase 2 is complete** ([exit review](Roadmap/PHASE_2_EXIT.md)). **Phase 3 is complete** ([exit review](Roadmap/PHASE_3_EXIT.md)). Current: [visual target](Roadmap/05_PHASE_4_VISUAL_TARGET.md) ([exit blocked](Roadmap/PHASE_4_EXIT.md)). After Phase 4: [ship](Roadmap/06_PHASE_5_PRODUCTION_VALUES_SHIP.md).
 

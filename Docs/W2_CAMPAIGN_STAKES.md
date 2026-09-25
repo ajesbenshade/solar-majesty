@@ -203,7 +203,7 @@ The crown is a solar power, or it was a meadow with a rocket. Choose which log w
 
 **Answer:** cradle overcrowding / sustain ceiling / Sol Authority legitimacy requires expansion, not just farms.
 
-The empty drop is the live start (`cut.earth.prologue`). The meadow claim is a disc, not a dominion. Tutorial HUD still walks Commons → airlock → HAB → workshop → flag → price; workshop has **no decree id**. Supporting decrees — `earth.explore.survey_the_claim`, `earth.extract.levy_the_meadow_farm`, as-needed `earth.clearthreat.seal_the_near_dens` / `earth.defendarea.ward_the_furrows` — keep the court alive. They do not answer the question.
+The empty drop is the live start (`cut.earth.prologue`). The meadow claim is a disc, not a dominion. Tutorial HUD walks Commons → HAB → workshop → flag → price; workshop has **no decree id**. Supporting decrees — `earth.explore.survey_the_claim`, `earth.extract.levy_the_meadow_farm`, as-needed `earth.clearthreat.seal_the_near_dens` / `earth.defendarea.ward_the_furrows` — keep the court alive. They do not answer the question.
 
 Mid-court (`cut.earth.mid_court`) fires when the civic triangle is real: `earth.build.raise_the_commons`, `earth.build.dock_the_first_hab`, `earth.researchsite.charter_the_hall`. Beds and a guild make the overcrowding *visible*. Eight population / 25 s hold is a sustain gate, not a destiny. Anvil’s greed lesson (default Build $70) is how the overseer learns that pride has a price — remember it when the Freeholds invoice the pad.
 
@@ -219,7 +219,7 @@ Advisor chain: E0–E10 in `W2_ADVISOR_AND_CHAIN_BEATS.md`.
 
 Arrival (`cut.luna.arrival`) is the tariff reality: 4 MET dock fee on Earth packages, hoppers on the HAB, ticks on the mines. The Freeholds were here. The rille is their contour line (`luna.explore.chart_the_tariff_rille`).
 
-Mid (`cut.luna.mid_warrant`) is the double bruise — `luna.extract.weigh_the_freehold_ore` (the levy, Strip / Core) and `luna.clearthreat.root_the_hopper_saboteurs` (the warrant, Aegis). Someone cut the hoppers loose. Ask later who paid them. Support only: `luna.defendarea.ward_the_weigh_station`, `luna.build.fortify_the_airlocks`, `luna.build.raise_the_crater_commons`, `luna.establishoutpost.stake_the_far_rim`. A crater COMMONS that still pays rent is not sovereignty.
+Mid (`cut.luna.mid_warrant`) is the double bruise — `luna.extract.weigh_the_freehold_ore` (the levy, Strip / Core) and `luna.clearthreat.root_the_hopper_saboteurs` (the warrant, Aegis). Someone cut the hoppers loose. Ask later who paid them. Support only: `luna.defendarea.ward_the_weigh_station`, `luna.build.fortify_the_perimeter`, `luna.build.raise_the_crater_commons`, `luna.establishoutpost.stake_the_far_rim`. A crater COMMONS that still pays rent is not sovereignty.
 
 Departure (`cut.luna.to_mars`) is `luna.researchsite.commission_the_mars_ship`. We leave because the lanes will never be ours at this price. The Compact seat is the first place the crown can stop renting the dark.
 
@@ -292,7 +292,7 @@ Cutscene keys (`cut.*`) are localization handles. **Decree ids stay the `FlagDec
 
 ### Decree ids referenced (all exist in `FlagDecreeIds`)
 
-`earth.build.raise_the_commons` · `earth.build.dock_the_first_hab` · `earth.researchsite.charter_the_hall` · `earth.build.stage_the_lunar_rocket` · `earth.explore.survey_the_claim` · `earth.extract.levy_the_meadow_farm` · `earth.clearthreat.seal_the_near_dens` · `earth.defendarea.ward_the_furrows` · `luna.explore.chart_the_tariff_rille` · `luna.extract.weigh_the_freehold_ore` · `luna.clearthreat.root_the_hopper_saboteurs` · `luna.defendarea.ward_the_weigh_station` · `luna.build.fortify_the_airlocks` · `luna.build.raise_the_crater_commons` · `luna.establishoutpost.stake_the_far_rim` · `luna.researchsite.commission_the_mars_ship` · `mars.build.raise_the_compact_seat` · `mars.explore.survey_the_red_apron` · `mars.build.string_the_solar_field` · `mars.clearthreat.hunt_the_wisps` · `mars.defendarea.ward_the_dust_furrows` · `mars.terraform.weave_the_crust` · `mars.establishoutpost.stake_campus_b` · `mars.researchsite.commission_the_belt_hauler`
+`earth.build.raise_the_commons` · `earth.build.dock_the_first_hab` · `earth.researchsite.charter_the_hall` · `earth.build.stage_the_lunar_rocket` · `earth.explore.survey_the_claim` · `earth.extract.levy_the_meadow_farm` · `earth.clearthreat.seal_the_near_dens` · `earth.defendarea.ward_the_furrows` · `luna.explore.chart_the_tariff_rille` · `luna.extract.weigh_the_freehold_ore` · `luna.clearthreat.root_the_hopper_saboteurs` · `luna.defendarea.ward_the_weigh_station` · `luna.build.fortify_the_perimeter` · `luna.build.raise_the_crater_commons` · `luna.establishoutpost.stake_the_far_rim` · `luna.researchsite.commission_the_mars_ship` · `mars.build.raise_the_compact_seat` · `mars.explore.survey_the_red_apron` · `mars.build.string_the_solar_field` · `mars.clearthreat.hunt_the_wisps` · `mars.defendarea.ward_the_dust_furrows` · `mars.terraform.weave_the_crust` · `mars.establishoutpost.stake_campus_b` · `mars.researchsite.commission_the_belt_hauler`
 
 Twenty-four consts. No new rows. Lookup remains `FlagDecreeIds.TryGet(...)`.
 

@@ -17,7 +17,6 @@ namespace SolarMajesty
                 { BuildingCategory.Power, "Buildings/SM_PWR1_PowerNode" },
                 { BuildingCategory.Mining, "Buildings/SM_OPS1_OperationsUnit" },
                 { BuildingCategory.Defense, "Buildings/SM_CMD1_CommandBuilding" },
-                { BuildingCategory.Utility, "Buildings/SM_ModularTubeConnector" },
                 { BuildingCategory.Laboratory, "Buildings/SM_LAB1_LaboratoryModule" },
                 // Unique modular kits (Farm / Mine / Camp / Workshops) are composed at runtime.
                 { BuildingCategory.Farm, "Buildings/SM_LAB1_LaboratoryModule" },
@@ -136,7 +135,6 @@ namespace SolarMajesty
         public static GameObject LoadCommandDome() => LoadByPath("Buildings/SM_CommandDome_CentralHub");
         public static GameObject LoadStarship() => LoadByPath("Environment/SM_Starship_Placeholder");
         public static GameObject LoadSolarArray() => LoadByPath("Buildings/SM_PWR1_SolarArray");
-        public static GameObject LoadConnector() => LoadByPath("Buildings/SM_ModularTubeConnector");
         public static GameObject LoadLaboratory() => LoadByPath("Buildings/SM_LAB1_LaboratoryModule");
 
         /// <summary>Prefer <see cref="EnvironmentMeshCatalog.LoadCrater"/>; kept for callers.</summary>

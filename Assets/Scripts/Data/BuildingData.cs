@@ -10,7 +10,7 @@ namespace SolarMajesty
     {
         [Header("Identity")]
         public string displayName = "Module";
-        public BuildingCategory category = BuildingCategory.Utility;
+        public BuildingCategory category = BuildingCategory.Habitat;
         [TextArea] public string description;
 
         [Header("Footprint (grid cells)")]

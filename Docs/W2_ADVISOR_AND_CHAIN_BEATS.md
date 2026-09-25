@@ -28,7 +28,7 @@ Flags stay **decrees**. The overseer posts them. Ego specialists take or ignore 
 
 **Spine:** empty drop → Raise the Commons → Dock the First HAB → greed Build lesson → Guild Charter → Seal Near Dens / Ward the Furrows as needed → Stage the Lunar Rocket → travel log **TO LUNA**.
 
-Tutorial HUD still walks Commons → airlock → HAB → workshop → flag → price (`OverseerHud` 1/6–6/6). Empty-start is the live drop: the court is not pre-built. Workshop has **no decree id** — it is tutorial dress on the HAB beat (robots fabricate outdoors; humans stay indoors). `earth.explore.survey_the_claim` and `earth.extract.levy_the_meadow_farm` support the court; they are not extra FlagTypes.
+Tutorial HUD walks Commons → HAB → workshop → flag → price (`OverseerHud` 1/6–6/6). Empty-start is the live drop: the court is not pre-built. Workshop has **no decree id** — it is tutorial dress on the HAB beat (workshops fabricate the robots; colonists run the village). `earth.explore.survey_the_claim` and `earth.extract.levy_the_meadow_farm` support the court; they are not extra FlagTypes.
 
 ### E0 — Empty drop
 
@@ -65,8 +65,8 @@ Tutorial HUD still walks Commons → airlock → HAB → workshop → flag → p
 | | |
 |---|---|
 | **Decree id** | `earth.build.dock_the_first_hab` |
-| **Advisor toast** | Dock the first HAB. Humans stay indoors; tax does not collect itself from a meadow. Anvil welds the airlock join — square socket, not a speech. |
-| **When** | post after Commons + airlock socket exist (tutorial 2/6–3/6). Workshop (4/6) is the same court lesson: no outdoor colonists. |
+| **Advisor toast** | Raise the first HAB. Beds become tax, and tax does not collect itself from a meadow. Anvil hangs the doors — square frames, not speeches. |
+| **When** | post after Commons exists (tutorial 2/6–3/6). Workshop (4/6) is the same court lesson: colonists never take bounties. |
 | **Claim aside** | Beds on the books. The meadow just became a ledger. |
 | **Hero hook** | Same Anvil Build claim. No new flavor asset. |
 
@@ -146,7 +146,7 @@ Tutorial HUD still walks Commons → airlock → HAB → workshop → flag → p
 
 **Spine:** arrival → tariff / Weigh the Freehold Ore → hopper-saboteur warrant → Crater Commons / Stake the Far Rim → Commission the Mars Ship → travel log **TO MARS**.
 
-Dock fee is 4 MET on Earth packages — the tithe. Arrival log already names hoppers + ticks; W2 leans into *who cut the hoppers loose*. `luna.explore.chart_the_tariff_rille`, `luna.defendarea.ward_the_weigh_station`, and `luna.build.fortify_the_airlocks` support the act.
+Dock fee is 4 MET on Earth packages — the tithe. Arrival log already names hoppers + ticks; W2 leans into *who cut the hoppers loose*. `luna.explore.chart_the_tariff_rille`, `luna.defendarea.ward_the_weigh_station`, and `luna.build.fortify_the_perimeter` support the act.
 
 ### L0 — Arrival
 
@@ -218,12 +218,12 @@ Dock fee is 4 MET on Earth packages — the tithe. Arrival log already names hop
 | **Claim aside** | Haul took the disc. They already said freight after. Believe them. |
 | **Hero hook** | Courier Outpost: *“Claim the cyan disc. Freight after.”* Do not rewrite. |
 
-### L7 — Fortify the Airlocks *(support)*
+### L7 — Fortify the Perimeter *(support)*
 
 | | |
 |---|---|
-| **Decree id** | `luna.build.fortify_the_airlocks` |
-| **Advisor toast** | Fortify the airlocks. Junction turrets are dressing — they look like courage. The labour is still a Build on a Battery or workshop order. |
+| **Decree id** | `luna.build.fortify_the_perimeter` |
+| **Advisor toast** | Fortify the perimeter. Battery turrets are dressing — they look like courage. The labour is still a Build on a Battery or workshop order. |
 | **When** | post on a live Defense Battery / workshop order after hoppers have visited. |
 | **Claim aside** | Anvil fortifies. Aegis will pretend it was their idea. |
 | **Hero hook** | Anvil Build claim. |
@@ -254,7 +254,7 @@ Dock fee is 4 MET on Earth packages — the tithe. Arrival log already names hop
 
 **Spine:** arrival → Compact seat → solar / wisps → dust furrows → Campus B / Weave the Crust optional → Belt Hauler + pad Build note → win travel log (Belt named only).
 
-Write for the packed white / orange campus Phase 4 is aiming at: geodesic Commons, HAB cylinder, square paneled airlocks, solar field, pad + craft. Do **not** write the empty Sol 1 still as canon. Wonders (Climate Loom / Aegis Spire / Deep Archive) are optional prestige asides after the three gates — no new decree ids.
+Write for the packed white / orange campus Phase 4 is aiming at: geodesic Commons, HAB cylinder, solar field, pad + craft — free-standing buildings, no airlocks or tubes. Do **not** write the empty Sol 1 still as canon. Wonders (Climate Loom / Aegis Spire / Deep Archive) are optional prestige asides after the three gates — no new decree ids.
 
 ### M0 — Arrival
 
@@ -367,7 +367,7 @@ Primary fire per row. Claim asides live in the chain beats. Travel rows have no 
 | — | Earth | — | The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic. | travel |
 | `earth.explore.survey_the_claim` | Earth | Explore | Chart the apron so the court knows where the orange disc ends and the meadow begins. Fog can wait. Guessing is undignified. | post |
 | `earth.build.raise_the_commons` | Earth | Build | Raise the Commons first. A court that meets in the dirt is a picnic, not a reign. Place the civic, then post Build on the live order. | post |
-| `earth.build.dock_the_first_hab` | Earth | Build | Dock the first HAB. Humans stay indoors; tax does not collect itself from a meadow. Anvil welds the airlock join — square socket, not a speech. | post |
+| `earth.build.dock_the_first_hab` | Earth | Build | Raise the first HAB. Beds become tax, and tax does not collect itself from a meadow. Anvil hangs the doors — square frames, not speeches. | post |
 | — | Earth | Build | Anvil will not weld for pocket change. Seventy is a suggestion; tempted is a fact. Raise the bounty until the chip admits it. | post |
 | `earth.extract.levy_the_meadow_farm` | Earth | Extract | Levy the meadow farm. ICE is life support, not a beverage program. Creepers will RSVP. | post |
 | `earth.researchsite.charter_the_hall` | Earth | ResearchSite | Charter the hall. A court without a guild is stationery. Field Survey, then Hab Ops, then the Charter — dock CMD-1 dress and assign Horizon / Anvil / Aegis / Triage. | post |
@@ -382,7 +382,7 @@ Primary fire per row. Claim asides live in the chain beats. Travel rows have no 
 | `luna.clearthreat.root_the_hopper_saboteurs` | Luna | ClearThreat | Someone cut the hoppers loose on the HAB. Post a warrant, not a sermon. Clear Threat. Ask later who paid them. | claim |
 | `luna.build.raise_the_crater_commons` | Luna | Build | Raise a Commons on grey rock. Authority that sits in a crater still has to sit somewhere. Same civic gate as Earth. HUD still says COMMONS. | post |
 | `luna.establishoutpost.stake_the_far_rim` | Luna | EstablishOutpost | Stake the far rim. The cyan disc is Campus B, not a picnic site. Haul claims it. Freight after. | post |
-| `luna.build.fortify_the_airlocks` | Luna | Build | Fortify the airlocks. Junction turrets are dressing — they look like courage. The labour is still a Build on a Battery or workshop order. | post |
+| `luna.build.fortify_the_perimeter` | Luna | Build | Fortify the perimeter. Battery turrets are dressing — they look like courage. The labour is still a Build on a Battery or workshop order. | post |
 | `luna.researchsite.commission_the_mars_ship` | Luna | ResearchSite | Commission the Mars Ship. The Compact is not a rumor. It is 100 science, 80 MET, 30 ICE, 20 PWR, and a pad you still have to weld. | post |
 | — | Luna | — | Luna holds. Mars Ship staged. Next body: Mars. Pack guild manners. The Compact does not curtsy. | travel |
 | — | Mars | — | Mars descent. Compact ground. Dust wisps already have opinions about Power. Raise the seat before the dust files a claim of its own. | travel |

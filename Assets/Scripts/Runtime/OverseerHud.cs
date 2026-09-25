@@ -174,7 +174,7 @@ namespace SolarMajesty
             var body = _loop.BodyProfile;
             string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
                 ? body.Briefing
-                : "Colony Commons is down. Dock modules via airlocks.";
+                : "Colony Commons is down. Build anywhere on open ground.";
             Toast(briefing, 6.5f);
         }
 
@@ -254,35 +254,100 @@ namespace SolarMajesty
         private void Meter(Rect r, float t01, Color fill) => HudSkin.Meter(r, t01, fill);
 
         /// <summary>
-        /// Speed readout plus four clickable notches. Space, comma, and period drive the same state,
-        /// but the notches make the feature discoverable to a player who never reads a key list.
+        /// Game speed: hold/resume, slower, the current pace, faster, and a row of pips (one per
+        /// running speed, clickable). Space, comma/period and −/+ drive the same state; the buttons
+        /// make it discoverable to a player who never reads a key list.
         /// </summary>
         private void DrawSpeedControl(Rect r)
         {
             bool paused = SimSpeed.IsPaused;
-            var glyph = UiIcons.Get(paused ? IconId.Pause : IconId.Play);
-            HudSkin.Icon(new Rect(r.x, r.y + 2f, 10f, 10f), glyph, paused ? Alarm : Gold);
-            GUI.Label(new Rect(r.x + 12f, r.y, r.width - 12f, 14f),
-                paused ? "HOLD" : SimSpeed.Label,
-                paused ? _microAlarm : _microRight);
+            const float btn = 22f;
+            const float h = 20f;
+            float x = r.x;
 
-            int count = SimSpeed.Multipliers.Length;
-            float notchW = (r.width - (count - 1) * 3f) / count;
-            var row = new Rect(r.x, r.y + 18f, notchW, 5f);
-
-            for (int i = 0; i < count; i++)
+            var hold = new Rect(x, r.y, btn, h);
+            if (SpeedButton(hold, UiIcons.Get(paused ? IconId.Play : IconId.Pause), null, paused, true))
             {
+                SimSpeed.TogglePause();
+                _loop.OnSpeedChanged();
+            }
+            Tooltip(hold, paused ? "RESUME   ·   SPACE" : "HOLD   ·   SPACE");
+            x += btn + 4f;
+
+            var slower = new Rect(x, r.y, btn, h);
+            if (SpeedButton(slower, null, "−", false, !SimSpeed.IsSlowest))
+            {
+                SimSpeed.Slower();
+                _loop.OnSpeedChanged();
+            }
+            Tooltip(slower, "SLOWER   ·   ,  or  −");
+            x += btn + 2f;
+
+            var readout = new Rect(x, r.y, r.xMax - x - btn - 2f, h);
+            HudSkin.Well(readout);
+            var prev = _numberSmall.alignment;
+            var prevColor = _numberSmall.normal.textColor;
+            _numberSmall.alignment = TextAnchor.MiddleCenter;
+            _numberSmall.normal.textColor = paused ? Alarm : TextPrimary;
+            GUI.Label(readout, paused ? "HOLD" : SimSpeed.Label, _numberSmall);
+            _numberSmall.alignment = prev;
+            _numberSmall.normal.textColor = prevColor;
+            Tooltip(readout, "GAME SPEED   ·   1× IS THE COLONY'S NORMAL PACE");
+
+            var faster = new Rect(readout.xMax + 2f, r.y, btn, h);
+            if (SpeedButton(faster, null, "+", false, !SimSpeed.IsFastest || paused))
+            {
+                SimSpeed.Faster();
+                _loop.OnSpeedChanged();
+            }
+            Tooltip(faster, "FASTER   ·   .  or  +");
+
+            // One pip per running speed; the 1× pip is brass so the default is easy to find again.
+            int steps = SimSpeed.Multipliers.Length - 1;
+            float gap = 2f;
+            float pipW = (r.width - gap * (steps - 1)) / steps;
+            float py = r.y + h + 4f;
+            for (int i = 1; i <= steps; i++)
+            {
+                var pip = new Rect(r.x + (i - 1) * (pipW + gap), py, pipW, 3f);
+                var hit = new Rect(pip.x, pip.y - 4f, pip.width, pip.height + 8f);
                 bool lit = !paused && i <= SimSpeed.Index;
-                var hit = new Rect(row.x, row.y - 5f, row.width, row.height + 10f);
+                bool normal = Mathf.Approximately(SimSpeed.Multipliers[i], 1f);
                 bool hot = hit.Contains(Event.current.mousePosition);
-                HudSkin.Pill(row, lit ? Accent : new Color(1f, 1f, 1f, hot ? 0.28f : 0.12f));
+                Color c = lit ? Accent : normal ? new Color(Gold.r, Gold.g, Gold.b, 0.55f) : new Color(1f, 1f, 1f, hot ? 0.30f : 0.12f);
+                HudSkin.Pill(pip, c);
                 if (GUI.Button(hit, GUIContent.none, GUIStyle.none))
                 {
                     SimSpeed.Set(i);
-                    _loop.ApplySimSpeed();
+                    _loop.OnSpeedChanged();
                 }
-                row.x += notchW + 3f;
+                Tooltip(hit, SimSpeed.LabelFor(i));
             }
+        }
+
+        /// <summary>Small square button for the speed control: icon or glyph, dimmed when it can't act.</summary>
+        private bool SpeedButton(Rect r, Texture2D icon, string glyph, bool on, bool enabled)
+        {
+            bool hot = enabled && r.Contains(Event.current.mousePosition);
+            var prev = GUI.color;
+            if (!enabled) GUI.color = new Color(prev.r, prev.g, prev.b, prev.a * 0.4f);
+            HudSkin.DrawPlate(r, on ? HudSkin.Plate.Primary : HudSkin.Plate.Quiet, hot);
+            Color tint = on ? Ink : hot ? Color.white : TextPrimary;
+            if (icon != null)
+                HudSkin.Icon(HudSkin.Expand(r, -5f), icon, tint);
+            else
+            {
+                var st = _tooltipStyle;
+                var c = st.normal.textColor;
+                int size = st.fontSize;
+                st.normal.textColor = tint;
+                st.fontSize = 15;
+                GUI.Label(new Rect(r.x, r.y - 1f, r.width, r.height), glyph, st);
+                st.normal.textColor = c;
+                st.fontSize = size;
+            }
+            GUI.color = prev;
+            return GUI.Button(r, GUIContent.none, GUIStyle.none) && enabled;
         }
 
         private void Bar(Rect r, string label, float t01, Color fill)
@@ -715,9 +780,9 @@ namespace SolarMajesty
         {
             int sol = 1 + Mathf.FloorToInt((_loop.Mission != null ? _loop.Mission.MissionElapsed : 0f) / MajestyEconomy.DaySeconds);
             HudSkin.Icon(new Rect(r.x, r.y, 13f, 13f), UiIcons.Get(IconId.Sun), Gold);
-            GUI.Label(new Rect(r.x + 18f, r.y - 1f, r.width - 90f, 15f), $"SOL {sol}", _section);
-            GUI.Label(new Rect(r.x, r.y + 15f, r.width - 76f, 12f), ReplayRules.HudTag, _micro);
-            DrawSpeedControl(new Rect(r.xMax - 64f, r.y, 62f, 26f));
+            GUI.Label(new Rect(r.x + 18f, r.y - 1f, r.width - 136f, 15f), $"SOL {sol}", _section);
+            GUI.Label(new Rect(r.x, r.y + 15f, r.width - 122f, 12f), ReplayRules.HudTag, _micro);
+            DrawSpeedControl(new Rect(r.xMax - 116f, r.y - 2f, 116f, 27f));
 
             int posted = _loop.Flags != null && _loop.Flags.Flags != null ? _loop.Flags.Flags.Count : 0;
             GUI.Label(new Rect(r.x, r.y + 30f, 70f, 13f), "BOUNTIES", _caps);
@@ -956,7 +1021,7 @@ namespace SolarMajesty
 
             if (_flagMinimized)
             {
-                DrawMinimizedToolStrip(dockTop, DockLeft(), 300f, FlagStripLabel(fp), "G catalog");
+                DrawMinimizedFlagStrip(fp, dockTop, DockLeft(), 300f);
                 return;
             }
 
@@ -1044,8 +1109,10 @@ namespace SolarMajesty
             bool on = fp.SelectedFlag == data;
             if (GUI.Button(r, GUIContent.none, on ? _rowOn : _rowOff))
             {
+                // Pick, then get out of the way: the next click on the map posts the flag.
                 _loop.SetTool(OverseerTool.Flag);
                 fp.SelectFlag(data);
+                _flagMinimized = true;
             }
 
             HudSkin.Dot(new Vector2(r.x + 11f, r.center.y), 8f, data.bannerColor);
@@ -1061,8 +1128,8 @@ namespace SolarMajesty
             if (_buildMinimized)
             {
                 string name = bp.Selected != null ? bp.Selected.displayName : "module";
-                DrawMinimizedToolStrip(dockTop, DockLeft() + 102f, 320f,
-                    name.ToUpperInvariant() + " · LMB place", "B catalog");
+                DrawMinimizedToolStrip(OverseerTool.Build, dockTop, DockLeft() + 102f, 320f,
+                    name.ToUpperInvariant(), "click the map to place · click here for the list", "B");
                 return;
             }
 
@@ -1101,8 +1168,10 @@ namespace SolarMajesty
 
                 if (GUI.Button(r, GUIContent.none, on ? _rowOn : _rowOff) && !locked)
                 {
+                    // Pick, then get out of the way: the next click on the map places it.
                     _loop.SetTool(OverseerTool.Build);
                     bp.SelectBuilding(i);
+                    _buildMinimized = true;
                 }
 
                 GUI.Label(new Rect(r.x + 8f, r.y, 18f, r.height), BuildHotkeyLabel(slot), on ? _onText : _micro);
@@ -1159,18 +1228,64 @@ namespace SolarMajesty
             string name = data != null && !string.IsNullOrEmpty(data.displayName)
                 ? data.displayName
                 : "flag";
-            return name.ToUpperInvariant() + " · LMB place";
+            return name.ToUpperInvariant();
         }
 
-        private void DrawMinimizedToolStrip(float dockTop, float left, float width, string title, string hint)
+        /// <summary>
+        /// Collapsed catalog: what is armed for placement. Clicking the strip re-opens the list
+        /// (as does B / G). The map stays clear for the placing click.
+        /// </summary>
+        private void DrawMinimizedToolStrip(
+            OverseerTool tool, float dockTop, float left, float width, string title, string hint, string key)
+        {
+            const float h = 36f;
+            var rect = new Rect(left, dockTop - 8f - h, width, h);
+            _contentBottom = rect.y;
+            bool hot = rect.Contains(Event.current.mousePosition);
+            var c = Panel(rect, null);
+            if (hot) HudSkin.RuleH(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Gold);
+            HudSkin.Pill(new Rect(rect.x + 6f, rect.y + 9f, 3f, rect.height - 18f), Accent);
+            GUI.Label(new Rect(c.x, c.y - 6f, c.width - 30f, 18f), title, _value);
+            GUI.Label(new Rect(c.x, c.y + 9f, c.width - 30f, 12f), hint, _micro);
+            var keyRect = new Rect(c.xMax - 22f, rect.y + 9f, 22f, 18f);
+            HudSkin.Well(keyRect);
+            GUI.Label(keyRect, key, _tooltipStyle);
+            if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
+                ExpandMenu(tool);
+            Tooltip(rect, $"OPEN THE LIST   ·   {key}");
+        }
+
+        /// <summary>Collapsed flag catalog: the armed flag, its bounty with − / +, and a way back to the list.</summary>
+        private void DrawMinimizedFlagStrip(FlagPlacementInput fp, float dockTop, float left, float width)
         {
             const float h = 36f;
             var rect = new Rect(left, dockTop - 8f - h, width, h);
             _contentBottom = rect.y;
             var c = Panel(rect, null);
             HudSkin.Pill(new Rect(rect.x + 6f, rect.y + 9f, 3f, rect.height - 18f), Accent);
-            GUI.Label(new Rect(c.x, c.y, c.width - 88f, c.height), title, _value);
-            GUI.Label(new Rect(c.xMax - 86f, c.y + 2f, 86f, c.height - 4f), hint, _microRight);
+
+            // Bounty stays adjustable without re-opening the list; those buttons come first so the
+            // strip's own "open the list" button below does not swallow their clicks.
+            var minus = new Rect(c.xMax - 56f, rect.y + 8f, 26f, 20f);
+            var plus = new Rect(c.xMax - 28f, rect.y + 8f, 26f, 20f);
+            if (GUI.Button(minus, "−", _chipOff)) fp.NudgeBounty(-MajestyEconomy.FlagBountyStep);
+            if (GUI.Button(plus, "+", _chipOff)) fp.NudgeBounty(MajestyEconomy.FlagBountyStep);
+            var prev = _number.alignment;
+            _number.alignment = TextAnchor.MiddleRight;
+            var prevC = _number.normal.textColor;
+            _number.normal.textColor = fp.CanAffordSelectedBounty() ? HudSkin.GoldBright : Alarm;
+            GUI.Label(new Rect(minus.x - 64f, rect.y, 60f, rect.height), $"${_loop.FlagBounty:F0}", _number);
+            _number.alignment = prev;
+            _number.normal.textColor = prevC;
+
+            var open = new Rect(rect.x, rect.y, minus.x - 66f - rect.x, rect.height);
+            bool hot = open.Contains(Event.current.mousePosition);
+            if (hot) HudSkin.RuleH(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Gold);
+            GUI.Label(new Rect(c.x, c.y - 6f, open.width - Pad, 18f), FlagStripLabel(fp), _value);
+            GUI.Label(new Rect(c.x, c.y + 9f, open.width - Pad, 12f), "click the map to post", _micro);
+            if (GUI.Button(open, GUIContent.none, GUIStyle.none))
+                ExpandMenu(OverseerTool.Flag);
+            Tooltip(open, "OPEN THE FLAG LIST   ·   G");
         }
 
         private bool Chip(Rect r, string label, bool on) =>
@@ -1404,7 +1519,7 @@ namespace SolarMajesty
                 ? (st.Residents > 0
                     ? (st.LevyPurse > 0
                         ? $"House tax {st.LevyPurse} EU sitting — a tax collector walks it home."
-                        : "Colonists indoors — house tax sits until a tax collector walks it home.")
+                        : "Colonists live here — house tax sits until a tax collector walks it home.")
                     : "Empty beds — seed crew arrives with the first HAB.")
                 : (st.LevyPurse > 0 && !st.IsTreasuryChest
                     ? $"{FormatWorkers(st)} · till {st.LevyPurse} EU"
@@ -1417,7 +1532,7 @@ namespace SolarMajesty
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     st.LevyPurse > 0
                         ? $"House tax {st.LevyPurse} EU — tax collectors carry it to Commons."
-                        : "Humans stay in HABs. Outdoor work is robots from workshops.", _micro);
+                        : "Home to colonists. Bounty work falls to robots from workshops.", _micro);
             }
             else if (st.IsFobotYard)
             {
@@ -2182,12 +2297,10 @@ namespace SolarMajesty
                     Vector3 b = _loop.Grid.CellToWorld(
                         piece.Origin + new Vector2Int(piece.Width - 1, piece.Height - 1));
                     Vector3 mid = (a + b) * 0.5f;
-                    Color col = piece.IsAirlock
-                        ? Accent
-                        : piece.Category == BuildingCategory.Commons
-                            ? HudSkin.GoldBright
-                            : new Color(0.90f, 0.91f, 0.93f);
-                    Pip(mid, col, piece.IsAirlock ? 3f : 4.5f);
+                    Color col = piece.Category == BuildingCategory.Commons
+                        ? HudSkin.GoldBright
+                        : new Color(0.90f, 0.91f, 0.93f);
+                    Pip(mid, col, 4.5f);
                 }
             }
 
@@ -3009,14 +3122,13 @@ namespace SolarMajesty
             {
                 BuildingCategory.Commons,
                 BuildingCategory.Habitat,
-                BuildingCategory.Utility,
                 BuildingCategory.EngineerWorkshop
             };
 
             var rect = new Rect(M, M, TopW, 118f);
             var c = Panel(rect, "Drop manifest");
             float y = c.y;
-            GUI.Label(new Rect(c.x, y, c.width, 13f), "COMMONS → airlock sockets → HAB / workshops. Lego campus only.", _micro);
+            GUI.Label(new Rect(c.x, y, c.width, 13f), "COMMONS first, then HAB and workshops anywhere on open ground.", _micro);
             y += 16f;
             for (int w = 0; w < want.Length; w++)
             {

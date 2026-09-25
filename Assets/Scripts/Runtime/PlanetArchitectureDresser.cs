@@ -8,7 +8,7 @@ namespace SolarMajesty
     /// kit colours for the world: printed regolith walls on Mars, ice shields on Europa, spin
     /// rings in the Belt, regolith berms on Luna, gardens on Earth. Parts live under a
     /// <c>Dress_Arch</c> child (IndustrialArtDressing skips Dress_ names) with no colliders, so
-    /// placement, pathing and airlock docking are unchanged. See Docs/PLANET_ARCHITECTURE.md.
+    /// placement and pathing are unchanged. See Docs/PLANET_ARCHITECTURE.md.
     /// </summary>
     public static class PlanetArchitectureDresser
     {
@@ -25,13 +25,13 @@ namespace SolarMajesty
 
         /// <summary>
         /// Dress a building that has already been snapped to the ground (ground = world y 0).
-        /// No-op for utility junctions, when the setting is off, or before a body is bound.
+        /// No-op for retired categories, when the setting is off, or before a body is bound.
         /// </summary>
         public static void Dress(GameObject root, BuildingCategory category, CelestialBodyId body,
             float worldW, float worldD)
         {
             if (root == null || !DemoSettings.PlanetArchitecture) return;
-            if (category == BuildingCategory.Utility) return;
+            if (BuildingPlacer.IsRetired(category)) return;
 
             var archetype = PlanetArchitecture.ArchetypeOf(category);
             var style = PlanetArchitecture.Style(body);
@@ -77,7 +77,6 @@ namespace SolarMajesty
         }
 
         private static bool IsPortName(string n) =>
-            CampusDressing.IsDockDressName(n) || n.StartsWith("Airlock") || n.Contains("AirlockHub") ||
             n.Contains("Port") || n.StartsWith("Dress_");
 
         /// <summary>Kit colours → this world's palette and dust, per renderer (materials stay shared).</summary>

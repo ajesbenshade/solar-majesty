@@ -374,66 +374,14 @@ namespace SolarMajesty.EditorTools
                       " hab=" + habR + " commons=" + comR + " lab=" + labR +
                       " power=" + pwrR + " pad=" + padR +
                       " guild=" + guildR + " ops=" + opsR + " farm=" + farmR);
-            SmokeDockFlush();
             Debug.Log("[Smoke] hero FBX ok=" + ok + " miss=" + miss +
                       (miss == 0 ? " SMOKE_OK" : " SMOKE_PARTIAL"));
-        }
-
-        /// <summary>
-        /// Commons (9 m) + 2×2 airlock + HAB (6 m) on a cardinal spine.
-        /// Orange collars should kiss at the Lego faces (z≈4.55 and z≈7.45).
-        /// </summary>
-        private static void SmokeDockFlush()
-        {
-            var root = new GameObject("Smoke_DockFlush");
-            var commons = ModularBuildingFactory.Spawn(
-                BuildingCategory.Commons, Vector3.zero, root.transform);
-            var airlock = ModularBuildingFactory.Spawn(
-                BuildingCategory.Utility, new Vector3(0f, 0f, 6f), root.transform);
-            var hab = ModularBuildingFactory.Spawn(
-                BuildingCategory.Habitat, new Vector3(0f, 0f, 10.5f), root.transform);
-            float cN = NearestCollarZ(commons, 4.55f);
-            float aS = NearestCollarZ(airlock, 4.55f);
-            float aN = NearestCollarZ(airlock, 7.45f);
-            float hS = NearestCollarZ(hab, 7.45f);
-            float dCommons = Mathf.Abs(cN - aS);
-            float dHab = Mathf.Abs(aN - hS);
-            bool flush = dCommons <= 0.12f && dHab <= 0.12f;
-            Debug.Log("[Smoke] dock flush Commons|airlock Δz=" + dCommons.ToString("0.000") +
-                      " airlock|HAB Δz=" + dHab.ToString("0.000") +
-                      " collars z=" + cN.ToString("0.00") + "/" + aS.ToString("0.00") +
-                      " " + aN.ToString("0.00") + "/" + hS.ToString("0.00") +
-                      (flush ? " FLUSH_OK" : " FLUSH_GAP"));
-            if (!flush)
-                Debug.LogWarning("[Smoke] dock collars are not flush at the Lego face.");
-            Object.DestroyImmediate(root);
-        }
-
-        private static float NearestCollarZ(GameObject go, float targetZ)
-        {
-            if (go == null) return float.NaN;
-            float best = float.NaN;
-            float bestD = 999f;
-            var ts = go.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < ts.Length; i++)
-            {
-                if (ts[i] == null || ts[i].name.IndexOf("Collar", System.StringComparison.Ordinal) < 0)
-                    continue;
-                float z = ts[i].position.z;
-                float d = Mathf.Abs(z - targetZ);
-                if (d < bestD)
-                {
-                    bestD = d;
-                    best = z;
-                }
-            }
-            return best;
         }
 
         private const string MarsStillRel = "Docs/Roadmap/SM_MarsCampaign_EditorStill.png";
 
         /// <summary>
-        /// Edit-mode Camera.Render of a Mars-graded Commons + airlock + HAB.
+        /// Edit-mode Camera.Render of a Mars-graded Commons + HAB.
         /// Not a Game-tab HUD still. CLI: -executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CaptureMarsStill
         /// </summary>
         [MenuItem("Solar Majesty/Capture Mars Still")]
@@ -488,8 +436,6 @@ namespace SolarMajesty.EditorTools
             buildings.transform.SetParent(root.transform);
             var commons = ModularBuildingFactory.Spawn(
                 BuildingCategory.Commons, o, buildings.transform);
-            var airlock = ModularBuildingFactory.Spawn(
-                BuildingCategory.Utility, o + new Vector3(0f, 0f, 6f), buildings.transform);
             var hab = ModularBuildingFactory.Spawn(
                 BuildingCategory.Habitat, o + new Vector3(0f, 0f, 10.5f), buildings.transform);
 
@@ -499,7 +445,6 @@ namespace SolarMajesty.EditorTools
             habData.category = BuildingCategory.Habitat;
             CampusDressing.DressPlaced(commonsData, commons, mars);
             CampusDressing.DressPlaced(habData, hab, mars);
-            RefreshCaptureDocks(grid, buildings.transform, o);
 
             int w = 1920;
             int h = 1080;
@@ -530,7 +475,6 @@ namespace SolarMajesty.EditorTools
             bool live = avg >= 12f;
             Debug.Log("[Capture] Mars still avgLum=" + avg.ToString("0.0") +
                       " commons=" + (commons != null) +
-                      " airlock=" + (airlock != null) +
                       " hab=" + (hab != null) +
                       (live ? " CAPTURE_OK" : " CAPTURE_BLACK"));
 
@@ -554,7 +498,7 @@ namespace SolarMajesty.EditorTools
         private const string PackedStillRel = "Docs/Roadmap/SM_MarsCampaign_PackedCampusStill.png";
 
         /// <summary>
-        /// Edit-mode Camera.Render of a packed Mars campus: Commons + airlock + HAB + pad + solar + extractors.
+        /// Edit-mode Camera.Render of a packed Mars campus: Commons + HAB + pad + solar + extractors.
         /// Archive packed Camera.Render still only — not the Phase 4 EXIT look claim. Does not flip spawnShowcaseColony.
         /// Not a Game-tab HUD still. CLI: -executeMethod SolarMajesty.EditorTools.DemoContentBuilder.CapturePackedMarsStill
         /// </summary>
@@ -609,7 +553,6 @@ namespace SolarMajesty.EditorTools
             var buildings = new GameObject("Buildings");
             buildings.transform.SetParent(root.transform);
             var commons = ModularBuildingFactory.Spawn(BuildingCategory.Commons, o, buildings.transform);
-            var airlock = ModularBuildingFactory.Spawn(BuildingCategory.Utility, o + new Vector3(0f, 0f, 6f), buildings.transform);
             var hab = ModularBuildingFactory.Spawn(BuildingCategory.Habitat, o + new Vector3(0f, 0f, 10.5f), buildings.transform);
             var pad = ModularBuildingFactory.Spawn(BuildingCategory.LandingPad, o + new Vector3(14f, 0f, 2f), buildings.transform);
             var pwr = ModularBuildingFactory.Spawn(BuildingCategory.Power, o + new Vector3(-12f, 0f, 2f), buildings.transform);
@@ -630,7 +573,6 @@ namespace SolarMajesty.EditorTools
             Dress(BuildingCategory.Power, pwr);
             Dress(BuildingCategory.Farm, farm);
             Dress(BuildingCategory.RegolithCamp, camp);
-            RefreshCaptureDocks(grid, buildings.transform, o);
 
             int w = 1920;
             int h = 1080;
@@ -680,23 +622,6 @@ namespace SolarMajesty.EditorTools
         }
 
         /// <summary>
-        /// Hide unused CommonsPort / sleeves, then enable the capture spine's
-        /// docked north face only. Does not write a Game-tab still.
-        /// </summary>
-        private static void RefreshCaptureDocks(IsoGrid grid, Transform buildings, Vector3 commonsCenter)
-        {
-            if (grid == null || buildings == null) return;
-            var placer = new BuildingPlacer(new ResourceManager());
-            Vector2Int c0 = OriginFromCenter(grid, commonsCenter, 6);
-            Vector2Int a0 = OriginFromCenter(grid, commonsCenter + new Vector3(0f, 0f, 6f), 2);
-            Vector2Int h0 = OriginFromCenter(grid, commonsCenter + new Vector3(0f, 0f, 10.5f), 4);
-            placer.RegisterPiece(c0, 6, 6, BuildingCategory.Commons);
-            placer.RegisterPiece(a0, 2, 2, BuildingCategory.Utility);
-            placer.RegisterPiece(h0, 4, 4, BuildingCategory.Habitat);
-            CampusDressing.RefreshTubes(placer, grid, buildings);
-        }
-
-        /// <summary>
         /// Edit-mode Camera.Render of materials created in the same frame leaks one material's
         /// UnityPerMaterial constants across every SM_Hull draw under the SRP Batcher (all hulls
         /// render as one slot — orange/black/brown depending on upload order). Play mode is
@@ -718,13 +643,6 @@ namespace SolarMajesty.EditorTools
             }
         }
 
-        private static Vector2Int OriginFromCenter(IsoGrid grid, Vector3 center, int side)
-        {
-            float cs = grid.CellSize;
-            int span = Mathf.Max(1, side);
-            Vector3 corner = center - new Vector3((span - 1) * 0.5f * cs, 0f, (span - 1) * 0.5f * cs);
-            return grid.WorldToCell(corner);
-        }
     }
 }
 #endif

@@ -605,7 +605,7 @@ namespace SolarMajesty
                     HasPreferredClass = true;
                     break;
                 case BuildingCategory.Habitat:
-                    // Humans live indoors — no outdoor robot duty class.
+                    // Colonists' homes — no robot duty class.
                     HasPreferredClass = false;
                     break;
                 default:
@@ -650,7 +650,6 @@ namespace SolarMajesty
                 case BuildingCategory.Defense: return "Defense Battery";
                 case BuildingCategory.Mining: return "Ops Unit";
                 case BuildingCategory.LandingPad: return "Landing Pad";
-                case BuildingCategory.Utility: return "Airlock";
                 default: return "Module";
             }
         }

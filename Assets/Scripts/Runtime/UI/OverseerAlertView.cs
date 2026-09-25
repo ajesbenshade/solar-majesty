@@ -16,6 +16,8 @@ namespace SolarMajesty
         private GameLoop _loop;
         private OverseerHud _hud;
         private readonly List<Alert> _sorted = new List<Alert>(8);
+        private readonly List<Rect> _hitRects = new List<Rect>(8);
+        private float _hitScale = 1f;
         private GUIStyle _text;
         private GUIStyle _legendTitle;
         private GUIStyle _legendLabel;
@@ -37,6 +39,7 @@ namespace SolarMajesty
 
         private void OnGUI()
         {
+            if (Event.current.type == EventType.Layout) _hitRects.Clear();
             if (_loop == null || _loop.Screen != DemoScreen.Playing) return;
 
             EnsureStyles();
@@ -48,6 +51,7 @@ namespace SolarMajesty
             feed.Sorted(_sorted);
 
             float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
+            _hitScale = s;
             float sw = Screen.width / s;
             var prev = GUI.matrix;
             GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(s, s, 1f));
@@ -69,6 +73,7 @@ namespace SolarMajesty
             {
                 Alert alert = _sorted[i];
                 var rect = new Rect(x, y, width, 36f);
+                if (Event.current.type == EventType.Layout) _hitRects.Add(rect);
                 Color sev = ColorFor(alert.Severity);
                 bool critical = alert.Severity == AlertSeverity.Critical;
                 bool hot = rect.Contains(Event.current.mousePosition);
@@ -97,6 +102,15 @@ namespace SolarMajesty
 
                 y += 42f;
             }
+        }
+
+        /// <summary>The mouse is over an alert card (so a click there is not a map click).</summary>
+        public bool PointerOverCards()
+        {
+            Vector2 m = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y) / _hitScale;
+            for (int i = 0; i < _hitRects.Count; i++)
+                if (_hitRects[i].Contains(m)) return true;
+            return false;
         }
 
         private void DrawLegend(float sh)

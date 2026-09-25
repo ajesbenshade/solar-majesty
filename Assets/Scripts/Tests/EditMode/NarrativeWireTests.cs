@@ -30,7 +30,7 @@ namespace SolarMajesty.Tests
         public void TryMatchPosted_UsesTitleBeforeUniqueType()
         {
             Assert.IsTrue(FlagDecreeIds.TryMatchPosted(
-                FlagType.Build, "Dock the First HAB", CelestialBodyId.Earth, out var d));
+                FlagType.Build, "Raise the First HAB", CelestialBodyId.Earth, out var d));
             Assert.AreEqual(FlagDecreeIds.EarthDockTheFirstHab, d.Id);
         }
 

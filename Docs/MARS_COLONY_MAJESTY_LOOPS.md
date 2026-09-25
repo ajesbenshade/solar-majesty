@@ -44,7 +44,7 @@ Hard locks (never violate):
 - No click-to-move. No unit orders. Player verbs stay: buildings, flags (post / cancel / re-price), research, camera, parties, inspect, pay the yard.
 - Do not rewrite `SpecialistBrain.ScoreFlag` without a section titled `REQUIRES DESIGN SIGN-OFF`.
 - Do not add a `FlagType`. Do not add an 11th specialist class.
-- Humans live only inside HABs. Everything outdoors is a robot.
+- Colonists run the village; bounty work is done by robots from workshops.
 - COMMONS is the civic name — never Palace, never CMD as a place.
 - No Majesty 2 / Paradox proper names (no tax collectors guild, no royal tax, no temple, no hero titles).
 - Ice *is* water. Do not add an H2O chip. Do not hide the ICE chip.
@@ -211,7 +211,7 @@ Later rewrite (not this pass): [`W2_ADVISOR_AND_CHAIN_BEATS.md`](W2_ADVISOR_AND_
 **Luna tutorial (training wheels on)**
 
 1. Drop: “Welcome to a rock that already has a landlord. Raise a Commons before the Freeholds invoice the crater.”
-2. First HAB: “Humans stay indoors. Everything that walks is a robot. Try not to mix them up — it gets philosophical.”
+2. First HAB: “Colonists run the village. Robots take the contracts. Try not to mix them up — it gets philosophical.”
 3. First flag: “That is a decree, not a leash. Post it. If nobody wants it, that is a *you* problem.”
 4. Greed-ask: “Anvil wants 79. He can count. Raise the bounty or enjoy the scenery.”
 5. First levy walk: “See the crate on wheels? That is your tax collector. We are not calling it that. Do not click it.”

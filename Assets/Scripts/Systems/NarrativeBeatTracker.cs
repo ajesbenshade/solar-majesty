@@ -161,7 +161,7 @@ namespace SolarMajesty
                         id = FlagDecreeIds.LunaRaiseTheCraterCommons;
                         return true;
                     }
-                    id = FlagDecreeIds.LunaFortifyTheAirlocks;
+                    id = FlagDecreeIds.LunaFortifyThePerimeter;
                     return true;
                 case CelestialBodyId.Mars:
                     if (!hint.HasCommons)

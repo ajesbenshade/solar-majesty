@@ -45,12 +45,11 @@ personalities collide with them, and your only lever on a crisis is money.
    propose changes to what feeds *into* the brain (context values, bonuses, hunger, courage,
    flag risk, consider range) — that path is already used for difficulty modifiers and is the
    intended extension point.
-3. **Humans live only inside HABs.** They are population, beds, tax and births — never outdoor
-   agents. Everything walking around outside is a **robot** fabricated by a workshop.
-4. **Buildings are Lego.** Colony Commons (6×6) is the first landmark. Square 2×2 **Airlock
-   Junctions** snap only to the face midlines of a module, and every other module must dock onto
-   an airlock end. Tubes and domes are cosmetic cladding, not a pathfinding graph. Do not
-   propose free-form placement or rotation.
+3. **Colonists run the village; robots take the contracts.** HABs give colonists beds, births and
+   tax. Bounty work is done by **robots** fabricated by workshops — colonists never take flags.
+4. **Free placement.** Colony Commons (6×6) is the first landmark; after it, any building goes on
+   open ground it fits. There are no airlocks, tubes or docking rules between buildings. Do not
+   propose rotation.
 5. **No new art requirements.** Art is mid-pass in a separate phase and is the bottleneck.
    Assume you can reuse existing primitives, existing building kits, HUD text, and simple VFX
    (rings, sparks, scorch decals, floating text). Do not design anything that needs a new
@@ -163,8 +162,7 @@ Bounty adjusts in steps of 15. **Only one robot's work advances a flag — progr
 - **Mitigation:** shop armour only — 18% or 32%.
 - **No ranges, no cooldowns, no projectiles, no counters, no focus fire.** Combat is contact dps.
 - **`BuildingCategory.Defense` — "Defense Battery", 60 MET — has zero combat code.** It is a
-  damageable box with a decorative turret model that never acquires or fires. Same for the
-  turrets modelled on top of every airlock junction.
+  damageable box with a decorative turret model that never acquires or fires.
 - **Fauna (7 kinds):** Stalkers spawn from dens and raid; Mites/Ticks/Creepers steal from
   extractors; Leeches/Wisps sit on Power Nodes and zero out their output; Hoppers raid HABs and
   can collapse them. Raiders **abort entirely if any robot is within 4 m**, so one loitering
@@ -227,7 +225,7 @@ completes** — the building itself is a decorative landmark that does nothing.
 
 ## Buildings (25 placeable)
 
-Commons 70 MET (gates everything, produces nothing) · HAB 50 (3 beds) · Airlock 8 (topology only) ·
+Commons 70 MET (gates everything, produces nothing) · HAB 50 (3 beds) ·
 Power Node 35 (+6 PWR) · Farm 28 (+3 ICE/8 s) · Mine 32 (+4 MET/8 s) · Regolith Camp 22 (+6 REG/8 s) ·
 OPS-1 45 (extract drop-off; **does not count as a Mine for the sustain gate**) · Laboratory 55
 (science) · Landing Pad 40 (launch gate + resupply) · Defense Battery 60 (**does nothing**) ·
@@ -286,7 +284,7 @@ in a log panel:** either `"Ignored — raise bounty (+) or pick a type they want
 reason like "too poor" / "too scared" / "too far", and nothing on the flag itself. A player who
 does not read the log panel will never learn the game's central mechanic.
 
-Six-beat tutorial: Commons → airlock → HAB → workshop → flag → open the tech panel.
+Six-beat tutorial: Commons → HAB → workshop → flag → price → open the tech panel.
 
 ## Meta
 

@@ -50,7 +50,7 @@ namespace SolarMajesty
         /// The build menu, hotkey order, for both the Earth demo and the full campaign. Ranks under
         /// 100 are the core Majesty list; 100+ join once the full campaign is on. Commons is placed
         /// for the player, houses and solar farms are raised by villagers (VillageGrowth), and the
-        /// retired airlock / regolith pieces never show.
+        /// retired regolith pieces never show.
         /// </summary>
         public static int MenuRank(BuildingCategory cat)
         {

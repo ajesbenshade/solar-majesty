@@ -117,6 +117,11 @@ namespace SolarMajesty
         public bool AllowsCamera => Screen == DemoScreen.Playing;
         public bool TitlePointerBlocksWorld =>
             _overseerHud != null && _overseerHud.HitsHudPanels();
+
+        /// <summary>The mouse is over a HUD panel right now (the wheel scrolls it instead of zooming).</summary>
+        public bool PointerOverHud =>
+            (_overseerHud != null && _overseerHud.HitsHudPanels()) ||
+            (_alertView != null && _alertView.PointerOverCards());
         public bool TitleConfirmOpen =>
             _overseerHud != null && _overseerHud.TitleConfirmOpen;
 
@@ -391,6 +396,7 @@ namespace SolarMajesty
         private double _playSeconds;
         private DebugHud _debugHud;
         private OverseerHud _overseerHud;
+        private OverseerAlertView _alertView;
         private int _focusedCampus;
         private CampusNavMesh _campusNav;
 
@@ -818,10 +824,9 @@ namespace SolarMajesty
                 PlanetaryMapDressing.ApplyCameraVoidFill(mainCamera, _body, RenderSettings.skybox != null);
             KingdomLife.Dress(transform, emptyStart: StartsEmpty);
             CampusDressing.Reset();
-            CampusDressing.RefreshTubes(Placer, grid, transform);
             RefreshSuitCrossings();
             EnsureHud();
-            TryInit("alerts", () => OverseerAlertView.Ensure(this));
+            TryInit("alerts", () => { _alertView = OverseerAlertView.Ensure(this); });
             TryInit("map overlay", () => MapOverlay.Ensure(this));
             EnsureMission();
             LaunchSite.ClearSession();
@@ -918,7 +923,7 @@ namespace SolarMajesty
             DemoSettings.SaveLoadNotice = "";
             SolarSystemTitleView.Instance?.Hide();
             Screen = DemoScreen.Playing;
-            Time.timeScale = SimSpeed.Multiplier;
+            Time.timeScale = SimSpeed.TimeScale;
             int piecesBefore = Placer != null ? Placer.Pieces.Count : 0;
             bool restoredSave = false;
             if (loadStockpile)
@@ -1006,7 +1011,7 @@ namespace SolarMajesty
         {
             CampaignProgress.ResetCampaign();
             SaveSystem.DeleteAll();
-            SimSpeed.ResetToNormal();
+            SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
             ReplayRules.Save();
@@ -1020,7 +1025,7 @@ namespace SolarMajesty
                 drop = CampaignProgress.NewGameBody;
             CampaignProgress.BeginNewGame(drop);
             SaveSystem.DeleteAll();
-            SimSpeed.ResetToNormal();
+            SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             if (drop == CelestialBodyId.Mars)
                 DemoSettings.MarkTutorialDone();
@@ -1038,7 +1043,7 @@ namespace SolarMajesty
             CampaignProgress.ResetCampaign();
             CampaignProgress.UnlockThrough(body);
             SaveSystem.DeleteAll();
-            SimSpeed.ResetToNormal();
+            SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
             ReplayRules.Save();
@@ -1121,7 +1126,7 @@ namespace SolarMajesty
             // Leaving the modal pause resumes at the speed the player was running, not always 1x.
             if (SimSpeed.IsPaused)
                 SimSpeed.Resume();
-            Time.timeScale = SimSpeed.Multiplier;
+            Time.timeScale = SimSpeed.TimeScale;
         }
 
         public void OpenSettings()
@@ -1182,7 +1187,7 @@ namespace SolarMajesty
             _overseerHud?.Notify(
                 DemoSettings.FirstHourDemo
                     ? "Tutorial reset — workshop, Build at 700, raise the price, then Defend."
-                    : "Tutorial reset — airlock onto Commons, then HAB, workshop, flag, bounty.",
+                    : "Tutorial reset — Commons, then HAB, workshop, flag, bounty.",
                 4f);
         }
 
@@ -1647,17 +1652,6 @@ namespace SolarMajesty
             LogOverseer("Soil creeper on the yard — post Defend (F5).");
         }
 
-        private bool HasAnyAirlock()
-        {
-            if (Placer == null) return false;
-            var pieces = Placer.Pieces;
-            for (int i = 0; i < pieces.Count; i++)
-            {
-                if (pieces[i].IsAirlock) return true;
-            }
-            return false;
-        }
-
         private bool HasAnyWorkshop()
         {
             if (Placer == null) return false;
@@ -1782,7 +1776,6 @@ namespace SolarMajesty
             CampusNavMesh.AddObstacle(go);
             Village?.RegisterPlacedBuilding(data, data.category, go, world);
             CampusDressing.DressPlaced(data, go, _body);
-            CampusDressing.RefreshTubes(Placer, grid, transform);
             HideDropClaimIfSettled();
             if (_campusNav != null)
                 NotifyCampusExpanded();
@@ -2135,30 +2128,32 @@ namespace SolarMajesty
             }
         }
 
-        /// <summary>Space holds the world; comma and period step the speed down and up.</summary>
+        /// <summary>
+        /// Space holds the world; comma / period (or − / + outside the flag tool, where they nudge
+        /// the bounty) step the speed down and up.
+        /// </summary>
         private void HandleSpeedHotkeys()
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
-            bool changed = false;
+            bool plusMinus = ActiveTool != OverseerTool.Flag;
 
             if (Input.GetKeyDown(KeyCode.Space))
-            {
                 SimSpeed.TogglePause();
-                changed = true;
-            }
-            else if (Input.GetKeyDown(KeyCode.Period))
-            {
+            else if (Input.GetKeyDown(KeyCode.Period) ||
+                     (plusMinus && (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))))
                 SimSpeed.Faster();
-                changed = true;
-            }
-            else if (Input.GetKeyDown(KeyCode.Comma))
-            {
+            else if (Input.GetKeyDown(KeyCode.Comma) ||
+                     (plusMinus && (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))))
                 SimSpeed.Slower();
-                changed = true;
-            }
+            else
+                return;
 
-            if (!changed) return;
+            OnSpeedChanged();
+        }
 
+        /// <summary>Apply a speed change from any control (keys or the HUD) and note it once.</summary>
+        public void OnSpeedChanged()
+        {
             ApplySimSpeed();
             LogOverseer(SimSpeed.IsPaused ? "World held." : $"Speed {SimSpeed.Label}.");
             PlaytestTelemetry.Record("speed_change", "speed", SimSpeed.Label);
@@ -2172,7 +2167,7 @@ namespace SolarMajesty
         {
             if (!IsPlaying)
                 return;
-            Time.timeScale = SimSpeed.Multiplier;
+            Time.timeScale = SimSpeed.TimeScale;
         }
 
         /// <summary>
@@ -2405,7 +2400,7 @@ namespace SolarMajesty
                         return false;
 
                     // Free placement, Majesty style: anywhere on open ground once the Commons
-                    // stands. No sockets, no airlocks between buildings — just keep out of water.
+                    // stands. Nothing links buildings together — just keep out of water.
                     return !FootprintOverWater(cell, data.footprintWidth, data.footprintHeight);
                 };
             }
@@ -2908,7 +2903,7 @@ namespace SolarMajesty
             ClearSelection();
             Agent = null;
             // Outdoor robots are fabricated when their workshop finishes construction.
-            // Humans live only in HABs (Settlement census) — never as outdoor agents.
+            // Colonists are villagers (VillagerAgent), not specialists — they never take bounties.
             Debug.Log("[GameLoop] No starter robots — build workshops to fabricate outdoor robots.");
         }
 
@@ -3269,7 +3264,7 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// CaptureStill / Phase 4: Commons→airlock→HAB plus CanFit pad / PWR-1 /
+        /// CaptureStill / Phase 4: Commons + neighbouring HAB plus CanFit pad / PWR-1 /
         /// water + regolith yard. Aaron 2026-09-07: no leftover packing, no
         /// interconnect tube webs. Spaced campus — empty dirt stays.
         /// Does not stamp Phase 4 exit.
@@ -3309,7 +3304,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// Aaron 2026-09-07: extra HAB + leftover workshop are leftover density
-        /// pressure. Still campus keeps the Commons→airlock→HAB chain only.
+        /// pressure. Still campus keeps Commons + one neighbouring HAB only.
         /// </summary>
         private void StampStillHubNeighbors()
         {
@@ -3319,7 +3314,7 @@ namespace SolarMajesty
         /// <summary>
         /// Pad + Starship, PWR-1/solar, water farm, regolith camp. Island yards
         /// (MinYardGapCells 4) — ExtraPlacementRule would park forward yards on
-        /// Campus B or demand extra airlocks.
+        /// Campus B.
         /// </summary>
         private void StampStillDensityPack()
         {
@@ -3494,8 +3489,7 @@ namespace SolarMajesty
             int side,
             BuildingPlacer.CampusPiece commons,
             BuildingPlacer.Cardinal habFace,
-            StillCampusDensity.BoundsOk bounds,
-            bool preferDock = false)
+            StillCampusDensity.BoundsOk bounds)
         {
             if (DataForCategory(cat) == null)
             {
@@ -3504,11 +3498,9 @@ namespace SolarMajesty
             }
 
             Vector2Int origin;
-            bool found = preferDock
-                ? StillCampusDensity.TryDockOrNext(Placer, commons, habFace, side, side, bounds, out origin)
-                : StillCampusDensity.TryNext(
-                    Placer, commons, habFace, side, side, bounds, out origin,
-                    StillCampusDensity.LandmarkGapCells);
+            bool found = StillCampusDensity.TryNext(
+                Placer, commons, habFace, side, side, bounds, out origin,
+                StillCampusDensity.LandmarkGapCells);
             if (!found)
             {
                 Debug.Log($"[GameLoop] Stamp density {DensityLabel(cat)}=False (CanFit)");
@@ -3530,7 +3522,6 @@ namespace SolarMajesty
                 case BuildingCategory.EngineerWorkshop: return "workshop";
                 case BuildingCategory.Inn: return "inn";
                 case BuildingCategory.AegisSpire: return "wonder";
-                case BuildingCategory.Utility: return "airlock";
                 case BuildingCategory.Habitat: return "hab";
                 case BuildingCategory.Defense: return "defense";
                 default: return cat.ToString();
@@ -3589,7 +3580,6 @@ namespace SolarMajesty
                     _agents[i]?.BindNavMesh(_campusNav);
             }
 
-            CampusDressing.RefreshTubes(Placer, grid, transform);
             RefreshSuitCrossings();
 
             if (InFaunaGrace)
@@ -3799,7 +3789,7 @@ namespace SolarMajesty
             if (_body == null) return "Ash hoppers on the HAB — post Clear Threat.";
             switch (_body.Id)
             {
-                case CelestialBodyId.Mars: return "Dust hoppers at the airlocks — post Clear Threat.";
+                case CelestialBodyId.Mars: return "Dust hoppers at the Commons — post Clear Threat.";
                 case CelestialBodyId.Belt: return "Shard hoppers on the Commons — post Clear Threat.";
                 default: return "Ash hoppers on the HAB — post Clear Threat.";
             }
@@ -4606,7 +4596,6 @@ namespace SolarMajesty
         {
             var extra = new[]
             {
-                CreateBuilding("Airlock Junction", BuildingCategory.Utility, 8, 0, 4f, 2, 2),
                 CreateBuilding("Greenhouse Farm", BuildingCategory.Farm, 28, 4, 10f, 4, 4),
                 CreateBuilding("Ore Mine", BuildingCategory.Mine, 32, 4, 12f, 4, 4),
                 CreateBuilding("Regolith Camp", BuildingCategory.RegolithCamp, 22, 0, 9f, 4, 4),
@@ -4682,9 +4671,6 @@ namespace SolarMajesty
                     case BuildingCategory.AidStation:
                         side = 4;
                         break;
-                    case BuildingCategory.Utility:
-                        side = 2;
-                        break;
                     default:
                         side = 4;
                         break;
@@ -4712,7 +4698,6 @@ namespace SolarMajesty
             if (data == null) return;
             Village?.RegisterPlacedBuilding(data, data.category, go, world);
             CampusDressing.DressPlaced(data, go, _body);
-            CampusDressing.RefreshTubes(Placer, grid, transform);
             if (ShouldSnapCampusCamera(data.category))
                 SnapCampusCamera();
             DemoVfx.BuildComplete(world);
@@ -4800,7 +4785,6 @@ namespace SolarMajesty
                 DemoAtmosphere.SyncFog(cam);
             }
 
-            CampusDressing.RefreshTubes(Placer, grid, transform);
             RefreshSuitCrossings();
 
             _glanceCooldown = 8f;
@@ -4813,7 +4797,6 @@ namespace SolarMajesty
             {
                 case BuildingCategory.Commons:
                 case BuildingCategory.Habitat:
-                case BuildingCategory.Utility:
                     return true;
                 default:
                     return ColonyStructure.IsWorkshopCategory(cat);
@@ -5734,7 +5717,6 @@ namespace SolarMajesty
 
             NotifyCampusExpanded();
             SyncLaunchGate();
-            CampusDressing.RefreshTubes(Placer, grid, transform);
             SnapCampusCamera();
             HideDropClaimIfSettled();
             LogOverseer($"Campus restored — {restored} modules on {(_body != null ? _body.DisplayName : celestialBody.ToString())}.");
@@ -5743,6 +5725,8 @@ namespace SolarMajesty
 
         private bool RestoreCampusSlot(CampusSlot slot)
         {
+            // Saves from before airlocks were retired still list their junctions; drop them.
+            if (BuildingPlacer.IsRetired(slot.Category)) return false;
             var data = DataForCategory(slot.Category);
             if (data == null)
             {
@@ -5883,7 +5867,6 @@ namespace SolarMajesty
             if (Placer != null && grid != null)
                 Placer.TryReleaseContaining(grid.WorldToCell(world), cat);
 
-            CampusDressing.RefreshTubes(Placer, grid, transform);
             NotifyCampusExpanded();
             PersistSession();
             LogOverseer($"{st.DisplayName} destroyed — rebuild before the next raid.");
@@ -6031,7 +6014,6 @@ namespace SolarMajesty
             SpawnShowcaseSet(ColonyLayout.Showcase, ColonyLayout.CampusOrigin, "A");
             if (spawnSecondBody)
                 SpawnShowcaseSet(ColonyLayout.ShowcaseB, ColonyLayout.CampusBOrigin, "B");
-            CampusDressing.RefreshTubes(Placer, grid, buildingRoot);
         }
 
         private void SpawnShowcaseSet(ColonyLayout.ShowcasePiece[] pieces, Vector3 campusOrigin, string tag)
@@ -6041,35 +6023,20 @@ namespace SolarMajesty
             {
                 var piece = pieces[i];
                 Vector3 world = piece.WorldPositionAt(campusOrigin);
-                GameObject go;
-                if (!string.IsNullOrEmpty(piece.ResourcesPath) &&
-                    piece.ResourcesPath.Contains("ModularTube"))
-                {
-                    float span = Mathf.Max(piece.FootprintW, piece.FootprintH) *
-                                 (grid != null ? grid.CellSize : ColonyLayout.DefaultCellSize);
-                    go = ColonyVisualUtility.SpawnPlusConnector(world, buildingRoot, span);
-                    go.name = $"Showcase{tag}_{i}_Plus";
-                    CampusNavMesh.AddObstacle(go);
-                }
-                else
-                {
-                    go = SpawnMesh(
-                        piece.ResourcesPath,
-                        world,
-                        $"Showcase{tag}_{i}_{System.IO.Path.GetFileName(piece.ResourcesPath)}",
-                        piece.ResolveScale(),
-                        0f);
-                }
+                GameObject go = SpawnMesh(
+                    piece.ResourcesPath,
+                    world,
+                    $"Showcase{tag}_{i}_{System.IO.Path.GetFileName(piece.ResourcesPath)}",
+                    piece.ResolveScale(),
+                    0f);
 
                 if (piece.ReservesCells && Placer != null && grid != null)
                 {
                     Vector2Int origin = ReserveShowcaseFootprint(world, piece.FootprintW, piece.FootprintH);
-                    BuildingCategory pieceCat = BuildingCategory.Utility;
+                    BuildingCategory pieceCat = BuildingCategory.Defense;
                     if (!string.IsNullOrEmpty(piece.ResourcesPath))
                     {
-                        if (piece.ResourcesPath.Contains("ModularTube"))
-                            pieceCat = BuildingCategory.Utility;
-                        else if (piece.ResourcesPath.Contains("CommandDome"))
+                        if (piece.ResourcesPath.Contains("CommandDome"))
                             pieceCat = BuildingCategory.Commons;
                         else if (piece.ResourcesPath.Contains("HAB"))
                             pieceCat = BuildingCategory.Habitat;
@@ -6083,8 +6050,6 @@ namespace SolarMajesty
                             pieceCat = BuildingCategory.Power;
                         else if (piece.ResourcesPath.Contains("LandingPad"))
                             pieceCat = BuildingCategory.LandingPad;
-                        else
-                            pieceCat = BuildingCategory.Utility;
                     }
                     Placer.RegisterPiece(origin, piece.FootprintW, piece.FootprintH, pieceCat);
                 }
@@ -6098,10 +6063,10 @@ namespace SolarMajesty
         {
             if (go == null || Village == null) return;
             if (string.IsNullOrEmpty(resourcesPath)) return;
-            if (resourcesPath.Contains("ModularTube") || resourcesPath.Contains("Starship"))
+            if (resourcesPath.Contains("Starship"))
                 return;
 
-            BuildingCategory cat = BuildingCategory.Utility;
+            BuildingCategory cat;
             if (resourcesPath.Contains("HAB")) cat = BuildingCategory.Habitat;
             else if (resourcesPath.Contains("LAB")) cat = BuildingCategory.Laboratory;
             else if (resourcesPath.Contains("CMD") || resourcesPath.Contains("CommandDome"))

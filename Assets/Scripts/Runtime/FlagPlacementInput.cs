@@ -176,10 +176,11 @@ namespace SolarMajesty
             if (_flags == null) return;
             if (_loop != null && !_loop.IsPlaying) return;
 
+            if (!enabledPlacement) return;
+
+            // − / + nudge the bounty only while the flag tool is open; otherwise they set game speed.
             if (!InputBindings.TextEntryActive)
                 HandleBountyKeys();
-
-            if (!enabledPlacement) return;
 
             // Typing flag orders: no flag hotkeys; mouse placement below still works.
             if (!InputBindings.TextEntryActive)
@@ -209,6 +210,8 @@ namespace SolarMajesty
                 if (!Input.GetMouseButtonUp(0)) return;
                 if (_cam != null && _cam.SuppressWorldClick) return;
                 if (_loop != null && _loop.WorldClickUsedBySelection) return;
+                // A click on a HUD panel (picking a flag type, pressing ±) is not a map click.
+                if (_loop != null && _loop.PointerOverHud) return;
             }
             else if (InputBindings.TextEntryActive || !Input.GetKeyDown(placeKey))
             {

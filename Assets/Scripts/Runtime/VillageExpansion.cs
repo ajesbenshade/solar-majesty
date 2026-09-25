@@ -208,7 +208,7 @@ namespace SolarMajesty
         {
             if (go == null || _loop?.Settlement == null) return;
             if (data != null) cat = data.category;
-            if (cat == BuildingCategory.Utility)
+            if (BuildingPlacer.IsRetired(cat))
                 return;
 
             _loop.Settlement.RegisterPlaced(cat);
@@ -778,16 +778,15 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Phase 4 still helper: dock one airlock + HAB onto Commons without spending stockpile.
+        /// Phase 4 still helper: stand one HAB beside Commons without spending stockpile.
         /// Prefer East/West/North (South hugs the Inn). Skips village Inn/CampusB distance filters
-        /// that were rejecting every face on a fresh Mars drop. HAB continues in the same
-        /// cardinal as the Commons dock — Opposite(face) sat the 4×4 on Commons and failed CanFit.
+        /// that were rejecting every face on a fresh Mars drop.
         /// </summary>
         public bool StampStillCampusChain()
         {
             if (_loop == null || _loop.Placer == null || _loop.Grid == null) return false;
 
-            if (!TryFindStillSlot(out Vector2Int airlockCell, out Vector2Int habCell, out var face))
+            if (!TryFindStillSlot(out Vector2Int habCell, out var face))
             {
                 Debug.LogWarning(
                     $"[Village] StampStillCampusChain failed — pieces={_loop.Placer.Pieces.Count} " +
@@ -795,21 +794,16 @@ namespace SolarMajesty
                 return false;
             }
 
-            SpawnConnector(airlockCell);
             SpawnHab(habCell);
             if (_loop.Settlement != null)
                 _loop.Settlement.AddVillageHab();
             _loop.NotifyCampusExpanded();
-            Debug.Log($"[Village] Still campus stamped — {face} airlock {airlockCell} HAB {habCell}");
+            Debug.Log($"[Village] Still campus stamped — {face} HAB {habCell}");
             return true;
         }
 
-        private bool TryFindStillSlot(
-            out Vector2Int airlockCell,
-            out Vector2Int habCell,
-            out BuildingPlacer.Cardinal face)
+        private bool TryFindStillSlot(out Vector2Int habCell, out BuildingPlacer.Cardinal face)
         {
-            airlockCell = default;
             habCell = default;
             face = BuildingPlacer.Cardinal.East;
 
@@ -835,21 +829,7 @@ namespace SolarMajesty
                 for (int f = 0; f < order.Length; f++)
                 {
                     face = order[f];
-                    BuildingPlacer.CardinalExpansionOrigins(module, face, 4, 4, out Vector2Int aCell, out Vector2Int hCell);
-                    if (!_loop.Placer.CanFitRect(aCell, 2, 2))
-                    {
-                        Debug.Log(
-                            $"[Village] StampStill skip {face}: airlock CanFit {aCell} " +
-                            DescribeBlocked(aCell, 2, 2));
-                        continue;
-                    }
-                    if (!_loop.Grid.InBounds(aCell) ||
-                        !_loop.Grid.InBounds(new Vector2Int(aCell.x + 1, aCell.y + 1)))
-                    {
-                        Debug.Log($"[Village] StampStill skip {face}: airlock OOB {aCell}");
-                        continue;
-                    }
-
+                    Vector2Int hCell = BuildingPlacer.NeighborOrigin(module, face, 4, 4);
                     if (!_loop.Placer.CanFitRect(hCell, 4, 4))
                     {
                         Debug.Log(
@@ -864,7 +844,6 @@ namespace SolarMajesty
                         continue;
                     }
 
-                    airlockCell = aCell;
                     habCell = hCell;
                     return true;
                 }
@@ -883,44 +862,6 @@ namespace SolarMajesty
             return false;
         }
 
-        private bool TryNextSlot(out Vector2Int airlockCell, out Vector2Int habCell)
-        {
-            airlockCell = default;
-            habCell = default;
-            if (_loop.Grid == null || _loop.Placer == null) return false;
-
-            var pieces = _loop.Placer.Pieces;
-            for (int i = 0; i < pieces.Count; i++)
-            {
-                var module = pieces[i];
-                if (!module.IsModule) continue;
-                for (int f = 0; f < 4; f++)
-                {
-                    var face = (BuildingPlacer.Cardinal)f;
-                    BuildingPlacer.CardinalExpansionOrigins(module, face, 4, 4, out Vector2Int aCell, out Vector2Int hCell);
-                    if (!_loop.Placer.CanFitRect(aCell, 2, 2)) continue;
-                    if (!_loop.Grid.InBounds(aCell) ||
-                        !_loop.Grid.InBounds(new Vector2Int(aCell.x + 1, aCell.y + 1)))
-                        continue;
-
-                    if (!_loop.Placer.CanFitRect(hCell, 4, 4)) continue;
-                    if (!_loop.Grid.InBounds(hCell) ||
-                        !_loop.Grid.InBounds(new Vector2Int(hCell.x + 3, hCell.y + 3)))
-                        continue;
-
-                    Vector3 habWorld = _loop.Grid.CellToWorld(hCell) + FootprintCenterOffset(4, 4);
-                    if (Flat(habWorld, ColonyLayout.InnOutpost) < 10f) continue;
-                    if (Flat(habWorld, ColonyLayout.CampusBOrigin) < 16f) continue;
-
-                    airlockCell = aCell;
-                    habCell = hCell;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         private string DescribeBlocked(Vector2Int origin, int width, int height)
         {
             if (_loop?.Placer == null)
@@ -936,21 +877,6 @@ namespace SolarMajesty
         {
             float cell = _loop.Grid.CellSize;
             return new Vector3((w - 1) * 0.5f * cell, 0f, (h - 1) * 0.5f * cell);
-        }
-
-        private void SpawnConnector(Vector2Int cell)
-        {
-            Vector3 mid = _loop.Grid.CellToWorld(cell) + FootprintCenterOffset(2, 2);
-            float cellSize = _loop.Grid.CellSize;
-            var go = ModularBuildingFactory.Spawn(
-                BuildingCategory.Utility,
-                mid,
-                _root,
-                2, 2, cellSize);
-            go.name = "VillageAirlock";
-            CampusNavMesh.AddObstacle(go);
-            _loop.Placer.MarkCampusRect(cell, 2, 2);
-            _loop.Placer.RegisterPiece(cell, 2, 2, BuildingCategory.Utility);
         }
 
         private ColonyStructure SpawnHab(Vector2Int cell)

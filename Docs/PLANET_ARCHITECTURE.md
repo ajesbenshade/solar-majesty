@@ -38,7 +38,7 @@ Dust and wear follow each world's style. **Mars is the tuned reference look,** s
   - measures the kit's roof;
   - builds the parts under a `Dress_Arch` child, with no colliders and one cached material per world and role;
   - regrades the kit's `SM_Art_*` slots per renderer with a `MaterialPropertyBlock`, so shared materials are untouched.
-- **Airlocks:** parts never cross the four airlock lanes, so Utility junctions still dock. `PlanetArchitectureTests.AirlockLanesStayClear` checks every world, archetype and several seeds against the dock tube's position (axis at 1.12 m, bore 1.42 m).
+- **Doorways:** parts never cross the four doorway lanes at the face centres. `PlanetArchitectureTests.DoorwayLanesStayClear` checks every world, archetype and several seeds against a ~1.4 m wide lane from knee to head height.
 - **Ground snap:** `SnapToGround` ignores `Dress_Arch_*` renderers, because berms and skirts are set into the ground on purpose.
 - **Turning it off:** it is on by default. Launch with `-classic-buildings` or set the PlayerPrefs key `SM_Set_PlanetArchitecture` to 0 to get the previous buildings back.
 

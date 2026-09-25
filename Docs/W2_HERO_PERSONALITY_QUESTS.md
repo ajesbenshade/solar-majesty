@@ -80,7 +80,7 @@ One chain per callsign. Primary body is where the ego first becomes a person. La
 |------|------|------------------------|----------|------------|--------------|
 | 1 | post / claim | `earth.build.raise_the_commons` | Build | Keep Engineer: *“Build's on the books. Don't cheap out mid-weld.”* | Anvil took the weld. Try not to look surprised. A court that meets in the dirt is a picnic. |
 | 2 | post (idle cheap Build) | — (reuse live Build on E2 / E3; default $70). Toast `advisor.lesson.earth.greed_build` | Build | Idle already: *“Idle. Build flags need real pay.”* Do not rewrite. | Seventy is a suggestion; *tempted* is a fact. Raise the bounty until the chip admits it. Pride has a price. Remember it on Luna. |
-| 3 | post / claim | `earth.build.dock_the_first_hab` | Build | Same Anvil claim. | Dock the first HAB. Humans stay indoors. Anvil welds the airlock join — square socket, not a speech. Beds on the books. The meadow just became a ledger. |
+| 3 | post / claim | `earth.build.dock_the_first_hab` | Build | Same Anvil claim. | Raise the first HAB. Anvil hangs the doors — square frames, not speeches. Beds on the books. The meadow just became a ledger. |
 | 4 | post / complete | `earth.build.stage_the_lunar_rocket` | Build | *“Pad labour. Same books. Stop being cute with the bounty.”* | Stage the Lunar Rocket. Science is 70 + 40 MET + 15 ICE. A trajectory without a pad is a toast to vacuum. |
 
 **Failure / refusal:** Pocket-change Build sits idle — that *is* the greed lesson, not a soft-lock. Post Explore on a construction order and Anvil will tinker in town until you remember F3. Wrong class: Horizon will not weld; Haul will not “freight” a Commons.
@@ -89,7 +89,7 @@ One chain per callsign. Primary body is where the ego first becomes a person. La
 
 **Optional mid-cut:** `cut.earth.mid_court` after Commons + HAB + Charter. Anvil’s weld is the civic half; Chart eats the sample.
 
-**Luna / Mars echo (not first-ship):** `luna.build.raise_the_crater_commons`, `luna.build.fortify_the_airlocks`, `mars.build.raise_the_compact_seat`, `mars.build.string_the_solar_field`. Same claim line. Advisor: try a guild-proud bounty. They notice.
+**Luna / Mars echo (not first-ship):** `luna.build.raise_the_crater_commons`, `luna.build.fortify_the_perimeter`, `mars.build.raise_the_compact_seat`, `mars.build.string_the_solar_field`. Same claim line. Advisor: try a guild-proud bounty. They notice.
 
 ---
 
@@ -266,7 +266,7 @@ One chain per callsign. Primary body is where the ego first becomes a person. La
 |------|------|------------------------|----------|------------|--------------|
 | 1 | post / claim | `earth.defendarea.ward_the_furrows` | DefendArea | Keep Sentinel: *“Perimeter locked. I hold. I do not wander.”* | Rim watch on a farm. Very dignified. Very necessary. Aegis could hunt instead. Rim will not. |
 | 2 | post / claim | `luna.defendarea.ward_the_weigh_station` | DefendArea | Same claim. | Ticks are stealing from the weigh-station. Rim took the watch. The levy continues. Poetry later. |
-| 3 *(support)* | post | `luna.build.fortify_the_airlocks` (Anvil welds; Rim does not) | Build | Rim idle: *“Idle. Defend is cheap for me.”* | Anvil fortifies. Aegis will pretend it was their idea. Rim will stand where the weld ends and refuse to wander past it. |
+| 3 *(support)* | post | `luna.build.fortify_the_perimeter` (Anvil welds; Rim does not) | Build | Rim idle: *“Idle. Defend is cheap for me.”* | Anvil fortifies. Aegis will pretend it was their idea. Rim will stand where the weld ends and refuse to wander past it. |
 | 4 | post / claim | `mars.defendarea.ward_the_dust_furrows` | DefendArea | Same claim. | Rim or Aegis on a greenhouse. The Compact keeps its lunch. Campus B can wait. Rim already said they do not wander. |
 
 **Failure / refusal:** Post Outpost and Rim will not claim the cyan disc — that is Haul’s slogan. Post Explore and they hold. Post Clear Threat and they may pest the rim (`HuntLine`: *“Pest on the rim — engaging.”*) but they will not take a den warrant if Aegis is in the hall. Cheap Defend they take. That is the class.

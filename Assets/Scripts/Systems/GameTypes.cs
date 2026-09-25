@@ -71,6 +71,7 @@ namespace SolarMajesty
         /// <summary>OPS-1 ops annex (legacy id). Not Colony Commons; metals drop-off like Mine.</summary>
         Mining = 3,
         Defense = 4,
+        /// <summary>Retired (was the airlock junction). Kept so old saves decode; never built.</summary>
         Utility = 5,
         Laboratory = 6,
         Farm = 7,
@@ -82,7 +83,7 @@ namespace SolarMajesty
         DefenseWorkshop = 13,
         MedicWorkshop = 14,
         /// <summary>
-        /// Colony Commons — first 6×6 civic landmark; campus docks from its airlocks.
+        /// Colony Commons — first 6×6 civic landmark; the campus grows around it.
         /// Saved as int 15 (CampusSnapshot). Do not change the numeric id.
         /// </summary>
         Commons = 15,

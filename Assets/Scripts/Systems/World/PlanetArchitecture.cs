@@ -90,7 +90,7 @@ namespace SolarMajesty
     /// <summary>
     /// Each world builds for its own conditions. Pure data: a palette, a remap of the shared kit
     /// colours, and a set of adaptation parts added to every building sized to its footprint and
-    /// height. Airlock port lanes (the four face centres) are always kept clear.
+    /// height. Doorway lanes (the four face centres) are always kept clear.
     ///
     /// Earth — open air, rain, a living biosphere: solarpunk green roofs, glass atria, wind.
     /// Luna — vacuum, radiation, micrometeoroids, ±150 °C: regolith berms and shield caps,
@@ -352,7 +352,7 @@ namespace SolarMajesty
                     p.Cyl("IceTank", ArchRole.Foil, new Vector3(-w * 0.3f, 0.75f, d * 0.3f), new Vector3(1.2f, 1.5f, 1.2f), new Vector3(0, 0, 90));
                     break;
                 case ArchArchetype.Defense:
-                    // Sintered-regolith blast blocks, split around the -Z airlock lane.
+                    // Sintered-regolith blast blocks, split around the -Z doorway lane.
                     for (int i = 0; i < 4; i++)
                     {
                         float x = (i < 2 ? -1f : 1f) * (i % 2 == 0 ? w * 0.42f : w * 0.22f);
@@ -482,7 +482,7 @@ namespace SolarMajesty
                     break;
                 case ArchArchetype.Extractor:
                     // Mass driver: throws ore off the rock toward the refinery.
-                    // Beside the +Z airlock lane, not across it.
+                    // Beside the +Z doorway lane, not across it.
                     float mx = -w * 0.32f;
                     p.Box("DriverRailA", ArchRole.Dark, new Vector3(mx - 0.25f, h * 0.5f + 1.2f, d * 0.5f + 1.2f), new Vector3(0.12f, 0.12f, 5f), new Vector3(-24, 0, 0));
                     p.Box("DriverRailB", ArchRole.Dark, new Vector3(mx + 0.25f, h * 0.5f + 1.2f, d * 0.5f + 1.2f), new Vector3(0.12f, 0.12f, 5f), new Vector3(-24, 0, 0));
@@ -490,7 +490,7 @@ namespace SolarMajesty
                     break;
                 case ArchArchetype.Workshop:
                     p.Box("GantryBeam", ArchRole.Trim, new Vector3(0, h + 1.6f, 0), new Vector3(w * 1.1f, 0.25f, 0.3f));
-                    // A-frame legs either side of the ±X airlock lanes.
+                    // A-frame legs either side of the ±X doorway lanes.
                     for (int s = 0; s < 4; s++)
                     {
                         float lx = (s < 2 ? -1f : 1f) * w * 0.55f, lz = (s % 2 == 0 ? -1f : 1f) * 1.35f;
@@ -617,14 +617,14 @@ namespace SolarMajesty
             public void Cyl(string n, ArchRole r, Vector3 pos, Vector3 size, Vector3 euler = default) => Add(n, ArchShape.Cylinder, r, pos, size, euler);
             public void Sphere(string n, ArchRole r, Vector3 pos, Vector3 size, Vector3 euler = default) => Add(n, ArchShape.Sphere, r, pos, size, euler);
 
-            /// <summary>True when an angle (degrees, 0 = +Z) points at an airlock lane.</summary>
+            /// <summary>True when an angle (degrees, 0 = +Z) points at a doorway lane.</summary>
             static bool InPortLane(float deg, float halfWidth = 16f)
             {
                 float m = ((deg % 90f) + 90f) % 90f;
                 return m < halfWidth || m > 90f - halfWidth;
             }
 
-            /// <summary>Mounds around the footprint, leaving the four airlock lanes clear.</summary>
+            /// <summary>Mounds around the footprint, leaving the four doorway lanes clear.</summary>
             public void PerimeterBerm(ArchRole role, float height, float depth, float length, float outset = 0.35f)
             {
                 float rx = W * 0.5f + outset, rz = D * 0.5f + outset;
@@ -649,7 +649,7 @@ namespace SolarMajesty
             public void WindowBands(float y, ArchRole role, bool slit = false)
             {
                 float t = slit ? 0.06f : 0.12f;
-                // Split either side of the airlock collar (bore radius 0.71 m).
+                // Split either side of the doorway (0.71 m half-width).
                 float z0 = 0.95f, z1 = D * 0.44f;
                 if (z1 - z0 < 0.3f) return;
                 float zc = (z0 + z1) * 0.5f, len = z1 - z0;
@@ -785,7 +785,7 @@ namespace SolarMajesty
             /// <summary>Vertical spin-gravity ring (segments of a torus) on a hub strut.</summary>
             public void SpinRing(Vector3 center, float radius, int segments, float yaw = 0f)
             {
-                // Yawed onto the diagonal so the rim never swings across an airlock lane.
+                // Yawed onto the diagonal so the rim never swings across a doorway lane.
                 Quaternion turn = Quaternion.Euler(0, yaw, 0);
                 Cyl("SpinHub", ArchRole.Dark, center, new Vector3(0.6f, 0.5f, 0.6f), new Vector3(90, yaw, 0));
                 Cyl("SpinStrut", ArchRole.Dark, new Vector3(center.x, center.y * 0.5f + 0.2f, center.z), new Vector3(0.18f, center.y - 0.4f, 0.18f));
@@ -804,7 +804,7 @@ namespace SolarMajesty
                 }
             }
 
-            /// <summary>Ice-block shield walls around the base, airlock lanes left open.</summary>
+            /// <summary>Ice-block shield walls around the base, doorway lanes left open.</summary>
             public void IceWalls(float height, float outset = 0.3f)
             {
                 float bw = 0.9f;
@@ -817,7 +817,7 @@ namespace SolarMajesty
                     for (int i = 0; i < n; i++)
                     {
                         float u = -span * 0.5f + (i + 0.5f) * span / n;
-                        if (Mathf.Abs(u) < 0.9f) continue; // airlock lane
+                        if (Mathf.Abs(u) < 0.9f) continue; // doorway lane
                         float hh = height * (0.75f + 0.25f * (float)_rng.NextDouble());
                         Vector3 at = alongX
                             ? new Vector3(u, hh * 0.5f, sign * (D * 0.5f + outset))

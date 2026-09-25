@@ -28,6 +28,10 @@ namespace SolarMajesty
             if (Enum.TryParse(Arg("-smHudShotBody") ?? "", true, out CelestialBodyId parsed))
                 body = parsed;
 
+            // The preview build has its own product name, so this only wipes its own state: every run
+            // starts from an empty claim instead of a campus restored from the last run.
+            PlayerPrefs.DeleteAll();
+            SaveSystem.DeleteAll();
             PlayerPrefs.SetInt(DemoSettings.FirstHourKey, body == CelestialBodyId.Earth ? 1 : 0);
             PlayerPrefs.SetInt(DemoSettings.FullscreenKey, 0);
             PlayerPrefs.SetInt(DemoSettings.TutorialKey, 0);
@@ -93,11 +97,21 @@ namespace SolarMajesty
 
             loop.ToggleTool(OverseerTool.Build);
             yield return Shot("03_build");
-            loop.ToggleTool(OverseerTool.Build);
+            // What a click on a catalog row does: arm the building, then the list gets out of the way.
+            loop.SetTool(OverseerTool.Build);
+            loop.BuildInput?.SelectBuilding(loop.BuildInput.VisibleIndices.Count > 0 ? loop.BuildInput.VisibleIndices[0] : 0);
+            yield return Shot("03b_build_picked");
+            loop.ToggleTool(OverseerTool.None);
 
             loop.ToggleTool(OverseerTool.Flag);
             yield return Shot("04_flag");
-            loop.ToggleTool(OverseerTool.Flag);
+            loop.SetTool(OverseerTool.Flag);
+            if (loop.FlagInput != null && loop.FlagInput.ExploreFlag != null)
+                loop.FlagInput.SelectFlag(loop.FlagInput.ExploreFlag);
+            yield return Shot("04b_flag_picked");
+            loop.ToggleTool(OverseerTool.None);
+
+            yield return ZoomCheck();
 
             var agents = loop.Agents;
             for (int i = 0; agents != null && i < agents.Count; i++)
@@ -175,6 +189,34 @@ namespace SolarMajesty
 
             Debug.Log($"[HudShot] Wrote stills to {_dir}");
             Application.Quit(0);
+        }
+
+        /// <summary>
+        /// Zoom in and out at an off-centre pixel and log how far the ground under it drifted —
+        /// zoom-to-cursor should keep it within a fraction of a metre.
+        /// </summary>
+        private IEnumerator ZoomCheck()
+        {
+            var cam = Camera.main;
+            var rig = cam != null ? cam.GetComponent<IsometricCameraController>() : null;
+            if (rig == null) yield break;
+            var pixel = new Vector2(Screen.width * 0.72f, Screen.height * 0.35f);
+            float start = cam.orthographicSize;
+            foreach (float size in new[] { start * 0.55f, start })
+            {
+                Vector3 before = GroundUnder(cam, pixel);
+                rig.ZoomAtScreenPoint(pixel, size);
+                yield return Wait(2.5f);
+                Vector3 after = GroundUnder(cam, pixel);
+                Debug.Log($"[HudShot] zoom {start:0.0}->{size:0.0} at {pixel}: ground drift {Vector3.Distance(before, after):0.00} m");
+                if (size < start) yield return Shot("15_zoomed_at_cursor");
+            }
+        }
+
+        private static Vector3 GroundUnder(Camera cam, Vector2 pixel)
+        {
+            var ray = cam.ScreenPointToRay(pixel);
+            return new Plane(Vector3.up, Vector3.zero).Raycast(ray, out float t) ? ray.GetPoint(t) : Vector3.zero;
         }
 
         private static SpecialistAgent FirstHero(GameLoop loop)

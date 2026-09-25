@@ -1,6 +1,6 @@
 # Art Direction
 
-**Integration note — 2026-09-22:** The later Commons lock is the smooth command-dome citadel (2026-09-17); older geodesic instructions and screenshots below are historical. The boxy tan HAB, orange ribbed airlocks, four-cell landmark yards, and animated units are retained. Phase 4 exit remains blocked pending a fresh visual review.
+**Integration note — 2026-09-22:** The later Commons lock is the smooth command-dome citadel (2026-09-17); older geodesic instructions and screenshots below are historical. The boxy tan HAB, four-cell landmark yards, and animated units are retained. Phase 4 exit remains blocked pending a fresh visual review.
 
 
 **Hero roster v2 — 2026-09-22:** The ten specialist heroes are armoured humanoid knights (LO-COU/DEF/ENG/GEO/HAR/MED/SCT/SEN/SRV/TRF-1) per [`ConceptSheets/Heroes_v2/`](../ConceptSheets/Heroes_v2/). Drones, tracked chassis and rovers are retired for heroes. The pipeline, rig and clips are documented in [Docs/HERO_ROSTER_V2.md](HERO_ROSTER_V2.md).
@@ -17,7 +17,7 @@ Locked north star: [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roa
 
 **Aaron look brief (2026-09-07)**
 
-1. **Forgo interconnect tubes** between buildings. Square Lego airlocks may remain as building ports. `SpawnTubeRuns` / pressurized tube corridors are **gone** (not a `StampTubeRuns` flag). Leftover `CampusDress_TubeRuns` roots are destroyed.
+1. **No tubes, airlocks or ports** between buildings. Every building stands alone on open ground (airlocks were removed from the game 2026-09-25).
 2. **More space** between buildings — empty dirt is intentional; do not pack AABB or fill dirt with leftover sockets.
 3. **Distant haze** toward the horizon (concept language).
 4. **Colony Commons** is the locked smooth command-dome citadel (plinth + drum + orange band + sphere + cupola) — not geodesic lattice, not a grey box.
@@ -25,7 +25,7 @@ Locked north star: [`Docs/Roadmap/SM_MarsCampus_SpacedOverseer_Concept.png`](Roa
 
 Phase 4 keyword extensions (append, do not replace the lock):
 
-> reddish Mars regolith and hazy orange sky, distant horizon haze, long low-angle shadows, white/black/orange industrial SpaceX-adjacent campus, **no pressurized interconnect tubes**, separate dirt pads with empty yards between buildings, large central white **geodesic / polyhedron** command dome with orange trim, square Lego airlock ports only, blue-glow solar arrays, circular landing pad with white Starship-like rocket, spacesuited figures on open ground, spacious campus pads, negative space, overseer strategy view
+> reddish Mars regolith and hazy orange sky, distant horizon haze, long low-angle shadows, white/black/orange industrial SpaceX-adjacent campus, **no pressurized interconnect tubes**, separate dirt pads with empty yards between buildings, large central white **geodesic / polyhedron** command dome with orange trim, free-standing buildings (no airlocks or tubes), blue-glow solar arrays, circular landing pad with white Starship-like rocket, spacesuited figures on open ground, spacious campus pads, negative space, overseer strategy view
 
 Do not add “packed city / fill every dirt patch / tube-web campus” to Imagine or Blender briefs.
 

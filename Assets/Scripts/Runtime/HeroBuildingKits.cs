@@ -171,7 +171,6 @@ namespace SolarMajesty
                     new Vector3(0.55f, 0.12f, 0.46f), Graphite);
             }
 
-            PlaceCardinalHullPorts(root, "HabPort", w, d, BuildingCategory.Habitat);
         }
 
         public static void BuildCommons(Transform root, float w, float d, Color hull)
@@ -233,7 +232,6 @@ namespace SolarMajesty
                 new Vector3(0f, domeTop + 0.44f, 0f),
                 new Vector3(0.12f, 0.12f, 0.12f), Orange, new Color(0.9f, 0.35f, 0.05f));
 
-            PlaceCardinalHullPorts(root, "CommonsPort", w, d, BuildingCategory.Commons);
 
             Prim(root, "CommonsSeamRing_0", PrimitiveType.Cylinder,
                 new Vector3(0f, 0.88f, 0f),
@@ -591,7 +589,6 @@ namespace SolarMajesty
                 new Vector3(pitchX * 1.55f, 0.68f, arrZ + pitchZ * 1.15f),
                 new Vector3(0.12f, 0.08f, 0.12f), Orange);
 
-            PlaceCardinalHullPorts(root, "PwrPort", w, d, BuildingCategory.Power);
         }
 
         public static void BuildDefenseBattery(Transform root, float w, float d, Color hull)
@@ -636,7 +633,7 @@ namespace SolarMajesty
 
         public static void BuildWorkshop(Transform root, float w, float d, Color accent, bool tall)
         {
-            // Hangar bay — not a colored greybox cube. Cardinal airlocks still attach in factory.
+            // Hangar bay — not a colored greybox cube.
             float h = tall ? 2.55f : 2.05f;
             Prim(root, "ShopPlinth", PrimitiveType.Cube,
                 new Vector3(0f, 0.10f, 0f),
@@ -1202,7 +1199,6 @@ namespace SolarMajesty
                 new Vector3(0f, z + radius * 0.50f, -radius * 0.70f),
                 new Vector3(length * 0.46f, 0.028f, 0.028f), Graphite);
 
-            PlaceCardinalHullPorts(root, "LabPort", w, d, BuildingCategory.Laboratory);
         }
 
         public static void BuildClimateLoom(Transform root, float w, float d, Color hull)
@@ -1361,116 +1357,6 @@ namespace SolarMajesty
             Prim(root, "ArchBeacon", PrimitiveType.Sphere,
                 new Vector3(-w * 0.06f, 2.85f, -d * 0.08f),
                 new Vector3(0.18f, 0.18f, 0.18f), Cyan, CyanEmit);
-        }
-
-        /// <summary>
-        /// Distance from module origin to the visual hull along a cardinal, at DockY.
-        /// DockSleeve uses this so the tube meets the collar instead of stopping at
-        /// the cell face or punching through the shell.
-        /// </summary>
-        public static float HullDistance(BuildingCategory cat, float worldW, float worldD, Vector3 outward)
-        {
-            Vector3 dir = outward.sqrMagnitude > 0.01f ? outward.normalized : Vector3.forward;
-            float w = Mathf.Max(0.5f, worldW);
-            float d = Mathf.Max(0.5f, worldD);
-            switch (cat)
-            {
-                case BuildingCategory.Commons:
-                    return Mathf.Min(w, d) * 0.38f;
-                case BuildingCategory.Habitat:
-                    if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.z))
-                        return w * HabBoxFill * 0.5f;
-                    return d * HabBoxFill * 0.5f;
-                case BuildingCategory.Laboratory:
-                    return CylinderHullDistance(w, d, 0.90f, 3.86f, 0.20f, dir);
-                case BuildingCategory.Power:
-                {
-                    float ny = d * 0.22f;
-                    float halfZ = d * 0.17f;
-                    float halfX = w * 0.21f;
-                    if (dir.z > 0.5f) return Mathf.Max(0.25f, ny + halfZ);
-                    // Hull sits north of origin; solar field is south — no hull to meet.
-                    if (dir.z < -0.5f) return 0f;
-                    return halfX;
-                }
-                default:
-                    if (ColonyStructure.IsWorkshopCategory(cat))
-                    {
-                        if (dir.z > 0.5f) return d * 0.26f;
-                        if (dir.z < -0.5f) return d * 0.42f;
-                        return w * 0.39f;
-                    }
-                    if (cat == BuildingCategory.GuildHall)
-                    {
-                        if (dir.z > 0.5f) return d * 0.27f;
-                        if (dir.z < -0.5f) return d * 0.35f;
-                        return w * 0.39f;
-                    }
-                    if (cat == BuildingCategory.Defense)
-                    {
-                        if (Mathf.Abs(dir.z) >= Mathf.Abs(dir.x)) return d * 0.31f;
-                        return w * 0.36f;
-                    }
-                    if (cat == BuildingCategory.Mining)
-                    {
-                        if (Mathf.Abs(dir.z) >= Mathf.Abs(dir.x)) return d * 0.31f;
-                        return w * 0.41f;
-                    }
-                    if (cat == BuildingCategory.Inn || cat == BuildingCategory.Market ||
-                        cat == BuildingCategory.Blacksmith || cat == BuildingCategory.FobotYard ||
-                        cat == BuildingCategory.Watchtower ||
-                        cat == BuildingCategory.AidStation)
-                    {
-                        if (dir.z > 0.5f) return d * 0.27f;
-                        if (dir.z < -0.5f) return d * 0.35f;
-                        return w * 0.29f;
-                    }
-                    if (cat == BuildingCategory.Farm)
-                    {
-                        if (dir.x > 0.5f) return w * 0.25f;
-                        if (dir.x < -0.5f) return w * 0.41f;
-                        return d * 0.23f;
-                    }
-                    return 0f;
-            }
-        }
-
-        /// <summary>True when the kit wears its own orange collar at DockY (sleeve must not add a second).</summary>
-        public static bool HasHullPort(BuildingCategory cat) =>
-            cat == BuildingCategory.Commons ||
-            cat == BuildingCategory.Habitat ||
-            cat == BuildingCategory.Laboratory ||
-            cat == BuildingCategory.Power;
-
-        private static float CylinderHullDistance(
-            float w, float d, float lengthFactor, float radiusDiv, float groundPad, Vector3 dir)
-        {
-            float length = Mathf.Min(w, d) * lengthFactor;
-            float radius = length / radiusDiv;
-            if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.z))
-                return length * 0.5f;
-            float axisY = radius + groundPad;
-            float dy = axisY - ColonyVisualUtility.DockY;
-            float chordSq = radius * radius - dy * dy;
-            if (chordSq < 0.04f) return Mathf.Max(0.2f, radius * 0.4f);
-            return Mathf.Sqrt(chordSq);
-        }
-
-        private static void PlaceCardinalHullPorts(
-            Transform root, string prefix, float w, float d, BuildingCategory cat)
-        {
-            PlaceHullPortIfAny(root, prefix + "_N", Vector3.forward, cat, w, d);
-            PlaceHullPortIfAny(root, prefix + "_S", Vector3.back, cat, w, d);
-            PlaceHullPortIfAny(root, prefix + "_E", Vector3.right, cat, w, d);
-            PlaceHullPortIfAny(root, prefix + "_W", Vector3.left, cat, w, d);
-        }
-
-        private static void PlaceHullPortIfAny(
-            Transform root, string name, Vector3 dir, BuildingCategory cat, float w, float d)
-        {
-            float hull = HullDistance(cat, w, d, dir);
-            if (hull < 0.15f) return;
-            ColonyVisualUtility.PlaceHullPort(root, name, dir, hull, startActive: false);
         }
 
         /// <summary>

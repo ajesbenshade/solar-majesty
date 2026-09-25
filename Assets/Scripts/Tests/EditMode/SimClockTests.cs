@@ -102,34 +102,67 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(SimSpeed.IsPaused);
         }
 
+        /// <summary>1× is the calm colony pace; 2× is the pace the game used to run at.</summary>
         [Test]
-        public void Faster_ClampsAtTheTopSpeed()
+        public void NormalPace_IsSlowerThanRealTime_AndTwoXIsTheOldPace()
         {
-            for (int i = 0; i < 10; i++) SimSpeed.Faster();
-
-            Assert.AreEqual(3f, SimSpeed.Multiplier);
+            Assert.Less(SimSpeed.BasePace, 1f);
+            Assert.AreEqual(SimSpeed.BasePace, SimSpeed.TimeScale, 1e-5f);
+            SimSpeed.Set(System.Array.IndexOf(SimSpeed.Multipliers, 2f));
+            Assert.AreEqual(1f, SimSpeed.TimeScale, 1e-5f);
         }
 
         [Test]
-        public void Slower_BottomsOutAtPause()
+        public void Steps_OfferSlowerAndFasterThanNormal()
         {
-            for (int i = 0; i < 10; i++) SimSpeed.Slower();
+            Assert.AreEqual(0.25f, SimSpeed.Multipliers[1], "slowest running speed");
+            Assert.AreEqual(4f, SimSpeed.Multipliers[SimSpeed.Multipliers.Length - 1], "fastest");
+            for (int i = 1; i < SimSpeed.Multipliers.Length; i++)
+                Assert.Greater(SimSpeed.Multipliers[i], SimSpeed.Multipliers[i - 1], "steps ascend");
+        }
 
-            Assert.IsTrue(SimSpeed.IsPaused);
-            Assert.AreEqual(0f, SimSpeed.Multiplier);
+        [Test]
+        public void Faster_ClampsAtTheTopSpeed()
+        {
+            for (int i = 0; i < 20; i++) SimSpeed.Faster();
+
+            Assert.AreEqual(4f, SimSpeed.Multiplier);
+            Assert.IsTrue(SimSpeed.IsFastest);
+        }
+
+        /// <summary>Slower never pauses by accident — Space is the hold.</summary>
+        [Test]
+        public void Slower_StopsAtTheSlowestRunningSpeed()
+        {
+            for (int i = 0; i < 20; i++) SimSpeed.Slower();
+
+            Assert.IsFalse(SimSpeed.IsPaused);
+            Assert.AreEqual(0.25f, SimSpeed.Multiplier);
+            Assert.IsTrue(SimSpeed.IsSlowest);
         }
 
         /// <summary>Unpausing must return to the speed the player chose, not snap back to 1x.</summary>
         [Test]
         public void TogglePause_RestoresThePreviousSpeed()
         {
-            SimSpeed.Set(3);
+            SimSpeed.Set(System.Array.IndexOf(SimSpeed.Multipliers, 3f));
 
             SimSpeed.TogglePause();
             Assert.IsTrue(SimSpeed.IsPaused);
+            Assert.AreEqual(0f, SimSpeed.TimeScale);
 
             SimSpeed.TogglePause();
             Assert.AreEqual(3f, SimSpeed.Multiplier);
+        }
+
+        [Test]
+        public void Faster_FromHold_ResumesThePreviousSpeed()
+        {
+            SimSpeed.Set(System.Array.IndexOf(SimSpeed.Multipliers, 1.5f));
+            SimSpeed.TogglePause();
+
+            SimSpeed.Faster();
+            Assert.AreEqual(1.5f, SimSpeed.Multiplier);
         }
 
         [Test]
@@ -138,8 +171,12 @@ namespace SolarMajesty.Tests
             SimSpeed.Set(0);
             Assert.AreEqual("HOLD", SimSpeed.Label);
 
-            SimSpeed.Set(2);
-            Assert.AreEqual("2x", SimSpeed.Label);
+            SimSpeed.Set(System.Array.IndexOf(SimSpeed.Multipliers, 2f));
+            Assert.AreEqual("2×", SimSpeed.Label);
+            SimSpeed.Set(1);
+            Assert.AreEqual("0.25×", SimSpeed.Label);
+            SimSpeed.Set(System.Array.IndexOf(SimSpeed.Multipliers, 1.5f));
+            Assert.AreEqual("1.5×", SimSpeed.Label);
         }
 
         [Test]

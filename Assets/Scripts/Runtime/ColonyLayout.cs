@@ -71,8 +71,6 @@ namespace SolarMajesty
                 case BuildingCategory.Mining:
                 case BuildingCategory.Laboratory:
                     return 4;
-                case BuildingCategory.Utility:
-                    return 2;
                 default:
                     return 4;
             }
@@ -97,7 +95,7 @@ namespace SolarMajesty
         /// <summary>Plaza where specialists gather (between dome and south power yard).</summary>
         public static Vector3 PartySpawn => CampusOrigin + new Vector3(0f, 0f, -8f);
 
-        /// <summary>Waystation inn — disconnected outpost south of campus. Not on the tube graph.</summary>
+        /// <summary>Waystation inn — disconnected outpost south of campus.</summary>
         public static Vector3 InnOutpost => CampusOrigin + new Vector3(0f, 0f, -18f);
 
         public static Vector3 PartySpawnB => CampusBOrigin + new Vector3(0f, 0f, -6f);
@@ -112,7 +110,7 @@ namespace SolarMajesty
         public const float CameraOrthoSize = 16f;
 
         /// <summary>
-        /// Iso on Commons plus room to place pad/solar/airlock. Empty-drop ortho 16 is
+        /// Iso on Commons plus room to place pad/solar. Empty-drop ortho 16 is
         /// only the pre-Commons fallback — first drop and Continue snap here, never 16.
         /// </summary>
         public const float CampusOrthoSize = StillCampusDensity.PlayCampusOrthoSize;
@@ -145,40 +143,31 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Campus A — axis-aligned (yaw 0) so HAB / plus / LAB / CMD / pad dock on cardinals.
+        /// Campus A — axis-aligned (yaw 0); HAB / LAB / CMD / pad sit on the cardinals around Commons.
         /// Inn is spawned separately and is not in this graph.
         /// </summary>
         public static readonly ShowcasePiece[] Showcase =
         {
             new ShowcasePiece("Buildings/SM_CommandDome_CentralHub", new Vector3(0f, 0f, 0f), 0f, 6, 6),
             new ShowcasePiece("Buildings/SM_HAB1_HabitatModule", new Vector3(-12f, 0f, 0f), 0f, 4, 4),
-            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(-6.5f, 0f, 0f), 0f, 2, 2),
             new ShowcasePiece("Buildings/SM_LAB1_LaboratoryModule", new Vector3(-21f, 0f, 0f), 0f, 3, 3),
-            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(-16.5f, 0f, 0f), 0f, 2, 2),
             new ShowcasePiece("Buildings/SM_CMD1_CommandBuilding", new Vector3(0f, 0f, 12f), 0f, 4, 4),
-            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(0f, 0f, 6.5f), 0f, 2, 2),
             new ShowcasePiece("Buildings/SM_OPS1_OperationsUnit", new Vector3(10f, 0f, 12f), 0f, 3, 3),
-            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(5f, 0f, 12f), 0f, 2, 2),
             new ShowcasePiece("Buildings/SM_PWR1_PowerNode", new Vector3(0f, 0f, -12f), 0f, 3, 3),
-            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(0f, 0f, -6.5f), 0f, 2, 2),
             new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(8f, 0f, -12f), 0f, 3, 3),
             new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(-8f, 0f, -12f), 0f, 3, 3),
             new ShowcasePiece("Environment/SM_LandingPad", new Vector3(16f, 0f, 0f), 0f, 6, 6, PadScale),
-            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(8.5f, 0f, 0f), 0f, 2, 2),
             new ShowcasePiece("Environment/SM_Starship_Placeholder", new Vector3(16f, 0f, 0f), 0f, 0, 0, ShipScale),
         };
 
-        /// <summary>Smaller second-body outpost — also yaw 0, cardinal docks only.</summary>
+        /// <summary>Smaller second-body outpost — also yaw 0, buildings on the cardinals.</summary>
         public static readonly ShowcasePiece[] ShowcaseB =
         {
             new ShowcasePiece("Buildings/SM_CommandDome_CentralHub", new Vector3(0f, 0f, 0f), 0f, 6, 6),
             new ShowcasePiece("Buildings/SM_HAB1_HabitatModule", new Vector3(-10.5f, 0f, 0f), 0f, 4, 4),
-            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(-5.5f, 0f, 0f), 0f, 2, 2),
             new ShowcasePiece("Buildings/SM_PWR1_PowerNode", new Vector3(0f, 0f, -9f), 0f, 3, 3),
-            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(0f, 0f, -5.5f), 0f, 2, 2),
             new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(8f, 0f, -9f), 0f, 3, 3),
             new ShowcasePiece("Buildings/SM_OPS1_OperationsUnit", new Vector3(0f, 0f, 9f), 0f, 3, 3),
-            new ShowcasePiece("Buildings/SM_ModularTubeConnector", new Vector3(0f, 0f, 5.5f), 0f, 2, 2),
         };
 
         public readonly struct ShowcasePiece

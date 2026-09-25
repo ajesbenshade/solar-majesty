@@ -5,13 +5,9 @@ using UnityEngine.TestTools;
 namespace SolarMajesty.Tests
 {
     /// <summary>
-    /// still5 leftover: unused Commons cardinal showed an orange hull-port ring.
-    /// still16 leftover: wrap carbon doors painted the 2×2 as a dark box joint.
-    /// Live kits must spawn dock groups off; RefreshTubes enables docked faces only.
-    /// CaptureStill / RefreshTubes must not stamp a between-yard tube web.
-    /// Locked HAB still: boxy tan hull + roof solar; white cube hub with dark
-    /// square windows; orange ribbed dock stubs with torus rings. Graphite-rim
-    /// HAB-1 cylinder is rejected.
+    /// Campus kits and the still-capture layout. Buildings stand alone: no airlocks, tubes,
+    /// ports or sleeves on any kit, live or ghost. Locked HAB still: boxy tan hull + roof solar;
+    /// graphite-rim HAB-1 cylinder is rejected.
     /// </summary>
     public class CampusDressingTests
     {
@@ -34,36 +30,6 @@ namespace SolarMajesty.Tests
         {
             if (_root != null)
                 Object.DestroyImmediate(_root);
-        }
-
-        [Test]
-        public void DockDressNames_CoverHullDrumPortsAndLegacyStubs()
-        {
-            Assert.IsTrue(CampusDressing.IsDockDressName("CommonsPort_N"));
-            Assert.IsTrue(CampusDressing.IsDockDressName("CommonsPort_E_Ring"));
-            Assert.IsTrue(CampusDressing.IsDockDressName("HabPort_S"));
-            Assert.IsTrue(CampusDressing.IsDockDressName("LabPort_W"));
-            Assert.IsTrue(CampusDressing.IsDockDressName("PwrPort_N"));
-            Assert.IsTrue(CampusDressing.IsDockDressName("DockSleeve_E"));
-            Assert.IsTrue(CampusDressing.IsDockDressName("Dress_TubeArm_W"));
-            Assert.IsTrue(CampusDressing.IsDockDressName("CommonsStub_N"));
-            Assert.IsTrue(CampusDressing.IsDockDressName("DrumPort_E"));
-            Assert.IsFalse(CampusDressing.IsDockDressName("CommonsDrum"));
-            Assert.IsFalse(CampusDressing.IsDockDressName("GuildPort_E"));
-            Assert.IsFalse(CampusDressing.IsDockDressName("Dress_AirlockHub"));
-        }
-
-        [Test]
-        public void LiveCommons_HullPortsStartInactive()
-        {
-            var commons = ModularBuildingFactory.Spawn(
-                BuildingCategory.Commons, Vector3.zero, _root.transform);
-            Assert.IsNotNull(FindChild(commons.transform, "CommonsPort_N"));
-            Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_N"));
-            Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_E"));
-            Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_S"));
-            Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_W"));
-            Assert.IsFalse(IsRootActive(commons.transform, "DockSleeve_N"));
         }
 
         [Test]
@@ -113,11 +79,7 @@ namespace SolarMajesty.Tests
             Assert.IsNull(FindChild(hab.transform, "HabFrontRim"),
                 "graphite/orange rim hatches are the rejected variant");
             Assert.IsNull(FindChild(hab.transform, "HabRearRim"));
-            Transform sleeve = FindChild(hab.transform, "DockSleeve_S_Tube");
-            Assert.IsNotNull(sleeve, "HAB south sleeve meets the airlock at the Lego face");
-            Color sleeveC = Albedo(sleeve);
-            Assert.Greater(sleeveC.r, 0.85f, "HAB sleeve stays orange, not a white gap");
-            Assert.Less(sleeveC.g, 0.55f);
+            Assert.IsNull(FindChild(hab.transform, "DockSleeve_S_Tube"), "HABs stand alone — no dock sleeves");
         }
 
         [Test]
@@ -162,22 +124,6 @@ namespace SolarMajesty.Tests
                 Assert.Less(mat.GetFloat("_Smoothness"), 0.28f, "cream hull stays matte");
             if (mat.HasProperty("_Metallic"))
                 Assert.Less(mat.GetFloat("_Metallic"), 0.10f, "dielectric — no hard metal terminator");
-        }
-
-        [Test]
-        public void SnapToGroundKeepingDockAxis_PreservesSharedDockY()
-        {
-            var airlock = ModularBuildingFactory.Spawn(
-                BuildingCategory.Utility, Vector3.zero, _root.transform);
-            Transform tube = FindChild(airlock.transform, "Dress_TubeArm_N_Tube");
-            Assert.IsNotNull(tube);
-            float before = tube.position.y;
-            // Force a ground seat that would otherwise slide docks off DockY.
-            airlock.transform.position += new Vector3(0f, 0.35f, 0f);
-            ColonyVisualUtility.SnapToGroundKeepingDockAxis(airlock);
-            Assert.AreEqual(before, tube.position.y, 0.04f,
-                "airlock arms must stay on ColonyVisualUtility.DockY after seating");
-            Assert.AreEqual(ColonyVisualUtility.DockY, tube.position.y, 0.08f);
         }
 
         [Test]
@@ -339,133 +285,19 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void GhostCommons_ShowsAllCardinalPorts()
-        {
-            var ghost = ModularBuildingFactory.Spawn(
-                BuildingCategory.Commons, Vector3.zero, _root.transform, ghost: true);
-            Assert.IsTrue(IsRootActive(ghost.transform, "CommonsPort_N"));
-            Assert.IsTrue(IsRootActive(ghost.transform, "CommonsPort_E"));
-            Assert.IsTrue(IsRootActive(ghost.transform, "DockSleeve_N"));
-        }
-
-        [Test]
-        public void RefreshTubes_EnablesOnlyDockedCommonsNorth()
-        {
-            var buildings = new GameObject("Buildings");
-            buildings.transform.SetParent(_root.transform);
-            Vector3 o = new Vector3(48f, 0f, 48f);
-            var commons = ModularBuildingFactory.Spawn(
-                BuildingCategory.Commons, o, buildings.transform);
-            commons.name = "Bld_ColonyCommons_drop";
-            var airlock = ModularBuildingFactory.Spawn(
-                BuildingCategory.Utility, o + new Vector3(0f, 0f, 6f), buildings.transform);
-            var hab = ModularBuildingFactory.Spawn(
-                BuildingCategory.Habitat, o + new Vector3(0f, 0f, 10.5f), buildings.transform);
-            hab.name = "Mod_Habitat";
-
-            var placer = new BuildingPlacer(new ResourceManager());
-            Vector2Int c0 = OriginFromCenter(o, 6);
-            Vector2Int a0 = OriginFromCenter(o + new Vector3(0f, 0f, 6f), 2);
-            Vector2Int h0 = OriginFromCenter(o + new Vector3(0f, 0f, 10.5f), 4);
-            placer.RegisterPiece(c0, 6, 6, BuildingCategory.Commons);
-            placer.RegisterPiece(a0, 2, 2, BuildingCategory.Utility);
-            placer.RegisterPiece(h0, 4, 4, BuildingCategory.Habitat);
-
-            CampusDressing.RefreshTubes(placer, _grid, buildings.transform);
-
-            Assert.IsTrue(IsRootActive(commons.transform, "CommonsPort_N"),
-                "docked Commons north must show one orange collar");
-            Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_E"),
-                "still5 unused east ring must stay off");
-            Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_S"));
-            Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_W"));
-            Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_N"));
-            Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_S"));
-            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_E"));
-            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_W"));
-            Assert.IsNotNull(FindChild(airlock.transform, "Dress_AirlockHub"));
-            Assert.IsNull(GameObject.Find("CampusTubeRoot"),
-                "no fourth CampusTubeRoot stacking collars in the HAB gap");
-            Assert.IsNull(GameObject.Find(CampusDressing.TubeRunRootName),
-                "RefreshTubes must not stamp a between-yard CampusDress_TubeRuns web");
-            AssertAirlockReadsAsWhiteHub(airlock.transform);
-            Assert.IsTrue(IsRootActive(hab.transform, "HabPort_S"),
-                "HAB south hull port is the module-side orange collar");
-            Assert.IsFalse(IsRootActive(hab.transform, "HabPort_N"));
-            Assert.IsFalse(IsRootActive(hab.transform, "HabPort_E"));
-            Assert.IsFalse(IsRootActive(hab.transform, "HabPort_W"));
-            AssertDockedArmIsOrangeRibbedCollar(airlock.transform, "Dress_TubeArm_S");
-            AssertDockedArmIsOrangeRibbedCollar(airlock.transform, "Dress_TubeArm_N");
-        }
-
-        [Test]
-        public void RefreshTubes_FindsVillageRingAirlock()
-        {
-            var buildings = new GameObject("Buildings");
-            buildings.transform.SetParent(_root.transform);
-            var village = new GameObject("VillageRing");
-            village.transform.SetParent(_root.transform);
-            Vector3 o = new Vector3(48f, 0f, 48f);
-            var commons = ModularBuildingFactory.Spawn(
-                BuildingCategory.Commons, o, buildings.transform);
-            commons.name = "Bld_ColonyCommons_drop";
-            var airlock = ModularBuildingFactory.Spawn(
-                BuildingCategory.Utility, o + new Vector3(0f, 0f, 6f), village.transform);
-            airlock.name = "VillageAirlock";
-            var hab = ModularBuildingFactory.Spawn(
-                BuildingCategory.Habitat, o + new Vector3(0f, 0f, 10.5f), village.transform);
-            hab.name = "VillageHAB_0";
-
-            var placer = new BuildingPlacer(new ResourceManager());
-            Vector2Int c0 = OriginFromCenter(o, 6);
-            Vector2Int a0 = OriginFromCenter(o + new Vector3(0f, 0f, 6f), 2);
-            Vector2Int h0 = OriginFromCenter(o + new Vector3(0f, 0f, 10.5f), 4);
-            placer.RegisterPiece(c0, 6, 6, BuildingCategory.Commons);
-            placer.RegisterPiece(a0, 2, 2, BuildingCategory.Utility);
-            placer.RegisterPiece(h0, 4, 4, BuildingCategory.Habitat);
-
-            CampusDressing.RefreshTubes(placer, _grid, _root.transform);
-
-            Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_N"),
-                "VillageRing airlock must get docked north collar");
-            Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_S"),
-                "VillageRing airlock must get docked south collar");
-            Assert.IsTrue(IsRootActive(commons.transform, "CommonsPort_N"));
-            Assert.IsTrue(IsRootActive(hab.transform, "HabPort_S"));
-        }
-
-        [Test]
-        public void AirlockHub_IsSmallWhiteSquare_NoWrapDoors()
-        {
-            var airlock = ModularBuildingFactory.Spawn(
-                BuildingCategory.Utility, Vector3.zero, _root.transform);
-            AssertAirlockReadsAsWhiteHub(airlock.transform);
-            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_N"),
-                "live unused north arm must start hidden");
-            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_E"));
-            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_S"));
-            Assert.IsFalse(IsRootActive(airlock.transform, "Dress_TubeArm_W"));
-        }
-
-        [Test]
-        public void GhostAirlock_ShowsAllArms_EachWithOneOrangeCollar()
-        {
-            var ghost = ModularBuildingFactory.Spawn(
-                BuildingCategory.Utility, Vector3.zero, _root.transform, ghost: true);
-            AssertAirlockReadsAsWhiteHub(ghost.transform);
-            string[] arms = { "Dress_TubeArm_N", "Dress_TubeArm_E", "Dress_TubeArm_S", "Dress_TubeArm_W" };
-            for (int i = 0; i < arms.Length; i++)
-            {
-                Assert.IsTrue(IsRootActive(ghost.transform, arms[i]), arms[i] + " ghost arm");
-                AssertDockedArmIsOrangeRibbedCollar(ghost.transform, arms[i]);
-            }
-        }
-
-        [Test]
-        public void CardinalExpansion_PlacesHabBeyondAirlock_NotOnCommons()
+        public void NeighborOrigin_CentresHabOnFace_WithWalkwayGap()
         {
             var commons = new BuildingPlacer.CampusPiece(
                 new Vector2Int(10, 10), 6, 6, BuildingCategory.Commons);
+            Assert.AreEqual(new Vector2Int(18, 11),
+                BuildingPlacer.NeighborOrigin(commons, BuildingPlacer.Cardinal.East, 4, 4));
+            Assert.AreEqual(new Vector2Int(4, 11),
+                BuildingPlacer.NeighborOrigin(commons, BuildingPlacer.Cardinal.West, 4, 4));
+            Assert.AreEqual(new Vector2Int(11, 18),
+                BuildingPlacer.NeighborOrigin(commons, BuildingPlacer.Cardinal.North, 4, 4));
+            Assert.AreEqual(new Vector2Int(11, 4),
+                BuildingPlacer.NeighborOrigin(commons, BuildingPlacer.Cardinal.South, 4, 4));
+
             var faces = new[]
             {
                 BuildingPlacer.Cardinal.East,
@@ -473,33 +305,19 @@ namespace SolarMajesty.Tests
                 BuildingPlacer.Cardinal.North,
                 BuildingPlacer.Cardinal.South
             };
-
             for (int i = 0; i < faces.Length; i++)
             {
-                var face = faces[i];
-                BuildingPlacer.CardinalExpansionOrigins(
-                    commons, face, 4, 4, out Vector2Int airlock, out Vector2Int hab);
-
-                Assert.IsFalse(
-                    RectsOverlap(hab, 4, 4, commons.Origin, 6, 6),
-                    $"{face} HAB {hab} must not sit on Commons {commons.Origin}");
-                Assert.IsFalse(
-                    RectsOverlap(hab, 4, 4, airlock, 2, 2),
-                    $"{face} HAB {hab} must not sit on airlock {airlock}");
-                Assert.AreEqual(
-                    BuildingPlacer.AirlockOriginOnModuleFace(commons, face),
-                    airlock);
-                Assert.AreEqual(
-                    BuildingPlacer.ModuleOriginOnAirlockFace(
-                        new BuildingPlacer.CampusPiece(airlock, 2, 2, BuildingCategory.Utility),
-                        4, 4, face),
-                    hab,
-                    $"{face} HAB must continue in the same cardinal as the Commons dock");
+                Vector2Int hab = BuildingPlacer.NeighborOrigin(commons, faces[i], 4, 4);
+                Assert.IsFalse(RectsOverlap(hab, 4, 4, commons.Origin, 6, 6),
+                    $"{faces[i]} HAB {hab} must not sit on Commons");
+                Assert.AreEqual(BuildingPlacer.NeighborGap,
+                    StillCampusDensity.RectGapCells(hab, 4, 4, commons.Origin, 6, 6),
+                    $"{faces[i]} HAB keeps a {BuildingPlacer.NeighborGap}-cell walkway");
             }
         }
 
         [Test]
-        public void OppositeFaceHab_OverlapsCommons_AndFailsCanFit()
+        public void NeighborOrigin_EveryFaceFitsOnAnEmptyCommonsDrop()
         {
             var placer = new BuildingPlacer(new ResourceManager());
             var commonsOrigin = new Vector2Int(10, 10);
@@ -507,74 +325,82 @@ namespace SolarMajesty.Tests
             placer.RegisterPiece(commonsOrigin, 6, 6, BuildingCategory.Commons);
             var commons = placer.Pieces[0];
 
-            var faces = new[]
+            for (int f = 0; f < 4; f++)
             {
-                BuildingPlacer.Cardinal.East,
-                BuildingPlacer.Cardinal.West,
-                BuildingPlacer.Cardinal.North,
-                BuildingPlacer.Cardinal.South
-            };
-
-            int outwardFits = 0;
-            for (int i = 0; i < faces.Length; i++)
-            {
-                var face = faces[i];
-                Vector2Int aCell = BuildingPlacer.AirlockOriginOnModuleFace(commons, face);
-                Assert.IsTrue(placer.CanFitRect(aCell, 2, 2), $"{face} airlock {aCell} must be free");
-
-                BuildingPlacer.CardinalExpansionOrigins(
-                    commons, face, 4, 4, out Vector2Int _, out Vector2Int outwardHab);
-                Assert.IsTrue(
-                    placer.CanFitRect(outwardHab, 4, 4),
-                    $"{face} outward HAB {outwardHab} must CanFit on an empty Commons drop");
-                outwardFits++;
-
-                var inward = Opposite(face);
-                Vector2Int inwardHab = BuildingPlacer.ModuleOriginOnAirlockFace(
-                    new BuildingPlacer.CampusPiece(aCell, 2, 2, BuildingCategory.Utility),
-                    4, 4, inward);
-                Assert.IsFalse(
-                    placer.CanFitRect(inwardHab, 4, 4),
-                    $"{face} Opposite HAB {inwardHab} is the still-stamp miss (overlaps Commons)");
-                Assert.IsTrue(
-                    placer.TryFirstOccupiedCell(inwardHab, 4, 4, out Vector2Int blocked));
-                Assert.IsTrue(
-                    placer.TryGetPieceAt(blocked, out var piece) &&
-                    piece.Category == BuildingCategory.Commons,
-                    $"{face} inward miss must report Commons overlap, got {blocked}");
+                var face = (BuildingPlacer.Cardinal)f;
+                Vector2Int hab = BuildingPlacer.NeighborOrigin(commons, face, 4, 4);
+                Assert.IsTrue(placer.CanFitRect(hab, 4, 4), $"{face} HAB {hab} must CanFit");
             }
-
-            Assert.AreEqual(4, outwardFits);
         }
 
         [Test]
-        public void EmptyCommonsDrop_EastChainFitsAndDoesNotOverlap()
+        public void Placer_RefusesRetiredAirlocks()
+        {
+            var placer = new BuildingPlacer(new ResourceManager());
+            placer.RegisterPiece(new Vector2Int(4, 4), 2, 2, BuildingCategory.Utility);
+            Assert.AreEqual(0, placer.Pieces.Count, "old-save airlock pieces are dropped");
+
+            var data = ScriptableObject.CreateInstance<BuildingData>();
+            try
+            {
+                data.category = BuildingCategory.Utility;
+                data.footprintWidth = 2;
+                data.footprintHeight = 2;
+                Assert.IsFalse(placer.TryPlace(data, new Vector2Int(8, 8), Vector3.zero, out _, out string why));
+                Assert.AreEqual("retired_building", why);
+            }
+            finally
+            {
+                Object.DestroyImmediate(data);
+            }
+        }
+
+        [Test]
+        public void Buildings_HaveNoPortsSleevesOrConnectors()
+        {
+            string[] banned =
+            {
+                "DockSleeve", "Dress_TubeArm", "CommonsStub", "CommonsPort", "HabPort", "LabPort",
+                "PwrPort", "HullPort", "DockPort", "DrumPort", "ModulePort", "CardinalPort",
+                "PlusConnector", "AirlockHub", "Dress_Hub"
+            };
+            var cats = new[]
+            {
+                BuildingCategory.Commons, BuildingCategory.Habitat, BuildingCategory.Laboratory,
+                BuildingCategory.Power, BuildingCategory.EngineerWorkshop, BuildingCategory.LandingPad
+            };
+            foreach (bool ghost in new[] { false, true })
+            foreach (var cat in cats)
+            {
+                var go = ModularBuildingFactory.Spawn(cat, Vector3.zero, _root.transform, 4, 4,
+                    ColonyLayout.DefaultCellSize, ghost);
+                foreach (var t in go.GetComponentsInChildren<Transform>(true))
+                    foreach (var b in banned)
+                        Assert.IsFalse(t.name.StartsWith(b),
+                            $"{cat}{(ghost ? " ghost" : "")} still has '{t.name}'");
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void EmptyCommonsDrop_EastHabFitsAndDoesNotOverlap()
         {
             var placer = new BuildingPlacer(new ResourceManager());
             var commonsOrigin = new Vector2Int(10, 10);
             placer.MarkCampusRect(commonsOrigin, 6, 6);
             placer.RegisterPiece(commonsOrigin, 6, 6, BuildingCategory.Commons);
 
-            BuildingPlacer.CardinalExpansionOrigins(
-                placer.Pieces[0],
-                BuildingPlacer.Cardinal.East,
-                4, 4,
-                out Vector2Int airlock,
-                out Vector2Int hab);
+            Vector2Int hab = BuildingPlacer.NeighborOrigin(
+                placer.Pieces[0], BuildingPlacer.Cardinal.East, 4, 4);
 
-            Assert.AreEqual(new Vector2Int(16, 12), airlock);
             Assert.AreEqual(new Vector2Int(18, 11), hab);
-            Assert.IsTrue(placer.CanFitRect(airlock, 2, 2));
             Assert.IsTrue(placer.CanFitRect(hab, 4, 4));
 
-            placer.MarkCampusRect(airlock, 2, 2);
-            placer.RegisterPiece(airlock, 2, 2, BuildingCategory.Utility);
             placer.MarkCampusRect(hab, 4, 4);
             placer.RegisterPiece(hab, 4, 4, BuildingCategory.Habitat);
 
-            Assert.AreEqual(3, placer.Pieces.Count);
+            Assert.AreEqual(2, placer.Pieces.Count);
             Assert.IsTrue(placer.HasCommonsModule);
-            Assert.IsFalse(placer.CanFitRect(airlock, 2, 2));
             Assert.IsFalse(placer.CanFitRect(hab, 4, 4));
         }
 
@@ -619,10 +445,10 @@ namespace SolarMajesty.Tests
                 StillCampusDensity.MinYardGapCells);
 
             var log = StillCampusDensity.StampLog.FromPieces(placer);
-            Assert.IsTrue(log.Commons && log.Airlock && log.Hab);
+            Assert.IsTrue(log.Commons && log.Hab);
             Assert.IsTrue(log.Pad && log.Power && log.Water && log.Regolith);
             Assert.AreEqual(
-                "commons=True airlock=True hab=True pad=True pwr=True water=True regolith=True " +
+                "commons=True hab=True pad=True pwr=True water=True regolith=True " +
                 "workshop=False inn=False wonder=False leftover=none extraHab=False extraSolar=False defense=False",
                 log.ToString());
 
@@ -637,7 +463,7 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(
                 RectsOverlap(plan.WaterOrigin, 4, 4, new Vector2Int(18, 11), 4, 4),
                 "water must not sit on east HAB");
-            Assert.AreEqual(7, placer.Pieces.Count);
+            Assert.AreEqual(6, placer.Pieces.Count);
         }
 
         [Test]
@@ -648,9 +474,6 @@ namespace SolarMajesty.Tests
                 commons, BuildingPlacer.Cardinal.West, 6, 6);
 
             Assert.IsTrue(placer.CanFitRect(westPad, 6, 6));
-            Assert.IsFalse(
-                placer.IsValidModuleDock(westPad, 6, 6),
-                "pad is a forward yard, not an airlock dock");
             Assert.IsFalse(
                 placer.OverlapsOutpostClaim(westPad, 6, 6),
                 "Campus B claim is ~30 m off — still pack must not require it");
@@ -717,7 +540,7 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(leftovers.Wonder, "Aaron 2026-09-07: leftover wonder is not a still density gate");
             Assert.IsFalse(leftovers.Workshop, "Aaron 2026-09-07: leftover hangar is not a still density gate");
             Assert.AreEqual("spaced", leftovers.SkipReason);
-            Assert.AreEqual(7, placer.Pieces.Count, "PlanLeftovers must not occupy leftover footprints");
+            Assert.AreEqual(6, placer.Pieces.Count, "PlanLeftovers must not occupy leftover footprints");
 
             var log = StillCampusDensity.StampLog.FromPieces(placer, leftovers.SkipReason);
             Assert.IsFalse(log.Workshop);
@@ -768,7 +591,7 @@ namespace SolarMajesty.Tests
         {
             var placer = StampEastChain(out var commons);
             StillCampusDensity.Plan(placer, commons, BuildingPlacer.Cardinal.East);
-            Assert.IsTrue(StillCampusDensity.TryDockOrNext(
+            Assert.IsTrue(StillCampusDensity.TryNext(
                 placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out Vector2Int shop));
             placer.MarkCampusRect(shop, 4, 4);
             placer.RegisterPiece(shop, 4, 4, BuildingCategory.EngineerWorkshop);
@@ -809,38 +632,31 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void DensePack_RejectsDockOverlappingCommons_AndFindsFreeSite()
+        public void DensePack_RejectsSiteOverlappingCommons_AndFindsFreeSite()
         {
             var placer = StampEastChain(out var commons);
             Assert.IsFalse(placer.CanFitRect(new Vector2Int(15, 14), 4, 4),
-                "the proposed north dock overlaps the Commons at (15,14)");
-            Assert.IsFalse(StillCampusDensity.TryDockOnAirlock(
-                placer, commons, 4, 4, null, out _));
+                "a site at (15,14) overlaps the Commons");
 
-            Assert.IsTrue(StillCampusDensity.TryDockOrNext(
+            Assert.IsTrue(StillCampusDensity.TryNext(
                 placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out Vector2Int picked));
             Assert.IsTrue(placer.CanFitRect(picked, 4, 4));
         }
 
         [Test]
-        public void DensePack_ExtraHabChain_CanFitSouth_ButPlanCuesSkips()
+        public void DensePack_ExtraHab_CanFitSouth_ButPlanCuesSkips()
         {
             var placer = StampEastChain(out var commons);
-            Assert.IsTrue(StillCampusDensity.TryExtraHabChain(
-                placer, commons, BuildingPlacer.Cardinal.East, null,
-                out Vector2Int airlock, out Vector2Int hab));
+            Assert.IsTrue(StillCampusDensity.TryExtraHab(
+                placer, commons, BuildingPlacer.Cardinal.East, null, out Vector2Int hab));
             Assert.AreEqual(
-                BuildingPlacer.AirlockOriginOnModuleFace(commons, BuildingPlacer.Cardinal.South),
-                airlock);
+                BuildingPlacer.NeighborOrigin(commons, BuildingPlacer.Cardinal.South, 4, 4), hab);
             Assert.IsFalse(RectsOverlap(hab, 4, 4, commons.Origin, 6, 6));
-            Assert.IsFalse(RectsOverlap(hab, 4, 4, airlock, 2, 2));
-            Assert.IsTrue(placer.CanFitRect(airlock, 2, 2));
             Assert.IsTrue(placer.CanFitRect(hab, 4, 4));
 
             var cues = StillCampusDensity.PlanCues(
                 placer, commons, BuildingPlacer.Cardinal.East);
             Assert.IsFalse(cues.ExtraHab, "Aaron 2026-09-07: extra HAB is leftover density, not a still gate");
-            Assert.IsFalse(cues.ExtraAirlock);
             Assert.AreEqual(0, cues.PlacedCount);
         }
 
@@ -890,63 +706,6 @@ namespace SolarMajesty.Tests
             Assert.GreaterOrEqual(stillOrtho, StillCampusDensity.StillMinOrtho);
             Assert.LessOrEqual(stillOrtho, StillCampusDensity.StillMaxOrtho);
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
-        }
-
-        [Test]
-        public void RefreshTubes_SpacedCampus_EnablesDockedArmsWithoutTubeRuns()
-        {
-            var buildings = new GameObject("Buildings");
-            buildings.transform.SetParent(_root.transform);
-            Vector3 o = new Vector3(48f, 0f, 48f);
-            var commons = ModularBuildingFactory.Spawn(
-                BuildingCategory.Commons, o, buildings.transform);
-            commons.name = "Bld_ColonyCommons_drop";
-            var airlock = ModularBuildingFactory.Spawn(
-                BuildingCategory.Utility, o + new Vector3(0f, 0f, 6f), buildings.transform);
-            var hab = ModularBuildingFactory.Spawn(
-                BuildingCategory.Habitat, o + new Vector3(0f, 0f, 10.5f), buildings.transform);
-            hab.name = "Mod_Habitat";
-
-            var placer = new BuildingPlacer(new ResourceManager());
-            Vector2Int c0 = OriginFromCenter(o, 6);
-            Vector2Int a0 = OriginFromCenter(o + new Vector3(0f, 0f, 6f), 2);
-            Vector2Int h0 = OriginFromCenter(o + new Vector3(0f, 0f, 10.5f), 4);
-            placer.RegisterPiece(c0, 6, 6, BuildingCategory.Commons);
-            placer.RegisterPiece(a0, 2, 2, BuildingCategory.Utility);
-            placer.RegisterPiece(h0, 4, 4, BuildingCategory.Habitat);
-
-            var commonsPiece = placer.Pieces[0];
-            Vector2Int pad = StillCampusDensity.FlushOrigin(
-                commonsPiece, BuildingPlacer.Cardinal.West, 6, 6);
-            placer.MarkCampusRect(pad, 6, 6);
-            placer.RegisterPiece(pad, 6, 6, BuildingCategory.LandingPad);
-            Vector3 padWorld = FootprintCenter(pad, 6);
-            var padGo = ModularBuildingFactory.Spawn(
-                BuildingCategory.LandingPad, padWorld, buildings.transform);
-            padGo.name = "Bld_LandingPad_still";
-
-            new GameObject(CampusDressing.TubeRunRootName).transform.SetParent(buildings.transform);
-
-            // West pad is a cardinal neighbor that still21 used to web with a tube run.
-            Assert.IsTrue(StillCampusDensity.TryCardinalNeighbor(
-                placer.Pieces[0], placer.Pieces[placer.Pieces.Count - 1],
-                8, out _, out bool eastWest));
-            Assert.IsTrue(eastWest, "west pad is an E/W neighbor of Commons");
-            Assert.IsFalse(StillCampusDensity.AreAirlockLinked(
-                placer, placer.Pieces[0], placer.Pieces[placer.Pieces.Count - 1]));
-
-            CampusDressing.RefreshTubes(placer, _grid, buildings.transform);
-
-            Assert.IsTrue(IsRootActive(commons.transform, "CommonsPort_N"),
-                "docked Commons north must stay enabled on a still campus");
-            Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_N"));
-            Assert.IsTrue(IsRootActive(airlock.transform, "Dress_TubeArm_S"));
-            Assert.IsFalse(IsRootActive(commons.transform, "CommonsPort_E"),
-                "unused Commons east ring stays off");
-            Assert.IsNull(GameObject.Find("CampusTubeRoot"),
-                "must not revive CampusTubeRoot in the HAB gap");
-            Assert.IsNull(GameObject.Find(CampusDressing.TubeRunRootName),
-                "RefreshTubes must not stamp a pressurized tube web between yards");
         }
 
         [Test]
@@ -1040,14 +799,7 @@ namespace SolarMajesty.Tests
             placer.RegisterPiece(commonsOrigin, 6, 6, BuildingCategory.Commons);
             commons = placer.Pieces[0];
 
-            BuildingPlacer.CardinalExpansionOrigins(
-                commons,
-                BuildingPlacer.Cardinal.East,
-                4, 4,
-                out Vector2Int airlock,
-                out Vector2Int hab);
-            placer.MarkCampusRect(airlock, 2, 2);
-            placer.RegisterPiece(airlock, 2, 2, BuildingCategory.Utility);
+            Vector2Int hab = BuildingPlacer.NeighborOrigin(commons, BuildingPlacer.Cardinal.East, 4, 4);
             placer.MarkCampusRect(hab, 4, 4);
             placer.RegisterPiece(hab, 4, 4, BuildingCategory.Habitat);
             return placer;
@@ -1062,16 +814,13 @@ namespace SolarMajesty.Tests
             out StillCampusDensity.CuePlan cues)
         {
             var placer = StampEastChain(out commons);
-            Assert.IsTrue(StillCampusDensity.TryExtraHabChain(
-                placer, commons, BuildingPlacer.Cardinal.East, null,
-                out Vector2Int extraAirlock, out Vector2Int extraHab));
-            placer.MarkCampusRect(extraAirlock, 2, 2);
-            placer.RegisterPiece(extraAirlock, 2, 2, BuildingCategory.Utility);
+            Assert.IsTrue(StillCampusDensity.TryExtraHab(
+                placer, commons, BuildingPlacer.Cardinal.East, null, out Vector2Int extraHab));
             placer.MarkCampusRect(extraHab, 4, 4);
             placer.RegisterPiece(extraHab, 4, 4, BuildingCategory.Habitat);
 
-            if (StillCampusDensity.TryDockOnAirlock(
-                    placer, commons, 4, 4, null, out Vector2Int shop))
+            if (StillCampusDensity.TryNext(
+                    placer, commons, BuildingPlacer.Cardinal.East, 4, 4, null, out Vector2Int shop))
             {
                 placer.MarkCampusRect(shop, 4, 4);
                 placer.RegisterPiece(shop, 4, 4, BuildingCategory.EngineerWorkshop);
@@ -1083,32 +832,11 @@ namespace SolarMajesty.Tests
             cues = StillCampusDensity.PlanCues(placer, commons, BuildingPlacer.Cardinal.East);
             return placer;
         }
-
-        private static BuildingPlacer.Cardinal Opposite(BuildingPlacer.Cardinal face)
-        {
-            switch (face)
-            {
-                case BuildingPlacer.Cardinal.East: return BuildingPlacer.Cardinal.West;
-                case BuildingPlacer.Cardinal.West: return BuildingPlacer.Cardinal.East;
-                case BuildingPlacer.Cardinal.North: return BuildingPlacer.Cardinal.South;
-                default: return BuildingPlacer.Cardinal.North;
-            }
-        }
-
         private static bool RectsOverlap(
             Vector2Int a, int aw, int ah, Vector2Int b, int bw, int bh)
         {
             return a.x < b.x + bw && a.x + aw > b.x && a.y < b.y + bh && a.y + ah > b.y;
         }
-
-        private Vector2Int OriginFromCenter(Vector3 center, int side)
-        {
-            float cs = _grid.CellSize;
-            int span = Mathf.Max(1, side);
-            Vector3 corner = center - new Vector3((span - 1) * 0.5f * cs, 0f, (span - 1) * 0.5f * cs);
-            return _grid.WorldToCell(corner);
-        }
-
         private static Transform FindChild(Transform root, string name)
         {
             var ts = root.GetComponentsInChildren<Transform>(true);
@@ -1159,92 +887,6 @@ namespace SolarMajesty.Tests
             agent.Initialize(null, null, Vector3.zero);
             agent.SetKind(kind);
         }
-
-        private static bool IsRootActive(Transform root, string name)
-        {
-            Transform t = FindChild(root, name);
-            return t != null && t.gameObject.activeSelf;
-        }
-
-        /// <summary>
-        /// Locked still: white cube hub with dark square windows. No wrap doors,
-        /// no inset-hatch-only language, no roof turret / cyan visor.
-        /// </summary>
-        private static void AssertAirlockReadsAsWhiteHub(Transform airlock)
-        {
-            Transform hub = FindChild(airlock, "Dress_AirlockHub");
-            Assert.IsNotNull(hub, "Dress_AirlockHub");
-            Vector3 scale = hub.localScale;
-            Assert.AreEqual(ColonyVisualUtility.AirlockHubSide, scale.x, 0.02f);
-            Assert.AreEqual(ColonyVisualUtility.AirlockHubSide, scale.z, 0.02f);
-            Assert.Less(scale.x, ColonyLayout.DefaultCellSize * 2f,
-                "hub must stay smaller than the 2×2 cell so the white tube reads");
-            Assert.Greater(Albedo(hub).grayscale, 0.70f, "hub hull must remain warm cream");
-            Assert.IsNotNull(FindChild(airlock, "Dress_HubPanel_0"));
-            Assert.Greater(Albedo(FindChild(airlock, "Dress_HubPanel_0")).grayscale, 0.70f);
-            Assert.IsNotNull(FindChild(airlock, "Dress_HubSeamH_0"),
-                "carbon panel seams must stay — still18 cube-ish miss");
-            Assert.Less(Albedo(FindChild(airlock, "Dress_HubSeamH_0")).grayscale, 0.35f);
-            Assert.Greater(Albedo(FindChild(airlock, "Dress_HubRoof")).grayscale, 0.70f,
-                "carbon roof was the still16 dark lid — roof stays white");
-            Assert.IsNull(FindChild(airlock, "Dress_HubDoor_0"),
-                "wrap doors painted the hub as a dark box");
-            Assert.IsNull(FindChild(airlock, "Dress_HubDoor_1"));
-            Assert.IsNull(FindChild(airlock, "Dress_HubInset_0"),
-                "inset hatch is not the locked still — dark square windows are");
-            Assert.IsNull(FindChild(airlock, "Dress_JunctionTurret"),
-                "locked still airlock is a white cube, not a turreted hub");
-            Transform window = FindChild(airlock, "Dress_HubWindow_0_00");
-            Assert.IsNotNull(window, "2×2 dark square windows per face");
-            Assert.Less(Albedo(window).grayscale, 0.25f, "windows stay dark, not cyan visor");
-            Assert.IsNotNull(FindChild(airlock, "Dress_HubWindow_0_11"));
-        }
-
-        private static void AssertDockedArmIsOrangeRibbedCollar(Transform airlock, string arm)
-        {
-            Transform group = FindChild(airlock, arm);
-            Assert.IsNotNull(group, arm);
-            Transform tube = FindChild(group, arm + "_Tube");
-            Transform collar = FindChild(group, arm + "_Collar");
-            Transform torus0 = FindChild(group, arm + "_Torus_0");
-            Transform torus1 = FindChild(group, arm + "_Torus_1");
-            Transform rib = FindChild(group, arm + "_Rib_0");
-            Assert.IsNotNull(tube, arm + " orange ribbed tube");
-            Assert.IsNotNull(collar, arm + " orange collar");
-            Assert.IsNotNull(torus0, arm + " torus ring 0");
-            Assert.IsNotNull(torus1, arm + " torus ring 1");
-            Assert.IsNotNull(rib, arm + " rib");
-            Assert.IsNull(FindChild(group, arm + "_Lip"),
-                arm + " white hub lip is the rejected white-tube kit");
-            Assert.IsNull(FindChild(group, arm + "_HubCollar"),
-                arm + " graphite hub collar is the rejected variant");
-            Transform faceFrame = FindChild(group, arm + "_FaceFrame");
-            Assert.IsNotNull(faceFrame, arm + " square orange face frame");
-            Color tubeC = Albedo(tube);
-            Assert.Greater(tubeC.r, 0.85f, arm + " tube stays safety orange");
-            Assert.Less(tubeC.g, 0.55f);
-            Assert.Less(tubeC.b, 0.25f);
-            Color collarC = Albedo(collar);
-            Assert.Greater(collarC.r, 0.85f, arm + " collar stays safety orange");
-            Assert.Less(collarC.g, 0.55f);
-            Color torusC = Albedo(torus0);
-            Assert.Greater(torusC.r, 0.85f, arm + " torus stays safety orange");
-            Assert.Less(torusC.g, 0.55f);
-            Color frameC = Albedo(faceFrame);
-            Assert.Greater(frameC.r, 0.85f, arm + " face frame stays safety orange");
-            Assert.Less(frameC.g, 0.55f);
-            float tubeLen = tube.localScale.y * 2f;
-            Assert.Greater(tubeLen, 0.39f, arm + " stub must read as a short orange tube");
-            float face = ColonyLayout.DefaultCellSize;
-            Vector3 collarFlat = collar.localPosition;
-            collarFlat.y = 0f;
-            Assert.Greater(collarFlat.magnitude, face * 0.85f,
-                arm + " orange collar sits at the Lego face");
-            Assert.Greater(collar.localScale.y, 0.06f, arm + " Lego-face collar must be thicker than a sliver");
-            Assert.Greater(torus0.localScale.x, ColonyVisualUtility.DockBore * 1.25f,
-                arm + " torus must read wider than the tube");
-        }
-
         private static void AssertNoSquareHullPanels(Transform t, string message)
         {
             Assert.IsNotNull(t);

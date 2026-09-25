@@ -75,7 +75,7 @@ namespace SolarMajesty.Tests
             var slots = new List<CampusSlot>
             {
                 Slot(BuildingCategory.Commons, 4, 4, 6, 6, 1000),
-                Slot(BuildingCategory.Utility, 10, 6, 2, 2, 1000),
+                Slot(BuildingCategory.Power, 10, 10, 4, 4, 1000),
                 Slot(BuildingCategory.Habitat, 12, 4, 4, 4, 1000),
                 Slot(BuildingCategory.EngineerWorkshop, 12, 8, 4, 4, 1000)
             };
@@ -86,7 +86,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(3, pop);
             Assert.AreEqual(4, decoded.Count);
             Assert.AreEqual(BuildingCategory.Commons, decoded[0].Category);
-            Assert.AreEqual(BuildingCategory.Utility, decoded[1].Category);
+            Assert.AreEqual(BuildingCategory.Power, decoded[1].Category);
             Assert.AreEqual(BuildingCategory.Habitat, decoded[2].Category);
             Assert.AreEqual(BuildingCategory.EngineerWorkshop, decoded[3].Category);
             Assert.AreEqual(1000, decoded[3].ProgressMilli);
@@ -97,13 +97,12 @@ namespace SolarMajesty.Tests
         public void CampusSnapshot_RestoresCommonsBeforeWorkshops()
         {
             Assert.AreEqual(0, CampusSnapshot.Rank(BuildingCategory.Commons));
-            Assert.AreEqual(1, CampusSnapshot.Rank(BuildingCategory.Utility));
             Assert.Greater(
                 CampusSnapshot.Rank(BuildingCategory.EngineerWorkshop),
                 CampusSnapshot.Rank(BuildingCategory.Commons));
             Assert.Greater(
                 CampusSnapshot.Rank(BuildingCategory.Habitat),
-                CampusSnapshot.Rank(BuildingCategory.Utility));
+                CampusSnapshot.Rank(BuildingCategory.Commons));
         }
 
         [Test]

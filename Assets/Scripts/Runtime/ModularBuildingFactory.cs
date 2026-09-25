@@ -5,7 +5,7 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Unique bilaterally-symmetric building kits sized to their grid footprints.
-    /// Cardinal airlock ports sit on the hull faces so Utility junctions click flush.
+    /// Each building stands alone — no ports, sleeves or connectors between them.
     /// Phase 4 hero FBX (SM_Hero_*) is preferred; HeroBuildingKits is the procedural fallback.
     /// </summary>
     public static class ModularBuildingFactory
@@ -49,7 +49,7 @@ namespace SolarMajesty
             }
         }
 
-        /// <summary>Hulls fill the footprint so faces meet the 2×2 airlock cell.</summary>
+        /// <summary>Hulls fill the footprint.</summary>
         private const float HullFill = 1f;
 
         public static GameObject Spawn(
@@ -77,16 +77,6 @@ namespace SolarMajesty
             float worldW = footprintW * cellSize;
             float worldD = footprintH * cellSize;
 
-            if (category == BuildingCategory.Utility)
-            {
-                var airlock = ColonyVisualUtility.SpawnPlusConnector(
-                    position, parent, Mathf.Min(worldW, worldD), showAllArms: ghost);
-                airlock.name = ghost ? $"Ghost_{category}" : "AirlockJunction";
-                if (ghost)
-                    StripColliders(airlock);
-                return airlock;
-            }
-
             var root = new GameObject(ghost ? $"Ghost_{category}" : $"Mod_{category}");
             if (parent != null)
                 root.transform.SetParent(parent, false);
@@ -95,17 +85,11 @@ namespace SolarMajesty
             if (!HeroBuildingKits.IsHero(category))
                 BuildDeck(root.transform, worldW, worldD);
             BuildCore(root.transform, category, worldW * HullFill, worldD * HullFill);
-            AttachCardinalAirlocks(root.transform, category, worldW * 0.5f, worldD * 0.5f, ghost);
-            if (ghost)
-                CampusDressing.SetLiveDockDressActive(root.transform, true);
-            else
-                CampusDressing.SetLiveDockDressActive(root.transform, false);
 
             ColonyVisualUtility.EnsureUrpMaterials(root);
             // Do not SetTintOverlay here — MPB _BaseColor replaces orange/cyan/carbon
             // and flattens hero kits into greybox hulls. Body grade lives in atmosphere.
-            // Keep DockY / DockBore flush after seating FBX or floating pivots.
-            ColonyVisualUtility.SnapToGroundKeepingDockAxis(root);
+            ColonyVisualUtility.SnapToGround(root);
             // Per-world architecture after the snap, so ground berms don't lift the hull.
             if (_body.HasValue)
                 PlanetArchitectureDresser.Dress(root, category, _body.Value, worldW, worldD);
@@ -352,117 +336,6 @@ namespace SolarMajesty
                 new Color(0.82f, 0.48f, 0.18f));
         }
 
-        private static void AttachCardinalAirlocks(
-            Transform root, BuildingCategory cat, float halfW, float halfD, bool ghost)
-        {
-            // Sleeves span hull → Lego face at DockY / DockBore. HAB sleeves stay
-            // orange so the Commons-to-HAB join matches the locked still. Live
-            // sleeves start hidden; RefreshTubes enables only faces that dock.
-            float y = ColonyVisualUtility.DockY;
-            float bore = ColonyVisualUtility.DockBore;
-            float w = halfW * 2f;
-            float d = halfD * 2f;
-            bool hullPort = HeroBuildingKits.HasHullPort(cat);
-            bool orangeJoin = cat == BuildingCategory.Habitat;
-            PlaceDockSleeve(root, "DockSleeve_N", Vector3.forward, halfD, y, bore,
-                HeroBuildingKits.HullDistance(cat, w, d, Vector3.forward), hullPort, orangeJoin, ghost);
-            PlaceDockSleeve(root, "DockSleeve_S", Vector3.back, halfD, y, bore,
-                HeroBuildingKits.HullDistance(cat, w, d, Vector3.back), hullPort, orangeJoin, ghost);
-            PlaceDockSleeve(root, "DockSleeve_E", Vector3.right, halfW, y, bore,
-                HeroBuildingKits.HullDistance(cat, w, d, Vector3.right), hullPort, orangeJoin, ghost);
-            PlaceDockSleeve(root, "DockSleeve_W", Vector3.left, halfW, y, bore,
-                HeroBuildingKits.HullDistance(cat, w, d, Vector3.left), hullPort, orangeJoin, ghost);
-        }
-
-        private static void PlaceDockSleeve(
-            Transform root,
-            string name,
-            Vector3 outward,
-            float face,
-            float y,
-            float bore,
-            float hullR,
-            bool hullHasPort,
-            bool orangeJoin,
-            bool ghost)
-        {
-            Vector3 dir = outward.normalized;
-            // Collar sits DockCollarOut outside the hull. Stop the tube there (no punch-through).
-            // Full-footprint boxes (hullR ~ 0) keep a short wall socket at the cell face.
-            float inset;
-            if (hullR > 0.15f && hullR < face - 0.08f)
-                inset = Mathf.Max(0.08f, face - hullR - ColonyVisualUtility.DockCollarOut);
-            else
-                inset = 0.36f;
-            const float outset = 0.04f;
-            Vector3 facePos = dir * face + new Vector3(0f, y, 0f);
-            DockSleeve(root, name, facePos, dir, bore, inset, outset,
-                hullHasPort && hullR > 0.15f, orangeJoin, ghost);
-        }
-
-        private static void DockSleeve(
-            Transform parent,
-            string name,
-            Vector3 facePos,
-            Vector3 outward,
-            float bore,
-            float inset,
-            float outset,
-            bool hullHasPort,
-            bool orangeJoin,
-            bool ghost)
-        {
-            var group = new GameObject(name);
-            group.transform.SetParent(parent, false);
-            group.transform.localPosition = Vector3.zero;
-            group.transform.localRotation = Quaternion.identity;
-
-            float length = inset + outset;
-            Vector3 dir = outward.normalized;
-            Vector3 center = facePos + dir * ((outset - inset) * 0.5f);
-            Color orange = AirlockColor();
-            Quaternion along = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
-            var tube = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            tube.name = name + "_Tube";
-            tube.transform.SetParent(group.transform, false);
-            tube.transform.localPosition = center;
-            tube.transform.localRotation = along;
-            tube.transform.localScale = new Vector3(bore, length * 0.5f, bore);
-            ColonyVisualUtility.DestroyNow(tube.GetComponent<Collider>());
-            // Locked HAB still: Commons-to-HAB join is orange, not a white sleeve.
-            ApplyColor(tube, orangeJoin ? orange : new Color(0.98f, 0.98f, 0.99f));
-
-            Vector3 hullEnd = facePos - dir * inset;
-            if (!orangeJoin)
-            {
-                Color carbon = new Color(0.16f, 0.17f, 0.19f);
-                DressCyl(group.transform, name + "_Lip", hullEnd + dir * 0.05f, along,
-                    new Vector3(bore * 1.04f, 0.035f, bore * 1.04f), carbon);
-            }
-            // Round kits already wear hull port rings. Box walls need the orange here.
-            if (!hullHasPort)
-            {
-                DressCyl(group.transform, name + "_Collar", hullEnd + dir * 0.02f, along,
-                    new Vector3(bore * 1.04f, 0.03f, bore * 1.04f), orange);
-            }
-
-            if (!ghost)
-                group.SetActive(false);
-        }
-
-        private static void DressCyl(
-            Transform parent, string name, Vector3 localPos, Quaternion rot, Vector3 localScale, Color color)
-        {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = localPos;
-            go.transform.localRotation = rot;
-            go.transform.localScale = localScale;
-            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
-            ApplyColor(go, color);
-        }
-
         private static void Part(
             Transform parent,
             string name,
@@ -512,7 +385,6 @@ namespace SolarMajesty
             if (_bodyHull.g > 0.85f) return _bodyHull;
             return Color.Lerp(sheet, _bodyHull, t);
         }
-        private static Color AirlockColor() => new Color(0.96f, 0.42f, 0.08f);
 
         private static Color AccentFor(BuildingCategory cat)
         {

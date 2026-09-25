@@ -88,7 +88,7 @@ All eight types are **playable on every body from drop**. Narrative “unlocks�
 
 Sustain also needs Commons, housing ≥ goal, ≥1 Farm, ≥1 Mine, floors ICE ≥ 8 / MET ≥ 12 / REG ≥ 10 (`MissionController` + `Settlement`).
 
-**Tutorial (Luna, six skippable beats; Earth copy stays parked):** Commons → airlock → HAB → workshop → flag → TECH (`OverseerHud`). Teach **Build $70** greed (Anvil refuses cheap weld) on beat 5.
+**Tutorial (Luna, six skippable beats; Earth copy stays parked):** Commons → HAB → workshop → flag → TECH (`OverseerHud`). Teach **Build $70** greed (Anvil refuses cheap weld) on beat 5.
 
 **Research tees (advisor, not auto-quest):**
 
@@ -123,7 +123,7 @@ Sustain also needs Commons, housing ≥ goal, ≥1 Farm, ≥1 Mine, floors ICE �
 |----|-------|------------|-------------------|
 | `earth.explore.survey_the_claim` | Survey the Claim | `Explore` | Horizon maps the meadow so the court knows the apron. |
 | `earth.build.raise_the_commons` | Raise the Commons | `Build` | First civic landmark; tutorial court opens. Place Commons, then post Build on the order. |
-| `earth.build.dock_the_first_hab` | Dock the First HAB | `Build` | Beds and tax. Humans stay indoors; Anvil welds the airlock join. |
+| `earth.build.dock_the_first_hab` | Raise the First HAB | `Build` | Beds and tax for the village. |
 | `earth.extract.levy_the_meadow_farm` | Levy the Meadow Farm | `Extract` | ICE for life support. Creepers follow the harvest. |
 | `earth.defendarea.ward_the_furrows` | Ward the Furrows | `DefendArea` | Hold farm pests without a hunt. Aegis / Triage cheap to tempt. |
 | `earth.clearthreat.seal_the_near_dens` | Seal the Near Dens | `ClearThreat` | Combat gate — three dens. Advisor: “The court does not share the meadow.” |
@@ -148,7 +148,7 @@ Sustain also needs Commons, housing ≥ goal, ≥1 Farm, ≥1 Mine, floors ICE �
 | `Extract` | Weigh Freehold ore / ice. This is the levy. |
 | `DefendArea` | Ward ticks at the weigh-station (mines). |
 | `ClearThreat` | Root hopper “saboteurs” on HABs; clear eight dens. |
-| `Build` | Crater Commons, airlock forts, Mars Ship pad. |
+| `Build` | Crater Commons, perimeter forts, Mars Ship pad. |
 | `EstablishOutpost` | Stake Campus B on the far rim (cyan disc). |
 | `ResearchSite` | Science toward Mars Ship. |
 | `Terraform` | Optional ice-polar dress; do not lead the act with it. |
@@ -164,7 +164,7 @@ Sustain also needs Commons, housing ≥ goal, ≥1 Farm, ≥1 Mine, floors ICE �
 | `luna.build.raise_the_crater_commons` | Raise the Crater Commons | `Build` | Authority plaza on grey rock. Same Commons gate as Earth. |
 | `luna.establishoutpost.stake_the_far_rim` | Stake the Far Rim | `EstablishOutpost` | Courier claims Campus B. Freight after. |
 | `luna.researchsite.commission_the_mars_ship` | Commission the Mars Ship | `ResearchSite` | +12 toward `TechId.MarsShip` (100 sci + 80 MET + 30 ICE + 20 PWR). |
-| `luna.build.fortify_the_airlocks` | Fortify the Airlocks | `Build` | Defense Battery / workshop labour. Junction turrets stay dressing (no fire). |
+| `luna.build.fortify_the_perimeter` | Fortify the Perimeter | `Build` | Defense Battery / workshop labour. Battery turrets stay dressing (no fire). |
 
 **Advisor cues:** arrival log already names hoppers + ticks. Lean into tithe / warrant / “who cut the hoppers loose.” Win travel log already: “Luna holds. Mars Ship staged. Next body: Mars.”
 
@@ -174,7 +174,7 @@ Sustain also needs Commons, housing ≥ goal, ≥1 Farm, ≥1 Mine, floors ICE �
 
 **Theme:** The red campus is the Compact’s stronghold, not a second Earth court. Commons is the Compact seat; Guild Hall is the Compact charter made stone; wonders are prestige, not Palace.  
 **Fauna:** Dust Wisp on Power (`ClearThreat`, F2). Dust Creeper on farms (`DefendArea`, F5). Ten dens.  
-**Look note:** Phase 4 EXIT is still art-blocked (airlock panels; spaced overseer still). Narrative writes against the **campus that will be**, not the empty Sol 1 still. Do not chase retired VisualTarget packed density.
+**Look note:** Phase 4 EXIT is still art-blocked (spaced overseer still). Narrative writes against the **campus that will be**, not the empty Sol 1 still. Do not chase retired VisualTarget packed density.
 
 ### Types in play
 
