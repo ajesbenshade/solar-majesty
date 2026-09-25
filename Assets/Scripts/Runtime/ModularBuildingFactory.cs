@@ -12,10 +12,12 @@ namespace SolarMajesty
     {
         private static Material _hull;
         private static Color _bodyHull = new Color(0.62f, 0.66f, 0.72f);
+        private static CelestialBodyId? _body;
 
         /// <summary>Greybox hull tint per body. Hero kits lerp a white shell toward this grade.</summary>
         public static void BindBody(CelestialBodyProfile body)
         {
+            _body = body != null ? body.Id : (CelestialBodyId?)null;
             if (body == null)
             {
                 _bodyHull = new Color(0.62f, 0.66f, 0.72f);
@@ -104,6 +106,9 @@ namespace SolarMajesty
             // and flattens hero kits into greybox hulls. Body grade lives in atmosphere.
             // Keep DockY / DockBore flush after seating FBX or floating pivots.
             ColonyVisualUtility.SnapToGroundKeepingDockAxis(root);
+            // Per-world architecture after the snap, so ground berms don't lift the hull.
+            if (_body.HasValue)
+                PlanetArchitectureDresser.Dress(root, category, _body.Value, worldW, worldD);
             if (ghost)
                 StripColliders(root);
             return root;
