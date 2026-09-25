@@ -223,6 +223,8 @@ Read from the PNG pixels (not captions). 1024×421 Unity editor Game-tab grab. S
 ## Leftovers (stay in Phase 4 — not Phase 5 polish)
 
 - **Campus Game-tab still (Aaron look-clear)** — frequency-3 Commons triangles + boxy tan HAB + orange collar + 4-cell islands + no tube web are **in code** on this branch. Latest archived Game-tab is still still6 (empty Sol 1). Bake-off #26/#27/#28 are **not** EXIT. **Needs a new Game-tab still from GD. Do not stamp exit.**
+
+Parked pad Starship uses a procedural warm-cream stack with two thick carbon bands and a small hull fill; the pad skips the cool-white placeholder FBX. LaunchSite still uses the placeholder craft. Needs a fresh Game-tab visual check.
 - Landmark kits (pad + Starship, solar, extractors) may appear when they CanFit. Leftover Workshop / Inn / wonder / extra HAB / extra solar / Defense do **not** stamp on `StampPhase4*`. Do not fill every dirt patch. Units remain optional (do not invent new unit systems).
 - Defense PNG **biped walker** (live mesh stays the Imagine **tracked** guardian so it does not clone Engineer)
 - Circular HAB cluster vs square docks (placement model stays square; interconnect tube webs are retired — Lego ports only)

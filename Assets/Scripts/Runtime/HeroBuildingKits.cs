@@ -1557,23 +1557,37 @@ namespace SolarMajesty
                 new Vector3(width, 0.07f, 0.07f), Concrete);
         }
 
+        /// <summary>
+        /// Concept stack height used by the procedural pad rocket (metres).
+        /// </summary>
+        public const float StarshipStackHeight = 7.4f;
+
+        /// <summary>Lower carbon band centre as a fraction of <see cref="StarshipStackHeight"/>.</summary>
+        public const float StarshipBandLoT = 0.30f;
+
+        /// <summary>Upper carbon band centre as a fraction of <see cref="StarshipStackHeight"/>.</summary>
+        public const float StarshipBandHiT = 0.58f;
+
+        /// <summary>
+        /// Unity cylinder <c>scale.y</c> is half-height. Lower band is ~11 % of the stack
+        /// so it reads as the concept's thick black ring at play ortho 10.
+        /// </summary>
+        public const float StarshipBandLoHalf = StarshipStackHeight * 0.055f;
+
+        /// <summary>Upper band ~9 % of the stack — slightly thinner than the lower ring.</summary>
+        public const float StarshipBandHiHalf = StarshipStackHeight * 0.045f;
+
+        /// <summary>
+        /// Tiny warm fill on cream hulls so the shaded flank reads ~55 % of lit
+        /// (concept terminator), not the placeholder FBX's 33 % brown core.
+        /// </summary>
+        public static readonly Color StarshipHullFill = new Color(0.14f, 0.12f, 0.10f);
+
         private static void SpawnParkedShip(Transform root)
         {
-            GameObject prefab = BuildingVisualCatalog.LoadStarship();
-            if (prefab != null)
-            {
-                var ship = ColonyVisualUtility.InstantiateOriented(prefab, root.position, root, 0f);
-                ship.name = "Dress_Starship";
-                ship.transform.localScale = Vector3.one * ColonyLayout.ShipScale;
-                ship.transform.localPosition = Vector3.zero;
-                StripColliders(ship);
-                ColonyVisualUtility.EnsureUrpMaterials(ship);
-                WarmShipSkin(ship);
-                ColonyVisualUtility.SnapToGround(ship, root.position.y + 0.16f);
-                AddShipCarbonBands(root, ship);
-                return;
-            }
-
+            // SM_Starship_Placeholder is cool-white and its shaded flank drops to ~33 %
+            // of lit. Concept rocket is warm cream with two thick black bands and a soft
+            // terminator. LaunchSite still uses LoadStarship() for the live craft.
             BuildProceduralShip(root);
         }
 
@@ -1600,72 +1614,30 @@ namespace SolarMajesty
             return root;
         }
 
-        /// <summary>
-        /// Placeholder Starship skin is cool white and its shaded flank drops to ~33 % of lit;
-        /// concept body is warm cream with a soft terminator (~55 %). Re-tint the bright
-        /// renderers dielectric warm white and leave dark parts (engines) alone.
-        /// </summary>
-        private static void WarmShipSkin(GameObject ship)
-        {
-            foreach (var rend in ship.GetComponentsInChildren<Renderer>())
-            {
-                var m = rend.sharedMaterial;
-                if (m == null) continue;
-                Color c = m.HasProperty("_BaseColor") ? m.GetColor("_BaseColor")
-                    : m.HasProperty("_Color") ? m.color : Color.white;
-                if (c.maxColorComponent < 0.6f) continue;
-                Tint(rend.gameObject, White);
-            }
-        }
-
-        /// <summary>
-        /// Concept Starship is white with two black bands; the FBX ships all-white, so wrap
-        /// two thin carbon rings around the stack at ~1/3 and ~2/3 height.
-        /// </summary>
-        private static void AddShipCarbonBands(Transform root, GameObject ship)
-        {
-            var rends = ship.GetComponentsInChildren<Renderer>();
-            if (rends == null || rends.Length == 0) return;
-            Bounds b = rends[0].bounds;
-            for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
-            float h = b.size.y;
-            if (h < 1f) return;
-            // Flaps widen the bounds along one axis only; the narrow axis is the hull diameter
-            // (SM_Starship_Placeholder: 1.74 m at ShipScale). Rings stand 5 % proud of the skin.
-            float dia = Mathf.Min(b.size.x, b.size.z) * 1.05f;
-            for (int i = 0; i < 2; i++)
-            {
-                float y = b.min.y + h * (i == 0 ? 0.30f : 0.58f);
-                Vector3 local = root.InverseTransformPoint(new Vector3(b.center.x, y, b.center.z));
-                Prim(root, "Dress_ShipBand_" + i, PrimitiveType.Cylinder,
-                    local, new Vector3(dia, h * 0.055f, dia), Carbon);
-            }
-        }
-
         private static void BuildProceduralShip(Transform root)
         {
-            const float h = 7.4f;
+            const float h = StarshipStackHeight;
+            // Near-black so the bands read at ortho 10 (Carbon 0.26 washed to charcoal).
+            Color band = new Color(0.08f, 0.07f, 0.07f);
+
             Prim(root, "Dress_StarshipSkirt", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.55f, 0f),
-                new Vector3(1.36f, 0.28f, 1.36f), Carbon);
+                new Vector3(0f, 0.42f, 0f),
+                new Vector3(1.28f, 0.22f, 1.28f), Graphite);
             Prim(root, "Dress_StarshipBody", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.15f, 0f),
-                new Vector3(1.04f, 2.6f, 1.04f), White);
+                new Vector3(0f, 3.20f, 0f),
+                new Vector3(1.04f, 2.65f, 1.04f), White, StarshipHullFill);
             Prim(root, "Dress_StarshipHeat", PrimitiveType.Cube,
-                new Vector3(0f, 2.85f, -0.42f),
-                new Vector3(0.85f, 4.4f, 0.18f), Carbon);
-            Prim(root, "Dress_StarshipBand", PrimitiveType.Cylinder,
-                new Vector3(0f, 1.85f, 0f),
-                new Vector3(1.12f, 0.05f, 1.12f), Carbon);
-            Prim(root, "Dress_StarshipStripe", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.55f, 0f),
-                new Vector3(1.12f, 0.05f, 1.12f), Orange);
-            Prim(root, "Dress_StarshipBandHi", PrimitiveType.Cylinder,
-                new Vector3(0f, 5.05f, 0f),
-                new Vector3(1.12f, 0.05f, 1.12f), Orange);
+                new Vector3(0f, 2.85f, -0.44f),
+                new Vector3(0.82f, 4.4f, 0.16f), Carbon);
+            Prim(root, "Dress_ShipBand_0", PrimitiveType.Cylinder,
+                new Vector3(0f, h * StarshipBandLoT, 0f),
+                new Vector3(1.16f, StarshipBandLoHalf, 1.16f), band);
+            Prim(root, "Dress_ShipBand_1", PrimitiveType.Cylinder,
+                new Vector3(0f, h * StarshipBandHiT, 0f),
+                new Vector3(1.16f, StarshipBandHiHalf, 1.16f), band);
             Prim(root, "Dress_StarshipNose", PrimitiveType.Sphere,
                 new Vector3(0f, h * 0.90f, 0f),
-                new Vector3(1.04f, 1.35f, 1.04f), White);
+                new Vector3(1.04f, 1.35f, 1.04f), White, StarshipHullFill);
             Prim(root, "Dress_StarshipFin_L", PrimitiveType.Cube,
                 new Vector3(0.08f, 1.05f, 0.58f),
                 new Vector3(0.12f, 1.25f, 0.55f), Carbon);

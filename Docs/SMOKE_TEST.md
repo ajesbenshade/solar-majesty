@@ -73,7 +73,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 
 - [ ] HAB: **boxy beige/tan hull** filling the 4×4, **roof solar array**, orange portholes — locked Play-mode still. **Not** HAB-1 graphite-rim cylinder. Same 4×4 footprint.
 - [ ] Colony Commons: **geodesic / polyhedron command dome** (frequency-3 cream triangular plates over a dark geodesic lattice, orange equator / cupola bands) on a dark mechanical ring — not a smooth sphere, not a grey box, not square hull tiles, not box-ribs over the triangles. Same 6×6 footprint. HUD **COMMONS**. CaptureStill pad / solar / extractors sit ~4 cells of empty dirt off Commons.
-- [ ] Landing Pad: dark circular disc, **orange concentric rings + H**, cardinal ticks, parked white/black Starship stack with heat-shield belly + forward flaps (visual only). Launch gate still needs the pad + tech.
+- [ ] Landing Pad: dark circular disc, **orange concentric rings + H**, cardinal ticks, parked warm-cream / two thick carbon-band Starship stack with heat-shield belly + forward flaps (visual only). Launch gate still needs the pad + tech.
 - [ ] Farm = **AG-1 vaulted greenhouse** + ice tanks/scaffold (water-ice extractor, not a HAB). Regolith Camp = low **drum + hopper**. Mine = twin silos + **A-frame** headframe.
 - [ ] Ghosts in **B** show the same silhouettes. Empty ground click still does not repath robots.
 - [ ] Shift+F10 Mars: same kits with a warm white hull grade; tubes still dressing.

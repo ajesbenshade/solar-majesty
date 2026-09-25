@@ -121,6 +121,50 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void LivePad_StarshipTwoCarbonBands_SoftTerminator()
+        {
+            var pad = ModularBuildingFactory.Spawn(
+                BuildingCategory.LandingPad, Vector3.zero, _root.transform);
+            Transform lo = FindChild(pad.transform, "Dress_ShipBand_0");
+            Transform hi = FindChild(pad.transform, "Dress_ShipBand_1");
+            Transform body = FindChild(pad.transform, "Dress_StarshipBody");
+            Assert.IsNotNull(lo, "lower carbon band");
+            Assert.IsNotNull(hi, "upper carbon band");
+            Assert.IsNotNull(body, "procedural cream hull — placeholder FBX skipped");
+            Assert.IsNull(FindChild(pad.transform, "Dress_StarshipStripe"),
+                "orange hull stripes are not the concept rocket");
+            Assert.IsNull(FindChild(pad.transform, "Dress_StarshipBandHi"));
+            Assert.IsNull(FindChild(pad.transform, "Dress_Starship"),
+                "SM_Starship_Placeholder stays off the pad (LaunchSite still uses it)");
+
+            float h = HeroBuildingKits.StarshipStackHeight;
+            float loLen = lo.localScale.y * 2f;
+            float hiLen = hi.localScale.y * 2f;
+            Assert.Greater(loLen / h, 0.08f, "lower band must read thick at ortho 10");
+            Assert.Less(loLen / h, 0.16f);
+            Assert.Greater(hiLen / h, 0.06f, "upper band stays a readable ring");
+            Assert.Less(hiLen / h, 0.14f);
+            Assert.Less(Albedo(lo).grayscale, 0.20f, "bands stay near-black, not orange");
+            Assert.Less(Albedo(hi).grayscale, 0.20f);
+            Assert.AreEqual(h * HeroBuildingKits.StarshipBandLoT, lo.localPosition.y, 0.02f);
+            Assert.AreEqual(h * HeroBuildingKits.StarshipBandHiT, hi.localPosition.y, 0.02f);
+
+            Color hull = Albedo(body);
+            Assert.Greater(hull.r - hull.b, 0.08f, "hull is warm cream, not cool white");
+            Assert.Greater(hull.grayscale, 0.70f);
+            var mat = body.GetComponent<Renderer>().sharedMaterial;
+            Assert.IsTrue(mat.HasProperty("_EmissionColor"), "warm fill lifts the shaded flank");
+            Color emit = mat.GetColor("_EmissionColor");
+            Assert.Greater(emit.maxColorComponent, 0.08f,
+                "hull fill keeps the terminator near 55 % of lit");
+            Assert.Less(emit.maxColorComponent, 0.22f, "fill is a hint, not a glow");
+            if (mat.HasProperty("_Smoothness"))
+                Assert.Less(mat.GetFloat("_Smoothness"), 0.28f, "cream hull stays matte");
+            if (mat.HasProperty("_Metallic"))
+                Assert.Less(mat.GetFloat("_Metallic"), 0.10f, "dielectric — no hard metal terminator");
+        }
+
+        [Test]
         public void SnapToGroundKeepingDockAxis_PreservesSharedDockY()
         {
             var airlock = ModularBuildingFactory.Spawn(
