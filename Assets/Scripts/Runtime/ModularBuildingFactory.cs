@@ -238,35 +238,55 @@ namespace SolarMajesty
 
         private static GameObject UniqueMeshPrefab(BuildingCategory cat)
         {
-            // LOCK (Aaron 2026-09-17): Colony Commons is the procedural command-dome
-            // citadel in HeroBuildingKits.BuildCommons. Joined Commons FBX (SM_Hero_Commons
-            // / SM_CommandDome_CentralHub) bake unused stubs. Do not attach them. Do not
-            // restore geodesic lattice.
-            if (cat == BuildingCategory.Commons ||
-                cat == BuildingCategory.Habitat ||
-                cat == BuildingCategory.Laboratory ||
-                cat == BuildingCategory.Power ||
-                cat == BuildingCategory.Farm ||
-                cat == BuildingCategory.LandingPad ||
-                cat == BuildingCategory.RegolithCamp)
-                return null;
-            // Detailed procedural builds (HeroBuildingDetail) replace the imported workshop,
-            // defense and inn meshes for these; Defense and Watchtower no longer share one FBX.
-            if (cat == BuildingCategory.Defense ||
-                cat == BuildingCategory.Watchtower ||
-                cat == BuildingCategory.Market ||
-                ColonyStructure.IsWorkshopCategory(cat))
-                return null;
-
+            if (IsProcedural(cat)) return null;
             GameObject hero = BuildingVisualCatalog.LoadHeroKit(cat);
             if (hero != null)
                 return hero;
+            return cat == BuildingCategory.Mining ? BuildingVisualCatalog.LoadPrefab(cat) : null;
+        }
+
+        /// <summary>
+        /// True = built by <see cref="HeroBuildingKits"/>; false = the imported SM_Hero_* FBX.
+        /// One line per category, grouped by kit family, so art passes on different families
+        /// touch different lines.
+        /// </summary>
+        private static bool IsProcedural(BuildingCategory cat)
+        {
+            if (ColonyStructure.IsWorkshopCategory(cat)) return true;
             switch (cat)
             {
-                case BuildingCategory.Mining:
-                    return BuildingVisualCatalog.LoadPrefab(cat);
-                default:
-                    return null;
+                // LOCK (Aaron 2026-09-17): Colony Commons is the procedural command-dome
+                // citadel in HeroBuildingKits.BuildCommons. Joined Commons FBX (SM_Hero_Commons
+                // / SM_CommandDome_CentralHub) bake unused stubs. Do not attach them. Do not
+                // restore geodesic lattice.
+                case BuildingCategory.Commons: return true;
+                case BuildingCategory.Habitat: return true;
+                case BuildingCategory.Power: return true;
+                case BuildingCategory.LandingPad: return true;
+                case BuildingCategory.Defense: return true;
+                case BuildingCategory.Watchtower: return true;
+                case BuildingCategory.Market: return true;
+
+                // Extractors
+                case BuildingCategory.Farm: return true;
+                case BuildingCategory.RegolithCamp: return true;
+                case BuildingCategory.Mine: return false;
+                case BuildingCategory.Mining: return false;
+
+                // Civic and services
+                case BuildingCategory.Laboratory: return true;
+                case BuildingCategory.Inn: return false;
+                case BuildingCategory.GuildHall: return false;
+                case BuildingCategory.Blacksmith: return false;
+                case BuildingCategory.FobotYard: return false;
+                case BuildingCategory.AidStation: return false;
+
+                // Wonders
+                case BuildingCategory.ClimateLoom: return false;
+                case BuildingCategory.AegisSpire: return false;
+                case BuildingCategory.DeepArchive: return false;
+
+                default: return false;
             }
         }
 

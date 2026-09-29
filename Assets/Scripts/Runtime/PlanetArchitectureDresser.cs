@@ -35,7 +35,6 @@ namespace SolarMajesty
 
             var archetype = PlanetArchitecture.ArchetypeOf(category);
             var style = PlanetArchitecture.Style(body);
-            float roof = MeasureRoof(root, worldW, worldD, archetype);
 
             Regrade(root, body, style);
 
@@ -44,14 +43,119 @@ namespace SolarMajesty
             Vector3 at = root.transform.position;
             holder.transform.position = new Vector3(at.x, 0f, at.z);
 
+            var shape = ShapeFor(root, category, worldW, worldD, archetype, holder.transform);
             int seed = Mathf.RoundToInt(at.x * 7.3f) * 73856093 ^ Mathf.RoundToInt(at.z * 7.3f) * 19349663;
-            var parts = PlanetArchitecture.Adapt(body, archetype, worldW, worldD, roof, seed);
-            bool ownRoof = HasOwnRoof(category);
+            var parts = PlanetArchitecture.Adapt(body, archetype, shape, seed);
+            BuildParts(root.transform, holder.transform, parts, body, style);
+        }
+
+        /// <summary>
+        /// The kit's own description (<see cref="KitAnchors"/>), moved into the dressing holder's space
+        /// (ground at y 0). Kits that record nothing get a stand-in with face-centre doorways and no
+        /// roof surfaces, so world parts never land on a guessed roof.
+        /// </summary>
+        private static KitShape ShapeFor(GameObject root, BuildingCategory category, float w, float d,
+            ArchArchetype archetype, Transform holder)
+        {
+            var kit = KitAnchors.Of(root);
+            Vector3 offset = holder.InverseTransformPoint(root.transform.position);
+            if (kit != null)
+            {
+                var s = kit.Shifted(offset);
+                s.Category = category;
+                if (s.W <= 0f) s.W = w;
+                if (s.D <= 0f) s.D = d;
+                if (s.Doors.Count == 0) s.AddFaceCentreDoors();
+                if (!s.HasBody) s.Body = new Bounds(new Vector3(0f, MeasureRoof(root, w, d, archetype) * 0.5f, 0f),
+                    new Vector3(w * 0.8f, MeasureRoof(root, w, d, archetype), d * 0.8f));
+                return s;
+            }
+            return KitShape.Fallback(category, w, d, MeasureRoof(root, w, d, archetype));
+        }
+
+        /// <summary>
+        /// Static parts merge into one mesh per role (a building's whole Luna berm is one renderer);
+        /// moving parts become their own GameObjects under a pivot per motion group, animated by
+        /// <see cref="KitLife"/>; emitter parts become <see cref="KitAnchors"/> vents.
+        /// </summary>
+        private static void BuildParts(Transform root, Transform holder, List<ArchPart> parts, CelestialBodyId body, in ArchStyle style)
+        {
+            var byRole = new Dictionary<ArchRole, (List<PrimitiveType> types, List<Matrix4x4> mats)>();
+            var pivots = new Dictionary<string, Transform>();
             for (int i = 0; i < parts.Count; i++)
             {
-                if (ownRoof && PlanetArchitecture.IsRoofShell(parts[i].Name)) continue;
-                Build(holder.transform, parts[i], body, style);
+                var part = parts[i];
+                if (part.IsEmitter)
+                {
+                    Vector3 wp = holder.TransformPoint(part.Position);
+                    KitAnchors.Emitter(root, part.EmitKind, root.InverseTransformPoint(wp), part.Euler, part.Size.x);
+                    continue;
+                }
+                if (part.Motion != ArchMotion.None && !string.IsNullOrEmpty(part.MotionGroup))
+                {
+                    if (!pivots.TryGetValue(part.MotionGroup, out var pivot))
+                    {
+                        pivot = KitLife.Pivot(holder, "Dress_Arch_" + part.MotionGroup, part.MotionPivot);
+                        pivots[part.MotionGroup] = pivot;
+                        Register(root, pivot, part);
+                    }
+                    var go = Build(pivot, part, body, style);
+                    if (go != null)
+                    {
+                        go.transform.localPosition = part.Position - part.MotionPivot;
+                        if (part.Motion == ArchMotion.Blink || part.Motion == ArchMotion.Pulse)
+                            RegisterGlow(root, go.GetComponent<Renderer>(), part);
+                    }
+                    continue;
+                }
+                if (!byRole.TryGetValue(part.Role, out var list))
+                {
+                    list = (new List<PrimitiveType>(), new List<Matrix4x4>());
+                    byRole[part.Role] = list;
+                }
+                list.types.Add(TypeOf(part.Shape));
+                list.mats.Add(Matrix4x4.TRS(part.Position, Quaternion.Euler(part.Euler), UnitScale(part)));
             }
+
+            foreach (var kv in byRole)
+            {
+                var go = new GameObject("Dress_Arch_" + kv.Key);
+                go.transform.SetParent(holder, false);
+                go.AddComponent<MeshFilter>().sharedMesh = DetailBatch.MergePrimitives(kv.Value.types, kv.Value.mats, "Arch_" + kv.Key);
+                var rend = go.AddComponent<MeshRenderer>();
+                Finish(rend, kv.Key, body, style);
+            }
+        }
+
+        private static void Register(Transform root, Transform pivot, in ArchPart part)
+        {
+            switch (part.Motion)
+            {
+                case ArchMotion.Spin: KitLife.Spin(root, pivot, part.MotionAmount, part.MotionAxis); break;
+                case ArchMotion.Sweep: KitLife.Sweep(root, pivot, part.MotionAmount, part.MotionPeriod); break;
+                case ArchMotion.Bob: KitLife.Bob(root, pivot, part.MotionAmount, part.MotionPeriod); break;
+            }
+        }
+
+        private static void RegisterGlow(Transform root, Renderer r, in ArchPart part)
+        {
+            if (r == null) return;
+            if (part.Motion == ArchMotion.Blink) KitLife.Blink(root, r, part.MotionPeriod, part.MotionAmount > 0f ? part.MotionAmount : 0.18f);
+            else KitLife.Pulse(root, r, part.MotionPeriod, part.MotionAmount > 0f ? part.MotionAmount : 0.45f);
+        }
+
+        private static PrimitiveType TypeOf(ArchShape s) => s switch
+        {
+            ArchShape.Cylinder => PrimitiveType.Cylinder,
+            ArchShape.Sphere => PrimitiveType.Sphere,
+            _ => PrimitiveType.Cube
+        };
+
+        /// <summary>Unity's cylinder is 2 m tall at scale 1; cube and sphere are 1 m.</summary>
+        private static Vector3 UnitScale(in ArchPart part)
+        {
+            Vector3 s = part.Size;
+            return part.Shape == ArchShape.Cylinder ? new Vector3(s.x, s.y * 0.5f, s.z) : s;
         }
 
         /// <summary>
@@ -95,10 +199,6 @@ namespace SolarMajesty
         private static bool IsStagedKitPart(string n) =>
             n.Length > 8 && n[6] == 'S' && n[7] >= '0' && n[7] <= '4' && n[8] == '_';
 
-        /// <summary>Detailed builds whose own roof (canopy, arched hangar) a world roof shell would bury.</summary>
-        private static bool HasOwnRoof(BuildingCategory c) =>
-            c == BuildingCategory.Market || ColonyStructure.IsWorkshopCategory(c);
-
         /// <summary>Kit colours → this world's palette and dust, per renderer (materials stay shared).</summary>
         private static void Regrade(GameObject root, CelestialBodyId body, in ArchStyle style)
         {
@@ -133,29 +233,25 @@ namespace SolarMajesty
             }
         }
 
-        private static void Build(Transform parent, in ArchPart part, CelestialBodyId body, in ArchStyle style)
+        private static GameObject Build(Transform parent, in ArchPart part, CelestialBodyId body, in ArchStyle style)
         {
-            var type = part.Shape switch
-            {
-                ArchShape.Cylinder => PrimitiveType.Cylinder,
-                ArchShape.Sphere => PrimitiveType.Sphere,
-                _ => PrimitiveType.Cube
-            };
-            var go = GameObject.CreatePrimitive(type);
+            var go = GameObject.CreatePrimitive(TypeOf(part.Shape));
             go.name = "Dress_Arch_" + part.Name;
             ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
             go.transform.SetParent(parent, false);
             go.transform.localPosition = part.Position;
             go.transform.localRotation = Quaternion.Euler(part.Euler);
-            // Unity's cylinder is 2 m tall at scale 1; cube and sphere are 1 m.
-            Vector3 s = part.Size;
-            go.transform.localScale = part.Shape == ArchShape.Cylinder ? new Vector3(s.x, s.y * 0.5f, s.z) : s;
-
+            go.transform.localScale = UnitScale(part);
             var rend = go.GetComponent<Renderer>();
-            if (rend == null) return;
-            rend.sharedMaterial = MaterialFor(body, part.Role, style);
-            bool see = ArchStyle.IsTranslucent(part.Role);
-            rend.shadowCastingMode = see
+            if (rend != null) Finish(rend, part.Role, body, style);
+            return go;
+        }
+
+        private static void Finish(Renderer rend, ArchRole role, CelestialBodyId body, in ArchStyle style)
+        {
+            rend.sharedMaterial = MaterialFor(body, role, style);
+            bool see = ArchStyle.IsTranslucent(role);
+            rend.shadowCastingMode = see || role == ArchRole.Glow
                 ? UnityEngine.Rendering.ShadowCastingMode.Off
                 : UnityEngine.Rendering.ShadowCastingMode.On;
             rend.receiveShadows = !see;

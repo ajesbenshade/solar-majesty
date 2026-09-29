@@ -55,6 +55,32 @@ namespace SolarMajesty
         public Vector3 Position;
         public Vector3 Size;
         public Vector3 Euler;
+
+        /// <summary>None = static (merged with its role's other parts into one mesh).</summary>
+        public ArchMotion Motion;
+        /// <summary>Parts sharing a group move together about <see cref="MotionPivot"/>.</summary>
+        public string MotionGroup;
+        public Vector3 MotionPivot;
+        public Vector3 MotionAxis;
+        /// <summary>Spin: degrees/second. Sweep: half-arc degrees. Bob: metres.</summary>
+        public float MotionAmount;
+        /// <summary>Seconds per cycle for Sweep, Blink, Pulse and Bob.</summary>
+        public float MotionPeriod;
+
+        /// <summary>True = not geometry: a vent or spark point for ambient effects at <see cref="Position"/>.</summary>
+        public bool IsEmitter;
+        public EmitterKind EmitKind;
+    }
+
+    /// <summary>How an architecture part moves (see KitLife in Runtime).</summary>
+    public enum ArchMotion
+    {
+        None,
+        Spin,
+        Sweep,
+        Blink,
+        Pulse,
+        Bob
     }
 
     /// <summary>A world's building palette and surface weathering.</summary>
@@ -102,7 +128,7 @@ namespace SolarMajesty
     /// Europa — −160 °C, Jupiter's radiation, an ocean under the ice: water-ice shield domes and
     ///        walls, heat-vent stacks with steam, cryobot drill derricks, cyan light, frost.
     /// </summary>
-    public static class PlanetArchitecture
+    public static partial class PlanetArchitecture
     {
         // Shared kit colours (HeroBuildingKits) that each world re-dresses.
         static readonly Color KitWhite = new Color(0.88f, 0.82f, 0.74f);
@@ -111,79 +137,15 @@ namespace SolarMajesty
         static readonly Color KitCarbon = new Color(0.26f, 0.24f, 0.22f);
         static readonly Color KitYellow = new Color(0.95f, 0.82f, 0.12f);
 
-        public static ArchStyle Style(CelestialBodyId id)
+        public static ArchStyle Style(CelestialBodyId id) => id switch
         {
-            switch (id)
-            {
-                case CelestialBodyId.Earth:
-                    return new ArchStyle
-                    {
-                        Name = "Solarpunk arcology",
-                        Rationale = "Open air, rain and a living biosphere: glass, green roofs, wind power, nothing to hide from.",
-                        Hull = new Color(0.93f, 0.94f, 0.91f), Trim = new Color(0.10f, 0.64f, 0.60f),
-                        Dark = new Color(0.30f, 0.27f, 0.23f), Glass = new Color(0.62f, 0.86f, 0.88f, 0.42f),
-                        Glow = new Color(1f, 0.86f, 0.62f), GlowEmission = new Color(1.3f, 0.95f, 0.55f),
-                        Shell = new Color(0.62f, 0.58f, 0.50f), Plant = new Color(0.24f, 0.56f, 0.26f),
-                        Foil = new Color(0.86f, 0.70f, 0.30f), Ice = new Color(0.8f, 0.9f, 1f, 0.35f),
-                        Steam = new Color(1f, 1f, 1f, 0.3f),
-                        DustColor = new Color(0.34f, 0.30f, 0.22f), DustAmount = 0.06f, WearAmount = 0.10f
-                    };
-                case CelestialBodyId.Luna:
-                    return new ArchStyle
-                    {
-                        Name = "Regolith-shielded outpost",
-                        Rationale = "No air, hard radiation, micrometeoroids and ±150 °C swings: bury it under regolith, shed heat through radiators, wrap it in gold foil.",
-                        Hull = new Color(0.86f, 0.87f, 0.88f), Trim = new Color(0.86f, 0.66f, 0.22f),
-                        Dark = new Color(0.18f, 0.18f, 0.20f), Glass = new Color(0.30f, 0.42f, 0.55f, 0.55f),
-                        Glow = new Color(1f, 0.25f, 0.18f), GlowEmission = new Color(2.2f, 0.35f, 0.22f),
-                        Shell = new Color(0.47f, 0.46f, 0.44f), Plant = new Color(0.3f, 0.5f, 0.3f),
-                        Foil = new Color(0.90f, 0.70f, 0.24f), Ice = new Color(0.8f, 0.9f, 1f, 0.35f),
-                        Steam = new Color(1f, 1f, 1f, 0.25f),
-                        DustColor = new Color(0.55f, 0.54f, 0.52f), DustAmount = 0.18f, WearAmount = 0.16f
-                    };
-                case CelestialBodyId.Mars:
-                    return new ArchStyle
-                    {
-                        Name = "Printed regolith colony",
-                        Rationale = "Thin CO₂ air, dust storms and −60 °C: print thick walls from local regolith, pressurise under domes, keep the heat in.",
-                        Hull = new Color(0.92f, 0.86f, 0.78f), Trim = new Color(0.96f, 0.42f, 0.08f),
-                        Dark = new Color(0.24f, 0.20f, 0.18f), Glass = new Color(0.86f, 0.78f, 0.66f, 0.40f),
-                        Glow = new Color(1f, 0.62f, 0.26f), GlowEmission = new Color(1.8f, 0.85f, 0.25f),
-                        Shell = new Color(0.66f, 0.40f, 0.28f), Plant = new Color(0.30f, 0.52f, 0.28f),
-                        Foil = new Color(0.86f, 0.66f, 0.24f), Ice = new Color(0.8f, 0.9f, 1f, 0.35f),
-                        Steam = new Color(1f, 0.95f, 0.9f, 0.25f),
-                        DustColor = new Color(0.62f, 0.36f, 0.22f), DustAmount = 0.24f, WearAmount = 0.16f
-                    };
-                case CelestialBodyId.Belt:
-                    return new ArchStyle
-                    {
-                        Name = "Anchored microgravity station",
-                        Rationale = "Barely any gravity, no air and a weak distant sun: bolt down to the rock, spin for gravity, spread huge solar wings.",
-                        Hull = new Color(0.50f, 0.51f, 0.54f), Trim = new Color(0.95f, 0.76f, 0.12f),
-                        Dark = new Color(0.13f, 0.13f, 0.14f), Glass = new Color(0.25f, 0.35f, 0.45f, 0.55f),
-                        Glow = new Color(1f, 0.70f, 0.30f), GlowEmission = new Color(2.0f, 1.1f, 0.35f),
-                        Shell = new Color(0.30f, 0.28f, 0.26f), Plant = new Color(0.3f, 0.5f, 0.3f),
-                        Foil = new Color(0.88f, 0.68f, 0.24f), Ice = new Color(0.8f, 0.9f, 1f, 0.35f),
-                        Steam = new Color(1f, 1f, 1f, 0.25f),
-                        DustColor = new Color(0.18f, 0.17f, 0.16f), DustAmount = 0.20f, WearAmount = 0.22f
-                    };
-                case CelestialBodyId.Europa:
-                    return new ArchStyle
-                    {
-                        Name = "Ice-shielded cryo base",
-                        Rationale = "−160 °C, Jupiter's radiation and an ocean under the crust: shield with water ice, vent waste heat, drill down.",
-                        Hull = new Color(0.86f, 0.92f, 0.96f), Trim = new Color(0.18f, 0.78f, 0.92f),
-                        Dark = new Color(0.16f, 0.20f, 0.26f), Glass = new Color(0.55f, 0.80f, 0.95f, 0.45f),
-                        Glow = new Color(0.35f, 0.95f, 1f), GlowEmission = new Color(0.30f, 1.60f, 2.20f),
-                        Shell = new Color(0.72f, 0.84f, 0.92f), Plant = new Color(0.3f, 0.5f, 0.3f),
-                        Foil = new Color(0.86f, 0.70f, 0.30f), Ice = new Color(0.66f, 0.86f, 0.98f, 0.42f),
-                        Steam = new Color(0.95f, 0.98f, 1f, 0.32f),
-                        DustColor = new Color(0.90f, 0.96f, 1f), DustAmount = 0.34f, WearAmount = 0.08f
-                    };
-                default:
-                    return Style(CelestialBodyId.Luna);
-            }
-        }
+            CelestialBodyId.Earth => StyleEarth(),
+            CelestialBodyId.Luna => StyleLuna(),
+            CelestialBodyId.Mars => StyleMars(),
+            CelestialBodyId.Belt => StyleBelt(),
+            CelestialBodyId.Europa => StyleEuropa(),
+            _ => StyleLuna()
+        };
 
         /// <summary>
         /// Roof shells and rooftop gardens a world lays over a building's hull (Mars pressure dome
@@ -260,12 +222,14 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Adaptation parts for one building. <paramref name="h"/> is the height of the building's
-        /// own hull; <paramref name="seed"/> varies small details between neighbours.
+        /// Adaptation parts for one building, fitted to the kit's own description of itself
+        /// (<see cref="KitShape"/>: hull bounds, real roof surfaces, doorways). Positions are in the
+        /// building's local space with the ground at y 0. <paramref name="seed"/> varies small
+        /// details between neighbours. Each world lives in its own file (PlanetArchitecture.Earth.cs…).
         /// </summary>
-        public static List<ArchPart> Adapt(CelestialBodyId id, ArchArchetype a, float w, float d, float h, int seed)
+        public static List<ArchPart> Adapt(CelestialBodyId id, ArchArchetype a, KitShape shape, int seed)
         {
-            var p = new Builder(w, d, Mathf.Max(0.8f, h), seed);
+            var p = new Builder(shape, seed);
             switch (id)
             {
                 case CelestialBodyId.Earth: Earth(p, a); break;
@@ -277,361 +241,90 @@ namespace SolarMajesty
             return p.Parts;
         }
 
-        // ------------------------------------------------------------------ Earth
+        /// <summary>
+        /// Stand-in box of <paramref name="h"/> with a flat roof over the hull and face-centre
+        /// doorways — offline previews and tests.
+        /// </summary>
+        public static List<ArchPart> Adapt(CelestialBodyId id, ArchArchetype a, float w, float d, float h, int seed) =>
+            Adapt(id, a, KitShape.FlatBox(RepresentativeOf(a), w, d, Mathf.Max(0.8f, h)), seed);
 
-        static void Earth(Builder p, ArchArchetype a)
+        /// <summary>A category that stands for an archetype, for stand-in shapes.</summary>
+        public static BuildingCategory RepresentativeOf(ArchArchetype a) => a switch
         {
-            float w = p.W, d = p.D, h = p.H;
-            if (a != ArchArchetype.Pad)
-            {
-                // Green roof and warm window bands.
-                p.Box("GreenRoof", ArchRole.Plant, new Vector3(0, h + 0.07f, 0), new Vector3(w * 0.72f, 0.14f, d * 0.72f));
-                for (int i = 0; i < 3 + p.Rng(3); i++)
-                    p.Sphere("Shrub" + i, ArchRole.Plant,
-                        new Vector3(p.Range(-w * 0.28f, w * 0.28f), h + 0.28f, p.Range(-d * 0.28f, d * 0.28f)),
-                        Vector3.one * p.Range(0.35f, 0.6f));
-                p.WindowBands(h * 0.62f, ArchRole.Glow);
-            }
-            p.CornerPlanters(ArchRole.Dark, ArchRole.Plant);
-
-            switch (a)
-            {
-                case ArchArchetype.Dwelling:
-                    p.GlassPavilion(new Vector3(-w * 0.12f, h + 0.14f, 0), w * 0.38f, 0.95f, d * 0.38f);
-                    break;
-                case ArchArchetype.Hub:
-                    p.Sphere("Atrium", ArchRole.Glass, new Vector3(0, h + 0.1f, 0), new Vector3(w * 0.5f, w * 0.44f, d * 0.5f));
-                    p.Cyl("AtriumRing", ArchRole.Trim, new Vector3(0, h + 0.16f, 0), new Vector3(w * 0.52f, 0.12f, d * 0.52f));
-                    p.Sphere("AtriumTree", ArchRole.Plant, new Vector3(0, h + 0.7f, 0), new Vector3(w * 0.22f, w * 0.2f, d * 0.22f));
-                    break;
-                case ArchArchetype.Power:
-                    p.WindTurbine(new Vector3(w * 0.34f, 0, -d * 0.34f), h + 3.2f);
-                    p.WindTurbine(new Vector3(-w * 0.34f, 0, -d * 0.34f), h + 2.6f);
-                    break;
-                case ArchArchetype.Extractor:
-                    p.Box("RainCanopy", ArchRole.Glass, new Vector3(0, h + 0.7f, 0), new Vector3(w * 0.9f, 0.06f, d * 0.6f), new Vector3(-12, 0, 0));
-                    p.Cyl("Cistern", ArchRole.Glass, new Vector3(w * 0.36f, 0.8f, -d * 0.36f), new Vector3(1.1f, 1.6f, 1.1f));
-                    p.Cyl("CisternCap", ArchRole.Trim, new Vector3(w * 0.36f, 1.64f, -d * 0.36f), new Vector3(1.16f, 0.08f, 1.16f));
-                    break;
-                case ArchArchetype.Workshop:
-                    for (int i = 0; i < 3; i++)
-                        p.Box("Skylight" + i, ArchRole.Glass,
-                            new Vector3((i - 1) * w * 0.24f, h + 0.42f, 0), new Vector3(w * 0.2f, 0.05f, d * 0.6f), new Vector3(0, 0, 30));
-                    break;
-                case ArchArchetype.Defense:
-                    p.PerimeterBerm(ArchRole.Plant, 0.7f, 0.55f, 0.95f);
-                    p.Mast(new Vector3(w * 0.38f, 0, d * 0.38f), h + 2.2f, ArchRole.Trim, ArchRole.Glow);
-                    break;
-                case ArchArchetype.Pad:
-                    p.EdgeLights(ArchRole.Glow, 12);
-                    break;
-                case ArchArchetype.Wonder:
-                    for (int t = 0; t < 4; t++)
-                    {
-                        float r = w * (0.46f - t * 0.09f);
-                        float y = h + t * 1.1f;
-                        p.Cyl("Tier" + t, ArchRole.Glass, new Vector3(0, y + 0.5f, 0), new Vector3(r, 1f, r));
-                        p.Cyl("TierGarden" + t, ArchRole.Plant, new Vector3(0, y + 1.02f, 0), new Vector3(r * 1.05f, 0.1f, r * 1.05f));
-                    }
-                    break;
-            }
-        }
-
-        // ------------------------------------------------------------------ Luna
-
-        static void Luna(Builder p, ArchArchetype a)
-        {
-            float w = p.W, d = p.D, h = p.H;
-            if (a != ArchArchetype.Pad)
-            {
-                // Regolith berm against radiation and micrometeoroids, a sintered shield cap,
-                // gold MLI foil under it and white radiator fins shedding heat.
-                p.PerimeterBerm(ArchRole.Shell, 0.9f, 0.75f, 1.35f);
-                if (a == ArchArchetype.Dwelling)
-                    p.Sphere("RegolithMound", ArchRole.Shell, new Vector3(0, h, 0), new Vector3(w * 0.9f, 0.95f, d * 0.9f));
-                else
-                    p.Box("ShieldCap", ArchRole.Shell, new Vector3(0, h + 0.2f, 0), new Vector3(w * 0.92f, 0.4f, d * 0.92f));
-                p.Box("FoilBand", ArchRole.Foil, new Vector3(0, h - 0.04f, 0), new Vector3(w * 0.94f, 0.1f, d * 0.94f));
-                p.Radiators(h, 2);
-                p.Mast(new Vector3(-w * 0.4f, 0, -d * 0.4f), h + 1.3f, ArchRole.Dark, ArchRole.Glow);
-            }
-
-            switch (a)
-            {
-                case ArchArchetype.Hub:
-                    p.Dish(new Vector3(w * 0.22f, h + 0.4f, -d * 0.2f), 1.9f);
-                    break;
-                case ArchArchetype.Power:
-                    // Polar sun-tracking tower: sunlight skims the horizon at the lunar poles.
-                    p.Cyl("SunTowerMast", ArchRole.Hull, new Vector3(w * 0.3f, (h + 5f) * 0.5f, -d * 0.3f), new Vector3(0.28f, h + 5f, 0.28f));
-                    p.Box("SunTowerPanel", ArchRole.Dark, new Vector3(w * 0.3f, h + 4f, -d * 0.3f), new Vector3(1.9f, 2.6f, 0.08f));
-                    p.Box("SunTowerFrame", ArchRole.Foil, new Vector3(w * 0.3f, h + 4f, -d * 0.3f - 0.06f), new Vector3(2.0f, 2.7f, 0.04f));
-                    break;
-                case ArchArchetype.Extractor:
-                    p.Cyl("IceTank", ArchRole.Foil, new Vector3(-w * 0.3f, 0.75f, d * 0.3f), new Vector3(1.2f, 1.5f, 1.2f), new Vector3(0, 0, 90));
-                    break;
-                case ArchArchetype.Defense:
-                    // Sintered-regolith blast blocks, split around the -Z doorway lane.
-                    for (int i = 0; i < 4; i++)
-                    {
-                        float x = (i < 2 ? -1f : 1f) * (i % 2 == 0 ? w * 0.42f : w * 0.22f);
-                        p.Box("SinterBlock" + i, ArchRole.Shell, new Vector3(x, 0.45f, -d * 0.58f), new Vector3(w * 0.18f, 0.9f, 0.6f));
-                    }
-                    break;
-                case ArchArchetype.Pad:
-                    p.PerimeterBerm(ArchRole.Shell, 1.1f, 0.9f, 1.6f, outset: 0.8f); // blast berm
-                    p.EdgeLights(ArchRole.Glow, 12);
-                    break;
-                case ArchArchetype.Wonder:
-                    p.Cyl("ShieldedTower", ArchRole.Shell, new Vector3(0, h + 2.2f, 0), new Vector3(w * 0.34f, 4.4f, d * 0.34f));
-                    p.Cyl("TowerFoil", ArchRole.Foil, new Vector3(0, h + 4.5f, 0), new Vector3(w * 0.36f, 0.2f, d * 0.36f));
-                    p.Sphere("TowerBeacon", ArchRole.Glow, new Vector3(0, h + 4.8f, 0), Vector3.one * 0.4f);
-                    break;
-            }
-        }
-
-        // ------------------------------------------------------------------ Mars
-
-        static void Mars(Builder p, ArchArchetype a)
-        {
-            float w = p.W, d = p.D, h = p.H;
-            if (a != ArchArchetype.Pad)
-            {
-                // Printed regolith windbreak on the storm side, a dark dust skirt and heater glow.
-                p.PrintedWall(new Vector3(0, 0, -d * 0.62f), w * 0.9f, Mathf.Min(h * 0.8f, 2.4f), 0.45f, gap: 2f);
-                p.Box("DustSkirt", ArchRole.Dark, new Vector3(0, 0.12f, 0), new Vector3(w * 0.98f, 0.24f, d * 0.98f));
-                p.WindowBands(0.55f, ArchRole.Glow, slit: true);
-            }
-
-            switch (a)
-            {
-                case ArchArchetype.Dwelling:
-                    // Printed tapering habitat tower (layered strata), after the printed-regolith Mars habitat designs.
-                    p.PrintedTower(new Vector3(-w * 0.36f, 0, d * 0.34f), 1.8f, h + 1.8f, 9);
-                    break;
-                case ArchArchetype.Hub:
-                    p.Sphere("PressureDome", ArchRole.Glass, new Vector3(0, h, 0), new Vector3(w * 0.8f, w * 0.62f, d * 0.8f));
-                    // Meridian ribs: thin shells hugging the dome.
-                    for (int i = 0; i < 4; i++)
-                        p.Sphere("DomeRib" + i, ArchRole.Trim, new Vector3(0, h, 0), new Vector3(0.09f, w * 0.63f, d * 0.81f), new Vector3(0, i * 45f, 0));
-                    p.PrintedRing(new Vector3(0, h - 0.05f, 0), w * 0.82f, 0.5f, 3);
-                    break;
-                case ArchArchetype.Power:
-                    // Compact fission reactor (Kilopower-class): the sun is weak and storms last weeks.
-                    Vector3 at = new Vector3(w * 0.32f, 0, -d * 0.1f);
-                    p.Cyl("ReactorCore", ArchRole.Dark, at + new Vector3(0, 1.0f, 0), new Vector3(0.8f, 2f, 0.8f));
-                    for (int i = 0; i < 6; i++)
-                        p.Box("ReactorFin" + i, ArchRole.Hull, at + new Vector3(0, 2.1f, 0), new Vector3(0.05f, 1.6f, 1.6f), new Vector3(0, i * 30f, 0));
-                    p.Sphere("ReactorGlow", ArchRole.Glow, at + new Vector3(0, 0.6f, 0), Vector3.one * 0.5f);
-                    break;
-                case ArchArchetype.Extractor:
-                    // ISRU propellant plant: tanks and pipework.
-                    for (int i = 0; i < 2; i++)
-                        p.Cyl("IsruTank" + i, ArchRole.Hull, new Vector3(-w * 0.22f - i * 1.1f, 0.6f, d * 0.36f), new Vector3(1f, 2.2f, 1f), new Vector3(90, 0, 0));
-                    p.Box("IsruPipe", ArchRole.Trim, new Vector3(-w * 0.1f, 1.2f, d * 0.2f), new Vector3(w * 0.5f, 0.12f, 0.12f));
-                    break;
-                case ArchArchetype.Workshop:
-                    // Printed barrel vault: regolith over a pressure shell, laid in visible courses.
-                    float len = w * 0.62f, dia = d * 0.56f;
-                    p.Cyl("PrintedVault", ArchRole.Shell, new Vector3(0, h - 0.15f, 0), new Vector3(dia, len, dia), new Vector3(0, 0, 90));
-                    for (int i = 0; i < 5; i++)
-                        p.Cyl("VaultCourse" + i, ArchRole.Shell, new Vector3(-len * 0.4f + i * len * 0.2f, h - 0.15f, 0), new Vector3(dia + 0.12f, 0.1f, dia + 0.12f), new Vector3(0, 0, 90));
-                    p.Box("VaultDoor", ArchRole.Glow, new Vector3(len * 0.5f + 0.01f, h + dia * 0.12f, 0), new Vector3(0.04f, dia * 0.3f, dia * 0.35f));
-                    break;
-                case ArchArchetype.Defense:
-                    p.PrintedWall(new Vector3(0, 0, d * 0.62f), w * 0.9f, 1.6f, 0.4f, gap: 2f);
-                    p.Mast(new Vector3(w * 0.4f, 0, d * 0.4f), h + 2f, ArchRole.Trim, ArchRole.Glow);
-                    break;
-                case ArchArchetype.Pad:
-                    for (int s = 0; s < 4; s++)
-                    {
-                        float ang = 45f + s * 90f;
-                        Vector3 dir = Quaternion.Euler(0, ang, 0) * Vector3.forward;
-                        p.Box("BlastWall" + s, ArchRole.Shell, dir * (p.R + 0.9f) + new Vector3(0, 0.7f, 0),
-                            new Vector3(p.R * 0.9f, 1.4f, 0.5f), new Vector3(0, ang, 0));
-                    }
-                    p.EdgeLights(ArchRole.Glow, 12);
-                    break;
-                case ArchArchetype.Wonder:
-                    p.PrintedTower(Vector3.zero + new Vector3(0, h - 0.2f, 0), w * 0.5f, 6f, 14);
-                    break;
-            }
-        }
-
-        // ------------------------------------------------------------------ Belt
-
-        static void Belt(Builder p, ArchArchetype a)
-        {
-            float w = p.W, d = p.D, h = p.H;
-            // Everything is bolted to the rock: anchor stilts, tethers, truss spars, floodlights.
-            float[] sx = { -0.46f, 0.46f, -0.46f, 0.46f }, sz = { -0.46f, -0.46f, 0.46f, 0.46f };
-            for (int i = 0; i < 4; i++)
-            {
-                Vector3 c = new Vector3(w * sx[i], 0, d * sz[i]);
-                p.Cyl("Anchor" + i, ArchRole.Dark, c + new Vector3(0, 0.35f, 0), new Vector3(0.34f, 0.7f, 0.34f));
-                p.Cyl("AnchorPad" + i, ArchRole.Trim, c + new Vector3(0, 0.04f, 0), new Vector3(0.7f, 0.08f, 0.7f));
-                Vector3 outward = new Vector3(sx[i], 0, sz[i]).normalized;
-                p.Box("Tether" + i, ArchRole.Dark, c + outward * 0.9f + new Vector3(0, h * 0.45f, 0),
-                    new Vector3(0.05f, h * 1.1f, 0.05f), new Vector3(0, 0, 0) + Tilt(outward, 32f));
-            }
-            if (a != ArchArchetype.Pad)
-            {
-                p.TrussFrame(h + 0.3f);
-                p.Box("HazardBand", ArchRole.Trim, new Vector3(0, 0.3f, 0), new Vector3(w * 0.99f, 0.12f, d * 0.99f));
-                for (int i = 0; i < 2; i++)
-                    p.Sphere("Floodlight" + i, ArchRole.Glow, new Vector3(w * (i == 0 ? -0.5f : 0.5f), h + 0.45f, d * 0.5f), Vector3.one * 0.3f);
-            }
-
-            switch (a)
-            {
-                case ArchArchetype.Dwelling:
-                    p.SpinRing(new Vector3(0, h + 1.9f, 0), w * 0.46f, 16, 45f);
-                    break;
-                case ArchArchetype.Hub:
-                    p.SpinRing(new Vector3(0, h + 3.1f, 0), w * 0.36f, 20, 45f);
-                    p.Box("DockSpine", ArchRole.Dark, new Vector3(0, h + 3.1f, 0), new Vector3(0.3f, 0.3f, d * 1.3f), new Vector3(0, 45f, 0));
-                    break;
-                case ArchArchetype.Power:
-                    // The Belt gets a tenth of Earth's sunlight: huge wings.
-                    for (int s = -1; s <= 1; s += 2)
-                    {
-                        p.Box("WingSpar" + s, ArchRole.Dark, new Vector3(s * (w * 0.5f + 2.2f), h + 1.2f, 0), new Vector3(4.4f, 0.08f, 0.1f));
-                        p.Box("Wing" + s, ArchRole.Glass, new Vector3(s * (w * 0.5f + 2.2f), h + 1.2f, 0), new Vector3(4.2f, 0.04f, d * 0.9f), new Vector3(15f * s, 0, 0));
-                    }
-                    break;
-                case ArchArchetype.Extractor:
-                    // Mass driver: throws ore off the rock toward the refinery.
-                    // Beside the +Z doorway lane, not across it.
-                    float mx = -w * 0.32f;
-                    p.Box("DriverRailA", ArchRole.Dark, new Vector3(mx - 0.25f, h * 0.5f + 1.2f, d * 0.5f + 1.2f), new Vector3(0.12f, 0.12f, 5f), new Vector3(-24, 0, 0));
-                    p.Box("DriverRailB", ArchRole.Dark, new Vector3(mx + 0.25f, h * 0.5f + 1.2f, d * 0.5f + 1.2f), new Vector3(0.12f, 0.12f, 5f), new Vector3(-24, 0, 0));
-                    p.Box("DriverCoils", ArchRole.Glow, new Vector3(mx, h * 0.5f + 1.2f, d * 0.5f + 1.2f), new Vector3(0.4f, 0.04f, 4.6f), new Vector3(-24, 0, 0));
-                    break;
-                case ArchArchetype.Workshop:
-                    p.Box("GantryBeam", ArchRole.Trim, new Vector3(0, h + 1.6f, 0), new Vector3(w * 1.1f, 0.25f, 0.3f));
-                    // A-frame legs either side of the ±X doorway lanes.
-                    for (int s = 0; s < 4; s++)
-                    {
-                        float lx = (s < 2 ? -1f : 1f) * w * 0.55f, lz = (s % 2 == 0 ? -1f : 1f) * 1.35f;
-                        p.Box("GantryLeg" + s, ArchRole.Dark, new Vector3(lx, (h + 1.6f) * 0.5f, lz), new Vector3(0.18f, h + 1.7f, 0.18f), new Vector3(lz > 0 ? 9f : -9f, 0, 0));
-                    }
-                    break;
-                case ArchArchetype.Defense:
-                    for (int i = 0; i < 2; i++)
-                    {
-                        Vector3 at = new Vector3(w * (i == 0 ? -0.3f : 0.3f), h + 0.6f, 0);
-                        p.Sphere("PdTurret" + i, ArchRole.Hull, at, new Vector3(0.9f, 0.6f, 0.9f));
-                        p.Box("PdBarrel" + i, ArchRole.Dark, at + new Vector3(0, 0.1f, 0.5f), new Vector3(0.1f, 0.1f, 0.9f), new Vector3(-20, 0, 0));
-                    }
-                    break;
-                case ArchArchetype.Pad:
-                    for (int s = 0; s < 4; s++)
-                    {
-                        float ang = s * 90f + 45f;
-                        Vector3 dir = Quaternion.Euler(0, ang, 0) * Vector3.forward;
-                        p.Box("CradleArm" + s, ArchRole.Trim, dir * (p.R * 0.9f) + new Vector3(0, 1.2f, 0), new Vector3(0.25f, 2.4f, 0.25f), Tilt(dir, -18f));
-                    }
-                    p.EdgeLights(ArchRole.Glow, 10);
-                    break;
-                case ArchArchetype.Wonder:
-                    for (int i = 0; i < 6; i++)
-                        p.Box("SpineSeg" + i, i % 2 == 0 ? ArchRole.Dark : ArchRole.Trim, new Vector3(0, h + 0.6f + i * 1.1f, 0), new Vector3(0.9f - i * 0.08f, 1f, 0.9f - i * 0.08f));
-                    p.SpinRing(new Vector3(0, h + 5.4f, 0), w * 0.4f, 20, 45f);
-                    break;
-            }
-        }
-
-        // ------------------------------------------------------------------ Europa
-
-        static void Europa(Builder p, ArchArchetype a)
-        {
-            float w = p.W, d = p.D, h = p.H;
-            if (a != ArchArchetype.Pad)
-            {
-                // Water ice stops radiation; the base is heated, so it vents; cyan light in the dark.
-                p.IceWalls(Mathf.Min(h * 0.7f, 1.8f));
-                p.HeatVent(new Vector3(w * 0.38f, 0, -d * 0.38f), h + 1.6f);
-                p.WindowBands(h * 0.5f, ArchRole.Glow);
-            }
-
-            switch (a)
-            {
-                case ArchArchetype.Dwelling:
-                    // Ice cap over the roof: metres of water ice are the radiation shield.
-                    p.Sphere("IceDome", ArchRole.Ice, new Vector3(0, h, 0), new Vector3(w * 0.78f, h * 0.9f, d * 0.78f));
-                    p.Cyl("IceDomeRing", ArchRole.Shell, new Vector3(0, h + 0.04f, 0), new Vector3(w * 0.82f, 0.12f, d * 0.82f));
-                    break;
-                case ArchArchetype.Hub:
-                    p.Sphere("IceShield", ArchRole.Ice, new Vector3(0, h, 0), new Vector3(w * 0.8f, h * 1.3f, d * 0.8f));
-                    p.Cyl("IceShieldRing", ArchRole.Shell, new Vector3(0, h + 0.04f, 0), new Vector3(w * 0.84f, 0.14f, d * 0.84f));
-                    p.Sphere("CoreLight", ArchRole.Glow, new Vector3(0, h + 0.3f, 0), new Vector3(w * 0.3f, 0.6f, d * 0.3f));
-                    p.HeatVent(new Vector3(-w * 0.38f, 0, -d * 0.38f), h + 2.1f);
-                    break;
-                case ArchArchetype.Power:
-                    // Sunlight is 1/25 of Earth's: radioisotope/fission with glowing radiator fins.
-                    Vector3 at = new Vector3(-w * 0.28f, 0, d * 0.25f);
-                    p.Cyl("RtgCore", ArchRole.Dark, at + new Vector3(0, 0.9f, 0), new Vector3(0.7f, 1.8f, 0.7f));
-                    for (int i = 0; i < 8; i++)
-                        p.Box("RtgFin" + i, ArchRole.Glow, at + new Vector3(0, 0.9f, 0), new Vector3(0.04f, 1.6f, 1.3f), new Vector3(0, i * 22.5f, 0));
-                    break;
-                case ArchArchetype.Extractor:
-                    // Cryobot drill derrick melting down toward the ocean.
-                    Vector3 c = new Vector3(w * 0.3f, 0, d * 0.3f);
-                    float top = h + 3.2f;
-                    for (int i = 0; i < 4; i++)
-                    {
-                        Vector3 leg = new Vector3(i % 2 == 0 ? -0.55f : 0.55f, 0, i < 2 ? -0.55f : 0.55f);
-                        p.Box("DerrickLeg" + i, ArchRole.Dark, c + leg * 0.5f + new Vector3(0, top * 0.5f, 0), new Vector3(0.1f, top, 0.1f), Tilt(leg.normalized, -7f));
-                    }
-                    p.Box("DerrickHead", ArchRole.Trim, c + new Vector3(0, top, 0), new Vector3(0.6f, 0.3f, 0.6f));
-                    p.Cyl("BoreGlow", ArchRole.Glow, c + new Vector3(0, 0.02f, 0), new Vector3(1.3f, 0.04f, 1.3f));
-                    break;
-                case ArchArchetype.Workshop:
-                    // Hangar for the under-ice submersible: an ice-clad tube with a lit moon pool.
-                    p.Cyl("SubHangar", ArchRole.Ice, new Vector3(0, h + 0.35f, 0), new Vector3(1.5f, w * 0.6f, 1.5f), new Vector3(0, 0, 90));
-                    p.Cyl("SubHangarFrame", ArchRole.Hull, new Vector3(0, h + 0.35f, 0), new Vector3(1.1f, w * 0.64f, 1.1f), new Vector3(0, 0, 90));
-                    p.Cyl("MoonPool", ArchRole.Glow, new Vector3(-w * 0.3f, 0.02f, d * 0.3f), new Vector3(1.1f, 0.04f, 1.1f));
-                    break;
-                case ArchArchetype.Defense:
-                    p.IceWalls(2.2f, outset: 0.5f);
-                    p.Cyl("WatchPylon", ArchRole.Ice, new Vector3(-w * 0.3f, h + 1.5f, d * 0.3f), new Vector3(0.9f, 3f, 0.9f));
-                    p.Sphere("WatchEye", ArchRole.Glow, new Vector3(-w * 0.3f, h + 3.2f, d * 0.3f), Vector3.one * 0.6f);
-                    break;
-                case ArchArchetype.Pad:
-                    p.EdgeLights(ArchRole.Glow, 14);
-                    p.Cyl("FrostRing", ArchRole.Shell, new Vector3(0, 0.02f, 0), new Vector3(p.R * 2.3f, 0.03f, p.R * 2.3f));
-                    break;
-                case ArchArchetype.Wonder:
-                    p.Cyl("IceSpire", ArchRole.Ice, new Vector3(0, h + 3f, 0), new Vector3(1.4f, 6f, 1.4f));
-                    p.Cyl("SpireCore", ArchRole.Glow, new Vector3(0, h + 3f, 0), new Vector3(0.35f, 5.8f, 0.35f));
-                    break;
-            }
-        }
-
-        /// <summary>Euler that leans a vertical part outward along <paramref name="dir"/> by <paramref name="deg"/>.</summary>
-        static Vector3 Tilt(Vector3 dir, float deg) => new Vector3(dir.z * deg, 0, -dir.x * deg);
+            ArchArchetype.Dwelling => BuildingCategory.Habitat,
+            ArchArchetype.Hub => BuildingCategory.Commons,
+            ArchArchetype.Power => BuildingCategory.Power,
+            ArchArchetype.Extractor => BuildingCategory.Mine,
+            ArchArchetype.Workshop => BuildingCategory.EngineerWorkshop,
+            ArchArchetype.Defense => BuildingCategory.Defense,
+            ArchArchetype.Pad => BuildingCategory.LandingPad,
+            _ => BuildingCategory.ClimateLoom
+        };
 
         // ------------------------------------------------------------------ builder
 
         sealed class Builder
         {
             public readonly List<ArchPart> Parts = new List<ArchPart>(48);
+            /// <summary>Footprint (x, z) and the top of the kit's main hull.</summary>
             public readonly float W, D, H;
             /// <summary>Half the smaller footprint side.</summary>
             public readonly float R;
+            /// <summary>The kit's hull bounds, real roof surfaces, doorways and vents.</summary>
+            public readonly KitShape Shape;
+            public BuildingCategory Category => Shape.Category;
             readonly System.Random _rng;
 
-            public Builder(float w, float d, float h, int seed)
+            public Builder(KitShape shape, int seed)
             {
-                W = w; D = d; H = h; R = Mathf.Min(w, d) * 0.5f;
+                Shape = shape;
+                W = shape.W; D = shape.D; H = Mathf.Max(0.8f, shape.BodyHeight); R = Mathf.Min(W, D) * 0.5f;
                 _rng = new System.Random(seed);
             }
 
             public int Rng(int n) => _rng.Next(n);
             public float Range(float a, float b) => a + (float)_rng.NextDouble() * (b - a);
 
-            public void Add(string n, ArchShape s, ArchRole r, Vector3 pos, Vector3 size, Vector3 euler) =>
-                Parts.Add(new ArchPart { Name = n, Shape = s, Role = r, Position = pos, Size = size, Euler = euler });
+            ArchPart _motion;
+            bool _inMotion;
+
+            public void Add(string n, ArchShape s, ArchRole r, Vector3 pos, Vector3 size, Vector3 euler)
+            {
+                var part = new ArchPart { Name = n, Shape = s, Role = r, Position = pos, Size = size, Euler = euler };
+                if (_inMotion)
+                {
+                    part.Motion = _motion.Motion; part.MotionGroup = _motion.MotionGroup; part.MotionPivot = _motion.MotionPivot;
+                    part.MotionAxis = _motion.MotionAxis; part.MotionAmount = _motion.MotionAmount; part.MotionPeriod = _motion.MotionPeriod;
+                }
+                Parts.Add(part);
+            }
+
+            /// <summary>
+            /// Parts added until <see cref="EndMotion"/> move together as <paramref name="group"/>:
+            /// spinning rotors, sweeping dishes, blinking beacons. Group names must be unique per building.
+            /// </summary>
+            public void BeginMotion(string group, ArchMotion motion, Vector3 pivot, Vector3 axis, float amount, float period = 2f)
+            {
+                _motion = new ArchPart
+                {
+                    Motion = motion, MotionGroup = group, MotionPivot = pivot,
+                    MotionAxis = axis == default ? Vector3.up : axis.normalized, MotionAmount = amount, MotionPeriod = period
+                };
+                _inMotion = true;
+            }
+
+            public void EndMotion() => _inMotion = false;
+
+            /// <summary>A vent or spark point for ambient effects (steam, smoke, sparks, heat shimmer).</summary>
+            public void Emit(string n, EmitterKind kind, Vector3 pos, Vector3 dir = default, float scale = 1f) =>
+                Parts.Add(new ArchPart
+                {
+                    Name = n, IsEmitter = true, EmitKind = kind, Position = pos, Size = Vector3.one * Mathf.Max(0.05f, scale),
+                    Euler = dir == default ? Vector3.up : dir.normalized, Role = ArchRole.Steam
+                });
+
+            /// <summary>True when a box (centre, full size) would stand in one of the kit's doorway lanes.</summary>
+            public bool BlocksDoor(Vector3 center, Vector3 size) => Shape.BlocksDoor(center, size);
             public void Box(string n, ArchRole r, Vector3 pos, Vector3 size, Vector3 euler = default) => Add(n, ArchShape.Box, r, pos, size, euler);
             public void Cyl(string n, ArchRole r, Vector3 pos, Vector3 size, Vector3 euler = default) => Add(n, ArchShape.Cylinder, r, pos, size, euler);
             public void Sphere(string n, ArchRole r, Vector3 pos, Vector3 size, Vector3 euler = default) => Add(n, ArchShape.Sphere, r, pos, size, euler);

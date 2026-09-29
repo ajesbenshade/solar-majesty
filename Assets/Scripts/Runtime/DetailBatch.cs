@@ -192,6 +192,20 @@ namespace SolarMajesty
             a.Stage == b.Stage && a.Band == b.Band && a.Plated == b.Plated &&
             a.Color == b.Color && a.Emission == b.Emission;
 
+        /// <summary>
+        /// Merge unit primitives (Unity's cube, cylinder, sphere) placed by <paramref name="matrices"/>
+        /// into one mesh — for callers that bring their own material (world architecture roles).
+        /// </summary>
+        public static Mesh MergePrimitives(IList<PrimitiveType> types, IList<Matrix4x4> matrices, string name = "Merged")
+        {
+            var g = new Group();
+            for (int i = 0; i < types.Count && i < matrices.Count; i++)
+                g.Parts.Add(new Part { Type = types[i], Matrix = matrices[i] });
+            var mesh = Merge(g);
+            mesh.name = name;
+            return mesh;
+        }
+
         private static Mesh Merge(Group g)
         {
             int vCount = 0, iCount = 0;

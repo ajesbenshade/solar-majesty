@@ -22,6 +22,8 @@ namespace SolarMajesty.EditorTools
     /// <item><c>-smTile 640x480</c> — tile size; <c>-smCols N</c> — columns for the plain sheet.</item>
     /// <item><c>-smYaw 45</c> — camera yaw (the play camera orbits; 45 is its default).</item>
     /// <item><c>-smNoAtmos</c> — flat studio light instead of the world's grade.</item>
+    /// <item><c>-smAnchors</c> — overlay each kit's KitAnchors: yellow body box, magenta roofs,
+    /// green doorway lanes, cyan vents. A kit with no anchors gets a red cross on the ground.</item>
     /// </list>
     /// </summary>
     public static class BuildingGallery
@@ -69,6 +71,7 @@ namespace SolarMajesty.EditorTools
             public int TileW, TileH, Cols;
             public float Yaw;
             public bool Atmos;
+            public bool Anchors;
         }
 
         [MenuItem("Solar Majesty/Render/Building Gallery (core set)", priority = 120)]
@@ -109,6 +112,7 @@ namespace SolarMajesty.EditorTools
             else opt.Cols = opt.Cats.Length > 12 ? 6 : 4;
             if (float.TryParse(Arg("-smYaw") ?? "", out float yaw)) opt.Yaw = yaw;
             opt.Atmos = !HasArg("-smNoAtmos");
+            opt.Anchors = HasArg("-smAnchors");
 
             string bodyArg = Arg("-smBody") ?? "Mars";
             bool allWorlds = bodyArg.Equals("all", StringComparison.OrdinalIgnoreCase);
@@ -311,6 +315,7 @@ namespace SolarMajesty.EditorTools
                 try { CampusDressing.DressPlaced(data, go, _body); }
                 catch (Exception e) { Debug.LogWarning($"[Gallery] DressPlaced {cat}: {e.Message}"); }
                 UnityEngine.Object.DestroyImmediate(data);
+                if (_opt.Anchors) AnchorOverlay.Draw(go);
                 return go;
             }
 
@@ -353,7 +358,8 @@ namespace SolarMajesty.EditorTools
             public Sheet(int cols, int rows, int tw, int th)
             {
                 _rows = rows; _tw = tw; _th = th;
-                _tex = new Texture2D(cols * tw, rows * th, TextureFormat.RGB24, false);
+                // Worlds mode opens a new scene per row, which unloads unreferenced assets.
+                _tex = new Texture2D(cols * tw, rows * th, TextureFormat.RGB24, false) { hideFlags = HideFlags.HideAndDontSave };
                 var fill = new Color[cols * tw * rows * th];
                 for (int i = 0; i < fill.Length; i++) fill[i] = new Color(0.08f, 0.08f, 0.09f);
                 _tex.SetPixels(fill);
@@ -390,6 +396,92 @@ namespace SolarMajesty.EditorTools
             }
         }
 
+        /// <summary>Debug overlay of a kit's recorded anchors (see <see cref="KitAnchors"/>).</summary>
+        private static class AnchorOverlay
+        {
+            private static readonly Dictionary<Color, Material> Mats = new Dictionary<Color, Material>();
+
+            public static void Draw(GameObject go)
+            {
+                var root = go.transform;
+                var shape = KitAnchors.Of(go);
+                var holder = new GameObject("AnchorOverlay").transform;
+                holder.SetParent(root, false);
+                if (shape == null)
+                {
+                    float top = WorldBounds(go).max.y - root.position.y + 0.3f;
+                    Bar(holder, new Vector3(0, top, 0), new Vector3(4f, 0.12f, 0.3f), Quaternion.Euler(0, 45, 0), Color.red);
+                    Bar(holder, new Vector3(0, top, 0), new Vector3(4f, 0.12f, 0.3f), Quaternion.Euler(0, -45, 0), Color.red);
+                    return;
+                }
+                if (shape.HasBody) WireBox(holder, shape.Body.center, shape.Body.size, Quaternion.identity, Color.yellow, 0.04f);
+                foreach (var r in shape.Roofs)
+                {
+                    var rot = Quaternion.Euler(r.Tilt, r.Yaw, 0f);
+                    switch (r.Kind)
+                    {
+                        case RoofKind.Flat:
+                        case RoofKind.Slope:
+                            WireBox(holder, r.Center, new Vector3(r.Size.x, 0.02f, r.Size.z), rot, Color.magenta, 0.07f);
+                            break;
+                        case RoofKind.Dome:
+                            WireBox(holder, r.Center + Vector3.up * r.Size.y * 0.5f, r.Size, Quaternion.identity, Color.magenta, 0.05f);
+                            break;
+                        case RoofKind.Vault:
+                            WireBox(holder, r.Center + Vector3.up * r.Size.y * 0.5f, r.Size, Quaternion.Euler(0, r.Yaw, 0), Color.magenta, 0.05f);
+                            break;
+                        case RoofKind.Cylinder:
+                            WireBox(holder, r.Center, new Vector3(r.Size.x, r.Size.x, r.Size.z), Quaternion.Euler(0, r.Yaw, 0), Color.magenta, 0.05f);
+                            break;
+                    }
+                }
+                foreach (var d in shape.Doors)
+                {
+                    Vector3 n = d.Normal.sqrMagnitude > 1e-4f ? d.Normal.normalized : Vector3.back;
+                    var rot = Quaternion.LookRotation(n, Vector3.up);
+                    Bar(holder, d.Position + n * 1.1f + Vector3.up * 0.03f, new Vector3(d.Width, 0.05f, 2.2f), rot, Color.green);
+                    Bar(holder, d.Position + Vector3.up * d.Height, new Vector3(d.Width, 0.06f, 0.06f), rot, Color.green);
+                }
+                foreach (var e in shape.Emitters)
+                    Bar(holder, e.Position, Vector3.one * 0.3f, Quaternion.identity, Color.cyan);
+            }
+
+            private static void WireBox(Transform parent, Vector3 c, Vector3 size, Quaternion rot, Color col, float t)
+            {
+                Vector3 h = size * 0.5f;
+                for (int i = 0; i < 12; i++)
+                {
+                    int axis = i / 4;
+                    float sa = (i & 1) == 0 ? -1 : 1, sb = (i & 2) == 0 ? -1 : 1;
+                    Vector3 off, sc;
+                    if (axis == 0) { off = new Vector3(0, sa * h.y, sb * h.z); sc = new Vector3(size.x, t, t); }
+                    else if (axis == 1) { off = new Vector3(sa * h.x, 0, sb * h.z); sc = new Vector3(t, size.y, t); }
+                    else { off = new Vector3(sa * h.x, sb * h.y, 0); sc = new Vector3(t, t, size.z); }
+                    Bar(parent, c + rot * off, sc, rot, col);
+                }
+            }
+
+            private static void Bar(Transform parent, Vector3 localPos, Vector3 size, Quaternion rot, Color col)
+            {
+                var g = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                UnityEngine.Object.DestroyImmediate(g.GetComponent<Collider>());
+                g.name = "Anchor";
+                g.transform.SetParent(parent, false);
+                g.transform.localPosition = localPos;
+                g.transform.localRotation = rot;
+                g.transform.localScale = new Vector3(Mathf.Max(size.x, 0.01f), Mathf.Max(size.y, 0.01f), Mathf.Max(size.z, 0.01f));
+                if (!Mats.TryGetValue(col, out var m) || m == null)
+                {
+                    m = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { hideFlags = HideFlags.DontUnloadUnusedAsset };
+                    m.SetColor("_BaseColor", col);
+                    Mats[col] = m;
+                }
+                var r = g.GetComponent<Renderer>();
+                r.sharedMaterial = m;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+        }
+
         private static Bounds WorldBounds(GameObject go)
         {
             var rends = go.GetComponentsInChildren<Renderer>();
@@ -397,7 +489,7 @@ namespace SolarMajesty.EditorTools
             bool first = true;
             foreach (var r in rends)
             {
-                if (!r.enabled || r.name.Contains("Footprint") || r.name.Contains("SelectRing")) continue;
+                if (!r.enabled || r.name.Contains("Footprint") || r.name.Contains("SelectRing") || r.name == "Anchor") continue;
                 if (first) { b = r.bounds; first = false; }
                 else b.Encapsulate(r.bounds);
             }
