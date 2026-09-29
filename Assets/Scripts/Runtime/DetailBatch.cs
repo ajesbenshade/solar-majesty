@@ -69,7 +69,23 @@ namespace SolarMajesty
         {
             _root = root;
             _cacheKey = cacheKey;
-            _cached = !string.IsNullOrEmpty(cacheKey) && MeshCache.ContainsKey(cacheKey);
+            _cached = !string.IsNullOrEmpty(cacheKey) && CacheAlive(cacheKey);
+        }
+
+        /// <summary>
+        /// A scene load unloads merged meshes nothing references any more, which leaves the cache
+        /// holding destroyed meshes and the next building with invisible detail. Drop such entries.
+        /// </summary>
+        private static bool CacheAlive(string cacheKey)
+        {
+            if (!MeshCache.TryGetValue(cacheKey, out var groups)) return false;
+            for (int i = 0; i < groups.Count; i++)
+            {
+                if (groups[i].Mesh != null) continue;
+                MeshCache.Remove(cacheKey);
+                return false;
+            }
+            return true;
         }
 
         public void Box(Vector3 pos, Vector3 size, Color c, Color emit = default) =>
@@ -216,7 +232,8 @@ namespace SolarMajesty
                     tris.Add(baseV + srcT[t]);
             }
 
-            var mesh = new Mesh { name = "Detail" };
+            // Survives scene loads so cached buildings keep their detail on the next world.
+            var mesh = new Mesh { name = "Detail", hideFlags = HideFlags.DontUnloadUnusedAsset };
             if (verts.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
             mesh.SetVertices(verts);
             mesh.SetNormals(norms);
