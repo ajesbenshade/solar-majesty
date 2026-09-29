@@ -46,8 +46,12 @@ namespace SolarMajesty
 
             int seed = Mathf.RoundToInt(at.x * 7.3f) * 73856093 ^ Mathf.RoundToInt(at.z * 7.3f) * 19349663;
             var parts = PlanetArchitecture.Adapt(body, archetype, worldW, worldD, roof, seed);
+            bool ownRoof = HasOwnRoof(category);
             for (int i = 0; i < parts.Count; i++)
+            {
+                if (ownRoof && PlanetArchitecture.IsRoofShell(parts[i].Name)) continue;
                 Build(holder.transform, parts[i], body, style);
+            }
         }
 
         /// <summary>
@@ -76,8 +80,24 @@ namespace SolarMajesty
             };
         }
 
+        /// <summary>
+        /// Ports and loose dressing don't count as hull. Staged kit parts (<c>Dress_S{n}_…</c>, see
+        /// ConstructionStages) are the hull of the detailed builds, so they do — except merged
+        /// detail meshes, whose bounds span antennas and masts.
+        /// </summary>
         private static bool IsPortName(string n) =>
-            n.Contains("Port") || n.StartsWith("Dress_");
+            SkipRegrade(n) || n.Contains("_Detail_");
+
+        /// <summary>Loose dressing keeps its colours; staged kit parts take the world's palette.</summary>
+        private static bool SkipRegrade(string n) =>
+            n.Contains("Port") || (n.StartsWith("Dress_") && !IsStagedKitPart(n));
+
+        private static bool IsStagedKitPart(string n) =>
+            n.Length > 8 && n[6] == 'S' && n[7] >= '0' && n[7] <= '4' && n[8] == '_';
+
+        /// <summary>Detailed builds whose own roof (canopy, arched hangar) a world roof shell would bury.</summary>
+        private static bool HasOwnRoof(BuildingCategory c) =>
+            c == BuildingCategory.Market || ColonyStructure.IsWorkshopCategory(c);
 
         /// <summary>Kit colours → this world's palette and dust, per renderer (materials stay shared).</summary>
         private static void Regrade(GameObject root, CelestialBodyId body, in ArchStyle style)
@@ -89,7 +109,7 @@ namespace SolarMajesty
             for (int i = 0; i < rends.Length; i++)
             {
                 var r = rends[i];
-                if (r == null || IsPortName(r.name)) continue;
+                if (r == null || SkipRegrade(r.name)) continue;
                 var mat = r.sharedMaterial;
                 if (mat == null || !mat.HasProperty("_BaseColor")) continue;
                 bool remap = PlanetArchitecture.TryRemapMaterial(body, mat.name, mat.GetColor("_BaseColor"), out Color c);

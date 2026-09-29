@@ -10,7 +10,7 @@ namespace SolarMajesty
     /// Dressing on the square Lego grid — no new pathing,
     /// no extra occupancy colliders, no click-to-fire.
     /// </summary>
-    public static class HeroBuildingKits
+    public static partial class HeroBuildingKits
     {
         // Concept whites are warm cream (lit ~RGB 224/198/175), never cool; carbon reads as
         // charcoal (~30/24/16 lit), never pure black (dream-loop round 8 Tier 3).
@@ -171,6 +171,7 @@ namespace SolarMajesty
                     new Vector3(0.55f, 0.12f, 0.46f), Graphite);
             }
 
+            DetailHabitat(root, w, d);
         }
 
         public static void BuildCommons(Transform root, float w, float d, Color hull)
@@ -248,6 +249,8 @@ namespace SolarMajesty
                     dir * (radius * 1.012f) + new Vector3(0f, 0.92f, 0f),
                     new Vector3(0.028f, 0.55f, 0.028f), Carbon, yaw);
             }
+
+            DetailCommons(root, w, d, hull);
         }
 
         public static void BuildLandingPad(Transform root, float w, float d, Color hull)
@@ -317,6 +320,7 @@ namespace SolarMajesty
             }
 
             SpawnParkedShip(root);
+            DetailLandingPad(root, w, d);
         }
 
         public static void BuildWaterExtractor(Transform root, float w, float d, Color hull)
@@ -589,112 +593,7 @@ namespace SolarMajesty
                 new Vector3(pitchX * 1.55f, 0.68f, arrZ + pitchZ * 1.15f),
                 new Vector3(0.12f, 0.08f, 0.12f), Orange);
 
-        }
-
-        public static void BuildDefenseBattery(Transform root, float w, float d, Color hull)
-        {
-            // Angular bunker + roof gun — not a HAB/Commons dome. Shield bubble stays Week 1 dressing.
-            Prim(root, "DefPlinth", PrimitiveType.Cube,
-                new Vector3(0f, 0.12f, 0f),
-                new Vector3(w * 0.92f, 0.22f, d * 0.92f), Carbon);
-            Prim(root, "DefHull", PrimitiveType.Cube,
-                new Vector3(0f, 0.95f, 0f),
-                new Vector3(w * 0.72f, 1.55f, d * 0.62f), hull);
-            Prim(root, "DefBand", PrimitiveType.Cube,
-                new Vector3(0f, 0.55f, 0f),
-                new Vector3(w * 0.76f, 0.14f, d * 0.66f), Carbon);
-            Prim(root, "DefStripe", PrimitiveType.Cube,
-                new Vector3(0f, 1.35f, d * 0.32f),
-                new Vector3(w * 0.55f, 0.12f, 0.08f), Orange);
-            Prim(root, "DefChevron", PrimitiveType.Cube,
-                new Vector3(0f, 1.55f, d * 0.32f),
-                new Vector3(w * 0.28f, 0.08f, 0.08f), Orange);
-            Prim(root, "DefVisor", PrimitiveType.Cube,
-                new Vector3(0f, 1.12f, d * 0.32f),
-                new Vector3(w * 0.42f, 0.16f, 0.07f), Cyan, CyanEmit);
-            Prim(root, "DefHatch", PrimitiveType.Cube,
-                new Vector3(0f, 0.7f, d * 0.32f),
-                new Vector3(0.7f, 0.85f, 0.08f), Orange);
-
-            for (int i = 0; i < 4; i++)
-            {
-                float ang = (i * 90f + 45f) * Mathf.Deg2Rad;
-                Vector3 p = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang)) * (Mathf.Min(w, d) * 0.38f);
-                Prim(root, "DefBollard_" + i, PrimitiveType.Cylinder,
-                    p + new Vector3(0f, 0.55f, 0f),
-                    new Vector3(0.16f, 0.5f, 0.16f), Carbon);
-                Prim(root, "DefVisorEye_" + i, PrimitiveType.Sphere,
-                    p + new Vector3(0f, 1.12f, 0f),
-                    new Vector3(0.14f, 0.14f, 0.14f), Cyan, CyanEmit);
-            }
-
-            BuildJunctionTurret(root, new Vector3(0f, 1.85f, 0.08f), 0f, 1.35f);
-        }
-
-        public static void BuildWorkshop(Transform root, float w, float d, Color accent, bool tall)
-        {
-            // Hangar bay — not a colored greybox cube.
-            float h = tall ? 2.55f : 2.05f;
-            Prim(root, "ShopPlinth", PrimitiveType.Cube,
-                new Vector3(0f, 0.10f, 0f),
-                new Vector3(w * 0.94f, 0.18f, d * 0.94f), Carbon);
-            Prim(root, "ShopApron", PrimitiveType.Cube,
-                new Vector3(0f, 0.16f, d * 0.32f),
-                new Vector3(w * 0.72f, 0.08f, d * 0.28f), Concrete);
-            Prim(root, "ShopHull", PrimitiveType.Cube,
-                new Vector3(0f, h * 0.5f + 0.12f, -d * 0.08f),
-                new Vector3(w * 0.78f, h, d * 0.68f), White);
-            Prim(root, "ShopCap", PrimitiveType.Cube,
-                new Vector3(0f, h + 0.18f, -d * 0.08f),
-                new Vector3(w * 0.84f, 0.14f, d * 0.74f), Carbon);
-            Prim(root, "ShopStripe", PrimitiveType.Cube,
-                new Vector3(0f, h * 0.62f, d * 0.26f),
-                new Vector3(w * 0.55f, 0.10f, 0.08f), Orange);
-            Prim(root, "ShopVisor", PrimitiveType.Cube,
-                new Vector3(0f, h * 0.78f, d * 0.26f),
-                new Vector3(w * 0.38f, 0.16f, 0.07f), Cyan, CyanEmit);
-            Prim(root, "ShopDoor_L", PrimitiveType.Cube,
-                new Vector3(-w * 0.16f, 0.95f, d * 0.26f),
-                new Vector3(w * 0.22f, 1.55f, 0.10f), accent);
-            Prim(root, "ShopDoor_R", PrimitiveType.Cube,
-                new Vector3(w * 0.16f, 0.95f, d * 0.26f),
-                new Vector3(w * 0.22f, 1.55f, 0.10f), accent);
-            Prim(root, "ShopStack_L", PrimitiveType.Cylinder,
-                new Vector3(-w * 0.22f, h + 0.55f, -d * 0.18f),
-                new Vector3(0.28f, 0.42f, 0.28f), Graphite);
-            Prim(root, "ShopStack_R", PrimitiveType.Cylinder,
-                new Vector3(w * 0.22f, h + 0.55f, -d * 0.18f),
-                new Vector3(0.28f, 0.42f, 0.28f), Graphite);
-            Prim(root, "ShopCranePost", PrimitiveType.Cube,
-                new Vector3(-w * 0.38f, 1.35f, d * 0.18f),
-                new Vector3(0.10f, 2.4f, 0.10f), Carbon);
-            Prim(root, "ShopCraneBeam", PrimitiveType.Cube,
-                new Vector3(-w * 0.12f, 2.52f, d * 0.18f),
-                new Vector3(w * 0.52f, 0.08f, 0.10f), Yellow);
-            Prim(root, "ShopBeacon", PrimitiveType.Sphere,
-                new Vector3(0f, h + 0.72f, -d * 0.08f),
-                new Vector3(0.22f, 0.22f, 0.22f), Cyan, CyanEmit);
-            Prim(root, "ShopHatch", PrimitiveType.Cube,
-                new Vector3(0f, 0.72f, d * 0.27f),
-                new Vector3(0.62f, 0.85f, 0.08f), Orange);
-            Prim(root, "ShopTrack_L", PrimitiveType.Cube,
-                new Vector3(-w * 0.30f, 1.05f, d * 0.27f),
-                new Vector3(0.06f, 1.85f, 0.06f), Carbon);
-            Prim(root, "ShopTrack_R", PrimitiveType.Cube,
-                new Vector3(w * 0.30f, 1.05f, d * 0.27f),
-                new Vector3(0.06f, 1.85f, 0.06f), Carbon);
-            Prim(root, "ShopBayLight_L", PrimitiveType.Sphere,
-                new Vector3(-w * 0.22f, h * 0.92f, d * 0.22f),
-                new Vector3(0.16f, 0.16f, 0.16f), accent, CyanEmit * 0.45f);
-            Prim(root, "ShopBayLight_R", PrimitiveType.Sphere,
-                new Vector3(w * 0.22f, h * 0.92f, d * 0.22f),
-                new Vector3(0.16f, 0.16f, 0.16f), accent, CyanEmit * 0.45f);
-            for (int i = 0; i < 3; i++)
-            {
-                Prim(root, "ShopChevron_" + i, PrimitiveType.Cube,
-                    new Vector3(0f, 0.20f, d * 0.38f - i * 0.22f),
-                    new Vector3(0.55f - i * 0.08f, 0.03f, 0.10f), Yellow);
-            }
+            DetailSolarField(root, w, d, hull);
         }
 
         public static void BuildWreck(Transform root)
@@ -732,32 +631,6 @@ namespace SolarMajesty
                 new Vector3(0.16f, 0.16f, 0.16f), Cyan, CyanEmit);
         }
 
-        public static void BuildWatchtower(Transform root, float w, float d)
-        {
-            Prim(root, "TowPlinth", PrimitiveType.Cube,
-                new Vector3(0f, 0.10f, 0f),
-                new Vector3(w * 0.62f, 0.16f, d * 0.62f), Carbon);
-            Prim(root, "TowShaft", PrimitiveType.Cylinder,
-                new Vector3(0f, 1.55f, 0f),
-                new Vector3(0.55f, 1.45f, 0.55f), White);
-            Prim(root, "TowCollar", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.55f, 0f),
-                new Vector3(0.72f, 0.10f, 0.72f), Orange);
-            Prim(root, "TowDeck", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.85f, 0f),
-                new Vector3(1.15f, 0.12f, 1.15f), White);
-            Prim(root, "TowRail", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.15f, 0f),
-                new Vector3(1.05f, 0.06f, 1.05f), Steel);
-            Prim(root, "TowBeacon", PrimitiveType.Sphere,
-                new Vector3(0f, 3.45f, 0f),
-                new Vector3(0.22f, 0.22f, 0.22f), Cyan, CyanEmit);
-            Prim(root, "Dress_TowerLaser", PrimitiveType.Cube,
-                new Vector3(0f, 3.05f, 0.42f),
-                new Vector3(0.18f, 0.12f, 0.55f), Orange);
-            ShowWatchtowerLasers(root, false);
-        }
-
         public static void ShowWatchtowerLasers(Transform root, bool on)
         {
             if (root == null) return;
@@ -765,8 +638,7 @@ namespace SolarMajesty
             if (t == null && on)
             {
                 Prim(root, "Dress_TowerLaser", PrimitiveType.Cube,
-                    new Vector3(0f, 3.05f, 0.42f),
-                    new Vector3(0.18f, 0.12f, 0.55f), Orange);
+                    TowerLaserPos, new Vector3(0.2f, 0.14f, 0.6f), Orange);
                 t = root.Find("Dress_TowerLaser");
             }
 
@@ -816,34 +688,6 @@ namespace SolarMajesty
             Prim(root, "YardBeacon", PrimitiveType.Sphere,
                 new Vector3(0f, 2.22f, -0.06f),
                 new Vector3(0.18f, 0.18f, 0.18f), Cyan, CyanEmit);
-        }
-
-        public static void BuildMarket(Transform root, float w, float d)
-        {
-            Prim(root, "MktPlinth", PrimitiveType.Cube,
-                new Vector3(0f, 0.10f, 0f),
-                new Vector3(w * 0.90f, 0.16f, d * 0.78f), Carbon);
-            Prim(root, "MktDeck", PrimitiveType.Cube,
-                new Vector3(0f, 0.28f, 0.08f),
-                new Vector3(w * 0.72f, 0.10f, d * 0.52f), Concrete);
-            Prim(root, "MktAwning", PrimitiveType.Cube,
-                new Vector3(0f, 1.55f, 0.12f),
-                new Vector3(w * 0.78f, 0.06f, d * 0.58f), Orange);
-            Prim(root, "MktPost_L", PrimitiveType.Cylinder,
-                new Vector3(-w * 0.28f, 0.85f, d * 0.22f),
-                new Vector3(0.08f, 0.72f, 0.08f), Steel);
-            Prim(root, "MktPost_R", PrimitiveType.Cylinder,
-                new Vector3(w * 0.28f, 0.85f, d * 0.22f),
-                new Vector3(0.08f, 0.72f, 0.08f), Steel);
-            Prim(root, "MktCrate", PrimitiveType.Cube,
-                new Vector3(-0.35f, 0.55f, 0.05f),
-                new Vector3(0.42f, 0.38f, 0.38f), White);
-            Prim(root, "MktBarrel", PrimitiveType.Cylinder,
-                new Vector3(0.42f, 0.48f, -0.08f),
-                new Vector3(0.28f, 0.28f, 0.28f), Orange);
-            Prim(root, "MktLantern", PrimitiveType.Sphere,
-                new Vector3(0f, 1.78f, 0.12f),
-                new Vector3(0.16f, 0.16f, 0.16f), Cyan, CyanEmit);
         }
 
         public static void BuildInn(Transform root, float w, float d)

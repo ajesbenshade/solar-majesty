@@ -142,8 +142,8 @@ namespace SolarMajesty
             {
                 if (_placer.TryPlace(Selected, cell, snapped, out ConstructionOrder order, out string fail))
                 {
-                    SpawnBuildingVisual(order);
-                    SpawnConstructionSite(order);
+                    GameObject built = SpawnBuildingVisual(order);
+                    SpawnConstructionSite(order, built);
                     DemoAudio.PlayBuildPlace(snapped);
                     Debug.Log($"[Build] Placed {Selected.displayName} @ {cell}");
                 }
@@ -170,7 +170,7 @@ namespace SolarMajesty
             Select(_visible[slot]);
         }
 
-        private void SpawnBuildingVisual(ConstructionOrder order)
+        private GameObject SpawnBuildingVisual(ConstructionOrder order)
         {
             float cell = _grid != null ? _grid.CellSize : ColonyLayout.DefaultCellSize;
             GameObject go = ModularBuildingFactory.Spawn(
@@ -186,9 +186,10 @@ namespace SolarMajesty
             CampusNavMesh.AddObstacle(go);
             _loop?.NotifyBuildingPlaced(order.Data, go, order.WorldPosition);
             _loop?.NotifyCampusExpanded();
+            return go;
         }
 
-        private void SpawnConstructionSite(ConstructionOrder order)
+        private void SpawnConstructionSite(ConstructionOrder order, GameObject building)
         {
             if (order.Data != null)
             {
@@ -201,7 +202,7 @@ namespace SolarMajesty
             site.transform.SetParent(_buildingRoot, true);
             site.transform.position = order.WorldPosition + Vector3.up * 0.05f;
             var vis = site.AddComponent<ConstructionSiteVisual>();
-            vis.Bind(order);
+            vis.Bind(order, building);
         }
 
         private void EnsureGhost()

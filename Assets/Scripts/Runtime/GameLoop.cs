@@ -5764,7 +5764,7 @@ namespace SolarMajesty
                 var site = new GameObject($"Site_save_{order.Id}");
                 site.transform.SetParent(root, true);
                 site.transform.position = world + Vector3.up * 0.05f;
-                site.AddComponent<ConstructionSiteVisual>().Bind(order);
+                site.AddComponent<ConstructionSiteVisual>().Bind(order, go);
             }
             else if (Village != null && ColonyStructure.IsWorkshopCategory(data.category))
             {

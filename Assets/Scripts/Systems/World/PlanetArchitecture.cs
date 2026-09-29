@@ -185,6 +185,25 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Roof shells and rooftop gardens a world lays over a building's hull (Mars pressure dome
+        /// and printed vault, Earth green roof and atrium…). Kits that carry their own detailed
+        /// roof skip these, or the shell buries the roof.
+        /// </summary>
+        public static bool IsRoofShell(string partName)
+        {
+            if (string.IsNullOrEmpty(partName)) return false;
+            foreach (var prefix in RoofShellPrefixes)
+                if (partName.StartsWith(prefix, System.StringComparison.Ordinal)) return true;
+            return false;
+        }
+
+        static readonly string[] RoofShellPrefixes =
+        {
+            "PressureDome", "DomeRib", "RingStrata", "PrintedVault", "VaultCourse", "VaultDoor",
+            "GreenRoof", "Shrub", "Atrium", "Skylight", "Pavilion"
+        };
+
         public static ArchArchetype ArchetypeOf(BuildingCategory c) => c switch
         {
             BuildingCategory.Habitat or BuildingCategory.Inn or BuildingCategory.AidStation => ArchArchetype.Dwelling,

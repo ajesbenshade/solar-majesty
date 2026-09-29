@@ -250,6 +250,13 @@ namespace SolarMajesty
                 cat == BuildingCategory.LandingPad ||
                 cat == BuildingCategory.RegolithCamp)
                 return null;
+            // Detailed procedural builds (HeroBuildingDetail) replace the imported workshop,
+            // defense and inn meshes for these; Defense and Watchtower no longer share one FBX.
+            if (cat == BuildingCategory.Defense ||
+                cat == BuildingCategory.Watchtower ||
+                cat == BuildingCategory.Market ||
+                ColonyStructure.IsWorkshopCategory(cat))
+                return null;
 
             GameObject hero = BuildingVisualCatalog.LoadHeroKit(cat);
             if (hero != null)
