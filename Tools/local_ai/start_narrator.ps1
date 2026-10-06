@@ -29,6 +29,8 @@ $Started = @()
 
 function Say($m) { Write-Host "[narrator] $m" -ForegroundColor Yellow }
 function Has($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
+# Start-Process joins -ArgumentList with spaces and does not quote, so a path like "C:\My Projects" splits.
+function Q($s) { "`"$s`"" }
 function VenvPython {
   $py = Join-Path $Venv 'Scripts\python.exe'
   if (-not (Test-Path $py)) {
@@ -89,7 +91,7 @@ try {
     Download "https://huggingface.co/$GgufRepo/resolve/main/$GgufFile" $gguf "$GgufFile (~1.1 GB)"
     Say "backend: llama-cpp-python on :$Port"
     $Started += Start-Process $py -PassThru -WindowStyle Hidden -RedirectStandardError $Log `
-      -ArgumentList @('-m', 'llama_cpp.server', '--model', $gguf, '--host', '127.0.0.1', '--port', $Port, '--n_ctx', '2048')
+      -ArgumentList @('-m', 'llama_cpp.server', '--model', (Q $gguf), '--host', '127.0.0.1', '--port', $Port, '--n_ctx', '2048')
   }
   else {
     throw 'No backend found. Install llama.cpp (winget install ggml.llamacpp), Ollama, or Python 3.'
@@ -118,7 +120,7 @@ try {
       Download "$kb/voices-v1.0.bin" $vbin 'Kokoro voices (~27 MB)'
       Say "starting voices on :$VoicePort"
       $Started += Start-Process $py -PassThru -WindowStyle Hidden -RedirectStandardError (Join-Path $Here 'voice.log') `
-        -ArgumentList @((Join-Path $Here 'voice_server.py'), '--model', $onnx, '--voices', $vbin, '--port', $VoicePort)
+        -ArgumentList @((Q (Join-Path $Here 'voice_server.py')), '--model', (Q $onnx), '--voices', (Q $vbin), '--port', $VoicePort)
       for ($i = 0; $i -lt 60 -and -not (Up $VoiceUrl); $i++) { Start-Sleep 2 }
     }
     if (-not (Up $VoiceUrl)) { Say 'voices did not start (needs Python 3; see voice.log) - text lines only'; $speech = $false }

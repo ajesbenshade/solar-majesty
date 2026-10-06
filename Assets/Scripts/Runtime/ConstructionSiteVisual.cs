@@ -3,8 +3,10 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// World-space progress bar, yellow gantry crane, and incomplete cladding for a
-    /// pending ConstructionOrder. Billboard is the bar only — the crane stays world-aligned.
+    /// World-space progress bar for a pending ConstructionOrder. When the finished building
+    /// is already spawned, <see cref="ConstructionStages"/> reveals it in place (and brings
+    /// its own crane). Village sites with no building yet keep the simple gantry and cladding.
+    /// The billboard is the bar only.
     /// </summary>
     public class ConstructionSiteVisual : MonoBehaviour
     {
@@ -13,18 +15,35 @@ namespace SolarMajesty
         private static readonly Color Carbon = new Color(0.12f, 0.12f, 0.13f);
 
         private ConstructionOrder _order;
+        private GameObject _building;
         private Transform _fill;
         private Transform _billboard;
         private GameObject _cladding;
         private float _sparkTimer;
+        private bool _staged;
 
-        public void Bind(ConstructionOrder order)
+        public void Bind(ConstructionOrder order) => Bind(order, null);
+
+        public void Bind(ConstructionOrder order, GameObject building)
         {
             _order = order;
+            _building = building;
             EnsureBillboard();
             EnsureBar();
-            EnsureCrane();
-            EnsureCladding();
+            if (building != null)
+            {
+                ConstructionStages.Show(building, Progress());
+                _staged = ConstructionStages.IsStaged(building);
+                if (_staged)
+                    _billboard.localPosition = new Vector3(0f, Mathf.Max(0f, ConstructionStages.Height(building) + 0.45f - 3.35f), 0f);
+            }
+
+            // The staged kit brings its own crane, scaffold, and stakes.
+            if (!_staged)
+            {
+                EnsureCrane();
+                EnsureCladding();
+            }
         }
 
         private void EnsureBillboard()
@@ -106,13 +125,19 @@ namespace SolarMajesty
             return go;
         }
 
+        private float Progress()
+        {
+            if (_order == null || _order.RequiredSeconds <= 0f) return 1f;
+            return Mathf.Clamp01(_order.ProgressSeconds / _order.RequiredSeconds);
+        }
+
         private void Update()
         {
             if (_order == null || _fill == null) return;
 
-            float p = _order.RequiredSeconds > 0f
-                ? Mathf.Clamp01(_order.ProgressSeconds / _order.RequiredSeconds)
-                : 1f;
+            float p = Progress();
+            if (_staged && _building != null)
+                ConstructionStages.Show(_building, p >= 0.999f ? 1f : p);
 
             float width = Mathf.Max(0.05f, 2.1f * p);
             _fill.localScale = new Vector3(width, 0.18f, 0.28f);
@@ -133,14 +158,26 @@ namespace SolarMajesty
             if (_sparkTimer <= 0f)
             {
                 _sparkTimer = 0.65f;
-                DemoVfx.ConstructionSparks(transform.position + Vector3.up * 0.6f);
+                Vector3 at = _staged && _building != null
+                    ? ConstructionStages.WorkPoint(_building)
+                    : transform.position + Vector3.up * 0.6f;
+                DemoVfx.ConstructionSparks(at);
             }
 
             if (_order.IsComplete || (_order.Data != null && p >= 0.999f))
             {
+                if (_staged && _building != null)
+                    ConstructionStages.Show(_building, 1f);
+                _staged = false;
                 Destroy(gameObject, 0.4f);
                 enabled = false;
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (_staged && _building != null)
+                ConstructionStages.Finish(_building);
         }
 
         private static void SetColor(GameObject go, Color c)

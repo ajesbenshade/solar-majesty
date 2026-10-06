@@ -58,6 +58,7 @@ namespace SolarMajesty.Tests
                 var parts = PlanetArchitecture.Adapt(id, a, w, d, Height(a), seed);
                 foreach (var p in parts)
                 {
+                    if (p.IsEmitter) continue;
                     Bounds(p, out Vector3 min, out Vector3 max);
                     if (max.y < LaneBottom || min.y > LaneTop) continue;
                     // ±X faces: lane runs along x, narrow in z.

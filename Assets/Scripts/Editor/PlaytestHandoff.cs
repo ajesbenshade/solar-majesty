@@ -54,7 +54,8 @@ namespace SolarMajesty.EditorTools
             "- If the Engineer ignores a cheap Build, raise its bounty. If already accepted, continue.\n" +
             "- This build is Earth only. Dens, sustain, and launch stay on the HUD. You do not have to finish Earth.\n" +
             "- Settings → Full campaign shows the other worlds. Leave it off for this session.\n" +
-            "- Greybox / blockout art. Please note crashes, unreadable UI, and \"I didn't know what to do\".\n";
+            "- Buildings rise in stages (site, frame, shell) instead of popping in finished.\n" +
+            "  Please note crashes, unreadable UI, and \"I didn't know what to do\".\n";
 
         public static string WindowsReadme =>
             "Solar Majesty — Windows playtest\n" +
