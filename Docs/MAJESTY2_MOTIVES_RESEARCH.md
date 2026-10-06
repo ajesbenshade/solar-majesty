@@ -165,3 +165,11 @@ Ours:
 - Companions power down after 90 s (Majesty summons last until killed; ours expire so they need no saving) or when their robot is scrapped. They have no collider, so they never steal selection clicks.
 
 Dark-priest skeletons and the lich are not mapped (no matching class). `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.
+
+## Build zones (implemented)
+Majesty builds trading posts and temples only in marked zones (`BuildInZoneAction`, `place_temple`). Ours (`BuildZoneTuning` on GameLoop, generated per seed by the world generator):
+- Landing Pad (our trading post): 6 trade zones, 24-165 m from the Commons, one building each.
+- Mine (our nuclear mine): only at an ore deposit. 4 deposits at 55-170 m, each with a rich fissile / metals node at its centre and an amber light column visible all game, so the walk out, and the raiders on the way, are a real risk.
+- Temples (Climate Loom, Aegis Spire, Deep Archive): 3 temple sites, 28-120 m.
+- Rings show while the Build tool is open: bright for the building picked, dim otherwise, grey once taken. Clicking a bad spot logs why.
+- Free everywhere else (houses, guilds, market, inn, blacksmith, towers).

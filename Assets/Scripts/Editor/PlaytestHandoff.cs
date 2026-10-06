@@ -24,8 +24,9 @@ namespace SolarMajesty.EditorTools
             "A soil creeper shows up. Press G, F5 Defend, and post it on the bug.\n" +
             "If the pole says ignored, build a Defense workshop (key 2) and post F5 again.\n" +
             "Keep mobs away: villagers raise houses and solar farms only while the yard is safe.\n" +
-            "Build a Nuclear Mine (key 5) — farther from the Commons pays more energy, but tax\n" +
-            "collectors must walk it home and mobs ambush them on the way.\n" +
+            "Mines go only at ore deposits (an amber light column marks each, far out): farther\n" +
+            "from the Commons pays more energy, but tax collectors must walk it home and mobs\n" +
+            "ambush them on the way. Landing pads and temples also need their marked zones.\n" +
             "SKIP dismisses the tutorial bar. Esc → Title → Continue brings the campus back.\n" +
             "Stop whenever you get bored. That moment is the useful data.\n" +
             "\n" +
