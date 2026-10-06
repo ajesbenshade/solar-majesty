@@ -29,10 +29,10 @@ namespace SolarMajesty
             if (BuildingPlacer.IsRetired(data.category))
                 return;
 
+            // Shield bubbles on the defences only; over the Commons it read as a blue blob.
             if (data.category == BuildingCategory.Defense ||
-                data.category == BuildingCategory.Watchtower ||
-                data.category == BuildingCategory.Commons)
-                SpawnShieldBubble(go.transform, data.category == BuildingCategory.Commons);
+                data.category == BuildingCategory.Watchtower)
+                SpawnShieldBubble(go.transform, false);
 
             if (data.category == BuildingCategory.Commons ||
                 data.category == BuildingCategory.Power ||

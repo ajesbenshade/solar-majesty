@@ -40,6 +40,7 @@ namespace SolarMajesty.EditorTools
 
         private static bool Run(BuildTarget target, string folder, string artifact)
         {
+            ShaderVariantKeeper.Create(); // runtime glass / glow must survive variant stripping
             string root = ArgValue("-smBuildPath") ?? DefaultOutputRoot;
             string outputPath = Path.Combine(root, folder, artifact);
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? root);

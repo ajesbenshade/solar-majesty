@@ -162,7 +162,13 @@ namespace SolarMajesty
             _projSite = new GameObject($"VillageSite_{data.category}");
             _projSite.transform.SetParent(_root, true);
             _projSite.transform.position = world + Vector3.up * 0.05f;
-            _projSite.AddComponent<ConstructionSiteVisual>().Bind(_proj);
+            // Raise the real house / solar farm in stages (site, frame, shell) like a player
+            // build, instead of a bare gantry and two panels. The finished building replaces
+            // this preview when the villagers are done.
+            float cs = _loop.Grid != null ? _loop.Grid.CellSize : ColonyLayout.DefaultCellSize;
+            var preview = ModularBuildingFactory.Spawn(data.category, world, _projSite.transform, w, h, cs);
+            if (preview != null) preview.name = $"VillagePreview_{data.category}";
+            _projSite.AddComponent<ConstructionSiteVisual>().Bind(_proj, preview);
 
             var hub = CommonsHub();
             Vector3 home = hub != null ? hub.WorldPosition : world;

@@ -174,12 +174,16 @@ namespace SolarMajesty
             DetailHabitat(root, w, d);
         }
 
+        /// <summary>Height of the Commons spire cap, where the crown comms mount.</summary>
+        public const float CommonsCrownY = 3.62f;
+
         public static void BuildCommons(Transform root, float w, float d, Color hull)
         {
-            // LOCK (Aaron 2026-09-17): Colony Commons is the smooth command-dome citadel
-            // (plinth + drum + orange equatorial band + sphere dome + cupola).
-            // Do not restore geodesic lattice (Dress_CommonsGeo_*) or attach
-            // SM_Hero_Commons / SM_CommandDome_CentralHub FBX (joined stubs).
+            // Aaron 2026-10-06: the sphere dome read as a blue bubble. The Commons is now a
+            // stepped command tower: plinth + drum + orange band, flat roof deck, a narrower
+            // upper tier with a window band, and a slim spire carrying the comms and beacon.
+            // Still no geodesic lattice (Dress_CommonsGeo_*) and no SM_Hero_Commons /
+            // SM_CommandDome_CentralHub FBX (joined stubs).
             float radius = Mathf.Min(w, d) * 0.38f;
             Prim(root, "CommonsPlinth", PrimitiveType.Cylinder,
                 new Vector3(0f, 0.28f, 0f),
@@ -205,30 +209,39 @@ namespace SolarMajesty
                 new Vector3(0f, 1.72f, 0f),
                 new Vector3(radius * 2.12f, 0.06f, radius * 2.12f), Orange);
 
-            Prim(root, "CommonsDome", PrimitiveType.Sphere,
-                new Vector3(0f, 1.85f, 0f),
-                new Vector3(radius * 2.0f, radius * 1.48f, radius * 2.0f), White);
+            // Flat roof deck over the drum.
+            Prim(root, "CommonsRoofDeck", PrimitiveType.Cylinder,
+                new Vector3(0f, 1.79f, 0f),
+                new Vector3(radius * 2.02f, 0.06f, radius * 2.02f), Graphite);
 
+            // Upper tier: the command floor (keeps the CommonsDome name the build stages use).
+            Prim(root, "CommonsDome", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.28f, 0f),
+                new Vector3(radius * 1.36f, 0.43f, radius * 1.36f), hull);
+            Prim(root, "CommonsTierWindows", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.36f, 0f),
+                new Vector3(radius * 1.38f, 0.1f, radius * 1.38f), Carbon);
             Prim(root, "CommonsDomeBand", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.05f, 0f),
-                new Vector3(radius * 1.44f, 0.055f, radius * 1.44f), Orange);
+                new Vector3(0f, 2.68f, 0f),
+                new Vector3(radius * 1.40f, 0.035f, radius * 1.40f), Orange);
             Prim(root, "CommonsDomeBandCarbon", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.98f, 0f),
-                new Vector3(radius * 1.48f, 0.03f, radius * 1.48f), Carbon);
+                new Vector3(0f, 2.74f, 0f),
+                new Vector3(radius * 1.44f, 0.04f, radius * 1.44f), Graphite);
 
-            float domeTop = 1.85f + radius * 0.74f;
+            // Spire: slim comms tower on the upper tier.
+            float domeTop = CommonsCrownY - 0.36f;
             Prim(root, "CommonsCupolaLo", PrimitiveType.Cylinder,
-                new Vector3(0f, domeTop + 0.04f, 0f),
-                new Vector3(radius * 0.30f, 0.12f, radius * 0.30f), White);
+                new Vector3(0f, 3.12f, 0f),
+                new Vector3(radius * 0.46f, 0.36f, radius * 0.46f), White);
             Prim(root, "Dress_CommonsCupolaBand", PrimitiveType.Cylinder,
-                new Vector3(0f, domeTop + 0.16f, 0f),
-                new Vector3(radius * 0.32f, 0.035f, radius * 0.32f), Orange);
+                new Vector3(0f, 3.30f, 0f),
+                new Vector3(radius * 0.49f, 0.035f, radius * 0.49f), Orange);
             Prim(root, "CommonsCupolaHi", PrimitiveType.Cylinder,
-                new Vector3(0f, domeTop + 0.26f, 0f),
-                new Vector3(radius * 0.22f, 0.07f, radius * 0.22f), White);
+                new Vector3(0f, 3.53f, 0f),
+                new Vector3(radius * 0.36f, 0.05f, radius * 0.36f), White);
             Prim(root, "CommonsCupolaCap", PrimitiveType.Cylinder,
                 new Vector3(0f, domeTop + 0.345f, 0f),
-                new Vector3(radius * 0.24f, 0.02f, radius * 0.24f), Graphite);
+                new Vector3(radius * 0.40f, 0.02f, radius * 0.40f), Graphite);
             Prim(root, "Dress_CommonsBeacon", PrimitiveType.Sphere,
                 new Vector3(0f, domeTop + 0.44f, 0f),
                 new Vector3(0.12f, 0.12f, 0.12f), Orange, new Color(0.9f, 0.35f, 0.05f));

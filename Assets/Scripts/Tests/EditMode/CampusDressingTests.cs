@@ -38,7 +38,10 @@ namespace SolarMajesty.Tests
             var commons = ModularBuildingFactory.Spawn(
                 BuildingCategory.Commons, Vector3.zero, _root.transform);
             Assert.IsNotNull(FindChild(commons.transform, "CommonsDome"),
-                "locked command-dome citadel — smooth sphere, not geodesic lattice");
+                "upper command tier, not a geodesic lattice");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsRoofDeck"), "flat roof deck, no bubble dome");
+            var tier = FindChild(commons.transform, "CommonsDome").GetComponent<MeshFilter>();
+            Assert.IsFalse(tier.sharedMesh.name.Contains("Sphere"), "the bubble dome is gone");
             Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
                 "orange equatorial band");
             Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsCupolaBand"),
