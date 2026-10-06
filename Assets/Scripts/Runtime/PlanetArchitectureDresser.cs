@@ -251,7 +251,7 @@ namespace SolarMajesty
         {
             rend.sharedMaterial = MaterialFor(body, role, style);
             bool see = ArchStyle.IsTranslucent(role);
-            rend.shadowCastingMode = see || role == ArchRole.Glow
+            rend.shadowCastingMode = see || ArchStyle.IsGlowing(role)
                 ? UnityEngine.Rendering.ShadowCastingMode.Off
                 : UnityEngine.Rendering.ShadowCastingMode.On;
             rend.receiveShadows = !see;
@@ -270,15 +270,19 @@ namespace SolarMajesty
                        ?? Shader.Find("Sprites/Default");
             }
             bool see = ArchStyle.IsTranslucent(role);
-            bool glow = role == ArchRole.Glow;
-            bool plated = !see && !glow && role != ArchRole.Plant && _hull != null;
+            bool glow = ArchStyle.IsGlowing(role) || role == ArchRole.Solar;
+            bool plated = !see && !ArchStyle.IsGlowing(role) && role != ArchRole.Plant && role != ArchRole.Soil && _hull != null;
             var mat = new Material(plated ? _hull : _lit) { name = $"SM_Arch_{body}_{role}" };
             Color c = style.RoleColor(role);
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             if (mat.HasProperty("_Color")) mat.color = c;
-            bool shiny = role == ArchRole.Glass || role == ArchRole.Ice || role == ArchRole.Foil;
+            bool shiny = role == ArchRole.Glass || role == ArchRole.Ice || role == ArchRole.Foil ||
+                         role == ArchRole.Water || role == ArchRole.Solar;
             if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", shiny ? 0.78f : 0.24f);
-            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", role == ArchRole.Foil ? 0.7f : 0.06f);
+            if (mat.HasProperty("_Metallic"))
+                mat.SetFloat("_Metallic", role == ArchRole.Foil ? 0.7f : role == ArchRole.Metal ? 0.55f : role == ArchRole.Solar ? 0.3f : 0.06f);
+            if (role == ArchRole.Soil && mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.04f);
+            if (role == ArchRole.Frost && mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.5f);
 
             if (plated)
             {
@@ -299,13 +303,13 @@ namespace SolarMajesty
             if (see)
             {
                 ColonyVisualUtility.ApplyTransparent(mat);
-                c.a = role == ArchRole.Steam ? 0.28f : role == ArchRole.Ice ? 0.62f : 0.45f;
+                c.a = role == ArchRole.Steam ? 0.28f : role == ArchRole.Ice ? 0.62f : role == ArchRole.Water ? 0.72f : 0.45f;
                 if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             }
             if (glow && mat.HasProperty("_EmissionColor"))
             {
                 mat.EnableKeyword("_EMISSION");
-                mat.SetColor("_EmissionColor", style.GlowEmission);
+                mat.SetColor("_EmissionColor", style.RoleEmission(role));
                 mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             }
             Cache[key] = mat;

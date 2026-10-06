@@ -32,7 +32,21 @@ namespace SolarMajesty
         /// <summary>Translucent water-ice shielding.</summary>
         Ice,
         /// <summary>Translucent vapour.</summary>
-        Steam
+        Steam,
+        /// <summary>Bare structural metal: trusses, anchors, gantries, pipework.</summary>
+        Metal,
+        /// <summary>Photovoltaic cells (dark blue with a faint glow).</summary>
+        Solar,
+        /// <summary>Opaque frost, packed snow or rime on roofs and ledges.</summary>
+        Frost,
+        /// <summary>Earth, soil and loose regolith heaped against walls.</summary>
+        Soil,
+        /// <summary>Open water: ponds, cisterns, moon pools (translucent).</summary>
+        Water,
+        /// <summary>Aviation / hazard beacon light (usually blinking).</summary>
+        Beacon,
+        /// <summary>The world's signature accent light (Earth teal, Europa cyan…).</summary>
+        Signal
     }
 
     public enum ArchShape
@@ -90,6 +104,8 @@ namespace SolarMajesty
         /// <summary>Why the buildings look like this (local conditions), for docs and tooltips.</summary>
         public string Rationale;
         public Color Hull, Trim, Dark, Glass, Glow, GlowEmission, Shell, Plant, Foil, Ice, Steam;
+        /// <summary>Optional roles; left default (alpha 0) they fall back to sensible colours.</summary>
+        public Color Metal, Solar, Frost, Soil, Water, Beacon, BeaconEmission, Signal, SignalEmission;
         /// <summary>Hull shader weathering: dust on Mars, grey regolith on Luna, frost on Europa, soot in the Belt.</summary>
         public Color DustColor;
         public float DustAmount;
@@ -107,10 +123,30 @@ namespace SolarMajesty
             ArchRole.Foil => Foil,
             ArchRole.Ice => Ice,
             ArchRole.Steam => Steam,
+            ArchRole.Metal => Metal.a > 0f ? Metal : new Color(0.42f, 0.44f, 0.48f),
+            ArchRole.Solar => Solar.a > 0f ? Solar : new Color(0.10f, 0.16f, 0.30f),
+            ArchRole.Frost => Frost.a > 0f ? Frost : new Color(0.90f, 0.95f, 1f),
+            ArchRole.Soil => Soil.a > 0f ? Soil : Shell,
+            ArchRole.Water => Water.a > 0f ? Water : new Color(0.20f, 0.42f, 0.52f, 0.7f),
+            ArchRole.Beacon => Beacon.a > 0f ? Beacon : new Color(1f, 0.22f, 0.12f),
+            ArchRole.Signal => Signal.a > 0f ? Signal : Trim,
             _ => Hull
         };
 
-        public static bool IsTranslucent(ArchRole r) => r == ArchRole.Glass || r == ArchRole.Ice || r == ArchRole.Steam;
+        /// <summary>HDR emission for glowing roles, or black.</summary>
+        public Color RoleEmission(ArchRole r) => r switch
+        {
+            ArchRole.Glow => GlowEmission,
+            ArchRole.Beacon => BeaconEmission.maxColorComponent > 0.01f ? BeaconEmission : new Color(2.4f, 0.35f, 0.18f),
+            ArchRole.Signal => SignalEmission.maxColorComponent > 0.01f ? SignalEmission : RoleColor(ArchRole.Signal) * 2.2f,
+            ArchRole.Solar => new Color(0.05f, 0.12f, 0.32f),
+            _ => Color.black
+        };
+
+        public static bool IsGlowing(ArchRole r) => r == ArchRole.Glow || r == ArchRole.Beacon || r == ArchRole.Signal;
+
+        public static bool IsTranslucent(ArchRole r) =>
+            r == ArchRole.Glass || r == ArchRole.Ice || r == ArchRole.Steam || r == ArchRole.Water;
     }
 
     /// <summary>
@@ -118,7 +154,7 @@ namespace SolarMajesty
     /// colours, and a set of adaptation parts added to every building sized to its footprint and
     /// height. Doorway lanes (the four face centres) are always kept clear.
     ///
-    /// Earth — open air, rain, a living biosphere: solarpunk green roofs, glass atria, wind.
+    /// Earth — open air, rain, a living biosphere: solarpunk glass atria, rooftop shrubs, wind.
     /// Luna — vacuum, radiation, micrometeoroids, ±150 °C: regolith berms and shield caps,
     ///        white radiators, gold foil, polar sun-tracking towers, red beacons.
     /// Mars — thin CO₂, dust storms, −60 °C: 3D-printed regolith (layered strata), inflatable
@@ -148,9 +184,9 @@ namespace SolarMajesty
         };
 
         /// <summary>
-        /// Roof shells and rooftop gardens a world lays over a building's hull (Mars pressure dome
-        /// and printed vault, Earth green roof and atrium…). Kits that carry their own detailed
-        /// roof skip these, or the shell buries the roof.
+        /// Roof shells a world lays over a building's hull (Mars pressure dome and printed vault,
+        /// Earth atrium…). Kits that carry their own detailed roof skip these, or the shell
+        /// buries the roof.
         /// </summary>
         public static bool IsRoofShell(string partName)
         {
@@ -163,7 +199,7 @@ namespace SolarMajesty
         static readonly string[] RoofShellPrefixes =
         {
             "PressureDome", "DomeRib", "RingStrata", "PrintedVault", "VaultCourse", "VaultDoor",
-            "GreenRoof", "Shrub", "Atrium", "Skylight", "Pavilion"
+            "Shrub", "Atrium", "Skylight", "Pavilion"
         };
 
         public static ArchArchetype ArchetypeOf(BuildingCategory c) => c switch

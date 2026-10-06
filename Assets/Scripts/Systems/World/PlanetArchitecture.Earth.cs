@@ -9,7 +9,7 @@ namespace SolarMajesty
             new ArchStyle
             {
                 Name = "Solarpunk arcology",
-                Rationale = "Open air, rain and a living biosphere: glass, green roofs, wind power, nothing to hide from.",
+                Rationale = "Open air, rain and a living biosphere: glass, rooftop shrubs, wind power, nothing to hide from.",
                 Hull = new Color(0.93f, 0.94f, 0.91f), Trim = new Color(0.10f, 0.64f, 0.60f),
                 Dark = new Color(0.30f, 0.27f, 0.23f), Glass = new Color(0.62f, 0.86f, 0.88f, 0.42f),
                 Glow = new Color(1f, 0.86f, 0.62f), GlowEmission = new Color(1.3f, 0.95f, 0.55f),
@@ -25,8 +25,7 @@ namespace SolarMajesty
             float w = p.W, d = p.D, h = p.H;
             if (a != ArchArchetype.Pad)
             {
-                // Green roof and warm window bands.
-                p.Box("GreenRoof", ArchRole.Plant, new Vector3(0, h + 0.07f, 0), new Vector3(w * 0.72f, 0.14f, d * 0.72f));
+                // Warm window bands and rooftop shrubs.
                 for (int i = 0; i < 3 + p.Rng(3); i++)
                     p.Sphere("Shrub" + i, ArchRole.Plant,
                         new Vector3(p.Range(-w * 0.28f, w * 0.28f), h + 0.28f, p.Range(-d * 0.28f, d * 0.28f)),
