@@ -146,6 +146,17 @@ namespace SolarMajesty
                     SpawnConstructionSite(order, built);
                     DemoAudio.PlayBuildPlace(snapped);
                     Debug.Log($"[Build] Placed {Selected.displayName} @ {cell}");
+
+                    // One building per pick: drop the ghost and hand back the normal pointer.
+                    // Shift-click keeps the tool armed to place several.
+                    bool keepPlacing = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                    if (!keepPlacing)
+                    {
+                        _ghost.SetActive(false);
+                        _footprint.SetActive(false);
+                        if (_loop != null) _loop.SetTool(OverseerTool.None);
+                        else enabledPlacement = false;
+                    }
                 }
                 else
                 {
