@@ -384,7 +384,11 @@ namespace SolarMajesty
             float r = Mathf.Min(w, d) * 0.38f;
             float R = r * 1.22f;
             float domeTop = HeroBuildingKits.CommonsCrownY - 0.36f;
-            var k = new DetailBatch(root, Key("Commons", w, d));
+            var k = new DetailBatch(root, Key("Commons", w, d) + "_x" + HeroBuildingKits.CommonsStretch.ToString("0.00"))
+            {
+                StretchY = HeroBuildingKits.CommonsStretch,
+                StretchBase = HeroBuildingKits.CommonsStretchBase
+            };
             float[] portals = { 180f, 270f };
 
             // Foundation: paved apron and entry stairs.

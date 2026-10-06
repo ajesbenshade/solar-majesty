@@ -178,7 +178,8 @@ namespace SolarMajesty
             var pip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             pip.name = commons ? "Dress_StatusStar" : "Dress_StatusShield";
             pip.transform.SetParent(root, false);
-            pip.transform.localPosition = new Vector3(0f, commons ? 5.85f : 3.35f, 0f);
+            pip.transform.localPosition = new Vector3(
+                0f, commons ? HeroBuildingKits.CommonsY(HeroBuildingKits.CommonsCrownY + 0.44f) + 1f : 3.35f, 0f);
             pip.transform.localScale = new Vector3(0.32f, 0.32f, 0.32f);
             ColonyVisualUtility.DestroyNow(pip.GetComponent<Collider>());
             Color glow = commons

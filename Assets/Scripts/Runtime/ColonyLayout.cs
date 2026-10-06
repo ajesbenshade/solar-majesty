@@ -34,11 +34,15 @@ namespace SolarMajesty
         /// <summary>Starship placeholder height landmark.</summary>
         public const float ShipScale = 0.18f;
 
+        /// <summary>Colony Commons footprint in cells (12 m).</summary>
+        public const int CommonsSide = 8;
+
         public static int FootprintSide(BuildingCategory category)
         {
             switch (category)
             {
                 case BuildingCategory.Commons:
+                    return CommonsSide; // the Majesty castle: twice a guild hall's width
                 case BuildingCategory.LandingPad:
                 case BuildingCategory.ClimateLoom:
                 case BuildingCategory.AegisSpire:
@@ -107,13 +111,14 @@ namespace SolarMajesty
 
         public static Vector3 GroundCenter => (CampusOrigin + CampusBOrigin) * 0.5f;
 
-        public const float CameraOrthoSize = 16f;
+        public const float CameraOrthoSize = 18f;
 
         /// <summary>
-        /// Iso on Commons plus room to place pad/solar. Empty-drop ortho 16 is
-        /// only the pre-Commons fallback — first drop and Continue snap here, never 16.
+        /// Play zoom on the colony: moderate, so the town, its nearby zones and the threats around
+        /// it are in view. Still captures keep their own tighter
+        /// <see cref="StillCampusDensity.PlayCampusOrthoSize"/>.
         /// </summary>
-        public const float CampusOrthoSize = StillCampusDensity.PlayCampusOrthoSize;
+        public const float CampusOrthoSize = 18f;
 
         public static float PlayOrtho(bool campusPlaced) =>
             campusPlaced ? CampusOrthoSize : CameraOrthoSize;

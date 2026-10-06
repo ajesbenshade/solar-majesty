@@ -174,10 +174,33 @@ namespace SolarMajesty
             DetailHabitat(root, w, d);
         }
 
-        /// <summary>Height of the Commons spire cap, where the crown comms mount.</summary>
+        /// <summary>Height of the Commons spire cap, where the crown comms mount (before the stretch).</summary>
         public const float CommonsCrownY = 3.62f;
 
+        /// <summary>
+        /// The Commons is the Majesty castle: everything above the plinth is stretched this much,
+        /// so the drum is two full storeys and the command tier and spire tower over the town.
+        /// </summary>
+        public const float CommonsStretch = 2.0f;
+        public const float CommonsStretchBase = 0.56f;
+
+        /// <summary>A height in the Commons kit's authored space, after the stretch.</summary>
+        public static float CommonsY(float y) =>
+            y <= CommonsStretchBase ? y : CommonsStretchBase + (y - CommonsStretchBase) * CommonsStretch;
+
+        private static float _primStretch = 1f;
+        private static float _primStretchBase;
+
         public static void BuildCommons(Transform root, float w, float d, Color hull)
+        {
+            _primStretch = CommonsStretch;
+            _primStretchBase = CommonsStretchBase;
+            try { BuildCommonsParts(root, w, d, hull); }
+            finally { _primStretch = 1f; }
+            DetailCommons(root, w, d, hull);
+        }
+
+        private static void BuildCommonsParts(Transform root, float w, float d, Color hull)
         {
             // Aaron 2026-10-06: the sphere dome read as a blue bubble. The Commons is now a
             // stepped command tower: plinth + drum + orange band, flat roof deck, a narrower
@@ -262,8 +285,6 @@ namespace SolarMajesty
                     dir * (radius * 1.012f) + new Vector3(0f, 0.92f, 0f),
                     new Vector3(0.028f, 0.55f, 0.028f), Carbon, yaw);
             }
-
-            DetailCommons(root, w, d, hull);
         }
 
         public static void BuildLandingPad(Transform root, float w, float d, Color hull)
@@ -1467,6 +1488,15 @@ namespace SolarMajesty
             Quaternion localRot,
             Color emission = default)
         {
+            if (!Mathf.Approximately(_primStretch, 1f))
+            {
+                bool upright = Vector3.Dot(localRot * Vector3.up, Vector3.up) > 0.98f;
+                float height = type == PrimitiveType.Cylinder ? localScale.y * 2f : localScale.y;
+                if (upright && height > 0.15f && localPos.y + height * 0.5f > _primStretchBase)
+                    localScale.y *= _primStretch;
+                if (localPos.y > _primStretchBase)
+                    localPos.y = _primStretchBase + (localPos.y - _primStretchBase) * _primStretch;
+            }
             var go = GameObject.CreatePrimitive(type);
             go.name = name;
             go.transform.SetParent(parent, false);

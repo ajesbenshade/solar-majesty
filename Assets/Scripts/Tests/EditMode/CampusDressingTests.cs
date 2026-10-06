@@ -42,6 +42,15 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(FindChild(commons.transform, "CommonsRoofDeck"), "flat roof deck, no bubble dome");
             var tier = FindChild(commons.transform, "CommonsDome").GetComponent<MeshFilter>();
             Assert.IsFalse(tier.sharedMesh.name.Contains("Sphere"), "the bubble dome is gone");
+            Assert.AreEqual(8, ColonyLayout.FootprintSide(BuildingCategory.Commons), "castle-sized: twice a guild");
+            var house = ModularBuildingFactory.Spawn(BuildingCategory.Habitat, Vector3.zero, _root.transform);
+            float Top(GameObject g)
+            {
+                float top = 0f;
+                foreach (var r in g.GetComponentsInChildren<Renderer>()) top = Mathf.Max(top, r.bounds.max.y);
+                return top;
+            }
+            Assert.Greater(Top(commons), Top(house) * 2f, "the Commons towers over a house");
             Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
                 "orange equatorial band");
             Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsCupolaBand"),
@@ -773,7 +782,7 @@ namespace SolarMajesty.Tests
         public void StillCampusDensity_GridConstants_MatchColonyLayout()
         {
             Assert.AreEqual(ColonyLayout.DefaultCellSize, StillCampusDensity.DefaultCellSize);
-            Assert.AreEqual(ColonyLayout.CampusOrthoSize, StillCampusDensity.PlayCampusOrthoSize);
+            Assert.AreEqual(18f, ColonyLayout.CampusOrthoSize, "play zoom is moderate; stills keep their own");
             Assert.AreEqual(1.5f, StillCampusDensity.DefaultCellSize);
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
             Assert.AreEqual(0, StillCampusDensity.StillFrameInsetCells);

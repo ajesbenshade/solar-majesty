@@ -2086,7 +2086,7 @@ namespace SolarMajesty
 
         private void SeedSoftClaim(Vector3 world, bool campus)
         {
-            const int footprint = 6;
+            int footprint = ColonyLayout.CommonsSide;
             float cell = grid.CellSize;
             float half = (footprint * cell) * 0.5f;
             Vector3 corner = world - new Vector3(half, 0f, half) + new Vector3(cell * 0.5f, 0f, cell * 0.5f);
@@ -2099,7 +2099,7 @@ namespace SolarMajesty
                     world,
                     "DropZone_Claim",
                     new Color(0.96f, 0.42f, 0.08f),
-                    9.5f);
+                    ColonyLayout.CommonsSide * grid.CellSize + 0.5f);
             }
             else
             {
@@ -2771,7 +2771,7 @@ namespace SolarMajesty
                 {
                     starterBuildings = new[]
                     {
-                        CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, 6, 6),
+                        CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, ColonyLayout.CommonsSide, ColonyLayout.CommonsSide),
                         CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4),
                         CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4),
                         CreateBuilding("OPS Drop-off", BuildingCategory.Mining, 45, 6, 14f, 4, 4),
@@ -2800,7 +2800,7 @@ namespace SolarMajesty
         /// <summary>Colony Commons is always catalog index 0 — Majesty first-build.</summary>
         private static BuildingData[] EnsureCommonsFirst(BuildingData[] current)
         {
-            var commons = CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, 6, 6);
+            var commons = CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, ColonyLayout.CommonsSide, ColonyLayout.CommonsSide);
             if (current == null || current.Length == 0)
                 return new[] { commons };
 
@@ -2942,10 +2942,9 @@ namespace SolarMajesty
             zoneMarkers.Bind(this);
             _orbitalInput = GetComponent<OrbitalTargetingInput>();
             if (_orbitalInput == null) _orbitalInput = gameObject.AddComponent<OrbitalTargetingInput>();
-            _orbitalInput.Initialize(this, _isoCam);
-
             _isoCam = mainCamera.GetComponent<IsometricCameraController>();
             if (_isoCam == null) _isoCam = mainCamera.gameObject.AddComponent<IsometricCameraController>();
+            _orbitalInput.Initialize(this, _isoCam);
 
             _flagInput.Initialize(
                 Flags, grid, _isoCam,
@@ -5218,8 +5217,7 @@ namespace SolarMajesty
             if (data == null) return;
             Village?.RegisterPlacedBuilding(data, data.category, go, world);
             CampusDressing.DressPlaced(data, go, _body);
-            if (ShouldSnapCampusCamera(data.category))
-                SnapCampusCamera();
+            // The camera stays where the player put it; it only frames the colony on start / load.
             DemoVfx.BuildComplete(world);
             ShakeCamera(0.30f, world);
             // No completion sound here: this runs at placement. It plays in ProcessCompletedConstruction.
@@ -5311,17 +5309,6 @@ namespace SolarMajesty
             Debug.Log($"[GameLoop] SnapStillCampusCamera ortho={ortho:0.##} aspect={aspect:0.##} aabb={min}->{max}");
         }
 
-        private static bool ShouldSnapCampusCamera(BuildingCategory cat)
-        {
-            switch (cat)
-            {
-                case BuildingCategory.Commons:
-                case BuildingCategory.Habitat:
-                    return true;
-                default:
-                    return ColonyStructure.IsWorkshopCategory(cat);
-            }
-        }
 
         /// <summary>
         /// Extract flag complete: haul through the nearest drop-off. Matching Mine/Farm/Camp/Power
