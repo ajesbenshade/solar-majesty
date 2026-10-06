@@ -180,14 +180,7 @@ namespace SolarMajesty
                 ConstructionStages.Finish(_building);
         }
 
-        private static void SetColor(GameObject go, Color c)
-        {
-            var rend = go.GetComponent<Renderer>();
-            if (rend == null) return;
-            if (rend.material.HasProperty("_BaseColor"))
-                rend.material.SetColor("_BaseColor", c);
-            else if (rend.material.HasProperty("_Color"))
-                rend.material.color = c;
-        }
+        private static void SetColor(GameObject go, Color c) =>
+            IndustrialArtDressing.SetUrpColor(go.GetComponent<Renderer>(), c);
     }
 }

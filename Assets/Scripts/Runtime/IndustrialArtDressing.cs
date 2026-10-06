@@ -162,6 +162,37 @@ namespace SolarMajesty
             }
         }
 
+        private static Shader _urpLit;
+
+        /// <summary>
+        /// Tint a renderer, first swapping in a URP Lit material if it still has a non-URP one.
+        /// A bare CreatePrimitive carries the built-in Standard material, which a URP player build
+        /// draws magenta (the Editor hides this). Safe to call every frame: the swap happens once.
+        /// </summary>
+        public static void SetUrpColor(Renderer rend, Color c)
+        {
+            if (rend == null) return;
+            var mat = rend.material;
+            string shader = mat != null && mat.shader != null ? mat.shader.name : "";
+            bool urpReady = shader.StartsWith("Universal Render Pipeline", System.StringComparison.Ordinal) ||
+                            shader.StartsWith("SolarMajesty", System.StringComparison.Ordinal) ||
+                            shader.StartsWith("Sprites", System.StringComparison.Ordinal);
+            if (!urpReady)
+            {
+                _urpLit ??= Shader.Find("Universal Render Pipeline/Lit")
+                            ?? Shader.Find("Universal Render Pipeline/Simple Lit");
+                if (_urpLit != null)
+                {
+                    mat = new Material(_urpLit) { name = "SM_UrpTint" };
+                    if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.3f);
+                    rend.material = mat;
+                }
+            }
+            if (mat == null) return;
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+            if (mat.HasProperty("_Color")) mat.color = c;
+        }
+
         /// <summary>Paint a Dress_ primitive; IndustrialArtDressing.Apply skips Dress_ names.</summary>
         public static void Tint(GameObject go, Color c, float smooth = 0.28f, Color emission = default)
         {

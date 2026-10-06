@@ -196,6 +196,13 @@ namespace SolarMajesty
             return false;
         }
 
+        /// <summary>Remove roof shells from a part list. Returns how many were removed.</summary>
+        public static int StripRoofShells(List<ArchPart> parts)
+        {
+            if (parts == null) return 0;
+            return parts.RemoveAll(p => IsRoofShell(p.Name));
+        }
+
         static readonly string[] RoofShellPrefixes =
         {
             "PressureDome", "DomeRib", "RingStrata", "PrintedVault", "VaultCourse", "VaultDoor",

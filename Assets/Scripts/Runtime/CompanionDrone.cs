@@ -71,7 +71,7 @@ namespace SolarMajesty
             c._hull = Mathf.Max(0.1f, def.hull);
             c._life = Mathf.Max(1f, def.lifetime);
             c._rend = go.GetComponent<Renderer>();
-            if (c._rend != null) c._rend.material.color = def.color;
+            IndustrialArtDressing.SetUrpColor(c._rend, def.color);
             Live.Add(c);
             DemoVfx.ClaimRing(go.transform.position, def.color);
             return c;

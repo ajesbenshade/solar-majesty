@@ -156,13 +156,6 @@ namespace SolarMajesty
                 _label.transform.position - Camera.main.transform.position);
         }
 
-        private static void SetColor(Renderer rend, Color c)
-        {
-            if (rend == null) return;
-            if (rend.material.HasProperty("_Color"))
-                rend.material.color = c;
-            else if (rend.material.HasProperty("_BaseColor"))
-                rend.material.SetColor("_BaseColor", c);
-        }
+        private static void SetColor(Renderer rend, Color c) => IndustrialArtDressing.SetUrpColor(rend, c);
     }
 }
