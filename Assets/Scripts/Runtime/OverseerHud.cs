@@ -42,6 +42,7 @@ namespace SolarMajesty
         private bool _techOpen;
         private bool _buildMinimized;
         private bool _flagMinimized;
+        private bool _orbitalMinimized;
         private Vector2 _techScroll;
         private Vector2 _buildScroll;
         private string _toast;
@@ -671,10 +672,10 @@ namespace SolarMajesty
             HudSkin.RuleV(new Rect(c.x + 254f, rect.y + 6f, 1f, rect.height - 12f), divider);
             HudSkin.RuleV(new Rect(c.xMax - right - 10f, rect.y + 6f, 1f, rect.height - 12f), divider);
 
-            // Verbs: build, bounty, research, campus, party, menu. Never unit orders.
+            // Verbs: build, bounty, orbital, research, campus, party, menu. Never unit orders.
             float sq = 48f;
-            float gap = 8f;
-            float verbsW = sq * 6f + gap * 5f;
+            float gap = 6f;
+            float verbsW = sq * 7f + gap * 6f;
             float midL = c.x + 262f;
             float midR = c.xMax - right - 18f;
             float x = midL + Mathf.Max(0f, (midR - midL - verbsW) * 0.5f);
@@ -684,6 +685,9 @@ namespace SolarMajesty
             x += sq + gap;
             if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphFlag, "BOUNTY FLAG", "G", _loop.ActiveTool == OverseerTool.Flag))
                 _loop.ToggleTool(OverseerTool.Flag);
+            x += sq + gap;
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Sun, "ORBITAL SUPPORT", "N", _loop.ActiveTool == OverseerTool.Orbital))
+                _loop.ToggleTool(OverseerTool.Orbital);
             x += sq + gap;
             if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphTech, "RESEARCH", "T", _techOpen))
                 ToggleTechPanel();
@@ -871,18 +875,21 @@ namespace SolarMajesty
             if (_loop == null) return;
             if (_loop.ActiveTool == OverseerTool.Build) _buildMinimized = true;
             if (_loop.ActiveTool == OverseerTool.Flag) _flagMinimized = true;
+            if (_loop.ActiveTool == OverseerTool.Orbital) _orbitalMinimized = true;
         }
 
         public void ExpandMenu(OverseerTool tool)
         {
             if (tool == OverseerTool.Build) _buildMinimized = false;
             if (tool == OverseerTool.Flag) _flagMinimized = false;
+            if (tool == OverseerTool.Orbital) _orbitalMinimized = false;
         }
 
         public void ClearMinimizedMenus()
         {
             _buildMinimized = false;
             _flagMinimized = false;
+            _orbitalMinimized = false;
         }
 
         /// <summary>B/G while a catalog is collapsed re-opens it instead of closing the tool.</summary>
@@ -897,6 +904,12 @@ namespace SolarMajesty
             if (tool == OverseerTool.Flag && _flagMinimized)
             {
                 _flagMinimized = false;
+                return true;
+            }
+
+            if (tool == OverseerTool.Orbital && _orbitalMinimized)
+            {
+                _orbitalMinimized = false;
                 return true;
             }
 
@@ -1012,6 +1025,92 @@ namespace SolarMajesty
                 DrawFlagPopup(dockTop);
             else if (_loop.ActiveTool == OverseerTool.Build)
                 DrawBuildPopup(dockTop);
+            else if (_loop.ActiveTool == OverseerTool.Orbital)
+                DrawOrbitalPopup(dockTop);
+        }
+
+        /// <summary>
+        /// Orbital support list (Majesty 2 ruler spells as satellite powers). Each row shows the
+        /// base price at an uplink; the armed strip shows the live price under the cursor.
+        /// </summary>
+        private void DrawOrbitalPopup(float dockTop)
+        {
+            var orbital = _loop.Orbital;
+            var input = _loop.OrbitalInput;
+            if (orbital == null || input == null) return;
+            var powers = orbital.Tuning.powers;
+            if (powers == null) return;
+
+            if (_orbitalMinimized && input.Selected.HasValue &&
+                orbital.Tuning.TryGet(input.Selected.Value, out var armed))
+            {
+                float wait = orbital.ReadyIn(armed.id);
+                string hint = wait > 0f
+                    ? $"recharging {Mathf.CeilToInt(wait)} s"
+                    : $"click the map · {input.CursorCost} EU here (x{input.CursorMultiplier:0} from uplink)";
+                DrawMinimizedToolStrip(OverseerTool.Orbital, dockTop, DockLeft() + 152f, 360f,
+                    armed.displayName.ToUpperInvariant(), hint, "N");
+                return;
+            }
+
+            const float popupW = 360f;
+            float popupH = 58f + powers.Length * 28f;
+            var rect = new Rect(DockLeft() + 152f, dockTop - 8f - popupH, popupW, popupH);
+            _contentBottom = rect.y;
+            var c = Panel(rect, "Orbital support");
+            GUI.Label(new Rect(c.x, c.y, c.width, 13f),
+                "Pick a power · LMB on the map · cost x1-x15 by distance from an uplink", _micro);
+            float y = c.y + 17f;
+
+            int treasury = _loop.Resources != null ? _loop.Resources.Get(ResourceId.Metals) : 0;
+            for (int i = 0; i < powers.Length; i++)
+            {
+                var p = powers[i];
+                bool locked = !orbital.IsUnlocked(p.id, _loop.OrbitalUnlocked);
+                float wait = orbital.ReadyIn(p.id);
+                bool on = input.Selected.HasValue && input.Selected.Value == p.id;
+                var r = new Rect(c.x, y, c.width, 24f);
+
+                if (GUI.Button(r, GUIContent.none, on ? _rowOn : _rowOff) && !locked)
+                {
+                    if (p.target == OrbitalTarget.Colony)
+                    {
+                        _loop.TryCastOrbital(p.id, Vector3.zero);
+                    }
+                    else
+                    {
+                        // Arm it, then get out of the way: the next click on the map fires.
+                        _loop.SetTool(OverseerTool.Orbital);
+                        input.Select(p.id);
+                        _orbitalMinimized = true;
+                    }
+                }
+
+                var nameStyle = on ? _onText : _action;
+                var prevName = nameStyle.normal.textColor;
+                if (!on && (locked || wait > 0f)) nameStyle.normal.textColor = TextMuted;
+                GUI.Label(new Rect(r.x + 8f, r.y, r.width - 96f, r.height), $"{p.displayName}  ·  {p.description}", nameStyle);
+                nameStyle.normal.textColor = prevName;
+
+                var costStyle = _microRight;
+                var prevCost = costStyle.normal.textColor;
+                string right;
+                if (locked) { right = "NEED TECH"; costStyle.normal.textColor = TextMuted; }
+                else if (wait > 0f) { right = $"{Mathf.CeilToInt(wait)} s"; costStyle.normal.textColor = TextMuted; }
+                else if (p.cost <= 0) right = "FREE";
+                else
+                {
+                    right = $"{p.cost}+ EU";
+                    if (p.cost > treasury) costStyle.normal.textColor = Alarm;
+                }
+                GUI.Label(new Rect(r.xMax - 88f, r.y, 82f, r.height), right, costStyle);
+                costStyle.normal.textColor = prevCost;
+
+                Tooltip(r, locked
+                    ? $"NEEDS {TechCatalog.Get(OrbitalTuning.TechFor(p.tier))?.DisplayName?.ToUpperInvariant()}"
+                    : $"{p.displayName.ToUpperInvariant()}   ·   recharge {p.cooldownSeconds:0} s");
+                y += 28f;
+            }
         }
 
         private void DrawFlagPopup(float dockTop)

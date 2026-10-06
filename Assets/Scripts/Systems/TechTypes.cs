@@ -35,7 +35,11 @@ namespace SolarMajesty
         HorizonPulse = 28,
         AnvilOvertime = 29,
         AegisWatchfire = 30,
-        TriageFieldAid = 31
+        TriageFieldAid = 31,
+        /// <summary>Satellite uplink: tier-1 orbital powers (lance, med-drop, survey, till audit).</summary>
+        OrbitalUplink = 32,
+        /// <summary>Full constellation: tier-2 orbital powers (barrage, EMP, aegis, revive, repair).</summary>
+        OrbitalConstellation = 33
     }
 
     /// <summary>Static tech definition used by <see cref="ResearchManager"/>.</summary>

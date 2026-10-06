@@ -160,6 +160,25 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>Beam from orbit plus a ground ring sized to the blast radius.</summary>
+        public static void OrbitalStrike(Vector3 worldPos, Color color, float radius)
+        {
+            var beam = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            beam.name = "VfxOrbitalBeam";
+            Object.Destroy(beam.GetComponent<Collider>());
+            beam.transform.position = worldPos + Vector3.up * 30f;
+            beam.transform.localScale = new Vector3(0.45f, 30f, 0.45f);
+            Paint(beam, color);
+            var fade = beam.AddComponent<VfxPulse>();
+            fade.lifetime = 0.45f;
+            fade.expand = 0.2f;
+            Object.Destroy(beam, 0.45f);
+
+            // Ring base diameter is 0.45; grow it to the blast diameter.
+            SpawnRing(worldPos, color, 0.55f, Mathf.Max(2f, radius * 2f / 0.45f));
+            SpawnPulse(worldPos + Vector3.up * 0.6f, Vector3.one * 0.9f, Color.white, 0.25f, 3f);
+        }
+
         private static void SpawnRing(Vector3 worldPos, Color color, float lifetime, float expand)
         {
             var go = VfxPool.Rent(PrimitiveType.Cylinder);

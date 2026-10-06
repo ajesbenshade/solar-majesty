@@ -221,9 +221,21 @@ namespace SolarMajesty
 
         public void SetBodyDanger(float danger01) => bodyDanger = Mathf.Clamp01(danger01);
 
+        private float _aegisUntil;
+
+        /// <summary>Under an orbital Aegis Field: takes no damage.</summary>
+        public bool IsShielded => Time.time < _aegisUntil;
+
+        public void ApplyAegisField(float seconds)
+        {
+            if (seconds <= 0f || _scrapped) return;
+            _aegisUntil = Mathf.Max(_aegisUntil, Time.time + seconds);
+        }
+
         public void ApplyDamage(float amount01, bool feedback = true)
         {
             if (amount01 <= 0f || _incapacitated) return;
+            if (IsShielded) return;
             float mitigated = amount01 * (1f - ArmorMitigation) / LevelHpMul;
             if (_loop != null &&
                 _loop.GuildBenefits != null &&

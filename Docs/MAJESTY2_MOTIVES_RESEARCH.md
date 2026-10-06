@@ -93,5 +93,24 @@ Raw Majesty values per hero (dist, danger, attack, protect, explore | armour, we
 ## Per-class motives (implemented)
 `ClassMotiveOverride.Defaults()` (same class mapping as flag appeal) sets each class's work / relax task budget and retreat health. Budgets are Majesty's own (12/3 for most, elf-Surveyor 15/5). Retreat health is not copied raw: our robots go down at 2% and bites reach 18%/s, so Majesty's 5-50% would get them killed. Each class keeps its place relative to the Majesty median (20%) around our 45% line: `0.45 + (pct - 20) x 0.006`, clamped to 30-60%. Rogue-Harvester 60%, ranger-Scout 54%, elf-Surveyor 51%, warrior-Defense Mech / marksman-Geologist / beastmaster-Courier 45%, dwarf-Sentinel 39%, cleric-Medic 36%. Engineer and Terraformer use the globals.
 
+## Ruler spells -> Orbital Support (implemented)
+`gameData/magic/spells.xml`: each spell has a gold cost, a target (enemy / friend / grave / caster), an area, a cooldown and an effect block, and is unlocked by research. Cost is multiplied by distance from the nearest magic building: 0-25 x1, 25-50 x3, 50-100 x5, 100-150 x7, 150-200 x9, 200-250 x10, beyond x15.
+
+Ours is a satellite constellation (`OrbitalTuning` on GameLoop, dock button ORBITAL SUPPORT, hotkey N). Uplinks are the Commons, Laboratories and Defense batteries; range bands use the caravan scale (2.5 Majesty units per metre). Tier 1 needs Orbital Uplink research, tier 2 Orbital Constellation.
+
+| Power | Majesty spell | Cost | Effect | Tier |
+|---|---|---|---|---|
+| Kinetic Lance | lightning 250 | 250 | 40 damage to the nearest hostile (kills a stalker) | 1 |
+| Orbital Barrage | thunderstorm 1,000 | 1,000 | 60 damage to every hostile in 7 m | 2 |
+| EMP Snare | roots 250 / petrify 750 | 500 | locks hostiles in 6 m for 6 s | 2 |
+| Med-Drop | heal 250 | 250 | +60% hull to one robot | 1 |
+| Aegis Field | divine shield 500 | 500 | one robot takes no damage for 15 s | 2 |
+| Revive Beacon | resurrect 750 | 750 | reboots downed robots in 6 m (wrecks still need the Fobot Yard) | 2 |
+| Repair Swarm | building heal 750 | 750 | restores 50% of a damaged building | 2 |
+| Survey Sweep | recon 250 | 250 | charts dens within 30 m | 1 |
+| Till Audit | extortion (free) | free | 30% of every till to the treasury, 180 s recharge | 1 |
+
+Nothing is charged when there is no target. Kills from orbit pay heroes nothing (as in Majesty). Cooldowns are saved.
+
 ## Not yet used
-Nothing from the data list above; next candidates are the unread `perks.xml`, `unit_actions.xml` and `spells.xml`. `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.
+`perks.xml` (timed buffs and debuffs) and `unit_actions.xml` (hero combat abilities). `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.

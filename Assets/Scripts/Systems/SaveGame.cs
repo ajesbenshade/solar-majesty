@@ -43,6 +43,8 @@ namespace SolarMajesty
         // Null in older saves: use the normal fresh village/collector defaults.
         public SaveVillageGrowth villageGrowth;
         public SaveCollectors collectors;
+        /// <summary>Null in older saves: every orbital power starts ready.</summary>
+        public SaveOrbital orbital;
 
         public List<SaveBuilding> buildings = new List<SaveBuilding>();
         public List<SaveFlag> flags = new List<SaveFlag>();
@@ -149,6 +151,13 @@ namespace SolarMajesty
     {
         public int tech;
         public float science;
+    }
+
+    [Serializable]
+    public sealed class SaveOrbital
+    {
+        /// <summary>Remaining cooldown seconds, indexed by OrbitalPowerId.</summary>
+        public float[] cooldowns;
     }
 
     [Serializable]

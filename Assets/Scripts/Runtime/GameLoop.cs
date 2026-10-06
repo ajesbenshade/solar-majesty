@@ -8,7 +8,9 @@ namespace SolarMajesty
     {
         None = 0,
         Build = 1,
-        Flag = 2
+        Flag = 2,
+        /// <summary>Orbital support powers (Majesty 2 ruler spells).</summary>
+        Orbital = 3
     }
 
     public enum DemoScreen
@@ -100,6 +102,8 @@ namespace SolarMajesty
         public OverseerTool ActiveTool => activeTool;
         public float FlagBounty => _flagInput != null ? _flagInput.Bounty : 0f;
         public FlagPlacementInput FlagInput => _flagInput;
+        public OrbitalTargetingInput OrbitalInput => _orbitalInput;
+        public OrbitalDirector Orbital => _orbital;
         public BuildingPlacementInput BuildInput => _buildInput;
         public int FocusedCampus => _focusedCampus;
         public IReadOnlyList<SpecialistAgent> SelectedAgents => _selected;
@@ -398,6 +402,11 @@ namespace SolarMajesty
         [Tooltip("Majesty 2-style spawn table: town burrows, boss raiders and wreck junk by kingdom value.")]
         [SerializeField] private KingdomThreatTuning kingdomThreat = new KingdomThreatTuning();
 
+        [Tooltip("Orbital support powers: prices, cooldowns, uplink range bands.")]
+        [SerializeField] private OrbitalTuning orbitalTuning = new OrbitalTuning();
+
+        private OrbitalDirector _orbital;
+        private OrbitalTargetingInput _orbitalInput;
         private KingdomThreatDirector _kingdomThreat;
         private readonly List<KingdomSpawnRequest> _kingdomRequests = new List<KingdomSpawnRequest>();
         private readonly Dictionary<int, List<DustStalkerAgent>> _kingdomSpawns =
@@ -2117,6 +2126,7 @@ namespace SolarMajesty
             TickFlagInterest(dt);
             TickCampusEcology(dt);
             TickKingdomThreat(dt);
+            _orbital?.Tick(dt);
             TickCampusBoard(dt);
 
             _constructionTick += dt;
@@ -2421,6 +2431,7 @@ namespace SolarMajesty
             MajestyEconomy.ApplyTuning(economyTuning ??= new EconomyTuning());
             Brain = new SpecialistBrain { Tuning = brainTuning };
             _kingdomThreat = new KingdomThreatDirector(kingdomThreat ??= new KingdomThreatTuning());
+            _orbital = new OrbitalDirector(orbitalTuning ??= new OrbitalTuning());
             _kingdomSpawns.Clear();
             _kingdomAnnounced.Clear();
             _heroDeaths = 0;
@@ -2468,6 +2479,10 @@ namespace SolarMajesty
             var def = TechCatalog.Get(id);
             if (def != null && def.SecretProject)
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
+            else if (id == TechId.OrbitalUplink)
+                LogOverseer("Orbital Uplink online. Press N: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit.");
+            else if (id == TechId.OrbitalConstellation)
+                LogOverseer("Constellation complete: Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.");
             else if (id == TechId.ExtractBasics && !DemoSettings.FirstHourDemo)
                 LogOverseer("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in EU.");
             else if (id == TechId.OreRefining && !DemoSettings.FirstHourDemo)
@@ -2859,6 +2874,9 @@ namespace SolarMajesty
 
             _buildInput = GetComponent<BuildingPlacementInput>();
             if (_buildInput == null) _buildInput = gameObject.AddComponent<BuildingPlacementInput>();
+            _orbitalInput = GetComponent<OrbitalTargetingInput>();
+            if (_orbitalInput == null) _orbitalInput = gameObject.AddComponent<OrbitalTargetingInput>();
+            _orbitalInput.Initialize(this, _isoCam);
 
             _isoCam = mainCamera.GetComponent<IsometricCameraController>();
             if (_isoCam == null) _isoCam = mainCamera.gameObject.AddComponent<IsometricCameraController>();
@@ -3111,6 +3129,9 @@ namespace SolarMajesty
         {
             WorldClickUsedBySelection = false;
             if (!IsPlaying) return;
+            // An armed orbital power fires at whatever is under the cursor instead of selecting it.
+            if (activeTool == OverseerTool.Orbital && _orbitalInput != null && _orbitalInput.Selected.HasValue)
+                return;
             if (!Input.GetMouseButtonUp(0)) return;
             if (_isoCam != null && _isoCam.SuppressWorldClick) return;
             if (_overseerHud != null && _overseerHud.PointerBlocksWorld) return;
@@ -3777,6 +3798,275 @@ namespace SolarMajesty
                 return true;
             }
             return false;
+        }
+
+        // ------------------------------------------------------------------ orbital support
+
+        /// <summary>Metres from a point to the nearest standing uplink (Commons, Laboratory, battery).</summary>
+        public float UplinkDistance(Vector3 at)
+        {
+            if (Village == null || orbitalTuning?.uplinkCategories == null) return float.PositiveInfinity;
+            float best = float.PositiveInfinity;
+            var list = Village.Structures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                if (System.Array.IndexOf(orbitalTuning.uplinkCategories, s.Category) < 0) continue;
+                best = Mathf.Min(best, FlatDist(at, s.WorldPosition));
+            }
+            return best;
+        }
+
+        public bool OrbitalUnlocked(TechId tech) => Research != null && Research.IsUnlocked(tech);
+
+        /// <summary>
+        /// Fire an orbital power at a map point (colony-wide powers ignore the point). Nothing is
+        /// charged unless there is something to hit. Majesty 2: the ruler pays per cast, more the
+        /// farther the target is from a casting building.
+        /// </summary>
+        public bool TryCastOrbital(OrbitalPowerId id, Vector3 at)
+        {
+            if (_orbital == null || Resources == null) return false;
+            if (!_orbital.Tuning.TryGet(id, out var def)) return false;
+
+            bool colony = def.target == OrbitalTarget.Colony;
+            Vector3 aim = colony ? ColonyLayout.CampusOrigin : at;
+            float uplink = colony ? 0f : UplinkDistance(aim);
+            int cost = _orbital.CostAt(id, uplink);
+            var check = _orbital.Check(id, OrbitalUnlocked, Resources.Get(ResourceId.Metals), uplink);
+            switch (check)
+            {
+                case OrbitalCastCheck.Ok: break;
+                case OrbitalCastCheck.Locked:
+                    LogOverseer($"{def.displayName} needs {TechCatalog.Get(OrbitalTuning.TechFor(def.tier))?.DisplayName} research.");
+                    return false;
+                case OrbitalCastCheck.Cooling:
+                    LogOverseer($"{def.displayName} recharging — {Mathf.CeilToInt(_orbital.ReadyIn(id))} s.");
+                    return false;
+                case OrbitalCastCheck.TooPoor:
+                    LogOverseer($"{def.displayName} costs {cost} EU here (x{_orbital.Tuning.RangeMultiplier(uplink):0} from the uplink).");
+                    return false;
+                default:
+                    return false;
+            }
+
+            if (!HasOrbitalTarget(def, aim, out string none))
+            {
+                LogOverseer($"{def.displayName}: {none}");
+                return false;
+            }
+            if (cost > 0 && !Resources.TrySpend(ResourceId.Metals, cost)) return false;
+
+            string done = ApplyOrbitalEffect(def, aim);
+            _orbital.StartCooldown(id);
+            LogOverseer(cost > 0 ? $"{def.displayName} — {done} ({cost} EU)." : $"{def.displayName} — {done}.");
+            return true;
+        }
+
+        private bool HasOrbitalTarget(OrbitalPowerDef def, Vector3 at, out string none)
+        {
+            none = null;
+            switch (def.target)
+            {
+                case OrbitalTarget.Fauna:
+                    none = "no hostile in the target ring.";
+                    return NearestFaunaAt(at, def.radius) != null;
+                case OrbitalTarget.Robot:
+                    none = "no robot in the target ring.";
+                    return NearestRobotAt(at, def.radius) != null;
+                case OrbitalTarget.DownedRobot:
+                    none = "no downed robot in the target ring.";
+                    for (int i = 0; i < _agents.Count; i++)
+                        if (IsDownedIn(_agents[i], at, def.radius)) return true;
+                    return false;
+                case OrbitalTarget.Structure:
+                    none = "no damaged building in the target ring.";
+                    return NearestDamagedAt(at, def.radius) != null;
+                case OrbitalTarget.Colony:
+                    none = "the tills are empty.";
+                    return Village != null && Village.TotalSittingLevy() > 0;
+                default:
+                    return true;
+            }
+        }
+
+        private string ApplyOrbitalEffect(OrbitalPowerDef def, Vector3 at)
+        {
+            switch (def.id)
+            {
+                case OrbitalPowerId.KineticLance:
+                {
+                    var s = NearestFaunaAt(at, def.radius);
+                    string who = s.RoleLabel.ToLowerInvariant();
+                    DemoVfx.OrbitalStrike(s.transform.position, new Color(1f, 0.85f, 0.55f), 1.5f);
+                    DemoAudio.PlayRobotHit(s.transform.position);
+                    s.ApplyOrbitalDamage(def.magnitude);
+                    return s.IsAlive ? $"{who} hit" : $"{who} destroyed";
+                }
+                case OrbitalPowerId.OrbitalBarrage:
+                {
+                    DemoVfx.OrbitalStrike(at, new Color(1f, 0.55f, 0.2f), def.radius);
+                    DemoAudio.PlayRobotHit(at);
+                    int hit = 0, killed = 0;
+                    foreach (var s in FaunaInRing(at, def.radius))
+                    {
+                        s.ApplyOrbitalDamage(def.magnitude);
+                        hit++;
+                        if (!s.IsAlive) killed++;
+                    }
+                    return $"{hit} hit, {killed} destroyed";
+                }
+                case OrbitalPowerId.EmpSnare:
+                {
+                    DemoVfx.OrbitalStrike(at, new Color(0.55f, 0.75f, 1f), def.radius);
+                    int n = 0;
+                    foreach (var s in FaunaInRing(at, def.radius)) { s.Stun(def.durationSeconds); n++; }
+                    return $"{n} hostile locked for {def.durationSeconds:0} s";
+                }
+                case OrbitalPowerId.MedDrop:
+                {
+                    var a = NearestRobotAt(at, def.radius);
+                    a.ReceiveHeal(def.magnitude);
+                    DemoVfx.OrbitalStrike(a.transform.position, new Color(0.45f, 1f, 0.55f), 1.5f);
+                    DemoAudio.PlayHeal(a.transform.position);
+                    return $"{a.Record.Name} patched";
+                }
+                case OrbitalPowerId.AegisField:
+                {
+                    var a = NearestRobotAt(at, def.radius);
+                    a.ApplyAegisField(def.durationSeconds);
+                    DemoVfx.OrbitalStrike(a.transform.position, new Color(0.6f, 0.85f, 1f), 2f);
+                    DemoAudio.PlayHeal(a.transform.position);
+                    return $"{a.Record.Name} shielded for {def.durationSeconds:0} s";
+                }
+                case OrbitalPowerId.ReviveBeacon:
+                {
+                    DemoVfx.OrbitalStrike(at, new Color(0.45f, 1f, 0.55f), def.radius);
+                    DemoAudio.PlayHeal(at);
+                    int n = 0;
+                    for (int i = 0; i < _agents.Count; i++)
+                    {
+                        var a = _agents[i];
+                        if (!IsDownedIn(a, at, def.radius)) continue;
+                        a.FieldRevive();
+                        n++;
+                    }
+                    return n == 1 ? "1 robot rebooted" : $"{n} robots rebooted";
+                }
+                case OrbitalPowerId.RepairSwarm:
+                {
+                    var b = NearestDamagedAt(at, def.radius);
+                    b.RestoreHealth01(Mathf.Min(1f, b.Health01 + def.magnitude));
+                    DemoVfx.OrbitalStrike(b.WorldPosition, new Color(1f, 0.75f, 0.3f), 3f);
+                    DemoAudio.PlayRepair(b.WorldPosition);
+                    return "nanites restored the hull";
+                }
+                case OrbitalPowerId.SurveySweep:
+                {
+                    DemoVfx.OrbitalStrike(at, new Color(0.45f, 0.85f, 1f), def.radius);
+                    DemoAudio.PlayClaim(at);
+                    int charted = 0;
+                    if (_world != null)
+                    {
+                        var lairs = _world.Lairs;
+                        for (int i = 0; i < lairs.Count; i++)
+                        {
+                            var l = lairs[i];
+                            if (l == null || l.IsCleared || l.IsScouted) continue;
+                            if (!DenChart.InDisc(at, l.WorldPosition, def.radius)) continue;
+                            l.MarkScouted();
+                            charted++;
+                        }
+                    }
+                    return charted == 0 ? "no uncharted dens" : charted == 1 ? "1 den charted" : $"{charted} dens charted";
+                }
+                case OrbitalPowerId.TillAudit:
+                {
+                    int total = 0;
+                    var list = Village.Structures;
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        var s = list[i];
+                        if (s == null || !s.IsAlive || s.LevyPurse <= 0) continue;
+                        total += s.StealLevy(Mathf.FloorToInt(s.LevyPurse * Mathf.Clamp01(def.magnitude)));
+                    }
+                    if (total > 0)
+                    {
+                        Settlement?.NoteLevyDelivered(total);
+                        NoteTreasuryIncome(total);
+                    }
+                    DemoVfx.ClaimRing(ColonyLayout.CampusOrigin, new Color(0.96f, 0.78f, 0.22f));
+                    DemoAudio.PlayCredits(ColonyLayout.CampusOrigin);
+                    return $"{total} EU pulled from the tills";
+                }
+                default:
+                    return "done";
+            }
+        }
+
+        private DustStalkerAgent NearestFaunaAt(Vector3 at, float radius)
+        {
+            DustStalkerAgent best = null;
+            float bestD = radius;
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                var s = _stalkers[i];
+                if (s == null || !s.IsAlive) continue;
+                float d = FlatDist(at, s.transform.position);
+                if (d > bestD) continue;
+                bestD = d;
+                best = s;
+            }
+            return best;
+        }
+
+        private List<DustStalkerAgent> FaunaInRing(Vector3 at, float radius)
+        {
+            var hits = new List<DustStalkerAgent>();
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                var s = _stalkers[i];
+                if (s != null && s.IsAlive && FlatDist(at, s.transform.position) <= radius) hits.Add(s);
+            }
+            return hits;
+        }
+
+        private SpecialistAgent NearestRobotAt(Vector3 at, float radius)
+        {
+            SpecialistAgent best = null;
+            float bestD = radius;
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                var a = _agents[i];
+                if (a == null || !a.IsAlive || a.IsIncapacitated) continue;
+                float d = FlatDist(at, a.transform.position);
+                if (d > bestD) continue;
+                bestD = d;
+                best = a;
+            }
+            return best;
+        }
+
+        private static bool IsDownedIn(SpecialistAgent a, Vector3 at, float radius) =>
+            a != null && a.IsIncapacitated && FlatDist(at, a.transform.position) <= radius;
+
+        private ColonyStructure NearestDamagedAt(Vector3 at, float radius)
+        {
+            if (Village == null) return null;
+            ColonyStructure best = null;
+            float bestD = radius;
+            var list = Village.Structures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.NeedsRepair) continue;
+                float d = FlatDist(at, s.WorldPosition);
+                if (d > bestD) continue;
+                bestD = d;
+                best = s;
+            }
+            return best;
         }
 
         private void RetreatCampusFauna()
@@ -4506,6 +4796,7 @@ namespace SolarMajesty
 
             if (Input.GetKeyDown(KeyCode.B)) ToggleTool(OverseerTool.Build);
             if (Input.GetKeyDown(KeyCode.G)) ToggleTool(OverseerTool.Flag);
+            if (Input.GetKeyDown(KeyCode.N)) ToggleTool(OverseerTool.Orbital);
             if (Input.GetKeyDown(KeyCode.T) && _overseerHud != null)
                 _overseerHud.ToggleTechPanel();
 
@@ -4575,6 +4866,11 @@ namespace SolarMajesty
             activeTool = tool;
             if (_flagInput != null) _flagInput.EnabledPlacement = tool == OverseerTool.Flag;
             if (_buildInput != null) _buildInput.EnabledPlacement = tool == OverseerTool.Build;
+            if (_orbitalInput != null)
+            {
+                _orbitalInput.EnabledPlacement = tool == OverseerTool.Orbital;
+                if (tool != OverseerTool.Orbital) _orbitalInput.ClearSelection();
+            }
             if (tool == OverseerTool.None)
                 _overseerHud?.ClearMinimizedMenus();
             else
@@ -5324,6 +5620,9 @@ namespace SolarMajesty
                 }
             }
 
+            if (_orbital != null)
+                save.orbital = new SaveOrbital { cooldowns = _orbital.CaptureCooldowns() };
+
             if (_mission != null)
             {
                 save.mission.state = (int)_mission.State;
@@ -5429,6 +5728,8 @@ namespace SolarMajesty
             Village?.RestoreGrowth(save.villageGrowth);
             Village?.Collectors.Restore(save.collectors);
             RefreshWreckVisuals();
+
+            _orbital?.RestoreCooldowns(save.orbital?.cooldowns);
 
             if (_mission != null)
             {
@@ -6320,6 +6621,7 @@ namespace SolarMajesty
 
         public void OnFaunaKilled(FaunaKind kind, Vector3 world, float rewardMul = 1f)
         {
+            if (rewardMul <= 0f) return; // orbital kill: no hero earned it
             var killer = NearestLivingAgent(world, 18f);
             if (killer == null) return;
             rewardMul = Mathf.Max(1f, rewardMul);

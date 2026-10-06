@@ -86,6 +86,31 @@ namespace SolarMajesty
                 Die();
         }
 
+        private bool _noReward;
+        private float _stunUntil;
+
+        /// <summary>Stunned by an EMP Snare: frozen in place, no bites, no raids.</summary>
+        public bool IsStunned => Time.time < _stunUntil;
+
+        public void Stun(float seconds)
+        {
+            if (!IsAlive || seconds <= 0f) return;
+            _stunUntil = Mathf.Max(_stunUntil, Time.time + seconds);
+            _aggro = false;
+            _raiding = false;
+        }
+
+        /// <summary>
+        /// Damage from an orbital strike. A kill from orbit pays no hero bounty (Majesty: the
+        /// ruler's spells earn heroes nothing); a survivor finished by a hero still pays.
+        /// </summary>
+        public void ApplyOrbitalDamage(float amount)
+        {
+            if (!IsAlive || amount <= 0f) return;
+            if (_health - amount <= 0f) _noReward = true;
+            ApplyCombatDamage(amount);
+        }
+
         /// <summary>Instant kill when a ClearThreat job clears the owning lair.</summary>
         public void ApplyClearThreatKill()
         {
@@ -492,6 +517,12 @@ namespace SolarMajesty
             if (!IsAlive || _threat == null) return;
 
             float dt = Time.deltaTime;
+            if (IsStunned)
+            {
+                _threat.Report(_sourceId, idlePressure);
+                TickPresentation(dt);
+                return;
+            }
             if (_retreating)
             {
                 TickRetreat(dt);
@@ -1116,7 +1147,7 @@ namespace SolarMajesty
                 FaunaKind.JunkBot => "Junk Bot",
                 _ => "Dust Stalker"
             };
-            _loop?.OnFaunaKilled(Kind, transform.position, RewardMultiplier);
+            _loop?.OnFaunaKilled(Kind, transform.position, _noReward ? 0f : RewardMultiplier);
             Debug.Log($"[Threat] {who} defeated — pressure contribution removed.");
             Destroy(gameObject);
         }
