@@ -87,18 +87,28 @@ namespace SolarMajesty
         }
 
         private bool _noReward;
-        private float _stunUntil;
+        private readonly StatusEffects _statuses = new StatusEffects();
 
-        /// <summary>Stunned by an EMP Snare: frozen in place, no bites, no raids.</summary>
-        public bool IsStunned => Time.time < _stunUntil;
+        /// <summary>Timed conditions: poison, burn, slow, stun, weaken (Majesty 2 perks).</summary>
+        public StatusEffects Statuses => _statuses;
 
-        public void Stun(float seconds)
+        /// <summary>Stunned (EMP Snare, stun strikes): frozen in place, no bites, no raids.</summary>
+        public bool IsStunned => _statuses.Stunned;
+
+        public bool ApplyStatus(StatusKind kind, float magnitude, float duration, float period = 0f)
         {
-            if (!IsAlive || seconds <= 0f) return;
-            _stunUntil = Mathf.Max(_stunUntil, Time.time + seconds);
-            _aggro = false;
-            _raiding = false;
+            if (!IsAlive) return false;
+            bool landed = _statuses.Apply(kind, magnitude, duration, period);
+            if (landed && kind == StatusKind.Stun)
+            {
+                _aggro = false;
+                _raiding = false;
+            }
+            ApplyFrenzyScale();
+            return landed;
         }
+
+        public void Stun(float seconds) => ApplyStatus(StatusKind.Stun, 1f, seconds);
 
         /// <summary>
         /// Damage from an orbital strike. A kill from orbit pays no hero bounty (Majesty: the
@@ -493,8 +503,8 @@ namespace SolarMajesty
         {
             float speed = _baseMoveSpeed > 0.01f ? _baseMoveSpeed : moveSpeed;
             float bite = _baseBite > 0.01f ? _baseBite : biteDamagePerSecond;
-            moveSpeed = speed * (_frenzy ? OverseerRules.FrenzySpeed : 1f);
-            biteDamagePerSecond = bite * (_frenzy ? OverseerRules.FrenzyBite : 1f);
+            moveSpeed = speed * (_frenzy ? OverseerRules.FrenzySpeed : 1f) * _statuses.SpeedMul;
+            biteDamagePerSecond = bite * (_frenzy ? OverseerRules.FrenzyBite : 1f) * _statuses.OutgoingMul;
         }
 
         /// <summary>Scatter after dens go quiet. Despawns off-campus without a death burst.</summary>
@@ -517,6 +527,14 @@ namespace SolarMajesty
             if (!IsAlive || _threat == null) return;
 
             float dt = Time.deltaTime;
+            if (_statuses.Count > 0)
+            {
+                float dh = _statuses.Tick(dt);
+                if (dh < 0f) ApplyCombatDamage(-dh);
+                else if (dh > 0f) _health = Mathf.Min(maxHealth, _health + dh);
+                if (!IsAlive) return;
+                ApplyFrenzyScale();
+            }
             if (IsStunned)
             {
                 _threat.Report(_sourceId, idlePressure);

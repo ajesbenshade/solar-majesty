@@ -405,6 +405,10 @@ namespace SolarMajesty
         [Tooltip("Orbital support powers: prices, cooldowns, uplink range bands.")]
         [SerializeField] private OrbitalTuning orbitalTuning = new OrbitalTuning();
 
+        [Tooltip("Class abilities (Majesty 2 unit actions) and status effects (perks).")]
+        [SerializeField] private AbilityTuning abilityTuning = new AbilityTuning();
+        public AbilityTuning Abilities => abilityTuning;
+
         private OrbitalDirector _orbital;
         private OrbitalTargetingInput _orbitalInput;
         private KingdomThreatDirector _kingdomThreat;

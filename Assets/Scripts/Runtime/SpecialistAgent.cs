@@ -53,6 +53,12 @@ namespace SolarMajesty
         private FlagManager _flags;
         private SpecialistBrain _brain;
         private readonly HeroMotives _motives = new HeroMotives();
+        private readonly StatusEffects _statuses = new StatusEffects();
+        private readonly AbilityBook _abilities = new AbilityBook();
+
+        /// <summary>Timed conditions on this robot: regen, armor, haste, stun immunity.</summary>
+        public StatusEffects Statuses => _statuses;
+        public string LastAbility { get; private set; }
         public HeroMotives Motives => _motives;
         private SimpleEconomy _economy;
         private BuildingPlacer _placer;
@@ -172,7 +178,8 @@ namespace SolarMajesty
         public float EffectiveMoveSpeed =>
             (data != null ? data.moveSpeed : 3.5f) *
             (1f + _geneSpeed + SuitSpeedBonus()) *
-            BodyMoveScale();
+            BodyMoveScale() *
+            _statuses.SpeedMul;
 
         public float EffectiveWorkRate
         {
@@ -236,7 +243,7 @@ namespace SolarMajesty
         {
             if (amount01 <= 0f || _incapacitated) return;
             if (IsShielded) return;
-            float mitigated = amount01 * (1f - ArmorMitigation) / LevelHpMul;
+            float mitigated = amount01 * (1f - ArmorMitigation) / LevelHpMul * _statuses.IncomingMul;
             if (_loop != null &&
                 _loop.GuildBenefits != null &&
                 _loop.GuildBenefits.IsActive(RobotGuildId.Aegis))
@@ -503,6 +510,8 @@ namespace SolarMajesty
             healthNormalized = 1f;
             fatigue = 0.1f;
             _motives.Reset();
+            _statuses.Clear();
+            _abilities.Reset();
             _status = "revived";
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
@@ -567,6 +576,8 @@ namespace SolarMajesty
             _loop = FindAnyObjectByType<GameLoop>();
             fatigue = 0.1f;
             _motives.Reset();
+            _statuses.Clear();
+            _abilities.Reset();
             healthNormalized = 1f;
             greedHunger = 0.55f;
             credits = 20f;
@@ -700,6 +711,7 @@ namespace SolarMajesty
             }
 
             TickNeeds(dt);
+            TickStatuses(dt);
             TickPayDuty();
             _motives.Tick(dt, _brain.Tuning, data.specialistClass, healthNormalized, bodyDanger,
                 _loop != null ? _loop.SafetyFieldAt(transform.position) : 0f);
@@ -1377,6 +1389,7 @@ namespace SolarMajesty
 
         private void TickFlee(float dt)
         {
+            TrySelfAbility(AbilityTrigger.Flee);
             Vector3 inn = RestPosition;
             if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
             {
@@ -1674,9 +1687,94 @@ namespace SolarMajesty
             var stalker = NearestStalkerAgent();
             if (stalker != null)
             {
-                float mul = HuntDpsMul(stalker.Kind) * LevelDpsMul * (1f + WeaponDamageBonus());
-                stalker.ApplyCombatDamage(EffectiveWorkRate * 8f * dt * mul);
+                float dps = StrikeDps(stalker.Kind);
+                stalker.ApplyCombatDamage(dps * dt);
+                TrySelfAbility(AbilityTrigger.Engage);
+                if (healthNormalized < (_loop?.Abilities?.hurtLine ?? 0.6f))
+                    TrySelfAbility(AbilityTrigger.Hurt);
+                if (stalker.IsAlive)
+                    TryStrikeAbility(stalker);
             }
+        }
+
+        // ------------------------------------------------------------------ abilities (Majesty 2 unit actions)
+
+        /// <summary>Normal strike damage per second against this kind of fauna.</summary>
+        private float StrikeDps(FaunaKind kind) =>
+            EffectiveWorkRate * 8f * HuntDpsMul(kind) * LevelDpsMul * (1f + WeaponDamageBonus()) * _statuses.OutgoingMul;
+
+        private void TickStatuses(float dt)
+        {
+            if (_statuses.Count == 0) return;
+            float dh = _statuses.Tick(dt);
+            if (dh > 0f) ReceiveHeal(dh);
+            else if (dh < 0f) ApplyDamage(-dh, false);
+        }
+
+        public bool ApplyStatus(StatusKind kind, float magnitude, float duration, float period = 0f)
+        {
+            if (_scrapped || _incapacitated) return false;
+            return _statuses.Apply(kind, magnitude, duration, period);
+        }
+
+        private void TryStrikeAbility(DustStalkerAgent target)
+        {
+            var t = _loop?.Abilities;
+            if (t == null || data == null || _statuses.Stunned) return;
+            if (!_abilities.TryPick(t, data.specialistClass, Level, AbilityTrigger.Strike, target.Kind, Time.time, out var a))
+                return;
+
+            Vector3 at = target.transform.position;
+            HitWithAbility(target, a);
+            if (a.aoeRadius > 0f && _loop != null)
+            {
+                var all = _loop.Stalkers;
+                for (int i = 0; i < all.Count; i++)
+                {
+                    var s = all[i];
+                    if (s == null || s == target || !s.IsAlive) continue;
+                    if (FlatDistance(at, s.transform.position) > a.aoeRadius) continue;
+                    HitWithAbility(s, a);
+                }
+            }
+            UsedAbility(t, a, at, new Color(1f, 0.6f, 0.2f));
+        }
+
+        private void HitWithAbility(DustStalkerAgent s, ClassAbilityDef a)
+        {
+            if (a.damageMul > 0f)
+                s.ApplyCombatDamage(StrikeDps(s.Kind) * a.damageMul);
+            if (a.appliesStatus && s.IsAlive)
+                s.ApplyStatus(a.status, a.statusMagnitude, a.statusDuration, a.statusPeriod);
+        }
+
+        private void TrySelfAbility(AbilityTrigger trigger)
+        {
+            var t = _loop?.Abilities;
+            if (t == null || data == null || _incapacitated || _statuses.Stunned) return;
+            if (!_abilities.TryPick(t, data.specialistClass, Level, trigger, null, Time.time, out var a)) return;
+            if (a.appliesStatus)
+                _statuses.Apply(a.status, a.statusMagnitude, a.statusDuration, a.statusPeriod);
+            UsedAbility(t, a, transform.position, new Color(0.55f, 0.85f, 1f));
+        }
+
+        private void TryAllyAbility(SpecialistAgent ally)
+        {
+            var t = _loop?.Abilities;
+            if (t == null || data == null || ally == null || _statuses.Stunned) return;
+            if (!_abilities.TryPick(t, data.specialistClass, Level, AbilityTrigger.Ally, null, Time.time, out var a)) return;
+            if (a.appliesStatus && !ally.ApplyStatus(a.status, a.statusMagnitude, a.statusDuration, a.statusPeriod))
+                return;
+            UsedAbility(t, a, ally.transform.position, new Color(0.45f, 1f, 0.55f));
+        }
+
+        private void UsedAbility(AbilityTuning t, ClassAbilityDef a, Vector3 at, Color color)
+        {
+            _abilities.NoteUsed(t, a, Time.time);
+            LastAbility = a.displayName;
+            DemoVfx.WorkSpark(at, color);
+            if (!string.IsNullOrEmpty(a.displayName))
+                ShowRefusal(a.displayName.ToUpperInvariant());
         }
 
         private void TickWanderTown(float dt)
@@ -1752,7 +1850,10 @@ namespace SolarMajesty
                 if (ally.IsIncapacitated)
                     ally.AccelerateRecover(dt);
                 else if (ally.HealthNormalized < 0.98f)
+                {
                     ally.ReceiveHeal(dt * 0.14f);
+                    TryAllyAbility(ally);
+                }
             }
         }
 

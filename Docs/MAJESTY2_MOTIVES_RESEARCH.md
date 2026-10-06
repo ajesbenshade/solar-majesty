@@ -112,5 +112,28 @@ Ours is a satellite constellation (`OrbitalTuning` on GameLoop, dock button ORBI
 
 Nothing is charged when there is no target. Kills from orbit pay heroes nothing (as in Majesty). Cooldowns are saved.
 
+## Perks -> status effects (implemented)
+`perks.xml` perks are timed blocks: HealthChange every period (poison 3/s, rogue poison 5/s for 50 s, burn 4/s, regen 15 per 2 s), Speed (slow 0.2, elf buff 1.5), Stun / Petrify / Roots, skill and resistance changes (kicked / wither -10 skill, resistant +25, magic shield +50, total +100), and immunities. Perks of one name refresh rather than stack.
+
+Ours: `StatusEffects` on every robot and fauna, with Poison, Burn, Regen, Slow, Stun, Weaken (outgoing damage), Armor (incoming damage), Haste and StunImmune. Durations are shorter than Majesty's because our fights last seconds. The orbital EMP Snare now uses Stun.
+
+## Unit actions -> class abilities (implemented)
+`unit_actions.xml`: each move has a skill multiplier (`f_skill_mod`), cooldown, area, an optional perk, a minimum level (0 / 5 / 10) and a target group (enemy, beast, undead, ally, self).
+
+Ours (`AbilityTuning` on GameLoop): damage is seconds of the robot's normal strike (a x3 move = three seconds of hits in one blow); Majesty levels 0 / 5 / 10 map to our 1 / 3 / 6. Robots use them on their own: strikes while hunting, Engage / Hurt buffs in a fight, Flee buffs while running, Ally buffs while a medic patches someone. A 1.5 s shared cooldown stops ability spam. Beasts map to stalkers, undead to junk bots.
+
+| Class (Majesty hero) | Abilities (level) |
+|---|---|
+| Defense Mech (warrior) | Power Strike x3 (1), Bulwark armor 25% when hurt (3), Maim x5 + slow (6) |
+| Scout (ranger) | Beastslayer x4 vs stalkers (1), Stingshot x1.5 + weaken (3) |
+| Harvester (rogue) | Venom Strike poison (1), Stun Strike 3 s (3) |
+| Medic (cleric) | Purge x8 vs junk bots (1), Nanite Regen on the patient (3) |
+| Sentinel (dwarf) | Stun Slam (1), Berserk stun immunity (3), Hardened Plating armor 50% (6) |
+| Surveyor (elf) | Snare Shot root (1), Arc Bolt x5 (3) |
+| Geologist (marksman) | Core Shot x5 (3), Sunburst x2 in 5 m (6) |
+| Courier (beastmaster) | Beastslayer x4 (1), Afterburner haste when fleeing (1) |
+| Terraformer (mage) | Thermal Lance x2 in 3 m + burn (1), Cryo Lock x3 + stun (3) |
+| Engineer (dwarf) | Weld Strike x3 (1) |
+
 ## Not yet used
-`perks.xml` (timed buffs and debuffs) and `unit_actions.xml` (hero combat abilities). `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.
+Monster perks (fauna poisoning or weakening robots), taunt, and summons. The Majesty data list is otherwise covered. `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.
