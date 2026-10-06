@@ -90,5 +90,8 @@ Raw Majesty values per hero (dist, danger, attack, protect, explore | armour, we
 ## Caravan curve (implemented)
 `EconomyTuning.caravanCurve` holds the Majesty table (x = Majesty distance, y = gold, linear between points, flat past the ends) and `caravanDistanceScale` 2.5 maps our metres onto it. Mines (the active trade posts) and landing-pad caravans both use it. Versus the old curve: 200 instead of 300 for routes under 10 m, the same 600 at 50 m, 1,100 at 100 m instead of the old 1,000 cap, topping out at 2,100 from 200 m.
 
+## Per-class motives (implemented)
+`ClassMotiveOverride.Defaults()` (same class mapping as flag appeal) sets each class's work / relax task budget and retreat health. Budgets are Majesty's own (12/3 for most, elf-Surveyor 15/5). Retreat health is not copied raw: our robots go down at 2% and bites reach 18%/s, so Majesty's 5-50% would get them killed. Each class keeps its place relative to the Majesty median (20%) around our 45% line: `0.45 + (pct - 20) x 0.006`, clamped to 30-60%. Rogue-Harvester 60%, ranger-Scout 54%, elf-Surveyor 51%, warrior-Defense Mech / marksman-Geologist / beastmaster-Courier 45%, dwarf-Sentinel 39%, cleric-Medic 36%. Engineer and Terraformer use the globals.
+
 ## Not yet used
-Per-class motive overrides (work/relax budgets and health reflex) are documented above but left at the global defaults. `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.
+Nothing from the data list above; next candidates are the unread `perks.xml`, `unit_actions.xml` and `spells.xml`. `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.

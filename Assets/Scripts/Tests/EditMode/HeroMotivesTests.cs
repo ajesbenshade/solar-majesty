@@ -153,6 +153,46 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void MajestyMapping_KeepsReflexesSurvivable_AndOrdered()
+        {
+            var warrior = ClassMotiveOverride.FromMajesty(SpecialistClass.DefenseMech, 12, 3, 20f);
+            var rogue = ClassMotiveOverride.FromMajesty(SpecialistClass.HarvesterBot, 12, 3, 50f);
+            var cleric = ClassMotiveOverride.FromMajesty(SpecialistClass.Medic, 12, 3, 5f);
+
+            Assert.AreEqual(0.45f, warrior.healthReflex, 1e-4f, "median Majesty hero = our default line");
+            Assert.AreEqual(0.6f, rogue.healthReflex, 1e-4f, "cautious rogue retreats first (clamped)");
+            Assert.AreEqual(0.36f, cleric.healthReflex, 1e-4f, "cleric stays longest");
+            foreach (var m in ClassMotiveOverride.Defaults())
+            {
+                Assert.GreaterOrEqual(m.healthReflex, 0.3f, $"{m.specialistClass} must leave before it goes down");
+                Assert.LessOrEqual(m.healthReflex, 0.6f);
+            }
+        }
+
+        [Test]
+        public void Defaults_SurveyorWorksLongerAndRestsLonger_EngineerUsesGlobals()
+        {
+            var t = new SpecialistBrainTuning();
+            Assert.AreEqual(15, t.MaxWorkTasksFor(SpecialistClass.SurveyorBot));
+            Assert.AreEqual(5, t.MaxRelaxTasksFor(SpecialistClass.SurveyorBot));
+            Assert.AreEqual(t.maxWorkTasks, t.MaxWorkTasksFor(SpecialistClass.EngineerBot));
+            Assert.AreEqual(1f - t.panicInjury, t.HealthReflexFor(SpecialistClass.EngineerBot), 1e-4f);
+        }
+
+        [Test]
+        public void Brain_CautiousClassRetreatsEarlier()
+        {
+            var brain = new SpecialistBrain();
+            var rogue = Ctx(null, 0.58f);
+            rogue.Data.specialistClass = SpecialistClass.HarvesterBot;
+            var warrior = Ctx(null, 0.58f);
+            warrior.Data.specialistClass = SpecialistClass.DefenseMech;
+
+            Assert.AreEqual(SpecialistAction.Flee, brain.Evaluate(rogue, new List<FlagHandle>(), 0.1f).Action);
+            Assert.AreNotEqual(SpecialistAction.Flee, brain.Evaluate(warrior, new List<FlagHandle>(), 0.1f).Action);
+        }
+
+        [Test]
         public void ClassOverride_ChangesTaskBudgetAndReflex()
         {
             _t.classMotives = new[]

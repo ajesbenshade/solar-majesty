@@ -12,6 +12,38 @@ namespace SolarMajesty
         [Min(1)] public int maxRelaxTasks;
         [Tooltip("Flee when health falls below this fraction (0 = use the global panic rules).")]
         [Range(0f, 1f)] public float healthReflex;
+
+        /// <summary>Our default retreat line (1 - panicInjury) that Majesty values are mapped around.</summary>
+        public const float BaselineReflex = 0.45f;
+
+        /// <summary>
+        /// Map a Majesty 2 hero's Motivator max_tasks and HealthReflex health_percent onto ours.
+        /// Majesty heroes retreat at 5-50% health (median 20%). Our robots go down at 2% and bites
+        /// run up to 18%/s, so the raw values would be lethal. Instead the class keeps its
+        /// position relative to the median around our 45% line: reflex = 0.45 + (pct - 20) x 0.006,
+        /// clamped to 30-60%. Warrior 20% -> 45%, rogue 50% -> 60%, cleric 5% -> 36%.
+        /// </summary>
+        public static ClassMotiveOverride FromMajesty(SpecialistClass cls, int work, int relax, float healthPercent) =>
+            new ClassMotiveOverride
+            {
+                specialistClass = cls,
+                maxWorkTasks = Mathf.Max(1, work),
+                maxRelaxTasks = Mathf.Max(1, relax),
+                healthReflex = Mathf.Clamp(BaselineReflex + (healthPercent - 20f) * 0.006f, 0.3f, 0.6f)
+            };
+
+        /// <summary>Same class mapping as <see cref="ClassAllure.Defaults"/>. Engineer and Terraformer use the globals.</summary>
+        public static ClassMotiveOverride[] Defaults() => new[]
+        {
+            FromMajesty(SpecialistClass.ScoutDrone, 12, 3, 35f),    // ranger
+            FromMajesty(SpecialistClass.DefenseMech, 12, 3, 20f),   // warrior
+            FromMajesty(SpecialistClass.Medic, 12, 3, 5f),          // cleric
+            FromMajesty(SpecialistClass.HarvesterBot, 12, 3, 50f),  // rogue
+            FromMajesty(SpecialistClass.SentinelMech, 12, 3, 10f),  // dwarf
+            FromMajesty(SpecialistClass.SurveyorBot, 15, 5, 30f),   // elf
+            FromMajesty(SpecialistClass.GeologistBot, 12, 3, 20f),  // marksman
+            FromMajesty(SpecialistClass.CourierBot, 12, 3, 20f),    // beastmaster
+        };
     }
 
     /// <summary>
@@ -190,7 +222,8 @@ namespace SolarMajesty
         public float flagAttackWeight = 1f;
         public float flagDefendWeight = 1f;
         public float flagExploreWeight = 1f;
-        public ClassMotiveOverride[] classMotives = Array.Empty<ClassMotiveOverride>();
+        [Tooltip("Per-class task budgets and retreat health (Majesty 2 Motivator / HealthReflex). Unlisted classes use the globals.")]
+        public ClassMotiveOverride[] classMotives = ClassMotiveOverride.Defaults();
 
         [Header("Per-class flag appeal (Majesty 2 AllureFactors)")]
         [Tooltip("Classes not listed are neutral (all 1).")]
