@@ -104,6 +104,11 @@ namespace SolarMajesty
         public FlagPlacementInput FlagInput => _flagInput;
         public OrbitalTargetingInput OrbitalInput => _orbitalInput;
         public OrbitalDirector Orbital => _orbital;
+
+        [Tooltip("Majesty 2 build zones: trading posts and temples go only on marked sites.")]
+        [SerializeField] private BuildZoneTuning buildZones = new BuildZoneTuning();
+        public BuildZoneTuning ZoneRules => buildZones ??= new BuildZoneTuning();
+        public IReadOnlyList<BuildZone> BuildZones => _world != null ? _world.Zones : null;
         public BuildingPlacementInput BuildInput => _buildInput;
         public int FocusedCampus => _focusedCampus;
         public IReadOnlyList<SpecialistAgent> SelectedAgents => _selected;
@@ -1964,6 +1969,58 @@ namespace SolarMajesty
         }
 
         /// <summary>True when any corner or the centre of the footprint sits on a lake or river.</summary>
+        private Vector3 FootprintCenterWorld(Vector2Int cell, int width, int height)
+        {
+            float cs = grid.CellSize;
+            return grid.CellToWorld(cell) + new Vector3((width - 1) * 0.5f * cs, 0f, (height - 1) * 0.5f * cs);
+        }
+
+        private List<Vector3> TakenCenters(BuildZoneKind kind)
+        {
+            var taken = new List<Vector3>();
+            if (Placer == null || grid == null) return taken;
+            var pieces = Placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                var p = pieces[i];
+                if (ZoneRules.KindFor(p.Category) != kind) continue;
+                taken.Add(FootprintCenterWorld(p.Origin, p.Width, p.Height));
+            }
+            return taken;
+        }
+
+        /// <summary>True if this building may stand here: free categories always, zone-bound ones only in a free zone.</summary>
+        public bool ZoneAllows(BuildingData data, Vector2Int cell)
+        {
+            if (data == null || grid == null) return true;
+            var kind = ZoneRules.KindFor(data.category);
+            if (kind == BuildZoneKind.None) return true;
+            var center = FootprintCenterWorld(cell, data.footprintWidth, data.footprintHeight);
+            return ZoneRules.Allows(kind, center, BuildZones, TakenCenters(kind));
+        }
+
+        /// <summary>Colony-log explanation for a zone-bound building that cannot go here; null when zones are not the problem.</summary>
+        public string ZoneBlockReason(BuildingData data, Vector2Int cell)
+        {
+            if (data == null || ZoneAllows(data, cell)) return null;
+            var kind = ZoneRules.KindFor(data.category);
+            if (kind == BuildZoneKind.None) return null;
+            var taken = TakenCenters(kind);
+            bool anyFree = false;
+            var zones = BuildZones;
+            if (zones != null)
+                for (int i = 0; i < zones.Count; i++)
+                    if (zones[i].Kind == kind && !BuildZoneTuning.IsTaken(zones[i], taken)) { anyFree = true; break; }
+            return ZoneRules.Reason(kind, anyFree);
+        }
+
+        public bool IsZoneTaken(int index)
+        {
+            var zones = BuildZones;
+            if (zones == null || index < 0 || index >= zones.Count) return false;
+            return BuildZoneTuning.IsTaken(zones[index], TakenCenters(zones[index].Kind));
+        }
+
         private bool FootprintOverWater(Vector2Int origin, int width, int height)
         {
             if (_world == null || grid == null) return false;
@@ -2429,9 +2486,12 @@ namespace SolarMajesty
                     if (!IsBuildingUnlocked(data.category))
                         return false;
 
-                    // Free placement, Majesty style: anywhere on open ground once the Commons
-                    // stands. Nothing links buildings together — just keep out of water.
-                    return !FootprintOverWater(cell, data.footprintWidth, data.footprintHeight);
+                    if (FootprintOverWater(cell, data.footprintWidth, data.footprintHeight))
+                        return false;
+
+                    // Free placement on open ground, except trading posts and temples, which go
+                    // only on marked zones (Majesty 2).
+                    return ZoneAllows(data, cell);
                 };
             }
 
@@ -2882,6 +2942,9 @@ namespace SolarMajesty
 
             _buildInput = GetComponent<BuildingPlacementInput>();
             if (_buildInput == null) _buildInput = gameObject.AddComponent<BuildingPlacementInput>();
+            var zoneMarkers = GetComponent<BuildZoneMarkers>();
+            if (zoneMarkers == null) zoneMarkers = gameObject.AddComponent<BuildZoneMarkers>();
+            zoneMarkers.Bind(this);
             _orbitalInput = GetComponent<OrbitalTargetingInput>();
             if (_orbitalInput == null) _orbitalInput = gameObject.AddComponent<OrbitalTargetingInput>();
             _orbitalInput.Initialize(this, _isoCam);

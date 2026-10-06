@@ -163,7 +163,18 @@ namespace SolarMajesty
                     Debug.Log($"[Build] Failed: {fail}");
                 }
             }
+            else if (Input.GetMouseButtonUp(0) && !valid && _loop != null && Time.time >= _zoneHintAt)
+            {
+                string why = _loop.ZoneBlockReason(Selected, cell);
+                if (!string.IsNullOrEmpty(why))
+                {
+                    _zoneHintAt = Time.time + 2.5f;
+                    _loop.LogOverseer(why);
+                }
+            }
         }
+
+        private float _zoneHintAt;
 
         private void Select(int index)
         {

@@ -38,6 +38,9 @@ namespace SolarMajesty
         public CelestialBodyProfile Body => _body;
         public IReadOnlyList<ResourceNode> Nodes => _nodes;
         public IReadOnlyList<StalkerLair> Lairs => _lairs;
+        private readonly List<BuildZone> _zones = new List<BuildZone>();
+        /// <summary>Marked trade-post and temple sites (Majesty 2 build zones).</summary>
+        public IReadOnlyList<BuildZone> Zones => _zones;
         public int UnclearedLairCount
         {
             get
@@ -72,6 +75,7 @@ namespace SolarMajesty
             if (_bake != null && _bake.BodyId != _body.Id) _bake = null;
             _nodes.Clear();
             _lairs.Clear();
+            _zones.Clear();
             ClearTintCache();
             _water.Clear();
 
@@ -101,12 +105,13 @@ namespace SolarMajesty
             SpawnRocks(rng, placed);
             SpawnResourceNodes(rng, placed);
             SpawnLairs(rng, placed);
+            SpawnBuildZones(rng, placed);
 
             Debug.Log(
                 $"[WorldGen] {_body.DisplayName} seed={seed} " +
                 $"craters={_body.CraterCount} lakes={_body.LakeCount} rivers={_body.RiverCount} " +
                 $"forests={_body.ForestPatchCount} dunes={_body.DuneCount} rocks={_body.RockCount} " +
-                $"nodes={_nodes.Count} lairs={_lairs.Count}");
+                $"nodes={_nodes.Count} lairs={_lairs.Count} zones={_zones.Count}");
         }
 
         public void SpawnLairStalkers(Transform threatParent)
@@ -973,6 +978,71 @@ namespace SolarMajesty
                 _lairs.Add(lair);
                 placed.Add(pos);
             }
+        }
+
+        /// <summary>
+        /// One zone per configured distance band, so the trade-post choice is always a spread of
+        /// safe-and-poor to far-and-rich. Placed on dry land, clear of dens and each other.
+        /// </summary>
+        private void SpawnBuildZones(System.Random rng, List<Vector3> placed)
+        {
+            var rules = _loop != null ? _loop.ZoneRules : null;
+            if (rules == null || !rules.enabled) return;
+            PlaceZones(rng, placed, rules.tradePostBands, BuildZoneKind.TradePost, rules.zoneRadius);
+            PlaceZones(rng, placed, rules.mineBands, BuildZoneKind.Mine, rules.zoneRadius);
+            PlaceZones(rng, placed, rules.templeBands, BuildZoneKind.Temple, rules.zoneRadius);
+        }
+
+        private void PlaceZones(
+            System.Random rng, List<Vector3> placed, ZoneBand[] bands, BuildZoneKind kind, float radius)
+        {
+            if (bands == null) return;
+            float maxX = _grid != null ? _grid.WorldWidth - 8f : 370f;
+            float maxZ = _grid != null ? _grid.WorldHeight - 8f : 370f;
+            for (int b = 0; b < bands.Length; b++)
+            {
+                float lo = Mathf.Max(radius + 4f, bands[b].minMeters);
+                float hi = Mathf.Max(lo + 1f, bands[b].maxMeters);
+                bool done = false;
+                for (int attempt = 0; attempt < 120 && !done; attempt++)
+                {
+                    float ang = (float)rng.NextDouble() * Mathf.PI * 2f;
+                    float d = Mathf.Lerp(lo, hi, (float)rng.NextDouble());
+                    var origin = ColonyLayout.CampusOrigin;
+                    var pos = new Vector3(origin.x + Mathf.Cos(ang) * d, 0f, origin.z + Mathf.Sin(ang) * d);
+                    if (pos.x < 4f || pos.z < 4f || pos.x > maxX || pos.z > maxZ) continue;
+                    if (IsOverWater(pos, radius)) continue;
+                    if (FlatDist(pos, ColonyLayout.CampusBOrigin) < radius + 10f) continue;
+
+                    bool clear = true;
+                    for (int i = 0; i < placed.Count && clear; i++)
+                        clear = FlatDist(pos, placed[i]) >= radius + 6f;
+                    if (!clear) continue;
+
+                    var center = new Vector3(pos.x, GroundY(pos), pos.z);
+                    _zones.Add(new BuildZone { Kind = kind, Center = center, Radius = radius });
+                    placed.Add(pos);
+                    if (kind == BuildZoneKind.Mine) SpawnMineDeposit(rng, center, b);
+                    done = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// The ore indicator at the middle of a mine zone: a rich nuclear (fissile) deposit, or
+        /// metals on alternate sites. Extract flags can strip it; the mine goes on top.
+        /// </summary>
+        private void SpawnMineDeposit(System.Random rng, Vector3 center, int index)
+        {
+            var type = index % 2 == 0 ? ResourceNodeType.Fissile : ResourceNodeType.Metals;
+            int yield = type == ResourceNodeType.Fissile ? 26 + rng.Next(0, 12) : 40 + rng.Next(0, 20);
+            yield = Mathf.Max(8, Mathf.RoundToInt(yield * Mathf.Max(0.25f, _body.ExtractYieldScale)));
+            var go = new GameObject($"Deposit_{type}_{index}");
+            go.transform.SetParent(_worldRoot, false);
+            go.transform.position = center;
+            var node = go.AddComponent<ResourceNode>();
+            node.Configure(type, yield, 7f, _body.SoilNodeColor);
+            _nodes.Add(node);
         }
 
         private bool TrySample(
