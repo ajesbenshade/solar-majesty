@@ -125,6 +125,11 @@ namespace SolarMajesty.Tests
                 Assert.IsTrue(parts.Exists(p => PlanetArchitecture.IsRoofShell(p.Name)), "Mars hubs do author a dome");
                 PlanetArchitecture.StripRoofShells(parts);
                 Assert.IsFalse(parts.Exists(p => PlanetArchitecture.IsRoofShell(p.Name)));
+
+                var earth = PlanetArchitecture.Adapt(CelestialBodyId.Earth, ArchArchetype.Hub, 6f, 6f, 3f, 1);
+                Assert.IsTrue(earth.Exists(p => PlanetArchitecture.IsWindowBand(p.Name)), "Earth authors window bands");
+                PlanetArchitecture.StripRoofShells(earth);
+                Assert.IsFalse(earth.Exists(p => PlanetArchitecture.IsWindowBand(p.Name)), "no chopsticks through the kits");
             }
             finally
             {

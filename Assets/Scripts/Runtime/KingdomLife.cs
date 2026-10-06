@@ -123,8 +123,6 @@ namespace SolarMajesty
 
             // Rest / party rally still use InnOutpost coords even without a mesh.
             Marker(root, Inn(0), "Inn_RestBeacon", new Color(0.96f, 0.42f, 0.08f), emptyStart ? 0.55f : 1.15f);
-            Marker(root, ColonyLayout.PartySpawnB, "Outpost_RestBeacon",
-                new Color(0.25f, 0.85f, 0.92f), 0.5f);
 
             if (emptyStart) return;
 

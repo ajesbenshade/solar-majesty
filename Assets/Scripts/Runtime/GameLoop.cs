@@ -2103,13 +2103,8 @@ namespace SolarMajesty
             }
             else
             {
+                // The outpost claim is coordinates only; no disc on the ground (Majesty has none).
                 Placer.SeedOutpostClaim(origin, footprint, footprint);
-                _outpostBeacon = CampusDressing.DressClaimDisc(
-                    buildingRoot != null ? buildingRoot : transform,
-                    world,
-                    "DropZone_Outpost",
-                    new Color(0.22f, 0.72f, 0.86f),
-                    8.2f);
             }
         }
 
@@ -5444,7 +5439,7 @@ namespace SolarMajesty
                     float dz = at.z - ColonyLayout.CampusBOrigin.z;
                     if (dx * dx + dz * dz > 18f * 18f)
                     {
-                        LogOverseer("Outpost flag too far from the cyan disc.");
+                        LogOverseer("Outpost flag too far from the forward camp.");
                         return;
                     }
                     Settlement?.ClaimOutpost();
