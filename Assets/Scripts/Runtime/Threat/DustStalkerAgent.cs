@@ -110,6 +110,39 @@ namespace SolarMajesty
 
         public void Stun(float seconds) => ApplyStatus(StatusKind.Stun, 1f, seconds);
 
+        private readonly AfflictionClock _afflictClock = new AfflictionClock();
+        private static readonly List<FaunaAffliction> AfflictBuffer = new List<FaunaAffliction>(2);
+
+        /// <summary>
+        /// A landed bite may put this creature's affliction on the robot (and robots around it,
+        /// for area ones). Each affliction has its own cooldown per creature.
+        /// </summary>
+        private void TryAfflict(SpecialistAgent bitten)
+        {
+            var tuning = _loop != null ? _loop.FaunaAfflictions : null;
+            if (tuning == null || bitten == null || IsStunned) return;
+            tuning.For(Kind, IsElite, AfflictBuffer);
+            float now = Time.time;
+            for (int i = 0; i < AfflictBuffer.Count; i++)
+            {
+                var a = AfflictBuffer[i];
+                if (!_afflictClock.Ready(a, now)) continue;
+                bool any = bitten.Afflict(a);
+                if (a.aoeRadius > 0f && _loop != null)
+                {
+                    var all = _loop.Agents;
+                    for (int k = 0; k < all.Count; k++)
+                    {
+                        var r = all[k];
+                        if (r == null || r == bitten || r.IsIncapacitated) continue;
+                        if (Vector3.Distance(Flat(r.transform.position), Flat(bitten.transform.position)) > a.aoeRadius) continue;
+                        any |= r.Afflict(a);
+                    }
+                }
+                if (any) _afflictClock.Used(a, now);
+            }
+        }
+
         /// <summary>
         /// Damage from an orbital strike. A kill from orbit pays no hero bounty (Majesty: the
         /// ruler's spells earn heroes nothing); a survivor finished by a hero still pays.
@@ -748,6 +781,7 @@ namespace SolarMajesty
             }
 
             prey.ApplyDamage(biteDamagePerSecond * dt);
+            TryAfflict(prey);
             _stealTimer += dt;
             if (_stealTimer >= OverseerRules.JunkBotStealSeconds)
             {
@@ -1053,6 +1087,7 @@ namespace SolarMajesty
             prey.y = transform.position.y;
             transform.position = MoveFlatToward(prey, moveSpeed * 0.85f * dt);
             nearest.ApplyDamage(biteDamagePerSecond * dt);
+            TryAfflict(nearest);
             if (_clips == null) _clips = GetComponentInChildren<UnitClipPlayer>();
             if (_clips != null) _clips.NotifyStrike();
         }

@@ -98,6 +98,24 @@ namespace SolarMajesty
 
         public void Clear() => _active.Clear();
 
+        /// <summary>Harmful kinds: what a cleanse removes and what a shield blocks.</summary>
+        public static bool IsHarmful(StatusKind kind) =>
+            kind == StatusKind.Poison || kind == StatusKind.Burn || kind == StatusKind.Slow ||
+            kind == StatusKind.Stun || kind == StatusKind.Weaken;
+
+        /// <summary>Remove every harmful status. Returns how many were removed.</summary>
+        public int ClearHarmful()
+        {
+            int n = 0;
+            for (int i = _active.Count - 1; i >= 0; i--)
+            {
+                if (!IsHarmful(_active[i].Kind)) continue;
+                _active.RemoveAt(i);
+                n++;
+            }
+            return n;
+        }
+
         /// <summary>
         /// Advance timers. Returns the health change this step: damage-over-time negative,
         /// regen positive, delivered in whole-period ticks (a 2 s regen pays every 2 s).

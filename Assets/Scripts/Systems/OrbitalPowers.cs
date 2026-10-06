@@ -112,7 +112,7 @@ namespace SolarMajesty
                 description = "Locks every hostile in 6 m in place for 6 s.",
                 target = OrbitalTarget.Fauna, tier = 2, cost = 500, cooldownSeconds = 15f, radius = 6f, durationSeconds = 6f, area = true },
             new OrbitalPowerDef { id = OrbitalPowerId.MedDrop, displayName = "Med-Drop",
-                description = "Repair pod for one robot: +60% hull.",
+                description = "Repair pod for one robot: +60% hull, clears poison, slow and stun.",
                 target = OrbitalTarget.Robot, tier = 1, cost = 250, cooldownSeconds = 3f, radius = 6f, magnitude = 0.6f },
             new OrbitalPowerDef { id = OrbitalPowerId.AegisField, displayName = "Aegis Field",
                 description = "Shield projector. One robot takes no damage for 15 s.",

@@ -409,6 +409,10 @@ namespace SolarMajesty
         [SerializeField] private AbilityTuning abilityTuning = new AbilityTuning();
         public AbilityTuning Abilities => abilityTuning;
 
+        [Tooltip("Statuses creature bites put on robots (Majesty 2 monster attacks).")]
+        [SerializeField] private FaunaAfflictionTuning faunaAfflictions = new FaunaAfflictionTuning();
+        public FaunaAfflictionTuning FaunaAfflictions => faunaAfflictions;
+
         private OrbitalDirector _orbital;
         private OrbitalTargetingInput _orbitalInput;
         private KingdomThreatDirector _kingdomThreat;
@@ -3932,9 +3936,10 @@ namespace SolarMajesty
                 {
                     var a = NearestRobotAt(at, def.radius);
                     a.ReceiveHeal(def.magnitude);
+                    int cleansed = a.Statuses.ClearHarmful();
                     DemoVfx.OrbitalStrike(a.transform.position, new Color(0.45f, 1f, 0.55f), 1.5f);
                     DemoAudio.PlayHeal(a.transform.position);
-                    return $"{a.Record.Name} patched";
+                    return cleansed > 0 ? $"{a.Record.Name} patched and cleansed" : $"{a.Record.Name} patched";
                 }
                 case OrbitalPowerId.AegisField:
                 {

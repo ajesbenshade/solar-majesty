@@ -135,5 +135,24 @@ Ours (`AbilityTuning` on GameLoop): damage is seconds of the robot's normal stri
 | Terraformer (mage) | Thermal Lance x2 in 3 m + burn (1), Cryo Lock x3 + stun (3) |
 | Engineer (dwarf) | Weld Strike x3 (1) |
 
+## Monster attacks -> fauna afflictions (implemented)
+Majesty monster actions carry perks: zombie poison (area), rat plague, wolf "kicked" (area weaken), earth-elemental and lich stun, fire-elemental and dragon burn.
+
+Ours (`FaunaAfflictionTuning` on GameLoop): a landed bite can put a status on the robot, each with its own cooldown per creature.
+
+| Creature | Affliction | Majesty source |
+|---|---|---|
+| Stalker | Bleeding: 1.2% hull/s for 8 s | wolf plague bite |
+| Alpha stalker (extra) | Shaken: weaken 25% for 8 s, 5 m area | wolf area "kicked" |
+| Mite | Gnawed: weaken 20% for 8 s | rat plague |
+| Leech | Drained: slow 40% for 6 s | manaburn |
+| Wisp | Chilled: slow 50% for 5 s | elemental |
+| Tick | Poisoned: 0.8% hull/s for 10 s | spider / goblin poison |
+| Creeper | Entangled: slow 90% for 3 s | roots |
+| Hopper | Stunned 1.5 s | earth-elemental stun |
+| Junk bot | Corroded: 1% hull/s for 8 s | zombie poison |
+
+Damage-over-time adds about 8-10% hull per affliction on top of the bite. Aegis Field blocks afflictions, Med-Drop now also cleanses them, and going down clears them.
+
 ## Not yet used
-Monster perks (fauna poisoning or weakening robots), taunt, and summons. The Majesty data list is otherwise covered. `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.
+Taunt and summons. The Majesty data list is otherwise covered. `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.

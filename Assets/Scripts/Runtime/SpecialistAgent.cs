@@ -758,6 +758,7 @@ namespace SolarMajesty
 
             DropLevy("downed");
             DropDuty("downed", MajestyEconomy.Tuning.taxDropOnDown);
+            _statuses.Clear();
             _incapacitated = true;
             float recover = recoverySeconds > 0.01f ? recoverySeconds : OverseerRules.RecoverSeconds;
             _recoverTimer = recover;
@@ -1714,7 +1715,16 @@ namespace SolarMajesty
         public bool ApplyStatus(StatusKind kind, float magnitude, float duration, float period = 0f)
         {
             if (_scrapped || _incapacitated) return false;
+            if (IsShielded && StatusEffects.IsHarmful(kind)) return false; // Aegis Field blocks afflictions
             return _statuses.Apply(kind, magnitude, duration, period);
+        }
+
+        /// <summary>A creature's bite put a status on this robot.</summary>
+        public bool Afflict(in FaunaAffliction a)
+        {
+            if (!ApplyStatus(a.status, a.magnitude, a.duration, a.period)) return false;
+            if (!string.IsNullOrEmpty(a.label)) ShowRefusal(a.label);
+            return true;
         }
 
         private void TryStrikeAbility(DustStalkerAgent target)
