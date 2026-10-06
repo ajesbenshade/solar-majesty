@@ -110,6 +110,49 @@ namespace SolarMajesty
 
         public void Stun(float seconds) => ApplyStatus(StatusKind.Stun, 1f, seconds);
 
+        private ITauntTarget _taunter;
+        private float _tauntUntil;
+
+        /// <summary>Forced to attack <paramref name="by"/> for a while (Majesty 2 taunt).</summary>
+        public bool IsTaunted => _taunter != null && Time.time < _tauntUntil;
+
+        public void Taunt(ITauntTarget by, float seconds)
+        {
+            if (!IsAlive || by == null || seconds <= 0f) return;
+            _taunter = by;
+            _tauntUntil = Mathf.Max(_tauntUntil, Time.time + seconds);
+            _aggro = true;
+            _raiding = false;
+        }
+
+        /// <summary>Chase and bite the taunter, ignoring raids and other prey. False when not taunted.</summary>
+        private bool TickTaunted(float dt)
+        {
+            if (_taunter == null) return false;
+            if (Time.time >= _tauntUntil || !_taunter.TauntAlive)
+            {
+                _taunter = null;
+                return false;
+            }
+
+            _aggro = true;
+            _raiding = false;
+            _threat?.Report(_sourceId, aggroPressure);
+            Vector3 dest = _taunter.TauntPosition;
+            dest.y = transform.position.y;
+            if (Vector3.Distance(Flat(transform.position), Flat(dest)) > biteRange)
+            {
+                transform.position = MoveFlatToward(dest, moveSpeed * 1.15f * dt);
+                return true;
+            }
+
+            _taunter.TakeTauntBite(biteDamagePerSecond * dt);
+            if (_taunter is SpecialistAgent robot) TryAfflict(robot);
+            if (_clips == null) _clips = GetComponentInChildren<UnitClipPlayer>();
+            if (_clips != null) _clips.NotifyStrike();
+            return true;
+        }
+
         private readonly AfflictionClock _afflictClock = new AfflictionClock();
         private static readonly List<FaunaAffliction> AfflictBuffer = new List<FaunaAffliction>(2);
 
@@ -571,6 +614,12 @@ namespace SolarMajesty
             if (IsStunned)
             {
                 _threat.Report(_sourceId, idlePressure);
+                TickPresentation(dt);
+                return;
+            }
+            if (!_retreating && TickTaunted(dt))
+            {
+                TickDefeat(dt);
                 TickPresentation(dt);
                 return;
             }

@@ -154,5 +154,14 @@ Ours (`FaunaAfflictionTuning` on GameLoop): a landed bite can put a status on th
 
 Damage-over-time adds about 8-10% hull per affliction on top of the bite. Aegis Field blocks afflictions, Med-Drop now also cleanses them, and going down clears them.
 
-## Not yet used
-Taunt and summons. The Majesty data list is otherwise covered. `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.
+## Taunt and summons (implemented)
+Majesty: warrior / blademaster / paladin taunt is a x1.5 hit in 5 m, 15 s cooldown, that forces enemies to attack the taunter (warrior from level 5). The beastmaster summons a wolf (cap 1, 30 s; 300 HP vs its master's 30) and from level 10 a bear (cap 1, 45 s; 900 HP, with its own taunt). Dark priests summon skeletons (cap 3) and a lich.
+
+Ours:
+- Defense Mech "Challenge" (level 3): x1.5 in 5 m, 15 s cooldown; everything hit must attack the mech for 6 s, abandoning raids and other prey.
+- Courier "Escort Drone" (level 1, 30 s, cap 1): follows the courier, fights fauna within 10 m, 2 robot hulls, 8 dps.
+- Courier "Hauler Mech" (level 6, 45 s, cap 1): 5 hulls, 10 dps, taunts everything within 5 m every 15 s.
+- Engage buffs and summons now also fire whenever local danger reaches `threatLine` (0.35), so non-fighting classes like the Courier use them.
+- Companions power down after 90 s (Majesty summons last until killed; ours expire so they need no saving) or when their robot is scrapped. They have no collider, so they never steal selection clicks.
+
+Dark-priest skeletons and the lich are not mapped (no matching class). `perks.xml`, `unit_actions.xml` and `spells.xml` are unread in detail.

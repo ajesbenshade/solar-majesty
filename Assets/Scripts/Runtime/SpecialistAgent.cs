@@ -8,7 +8,7 @@ namespace SolarMajesty
     /// Thin runtime driver for one autonomous specialist.
     /// Decisions come only from SpecialistBrain — the player never path-commands this unit.
     /// </summary>
-    public class SpecialistAgent : MonoBehaviour
+    public class SpecialistAgent : MonoBehaviour, ITauntTarget
     {
         [Header("Data")]
         [SerializeField] private SpecialistData data;
@@ -59,6 +59,11 @@ namespace SolarMajesty
         /// <summary>Timed conditions on this robot: regen, armor, haste, stun immunity.</summary>
         public StatusEffects Statuses => _statuses;
         public string LastAbility { get; private set; }
+
+        // ITauntTarget: fauna forced onto this robot bite it like any other prey.
+        public Vector3 TauntPosition => transform.position;
+        public bool TauntAlive => !_scrapped && !_incapacitated;
+        public void TakeTauntBite(float amount) => ApplyDamage(amount);
         public HeroMotives Motives => _motives;
         private SimpleEconomy _economy;
         private BuildingPlacer _placer;
@@ -712,6 +717,8 @@ namespace SolarMajesty
 
             TickNeeds(dt);
             TickStatuses(dt);
+            if (bodyDanger >= (_loop?.Abilities?.threatLine ?? 2f))
+                TrySelfAbility(AbilityTrigger.Engage); // summons and battle buffs when trouble is near
             TickPayDuty();
             _motives.Tick(dt, _brain.Tuning, data.specialistClass, healthNormalized, bodyDanger,
                 _loop != null ? _loop.SafetyFieldAt(transform.position) : 0f);
@@ -1756,17 +1763,27 @@ namespace SolarMajesty
                 s.ApplyCombatDamage(StrikeDps(s.Kind) * a.damageMul);
             if (a.appliesStatus && s.IsAlive)
                 s.ApplyStatus(a.status, a.statusMagnitude, a.statusDuration, a.statusPeriod);
+            if (a.taunts && s.IsAlive)
+                s.Taunt(this, a.tauntDuration);
         }
 
         private void TrySelfAbility(AbilityTrigger trigger)
         {
             var t = _loop?.Abilities;
             if (t == null || data == null || _incapacitated || _statuses.Stunned) return;
-            if (!_abilities.TryPick(t, data.specialistClass, Level, trigger, null, Time.time, out var a)) return;
+            if (!_abilities.TryPick(t, data.specialistClass, Level, trigger, null, Time.time, out var a, CanUseSelf))
+                return;
             if (a.appliesStatus)
                 _statuses.Apply(a.status, a.statusMagnitude, a.statusDuration, a.statusPeriod);
+            if (!string.IsNullOrEmpty(a.summonId) && t.TryGetCompanion(a.summonId, out var companion))
+                CompanionDrone.Spawn(_loop, this, companion);
             UsedAbility(t, a, transform.position, new Color(0.55f, 0.85f, 1f));
         }
+
+        /// <summary>Summons respect their cap (Majesty i_cap): no new escort while one is still out.</summary>
+        private bool CanUseSelf(ClassAbilityDef a) =>
+            string.IsNullOrEmpty(a.summonId) ||
+            CompanionDrone.CountFor(this, a.summonId) < Mathf.Max(1, a.summonCap);
 
         private void TryAllyAbility(SpecialistAgent ally)
         {
