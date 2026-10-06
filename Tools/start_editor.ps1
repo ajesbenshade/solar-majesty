@@ -26,7 +26,8 @@ Write-Host "[solar-majesty] Opening Unity $version"
 Write-Host "[solar-majesty] Project: $Root"
 Write-Host "[solar-majesty] Scene:   $ScenePath"
 
-$args = @('-projectPath', $Root)
+# Windows PowerShell's Start-Process joins arguments with spaces and does not quote them.
+$args = @('-projectPath', "`"$Root`"")
 if ($Wait) {
   Start-Process -FilePath $UnityExe -WorkingDirectory (Split-Path $UnityExe) -ArgumentList $args -Wait
 } else {
