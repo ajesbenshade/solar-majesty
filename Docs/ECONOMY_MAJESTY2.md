@@ -13,7 +13,7 @@ treasury ──► buildings · flag rewards · hire fees · yard bills · resea
    │                         ▼
    │            heroes spend ──► Market · Blacksmith · Guild · Inn · Aid · Workshop tills
    │            daily tax    ──► Commons 50 · Market 250 · Farm 50 · houses 20+10/resident (≤50)
-   │            trade        ──► ship caravans 300–1,000 + ICE/REG sales ──► Market till
+   │            trade        ──► ship caravans 200–2,100 + ICE/REG sales ──► Market till
    │            mines        ──► Mine till
    │                         │
    └──── tax collectors (2 per Commons, 1 per Watchtower) walk tills home
@@ -31,7 +31,7 @@ Gold dropped in a Commons or Watchtower till is already home and goes straight t
 | Collector settings: min to collect / min to return | `CollectMinimum` 40, `ReturnAt` 300 |
 | Collectors can be robbed | A pest within 2.6 m snatches half the bag |
 | Palace 50/day, Marketplace 250/day, houses 20–50/day | `DailyTax`, `HousesDailyTax`; one day = 60 s |
-| Trading-post caravans 300–1,000 by distance | Pad landing pays `CaravanGold(pad→market m)` into the Market till |
+| Trading-post caravans 200–2,100 by distance (Majesty `caravans.set`: 100 + 4 per unit) | Pad landing pays `CaravanGold(pad→market m)` into the Market till; mines use the same curve from the Commons. Metres → Majesty units via `EconomyTuning.caravanDistanceScale` (2.5) |
 | Extra building of a type = 150% of the last, round up to 10 | `BuildingPlacer.CostFor` (housing, power, farms, mines, camps, junctions stay flat) |
 | Hire cost per hero | Workshop charges `HireCost` when it fabricates (waits if the treasury is short) |
 | Resurrection = hire + ½ hire per level gained | `OverseerRules.YardBill(level, class)` |

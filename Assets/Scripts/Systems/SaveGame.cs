@@ -225,6 +225,8 @@ namespace SolarMajesty
         public int claimedFlagIndex = -1;
         /// <summary>HAB tax the Courier is carrying to Commons. Distinct from personal credits.</summary>
         public int levyCarry;
+        /// <summary>Guild tax carried but not yet handed in.</summary>
+        public int dutyCarry;
         public int level = 1;
         public int xp;
         public int suit;

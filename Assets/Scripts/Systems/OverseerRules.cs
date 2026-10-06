@@ -185,9 +185,9 @@ namespace SolarMajesty
         /// </summary>
         public static int GreedAsk(SpecialistData data)
         {
-            if (data == null) return Mathf.CeilToInt(18f * MajestyEconomy.GoldScale);
+            if (data == null) return Mathf.CeilToInt(SpecialistBrainTuning.Active.gateBase * MajestyEconomy.GoldScale);
             // The brain judges bounties in 1/10 units (MajestyEconomy.ToBrain); the ask is in CRED.
-            return Mathf.Max(1, Mathf.CeilToInt((18f + data.baseGreed * 95f) * 0.78f * MajestyEconomy.GoldScale));
+            return Mathf.Max(1, Mathf.CeilToInt(SpecialistBrainTuning.Active.GateBounty(data.baseGreed) * MajestyEconomy.GoldScale));
         }
 
         public static float StackShare(int rank)

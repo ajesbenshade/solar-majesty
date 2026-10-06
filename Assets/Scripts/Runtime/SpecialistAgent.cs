@@ -52,6 +52,8 @@ namespace SolarMajesty
 
         private FlagManager _flags;
         private SpecialistBrain _brain;
+        private readonly HeroMotives _motives = new HeroMotives();
+        public HeroMotives Motives => _motives;
         private SimpleEconomy _economy;
         private BuildingPlacer _placer;
         private CampusNavMesh _navMesh;
@@ -100,6 +102,7 @@ namespace SolarMajesty
         private float _workshopRepairCooldown;
         private bool _innPaid;
         private int _levyCarry;
+        private readonly DutyPurse _duty = new DutyPurse();
 
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
@@ -116,6 +119,9 @@ namespace SolarMajesty
         public ShopItemId EquippedAccessory => equippedAccessory;
         public ShopItemId EquippedWeapon => equippedWeapon;
         public int LevyCarried => _levyCarry;
+        /// <summary>Guild tax carried but not yet handed in.</summary>
+        public int DutyCarry => _duty.Carry;
+        public void RestoreDutyCarry(int amount) => _duty.Restore(amount);
         public int Level => Mathf.Clamp(level, 1, OverseerRules.LevelCap);
         public int Xp => Mathf.Max(0, xp);
         public int ReviveCount => Mathf.Max(0, reviveCount);
@@ -236,8 +242,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Hero earns gold. Majesty 2: half of every earning is taxed into the hero's guild
-        /// (workshop) till — Commons if the workshop is gone — for a tax collector to carry home.
+        /// Hero earns gold. Majesty 2: half of every earning is guild tax. With tax carry on the
+        /// hero holds it until the purse is full, then walks it to the guild (workshop) till —
+        /// Commons if the workshop is gone — for a tax collector to carry home.
         /// </summary>
         public void EarnCredits(float amount, string reason = null, bool taxed = true)
         {
@@ -246,12 +253,15 @@ namespace SolarMajesty
             if (tax > 0)
             {
                 var till = GuildTill();
-                if (till != null)
+                if (till == null)
+                    tax = 0;
+                else if (MajestyEconomy.Tuning.taxCarryEnabled)
+                    _duty.Add(tax);
+                else
                 {
                     till.AccrueLevy(tax);
                     _loop?.NoteGuildTax(tax);
                 }
-                else tax = 0;
             }
             float kept = amount - tax;
             credits += kept;
@@ -480,6 +490,7 @@ namespace SolarMajesty
             _recoverTimer = 0f;
             healthNormalized = 1f;
             fatigue = 0.1f;
+            _motives.Reset();
             _status = "revived";
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
@@ -493,6 +504,7 @@ namespace SolarMajesty
             _recoverTimer = 0f;
             healthNormalized = OverseerRules.ReviveHp;
             fatigue = OverseerRules.ReviveFatigue;
+            _motives.Reset();
             _status = "field_revive";
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
@@ -542,6 +554,7 @@ namespace SolarMajesty
             _world = world;
             _loop = FindAnyObjectByType<GameLoop>();
             fatigue = 0.1f;
+            _motives.Reset();
             healthNormalized = 1f;
             greedHunger = 0.55f;
             credits = 20f;
@@ -675,6 +688,9 @@ namespace SolarMajesty
             }
 
             TickNeeds(dt);
+            TickPayDuty();
+            _motives.Tick(dt, _brain.Tuning, data.specialistClass, healthNormalized, bodyDanger,
+                _loop != null ? _loop.SafetyFieldAt(transform.position) : 0f);
             TickRadiation(dt);
             TickGene(dt);
             TickMedic(dt);
@@ -717,6 +733,7 @@ namespace SolarMajesty
             }
 
             DropLevy("downed");
+            DropDuty("downed", MajestyEconomy.Tuning.taxDropOnDown);
             _incapacitated = true;
             float recover = recoverySeconds > 0.01f ? recoverySeconds : OverseerRules.RecoverSeconds;
             _recoverTimer = recover;
@@ -742,6 +759,7 @@ namespace SolarMajesty
             _activeFlag = null;
             SetWorkplace(null);
             DropLevy("scrapped");
+            DropDuty("scrapped", 1f);
             int salvage = Mathf.FloorToInt(credits * OverseerRules.SalvageCreditFrac);
             credits = 0f;
             if (_levyCarry > 0)
@@ -855,6 +873,7 @@ namespace SolarMajesty
                 if (lead != null && lead.IsAlive)
                     decision = FollowLeader(lead);
             }
+            _motives.NoteDecision(_brain.Tuning, decision.Action, decision.TargetFlag?.RuntimeId, Time.time);
             ApplyDecision(decision);
             SyncWorkplace(decision);
         }
@@ -997,6 +1016,9 @@ namespace SolarMajesty
                 }
             }
 
+            var dutyTill = _duty.WantsToPay(MajestyEconomy.Tuning) ? GuildTill() : null;
+            if (dutyTill != null && !dutyTill.IsAlive) dutyTill = null;
+
             float hunger = Mathf.Clamp01(greedHunger + ReplayRules.GreedHungerBias);
             if (_loop != null && _loop.Resources != null &&
                 _loop.Resources.Get(ResourceId.Metals) < OverseerRules.ThinMetals)
@@ -1029,6 +1051,9 @@ namespace SolarMajesty
                 RepairDistance = repairDist,
                 RepairNeed = repairNeed,
                 CourageEffective = EffectiveCourage,
+                Motives = _motives,
+                HasDutyWalk = dutyTill != null,
+                DutyPosition = dutyTill != null ? dutyTill.WorldPosition : Vector3.zero,
                 Level = Level,
                 HasLevyWalk = hasLevy,
                 LevyPosition = levyPos,
@@ -1486,6 +1511,34 @@ namespace SolarMajesty
             _status = Workplace.LaserArmed ? "tower_lasers" : "posted_watch";
         }
 
+        private void DropDuty(string reason, float fraction)
+        {
+            int lost = _duty.Drop(fraction);
+            if (lost > 0)
+                _loop?.LogOverseer($"{Record.Name} {reason} — {lost} EU of guild tax lost.");
+        }
+
+        /// <summary>
+        /// Hand carried tax in at the guild till. Happens on a pay-duty walk, or whenever the
+        /// hero passes its guild with tax in hand.
+        /// </summary>
+        private void TickPayDuty()
+        {
+            if (_duty.Carry <= 0 || _incapacitated || _scrapped) return;
+            var t = MajestyEconomy.Tuning;
+            var till = GuildTill();
+            if (till == null || !till.IsAlive) return;
+            if (FlatDistance(transform.position, till.WorldPosition) > Mathf.Max(1f, t.taxPayArrive) + 1.5f)
+                return;
+            int paid = _duty.Pay();
+            till.AccrueLevy(paid);
+            _loop?.NoteGuildTax(paid);
+            _status = "duty_paid";
+            DemoVfx.ClaimRing(transform.position, new Color(0.96f, 0.78f, 0.22f));
+            if (_lastDecision.Reason == "pay_duty")
+                _thinkTimer = 0f; // decide what to do next right away
+        }
+
         private void DropLevy(string reason)
         {
             if (_levyCarry <= 0) return;
@@ -1507,6 +1560,7 @@ namespace SolarMajesty
             if (_shopCooldown > 0f || data == null) return;
             if (Workplace == null || !Workplace.IsAlive || !Workplace.IsGuild) return;
             if (FlatDistance(transform.position, Workplace.WorldPosition) > 6f) return;
+            if (MajestyEconomy.Tuning.ShopPriorityFor(data.specialistClass).armor == ShopNeed.Min) return;
             var item = ShopCatalog.BestGuildUpgrade(data.specialistClass, Mathf.FloorToInt(credits), equippedSuit);
             if (item != null)
                 TryBuy(item, Workplace);
@@ -1519,7 +1573,8 @@ namespace SolarMajesty
             var market = _loop.Village.NearestByCategory(transform.position, 6f, BuildingCategory.Market);
             if (market == null) return;
             var item = ShopCatalog.PreferredMarketBuy(
-                data.specialistClass, Mathf.FloorToInt(credits), healthNormalized, equippedAccessory);
+                data.specialistClass, Mathf.FloorToInt(credits), healthNormalized, equippedAccessory,
+                MajestyEconomy.Tuning.ShopPriorityFor(data.specialistClass));
             if (item != null)
                 TryBuy(item, market);
         }
@@ -1531,7 +1586,8 @@ namespace SolarMajesty
             var smith = _loop.Village.NearestByCategory(transform.position, 6f, BuildingCategory.Blacksmith);
             if (smith == null) return;
             var item = ShopCatalog.BestBlacksmithBuy(
-                data.specialistClass, Mathf.FloorToInt(credits), equippedSuit, equippedWeapon);
+                data.specialistClass, Mathf.FloorToInt(credits), equippedSuit, equippedWeapon,
+                MajestyEconomy.Tuning.ShopPriorityFor(data.specialistClass));
             if (item != null)
                 TryBuy(item, smith);
         }

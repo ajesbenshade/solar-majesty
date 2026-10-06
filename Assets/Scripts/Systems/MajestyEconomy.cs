@@ -104,8 +104,8 @@ namespace SolarMajesty
 
         /// <summary>
         /// A mine is the Majesty trading post: each day it refines a load of nuclear fuel worth
-        /// more energy the farther it sits from the Commons (300–1,000), and a tax collector has
-        /// to walk that load home past whatever lives in between.
+        /// more energy the farther it sits from the Commons (the caravan curve, 200-2,100), and a
+        /// tax collector has to walk that load home past whatever lives in between.
         /// </summary>
         public static int MineDailyEnergy(float metersFromCommons) => CaravanGold(metersFromCommons);
 
@@ -139,24 +139,45 @@ namespace SolarMajesty
 
         // ------------------------------------------------------------------ trading post / caravans
 
-        /// <summary>Gold a landed ship's cargo is worth at the Market (Majesty caravan: 300–1,000).</summary>
+        /// <summary>Starting caravan value before the first route is measured.</summary>
         public const int CaravanGoldBase = 300;
 
-        /// <summary>Bonus per 10 m between pad and market (longer route, richer caravan).</summary>
-        public const int CaravanGoldPer10m = 60;
-
-        public const int CaravanGoldMax = 1000;
-
-        public static int CaravanGold(float padToMarketMeters)
-        {
-            int bonus = Mathf.FloorToInt(Mathf.Max(0f, padToMarketMeters) / 10f) * CaravanGoldPer10m;
-            return Mathf.Clamp(CaravanGoldBase + bonus, CaravanGoldBase, CaravanGoldMax);
-        }
+        /// <summary>
+        /// Gold a caravan (or a mine's daily load) is worth for a route of this length. Majesty 2
+        /// caravans.set: 100 + 4 per map unit, 200 at the short end and 2,100 at the long end,
+        /// with our metres scaled to Majesty units by <see cref="EconomyTuning.caravanDistanceScale"/>.
+        /// </summary>
+        public static int CaravanGold(float routeMeters) => Tuning.CaravanGoldFor(routeMeters);
 
         // ------------------------------------------------------------------ building prices
 
-        /// <summary>Majesty 2 price of the first building of a category.</summary>
+        /// <summary>Live tuning (Inspector). Set through <see cref="ApplyTuning"/>; defaults reproduce the Majesty 2 table.</summary>
+        public static EconomyTuning Tuning { get; private set; } = new EconomyTuning();
+
+        public static void ApplyTuning(EconomyTuning tuning) => Tuning = tuning ?? new EconomyTuning();
+
+        /// <summary>
+        /// Price of the first building of a category: the Majesty 2 table (or the Inspector
+        /// override), times the cost scale, rounded up to 10 when scaled.
+        /// </summary>
         public static int BuildingCost(BuildingCategory cat)
+        {
+            int cost = BaseBuildingCost(cat);
+            var overrides = Tuning.buildingCostOverrides;
+            if (overrides != null)
+            {
+                for (int i = 0; i < overrides.Length; i++)
+                {
+                    if (overrides[i].category == cat) { cost = overrides[i].cost; break; }
+                }
+            }
+
+            float scale = Tuning.buildingCostScale;
+            if (Mathf.Approximately(scale, 1f) || cost <= 0) return cost;
+            return Mathf.Max(10, Mathf.CeilToInt(cost * scale / 10f) * 10);
+        }
+
+        private static int BaseBuildingCost(BuildingCategory cat)
         {
             switch (cat)
             {
@@ -199,7 +220,7 @@ namespace SolarMajesty
         /// first building, rounded up to the nearest 10" — compounding (500 → 750 → 1,130).
         /// Housing, power, farms, camps, and junctions are infrastructure and stay flat.
         /// </summary>
-        public const float DuplicateMultiplier = 1.5f;
+        public static float DuplicateMultiplier => Tuning.duplicateMultiplier;
 
         public static bool ScalesWithCount(BuildingCategory cat)
         {

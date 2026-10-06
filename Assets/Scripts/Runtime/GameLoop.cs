@@ -182,7 +182,7 @@ namespace SolarMajesty
         public void ApplyReplayToBrain()
         {
             if (Brain == null) return;
-            Brain.ConsiderRange = 80f * Mathf.Clamp(ReplayRules.ConsiderRangeScale, 0.8f, 1.55f);
+            Brain.ConsiderRangeScale = Mathf.Clamp(ReplayRules.ConsiderRangeScale, 0.8f, 1.55f);
         }
 
         private OverseerScoreInput BuildScoreInput()
@@ -391,6 +391,19 @@ namespace SolarMajesty
         private string _stillLeftoverNote = "none";
         private Transform _threatRoot;
         private float _constructionTick;
+
+        [Header("Tuning (Inspector)")]
+        [SerializeField] private SpecialistBrainTuning brainTuning = new SpecialistBrainTuning();
+        [SerializeField] private EconomyTuning economyTuning = new EconomyTuning();
+        [Tooltip("Majesty 2-style spawn table: town burrows, boss raiders and wreck junk by kingdom value.")]
+        [SerializeField] private KingdomThreatTuning kingdomThreat = new KingdomThreatTuning();
+
+        private KingdomThreatDirector _kingdomThreat;
+        private readonly List<KingdomSpawnRequest> _kingdomRequests = new List<KingdomSpawnRequest>();
+        private readonly Dictionary<int, List<DustStalkerAgent>> _kingdomSpawns =
+            new Dictionary<int, List<DustStalkerAgent>>();
+        private readonly HashSet<int> _kingdomAnnounced = new HashSet<int>();
+        private int _heroDeaths;
         private readonly SimClock _sim = new SimClock();
         private AdaptiveMusic _music;
         private double _playSeconds;
@@ -1523,9 +1536,7 @@ namespace SolarMajesty
                 var kind = Brain.ExplainFlag(ctx, flag, agent.BodyDanger);
                 if (kind == FlagRefusalKind.WouldTake) continue;
                 float dist = FlatDist(agent.transform.position, flag.WorldPosition);
-                float consider = 40f + agent.Data.explorePreference * 35f;
-                if (Brain.ConsiderRange > 0f)
-                    consider = Mathf.Max(consider, Brain.ConsiderRange * 0.7f);
+                float consider = Brain.ConsiderDistance(agent.Data);
                 if (dist > consider) continue;
                 string chip = kind switch
                 {
@@ -2105,6 +2116,7 @@ namespace SolarMajesty
             TickEmptyRosterFail(dt);
             TickFlagInterest(dt);
             TickCampusEcology(dt);
+            TickKingdomThreat(dt);
             TickCampusBoard(dt);
 
             _constructionTick += dt;
@@ -2405,11 +2417,17 @@ namespace SolarMajesty
                 };
             }
 
-            Brain = new SpecialistBrain();
+            SpecialistBrainTuning.Active = brainTuning ??= new SpecialistBrainTuning();
+            MajestyEconomy.ApplyTuning(economyTuning ??= new EconomyTuning());
+            Brain = new SpecialistBrain { Tuning = brainTuning };
+            _kingdomThreat = new KingdomThreatDirector(kingdomThreat ??= new KingdomThreatTuning());
+            _kingdomSpawns.Clear();
+            _kingdomAnnounced.Clear();
+            _heroDeaths = 0;
             ApplyReplayToBrain();
             // Mines are the trade posts now; no supply ships land with cargo.
-            Economy = new SimpleEconomy(Resources) { ResupplyEnabled = false };
-            float resupply = 90f * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
+            Economy = new SimpleEconomy(Resources, economyTuning) { ResupplyEnabled = false };
+            float resupply = economyTuning.resupplyBaseSeconds * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
             int fee = _body != null ? Mathf.Max(0, _body.ResupplyDockFee) : 0;
             Economy.ConfigureResupply(resupply, fee);
             Settlement = new Settlement(Resources);
@@ -3623,6 +3641,144 @@ namespace SolarMajesty
             TrySpawnCampusFauna();
         }
 
+        /// <summary>
+        /// Kingdom spawn table (Majesty 2 global spawn settings): as the colony grows, burrows open
+        /// inside town, alpha raiders walk in from the edge, and wrecks keep spawning junk after a death.
+        /// Unlike campus ecology this keeps running after the dens are cleared.
+        /// </summary>
+        private void TickKingdomThreat(float dt)
+        {
+            if (_kingdomThreat == null || Threat == null || !spawnDustStalkers) return;
+            if (DemoSettings.FirstHourDemo || InFaunaGrace) return;
+            _kingdomThreat.SetTuning(kingdomThreat);
+
+            _kingdomThreat.Tick(dt, KingdomValue, _heroDeaths, KingdomAlive, _kingdomRequests);
+            for (int r = 0; r < _kingdomRequests.Count; r++)
+            {
+                var req = _kingdomRequests[r];
+                for (int n = 0; n < req.Count; n++)
+                {
+                    if (!TryKingdomSpawnPoint(req.Site, out Vector3 at)) break;
+                    var agent = SpawnFaunaAt(req.Kind, at);
+                    if (agent == null) break;
+                    if (req.Elite)
+                        agent.MakeElite(kingdomThreat.eliteHealthMul, kingdomThreat.eliteBiteMul,
+                            kingdomThreat.eliteScaleMul, kingdomThreat.eliteRewardMul);
+                    if (!_kingdomSpawns.TryGetValue(req.EntryIndex, out var list))
+                        _kingdomSpawns[req.EntryIndex] = list = new List<DustStalkerAgent>();
+                    list.Add(agent);
+                    AnnounceKingdomSpawn(req, agent);
+                }
+            }
+        }
+
+        private bool IsKingdomSpawn(DustStalkerAgent agent)
+        {
+            foreach (var list in _kingdomSpawns.Values)
+                if (list.Contains(agent)) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Majesty 2 city value: the weighted sum of standing buildings (Commons 1, guild 0.5,
+        /// houses and producers 0). Drives the kingdom spawn table.
+        /// </summary>
+        public float KingdomValue
+        {
+            get
+            {
+                if (Village == null || kingdomThreat == null) return 0f;
+                float v = 0f;
+                var list = Village.Structures;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    var s = list[i];
+                    if (s != null && s.IsAlive) v += kingdomThreat.WorthOf(s.Category).kingdomValue;
+                }
+                return v;
+            }
+        }
+
+        /// <summary>Safety field (0..1) from nearby buildings: heroes feel safe near the Commons and guilds.</summary>
+        public float SafetyFieldAt(Vector3 pos)
+        {
+            if (Village == null || kingdomThreat == null) return 0f;
+            float field = 0f;
+            var list = Village.Structures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                field += kingdomThreat.SafetyFrom(s.Category, FlatDist(pos, s.WorldPosition));
+                if (field >= 1f) return 1f;
+            }
+            return field;
+        }
+
+        private int KingdomAlive(int entry)
+        {
+            if (!_kingdomSpawns.TryGetValue(entry, out var list)) return 0;
+            list.RemoveAll(a => a == null || !a.IsAlive);
+            return list.Count;
+        }
+
+        private void AnnounceKingdomSpawn(KingdomSpawnRequest req, DustStalkerAgent agent)
+        {
+            if (req.Site == KingdomSpawnSite.ColonyEdge)
+            {
+                LogOverseer($"{agent.RoleLabel} sighted at the colony edge — post Clear Threat.");
+                return;
+            }
+            if (!_kingdomAnnounced.Add(req.EntryIndex)) return;
+            LogOverseer(req.Site == KingdomSpawnSite.Burrow
+                ? $"The colony has grown — {agent.RoleLabel.ToLowerInvariant()}s are burrowing in town."
+                : "Wrecks are drawing junk bots to the yard.");
+        }
+
+        private bool TryKingdomSpawnPoint(KingdomSpawnSite site, out Vector3 at)
+        {
+            at = ColonyLayout.CampusOrigin;
+            if (site == KingdomSpawnSite.Scrapyard)
+            {
+                Vector2 j = Random.insideUnitCircle * 2.2f;
+                at = ScrapyardPosition() + new Vector3(j.x, 0f, j.y);
+                return true;
+            }
+
+            if (Village == null) return false;
+            var list = Village.Structures;
+            int alive = 0;
+            float far = 0f;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                alive++;
+                far = Mathf.Max(far, FlatDist(s.WorldPosition, ColonyLayout.CampusOrigin));
+            }
+            if (alive == 0) return false;
+
+            Vector2 dir = Random.insideUnitCircle.normalized;
+            if (dir.sqrMagnitude < 0.01f) dir = Vector2.up;
+            if (site == KingdomSpawnSite.ColonyEdge)
+            {
+                at = ColonyLayout.CampusOrigin +
+                     new Vector3(dir.x, 0f, dir.y) * (far + kingdomThreat.edgeSpawnDistance);
+                return true;
+            }
+
+            int pick = Random.Range(0, alive);
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                if (pick-- > 0) continue;
+                at = s.WorldPosition + new Vector3(dir.x, 0f, dir.y) * kingdomThreat.burrowSpawnDistance;
+                return true;
+            }
+            return false;
+        }
+
         private void RetreatCampusFauna()
         {
             bool any = false;
@@ -3632,6 +3788,7 @@ namespace SolarMajesty
                 var s = _stalkers[i];
                 if (s == null || !s.IsAlive) continue;
                 if (!DustStalkerAgent.IsCampusPest(s.Kind)) continue;
+                if (IsKingdomSpawn(s)) continue; // town burrows outlive the dens
                 string label = (s.RoleLabel ?? s.Kind.ToString()).ToLowerInvariant();
                 if (!names.Contains(label)) names.Add(label);
                 s.BeginRetreat();
@@ -5105,6 +5262,7 @@ namespace SolarMajesty
                     downedTimer = a.RecoverSecondsLeft,
                     claimedFlagIndex = IndexOfSavedFlag(a.ActiveFlag, Flags),
                     levyCarry = a.LevyCarry,
+                    dutyCarry = a.DutyCarry,
                     level = a.Level,
                     xp = a.Xp,
                     suit = (int)a.EquippedSuit,
@@ -5444,6 +5602,7 @@ namespace SolarMajesty
                 }
                 agent.RestoreCombatState(s.health, s.fatigue, s.credits, s.downed, s.downedTimer);
                 agent.RestoreLevyCarry(s.levyCarry);
+                agent.RestoreDutyCarry(s.dutyCarry);
                 agent.BindNavMesh(_campusNav);
                 RemoveCorpse(cls);
                 _pendingVeterans.Remove(cls);
@@ -6155,17 +6314,19 @@ namespace SolarMajesty
         public void NoteMechDeath(Vector3 world)
         {
             _lastMechDeathAt = Time.time;
+            _heroDeaths++;
             TrySpawnJunkBot(world);
         }
 
-        public void OnFaunaKilled(FaunaKind kind, Vector3 world)
+        public void OnFaunaKilled(FaunaKind kind, Vector3 world, float rewardMul = 1f)
         {
             var killer = NearestLivingAgent(world, 18f);
             if (killer == null) return;
-            int purse = OverseerRules.KillPurse(kind);
+            rewardMul = Mathf.Max(1f, rewardMul);
+            int purse = Mathf.RoundToInt(OverseerRules.KillPurse(kind) * rewardMul);
             if (purse > 0)
                 killer.EarnCredits(purse, kind.ToString());
-            killer.GrantXp(OverseerRules.XpForFauna(kind), kind.ToString());
+            killer.GrantXp(Mathf.RoundToInt(OverseerRules.XpForFauna(kind) * rewardMul), kind.ToString());
         }
 
         private ColonyStructure FindWorkshopFor(SpecialistClass cls)
@@ -6315,7 +6476,7 @@ namespace SolarMajesty
                 }
             }
 
-            float resupply = 90f * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
+            float resupply = Economy.Tuning.resupplyBaseSeconds * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
             resupply *= Mathf.Max(0.4f, _tech.ResupplyIntervalScale);
             resupply *= Mathf.Max(0.4f, ReplayRules.ResupplyIntervalScale);
             resupply *= courier;

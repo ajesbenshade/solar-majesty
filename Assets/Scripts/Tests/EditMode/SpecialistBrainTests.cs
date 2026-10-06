@@ -6,9 +6,8 @@ namespace SolarMajesty.Tests
 {
     /// <summary>
     /// Characterisation tests. These lock the CURRENT behaviour of SpecialistBrain scoring so a
-    /// refactor elsewhere cannot silently move the greed gate. ScoreFlag is frozen by design rule —
-    /// if one of these fails, the scoring changed and that needs explicit design sign-off, not a
-    /// test update.
+    /// refactor elsewhere cannot silently move the greed gate. Scoring curves are tunable via
+    /// SpecialistBrainTuning; these assert the shipped defaults (distance exponent 1.5).
     /// </summary>
     public class SpecialistBrainTests
     {
@@ -92,7 +91,7 @@ namespace SolarMajesty.Tests
 
         /// <summary>
         /// Hand-computed from ScoreFlag: greed 0.3*(0.55+0.6*0.7)=0.291, preference 0.5*0.9=0.45,
-        /// distance penalty clamp01(10/45)*0.55=0.1222222. No risk, crowd, or fatigue.
+        /// distance penalty (10/45)^1.5*0.55=0.0576161. No risk, crowd, or fatigue.
         /// </summary>
         [Test]
         public void ScoreFlag_UnderpaidBuildFlag_ScoresExactly()
@@ -104,10 +103,10 @@ namespace SolarMajesty.Tests
 
             brain.WouldTakeFlag(ctx, flag, 0f, out float score);
 
-            Assert.AreEqual(0.6187778f, score, Tol);
+            Assert.AreEqual(0.6833839f, score, Tol);
         }
 
-        /// <summary>Same flag at a bounty that clears the gate: 0.59*0.97 + 0.45 - 0.1222222.</summary>
+        /// <summary>Same flag at a bounty that clears the gate: 0.59*0.97 + 0.45 - 0.0576161.</summary>
         [Test]
         public void ScoreFlag_PaidBuildFlag_ScoresExactly()
         {
@@ -118,7 +117,7 @@ namespace SolarMajesty.Tests
 
             brain.WouldTakeFlag(ctx, flag, 0f, out float score);
 
-            Assert.AreEqual(0.9000778f, score, Tol);
+            Assert.AreEqual(0.9646839f, score, Tol);
         }
 
         [Test]
@@ -321,6 +320,92 @@ namespace SolarMajesty.Tests
             brain.WouldTakeFlag(ctx, flag, 1f, out float dangerous);
 
             Assert.Greater(calm, dangerous);
+        }
+
+        // ---------------------------------------------------------------
+        // Non-linear pacing: distance, threat, survival
+        // ---------------------------------------------------------------
+
+        [Test]
+        public void DistancePenalty_IsConvex_NearFlagsCheapFarFlagsSteep()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeSpecialist());
+            float S(float d)
+            {
+                brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), Gold(60f), new Vector3(d, 0f, 0f)), 0f, out float s);
+                return s;
+            }
+
+            float drop1 = S(0f) - S(15f);
+            float drop2 = S(15f) - S(30f);
+            Assert.Greater(drop2, drop1, "second 15 m must cost more than the first");
+        }
+
+        [Test]
+        public void SameThreat_HurtHero_ScoresLowerThanHealthyHero()
+        {
+            var brain = new SpecialistBrain();
+            var data = MakeSpecialist(courage: 0.5f);
+            var healthy = MakeContext(data);
+            var hurt = MakeContext(data);
+            hurt.HealthNormalized = 0.7f; // still above the panic gate
+            var flag = MakeFlag(MakeFlagData(), Gold(80f), new Vector3(10f, 0f, 0f), 0.5f);
+
+            brain.WouldTakeFlag(healthy, flag, 0f, out float a);
+            brain.WouldTakeFlag(hurt, flag, 0f, out float b);
+
+            Assert.Greater(a, b);
+        }
+
+        [Test]
+        public void BrokeHealthyHero_ToleratesMoreThreat_ThanRichOne()
+        {
+            var brain = new SpecialistBrain();
+            var data = MakeSpecialist(courage: 0.4f);
+            var rich = MakeContext(data);
+            var broke = MakeContext(data);
+            broke.GreedHunger = 0.6f; // below the bypass, so only risk tolerance differs
+            var flag = MakeFlag(MakeFlagData(), Gold(80f), new Vector3(10f, 0f, 0f), 0.8f);
+
+            brain.WouldTakeFlag(rich, flag, 0f, out float richScore);
+            brain.WouldTakeFlag(broke, flag, 0f, out float brokeScore);
+
+            Assert.Greater(brokeScore, richScore);
+        }
+
+        [Test]
+        public void LethalThreat_SinksScore_EvenForGreedyHeroes()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeSpecialist(greed: 0.9f, courage: 0.3f));
+            var safe = MakeFlag(MakeFlagData(), Gold(100f), new Vector3(10f, 0f, 0f), 0f);
+            var deadly = MakeFlag(MakeFlagData(), Gold(100f), new Vector3(10f, 0f, 0f), 1.5f);
+
+            brain.WouldTakeFlag(ctx, safe, 0f, out float s);
+            brain.WouldTakeFlag(ctx, deadly, 0f, out float d);
+
+            Assert.Less(d, s - 0.5f);
+        }
+
+        [Test]
+        public void GreedMultiplier_RaisesTheAsk_AndTheDisplayedAskMatches()
+        {
+            var brain = new SpecialistBrain();
+            brain.Tuning.greedMultiplier = 1.5f;
+            var previous = SpecialistBrainTuning.Active;
+            SpecialistBrainTuning.Active = brain.Tuning;
+            try
+            {
+                var data = MakeSpecialist(greed: 0.6f);
+                var ctx = MakeContext(data);
+                int ask = OverseerRules.GreedAsk(data);
+
+                Assert.Greater(ask, (int)Gold(58.5f));
+                Assert.IsTrue(brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), ask, new Vector3(10f, 0f, 0f)), 0f, out _));
+                Assert.IsFalse(brain.WouldTakeFlag(ctx, MakeFlag(MakeFlagData(), ask - 20f, new Vector3(10f, 0f, 0f)), 0f, out _));
+            }
+            finally { SpecialistBrainTuning.Active = previous; }
         }
 
         // ---------------------------------------------------------------

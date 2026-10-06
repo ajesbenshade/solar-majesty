@@ -18,8 +18,16 @@ namespace SolarMajesty
         private float _upkeepTimer;
         private float _resupplyTimer;
 
-        public float UpkeepIntervalSeconds { get; set; } = 30f;
-        public float ResupplyIntervalSeconds { get; set; } = 90f;
+        /// <summary>Inspector-editable numbers (intervals, yields). Defaults match the original values.</summary>
+        public EconomyTuning Tuning { get; }
+
+        public float UpkeepIntervalSeconds
+        {
+            get => Mathf.Max(1f, Tuning.upkeepIntervalSeconds);
+            set => Tuning.upkeepIntervalSeconds = value;
+        }
+
+        public float ResupplyIntervalSeconds { get; set; }
         public bool ResupplyEnabled { get; set; } = true;
         public bool ResupplyRequiresPad { get; set; } = true;
         public bool HasDock { get; set; }
@@ -60,33 +68,36 @@ namespace SolarMajesty
         public bool LastResupplyDocked { get; private set; }
         public int LastMetalsUpkeep { get; private set; }
 
-        public SimpleEconomy(ResourceManager resources)
+        public SimpleEconomy(ResourceManager resources, EconomyTuning tuning = null)
         {
             _resources = resources ?? throw new ArgumentNullException(nameof(resources));
+            Tuning = tuning ?? new EconomyTuning();
+            ResupplyIntervalSeconds = Mathf.Max(Tuning.minResupplySeconds, Tuning.resupplyBaseSeconds);
             _upkeepTimer = UpkeepIntervalSeconds;
             _resupplyTimer = ResupplyIntervalSeconds;
         }
 
         /// <summary>
-        /// Advance timers. Pass currently living specialist definitions for upkeep.
+        /// Advance timers by simulation seconds (never frames). Each timer fires once per full
+        /// interval elapsed, so a long step catches up instead of silently losing ticks; a backlog
+        /// beyond <see cref="EconomyTuning.maxCatchUpTicks"/> is dropped to avoid a payout burst.
+        /// Pass currently living specialist definitions for upkeep.
         /// </summary>
         public void Tick(float deltaTime, IReadOnlyList<SpecialistData> livingSpecialists = null)
         {
-            if (deltaTime <= 0f) return;
+            if (!(deltaTime > 0f) || float.IsInfinity(deltaTime)) return;
 
             _upkeepTimer -= deltaTime;
-            if (_upkeepTimer <= 0f)
-            {
-                _upkeepTimer += UpkeepIntervalSeconds;
+            int fires = Drain(ref _upkeepTimer, UpkeepIntervalSeconds);
+            for (int i = 0; i < fires; i++)
                 UpkeepApplied?.Invoke();
-            }
 
             if (!ResupplyEnabled) return;
 
             _resupplyTimer -= deltaTime;
-            if (_resupplyTimer <= 0f)
+            fires = Drain(ref _resupplyTimer, ResupplyIntervalSeconds);
+            for (int i = 0; i < fires; i++)
             {
-                _resupplyTimer += ResupplyIntervalSeconds;
                 if (DeliverResupply())
                     ResupplyArrived?.Invoke();
                 else
@@ -94,9 +105,28 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>Count expired intervals on a countdown timer and re-arm it.</summary>
+        private int Drain(ref float timer, float interval)
+        {
+            if (timer > 0f) return 0;
+            interval = Mathf.Max(1f, interval);
+            int fires = 0;
+            int cap = Mathf.Max(1, Tuning.maxCatchUpTicks);
+            while (timer <= 0f)
+            {
+                timer += interval;
+                if (++fires >= cap)
+                {
+                    if (timer <= 0f) timer = interval; // backlog dropped
+                    break;
+                }
+            }
+            return fires;
+        }
+
         public void ConfigureResupply(float intervalSeconds, int dockFee)
         {
-            ResupplyIntervalSeconds = Mathf.Max(20f, intervalSeconds);
+            ResupplyIntervalSeconds = Mathf.Max(Tuning.minResupplySeconds, intervalSeconds);
             ResupplyDockFee = Mathf.Max(0, dockFee);
             _resupplyTimer = ResupplyIntervalSeconds;
         }
@@ -104,7 +134,7 @@ namespace SolarMajesty
         /// <summary>Live rule change without resetting the incoming ship clock unless it overshoots.</summary>
         public void SetResupplyRules(float intervalSeconds, int dockFee)
         {
-            ResupplyIntervalSeconds = Mathf.Max(20f, intervalSeconds);
+            ResupplyIntervalSeconds = Mathf.Max(Tuning.minResupplySeconds, intervalSeconds);
             ResupplyDockFee = Mathf.Max(0, dockFee);
             if (_resupplyTimer > ResupplyIntervalSeconds)
                 _resupplyTimer = ResupplyIntervalSeconds;
@@ -229,17 +259,17 @@ namespace SolarMajesty
             {
                 int ore = node.NodeType switch
                 {
-                    ResourceNodeType.Metals => node.Harvest(8),
-                    ResourceNodeType.Ice => node.Harvest(7) * 3 / 4,
-                    ResourceNodeType.Fissile => node.Harvest(5),
-                    _ => node.Harvest(10) / 2
+                    ResourceNodeType.Metals => node.Harvest(Tuning.metalsPerHarvest),
+                    ResourceNodeType.Ice => node.Harvest(Tuning.icePerHarvest) * 3 / 4,
+                    ResourceNodeType.Fissile => node.Harvest(Tuning.fissilePerHarvest),
+                    _ => node.Harvest(Tuning.otherPerHarvest) / 2
                 };
                 int got = Deliver(ResourceId.Metals, Gold(ore), haul);
                 RecordExtract($"+{got} EU {tag}", got);
                 return;
             }
 
-            int fallback = Deliver(ResourceId.Metals, Gold(campusIndex <= 0 ? 4 : 3), haul);
+            int fallback = Deliver(ResourceId.Metals, Gold(campusIndex <= 0 ? Tuning.campusFallbackOre : Tuning.outpostFallbackOre), haul);
             RecordExtract($"+{fallback} EU {(campusIndex <= 0 ? "campus" : "outpost")} {tag}", fallback);
         }
 

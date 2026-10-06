@@ -79,6 +79,11 @@ namespace SolarMajesty
                 c = new Color(0.98f, 0.82f, 0.22f);
                 text = $"LEVY {_agent.LevyCarried}";
             }
+            else if (_agent.DutyCarry > 0 && _agent.LastReason == "pay_duty")
+            {
+                c = new Color(0.98f, 0.82f, 0.22f);
+                text = $"TAX {_agent.DutyCarry}";
+            }
             else if (!string.IsNullOrEmpty(_agent.RefusalChip))
             {
                 c = new Color(0.96f, 0.42f, 0.08f);

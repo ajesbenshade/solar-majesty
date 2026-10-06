@@ -146,6 +146,31 @@ namespace SolarMajesty
             gameObject.name = "DustStalker";
         }
 
+        /// <summary>Boss-grade raider from the kingdom spawn table (Majesty 2 attackers).</summary>
+        public bool IsElite { get; private set; }
+
+        /// <summary>Kill purse / XP multiplier (elites pay more).</summary>
+        public float RewardMultiplier { get; private set; } = 1f;
+
+        /// <summary>Promote to an elite. Call after <see cref="SetKind"/> and <see cref="ApplyBodyTune"/>.</summary>
+        public void MakeElite(float healthMul, float biteMul, float scaleMul, float rewardMul)
+        {
+            if (IsElite) return;
+            IsElite = true;
+            RewardMultiplier = Mathf.Max(1f, rewardMul);
+            maxHealth *= Mathf.Max(1f, healthMul);
+            _health = maxHealth;
+            float bite = _baseBite > 0.01f ? _baseBite : biteDamagePerSecond;
+            _baseBite = bite * Mathf.Max(1f, biteMul);
+            aggroPressure = Mathf.Clamp01(aggroPressure * 1.3f);
+            transform.localScale *= Mathf.Max(0.5f, scaleMul);
+            _baseScale = transform.localScale;
+            _roleNoun = "ALPHA " + RoleLabel.ToUpperInvariant();
+            gameObject.name += "_Alpha";
+            if (_label != null) _label.text = _roleNoun;
+            ApplyFrenzyScale();
+        }
+
         /// <summary>Retarget this agent as campus fauna after Initialize. Stalker is the default.</summary>
         public void SetKind(FaunaKind kind)
         {
@@ -1091,7 +1116,7 @@ namespace SolarMajesty
                 FaunaKind.JunkBot => "Junk Bot",
                 _ => "Dust Stalker"
             };
-            _loop?.OnFaunaKilled(Kind, transform.position);
+            _loop?.OnFaunaKilled(Kind, transform.position, RewardMultiplier);
             Debug.Log($"[Threat] {who} defeated — pressure contribution removed.");
             Destroy(gameObject);
         }

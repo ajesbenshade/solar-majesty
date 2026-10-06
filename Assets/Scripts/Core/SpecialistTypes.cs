@@ -48,6 +48,11 @@ namespace SolarMajesty
         public bool HasLevyWalk;
         public Vector3 LevyPosition;
         public bool LevyCarrying;
+        /// <summary>Work / safety / relaxation state. Null = legacy behaviour (no motives).</summary>
+        [NonSerialized] public HeroMotives Motives;
+        /// <summary>Carrying enough guild tax to walk it in (Majesty 2 pay duty).</summary>
+        public bool HasDutyWalk;
+        public Vector3 DutyPosition;
     }
 
     public struct BrainDecision
