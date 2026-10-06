@@ -174,119 +174,6 @@ namespace SolarMajesty
             DetailHabitat(root, w, d);
         }
 
-        /// <summary>Height of the Commons spire cap, where the crown comms mount (before the stretch).</summary>
-        public const float CommonsCrownY = 3.62f;
-
-        /// <summary>
-        /// The Commons is the Majesty castle: everything above the plinth is stretched this much,
-        /// so the drum is two full storeys and the command tier and spire tower over the town.
-        /// </summary>
-        public const float CommonsStretch = 2.0f;
-        public const float CommonsStretchBase = 0.56f;
-
-        /// <summary>A height in the Commons kit's authored space, after the stretch.</summary>
-        public static float CommonsY(float y) =>
-            y <= CommonsStretchBase ? y : CommonsStretchBase + (y - CommonsStretchBase) * CommonsStretch;
-
-        private static float _primStretch = 1f;
-        private static float _primStretchBase;
-
-        public static void BuildCommons(Transform root, float w, float d, Color hull)
-        {
-            _primStretch = CommonsStretch;
-            _primStretchBase = CommonsStretchBase;
-            try { BuildCommonsParts(root, w, d, hull); }
-            finally { _primStretch = 1f; }
-            DetailCommons(root, w, d, hull);
-        }
-
-        private static void BuildCommonsParts(Transform root, float w, float d, Color hull)
-        {
-            // Aaron 2026-10-06: the sphere dome read as a blue bubble. The Commons is now a
-            // stepped command tower: plinth + drum + orange band, flat roof deck, a narrower
-            // upper tier with a window band, and a slim spire carrying the comms and beacon.
-            // Still no geodesic lattice (Dress_CommonsGeo_*) and no SM_Hero_Commons /
-            // SM_CommandDome_CentralHub FBX (joined stubs).
-            float radius = Mathf.Min(w, d) * 0.38f;
-            Prim(root, "CommonsPlinth", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.28f, 0f),
-                new Vector3(radius * 2.44f, 0.28f, radius * 2.44f), Carbon);
-            Prim(root, "CommonsMech", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.58f, 0f),
-                new Vector3(radius * 2.24f, 0.11f, radius * 2.24f), Graphite);
-            for (int i = 0; i < 8; i++)
-            {
-                float ang = i * 45f * Mathf.Deg2Rad;
-                Prim(root, "CommonsLamp_" + i, PrimitiveType.Cube,
-                    new Vector3(Mathf.Sin(ang) * radius * 1.14f, 0.52f, Mathf.Cos(ang) * radius * 1.14f),
-                    new Vector3(0.14f, 0.08f, 0.10f), Orange);
-            }
-
-            Prim(root, "CommonsDrum", PrimitiveType.Cylinder,
-                new Vector3(0f, 1.15f, 0f),
-                new Vector3(radius * 2f, 0.58f, radius * 2f), hull);
-            Prim(root, "CommonsBand", PrimitiveType.Cylinder,
-                new Vector3(0f, 1.35f, 0f),
-                new Vector3(radius * 2.08f, 0.07f, radius * 2.08f), Carbon);
-            Prim(root, "CommonsStripe", PrimitiveType.Cylinder,
-                new Vector3(0f, 1.72f, 0f),
-                new Vector3(radius * 2.12f, 0.06f, radius * 2.12f), Orange);
-
-            // Flat roof deck over the drum.
-            Prim(root, "CommonsRoofDeck", PrimitiveType.Cylinder,
-                new Vector3(0f, 1.79f, 0f),
-                new Vector3(radius * 2.02f, 0.06f, radius * 2.02f), Graphite);
-
-            // Upper tier: the command floor (keeps the CommonsDome name the build stages use).
-            Prim(root, "CommonsDome", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.28f, 0f),
-                new Vector3(radius * 1.36f, 0.43f, radius * 1.36f), hull);
-            Prim(root, "CommonsTierWindows", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.36f, 0f),
-                new Vector3(radius * 1.38f, 0.1f, radius * 1.38f), Carbon);
-            Prim(root, "CommonsDomeBand", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.68f, 0f),
-                new Vector3(radius * 1.40f, 0.035f, radius * 1.40f), Orange);
-            Prim(root, "CommonsDomeBandCarbon", PrimitiveType.Cylinder,
-                new Vector3(0f, 2.74f, 0f),
-                new Vector3(radius * 1.44f, 0.04f, radius * 1.44f), Graphite);
-
-            // Spire: slim comms tower on the upper tier.
-            float domeTop = CommonsCrownY - 0.36f;
-            Prim(root, "CommonsCupolaLo", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.12f, 0f),
-                new Vector3(radius * 0.46f, 0.36f, radius * 0.46f), White);
-            Prim(root, "Dress_CommonsCupolaBand", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.30f, 0f),
-                new Vector3(radius * 0.49f, 0.035f, radius * 0.49f), Orange);
-            Prim(root, "CommonsCupolaHi", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.53f, 0f),
-                new Vector3(radius * 0.36f, 0.05f, radius * 0.36f), White);
-            Prim(root, "CommonsCupolaCap", PrimitiveType.Cylinder,
-                new Vector3(0f, domeTop + 0.345f, 0f),
-                new Vector3(radius * 0.40f, 0.02f, radius * 0.40f), Graphite);
-            Prim(root, "Dress_CommonsBeacon", PrimitiveType.Sphere,
-                new Vector3(0f, domeTop + 0.44f, 0f),
-                new Vector3(0.12f, 0.12f, 0.12f), Orange, new Color(0.9f, 0.35f, 0.05f));
-
-
-            Prim(root, "CommonsSeamRing_0", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.88f, 0f),
-                new Vector3(radius * 2.03f, 0.019f, radius * 2.03f), Graphite);
-            Prim(root, "CommonsSeamRing_1", PrimitiveType.Cylinder,
-                new Vector3(0f, 1.55f, 0f),
-                new Vector3(radius * 2.024f, 0.019f, radius * 2.024f), Carbon);
-            for (int i = 0; i < 12; i++)
-            {
-                float ang = i * 30f * Mathf.Deg2Rad;
-                Vector3 dir = new Vector3(Mathf.Sin(ang), 0f, Mathf.Cos(ang));
-                Quaternion yaw = Quaternion.Euler(0f, i * 30f, 0f);
-                Prim(root, "CommonsMeridianLo_" + i, PrimitiveType.Cube,
-                    dir * (radius * 1.012f) + new Vector3(0f, 0.92f, 0f),
-                    new Vector3(0.028f, 0.55f, 0.028f), Carbon, yaw);
-            }
-        }
-
         public static void BuildLandingPad(Transform root, float w, float d, Color hull)
         {
             float span = Mathf.Min(w, d);
@@ -1488,15 +1375,6 @@ namespace SolarMajesty
             Quaternion localRot,
             Color emission = default)
         {
-            if (!Mathf.Approximately(_primStretch, 1f))
-            {
-                bool upright = Vector3.Dot(localRot * Vector3.up, Vector3.up) > 0.98f;
-                float height = type == PrimitiveType.Cylinder ? localScale.y * 2f : localScale.y;
-                if (upright && height > 0.15f && localPos.y + height * 0.5f > _primStretchBase)
-                    localScale.y *= _primStretch;
-                if (localPos.y > _primStretchBase)
-                    localPos.y = _primStretchBase + (localPos.y - _primStretchBase) * _primStretch;
-            }
             var go = GameObject.CreatePrimitive(type);
             go.name = name;
             go.transform.SetParent(parent, false);

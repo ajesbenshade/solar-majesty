@@ -34,15 +34,15 @@ namespace SolarMajesty
         /// <summary>Starship placeholder height landmark.</summary>
         public const float ShipScale = 0.18f;
 
-        /// <summary>Colony Commons footprint in cells (12 m).</summary>
-        public const int CommonsSide = 8;
+        /// <summary>Colony Commons footprint in cells (18 m): the walled citadel, three guild halls wide.</summary>
+        public const int CommonsSide = 12;
 
         public static int FootprintSide(BuildingCategory category)
         {
             switch (category)
             {
                 case BuildingCategory.Commons:
-                    return CommonsSide; // the Majesty castle: twice a guild hall's width
+                    return CommonsSide; // the Majesty castle
                 case BuildingCategory.LandingPad:
                 case BuildingCategory.ClimateLoom:
                 case BuildingCategory.AegisSpire:

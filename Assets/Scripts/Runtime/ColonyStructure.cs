@@ -115,8 +115,9 @@ namespace SolarMajesty
             EnsureSelectRing();
             if (_selectRing != null)
             {
-                float ring = Category == BuildingCategory.Commons || Category == BuildingCategory.LandingPad
-                    || IsWonderCategory(Category)
+                float ring = Category == BuildingCategory.Commons
+                    ? ColonyLayout.FootprintMeters(BuildingCategory.Commons) * 1.08f
+                    : Category == BuildingCategory.LandingPad || IsWonderCategory(Category)
                     ? 6.4f
                     : HeroBuildingKits.IsHero(Category) ? 4.4f : 3.2f;
                 _selectRing.transform.localScale = new Vector3(ring, 0.025f, ring);
@@ -669,11 +670,14 @@ namespace SolarMajesty
             proxy.layer = gameObject.layer;
             var box = proxy.AddComponent<BoxCollider>();
             box.center = Vector3.zero;
-            float span = Category == BuildingCategory.Commons || Category == BuildingCategory.LandingPad
-                || IsWonderCategory(Category)
+            float span = Category == BuildingCategory.Commons
+                ? ColonyLayout.FootprintMeters(BuildingCategory.Commons) * 0.9f
+                : Category == BuildingCategory.LandingPad || IsWonderCategory(Category)
                 ? 5.4f
                 : HeroBuildingKits.IsHero(Category) ? 3.6f : 2.6f;
-            box.size = new Vector3(span, 2.2f, span);
+            float tall = Category == BuildingCategory.Commons ? 7f : 2.2f;
+            box.size = new Vector3(span, tall, span);
+            box.center = new Vector3(0f, (tall - 2.2f) * 0.5f, 0f);
         }
 
         private void EnsureSelectRing()

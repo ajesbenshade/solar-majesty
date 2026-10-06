@@ -42,7 +42,10 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(FindChild(commons.transform, "CommonsRoofDeck"), "flat roof deck, no bubble dome");
             var tier = FindChild(commons.transform, "CommonsDome").GetComponent<MeshFilter>();
             Assert.IsFalse(tier.sharedMesh.name.Contains("Sphere"), "the bubble dome is gone");
-            Assert.AreEqual(8, ColonyLayout.FootprintSide(BuildingCategory.Commons), "castle-sized: twice a guild");
+            Assert.AreEqual(12, ColonyLayout.FootprintSide(BuildingCategory.Commons), "castle-sized: three guild halls wide");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsKeep"), "a keep");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsTower_3"), "four corner towers");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsGateLintel"), "a gatehouse");
             var house = ModularBuildingFactory.Spawn(BuildingCategory.Habitat, Vector3.zero, _root.transform);
             float Top(GameObject g)
             {
@@ -50,7 +53,7 @@ namespace SolarMajesty.Tests
                 foreach (var r in g.GetComponentsInChildren<Renderer>()) top = Mathf.Max(top, r.bounds.max.y);
                 return top;
             }
-            Assert.Greater(Top(commons), Top(house) * 2f, "the Commons towers over a house");
+            Assert.Greater(Top(commons), Top(house) * 2.5f, "the Commons towers over a house");
             Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
                 "orange equatorial band");
             Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsCupolaBand"),

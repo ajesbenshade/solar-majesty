@@ -65,22 +65,6 @@ namespace SolarMajesty
         /// <summary>Stage new parts go to until changed (see <see cref="ConstructionStages"/>).</summary>
         public int Stage = ConstructionStages.FitOut;
 
-        /// <summary>
-        /// Vertical stretch for taller variants of a kit: points above <see cref="StretchBase"/>
-        /// move up by <see cref="StretchY"/>, and parts taller than <see cref="StretchMinHeight"/>
-        /// grow with them. Thin trim, lamps and bands keep their size. 1 = off.
-        /// </summary>
-        public float StretchY = 1f;
-        public float StretchBase;
-        public float StretchMinHeight = 0.15f;
-
-        private Vector3 Stretch(Vector3 p)
-        {
-            if (Mathf.Approximately(StretchY, 1f) || p.y <= StretchBase) return p;
-            p.y = StretchBase + (p.y - StretchBase) * StretchY;
-            return p;
-        }
-
         public DetailBatch(Transform root, string cacheKey)
         {
             _root = root;
@@ -126,8 +110,6 @@ namespace SolarMajesty
         /// <summary>A round bar from <paramref name="a"/> to <paramref name="b"/>.</summary>
         public void Rod(Vector3 a, Vector3 b, float diameter, Color c, Color emit = default)
         {
-            a = Stretch(a);
-            b = Stretch(b);
             Vector3 d = b - a;
             float len = d.magnitude;
             if (len < 1e-4f) return;
@@ -138,8 +120,6 @@ namespace SolarMajesty
         /// <summary>A square beam from <paramref name="a"/> to <paramref name="b"/>.</summary>
         public void Beam(Vector3 a, Vector3 b, float thick, Color c, Color emit = default)
         {
-            a = Stretch(a);
-            b = Stretch(b);
             Vector3 d = b - a;
             float len = d.magnitude;
             if (len < 1e-4f) return;
@@ -154,15 +134,6 @@ namespace SolarMajesty
         public void Add(PrimitiveType type, Vector3 pos, Vector3 scale, Quaternion rot, Color c,
             Color emit = default, bool plated = false)
         {
-            if (!Mathf.Approximately(StretchY, 1f))
-            {
-                // Grow upright parts that are tall enough to read as wall, not trim.
-                bool upright = Vector3.Dot(rot * Vector3.up, Vector3.up) > 0.98f;
-                float height = type == PrimitiveType.Cylinder ? scale.y * 2f : scale.y;
-                if (upright && height > StretchMinHeight && pos.y + height * 0.5f > StretchBase)
-                    scale.y *= StretchY;
-                pos = Stretch(pos);
-            }
             AddRaw(type, pos, scale, rot, c, emit, plated);
         }
 
