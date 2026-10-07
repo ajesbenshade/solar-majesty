@@ -43,7 +43,9 @@ namespace SolarMajesty.EditorTools
             "F1 Explore   F2 Clear Threat   F3 Build   F4 Extract   F5 Defend\n" +
             "LMB          Place / inspect. Shift-click keeps placing. Click a flag pole to select it\n" +
             "RMB          On a flag: cancel + refund EU\n" +
-            "+ / -        Raise / lower the selected flag's bounty (numpad too). These are not speed\n" +
+            "+ / -        Raise / lower the selected flag's bounty (numpad too). These are not speed.\n" +
+            "             The panel's − / + do the same. Nothing selected: no change. Flag tool\n" +
+            "             open with no pole: they set the next post, labeled on the panel.\n" +
             "P            Form a party (max 4)     [ disband\n" +
             "\n" +
             "Telemetry (please zip this folder back)\n" +

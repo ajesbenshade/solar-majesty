@@ -142,6 +142,12 @@ namespace SolarMajesty
 
         public int EscrowedMetals { get; private set; }
 
+        /// <summary>
+        /// Make the reserved total equal the sum of the flags still standing.
+        /// Does not spend or refund; post, step, cancel, and complete already moved the metals.
+        /// </summary>
+        public void MatchReserved(int reserved) => EscrowedMetals = Mathf.Max(0, reserved);
+
         /// <summary>Metals withdrawn from the stockpile to post a bounty flag.</summary>
         public static int BountyMetalsCost(float bounty) =>
             Mathf.Max(1, Mathf.RoundToInt(bounty));

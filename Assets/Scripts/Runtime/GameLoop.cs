@@ -101,6 +101,10 @@ namespace SolarMajesty
         public IReadOnlyList<DustStalkerAgent> Stalkers => _stalkers;
         public OverseerTool ActiveTool => activeTool;
         public float FlagBounty => _flagInput != null ? _flagInput.Bounty : 0f;
+
+        /// <summary>Metals reserved on flags that are still standing. This is the IN BOUNTIES total.</summary>
+        public int BountyEscrowTotal =>
+            Flags != null ? FlagBountySync.Sum(Flags.Flags) : (Economy != null ? Economy.EscrowedMetals : 0);
         public FlagPlacementInput FlagInput => _flagInput;
         public OrbitalTargetingInput OrbitalInput => _orbitalInput;
         public OrbitalDirector Orbital => _orbital;
@@ -1305,6 +1309,8 @@ namespace SolarMajesty
             int refund = handle.EscrowMetals;
             Economy?.RefundBountyEscrow(refund);
             Flags.Cancel(handle);
+            if (Economy != null)
+                Economy.MatchReserved(FlagBountySync.Sum(Flags.Flags));
             _overseerHud?.Notify(refund > 0 ? $"Flag cancelled — {refund} EU returned." : "Flag cancelled.", 2.4f);
             Debug.Log("[Flags] Cancelled — metals refunded.");
         }
@@ -1393,7 +1399,12 @@ namespace SolarMajesty
             SyncNarrativeCivic();
         }
 
-        private void OnFlagWorkCompleted(FlagHandle handle) => NotifyFlagCompleted(handle);
+        private void OnFlagWorkCompleted(FlagHandle handle)
+        {
+            if (handle != null && _flagInput != null && ReferenceEquals(_flagInput.SelectedPosted, handle))
+                _flagInput.ClearPostedSelection();
+            NotifyFlagCompleted(handle);
+        }
 
         private string InterestLine(FlagHandle handle)
         {
@@ -5090,7 +5101,12 @@ namespace SolarMajesty
         private void ApplyTool(OverseerTool tool)
         {
             activeTool = tool;
-            if (_flagInput != null) _flagInput.EnabledPlacement = tool == OverseerTool.Flag;
+            if (_flagInput != null)
+            {
+                _flagInput.EnabledPlacement = tool == OverseerTool.Flag;
+                if (FlagBountySync.ClearSelectionOnTool(tool == OverseerTool.Flag))
+                    _flagInput.ClearPostedSelection();
+            }
             if (_buildInput != null) _buildInput.EnabledPlacement = tool == OverseerTool.Build;
             if (_orbitalInput != null)
             {
@@ -5925,6 +5941,8 @@ namespace SolarMajesty
             RetryUnpaidCorpses();
 
             var restoredFlags = RestoreFlags(save.flags);
+            if (Economy != null && Flags != null)
+                Economy.MatchReserved(FlagBountySync.Sum(Flags.Flags));
             var restoredAgents = RestoreAgents(save.agents, restoredFlags, save.rosterBlob != null);
             RestoreParties(save.parties, restoredAgents);
             var restoredLairs = RestoreWorldBoard(save);

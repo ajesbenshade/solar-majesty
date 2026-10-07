@@ -1236,7 +1236,7 @@ namespace SolarMajesty
 
             if (done)
             {
-                float bounty = _activeFlag.CurrentBounty;
+                int bounty = FlagBountySync.Amount(_activeFlag);
                 var completedType = _activeFlag.Data.flagType;
                 EarnCredits(bounty, $"flag_{completedType}");
                 GrantXp(OverseerRules.XpForFlag(completedType), completedType.ToString());
@@ -2154,7 +2154,7 @@ namespace SolarMajesty
         public string DebugLine()
         {
             string flagInfo = _activeFlag != null
-                ? $"{_activeFlag.Data.flagType} b={_activeFlag.CurrentBounty:F0}"
+                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):F0}"
                 : "-";
             string nav = _agent != null && _agent.isOnNavMesh ? "nav" : "direct";
             return $"{data?.displayName ?? "?"} L{Level} | {_lastDecision.Action} | " +

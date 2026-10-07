@@ -31,7 +31,8 @@ namespace SolarMajesty
             GUILayout.Label("Player: flags / buildings only. No unit commands.");
             GUILayout.Space(4);
 
-            GUILayout.Label($"Tool: {_loop.ActiveTool}  Bounty: {_loop.FlagBounty:F0}");
+            int shown = _loop.FlagInput != null ? _loop.FlagInput.ShownBounty : 0;
+            GUILayout.Label($"Tool: {_loop.ActiveTool}  Bounty: {shown:F0}");
             GUILayout.Label(_loop.Resources?.DebugSummary() ?? "");
 
             string threatLine = _loop.Threat != null ? _loop.Threat.DebugLine() : "threat=n/a";
