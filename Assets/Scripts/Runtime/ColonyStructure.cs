@@ -85,6 +85,7 @@ namespace SolarMajesty
         /// <summary>Grade a pad under the building so it sits on level ground off the yards.</summary>
         private void Start()
         {
+            ClearPropsUnder();
             TerrainGrading.LevelUnder(gameObject);
         }
 
@@ -369,6 +370,15 @@ namespace SolarMajesty
         }
 
         public bool NeedsRepair => IsAlive && Health01 < 0.985f;
+
+        /// <summary>Trees, rocks and grass under this building's footprint are removed when it goes up.</summary>
+        private void ClearPropsUnder()
+        {
+            var world = FindFirstObjectByType<PlanetaryWorldGen>();
+            if (world == null) return;
+            float half = ColonyLayout.FootprintMeters(Category) * 0.5f + 0.6f;
+            world.ClearPropsInRect(transform.position, half, half);
+        }
 
         private Vector3 _baseScale = Vector3.one;
         private bool _capturedBaseScale;

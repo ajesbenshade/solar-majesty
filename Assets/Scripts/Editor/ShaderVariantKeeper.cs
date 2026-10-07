@@ -29,11 +29,13 @@ namespace SolarMajesty.EditorTools
             Keep("Universal Render Pipeline/Simple Lit", "SM_Keep_SimpleLitTransparent", transparent: true, emission: false);
             Keep("Universal Render Pipeline/Unlit", "SM_Keep_UnlitTransparent", transparent: true, emission: false);
             Keep("Universal Render Pipeline/Unlit", "SM_Keep_Unlit", transparent: false, emission: false);
+            // Vendor leaf and grass cards are remapped onto alpha-clipped Lit at runtime.
+            Keep("Universal Render Pipeline/Lit", "SM_Keep_LitCutout", transparent: false, emission: false, cutout: true);
             AssetDatabase.SaveAssets();
             Debug.Log("[ShaderVariantKeeper] Keeper materials written to " + Folder);
         }
 
-        private static void Keep(string shaderName, string assetName, bool transparent, bool emission)
+        private static void Keep(string shaderName, string assetName, bool transparent, bool emission, bool cutout = false)
         {
             var shader = Shader.Find(shaderName);
             if (shader == null)
@@ -59,6 +61,13 @@ namespace SolarMajesty.EditorTools
                 mat.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
                 mat.renderQueue = (int)RenderQueue.Transparent;
                 mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            }
+            if (cutout)
+            {
+                if (mat.HasProperty("_AlphaClip")) mat.SetFloat("_AlphaClip", 1f);
+                if (mat.HasProperty("_Cull")) mat.SetFloat("_Cull", (float)CullMode.Off);
+                mat.EnableKeyword("_ALPHATEST_ON");
+                mat.renderQueue = (int)RenderQueue.AlphaTest;
             }
             if (emission && mat.HasProperty("_EmissionColor"))
             {

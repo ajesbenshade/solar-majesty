@@ -766,12 +766,6 @@ namespace SolarMajesty
 
         private static void EnsureEarthVista(Transform parent, CelestialBodyProfile body)
         {
-            var oldClouds = GameObject.Find("EarthCloudRoot");
-            if (oldClouds != null)
-            {
-                oldClouds.name = "EarthCloudRoot_old";
-                Object.Destroy(oldClouds);
-            }
             var oldVista = GameObject.Find("EarthVistaRoot");
             if (oldVista != null)
             {
@@ -783,19 +777,6 @@ namespace SolarMajesty
             Vector3 campus = ColonyLayout.CampusOrigin;
             var root = new GameObject("EarthVistaRoot").transform;
             if (parent != null) root.SetParent(parent, false);
-
-            // Cumulus in the isometric backdrop (ortho 16) — not parked on the far map edge.
-            var clouds = new GameObject("EarthCloudRoot").transform;
-            clouds.SetParent(root, false);
-            Vector3[] cloudSpots =
-            {
-                campus + new Vector3(-18f, 20f, 16f),
-                campus + new Vector3(22f, 24f, 10f),
-                campus + new Vector3(8f, 18f, -18f),
-                campus + new Vector3(-10f, 22f, -14f)
-            };
-            for (int i = 0; i < cloudSpots.Length; i++)
-                SpawnCumulus(clouds, cloudSpots[i], 0.62f + i * 0.08f);
 
             // Grass / trees / a pond just outside the 6-cell claim so the empty drop reads Earth.
             for (int i = 0; i < 28; i++)
@@ -1085,44 +1066,6 @@ namespace SolarMajesty
             }
         }
 
-        private static void SpawnCumulus(Transform parent, Vector3 pos, float scale)
-        {
-            var go = new GameObject("Dress_Cumulus");
-            go.transform.SetParent(parent, false);
-            go.transform.position = pos;
-            go.transform.localScale = Vector3.one * scale;
-            go.AddComponent<CloudDrift>();
-
-            Vector3[] lobes =
-            {
-                new Vector3(0f, 0f, 0f),
-                new Vector3(3.2f, 0.4f, 1.1f),
-                new Vector3(-2.6f, 0.2f, -0.8f),
-                new Vector3(1.1f, 0.9f, -2.2f)
-            };
-            float[] rad = { 6.5f, 4.8f, 4.2f, 3.6f };
-            for (int i = 0; i < lobes.Length; i++)
-            {
-                var puff = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                puff.name = "Puff_" + i;
-                puff.transform.SetParent(go.transform, false);
-                puff.transform.localPosition = lobes[i];
-                puff.transform.localScale = new Vector3(rad[i], rad[i] * 0.38f, rad[i] * 0.72f);
-                Object.Destroy(puff.GetComponent<Collider>());
-                var rend = puff.GetComponent<Renderer>();
-                if (rend == null) continue;
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                       ?? Shader.Find("Sprites/Default"));
-                var c = new Color(0.94f, 0.96f, 0.98f, 0.42f - i * 0.04f);
-                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
-                if (mat.HasProperty("_Color")) mat.color = c;
-                if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.08f);
-                ColonyVisualUtility.ApplyTransparent(mat);
-                rend.sharedMaterial = mat;
-                rend.shadowCastingMode = ShadowCastingMode.Off;
-            }
-        }
-
         private static Texture2D BuildNormal(int size)
         {
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, true)
@@ -1165,31 +1108,6 @@ namespace SolarMajesty
         private void Update()
         {
             transform.Rotate(0f, degreesPerSecond * Time.deltaTime, 0f);
-        }
-    }
-
-    /// <summary>Slow drift for distant Earth cumulus. Not a threat.</summary>
-    public class CloudDrift : MonoBehaviour
-    {
-        [SerializeField] private float orbitMeters = 5.5f;
-        [SerializeField] private float degreesPerSecond = 2.4f;
-        [SerializeField] private float bobMeters = 0.55f;
-
-        private Vector3 _origin;
-        private float _phase;
-
-        private void Awake()
-        {
-            _origin = transform.position;
-            _phase = transform.position.x * 0.07f;
-        }
-
-        private void Update()
-        {
-            float t = Time.time * degreesPerSecond * Mathf.Deg2Rad + _phase;
-            Vector3 orbit = new Vector3(Mathf.Cos(t), 0f, Mathf.Sin(t * 0.65f)) * orbitMeters;
-            float bob = Mathf.Sin(Time.time * 0.18f + _phase) * bobMeters;
-            transform.position = _origin + orbit + new Vector3(0f, bob, 0f);
         }
     }
 }

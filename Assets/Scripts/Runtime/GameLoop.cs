@@ -847,6 +847,8 @@ namespace SolarMajesty
             EnsureNavMesh();
             DemoAtmosphere.Apply(mainCamera, transform, _body);
             PlanetaryMapDressing.Apply(transform, grid, _body);
+            // The vista's trees and grass round the Commons clear for buildings like world props.
+            _world?.RegisterChildren(transform.Find("EarthVistaRoot"), "Dress_Pond");
             // Vista ponds add NavMesh carve obstacles after the first bake — rebuild once.
             if (_campusNav != null && grid != null)
             {
@@ -5156,44 +5158,8 @@ namespace SolarMajesty
             {
                 var b = buildings[i];
                 if (b == null) continue;
-                int side = Mathf.Max(1, b.footprintWidth, b.footprintHeight);
-                switch (b.category)
-                {
-                    case BuildingCategory.Commons:
-                    case BuildingCategory.LandingPad:
-                    case BuildingCategory.ClimateLoom:
-                    case BuildingCategory.AegisSpire:
-                    case BuildingCategory.DeepArchive:
-                        side = 6;
-                        break;
-                    case BuildingCategory.Habitat:
-                    case BuildingCategory.Defense:
-                    case BuildingCategory.Inn:
-                    case BuildingCategory.Farm:
-                    case BuildingCategory.Mine:
-                    case BuildingCategory.RegolithCamp:
-                    case BuildingCategory.ScoutWorkshop:
-                    case BuildingCategory.EngineerWorkshop:
-                    case BuildingCategory.DefenseWorkshop:
-                    case BuildingCategory.MedicWorkshop:
-                    case BuildingCategory.HarvesterWorkshop:
-                    case BuildingCategory.SurveyorWorkshop:
-                    case BuildingCategory.TerraformerWorkshop:
-                    case BuildingCategory.CourierWorkshop:
-                    case BuildingCategory.GeologistWorkshop:
-                    case BuildingCategory.SentinelWorkshop:
-                    case BuildingCategory.GuildHall:
-                    case BuildingCategory.Power:
-                    case BuildingCategory.Mining:
-                    case BuildingCategory.Laboratory:
-                    case BuildingCategory.Watchtower:
-                    case BuildingCategory.AidStation:
-                        side = 4;
-                        break;
-                    default:
-                        side = 4;
-                        break;
-                }
+                // One table for every footprint (the Commons citadel is 12x12, most buildings 4x4).
+                int side = ColonyLayout.FootprintSide(b.category);
 
                 b.footprintWidth = side;
                 b.footprintHeight = side;

@@ -182,6 +182,41 @@ namespace SolarMajesty.EditorTools
             }
         }
 
+        /// <summary>
+        /// Stalker dens in their three looks: active, charted (survey beacon), cleared.
+        /// CLI: -executeMethod SolarMajesty.EditorTools.BuildingGallery.RunDens -smOut path.png [-smBody Earth]
+        /// </summary>
+        public static void RunDens()
+        {
+            string outPath = Arg("-smOut") ?? "Docs/ReviewEvidence/dens.png";
+            var opt = Defaults(new[] { BuildingCategory.Commons });
+            opt.TileW = 900; opt.TileH = 700;
+            string bodyArg = Arg("-smBody") ?? "Earth";
+            var body = Enum.TryParse(bodyArg, true, out CelestialBodyId parsed) ? parsed : CelestialBodyId.Earth;
+            bool ok;
+            using (var studio = new Studio(body, opt))
+            {
+                var profile = CelestialBodyCatalog.Get(body);
+                var sheet = new Sheet(3, 1, opt.TileW, opt.TileH);
+                for (int look = 0; look < 3; look++)
+                {
+                    var go = new GameObject("Den");
+                    var lair = go.AddComponent<StalkerLair>();
+                    lair.Configure(null, 2, 8f, profile?.LairRim, profile?.LairPit);
+                    if (look >= 1) lair.MarkScouted();
+                    if (look == 2) lair.ForceClear();
+                    if (look == 0) lair.RestoreChart(false, true);
+                    var beacon = go.transform.Find("SurveyBeacon");
+                    if (look == 0 && beacon != null) beacon.gameObject.SetActive(false);
+                    studio.Frame(go);
+                    sheet.Put(look, 0, studio.Shoot());
+                    UnityEngine.Object.DestroyImmediate(go);
+                }
+                ok = sheet.Write(outPath);
+            }
+            if (Application.isBatchMode) EditorApplication.Exit(ok ? 0 : 1);
+        }
+
         private static bool RenderStages(string outPath, CelestialBodyId bodyId, Options opt)
         {
             int stageCount = ConstructionStages.Count;

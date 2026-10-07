@@ -168,6 +168,8 @@ namespace SolarMajesty
             float cs = _loop.Grid != null ? _loop.Grid.CellSize : ColonyLayout.DefaultCellSize;
             var preview = ModularBuildingFactory.Spawn(data.category, world, _projSite.transform, w, h, cs);
             if (preview != null) preview.name = $"VillagePreview_{data.category}";
+            var worldGen = Object.FindFirstObjectByType<PlanetaryWorldGen>();
+            worldGen?.ClearPropsInRect(world, w * cs * 0.5f + 0.6f, h * cs * 0.5f + 0.6f);
             _projSite.AddComponent<ConstructionSiteVisual>().Bind(_proj, preview);
 
             var hub = CommonsHub();

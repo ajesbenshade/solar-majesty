@@ -10,7 +10,7 @@ namespace SolarMajesty
     /// Driven by <see cref="CelestialBodyProfile"/> so each body keeps its kit
     /// (Earth hydrology, Luna craters, Mars dunes, Belt islets, Europa ice).
     /// </summary>
-    public class PlanetaryWorldGen : MonoBehaviour
+    public partial class PlanetaryWorldGen : MonoBehaviour
     {
         private readonly List<ResourceNode> _nodes = new List<ResourceNode>(16);
         private readonly List<StalkerLair> _lairs = new List<StalkerLair>(8);
@@ -76,6 +76,7 @@ namespace SolarMajesty
             _nodes.Clear();
             _lairs.Clear();
             _zones.Clear();
+            _props.Clear();
             ClearTintCache();
             _water.Clear();
 
@@ -104,8 +105,12 @@ namespace SolarMajesty
             SpawnIcePlates(rng, placed);
             SpawnRocks(rng, placed);
             SpawnResourceNodes(rng, placed);
+            SpawnRockFormations(rng, placed);
+            SpawnPointsOfInterest(rng, placed);
             SpawnLairs(rng, placed);
             SpawnBuildZones(rng, placed);
+            SpawnMeadows(rng);
+            ClearGameplaySites();
 
             Debug.Log(
                 $"[WorldGen] {_body.DisplayName} seed={seed} " +
@@ -562,7 +567,8 @@ namespace SolarMajesty
                     if (IsOverWater(world, 1.1f))
                         continue;
 
-                    SpawnTree(patch.transform, local, rng);
+                    var tree = SpawnTree(patch.transform, local, rng);
+                    if (tree != null) RegisterProp(tree.transform);
                 }
 
                 if (_body.Id == CelestialBodyId.Earth)
@@ -583,6 +589,7 @@ namespace SolarMajesty
                         shrub.transform.SetParent(patch.transform, false);
                         shrub.transform.localPosition = local;
                         shrub.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
+                        RegisterProp(shrub.transform);
                     }
                 }
 
@@ -602,7 +609,7 @@ namespace SolarMajesty
             }
         }
 
-        private void SpawnTree(Transform parent, Vector3 local, System.Random rng)
+        private GameObject SpawnTree(Transform parent, Vector3 local, System.Random rng)
         {
             float h = Mathf.Lerp(1.1f, 2.6f, (float)rng.NextDouble());
             int variant = _body.Id == CelestialBodyId.Earth ? rng.Next(0, 8) : rng.Next(0, 2);
@@ -625,7 +632,7 @@ namespace SolarMajesty
                         float s = h / EnvironmentMeshCatalog.TreeNativeHeight;
                         mesh.transform.localScale = Vector3.one * s;
                     }
-                    return;
+                    return mesh;
                 }
             }
 
@@ -665,6 +672,16 @@ namespace SolarMajesty
                     (float)rng.NextDouble() * 0.35f);
                 Tint(canopy, leaf, 0.12f);
             }
+            return tree;
+        }
+
+        /// <summary>Zones and dens keep their ground clear of trees and scatter.</summary>
+        private void ClearGameplaySites()
+        {
+            for (int i = 0; i < _zones.Count; i++)
+                ClearPropsInDisc(_zones[i].Center, _zones[i].Radius + 1.5f);
+            for (int i = 0; i < _lairs.Count; i++)
+                if (_lairs[i] != null) ClearPropsInDisc(_lairs[i].WorldPosition, 7f);
         }
 
         private void SpawnDunes(System.Random rng, List<Vector3> placed)
@@ -852,6 +869,7 @@ namespace SolarMajesty
                     }
                     // Sit slightly embedded, as real boulders do.
                     ColonyVisualUtility.SnapToGround(mesh, GroundY(pos) - s * 0.12f);
+                    RegisterProp(mesh.transform);
                     continue;
                 }
 
@@ -891,6 +909,7 @@ namespace SolarMajesty
                 }
 
                 ColonyVisualUtility.SnapToGround(rock, GroundY(pos) - 0.05f);
+                RegisterProp(rock.transform);
             }
         }
 
