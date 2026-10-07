@@ -129,7 +129,7 @@ namespace SolarMajesty
             switch (kind)
             {
                 case BuildZoneKind.TradePost:
-                    return anyZoneFree ? "Landing pads can only be built in a marked trade zone." : "Every trade zone is taken.";
+                    return anyZoneFree ? "Landing pads only fit inside a gold trade ring." : "Every trade zone is taken.";
                 case BuildZoneKind.Mine:
                     return anyZoneFree ? "Mines can only be built at an ore deposit, out in the wilds." : "Every ore deposit has a mine.";
                 default:

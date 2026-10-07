@@ -551,17 +551,15 @@ namespace SolarMajesty
 
         public bool TryGetMouseGroundPoint(out Vector3 world)
         {
-            world = GroundPoint(Input.mousePosition);
+            world = default;
+            if (_cam == null) return false;
+            Ray ray = _cam.ScreenPointToRay(Input.mousePosition);
+            // Walk onto the height field so a hill does not leave the hit short of the cursor,
+            // then drop Y back to the flat grid the rest of the sim pathfinds on.
+            if (!GroundPick.TryHit(ray, (x, z) => TerrainDataBake.GroundHeight(x, z), out world))
+                return false;
+            world.y = 0f;
             return true;
-        }
-
-        private Vector3 GroundPoint(Vector3 screen)
-        {
-            Ray ray = _cam.ScreenPointToRay(screen);
-            var plane = new Plane(Vector3.up, Vector3.zero);
-            if (plane.Raycast(ray, out float enter))
-                return ray.GetPoint(enter);
-            return _targetPos;
         }
     }
 }

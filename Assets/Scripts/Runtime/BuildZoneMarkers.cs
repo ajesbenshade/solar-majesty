@@ -51,35 +51,53 @@ namespace SolarMajesty
                 c.a = taken ? 0.35f : match ? 1f : 0.45f;
                 ring.startColor = c;
                 ring.endColor = c;
-                ring.widthMultiplier = match && !taken ? 0.3f : 0.14f;
+                ring.widthMultiplier = match && !taken ? 0.55f : 0.22f;
+                float ringY = TerrainDataBake.GroundHeight(z.Center.x, z.Center.z) + 0.45f;
                 for (int s = 0; s < Segments; s++)
                 {
                     float a = Mathf.PI * 2f * s / Segments;
                     ring.SetPosition(s, new Vector3(
-                        z.Center.x + Mathf.Cos(a) * z.Radius, z.Center.y + 0.2f, z.Center.z + Mathf.Sin(a) * z.Radius));
+                        z.Center.x + Mathf.Cos(a) * z.Radius, ringY, z.Center.z + Mathf.Sin(a) * z.Radius));
                 }
             }
         }
 
         /// <summary>
-        /// Ore indicator: an open ore deposit shows an amber light column all the time, so the
-        /// player can spot far mine sites on the map without opening the Build tool.
+        /// Light columns mark where a bound building can go. Open ore deposits stay lit all the
+        /// time. While the Build tool is open, free zones of the picked kind (gold trade rings
+        /// for a landing pad, violet temple sites) get a column too.
         /// </summary>
         private void UpdateBeacons(IReadOnlyList<BuildZone> zones)
         {
             bool playing = _loop != null && _loop.IsPlaying && zones != null && _loop.ZoneRules.enabled;
+            bool buildOpen = playing && _loop.ActiveTool == OverseerTool.Build;
+            BuildZoneKind pickedKind = BuildZoneKind.None;
+            if (buildOpen && _loop.BuildInput != null && _loop.BuildInput.Selected != null)
+                pickedKind = _loop.ZoneRules.KindFor(_loop.BuildInput.Selected.category);
+
             for (int i = 0; i < _beacons.Count; i++)
             {
                 var b = _beacons[i];
                 if (b == null) continue;
-                bool on = playing && i < zones.Count && zones[i].Kind == BuildZoneKind.Mine && !_loop.IsZoneTaken(i);
+                bool inRange = playing && i < zones.Count;
+                bool taken = inRange && _loop.IsZoneTaken(i);
+                var kind = inRange ? zones[i].Kind : BuildZoneKind.None;
+                bool mineAlways = inRange && kind == BuildZoneKind.Mine && !taken;
+                bool pickedColumn = inRange && !taken && pickedKind != BuildZoneKind.None && kind == pickedKind;
+                bool on = mineAlways || pickedColumn;
                 if (b.enabled != on) b.enabled = on;
                 if (!on) continue;
-                var c = new Color(1f, 0.55f, 0.15f, 0.8f);
+                Color c = kind == BuildZoneKind.Temple
+                    ? new Color(0.72f, 0.5f, 1f)
+                    : kind == BuildZoneKind.Mine
+                        ? new Color(1f, 0.55f, 0.15f)
+                        : new Color(1f, 0.84f, 0.28f);
                 b.startColor = new Color(c.r, c.g, c.b, 0.9f);
                 b.endColor = new Color(c.r, c.g, c.b, 0f);
-                b.SetPosition(0, zones[i].Center + Vector3.up * 0.3f);
-                b.SetPosition(1, zones[i].Center + Vector3.up * 14f);
+                float y = TerrainDataBake.GroundHeight(zones[i].Center.x, zones[i].Center.z);
+                var baseAt = new Vector3(zones[i].Center.x, y, zones[i].Center.z);
+                b.SetPosition(0, baseAt + Vector3.up * 0.4f);
+                b.SetPosition(1, baseAt + Vector3.up * 14f);
             }
         }
 

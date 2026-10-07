@@ -116,9 +116,13 @@ namespace SolarMajesty
             }
 
             if (!TryGround(out Vector3 world)) return;
-            Vector2Int cell = _grid != null ? _grid.WorldToCell(world) : Vector2Int.zero;
+            // Centre the footprint on the cursor. The cell under the cursor is the min corner,
+            // which parks a 6×6 pad several metres off the pointer.
+            Vector2Int cell = _grid != null
+                ? PlacementCursor.FootprintOrigin(
+                    world, _grid.Origin, _grid.CellSize, Selected.footprintWidth, Selected.footprintHeight)
+                : Vector2Int.zero;
 
-            // Free placement: the ghost follows the cursor cell; nothing snaps to sockets.
             Vector3 snapped = FootprintWorldCenter(cell, Selected);
 
             EnsureGhost();
@@ -126,12 +130,26 @@ namespace SolarMajesty
             _ghost.SetActive(true);
             _footprint.SetActive(true);
             _ghost.transform.position = snapped;
-            ColonyVisualUtility.SnapToGround(_ghost);
+            // Gameplay stays on the flat grid (snapped.y is 0). The ghost sits on the
+            // visible surface so a pad aimed at a trade ring on a hill is not buried.
+            ColonyVisualUtility.SnapToGround(_ghost, TerrainDataBake.GroundHeight(snapped.x, snapped.z));
 
-            bool valid = _placer.CanFit(Selected, cell) &&
-                         (_resources == null || _resources.CanAfford(_placer.CostFor(Selected)));
-            if (valid && _placer.ExtraPlacementRule != null)
-                valid = _placer.ExtraPlacementRule(cell, Selected);
+            string block = null;
+            bool valid;
+            if (_loop != null)
+            {
+                block = _loop.PlacementBlockReason(Selected, cell);
+                valid = block == null;
+            }
+            else
+            {
+                valid = _placer.CanFit(Selected, cell) &&
+                        (_resources == null || _resources.CanAfford(_placer.CostFor(Selected)));
+                if (valid && _placer.ExtraPlacementRule != null)
+                    valid = _placer.ExtraPlacementRule(cell, Selected);
+                if (!valid) block = "Can't build there.";
+            }
+            _blockReason = valid ? null : block;
             ColonyVisualUtility.ApplyGhostTint(_ghost, valid);
             UpdateFootprint(cell, valid);
 
@@ -165,16 +183,55 @@ namespace SolarMajesty
             }
             else if (Input.GetMouseButtonUp(0) && !valid && _loop != null && Time.time >= _zoneHintAt)
             {
-                string why = _loop.ZoneBlockReason(Selected, cell);
-                if (!string.IsNullOrEmpty(why))
+                if (!string.IsNullOrEmpty(_blockReason))
                 {
                     _zoneHintAt = Time.time + 2.5f;
-                    _loop.LogOverseer(why);
+                    _loop.LogOverseer(_blockReason);
                 }
             }
         }
 
         private float _zoneHintAt;
+        private string _blockReason;
+        private GUIStyle _refuseStyle;
+
+        private void OnGUI()
+        {
+            if (!enabledPlacement || _ghost == null || !_ghost.activeInHierarchy) return;
+            if (_loop != null && !_loop.IsPlaying) return;
+            if (string.IsNullOrEmpty(_blockReason)) return;
+
+            Camera cam = _cam != null ? _cam.GetComponent<Camera>() : Camera.main;
+            if (cam == null) return;
+            Vector3 sp = cam.WorldToScreenPoint(_ghost.transform.position + Vector3.up * 3f);
+            if (sp.z < 0f) return;
+
+            if (_refuseStyle == null)
+            {
+                _refuseStyle = new GUIStyle(GUI.skin.label)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 14,
+                    fontStyle = FontStyle.Bold,
+                };
+                _refuseStyle.normal.textColor = new Color(1f, 0.88f, 0.45f);
+            }
+
+            var content = new GUIContent(_blockReason);
+            Vector2 size = _refuseStyle.CalcSize(content);
+            size.x += 18f;
+            size.y += 8f;
+            var rect = new Rect(sp.x - size.x * 0.5f, Screen.height - sp.y - size.y - 6f, size.x, size.y);
+            rect.x = Mathf.Clamp(rect.x, 8f, Mathf.Max(8f, Screen.width - rect.width - 8f));
+            rect.y = Mathf.Clamp(rect.y, 8f, Mathf.Max(8f, Screen.height - rect.height - 8f));
+
+            Color prev = GUI.color;
+            GUI.color = new Color(0.05f, 0.04f, 0.02f, 0.86f);
+            GUI.DrawTexture(rect, Texture2D.whiteTexture);
+            GUI.color = Color.white;
+            GUI.Label(rect, content, _refuseStyle);
+            GUI.color = prev;
+        }
 
         private void Select(int index)
         {
@@ -273,12 +330,10 @@ namespace SolarMajesty
             float cellSize = _grid.CellSize;
             float w = Selected.footprintWidth * cellSize;
             float h = Selected.footprintHeight * cellSize;
-            // Footprint anchored at placement cell (same origin BuildingPlacer uses).
-            Vector3 origin = _grid.CellToWorld(cell);
-            // CellToWorld is cell center; shift to footprint AABB center.
-            float ox = (Selected.footprintWidth - 1) * 0.5f * cellSize;
-            float oz = (Selected.footprintHeight - 1) * 0.5f * cellSize;
-            _footprint.transform.position = new Vector3(origin.x + ox, 0.05f, origin.z + oz);
+            Vector3 mid = PlacementCursor.Center(
+                cell, Selected.footprintWidth, Selected.footprintHeight, cellSize, _grid.Origin);
+            float footY = TerrainDataBake.GroundHeight(mid.x, mid.z) + 0.08f;
+            _footprint.transform.position = new Vector3(mid.x, footY, mid.z);
             _footprint.transform.localScale = new Vector3(w * 0.98f, 0.06f, h * 0.98f);
 
             var rend = _footprint.GetComponent<Renderer>();
@@ -290,21 +345,14 @@ namespace SolarMajesty
         {
             if (_grid == null || data == null)
                 return Vector3.zero;
-            Vector3 corner = _grid.CellToWorld(origin);
-            float cs = _grid.CellSize;
-            return corner + new Vector3(
-                (data.footprintWidth - 1) * 0.5f * cs,
-                0f,
-                (data.footprintHeight - 1) * 0.5f * cs);
+            return PlacementCursor.Center(
+                origin, data.footprintWidth, data.footprintHeight, _grid.CellSize, _grid.Origin);
         }
 
         private bool TryGround(out Vector3 world)
         {
             if (_cam != null)
-            {
-                _cam.TryGetMouseGroundPoint(out world);
-                return true;
-            }
+                return _cam.TryGetMouseGroundPoint(out world);
 
             world = Vector3.zero;
             var main = Camera.main;
