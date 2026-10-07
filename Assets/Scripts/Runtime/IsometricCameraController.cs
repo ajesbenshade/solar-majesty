@@ -215,8 +215,8 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Edge scroll, off by default because it fights flag placement near the screen border.
-        /// Enabled from Settings.
+        /// Edge scroll. On unless Settings has a saved choice. The margin pan stands down
+        /// while the pointer is outside the window.
         /// </summary>
         private void HandleEdgeScroll()
         {

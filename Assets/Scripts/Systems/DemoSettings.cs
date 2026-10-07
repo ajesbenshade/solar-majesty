@@ -53,8 +53,8 @@ namespace SolarMajesty
         public static int QualityIndex;
         public static bool Fullscreen = true;
 
-        /// <summary>Off by default: edge scroll fights flag placement near the screen border.</summary>
-        public static bool EdgeScroll;
+        /// <summary>On unless the player has saved a choice. Missing key stays on; a stored 0 stays off.</summary>
+        public static bool EdgeScroll = true;
 
         /// <summary>Accessibility: suppresses camera shake and non-essential pulsing.</summary>
         public static bool ReduceMotion;
@@ -102,6 +102,10 @@ namespace SolarMajesty
         /// <summary>Per-world building architecture (see Docs/PLANET_ARCHITECTURE.md). <c>-classic-buildings</c> turns it off.</summary>
         public static bool PlanetArchitecture = true;
 
+        /// <summary>Missing preference is on. A stored 0 is an explicit off and stays off.</summary>
+        public static bool ResolveEdgeScroll(bool hasSavedChoice, int stored) =>
+            !hasSavedChoice || stored != 0;
+
         public static void Load()
         {
             Master = PlayerPrefs.GetFloat(MasterKey, 1f);
@@ -116,7 +120,7 @@ namespace SolarMajesty
             SaveExists = PlayerPrefs.GetInt(SaveFlagKey, 0) == 1;
             QualityIndex = PlayerPrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
             Fullscreen = PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) == 1;
-            EdgeScroll = PlayerPrefs.GetInt(EdgeScrollKey, 0) == 1;
+            EdgeScroll = ResolveEdgeScroll(PlayerPrefs.HasKey(EdgeScrollKey), PlayerPrefs.GetInt(EdgeScrollKey, 1));
             ReduceMotion = PlayerPrefs.GetInt(ReduceMotionKey, 0) == 1;
             ColorBlindMode = PlayerPrefs.GetInt(ColorBlindKey, 0);
             FrameCap = PlayerPrefs.GetInt(FrameCapKey, 0);
