@@ -1539,7 +1539,11 @@ namespace SolarMajesty
                 case FlagRefusalKind.Greed:
                     return $"{cls} wants {agent.HireMin} — raise +";
                 case FlagRefusalKind.TooFar:
-                    return $"too far for {cls}";
+                {
+                    float reach = Brain.ConsiderDistance(
+                        agent.Data, flag.Data != null ? flag.Data.flagType : FlagType.Explore);
+                    return $"too far for {cls} — {Mathf.RoundToInt(reach)}m";
+                }
                 case FlagRefusalKind.Hurt:
                     return $"{cls} is hurt — wait";
                 case FlagRefusalKind.NotMyJob:
@@ -1560,7 +1564,8 @@ namespace SolarMajesty
                 var kind = Brain.ExplainFlag(ctx, flag, agent.BodyDanger);
                 if (kind == FlagRefusalKind.WouldTake) continue;
                 float dist = FlatDist(agent.transform.position, flag.WorldPosition);
-                float consider = Brain.ConsiderDistance(agent.Data);
+                float consider = Brain.ConsiderDistance(
+                    agent.Data, flag.Data != null ? flag.Data.flagType : FlagType.Explore);
                 if (dist > consider) continue;
                 string chip = kind switch
                 {

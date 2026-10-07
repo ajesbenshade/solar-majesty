@@ -55,6 +55,21 @@ namespace SolarMajesty.Tests
             return data;
         }
 
+        private SpecialistData MakeDefense()
+        {
+            var data = MakeSpecialist(SpecialistClass.DefenseMech);
+            SpecialistPersonality.Apply(data);
+            return data;
+        }
+
+        private FlagData MakeClearThreat()
+        {
+            var data = MakeFlagData(FlagType.ClearThreat);
+            data.baseRisk = 0.4f;
+            data.stronglyAttracts = new[] { SpecialistClass.DefenseMech, SpecialistClass.SentinelMech };
+            return data;
+        }
+
         /// <summary>Bounties below are written in the brain's tuning units; flags carry CRED.</summary>
         private static float Gold(float brainUnits) => brainUnits * MajestyEconomy.GoldScale;
 
@@ -223,6 +238,91 @@ namespace SolarMajesty.Tests
             var flag = MakeFlag(MakeFlagData(), Gold(500f), new Vector3(5000f, 0f, 0f));
 
             Assert.IsFalse(brain.WouldTakeFlag(ctx, flag, 0f, out _));
+            Assert.AreEqual(FlagRefusalKind.TooFar, brain.ExplainFlag(ctx, flag, 0f));
+        }
+
+        /// <summary>
+        /// Playtest 65166d6: Clear Threat on a den read "too far for DEF" and Clear dens
+        /// could not finish. Defense notices ordinary flags at ~56 m and will not wander,
+        /// but dens spawn anywhere on the 384 m board. A paid warrant must be taken,
+        /// including from the opposite corner of the sandbox.
+        /// </summary>
+        [Test]
+        public void ClearThreat_OnARimDen_IsTakenByDefense()
+        {
+            var brain = new SpecialistBrain();
+            var data = MakeDefense();
+            var ctx = MakeContext(data);
+            float personal = brain.ConsiderDistance(data);
+            Assert.Less(personal, 90f, "Defense still ignores ordinary flags past the personal radius");
+
+            var mid = MakeFlag(MakeClearThreat(), 400f, new Vector3(180f, 0f, 0f), 0.4f);
+            Assert.IsTrue(brain.WouldTakeFlag(ctx, mid, 0f, out _), "a mid-map den is inside the warrant radius");
+            Assert.AreEqual(FlagRefusalKind.WouldTake, brain.ExplainFlag(ctx, mid, 0f));
+
+            var decision = brain.Evaluate(ctx, new List<FlagHandle> { mid });
+            Assert.AreEqual(SpecialistAction.PursueFlag, decision.Action);
+            Assert.AreSame(mid, decision.TargetFlag);
+
+            float map = ColonyLayout.MapCells * ColonyLayout.DefaultCellSize;
+            var cornerHero = new Vector3(4f, 0f, 4f);
+            var cornerDen = new Vector3(map - 8f, 8f, map - 8f);
+            Assert.Less(Vector3.Distance(cornerHero, cornerDen), OverseerRules.ClearThreatConsiderMeters);
+            ctx.Position = cornerHero;
+            var corner = MakeFlag(MakeClearThreat(), 400f, cornerDen, 0.4f);
+            Assert.IsTrue(brain.WouldTakeFlag(ctx, corner, 0f, out _));
+            Assert.AreEqual(FlagRefusalKind.WouldTake, brain.ExplainFlag(ctx, corner, 0f));
+        }
+
+        /// <summary>Campus pests score a full hunt. That must not cancel a warrant the hero already accepts.</summary>
+        [Test]
+        public void ClearThreat_OnARimDen_BeatsANearbyPest()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeDefense());
+            ctx.HasHunt = true;
+            ctx.HuntDistance = 6f;
+            ctx.HuntPosition = new Vector3(6f, 0f, 0f);
+            ctx.CurrentAction = SpecialistAction.Hunt;
+            var flag = MakeFlag(MakeClearThreat(), 400f, new Vector3(180f, 0f, 40f), 0.4f);
+
+            Assert.IsTrue(brain.WouldTakeFlag(ctx, flag, 0f, out _));
+            Assert.AreEqual(FlagRefusalKind.WouldTake, brain.ExplainFlag(ctx, flag, 0f));
+            var decision = brain.Evaluate(ctx, new List<FlagHandle> { flag });
+            Assert.AreEqual(SpecialistAction.PursueFlag, decision.Action);
+            Assert.AreSame(flag, decision.TargetFlag);
+        }
+
+        /// <summary>The default $80 posting is still a price problem, so raising the bounty is the lever.</summary>
+        [Test]
+        public void ClearThreat_OnARimDen_CheapBounty_IsGreedNotDistance()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeDefense());
+            var flag = MakeFlag(MakeClearThreat(), 80f, new Vector3(180f, 0f, 0f), 0.4f);
+
+            Assert.IsFalse(brain.WouldTakeFlag(ctx, flag, 0f, out _));
+            Assert.AreEqual(FlagRefusalKind.Greed, brain.ExplainFlag(ctx, flag, 0f));
+        }
+
+        [Test]
+        public void ClearThreat_PastTheSandbox_IsStillTooFar()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeDefense());
+            var flag = MakeFlag(MakeClearThreat(), 500f, new Vector3(2000f, 0f, 0f), 0.4f);
+
+            Assert.IsFalse(brain.WouldTakeFlag(ctx, flag, 0f, out _));
+            Assert.AreEqual(FlagRefusalKind.TooFar, brain.ExplainFlag(ctx, flag, 0f));
+        }
+
+        [Test]
+        public void BuildFlag_PastPersonalRadius_StaysTooFar()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeDefense());
+            var flag = MakeFlag(MakeFlagData(FlagType.Build), 500f, new Vector3(180f, 0f, 0f));
+
             Assert.AreEqual(FlagRefusalKind.TooFar, brain.ExplainFlag(ctx, flag, 0f));
         }
 

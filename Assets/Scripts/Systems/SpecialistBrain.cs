@@ -63,7 +63,6 @@ namespace SolarMajesty
             FlagHandle bestFlag = null;
             float bestFlagScore = -1f;
             string bestFlagReason = "none";
-            float consider = ConsiderDistance(data);
 
             if (openFlags != null)
             {
@@ -74,6 +73,7 @@ namespace SolarMajesty
                     if (!FlagOrdersRules.Permits(ctx, flag)) continue; // player's written orders
 
                     float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
+                    float consider = ConsiderDistance(data, flag.Data.flagType);
                     if (consider > 0f && dist > consider) continue;
 
                     float score = ScoreFlag(ctx, flag, dist, bodyDanger);
@@ -106,7 +106,13 @@ namespace SolarMajesty
                     huntScore += t.huntHysteresis;
             }
 
-            if (huntScore >= acceptance && huntScore > bestFlagScore)
+            // A Clear Threat the hero already priced in is the warrant for a den that will
+            // not walk to campus. Opportunistic hunt (any fauna inside 28 m) scores ~1 and
+            // would otherwise outrank it, because the distance penalty saturates at 45 m.
+            bool acceptedClearThreat = takeFlag &&
+                                       bestFlag != null &&
+                                       bestFlag.Data.flagType == FlagType.ClearThreat;
+            if (huntScore >= acceptance && huntScore > bestFlagScore && !acceptedClearThreat)
                 return BrainDecision.Hunt(ctx.HuntPosition, huntScore, "hunt_fauna");
 
             // 4b. Engineers patch damaged modules for a small personal payday.
@@ -201,7 +207,11 @@ namespace SolarMajesty
                     AddUnique(into, taken[i]);
             }
 
-            if (CanHunt(ctx))
+            bool pursuingClearThreat = utility.Action == SpecialistAction.PursueFlag &&
+                                       utility.TargetFlag != null &&
+                                       utility.TargetFlag.Data != null &&
+                                       utility.TargetFlag.Data.flagType == FlagType.ClearThreat;
+            if (CanHunt(ctx) && !pursuingClearThreat)
             {
                 float hunt = ScoreHunt(ctx, bodyDanger);
                 if (hunt >= acceptance)
@@ -256,7 +266,7 @@ namespace SolarMajesty
             if (!FlagOrdersRules.Permits(ctx, flag)) return false;
 
             float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
-            float consider = ConsiderDistance(ctx.Data);
+            float consider = ConsiderDistance(ctx.Data, flag.Data.flagType);
             if (consider > 0f && dist > consider) return false;
 
             score = ScoreFlag(ctx, flag, dist, bodyDanger);
@@ -276,7 +286,7 @@ namespace SolarMajesty
             if (!FlagOrdersRules.Permits(ctx, flag)) return FlagRefusalKind.Orders;
 
             float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
-            float consider = ConsiderDistance(ctx.Data);
+            float consider = ConsiderDistance(ctx.Data, flag.Data.flagType);
             if (consider > 0f && dist > consider) return FlagRefusalKind.TooFar;
 
             float score = ScoreFlag(ctx, flag, dist, bodyDanger);
@@ -290,7 +300,11 @@ namespace SolarMajesty
                     huntScore += _tuning.huntHysteresis;
             }
 
-            if (huntScore >= acceptance && huntScore > score)
+            // Same exception as Evaluate: an accepted Clear Threat is not "hunting instead".
+            bool acceptedClearThreat = flag.Data.flagType == FlagType.ClearThreat &&
+                                       score >= acceptance &&
+                                       PassesGreedGate(ctx.Data, flag.CurrentBounty, ctx.GreedHunger);
+            if (huntScore >= acceptance && huntScore > score && !acceptedClearThreat)
                 return FlagRefusalKind.Hunting;
 
             if (score < acceptance)
@@ -339,14 +353,24 @@ namespace SolarMajesty
         bool IsRelaxing(in SpecialistContext ctx) =>
             _tuning.motivesEnabled && ctx.Motives != null && ctx.Motives.Relaxing;
 
-        /// <summary>How far (m) this hero will look for flags.</summary>
-        public float ConsiderDistance(SpecialistData data)
+        /// <summary>How far (m) this hero will look for an ordinary flag.</summary>
+        public float ConsiderDistance(SpecialistData data) =>
+            ConsiderDistance(data, FlagType.Explore);
+
+        /// <summary>
+        /// How far (m) this hero will look for <paramref name="flagType"/>.
+        /// Clear Threat uses <see cref="OverseerRules.ClearThreatConsiderMeters"/> so a den
+        /// anywhere on the sandbox is visible. Other types keep the personal radius.
+        /// </summary>
+        public float ConsiderDistance(SpecialistData data, FlagType flagType)
         {
             var t = _tuning;
             float consider = t.considerBase + data.explorePreference * t.considerExplorePerPoint;
             float range = ConsiderRange;
             if (range > 0f)
                 consider = Mathf.Max(consider, range * t.considerRangeFactor);
+            if (flagType == FlagType.ClearThreat)
+                consider = Mathf.Max(consider, OverseerRules.ClearThreatConsiderMeters);
             return consider;
         }
 

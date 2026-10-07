@@ -92,6 +92,19 @@ namespace SolarMajesty
         public const float ScoutedDenWorkMul = 0.70f;
         public const float ScoutedDenPostRange = 12f;
 
+        /// <summary>
+        /// How far (m) a hero will notice a Clear Threat flag.
+        /// Defense's personal radius is considerBase + explore×perPoint, floored by
+        /// considerRange×0.7 — about 56 m (explore 0.08, will not wander, patrol ring 20 m).
+        /// The sandbox is 384 m (256×1.5). Dens sample that whole board outside a ~21 m
+        /// campus exclusion, so a den on the rim is permanently "too far for DEF".
+        /// Bounty cannot extend the hard gate, and nothing the player builds does either.
+        /// 560 m is the map diagonal (543 m) plus terrain-height margin, so any den on
+        /// the board is in range. ScoreFlag is unchanged: the distance penalty still
+        /// saturates at 45 m, and the greed gate still sets the price.
+        /// </summary>
+        public const float ClearThreatConsiderMeters = 560f;
+
         public const float DefendWatchSeconds = 50f;
         public const float DefendWatchDps = 4f;
         public const float DefendWatchRadius = 16f;
