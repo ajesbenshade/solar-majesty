@@ -46,6 +46,12 @@ namespace SolarMajesty
         private readonly HashSet<long> _outpostCells = new HashSet<long>();
         private readonly List<CampusPiece> _pieces = new List<CampusPiece>();
         private int _nextId = 1;
+        private float _cellSize = 1.5f;
+        private Vector3 _gridOrigin;
+        private bool _gridBound;
+
+        /// <summary>Red-ghost line when the footprint runs through something already standing.</summary>
+        public const string BlockedByBuilding = "Blocked by a building.";
 
 
         /// <summary>The waystation inn is occupied but never part of the tube graph.</summary>
@@ -101,6 +107,18 @@ namespace SolarMajesty
             _resources = resources ?? throw new ArgumentNullException(nameof(resources));
         }
 
+        /// <summary>
+        /// Cell size and grid origin used to turn a footprint into world metres.
+        /// Dress overlap (wind turbines) is skipped until this is set, so saves and
+        /// cell-only tests keep the old rectangle test.
+        /// </summary>
+        public void BindGrid(float cellSize, Vector3 origin)
+        {
+            _cellSize = cellSize > 0.01f ? cellSize : 1.5f;
+            _gridOrigin = origin;
+            _gridBound = true;
+        }
+
         public IReadOnlyList<ConstructionOrder> Orders => _orders;
         public IReadOnlyList<CampusPiece> Pieces => _pieces;
 
@@ -126,7 +144,7 @@ namespace SolarMajesty
                 return false;
             }
 
-            if (!CanFit(data, gridCell))
+            if (!FootprintClear(data, gridCell))
             {
                 failReason = "footprint_blocked";
                 return false;
@@ -346,6 +364,100 @@ namespace SolarMajesty
         {
             if (data == null) return false;
             return CanFitRect(origin, data.footprintWidth, data.footprintHeight);
+        }
+
+        /// <summary>
+        /// True when the cells are free and the footprint does not run through a standing
+        /// building's dress. <see cref="TryRestore"/> stays on <see cref="CanFit"/> so a
+        /// save that already clips still loads.
+        /// </summary>
+        public bool FootprintClear(BuildingData data, Vector2Int origin)
+        {
+            if (!CanFit(data, origin)) return false;
+            return !OverlapsDress(data, origin);
+        }
+
+        /// <summary>
+        /// "Blocked by a building." when <see cref="FootprintClear"/> fails; null when the
+        /// cells and the dress are both free. Null data is not an occupancy problem.
+        /// </summary>
+        public static string OccupancyBlock(BuildingPlacer placer, BuildingData data, Vector2Int cell)
+        {
+            if (placer == null || data == null) return null;
+            return placer.FootprintClear(data, cell) ? null : BlockedByBuilding;
+        }
+
+        /// <summary>
+        /// Earth power nodes grow two wind turbines inside their cell rectangle, close
+        /// enough to the edge that a flush neighbour (any footprint) lays its deck
+        /// through the rotor. The cell test does not see that.
+        /// </summary>
+        public bool OverlapsDress(BuildingData data, Vector2Int origin)
+        {
+            if (!_gridBound || data == null) return false;
+            int w = Mathf.Max(1, data.footprintWidth);
+            int h = Mathf.Max(1, data.footprintHeight);
+            WorldRect(origin, w, h, out float minX, out float minZ, out float maxX, out float maxZ);
+
+            if (data.category == BuildingCategory.Power && TurbinesHitAnyRect(origin, w, h))
+                return true;
+
+            for (int i = 0; i < _pieces.Count; i++)
+            {
+                var piece = _pieces[i];
+                if (piece.Category != BuildingCategory.Power) continue;
+                if (CirclesHitRect(piece.Origin, piece.Width, piece.Height, minX, minZ, maxX, maxZ))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>Candidate power turbines against every other standing rectangle.</summary>
+        private bool TurbinesHitAnyRect(Vector2Int origin, int w, int h)
+        {
+            for (int i = 0; i < _pieces.Count; i++)
+            {
+                var piece = _pieces[i];
+                if (piece.Category == BuildingCategory.Power &&
+                    piece.Origin == origin && piece.Width == w && piece.Height == h)
+                    continue;
+                WorldRect(piece.Origin, piece.Width, piece.Height, out float minX, out float minZ, out float maxX, out float maxZ);
+                if (CirclesHitRect(origin, w, h, minX, minZ, maxX, maxZ))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool CirclesHitRect(Vector2Int origin, int w, int h, float minX, float minZ, float maxX, float maxZ)
+        {
+            float worldW = w * _cellSize;
+            float worldD = h * _cellSize;
+            float radius = PlanetArchitecture.WindTurbineBlockRadius(worldW, worldD);
+            Vector3 center = PlacementCursor.Center(origin, w, h, _cellSize, _gridOrigin);
+            PlanetArchitecture.WindTurbineSites(worldW, worldD, out Vector2 a, out Vector2 b);
+            return CircleHits(center.x + a.x, center.z + a.y, radius, minX, minZ, maxX, maxZ)
+                || CircleHits(center.x + b.x, center.z + b.y, radius, minX, minZ, maxX, maxZ);
+        }
+
+        private static bool CircleHits(float cx, float cz, float radius, float minX, float minZ, float maxX, float maxZ)
+        {
+            float x = Mathf.Clamp(cx, minX, maxX);
+            float z = Mathf.Clamp(cz, minZ, maxZ);
+            float dx = cx - x, dz = cz - z;
+            return dx * dx + dz * dz <= radius * radius;
+        }
+
+        private void WorldRect(Vector2Int origin, int w, int h, out float minX, out float minZ, out float maxX, out float maxZ)
+        {
+            Vector3 center = PlacementCursor.Center(origin, w, h, _cellSize, _gridOrigin);
+            float halfW = w * _cellSize * 0.5f;
+            float halfD = h * _cellSize * 0.5f;
+            minX = center.x - halfW;
+            maxX = center.x + halfW;
+            minZ = center.z - halfD;
+            maxZ = center.z + halfD;
         }
 
         public bool CanFitRect(Vector2Int origin, int width, int height)

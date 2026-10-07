@@ -2121,7 +2121,8 @@ namespace SolarMajesty
             if (BuildingPlacer.IsRetired(data.category)) return "That building is retired.";
             string extra = ExtraPlacementReason(cell, data);
             if (extra != null) return extra;
-            if (Placer != null && !Placer.CanFit(data, cell)) return "Something is already built there.";
+            string occupied = BuildingPlacer.OccupancyBlock(Placer, data, cell);
+            if (occupied != null) return occupied;
             if (Resources != null && Placer != null && !Resources.CanAfford(Placer.CostFor(data)))
                 return "Not enough EU.";
             return null;
@@ -2599,6 +2600,8 @@ namespace SolarMajesty
             Flags = new FlagManager();
             Flags.FlagCompleted += OnFlagWorkCompleted;
             Placer = new BuildingPlacer(Resources);
+            if (grid != null)
+                Placer.BindGrid(grid.CellSize, grid.Origin);
             Placer.HasCommons = () =>
                 (Settlement != null && Settlement.HasCommons) || Placer.HasCommonsModule;
             if (grid != null)
