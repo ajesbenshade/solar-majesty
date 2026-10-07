@@ -256,8 +256,8 @@ namespace SolarMajesty
 
         /// <summary>
         /// Game speed: hold/resume, slower, the current pace, faster, and a row of pips (one per
-        /// running speed, clickable). Space, comma/period and −/+ drive the same state; the buttons
-        /// make it discoverable to a player who never reads a key list.
+        /// running speed, clickable). Space and comma/period drive the same state. +/− edits a
+        /// selected flag's bounty. The buttons make speed discoverable without a key list.
         /// </summary>
         private void DrawSpeedControl(Rect r)
         {
@@ -281,7 +281,7 @@ namespace SolarMajesty
                 SimSpeed.Slower();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(slower, "SLOWER   ·   ,  or  −");
+            Tooltip(slower, "SLOWER   ·   ,");
             x += btn + 2f;
 
             var readout = new Rect(x, r.y, r.xMax - x - btn - 2f, h);
@@ -301,7 +301,7 @@ namespace SolarMajesty
                 SimSpeed.Faster();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(faster, "FASTER   ·   .  or  +");
+            Tooltip(faster, "FASTER   ·   .");
 
             // One pip per running speed; the 1× pip is brass so the default is easy to find again.
             int steps = SimSpeed.Multipliers.Length - 1;
@@ -1154,9 +1154,12 @@ namespace SolarMajesty
             y += 22f;
             var prevC = _micro.normal.textColor;
             _micro.normal.textColor = canPay ? TextMuted : Alarm;
-            GUI.Label(new Rect(c.x, y, c.width, 13f),
-                canPay ? $"escrow {metCost} EU · LMB places · RMB flag refunds" : $"need {metCost} EU — raise stockpile",
-                _micro);
+            string placeHint = fp.HasSelectedPosted
+                ? "pole selected · +/− edits this bounty"
+                : canPay
+                    ? $"escrow {metCost} EU · click a pole to select"
+                    : $"need {metCost} EU — raise stockpile";
+            GUI.Label(new Rect(c.x, y, c.width, 13f), placeHint, _micro);
             _micro.normal.textColor = prevC;
 
             y += 18f;
@@ -1381,7 +1384,8 @@ namespace SolarMajesty
             bool hot = open.Contains(Event.current.mousePosition);
             if (hot) HudSkin.RuleH(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Gold);
             GUI.Label(new Rect(c.x, c.y - 6f, open.width - Pad, 18f), FlagStripLabel(fp), _value);
-            GUI.Label(new Rect(c.x, c.y + 9f, open.width - Pad, 12f), "click the map to post", _micro);
+            GUI.Label(new Rect(c.x, c.y + 9f, open.width - Pad, 12f),
+                fp.HasSelectedPosted ? "pole selected · keys +/− edit it" : "click the map to post", _micro);
             if (GUI.Button(open, GUIContent.none, GUIStyle.none))
                 ExpandMenu(OverseerTool.Flag);
             Tooltip(open, "OPEN THE FLAG LIST   ·   G");
