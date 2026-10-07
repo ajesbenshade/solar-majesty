@@ -5,10 +5,11 @@ Heroes (the ten specialist classes) are armoured humanoid knights built by
 sm_hero_humanoids.py from the 2026-09-22 concept art (ConceptSheets/Heroes_v2/). They
 ship Idle / Walk / Strike / Work / Down clips and a stride speed for Unity.
 
-Fauna keep their bespoke rigs below: Hopper has six legs, Wisp has seven points,
-Creeper is graphite, Leech is a white ray, Mite is a pillbug, Stalker is a four-eyed
-quadruped. Every fauna clip now keys every bone (rest pose where a clip does not move
-a bone) so no clip inherits another clip's leftover pose on export.
+Enemy fauna (v2, 2026-10-07) are built by sm_fauna_v2.py in the hostile den style (dark
+chitin, bone, orange glow): Hopper has six legs, Wisp has seven points, Creeper is
+graphite, Leech is a white ray, Mite is a pillbug, Stalker is a four-eyed quadruped. They
+ship Idle / Walk / Strike / Down clips that key every bone on every frame, a measured stride
+speed, and a baked colour atlas per creature (Assets/Art/Fauna/Textures).
 
 Blender 4.4+ (tested 5.0 / 5.2). Run:
   blender --background --python Blender/scripts/sm_animated_roster.py -- --export --render
@@ -31,6 +32,7 @@ from mathutils import Euler, Matrix, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import sm_hero_humanoids as heroes  # noqa: E402
+import sm_fauna_v2 as fauna_v2  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 TEX_DIR = ROOT / ".dream-loop" / "textures"
@@ -454,227 +456,20 @@ def finish_character(parts, rig: Rig, mesh_name: str):
 
 # --- fauna -----------------------------------------------------------------
 
-def build_stalker(mats, clips):
-    rig = Rig(UNIT_NAMES["Stalker"])
-    rig.bone("Body", (0, 0, 0.28), (0, 0.15, 0.55), "Root")
-    rig.bone("Head", (0, 0.55, 0.42), (0, 0.85, 0.48), "Body")
-    rig.bone("Tail", (0, -0.55, 0.38), (0, -1.05, 0.55), "Body")
-    parts = []
-    parts.append(uv_sphere("body", 0.28, (0, 0.05, 0.40), mats["graphite"], "Body", scale=(1.05, 2.3, 0.72), u=24, v=14))
-    parts.append(uv_sphere("head", 0.16, (0, 0.62, 0.46), mats["graphite"], "Head", scale=(1.1, 1.35, 0.8), u=16, v=10))
-    parts.append(seg("snout", (0, 0.7, 0.44), (0, 0.98, 0.40), 0.09, 0.035, mats["graphite"], "Head"))
-    for i, x in enumerate((-0.07, 0.07, -0.12, 0.12)):
-        y = 0.78 if abs(x) < 0.1 else 0.68
-        z = 0.54 if abs(x) < 0.1 else 0.50
-        parts.append(uv_sphere(f"eye{i}", 0.028, (x, y, z), mats["orange"], "Head", u=8, v=6))
-    for i, y in enumerate((-0.15, 0.05, 0.25)):
-        parts.append(cube(f"ridge{i}", (0.06, 0.16, 0.10), (0, y, 0.62), mats["black"], "Body", bevel=0.01))
-    parts.append(seg("tail", (0, -0.35, 0.38), (0, -0.95, 0.62), 0.08, 0.02, mats["graphite"], "Tail"))
-    hips = [(-0.22, 0.32, 0.36), (0.22, 0.32, 0.36), (-0.22, -0.28, 0.34), (0.22, -0.28, 0.34)]
-    feet = [(-0.38, 0.48, 0.02), (0.38, 0.48, 0.02), (-0.40, -0.48, 0.02), (0.40, -0.48, 0.02)]
-    for i, (h, f) in enumerate(zip(hips, feet)):
-        knee = ((h[0] + f[0]) * 0.5, (h[1] + f[1]) * 0.5, 0.22)
-        leg_pair(rig, parts, f"L{i}", h, knee, f, 0.055, 0.04, mats["black"])
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Stalker"])
-    idle_sway(arm, clips[0], extras=(("Head", (0.08, 0, 0)), ("Tail", (-0.12, 0, 0.2))))
-    gait(arm, clips[1], [(f"L{i}_Hip", 0.0 if i % 2 == 0 else 0.5) for i in range(4)])
-    strike_pose(arm, clips[2], {
-        "Body": (0.35, 0, 0),
-        "Head": (0.45, 0, 0),
-        "L0_Hip": (0.9, 0, 0),
-        "L1_Hip": (0.9, 0, 0),
-        "Tail": (-0.4, 0, 0),
-    })
-    return arm, mesh
+# --- fauna -----------------------------------------------------------------
+# v2 creatures live in sm_fauna_v2.py (their own mesh, rig, clips and baked atlas). The
+# palette materials are not used: each creature brings SM_Art_Fauna_<Name> + the shared
+# SM_Art_Fauna_GlowAccent.
+
+FAUNA_CLIPS = fauna_v2.CLIPS
 
 
-def build_hopper(mats, clips):
-    rig = Rig(UNIT_NAMES["Hopper"])
-    rig.bone("Body", (0, 0, 0.9), (0, 0.1, 1.35), "Root")
-    rig.bone("Head", (0, 0.22, 1.25), (0, 0.48, 1.32), "Body")
-    parts = []
-    parts.append(uv_sphere("body", 0.22, (0, 0, 1.18), mats["ash"], "Body", scale=(0.85, 1.5, 1.15), u=18, v=12))
-    parts.append(uv_sphere("head", 0.12, (0, 0.28, 1.28), mats["ash"], "Head", scale=(1, 1.2, 0.9)))
-    parts.append(cube("stripe", (0.16, 0.04, 0.05), (0, 0.40, 1.30), mats["orange"], "Head", bevel=0.005))
-    parts.append(uv_sphere("eyeL", 0.03, (-0.07, 0.38, 1.34), mats["cyan"], "Head", u=8, v=6))
-    parts.append(uv_sphere("eyeR", 0.03, (0.07, 0.38, 1.34), mats["cyan"], "Head", u=8, v=6))
-    # Six stilts. Front and rear cross in side view (X-legs); middle is a strut.
-    specs = [
-        ("L0", (-0.12, 0.22, 1.05), (-0.34, 0.02, 0.55), (-0.28, 0.28, 0.02)),
-        ("L1", (-0.14, 0.0, 1.02), (-0.42, 0.0, 0.52), (-0.30, 0.0, 0.02)),
-        ("L2", (-0.12, -0.22, 1.05), (-0.34, -0.02, 0.55), (-0.28, -0.30, 0.02)),
-        ("R0", (0.12, 0.22, 1.05), (0.34, 0.02, 0.55), (0.28, 0.28, 0.02)),
-        ("R1", (0.14, 0.0, 1.02), (0.42, 0.0, 0.52), (0.30, 0.0, 0.02)),
-        ("R2", (0.12, -0.22, 1.05), (0.34, -0.02, 0.55), (0.28, -0.30, 0.02)),
-    ]
-    for name, hip, knee, foot in specs:
-        leg_pair(rig, parts, name, hip, knee, foot, 0.035, 0.028, mats["black"])
-        parts.append(uv_sphere(name + "k", 0.04, knee, mats["orange"], name + "_Knee", u=8, v=6))
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Hopper"])
-    idle_sway(arm, clips[0], extras=(("Head", (0.06, 0, 0)),))
-    gait(arm, clips[1], [(n + "_Hip", i * (1 / 6)) for i, (n, *_) in enumerate(specs)])
-    strike_pose(arm, clips[2], {
-        "Body": (-0.15, 0, 0),
-        "Head": (0.4, 0, 0),
-        "L0_Knee": (1.1, 0, 0),
-        "R0_Knee": (1.1, 0, 0),
-        "L1_Hip": (-0.4, 0, 0),
-        "R1_Hip": (-0.4, 0, 0),
-    })
-    return arm, mesh
+def _fauna_v2(key):
+    def build(mats, clips):
+        return fauna_v2.BUILDERS[key](clips)
 
-
-def build_creeper(mats, clips):
-    rig = Rig(UNIT_NAMES["Creeper"])
-    parts = []
-    parent = "Root"
-    seg_bones = []
-    for i in range(6):
-        y = -0.85 + i * 0.32
-        bone = f"Seg{i}"
-        rig.bone(bone, (0, y, 0.16), (0, y + 0.12, 0.28), parent)
-        seg_bones.append(bone)
-        parent = bone
-        mat = mats["olive"] if i == 3 else mats["graphite"]
-        parts.append(uv_sphere(f"pl{i}", 0.16, (0, y, 0.22), mat, bone, scale=(1.15, 1.05, 0.55), u=16, v=8))
-        parts.append(cube(f"tile{i}", (0.22, 0.18, 0.04), (0, y, 0.32), mats["graphite"], bone, bevel=0.006))
-        for side, x in (("a", -0.16), ("b", 0.16)):
-            hip = (x * 0.55, y, 0.14)
-            foot = (x * 1.35, y + 0.04, 0.02)
-            knee = ((hip[0] + foot[0]) * 0.5, y, 0.08)
-            leg_pair(rig, parts, f"S{i}{side}", hip, knee, foot, 0.03, 0.022, mats["black"], parent=bone)
-    rig.bone("Head", (0, 1.05, 0.2), (0, 1.28, 0.24), "Seg5")
-    parts.append(uv_sphere("head", 0.11, (0, 1.12, 0.22), mats["graphite"], "Head", scale=(1, 1.3, 0.7)))
-    parts.append(uv_sphere("eye", 0.025, (0.06, 1.22, 0.28), mats["cyan"], "Head", u=8, v=5))
-    parts.append(uv_sphere("nub", 0.02, (-0.05, 1.2, 0.30), mats["orange"], "Head", u=8, v=5))
-    parts.append(seg("tendril", (0, -1.0, 0.18), (0, -1.25, 0.28), 0.03, 0.012, mats["orange"], "Seg0"))
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Creeper"])
-    idle_sway(arm, clips[0])
-    begin_action(arm, clips[1])
-    hips = []
-    for i in range(6):
-        for side in ("a", "b"):
-            hips.append((f"S{i}{side}_Hip", (i * 0.15) + (0 if side == "a" else 0.5)))
-    # gait() opens its own action; key the wave directly.
-    arm.animation_data.action = bpy.data.actions[clips[1]]
-    for frame in range(1, 25):
-        t = (frame - 1) / 24
-        for i, bone in enumerate(seg_bones):
-            krot(arm, bone, frame, z=math.sin((t * math.tau) + i * 0.7) * 0.12)
-        for bone, phase in hips:
-            s = math.sin((t + phase) * math.tau)
-            krot(arm, bone, frame, x=s * 0.5)
-    strike_pose(arm, clips[2], {"Head": (0.5, 0, 0), "Seg5": (0.25, 0, 0), "Seg0": (-0.2, 0, 0)})
-    return arm, mesh
-
-
-def build_tick(mats, clips):
-    rig = Rig(UNIT_NAMES["Tick"])
-    rig.bone("Body", (0, 0, 0.22), (0, 0.05, 0.42), "Root")
-    rig.bone("PinL", (-0.18, 0.28, 0.22), (-0.42, 0.55, 0.16), "Body")
-    rig.bone("PinR", (0.18, 0.28, 0.22), (0.42, 0.55, 0.16), "Body")
-    parts = []
-    parts.append(uv_sphere("shell", 0.34, (0, 0, 0.28), mats["graphite"], "Body", scale=(1.7, 1.05, 0.55), u=22, v=12))
-    parts.append(cone("spike", 0.04, 0.01, 0.22, (0, -0.02, 0.48), Vector((0, 0, 1)), mats["graphite"], "Body"))
-    parts.append(uv_sphere("eL", 0.03, (-0.12, 0.28, 0.36), mats["cyan"], "Body", u=8, v=6))
-    parts.append(uv_sphere("eR", 0.03, (0.12, 0.28, 0.36), mats["cyan"], "Body", u=8, v=6))
-    parts.append(seg("pL", (-0.12, 0.32, 0.2), (-0.38, 0.58, 0.12), 0.045, 0.02, mats["graphite"], "PinL"))
-    parts.append(uv_sphere("pLt", 0.035, (-0.40, 0.60, 0.12), mats["orange"], "PinL", u=8, v=5))
-    parts.append(seg("pR", (0.12, 0.32, 0.2), (0.38, 0.58, 0.12), 0.045, 0.02, mats["graphite"], "PinR"))
-    parts.append(uv_sphere("pRt", 0.035, (0.40, 0.60, 0.12), mats["orange"], "PinR", u=8, v=5))
-    for i, y in enumerate((-0.18, 0.0, 0.18)):
-        for s, x in enumerate((-1, 1)):
-            hip = (0.28 * x, y, 0.18)
-            knee = (0.48 * x, y + 0.05, 0.1)
-            foot = (0.58 * x, y + 0.08, 0.02)
-            leg_pair(rig, parts, f"T{i}{s}", hip, knee, foot, 0.035, 0.026, mats["black"])
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Tick"])
-    idle_sway(arm, clips[0])
-    gait(arm, clips[1], [(f"T{i}{s}_Hip", (i * 0.2) + s * 0.5) for i in range(3) for s in range(2)])
-    strike_pose(arm, clips[2], {"PinL": (0.2, 0, -0.7), "PinR": (0.2, 0, 0.7), "Body": (0.15, 0, 0)})
-    return arm, mesh
-
-
-def build_mite(mats, clips):
-    rig = Rig(UNIT_NAMES["Mite"])
-    rig.bone("Body", (0, 0, 0.16), (0, 0.08, 0.32), "Root")
-    rig.bone("Head", (0, 0.38, 0.16), (0, 0.55, 0.18), "Body")
-    parts = []
-    parts.append(uv_sphere("belly", 0.22, (0, 0, 0.18), mats["dust"], "Body", scale=(0.85, 1.7, 0.7), u=18, v=10))
-    for i, y in enumerate((-0.22, -0.05, 0.12)):
-        parts.append(cube(f"plate{i}", (0.28, 0.16, 0.05), (0, y, 0.32), mats["graphite"], "Body", bevel=0.008))
-    parts.append(uv_sphere("head", 0.09, (0, 0.42, 0.18), mats["graphite"], "Head", scale=(1, 1.2, 0.8)))
-    parts.append(cube("jaw", (0.06, 0.08, 0.03), (0, 0.52, 0.14), mats["black"], "Head", bevel=0.004))
-    parts.append(uv_sphere("eye", 0.022, (0.05, 0.48, 0.24), mats["cyan"], "Head", u=8, v=5))
-    parts.append(uv_sphere("nubL", 0.018, (-0.06, 0.46, 0.26), mats["orange"], "Head", u=6, v=4))
-    parts.append(uv_sphere("nubR", 0.018, (0.06, 0.40, 0.26), mats["orange"], "Head", u=6, v=4))
-    for i, y in enumerate((-0.18, 0.0, 0.16)):
-        for s, x in enumerate((-1, 1)):
-            hip = (0.14 * x, y, 0.12)
-            knee = (0.22 * x, y, 0.07)
-            foot = (0.26 * x, y + 0.03, 0.02)
-            leg_pair(rig, parts, f"M{i}{s}", hip, knee, foot, 0.028, 0.02, mats["black"])
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Mite"])
-    idle_sway(arm, clips[0])
-    gait(arm, clips[1], [(f"M{i}{s}_Hip", i * 0.25 + s * 0.5) for i in range(3) for s in range(2)])
-    strike_pose(arm, clips[2], {"Head": (0.6, 0, 0), "Body": (0.15, 0, 0)})
-    return arm, mesh
-
-
-def build_leech(mats, clips):
-    rig = Rig(UNIT_NAMES["Leech"])
-    parts = []
-    parent = "Root"
-    bones = []
-    for i in range(5):
-        y = -0.7 + i * 0.32
-        bone = f"Rib{i}"
-        rig.bone(bone, (0, y, 0.1), (0, y + 0.16, 0.16), parent)
-        bones.append(bone)
-        parent = bone
-        parts.append(uv_sphere(f"rib{i}", 0.16, (0, y, 0.14), mats["white_ray"], bone, scale=(1.4, 1.05, 0.28), u=16, v=8))
-    rig.bone("Head", (0, 0.85, 0.12), (0, 1.15, 0.14), "Rib4")
-    parts.append(cone("funnel", 0.1, 0.03, 0.28, (0, 1.0, 0.12), Vector((0, 1, 0)), mats["white_ray"], "Head"))
-    parts.append(cube("groove", (0.06, 1.3, 0.025), (0, 0.05, 0.22), mats["cyan"], "Rib2", bevel=0.004))
-    for i, y in enumerate((-0.55, -0.2, 0.15, 0.45)):
-        parts.append(uv_sphere(f"dL{i}", 0.055, (-0.2, y, 0.08), mats["black"], bones[min(i, 4)], scale=(1, 1, 0.45), u=10, v=6))
-        parts.append(uv_sphere(f"dR{i}", 0.055, (0.2, y, 0.08), mats["black"], bones[min(i, 4)], scale=(1, 1, 0.45), u=10, v=6))
-    parts.append(uv_sphere("nub", 0.02, (0.08, 1.05, 0.16), mats["orange"], "Head", u=6, v=4))
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Leech"])
-    idle_sway(arm, clips[0])
-    begin_action(arm, clips[1])
-    for frame in range(1, 25):
-        t = (frame - 1) / 24
-        for i, bone in enumerate(bones):
-            krot(arm, bone, frame, z=math.sin(t * math.tau + i * 0.8) * 0.18, x=math.sin(t * math.tau * 2 + i) * 0.05)
-        kloc(arm, "Body", frame, z=math.sin(t * math.tau) * 0.04) if "Body" in arm.pose.bones else None
-    strike_pose(arm, clips[2], {"Head": (0.7, 0, 0), "Rib4": (0.3, 0, 0)})
-    return arm, mesh
-
-
-def build_wisp(mats, clips):
-    rig = Rig(UNIT_NAMES["Wisp"])
-    rig.bone("Body", (0, 0, 0.7), (0, 0, 0.95), "Root")
-    parts = []
-    parts.append(uv_sphere("core", 0.08, (0, 0, 0.85), mats["white"], "Body", u=12, v=8))
-    for i in range(7):
-        ang = i * (math.tau / 7)
-        direction = Vector((math.cos(ang), math.sin(ang) * 0.35, math.sin(ang) * 0.25 + 0.15))
-        tip = Vector((0, 0, 0.85)) + direction.normalized() * 0.85
-        bone = f"Shard{i}"
-        rig.bone(bone, (0, 0, 0.85), tip, "Body")
-        parts.append(seg(bone + "m", (0, 0, 0.85), tip, 0.06, 0.012, mats["ice"], bone, verts=8))
-    parts.append(cone("up", 0.05, 0.01, 0.35, (0, 0, 1.15), Vector((0, 0, 1)), mats["ice"], "Body"))
-    parts.append(uv_sphere("nubL", 0.018, (-0.06, 0.1, 0.9), mats["orange"], "Body", u=6, v=4))
-    parts.append(uv_sphere("nubR", 0.018, (0.06, 0.1, 0.9), mats["orange"], "Body", u=6, v=4))
-    arm, mesh = finish_character(parts, rig, UNIT_NAMES["Wisp"])
-    idle_sway(arm, clips[0])
-    begin_action(arm, clips[1])
-    spin(arm, [f"Shard{i}" for i in range(7)], 24, axis="y", turns=0.35, bob="Body")
-    peak = {f"Shard{i}": (0.4, 0, 0) for i in range(7)}
-    peak["Body"] = (0, 0.3, 0)
-    strike_pose(arm, clips[2], peak)
-    return arm, mesh
+    build.__name__ = f"build_{key.lower()}"
+    return build
 
 
 # --- heroes ----------------------------------------------------------------
@@ -735,15 +530,7 @@ def fill_rest_keys(arm, clip_names):
     bpy.ops.object.mode_set(mode="OBJECT")
 
 
-FAUNA_BUILDERS = {
-    "Stalker": build_stalker,
-    "Hopper": build_hopper,
-    "Creeper": build_creeper,
-    "Tick": build_tick,
-    "Mite": build_mite,
-    "Leech": build_leech,
-    "Wisp": build_wisp,
-}
+FAUNA_BUILDERS = {key: _fauna_v2(key) for key in ("Stalker", "Hopper", "Creeper", "Tick", "Mite", "Leech", "Wisp")}
 
 
 def _fauna_builder(fn):
@@ -821,10 +608,18 @@ def write_meta():
             "clips": list(HERO_CLIPS),
             "downHoldsLastFrame": True,
         }
+    for unit, meta in fauna_v2.META.items():
+        data[unit] = {
+            "unit": unit,
+            "walkSpeed": meta["walkSpeed"],
+            "height": meta["height"],
+            "clips": list(FAUNA_CLIPS),
+            "downHoldsLastFrame": True,
+        }
     for key, unit in UNIT_NAMES.items():
         if key in FAUNA_BUILDERS and unit not in data:
-            data[unit] = {"unit": unit, "walkSpeed": 0.0, "height": 0.0, "clips": ["Idle", "Walk", "Strike"],
-                          "downHoldsLastFrame": False}
+            data[unit] = {"unit": unit, "walkSpeed": 0.0, "height": 0.0, "clips": list(FAUNA_CLIPS),
+                          "downHoldsLastFrame": True}
     META_PATH.parent.mkdir(parents=True, exist_ok=True)
     META_PATH.write_text(json.dumps({"units": sorted(data.values(), key=lambda r: r["unit"])}, indent=2) + "\n")
     print(f"[SM] meta {META_PATH}")
@@ -836,7 +631,8 @@ def export_all():
         print(f"[SM] === {key} ===")
         clear_scene()
         mats = palette()
-        arm, mesh = builder(mats, ("Idle", "Walk", "Strike"))
+        clips = FAUNA_CLIPS if key in FAUNA_BUILDERS else ("Idle", "Walk", "Strike")
+        arm, mesh = builder(mats, clips)
         export_fbx(arm, mesh, UNIT_NAMES[key])
     write_meta()
 
@@ -940,9 +736,11 @@ def render_lineup(animate=True):
     clear_scene()
     mats = palette()
     build_world()
+    fauna_v2.BAKE_TEXTURES = False  # reuse the committed atlases instead of re-baking
     for key, x, y, which in LAYOUT:
         print(f"[SM] place {key}")
-        arm, mesh = BUILDERS[key](mats, (f"{key}_Idle", f"{key}_Walk", f"{key}_Strike"))
+        names = FAUNA_CLIPS if key in FAUNA_BUILDERS else ("Idle", "Walk", "Strike")
+        arm, mesh = BUILDERS[key](mats, tuple(f"{key}_{n}" for n in names))
         arm.location = (x, y, 0.0)
         arm.rotation_euler = (0.0, 0.0, math.pi)
         act_name = f"{key}_{which}"
