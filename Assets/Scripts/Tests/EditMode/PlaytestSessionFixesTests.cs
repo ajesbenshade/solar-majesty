@@ -195,6 +195,19 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void PlaytestNotes_MatchCurrentControls()
+        {
+            string path = Path.Combine(Application.dataPath, "Scripts/Editor/PlaytestHandoff.cs");
+            string text = File.ReadAllText(path);
+            Assert.That(text, Does.Contain("While placing a building or flag"));
+            Assert.That(text, Does.Contain("Space"));
+            Assert.That(text, Does.Contain(", / ."));
+            Assert.That(text, Does.Contain("speed buttons"));
+            Assert.That(text, Does.Contain("selected flag's bounty"));
+            Assert.That(text, Does.Contain("These are not speed"));
+        }
+
+        [Test]
         public void Hud_LabelsStayApart_AtPlaytestResolutions()
         {
             AssertHud(1280f, 800f);
