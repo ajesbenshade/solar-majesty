@@ -300,6 +300,36 @@ namespace SolarMajesty
         public static List<ArchPart> Adapt(CelestialBodyId id, ArchArchetype a, float w, float d, float h, int seed) =>
             Adapt(id, a, KitShape.FlatBox(RepresentativeOf(a), w, d, Mathf.Max(0.8f, h)), seed);
 
+        /// <summary>Fraction of the footprint from centre to an Earth power-node turbine.</summary>
+        public const float WindTurbineAlong = 0.34f;
+
+        /// <summary>
+        /// Horizontal reach of a turbine blade from its mast (0.45 m offset, 1.6 m blade
+        /// rolled 12°). The mast itself sits (0.5 − <see cref="WindTurbineAlong"/>) of the
+        /// side in from the corner, so the rotor stays inside the cell rectangle.
+        /// </summary>
+        public const float WindTurbineBladeReach = 0.75f;
+
+        /// <summary>Local XZ of the two Earth power turbines, footprint centred on the origin.</summary>
+        public static void WindTurbineSites(float worldW, float worldD, out Vector2 southeast, out Vector2 southwest)
+        {
+            southeast = new Vector2(worldW * WindTurbineAlong, -worldD * WindTurbineAlong);
+            southwest = new Vector2(-worldW * WindTurbineAlong, -worldD * WindTurbineAlong);
+        }
+
+        /// <summary>
+        /// Ground the rotor blocks around each mast. The circle reaches
+        /// <see cref="WindTurbineBladeReach"/> past the cell rectangle, which is the
+        /// neighbour ground a flush footprint shares with the blades. A cell test never
+        /// sees it: the mast is still inside the donor rectangle.
+        /// </summary>
+        public static float WindTurbineBlockRadius(float worldW, float worldD)
+        {
+            float side = Mathf.Min(Mathf.Abs(worldW), Mathf.Abs(worldD));
+            float inset = (0.5f - WindTurbineAlong) * side;
+            return inset + WindTurbineBladeReach;
+        }
+
         /// <summary>A category that stands for an archetype, for stand-in shapes.</summary>
         public static BuildingCategory RepresentativeOf(ArchArchetype a) => a switch
         {

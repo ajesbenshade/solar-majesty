@@ -45,8 +45,8 @@ namespace SolarMajesty
                     p.Sphere("AtriumTree", ArchRole.Plant, new Vector3(0, h + 0.7f, 0), new Vector3(w * 0.22f, w * 0.2f, d * 0.22f));
                     break;
                 case ArchArchetype.Power:
-                    p.WindTurbine(new Vector3(w * 0.34f, 0, -d * 0.34f), h + 3.2f);
-                    p.WindTurbine(new Vector3(-w * 0.34f, 0, -d * 0.34f), h + 2.6f);
+                    p.WindTurbine(new Vector3(w * WindTurbineAlong, 0, -d * WindTurbineAlong), h + 3.2f);
+                    p.WindTurbine(new Vector3(-w * WindTurbineAlong, 0, -d * WindTurbineAlong), h + 2.6f);
                     break;
                 case ArchArchetype.Extractor:
                     p.Box("RainCanopy", ArchRole.Glass, new Vector3(0, h + 0.7f, 0), new Vector3(w * 0.9f, 0.06f, d * 0.6f), new Vector3(-12, 0, 0));
