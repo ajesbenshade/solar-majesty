@@ -28,7 +28,12 @@ Clips: Idle, Walk, Strike, Down (Down plays once and holds). Every clip keys eve
 every frame; looping clips end on their first pose. Walk stride speeds are measured from
 the gait (stance travel / stance time) and written to UnitClipMeta.json by the roster.
 
-Fronts point +Y (Unity +Z after export), ground at z = 0, metres.
+Modelled with the front at +Y, ground at z = 0, metres. On output (mesh, joint heads and
+keys) every creature is turned 180 degrees about Z: with the roster's FBX axis settings
+Blender +Y lands on Unity -Z, and fauna roots face their travel direction (+Z), so without
+the turn clip-driven fauna walk backwards (v1 did; only the static Stalker prefab was rescued
+by FaunaDressing.AlignHead). Keys stay exact: Rz(pi) conjugation maps Euler XYZ (x, y, z)
+to (-x, -y, z) and locations (x, y, z) to (-x, -y, z).
 
 Used by sm_animated_roster.py (export path):
   blender --background --python Blender/scripts/sm_animated_roster.py -- --export --only Stalker,Hopper,Creeper,Tick,Mite,Leech,Wisp
@@ -58,6 +63,7 @@ GLOW_MAT = "SM_Art_Fauna_GlowAccent"
 BAKE_TEXTURES = True          # roster lineup renders flip this off and reuse the PNGs
 NO_BAKE = False               # quick previews: no UVs/bake, body shows vertex colour
 META: dict[str, dict] = {}    # unit -> {"walkSpeed", "height", "tris"}
+FACE_UNITY_FORWARD = True     # turn 180 deg on output so the head ends up on Unity +Z
 
 UNIT = {
     "Stalker": ("SM_Unit_DustStalker", "DustStalker"),
@@ -246,6 +252,9 @@ class Build:
 
     def to_object(self, body_mat, glow_mat):
         me = bpy.data.meshes.new(OLD_GEOM[self.key])
+        if FACE_UNITY_FORWARD:
+            for v in self.bm.verts:
+                v.co.x, v.co.y = -v.co.x, -v.co.y
         self.bm.normal_update()
         self.bm.to_mesh(me)
         self.bm.free()
@@ -284,6 +293,8 @@ class Rig:
         bpy.ops.object.mode_set(mode="EDIT")
         eb = self.obj.data.edit_bones
         for name, head in self.heads.items():
+            if FACE_UNITY_FORWARD:
+                head = Vector((-head.x, -head.y, head.z))
             b = eb.new(name)
             b.head = head
             b.tail = head + Vector((0, self.len, 0))
@@ -332,6 +343,9 @@ def make_clip(arm, name, frames, fn):
         pose = fn(t)
         for pb in pbs:
             rot, loc = pose.get(pb.name, ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+            if FACE_UNITY_FORWARD:
+                rot = (-rot[0], -rot[1], rot[2])
+                loc = (-loc[0], -loc[1], loc[2])
             pb.rotation_euler = rot
             pb.location = loc
             pb.keyframe_insert("rotation_euler", frame=f + 1)
@@ -453,9 +467,9 @@ def glow_material():
     mat = bpy.data.materials.new(GLOW_MAT)
     mat.use_nodes = True
     bsdf = mat.node_tree.nodes.get("Principled BSDF")
-    bsdf.inputs["Base Color"].default_value = (1.0, 0.22, 0.012, 1.0)
-    bsdf.inputs["Emission Color"].default_value = (1.0, 0.20, 0.015, 1.0)
-    bsdf.inputs["Emission Strength"].default_value = 3.0
+    bsdf.inputs["Base Color"].default_value = (0.9, 0.22, 0.03, 1.0)
+    bsdf.inputs["Emission Color"].default_value = (1.0, 0.14, 0.01, 1.0)
+    bsdf.inputs["Emission Strength"].default_value = 1.6
     bsdf.inputs["Roughness"].default_value = 0.35
     # Same texture node so the bake pass (which needs an active image in every slot) succeeds.
     img = mat.node_tree.nodes.new("ShaderNodeTexImage")
@@ -667,8 +681,8 @@ def chain_weights(nodes):
 def build_stalker(clips):
     b = Build("Stalker")
     rig = Rig(b.unit)
-    CH = shade((0.06, 0.03, 0.05), (0.25, 0.13, 0.20), (0.62, 0.38, 0.50), sheen=0.75, seed=1.0)
-    CH_D = shade((0.04, 0.02, 0.035), (0.15, 0.08, 0.12), (0.38, 0.24, 0.32), sheen=0.6, seed=2.0)
+    CH = shade((0.05, 0.02, 0.035), (0.21, 0.08, 0.14), (0.54, 0.27, 0.37), sheen=0.75, seed=1.0)
+    CH_D = shade((0.03, 0.015, 0.025), (0.13, 0.05, 0.09), (0.34, 0.18, 0.25), sheen=0.6, seed=2.0)
     BN = bone_shade(1.0)
     rig.add("Body", (0, 0.02, 0.66), "Root")
     rig.add("Head", (0, 0.56, 0.75), "Body")
@@ -1531,6 +1545,133 @@ def build_all(keys=None, prefixed=False):
     return out
 
 
+# --------------------------------------------------------------------------- review renders
+
+LINEUP_ORDER = ("Stalker", "Hopper", "Creeper", "Tick", "Mite", "Leech", "Wisp")
+
+
+def _review_world(fast):
+    sc = bpy.context.scene
+    sc.render.engine = "CYCLES"
+    sc.cycles.device = "CPU"
+    sc.cycles.samples = 24 if fast else 96
+    sc.cycles.use_denoising = True
+    try:
+        sc.view_settings.view_transform = "AgX"
+        sc.view_settings.look = "AgX - Medium High Contrast"
+    except TypeError:
+        pass
+    world = bpy.data.worlds.new("EarthSky")
+    sc.world = world
+    world.use_nodes = True
+    bg = world.node_tree.nodes["Background"]
+    bg.inputs["Color"].default_value = (0.50, 0.66, 0.90, 1.0)
+    bg.inputs["Strength"].default_value = 0.9
+    sun = bpy.data.objects.new("Sun", bpy.data.lights.new("Sun", "SUN"))
+    sun.data.energy = 3.6
+    sun.data.color = (1.0, 0.95, 0.86)
+    sun.data.angle = math.radians(4)
+    sun.rotation_euler = (math.radians(48), 0.0, math.radians(30))
+    sc.collection.objects.link(sun)
+    # Grass ground: noise-mottled green, like the game's Earth temp scene.
+    me = bpy.data.meshes.new("Grass")
+    bm = bmesh.new()
+    bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=60)
+    bm.to_mesh(me)
+    bm.free()
+    g = bpy.data.objects.new("Grass", me)
+    sc.collection.objects.link(g)
+    mat = bpy.data.materials.new("GrassMat")
+    mat.use_nodes = True
+    nt = mat.node_tree
+    bsdf = nt.nodes["Principled BSDF"]
+    bsdf.inputs["Roughness"].default_value = 0.95
+    noise_n = nt.nodes.new("ShaderNodeTexNoise")
+    noise_n.inputs["Scale"].default_value = 3.0
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    ramp.color_ramp.elements[0].color = (0.10, 0.20, 0.045, 1)
+    ramp.color_ramp.elements[1].color = (0.20, 0.33, 0.08, 1)
+    nt.links.new(noise_n.outputs["Fac"], ramp.inputs["Fac"])
+    nt.links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    me.materials.append(mat)
+    cam = bpy.data.objects.new("Cam", bpy.data.cameras.new("Cam"))
+    sc.collection.objects.link(cam)
+    sc.camera = cam
+    return cam
+
+
+def _aim(cam, target, pitch_deg, yaw_deg, dist=40.0):
+    p, y = math.radians(pitch_deg), math.radians(yaw_deg)
+    d = Vector((math.sin(y) * math.cos(p), -math.cos(y) * math.cos(p), math.sin(p)))
+    cam.location = Vector(target) + d * dist
+    cam.rotation_euler = (Vector(target) - cam.location).to_track_quat("-Z", "Y").to_euler()
+
+
+def _use_clip(arm, clip, t):
+    for a in bpy.data.actions:
+        if a.name == clip or (a.name.split(".")[0] == clip and arm.name in [s.name_display for s in a.slots]):
+            arm.animation_data.action = a
+            arm.animation_data.action_slot = a.slots[0]
+            lo, hi = a.frame_range
+            return int(round(lo + (hi - lo) * t))
+    return 1
+
+
+def review(out: Path, fast=False, strips=("Stalker", "Hopper")):
+    """Blender lineup render on grass + Walk/Strike/Down frame strips (PNG)."""
+    global BAKE_TEXTURES
+    BAKE_TEXTURES = False
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    out.mkdir(parents=True, exist_ok=True)
+    res = build_all(LINEUP_ORDER, prefixed=True)
+    cam = _review_world(fast)
+    sc = bpy.context.scene
+    # Lineup: game-like overseer view (ortho, pitch 30, creatures facing the camera's left).
+    spacing = 2.9
+    for i, key in enumerate(LINEUP_ORDER):
+        arm = res[key][0]
+        arm.location = ((i - 3) * spacing, 0.0, 0.0)
+        arm.rotation_euler = (0.0, 0.0, math.radians(205 + (180 if FACE_UNITY_FORWARD else 0)))
+        sc.frame_set(_use_clip(arm, f"{key}_Idle", 0.0))
+    cam.data.type = "ORTHO"
+    cam.data.ortho_scale = 21.5
+    sc.render.resolution_x, sc.render.resolution_y = (1600, 700) if not fast else (1000, 440)
+    _aim(cam, (0, 0, 0.7), 30, 0)
+    sc.render.filepath = str(out / "blender_lineup.png")
+    bpy.ops.render.render(write_still=True)
+    # Action lineup: everyone mid-Strike.
+    for key in LINEUP_ORDER:
+        _use_clip(res[key][0], f"{key}_Strike", 0.5)
+    frames = {}
+    for key in LINEUP_ORDER:
+        arm = res[key][0]
+        frames[key] = _use_clip(arm, f"{key}_Strike", 0.46)
+    # Each armature has its own action; one scene frame drives them all, so pick a shared frame.
+    sc.frame_set(9)
+    sc.render.filepath = str(out / "blender_lineup_strike.png")
+    bpy.ops.render.render(write_still=True)
+    # Frame strips: solo creature, 6 samples per clip.
+    sc.render.resolution_x, sc.render.resolution_y = (480, 400) if not fast else (320, 270)
+    for key in strips:
+        for k2 in LINEUP_ORDER:
+            for o in (res[k2][0], res[k2][1]):
+                o.hide_render = k2 != key
+        arm = res[key][0]
+        arm.location = (0, 0, 0)
+        arm.rotation_euler = (0.0, 0.0, math.pi if FACE_UNITY_FORWARD else 0.0)
+        h = META[UNIT[key][0]]["height"]
+        cam.data.ortho_scale = max(2.6, h * 1.7)
+        for clip in ("Walk", "Strike", "Down"):
+            for j, t in enumerate((0.0, 0.17, 0.33, 0.5, 0.67, 0.83) if clip == "Walk" else
+                                  (0.0, 0.22, 0.34, 0.46, 0.6, 0.85) if clip == "Strike" else
+                                  (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)):
+                sc.frame_set(_use_clip(arm, f"{key}_{clip}", t))
+                _aim(cam, (0, 0, h * 0.4), 24, 64)
+                sc.render.filepath = str(out / f"strip_{key}_{clip}_{j}.png")
+                bpy.ops.render.render(write_still=True)
+    print(f"[SM] review renders in {out}")
+
+
 def _args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     return argv
@@ -1545,3 +1686,7 @@ if __name__ == "__main__":
         if "--save" in argv:
             bpy.ops.wm.save_as_mainfile(filepath=argv[argv.index("--save") + 1])
         print(json.dumps(META, indent=1))
+    elif "--review" in argv:
+        out = Path(argv[argv.index("--out") + 1]) if "--out" in argv else ROOT / ".dream-loop" / "stills" / "fauna_v2"
+        strips = argv[argv.index("--strips") + 1].split(",") if "--strips" in argv else ("Stalker", "Hopper")
+        review(out, fast="--fast" in argv, strips=strips)
