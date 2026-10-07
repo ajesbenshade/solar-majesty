@@ -657,5 +657,215 @@ namespace SolarMajesty.Tests
             Assert.DoesNotThrow(() => brain.Evaluate(ctx, flags));
             Assert.DoesNotThrow(() => brain.Evaluate(ctx, null));
         }
+
+        // ---------------------------------------------------------------
+        // Clear Threat commitment — playtest after fff705e
+        // ---------------------------------------------------------------
+
+        /// <summary>
+        /// A paid Defense claim on a far den used to drop within a think or two: fatigue × distance
+        /// and the hero's own claim pushed the score back under acceptance, then hunt/rest/wander
+        /// won, then the score recovered and they claimed again (249 flag_claimed in 25 minutes).
+        /// Healthy and paid, the warrant stays through that whole swing.
+        /// </summary>
+        [Test]
+        public void ClearThreat_OnceClaimed_StaysThroughFatigueHuntAndRest()
+        {
+            var brain = new SpecialistBrain();
+            var ctx = MakeContext(MakeDefense());
+            var flag = MakeFlag(MakeClearThreat(), 1000f, new Vector3(180f, 0f, 0f), 0.6f);
+            var flags = new List<FlagHandle> { flag };
+
+            ctx.HasHunt = true;
+            ctx.HuntDistance = 5f;
+            ctx.HuntPosition = new Vector3(5f, 0f, 0f);
+            var first = brain.Evaluate(ctx, flags, 0.85f);
+            Assert.AreEqual(SpecialistAction.PursueFlag, first.Action, "a healthy paid warrant is still taken");
+            Assert.AreSame(flag, first.TargetFlag);
+
+            var motives = new HeroMotives();
+            float now = 0f;
+            for (int n = 0; n < 12; n++)
+            {
+                now += 7f;
+                motives.NoteDecision(brain.Tuning, SpecialistAction.Hunt, new object(), now);
+            }
+            Assert.IsTrue(motives.Relaxing, "the work budget should have started a break");
+            ctx.Motives = motives;
+
+            ctx.CurrentAction = SpecialistAction.PursueFlag;
+            ctx.CurrentFlag = flag;
+            for (int i = 0; i < 40; i++)
+            {
+                ctx.Fatigue = i / 39f;
+                ctx.GreedHunger = (i % 5) * 0.2f;
+                ctx.HasHunt = true;
+                ctx.HuntDistance = 4f;
+                ctx.CurrentAction = SpecialistAction.PursueFlag;
+                ctx.CurrentFlag = flag;
+                flag.ClaimCount = 1 + (i % 5);
+                var decision = brain.Evaluate(ctx, flags, 0.9f);
+                Assert.AreEqual(SpecialistAction.PursueFlag, decision.Action, $"dropped on think {i} fatigue={ctx.Fatigue:F2}");
+                Assert.AreSame(flag, decision.TargetFlag);
+                Assert.AreEqual("clear_threat_commit", decision.Reason);
+                Assert.IsTrue(brain.WouldTakeFlag(ctx, flag, 0.9f, out _));
+                Assert.AreEqual(FlagRefusalKind.WouldTake, brain.ExplainFlag(ctx, flag, 0.9f));
+            }
+
+            var options = new List<BrainDecision>();
+            Assert.IsFalse(brain.CollectOptions(ctx, flags, 0.9f, options), "Laya must not swap a held warrant");
+            Assert.AreEqual("clear_threat_commit", options[0].Reason);
+
+            ctx.HealthNormalized = 0.2f;
+            var hurt = brain.Evaluate(ctx, flags, 0.9f);
+            Assert.AreEqual(SpecialistAction.Flee, hurt.Action, "low health still retreats");
+
+            ctx.HealthNormalized = 1f;
+            ctx.Fatigue = 0f;
+            ctx.CurrentAction = SpecialistAction.PursueFlag;
+            ctx.CurrentFlag = flag;
+            var cancelled = brain.Evaluate(ctx, new List<FlagHandle>(), 0f);
+            Assert.AreNotEqual(SpecialistAction.PursueFlag, cancelled.Action, "a removed flag ends the warrant");
+
+            ctx.CurrentAction = SpecialistAction.Idle;
+            ctx.CurrentFlag = null;
+            ctx.Motives = null;
+            ctx.HasHunt = false;
+            flag.ClaimCount = 0;
+            var again = brain.Evaluate(ctx, flags, 0f);
+            Assert.AreEqual(SpecialistAction.PursueFlag, again.Action, "after healing they may take the warrant again");
+            Assert.AreSame(flag, again.TargetFlag);
+
+            ctx.CurrentAction = SpecialistAction.Idle;
+            ctx.CurrentFlag = null;
+            ctx.Fatigue = 1f;
+            Assert.AreEqual(FlagRefusalKind.Tired, brain.ExplainFlag(ctx, flag, 0f));
+            Assert.AreEqual("DEF is tired — wait", OverseerRules.FlagRefusalLine(FlagRefusalKind.Tired, "DEF", 304, 560, 1000f));
+            Assert.AreEqual("DEF won't take the walk", OverseerRules.FlagRefusalLine(FlagRefusalKind.Ignored, "DEF", 304, 56, 1000f));
+            Assert.AreEqual("Ignored — raise bounty (+)", OverseerRules.FlagRefusalLine(FlagRefusalKind.Ignored, "DEF", 304, 56, 80f));
+            Assert.AreEqual("DEF is hunting pests", OverseerRules.FlagRefusalLine(FlagRefusalKind.Hunting, "DEF", 304, 56, 1000f));
+            Assert.AreEqual("orders exclude DEF", OverseerRules.FlagRefusalLine(FlagRefusalKind.Orders, "DEF", 304, 56, 1000f));
+            Assert.AreEqual("DEF wants 304 — raise +", OverseerRules.FlagRefusalLine(FlagRefusalKind.Greed, "DEF", 304, 56, 80f));
+            Assert.AreEqual("too far for DEF — 56m", OverseerRules.FlagRefusalLine(FlagRefusalKind.TooFar, "DEF", 304, 56, 80f));
+            Assert.AreEqual("DEF is hurt — wait", OverseerRules.FlagRefusalLine(FlagRefusalKind.Hurt, "DEF", 304, 56, 80f));
+            Assert.AreEqual("not a ENG job", OverseerRules.FlagRefusalLine(FlagRefusalKind.NotMyJob, "ENG", 800, 56, 1000f));
+        }
+
+        /// <summary>Clear Threat is a combat warrant. Engineers and the other non-combat classes stay off it.</summary>
+        [Test]
+        public void ClearThreat_NonCombatClasses_DoNotTakeIt()
+        {
+            var brain = new SpecialistBrain();
+            var classes = new[]
+            {
+                SpecialistClass.EngineerBot,
+                SpecialistClass.Medic,
+                SpecialistClass.ScoutDrone,
+                SpecialistClass.HarvesterBot,
+                SpecialistClass.SurveyorBot,
+                SpecialistClass.TerraformerBot,
+                SpecialistClass.CourierBot,
+                SpecialistClass.GeologistBot
+            };
+            var spots = new[] { new Vector3(5f, 0f, 0f), new Vector3(180f, 0f, 0f) };
+            float[] bounties = { 1000f, 5000f };
+
+            for (int c = 0; c < classes.Length; c++)
+            {
+                var data = MakeSpecialist(classes[c]);
+                SpecialistPersonality.Apply(data);
+                var ctx = MakeContext(data);
+                for (int s = 0; s < spots.Length; s++)
+                {
+                    for (int b = 0; b < bounties.Length; b++)
+                    {
+                        var flag = MakeFlag(MakeClearThreat(), bounties[b], spots[s], 0.4f);
+                        Assert.IsFalse(brain.WouldTakeFlag(ctx, flag, 0f, out _), classes[c].ToString());
+                        Assert.AreEqual(FlagRefusalKind.NotMyJob, brain.ExplainFlag(ctx, flag, 0f), classes[c].ToString());
+                        var decision = brain.Evaluate(ctx, new List<FlagHandle> { flag });
+                        Assert.AreNotEqual(SpecialistAction.PursueFlag, decision.Action, classes[c].ToString());
+                    }
+                }
+            }
+
+            var sentinel = MakeSpecialist(SpecialistClass.SentinelMech);
+            SpecialistPersonality.Apply(sentinel);
+            var sentCtx = MakeContext(sentinel);
+            var sentFlag = MakeFlag(MakeClearThreat(), 1000f, new Vector3(15f, 0f, 0f), 0.4f);
+            Assert.IsTrue(brain.WouldTakeFlag(sentCtx, sentFlag, 0f, out _));
+            Assert.AreEqual(FlagRefusalKind.WouldTake, brain.ExplainFlag(sentCtx, sentFlag, 0f));
+            Assert.AreEqual(SpecialistAction.PursueFlag, brain.Evaluate(sentCtx, new List<FlagHandle> { sentFlag }).Action);
+
+            var bare = MakeFlagData(FlagType.ClearThreat);
+            bare.baseRisk = 0.4f;
+            var engineer = MakeContext(MakeDefense());
+            engineer.Data = MakeSpecialist(SpecialistClass.EngineerBot);
+            SpecialistPersonality.Apply(engineer.Data);
+            var rich = MakeFlag(bare, 5000f, new Vector3(5f, 0f, 0f), 0.4f);
+            Assert.AreEqual(FlagRefusalKind.NotMyJob, brain.ExplainFlag(engineer, rich, 0f));
+            Assert.IsFalse(brain.WouldTakeFlag(engineer, rich, 0f, out _));
+
+            var defense = MakeContext(MakeDefense());
+            Assert.IsTrue(brain.WouldTakeFlag(defense, MakeFlag(bare, 1000f, new Vector3(15f, 0f, 0f), 0.4f), 0f, out _));
+
+            var stuck = MakeContext(engineer.Data);
+            stuck.CurrentAction = SpecialistAction.PursueFlag;
+            stuck.CurrentFlag = rich;
+            Assert.AreNotEqual("clear_threat_commit", brain.Evaluate(stuck, new List<FlagHandle> { rich }).Reason);
+        }
+
+        /// <summary>Continue restores a cleared den. That must not replay the live-clear log.</summary>
+        [Test]
+        public void RestoreChart_AlreadyCleared_DoesNotLogLairCleared()
+        {
+            var go = new GameObject("reload-den");
+            var lair = go.AddComponent<StalkerLair>();
+            int hits = 0;
+            Application.LogCallback onLog = (cond, stack, type) =>
+            {
+                if (cond != null && cond.IndexOf("[Lair] Cleared stalker den", System.StringComparison.Ordinal) >= 0)
+                    hits++;
+            };
+            Application.logMessageReceived += onLog;
+            try
+            {
+                lair.RestoreChart(true, false);
+                Assert.IsTrue(lair.IsCleared);
+                Assert.AreEqual(0, hits);
+            }
+            finally
+            {
+                Application.logMessageReceived -= onLog;
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>A den that actually falls still announces it.</summary>
+        [Test]
+        public void ForceClear_LogsLairCleared()
+        {
+            var go = new GameObject("live-den");
+            var lair = go.AddComponent<StalkerLair>();
+            int hits = 0;
+            Application.LogCallback onLog = (cond, stack, type) =>
+            {
+                if (cond != null && cond.IndexOf("[Lair] Cleared stalker den", System.StringComparison.Ordinal) >= 0)
+                    hits++;
+            };
+            Application.logMessageReceived += onLog;
+            try
+            {
+                lair.ForceClear();
+                Assert.IsTrue(lair.IsCleared);
+                Assert.AreEqual(1, hits);
+                lair.ForceClear();
+                Assert.AreEqual(1, hits, "a second clear is silent");
+            }
+            finally
+            {
+                Application.logMessageReceived -= onLog;
+                Object.DestroyImmediate(go);
+            }
+        }
     }
 }

@@ -80,6 +80,9 @@ namespace SolarMajesty
         private LayaHeroDriver _laya;
         private FlagHandle _activeFlag;
         private bool _claimedActive;
+        private FlagHandle _claimAnnounced;
+        private float _claimAnnouncedAt = -999f;
+        private const float ClaimAnnounceWindow = 20f;
         private Vector3 _idleTarget;
         private bool _hasIdleTarget;
         private float _restTimer;
@@ -1093,6 +1096,21 @@ namespace SolarMajesty
             };
         }
 
+        /// <summary>
+        /// One claim line per flag per window. A warrant that flickers would otherwise
+        /// reprint "Hunting the den" and a flag_claimed event on every think.
+        /// </summary>
+        private void AnnounceFlagClaim(FlagHandle flag)
+        {
+            if (flag?.Data == null || data == null) return;
+            if (ReferenceEquals(_claimAnnounced, flag) && Time.time - _claimAnnouncedAt < ClaimAnnounceWindow)
+                return;
+            _claimAnnounced = flag;
+            _claimAnnouncedAt = Time.time;
+            _loop?.LogOverseer(SpecialistFlavor.ClaimLine(data.displayName, data.specialistClass, flag.Data.flagType));
+            _loop?.NotifyFlagClaimed(flag);
+        }
+
         private void ApplyDecision(BrainDecision decision)
         {
             bool changed = decision.Action != _lastDecision.Action ||
@@ -1112,12 +1130,7 @@ namespace SolarMajesty
                     _buildLaborHit = false;
                     DemoAudio.PlayClaim(transform.position);
                     DemoVfx.ClaimRing(_activeFlag.WorldPosition, new Color(1f, 0.85f, 0.2f));
-                    if (decision.TargetFlag.Data != null)
-                    {
-                        _loop?.LogOverseer(SpecialistFlavor.ClaimLine(
-                            data.displayName, data.specialistClass, decision.TargetFlag.Data.flagType));
-                        _loop?.NotifyFlagClaimed(decision.TargetFlag);
-                    }
+                    AnnounceFlagClaim(decision.TargetFlag);
                 }
                 _idleTarget = _activeFlag.WorldPosition;
                 _hasIdleTarget = true;
@@ -1236,7 +1249,7 @@ namespace SolarMajesty
 
             if (done)
             {
-                float bounty = _activeFlag.CurrentBounty;
+                int bounty = FlagBountySync.Amount(_activeFlag);
                 var completedType = _activeFlag.Data.flagType;
                 EarnCredits(bounty, $"flag_{completedType}");
                 GrantXp(OverseerRules.XpForFlag(completedType), completedType.ToString());
@@ -2154,7 +2167,7 @@ namespace SolarMajesty
         public string DebugLine()
         {
             string flagInfo = _activeFlag != null
-                ? $"{_activeFlag.Data.flagType} b={_activeFlag.CurrentBounty:F0}"
+                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):F0}"
                 : "-";
             string nav = _agent != null && _agent.isOnNavMesh ? "nav" : "direct";
             return $"{data?.displayName ?? "?"} L{Level} | {_lastDecision.Action} | " +

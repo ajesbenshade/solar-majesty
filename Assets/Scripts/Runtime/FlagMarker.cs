@@ -204,10 +204,7 @@ namespace SolarMajesty
 
             if (_bountyLabel != null)
             {
-                string pay = $"$ {_handle.CurrentBounty:F0}";
-                if (_handle.EscrowMetals > 0)
-                    pay += $"  ·  {_handle.EscrowMetals} EU";
-                _bountyLabel.text = pay;
+                _bountyLabel.text = $"$ {FlagBountySync.Amount(_handle):F0}";
             }
 
             if (_metaLabel != null)

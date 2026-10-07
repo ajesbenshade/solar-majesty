@@ -33,6 +33,12 @@ namespace SolarMajesty
         public float Bounty => bounty;
         public FlagData SelectedFlag => _selected;
 
+        /// <summary>The number the flag panel prints. A selected pole shows that pole; otherwise the next post.</summary>
+        public int ShownBounty => FlagBountySync.PanelAmount(SelectedPosted, bounty, _selected);
+
+        /// <summary>A posted pole is already paid for. The next post is red when the treasury cannot cover it.</summary>
+        public bool ShownBountyAffordable => HasSelectedPosted || CanAffordSelectedBounty();
+
         private FlagHandle _posted;
 
         /// <summary>The pole the player clicked. +/- edits this bounty. Null when none is selected.</summary>
@@ -60,6 +66,10 @@ namespace SolarMajesty
             }
 
             bool changed = !ReferenceEquals(_posted, handle);
+            float before = handle.CurrentBounty;
+            FlagBountySync.AdoptReserved(handle);
+            if (!Mathf.Approximately(before, handle.CurrentBounty))
+                _loop?.RefreshFlagInterest();
             _posted = handle;
             ApplyMarkerSelection(handle);
             if (!changed) return;
@@ -119,12 +129,37 @@ namespace SolarMajesty
             enabledPlacement = true;
         }
 
-        /// <summary>The bounty the next post will escrow. The − / + buttons on the flag panel use this.</summary>
+        /// <summary>
+        /// − / + on the flag panel and the +/− keys. A selected pole steps that bounty through
+        /// the treasury. With the flag tool armed and nothing selected, this only sets the next
+        /// post. With nothing selected and the tool closed, it does nothing.
+        /// </summary>
         public void NudgeBounty(float delta)
         {
-            bounty += delta;
-            if (_selected != null)
-                bounty = Mathf.Clamp(bounty, _selected.minBounty, _selected.maxBounty);
+            var selected = SelectedPosted;
+            float before = selected != null ? selected.CurrentBounty : 0f;
+            int escrowBefore = selected != null ? selected.EscrowMetals : 0;
+            float pending = bounty;
+            FlagBountySync.Apply(
+                _flags,
+                _loop != null ? _loop.Economy : null,
+                selected,
+                enabledPlacement,
+                ref pending,
+                _selected,
+                delta,
+                out bool treasuryShort);
+            bounty = pending;
+            if (treasuryShort)
+                _loop?.LogOverseer("Not enough EU to raise that bounty.");
+
+            if (selected == null || Mathf.Approximately(selected.CurrentBounty, before))
+                return;
+            _loop?.RefreshFlagInterest();
+            string kind = selected.Data != null ? selected.Data.flagType.ToString() : "Flag";
+            Debug.Log(
+                $"[Flags] {kind} bounty ${before:F0} -> ${selected.CurrentBounty:F0} " +
+                $"escrow {escrowBefore} -> {selected.EscrowMetals} EU");
         }
 
         /// <summary>Programmatic post (Phase 5E attractor) with marker + SFX.</summary>
@@ -169,6 +204,7 @@ namespace SolarMajesty
             _selected = data;
             FlagHandle handle = _flags.Post(data, world, bountyAmount);
             handle.EscrowMetals = escrow;
+            FlagBountySync.AdoptReserved(handle);
             if (orders != null && !string.IsNullOrWhiteSpace(orders.text))
                 handle.Orders = orders; // restored verbatim — never re-parsed or re-asked
             if (_loop != null)
@@ -181,7 +217,7 @@ namespace SolarMajesty
         public bool CanAffordSelectedBounty()
         {
             if (_loop?.Economy == null) return true;
-            return _loop.Economy.CanAffordBounty(bounty);
+            return _loop.Economy.CanAffordBounty(FlagBountySync.PostCost(_selected, bounty));
         }
 
         public void Initialize(
@@ -220,8 +256,8 @@ namespace SolarMajesty
             if (_flags == null) return;
             if (_loop != null && !_loop.IsPlaying) return;
 
-            // +/- edits the selected pole even when the flag tool is closed. With the tool open and
-            // nothing selected, it sets the bounty the next click will post. Speed is comma / period.
+            // +/− edits the selected pole. With the flag tool open and nothing selected, it sets
+            // the next post. With nothing selected and the tool closed, it does nothing. Speed is comma / period.
             if (!InputBindings.TextEntryActive)
                 HandleBountyKeys();
 
@@ -302,15 +338,10 @@ namespace SolarMajesty
         {
             if (data == null || _flags == null) return null;
 
-            int escrow = 0;
-            if (_loop?.Economy != null)
-            {
-                if (!_loop.Economy.TryEscrowBounty(bountyAmount, out escrow))
-                    return null;
-            }
-
-            FlagHandle handle = _flags.Post(data, world, bountyAmount);
-            handle.EscrowMetals = escrow;
+            FlagHandle handle = FlagBountySync.TryPost(
+                _flags, _loop != null ? _loop.Economy : null, data, world, bountyAmount);
+            if (handle == null) return null;
+            int escrow = handle.EscrowMetals;
             if (_loop != null)
                 handle.Risk = Mathf.Clamp01(data.baseRisk + _loop.LocalThreatAt(world) * 0.5f);
             if (data.flagType == FlagType.ClearThreat && _loop?.World != null)
@@ -335,36 +366,7 @@ namespace SolarMajesty
 
             float step = Mathf.Max(bountyStep, MajestyEconomy.FlagBountyStep);
             float delta = (plus ? step : 0f) + (minus ? -step : 0f);
-
-            if (HasSelectedPosted)
-            {
-                TryStepSelectedBounty(delta);
-                return;
-            }
-
-            // No pole selected: +/- sets the next post only while the flag tool is open.
-            if (!enabledPlacement) return;
             NudgeBounty(delta);
-        }
-
-        private void TryStepSelectedBounty(float delta)
-        {
-            var flag = SelectedPosted;
-            if (flag == null) return;
-            float before = flag.CurrentBounty;
-            int escrowBefore = flag.EscrowMetals;
-            if (!FlagClick.TryStepBounty(_flags, _loop != null ? _loop.Economy : null, flag, delta))
-            {
-                _loop?.LogOverseer("Not enough EU to raise that bounty.");
-                return;
-            }
-
-            if (Mathf.Approximately(flag.CurrentBounty, before))
-                return;
-            _loop?.RefreshFlagInterest();
-            Debug.Log(
-                $"[Flags] {flag.Data.flagType} bounty ${before:F0} -> ${flag.CurrentBounty:F0} " +
-                $"escrow {escrowBefore} -> {flag.EscrowMetals} EU");
         }
 
         private Ray ViewRay()

@@ -300,6 +300,38 @@ namespace SolarMajesty
                 default: return PestKillMet;
             }
         }
+
+        /// <summary>
+        /// Flag-log line when a hero will not take the flag. A bounty that already meets the
+        /// ask does not say "raise bounty" — that lever is spent.
+        /// </summary>
+        public static string FlagRefusalLine(FlagRefusalKind kind, string cls, int ask, int reachMeters, float bounty)
+        {
+            if (string.IsNullOrEmpty(cls)) cls = "SCOUT";
+            switch (kind)
+            {
+                case FlagRefusalKind.Greed:
+                    return $"{cls} wants {ask} — raise +";
+                case FlagRefusalKind.TooFar:
+                    return $"too far for {cls} — {reachMeters}m";
+                case FlagRefusalKind.Hurt:
+                    return $"{cls} is hurt — wait";
+                case FlagRefusalKind.NotMyJob:
+                    return $"not a {cls} job";
+                case FlagRefusalKind.Tired:
+                    return $"{cls} is tired — wait";
+                case FlagRefusalKind.Hunting:
+                    return $"{cls} is hunting pests";
+                case FlagRefusalKind.Orders:
+                    return $"orders exclude {cls}";
+                case FlagRefusalKind.Ignored:
+                    if (ask > 0 && bounty + 0.5f >= ask)
+                        return $"{cls} won't take the walk";
+                    return "Ignored — raise bounty (+)";
+                default:
+                    return "Ignored — raise bounty (+)";
+            }
+        }
     }
 
     public enum FlagRefusalKind
@@ -312,6 +344,8 @@ namespace SolarMajesty
         Hunting = 5,
         Ignored = 6,
         /// <summary>The flag's orders exclude this hero (level, class or health).</summary>
-        Orders = 7
+        Orders = 7,
+        /// <summary>Score failed because the hero is worn out, not because the bounty is short.</summary>
+        Tired = 8
     }
 }
