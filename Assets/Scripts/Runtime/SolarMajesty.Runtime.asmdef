@@ -15,8 +15,5 @@
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
-    "noEngineReferences": false,
-    "internalsVisibleTo": [
-        "SolarMajesty.Tests.EditMode"
-    ]
+    "noEngineReferences": false
 }

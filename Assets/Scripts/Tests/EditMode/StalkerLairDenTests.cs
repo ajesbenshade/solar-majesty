@@ -76,11 +76,17 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(active.gameObject.activeInHierarchy);
             Assert.IsFalse(ruined.gameObject.activeSelf);
             Bounds bounds = ActiveBounds(active);
-            Assert.Greater(bounds.size.y, 4f, "den height");
-            Assert.Less(bounds.size.y, 16f, "den height");
+            float height = bounds.size.y;
             float footprint = Mathf.Max(bounds.size.x, bounds.size.z);
-            Assert.Greater(footprint, 8f, "den footprint");
-            Assert.Less(footprint, 24f, "den footprint");
+            string size = "height " + height.ToString("0.00")
+                + " footprint " + footprint.ToString("0.00")
+                + " (x " + bounds.size.x.ToString("0.00")
+                + " z " + bounds.size.z.ToString("0.00") + ")";
+            Debug.Log("[Lair] Authored den size " + size);
+            Assert.Greater(height, 4f, "den " + size);
+            Assert.Less(height, 16f, "den " + size);
+            Assert.Greater(footprint, 8f, "den " + size);
+            Assert.Less(footprint, 24f, "den " + size);
         }
 
         [Test]

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -282,10 +281,10 @@ namespace SolarMajesty
         private static readonly Color DefaultSoil = new Color(0.40f, 0.31f, 0.22f);
         private static readonly Color DefaultStone = new Color(0.52f, 0.48f, 0.43f);
 
-        private static Func<GameObject> _denPrefabLoader;
+        private static System.Func<GameObject> _denPrefabLoader;
 
         /// <summary>EditMode seam. Null uses Resources. A loader that returns null forces the primitive den.</summary>
-        internal static void SetDenPrefabLoaderForTests(Func<GameObject> loader) => _denPrefabLoader = loader;
+        internal static void SetDenPrefabLoaderForTests(System.Func<GameObject> loader) => _denPrefabLoader = loader;
 
         internal static void ResetDenPrefabLoaderForTests() => _denPrefabLoader = null;
 
@@ -538,7 +537,7 @@ namespace SolarMajesty
 
             // false: keep the prefab's local pose under the 45° pivot. The mesh has no baked
             // rotation; identity keeps the mouth on the pivot's -Z, toward the play camera.
-            GameObject instance = Object.Instantiate(prefab, _body, false);
+            GameObject instance = Instantiate(prefab, _body, false);
             instance.name = prefab.name;
             instance.transform.localPosition = Vector3.zero;
             instance.transform.localRotation = Quaternion.identity;
