@@ -118,6 +118,18 @@ namespace SolarMajesty.Tests
                 Assert.IsNull(FindChild(shop.transform, "Dress_Arch_PrintedVault"), "arched hangar is not buried under a vault");
                 Assert.IsTrue(PlanetArchitecture.IsRoofShell("PressureDome"));
                 Assert.IsFalse(PlanetArchitecture.IsRoofShell("DustSkirt"));
+
+                // The dresser strips shells from the part list (parts merge per role, so the
+                // child-name checks above cannot see them).
+                var parts = PlanetArchitecture.Adapt(CelestialBodyId.Mars, ArchArchetype.Hub, 6f, 6f, 3f, 1);
+                Assert.IsTrue(parts.Exists(p => PlanetArchitecture.IsRoofShell(p.Name)), "Mars hubs do author a dome");
+                PlanetArchitecture.StripRoofShells(parts);
+                Assert.IsFalse(parts.Exists(p => PlanetArchitecture.IsRoofShell(p.Name)));
+
+                var earth = PlanetArchitecture.Adapt(CelestialBodyId.Earth, ArchArchetype.Hub, 6f, 6f, 3f, 1);
+                Assert.IsTrue(earth.Exists(p => PlanetArchitecture.IsWindowBand(p.Name)), "Earth authors window bands");
+                PlanetArchitecture.StripRoofShells(earth);
+                Assert.IsFalse(earth.Exists(p => PlanetArchitecture.IsWindowBand(p.Name)), "no chopsticks through the kits");
             }
             finally
             {

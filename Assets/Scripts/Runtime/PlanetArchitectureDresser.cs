@@ -46,6 +46,9 @@ namespace SolarMajesty
             var shape = ShapeFor(root, category, worldW, worldD, archetype, holder.transform);
             int seed = Mathf.RoundToInt(at.x * 7.3f) * 73856093 ^ Mathf.RoundToInt(at.z * 7.3f) * 19349663;
             var parts = PlanetArchitecture.Adapt(body, archetype, shape, seed);
+            // Every building is a kit with its own detailed roof; a world's roof shell (Earth
+            // atrium dome and glass pavilion, Mars pressure dome...) would sit on top of it.
+            PlanetArchitecture.StripRoofShells(parts);
             BuildParts(root.transform, holder.transform, parts, body, style);
         }
 

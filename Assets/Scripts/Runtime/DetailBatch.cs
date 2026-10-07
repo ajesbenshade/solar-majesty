@@ -113,8 +113,8 @@ namespace SolarMajesty
             Vector3 d = b - a;
             float len = d.magnitude;
             if (len < 1e-4f) return;
-            Add(PrimitiveType.Cylinder, (a + b) * 0.5f, new Vector3(diameter, len * 0.5f, diameter),
-                Quaternion.FromToRotation(Vector3.up, d / len), c, emit);
+            AddRaw(PrimitiveType.Cylinder, (a + b) * 0.5f, new Vector3(diameter, len * 0.5f, diameter),
+                Quaternion.FromToRotation(Vector3.up, d / len), c, emit, false);
         }
 
         /// <summary>A square beam from <paramref name="a"/> to <paramref name="b"/>.</summary>
@@ -123,8 +123,8 @@ namespace SolarMajesty
             Vector3 d = b - a;
             float len = d.magnitude;
             if (len < 1e-4f) return;
-            Add(PrimitiveType.Cube, (a + b) * 0.5f, new Vector3(thick, len, thick),
-                Quaternion.FromToRotation(Vector3.up, d / len), c, emit);
+            AddRaw(PrimitiveType.Cube, (a + b) * 0.5f, new Vector3(thick, len, thick),
+                Quaternion.FromToRotation(Vector3.up, d / len), c, emit, false);
         }
 
         /// <summary>Large surface part that should carry the hull shader's panel seams.</summary>
@@ -133,6 +133,12 @@ namespace SolarMajesty
 
         public void Add(PrimitiveType type, Vector3 pos, Vector3 scale, Quaternion rot, Color c,
             Color emit = default, bool plated = false)
+        {
+            AddRaw(type, pos, scale, rot, c, emit, plated);
+        }
+
+        private void AddRaw(PrimitiveType type, Vector3 pos, Vector3 scale, Quaternion rot, Color c,
+            Color emit, bool plated)
         {
             if (_cached) return;
             int band = Mathf.Max(0, Mathf.FloorToInt(pos.y / BandHeight));

@@ -281,23 +281,55 @@ namespace SolarMajesty
             return best;
         }
 
-        public static ShopItemDef PreferredMarketBuy(SpecialistClass cls, int credits, float hp, ShopItemId accessory)
+        /// <summary>Health at or below which a hero with this need buys a health potion.</summary>
+        public static float HealthPotionThreshold(ShopNeed need)
         {
-            if (hp < 0.72f)
+            switch (need)
             {
-                var pot = Get(ShopItemId.HealthPotion);
-                if (pot != null && pot.Cost <= credits) return pot;
+                case ShopNeed.Max: return 0.88f;
+                case ShopNeed.High: return 0.8f;
+                case ShopNeed.Medium: return 0.72f;
+                case ShopNeed.Lower: return 0.5f;
+                default: return -1f;
             }
+        }
 
+        /// <summary>
+        /// Lower-need items are only bought with money to spare (Majesty 2: "buys if there is
+        /// extra money"); Min-need items never.
+        /// </summary>
+        private static bool CanJustify(ShopNeed need, int cost, int credits, int spareMultiple)
+        {
+            if (need == ShopNeed.Min || cost > credits) return false;
+            return need != ShopNeed.Lower || credits >= cost * spareMultiple;
+        }
+
+        public static ShopItemDef PreferredMarketBuy(
+            SpecialistClass cls, int credits, float hp, ShopItemId accessory, ClassShopPriority? priority = null)
+        {
+            var p = priority ?? ClassShopPriority.Neutral(cls);
+
+            // A hurt hero patches up first, at a health line set by how much the class values potions.
+            var pot = Get(ShopItemId.HealthPotion);
+            if (pot != null && hp < HealthPotionThreshold(p.healthPotion) && CanJustify(p.healthPotion, pot.Cost, credits, 4))
+                return pot;
+
+            ShopItemDef neckBuy = null;
             if (accessory != ShopItemId.RegenNecklace)
             {
                 var neck = Get(ShopItemId.RegenNecklace);
-                if (neck != null && neck.Cost <= credits && hp < 0.92f) return neck;
+                bool wants = p.accessory == ShopNeed.Max || hp < 0.92f;
+                if (neck != null && wants && CanJustify(p.accessory, neck.Cost, credits, 2))
+                    neckBuy = neck;
             }
 
             var mag = Get(ShopItemId.MagicPotion);
-            if (mag != null && mag.Cost <= credits) return mag;
-            return null;
+            ShopItemDef magBuy = mag != null && CanJustify(p.magicPotion, mag.Cost, credits, 4) ? mag : null;
+
+            // Higher need first; on a tie the necklace (the bigger investment) wins, as before.
+            if (neckBuy != null && magBuy != null)
+                return p.magicPotion > p.accessory ? magBuy : neckBuy;
+            return neckBuy ?? magBuy;
         }
 
         public static ShopItemDef PreferredGene(SpecialistClass cls, int credits)
@@ -306,8 +338,9 @@ namespace SolarMajesty
         }
 
         public static ShopItemDef BestBlacksmithBuy(
-            SpecialistClass cls, int credits, ShopItemId armor, ShopItemId weapon)
+            SpecialistClass cls, int credits, ShopItemId armor, ShopItemId weapon, ClassShopPriority? priority = null)
         {
+            var p = priority ?? ClassShopPriority.Neutral(cls);
             ShopItemDef bestWeapon = null;
             ShopItemDef bestArmor = null;
             var curArmor = Get(armor);
@@ -337,6 +370,13 @@ namespace SolarMajesty
                 }
             }
 
+            if (bestWeapon != null && !CanJustify(p.weapon, bestWeapon.Cost, credits, 2)) bestWeapon = null;
+            if (bestArmor != null && !CanJustify(p.armor, bestArmor.Cost, credits, 2)) bestArmor = null;
+
+            // The class's priorities decide first (Majesty 2 warriors armour up, rogues and
+            // marksmen want the new weapon); equal need keeps the original rule.
+            if (bestWeapon != null && bestArmor != null && p.weapon != p.armor)
+                return p.weapon > p.armor ? bestWeapon : bestArmor;
             if (weapon == ShopItemId.None && bestWeapon != null) return bestWeapon;
             if (bestArmor != null && (bestWeapon == null || bestArmor.Cost <= bestWeapon.Cost))
                 return bestArmor;

@@ -42,6 +42,7 @@ namespace SolarMajesty.EditorTools
         {
             if (!File.Exists(ScenePath))
                 DemoSceneBuilder.Build();
+            ShaderVariantKeeper.Create(); // runtime glass / glow must survive variant stripping
 
             if (!EditorUserBuildSettings.SwitchActiveBuildTarget(
                     BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64))

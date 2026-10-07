@@ -120,10 +120,7 @@ namespace SolarMajesty
         {
             if (_renderer == null) _renderer = GetComponentInChildren<Renderer>();
             if (_renderer == null) return;
-            if (_renderer.material.HasProperty("_Color"))
-                _renderer.material.color = c;
-            else if (_renderer.material.HasProperty("_BaseColor"))
-                _renderer.material.SetColor("_BaseColor", c);
+            IndustrialArtDressing.SetUrpColor(_renderer, c);
         }
 
         private void EnsureLabels()
@@ -220,10 +217,7 @@ namespace SolarMajesty
                 if (claimed && _claimBadgeRend != null)
                 {
                     Color badge = new Color(1f, 0.85f, 0.2f);
-                    if (_claimBadgeRend.material.HasProperty("_Color"))
-                        _claimBadgeRend.material.color = badge;
-                    else if (_claimBadgeRend.material.HasProperty("_BaseColor"))
-                        _claimBadgeRend.material.SetColor("_BaseColor", badge);
+                    IndustrialArtDressing.SetUrpColor(_claimBadgeRend, badge);
 
                     float pulse = 1f + Mathf.Sin(Time.time * 6f) * 0.15f;
                     _claimBadge.localScale = Vector3.one * (0.28f * pulse);

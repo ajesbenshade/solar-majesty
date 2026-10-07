@@ -10,7 +10,7 @@ namespace SolarMajesty
     /// Driven by <see cref="CelestialBodyProfile"/> so each body keeps its kit
     /// (Earth hydrology, Luna craters, Mars dunes, Belt islets, Europa ice).
     /// </summary>
-    public class PlanetaryWorldGen : MonoBehaviour
+    public partial class PlanetaryWorldGen : MonoBehaviour
     {
         private readonly List<ResourceNode> _nodes = new List<ResourceNode>(16);
         private readonly List<StalkerLair> _lairs = new List<StalkerLair>(8);
@@ -38,6 +38,9 @@ namespace SolarMajesty
         public CelestialBodyProfile Body => _body;
         public IReadOnlyList<ResourceNode> Nodes => _nodes;
         public IReadOnlyList<StalkerLair> Lairs => _lairs;
+        private readonly List<BuildZone> _zones = new List<BuildZone>();
+        /// <summary>Marked trade-post and temple sites (Majesty 2 build zones).</summary>
+        public IReadOnlyList<BuildZone> Zones => _zones;
         public int UnclearedLairCount
         {
             get
@@ -72,6 +75,10 @@ namespace SolarMajesty
             if (_bake != null && _bake.BodyId != _body.Id) _bake = null;
             _nodes.Clear();
             _lairs.Clear();
+            _zones.Clear();
+            _props.Clear();
+            _coverKeepOut.Clear();
+            _forestFloors.Clear();
             ClearTintCache();
             _water.Clear();
 
@@ -100,13 +107,20 @@ namespace SolarMajesty
             SpawnIcePlates(rng, placed);
             SpawnRocks(rng, placed);
             SpawnResourceNodes(rng, placed);
+            SpawnRockFormations(rng, placed);
+            SpawnPointsOfInterest(rng, placed);
             SpawnLairs(rng, placed);
+            SpawnBuildZones(rng, placed);
+            for (int i = 0; i < _nodes.Count; i++)
+                if (_nodes[i] != null) KeepCoverOff(_nodes[i].transform.position, 2.2f);
+            SpawnGroundCover(rng);
+            ClearGameplaySites();
 
             Debug.Log(
                 $"[WorldGen] {_body.DisplayName} seed={seed} " +
                 $"craters={_body.CraterCount} lakes={_body.LakeCount} rivers={_body.RiverCount} " +
                 $"forests={_body.ForestPatchCount} dunes={_body.DuneCount} rocks={_body.RockCount} " +
-                $"nodes={_nodes.Count} lairs={_lairs.Count}");
+                $"nodes={_nodes.Count} lairs={_lairs.Count} zones={_zones.Count}");
         }
 
         public void SpawnLairStalkers(Transform threatParent)
@@ -557,29 +571,12 @@ namespace SolarMajesty
                     if (IsOverWater(world, 1.1f))
                         continue;
 
-                    SpawnTree(patch.transform, local, rng);
+                    var tree = SpawnTree(patch.transform, local, rng);
+                    if (tree != null) RegisterProp(tree.transform);
                 }
 
-                if (_body.Id == CelestialBodyId.Earth)
-                {
-                    int shrubs = 4 + rng.Next(0, 6);
-                    for (int s = 0; s < shrubs; s++)
-                    {
-                        float ang = (float)rng.NextDouble() * Mathf.PI * 2f;
-                        float rad = patchR * 0.85f * Mathf.Sqrt((float)rng.NextDouble());
-                        Vector3 local = new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
-                        Vector3 world = pos + local;
-                        if (IsOverWater(world, 0.8f)) continue;
-                        var shrubPrefab = EnvironmentMeshCatalog.LoadEarthShrub(i * 17 + s);
-                        if (shrubPrefab == null) break;
-                        var shrub = EnvironmentMeshCatalog.InstantiateVendorNature(
-                            shrubPrefab, "Shrub", Mathf.Lerp(0.45f, 0.95f, (float)rng.NextDouble()));
-                        if (shrub == null) continue;
-                        shrub.transform.SetParent(patch.transform, false);
-                        shrub.transform.localPosition = local;
-                        shrub.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
-                    }
-                }
+                // The forest floor (ferns, bushes, twigs, mushrooms) is instanced ground cover.
+                _forestFloors.Add(new Vector4(pos.x, 0f, pos.z, patchR));
 
                 if (_bake != null) SeatChildrenOnGround(patch.transform);
                 else ColonyVisualUtility.SnapToGround(patch);
@@ -597,7 +594,7 @@ namespace SolarMajesty
             }
         }
 
-        private void SpawnTree(Transform parent, Vector3 local, System.Random rng)
+        private GameObject SpawnTree(Transform parent, Vector3 local, System.Random rng)
         {
             float h = Mathf.Lerp(1.1f, 2.6f, (float)rng.NextDouble());
             int variant = _body.Id == CelestialBodyId.Earth ? rng.Next(0, 8) : rng.Next(0, 2);
@@ -620,7 +617,7 @@ namespace SolarMajesty
                         float s = h / EnvironmentMeshCatalog.TreeNativeHeight;
                         mesh.transform.localScale = Vector3.one * s;
                     }
-                    return;
+                    return mesh;
                 }
             }
 
@@ -660,6 +657,25 @@ namespace SolarMajesty
                     (float)rng.NextDouble() * 0.35f);
                 Tint(canopy, leaf, 0.12f);
             }
+            return tree;
+        }
+
+        /// <summary>Zones and dens keep their ground clear of trees and scatter.</summary>
+        private void ClearGameplaySites()
+        {
+            for (int i = 0; i < _zones.Count; i++)
+                ClearPropsInDisc(_zones[i].Center, _zones[i].Radius + 1.5f);
+            // Dens sit on a graded pad (6.5 m plus a 3 m apron); nothing may float over the apron.
+            for (int i = 0; i < _lairs.Count; i++)
+                if (_lairs[i] != null) ClearPropsInDisc(_lairs[i].WorldPosition, 9.5f);
+        }
+
+        /// <summary>Level a square pad at the site's own ground height, so a den or landmark sits
+        /// flat on a slope instead of floating over it. Play mode only (grading runs per frame).</summary>
+        private void GradeSite(Vector3 at, float half)
+        {
+            if (!Application.isPlaying || _bake == null) return;
+            TerrainGrading.Request(new Vector3(at.x, GroundY(at), at.z), new Vector2(half, half));
         }
 
         private void SpawnDunes(System.Random rng, List<Vector3> placed)
@@ -847,6 +863,7 @@ namespace SolarMajesty
                     }
                     // Sit slightly embedded, as real boulders do.
                     ColonyVisualUtility.SnapToGround(mesh, GroundY(pos) - s * 0.12f);
+                    RegisterProp(mesh.transform);
                     continue;
                 }
 
@@ -886,6 +903,7 @@ namespace SolarMajesty
                 }
 
                 ColonyVisualUtility.SnapToGround(rock, GroundY(pos) - 0.05f);
+                RegisterProp(rock.transform);
             }
         }
 
@@ -969,10 +987,80 @@ namespace SolarMajesty
                 go.transform.SetParent(root, false);
                 go.transform.position = new Vector3(pos.x, GroundY(pos), pos.z);
                 var lair = go.AddComponent<StalkerLair>();
-                lair.Configure(_loop, budget, 8f, _body.LairRim, _body.LairPit);
+                Color soil = _body.Id == CelestialBodyId.Earth
+                    ? new Color(0.40f, 0.31f, 0.22f)
+                    : Color.Lerp(_body.GroundDark, _body.GroundLight, 0.45f);
+                Color stone = Color.Lerp(_body.RockColor, _body.GroundLight, 0.35f);
+                lair.Configure(_loop, budget, 8f, _body.LairRim, _body.LairPit, soil, stone);
+                GradeSite(go.transform.position, 6.5f);
                 _lairs.Add(lair);
                 placed.Add(pos);
             }
+        }
+
+        /// <summary>
+        /// One zone per configured distance band, so the trade-post choice is always a spread of
+        /// safe-and-poor to far-and-rich. Placed on dry land, clear of dens and each other.
+        /// </summary>
+        private void SpawnBuildZones(System.Random rng, List<Vector3> placed)
+        {
+            var rules = _loop != null ? _loop.ZoneRules : null;
+            if (rules == null || !rules.enabled) return;
+            PlaceZones(rng, placed, rules.tradePostBands, BuildZoneKind.TradePost, rules.zoneRadius);
+            PlaceZones(rng, placed, rules.mineBands, BuildZoneKind.Mine, rules.zoneRadius);
+            PlaceZones(rng, placed, rules.templeBands, BuildZoneKind.Temple, rules.zoneRadius);
+        }
+
+        private void PlaceZones(
+            System.Random rng, List<Vector3> placed, ZoneBand[] bands, BuildZoneKind kind, float radius)
+        {
+            if (bands == null) return;
+            float maxX = _grid != null ? _grid.WorldWidth - 8f : 370f;
+            float maxZ = _grid != null ? _grid.WorldHeight - 8f : 370f;
+            for (int b = 0; b < bands.Length; b++)
+            {
+                float lo = Mathf.Max(radius + 4f, bands[b].minMeters);
+                float hi = Mathf.Max(lo + 1f, bands[b].maxMeters);
+                bool done = false;
+                for (int attempt = 0; attempt < 120 && !done; attempt++)
+                {
+                    float ang = (float)rng.NextDouble() * Mathf.PI * 2f;
+                    float d = Mathf.Lerp(lo, hi, (float)rng.NextDouble());
+                    var origin = ColonyLayout.CampusOrigin;
+                    var pos = new Vector3(origin.x + Mathf.Cos(ang) * d, 0f, origin.z + Mathf.Sin(ang) * d);
+                    if (pos.x < 4f || pos.z < 4f || pos.x > maxX || pos.z > maxZ) continue;
+                    if (IsOverWater(pos, radius)) continue;
+                    if (FlatDist(pos, ColonyLayout.CampusBOrigin) < radius + 10f) continue;
+
+                    bool clear = true;
+                    for (int i = 0; i < placed.Count && clear; i++)
+                        clear = FlatDist(pos, placed[i]) >= radius + 6f;
+                    if (!clear) continue;
+
+                    var center = new Vector3(pos.x, GroundY(pos), pos.z);
+                    _zones.Add(new BuildZone { Kind = kind, Center = center, Radius = radius });
+                    placed.Add(pos);
+                    if (kind == BuildZoneKind.Mine) SpawnMineDeposit(rng, center, b);
+                    done = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// The ore indicator at the middle of a mine zone: a rich nuclear (fissile) deposit, or
+        /// metals on alternate sites. Extract flags can strip it; the mine goes on top.
+        /// </summary>
+        private void SpawnMineDeposit(System.Random rng, Vector3 center, int index)
+        {
+            var type = index % 2 == 0 ? ResourceNodeType.Fissile : ResourceNodeType.Metals;
+            int yield = type == ResourceNodeType.Fissile ? 26 + rng.Next(0, 12) : 40 + rng.Next(0, 20);
+            yield = Mathf.Max(8, Mathf.RoundToInt(yield * Mathf.Max(0.25f, _body.ExtractYieldScale)));
+            var go = new GameObject($"Deposit_{type}_{index}");
+            go.transform.SetParent(_worldRoot, false);
+            go.transform.position = center;
+            var node = go.AddComponent<ResourceNode>();
+            node.Configure(type, yield, 7f, _body.SoilNodeColor);
+            _nodes.Add(node);
         }
 
         private bool TrySample(

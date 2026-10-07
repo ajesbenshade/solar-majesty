@@ -38,7 +38,22 @@ namespace SolarMajesty.Tests
             var commons = ModularBuildingFactory.Spawn(
                 BuildingCategory.Commons, Vector3.zero, _root.transform);
             Assert.IsNotNull(FindChild(commons.transform, "CommonsDome"),
-                "locked command-dome citadel — smooth sphere, not geodesic lattice");
+                "upper command tier, not a geodesic lattice");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsRoofDeck"), "flat roof deck, no bubble dome");
+            var tier = FindChild(commons.transform, "CommonsDome").GetComponent<MeshFilter>();
+            Assert.IsFalse(tier.sharedMesh.name.Contains("Sphere"), "the bubble dome is gone");
+            Assert.AreEqual(12, ColonyLayout.FootprintSide(BuildingCategory.Commons), "castle-sized: three guild halls wide");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsKeep"), "a keep");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsTower_3"), "four corner towers");
+            Assert.IsNotNull(FindChild(commons.transform, "CommonsGateLintel"), "a gatehouse");
+            var house = ModularBuildingFactory.Spawn(BuildingCategory.Habitat, Vector3.zero, _root.transform);
+            float Top(GameObject g)
+            {
+                float top = 0f;
+                foreach (var r in g.GetComponentsInChildren<Renderer>()) top = Mathf.Max(top, r.bounds.max.y);
+                return top;
+            }
+            Assert.Greater(Top(commons), Top(house) * 2.5f, "the Commons towers over a house");
             Assert.IsNotNull(FindChild(commons.transform, "CommonsStripe"),
                 "orange equatorial band");
             Assert.IsNotNull(FindChild(commons.transform, "Dress_CommonsCupolaBand"),
@@ -770,7 +785,7 @@ namespace SolarMajesty.Tests
         public void StillCampusDensity_GridConstants_MatchColonyLayout()
         {
             Assert.AreEqual(ColonyLayout.DefaultCellSize, StillCampusDensity.DefaultCellSize);
-            Assert.AreEqual(ColonyLayout.CampusOrthoSize, StillCampusDensity.PlayCampusOrthoSize);
+            Assert.AreEqual(18f, ColonyLayout.CampusOrthoSize, "play zoom is moderate; stills keep their own");
             Assert.AreEqual(1.5f, StillCampusDensity.DefaultCellSize);
             Assert.AreEqual(10f, StillCampusDensity.PlayCampusOrthoSize);
             Assert.AreEqual(0, StillCampusDensity.StillFrameInsetCells);

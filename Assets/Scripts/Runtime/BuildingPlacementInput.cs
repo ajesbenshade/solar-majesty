@@ -146,13 +146,35 @@ namespace SolarMajesty
                     SpawnConstructionSite(order, built);
                     DemoAudio.PlayBuildPlace(snapped);
                     Debug.Log($"[Build] Placed {Selected.displayName} @ {cell}");
+
+                    // One building per pick: drop the ghost and hand back the normal pointer.
+                    // Shift-click keeps the tool armed to place several.
+                    bool keepPlacing = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                    if (!keepPlacing)
+                    {
+                        _ghost.SetActive(false);
+                        _footprint.SetActive(false);
+                        if (_loop != null) _loop.SetTool(OverseerTool.None);
+                        else enabledPlacement = false;
+                    }
                 }
                 else
                 {
                     Debug.Log($"[Build] Failed: {fail}");
                 }
             }
+            else if (Input.GetMouseButtonUp(0) && !valid && _loop != null && Time.time >= _zoneHintAt)
+            {
+                string why = _loop.ZoneBlockReason(Selected, cell);
+                if (!string.IsNullOrEmpty(why))
+                {
+                    _zoneHintAt = Time.time + 2.5f;
+                    _loop.LogOverseer(why);
+                }
+            }
         }
+
+        private float _zoneHintAt;
 
         private void Select(int index)
         {
@@ -194,7 +216,9 @@ namespace SolarMajesty
             if (order.Data != null)
             {
                 float cell = _grid != null ? _grid.CellSize : ColonyLayout.DefaultCellSize;
-                TerrainGrading.Request(order.WorldPosition, new Vector2(
+                var pad = order.WorldPosition;
+                pad.y = 0f;
+                TerrainGrading.Request(pad, new Vector2(
                     order.Data.footprintWidth * cell * 0.5f + 0.4f,
                     order.Data.footprintHeight * cell * 0.5f + 0.4f));
             }

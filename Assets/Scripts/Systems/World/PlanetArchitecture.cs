@@ -196,6 +196,22 @@ namespace SolarMajesty
             return false;
         }
 
+        /// <summary>
+        /// Window bands sized from the footprint, not the kit. On real kits (round Commons, inset
+        /// walls) they stick out past both ends like chopsticks; every kit has its own windows.
+        /// </summary>
+        public static bool IsWindowBand(string partName) =>
+            !string.IsNullOrEmpty(partName) &&
+            (partName.StartsWith("WindowA", System.StringComparison.Ordinal) ||
+             partName.StartsWith("WindowB", System.StringComparison.Ordinal));
+
+        /// <summary>Remove roof shells and window bands from a part list. Returns how many were removed.</summary>
+        public static int StripRoofShells(List<ArchPart> parts)
+        {
+            if (parts == null) return 0;
+            return parts.RemoveAll(p => IsRoofShell(p.Name) || IsWindowBand(p.Name));
+        }
+
         static readonly string[] RoofShellPrefixes =
         {
             "PressureDome", "DomeRib", "RingStrata", "PrintedVault", "VaultCourse", "VaultDoor",

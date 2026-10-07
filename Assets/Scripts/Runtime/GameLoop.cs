@@ -8,7 +8,9 @@ namespace SolarMajesty
     {
         None = 0,
         Build = 1,
-        Flag = 2
+        Flag = 2,
+        /// <summary>Orbital support powers (Majesty 2 ruler spells).</summary>
+        Orbital = 3
     }
 
     public enum DemoScreen
@@ -100,6 +102,13 @@ namespace SolarMajesty
         public OverseerTool ActiveTool => activeTool;
         public float FlagBounty => _flagInput != null ? _flagInput.Bounty : 0f;
         public FlagPlacementInput FlagInput => _flagInput;
+        public OrbitalTargetingInput OrbitalInput => _orbitalInput;
+        public OrbitalDirector Orbital => _orbital;
+
+        [Tooltip("Majesty 2 build zones: trading posts and temples go only on marked sites.")]
+        [SerializeField] private BuildZoneTuning buildZones = new BuildZoneTuning();
+        public BuildZoneTuning ZoneRules => buildZones ??= new BuildZoneTuning();
+        public IReadOnlyList<BuildZone> BuildZones => _world != null ? _world.Zones : null;
         public BuildingPlacementInput BuildInput => _buildInput;
         public int FocusedCampus => _focusedCampus;
         public IReadOnlyList<SpecialistAgent> SelectedAgents => _selected;
@@ -182,7 +191,7 @@ namespace SolarMajesty
         public void ApplyReplayToBrain()
         {
             if (Brain == null) return;
-            Brain.ConsiderRange = 80f * Mathf.Clamp(ReplayRules.ConsiderRangeScale, 0.8f, 1.55f);
+            Brain.ConsiderRangeScale = Mathf.Clamp(ReplayRules.ConsiderRangeScale, 0.8f, 1.55f);
         }
 
         private OverseerScoreInput BuildScoreInput()
@@ -391,6 +400,32 @@ namespace SolarMajesty
         private string _stillLeftoverNote = "none";
         private Transform _threatRoot;
         private float _constructionTick;
+
+        [Header("Tuning (Inspector)")]
+        [SerializeField] private SpecialistBrainTuning brainTuning = new SpecialistBrainTuning();
+        [SerializeField] private EconomyTuning economyTuning = new EconomyTuning();
+        [Tooltip("Majesty 2-style spawn table: town burrows, boss raiders and wreck junk by kingdom value.")]
+        [SerializeField] private KingdomThreatTuning kingdomThreat = new KingdomThreatTuning();
+
+        [Tooltip("Orbital support powers: prices, cooldowns, uplink range bands.")]
+        [SerializeField] private OrbitalTuning orbitalTuning = new OrbitalTuning();
+
+        [Tooltip("Class abilities (Majesty 2 unit actions) and status effects (perks).")]
+        [SerializeField] private AbilityTuning abilityTuning = new AbilityTuning();
+        public AbilityTuning Abilities => abilityTuning;
+
+        [Tooltip("Statuses creature bites put on robots (Majesty 2 monster attacks).")]
+        [SerializeField] private FaunaAfflictionTuning faunaAfflictions = new FaunaAfflictionTuning();
+        public FaunaAfflictionTuning FaunaAfflictions => faunaAfflictions;
+
+        private OrbitalDirector _orbital;
+        private OrbitalTargetingInput _orbitalInput;
+        private KingdomThreatDirector _kingdomThreat;
+        private readonly List<KingdomSpawnRequest> _kingdomRequests = new List<KingdomSpawnRequest>();
+        private readonly Dictionary<int, List<DustStalkerAgent>> _kingdomSpawns =
+            new Dictionary<int, List<DustStalkerAgent>>();
+        private readonly HashSet<int> _kingdomAnnounced = new HashSet<int>();
+        private int _heroDeaths;
         private readonly SimClock _sim = new SimClock();
         private AdaptiveMusic _music;
         private double _playSeconds;
@@ -812,6 +847,8 @@ namespace SolarMajesty
             EnsureNavMesh();
             DemoAtmosphere.Apply(mainCamera, transform, _body);
             PlanetaryMapDressing.Apply(transform, grid, _body);
+            // The vista's trees and grass round the Commons clear for buildings like world props.
+            _world?.RegisterChildren(transform.Find("EarthVistaRoot"), "Dress_Pond");
             // Vista ponds add NavMesh carve obstacles after the first bake — rebuild once.
             if (_campusNav != null && grid != null)
             {
@@ -1523,9 +1560,7 @@ namespace SolarMajesty
                 var kind = Brain.ExplainFlag(ctx, flag, agent.BodyDanger);
                 if (kind == FlagRefusalKind.WouldTake) continue;
                 float dist = FlatDist(agent.transform.position, flag.WorldPosition);
-                float consider = 40f + agent.Data.explorePreference * 35f;
-                if (Brain.ConsiderRange > 0f)
-                    consider = Mathf.Max(consider, Brain.ConsiderRange * 0.7f);
+                float consider = Brain.ConsiderDistance(agent.Data);
                 if (dist > consider) continue;
                 string chip = kind switch
                 {
@@ -1936,6 +1971,58 @@ namespace SolarMajesty
         }
 
         /// <summary>True when any corner or the centre of the footprint sits on a lake or river.</summary>
+        private Vector3 FootprintCenterWorld(Vector2Int cell, int width, int height)
+        {
+            float cs = grid.CellSize;
+            return grid.CellToWorld(cell) + new Vector3((width - 1) * 0.5f * cs, 0f, (height - 1) * 0.5f * cs);
+        }
+
+        private List<Vector3> TakenCenters(BuildZoneKind kind)
+        {
+            var taken = new List<Vector3>();
+            if (Placer == null || grid == null) return taken;
+            var pieces = Placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                var p = pieces[i];
+                if (ZoneRules.KindFor(p.Category) != kind) continue;
+                taken.Add(FootprintCenterWorld(p.Origin, p.Width, p.Height));
+            }
+            return taken;
+        }
+
+        /// <summary>True if this building may stand here: free categories always, zone-bound ones only in a free zone.</summary>
+        public bool ZoneAllows(BuildingData data, Vector2Int cell)
+        {
+            if (data == null || grid == null) return true;
+            var kind = ZoneRules.KindFor(data.category);
+            if (kind == BuildZoneKind.None) return true;
+            var center = FootprintCenterWorld(cell, data.footprintWidth, data.footprintHeight);
+            return ZoneRules.Allows(kind, center, BuildZones, TakenCenters(kind));
+        }
+
+        /// <summary>Colony-log explanation for a zone-bound building that cannot go here; null when zones are not the problem.</summary>
+        public string ZoneBlockReason(BuildingData data, Vector2Int cell)
+        {
+            if (data == null || ZoneAllows(data, cell)) return null;
+            var kind = ZoneRules.KindFor(data.category);
+            if (kind == BuildZoneKind.None) return null;
+            var taken = TakenCenters(kind);
+            bool anyFree = false;
+            var zones = BuildZones;
+            if (zones != null)
+                for (int i = 0; i < zones.Count; i++)
+                    if (zones[i].Kind == kind && !BuildZoneTuning.IsTaken(zones[i], taken)) { anyFree = true; break; }
+            return ZoneRules.Reason(kind, anyFree);
+        }
+
+        public bool IsZoneTaken(int index)
+        {
+            var zones = BuildZones;
+            if (zones == null || index < 0 || index >= zones.Count) return false;
+            return BuildZoneTuning.IsTaken(zones[index], TakenCenters(zones[index].Kind));
+        }
+
         private bool FootprintOverWater(Vector2Int origin, int width, int height)
         {
             if (_world == null || grid == null) return false;
@@ -2001,7 +2088,7 @@ namespace SolarMajesty
 
         private void SeedSoftClaim(Vector3 world, bool campus)
         {
-            const int footprint = 6;
+            int footprint = ColonyLayout.CommonsSide;
             float cell = grid.CellSize;
             float half = (footprint * cell) * 0.5f;
             Vector3 corner = world - new Vector3(half, 0f, half) + new Vector3(cell * 0.5f, 0f, cell * 0.5f);
@@ -2014,17 +2101,12 @@ namespace SolarMajesty
                     world,
                     "DropZone_Claim",
                     new Color(0.96f, 0.42f, 0.08f),
-                    9.5f);
+                    ColonyLayout.CommonsSide * grid.CellSize + 0.5f);
             }
             else
             {
+                // The outpost claim is coordinates only; no disc on the ground (Majesty has none).
                 Placer.SeedOutpostClaim(origin, footprint, footprint);
-                _outpostBeacon = CampusDressing.DressClaimDisc(
-                    buildingRoot != null ? buildingRoot : transform,
-                    world,
-                    "DropZone_Outpost",
-                    new Color(0.22f, 0.72f, 0.86f),
-                    8.2f);
             }
         }
 
@@ -2105,6 +2187,8 @@ namespace SolarMajesty
             TickEmptyRosterFail(dt);
             TickFlagInterest(dt);
             TickCampusEcology(dt);
+            TickKingdomThreat(dt);
+            _orbital?.Tick(dt);
             TickCampusBoard(dt);
 
             _constructionTick += dt;
@@ -2399,17 +2483,27 @@ namespace SolarMajesty
                     if (!IsBuildingUnlocked(data.category))
                         return false;
 
-                    // Free placement, Majesty style: anywhere on open ground once the Commons
-                    // stands. Nothing links buildings together — just keep out of water.
-                    return !FootprintOverWater(cell, data.footprintWidth, data.footprintHeight);
+                    if (FootprintOverWater(cell, data.footprintWidth, data.footprintHeight))
+                        return false;
+
+                    // Free placement on open ground, except trading posts and temples, which go
+                    // only on marked zones (Majesty 2).
+                    return ZoneAllows(data, cell);
                 };
             }
 
-            Brain = new SpecialistBrain();
+            SpecialistBrainTuning.Active = brainTuning ??= new SpecialistBrainTuning();
+            MajestyEconomy.ApplyTuning(economyTuning ??= new EconomyTuning());
+            Brain = new SpecialistBrain { Tuning = brainTuning };
+            _kingdomThreat = new KingdomThreatDirector(kingdomThreat ??= new KingdomThreatTuning());
+            _orbital = new OrbitalDirector(orbitalTuning ??= new OrbitalTuning());
+            _kingdomSpawns.Clear();
+            _kingdomAnnounced.Clear();
+            _heroDeaths = 0;
             ApplyReplayToBrain();
             // Mines are the trade posts now; no supply ships land with cargo.
-            Economy = new SimpleEconomy(Resources) { ResupplyEnabled = false };
-            float resupply = 90f * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
+            Economy = new SimpleEconomy(Resources, economyTuning) { ResupplyEnabled = false };
+            float resupply = economyTuning.resupplyBaseSeconds * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
             int fee = _body != null ? Mathf.Max(0, _body.ResupplyDockFee) : 0;
             Economy.ConfigureResupply(resupply, fee);
             Settlement = new Settlement(Resources);
@@ -2450,6 +2544,10 @@ namespace SolarMajesty
             var def = TechCatalog.Get(id);
             if (def != null && def.SecretProject)
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
+            else if (id == TechId.OrbitalUplink)
+                LogOverseer("Orbital Uplink online. Press N: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit.");
+            else if (id == TechId.OrbitalConstellation)
+                LogOverseer("Constellation complete: Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.");
             else if (id == TechId.ExtractBasics && !DemoSettings.FirstHourDemo)
                 LogOverseer("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in EU.");
             else if (id == TechId.OreRefining && !DemoSettings.FirstHourDemo)
@@ -2675,7 +2773,7 @@ namespace SolarMajesty
                 {
                     starterBuildings = new[]
                     {
-                        CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, 6, 6),
+                        CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, ColonyLayout.CommonsSide, ColonyLayout.CommonsSide),
                         CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4),
                         CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4),
                         CreateBuilding("OPS Drop-off", BuildingCategory.Mining, 45, 6, 14f, 4, 4),
@@ -2704,7 +2802,7 @@ namespace SolarMajesty
         /// <summary>Colony Commons is always catalog index 0 — Majesty first-build.</summary>
         private static BuildingData[] EnsureCommonsFirst(BuildingData[] current)
         {
-            var commons = CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, 6, 6);
+            var commons = CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, ColonyLayout.CommonsSide, ColonyLayout.CommonsSide);
             if (current == null || current.Length == 0)
                 return new[] { commons };
 
@@ -2841,9 +2939,14 @@ namespace SolarMajesty
 
             _buildInput = GetComponent<BuildingPlacementInput>();
             if (_buildInput == null) _buildInput = gameObject.AddComponent<BuildingPlacementInput>();
-
+            var zoneMarkers = GetComponent<BuildZoneMarkers>();
+            if (zoneMarkers == null) zoneMarkers = gameObject.AddComponent<BuildZoneMarkers>();
+            zoneMarkers.Bind(this);
+            _orbitalInput = GetComponent<OrbitalTargetingInput>();
+            if (_orbitalInput == null) _orbitalInput = gameObject.AddComponent<OrbitalTargetingInput>();
             _isoCam = mainCamera.GetComponent<IsometricCameraController>();
             if (_isoCam == null) _isoCam = mainCamera.gameObject.AddComponent<IsometricCameraController>();
+            _orbitalInput.Initialize(this, _isoCam);
 
             _flagInput.Initialize(
                 Flags, grid, _isoCam,
@@ -3093,6 +3196,9 @@ namespace SolarMajesty
         {
             WorldClickUsedBySelection = false;
             if (!IsPlaying) return;
+            // An armed orbital power fires at whatever is under the cursor instead of selecting it.
+            if (activeTool == OverseerTool.Orbital && _orbitalInput != null && _orbitalInput.Selected.HasValue)
+                return;
             if (!Input.GetMouseButtonUp(0)) return;
             if (_isoCam != null && _isoCam.SuppressWorldClick) return;
             if (_overseerHud != null && _overseerHud.PointerBlocksWorld) return;
@@ -3623,6 +3729,414 @@ namespace SolarMajesty
             TrySpawnCampusFauna();
         }
 
+        /// <summary>
+        /// Kingdom spawn table (Majesty 2 global spawn settings): as the colony grows, burrows open
+        /// inside town, alpha raiders walk in from the edge, and wrecks keep spawning junk after a death.
+        /// Unlike campus ecology this keeps running after the dens are cleared.
+        /// </summary>
+        private void TickKingdomThreat(float dt)
+        {
+            if (_kingdomThreat == null || Threat == null || !spawnDustStalkers) return;
+            if (DemoSettings.FirstHourDemo || InFaunaGrace) return;
+            _kingdomThreat.SetTuning(kingdomThreat);
+
+            _kingdomThreat.Tick(dt, KingdomValue, _heroDeaths, KingdomAlive, _kingdomRequests);
+            for (int r = 0; r < _kingdomRequests.Count; r++)
+            {
+                var req = _kingdomRequests[r];
+                for (int n = 0; n < req.Count; n++)
+                {
+                    if (!TryKingdomSpawnPoint(req.Site, out Vector3 at)) break;
+                    var agent = SpawnFaunaAt(req.Kind, at);
+                    if (agent == null) break;
+                    if (req.Elite)
+                        agent.MakeElite(kingdomThreat.eliteHealthMul, kingdomThreat.eliteBiteMul,
+                            kingdomThreat.eliteScaleMul, kingdomThreat.eliteRewardMul);
+                    if (!_kingdomSpawns.TryGetValue(req.EntryIndex, out var list))
+                        _kingdomSpawns[req.EntryIndex] = list = new List<DustStalkerAgent>();
+                    list.Add(agent);
+                    AnnounceKingdomSpawn(req, agent);
+                }
+            }
+        }
+
+        private bool IsKingdomSpawn(DustStalkerAgent agent)
+        {
+            foreach (var list in _kingdomSpawns.Values)
+                if (list.Contains(agent)) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Majesty 2 city value: the weighted sum of standing buildings (Commons 1, guild 0.5,
+        /// houses and producers 0). Drives the kingdom spawn table.
+        /// </summary>
+        public float KingdomValue
+        {
+            get
+            {
+                if (Village == null || kingdomThreat == null) return 0f;
+                float v = 0f;
+                var list = Village.Structures;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    var s = list[i];
+                    if (s != null && s.IsAlive) v += kingdomThreat.WorthOf(s.Category).kingdomValue;
+                }
+                return v;
+            }
+        }
+
+        /// <summary>Safety field (0..1) from nearby buildings: heroes feel safe near the Commons and guilds.</summary>
+        public float SafetyFieldAt(Vector3 pos)
+        {
+            if (Village == null || kingdomThreat == null) return 0f;
+            float field = 0f;
+            var list = Village.Structures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                field += kingdomThreat.SafetyFrom(s.Category, FlatDist(pos, s.WorldPosition));
+                if (field >= 1f) return 1f;
+            }
+            return field;
+        }
+
+        private int KingdomAlive(int entry)
+        {
+            if (!_kingdomSpawns.TryGetValue(entry, out var list)) return 0;
+            list.RemoveAll(a => a == null || !a.IsAlive);
+            return list.Count;
+        }
+
+        private void AnnounceKingdomSpawn(KingdomSpawnRequest req, DustStalkerAgent agent)
+        {
+            if (req.Site == KingdomSpawnSite.ColonyEdge)
+            {
+                LogOverseer($"{agent.RoleLabel} sighted at the colony edge — post Clear Threat.");
+                return;
+            }
+            if (!_kingdomAnnounced.Add(req.EntryIndex)) return;
+            LogOverseer(req.Site == KingdomSpawnSite.Burrow
+                ? $"The colony has grown — {agent.RoleLabel.ToLowerInvariant()}s are burrowing in town."
+                : "Wrecks are drawing junk bots to the yard.");
+        }
+
+        private bool TryKingdomSpawnPoint(KingdomSpawnSite site, out Vector3 at)
+        {
+            at = ColonyLayout.CampusOrigin;
+            if (site == KingdomSpawnSite.Scrapyard)
+            {
+                Vector2 j = Random.insideUnitCircle * 2.2f;
+                at = ScrapyardPosition() + new Vector3(j.x, 0f, j.y);
+                return true;
+            }
+
+            if (Village == null) return false;
+            var list = Village.Structures;
+            int alive = 0;
+            float far = 0f;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                alive++;
+                far = Mathf.Max(far, FlatDist(s.WorldPosition, ColonyLayout.CampusOrigin));
+            }
+            if (alive == 0) return false;
+
+            Vector2 dir = Random.insideUnitCircle.normalized;
+            if (dir.sqrMagnitude < 0.01f) dir = Vector2.up;
+            if (site == KingdomSpawnSite.ColonyEdge)
+            {
+                at = ColonyLayout.CampusOrigin +
+                     new Vector3(dir.x, 0f, dir.y) * (far + kingdomThreat.edgeSpawnDistance);
+                return true;
+            }
+
+            int pick = Random.Range(0, alive);
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                if (pick-- > 0) continue;
+                at = s.WorldPosition + new Vector3(dir.x, 0f, dir.y) * kingdomThreat.burrowSpawnDistance;
+                return true;
+            }
+            return false;
+        }
+
+        // ------------------------------------------------------------------ orbital support
+
+        /// <summary>Metres from a point to the nearest standing uplink (Commons, Laboratory, battery).</summary>
+        public float UplinkDistance(Vector3 at)
+        {
+            if (Village == null || orbitalTuning?.uplinkCategories == null) return float.PositiveInfinity;
+            float best = float.PositiveInfinity;
+            var list = Village.Structures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.IsAlive) continue;
+                if (System.Array.IndexOf(orbitalTuning.uplinkCategories, s.Category) < 0) continue;
+                best = Mathf.Min(best, FlatDist(at, s.WorldPosition));
+            }
+            return best;
+        }
+
+        public bool OrbitalUnlocked(TechId tech) => Research != null && Research.IsUnlocked(tech);
+
+        /// <summary>
+        /// Fire an orbital power at a map point (colony-wide powers ignore the point). Nothing is
+        /// charged unless there is something to hit. Majesty 2: the ruler pays per cast, more the
+        /// farther the target is from a casting building.
+        /// </summary>
+        public bool TryCastOrbital(OrbitalPowerId id, Vector3 at)
+        {
+            if (_orbital == null || Resources == null) return false;
+            if (!_orbital.Tuning.TryGet(id, out var def)) return false;
+
+            bool colony = def.target == OrbitalTarget.Colony;
+            Vector3 aim = colony ? ColonyLayout.CampusOrigin : at;
+            float uplink = colony ? 0f : UplinkDistance(aim);
+            int cost = _orbital.CostAt(id, uplink);
+            var check = _orbital.Check(id, OrbitalUnlocked, Resources.Get(ResourceId.Metals), uplink);
+            switch (check)
+            {
+                case OrbitalCastCheck.Ok: break;
+                case OrbitalCastCheck.Locked:
+                    LogOverseer($"{def.displayName} needs {TechCatalog.Get(OrbitalTuning.TechFor(def.tier))?.DisplayName} research.");
+                    return false;
+                case OrbitalCastCheck.Cooling:
+                    LogOverseer($"{def.displayName} recharging — {Mathf.CeilToInt(_orbital.ReadyIn(id))} s.");
+                    return false;
+                case OrbitalCastCheck.TooPoor:
+                    LogOverseer($"{def.displayName} costs {cost} EU here (x{_orbital.Tuning.RangeMultiplier(uplink):0} from the uplink).");
+                    return false;
+                default:
+                    return false;
+            }
+
+            if (!HasOrbitalTarget(def, aim, out string none))
+            {
+                LogOverseer($"{def.displayName}: {none}");
+                return false;
+            }
+            if (cost > 0 && !Resources.TrySpend(ResourceId.Metals, cost)) return false;
+
+            string done = ApplyOrbitalEffect(def, aim);
+            _orbital.StartCooldown(id);
+            LogOverseer(cost > 0 ? $"{def.displayName} — {done} ({cost} EU)." : $"{def.displayName} — {done}.");
+            return true;
+        }
+
+        private bool HasOrbitalTarget(OrbitalPowerDef def, Vector3 at, out string none)
+        {
+            none = null;
+            switch (def.target)
+            {
+                case OrbitalTarget.Fauna:
+                    none = "no hostile in the target ring.";
+                    return NearestFaunaAt(at, def.radius) != null;
+                case OrbitalTarget.Robot:
+                    none = "no robot in the target ring.";
+                    return NearestRobotAt(at, def.radius) != null;
+                case OrbitalTarget.DownedRobot:
+                    none = "no downed robot in the target ring.";
+                    for (int i = 0; i < _agents.Count; i++)
+                        if (IsDownedIn(_agents[i], at, def.radius)) return true;
+                    return false;
+                case OrbitalTarget.Structure:
+                    none = "no damaged building in the target ring.";
+                    return NearestDamagedAt(at, def.radius) != null;
+                case OrbitalTarget.Colony:
+                    none = "the tills are empty.";
+                    return Village != null && Village.TotalSittingLevy() > 0;
+                default:
+                    return true;
+            }
+        }
+
+        private string ApplyOrbitalEffect(OrbitalPowerDef def, Vector3 at)
+        {
+            switch (def.id)
+            {
+                case OrbitalPowerId.KineticLance:
+                {
+                    var s = NearestFaunaAt(at, def.radius);
+                    string who = s.RoleLabel.ToLowerInvariant();
+                    DemoVfx.OrbitalStrike(s.transform.position, new Color(1f, 0.85f, 0.55f), 1.5f);
+                    DemoAudio.PlayRobotHit(s.transform.position);
+                    s.ApplyOrbitalDamage(def.magnitude);
+                    return s.IsAlive ? $"{who} hit" : $"{who} destroyed";
+                }
+                case OrbitalPowerId.OrbitalBarrage:
+                {
+                    DemoVfx.OrbitalStrike(at, new Color(1f, 0.55f, 0.2f), def.radius);
+                    DemoAudio.PlayRobotHit(at);
+                    int hit = 0, killed = 0;
+                    foreach (var s in FaunaInRing(at, def.radius))
+                    {
+                        s.ApplyOrbitalDamage(def.magnitude);
+                        hit++;
+                        if (!s.IsAlive) killed++;
+                    }
+                    return $"{hit} hit, {killed} destroyed";
+                }
+                case OrbitalPowerId.EmpSnare:
+                {
+                    DemoVfx.OrbitalStrike(at, new Color(0.55f, 0.75f, 1f), def.radius);
+                    int n = 0;
+                    foreach (var s in FaunaInRing(at, def.radius)) { s.Stun(def.durationSeconds); n++; }
+                    return $"{n} hostile locked for {def.durationSeconds:0} s";
+                }
+                case OrbitalPowerId.MedDrop:
+                {
+                    var a = NearestRobotAt(at, def.radius);
+                    a.ReceiveHeal(def.magnitude);
+                    int cleansed = a.Statuses.ClearHarmful();
+                    DemoVfx.OrbitalStrike(a.transform.position, new Color(0.45f, 1f, 0.55f), 1.5f);
+                    DemoAudio.PlayHeal(a.transform.position);
+                    return cleansed > 0 ? $"{a.Record.Name} patched and cleansed" : $"{a.Record.Name} patched";
+                }
+                case OrbitalPowerId.AegisField:
+                {
+                    var a = NearestRobotAt(at, def.radius);
+                    a.ApplyAegisField(def.durationSeconds);
+                    DemoVfx.OrbitalStrike(a.transform.position, new Color(0.6f, 0.85f, 1f), 2f);
+                    DemoAudio.PlayHeal(a.transform.position);
+                    return $"{a.Record.Name} shielded for {def.durationSeconds:0} s";
+                }
+                case OrbitalPowerId.ReviveBeacon:
+                {
+                    DemoVfx.OrbitalStrike(at, new Color(0.45f, 1f, 0.55f), def.radius);
+                    DemoAudio.PlayHeal(at);
+                    int n = 0;
+                    for (int i = 0; i < _agents.Count; i++)
+                    {
+                        var a = _agents[i];
+                        if (!IsDownedIn(a, at, def.radius)) continue;
+                        a.FieldRevive();
+                        n++;
+                    }
+                    return n == 1 ? "1 robot rebooted" : $"{n} robots rebooted";
+                }
+                case OrbitalPowerId.RepairSwarm:
+                {
+                    var b = NearestDamagedAt(at, def.radius);
+                    b.RestoreHealth01(Mathf.Min(1f, b.Health01 + def.magnitude));
+                    DemoVfx.OrbitalStrike(b.WorldPosition, new Color(1f, 0.75f, 0.3f), 3f);
+                    DemoAudio.PlayRepair(b.WorldPosition);
+                    return "nanites restored the hull";
+                }
+                case OrbitalPowerId.SurveySweep:
+                {
+                    DemoVfx.OrbitalStrike(at, new Color(0.45f, 0.85f, 1f), def.radius);
+                    DemoAudio.PlayClaim(at);
+                    int charted = 0;
+                    if (_world != null)
+                    {
+                        var lairs = _world.Lairs;
+                        for (int i = 0; i < lairs.Count; i++)
+                        {
+                            var l = lairs[i];
+                            if (l == null || l.IsCleared || l.IsScouted) continue;
+                            if (!DenChart.InDisc(at, l.WorldPosition, def.radius)) continue;
+                            l.MarkScouted();
+                            charted++;
+                        }
+                    }
+                    return charted == 0 ? "no uncharted dens" : charted == 1 ? "1 den charted" : $"{charted} dens charted";
+                }
+                case OrbitalPowerId.TillAudit:
+                {
+                    int total = 0;
+                    var list = Village.Structures;
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        var s = list[i];
+                        if (s == null || !s.IsAlive || s.LevyPurse <= 0) continue;
+                        total += s.StealLevy(Mathf.FloorToInt(s.LevyPurse * Mathf.Clamp01(def.magnitude)));
+                    }
+                    if (total > 0)
+                    {
+                        Settlement?.NoteLevyDelivered(total);
+                        NoteTreasuryIncome(total);
+                    }
+                    DemoVfx.ClaimRing(ColonyLayout.CampusOrigin, new Color(0.96f, 0.78f, 0.22f));
+                    DemoAudio.PlayCredits(ColonyLayout.CampusOrigin);
+                    return $"{total} EU pulled from the tills";
+                }
+                default:
+                    return "done";
+            }
+        }
+
+        private DustStalkerAgent NearestFaunaAt(Vector3 at, float radius)
+        {
+            DustStalkerAgent best = null;
+            float bestD = radius;
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                var s = _stalkers[i];
+                if (s == null || !s.IsAlive) continue;
+                float d = FlatDist(at, s.transform.position);
+                if (d > bestD) continue;
+                bestD = d;
+                best = s;
+            }
+            return best;
+        }
+
+        private List<DustStalkerAgent> FaunaInRing(Vector3 at, float radius)
+        {
+            var hits = new List<DustStalkerAgent>();
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                var s = _stalkers[i];
+                if (s != null && s.IsAlive && FlatDist(at, s.transform.position) <= radius) hits.Add(s);
+            }
+            return hits;
+        }
+
+        private SpecialistAgent NearestRobotAt(Vector3 at, float radius)
+        {
+            SpecialistAgent best = null;
+            float bestD = radius;
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                var a = _agents[i];
+                if (a == null || !a.IsAlive || a.IsIncapacitated) continue;
+                float d = FlatDist(at, a.transform.position);
+                if (d > bestD) continue;
+                bestD = d;
+                best = a;
+            }
+            return best;
+        }
+
+        private static bool IsDownedIn(SpecialistAgent a, Vector3 at, float radius) =>
+            a != null && a.IsIncapacitated && FlatDist(at, a.transform.position) <= radius;
+
+        private ColonyStructure NearestDamagedAt(Vector3 at, float radius)
+        {
+            if (Village == null) return null;
+            ColonyStructure best = null;
+            float bestD = radius;
+            var list = Village.Structures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var s = list[i];
+                if (s == null || !s.NeedsRepair) continue;
+                float d = FlatDist(at, s.WorldPosition);
+                if (d > bestD) continue;
+                bestD = d;
+                best = s;
+            }
+            return best;
+        }
+
         private void RetreatCampusFauna()
         {
             bool any = false;
@@ -3632,6 +4146,7 @@ namespace SolarMajesty
                 var s = _stalkers[i];
                 if (s == null || !s.IsAlive) continue;
                 if (!DustStalkerAgent.IsCampusPest(s.Kind)) continue;
+                if (IsKingdomSpawn(s)) continue; // town burrows outlive the dens
                 string label = (s.RoleLabel ?? s.Kind.ToString()).ToLowerInvariant();
                 if (!names.Contains(label)) names.Add(label);
                 s.BeginRetreat();
@@ -4349,6 +4864,7 @@ namespace SolarMajesty
 
             if (Input.GetKeyDown(KeyCode.B)) ToggleTool(OverseerTool.Build);
             if (Input.GetKeyDown(KeyCode.G)) ToggleTool(OverseerTool.Flag);
+            if (Input.GetKeyDown(KeyCode.N)) ToggleTool(OverseerTool.Orbital);
             if (Input.GetKeyDown(KeyCode.T) && _overseerHud != null)
                 _overseerHud.ToggleTechPanel();
 
@@ -4418,6 +4934,11 @@ namespace SolarMajesty
             activeTool = tool;
             if (_flagInput != null) _flagInput.EnabledPlacement = tool == OverseerTool.Flag;
             if (_buildInput != null) _buildInput.EnabledPlacement = tool == OverseerTool.Build;
+            if (_orbitalInput != null)
+            {
+                _orbitalInput.EnabledPlacement = tool == OverseerTool.Orbital;
+                if (tool != OverseerTool.Orbital) _orbitalInput.ClearSelection();
+            }
             if (tool == OverseerTool.None)
                 _overseerHud?.ClearMinimizedMenus();
             else
@@ -4637,44 +5158,8 @@ namespace SolarMajesty
             {
                 var b = buildings[i];
                 if (b == null) continue;
-                int side = Mathf.Max(1, b.footprintWidth, b.footprintHeight);
-                switch (b.category)
-                {
-                    case BuildingCategory.Commons:
-                    case BuildingCategory.LandingPad:
-                    case BuildingCategory.ClimateLoom:
-                    case BuildingCategory.AegisSpire:
-                    case BuildingCategory.DeepArchive:
-                        side = 6;
-                        break;
-                    case BuildingCategory.Habitat:
-                    case BuildingCategory.Defense:
-                    case BuildingCategory.Inn:
-                    case BuildingCategory.Farm:
-                    case BuildingCategory.Mine:
-                    case BuildingCategory.RegolithCamp:
-                    case BuildingCategory.ScoutWorkshop:
-                    case BuildingCategory.EngineerWorkshop:
-                    case BuildingCategory.DefenseWorkshop:
-                    case BuildingCategory.MedicWorkshop:
-                    case BuildingCategory.HarvesterWorkshop:
-                    case BuildingCategory.SurveyorWorkshop:
-                    case BuildingCategory.TerraformerWorkshop:
-                    case BuildingCategory.CourierWorkshop:
-                    case BuildingCategory.GeologistWorkshop:
-                    case BuildingCategory.SentinelWorkshop:
-                    case BuildingCategory.GuildHall:
-                    case BuildingCategory.Power:
-                    case BuildingCategory.Mining:
-                    case BuildingCategory.Laboratory:
-                    case BuildingCategory.Watchtower:
-                    case BuildingCategory.AidStation:
-                        side = 4;
-                        break;
-                    default:
-                        side = 4;
-                        break;
-                }
+                // One table for every footprint (the Commons citadel is 12x12, most buildings 4x4).
+                int side = ColonyLayout.FootprintSide(b.category);
 
                 b.footprintWidth = side;
                 b.footprintHeight = side;
@@ -4698,8 +5183,7 @@ namespace SolarMajesty
             if (data == null) return;
             Village?.RegisterPlacedBuilding(data, data.category, go, world);
             CampusDressing.DressPlaced(data, go, _body);
-            if (ShouldSnapCampusCamera(data.category))
-                SnapCampusCamera();
+            // The camera stays where the player put it; it only frames the colony on start / load.
             DemoVfx.BuildComplete(world);
             ShakeCamera(0.30f, world);
             // No completion sound here: this runs at placement. It plays in ProcessCompletedConstruction.
@@ -4791,17 +5275,6 @@ namespace SolarMajesty
             Debug.Log($"[GameLoop] SnapStillCampusCamera ortho={ortho:0.##} aspect={aspect:0.##} aabb={min}->{max}");
         }
 
-        private static bool ShouldSnapCampusCamera(BuildingCategory cat)
-        {
-            switch (cat)
-            {
-                case BuildingCategory.Commons:
-                case BuildingCategory.Habitat:
-                    return true;
-                default:
-                    return ColonyStructure.IsWorkshopCategory(cat);
-            }
-        }
 
         /// <summary>
         /// Extract flag complete: haul through the nearest drop-off. Matching Mine/Farm/Camp/Power
@@ -4919,7 +5392,7 @@ namespace SolarMajesty
                     float dz = at.z - ColonyLayout.CampusBOrigin.z;
                     if (dx * dx + dz * dz > 18f * 18f)
                     {
-                        LogOverseer("Outpost flag too far from the cyan disc.");
+                        LogOverseer("Outpost flag too far from the forward camp.");
                         return;
                     }
                     Settlement?.ClaimOutpost();
@@ -5105,6 +5578,7 @@ namespace SolarMajesty
                     downedTimer = a.RecoverSecondsLeft,
                     claimedFlagIndex = IndexOfSavedFlag(a.ActiveFlag, Flags),
                     levyCarry = a.LevyCarry,
+                    dutyCarry = a.DutyCarry,
                     level = a.Level,
                     xp = a.Xp,
                     suit = (int)a.EquippedSuit,
@@ -5165,6 +5639,9 @@ namespace SolarMajesty
                     });
                 }
             }
+
+            if (_orbital != null)
+                save.orbital = new SaveOrbital { cooldowns = _orbital.CaptureCooldowns() };
 
             if (_mission != null)
             {
@@ -5271,6 +5748,8 @@ namespace SolarMajesty
             Village?.RestoreGrowth(save.villageGrowth);
             Village?.Collectors.Restore(save.collectors);
             RefreshWreckVisuals();
+
+            _orbital?.RestoreCooldowns(save.orbital?.cooldowns);
 
             if (_mission != null)
             {
@@ -5444,6 +5923,7 @@ namespace SolarMajesty
                 }
                 agent.RestoreCombatState(s.health, s.fatigue, s.credits, s.downed, s.downedTimer);
                 agent.RestoreLevyCarry(s.levyCarry);
+                agent.RestoreDutyCarry(s.dutyCarry);
                 agent.BindNavMesh(_campusNav);
                 RemoveCorpse(cls);
                 _pendingVeterans.Remove(cls);
@@ -6155,17 +6635,20 @@ namespace SolarMajesty
         public void NoteMechDeath(Vector3 world)
         {
             _lastMechDeathAt = Time.time;
+            _heroDeaths++;
             TrySpawnJunkBot(world);
         }
 
-        public void OnFaunaKilled(FaunaKind kind, Vector3 world)
+        public void OnFaunaKilled(FaunaKind kind, Vector3 world, float rewardMul = 1f)
         {
+            if (rewardMul <= 0f) return; // orbital kill: no hero earned it
             var killer = NearestLivingAgent(world, 18f);
             if (killer == null) return;
-            int purse = OverseerRules.KillPurse(kind);
+            rewardMul = Mathf.Max(1f, rewardMul);
+            int purse = Mathf.RoundToInt(OverseerRules.KillPurse(kind) * rewardMul);
             if (purse > 0)
                 killer.EarnCredits(purse, kind.ToString());
-            killer.GrantXp(OverseerRules.XpForFauna(kind), kind.ToString());
+            killer.GrantXp(Mathf.RoundToInt(OverseerRules.XpForFauna(kind) * rewardMul), kind.ToString());
         }
 
         private ColonyStructure FindWorkshopFor(SpecialistClass cls)
@@ -6315,7 +6798,7 @@ namespace SolarMajesty
                 }
             }
 
-            float resupply = 90f * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
+            float resupply = Economy.Tuning.resupplyBaseSeconds * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
             resupply *= Mathf.Max(0.4f, _tech.ResupplyIntervalScale);
             resupply *= Mathf.Max(0.4f, ReplayRules.ResupplyIntervalScale);
             resupply *= courier;

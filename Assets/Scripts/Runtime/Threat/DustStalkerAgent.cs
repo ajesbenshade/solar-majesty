@@ -86,6 +86,117 @@ namespace SolarMajesty
                 Die();
         }
 
+        private bool _noReward;
+        private readonly StatusEffects _statuses = new StatusEffects();
+
+        /// <summary>Timed conditions: poison, burn, slow, stun, weaken (Majesty 2 perks).</summary>
+        public StatusEffects Statuses => _statuses;
+
+        /// <summary>Stunned (EMP Snare, stun strikes): frozen in place, no bites, no raids.</summary>
+        public bool IsStunned => _statuses.Stunned;
+
+        public bool ApplyStatus(StatusKind kind, float magnitude, float duration, float period = 0f)
+        {
+            if (!IsAlive) return false;
+            bool landed = _statuses.Apply(kind, magnitude, duration, period);
+            if (landed && kind == StatusKind.Stun)
+            {
+                _aggro = false;
+                _raiding = false;
+            }
+            ApplyFrenzyScale();
+            return landed;
+        }
+
+        public void Stun(float seconds) => ApplyStatus(StatusKind.Stun, 1f, seconds);
+
+        private ITauntTarget _taunter;
+        private float _tauntUntil;
+
+        /// <summary>Forced to attack <paramref name="by"/> for a while (Majesty 2 taunt).</summary>
+        public bool IsTaunted => _taunter != null && Time.time < _tauntUntil;
+
+        public void Taunt(ITauntTarget by, float seconds)
+        {
+            if (!IsAlive || by == null || seconds <= 0f) return;
+            _taunter = by;
+            _tauntUntil = Mathf.Max(_tauntUntil, Time.time + seconds);
+            _aggro = true;
+            _raiding = false;
+        }
+
+        /// <summary>Chase and bite the taunter, ignoring raids and other prey. False when not taunted.</summary>
+        private bool TickTaunted(float dt)
+        {
+            if (_taunter == null) return false;
+            if (Time.time >= _tauntUntil || !_taunter.TauntAlive)
+            {
+                _taunter = null;
+                return false;
+            }
+
+            _aggro = true;
+            _raiding = false;
+            _threat?.Report(_sourceId, aggroPressure);
+            Vector3 dest = _taunter.TauntPosition;
+            dest.y = transform.position.y;
+            if (Vector3.Distance(Flat(transform.position), Flat(dest)) > biteRange)
+            {
+                transform.position = MoveFlatToward(dest, moveSpeed * 1.15f * dt);
+                return true;
+            }
+
+            _taunter.TakeTauntBite(biteDamagePerSecond * dt);
+            if (_taunter is SpecialistAgent robot) TryAfflict(robot);
+            if (_clips == null) _clips = GetComponentInChildren<UnitClipPlayer>();
+            if (_clips != null) _clips.NotifyStrike();
+            return true;
+        }
+
+        private readonly AfflictionClock _afflictClock = new AfflictionClock();
+        private static readonly List<FaunaAffliction> AfflictBuffer = new List<FaunaAffliction>(2);
+
+        /// <summary>
+        /// A landed bite may put this creature's affliction on the robot (and robots around it,
+        /// for area ones). Each affliction has its own cooldown per creature.
+        /// </summary>
+        private void TryAfflict(SpecialistAgent bitten)
+        {
+            var tuning = _loop != null ? _loop.FaunaAfflictions : null;
+            if (tuning == null || bitten == null || IsStunned) return;
+            tuning.For(Kind, IsElite, AfflictBuffer);
+            float now = Time.time;
+            for (int i = 0; i < AfflictBuffer.Count; i++)
+            {
+                var a = AfflictBuffer[i];
+                if (!_afflictClock.Ready(a, now)) continue;
+                bool any = bitten.Afflict(a);
+                if (a.aoeRadius > 0f && _loop != null)
+                {
+                    var all = _loop.Agents;
+                    for (int k = 0; k < all.Count; k++)
+                    {
+                        var r = all[k];
+                        if (r == null || r == bitten || r.IsIncapacitated) continue;
+                        if (Vector3.Distance(Flat(r.transform.position), Flat(bitten.transform.position)) > a.aoeRadius) continue;
+                        any |= r.Afflict(a);
+                    }
+                }
+                if (any) _afflictClock.Used(a, now);
+            }
+        }
+
+        /// <summary>
+        /// Damage from an orbital strike. A kill from orbit pays no hero bounty (Majesty: the
+        /// ruler's spells earn heroes nothing); a survivor finished by a hero still pays.
+        /// </summary>
+        public void ApplyOrbitalDamage(float amount)
+        {
+            if (!IsAlive || amount <= 0f) return;
+            if (_health - amount <= 0f) _noReward = true;
+            ApplyCombatDamage(amount);
+        }
+
         /// <summary>Instant kill when a ClearThreat job clears the owning lair.</summary>
         public void ApplyClearThreatKill()
         {
@@ -144,6 +255,31 @@ namespace SolarMajesty
             PickWanderTarget();
             EnsureVisual();
             gameObject.name = "DustStalker";
+        }
+
+        /// <summary>Boss-grade raider from the kingdom spawn table (Majesty 2 attackers).</summary>
+        public bool IsElite { get; private set; }
+
+        /// <summary>Kill purse / XP multiplier (elites pay more).</summary>
+        public float RewardMultiplier { get; private set; } = 1f;
+
+        /// <summary>Promote to an elite. Call after <see cref="SetKind"/> and <see cref="ApplyBodyTune"/>.</summary>
+        public void MakeElite(float healthMul, float biteMul, float scaleMul, float rewardMul)
+        {
+            if (IsElite) return;
+            IsElite = true;
+            RewardMultiplier = Mathf.Max(1f, rewardMul);
+            maxHealth *= Mathf.Max(1f, healthMul);
+            _health = maxHealth;
+            float bite = _baseBite > 0.01f ? _baseBite : biteDamagePerSecond;
+            _baseBite = bite * Mathf.Max(1f, biteMul);
+            aggroPressure = Mathf.Clamp01(aggroPressure * 1.3f);
+            transform.localScale *= Mathf.Max(0.5f, scaleMul);
+            _baseScale = transform.localScale;
+            _roleNoun = "ALPHA " + RoleLabel.ToUpperInvariant();
+            gameObject.name += "_Alpha";
+            if (_label != null) _label.text = _roleNoun;
+            ApplyFrenzyScale();
         }
 
         /// <summary>Retarget this agent as campus fauna after Initialize. Stalker is the default.</summary>
@@ -443,8 +579,8 @@ namespace SolarMajesty
         {
             float speed = _baseMoveSpeed > 0.01f ? _baseMoveSpeed : moveSpeed;
             float bite = _baseBite > 0.01f ? _baseBite : biteDamagePerSecond;
-            moveSpeed = speed * (_frenzy ? OverseerRules.FrenzySpeed : 1f);
-            biteDamagePerSecond = bite * (_frenzy ? OverseerRules.FrenzyBite : 1f);
+            moveSpeed = speed * (_frenzy ? OverseerRules.FrenzySpeed : 1f) * _statuses.SpeedMul;
+            biteDamagePerSecond = bite * (_frenzy ? OverseerRules.FrenzyBite : 1f) * _statuses.OutgoingMul;
         }
 
         /// <summary>Scatter after dens go quiet. Despawns off-campus without a death burst.</summary>
@@ -467,6 +603,26 @@ namespace SolarMajesty
             if (!IsAlive || _threat == null) return;
 
             float dt = Time.deltaTime;
+            if (_statuses.Count > 0)
+            {
+                float dh = _statuses.Tick(dt);
+                if (dh < 0f) ApplyCombatDamage(-dh);
+                else if (dh > 0f) _health = Mathf.Min(maxHealth, _health + dh);
+                if (!IsAlive) return;
+                ApplyFrenzyScale();
+            }
+            if (IsStunned)
+            {
+                _threat.Report(_sourceId, idlePressure);
+                TickPresentation(dt);
+                return;
+            }
+            if (!_retreating && TickTaunted(dt))
+            {
+                TickDefeat(dt);
+                TickPresentation(dt);
+                return;
+            }
             if (_retreating)
             {
                 TickRetreat(dt);
@@ -674,6 +830,7 @@ namespace SolarMajesty
             }
 
             prey.ApplyDamage(biteDamagePerSecond * dt);
+            TryAfflict(prey);
             _stealTimer += dt;
             if (_stealTimer >= OverseerRules.JunkBotStealSeconds)
             {
@@ -979,6 +1136,7 @@ namespace SolarMajesty
             prey.y = transform.position.y;
             transform.position = MoveFlatToward(prey, moveSpeed * 0.85f * dt);
             nearest.ApplyDamage(biteDamagePerSecond * dt);
+            TryAfflict(nearest);
             if (_clips == null) _clips = GetComponentInChildren<UnitClipPlayer>();
             if (_clips != null) _clips.NotifyStrike();
         }
@@ -1091,7 +1249,7 @@ namespace SolarMajesty
                 FaunaKind.JunkBot => "Junk Bot",
                 _ => "Dust Stalker"
             };
-            _loop?.OnFaunaKilled(Kind, transform.position);
+            _loop?.OnFaunaKilled(Kind, transform.position, _noReward ? 0f : RewardMultiplier);
             Debug.Log($"[Threat] {who} defeated — pressure contribution removed.");
             Destroy(gameObject);
         }
@@ -1323,14 +1481,7 @@ namespace SolarMajesty
             }
         }
 
-        private static void SetColor(Renderer rend, Color c)
-        {
-            if (rend == null) return;
-            if (rend.material.HasProperty("_Color"))
-                rend.material.color = c;
-            else if (rend.material.HasProperty("_BaseColor"))
-                rend.material.SetColor("_BaseColor", c);
-        }
+        private static void SetColor(Renderer rend, Color c) => IndustrialArtDressing.SetUrpColor(rend, c);
 
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()

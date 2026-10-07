@@ -79,7 +79,7 @@ namespace SolarMajesty.EditorTools
             WriteFlag("Flag_EstablishOutpost", FlagType.EstablishOutpost, "Establish Outpost", 75, 0.22f, 10f, new Color(0.22f, 0.82f, 0.78f));
             WriteFlag("Flag_Terraform", FlagType.Terraform, "Terraform", 70, 0.14f, 11f, new Color(0.42f, 0.88f, 0.38f));
 
-            WriteBuilding("Building_Commons", "Colony Commons", BuildingCategory.Commons, 70, 10, 18f, 6, 6);
+            WriteBuilding("Building_Commons", "Colony Commons", BuildingCategory.Commons, 70, 10, 18f, ColonyLayout.CommonsSide, ColonyLayout.CommonsSide);
             WriteBuilding("Building_LandingPad", "Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6);
             WriteBuilding("Building_HAB1", "Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4);
             WriteBuilding("Building_PWR1", "Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4);

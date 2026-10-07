@@ -125,6 +125,17 @@ namespace SolarMajesty
             go.transform.localScale *= targetHeight / h;
         }
 
+        /// <summary>
+        /// Remapped vendor materials, shared by every instance of the same source material and
+        /// renderer. Without this each tree, rock and grass clump got its own materials, which
+        /// stops instancing and makes dense dressing expensive.
+        /// </summary>
+        private static readonly System.Collections.Generic.Dictionary<string, Material> VendorMatCache =
+            new System.Collections.Generic.Dictionary<string, Material>();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetVendorCache() => VendorMatCache.Clear();
+
         private static void RemapVendorToUrp(GameObject root)
         {
             if (root == null) return;
@@ -143,9 +154,15 @@ namespace SolarMajesty
                 for (int m = 0; m < src.Length; m++)
                 {
                     var old = src[m];
+                    string cacheKey = (old != null ? old.GetEntityId().ToString() : "null") + "|" + rend.name;
+                    if (VendorMatCache.TryGetValue(cacheKey, out var cachedMat) && cachedMat != null)
+                    {
+                        next[m] = cachedMat;
+                        continue;
+                    }
                     if (old == null)
                     {
-                        next[m] = MakeEnvMat(lit, rend.name, EnvColorFor(rend.name));
+                        next[m] = VendorMatCache[cacheKey] = MakeEnvMat(lit, rend.name, EnvColorFor(rend.name));
                         continue;
                     }
                     string shaderName = old.shader != null ? old.shader.name : "";
@@ -170,11 +187,24 @@ namespace SolarMajesty
                     Texture tex = null;
                     if (old.HasProperty("_BaseTexture")) tex = old.GetTexture("_BaseTexture");
                     if (tex == null && old.HasProperty("_MainTex")) tex = old.GetTexture("_MainTex");
+                    if (tex == null && old.HasProperty("_BASETEXTURE")) tex = old.GetTexture("_BASETEXTURE");
                     if (tex == null && old.HasProperty("_BaseMap")) tex = old.GetTexture("_BaseMap");
+                    // Polytope textures are colour palettes; tinting them with the fallback greens
+                    // and browns multiplied them down to near-black. A textured part keeps the
+                    // palette as authored.
+                    if (tex != null) c = Color.white;
+                    string token = (old.name + " " + rend.name).ToLowerInvariant();
+                    // The rock shader builds its colour from a ground/top gradient; its texture is
+                    // a blue-grey mask, so rocks take a flat weathered stone instead.
+                    bool rock = token.Contains("rock") || token.Contains("stone") || token.Contains("boulder");
+                    if (rock)
+                    {
+                        tex = null;
+                        c = new Color(0.47f, 0.45f, 0.42f);
+                    }
                     var mat = MakeEnvMat(lit, old.name, c);
                     if (tex != null && mat.HasProperty("_BaseMap"))
                         mat.SetTexture("_BaseMap", tex);
-                    string token = (old.name + " " + rend.name).ToLowerInvariant();
                     bool cutout = token.Contains("leaf") || token.Contains("grass") || token.Contains("flower") ||
                                   token.Contains("foliage") || token.Contains("plant") || token.Contains("poppy");
                     if (old.HasProperty("_Cutoff") && mat.HasProperty("_Cutoff"))
@@ -184,10 +214,14 @@ namespace SolarMajesty
                     }
                     if (cutout && mat.HasProperty("_AlphaClip"))
                     {
+                        // Same switches as the SM_Keep_LitCutout keeper, so the variant survives builds.
                         mat.SetFloat("_AlphaClip", 1f);
                         mat.EnableKeyword("_ALPHATEST_ON");
+                        if (mat.HasProperty("_Cull")) mat.SetFloat("_Cull", 0f);
+                        mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
                     }
-                    next[m] = mat;
+                    mat.enableInstancing = true;
+                    next[m] = VendorMatCache[cacheKey] = mat;
                 }
                 rend.sharedMaterials = next;
                 rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;

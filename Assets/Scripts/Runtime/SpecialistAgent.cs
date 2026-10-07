@@ -8,7 +8,7 @@ namespace SolarMajesty
     /// Thin runtime driver for one autonomous specialist.
     /// Decisions come only from SpecialistBrain — the player never path-commands this unit.
     /// </summary>
-    public class SpecialistAgent : MonoBehaviour
+    public class SpecialistAgent : MonoBehaviour, ITauntTarget
     {
         [Header("Data")]
         [SerializeField] private SpecialistData data;
@@ -52,6 +52,19 @@ namespace SolarMajesty
 
         private FlagManager _flags;
         private SpecialistBrain _brain;
+        private readonly HeroMotives _motives = new HeroMotives();
+        private readonly StatusEffects _statuses = new StatusEffects();
+        private readonly AbilityBook _abilities = new AbilityBook();
+
+        /// <summary>Timed conditions on this robot: regen, armor, haste, stun immunity.</summary>
+        public StatusEffects Statuses => _statuses;
+        public string LastAbility { get; private set; }
+
+        // ITauntTarget: fauna forced onto this robot bite it like any other prey.
+        public Vector3 TauntPosition => transform.position;
+        public bool TauntAlive => !_scrapped && !_incapacitated;
+        public void TakeTauntBite(float amount) => ApplyDamage(amount);
+        public HeroMotives Motives => _motives;
         private SimpleEconomy _economy;
         private BuildingPlacer _placer;
         private CampusNavMesh _navMesh;
@@ -100,6 +113,7 @@ namespace SolarMajesty
         private float _workshopRepairCooldown;
         private bool _innPaid;
         private int _levyCarry;
+        private readonly DutyPurse _duty = new DutyPurse();
 
         public SpecialistData Data => data;
         public BrainDecision LastDecision => _lastDecision;
@@ -116,6 +130,9 @@ namespace SolarMajesty
         public ShopItemId EquippedAccessory => equippedAccessory;
         public ShopItemId EquippedWeapon => equippedWeapon;
         public int LevyCarried => _levyCarry;
+        /// <summary>Guild tax carried but not yet handed in.</summary>
+        public int DutyCarry => _duty.Carry;
+        public void RestoreDutyCarry(int amount) => _duty.Restore(amount);
         public int Level => Mathf.Clamp(level, 1, OverseerRules.LevelCap);
         public int Xp => Mathf.Max(0, xp);
         public int ReviveCount => Mathf.Max(0, reviveCount);
@@ -166,7 +183,8 @@ namespace SolarMajesty
         public float EffectiveMoveSpeed =>
             (data != null ? data.moveSpeed : 3.5f) *
             (1f + _geneSpeed + SuitSpeedBonus()) *
-            BodyMoveScale();
+            BodyMoveScale() *
+            _statuses.SpeedMul;
 
         public float EffectiveWorkRate
         {
@@ -215,10 +233,22 @@ namespace SolarMajesty
 
         public void SetBodyDanger(float danger01) => bodyDanger = Mathf.Clamp01(danger01);
 
+        private float _aegisUntil;
+
+        /// <summary>Under an orbital Aegis Field: takes no damage.</summary>
+        public bool IsShielded => Time.time < _aegisUntil;
+
+        public void ApplyAegisField(float seconds)
+        {
+            if (seconds <= 0f || _scrapped) return;
+            _aegisUntil = Mathf.Max(_aegisUntil, Time.time + seconds);
+        }
+
         public void ApplyDamage(float amount01, bool feedback = true)
         {
             if (amount01 <= 0f || _incapacitated) return;
-            float mitigated = amount01 * (1f - ArmorMitigation) / LevelHpMul;
+            if (IsShielded) return;
+            float mitigated = amount01 * (1f - ArmorMitigation) / LevelHpMul * _statuses.IncomingMul;
             if (_loop != null &&
                 _loop.GuildBenefits != null &&
                 _loop.GuildBenefits.IsActive(RobotGuildId.Aegis))
@@ -236,8 +266,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Hero earns gold. Majesty 2: half of every earning is taxed into the hero's guild
-        /// (workshop) till — Commons if the workshop is gone — for a tax collector to carry home.
+        /// Hero earns gold. Majesty 2: half of every earning is guild tax. With tax carry on the
+        /// hero holds it until the purse is full, then walks it to the guild (workshop) till —
+        /// Commons if the workshop is gone — for a tax collector to carry home.
         /// </summary>
         public void EarnCredits(float amount, string reason = null, bool taxed = true)
         {
@@ -246,12 +277,15 @@ namespace SolarMajesty
             if (tax > 0)
             {
                 var till = GuildTill();
-                if (till != null)
+                if (till == null)
+                    tax = 0;
+                else if (MajestyEconomy.Tuning.taxCarryEnabled)
+                    _duty.Add(tax);
+                else
                 {
                     till.AccrueLevy(tax);
                     _loop?.NoteGuildTax(tax);
                 }
-                else tax = 0;
             }
             float kept = amount - tax;
             credits += kept;
@@ -480,6 +514,9 @@ namespace SolarMajesty
             _recoverTimer = 0f;
             healthNormalized = 1f;
             fatigue = 0.1f;
+            _motives.Reset();
+            _statuses.Clear();
+            _abilities.Reset();
             _status = "revived";
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
@@ -493,6 +530,7 @@ namespace SolarMajesty
             _recoverTimer = 0f;
             healthNormalized = OverseerRules.ReviveHp;
             fatigue = OverseerRules.ReviveFatigue;
+            _motives.Reset();
             _status = "field_revive";
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
@@ -542,6 +580,9 @@ namespace SolarMajesty
             _world = world;
             _loop = FindAnyObjectByType<GameLoop>();
             fatigue = 0.1f;
+            _motives.Reset();
+            _statuses.Clear();
+            _abilities.Reset();
             healthNormalized = 1f;
             greedHunger = 0.55f;
             credits = 20f;
@@ -675,6 +716,12 @@ namespace SolarMajesty
             }
 
             TickNeeds(dt);
+            TickStatuses(dt);
+            if (bodyDanger >= (_loop?.Abilities?.threatLine ?? 2f))
+                TrySelfAbility(AbilityTrigger.Engage); // summons and battle buffs when trouble is near
+            TickPayDuty();
+            _motives.Tick(dt, _brain.Tuning, data.specialistClass, healthNormalized, bodyDanger,
+                _loop != null ? _loop.SafetyFieldAt(transform.position) : 0f);
             TickRadiation(dt);
             TickGene(dt);
             TickMedic(dt);
@@ -717,6 +764,8 @@ namespace SolarMajesty
             }
 
             DropLevy("downed");
+            DropDuty("downed", MajestyEconomy.Tuning.taxDropOnDown);
+            _statuses.Clear();
             _incapacitated = true;
             float recover = recoverySeconds > 0.01f ? recoverySeconds : OverseerRules.RecoverSeconds;
             _recoverTimer = recover;
@@ -742,6 +791,7 @@ namespace SolarMajesty
             _activeFlag = null;
             SetWorkplace(null);
             DropLevy("scrapped");
+            DropDuty("scrapped", 1f);
             int salvage = Mathf.FloorToInt(credits * OverseerRules.SalvageCreditFrac);
             credits = 0f;
             if (_levyCarry > 0)
@@ -855,6 +905,7 @@ namespace SolarMajesty
                 if (lead != null && lead.IsAlive)
                     decision = FollowLeader(lead);
             }
+            _motives.NoteDecision(_brain.Tuning, decision.Action, decision.TargetFlag?.RuntimeId, Time.time);
             ApplyDecision(decision);
             SyncWorkplace(decision);
         }
@@ -997,6 +1048,9 @@ namespace SolarMajesty
                 }
             }
 
+            var dutyTill = _duty.WantsToPay(MajestyEconomy.Tuning) ? GuildTill() : null;
+            if (dutyTill != null && !dutyTill.IsAlive) dutyTill = null;
+
             float hunger = Mathf.Clamp01(greedHunger + ReplayRules.GreedHungerBias);
             if (_loop != null && _loop.Resources != null &&
                 _loop.Resources.Get(ResourceId.Metals) < OverseerRules.ThinMetals)
@@ -1029,6 +1083,9 @@ namespace SolarMajesty
                 RepairDistance = repairDist,
                 RepairNeed = repairNeed,
                 CourageEffective = EffectiveCourage,
+                Motives = _motives,
+                HasDutyWalk = dutyTill != null,
+                DutyPosition = dutyTill != null ? dutyTill.WorldPosition : Vector3.zero,
                 Level = Level,
                 HasLevyWalk = hasLevy,
                 LevyPosition = levyPos,
@@ -1340,6 +1397,7 @@ namespace SolarMajesty
 
         private void TickFlee(float dt)
         {
+            TrySelfAbility(AbilityTrigger.Flee);
             Vector3 inn = RestPosition;
             if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
             {
@@ -1486,6 +1544,34 @@ namespace SolarMajesty
             _status = Workplace.LaserArmed ? "tower_lasers" : "posted_watch";
         }
 
+        private void DropDuty(string reason, float fraction)
+        {
+            int lost = _duty.Drop(fraction);
+            if (lost > 0)
+                _loop?.LogOverseer($"{Record.Name} {reason} — {lost} EU of guild tax lost.");
+        }
+
+        /// <summary>
+        /// Hand carried tax in at the guild till. Happens on a pay-duty walk, or whenever the
+        /// hero passes its guild with tax in hand.
+        /// </summary>
+        private void TickPayDuty()
+        {
+            if (_duty.Carry <= 0 || _incapacitated || _scrapped) return;
+            var t = MajestyEconomy.Tuning;
+            var till = GuildTill();
+            if (till == null || !till.IsAlive) return;
+            if (FlatDistance(transform.position, till.WorldPosition) > Mathf.Max(1f, t.taxPayArrive) + 1.5f)
+                return;
+            int paid = _duty.Pay();
+            till.AccrueLevy(paid);
+            _loop?.NoteGuildTax(paid);
+            _status = "duty_paid";
+            DemoVfx.ClaimRing(transform.position, new Color(0.96f, 0.78f, 0.22f));
+            if (_lastDecision.Reason == "pay_duty")
+                _thinkTimer = 0f; // decide what to do next right away
+        }
+
         private void DropLevy(string reason)
         {
             if (_levyCarry <= 0) return;
@@ -1507,6 +1593,7 @@ namespace SolarMajesty
             if (_shopCooldown > 0f || data == null) return;
             if (Workplace == null || !Workplace.IsAlive || !Workplace.IsGuild) return;
             if (FlatDistance(transform.position, Workplace.WorldPosition) > 6f) return;
+            if (MajestyEconomy.Tuning.ShopPriorityFor(data.specialistClass).armor == ShopNeed.Min) return;
             var item = ShopCatalog.BestGuildUpgrade(data.specialistClass, Mathf.FloorToInt(credits), equippedSuit);
             if (item != null)
                 TryBuy(item, Workplace);
@@ -1519,7 +1606,8 @@ namespace SolarMajesty
             var market = _loop.Village.NearestByCategory(transform.position, 6f, BuildingCategory.Market);
             if (market == null) return;
             var item = ShopCatalog.PreferredMarketBuy(
-                data.specialistClass, Mathf.FloorToInt(credits), healthNormalized, equippedAccessory);
+                data.specialistClass, Mathf.FloorToInt(credits), healthNormalized, equippedAccessory,
+                MajestyEconomy.Tuning.ShopPriorityFor(data.specialistClass));
             if (item != null)
                 TryBuy(item, market);
         }
@@ -1531,7 +1619,8 @@ namespace SolarMajesty
             var smith = _loop.Village.NearestByCategory(transform.position, 6f, BuildingCategory.Blacksmith);
             if (smith == null) return;
             var item = ShopCatalog.BestBlacksmithBuy(
-                data.specialistClass, Mathf.FloorToInt(credits), equippedSuit, equippedWeapon);
+                data.specialistClass, Mathf.FloorToInt(credits), equippedSuit, equippedWeapon,
+                MajestyEconomy.Tuning.ShopPriorityFor(data.specialistClass));
             if (item != null)
                 TryBuy(item, smith);
         }
@@ -1606,9 +1695,113 @@ namespace SolarMajesty
             var stalker = NearestStalkerAgent();
             if (stalker != null)
             {
-                float mul = HuntDpsMul(stalker.Kind) * LevelDpsMul * (1f + WeaponDamageBonus());
-                stalker.ApplyCombatDamage(EffectiveWorkRate * 8f * dt * mul);
+                float dps = StrikeDps(stalker.Kind);
+                stalker.ApplyCombatDamage(dps * dt);
+                TrySelfAbility(AbilityTrigger.Engage);
+                if (healthNormalized < (_loop?.Abilities?.hurtLine ?? 0.6f))
+                    TrySelfAbility(AbilityTrigger.Hurt);
+                if (stalker.IsAlive)
+                    TryStrikeAbility(stalker);
             }
+        }
+
+        // ------------------------------------------------------------------ abilities (Majesty 2 unit actions)
+
+        /// <summary>Normal strike damage per second against this kind of fauna.</summary>
+        private float StrikeDps(FaunaKind kind) =>
+            EffectiveWorkRate * 8f * HuntDpsMul(kind) * LevelDpsMul * (1f + WeaponDamageBonus()) * _statuses.OutgoingMul;
+
+        private void TickStatuses(float dt)
+        {
+            if (_statuses.Count == 0) return;
+            float dh = _statuses.Tick(dt);
+            if (dh > 0f) ReceiveHeal(dh);
+            else if (dh < 0f) ApplyDamage(-dh, false);
+        }
+
+        public bool ApplyStatus(StatusKind kind, float magnitude, float duration, float period = 0f)
+        {
+            if (_scrapped || _incapacitated) return false;
+            if (IsShielded && StatusEffects.IsHarmful(kind)) return false; // Aegis Field blocks afflictions
+            return _statuses.Apply(kind, magnitude, duration, period);
+        }
+
+        /// <summary>A creature's bite put a status on this robot.</summary>
+        public bool Afflict(in FaunaAffliction a)
+        {
+            if (!ApplyStatus(a.status, a.magnitude, a.duration, a.period)) return false;
+            if (!string.IsNullOrEmpty(a.label)) ShowRefusal(a.label);
+            return true;
+        }
+
+        private void TryStrikeAbility(DustStalkerAgent target)
+        {
+            var t = _loop?.Abilities;
+            if (t == null || data == null || _statuses.Stunned) return;
+            if (!_abilities.TryPick(t, data.specialistClass, Level, AbilityTrigger.Strike, target.Kind, Time.time, out var a))
+                return;
+
+            Vector3 at = target.transform.position;
+            HitWithAbility(target, a);
+            if (a.aoeRadius > 0f && _loop != null)
+            {
+                var all = _loop.Stalkers;
+                for (int i = 0; i < all.Count; i++)
+                {
+                    var s = all[i];
+                    if (s == null || s == target || !s.IsAlive) continue;
+                    if (FlatDistance(at, s.transform.position) > a.aoeRadius) continue;
+                    HitWithAbility(s, a);
+                }
+            }
+            UsedAbility(t, a, at, new Color(1f, 0.6f, 0.2f));
+        }
+
+        private void HitWithAbility(DustStalkerAgent s, ClassAbilityDef a)
+        {
+            if (a.damageMul > 0f)
+                s.ApplyCombatDamage(StrikeDps(s.Kind) * a.damageMul);
+            if (a.appliesStatus && s.IsAlive)
+                s.ApplyStatus(a.status, a.statusMagnitude, a.statusDuration, a.statusPeriod);
+            if (a.taunts && s.IsAlive)
+                s.Taunt(this, a.tauntDuration);
+        }
+
+        private void TrySelfAbility(AbilityTrigger trigger)
+        {
+            var t = _loop?.Abilities;
+            if (t == null || data == null || _incapacitated || _statuses.Stunned) return;
+            if (!_abilities.TryPick(t, data.specialistClass, Level, trigger, null, Time.time, out var a, CanUseSelf))
+                return;
+            if (a.appliesStatus)
+                _statuses.Apply(a.status, a.statusMagnitude, a.statusDuration, a.statusPeriod);
+            if (!string.IsNullOrEmpty(a.summonId) && t.TryGetCompanion(a.summonId, out var companion))
+                CompanionDrone.Spawn(_loop, this, companion);
+            UsedAbility(t, a, transform.position, new Color(0.55f, 0.85f, 1f));
+        }
+
+        /// <summary>Summons respect their cap (Majesty i_cap): no new escort while one is still out.</summary>
+        private bool CanUseSelf(ClassAbilityDef a) =>
+            string.IsNullOrEmpty(a.summonId) ||
+            CompanionDrone.CountFor(this, a.summonId) < Mathf.Max(1, a.summonCap);
+
+        private void TryAllyAbility(SpecialistAgent ally)
+        {
+            var t = _loop?.Abilities;
+            if (t == null || data == null || ally == null || _statuses.Stunned) return;
+            if (!_abilities.TryPick(t, data.specialistClass, Level, AbilityTrigger.Ally, null, Time.time, out var a)) return;
+            if (a.appliesStatus && !ally.ApplyStatus(a.status, a.statusMagnitude, a.statusDuration, a.statusPeriod))
+                return;
+            UsedAbility(t, a, ally.transform.position, new Color(0.45f, 1f, 0.55f));
+        }
+
+        private void UsedAbility(AbilityTuning t, ClassAbilityDef a, Vector3 at, Color color)
+        {
+            _abilities.NoteUsed(t, a, Time.time);
+            LastAbility = a.displayName;
+            DemoVfx.WorkSpark(at, color);
+            if (!string.IsNullOrEmpty(a.displayName))
+                ShowRefusal(a.displayName.ToUpperInvariant());
         }
 
         private void TickWanderTown(float dt)
@@ -1684,7 +1877,10 @@ namespace SolarMajesty
                 if (ally.IsIncapacitated)
                     ally.AccelerateRecover(dt);
                 else if (ally.HealthNormalized < 0.98f)
+                {
                     ally.ReceiveHeal(dt * 0.14f);
+                    TryAllyAbility(ally);
+                }
             }
         }
 

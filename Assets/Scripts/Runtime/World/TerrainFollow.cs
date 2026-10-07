@@ -89,6 +89,7 @@ namespace SolarMajesty
             Request(new Vector3(b.center.x, 0f, b.center.z), half);
         }
 
+        /// <summary>Queue a graded pad. <paramref name="center"/>.y is the pad height (0 for yards).</summary>
         public static void Request(Vector3 center, Vector2 halfExtents)
         {
             if (TerrainDataBake.Current == null) return;
@@ -115,7 +116,7 @@ namespace SolarMajesty
             bool changed = false;
             foreach (var (center, half) in Pending)
             {
-                if (!TerrainDataBake.LevelFootprint(bake, center, half, Apron)) continue;
+                if (!TerrainDataBake.LevelFootprint(bake, center, half, Apron, center.y)) continue;
                 changed = true;
                 if (mesh != null)
                     TerrainMeshBuilder.RefreshRegion(mesh, bake, center, half + new Vector2(Apron, Apron));

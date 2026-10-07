@@ -6,11 +6,25 @@ namespace SolarMajesty
     /// <summary>
     /// Majesty-style utility AI: bounties, fear, opportunistic hunting, and kingdom vocation.
     /// The player never forces a job — only posts flags and hopes personality + greed accepts it.
+    /// Every threshold lives in <see cref="SpecialistBrainTuning"/> so it can be tuned in the Inspector.
     /// </summary>
     public sealed class SpecialistBrain
     {
-        public float ConsiderRange = 80f;
-        public float CurrentFlagHysteresis = 0.15f;
+        private SpecialistBrainTuning _tuning = new SpecialistBrainTuning();
+
+        public SpecialistBrainTuning Tuning
+        {
+            get => _tuning;
+            set => _tuning = value ?? new SpecialistBrainTuning();
+        }
+
+        /// <summary>Replay-rule multiplier on <see cref="SpecialistBrainTuning.considerRange"/>.</summary>
+        public float ConsiderRangeScale = 1f;
+
+        /// <summary>Effective flag consideration radius: tuning range x replay scale.</summary>
+        public float ConsiderRange => _tuning.considerRange * ConsiderRangeScale;
+
+        public float CurrentFlagHysteresis => _tuning.currentFlagHysteresis;
 
         public BrainDecision Evaluate(
             in SpecialistContext ctx,
@@ -20,32 +34,36 @@ namespace SolarMajesty
             if (ctx.Data == null)
                 return BrainDecision.Idle(0f, "missing_data");
 
+            var t = _tuning;
             var data = ctx.Data;
             Vector3 inn = ctx.SafetyPosition.sqrMagnitude > 0.01f
                 ? ctx.SafetyPosition
                 : ctx.Position;
 
-            float injury = 1f - ctx.HealthNormalized;
             float restScore = CalculateRestScore(ctx);
-            float courage = EffectiveCourage(ctx);
 
             // 1. Panic — Majesty heroes drop quests and run to the inn when badly hurt.
-            bool panicked = injury > 0.55f ||
-                            (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
-            if (panicked && ctx.HealthNormalized < 0.62f)
-                return BrainDecision.Flee(inn, 0.95f, "flee_to_inn");
+            if (IsPanicked(ctx, bodyDanger))
+                return BrainDecision.Flee(inn, t.fleeScore, "flee_to_inn");
 
             // 2. Exhaustion / injury — rest at the inn, not in the field.
-            if (restScore > 0.78f)
+            if (restScore > t.restForced)
                 return BrainDecision.Rest(restScore, "exhausted_or_hurt", inn);
+
+            // 2b. Pay duty: a hero with a full tax purse walks it to the guild, but finishes
+            //     the flag or fight it is already on first (Majesty 2 TaxCashCard).
+            if (ctx.HasDutyWalk &&
+                ctx.CurrentAction != SpecialistAction.PursueFlag &&
+                ctx.CurrentAction != SpecialistAction.Hunt)
+            {
+                return BrainDecision.Wander(ctx.DutyPosition, t.dutyScore, "pay_duty");
+            }
 
             // 3. Player bounties (greed gate). Broke heroes take cheaper flags.
             FlagHandle bestFlag = null;
             float bestFlagScore = -1f;
             string bestFlagReason = "none";
-            float consider = 40f + data.explorePreference * 35f;
-            if (ConsiderRange > 0f)
-                consider = Mathf.Max(consider, ConsiderRange * 0.7f);
+            float consider = ConsiderDistance(data);
 
             if (openFlags != null)
             {
@@ -62,7 +80,7 @@ namespace SolarMajesty
                     if (ctx.CurrentFlag != null &&
                         ReferenceEquals(ctx.CurrentFlag.RuntimeId, flag.RuntimeId))
                     {
-                        score += CurrentFlagHysteresis;
+                        score += t.currentFlagHysteresis;
                     }
 
                     if (score > bestFlagScore)
@@ -74,20 +92,18 @@ namespace SolarMajesty
                 }
             }
 
-            float acceptance = 0.38f + data.baseGreed * 0.25f - ctx.GreedHunger * 0.22f;
-            acceptance = Mathf.Clamp(acceptance, 0.22f, 0.72f);
+            float acceptance = Acceptance(ctx);
             bool takeFlag = bestFlag != null && bestFlagScore >= acceptance;
             if (takeFlag && !PassesGreedGate(data, bestFlag.CurrentBounty, ctx.GreedHunger))
                 takeFlag = false;
 
             // 4. Opportunistic hunt — warriors engage nearby fauna without a posted bounty.
             float huntScore = -1f;
-            if (ctx.HasHunt && data.specialistClass != SpecialistClass.Medic &&
-                data.combatPreference >= 0.2f && ctx.HealthNormalized > 0.38f)
+            if (CanHunt(ctx))
             {
                 huntScore = ScoreHunt(ctx, bodyDanger);
                 if (ctx.CurrentAction == SpecialistAction.Hunt)
-                    huntScore += 0.12f;
+                    huntScore += t.huntHysteresis;
             }
 
             if (huntScore >= acceptance && huntScore > bestFlagScore)
@@ -99,10 +115,10 @@ namespace SolarMajesty
             {
                 repairScore = ScoreRepair(ctx);
                 if (ctx.CurrentAction == SpecialistAction.Repair)
-                    repairScore += 0.12f;
+                    repairScore += t.huntHysteresis;
             }
 
-            if (repairScore >= acceptance * 0.82f &&
+            if (repairScore >= acceptance * t.repairAcceptFactor &&
                 repairScore > bestFlagScore &&
                 repairScore > huntScore)
             {
@@ -113,20 +129,24 @@ namespace SolarMajesty
                 return BrainDecision.Pursue(bestFlag, bestFlagScore, bestFlagReason);
 
             if (data.specialistClass == SpecialistClass.Medic && ctx.HasPatient &&
-                ctx.HealthNormalized > 0.38f)
+                ctx.HealthNormalized > t.huntMinHealth)
             {
-                return BrainDecision.Wander(ctx.PatientPosition, 0.48f, "triage");
+                return BrainDecision.Wander(ctx.PatientPosition, t.triageScore, "triage");
             }
 
+            // 5a. Scheduled break: a hero that has done its share of work goes to the inn.
+            if (IsRelaxing(ctx))
+                return BrainDecision.Rest(Mathf.Max(restScore, t.relaxScore), "relax_break", inn);
+
             // 5. Mild rest if worn, else kingdom vocation (never stand still).
-            if (restScore > 0.45f)
+            if (restScore > t.restMild)
                 return BrainDecision.Rest(restScore, "mild_fatigue", inn);
 
             // Courier levy is a wander bias, not a flag. ScoreFlag is untouched.
             if (data.specialistClass == SpecialistClass.CourierBot && ctx.HasLevyWalk)
             {
                 string levyReason = ctx.LevyCarrying ? "levy_home" : "levy_collect";
-                return BrainDecision.Wander(ctx.LevyPosition, 0.36f, levyReason);
+                return BrainDecision.Wander(ctx.LevyPosition, t.levyScore, levyReason);
             }
 
             string vocation = data.specialistClass switch
@@ -139,14 +159,14 @@ namespace SolarMajesty
             Vector3 dest = data.specialistClass == SpecialistClass.Medic
                 ? inn
                 : (ctx.VocationPosition.sqrMagnitude > 0.01f ? ctx.VocationPosition : inn);
-            return BrainDecision.Wander(dest, ctx.HasWorkshop ? 0.34f : 0.28f, vocation);
+            return BrainDecision.Wander(dest, ctx.HasWorkshop ? t.workshopWanderScore : t.wanderScore, vocation);
         }
 
         /// <summary>
         /// Every option the utility gates would allow right now, for an external chooser (the local
         /// Laya model) to pick between. Always includes <see cref="Evaluate"/>'s own pick first.
         /// Returns false when the choice is forced (panic flee / exhaustion) and must not be
-        /// overridden. Reuses the frozen scorers; does not change Evaluate.
+        /// overridden. Reuses the scorers; does not change Evaluate.
         /// </summary>
         public bool CollectOptions(
             in SpecialistContext ctx,
@@ -162,10 +182,10 @@ namespace SolarMajesty
             if (utility.Action == SpecialistAction.Flee || utility.Reason == "exhausted_or_hurt")
                 return false;
 
+            var t = _tuning;
             var data = ctx.Data;
             Vector3 inn = ctx.SafetyPosition.sqrMagnitude > 0.01f ? ctx.SafetyPosition : ctx.Position;
-            float acceptance = 0.38f + data.baseGreed * 0.25f - ctx.GreedHunger * 0.22f;
-            acceptance = Mathf.Clamp(acceptance, 0.22f, 0.72f);
+            float acceptance = Acceptance(ctx);
 
             if (openFlags != null)
             {
@@ -181,8 +201,7 @@ namespace SolarMajesty
                     AddUnique(into, taken[i]);
             }
 
-            if (ctx.HasHunt && data.specialistClass != SpecialistClass.Medic &&
-                data.combatPreference >= 0.2f && ctx.HealthNormalized > 0.38f)
+            if (CanHunt(ctx))
             {
                 float hunt = ScoreHunt(ctx, bodyDanger);
                 if (hunt >= acceptance)
@@ -192,18 +211,18 @@ namespace SolarMajesty
             if (data.specialistClass == SpecialistClass.EngineerBot && ctx.HasRepair)
             {
                 float repair = ScoreRepair(ctx);
-                if (repair >= acceptance * 0.82f)
+                if (repair >= acceptance * t.repairAcceptFactor)
                     AddUnique(into, BrainDecision.Repair(ctx.RepairPosition, repair, "repair_module"));
             }
 
             float rest = CalculateRestScore(ctx);
-            if (rest > 0.3f)
+            if (rest > t.restOption)
                 AddUnique(into, BrainDecision.Rest(rest, "mild_fatigue", inn));
 
             if (utility.Action != SpecialistAction.Wander)
             {
                 Vector3 dest = ctx.VocationPosition.sqrMagnitude > 0.01f ? ctx.VocationPosition : inn;
-                AddUnique(into, BrainDecision.Wander(dest, 0.28f, "wandering_frontier"));
+                AddUnique(into, BrainDecision.Wander(dest, t.wanderScore, "wandering_frontier"));
             }
             return into.Count > 1;
         }
@@ -232,59 +251,43 @@ namespace SolarMajesty
             score = 0f;
             if (ctx.Data == null || flag?.Data == null) return false;
 
-            float injury = 1f - ctx.HealthNormalized;
-            float courage = EffectiveCourage(ctx);
-            bool panicked = injury > 0.55f ||
-                            (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
-            if (panicked && ctx.HealthNormalized < 0.62f) return false;
-            if (CalculateRestScore(ctx) > 0.78f) return false;
+            if (IsPanicked(ctx, bodyDanger)) return false;
+            if (CalculateRestScore(ctx) > _tuning.restForced) return false;
             if (!FlagOrdersRules.Permits(ctx, flag)) return false;
 
             float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
-            float consider = 40f + ctx.Data.explorePreference * 35f;
-            if (ConsiderRange > 0f)
-                consider = Mathf.Max(consider, ConsiderRange * 0.7f);
+            float consider = ConsiderDistance(ctx.Data);
             if (consider > 0f && dist > consider) return false;
 
             score = ScoreFlag(ctx, flag, dist, bodyDanger);
-            float acceptance = 0.38f + ctx.Data.baseGreed * 0.25f - ctx.GreedHunger * 0.22f;
-            acceptance = Mathf.Clamp(acceptance, 0.22f, 0.72f);
-            if (score < acceptance) return false;
+            if (score < Acceptance(ctx)) return false;
             return PassesGreedGate(ctx.Data, flag.CurrentBounty, ctx.GreedHunger);
         }
 
         /// <summary>
-        /// Why WouldTakeFlag is false. Reads the same gates as Evaluate; does not change ScoreFlag.
+        /// Why WouldTakeFlag is false. Reads the same gates as Evaluate.
         /// </summary>
         public FlagRefusalKind ExplainFlag(in SpecialistContext ctx, FlagHandle flag, float bodyDanger)
         {
             if (ctx.Data == null || flag?.Data == null) return FlagRefusalKind.Ignored;
 
-            float injury = 1f - ctx.HealthNormalized;
-            float courage = EffectiveCourage(ctx);
-            bool panicked = injury > 0.55f ||
-                            (injury > 0.32f && bodyDanger > 0.4f && courage < 0.55f);
-            if (panicked && ctx.HealthNormalized < 0.62f) return FlagRefusalKind.Hurt;
-            if (CalculateRestScore(ctx) > 0.78f) return FlagRefusalKind.Hurt;
+            if (IsPanicked(ctx, bodyDanger)) return FlagRefusalKind.Hurt;
+            if (CalculateRestScore(ctx) > _tuning.restForced) return FlagRefusalKind.Hurt;
             if (!FlagOrdersRules.Permits(ctx, flag)) return FlagRefusalKind.Orders;
 
             float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
-            float consider = 40f + ctx.Data.explorePreference * 35f;
-            if (ConsiderRange > 0f)
-                consider = Mathf.Max(consider, ConsiderRange * 0.7f);
+            float consider = ConsiderDistance(ctx.Data);
             if (consider > 0f && dist > consider) return FlagRefusalKind.TooFar;
 
             float score = ScoreFlag(ctx, flag, dist, bodyDanger);
-            float acceptance = 0.38f + ctx.Data.baseGreed * 0.25f - ctx.GreedHunger * 0.22f;
-            acceptance = Mathf.Clamp(acceptance, 0.22f, 0.72f);
+            float acceptance = Acceptance(ctx);
 
             float huntScore = -1f;
-            if (ctx.HasHunt && ctx.Data.specialistClass != SpecialistClass.Medic &&
-                ctx.Data.combatPreference >= 0.2f && ctx.HealthNormalized > 0.38f)
+            if (CanHunt(ctx))
             {
                 huntScore = ScoreHunt(ctx, bodyDanger);
                 if (ctx.CurrentAction == SpecialistAction.Hunt)
-                    huntScore += 0.12f;
+                    huntScore += _tuning.huntHysteresis;
             }
 
             if (huntScore >= acceptance && huntScore > score)
@@ -303,69 +306,145 @@ namespace SolarMajesty
             return FlagRefusalKind.WouldTake;
         }
 
-        /// <summary>Greedy heroes skip underpaid jobs unless starving. Does not change ScoreFlag weights.</summary>
-        static bool PassesGreedGate(SpecialistData data, float bounty, float hunger)
+        // ------------------------------------------------------------------ shared gates
+
+        /// <summary>Badly hurt, or hurt-and-nervous in a dangerous place: drop everything and run.</summary>
+        bool IsPanicked(in SpecialistContext ctx, float bodyDanger)
+        {
+            var t = _tuning;
+            float injury = 1f - ctx.HealthNormalized;
+            float courage = EffectiveCourage(ctx);
+            float reflex = t.HealthReflexFor(ctx.Data.specialistClass);
+            bool panicked = injury > 1f - reflex ||
+                            (injury > t.panicInjuryNervous && bodyDanger > t.panicBodyDanger &&
+                             courage < t.panicCourage);
+            // A scare lingers: stay home until safety has recovered, not just until danger passes.
+            if (t.motivesEnabled && ctx.Motives != null && ctx.Motives.Shaken)
+                panicked = true;
+            return panicked && ctx.HealthNormalized < t.panicHealthCeiling;
+        }
+
+        /// <summary>Score a task must reach before this hero commits. Greedy heroes are pickier; broke ones aren't.</summary>
+        float Acceptance(in SpecialistContext ctx)
+        {
+            var t = _tuning;
+            float greed = t.EffectiveGreed(ctx.Data.baseGreed);
+            float a = t.acceptBase + greed * t.acceptPerGreed - ctx.GreedHunger * t.acceptHungerRelief;
+            a = Mathf.Clamp(a, t.acceptMin, t.acceptMax);
+            // On a break only a standout task tempts a hero out.
+            if (IsRelaxing(ctx)) a += t.relaxFlagPremium;
+            return a;
+        }
+
+        bool IsRelaxing(in SpecialistContext ctx) =>
+            _tuning.motivesEnabled && ctx.Motives != null && ctx.Motives.Relaxing;
+
+        /// <summary>How far (m) this hero will look for flags.</summary>
+        public float ConsiderDistance(SpecialistData data)
+        {
+            var t = _tuning;
+            float consider = t.considerBase + data.explorePreference * t.considerExplorePerPoint;
+            float range = ConsiderRange;
+            if (range > 0f)
+                consider = Mathf.Max(consider, range * t.considerRangeFactor);
+            return consider;
+        }
+
+        bool CanHunt(in SpecialistContext ctx) =>
+            ctx.HasHunt && ctx.Data.specialistClass != SpecialistClass.Medic &&
+            ctx.Data.combatPreference >= _tuning.huntMinCombatPreference &&
+            ctx.HealthNormalized > _tuning.huntMinHealth;
+
+        /// <summary>Greedy heroes skip underpaid jobs unless starving.</summary>
+        bool PassesGreedGate(SpecialistData data, float bounty, float hunger)
         {
             if (data == null) return false;
             bounty = MajestyEconomy.ToBrain(bounty); // CRED → the 1/10 units this gate was tuned on
-            float need = 18f + data.baseGreed * 95f;
-            if (bounty + 0.01f >= need * 0.78f) return true;
-            return hunger > 0.75f;
+            if (bounty + 0.01f >= _tuning.GateBounty(data.baseGreed)) return true;
+            return hunger > _tuning.hungerBypass;
         }
 
         float CalculateRestScore(in SpecialistContext ctx)
         {
-            float fatigue = ctx.Fatigue;
+            var t = _tuning;
             float injury = 1f - ctx.HealthNormalized;
-            float score = fatigue * 0.7f + injury * 0.55f;
-            score *= (1.1f - ctx.Data.workaholicBias);
+            float score = ctx.Fatigue * t.restFatigueWeight + injury * t.restInjuryWeight;
+            score *= (t.restWorkaholicOffset - ctx.Data.workaholicBias);
             return Mathf.Clamp01(score);
         }
 
         float ScoreHunt(in SpecialistContext ctx, float bodyDanger)
         {
+            var t = _tuning;
             var data = ctx.Data;
             float courage = EffectiveCourage(ctx);
-            float distPenalty = Mathf.Clamp01(ctx.HuntDistance / 28f) * 0.55f;
-            float courageBoost = courage * 0.45f;
-            float pref = data.combatPreference * 0.95f;
-            float fear = (1f - ctx.HealthNormalized) * (1.1f - courage) * 0.5f;
-            float danger = bodyDanger * (1.05f - courage) * 0.35f;
+            float distPenalty = Mathf.Clamp01(ctx.HuntDistance / t.huntDistanceReference) * t.huntDistancePenalty;
+            float courageBoost = courage * t.huntCourageBoost;
+            float pref = data.combatPreference * t.huntPreferenceWeight;
+            float fear = (1f - ctx.HealthNormalized) * (1.1f - courage) * t.huntFearWeight;
+            float danger = bodyDanger * (1.05f - courage) * t.huntDangerWeight;
             return Mathf.Clamp01(pref + courageBoost - distPenalty - fear - danger);
         }
 
         float ScoreRepair(in SpecialistContext ctx)
         {
+            var t = _tuning;
             var data = ctx.Data;
-            float pref = data.buildPreference * 0.95f;
-            float need = ctx.RepairNeed * 0.55f;
-            float greed = ctx.GreedHunger * 0.12f;
-            float distPenalty = Mathf.Clamp01(ctx.RepairDistance / 36f) * 0.45f;
-            float fatiguePenalty = ctx.Fatigue * 0.18f;
+            float pref = data.buildPreference * t.repairPreferenceWeight;
+            float need = ctx.RepairNeed * t.repairNeedWeight;
+            float greed = ctx.GreedHunger * t.repairGreedWeight;
+            float distPenalty = Mathf.Clamp01(ctx.RepairDistance / t.repairDistanceReference) * t.repairDistancePenalty;
+            float fatiguePenalty = ctx.Fatigue * t.repairFatiguePenalty;
             return Mathf.Clamp01(pref + need + greed - distPenalty - fatiguePenalty);
+        }
+
+        float FlagKindWeight(FlagType type)
+        {
+            switch (type)
+            {
+                case FlagType.ClearThreat: return _tuning.flagAttackWeight;
+                case FlagType.DefendArea: return _tuning.flagDefendWeight;
+                case FlagType.Explore: return _tuning.flagExploreWeight;
+                default: return 1f;
+            }
         }
 
         static float EffectiveCourage(in SpecialistContext ctx) =>
             ctx.CourageEffective > 0.01f ? ctx.CourageEffective : (ctx.Data != null ? ctx.Data.courage : 0.5f);
 
+        /// <summary>
+        /// Flag desirability, 0..1. Three non-linear terms keep heroes from ignoring good work or
+        /// suiciding on it:
+        ///   distance — penalty grows as (d/ref)^distanceExponent: near flags are cheap, far ones steeply worse;
+        ///   threat   — penalty grows as threat^threatExponent, scaled by (offset - courage) and by how
+        ///              hurt the hull is, so weak heroes avoid danger a healthy one shrugs off;
+        ///   fear     — threat beyond what this hero can survive (courage x health) costs extra, while a
+        ///              broke-but-healthy hero (GreedHunger) tolerates more. Broke and hurt does not.
+        /// </summary>
         float ScoreFlag(in SpecialistContext ctx, FlagHandle flag, float distance, float bodyDanger)
         {
+            var t = _tuning;
             var data = ctx.Data;
             var fdata = flag.Data;
             float courage = EffectiveCourage(ctx);
+            float health = Mathf.Clamp01(ctx.HealthNormalized);
+            float hunger = Mathf.Clamp01(ctx.GreedHunger);
+            float greed = t.EffectiveGreed(data.baseGreed);
 
-            float bountyFactor = Mathf.Clamp01(MajestyEconomy.ToBrain(flag.CurrentBounty) / 100f);
-            float greedScore = bountyFactor * (0.55f + data.baseGreed * 0.7f);
-            greedScore += ctx.GreedHunger * 0.18f * bountyFactor;
+            float bountyFactor = Mathf.Clamp01(MajestyEconomy.ToBrain(flag.CurrentBounty) / t.bountyReference);
+            float greedScore = bountyFactor * (t.greedScoreBase + greed * t.greedScorePerGreed);
+            greedScore += hunger * t.hungerScoreBonus * bountyFactor;
 
-            float preferenceScore = data.GetPreference(fdata.flagType) * 0.9f;
+            float preferenceScore = data.GetPreference(fdata.flagType) * t.preferenceWeight;
+            var allure = t.AllureFor(data.specialistClass);
+            preferenceScore *= FlagKindWeight(fdata.flagType) * allure.KindMul(fdata.flagType);
             if (fdata.stronglyAttracts != null)
             {
                 for (int i = 0; i < fdata.stronglyAttracts.Length; i++)
                 {
                     if (fdata.stronglyAttracts[i] == data.specialistClass)
                     {
-                        preferenceScore += 0.22f;
+                        preferenceScore += t.attractBonus;
                         break;
                     }
                 }
@@ -374,20 +453,38 @@ namespace SolarMajesty
             if (ctx.HasWorkshop)
             {
                 float toShop = Vector3.Distance(flag.WorldPosition, ctx.WorkshopPosition);
-                if (toShop < 14f)
-                    preferenceScore += ctx.FlagWorkshopBonus * (1f - toShop / 14f);
+                if (toShop < t.workshopBonusRange)
+                    preferenceScore += ctx.FlagWorkshopBonus * (1f - toShop / t.workshopBonusRange);
             }
-            float distPenalty = Mathf.Clamp01(distance / 45f) * 0.55f;
-            float risk = flag.Risk + bodyDanger * 0.4f;
-            float riskPenalty = risk * (1.15f - courage);
-            float crowdPenalty = Mathf.Clamp01(flag.ClaimCount * 0.18f);
-            float fatiguePenalty = ctx.Fatigue * 0.25f * (distance / 30f);
+
+            float distPenalty =
+                Mathf.Pow(Mathf.Clamp01(distance / t.distanceReference), t.distanceExponent) * t.distanceMaxPenalty *
+                allure.distanceMul;
+
+            float threat = Mathf.Max(0f, flag.Risk + bodyDanger * t.bodyDangerWeight);
+            float fragility = 1f + (1f - health) * (1f - health) * t.survivalFearWeight;
+            float desperation = hunger * health * t.desperationRiskDiscount;
+            float riskPenalty = Mathf.Pow(threat, t.threatExponent) *
+                                Mathf.Max(0f, t.riskCourageOffset - courage) *
+                                t.riskWeight * fragility * (1f - desperation);
+
+            float survivable =
+                (t.fearThresholdBase + courage * t.fearThresholdCourage) *
+                Mathf.Lerp(t.fearMinHealthFactor, 1f, health) +
+                hunger * health * t.desperationCapacity;
+            float fearPenalty = Mathf.Max(0f, threat - survivable) * t.fearSlope;
+            riskPenalty *= allure.dangerMul;
+            fearPenalty *= allure.dangerMul;
+
+            float crowdPenalty = Mathf.Clamp01(flag.ClaimCount * t.crowdPenaltyPerClaim);
+            float fatiguePenalty = ctx.Fatigue * t.fatiguePenalty * (distance / t.fatigueDistanceReference);
 
             float finalScore =
                 greedScore +
                 preferenceScore -
                 distPenalty -
                 riskPenalty -
+                fearPenalty -
                 crowdPenalty -
                 fatiguePenalty;
 

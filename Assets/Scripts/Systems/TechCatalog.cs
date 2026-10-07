@@ -268,7 +268,23 @@ namespace SolarMajesty
                     "Activate at Triage Compact: everyone on the dirt patches HP. Costs EU.",
                     36f,
                     new[] { TechId.GuildCharter },
-                    Wallet.Credits(250))
+                    Wallet.Credits(250)),
+
+                new TechDef(
+                    TechId.OrbitalUplink,
+                    "Orbital Uplink",
+                    "Satellite link: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit. Cheaper near an uplink.",
+                    32f,
+                    new[] { TechId.LabScience },
+                    Wallet.Credits(300)),
+
+                new TechDef(
+                    TechId.OrbitalConstellation,
+                    "Orbital Constellation",
+                    "Full constellation: Orbital Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.",
+                    60f,
+                    new[] { TechId.OrbitalUplink, TechId.DeepSurvey },
+                    Wallet.Credits(1000))
             };
         }
 

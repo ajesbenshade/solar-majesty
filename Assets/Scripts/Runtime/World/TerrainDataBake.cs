@@ -46,6 +46,8 @@ namespace SolarMajesty
         public float[] Heights;
         public float[] Rock;
         public float[] Fresh;
+        /// <summary>Splat weights per texel (same layout as <see cref="SplatMap"/>), for scatter.</summary>
+        public Color[] Splat;
         public Texture2D HeightMap;
         public Texture2D NormalMap;
         public Texture2D SplatMap;
@@ -54,6 +56,23 @@ namespace SolarMajesty
         public readonly List<TerrainRiver> Rivers = new List<TerrainRiver>(8);
 
         public float SampleHeight(float wx, float wz) => Sample(Heights, wx, wz);
+
+        /// <summary>Splat weights at world XZ (nearest texel; dust only when there is no splat).</summary>
+        public Color SampleSplat(float wx, float wz)
+        {
+            if (Splat == null || Resolution < 2) return new Color(1f, 0f, 0f, 0f);
+            int x = Mathf.Clamp(Mathf.RoundToInt(wx / Mathf.Max(0.01f, WorldWidth) * (Resolution - 1)), 0, Resolution - 1);
+            int z = Mathf.Clamp(Mathf.RoundToInt(wz / Mathf.Max(0.01f, WorldHeight) * (Resolution - 1)), 0, Resolution - 1);
+            return Splat[z * Resolution + x];
+        }
+
+        /// <summary>Surface normal at world XZ from the height field.</summary>
+        public Vector3 SampleNormal(float wx, float wz, float step = 0.6f)
+        {
+            float hl = SampleHeight(wx - step, wz), hr = SampleHeight(wx + step, wz);
+            float hd = SampleHeight(wx, wz - step), hu = SampleHeight(wx, wz + step);
+            return new Vector3(hl - hr, 2f * step, hd - hu).normalized;
+        }
 
         /// <summary>0 on dust / sand, 1 on bare rock (slopes, cliffs, fresh crater rims).</summary>
         public float SampleRockiness(float wx, float wz)
@@ -1061,6 +1080,7 @@ namespace SolarMajesty
             bake.HeightMap = MakeTex("SM_Bake_Height", n, heightPx, true);
             bake.NormalMap = MakeTex("SM_Bake_Normal", n, normalPx, true);
             bake.SplatMap = MakeTex("SM_Bake_Splat", n, splatPx, false);
+            bake.Splat = splatPx;
             bake.MaskMap = MakeTex("SM_Bake_Mask", n, maskPx, true);
             bake.Rock = g.Rock;
         }

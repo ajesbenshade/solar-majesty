@@ -70,6 +70,12 @@ namespace SolarMajesty
         public int LakeCount = 0;
         public int RiverCount = 0;
         public int ForestPatchCount = 0;
+        [UnityEngine.Tooltip("Big boulder outcrops (landmarks).")]
+        public int RockFormationCount = 0;
+        [UnityEngine.Tooltip("Points of interest (themed per world: ruins, landers, rovers, rigs, geysers...).")]
+        public int PoiCount = 0;
+        [UnityEngine.Tooltip("Instanced undergrowth: grass, flowers, pebbles, crystals, ice shards...")]
+        public GroundCoverLayer[] GroundCover = new GroundCoverLayer[0];
         public int ResourceNodeCount = 12;
         public int LairCount = 4;
         public float CampusExclusion = 18f;

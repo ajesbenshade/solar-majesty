@@ -29,10 +29,10 @@ namespace SolarMajesty
             if (BuildingPlacer.IsRetired(data.category))
                 return;
 
+            // Shield bubbles on the defences only; over the Commons it read as a blue blob.
             if (data.category == BuildingCategory.Defense ||
-                data.category == BuildingCategory.Watchtower ||
-                data.category == BuildingCategory.Commons)
-                SpawnShieldBubble(go.transform, data.category == BuildingCategory.Commons);
+                data.category == BuildingCategory.Watchtower)
+                SpawnShieldBubble(go.transform, false);
 
             if (data.category == BuildingCategory.Commons ||
                 data.category == BuildingCategory.Power ||
@@ -178,7 +178,8 @@ namespace SolarMajesty
             var pip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             pip.name = commons ? "Dress_StatusStar" : "Dress_StatusShield";
             pip.transform.SetParent(root, false);
-            pip.transform.localPosition = new Vector3(0f, commons ? 5.85f : 3.35f, 0f);
+            pip.transform.localPosition = new Vector3(
+                0f, commons ? HeroBuildingKits.CitadelCrownY + 2.2f : 3.35f, 0f);
             pip.transform.localScale = new Vector3(0.32f, 0.32f, 0.32f);
             ColonyVisualUtility.DestroyNow(pip.GetComponent<Collider>());
             Color glow = commons

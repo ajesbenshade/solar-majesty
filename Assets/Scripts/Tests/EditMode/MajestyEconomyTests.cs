@@ -88,11 +88,27 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void Caravans_Pay300To1000_ByDistance()
+        public void Caravans_FollowTheMajestyTable_ByDistance()
         {
-            Assert.AreEqual(300, MajestyEconomy.CaravanGold(0f));
-            Assert.AreEqual(300 + 3 * 60, MajestyEconomy.CaravanGold(35f));
-            Assert.AreEqual(1000, MajestyEconomy.CaravanGold(5000f));
+            Assert.AreEqual(200, MajestyEconomy.CaravanGold(0f), "short-route floor");
+            Assert.AreEqual(450, MajestyEconomy.CaravanGold(35f), "87.5 units: 100 + 4 x 87.5");
+            Assert.AreEqual(600, MajestyEconomy.CaravanGold(50f), "matches the old curve at 50 m");
+            Assert.AreEqual(2100, MajestyEconomy.CaravanGold(5000f), "table tops out at 2,100");
+        }
+
+        [Test]
+        public void CaravanCurve_IsMonotonic_AndScaleStretchesIt()
+        {
+            var t = new EconomyTuning();
+            int prev = 0;
+            for (int m = 0; m <= 250; m += 5)
+            {
+                int g = t.CaravanGoldFor(m);
+                Assert.GreaterOrEqual(g, prev);
+                prev = g;
+            }
+            t.caravanDistanceScale = 5f;
+            Assert.AreEqual(1100, t.CaravanGoldFor(50f), "250 units");
         }
 
         [Test]
@@ -119,9 +135,9 @@ namespace SolarMajesty.Tests
         [Test]
         public void Mine_IsATradePost_PayingMoreEnergyFartherFromTheCommons()
         {
-            Assert.AreEqual(300, MajestyEconomy.MineDailyEnergy(0f));
+            Assert.AreEqual(200, MajestyEconomy.MineDailyEnergy(0f));
             Assert.AreEqual(600, MajestyEconomy.MineDailyEnergy(50f));
-            Assert.AreEqual(1000, MajestyEconomy.MineDailyEnergy(400f), "capped like a Majesty caravan");
+            Assert.AreEqual(2100, MajestyEconomy.MineDailyEnergy(400f), "capped like a Majesty caravan");
             Assert.Less(MajestyEconomy.MineDailyEnergy(20f), MajestyEconomy.MineDailyEnergy(60f));
         }
 
