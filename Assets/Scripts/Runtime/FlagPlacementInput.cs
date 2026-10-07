@@ -419,10 +419,7 @@ namespace SolarMajesty
         private bool TryGround(out Vector3 world)
         {
             if (_cam != null)
-            {
-                _cam.TryGetMouseGroundPoint(out world);
-                return true;
-            }
+                return _cam.TryGetMouseGroundPoint(out world);
 
             var main = Camera.main;
             if (main == null)

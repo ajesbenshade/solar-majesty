@@ -18,6 +18,7 @@ namespace SolarMajesty
         public int Width => width;
         public int Height => height;
         public float CellSize => cellSize;
+        public Vector3 Origin => origin;
         public float WorldWidth => width * cellSize;
         public float WorldHeight => height * cellSize;
 

@@ -1977,11 +1977,10 @@ namespace SolarMajesty
             return true;
         }
 
-        /// <summary>True when any corner or the centre of the footprint sits on a lake or river.</summary>
         private Vector3 FootprintCenterWorld(Vector2Int cell, int width, int height)
         {
-            float cs = grid.CellSize;
-            return grid.CellToWorld(cell) + new Vector3((width - 1) * 0.5f * cs, 0f, (height - 1) * 0.5f * cs);
+            if (grid == null) return Vector3.zero;
+            return PlacementCursor.Center(cell, width, height, grid.CellSize, grid.Origin);
         }
 
         private List<Vector3> TakenCenters(BuildZoneKind kind)
@@ -2014,13 +2013,80 @@ namespace SolarMajesty
             if (data == null || ZoneAllows(data, cell)) return null;
             var kind = ZoneRules.KindFor(data.category);
             if (kind == BuildZoneKind.None) return null;
-            var taken = TakenCenters(kind);
-            bool anyFree = false;
             var zones = BuildZones;
+            int ofKind = 0;
             if (zones != null)
                 for (int i = 0; i < zones.Count; i++)
-                    if (zones[i].Kind == kind && !BuildZoneTuning.IsTaken(zones[i], taken)) { anyFree = true; break; }
+                    if (zones[i].Kind == kind) ofKind++;
+            if (ofKind == 0)
+            {
+                switch (kind)
+                {
+                    case BuildZoneKind.TradePost: return "No trade ring was marked on this map.";
+                    case BuildZoneKind.Mine: return "No ore deposit was marked on this map.";
+                    default: return "No temple site was marked on this map.";
+                }
+            }
+            var taken = TakenCenters(kind);
+            bool anyFree = false;
+            for (int i = 0; i < zones.Count; i++)
+                if (zones[i].Kind == kind && !BuildZoneTuning.IsTaken(zones[i], taken)) { anyFree = true; break; }
             return ZoneRules.Reason(kind, anyFree);
+        }
+
+        /// <summary>
+        /// Why this ghost cannot be committed. Null exactly when <see cref="BuildingPlacer.TryPlace"/> would accept it.
+        /// </summary>
+        public string PlacementBlockReason(BuildingData data, Vector2Int cell)
+        {
+            if (data == null) return "No building selected.";
+            if (BuildingPlacer.IsRetired(data.category)) return "That building is retired.";
+            string extra = ExtraPlacementReason(cell, data);
+            if (extra != null) return extra;
+            if (Placer != null && !Placer.CanFit(data, cell)) return "Something is already built there.";
+            if (Resources != null && Placer != null && !Resources.CanAfford(Placer.CostFor(data)))
+                return "Not enough EU.";
+            return null;
+        }
+
+        /// <summary>Null when the extra placement rule accepts the footprint. Same order as the rule itself.</summary>
+        private string ExtraPlacementReason(Vector2Int cell, BuildingData data)
+        {
+            if (data == null) return "No building selected.";
+            if (grid == null) return "That spot is off the map.";
+            for (int x = 0; x < data.footprintWidth; x++)
+            for (int y = 0; y < data.footprintHeight; y++)
+            {
+                if (!grid.InBounds(new Vector2Int(cell.x + x, cell.y + y)))
+                    return "That spot is off the map.";
+            }
+
+            bool hasCommons = (Settlement != null && Settlement.HasCommons) ||
+                              (Placer != null && Placer.HasCommonsModule);
+
+            if (data.category == BuildingCategory.Commons)
+            {
+                if (hasCommons) return "Colony Commons is already standing.";
+                if (Placer == null || !Placer.OverlapsSoftClaim(cell, data.footprintWidth, data.footprintHeight))
+                    return "Place Colony Commons on the landing site.";
+                return null;
+            }
+
+            if (data.category == BuildingCategory.Inn)
+                return null;
+
+            if (!hasCommons)
+                return "Raise Colony Commons first.";
+
+            if (!IsBuildingUnlocked(data.category))
+                return "That building needs research first.";
+
+            if (FootprintOverWater(cell, data.footprintWidth, data.footprintHeight))
+                return "Can't build on water.";
+
+            if (!ZoneAllows(data, cell))
+                return ZoneBlockReason(data, cell) ?? "That building doesn't fit here.";
+            return null;
         }
 
         public bool IsZoneTaken(int index)
@@ -2030,6 +2096,7 @@ namespace SolarMajesty
             return BuildZoneTuning.IsTaken(zones[index], TakenCenters(zones[index].Kind));
         }
 
+        /// <summary>True when any corner or the centre of the footprint sits on a lake or river.</summary>
         private bool FootprintOverWater(Vector2Int origin, int width, int height)
         {
             if (_world == null || grid == null) return false;
@@ -2459,42 +2526,9 @@ namespace SolarMajesty
             if (grid != null)
             {
                 // Reject if any footprint cell is off-map (not only the origin).
-                Placer.ExtraPlacementRule = (cell, data) =>
-                {
-                    if (data == null) return false;
-                    for (int x = 0; x < data.footprintWidth; x++)
-                    for (int y = 0; y < data.footprintHeight; y++)
-                    {
-                        if (!grid.InBounds(new Vector2Int(cell.x + x, cell.y + y)))
-                            return false;
-                    }
-
-                    bool hasCommons = (Settlement != null && Settlement.HasCommons) ||
-                                      Placer.HasCommonsModule;
-
-                    // Colony Commons: first civic landmark on the drop claim only.
-                    if (data.category == BuildingCategory.Commons)
-                    {
-                        if (hasCommons) return false;
-                        return Placer.OverlapsSoftClaim(cell, data.footprintWidth, data.footprintHeight);
-                    }
-
-                    if (data.category == BuildingCategory.Inn)
-                        return true;
-
-                    if (!hasCommons)
-                        return false;
-
-                    if (!IsBuildingUnlocked(data.category))
-                        return false;
-
-                    if (FootprintOverWater(cell, data.footprintWidth, data.footprintHeight))
-                        return false;
-
-                    // Free placement on open ground, except trading posts and temples, which go
-                    // only on marked zones (Majesty 2).
-                    return ZoneAllows(data, cell);
-                };
+                // Free placement on open ground, except trading posts, mines and temples,
+                // which go only on marked zones (Majesty 2).
+                Placer.ExtraPlacementRule = (cell, data) => ExtraPlacementReason(cell, data) == null;
             }
 
             SpecialistBrainTuning.Active = brainTuning ??= new SpecialistBrainTuning();
@@ -6327,9 +6361,7 @@ namespace SolarMajesty
         private Vector3 FootprintWorldCenter(Vector2Int origin, int w, int h)
         {
             if (grid == null) return Vector3.zero;
-            Vector3 corner = grid.CellToWorld(origin);
-            float cs = grid.CellSize;
-            return corner + new Vector3((Mathf.Max(1, w) - 1) * 0.5f * cs, 0f, (Mathf.Max(1, h) - 1) * 0.5f * cs);
+            return PlacementCursor.Center(origin, w, h, grid.CellSize, grid.Origin);
         }
 
         private static SpecialistClass[] DefaultOccupants(BuildingCategory cat)
