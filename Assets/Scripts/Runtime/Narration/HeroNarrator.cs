@@ -424,7 +424,7 @@ namespace SolarMajesty
             if (flag?.Data != null && (kind == NarrationKind.Claim || kind == NarrationKind.Refused))
             {
                 m.FlagType = SpecialistFlavor.FlagShort(flag.Data.flagType);
-                m.Bounty = Mathf.RoundToInt(flag.CurrentBounty);
+                m.Bounty = FlagBountySync.Amount(flag);
                 m.Orders = flag.Orders != null ? flag.Orders.text : null;
             }
             return m;

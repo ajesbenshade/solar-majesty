@@ -735,7 +735,7 @@ namespace SolarMajesty
         {
             _hitRects.Add(r);
             int gold = _loop.Resources != null ? _loop.Resources.Get(ResourceId.Metals) : 0;
-            int escrow = _loop.Economy != null ? _loop.Economy.EscrowedMetals : 0;
+            int escrow = _loop.BountyEscrowTotal;
             bool thin = _loop.PayrollThin;
             if (thin)
             {
@@ -1166,22 +1166,23 @@ namespace SolarMajesty
             y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "U   Terraform", fp.TerraformFlag);
 
             y += 4f;
-            int metCost = SimpleEconomy.BountyMetalsCost(_loop.FlagBounty);
-            bool canPay = fp.CanAffordSelectedBounty();
+            int shown = fp.ShownBounty;
+            bool posted = fp.HasSelectedPosted;
+            bool canPay = fp.ShownBountyAffordable;
             HudLayout.StatLine(new Rect(c.x, y, 140f, 24f), out var bountyLabel, out var bountyValue);
             GUI.Label(bountyLabel, "BOUNTY", _micro);
-            GUI.Label(bountyValue, $"${_loop.FlagBounty:F0}", _value);
+            GUI.Label(bountyValue, $"${shown:F0}", _value);
             if (GUI.Button(new Rect(c.xMax - 58f, y + 2f, 26f, 20f), "−", _chipOff)) fp.NudgeBounty(-MajestyEconomy.FlagBountyStep);
             if (GUI.Button(new Rect(c.xMax - 28f, y + 2f, 26f, 20f), "+", _chipOff)) fp.NudgeBounty(MajestyEconomy.FlagBountyStep);
 
             y += 22f;
             var prevC = _micro.normal.textColor;
             _micro.normal.textColor = canPay ? TextMuted : Alarm;
-            string placeHint = fp.HasSelectedPosted
-                ? "pole selected · +/− edits this bounty"
+            string placeHint = posted
+                ? "this pole · +/− edits this bounty"
                 : canPay
-                    ? $"escrow {metCost} EU · click a pole to select"
-                    : $"need {metCost} EU — raise stockpile";
+                    ? $"next post · escrow {shown} EU"
+                    : $"next post · need {shown} EU";
             GUI.Label(new Rect(c.x, y, c.width, 13f), placeHint, _micro);
             _micro.normal.textColor = prevC;
 
@@ -1393,8 +1394,8 @@ namespace SolarMajesty
             var prev = _number.alignment;
             _number.alignment = TextAnchor.MiddleRight;
             var prevC = _number.normal.textColor;
-            _number.normal.textColor = fp.CanAffordSelectedBounty() ? HudSkin.GoldBright : Alarm;
-            GUI.Label(new Rect(minus.x - 68f, rect.y, 60f, rect.height), $"${_loop.FlagBounty:F0}", _number);
+            _number.normal.textColor = fp.ShownBountyAffordable ? HudSkin.GoldBright : Alarm;
+            GUI.Label(new Rect(minus.x - 68f, rect.y, 60f, rect.height), $"${fp.ShownBounty:F0}", _number);
             _number.alignment = prev;
             _number.normal.textColor = prevC;
 
@@ -1403,7 +1404,7 @@ namespace SolarMajesty
             if (hot) HudSkin.RuleH(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Gold);
             GUI.Label(new Rect(c.x, c.y - 6f, open.width - Pad, 18f), FlagStripLabel(fp), _value);
             GUI.Label(new Rect(c.x, c.y + 9f, open.width - Pad, 12f),
-                fp.HasSelectedPosted ? "pole selected · keys +/− edit it" : "click the map to post", _micro);
+                fp.HasSelectedPosted ? "this pole · +/− edits it" : "next post · click the map", _micro);
             if (GUI.Button(open, GUIContent.none, GUIStyle.none))
                 ExpandMenu(OverseerTool.Flag);
             Tooltip(open, "OPEN THE FLAG LIST   ·   G");
@@ -1531,7 +1532,7 @@ namespace SolarMajesty
                     HudSkin.Dot(new Vector2(c.x + 4f, y + 7.5f), 7f, col);
                     string orders = f.Orders != null && f.Orders.HasRules ? $"  ·  {f.Orders.Summary()}" : "";
                     GUI.Label(new Rect(c.x + 12f, y, c.width - 12f, 15f),
-                        $"{f.Data.displayName}  ${f.CurrentBounty:F0}  ·  {claim}{orders}", _micro);
+                        $"{f.Data.displayName}  ${FlagBountySync.Amount(f):F0}  ·  {claim}{orders}", _micro);
                     y += 15f;
                 }
             }
