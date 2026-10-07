@@ -18,11 +18,13 @@ namespace SolarMajesty.Tests
             System.IO.Directory.CreateDirectory(_saveRoot);
             SaveSystem.DirectoryOverride = _saveRoot;
             PlaytestTelemetry.DirectoryOverride = System.IO.Path.Combine(_saveRoot, "Playtest");
+            DeveloperPrefsShield.Capture();
         }
 
         [TearDown]
         public void ClearTempSaveRoot()
         {
+            DeveloperPrefsShield.Restore();
             SaveSystem.DirectoryOverride = null;
             PlaytestTelemetry.DirectoryOverride = null;
             if (!string.IsNullOrEmpty(_saveRoot) && System.IO.Directory.Exists(_saveRoot))

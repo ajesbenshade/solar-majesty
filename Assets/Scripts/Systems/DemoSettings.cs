@@ -145,6 +145,16 @@ namespace SolarMajesty
             ApplyDisplay();
         }
 
+        /// <summary>Read the flags play-mode tests rewrite, without applying display or consuming boot.</summary>
+        public static void ReloadFlagsFromPrefs()
+        {
+            TutorialDone = PlayerPrefs.GetInt(TutorialKey, 0) == 1;
+            SaveExists = PlayerPrefs.GetInt(SaveFlagKey, 0) == 1;
+            BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
+            FirstHourDemo = PlayerPrefs.GetInt(FirstHourKey, 1) == 1;
+            EdgeScroll = ResolveEdgeScroll(PlayerPrefs.HasKey(EdgeScrollKey), PlayerPrefs.GetInt(EdgeScrollKey, 1));
+        }
+
         public static void Load()
         {
             Master = PlayerPrefs.GetFloat(MasterKey, 1f);
