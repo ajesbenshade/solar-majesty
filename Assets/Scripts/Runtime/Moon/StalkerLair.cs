@@ -25,9 +25,12 @@ namespace SolarMajesty
         public Vector3 WorldPosition => transform.position;
         public IReadOnlyList<DustStalkerAgent> Spawned => _spawned;
 
-        public void Configure(GameLoop loop, int budget, float radius, Color? rimColor = null, Color? pitColor = null)
+        public void Configure(GameLoop loop, int budget, float radius, Color? rimColor = null, Color? pitColor = null,
+            Color? soilColor = null, Color? stoneColor = null)
         {
             _loop = loop;
+            _soil = soilColor;
+            _stone = stoneColor;
             stalkerBudget = Mathf.Max(1, budget);
             clearRadius = Mathf.Max(4f, radius);
             cleared = false;
@@ -180,7 +183,7 @@ namespace SolarMajesty
                 // Uncharted: trampled earth and a few gnawed bones hint something lives here.
                 var go = Prim(PrimitiveType.Cylinder, "FogHint",
                     new Vector3(0f, 0.03f, 0f), new Vector3(6f, 0.02f, 5f), Quaternion.Euler(0f, 18f, 0f));
-                Paint(go, new Color(0.36f, 0.27f, 0.18f), default);
+                Paint(go, (_soil ?? new Color(0.36f, 0.27f, 0.18f)) * 0.85f, default);
                 for (int i = 0; i < 4; i++)
                 {
                     float a = i * 1.7f + 0.4f;
@@ -277,9 +280,11 @@ namespace SolarMajesty
 
             var rng = new System.Random(Mathf.RoundToInt(transform.position.x * 13f + transform.position.z * 7f));
             float R(float lo, float hi) => lo + (float)rng.NextDouble() * (hi - lo);
-            Color stone = new Color(0.52f, 0.48f, 0.43f);
-            Color stoneDark = new Color(0.38f, 0.35f, 0.32f);
-            Color dirt = Color.Lerp(new Color(0.40f, 0.31f, 0.22f), pitColor, 0.15f);
+            // The world's own rock and soil, so a Luna den is grey regolith and a Mars den rust.
+            Color stone = _stone ?? new Color(0.52f, 0.48f, 0.43f);
+            Color stoneDark = stone * 0.72f;
+            stoneDark.a = 1f;
+            Color dirt = Color.Lerp(_soil ?? new Color(0.40f, 0.31f, 0.22f), pitColor, 0.15f);
             Color chitin = Color.Lerp(new Color(0.30f, 0.15f, 0.22f), rimColor, 0.25f);
             Color chitinHi = chitin * 1.45f;
             Color bone = new Color(0.88f, 0.83f, 0.70f);
@@ -396,6 +401,8 @@ namespace SolarMajesty
         }
 
         private Transform _body;
+        private Color? _soil;
+        private Color? _stone;
 
         private void Part(PrimitiveType type, string name, Vector3 pos, Vector3 scale, Quaternion rot, Color color,
             Color emission = default)

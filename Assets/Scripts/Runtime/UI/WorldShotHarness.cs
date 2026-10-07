@@ -79,6 +79,8 @@ namespace SolarMajesty
             yield return Look(cam, ColonyLayout.CampusOrigin, 18f, "01_campus");
             yield return Look(cam, ColonyLayout.CampusOrigin, 34f, "02_wide");
             yield return Look(cam, ColonyLayout.CampusOrigin + new Vector3(60f, 0f, 60f), 34f, "03_wide_ne");
+            yield return Look(cam, ColonyLayout.CampusOrigin + new Vector3(28f, 0f, -22f), 22f, "03b_mid");
+            yield return Look(cam, ColonyLayout.CampusOrigin + new Vector3(30f, 0f, -26f), 9f, "03c_close");
 
             if (world != null)
             {
@@ -98,7 +100,7 @@ namespace SolarMajesty
             }
 
             yield return LookAtChildren(cam, "RockFormations", 2, 14f, "06_rocks_");
-            yield return LookAtChildren(cam, "PointsOfInterest", 5, 12f, "07_poi_");
+            yield return LookAtChildren(cam, "PointsOfInterest", 7, 12f, "07_poi_");
             yield return LookAtChildren(cam, "Forests", 1, 16f, "08_forest_");
 
             Debug.Log("[WorldShot] done");

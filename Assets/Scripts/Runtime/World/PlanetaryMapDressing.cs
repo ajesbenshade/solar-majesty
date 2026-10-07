@@ -326,13 +326,13 @@ namespace SolarMajesty
                     F("_Smoothness", 0.35f);
                     break;
                 default: // Belt: dark carbonaceous regolith
-                    C("_BaseColor", new Color(0.20f, 0.19f, 0.18f));
-                    C("_DarkColor", new Color(0.12f, 0.115f, 0.11f));
-                    C("_RockColor", new Color(0.27f, 0.26f, 0.25f));
-                    C("_GrassColor", new Color(0.15f, 0.145f, 0.14f));  // ponded fines
-                    C("_WetColor", new Color(0.15f, 0.145f, 0.14f));
-                    C("_EjectaColor", new Color(0.36f, 0.34f, 0.32f));
-                    C("_StrataColor", new Color(0.24f, 0.23f, 0.22f));
+                    C("_BaseColor", new Color(0.37f, 0.34f, 0.31f));
+                    C("_DarkColor", new Color(0.22f, 0.21f, 0.20f));
+                    C("_RockColor", new Color(0.45f, 0.42f, 0.38f));
+                    C("_GrassColor", new Color(0.29f, 0.27f, 0.26f));  // ponded fines
+                    C("_WetColor", new Color(0.29f, 0.27f, 0.26f));
+                    C("_EjectaColor", new Color(0.56f, 0.53f, 0.49f));
+                    C("_StrataColor", new Color(0.38f, 0.35f, 0.32f));
                     F("_StrataStrength", 0.2f);
                     F("_AOStrength", 0.7f);
                     F("_FreshAmount", 0.7f);

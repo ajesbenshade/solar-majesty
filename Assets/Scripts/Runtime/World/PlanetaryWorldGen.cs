@@ -77,6 +77,8 @@ namespace SolarMajesty
             _lairs.Clear();
             _zones.Clear();
             _props.Clear();
+            _coverKeepOut.Clear();
+            _forestFloors.Clear();
             ClearTintCache();
             _water.Clear();
 
@@ -109,7 +111,9 @@ namespace SolarMajesty
             SpawnPointsOfInterest(rng, placed);
             SpawnLairs(rng, placed);
             SpawnBuildZones(rng, placed);
-            SpawnMeadows(rng);
+            for (int i = 0; i < _nodes.Count; i++)
+                if (_nodes[i] != null) KeepCoverOff(_nodes[i].transform.position, 2.2f);
+            SpawnGroundCover(rng);
             ClearGameplaySites();
 
             Debug.Log(
@@ -571,27 +575,8 @@ namespace SolarMajesty
                     if (tree != null) RegisterProp(tree.transform);
                 }
 
-                if (_body.Id == CelestialBodyId.Earth)
-                {
-                    int shrubs = 4 + rng.Next(0, 6);
-                    for (int s = 0; s < shrubs; s++)
-                    {
-                        float ang = (float)rng.NextDouble() * Mathf.PI * 2f;
-                        float rad = patchR * 0.85f * Mathf.Sqrt((float)rng.NextDouble());
-                        Vector3 local = new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
-                        Vector3 world = pos + local;
-                        if (IsOverWater(world, 0.8f)) continue;
-                        var shrubPrefab = EnvironmentMeshCatalog.LoadEarthShrub(i * 17 + s);
-                        if (shrubPrefab == null) break;
-                        var shrub = EnvironmentMeshCatalog.InstantiateVendorNature(
-                            shrubPrefab, "Shrub", Mathf.Lerp(0.45f, 0.95f, (float)rng.NextDouble()));
-                        if (shrub == null) continue;
-                        shrub.transform.SetParent(patch.transform, false);
-                        shrub.transform.localPosition = local;
-                        shrub.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
-                        RegisterProp(shrub.transform);
-                    }
-                }
+                // The forest floor (ferns, bushes, twigs, mushrooms) is instanced ground cover.
+                _forestFloors.Add(new Vector4(pos.x, 0f, pos.z, patchR));
 
                 if (_bake != null) SeatChildrenOnGround(patch.transform);
                 else ColonyVisualUtility.SnapToGround(patch);
@@ -680,8 +665,17 @@ namespace SolarMajesty
         {
             for (int i = 0; i < _zones.Count; i++)
                 ClearPropsInDisc(_zones[i].Center, _zones[i].Radius + 1.5f);
+            // Dens sit on a graded pad (6.5 m plus a 3 m apron); nothing may float over the apron.
             for (int i = 0; i < _lairs.Count; i++)
-                if (_lairs[i] != null) ClearPropsInDisc(_lairs[i].WorldPosition, 7f);
+                if (_lairs[i] != null) ClearPropsInDisc(_lairs[i].WorldPosition, 9.5f);
+        }
+
+        /// <summary>Level a square pad at the site's own ground height, so a den or landmark sits
+        /// flat on a slope instead of floating over it. Play mode only (grading runs per frame).</summary>
+        private void GradeSite(Vector3 at, float half)
+        {
+            if (!Application.isPlaying || _bake == null) return;
+            TerrainGrading.Request(new Vector3(at.x, GroundY(at), at.z), new Vector2(half, half));
         }
 
         private void SpawnDunes(System.Random rng, List<Vector3> placed)
@@ -993,7 +987,12 @@ namespace SolarMajesty
                 go.transform.SetParent(root, false);
                 go.transform.position = new Vector3(pos.x, GroundY(pos), pos.z);
                 var lair = go.AddComponent<StalkerLair>();
-                lair.Configure(_loop, budget, 8f, _body.LairRim, _body.LairPit);
+                Color soil = _body.Id == CelestialBodyId.Earth
+                    ? new Color(0.40f, 0.31f, 0.22f)
+                    : Color.Lerp(_body.GroundDark, _body.GroundLight, 0.45f);
+                Color stone = Color.Lerp(_body.RockColor, _body.GroundLight, 0.35f);
+                lair.Configure(_loop, budget, 8f, _body.LairRim, _body.LairPit, soil, stone);
+                GradeSite(go.transform.position, 6.5f);
                 _lairs.Add(lair);
                 placed.Add(pos);
             }

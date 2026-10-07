@@ -31,6 +31,8 @@ namespace SolarMajesty.EditorTools
             Keep("Universal Render Pipeline/Unlit", "SM_Keep_Unlit", transparent: false, emission: false);
             // Vendor leaf and grass cards are remapped onto alpha-clipped Lit at runtime.
             Keep("Universal Render Pipeline/Lit", "SM_Keep_LitCutout", transparent: false, emission: false, cutout: true);
+            // Instanced ground cover loads this material at runtime (GroundCover.MaterialPath).
+            Keep(GroundCover.ShaderName, "SM_Keep_GroundCover", transparent: false, emission: false);
             AssetDatabase.SaveAssets();
             Debug.Log("[ShaderVariantKeeper] Keeper materials written to " + Folder);
         }
@@ -75,6 +77,7 @@ namespace SolarMajesty.EditorTools
                 mat.SetColor("_EmissionColor", Color.white);
             }
 
+            mat.enableInstancing = true;
             if (isNew) AssetDatabase.CreateAsset(mat, path);
             else EditorUtility.SetDirty(mat);
         }

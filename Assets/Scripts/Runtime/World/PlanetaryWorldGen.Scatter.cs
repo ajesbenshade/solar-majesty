@@ -4,13 +4,19 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// World dressing that makes the map worth looking at: meadow scatter, rock formations and
-    /// points of interest, plus the prop registry that lets a building clear the trees, rocks and
-    /// grass under its footprint.
+    /// World dressing that makes the map worth looking at: instanced ground cover, rock formations
+    /// and points of interest, plus the prop registry that lets a building clear the trees, rocks
+    /// and undergrowth under its footprint.
     /// </summary>
     public partial class PlanetaryWorldGen
     {
         private readonly List<Transform> _props = new List<Transform>(2048);
+        private readonly List<Vector4> _coverKeepOut = new List<Vector4>(64);
+        private readonly List<Vector4> _forestFloors = new List<Vector4>(64);
+        private GroundCover _cover;
+
+        /// <summary>Instanced undergrowth of this world (null until generated).</summary>
+        public GroundCover Cover => _cover;
 
         /// <summary>Record a removable prop (tree, shrub, rock, scatter, POI).</summary>
         public void RegisterProp(Transform prop)
@@ -36,7 +42,7 @@ namespace SolarMajesty
         /// </summary>
         public int ClearPropsInRect(Vector3 center, float halfX, float halfZ)
         {
-            int n = 0;
+            int n = _cover != null ? _cover.ClearRect(center, halfX, halfZ) : 0;
             for (int i = _props.Count - 1; i >= 0; i--)
             {
                 var p = _props[i];
@@ -68,53 +74,111 @@ namespace SolarMajesty
             return Mathf.Clamp(Mathf.Max(e.x, e.z) * 0.7f, 0.2f, 3f);
         }
 
-        // ------------------------------------------------------------------ meadows
+        // ------------------------------------------------------------------ ground cover
+
+        /// <summary>Keep instanced cover off a site that has its own ground (POI plaza, ore node).</summary>
+        private void KeepCoverOff(Vector3 center, float radius) =>
+            _coverKeepOut.Add(new Vector4(center.x, center.y, center.z, radius));
 
         /// <summary>
-        /// Grass clumps, flowers and shrubs over the open ground, thicker where the terrain's
-        /// splat is green and around forest edges. Keeps off water and the Commons yard.
+        /// Plant the body's instanced undergrowth layers over the whole map: each layer follows
+        /// the terrain splat it likes (grass on the green, pebbles on rock, frost in the lows),
+        /// grows in noise patches, tilts with the slope and keeps out of water.
         /// </summary>
-        private void SpawnMeadows(System.Random rng)
+        private void SpawnGroundCover(System.Random rng)
         {
-            if (_body.MeadowCount <= 0) return;
-            var root = new GameObject("Meadows").transform;
-            root.SetParent(_worldRoot, false);
-            float maxX = _grid != null ? _grid.WorldWidth - 6f : 378f;
-            float maxZ = _grid != null ? _grid.WorldHeight - 6f : 378f;
-
-            int placedCount = 0;
-            for (int i = 0; i < _body.MeadowCount * 3 && placedCount < _body.MeadowCount; i++)
+            var layers = _body.GroundCover;
+            if (layers == null || layers.Length == 0) return;
+            if (_cover == null)
             {
-                var pos = new Vector3(Mathf.Lerp(6f, maxX, (float)rng.NextDouble()), 0f, Mathf.Lerp(6f, maxZ, (float)rng.NextDouble()));
-                if (FlatDist(pos, ColonyLayout.CampusOrigin) < VistaExclusion * 1.1f) continue;
-                // Patchy: meadows cluster where low-frequency noise is high.
-                float field = Mathf.PerlinNoise(pos.x * 0.022f + 3.1f, pos.z * 0.022f + 7.7f);
-                if (field < 0.42f && rng.NextDouble() < 0.75) continue;
-                if (IsOverWater(pos, 0.6f)) continue;
+                var go = new GameObject("GroundCover");
+                go.transform.SetParent(transform, false);
+                _cover = go.AddComponent<GroundCover>();
+            }
+            _cover.Clear();
 
-                double roll = rng.NextDouble();
-                GameObject prefab;
-                string name;
-                float height;
-                if (roll < 0.62) { prefab = EnvironmentMeshCatalog.LoadEarthGrass(i); name = "Meadow_Grass"; height = Mathf.Lerp(0.35f, 0.7f, (float)rng.NextDouble()); }
-                else if (roll < 0.84) { prefab = EnvironmentMeshCatalog.LoadEarthFlower(i); name = "Meadow_Flower"; height = Mathf.Lerp(0.3f, 0.55f, (float)rng.NextDouble()); }
-                else { prefab = EnvironmentMeshCatalog.LoadEarthShrub(i); name = "Meadow_Shrub"; height = Mathf.Lerp(0.5f, 1.1f, (float)rng.NextDouble()); }
-                if (prefab == null) continue;
-
-                // A clump: one to four of the same kind close together.
-                int clump = 1 + rng.Next(0, 4);
-                for (int c = 0; c < clump; c++)
+            float maxX = _grid != null ? _grid.WorldWidth : 384f;
+            float maxZ = _grid != null ? _grid.WorldHeight : 384f;
+            for (int li = 0; li < layers.Length; li++)
+            {
+                var layer = layers[li];
+                if (layer.Density <= 0f) continue;
+                var lr = new System.Random(rng.Next());
+                float ox = (float)lr.NextDouble() * 400f, oz = (float)lr.NextDouble() * 400f;
+                int target = Mathf.RoundToInt(layer.Density * maxX * maxZ / 100f);
+                bool rough = layer.Kind == GroundCoverKind.Boulder || layer.Kind == GroundCoverKind.Crystals ||
+                             layer.Kind == GroundCoverKind.IceShards || layer.Kind == GroundCoverKind.Bush;
+                for (int i = 0; i < target; i++)
                 {
-                    var p = pos + new Vector3((float)(rng.NextDouble() - 0.5) * 1.6f, 0f, (float)(rng.NextDouble() - 0.5) * 1.6f);
-                    var go = EnvironmentMeshCatalog.InstantiateVendorNature(prefab, name, height * Mathf.Lerp(0.8f, 1.2f, (float)rng.NextDouble()));
-                    if (go == null) break;
-                    go.transform.SetParent(root, false);
-                    go.transform.position = p;
-                    go.transform.rotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
-                    ColonyVisualUtility.SnapToGround(go, GroundY(p) - 0.02f);
-                    RegisterProp(go.transform);
+                    float x = (float)lr.NextDouble() * maxX;
+                    float z = (float)lr.NextDouble() * maxZ;
+                    float keep = layer.ClusterScale > 0f
+                        ? layer.Patch(Mathf.PerlinNoise(x / layer.ClusterScale + ox, z / layer.ClusterScale + oz))
+                        : 1f;
+                    if (keep <= 0f) continue;
+                    keep *= layer.Welcome(_bake != null ? _bake.SampleSplat(x, z) : new Color(1f, 0f, 0f, 0f));
+                    if ((float)lr.NextDouble() > keep) continue;
+                    var pos = new Vector3(x, 0f, z);
+                    if (_water.Count > 0 && IsOverWater(pos, 0.35f)) continue;
+
+                    float s = Mathf.Lerp(layer.ScaleMin, layer.ScaleMax, (float)lr.NextDouble());
+                    Vector3 scale = rough
+                        ? new Vector3(s * Mathf.Lerp(0.85f, 1.2f, (float)lr.NextDouble()), s * Mathf.Lerp(0.75f, 1.2f, (float)lr.NextDouble()), s)
+                        : Vector3.one * s;
+                    Vector3 up = _bake != null ? Vector3.Slerp(Vector3.up, _bake.SampleNormal(x, z), 0.75f) : Vector3.up;
+                    var rot = Quaternion.FromToRotation(Vector3.up, up) * Quaternion.Euler(0f, (float)lr.NextDouble() * 360f, 0f);
+                    pos.y = GroundY(pos) - layer.Sink * s - 0.01f;
+
+                    Color c = Color.Lerp(layer.ColorA, layer.ColorB, (float)lr.NextDouble());
+                    float macro = Mathf.PerlinNoise(x * 0.011f + 11.3f, z * 0.011f + 5.9f);
+                    c *= Mathf.Lerp(0.86f, 1.12f, macro);
+                    _cover.Add(layer.Kind, pos, rot, scale, c, layer.CastShadows);
                 }
-                placedCount++;
+            }
+
+            PlantForestFloors(rng, layers);
+
+            for (int i = 0; i < _coverKeepOut.Count; i++)
+            {
+                var k = _coverKeepOut[i];
+                _cover.ClearDisc(new Vector3(k.x, k.y, k.z), k.w);
+            }
+            Debug.Log($"[WorldGen] {_body.DisplayName} ground cover: {_cover.InstanceCount} instances in {_cover.BatchCount} batches.");
+        }
+
+        /// <summary>
+        /// Thicken the undergrowth inside forest patches: ferns, bushes, twigs and mushrooms in the
+        /// colours of the world's own layers of those kinds (worlds without them get none).
+        /// </summary>
+        private void PlantForestFloors(System.Random rng, GroundCoverLayer[] layers)
+        {
+            if (_forestFloors.Count == 0) return;
+            var kinds = new[] { GroundCoverKind.Fern, GroundCoverKind.Bush, GroundCoverKind.Twigs, GroundCoverKind.Mushrooms };
+            var perM2 = new[] { 0.16f, 0.05f, 0.06f, 0.025f };
+            for (int k = 0; k < kinds.Length; k++)
+            {
+                int li = System.Array.FindIndex(layers, l => l.Kind == kinds[k]);
+                if (li < 0) continue;
+                var layer = layers[li];
+                for (int f = 0; f < _forestFloors.Count; f++)
+                {
+                    var patch = _forestFloors[f];
+                    float r = patch.w;
+                    int n = Mathf.RoundToInt(Mathf.PI * r * r * perM2[k]);
+                    for (int i = 0; i < n; i++)
+                    {
+                        float ang = (float)rng.NextDouble() * Mathf.PI * 2f;
+                        float d = r * Mathf.Sqrt((float)rng.NextDouble());
+                        var pos = new Vector3(patch.x + Mathf.Cos(ang) * d, 0f, patch.z + Mathf.Sin(ang) * d);
+                        if (_water.Count > 0 && IsOverWater(pos, 0.4f)) continue;
+                        float s = Mathf.Lerp(layer.ScaleMin, layer.ScaleMax, (float)rng.NextDouble());
+                        Vector3 up = _bake != null ? Vector3.Slerp(Vector3.up, _bake.SampleNormal(pos.x, pos.z), 0.75f) : Vector3.up;
+                        var rot = Quaternion.FromToRotation(Vector3.up, up) * Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
+                        pos.y = GroundY(pos) - layer.Sink * s - 0.01f;
+                        Color c = Color.Lerp(layer.ColorA, layer.ColorB, (float)rng.NextDouble()) * 0.9f;
+                        _cover.Add(layer.Kind, pos, rot, Vector3.one * s, c, layer.CastShadows);
+                    }
+                }
             }
         }
 
@@ -149,18 +213,7 @@ namespace SolarMajesty
                     float dist = isBig ? (float)rng.NextDouble() * 1.4f : Mathf.Lerp(2.0f, 4.2f, (float)rng.NextDouble());
                     var p = pos + new Vector3(Mathf.Cos(ang) * dist, 0f, Mathf.Sin(ang) * dist);
                     float h = isBig ? Mathf.Lerp(3.0f, 6.0f, (float)rng.NextDouble()) : Mathf.Lerp(0.6f, 1.8f, (float)rng.NextDouble());
-                    var prefab = EnvironmentMeshCatalog.LoadRock(made * 13 + i, _body.Id);
-                    GameObject rock;
-                    if (prefab != null && EnvironmentMeshCatalog.IsVendorNature(prefab))
-                        rock = EnvironmentMeshCatalog.InstantiateVendorNature(prefab, "Outcrop", h);
-                    else
-                    {
-                        rock = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        rock.name = "Outcrop";
-                        ColonyVisualUtility.DestroyNow(rock.GetComponent<Collider>());
-                        rock.transform.localScale = new Vector3(h * 1.1f, h, h * 0.9f);
-                        Tint(rock, Color.Lerp(_body.RockColor, _body.GroundDark, (float)rng.NextDouble() * 0.35f), 0.06f, UnityEngine.Rendering.ShadowCastingMode.On);
-                    }
+                    var rock = MakeOutcropRock(made * 13 + i, h, rng);
                     if (rock == null) continue;
                     rock.transform.SetParent(formation, true);
                     rock.transform.position = p;
@@ -176,27 +229,125 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// One outcrop rock in the world's own stone: the vendor rock on Earth, the imported
+        /// boulder meshes tinted with the body's rock colour elsewhere (glossier ice on Europa).
+        /// </summary>
+        private GameObject MakeOutcropRock(int variant, float size, System.Random rng)
+        {
+            var prefab = EnvironmentMeshCatalog.LoadRock(variant, _body.Id);
+            if (prefab != null && EnvironmentMeshCatalog.IsVendorNature(prefab))
+                return EnvironmentMeshCatalog.InstantiateVendorNature(prefab, "Outcrop", size);
+            GameObject rock;
+            if (prefab != null)
+            {
+                rock = EnvironmentMeshCatalog.InstantiateClean(prefab, "Outcrop");
+                if (rock == null) return null;
+                rock.transform.localScale = new Vector3(
+                    size * Mathf.Lerp(0.9f, 1.3f, (float)rng.NextDouble()),
+                    size,
+                    size * Mathf.Lerp(0.85f, 1.2f, (float)rng.NextDouble())) / EnvironmentMeshCatalog.RockNativeSize;
+            }
+            else
+            {
+                rock = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                rock.name = "Outcrop";
+                ColonyVisualUtility.DestroyNow(rock.GetComponent<Collider>());
+                rock.transform.localScale = new Vector3(size * 1.2f, size * 0.8f, size);
+            }
+            Color c = Color.Lerp(_body.RockColor, _body.GroundLight, (float)rng.NextDouble() * 0.35f);
+            Tint(rock, c, _body.Id == CelestialBodyId.Europa ? 0.5f : 0.06f, UnityEngine.Rendering.ShadowCastingMode.On);
+            return rock;
+        }
+
         // ------------------------------------------------------------------ points of interest
 
-        private enum Poi { StoneCircle, Ruins, Monolith, CrashedProbe, SurveyCamp }
+        private enum Poi
+        {
+            StoneCircle, Ruins, Monolith, CrashedProbe, SurveyCamp, Homestead, FallenGiant,
+            Lander, RoverWreck, BoulderTrack, Hoodoos, DustHab, MiningRig, Geode, HullWreck,
+            Geyser, IceSpires, Cryobot
+        }
 
-        /// <summary>Stone circles, ruins, monoliths, a crashed probe, an abandoned survey camp.</summary>
+        /// <summary>The landmarks a world deals out, in turn.</summary>
+        private static Poi[] PoiThemes(CelestialBodyId id)
+        {
+            switch (id)
+            {
+                case CelestialBodyId.Luna:
+                    return new[] { Poi.Lander, Poi.BoulderTrack, Poi.RoverWreck, Poi.CrashedProbe, Poi.Monolith };
+                case CelestialBodyId.Mars:
+                    return new[] { Poi.Hoodoos, Poi.RoverWreck, Poi.DustHab, Poi.CrashedProbe, Poi.Monolith };
+                case CelestialBodyId.Belt:
+                    return new[] { Poi.MiningRig, Poi.Geode, Poi.HullWreck, Poi.CrashedProbe, Poi.Monolith };
+                case CelestialBodyId.Europa:
+                    return new[] { Poi.Geyser, Poi.IceSpires, Poi.Cryobot, Poi.CrashedProbe, Poi.Monolith };
+                default:
+                    return new[]
+                    {
+                        Poi.StoneCircle, Poi.Homestead, Poi.Ruins, Poi.FallenGiant, Poi.Monolith, Poi.CrashedProbe,
+                        Poi.SurveyCamp
+                    };
+            }
+        }
+
+        /// <summary>Half-size of the landmark's own ground; 0 = follows the terrain, no graded pad.</summary>
+        private static float PoiPad(Poi kind)
+        {
+            switch (kind)
+            {
+                case Poi.StoneCircle: return 5.5f;
+                case Poi.Ruins: return 5f;
+                case Poi.Monolith: return 3.6f;
+                case Poi.CrashedProbe: return 4f;
+                case Poi.SurveyCamp: return 4.6f;
+                case Poi.Homestead: return 6.5f;
+                case Poi.Lander: return 4.5f;
+                case Poi.RoverWreck: return 3.2f;
+                case Poi.Hoodoos: return 4.5f;
+                case Poi.DustHab: return 5.5f;
+                case Poi.MiningRig: return 5.5f;
+                case Poi.Geode: return 4f;
+                case Poi.HullWreck: return 5.5f;
+                case Poi.Geyser: return 4f;
+                case Poi.IceSpires: return 5f;
+                case Poi.Cryobot: return 5f;
+                default: return 0f; // FallenGiant, BoulderTrack lie on the land as it is
+            }
+        }
+
+        /// <summary>
+        /// Landmarks themed per world (see <see cref="PoiThemes"/>): stone circles and homesteads on
+        /// Earth, landers and boulder tracks on Luna, hoodoos and buried habs on Mars, mining rigs
+        /// and geodes in the Belt, geysers and penitentes on Europa. Each sits on a graded pad on
+        /// fairly flat ground and keeps the undergrowth off its plaza.
+        /// </summary>
         private void SpawnPointsOfInterest(System.Random rng, List<Vector3> placed)
         {
             if (_body.PoiCount <= 0) return;
             var root = new GameObject("PointsOfInterest").transform;
             root.SetParent(_worldRoot, false);
+            var themes = PoiThemes(_body.Id);
             int made = 0;
-            for (int attempt = 0; attempt < _body.PoiCount * 8 && made < _body.PoiCount; attempt++)
+            for (int attempt = 0; attempt < _body.PoiCount * 10 && made < _body.PoiCount; attempt++)
             {
                 if (!TrySample(rng, placed, VistaExclusion * 2.2f, _body.MinSpacing * 2f, out Vector3 pos)) continue;
-                if (IsOverWater(pos, 6f)) continue;
-                var kind = (Poi)(made % 5);
+                if (IsOverWater(pos, 8f)) continue;
+                if (_bake != null && _bake.SampleNormal(pos.x, pos.z, 3f).y < 0.94f) continue;
+                var kind = themes[made % themes.Length];
                 var go = new GameObject("POI_" + kind + "_" + made);
                 go.transform.SetParent(root, false);
                 go.transform.position = new Vector3(pos.x, GroundY(pos), pos.z);
                 go.transform.rotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
-                var k = new DetailBatch(go.transform, "POI_" + kind + "_" + made + "_" + _body.Id);
+                var t = go.transform;
+                float pad = PoiPad(kind);
+                // Ground offset under a local point (0 on the graded pad itself).
+                float Ground(Vector3 local)
+                {
+                    if (pad > 0f && new Vector2(local.x, local.z).magnitude < pad) return 0f;
+                    return GroundY(t.TransformPoint(local)) - t.position.y;
+                }
+                var k = new DetailBatch(t, null);
                 var r = new System.Random(rng.Next());
                 switch (kind)
                 {
@@ -204,10 +355,25 @@ namespace SolarMajesty
                     case Poi.Ruins: Ruins(k, r); break;
                     case Poi.Monolith: Monolith(k, r); break;
                     case Poi.CrashedProbe: CrashedProbe(k, r); break;
-                    default: SurveyCamp(k, r); break;
+                    case Poi.SurveyCamp: SurveyCamp(k, r); break;
+                    case Poi.Homestead: Homestead(k, r, Ground); break;
+                    case Poi.FallenGiant: FallenGiant(k, r, Ground); break;
+                    case Poi.Lander: Lander(k, r, Ground); break;
+                    case Poi.RoverWreck: RoverWreck(k, r, Ground); break;
+                    case Poi.BoulderTrack: BoulderTrack(k, r, Ground); break;
+                    case Poi.Hoodoos: Hoodoos(k, r, Ground); break;
+                    case Poi.DustHab: DustHab(k, r, Ground); break;
+                    case Poi.MiningRig: MiningRig(k, r, Ground); break;
+                    case Poi.Geode: Geode(k, r, Ground); break;
+                    case Poi.HullWreck: HullWreck(k, r, Ground); break;
+                    case Poi.Geyser: Geyser(k, r, Ground); break;
+                    case Poi.IceSpires: IceSpires(k, r, Ground); break;
+                    default: Cryobot(k, r, Ground); break;
                 }
                 k.Build();
                 RegisterProp(go.transform);
+                if (pad > 0f) GradeSite(go.transform.position, pad);
+                KeepCoverOff(go.transform.position, pad > 0f ? pad + 2.5f : 3f);
                 placed.Add(pos);
                 made++;
             }

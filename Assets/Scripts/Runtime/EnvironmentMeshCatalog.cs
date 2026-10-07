@@ -200,7 +200,7 @@ namespace SolarMajesty
                     if (rock)
                     {
                         tex = null;
-                        c = new Color(0.58f, 0.55f, 0.5f);
+                        c = new Color(0.47f, 0.45f, 0.42f);
                     }
                     var mat = MakeEnvMat(lit, old.name, c);
                     if (tex != null && mat.HasProperty("_BaseMap"))

@@ -97,10 +97,10 @@ namespace SolarMajesty
                 DuneCount = 0,
                 LakeCount = 8,
                 RiverCount = 5,
-                ForestPatchCount = 38,
-                MeadowCount = 900,
-                RockFormationCount = 14,
-                PoiCount = 10,
+                ForestPatchCount = 56,
+                RockFormationCount = 16,
+                PoiCount = 14,
+                GroundCover = EarthCover(),
                 ResourceNodeCount = 10,
                 LairCount = 3,
                 CampusExclusion = 20f,
@@ -171,6 +171,10 @@ namespace SolarMajesty
                 SkyExposure = 0.55f,
                 CraterCount = 96,
                 DuneCount = 0,
+                RockCount = 70,
+                RockFormationCount = 12,
+                PoiCount = 9,
+                GroundCover = LunaCover(),
                 ResourceNodeCount = 24,
                 LairCount = 8,
                 CampusExclusion = 22f,
@@ -258,6 +262,10 @@ namespace SolarMajesty
                 SkyExposure = 1.10f,
                 CraterCount = 56,
                 DuneCount = 64,
+                RockCount = 80,
+                RockFormationCount = 16,
+                PoiCount = 10,
+                GroundCover = MarsCover(),
                 ResourceNodeCount = 24,
                 LairCount = 10,
                 CampusExclusion = 22f,
@@ -302,8 +310,9 @@ namespace SolarMajesty
                 VictoryLog = "Belt claim holds. Icebreaker staged — Europa's crust is next.",
                 FailLog = "The rocks took the outpost. Revive the robots or abandon this cluster.",
                 EndlessLog = "Belt claim holds. Keep stripping the rocks — rating stands, no hop.",
-                GroundLight = new Color(0.22f, 0.20f, 0.18f),
-                GroundDark = new Color(0.08f, 0.07f, 0.07f),
+                // Dark carbonaceous rock, but lit enough that rubble, craters and rigs read.
+                GroundLight = new Color(0.40f, 0.37f, 0.33f),
+                GroundDark = new Color(0.17f, 0.16f, 0.15f),
                 Horizon = new Color(0.04f, 0.04f, 0.05f),
                 RockColor = new Color(0.38f, 0.34f, 0.30f),
                 CraterRim = new Color(0.28f, 0.26f, 0.24f),
@@ -319,10 +328,10 @@ namespace SolarMajesty
                 SunEuler = new Vector3(22f, 48f, 0f),
                 GradeFilter = new Color(0.92f, 0.93f, 1f),
                 AmbientHum = 38f,
-                FillColor = new Color(0.22f, 0.24f, 0.32f),
-                AmbientSky = new Color(0.08f, 0.09f, 0.14f),
-                AmbientEquator = new Color(0.12f, 0.11f, 0.10f),
-                AmbientGround = new Color(0.04f, 0.03f, 0.03f),
+                FillColor = new Color(0.36f, 0.38f, 0.48f),
+                AmbientSky = new Color(0.20f, 0.22f, 0.30f),
+                AmbientEquator = new Color(0.22f, 0.20f, 0.19f),
+                AmbientGround = new Color(0.09f, 0.08f, 0.08f),
                 FogColor = new Color(0.12f, 0.12f, 0.14f),
                 FogStart = 40f,
                 FogEnd = 220f,
@@ -331,6 +340,9 @@ namespace SolarMajesty
                 CraterCount = 18,
                 RockCount = 220,
                 DuneCount = 0,
+                RockFormationCount = 12,
+                PoiCount = 9,
+                GroundCover = BeltCover(),
                 ResourceNodeCount = 28,
                 LairCount = 7,
                 CampusExclusion = 16f,
@@ -417,6 +429,9 @@ namespace SolarMajesty
                 CraterCount = 24,
                 RockCount = 48,
                 DuneCount = 0,
+                RockFormationCount = 10,
+                PoiCount = 9,
+                GroundCover = EuropaCover(),
                 // Europa's surface is frozen solid (~100 K): no open lakes or rivers. The ice
                 // shell reads through lineae, chaos rafts and fresh craters in the height field.
                 LakeCount = 0,
@@ -465,5 +480,59 @@ namespace SolarMajesty
                 FaunaCreeperTint = new Color(0.72f, 0.88f, 0.90f, 1f)
             };
         }
+        // ------------------------------------------------------------------ ground cover
+        // Instanced undergrowth per world. Density is per 100 m2 where the layer is fully welcome;
+        // affinity weights the terrain splat (R dust/soil, G rock, B vegetation/feature, A wet/floor).
+
+        private static Color C(float r, float g, float b) => new Color(r, g, b, 1f);
+
+        private static GroundCoverLayer L(GroundCoverKind kind, float density, float sMin, float sMax, Color a, Color b,
+            Vector4 affinity, float cluster = 0f, float threshold = 0f, bool shadows = false, float sink = 0f) =>
+            GroundCoverLayer.Of(kind, density, sMin, sMax, a, b, affinity, cluster, threshold, shadows, sink);
+
+        private static GroundCoverLayer[] EarthCover() => new[]
+        {
+            L(GroundCoverKind.GrassTuft, 80f, 0.38f, 0.72f, C(0.30f, 0.50f, 0.17f), C(0.46f, 0.62f, 0.23f), new Vector4(0.5f, 0.05f, 1f, 0.6f), 9f, 0.18f),
+            L(GroundCoverKind.GrassTuft, 12f, 0.4f, 0.7f, C(0.55f, 0.58f, 0.27f), C(0.66f, 0.62f, 0.34f), new Vector4(0.6f, 0.1f, 1f, 0.2f), 16f, 0.55f),
+            L(GroundCoverKind.TallGrass, 8f, 0.55f, 0.85f, C(0.46f, 0.60f, 0.22f), C(0.66f, 0.64f, 0.32f), new Vector4(0.3f, 0f, 1f, 0.8f), 14f, 0.55f),
+            L(GroundCoverKind.Flowers, 3.4f, 0.65f, 1.0f, C(0.95f, 0.30f, 0.28f), C(0.98f, 0.82f, 0.30f), new Vector4(0.2f, 0f, 1f, 0.3f), 7f, 0.62f),
+            L(GroundCoverKind.Flowers, 3.0f, 0.65f, 1.0f, C(0.96f, 0.96f, 0.98f), C(0.68f, 0.56f, 0.96f), new Vector4(0.2f, 0f, 1f, 0.3f), 8f, 0.64f),
+            L(GroundCoverKind.Fern, 1.4f, 0.5f, 0.95f, C(0.24f, 0.46f, 0.17f), C(0.38f, 0.58f, 0.20f), new Vector4(0.3f, 0.1f, 1f, 0.6f), 12f, 0.6f),
+            L(GroundCoverKind.Bush, 0.8f, 0.7f, 1.5f, C(0.18f, 0.36f, 0.13f), C(0.32f, 0.50f, 0.18f), new Vector4(0.3f, 0.2f, 1f, 0.4f), 18f, 0.5f, true),
+            L(GroundCoverKind.Reeds, 7f, 0.65f, 1.05f, C(0.40f, 0.55f, 0.24f), C(0.58f, 0.62f, 0.30f), new Vector4(0f, 0f, 0f, 1f)),
+            L(GroundCoverKind.Pebbles, 2.6f, 0.5f, 1.0f, C(0.54f, 0.51f, 0.47f), C(0.68f, 0.64f, 0.58f), new Vector4(0.6f, 1f, 0.12f, 0.3f), 10f, 0.4f),
+            L(GroundCoverKind.Mushrooms, 0.14f, 0.45f, 0.75f, C(0.80f, 0.20f, 0.14f), C(0.62f, 0.44f, 0.26f), new Vector4(0.4f, 0.1f, 1f, 0.5f), 10f, 0.7f),
+            L(GroundCoverKind.Twigs, 0.7f, 0.8f, 1.2f, C(0.42f, 0.32f, 0.22f), C(0.56f, 0.44f, 0.28f), new Vector4(1f, 0.2f, 0.5f, 0f), 12f, 0.6f)
+        };
+
+        private static GroundCoverLayer[] LunaCover() => new[]
+        {
+            L(GroundCoverKind.Pebbles, 10f, 0.4f, 0.95f, C(0.50f, 0.49f, 0.47f), C(0.72f, 0.71f, 0.69f), new Vector4(1f, 1f, 0.6f, 1f), 10f, 0.3f),
+            L(GroundCoverKind.Rubble, 4.5f, 0.6f, 1.3f, C(0.46f, 0.45f, 0.44f), C(0.64f, 0.63f, 0.61f), new Vector4(0.3f, 1f, 0.3f, 0.4f), 16f, 0.42f),
+            L(GroundCoverKind.Boulder, 0.55f, 0.6f, 1.9f, C(0.50f, 0.49f, 0.47f), C(0.68f, 0.67f, 0.65f), new Vector4(0.4f, 1f, 0.3f, 0.4f), 0f, 0f, true, 0.12f)
+        };
+
+        private static GroundCoverLayer[] MarsCover() => new[]
+        {
+            L(GroundCoverKind.Pebbles, 11f, 0.4f, 0.95f, C(0.52f, 0.25f, 0.12f), C(0.68f, 0.36f, 0.19f), new Vector4(1f, 1f, 0.7f, 0.6f), 9f, 0.3f),
+            L(GroundCoverKind.Rubble, 5f, 0.6f, 1.35f, C(0.42f, 0.20f, 0.10f), C(0.58f, 0.30f, 0.16f), new Vector4(0.3f, 1f, 0.4f, 0.2f), 15f, 0.42f),
+            L(GroundCoverKind.Boulder, 0.65f, 0.6f, 2.0f, C(0.44f, 0.22f, 0.11f), C(0.60f, 0.32f, 0.17f), new Vector4(0.3f, 1f, 0.3f, 0.3f), 0f, 0f, true, 0.12f)
+        };
+
+        private static GroundCoverLayer[] BeltCover() => new[]
+        {
+            L(GroundCoverKind.Rubble, 9f, 0.5f, 1.2f, C(0.42f, 0.38f, 0.34f), C(0.60f, 0.54f, 0.46f), new Vector4(1f, 1f, 1f, 1f), 10f, 0.3f),
+            L(GroundCoverKind.Pebbles, 6f, 0.45f, 0.9f, C(0.56f, 0.52f, 0.47f), C(0.72f, 0.64f, 0.50f), new Vector4(1f, 1f, 1f, 1f), 8f, 0.35f),
+            L(GroundCoverKind.Boulder, 0.8f, 0.6f, 2.0f, C(0.40f, 0.37f, 0.34f), C(0.56f, 0.51f, 0.46f), new Vector4(0.5f, 1f, 0.5f, 0.5f), 0f, 0f, true, 0.12f),
+            L(GroundCoverKind.Crystals, 0.55f, 0.6f, 1.4f, C(0.60f, 0.42f, 1.00f), C(0.32f, 0.86f, 0.92f), new Vector4(0.5f, 1f, 1f, 1f), 20f, 0.58f, true)
+        };
+
+        private static GroundCoverLayer[] EuropaCover() => new[]
+        {
+            L(GroundCoverKind.IceShards, 2.6f, 0.5f, 1.4f, C(0.82f, 0.92f, 1.00f), C(0.95f, 0.98f, 1.00f), new Vector4(1f, 1f, 0.3f, 0f), 14f, 0.45f, true),
+            L(GroundCoverKind.Rubble, 6f, 0.5f, 1.1f, C(0.76f, 0.85f, 0.92f), C(0.92f, 0.96f, 1.00f), new Vector4(1f, 1f, 0.5f, 0.5f), 10f, 0.3f),
+            L(GroundCoverKind.Pebbles, 4.5f, 0.45f, 0.9f, C(0.62f, 0.42f, 0.32f), C(0.76f, 0.56f, 0.45f), new Vector4(0f, 0.2f, 1f, 0f), 8f, 0.3f),
+            L(GroundCoverKind.Crystals, 0.12f, 0.6f, 1.2f, C(0.55f, 0.85f, 1.00f), C(0.76f, 0.95f, 1.00f), new Vector4(1f, 1f, 1f, 1f), 18f, 0.6f, true)
+        };
     }
 }

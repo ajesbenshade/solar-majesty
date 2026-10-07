@@ -216,7 +216,9 @@ namespace SolarMajesty
             if (order.Data != null)
             {
                 float cell = _grid != null ? _grid.CellSize : ColonyLayout.DefaultCellSize;
-                TerrainGrading.Request(order.WorldPosition, new Vector2(
+                var pad = order.WorldPosition;
+                pad.y = 0f;
+                TerrainGrading.Request(pad, new Vector2(
                     order.Data.footprintWidth * cell * 0.5f + 0.4f,
                     order.Data.footprintHeight * cell * 0.5f + 0.4f));
             }
