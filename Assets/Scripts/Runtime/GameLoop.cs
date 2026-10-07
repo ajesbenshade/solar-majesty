@@ -1599,12 +1599,23 @@ namespace SolarMajesty
             if (InputBindings.TextEntryActive) return; // typing flag orders
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (Screen == DemoScreen.Settings)
-                    CloseSettings();
-                else if (Screen == DemoScreen.Title)
-                    return;
-                else
-                    TogglePause();
+                bool placing = activeTool == OverseerTool.Build || activeTool == OverseerTool.Flag;
+                switch (SessionHotkeys.OnEscape(
+                    Screen == DemoScreen.Settings,
+                    Screen == DemoScreen.Title,
+                    Screen == DemoScreen.Playing,
+                    placing))
+                {
+                    case SessionHotkeys.EscapeAction.CloseSettings:
+                        CloseSettings();
+                        break;
+                    case SessionHotkeys.EscapeAction.CancelPlacement:
+                        ApplyTool(OverseerTool.None);
+                        break;
+                    case SessionHotkeys.EscapeAction.TogglePause:
+                        TogglePause();
+                        break;
+                }
             }
         }
 

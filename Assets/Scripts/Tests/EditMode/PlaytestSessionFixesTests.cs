@@ -77,6 +77,22 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void Escape_CancelsBuildOrFlagPlacement_AndPausesWhenNothingIsArmed()
+        {
+            Assert.AreEqual(SessionHotkeys.EscapeAction.CancelPlacement,
+                SessionHotkeys.OnEscape(false, false, true, true));
+            Assert.AreEqual(SessionHotkeys.EscapeAction.TogglePause,
+                SessionHotkeys.OnEscape(false, false, true, false));
+            Assert.AreEqual(SessionHotkeys.EscapeAction.TogglePause,
+                SessionHotkeys.OnEscape(false, false, false, true),
+                "Esc on the pause screen still resumes, even if a tool was armed");
+            Assert.AreEqual(SessionHotkeys.EscapeAction.CloseSettings,
+                SessionHotkeys.OnEscape(true, false, false, true));
+            Assert.AreEqual(SessionHotkeys.EscapeAction.Ignore,
+                SessionHotkeys.OnEscape(false, true, false, false));
+        }
+
+        [Test]
         public void EdgeScroll_DefaultsOn_AndKeepsAnExplicitOff()
         {
             Assert.IsTrue(DemoSettings.ResolveEdgeScroll(false, 0));
