@@ -22,6 +22,8 @@ namespace SolarMajesty
         public const string FirstHourKey = "SM_FirstHourDemo";
         public const string QualityKey = "SM_Set_Quality";
         public const string FullscreenKey = "SM_Set_Fullscreen";
+        public const string ResolutionWKey = "SM_Set_ResW";
+        public const string ResolutionHKey = "SM_Set_ResH";
         public const string CampusKeyPrefix = "SM_Campus_";
         public const string EdgeScrollKey = "SM_Set_EdgeScroll";
         public const string ReduceMotionKey = "SM_Set_ReduceMotion";
@@ -52,6 +54,13 @@ namespace SolarMajesty
         public static string SaveLoadNotice = "";
         public static int QualityIndex;
         public static bool Fullscreen = true;
+
+        /// <summary>0 means keep the monitor's current mode. Otherwise an applied window size.</summary>
+        public static int ResolutionWidth;
+        public static int ResolutionHeight;
+
+        public static readonly int[] ResolutionWidths = { 1280, 1280, 1366, 1600, 1920, 1920, 2560, 2560, 3840 };
+        public static readonly int[] ResolutionHeights = { 720, 800, 768, 900, 1080, 1200, 1440, 1600, 2160 };
 
         /// <summary>On unless the player has saved a choice. Missing key stays on; a stored 0 stays off.</summary>
         public static bool EdgeScroll = true;
@@ -106,6 +115,36 @@ namespace SolarMajesty
         public static bool ResolveEdgeScroll(bool hasSavedChoice, int stored) =>
             !hasSavedChoice || stored != 0;
 
+        public static string ResolutionLabel =>
+            ResolutionWidth >= 640 && ResolutionHeight >= 480
+                ? $"{ResolutionWidth}×{ResolutionHeight}"
+                : "DISPLAY";
+
+        public static int ResolutionIndex()
+        {
+            for (int i = 0; i < ResolutionWidths.Length; i++)
+            {
+                if (ResolutionWidths[i] == ResolutionWidth && ResolutionHeights[i] == ResolutionHeight)
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>Step to the next preset. The first click leaves "display" for 1280×720, and the last wraps.</summary>
+        public static void StepResolution()
+        {
+            int i = ResolutionIndex();
+            int next = i < 0 ? 0 : (i + 1) % ResolutionWidths.Length;
+            ResolutionWidth = ResolutionWidths[next];
+            ResolutionHeight = ResolutionHeights[next];
+        }
+
+        public static void CycleResolution()
+        {
+            StepResolution();
+            ApplyDisplay();
+        }
+
         public static void Load()
         {
             Master = PlayerPrefs.GetFloat(MasterKey, 1f);
@@ -120,6 +159,8 @@ namespace SolarMajesty
             SaveExists = PlayerPrefs.GetInt(SaveFlagKey, 0) == 1;
             QualityIndex = PlayerPrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
             Fullscreen = PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) == 1;
+            ResolutionWidth = PlayerPrefs.GetInt(ResolutionWKey, 0);
+            ResolutionHeight = PlayerPrefs.GetInt(ResolutionHKey, 0);
             EdgeScroll = ResolveEdgeScroll(PlayerPrefs.HasKey(EdgeScrollKey), PlayerPrefs.GetInt(EdgeScrollKey, 1));
             ReduceMotion = PlayerPrefs.GetInt(ReduceMotionKey, 0) == 1;
             ColorBlindMode = PlayerPrefs.GetInt(ColorBlindKey, 0);
@@ -164,7 +205,10 @@ namespace SolarMajesty
                 if (QualitySettings.GetQualityLevel() != QualityIndex)
                     QualitySettings.SetQualityLevel(QualityIndex, true);
             }
-            if (Screen.fullScreen != Fullscreen)
+            bool sized = ResolutionWidth >= 640 && ResolutionHeight >= 480;
+            if (sized)
+                Screen.SetResolution(ResolutionWidth, ResolutionHeight, Fullscreen);
+            else if (Screen.fullScreen != Fullscreen)
                 Screen.fullScreen = Fullscreen;
 
             // 0 means "let the platform decide"; anything else is an explicit cap.
@@ -182,6 +226,8 @@ namespace SolarMajesty
             PlayerPrefs.SetInt(InvertKey, InvertPan ? 1 : 0);
             PlayerPrefs.SetInt(QualityKey, QualityIndex);
             PlayerPrefs.SetInt(FullscreenKey, Fullscreen ? 1 : 0);
+            PlayerPrefs.SetInt(ResolutionWKey, ResolutionWidth);
+            PlayerPrefs.SetInt(ResolutionHKey, ResolutionHeight);
             PlayerPrefs.SetInt(EdgeScrollKey, EdgeScroll ? 1 : 0);
             PlayerPrefs.SetInt(ReduceMotionKey, ReduceMotion ? 1 : 0);
             PlayerPrefs.SetInt(ColorBlindKey, ColorBlindMode);

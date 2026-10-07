@@ -2973,10 +2973,20 @@ namespace SolarMajesty
             {
                 DemoSettings.Fullscreen = !DemoSettings.Fullscreen;
                 DemoSettings.ApplyDisplay();
+                DemoSettings.SaveSettings();
             }
             if (Chip(new Rect(c.x + 208f, y, c.width - 208f, 26f), "DAY / NIGHT CYCLE", DemoSettings.DayCycle))
             {
                 DemoSettings.DayCycle = !DemoSettings.DayCycle;
+                DemoSettings.SaveSettings();
+            }
+            y += 32f;
+
+            if (Chip(new Rect(c.x, y, c.width, 26f),
+                    $"RESOLUTION  ·  {DemoSettings.ResolutionLabel}",
+                    DemoSettings.ResolutionWidth >= 640))
+            {
+                DemoSettings.CycleResolution();
                 DemoSettings.SaveSettings();
             }
             y += 32f;
