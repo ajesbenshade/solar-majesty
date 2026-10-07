@@ -193,5 +193,66 @@ namespace SolarMajesty.Tests
                 PlayerPrefs.Save();
             }
         }
+
+        [Test]
+        public void Hud_LabelsStayApart_AtPlaytestResolutions()
+        {
+            AssertHud(1280f, 800f);
+            AssertHud(1920f, 1080f);
+            // 1.25 HUD scale on 1280×800 shrinks the dock; the catalog still clears the crest.
+            AssertHud(1280f / 1.25f, 800f / 1.25f);
+        }
+
+        static void AssertHud(float viewW, float viewH)
+        {
+            Rect crest = HudLayout.Crest(viewW, viewH);
+            var plate = new Rect(
+                crest.x - HudLayout.CrestPad, crest.y - HudLayout.CrestPad,
+                crest.width + HudLayout.CrestPad * 2f, crest.height + HudLayout.CrestPad * 2f);
+            Rect catalog = HudLayout.ToolPopup(viewW, viewH, 320f, 400f);
+            AssertLeftOf(catalog, plate, HudLayout.PanelGap);
+            Assert.LessOrEqual(catalog.yMax + HudLayout.PanelGap, plate.yMin + 0.01f);
+
+            HudLayout.Tutorial(viewW, 60f, out var bar, out var text, out var skip);
+            AssertLeftOf(text, skip, HudLayout.PanelGap);
+            AssertLeftOf(bar, HudLayout.Objectives(viewW), 12f);
+
+            var chip = new Rect(0f, 0f, 119f, 28f);
+            HudLayout.ChipText(chip, out var chipLabel, out var chipNumber);
+            AssertLeftOf(chipLabel, chipNumber, HudLayout.TextGap);
+            Assert.Greater(chipLabel.width, 8f);
+
+            HudLayout.SplitRow(0f, 0f, 240f, 24f, 26f, 80f, out var rowName, out var rowCost);
+            AssertLeftOf(rowName, rowCost, HudLayout.PanelGap);
+
+            var clock = new Rect(0f, 40f, 186f, 76f);
+            HudLayout.ClockHeader(clock, out var sol, out var tag, out var speed);
+            Assert.AreEqual(116f, speed.width);
+            AssertLeftOf(sol, speed, HudLayout.TextGap);
+            AssertLeftOf(tag, speed, HudLayout.TextGap);
+
+            HudLayout.StatLine(new Rect(0f, 0f, 186f, 13f), out var statLabel, out var statValue);
+            AssertLeftOf(statLabel, statValue, HudLayout.TextGap);
+
+            HudLayout.Stake(new Rect(0f, 0f, 276f, 20f), out var stakeLabel, out var stakeValue);
+            AssertLeftOf(stakeLabel, stakeValue, HudLayout.TextGap);
+
+            string levy = HudLayout.LevyLine(20, 2, 0, 230);
+            Assert.LessOrEqual(levy.Length, HudLayout.LevyBudget);
+            Assert.That(levy, Does.Contain("TILLS"));
+            Assert.LessOrEqual(HudLayout.LevyLine(12345, 12, 999, 99999).Length, HudLayout.LevyBudget);
+
+            string treasury = HudLayout.TreasuryLine(455f, 460, false);
+            Assert.LessOrEqual(treasury.Length, HudLayout.TreasuryBudget);
+            Assert.That(treasury, Does.Contain("455"));
+            Assert.LessOrEqual(HudLayout.TreasuryLine(455f, 460, true).Length, HudLayout.TreasuryBudget);
+            Assert.LessOrEqual(HudLayout.TreasuryLine(100000f, 100000, true).Length, HudLayout.TreasuryBudget);
+        }
+
+        static void AssertLeftOf(Rect left, Rect right, float gap)
+        {
+            Assert.LessOrEqual(left.xMax + gap, right.xMin + 0.01f,
+                $"expected {left} to clear {right} by {gap}");
+        }
     }
 }

@@ -25,15 +25,13 @@ namespace SolarMajesty
         private static readonly Color Alarm = HudSkin.Alarm;
         private static readonly Color Good = HudSkin.Good;
 
-        private const float M = 16f;      // screen margin
-        private const float Pad = 12f;    // panel padding
+        private const float M = HudLayout.Margin;
+        private const float Pad = HudLayout.Pad;
         private const float TopW = 300f;  // top-left command width
         // Majesty 2-style console: one bottom-centre bar with the treasury crest on top.
-        private const float DockH = 100f;
-        private const float DockW = 860f;
-        private const float CrestW = 240f;
-        private const float CrestRise = 30f;
-        private const float MapSize = 176f;
+        private const float DockH = HudLayout.DockH;
+        private const float CrestRise = HudLayout.CrestRise;
+        private const float MapSize = HudLayout.MapSize;
 
         private GameLoop _loop;
         private bool _failLatched;
@@ -444,7 +442,7 @@ namespace SolarMajesty
             _wrap.wordWrap = true;
             _onText = Label(body, 11, FontStyle.Bold, Color.white, TextAnchor.MiddleLeft);
             _chipLabel = Label(display, 10, FontStyle.Bold, TextMuted, TextAnchor.MiddleLeft);
-            _chipLabel.clipping = TextClipping.Overflow;
+            _chipLabel.clipping = TextClipping.Clip;
             _titleWord = Label(display, 44, FontStyle.Bold, TextPrimary, TextAnchor.MiddleLeft);
             _titleWord.clipping = TextClipping.Overflow;
             _planetName = Label(display, 12, FontStyle.Bold, TextPrimary, TextAnchor.MiddleCenter);
@@ -538,7 +536,7 @@ namespace SolarMajesty
                 float dockTop = _sh - M - DockH;
                 float stackTop = dockTop - CrestRise;
                 _contentBottom = stackTop;
-                DrawToolPopups(stackTop);
+                DrawToolPopups();
                 DrawBottomDock(dockTop);
                 DrawLogFeed(stackTop);
 
@@ -632,16 +630,21 @@ namespace SolarMajesty
             if (tex != null) HudSkin.Icon(icon, tex, Color.white);
             else HudSkin.Dot(icon.center, 10f, ChipSwatch(label));
 
+            HudLayout.ChipText(r, out var labelRect, out var numberRect);
             var prevLabel = _chipLabel.normal.textColor;
             _chipLabel.normal.textColor = alarm ? Alarm : TextMuted;
-            GUI.Label(new Rect(r.x + 29f, r.y + 2f, r.width - 62f, 12f), label, _chipLabel);
+            GUI.Label(labelRect, label, _chipLabel);
             _chipLabel.normal.textColor = prevLabel;
             if (!string.IsNullOrEmpty(rate))
-                GUI.Label(new Rect(r.x + 29f, r.y + 13f, r.width - 62f, 12f), rate, _micro);
+            {
+                var rateRect = labelRect;
+                rateRect.y = r.y + 13f;
+                GUI.Label(rateRect, rate, _micro);
+            }
 
             var prevAnchor = _number.alignment;
             _number.alignment = TextAnchor.MiddleRight;
-            GUI.Label(new Rect(r.xMax - 44f, r.y, 38f, r.height), amount.ToString(), _number);
+            GUI.Label(numberRect, amount.ToString(), _number);
             _number.alignment = prevAnchor;
         }
 
@@ -670,14 +673,10 @@ namespace SolarMajesty
             return Gold;
         }
 
-        private float DockWidth() => Mathf.Min(DockW, _sw - M * 3f - MapSize - 12f);
+        private float DockWidth() => HudLayout.DockWidth(_sw);
 
         /// <summary>Centred, but never under the minimap on narrow screens.</summary>
-        private float DockLeft()
-        {
-            float w = DockWidth();
-            return Mathf.Max(M, Mathf.Min((_sw - w) * 0.5f, _sw - M - MapSize - 12f - w));
-        }
+        private float DockLeft() => HudLayout.DockLeft(_sw);
 
         /// <summary>
         /// Bottom-centre console: stockpile on the left, Overseer verbs in the middle, clock and
@@ -728,7 +727,7 @@ namespace SolarMajesty
 
             DrawLevyLine(new Rect(midL, vy + sq + 7f, midR - midL, 14f));
             DrawClockAndThreat(new Rect(c.xMax - right, c.y, right, c.height));
-            DrawTreasuryCrest(new Rect(rect.x + (w - CrestW) * 0.5f, top - CrestRise, CrestW, HudSkin.CrestSize.y));
+            DrawTreasuryCrest(HudLayout.Crest(_sw, _sh));
         }
 
         /// <summary>Treasury (CRED is Majesty gold), live income, and what is locked in bounties.</summary>
@@ -754,11 +753,10 @@ namespace SolarMajesty
             HudSkin.ShadowLabel(new Rect(gx + 26f, r.y + 5f, numW + 4f, 28f), $"{gold:N0}", _treasury, 0.6f);
 
             float perMin = _loop.TreasuryIncomePerMin;
-            string rate = perMin >= 1f ? $"+{perMin:F0} EU / MIN" : "NO INCOME YET";
-            if (escrow > 0) rate += $"  ·  {escrow:N0} IN BOUNTIES";
+            string rate = HudLayout.TreasuryLine(perMin, escrow, thin);
             var prev = _treasuryRate.normal.textColor;
             _treasuryRate.normal.textColor = thin ? Alarm : (perMin >= 1f ? Good : TextMuted);
-            GUI.Label(new Rect(r.x + 26f, r.y + 32f, r.width - 52f, 13f), thin ? "TREASURY LOW  ·  " + rate : rate, _treasuryRate);
+            GUI.Label(new Rect(r.x + 26f, r.y + 32f, r.width - 52f, 13f), rate, _treasuryRate);
             _treasuryRate.normal.textColor = prev;
         }
 
@@ -800,28 +798,31 @@ namespace SolarMajesty
             int bags = village != null ? village.Collectors.GoldInTransit : 0;
             int collectors = village != null ? village.Collectors.Count : 0;
             int daily = village != null ? village.DailyBuildingTax() : 0;
-            string line = $"TILLS {tills:N0}   ·   COLLECTORS {collectors} carrying {bags:N0}   ·   TAX {daily:N0}/day";
-            GUI.Label(r, line, _microCenter);
+            GUI.Label(r, HudLayout.LevyLine(tills, collectors, bags, daily), _microCenter);
         }
 
         private void DrawClockAndThreat(Rect r)
         {
             int sol = 1 + Mathf.FloorToInt((_loop.Mission != null ? _loop.Mission.MissionElapsed : 0f) / MajestyEconomy.DaySeconds);
+            HudLayout.ClockHeader(r, out var solRect, out var tagRect, out var speedRect);
             HudSkin.Icon(new Rect(r.x, r.y, 13f, 13f), UiIcons.Get(IconId.Sun), Gold);
-            GUI.Label(new Rect(r.x + 18f, r.y - 1f, r.width - 136f, 15f), $"SOL {sol}", _section);
-            GUI.Label(new Rect(r.x, r.y + 15f, r.width - 122f, 12f), ReplayRules.HudTag, _micro);
-            DrawSpeedControl(new Rect(r.xMax - 116f, r.y - 2f, 116f, 27f));
+            GUI.Label(solRect, $"SOL {sol}", _section);
+            GUI.Label(tagRect, ReplayRules.HudTag, _micro);
+            DrawSpeedControl(speedRect);
 
             int posted = _loop.Flags != null && _loop.Flags.Flags != null ? _loop.Flags.Flags.Count : 0;
-            GUI.Label(new Rect(r.x, r.y + 30f, 70f, 13f), "BOUNTIES", _caps);
-            GUI.Label(new Rect(r.x + 60f, r.y + 30f, r.width - 62f, 13f),
-                posted <= 0 ? "none posted" : $"{posted} posted", _microRight);
+            var bountyRow = new Rect(r.x, r.y + 30f, r.width, 13f);
+            HudLayout.StatLine(bountyRow, out var bountyLabel, out var bountyValue);
+            GUI.Label(bountyLabel, "BOUNTIES", _caps);
+            GUI.Label(bountyValue, posted <= 0 ? "none posted" : $"{posted} posted", _microRight);
 
             float threat = _loop.FocusedLocalThreat;
-            GUI.Label(new Rect(r.x, r.y + 44f, 60f, 13f), "THREAT", _caps);
+            var threatRow = new Rect(r.x, r.y + 44f, r.width, 13f);
+            HudLayout.StatLine(threatRow, out var threatLabel, out var threatValue);
+            GUI.Label(threatLabel, "THREAT", _caps);
             var prev = _microRight.normal.textColor;
             _microRight.normal.textColor = threat > 0.6f ? Alarm : threat > 0.3f ? Accent : TextMuted;
-            GUI.Label(new Rect(r.xMax - 44f, r.y + 44f, 42f, 13f), $"{threat * 100f:F0}%", _microRight);
+            GUI.Label(threatValue, $"{threat * 100f:F0}%", _microRight);
             _microRight.normal.textColor = prev;
             DrawSegments(new Rect(r.x, r.y + 59f, r.width - 2f, 4f), threat, 12);
             var rating = _loop.CurrentRating;
@@ -1043,21 +1044,21 @@ namespace SolarMajesty
             GUI.EndScrollView();
         }
 
-        private void DrawToolPopups(float dockTop)
+        private void DrawToolPopups()
         {
             if (_loop.ActiveTool == OverseerTool.Flag)
-                DrawFlagPopup(dockTop);
+                DrawFlagPopup();
             else if (_loop.ActiveTool == OverseerTool.Build)
-                DrawBuildPopup(dockTop);
+                DrawBuildPopup();
             else if (_loop.ActiveTool == OverseerTool.Orbital)
-                DrawOrbitalPopup(dockTop);
+                DrawOrbitalPopup();
         }
 
         /// <summary>
         /// Orbital support list (Majesty 2 ruler spells as satellite powers). Each row shows the
         /// base price at an uplink; the armed strip shows the live price under the cursor.
         /// </summary>
-        private void DrawOrbitalPopup(float dockTop)
+        private void DrawOrbitalPopup()
         {
             var orbital = _loop.Orbital;
             var input = _loop.OrbitalInput;
@@ -1072,14 +1073,13 @@ namespace SolarMajesty
                 string hint = wait > 0f
                     ? $"recharging {Mathf.CeilToInt(wait)} s"
                     : $"click the map · {input.CursorCost} EU here (x{input.CursorMultiplier:0} from uplink)";
-                DrawMinimizedToolStrip(OverseerTool.Orbital, dockTop, DockLeft() + 152f, 360f,
+                DrawMinimizedToolStrip(OverseerTool.Orbital, 360f,
                     armed.displayName.ToUpperInvariant(), hint, "N");
                 return;
             }
 
-            const float popupW = 360f;
             float popupH = 58f + powers.Length * 28f;
-            var rect = new Rect(DockLeft() + 152f, dockTop - 8f - popupH, popupW, popupH);
+            var rect = HudLayout.ToolPopup(_sw, _sh, 360f, popupH);
             _contentBottom = rect.y;
             var c = Panel(rect, "Orbital support");
             GUI.Label(new Rect(c.x, c.y, c.width, 13f),
@@ -1110,10 +1110,11 @@ namespace SolarMajesty
                     }
                 }
 
+                HudLayout.SplitRow(r.x, r.y, r.width, r.height, 8f, 80f, out var nameRect, out var costRect);
                 var nameStyle = on ? _onText : _action;
                 var prevName = nameStyle.normal.textColor;
                 if (!on && (locked || wait > 0f)) nameStyle.normal.textColor = TextMuted;
-                GUI.Label(new Rect(r.x + 8f, r.y, r.width - 96f, r.height), $"{p.displayName}  ·  {p.description}", nameStyle);
+                GUI.Label(nameRect, $"{p.displayName}  ·  {p.description}", nameStyle);
                 nameStyle.normal.textColor = prevName;
 
                 var costStyle = _microRight;
@@ -1127,7 +1128,7 @@ namespace SolarMajesty
                     right = $"{p.cost}+ EU";
                     if (p.cost > treasury) costStyle.normal.textColor = Alarm;
                 }
-                GUI.Label(new Rect(r.xMax - 88f, r.y, 82f, r.height), right, costStyle);
+                GUI.Label(costRect, right, costStyle);
                 costStyle.normal.textColor = prevCost;
 
                 Tooltip(r, locked
@@ -1137,21 +1138,18 @@ namespace SolarMajesty
             }
         }
 
-        private void DrawFlagPopup(float dockTop)
+        private void DrawFlagPopup()
         {
             var fp = _loop.FlagInput;
             if (fp == null) return;
 
             if (_flagMinimized)
             {
-                DrawMinimizedFlagStrip(fp, dockTop, DockLeft(), 300f);
+                DrawMinimizedFlagStrip(fp, 300f);
                 return;
             }
 
-            const float popupW = 300f;
-            const float popupH = 398f;
-            float left = DockLeft();
-            var rect = new Rect(left, dockTop - 8f - popupH, popupW, popupH);
+            var rect = HudLayout.ToolPopup(_sw, _sh, 300f, 398f);
             _contentBottom = rect.y;
             var c = Panel(rect, "Flag orders");
 
@@ -1170,8 +1168,9 @@ namespace SolarMajesty
             y += 4f;
             int metCost = SimpleEconomy.BountyMetalsCost(_loop.FlagBounty);
             bool canPay = fp.CanAffordSelectedBounty();
-            GUI.Label(new Rect(c.x, y, 60f, 24f), "BOUNTY", _micro);
-            GUI.Label(new Rect(c.x + 58f, y, 70f, 24f), $"${_loop.FlagBounty:F0}", _value);
+            HudLayout.StatLine(new Rect(c.x, y, 140f, 24f), out var bountyLabel, out var bountyValue);
+            GUI.Label(bountyLabel, "BOUNTY", _micro);
+            GUI.Label(bountyValue, $"${_loop.FlagBounty:F0}", _value);
             if (GUI.Button(new Rect(c.xMax - 58f, y + 2f, 26f, 20f), "−", _chipOff)) fp.NudgeBounty(-MajestyEconomy.FlagBountyStep);
             if (GUI.Button(new Rect(c.xMax - 28f, y + 2f, 26f, 20f), "+", _chipOff)) fp.NudgeBounty(MajestyEconomy.FlagBountyStep);
 
@@ -1246,7 +1245,7 @@ namespace SolarMajesty
             return r.yMax + 4f;
         }
 
-        private void DrawBuildPopup(float dockTop)
+        private void DrawBuildPopup()
         {
             var bp = _loop.BuildInput;
             if (bp == null || bp.Catalog == null) return;
@@ -1254,18 +1253,16 @@ namespace SolarMajesty
             if (_buildMinimized)
             {
                 string name = bp.Selected != null ? bp.Selected.displayName : "module";
-                DrawMinimizedToolStrip(OverseerTool.Build, dockTop, DockLeft() + 102f, 320f,
+                DrawMinimizedToolStrip(OverseerTool.Build, 320f,
                     name.ToUpperInvariant(), "click the map to place · click here for the list", "B");
                 return;
             }
 
             var visible = bp.VisibleIndices;
             int count = visible.Count;
-            const float popupW = 320f;
             float fullH = count * 28f;
             float popupH = 58f + Mathf.Min(336f, fullH);
-            float left = DockLeft() + 102f;
-            var rect = new Rect(left, dockTop - 8f - popupH, popupW, popupH);
+            var rect = HudLayout.ToolPopup(_sw, _sh, 320f, popupH);
             _contentBottom = rect.y;
             var c = Panel(rect, "Build catalog");
 
@@ -1301,19 +1298,18 @@ namespace SolarMajesty
                 }
 
                 GUI.Label(new Rect(r.x + 8f, r.y, 18f, r.height), BuildHotkeyLabel(slot), on ? _onText : _micro);
+                HudLayout.SplitRow(r.x, r.y, r.width, r.height, 26f, 80f, out var nameRect, out var costRect);
                 var nameStyle = on ? _onText : _action;
                 var prevColor = nameStyle.normal.textColor;
                 if (!on && (!canAfford || locked)) nameStyle.normal.textColor = TextMuted;
-                GUI.Label(new Rect(r.x + 26f, r.y, r.width - 110f, r.height),
-                    BuildRowLabel(b), nameStyle);
+                GUI.Label(nameRect, BuildRowLabel(b), nameStyle);
                 nameStyle.normal.textColor = prevColor;
 
                 var costStyle = _microRight;
                 var prevCost = costStyle.normal.textColor;
                 if (locked) costStyle.normal.textColor = TextMuted;
                 else if (!canAfford) costStyle.normal.textColor = Alarm;
-                GUI.Label(new Rect(r.xMax - 92f, r.y, 86f, r.height),
-                    locked ? "NEED TECH" : FormatBuildCost(CostOf(b)), costStyle);
+                GUI.Label(costRect, locked ? "NEED TECH" : FormatBuildCost(CostOf(b)), costStyle);
                 costStyle.normal.textColor = prevCost;
 
                 rowY += 28f;
@@ -1362,10 +1358,9 @@ namespace SolarMajesty
         /// (as does B / G). The map stays clear for the placing click.
         /// </summary>
         private void DrawMinimizedToolStrip(
-            OverseerTool tool, float dockTop, float left, float width, string title, string hint, string key)
+            OverseerTool tool, float width, string title, string hint, string key)
         {
-            const float h = 36f;
-            var rect = new Rect(left, dockTop - 8f - h, width, h);
+            var rect = HudLayout.ToolPopup(_sw, _sh, width, 36f);
             _contentBottom = rect.y;
             bool hot = rect.Contains(Event.current.mousePosition);
             var c = Panel(rect, null);
@@ -1382,10 +1377,9 @@ namespace SolarMajesty
         }
 
         /// <summary>Collapsed flag catalog: the armed flag, its bounty with − / +, and a way back to the list.</summary>
-        private void DrawMinimizedFlagStrip(FlagPlacementInput fp, float dockTop, float left, float width)
+        private void DrawMinimizedFlagStrip(FlagPlacementInput fp, float width)
         {
-            const float h = 36f;
-            var rect = new Rect(left, dockTop - 8f - h, width, h);
+            var rect = HudLayout.ToolPopup(_sw, _sh, width, 36f);
             _contentBottom = rect.y;
             var c = Panel(rect, null);
             HudSkin.Pill(new Rect(rect.x + 6f, rect.y + 9f, 3f, rect.height - 18f), Accent);
@@ -1400,11 +1394,11 @@ namespace SolarMajesty
             _number.alignment = TextAnchor.MiddleRight;
             var prevC = _number.normal.textColor;
             _number.normal.textColor = fp.CanAffordSelectedBounty() ? HudSkin.GoldBright : Alarm;
-            GUI.Label(new Rect(minus.x - 64f, rect.y, 60f, rect.height), $"${_loop.FlagBounty:F0}", _number);
+            GUI.Label(new Rect(minus.x - 68f, rect.y, 60f, rect.height), $"${_loop.FlagBounty:F0}", _number);
             _number.alignment = prev;
             _number.normal.textColor = prevC;
 
-            var open = new Rect(rect.x, rect.y, minus.x - 66f - rect.x, rect.height);
+            var open = new Rect(rect.x, rect.y, minus.x - 76f - rect.x, rect.height);
             bool hot = open.Contains(Event.current.mousePosition);
             if (hot) HudSkin.RuleH(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Gold);
             GUI.Label(new Rect(c.x, c.y - 6f, open.width - Pad, 18f), FlagStripLabel(fp), _value);
@@ -1546,8 +1540,9 @@ namespace SolarMajesty
         private void Stake(Rect r, bool done, string label, string value)
         {
             CheckBox(new Rect(r.x, r.y + 4f, 11f, 11f), done);
-            GUI.Label(new Rect(r.x + 19f, r.y, r.width - 160f, r.height), label, done ? _muted : _body);
-            GUI.Label(new Rect(r.xMax - 140f, r.y, 140f, r.height), value, _microRight);
+            HudLayout.Stake(r, out var labelRect, out var valueRect);
+            GUI.Label(labelRect, label, done ? _muted : _body);
+            GUI.Label(valueRect, value, _microRight);
         }
 
         private void DrawInspectPanel()
@@ -3328,12 +3323,8 @@ namespace SolarMajesty
             }
             // Top centre, like Majesty 2's advisor line — build/flag catalogs own the space above
             // the console, and the objectives panel owns the top-right corner.
-            float left = M;
-            float right = _sw - M - 300f - 12f;
-            float w = Mathf.Min(720f, right - left);
             float barH = DemoSettings.FirstHourDemo ? 60f : 52f;
-            float x = Mathf.Clamp((_sw - w) * 0.5f, left, Mathf.Max(left, right - w));
-            var rect = new Rect(x, M, w, barH);
+            HudLayout.Tutorial(_sw, barH, out var rect, out var textRect, out var skipRect);
             _tutorialBottom = rect.yMax;
             var c = Panel(rect, null);
             HudSkin.RuleH(new Rect(rect.x, rect.y, rect.width, 1f), Accent);
@@ -3345,9 +3336,9 @@ namespace SolarMajesty
             HudSkin.Icon(HudSkin.Expand(medal, -7f), UiIcons.Get(IconId.Sun), HudSkin.GoldBright);
             var prevText = _wrap.normal.textColor;
             _wrap.normal.textColor = TextPrimary;
-            GUI.Label(new Rect(c.x + 42f, c.y, c.width - 128f, barH - 16f), line, _wrap);
+            GUI.Label(textRect, line, _wrap);
             _wrap.normal.textColor = prevText;
-            if (GUI.Button(new Rect(c.xMax - 72f, rect.center.y - 13f, 72f, 26f), "SKIP", _chipOff))
+            if (GUI.Button(skipRect, "SKIP", _chipOff))
                 _loop.SkipTutorial();
         }
 
