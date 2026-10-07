@@ -394,6 +394,7 @@ namespace SolarMajesty
         private readonly List<DustStalkerAgent> _stalkers = new List<DustStalkerAgent>();
         private readonly List<HeroParty> _parties = new List<HeroParty>(4);
         private int _nextPartyId = 1;
+        private int _bootSlot = -1;
         private FlagPlacementInput _flagInput;
         private BuildingPlacementInput _buildInput;
         private IsometricCameraController _isoCam;
@@ -789,7 +790,34 @@ namespace SolarMajesty
             Achievements.Earned += OnAchievementEarned;
             CampaignProgress.Ensure();
             celestialBody = BodySeed.LoadSavedBody();
-            if (SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var bootSave))
+            bool freshCampaign = CampaignSlots.ConsumeFresh();
+            int pendingSlot = freshCampaign ? -1 : CampaignSlots.ConsumePendingLoad();
+            SaveGame pendingSave = null;
+            bool pendingOk = pendingSlot >= 0 && SaveSystem.TryRead(pendingSlot, out pendingSave);
+            _bootSlot = -1;
+            if (freshCampaign)
+            {
+                DemoSettings.SaveExists = false;
+            }
+            else if (pendingOk)
+            {
+                _bootSlot = pendingSlot;
+                DemoSettings.SaveExists = true;
+                CampaignSlots.AdoptStamp(pendingSave.campaignStamp);
+                celestialBody = (CelestialBodyId)pendingSave.body;
+                CampaignProgress.UnlockThrough((CelestialBodyId)pendingSave.highestUnlocked);
+                CampaignProgress.UnlockThrough((CelestialBodyId)pendingSave.body);
+                ReplayRules.Restore(pendingSave.replay);
+                if (pendingSave.rosterBlob != null)
+                {
+                    DemoSettings.FirstHourDemo = pendingSave.firstHourDemo;
+                    DemoSettings.TutorialDone = pendingSave.tutorialDone;
+                }
+                else if (celestialBody != CelestialBodyId.Earth)
+                    DemoSettings.FirstHourDemo = false;
+            }
+            else if (SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var bootSave)
+                     && CampaignSlots.LiveSnapshotMatches(bootSave.campaignStamp))
             {
                 DemoSettings.SaveExists = true;
                 CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.highestUnlocked);
@@ -806,12 +834,12 @@ namespace SolarMajesty
                 else if (celestialBody != CelestialBodyId.Earth)
                     DemoSettings.FirstHourDemo = false;
             }
-            else if (SaveSystem.IsNewerVersion(SaveSystem.AutosaveSlot))
+            else if (string.IsNullOrEmpty(CampaignSlots.Stamp) && SaveSystem.IsNewerVersion(SaveSystem.AutosaveSlot))
             {
                 DemoSettings.SaveExists = true;
                 DemoSettings.SaveLoadNotice = "This colony was saved by a newer game version. Update the game to Continue; your save is unchanged.";
             }
-            else if (SaveSystem.Exists(SaveSystem.AutosaveSlot))
+            else if (string.IsNullOrEmpty(CampaignSlots.Stamp) && SaveSystem.Exists(SaveSystem.AutosaveSlot))
             {
                 DemoSettings.SaveExists = true;
                 DemoSettings.SaveLoadNotice = "We couldn't read this colony or its backup. Your save files are unchanged.";
@@ -823,10 +851,16 @@ namespace SolarMajesty
             IndustrialArtDressing.BindBody(_body);
             BodySeed.Ensure(celestialBody, worldSeedOverride);
             // Choose the world seed before generating its terrain, nodes and lairs.
-            if (worldSeedOverride == 0 && SaveSystem.TryReadWorld(celestialBody, out var worldSave))
+            if (pendingOk)
+                BodySeed.SetAndPersist(pendingSave.seed);
+            else if (!freshCampaign && worldSeedOverride == 0
+                     && SaveSystem.TryReadWorld(celestialBody, out var worldSave)
+                     && CampaignSlots.LiveSnapshotMatches(worldSave.campaignStamp))
                 BodySeed.SetAndPersist(worldSave.seed);
-            else if (worldSeedOverride == 0 && SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var latestSave)
-                     && latestSave.body == (int)celestialBody)
+            else if (!freshCampaign && worldSeedOverride == 0
+                     && SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var latestSave)
+                     && latestSave.body == (int)celestialBody
+                     && CampaignSlots.LiveSnapshotMatches(latestSave.campaignStamp))
                 BodySeed.SetAndPersist(latestSave.seed);
 
             EnsureSceneRefs();
@@ -944,13 +978,14 @@ namespace SolarMajesty
 
         public void EnterPlaying(bool loadStockpile)
         {
-            if (loadStockpile && SaveSystem.IsNewerVersion(SaveSystem.AutosaveSlot))
+            bool guardAutosave = _bootSlot < 0 && string.IsNullOrEmpty(CampaignSlots.Stamp);
+            if (loadStockpile && guardAutosave && SaveSystem.IsNewerVersion(SaveSystem.AutosaveSlot))
             {
                 DemoSettings.SaveLoadNotice = "This colony was saved by a newer game version. Update the game to Continue; your save is unchanged.";
                 EnterTitle();
                 return;
             }
-            if (loadStockpile && SaveSystem.Exists(SaveSystem.AutosaveSlot) &&
+            if (loadStockpile && guardAutosave && SaveSystem.Exists(SaveSystem.AutosaveSlot) &&
                 !SaveSystem.TryRead(SaveSystem.AutosaveSlot, out _))
             {
                 DemoSettings.SaveLoadNotice = "We couldn't read this colony or its backup. Your save files are unchanged.";
@@ -963,12 +998,18 @@ namespace SolarMajesty
             Time.timeScale = SimSpeed.TimeScale;
             int piecesBefore = Placer != null ? Placer.Pieces.Count : 0;
             bool restoredSave = false;
+            SaveGame latest = null;
             if (loadStockpile)
             {
-                SaveSystem.TryRead(SaveSystem.AutosaveSlot, out SaveGame latest);
+                if (_bootSlot >= 0)
+                    SaveSystem.TryRead(_bootSlot, out latest);
+                else if (SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var auto)
+                         && CampaignSlots.LiveSnapshotMatches(auto.campaignStamp))
+                    latest = auto;
                 SaveGame save = latest != null && latest.MatchesWorld(celestialBody, BodySeed.Current) ? latest : null;
                 if (save == null && SaveSystem.TryReadWorld(celestialBody, out var destination)
-                                 && destination.MatchesWorld(celestialBody, BodySeed.Current))
+                                 && destination.MatchesWorld(celestialBody, BodySeed.Current)
+                                 && CampaignSlots.LiveSnapshotMatches(destination.campaignStamp))
                 {
                     save = destination;
                     // Resources and research travel with the campaign; colony state stays on its world.
@@ -998,10 +1039,11 @@ namespace SolarMajesty
                     RetryUnpaidCorpses();
                 }
             }
+            _bootSlot = -1;
             if (!restoredSave)
             {
-                if (loadStockpile && SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var campaignSave))
-                    ReplayRules.ApplyIronmanFromSave(campaignSave.replay);
+                if (loadStockpile && latest != null)
+                    ReplayRules.ApplyIronmanFromSave(latest.replay);
                 else
                     ReplayRules.LatchRun();
             }
@@ -1043,11 +1085,13 @@ namespace SolarMajesty
 
         public void StartNewGame() => StartNewGame(CampaignProgress.NewGameBody);
 
-        /// <summary>Wipes the continue slot and returns to the solar-system title.</summary>
-        public void WipeCampaignToTitle()
+        /// <summary>
+        /// Returns to the title after replacing one slot. Other slots stay on disk.
+        /// </summary>
+        public void WipeCampaignToTitle(int slot = 1)
         {
             CampaignProgress.ResetCampaign();
-            SaveSystem.DeleteAll();
+            BeginFreshFiles(slot);
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
@@ -1056,12 +1100,12 @@ namespace SolarMajesty
         }
 
         /// <summary>Start a fresh campaign on the selected world; Earth is the default.</summary>
-        public void StartNewGame(CelestialBodyId drop)
+        public void StartNewGame(CelestialBodyId drop, int slot = 1)
         {
             if (!CampaignProgress.IsOnSpine(drop))
                 drop = CampaignProgress.NewGameBody;
             CampaignProgress.BeginNewGame(drop);
-            SaveSystem.DeleteAll();
+            BeginFreshFiles(slot);
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             if (drop == CelestialBodyId.Mars)
@@ -1074,12 +1118,12 @@ namespace SolarMajesty
             ReloadActiveScene();
         }
 
-        public void StartNewGameOn(CelestialBodyId body)
+        public void StartNewGameOn(CelestialBodyId body, int slot = 1)
         {
             ResearchManager.WipeUnlocks();
             CampaignProgress.ResetCampaign();
             CampaignProgress.UnlockThrough(body);
-            SaveSystem.DeleteAll();
+            BeginFreshFiles(slot);
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
@@ -1087,6 +1131,13 @@ namespace SolarMajesty
             DemoSettings.RequestBootIntoPlay();
             BodySeed.SetBody(body);
             ReloadActiveScene();
+        }
+
+        /// <summary>Delete the chosen slot only, and stamp this boot as a new campaign.</summary>
+        private void BeginFreshFiles(int slot)
+        {
+            CampaignSlots.ReplaceChosenSlot(slot);
+            CampaignSlots.BeginFresh(slot);
         }
 
         /// <summary>Title orrery click. Never posts flags or specialist orders.</summary>
@@ -1116,7 +1167,10 @@ namespace SolarMajesty
                         3.5f);
                     return;
                 case SolarSystemTitlePick.Outcome.StartNewOnBody:
-                    StartNewGameOn(body);
+                    if (_overseerHud != null)
+                        _overseerHud.PromptNewCampaign(body, unlockThrough: true);
+                    else
+                        StartNewGameOn(body, 1);
                     return;
                 case SolarSystemTitlePick.Outcome.ContinueCurrent:
                     ContinueGame();
@@ -1613,6 +1667,9 @@ namespace SolarMajesty
                         ApplyTool(OverseerTool.None);
                         break;
                     case SessionHotkeys.EscapeAction.TogglePause:
+                        if (Screen == DemoScreen.Paused && _overseerHud != null &&
+                            _overseerHud.ConsumePauseSubmenuEscape())
+                            break;
                         TogglePause();
                         break;
                 }
@@ -5546,6 +5603,9 @@ namespace SolarMajesty
             var snapshot = CaptureSave("autosave");
             SaveSystem.WriteWorld(snapshot);
             SaveSystem.Write(SaveSystem.AutosaveSlot, snapshot);
+            int home = CampaignSlots.ActiveSlot;
+            if (CampaignSlots.IsPlayerSlot(home))
+                SaveSystem.Write(home, snapshot);
         }
 
         /// <summary>Player-triggered save into one of the numbered slots.</summary>
@@ -5562,6 +5622,30 @@ namespace SolarMajesty
             return ok;
         }
 
+        /// <summary>Load a slot through the existing snapshot. Other slots are left on disk.</summary>
+        public bool LoadFromSlot(int slot)
+        {
+            if (ReplayRules.BlocksManualSavesAndReloads)
+            {
+                LogOverseer("Ironman — reloads are closed.");
+                return false;
+            }
+            if (slot < 0 || slot >= SaveSystem.SlotCount || !SaveSystem.TryRead(slot, out var save))
+            {
+                LogOverseer("That slot is empty.");
+                return false;
+            }
+            CampaignSlots.AdoptStamp(save.campaignStamp);
+            CampaignSlots.MarkPendingLoad(slot);
+            BodySeed.SetBody((CelestialBodyId)save.body);
+            BodySeed.SetAndPersist(save.seed);
+            DemoSettings.SaveExists = true;
+            DemoSettings.RequestBootIntoPlay();
+            PlaytestTelemetry.Record("load", "slot", slot);
+            ReloadActiveScene();
+            return true;
+        }
+
         /// <summary>
         /// Continue autosave / numbered-slot capture: campus, stockpile, research, posted flags
         /// (escrow + remaining work), specialist combat state, and living fauna.
@@ -5572,6 +5656,7 @@ namespace SolarMajesty
             var save = new SaveGame
             {
                 label = label ?? "",
+                campaignStamp = CampaignSlots.Stamp ?? "",
                 playSeconds = _playSeconds,
                 simSteps = _sim.TotalSteps,
                 body = (int)celestialBody,

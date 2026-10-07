@@ -1,3 +1,4 @@
+using System.IO;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -74,6 +75,64 @@ namespace SolarMajesty.Tests
                 else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
                 PlayerPrefs.Save();
             }
+        }
+
+        [Test]
+        public void NewCampaign_ReplacesOnlyTheChosenSlot()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "sm-saves-" + System.Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            string previous = SaveSystem.DirectoryOverride;
+            try
+            {
+                SaveSystem.DirectoryOverride = root;
+                for (int i = 0; i < SaveSystem.SlotCount; i++)
+                {
+                    Assert.IsTrue(SaveSystem.Write(i, new SaveGame
+                    {
+                        body = (int)CelestialBodyId.Earth,
+                        seed = 1000 + i,
+                        label = "slot" + i
+                    }));
+                }
+                Assert.IsTrue(SaveSystem.WriteWorld(new SaveGame
+                {
+                    body = (int)CelestialBodyId.Earth,
+                    seed = 50,
+                    label = "earth"
+                }));
+
+                Assert.AreEqual(2, CampaignSlots.SlotReplacedByNewCampaign(2));
+                Assert.AreEqual(1, CampaignSlots.SlotReplacedByNewCampaign(0));
+                Assert.AreEqual(1, CampaignSlots.SlotReplacedByNewCampaign(99));
+                CampaignSlots.ReplaceChosenSlot(2);
+
+                Assert.IsFalse(SaveSystem.Exists(2), "the chosen slot is the one that is replaced");
+                Assert.IsTrue(SaveSystem.Exists(0));
+                Assert.IsTrue(SaveSystem.Exists(1));
+                Assert.IsTrue(SaveSystem.Exists(3));
+                Assert.IsTrue(SaveSystem.TryReadWorld(CelestialBodyId.Earth, out var world));
+                Assert.AreEqual("earth", world.label);
+                Assert.IsTrue(CampaignSlots.StampsMatch(null, "legacy"));
+                Assert.IsTrue(CampaignSlots.StampsMatch("", "legacy"));
+                Assert.IsTrue(CampaignSlots.StampsMatch("abc", "abc"));
+                Assert.IsFalse(CampaignSlots.StampsMatch("abc", ""));
+                Assert.IsFalse(CampaignSlots.StampsMatch("abc", "def"));
+            }
+            finally
+            {
+                SaveSystem.DirectoryOverride = previous;
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
+        [Test]
+        public void GameLoop_NewCampaignDoesNotDeleteEverySave()
+        {
+            string path = Path.Combine(Application.dataPath, "Scripts/Runtime/GameLoop.cs");
+            string text = File.ReadAllText(path);
+            Assert.IsFalse(text.Contains("SaveSystem.DeleteAll("),
+                "New Campaign must not wipe every slot");
         }
 
         [Test]

@@ -56,6 +56,11 @@ namespace SolarMajesty
         private float _hudScale = 1f;
         private bool _powerAlarmLatched;
         private bool _confirmNewGame;
+        private bool _titleLoad;
+        private bool _pauseSlots;
+        private bool _pauseSlotsAreLoad;
+        private bool _pendingUnlockThrough;
+        private int _newCampaignSlot = 1;
         private CelestialBodyId _pendingNewGameBody = CelestialBodyId.Earth;
         private float _toastStart;
         private ColonyStructure _cardFor;
@@ -124,7 +129,24 @@ namespace SolarMajesty
             return false;
         }
 
-        public bool TitleConfirmOpen => _confirmNewGame;
+        public bool TitleConfirmOpen => _confirmNewGame || _titleLoad;
+
+        /// <summary>Esc on the pause screen closes Save/Load before it resumes.</summary>
+        public bool ConsumePauseSubmenuEscape()
+        {
+            if (!_pauseSlots) return false;
+            _pauseSlots = false;
+            return true;
+        }
+
+        public void PromptNewCampaign(CelestialBodyId body, bool unlockThrough)
+        {
+            _pendingNewGameBody = body;
+            _pendingUnlockThrough = unlockThrough;
+            _newCampaignSlot = CampaignSlots.SlotReplacedByNewCampaign(_newCampaignSlot);
+            _titleLoad = false;
+            _confirmNewGame = true;
+        }
 
         /// <summary>Bottom of the right-hand column (objectives, research) in HUD units; the alert feed stacks under it.</summary>
         public float RightColumnBottom { get; private set; } = 96f;
@@ -167,6 +189,8 @@ namespace SolarMajesty
         public void OnSessionPlaying()
         {
             _confirmNewGame = false;
+            _titleLoad = false;
+            _pauseSlots = false;
             if (StillCaptureHold.Active) return;
             if (_loop == null || !_loop.StartsEmpty) return;
             // W2 arrival cuts + advisor travel toasts replace the stale Earth briefing.
@@ -2773,9 +2797,9 @@ namespace SolarMajesty
 
             DrawTitlePlanetLabels();
 
-            if (_confirmNewGame)
+            if (_confirmNewGame || _titleLoad)
             {
-                DrawTitleConfirm();
+                DrawCampaignDialog(_confirmNewGame);
                 DrawToast();
                 return;
             }
@@ -2790,16 +2814,15 @@ namespace SolarMajesty
             if (TitleButton(new Rect(x, y, bw, bh), "SETTINGS", false))
                 _loop.OpenSettings();
             y -= bh + 6f;
+            if (TitleButton(new Rect(x, y, bw, bh), "LOAD", false))
+                _titleLoad = true;
+            y -= bh + 6f;
             if (TitleButton(new Rect(x, y, bw, bh), "NEW CAMPAIGN", !DemoSettings.SaveExists))
             {
-                var drop = CampaignProgress.NewGameBody;
-                if (DemoSettings.SaveExists)
-                {
-                    _pendingNewGameBody = drop;
-                    _confirmNewGame = true;
-                }
-                else
-                    _loop.StartNewGame(drop);
+                _pendingNewGameBody = CampaignProgress.NewGameBody;
+                _pendingUnlockThrough = false;
+                _newCampaignSlot = 1;
+                _confirmNewGame = true;
             }
             if (DemoSettings.SaveExists)
             {
@@ -2883,22 +2906,56 @@ namespace SolarMajesty
             }
         }
 
-        private void DrawTitleConfirm()
+        private void DrawCampaignDialog(bool newCampaign)
         {
-            var rect = new Rect(M + 8f, _sh - M - 8f - 150f, 360f, 150f);
-            var c = Panel(rect, "New campaign");
-            GUI.Label(new Rect(c.x, c.y, c.width, 44f), CampaignProgress.DropConfirmDetail(_pendingNewGameBody), _wrap);
-            if (GUI.Button(new Rect(c.x, c.y + 50f, c.width, 30f),
-                    CampaignProgress.DropConfirmLabel(_pendingNewGameBody), _chipOn))
+            float h = newCampaign ? 400f : 360f;
+            var rect = new Rect((_sw - 460f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 460f, h);
+            var c = Panel(rect, newCampaign ? "New campaign" : "Load");
+            HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
+            float y = WrapBlock(c, c.y, newCampaign
+                ? $"Drop on {_pendingNewGameBody}. Only the chosen slot is replaced. Other saves stay. Autosave will follow this new colony — save the current one first if you still need it."
+                : "Load a saved colony. Other slots stay on disk.");
+            var slots = SaveSystem.ListSlots();
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var info = slots[i];
+                if (newCampaign && info.Slot == SaveSystem.AutosaveSlot) continue;
+                bool selected = newCampaign && info.Slot == _newCampaignSlot;
+                if (GUI.Button(new Rect(c.x, y, c.width, 28f), SlotButtonLabel(info), selected ? _chipOn : _chipOff))
+                {
+                    if (newCampaign)
+                        _newCampaignSlot = info.Slot;
+                    else if (info.Occupied)
+                        _loop.LoadFromSlot(info.Slot);
+                    else
+                        Notify("That slot is empty.", 2.2f);
+                }
+                y += 34f;
+            }
+            y += 6f;
+            if (newCampaign && GUI.Button(new Rect(c.x, y, c.width, 32f),
+                    $"START IN SLOT {_newCampaignSlot}", _chipOn))
+            {
+                int slot = _newCampaignSlot;
+                var body = _pendingNewGameBody;
+                bool unlock = _pendingUnlockThrough;
+                _confirmNewGame = false;
+                if (unlock)
+                    _loop.StartNewGameOn(body, slot);
+                else
+                    _loop.StartNewGame(body, slot);
+            }
+            if (!newCampaign) y -= 4f;
+            float backY = newCampaign ? y + 40f : y;
+            if (GUI.Button(new Rect(c.x, backY, c.width, 28f), "BACK  ·  Esc", _chipOff))
             {
                 _confirmNewGame = false;
-                _loop.StartNewGame(_pendingNewGameBody);
+                _titleLoad = false;
             }
-            if (GUI.Button(new Rect(c.x, c.y + 86f, c.width, 24f), "BACK  ·  Esc", _chipOff))
-                _confirmNewGame = false;
             if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
             {
                 _confirmNewGame = false;
+                _titleLoad = false;
                 Event.current.Use();
             }
         }
@@ -2906,30 +2963,101 @@ namespace SolarMajesty
         private void DrawPause()
         {
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f), 0.5f);
-            var rect = new Rect((_sw - 420f) * 0.5f, _sh * 0.22f, 420f, 278f);
+            if (_pauseSlots)
+            {
+                DrawPauseSlots();
+                return;
+            }
+
+            bool iron = ReplayRules.BlocksManualSavesAndReloads;
+            float h = iron ? 340f : 400f;
+            var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 440f, h);
             var c = Panel(rect, "Paused");
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
-            GUI.Label(new Rect(c.x, c.y, c.width, 28f),
-                "Simulation frozen. Autosave keeps this body's campus, stockpile, and research.",
-                _wrap);
-            if (GUI.Button(new Rect(c.x, c.y + 36f, c.width, 32f), "RESUME  ·  Esc", _chipOn))
+            float y = WrapBlock(c, c.y,
+                "Simulation frozen. Autosave follows this colony. Save keeps a copy in a numbered slot.");
+            if (GUI.Button(new Rect(c.x, y, c.width, 32f), "RESUME  ·  Esc", _chipOn))
                 _loop.ResumePlay();
-            if (GUI.Button(new Rect(c.x, c.y + 76f, c.width, 32f), "SETTINGS", _chipOff))
-                _loop.OpenSettings();
-            if (GUI.Button(new Rect(c.x, c.y + 116f, c.width, 32f), "TITLE", _chipOff))
-                _loop.ReturnToTitle();
-            if (ReplayRules.BlocksManualSavesAndReloads)
+            y += 40f;
+            if (iron)
             {
-                GUI.Label(new Rect(c.x, c.y + 162f, c.width, 20f),
-                    "IRONMAN — no abandon, no new seed.", _muted);
+                GUI.Label(new Rect(c.x, y, c.width, 18f), "IRONMAN — no manual save or load.", _muted);
+                y += 26f;
             }
-            else if (GUI.Button(new Rect(c.x, c.y + 156f, c.width, 32f), "ABANDON BODY  ·  new seed", _chipOff))
+            else
+            {
+                float half = (c.width - 8f) * 0.5f;
+                if (GUI.Button(new Rect(c.x, y, half, 32f), "SAVE", _chipOff))
+                {
+                    _pauseSlots = true;
+                    _pauseSlotsAreLoad = false;
+                }
+                if (GUI.Button(new Rect(c.x + half + 8f, y, half, 32f), "LOAD", _chipOff))
+                {
+                    _pauseSlots = true;
+                    _pauseSlotsAreLoad = true;
+                }
+                y += 40f;
+            }
+            if (GUI.Button(new Rect(c.x, y, c.width, 32f), "SETTINGS", _chipOff))
+                _loop.OpenSettings();
+            y += 40f;
+            if (GUI.Button(new Rect(c.x, y, c.width, 32f), "TITLE", _chipOff))
+                _loop.ReturnToTitle();
+            y += 40f;
+            if (iron)
+            {
+                GUI.Label(new Rect(c.x, y, c.width, 18f), "IRONMAN — no abandon, no new seed.", _muted);
+                y += 26f;
+            }
+            else if (GUI.Button(new Rect(c.x, y, c.width, 32f), "ABANDON BODY  ·  new seed", _chipOff))
             {
                 DemoSettings.RequestBootIntoPlay();
                 _loop.RestartMission();
             }
-            if (GUI.Button(new Rect(c.x, c.y + 196f, c.width, 32f), "QUIT", _chipOff))
+            if (!iron) y += 40f;
+            if (GUI.Button(new Rect(c.x, y, c.width, 32f), "QUIT", _chipOff))
                 _loop.QuitDemo();
+        }
+
+        private void DrawPauseSlots()
+        {
+            float h = _pauseSlotsAreLoad ? 340f : 300f;
+            var rect = new Rect((_sw - 480f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 480f, h);
+            var c = Panel(rect, _pauseSlotsAreLoad ? "Load" : "Save");
+            HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
+            float y = WrapBlock(c, c.y, _pauseSlotsAreLoad
+                ? "Load a colony. Other slots stay on disk."
+                : "Write this colony into a slot. Other slots stay.");
+            var slots = SaveSystem.ListSlots();
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var info = slots[i];
+                if (!_pauseSlotsAreLoad && info.Slot == SaveSystem.AutosaveSlot) continue;
+                if (GUI.Button(new Rect(c.x, y, c.width, 28f), SlotButtonLabel(info), _chipOff))
+                {
+                    if (_pauseSlotsAreLoad)
+                    {
+                        if (info.Occupied) _loop.LoadFromSlot(info.Slot);
+                        else Notify("That slot is empty.", 2.2f);
+                    }
+                    else if (_loop.SaveToSlot(info.Slot))
+                        _pauseSlots = false;
+                }
+                y += 34f;
+            }
+            y += 6f;
+            if (GUI.Button(new Rect(c.x, y, c.width, 28f), "BACK  ·  Esc", _chipOn))
+                _pauseSlots = false;
+        }
+
+        private static string SlotButtonLabel(SaveSlotInfo info)
+        {
+            if (!info.Occupied || string.IsNullOrEmpty(info.Summary))
+                return $"{info.Label}  ·  empty";
+            string summary = info.Summary;
+            if (summary.Length > 52) summary = summary.Substring(0, 51) + "…";
+            return $"{info.Label}  ·  {summary}";
         }
 
         private void DrawSettings()

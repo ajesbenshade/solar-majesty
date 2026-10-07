@@ -186,10 +186,10 @@ namespace SolarMajesty
 
         public static string DropButtonLabel(CelestialBodyId drop) => $"NEW GAME  ·  {drop} drop";
 
-        public static string DropConfirmLabel(CelestialBodyId drop) => $"WIPE AND DROP {drop.ToString().ToUpperInvariant()}";
+        public static string DropConfirmLabel(CelestialBodyId drop) => $"START  ·  {drop.ToString().ToUpperInvariant()}";
 
         public static string DropConfirmDetail(CelestialBodyId drop) =>
-            $"This wipes the continue slot and campaign unlocks, then drops you on {drop}.";
+            $"Starts a new campaign on {drop}. Pick a slot — only that slot is replaced. Other saves stay.";
 
         /// <summary>EditMode helper. Clears campaign prefs including the veteran Luna-hour flag.</summary>
         public static void ResetAllForTests()
