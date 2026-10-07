@@ -26,6 +26,13 @@ namespace SolarMajesty
 
         private static int _index = NormalIndex;
 
+        /// <summary>
+        /// Continue/Load forced the next resume to 1×. That resume applies the pace in memory
+        /// and must not overwrite the stored preference. Cleared by the resume itself, or by
+        /// an explicit speed change.
+        /// </summary>
+        private static bool _resumeWithoutPersist;
+
         /// <summary>Index into <see cref="Multipliers"/>.</summary>
         public static int Index => _index;
 
@@ -51,15 +58,8 @@ namespace SolarMajesty
             return m <= 0f ? "HOLD" : $"{m:0.##}×";
         }
 
-        public static void Set(int index)
-        {
-            _index = Mathf.Clamp(index, 0, Multipliers.Length - 1);
-            if (_index > 0)
-            {
-                LastRunningIndex = _index;
-                PlayerPrefs.SetInt(PrefsKey, _index);
-            }
-        }
+        /// <summary>An explicit speed choice (keys or the HUD). Writes the preference.</summary>
+        public static void Set(int index) => Apply(index, persist: true);
 
         /// <summary>One step faster; from the hold, resumes at the speed the player was running.</summary>
         public static void Faster() => Set(IsPaused ? LastRunningIndex : _index + 1);
@@ -67,16 +67,31 @@ namespace SolarMajesty
         /// <summary>One step slower, stopping at the slowest running speed — the hold is Space.</summary>
         public static void Slower() => Set(Mathf.Max(1, _index - 1));
 
-        public static void TogglePause() => Set(IsPaused ? LastRunningIndex : 0);
+        public static void TogglePause()
+        {
+            if (IsPaused)
+                Resume();
+            else
+                Set(0);
+        }
 
-        /// <summary>Resume at the player's last chosen speed (used when leaving a menu).</summary>
-        public static void Resume() => Set(LastRunningIndex);
+        /// <summary>
+        /// Resume at the pace <see cref="LastRunningIndex"/> names. After Continue/Load that is
+        /// 1× and the stored fast-forward is left alone. A later key or button still saves.
+        /// </summary>
+        public static void Resume()
+        {
+            bool persist = !_resumeWithoutPersist;
+            _resumeWithoutPersist = false;
+            Apply(LastRunningIndex, persist);
+        }
 
         /// <summary>Back to 1× without touching the stored preference.</summary>
         public static void ResetToNormal()
         {
             _index = NormalIndex;
             LastRunningIndex = NormalIndex;
+            _resumeWithoutPersist = false;
         }
 
         /// <summary>
@@ -87,6 +102,21 @@ namespace SolarMajesty
         {
             LastRunningIndex = NormalIndex;
             _index = 0;
+            _resumeWithoutPersist = true;
+        }
+
+        private static void Apply(int index, bool persist)
+        {
+            _index = Mathf.Clamp(index, 0, Multipliers.Length - 1);
+            if (_index <= 0)
+                return;
+            LastRunningIndex = _index;
+            // Choosing a pace (comma, period, or a speed button) replaces the saved one.
+            // Resuming the Continue hold does not.
+            if (!persist)
+                return;
+            _resumeWithoutPersist = false;
+            PlayerPrefs.SetInt(PrefsKey, _index);
         }
 
         /// <summary>The player's saved speed, so a new session starts at the pace they like.</summary>
@@ -95,6 +125,7 @@ namespace SolarMajesty
             int saved = PlayerPrefs.GetInt(PrefsKey, NormalIndex);
             LastRunningIndex = Mathf.Clamp(saved, 1, Multipliers.Length - 1);
             _index = LastRunningIndex;
+            _resumeWithoutPersist = false;
         }
     }
 }
