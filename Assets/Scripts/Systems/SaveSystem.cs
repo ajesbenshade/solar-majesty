@@ -19,8 +19,17 @@ namespace SolarMajesty
         private const string FolderName = "Saves";
         private const string Extension = ".json";
 
+        /// <summary>
+        /// When set, saves are read and written here instead of
+        /// <c>Application.persistentDataPath/Saves</c>. Tests point this at a temp folder so a
+        /// crashed run cannot touch the player's real colony files. Null in the game.
+        /// </summary>
+        public static string DirectoryOverride { get; set; }
+
         public static string SaveDirectory =>
-            Path.Combine(Application.persistentDataPath, FolderName);
+            string.IsNullOrEmpty(DirectoryOverride)
+                ? Path.Combine(Application.persistentDataPath, FolderName)
+                : DirectoryOverride;
 
         public static string SlotPath(int slot) =>
             Path.Combine(SaveDirectory, $"slot{Mathf.Clamp(slot, 0, SlotCount - 1)}{Extension}");
