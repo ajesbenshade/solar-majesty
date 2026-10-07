@@ -106,7 +106,8 @@ namespace SolarMajesty
             ApplyLook();
             // Scouting is independent history, even when the den was later cleared.
             if (wasScouted) MarkScouted();
-            if (wasCleared) MarkCleared();
+            // The clear already happened. Do not log it or play the claim ring again.
+            if (wasCleared) MarkCleared(false);
             else if (!wasScouted) ApplyFoggedLook();
         }
 
@@ -239,7 +240,7 @@ namespace SolarMajesty
             beacon.gameObject.SetActive(!cleared);
         }
 
-        private void MarkCleared()
+        private void MarkCleared(bool announce = true)
         {
             if (cleared) return;
             cleared = true;
@@ -248,6 +249,7 @@ namespace SolarMajesty
             var hint = transform.Find("FogHint");
             if (hint != null) hint.gameObject.SetActive(false);
             ApplyClearedLook();
+            if (!announce) return;
             if (Application.isPlaying) DemoVfx.ClaimRing(transform.position, new Color(0.35f, 0.9f, 0.55f));
             Debug.Log("[Lair] Cleared stalker den.");
         }
