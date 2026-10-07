@@ -26,7 +26,16 @@ namespace SolarMajesty
 
         public static string SessionPath => _path;
 
-        public static string Directory => Path.Combine(Application.persistentDataPath, FolderName);
+        /// <summary>
+        /// When set, session logs are written here instead of
+        /// <c>Application.persistentDataPath/Playtest</c>. Tests use a temp folder.
+        /// </summary>
+        public static string DirectoryOverride { get; set; }
+
+        public static string Directory =>
+            string.IsNullOrEmpty(DirectoryOverride)
+                ? Path.Combine(Application.persistentDataPath, FolderName)
+                : DirectoryOverride;
 
         public static void Begin(string buildLabel)
         {

@@ -9,6 +9,55 @@ namespace SolarMajesty.Tests
 {
     public class StabilizationTests
     {
+        private string _saveRoot;
+
+        [SetUp]
+        public void UseTempSaveRoot()
+        {
+            _saveRoot = Path.Combine(Path.GetTempPath(), "sm-saves-" + System.Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_saveRoot);
+            SaveSystem.DirectoryOverride = _saveRoot;
+            PlaytestTelemetry.DirectoryOverride = Path.Combine(_saveRoot, "Playtest");
+        }
+
+        [TearDown]
+        public void ClearTempSaveRoot()
+        {
+            SaveSystem.DirectoryOverride = null;
+            PlaytestTelemetry.DirectoryOverride = null;
+            if (!string.IsNullOrEmpty(_saveRoot) && Directory.Exists(_saveRoot))
+                Directory.Delete(_saveRoot, true);
+        }
+
+        [Test]
+        public void SaveAndTelemetry_WriteUnderTheOverride_NotThePlayerFolder()
+        {
+            var save = new SaveGame { body = (int)CelestialBodyId.Earth, seed = 42, label = "temp" };
+            Assert.IsTrue(SaveSystem.Write(1, save));
+            string slot = Path.GetFullPath(SaveSystem.SlotPath(1));
+            string playerSaves = Path.GetFullPath(Path.Combine(Application.persistentDataPath, "Saves"));
+            Assert.IsTrue(slot.StartsWith(Path.GetFullPath(_saveRoot), StringComparison.Ordinal));
+            Assert.IsFalse(slot.StartsWith(playerSaves, StringComparison.Ordinal));
+            Assert.IsTrue(File.Exists(slot));
+
+            bool enabled = PlaytestTelemetry.Enabled;
+            try
+            {
+                PlaytestTelemetry.Enabled = true;
+                PlaytestTelemetry.Begin("root");
+                PlaytestTelemetry.Record("ping", "n", 1);
+                PlaytestTelemetry.Flush();
+                string log = Path.GetFullPath(PlaytestTelemetry.SessionPath);
+                string playerLogs = Path.GetFullPath(Path.Combine(Application.persistentDataPath, "Playtest"));
+                Assert.IsTrue(log.StartsWith(Path.GetFullPath(PlaytestTelemetry.DirectoryOverride), StringComparison.Ordinal));
+                Assert.IsFalse(log.StartsWith(playerLogs, StringComparison.Ordinal));
+            }
+            finally
+            {
+                PlaytestTelemetry.Enabled = enabled;
+            }
+        }
+
         [Test]
         public void HiddenResearch_RestoresProgressAndBank_WithoutSpendingAgain()
         {

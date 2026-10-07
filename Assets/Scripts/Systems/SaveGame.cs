@@ -21,6 +21,12 @@ namespace SolarMajesty
         public string buildGuid = "";
         public string savedAtUtc = "";
         public string label = "";
+        /// <summary>
+        /// Which live campaign wrote this file. Empty on saves from older builds.
+        /// A new campaign uses a fresh stamp so leftover autosaves and world files
+        /// stay on disk and are not loaded by accident. Load still reads them.
+        /// </summary>
+        public string campaignStamp = "";
         public double playSeconds;
         public long simSteps;
 

@@ -8,11 +8,15 @@ namespace SolarMajesty.Tests
     public class SaveMigrationTests
     {
         private string _path;
+        private string _saveRoot;
         private readonly Dictionary<string, byte[]> _backup = new Dictionary<string, byte[]>();
 
         [SetUp]
         public void PreserveSlot()
         {
+            _saveRoot = Path.Combine(Path.GetTempPath(), "sm-saves-" + System.Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_saveRoot);
+            SaveSystem.DirectoryOverride = _saveRoot;
             _path = SaveSystem.SlotPath(3);
             Directory.CreateDirectory(SaveSystem.SaveDirectory);
             foreach (string suffix in new[] { "", ".bak", ".tmp" })
@@ -30,6 +34,9 @@ namespace SolarMajesty.Tests
                 if (entry.Value == null) { if (File.Exists(entry.Key)) File.Delete(entry.Key); }
                 else File.WriteAllBytes(entry.Key, entry.Value);
             _backup.Clear();
+            SaveSystem.DirectoryOverride = null;
+            if (!string.IsNullOrEmpty(_saveRoot) && Directory.Exists(_saveRoot))
+                Directory.Delete(_saveRoot, true);
         }
 
         [TestCase(1)]

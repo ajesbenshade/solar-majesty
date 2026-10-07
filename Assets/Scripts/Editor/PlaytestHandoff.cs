@@ -27,20 +27,23 @@ namespace SolarMajesty.EditorTools
             "Mines go only at ore deposits (an amber light column marks each, far out): farther\n" +
             "from the Commons pays more energy, but tax collectors must walk it home and mobs\n" +
             "ambush them on the way. Landing pads and temples also need their marked zones.\n" +
-            "SKIP dismisses the tutorial bar. Esc → Title → Continue brings the campus back.\n" +
+            "SKIP dismisses the tutorial bar. Esc cancels a placement ghost; Esc again opens pause.\n" +
+            "From there, Title → Continue brings the campus back.\n" +
             "Stop whenever you get bored. That moment is the useful data.\n" +
             "\n" +
             "Controls\n" +
             "--------\n" +
-            "Esc          Pause (Resume / Settings / Title / Quit)\n" +
+            "Esc          While placing a building or flag: cancel that ghost. Otherwise pause\n" +
+            "             (Resume / Save / Load / Settings / Title / Quit)\n" +
             "WASD         Pan camera     Q / E zoom out / in (mouse does not pan or zoom)\n" +
-            "B            Build catalog  G flag catalog     Tab cycle     T research\n" +
+            "Space        Hold / resume the world. The clock's speed buttons do the same\n" +
+            ", / .        Slower / faster. The − / + beside the speed readout do the same\n" +
+            "B            Build catalog  G flag catalog     Tab cycle     T research     N orbital\n" +
             "1-9 / 0      Pick a building while Build is open\n" +
             "F1 Explore   F2 Clear Threat   F3 Build   F4 Extract   F5 Defend\n" +
-            "LMB          Place / inspect. Click a flag pole to select it (does not post another)\n" +
+            "LMB          Place / inspect. Shift-click keeps placing. Click a flag pole to select it\n" +
             "RMB          On a flag: cancel + refund EU\n" +
-            "+ / -        Raise / lower the selected flag's bounty (numpad too)\n" +
-            ", / .        Slower / faster\n" +
+            "+ / -        Raise / lower the selected flag's bounty (numpad too). These are not speed\n" +
             "P            Form a party (max 4)     [ disband\n" +
             "\n" +
             "Telemetry (please zip this folder back)\n" +

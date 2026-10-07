@@ -11,6 +11,26 @@ namespace SolarMajesty.Tests
 {
     public class DevelopedColonySaveTests
     {
+        private string _saveRoot;
+
+        [SetUp]
+        public void UseTempSaveRoot()
+        {
+            _saveRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "sm-saves-" + System.Guid.NewGuid().ToString("N"));
+            System.IO.Directory.CreateDirectory(_saveRoot);
+            SaveSystem.DirectoryOverride = _saveRoot;
+            PlaytestTelemetry.DirectoryOverride = System.IO.Path.Combine(_saveRoot, "Playtest");
+        }
+
+        [TearDown]
+        public void ClearTempSaveRoot()
+        {
+            SaveSystem.DirectoryOverride = null;
+            PlaytestTelemetry.DirectoryOverride = null;
+            if (!string.IsNullOrEmpty(_saveRoot) && System.IO.Directory.Exists(_saveRoot))
+                System.IO.Directory.Delete(_saveRoot, true);
+        }
+
         [UnityTest]
         public IEnumerator DevelopedSnapshot_RoundTripsThroughSceneAndDiskTwice()
         {
