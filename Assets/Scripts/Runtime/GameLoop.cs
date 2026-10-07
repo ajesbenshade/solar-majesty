@@ -1535,24 +1535,16 @@ namespace SolarMajesty
             if (flag == null || agent == null || Brain == null)
                 return "Ignored — raise bounty (+)";
             var kind = Brain.ExplainFlag(agent.PeekContext(), flag, agent.BodyDanger);
-            string cls = ColonyStructure.ClassLabel(agent.Data != null ? agent.Data.specialistClass : SpecialistClass.ScoutDrone);
-            switch (kind)
+            var data = agent.Data;
+            string cls = ColonyStructure.ClassLabel(data != null ? data.specialistClass : SpecialistClass.ScoutDrone);
+            int reach = 0;
+            if (data != null)
             {
-                case FlagRefusalKind.Greed:
-                    return $"{cls} wants {agent.HireMin} — raise +";
-                case FlagRefusalKind.TooFar:
-                {
-                    float reach = Brain.ConsiderDistance(
-                        agent.Data, flag.Data != null ? flag.Data.flagType : FlagType.Explore);
-                    return $"too far for {cls} — {Mathf.RoundToInt(reach)}m";
-                }
-                case FlagRefusalKind.Hurt:
-                    return $"{cls} is hurt — wait";
-                case FlagRefusalKind.NotMyJob:
-                    return $"not a {cls} job";
-                default:
-                    return "Ignored — raise bounty (+)";
+                reach = Mathf.RoundToInt(Brain.ConsiderDistance(
+                    data, flag.Data != null ? flag.Data.flagType : FlagType.Explore));
             }
+            int ask = data != null ? agent.HireMin : 0;
+            return OverseerRules.FlagRefusalLine(kind, cls, ask, reach, flag.CurrentBounty);
         }
 
         private void BroadcastRefusalChips(FlagHandle flag)
@@ -1577,6 +1569,7 @@ namespace SolarMajesty
                     FlagRefusalKind.NotMyJob => "NO",
                     FlagRefusalKind.Hunting => "HUNTING",
                     FlagRefusalKind.Orders => "ORDERS",
+                    FlagRefusalKind.Tired => "TIRED",
                     _ => null
                 };
                 if (!string.IsNullOrEmpty(chip))

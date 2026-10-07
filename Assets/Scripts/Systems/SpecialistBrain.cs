@@ -46,6 +46,12 @@ namespace SolarMajesty
             if (IsPanicked(ctx, bodyDanger))
                 return BrainDecision.Flee(inn, t.fleeScore, "flee_to_inn");
 
+            // A paid Clear Threat is a warrant, not a mood. Once claimed, keep walking until the
+            // den's flag is gone or health breaks (the panic gate above). Fatigue, hunger, a
+            // nearby pest, and the hero's own claim do not reopen the decision.
+            if (TryHoldClearThreat(ctx, openFlags, out var heldThreat))
+                return BrainDecision.Pursue(heldThreat, 1f, "clear_threat_commit");
+
             // 2. Exhaustion / injury — rest at the inn, not in the field.
             if (restScore > t.restForced)
                 return BrainDecision.Rest(restScore, "exhausted_or_hurt", inn);
@@ -70,6 +76,7 @@ namespace SolarMajesty
                 {
                     var flag = openFlags[i];
                     if (flag == null || flag.Data == null) continue;
+                    if (!MayTakeClearThreat(data, flag)) continue;
                     if (!FlagOrdersRules.Permits(ctx, flag)) continue; // player's written orders
 
                     float dist = Vector3.Distance(ctx.Position, flag.WorldPosition);
@@ -187,6 +194,9 @@ namespace SolarMajesty
             if (ctx.Data == null) return false;
             if (utility.Action == SpecialistAction.Flee || utility.Reason == "exhausted_or_hurt")
                 return false;
+            // The warrant is not a menu. Laya must not swap it for hunt, rest, or wander.
+            if (utility.Reason == "clear_threat_commit")
+                return false;
 
             var t = _tuning;
             var data = ctx.Data;
@@ -262,6 +272,13 @@ namespace SolarMajesty
             if (ctx.Data == null || flag?.Data == null) return false;
 
             if (IsPanicked(ctx, bodyDanger)) return false;
+            if (IsHoldingClearThreat(ctx, flag))
+            {
+                score = 1f;
+                return true;
+            }
+
+            if (!MayTakeClearThreat(ctx.Data, flag)) return false;
             if (CalculateRestScore(ctx) > _tuning.restForced) return false;
             if (!FlagOrdersRules.Permits(ctx, flag)) return false;
 
@@ -282,6 +299,8 @@ namespace SolarMajesty
             if (ctx.Data == null || flag?.Data == null) return FlagRefusalKind.Ignored;
 
             if (IsPanicked(ctx, bodyDanger)) return FlagRefusalKind.Hurt;
+            if (IsHoldingClearThreat(ctx, flag)) return FlagRefusalKind.WouldTake;
+            if (!MayTakeClearThreat(ctx.Data, flag)) return FlagRefusalKind.NotMyJob;
             if (CalculateRestScore(ctx) > _tuning.restForced) return FlagRefusalKind.Hurt;
             if (!FlagOrdersRules.Permits(ctx, flag)) return FlagRefusalKind.Orders;
 
@@ -311,6 +330,9 @@ namespace SolarMajesty
             {
                 if (ctx.Data.GetPreference(flag.Data.flagType) < 0.25f)
                     return FlagRefusalKind.NotMyJob;
+                // A long walk while tired fails the score even when the bounty already saturates.
+                if (ctx.Fatigue >= TiredFatigue)
+                    return FlagRefusalKind.Tired;
                 return FlagRefusalKind.Ignored;
             }
 
@@ -318,6 +340,67 @@ namespace SolarMajesty
                 return FlagRefusalKind.Greed;
 
             return FlagRefusalKind.WouldTake;
+        }
+
+        // ------------------------------------------------------------------ Clear Threat warrant
+
+        /// <summary>Fatigue at which a refused flag is "tired", not "raise the bounty".</summary>
+        const float TiredFatigue = 0.35f;
+
+        /// <summary>
+        /// Clear Threat is a combat warrant. Authored <c>stronglyAttracts</c> is the allow-list
+        /// (Defense and Sentinel). An empty list falls back to those two classes so a flag that
+        /// skipped affinity still does not pull an Engineer.
+        /// </summary>
+        static bool MayTakeClearThreat(SpecialistData data, FlagHandle flag)
+        {
+            if (data == null || flag?.Data == null) return false;
+            if (flag.Data.flagType != FlagType.ClearThreat) return true;
+            var attract = flag.Data.stronglyAttracts;
+            if (attract != null && attract.Length > 0)
+            {
+                for (int i = 0; i < attract.Length; i++)
+                {
+                    if (attract[i] == data.specialistClass) return true;
+                }
+                return false;
+            }
+
+            return data.specialistClass == SpecialistClass.DefenseMech ||
+                   data.specialistClass == SpecialistClass.SentinelMech;
+        }
+
+        bool IsHoldingClearThreat(in SpecialistContext ctx, FlagHandle flag)
+        {
+            if (ctx.CurrentAction != SpecialistAction.PursueFlag) return false;
+            if (!SameFlag(ctx.CurrentFlag, flag)) return false;
+            if (flag?.Data == null || flag.Data.flagType != FlagType.ClearThreat) return false;
+            if (!MayTakeClearThreat(ctx.Data, flag)) return false;
+            return FlagOrdersRules.Permits(ctx, flag);
+        }
+
+        bool TryHoldClearThreat(in SpecialistContext ctx, IReadOnlyList<FlagHandle> openFlags, out FlagHandle held)
+        {
+            held = null;
+            if (openFlags == null || ctx.CurrentFlag == null) return false;
+            if (!IsHoldingClearThreat(ctx, ctx.CurrentFlag)) return false;
+            for (int i = 0; i < openFlags.Count; i++)
+            {
+                var flag = openFlags[i];
+                if (!SameFlag(flag, ctx.CurrentFlag)) continue;
+                if (!IsHoldingClearThreat(ctx, flag)) return false;
+                held = flag;
+                return true;
+            }
+            return false;
+        }
+
+        static bool SameFlag(FlagHandle a, FlagHandle b)
+        {
+            if (a == null || b == null) return false;
+            if (ReferenceEquals(a, b)) return true;
+            if (a.RuntimeId == null || b.RuntimeId == null) return false;
+            return ReferenceEquals(a.RuntimeId, b.RuntimeId) || a.RuntimeId.Equals(b.RuntimeId);
         }
 
         // ------------------------------------------------------------------ shared gates
