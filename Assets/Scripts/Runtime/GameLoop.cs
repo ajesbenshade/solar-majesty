@@ -1246,6 +1246,8 @@ namespace SolarMajesty
         public void CancelFlag(FlagHandle handle)
         {
             if (handle == null || Flags == null) return;
+            if (_flagInput != null && ReferenceEquals(_flagInput.SelectedPosted, handle))
+                _flagInput.ClearPostedSelection();
             int refund = handle.EscrowMetals;
             Economy?.RefundBountyEscrow(refund);
             Flags.Cancel(handle);
@@ -2213,21 +2215,19 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Space holds the world; comma / period (or − / + outside the flag tool, where they nudge
-        /// the bounty) step the speed down and up.
+        /// Space holds the world. Comma / period step the speed down and up.
+        /// + / − (and the numpad) belong to the selected flag's bounty, or to the next post
+        /// while the flag tool is open.
         /// </summary>
         private void HandleSpeedHotkeys()
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
-            bool plusMinus = ActiveTool != OverseerTool.Flag;
 
             if (Input.GetKeyDown(KeyCode.Space))
                 SimSpeed.TogglePause();
-            else if (Input.GetKeyDown(KeyCode.Period) ||
-                     (plusMinus && (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))))
+            else if (Input.GetKeyDown(KeyCode.Period))
                 SimSpeed.Faster();
-            else if (Input.GetKeyDown(KeyCode.Comma) ||
-                     (plusMinus && (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))))
+            else if (Input.GetKeyDown(KeyCode.Comma))
                 SimSpeed.Slower();
             else
                 return;
@@ -3004,6 +3004,7 @@ namespace SolarMajesty
         {
             _agents.Clear();
             ClearSelection();
+            _flagInput?.ClearPostedSelection();
             Agent = null;
             // Outdoor robots are fabricated when their workshop finishes construction.
             // Colonists are villagers (VillagerAgent), not specialists — they never take bounties.
@@ -3162,6 +3163,7 @@ namespace SolarMajesty
         {
             ClearStructureSelection();
             ClearSelection();
+            _flagInput?.ClearPostedSelection();
             if (agent == null) return;
             _selected.Add(agent);
             agent.SetSelected(true);
@@ -3172,6 +3174,7 @@ namespace SolarMajesty
         {
             if (agent == null) return;
             ClearStructureSelection();
+            _flagInput?.ClearPostedSelection();
             int idx = _selected.IndexOf(agent);
             if (idx >= 0)
             {
@@ -3205,12 +3208,30 @@ namespace SolarMajesty
             if (mainCamera == null) return;
 
             bool additive = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+
+            // A direct hit on the pole wins over a hero standing next to it, so +/- can still
+            // reach that bounty. A direct hit on the hero still selects the hero.
+            FlagHandle directFlag = PickPostedFlagUnderCursor(cellSnap: false);
+            if (directFlag != null)
+            {
+                SelectPostedFlag(directFlag);
+                return;
+            }
+
             SpecialistAgent best = PickAgentUnderCursor();
             if (best != null)
             {
                 if (additive) ToggleSelect(best);
                 else SelectOnly(best);
                 WorldClickUsedBySelection = true;
+                return;
+            }
+
+            // The click missed the mesh but landed on the pole's cell: select, do not stack another flag.
+            FlagHandle flag = PickPostedFlagUnderCursor(cellSnap: true);
+            if (flag != null)
+            {
+                SelectPostedFlag(flag);
                 return;
             }
 
@@ -3226,7 +3247,37 @@ namespace SolarMajesty
             {
                 ClearSelection();
                 ClearStructureSelection();
+                _flagInput?.ClearPostedSelection();
             }
+        }
+
+        private void SelectPostedFlag(FlagHandle flag)
+        {
+            ClearSelection();
+            ClearStructureSelection();
+            _flagInput?.SelectPosted(flag);
+            WorldClickUsedBySelection = true;
+        }
+
+        private FlagHandle PickPostedFlagUnderCursor(bool cellSnap)
+        {
+            if (Flags == null || _flagInput == null || mainCamera == null) return null;
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            FlagHandle hit = FlagMarker.ClosestUnderRay(ray);
+            if (hit != null || !cellSnap) return hit;
+
+            // A hero or a building under the cursor keeps the click. Cell-snap is for the pole's ground.
+            if (Physics.Raycast(ray, out RaycastHit block, 500f, ~0, QueryTriggerInteraction.Ignore) &&
+                block.collider != null &&
+                (block.collider.GetComponentInParent<SpecialistAgent>() != null ||
+                 block.collider.GetComponentInParent<ColonyStructure>() != null))
+                return null;
+
+            if (_isoCam == null || !_isoCam.TryGetMouseGroundPoint(out Vector3 ground))
+                return null;
+            if (grid != null)
+                ground = grid.SnapToCellCenter(ground);
+            return FlagClick.FindOnPole(Flags.Flags, ground);
         }
 
         private ColonyStructure PickStructureUnderCursor()
@@ -6330,6 +6381,7 @@ namespace SolarMajesty
         public void SelectStructure(ColonyStructure st)
         {
             ClearSelection();
+            _flagInput?.ClearPostedSelection();
             if (SelectedStructure != null && SelectedStructure != st)
                 SelectedStructure.SetSelected(false);
             SelectedStructure = st;

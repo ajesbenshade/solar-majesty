@@ -37,8 +37,10 @@ namespace SolarMajesty.EditorTools
             "B            Build catalog  G flag catalog     Tab cycle     T research\n" +
             "1-9 / 0      Pick a building while Build is open\n" +
             "F1 Explore   F2 Clear Threat   F3 Build   F4 Extract   F5 Defend\n" +
-            "LMB          Place / inspect     RMB on a flag: cancel + refund EU\n" +
-            "+ / -        Raise / lower bounty\n" +
+            "LMB          Place / inspect. Click a flag pole to select it (does not post another)\n" +
+            "RMB          On a flag: cancel + refund EU\n" +
+            "+ / -        Raise / lower the selected flag's bounty (numpad too)\n" +
+            ", / .        Slower / faster\n" +
             "P            Form a party (max 4)     [ disband\n" +
             "\n" +
             "Telemetry (please zip this folder back)\n" +

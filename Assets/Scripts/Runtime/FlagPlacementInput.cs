@@ -5,7 +5,9 @@ namespace SolarMajesty
     /// <summary>
     /// Player posts / adjusts bounty flags only. Never commands specialists.
     /// F1 Explore · F2 ClearThreat · F3 Build · F4 Extract · F5 Defend · I Research Site · O Outpost · U Terraform
+    /// Runs after <see cref="GameLoop"/> so a click that selects a pole is consumed before this posts.
     /// </summary>
+    [DefaultExecutionOrder(10)]
     public class FlagPlacementInput : MonoBehaviour
     {
         [SerializeField] private FlagData exploreFlag;
@@ -30,6 +32,49 @@ namespace SolarMajesty
 
         public float Bounty => bounty;
         public FlagData SelectedFlag => _selected;
+
+        private FlagHandle _posted;
+
+        /// <summary>The pole the player clicked. +/- edits this bounty. Null when none is selected.</summary>
+        public FlagHandle SelectedPosted
+        {
+            get
+            {
+                if (_posted != null && (_flags == null || !_flags.TryGet(_posted.RuntimeId, out _)))
+                {
+                    _posted = null;
+                    ApplyMarkerSelection(null);
+                }
+                return _posted;
+            }
+        }
+
+        public bool HasSelectedPosted => SelectedPosted != null;
+
+        public void SelectPosted(FlagHandle handle)
+        {
+            if (handle == null || _flags == null || !_flags.TryGet(handle.RuntimeId, out _))
+            {
+                ClearPostedSelection();
+                return;
+            }
+
+            bool changed = !ReferenceEquals(_posted, handle);
+            _posted = handle;
+            ApplyMarkerSelection(handle);
+            if (!changed) return;
+            string name = handle.Data != null && !string.IsNullOrEmpty(handle.Data.displayName)
+                ? handle.Data.displayName
+                : "Flag";
+            Debug.Log($"[Flags] Selected existing {name} — no new flag, no escrow.");
+        }
+
+        public void ClearPostedSelection()
+        {
+            if (_posted == null) return;
+            _posted = null;
+            ApplyMarkerSelection(null);
+        }
 
         /// <summary>
         /// Written orders for the next flag posted (HUD text box). Parsed once at post time into
@@ -74,10 +119,9 @@ namespace SolarMajesty
             enabledPlacement = true;
         }
 
+        /// <summary>The bounty the next post will escrow. The − / + buttons on the flag panel use this.</summary>
         public void NudgeBounty(float delta)
         {
-            if (TryRepriceHovered(delta))
-                return;
             bounty += delta;
             if (_selected != null)
                 bounty = Mathf.Clamp(bounty, _selected.minBounty, _selected.maxBounty);
@@ -176,11 +220,12 @@ namespace SolarMajesty
             if (_flags == null) return;
             if (_loop != null && !_loop.IsPlaying) return;
 
-            if (!enabledPlacement) return;
-
-            // − / + nudge the bounty only while the flag tool is open; otherwise they set game speed.
+            // +/- edits the selected pole even when the flag tool is closed. With the tool open and
+            // nothing selected, it sets the bounty the next click will post. Speed is comma / period.
             if (!InputBindings.TextEntryActive)
                 HandleBountyKeys();
+
+            if (!enabledPlacement) return;
 
             // Typing flag orders: no flag hotkeys; mouse placement below still works.
             if (!InputBindings.TextEntryActive)
@@ -224,9 +269,20 @@ namespace SolarMajesty
             if (_grid != null)
                 world = _grid.SnapToCellCenter(world);
 
+            // Clicking a pole that is already standing selects it. A second post would escrow again.
+            FlagHandle rayHit = FlagMarker.ClosestUnderRay(ViewRay());
+            if (FlagClick.Resolve(_flags.Flags, world, rayHit, out FlagHandle existing) ==
+                FlagClickAction.SelectExisting)
+            {
+                SelectPosted(existing);
+                return;
+            }
+
             FlagHandle handle = TryPost(_selected, world, bounty);
             if (handle == null)
                 Debug.Log("[Flags] Cannot post — not enough metals in the stockpile.");
+            else
+                ClearPostedSelection();
         }
 
         private void AttachPendingOrders(FlagHandle handle)
@@ -273,35 +329,63 @@ namespace SolarMajesty
 
         private void HandleBountyKeys()
         {
-            if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))
-                NudgeBounty(Mathf.Max(bountyStep, MajestyEconomy.FlagBountyStep));
-            if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))
-                NudgeBounty(-Mathf.Max(bountyStep, MajestyEconomy.FlagBountyStep));
-            if (_selected != null)
-                bounty = Mathf.Clamp(bounty, _selected.minBounty, _selected.maxBounty);
+            bool plus = Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus);
+            bool minus = Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus);
+            if (!plus && !minus) return;
+
+            float step = Mathf.Max(bountyStep, MajestyEconomy.FlagBountyStep);
+            float delta = (plus ? step : 0f) + (minus ? -step : 0f);
+
+            if (HasSelectedPosted)
+            {
+                TryStepSelectedBounty(delta);
+                return;
+            }
+
+            // No pole selected: +/- sets the next post only while the flag tool is open.
+            if (!enabledPlacement) return;
+            NudgeBounty(delta);
         }
 
-        private bool TryRepriceHovered(float delta)
+        private void TryStepSelectedBounty(float delta)
         {
-            if (_loop?.Economy == null || _flags == null) return false;
-            var cam = Camera.main;
-            if (cam == null) return false;
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-            if (!Physics.Raycast(ray, out RaycastHit hit, 400f)) return false;
-            var marker = hit.collider.GetComponentInParent<FlagMarker>();
-            if (marker == null || marker.Handle == null || marker.Handle.Data == null) return false;
-
-            var flag = marker.Handle;
-            float next = Mathf.Clamp(flag.CurrentBounty + delta, flag.Data.minBounty, flag.Data.maxBounty);
-            if (Mathf.Approximately(next, flag.CurrentBounty)) return true;
-            if (!_loop.Economy.TryAdjustBountyEscrow(flag, next))
+            var flag = SelectedPosted;
+            if (flag == null) return;
+            float before = flag.CurrentBounty;
+            int escrowBefore = flag.EscrowMetals;
+            if (!FlagClick.TryStepBounty(_flags, _loop != null ? _loop.Economy : null, flag, delta))
             {
-                _loop.LogOverseer("Not enough EU to raise that bounty.");
-                return true;
+                _loop?.LogOverseer("Not enough EU to raise that bounty.");
+                return;
             }
-            _flags.SetBounty(flag, next);
-            _loop.NotifyFlagPosted(flag);
-            return true;
+
+            if (Mathf.Approximately(flag.CurrentBounty, before))
+                return;
+            _loop?.RefreshFlagInterest();
+            Debug.Log(
+                $"[Flags] {flag.Data.flagType} bounty ${before:F0} -> ${flag.CurrentBounty:F0} " +
+                $"escrow {escrowBefore} -> {flag.EscrowMetals} EU");
+        }
+
+        private Ray ViewRay()
+        {
+            Camera cam = null;
+            if (_cam != null)
+                cam = _cam.GetComponent<Camera>();
+            if (cam == null)
+                cam = Camera.main;
+            return cam != null ? cam.ScreenPointToRay(Input.mousePosition) : new Ray(Vector3.zero, Vector3.down);
+        }
+
+        private void ApplyMarkerSelection(FlagHandle handle)
+        {
+            if (_markerRoot == null) return;
+            for (int i = 0; i < _markerRoot.childCount; i++)
+            {
+                var marker = _markerRoot.GetChild(i).GetComponent<FlagMarker>();
+                if (marker == null) continue;
+                marker.SetSelected(handle != null && ReferenceEquals(marker.Handle, handle));
+            }
         }
 
         private void Select(FlagData data)

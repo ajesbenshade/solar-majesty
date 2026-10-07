@@ -76,7 +76,7 @@ Then in the game: **Settings → HERO LINES · LOCAL LLM** (text) and **SPOKEN �
 
 **4. Optional standalone build:** **Solar Majesty → Build → Windows / macOS / Linux** writes to `Builds/`. After that, `start_narrator.sh` / `.ps1` without `--no-game` / `-NoGame` starts the model *and* the built game with voices on.
 
-**Game speed:** the colony runs at a calm pace by default (**1×**). The speed control on the right of the bottom bar (or **,** / **.**, or **−** / **+** outside the flag tool) steps from **0.25×** to **4×**; **Space** holds the world. **2×** is the game's old default pace, and your choice is remembered between sessions.
+**Game speed:** the colony runs at a calm pace by default (**1×**). The speed control on the right of the bottom bar (or **,** / **.**) steps from **0.25×** to **4×**; **Space** holds the world. **2×** is the game's old default pace, and your choice is remembered between sessions. **+** / **−** and the numpad raise or lower the selected flag's bounty, and the escrow moves with the treasury. With the flag tool open and no pole selected, those keys set the bounty the next flag will post.
 
 **Mouse:** the wheel zooms toward whatever is under the cursor. Picking an item in the Build or Flag menu collapses the menu to a slim strip, so your next click places it on the map; click the strip (or press **B** / **G**) to open the list again. The flag strip keeps the bounty's **−** / **+**.
 

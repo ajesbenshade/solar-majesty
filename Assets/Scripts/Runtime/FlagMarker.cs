@@ -27,8 +27,39 @@ namespace SolarMajesty
         private TextMesh _metaLabel;
         private Transform _claimBadge;
         private Renderer _claimBadgeRend;
+        private bool _selected;
+        private GameObject _selectRing;
 
         public FlagHandle Handle => _handle;
+
+        public void SetSelected(bool selected)
+        {
+            _selected = selected;
+            if (selected)
+                EnsureSelectRing();
+            if (_selectRing != null)
+                _selectRing.SetActive(selected);
+            RefreshLabels();
+        }
+
+        /// <summary>
+        /// The flag under the cursor when the closest hit belongs to a pole.
+        /// A closer building or the ground hides the pole.
+        /// </summary>
+        public static FlagHandle ClosestUnderRay(Ray ray, float maxDistance = 500f)
+        {
+            var hits = Physics.RaycastAll(ray, maxDistance, ~0, QueryTriggerInteraction.Ignore);
+            float bestDist = float.MaxValue;
+            FlagHandle best = null;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                if (hits[i].collider == null || hits[i].distance >= bestDist) continue;
+                bestDist = hits[i].distance;
+                var marker = hits[i].collider.GetComponentInParent<FlagMarker>();
+                best = marker != null ? marker.Handle : null;
+            }
+            return best;
+        }
 
         public void Bind(FlagHandle handle, FlagManager manager)
         {
@@ -193,7 +224,8 @@ namespace SolarMajesty
                 string orders = _handle.Orders != null && _handle.Orders.HasRules
                     ? $"\nORDERS  {_handle.Orders.Summary()}"
                     : "";
-                _metaLabel.text = $"{type}  ·  {interest}\n{claimTxt}  ·  RMB cancel  ·  w {work:F1}{orders}";
+                string keys = _selected ? "  ·  +/− bounty" : "";
+                _metaLabel.text = $"{type}  ·  {interest}\n{claimTxt}  ·  RMB cancel{keys}  ·  w {work:F1}{orders}";
                 _metaLabel.color = _handle.InterestCount > 0
                     ? new Color(0.85f, 1f, 0.55f)
                     : new Color(1f, 0.55f, 0.35f);
@@ -225,7 +257,22 @@ namespace SolarMajesty
             }
 
             if (_bountyLabel != null)
-                _bountyLabel.color = claimed ? claimedTint : Color.white;
+                _bountyLabel.color = _selected || claimed ? claimedTint : Color.white;
+        }
+
+        private void EnsureSelectRing()
+        {
+            if (_selectRing != null) return;
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            go.name = "SelectRing";
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = new Vector3(0f, -0.55f, 0f);
+            go.transform.localScale = new Vector3(1.7f, 0.025f, 1.7f);
+            Object.Destroy(go.GetComponent<Collider>());
+            var rend = go.GetComponent<Renderer>();
+            if (rend != null)
+                IndustrialArtDressing.SetUrpColor(rend, new Color(1f, 0.86f, 0.28f));
+            _selectRing = go;
         }
 
         private void Billboard()
