@@ -45,6 +45,14 @@ namespace SolarMajesty
         public static CelestialBodyId LoadSavedBody() =>
             (CelestialBodyId)PlayerPrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Earth);
 
+        /// <summary>Point the in-memory body and seed at prefs. Does not write.</summary>
+        public static void ReloadFromPrefs()
+        {
+            Body = LoadSavedBody();
+            string key = SeedKey(Body);
+            Current = PlayerPrefs.HasKey(key) ? PlayerPrefs.GetInt(key, DefaultSeed(Body)) : DefaultSeed(Body);
+        }
+
         public static void SetBody(CelestialBodyId body)
         {
             Body = body;

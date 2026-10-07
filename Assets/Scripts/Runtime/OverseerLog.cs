@@ -25,13 +25,22 @@ namespace SolarMajesty
         public IReadOnlyList<OverseerLogEntry> Entries => _entries;
         public string Latest => _entries.Count > 0 ? _entries[_entries.Count - 1].Line : "";
 
-        public void Push(string line)
+        /// <summary>False when this line repeats inside <see cref="NoticeDedupe.WindowSeconds"/>.</summary>
+        public bool Push(string line)
         {
-            if (string.IsNullOrEmpty(line)) return;
-            _entries.Add(new OverseerLogEntry(line, UnityEngine.Time.unscaledTime));
+            if (string.IsNullOrEmpty(line)) return false;
+            float now = UnityEngine.Time.unscaledTime;
+            if (_entries.Count > 0)
+            {
+                var last = _entries[_entries.Count - 1];
+                if (NoticeDedupe.IsRepeat(last.Line, last.Time, line, now, NoticeDedupe.WindowSeconds))
+                    return false;
+            }
+            _entries.Add(new OverseerLogEntry(line, now));
             while (_entries.Count > 8)
                 _entries.RemoveAt(0);
             Debug.Log($"[Overseer] {line}");
+            return true;
         }
     }
 }

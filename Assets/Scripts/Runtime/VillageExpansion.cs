@@ -587,7 +587,12 @@ namespace SolarMajesty
                 if (s.LevyPurse <= 0 || s.LevySitSeconds < LevyRun.SitStealSeconds) continue;
                 int stole = s.StealLevy(LevyRun.SitStealAmount);
                 if (stole > 0)
+                {
+                    // The sit clock stays past the threshold while gold remains, so without a
+                    // reset the next tick nibbles again and the purse toast fires every frame.
+                    s.ResetLevySit();
                     _loop.NotifyLevyStolen(stole, s.DisplayName);
+                }
             }
         }
 

@@ -231,11 +231,13 @@ namespace SolarMajesty
 
         private void Toast(string message, float seconds)
         {
-            if (StillCaptureHold.Active) return;
-            if (_toast != message || Time.unscaledTime > _toastUntil)
-                _toastStart = Time.unscaledTime;
+            if (StillCaptureHold.Active || string.IsNullOrEmpty(message)) return;
+            float now = Time.unscaledTime;
+            bool repeat = NoticeDedupe.IsRepeat(_toast, _toastStart, message, now, NoticeDedupe.WindowSeconds);
+            if (!repeat)
+                _toastStart = now;
             _toast = message;
-            _toastUntil = Time.unscaledTime + seconds;
+            _toastUntil = now + seconds;
         }
 
         // ---- drawing primitives -------------------------------------------------
@@ -941,6 +943,42 @@ namespace SolarMajesty
             return false;
         }
 
+        /// <summary>
+        /// The body's departure tech stays above the scroll. Lunar Rocket is deep in the tree,
+        /// so a player who only sees the first rows never finds the launch chain.
+        /// </summary>
+        private float DrawLaunchTechPin(Rect c, float y, ResearchManager research)
+        {
+            TechId id = research.LaunchTechId(_loop.ActiveBody);
+            if (id == TechId.None || !DemoSlice.ShowTech(id)) return y;
+            var def = TechCatalog.Get(id);
+            if (def == null) return y;
+
+            bool done = research.IsUnlocked(id);
+            bool can = research.CanSelect(id);
+            bool active = research.ActiveTech == id;
+            var row = new Rect(c.x, y, c.width, 36f);
+            if (GUI.Button(row, GUIContent.none, active ? _rowOn : _rowOff) && can)
+            {
+                if (research.TrySelect(id))
+                    _techOpen = false;
+            }
+
+            string mark = done ? "DONE" : active ? "…" : can ? "GO" : "—";
+            GUI.Label(new Rect(row.x + 6f, row.y + 2f, row.width - 52f, 16f), def.DisplayName, _value);
+            var prev = _microRight.normal.textColor;
+            _microRight.normal.textColor = done ? Good : can ? TextPrimary : TextMuted;
+            GUI.Label(new Rect(row.xMax - 44f, row.y + 2f, 40f, 16f), mark, _microRight);
+            _microRight.normal.textColor = prev;
+
+            string need = research.UnmetPrerequisiteLabel(id);
+            string detail = done
+                ? "Researched. A Landing Pad stages the craft."
+                : string.IsNullOrEmpty(need) ? def.Description : "needs " + need;
+            GUI.Label(new Rect(row.x + 6f, row.y + 18f, row.width - 12f, 16f), Truncate(detail, 64), _micro);
+            return y + 40f;
+        }
+
         private void DrawTechPanel()
         {
             if (!_techOpen) return;
@@ -958,6 +996,7 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, c.y, c.width, 14f),
                 $"Labs {research.LabCount} · rate {research.CurrentRate:F1}/s · tip {launch}", _micro);
             float y = c.y + 18f;
+            y = DrawLaunchTechPin(c, y, research);
 
             if (research.ActiveTech != TechId.None)
             {
@@ -994,9 +1033,11 @@ namespace SolarMajesty
             float listH = c.yMax - y;
             var view = new Rect(c.x, y, c.width, listH);
             var techs = TechCatalog.All;
+            TechId pinned = research.LaunchTechId(_loop.ActiveBody);
             int visibleTechs = 0;
             for (int i = 0; i < techs.Count; i++)
             {
+                if (techs[i].Id == pinned) continue;
                 if (DemoSlice.ShowTech(techs[i].Id))
                     visibleTechs++;
             }
@@ -1007,6 +1048,7 @@ namespace SolarMajesty
             for (int i = 0; i < techs.Count; i++)
             {
                 var t = techs[i];
+                if (t.Id == pinned) continue;
                 if (!DemoSlice.ShowTech(t.Id)) continue;
                 bool done = research.IsUnlocked(t.Id);
                 bool can = research.CanSelect(t.Id);
@@ -1464,6 +1506,7 @@ namespace SolarMajesty
             var flags = _loop.Flags != null ? _loop.Flags.Flags : null;
             int flagN = flags != null ? Mathf.Min(3, flags.Count) : 0;
             float h = 136f;
+            if (DemoSettings.FirstHourDemo) h += 52f;
             if (mission.DeadlineEnabled) h += 26f;
             h += 18f + flagN * 16f;
 
@@ -1490,11 +1533,15 @@ namespace SolarMajesty
 
             string launchNeed = _loop.Research != null
                 ? _loop.Research.LaunchTechLabel(_loop.ActiveBody)
-                : "craft";
+                : "Lunar Rocket";
+            bool fullCampaign = !DemoSettings.FirstHourDemo;
+            string launchLine = LaunchPath.ObjectiveText(fullCampaign, mission.LaunchReady, launchNeed);
             Stake(new Rect(c.x, y, c.width, 20f), mission.LaunchReady,
                 "Launch craft",
-                mission.LaunchReady ? "ready on pad" : $"need {launchNeed}");
+                fullCampaign ? launchLine : LaunchPath.Chain(launchNeed));
             y += 22f;
+            if (!fullCampaign)
+                y = WrapBlock(c, y, launchLine) - 2f;
 
             if (set != null)
             {
@@ -2880,7 +2927,7 @@ namespace SolarMajesty
 
                 if (hot)
                 {
-                    if (demoLocked) tag = "SETTINGS → FULL CAMPAIGN";
+                    if (demoLocked) tag = "SETTINGS → DEMO → FULL CAMPAIGN";
                     else if (!unlocked) tag = shift ? "CLICK TO UNLOCK" : "LOCKED  ·  SHIFT+CLICK";
                     else if (DemoSettings.SaveExists && body == _loop.ActiveBody) tag = "CLICK TO CONTINUE";
                     else tag = "CLICK TO LAND";

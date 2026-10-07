@@ -79,6 +79,16 @@ namespace SolarMajesty
             LastRunningIndex = NormalIndex;
         }
 
+        /// <summary>
+        /// Continue and Load hold the world. Space resumes at 1×, not the fast-forward that was
+        /// running when the colony was saved. The stored preference is left for a new campaign.
+        /// </summary>
+        public static void HoldAfterRestore()
+        {
+            LastRunningIndex = NormalIndex;
+            _index = 0;
+        }
+
         /// <summary>The player's saved speed, so a new session starts at the pace they like.</summary>
         public static void Load()
         {

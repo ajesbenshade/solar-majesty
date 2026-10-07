@@ -250,6 +250,18 @@ namespace SolarMajesty
             return def != null ? def.DisplayName : profile.LaunchTech.ToString();
         }
 
+        public TechId LaunchTechId(CelestialBodyId body)
+        {
+            var profile = CelestialBodyCatalog.Get(body);
+            return profile != null ? profile.LaunchTech : TechId.None;
+        }
+
+        public string UnmetPrerequisiteLabel(TechId id)
+        {
+            var have = _unlocked;
+            return LaunchPath.UnmetPrerequisites(id, have);
+        }
+
         public bool HasLaunchUnlockFor(CelestialBodyId body)
         {
             var profile = CelestialBodyCatalog.Get(body);

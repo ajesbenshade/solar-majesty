@@ -28,6 +28,19 @@ namespace SolarMajesty
         public static CelestialBodyId NewGameBody =>
             CelestialBodyId.Earth;
 
+        /// <summary>Match <see cref="HighestUnlocked"/> to prefs without writing them.</summary>
+        public static void ReloadFromPrefs()
+        {
+            if (!PlayerPrefs.HasKey(FreshKey))
+            {
+                HighestUnlocked = CelestialBodyId.Earth;
+                return;
+            }
+
+            HighestUnlocked = (CelestialBodyId)PlayerPrefs.GetInt(MaxKey, (int)CelestialBodyId.Earth);
+            HighestUnlocked = MigrateHighest(HighestUnlocked);
+        }
+
         public static void Ensure()
         {
             if (!PlayerPrefs.HasKey(FreshKey))

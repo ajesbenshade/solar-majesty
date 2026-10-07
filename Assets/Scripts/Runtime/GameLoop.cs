@@ -616,10 +616,11 @@ namespace SolarMajesty
         public void LogOverseer(string line, float seconds)
         {
             if (StillCaptureHold.Active) return;
-            Log.Push(line);
+            bool fresh = Log.Push(line);
             _overseerHud?.Notify(line, seconds);
-            // Scripted Grok lines are baked; everything else in the log stays text.
-            OverseerVoice.SpeakIfScripted(line);
+            // A repeat inside the dedupe window must not speak the line again.
+            if (fresh)
+                OverseerVoice.SpeakIfScripted(line);
         }
 
         public bool GrokLessonsOn => GrokAdvisor.TrainingWheels(celestialBody);
@@ -995,6 +996,8 @@ namespace SolarMajesty
             DemoSettings.SaveLoadNotice = "";
             SolarSystemTitleView.Instance?.Hide();
             Screen = DemoScreen.Playing;
+            if (loadStockpile)
+                SimSpeed.HoldAfterRestore();
             Time.timeScale = SimSpeed.TimeScale;
             int piecesBefore = Placer != null ? Placer.Pieces.Count : 0;
             bool restoredSave = false;
@@ -1073,6 +1076,8 @@ namespace SolarMajesty
             TickTutorial();
             RearmStillHoldIfEditorShutter();
             _overseerHud?.OnSessionPlaying();
+            if (loadStockpile)
+                LogOverseer("World held. Space resumes at 1×.", 5.5f);
             BeginNarrativeSession();
             if (ReplayRules.Mode != ColonyRunMode.Campaign ||
                 ReplayRules.Challenge != ChallengeId.None ||
@@ -1145,9 +1150,10 @@ namespace SolarMajesty
         {
             if (DemoSettings.FirstHourDemo && body != CelestialBodyId.Earth)
             {
-                _overseerHud?.Notify(
-                    "This demo is Earth. Settings → Full campaign opens the other worlds.",
-                    3.5f);
+                string craft = Research != null
+                    ? Research.LaunchTechLabel(CelestialBodyId.Earth)
+                    : "Lunar Rocket";
+                _overseerHud?.Notify(LaunchPath.ObjectiveText(false, false, craft), 5f);
                 return;
             }
 
@@ -4893,6 +4899,15 @@ namespace SolarMajesty
         /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>
         public void AdvanceCampaign()
         {
+            if (DemoSettings.FirstHourDemo)
+            {
+                string craft = Research != null
+                    ? Research.LaunchTechLabel(CelestialBodyId.Earth)
+                    : "Lunar Rocket";
+                _overseerHud?.Notify(LaunchPath.ObjectiveText(false, false, craft), 5f);
+                return;
+            }
+
             Vector3 pad = ColonyLayout.CampusOrigin + new Vector3(16f, 0f, 0f);
             LaunchSite.PlayDeparture(pad);
             string freight = PayInterBodyFreight();
@@ -4965,9 +4980,10 @@ namespace SolarMajesty
         {
             if (DemoSettings.FirstHourDemo)
             {
-                _overseerHud?.Notify(
-                    "This demo stays on Earth. Settings → Full campaign opens the other worlds.",
-                    3.5f);
+                string craft = Research != null
+                    ? Research.LaunchTechLabel(CelestialBodyId.Earth)
+                    : "Lunar Rocket";
+                _overseerHud?.Notify(LaunchPath.ObjectiveText(false, false, craft), 5f);
                 return;
             }
             if (_bodyHopQueued) return;

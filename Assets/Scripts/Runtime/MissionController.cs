@@ -171,6 +171,13 @@ namespace SolarMajesty
             {
                 if (ReplayRules.IsEndless)
                     return "Campaign hop is off. Shift+F10 still unlocks body chips.";
+                if (DemoSettings.FirstHourDemo)
+                {
+                    string craft = _loop != null && _loop.Research != null
+                        ? _loop.Research.LaunchTechLabel(CelestialBodyId.Earth)
+                        : "Lunar Rocket";
+                    return LaunchPath.ObjectiveText(false, false, craft);
+                }
                 if (_loop == null || !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
                     return "Mars holds. Earth, Belt, and Europa stay parked — Shift+click chips to load them.";
                 var next = CampaignProgress.NextAfter(_loop.ActiveBody);

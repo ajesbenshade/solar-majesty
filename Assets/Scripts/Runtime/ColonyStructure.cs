@@ -212,6 +212,9 @@ namespace SolarMajesty
 
         public void TickLevySit(float dt) => TickLevy(dt);
 
+        /// <summary>A pest nibble starts the sit clock over.</summary>
+        public void ResetLevySit() => LevyIdleSeconds = 0f;
+
         public void SetLevyPurse(int amount)
         {
             LevyPurse = Mathf.Max(0, amount);
