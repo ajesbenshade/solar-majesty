@@ -93,6 +93,8 @@ namespace SolarMajesty
             AddInt(DemoSettings.CharacterVoicesKey);
             AddInt(DemoSettings.HeroSpeechKey);
             AddInt(DemoSettings.PlanetArchitectureKey);
+            AddInt(IntroLaunch.SeenKey);
+            AddInt(IntroLaunch.PlayOnLaunchKey);
             AddInt(ReplayRules.ModeKey);
             AddInt(ReplayRules.ChallengeKey);
             AddInt(ReplayRules.StanceKey);
