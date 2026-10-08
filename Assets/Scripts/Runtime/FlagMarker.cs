@@ -41,6 +41,11 @@ namespace SolarMajesty
         }
 
         static readonly List<LiveLabel> LiveLabels = new List<LiveLabel>(16);
+        static int LayoutFrame = -1;
+        const float BountyLocalY = 1.55f;
+        const float MetaLocalY = 0.92f;
+        float _labelOffsetY;
+        bool _hideDetail;
 
         /// <summary>The flag whose floating label covers this screen point (origin bottom-left, like the mouse).</summary>
         public static FlagHandle LabelAtScreen(Vector2 screen)
@@ -318,9 +323,66 @@ namespace SolarMajesty
             _selectRing = go;
         }
 
+        private void LateUpdate()
+        {
+            if (LayoutFrame == Time.frameCount) return;
+            LayoutFrame = Time.frameCount;
+            LayoutLiveLabels();
+        }
+
+        static void LayoutLiveLabels()
+        {
+            int n = LiveLabels.Count;
+            if (n == 0) return;
+            var labels = new FlagLabelLayout.ScreenLabel[n];
+            for (int i = 0; i < n; i++)
+                labels[i] = LiveLabels[i].Label;
+            FlagLabelLayout.Resolve(labels, 6f);
+            for (int i = 0; i < n; i++)
+            {
+                var live = LiveLabels[i];
+                live.Label = labels[i];
+                LiveLabels[i] = live;
+                if (live.Marker != null)
+                    live.Marker.ApplyLabelOffset(labels[i]);
+            }
+        }
+
+        void ApplyLabelOffset(FlagLabelLayout.ScreenLabel label)
+        {
+            _labelOffsetY = label.OffsetY;
+            _hideDetail = label.HideDetail;
+            var cam = Camera.main;
+            float worldPerPixel = 0.012f;
+            if (cam != null && cam.orthographic && Screen.height > 1)
+                worldPerPixel = (cam.orthographicSize * 2f) / Screen.height;
+            Vector3 up = cam != null ? cam.transform.up : Vector3.up;
+            Vector3 worldLift = up * (label.OffsetY * worldPerPixel);
+            PlaceLabel(_bountyLabel, BountyLocalY, worldLift, visible: true);
+            PlaceLabel(_metaLabel, MetaLocalY, worldLift, visible: !label.HideDetail);
+        }
+
+        void PlaceLabel(TextMesh mesh, float baseY, Vector3 worldLift, bool visible)
+        {
+            if (mesh == null) return;
+            float s = mesh.transform.localScale.y;
+            if (s < 0.01f) s = 1f;
+            Vector3 localLift = transform.InverseTransformVector(worldLift) / s;
+            mesh.transform.localPosition = new Vector3(0f, baseY, 0f) + localLift;
+            var rend = mesh.GetComponent<Renderer>();
+            if (rend != null) rend.enabled = visible;
+            var col = mesh.GetComponent<Collider>();
+            if (col != null) col.enabled = visible;
+        }
+
         private void Billboard()
         {
             if (Camera.main == null) return;
+            // Measure the unshifted label. LateUpdate applies this frame's declutter lift.
+            if (_bountyLabel != null)
+                _bountyLabel.transform.localPosition = new Vector3(0f, BountyLocalY, 0f);
+            if (_metaLabel != null)
+                _metaLabel.transform.localPosition = new Vector3(0f, MetaLocalY, 0f);
             if (_bountyLabel != null)
             {
                 _bountyLabel.transform.rotation = Quaternion.LookRotation(
@@ -355,7 +417,9 @@ namespace SolarMajesty
                     Center = center,
                     Width = width,
                     Height = height,
-                    Priority = priority
+                    Priority = priority,
+                    OffsetY = _labelOffsetY,
+                    HideDetail = _hideDetail
                 }
             });
         }
@@ -388,7 +452,7 @@ namespace SolarMajesty
         {
             if (mesh == null) return;
             var rend = mesh.GetComponent<Renderer>();
-            if (rend == null || !rend.enabled) return;
+            if (rend == null) return;
             Bounds b = rend.bounds;
             Vector3 c = b.center;
             Vector3 e = b.extents;
