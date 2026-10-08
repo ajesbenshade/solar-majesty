@@ -20,7 +20,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(1, Count(modes, 1920, 1080));
             Assert.AreEqual(1, Count(modes, 2560, 1440));
             Assert.AreEqual(1, Count(modes, 3440, 1440));
-            Assert.AreNotEqual(16f / 9f, 3440f / 1440f, 0.02f, "ultrawide is not a 16:9 mode");
+            Assert.Greater(Mathf.Abs(3440f / 1440f - 16f / 9f), 0.02f, "ultrawide is not a 16:9 mode");
         }
 
         [Test]

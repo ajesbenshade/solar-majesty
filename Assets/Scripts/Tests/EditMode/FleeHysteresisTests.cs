@@ -60,8 +60,8 @@ namespace SolarMajesty.Tests
             _created.Add(data);
             data.flagType = FlagType.Explore;
             data.displayName = "Explore";
-            data.minBounty = 40f;
-            data.maxBounty = 5000f;
+            data.minBounty = 40;
+            data.maxBounty = 5000;
             return new FlagHandle
             {
                 Data = data,
