@@ -5,8 +5,10 @@ namespace SolarMajesty
     /// <summary>
     /// Authored colonist suits (art batch 3, Blender/scripts/sm_colonists.py). One prefab per role in
     /// Resources/Colonists/SM_Colonist_&lt;Variant&gt;. Each is a Humanoid (Kevin Iglesias joint names) with an
-    /// Animator running SM_Colonist.controller: Idle01 / Walk01_Forward from Human Basic Motions, switched
-    /// by the float <see cref="SpeedParam"/>. Root motion is off; the owner moves the transform.
+    /// Animator running SM_Colonist.controller: Idle01 (Kevin Iglesias Human Basic Motions) and Walk = the
+    /// original "colony stride" lope (Art/Colonists/Anim/SM_Colonist@Stride.fbx, Blender/scripts/
+    /// sm_colonist_stride.py), switched by the float <see cref="SpeedParam"/>. Root motion is off; the owner
+    /// moves the transform. The pivot is at the boot soles.
     /// Materials: slot 0 SM_Art_Colonist_Suit (shared palette atlas), slot 1 SM_Art_Colonist_Role_&lt;Variant&gt;
     /// (role trim). Do not run IndustrialArtDressing over these renderers.
     /// </summary>
@@ -18,12 +20,16 @@ namespace SolarMajesty
         public static readonly int SpeedHash = Animator.StringToHash(SpeedParam);
 
         /// <summary>
-        /// Ground speed (m/s) the retargeted, in-place Walk01 cycle matches at 1x on the 1.26 m suit
-        /// (measured in Unity from planted-foot slide: 0.99 male / 0.91 female clip).
+        /// Ground speed (m/s) the in-place stride cycle covers at 1x on the 1.26 m suit: 1.26 m steps,
+        /// 1.2 s per two-step cycle, authored at 2.10 m/s and measured in Unity from the planted foot.
+        /// VillagerAgent's 2.4 m/s plays it at ~1.14x, about 1.9 steps/s.
         /// </summary>
-        public const float StrideSpeed = 0.95f;
+        public const float StrideSpeed = 2.1f;
 
-        /// <summary>Fastest playback rate; VillagerAgent's 2.4 m/s lands just under it (a Majesty-style scurry).</summary>
+        /// <summary>Length of one step (m) of the stride cycle; steps per second = ground speed / StepLength.</summary>
+        public const float StepLength = 1.26f;
+
+        /// <summary>Fastest playback rate (safety cap; the stride no longer gets near it).</summary>
         public const float MaxPlayback = 2.5f;
 
         public static readonly string[] Variants = { "Engineer", "Hydroponics", "Medic", "Hauler" };

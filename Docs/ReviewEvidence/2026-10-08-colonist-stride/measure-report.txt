@@ -1,0 +1,16 @@
+measure unity=6000.5.10f1 StrideSpeed=2.1 MaxPlayback=2.5
+prefab root pos=(0.00, 0.00, 0.00) smr.localBounds=Center: (0.00, 0.10, -0.01), Extents: (0.60, 0.65, 0.25) rootBone=B-hips hips rest y=0.500 mesh bounds min y=-0.236
+Engineer     OLD Walk01: stance@1x=1.045 m/s playback@2.4=2.500x steps/s=6.25 (counted 6.25) plantedSlide=0.210 m/s (8.8%) lowestVertexY planted~-0.022 min=-0.024 max=-0.001 hipsY(avg)=0.481 | idle lowestVertexY -0.002..-0.001
+Engineer     NEW Stride: stance@1x=2.098 m/s playback@2.4=1.143x steps/s=1.90 (counted 5.00) plantedSlide=0.066 m/s (2.8%) lowestVertexY planted~-0.003 min=-0.008 max=0.061 hipsY(avg)=0.453 | idle lowestVertexY -0.002..-0.001
+Hydroponics  OLD Walk01: stance@1x=1.030 m/s playback@2.4=2.500x steps/s=6.25 (counted 18.75) plantedSlide=0.320 m/s (13.3%) lowestVertexY planted~-0.028 min=-0.032 max=0.003 hipsY(avg)=0.480 | idle lowestVertexY -0.004..-0.001
+Hydroponics  NEW Stride: stance@1x=2.098 m/s playback@2.4=1.143x steps/s=1.90 (counted 5.00) plantedSlide=0.066 m/s (2.8%) lowestVertexY planted~-0.003 min=-0.008 max=0.061 hipsY(avg)=0.453 | idle lowestVertexY -0.004..-0.001
+Medic        OLD Walk01: stance@1x=1.030 m/s playback@2.4=2.500x steps/s=6.25 (counted 18.75) plantedSlide=0.320 m/s (13.3%) lowestVertexY planted~-0.028 min=-0.032 max=0.003 hipsY(avg)=0.480 | idle lowestVertexY -0.004..-0.001
+Medic        NEW Stride: stance@1x=2.098 m/s playback@2.4=1.143x steps/s=1.90 (counted 5.00) plantedSlide=0.066 m/s (2.8%) lowestVertexY planted~-0.003 min=-0.008 max=0.061 hipsY(avg)=0.453 | idle lowestVertexY -0.004..-0.001
+Hauler       OLD Walk01: stance@1x=1.045 m/s playback@2.4=2.500x steps/s=6.25 (counted 6.25) plantedSlide=0.210 m/s (8.8%) lowestVertexY planted~-0.022 min=-0.024 max=-0.001 hipsY(avg)=0.481 | idle lowestVertexY -0.002..-0.001
+Hauler       NEW Stride: stance@1x=2.098 m/s playback@2.4=1.143x steps/s=1.90 (counted 5.00) plantedSlide=0.066 m/s (2.8%) lowestVertexY planted~-0.003 min=-0.008 max=0.061 hipsY(avg)=0.453 | idle lowestVertexY -0.002..-0.001
+Earth bake 256m seed7: heights min=-7.97 p10=-5.47 p50=-1.35 p90=2.90 max=7.90; |h|>0.3m on 92% of cells
+spawn on dip h=-7.746: root y=-7.746 lowest vertex=-7.749 (gap -0.002); main would put the boots at y=0 -> gap +7.746
+  after moving 3 m: ground h=-7.080 root y=-7.080 lowest vertex=-7.083 (gap -0.002)
+spawn on rise h=5.827: root y=5.827 lowest vertex=5.823 (gap -0.004); main would put the boots at y=0 -> gap -5.827
+  after moving 3 m: ground h=5.486 root y=5.486 lowest vertex=5.483 (gap -0.004)
+measure ok=True
