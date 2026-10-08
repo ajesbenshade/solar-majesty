@@ -47,6 +47,9 @@ namespace SolarMajesty.Tests
             bool hadH = PlayerPrefs.HasKey(DemoSettings.ResolutionHKey);
             int prevW = PlayerPrefs.GetInt(DemoSettings.ResolutionWKey, 0);
             int prevH = PlayerPrefs.GetInt(DemoSettings.ResolutionHKey, 0);
+            // SaveSettings also writes the UI-scale auto flag; put it back too.
+            bool hadHudAuto = PlayerPrefs.HasKey(DemoSettings.HudAutoKey);
+            int prevHudAuto = PlayerPrefs.GetInt(DemoSettings.HudAutoKey, 1);
             bool hadBoot = PlayerPrefs.HasKey(DemoSettings.BootPlayKey);
             int boot = PlayerPrefs.GetInt(DemoSettings.BootPlayKey, 0);
             try
@@ -67,6 +70,8 @@ namespace SolarMajesty.Tests
                 else PlayerPrefs.DeleteKey(DemoSettings.ResolutionWKey);
                 if (hadH) PlayerPrefs.SetInt(DemoSettings.ResolutionHKey, prevH);
                 else PlayerPrefs.DeleteKey(DemoSettings.ResolutionHKey);
+                if (hadHudAuto) PlayerPrefs.SetInt(DemoSettings.HudAutoKey, prevHudAuto);
+                else PlayerPrefs.DeleteKey(DemoSettings.HudAutoKey);
                 if (hadBoot) PlayerPrefs.SetInt(DemoSettings.BootPlayKey, boot);
                 else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
                 PlayerPrefs.Save();
