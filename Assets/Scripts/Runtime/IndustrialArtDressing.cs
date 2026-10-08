@@ -242,67 +242,111 @@ namespace SolarMajesty
         private static Shader _urpLit;
 
         /// <summary>
-        /// Tint a renderer, first swapping in a URP Lit material if it still has a non-URP one.
-        /// A bare CreatePrimitive carries the built-in Standard material, which a URP player build
-        /// draws magenta (the Editor hides this). Safe to call every frame: the swap happens once.
+        /// Per-instance tint via a property block, so shared assets (including SM_Art_Fauna
+        /// atlases and the glow accent) stay untouched. A bare CreatePrimitive still carries
+        /// the built-in Standard material, which a URP player build draws magenta. That swap
+        /// is a new Lit material assigned through sharedMaterials, and only while playing:
+        /// renderer.material / materials instantiate and log an error in edit mode, and the
+        /// singular setter collapses extra slots.
         /// </summary>
         public static void SetUrpColor(Renderer rend, Color c)
         {
             if (rend == null) return;
             var shared = rend.sharedMaterials;
+            if (Application.isPlaying)
+                shared = EnsurePlayModeUrpCopies(rend, shared, c);
+
             int count = shared != null ? shared.Length : 0;
-            // Single slot keeps the historical path (rend.material caches one instance).
-            // Assigning rend.material on a multi-slot renderer would collapse the glow slot.
+            if (count == 1 && IsFaunaGlowMaterial(shared[0]))
+                return;
+
+            ApplyTintBlock(rend, shared, c);
+        }
+
+        /// <summary>
+        /// Replace non-URP, non-fauna slots with a Lit instance. Fauna art is never copied.
+        /// </summary>
+        private static Material[] EnsurePlayModeUrpCopies(Renderer rend, Material[] shared, Color c)
+        {
+            int count = shared != null ? shared.Length : 0;
+            if (count == 0)
+            {
+                var created = CreateUrpTintMaterial(c);
+                if (created == null) return shared;
+                rend.sharedMaterials = new[] { created };
+                return rend.sharedMaterials;
+            }
+
+            bool dirty = false;
+            var next = new Material[count];
+            for (int i = 0; i < count; i++)
+            {
+                var mat = shared[i];
+                if (mat != null && !IsFaunaArtMaterial(mat) && !IsUrpTintReady(mat))
+                {
+                    var created = CreateUrpTintMaterial(c);
+                    if (created != null)
+                    {
+                        next[i] = created;
+                        dirty = true;
+                        continue;
+                    }
+                }
+                next[i] = mat;
+            }
+
+            if (!dirty) return shared;
+            rend.sharedMaterials = next;
+            return next;
+        }
+
+        private static void ApplyTintBlock(Renderer rend, Material[] shared, Color c)
+        {
+            int count = shared != null ? shared.Length : 0;
             if (count <= 1)
             {
-                if (count == 1 && IsFaunaGlowMaterial(shared[0]))
-                    return;
-                TintPrimarySlot(rend, c);
+                var block = new MaterialPropertyBlock();
+                rend.GetPropertyBlock(block);
+                WriteTint(block, c);
+                rend.SetPropertyBlock(block);
                 return;
             }
 
-            var mats = rend.materials;
-            bool replaced = false;
-            for (int i = 0; i < mats.Length; i++)
+            // Per slot. A renderer-level block would tint the glow submesh as well.
+            for (int i = 0; i < count; i++)
             {
-                var mat = mats[i];
-                if (mat == null) continue;
-                if (IsFaunaGlowMaterial(mat))
+                if (IsFaunaGlowMaterial(shared[i]))
                     continue;
-                if (EnsureUrpTintInstance(ref mat, c))
-                {
-                    mats[i] = mat;
-                    replaced = true;
-                }
-                PaintAlbedo(mat, c);
+                var block = new MaterialPropertyBlock();
+                rend.GetPropertyBlock(block, i);
+                WriteTint(block, c);
+                rend.SetPropertyBlock(block, i);
             }
-            if (replaced)
-                rend.materials = mats;
         }
 
-        private static void TintPrimarySlot(Renderer rend, Color c)
+        private static void WriteTint(MaterialPropertyBlock block, Color c)
         {
-            var mat = rend.material;
-            if (EnsureUrpTintInstance(ref mat, c))
-                rend.material = mat;
-            PaintAlbedo(mat, c);
+            block.SetColor("_BaseColor", c);
+            block.SetColor("_Color", c);
         }
 
-        /// <summary>Swap a non-URP material for a tintable Lit instance. Returns true when <paramref name="mat"/> changed.</summary>
-        private static bool EnsureUrpTintInstance(ref Material mat, Color c)
+        private static bool IsUrpTintReady(Material mat)
         {
             string shader = mat != null && mat.shader != null ? mat.shader.name : "";
-            bool urpReady = shader.StartsWith("Universal Render Pipeline", System.StringComparison.Ordinal) ||
-                            shader.StartsWith("SolarMajesty", System.StringComparison.Ordinal) ||
-                            shader.StartsWith("Sprites", System.StringComparison.Ordinal);
-            if (urpReady) return false;
+            return shader.StartsWith("Universal Render Pipeline", System.StringComparison.Ordinal) ||
+                   shader.StartsWith("SolarMajesty", System.StringComparison.Ordinal) ||
+                   shader.StartsWith("Sprites", System.StringComparison.Ordinal);
+        }
+
+        private static Material CreateUrpTintMaterial(Color c)
+        {
             _urpLit ??= Shader.Find("Universal Render Pipeline/Lit")
                         ?? Shader.Find("Universal Render Pipeline/Simple Lit");
-            if (_urpLit == null) return false;
-            mat = new Material(_urpLit) { name = "SM_UrpTint" };
+            if (_urpLit == null) return null;
+            var mat = new Material(_urpLit) { name = "SM_UrpTint" };
             if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.3f);
             PaintAlbedo(mat, c);
-            return true;
+            return mat;
         }
 
         private static void PaintAlbedo(Material mat, Color c)

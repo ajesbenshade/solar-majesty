@@ -94,15 +94,21 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(2, tinted.Length, "tint must not collapse material slots");
             Material glowNow = null;
             Material bodyNow = null;
+            int bodyIndex = -1;
             for (int i = 0; i < tinted.Length; i++)
             {
+                Assert.AreSame(before[i], tinted[i], "SetUrpColor replaced fauna slot " + i);
                 if (tinted[i] != null && tinted[i].name.IndexOf("Glow", System.StringComparison.Ordinal) >= 0)
                     glowNow = tinted[i];
                 else
+                {
                     bodyNow = tinted[i];
+                    bodyIndex = i;
+                }
             }
             Assert.IsNotNull(glowNow);
             Assert.IsNotNull(bodyNow);
+            Assert.AreSame(glow, glowNow, "glow slot must stay the shared accent");
             Assert.AreEqual(authoredEmission, glow.GetColor("_EmissionColor"), "shared glow asset emission");
             Assert.AreEqual(authoredEmission, glowNow.GetColor("_EmissionColor"), "glow instance emission");
             Assert.Greater(
@@ -112,11 +118,20 @@ namespace SolarMajesty.Tests
                 "glow emission must not be replaced with the tint");
             if (bodyNow.HasProperty("_BaseColor"))
             {
-                Color body = bodyNow.GetColor("_BaseColor");
-                Assert.AreEqual(tint.r, body.r, 0.02f);
-                Assert.AreEqual(tint.g, body.g, 0.02f);
-                Assert.AreEqual(tint.b, body.b, 0.02f);
+                Color authoredBody = bodyNow.GetColor("_BaseColor");
+                Assert.Greater(
+                    Mathf.Abs(authoredBody.r - tint.r) + Mathf.Abs(authoredBody.b - tint.b),
+                    0.2f,
+                    "shared fauna body atlas was recolored");
             }
+
+            Assert.GreaterOrEqual(bodyIndex, 0);
+            var bodyBlock = new MaterialPropertyBlock();
+            smr.GetPropertyBlock(bodyBlock, bodyIndex);
+            Color body = bodyBlock.GetColor("_BaseColor");
+            Assert.AreEqual(tint.r, body.r, 0.02f);
+            Assert.AreEqual(tint.g, body.g, 0.02f);
+            Assert.AreEqual(tint.b, body.b, 0.02f);
 
             Color dim = new Color(0.25f, 0.05f, 0.02f);
             IndustrialArtDressing.SetTintOverlay(go, dim);

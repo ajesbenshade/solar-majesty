@@ -24,6 +24,8 @@ namespace SolarMajesty
 
         public static SpatialAudio Ensure()
         {
+            // EditMode tests and other non-play callers cannot DontDestroyOnLoad.
+            if (!Application.isPlaying) return _instance;
             if (_instance != null) return _instance;
 
             var go = GameObject.Find("SM_SpatialAudio");
@@ -68,6 +70,7 @@ namespace SolarMajesty
             if (clip == null) return;
 
             SpatialAudio audio = Ensure();
+            if (audio == null) return;
             AudioSource src = audio.Take();
             if (src == null) return;
 
