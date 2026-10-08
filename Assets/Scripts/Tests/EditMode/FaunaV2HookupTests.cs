@@ -28,6 +28,8 @@ namespace SolarMajesty.Tests
             loopGo.SetActive(false);
             _loop = loopGo.AddComponent<GameLoop>();
             _loop.ArmThreat(new ThreatPressure());
+            // NUnit reuses the fixture instance, so the counter must start fresh per test.
+            _kills = 0;
             _loop.FaunaKilledHook += NoteKill;
             _stage = new GameObject("fauna-v2-stage");
         }
