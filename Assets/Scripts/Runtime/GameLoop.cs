@@ -4617,26 +4617,41 @@ namespace SolarMajesty
             _world.Generate(this, grid, BodySeed.Current, _body);
         }
 
-        /// <summary>Spawn one stalker at a world point (lair / wave helpers).</summary>
+        /// <summary>
+        /// EditMode hookup tests arm threat without booting <see cref="Awake"/>,
+        /// which reads the player save folder and PlayerPrefs.
+        /// </summary>
+        internal void ArmThreat(ThreatPressure threat) => Threat = threat ?? new ThreatPressure();
+
+        /// <summary>
+        /// Spawn one stalker at a world point (lair / wave helpers).
+        /// Mounts <c>SM_Unit_DustStalker</c> the same way as the other fauna so Idle/Walk/Strike/Down play.
+        /// The static <c>Unit_DustStalker</c> prefab has no clips; it is not used.
+        /// </summary>
         public DustStalkerAgent SpawnStalkerAt(Vector3 home, Transform parent = null)
         {
             if (Threat == null) return null;
 
             Transform root = parent != null ? parent : (_threatRoot != null ? _threatRoot : transform);
-            GameObject stalkerPrefab = DemoContentCatalog.LoadStalkerPrefab();
-            GameObject go;
-            if (stalkerPrefab != null)
+            GameObject mesh = UnitMeshCatalog.LoadStalker();
+            GameObject go = new GameObject("DustStalker");
+            go.transform.SetParent(root, false);
+            go.transform.SetPositionAndRotation(home, Quaternion.identity);
+            if (mesh != null)
             {
-                go = new GameObject("DustStalker");
-                go.transform.SetParent(root, false);
-                go.transform.SetPositionAndRotation(home, Quaternion.identity);
-                ColonyVisualUtility.AttachImportVisual(stalkerPrefab, go.transform);
+                // Same as SpawnFaunaAt: import rotation only, no extra yaw.
+                ColonyVisualUtility.AttachImportVisual(mesh, go.transform);
             }
             else
             {
-                go = UnitPlaceholderFactory.BuildDustStalker();
-                go.transform.SetParent(root, false);
-                go.transform.SetPositionAndRotation(home, Quaternion.identity);
+                GameObject visual = UnitPlaceholderFactory.BuildDustStalker();
+                if (visual != null)
+                {
+                    visual.name = "Visual";
+                    visual.transform.SetParent(go.transform, false);
+                    visual.transform.localPosition = Vector3.zero;
+                    visual.transform.localRotation = Quaternion.identity;
+                }
             }
 
             ColonyVisualUtility.EnsureUrpMaterials(go);
@@ -6854,8 +6869,12 @@ namespace SolarMajesty
             TrySpawnJunkBot(world);
         }
 
+        /// <summary>EditMode observes kill credit without subclassing (nested behaviours cannot be added).</summary>
+        internal event System.Action<FaunaKind, float> FaunaKilledHook;
+
         public void OnFaunaKilled(FaunaKind kind, Vector3 world, float rewardMul = 1f)
         {
+            FaunaKilledHook?.Invoke(kind, rewardMul);
             if (rewardMul <= 0f) return; // orbital kill: no hero earned it
             var killer = NearestLivingAgent(world, 18f);
             if (killer == null) return;

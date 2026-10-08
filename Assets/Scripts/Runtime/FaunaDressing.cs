@@ -33,11 +33,44 @@ namespace SolarMajesty
         }
 
         /// <summary>
+        /// Fauna v2 meshes already face travel (+Z). A yaw fix here would make them walk backwards.
+        /// Primitive bodies (no SM_Art_Fauna materials and no clip player) still get aligned.
+        /// </summary>
+        public static bool ShouldKeepAuthoredFacing(GameObject root)
+        {
+            if (root == null) return false;
+            if (root.GetComponentInChildren<UnitClipPlayer>(true) != null)
+                return true;
+            return UsesAuthoredFaunaArt(root);
+        }
+
+        /// <summary>True when a renderer carries the fauna v2 atlas or shared glow.</summary>
+        public static bool UsesAuthoredFaunaArt(GameObject root)
+        {
+            if (root == null) return false;
+            var rends = root.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < rends.Length; i++)
+            {
+                var rend = rends[i];
+                if (rend == null) continue;
+                var mats = rend.sharedMaterials;
+                if (mats == null) continue;
+                for (int m = 0; m < mats.Length; m++)
+                {
+                    if (IndustrialArtDressing.IsFaunaArtMaterial(mats[m]))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Keep FBX import X tilt, yaw so the longest horizontal mesh axis maps to parent +Z,
         /// then flip 180 if cyan markings sit at −Z (head was modeled backward).
         /// </summary>
         public static void AlignHead(GameObject root)
         {
+            if (ShouldKeepAuthoredFacing(root)) return;
             Transform visual = FindVisual(root);
             if (visual == null) return;
             Transform parent = visual.parent != null ? visual.parent : visual;
@@ -62,7 +95,7 @@ namespace SolarMajesty
 
         public static void Paint(GameObject root, FaunaKind kind)
         {
-            if (root == null || kind == FaunaKind.JunkBot) return;
+            if (root == null || kind == FaunaKind.JunkBot || ShouldKeepAuthoredFacing(root)) return;
 
             Transform visual = FindVisual(root);
             Transform host = visual != null
