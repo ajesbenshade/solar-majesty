@@ -86,6 +86,10 @@ namespace SolarMajesty.EditorTools
             var audio = FindTrack<AudioTrack>(timeline, IntroAssets.StingTrack);
             if (audio == null)
                 audio = timeline.CreateTrack<AudioTrack>(null, IntroAssets.StingTrack);
+            // Manual evaluation does not play Timeline audio. The runtime one-shot owns the sting.
+            // Muted so a later switch off Manual cannot double-play it.
+            if (!audio.muted)
+                audio.muted = true;
             var sting = AssetDatabase.LoadAssetAtPath<AudioClip>(IntroAssets.StingAssetPath);
             var stingClip = FirstClip(audio);
             if (sting != null)
@@ -548,7 +552,11 @@ namespace SolarMajesty.EditorTools
                 else if (track is ActivationTrack)
                     binding = title;
                 else if (track is AudioTrack)
-                    binding = source;
+                {
+                    if (director.GetGenericBinding(track) != null)
+                        director.ClearGenericBinding(track);
+                    continue;
+                }
 
                 if (binding != null && director.GetGenericBinding(track) != binding)
                     director.SetGenericBinding(track, binding);

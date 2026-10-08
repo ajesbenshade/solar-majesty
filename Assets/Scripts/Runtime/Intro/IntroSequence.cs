@@ -65,16 +65,38 @@ namespace SolarMajesty
         private Vector4[] _goldSt = System.Array.Empty<Vector4>();
         private MaterialPropertyBlock _glintBlock;
         private MaterialPropertyBlock _citadelBlock;
-        private Renderer[] _glowRenderers = System.Array.Empty<Renderer>();
-        private Color[] _glowEmission = System.Array.Empty<Color>();
+        private GlowSlot[] _glow = System.Array.Empty<GlowSlot>();
         private Light[] _lamps = System.Array.Empty<Light>();
         private float[] _lampIntensity = System.Array.Empty<float>();
         private Renderer[] _forcedGlow;
         private Light[] _forcedLamps;
         private bool _citadelCaptured;
         private bool _citadelTouched;
+        private int _citadelRendererCount;
+        private int _citadelLightCount;
+        private bool _haveSkyTint;
+        private bool _haveSkyGround;
+        private bool _haveAtmosphere;
+        private Color _skyTint;
+        private Color _skyGround;
+        private float _atmosphere;
+        private Material _skyMat;
         private static readonly int BaseMapStId = Shader.PropertyToID("_BaseMap_ST");
         private static readonly int EmissionId = Shader.PropertyToID("_EmissionColor");
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+
+        /// <summary>How many citadel window renderers the last capture will dim.</summary>
+        internal int CitadelDimRendererCount => _citadelRendererCount;
+
+        /// <summary>How many Colony Commons point or spot lights the last capture will dim.</summary>
+        internal int CitadelDimLightCount => _citadelLightCount;
+
+        /// <summary>Times the sting was triggered from the intro clock. Edit-mode tests read this instead of the device.</summary>
+        internal int StingPlays { get; private set; }
+
+        /// <summary>Skip or abort stopped the sting source.</summary>
+        internal bool StingStopped { get; private set; }
 
         public static IntroPlayback ChoosePlayback(bool timelinePresent) =>
             timelinePresent ? IntroPlayback.Timeline : IntroPlayback.Fallback;
@@ -163,6 +185,7 @@ namespace SolarMajesty
         public void Skip()
         {
             if (!_playing) return;
+            StopSting();
             _overlay = 0f;
             Finish(skipped: true);
         }
@@ -174,6 +197,7 @@ namespace SolarMajesty
             _playing = false;
             _crossfading = false;
             _overlay = 0f;
+            StopSting();
             StopDirector();
             RestorePresentation();
             RestoreCitadel();
@@ -192,6 +216,8 @@ namespace SolarMajesty
             _elapsed = 0f;
             _fadeClock = 0f;
             _stingPlayed = false;
+            StingPlays = 0;
+            StingStopped = false;
             _titleBound = false;
             _authoredCamera = false;
             _citadelCaptured = false;
@@ -279,7 +305,8 @@ namespace SolarMajesty
             if (showTitle && titleRoot != null)
                 titleRoot.SetActive(IntroShot.TitleVisible(time));
 
-            if (!_stingPlayed && time >= IntroShot.TitleOn && Playback == IntroPlayback.Fallback)
+            // Timeline audio does not play under DirectorUpdateMode.Manual. The clock fires the sting once.
+            if (!_stingPlayed && time >= IntroShot.TitleOn)
             {
                 _stingPlayed = true;
                 PlaySting();
@@ -396,11 +423,14 @@ namespace SolarMajesty
                         _titleBound = true;
                     }
                 }
-                else if (src is AudioTrack)
+                else if (src is AudioTrack audioTrack)
                 {
-                    var source = EnsureSource();
-                    if (source != null)
-                        director.SetGenericBinding(src, source);
+                    // Code owns the sting. A muted, unbound track cannot also play if the director
+                    // is later switched off Manual.
+                    if (!audioTrack.muted)
+                        audioTrack.muted = true;
+                    if (director.GetGenericBinding(src) != null)
+                        director.ClearGenericBinding(src);
                 }
             }
         }
@@ -741,11 +771,20 @@ namespace SolarMajesty
 
         private void PlaySting()
         {
+            StingPlays++;
+            if (!Application.isPlaying) return;
             var clip = LoadSting();
             if (clip == null) return;
             var source = EnsureSource();
-            if (!Application.isPlaying) return;
             source.PlayOneShot(clip, source.volume);
+        }
+
+        private void StopSting()
+        {
+            if (!_stingPlayed || StingStopped) return;
+            StingStopped = true;
+            if (stingSource != null)
+                stingSource.Stop();
         }
 
         private void ApplyDusk(CelestialBodyProfile body)
@@ -786,9 +825,57 @@ namespace SolarMajesty
                 RenderSettings.ambientGroundColor = tinted.Ground;
                 RenderSettings.ambientLight = tinted.Flat;
                 RenderSettings.ambientIntensity = tinted.Intensity;
+                RenderSettings.fogColor = IntroDusk.TintFog(_fog.Color);
+                ApplySkyDusk();
             }
 
             _tintedDusk = true;
+        }
+
+        private void ApplySkyDusk()
+        {
+            _haveSkyTint = false;
+            _haveSkyGround = false;
+            _haveAtmosphere = false;
+            var sky = RenderSettings.skybox;
+            _skyMat = sky;
+            if (sky == null) return;
+            if (sky.HasProperty("_SkyTint"))
+            {
+                _haveSkyTint = true;
+                _skyTint = sky.GetColor("_SkyTint");
+                sky.SetColor("_SkyTint", IntroDusk.TintSkyTint(_skyTint));
+            }
+            if (sky.HasProperty("_GroundColor"))
+            {
+                _haveSkyGround = true;
+                _skyGround = sky.GetColor("_GroundColor");
+                sky.SetColor("_GroundColor", IntroDusk.TintSkyGround(_skyGround));
+            }
+            if (sky.HasProperty("_AtmosphereThickness"))
+            {
+                _haveAtmosphere = true;
+                _atmosphere = sky.GetFloat("_AtmosphereThickness");
+                sky.SetFloat("_AtmosphereThickness", IntroDusk.TintAtmosphere(_atmosphere));
+            }
+        }
+
+        private void RestoreSky()
+        {
+            var sky = _skyMat != null ? _skyMat : RenderSettings.skybox;
+            if (sky != null)
+            {
+                if (_haveSkyTint && sky.HasProperty("_SkyTint"))
+                    sky.SetColor("_SkyTint", _skyTint);
+                if (_haveSkyGround && sky.HasProperty("_GroundColor"))
+                    sky.SetColor("_GroundColor", _skyGround);
+                if (_haveAtmosphere && sky.HasProperty("_AtmosphereThickness"))
+                    sky.SetFloat("_AtmosphereThickness", _atmosphere);
+            }
+            _haveSkyTint = false;
+            _haveSkyGround = false;
+            _haveAtmosphere = false;
+            _skyMat = null;
         }
 
         private Light FindSun()
@@ -932,6 +1019,8 @@ namespace SolarMajesty
                     RenderSettings.ambientGroundColor = _ambient.Ground;
                     RenderSettings.ambientLight = _ambient.Flat;
                     RenderSettings.ambientIntensity = _ambient.Intensity;
+                    RenderSettings.fogColor = _fog.Color;
+                    RestoreSky();
                 }
 
                 _tintedDusk = false;
@@ -963,11 +1052,12 @@ namespace SolarMajesty
 
         private void CaptureCitadel()
         {
-            _glowRenderers = System.Array.Empty<Renderer>();
-            _glowEmission = System.Array.Empty<Color>();
+            _glow = System.Array.Empty<GlowSlot>();
             _lamps = System.Array.Empty<Light>();
             _lampIntensity = System.Array.Empty<float>();
             _citadelTouched = false;
+            _citadelRendererCount = 0;
+            _citadelLightCount = 0;
 
             bool forced = _forcedGlow != null || _forcedLamps != null;
             if (!Application.isPlaying && !forced)
@@ -976,50 +1066,105 @@ namespace SolarMajesty
                 return;
             }
 
-            var glow = new System.Collections.Generic.List<Renderer>(32);
-            var emission = new System.Collections.Generic.List<Color>(32);
+            var glow = new System.Collections.Generic.List<GlowSlot>(32);
+            var seen = new System.Collections.Generic.HashSet<Renderer>();
             var lamps = new System.Collections.Generic.List<Light>(8);
             var intensities = new System.Collections.Generic.List<float>(8);
             if (forced)
             {
-                AddWindows(_forcedGlow, glow, emission);
+                AddWindows(_forcedGlow, glow, seen);
                 AddLamps(_forcedLamps, lamps, intensities);
             }
             else
             {
+                int commons = 0;
                 var structures = FindObjectsByType<ColonyStructure>(FindObjectsSortMode.None);
                 for (int i = 0; i < structures.Length; i++)
                 {
                     var structure = structures[i];
                     if (structure == null || structure.Category != BuildingCategory.Commons) continue;
-                    AddWindows(structure.GetComponentsInChildren<Renderer>(true), glow, emission);
+                    commons++;
+                    AddWindows(structure.GetComponentsInChildren<Renderer>(true), glow, seen);
                     AddLamps(structure.GetComponentsInChildren<Light>(true), lamps, intensities);
                 }
+
+                if (commons == 0)
+                    AddNamedCommons(glow, seen, lamps, intensities);
             }
 
-            _glowRenderers = glow.ToArray();
-            _glowEmission = emission.ToArray();
+            _glow = glow.ToArray();
             _lamps = lamps.ToArray();
             _lampIntensity = intensities.ToArray();
+            _citadelRendererCount = seen.Count;
+            _citadelLightCount = _lamps.Length;
             _citadelCaptured = true;
+            if (Application.isPlaying)
+            {
+                Debug.Log("[Intro] Citadel dim targets: " + _citadelRendererCount
+                    + " renderers, " + _citadelLightCount + " lights.");
+            }
+        }
+
+        private void AddNamedCommons(
+            System.Collections.Generic.List<GlowSlot> glow,
+            System.Collections.Generic.HashSet<Renderer> seen,
+            System.Collections.Generic.List<Light> lamps,
+            System.Collections.Generic.List<float> intensities)
+        {
+            var transforms = FindObjectsByType<Transform>(FindObjectsSortMode.None);
+            for (int i = 0; i < transforms.Length; i++)
+            {
+                var t = transforms[i];
+                if (t == null || !IsCommonsName(t.name)) continue;
+                if (t.parent != null && IsCommonsName(t.parent.name)) continue;
+                AddWindows(t.GetComponentsInChildren<Renderer>(true), glow, seen);
+                AddLamps(t.GetComponentsInChildren<Light>(true), lamps, intensities);
+            }
+        }
+
+        private static bool IsCommonsName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            return name.IndexOf("ColonyCommons", System.StringComparison.Ordinal) >= 0
+                || name.IndexOf("CommandDome", System.StringComparison.Ordinal) >= 0
+                || name == "Colony Commons";
         }
 
         private void AddWindows(
             Renderer[] renderers,
-            System.Collections.Generic.List<Renderer> glow,
-            System.Collections.Generic.List<Color> emission)
+            System.Collections.Generic.List<GlowSlot> glow,
+            System.Collections.Generic.HashSet<Renderer> seen)
         {
             if (renderers == null) return;
             for (int i = 0; i < renderers.Length; i++)
             {
                 var renderer = renderers[i];
                 if (renderer == null) continue;
-                var mat = renderer.sharedMaterial;
-                if (mat == null || !mat.HasProperty(EmissionId)) continue;
-                Color authored = mat.GetColor(EmissionId);
-                if (!IntroCitadel.IsWindowEmission(authored)) continue;
-                glow.Add(renderer);
-                emission.Add(authored);
+                var mats = renderer.sharedMaterials;
+                if (mats == null) continue;
+                bool kept = false;
+                for (int m = 0; m < mats.Length; m++)
+                {
+                    var mat = mats[m];
+                    if (mat == null || !mat.HasProperty(EmissionId)) continue;
+                    Color authored = mat.GetColor(EmissionId);
+                    if (!IntroCitadel.IsWindowEmission(authored)) continue;
+                    // URP Lit emits only while _EMISSION is enabled. Hull emits from the color
+                    // itself; DetailBatch still turns the keyword on for those windows.
+                    bool keywordOn = mat.IsKeywordEnabled("_EMISSION");
+                    bool hull = mat.shader != null && mat.shader.name.IndexOf("Hull", System.StringComparison.Ordinal) >= 0;
+                    if (!keywordOn && !hull) continue;
+                    glow.Add(new GlowSlot
+                    {
+                        Renderer = renderer,
+                        Index = m,
+                        MaterialCount = mats.Length,
+                        Shared = mat,
+                        Emission = authored
+                    });
+                    kept = true;
+                }
+                if (kept) seen.Add(renderer);
             }
         }
 
@@ -1053,13 +1198,18 @@ namespace SolarMajesty
             _citadelTouched = true;
             if (_citadelBlock == null)
                 _citadelBlock = new MaterialPropertyBlock();
-            for (int i = 0; i < _glowRenderers.Length; i++)
+            for (int i = 0; i < _glow.Length; i++)
             {
-                var renderer = _glowRenderers[i];
-                if (renderer == null) continue;
-                renderer.GetPropertyBlock(_citadelBlock);
-                _citadelBlock.SetColor(EmissionId, IntroCitadel.ScaleEmission(_glowEmission[i], keep));
-                renderer.SetPropertyBlock(_citadelBlock);
+                var slot = _glow[i];
+                if (slot == null || slot.Renderer == null || slot.Shared == null) continue;
+                EnsureDimInstance(slot);
+                Color emission = IntroCitadel.ScaleEmission(slot.Emission, keep);
+                if (slot.Instance != null)
+                {
+                    slot.Instance.SetColor(EmissionId, emission);
+                    ScaleAlbedo(slot, keep);
+                }
+                WriteEmissionBlock(slot, emission);
             }
 
             for (int i = 0; i < _lamps.Length; i++)
@@ -1069,18 +1219,69 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Hull keeps _EmissionColor in UnityPerMaterial, and the SRP batcher ignores a property
+        /// block for that buffer. A private instance carries the dimmed color. The shared asset is not written.
+        /// </summary>
+        private static void EnsureDimInstance(GlowSlot slot)
+        {
+            if (slot.Instance != null) return;
+            var instance = new Material(slot.Shared) { name = slot.Shared.name + " IntroDim" };
+            slot.Instance = instance;
+            var mats = slot.Renderer.sharedMaterials;
+            if (mats == null || slot.Index < 0 || slot.Index >= mats.Length) return;
+            mats[slot.Index] = instance;
+            slot.Renderer.sharedMaterials = mats;
+        }
+
+        /// <summary>
+        /// Index is the slot URP draws. A one-material renderer also keeps the renderer-level
+        /// block in step; a multi-material renderer must not, or the cyan bars would take the warm dim.
+        /// </summary>
+        private void WriteEmissionBlock(GlowSlot slot, Color emission)
+        {
+            slot.Renderer.GetPropertyBlock(_citadelBlock, slot.Index);
+            _citadelBlock.SetColor(EmissionId, emission);
+            slot.Renderer.SetPropertyBlock(_citadelBlock, slot.Index);
+            if (slot.MaterialCount <= 1)
+            {
+                slot.Renderer.GetPropertyBlock(_citadelBlock);
+                _citadelBlock.SetColor(EmissionId, emission);
+                slot.Renderer.SetPropertyBlock(_citadelBlock);
+            }
+        }
+
+        private static void ScaleAlbedo(GlowSlot slot, float keep)
+        {
+            var shared = slot.Shared;
+            var instance = slot.Instance;
+            if (shared.HasProperty(BaseColorId) && instance.HasProperty(BaseColorId))
+                instance.SetColor(BaseColorId, IntroCitadel.ScaleEmission(shared.GetColor(BaseColorId), keep));
+            if (shared.HasProperty(ColorId) && instance.HasProperty(ColorId))
+                instance.SetColor(ColorId, IntroCitadel.ScaleEmission(shared.GetColor(ColorId), keep));
+        }
+
         private void RestoreCitadel()
         {
             if (!_citadelTouched) return;
             if (_citadelBlock == null)
                 _citadelBlock = new MaterialPropertyBlock();
-            for (int i = 0; i < _glowRenderers.Length; i++)
+            for (int i = 0; i < _glow.Length; i++)
             {
-                var renderer = _glowRenderers[i];
-                if (renderer == null) continue;
-                renderer.GetPropertyBlock(_citadelBlock);
-                _citadelBlock.SetColor(EmissionId, _glowEmission[i]);
-                renderer.SetPropertyBlock(_citadelBlock);
+                var slot = _glow[i];
+                if (slot == null || slot.Renderer == null) continue;
+                var mats = slot.Renderer.sharedMaterials;
+                if (mats != null && slot.Shared != null && slot.Index >= 0 && slot.Index < mats.Length)
+                {
+                    mats[slot.Index] = slot.Shared;
+                    slot.Renderer.sharedMaterials = mats;
+                }
+                WriteEmissionBlock(slot, slot.Emission);
+                if (slot.Instance != null)
+                {
+                    DestroyOwned(slot.Instance);
+                    slot.Instance = null;
+                }
             }
 
             for (int i = 0; i < _lamps.Length; i++)
@@ -1148,6 +1349,16 @@ namespace SolarMajesty
             public Color Color;
             public float Start;
             public float End;
+        }
+
+        private sealed class GlowSlot
+        {
+            public Renderer Renderer;
+            public int Index;
+            public int MaterialCount;
+            public Material Shared;
+            public Material Instance;
+            public Color Emission;
         }
     }
 }

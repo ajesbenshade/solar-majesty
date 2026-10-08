@@ -84,6 +84,25 @@ namespace SolarMajesty
             };
         }
 
+        /// <summary>Earth's fog is a pale blue. Pull that haze into the dusk band under the sun.</summary>
+        public static Color TintFog(Color current) =>
+            Tint(current, new Color(0.50f, 0.22f, 0.08f, 1f), 0.9f, 0.65f);
+
+        /// <summary>Procedural sky tint. A blue multiplier is the pale band under an orange sun disk.</summary>
+        public static Color TintSkyTint(Color current)
+        {
+            var color = Color.Lerp(current, new Color(1f, 0.40f, 0.14f, 1f), 0.8f);
+            color.a = 1f;
+            return color;
+        }
+
+        /// <summary>Skybox ground color, the hemisphere under the horizon.</summary>
+        public static Color TintSkyGround(Color current) =>
+            Tint(current, new Color(0.16f, 0.07f, 0.03f, 1f), 0.8f, 0.6f);
+
+        /// <summary>Thick Rayleigh air reads as a blue stripe. Ease it toward a thin dusk haze.</summary>
+        public static float TintAtmosphere(float current) => Mathf.Lerp(current, 0.28f, 0.82f);
+
         static Color Tint(Color current, Color warm, float toward, float dim)
         {
             var color = Color.Lerp(current, warm, toward) * dim;

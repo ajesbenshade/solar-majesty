@@ -455,6 +455,25 @@ namespace SolarMajesty.Tests
             Color flat = RenderSettings.ambientLight;
             float ambIntensity = RenderSettings.ambientIntensity;
             var ambMode = RenderSettings.ambientMode;
+            Color fog = RenderSettings.fogColor;
+            var skybox = RenderSettings.skybox;
+            Material skyProbe = null;
+            var skyShader = Shader.Find("Skybox/Procedural");
+            if (skyShader != null)
+            {
+                skyProbe = new Material(skyShader) { name = "SM_IntroDuskProbe" };
+                skyProbe.SetColor("_SkyTint", new Color(0.62f, 0.78f, 1f, 1f));
+                skyProbe.SetColor("_GroundColor", new Color(0.76f, 0.86f, 0.94f, 1f));
+                skyProbe.SetFloat("_AtmosphereThickness", 1.28f);
+                RenderSettings.skybox = skyProbe;
+            }
+            var liveSky = skyProbe != null ? skyProbe : skybox;
+            bool hasTint = liveSky != null && liveSky.HasProperty("_SkyTint");
+            bool hasGround = liveSky != null && liveSky.HasProperty("_GroundColor");
+            bool hasAir = liveSky != null && liveSky.HasProperty("_AtmosphereThickness");
+            Color skyTint = hasTint ? liveSky.GetColor("_SkyTint") : Color.black;
+            Color skyGround = hasGround ? liveSky.GetColor("_GroundColor") : Color.black;
+            float atmosphere = hasAir ? liveSky.GetFloat("_AtmosphereThickness") : 0f;
 
             intro.SetLightsForTests(sun, fill);
             try
@@ -465,6 +484,26 @@ namespace SolarMajesty.Tests
                 Assert.Greater(sun.color.r, sun.color.b);
                 Assert.Greater(RenderSettings.ambientSkyColor.r, RenderSettings.ambientSkyColor.b);
                 Assert.AreNotEqual(sky, RenderSettings.ambientSkyColor);
+
+                Color paleFog = new Color(0.76f, 0.86f, 0.94f, 1f);
+                Color duskFog = IntroDusk.TintFog(paleFog);
+                Assert.Greater(duskFog.r, duskFog.b);
+                Assert.Less(duskFog.b, paleFog.b);
+                Assert.Greater(ColorGap(RenderSettings.fogColor, fog), 0.02f);
+                Assert.Greater(RenderSettings.fogColor.r, RenderSettings.fogColor.b);
+                if (hasTint)
+                {
+                    Color tintNow = liveSky.GetColor("_SkyTint");
+                    Assert.Greater(tintNow.r, tintNow.b);
+                    Assert.Greater(ColorGap(tintNow, skyTint), 0.05f);
+                }
+                if (hasGround)
+                {
+                    Color groundNow = liveSky.GetColor("_GroundColor");
+                    Assert.Greater(groundNow.r, groundNow.b);
+                }
+                if (hasAir)
+                    Assert.Less(liveSky.GetFloat("_AtmosphereThickness"), atmosphere - 0.2f);
 
                 intro.Skip();
                 Assert.AreEqual(1.4f, sun.intensity, 0.0001f);
@@ -478,19 +517,84 @@ namespace SolarMajesty.Tests
                 Assert.Less(ColorGap(RenderSettings.ambientLight, flat), 0.001f);
                 Assert.AreEqual(ambIntensity, RenderSettings.ambientIntensity, 0.0001f);
                 Assert.AreEqual(ambMode, RenderSettings.ambientMode);
+                Assert.Less(ColorGap(RenderSettings.fogColor, fog), 0.001f);
+                if (hasTint)
+                    Assert.Less(ColorGap(liveSky.GetColor("_SkyTint"), skyTint), 0.001f);
+                if (hasGround)
+                    Assert.Less(ColorGap(liveSky.GetColor("_GroundColor"), skyGround), 0.001f);
+                if (hasAir)
+                    Assert.AreEqual(atmosphere, liveSky.GetFloat("_AtmosphereThickness"), 0.0001f);
             }
             finally
             {
+                if (intro != null) Object.DestroyImmediate(intro.gameObject);
                 RenderSettings.ambientMode = ambMode;
                 RenderSettings.ambientSkyColor = sky;
                 RenderSettings.ambientEquatorColor = equator;
                 RenderSettings.ambientGroundColor = ground;
                 RenderSettings.ambientLight = flat;
                 RenderSettings.ambientIntensity = ambIntensity;
-                if (intro != null) Object.DestroyImmediate(intro.gameObject);
+                RenderSettings.fogColor = fog;
+                RenderSettings.skybox = skybox;
+                if (skyProbe == null && skybox != null)
+                {
+                    if (hasTint) skybox.SetColor("_SkyTint", skyTint);
+                    if (hasGround) skybox.SetColor("_GroundColor", skyGround);
+                    if (hasAir) skybox.SetFloat("_AtmosphereThickness", atmosphere);
+                }
+                if (skyProbe != null) Object.DestroyImmediate(skyProbe);
                 if (cam != null) Object.DestroyImmediate(cam.gameObject);
                 if (sunGo != null) Object.DestroyImmediate(sunGo);
                 if (fillGo != null) Object.DestroyImmediate(fillGo);
+            }
+        }
+
+        [Test]
+        public void Sting_PlaysOnceWhenTheClockCrossesItAndStopsOnSkip()
+        {
+            var timeline = IntroSequence.LoadTimeline();
+            Assert.IsNotNull(timeline, "Resources/Intro/IntroTimeline is missing.");
+            AudioTrack stingTrack = null;
+            foreach (var output in timeline.outputs)
+            {
+                if (output.sourceObject is AudioTrack track && track.name == IntroAssets.StingTrack)
+                    stingTrack = track;
+            }
+            Assert.IsNotNull(stingTrack);
+            Assert.IsTrue(stingTrack.muted, "a Manual director cannot play this; an unmuted track would double-play later");
+
+            var intro = NewIntro();
+            var cam = NewCamera();
+            bool startedSampling = false;
+            try
+            {
+                if (!AnimationMode.InAnimationMode())
+                {
+                    AnimationMode.StartAnimationMode();
+                    startedSampling = true;
+                }
+
+                intro.Play(cam, ColonyLayout.CameraFocus, CelestialBodyCatalog.Earth(), false);
+                Assert.AreEqual(IntroPlayback.Timeline, intro.Playback);
+                Step(intro, IntroShot.TitleOn - 0.05f);
+                Assert.AreEqual(0, intro.StingPlays);
+                Step(intro, 0.1f);
+                Assert.AreEqual(1, intro.StingPlays);
+                Assert.IsFalse(intro.StingStopped);
+                Step(intro, 0.4f);
+                Assert.AreEqual(1, intro.StingPlays, "crossing the sting time again must not retrigger");
+                intro.Skip();
+                Assert.IsTrue(intro.StingStopped);
+                Assert.AreEqual(1, intro.StingPlays);
+            }
+            finally
+            {
+                if (intro != null && intro.IsPlaying)
+                    intro.Abort();
+                if (startedSampling && AnimationMode.InAnimationMode())
+                    AnimationMode.StopAnimationMode();
+                if (intro != null) Object.DestroyImmediate(intro.gameObject);
+                if (cam != null) Object.DestroyImmediate(cam.gameObject);
             }
         }
 
@@ -569,6 +673,7 @@ namespace SolarMajesty.Tests
 
             Color warmEmit = new Color(1.55f, 1.02f, 0.5f, 1f);
             warmMat.SetColor("_EmissionColor", warmEmit);
+            warmMat.EnableKeyword("_EMISSION");
             warm.sharedMaterial = warmMat;
 
             var coolGo = new GameObject("citadel-cyan");
@@ -589,9 +694,11 @@ namespace SolarMajesty.Tests
             try
             {
                 intro.PlayFallback(cam, ColonyLayout.CameraFocus, CelestialBodyCatalog.Earth());
+                Assert.AreEqual(1, intro.CitadelDimRendererCount);
+                Assert.AreEqual(1, intro.CitadelDimLightCount);
                 Step(intro, 3.2f);
                 Assert.AreEqual(3.2f, lamp.intensity, 0.001f);
-                Assert.Less(ColorGap(warm.sharedMaterial.GetColor("_EmissionColor"), warmEmit), 0.001f);
+                Assert.Less(ColorGap(warmMat.GetColor("_EmissionColor"), warmEmit), 0.001f);
 
                 Step(intro, 4f - intro.Elapsed);
                 Assert.IsTrue(intro.IsPlaying);
@@ -600,10 +707,12 @@ namespace SolarMajesty.Tests
                 Assert.AreEqual(3.2f * keep, lamp.intensity, 0.001f);
 
                 var block = new MaterialPropertyBlock();
-                warm.GetPropertyBlock(block);
+                warm.GetPropertyBlock(block, 0);
                 Color dimmed = block.GetColor("_EmissionColor");
                 Assert.Less(ColorGap(dimmed, IntroCitadel.ScaleEmission(warmEmit, keep)), 0.02f);
-                Assert.Less(ColorGap(warm.sharedMaterial.GetColor("_EmissionColor"), warmEmit), 0.001f);
+                Assert.AreNotSame(warmMat, warm.sharedMaterial);
+                Assert.Less(ColorGap(warm.sharedMaterial.GetColor("_EmissionColor"), IntroCitadel.ScaleEmission(warmEmit, keep)), 0.02f);
+                Assert.Less(ColorGap(warmMat.GetColor("_EmissionColor"), warmEmit), 0.001f);
 
                 cool.GetPropertyBlock(block);
                 Assert.Greater(
@@ -613,9 +722,10 @@ namespace SolarMajesty.Tests
 
                 intro.Skip();
                 Assert.AreEqual(3.2f, lamp.intensity, 0.0001f);
-                warm.GetPropertyBlock(block);
+                Assert.AreSame(warmMat, warm.sharedMaterial);
+                warm.GetPropertyBlock(block, 0);
                 Assert.Less(ColorGap(block.GetColor("_EmissionColor"), warmEmit), 0.02f);
-                Assert.Less(ColorGap(warm.sharedMaterial.GetColor("_EmissionColor"), warmEmit), 0.001f);
+                Assert.Less(ColorGap(warmMat.GetColor("_EmissionColor"), warmEmit), 0.001f);
                 Assert.Less(ColorGap(cool.sharedMaterial.GetColor("_EmissionColor"), coolEmit), 0.001f);
             }
             finally
