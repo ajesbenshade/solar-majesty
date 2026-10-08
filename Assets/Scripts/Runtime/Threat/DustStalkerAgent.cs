@@ -78,10 +78,22 @@ namespace SolarMajesty
         public static bool UsesDefendCounter(FaunaKind kind) =>
             kind == FaunaKind.Mite || kind == FaunaKind.Tick || kind == FaunaKind.Creeper;
 
+        private readonly DamageLedger _damage = new DamageLedger();
+
+        /// <summary>Who should be paid if this creature died now. EditMode reads the ledger.</summary>
+        internal SpecialistAgent KillPayeeForTests => _damage.Payee() as SpecialistAgent;
+
         /// <summary>Opportunistic combat from a hunting specialist (no bounty flag required).</summary>
-        public void ApplyCombatDamage(float amount)
+        public void ApplyCombatDamage(float amount) => ApplyCombatDamage(amount, null);
+
+        /// <summary>
+        /// <paramref name="source"/> is the hero who landed this hit. A null source
+        /// (turret, battery, orbital, status tick) does not take the kill from a hero.
+        /// </summary>
+        public void ApplyCombatDamage(float amount, SpecialistAgent source)
         {
             if (!IsAlive || amount <= 0f) return;
+            _damage.Note(source, amount);
             _health -= amount;
             _lastCombatTime = Time.time;
             // Called every frame while a mech fights; one strike sound per swing-length is plenty.
@@ -186,7 +198,7 @@ namespace SolarMajesty
                     for (int k = 0; k < all.Count; k++)
                     {
                         var r = all[k];
-                        if (r == null || r == bitten || r.IsIncapacitated) continue;
+                        if (r == null || r == bitten || r.IsUntargetable) continue;
                         if (Vector3.Distance(Flat(r.transform.position), Flat(bitten.transform.position)) > a.aoeRadius) continue;
                         any |= r.Afflict(a);
                     }
@@ -444,6 +456,14 @@ namespace SolarMajesty
                 _health = 0.01f;
         }
 
+        /// <summary>EditMode: a swarm that must survive a long fight.</summary>
+        internal void SetHealthForTests(float health)
+        {
+            maxHealth = Mathf.Max(1f, health);
+            _health = health;
+            _downed = false;
+        }
+
         /// <summary>Body-native speed, aggro, and tints. Does not change SpecialistBrain.</summary>
         public void ApplyBodyTune(CelestialBodyProfile body)
         {
@@ -598,6 +618,21 @@ namespace SolarMajesty
             moveSpeed = speed * (_frenzy ? OverseerRules.FrenzySpeed : 1f) * _statuses.SpeedMul;
             biteDamagePerSecond = bite * (_frenzy ? OverseerRules.FrenzyBite : 1f) * _statuses.OutgoingMul;
         }
+
+        /// <summary>The mound broke. Stragglers leave without a kill bounty.</summary>
+        public void ScatterFromDen()
+        {
+            if (!IsAlive) return;
+            _noReward = true;
+            _aggro = false;
+            _raiding = false;
+            if (_threat == null)
+                DespawnQuiet();
+            else
+                BeginRetreat();
+        }
+
+        public bool IsRetreating => _retreating;
 
         /// <summary>Scatter after dens go quiet. Despawns off-campus without a death burst.</summary>
         public void BeginRetreat()
@@ -946,7 +981,7 @@ namespace SolarMajesty
             for (int i = 0; i < agents.Count; i++)
             {
                 var a = agents[i];
-                if (a == null || a.IsIncapacitated || !a.IsAlive) continue;
+                if (a == null || a.IsUntargetable || !a.IsAlive) continue;
                 float d = Vector3.Distance(me, Flat(a.transform.position));
                 if (d < bestD)
                 {
@@ -1145,7 +1180,7 @@ namespace SolarMajesty
             for (int i = 0; i < specialists.Length; i++)
             {
                 var s = specialists[i];
-                if (s == null || s.IsIncapacitated) continue;
+                if (s == null || s.IsUntargetable) continue;
                 float sq = (Flat(s.transform.position) - me).sqrMagnitude;
                 if (sq <= best)
                 {
@@ -1303,7 +1338,7 @@ namespace SolarMajesty
             float rewardMul = _noReward ? 0f : RewardMultiplier;
             KillCreditsIssued++;
             LastKillRewardMul = rewardMul;
-            _loop?.OnFaunaKilled(Kind, transform.position, rewardMul);
+            _loop?.OnFaunaKilled(Kind, transform.position, rewardMul, _damage.Payee() as SpecialistAgent);
             Debug.Log($"[Threat] {who} defeated — pressure contribution removed.");
         }
 
@@ -1334,7 +1369,10 @@ namespace SolarMajesty
             if (this == null) return;
             _corpseReleased = true;
             _threat?.Clear(_sourceId);
-            Destroy(gameObject);
+            if (Application.isPlaying)
+                Destroy(gameObject);
+            else
+                DestroyImmediate(gameObject);
         }
 
         private void OnDestroy()

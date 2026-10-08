@@ -582,6 +582,7 @@ namespace SolarMajesty
         private bool _levyHomeLogged;
         private readonly LevyRaidNotice _levyRaid = new LevyRaidNotice();
         private Vector3 _levyRaidAt;
+        private readonly PurseTheftWindow _purseThefts = new PurseTheftWindow(OverseerRules.PurseTheftWindowSeconds);
         private float _levyHintAt = -999f;
 
         private struct TimedDisc
@@ -716,6 +717,12 @@ namespace SolarMajesty
         }
 
         void TickLevyRaid() => FlushLevyRaid(_levyRaidAt, force: false);
+
+        void TickPurseThefts()
+        {
+            if (_purseThefts.Flush(Time.time, false, out string line))
+                LogOverseer(line);
+        }
 
         void FlushLevyRaid(Vector3 at, bool force)
         {
@@ -2344,6 +2351,7 @@ namespace SolarMajesty
             TickJunkYard(Time.deltaTime);
             TickGrok();
             TickLevyRaid();
+            TickPurseThefts();
             if (_glanceCooldown > 0f)
                 _glanceCooldown -= Time.deltaTime;
 
@@ -4796,7 +4804,10 @@ namespace SolarMajesty
         public void NotifyLevyStolen(int amount, string where)
         {
             if (amount <= 0) return;
-            LogOverseer(CompactGrok.LevyStolen(amount, where));
+            Debug.Log(CompactGrok.LevyStolen(amount, where));
+            _purseThefts.Note(Time.time, amount, where, out string flushed);
+            if (!string.IsNullOrEmpty(flushed))
+                LogOverseer(flushed);
         }
 
         public bool TryArmWatchtower(ColonyStructure tower)
@@ -6007,6 +6018,8 @@ namespace SolarMajesty
             RetryUnpaidCorpses();
 
             var restoredFlags = RestoreFlags(save.flags);
+            if (Flags != null)
+                ClearThreatMerge.CollapseAll(Flags, OverseerRules.ClearThreatSameDenMeters);
             if (Economy != null && Flags != null)
                 Economy.MatchReserved(FlagBountySync.Sum(Flags.Flags));
             var restoredAgents = RestoreAgents(save.agents, restoredFlags, save.rosterBlob != null);
@@ -6195,13 +6208,26 @@ namespace SolarMajesty
                 agent.RestoreLevyCarry(s.levyCarry);
                 agent.RestoreDutyCarry(s.dutyCarry);
                 agent.BindNavMesh(_campusNav);
-                RemoveCorpse(cls);
+                RemoveCorpse(agent.ToRecord(false));
                 _pendingVeterans.Remove(cls);
                 if (s.downed)
                     continue;
                 int idx = s.claimedFlagIndex;
                 if (idx >= 0 && restoredFlags != null && idx < restoredFlags.Count)
                     agent.RestoreActiveFlag(restoredFlags[idx]);
+            }
+
+            for (int a = _agents.Count - 1; a >= 0; a--)
+            {
+                var extra = _agents[a];
+                if (extra == null || used.Contains(extra)) continue;
+                _agents.RemoveAt(a);
+                if (Agent == extra)
+                    Agent = _agents.Count > 0 ? _agents[0] : null;
+                if (Application.isPlaying)
+                    Destroy(extra.gameObject);
+                else
+                    DestroyImmediate(extra.gameObject);
             }
 
             return restored;
@@ -6291,10 +6317,18 @@ namespace SolarMajesty
             _stalkers.Clear();
 
             if (saved == null) return;
+            var lairIndex = new int[saved.Count];
+            var health = new float[saved.Count];
+            for (int i = 0; i < saved.Count; i++)
+            {
+                lairIndex[i] = saved[i].lairIndex;
+                health[i] = saved[i].health;
+            }
+            bool[] keep = FaunaRestoreCap.Keep(lairIndex, health, OverseerRules.MaxFaunaPerDen);
             for (int i = 0; i < saved.Count; i++)
             {
                 var s = saved[i];
-                if (s.health <= 0.001f) continue;
+                if (!keep[i] || s.health <= 0.001f) continue;
                 var agent = SpawnFaunaAt((FaunaKind)s.kind, new Vector3(s.px, s.py, s.pz));
                 agent?.RestoreHealth01(s.health);
                 if (lairs != null && lairs.TryGetValue(s.lairIndex, out var owner))
@@ -6911,17 +6945,33 @@ namespace SolarMajesty
         /// <summary>EditMode observes kill credit without subclassing (nested behaviours cannot be added).</summary>
         internal event System.Action<FaunaKind, float> FaunaKilledHook;
 
-        public void OnFaunaKilled(FaunaKind kind, Vector3 world, float rewardMul = 1f)
+        public void OnFaunaKilled(FaunaKind kind, Vector3 world, float rewardMul = 1f, SpecialistAgent killer = null)
         {
             FaunaKilledHook?.Invoke(kind, rewardMul);
-            if (rewardMul <= 0f) return; // orbital kill: no hero earned it
-            var killer = NearestLivingAgent(world, 18f);
-            if (killer == null) return;
+            if (rewardMul <= 0f || killer == null || killer.IsScrapped) return;
             rewardMul = Mathf.Max(1f, rewardMul);
             int purse = Mathf.RoundToInt(OverseerRules.KillPurse(kind) * rewardMul);
             if (purse > 0)
                 killer.EarnCredits(purse, kind.ToString());
             killer.GrantXp(Mathf.RoundToInt(OverseerRules.XpForFauna(kind) * rewardMul), kind.ToString());
+        }
+
+        /// <summary>
+        /// The mound broke. Every Clear Threat still standing on it pays once, as the sum
+        /// of the escrows the treasury already took.
+        /// </summary>
+        public void ResolveDenClear(StalkerLair lair, SpecialistAgent hero, bool grantXp)
+        {
+            if (lair == null || Flags == null) return;
+            int pay = ClearThreatMerge.Take(
+                Flags, lair.WorldPosition, OverseerRules.ClearThreatSameDenMeters, out int escrow);
+            if (pay > 0)
+                Economy?.ReleaseBountyEscrow(escrow);
+            if (hero == null || hero.IsScrapped) return;
+            if (pay > 0)
+                hero.EarnCredits(pay, "flag_ClearThreat");
+            if (grantXp)
+                hero.GrantXp(OverseerRules.XpForFlag(FlagType.ClearThreat) + OverseerRules.XpDen, "den");
         }
 
         private ColonyStructure FindWorkshopFor(SpecialistClass cls)
@@ -7125,26 +7175,21 @@ namespace SolarMajesty
         private List<SpecialistRecord> CaptureRoster()
         {
             var list = new List<SpecialistRecord>(8);
+            var living = new List<SpecialistRecord>(8);
             for (int i = 0; i < _agents.Count; i++)
             {
                 var a = _agents[i];
                 if (a == null || a.Data == null) continue;
-                list.Add(a.ToRecord(corpse: false));
+                var row = a.ToRecord(corpse: false);
+                living.Add(row);
+                list.Add(row);
             }
             for (int i = 0; i < _corpses.Count; i++)
             {
                 var rec = _corpses[i];
                 rec.Corpse = true;
-                bool dup = false;
-                for (int j = 0; j < list.Count; j++)
-                {
-                    if (list[j].Class == rec.Class)
-                    {
-                        dup = true;
-                        break;
-                    }
-                }
-                if (!dup) list.Add(rec);
+                if (ScrapRoster.ShouldKeepCorpse(living, rec))
+                    list.Add(rec);
             }
             foreach (var kv in _pendingVeterans)
             {
@@ -7228,12 +7273,36 @@ namespace SolarMajesty
             rec.Corpse = true;
             for (int i = 0; i < _corpses.Count; i++)
             {
-                if (_corpses[i].Class != rec.Class) continue;
+                bool same = ScrapRoster.IsSameHero(_corpses[i], rec);
+                bool legacy = string.IsNullOrEmpty(_corpses[i].Name) &&
+                              string.IsNullOrEmpty(rec.Name) &&
+                              _corpses[i].Class == rec.Class;
+                if (!same && !legacy) continue;
                 _corpses[i] = rec;
                 RefreshWreckVisuals();
                 return;
             }
             _corpses.Add(rec);
+            RefreshWreckVisuals();
+        }
+
+        /// <summary>
+        /// Drop the wreck of this hero. An unnamed record is the old one-per-class snapshot
+        /// and still clears every wreck of that class.
+        /// </summary>
+        private void RemoveCorpse(SpecialistRecord rec)
+        {
+            if (string.IsNullOrEmpty(rec.Name))
+            {
+                RemoveCorpse(rec.Class);
+                return;
+            }
+
+            for (int i = _corpses.Count - 1; i >= 0; i--)
+            {
+                if (ScrapRoster.IsSameHero(_corpses[i], rec))
+                    _corpses.RemoveAt(i);
+            }
             RefreshWreckVisuals();
         }
 
@@ -7351,7 +7420,7 @@ namespace SolarMajesty
                 return false;
             }
 
-            RemoveCorpse(rec.Class);
+            RemoveCorpse(rec);
             _pendingVeterans.Remove(rec.Class);
             return true;
         }
@@ -7389,7 +7458,7 @@ namespace SolarMajesty
             if (Agent == null)
                 Agent = agent;
             agent.BindNavMesh(_campusNav);
-            RemoveCorpse(rec.Class);
+            RemoveCorpse(rec);
         }
 
         private ColonyStructure FindFobotYard()

@@ -52,6 +52,7 @@ namespace SolarMajesty
         private float _playTop;
         private float _tutorialBottom = M;
         private float _hudScale = 1f;
+        private HudScaleGesture _uiScaleGesture;
         private bool _powerAlarmLatched;
         private bool _confirmNewGame;
         private bool _titleLoad;
@@ -3332,14 +3333,23 @@ namespace SolarMajesty
             return y + h + 6f;
         }
 
-        /// <summary>75%–200% in 5% steps. AUTO follows screen height. Same row height as a mix slider.</summary>
+        /// <summary>
+        /// 75%–200% in 5% steps. AUTO follows screen height. The number updates while the
+        /// slider moves; the panel scale changes when the mouse comes up, so the row
+        /// does not slide out from under the cursor.
+        /// </summary>
         private float UiScaleRow(float x, float y, float width)
         {
             bool auto = DemoSettings.HudScaleAuto;
-            float chosen = auto
+            float applied = auto
                 ? HudScaleMath.AutoForHeight(Screen.height)
                 : DemoSettings.HudScaleExplicit;
-            string pct = auto ? $"A {chosen * 100f:0}%" : $"{chosen * 100f:0}%";
+            if (auto)
+                _uiScaleGesture.Cancel();
+            else
+                _uiScaleGesture.SyncApplied(applied);
+            float shown = auto ? applied : _uiScaleGesture.Shown;
+            string pct = auto ? $"A {shown * 100f:0}%" : $"{shown * 100f:0}%";
 
             GUI.Label(new Rect(x, y, 78f, 18f), "UI SCALE", _caps);
             const float autoW = 52f;
@@ -3348,16 +3358,27 @@ namespace SolarMajesty
             float sliderX = x + 82f;
             float sliderW = Mathf.Max(24f, right - autoW - valueW - 8f - sliderX);
             float next = GUI.HorizontalSlider(
-                new Rect(sliderX, y + 2f, sliderW, 16f), chosen, HudScaleMath.Min, HudScaleMath.Max);
-            float snapped = HudScaleMath.RoundToStep(next);
-            if (!Mathf.Approximately(snapped, HudScaleMath.RoundToStep(chosen)))
+                new Rect(sliderX, y + 2f, sliderW, 16f), shown, HudScaleMath.Min, HudScaleMath.Max);
+            if (!auto)
+                _uiScaleGesture.Drag(next);
+            bool mouseUp = Event.current != null &&
+                           Event.current.type == EventType.MouseUp &&
+                           Event.current.button == 0;
+            if (!mouseUp &&
+                Event.current != null &&
+                Event.current.type == EventType.Repaint &&
+                _uiScaleGesture.Dragging &&
+                !Input.GetMouseButton(0))
+                mouseUp = true;
+            if (!auto && _uiScaleGesture.TryCommit(mouseUp, out float commit))
             {
-                DemoSettings.SetHudScaleExplicit(snapped);
+                DemoSettings.SetHudScaleExplicit(commit);
                 DemoSettings.SaveSettings();
             }
             GUI.Label(new Rect(right - autoW - valueW - 4f, y, valueW, 18f), pct, _microRight);
             if (GUI.Button(new Rect(right - autoW, y - 2f, autoW, 22f), "AUTO", auto ? _chipOn : _chipOff))
             {
+                _uiScaleGesture.Cancel();
                 DemoSettings.SetHudScaleAuto();
                 DemoSettings.SaveSettings();
             }

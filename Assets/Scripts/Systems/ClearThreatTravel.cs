@@ -53,7 +53,14 @@ namespace SolarMajesty
         public bool Repathed;
         public bool Released;
 
-        public void Note(float distance, float dt, out bool repath, out bool release)
+        public void Note(float distance, float dt, out bool repath, out bool release) =>
+            Note(distance, dt, false, false, out repath, out release);
+
+        /// <summary>
+        /// Stuck only when the hero is neither closing, moving, nor in a fight.
+        /// Combat or any movement resets the window. A frozen hero still repaths once, then lets go.
+        /// </summary>
+        public void Note(float distance, float dt, bool moved, bool inCombat, out bool repath, out bool release)
         {
             repath = false;
             release = false;
@@ -65,11 +72,13 @@ namespace SolarMajesty
                 return;
             }
 
-            if (distance < Mark - ProgressMeters)
+            bool closer = distance < Mark - ProgressMeters;
+            if (closer || moved || inCombat)
             {
                 Seconds = 0f;
                 Repathed = false;
-                Mark = distance;
+                if (distance < Mark)
+                    Mark = distance;
                 return;
             }
 

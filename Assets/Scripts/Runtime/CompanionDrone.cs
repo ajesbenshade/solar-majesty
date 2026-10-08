@@ -103,7 +103,8 @@ namespace SolarMajesty
                 if (Flat(transform.position, at) > 2f)
                     MoveToward(at, _def.moveSpeed * dt);
                 else
-                    target.ApplyCombatDamage(_def.dps * dt);
+                    target.ApplyCombatDamage(_def.dps * dt, _owner);
+                    _owner?.NotifyCombatProgress();
 
                 if (_def.taunts)
                 {

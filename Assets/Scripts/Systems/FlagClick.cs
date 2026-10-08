@@ -78,7 +78,11 @@ namespace SolarMajesty
             // so +/- cannot raise a number the treasury never held.
             FlagBountySync.AdoptReserved(flag);
 
-            float next = Mathf.Clamp(flag.CurrentBounty + delta, flag.Data.minBounty, flag.Data.maxBounty);
+            // A folded Clear Threat keeps the summed escrow, which can sit above the
+            // asset max. The step ceiling is that sum, so one click cannot snap the
+            // pole to maxBounty and refund the pile.
+            float ceiling = Mathf.Max(flag.Data.maxBounty, flag.EscrowMetals);
+            float next = Mathf.Clamp(flag.CurrentBounty + delta, flag.Data.minBounty, ceiling);
             int cost = SimpleEconomy.BountyMetalsCost(next);
             if (cost == flag.EscrowMetals && Mathf.Approximately(cost, flag.CurrentBounty))
                 return true;
@@ -86,7 +90,10 @@ namespace SolarMajesty
             if (economy != null && !economy.TryAdjustBountyEscrow(flag, cost))
                 return false;
 
-            flags.SetBounty(flag, cost);
+            if (cost <= flag.Data.maxBounty)
+                flags.SetBounty(flag, cost);
+            else
+                flag.CurrentBounty = cost;
             flag.EscrowMetals = cost;
             if (economy != null)
                 economy.MatchReserved(FlagBountySync.Sum(flags.Flags));
@@ -221,6 +228,21 @@ namespace SolarMajesty
         {
             if (flags == null || data == null) return null;
             int cost = PostCost(data, requested);
+            if (data.flagType == FlagType.ClearThreat)
+            {
+                var existing = ClearThreatMerge.Nearest(
+                    flags.Flags, world, OverseerRules.ClearThreatSameDenMeters);
+                if (existing != null)
+                {
+                    if (economy != null && !economy.TryEscrowBounty(cost, out _))
+                        return null;
+                    existing.CurrentBounty += cost;
+                    existing.EscrowMetals += cost;
+                    if (economy != null)
+                        economy.MatchReserved(Sum(flags.Flags));
+                    return existing;
+                }
+            }
             if (economy != null && !economy.TryEscrowBounty(cost, out _))
                 return null;
 

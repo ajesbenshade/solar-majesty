@@ -117,8 +117,39 @@ namespace SolarMajesty
         /// </summary>
         public const float ClearThreatAttackRange = 11f;
 
+        /// <summary>
+        /// Structure points on a stalker den. A hero inside <see cref="ClearThreatAttackRange"/>
+        /// chips this even while fighting. Emptying it clears the den; leftover fauna scatter.
+        /// </summary>
+        public const float DenStructureHp = 120f;
+
+        /// <summary>Structure damage per second from one hero standing in range of the den.</summary>
+        public const float DenStructureDps = 8f;
+
+        /// <summary>Clear Threat poles this close are the same den.</summary>
+        public const float ClearThreatSameDenMeters = 18f;
+
+        /// <summary>Continue will not put more than this many saved fauna back on one den.</summary>
+        public const int MaxFaunaPerDen = 8;
+
         /// <summary>Game-seconds without closing on a Clear Threat before one repath, then a release.</summary>
         public const float ClearThreatStuckSeconds = 10f;
+
+        /// <summary>After standing up, bites do not land for this long.</summary>
+        public const float RecoverInvulnSeconds = 8f;
+
+        /// <summary>
+        /// After standing up, the hero walks to the inn and will not take a new fight
+        /// until they arrive or this long has passed. The scrap window is unchanged.
+        /// </summary>
+        public const float RecoverRetreatSeconds = 40f;
+
+        /// <summary>Building-purse thefts collapse into one line across this window.</summary>
+        public const float PurseTheftWindowSeconds = 60f;
+
+        /// <summary>Settings will not offer a mode smaller than the 720p preset.</summary>
+        public const int MinResolutionWidth = 1280;
+        public const int MinResolutionHeight = 720;
 
         /// <summary>After a stuck release, this hero leaves that flag alone so someone else can take it.</summary>
         public const float ClearThreatYieldSeconds = 60f;

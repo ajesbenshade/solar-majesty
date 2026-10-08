@@ -8,6 +8,17 @@ namespace SolarMajesty
         public static string LevyStolen(int amount, string where) =>
             $"The purse is gone. {amount} EU walked off {where}. That was not a sale.";
 
+        /// <summary>
+        /// One line for a burst of purse thefts. Templated (the numbers change), so it is
+        /// text-only: VoiceBank.TryGetLine will not find a baked clip.
+        /// </summary>
+        public static string PestsLifted(int amount, int buildings)
+        {
+            int n = buildings < 1 ? 1 : buildings;
+            string purses = n == 1 ? "building purse" : "building purses";
+            return $"Pests lifted {amount} EU from {n} {purses}.";
+        }
+
         public static string LevyDelivered(int amount) =>
             $"Haul dumped {amount} EU at the chest. The walk was the joke.";
 
