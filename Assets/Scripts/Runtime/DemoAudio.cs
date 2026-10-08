@@ -158,12 +158,15 @@ namespace SolarMajesty
 
         public static void Ensure()
         {
+            // DontDestroyOnLoad is illegal outside play mode. Callers (hit and death
+            // sounds included) must tolerate a missing host during EditMode tests.
+            if (!Application.isPlaying) return;
             if (_ready && _sfx != null) return;
             var go = GameObject.Find("DemoAudio");
             if (go == null)
             {
                 go = new GameObject("DemoAudio");
-                Object.DontDestroyOnLoad(go);
+                if (Application.isPlaying) Object.DontDestroyOnLoad(go);
             }
             _sfx = go.GetComponent<AudioSource>();
             if (_sfx == null) _sfx = go.AddComponent<AudioSource>();
@@ -462,6 +465,7 @@ namespace SolarMajesty
         /// <summary>2D one-shot. Returns false when rate limited.</summary>
         private static bool Play(SfxEvent e)
         {
+            if (!Application.isPlaying) return false;
             if (!Limiter.TryAcquire(e.Key, Time.unscaledTime, e.Limit)) return false;
             Ensure();
             if (_sfx == null) return false;
@@ -476,6 +480,7 @@ namespace SolarMajesty
         /// <summary>Positioned one-shot through the pooled 3D voices.</summary>
         private static bool PlayAt(SfxEvent e, Vector3 at)
         {
+            if (!Application.isPlaying) return false;
             if (!Limiter.TryAcquire(e.Key, Time.unscaledTime, e.Limit)) return false;
             Ensure();
 

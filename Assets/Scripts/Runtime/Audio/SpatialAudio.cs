@@ -24,13 +24,15 @@ namespace SolarMajesty
 
         public static SpatialAudio Ensure()
         {
+            // EditMode tests and other non-play callers cannot DontDestroyOnLoad.
+            if (!Application.isPlaying) return _instance;
             if (_instance != null) return _instance;
 
             var go = GameObject.Find("SM_SpatialAudio");
             if (go == null)
             {
                 go = new GameObject("SM_SpatialAudio");
-                DontDestroyOnLoad(go);
+                if (Application.isPlaying) DontDestroyOnLoad(go);
             }
 
             _instance = go.GetComponent<SpatialAudio>();
@@ -68,6 +70,7 @@ namespace SolarMajesty
             if (clip == null) return;
 
             SpatialAudio audio = Ensure();
+            if (audio == null) return;
             AudioSource src = audio.Take();
             if (src == null) return;
 
@@ -82,6 +85,8 @@ namespace SolarMajesty
         /// <summary>Round-robin, stealing the oldest voice when everything is busy.</summary>
         private AudioSource Take()
         {
+            // Awake builds the pool; it has not run on an EditMode AddComponent.
+            if (_pool.Count == 0) return null;
             for (int i = 0; i < _pool.Count; i++)
             {
                 int index = (_next + i) % _pool.Count;

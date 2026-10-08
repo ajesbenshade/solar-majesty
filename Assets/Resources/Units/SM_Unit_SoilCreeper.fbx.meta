@@ -3,7 +3,17 @@ guid: e4b17c8a2d6f4a91b3c5e708d9f12a46
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_GlowAccent
+    second: {fileID: 2100000, guid: 0867e7859c1f9d545a8acc167d08f992, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_SoilCreeper
+    second: {fileID: 2100000, guid: b1f15b4d629c4824297223288aa9af98, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

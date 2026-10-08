@@ -2,14 +2,15 @@
   "units": [
     {
       "unit": "SM_Unit_AshHopper",
-      "walkSpeed": 0.0,
-      "height": 0.0,
+      "walkSpeed": 1.361,
+      "height": 2.28,
       "clips": [
         "Idle",
         "Walk",
-        "Strike"
+        "Strike",
+        "Down"
       ],
-      "downHoldsLastFrame": false
+      "downHoldsLastFrame": true
     },
     {
       "unit": "SM_Unit_CourierBot",
@@ -39,14 +40,15 @@
     },
     {
       "unit": "SM_Unit_DustStalker",
-      "walkSpeed": 0.0,
-      "height": 0.0,
+      "walkSpeed": 1.37,
+      "height": 1.286,
       "clips": [
         "Idle",
         "Walk",
-        "Strike"
+        "Strike",
+        "Down"
       ],
-      "downHoldsLastFrame": false
+      "downHoldsLastFrame": true
     },
     {
       "unit": "SM_Unit_EngineerBot",
@@ -89,14 +91,15 @@
     },
     {
       "unit": "SM_Unit_IceWisp",
-      "walkSpeed": 0.0,
-      "height": 0.0,
+      "walkSpeed": 1.4,
+      "height": 2.03,
       "clips": [
         "Idle",
         "Walk",
-        "Strike"
+        "Strike",
+        "Down"
       ],
-      "downHoldsLastFrame": false
+      "downHoldsLastFrame": true
     },
     {
       "unit": "SM_Unit_Medic",
@@ -113,25 +116,27 @@
     },
     {
       "unit": "SM_Unit_RegolithMite",
-      "walkSpeed": 0.0,
-      "height": 0.0,
+      "walkSpeed": 1.253,
+      "height": 0.673,
       "clips": [
         "Idle",
         "Walk",
-        "Strike"
+        "Strike",
+        "Down"
       ],
-      "downHoldsLastFrame": false
+      "downHoldsLastFrame": true
     },
     {
       "unit": "SM_Unit_RockTick",
-      "walkSpeed": 0.0,
-      "height": 0.0,
+      "walkSpeed": 1.268,
+      "height": 1.02,
       "clips": [
         "Idle",
         "Walk",
-        "Strike"
+        "Strike",
+        "Down"
       ],
-      "downHoldsLastFrame": false
+      "downHoldsLastFrame": true
     },
     {
       "unit": "SM_Unit_ScoutDrone",
@@ -161,14 +166,15 @@
     },
     {
       "unit": "SM_Unit_SoilCreeper",
-      "walkSpeed": 0.0,
-      "height": 0.0,
+      "walkSpeed": 0.941,
+      "height": 0.581,
       "clips": [
         "Idle",
         "Walk",
-        "Strike"
+        "Strike",
+        "Down"
       ],
-      "downHoldsLastFrame": false
+      "downHoldsLastFrame": true
     },
     {
       "unit": "SM_Unit_SurveyorBot",
@@ -198,14 +204,15 @@
     },
     {
       "unit": "SM_Unit_WattLeech",
-      "walkSpeed": 0.0,
-      "height": 0.0,
+      "walkSpeed": 1.02,
+      "height": 0.378,
       "clips": [
         "Idle",
         "Walk",
-        "Strike"
+        "Strike",
+        "Down"
       ],
-      "downHoldsLastFrame": false
+      "downHoldsLastFrame": true
     }
   ]
 }
