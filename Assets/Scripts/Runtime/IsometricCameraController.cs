@@ -381,8 +381,15 @@ namespace SolarMajesty
             }
 
             float scroll = Input.GetAxis("Mouse ScrollWheel");
-            // The wheel over a HUD panel scrolls that panel's list, not the map.
-            if (Mathf.Abs(scroll) > 0.0001f && !(_loop != null && _loop.PointerOverHud))
+            // The wheel over Settings, the build catalog, research, or any other panel
+            // scrolls that UI. It does not zoom. uGUI (when present) uses the same rule.
+            bool playing = _loop == null || _loop.AllowsCamera;
+            bool overImgui = _loop != null && _loop.PointerOverHud;
+            bool overUgui = false;
+            var events = UnityEngine.EventSystems.EventSystem.current;
+            if (events != null)
+                overUgui = events.IsPointerOverGameObject();
+            if (Mathf.Abs(scroll) > 0.0001f && HudPointer.WheelZoomsMap(overImgui, overUgui, playing))
             {
                 float before = _targetZoom;
                 _targetZoom = Mathf.Clamp(

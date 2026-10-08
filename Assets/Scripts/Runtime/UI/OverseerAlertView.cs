@@ -107,10 +107,8 @@ namespace SolarMajesty
         /// <summary>The mouse is over an alert card (so a click there is not a map click).</summary>
         public bool PointerOverCards()
         {
-            Vector2 m = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y) / _hitScale;
-            for (int i = 0; i < _hitRects.Count; i++)
-                if (_hitRects[i].Contains(m)) return true;
-            return false;
+            Vector2 gui = HudPointer.ScreenToGui(Input.mousePosition, Screen.height, _hitScale);
+            return HudPointer.OverRects(_hitRects, gui, pad: 0f);
         }
 
         private void DrawLegend(float sh)

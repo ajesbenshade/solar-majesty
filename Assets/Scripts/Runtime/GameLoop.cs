@@ -131,9 +131,12 @@ namespace SolarMajesty
         public bool TitlePointerBlocksWorld =>
             _overseerHud != null && _overseerHud.HitsHudPanels();
 
-        /// <summary>The mouse is over a HUD panel right now (the wheel scrolls it instead of zooming).</summary>
+        /// <summary>
+        /// The mouse is over HUD chrome (the wheel scrolls it instead of zooming).
+        /// Settings, pause, and the title block the whole screen, not only the drawn panel.
+        /// </summary>
         public bool PointerOverHud =>
-            (_overseerHud != null && _overseerHud.HitsHudPanels()) ||
+            (_overseerHud != null && (_overseerHud.PointerBlocksWorld || _overseerHud.HitsHudPanels())) ||
             (_alertView != null && _alertView.PointerOverCards());
         public bool TitleConfirmOpen =>
             _overseerHud != null && _overseerHud.TitleConfirmOpen;

@@ -118,13 +118,8 @@ namespace SolarMajesty
         public bool HitsHudPanels()
         {
             float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
-            Vector2 imguiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y) / s;
-            for (int i = 0; i < _hitRects.Count; i++)
-            {
-                if (_hitRects[i].Contains(imguiMouse))
-                    return true;
-            }
-            return false;
+            Vector2 guiMouse = HudPointer.ScreenToGui(Input.mousePosition, Screen.height, s);
+            return HudPointer.OverRects(_hitRects, guiMouse);
         }
 
         public bool TitleConfirmOpen => _confirmNewGame || _titleLoad;
@@ -2608,6 +2603,7 @@ namespace SolarMajesty
             if (_loop == null || !_loop.TryPeekCutscene(out var cut)) return;
 
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.03f, 0.05f), 0.35f);
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
             int lines = cut.Body != null ? cut.Body.Length : 0;
             float h = 100f + lines * 28f;
@@ -2649,6 +2645,7 @@ namespace SolarMajesty
             if (mission == null || !mission.IsWon || _winDismissed) return;
 
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.05f, 0.03f), 0.35f);
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
             bool travelCut = CampaignCutsceneCatalog.TryGetVictory(_loop.ActiveBody, out _);
             float detailH = travelCut ? 72f : 32f;
@@ -2718,6 +2715,7 @@ namespace SolarMajesty
             }
 
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.10f, 0.01f, 0.01f), 0.4f);
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
             var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.32f, 460f, 180f);
             var c = Panel(rect, null, false);
@@ -3005,6 +3003,7 @@ namespace SolarMajesty
 
         private void DrawPause()
         {
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f), 0.5f);
             if (_pauseSlots)
             {
@@ -3105,6 +3104,8 @@ namespace SolarMajesty
 
         private void DrawSettings()
         {
+            // The dimmed backdrop is UI. A wheel notch here scrolls settings, not the map.
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f), 0.55f);
             float h = Mathf.Min(764f, Mathf.Max(460f, _sh - 24f));
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
