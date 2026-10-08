@@ -123,16 +123,34 @@ namespace SolarMajesty
             return false;
         }
 
+        /// <summary>The point sits inside a zone of this kind that already holds a building.</summary>
+        public bool PointInTakenZone(
+            BuildZoneKind kind, Vector3 point, IReadOnlyList<BuildZone> zones, IReadOnlyList<Vector3> takenBy)
+        {
+            if (kind == BuildZoneKind.None || zones == null) return false;
+            for (int i = 0; i < zones.Count; i++)
+            {
+                var z = zones[i];
+                if (z.Kind != kind) continue;
+                if (Flat(point, z.Center) > z.Radius) continue;
+                if (IsTaken(z, takenBy)) return true;
+            }
+            return false;
+        }
+
         /// <summary>Why a bound building cannot go here, for the colony log.</summary>
-        public string Reason(BuildZoneKind kind, bool anyZoneFree)
+        public string Reason(BuildZoneKind kind, bool anyZoneFree, bool insideTakenZone = false)
         {
             switch (kind)
             {
                 case BuildZoneKind.TradePost:
+                    if (insideTakenZone) return "That trade ring is already taken.";
                     return anyZoneFree ? "Landing pads only fit inside a gold trade ring." : "Every trade zone is taken.";
                 case BuildZoneKind.Mine:
+                    if (insideTakenZone) return "That ore deposit already has a mine.";
                     return anyZoneFree ? "Mines can only be built at an ore deposit, out in the wilds." : "Every ore deposit has a mine.";
                 default:
+                    if (insideTakenZone) return "That temple site is already taken.";
                     return anyZoneFree ? "Temples can only be built on a marked temple site." : "Every temple site is taken.";
             }
         }

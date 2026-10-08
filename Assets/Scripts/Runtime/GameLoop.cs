@@ -2120,7 +2120,9 @@ namespace SolarMajesty
             bool anyFree = false;
             for (int i = 0; i < zones.Count; i++)
                 if (zones[i].Kind == kind && !BuildZoneTuning.IsTaken(zones[i], taken)) { anyFree = true; break; }
-            return ZoneRules.Reason(kind, anyFree);
+            var center = FootprintCenterWorld(cell, data.footprintWidth, data.footprintHeight);
+            bool insideTaken = ZoneRules.PointInTakenZone(kind, center, zones, taken);
+            return ZoneRules.Reason(kind, anyFree, insideTaken);
         }
 
         /// <summary>
