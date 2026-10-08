@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -31,6 +32,45 @@ namespace SolarMajesty
         private GameObject _selectRing;
 
         public FlagHandle Handle => _handle;
+
+        struct LiveLabel
+        {
+            public FlagMarker Marker;
+            public FlagHandle Handle;
+            public FlagLabelLayout.ScreenLabel Label;
+        }
+
+        static readonly List<LiveLabel> LiveLabels = new List<LiveLabel>(16);
+        static int LayoutFrame = -1;
+        const float BountyLocalY = 1.55f;
+        const float MetaLocalY = 0.92f;
+        float _labelOffsetY;
+        bool _hideDetail;
+
+        /// <summary>The flag whose floating label covers this screen point (origin bottom-left, like the mouse).</summary>
+        public static FlagHandle LabelAtScreen(Vector2 screen)
+        {
+            FlagHandle best = null;
+            int bestPriority = int.MinValue;
+            for (int i = 0; i < LiveLabels.Count; i++)
+            {
+                if (LiveLabels[i].Handle == null) continue;
+                if (!FlagLabelLayout.Hits(LiveLabels[i].Label, screen)) continue;
+                if (LiveLabels[i].Label.Priority < bestPriority) continue;
+                bestPriority = LiveLabels[i].Label.Priority;
+                best = LiveLabels[i].Handle;
+            }
+            return best;
+        }
+
+        void OnDisable()
+        {
+            for (int i = LiveLabels.Count - 1; i >= 0; i--)
+            {
+                if (LiveLabels[i].Marker == this)
+                    LiveLabels.RemoveAt(i);
+            }
+        }
 
         public void SetSelected(bool selected)
         {
@@ -168,6 +208,7 @@ namespace SolarMajesty
                 _bountyLabel.fontSize = 64;
                 _bountyLabel.fontStyle = FontStyle.Bold;
                 _bountyLabel.color = Color.white;
+                EnsureLabelCollider(go, new Vector3(3.6f, 0.7f, 0.4f));
             }
 
             if (_metaLabel == null)
@@ -181,7 +222,17 @@ namespace SolarMajesty
                 _metaLabel.characterSize = 0.14f;
                 _metaLabel.fontSize = 36;
                 _metaLabel.color = new Color(0.9f, 0.9f, 0.95f);
+                EnsureLabelCollider(go, new Vector3(5.4f, 1.15f, 0.4f));
             }
+        }
+
+        static void EnsureLabelCollider(GameObject go, Vector3 size)
+        {
+            var box = go.GetComponent<BoxCollider>();
+            if (box == null) box = go.AddComponent<BoxCollider>();
+            box.center = Vector3.zero;
+            box.size = size;
+            box.isTrigger = false;
         }
 
         private void EnsureClaimBadge()
@@ -272,9 +323,72 @@ namespace SolarMajesty
             _selectRing = go;
         }
 
+        private void LateUpdate()
+        {
+            if (LayoutFrame == Time.frameCount) return;
+            LayoutFrame = Time.frameCount;
+            LayoutLiveLabels();
+        }
+
+        static void LayoutLiveLabels()
+        {
+            int n = LiveLabels.Count;
+            if (n == 0) return;
+            var labels = new FlagLabelLayout.ScreenLabel[n];
+            for (int i = 0; i < n; i++)
+                labels[i] = LiveLabels[i].Label;
+            FlagLabelLayout.Resolve(labels, 6f);
+            for (int i = 0; i < n; i++)
+            {
+                var live = LiveLabels[i];
+                live.Label = labels[i];
+                LiveLabels[i] = live;
+                if (live.Marker != null)
+                    live.Marker.ApplyLabelOffset(labels[i]);
+            }
+        }
+
+        void ApplyLabelOffset(FlagLabelLayout.ScreenLabel label)
+        {
+            _labelOffsetY = label.OffsetY;
+            _hideDetail = label.HideDetail;
+            var cam = Camera.main;
+            float worldPerPixel = 0.012f;
+            if (cam != null && cam.orthographic && Screen.height > 1)
+                worldPerPixel = (cam.orthographicSize * 2f) / Screen.height;
+            Vector3 up = cam != null ? cam.transform.up : Vector3.up;
+            Vector3 worldLift = up * (label.OffsetY * worldPerPixel);
+            PlaceLabel(_bountyLabel, BountyLocalY, worldLift, visible: true);
+            PlaceLabel(_metaLabel, MetaLocalY, worldLift, visible: !label.HideDetail);
+        }
+
+        void PlaceLabel(TextMesh mesh, float baseY, Vector3 worldLift, bool visible)
+        {
+            if (mesh == null) return;
+            float s = mesh.transform.localScale.y;
+            if (s < 0.01f) s = 1f;
+            Vector3 localLift = transform.InverseTransformVector(worldLift) / s;
+            mesh.transform.localPosition = new Vector3(0f, baseY, 0f) + localLift;
+            var rend = mesh.GetComponent<Renderer>();
+            if (rend != null) rend.enabled = visible;
+            var col = mesh.GetComponent<Collider>();
+            if (col != null) col.enabled = visible;
+        }
+
         private void Billboard()
         {
             if (Camera.main == null) return;
+            // Match the IMGUI HUD so a click on the words hits at every UI scale.
+            float hud = Mathf.Max(0.05f, DemoSettings.HudScale);
+            if (_bountyLabel != null)
+                _bountyLabel.transform.localScale = Vector3.one * hud;
+            if (_metaLabel != null)
+                _metaLabel.transform.localScale = Vector3.one * hud;
+            // Measure the unshifted label. LateUpdate applies this frame's declutter lift.
+            if (_bountyLabel != null)
+                _bountyLabel.transform.localPosition = new Vector3(0f, BountyLocalY, 0f);
+            if (_metaLabel != null)
+                _metaLabel.transform.localPosition = new Vector3(0f, MetaLocalY, 0f);
             if (_bountyLabel != null)
             {
                 _bountyLabel.transform.rotation = Quaternion.LookRotation(
@@ -284,6 +398,83 @@ namespace SolarMajesty
             {
                 _metaLabel.transform.rotation = Quaternion.LookRotation(
                     _metaLabel.transform.position - Camera.main.transform.position);
+            }
+
+            RegisterScreenLabel(Camera.main);
+        }
+
+        void RegisterScreenLabel(Camera cam)
+        {
+            for (int i = LiveLabels.Count - 1; i >= 0; i--)
+            {
+                if (LiveLabels[i].Marker == this)
+                    LiveLabels.RemoveAt(i);
+            }
+            if (cam == null || _handle == null || _bountyLabel == null) return;
+            if (!TryLabelScreenRect(cam, out Vector2 center, out float width, out float height)) return;
+
+            int priority = _selected ? 2 : (_handle.ClaimCount > 0 ? 1 : 0);
+            LiveLabels.Add(new LiveLabel
+            {
+                Marker = this,
+                Handle = _handle,
+                Label = new FlagLabelLayout.ScreenLabel
+                {
+                    Center = center,
+                    Width = width,
+                    Height = height,
+                    Priority = priority,
+                    OffsetY = _labelOffsetY,
+                    HideDetail = _hideDetail
+                }
+            });
+        }
+
+        bool TryLabelScreenRect(Camera cam, out Vector2 center, out float width, out float height)
+        {
+            center = default;
+            width = 0f;
+            height = 0f;
+            bool any = false;
+            float minX = float.MaxValue, minY = float.MaxValue;
+            float maxX = float.MinValue, maxY = float.MinValue;
+            AccumulateScreen(_bountyLabel, cam, ref any, ref minX, ref minY, ref maxX, ref maxY);
+            AccumulateScreen(_metaLabel, cam, ref any, ref minX, ref minY, ref maxX, ref maxY);
+            if (!any) return false;
+            const float pad = 8f;
+            minX -= pad;
+            minY -= pad;
+            maxX += pad;
+            maxY += pad;
+            center = new Vector2((minX + maxX) * 0.5f, (minY + maxY) * 0.5f);
+            width = maxX - minX;
+            height = maxY - minY;
+            return width > 1f && height > 1f;
+        }
+
+        static void AccumulateScreen(
+            TextMesh mesh, Camera cam, ref bool any,
+            ref float minX, ref float minY, ref float maxX, ref float maxY)
+        {
+            if (mesh == null) return;
+            var rend = mesh.GetComponent<Renderer>();
+            if (rend == null) return;
+            Bounds b = rend.bounds;
+            Vector3 c = b.center;
+            Vector3 e = b.extents;
+            for (int i = 0; i < 8; i++)
+            {
+                var corner = c + new Vector3(
+                    (i & 1) == 0 ? -e.x : e.x,
+                    (i & 2) == 0 ? -e.y : e.y,
+                    (i & 4) == 0 ? -e.z : e.z);
+                Vector3 sp = cam.WorldToScreenPoint(corner);
+                if (sp.z < 0f) continue;
+                any = true;
+                if (sp.x < minX) minX = sp.x;
+                if (sp.y < minY) minY = sp.y;
+                if (sp.x > maxX) maxX = sp.x;
+                if (sp.y > maxY) maxY = sp.y;
             }
         }
     }

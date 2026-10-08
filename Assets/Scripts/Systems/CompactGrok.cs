@@ -12,7 +12,7 @@ namespace SolarMajesty
             $"Haul dumped {amount} EU at the chest. The walk was the joke.";
 
         public static string PurseSitting(int amount) =>
-            $"{amount} EU is napping on a HAB. Haul will not teleport it.";
+            $"{amount} EU is sitting in building purses. Haul will not teleport it.";
 
         public static string YardBill(int credits) =>
             $"The yard wants {credits} EU. Level is the scandal, not the corpse.";

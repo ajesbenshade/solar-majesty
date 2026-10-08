@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -11,6 +12,8 @@ namespace SolarMajesty
         public const string SfxKey = "SM_Set_Sfx";
         public const string AmbientKey = "SM_Set_Ambient";
         public const string HudKey = "SM_Set_Hud";
+        /// <summary>1 (or a missing key) follows screen height. 0 is an explicit slider choice.</summary>
+        public const string HudAutoKey = "SM_Set_HudAuto";
         public const string InvertKey = "SM_Set_InvertPan";
         public const string TutorialKey = "SM_TutorialDone";
         public const string SaveFlagKey = "SM_SaveExists";
@@ -47,7 +50,12 @@ namespace SolarMajesty
         public static float Ambient = 1f;
         public static float Music = 1f;
         public static float Voice = 1f;
+        /// <summary>Applied IMGUI scale for this frame. Refreshed from auto or the explicit choice.</summary>
         public static float HudScale = 1f;
+        /// <summary>True until the player drags the UI scale slider.</summary>
+        public static bool HudScaleAuto = true;
+        /// <summary>Last slider choice, in 5% steps. Stored even while auto is on.</summary>
+        public static float HudScaleExplicit = 1f;
         public static bool InvertPan;
         public static bool TutorialDone;
         public static bool SaveExists;
@@ -61,6 +69,20 @@ namespace SolarMajesty
 
         public static readonly int[] ResolutionWidths = { 1280, 1280, 1366, 1600, 1920, 1920, 2560, 2560, 3840 };
         public static readonly int[] ResolutionHeights = { 720, 800, 768, 900, 1080, 1200, 1440, 1600, 2160 };
+
+        /// <summary>One entry per width×height. Refresh rate is ignored so the list does not repeat.</summary>
+        public readonly struct DisplayMode
+        {
+            public readonly int Width;
+            public readonly int Height;
+            public DisplayMode(int width, int height)
+            {
+                Width = width;
+                Height = height;
+            }
+        }
+
+        static List<DisplayMode> _displayModes;
 
         /// <summary>On unless the player has saved a choice. Missing key stays on; a stored 0 stays off.</summary>
         public static bool EdgeScroll = true;
@@ -139,10 +161,102 @@ namespace SolarMajesty
             ResolutionHeight = ResolutionHeights[next];
         }
 
+        /// <summary>
+        /// Native display size, <see cref="Screen.currentResolution"/>, and every reported
+        /// <see cref="Screen.resolutions"/> entry, deduped by width×height. No 16:9 snap.
+        /// An empty report falls back to the built-in presets.
+        /// </summary>
+        public static List<DisplayMode> CollectResolutions(
+            int currentW, int currentH, int systemW, int systemH, Resolution[] reported)
+        {
+            var list = new List<DisplayMode>(16);
+            AddMode(list, currentW, currentH);
+            AddMode(list, systemW, systemH);
+            if (reported != null)
+            {
+                for (int i = 0; i < reported.Length; i++)
+                    AddMode(list, reported[i].width, reported[i].height);
+            }
+            if (list.Count == 0)
+            {
+                for (int i = 0; i < ResolutionWidths.Length; i++)
+                    AddMode(list, ResolutionWidths[i], ResolutionHeights[i]);
+            }
+            list.Sort(CompareModes);
+            return list;
+        }
+
+        public static int IndexOfMode(IReadOnlyList<DisplayMode> modes, int width, int height)
+        {
+            if (modes == null) return -1;
+            for (int i = 0; i < modes.Count; i++)
+            {
+                if (modes[i].Width == width && modes[i].Height == height)
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>Leaving "display" lands on the monitor's own size when that size is in the list.</summary>
+        public static int FirstExplicitIndex(IReadOnlyList<DisplayMode> modes, int nativeW, int nativeH)
+        {
+            int native = IndexOfMode(modes, nativeW, nativeH);
+            return native >= 0 ? native : 0;
+        }
+
+        public static void RefreshDisplayModes()
+        {
+            int currentW = Screen.currentResolution.width;
+            int currentH = Screen.currentResolution.height;
+            int systemW = 0;
+            int systemH = 0;
+            var display = Display.main;
+            if (display != null)
+            {
+                systemW = display.systemWidth;
+                systemH = display.systemHeight;
+            }
+            _displayModes = CollectResolutions(currentW, currentH, systemW, systemH, Screen.resolutions);
+        }
+
         public static void CycleResolution()
         {
-            StepResolution();
+            if (_displayModes == null || _displayModes.Count == 0)
+                RefreshDisplayModes();
+            int i = IndexOfMode(_displayModes, ResolutionWidth, ResolutionHeight);
+            int next;
+            if (i < 0)
+            {
+                int nativeW = Screen.currentResolution.width;
+                int nativeH = Screen.currentResolution.height;
+                var display = Display.main;
+                if (display != null && display.systemWidth >= 640 && display.systemHeight >= 480)
+                {
+                    nativeW = display.systemWidth;
+                    nativeH = display.systemHeight;
+                }
+                next = FirstExplicitIndex(_displayModes, nativeW, nativeH);
+            }
+            else
+            {
+                next = (i + 1) % _displayModes.Count;
+            }
+            ResolutionWidth = _displayModes[next].Width;
+            ResolutionHeight = _displayModes[next].Height;
             ApplyDisplay();
+        }
+
+        static void AddMode(List<DisplayMode> list, int width, int height)
+        {
+            if (width < 640 || height < 480) return;
+            if (IndexOfMode(list, width, height) >= 0) return;
+            list.Add(new DisplayMode(width, height));
+        }
+
+        static int CompareModes(DisplayMode a, DisplayMode b)
+        {
+            int c = a.Width.CompareTo(b.Width);
+            return c != 0 ? c : a.Height.CompareTo(b.Height);
         }
 
         /// <summary>Read the flags play-mode tests rewrite, without applying display or consuming boot.</summary>
@@ -163,7 +277,11 @@ namespace SolarMajesty
             // Music used to ride the ambience slider; inherit it so an old mute stays muted.
             Music = PlayerPrefs.GetFloat(MusicKey, Ambient);
             Voice = PlayerPrefs.GetFloat(VoiceKey, 1f);
-            HudScale = Mathf.Clamp(PlayerPrefs.GetFloat(HudKey, 1f), 0.85f, 1.25f);
+            // A missing auto key stays on auto. SaveSettings always writes HudKey, so an old
+            // 0.85–1.25 value must not count as an explicit choice.
+            HudScaleAuto = PlayerPrefs.GetInt(HudAutoKey, 1) == 1;
+            HudScaleExplicit = HudScaleMath.RoundToStep(PlayerPrefs.GetFloat(HudKey, 1f));
+            RefreshHudScale(Screen.width, Screen.height);
             InvertPan = PlayerPrefs.GetInt(InvertKey, 0) == 1;
             TutorialDone = PlayerPrefs.GetInt(TutorialKey, 0) == 1;
             SaveExists = PlayerPrefs.GetInt(SaveFlagKey, 0) == 1;
@@ -206,6 +324,26 @@ namespace SolarMajesty
             return false;
         }
 
+        /// <summary>Writes <see cref="HudScale"/> from auto-by-height or the explicit slider, then fit-clamps.</summary>
+        public static void RefreshHudScale(int screenWidth, int screenHeight)
+        {
+            HudScale = HudScaleMath.Effective(HudScaleAuto, HudScaleExplicit, screenWidth, screenHeight);
+        }
+
+        /// <summary>Player dragged the slider. Auto stays off until they press AUTO.</summary>
+        public static void SetHudScaleExplicit(float value)
+        {
+            HudScaleAuto = false;
+            HudScaleExplicit = HudScaleMath.RoundToStep(value);
+            RefreshHudScale(Screen.width, Screen.height);
+        }
+
+        public static void SetHudScaleAuto()
+        {
+            HudScaleAuto = true;
+            RefreshHudScale(Screen.width, Screen.height);
+        }
+
         public static void ApplyDisplay()
         {
             var names = QualitySettings.names;
@@ -215,6 +353,8 @@ namespace SolarMajesty
                 if (QualitySettings.GetQualityLevel() != QualityIndex)
                     QualitySettings.SetQualityLevel(QualityIndex, true);
             }
+            // Exact width×height. The HUD is IMGUI in screen pixels (scaled by HudScale),
+            // not a 16:9 canvas, so an ultrawide mode is not pillarboxed by the UI.
             bool sized = ResolutionWidth >= 640 && ResolutionHeight >= 480;
             if (sized)
                 Screen.SetResolution(ResolutionWidth, ResolutionHeight, Fullscreen);
@@ -232,7 +372,8 @@ namespace SolarMajesty
             PlayerPrefs.SetFloat(AmbientKey, Ambient);
             PlayerPrefs.SetFloat(MusicKey, Music);
             PlayerPrefs.SetFloat(VoiceKey, Voice);
-            PlayerPrefs.SetFloat(HudKey, HudScale);
+            PlayerPrefs.SetFloat(HudKey, HudScaleExplicit);
+            PlayerPrefs.SetInt(HudAutoKey, HudScaleAuto ? 1 : 0);
             PlayerPrefs.SetInt(InvertKey, InvertPan ? 1 : 0);
             PlayerPrefs.SetInt(QualityKey, QualityIndex);
             PlayerPrefs.SetInt(FullscreenKey, Fullscreen ? 1 : 0);

@@ -117,14 +117,9 @@ namespace SolarMajesty
         /// <summary>IMGUI chrome under the cursor (title orrery skips these clicks).</summary>
         public bool HitsHudPanels()
         {
-            float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
-            Vector2 imguiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y) / s;
-            for (int i = 0; i < _hitRects.Count; i++)
-            {
-                if (_hitRects[i].Contains(imguiMouse))
-                    return true;
-            }
-            return false;
+            float s = _hudScale < 0.05f ? DemoSettings.HudScale : _hudScale;
+            Vector2 guiMouse = HudPointer.ScreenToGui(Input.mousePosition, Screen.height, s);
+            return HudPointer.OverRects(_hitRects, guiMouse);
         }
 
         public bool TitleConfirmOpen => _confirmNewGame || _titleLoad;
@@ -507,7 +502,8 @@ namespace SolarMajesty
             _chatFieldDrawn = false;
             _tooltip = null;
 
-            float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
+            DemoSettings.RefreshHudScale(Screen.width, Screen.height);
+            float s = DemoSettings.HudScale;
             _hudScale = s;
             var prevMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(s, s, 1f));
@@ -891,6 +887,10 @@ namespace SolarMajesty
             return hit;
         }
 
+        public bool TechPanelOpen => _techOpen;
+
+        public void CloseTechPanel() => _techOpen = false;
+
         public void ToggleTechPanel()
         {
             _techOpen = !_techOpen;
@@ -960,10 +960,7 @@ namespace SolarMajesty
             bool active = research.ActiveTech == id;
             var row = new Rect(c.x, y, c.width, 36f);
             if (GUI.Button(row, GUIContent.none, active ? _rowOn : _rowOff) && can)
-            {
-                if (research.TrySelect(id))
-                    _techOpen = false;
-            }
+                research.TrySelect(id);
 
             string mark = done ? "DONE" : active ? "…" : can ? "GO" : "—";
             GUI.Label(new Rect(row.x + 6f, row.y + 2f, row.width - 52f, 16f), def.DisplayName, _value);
@@ -992,6 +989,8 @@ namespace SolarMajesty
             var rect = new Rect(_sw - M - panelW, top, panelW, panelH);
             RightColumnBottom = rect.yMax;
             var c = Panel(rect, "Research · T");
+            if (GUI.Button(new Rect(rect.xMax - 68f, rect.y + 8f, 56f, 18f), "CLOSE", _chipOff))
+                _techOpen = false;
 
             string launch = research.LaunchTechLabel(_loop.ActiveBody);
             GUI.Label(new Rect(c.x, c.y, c.width, 14f),
@@ -1057,10 +1056,7 @@ namespace SolarMajesty
                 var row = new Rect(0f, rowY, content.width, 50f);
 
                 if (GUI.Button(row, GUIContent.none, active ? _rowOn : _rowOff) && can)
-                {
-                    if (research.TrySelect(t.Id))
-                        _techOpen = false;
-                }
+                    research.TrySelect(t.Id);
 
                 string mark = done ? "DONE" : active ? "…" : can ? (t.SecretProject ? "★" : "GO") : "—";
                 Color markC = done ? Good : active ? Accent : can ? TextPrimary : TextMuted;
@@ -2609,6 +2605,7 @@ namespace SolarMajesty
             if (_loop == null || !_loop.TryPeekCutscene(out var cut)) return;
 
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.03f, 0.05f), 0.35f);
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
             int lines = cut.Body != null ? cut.Body.Length : 0;
             float h = 100f + lines * 28f;
@@ -2650,6 +2647,7 @@ namespace SolarMajesty
             if (mission == null || !mission.IsWon || _winDismissed) return;
 
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.05f, 0.03f), 0.35f);
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
             bool travelCut = CampaignCutsceneCatalog.TryGetVictory(_loop.ActiveBody, out _);
             float detailH = travelCut ? 72f : 32f;
@@ -2719,6 +2717,7 @@ namespace SolarMajesty
             }
 
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.10f, 0.01f, 0.01f), 0.4f);
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
             var rect = new Rect((_sw - 460f) * 0.5f, _sh * 0.32f, 460f, 180f);
             var c = Panel(rect, null, false);
@@ -3010,6 +3009,7 @@ namespace SolarMajesty
 
         private void DrawPause()
         {
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f), 0.5f);
             if (_pauseSlots)
             {
@@ -3110,6 +3110,8 @@ namespace SolarMajesty
 
         private void DrawSettings()
         {
+            // The dimmed backdrop is UI. A wheel notch here scrolls settings, not the map.
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f), 0.55f);
             float h = Mathf.Min(764f, Mathf.Max(460f, _sh - 24f));
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
@@ -3123,7 +3125,7 @@ namespace SolarMajesty
             _settingsScroll = GUI.BeginScrollView(view, _settingsScroll, c);
             float y = c.y;
 
-            // Two columns: five mix sliders plus HUD scale fit in the height three rows used to.
+            // Two columns of mix sliders, then a full-width UI scale row.
             float colW = (c.width - 16f) * 0.5f;
             float colX = c.x + colW + 16f;
             SettingsSlider(c.x, y, colW, "MASTER", ref DemoSettings.Master);
@@ -3131,7 +3133,8 @@ namespace SolarMajesty
             SettingsSlider(c.x, y, colW, "SFX", ref DemoSettings.Sfx);
             y = SettingsSlider(colX, y, colW, "VOICES", ref DemoSettings.Voice);
             SettingsSlider(c.x, y, colW, "AMBIENCE", ref DemoSettings.Ambient);
-            y = SettingsSlider(colX, y, colW, "HUD SCALE", ref DemoSettings.HudScale, 0.85f, 1.25f, applyAudio: false);
+            y += 28f;
+            y = UiScaleRow(c.x, y, c.width);
             y += 6f;
 
             if (Chip(new Rect(c.x, y, 200f, 26f), "INVERT CAMERA PAN", DemoSettings.InvertPan))
@@ -3344,6 +3347,38 @@ namespace SolarMajesty
             float h = _wrap.CalcHeight(new GUIContent(text), c.width);
             GUI.Label(new Rect(c.x, y, c.width, h), text, _wrap);
             return y + h + 6f;
+        }
+
+        /// <summary>75%–200% in 5% steps. AUTO follows screen height. Same row height as a mix slider.</summary>
+        private float UiScaleRow(float x, float y, float width)
+        {
+            bool auto = DemoSettings.HudScaleAuto;
+            float chosen = auto
+                ? HudScaleMath.AutoForHeight(Screen.height)
+                : DemoSettings.HudScaleExplicit;
+            string pct = auto ? $"A {chosen * 100f:0}%" : $"{chosen * 100f:0}%";
+
+            GUI.Label(new Rect(x, y, 78f, 18f), "UI SCALE", _caps);
+            const float autoW = 52f;
+            const float valueW = 64f;
+            float right = x + width;
+            float sliderX = x + 82f;
+            float sliderW = Mathf.Max(24f, right - autoW - valueW - 8f - sliderX);
+            float next = GUI.HorizontalSlider(
+                new Rect(sliderX, y + 2f, sliderW, 16f), chosen, HudScaleMath.Min, HudScaleMath.Max);
+            float snapped = HudScaleMath.RoundToStep(next);
+            if (!Mathf.Approximately(snapped, HudScaleMath.RoundToStep(chosen)))
+            {
+                DemoSettings.SetHudScaleExplicit(snapped);
+                DemoSettings.SaveSettings();
+            }
+            GUI.Label(new Rect(right - autoW - valueW - 4f, y, valueW, 18f), pct, _microRight);
+            if (GUI.Button(new Rect(right - autoW, y - 2f, autoW, 22f), "AUTO", auto ? _chipOn : _chipOff))
+            {
+                DemoSettings.SetHudScaleAuto();
+                DemoSettings.SaveSettings();
+            }
+            return y + 28f;
         }
 
         private float SettingsSlider(

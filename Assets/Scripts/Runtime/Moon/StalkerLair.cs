@@ -24,6 +24,26 @@ namespace SolarMajesty
         public int StalkerBudget => stalkerBudget;
         public float ClearRadius => clearRadius;
         public Vector3 WorldPosition => transform.position;
+
+        /// <summary>
+        /// Opening of the mound. The body is yawed 45° and the mouth is local -Z,
+        /// so heroes approach from that side instead of the centre.
+        /// </summary>
+        public Vector3 MouthDirection
+        {
+            get
+            {
+                if (_body != null)
+                {
+                    Vector3 dir = _body.TransformDirection(Vector3.back);
+                    dir.y = 0f;
+                    if (dir.sqrMagnitude > 0.0001f)
+                        return dir.normalized;
+                }
+                return ClearThreatTravel.DefaultMouthDirection;
+            }
+        }
+
         public IReadOnlyList<DustStalkerAgent> Spawned => _spawned;
 
         public void Configure(GameLoop loop, int budget, float radius, Color? rimColor = null, Color? pitColor = null,

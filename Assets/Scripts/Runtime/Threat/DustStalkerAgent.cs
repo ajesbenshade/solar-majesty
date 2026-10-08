@@ -46,14 +46,23 @@ namespace SolarMajesty
         private float _wanderTimer;
         private float _health;
         private bool _aggro;
+        private bool _downed;
+        private bool _corpseReleased;
+        private float _downHold;
+        /// <summary>How long a Down clip stays on screen before the corpse is destroyed.</summary>
+        public const float DownCorpseSeconds = 1.2f;
         private object _sourceId;
         private Vector3 _baseScale;
         private float _yBase;
         private TextMesh _label;
         private Renderer _rend;
 
-        public bool IsAlive => _health > 0f;
-        public bool IsAggro => _aggro;
+        public bool IsAlive => !_downed && _health > 0f;
+        /// <summary>Corpse is playing Down and is not a target, bounty, or living threat.</summary>
+        public bool IsDowned => _downed;
+        /// <summary>Living fauna only. Downed corpses are not pickable or AI targets.</summary>
+        public bool IsTargetable => IsAlive;
+        public bool IsAggro => _aggro && IsAlive;
         public bool IsRaiding => _raiding && IsAlive;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
         public FaunaKind Kind { get; private set; } = FaunaKind.Stalker;
@@ -262,6 +271,13 @@ namespace SolarMajesty
 
         /// <summary>Kill purse / XP multiplier (elites pay more).</summary>
         public float RewardMultiplier { get; private set; } = 1f;
+
+        /// <summary>Times <see cref="GameLoop.OnFaunaKilled"/> was invoked. Stays 1 after the corpse delay.</summary>
+        internal int KillCreditsIssued { get; private set; }
+
+        internal float LastKillRewardMul { get; private set; }
+        internal float DownSecondsLeft => _downHold;
+        internal bool CorpseReleased => _corpseReleased;
 
         /// <summary>Promote to an elite. Call after <see cref="SetKind"/> and <see cref="ApplyBodyTune"/>.</summary>
         public void MakeElite(float healthMul, float biteMul, float scaleMul, float rewardMul)
@@ -598,11 +614,18 @@ namespace SolarMajesty
             _threat?.Clear(_sourceId);
         }
 
-        private void Update()
-        {
-            if (!IsAlive || _threat == null) return;
+        private void Update() => Tick(Time.deltaTime);
 
-            float dt = Time.deltaTime;
+        /// <summary>One simulation step. EditMode tests advance the corpse timer without waiting on the player loop.</summary>
+        internal void Tick(float dt)
+        {
+            if (_downed)
+            {
+                TickDowned(dt);
+                return;
+            }
+
+            if (!IsAlive || _threat == null) return;
             if (_statuses.Count > 0)
             {
                 float dh = _statuses.Tick(dt);
@@ -786,7 +809,7 @@ namespace SolarMajesty
                 transform.position = MoveFlatToward(dest, moveSpeed * 1.1f * dt);
                 return true;
             }
-            prey.TakeHit(biteDamagePerSecond * dt);
+            prey.TakeHit(biteDamagePerSecond * dt, hostile: true, attacker: FaunaNames.Display(Kind));
             if (_clips == null) _clips = GetComponentInChildren<UnitClipPlayer>();
             if (_clips != null) _clips.NotifyStrike();
             return true;
@@ -859,7 +882,9 @@ namespace SolarMajesty
 
             int stole = prey.StealLevyCarry(prey.LevyCarry);
             if (stole > 0)
-                _loop.NoteLevyStolen(stole, prey.transform.position, fromHab: false);
+                _loop.NoteLevyStolen(
+                    stole, prey.transform.position, fromHab: false,
+                    FaunaNames.Display(Kind), LevyLossCause.Mugged);
             return true;
         }
 
@@ -1234,7 +1259,33 @@ namespace SolarMajesty
 
         private void Die()
         {
+            if (_downed || _corpseReleased) return;
+            // Dead immediately: no second kill, no targeting, no living-threat counts.
+            // Rewards fire here, not when the corpse is finally destroyed.
+            _downed = true;
+            _health = 0f;
+            _aggro = false;
+            _raiding = false;
+            _retreating = false;
+            _taunter = null;
+            _downHold = DownCorpseSeconds;
             _threat?.Clear(_sourceId);
+
+            var cols = GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < cols.Length; i++)
+            {
+                if (cols[i] != null)
+                    cols[i].enabled = false;
+            }
+
+            if (_label != null)
+                _label.gameObject.SetActive(false);
+
+            if (_clips == null) _clips = GetComponentInChildren<UnitClipPlayer>(true);
+            if (_clips != null) _clips.SetDowned(true);
+            var motion = GetComponent<UnitMotion>();
+            if (motion != null) motion.SetSuspended(true);
+
             DemoAudio.PlayStalkerDeath(transform.position);
             DemoVfx.DeathBurst(transform.position, stalkerColor);
             _loop?.ShakeCamera(0.22f, transform.position);
@@ -1249,20 +1300,46 @@ namespace SolarMajesty
                 FaunaKind.JunkBot => "Junk Bot",
                 _ => "Dust Stalker"
             };
-            _loop?.OnFaunaKilled(Kind, transform.position, _noReward ? 0f : RewardMultiplier);
+            float rewardMul = _noReward ? 0f : RewardMultiplier;
+            KillCreditsIssued++;
+            LastKillRewardMul = rewardMul;
+            _loop?.OnFaunaKilled(Kind, transform.position, rewardMul);
             Debug.Log($"[Threat] {who} defeated — pressure contribution removed.");
-            Destroy(gameObject);
+        }
+
+        private void TickDowned(float dt)
+        {
+            if (_corpseReleased || this == null) return;
+            if (dt > 0f)
+                _downHold -= dt;
+            if (_downHold > 0f) return;
+            ReleaseCorpse();
+        }
+
+        private void ReleaseCorpse()
+        {
+            if (_corpseReleased || this == null) return;
+            _corpseReleased = true;
+            // EditMode tests have no player loop to flush Destroy. Play mode keeps the
+            // object through this frame so the Down pose is what the camera last saw.
+            if (Application.isPlaying)
+                Destroy(gameObject);
+            else
+                DestroyImmediate(gameObject);
         }
 
         /// <summary>Remove without a kill burst (Continue replace, quiet retreat).</summary>
         public void DespawnQuiet()
         {
+            if (this == null) return;
+            _corpseReleased = true;
             _threat?.Clear(_sourceId);
             Destroy(gameObject);
         }
 
         private void OnDestroy()
         {
+            _corpseReleased = true;
             _threat?.Clear(_sourceId);
         }
 
@@ -1339,8 +1416,8 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Procedural locomotion, plus IK legs for the arthropod fauna. Authored FBX still
-        /// needs IK: joined meshes have static sculpted legs and no skeleton.
+        /// Procedural locomotion. IK legs and head-flip dressing are for primitive bodies only.
+        /// Fauna v2 rigs (clip player or SM_Art_Fauna materials) already face +Z and have real legs.
         /// </summary>
         private void EnsureMotion()
         {
@@ -1349,7 +1426,7 @@ namespace SolarMajesty
             if (motion == null) return;
             TerrainFollow.Attach(gameObject);
 
-            if (GetComponentInChildren<UnitClipPlayer>(true) != null)
+            if (FaunaDressing.ShouldKeepAuthoredFacing(gameObject))
             {
                 ProceduralLegs.Remove(gameObject);
                 return;

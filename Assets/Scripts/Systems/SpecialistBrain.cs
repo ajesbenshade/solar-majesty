@@ -409,7 +409,18 @@ namespace SolarMajesty
         bool IsPanicked(in SpecialistContext ctx, float bodyDanger)
         {
             var t = _tuning;
-            float injury = 1f - ctx.HealthNormalized;
+            float health = ctx.HealthNormalized;
+            // Hysteresis is the same for every class: enter on the panic gate below, stay
+            // latched until health clears fleeResumeHealth. A tick through 0.49–0.65 used to
+            // drop flee and send an Engineer back to workshop duty before the inn could heal them.
+            if (ctx.Motives != null && ctx.Motives.FleeLatched)
+            {
+                if (health >= t.fleeResumeHealth)
+                    return false;
+                return true;
+            }
+
+            float injury = 1f - health;
             float courage = EffectiveCourage(ctx);
             float reflex = t.HealthReflexFor(ctx.Data.specialistClass);
             bool panicked = injury > 1f - reflex ||
@@ -418,7 +429,7 @@ namespace SolarMajesty
             // A scare lingers: stay home until safety has recovered, not just until danger passes.
             if (t.motivesEnabled && ctx.Motives != null && ctx.Motives.Shaken)
                 panicked = true;
-            return panicked && ctx.HealthNormalized < t.panicHealthCeiling;
+            return panicked && health < t.panicHealthCeiling;
         }
 
         /// <summary>Score a task must reach before this hero commits. Greedy heroes are pickier; broke ones aren't.</summary>

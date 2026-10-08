@@ -1,0 +1,86 @@
+SM_Unit_DustStalker fbx mats after remap: [Assets/Art/Fauna/Materials/SM_Art_Fauna_DustStalker.mat:SM_Art_Fauna_DustStalker, Assets/Art/Fauna/Materials/SM_Art_Fauna_GlowAccent.mat:SM_Art_Fauna_GlowAccent] mesh=SM_Unit_DustStalker
+Unit_DustStalker saved=True
+SM_Unit_AshHopper fbx mats after remap: [Assets/Art/Fauna/Materials/SM_Art_Fauna_AshHopper.mat:SM_Art_Fauna_AshHopper, Assets/Art/Fauna/Materials/SM_Art_Fauna_GlowAccent.mat:SM_Art_Fauna_GlowAccent] mesh=SM_Unit_AshHopper
+Unit_AshHopper saved=True
+SM_Unit_SoilCreeper fbx mats after remap: [Assets/Art/Fauna/Materials/SM_Art_Fauna_SoilCreeper.mat:SM_Art_Fauna_SoilCreeper, Assets/Art/Fauna/Materials/SM_Art_Fauna_GlowAccent.mat:SM_Art_Fauna_GlowAccent] mesh=SM_Unit_SoilCreeper
+Unit_SoilCreeper saved=True
+SM_Unit_RockTick fbx mats after remap: [Assets/Art/Fauna/Materials/SM_Art_Fauna_RockTick.mat:SM_Art_Fauna_RockTick, Assets/Art/Fauna/Materials/SM_Art_Fauna_GlowAccent.mat:SM_Art_Fauna_GlowAccent] mesh=SM_Unit_RockTick
+Unit_RockTick saved=True
+SM_Unit_RegolithMite fbx mats after remap: [Assets/Art/Fauna/Materials/SM_Art_Fauna_RegolithMite.mat:SM_Art_Fauna_RegolithMite, Assets/Art/Fauna/Materials/SM_Art_Fauna_GlowAccent.mat:SM_Art_Fauna_GlowAccent] mesh=SM_Unit_RegolithMite
+Unit_RegolithMite saved=True
+SM_Unit_WattLeech fbx mats after remap: [Assets/Art/Fauna/Materials/SM_Art_Fauna_WattLeech.mat:SM_Art_Fauna_WattLeech, Assets/Art/Fauna/Materials/SM_Art_Fauna_GlowAccent.mat:SM_Art_Fauna_GlowAccent] mesh=SM_Unit_WattLeech
+Unit_WattLeech saved=True
+SM_Unit_IceWisp fbx mats after remap: [Assets/Art/Fauna/Materials/SM_Art_Fauna_IceWisp.mat:SM_Art_Fauna_IceWisp, Assets/Art/Fauna/Materials/SM_Art_Fauna_GlowAccent.mat:SM_Art_Fauna_GlowAccent] mesh=SM_Unit_IceWisp
+Unit_IceWisp saved=True
+phase=after-setup unity=6000.5.10f1
+SM_Unit_DustStalker mesh 'SM_Unit_DustStalker' fileID=-393184096717449203 tris=2514 verts=3075 submeshes=2 bounds=Center: (0.00, 0.16, 0.65), Extents: (0.52, 1.29, 0.63)
+SM_Unit_DustStalker clips: SM_Unit_DustStalker_Rig|Down (Down) len=1.167s fps=24 loop=False curves=190, SM_Unit_DustStalker_Rig|Idle (Idle) len=1.333s fps=24 loop=False curves=190, SM_Unit_DustStalker_Rig|Strike (Strike) len=0.750s fps=24 loop=False curves=190, SM_Unit_DustStalker_Rig|Walk (Walk) len=0.667s fps=24 loop=False curves=190
+SM_Unit_DustStalker walkSpeed(meta)=1.370
+SM_Unit_DustStalker renderer SkinnedMeshRenderer 'SM_Unit_DustStalker' mats=[SM_Art_Fauna_DustStalker(Universal Render Pipeline/Lit), SM_Art_Fauna_GlowAccent(Universal Render Pipeline/Lit)]
+SM_Unit_DustStalker UnitClipPlayer.Bind ready=True hasDown=True
+SM_Unit_DustStalker clip Down plays: maxBoneMove=0.371m maxBoneAngle=72.5deg
+SM_Unit_DustStalker clip Idle plays: maxBoneMove=0.010m maxBoneAngle=24.1deg
+SM_Unit_DustStalker clip Strike plays: maxBoneMove=0.321m maxBoneAngle=54.4deg
+SM_Unit_DustStalker clip Walk plays: maxBoneMove=0.045m maxBoneAngle=60.2deg
+Unit_DustStalker meshFilter 'Unit_DustStalker' mesh=SM_Unit_DustStalker fileID=-393184096717449203 tris=2514 mats=[SM_Art_Fauna_DustStalker, SM_Art_Fauna_GlowAccent]
+SM_Unit_AshHopper mesh 'SM_Unit_AshHopper' fileID=8673615076541570361 tris=1536 verts=1727 submeshes=2 bounds=Center: (0.00, 0.22, 1.14), Extents: (0.96, 1.27, 1.14)
+SM_Unit_AshHopper clips: SM_Unit_AshHopper_Rig|Down (Down) len=1.167s fps=24 loop=False curves=230, SM_Unit_AshHopper_Rig|Idle (Idle) len=1.333s fps=24 loop=False curves=230, SM_Unit_AshHopper_Rig|Strike (Strike) len=0.667s fps=24 loop=False curves=230, SM_Unit_AshHopper_Rig|Walk (Walk) len=0.667s fps=24 loop=False curves=230
+SM_Unit_AshHopper walkSpeed(meta)=1.361
+SM_Unit_AshHopper renderer SkinnedMeshRenderer 'SM_Unit_AshHopper' mats=[SM_Art_Fauna_AshHopper(Universal Render Pipeline/Lit), SM_Art_Fauna_GlowAccent(Universal Render Pipeline/Lit)]
+SM_Unit_AshHopper UnitClipPlayer.Bind ready=True hasDown=True
+SM_Unit_AshHopper clip Down plays: maxBoneMove=1.414m maxBoneAngle=63.6deg
+SM_Unit_AshHopper clip Idle plays: maxBoneMove=0.021m maxBoneAngle=17.0deg
+SM_Unit_AshHopper clip Strike plays: maxBoneMove=0.313m maxBoneAngle=45.8deg
+SM_Unit_AshHopper clip Walk plays: maxBoneMove=0.075m maxBoneAngle=24.1deg
+Unit_AshHopper meshFilter 'Unit_AshHopper' mesh=SM_Unit_AshHopper fileID=8673615076541570361 tris=1536 mats=[SM_Art_Fauna_AshHopper, SM_Art_Fauna_GlowAccent]
+SM_Unit_SoilCreeper mesh 'SM_Unit_SoilCreeper' fileID=2425573196121976764 tris=1674 verts=2178 submeshes=2 bounds=Center: (0.00, 0.05, 0.29), Extents: (0.54, 1.49, 0.29)
+SM_Unit_SoilCreeper clips: SM_Unit_SoilCreeper_Rig|Down (Down) len=1.250s fps=24 loop=False curves=450, SM_Unit_SoilCreeper_Rig|Idle (Idle) len=1.333s fps=24 loop=False curves=450, SM_Unit_SoilCreeper_Rig|Strike (Strike) len=0.667s fps=24 loop=False curves=450, SM_Unit_SoilCreeper_Rig|Walk (Walk) len=0.667s fps=24 loop=False curves=450
+SM_Unit_SoilCreeper walkSpeed(meta)=0.941
+SM_Unit_SoilCreeper renderer SkinnedMeshRenderer 'SM_Unit_SoilCreeper' mats=[SM_Art_Fauna_SoilCreeper(Universal Render Pipeline/Lit), SM_Art_Fauna_GlowAccent(Universal Render Pipeline/Lit)]
+SM_Unit_SoilCreeper UnitClipPlayer.Bind ready=True hasDown=True
+SM_Unit_SoilCreeper clip Down plays: maxBoneMove=0.650m maxBoneAngle=124.2deg
+SM_Unit_SoilCreeper clip Idle plays: maxBoneMove=0.000m maxBoneAngle=12.5deg
+SM_Unit_SoilCreeper clip Strike plays: maxBoneMove=0.120m maxBoneAngle=39.1deg
+SM_Unit_SoilCreeper clip Walk plays: maxBoneMove=0.012m maxBoneAngle=31.5deg
+Unit_SoilCreeper meshFilter 'Unit_SoilCreeper' mesh=SM_Unit_SoilCreeper fileID=2425573196121976764 tris=1674 mats=[SM_Art_Fauna_SoilCreeper, SM_Art_Fauna_GlowAccent]
+SM_Unit_RockTick mesh 'SM_Unit_RockTick' fileID=-4717264449531377494 tris=1936 verts=2372 submeshes=2 bounds=Center: (0.00, -0.31, 0.51), Extents: (0.95, 0.80, 0.51)
+SM_Unit_RockTick clips: SM_Unit_RockTick_Rig|Down (Down) len=1.167s fps=24 loop=False curves=330, SM_Unit_RockTick_Rig|Idle (Idle) len=1.333s fps=24 loop=False curves=330, SM_Unit_RockTick_Rig|Strike (Strike) len=0.750s fps=24 loop=False curves=330, SM_Unit_RockTick_Rig|Walk (Walk) len=0.500s fps=24 loop=False curves=330
+SM_Unit_RockTick walkSpeed(meta)=1.268
+SM_Unit_RockTick renderer SkinnedMeshRenderer 'SM_Unit_RockTick' mats=[SM_Art_Fauna_RockTick(Universal Render Pipeline/Lit), SM_Art_Fauna_GlowAccent(Universal Render Pipeline/Lit)]
+SM_Unit_RockTick UnitClipPlayer.Bind ready=True hasDown=True
+SM_Unit_RockTick clip Down plays: maxBoneMove=0.153m maxBoneAngle=63.0deg
+SM_Unit_RockTick clip Idle plays: maxBoneMove=0.008m maxBoneAngle=19.9deg
+SM_Unit_RockTick clip Strike plays: maxBoneMove=0.160m maxBoneAngle=34.9deg
+SM_Unit_RockTick clip Walk plays: maxBoneMove=0.020m maxBoneAngle=22.9deg
+Unit_RockTick meshFilter 'Unit_RockTick' mesh=SM_Unit_RockTick fileID=-4717264449531377494 tris=1936 mats=[SM_Art_Fauna_RockTick, SM_Art_Fauna_GlowAccent]
+SM_Unit_RegolithMite mesh 'SM_Unit_RegolithMite' fileID=-3551584259763722353 tris=1582 verts=1838 submeshes=2 bounds=Center: (0.00, -0.06, 0.34), Extents: (0.50, 0.70, 0.34)
+SM_Unit_RegolithMite clips: SM_Unit_RegolithMite_Rig|Down (Down) len=1.250s fps=24 loop=False curves=220, SM_Unit_RegolithMite_Rig|Idle (Idle) len=1.333s fps=24 loop=False curves=220, SM_Unit_RegolithMite_Rig|Strike (Strike) len=0.667s fps=24 loop=False curves=220, SM_Unit_RegolithMite_Rig|Walk (Walk) len=0.417s fps=24 loop=False curves=220
+SM_Unit_RegolithMite walkSpeed(meta)=1.253
+SM_Unit_RegolithMite renderer SkinnedMeshRenderer 'SM_Unit_RegolithMite' mats=[SM_Art_Fauna_RegolithMite(Universal Render Pipeline/Lit), SM_Art_Fauna_GlowAccent(Universal Render Pipeline/Lit)]
+SM_Unit_RegolithMite UnitClipPlayer.Bind ready=True hasDown=True
+SM_Unit_RegolithMite clip Down plays: maxBoneMove=0.272m maxBoneAngle=179.0deg
+SM_Unit_RegolithMite clip Idle plays: maxBoneMove=0.007m maxBoneAngle=14.2deg
+SM_Unit_RegolithMite clip Strike plays: maxBoneMove=0.266m maxBoneAngle=25.8deg
+SM_Unit_RegolithMite clip Walk plays: maxBoneMove=0.020m maxBoneAngle=28.9deg
+Unit_RegolithMite meshFilter 'Unit_RegolithMite' mesh=SM_Unit_RegolithMite fileID=-3551584259763722353 tris=1582 mats=[SM_Art_Fauna_RegolithMite, SM_Art_Fauna_GlowAccent]
+SM_Unit_WattLeech mesh 'SM_Unit_WattLeech' fileID=9002555136880942525 tris=1556 verts=1489 submeshes=2 bounds=Center: (0.00, -0.01, 0.21), Extents: (0.72, 1.19, 0.16)
+SM_Unit_WattLeech clips: SM_Unit_WattLeech_Rig|Down (Down) len=1.167s fps=24 loop=False curves=120, SM_Unit_WattLeech_Rig|Idle (Idle) len=1.333s fps=24 loop=False curves=120, SM_Unit_WattLeech_Rig|Strike (Strike) len=0.750s fps=24 loop=False curves=120, SM_Unit_WattLeech_Rig|Walk (Walk) len=0.833s fps=24 loop=False curves=120
+SM_Unit_WattLeech walkSpeed(meta)=1.020
+SM_Unit_WattLeech renderer SkinnedMeshRenderer 'SM_Unit_WattLeech' mats=[SM_Art_Fauna_WattLeech(Universal Render Pipeline/Lit), SM_Art_Fauna_GlowAccent(Universal Render Pipeline/Lit)]
+SM_Unit_WattLeech UnitClipPlayer.Bind ready=True hasDown=True
+SM_Unit_WattLeech clip Down plays: maxBoneMove=0.031m maxBoneAngle=147.4deg
+SM_Unit_WattLeech clip Idle plays: maxBoneMove=0.000m maxBoneAngle=17.2deg
+SM_Unit_WattLeech clip Strike plays: maxBoneMove=0.100m maxBoneAngle=28.7deg
+SM_Unit_WattLeech clip Walk plays: maxBoneMove=0.000m maxBoneAngle=22.3deg
+Unit_WattLeech meshFilter 'Unit_WattLeech' mesh=SM_Unit_WattLeech fileID=9002555136880942525 tris=1556 mats=[SM_Art_Fauna_WattLeech, SM_Art_Fauna_GlowAccent]
+SM_Unit_IceWisp mesh 'SM_Unit_IceWisp' fileID=1866846970586429681 tris=1606 verts=2987 submeshes=2 bounds=Center: (0.00, -0.04, 1.02), Extents: (0.67, 0.71, 1.01)
+SM_Unit_IceWisp clips: SM_Unit_IceWisp_Rig|Down (Down) len=1.167s fps=24 loop=False curves=100, SM_Unit_IceWisp_Rig|Idle (Idle) len=1.333s fps=24 loop=False curves=100, SM_Unit_IceWisp_Rig|Strike (Strike) len=0.667s fps=24 loop=False curves=100, SM_Unit_IceWisp_Rig|Walk (Walk) len=1.000s fps=24 loop=False curves=100
+SM_Unit_IceWisp walkSpeed(meta)=1.400
+SM_Unit_IceWisp renderer SkinnedMeshRenderer 'SM_Unit_IceWisp' mats=[SM_Art_Fauna_IceWisp(Universal Render Pipeline/Lit), SM_Art_Fauna_GlowAccent(Universal Render Pipeline/Lit)]
+SM_Unit_IceWisp UnitClipPlayer.Bind ready=True hasDown=True
+SM_Unit_IceWisp clip Down plays: maxBoneMove=0.843m maxBoneAngle=64.8deg
+SM_Unit_IceWisp clip Idle plays: maxBoneMove=0.068m maxBoneAngle=17.1deg
+SM_Unit_IceWisp clip Strike plays: maxBoneMove=0.393m maxBoneAngle=54.5deg
+SM_Unit_IceWisp clip Walk plays: maxBoneMove=0.083m maxBoneAngle=34.6deg
+Unit_IceWisp meshFilter 'Unit_IceWisp' mesh=SM_Unit_IceWisp fileID=1866846970586429681 tris=1606 mats=[SM_Art_Fauna_IceWisp, SM_Art_Fauna_GlowAccent]
+inspect ok=True

@@ -132,9 +132,12 @@ namespace SolarMajesty
         public bool TitlePointerBlocksWorld =>
             _overseerHud != null && _overseerHud.HitsHudPanels();
 
-        /// <summary>The mouse is over a HUD panel right now (the wheel scrolls it instead of zooming).</summary>
+        /// <summary>
+        /// The mouse is over HUD chrome (the wheel scrolls it instead of zooming).
+        /// Settings, pause, and the title block the whole screen, not only the drawn panel.
+        /// </summary>
         public bool PointerOverHud =>
-            (_overseerHud != null && _overseerHud.HitsHudPanels()) ||
+            (_overseerHud != null && (_overseerHud.PointerBlocksWorld || _overseerHud.HitsHudPanels())) ||
             (_alertView != null && _alertView.PointerOverCards());
         public bool TitleConfirmOpen =>
             _overseerHud != null && _overseerHud.TitleConfirmOpen;
@@ -484,6 +487,7 @@ namespace SolarMajesty
         public void NoteCollectorDeposit(int amount, Vector3 at)
         {
             if (amount <= 0) return;
+            FlushLevyRaid(at, force: true);
             Settlement?.NoteLevyDeposited(amount);
             NoteTreasuryIncome(amount);
             if (!_levyHomeLogged)
@@ -585,6 +589,9 @@ namespace SolarMajesty
         private string _consumedTravelLog;
         private bool _continuedColony;
         private bool _levyHomeLogged;
+        private readonly LevyRaidNotice _levyRaid = new LevyRaidNotice();
+        private Vector3 _levyRaidAt;
+        private float _levyHintAt = -999f;
 
         private struct TimedDisc
         {
@@ -685,6 +692,7 @@ namespace SolarMajesty
         public void NoteLevyDeposited(int amount, Vector3 at)
         {
             if (amount <= 0) return;
+            FlushLevyRaid(at, force: true);
             Settlement?.NoteLevyDeposited(amount);
             NoteTreasuryIncome(amount);
             if (!_levyHomeLogged)
@@ -697,20 +705,37 @@ namespace SolarMajesty
             Alerts.Push("levy_home", $"Levy walked home · {amount} EU", AlertSeverity.Good, Time.unscaledTime, at);
         }
 
-        public void NoteLevyStolen(int amount, Vector3 at, bool fromHab)
+        public void NoteLevyStolen(
+            int amount, Vector3 at, bool fromHab, string attacker = null, LevyLossCause cause = LevyLossCause.Mugged)
         {
             if (amount <= 0) return;
             Settlement?.NoteLevyStolen(amount);
-            string line = fromHab
-                ? OverseerRules.GrokLevyStolenHab
-                : OverseerRules.GrokLevyStolenCourier;
+            if (fromHab)
+            {
+                AnnounceLevyLine(OverseerRules.GrokLevyStolenHab, "levy_stolen_hab", at);
+                return;
+            }
+
+            // A hit after the window belongs to the next raid, so close the old total first.
+            FlushLevyRaid(_levyRaidAt, force: false);
+            _levyRaidAt = at;
+            _levyRaid.Note(amount, cause, attacker, "Haul", Time.time);
+            if (cause == LevyLossCause.Destroyed)
+                FlushLevyRaid(at, force: true);
+        }
+
+        void TickLevyRaid() => FlushLevyRaid(_levyRaidAt, force: false);
+
+        void FlushLevyRaid(Vector3 at, bool force)
+        {
+            if (_levyRaid.TryFlush(Time.time, force, ref _levyHintAt, out string line))
+                AnnounceLevyLine(line, "levy_stolen_courier", at);
+        }
+
+        void AnnounceLevyLine(string line, string key, Vector3 at)
+        {
             LogOverseer(line, 6.2f);
-            Alerts.Push(
-                fromHab ? "levy_stolen_hab" : "levy_stolen_courier",
-                line,
-                AlertSeverity.Warning,
-                Time.unscaledTime,
-                at);
+            Alerts.Push(key, line, AlertSeverity.Warning, Time.unscaledTime, at);
             DemoAudio.PlayAlertWarning();
             OverseerVoice.Speak(line, AlertSeverity.Warning);
         }
@@ -1548,7 +1573,8 @@ namespace SolarMajesty
 
             return new NarrativeWorldHint
             {
-                HasCommons = Settlement != null && Settlement.HasCommons,
+                HasCommons = (Settlement != null && Settlement.HasCommons) ||
+                            (Placer != null && Placer.HasCommonsModule),
                 HasHab = Settlement != null && Settlement.CoreHabs > 0,
                 HasPad = hasPad,
                 HasPower = true,
@@ -1585,13 +1611,16 @@ namespace SolarMajesty
 
             string travelKey = AdvisorToastCatalog.TravelKeyForArrival(celestialBody);
             bool announce = hop || freshDrop;
+            // Continue/Load rebuilds the narrative tracker, so a first-run key would
+            // speak again. The loaded campus is the source of truth, not that fresh tracker.
+            var loaded = CurrentNarrativeHint();
             if (announce && celestialBody == CelestialBodyId.Luna && TryGrok(GrokBeat.Drop))
             {
                 // Luna training-wheels drop. W2 arrival copy stays in the catalog.
             }
             else if (announce &&
                      GrokAdvisor.TrainingWheels(celestialBody) &&
-                     !string.IsNullOrEmpty(travelKey) &&
+                     AdvisorArrival.ShouldSpeak(travelKey, loaded.HasCommons) &&
                      _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
                 LogOverseer(toast.Line, 6.8f);
@@ -1748,10 +1777,14 @@ namespace SolarMajesty
                     Screen == DemoScreen.Settings,
                     Screen == DemoScreen.Title,
                     Screen == DemoScreen.Playing,
-                    placing))
+                    placing,
+                    _overseerHud != null && _overseerHud.TechPanelOpen))
                 {
                     case SessionHotkeys.EscapeAction.CloseSettings:
                         CloseSettings();
+                        break;
+                    case SessionHotkeys.EscapeAction.CloseResearch:
+                        _overseerHud.CloseTechPanel();
                         break;
                     case SessionHotkeys.EscapeAction.CancelPlacement:
                         ApplyTool(OverseerTool.None);
@@ -2189,7 +2222,9 @@ namespace SolarMajesty
             bool anyFree = false;
             for (int i = 0; i < zones.Count; i++)
                 if (zones[i].Kind == kind && !BuildZoneTuning.IsTaken(zones[i], taken)) { anyFree = true; break; }
-            return ZoneRules.Reason(kind, anyFree);
+            var center = FootprintCenterWorld(cell, data.footprintWidth, data.footprintHeight);
+            bool insideTaken = ZoneRules.PointInTakenZone(kind, center, zones, taken);
+            return ZoneRules.Reason(kind, anyFree, insideTaken);
         }
 
         /// <summary>
@@ -2399,6 +2434,7 @@ namespace SolarMajesty
             TickAutosave();
             TickJunkYard(Time.deltaTime);
             TickGrok();
+            TickLevyRaid();
             if (_glanceCooldown > 0f)
                 _glanceCooldown -= Time.deltaTime;
 
@@ -3202,9 +3238,10 @@ namespace SolarMajesty
             {
                 if (grid != null)
                 {
-                    float maxX = grid.WorldWidth + 12f;
-                    float maxZ = grid.WorldHeight + 12f;
-                    _isoCam.SetPanBounds(new Vector2(-8f, -8f), new Vector2(maxX, maxZ));
+                    float margin = IsometricCameraController.MapEdgeMargin;
+                    _isoCam.SetPanBounds(
+                        new Vector2(-margin, -margin),
+                        new Vector2(grid.WorldWidth + margin, grid.WorldHeight + margin));
                 }
                 _isoCam.FocusOn(focus, ortho);
                 _isoCam.SnapToTarget();
@@ -3475,6 +3512,8 @@ namespace SolarMajesty
             if (Flags == null || _flagInput == null || mainCamera == null) return null;
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
             FlagHandle hit = FlagMarker.ClosestUnderRay(ray);
+            if (hit == null)
+                hit = FlagMarker.LabelAtScreen(Input.mousePosition);
             if (hit != null || !cellSnap) return hit;
 
             // A hero or a building under the cursor keeps the click. Cell-snap is for the pole's ground.
@@ -4708,26 +4747,41 @@ namespace SolarMajesty
             _world.Generate(this, grid, BodySeed.Current, _body);
         }
 
-        /// <summary>Spawn one stalker at a world point (lair / wave helpers).</summary>
+        /// <summary>
+        /// EditMode hookup tests arm threat without booting <see cref="Awake"/>,
+        /// which reads the player save folder and PlayerPrefs.
+        /// </summary>
+        internal void ArmThreat(ThreatPressure threat) => Threat = threat ?? new ThreatPressure();
+
+        /// <summary>
+        /// Spawn one stalker at a world point (lair / wave helpers).
+        /// Mounts <c>SM_Unit_DustStalker</c> the same way as the other fauna so Idle/Walk/Strike/Down play.
+        /// The static <c>Unit_DustStalker</c> prefab has no clips; it is not used.
+        /// </summary>
         public DustStalkerAgent SpawnStalkerAt(Vector3 home, Transform parent = null)
         {
             if (Threat == null) return null;
 
             Transform root = parent != null ? parent : (_threatRoot != null ? _threatRoot : transform);
-            GameObject stalkerPrefab = DemoContentCatalog.LoadStalkerPrefab();
-            GameObject go;
-            if (stalkerPrefab != null)
+            GameObject mesh = UnitMeshCatalog.LoadStalker();
+            GameObject go = new GameObject("DustStalker");
+            go.transform.SetParent(root, false);
+            go.transform.SetPositionAndRotation(home, Quaternion.identity);
+            if (mesh != null)
             {
-                go = new GameObject("DustStalker");
-                go.transform.SetParent(root, false);
-                go.transform.SetPositionAndRotation(home, Quaternion.identity);
-                ColonyVisualUtility.AttachImportVisual(stalkerPrefab, go.transform);
+                // Same as SpawnFaunaAt: import rotation only, no extra yaw.
+                ColonyVisualUtility.AttachImportVisual(mesh, go.transform);
             }
             else
             {
-                go = UnitPlaceholderFactory.BuildDustStalker();
-                go.transform.SetParent(root, false);
-                go.transform.SetPositionAndRotation(home, Quaternion.identity);
+                GameObject visual = UnitPlaceholderFactory.BuildDustStalker();
+                if (visual != null)
+                {
+                    visual.name = "Visual";
+                    visual.transform.SetParent(go.transform, false);
+                    visual.transform.localPosition = Vector3.zero;
+                    visual.transform.localRotation = Quaternion.identity;
+                }
             }
 
             ColonyVisualUtility.EnsureUrpMaterials(go);
@@ -6945,8 +6999,12 @@ namespace SolarMajesty
             TrySpawnJunkBot(world);
         }
 
+        /// <summary>EditMode observes kill credit without subclassing (nested behaviours cannot be added).</summary>
+        internal event System.Action<FaunaKind, float> FaunaKilledHook;
+
         public void OnFaunaKilled(FaunaKind kind, Vector3 world, float rewardMul = 1f)
         {
+            FaunaKilledHook?.Invoke(kind, rewardMul);
             if (rewardMul <= 0f) return; // orbital kill: no hero earned it
             var killer = NearestLivingAgent(world, 18f);
             if (killer == null) return;

@@ -80,6 +80,16 @@ namespace SolarMajesty
         private LayaHeroDriver _laya;
         private FlagHandle _activeFlag;
         private bool _claimedActive;
+        private readonly ClearThreatStuckWatch _stuckWatch = new ClearThreatStuckWatch();
+        private bool _forceRepath;
+        private object _yieldThreatId;
+        private float _yieldThreatSeconds;
+
+        /// <summary>EditMode stand-in for <see cref="GameLoop.Stalkers"/>. Production leaves this null.</summary>
+        internal IReadOnlyList<DustStalkerAgent> ThreatsOverride;
+
+        /// <summary>EditMode: travel orders do not move the transform, so a stuck claim can be tested.</summary>
+        internal bool SuppressTravelForTests;
         private FlagHandle _claimAnnounced;
         private float _claimAnnouncedAt = -999f;
         private const float ClaimAnnounceWindow = 20f;
@@ -710,6 +720,7 @@ namespace SolarMajesty
                 fatigue = debugFatigueValue;
 
             float dt = Time.deltaTime;
+            TickYield(dt);
             if (_incapacitated)
             {
                 SetAgentStopped(true);
@@ -908,6 +919,14 @@ namespace SolarMajesty
                 if (lead != null && lead.IsAlive)
                     decision = FollowLeader(lead);
             }
+            bool atInn = KingdomLife.AtRest(transform.position, OutpostClaimed);
+            decision = _motives.Commit(decision, _brain.Tuning, healthNormalized, Time.time, atInn);
+
+            // A stuck Clear Threat was let go. Do not pick the same flag straight back up,
+            // or the release log fires again and the warrant never frees.
+            if (IsYieldingThreat(decision.TargetFlag))
+                decision = BrainDecision.Wander(transform.position, 0.15f, "clear_threat_yield");
+
             _motives.NoteDecision(_brain.Tuning, decision.Action, decision.TargetFlag?.RuntimeId, Time.time);
             ApplyDecision(decision);
             SyncWorkplace(decision);
@@ -1068,6 +1087,7 @@ namespace SolarMajesty
                 CurrentFlag = _activeFlag,
                 HealthNormalized = healthNormalized,
                 SafetyPosition = KingdomLife.RestNear(transform.position, OutpostClaimed),
+                AtInn = KingdomLife.AtRest(transform.position, OutpostClaimed),
                 VocationPosition = vocation,
                 HuntPosition = hunt,
                 HuntDistance = huntDist,
@@ -1128,17 +1148,22 @@ namespace SolarMajesty
                     _flags.AddClaim(_activeFlag);
                     _claimedActive = true;
                     _buildLaborHit = false;
+                    _stuckWatch.Reset();
+                    _forceRepath = false;
                     DemoAudio.PlayClaim(transform.position);
                     DemoVfx.ClaimRing(_activeFlag.WorldPosition, new Color(1f, 0.85f, 0.2f));
                     AnnounceFlagClaim(decision.TargetFlag);
                 }
-                _idleTarget = _activeFlag.WorldPosition;
+                bool clearThreat = IsClearThreat(_activeFlag);
+                Vector3 dest = clearThreat ? ClearThreatDestination(_activeFlag) : _activeFlag.WorldPosition;
+                _idleTarget = dest;
                 _hasIdleTarget = true;
                 _status = $"pursue_{decision.TargetFlag.Data.flagType}";
                 FlavorLine = SpecialistFlavor.CardLine(
                     data.specialistClass, SpecialistAction.PursueFlag, decision.Reason,
                     decision.TargetFlag.Data != null ? decision.TargetFlag.Data.flagType : (FlagType?)null);
-                SetDestination(_activeFlag.WorldPosition);
+                SetDestination(dest, _forceRepath, clearThreat ? OverseerRules.DenFootprintMeters : 0f);
+                _forceRepath = false;
             }
             else
             {
@@ -1223,6 +1248,14 @@ namespace SolarMajesty
                 return;
             }
 
+            // The pole is the den centre. Pathing there fails inside the mound and the
+            // on-mesh fallback then does nothing, so a committed hero stands in the colony.
+            if (IsClearThreat(_activeFlag))
+            {
+                TickClearThreat(dt);
+                return;
+            }
+
             Vector3 target = _activeFlag.WorldPosition;
             float dist = FlatDistance(transform.position, target);
 
@@ -1234,6 +1267,48 @@ namespace SolarMajesty
                 return;
             }
 
+            WorkArrivedFlag(dt);
+        }
+
+        private void TickClearThreat(float dt)
+        {
+            Vector3 approach = ClearThreatDestination(_activeFlag);
+            float toApproach = FlatDistance(transform.position, approach);
+
+            if (toApproach > arriveDistance)
+            {
+                // Bite range is a fight. The warrant stays; the walk resumes when it is over.
+                if (TryEngageThreatInReach(dt))
+                {
+                    _stuckWatch.ClearTimer();
+                    return;
+                }
+
+                AdvanceToward(approach, dt, _forceRepath);
+                _forceRepath = false;
+                _stuckWatch.Note(FlatDistance(transform.position, approach), dt, out bool repath, out bool release);
+                if (repath)
+                {
+                    _forceRepath = true;
+                    AdvanceToward(approach, dt, true);
+                }
+                if (release)
+                {
+                    ReleaseClearThreatStuck();
+                    return;
+                }
+
+                _status = "moving_to_ClearThreat";
+                return;
+            }
+
+            _stuckWatch.ClearTimer();
+            TryEngageThreatInReach(dt);
+            WorkArrivedFlag(dt);
+        }
+
+        private void WorkArrivedFlag(float dt)
+        {
             SetAgentStopped(true);
             _status = $"working_{_activeFlag.Data.flagType}";
             _workPulse = 1f;
@@ -1590,7 +1665,7 @@ namespace SolarMajesty
             if (_levyCarry <= 0) return;
             int n = _levyCarry;
             _levyCarry = 0;
-            _loop?.NotifyLevyStolen(n, reason);
+            _loop?.NoteLevyStolen(n, transform.position, false, null, LevyLossCause.Destroyed);
         }
 
         private void TickGuildAndMarket(float dt)
@@ -1921,12 +1996,16 @@ namespace SolarMajesty
             return found;
         }
 
-        private DustStalkerAgent NearestStalkerAgent()
+        private DustStalkerAgent NearestStalkerAgent() => NearestStalkerWithin(28f);
+
+        private DustStalkerAgent NearestStalkerWithin(float range)
         {
-            IReadOnlyList<DustStalkerAgent> list = _loop != null ? _loop.Stalkers : null;
+            IReadOnlyList<DustStalkerAgent> list = ThreatsOverride;
+            if (list == null)
+                list = _loop != null ? _loop.Stalkers : null;
             if (list == null || list.Count == 0) return null;
             DustStalkerAgent best = null;
-            float bestD = 28f;
+            float bestD = range;
             Vector3 me = transform.position;
             for (int i = 0; i < list.Count; i++)
             {
@@ -2022,13 +2101,179 @@ namespace SolarMajesty
             return best;
         }
 
-        private void SetDestination(Vector3 world)
+        /// <summary>
+        /// EditMode seam. No visuals, nav agent, or GameLoop. Movement is the direct step.
+        /// </summary>
+        internal void BindForTravelTest(SpecialistData specialistData, FlagManager flagManager, SpecialistBrain brain)
+        {
+            data = specialistData;
+            _flags = flagManager;
+            _brain = brain;
+            useNavMesh = false;
+            _agent = null;
+            _navMesh = null;
+            _world = null;
+            _loop = null;
+            fatigue = 0f;
+            healthNormalized = 1f;
+            greedHunger = 0.15f;
+            _incapacitated = false;
+            _scrapped = false;
+            _thinkTimer = 0f;
+            logDecisions = false;
+            _lastDecision = BrainDecision.Idle(0f, "idle");
+            _status = "idle";
+            _activeFlag = null;
+            _claimedActive = false;
+            _stuckWatch.Reset();
+            _forceRepath = false;
+            _yieldThreatId = null;
+            _yieldThreatSeconds = 0f;
+            ThreatsOverride = null;
+            SuppressTravelForTests = false;
+            if (transform.localScale.sqrMagnitude < 0.0001f)
+                transform.localScale = Vector3.one;
+            _baseScale = transform.localScale;
+        }
+
+        /// <summary>One simulated tick. EditMode has no player loop, so tests call this.</summary>
+        internal void Simulate(float dt)
+        {
+            if (data == null || _brain == null || _flags == null || _incapacitated || _scrapped)
+                return;
+            if (dt < 0f) dt = 0f;
+            TickYield(dt);
+            TickNeeds(dt);
+            TickThink(dt);
+            TickBehaviour(dt);
+        }
+
+        private void TickYield(float dt)
+        {
+            if (_yieldThreatSeconds <= 0f) return;
+            _yieldThreatSeconds = Mathf.Max(0f, _yieldThreatSeconds - dt);
+            if (_yieldThreatSeconds <= 0f)
+                _yieldThreatId = null;
+        }
+
+        private bool IsYieldingThreat(FlagHandle flag)
+        {
+            if (flag == null || _yieldThreatSeconds <= 0f || _yieldThreatId == null || flag.RuntimeId == null)
+                return false;
+            return ReferenceEquals(_yieldThreatId, flag.RuntimeId) || _yieldThreatId.Equals(flag.RuntimeId);
+        }
+
+        private static bool IsClearThreat(FlagHandle flag) =>
+            flag != null && flag.Data != null && flag.Data.flagType == FlagType.ClearThreat;
+
+        private Vector3 ClearThreatDestination(FlagHandle flag)
+        {
+            Vector3 den = flag != null ? flag.WorldPosition : transform.position;
+            Vector3 mouth = ClearThreatTravel.DefaultMouthDirection;
+            if (_world != null)
+            {
+                var lair = _world.FindNearestLair(den, 12f);
+                if (lair != null)
+                {
+                    den = lair.WorldPosition;
+                    mouth = lair.MouthDirection;
+                }
+            }
+            return ClearThreatTravel.ApproachPoint(den, mouth);
+        }
+
+        private void AdvanceToward(Vector3 target, float dt, bool force)
+        {
+            if (SuppressTravelForTests) return;
+            float step = EffectiveMoveSpeed * dt;
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                SetDestination(target, force, OverseerRules.DenFootprintMeters);
+                if (NavPathCarries(target)) return;
+                StepRegardless(target, step);
+                return;
+            }
+            MoveFallback(target, step);
+        }
+
+        /// <summary>
+        /// True when the agent is still working out a path, or the path still has
+        /// distance left. A path that says "arrived" while the den is far away is not carrying us.
+        /// </summary>
+        private bool NavPathCarries(Vector3 target)
+        {
+            if (_agent == null || !_agent.isOnNavMesh) return false;
+            if (_agent.pathPending) return true;
+            if (_agent.pathStatus == NavMeshPathStatus.PathInvalid) return false;
+            float remaining = _agent.remainingDistance;
+            if (float.IsPositiveInfinity(remaining)) return false;
+            float along = FlatDistance(transform.position, target);
+            if (along > arriveDistance + 1.5f && remaining <= _agent.stoppingDistance + 0.35f)
+                return false;
+            return true;
+        }
+
+        private void StepRegardless(Vector3 target, float step)
+        {
+            target.y = transform.position.y;
+            Vector3 next = Vector3.MoveTowards(transform.position, target, step);
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+                _agent.ResetPath();
+                if (_agent.Warp(next)) return;
+            }
+            transform.position = next;
+        }
+
+        /// <summary>Melee only. The 28 m hunt radius must not pull a Clear Threat hero off the walk.</summary>
+        private bool TryEngageThreatInReach(float dt)
+        {
+            var stalker = NearestStalkerWithin(KingdomLife.HuntRange + 0.05f);
+            if (stalker == null) return false;
+            if (FlatDistance(transform.position, stalker.transform.position) > KingdomLife.HuntRange)
+                return false;
+
+            SetAgentStopped(true);
+            _status = "engaging";
+            _workPulse = 1f;
+            var strikeClips = Clips;
+            if (strikeClips != null) strikeClips.NotifyStrike();
+            stalker.ApplyCombatDamage(StrikeDps(stalker.Kind) * dt);
+            TrySelfAbility(AbilityTrigger.Engage);
+            if (healthNormalized < (_loop?.Abilities?.hurtLine ?? 0.6f))
+                TrySelfAbility(AbilityTrigger.Hurt);
+            if (stalker.IsAlive)
+                TryStrikeAbility(stalker);
+            return true;
+        }
+
+        private void ReleaseClearThreatStuck()
+        {
+            if (_activeFlag == null) return;
+            string who = data != null && !string.IsNullOrEmpty(data.displayName) ? data.displayName : "Hero";
+            Debug.Log($"[ClearThreat] {who} released the claim — no progress.");
+            _yieldThreatId = _activeFlag.RuntimeId;
+            _yieldThreatSeconds = OverseerRules.ClearThreatYieldSeconds;
+            ReleaseClaim();
+            _activeFlag = null;
+            _hasIdleTarget = false;
+            _forceRepath = false;
+            _lastDecision = BrainDecision.Wander(transform.position, 0.15f, "clear_threat_yield");
+            _status = "clear_threat_yield";
+            SetAgentStopped(true);
+        }
+
+        private void SetDestination(Vector3 world, bool force = false, float sampleRadius = 0f)
         {
             if (_agent == null || !_agent.isOnNavMesh) return;
             SetAgentStopped(false);
-            if (_navMesh != null && _navMesh.SamplePosition(world, out Vector3 onMesh))
+            float radius = sampleRadius > 0f ? sampleRadius : 5f;
+            if (_navMesh != null && _navMesh.SamplePosition(world, out Vector3 onMesh, radius))
                 world = onMesh;
-            if (!_agent.pathPending && (_agent.destination - world).sqrMagnitude > 0.25f)
+            if (force)
+                _agent.ResetPath();
+            if (force || (!_agent.pathPending && (_agent.destination - world).sqrMagnitude > 0.25f))
                 _agent.SetDestination(world);
         }
 

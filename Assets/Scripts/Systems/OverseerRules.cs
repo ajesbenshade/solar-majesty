@@ -105,6 +105,24 @@ namespace SolarMajesty
         /// </summary>
         public const float ClearThreatConsiderMeters = 560f;
 
+        /// <summary>
+        /// Authored den width in metres. The flag pole is planted on the den centre,
+        /// inside this footprint, so it is not a place a hero can stand.
+        /// </summary>
+        public const float DenFootprintMeters = 16.4f;
+
+        /// <summary>
+        /// Distance from the den centre at which a hero on the mouth approach can fight.
+        /// The stand point is half the footprint plus a short step, about 8.7 m.
+        /// </summary>
+        public const float ClearThreatAttackRange = 11f;
+
+        /// <summary>Game-seconds without closing on a Clear Threat before one repath, then a release.</summary>
+        public const float ClearThreatStuckSeconds = 10f;
+
+        /// <summary>After a stuck release, this hero leaves that flag alone so someone else can take it.</summary>
+        public const float ClearThreatYieldSeconds = 60f;
+
         public const float DefendWatchSeconds = 50f;
         public const float DefendWatchDps = 4f;
         public const float DefendWatchRadius = 16f;
@@ -142,7 +160,7 @@ namespace SolarMajesty
         public const float LevyHabStaleSeconds = 72f;
 
         public const string GrokLevyStolenCourier =
-            "Junk-bot ate the levy. Congratulations, you have invented charity.";
+            "Haul lost the levy on the road.";
         public const string GrokLevyStolenHab =
             "Credits were napping on the HAB. A mite just made a withdrawal.";
         public const string GrokLevyHome =

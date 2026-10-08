@@ -29,6 +29,8 @@ namespace SolarMajesty
         public float HuntDistance;
         public bool HasHunt;
         public SpecialistAction CurrentAction;
+        /// <summary>Standing on the inn disc. Flee stays latched until the inn heal clears the resume line.</summary>
+        public bool AtInn;
         public Vector3 WorkshopPosition;
         public bool HasWorkshop;
         public float FlagWorkshopBonus;

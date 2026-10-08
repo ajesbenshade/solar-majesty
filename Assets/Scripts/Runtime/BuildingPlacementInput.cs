@@ -217,13 +217,24 @@ namespace SolarMajesty
                 _refuseStyle.normal.textColor = new Color(1f, 0.88f, 0.45f);
             }
 
+            // Same scale-from-origin matrix as the overseer HUD, so the refusal tracks UI SCALE.
+            DemoSettings.RefreshHudScale(Screen.width, Screen.height);
+            float s = DemoSettings.HudScale;
+            if (s < 0.05f) s = 1f;
+            float viewW = Screen.width / s;
+            float viewH = Screen.height / s;
+            var prevMatrix = GUI.matrix;
+            GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(s, s, 1f));
+
             var content = new GUIContent(_blockReason);
             Vector2 size = _refuseStyle.CalcSize(content);
             size.x += 18f;
             size.y += 8f;
-            var rect = new Rect(sp.x - size.x * 0.5f, Screen.height - sp.y - size.y - 6f, size.x, size.y);
-            rect.x = Mathf.Clamp(rect.x, 8f, Mathf.Max(8f, Screen.width - rect.width - 8f));
-            rect.y = Mathf.Clamp(rect.y, 8f, Mathf.Max(8f, Screen.height - rect.height - 8f));
+            float guiX = sp.x / s;
+            float guiY = (Screen.height - sp.y) / s;
+            var rect = new Rect(guiX - size.x * 0.5f, guiY - size.y - 6f, size.x, size.y);
+            rect.x = Mathf.Clamp(rect.x, 8f, Mathf.Max(8f, viewW - rect.width - 8f));
+            rect.y = Mathf.Clamp(rect.y, 8f, Mathf.Max(8f, viewH - rect.height - 8f));
 
             Color prev = GUI.color;
             GUI.color = new Color(0.05f, 0.04f, 0.02f, 0.86f);
@@ -231,6 +242,7 @@ namespace SolarMajesty
             GUI.color = Color.white;
             GUI.Label(rect, content, _refuseStyle);
             GUI.color = prev;
+            GUI.matrix = prevMatrix;
         }
 
         private void Select(int index)

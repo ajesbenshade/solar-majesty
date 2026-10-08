@@ -55,7 +55,7 @@ namespace SolarMajesty
                 case GrokBeat.LevyWalk:
                     return "See the crate on wheels? That is your tax collector. We are not calling it that. Do not click it.";
                 case GrokBeat.PurseSitting:
-                    return "Credits are napping on the HAB. Haul will get around to it. Or a mite will. Gambling!";
+                    return "Credits are sitting in building purses. Haul will get around to it. Or a mite will. Gambling!";
                 case GrokBeat.YardBill:
                     return "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.";
                 case GrokBeat.TankVsWallet:
@@ -67,7 +67,7 @@ namespace SolarMajesty
                 case GrokBeat.PowerShort:
                     return "Grid is skinny. Everyone is working at seventy percent, including your patience.";
                 case GrokBeat.PurseStolen:
-                    return "Junk-bot ate the levy. Congratulations, you have invented charity.";
+                    return "Haul lost the levy on the road.";
                 case GrokBeat.YardUnaffordable:
                     return "Level 6 wreck, Compact scrip insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
                 case GrokBeat.EmptyRoster:

@@ -305,8 +305,10 @@ namespace SolarMajesty
             if (_grid != null)
                 world = _grid.SnapToCellCenter(world);
 
-            // Clicking a pole that is already standing selects it. A second post would escrow again.
+            // Clicking a pole, or the floating label above it, selects it. A second post would escrow again.
             FlagHandle rayHit = FlagMarker.ClosestUnderRay(ViewRay());
+            if (rayHit == null)
+                rayHit = FlagMarker.LabelAtScreen(Input.mousePosition);
             if (FlagClick.Resolve(_flags.Flags, world, rayHit, out FlagHandle existing) ==
                 FlagClickAction.SelectExisting)
             {

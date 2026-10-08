@@ -3,7 +3,17 @@ guid: c832fdc46a554919a526f9171f070838
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_GlowAccent
+    second: {fileID: 2100000, guid: 0867e7859c1f9d545a8acc167d08f992, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_IceWisp
+    second: {fileID: 2100000, guid: c751543f28d2b204f8f8f1f77d07f864, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

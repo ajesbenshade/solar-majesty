@@ -1,0 +1,34 @@
+Engineer auto avatar valid=True human=True
+Engineer mapped avatar valid=True human=True skeleton=24
+Engineer smr 'SM_Colonist_Engineer' mats=[Assets/Art/Colonists/Materials/SM_Art_Colonist_Suit.mat, Assets/Art/Colonists/Materials/SM_Art_Colonist_Role_Engineer.mat] tris=1718
+Engineer prefab saved=True
+Hydroponics auto avatar valid=True human=True
+Hydroponics mapped avatar valid=True human=True skeleton=24
+Hydroponics smr 'SM_Colonist_Hydroponics' mats=[Assets/Art/Colonists/Materials/SM_Art_Colonist_Suit.mat, Assets/Art/Colonists/Materials/SM_Art_Colonist_Role_Hydroponics.mat] tris=1762
+Hydroponics prefab saved=True
+Medic auto avatar valid=True human=True
+Medic mapped avatar valid=True human=True skeleton=24
+Medic smr 'SM_Colonist_Medic' mats=[Assets/Art/Colonists/Materials/SM_Art_Colonist_Suit.mat, Assets/Art/Colonists/Materials/SM_Art_Colonist_Role_Medic.mat] tris=1654
+Medic prefab saved=True
+Hauler auto avatar valid=True human=True
+Hauler mapped avatar valid=True human=True skeleton=24
+Hauler smr 'SM_Colonist_Hauler' mats=[Assets/Art/Colonists/Materials/SM_Art_Colonist_Suit.mat, Assets/Art/Colonists/Materials/SM_Art_Colonist_Role_Hauler.mat] tris=1594
+Hauler prefab saved=True
+inspect unity=6000.5.10f1
+Engineer tris=1718 verts=2057 bones=21 submeshes=2 bounds=Center: (0.00, 0.01, 0.63), Extents: (0.60, 0.25, 0.63) mats=[SM_Art_Colonist_Suit(Universal Render Pipeline/Lit), SM_Art_Colonist_Role_Engineer(Universal Render Pipeline/Lit)]
+Engineer avatar=SM_Colonist_EngineerAvatar human=True ctrl=SM_Colonist clips=[HumanM@Idle01:2.70s, HumanM@Walk01_Forward:0.80s]
+Engineer walk rootMotion 2.0s: delta=(0.000, 0.000, 0.000) speed=0.000 m/s humanScale=0.582 toeAhead(avg)=0.061 footSwingZ=0.377 headY=0.89 state=Walk
+Engineer FACING/ROOT MOTION NOT +Z
+Hydroponics tris=1762 verts=1921 bones=21 submeshes=2 bounds=Center: (0.00, 0.05, 0.63), Extents: (0.60, 0.31, 0.63) mats=[SM_Art_Colonist_Suit(Universal Render Pipeline/Lit), SM_Art_Colonist_Role_Hydroponics(Universal Render Pipeline/Lit)]
+Hydroponics avatar=SM_Colonist_HydroponicsAvatar human=True ctrl=SM_Colonist_F clips=[HumanF@Idle01:2.70s, HumanF@Walk01_Forward:0.80s]
+Hydroponics walk rootMotion 2.0s: delta=(0.000, 0.000, 0.000) speed=0.000 m/s humanScale=0.582 toeAhead(avg)=0.061 footSwingZ=0.396 headY=0.89 state=Walk
+Hydroponics FACING/ROOT MOTION NOT +Z
+Medic tris=1654 verts=1911 bones=21 submeshes=2 bounds=Center: (0.00, 0.01, 0.71), Extents: (0.60, 0.25, 0.71) mats=[SM_Art_Colonist_Suit(Universal Render Pipeline/Lit), SM_Art_Colonist_Role_Medic(Universal Render Pipeline/Lit)]
+Medic avatar=SM_Colonist_MedicAvatar human=True ctrl=SM_Colonist_F clips=[HumanF@Idle01:2.70s, HumanF@Walk01_Forward:0.80s]
+Medic walk rootMotion 2.0s: delta=(0.000, 0.000, 0.000) speed=0.000 m/s humanScale=0.582 toeAhead(avg)=0.061 footSwingZ=0.396 headY=0.89 state=Walk
+Medic FACING/ROOT MOTION NOT +Z
+Hauler tris=1594 verts=1809 bones=21 submeshes=2 bounds=Center: (0.00, 0.10, 0.63), Extents: (0.60, 0.33, 0.63) mats=[SM_Art_Colonist_Suit(Universal Render Pipeline/Lit), SM_Art_Colonist_Role_Hauler(Universal Render Pipeline/Lit)]
+Hauler avatar=SM_Colonist_HaulerAvatar human=True ctrl=SM_Colonist clips=[HumanM@Idle01:2.70s, HumanM@Walk01_Forward:0.80s]
+Hauler walk rootMotion 2.0s: delta=(0.000, 0.000, 0.000) speed=0.000 m/s humanScale=0.582 toeAhead(avg)=0.061 footSwingZ=0.377 headY=0.89 state=Walk
+Hauler FACING/ROOT MOTION NOT +Z
+inspect ok=False
