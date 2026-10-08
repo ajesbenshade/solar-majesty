@@ -3836,6 +3836,17 @@
   {
    "speaker": "overseer",
    "cue": "line",
+   "key": "0335a063",
+   "text": "Credits are sitting in building purses. Haul will get around to it. Or a mite will. Gambling!",
+   "clip": "overseer_line_0335a063",
+   "hash": "f6f816c15bcc",
+   "seconds": 5.17,
+   "peak_db": -3.9,
+   "rms_db": -21.5
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
    "key": "0f8712fb",
    "text": "Pad paid out. Dock fee already left. The Freeholds send their love. It is itemized.",
    "clip": "overseer_line_0f8712fb",
@@ -4023,6 +4034,17 @@
   {
    "speaker": "overseer",
    "cue": "line",
+   "key": "a7a2646e",
+   "text": "Haul lost the levy on the road.",
+   "clip": "overseer_line_a7a2646e",
+   "hash": "77c6e007ab7e",
+   "seconds": 1.64,
+   "peak_db": -4.8,
+   "rms_db": -21.1
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
    "key": "b2cd8f49",
    "text": "Credits were napping on the HAB. A mite just made a withdrawal.",
    "clip": "overseer_line_b2cd8f49",
@@ -4045,17 +4067,6 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "bf134132",
-   "text": "Credits are napping on the HAB. Haul will get around to it. Or a mite will. Gambling!",
-   "clip": "overseer_line_bf134132",
-   "hash": "48a5835d5f4c",
-   "seconds": 4.67,
-   "peak_db": -3.8,
-   "rms_db": -21.5
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
    "key": "c50b7429",
    "text": "Haul walked the purse home. That is your tax collector. We are not calling it that.",
    "clip": "overseer_line_c50b7429",
@@ -4063,17 +4074,6 @@
    "seconds": 4.36,
    "peak_db": -4.0,
    "rms_db": -21.6
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "c50c568a",
-   "text": "Junk-bot ate the levy. Congratulations, you have invented charity.",
-   "clip": "overseer_line_c50c568a",
-   "hash": "97f6d26084fd",
-   "seconds": 4.32,
-   "peak_db": -3.0,
-   "rms_db": -21.4
   },
   {
    "speaker": "overseer",
