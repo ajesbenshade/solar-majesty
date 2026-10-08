@@ -3124,9 +3124,10 @@ namespace SolarMajesty
             {
                 if (grid != null)
                 {
-                    float maxX = grid.WorldWidth + 12f;
-                    float maxZ = grid.WorldHeight + 12f;
-                    _isoCam.SetPanBounds(new Vector2(-8f, -8f), new Vector2(maxX, maxZ));
+                    float margin = IsometricCameraController.MapEdgeMargin;
+                    _isoCam.SetPanBounds(
+                        new Vector2(-margin, -margin),
+                        new Vector2(grid.WorldWidth + margin, grid.WorldHeight + margin));
                 }
                 _isoCam.FocusOn(focus, ortho);
                 _isoCam.SnapToTarget();

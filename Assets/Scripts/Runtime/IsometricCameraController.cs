@@ -39,6 +39,9 @@ namespace SolarMajesty
         [SerializeField] private float maxPitch = 42f;
 
         private const float EdgeMargin = 6f;
+
+        /// <summary>How far past the playable map the ground focus may sit. A skirt, not a void.</summary>
+        public const float MapEdgeMargin = 8f;
         private const float MaxShake = 1.4f;
         private const float ShakeDecay = 2.2f;
 
@@ -319,7 +322,10 @@ namespace SolarMajesty
             float dist = Vector3.Distance(PosePosition, _orbitFocus);
             if (dist < 2f) dist = 28f;
             Quaternion rot = Quaternion.Euler(_pitch, _yaw, 0f);
-            Vector3 pos = _orbitFocus - rot * Vector3.forward * dist;
+            Vector3 fwd = rot * Vector3.forward;
+            Vector3 pos = ClampPoseToMap(_orbitFocus - fwd * dist, fwd, panBoundsMin, panBoundsMax);
+            if (TryGroundFocus(pos, fwd, out Vector3 focus))
+                _orbitFocus = focus;
             _targetPos = pos;
             _smoothedPos = pos;
             if (_diorama)
@@ -440,8 +446,10 @@ namespace SolarMajesty
 
         private void Apply()
         {
-            _targetPos.x = Mathf.Clamp(_targetPos.x, panBoundsMin.x, panBoundsMax.x);
-            _targetPos.z = Mathf.Clamp(_targetPos.z, panBoundsMin.y, panBoundsMax.y);
+            // Bounds are the ground the player is looking at, not the rig. An iso camera
+            // sits well off that point, so clamping the rig let the far NW corner show void.
+            Vector3 forward = _diorama ? BaseRotation * Vector3.forward : transform.forward;
+            _targetPos = ClampPoseToMap(_targetPos, forward, panBoundsMin, panBoundsMax);
             _targetPos.y = PosePosition.y;
 
             float tPan = 1f - Mathf.Exp(-panSmooth * Time.unscaledDeltaTime);
@@ -554,6 +562,44 @@ namespace SolarMajesty
             p.y = minCamY;
             transform.position = p;
             _targetPos.y = minCamY;
+        }
+
+        /// <summary>Ground point under a camera pose, or false when the view ray misses y = 0.</summary>
+        public static bool TryGroundFocus(Vector3 origin, Vector3 forward, out Vector3 focus)
+        {
+            focus = new Vector3(origin.x, 0f, origin.z);
+            var plane = new Plane(Vector3.up, Vector3.zero);
+            var ray = new Ray(origin, forward);
+            if (!plane.Raycast(ray, out float distance) || distance <= 0f)
+                return false;
+            focus = ray.GetPoint(distance);
+            return true;
+        }
+
+        public static Vector3 ClampFocus(Vector3 focus, Vector2 min, Vector2 max)
+        {
+            float minX = Mathf.Min(min.x, max.x);
+            float maxX = Mathf.Max(min.x, max.x);
+            float minZ = Mathf.Min(min.y, max.y);
+            float maxZ = Mathf.Max(min.y, max.y);
+            focus.x = Mathf.Clamp(focus.x, minX, maxX);
+            focus.z = Mathf.Clamp(focus.z, minZ, maxZ);
+            return focus;
+        }
+
+        /// <summary>Shift the pose so the ground it looks at stays inside the playable map.</summary>
+        public static Vector3 ClampPoseToMap(Vector3 cameraPos, Vector3 forward, Vector2 min, Vector2 max)
+        {
+            if (!TryGroundFocus(cameraPos, forward, out Vector3 focus))
+            {
+                Vector3 fallback = ClampFocus(cameraPos, min, max);
+                cameraPos.x = fallback.x;
+                cameraPos.z = fallback.z;
+                return cameraPos;
+            }
+
+            Vector3 clamped = ClampFocus(focus, min, max);
+            return cameraPos + (clamped - focus);
         }
 
         public bool TryGetMouseGroundPoint(out Vector3 world)
