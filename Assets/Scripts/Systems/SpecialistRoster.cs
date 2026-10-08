@@ -20,6 +20,8 @@ namespace SolarMajesty
         public ShopItemId Accessory;
         public ShopItemId Weapon;
         public bool Corpse;
+        /// <summary>Service name (Basalt, Jute). Empty on snapshots from before wrecks were named.</summary>
+        public string Name;
     }
 
     public static class SpecialistRoster
@@ -55,6 +57,8 @@ namespace SolarMajesty
                 sb.Append((int)r.Accessory);
                 sb.Append(':');
                 sb.Append((int)r.Weapon);
+                sb.Append(':');
+                sb.Append(SanitizeName(r.Name));
             }
 
             return sb.ToString();
@@ -92,6 +96,7 @@ namespace SolarMajesty
                 int weapon = 0;
                 if (f.Length >= 9)
                     int.TryParse(f[8], out weapon);
+                string name = f.Length >= 10 ? f[9] : null;
                 records.Add(new SpecialistRecord
                 {
                     Class = (SpecialistClass)cls,
@@ -102,11 +107,18 @@ namespace SolarMajesty
                     Suit = (ShopItemId)suit,
                     Accessory = (ShopItemId)accessory,
                     Weapon = (ShopItemId)weapon,
-                    Corpse = corpse == 1
+                    Corpse = corpse == 1,
+                    Name = string.IsNullOrEmpty(name) ? null : name
                 });
             }
 
             return true;
+        }
+
+        static string SanitizeName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "";
+            return name.Replace(":", "").Replace(";", "").Replace("|", "");
         }
 
         public static bool TryGet(IReadOnlyList<SpecialistRecord> records, SpecialistClass cls, out SpecialistRecord record)

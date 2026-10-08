@@ -62,7 +62,7 @@ namespace SolarMajesty
 
         // ITauntTarget: fauna forced onto this robot bite it like any other prey.
         public Vector3 TauntPosition => transform.position;
-        public bool TauntAlive => !_scrapped && !_incapacitated;
+        public bool TauntAlive => !IsUntargetable;
         public void TakeTauntBite(float amount) => ApplyDamage(amount);
         public HeroMotives Motives => _motives;
         private SimpleEconomy _economy;
@@ -81,6 +81,11 @@ namespace SolarMajesty
         private FlagHandle _activeFlag;
         private bool _claimedActive;
         private readonly ClearThreatStuckWatch _stuckWatch = new ClearThreatStuckWatch();
+        private Vector3 _watchSample;
+        private bool _watchReady;
+        private float _combatCredit;
+        private float _invulnLeft;
+        private float _retreatLeft;
         private bool _forceRepath;
         private object _yieldThreatId;
         private float _yieldThreatSeconds;
@@ -178,6 +183,9 @@ namespace SolarMajesty
         public FlagHandle ActiveFlag => _activeFlag;
         public float BodyDanger => bodyDanger;
         public bool IsIncapacitated => _incapacitated;
+        public bool IsScrapped => _scrapped;
+        /// <summary>Down, scrapped, or walking home after a recovery. Fauna leave them alone.</summary>
+        public bool IsUntargetable => _scrapped || _incapacitated || _invulnLeft > 0f || _retreatLeft > 0f;
         public bool IsAlive => !_scrapped && (!_incapacitated || healthNormalized > incapacitateThreshold);
         public bool IsClaiming => _claimedActive;
         public int HireMin => OverseerRules.GreedAsk(data);
@@ -260,6 +268,7 @@ namespace SolarMajesty
         public void ApplyDamage(float amount01, bool feedback = true)
         {
             if (amount01 <= 0f || _incapacitated) return;
+            if (_invulnLeft > 0f) return;
             if (IsShielded) return;
             float mitigated = amount01 * (1f - ArmorMitigation) / LevelHpMul * _statuses.IncomingMul;
             if (_loop != null &&
@@ -399,6 +408,12 @@ namespace SolarMajesty
             equippedSuit = record.Suit;
             equippedAccessory = record.Accessory;
             equippedWeapon = record.Weapon;
+            if (!string.IsNullOrEmpty(record.Name))
+            {
+                var service = Record;
+                service.Name = record.Name;
+                service.Class = record.Class;
+            }
         }
 
         /// <summary>Continue restore of combat state. No death VFX — the down already happened.</summary>
@@ -461,7 +476,8 @@ namespace SolarMajesty
                 Suit = equippedSuit,
                 Accessory = equippedAccessory,
                 Weapon = equippedWeapon,
-                Corpse = corpse
+                Corpse = corpse,
+                Name = Record.Name
             };
         }
 
@@ -534,6 +550,7 @@ namespace SolarMajesty
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
             SetAgentStopped(false);
+            BeginRecoverySafety();
         }
 
         public void FieldRevive()
@@ -548,6 +565,7 @@ namespace SolarMajesty
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
             SetAgentStopped(false);
+            BeginRecoverySafety();
         }
 
         public void ShowRefusal(string chip)
@@ -721,6 +739,7 @@ namespace SolarMajesty
 
             float dt = Time.deltaTime;
             TickYield(dt);
+            TickRecovery(dt);
             if (_incapacitated)
             {
                 SetAgentStopped(true);
@@ -840,6 +859,7 @@ namespace SolarMajesty
                 _status = "recovered";
                 IndustrialArtDressing.ClearTintOverlay(gameObject);
                 SetAgentStopped(false);
+                BeginRecoverySafety();
                 if (!_scrapRiskLogged)
                 {
                     _scrapRiskLogged = true;
@@ -885,6 +905,18 @@ namespace SolarMajesty
 
         private void TickThink(float dt)
         {
+            if (_retreatLeft > 0f)
+            {
+                if (KingdomLife.AtRest(transform.position, OutpostClaimed))
+                    _retreatLeft = 0f;
+                else
+                {
+                    ApplyDecision(BrainDecision.Flee(RestPosition, 0.95f, "flee_to_inn"));
+                    _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
+                    return;
+                }
+            }
+
             _thinkTimer -= dt;
             if (_thinkTimer > 0f) return;
             _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
@@ -1150,6 +1182,8 @@ namespace SolarMajesty
                     _buildLaborHit = false;
                     _stuckWatch.Reset();
                     _forceRepath = false;
+                    _watchReady = false;
+                    _combatCredit = 0f;
                     DemoAudio.PlayClaim(transform.position);
                     DemoVfx.ClaimRing(_activeFlag.WorldPosition, new Color(1f, 0.85f, 0.2f));
                     AnnounceFlagClaim(decision.TargetFlag);
@@ -1272,25 +1306,37 @@ namespace SolarMajesty
 
         private void TickClearThreat(float dt)
         {
+            if (_activeFlag == null) return;
+            bool chipped = TryChipDen(dt);
+            if (_activeFlag == null) return;
+
             Vector3 approach = ClearThreatDestination(_activeFlag);
             float toApproach = FlatDistance(transform.position, approach);
+            Vector3 before = _watchReady ? _watchSample : transform.position;
 
             if (toApproach > arriveDistance)
             {
-                // Bite range is a fight. The warrant stays; the walk resumes when it is over.
-                if (TryEngageThreatInReach(dt))
+                bool engaged = TryEngageThreatInReach(dt);
+                if (!engaged)
                 {
-                    _stuckWatch.ClearTimer();
-                    return;
+                    AdvanceToward(approach, dt, _forceRepath);
+                    _forceRepath = false;
                 }
 
-                AdvanceToward(approach, dt, _forceRepath);
-                _forceRepath = false;
-                _stuckWatch.Note(FlatDistance(transform.position, approach), dt, out bool repath, out bool release);
+                bool moved = _watchReady && FlatDistance(transform.position, before) > 0.2f;
+                _watchSample = transform.position;
+                _watchReady = true;
+                bool inCombat = engaged || chipped || _combatCredit > 0f;
+                _stuckWatch.Note(
+                    FlatDistance(transform.position, approach), dt, moved, inCombat,
+                    out bool repath, out bool release);
+                if (_combatCredit > 0f)
+                    _combatCredit = Mathf.Max(0f, _combatCredit - dt);
                 if (repath)
                 {
                     _forceRepath = true;
-                    AdvanceToward(approach, dt, true);
+                    if (!engaged)
+                        AdvanceToward(approach, dt, true);
                 }
                 if (release)
                 {
@@ -1298,13 +1344,79 @@ namespace SolarMajesty
                     return;
                 }
 
-                _status = "moving_to_ClearThreat";
+                _status = engaged ? "engaging" : "moving_to_ClearThreat";
                 return;
             }
 
             _stuckWatch.ClearTimer();
+            _watchReady = false;
             TryEngageThreatInReach(dt);
             WorkArrivedFlag(dt);
+        }
+
+        /// <summary>Chip the mound while standing in its attack radius. The swarm is not the objective.</summary>
+        private bool TryChipDen(float dt)
+        {
+            if (_world == null || _activeFlag == null || dt <= 0f) return false;
+            var lair = _world.FindNearestLair(_activeFlag.WorldPosition, OverseerRules.ClearThreatAttackRange);
+            if (lair == null || lair.IsCleared)
+            {
+                if (lair != null && lair.IsCleared)
+                {
+                    ReleaseClaim();
+                    _activeFlag = null;
+                    _status = "den_cleared";
+                }
+                return false;
+            }
+
+            if (FlatDistance(transform.position, lair.WorldPosition) > OverseerRules.ClearThreatAttackRange)
+                return false;
+
+            NoteClearThreatCombat();
+            bool fell = lair.ApplyStructureDamage(OverseerRules.DenStructureDps * dt, this);
+            if (fell || (_flags != null && !_flags.TryGet(_activeFlag.RuntimeId, out _)))
+            {
+                ReleaseClaim();
+                _activeFlag = null;
+                _status = "den_cleared";
+            }
+            return true;
+        }
+
+        private void NoteClearThreatCombat() => _combatCredit = Mathf.Max(_combatCredit, 1.5f);
+
+        /// <summary>A fight on the way to a den is progress, including a companion's hits.</summary>
+        public void NotifyCombatProgress() => NoteClearThreatCombat();
+
+        private void StrikeFauna(DustStalkerAgent stalker, float amount)
+        {
+            if (stalker == null || amount <= 0f) return;
+            NoteClearThreatCombat();
+            stalker.ApplyCombatDamage(amount, this);
+        }
+
+        private void TickRecovery(float dt)
+        {
+            if (dt <= 0f) return;
+            if (_invulnLeft > 0f)
+                _invulnLeft = Mathf.Max(0f, _invulnLeft - dt);
+            if (_retreatLeft <= 0f) return;
+            if (KingdomLife.AtRest(transform.position, OutpostClaimed))
+                _retreatLeft = 0f;
+            else
+                _retreatLeft = Mathf.Max(0f, _retreatLeft - dt);
+        }
+
+        /// <summary>Just stood up. Brief immunity, then a walk home before the next fight.</summary>
+        private void BeginRecoverySafety()
+        {
+            _invulnLeft = OverseerRules.RecoverInvulnSeconds;
+            _retreatLeft = OverseerRules.RecoverRetreatSeconds;
+            _combatCredit = 0f;
+            _watchReady = false;
+            ReleaseClaim();
+            _activeFlag = null;
         }
 
         private void WorkArrivedFlag(float dt)
@@ -1350,8 +1462,8 @@ namespace SolarMajesty
                     var lair = _world.FindNearestLair(transform.position, 12f);
                     if (lair != null && !lair.IsCleared)
                     {
-                        lair.ForceClear();
                         GrantXp(OverseerRules.XpDen, "den");
+                        lair.ClearFromFlagWork(this);
                     }
                 }
                 else if (completedType == FlagType.Explore)
@@ -1784,7 +1896,7 @@ namespace SolarMajesty
             if (stalker != null)
             {
                 float dps = StrikeDps(stalker.Kind);
-                stalker.ApplyCombatDamage(dps * dt);
+                StrikeFauna(stalker, dps * dt);
                 TrySelfAbility(AbilityTrigger.Engage);
                 if (healthNormalized < (_loop?.Abilities?.hurtLine ?? 0.6f))
                     TrySelfAbility(AbilityTrigger.Hurt);
@@ -1810,6 +1922,7 @@ namespace SolarMajesty
         public bool ApplyStatus(StatusKind kind, float magnitude, float duration, float period = 0f)
         {
             if (_scrapped || _incapacitated) return false;
+            if (_invulnLeft > 0f && StatusEffects.IsHarmful(kind)) return false;
             if (IsShielded && StatusEffects.IsHarmful(kind)) return false; // Aegis Field blocks afflictions
             return _statuses.Apply(kind, magnitude, duration, period);
         }
@@ -1848,7 +1961,7 @@ namespace SolarMajesty
         private void HitWithAbility(DustStalkerAgent s, ClassAbilityDef a)
         {
             if (a.damageMul > 0f)
-                s.ApplyCombatDamage(StrikeDps(s.Kind) * a.damageMul);
+                StrikeFauna(s, StrikeDps(s.Kind) * a.damageMul);
             if (a.appliesStatus && s.IsAlive)
                 s.ApplyStatus(a.status, a.statusMagnitude, a.statusDuration, a.statusPeriod);
             if (a.taunts && s.IsAlive)
@@ -2127,6 +2240,10 @@ namespace SolarMajesty
             _claimedActive = false;
             _stuckWatch.Reset();
             _forceRepath = false;
+            _watchReady = false;
+            _combatCredit = 0f;
+            _invulnLeft = 0f;
+            _retreatLeft = 0f;
             _yieldThreatId = null;
             _yieldThreatSeconds = 0f;
             ThreatsOverride = null;
@@ -2139,10 +2256,16 @@ namespace SolarMajesty
         /// <summary>One simulated tick. EditMode has no player loop, so tests call this.</summary>
         internal void Simulate(float dt)
         {
-            if (data == null || _brain == null || _flags == null || _incapacitated || _scrapped)
+            if (data == null || _brain == null || _flags == null || _scrapped)
                 return;
             if (dt < 0f) dt = 0f;
             TickYield(dt);
+            TickRecovery(dt);
+            if (_incapacitated)
+            {
+                TickIncapacitated(dt);
+                return;
+            }
             TickNeeds(dt);
             TickThink(dt);
             TickBehaviour(dt);
@@ -2239,7 +2362,7 @@ namespace SolarMajesty
             _workPulse = 1f;
             var strikeClips = Clips;
             if (strikeClips != null) strikeClips.NotifyStrike();
-            stalker.ApplyCombatDamage(StrikeDps(stalker.Kind) * dt);
+            StrikeFauna(stalker, StrikeDps(stalker.Kind) * dt);
             TrySelfAbility(AbilityTrigger.Engage);
             if (healthNormalized < (_loop?.Abilities?.hurtLine ?? 0.6f))
                 TrySelfAbility(AbilityTrigger.Hurt);
@@ -2259,6 +2382,8 @@ namespace SolarMajesty
             _activeFlag = null;
             _hasIdleTarget = false;
             _forceRepath = false;
+            _watchReady = false;
+            _combatCredit = 0f;
             _lastDecision = BrainDecision.Wander(transform.position, 0.15f, "clear_threat_yield");
             _status = "clear_threat_yield";
             SetAgentStopped(true);

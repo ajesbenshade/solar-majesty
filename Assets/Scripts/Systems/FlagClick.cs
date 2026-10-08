@@ -221,6 +221,21 @@ namespace SolarMajesty
         {
             if (flags == null || data == null) return null;
             int cost = PostCost(data, requested);
+            if (data.flagType == FlagType.ClearThreat)
+            {
+                var existing = ClearThreatMerge.Nearest(
+                    flags.Flags, world, OverseerRules.ClearThreatSameDenMeters);
+                if (existing != null)
+                {
+                    if (economy != null && !economy.TryEscrowBounty(cost, out _))
+                        return null;
+                    existing.CurrentBounty += cost;
+                    existing.EscrowMetals += cost;
+                    if (economy != null)
+                        economy.MatchReserved(Sum(flags.Flags));
+                    return existing;
+                }
+            }
             if (economy != null && !economy.TryEscrowBounty(cost, out _))
                 return null;
 

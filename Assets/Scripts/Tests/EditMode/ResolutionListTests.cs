@@ -42,6 +42,24 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void Collect_DropsModesBelow720p()
+        {
+            var modes = DemoSettings.CollectResolutions(3840, 2160, 3840, 2160, new[]
+            {
+                new Resolution { width = 640, height = 480 },
+                new Resolution { width = 800, height = 600 },
+                new Resolution { width = 1920, height = 1080 },
+                new Resolution { width = 3840, height = 2160 }
+            });
+            Assert.AreEqual(0, Count(modes, 640, 480));
+            Assert.AreEqual(0, Count(modes, 800, 600));
+            Assert.AreEqual(1, Count(modes, 1920, 1080));
+            Assert.AreEqual(1, Count(modes, 3840, 2160));
+            Assert.IsFalse(DemoSettings.IsListedResolution(640, 480));
+            Assert.IsTrue(DemoSettings.IsListedResolution(1280, 720));
+        }
+
+        [Test]
         public void LeavingDisplay_PrefersTheNativeSize()
         {
             var modes = DemoSettings.CollectResolutions(3440, 1440, 3440, 1440, new[]

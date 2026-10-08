@@ -4,7 +4,8 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Stalker den. Owns a budget of fauna; when they die the lair clears.
+    /// Stalker den. The mound is the objective: a hero in attack range chips its
+    /// structure, and breaking it clears the den even if stalkers are still up.
     /// Prefers the authored Resources/Dens/StalkerDen prefab. The procedural hive
     /// mound remains the fallback when that prefab is missing.
     /// </summary>
@@ -17,8 +18,12 @@ namespace SolarMajesty
         private readonly List<DustStalkerAgent> _spawned = new List<DustStalkerAgent>(4);
         private GameLoop _loop;
         private bool _expansionSpawned;
+        private float _structureHp = OverseerRules.DenStructureHp;
+        private SpecialistAgent _lastStriker;
 
         public bool IsCleared => cleared;
+        public float StructureHp => _structureHp;
+        public float StructureMaxHp => OverseerRules.DenStructureHp;
         public bool ExpansionSpawned => _expansionSpawned;
         public bool IsScouted { get; private set; }
         public int StalkerBudget => stalkerBudget;
@@ -55,6 +60,8 @@ namespace SolarMajesty
             stalkerBudget = Mathf.Max(1, budget);
             clearRadius = Mathf.Max(4f, radius);
             cleared = false;
+            _structureHp = OverseerRules.DenStructureHp;
+            _lastStriker = null;
             gameObject.name = "StalkerLair";
             BuildMarker(
                 rimColor ?? new Color(0.18f, 0.08f, 0.08f),
@@ -86,13 +93,8 @@ namespace SolarMajesty
                     _spawned.RemoveAt(i);
             }
 
-            // ClearThreat posted on the den itself depletes the lair even if fauna wandered.
-            if (HasActiveClearThreatNearby())
-            {
-                ForceClear();
-                return;
-            }
-
+            // An empty den is already quiet. A living swarm does not keep the mound up
+            // once a hero has broken it — that happens in ApplyStructureDamage.
             if (_spawned.Count == 0)
             {
                 MarkCleared();
@@ -122,13 +124,19 @@ namespace SolarMajesty
             _spawned.Clear();
             _expansionSpawned = expansionSpawned;
             cleared = false;
+            _structureHp = OverseerRules.DenStructureHp;
+            _lastStriker = null;
             IsScouted = false;
             gameObject.name = "StalkerLair";
             ApplyLook();
             // Scouting is independent history, even when the den was later cleared.
             if (wasScouted) MarkScouted();
             // The clear already happened. Do not log it or play the claim ring again.
-            if (wasCleared) MarkCleared(false);
+            if (wasCleared)
+            {
+                _structureHp = 0f;
+                MarkCleared(false);
+            }
             else if (!wasScouted) ApplyFoggedLook();
         }
 
@@ -138,39 +146,44 @@ namespace SolarMajesty
                 _spawned.Add(agent);
         }
 
-        /// <summary>ClearThreat near this den — kill remaining fauna and silence the lair.</summary>
-        public void ForceClear()
+        /// <summary>
+        /// A hero at the mouth chips the mound. Breaking it clears the den.
+        /// Returns true when this hit is the one that drops the structure.
+        /// </summary>
+        public bool ApplyStructureDamage(float amount, SpecialistAgent hero)
+        {
+            if (cleared || amount <= 0f) return false;
+            if (hero != null) _lastStriker = hero;
+            _structureHp = Mathf.Max(0f, _structureHp - amount);
+            if (_structureHp > 0f) return false;
+            FinishClear(true);
+            return true;
+        }
+
+        /// <summary>Silence the lair. Leftover fauna scatter; they are not bounty kills.</summary>
+        public void ForceClear() => FinishClear(true);
+
+        /// <summary>
+        /// Flag labor already paid this pole and the den XP. Fold any other Clear Threat
+        /// poles on the same mound into one payout.
+        /// </summary>
+        public void ClearFromFlagWork(SpecialistAgent hero)
+        {
+            if (hero != null) _lastStriker = hero;
+            FinishClear(false);
+        }
+
+        private void FinishClear(bool grantXp)
         {
             if (cleared) return;
             for (int i = 0; i < _spawned.Count; i++)
             {
                 if (_spawned[i] != null && _spawned[i].IsAlive)
-                    _spawned[i].ApplyClearThreatKill();
+                    _spawned[i].ScatterFromDen();
             }
             _spawned.Clear();
             MarkCleared();
-        }
-
-        private bool HasActiveClearThreatNearby()
-        {
-            if (_loop == null || _loop.Flags == null) return false;
-            var list = _loop.Flags.Flags;
-            Vector3 me = transform.position;
-            float r = clearRadius;
-            float rSq = r * r;
-            for (int i = 0; i < list.Count; i++)
-            {
-                var f = list[i];
-                if (f == null || f.Data == null) continue;
-                if (f.Data.flagType != FlagType.ClearThreat) continue;
-                float dx = f.WorldPosition.x - me.x;
-                float dz = f.WorldPosition.z - me.z;
-                if (dx * dx + dz * dz > rSq) continue;
-                // Only deplete once a specialist is actually working the den, not on claim alone.
-                if (_loop.Flags.GetWorkRemaining(f) < f.PostedWork - 0.05f)
-                    return true;
-            }
-            return false;
+            _loop?.ResolveDenClear(this, _lastStriker, grantXp);
         }
 
         public void MarkScouted()

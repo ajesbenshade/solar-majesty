@@ -26,6 +26,7 @@ namespace SolarMajesty
         private Color _baseColor;
         private TextMesh _bountyLabel;
         private TextMesh _metaLabel;
+        private bool _stackHidden;
         private Transform _claimBadge;
         private Renderer _claimBadgeRend;
         private bool _selected;
@@ -253,10 +254,55 @@ namespace SolarMajesty
         {
             if (_handle == null) return;
 
-            if (_bountyLabel != null)
+            string bountyText = $"$ {FlagBountySync.Amount(_handle):F0}";
+            _stackHidden = false;
+            if (_manager != null && _handle.Data != null)
             {
-                _bountyLabel.text = $"$ {FlagBountySync.Amount(_handle):F0}";
+                var items = new List<FlagLabelStack.Item>(_manager.Flags.Count);
+                int mine = -1;
+                var flags = _manager.Flags;
+                for (int i = 0; i < flags.Count; i++)
+                {
+                    var flag = flags[i];
+                    if (flag?.Data == null) continue;
+                    if (ReferenceEquals(flag, _handle))
+                        mine = items.Count;
+                    string title = !string.IsNullOrEmpty(flag.Data.displayName)
+                        ? flag.Data.displayName
+                        : SpecialistFlavor.FlagShort(flag.Data.flagType);
+                    items.Add(new FlagLabelStack.Item
+                    {
+                        World = flag.WorldPosition,
+                        Title = title,
+                        Bounty = FlagBountySync.Amount(flag),
+                        Order = i,
+                        Type = flag.Data.flagType
+                    });
+                }
+
+                if (mine >= 0 &&
+                    !FlagLabelStack.IsRepresentative(items, mine, OverseerRules.ClearThreatSameDenMeters))
+                {
+                    _stackHidden = true;
+                    SetLabelDrawn(_bountyLabel, false);
+                    SetLabelDrawn(_metaLabel, false);
+                    return;
+                }
+
+                if (mine >= 0)
+                {
+                    FlagLabelStack.Sum(
+                        items, mine, OverseerRules.ClearThreatSameDenMeters, out int count, out int bounty);
+                    string caption = FlagLabelStack.Caption(items[mine].Title, count, bounty);
+                    if (!string.IsNullOrEmpty(caption))
+                        bountyText = caption;
+                }
             }
+
+            SetLabelDrawn(_bountyLabel, true);
+            SetLabelDrawn(_metaLabel, true);
+            if (_bountyLabel != null)
+                _bountyLabel.text = bountyText;
 
             if (_metaLabel != null)
             {
@@ -362,6 +408,13 @@ namespace SolarMajesty
             PlaceLabel(_metaLabel, MetaLocalY, worldLift, visible: !label.HideDetail);
         }
 
+        static void SetLabelDrawn(TextMesh mesh, bool drawn)
+        {
+            if (mesh == null) return;
+            var rend = mesh.GetComponent<Renderer>();
+            if (rend != null) rend.enabled = drawn;
+        }
+
         void PlaceLabel(TextMesh mesh, float baseY, Vector3 worldLift, bool visible)
         {
             if (mesh == null) return;
@@ -410,7 +463,7 @@ namespace SolarMajesty
                 if (LiveLabels[i].Marker == this)
                     LiveLabels.RemoveAt(i);
             }
-            if (cam == null || _handle == null || _bountyLabel == null) return;
+            if (cam == null || _handle == null || _bountyLabel == null || _stackHidden) return;
             if (!TryLabelScreenRect(cam, out Vector2 center, out float width, out float height)) return;
 
             int priority = _selected ? 2 : (_handle.ClaimCount > 0 ? 1 : 0);

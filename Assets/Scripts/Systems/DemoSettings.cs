@@ -246,9 +246,13 @@ namespace SolarMajesty
             ApplyDisplay();
         }
 
+        /// <summary>True for a mode the settings list is allowed to offer. Tiny modes such as 640×480 are not.</summary>
+        public static bool IsListedResolution(int width, int height) =>
+            width >= OverseerRules.MinResolutionWidth && height >= OverseerRules.MinResolutionHeight;
+
         static void AddMode(List<DisplayMode> list, int width, int height)
         {
-            if (width < 640 || height < 480) return;
+            if (!IsListedResolution(width, height)) return;
             if (IndexOfMode(list, width, height) >= 0) return;
             list.Add(new DisplayMode(width, height));
         }
