@@ -740,6 +740,73 @@ namespace SolarMajesty.Tests
             }
         }
 
+        [Test]
+        public void CitadelDim_DestroysItsInstancesOnFinishAbortAndAMissingRenderer()
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                         ?? Shader.Find("Standard");
+            if (shader == null)
+                Assert.Inconclusive("Lit shader unavailable.");
+
+            Color warmEmit = new Color(1.55f, 1.02f, 0.5f, 1f);
+            // 0 = the shot finishes on its own, 1 = abort, 2 = the window renderer is destroyed mid-dim.
+            for (int path = 0; path < 3; path++)
+            {
+                var intro = NewIntro();
+                var cam = NewCamera();
+                var warmGo = new GameObject("citadel-window");
+                warmGo.hideFlags = HideFlags.HideAndDontSave;
+                var warm = warmGo.AddComponent<MeshRenderer>();
+                var warmMat = new Material(shader) { name = "SM_TestWindow" };
+                warmMat.SetColor("_EmissionColor", warmEmit);
+                warmMat.EnableKeyword("_EMISSION");
+                warm.sharedMaterials = new[] { warmMat };
+                intro.SetCitadelForTests(new[] { warm }, new Light[0]);
+                try
+                {
+                    intro.PlayFallback(cam, ColonyLayout.CameraFocus, CelestialBodyCatalog.Earth());
+                    Step(intro, 4f);
+                    Assert.IsTrue(intro.IsPlaying, "path " + path);
+                    var instance = warm.sharedMaterial;
+                    Assert.AreNotSame(warmMat, instance, "path " + path + ": the dim uses a private instance");
+                    Assert.IsTrue(instance != null);
+
+                    if (path == 0)
+                    {
+                        Step(intro, IntroShot.Duration);
+                        Assert.IsFalse(intro.IsPlaying, "the shot should have finished");
+                    }
+                    else if (path == 1)
+                    {
+                        intro.Abort();
+                    }
+                    else
+                    {
+                        Object.DestroyImmediate(warmGo);
+                        warmGo = null;
+                        intro.Skip();
+                    }
+
+                    Assert.IsTrue(instance == null, "path " + path + ": the dim instance must be destroyed");
+                    if (warmGo != null)
+                    {
+                        Assert.AreSame(warmMat, warm.sharedMaterial, "path " + path);
+                        Assert.AreEqual(1, warm.sharedMaterials.Length);
+                    }
+                    Assert.Less(ColorGap(warmMat.GetColor("_EmissionColor"), warmEmit), 0.001f,
+                        "path " + path + ": the shared material is never written");
+                }
+                finally
+                {
+                    if (intro != null) Object.DestroyImmediate(intro.gameObject);
+                    if (cam != null) Object.DestroyImmediate(cam.gameObject);
+                    if (warmMat != null) Object.DestroyImmediate(warmMat);
+                    if (warmGo != null) Object.DestroyImmediate(warmGo);
+                }
+            }
+        }
+
         private static float ColorGap(Color a, Color b)
         {
             return Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b) + Mathf.Abs(a.a - b.a);

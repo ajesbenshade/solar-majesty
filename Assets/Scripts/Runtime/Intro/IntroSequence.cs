@@ -1266,21 +1266,31 @@ namespace SolarMajesty
             if (!_citadelTouched) return;
             if (_citadelBlock == null)
                 _citadelBlock = new MaterialPropertyBlock();
+            int restored = 0;
+            int destroyed = 0;
             for (int i = 0; i < _glow.Length; i++)
             {
                 var slot = _glow[i];
-                if (slot == null || slot.Renderer == null) continue;
-                var mats = slot.Renderer.sharedMaterials;
-                if (mats != null && slot.Shared != null && slot.Index >= 0 && slot.Index < mats.Length)
+                if (slot == null) continue;
+                if (slot.Renderer != null)
                 {
-                    mats[slot.Index] = slot.Shared;
-                    slot.Renderer.sharedMaterials = mats;
+                    var mats = slot.Renderer.sharedMaterials;
+                    if (mats != null && slot.Shared != null && slot.Index >= 0 && slot.Index < mats.Length
+                        && (slot.Instance == null || mats[slot.Index] == slot.Instance))
+                    {
+                        mats[slot.Index] = slot.Shared;
+                        slot.Renderer.sharedMaterials = mats;
+                        restored++;
+                    }
+                    WriteEmissionBlock(slot, slot.Emission);
                 }
-                WriteEmissionBlock(slot, slot.Emission);
+
+                // Destroy the instance even when its renderer is already gone, or it leaks.
                 if (slot.Instance != null)
                 {
                     DestroyOwned(slot.Instance);
                     slot.Instance = null;
+                    destroyed++;
                 }
             }
 
@@ -1291,6 +1301,11 @@ namespace SolarMajesty
             }
 
             _citadelTouched = false;
+            if (Application.isPlaying)
+            {
+                Debug.Log("[Intro] Citadel restored: " + restored + " material slots back on the shared asset, "
+                    + destroyed + " dim instances destroyed.");
+            }
         }
 
         private void OnDestroy()
