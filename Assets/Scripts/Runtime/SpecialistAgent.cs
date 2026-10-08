@@ -1593,7 +1593,7 @@ namespace SolarMajesty
             if (_levyCarry <= 0) return;
             int n = _levyCarry;
             _levyCarry = 0;
-            _loop?.NotifyLevyStolen(n, reason);
+            _loop?.NoteLevyStolen(n, transform.position, false, null, LevyLossCause.Destroyed);
         }
 
         private void TickGuildAndMarket(float dt)

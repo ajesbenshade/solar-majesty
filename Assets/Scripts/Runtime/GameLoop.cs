@@ -483,6 +483,7 @@ namespace SolarMajesty
         public void NoteCollectorDeposit(int amount, Vector3 at)
         {
             if (amount <= 0) return;
+            FlushLevyRaid(at, force: true);
             Settlement?.NoteLevyDeposited(amount);
             NoteTreasuryIncome(amount);
             if (!_levyHomeLogged)
@@ -579,6 +580,9 @@ namespace SolarMajesty
         private string _consumedTravelLog;
         private bool _continuedColony;
         private bool _levyHomeLogged;
+        private readonly LevyRaidNotice _levyRaid = new LevyRaidNotice();
+        private Vector3 _levyRaidAt;
+        private float _levyHintAt = -999f;
 
         private struct TimedDisc
         {
@@ -679,6 +683,7 @@ namespace SolarMajesty
         public void NoteLevyDeposited(int amount, Vector3 at)
         {
             if (amount <= 0) return;
+            FlushLevyRaid(at, force: true);
             Settlement?.NoteLevyDeposited(amount);
             NoteTreasuryIncome(amount);
             if (!_levyHomeLogged)
@@ -691,20 +696,37 @@ namespace SolarMajesty
             Alerts.Push("levy_home", $"Levy walked home · {amount} EU", AlertSeverity.Good, Time.unscaledTime, at);
         }
 
-        public void NoteLevyStolen(int amount, Vector3 at, bool fromHab)
+        public void NoteLevyStolen(
+            int amount, Vector3 at, bool fromHab, string attacker = null, LevyLossCause cause = LevyLossCause.Mugged)
         {
             if (amount <= 0) return;
             Settlement?.NoteLevyStolen(amount);
-            string line = fromHab
-                ? OverseerRules.GrokLevyStolenHab
-                : OverseerRules.GrokLevyStolenCourier;
+            if (fromHab)
+            {
+                AnnounceLevyLine(OverseerRules.GrokLevyStolenHab, "levy_stolen_hab", at);
+                return;
+            }
+
+            // A hit after the window belongs to the next raid, so close the old total first.
+            FlushLevyRaid(_levyRaidAt, force: false);
+            _levyRaidAt = at;
+            _levyRaid.Note(amount, cause, attacker, "Haul", Time.time);
+            if (cause == LevyLossCause.Destroyed)
+                FlushLevyRaid(at, force: true);
+        }
+
+        void TickLevyRaid() => FlushLevyRaid(_levyRaidAt, force: false);
+
+        void FlushLevyRaid(Vector3 at, bool force)
+        {
+            if (_levyRaid.TryFlush(Time.time, force, ref _levyHintAt, out string line))
+                AnnounceLevyLine(line, "levy_stolen_courier", at);
+        }
+
+        void AnnounceLevyLine(string line, string key, Vector3 at)
+        {
             LogOverseer(line, 6.2f);
-            Alerts.Push(
-                fromHab ? "levy_stolen_hab" : "levy_stolen_courier",
-                line,
-                AlertSeverity.Warning,
-                Time.unscaledTime,
-                at);
+            Alerts.Push(key, line, AlertSeverity.Warning, Time.unscaledTime, at);
             DemoAudio.PlayAlertWarning();
             OverseerVoice.Speak(line, AlertSeverity.Warning);
         }
@@ -2321,6 +2343,7 @@ namespace SolarMajesty
             TickAutosave();
             TickJunkYard(Time.deltaTime);
             TickGrok();
+            TickLevyRaid();
             if (_glanceCooldown > 0f)
                 _glanceCooldown -= Time.deltaTime;
 

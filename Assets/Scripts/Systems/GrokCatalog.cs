@@ -67,7 +67,7 @@ namespace SolarMajesty
                 case GrokBeat.PowerShort:
                     return "Grid is skinny. Everyone is working at seventy percent, including your patience.";
                 case GrokBeat.PurseStolen:
-                    return "Junk-bot ate the levy. Congratulations, you have invented charity.";
+                    return "Haul lost the levy on the road.";
                 case GrokBeat.YardUnaffordable:
                     return "Level 6 wreck, Compact scrip insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
                 case GrokBeat.EmptyRoster:
