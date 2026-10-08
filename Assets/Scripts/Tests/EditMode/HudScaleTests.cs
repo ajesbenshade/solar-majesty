@@ -30,12 +30,39 @@ namespace SolarMajesty.Tests
         [Test]
         public void ExplicitChoice_PersistsApartFromAuto()
         {
-            bool hadAuto = PlayerPrefs.HasKey(DemoSettings.HudAutoKey);
-            int prevAuto = PlayerPrefs.GetInt(DemoSettings.HudAutoKey, 1);
-            bool hadHud = PlayerPrefs.HasKey(DemoSettings.HudKey);
-            float prevHud = PlayerPrefs.GetFloat(DemoSettings.HudKey, 1f);
-            bool hadBoot = PlayerPrefs.HasKey(DemoSettings.BootPlayKey);
-            int boot = PlayerPrefs.GetInt(DemoSettings.BootPlayKey, 0);
+            // SaveSettings writes the whole settings block, including resolution and UI-scale auto.
+            string[] floats =
+            {
+                DemoSettings.MasterKey, DemoSettings.SfxKey, DemoSettings.AmbientKey,
+                DemoSettings.MusicKey, DemoSettings.VoiceKey, DemoSettings.HudKey
+            };
+            string[] ints =
+            {
+                DemoSettings.HudAutoKey, DemoSettings.InvertKey, DemoSettings.QualityKey,
+                DemoSettings.FullscreenKey, DemoSettings.ResolutionWKey, DemoSettings.ResolutionHKey,
+                DemoSettings.EdgeScrollKey, DemoSettings.ReduceMotionKey, DemoSettings.ColorBlindKey,
+                DemoSettings.FrameCapKey, DemoSettings.DayCycleKey, DemoSettings.DioramaCameraKey,
+                DemoSettings.TiltShiftKey, DemoSettings.CloudShadowsKey, DemoSettings.HeroVoicesKey,
+                DemoSettings.CharacterVoicesKey, DemoSettings.HeroSpeechKey, DemoSettings.FirstHourKey,
+                DemoSettings.MarsGrokLessonsKey, DemoSettings.BootPlayKey, DemoSettings.TutorialKey,
+                DemoSettings.SaveFlagKey, DemoSettings.PlanetArchitectureKey,
+                ReplayRules.ModeKey, ReplayRules.ChallengeKey, ReplayRules.StanceKey, ReplayRules.IronmanKey
+            };
+            bool[] hadFloat = new bool[floats.Length];
+            float[] prevFloat = new float[floats.Length];
+            bool[] hadInt = new bool[ints.Length];
+            int[] prevInt = new int[ints.Length];
+            for (int i = 0; i < floats.Length; i++)
+            {
+                hadFloat[i] = PlayerPrefs.HasKey(floats[i]);
+                prevFloat[i] = PlayerPrefs.GetFloat(floats[i], 0f);
+            }
+            for (int i = 0; i < ints.Length; i++)
+            {
+                hadInt[i] = PlayerPrefs.HasKey(ints[i]);
+                prevInt[i] = PlayerPrefs.GetInt(ints[i], 0);
+            }
+
             try
             {
                 PlayerPrefs.DeleteKey(DemoSettings.HudAutoKey);
@@ -54,17 +81,41 @@ namespace SolarMajesty.Tests
             }
             finally
             {
-                if (hadAuto) PlayerPrefs.SetInt(DemoSettings.HudAutoKey, prevAuto);
-                else PlayerPrefs.DeleteKey(DemoSettings.HudAutoKey);
-                if (hadHud) PlayerPrefs.SetFloat(DemoSettings.HudKey, prevHud);
-                else PlayerPrefs.DeleteKey(DemoSettings.HudKey);
-                if (hadBoot) PlayerPrefs.SetInt(DemoSettings.BootPlayKey, boot);
-                else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
+                Restore();
                 PlayerPrefs.Save();
                 DemoSettings.Load();
-                if (hadBoot) PlayerPrefs.SetInt(DemoSettings.BootPlayKey, boot);
-                else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
+                // Load consumes the boot-play key when it is set. Put every snapshot back after that.
+                Restore();
                 PlayerPrefs.Save();
+            }
+
+            for (int i = 0; i < floats.Length; i++)
+            {
+                if (hadFloat[i])
+                    Assert.AreEqual(prevFloat[i], PlayerPrefs.GetFloat(floats[i]), 0.0001f);
+                else
+                    Assert.IsFalse(PlayerPrefs.HasKey(floats[i]), floats[i]);
+            }
+            for (int i = 0; i < ints.Length; i++)
+            {
+                if (hadInt[i])
+                    Assert.AreEqual(prevInt[i], PlayerPrefs.GetInt(ints[i]));
+                else
+                    Assert.IsFalse(PlayerPrefs.HasKey(ints[i]), ints[i]);
+            }
+
+            void Restore()
+            {
+                for (int i = 0; i < floats.Length; i++)
+                {
+                    if (hadFloat[i]) PlayerPrefs.SetFloat(floats[i], prevFloat[i]);
+                    else PlayerPrefs.DeleteKey(floats[i]);
+                }
+                for (int i = 0; i < ints.Length; i++)
+                {
+                    if (hadInt[i]) PlayerPrefs.SetInt(ints[i], prevInt[i]);
+                    else PlayerPrefs.DeleteKey(ints[i]);
+                }
             }
         }
     }
