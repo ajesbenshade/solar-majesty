@@ -285,7 +285,8 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(stock, res.Get(ResourceId.Metals));
             Assert.AreEqual(reserved, eco.EscrowedMetals);
 
-            var second = FlagBountySync.TryPost(flags, eco, data, new Vector3(8f, 0f, 0f), 200f);
+            // 40 m is outside ClearThreatSameDenMeters, so this post stays its own pole.
+            var second = FlagBountySync.TryPost(flags, eco, data, new Vector3(40f, 0f, 0f), 200f);
             Assert.AreEqual(400, FlagBountySync.PanelAmount(flag, pending, data), "the panel shows the selected pole");
             Assert.AreEqual(200, FlagBountySync.Amount(second));
             Assert.AreEqual(600, FlagBountySync.Sum(flags.Flags), "IN BOUNTIES is every pole, not just the one on the panel");
@@ -293,6 +294,27 @@ namespace SolarMajesty.Tests
 
             Assert.IsTrue(FlagBountySync.ClearSelectionOnTool(false), "closing the flag panel clears the pole");
             Assert.IsFalse(FlagBountySync.ClearSelectionOnTool(true));
+        }
+
+        [Test]
+        public void StackedPole_StepDoesNotRefundTheSumDownToTheAssetMax()
+        {
+            var res = new ResourceManager();
+            res.Set(ResourceId.Metals, 50000);
+            var eco = new SimpleEconomy(res);
+            var flags = new FlagManager();
+            var data = MakeFlag(FlagType.ClearThreat, 5, 500);
+            var flag = FlagBountySync.TryPost(flags, eco, data, Vector3.zero, 500f);
+            flag.CurrentBounty = 20800f;
+            flag.EscrowMetals = 20800;
+            eco.MatchReserved(FlagBountySync.Sum(flags.Flags));
+            int stock = res.Get(ResourceId.Metals);
+
+            Assert.IsTrue(FlagClick.TryStepBounty(flags, eco, flag, -MajestyEconomy.FlagBountyStep));
+            Assert.AreEqual(20800 - MajestyEconomy.FlagBountyStep, flag.EscrowMetals);
+            Assert.AreEqual(flag.EscrowMetals, flag.CurrentBounty);
+            Assert.AreEqual(stock + MajestyEconomy.FlagBountyStep, res.Get(ResourceId.Metals));
+            Assert.AreEqual(flag.EscrowMetals, eco.EscrowedMetals);
         }
 
         [Test]
