@@ -86,6 +86,14 @@ namespace SolarMajesty.Tests
 
             var mite = new GameObject("Mite").AddComponent<DustStalkerAgent>();
             _created.Add(mite.gameObject);
+            // Give it an authored-looking body first. The placeholder path calls Destroy and
+            // renderer.material, which EditMode rejects; SM_Art_ skips the tint.
+            var body = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            Object.DestroyImmediate(body.GetComponent<Collider>());
+            body.transform.SetParent(mite.transform, false);
+            var bodyMat = new Material(Shader.Find("Sprites/Default")) { name = "SM_Art_TestMite" };
+            _created.Add(bodyMat);
+            body.GetComponent<Renderer>().sharedMaterial = bodyMat;
             mite.Initialize(null, null, new Vector3(1.2f, 0f, 0f), null);
             hero.ThreatsOverride = new List<DustStalkerAgent> { mite };
 
