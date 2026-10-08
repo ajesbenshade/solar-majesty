@@ -1471,7 +1471,8 @@ namespace SolarMajesty
 
             return new NarrativeWorldHint
             {
-                HasCommons = Settlement != null && Settlement.HasCommons,
+                HasCommons = (Settlement != null && Settlement.HasCommons) ||
+                            (Placer != null && Placer.HasCommonsModule),
                 HasHab = Settlement != null && Settlement.CoreHabs > 0,
                 HasPad = hasPad,
                 HasPower = true,
