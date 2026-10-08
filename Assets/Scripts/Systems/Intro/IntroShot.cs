@@ -4,8 +4,9 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Default 5 second intro: fly past a stand-in Earth, settle on the colony, hold for the title.
-    /// The Timeline builder bakes these poses into the camera track. The runtime uses the same
-    /// math when that asset is missing, so both paths frame the same shot.
+    /// The generated Timeline camera is baked from <see cref="Sample"/>. The hand-authored camera
+    /// is not. The title slot stays on the old 30° settle; the fallback camera ends on the
+    /// authored pose so the lifted title stays in frame.
     /// </summary>
     public static class IntroShot
     {
@@ -30,8 +31,8 @@ namespace SolarMajesty
         public const float TitleDistance = 11f;
 
         /// <summary>
-        /// World-up lift so the gold letters sit against the dark ground and sky
-        /// instead of the citadel's lit windows. The settle camera does not move.
+        /// World-up lift so the gold letters sit against the sky instead of the citadel's lit windows.
+        /// The title slot stays on the old settle. The fallback camera pitches up to see it.
         /// </summary>
         public const float TitleLift = 5f;
 
@@ -48,9 +49,22 @@ namespace SolarMajesty
         public static Vector3 EarthPosition(Vector3 colonyFocus) =>
             colonyFocus + new Vector3(-62f, 28f, 18f);
 
-        /// <summary>Colony settle matches <c>GameLoop.ConfigureCamera</c>: focus + (-18, 22, -18), pitch 30, yaw 45.</summary>
+        /// <summary>Old colony settle, <c>GameLoop.ConfigureCamera</c>: focus + (-18, 22, -18), pitch 30, yaw 45.
+        /// The title slot is built from this. The fallback camera does not end here.</summary>
         public static Vector3 ColonySettlePosition(Vector3 colonyFocus) =>
             colonyFocus + new Vector3(-18f, 22f, -18f);
+
+        /// <summary>
+        /// Fallback end, the same pose as the authored intro camera.
+        /// At <c>ColonyLayout.CameraFocus</c> (192, 0, 190) that is (173.05, 19.78, 171.05), pitched 9° up, FOV 35.
+        /// </summary>
+        public static readonly Vector3 FallbackEndAtFocus = new Vector3(173.05f, 19.78f, 171.05f);
+        static readonly Vector3 FallbackFocus = new Vector3(192f, 0f, 190f);
+        public const float FallbackEndPitch = -9f;
+        public const float FallbackEndFov = 35f;
+
+        public static Vector3 FallbackEndPosition(Vector3 colonyFocus) =>
+            colonyFocus + (FallbackEndAtFocus - FallbackFocus);
 
         public static Pose Sample(float time, Vector3 colonyFocus, bool reduceMotion)
         {
@@ -63,14 +77,14 @@ namespace SolarMajesty
             Vector3 lookStart = earth + new Vector3(4f, -2f, 2f);
             Quaternion startRot = Quaternion.LookRotation(lookStart - start, Vector3.up);
 
-            Vector3 end = ColonySettlePosition(colonyFocus);
-            Quaternion endRot = Quaternion.Euler(30f, 45f, 0f);
+            Vector3 end = FallbackEndPosition(colonyFocus);
+            Quaternion endRot = Quaternion.Euler(FallbackEndPitch, 45f, 0f);
 
             return new Pose
             {
                 Position = Vector3.Lerp(start, end, s),
                 Rotation = Quaternion.Slerp(startRot, endRot, s),
-                FieldOfView = Mathf.Lerp(48f, 35f, s)
+                FieldOfView = Mathf.Lerp(48f, FallbackEndFov, s)
             };
         }
 
@@ -88,12 +102,14 @@ namespace SolarMajesty
         /// </summary>
         public static Pose TitlePose(Vector3 colonyFocus)
         {
-            Pose cam = Sample(CameraSettle, colonyFocus, false);
+            // Stays on the old 30° settle. The authored camera was keyed to this slot.
+            Vector3 anchor = ColonySettlePosition(colonyFocus);
+            Quaternion anchorRot = Quaternion.Euler(30f, 45f, 0f);
             return new Pose
             {
-                Position = cam.Position + cam.Rotation * Vector3.forward * TitleDistance + Vector3.up * TitleLift,
-                Rotation = cam.Rotation,
-                FieldOfView = cam.FieldOfView
+                Position = anchor + anchorRot * Vector3.forward * TitleDistance + Vector3.up * TitleLift,
+                Rotation = anchorRot,
+                FieldOfView = FallbackEndFov
             };
         }
 

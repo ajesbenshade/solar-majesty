@@ -129,7 +129,7 @@ namespace SolarMajesty.Tests
                 Step(intro, IntroShot.CameraSettle);
                 Vector3 settled = cam.transform.position;
                 Assert.Greater(Vector3.Distance(opened, settled), 5f);
-                Assert.Less(Vector3.Distance(settled, IntroShot.ColonySettlePosition(focus)), 0.05f);
+                Assert.Less(Vector3.Distance(settled, IntroShot.FallbackEndPosition(focus)), 0.05f);
                 Assert.IsTrue(intro.TitleRoot.activeSelf);
                 Assert.IsNotNull(intro.TitleRoot.transform.Find(IntroAssets.PlaceholderGlyphs));
 
@@ -155,7 +155,51 @@ namespace SolarMajesty.Tests
             Assert.Less(Vector3.Distance(opened.Position, earth), Vector3.Distance(settled.Position, earth));
             Vector3 toEarth = (earth - opened.Position).normalized;
             Assert.Greater(Vector3.Dot(opened.Rotation * Vector3.forward, toEarth), 0.9f);
-            Assert.Less(Vector3.Distance(settled.Position, IntroShot.ColonySettlePosition(focus)), 0.001f);
+            Vector3 end = IntroShot.FallbackEndPosition(focus);
+            Assert.Less(Vector3.Distance(settled.Position, end), 0.001f);
+            Assert.AreEqual(173.05f, end.x, 0.001f);
+            Assert.AreEqual(19.78f, end.y, 0.001f);
+            Assert.AreEqual(171.05f, end.z, 0.001f);
+            Assert.Less(Quaternion.Angle(settled.Rotation, Quaternion.Euler(IntroShot.FallbackEndPitch, 45f, 0f)), 0.05f);
+            Assert.AreEqual(IntroShot.FallbackEndFov, settled.FieldOfView, 0.001f);
+
+            var held = IntroShot.Sample(IntroShot.Duration, focus, false);
+            Assert.Less(Vector3.Distance(held.Position, settled.Position), 0.001f, "holds from the settle to the fade");
+            Assert.Less(Quaternion.Angle(held.Rotation, settled.Rotation), 0.05f);
+
+            var reduced = IntroShot.Sample(0f, focus, true);
+            Assert.Less(Vector3.Distance(reduced.Position, end), 0.001f, "reduce motion starts on the end pose");
+
+            var slot = IntroShot.TitlePose(focus);
+            var camGo = new GameObject("fallback-frustum");
+            camGo.hideFlags = HideFlags.HideAndDontSave;
+            try
+            {
+                var cam = camGo.AddComponent<Camera>();
+                cam.transform.SetPositionAndRotation(settled.Position, settled.Rotation);
+                cam.fieldOfView = settled.FieldOfView;
+                cam.nearClipPlane = 0.3f;
+                cam.farClipPlane = 4000f;
+                cam.aspect = 16f / 9f;
+                Vector3 right = slot.Rotation * Vector3.right * (7.0f * 0.5f);
+                Vector3 up = slot.Rotation * Vector3.up * (2.34f * 0.5f);
+                var corners = new[]
+                {
+                    slot.Position - right - up, slot.Position + right - up,
+                    slot.Position - right + up, slot.Position + right + up
+                };
+                foreach (var c in corners)
+                {
+                    Vector3 v = cam.WorldToViewportPoint(c);
+                    Assert.Greater(v.z, 0f, "title in front of the fallback camera");
+                    Assert.That(v.x, Is.InRange(0.02f, 0.98f), "title inside the fallback frame");
+                    Assert.That(v.y, Is.InRange(0.02f, 0.98f), "title inside the fallback frame");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(camGo);
+            }
         }
 
         [Test]
@@ -173,10 +217,11 @@ namespace SolarMajesty.Tests
         {
             Vector3 focus = ColonyLayout.CameraFocus;
             var slot = IntroShot.TitlePose(focus);
-            var cam = IntroShot.Sample(IntroShot.CameraSettle, focus, false);
+            Vector3 anchorPos = IntroShot.ColonySettlePosition(focus);
+            Quaternion anchorRot = Quaternion.Euler(30f, 45f, 0f);
 
-            Assert.Greater(Vector3.Dot(slot.Rotation * Vector3.forward, cam.Rotation * Vector3.forward), 0.999f);
-            Vector3 onAxis = cam.Position + cam.Rotation * Vector3.forward * IntroShot.TitleDistance;
+            Assert.Greater(Vector3.Dot(slot.Rotation * Vector3.forward, anchorRot * Vector3.forward), 0.999f);
+            Vector3 onAxis = anchorPos + anchorRot * Vector3.forward * IntroShot.TitleDistance;
             Vector3 lifted = onAxis + Vector3.up * IntroShot.TitleLift;
             Assert.Less(Vector3.Distance(slot.Position, lifted), 0.001f);
             Assert.AreEqual(IntroShot.TitleLift, slot.Position.y - onAxis.y, 0.0001f);

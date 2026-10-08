@@ -75,6 +75,11 @@ namespace SolarMajesty.EditorTools
             else
             {
                 Debug.Log("[Intro] Camera track '" + camera.name + "' is authored. Left untouched.");
+                // The plain sweep is what a missing authored track falls back to, and tests
+                // check it against IntroShot.Sample. Refresh it without touching the authored clip.
+                var generated = FindTrack<AnimationTrack>(timeline, IntroAssets.CameraTrack);
+                if (generated != null && generated != camera)
+                    RebuildCameraTrack(timeline, generated);
             }
 
             var title = FindTrack<ActivationTrack>(timeline, IntroAssets.TitleTrack);
