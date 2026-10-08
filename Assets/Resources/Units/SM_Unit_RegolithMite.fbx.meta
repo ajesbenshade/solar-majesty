@@ -3,7 +3,17 @@ guid: 9d040cab1c8d40bfa1a982459a30c898
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_GlowAccent
+    second: {fileID: 2100000, guid: 0867e7859c1f9d545a8acc167d08f992, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_RegolithMite
+    second: {fileID: 2100000, guid: c0c0a07d4cadaa643ac0c4e77ae23f25, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

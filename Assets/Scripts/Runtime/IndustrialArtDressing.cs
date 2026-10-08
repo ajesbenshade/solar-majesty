@@ -103,13 +103,41 @@ namespace SolarMajesty
                     continue;
                 }
 
-                var next = new Material[src.Length];
+                // Fauna v2 authors two slots (body atlas + shared glow). GuessSlot would
+                // remap GlowAccent ("accent") onto the orange library and wipe the atlas.
+                bool anyOther = false;
                 for (int m = 0; m < src.Length; m++)
-                    next[m] = Get(GuessSlot(rend, src[m]), unit);
-                rend.sharedMaterials = next;
+                {
+                    if (!IsFaunaArtMaterial(src[m]))
+                        anyOther = true;
+                }
+
+                if (anyOther)
+                {
+                    var next = new Material[src.Length];
+                    for (int m = 0; m < src.Length; m++)
+                    {
+                        next[m] = IsFaunaArtMaterial(src[m])
+                            ? src[m]
+                            : Get(GuessSlot(rend, src[m]), unit);
+                    }
+                    rend.sharedMaterials = next;
+                }
+
                 rend.shadowCastingMode = ShadowCastingMode.On;
                 rend.receiveShadows = true;
             }
+        }
+
+        /// <summary>Authored fauna v2 atlas or shared glow. Apply must not replace these.</summary>
+        public static bool IsFaunaArtMaterial(Material mat) =>
+            mat != null && mat.name.StartsWith("SM_Art_Fauna");
+
+        /// <summary>Shared orange glow accent. Tint must not write a new emission colour onto it.</summary>
+        public static bool IsFaunaGlowMaterial(Material mat)
+        {
+            if (!IsFaunaArtMaterial(mat)) return false;
+            return mat.name.IndexOf("Glow", System.StringComparison.Ordinal) >= 0;
         }
 
         public static bool HasArt(GameObject root)
@@ -118,9 +146,16 @@ namespace SolarMajesty
             var rends = root.GetComponentsInChildren<Renderer>(true);
             for (int i = 0; i < rends.Length; i++)
             {
-                var mat = rends[i] != null ? rends[i].sharedMaterial : null;
-                if (mat != null && mat.name.StartsWith("SM_Art_"))
-                    return true;
+                var rend = rends[i];
+                if (rend == null) continue;
+                var mats = rend.sharedMaterials;
+                if (mats == null) continue;
+                for (int m = 0; m < mats.Length; m++)
+                {
+                    var mat = mats[m];
+                    if (mat != null && mat.name.StartsWith("SM_Art_"))
+                        return true;
+                }
             }
             return false;
         }
@@ -144,10 +179,48 @@ namespace SolarMajesty
             {
                 var rend = rends[i];
                 if (rend == null || ShouldSkip(rend)) continue;
-                rend.GetPropertyBlock(block);
-                block.SetColor("_BaseColor", multiply);
-                rend.SetPropertyBlock(block);
+                var mats = rend.sharedMaterials;
+                int count = mats != null ? mats.Length : 0;
+                bool indexed = count > 1;
+                if (!indexed && count == 1)
+                    indexed = IsFaunaGlowMaterial(mats[0]);
+                if (!indexed)
+                {
+                    rend.GetPropertyBlock(block);
+                    block.SetColor("_BaseColor", multiply);
+                    rend.SetPropertyBlock(block);
+                    continue;
+                }
+
+                // Per slot: a renderer-level block would tint the glow albedo on every submesh.
+                rend.SetPropertyBlock(null);
+                for (int m = 0; m < count; m++)
+                {
+                    var mat = mats[m];
+                    if (IsFaunaGlowMaterial(mat))
+                    {
+                        var glow = new MaterialPropertyBlock();
+                        DimGlowEmission(glow, mat, multiply.maxColorComponent);
+                        rend.SetPropertyBlock(glow, m);
+                        continue;
+                    }
+
+                    var tint = new MaterialPropertyBlock();
+                    tint.SetColor("_BaseColor", multiply);
+                    rend.SetPropertyBlock(tint, m);
+                }
             }
+        }
+
+        /// <summary>
+        /// Darken authored glow by scaling its emission. Never assigns the tint colour
+        /// (that would repaint the shared orange accent).
+        /// </summary>
+        private static void DimGlowEmission(MaterialPropertyBlock block, Material mat, float scale)
+        {
+            if (block == null || mat == null || !mat.HasProperty("_EmissionColor")) return;
+            float s = Mathf.Clamp01(scale);
+            block.SetColor("_EmissionColor", mat.GetColor("_EmissionColor") * s);
         }
 
         public static void ClearTintOverlay(GameObject root)
@@ -159,36 +232,126 @@ namespace SolarMajesty
                 var rend = rends[i];
                 if (rend == null || ShouldSkip(rend)) continue;
                 rend.SetPropertyBlock(null);
+                var mats = rend.sharedMaterials;
+                int count = mats != null ? mats.Length : 0;
+                for (int m = 0; m < count; m++)
+                    rend.SetPropertyBlock(null, m);
             }
         }
 
         private static Shader _urpLit;
 
         /// <summary>
-        /// Tint a renderer, first swapping in a URP Lit material if it still has a non-URP one.
-        /// A bare CreatePrimitive carries the built-in Standard material, which a URP player build
-        /// draws magenta (the Editor hides this). Safe to call every frame: the swap happens once.
+        /// Per-instance tint via a property block, so shared assets (including SM_Art_Fauna
+        /// atlases and the glow accent) stay untouched. A bare CreatePrimitive still carries
+        /// the built-in Standard material, which a URP player build draws magenta. That swap
+        /// is a new Lit material assigned through sharedMaterials, and only while playing:
+        /// renderer.material / materials instantiate and log an error in edit mode, and the
+        /// singular setter collapses extra slots.
         /// </summary>
         public static void SetUrpColor(Renderer rend, Color c)
         {
             if (rend == null) return;
-            var mat = rend.material;
-            string shader = mat != null && mat.shader != null ? mat.shader.name : "";
-            bool urpReady = shader.StartsWith("Universal Render Pipeline", System.StringComparison.Ordinal) ||
-                            shader.StartsWith("SolarMajesty", System.StringComparison.Ordinal) ||
-                            shader.StartsWith("Sprites", System.StringComparison.Ordinal);
-            if (!urpReady)
+            var shared = rend.sharedMaterials;
+            if (Application.isPlaying)
+                shared = EnsurePlayModeUrpCopies(rend, shared, c);
+
+            int count = shared != null ? shared.Length : 0;
+            if (count == 1 && IsFaunaGlowMaterial(shared[0]))
+                return;
+
+            ApplyTintBlock(rend, shared, c);
+        }
+
+        /// <summary>
+        /// Replace non-URP, non-fauna slots with a Lit instance. Fauna art is never copied.
+        /// </summary>
+        private static Material[] EnsurePlayModeUrpCopies(Renderer rend, Material[] shared, Color c)
+        {
+            int count = shared != null ? shared.Length : 0;
+            if (count == 0)
             {
-                _urpLit ??= Shader.Find("Universal Render Pipeline/Lit")
-                            ?? Shader.Find("Universal Render Pipeline/Simple Lit");
-                if (_urpLit != null)
-                {
-                    mat = new Material(_urpLit) { name = "SM_UrpTint" };
-                    if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.3f);
-                    rend.material = mat;
-                }
+                var created = CreateUrpTintMaterial(c);
+                if (created == null) return shared;
+                rend.sharedMaterials = new[] { created };
+                return rend.sharedMaterials;
             }
-            if (mat == null) return;
+
+            bool dirty = false;
+            var next = new Material[count];
+            for (int i = 0; i < count; i++)
+            {
+                var mat = shared[i];
+                if (mat != null && !IsFaunaArtMaterial(mat) && !IsUrpTintReady(mat))
+                {
+                    var created = CreateUrpTintMaterial(c);
+                    if (created != null)
+                    {
+                        next[i] = created;
+                        dirty = true;
+                        continue;
+                    }
+                }
+                next[i] = mat;
+            }
+
+            if (!dirty) return shared;
+            rend.sharedMaterials = next;
+            return next;
+        }
+
+        private static void ApplyTintBlock(Renderer rend, Material[] shared, Color c)
+        {
+            int count = shared != null ? shared.Length : 0;
+            if (count <= 1)
+            {
+                var block = new MaterialPropertyBlock();
+                rend.GetPropertyBlock(block);
+                WriteTint(block, c);
+                rend.SetPropertyBlock(block);
+                return;
+            }
+
+            // Per slot. A renderer-level block would tint the glow submesh as well.
+            for (int i = 0; i < count; i++)
+            {
+                if (IsFaunaGlowMaterial(shared[i]))
+                    continue;
+                var block = new MaterialPropertyBlock();
+                rend.GetPropertyBlock(block, i);
+                WriteTint(block, c);
+                rend.SetPropertyBlock(block, i);
+            }
+        }
+
+        private static void WriteTint(MaterialPropertyBlock block, Color c)
+        {
+            block.SetColor("_BaseColor", c);
+            block.SetColor("_Color", c);
+        }
+
+        private static bool IsUrpTintReady(Material mat)
+        {
+            string shader = mat != null && mat.shader != null ? mat.shader.name : "";
+            return shader.StartsWith("Universal Render Pipeline", System.StringComparison.Ordinal) ||
+                   shader.StartsWith("SolarMajesty", System.StringComparison.Ordinal) ||
+                   shader.StartsWith("Sprites", System.StringComparison.Ordinal);
+        }
+
+        private static Material CreateUrpTintMaterial(Color c)
+        {
+            _urpLit ??= Shader.Find("Universal Render Pipeline/Lit")
+                        ?? Shader.Find("Universal Render Pipeline/Simple Lit");
+            if (_urpLit == null) return null;
+            var mat = new Material(_urpLit) { name = "SM_UrpTint" };
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.3f);
+            PaintAlbedo(mat, c);
+            return mat;
+        }
+
+        private static void PaintAlbedo(Material mat, Color c)
+        {
+            if (mat == null || IsFaunaGlowMaterial(mat)) return;
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             if (mat.HasProperty("_Color")) mat.color = c;
         }

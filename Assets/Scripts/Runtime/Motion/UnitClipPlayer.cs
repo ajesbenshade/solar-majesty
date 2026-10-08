@@ -61,6 +61,9 @@ namespace SolarMajesty
         /// <summary>True when an authored Down clip exists (UnitMotion should not sag the body).</summary>
         public bool HasDownClip => _ready && _clips[DownSlot] != null;
 
+        /// <summary>True after <see cref="SetDowned"/> until revived.</summary>
+        public bool IsDowned => _downed;
+
         public static UnitClipPlayer Bind(GameObject visual, string resourceName)
         {
             if (visual == null || string.IsNullOrEmpty(resourceName)) return null;

@@ -3,7 +3,17 @@ guid: fcfa74e065ff45529b08cd8a9512a848
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_GlowAccent
+    second: {fileID: 2100000, guid: 0867e7859c1f9d545a8acc167d08f992, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_RockTick
+    second: {fileID: 2100000, guid: a0cb3f07b252b0942af6e01c2542e34c, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

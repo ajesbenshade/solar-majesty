@@ -44,7 +44,8 @@ namespace SolarMajesty
         /// <summary>Rent a primitive. Returns null past the hard cap rather than spiralling.</summary>
         public static GameObject Rent(PrimitiveType type)
         {
-            // Presentation only. EditMode tests have no player loop to pulse or release these.
+            // The pool root is DontDestroyOnLoad. EditMode (fauna death tests) cannot
+            // create it; callers already treat a null rent as "no burst".
             if (!Application.isPlaying) return null;
 
             if (!Free.TryGetValue(type, out Stack<GameObject> stack))
