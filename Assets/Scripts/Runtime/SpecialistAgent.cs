@@ -919,6 +919,8 @@ namespace SolarMajesty
                 if (lead != null && lead.IsAlive)
                     decision = FollowLeader(lead);
             }
+            bool atInn = KingdomLife.AtRest(transform.position, OutpostClaimed);
+            decision = _motives.Commit(decision, _brain.Tuning, healthNormalized, Time.time, atInn);
 
             // A stuck Clear Threat was let go. Do not pick the same flag straight back up,
             // or the release log fires again and the warrant never frees.
@@ -1085,6 +1087,7 @@ namespace SolarMajesty
                 CurrentFlag = _activeFlag,
                 HealthNormalized = healthNormalized,
                 SafetyPosition = KingdomLife.RestNear(transform.position, OutpostClaimed),
+                AtInn = KingdomLife.AtRest(transform.position, OutpostClaimed),
                 VocationPosition = vocation,
                 HuntPosition = hunt,
                 HuntDistance = huntDist,
@@ -1662,7 +1665,7 @@ namespace SolarMajesty
             if (_levyCarry <= 0) return;
             int n = _levyCarry;
             _levyCarry = 0;
-            _loop?.NotifyLevyStolen(n, reason);
+            _loop?.NoteLevyStolen(n, transform.position, false, null, LevyLossCause.Destroyed);
         }
 
         private void TickGuildAndMarket(float dt)

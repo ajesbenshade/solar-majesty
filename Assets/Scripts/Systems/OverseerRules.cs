@@ -160,7 +160,7 @@ namespace SolarMajesty
         public const float LevyHabStaleSeconds = 72f;
 
         public const string GrokLevyStolenCourier =
-            "Junk-bot ate the levy. Congratulations, you have invented charity.";
+            "Haul lost the levy on the road.";
         public const string GrokLevyStolenHab =
             "Credits were napping on the HAB. A mite just made a withdrawal.";
         public const string GrokLevyHome =

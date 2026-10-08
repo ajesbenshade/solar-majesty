@@ -73,6 +73,45 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void LabelScreenPoint_PicksThatFlag_AndNotTheEmptyMap()
+        {
+            var labels = new[]
+            {
+                new FlagLabelLayout.ScreenLabel
+                {
+                    Center = new Vector2(400f, 300f),
+                    Width = 220f,
+                    Height = 72f,
+                    Priority = 1
+                }
+            };
+            Assert.AreEqual(0, FlagLabelLayout.Pick(labels, new Vector2(420f, 310f)));
+            Assert.AreEqual(-1, FlagLabelLayout.Pick(labels, new Vector2(12f, 12f)),
+                "a click on empty map is not a label, so it must not be treated as this pole");
+        }
+
+        [Test]
+        public void OverlappingLabels_OffsetTheLowerPriorityOne()
+        {
+            var labels = new[]
+            {
+                new FlagLabelLayout.ScreenLabel
+                {
+                    Center = new Vector2(960f, 540f), Width = 180f, Height = 64f, Priority = 2
+                },
+                new FlagLabelLayout.ScreenLabel
+                {
+                    Center = new Vector2(970f, 530f), Width = 180f, Height = 64f, Priority = 0
+                }
+            };
+            FlagLabelLayout.Resolve(labels, 6f);
+            Assert.AreEqual(0f, labels[0].OffsetY, 0.01f, "the selected flag keeps its place");
+            Assert.Greater(labels[1].OffsetY, 0f);
+            Assert.IsFalse(FlagLabelLayout.Bounds(labels[0]).Overlaps(FlagLabelLayout.Bounds(labels[1])),
+                "1080p neighbours must not paint on top of each other");
+        }
+
+        [Test]
         public void RayHit_SelectsThatFlag_EvenIfTheSnapIsElsewhere()
         {
             var flags = new FlagManager();

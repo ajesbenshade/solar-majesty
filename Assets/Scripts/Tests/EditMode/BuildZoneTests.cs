@@ -85,5 +85,23 @@ namespace SolarMajesty.Tests
             StringAssert.Contains("taken", t.Reason(BuildZoneKind.TradePost, false));
             StringAssert.Contains("temple", t.Reason(BuildZoneKind.Temple, true));
         }
+
+        [Test]
+        public void OccupiedTradeRing_SaysThatRingIsTaken_EvenWhenAnotherIsFree()
+        {
+            var t = new BuildZoneTuning();
+            var zones = new List<BuildZone>
+            {
+                new BuildZone { Kind = BuildZoneKind.TradePost, Center = new Vector3(10f, 0f, 10f), Radius = 7f },
+                new BuildZone { Kind = BuildZoneKind.TradePost, Center = new Vector3(40f, 0f, 10f), Radius = 7f }
+            };
+            var taken = new List<Vector3> { new Vector3(10f, 0f, 10f) };
+
+            Assert.IsTrue(t.PointInTakenZone(BuildZoneKind.TradePost, new Vector3(12f, 0f, 10f), zones, taken));
+            Assert.IsFalse(t.PointInTakenZone(BuildZoneKind.TradePost, new Vector3(40f, 0f, 10f), zones, taken));
+            Assert.AreEqual("That trade ring is already taken.",
+                t.Reason(BuildZoneKind.TradePost, anyZoneFree: true, insideTakenZone: true));
+            StringAssert.Contains("gold trade ring", t.Reason(BuildZoneKind.TradePost, true, false));
+        }
     }
 }

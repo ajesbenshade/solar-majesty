@@ -131,9 +131,12 @@ namespace SolarMajesty
         public bool TitlePointerBlocksWorld =>
             _overseerHud != null && _overseerHud.HitsHudPanels();
 
-        /// <summary>The mouse is over a HUD panel right now (the wheel scrolls it instead of zooming).</summary>
+        /// <summary>
+        /// The mouse is over HUD chrome (the wheel scrolls it instead of zooming).
+        /// Settings, pause, and the title block the whole screen, not only the drawn panel.
+        /// </summary>
         public bool PointerOverHud =>
-            (_overseerHud != null && _overseerHud.HitsHudPanels()) ||
+            (_overseerHud != null && (_overseerHud.PointerBlocksWorld || _overseerHud.HitsHudPanels())) ||
             (_alertView != null && _alertView.PointerOverCards());
         public bool TitleConfirmOpen =>
             _overseerHud != null && _overseerHud.TitleConfirmOpen;
@@ -480,6 +483,7 @@ namespace SolarMajesty
         public void NoteCollectorDeposit(int amount, Vector3 at)
         {
             if (amount <= 0) return;
+            FlushLevyRaid(at, force: true);
             Settlement?.NoteLevyDeposited(amount);
             NoteTreasuryIncome(amount);
             if (!_levyHomeLogged)
@@ -576,6 +580,9 @@ namespace SolarMajesty
         private string _consumedTravelLog;
         private bool _continuedColony;
         private bool _levyHomeLogged;
+        private readonly LevyRaidNotice _levyRaid = new LevyRaidNotice();
+        private Vector3 _levyRaidAt;
+        private float _levyHintAt = -999f;
 
         private struct TimedDisc
         {
@@ -676,6 +683,7 @@ namespace SolarMajesty
         public void NoteLevyDeposited(int amount, Vector3 at)
         {
             if (amount <= 0) return;
+            FlushLevyRaid(at, force: true);
             Settlement?.NoteLevyDeposited(amount);
             NoteTreasuryIncome(amount);
             if (!_levyHomeLogged)
@@ -688,20 +696,37 @@ namespace SolarMajesty
             Alerts.Push("levy_home", $"Levy walked home · {amount} EU", AlertSeverity.Good, Time.unscaledTime, at);
         }
 
-        public void NoteLevyStolen(int amount, Vector3 at, bool fromHab)
+        public void NoteLevyStolen(
+            int amount, Vector3 at, bool fromHab, string attacker = null, LevyLossCause cause = LevyLossCause.Mugged)
         {
             if (amount <= 0) return;
             Settlement?.NoteLevyStolen(amount);
-            string line = fromHab
-                ? OverseerRules.GrokLevyStolenHab
-                : OverseerRules.GrokLevyStolenCourier;
+            if (fromHab)
+            {
+                AnnounceLevyLine(OverseerRules.GrokLevyStolenHab, "levy_stolen_hab", at);
+                return;
+            }
+
+            // A hit after the window belongs to the next raid, so close the old total first.
+            FlushLevyRaid(_levyRaidAt, force: false);
+            _levyRaidAt = at;
+            _levyRaid.Note(amount, cause, attacker, "Haul", Time.time);
+            if (cause == LevyLossCause.Destroyed)
+                FlushLevyRaid(at, force: true);
+        }
+
+        void TickLevyRaid() => FlushLevyRaid(_levyRaidAt, force: false);
+
+        void FlushLevyRaid(Vector3 at, bool force)
+        {
+            if (_levyRaid.TryFlush(Time.time, force, ref _levyHintAt, out string line))
+                AnnounceLevyLine(line, "levy_stolen_courier", at);
+        }
+
+        void AnnounceLevyLine(string line, string key, Vector3 at)
+        {
             LogOverseer(line, 6.2f);
-            Alerts.Push(
-                fromHab ? "levy_stolen_hab" : "levy_stolen_courier",
-                line,
-                AlertSeverity.Warning,
-                Time.unscaledTime,
-                at);
+            Alerts.Push(key, line, AlertSeverity.Warning, Time.unscaledTime, at);
             DemoAudio.PlayAlertWarning();
             OverseerVoice.Speak(line, AlertSeverity.Warning);
         }
@@ -1468,7 +1493,8 @@ namespace SolarMajesty
 
             return new NarrativeWorldHint
             {
-                HasCommons = Settlement != null && Settlement.HasCommons,
+                HasCommons = (Settlement != null && Settlement.HasCommons) ||
+                            (Placer != null && Placer.HasCommonsModule),
                 HasHab = Settlement != null && Settlement.CoreHabs > 0,
                 HasPad = hasPad,
                 HasPower = true,
@@ -1505,13 +1531,16 @@ namespace SolarMajesty
 
             string travelKey = AdvisorToastCatalog.TravelKeyForArrival(celestialBody);
             bool announce = hop || freshDrop;
+            // Continue/Load rebuilds the narrative tracker, so a first-run key would
+            // speak again. The loaded campus is the source of truth, not that fresh tracker.
+            var loaded = CurrentNarrativeHint();
             if (announce && celestialBody == CelestialBodyId.Luna && TryGrok(GrokBeat.Drop))
             {
                 // Luna training-wheels drop. W2 arrival copy stays in the catalog.
             }
             else if (announce &&
                      GrokAdvisor.TrainingWheels(celestialBody) &&
-                     !string.IsNullOrEmpty(travelKey) &&
+                     AdvisorArrival.ShouldSpeak(travelKey, loaded.HasCommons) &&
                      _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
                 LogOverseer(toast.Line, 6.8f);
@@ -1668,10 +1697,14 @@ namespace SolarMajesty
                     Screen == DemoScreen.Settings,
                     Screen == DemoScreen.Title,
                     Screen == DemoScreen.Playing,
-                    placing))
+                    placing,
+                    _overseerHud != null && _overseerHud.TechPanelOpen))
                 {
                     case SessionHotkeys.EscapeAction.CloseSettings:
                         CloseSettings();
+                        break;
+                    case SessionHotkeys.EscapeAction.CloseResearch:
+                        _overseerHud.CloseTechPanel();
                         break;
                     case SessionHotkeys.EscapeAction.CancelPlacement:
                         ApplyTool(OverseerTool.None);
@@ -2109,7 +2142,9 @@ namespace SolarMajesty
             bool anyFree = false;
             for (int i = 0; i < zones.Count; i++)
                 if (zones[i].Kind == kind && !BuildZoneTuning.IsTaken(zones[i], taken)) { anyFree = true; break; }
-            return ZoneRules.Reason(kind, anyFree);
+            var center = FootprintCenterWorld(cell, data.footprintWidth, data.footprintHeight);
+            bool insideTaken = ZoneRules.PointInTakenZone(kind, center, zones, taken);
+            return ZoneRules.Reason(kind, anyFree, insideTaken);
         }
 
         /// <summary>
@@ -2308,6 +2343,7 @@ namespace SolarMajesty
             TickAutosave();
             TickJunkYard(Time.deltaTime);
             TickGrok();
+            TickLevyRaid();
             if (_glanceCooldown > 0f)
                 _glanceCooldown -= Time.deltaTime;
 
@@ -3111,9 +3147,10 @@ namespace SolarMajesty
             {
                 if (grid != null)
                 {
-                    float maxX = grid.WorldWidth + 12f;
-                    float maxZ = grid.WorldHeight + 12f;
-                    _isoCam.SetPanBounds(new Vector2(-8f, -8f), new Vector2(maxX, maxZ));
+                    float margin = IsometricCameraController.MapEdgeMargin;
+                    _isoCam.SetPanBounds(
+                        new Vector2(-margin, -margin),
+                        new Vector2(grid.WorldWidth + margin, grid.WorldHeight + margin));
                 }
                 _isoCam.FocusOn(focus, ortho);
                 _isoCam.SnapToTarget();
@@ -3384,6 +3421,8 @@ namespace SolarMajesty
             if (Flags == null || _flagInput == null || mainCamera == null) return null;
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
             FlagHandle hit = FlagMarker.ClosestUnderRay(ray);
+            if (hit == null)
+                hit = FlagMarker.LabelAtScreen(Input.mousePosition);
             if (hit != null || !cellSnap) return hit;
 
             // A hero or a building under the cursor keeps the click. Cell-snap is for the pole's ground.

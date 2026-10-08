@@ -21,6 +21,11 @@ namespace SolarMajesty
         public bool Relaxing { get; private set; }
         /// <summary>Scared badly enough to stay home until safety recovers.</summary>
         public bool Shaken { get; private set; }
+        /// <summary>
+        /// Hurt badly enough to run for the inn. Stays set until health clears
+        /// <see cref="SpecialistBrainTuning.fleeResumeHealth"/> (the inn heal climbs there).
+        /// </summary>
+        public bool FleeLatched { get; private set; }
         public int WorkTasks { get; private set; }
         public int RelaxTasks { get; private set; }
 
@@ -30,6 +35,11 @@ namespace SolarMajesty
         private float _lastTaskAt = -999f;
         private SpecialistAction _lastAction = SpecialistAction.Idle;
         private object _lastKey;
+        private bool _holdValid;
+        private float _holdUntil;
+        private SpecialistAction _holdAction = SpecialistAction.Idle;
+        private string _holdReason = "";
+        private BrainDecision _held;
 
         /// <summary>Forget everything (hero respawned / revived).</summary>
         public void Reset()
@@ -37,11 +47,61 @@ namespace SolarMajesty
             Safety = 1f;
             Relaxing = false;
             Shaken = false;
+            FleeLatched = false;
             WorkTasks = RelaxTasks = 0;
             _phaseSeconds = 0f;
             _lastTaskAt = -999f;
             _lastAction = SpecialistAction.Idle;
             _lastKey = null;
+            _holdValid = false;
+            _holdUntil = 0f;
+            _holdAction = SpecialistAction.Idle;
+            _holdReason = "";
+            _held = default;
+        }
+
+        /// <summary>
+        /// Keep <paramref name="proposed"/> from replacing the last action until the dwell elapses.
+        /// Entering flee, and leaving flee because health cleared the resume line, break the dwell
+        /// so a fresh wound is not ignored and a healed hero is not stuck running.
+        /// </summary>
+        public BrainDecision HoldDecision(BrainDecision proposed, float now, float minSeconds, bool force)
+        {
+            bool changed = !_holdValid ||
+                           proposed.Action != _holdAction ||
+                           proposed.Reason != _holdReason;
+            if (_holdValid && changed && !force && now < _holdUntil)
+                return _held;
+
+            if (changed)
+            {
+                _holdAction = proposed.Action;
+                _holdReason = proposed.Reason ?? "";
+                _holdUntil = now + Mathf.Max(0f, minSeconds);
+                _holdValid = true;
+            }
+            _held = proposed;
+            return proposed;
+        }
+
+        /// <summary>
+        /// Apply dwell, then latch flee until health is back above the resume line.
+        /// Reaching the inn is what applies that heal (<c>TickFlee</c>); the latch drops once
+        /// health crosses <see cref="SpecialistBrainTuning.fleeResumeHealth"/>, including there.
+        /// </summary>
+        public BrainDecision Commit(BrainDecision proposed, SpecialistBrainTuning tuning, float health, float now, bool atInn)
+        {
+            if (tuning == null) tuning = new SpecialistBrainTuning();
+            float exit = tuning.fleeResumeHealth;
+            bool healed = health >= exit || (atInn && health >= exit);
+            bool force = proposed.Action == SpecialistAction.Flee ||
+                         (_holdValid && _holdAction == SpecialistAction.Flee && healed);
+            var decision = HoldDecision(proposed, now, tuning.decisionDwellSeconds, force);
+            if (decision.Action == SpecialistAction.Flee)
+                FleeLatched = true;
+            else if (healed)
+                FleeLatched = false;
+            return decision;
         }
 
         /// <summary>Advance safety and the phase clock by simulation seconds.</summary>

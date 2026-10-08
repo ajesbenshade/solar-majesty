@@ -809,7 +809,7 @@ namespace SolarMajesty
                 transform.position = MoveFlatToward(dest, moveSpeed * 1.1f * dt);
                 return true;
             }
-            prey.TakeHit(biteDamagePerSecond * dt);
+            prey.TakeHit(biteDamagePerSecond * dt, hostile: true, attacker: FaunaNames.Display(Kind));
             if (_clips == null) _clips = GetComponentInChildren<UnitClipPlayer>();
             if (_clips != null) _clips.NotifyStrike();
             return true;
@@ -882,7 +882,9 @@ namespace SolarMajesty
 
             int stole = prey.StealLevyCarry(prey.LevyCarry);
             if (stole > 0)
-                _loop.NoteLevyStolen(stole, prey.transform.position, fromHab: false);
+                _loop.NoteLevyStolen(
+                    stole, prey.transform.position, fromHab: false,
+                    FaunaNames.Display(Kind), LevyLossCause.Mugged);
             return true;
         }
 

@@ -47,6 +47,9 @@ namespace SolarMajesty.Tests
             bool hadH = PlayerPrefs.HasKey(DemoSettings.ResolutionHKey);
             int prevW = PlayerPrefs.GetInt(DemoSettings.ResolutionWKey, 0);
             int prevH = PlayerPrefs.GetInt(DemoSettings.ResolutionHKey, 0);
+            // SaveSettings also writes the UI-scale auto flag; put it back too.
+            bool hadHudAuto = PlayerPrefs.HasKey(DemoSettings.HudAutoKey);
+            int prevHudAuto = PlayerPrefs.GetInt(DemoSettings.HudAutoKey, 1);
             bool hadBoot = PlayerPrefs.HasKey(DemoSettings.BootPlayKey);
             int boot = PlayerPrefs.GetInt(DemoSettings.BootPlayKey, 0);
             try
@@ -67,6 +70,8 @@ namespace SolarMajesty.Tests
                 else PlayerPrefs.DeleteKey(DemoSettings.ResolutionWKey);
                 if (hadH) PlayerPrefs.SetInt(DemoSettings.ResolutionHKey, prevH);
                 else PlayerPrefs.DeleteKey(DemoSettings.ResolutionHKey);
+                if (hadHudAuto) PlayerPrefs.SetInt(DemoSettings.HudAutoKey, prevHudAuto);
+                else PlayerPrefs.DeleteKey(DemoSettings.HudAutoKey);
                 if (hadBoot) PlayerPrefs.SetInt(DemoSettings.BootPlayKey, boot);
                 else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
                 PlayerPrefs.Save();
@@ -149,6 +154,11 @@ namespace SolarMajesty.Tests
                 SessionHotkeys.OnEscape(true, false, false, true));
             Assert.AreEqual(SessionHotkeys.EscapeAction.Ignore,
                 SessionHotkeys.OnEscape(false, true, false, false));
+            Assert.AreEqual(SessionHotkeys.EscapeAction.CloseResearch,
+                SessionHotkeys.OnEscape(false, false, true, true, researchOpen: true),
+                "Esc closes research before it cancels a placement or pauses");
+            Assert.AreEqual(SessionHotkeys.EscapeAction.CancelPlacement,
+                SessionHotkeys.OnEscape(false, false, true, true, researchOpen: false));
         }
 
         [Test]
@@ -212,6 +222,8 @@ namespace SolarMajesty.Tests
         {
             AssertHud(1280f, 800f);
             AssertHud(1920f, 1080f);
+            AssertHud(3440f, 1440f);
+            AssertHud(3840f, 2160f);
             // 1.25 HUD scale on 1280×800 shrinks the dock; the catalog still clears the crest.
             AssertHud(1280f / 1.25f, 800f / 1.25f);
         }

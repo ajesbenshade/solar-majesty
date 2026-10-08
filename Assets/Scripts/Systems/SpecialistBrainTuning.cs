@@ -149,6 +149,10 @@ namespace SolarMajesty
         public float panicCourage = 0.55f;
         [Tooltip("Panic only triggers below this health.")]
         public float panicHealthCeiling = 0.62f;
+        [Tooltip("Once fleeing, keep going until health reaches this. Clearly above the enter line so a hero bouncing through 0.49–0.65 cannot flip back to workshop duty. The inn heal is what climbs to this line.")]
+        [Range(0.5f, 1f)] public float fleeResumeHealth = 0.8f;
+        [Tooltip("A new action has to stick at least this long. Stops a decision from flipping on every think.")]
+        public float decisionDwellSeconds = 1.75f;
         public float fleeScore = 0.95f;
         public float restFatigueWeight = 0.7f;
         public float restInjuryWeight = 0.55f;

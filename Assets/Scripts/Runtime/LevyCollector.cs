@@ -50,7 +50,7 @@ namespace SolarMajesty
         public int Replacing => _respawnAt.Count;
 
         /// <summary>A mob killed a collector on its round: the bag is gone, a replacement follows.</summary>
-        internal void NotifyCollectorKilled(LevyCollector c, int lostBag)
+        internal void NotifyCollectorKilled(LevyCollector c)
         {
             if (c == null) return;
             _collectors.Remove(c);
@@ -58,9 +58,8 @@ namespace SolarMajesty
             Vector3 at = c.transform.position;
             Object.Destroy(c.gameObject);
             _respawnAt.Add(_simTime + MajestyEconomy.CollectorRespawnSeconds);
-            _loop.LogOverseer(lostBag > 0
-                ? $"A tax collector was killed on the road — {lostBag} EU lost. The Commons sends another in {Mathf.RoundToInt(MajestyEconomy.CollectorRespawnSeconds)} s."
-                : $"A tax collector was killed on the road. The Commons sends another in {Mathf.RoundToInt(MajestyEconomy.CollectorRespawnSeconds)} s.");
+            int back = Mathf.RoundToInt(MajestyEconomy.CollectorRespawnSeconds);
+            _loop.LogOverseer($"The Commons sends another Haul in {back} s.");
             _loop.RaiseAlert("collector_killed", "Tax collector killed on the road", AlertSeverity.Warning, at);
         }
 
@@ -554,25 +553,28 @@ namespace SolarMajesty
         /// A mob bit this collector on the road. The first hit knocks half the bag loose and sends
         /// it running for the nearest chest; at zero HP the collector falls and the rest is lost.
         /// </summary>
-        public void TakeHit(float damage)
+        public void TakeHit(float damage, bool hostile = true, string attacker = null)
         {
-            if (!IsAlive || damage <= 0f) return;
+            // A friendly tap, splash from our own yard, or a zero-damage tick must not lighten the bag.
+            if (!IsAlive || !hostile || damage <= 0f) return;
             Hp -= damage;
-            if (Carry > 0 && _robCooldown <= 0f)
+            if (LevyRaidNotice.ShouldRob(hostile, damage, Carry) && _robCooldown <= 0f)
             {
                 int stolen = Mathf.Max(1, Mathf.RoundToInt(Carry * MajestyEconomy.CollectorRobShare));
+                if (stolen > Carry) stolen = Carry;
                 Carry -= stolen;
                 RefreshBag();
                 _robCooldown = 8f;
-                _director.Loop.NoteLevyStolen(stolen, transform.position, false);
+                _director.Loop.NoteLevyStolen(stolen, transform.position, false, attacker, LevyLossCause.Hit);
                 GoHome();
             }
             if (Hp > 0f) return;
 
             int lost = Carry;
             Carry = 0;
-            if (lost > 0) _director.Loop.NoteLevyStolen(lost, transform.position, false);
-            _director.NotifyCollectorKilled(this, lost);
+            if (lost > 0)
+                _director.Loop.NoteLevyStolen(lost, transform.position, false, attacker, LevyLossCause.Destroyed);
+            _director.NotifyCollectorKilled(this);
         }
 
         /// <summary>Walk toward a building; true when close enough to hand over gold.</summary>
