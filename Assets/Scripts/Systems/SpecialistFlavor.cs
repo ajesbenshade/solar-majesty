@@ -150,7 +150,7 @@ namespace SolarMajesty
                 if (reason.IndexOf("levy_home", System.StringComparison.Ordinal) >= 0)
                     return "Walking the purse home. Do not click me.";
                 if (reason.IndexOf("levy_collect", System.StringComparison.Ordinal) >= 0)
-                    return "Credits are napping on the HAB. Haul will get around to it.";
+                    return "Credits are sitting in building purses. Haul will get around to it.";
                 if (reason.IndexOf("frontier", System.StringComparison.Ordinal) >= 0)
                     return "Wandering the apron.";
             }
