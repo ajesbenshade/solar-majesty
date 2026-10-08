@@ -1508,13 +1508,16 @@ namespace SolarMajesty
 
             string travelKey = AdvisorToastCatalog.TravelKeyForArrival(celestialBody);
             bool announce = hop || freshDrop;
+            // Continue/Load rebuilds the narrative tracker, so a first-run key would
+            // speak again. The loaded campus is the source of truth, not that fresh tracker.
+            var loaded = CurrentNarrativeHint();
             if (announce && celestialBody == CelestialBodyId.Luna && TryGrok(GrokBeat.Drop))
             {
                 // Luna training-wheels drop. W2 arrival copy stays in the catalog.
             }
             else if (announce &&
                      GrokAdvisor.TrainingWheels(celestialBody) &&
-                     !string.IsNullOrEmpty(travelKey) &&
+                     AdvisorArrival.ShouldSpeak(travelKey, loaded.HasCommons) &&
                      _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
                 LogOverseer(toast.Line, 6.8f);
