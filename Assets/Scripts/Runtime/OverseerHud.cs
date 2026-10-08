@@ -117,7 +117,7 @@ namespace SolarMajesty
         /// <summary>IMGUI chrome under the cursor (title orrery skips these clicks).</summary>
         public bool HitsHudPanels()
         {
-            float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
+            float s = _hudScale < 0.05f ? DemoSettings.HudScale : _hudScale;
             Vector2 guiMouse = HudPointer.ScreenToGui(Input.mousePosition, Screen.height, s);
             return HudPointer.OverRects(_hitRects, guiMouse);
         }
@@ -501,7 +501,8 @@ namespace SolarMajesty
             _chatFieldDrawn = false;
             _tooltip = null;
 
-            float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
+            DemoSettings.RefreshHudScale(Screen.width, Screen.height);
+            float s = DemoSettings.HudScale;
             _hudScale = s;
             var prevMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(s, s, 1f));
@@ -3119,7 +3120,7 @@ namespace SolarMajesty
             _settingsScroll = GUI.BeginScrollView(view, _settingsScroll, c);
             float y = c.y;
 
-            // Two columns: five mix sliders plus HUD scale fit in the height three rows used to.
+            // Two columns of mix sliders, then a full-width UI scale row.
             float colW = (c.width - 16f) * 0.5f;
             float colX = c.x + colW + 16f;
             SettingsSlider(c.x, y, colW, "MASTER", ref DemoSettings.Master);
@@ -3127,7 +3128,8 @@ namespace SolarMajesty
             SettingsSlider(c.x, y, colW, "SFX", ref DemoSettings.Sfx);
             y = SettingsSlider(colX, y, colW, "VOICES", ref DemoSettings.Voice);
             SettingsSlider(c.x, y, colW, "AMBIENCE", ref DemoSettings.Ambient);
-            y = SettingsSlider(colX, y, colW, "HUD SCALE", ref DemoSettings.HudScale, 0.85f, 1.25f, applyAudio: false);
+            y += 28f;
+            y = UiScaleRow(c.x, y, c.width);
             y += 6f;
 
             if (Chip(new Rect(c.x, y, 200f, 26f), "INVERT CAMERA PAN", DemoSettings.InvertPan))
@@ -3328,6 +3330,38 @@ namespace SolarMajesty
             float h = _wrap.CalcHeight(new GUIContent(text), c.width);
             GUI.Label(new Rect(c.x, y, c.width, h), text, _wrap);
             return y + h + 6f;
+        }
+
+        /// <summary>75%–200% in 5% steps. AUTO follows screen height. Same row height as a mix slider.</summary>
+        private float UiScaleRow(float x, float y, float width)
+        {
+            bool auto = DemoSettings.HudScaleAuto;
+            float chosen = auto
+                ? HudScaleMath.AutoForHeight(Screen.height)
+                : DemoSettings.HudScaleExplicit;
+            string pct = auto ? $"A {chosen * 100f:0}%" : $"{chosen * 100f:0}%";
+
+            GUI.Label(new Rect(x, y, 78f, 18f), "UI SCALE", _caps);
+            const float autoW = 52f;
+            const float valueW = 64f;
+            float right = x + width;
+            float sliderX = x + 82f;
+            float sliderW = Mathf.Max(24f, right - autoW - valueW - 8f - sliderX);
+            float next = GUI.HorizontalSlider(
+                new Rect(sliderX, y + 2f, sliderW, 16f), chosen, HudScaleMath.Min, HudScaleMath.Max);
+            float snapped = HudScaleMath.RoundToStep(next);
+            if (!Mathf.Approximately(snapped, HudScaleMath.RoundToStep(chosen)))
+            {
+                DemoSettings.SetHudScaleExplicit(snapped);
+                DemoSettings.SaveSettings();
+            }
+            GUI.Label(new Rect(right - autoW - valueW - 4f, y, valueW, 18f), pct, _microRight);
+            if (GUI.Button(new Rect(right - autoW, y - 2f, autoW, 22f), "AUTO", auto ? _chipOn : _chipOff))
+            {
+                DemoSettings.SetHudScaleAuto();
+                DemoSettings.SaveSettings();
+            }
+            return y + 28f;
         }
 
         private float SettingsSlider(

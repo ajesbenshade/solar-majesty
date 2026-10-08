@@ -12,6 +12,8 @@ namespace SolarMajesty
         public const string SfxKey = "SM_Set_Sfx";
         public const string AmbientKey = "SM_Set_Ambient";
         public const string HudKey = "SM_Set_Hud";
+        /// <summary>1 (or a missing key) follows screen height. 0 is an explicit slider choice.</summary>
+        public const string HudAutoKey = "SM_Set_HudAuto";
         public const string InvertKey = "SM_Set_InvertPan";
         public const string TutorialKey = "SM_TutorialDone";
         public const string SaveFlagKey = "SM_SaveExists";
@@ -48,7 +50,12 @@ namespace SolarMajesty
         public static float Ambient = 1f;
         public static float Music = 1f;
         public static float Voice = 1f;
+        /// <summary>Applied IMGUI scale for this frame. Refreshed from auto or the explicit choice.</summary>
         public static float HudScale = 1f;
+        /// <summary>True until the player drags the UI scale slider.</summary>
+        public static bool HudScaleAuto = true;
+        /// <summary>Last slider choice, in 5% steps. Stored even while auto is on.</summary>
+        public static float HudScaleExplicit = 1f;
         public static bool InvertPan;
         public static bool TutorialDone;
         public static bool SaveExists;
@@ -270,7 +277,11 @@ namespace SolarMajesty
             // Music used to ride the ambience slider; inherit it so an old mute stays muted.
             Music = PlayerPrefs.GetFloat(MusicKey, Ambient);
             Voice = PlayerPrefs.GetFloat(VoiceKey, 1f);
-            HudScale = Mathf.Clamp(PlayerPrefs.GetFloat(HudKey, 1f), 0.85f, 1.25f);
+            // A missing auto key stays on auto. SaveSettings always writes HudKey, so an old
+            // 0.85–1.25 value must not count as an explicit choice.
+            HudScaleAuto = PlayerPrefs.GetInt(HudAutoKey, 1) == 1;
+            HudScaleExplicit = HudScaleMath.RoundToStep(PlayerPrefs.GetFloat(HudKey, 1f));
+            RefreshHudScale(Screen.width, Screen.height);
             InvertPan = PlayerPrefs.GetInt(InvertKey, 0) == 1;
             TutorialDone = PlayerPrefs.GetInt(TutorialKey, 0) == 1;
             SaveExists = PlayerPrefs.GetInt(SaveFlagKey, 0) == 1;
@@ -313,6 +324,26 @@ namespace SolarMajesty
             return false;
         }
 
+        /// <summary>Writes <see cref="HudScale"/> from auto-by-height or the explicit slider, then fit-clamps.</summary>
+        public static void RefreshHudScale(int screenWidth, int screenHeight)
+        {
+            HudScale = HudScaleMath.Effective(HudScaleAuto, HudScaleExplicit, screenWidth, screenHeight);
+        }
+
+        /// <summary>Player dragged the slider. Auto stays off until they press AUTO.</summary>
+        public static void SetHudScaleExplicit(float value)
+        {
+            HudScaleAuto = false;
+            HudScaleExplicit = HudScaleMath.RoundToStep(value);
+            RefreshHudScale(Screen.width, Screen.height);
+        }
+
+        public static void SetHudScaleAuto()
+        {
+            HudScaleAuto = true;
+            RefreshHudScale(Screen.width, Screen.height);
+        }
+
         public static void ApplyDisplay()
         {
             var names = QualitySettings.names;
@@ -341,7 +372,8 @@ namespace SolarMajesty
             PlayerPrefs.SetFloat(AmbientKey, Ambient);
             PlayerPrefs.SetFloat(MusicKey, Music);
             PlayerPrefs.SetFloat(VoiceKey, Voice);
-            PlayerPrefs.SetFloat(HudKey, HudScale);
+            PlayerPrefs.SetFloat(HudKey, HudScaleExplicit);
+            PlayerPrefs.SetInt(HudAutoKey, HudScaleAuto ? 1 : 0);
             PlayerPrefs.SetInt(InvertKey, InvertPan ? 1 : 0);
             PlayerPrefs.SetInt(QualityKey, QualityIndex);
             PlayerPrefs.SetInt(FullscreenKey, Fullscreen ? 1 : 0);

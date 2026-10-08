@@ -378,6 +378,12 @@ namespace SolarMajesty
         private void Billboard()
         {
             if (Camera.main == null) return;
+            // Match the IMGUI HUD so a click on the words hits at every UI scale.
+            float hud = Mathf.Max(0.05f, DemoSettings.HudScale);
+            if (_bountyLabel != null)
+                _bountyLabel.transform.localScale = Vector3.one * hud;
+            if (_metaLabel != null)
+                _metaLabel.transform.localScale = Vector3.one * hud;
             // Measure the unshifted label. LateUpdate applies this frame's declutter lift.
             if (_bountyLabel != null)
                 _bountyLabel.transform.localPosition = new Vector3(0f, BountyLocalY, 0f);

@@ -50,7 +50,8 @@ namespace SolarMajesty
             feed.Tick(Time.unscaledTime);
             feed.Sorted(_sorted);
 
-            float s = Mathf.Clamp(DemoSettings.HudScale, 0.85f, 1.25f);
+            DemoSettings.RefreshHudScale(Screen.width, Screen.height);
+            float s = DemoSettings.HudScale;
             _hitScale = s;
             float sw = Screen.width / s;
             var prev = GUI.matrix;
