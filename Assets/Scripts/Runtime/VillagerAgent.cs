@@ -61,10 +61,16 @@ namespace SolarMajesty
             if (face.sqrMagnitude > 0.01f)
                 go.transform.rotation = Quaternion.LookRotation(face.normalized, Vector3.up);
 
+            // Stand on the displaced terrain, not on y = 0, and keep following it while walking
+            // (paths leave the flat campus pads; without this, villagers hover over dips).
+            float ground = TerrainDataBake.GroundHeight(home);
             var suit = ColonistArt.Attach(go.transform, s_spawned++);
             if (suit != null)
             {
-                ColonyVisualUtility.SnapToGround(go);
+                // The suit's pivot is at the boot soles; its skinned bind-pose bounds are padded ~5 cm,
+                // so seat the root on the ground directly instead of snapping by renderer bounds.
+                go.transform.position = new Vector3(home.x, ground, home.z);
+                TerrainFollow.Attach(go);
                 var agent = go.AddComponent<VillagerAgent>();
                 agent._anim = suit.GetComponentInChildren<Animator>();
                 agent.Bind(home, work);
@@ -85,7 +91,8 @@ namespace SolarMajesty
             Object.Destroy(band.GetComponent<Collider>());
 
             ColonyVisualUtility.EnsureUrpMaterials(go);
-            ColonyVisualUtility.SnapToGround(go);
+            ColonyVisualUtility.SnapToGround(go, ground);
+            TerrainFollow.Attach(go, go.transform.position.y - ground);
             var v = go.AddComponent<VillagerAgent>();
             v.Bind(home, work);
             return v;
