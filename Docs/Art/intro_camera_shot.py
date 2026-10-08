@@ -5,8 +5,11 @@ Writes a 30 fps sample table (t, position, rotation quaternion, FOV) that a one-
 bake turns into the "Intro Camera (Authored)" Timeline track. World numbers come from
 IntroShot / ColonyLayout on the #72 branch:
   colony focus F = (192, 0, 190), Earth E = F + (-62, 28, 18), settle S = F + (-18, 22, -18),
-  settle rotation Euler(30, 45, 0), title 11 m ahead of S at FOV 35.
-The last pose must equal the settle pose so the title slot (placed from it) is centred.
+  settle rotation Euler(30, 45, 0), title slot T = S + fwd*11 + up*TitleLift(5) = (180.736, 21.5, 178.736),
+  slot rotation Euler(30, 45, 0) (letters lean back 30 degrees).
+v2 (after TitleLift): the shot no longer ends on the code settle pose. It ends 11 m in front of the
+title on yaw 45, looking slightly UP (pitch END_PITCH < 0) so the letters sit against the dusk sky
+above the horizon, centred, at FOV 35 (title ~57% of 16:9 width, ~63% of 16:10).
 """
 import math, sys
 
@@ -28,10 +31,17 @@ DURATION = 5.0
 SETTLE = 3.35
 FPS = 30
 
+TITLE_LIFT = 5.0
+TITLE_DISTANCE = 11.0
+END_PITCH = -9.0                                 # negative = looking up
+
 def euler_fwd(pitch, yaw):
     p, y = math.radians(pitch), math.radians(yaw)
     return (math.sin(y) * math.cos(p), -math.sin(p), math.cos(y) * math.cos(p))
-FS = euler_fwd(30.0, 45.0)
+CODE_SETTLE_FWD = euler_fwd(30.0, 45.0)
+T = add(add(S, mul(CODE_SETTLE_FWD, TITLE_DISTANCE)), (0.0, TITLE_LIFT, 0.0))   # title slot centre
+FS = euler_fwd(END_PITCH, 45.0)                  # end view axis
+S = sub(T, mul(FS, TITLE_DISTANCE))              # end camera position (replaces the code settle)
 
 # ---- path: cubic Hermite through keyed points with explicit tangents (m/unit) ----
 U = norm((F[0]-E[0], 0.0, F[2]-E[2]))           # Earth -> colony, horizontal
@@ -39,6 +49,7 @@ RIGHT = (U[2], 0.0, -U[0])                       # camera-right when looking alo
 LEFT = mul(RIGHT, -1.0)
 UP = (0.0, 1.0, 0.0)
 
+P2Y = 25.0
 DOLLY = 9.0                                      # final push-in along the settle axis
 A = sub(S, mul(FS, DOLLY))
 # Approach Earth from its south-west so the Americas face the lens (the globe's texture is
@@ -46,7 +57,7 @@ A = sub(S, mul(FS, DOLLY))
 # title axis over the colony.
 P0 = add(E, (-30.0, -3.0, -24.0))                # low, south-west of Earth; Earth left, colony far right
 P1 = add(E, (-2.0, 4.0, -27.0))                  # passing south of Earth, rising
-P2 = add(F, (-40.0, 35.0, -22.0))                # crest over the dark plain, colony lights ahead
+P2 = add(F, (-40.0, P2Y, -22.0))                 # crest over the dark plain, colony lights ahead
 KEYS = [P0, P1, P2, A, S]
 
 def tangents():
@@ -124,15 +135,20 @@ def slerp_dir(a, b, t):
 
 EARTH_AIM = add(E, (9.0, -1.0, -8.0))            # aim right of Earth so the colony shares the frame
 
-def forward_at(s, pos):
+def forward_at(s, pos, u=None):
     # The aim point glides from Earth to the citadel (smoother than swinging the direction),
     # then the direction settles onto the title axis for the push-in.
     aim = lerp(EARTH_AIM, CITADEL, smooth(W1[0], W1[1], s))
+    # v2: the eye lift to the title and the final settle run on the clock (u = t / SETTLE), not on
+    # path progress, so the tilt up spreads over the slow landing instead of bunching mid-descent.
+    if u is None: u = s
+    aim = lerp(aim, T, smooth(W3[0], W3[1], u))        # lift the eye from the citadel to the title slot
     f = sub(aim, pos)
-    return slerp_dir(f, FS, smooth(W2[0], W2[1], s))
+    return slerp_dir(f, FS, smooth(W2[0], W2[1], u))
 
 W1 = (0.12, 0.70)
-W2 = (0.70, 1.00)
+W2 = (0.60, 1.00)
+W3 = (0.55, 1.00)
 
 def look_quat(fwd, roll_deg):
     z = norm(fwd)
@@ -183,7 +199,7 @@ def sample(t):
     u = min(t / SETTLE, 1.0)
     s = ease(u)
     pos = at_arclength(s)
-    fwd = forward_at(s, pos)
+    fwd = forward_at(s, pos, u)
     return s, pos, fwd
 
 def bank_at(t, dt=1.0/FPS):
