@@ -166,7 +166,7 @@ namespace SolarMajesty
             if (go == null)
             {
                 go = new GameObject("DemoAudio");
-                Object.DontDestroyOnLoad(go);
+                if (Application.isPlaying) Object.DontDestroyOnLoad(go);
             }
             _sfx = go.GetComponent<AudioSource>();
             if (_sfx == null) _sfx = go.AddComponent<AudioSource>();

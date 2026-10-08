@@ -34,7 +34,7 @@ namespace SolarMajesty
                 if (go == null)
                 {
                     go = new GameObject("SM_VfxPool");
-                    Object.DontDestroyOnLoad(go);
+                    if (Application.isPlaying) Object.DontDestroyOnLoad(go);
                 }
                 _root = go.transform;
                 return _root;

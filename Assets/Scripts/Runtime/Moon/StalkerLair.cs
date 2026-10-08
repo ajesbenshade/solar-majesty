@@ -4,8 +4,9 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Procedural stalker den. Owns a budget of fauna; when they die the lair clears.
-    /// Looks like a Majesty 2 lair: a landmark hive mound, not a ground decal.
+    /// Stalker den. Owns a budget of fauna; when they die the lair clears.
+    /// Prefers the authored Resources/Dens/StalkerDen prefab. The procedural hive
+    /// mound remains the fallback when that prefab is missing.
     /// </summary>
     public class StalkerLair : MonoBehaviour
     {
@@ -23,6 +24,26 @@ namespace SolarMajesty
         public int StalkerBudget => stalkerBudget;
         public float ClearRadius => clearRadius;
         public Vector3 WorldPosition => transform.position;
+
+        /// <summary>
+        /// Opening of the mound. The body is yawed 45° and the mouth is local -Z,
+        /// so heroes approach from that side instead of the centre.
+        /// </summary>
+        public Vector3 MouthDirection
+        {
+            get
+            {
+                if (_body != null)
+                {
+                    Vector3 dir = _body.TransformDirection(Vector3.back);
+                    dir.y = 0f;
+                    if (dir.sqrMagnitude > 0.0001f)
+                        return dir.normalized;
+                }
+                return ClearThreatTravel.DefaultMouthDirection;
+            }
+        }
+
         public IReadOnlyList<DustStalkerAgent> Spawned => _spawned;
 
         public void Configure(GameLoop loop, int budget, float radius, Color? rimColor = null, Color? pitColor = null,
@@ -261,15 +282,45 @@ namespace SolarMajesty
             public Renderer Rend;
             public Color Color;
             public Color Emission;
+            public bool Authored;
         }
 
         private readonly List<DenPart> _parts = new List<DenPart>(96);
+        private bool _authoredDen;
+
+        /// <summary>Resources path of the authored den. Mouth faces -Z, pivot at ground centre.</summary>
+        internal const string DenResourcePath = "Dens/StalkerDen";
 
         /// <summary>
-        /// A hive den: a dirt clearing, a ring of pale angular stone and standing slabs behind,
+        /// Uniform scale for the authored den under the 45° mouth pivot.
+        /// SM_StalkerDen is already in metres (about 13 m across and 8.5 m tall), matching
+        /// the procedural clearing (12.5 × 11) and hive (about 8 m), so the fit stays 1.
+        /// </summary>
+        internal const float AuthoredDenScale = 1f;
+
+        private static readonly Color DefaultSoil = new Color(0.40f, 0.31f, 0.22f);
+        private static readonly Color DefaultStone = new Color(0.52f, 0.48f, 0.43f);
+
+        private static System.Func<GameObject> _denPrefabLoader;
+
+        /// <summary>EditMode seam. Null uses Resources. A loader that returns null forces the primitive den.</summary>
+        internal static void SetDenPrefabLoaderForTests(System.Func<GameObject> loader) => _denPrefabLoader = loader;
+
+        internal static void ResetDenPrefabLoaderForTests() => _denPrefabLoader = null;
+
+        private static GameObject LoadDenPrefab()
+        {
+            if (_denPrefabLoader != null)
+                return _denPrefabLoader();
+            return Resources.Load<GameObject>(DenResourcePath);
+        }
+
+        /// <summary>
+        /// Authored den when Resources/Dens/StalkerDen is present; otherwise the procedural hive.
+        /// Either way the mesh sits under a pivot turned 45 degrees, mouth toward the play camera.
+        /// The procedural mound is a dirt clearing, a ring of pale angular stone and standing slabs,
         /// a tall dark chitin hive with glowing veins, three secondary spires, a lit cave mouth
-        /// framed by bone tusks, glowing egg pods, a half-buried ribcage and a slime pool. Built
-        /// facing -Z inside a pivot turned 45 degrees, so the mouth faces the play camera.
+        /// framed by bone tusks, glowing egg pods, a half-buried ribcage and a slime pool.
         /// </summary>
         private void BuildMarker(Color rimColor, Color pitColor)
         {
@@ -279,14 +330,22 @@ namespace SolarMajesty
             _body = new GameObject("DenBody").transform;
             _body.SetParent(transform, false);
             _body.localRotation = Quaternion.Euler(0f, 45f, 0f);
+            _authoredDen = false;
+            if (TryAttachAuthoredDen())
+            {
+                // Artist pivot is ground centre. The primitive bounds-seat would lift buried
+                // stone and float the soil, so the authored den is not snapped.
+                ApplyLook();
+                return;
+            }
 
             var rng = new System.Random(Mathf.RoundToInt(transform.position.x * 13f + transform.position.z * 7f));
             float R(float lo, float hi) => lo + (float)rng.NextDouble() * (hi - lo);
             // The world's own rock and soil, so a Luna den is grey regolith and a Mars den rust.
-            Color stone = _stone ?? new Color(0.52f, 0.48f, 0.43f);
+            Color stone = _stone ?? DefaultStone;
             Color stoneDark = stone * 0.72f;
             stoneDark.a = 1f;
-            Color dirt = Color.Lerp(_soil ?? new Color(0.40f, 0.31f, 0.22f), pitColor, 0.15f);
+            Color dirt = Color.Lerp(_soil ?? DefaultSoil, pitColor, 0.15f);
             Color chitin = Color.Lerp(new Color(0.30f, 0.15f, 0.22f), rimColor, 0.25f);
             Color chitinHi = chitin * 1.45f;
             Color bone = new Color(0.88f, 0.83f, 0.70f);
@@ -442,14 +501,111 @@ namespace SolarMajesty
             {
                 var p = _parts[i];
                 if (p.Rend == null) continue;
+                if (p.Authored)
+                {
+                    TintAuthored(p);
+                    continue;
+                }
                 if (!cleared)
                 {
                     Paint(p.Rend.gameObject, p.Color, p.Emission);
                     continue;
                 }
-                float grey = p.Color.grayscale;
-                Paint(p.Rend.gameObject, Color.Lerp(p.Color, new Color(grey, grey, grey), 0.7f) * 0.7f, default);
+                Paint(p.Rend.gameObject, DimDenTint(p.Color), default);
             }
+
+            if (_authoredDen)
+                ApplyAuthoredDenState();
+        }
+
+        /// <summary>Same grey/dim the procedural den uses, applied as a multiplier on a tint.</summary>
+        private static Color DimDenTint(Color c)
+        {
+            float grey = c.grayscale;
+            return Color.Lerp(c, new Color(grey, grey, grey), 0.7f) * 0.7f;
+        }
+
+        /// <summary>
+        /// Property blocks only. Soil and stone take the planet tints; every other renderer stays white.
+        /// Emission stays the material's own value (the glow map carries the orange). A cleared den
+        /// scales that emission to zero — never writes an orange into _EmissionColor.
+        /// </summary>
+        private void TintAuthored(DenPart p)
+        {
+            Color tint = cleared ? DimDenTint(p.Color) : p.Color;
+            Color emission = cleared ? Color.black : p.Emission;
+            _block ??= new MaterialPropertyBlock();
+            p.Rend.GetPropertyBlock(_block);
+            _block.SetColor("_BaseColor", tint);
+            _block.SetColor("_Color", tint);
+            _block.SetColor("_EmissionColor", emission);
+            p.Rend.SetPropertyBlock(_block);
+        }
+
+        private void ApplyAuthoredDenState()
+        {
+            Transform active = FindDescendant(_body, "Den_Active");
+            Transform ruined = FindDescendant(_body, "Den_Ruined");
+            if (active != null) active.gameObject.SetActive(!cleared);
+            if (ruined != null) ruined.gameObject.SetActive(cleared);
+        }
+
+        private bool TryAttachAuthoredDen()
+        {
+            GameObject prefab = LoadDenPrefab();
+            if (prefab == null) return false;
+
+            // false: keep the prefab's local pose under the 45° pivot. The mesh has no baked
+            // rotation; identity keeps the mouth on the pivot's -Z, toward the play camera.
+            GameObject instance = Instantiate(prefab, _body, false);
+            instance.name = prefab.name;
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+            instance.transform.localScale = Vector3.one * AuthoredDenScale;
+            _authoredDen = true;
+            CacheAuthoredTints(instance);
+            return true;
+        }
+
+        private void CacheAuthoredTints(GameObject instance)
+        {
+            Color soil = _soil ?? DefaultSoil;
+            Color stone = _stone ?? DefaultStone;
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer rend = renderers[i];
+                if (rend == null) continue;
+                Color tint = Color.white;
+                if (rend.gameObject.name == "Den_Soil") tint = soil;
+                else if (rend.gameObject.name == "Den_Stone") tint = stone;
+
+                Color emission = Color.black;
+                Material mat = rend.sharedMaterial;
+                if (mat != null && mat.HasProperty("_EmissionColor"))
+                    emission = mat.GetColor("_EmissionColor");
+
+                _parts.Add(new DenPart
+                {
+                    Rend = rend,
+                    Color = tint,
+                    Emission = emission,
+                    Authored = true
+                });
+            }
+        }
+
+        private static Transform FindDescendant(Transform root, string name)
+        {
+            if (root == null) return null;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.name == name) return child;
+                Transform nested = FindDescendant(child, name);
+                if (nested != null) return nested;
+            }
+            return null;
         }
 
         private void ApplyClearedLook()

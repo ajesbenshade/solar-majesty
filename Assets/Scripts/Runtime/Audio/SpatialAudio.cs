@@ -32,7 +32,7 @@ namespace SolarMajesty
             if (go == null)
             {
                 go = new GameObject("SM_SpatialAudio");
-                DontDestroyOnLoad(go);
+                if (Application.isPlaying) DontDestroyOnLoad(go);
             }
 
             _instance = go.GetComponent<SpatialAudio>();
@@ -85,6 +85,8 @@ namespace SolarMajesty
         /// <summary>Round-robin, stealing the oldest voice when everything is busy.</summary>
         private AudioSource Take()
         {
+            // Awake builds the pool; it has not run on an EditMode AddComponent.
+            if (_pool.Count == 0) return null;
             for (int i = 0; i < _pool.Count; i++)
             {
                 int index = (_next + i) % _pool.Count;
