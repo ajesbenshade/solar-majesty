@@ -489,6 +489,7 @@ namespace SolarMajesty
         private void OnGUI()
         {
             if (_loop == null) return;
+            if (_loop.Screen == DemoScreen.Intro) return;
             EnsureStyles();
             GUI.skin = HudSkin.Skin();
             HandleDebugHopKeys();
@@ -2846,6 +2847,10 @@ namespace SolarMajesty
                 return;
             }
 
+            if (_loop.TitleButtonsBlocked && Event.current != null &&
+                (Event.current.isMouse || Event.current.type == EventType.KeyDown))
+                Event.current.Use();
+
             const float bw = 240f;
             const float bh = 34f;
             float x = M + 14f;
@@ -3252,6 +3257,18 @@ namespace SolarMajesty
             if (Chip(new Rect(c.x, y, 220f, 26f), tutLabel, _loop.IsTutorialActive))
                 _loop.RestartTutorial();
             y += 32f;
+
+            if (Chip(new Rect(c.x, y, c.width, 26f),
+                    IntroLaunch.PlayOnLaunch ? "PLAY INTRO ON LAUNCH  ·  ON" : "PLAY INTRO ON LAUNCH  ·  OFF",
+                    IntroLaunch.PlayOnLaunch))
+                IntroLaunch.SetPlayOnLaunch(!IntroLaunch.PlayOnLaunch);
+            y += 32f;
+            if (Chip(new Rect(c.x, y, c.width, 26f), "REPLAY INTRO", false))
+                _loop.ReplayIntro();
+            y += 28f;
+            GUI.Label(new Rect(c.x, y, c.width, 16f),
+                "The launch intro plays once, the first time the title opens. Replay plays it now.", _micro);
+            y += 24f;
 
             bool marsLessons = DemoSettings.MarsGrokLessons;
             if (Chip(new Rect(c.x, y, c.width, 26f),

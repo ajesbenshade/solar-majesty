@@ -18,7 +18,8 @@ namespace SolarMajesty
         Title = 0,
         Playing = 1,
         Paused = 2,
-        Settings = 3
+        Settings = 3,
+        Intro = 4
     }
 
     /// <summary>
@@ -140,6 +141,9 @@ namespace SolarMajesty
             (_alertView != null && _alertView.PointerOverCards());
         public bool TitleConfirmOpen =>
             _overseerHud != null && _overseerHud.TitleConfirmOpen;
+
+        /// <summary>Skip click must not fall through onto New Campaign / Continue / Load.</summary>
+        public bool TitleButtonsBlocked => Time.unscaledTime < _titleButtonBlockUntil;
 
         /// <summary>
         /// True while a colony is in progress (or settings opened from pause). Ironman cannot
@@ -543,6 +547,11 @@ namespace SolarMajesty
         private TechEffects _tech = TechEffects.Neutral;
         private bool _launchCraftStaged;
         private DemoScreen _settingsReturn = DemoScreen.Title;
+        private IntroSequence _intro;
+        private bool _enterTitleAfterIntro;
+        private bool _replayIntroQueued;
+        private bool _blockTitleButtons;
+        private float _titleButtonBlockUntil;
         private float _autosaveTimer;
         private float _interestTimer;
         private float _ecologyCooldown = 5f;
@@ -956,8 +965,13 @@ namespace SolarMajesty
                 Log.Push(_body.ArrivalLog);
             }
 
+            // One scene builds the colony and then opens the title. The intro is an overlay
+            // on that cold title open. Continue, Load, and New Game set BootStraightIntoPlay
+            // or arrive with a save, and ReturnToTitle never comes through here.
             if (DemoSettings.BootStraightIntoPlay)
                 EnterPlaying(loadStockpile: DemoSettings.SaveExists);
+            else if (IntroLaunch.ShouldAutoPlay(IntroBootForColdStart()))
+                BeginIntro(false);
             else
                 EnterTitle();
 
@@ -994,16 +1008,82 @@ namespace SolarMajesty
                 0,
                 Placer != null ? Placer.Pieces.Count : 0,
                 _playSeconds);
+            if (_intro != null && _intro.IsPlaying)
+                _intro.Abort();
             SolarSystemTitleView.Instance?.Hide();
             Time.timeScale = 1f;
         }
 
         public void EnterTitle()
         {
+            _enterTitleAfterIntro = false;
+            if (_blockTitleButtons)
+            {
+                _blockTitleButtons = false;
+                _titleButtonBlockUntil = Time.unscaledTime + 0.3f;
+            }
+            if (_intro != null && _intro.IsPlaying)
+            {
+                _intro.Abort();
+                IntroLaunch.MarkSeen();
+            }
             Screen = DemoScreen.Title;
             Time.timeScale = 0f;
             ApplyTool(OverseerTool.None);
             SolarSystemTitleView.Ensure(this, mainCamera)?.Show();
+        }
+
+        /// <summary>Settings → Replay intro. Runs next Update so the click cannot land on the title.</summary>
+        public void ReplayIntro() => _replayIntroQueued = true;
+
+        private IntroBootContext IntroBootForColdStart() =>
+            new IntroBootContext(
+                DemoSettings.BootStraightIntoPlay,
+                returningFromSession: false,
+                continueOrLoadReady: DemoSettings.SaveExists || _bootSlot >= 0,
+                StillCaptureHold.Active);
+
+        private void BeginIntro(bool force)
+        {
+            if (!force && !IntroLaunch.ShouldAutoPlay(IntroBootForColdStart()))
+            {
+                EnterTitle();
+                return;
+            }
+
+            SolarSystemTitleView.Instance?.Hide();
+            Screen = DemoScreen.Intro;
+            Time.timeScale = 0f;
+            ApplyTool(OverseerTool.None);
+            _intro = IntroSequence.Ensure();
+            _intro.Finished -= OnIntroFinished;
+            _intro.Finished += OnIntroFinished;
+            _intro.Play(mainCamera, ColonyLayout.CameraFocus, _body, DemoSettings.ReduceMotion);
+        }
+
+        private void OnIntroFinished()
+        {
+            IntroLaunch.MarkSeen();
+            _blockTitleButtons = true;
+            // A skip click is still in this frame's OnGUI, so the title waits one Update.
+            // A finished shot hands off now, under the same crossfade, so the screen never sits at black.
+            if (_intro != null && _intro.DeferTitleHandoff)
+                _enterTitleAfterIntro = true;
+            else
+                EnterTitle();
+        }
+
+        private void StartReplayIntro()
+        {
+            bool inSession = Screen == DemoScreen.Playing
+                || Screen == DemoScreen.Paused
+                || (Screen == DemoScreen.Settings && _settingsReturn == DemoScreen.Paused);
+            if (inSession)
+                PersistSession();
+            DemoSettings.SaveSettings();
+            DemoAudio.ApplyVolumes();
+            _settingsReturn = DemoScreen.Title;
+            BeginIntro(force: true);
         }
 
         public void EnterPlaying(bool loadStockpile)
@@ -2308,6 +2388,17 @@ namespace SolarMajesty
 
         private void Update()
         {
+            if (_replayIntroQueued)
+            {
+                _replayIntroQueued = false;
+                StartReplayIntro();
+            }
+            if (_enterTitleAfterIntro && (_intro == null || !_intro.IsPlaying))
+            {
+                _enterTitleAfterIntro = false;
+                EnterTitle();
+            }
+
             FlushDebugBodyHop();
             HandleSessionHotkeys();
             HandleBodyHopHotkeys();
