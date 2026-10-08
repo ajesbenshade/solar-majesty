@@ -86,6 +86,12 @@ namespace SolarMajesty
         private float _combatCredit;
         private float _invulnLeft;
         private float _retreatLeft;
+        private float _navStall;
+        private bool _navStallReady;
+        private bool _directTravel;
+        private Vector3 _navStallSample;
+        /// <summary>EditMode: a nav path that stays pending and never moves the body.</summary>
+        internal bool PretendStalledNav;
         private bool _forceRepath;
         private object _yieldThreatId;
         private float _yieldThreatSeconds;
@@ -422,6 +428,12 @@ namespace SolarMajesty
             healthNormalized = Mathf.Clamp01(health01);
             fatigue = Mathf.Clamp01(fatigue01);
             credits = Mathf.Max(0, purse);
+            // A walk-home after standing up is not saved. Continue must not resume it.
+            _invulnLeft = 0f;
+            _retreatLeft = 0f;
+            _directTravel = false;
+            _navStall = 0f;
+            _navStallReady = false;
             if (!downed)
             {
                 _incapacitated = false;
@@ -442,10 +454,17 @@ namespace SolarMajesty
         /// <summary>Place a restored robot without a new fabrication burst.</summary>
         public void RestoreWorldPose(Vector3 world)
         {
+            if (TerrainDataBake.Current != null)
+                world.y = TerrainDataBake.GroundHeight(world);
             transform.position = world;
-            ColonyVisualUtility.SnapToGround(gameObject);
-            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
-                _agent.Warp(transform.position);
+            ColonyVisualUtility.SnapToGround(gameObject, world.y);
+            // Sample on the flat nav plane. A saved y under the terrain misses the mesh.
+            Vector3 probe = new Vector3(world.x, 0.02f, world.z);
+            if (_agent != null && _agent.enabled && _navMesh != null && _navMesh.IsReady &&
+                _navMesh.SamplePosition(probe, out Vector3 onMesh, 8f))
+                _agent.Warp(onMesh);
+            else if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
+                _agent.Warp(probe);
             else
                 BindNavMesh(_navMesh);
         }
@@ -1182,6 +1201,9 @@ namespace SolarMajesty
                     _buildLaborHit = false;
                     _stuckWatch.Reset();
                     _forceRepath = false;
+                    _directTravel = false;
+                    _navStall = 0f;
+                    _navStallReady = false;
                     _watchReady = false;
                     _combatCredit = 0f;
                     DemoAudio.PlayClaim(transform.position);
@@ -1413,6 +1435,10 @@ namespace SolarMajesty
         {
             _invulnLeft = OverseerRules.RecoverInvulnSeconds;
             _retreatLeft = OverseerRules.RecoverRetreatSeconds;
+            _directTravel = false;
+            _navStall = 0f;
+            _navStallReady = false;
+            SeatOnTerrain();
             _combatCredit = 0f;
             _watchReady = false;
             ReleaseClaim();
@@ -1581,8 +1607,7 @@ namespace SolarMajesty
             Vector3 inn = RestPosition;
             if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
             {
-                SetDestination(inn);
-                MoveFallback(inn, EffectiveMoveSpeed * dt);
+                AdvanceToward(inn, dt, false);
                 _status = "seeking_inn";
                 return;
             }
@@ -1601,8 +1626,7 @@ namespace SolarMajesty
             Vector3 inn = RestPosition;
             if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
             {
-                SetDestination(inn);
-                MoveFallback(inn, EffectiveMoveSpeed * 1.35f * dt);
+                AdvanceToward(inn, dt, false);
                 _status = "fleeing";
                 return;
             }
@@ -2244,6 +2268,10 @@ namespace SolarMajesty
             _combatCredit = 0f;
             _invulnLeft = 0f;
             _retreatLeft = 0f;
+            _directTravel = false;
+            _navStall = 0f;
+            _navStallReady = false;
+            PretendStalledNav = false;
             _yieldThreatId = null;
             _yieldThreatSeconds = 0f;
             ThreatsOverride = null;
@@ -2308,15 +2336,58 @@ namespace SolarMajesty
         private void AdvanceToward(Vector3 target, float dt, bool force)
         {
             if (SuppressTravelForTests) return;
+            if (dt < 0f) dt = 0f;
             float step = EffectiveMoveSpeed * dt;
-            if (_agent != null && _agent.isOnNavMesh)
+            if (FlatDistance(transform.position, target) <= arriveDistance)
             {
-                SetDestination(target, force, OverseerRules.DenFootprintMeters);
-                if (NavPathCarries(target)) return;
+                _directTravel = false;
+                _navStall = 0f;
+                return;
+            }
+
+            bool onMesh = (_agent != null && _agent.isOnNavMesh) || PretendStalledNav;
+            if (!onMesh)
+            {
+                MoveFallback(target, step);
+                return;
+            }
+
+            if (_directTravel)
+            {
                 StepRegardless(target, step);
                 return;
             }
-            MoveFallback(target, step);
+
+            if (!PretendStalledNav)
+                SetDestination(target, force, OverseerRules.DenFootprintMeters);
+
+            bool carried = PretendStalledNav || NavPathCarries(target);
+            float moved = _navStallReady ? FlatDistance(transform.position, _navStallSample) : 0f;
+            _navStallSample = transform.position;
+            _navStallReady = true;
+            if (moved > Mathf.Max(0.05f, step * 0.35f))
+                _navStall = 0f;
+            else
+                _navStall += dt;
+
+            // A path that never moves the body is how a claimed mech stands in the colony.
+            if (_navStall >= 1.25f)
+                _directTravel = true;
+            if (carried && !_directTravel)
+                return;
+            StepRegardless(target, step);
+        }
+
+        /// <summary>Put the pivot on the terrain. A recovered mech was saved under the surface.</summary>
+        private void SeatOnTerrain()
+        {
+            if (TerrainDataBake.Current == null) return;
+            Vector3 p = transform.position;
+            p.y = TerrainDataBake.GroundHeight(p);
+            transform.position = p;
+            Vector3 probe = new Vector3(p.x, 0.02f, p.z);
+            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
+                _agent.Warp(probe);
         }
 
         /// <summary>
@@ -2398,7 +2469,12 @@ namespace SolarMajesty
                 world = onMesh;
             if (force)
                 _agent.ResetPath();
-            if (force || (!_agent.pathPending && (_agent.destination - world).sqrMagnitude > 0.25f))
+            // Compare on the plane. A y mismatch retried SetDestination every frame and
+            // left the path pending, so the body never left the colony.
+            Vector3 have = _agent.destination;
+            float dx = have.x - world.x;
+            float dz = have.z - world.z;
+            if (force || (!_agent.pathPending && dx * dx + dz * dz > 0.25f))
                 _agent.SetDestination(world);
         }
 

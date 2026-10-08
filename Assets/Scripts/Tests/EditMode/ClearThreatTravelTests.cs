@@ -217,6 +217,48 @@ namespace SolarMajesty.Tests
             return _flags.Post(data, den, 1000f);
         }
 
+
+        [Test]
+        public void StalledNav_ClaimedMech_LeavesTheColonyWithinSeconds()
+        {
+            Vector3 den = new Vector3(129f, 0f, 302f);
+            var hero = MakeHero(SpecialistClass.DefenseMech);
+            hero.transform.position = new Vector3(195f, 0f, 203f);
+            PostClearThreat(den);
+            hero.PretendStalledNav = true;
+            Vector3 start = hero.transform.position;
+
+            Sim(hero, 4f, 0.25f);
+
+            float moved = Flat(hero.transform.position, start);
+            Assert.Greater(moved, 3f, "a claimed mech must not stand still while the path fails");
+
+            Sim(hero, 46f, 0.25f);
+            Assert.Less(Flat(hero.transform.position, den), OverseerRules.ClearThreatAttackRange);
+            Assert.AreEqual(SpecialistAction.PursueFlag, hero.CurrentAction);
+            Assert.IsNotNull(hero.ActiveFlag);
+        }
+
+        [Test]
+        public void Retreat_StalledNav_WalksAndTheUntargetableStateEnds()
+        {
+            var hero = MakeHero(SpecialistClass.DefenseMech);
+            hero.transform.position = ColonyLayout.InnOutpost + new Vector3(50f, -2.3f, 0f);
+            hero.ApplyDamage(5f);
+            Assert.IsTrue(hero.IsIncapacitated);
+            Sim(hero, OverseerRules.RecoverSeconds + 0.2f, 0.5f);
+            Assert.IsFalse(hero.IsIncapacitated);
+            Assert.IsTrue(hero.IsUntargetable);
+            Vector3 stood = hero.transform.position;
+            hero.PretendStalledNav = true;
+
+            Sim(hero, 4f, 0.25f);
+            Assert.Greater(Flat(hero.transform.position, stood), 2f, "falling back has to actually walk");
+
+            Sim(hero, OverseerRules.RecoverRetreatSeconds, 0.5f);
+            Assert.IsFalse(hero.IsUntargetable, "the retreat cap ends the state even if the inn is still far");
+        }
+
         private static void Sim(SpecialistAgent hero, float seconds, float step)
         {
             float t = 0f;
