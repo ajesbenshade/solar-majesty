@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -26,14 +25,21 @@ namespace SolarMajesty
         public float Elapsed => _elapsed;
         public float OverlayAlpha => _overlay;
 
-        public event Action Finished;
+        public event System.Action Finished;
+
+        /// <summary>Skip waits one frame so the click cannot land on a title button. A finished shot does not.</summary>
+        public bool DeferTitleHandoff => _skipped;
 
         private bool _playing;
+        private bool _skipped;
         private bool _reduceMotion;
         private bool _titleBound;
         private bool _stingPlayed;
         private bool _pushedFog;
+        private bool _tintedDusk;
+        private bool _crossfading;
         private float _elapsed;
+        private float _fadeClock;
         private float _overlay;
         private Vector3 _focus;
         private Camera _cam;
@@ -46,8 +52,17 @@ namespace SolarMajesty
         private LightSnapshot _fillSnap;
         private bool _haveSun;
         private bool _haveFill;
+        private bool _haveAmbient;
+        private Light _forcedSun;
+        private Light _forcedFill;
         private FogSnapshot _fog;
+        private IntroAmbientSample _ambient;
         private Texture2D _fadeTex;
+        private TitlePart[] _parts = System.Array.Empty<TitlePart>();
+        private Renderer[] _gold = System.Array.Empty<Renderer>();
+        private Vector4[] _goldSt = System.Array.Empty<Vector4>();
+        private MaterialPropertyBlock _glintBlock;
+        private static readonly int BaseMapStId = Shader.PropertyToID("_BaseMap_ST");
 
         public static IntroPlayback ChoosePlayback(bool timelinePresent) =>
             timelinePresent ? IntroPlayback.Timeline : IntroPlayback.Fallback;
@@ -94,6 +109,26 @@ namespace SolarMajesty
                 Finish(skipped: false);
         }
 
+        /// <summary>Keeps the crossfade moving after the shot has handed off. One step per frame, no hold at black.</summary>
+        public void AdvanceCrossfade(float unscaledDelta)
+        {
+            if (_playing || !_crossfading) return;
+            _fadeClock += Mathf.Max(0f, unscaledDelta);
+            _overlay = IntroShot.CrossfadeAlpha(_fadeClock);
+            if (_fadeClock >= IntroShot.CrossfadeSeconds * 2f)
+            {
+                _overlay = 0f;
+                _crossfading = false;
+            }
+        }
+
+        /// <summary>Edit-mode tests pass their own lights so the open scene's sun is left alone.</summary>
+        internal void SetLightsForTests(Light sun, Light fill)
+        {
+            _forcedSun = sun;
+            _forcedFill = fill;
+        }
+
         /// <summary>Test hook. Armed skip uses the same rule as a real key, click, or pad button.</summary>
         public void NotifyInput(IntroInputSample sample)
         {
@@ -115,10 +150,13 @@ namespace SolarMajesty
         {
             if (!_playing && _overlay <= 0f) return;
             _playing = false;
+            _crossfading = false;
             _overlay = 0f;
             StopDirector();
             RestorePresentation();
             HideProps();
+            RestoreTitleScales();
+            ClearGlint();
         }
 
         private void Begin(Camera camera, Vector3 colonyFocus, CelestialBodyProfile body, TimelineAsset timeline)
@@ -129,17 +167,22 @@ namespace SolarMajesty
             _cam = camera != null ? camera : Camera.main;
             _focus = colonyFocus;
             _elapsed = 0f;
+            _fadeClock = 0f;
             _stingPlayed = false;
             _titleBound = false;
+            _skipped = false;
+            _crossfading = false;
             _overlay = 0f;
             _playing = true;
             Playback = ChoosePlayback(timeline != null && !_reduceMotion);
 
             SnapshotPresentation();
-            if (Application.isPlaying)
+            if (Application.isPlaying || _forcedSun != null || _forcedFill != null)
                 ApplyDusk(body);
             EnsureEarth();
             EnsureTitle();
+            CacheTitleMotion();
+            ApplyTitleMotion(0f);
             if (titleRoot != null)
                 titleRoot.SetActive(false);
             ApplyPose(IntroShot.Sample(0f, _focus, _reduceMotion));
@@ -154,16 +197,24 @@ namespace SolarMajesty
             {
                 if (Application.isPlaying)
                     NotifyInput(IntroSkip.Sample());
-                if (!_playing) return;
-                Advance(Time.unscaledDeltaTime);
+                if (_playing)
+                    Advance(Time.unscaledDeltaTime);
             }
-            else if (_overlay > 0f)
-            {
-                _overlay = Mathf.MoveTowards(_overlay, 0f, Time.unscaledDeltaTime / IntroShot.FadeOutSeconds);
-            }
+
+            // Same frame the shot ends: step past the peak so OnGUI never paints a held black frame.
+            if (!_playing)
+                AdvanceCrossfade(Time.unscaledDeltaTime);
 
             if (_earth != null && _earth.gameObject.activeSelf && !_reduceMotion)
                 _earth.Rotate(0f, 8f * Time.unscaledDeltaTime, 0f, Space.Self);
+        }
+
+        private void LateUpdate()
+        {
+            // The animator applies the reveal clip between Update and LateUpdate.
+            // Re-apply so the code path wins, and a missing clip still reveals.
+            if (_playing)
+                ApplyTitleMotion(_elapsed);
         }
 
         private void OnGUI()
@@ -200,7 +251,12 @@ namespace SolarMajesty
             }
 
             if (!_reduceMotion)
-                _overlay = Mathf.Max(_overlay, IntroShot.FadeAlpha(time));
+            {
+                _fadeClock = Mathf.Max(0f, time - IntroShot.FadeStart);
+                _overlay = IntroShot.CrossfadeAlpha(_fadeClock);
+            }
+
+            ApplyTitleMotion(time);
 
             if (_earth != null)
                 _earth.gameObject.SetActive(spawnEarthGlobe);
@@ -210,11 +266,23 @@ namespace SolarMajesty
         {
             if (!_playing) return;
             _playing = false;
+            _skipped = skipped;
             StopDirector();
             RestorePresentation();
             HideProps();
-            if (!skipped)
-                _overlay = 1f;
+            RestoreTitleScales();
+            ClearGlint();
+            if (skipped || _reduceMotion)
+            {
+                _overlay = 0f;
+                _crossfading = false;
+            }
+            else
+            {
+                _crossfading = true;
+                _fadeClock = Mathf.Max(0f, _elapsed - IntroShot.FadeStart);
+                _overlay = IntroShot.CrossfadeAlpha(_fadeClock);
+            }
             Finished?.Invoke();
         }
 
@@ -238,12 +306,30 @@ namespace SolarMajesty
         private void Bind(TimelineAsset timeline)
         {
             var animator = EnsureAnimator(_cam);
+            bool authoredCamera = false;
+            foreach (var output in timeline.outputs)
+            {
+                if (output.sourceObject is AnimationTrack candidate && IntroAssets.IsAuthoredCameraTrack(candidate.name))
+                    authoredCamera = true;
+            }
             foreach (var output in timeline.outputs)
             {
                 var src = output.sourceObject;
-                if (src is AnimationTrack)
+                if (src is AnimationTrack animTrack)
                 {
-                    if (animator != null)
+                    if (animTrack.name == IntroAssets.RevealTrack)
+                    {
+                        var title = EnsureTitle();
+                        var titleAnimator = EnsureAnimator(title);
+                        if (titleAnimator != null)
+                        {
+                            titleAnimator.enabled = true;
+                            director.SetGenericBinding(src, titleAnimator);
+                        }
+                    }
+                    else if (IntroAssets.IsCameraTrackName(animTrack.name)
+                             && !(authoredCamera && animTrack.name == IntroAssets.CameraTrack)
+                             && animator != null)
                     {
                         animator.enabled = true;
                         director.SetGenericBinding(src, animator);
@@ -273,22 +359,30 @@ namespace SolarMajesty
             if (director.state == PlayState.Playing)
                 director.Stop();
             director.enabled = false;
-            if (_cam != null)
-            {
-                var animator = _cam.GetComponent<Animator>();
-                if (animator != null && animator.runtimeAnimatorController == null)
-                    animator.enabled = false;
-            }
+            DisableLooseAnimator(_cam != null ? _cam.gameObject : null);
+            DisableLooseAnimator(titleRoot);
         }
 
-        private static Animator EnsureAnimator(Camera camera)
+        private static void DisableLooseAnimator(GameObject go)
         {
-            if (camera == null) return null;
-            var animator = camera.GetComponent<Animator>();
+            if (go == null) return;
+            var animator = go.GetComponent<Animator>();
+            if (animator != null && animator.runtimeAnimatorController == null)
+                animator.enabled = false;
+        }
+
+        private static Animator EnsureAnimator(GameObject go)
+        {
+            if (go == null) return null;
+            var animator = go.GetComponent<Animator>();
             if (animator == null)
-                animator = camera.gameObject.AddComponent<Animator>();
+                animator = go.AddComponent<Animator>();
+            animator.runtimeAnimatorController = null;
             return animator;
         }
+
+        private static Animator EnsureAnimator(Camera camera) =>
+            camera == null ? null : EnsureAnimator(camera.gameObject);
 
         private void ApplyPose(IntroShot.Pose pose)
         {
@@ -323,7 +417,134 @@ namespace SolarMajesty
             if (created)
                 titleRoot.SetActive(false);
             DressPlaceholder(titleRoot);
+            DisableTitleShadows(titleRoot);
             return titleRoot;
+        }
+
+        /// <summary>Instance override only. The artist's prefab asset keeps its own shadow flags.</summary>
+        public static void DisableTitleShadows(GameObject title)
+        {
+            if (title == null) return;
+            var renderers = title.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (renderer == null) continue;
+                if (renderer.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off)
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                if (renderer.receiveShadows)
+                    renderer.receiveShadows = false;
+            }
+        }
+
+        private void CacheTitleMotion()
+        {
+            RestoreTitleScales();
+            ClearGlint();
+            _parts = System.Array.Empty<TitlePart>();
+            _gold = System.Array.Empty<Renderer>();
+            _goldSt = System.Array.Empty<Vector4>();
+            if (titleRoot == null) return;
+
+            var solar = FindDeep(titleRoot.transform, IntroAssets.WordSolar);
+            var emblem = FindDeep(titleRoot.transform, IntroAssets.EmblemPlanet);
+            var majesty = FindDeep(titleRoot.transform, IntroAssets.WordMajesty);
+            var trim = FindDeep(titleRoot.transform, IntroAssets.TrimRoot);
+
+            var parts = new System.Collections.Generic.List<TitlePart>(16);
+            if (solar != null)
+            {
+                int letters = 0;
+                for (int i = 0; i < solar.childCount; i++)
+                {
+                    var child = solar.GetChild(i);
+                    if (child == null || child == emblem) continue;
+                    parts.Add(Part(child, IntroTitleMotion.StepSolar));
+                    letters++;
+                }
+                if (letters == 0)
+                    parts.Add(Part(solar, IntroTitleMotion.StepSolar));
+            }
+            if (emblem != null)
+                parts.Add(Part(emblem, IntroTitleMotion.StepEmblem));
+            if (majesty != null)
+                parts.Add(Part(majesty, IntroTitleMotion.StepMajesty));
+            if (trim != null)
+                parts.Add(Part(trim, IntroTitleMotion.StepMajesty));
+            _parts = parts.ToArray();
+
+            var renderers = titleRoot.GetComponentsInChildren<Renderer>(true);
+            var gold = new System.Collections.Generic.List<Renderer>(renderers.Length);
+            var sts = new System.Collections.Generic.List<Vector4>(renderers.Length);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                var mat = renderer != null ? renderer.sharedMaterial : null;
+                if (mat == null || mat.name == null) continue;
+                if (!mat.name.StartsWith(IntroAssets.GoldMaterialName)) continue;
+                if (!mat.HasProperty(BaseMapStId)) continue;
+                gold.Add(renderer);
+                sts.Add(mat.GetVector(BaseMapStId));
+            }
+            _gold = gold.ToArray();
+            _goldSt = sts.ToArray();
+        }
+
+        private static TitlePart Part(Transform transform, int step) =>
+            new TitlePart { Transform = transform, BaseScale = transform.localScale, Step = step };
+
+        private void ApplyTitleMotion(float time)
+        {
+            for (int i = 0; i < _parts.Length; i++)
+            {
+                var part = _parts[i];
+                if (part.Transform == null) continue;
+                float weight = IntroTitleMotion.RevealWeight(time, part.Step);
+                part.Transform.localScale = part.BaseScale * weight;
+            }
+
+            float glintStart = IntroShot.TitleOn + IntroTitleMotion.GlintLead;
+            if (time < glintStart || _gold.Length == 0) return;
+            if (_glintBlock == null)
+                _glintBlock = new MaterialPropertyBlock();
+            for (int i = 0; i < _gold.Length; i++)
+            {
+                if (_gold[i] == null) continue;
+                _gold[i].GetPropertyBlock(_glintBlock);
+                _glintBlock.SetVector(BaseMapStId, IntroTitleMotion.WithGlint(_goldSt[i], time));
+                _gold[i].SetPropertyBlock(_glintBlock);
+            }
+        }
+
+        private void RestoreTitleScales()
+        {
+            for (int i = 0; i < _parts.Length; i++)
+            {
+                var part = _parts[i];
+                if (part.Transform != null)
+                    part.Transform.localScale = part.BaseScale;
+            }
+        }
+
+        private void ClearGlint()
+        {
+            for (int i = 0; i < _gold.Length; i++)
+            {
+                if (_gold[i] != null)
+                    _gold[i].SetPropertyBlock(null);
+            }
+        }
+
+        private static Transform FindDeep(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return null;
+            if (root.name == name) return root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                var found = FindDeep(root.GetChild(i), name);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         private static void DressPlaceholder(GameObject title)
@@ -478,18 +699,44 @@ namespace SolarMajesty
         private void ApplyDusk(CelestialBodyProfile body)
         {
             if (body == null) body = CelestialBodyCatalog.Earth();
-            var state = SunPath.Evaluate(body, SunPath.DuskElapsed(body));
-            _sun = FindSun();
-            if (_sun != null)
+            _sun = _forcedSun != null ? _forcedSun : FindSun();
+            if (_sun != null && _haveSun)
             {
-                _sun.transform.rotation = Quaternion.Euler(state.Euler);
-                _sun.color = state.Color;
-                _sun.intensity = body.SunIntensity * state.Intensity;
+                var tinted = IntroDusk.TintSun(new IntroLightSample
+                {
+                    Rotation = _sunSnap.Euler,
+                    Color = _sunSnap.Color,
+                    Intensity = _sunSnap.Intensity
+                }, body);
+                _sun.transform.rotation = tinted.Rotation;
+                _sun.color = tinted.Color;
+                _sun.intensity = tinted.Intensity;
             }
 
-            _fill = FindFill();
-            if (_fill != null)
-                _fill.intensity = _fillSnap.Intensity * 0.55f;
+            _fill = _forcedFill != null ? _forcedFill : FindFill();
+            if (_fill != null && _haveFill)
+            {
+                var tinted = IntroDusk.TintFill(new IntroLightSample
+                {
+                    Rotation = _fillSnap.Euler,
+                    Color = _fillSnap.Color,
+                    Intensity = _fillSnap.Intensity
+                });
+                _fill.color = tinted.Color;
+                _fill.intensity = tinted.Intensity;
+            }
+
+            if (_haveAmbient)
+            {
+                var tinted = IntroDusk.TintAmbient(_ambient);
+                RenderSettings.ambientSkyColor = tinted.Sky;
+                RenderSettings.ambientEquatorColor = tinted.Equator;
+                RenderSettings.ambientGroundColor = tinted.Ground;
+                RenderSettings.ambientLight = tinted.Flat;
+                RenderSettings.ambientIntensity = tinted.Intensity;
+            }
+
+            _tintedDusk = true;
         }
 
         private Light FindSun()
@@ -536,10 +783,11 @@ namespace SolarMajesty
                 };
             }
 
-            var sun = FindSun();
+            var sun = _forcedSun != null ? _forcedSun : (Application.isPlaying ? FindSun() : null);
             _haveSun = sun != null;
             if (_haveSun)
             {
+                _sun = sun;
                 _sunSnap = new LightSnapshot
                 {
                     Euler = sun.transform.rotation,
@@ -548,15 +796,31 @@ namespace SolarMajesty
                 };
             }
 
-            var fill = FindFill();
+            var fill = _forcedFill != null ? _forcedFill : (Application.isPlaying ? FindFill() : null);
             _haveFill = fill != null;
             if (_haveFill)
             {
+                _fill = fill;
                 _fillSnap = new LightSnapshot
                 {
                     Euler = fill.transform.rotation,
                     Color = fill.color,
                     Intensity = fill.intensity
+                };
+            }
+
+            bool tintAmbient = Application.isPlaying || _forcedSun != null || _forcedFill != null;
+            _haveAmbient = tintAmbient;
+            if (_haveAmbient)
+            {
+                _ambient = new IntroAmbientSample
+                {
+                    Mode = RenderSettings.ambientMode,
+                    Sky = RenderSettings.ambientSkyColor,
+                    Equator = RenderSettings.ambientEquatorColor,
+                    Ground = RenderSettings.ambientGroundColor,
+                    Flat = RenderSettings.ambientLight,
+                    Intensity = RenderSettings.ambientIntensity
                 };
             }
 
@@ -592,7 +856,7 @@ namespace SolarMajesty
                 _cam.transform.SetPositionAndRotation(_camera.Position, _camera.Rotation);
             }
 
-            if (_pushedFog)
+            if (_tintedDusk)
             {
                 if (_haveSun && _sun != null)
                 {
@@ -602,8 +866,27 @@ namespace SolarMajesty
                 }
 
                 if (_haveFill && _fill != null)
+                {
+                    _fill.transform.rotation = _fillSnap.Euler;
+                    _fill.color = _fillSnap.Color;
                     _fill.intensity = _fillSnap.Intensity;
+                }
 
+                if (_haveAmbient)
+                {
+                    RenderSettings.ambientMode = _ambient.Mode;
+                    RenderSettings.ambientSkyColor = _ambient.Sky;
+                    RenderSettings.ambientEquatorColor = _ambient.Equator;
+                    RenderSettings.ambientGroundColor = _ambient.Ground;
+                    RenderSettings.ambientLight = _ambient.Flat;
+                    RenderSettings.ambientIntensity = _ambient.Intensity;
+                }
+
+                _tintedDusk = false;
+            }
+
+            if (_pushedFog)
+            {
                 RenderSettings.fog = _fog.Enabled;
                 RenderSettings.fogColor = _fog.Color;
                 RenderSettings.fogStartDistance = _fog.Start;
@@ -628,6 +911,8 @@ namespace SolarMajesty
 
         private void OnDestroy()
         {
+            if (_tintedDusk || _pushedFog)
+                RestorePresentation();
             DestroyOwned(_fadeTex);
             DestroyOwned(_earthMat);
             if (titleRoot == null) return;
@@ -656,6 +941,13 @@ namespace SolarMajesty
             public Color Background;
             public Vector3 Position;
             public Quaternion Rotation;
+        }
+
+        private struct TitlePart
+        {
+            public Transform Transform;
+            public Vector3 BaseScale;
+            public int Step;
         }
 
         private struct LightSnapshot

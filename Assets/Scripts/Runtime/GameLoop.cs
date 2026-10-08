@@ -1039,10 +1039,13 @@ namespace SolarMajesty
         private void OnIntroFinished()
         {
             IntroLaunch.MarkSeen();
-            // Stay on the intro screen through this frame's OnGUI so the skip click
-            // does not fall through onto a title button. Update picks this up next frame.
             _blockTitleButtons = true;
-            _enterTitleAfterIntro = true;
+            // A skip click is still in this frame's OnGUI, so the title waits one Update.
+            // A finished shot hands off now, under the same crossfade, so the screen never sits at black.
+            if (_intro != null && _intro.DeferTitleHandoff)
+                _enterTitleAfterIntro = true;
+            else
+                EnterTitle();
         }
 
         private void StartReplayIntro()

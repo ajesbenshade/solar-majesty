@@ -12,9 +12,14 @@ namespace SolarMajesty
         public const float Duration = 5f;
         public const float CameraSettle = 3.35f;
         public const float TitleOn = 2.85f;
-        public const float TitleOff = 4.7f;
+        public const float TitleOff = Duration;
+        /// <summary>Seconds of fade on the shot, then the same again over the title screen. One curve, no hold at black.</summary>
+        public const float CrossfadeSeconds = 0.6f;
         public const float FadeStart = 4.4f;
-        public const float FadeOutSeconds = 0.4f;
+        public const float FadeOutSeconds = CrossfadeSeconds;
+
+        /// <summary>Standing water and the colony ground sit near y = 0. The sweep stays above both.</summary>
+        public const float MinCameraHeight = 4f;
 
         /// <summary>Ignore input for a breath so the click that focused the window does not skip the shot.</summary>
         public const float SkipArmSeconds = 0.12f;
@@ -78,12 +83,20 @@ namespace SolarMajesty
 
         public static bool TitleVisible(float time) => time >= TitleOn && time < TitleOff;
 
-        public static float FadeAlpha(float time)
+        public static float FadeAlpha(float time) => CrossfadeAlpha(time - FadeStart);
+
+        /// <summary>
+        /// One tent from the intro into the title screen. Peaks at <see cref="CrossfadeSeconds"/>
+        /// and is back to clear at twice that. It does not sit at full black.
+        /// </summary>
+        public static float CrossfadeAlpha(float secondsSinceFadeStart)
         {
-            if (time <= FadeStart) return 0f;
-            float span = Duration - FadeStart;
-            if (span <= 0.0001f) return 1f;
-            return Mathf.Clamp01((time - FadeStart) / span);
+            if (secondsSinceFadeStart <= 0f || CrossfadeSeconds <= 0.0001f) return 0f;
+            if (secondsSinceFadeStart < CrossfadeSeconds)
+                return secondsSinceFadeStart / CrossfadeSeconds;
+            float down = (secondsSinceFadeStart - CrossfadeSeconds) / CrossfadeSeconds;
+            if (down >= 1f) return 0f;
+            return 1f - down;
         }
     }
 
