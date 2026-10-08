@@ -1,0 +1,22 @@
+inspect unity=6000.5.10f1
+Engineer tris=1718 verts=2057 bones=21 submeshes=2 bounds=Center: (0.00, 0.01, 0.63), Extents: (0.60, 0.25, 0.63) mats=[SM_Art_Colonist_Suit(Universal Render Pipeline/Lit), SM_Art_Colonist_Role_Engineer(Universal Render Pipeline/Lit)]
+Engineer avatar=SM_Colonist_EngineerAvatar human=True ctrl=SM_Colonist clips=[HumanM@Idle01:2.70s, HumanM@Walk01_Forward:0.80s]
+Engineer walk rootMotion 2.0s: delta=(0.000, 0.000, 0.000) speed=0.000 m/s humanScale=0.582 toeAhead(avg)=0.061 footSwingZ=0.377 headY=0.89 state=Walk
+Engineer walk clip 'HumanM@Walk01_Forward' averageSpeed=(0.000, 0.000, 0.000) apparentSpeed=0.000 len=0.800 -> ground speed at 1x ~ 0.000 / 0.000 m/s; foot-range estimate 0.760 m/s
+Engineer stance speed: median=0.991 m/s samples=80 footY[min]=0.075
+Hydroponics tris=1762 verts=1921 bones=21 submeshes=2 bounds=Center: (0.00, 0.05, 0.63), Extents: (0.60, 0.31, 0.63) mats=[SM_Art_Colonist_Suit(Universal Render Pipeline/Lit), SM_Art_Colonist_Role_Hydroponics(Universal Render Pipeline/Lit)]
+Hydroponics avatar=SM_Colonist_HydroponicsAvatar human=True ctrl=SM_Colonist_F clips=[HumanF@Idle01:2.70s, HumanF@Walk01_Forward:0.80s]
+Hydroponics walk rootMotion 2.0s: delta=(0.000, 0.000, 0.000) speed=0.000 m/s humanScale=0.582 toeAhead(avg)=0.061 footSwingZ=0.396 headY=0.89 state=Walk
+Hydroponics walk clip 'HumanF@Walk01_Forward' averageSpeed=(0.000, 0.000, 0.000) apparentSpeed=0.000 len=0.800 -> ground speed at 1x ~ 0.000 / 0.000 m/s; foot-range estimate 0.799 m/s
+Hydroponics stance speed: median=0.907 m/s samples=104 footY[min]=0.073
+Medic tris=1654 verts=1911 bones=21 submeshes=2 bounds=Center: (0.00, 0.01, 0.71), Extents: (0.60, 0.25, 0.71) mats=[SM_Art_Colonist_Suit(Universal Render Pipeline/Lit), SM_Art_Colonist_Role_Medic(Universal Render Pipeline/Lit)]
+Medic avatar=SM_Colonist_MedicAvatar human=True ctrl=SM_Colonist_F clips=[HumanF@Idle01:2.70s, HumanF@Walk01_Forward:0.80s]
+Medic walk rootMotion 2.0s: delta=(0.000, 0.000, 0.000) speed=0.000 m/s humanScale=0.582 toeAhead(avg)=0.061 footSwingZ=0.396 headY=0.89 state=Walk
+Medic walk clip 'HumanF@Walk01_Forward' averageSpeed=(0.000, 0.000, 0.000) apparentSpeed=0.000 len=0.800 -> ground speed at 1x ~ 0.000 / 0.000 m/s; foot-range estimate 0.799 m/s
+Medic stance speed: median=0.907 m/s samples=104 footY[min]=0.073
+Hauler tris=1594 verts=1809 bones=21 submeshes=2 bounds=Center: (0.00, 0.10, 0.63), Extents: (0.60, 0.33, 0.63) mats=[SM_Art_Colonist_Suit(Universal Render Pipeline/Lit), SM_Art_Colonist_Role_Hauler(Universal Render Pipeline/Lit)]
+Hauler avatar=SM_Colonist_HaulerAvatar human=True ctrl=SM_Colonist clips=[HumanM@Idle01:2.70s, HumanM@Walk01_Forward:0.80s]
+Hauler walk rootMotion 2.0s: delta=(0.000, 0.000, 0.000) speed=0.000 m/s humanScale=0.582 toeAhead(avg)=0.061 footSwingZ=0.377 headY=0.89 state=Walk
+Hauler walk clip 'HumanM@Walk01_Forward' averageSpeed=(0.000, 0.000, 0.000) apparentSpeed=0.000 len=0.800 -> ground speed at 1x ~ 0.000 / 0.000 m/s; foot-range estimate 0.760 m/s
+Hauler stance speed: median=0.991 m/s samples=80 footY[min]=0.075
+inspect ok=True

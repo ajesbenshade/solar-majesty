@@ -1,0 +1,9 @@
+Unity 6000.5.10f1 EditMode, art/colonists-v1 worktree on Basement-1, 2026-10-07 20:28 ET (UTC 00:28 next day)
+total=629 passed=629 failed=0 skipped=0 duration=18.9s
+ColonistArtTests (18/18 passed):
+  Prefab_IsBudgetedSuitWithSuitAndRoleMaterials x4   (1000-2000 tris, 2 URP Lit mats, suit atlas bound)
+  Prefab_IsHumanoidOnKevinIglesiasIdleWalk x4        (valid human avatar, root motion off, Speed param, Idle01/Walk01 clips)
+  Prefab_FacesPlusZ_LeftSideAtMinusX x4              (toe ahead of foot on +Z, left thigh on -X, head above 0.85 m)
+  Walk_PlaysOnSpeed_AndKeepsFacing x4                (Idle at rest, Walk on Speed, feet swing >0.12 m, toes stay on +Z)
+  PlaybackSpeed_IdlesAtOneAndClamps
+  VillagerSpawn_WearsSuit_FacesWork_AndCyclesRoles   (no capsule, Animator on Visual, faces work, mats not remapped, boots on ground, 4 roles cycle)
