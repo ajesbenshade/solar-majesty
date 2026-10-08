@@ -3,7 +3,17 @@ guid: f5c28d9b3e7a4b02c4d6f819e0a23b57
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_AshHopper
+    second: {fileID: 2100000, guid: 5fae5716dacc0f24ab43a22556c7bfa5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SM_Art_Fauna_GlowAccent
+    second: {fileID: 2100000, guid: 0867e7859c1f9d545a8acc167d08f992, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
