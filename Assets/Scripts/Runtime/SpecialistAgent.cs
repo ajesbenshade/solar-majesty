@@ -908,6 +908,8 @@ namespace SolarMajesty
                 if (lead != null && lead.IsAlive)
                     decision = FollowLeader(lead);
             }
+            bool atInn = KingdomLife.AtRest(transform.position, OutpostClaimed);
+            decision = _motives.Commit(decision, _brain.Tuning, healthNormalized, Time.time, atInn);
             _motives.NoteDecision(_brain.Tuning, decision.Action, decision.TargetFlag?.RuntimeId, Time.time);
             ApplyDecision(decision);
             SyncWorkplace(decision);
@@ -1068,6 +1070,7 @@ namespace SolarMajesty
                 CurrentFlag = _activeFlag,
                 HealthNormalized = healthNormalized,
                 SafetyPosition = KingdomLife.RestNear(transform.position, OutpostClaimed),
+                AtInn = KingdomLife.AtRest(transform.position, OutpostClaimed),
                 VocationPosition = vocation,
                 HuntPosition = hunt,
                 HuntDistance = huntDist,
