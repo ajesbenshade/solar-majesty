@@ -463,8 +463,10 @@ namespace SolarMajesty.EditorTools
                 director.playableAsset = timeline;
             if (director.playOnAwake)
                 director.playOnAwake = false;
-            if (director.timeUpdateMode != DirectorUpdateMode.UnscaledGameTime)
-                director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
+            // IntroSequence seeks this director from its own clock. UnscaledGameTime would
+            // run ahead on a slow first frame and desync the sting, reveal, and camera.
+            if (director.timeUpdateMode != DirectorUpdateMode.Manual)
+                director.timeUpdateMode = DirectorUpdateMode.Manual;
             if (director.extrapolationMode != DirectorWrapMode.Hold)
                 director.extrapolationMode = DirectorWrapMode.Hold;
 
@@ -534,7 +536,13 @@ namespace SolarMajesty.EditorTools
                 {
                     if (anim.name == IntroAssets.RevealTrack)
                         binding = titleAnimator;
-                    else if (IntroAssets.IsCameraTrackName(anim.name) && !(authoredCamera && anim.name == IntroAssets.CameraTrack))
+                    else if (authoredCamera && anim.name == IntroAssets.CameraTrack)
+                    {
+                        if (director.GetGenericBinding(track) != null)
+                            director.ClearGenericBinding(track);
+                        continue;
+                    }
+                    else if (IntroAssets.IsCameraTrackName(anim.name))
                         binding = animator;
                 }
                 else if (track is ActivationTrack)

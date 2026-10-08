@@ -404,7 +404,7 @@ PlayableDirector:
   m_PlayableAsset: {fileID: 11400000, guid: c919759dbc2186743bf843ba1596b40c, type: 2}
   m_InitialState: 0
   m_WrapMode: 0
-  m_DirectorUpdateMode: 2
+  m_DirectorUpdateMode: 3
   m_InitialTime: 0
   m_SceneBindings:
   - key: {fileID: 725649769048026438, guid: c919759dbc2186743bf843ba1596b40c, type: 2}
@@ -446,7 +446,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 16.5
+      value: 21.5
       objectReference: {fileID: 0}
     - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
       propertyPath: m_LocalPosition.z

@@ -9,7 +9,8 @@ namespace SolarMajesty
     /// <see cref="PlayableDirector"/> when that Timeline exists (camera track, title
     /// activation track, sting audio track). Otherwise sweeps the camera in code,
     /// shows the same placeholder title, and plays <c>Resources/Intro/IntroSting</c> if present.
-    /// Real-time: the director uses unscaled time, and the colony clock stays paused.
+    /// The intro clock is unscaled and clamped, and it drives the director by hand
+    /// so a slow first frame cannot finish the shot while the Timeline is still at 0.
     /// </summary>
     [DefaultExecutionOrder(100)]
     public sealed class IntroSequence : MonoBehaviour
@@ -34,6 +35,7 @@ namespace SolarMajesty
         private bool _skipped;
         private bool _reduceMotion;
         private bool _titleBound;
+        private bool _authoredCamera;
         private bool _stingPlayed;
         private bool _pushedFog;
         private bool _tintedDusk;
@@ -62,7 +64,17 @@ namespace SolarMajesty
         private Renderer[] _gold = System.Array.Empty<Renderer>();
         private Vector4[] _goldSt = System.Array.Empty<Vector4>();
         private MaterialPropertyBlock _glintBlock;
+        private MaterialPropertyBlock _citadelBlock;
+        private Renderer[] _glowRenderers = System.Array.Empty<Renderer>();
+        private Color[] _glowEmission = System.Array.Empty<Color>();
+        private Light[] _lamps = System.Array.Empty<Light>();
+        private float[] _lampIntensity = System.Array.Empty<float>();
+        private Renderer[] _forcedGlow;
+        private Light[] _forcedLamps;
+        private bool _citadelCaptured;
+        private bool _citadelTouched;
         private static readonly int BaseMapStId = Shader.PropertyToID("_BaseMap_ST");
+        private static readonly int EmissionId = Shader.PropertyToID("_EmissionColor");
 
         public static IntroPlayback ChoosePlayback(bool timelinePresent) =>
             timelinePresent ? IntroPlayback.Timeline : IntroPlayback.Fallback;
@@ -103,7 +115,7 @@ namespace SolarMajesty
         public void Advance(float unscaledDelta)
         {
             if (!_playing) return;
-            _elapsed += Mathf.Max(0f, unscaledDelta);
+            _elapsed += IntroShot.ClampDelta(unscaledDelta);
             ApplyClock(_elapsed);
             if (_elapsed >= IntroShot.Duration)
                 Finish(skipped: false);
@@ -113,7 +125,7 @@ namespace SolarMajesty
         public void AdvanceCrossfade(float unscaledDelta)
         {
             if (_playing || !_crossfading) return;
-            _fadeClock += Mathf.Max(0f, unscaledDelta);
+            _fadeClock += IntroShot.ClampDelta(unscaledDelta);
             _overlay = IntroShot.CrossfadeAlpha(_fadeClock);
             if (_fadeClock >= IntroShot.CrossfadeSeconds * 2f)
             {
@@ -127,6 +139,16 @@ namespace SolarMajesty
         {
             _forcedSun = sun;
             _forcedFill = fill;
+        }
+
+        /// <summary>
+        /// Edit-mode tests pass their own windows and lamps. Play mode finds the citadel.
+        /// Either way the open scene is not scanned unless the game is running.
+        /// </summary>
+        internal void SetCitadelForTests(Renderer[] windows, Light[] lamps)
+        {
+            _forcedGlow = windows;
+            _forcedLamps = lamps;
         }
 
         /// <summary>Test hook. Armed skip uses the same rule as a real key, click, or pad button.</summary>
@@ -154,6 +176,7 @@ namespace SolarMajesty
             _overlay = 0f;
             StopDirector();
             RestorePresentation();
+            RestoreCitadel();
             HideProps();
             RestoreTitleScales();
             ClearGlint();
@@ -170,6 +193,9 @@ namespace SolarMajesty
             _fadeClock = 0f;
             _stingPlayed = false;
             _titleBound = false;
+            _authoredCamera = false;
+            _citadelCaptured = false;
+            _citadelTouched = false;
             _skipped = false;
             _crossfading = false;
             _overlay = 0f;
@@ -185,6 +211,7 @@ namespace SolarMajesty
             ApplyTitleMotion(0f);
             if (titleRoot != null)
                 titleRoot.SetActive(false);
+            CaptureCitadel();
             ApplyPose(IntroShot.Sample(0f, _focus, _reduceMotion));
 
             if (Playback == IntroPlayback.Timeline)
@@ -206,7 +233,7 @@ namespace SolarMajesty
                 AdvanceCrossfade(Time.unscaledDeltaTime);
 
             if (_earth != null && _earth.gameObject.activeSelf && !_reduceMotion)
-                _earth.Rotate(0f, 8f * Time.unscaledDeltaTime, 0f, Space.Self);
+                _earth.Rotate(0f, 8f * IntroShot.ClampDelta(Time.unscaledDeltaTime), 0f, Space.Self);
         }
 
         private void LateUpdate()
@@ -214,7 +241,10 @@ namespace SolarMajesty
             // The animator applies the reveal clip between Update and LateUpdate.
             // Re-apply so the code path wins, and a missing clip still reveals.
             if (_playing)
+            {
                 ApplyTitleMotion(_elapsed);
+                ApplyCitadel(_elapsed);
+            }
         }
 
         private void OnGUI()
@@ -237,8 +267,13 @@ namespace SolarMajesty
         {
             if (Playback == IntroPlayback.Fallback)
                 ApplyPose(IntroShot.Sample(time, _focus, _reduceMotion));
-            else if (_cam != null)
-                _cam.fieldOfView = IntroShot.Sample(time, _focus, false).FieldOfView;
+            else
+            {
+                SampleDirector(time);
+                // The generated sweep has no field-of-view curve. An authored clip does, so leave it.
+                if (!_authoredCamera && _cam != null)
+                    _cam.fieldOfView = IntroShot.Sample(time, _focus, false).FieldOfView;
+            }
 
             bool showTitle = Playback == IntroPlayback.Fallback || !_titleBound;
             if (showTitle && titleRoot != null)
@@ -257,6 +292,7 @@ namespace SolarMajesty
             }
 
             ApplyTitleMotion(time);
+            ApplyCitadel(time);
 
             if (_earth != null)
                 _earth.gameObject.SetActive(spawnEarthGlobe);
@@ -269,6 +305,7 @@ namespace SolarMajesty
             _skipped = skipped;
             StopDirector();
             RestorePresentation();
+            RestoreCitadel();
             HideProps();
             RestoreTitleScales();
             ClearGlint();
@@ -296,21 +333,33 @@ namespace SolarMajesty
             director.playableAsset = timeline;
             director.enabled = true;
             director.playOnAwake = false;
-            director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
+            director.timeUpdateMode = DirectorUpdateMode.Manual;
             director.extrapolationMode = DirectorWrapMode.Hold;
             Bind(timeline);
+            director.RebuildGraph();
             director.time = 0d;
             director.Play();
+            SampleDirector(0f);
+        }
+
+        /// <summary>The intro clock is the only thing that moves the Timeline. Audio, reveal, and camera stay on it.</summary>
+        private void SampleDirector(float time)
+        {
+            if (director == null || director.playableAsset == null) return;
+            director.time = time;
+            director.Evaluate();
+            if (!Application.isPlaying && director.playableGraph.IsValid())
+                director.playableGraph.Evaluate(0f);
         }
 
         private void Bind(TimelineAsset timeline)
         {
             var animator = EnsureAnimator(_cam);
-            bool authoredCamera = false;
+            _authoredCamera = false;
             foreach (var output in timeline.outputs)
             {
                 if (output.sourceObject is AnimationTrack candidate && IntroAssets.IsAuthoredCameraTrack(candidate.name))
-                    authoredCamera = true;
+                    _authoredCamera = true;
             }
             foreach (var output in timeline.outputs)
             {
@@ -327,9 +376,12 @@ namespace SolarMajesty
                             director.SetGenericBinding(src, titleAnimator);
                         }
                     }
-                    else if (IntroAssets.IsCameraTrackName(animTrack.name)
-                             && !(authoredCamera && animTrack.name == IntroAssets.CameraTrack)
-                             && animator != null)
+                    else if (_authoredCamera && animTrack.name == IntroAssets.CameraTrack)
+                    {
+                        if (director.GetGenericBinding(src) != null)
+                            director.ClearGenericBinding(src);
+                    }
+                    else if (IntroAssets.IsCameraTrackName(animTrack.name) && animator != null)
                     {
                         animator.enabled = true;
                         director.SetGenericBinding(src, animator);
@@ -909,10 +961,143 @@ namespace SolarMajesty
                 titleRoot.SetActive(false);
         }
 
+        private void CaptureCitadel()
+        {
+            _glowRenderers = System.Array.Empty<Renderer>();
+            _glowEmission = System.Array.Empty<Color>();
+            _lamps = System.Array.Empty<Light>();
+            _lampIntensity = System.Array.Empty<float>();
+            _citadelTouched = false;
+
+            bool forced = _forcedGlow != null || _forcedLamps != null;
+            if (!Application.isPlaying && !forced)
+            {
+                _citadelCaptured = false;
+                return;
+            }
+
+            var glow = new System.Collections.Generic.List<Renderer>(32);
+            var emission = new System.Collections.Generic.List<Color>(32);
+            var lamps = new System.Collections.Generic.List<Light>(8);
+            var intensities = new System.Collections.Generic.List<float>(8);
+            if (forced)
+            {
+                AddWindows(_forcedGlow, glow, emission);
+                AddLamps(_forcedLamps, lamps, intensities);
+            }
+            else
+            {
+                var structures = FindObjectsByType<ColonyStructure>(FindObjectsSortMode.None);
+                for (int i = 0; i < structures.Length; i++)
+                {
+                    var structure = structures[i];
+                    if (structure == null || structure.Category != BuildingCategory.Commons) continue;
+                    AddWindows(structure.GetComponentsInChildren<Renderer>(true), glow, emission);
+                    AddLamps(structure.GetComponentsInChildren<Light>(true), lamps, intensities);
+                }
+            }
+
+            _glowRenderers = glow.ToArray();
+            _glowEmission = emission.ToArray();
+            _lamps = lamps.ToArray();
+            _lampIntensity = intensities.ToArray();
+            _citadelCaptured = true;
+        }
+
+        private void AddWindows(
+            Renderer[] renderers,
+            System.Collections.Generic.List<Renderer> glow,
+            System.Collections.Generic.List<Color> emission)
+        {
+            if (renderers == null) return;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (renderer == null) continue;
+                var mat = renderer.sharedMaterial;
+                if (mat == null || !mat.HasProperty(EmissionId)) continue;
+                Color authored = mat.GetColor(EmissionId);
+                if (!IntroCitadel.IsWindowEmission(authored)) continue;
+                glow.Add(renderer);
+                emission.Add(authored);
+            }
+        }
+
+        private static void AddLamps(
+            Light[] lights,
+            System.Collections.Generic.List<Light> lamps,
+            System.Collections.Generic.List<float> intensities)
+        {
+            if (lights == null) return;
+            for (int i = 0; i < lights.Length; i++)
+            {
+                var light = lights[i];
+                if (light == null) continue;
+                if (light.type != LightType.Point && light.type != LightType.Spot) continue;
+                lamps.Add(light);
+                intensities.Add(light.intensity);
+            }
+        }
+
+        private void ApplyCitadel(float time)
+        {
+            if (!_citadelCaptured) return;
+            float keep = IntroCitadel.Keep(time);
+            if (keep >= 0.999f)
+            {
+                if (_citadelTouched)
+                    RestoreCitadel();
+                return;
+            }
+
+            _citadelTouched = true;
+            if (_citadelBlock == null)
+                _citadelBlock = new MaterialPropertyBlock();
+            for (int i = 0; i < _glowRenderers.Length; i++)
+            {
+                var renderer = _glowRenderers[i];
+                if (renderer == null) continue;
+                renderer.GetPropertyBlock(_citadelBlock);
+                _citadelBlock.SetColor(EmissionId, IntroCitadel.ScaleEmission(_glowEmission[i], keep));
+                renderer.SetPropertyBlock(_citadelBlock);
+            }
+
+            for (int i = 0; i < _lamps.Length; i++)
+            {
+                if (_lamps[i] == null) continue;
+                _lamps[i].intensity = IntroCitadel.ScaleIntensity(_lampIntensity[i], keep);
+            }
+        }
+
+        private void RestoreCitadel()
+        {
+            if (!_citadelTouched) return;
+            if (_citadelBlock == null)
+                _citadelBlock = new MaterialPropertyBlock();
+            for (int i = 0; i < _glowRenderers.Length; i++)
+            {
+                var renderer = _glowRenderers[i];
+                if (renderer == null) continue;
+                renderer.GetPropertyBlock(_citadelBlock);
+                _citadelBlock.SetColor(EmissionId, _glowEmission[i]);
+                renderer.SetPropertyBlock(_citadelBlock);
+            }
+
+            for (int i = 0; i < _lamps.Length; i++)
+            {
+                if (_lamps[i] == null) continue;
+                _lamps[i].intensity = _lampIntensity[i];
+            }
+
+            _citadelTouched = false;
+        }
+
         private void OnDestroy()
         {
             if (_tintedDusk || _pushedFog)
                 RestorePresentation();
+            if (_citadelTouched)
+                RestoreCitadel();
             DestroyOwned(_fadeTex);
             DestroyOwned(_earthMat);
             if (titleRoot == null) return;

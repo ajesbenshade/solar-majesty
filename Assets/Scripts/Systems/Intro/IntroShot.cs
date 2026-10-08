@@ -29,6 +29,15 @@ namespace SolarMajesty
         /// <summary>Metres in front of the settled camera. The slot scale stays 1 so a swapped model is not resized.</summary>
         public const float TitleDistance = 11f;
 
+        /// <summary>
+        /// World-up lift so the gold letters sit against the dark ground and sky
+        /// instead of the citadel's lit windows. The settle camera does not move.
+        /// </summary>
+        public const float TitleLift = 5f;
+
+        /// <summary>A hitch after boot cannot jump the shot. One intro frame is at most this long.</summary>
+        public const float MaxFrameDelta = 1f / 20f;
+
         public struct Pose
         {
             public Vector3 Position;
@@ -65,17 +74,24 @@ namespace SolarMajesty
             };
         }
 
+        public static float ClampDelta(float unscaledDelta)
+        {
+            if (unscaledDelta <= 0f) return 0f;
+            return unscaledDelta > MaxFrameDelta ? MaxFrameDelta : unscaledDelta;
+        }
+
         /// <summary>
         /// World pose of the title slot once the camera has settled.
         /// Local +Z matches the camera forward, so the readable face (local -Z) points back at the lens
-        /// and the pivot sits at the centre. The placeholder and <c>SM_Title_SolarMajesty</c> share this pose.
+        /// and the pivot sits at the centre. Lifted on world Y so the letters clear the lit windows.
+        /// The placeholder and <c>SM_Title_SolarMajesty</c> share this pose.
         /// </summary>
         public static Pose TitlePose(Vector3 colonyFocus)
         {
             Pose cam = Sample(CameraSettle, colonyFocus, false);
             return new Pose
             {
-                Position = cam.Position + cam.Rotation * Vector3.forward * TitleDistance,
+                Position = cam.Position + cam.Rotation * Vector3.forward * TitleDistance + Vector3.up * TitleLift,
                 Rotation = cam.Rotation,
                 FieldOfView = cam.FieldOfView
             };

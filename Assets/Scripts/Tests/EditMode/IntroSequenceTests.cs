@@ -92,7 +92,7 @@ namespace SolarMajesty.Tests
                 intro.NotifyInput(new IntroInputSample(true, false, false));
                 Assert.IsTrue(intro.IsPlaying, "a click on the opening instant does not skip");
 
-                intro.Advance(IntroShot.SkipArmSeconds);
+                Step(intro, IntroShot.SkipArmSeconds);
                 intro.NotifyInput(new IntroInputSample(false, true, false));
                 Assert.IsFalse(intro.IsPlaying);
                 Assert.AreEqual(0f, intro.OverlayAlpha, 0.001f);
@@ -126,14 +126,14 @@ namespace SolarMajesty.Tests
                 Assert.IsFalse(intro.TitleRoot.activeSelf);
 
                 Vector3 opened = cam.transform.position;
-                intro.Advance(IntroShot.CameraSettle);
+                Step(intro, IntroShot.CameraSettle);
                 Vector3 settled = cam.transform.position;
                 Assert.Greater(Vector3.Distance(opened, settled), 5f);
                 Assert.Less(Vector3.Distance(settled, IntroShot.ColonySettlePosition(focus)), 0.05f);
                 Assert.IsTrue(intro.TitleRoot.activeSelf);
                 Assert.IsNotNull(intro.TitleRoot.transform.Find(IntroAssets.PlaceholderGlyphs));
 
-                intro.Advance(IntroShot.Duration);
+                Step(intro, IntroShot.Duration);
                 Assert.IsFalse(intro.IsPlaying);
                 Assert.IsFalse(intro.TitleRoot.activeSelf);
             }
@@ -176,8 +176,14 @@ namespace SolarMajesty.Tests
             var cam = IntroShot.Sample(IntroShot.CameraSettle, focus, false);
 
             Assert.Greater(Vector3.Dot(slot.Rotation * Vector3.forward, cam.Rotation * Vector3.forward), 0.999f);
-            Vector3 toCamera = (cam.Position - slot.Position).normalized;
-            Assert.Greater(Vector3.Dot(toCamera, slot.Rotation * Vector3.back), 0.999f);
+            Vector3 onAxis = cam.Position + cam.Rotation * Vector3.forward * IntroShot.TitleDistance;
+            Vector3 lifted = onAxis + Vector3.up * IntroShot.TitleLift;
+            Assert.Less(Vector3.Distance(slot.Position, lifted), 0.001f);
+            Assert.AreEqual(IntroShot.TitleLift, slot.Position.y - onAxis.y, 0.0001f);
+            // Colony focus (192, 0, 190), settle Euler (30, 45, 0), 11 m forward, +5 m world Y.
+            Assert.AreEqual(180.7361f, slot.Position.x, 0.001f);
+            Assert.AreEqual(21.5f, slot.Position.y, 0.001f);
+            Assert.AreEqual(178.7361f, slot.Position.z, 0.001f);
         }
 
         [Test]
@@ -318,7 +324,7 @@ namespace SolarMajesty.Tests
             try
             {
                 intro.PlayFallback(cam, ColonyLayout.CameraFocus, CelestialBodyCatalog.Earth());
-                intro.Advance(IntroShot.Duration);
+                Step(intro, IntroShot.Duration);
                 Assert.IsFalse(intro.IsPlaying);
                 float peak = intro.OverlayAlpha;
                 intro.AdvanceCrossfade(1f / 60f);
@@ -359,13 +365,13 @@ namespace SolarMajesty.Tests
                 Assert.IsFalse(renderer.receiveShadows);
                 Assert.Less(letter.transform.localScale.x, 0.05f);
 
-                intro.Advance(IntroShot.TitleOn + IntroTitleMotion.RevealDuration);
+                Step(intro, IntroShot.TitleOn + IntroTitleMotion.RevealDuration);
                 Assert.Greater(letter.transform.localScale.x, 0.9f);
                 Assert.Less(emblem.transform.localScale.x, 0.55f);
                 Assert.Less(majesty.transform.localScale.x, 0.05f);
 
                 float majestyMid = IntroShot.TitleOn + IntroTitleMotion.RevealStep * 2f + IntroTitleMotion.RevealDuration * 0.45f;
-                intro.Advance(majestyMid - intro.Elapsed);
+                Step(intro, majestyMid - intro.Elapsed);
                 Assert.Greater(emblem.transform.localScale.x, 0.9f);
                 Assert.Greater(majesty.transform.localScale.x, 0.35f);
                 Assert.Less(majesty.transform.localScale.x, 0.7f);
@@ -403,7 +409,7 @@ namespace SolarMajesty.Tests
             try
             {
                 intro.PlayFallback(cam, ColonyLayout.CameraFocus, CelestialBodyCatalog.Earth());
-                intro.Advance(mid);
+                Step(intro, mid);
                 Assert.AreEqual(authored.z, mat.GetVector("_BaseMap_ST").z, 0.0001f);
                 var block = new MaterialPropertyBlock();
                 renderer.GetPropertyBlock(block);
@@ -488,9 +494,160 @@ namespace SolarMajesty.Tests
             }
         }
 
+        [Test]
+        public void SlowFirstFrame_DoesNotSkipTheOpening()
+        {
+            Assert.AreEqual(IntroShot.MaxFrameDelta, IntroShot.ClampDelta(5f), 0.000001f);
+            Assert.AreEqual(0f, IntroShot.ClampDelta(-2f), 0.000001f);
+            Assert.AreEqual(0f, IntroCitadel.Weight(IntroCitadel.HoldStart), 0.0001f);
+            Assert.AreEqual(1f, IntroCitadel.Weight(IntroShot.Duration), 0.0001f);
+
+            var intro = NewIntro();
+            var cam = NewCamera();
+            bool startedSampling = false;
+            try
+            {
+                if (!AnimationMode.InAnimationMode())
+                {
+                    AnimationMode.StartAnimationMode();
+                    startedSampling = true;
+                }
+
+                intro.Play(cam, ColonyLayout.CameraFocus, CelestialBodyCatalog.Earth(), false);
+                intro.Advance(5f);
+                Assert.IsTrue(intro.IsPlaying, "a 5s first frame must not finish the shot");
+                Assert.Greater(intro.Elapsed, 0f);
+                Assert.LessOrEqual(intro.Elapsed, IntroShot.MaxFrameDelta + 0.0001f);
+                Assert.Less(intro.Elapsed, IntroShot.TitleOn);
+                Assert.Less(intro.Elapsed, IntroCitadel.HoldStart);
+
+                var settle = IntroShot.ColonySettlePosition(ColonyLayout.CameraFocus);
+                Assert.Greater(Vector3.Distance(cam.transform.position, settle), 5f);
+
+                if (intro.Playback == IntroPlayback.Timeline)
+                {
+                    var director = intro.GetComponent<PlayableDirector>();
+                    Assert.IsNotNull(director);
+                    Assert.AreEqual(DirectorUpdateMode.Manual, director.timeUpdateMode);
+                    Assert.AreEqual(intro.Elapsed, (float)director.time, 0.0001f);
+                }
+            }
+            finally
+            {
+                if (intro != null && intro.IsPlaying)
+                    intro.Abort();
+                if (startedSampling && AnimationMode.InAnimationMode())
+                    AnimationMode.StopAnimationMode();
+                if (intro != null) Object.DestroyImmediate(intro.gameObject);
+                if (cam != null) Object.DestroyImmediate(cam.gameObject);
+            }
+        }
+
+        [Test]
+        public void CitadelWindows_DimDuringTheTitleHoldAndRestoreOnSkip()
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                         ?? Shader.Find("Standard");
+            if (shader == null)
+                Assert.Inconclusive("Lit shader unavailable.");
+
+            var intro = NewIntro();
+            var cam = NewCamera();
+            var warmGo = new GameObject("citadel-window");
+            warmGo.hideFlags = HideFlags.HideAndDontSave;
+            var warm = warmGo.AddComponent<MeshRenderer>();
+            var warmMat = new Material(shader) { name = "SM_TestWindow" };
+            if (!warmMat.HasProperty("_EmissionColor"))
+            {
+                Object.DestroyImmediate(warmMat);
+                Object.DestroyImmediate(warmGo);
+                Object.DestroyImmediate(intro.gameObject);
+                Object.DestroyImmediate(cam.gameObject);
+                Assert.Inconclusive(shader.name + " has no _EmissionColor");
+            }
+
+            Color warmEmit = new Color(1.55f, 1.02f, 0.5f, 1f);
+            warmMat.SetColor("_EmissionColor", warmEmit);
+            warm.sharedMaterial = warmMat;
+
+            var coolGo = new GameObject("citadel-cyan");
+            coolGo.hideFlags = HideFlags.HideAndDontSave;
+            var cool = coolGo.AddComponent<MeshRenderer>();
+            var coolMat = new Material(shader) { name = "SM_TestCyan" };
+            Color coolEmit = new Color(0.2f, 1.15f, 1.65f, 1f);
+            coolMat.SetColor("_EmissionColor", coolEmit);
+            cool.sharedMaterial = coolMat;
+
+            var lampGo = new GameObject("citadel-lamp");
+            lampGo.hideFlags = HideFlags.HideAndDontSave;
+            var lamp = lampGo.AddComponent<Light>();
+            lamp.type = LightType.Point;
+            lamp.intensity = 3.2f;
+
+            intro.SetCitadelForTests(new[] { warm, cool }, new[] { lamp });
+            try
+            {
+                intro.PlayFallback(cam, ColonyLayout.CameraFocus, CelestialBodyCatalog.Earth());
+                Step(intro, 3.2f);
+                Assert.AreEqual(3.2f, lamp.intensity, 0.001f);
+                Assert.Less(ColorGap(warm.sharedMaterial.GetColor("_EmissionColor"), warmEmit), 0.001f);
+
+                Step(intro, 4f - intro.Elapsed);
+                Assert.IsTrue(intro.IsPlaying);
+                float keep = IntroCitadel.Keep(intro.Elapsed);
+                Assert.Less(keep, 0.2f);
+                Assert.AreEqual(3.2f * keep, lamp.intensity, 0.001f);
+
+                var block = new MaterialPropertyBlock();
+                warm.GetPropertyBlock(block);
+                Color dimmed = block.GetColor("_EmissionColor");
+                Assert.Less(ColorGap(dimmed, IntroCitadel.ScaleEmission(warmEmit, keep)), 0.02f);
+                Assert.Less(ColorGap(warm.sharedMaterial.GetColor("_EmissionColor"), warmEmit), 0.001f);
+
+                cool.GetPropertyBlock(block);
+                Assert.Greater(
+                    ColorGap(block.GetColor("_EmissionColor"), IntroCitadel.ScaleEmission(coolEmit, keep)),
+                    0.5f);
+                Assert.Less(ColorGap(cool.sharedMaterial.GetColor("_EmissionColor"), coolEmit), 0.001f);
+
+                intro.Skip();
+                Assert.AreEqual(3.2f, lamp.intensity, 0.0001f);
+                warm.GetPropertyBlock(block);
+                Assert.Less(ColorGap(block.GetColor("_EmissionColor"), warmEmit), 0.02f);
+                Assert.Less(ColorGap(warm.sharedMaterial.GetColor("_EmissionColor"), warmEmit), 0.001f);
+                Assert.Less(ColorGap(cool.sharedMaterial.GetColor("_EmissionColor"), coolEmit), 0.001f);
+            }
+            finally
+            {
+                if (intro != null) Object.DestroyImmediate(intro.gameObject);
+                if (cam != null) Object.DestroyImmediate(cam.gameObject);
+                if (warmMat != null) Object.DestroyImmediate(warmMat);
+                if (coolMat != null) Object.DestroyImmediate(coolMat);
+                if (warmGo != null) Object.DestroyImmediate(warmGo);
+                if (coolGo != null) Object.DestroyImmediate(coolGo);
+                if (lampGo != null) Object.DestroyImmediate(lampGo);
+            }
+        }
+
         private static float ColorGap(Color a, Color b)
         {
             return Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b) + Mathf.Abs(a.a - b.a);
+        }
+
+        /// <summary>Walks the clamped frame clock to <paramref name="seconds"/> ahead. A single Advance cannot jump.</summary>
+        private static void Step(IntroSequence intro, float seconds)
+        {
+            float target = intro.Elapsed + Mathf.Max(0f, seconds);
+            int guard = 0;
+            while (intro.IsPlaying && guard++ < 800)
+            {
+                float remain = target - intro.Elapsed;
+                if (remain <= 0.00002f) break;
+                float before = intro.Elapsed;
+                intro.Advance(Mathf.Min(IntroShot.MaxFrameDelta, remain));
+                if (intro.Elapsed <= before) break;
+            }
         }
 
         private static IntroSequence NewIntro()
