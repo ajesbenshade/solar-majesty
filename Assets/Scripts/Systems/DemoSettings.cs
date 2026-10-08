@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -61,6 +62,20 @@ namespace SolarMajesty
 
         public static readonly int[] ResolutionWidths = { 1280, 1280, 1366, 1600, 1920, 1920, 2560, 2560, 3840 };
         public static readonly int[] ResolutionHeights = { 720, 800, 768, 900, 1080, 1200, 1440, 1600, 2160 };
+
+        /// <summary>One entry per width×height. Refresh rate is ignored so the list does not repeat.</summary>
+        public readonly struct DisplayMode
+        {
+            public readonly int Width;
+            public readonly int Height;
+            public DisplayMode(int width, int height)
+            {
+                Width = width;
+                Height = height;
+            }
+        }
+
+        static List<DisplayMode> _displayModes;
 
         /// <summary>On unless the player has saved a choice. Missing key stays on; a stored 0 stays off.</summary>
         public static bool EdgeScroll = true;
@@ -139,10 +154,102 @@ namespace SolarMajesty
             ResolutionHeight = ResolutionHeights[next];
         }
 
+        /// <summary>
+        /// Native display size, <see cref="Screen.currentResolution"/>, and every reported
+        /// <see cref="Screen.resolutions"/> entry, deduped by width×height. No 16:9 snap.
+        /// An empty report falls back to the built-in presets.
+        /// </summary>
+        public static List<DisplayMode> CollectResolutions(
+            int currentW, int currentH, int systemW, int systemH, Resolution[] reported)
+        {
+            var list = new List<DisplayMode>(16);
+            AddMode(list, currentW, currentH);
+            AddMode(list, systemW, systemH);
+            if (reported != null)
+            {
+                for (int i = 0; i < reported.Length; i++)
+                    AddMode(list, reported[i].width, reported[i].height);
+            }
+            if (list.Count == 0)
+            {
+                for (int i = 0; i < ResolutionWidths.Length; i++)
+                    AddMode(list, ResolutionWidths[i], ResolutionHeights[i]);
+            }
+            list.Sort(CompareModes);
+            return list;
+        }
+
+        public static int IndexOfMode(IReadOnlyList<DisplayMode> modes, int width, int height)
+        {
+            if (modes == null) return -1;
+            for (int i = 0; i < modes.Count; i++)
+            {
+                if (modes[i].Width == width && modes[i].Height == height)
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>Leaving "display" lands on the monitor's own size when that size is in the list.</summary>
+        public static int FirstExplicitIndex(IReadOnlyList<DisplayMode> modes, int nativeW, int nativeH)
+        {
+            int native = IndexOfMode(modes, nativeW, nativeH);
+            return native >= 0 ? native : 0;
+        }
+
+        public static void RefreshDisplayModes()
+        {
+            int currentW = Screen.currentResolution.width;
+            int currentH = Screen.currentResolution.height;
+            int systemW = 0;
+            int systemH = 0;
+            var display = Display.main;
+            if (display != null)
+            {
+                systemW = display.systemWidth;
+                systemH = display.systemHeight;
+            }
+            _displayModes = CollectResolutions(currentW, currentH, systemW, systemH, Screen.resolutions);
+        }
+
         public static void CycleResolution()
         {
-            StepResolution();
+            if (_displayModes == null || _displayModes.Count == 0)
+                RefreshDisplayModes();
+            int i = IndexOfMode(_displayModes, ResolutionWidth, ResolutionHeight);
+            int next;
+            if (i < 0)
+            {
+                int nativeW = Screen.currentResolution.width;
+                int nativeH = Screen.currentResolution.height;
+                var display = Display.main;
+                if (display != null && display.systemWidth >= 640 && display.systemHeight >= 480)
+                {
+                    nativeW = display.systemWidth;
+                    nativeH = display.systemHeight;
+                }
+                next = FirstExplicitIndex(_displayModes, nativeW, nativeH);
+            }
+            else
+            {
+                next = (i + 1) % _displayModes.Count;
+            }
+            ResolutionWidth = _displayModes[next].Width;
+            ResolutionHeight = _displayModes[next].Height;
             ApplyDisplay();
+        }
+
+        static void AddMode(List<DisplayMode> list, int width, int height)
+        {
+            if (width < 640 || height < 480) return;
+            if (IndexOfMode(list, width, height) >= 0) return;
+            list.Add(new DisplayMode(width, height));
+        }
+
+        static int CompareModes(DisplayMode a, DisplayMode b)
+        {
+            int c = a.Width.CompareTo(b.Width);
+            return c != 0 ? c : a.Height.CompareTo(b.Height);
         }
 
         /// <summary>Read the flags play-mode tests rewrite, without applying display or consuming boot.</summary>
@@ -215,6 +322,8 @@ namespace SolarMajesty
                 if (QualitySettings.GetQualityLevel() != QualityIndex)
                     QualitySettings.SetQualityLevel(QualityIndex, true);
             }
+            // Exact width×height. The HUD is IMGUI in screen pixels (scaled by HudScale),
+            // not a 16:9 canvas, so an ultrawide mode is not pillarboxed by the UI.
             bool sized = ResolutionWidth >= 640 && ResolutionHeight >= 480;
             if (sized)
                 Screen.SetResolution(ResolutionWidth, ResolutionHeight, Fullscreen);

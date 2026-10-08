@@ -217,6 +217,8 @@ namespace SolarMajesty.Tests
         {
             AssertHud(1280f, 800f);
             AssertHud(1920f, 1080f);
+            AssertHud(3440f, 1440f);
+            AssertHud(3840f, 2160f);
             // 1.25 HUD scale on 1280×800 shrinks the dock; the catalog still clears the crest.
             AssertHud(1280f / 1.25f, 800f / 1.25f);
         }
