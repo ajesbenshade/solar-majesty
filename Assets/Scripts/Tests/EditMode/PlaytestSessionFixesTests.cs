@@ -149,6 +149,11 @@ namespace SolarMajesty.Tests
                 SessionHotkeys.OnEscape(true, false, false, true));
             Assert.AreEqual(SessionHotkeys.EscapeAction.Ignore,
                 SessionHotkeys.OnEscape(false, true, false, false));
+            Assert.AreEqual(SessionHotkeys.EscapeAction.CloseResearch,
+                SessionHotkeys.OnEscape(false, false, true, true, researchOpen: true),
+                "Esc closes research before it cancels a placement or pauses");
+            Assert.AreEqual(SessionHotkeys.EscapeAction.CancelPlacement,
+                SessionHotkeys.OnEscape(false, false, true, true, researchOpen: false));
         }
 
         [Test]

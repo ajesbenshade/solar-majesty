@@ -890,6 +890,10 @@ namespace SolarMajesty
             return hit;
         }
 
+        public bool TechPanelOpen => _techOpen;
+
+        public void CloseTechPanel() => _techOpen = false;
+
         public void ToggleTechPanel()
         {
             _techOpen = !_techOpen;
@@ -959,10 +963,7 @@ namespace SolarMajesty
             bool active = research.ActiveTech == id;
             var row = new Rect(c.x, y, c.width, 36f);
             if (GUI.Button(row, GUIContent.none, active ? _rowOn : _rowOff) && can)
-            {
-                if (research.TrySelect(id))
-                    _techOpen = false;
-            }
+                research.TrySelect(id);
 
             string mark = done ? "DONE" : active ? "…" : can ? "GO" : "—";
             GUI.Label(new Rect(row.x + 6f, row.y + 2f, row.width - 52f, 16f), def.DisplayName, _value);
@@ -991,6 +992,8 @@ namespace SolarMajesty
             var rect = new Rect(_sw - M - panelW, top, panelW, panelH);
             RightColumnBottom = rect.yMax;
             var c = Panel(rect, "Research · T");
+            if (GUI.Button(new Rect(rect.xMax - 68f, rect.y + 8f, 56f, 18f), "CLOSE", _chipOff))
+                _techOpen = false;
 
             string launch = research.LaunchTechLabel(_loop.ActiveBody);
             GUI.Label(new Rect(c.x, c.y, c.width, 14f),
@@ -1056,10 +1059,7 @@ namespace SolarMajesty
                 var row = new Rect(0f, rowY, content.width, 50f);
 
                 if (GUI.Button(row, GUIContent.none, active ? _rowOn : _rowOff) && can)
-                {
-                    if (research.TrySelect(t.Id))
-                        _techOpen = false;
-                }
+                    research.TrySelect(t.Id);
 
                 string mark = done ? "DONE" : active ? "…" : can ? (t.SecretProject ? "★" : "GO") : "—";
                 Color markC = done ? Good : active ? Accent : can ? TextPrimary : TextMuted;

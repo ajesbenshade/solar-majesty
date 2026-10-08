@@ -1668,10 +1668,14 @@ namespace SolarMajesty
                     Screen == DemoScreen.Settings,
                     Screen == DemoScreen.Title,
                     Screen == DemoScreen.Playing,
-                    placing))
+                    placing,
+                    _overseerHud != null && _overseerHud.TechPanelOpen))
                 {
                     case SessionHotkeys.EscapeAction.CloseSettings:
                         CloseSettings();
+                        break;
+                    case SessionHotkeys.EscapeAction.CloseResearch:
+                        _overseerHud.CloseTechPanel();
                         break;
                     case SessionHotkeys.EscapeAction.CancelPlacement:
                         ApplyTool(OverseerTool.None);

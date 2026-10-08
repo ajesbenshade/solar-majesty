@@ -10,13 +10,16 @@ namespace SolarMajesty
             Ignore = 0,
             CloseSettings = 1,
             CancelPlacement = 2,
-            TogglePause = 3
+            TogglePause = 3,
+            CloseResearch = 4
         }
 
-        public static EscapeAction OnEscape(bool settingsOpen, bool onTitle, bool playing, bool placementArmed)
+        public static EscapeAction OnEscape(
+            bool settingsOpen, bool onTitle, bool playing, bool placementArmed, bool researchOpen = false)
         {
             if (settingsOpen) return EscapeAction.CloseSettings;
             if (onTitle) return EscapeAction.Ignore;
+            if (playing && researchOpen) return EscapeAction.CloseResearch;
             if (playing && placementArmed) return EscapeAction.CancelPlacement;
             return EscapeAction.TogglePause;
         }
