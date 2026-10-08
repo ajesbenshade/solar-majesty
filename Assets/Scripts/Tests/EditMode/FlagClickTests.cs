@@ -73,6 +73,24 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void LabelScreenPoint_PicksThatFlag_AndNotTheEmptyMap()
+        {
+            var labels = new[]
+            {
+                new FlagLabelLayout.ScreenLabel
+                {
+                    Center = new Vector2(400f, 300f),
+                    Width = 220f,
+                    Height = 72f,
+                    Priority = 1
+                }
+            };
+            Assert.AreEqual(0, FlagLabelLayout.Pick(labels, new Vector2(420f, 310f)));
+            Assert.AreEqual(-1, FlagLabelLayout.Pick(labels, new Vector2(12f, 12f)),
+                "a click on empty map is not a label, so it must not be treated as this pole");
+        }
+
+        [Test]
         public void RayHit_SelectsThatFlag_EvenIfTheSnapIsElsewhere()
         {
             var flags = new FlagManager();

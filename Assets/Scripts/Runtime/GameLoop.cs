@@ -3397,6 +3397,8 @@ namespace SolarMajesty
             if (Flags == null || _flagInput == null || mainCamera == null) return null;
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
             FlagHandle hit = FlagMarker.ClosestUnderRay(ray);
+            if (hit == null)
+                hit = FlagMarker.LabelAtScreen(Input.mousePosition);
             if (hit != null || !cellSnap) return hit;
 
             // A hero or a building under the cursor keeps the click. Cell-snap is for the pole's ground.
