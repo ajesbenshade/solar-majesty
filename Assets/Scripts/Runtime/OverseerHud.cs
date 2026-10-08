@@ -3344,11 +3344,9 @@ namespace SolarMajesty
             float applied = auto
                 ? HudScaleMath.AutoForHeight(Screen.height)
                 : DemoSettings.HudScaleExplicit;
-            if (auto)
-                _uiScaleGesture.Cancel();
-            else
+            if (!_uiScaleGesture.Dragging)
                 _uiScaleGesture.SyncApplied(applied);
-            float shown = auto ? applied : _uiScaleGesture.Shown;
+            float shown = _uiScaleGesture.Dragging ? _uiScaleGesture.Shown : applied;
             string pct = auto ? $"A {shown * 100f:0}%" : $"{shown * 100f:0}%";
 
             GUI.Label(new Rect(x, y, 78f, 18f), "UI SCALE", _caps);
@@ -3359,8 +3357,7 @@ namespace SolarMajesty
             float sliderW = Mathf.Max(24f, right - autoW - valueW - 8f - sliderX);
             float next = GUI.HorizontalSlider(
                 new Rect(sliderX, y + 2f, sliderW, 16f), shown, HudScaleMath.Min, HudScaleMath.Max);
-            if (!auto)
-                _uiScaleGesture.Drag(next);
+            _uiScaleGesture.Drag(next);
             bool mouseUp = Event.current != null &&
                            Event.current.type == EventType.MouseUp &&
                            Event.current.button == 0;
@@ -3370,7 +3367,7 @@ namespace SolarMajesty
                 _uiScaleGesture.Dragging &&
                 !Input.GetMouseButton(0))
                 mouseUp = true;
-            if (!auto && _uiScaleGesture.TryCommit(mouseUp, out float commit))
+            if (_uiScaleGesture.TryCommit(mouseUp, out float commit))
             {
                 DemoSettings.SetHudScaleExplicit(commit);
                 DemoSettings.SaveSettings();
@@ -3379,7 +3376,7 @@ namespace SolarMajesty
             if (GUI.Button(new Rect(right - autoW, y - 2f, autoW, 22f), "AUTO", auto ? _chipOn : _chipOff))
             {
                 _uiScaleGesture.Cancel();
-                DemoSettings.SetHudScaleAuto();
+                DemoSettings.ToggleHudScaleAuto(Screen.width, Screen.height);
                 DemoSettings.SaveSettings();
             }
             return y + 28f;

@@ -348,6 +348,16 @@ namespace SolarMajesty
             RefreshHudScale(Screen.width, Screen.height);
         }
 
+        /// <summary>The AUTO chip. On turns it off at the current auto scale; off turns it on.</summary>
+        public static void ToggleHudScaleAuto(int screenWidth, int screenHeight)
+        {
+            if (HudScaleAuto)
+                SetHudScaleExplicit(HudScaleMath.AutoForHeight(screenHeight));
+            else
+                SetHudScaleAuto();
+            RefreshHudScale(screenWidth, screenHeight);
+        }
+
         public static void ApplyDisplay()
         {
             var names = QualitySettings.names;

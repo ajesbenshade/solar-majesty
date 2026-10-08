@@ -4804,7 +4804,8 @@ namespace SolarMajesty
         public void NotifyLevyStolen(int amount, string where)
         {
             if (amount <= 0) return;
-            Debug.Log(CompactGrok.LevyStolen(amount, where));
+            // The EU is already gone. The overseer feed gets one summed line per minute,
+            // not this per-theft sentence. That sentence was flooding Player.log.
             _purseThefts.Note(Time.time, amount, where, out string flushed);
             if (!string.IsNullOrEmpty(flushed))
                 LogOverseer(flushed);
@@ -6049,7 +6050,7 @@ namespace SolarMajesty
             int modules = save.buildings != null ? save.buildings.Count : 0;
             int bounties = save.flags != null ? save.flags.Count : 0;
             int robots = save.agents != null ? save.agents.Count : 0;
-            int fauna = save.fauna != null ? save.fauna.Count : 0;
+            int fauna = _stalkers != null ? _stalkers.Count : 0;
             int dens = save.lairs != null ? save.lairs.Count : 0;
             int parties = save.parties != null ? save.parties.Count : 0;
             LogOverseer(

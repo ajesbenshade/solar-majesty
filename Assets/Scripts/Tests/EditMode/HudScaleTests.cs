@@ -118,5 +118,30 @@ namespace SolarMajesty.Tests
                 }
             }
         }
+
+        [Test]
+        public void AutoToggle_TurnsOffAndOn_AndASliderValueClearsAuto()
+        {
+            bool auto = DemoSettings.HudScaleAuto;
+            float explicitScale = DemoSettings.HudScaleExplicit;
+            try
+            {
+                DemoSettings.SetHudScaleAuto();
+                Assert.IsTrue(DemoSettings.HudScaleAuto);
+                DemoSettings.ToggleHudScaleAuto(1920, 1080);
+                Assert.IsFalse(DemoSettings.HudScaleAuto, "AUTO on must switch off");
+                DemoSettings.ToggleHudScaleAuto(1920, 1080);
+                Assert.IsTrue(DemoSettings.HudScaleAuto, "AUTO off must switch on");
+                DemoSettings.SetHudScaleExplicit(1.25f);
+                Assert.IsFalse(DemoSettings.HudScaleAuto, "dragging the slider leaves AUTO");
+                Assert.AreEqual(1.25f, DemoSettings.HudScaleExplicit, 0.001f);
+            }
+            finally
+            {
+                DemoSettings.HudScaleAuto = auto;
+                DemoSettings.HudScaleExplicit = explicitScale;
+                DemoSettings.RefreshHudScale(1920, 1080);
+            }
+        }
     }
 }
