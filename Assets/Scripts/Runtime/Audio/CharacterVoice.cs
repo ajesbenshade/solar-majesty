@@ -78,7 +78,7 @@ namespace SolarMajesty
             if (go == null)
             {
                 go = new GameObject("SM_CharacterVoice");
-                DontDestroyOnLoad(go);
+                if (Application.isPlaying) DontDestroyOnLoad(go);
             }
             _instance = go.GetComponent<CharacterVoice>();
             if (_instance == null) _instance = go.AddComponent<CharacterVoice>();

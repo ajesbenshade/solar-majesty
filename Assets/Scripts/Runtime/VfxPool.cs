@@ -34,7 +34,7 @@ namespace SolarMajesty
                 if (go == null)
                 {
                     go = new GameObject("SM_VfxPool");
-                    Object.DontDestroyOnLoad(go);
+                    if (Application.isPlaying) Object.DontDestroyOnLoad(go);
                 }
                 _root = go.transform;
                 return _root;
@@ -44,6 +44,9 @@ namespace SolarMajesty
         /// <summary>Rent a primitive. Returns null past the hard cap rather than spiralling.</summary>
         public static GameObject Rent(PrimitiveType type)
         {
+            // Presentation only. EditMode tests have no player loop to pulse or release these.
+            if (!Application.isPlaying) return null;
+
             if (!Free.TryGetValue(type, out Stack<GameObject> stack))
             {
                 stack = new Stack<GameObject>(WarmPerType);

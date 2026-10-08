@@ -56,7 +56,18 @@ namespace SolarMajesty
 
         public bool SamplePosition(Vector3 approx, out Vector3 onMesh)
         {
-            if (NavMesh.SamplePosition(approx, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+            return SamplePosition(approx, out onMesh, 5f);
+        }
+
+        /// <summary>
+        /// Snap <paramref name="approx"/> to the navmesh within <paramref name="maxDistance"/>.
+        /// Ordinary jobs use 5 m. A Clear Threat approach can sit just outside a den that is
+        /// wider than that, so the caller passes the den footprint instead.
+        /// </summary>
+        public bool SamplePosition(Vector3 approx, out Vector3 onMesh, float maxDistance)
+        {
+            if (maxDistance <= 0f) maxDistance = 5f;
+            if (NavMesh.SamplePosition(approx, out NavMeshHit hit, maxDistance, NavMesh.AllAreas))
             {
                 onMesh = hit.position;
                 return true;
