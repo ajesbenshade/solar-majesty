@@ -27,7 +27,7 @@ namespace SolarMajesty.Tests
 
         public static void RequireValidationProfile()
         {
-            if (Application.companyName != "SolarMajestyValidation" && Environment.GetEnvironmentVariable("CI") != "true")
+            if (Application.companyName != "SolarMajestyValidation" && !ValidationGate.IsCi)
                 Assert.Ignore("Requires the isolated validation profile (or CI=true); resets that profile's campaign.");
         }
 

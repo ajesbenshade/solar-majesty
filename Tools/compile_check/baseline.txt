@@ -1,4 +1,7 @@
 Editor/AudioImportRules.cs: error CS1061: 'AudioImporterSampleSettings' does not contain a definition for 'preloadAudioData' and no accessible extension method 'preloadAudioData' accepting a first argument of type 'AudioImporterSampleSettings' could be found (are you missing a using directive or an assembly reference?)
+Editor/ReleaseStamp.cs: error CS0103: The name 'NamedBuildTarget' does not exist in the current context
+Editor/ReleaseStamp.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'GetIconSizes'
+Editor/ReleaseStamp.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'SetIcons'
 Editor/WindowsPlaytestBuilder.cs: error CS0103: The name 'NamedBuildTarget' does not exist in the current context
 Editor/WindowsPlaytestBuilder.cs: error CS0103: The name 'StandaloneBuildSubtarget' does not exist in the current context
 Editor/WindowsPlaytestBuilder.cs: error CS0117: 'BuildPlayerOptions' does not contain a definition for 'subtarget'

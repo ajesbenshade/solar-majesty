@@ -11,9 +11,11 @@ is in it being honest, not in it being all ticked.
 - [x] Headless build command ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs))
 - [x] Standalone player builds (macOS verified)
 - [x] Bundle identifier set (`com.solarmajesty.solarmajesty`)
-- [ ] Application icons for every platform size
-- [ ] Code signing and notarisation (macOS), Authenticode (Windows)
-- [ ] `UNITY_LICENSE` / `UNITY_EMAIL` / `UNITY_PASSWORD` secrets added to the GitHub repo so CI can run
+- [x] Application icons for every platform size (`Assets/Art/Icons/SM_AppIcon_*`, 16–1024 px, assigned at build time by `ReleaseStamp`; **Solar Majesty → Build → Apply App Icons** saves them into ProjectSettings)
+- [ ] Code signing and notarisation (macOS), Authenticode (Windows) — pipeline steps exist in `release.yml` and run once the certificates are added as secrets ([RELEASE_PIPELINE.md](RELEASE_PIPELINE.md)); not yet exercised
+- [ ] `UNITY_LICENSE` / `UNITY_EMAIL` / `UNITY_PASSWORD` secrets added to the GitHub repo so CI can run — CI now fails fast with instructions until they are ([RELEASE_PIPELINE.md](RELEASE_PIPELINE.md))
+- [x] Compile check that needs no Unity licence, on every push and PR ([Tools/compile_check](../Tools/compile_check/README.md))
+- [x] Versioned builds (tag `vX.Y.Z` or `0.0.0-dev+sha`) with `build-info.json`, tagged GitHub Releases, optional itch.io / Steam upload ([release.yml](../.github/workflows/release.yml))
 
 ## Systems
 

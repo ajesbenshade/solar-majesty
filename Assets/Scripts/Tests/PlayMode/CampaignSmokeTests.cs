@@ -39,7 +39,7 @@ namespace SolarMajesty.Tests
         public IEnumerator FiveWorlds_BootAndRevisitWithIndependentSeedsAndColonies()
         {
             if (Application.companyName != "SolarMajestyValidation" &&
-                Environment.GetEnvironmentVariable("CI") != "true")
+                !ValidationGate.IsCi)
                 Assert.Ignore("Run in the isolated validation project; this test resets its campaign.");
             SaveSystem.DeleteAll();
             DemoSettings.ClearSave();
@@ -85,7 +85,7 @@ namespace SolarMajesty.Tests
         public IEnumerator EarthLunaReturn_ContinueAndRetry_KeepWorldsSeparate()
         {
             if (Application.companyName != "SolarMajestyValidation" &&
-                Environment.GetEnvironmentVariable("CI") != "true")
+                !ValidationGate.IsCi)
                 Assert.Ignore("Run in the isolated validation project; this test resets its campaign.");
 
             SaveSystem.DeleteAll();

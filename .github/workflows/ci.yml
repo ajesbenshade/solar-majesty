@@ -38,7 +38,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Compile against Unity reference assemblies
-        run: bash Tools/compile_check/check.sh "$GITHUB_WORKSPACE"
+        run: bash Tools/compile_check/check.sh
 
   license:
     # Fails in seconds, with the fix in the message, instead of the Unity step exiting 1 with no
@@ -116,7 +116,7 @@ jobs:
           artifactsPath: test-results
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: ${{ matrix.testMode }} results
-          customParameters: ${{ (matrix.testMode == 'playmode' && env.FULL_SUITE != 'true') && '-testCategory !Soak;!Perf' || '' }}
+          customParameters: ${{ (matrix.testMode == 'playmode' && env.FULL_SUITE != 'true') && '-smCI -testCategory !Soak;!Perf' || '-smCI' }}
 
       - uses: actions/upload-artifact@v7
         if: always()
