@@ -29,23 +29,61 @@ Useful mix:
 
 ## What gets collected automatically
 
-`PlaytestTelemetry` writes one JSON-lines file per session to:
+`PlaytestTelemetry` writes one JSON-lines file per scene load (title, then the colony) to
+`<persistentDataPath>/Playtest/session-<UTC timestamp>.jsonl`. Nothing leaves the machine on its own.
+Company `SolarMajesty`, product `Solar Majesty` (ProjectSettings), so the folder is:
 
-```
-<persistentDataPath>/Playtest/session-<timestamp>.jsonl
-```
+| OS | Folder |
+|---|---|
+| Windows | `%USERPROFILE%\AppData\LocalLow\SolarMajesty\Solar Majesty\Playtest\` |
+| macOS | `~/Library/Application Support/SolarMajesty/Solar Majesty/Playtest/` |
+| Linux | `~/.config/unity3d/SolarMajesty/Solar Majesty/Playtest/` (or `$XDG_CONFIG_HOME/unity3d/...`) |
 
-On macOS that is `~/Library/Application Support/SolarMajesty/Solar Majesty/Playtest/`.
+The Editor writes to the same place as a player on that OS. Paste the Windows path into Explorer's
+address bar; on macOS use Finder → Go → Go to Folder (`Cmd+Shift+G`).
 
-Ask the tester to zip that folder and send it back. It records session start/quit, how far they got
-(body, population, module count, play seconds), speed changes, saves and loads.
+What a session records:
+
+- Session start/quit: build, platform, quit screen, body, module count, play seconds, error count.
+- Tutorial: `tutorial_start`, every `tutorial_step` with the step left, the step entered, and the play
+  seconds spent on it, plus `tutorial_skip` and `tutorial_restart`.
+- Idle gaps: no key, button, or wheel for over 30 s while the world runs (pause, HOLD, menus, and an
+  unfocused window do not count). One `idle_gap` per gap with its length, the tutorial step, and what
+  ended it (input, pause, quit). In the Earth demo the first 30 s also shows a concrete hint for the
+  current step (`idle_hint`).
+- Placement: `placement_invalid` with the building and the red-ghost reason.
+- Flags: `flag_posted`, `flag_bounty` (+ / − on a pole, with whether it now tempts anyone),
+  `flag_cancelled`, `flag_post_failed` (treasury), `flag_refused`, `flag_claimed`.
+- Menus and speed: `pause_opened`, `settings_opened`, `speed_change`; saves and loads.
+- The first five errors or exceptions (`error`, message trimmed); the count goes on `session_quit`.
+
+### Collecting and summarizing
+
+1. Ask the tester to zip the whole `Playtest` folder and send it back with "where did you stop".
+2. Unzip each tester into its own folder, e.g. `playtests/2026-10-tester-a/`.
+3. Run the summarizer (Python 3, standard library only):
+
+   ```
+   python3 Tools/playtest/summarize.py playtests/2026-10-tester-a playtests/2026-10-tester-b -o report.md
+   ```
+
+   Arguments are files or folders (searched recursively for `session-*.jsonl`). Without `-o` it prints
+   to stdout. Title-only sessions are listed but left out of the funnel.
+4. The report has an aggregate funnel (share of sessions reaching each tutorial step, median time on
+   each step, where unfinished sessions stopped, idle gaps and nudges per step, invalid placements) and
+   a per-session timeline. "Finished the Earth beat" means the Earth demo tutorial reached step 4.
+5. Paste the aggregate and anything surprising into [PLAYTEST_REPORTS.md](PLAYTEST_REPORTS.md), and the
+   observed behaviour per tester into [PHASE_1_FRICTION.md](Roadmap/PHASE_1_FRICTION.md).
+
+The telemetry tells you *where* and *how long*. Only the recording tells you *why*.
 
 ## What you watch for
 
 Do not ask leading questions during the session. Afterwards, answer these from the recording:
 
 **The first ten minutes**
-- How long before they place the Colony Commons?
+- How long before they place the Engineer workshop? (The Earth demo starts with the Commons and a HAB
+  already standing.)
 - Do they understand they cannot order anyone around? When does that land?
 - Do they find the flag tool without being told?
 
