@@ -13,6 +13,7 @@ namespace SolarMajesty
     /// LMB is world click. RMB is flag-cancel. Mouse does not pan.
     /// Controller (legacy Input Manager, <see cref="GamepadInput"/>): left stick / D-pad pan,
     /// triggers and right stick Y zoom, right stick X orbits. Full map in Docs/CONTROLS.md.
+    /// Scripted beats (<see cref="CameraDirector"/>) borrow the rig and hand back the exact pose.
     /// </summary>
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Camera))]
@@ -71,6 +72,26 @@ namespace SolarMajesty
         private Quaternion _lastAppliedRot;
         private float _focusDistance = 30f;
 
+        // Scripted beats. While directed the rig reads no camera input and moves nothing;
+        // CameraDirector writes the pose, then EndDirected restores every field below.
+        private struct RigPose
+        {
+            public Vector3 Position;
+            public Quaternion Rotation;
+            public float OrthoSize;
+            public Vector3 TargetPos;
+            public Vector3 SmoothedPos;
+            public float TargetZoom;
+            public float Yaw;
+            public float Pitch;
+            public float FocusDistance;
+            public bool HasApplied;
+            public Vector3 LastAppliedPos;
+            public Quaternion LastAppliedRot;
+        }
+
+        private bool _directed;
+        private RigPose _beforeDirected;
         private OverseerHud _hud;
 
         /// <summary>True while the perspective diorama camera is live.</summary>
@@ -85,6 +106,12 @@ namespace SolarMajesty
         private Quaternion BaseRotation => Quaternion.Euler(_pitch, _yaw, 0f);
         private Vector3 PosePosition => _diorama ? _smoothedPos : transform.position;
         private Vector3 PoseForward => _diorama ? BaseRotation * Vector3.forward : transform.forward;
+
+        /// <summary>True while a <see cref="CameraDirector"/> beat owns the camera.</summary>
+        public bool IsDirected => _directed;
+
+        /// <summary>Farthest orthographic size the player can zoom to.</summary>
+        public float MaxZoomSize => maxZoom;
 
         /// <summary>True while middle-mouse orbit is held. LMB/RMB stay free.</summary>
         public bool IsDragging => _orbiting;
@@ -118,6 +145,7 @@ namespace SolarMajesty
         /// <summary>Smooth pan toward a ground point (does not snap this frame).</summary>
         public void GlanceAt(Vector3 groundPoint, float? orthoSize = null)
         {
+            if (_directed) return; // a soft glance never interrupts a scripted beat
             if (_cam == null) _cam = GetComponent<Camera>();
             AdoptExternalTransform();
 
@@ -143,6 +171,7 @@ namespace SolarMajesty
         /// <summary>Snap look-at focus on the ground plane; keeps current iso pitch/yaw.</summary>
         public void FocusOn(Vector3 groundPoint, float? orthoSize = null)
         {
+            StopDirectedBeat(); // a hard snap wins over a scripted beat
             if (_cam == null) _cam = GetComponent<Camera>();
             AdoptExternalTransform();
 
@@ -176,6 +205,7 @@ namespace SolarMajesty
         /// <summary>Hard-set transform to the current pan/zoom targets (skip smoothing).</summary>
         public void SnapToTarget()
         {
+            StopDirectedBeat();
             if (_cam == null) _cam = GetComponent<Camera>();
             AdoptExternalTransform();
             _smoothedPos = _targetPos;
@@ -202,6 +232,7 @@ namespace SolarMajesty
             var loop = _loop != null ? _loop : FindAnyObjectByType<GameLoop>();
             _loop = loop;
             HandleGamepadButtons(loop);
+            if (_directed) return; // CameraDirector owns the pose this frame
             if (loop != null && !loop.AllowsCamera) return;
 
             AdoptExternalTransform();
@@ -452,6 +483,69 @@ namespace SolarMajesty
                 else if (loop.ActiveTool == OverseerTool.Build || loop.ActiveTool == OverseerTool.Flag)
                     loop.SetTool(OverseerTool.None);
             }
+        }
+
+        /// <summary>Hand the camera to a scripted beat. False if one already has it or there is no camera.</summary>
+        internal bool BeginDirected()
+        {
+            if (_directed) return false;
+            if (_cam == null) _cam = GetComponent<Camera>();
+            if (_cam == null) return false;
+            _orbiting = false;
+            _beforeDirected = new RigPose
+            {
+                Position = transform.position,
+                Rotation = transform.rotation,
+                OrthoSize = _cam.orthographicSize,
+                TargetPos = _targetPos,
+                SmoothedPos = _smoothedPos,
+                TargetZoom = _targetZoom,
+                Yaw = _yaw,
+                Pitch = _pitch,
+                FocusDistance = _focusDistance,
+                HasApplied = _hasApplied,
+                LastAppliedPos = _lastAppliedPos,
+                LastAppliedRot = _lastAppliedRot
+            };
+            _directed = true;
+            return true;
+        }
+
+        /// <summary>Scripted pose for this frame. Ignored unless a beat owns the rig.</summary>
+        internal void ApplyDirectedPose(Vector3 position, Quaternion rotation, float orthoSize)
+        {
+            if (!_directed || _cam == null) return;
+            transform.SetPositionAndRotation(position, rotation);
+            _cam.orthographicSize = Mathf.Max(0.5f, orthoSize);
+            KeepViewAboveGround(); // ortho only; it nudges _targetPos.y, which EndDirected restores
+            DemoAtmosphere.SyncFog(_cam);
+        }
+
+        /// <summary>Give the player back the exact pose they had when the beat began.</summary>
+        internal void EndDirected()
+        {
+            if (!_directed) return;
+            _directed = false;
+            var p = _beforeDirected;
+            transform.SetPositionAndRotation(p.Position, p.Rotation);
+            if (_cam != null) _cam.orthographicSize = p.OrthoSize;
+            _targetPos = p.TargetPos;
+            _smoothedPos = p.SmoothedPos;
+            _targetZoom = p.TargetZoom;
+            _yaw = p.Yaw;
+            _pitch = p.Pitch;
+            _focusDistance = p.FocusDistance;
+            _hasApplied = p.HasApplied;
+            _lastAppliedPos = p.LastAppliedPos;
+            _lastAppliedRot = p.LastAppliedRot;
+            if (_cam != null) DemoAtmosphere.SyncFog(_cam);
+        }
+
+        private void StopDirectedBeat()
+        {
+            if (!_directed) return;
+            if (TryGetComponent(out CameraDirector director)) director.Stop();
+            EndDirected(); // no-op when the director already restored
         }
 
         private void HandleZoom()
