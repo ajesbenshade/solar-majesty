@@ -1,0 +1,10 @@
+		"@DEPOT_ID@"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "@PLATFORM_DIR@/*"
+				"DepotPath" "."
+				"recursive" "1"
+			}
+			"FileExclusion" "*.pdb"
+		}
