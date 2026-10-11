@@ -41,7 +41,7 @@ is in it being honest, not in it being all ticked.
 - [x] Scatter props share cached instanced materials instead of one material each
 - [ ] Fresh Mars still captured as a spaced overseer campus (run **Solar Majesty > Render > Capture Mars Still** in the editor; batch mode cannot drive play mode). Do not score vs the retired VisualTarget PNG.
 - [ ] Campus landmark pass: pad, Starship, solar, extractors readable when placed — empty dirt OK, not fill-every-patch
-- [ ] LOD chains on the hero building meshes
+- [x] LOD chains on the hero building meshes (every spawned building gets a LODGroup: detail drops at 4 % screen height, culls at 1 %; [BuildingLod.cs](../Assets/Scripts/Runtime/BuildingLod.cs), [BuildingLodRules.cs](../Assets/Scripts/Systems/World/BuildingLodRules.cs))
 
 ## Motion
 
