@@ -179,10 +179,12 @@ namespace SolarMajesty
                 else
                 {
                     Debug.Log($"[Build] Failed: {fail}");
+                    PlaytestTelemetry.RecordPlacementInvalid(Selected.displayName, fail);
                 }
             }
             else if (Input.GetMouseButtonUp(0) && !valid && _loop != null && Time.time >= _zoneHintAt)
             {
+                PlaytestTelemetry.RecordPlacementInvalid(Selected.displayName, _blockReason);
                 if (!string.IsNullOrEmpty(_blockReason))
                 {
                     _zoneHintAt = Time.time + 2.5f;

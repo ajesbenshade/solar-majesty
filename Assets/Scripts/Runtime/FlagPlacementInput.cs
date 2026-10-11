@@ -40,6 +40,7 @@ namespace SolarMajesty
         public bool ShownBountyAffordable => HasSelectedPosted || CanAffordSelectedBounty();
 
         private FlagHandle _posted;
+        private float _bountyHintAt;
 
         /// <summary>The pole the player clicked. +/- edits this bounty. Null when none is selected.</summary>
         public FlagHandle SelectedPosted
@@ -137,6 +138,13 @@ namespace SolarMajesty
         public void NudgeBounty(float delta)
         {
             var selected = SelectedPosted;
+            string noTarget = FirstHourHints.BountyKeyHint(selected != null, enabledPlacement);
+            if (noTarget != null && _loop != null && Time.unscaledTime >= _bountyHintAt)
+            {
+                // Pressing + with nothing selected used to do nothing at all.
+                _bountyHintAt = Time.unscaledTime + 4f;
+                _loop.LogOverseer(noTarget);
+            }
             float before = selected != null ? selected.CurrentBounty : 0f;
             int escrowBefore = selected != null ? selected.EscrowMetals : 0;
             float pending = bounty;
@@ -157,6 +165,7 @@ namespace SolarMajesty
                 return;
             _loop?.RefreshFlagInterest();
             string kind = selected.Data != null ? selected.Data.flagType.ToString() : "Flag";
+            PlaytestTelemetry.RecordFlagBounty(kind, before, selected.CurrentBounty, selected.InterestCount);
             Debug.Log(
                 $"[Flags] {kind} bounty ${before:F0} -> ${selected.CurrentBounty:F0} " +
                 $"escrow {escrowBefore} -> {selected.EscrowMetals} EU");
@@ -318,7 +327,13 @@ namespace SolarMajesty
 
             FlagHandle handle = TryPost(_selected, world, bounty);
             if (handle == null)
+            {
                 Debug.Log("[Flags] Cannot post — not enough metals in the stockpile.");
+                // The click used to fail silently; say why and log it for the playtest report.
+                int cost = FlagBountySync.PostCost(_selected, bounty);
+                _loop?.LogOverseer(FirstHourHints.PostRefused(_selected.displayName, cost));
+                PlaytestTelemetry.RecordFlagPostFailed(_selected.flagType.ToString(), cost, "treasury");
+            }
             else
                 ClearPostedSelection();
         }

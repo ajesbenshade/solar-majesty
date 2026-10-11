@@ -1,0 +1,6 @@
+{"t":3.3,"e":"session_start","build":"0.4.0","build_guid":"3f2a9c","unity":"6000.5.10f1","platform":"LinuxPlayer"}
+{"t":6.0,"e":"tutorial_start","flow":"first_hour","step":"0","goal":"4"}
+{"t":101.7,"e":"tutorial_step","step":"1","from":"0","seconds":"95.7","goal":"4","flow":"first_hour"}
+{"t":119.0,"e":"tutorial_skip","flow":"first_hour","step":"1","goal":"4","seconds":"17.3"}
+{"t":180.4,"e":"flag_posted","type":"Explore","bounty":"400","escrow":"400","interest":"0"}
+{"t":181.0,"e":"speed_change","speed":"3x"}
