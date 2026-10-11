@@ -5027,6 +5027,8 @@ namespace SolarMajesty
         {
             Stats.BodiesConquered++;
             Achievements.Evaluate(Stats);
+            // Victory camera beat over the Commons. No-op under Reduce Motion, in batch, or with no rig.
+            CameraDirector.TryPlayVictory(_isoCam, ColonyLayout.CampusOriginFor(FocusedCampus));
         }
 
         /// <summary>Same-body reseed (sandbox rematch).</summary>
@@ -5076,6 +5078,19 @@ namespace SolarMajesty
             BodySeed.Ensure(next.Value, 0);
             BodySeed.AdvanceForNextConquest();
             DemoAudio.PlayRetry();
+            // Launch camera beat: everything above is already committed; only the reload waits
+            // for the beat (any input skips it). Without a beat the reload is immediate, as before.
+            if (CameraDirector.TryPlayLaunch(_isoCam, pad, LaunchSite.Craft))
+                StartCoroutine(ReloadAfterLaunchBeat());
+            else
+                ReloadActiveScene();
+        }
+
+        private System.Collections.IEnumerator ReloadAfterLaunchBeat()
+        {
+            float giveUp = Time.unscaledTime + CameraBeatMath.LaunchDuration + 1f;
+            while (CameraDirector.IsPlaying(_isoCam) && Time.unscaledTime < giveUp)
+                yield return null;
             ReloadActiveScene();
         }
 

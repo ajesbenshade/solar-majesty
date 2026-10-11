@@ -5,12 +5,64 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Authored Alpha Centauri-style tech tree for the campaign spine.
+    /// The table below is the default. A <see cref="TechDatabase"/> at
+    /// <c>Resources/Data/TechDatabase</c> overrides it entry by entry (see Docs/DATA_CATALOGS.md).
     /// </summary>
     public static class TechCatalog
     {
-        private static TechDef[] _all;
+        private static TechDef[] _defaults;
+        private static IReadOnlyList<TechDef> _all;
 
-        public static IReadOnlyList<TechDef> All => _all ??= Build();
+        public static IReadOnlyList<TechDef> All
+        {
+            get
+            {
+                if (_all != null) return _all;
+                var db = CatalogDatabase.Load<TechDatabase>(TechDatabase.ResourcePath, out bool settled);
+                var resolved = Resolve(db);
+                if (settled) _all = resolved;
+                return resolved;
+            }
+        }
+
+        /// <summary>The built-in table, ignoring any database asset.</summary>
+        public static IReadOnlyList<TechDef> Defaults => _defaults ??= Build();
+
+        /// <summary>True when a database asset is supplying the tree.</summary>
+        public static bool UsingDatabase { get; private set; }
+
+        /// <summary>Use <paramref name="db"/> from now on; null pins the built-in table.</summary>
+        public static void UseDatabase(TechDatabase db) => _all = Resolve(db);
+
+        /// <summary>Forget the resolved tree; the next read loads the Resources asset again.</summary>
+        public static void ReloadDatabase()
+        {
+            _all = null;
+            UsingDatabase = false;
+        }
+
+        private static IReadOnlyList<TechDef> Resolve(TechDatabase db)
+        {
+            UsingDatabase = db != null && db.techs != null && db.techs.Count > 0;
+            if (!UsingDatabase) return Defaults;
+            return CatalogDatabase.Merge(
+                Defaults,
+                db.ToDefs(DefaultFor),
+                d => d.Id,
+                id => id != TechId.None,
+                "TechDatabase");
+        }
+
+        private static TechDef DefaultFor(TechId id)
+        {
+            var list = Defaults;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Id == id)
+                    return list[i];
+            }
+            return null;
+        }
 
         public static TechDef Get(TechId id)
         {
