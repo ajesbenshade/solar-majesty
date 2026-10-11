@@ -76,7 +76,37 @@ Loudness is set per tier (BS.1770 momentary max) so importance reads by ear:
 
 Ambient beds: one per world, looping seamlessly, plus a "campus B" variation. Earth has wind and plant hum. Luna has a near-silent suit fan and hull ticks. Mars has thin wind and grit. Belt has far drills and creaks. Europa has ice groans and a deep drone.
 
-`DemoAudio` picks takes without repeats (`Systems/SfxVariantPicker.cs`) and rate-limits each event (`Systems/SfxRateLimiter.cs`), so twenty robots claiming in one frame make one sound. World-positioned overloads (`PlayBite(at)`, `PlayBuildComplete(at)`, …) go through `SpatialAudio`. UI sounds and alerts stay 2D. Everything routes through `SoundBus`. The completion clunk now plays when construction actually finishes. Before, it played at placement, on top of the placement sound.
+`DemoAudio` picks takes without repeats (`Systems/SfxVariantPicker.cs`) and rate-limits each event (`Systems/SfxRateLimiter.cs`), so twenty robots claiming in one frame make one sound. Everything routes through `SoundBus`. The completion clunk now plays when construction actually finishes. Before, it played at placement, on top of the placement sound.
+
+Every event has three rendered takes, including `extract` (rock crunch, hopper rattle, canister seal), `build_complete` (heavy clunk, latch, hydraulic hiss, bell arpeggio) and `research` (rising pentatonic bell shimmer into a held chord). They all decode, and their sample peaks sit between −4.8 and −9.3 dBFS. None of them falls through to the procedural chord. `SfxClipCoverageTests` loads take 1 of every event through the same `Resources` path `DemoAudio` uses, so a missing clip fails a test instead of quietly going synthetic.
+
+### Spatial or 2D
+
+A sound tied to a spot on the map is positioned. A sound about the colony as a whole, or about the interface, is 2D. Positioned overloads (`PlayBite(at)`, `PlayBuildComplete(at)`, …) go through `SpatialAudio`: a pool of 16 3D voices with linear roll-off from 6 to 70 m, no Doppler, and the volume of the event's `SoundBus` channel at play time. They get a +35 % make-up gain (`SpatialMakeup`), because the listener rides the camera about 30 m up and a centred sound would otherwise land about 4 dB under its 2D level. Their pitch jitter is ±3 %, since the takes already supply variety.
+
+| Spatial (at the source) | Where the position comes from |
+|---|---|
+| `build_place` | the snapped placement cell |
+| `flag_post` | the flag's ground point |
+| `build_complete`, `construction_tick` | the construction order's position |
+| `claim`, `extract`, `credits`, `level_up`, `heal`, `equip`, `robot_down`, `robot_hit`, `bite` | the robot (for `bite`, the robot being bitten) |
+| `repair` | the repaired building |
+| `robot_spawn` | the workshop's spawn point |
+| `party_form` | the party leader, or the inn outpost |
+| `stalker_growl`, `stalker_death` | the stalker |
+| `launch_ready` | the launch pad |
+| Orbital powers (`robot_hit`, `heal`, `claim`, `credits`) | the strike or drop target, the affected robot, or the campus centre for Till Audit |
+
+| 2D on purpose | Why |
+|---|---|
+| `ui_hover`, `ui_click`, `retry` | interface feedback |
+| `alert_warning`, `alert_critical` | about the colony, and must be heard wherever the camera is |
+| `research` | a tech unlock is colony-wide, not tied to a building |
+| `credits` when the trade ship lands | paired with the toast, so it works as a notification |
+| `launch` | the climax of a world: fills the room and ducks the ambient bed |
+| `victory`, `fail` | outcomes. They play when the music stinger is missing; `fail` also marks a downed field party |
+
+The 2D overloads of the positional events (`PlayClaim()`, `PlayBite()`, …) are still there for callers with no world position. Apart from the trade-ship `PlayCredits()`, nothing in `Runtime` calls them now.
 
 ## Character voices
 

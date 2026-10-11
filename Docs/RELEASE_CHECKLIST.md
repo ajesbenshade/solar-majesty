@@ -58,8 +58,8 @@ is in it being honest, not in it being all ticked.
 - [x] Pooled 3D positional one-shots ([SpatialAudio.cs](../Assets/Scripts/Runtime/Audio/SpatialAudio.cs))
 - [x] Adaptive four-stem generative score ([AdaptiveMusic.cs](../Assets/Scripts/Runtime/Audio/AdaptiveMusic.cs))
 - [x] Synthesised Overseer voice and robot chirps ([OverseerVoice.cs](../Assets/Scripts/Runtime/Audio/OverseerVoice.cs))
-- [ ] Existing one-shots migrated from 2D `DemoAudio` to `SpatialAudio`
-- [ ] Missing clips authored: `sfx_extract`, `sfx_build_complete`, `sfx_research` (currently fall through to synthesis)
+- [x] Existing one-shots migrated from 2D `DemoAudio` to `SpatialAudio` (world events are positioned; UI, alerts, research and outcomes stay 2D on purpose; see [AUDIO.md](AUDIO.md#spatial-or-2d))
+- [x] Missing clips authored: `sfx_extract`, `sfx_build_complete`, `sfx_research` (three rendered takes each in `Resources/Audio/Sfx/`, guarded by `SfxClipCoverageTests`)
 
 ## Interface
 
