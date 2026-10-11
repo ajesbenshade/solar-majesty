@@ -120,12 +120,18 @@ jobs:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          # See ci.yml: the container only sees variables listed here.
+          GAME_CI_DOCKER_ENV: |
+            CI=true
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
+          cliVersion: v0.1.72
           testMode: ${{ matrix.testMode }}
           artifactsPath: test-results
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: release ${{ matrix.testMode }} results
+          # Soak and Perf run nightly in ci.yml; a release gates on the same suite as a PR.
+          customParameters: ${{ matrix.testMode == 'playmode' && '-testCategory !Soak;!Perf' || '' }}
 
       - uses: actions/upload-artifact@v7
         if: always()
