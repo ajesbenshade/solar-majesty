@@ -3014,7 +3014,7 @@ namespace SolarMajesty
             }
 
             bool iron = ReplayRules.BlocksManualSavesAndReloads;
-            float h = iron ? 340f : 400f;
+            float h = iron ? 372f : 432f;
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 440f, h);
             var c = Panel(rect, "Paused");
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
@@ -3062,6 +3062,12 @@ namespace SolarMajesty
             if (!iron) y += 40f;
             if (GUI.Button(new Rect(c.x, y, c.width, 32f), "QUIT", _chipOff))
                 _loop.QuitDemo();
+            y += 40f;
+            if (GUI.Button(new Rect(c.x, y, c.width, 24f), "REPORT A BUG  ·  open logs", _chipOff))
+            {
+                string path = ErrorLogHook.OpenLogsFolder();
+                Notify(string.IsNullOrEmpty(path) ? "Logs folder opened." : "Log path copied — attach that file to your report.", 4f);
+            }
         }
 
         private void DrawPauseSlots()
