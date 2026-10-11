@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Common.props" />
+  <!-- Runtime + EditMode/PlayMode tests in one assembly (Runtime has a few Unity-6-only calls, so it can't be a clean DLL). -->
+  <PropertyGroup>
+    <AssemblyName>SolarMajesty.RuntimeTests</AssemblyName>
+    <DefineConstants>$(DefineConstants);UNITY_INCLUDE_TESTS;UNITY_EDITOR</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)Assets/Scripts/Runtime/**/*.cs" />
+    <Compile Include="$(RepoRoot)Assets/Scripts/Tests/**/*.cs" />
+    <Compile Include="../stubs/PackageStubs.cs" />
+    <Compile Include="../stubs/TestStubs.cs" />
+    <ProjectReference Include="../systems/Systems.csproj" />
+    <Reference Include="System.Net.Http" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="UnityTechnologies.UnityEditor" Version="2020.2.2.1" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

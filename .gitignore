@@ -74,3 +74,8 @@ Tools/local_ai/*.log
 Tools/audio/.venv/
 Tools/audio/models/
 Tools/audio/preview/
+
+# Compile-check tool (Tools/compile_check) — hand-written projects, not Unity-generated
+!Tools/compile_check/**/*.csproj
+Tools/compile_check/**/bin/
+Tools/compile_check/**/obj/

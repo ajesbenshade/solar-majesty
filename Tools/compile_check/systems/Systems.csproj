@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Common.props" />
+  <PropertyGroup><AssemblyName>SolarMajesty.Systems</AssemblyName></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)Assets/Scripts/**/*.cs" Exclude="$(RepoRoot)Assets/Scripts/Runtime/**;$(RepoRoot)Assets/Scripts/Editor/**;$(RepoRoot)Assets/Scripts/Tests/**" />
+  </ItemGroup>
+</Project>
