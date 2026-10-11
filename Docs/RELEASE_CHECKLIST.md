@@ -26,7 +26,7 @@ is in it being honest, not in it being all ticked.
 - [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs))
 - [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs))
 - [x] Named robots with service records ([SpecialistIdentity.cs](../Assets/Scripts/Systems/SpecialistIdentity.cs))
-- [ ] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`)
+- [x] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`): optional `Resources/Data` overrides, code tables stay the default ([DATA_CATALOGS.md](DATA_CATALOGS.md))
 - [x] Ironman wired to the run configuration (`ReplayRules.Ironman` chip, latched at New Game / Continue; blocks manual saves and body restarts; No Second Draft evaluates on body conquest)
 
 ## Look
@@ -50,7 +50,8 @@ is in it being honest, not in it being all ticked.
 - [x] Tread scrolling on tracked classes
 - [x] Camera shake on impacts, module loss, and construction
 - [x] Edge scroll and mouse wheel zoom
-- [ ] Scripted camera beat for launch and victory
+- [x] Scripted camera beat for launch and victory ([CameraDirector.cs](../Assets/Scripts/Runtime/Camera/CameraDirector.cs); skipped under Reduce Motion, any input hands back control; needs an in-editor play check)
+- [x] Controller support for camera, speed and pause via the legacy Input Manager ([CONTROLS.md](CONTROLS.md)); no pointer or HUD navigation by controller; needs a play check with a real pad
 
 ## Audio
 
