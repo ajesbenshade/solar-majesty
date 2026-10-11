@@ -95,6 +95,8 @@ namespace SolarMajesty
                 PlanetArchitectureDresser.Dress(root, category, _body.Value, worldW, worldD);
             if (ghost)
                 StripColliders(root);
+            else
+                BuildingLod.Apply(root); // after dressing, so Dress_Arch parts are in the LODs
             return root;
         }
 
