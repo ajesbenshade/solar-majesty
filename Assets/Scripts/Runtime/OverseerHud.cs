@@ -3238,6 +3238,14 @@ namespace SolarMajesty
                 DemoSettings.ReduceMotion = !DemoSettings.ReduceMotion;
             y += 32f;
 
+            // Controller support (Docs/CONTROLS.md). Saved at once; off is for a drifting or stray device.
+            string padState = !GamepadInput.Enabled ? "OFF"
+                : !GamepadInput.AxesAvailable ? "ON  ·  NOT SET UP"
+                : GamepadInput.Connected ? "ON" : "ON  ·  NONE CONNECTED";
+            if (Chip(new Rect(c.x, y, c.width, 26f), $"CONTROLLER  ·  {padState}", GamepadInput.Enabled))
+                GamepadInput.Enabled = !GamepadInput.Enabled;
+            y += 32f;
+
             var cbMode = Accessibility.Mode;
             if (Chip(new Rect(c.x, y, c.width, 26f),
                     $"COLOUR VISION  ·  {Accessibility.ModeLabel(cbMode).ToUpperInvariant()}",

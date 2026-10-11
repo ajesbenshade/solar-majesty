@@ -11,6 +11,8 @@ namespace SolarMajesty
     /// WASD pans. Q zooms out, E zooms in. The wheel zooms toward the ground point under the cursor.
     /// MMB drag orbits yaw (and a little pitch).
     /// LMB is world click. RMB is flag-cancel. Mouse does not pan.
+    /// Controller (legacy Input Manager, <see cref="GamepadInput"/>): left stick / D-pad pan,
+    /// triggers and right stick Y zoom, right stick X orbits. Full map in Docs/CONTROLS.md.
     /// </summary>
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Camera))]
@@ -38,6 +40,10 @@ namespace SolarMajesty
         [SerializeField] private float minPitch = 22f;
         [SerializeField] private float maxPitch = 42f;
 
+        [Header("Controller")]
+        [Tooltip("Degrees per second at full right-stick tilt.")]
+        [SerializeField] private float padOrbitSpeed = 90f;
+
         private const float EdgeMargin = 6f;
 
         /// <summary>How far past the playable map the ground focus may sit. A skirt, not a void.</summary>
@@ -64,6 +70,8 @@ namespace SolarMajesty
         private Vector3 _lastAppliedPos;
         private Quaternion _lastAppliedRot;
         private float _focusDistance = 30f;
+
+        private OverseerHud _hud;
 
         /// <summary>True while the perspective diorama camera is live.</summary>
         public static bool DioramaActive { get; private set; }
@@ -193,6 +201,7 @@ namespace SolarMajesty
         {
             var loop = _loop != null ? _loop : FindAnyObjectByType<GameLoop>();
             _loop = loop;
+            HandleGamepadButtons(loop);
             if (loop != null && !loop.AllowsCamera) return;
 
             AdoptExternalTransform();
@@ -210,7 +219,9 @@ namespace SolarMajesty
             }
 
             HandleMouseOrbit();
+            HandleGamepadOrbit();
             HandleKeyboardPan();
+            HandleGamepadPan();
             HandleEdgeScroll();
             HandleZoom();
             TickShake();
@@ -372,6 +383,77 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>Left stick (or D-pad) pans like WASD, with the stick's analog tilt as speed.</summary>
+        private void HandleGamepadPan()
+        {
+            Vector2 pad = GamepadInput.Pan();
+            if (Mathf.Abs(pad.x) < 0.001f && Mathf.Abs(pad.y) < 0.001f) return;
+            PanBy(pad.x, pad.y);
+        }
+
+        /// <summary>Right stick X orbits yaw around the ground point at screen centre (MMB's yaw).</summary>
+        private void HandleGamepadOrbit()
+        {
+            if (_orbiting) return; // MMB drag already owns the orbit
+            float spin = GamepadInput.Orbit();
+            if (Mathf.Abs(spin) < 0.001f) return;
+            if (!_diorama) ReadAnglesFromTransform();
+            _orbitFocus = GroundLookAt();
+            _yaw += spin * padOrbitSpeed * Time.unscaledDeltaTime;
+            ApplyOrbit();
+        }
+
+        /// <summary>
+        /// Controller buttons that are not camera moves. Start = pause menu, LB / RB = slower /
+        /// faster, X = hold, Y = research, A = jump to the most urgent alert, B = back out of
+        /// research or a placement tool. Runs before the paused-camera early-out so Start can unpause.
+        /// </summary>
+        private void HandleGamepadButtons(GameLoop loop)
+        {
+            if (loop == null || !GamepadInput.Active) return;
+
+            if (GamepadInput.Pressed(GamepadInput.ButtonStart))
+            {
+                if (loop.Screen == DemoScreen.Settings) loop.CloseSettings();
+                else loop.TogglePause();
+                return;
+            }
+
+            if (!loop.IsPlaying) return;
+            if (_hud == null) _hud = FindAnyObjectByType<OverseerHud>();
+
+            int step = GamepadMath.SpeedStep(
+                GamepadInput.Pressed(GamepadInput.ButtonLB), GamepadInput.Pressed(GamepadInput.ButtonRB));
+            bool hold = GamepadInput.Pressed(GamepadInput.ButtonX);
+            if (step != 0 || hold)
+            {
+                if (step > 0) SimSpeed.Faster();
+                else if (step < 0) SimSpeed.Slower();
+                else SimSpeed.TogglePause();
+                loop.OnSpeedChanged();
+            }
+
+            if (GamepadInput.Pressed(GamepadInput.ButtonY) && _hud != null)
+                _hud.ToggleTechPanel();
+
+            if (GamepadInput.Pressed(GamepadInput.ButtonA))
+            {
+                Alert urgent = loop.Alerts.MostUrgentWithPosition();
+                if (urgent != null)
+                {
+                    loop.GlanceAt(urgent.WorldPosition, force: true);
+                    loop.Alerts.Acknowledge(urgent);
+                }
+            }
+
+            if (GamepadInput.Pressed(GamepadInput.ButtonB))
+            {
+                if (_hud != null && _hud.TechPanelOpen) _hud.CloseTechPanel();
+                else if (loop.ActiveTool == OverseerTool.Build || loop.ActiveTool == OverseerTool.Flag)
+                    loop.SetTool(OverseerTool.None);
+            }
+        }
+
         private void HandleZoom()
         {
             float dir = 0f;
@@ -380,6 +462,7 @@ namespace SolarMajesty
                 if (Input.GetKey(KeyCode.Q)) dir += 1f;
                 if (Input.GetKey(KeyCode.E)) dir -= 1f;
             }
+            dir = Mathf.Clamp(dir + GamepadInput.Zoom(), -1f, 1f);
             if (Mathf.Abs(dir) > 0.01f)
             {
                 _targetZoom = Mathf.Clamp(
