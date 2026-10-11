@@ -41,7 +41,7 @@ is in it being honest, not in it being all ticked.
 - [x] Scatter props share cached instanced materials instead of one material each
 - [ ] Fresh Mars still captured as a spaced overseer campus (run **Solar Majesty > Render > Capture Mars Still** in the editor; batch mode cannot drive play mode). Do not score vs the retired VisualTarget PNG.
 - [ ] Campus landmark pass: pad, Starship, solar, extractors readable when placed — empty dirt OK, not fill-every-patch
-- [ ] LOD chains on the hero building meshes
+- [x] LOD chains on the hero building meshes (every spawned building gets a LODGroup: detail drops at 4 % screen height, culls at 1 %; [BuildingLod.cs](../Assets/Scripts/Runtime/BuildingLod.cs), [BuildingLodRules.cs](../Assets/Scripts/Systems/World/BuildingLodRules.cs))
 
 ## Motion
 
@@ -58,8 +58,8 @@ is in it being honest, not in it being all ticked.
 - [x] Pooled 3D positional one-shots ([SpatialAudio.cs](../Assets/Scripts/Runtime/Audio/SpatialAudio.cs))
 - [x] Adaptive four-stem generative score ([AdaptiveMusic.cs](../Assets/Scripts/Runtime/Audio/AdaptiveMusic.cs))
 - [x] Synthesised Overseer voice and robot chirps ([OverseerVoice.cs](../Assets/Scripts/Runtime/Audio/OverseerVoice.cs))
-- [ ] Existing one-shots migrated from 2D `DemoAudio` to `SpatialAudio`
-- [ ] Missing clips authored: `sfx_extract`, `sfx_build_complete`, `sfx_research` (currently fall through to synthesis)
+- [x] Existing one-shots migrated from 2D `DemoAudio` to `SpatialAudio` (world events are positioned; UI, alerts, research and outcomes stay 2D on purpose; see [AUDIO.md](AUDIO.md#spatial-or-2d))
+- [x] Missing clips authored: `sfx_extract`, `sfx_build_complete`, `sfx_research` (three rendered takes each in `Resources/Audio/Sfx/`, guarded by `SfxClipCoverageTests`)
 
 ## Interface
 
