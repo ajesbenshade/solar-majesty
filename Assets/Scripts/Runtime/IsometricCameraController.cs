@@ -387,10 +387,10 @@ namespace SolarMajesty
             if (InputBindings.TextEntryActive) return; // typing flag orders
             float h = 0f;
             float v = 0f;
-            if (Input.GetKey(KeyCode.D)) h += 1f;
-            if (Input.GetKey(KeyCode.A)) h -= 1f;
-            if (Input.GetKey(KeyCode.W)) v += 1f;
-            if (Input.GetKey(KeyCode.S)) v -= 1f;
+            if (InputBindings.Held(GameAction.PanRight)) h += 1f;
+            if (InputBindings.Held(GameAction.PanLeft)) h -= 1f;
+            if (InputBindings.Held(GameAction.PanUp)) v += 1f;
+            if (InputBindings.Held(GameAction.PanDown)) v -= 1f;
             if (Mathf.Abs(h) < 0.01f && Mathf.Abs(v) < 0.01f) return;
             PanBy(h, v);
         }
@@ -553,8 +553,8 @@ namespace SolarMajesty
             float dir = 0f;
             if (!InputBindings.TextEntryActive)
             {
-                if (Input.GetKey(KeyCode.Q)) dir += 1f;
-                if (Input.GetKey(KeyCode.E)) dir -= 1f;
+                if (InputBindings.Held(GameAction.ZoomOut)) dir += 1f;
+                if (InputBindings.Held(GameAction.ZoomIn)) dir -= 1f;
             }
             dir = Mathf.Clamp(dir + GamepadInput.Zoom(), -1f, 1f);
             if (Mathf.Abs(dir) > 0.01f)

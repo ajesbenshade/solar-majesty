@@ -84,19 +84,13 @@ namespace SolarMajesty
                 return;
             }
 
-            // Hotkeys 1–0 pick the build menu's rows in order, in every mode.
+            // Hotkeys 1–0 (by default) pick the build menu's rows in order, in every mode.
             if (!InputBindings.TextEntryActive) // typing flag orders
             {
-                if (Input.GetKeyDown(KeyCode.Alpha1)) SelectVisibleSlot(0);
-                if (Input.GetKeyDown(KeyCode.Alpha2)) SelectVisibleSlot(1);
-                if (Input.GetKeyDown(KeyCode.Alpha3)) SelectVisibleSlot(2);
-                if (Input.GetKeyDown(KeyCode.Alpha4)) SelectVisibleSlot(3);
-                if (Input.GetKeyDown(KeyCode.Alpha5)) SelectVisibleSlot(4);
-                if (Input.GetKeyDown(KeyCode.Alpha6)) SelectVisibleSlot(5);
-                if (Input.GetKeyDown(KeyCode.Alpha7)) SelectVisibleSlot(6);
-                if (Input.GetKeyDown(KeyCode.Alpha8)) SelectVisibleSlot(7);
-                if (Input.GetKeyDown(KeyCode.Alpha9)) SelectVisibleSlot(8);
-                if (Input.GetKeyDown(KeyCode.Alpha0)) SelectVisibleSlot(9);
+                for (int slot = 0; slot < 10; slot++)
+                {
+                    if (InputBindings.Down(InputBindings.BuildSlot(slot))) SelectVisibleSlot(slot);
+                }
             }
 
             if (!enabledPlacement || Selected == null)

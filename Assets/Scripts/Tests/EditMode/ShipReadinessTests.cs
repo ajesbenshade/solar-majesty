@@ -35,8 +35,8 @@ namespace SolarMajesty.Tests
         [Test]
         public void TryRebind_AssignsAFreeKey()
         {
-            Assert.IsTrue(InputBindings.TryRebind(GameAction.ToolBuild, KeyCode.Y));
-            Assert.AreEqual(KeyCode.Y, InputBindings.Key(GameAction.ToolBuild));
+            Assert.IsTrue(InputBindings.TryRebind(GameAction.ToolBuild, KeyCode.H));
+            Assert.AreEqual(KeyCode.H, InputBindings.Key(GameAction.ToolBuild));
         }
 
         /// <summary>Double-assigning would leave one action silently unreachable.</summary>
@@ -71,7 +71,7 @@ namespace SolarMajesty.Tests
         public void ResetToDefaults_UndoesRebinds()
         {
             KeyCode original = InputBindings.DefaultKey(GameAction.ToolBuild);
-            InputBindings.TryRebind(GameAction.ToolBuild, KeyCode.Y);
+            InputBindings.TryRebind(GameAction.ToolBuild, KeyCode.H);
 
             InputBindings.ResetToDefaults();
 
