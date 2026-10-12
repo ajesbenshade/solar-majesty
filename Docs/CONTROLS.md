@@ -70,6 +70,32 @@ Any key, mouse button, wheel turn, edge scroll or controller input (after the fi
 | Fatigue every robot (debug) | `R` |
 | Play a locked world from the title screen | `Shift` + click |
 
+## Rebinding keys
+
+Settings → **CONTROLS** lists every keyboard action by group, each with its current key.
+
+- **To rebind:** click a row, then press the new key. **Esc** cancels.
+- **A key already in use is refused,** and the screen names the action using it. So you can never end up with two actions on one key, or an action with no key.
+- **RESET TO DEFAULTS** puts every key back.
+- **Gameplay hotkeys stand down** while a rebind waits for its key, just as they do while you type flag orders.
+- **The keys shown on the HUD** (tool buttons, flag list, banners) are always your current bindings.
+
+Some keys are fixed on purpose and can't be rebound or taken by another action:
+
+| Key | Why it's fixed |
+|---|---|
+| **Esc** | The universal back key. It opens the pause menu, closes panels, leaves text boxes and cancels a rebind. |
+| **Shift** | The modifier: keep placing after a build, add to a selection, open a locked world from the title screen. |
+| **Mouse buttons** | Clicks, not hotkeys. |
+| **Enter / Esc in text boxes and dialogs** | They confirm or cancel the box itself. |
+
+**Keypad twins:** Keypad + and −, and Keypad Enter, always work alongside their actions (bounty up/down and Confirm), whatever those are bound to. They count as taken.
+
+**Saved bindings:** bindings are stored per action in PlayerPrefs (`SM_Bindings`).
+- **Actions added in later versions** start on their default key.
+- **If you had already given that default key to something else,** the new action starts unbound (shown as —) rather than firing twice.
+- **The controller layout** is listed read-only at the bottom of the screen; see [Controller](#controller).
+
 ## Controller
 
 Any XInput controller (Xbox and compatible pads) works on Windows. Controller support is on by default, and nothing is read until a controller is plugged in. Settings → **CONTROLLER** turns it off, for example when a drifting or stray device keeps nudging the map. The chip also reports **NONE CONNECTED** or **NOT SET UP** (the Input Manager axes are missing).

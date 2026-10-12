@@ -72,7 +72,7 @@ is in it being honest, not in it being all ticked.
 - [x] Map overlays for power, threat, and defence coverage ([MapOverlay.cs](../Assets/Scripts/Runtime/UI/MapOverlay.cs))
 - [ ] Remaining IMGUI panels migrated to UI Toolkit (`OverseerHud.cs` is still ~2,100 lines)
 - [ ] Tooltips on every panel
-- [ ] Controls screen generated from `InputBindings` (the binding system exists; the screen does not)
+- [x] Controls screen generated from `InputBindings` (Settings → CONTROLS: grouped list, click-to-rebind with conflict and reserved-key refusal, reset to defaults, read-only controller map; [CONTROLS.md](CONTROLS.md#rebinding-keys)); needs a play check
 
 ## Accessibility
 
@@ -82,8 +82,8 @@ is in it being honest, not in it being all ticked.
 - [x] Severity carried by icon and text prefix as well as colour
 - [x] Frame cap selector
 - [x] Rebindable keys with conflict rejection ([InputBindings.cs](../Assets/Scripts/Systems/InputBindings.cs))
-- [ ] Runtime input routed through `InputBindings` (roughly 100 literal `KeyCode` sites remain)
-- [ ] Gamepad support
+- [x] Runtime input routed through `InputBindings` (every gameplay hotkey; defaults equal the old keys; only Esc, Shift, mouse buttons and text-box Enter/Esc stay literal on purpose)
+- [x] Gamepad support (see the controller line under Motion and [CONTROLS.md](CONTROLS.md#controller))
 - [ ] Independent UI text scaling
 
 ## Localization
