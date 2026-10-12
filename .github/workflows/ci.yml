@@ -14,23 +14,79 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  checks: write # unity-test-runner publishes a check run with the results
+
 env:
   UNITY_VERSION: 6000.5.10f1
+  # Run every JavaScript action on Node 24 now, ahead of GitHub's switch.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  compile-check:
+    # Needs no Unity and no secrets, so it runs on every push and PR, forks included: compiles
+    # Systems, Runtime + tests and Editor against Unity reference assemblies in about a minute.
+    # The Unity jobs below do not wait for it; they are the authority, this is the fast signal.
+    name: C# compile check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compile against Unity reference assemblies
+        run: bash Tools/compile_check/check.sh
+
+  license:
+    # Fails in seconds, with the fix in the message, instead of the Unity step exiting 1 with no
+    # results. Setup: Docs/RELEASE_PIPELINE.md.
+    name: Unity license preflight
+    runs-on: ubuntu-24.04
+    outputs:
+      ok: ${{ steps.check.outputs.ok }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: Tools/release
+
+      - name: Check Unity license secrets
+        id: check
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        run: bash Tools/release/check-unity-secrets.sh
+
+      - name: Resolve build version
+        id: version
+        run: bash Tools/release/version.sh
+
   tests:
     name: ${{ matrix.testMode }} tests
-    runs-on: ubuntu-latest
+    needs: license
+    if: needs.license.outputs.ok == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
         testMode: [editmode, playmode]
+    env:
+      # Nightly and manual runs include the long PlayMode categories (Soak, Perf); pushes and
+      # pull requests leave them out.
+      FULL_SUITE: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           lfs: true
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: Library
           key: Library-tests-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
@@ -38,29 +94,50 @@ jobs:
             Library-tests-
             Library-
 
+      # Unity runs inside GameCI's container, which does not inherit this job's environment:
+      # GAME_CI_DOCKER_ENV (the CLI's --dockerEnv) is how CI / SM_* reach the tests.
+      # customParameters is word-split without shell quote handling, so the category filter is
+      # written unquoted; quotes would become part of the category name.
       - name: Run ${{ matrix.testMode }} tests
         uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          GAME_CI_DOCKER_ENV: |
+            CI=true
+            SM_SOAK_MINUTES=10
+            SM_PERF_OUT=/github/workspace/test-results/perf-${{ matrix.testMode }}.json
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
+          cliVersion: v0.1.72
           testMode: ${{ matrix.testMode }}
           artifactsPath: test-results
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: ${{ matrix.testMode }} results
+          customParameters: ${{ (matrix.testMode == 'playmode' && env.FULL_SUITE != 'true') && '-smCI -testCategory !Soak;!Perf' || '-smCI' }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results-${{ matrix.testMode }}
           path: test-results
+          retention-days: 14
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v7
+        if: always() && env.FULL_SUITE == 'true' && matrix.testMode == 'playmode'
+        with:
+          name: perf-${{ github.run_number }}
+          path: test-results/perf-*.json
+          retention-days: 30
+          if-no-files-found: warn
 
   build:
     name: Build ${{ matrix.targetPlatform }}
-    needs: tests
-    runs-on: ubuntu-latest
+    needs: [license, tests]
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -68,12 +145,19 @@ jobs:
           - StandaloneOSX
           - StandaloneWindows64
           - StandaloneLinux64
+    env:
+      VERSION: ${{ needs.license.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Free disk space for the Unity image
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - uses: actions/checkout@v7
         with:
           lfs: true
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: Library
           key: Library-${{ matrix.targetPlatform }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
@@ -81,17 +165,36 @@ jobs:
             Library-${{ matrix.targetPlatform }}-
             Library-
 
+      # BuildCommands.BuildFromCommandLine is the same code path as the editor's
+      # Solar Majesty > Build menu: shader keepers, version, icons, build-info.json.
       - uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
           targetPlatform: ${{ matrix.targetPlatform }}
           buildName: SolarMajesty
+          buildMethod: SolarMajesty.EditorTools.BuildCommands.BuildFromCommandLine
+          versioning: Custom
+          version: ${{ env.VERSION }}
+          customParameters: -smVersion ${{ env.VERSION }} -smCommit ${{ github.sha }}
 
-      - uses: actions/upload-artifact@v4
+      - name: Zip player
+        id: zip
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" build
+          zip_path=$(bash Tools/release/package.sh "${{ matrix.targetPlatform }}" "build/${{ matrix.targetPlatform }}" "$VERSION" dist)
+          echo "path=$zip_path" >> "$GITHUB_OUTPUT"
+
+      # Nightly / main builds: download from the run page (Actions > CI > a run > Artifacts).
+      # archive: false uploads the zip as-is (artifact named after the file), so the download
+      # is SolarMajesty-<version>-<platform>.zip with executable bits intact, not a zip in a zip.
+      - uses: actions/upload-artifact@v7
         with:
-          name: SolarMajesty-${{ matrix.targetPlatform }}
-          path: build
+          path: ${{ steps.zip.outputs.path }}
+          archive: false
+          retention-days: 14
+          if-no-files-found: error

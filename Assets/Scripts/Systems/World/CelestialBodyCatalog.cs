@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -5,6 +6,8 @@ namespace SolarMajesty
     /// <summary>
     /// Built-in world profiles. Campaign spine: Luna → Mars.
     /// Earth, Belt, and Europa are parked (debug / later expansion), not deleted.
+    /// The profiles below are the defaults. A <see cref="CelestialBodyDatabase"/> at
+    /// <c>Resources/Data/CelestialBodyDatabase</c> overrides them body by body (see Docs/DATA_CATALOGS.md).
     /// </summary>
     public static class CelestialBodyCatalog
     {
@@ -25,23 +28,75 @@ namespace SolarMajesty
         public static CelestialBodyId[] All => AllBodies;
         public static CelestialBodyId Last => AllBodies[AllBodies.Length - 1];
 
-        public static CelestialBodyProfile Earth() => _earth ??= BuildEarth();
-        public static CelestialBodyProfile Luna() => _luna ??= BuildLuna();
-        public static CelestialBodyProfile Mars() => _mars ??= BuildMars();
-        public static CelestialBodyProfile Belt() => _belt ??= BuildBelt();
-        public static CelestialBodyProfile Europa() => _europa ??= BuildEuropa();
+        public static CelestialBodyProfile Earth() => Get(CelestialBodyId.Earth);
+        public static CelestialBodyProfile Luna() => Get(CelestialBodyId.Luna);
+        public static CelestialBodyProfile Mars() => Get(CelestialBodyId.Mars);
+        public static CelestialBodyProfile Belt() => Get(CelestialBodyId.Belt);
+        public static CelestialBodyProfile Europa() => Get(CelestialBodyId.Europa);
 
         public static CelestialBodyProfile Get(CelestialBodyId id)
         {
+            var overrides = Overrides;
+            if (overrides.Count > 0 && overrides.TryGetValue(id, out var edited))
+                return edited;
+            return Default(id);
+        }
+
+        /// <summary>The built-in profile, ignoring any database asset.</summary>
+        public static CelestialBodyProfile Default(CelestialBodyId id)
+        {
             switch (id)
             {
-                case CelestialBodyId.Earth: return Earth();
-                case CelestialBodyId.Luna: return Luna();
-                case CelestialBodyId.Mars: return Mars();
-                case CelestialBodyId.Belt: return Belt();
-                case CelestialBodyId.Europa: return Europa();
-                default: return Luna();
+                case CelestialBodyId.Earth: return _earth ??= BuildEarth();
+                case CelestialBodyId.Luna: return _luna ??= BuildLuna();
+                case CelestialBodyId.Mars: return _mars ??= BuildMars();
+                case CelestialBodyId.Belt: return _belt ??= BuildBelt();
+                case CelestialBodyId.Europa: return _europa ??= BuildEuropa();
+                default: return _luna ??= BuildLuna();
             }
+        }
+
+        private static Dictionary<CelestialBodyId, CelestialBodyProfile> _overrides;
+
+        /// <summary>True when a database asset is supplying at least one profile.</summary>
+        public static bool UsingDatabase { get; private set; }
+
+        /// <summary>Use <paramref name="db"/> from now on; null pins the built-in profiles.</summary>
+        public static void UseDatabase(CelestialBodyDatabase db) => _overrides = Resolve(db);
+
+        /// <summary>Forget the resolved profiles; the next read loads the Resources asset again.</summary>
+        public static void ReloadDatabase()
+        {
+            _overrides = null;
+            UsingDatabase = false;
+        }
+
+        private static Dictionary<CelestialBodyId, CelestialBodyProfile> Overrides
+        {
+            get
+            {
+                if (_overrides != null) return _overrides;
+                var db = CatalogDatabase.Load<CelestialBodyDatabase>(CelestialBodyDatabase.ResourcePath, out bool settled);
+                var resolved = Resolve(db);
+                if (settled) _overrides = resolved;
+                return resolved;
+            }
+        }
+
+        private static Dictionary<CelestialBodyId, CelestialBodyProfile> Resolve(CelestialBodyDatabase db)
+        {
+            var map = new Dictionary<CelestialBodyId, CelestialBodyProfile>();
+            if (db != null)
+            {
+                for (int i = 0; i < AllBodies.Length; i++)
+                {
+                    var id = AllBodies[i];
+                    var edited = db.Find(id, Default(id));
+                    if (edited != null) map[id] = edited;
+                }
+            }
+            UsingDatabase = map.Count > 0;
+            return map;
         }
 
         public static CelestialBodyId Next(CelestialBodyId id)

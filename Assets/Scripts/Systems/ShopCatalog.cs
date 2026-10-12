@@ -7,10 +7,62 @@ namespace SolarMajesty
     /// blacksmith gear 300–480). Every sale lands in the vendor's till. Guild halls sell class kits. The market sells potions
     /// and the regen necklace. The blacksmith sells guild arms and armor.
     /// The inn is rest only.
+    /// The list below is the default. A <see cref="ShopDatabase"/> at
+    /// <c>Resources/Data/ShopDatabase</c> overrides it item by item (see Docs/DATA_CATALOGS.md).
     /// </summary>
     public static class ShopCatalog
     {
-        private static readonly List<ShopItemDef> Items = new List<ShopItemDef>
+        private static List<ShopItemDef> _items;
+
+        /// <summary>The live list: the database asset when there is one, else <see cref="DefaultItems"/>.</summary>
+        private static List<ShopItemDef> Items
+        {
+            get
+            {
+                if (_items != null) return _items;
+                var db = CatalogDatabase.Load<ShopDatabase>(ShopDatabase.ResourcePath, out bool settled);
+                var resolved = Resolve(db);
+                if (settled) _items = resolved;
+                return resolved;
+            }
+        }
+
+        /// <summary>The built-in list, ignoring any database asset.</summary>
+        public static IReadOnlyList<ShopItemDef> Defaults => DefaultItems;
+
+        /// <summary>True when a database asset is supplying the shop list.</summary>
+        public static bool UsingDatabase { get; private set; }
+
+        /// <summary>Use <paramref name="db"/> from now on; null pins the built-in list.</summary>
+        public static void UseDatabase(ShopDatabase db) => _items = Resolve(db);
+
+        /// <summary>Forget the resolved list; the next read loads the Resources asset again.</summary>
+        public static void ReloadDatabase()
+        {
+            _items = null;
+            UsingDatabase = false;
+        }
+
+        private static List<ShopItemDef> Resolve(ShopDatabase db)
+        {
+            UsingDatabase = db != null && db.items != null && db.items.Count > 0;
+            if (!UsingDatabase) return DefaultItems;
+            return CatalogDatabase.Merge(
+                DefaultItems,
+                db.ToDefs(DefaultFor),
+                d => d.Id,
+                id => id != ShopItemId.None,
+                "ShopDatabase");
+        }
+
+        private static ShopItemDef DefaultFor(ShopItemId id)
+        {
+            for (int i = 0; i < DefaultItems.Count; i++)
+                if (DefaultItems[i].Id == id) return DefaultItems[i];
+            return null;
+        }
+
+        private static readonly List<ShopItemDef> DefaultItems = new List<ShopItemDef>
         {
             new ShopItemDef
             {

@@ -156,6 +156,9 @@ namespace SolarMajesty
         public bool IsTutorialActive => !DemoSettings.TutorialDone && TutorialStep < TutorialGoal;
         private bool _tutorialDefendPosted;
         private bool _tutorialPestSpawned;
+        private readonly TutorialStepClock _tutorialClock = new TutorialStepClock();
+        private readonly PlaytestIdleTracker _idle = new PlaytestIdleTracker();
+        private string TutorialFlow => DemoSettings.FirstHourDemo ? "first_hour" : "campaign";
         public BuildingData[] StarterBuildings => starterBuildings;
         public StillCampusDensity.StampLog LastStillStamp { get; private set; }
         public float LastStillOrtho { get; private set; }
@@ -748,7 +751,7 @@ namespace SolarMajesty
         private void HandleOverlayHotkeys()
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
-            if (Input.GetKeyDown(KeyCode.V))
+            if (InputBindings.Down(GameAction.CycleOverlay))
             {
                 // V cycles off → danger → coverage. The power overlay retired with the grid.
                 OverlayMode = OverlayMode switch
@@ -763,7 +766,7 @@ namespace SolarMajesty
             }
 
             // Jump to whatever is going most wrong right now.
-            if (Input.GetKeyDown(KeyCode.Backspace))
+            if (InputBindings.Down(GameAction.JumpToAlert))
             {
                 Alert urgent = Alerts.MostUrgentWithPosition();
                 if (urgent != null)
@@ -995,6 +998,7 @@ namespace SolarMajesty
                 Economy.UpkeepApplied -= OnUpkeepTithe;
             }
             Achievements.Earned -= OnAchievementEarned;
+            CloseIdleGap("quit");
             PlaytestTelemetry.RecordQuit(
                 Screen.ToString(),
                 celestialBody,
@@ -1109,6 +1113,9 @@ namespace SolarMajesty
                 SnapCampusCamera();
             PersistSession();
             TutorialStep = DemoSettings.TutorialDone ? TutorialGoal : 0;
+            _tutorialClock.Reset(TutorialStep, _playSeconds);
+            if (IsTutorialActive)
+                PlaytestTelemetry.RecordTutorialStart(TutorialFlow, TutorialStep, TutorialGoal);
             TickTutorial();
             RearmStillHoldIfEditorShutter();
             _overseerHud?.OnSessionPlaying();
@@ -1247,6 +1254,8 @@ namespace SolarMajesty
         public void PausePlay()
         {
             if (Screen != DemoScreen.Playing) return;
+            CloseIdleGap("pause");
+            PlaytestTelemetry.Record("pause_opened", "step", IdleStep);
             Screen = DemoScreen.Paused;
             Time.timeScale = 0f;
             ApplyTool(OverseerTool.None);
@@ -1264,6 +1273,7 @@ namespace SolarMajesty
 
         public void OpenSettings()
         {
+            PlaytestTelemetry.Record("settings_opened", "from", Screen.ToString());
             _settingsReturn = Screen == DemoScreen.Playing ? DemoScreen.Paused : Screen;
             if (Screen == DemoScreen.Playing)
                 PausePlay();
@@ -1307,14 +1317,19 @@ namespace SolarMajesty
 
         public void SkipTutorial()
         {
+            if (IsTutorialActive)
+                PlaytestTelemetry.RecordTutorialSkip(
+                    TutorialFlow, TutorialStep, TutorialGoal, _tutorialClock.Since(_playSeconds));
             TutorialStep = TutorialGoal;
             DemoSettings.MarkTutorialDone();
         }
 
         public void RestartTutorial()
         {
+            PlaytestTelemetry.RecordTutorialRestart(TutorialFlow, TutorialStep);
             DemoSettings.ResetTutorial();
             TutorialStep = 0;
+            _tutorialClock.Reset(0, _playSeconds);
             _tutorialDefendPosted = false;
             _tutorialPestSpawned = false;
             _overseerHud?.Notify(
@@ -1345,6 +1360,8 @@ namespace SolarMajesty
             if (_flagInput != null && ReferenceEquals(_flagInput.SelectedPosted, handle))
                 _flagInput.ClearPostedSelection();
             int refund = handle.EscrowMetals;
+            PlaytestTelemetry.RecordFlagCancelled(
+                handle.Data != null ? handle.Data.flagType.ToString() : "", handle.CurrentBounty, refund);
             Economy?.RefundBountyEscrow(refund);
             Flags.Cancel(handle);
             if (Economy != null)
@@ -1697,7 +1714,7 @@ namespace SolarMajesty
         private void HandleSessionHotkeys()
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (InputBindings.Down(GameAction.Cancel)) // fixed on Esc (InputBindings.IsFixed)
             {
                 bool placing = activeTool == OverseerTool.Build || activeTool == OverseerTool.Flag;
                 switch (SessionHotkeys.OnEscape(
@@ -1708,6 +1725,9 @@ namespace SolarMajesty
                     _overseerHud != null && _overseerHud.TechPanelOpen))
                 {
                     case SessionHotkeys.EscapeAction.CloseSettings:
+                        // Esc on the controls screen goes back to Settings, not out of it.
+                        if (_overseerHud != null && _overseerHud.ConsumeControlsEscape())
+                            break;
                         CloseSettings();
                         break;
                     case SessionHotkeys.EscapeAction.CloseResearch:
@@ -1765,8 +1785,9 @@ namespace SolarMajesty
                 int next = FirstHourTutorial.Advance(
                     TutorialStep, engineer, refused, tempted, _tutorialDefendPosted);
                 if (next == TutorialStep) break;
+                int from = TutorialStep;
                 TutorialStep = next;
-                PlaytestTelemetry.Record("tutorial_step", "step", TutorialStep);
+                NoteTutorialStep(from);
                 if (TutorialStep == FirstHourTutorial.PestStep)
                     SpawnTutorialPest();
                 if (TutorialStep >= FirstHourTutorial.Goal)
@@ -1812,6 +1833,18 @@ namespace SolarMajesty
             LogOverseer("Soil creeper on the yard — post Defend (F5).");
         }
 
+        private bool HasEngineerWorkshop()
+        {
+            if (Placer == null) return false;
+            var pieces = Placer.Pieces;
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                if (pieces[i].Category == BuildingCategory.EngineerWorkshop)
+                    return true;
+            }
+            return false;
+        }
+
         private bool HasAnyWorkshop()
         {
             if (Placer == null) return false;
@@ -1849,10 +1882,49 @@ namespace SolarMajesty
 
         private void AdvanceTutorial()
         {
+            int from = TutorialStep;
             TutorialStep++;
-            PlaytestTelemetry.Record("tutorial_step", "step", TutorialStep);
+            NoteTutorialStep(from);
             if (TutorialStep >= TutorialGoal)
                 DemoSettings.MarkTutorialDone();
+        }
+
+        private void NoteTutorialStep(int from)
+        {
+            float spent = _tutorialClock.Enter(TutorialStep, _playSeconds);
+            PlaytestTelemetry.RecordTutorialStep(TutorialFlow, from, TutorialStep, spent, TutorialGoal);
+        }
+
+        /// <summary>
+        /// Playtest idle gaps: no key, button, or wheel for 30 s while the world runs. Logged once
+        /// per gap. In the Earth demo the first crossing also repeats the current beat, concretely.
+        /// </summary>
+        private void TickPlaytestIdle()
+        {
+            bool input = Input.anyKey || Input.mouseScrollDelta.sqrMagnitude > 0.01f;
+            bool counting = !SimSpeed.IsPaused && Application.isFocused;
+            var change = _idle.Tick(Time.unscaledDeltaTime, counting, input);
+            if (change == PlaytestIdleTracker.Change.Ended)
+                PlaytestTelemetry.RecordIdleGap(_idle.LastGapSeconds, IdleStep, "input");
+            else if (change == PlaytestIdleTracker.Change.Crossed)
+                NudgeQuietPlayer();
+        }
+
+        private int IdleStep => IsTutorialActive ? TutorialStep : -1;
+
+        private void CloseIdleGap(string reason)
+        {
+            if (_idle.TryClose(out float seconds))
+                PlaytestTelemetry.RecordIdleGap(seconds, IdleStep, reason);
+        }
+
+        private void NudgeQuietPlayer()
+        {
+            if (!DemoSettings.FirstHourDemo || !IsTutorialActive || StillCaptureHold.Active) return;
+            string hint = FirstHourHints.IdleHint(TutorialStep, HasEngineerWorkshop(), _awaitingHire.Count > 0);
+            if (string.IsNullOrEmpty(hint)) return;
+            LogOverseer(hint, 7f);
+            PlaytestTelemetry.RecordIdleHint(TutorialStep, hint);
         }
 
         private void TickAutosave()
@@ -2347,6 +2419,7 @@ namespace SolarMajesty
             TickCourierPad();
             _mission?.Tick();
             TickTutorial();
+            TickPlaytestIdle();
             TickAutosave();
             TickJunkYard(Time.deltaTime);
             TickGrok();
@@ -2418,11 +2491,11 @@ namespace SolarMajesty
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
 
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (InputBindings.Down(GameAction.TogglePause))
                 SimSpeed.TogglePause();
-            else if (Input.GetKeyDown(KeyCode.Period))
+            else if (InputBindings.Down(GameAction.SpeedUp))
                 SimSpeed.Faster();
-            else if (Input.GetKeyDown(KeyCode.Comma))
+            else if (InputBindings.Down(GameAction.SpeedDown))
                 SimSpeed.Slower();
             else
                 return;
@@ -4957,6 +5030,8 @@ namespace SolarMajesty
         {
             Stats.BodiesConquered++;
             Achievements.Evaluate(Stats);
+            // Victory camera beat over the Commons. No-op under Reduce Motion, in batch, or with no rig.
+            CameraDirector.TryPlayVictory(_isoCam, ColonyLayout.CampusOriginFor(FocusedCampus));
         }
 
         /// <summary>Same-body reseed (sandbox rematch).</summary>
@@ -5006,6 +5081,19 @@ namespace SolarMajesty
             BodySeed.Ensure(next.Value, 0);
             BodySeed.AdvanceForNextConquest();
             DemoAudio.PlayRetry();
+            // Launch camera beat: everything above is already committed; only the reload waits
+            // for the beat (any input skips it). Without a beat the reload is immediate, as before.
+            if (CameraDirector.TryPlayLaunch(_isoCam, pad, LaunchSite.Craft))
+                StartCoroutine(ReloadAfterLaunchBeat());
+            else
+                ReloadActiveScene();
+        }
+
+        private System.Collections.IEnumerator ReloadAfterLaunchBeat()
+        {
+            float giveUp = Time.unscaledTime + CameraBeatMath.LaunchDuration + 1f;
+            while (CameraDirector.IsPlaying(_isoCam) && Time.unscaledTime < giveUp)
+                yield return null;
             ReloadActiveScene();
         }
 
@@ -5072,7 +5160,8 @@ namespace SolarMajesty
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
             if (Screen != DemoScreen.Playing && Screen != DemoScreen.Paused) return;
-            if (!Input.GetKeyDown(KeyCode.F10)) return;
+            if (!InputBindings.Down(GameAction.DebugNextWorld)) return;
+            // Shift is a modifier, not a binding (InputBindings.ReservedReason).
             bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
             RequestDebugBodyCycle(shift);
         }
@@ -5102,35 +5191,35 @@ namespace SolarMajesty
             if (InputBindings.TextEntryActive) return; // typing flag orders
             if (!IsPlaying) return;
 
-            if (Input.GetKeyDown(KeyCode.Tab))
+            if (InputBindings.Down(GameAction.CycleTool))
             {
                 if (activeTool == OverseerTool.Flag) ApplyTool(OverseerTool.Build);
                 else if (activeTool == OverseerTool.Build) ApplyTool(OverseerTool.None);
                 else ApplyTool(OverseerTool.Flag);
             }
 
-            if (Input.GetKeyDown(KeyCode.B)) ToggleTool(OverseerTool.Build);
-            if (Input.GetKeyDown(KeyCode.G)) ToggleTool(OverseerTool.Flag);
-            if (Input.GetKeyDown(KeyCode.N)) ToggleTool(OverseerTool.Orbital);
-            if (Input.GetKeyDown(KeyCode.T) && _overseerHud != null)
+            if (InputBindings.Down(GameAction.ToolBuild)) ToggleTool(OverseerTool.Build);
+            if (InputBindings.Down(GameAction.ToolFlag)) ToggleTool(OverseerTool.Flag);
+            if (InputBindings.Down(GameAction.ToolOrbital)) ToggleTool(OverseerTool.Orbital);
+            if (InputBindings.Down(GameAction.ToolTech) && _overseerHud != null)
                 _overseerHud.ToggleTechPanel();
 
-            if (Input.GetKeyDown(KeyCode.F8) && _debugHud != null)
+            if (InputBindings.Down(GameAction.DebugHud) && _debugHud != null)
                 _debugHud.ToggleVisible();
 
-            if (Input.GetKeyDown(KeyCode.F6))
+            if (InputBindings.Down(GameAction.FocusCampusA))
                 FocusCampus(0);
-            if (Input.GetKeyDown(KeyCode.F7))
+            if (InputBindings.Down(GameAction.FocusCampusB))
                 FocusCampus(1);
-            if (Input.GetKeyDown(KeyCode.F9))
+            if (InputBindings.Down(GameAction.DebugSeedCampusB))
                 SeedCampusBAttract();
 
-            if (Input.GetKeyDown(KeyCode.P))
+            if (InputBindings.Down(GameAction.ToolParty))
                 FormParty();
-            if (Input.GetKeyDown(KeyCode.LeftBracket))
+            if (InputBindings.Down(GameAction.DisbandParty))
                 DisbandSelectedParty();
 
-            if (Input.GetKeyDown(KeyCode.R))
+            if (InputBindings.Down(GameAction.DebugFatigue))
                 DebugFatigueAll(0.92f);
         }
 

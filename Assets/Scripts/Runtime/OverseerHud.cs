@@ -66,6 +66,15 @@ namespace SolarMajesty
         private float _cardMeasuredH;
         private Vector2 _settingsScroll;
         private float _settingsContentH = 700f;
+
+        // Settings → CONTROLS: a screen of its own inside Settings, so the settings list does not grow.
+        private bool _controlsOpen;
+        private GameAction? _rebindTarget;
+        private List<ControlsList.Group> _controlsGroups;
+        private string _controlsMsg;
+        private bool _controlsMsgBad;
+        private Vector2 _controlsScroll;
+        private float _controlsContentH = 900f;
         private string _tooltip;
         private Rect _tooltipAnchor;
 
@@ -124,6 +133,17 @@ namespace SolarMajesty
         }
 
         public bool TitleConfirmOpen => _confirmNewGame || _titleLoad;
+
+        /// <summary>
+        /// Esc on the controls screen returns to Settings rather than closing them. While a key
+        /// is being captured the game ignores Esc (TextEntryActive) and the screen cancels itself.
+        /// </summary>
+        public bool ConsumeControlsEscape()
+        {
+            if (!_controlsOpen) return false;
+            CloseControls();
+            return true;
+        }
 
         /// <summary>Esc on the pause screen closes Save/Load before it resumes.</summary>
         public bool ConsumePauseSubmenuEscape()
@@ -292,7 +312,7 @@ namespace SolarMajesty
                 SimSpeed.TogglePause();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(hold, paused ? "RESUME   ·   SPACE" : "HOLD   ·   SPACE");
+            Tooltip(hold, (paused ? "RESUME   ·   " : "HOLD   ·   ") + KeyHint(GameAction.TogglePause));
             x += btn + 4f;
 
             var slower = new Rect(x, r.y, btn, h);
@@ -301,7 +321,7 @@ namespace SolarMajesty
                 SimSpeed.Slower();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(slower, "SLOWER   ·   ,");
+            Tooltip(slower, "SLOWER   ·   " + KeyHint(GameAction.SpeedDown));
             x += btn + 2f;
 
             var readout = new Rect(x, r.y, r.xMax - x - btn - 2f, h);
@@ -321,7 +341,7 @@ namespace SolarMajesty
                 SimSpeed.Faster();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(faster, "FASTER   ·   .");
+            Tooltip(faster, "FASTER   ·   " + KeyHint(GameAction.SpeedUp));
 
             // One pip per running speed; the 1× pip is brass so the default is easy to find again.
             int steps = SimSpeed.Multipliers.Length - 1;
@@ -516,7 +536,8 @@ namespace SolarMajesty
             }
             else if (_loop.Screen == DemoScreen.Settings)
             {
-                DrawSettings();
+                if (_controlsOpen) DrawControls();
+                else DrawSettings();
             }
             else if (_loop.Screen == DemoScreen.Paused)
             {
@@ -600,7 +621,12 @@ namespace SolarMajesty
                 GUI.FocusControl(null);
                 orders = chat = false;
             }
-            InputBindings.TextEntryActive = orders || chat;
+            // The controls screen lives inside Settings; leaving Settings by any route closes it,
+            // so a pending rebind can never hold the game's hotkeys down.
+            if (_loop.Screen != DemoScreen.Settings && (_controlsOpen || _rebindTarget.HasValue))
+                CloseControls();
+            // While a rebind waits for its key, gameplay hotkeys stand down as they do for typing.
+            InputBindings.TextEntryActive = orders || chat || _rebindTarget.HasValue;
         }
 
         private static string FormatRate(int rate)
@@ -702,23 +728,23 @@ namespace SolarMajesty
             float midR = c.xMax - right - 18f;
             float x = midL + Mathf.Max(0f, (midR - midL - verbsW) * 0.5f);
             float vy = c.y + 3f;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphBuild, "BUILD", "B", _loop.ActiveTool == OverseerTool.Build))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphBuild, "BUILD", KeyHint(GameAction.ToolBuild), _loop.ActiveTool == OverseerTool.Build))
                 _loop.ToggleTool(OverseerTool.Build);
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphFlag, "BOUNTY FLAG", "G", _loop.ActiveTool == OverseerTool.Flag))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphFlag, "BOUNTY FLAG", KeyHint(GameAction.ToolFlag), _loop.ActiveTool == OverseerTool.Flag))
                 _loop.ToggleTool(OverseerTool.Flag);
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Sun, "ORBITAL SUPPORT", "N", _loop.ActiveTool == OverseerTool.Orbital))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Sun, "ORBITAL SUPPORT", KeyHint(GameAction.ToolOrbital), _loop.ActiveTool == OverseerTool.Orbital))
                 _loop.ToggleTool(OverseerTool.Orbital);
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphTech, "RESEARCH", "T", _techOpen))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphTech, "RESEARCH", KeyHint(GameAction.ToolTech), _techOpen))
                 ToggleTechPanel();
             x += sq + gap;
             if (SquareAction(new Rect(x, vy, sq, sq), IconId.Camp, "SWITCH CAMPUS", "A/B", false))
                 _loop.FocusCampus(1 - _loop.FocusedCampus);
             x += sq + gap;
             int partyCount = _loop.Parties != null ? _loop.Parties.Count : 0;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Party, "FORM PARTY", "P", partyCount > 0))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Party, "FORM PARTY", KeyHint(GameAction.ToolParty), partyCount > 0))
                 _loop.FormParty();
             x += sq + gap;
             if (SquareAction(new Rect(x, vy, sq, sq), IconId.Menu, "MENU", "Esc", false))
@@ -988,7 +1014,7 @@ namespace SolarMajesty
             float panelH = Mathf.Clamp(_sh - M - MapSize - 24f - top, 220f, 480f);
             var rect = new Rect(_sw - M - panelW, top, panelW, panelH);
             RightColumnBottom = rect.yMax;
-            var c = Panel(rect, "Research · T");
+            var c = Panel(rect, "Research · " + KeyHint(GameAction.ToolTech));
             if (GUI.Button(new Rect(rect.xMax - 68f, rect.y + 8f, 56f, 18f), "CLOSE", _chipOff))
                 _techOpen = false;
 
@@ -1113,7 +1139,7 @@ namespace SolarMajesty
                     ? $"recharging {Mathf.CeilToInt(wait)} s"
                     : $"click the map · {input.CursorCost} EU here (x{input.CursorMultiplier:0} from uplink)";
                 DrawMinimizedToolStrip(OverseerTool.Orbital, 360f,
-                    armed.displayName.ToUpperInvariant(), hint, "N");
+                    armed.displayName.ToUpperInvariant(), hint, KeyHint(GameAction.ToolOrbital));
                 return;
             }
 
@@ -1195,14 +1221,14 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, c.y, c.width, 13f), FlagBoardLine(), _micro);
             float y = c.y + 17f;
 
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F1  Explore  ·  survey 22 m / 90 s", fp.ExploreFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F2  Clear Threat", fp.ClearThreatFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F3  Build Here", fp.BuildFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F4  Extract", fp.ExtractFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F5  Defend  ·  watch 50 s after", fp.DefendFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "I   Research Site", fp.ResearchSiteFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "O   Outpost", fp.OutpostFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "U   Terraform", fp.TerraformFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagExplore) + "Explore  ·  survey 22 m / 90 s", fp.ExploreFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagClearThreat) + "Clear Threat", fp.ClearThreatFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagBuild) + "Build Here", fp.BuildFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagExtract) + "Extract", fp.ExtractFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagDefend) + "Defend  ·  watch 50 s after", fp.DefendFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagResearchSite) + "Research Site", fp.ResearchSiteFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagOutpost) + "Outpost", fp.OutpostFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagTerraform) + "Terraform", fp.TerraformFlag);
 
             y += 4f;
             int shown = fp.ShownBounty;
@@ -1294,7 +1320,7 @@ namespace SolarMajesty
             {
                 string name = bp.Selected != null ? bp.Selected.displayName : "module";
                 DrawMinimizedToolStrip(OverseerTool.Build, 320f,
-                    name.ToUpperInvariant(), "click the map to place · click here for the list", "B");
+                    name.ToUpperInvariant(), "click the map to place · click here for the list", KeyHint(GameAction.ToolBuild));
                 return;
             }
 
@@ -1360,10 +1386,26 @@ namespace SolarMajesty
 
         private static string BuildHotkeyLabel(int index)
         {
-            if (index < 9) return (index + 1).ToString();
-            if (index == 9) return "0";
-            return "·";
+            if (index < 0 || index > 9) return "·";
+            return KeyHint(InputBindings.BuildSlot(index));
         }
+
+        private static readonly Dictionary<KeyCode, string> KeyHints = new Dictionary<KeyCode, string>();
+
+        /// <summary>The action's current key in HUD caps ("SPACE", "B", "F1"), cached per key.</summary>
+        private static string KeyHint(GameAction action)
+        {
+            KeyCode key = InputBindings.Key(action);
+            if (!KeyHints.TryGetValue(key, out string hint))
+            {
+                hint = InputBindings.KeyLabel(key).ToUpperInvariant();
+                KeyHints[key] = hint;
+            }
+            return hint;
+        }
+
+        /// <summary>Flag list key column: the key, padded so the names line up ("F1  ", "I   ").</summary>
+        private static string FlagKeyColumn(GameAction action) => KeyHint(action).PadRight(3) + " ";
 
         private static string BuildRowLabel(BuildingData b)
         {
@@ -1446,7 +1488,7 @@ namespace SolarMajesty
                 fp.HasSelectedPosted ? "this pole · +/− edits it" : "next post · click the map", _micro);
             if (GUI.Button(open, GUIContent.none, GUIStyle.none))
                 ExpandMenu(OverseerTool.Flag);
-            Tooltip(open, "OPEN THE FLAG LIST   ·   G");
+            Tooltip(open, "OPEN THE FLAG LIST   ·   " + KeyHint(GameAction.ToolFlag));
         }
 
         private bool Chip(Rect r, string label, bool on) =>
@@ -1464,7 +1506,7 @@ namespace SolarMajesty
         {
             if (_loop.Screen != DemoScreen.Playing && _loop.Screen != DemoScreen.Paused) return;
             var e = Event.current;
-            if (e == null || e.type != EventType.KeyDown || e.keyCode != KeyCode.F10) return;
+            if (e == null || e.type != EventType.KeyDown || !InputBindings.Matches(GameAction.DebugNextWorld, e.keyCode)) return;
             e.Use();
             _loop.RequestDebugBodyCycle(ShiftHeld());
         }
@@ -1971,7 +2013,7 @@ namespace SolarMajesty
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
                     Truncate($"{Truncate(a.LastReason, 14)} · {a.SuitLabel} · {gene}", 42), _micro);
                 row += 18f;
-                if (GUI.Button(new Rect(c.x, row, c.width, 22f), n == 1 ? "TALK  ·  ENTER" : "TALK", _chipOff))
+                if (GUI.Button(new Rect(c.x, row, c.width, 22f), n == 1 ? "TALK  ·  " + KeyHint(GameAction.Confirm) : "TALK", _chipOff))
                 {
                     _loop.SelectOnly(a);
                     OpenChat(a);
@@ -2629,11 +2671,12 @@ namespace SolarMajesty
                 }
             }
 
-            if (GUI.Button(new Rect(c.x, c.yMax - 30f, 180f, 30f), "CONTINUE  ·  SPACE", _chipOn))
+            if (GUI.Button(new Rect(c.x, c.yMax - 30f, 180f, 30f), $"CONTINUE  ·  {KeyHint(GameAction.TogglePause)}", _chipOn))
                 _loop.DismissCutscene();
 
             if (Event.current.type == EventType.KeyDown &&
-                (Event.current.keyCode == KeyCode.Space || Event.current.keyCode == KeyCode.Return))
+                (InputBindings.Matches(GameAction.TogglePause, Event.current.keyCode) ||
+                 InputBindings.Matches(GameAction.Confirm, Event.current.keyCode)))
             {
                 _loop.DismissCutscene();
                 Event.current.Use();
@@ -2667,7 +2710,7 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, ratingY, c.width, 16f), rating.Summary, _value);
             GUI.Label(new Rect(c.x, ratingY + 18f, c.width, 14f), rating.Breakdown, _micro);
 
-            if (GUI.Button(new Rect(c.x, c.yMax - 30f, 190f, 28f), "CONTINUE OVERSEEING  ·  Y", _chipOn))
+            if (GUI.Button(new Rect(c.x, c.yMax - 30f, 190f, 28f), "CONTINUE OVERSEEING  ·  " + KeyHint(GameAction.PromptYes), _chipOn))
             {
                 _winDismissed = true;
                 mission.DismissWinToSandbox();
@@ -2759,8 +2802,8 @@ namespace SolarMajesty
                         ? "Dock a Fobot Yard. Y does not skip the building."
                         : _loop.FieldReviveReadyIn > 0.5f
                             ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Bill is by level, EU only."
-                            : "Inspect the yard or press Y. ICE is not on the bill.", _muted);
-                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "FOBOT YARD  ·  Y", _chipOn))
+                            : $"Inspect the yard or press {InputBindings.Label(GameAction.PromptYes)}. ICE is not on the bill.", _muted);
+                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "FOBOT YARD  ·  " + KeyHint(GameAction.PromptYes), _chipOn))
                     _loop.PayFobotYard();
             }
         }
@@ -2771,19 +2814,21 @@ namespace SolarMajesty
             bool cutsceneUp = _loop.TryPeekCutscene(out _);
             if ((_loop.NeedsFieldRevive || _loop.CanPayYard) &&
                 !(_loop.Mission != null && _loop.Mission.IsLost) &&
-                Input.GetKeyDown(KeyCode.Y))
+                InputBindings.DownEvenWhileTyping(GameAction.PromptYes))
                 _loop.PayFobotYard();
             if (!_loop.NeedsFieldRevive &&
                 !(_loop.Mission != null && _loop.Mission.IsLost))
                 _failLatched = false;
 
             if (_loop.TryPeekCutscene(out _) &&
-                (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)))
+                (InputBindings.DownEvenWhileTyping(GameAction.TogglePause) ||
+                 InputBindings.DownEvenWhileTyping(GameAction.Confirm)))
             {
                 _loop.DismissCutscene();
             }
 
-            if (_loop.Mission != null && _loop.Mission.IsWon && Input.GetKeyDown(KeyCode.Y) && !_loop.IsOutpostOverwhelmed)
+            if (_loop.Mission != null && _loop.Mission.IsWon && InputBindings.DownEvenWhileTyping(GameAction.PromptYes) &&
+                !_loop.IsOutpostOverwhelmed)
             {
                 _winDismissed = true;
                 _loop.Mission.DismissWinToSandbox();
@@ -2791,7 +2836,7 @@ namespace SolarMajesty
 
             // Enter talks to the one selected hero (not while typing, a card is up, or a cut plays).
             if (ReferenceEquals(_chatAgent, null) && !InputBindings.TextEntryActive && _loop.SelectedStructure == null &&
-                (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) &&
+                InputBindings.DownOrAlias(GameAction.Confirm) &&
                 !cutsceneUp && !_loop.TryPeekCutscene(out _))
             {
                 var sel = _loop.SelectedAgents;
@@ -3014,7 +3059,7 @@ namespace SolarMajesty
             }
 
             bool iron = ReplayRules.BlocksManualSavesAndReloads;
-            float h = iron ? 340f : 400f;
+            float h = iron ? 372f : 432f;
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 440f, h);
             var c = Panel(rect, "Paused");
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
@@ -3062,6 +3107,12 @@ namespace SolarMajesty
             if (!iron) y += 40f;
             if (GUI.Button(new Rect(c.x, y, c.width, 32f), "QUIT", _chipOff))
                 _loop.QuitDemo();
+            y += 40f;
+            if (GUI.Button(new Rect(c.x, y, c.width, 24f), "REPORT A BUG  ·  open logs", _chipOff))
+            {
+                string path = ErrorLogHook.OpenLogsFolder();
+                Notify(string.IsNullOrEmpty(path) ? "Logs folder opened." : "Log path copied — attach that file to your report.", 4f);
+            }
         }
 
         private void DrawPauseSlots()
@@ -3238,6 +3289,14 @@ namespace SolarMajesty
                 DemoSettings.ReduceMotion = !DemoSettings.ReduceMotion;
             y += 32f;
 
+            // Controller support (Docs/CONTROLS.md). Saved at once; off is for a drifting or stray device.
+            string padState = !GamepadInput.Enabled ? "OFF"
+                : !GamepadInput.AxesAvailable ? "ON  ·  NOT SET UP"
+                : GamepadInput.Connected ? "ON" : "ON  ·  NONE CONNECTED";
+            if (Chip(new Rect(c.x, y, c.width, 26f), $"CONTROLLER  ·  {padState}", GamepadInput.Enabled))
+                GamepadInput.Enabled = !GamepadInput.Enabled;
+            y += 32f;
+
             var cbMode = Accessibility.Mode;
             if (Chip(new Rect(c.x, y, c.width, 26f),
                     $"COLOUR VISION  ·  {Accessibility.ModeLabel(cbMode).ToUpperInvariant()}",
@@ -3252,6 +3311,9 @@ namespace SolarMajesty
             string tutLabel = _loop.IsTutorialActive ? "TUTORIAL  ·  ON" : "REPLAY TUTORIAL";
             if (Chip(new Rect(c.x, y, 220f, 26f), tutLabel, _loop.IsTutorialActive))
                 _loop.RestartTutorial();
+            // Key list and rebinding, on a screen of its own (Docs/CONTROLS.md).
+            if (Chip(new Rect(c.x + 228f, y, c.width - 228f, 26f), "CONTROLS", false))
+                OpenControls();
             y += 32f;
 
             bool marsLessons = DemoSettings.MarsGrokLessons;
@@ -3322,6 +3384,161 @@ namespace SolarMajesty
 
             if (GUI.Button(new Rect(panel.x, panel.yMax - 34f, panel.width, 32f), "BACK  ·  Esc", _chipOn))
                 _loop.CloseSettings();
+        }
+
+        private void OpenControls()
+        {
+            _controlsOpen = true;
+            _rebindTarget = null;
+            _controlsGroups = null;
+            _controlsMsg = null;
+            _controlsScroll = Vector2.zero;
+        }
+
+        private void CloseControls()
+        {
+            _controlsOpen = false;
+            _rebindTarget = null;
+            _controlsGroups = null;
+            _controlsMsg = null;
+        }
+
+        /// <summary>
+        /// Settings → CONTROLS. Every action from InputBindings, grouped (ControlsList). Click a key,
+        /// then press the new one; Esc cancels; a key already in use is refused and named.
+        /// The controller layout is listed underneath, read-only.
+        /// </summary>
+        private void DrawControls()
+        {
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
+            HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f), 0.55f);
+            float h = Mathf.Min(764f, Mathf.Max(460f, _sh - 24f));
+            var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
+            var panel = Panel(rect, "Controls");
+            HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
+
+            // The waiting rebind takes the key event before any control can see it.
+            var e = Event.current;
+            if (_rebindTarget.HasValue && e.type == EventType.KeyDown)
+            {
+                switch (ControlsList.CaptureStepFor(e.keyCode))
+                {
+                    case ControlsList.CaptureStep.Cancel:
+                        _rebindTarget = null;
+                        _controlsMsg = "Rebind cancelled.";
+                        _controlsMsgBad = false;
+                        e.Use();
+                        break;
+                    case ControlsList.CaptureStep.Assign:
+                        GameAction action = _rebindTarget.Value;
+                        var check = InputBindings.Check(action, e.keyCode, out GameAction other);
+                        _controlsMsg = ControlsList.Message(check, action, e.keyCode, other);
+                        _controlsMsgBad = check != InputBindings.RebindCheck.Ok;
+                        // A refused key leaves the row waiting, so the player can try another.
+                        if (check == InputBindings.RebindCheck.Ok && InputBindings.TryRebind(action, e.keyCode))
+                        {
+                            _rebindTarget = null;
+                            _controlsGroups = null;
+                        }
+                        e.Use();
+                        break;
+                }
+            }
+
+            if (_controlsGroups == null) _controlsGroups = ControlsList.Build();
+
+            const float footerH = 44f + 36f;
+            var view = new Rect(panel.x, panel.y, panel.width, panel.height - footerH);
+            bool scrolls = _controlsContentH > view.height;
+            var c = new Rect(0f, 0f, view.width - (scrolls ? 12f : 0f), _controlsContentH);
+            _controlsScroll = GUI.BeginScrollView(view, _controlsScroll, c);
+            float y = c.y;
+
+            GUI.Label(new Rect(c.x, y, c.width, 14f), "Click a key, then press the new one. Esc cancels.", _micro);
+            y += 20f;
+
+            const float keyW = 156f;
+            for (int g = 0; g < _controlsGroups.Count; g++)
+            {
+                var group = _controlsGroups[g];
+                Fill(new Rect(c.x, y, c.width, 1f), Hairline);
+                y += 6f;
+                GUI.Label(new Rect(c.x, y, c.width, 14f), group.Title, _section);
+                y += 18f;
+
+                for (int i = 0; i < group.Rows.Count; i++)
+                {
+                    var row = group.Rows[i];
+                    if (!row.IsDefault)
+                        HudSkin.Pill(new Rect(c.x, y + 5f, 3f, 12f), Gold);
+                    GUI.Label(new Rect(c.x + 8f, y, c.width - keyW - 16f, 22f), row.Name, _body);
+
+                    var keyRect = new Rect(c.xMax - keyW, y + 1f, keyW, 20f);
+                    if (row.Fixed)
+                    {
+                        HudSkin.Well(keyRect);
+                        GUI.Label(keyRect, row.Key.ToUpperInvariant() + "  ·  FIXED", _microCenter);
+                    }
+                    else
+                    {
+                        bool waiting = _rebindTarget.HasValue && _rebindTarget.Value == row.Action;
+                        if (Chip(keyRect, waiting ? "PRESS A KEY" : row.Key.ToUpperInvariant(), waiting))
+                        {
+                            if (waiting)
+                            {
+                                _rebindTarget = null;
+                                _controlsMsg = "Rebind cancelled.";
+                            }
+                            else
+                            {
+                                _rebindTarget = row.Action;
+                                _controlsMsg = $"Press a key for {row.Name}. Esc cancels.";
+                            }
+                            _controlsMsgBad = false;
+                        }
+                    }
+                    y += 24f;
+                }
+                y += 4f;
+            }
+
+            Fill(new Rect(c.x, y, c.width, 1f), Hairline);
+            y += 6f;
+            GUI.Label(new Rect(c.x, y, c.width, 14f), "CONTROLLER", _section);
+            y += 18f;
+            y = WrapBlock(c, y,
+                "Fixed layout (Xbox-style pad on Windows). The controller cannot click HUD buttons or place things; use the mouse for those. Settings → CONTROLLER turns it off.");
+            var pads = ControlsList.ControllerRows;
+            for (int i = 0; i < pads.Length; i++)
+            {
+                GUI.Label(new Rect(c.x + 8f, y, 150f, 18f), pads[i].Button, _value);
+                GUI.Label(new Rect(c.x + 164f, y, c.width - 164f, 18f), pads[i].Action, _muted);
+                y += 20f;
+            }
+
+            _controlsContentH = y + 4f;
+            GUI.EndScrollView();
+
+            var msgRect = new Rect(panel.x, panel.yMax - footerH + 4f, panel.width, 32f);
+            if (!string.IsNullOrEmpty(_controlsMsg))
+            {
+                var prev = _wrap.normal.textColor;
+                _wrap.normal.textColor = _controlsMsgBad ? Alarm : TextPrimary;
+                GUI.Label(msgRect, _controlsMsg, _wrap);
+                _wrap.normal.textColor = prev;
+            }
+
+            float half = (panel.width - 8f) * 0.5f;
+            if (GUI.Button(new Rect(panel.x, panel.yMax - 34f, half, 32f), "RESET TO DEFAULTS", _chipOff))
+            {
+                InputBindings.ResetToDefaults();
+                _rebindTarget = null;
+                _controlsGroups = null;
+                _controlsMsg = "Every key is back to its default.";
+                _controlsMsgBad = false;
+            }
+            if (GUI.Button(new Rect(panel.x + half + 8f, panel.yMax - 34f, half, 32f), "BACK  ·  Esc", _chipOn))
+                CloseControls();
         }
 
         /// <summary>Wrapped paragraph at its measured height; returns the y below it.</summary>

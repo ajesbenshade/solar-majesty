@@ -1,0 +1,20 @@
+<Project>
+  <!-- Shared settings: compile the game's code against Unity reference assemblies from NuGet. -->
+  <PropertyGroup>
+    <RepoRoot Condition="'$(RepoRoot)'==''">$(MSBuildThisFileDirectory)../../</RepoRoot>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>CS0649;CS0414;CS0169;CS0618;CS0067;CS8632;CS0162;CS0108;CS0114;CS0219;CS0168;CS1998;CS4014</NoWarn>
+    <DefineConstants>UNITY_2021_3_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_STANDALONE</DefineConstants>
+    <OutputType>Library</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Unity 2021.3 runtime modules (the newest published on NuGet); Unity-6-only APIs are listed in baseline.txt. -->
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

@@ -34,7 +34,7 @@ namespace SolarMajesty.Tests
         [UnityTest]
         public IEnumerator VillageAndCollectors_SurviveTwoDiskAndSceneRoundTrips()
         {
-            if (Application.companyName != "SolarMajestyValidation" && Environment.GetEnvironmentVariable("CI") != "true")
+            if (Application.companyName != "SolarMajestyValidation" && !ValidationGate.IsCi)
                 Assert.Ignore("Requires the isolated validation profile; resets that profile's campaign.");
             SaveSystem.DeleteAll();
             DemoSettings.ClearSave();

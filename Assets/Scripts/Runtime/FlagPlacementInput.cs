@@ -20,6 +20,8 @@ namespace SolarMajesty
         [SerializeField] private FlagData terraformFlag;
         [SerializeField] private float bounty = 50f;
         [SerializeField] private float bountyStep = 15f;
+        // The place click, not a hotkey: mouse buttons stay out of InputBindings. No scene sets it
+        // (GameLoop adds this component at runtime), so it is always Mouse0 in the shipped game.
         [SerializeField] private KeyCode placeKey = KeyCode.Mouse0;
         [SerializeField] private bool enabledPlacement = true;
 
@@ -40,6 +42,7 @@ namespace SolarMajesty
         public bool ShownBountyAffordable => HasSelectedPosted || CanAffordSelectedBounty();
 
         private FlagHandle _posted;
+        private float _bountyHintAt;
 
         /// <summary>The pole the player clicked. +/- edits this bounty. Null when none is selected.</summary>
         public FlagHandle SelectedPosted
@@ -137,6 +140,13 @@ namespace SolarMajesty
         public void NudgeBounty(float delta)
         {
             var selected = SelectedPosted;
+            string noTarget = FirstHourHints.BountyKeyHint(selected != null, enabledPlacement);
+            if (noTarget != null && _loop != null && Time.unscaledTime >= _bountyHintAt)
+            {
+                // Pressing + with nothing selected used to do nothing at all.
+                _bountyHintAt = Time.unscaledTime + 4f;
+                _loop.LogOverseer(noTarget);
+            }
             float before = selected != null ? selected.CurrentBounty : 0f;
             int escrowBefore = selected != null ? selected.EscrowMetals : 0;
             float pending = bounty;
@@ -157,6 +167,7 @@ namespace SolarMajesty
                 return;
             _loop?.RefreshFlagInterest();
             string kind = selected.Data != null ? selected.Data.flagType.ToString() : "Flag";
+            PlaytestTelemetry.RecordFlagBounty(kind, before, selected.CurrentBounty, selected.InterestCount);
             Debug.Log(
                 $"[Flags] {kind} bounty ${before:F0} -> ${selected.CurrentBounty:F0} " +
                 $"escrow {escrowBefore} -> {selected.EscrowMetals} EU");
@@ -266,21 +277,21 @@ namespace SolarMajesty
             // Typing flag orders: no flag hotkeys; mouse placement below still works.
             if (!InputBindings.TextEntryActive)
             {
-                if (Input.GetKeyDown(KeyCode.F1) && exploreFlag != null)
+                if (InputBindings.Down(GameAction.FlagExplore) && exploreFlag != null)
                     Select(exploreFlag);
-                if (Input.GetKeyDown(KeyCode.F2) && clearThreatFlag != null)
+                if (InputBindings.Down(GameAction.FlagClearThreat) && clearThreatFlag != null)
                     Select(clearThreatFlag);
-                if (Input.GetKeyDown(KeyCode.F3) && buildFlag != null)
+                if (InputBindings.Down(GameAction.FlagBuild) && buildFlag != null)
                     Select(buildFlag);
-                if (Input.GetKeyDown(KeyCode.F4) && extractFlag != null)
+                if (InputBindings.Down(GameAction.FlagExtract) && extractFlag != null)
                     Select(extractFlag);
-                if (Input.GetKeyDown(KeyCode.F5) && defendFlag != null)
+                if (InputBindings.Down(GameAction.FlagDefend) && defendFlag != null)
                     Select(defendFlag);
-                if (Input.GetKeyDown(KeyCode.I) && researchSiteFlag != null)
+                if (InputBindings.Down(GameAction.FlagResearchSite) && researchSiteFlag != null)
                     Select(researchSiteFlag);
-                if (Input.GetKeyDown(KeyCode.O) && outpostFlag != null)
+                if (InputBindings.Down(GameAction.FlagOutpost) && outpostFlag != null)
                     Select(outpostFlag);
-                if (Input.GetKeyDown(KeyCode.U) && terraformFlag != null)
+                if (InputBindings.Down(GameAction.FlagTerraform) && terraformFlag != null)
                     Select(terraformFlag);
             }
 
@@ -318,7 +329,13 @@ namespace SolarMajesty
 
             FlagHandle handle = TryPost(_selected, world, bounty);
             if (handle == null)
+            {
                 Debug.Log("[Flags] Cannot post — not enough metals in the stockpile.");
+                // The click used to fail silently; say why and log it for the playtest report.
+                int cost = FlagBountySync.PostCost(_selected, bounty);
+                _loop?.LogOverseer(FirstHourHints.PostRefused(_selected.displayName, cost));
+                PlaytestTelemetry.RecordFlagPostFailed(_selected.flagType.ToString(), cost, "treasury");
+            }
             else
                 ClearPostedSelection();
         }
@@ -362,8 +379,9 @@ namespace SolarMajesty
 
         private void HandleBountyKeys()
         {
-            bool plus = Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus);
-            bool minus = Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus);
+            // The keypad + / - twins always work as well as the bindings (InputBindings.Alias).
+            bool plus = InputBindings.DownOrAlias(GameAction.BountyUp);
+            bool minus = InputBindings.DownOrAlias(GameAction.BountyDown);
             if (!plus && !minus) return;
 
             float step = Mathf.Max(bountyStep, MajestyEconomy.FlagBountyStep);

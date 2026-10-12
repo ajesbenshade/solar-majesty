@@ -36,7 +36,7 @@ namespace SolarMajesty.Tests
         [UnityTest]
         public IEnumerator DevelopedSnapshot_RoundTripsThroughSceneAndDiskTwice()
         {
-            if (Application.companyName != "SolarMajestyValidation" && Environment.GetEnvironmentVariable("CI") != "true")
+            if (Application.companyName != "SolarMajestyValidation" && !ValidationGate.IsCi)
                 Assert.Ignore("Requires the isolated validation profile; resets that profile's campaign.");
             SaveSystem.DeleteAll();
             DemoSettings.ClearSave();
@@ -174,7 +174,7 @@ namespace SolarMajesty.Tests
         [UnityTest]
         public IEnumerator Continue_UnsupportedOrUnreadableSaveStaysOnTitleAndPreservesFile()
         {
-            if (Application.companyName != "SolarMajestyValidation" && Environment.GetEnvironmentVariable("CI") != "true")
+            if (Application.companyName != "SolarMajestyValidation" && !ValidationGate.IsCi)
                 Assert.Ignore("Requires the isolated validation profile; resets that profile's campaign.");
             SaveSystem.DeleteAll();
             DemoSettings.ClearSave();

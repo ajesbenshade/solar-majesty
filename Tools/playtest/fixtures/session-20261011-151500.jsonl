@@ -1,0 +1,19 @@
+{"t":5.1,"e":"session_start","build":"0.4.0","build_guid":"3f2a9c","unity":"6000.5.10f1","platform":"OSXPlayer"}
+{"t":9.8,"e":"tutorial_start","flow":"first_hour","step":"0","goal":"4"}
+{"t":52.6,"e":"idle_hint","step":"0","hint":"Stuck? Press B, then 1, and click open ground near the Commons to place the Engineer workshop."}
+{"t":58.0,"e":"idle_gap","seconds":"35.4","step":"0","ended":"input"}
+{"t":66.3,"e":"placement_invalid","building":"Engineer Workshop","reason":"That spot is off the map."}
+{"t":210.2,"e":"tutorial_step","step":"1","from":"0","seconds":"200.4","goal":"4","flow":"first_hour"}
+{"t":248.9,"e":"flag_posted","type":"Build","bounty":"700","escrow":"700","interest":"0"}
+{"t":248.9,"e":"flag_refused","class":"EngineerBot","kind":"Greed","bounty":"700"}
+{"t":249.0,"e":"tutorial_step","step":"2","from":"1","seconds":"38.8","goal":"4","flow":"first_hour"}
+{"t":262.4,"e":"flag_posted","type":"Build","bounty":"700","escrow":"700","interest":"0"}
+{"t":262.4,"e":"flag_refused","class":"EngineerBot","kind":"Greed","bounty":"700"}
+{"t":270.0,"e":"flag_post_failed","type":"Build","bounty":"700","reason":"treasury"}
+{"t":301.5,"e":"idle_hint","step":"2","hint":"The Engineer wants more. Click the Build pole to select it, then press + (or + on the flag panel) a few times."}
+{"t":366.6,"e":"idle_gap","seconds":"95.1","step":"2","ended":"input"}
+{"t":370.2,"e":"flag_cancelled","type":"Build","bounty":"700","refund":"700"}
+{"t":388.0,"e":"error","type":"Exception","msg":"NullReferenceException: Object reference not set to an instance of an object"}
+{"t":450.7,"e":"idle_gap","seconds":"61.2","step":"2","ended":"pause"}
+{"t":450.7,"e":"pause_opened","step":"2"}
+{"t":455.3,"e":"session_quit","screen":"Paused","body":"Earth","pop":"0","modules":"3","play_seconds":"440","errors":"1"}
