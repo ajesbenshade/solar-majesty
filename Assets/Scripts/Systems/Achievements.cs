@@ -89,7 +89,7 @@ namespace SolarMajesty
             {
                 Id = AchievementId.SelfSufficient,
                 Title = "Self-Sufficient",
-                Description = "Collect 2,000 EU in guild tax.",
+                Description = "Bank 2,000 EU into the till.",
                 Test = s => s.TitheCollected >= 2000
             },
             new AchievementDef

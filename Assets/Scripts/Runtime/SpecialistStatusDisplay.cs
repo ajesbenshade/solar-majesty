@@ -82,7 +82,7 @@ namespace SolarMajesty
             else if (_agent.DutyCarry > 0 && _agent.LastReason == "pay_duty")
             {
                 c = new Color(0.98f, 0.82f, 0.22f);
-                text = $"TAX {_agent.DutyCarry}";
+                text = $"EU {_agent.DutyCarry}";
             }
             else if (!string.IsNullOrEmpty(_agent.RefusalChip))
             {

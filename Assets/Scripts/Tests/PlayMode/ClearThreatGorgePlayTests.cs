@@ -46,7 +46,7 @@ namespace SolarMajesty.Tests
             var pays = new System.Collections.Generic.List<int>();
             void OnLog(string condition, string stack, LogType type)
             {
-                if (condition != null && condition.Contains("flag_ClearThreat"))
+                if (condition != null && condition.StartsWith("[Credits]") && condition.Contains("Clear Threat"))
                 {
                     pays.Add(ParseGross(condition));
                     log.AppendLine(condition);
@@ -114,10 +114,14 @@ namespace SolarMajesty.Tests
                 Assert.AreEqual(1, pays.FindAll(v => v == 20800).Count, "the stacked 20,800 pays once. " + log);
 
                 var heroes = Object.FindObjectsByType<SpecialistAgent>(FindObjectsSortMode.None);
+                // A mech that stood up inside the scrap window can roll a scrap on this down, so skip it.
+                var stoodUpAt = typeof(SpecialistAgent).GetField("_stoodUpAt",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 SpecialistAgent flee = null;
                 for (int i = 0; i < heroes.Length; i++)
                 {
-                    if (heroes[i] != null && heroes[i].IsAlive && !heroes[i].IsScrapped)
+                    if (heroes[i] != null && heroes[i].IsAlive && !heroes[i].IsUntargetable
+                        && (float)stoodUpAt.GetValue(heroes[i]) <= Time.time - OverseerRules.ScrapWindow)
                     {
                         flee = heroes[i];
                         break;
@@ -126,6 +130,7 @@ namespace SolarMajesty.Tests
                 Assert.IsNotNull(flee, "a living hero has to be able to flee home");
                 float hp = flee.HealthNormalized;
                 flee.ApplyDamage(5f, false);
+                Assert.IsFalse(flee.IsScrapped, "the scripted down has to test recovery, not scrapping");
                 Assert.IsTrue(flee.IsIncapacitated, "the scripted hit has to drop the hero");
 
                 float recoverGame = 0f;
@@ -134,6 +139,7 @@ namespace SolarMajesty.Tests
                 while (recoverGame < 240f && Time.realtimeSinceStartup - recoverStart < 120f)
                 {
                     PushFast();
+                    Assert.IsTrue(flee != null && !flee.IsScrapped, "the recovering hero was destroyed or scrapped");
                     float door = Flat(flee.transform.position, ColonyLayout.InnOutpost);
                     if (!flee.IsIncapacitated && door < KingdomLife.RefugeArrive && flee.HealthNormalized > hp * 0.5f)
                     {
@@ -143,6 +149,7 @@ namespace SolarMajesty.Tests
                     yield return null;
                     recoverGame += Time.deltaTime;
                 }
+                Assert.IsTrue(flee != null && !flee.IsScrapped, "the recovering hero was destroyed or scrapped");
                 Shot(Path.Combine(outDir, "inn-recover.png"), flee.transform.position);
                 log.AppendLine($"FLEE pos={flee.transform.position.x:F1},{flee.transform.position.z:F1} hp={flee.HealthNormalized:F2} action={flee.CurrentAction} down={flee.IsIncapacitated}");
                 File.WriteAllText(Path.Combine(outDir, "e2e-log.txt"), log.ToString());
@@ -206,19 +213,24 @@ namespace SolarMajesty.Tests
 
         private static int ParseGross(string line)
         {
-            int plus = line.IndexOf('+');
-            int eu = line.IndexOf(" EU");
-            int semi = line.IndexOf(" to guild");
-            int paren = line.LastIndexOf('(', semi);
-            if (plus < 0 || eu < 0 || semi < 0 || paren < 0) return 0;
-            int.TryParse(line.Substring(plus + 1, eu - plus - 1).Trim(), out int kept);
-            int taxStart = paren + 1;
-            int taxLen = semi - taxStart;
-            string taxText = line.Substring(taxStart, taxLen);
-            int cut = taxText.LastIndexOf(';');
-            if (cut >= 0) taxText = taxText.Substring(cut + 1);
-            int.TryParse(taxText.Trim(), out int tax);
-            return kept + tax;
+            // Claim and status lines can mention Clear Threat without being a payout.
+            // Only "Bounty N EU" counts; anything else is skipped, and a short line
+            // must not throw when the marker sits at the end.
+            if (string.IsNullOrEmpty(line)) return 0;
+            const string mark = "Bounty ";
+            int at = line.IndexOf(mark);
+            if (at < 0) return 0;
+            int start = at + mark.Length;
+            if (start < 0 || start > line.Length) return 0;
+            int eu = line.IndexOf(" EU", start);
+            if (eu < start) return 0;
+            int len = eu - start;
+            if (len < 0 || start > line.Length - len) return 0;
+            string text = line.Substring(start, len);
+            text = text.Replace(",", "").Replace(".", "").Replace(" ", "")
+                .Replace("\u00A0", "").Replace("\u202F", "");
+            if (text.Length == 0 || !int.TryParse(text, out int gross)) return 0;
+            return gross;
         }
 
         private static string HeroLine()

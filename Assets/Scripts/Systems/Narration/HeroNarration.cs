@@ -67,7 +67,7 @@ namespace SolarMajesty
         /// <summary>Example exchanges: small models copy tone and length from these far better than from rules.</summary>
         static readonly string[,] Examples =
         {
-            { "Hero: level 3 Defense Mech on Mars. Voice: greedy — always about the money. Now: just took the den bounty paying 600 credits.",
+            { "Hero: level 3 Defense Mech on Mars. Voice: greedy — always about the money. Now: just took the den bounty paying 600 EU.",
               "Six hundred for a den? I'd clear two." },
             { "Hero: level 1 Scout Drone on Luna. Voice: cowardly — nervous, looking for an exit. Now: badly hurt and running back to the inn.",
               "Nope. Nope. Inn. Now." },
@@ -86,7 +86,7 @@ namespace SolarMajesty
               .Append(Word(m.Courage, "cowardly", "steady", "fearless")).Append(", ")
               .Append(Word(m.Workaholic, "lazy", "diligent", "workaholic")).Append(". ");
             sb.Append("Health ").Append(Pct(m.Health01)).Append(", tired ").Append(Pct(m.Fatigue01))
-              .Append(", purse ").Append(Mathf.Max(0, m.Credits)).Append(" credits. ");
+              .Append(", holds ").Append(Mathf.Max(0, m.Credits)).Append(" EU. ");
             sb.Append("Now: ").Append(Situation(m)).Append('.');
             return sb.ToString();
         }
@@ -109,7 +109,7 @@ namespace SolarMajesty
             switch (m.Kind)
             {
                 case NarrationKind.Claim:
-                    return $"just took the {flag} bounty paying {m.Bounty} credits" +
+                    return $"just took the {flag} bounty paying {m.Bounty:N0} EU" +
                            (string.IsNullOrEmpty(m.Orders) ? "" : $" (orders on it: \"{Clip(m.Orders, 80)}\")");
                 case NarrationKind.Refused:
                     return $"is not allowed to take the {flag} bounty because the overseer's orders say \"{Clip(m.Orders, 80)}\"";
@@ -124,7 +124,7 @@ namespace SolarMajesty
                         "workshop_duty" => "working a shift at the guild workshop",
                         "patrolling" => "patrolling the colony perimeter",
                         "triage" or "inn_triage" => "tending the wounded",
-                        "levy_collect" or "levy_home" => "walking the tax levy route",
+                        "levy_collect" or "levy_home" => "walking EU home",
                         _ => "wandering the frontier with no job"
                     };
             }

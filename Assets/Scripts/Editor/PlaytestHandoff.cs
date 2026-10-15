@@ -23,12 +23,12 @@ namespace SolarMajesty.EditorTools
             "If ignored, select the flag and press + until tempted. If accepted, continue.\n" +
             "A soil creeper shows up. Press G, F5 Defend, and post it on the bug.\n" +
             "If the pole says ignored, build a Defense workshop (key 2) and post F5 again.\n" +
-            "Keep mobs away: villagers raise houses and solar farms only while the yard is safe.\n" +
+            "Keep mobs away: bots build houses and solar farms only while the yard is safe.\n" +
             "Mines go only at ore deposits (an amber light column marks each, far out): farther\n" +
-            "from the Commons pays more energy, but tax collectors must walk it home and mobs\n" +
+            "from the Commons pays more energy, but Haul must walk it home and mobs\n" +
             "ambush them on the way. Landing pads and temples also need their marked zones.\n" +
             "SKIP dismisses the tutorial bar. Esc cancels a placement ghost; Esc again opens pause.\n" +
-            "From there, Title → Continue brings the campus back.\n" +
+            "From there, Title → Continue brings the yard back.\n" +
             "Stop whenever you get bored. That moment is the useful data.\n" +
             "\n" +
             "Controls\n" +
@@ -56,9 +56,9 @@ namespace SolarMajesty.EditorTools
             "\n" +
             "Notes\n" +
             "-----\n" +
-            "- Energy units (EU) are the only currency. Buildings fill their tills; tax collectors\n" +
-            "  carry the energy to the Commons or a Watchtower. Flags escrow EU.\n" +
-            "- Continue restores campus + treasury + research + open flags + fauna + specialist HP.\n" +
+            "- Energy units (EU) are the only currency. Buildings fill their tills; Haul\n" +
+            "  carries the energy to the Commons or a Watchtower. Flags escrow EU.\n" +
+            "- Continue restores the yard + treasury + research + open flags + fauna + specialist HP.\n" +
             "- If the Engineer ignores a cheap Build, raise its bounty. If already accepted, continue.\n" +
             "- This build is Earth only. Dens, sustain, and launch stay on the HUD. You do not have to finish Earth.\n" +
             "- Settings → Full campaign shows the other worlds. Leave it off for this session.\n" +

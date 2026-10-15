@@ -145,7 +145,7 @@ namespace SolarMajesty
             {
                 case BuildZoneKind.TradePost:
                     if (insideTakenZone) return "That trade ring is already taken.";
-                    return anyZoneFree ? "Landing pads only fit inside a gold trade ring." : "Every trade zone is taken.";
+                    return anyZoneFree ? "Landing pads only fit inside an EU trade ring." : "Every trade zone is taken.";
                 case BuildZoneKind.Mine:
                     if (insideTakenZone) return "That ore deposit already has a mine.";
                     return anyZoneFree ? "Mines can only be built at an ore deposit, out in the wilds." : "Every ore deposit has a mine.";

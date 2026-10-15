@@ -327,7 +327,37 @@ namespace SolarMajesty
             credits += kept;
             greedHunger = Mathf.Clamp01(greedHunger - Mathf.Clamp01(MajestyEconomy.ToBrain(amount) / 120f) * 0.35f);
             if (!string.IsNullOrEmpty(reason))
-                Debug.Log($"[Credits] {data?.displayName} +{kept:F0} EU ({reason}; {tax} to guild) → {credits:F0}");
+                Debug.Log(FormatCreditGain(data != null ? data.displayName : null, amount, kept, tax, credits, reason));
+        }
+
+        /// <summary>
+        /// Flag bounties name the full purse and both shares. A bare "+kept (flag_ClearThreat)"
+        /// reads as if half the bounty vanished.
+        /// </summary>
+        private static string FormatCreditGain(string who, float amount, float kept, int tax, float balance, string reason)
+        {
+            if (TryFlagLabel(reason, out string label))
+            {
+                int gross = Mathf.RoundToInt(amount);
+                int share = gross - tax;
+                string name = string.IsNullOrEmpty(who) ? "mech" : who;
+                return $"[Credits] Bounty {gross:N0} EU: {share:N0} EU to {name}, {tax:N0} EU to the till — {label}";
+            }
+
+            return $"[Credits] {who} +{kept:N0} EU ({reason}; {tax:N0} EU to the till) → {balance:N0}";
+        }
+
+        private static bool TryFlagLabel(string reason, out string label)
+        {
+            label = null;
+            const string prefix = "flag_";
+            if (string.IsNullOrEmpty(reason) || !reason.StartsWith(prefix)) return false;
+            string raw = reason.Substring(prefix.Length);
+            if (System.Enum.TryParse(raw, out FlagType type))
+                label = SpecialistFlavor.FlagShort(type);
+            else
+                label = raw;
+            return true;
         }
 
         /// <summary>The till this hero's guild tax lands in: workshop / guild hall, else Commons.</summary>
@@ -867,7 +897,7 @@ namespace SolarMajesty
             _loop?.OnRobotScrapped(this, salvage);
             DemoVfx.DeathBurst(transform.position, bodyTint);
             DemoAudio.PlayRobotDown(transform.position);
-            Debug.Log($"[Specialist] {data?.displayName} SCRAPPED — salvage {salvage} MET");
+            Debug.Log($"[Specialist] {data?.displayName} scrapped — salvage {salvage} EU to the till");
             Destroy(gameObject);
         }
 
@@ -935,10 +965,15 @@ namespace SolarMajesty
             if (_retreatLeft > 0f)
             {
                 // The inn building carves the mesh, so the door is about 9 m from the beacon.
+                // Wake-up health is 28%. Hand that flee off to rest before the next think
+                // can claim a flag, and latch rest until the leave line.
                 if (KingdomLife.AtRefuge(transform.position, OutpostClaimed))
                 {
                     _retreatLeft = 0f;
-                    ApplyDecision(BrainDecision.Rest(0.9f, "recovering_at_inn", RestPosition));
+                    var rest = _motives.Commit(
+                        BrainDecision.Rest(0.9f, "recovering_at_inn", RestPosition),
+                        _brain.Tuning, healthNormalized, Time.time, true);
+                    ApplyDecision(rest);
                 }
                 else
                 {
@@ -963,17 +998,6 @@ namespace SolarMajesty
             {
                 decision = _brain.Evaluate(BuildContext(), _flags.Flags, bodyDanger);
             }
-            if (decision.Action != SpecialistAction.Flee &&
-                _lastDecision.Action == SpecialistAction.Rest &&
-                KingdomLife.AtRest(transform.position, OutpostClaimed) &&
-                (fatigue > 0.22f || healthNormalized < 0.82f))
-            {
-                decision = BrainDecision.Rest(
-                    Mathf.Max(decision.Score, 0.6f),
-                    "recovering_at_inn",
-                    RestPosition);
-            }
-
             Party?.PromoteIfNeeded();
             if (Party != null && !Party.IsLeader(this) &&
                 decision.Action != SpecialistAction.Flee)
@@ -982,23 +1006,17 @@ namespace SolarMajesty
                 if (lead != null && lead.IsAlive)
                     decision = FollowLeader(lead);
             }
-            bool atInn = KingdomLife.AtRest(transform.position, OutpostClaimed);
-            decision = _motives.Commit(decision, _brain.Tuning, healthNormalized, Time.time, atInn);
+            // The inn door is outside the 3.2 m disc. Commit treats that door as the inn:
+            // Flee at wake-up HP hands off to Rest, Rest holds until restLeaveHealth, and a
+            // Defend flag cannot be reclaimed until the post-rest cooldown. The old 0.82 disc
+            // release and 0.85 refuge pull fought across the 1.75 s dwell and flipped every ~2 s.
+            bool atDoor = KingdomLife.AtRefuge(transform.position, OutpostClaimed);
+            decision = _motives.Commit(decision, _brain.Tuning, healthNormalized, Time.time, atDoor);
 
             // A stuck Clear Threat was let go. Do not pick the same flag straight back up,
             // or the release log fires again and the warrant never frees.
             if (IsYieldingThreat(decision.TargetFlag))
                 decision = BrainDecision.Wander(transform.position, 0.15f, "clear_threat_yield");
-
-            // The inn door is outside the 3.2 m beacon, inside the carved building. Heal there.
-            if (KingdomLife.AtRefuge(transform.position, OutpostClaimed) &&
-                (healthNormalized < 0.85f || fatigue > 0.22f))
-            {
-                decision = BrainDecision.Rest(
-                    Mathf.Max(decision.Score, 0.7f),
-                    "recovering_at_inn",
-                    RestPosition);
-            }
 
             _motives.NoteDecision(_brain.Tuning, decision.Action, decision.TargetFlag?.RuntimeId, Time.time);
             ApplyDecision(decision);
@@ -1545,7 +1563,7 @@ namespace SolarMajesty
                     DemoAudio.PlayCredits(transform.position);
                     DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
                 }
-                Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty=${bounty:F0}");
+                Debug.Log($"[Specialist] {data.displayName} completed {SpecialistFlavor.FlagShort(completedType)} bounty={bounty:N0} EU");
                 ReleaseClaim();
                 _activeFlag = null;
                 _status = "completed_flag";
@@ -1795,7 +1813,7 @@ namespace SolarMajesty
         {
             int lost = _duty.Drop(fraction);
             if (lost > 0)
-                _loop?.LogOverseer($"{Record.Name} {reason} — {lost} EU of guild tax lost.");
+                _loop?.LogOverseer($"{Record.Name} {reason} — {lost:N0} EU dropped.");
         }
 
         /// <summary>
@@ -2468,7 +2486,7 @@ namespace SolarMajesty
                 _agent.isStopped = true;
                 _agent.ResetPath();
                 Vector3 warp = new Vector3(next.x, 0.02f, next.z);
-                if (NavMesh.SamplePosition(warp, out NavMeshHit hit, 2.5f, NavMesh.AllAreas) && _agent.Warp(hit.position))
+                if (SampleForAgent(warp, out NavMeshHit hit) && StepAgentTo(hit.position))
                 {
                     Vector3 seated = transform.position;
                     seated.x = hit.position.x;
@@ -2499,6 +2517,32 @@ namespace SolarMajesty
         }
 
         /// <summary>Put the pivot on the terrain. A recovered mech was saved under the surface.</summary>
+        /// <summary>
+        /// Sample only this agent's NavMesh. An AllAreas sample can land on another agent type's mesh,
+        /// and warping there logs "Failed to create agent".
+        /// </summary>
+        private bool SampleForAgent(Vector3 point, out NavMeshHit hit)
+        {
+            var filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = NavMesh.AllAreas };
+            return NavMesh.SamplePosition(point, out hit, 2.5f, filter);
+        }
+        /// <summary>
+        /// Short hops slide the agent along its mesh with Move. Warp re-creates the agent, and near
+        /// carved river cells that logs "Failed to create agent" even on a sampled point.
+        /// </summary>
+        private bool StepAgentTo(Vector3 onMesh)
+        {
+            Vector3 delta = onMesh - _agent.nextPosition;
+            delta.y = 0f;
+            // Move only along a clear straight line on the mesh; a hop across a carved edge still warps.
+            var filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = NavMesh.AllAreas };
+            if (delta.sqrMagnitude < 1f && !NavMesh.Raycast(_agent.nextPosition, onMesh, out _, filter))
+            {
+                _agent.Move(delta);
+                return true;
+            }
+            return _agent.Warp(onMesh);
+        }
         private void SeatOnTerrain()
         {
             if (TerrainDataBake.Current == null) return;
@@ -2507,8 +2551,10 @@ namespace SolarMajesty
             p.y = TerrainDataBake.GroundHeight(p);
             transform.position = p;
             Vector3 probe = new Vector3(p.x, 0.02f, p.z);
-            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
-                _agent.Warp(probe);
+            // Seat only onto a sampled point of this agent's mesh, never a raw off-mesh warp.
+            if (_agent != null && _agent.enabled && _agent.isOnNavMesh &&
+                SampleForAgent(probe, out NavMeshHit hit))
+                StepAgentTo(hit.position);
         }
 
         /// <summary>
@@ -2734,7 +2780,7 @@ namespace SolarMajesty
         public string DebugLine()
         {
             string flagInfo = _activeFlag != null
-                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):F0}"
+                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):N0} EU"
                 : "-";
             string nav = _agent != null && _agent.isOnNavMesh ? "nav" : "direct";
             return $"{data?.displayName ?? "?"} L{Level} | {_lastDecision.Action} | " +

@@ -128,13 +128,13 @@ namespace SolarMajesty
         /// </summary>
         public static string LevyLine(int tills, int collectors, int bags, int daily)
         {
-            string full = $"TILLS {tills:N0} · COLLECTORS {collectors} carrying {bags:N0} · TAX {daily:N0}/day";
+            string full = $"TILLS {tills:N0} · COLLECTORS {collectors} carrying {bags:N0} · EU {daily:N0}/day";
             if (full.Length <= LevyBudget) return full;
-            string mid = $"TILLS {tills:N0} · {collectors} TAXMEN · {bags:N0} BAGS · TAX {daily:N0}/day";
+            string mid = $"TILLS {tills:N0} · {collectors} HAUL · {bags:N0} BAGS · EU {daily:N0}/day";
             if (mid.Length <= LevyBudget) return mid;
-            string compact = $"TILLS {tills:N0} · TAXMEN {collectors} · TAX {daily:N0}/day";
+            string compact = $"TILLS {tills:N0} · HAUL {collectors} · EU {daily:N0}/day";
             if (compact.Length <= LevyBudget) return compact;
-            return $"T {tills:N0} · C {collectors} · TAX {daily:N0}";
+            return $"T {tills:N0} · C {collectors} · EU {daily:N0}";
         }
 
         /// <summary>Income under the treasury number. Stays inside the crest plate.</summary>

@@ -67,8 +67,8 @@ namespace SolarMajesty
             new CampaignCutscene(EarthMidCourt, "Court, Beds, Charter", CutsceneKind.Modal,
                 "The Commons stands. The HAB is a ledger. The hall has a charter.",
                 "That is a court. It is not a solar power.",
-                "ICE and REG have a ceiling on this meadow. Eight souls and a farm do not impress anyone who already owns a lane.",
-                "Sol Authority’s legitimacy is expansion. Farms are how we eat. They are not why we rule."),
+                "ICE and REG have a ceiling on this meadow. Eight bots and a farm do not impress anyone who already owns a lane.",
+                "Sol Authority’s legitimacy is expansion. Farms fill the tank. They are not why we rule."),
 
             new CampaignCutscene(EarthToLuna, "Trajectory Locked — Luna", CutsceneKind.TravelLog,
                 "Earth holds. The Lunar Rocket is on the pad, not in a toast.",
@@ -79,8 +79,8 @@ namespace SolarMajesty
             new CampaignCutscene(LunaArrival, "Hospitality, Itemized", CutsceneKind.Modal,
                 "Luna insertion. The Freeholds smile like a weigh-station.",
                 "Dock fee is forty EU. Ice and ore have owners. The lanes have owners.",
-                "Ash hoppers will test the HAB. Dust ticks will test the mines. Neither is the real tax.",
-                "The real tax is staying. Stay, and you pay forever."),
+                "Ash hoppers will test the HAB. Dust ticks will test the mines. Neither is the real bill.",
+                "The real bill is staying. Stay, and you pay forever."),
 
             new CampaignCutscene(LunaMidWarrant, "Receipt and Warrant", CutsceneKind.Modal,
                 "They call it a tariff. Strip and Core hauled the receipt. Do not lose it.",
@@ -92,7 +92,7 @@ namespace SolarMajesty
                 "Luna holds. Mars Ship staged. Pack guild manners.",
                 "The Compact does not curtsy. It charters.",
                 "We have paid the Freehold tithe long enough to learn the lesson: ice and ore without a seat is someone else’s spine.",
-                "The red campus is where a crown becomes industrial — or becomes a story about a meadow."),
+                "The red yard is where a crown becomes industrial — or becomes a story about a meadow."),
 
             new CampaignCutscene(MarsArrival, "Compact Ground", CutsceneKind.Modal,
                 "Mars descent. Compact ground. Dust already filing opinions about Power.",
@@ -104,7 +104,7 @@ namespace SolarMajesty
                 "The solar field is on the books. The wisps can read. Aegis hunts light that should not have a mouth.",
                 "Bloom will weave the crust if you pay for a garden. The Compact creed is not a picnic blanket.",
                 "A stronghold that cannot keep Power or lunch is a failed picnic with better dust.",
-                "Hold the campus. Then we name the rocks. We do not write their decrees today."),
+                "Hold the yard. Then we name the rocks. We do not write their decrees today."),
 
             new CampaignCutscene(MarsBeltNamed, "The Rocks Have a Name", CutsceneKind.TravelLog,
                 "Mars holds. Belt Hauler on the pad. Trajectory into the rocks is open.",

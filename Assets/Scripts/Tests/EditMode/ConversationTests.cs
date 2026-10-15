@@ -163,7 +163,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(1, log.Events.Count);
 
             var claim = new HeroMoment { Kind = NarrationKind.Claim, FlagType = "den", Bounty = 450 };
-            Assert.AreEqual("took the den bounty for 450 credits", HeroConversation.EventLine(claim));
+            Assert.AreEqual("took the den bounty for 450 EU", HeroConversation.EventLine(claim));
             Assert.IsNull(HeroConversation.EventLine(new HeroMoment { Kind = NarrationKind.Wander }));
         }
 

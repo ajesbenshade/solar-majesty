@@ -490,7 +490,7 @@ namespace SolarMajesty
             {
                 _levyHomeLogged = true;
                 LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
-                Alerts.Push("levy_home", $"Tax collector walked {amount} EU home", AlertSeverity.Good, Time.unscaledTime, at);
+                Alerts.Push("levy_home", $"Haul walked {amount:N0} EU home", AlertSeverity.Good, Time.unscaledTime, at);
             }
         }
 
@@ -555,6 +555,8 @@ namespace SolarMajesty
         private bool _bodyHopQueued;
         private CelestialBodyId _bodyHopTarget;
         private bool _bodyHopUnlock;
+        /// <summary>Victory panel is up. Time scale stays at 0 until Continue or Main Menu.</summary>
+        private bool _victoryHold;
         private GameObject _outpostBeacon;
         private readonly Dictionary<EntityId, float> _extractStamp = new Dictionary<EntityId, float>(8);
         private readonly List<ConstructionOrder> _completedBuilds = new List<ConstructionOrder>(8);
@@ -1237,6 +1239,7 @@ namespace SolarMajesty
 
         public void TogglePause()
         {
+            if (_victoryHold) return;
             if (Screen == DemoScreen.Title || Screen == DemoScreen.Settings) return;
             if (Screen == DemoScreen.Paused)
                 ResumePlay();
@@ -2416,6 +2419,7 @@ namespace SolarMajesty
         /// </summary>
         private void HandleSpeedHotkeys()
         {
+            if (_victoryHold) return;
             if (InputBindings.TextEntryActive) return; // typing flag orders
 
             if (Input.GetKeyDown(KeyCode.Space))
@@ -2446,6 +2450,11 @@ namespace SolarMajesty
         {
             if (!IsPlaying)
                 return;
+            if (_victoryHold)
+            {
+                Time.timeScale = 0f;
+                return;
+            }
             Time.timeScale = SimSpeed.TimeScale;
         }
 
@@ -2738,7 +2747,7 @@ namespace SolarMajesty
                 SyncNarrativeCivic();
             }
             else if (id == TechId.HarvestDoctrine)
-                LogOverseer("Harvest Doctrine. Strip Guild is licensed. Mines and haul improve.");
+                LogOverseer("Harvest Doctrine. Harvest Lodge is licensed. Mines and haul improve.");
             else if (id == TechId.SurveyDoctrine)
                 LogOverseer("Survey Doctrine. Chart Lodge is licensed. Labs tick faster.");
             else if (id == TechId.AegisDoctrine)
@@ -3035,10 +3044,10 @@ namespace SolarMajesty
                         b.description = "more energy farther out";
                         break;
                     case BuildingCategory.Habitat:
-                        b.description = $"villagers build · {MajestyEconomy.HouseDailyFlat} EU/day";
+                        b.description = $"bots build · {MajestyEconomy.HouseDailyFlat:N0} EU/day";
                         break;
                     case BuildingCategory.Farm:
-                        b.description = $"tax {MajestyEconomy.FarmDailyTax}/day";
+                        b.description = $"{MajestyEconomy.FarmDailyTax:N0} EU/day";
                         break;
                     case BuildingCategory.LandingPad:
                         b.description = "launch craft";
@@ -3048,7 +3057,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Power:
                         b.displayName = "Solar Farm";
-                        b.description = $"villagers build · {MajestyEconomy.SolarFarmDailyTax} EU/day";
+                        b.description = $"bots build · {MajestyEconomy.SolarFarmDailyTax:N0} EU/day";
                         break;
                     case BuildingCategory.ClimateLoom:
                     case BuildingCategory.AegisSpire:
@@ -3068,7 +3077,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Market:
                         b.displayName = "Market Stall";
-                        b.description = $"tax {MajestyEconomy.MarketDailyTax}/day";
+                        b.description = $"{MajestyEconomy.MarketDailyTax:N0} EU/day";
                         break;
                     case BuildingCategory.Blacksmith:
                         b.displayName = "Blacksmith";
@@ -3080,7 +3089,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Watchtower:
                         b.displayName = "Watchtower";
-                        b.description = "+1 tax collector";
+                        b.description = "+1 Haul";
                         break;
                     case BuildingCategory.AidStation:
                         b.displayName = "Aid Station";
@@ -4374,7 +4383,7 @@ namespace SolarMajesty
             if (any && !_faunaRetreated)
             {
                 _faunaRetreated = true;
-                LogOverseer("Dens quiet — campus pests scatter: " + JoinEnglish(names) + ".");
+                LogOverseer("Dens quiet — yard pests scatter: " + JoinEnglish(names) + ".");
             }
         }
 
@@ -4530,7 +4539,7 @@ namespace SolarMajesty
 
         private static string JoinEnglish(List<string> parts)
         {
-            if (parts == null || parts.Count == 0) return "campus pests";
+            if (parts == null || parts.Count == 0) return "yard pests";
             if (parts.Count == 1) return parts[0];
             if (parts.Count == 2) return parts[0] + " and " + parts[1];
             var sb = new System.Text.StringBuilder();
@@ -4969,10 +4978,52 @@ namespace SolarMajesty
             ReloadActiveScene();
         }
 
-        /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>
-        public void AdvanceCampaign()
+        /// <summary>
+        /// Victory panel: world holds, and the conquered body is written with the existing campaign key.
+        /// </summary>
+        public void HoldForVictory()
         {
+            if (ReplayRules.IsEndless || _victoryHold) return;
+            _victoryHold = true;
+            Time.timeScale = 0f;
+            VictoryOffer.RecordProgress(celestialBody);
+            PersistSession();
+        }
+
+        /// <summary>Victory button. Loads the next body when that level exists.</summary>
+        public void ContinueAfterVictory()
+        {
+            if (!VictoryOffer.NextIsBuilt(celestialBody))
+                return;
+            _victoryHold = false;
+            // The Earth demo used to refuse this hop. Leaving it on would also hide Luna's
+            // departure tech. Same preference key, no replay-rule reload.
             if (DemoSettings.FirstHourDemo)
+            {
+                DemoSettings.FirstHourDemo = false;
+                PlayerPrefs.SetInt(DemoSettings.FirstHourKey, 0);
+                PlayerPrefs.Save();
+            }
+            if (SimSpeed.IsPaused)
+                SimSpeed.Resume();
+            Time.timeScale = SimSpeed.TimeScale;
+            AdvanceCampaign(fromVictory: true);
+        }
+
+        /// <summary>Victory button. Progress is already stored; this only leaves the colony.</summary>
+        public void ExitVictoryToTitle()
+        {
+            _victoryHold = false;
+            ReturnToTitle();
+        }
+
+        /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>
+        public void AdvanceCampaign() => AdvanceCampaign(fromVictory: false);
+
+        /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>
+        public void AdvanceCampaign(bool fromVictory)
+        {
+            if (VictoryOffer.DemoBlocksDepart(DemoSettings.FirstHourDemo, fromVictory))
             {
                 string craft = Research != null
                     ? Research.LaunchTechLabel(CelestialBodyId.Earth)
@@ -4994,11 +5045,7 @@ namespace SolarMajesty
                 return;
             }
 
-            string from = _body != null ? _body.DisplayName : celestialBody.ToString();
-            string to = CelestialBodyCatalog.Get(next.Value).DisplayName;
-            string hop = CampaignCutsceneCatalog.TryGetVictory(celestialBody, out var cut)
-                ? cut.LogParagraph
-                : $"Departure from {from}. Trajectory locked: {to}.";
+            string hop = VictoryOffer.For(celestialBody, nextBuilt: true, endless: false).Body;
             if (!string.IsNullOrEmpty(freight))
                 hop += " " + freight;
             CampaignProgress.QueueTravelLog(hop);
@@ -5327,7 +5374,7 @@ namespace SolarMajesty
             b.powerGen = PowerGenFor(cat, name);
             b.description = cat switch
             {
-                BuildingCategory.Inn => "wrecks wait — credits only",
+                BuildingCategory.Inn => "wrecks wait — EU only",
                 BuildingCategory.Defense => "auto-fires 18 m",
                 BuildingCategory.Mining => "does not grow EU",
                 BuildingCategory.ClimateLoom => "unlock from ★ tech — bonus while standing",
@@ -5381,7 +5428,7 @@ namespace SolarMajesty
                 CreateBuilding("Watchtower", BuildingCategory.Watchtower, 36, 2, 10f, 4, 4),
                 CreateBuilding("Aid Station", BuildingCategory.AidStation, 38, 2, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
-                CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
+                CreateBuilding("Repair Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
                 CreateGuildHall(RobotGuildId.Horizon),
                 CreateGuildHall(RobotGuildId.Anvil),
                 CreateGuildHall(RobotGuildId.Aegis),
@@ -6040,6 +6087,11 @@ namespace SolarMajesty
                 _mission.RestoreFrom(save.mission);
                 if (save.mission != null && save.mission.launchReady)
                     _launchCraftStaged = true;
+                if (_mission.IsWon && !ReplayRules.IsEndless)
+                {
+                    _victoryHold = true;
+                    Time.timeScale = 0f;
+                }
             }
 
             _playSeconds = save.playSeconds;
@@ -6504,7 +6556,7 @@ namespace SolarMajesty
             SyncLaunchGate();
             SnapCampusCamera();
             HideDropClaimIfSettled();
-            LogOverseer($"Campus restored — {restored} modules on {(_body != null ? _body.DisplayName : celestialBody.ToString())}.");
+            LogOverseer($"Yard restored — {restored} modules on {(_body != null ? _body.DisplayName : celestialBody.ToString())}.");
             Debug.Log($"[GameLoop] Restored {restored} campus pieces.");
         }
 
@@ -6994,7 +7046,7 @@ namespace SolarMajesty
         {
             SpecialistClass.EngineerBot => "Engineer Workshop",
             SpecialistClass.DefenseMech => "Defense Workshop",
-            SpecialistClass.Medic => "Medic Workshop",
+            SpecialistClass.Medic => "Repair Workshop",
             SpecialistClass.HarvesterBot => "Harvester Workshop",
             SpecialistClass.SurveyorBot => "Surveyor Workshop",
             SpecialistClass.TerraformerBot => "Terraformer Workshop",

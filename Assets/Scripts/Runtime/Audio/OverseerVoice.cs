@@ -202,6 +202,8 @@ namespace SolarMajesty
         private static void EnsureSource()
         {
             if (_source != null) return;
+            // DontDestroyOnLoad is illegal in EditMode. A missing source just skips the cue.
+            if (!Application.isPlaying) return;
 
             var go = GameObject.Find("SM_Voice");
             if (go == null)

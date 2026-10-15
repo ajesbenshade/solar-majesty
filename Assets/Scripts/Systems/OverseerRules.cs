@@ -27,7 +27,7 @@ namespace SolarMajesty
         public const string GrokYardFirstBill =
             "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.";
         public const string GrokYardUnaffordable =
-            "Compact scrip insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
+            "Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
         public const string GrokYardMissing =
             "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building.";
         public const float ReviveCooldown = 120f;
@@ -193,9 +193,9 @@ namespace SolarMajesty
         public const string GrokLevyStolenCourier =
             "Haul lost the levy on the road.";
         public const string GrokLevyStolenHab =
-            "Credits were napping on the HAB. A mite just made a withdrawal.";
+            "EU was napping on the HAB. A mite just made a withdrawal.";
         public const string GrokLevyHome =
-            "Haul walked the purse home. That is your tax collector. We are not calling it that.";
+            "Haul walked the purse home. EU is in the chest. Do not click the crate.";
 
         public const float PressureInterval = 75f;
         public const float FrenzyPressure = 50f;

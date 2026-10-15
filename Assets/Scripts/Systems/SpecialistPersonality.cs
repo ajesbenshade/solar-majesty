@@ -59,7 +59,7 @@ namespace SolarMajesty
                     s.upkeepPerMinute = Upkeep(ResourceId.Power, 2);
                     break;
                 case SpecialistClass.Medic:
-                    s.displayName = "Medic";
+                    s.displayName = "Repair";
                     s.description = "Triage. Stays near the wounded. Defends; will not hunt dens.";
                     s.baseGreed = 0.24f;
                     s.courage = 0.42f;
