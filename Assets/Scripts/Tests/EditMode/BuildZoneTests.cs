@@ -101,7 +101,7 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(t.PointInTakenZone(BuildZoneKind.TradePost, new Vector3(40f, 0f, 10f), zones, taken));
             Assert.AreEqual("That trade ring is already taken.",
                 t.Reason(BuildZoneKind.TradePost, anyZoneFree: true, insideTakenZone: true));
-            StringAssert.Contains("gold trade ring", t.Reason(BuildZoneKind.TradePost, true, false));
+            StringAssert.Contains("EU trade ring", t.Reason(BuildZoneKind.TradePost, true, false));
         }
     }
 }

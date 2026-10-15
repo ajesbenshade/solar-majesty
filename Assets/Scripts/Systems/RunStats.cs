@@ -86,7 +86,7 @@ namespace SolarMajesty
                 ("Bounties refused", FlagsRefused.ToString()),
                 ("Highest bounty", $"{HighestBounty} EU"),
                 ("Paid out", $"{BountyPaid} EU"),
-                ("Guild tax", $"{TitheCollected} EU"),
+                ("Till share", $"{TitheCollected} EU"),
                 ("Modules built", ModulesBuilt.ToString()),
                 ("Modules lost", ModulesLost.ToString()),
                 ("Robots fabricated", RobotsFabricated.ToString()),

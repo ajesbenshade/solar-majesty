@@ -327,7 +327,37 @@ namespace SolarMajesty
             credits += kept;
             greedHunger = Mathf.Clamp01(greedHunger - Mathf.Clamp01(MajestyEconomy.ToBrain(amount) / 120f) * 0.35f);
             if (!string.IsNullOrEmpty(reason))
-                Debug.Log($"[Credits] {data?.displayName} +{kept:F0} EU ({reason}; {tax} to guild) → {credits:F0}");
+                Debug.Log(FormatCreditGain(data != null ? data.displayName : null, amount, kept, tax, credits, reason));
+        }
+
+        /// <summary>
+        /// Flag bounties name the full purse and both shares. A bare "+kept (flag_ClearThreat)"
+        /// reads as if half the bounty vanished.
+        /// </summary>
+        private static string FormatCreditGain(string who, float amount, float kept, int tax, float balance, string reason)
+        {
+            if (TryFlagLabel(reason, out string label))
+            {
+                int gross = Mathf.RoundToInt(amount);
+                int share = gross - tax;
+                string name = string.IsNullOrEmpty(who) ? "mech" : who;
+                return $"[Credits] Bounty {gross:N0} EU: {share:N0} EU to {name}, {tax:N0} EU to the till — {label}";
+            }
+
+            return $"[Credits] {who} +{kept:N0} EU ({reason}; {tax:N0} EU to the till) → {balance:N0}";
+        }
+
+        private static bool TryFlagLabel(string reason, out string label)
+        {
+            label = null;
+            const string prefix = "flag_";
+            if (string.IsNullOrEmpty(reason) || !reason.StartsWith(prefix)) return false;
+            string raw = reason.Substring(prefix.Length);
+            if (System.Enum.TryParse(raw, out FlagType type))
+                label = SpecialistFlavor.FlagShort(type);
+            else
+                label = raw;
+            return true;
         }
 
         /// <summary>The till this hero's guild tax lands in: workshop / guild hall, else Commons.</summary>
@@ -1545,7 +1575,7 @@ namespace SolarMajesty
                     DemoAudio.PlayCredits(transform.position);
                     DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
                 }
-                Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty=${bounty:F0}");
+                Debug.Log($"[Specialist] {data.displayName} completed {SpecialistFlavor.FlagShort(completedType)} bounty={bounty:N0} EU");
                 ReleaseClaim();
                 _activeFlag = null;
                 _status = "completed_flag";
@@ -1795,7 +1825,7 @@ namespace SolarMajesty
         {
             int lost = _duty.Drop(fraction);
             if (lost > 0)
-                _loop?.LogOverseer($"{Record.Name} {reason} — {lost} EU of guild tax lost.");
+                _loop?.LogOverseer($"{Record.Name} {reason} — {lost:N0} EU dropped.");
         }
 
         /// <summary>
@@ -2734,7 +2764,7 @@ namespace SolarMajesty
         public string DebugLine()
         {
             string flagInfo = _activeFlag != null
-                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):F0}"
+                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):N0} EU"
                 : "-";
             string nav = _agent != null && _agent.isOnNavMesh ? "nav" : "direct";
             return $"{data?.displayName ?? "?"} L{Level} | {_lastDecision.Action} | " +

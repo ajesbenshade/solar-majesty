@@ -207,7 +207,7 @@ namespace SolarMajesty
         {
             string line = _loop?.Economy != null && !string.IsNullOrEmpty(_loop.Economy.LastResupplyLine)
                 ? _loop.Economy.LastResupplyLine
-                : "Trade ship landed — caravan gold waits in the Market till for a collector.";
+                : "Trade ship landed — caravan EU waits in the Market till for a collector.";
             Toast(line, 4f);
             DemoAudio.PlayCredits(); // caravan gold landed, not a menu confirm
         }
@@ -664,8 +664,8 @@ namespace SolarMajesty
             if (label.StartsWith("BEDS")) return UiIcons.Get(IconId.Beds);
             if (label.StartsWith("HEROES")) return UiIcons.Get(IconId.Robot);
             if (label.StartsWith("HOUSES")) return UiIcons.Get(IconId.House);
-            if (label.StartsWith("TAXMEN")) return UiIcons.Get(IconId.Bag);
-            if (label.StartsWith("VILLAGE") || label.StartsWith("HALTED")) return UiIcons.Get(IconId.Hammer);
+            if (label.StartsWith("HAUL")) return UiIcons.Get(IconId.Bag);
+            if (label.StartsWith("BOTS") || label.StartsWith("HALTED")) return UiIcons.Get(IconId.Hammer);
             return null;
         }
 
@@ -791,9 +791,9 @@ namespace SolarMajesty
             ResourceChip(new Rect(r.x, top, cw, ch), "HEROES", heroes, heroes <= 0);
             ResourceChip(new Rect(r.x + cw + 6f, top, cw, ch), "HOUSES", houses, false,
                 solar > 0 ? $"{solar} solar" : null);
-            ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "TAXMEN", collectors, collectors <= 0 || replacing > 0,
+            ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", collectors, collectors <= 0 || replacing > 0,
                 replacing > 0 ? $"-{replacing} replacing" : (bags > 0 ? $"{bags} carried" : null));
-            ResourceChip(new Rect(r.x + cw + 6f, top + ch + 4f, cw, ch), halted ? "HALTED" : "VILLAGE",
+            ResourceChip(new Rect(r.x + cw + 6f, top + ch + 4f, cw, ch), halted ? "HALTED" : "BOTS",
                 building ? pct : 0, halted, building ? "% built" : "idle");
         }
 
@@ -1216,9 +1216,9 @@ namespace SolarMajesty
             int shown = fp.ShownBounty;
             bool posted = fp.HasSelectedPosted;
             bool canPay = fp.ShownBountyAffordable;
-            HudLayout.StatLine(new Rect(c.x, y, 140f, 24f), out var bountyLabel, out var bountyValue);
+            HudLayout.StatLine(new Rect(c.x, y, Mathf.Max(140f, c.width - 64f), 24f), out var bountyLabel, out var bountyValue);
             GUI.Label(bountyLabel, "BOUNTY", _micro);
-            GUI.Label(bountyValue, $"${shown:F0}", _value);
+            GUI.Label(bountyValue, $"{shown:N0} EU", _value);
             if (GUI.Button(new Rect(c.xMax - 58f, y + 2f, 26f, 20f), "−", _chipOff)) fp.NudgeBounty(-MajestyEconomy.FlagBountyStep);
             if (GUI.Button(new Rect(c.xMax - 28f, y + 2f, 26f, 20f), "+", _chipOff)) fp.NudgeBounty(MajestyEconomy.FlagBountyStep);
 
@@ -1442,11 +1442,11 @@ namespace SolarMajesty
             _number.alignment = TextAnchor.MiddleRight;
             var prevC = _number.normal.textColor;
             _number.normal.textColor = fp.ShownBountyAffordable ? HudSkin.GoldBright : Alarm;
-            GUI.Label(new Rect(minus.x - 68f, rect.y, 60f, rect.height), $"${fp.ShownBounty:F0}", _number);
+            GUI.Label(new Rect(minus.x - 112f, rect.y, 104f, rect.height), $"{fp.ShownBounty:N0} EU", _number);
             _number.alignment = prev;
             _number.normal.textColor = prevC;
 
-            var open = new Rect(rect.x, rect.y, minus.x - 76f - rect.x, rect.height);
+            var open = new Rect(rect.x, rect.y, minus.x - 120f - rect.x, rect.height);
             bool hot = open.Contains(Event.current.mousePosition);
             if (hot) HudSkin.RuleH(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Gold);
             GUI.Label(new Rect(c.x, c.y - 6f, open.width - Pad, 18f), FlagStripLabel(fp), _value);
@@ -1584,7 +1584,7 @@ namespace SolarMajesty
                     HudSkin.Dot(new Vector2(c.x + 4f, y + 7.5f), 7f, col);
                     string orders = f.Orders != null && f.Orders.HasRules ? $"  ·  {f.Orders.Summary()}" : "";
                     GUI.Label(new Rect(c.x + 12f, y, c.width - 12f, 15f),
-                        $"{f.Data.displayName}  ${FlagBountySync.Amount(f):F0}  ·  {claim}{orders}", _micro);
+                        $"{f.Data.displayName}  {FlagBountySync.Amount(f):N0} EU  ·  {claim}{orders}", _micro);
                     y += 15f;
                 }
             }
@@ -1672,13 +1672,13 @@ namespace SolarMajesty
                         ? (st.LaserArmed ? "Watchtower · lasers armed" : "Watchtower · guard post")
                     : st.IsAidStation ? "Aid Station · paid patch"
                     : st.IsLandingPad ? "Weigh-station · tank vs wallet"
-                    : st.IsResidential ? "Habitat · colonists"
+                    : st.IsResidential ? "Habitat · worker bots"
                     : st.Role.ToString();
             string worker = st.IsResidential
-                ? "humans"
+                ? "bots"
                 : (st.HasPreferredClass ? ColonyStructure.ClassLabel(st.PreferredClass) : "—");
             string beds = st.IsResidential
-                ? $" · residents {st.Residents}/{st.ResidentCapacity}"
+                ? $" · bots {st.Residents}/{st.ResidentCapacity}"
                 : "";
             GUI.Label(new Rect(c.x, row, c.width, 13f),
                 st.IsResidential
@@ -1693,8 +1693,8 @@ namespace SolarMajesty
             string workers = st.IsResidential
                 ? (st.Residents > 0
                     ? (st.LevyPurse > 0
-                        ? $"House tax {st.LevyPurse} EU sitting — a tax collector walks it home."
-                        : "Colonists live here — house tax sits until a tax collector walks it home.")
+                        ? $"{st.LevyPurse:N0} EU sitting — a bot walks it home."
+                        : "Worker bots bunk here — EU sits until a bot walks it home.")
                     : "Empty beds — seed crew arrives with the first HAB.")
                 : (st.LevyPurse > 0 && !st.IsTreasuryChest
                     ? $"{FormatWorkers(st)} · till {st.LevyPurse} EU"
@@ -1706,15 +1706,15 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     st.LevyPurse > 0
-                        ? $"House tax {st.LevyPurse} EU — tax collectors carry it to Commons."
-                        : "Home to colonists. Bounty work falls to robots from workshops.", _micro);
+                        ? $"{st.LevyPurse:N0} EU — bots carry it to Commons."
+                        : "Home to worker bots. Contract mechs take the bounties.", _micro);
             }
             else if (st.IsFobotYard)
             {
                 string wrecks = _loop.WreckSummary();
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     string.IsNullOrEmpty(wrecks)
-                        ? "Wrecks wait here. Pay credits to stand THIS ego up."
+                        ? "Wrecks wait here. Pay EU to stand THIS ego up."
                         : wrecks,
                     _micro);
                 row += 24f;
@@ -1949,7 +1949,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{a.Data?.displayName ?? "Specialist"} · {ColonyLayout.CampusLabel(campus)} · Asks {a.HireMin} EU · Purse {a.Credits:F0}{LevyCarryLine(a)}", _micro);
+                    $"{a.Data?.displayName ?? "Specialist"} · {ColonyLayout.CampusLabel(campus)} · Asks {a.HireMin:N0} EU · Purse {a.Credits:N0} EU{LevyCarryLine(a)}", _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -2341,7 +2341,7 @@ namespace SolarMajesty
 
             if (living <= 0)
             {
-                const string hintText = "Build anywhere on open ground · houses pay tax · a workshop fabricates a robot";
+                const string hintText = "Build anywhere on open ground · houses pay EU · a workshop fabricates a mech";
                 var hint = new Rect(M, _contentBottom - 8f - 26f, _micro.CalcSize(new GUIContent(hintText)).x + 46f, 26f);
                 _hitRects.Add(hint);
                 HudSkin.Panel(hint, 0.9f, false);
@@ -3456,8 +3456,8 @@ namespace SolarMajesty
                 string[] beats =
                 {
                     "1/6  COMMONS — Colony Commons is already on the claim. It holds the treasury.",
-                    "2/6  Tax collectors walk out of the Commons and carry each building's till home.",
-                    "3/6  Keep the yard clear of mobs — villagers raise houses and solar farms that pay energy.",
+                    "2/6  Haul walks out of the Commons and carries each building's EU home.",
+                    "3/6  Keep the yard clear of mobs — bots build houses and solar farms that pay EU.",
                     "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
                     "5/6  G, Build, leave it at 700. Watch the Engineer.",
                     "6/6  They named a price. Select the flag and press + until the chip reads tempted."

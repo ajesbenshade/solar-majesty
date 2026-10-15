@@ -3,25 +3,26 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Authored colonist suits (art batch 3, Blender/scripts/sm_colonists.py). One prefab per role in
-    /// Resources/Colonists/SM_Colonist_&lt;Variant&gt;. Each is a Humanoid (Kevin Iglesias joint names) with an
-    /// Animator running SM_Colonist.controller: Idle01 (Kevin Iglesias Human Basic Motions) and Walk = the
-    /// original "colony stride" lope (Art/Colonists/Anim/SM_Colonist@Stride.fbx, Blender/scripts/
-    /// sm_colonist_stride.py), switched by the float <see cref="SpeedParam"/>. Root motion is off; the owner
-    /// moves the transform. The pivot is at the boot soles.
-    /// Materials: slot 0 SM_Art_Colonist_Suit (shared palette atlas), slot 1 SM_Art_Colonist_Role_&lt;Variant&gt;
-    /// (role trim). Do not run IndustrialArtDressing over these renderers.
-    /// Canon villagers are worker bots. <see cref="Enabled"/> stays off so these human suits are not
-    /// mounted; the prefabs remain in Resources for when worker-bot meshes replace them.
+    /// Worker-bot villagers (canon: the player is the central AI, villagers are worker bots;
+    /// Blender/scripts/sm_worker_bots.py). One prefab per role in Resources/Colonists/SM_Colonist_&lt;Variant&gt;
+    /// (resource names and role IDs unchanged; "Medic" holds the Repair bot). Each is a Humanoid on the
+    /// shared colonist skeleton (Kevin Iglesias-style joint names) with an Animator running
+    /// SM_Colonist.controller: Idle = the original worker-bot idle (Art/Colonists/Anim/SM_WorkerBot@Idle.fbx)
+    /// and Walk = the original "colony stride" lope (Art/Colonists/Anim/SM_Colonist@Stride.fbx,
+    /// Blender/scripts/sm_colonist_stride.py), switched by the float <see cref="SpeedParam"/>. Root motion is
+    /// off; the owner moves the transform. The pivot is at the soles.
+    /// Materials: slot 0 SM_Art_WorkerBot_Chassis (shared palette atlas, emissive sensor), slot 1
+    /// SM_Art_WorkerBot_Role_&lt;Variant&gt; (role paint + glowing beacon). Do not run IndustrialArtDressing
+    /// over these renderers.
     /// </summary>
     public static class ColonistArt
     {
         /// <summary>
-        /// Single switch for the human colonist meshes hooked up in <see cref="VillagerAgent.Spawn"/>.
-        /// Off (the default): <see cref="Attach"/> returns null and villagers keep the worker-bot capsule.
-        /// Change the initializer to true when worker-bot prefabs should use this hookup.
+        /// Single switch for the worker-bot meshes hooked up in <see cref="VillagerAgent.Spawn"/>.
+        /// On: villagers mount the authored worker bots. Off: <see cref="Attach"/> returns null and
+        /// villagers keep the capsule placeholder.
         /// </summary>
-        public static readonly bool Enabled = false;
+        public static readonly bool Enabled = true;
 
         public const string ResourceDir = "Colonists/";
         public const string PrefabPrefix = "SM_Colonist_";
@@ -29,7 +30,7 @@ namespace SolarMajesty
         public static readonly int SpeedHash = Animator.StringToHash(SpeedParam);
 
         /// <summary>
-        /// Ground speed (m/s) the in-place stride cycle covers at 1x on the 1.26 m suit: 1.26 m steps,
+        /// Ground speed (m/s) the in-place stride cycle covers at 1x on the 1.27 m bot: 1.26 m steps,
         /// 1.2 s per two-step cycle, authored at 2.10 m/s and measured in Unity from the planted foot.
         /// VillagerAgent's 2.4 m/s plays it at ~1.14x, about 1.9 steps/s.
         /// </summary>
@@ -49,7 +50,7 @@ namespace SolarMajesty
         public static GameObject Load(int salt) => Resources.Load<GameObject>(ResourceDir + PrefabName(salt));
 
         /// <summary>
-        /// Instantiate the suit for <paramref name="salt"/> as child "Visual" (faces the parent's +Z).
+        /// Instantiate the worker bot for <paramref name="salt"/> as child "Visual" (faces the parent's +Z).
         /// Returns null when <see cref="Enabled"/> is off or the prefab is missing so callers keep their placeholder.
         /// </summary>
         public static GameObject Attach(Transform parent, int salt)
@@ -68,7 +69,7 @@ namespace SolarMajesty
         public static float PlaybackSpeed(float groundSpeed) =>
             groundSpeed < 0.05f ? 1f : Mathf.Clamp(groundSpeed / StrideSpeed, 0.75f, MaxPlayback);
 
-        /// <summary>Drive Idle/Walk on a suit's Animator from the owner's ground speed.</summary>
+        /// <summary>Drive Idle/Walk on a bot's Animator from the owner's ground speed.</summary>
         public static void Drive(Animator anim, float groundSpeed)
         {
             if (anim == null || anim.runtimeAnimatorController == null) return;

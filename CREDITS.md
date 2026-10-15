@@ -26,8 +26,8 @@ This file lists the third-party content checked into this repo, its license, and
   - `SpineProxy.cs`
   - the Human Basic Motions demo controller and dummy prefabs
 - **Use:**
-  - **Colonists (`Assets/Art/Colonists`, `Assets/Resources/Colonists`):** play `Idle01` (Kevin Iglesias) through Unity Humanoid retargeting. The walk is original: the colony-stride clip `Assets/Art/Colonists/Anim/SM_Colonist@Stride.fbx`, authored by `Blender/scripts/sm_colonist_stride.py`, not `Walk01_Forward`. Their skeleton reuses Kevin Iglesias's joint names and hierarchy (`B-hips` … `B-toe.R`), re-proportioned in `Blender/scripts/sm_colonists.py`. **No Kevin Iglesias mesh is used in the colonists.**
-  - **`SuitCrossingWalker` / `VendorDressingKit`:** also reference these clips.
+  - **`SuitCrossingWalker` / `VendorDressingKit`:** the only users of this rig. The vendor and the crossing walkers play the `Idle01` and `Walk01_Forward` clips through Unity Humanoid retargeting.
+  - **Worker-bot villagers (`Assets/Art/Colonists`, `Assets/Resources/Colonists`):** no Kevin Iglesias mesh or clip. Their idle (`SM_WorkerBot@Idle.fbx`) and stride are original, authored by `Blender/scripts/sm_worker_bots.py`. Only the joint names and hierarchy (`B-hips` to `B-toe.R`) follow Kevin Iglesias's convention.
 - **Notes:** no standalone redistribution. **Review before the repo is made public** (see the note at the top).
 
 ### BOXOPHOBIC: Terrain Data Baker

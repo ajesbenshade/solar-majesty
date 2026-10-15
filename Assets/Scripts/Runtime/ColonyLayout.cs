@@ -138,7 +138,7 @@ namespace SolarMajesty
             campusIndex <= 0 ? CampusOrigin : CampusBOrigin;
 
         public static string CampusLabel(int campusIndex) =>
-            campusIndex <= 0 ? "Campus A" : "Campus B";
+            campusIndex <= 0 ? "Yard A" : "Yard B";
 
         private static float FlatDistSq(Vector3 a, Vector3 b)
         {

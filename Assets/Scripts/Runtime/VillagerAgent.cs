@@ -4,8 +4,8 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Worker bot that connects village HABs and works camps. Not player-commanded.
-    /// The capsule body is the villager. <see cref="ColonistArt"/> suits attach only while
-    /// <see cref="ColonistArt.Enabled"/> is on (human meshes, parked until worker-bot prefabs land).
+    /// Wears an authored worker bot from <see cref="ColonistArt"/> while <see cref="ColonistArt.Enabled"/>
+    /// is on (falls back to the capsule placeholder).
     /// </summary>
     public class VillagerAgent : MonoBehaviour
     {
@@ -68,7 +68,7 @@ namespace SolarMajesty
             var suit = ColonistArt.Attach(go.transform, s_spawned++);
             if (suit != null)
             {
-                // The suit's pivot is at the boot soles; its skinned bind-pose bounds are padded ~5 cm,
+                // The bot's pivot is at its soles; its skinned bind-pose bounds are padded ~5 cm,
                 // so seat the root on the ground directly instead of snapping by renderer bounds.
                 go.transform.position = new Vector3(home.x, ground, home.z);
                 TerrainFollow.Attach(go);

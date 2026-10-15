@@ -60,7 +60,7 @@ namespace SolarMajesty
             _respawnAt.Add(_simTime + MajestyEconomy.CollectorRespawnSeconds);
             int back = Mathf.RoundToInt(MajestyEconomy.CollectorRespawnSeconds);
             _loop.LogOverseer($"The Commons sends another Haul in {back} s.");
-            _loop.RaiseAlert("collector_killed", "Tax collector killed on the road", AlertSeverity.Warning, at);
+            _loop.RaiseAlert("collector_killed", "Haul down on the road", AlertSeverity.Warning, at);
         }
 
         public SaveCollectors Capture()
@@ -150,7 +150,7 @@ namespace SolarMajesty
             if (_logTimer <= 0f && _pendingLog > 0)
             {
                 _logTimer = 45f;
-                _loop.LogOverseer($"Tax collectors carried {_pendingLog} EU home.");
+                _loop.LogOverseer($"Haul carried {_pendingLog:N0} EU home.");
                 _pendingLog = 0;
             }
         }
