@@ -143,6 +143,7 @@ namespace SolarMajesty.Tests
                     yield return null;
                     recoverGame += Time.deltaTime;
                 }
+                Assert.IsTrue(flee != null && !flee.IsScrapped, "the recovering hero was destroyed or scrapped");
                 Shot(Path.Combine(outDir, "inn-recover.png"), flee.transform.position);
                 log.AppendLine($"FLEE pos={flee.transform.position.x:F1},{flee.transform.position.z:F1} hp={flee.HealthNormalized:F2} action={flee.CurrentAction} down={flee.IsIncapacitated}");
                 File.WriteAllText(Path.Combine(outDir, "e2e-log.txt"), log.ToString());
