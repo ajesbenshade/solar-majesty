@@ -437,20 +437,46 @@ namespace SolarMajesty
         private static readonly Color CoinGold = new Color(1f, 0.81f, 0.38f);
         private static readonly Color CoinDeep = new Color(0.70f, 0.47f, 0.15f);
 
-        /// <summary>Gold coin struck with the Solar Majesty sun — the treasury.</summary>
+        private static readonly Color CellInk = new Color(0.05f, 0.06f, 0.08f);
+        private static readonly Color CellCarbon = new Color(0.10f, 0.11f, 0.13f);
+        private static readonly Color CellGlow = new Color(0.25f, 0.88f, 1f);
+
+        /// <summary>
+        /// EU energy cell — the treasury. White ceramic shell, carbon window, cyan bolt (the bots'
+        /// sensor-eye colour), wrapped in a dark outline so it holds its silhouette at 16-24 px.
+        /// Kept under IconId.Coin so every call site picks it up without rewiring.
+        /// </summary>
         private static void DrawCoin(Color[] px)
         {
-            Disc(px, 32f, 31f, 27f, CoinDeep);
-            Disc(px, 32f, 33f, 26f, CoinGold);
-            Ring(px, 32f, 33f, 21f, 2.5f, CoinDeep);
-            Disc(px, 32f, 33f, 6.5f, CoinDeep);
-            for (int i = 0; i < 8; i++)
+            RoundBox(px, 15f, 3f, 49f, 55f, 8f, CellInk);
+            RoundBox(px, 24f, 51f, 40f, 61f, 3f, CellInk);
+            RoundBox(px, 18f, 6f, 46f, 52f, 6f, Bone);
+            RoundBox(px, 27f, 52f, 37f, 58f, 1.5f, Bone);
+            RoundBox(px, 22f, 10f, 42f, 48f, 3.5f, CellCarbon);
+            Disc(px, 32f, 29f, 11f, new Color(CellGlow.r, CellGlow.g, CellGlow.b, 0.35f));
+            Bolt(px, 1.6f, CellInk);
+            Bolt(px, 0f, CellGlow);
+            Tri(px, new Vector2(34.5f, 41f), new Vector2(29f, 30f), new Vector2(32.5f, 30f), new Color(1f, 1f, 1f, 0.85f));
+        }
+
+        private static void Bolt(Color[] px, float o, Color c)
+        {
+            Tri(px, new Vector2(36f + o * 0.3f, 46f + o), new Vector2(24f - o, 27f - o * 0.3f), new Vector2(34f + o, 27f - o * 0.3f), c);
+            Tri(px, new Vector2(28f - o * 0.3f, 12f - o), new Vector2(40f + o, 31f + o * 0.3f), new Vector2(30f - o, 31f + o * 0.3f), c);
+        }
+
+        private static void RoundBox(Color[] px, float x0, float y0, float x1, float y1, float r, Color c)
+        {
+            float cx = (x0 + x1) * 0.5f, cy = (y0 + y1) * 0.5f;
+            float hx = (x1 - x0) * 0.5f - r, hy = (y1 - y0) * 0.5f - r;
+            for (int y = Mathf.Max(0, (int)y0 - 1); y <= Mathf.Min(Size - 1, (int)y1 + 1); y++)
+            for (int x = Mathf.Max(0, (int)x0 - 1); x <= Mathf.Min(Size - 1, (int)x1 + 1); x++)
             {
-                float a = i * Mathf.PI / 4f + Mathf.PI / 8f;
-                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
-                DrawLine(px, new Vector2(32f, 33f) + d * 10f, new Vector2(32f, 33f) + d * 16f, 3f, CoinDeep);
+                float qx = Mathf.Abs(x + 0.5f - cx) - hx;
+                float qy = Mathf.Abs(y + 0.5f - cy) - hy;
+                float d = new Vector2(Mathf.Max(qx, 0f), Mathf.Max(qy, 0f)).magnitude + Mathf.Min(Mathf.Max(qx, qy), 0f) - r;
+                Blend(px, x, y, c, Mathf.Clamp01(0.5f - d));
             }
-            Disc(px, 22f, 46f, 5f, new Color(1f, 1f, 1f, 0.45f));
         }
 
         /// <summary>Pitched-roof house: tax-paying homes.</summary>
@@ -463,7 +489,7 @@ namespace SolarMajesty
             Box(px, 40f, 22f, 46f, 28f, Cyan);
         }
 
-        /// <summary>Tied coin sack: tax collectors on their rounds.</summary>
+        /// <summary>Tied haul sack with a cyan energy ring: haulers on their rounds.</summary>
         private static void DrawBag(Color[] px)
         {
             var sack = new Color(0.84f, 0.64f, 0.36f);
@@ -471,7 +497,7 @@ namespace SolarMajesty
             Tri(px, new Vector2(20f, 54f), new Vector2(32f, 40f), new Vector2(44f, 54f), sack * 0.92f);
             Box(px, 26f, 36f, 38f, 44f, sack * 0.9f);
             DrawLine(px, new Vector2(23f, 41f), new Vector2(41f, 41f), 3.5f, new Color(0.40f, 0.24f, 0.10f));
-            Ring(px, 32f, 23f, 7f, 3f, CoinGold);
+            Ring(px, 32f, 23f, 7f, 3f, CellGlow);
         }
 
         /// <summary>Wood-and-steel hammer: the village raising buildings.</summary>
