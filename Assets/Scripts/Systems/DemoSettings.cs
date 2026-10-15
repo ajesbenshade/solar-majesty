@@ -358,16 +358,6 @@ namespace SolarMajesty
             RefreshHudScale(screenWidth, screenHeight);
         }
 
-        /// <summary>Shrink a stored resolution that does not fit the display to the display's own size.</summary>
-        public static bool ClampToDisplay(ref int width, ref int height, int displayW, int displayH)
-        {
-            if (displayW < 640 || displayH < 480) return false;
-            if (width <= displayW && height <= displayH) return false;
-            width = displayW;
-            height = displayH;
-            return true;
-        }
-
         public static void ApplyDisplay()
         {
             var names = QualitySettings.names;
@@ -379,11 +369,6 @@ namespace SolarMajesty
             }
             // Exact width×height. The HUD is IMGUI in screen pixels (scaled by HudScale),
             // not a 16:9 canvas, so an ultrawide mode is not pillarboxed by the UI.
-            // A stored mode bigger than the monitor (for example 3840x2160 on a 1440p panel) opens a
-            // window larger than the screen, and the bottom-left title menu lands off-screen.
-            var display = Display.main;
-            if (display != null)
-                ClampToDisplay(ref ResolutionWidth, ref ResolutionHeight, display.systemWidth, display.systemHeight);
             bool sized = ResolutionWidth >= 640 && ResolutionHeight >= 480;
             if (sized)
                 Screen.SetResolution(ResolutionWidth, ResolutionHeight, Fullscreen);
