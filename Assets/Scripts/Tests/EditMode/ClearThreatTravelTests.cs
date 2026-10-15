@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace SolarMajesty.Tests
 {
@@ -234,7 +235,7 @@ namespace SolarMajesty.Tests
             Assert.Greater(moved, 3f, "a claimed mech must not stand still while the path fails");
 
             Sim(hero, 46f, 0.25f);
-            Assert.Less(Flat(hero.transform.position, den), OverseerRules.ClearThreatAttackRange);
+            Assert.LessOrEqual(Flat(hero.transform.position, den), OverseerRules.ClearThreatAttackRange);
             Assert.AreEqual(SpecialistAction.PursueFlag, hero.CurrentAction);
             Assert.IsNotNull(hero.ActiveFlag);
         }
@@ -258,6 +259,70 @@ namespace SolarMajesty.Tests
             Sim(hero, OverseerRules.RecoverRetreatSeconds, 0.5f);
             Assert.IsFalse(hero.IsUntargetable, "the retreat cap ends the state even if the inn is still far");
         }
+
+        [Test]
+        public void DoorAtNineMeters_EndsFleeAndRecovers()
+        {
+            var hero = MakeHero(SpecialistClass.DefenseMech);
+            hero.transform.position = ColonyLayout.InnOutpost + new Vector3(40f, 0f, 0f);
+            hero.ApplyDamage(5f);
+            Sim(hero, OverseerRules.RecoverSeconds + 0.2f, 0.5f);
+            Assert.IsFalse(hero.IsIncapacitated);
+            hero.transform.position = ColonyLayout.InnOutpost + new Vector3(9f, 0f, 0f);
+            float before = hero.HealthNormalized;
+
+            Sim(hero, 3f, 0.25f);
+
+            Assert.Less(Flat(hero.transform.position, ColonyLayout.InnOutpost), KingdomLife.RefugeArrive);
+            Assert.Greater(hero.HealthNormalized, before + 0.02f, "standing at the inn door has to heal");
+            Assert.AreEqual(SpecialistAction.Rest, hero.CurrentAction);
+        }
+
+        [Test]
+        public void RiverGap_ClaimedMech_FordsAndReachesTheMound()
+        {
+            var settings = UnityEngine.AI.NavMesh.GetSettingsByIndex(0);
+            var sources = new List<UnityEngine.AI.NavMeshBuildSource>
+            {
+                Island(new Vector3(0f, 0f, 0f), new Vector3(24f, 0.2f, 24f)),
+                Island(new Vector3(0f, 0f, 56f), new Vector3(24f, 0.2f, 24f))
+            };
+            var data = UnityEngine.AI.NavMeshBuilder.BuildNavMeshData(
+                settings, sources,
+                new Bounds(new Vector3(0f, 0f, 28f), new Vector3(80f, 10f, 100f)),
+                Vector3.zero, Quaternion.identity);
+            var inst = UnityEngine.AI.NavMesh.AddNavMeshData(data);
+            try
+            {
+                Vector3 den = new Vector3(0f, 0f, 56f);
+                var hero = MakeHero(SpecialistClass.DefenseMech);
+                hero.transform.position = Vector3.zero;
+                hero.TravelBlocked = p => p.z > 14f && p.z < 40f;
+                PostClearThreat(den);
+
+                Sim(hero, 30f, 0.25f);
+
+                Assert.LessOrEqual(Flat(hero.transform.position, den), OverseerRules.ClearThreatAttackRange);
+                Assert.AreEqual(SpecialistAction.PursueFlag, hero.CurrentAction);
+            }
+            finally
+            {
+                UnityEngine.AI.NavMesh.RemoveNavMeshData(inst);
+                Object.DestroyImmediate(data);
+            }
+        }
+
+        private static UnityEngine.AI.NavMeshBuildSource Island(Vector3 center, Vector3 size)
+        {
+            return new UnityEngine.AI.NavMeshBuildSource
+            {
+                shape = UnityEngine.AI.NavMeshBuildSourceShape.Box,
+                size = size,
+                area = 0,
+                transform = Matrix4x4.TRS(center, Quaternion.identity, Vector3.one)
+            };
+        }
+
 
         private static void Sim(SpecialistAgent hero, float seconds, float step)
         {

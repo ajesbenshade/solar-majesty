@@ -90,6 +90,14 @@ namespace SolarMajesty
         private bool _navStallReady;
         private bool _directTravel;
         private Vector3 _navStallSample;
+        private Vector3[] _route;
+        private int _routeCorner;
+        private Vector3 _routeGoal;
+        private int _approachAttempt;
+        private float _bestGoalDist = float.MaxValue;
+        private float _noCloser;
+        /// <summary>EditMode: extra blocked cells, such as a river the navmesh does not carve.</summary>
+        internal System.Func<Vector3, bool> TravelBlocked;
         /// <summary>EditMode: a nav path that stays pending and never moves the body.</summary>
         internal bool PretendStalledNav;
         private bool _forceRepath;
@@ -926,14 +934,18 @@ namespace SolarMajesty
         {
             if (_retreatLeft > 0f)
             {
-                if (KingdomLife.AtRest(transform.position, OutpostClaimed))
+                // The inn building carves the mesh, so the door is about 9 m from the beacon.
+                if (KingdomLife.AtRefuge(transform.position, OutpostClaimed))
+                {
                     _retreatLeft = 0f;
+                    ApplyDecision(BrainDecision.Rest(0.9f, "recovering_at_inn", RestPosition));
+                }
                 else
                 {
                     ApplyDecision(BrainDecision.Flee(RestPosition, 0.95f, "flee_to_inn"));
-                    _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
-                    return;
                 }
+                _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
+                return;
             }
 
             _thinkTimer -= dt;
@@ -977,6 +989,16 @@ namespace SolarMajesty
             // or the release log fires again and the warrant never frees.
             if (IsYieldingThreat(decision.TargetFlag))
                 decision = BrainDecision.Wander(transform.position, 0.15f, "clear_threat_yield");
+
+            // The inn door is outside the 3.2 m beacon, inside the carved building. Heal there.
+            if (KingdomLife.AtRefuge(transform.position, OutpostClaimed) &&
+                (healthNormalized < 0.85f || fatigue > 0.22f))
+            {
+                decision = BrainDecision.Rest(
+                    Mathf.Max(decision.Score, 0.7f),
+                    "recovering_at_inn",
+                    RestPosition);
+            }
 
             _motives.NoteDecision(_brain.Tuning, decision.Action, decision.TargetFlag?.RuntimeId, Time.time);
             ApplyDecision(decision);
@@ -1204,6 +1226,10 @@ namespace SolarMajesty
                     _directTravel = false;
                     _navStall = 0f;
                     _navStallReady = false;
+                    _route = null;
+                    _approachAttempt = 0;
+                    _bestGoalDist = float.MaxValue;
+                    _noCloser = 0f;
                     _watchReady = false;
                     _combatCredit = 0f;
                     DemoAudio.PlayClaim(transform.position);
@@ -1332,16 +1358,16 @@ namespace SolarMajesty
             bool chipped = TryChipDen(dt);
             if (_activeFlag == null) return;
 
-            Vector3 approach = ClearThreatDestination(_activeFlag);
-            float toApproach = FlatDistance(transform.position, approach);
+            Vector3 den = ClearThreatDenCenter();
+            float toDen = FlatDistance(transform.position, den);
             Vector3 before = _watchReady ? _watchSample : transform.position;
 
-            if (toApproach > arriveDistance)
+            if (toDen > OverseerRules.ClearThreatAttackRange)
             {
                 bool engaged = TryEngageThreatInReach(dt);
                 if (!engaged)
                 {
-                    AdvanceToward(approach, dt, _forceRepath);
+                    AdvanceToward(den, dt, _forceRepath);
                     _forceRepath = false;
                 }
 
@@ -1350,7 +1376,7 @@ namespace SolarMajesty
                 _watchReady = true;
                 bool inCombat = engaged || chipped || _combatCredit > 0f;
                 _stuckWatch.Note(
-                    FlatDistance(transform.position, approach), dt, moved, inCombat,
+                    toDen, dt, moved, inCombat,
                     out bool repath, out bool release);
                 if (_combatCredit > 0f)
                     _combatCredit = Mathf.Max(0f, _combatCredit - dt);
@@ -1358,7 +1384,7 @@ namespace SolarMajesty
                 {
                     _forceRepath = true;
                     if (!engaged)
-                        AdvanceToward(approach, dt, true);
+                        AdvanceToward(den, dt, true);
                 }
                 if (release)
                 {
@@ -1424,10 +1450,7 @@ namespace SolarMajesty
             if (_invulnLeft > 0f)
                 _invulnLeft = Mathf.Max(0f, _invulnLeft - dt);
             if (_retreatLeft <= 0f) return;
-            if (KingdomLife.AtRest(transform.position, OutpostClaimed))
-                _retreatLeft = 0f;
-            else
-                _retreatLeft = Mathf.Max(0f, _retreatLeft - dt);
+            _retreatLeft = Mathf.Max(0f, _retreatLeft - dt);
         }
 
         /// <summary>Just stood up. Brief immunity, then a walk home before the next fight.</summary>
@@ -1605,7 +1628,7 @@ namespace SolarMajesty
         private void TickRest(float dt)
         {
             Vector3 inn = RestPosition;
-            if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
+            if (FlatDistance(transform.position, inn) > KingdomLife.RefugeArrive)
             {
                 AdvanceToward(inn, dt, false);
                 _status = "seeking_inn";
@@ -1624,7 +1647,7 @@ namespace SolarMajesty
         {
             TrySelfAbility(AbilityTrigger.Flee);
             Vector3 inn = RestPosition;
-            if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
+            if (FlatDistance(transform.position, inn) > KingdomLife.RefugeArrive)
             {
                 AdvanceToward(inn, dt, false);
                 _status = "fleeing";
@@ -2338,50 +2361,148 @@ namespace SolarMajesty
             if (SuppressTravelForTests) return;
             if (dt < 0f) dt = 0f;
             float step = EffectiveMoveSpeed * dt;
-            if (FlatDistance(transform.position, target) <= arriveDistance)
+            float arrive = IsClearThreat(_activeFlag) && _lastDecision.Action == SpecialistAction.PursueFlag
+                ? OverseerRules.ClearThreatAttackRange
+                : arriveDistance;
+            if (FlatDistance(transform.position, target) <= arrive)
             {
+                _route = null;
                 _directTravel = false;
                 _navStall = 0f;
+                _noCloser = 0f;
                 return;
             }
 
-            bool onMesh = (_agent != null && _agent.isOnNavMesh) || PretendStalledNav;
-            if (!onMesh)
-            {
-                MoveFallback(target, step);
-                return;
-            }
-
-            if (_directTravel)
+            if (PretendStalledNav)
             {
                 StepRegardless(target, step);
                 return;
             }
 
-            if (!PretendStalledNav)
-                SetDestination(target, force, OverseerRules.DenFootprintMeters);
+            bool denWalk = IsClearThreat(_activeFlag) && _lastDecision.Action == SpecialistAction.PursueFlag;
+            bool goalMoved = FlatDistance(_routeGoal, target) > 3f;
+            bool stalled = _noCloser >= NavCornerPath.StallReplanSeconds;
+            if (force || _route == null || goalMoved || stalled)
+            {
+                if (stalled) _approachAttempt++;
+                RebuildRoute(target, denWalk);
+                _noCloser = 0f;
+            }
 
-            bool carried = PretendStalledNav || NavPathCarries(target);
-            float moved = _navStallReady ? FlatDistance(transform.position, _navStallSample) : 0f;
-            _navStallSample = transform.position;
-            _navStallReady = true;
-            if (moved > Mathf.Max(0.05f, step * 0.35f))
-                _navStall = 0f;
+            Vector3 corner = NextCorner(target);
+            StepAlongRoute(corner, step);
+
+            float along = FlatDistance(transform.position, target);
+            if (along < _bestGoalDist - 0.75f)
+            {
+                _bestGoalDist = along;
+                _noCloser = 0f;
+            }
             else
-                _navStall += dt;
+                _noCloser += dt;
 
-            // A path that never moves the body is how a claimed mech stands in the colony.
-            if (_navStall >= 1.25f)
-                _directTravel = true;
-            if (carried && !_directTravel)
+            SeatOnTerrain();
+        }
+
+        private void RebuildRoute(Vector3 target, bool denWalk)
+        {
+            _routeGoal = target;
+            _routeCorner = 0;
+            if (denWalk && NavCornerPath.TryDenRoute(
+                    transform.position, target, OverseerRules.ClearThreatAttackRange,
+                    _approachAttempt, TravelWet, out Vector3[] denCorners))
+            {
+                _route = denCorners;
                 return;
-            StepRegardless(target, step);
+            }
+
+            if (NavCornerPath.TryBuild(transform.position, target, 8f, out Vector3[] corners, out NavMeshPathStatus status) &&
+                status == NavMeshPathStatus.PathComplete)
+            {
+                _route = corners;
+                return;
+            }
+
+            _route = null;
+        }
+
+        private Vector3 NextCorner(Vector3 fallback)
+        {
+            if (_route == null || _route.Length == 0) return fallback;
+            while (_routeCorner < _route.Length - 1 &&
+                   FlatDistance(transform.position, _route[_routeCorner]) < 1.35f)
+                _routeCorner++;
+            return _route[Mathf.Min(_routeCorner, _route.Length - 1)];
+        }
+
+        /// <summary>
+        /// Follow the corner. A wet cell is refused unless it is a short ford the route asked for.
+        /// </summary>
+        private bool StepAlongRoute(Vector3 corner, float step)
+        {
+            Vector3 next = Vector3.MoveTowards(transform.position, new Vector3(corner.x, transform.position.y, corner.z), step);
+            bool wet = TravelWet(next);
+            bool ford = wet && FlatDistance(transform.position, corner) <= NavCornerPath.MaxFordMeters + 1.5f;
+            if (wet && !ford)
+            {
+                Vector3 dir = next - transform.position;
+                dir.y = 0f;
+                if (dir.sqrMagnitude < 0.0001f) return false;
+                Vector3 side = new Vector3(-dir.z, 0f, dir.x).normalized * step;
+                Vector3 left = transform.position + side;
+                Vector3 right = transform.position - side;
+                if (!TravelWet(left)) next = left;
+                else if (!TravelWet(right)) next = right;
+                else return false;
+            }
+
+            // A ford is off the mesh on purpose. Warping would snap the hero back to the near bank.
+            if (ford)
+            {
+                transform.position = next;
+                return true;
+            }
+
+            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+                _agent.ResetPath();
+                Vector3 warp = new Vector3(next.x, 0.02f, next.z);
+                if (NavMesh.SamplePosition(warp, out NavMeshHit hit, 2.5f, NavMesh.AllAreas) && _agent.Warp(hit.position))
+                {
+                    Vector3 seated = transform.position;
+                    seated.x = hit.position.x;
+                    seated.z = hit.position.z;
+                    transform.position = seated;
+                    return true;
+                }
+            }
+            transform.position = next;
+            return true;
+        }
+
+        private bool TravelWet(Vector3 p)
+        {
+            if (TravelBlocked != null && TravelBlocked(p)) return true;
+            return _world != null && _world.IsOverWater(p, 0.35f);
+        }
+
+        private Vector3 ClearThreatDenCenter()
+        {
+            Vector3 den = _activeFlag != null ? _activeFlag.WorldPosition : transform.position;
+            if (_world != null)
+            {
+                var lair = _world.FindNearestLair(den, 12f);
+                if (lair != null) den = lair.WorldPosition;
+            }
+            return den;
         }
 
         /// <summary>Put the pivot on the terrain. A recovered mech was saved under the surface.</summary>
         private void SeatOnTerrain()
         {
             if (TerrainDataBake.Current == null) return;
+            if (TravelWet(transform.position)) return;
             Vector3 p = transform.position;
             p.y = TerrainDataBake.GroundHeight(p);
             transform.position = p;
