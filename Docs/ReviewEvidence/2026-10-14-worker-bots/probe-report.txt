@@ -1,0 +1,9 @@
+Engineer speed=0 state=Idle hips=(0.000, 0.486, 0.000) head=(0.000, 0.906, 0.012) vtx y 0.002..1.254 x -0.32..0.33 bounds=Center: (0.06, 0.59, -0.04), Extents: (0.68, 0.66, 0.24) enabled=True active=True
+Engineer speed=2.4 state=Walk hips=(0.003, 0.484, 0.000) head=(0.003, 0.900, 0.052) vtx y 0.035..1.248 x -0.34..0.34 bounds=Center: (0.06, 0.59, -0.04), Extents: (0.68, 0.66, 0.24) enabled=True active=True
+Hydroponics speed=0 state=Idle hips=(0.000, 0.486, 0.000) head=(0.000, 0.906, 0.012) vtx y 0.002..1.254 x -0.32..0.36 bounds=Center: (0.12, 0.59, -0.06), Extents: (0.74, 0.66, 0.26) enabled=True active=True
+Hydroponics speed=2.4 state=Walk hips=(0.003, 0.484, 0.000) head=(0.003, 0.900, 0.052) vtx y 0.035..1.248 x -0.34..0.34 bounds=Center: (0.12, 0.59, -0.06), Extents: (0.74, 0.66, 0.26) enabled=True active=True
+Medic speed=0 state=Idle hips=(0.000, 0.486, 0.000) head=(0.000, 0.906, 0.012) vtx y 0.002..1.254 x -0.32..0.34 bounds=Center: (0.04, 0.59, -0.09), Extents: (0.66, 0.66, 0.28) enabled=True active=True
+Medic speed=2.4 state=Walk hips=(0.003, 0.484, 0.000) head=(0.003, 0.900, 0.052) vtx y 0.035..1.248 x -0.34..0.34 bounds=Center: (0.04, 0.59, -0.09), Extents: (0.66, 0.66, 0.28) enabled=True active=True
+Hauler speed=0 state=Idle hips=(0.000, 0.486, 0.000) head=(0.000, 0.906, 0.012) vtx y 0.002..1.254 x -0.33..0.33 bounds=Center: (0.00, 0.59, -0.14), Extents: (0.64, 0.66, 0.33) enabled=True active=True
+Hauler speed=2.4 state=Walk hips=(0.003, 0.484, 0.000) head=(0.003, 0.900, 0.052) vtx y 0.035..1.248 x -0.36..0.35 bounds=Center: (0.00, 0.59, -0.14), Extents: (0.64, 0.66, 0.33) enabled=True active=True
+ok=True
