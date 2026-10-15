@@ -555,6 +555,8 @@ namespace SolarMajesty
         private bool _bodyHopQueued;
         private CelestialBodyId _bodyHopTarget;
         private bool _bodyHopUnlock;
+        /// <summary>Victory panel is up. Time scale stays at 0 until Continue or Main Menu.</summary>
+        private bool _victoryHold;
         private GameObject _outpostBeacon;
         private readonly Dictionary<EntityId, float> _extractStamp = new Dictionary<EntityId, float>(8);
         private readonly List<ConstructionOrder> _completedBuilds = new List<ConstructionOrder>(8);
@@ -1237,6 +1239,7 @@ namespace SolarMajesty
 
         public void TogglePause()
         {
+            if (_victoryHold) return;
             if (Screen == DemoScreen.Title || Screen == DemoScreen.Settings) return;
             if (Screen == DemoScreen.Paused)
                 ResumePlay();
@@ -2416,6 +2419,7 @@ namespace SolarMajesty
         /// </summary>
         private void HandleSpeedHotkeys()
         {
+            if (_victoryHold) return;
             if (InputBindings.TextEntryActive) return; // typing flag orders
 
             if (Input.GetKeyDown(KeyCode.Space))
@@ -2446,6 +2450,11 @@ namespace SolarMajesty
         {
             if (!IsPlaying)
                 return;
+            if (_victoryHold)
+            {
+                Time.timeScale = 0f;
+                return;
+            }
             Time.timeScale = SimSpeed.TimeScale;
         }
 
@@ -4969,10 +4978,52 @@ namespace SolarMajesty
             ReloadActiveScene();
         }
 
-        /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>
-        public void AdvanceCampaign()
+        /// <summary>
+        /// Victory panel: world holds, and the conquered body is written with the existing campaign key.
+        /// </summary>
+        public void HoldForVictory()
         {
+            if (ReplayRules.IsEndless || _victoryHold) return;
+            _victoryHold = true;
+            Time.timeScale = 0f;
+            VictoryOffer.RecordProgress(celestialBody);
+            PersistSession();
+        }
+
+        /// <summary>Victory button. Loads the next body when that level exists.</summary>
+        public void ContinueAfterVictory()
+        {
+            if (!VictoryOffer.NextIsBuilt(celestialBody))
+                return;
+            _victoryHold = false;
+            // The Earth demo used to refuse this hop. Leaving it on would also hide Luna's
+            // departure tech. Same preference key, no replay-rule reload.
             if (DemoSettings.FirstHourDemo)
+            {
+                DemoSettings.FirstHourDemo = false;
+                PlayerPrefs.SetInt(DemoSettings.FirstHourKey, 0);
+                PlayerPrefs.Save();
+            }
+            if (SimSpeed.IsPaused)
+                SimSpeed.Resume();
+            Time.timeScale = SimSpeed.TimeScale;
+            AdvanceCampaign(fromVictory: true);
+        }
+
+        /// <summary>Victory button. Progress is already stored; this only leaves the colony.</summary>
+        public void ExitVictoryToTitle()
+        {
+            _victoryHold = false;
+            ReturnToTitle();
+        }
+
+        /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>
+        public void AdvanceCampaign() => AdvanceCampaign(fromVictory: false);
+
+        /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>
+        public void AdvanceCampaign(bool fromVictory)
+        {
+            if (VictoryOffer.DemoBlocksDepart(DemoSettings.FirstHourDemo, fromVictory))
             {
                 string craft = Research != null
                     ? Research.LaunchTechLabel(CelestialBodyId.Earth)
@@ -4994,11 +5045,7 @@ namespace SolarMajesty
                 return;
             }
 
-            string from = _body != null ? _body.DisplayName : celestialBody.ToString();
-            string to = CelestialBodyCatalog.Get(next.Value).DisplayName;
-            string hop = CampaignCutsceneCatalog.TryGetVictory(celestialBody, out var cut)
-                ? cut.LogParagraph
-                : $"Departure from {from}. Trajectory locked: {to}.";
+            string hop = VictoryOffer.For(celestialBody, nextBuilt: true, endless: false).Body;
             if (!string.IsNullOrEmpty(freight))
                 hop += " " + freight;
             CampaignProgress.QueueTravelLog(hop);
@@ -6040,6 +6087,11 @@ namespace SolarMajesty
                 _mission.RestoreFrom(save.mission);
                 if (save.mission != null && save.mission.launchReady)
                     _launchCraftStaged = true;
+                if (_mission.IsWon && !ReplayRules.IsEndless)
+                {
+                    _victoryHold = true;
+                    Time.timeScale = 0f;
+                }
             }
 
             _playSeconds = save.playSeconds;
