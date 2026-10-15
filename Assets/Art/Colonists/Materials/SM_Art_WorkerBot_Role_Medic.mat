@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SM_Art_Colonist_Role_Hydroponics
+  m_Name: SM_Art_WorkerBot_Role_Medic
   m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -47,7 +47,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: df06175a102968745b3c0956a321d950, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -107,7 +107,7 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _Smoothness: 0.5
+    - _Smoothness: 0.6
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -117,13 +117,13 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.36, g: 0.8, b: 0.26, a: 1}
-    - _Color: {r: 0.36, g: 0.8, b: 0.26, a: 1}
-    - _EmissionColor: {r: 0.0792, g: 0.176, b: 0.057199996, a: 0.22}
+    - _BaseColor: {r: 0.92, g: 0.18, b: 0.16, a: 1}
+    - _Color: {r: 0.92, g: 0.18, b: 0.16, a: 1}
+    - _EmissionColor: {r: 2.3, g: 0.45000002, b: 0.39999998, a: 2.5}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &8441395072759070890
+--- !u!114 &4657200185968407789
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
