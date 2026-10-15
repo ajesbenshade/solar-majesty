@@ -49,8 +49,13 @@ namespace SolarMajesty
                     p.WindTurbine(new Vector3(-w * WindTurbineAlong, 0, -d * WindTurbineAlong), h + 2.6f);
                     break;
                 case ArchArchetype.Extractor:
-                    p.Box("RainCanopy", ArchRole.Glass, new Vector3(0, h + 0.7f, 0), new Vector3(w * 0.9f, 0.06f, d * 0.6f), new Vector3(-12, 0, 0));
-                    p.Cyl("Cistern", ArchRole.Glass, new Vector3(w * 0.36f, 0.8f, -d * 0.36f), new Vector3(1.1f, 1.6f, 1.1f));
+                    // Machine-colony roof (Aaron 2026-10-15: no pale-blue glass sheet): ceramic deck,
+                    // carbon fascia, one narrow PV strip. Same plane, tilt and footprint as before.
+                    p.Box("RainCanopy", ArchRole.Hull, new Vector3(0, h + 0.7f, 0), new Vector3(w * 0.9f, 0.10f, d * 0.6f), new Vector3(-12, 0, 0));
+                    p.Box("RainCanopyFascia", ArchRole.Dark, new Vector3(0, h + 0.66f, 0), new Vector3(w * 0.92f, 0.07f, d * 0.62f), new Vector3(-12, 0, 0));
+                    p.Box("RainCanopySeam", ArchRole.Dark, new Vector3(0, h + 0.76f, 0), new Vector3(0.05f, 0.02f, d * 0.6f), new Vector3(-12, 0, 0));
+                    p.Box("RainCanopySolar", ArchRole.Solar, new Vector3(w * 0.22f, h + 0.77f, 0), new Vector3(w * 0.22f, 0.02f, d * 0.5f), new Vector3(-12, 0, 0));
+                    p.Cyl("Cistern", ArchRole.Hull, new Vector3(w * 0.36f, 0.8f, -d * 0.36f), new Vector3(1.1f, 1.6f, 1.1f));
                     p.Cyl("CisternCap", ArchRole.Trim, new Vector3(w * 0.36f, 1.64f, -d * 0.36f), new Vector3(1.16f, 0.08f, 1.16f));
                     break;
                 case ArchArchetype.Workshop:
