@@ -8,10 +8,10 @@ using UnityEngine;
 namespace SolarMajesty.Tests
 {
     /// <summary>
-    /// Guards for colonists v1 (art batch 3): the four suited villager prefabs, their Humanoid rig on the
-    /// Kevin Iglesias Idle01 and the original colony-stride Walk, +Z facing (fauna v1 shipped facing -Z and
-    /// walked backwards), feet planted at 2.4 m/s without a scurry, boots on the (displaced) ground, and the
-    /// VillagerAgent.Spawn hookup that replaced the capsule placeholder.
+    /// Guards for the parked colonist suits (art batch 3): the four Humanoid prefabs, Kevin Iglesias Idle01
+    /// and the original colony-stride Walk, +Z facing (fauna v1 shipped facing -Z and walked backwards), and
+    /// feet planted at 2.4 m/s. <see cref="ColonistArt.Enabled"/> is off, so VillagerAgent.Spawn keeps the
+    /// worker-bot capsule instead of mounting a suit.
     /// </summary>
     public class ColonistArtTests
     {
@@ -56,6 +56,16 @@ namespace SolarMajesty.Tests
             smr.BakeMesh(tmp);
             float m = float.MaxValue;
             foreach (var v in tmp.vertices) m = Mathf.Min(m, smr.transform.TransformPoint(v).y);
+            return m;
+        }
+
+        private static float LowestRendererY(GameObject root)
+        {
+            float m = float.MaxValue;
+            var rends = root.GetComponentsInChildren<Renderer>();
+            Assert.IsNotEmpty(rends);
+            for (int i = 0; i < rends.Length; i++)
+                m = Mathf.Min(m, rends[i].bounds.min.y);
             return m;
         }
 
@@ -224,29 +234,33 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void VillagerSpawn_WearsSuit_FacesWork_AndCyclesRoles()
+        public void VillagerSpawn_SkipsColonistArt_WhenSwitchIsOff()
         {
+            Assert.IsFalse(ColonistArt.Enabled, "human suits stay off until worker-bot prefabs land");
             var parent = new GameObject("ColonistArtTests");
             try
             {
-                var roles = new HashSet<string>();
+                Assert.IsNull(ColonistArt.Attach(parent.transform, 0), "Attach is a no-op while the switch is off");
                 for (int i = 0; i < ColonistArt.Variants.Length; i++)
                 {
                     Vector3 home = new Vector3(i * 3f, 0f, 0f);
                     Vector3 work = home + new Vector3(4f, 0f, 4f);
                     var v = VillagerAgent.Spawn(parent.transform, home, work);
                     Assert.IsNotNull(v);
-                    Assert.IsNull(v.transform.Find("Body"), "capsule placeholder replaced");
-                    var visual = v.transform.Find("Visual");
-                    Assert.IsNotNull(visual, "suit mounted as Visual");
-                    Assert.IsNotNull(visual.GetComponentInChildren<Animator>());
+                    Assert.IsNull(v.transform.Find("Visual"), "no colonist suit");
+                    Assert.IsNull(v.GetComponentInChildren<SkinnedMeshRenderer>(true));
+                    Assert.IsNull(v.GetComponentInChildren<Animator>(true));
+                    var body = v.transform.Find("Body");
+                    var band = v.transform.Find("Band");
+                    Assert.IsNotNull(body, "worker-bot capsule");
+                    Assert.IsNotNull(band, "worker-bot band");
+                    Assert.IsNull(body.GetComponent<Collider>(), "primitive collider stripped");
+                    Assert.IsNull(band.GetComponent<Collider>());
                     Assert.Greater(Vector3.Dot(v.transform.forward, (work - home).normalized), 0.99f, "faces its work site");
-                    var smr = visual.GetComponentInChildren<SkinnedMeshRenderer>();
-                    Assert.AreEqual("SM_Art_Colonist_Suit", smr.sharedMaterials[0].name, "no runtime material remap");
-                    roles.Add(smr.sharedMaterials[1].name);
-                    Assert.AreEqual(0f, v.transform.position.y, 1e-4f, "pivot (boot soles) on the ground");
+                    var speed = typeof(VillagerAgent).GetField("moveSpeed", BindingFlags.Instance | BindingFlags.NonPublic);
+                    Assert.IsNotNull(speed);
+                    Assert.AreEqual(VillagerSpeed, (float)speed.GetValue(v));
                 }
-                Assert.AreEqual(ColonistArt.Variants.Length, roles.Count, "consecutive villagers cycle roles");
             }
             finally
             {
@@ -269,18 +283,16 @@ namespace SolarMajesty.Tests
                 };
                 Vector3 home = new Vector3(50f, 0f, 25f);           // ground +0.2 m
                 var v = VillagerAgent.Spawn(parent.transform, home, home + new Vector3(0f, 0f, 50f));
-                Assert.AreEqual(0.2f, v.transform.position.y, 1e-3f, "spawns standing on the terrain, not on y = 0");
-                var anim = Animate(v.gameObject);
-                anim.Update(0.5f);
-                var tmp = new Mesh();
-                Assert.AreEqual(0.2f, LowestVertexY(v.GetComponentInChildren<SkinnedMeshRenderer>(), tmp), 0.03f, "boots on the terrain");
-                Object.DestroyImmediate(tmp);
+                Assert.IsNull(v.transform.Find("Visual"), "worker bot, not a colonist suit");
+                const float homeGround = 0.2f;
+                Assert.AreEqual(homeGround, LowestRendererY(v.gameObject), 0.03f, "body sits on the terrain, not on y = 0");
+                float aboveGround = v.transform.position.y - homeGround;
 
                 var follow = v.GetComponent<TerrainFollow>();
                 Assert.IsNotNull(follow, "keeps following the ground while walking");
                 v.transform.position = new Vector3(50f, v.transform.position.y, 75f); // ground -0.2 m
                 typeof(TerrainFollow).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(follow, null);
-                Assert.AreEqual(-0.2f, v.transform.position.y, 1e-3f, "drops into the dip instead of hovering");
+                Assert.AreEqual(-0.2f + aboveGround, v.transform.position.y, 1e-3f, "drops into the dip instead of hovering");
             }
             finally
             {

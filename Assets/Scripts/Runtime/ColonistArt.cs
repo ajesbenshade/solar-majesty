@@ -11,9 +11,18 @@ namespace SolarMajesty
     /// moves the transform. The pivot is at the boot soles.
     /// Materials: slot 0 SM_Art_Colonist_Suit (shared palette atlas), slot 1 SM_Art_Colonist_Role_&lt;Variant&gt;
     /// (role trim). Do not run IndustrialArtDressing over these renderers.
+    /// Canon villagers are worker bots. <see cref="Enabled"/> stays off so these human suits are not
+    /// mounted; the prefabs remain in Resources for when worker-bot meshes replace them.
     /// </summary>
     public static class ColonistArt
     {
+        /// <summary>
+        /// Single switch for the human colonist meshes hooked up in <see cref="VillagerAgent.Spawn"/>.
+        /// Off (the default): <see cref="Attach"/> returns null and villagers keep the worker-bot capsule.
+        /// Change the initializer to true when worker-bot prefabs should use this hookup.
+        /// </summary>
+        public static readonly bool Enabled = false;
+
         public const string ResourceDir = "Colonists/";
         public const string PrefabPrefix = "SM_Colonist_";
         public const string SpeedParam = "Speed";
@@ -41,11 +50,11 @@ namespace SolarMajesty
 
         /// <summary>
         /// Instantiate the suit for <paramref name="salt"/> as child "Visual" (faces the parent's +Z).
-        /// Returns null when the prefab is missing so callers keep their placeholder.
+        /// Returns null when <see cref="Enabled"/> is off or the prefab is missing so callers keep their placeholder.
         /// </summary>
         public static GameObject Attach(Transform parent, int salt)
         {
-            if (parent == null) return null;
+            if (!Enabled || parent == null) return null;
             var prefab = Load(salt);
             if (prefab == null) return null;
             var visual = Object.Instantiate(prefab, parent, false);
