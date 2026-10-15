@@ -206,16 +206,23 @@ namespace SolarMajesty.Tests
 
         private static int ParseGross(string line)
         {
+            // Claim and status lines can mention Clear Threat without being a payout.
+            // Only "Bounty N EU" counts; anything else is skipped, and a short line
+            // must not throw when the marker sits at the end.
+            if (string.IsNullOrEmpty(line)) return 0;
             const string mark = "Bounty ";
             int at = line.IndexOf(mark);
             if (at < 0) return 0;
             int start = at + mark.Length;
+            if (start < 0 || start > line.Length) return 0;
             int eu = line.IndexOf(" EU", start);
-            if (eu < 0) return 0;
-            string text = line.Substring(start, eu - start);
+            if (eu < start) return 0;
+            int len = eu - start;
+            if (len < 0 || start > line.Length - len) return 0;
+            string text = line.Substring(start, len);
             text = text.Replace(",", "").Replace(".", "").Replace(" ", "")
                 .Replace("\u00A0", "").Replace("\u202F", "");
-            int.TryParse(text, out int gross);
+            if (text.Length == 0 || !int.TryParse(text, out int gross)) return 0;
             return gross;
         }
 

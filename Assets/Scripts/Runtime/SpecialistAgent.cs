@@ -965,10 +965,15 @@ namespace SolarMajesty
             if (_retreatLeft > 0f)
             {
                 // The inn building carves the mesh, so the door is about 9 m from the beacon.
+                // Wake-up health is 28%. Hand that flee off to rest before the next think
+                // can claim a flag, and latch rest until the leave line.
                 if (KingdomLife.AtRefuge(transform.position, OutpostClaimed))
                 {
                     _retreatLeft = 0f;
-                    ApplyDecision(BrainDecision.Rest(0.9f, "recovering_at_inn", RestPosition));
+                    var rest = _motives.Commit(
+                        BrainDecision.Rest(0.9f, "recovering_at_inn", RestPosition),
+                        _brain.Tuning, healthNormalized, Time.time, true);
+                    ApplyDecision(rest);
                 }
                 else
                 {
@@ -993,17 +998,6 @@ namespace SolarMajesty
             {
                 decision = _brain.Evaluate(BuildContext(), _flags.Flags, bodyDanger);
             }
-            if (decision.Action != SpecialistAction.Flee &&
-                _lastDecision.Action == SpecialistAction.Rest &&
-                KingdomLife.AtRest(transform.position, OutpostClaimed) &&
-                (fatigue > 0.22f || healthNormalized < 0.82f))
-            {
-                decision = BrainDecision.Rest(
-                    Mathf.Max(decision.Score, 0.6f),
-                    "recovering_at_inn",
-                    RestPosition);
-            }
-
             Party?.PromoteIfNeeded();
             if (Party != null && !Party.IsLeader(this) &&
                 decision.Action != SpecialistAction.Flee)
@@ -1012,23 +1006,17 @@ namespace SolarMajesty
                 if (lead != null && lead.IsAlive)
                     decision = FollowLeader(lead);
             }
-            bool atInn = KingdomLife.AtRest(transform.position, OutpostClaimed);
-            decision = _motives.Commit(decision, _brain.Tuning, healthNormalized, Time.time, atInn);
+            // The inn door is outside the 3.2 m disc. Commit treats that door as the inn:
+            // Flee at wake-up HP hands off to Rest, Rest holds until restLeaveHealth, and a
+            // Defend flag cannot be reclaimed until the post-rest cooldown. The old 0.82 disc
+            // release and 0.85 refuge pull fought across the 1.75 s dwell and flipped every ~2 s.
+            bool atDoor = KingdomLife.AtRefuge(transform.position, OutpostClaimed);
+            decision = _motives.Commit(decision, _brain.Tuning, healthNormalized, Time.time, atDoor);
 
             // A stuck Clear Threat was let go. Do not pick the same flag straight back up,
             // or the release log fires again and the warrant never frees.
             if (IsYieldingThreat(decision.TargetFlag))
                 decision = BrainDecision.Wander(transform.position, 0.15f, "clear_threat_yield");
-
-            // The inn door is outside the 3.2 m beacon, inside the carved building. Heal there.
-            if (KingdomLife.AtRefuge(transform.position, OutpostClaimed) &&
-                (healthNormalized < 0.85f || fatigue > 0.22f))
-            {
-                decision = BrainDecision.Rest(
-                    Mathf.Max(decision.Score, 0.7f),
-                    "recovering_at_inn",
-                    RestPosition);
-            }
 
             _motives.NoteDecision(_brain.Tuning, decision.Action, decision.TargetFlag?.RuntimeId, Time.time);
             ApplyDecision(decision);
