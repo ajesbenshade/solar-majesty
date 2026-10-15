@@ -2525,8 +2525,10 @@ namespace SolarMajesty
             p.y = TerrainDataBake.GroundHeight(p);
             transform.position = p;
             Vector3 probe = new Vector3(p.x, 0.02f, p.z);
-            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
-                _agent.Warp(probe);
+            // Warp only to a sampled point on the mesh: warping off it logs "Failed to create agent".
+            if (_agent != null && _agent.enabled && _agent.isOnNavMesh &&
+                NavMesh.SamplePosition(probe, out NavMeshHit hit, 2.5f, NavMesh.AllAreas))
+                _agent.Warp(hit.position);
         }
 
         /// <summary>
