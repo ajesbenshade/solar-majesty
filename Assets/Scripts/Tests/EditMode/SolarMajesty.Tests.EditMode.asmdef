@@ -4,6 +4,7 @@
     "references": [
         "SolarMajesty.Systems",
         "SolarMajesty.Runtime",
+        "Unity.Timeline",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

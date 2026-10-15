@@ -113,6 +113,22 @@ namespace SolarMajesty
             };
         }
 
+        /// <summary>
+        /// Mission time just before blue hour: the sun is low and the golden term is high.
+        /// Used by the launch intro so the colony settle reads as dusk.
+        /// </summary>
+        public static double DuskElapsed(CelestialBodyProfile body, float cycleSeconds = CycleSeconds)
+        {
+            Vector3 baseEuler = body != null ? body.SunEuler : new Vector3(45f, -30f, 0f);
+            float baseElev = Mathf.Max(MinElevation + 1f, baseEuler.x);
+            float peak = Mathf.Clamp(baseElev + 14f, baseElev, Mathf.Max(baseElev, MaxPeak));
+            float d0 = RisingDayFraction(baseElev, peak);
+            float phase = DayShare * 0.985f;
+            float cycle = phase - d0 * DayShare;
+            if (cycle < 0f) cycle += 1f;
+            return cycle * cycleSeconds;
+        }
+
         /// <summary>Day fraction (0..0.5) on the rising side where the sun sits at the tuned elevation.</summary>
         static float RisingDayFraction(float baseElev, float peak)
         {

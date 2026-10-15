@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 215892562}
   - component: {fileID: 215892564}
   - component: {fileID: 215892563}
+  - component: {fileID: 215892566}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -203,16 +204,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.IsometricCameraController
   panSpeed: 22
   panSmooth: 12
-  edgePan: 1
-  edgeBorder: 14
   panBoundsMin: {x: -5, y: -5}
   panBoundsMax: {x: 70, y: 70}
   zoomSpeed: 6
   minZoom: 4.5
   maxZoom: 52
   zoomSmooth: 10
-  middleMouseDrag: 1
-  rightMouseDrag: 1
+  wheelZoomScale: 18
+  yawSensitivity: 0.22
+  pitchSensitivity: 0.12
+  minPitch: 22
+  maxPitch: 42
 --- !u!81 &215892564
 AudioListener:
   m_ObjectHideFlags: 0
@@ -236,6 +238,361 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &215892566
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 215892561}
+  m_Enabled: 0
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!1 &1121430170
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1121430174}
+  - component: {fileID: 1121430173}
+  - component: {fileID: 1121430172}
+  - component: {fileID: 1121430171}
+  m_Layer: 0
+  m_Name: Intro
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!82 &1121430171
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121430170}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &1121430172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121430170}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a3d7e15c8b24f6a0d1e5c7b3a9f2841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SolarMajesty.Runtime::SolarMajesty.IntroSequence
+  director: {fileID: 1121430173}
+  titleRoot: {fileID: 1310804577}
+  stingSource: {fileID: 1121430171}
+  spawnEarthGlobe: 1
+--- !u!320 &1121430173
+PlayableDirector:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121430170}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_PlayableAsset: {fileID: 11400000, guid: c919759dbc2186743bf843ba1596b40c, type: 2}
+  m_InitialState: 0
+  m_WrapMode: 0
+  m_DirectorUpdateMode: 3
+  m_InitialTime: 0
+  m_SceneBindings:
+  - key: {fileID: 725649769048026438, guid: c919759dbc2186743bf843ba1596b40c, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 7332474617316121523, guid: c919759dbc2186743bf843ba1596b40c, type: 2}
+    value: {fileID: 1310804577}
+  - key: {fileID: -2434377513037665756, guid: c919759dbc2186743bf843ba1596b40c, type: 2}
+    value: {fileID: 0}
+  m_ExposedReferences:
+    m_References: []
+--- !u!4 &1121430174
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121430170}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1310804578}
+  - {fileID: 1318043749}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1310804576
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1121430174}
+    m_Modifications:
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 180.7361
+      objectReference: {fileID: 0}
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 21.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 178.7361
+      objectReference: {fileID: 0}
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.8923991
+      objectReference: {fileID: 0}
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.23911761
+      objectReference: {fileID: 0}
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.36964384
+      objectReference: {fileID: 0}
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.09904577
+      objectReference: {fileID: 0}
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4166017327751100793, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_Name
+      value: IntroTitle
+      objectReference: {fileID: 0}
+    - target: {fileID: 4166017327751100793, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+--- !u!1 &1310804577 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4166017327751100793, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+  m_PrefabInstance: {fileID: 1310804576}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1310804578 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2121968841785335658, guid: 22b153d97e65e76458684795252e40cb, type: 3}
+  m_PrefabInstance: {fileID: 1310804576}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1318043748
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1318043749}
+  - component: {fileID: 1318043751}
+  - component: {fileID: 1318043750}
+  m_Layer: 0
+  m_Name: IntroEarth
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1318043749
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1318043748}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 130, y: 28, z: 208}
+  m_LocalScale: {x: 14, y: 14, z: 14}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1121430174}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!23 &1318043750
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1318043748}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 34f2a658fbdf20f4fa42f23548d69c6c, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1318043751
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1318043748}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1495487854
 GameObject:
   m_ObjectHideFlags: 0
@@ -370,20 +727,1211 @@ MonoBehaviour:
   scoutData: {fileID: 0}
   engineerData: {fileID: 0}
   defenseData: {fileID: 0}
+  medicData: {fileID: 0}
+  harvesterData: {fileID: 0}
+  surveyorData: {fileID: 0}
+  terraformerData: {fileID: 0}
+  courierData: {fileID: 0}
+  geologistData: {fileID: 0}
+  sentinelData: {fileID: 0}
   exploreFlagData: {fileID: 0}
   clearThreatFlagData: {fileID: 0}
   buildFlagData: {fileID: 0}
+  extractFlagData: {fileID: 0}
+  defendFlagData: {fileID: 0}
+  researchSiteFlagData: {fileID: 0}
+  outpostFlagData: {fileID: 0}
+  terraformFlagData: {fileID: 0}
   starterBuildings: []
   activeTool: 2
   specialistSpawnOffset: {x: 8, y: 0, z: 8}
   seedStartingResources: 1
-  spawnFullParty: 1
   spawnDustStalkers: 1
   dustStalkerCount: 2
   stalkerSpawnRadius: 14
+  spawnSecondBody: 1
+  campusBStalkerCount: 2
   spawnGroundPlane: 1
   spawnShowcaseColony: 0
   spawnWaystationInn: 0
+  celestialBody: 0
+  worldSeedOverride: 0
+  advanceSeedOnRestart: 1
+  buildZones:
+    enabled: 1
+    zoneRadius: 7
+    tradePostBuildings: 00000000
+    mineBuildings: 08000000
+    templeBuildings: 170000001800000019000000
+    tradePostBands:
+    - minMeters: 24
+      maxMeters: 40
+    - minMeters: 40
+      maxMeters: 60
+    - minMeters: 60
+      maxMeters: 85
+    - minMeters: 85
+      maxMeters: 115
+    - minMeters: 105
+      maxMeters: 140
+    - minMeters: 125
+      maxMeters: 165
+    mineBands:
+    - minMeters: 55
+      maxMeters: 75
+    - minMeters: 80
+      maxMeters: 105
+    - minMeters: 110
+      maxMeters: 140
+    - minMeters: 140
+      maxMeters: 170
+    templeBands:
+    - minMeters: 28
+      maxMeters: 55
+    - minMeters: 50
+      maxMeters: 85
+    - minMeters: 80
+      maxMeters: 120
+  brainTuning:
+    considerRange: 80
+    considerBase: 40
+    considerExplorePerPoint: 35
+    considerRangeFactor: 0.7
+    currentFlagHysteresis: 0.15
+    greedMultiplier: 1
+    bountyReference: 100
+    greedScoreBase: 0.55
+    greedScorePerGreed: 0.7
+    hungerScoreBonus: 0.18
+    gateBase: 18
+    gatePerGreed: 95
+    gateFraction: 0.78
+    hungerBypass: 0.75
+    acceptBase: 0.38
+    acceptPerGreed: 0.25
+    acceptHungerRelief: 0.22
+    acceptMin: 0.22
+    acceptMax: 0.72
+    preferenceWeight: 0.9
+    attractBonus: 0.22
+    workshopBonusRange: 14
+    distanceReference: 45
+    distanceExponent: 1.5
+    distanceMaxPenalty: 0.55
+    fatiguePenalty: 0.25
+    fatigueDistanceReference: 30
+    crowdPenaltyPerClaim: 0.18
+    bodyDangerWeight: 0.4
+    threatExponent: 1.5
+    riskCourageOffset: 1.15
+    riskWeight: 1
+    survivalFearWeight: 2.5
+    fearThresholdBase: 0.35
+    fearThresholdCourage: 0.5
+    fearMinHealthFactor: 0.4
+    fearSlope: 2
+    desperationCapacity: 0.2
+    desperationRiskDiscount: 0.5
+    panicInjury: 0.55
+    panicInjuryNervous: 0.32
+    panicBodyDanger: 0.4
+    panicCourage: 0.55
+    panicHealthCeiling: 0.62
+    fleeScore: 0.95
+    restFatigueWeight: 0.7
+    restInjuryWeight: 0.55
+    restWorkaholicOffset: 1.1
+    restForced: 0.78
+    restMild: 0.45
+    restOption: 0.3
+    huntMinHealth: 0.38
+    huntMinCombatPreference: 0.2
+    huntDistanceReference: 28
+    huntDistancePenalty: 0.55
+    huntPreferenceWeight: 0.95
+    huntCourageBoost: 0.45
+    huntFearWeight: 0.5
+    huntDangerWeight: 0.35
+    huntHysteresis: 0.12
+    repairDistanceReference: 36
+    repairDistancePenalty: 0.45
+    repairPreferenceWeight: 0.95
+    repairNeedWeight: 0.55
+    repairGreedWeight: 0.12
+    repairFatiguePenalty: 0.18
+    repairAcceptFactor: 0.82
+    dutyScore: 0.6
+    workshopWanderScore: 0.34
+    wanderScore: 0.28
+    levyScore: 0.36
+    triageScore: 0.48
+    motivesEnabled: 1
+    maxWorkTasks: 12
+    maxRelaxTasks: 3
+    relaxMaxSeconds: 90
+    relaxFlagPremium: 0.2
+    relaxScore: 0.5
+    minTaskSeconds: 6
+    safetyFallRate: 0.12
+    safetyRiseRate: 0.5
+    safetyDangerWeight: 1
+    safetyFieldWeight: 0.35
+    safetyFleeBelow: 0.25
+    safetyResumeAbove: 0.6
+    flagAttackWeight: 1
+    flagDefendWeight: 1
+    flagExploreWeight: 1
+    classMotives:
+    - specialistClass: 1
+      maxWorkTasks: 12
+      maxRelaxTasks: 3
+      healthReflex: 0.53999996
+    - specialistClass: 2
+      maxWorkTasks: 12
+      maxRelaxTasks: 3
+      healthReflex: 0.45
+    - specialistClass: 3
+      maxWorkTasks: 12
+      maxRelaxTasks: 3
+      healthReflex: 0.35999998
+    - specialistClass: 4
+      maxWorkTasks: 12
+      maxRelaxTasks: 3
+      healthReflex: 0.6
+    - specialistClass: 9
+      maxWorkTasks: 12
+      maxRelaxTasks: 3
+      healthReflex: 0.39
+    - specialistClass: 5
+      maxWorkTasks: 15
+      maxRelaxTasks: 5
+      healthReflex: 0.51
+    - specialistClass: 8
+      maxWorkTasks: 12
+      maxRelaxTasks: 3
+      healthReflex: 0.45
+    - specialistClass: 7
+      maxWorkTasks: 12
+      maxRelaxTasks: 3
+      healthReflex: 0.45
+    classAllure:
+    - specialistClass: 1
+      distanceMul: 0.7
+      dangerMul: 0.84000003
+      attackMul: 0.8913044
+      defendMul: 0.6956522
+      exploreMul: 1.4130435
+    - specialistClass: 2
+      distanceMul: 1.1
+      dangerMul: 0.68
+      attackMul: 1.1627907
+      defendMul: 1.0232558
+      exploreMul: 0.8139535
+    - specialistClass: 3
+      distanceMul: 1
+      dangerMul: 1.08
+      attackMul: 1.0789474
+      defendMul: 1.1578947
+      exploreMul: 0.7631579
+    - specialistClass: 4
+      distanceMul: 0.8
+      dangerMul: 1.08
+      attackMul: 1.0571429
+      defendMul: 0.8428572
+      exploreMul: 1.1
+    - specialistClass: 9
+      distanceMul: 1.3
+      dangerMul: 1.4000001
+      attackMul: 1.325
+      defendMul: 0.8
+      exploreMul: 0.875
+    - specialistClass: 5
+      distanceMul: 0.7
+      dangerMul: 1.24
+      attackMul: 1.25
+      defendMul: 0.8088235
+      exploreMul: 0.9411765
+    - specialistClass: 8
+      distanceMul: 0.7
+      dangerMul: 1.4000001
+      attackMul: 0.9
+      defendMul: 1
+      exploreMul: 1.1
+    - specialistClass: 7
+      distanceMul: 0.8
+      dangerMul: 1.4000001
+      attackMul: 1.0416666
+      defendMul: 0.9166667
+      exploreMul: 1.0416666
+  economyTuning:
+    upkeepIntervalSeconds: 30
+    resupplyBaseSeconds: 90
+    minResupplySeconds: 20
+    maxCatchUpTicks: 8
+    taxCarryEnabled: 1
+    taxCarryBarrier: 250
+    taxPayArrive: 3.5
+    taxDropOnDown: 0.5
+    caravanDistanceScale: 2.5
+    caravanCurve:
+    - {x: 25, y: 200}
+    - {x: 50, y: 300}
+    - {x: 75, y: 400}
+    - {x: 100, y: 500}
+    - {x: 125, y: 600}
+    - {x: 150, y: 700}
+    - {x: 175, y: 800}
+    - {x: 200, y: 900}
+    - {x: 225, y: 1000}
+    - {x: 250, y: 1100}
+    - {x: 275, y: 1200}
+    - {x: 300, y: 1300}
+    - {x: 325, y: 1400}
+    - {x: 350, y: 1500}
+    - {x: 375, y: 1600}
+    - {x: 400, y: 1700}
+    - {x: 425, y: 1800}
+    - {x: 450, y: 1900}
+    - {x: 475, y: 2000}
+    - {x: 500, y: 2100}
+    classShopPriorities:
+    - specialistClass: 1
+      armor: 3
+      weapon: 3
+      healthPotion: 4
+      magicPotion: 0
+      accessory: 4
+    - specialistClass: 2
+      armor: 4
+      weapon: 3
+      healthPotion: 3
+      magicPotion: 0
+      accessory: 3
+    - specialistClass: 3
+      armor: 3
+      weapon: 3
+      healthPotion: 2
+      magicPotion: 4
+      accessory: 2
+    - specialistClass: 4
+      armor: 3
+      weapon: 4
+      healthPotion: 4
+      magicPotion: 0
+      accessory: 2
+    - specialistClass: 9
+      armor: 4
+      weapon: 4
+      healthPotion: 4
+      magicPotion: 0
+      accessory: 3
+    - specialistClass: 5
+      armor: 3
+      weapon: 3
+      healthPotion: 4
+      magicPotion: 3
+      accessory: 2
+    - specialistClass: 8
+      armor: 3
+      weapon: 4
+      healthPotion: 4
+      magicPotion: 0
+      accessory: 2
+    - specialistClass: 7
+      armor: 3
+      weapon: 3
+      healthPotion: 4
+      magicPotion: 0
+      accessory: 4
+    metalsPerHarvest: 8
+    icePerHarvest: 7
+    fissilePerHarvest: 5
+    otherPerHarvest: 10
+    campusFallbackOre: 4
+    outpostFallbackOre: 3
+    buildingCostScale: 1
+    duplicateMultiplier: 1.5
+    buildingCostOverrides: []
+  kingdomThreat:
+    enabled: 1
+    eliteHealthMul: 4
+    eliteBiteMul: 1.8
+    eliteScaleMul: 1.6
+    eliteRewardMul: 4
+    edgeSpawnDistance: 26
+    burrowSpawnDistance: 5
+    buildingWorth:
+    - category: 15
+      kingdomValue: 1
+      safetyPower: 10
+      safetyRadius: 30
+    - category: 1
+      kingdomValue: 0
+      safetyPower: 3
+      safetyRadius: 10
+    - category: 2
+      kingdomValue: 0
+      safetyPower: 2
+      safetyRadius: 10
+    - category: 7
+      kingdomValue: 0
+      safetyPower: 2
+      safetyRadius: 10
+    - category: 8
+      kingdomValue: 0
+      safetyPower: 2
+      safetyRadius: 10
+    - category: 9
+      kingdomValue: 0
+      safetyPower: 2
+      safetyRadius: 10
+    - category: 3
+      kingdomValue: 0
+      safetyPower: 2
+      safetyRadius: 10
+    - category: 26
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 10
+    - category: 27
+      kingdomValue: 0.2
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 10
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 29
+      kingdomValue: 0.2
+      safetyPower: 5
+      safetyRadius: 10
+    - category: 0
+      kingdomValue: 0.2
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 4
+      kingdomValue: 0.2
+      safetyPower: 7
+      safetyRadius: 20
+    - category: 16
+      kingdomValue: 0.2
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 6
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 28
+      kingdomValue: 0.2
+      safetyPower: 5
+      safetyRadius: 10
+    - category: 30
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 11
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 12
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 13
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 14
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 17
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 18
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 19
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 20
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 21
+      kingdomValue: 0.5
+      safetyPower: 5
+      safetyRadius: 20
+    - category: 22
+      kingdomValue: 0.5
+      safetyPower: 10
+      safetyRadius: 20
+    - category: 23
+      kingdomValue: 0.5
+      safetyPower: 10
+      safetyRadius: 20
+    - category: 24
+      kingdomValue: 0.5
+      safetyPower: 10
+      safetyRadius: 20
+    - category: 25
+      kingdomValue: 0.5
+      safetyPower: 10
+      safetyRadius: 20
+    fallbackValue: 0.2
+    fallbackSafetyPower: 3
+    fallbackSafetyRadius: 10
+    safetyFieldFull: 10
+    entries:
+    - id: burrow_1
+      kind: 1
+      site: 0
+      trigger: 0
+      minValue: 2
+      maxValue: 999
+      intervalSeconds: 60
+      countMin: 1
+      countMax: 1
+      cap: 1
+      elite: 0
+    - id: burrow_2
+      kind: 6
+      site: 0
+      trigger: 0
+      minValue: 4
+      maxValue: 999
+      intervalSeconds: 75
+      countMin: 1
+      countMax: 1
+      cap: 1
+      elite: 0
+    - id: burrow_3
+      kind: 2
+      site: 0
+      trigger: 0
+      minValue: 6
+      maxValue: 999
+      intervalSeconds: 60
+      countMin: 1
+      countMax: 2
+      cap: 2
+      elite: 0
+    - id: raider_1
+      kind: 0
+      site: 1
+      trigger: 0
+      minValue: 3
+      maxValue: 999
+      intervalSeconds: 300
+      countMin: 1
+      countMax: 1
+      cap: 1
+      elite: 1
+    - id: raider_2
+      kind: 0
+      site: 1
+      trigger: 0
+      minValue: 6
+      maxValue: 999
+      intervalSeconds: 240
+      countMin: 1
+      countMax: 1
+      cap: 1
+      elite: 1
+    - id: wreck_1
+      kind: 7
+      site: 2
+      trigger: 1
+      minValue: 4
+      maxValue: 999
+      intervalSeconds: 120
+      countMin: 1
+      countMax: 1
+      cap: 1
+      elite: 0
+  orbitalTuning:
+    enabled: 1
+    requireResearch: 1
+    rangeScale: 2.5
+    uplinkCategories: 0f0000000600000004000000
+    rangeBands:
+    - maxUnits: 25
+      costMul: 1
+    - maxUnits: 50
+      costMul: 3
+    - maxUnits: 100
+      costMul: 5
+    - maxUnits: 150
+      costMul: 7
+    - maxUnits: 200
+      costMul: 9
+    - maxUnits: 250
+      costMul: 10
+    - maxUnits: 1000000
+      costMul: 15
+    powers:
+    - id: 0
+      displayName: Kinetic Lance
+      description: Tungsten rod from orbit. Kills a stalker outright.
+      target: 0
+      tier: 1
+      cost: 250
+      cooldownSeconds: 3
+      radius: 6
+      magnitude: 40
+      durationSeconds: 0
+      area: 0
+    - id: 1
+      displayName: Orbital Barrage
+      description: Saturation strike. Hits every hostile in 7 m.
+      target: 0
+      tier: 2
+      cost: 1000
+      cooldownSeconds: 20
+      radius: 7
+      magnitude: 60
+      durationSeconds: 0
+      area: 1
+    - id: 2
+      displayName: EMP Snare
+      description: Locks every hostile in 6 m in place for 6 s.
+      target: 0
+      tier: 2
+      cost: 500
+      cooldownSeconds: 15
+      radius: 6
+      magnitude: 0
+      durationSeconds: 6
+      area: 1
+    - id: 3
+      displayName: Med-Drop
+      description: 'Repair pod for one robot: +60% hull, clears poison, slow and
+        stun.'
+      target: 1
+      tier: 1
+      cost: 250
+      cooldownSeconds: 3
+      radius: 6
+      magnitude: 0.6
+      durationSeconds: 0
+      area: 0
+    - id: 4
+      displayName: Aegis Field
+      description: Shield projector. One robot takes no damage for 15 s.
+      target: 1
+      tier: 2
+      cost: 500
+      cooldownSeconds: 10
+      radius: 6
+      magnitude: 0
+      durationSeconds: 15
+      area: 0
+    - id: 5
+      displayName: Revive Beacon
+      description: Reboots downed robots in 6 m on the spot. Wrecks still need the
+        Fobot Yard.
+      target: 2
+      tier: 2
+      cost: 750
+      cooldownSeconds: 30
+      radius: 6
+      magnitude: 0
+      durationSeconds: 0
+      area: 1
+    - id: 6
+      displayName: Repair Swarm
+      description: Nanite drop. Restores 50% of a damaged building.
+      target: 3
+      tier: 2
+      cost: 750
+      cooldownSeconds: 10
+      radius: 8
+      magnitude: 0.5
+      durationSeconds: 0
+      area: 0
+    - id: 7
+      displayName: Survey Sweep
+      description: Satellite pass. Charts every den within 30 m.
+      target: 4
+      tier: 1
+      cost: 250
+      cooldownSeconds: 20
+      radius: 30
+      magnitude: 0
+      durationSeconds: 0
+      area: 0
+    - id: 8
+      displayName: Till Audit
+      description: 'Remote audit: 30% of every till straight to the treasury. Free.'
+      target: 5
+      tier: 1
+      cost: 0
+      cooldownSeconds: 180
+      radius: 0
+      magnitude: 0.3
+      durationSeconds: 0
+      area: 0
+  abilityTuning:
+    enabled: 1
+    globalCooldown: 1.5
+    hurtLine: 0.6
+    threatLine: 0.35
+    abilities:
+    - id: mech_power_strike
+      displayName: Power Strike
+      specialistClass: 2
+      trigger: 0
+      minLevel: 1
+      cooldownSeconds: 10
+      damageMul: 3
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: mech_challenge
+      displayName: Challenge
+      specialistClass: 2
+      trigger: 0
+      minLevel: 3
+      cooldownSeconds: 15
+      damageMul: 1.5
+      aoeRadius: 5
+      filter: 0
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 1
+      tauntDuration: 6
+      summonId: 
+      summonCap: 0
+    - id: mech_bulwark
+      displayName: Bulwark
+      specialistClass: 2
+      trigger: 2
+      minLevel: 3
+      cooldownSeconds: 60
+      damageMul: 0
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 6
+      statusMagnitude: 0.25
+      statusDuration: 30
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: mech_maim
+      displayName: Maim
+      specialistClass: 2
+      trigger: 0
+      minLevel: 6
+      cooldownSeconds: 30
+      damageMul: 5
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 3
+      statusMagnitude: 0.5
+      statusDuration: 8
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: scout_beastslayer
+      displayName: Beastslayer
+      specialistClass: 1
+      trigger: 0
+      minLevel: 1
+      cooldownSeconds: 10
+      damageMul: 4
+      aoeRadius: 0
+      filter: 1
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: scout_stingshot
+      displayName: Stingshot
+      specialistClass: 1
+      trigger: 0
+      minLevel: 3
+      cooldownSeconds: 15
+      damageMul: 1.5
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 5
+      statusMagnitude: 0.25
+      statusDuration: 10
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: harvester_venom
+      displayName: Venom Strike
+      specialistClass: 4
+      trigger: 0
+      minLevel: 1
+      cooldownSeconds: 15
+      damageMul: 1
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 0
+      statusMagnitude: 2
+      statusDuration: 10
+      statusPeriod: 1
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: harvester_stun
+      displayName: Stun Strike
+      specialistClass: 4
+      trigger: 0
+      minLevel: 3
+      cooldownSeconds: 20
+      damageMul: 1.5
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 4
+      statusMagnitude: 1
+      statusDuration: 3
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: medic_purge
+      displayName: Purge
+      specialistClass: 3
+      trigger: 0
+      minLevel: 1
+      cooldownSeconds: 5
+      damageMul: 8
+      aoeRadius: 0
+      filter: 3
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: medic_nanite_regen
+      displayName: Nanite Regen
+      specialistClass: 3
+      trigger: 4
+      minLevel: 3
+      cooldownSeconds: 20
+      damageMul: 0
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 2
+      statusMagnitude: 0.03
+      statusDuration: 20
+      statusPeriod: 2
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: sentinel_stun_slam
+      displayName: Stun Slam
+      specialistClass: 9
+      trigger: 0
+      minLevel: 1
+      cooldownSeconds: 20
+      damageMul: 1.5
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 4
+      statusMagnitude: 1
+      statusDuration: 3
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: sentinel_berserk
+      displayName: Berserk
+      specialistClass: 9
+      trigger: 1
+      minLevel: 3
+      cooldownSeconds: 60
+      damageMul: 0
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 8
+      statusMagnitude: 1
+      statusDuration: 30
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: sentinel_plating
+      displayName: Hardened Plating
+      specialistClass: 9
+      trigger: 2
+      minLevel: 6
+      cooldownSeconds: 60
+      damageMul: 0
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 6
+      statusMagnitude: 0.5
+      statusDuration: 20
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: surveyor_snare
+      displayName: Snare Shot
+      specialistClass: 5
+      trigger: 0
+      minLevel: 1
+      cooldownSeconds: 30
+      damageMul: 1.5
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 3
+      statusMagnitude: 0.9
+      statusDuration: 6
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: surveyor_arc_bolt
+      displayName: Arc Bolt
+      specialistClass: 5
+      trigger: 0
+      minLevel: 3
+      cooldownSeconds: 15
+      damageMul: 5
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: geologist_core_shot
+      displayName: Core Shot
+      specialistClass: 8
+      trigger: 0
+      minLevel: 3
+      cooldownSeconds: 30
+      damageMul: 5
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: geologist_sunburst
+      displayName: Sunburst
+      specialistClass: 8
+      trigger: 0
+      minLevel: 6
+      cooldownSeconds: 30
+      damageMul: 2
+      aoeRadius: 5
+      filter: 0
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: courier_beastslayer
+      displayName: Beastslayer
+      specialistClass: 7
+      trigger: 0
+      minLevel: 1
+      cooldownSeconds: 10
+      damageMul: 4
+      aoeRadius: 0
+      filter: 1
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: courier_escort
+      displayName: Escort Drone
+      specialistClass: 7
+      trigger: 1
+      minLevel: 1
+      cooldownSeconds: 30
+      damageMul: 0
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: escort_drone
+      summonCap: 1
+    - id: courier_hauler
+      displayName: Hauler Mech
+      specialistClass: 7
+      trigger: 1
+      minLevel: 6
+      cooldownSeconds: 45
+      damageMul: 0
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: hauler_mech
+      summonCap: 1
+    - id: courier_afterburner
+      displayName: Afterburner
+      specialistClass: 7
+      trigger: 3
+      minLevel: 1
+      cooldownSeconds: 30
+      damageMul: 0
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 7
+      statusMagnitude: 0.5
+      statusDuration: 10
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: terra_thermal
+      displayName: Thermal Lance
+      specialistClass: 6
+      trigger: 0
+      minLevel: 1
+      cooldownSeconds: 8
+      damageMul: 2
+      aoeRadius: 3
+      filter: 0
+      appliesStatus: 1
+      status: 1
+      statusMagnitude: 3
+      statusDuration: 5
+      statusPeriod: 1
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: terra_cryo
+      displayName: Cryo Lock
+      specialistClass: 6
+      trigger: 0
+      minLevel: 3
+      cooldownSeconds: 8
+      damageMul: 3
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 1
+      status: 4
+      statusMagnitude: 1
+      statusDuration: 4
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    - id: engineer_weld_strike
+      displayName: Weld Strike
+      specialistClass: 0
+      trigger: 0
+      minLevel: 1
+      cooldownSeconds: 10
+      damageMul: 3
+      aoeRadius: 0
+      filter: 0
+      appliesStatus: 0
+      status: 0
+      statusMagnitude: 0
+      statusDuration: 0
+      statusPeriod: 0
+      taunts: 0
+      tauntDuration: 0
+      summonId: 
+      summonCap: 0
+    companions:
+    - id: escort_drone
+      displayName: Escort Drone
+      hull: 2
+      dps: 8
+      moveSpeed: 4.6
+      lifetime: 90
+      leash: 10
+      taunts: 0
+      tauntRadius: 0
+      tauntCooldown: 0
+      tauntDuration: 0
+      color: {r: 0.55, g: 0.8, b: 1, a: 1}
+      scale: 0.55
+    - id: hauler_mech
+      displayName: Hauler Mech
+      hull: 5
+      dps: 10
+      moveSpeed: 3.4
+      lifetime: 90
+      leash: 8
+      taunts: 1
+      tauntRadius: 5
+      tauntCooldown: 15
+      tauntDuration: 6
+      color: {r: 0.95, g: 0.7, b: 0.3, a: 1}
+      scale: 0.9
+  faunaAfflictions:
+    enabled: 1
+    afflictions:
+    - id: stalker_rend
+      label: BLEEDING
+      kind: 0
+      eliteOnly: 0
+      status: 0
+      magnitude: 0.012
+      duration: 8
+      period: 1
+      cooldown: 12
+      aoeRadius: 0
+    - id: alpha_howl
+      label: SHAKEN
+      kind: 0
+      eliteOnly: 1
+      status: 5
+      magnitude: 0.25
+      duration: 8
+      period: 0
+      cooldown: 15
+      aoeRadius: 5
+    - id: mite_gnaw
+      label: GNAWED
+      kind: 1
+      eliteOnly: 0
+      status: 5
+      magnitude: 0.2
+      duration: 8
+      period: 0
+      cooldown: 15
+      aoeRadius: 0
+    - id: leech_drain
+      label: DRAINED
+      kind: 2
+      eliteOnly: 0
+      status: 3
+      magnitude: 0.4
+      duration: 6
+      period: 0
+      cooldown: 15
+      aoeRadius: 0
+    - id: wisp_chill
+      label: CHILLED
+      kind: 3
+      eliteOnly: 0
+      status: 3
+      magnitude: 0.5
+      duration: 5
+      period: 0
+      cooldown: 12
+      aoeRadius: 0
+    - id: tick_toxin
+      label: POISONED
+      kind: 4
+      eliteOnly: 0
+      status: 0
+      magnitude: 0.008
+      duration: 10
+      period: 1
+      cooldown: 15
+      aoeRadius: 0
+    - id: creeper_entangle
+      label: ENTANGLED
+      kind: 5
+      eliteOnly: 0
+      status: 3
+      magnitude: 0.9
+      duration: 3
+      period: 0
+      cooldown: 20
+      aoeRadius: 0
+    - id: hopper_pounce
+      label: STUNNED
+      kind: 6
+      eliteOnly: 0
+      status: 4
+      magnitude: 1
+      duration: 1.5
+      period: 0
+      cooldown: 20
+      aoeRadius: 0
+    - id: junk_corrode
+      label: CORRODED
+      kind: 7
+      eliteOnly: 0
+      status: 0
+      magnitude: 0.01
+      duration: 8
+      period: 1
+      cooldown: 15
+      aoeRadius: 0
 --- !u!4 &1891535069
 Transform:
   m_ObjectHideFlags: 0
@@ -406,3 +1954,4 @@ SceneRoots:
   - {fileID: 1495487856}
   - {fileID: 215892565}
   - {fileID: 1891535069}
+  - {fileID: 1121430174}
