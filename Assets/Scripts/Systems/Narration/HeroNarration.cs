@@ -86,7 +86,7 @@ namespace SolarMajesty
               .Append(Word(m.Courage, "cowardly", "steady", "fearless")).Append(", ")
               .Append(Word(m.Workaholic, "lazy", "diligent", "workaholic")).Append(". ");
             sb.Append("Health ").Append(Pct(m.Health01)).Append(", tired ").Append(Pct(m.Fatigue01))
-              .Append(", purse ").Append(Mathf.Max(0, m.Credits)).Append(" EU. ");
+              .Append(", holds ").Append(Mathf.Max(0, m.Credits)).Append(" EU. ");
             sb.Append("Now: ").Append(Situation(m)).Append('.');
             return sb.ToString();
         }

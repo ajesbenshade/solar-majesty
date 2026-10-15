@@ -722,7 +722,7 @@ namespace SolarMajesty
             if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphTech, "RESEARCH", "T", _techOpen))
                 ToggleTechPanel();
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Camp, "SWITCH CAMPUS", "A/B", false))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Camp, "SWITCH YARD", "A/B", false))
                 _loop.FocusCampus(1 - _loop.FocusedCampus);
             x += sq + gap;
             int partyCount = _loop.Parties != null ? _loop.Parties.Count : 0;
@@ -1949,7 +1949,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{a.Data?.displayName ?? "Specialist"} · {ColonyLayout.CampusLabel(campus)} · Asks {a.HireMin:N0} EU · Purse {a.Credits:N0} EU{LevyCarryLine(a)}", _micro);
+                    $"{a.Data?.displayName ?? "Specialist"} · {ColonyLayout.CampusLabel(campus)} · Asks {a.HireMin:N0} EU · Holds {a.Credits:N0} EU{LevyCarryLine(a)}", _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -2298,8 +2298,8 @@ namespace SolarMajesty
                 }
             }
             return posted <= 0
-                ? "Bounty escrowed from EU. Heroes keep a purse; colony tithes."
-                : $"Posted {posted}  ·  claimed {claimed}  ·  heroes keep EU purse";
+                ? "Bounty escrowed from EU. Bots keep their EU share; the till takes its cut."
+                : $"Posted {posted}  ·  claimed {claimed}  ·  bots keep their EU share";
         }
 
         private static Color ActionTint(SpecialistAction action) => action switch

@@ -897,7 +897,7 @@ namespace SolarMajesty
             _loop?.OnRobotScrapped(this, salvage);
             DemoVfx.DeathBurst(transform.position, bodyTint);
             DemoAudio.PlayRobotDown(transform.position);
-            Debug.Log($"[Specialist] {data?.displayName} SCRAPPED — salvage {salvage} MET");
+            Debug.Log($"[Specialist] {data?.displayName} scrapped — salvage {salvage} EU to the till");
             Destroy(gameObject);
         }
 
