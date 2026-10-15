@@ -510,7 +510,15 @@ namespace SolarMajesty
             _sw = Screen.width / s;
             _sh = Screen.height / s;
 
-            if (_loop.Screen == DemoScreen.Title)
+            // Campaign victory replaces the console so pause and dock buttons cannot eat the click.
+            // Drawn in the scaled GUI space, so the UI Scale setting sizes the panel.
+            if (_loop.Screen != DemoScreen.Title &&
+                _loop.Screen != DemoScreen.Settings &&
+                TryDrawCampaignVictory())
+            {
+                // The panel is the whole frame. Play and pause chrome stay undrawn.
+            }
+            else if (_loop.Screen == DemoScreen.Title)
             {
                 DrawTitle();
             }
@@ -2640,18 +2648,82 @@ namespace SolarMajesty
             }
         }
 
+        private bool TryDrawCampaignVictory()
+        {
+            if (StillCaptureHold.Active || ReplayRules.IsEndless || _winDismissed) return false;
+            var mission = _loop.Mission;
+            if (mission == null || !mission.IsWon) return false;
+            bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
+            DrawCampaignVictory(VictoryOffer.For(_loop.ActiveBody, nextBuilt, endless: false));
+            return true;
+        }
+
         private void DrawWinBanner()
         {
-            if (StillCaptureHold.Active) return;
+            if (StillCaptureHold.Active || !ReplayRules.IsEndless) return;
             var mission = _loop.Mission;
             if (mission == null || !mission.IsWon || _winDismissed) return;
+            DrawEndlessWinBanner(mission);
+        }
 
+        private void DrawCampaignVictory(VictoryOffer.View offer)
+        {
+            HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.05f, 0.03f), 0.42f);
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
+
+            var rect = VictoryOffer.PanelRect(_sw, _sh);
+            var c = Panel(rect, null, false);
+            HudSkin.ModalChrome(rect, Good);
+
+            var prev = _banner.normal.textColor;
+            _banner.normal.textColor = Good;
+            GUI.Label(new Rect(c.x, c.y, c.width, 26f), offer.Headline, _banner);
+            _banner.normal.textColor = prev;
+
+            const float buttonH = 30f;
+            float buttonY = c.yMax - buttonH;
+            float textBottom = buttonY - 8f;
+            if (!string.IsNullOrEmpty(offer.ComingSoon))
+            {
+                textBottom -= 22f;
+                var soonPrev = _body.normal.textColor;
+                _body.normal.textColor = HudSkin.GoldBright;
+                GUI.Label(new Rect(c.x, textBottom, c.width, 20f), offer.ComingSoon, _body);
+                _body.normal.textColor = soonPrev;
+            }
+
+            float bodyH = Mathf.Max(16f, textBottom - (c.y + 30f));
+            GUI.Label(new Rect(c.x, c.y + 30f, c.width, bodyH), offer.Body, _wrap != null ? _wrap : _body);
+
+            float gap = 8f;
+            if (offer.CanContinue && offer.ShowMainMenu)
+            {
+                float w = (c.width - gap) * 0.5f;
+                if (GUI.Button(new Rect(c.x, buttonY, w, buttonH), offer.ContinueLabel, _chipOn))
+                    _loop.ContinueAfterVictory();
+                if (GUI.Button(new Rect(c.x + w + gap, buttonY, w, buttonH), VictoryOffer.MainMenu, _chipOff))
+                {
+                    _winDismissed = true;
+                    _loop.ExitVictoryToTitle();
+                }
+            }
+            else if (offer.ShowMainMenu)
+            {
+                float w = Mathf.Min(180f, c.width);
+                if (GUI.Button(new Rect(c.x, buttonY, w, buttonH), VictoryOffer.MainMenu, _chipOn))
+                {
+                    _winDismissed = true;
+                    _loop.ExitVictoryToTitle();
+                }
+            }
+        }
+
+        private void DrawEndlessWinBanner(MissionController mission)
+        {
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.05f, 0.03f), 0.35f);
             _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
-            bool travelCut = CampaignCutsceneCatalog.TryGetVictory(_loop.ActiveBody, out _);
-            float detailH = travelCut ? 72f : 32f;
-            var rect = new Rect((_sw - 500f) * 0.5f, _sh * 0.22f, 500f, travelCut ? 268f : 216f);
+            var rect = VictoryOffer.PanelRect(_sw, _sh);
             var c = Panel(rect, null, false);
             HudSkin.ModalChrome(rect, Good);
 
@@ -2660,40 +2732,11 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, c.y, c.width, 26f), mission.WinHeadline, _banner);
             _banner.normal.textColor = prev;
 
-            GUI.Label(new Rect(c.x, c.y + 32f, c.width, detailH), mission.WinDetail, _wrap != null ? _wrap : _body);
-            GUI.Label(new Rect(c.x, c.y + 32f + detailH, c.width, 24f), mission.WinSubline, _muted);
-            var rating = _loop.CurrentRating;
-            float ratingY = c.y + 56f + detailH;
-            GUI.Label(new Rect(c.x, ratingY, c.width, 16f), rating.Summary, _value);
-            GUI.Label(new Rect(c.x, ratingY + 18f, c.width, 14f), rating.Breakdown, _micro);
-
-            if (GUI.Button(new Rect(c.x, c.yMax - 30f, 190f, 28f), "CONTINUE OVERSEEING  ·  Y", _chipOn))
+            GUI.Label(new Rect(c.x, c.y + 32f, c.width, 48f), mission.WinDetail, _wrap != null ? _wrap : _body);
+            if (GUI.Button(new Rect(c.x, c.yMax - 30f, Mathf.Min(220f, c.width), 28f), "CONTINUE OVERSEEING  ·  Y", _chipOn))
             {
                 _winDismissed = true;
                 mission.DismissWinToSandbox();
-            }
-
-            if (!ReplayRules.IsEndless)
-            {
-                var next = CampaignProgress.NextAfter(_loop.ActiveBody);
-                if (next.HasValue)
-                {
-                    string nextName = CelestialBodyCatalog.Get(next.Value).ShortCode;
-                    if (GUI.Button(new Rect(c.x + 200f, c.yMax - 30f, 160f, 28f), $"TO {nextName}", _chipOff))
-                    {
-                        _winDismissed = true;
-                        _loop.AdvanceCampaign();
-                    }
-                }
-                else
-                {
-                    string rematch = _loop.BodyProfile != null ? $"NEW {_loop.BodyProfile.ShortCode}" : "NEW WORLD";
-                    if (GUI.Button(new Rect(c.x + 200f, c.yMax - 30f, 160f, 28f), rematch, _chipOff))
-                    {
-                        _winDismissed = true;
-                        _loop.BeginNextConquest();
-                    }
-                }
             }
         }
 
@@ -2783,7 +2826,9 @@ namespace SolarMajesty
                 _loop.DismissCutscene();
             }
 
-            if (_loop.Mission != null && _loop.Mission.IsWon && Input.GetKeyDown(KeyCode.Y) && !_loop.IsOutpostOverwhelmed)
+            if (ReplayRules.IsEndless &&
+                _loop.Mission != null && _loop.Mission.IsWon &&
+                Input.GetKeyDown(KeyCode.Y) && !_loop.IsOutpostOverwhelmed)
             {
                 _winDismissed = true;
                 _loop.Mission.DismissWinToSandbox();
