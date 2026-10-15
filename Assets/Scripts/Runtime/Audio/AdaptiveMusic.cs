@@ -136,6 +136,8 @@ namespace SolarMajesty
         public static AdaptiveMusic Ensure()
         {
             if (_instance != null) return _instance;
+            // DontDestroyOnLoad is illegal in EditMode. Victory tests latch without a score.
+            if (!Application.isPlaying) return null;
 
             var go = GameObject.Find("SM_Music");
             if (go == null)
