@@ -33,7 +33,7 @@ namespace SolarMajesty.Tests
             StringAssert.Contains("level 7 Defense Mech on Luna", d);
             StringAssert.Contains("greedy", d);
             StringAssert.Contains("cowardly", d);
-            StringAssert.Contains("450 credits", d);
+            StringAssert.Contains("450 EU", d);
             StringAssert.Contains("stay away unless level 9+", d);
 
             var refused = Claim("mechs only");

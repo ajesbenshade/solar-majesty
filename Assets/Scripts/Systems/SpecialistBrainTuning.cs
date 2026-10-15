@@ -187,7 +187,7 @@ namespace SolarMajesty
         public float repairAcceptFactor = 0.82f;
 
         [Header("Pay duty")]
-        [Tooltip("Score of walking carried guild tax home. Heroes finish a flag or hunt first.")]
+        [Tooltip("Score of walking carried EU home. Heroes finish a flag or hunt first.")]
         public float dutyScore = 0.6f;
 
         [Header("Idle behaviour scores")]

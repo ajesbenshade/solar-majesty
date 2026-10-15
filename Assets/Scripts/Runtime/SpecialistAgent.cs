@@ -327,7 +327,7 @@ namespace SolarMajesty
             credits += kept;
             greedHunger = Mathf.Clamp01(greedHunger - Mathf.Clamp01(MajestyEconomy.ToBrain(amount) / 120f) * 0.35f);
             if (!string.IsNullOrEmpty(reason))
-                Debug.Log($"[Credits] {data?.displayName} +{kept:F0} EU ({reason}; {tax} to guild) → {credits:F0}");
+                Debug.Log($"[Credits] {data?.displayName} +{kept:N0} EU ({reason}; {tax:N0} EU to the till) → {credits:N0}");
         }
 
         /// <summary>The till this hero's guild tax lands in: workshop / guild hall, else Commons.</summary>
@@ -1545,7 +1545,7 @@ namespace SolarMajesty
                     DemoAudio.PlayCredits(transform.position);
                     DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
                 }
-                Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty=${bounty:F0}");
+                Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty={bounty:N0} EU");
                 ReleaseClaim();
                 _activeFlag = null;
                 _status = "completed_flag";
@@ -1795,7 +1795,7 @@ namespace SolarMajesty
         {
             int lost = _duty.Drop(fraction);
             if (lost > 0)
-                _loop?.LogOverseer($"{Record.Name} {reason} — {lost} EU of guild tax lost.");
+                _loop?.LogOverseer($"{Record.Name} {reason} — {lost:N0} EU dropped.");
         }
 
         /// <summary>
@@ -2734,7 +2734,7 @@ namespace SolarMajesty
         public string DebugLine()
         {
             string flagInfo = _activeFlag != null
-                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):F0}"
+                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):N0} EU"
                 : "-";
             string nav = _agent != null && _agent.isOnNavMesh ? "nav" : "direct";
             return $"{data?.displayName ?? "?"} L{Level} | {_lastDecision.Action} | " +

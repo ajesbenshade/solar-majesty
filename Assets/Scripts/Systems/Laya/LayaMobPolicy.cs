@@ -37,10 +37,10 @@ namespace SolarMajesty
 
         public static string BuildState(in MobState s) =>
             $"Hostile lunar fauna: a {s.Kind}. Health {Mathf.RoundToInt(Mathf.Clamp01(s.Health01) * 100f)}%. " +
-            $"{Mathf.RoundToInt(s.DistanceToCampus)}m from the colony campus. " +
+            $"{Mathf.RoundToInt(s.DistanceToCampus)}m from the bot yard. " +
             (s.Frenzy ? "In a feeding frenzy. " : "") +
             (s.RecentlyHit ? "Just took hits from a colony defender. " : "") +
-            (s.CollectorNearby ? "A tax collector robot is walking the road nearby carrying gold. " : "") +
+            (s.CollectorNearby ? "A worker bot is walking the road nearby carrying EU. " : "") +
             (s.RaidTargetNearby ? $"A {s.RaidTarget} is within reach to raid." : $"No {s.RaidTarget} in reach.");
 
         /// <summary>Only legal stances are offered: Role is always first (the scripted fallback).</summary>
@@ -59,7 +59,7 @@ namespace SolarMajesty
             if (s.CollectorNearby)
             {
                 tactics.Add(MobTactic.Ambush);
-                list.Add(new LayaOption { Label = "ambush", Description = "Ambush the travelling tax collector and steal its gold." });
+                list.Add(new LayaOption { Label = "ambush", Description = "Ambush the travelling worker bot and take its EU." });
             }
             tactics.Add(MobTactic.Prowl);
             list.Add(new LayaOption { Label = "prowl", Description = "Hang back and prowl; avoid the colony's defenders." });
