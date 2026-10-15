@@ -3836,13 +3836,13 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "0335a063",
-   "text": "Credits are sitting in building purses. Haul will get around to it. Or a mite will. Gambling!",
-   "clip": "overseer_line_0335a063",
-   "hash": "f6f816c15bcc",
-   "seconds": 5.17,
-   "peak_db": -3.9,
-   "rms_db": -21.5
+   "key": "0cd99e35",
+   "text": "EU is sitting in building purses. Haul will get around to it. Or a mite will. Gambling!",
+   "clip": "overseer_line_0cd99e35",
+   "hash": "4e7df0b18f20",
+   "seconds": 5.15,
+   "peak_db": -4.6,
+   "rms_db": -21.6
   },
   {
    "speaker": "overseer",
@@ -3869,6 +3869,17 @@
   {
    "speaker": "overseer",
    "cue": "line",
+   "key": "1f15cde9",
+   "text": "Haul down on the road",
+   "clip": "overseer_line_1f15cde9",
+   "hash": "bd011421099e",
+   "seconds": 1.22,
+   "peak_db": -4.4,
+   "rms_db": -20.5
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
    "key": "3140f16a",
    "text": "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building.",
    "clip": "overseer_line_3140f16a",
@@ -3876,6 +3887,17 @@
    "seconds": 5.56,
    "peak_db": -3.9,
    "rms_db": -21.5
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "32b59ebd",
+   "text": "EU was napping on the HAB. A mite just made a withdrawal.",
+   "clip": "overseer_line_32b59ebd",
+   "hash": "4d01fa422f0d",
+   "seconds": 3.25,
+   "peak_db": -2.8,
+   "rms_db": -21.2
   },
   {
    "speaker": "overseer",
@@ -3891,28 +3913,6 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "3ae9c966",
-   "text": "That red chip is water, not a coupon. Credits will not drink themselves. Build a farm or stop collecting roommates.",
-   "clip": "overseer_line_3ae9c966",
-   "hash": "692e7982493a",
-   "seconds": 7.27,
-   "peak_db": -3.7,
-   "rms_db": -21.5
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "3b68d3ee",
-   "text": "Colonists run the village. Robots take the contracts. Try not to mix them up — it gets philosophical.",
-   "clip": "overseer_line_3b68d3ee",
-   "hash": "45cdb761a0e4",
-   "seconds": 6.21,
-   "peak_db": -3.3,
-   "rms_db": -21.7
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
    "key": "4ee4328e",
    "text": "Dock a Fobot Yard. Y is not a miracle. It is an invoice.",
    "clip": "overseer_line_4ee4328e",
@@ -3920,6 +3920,17 @@
    "seconds": 3.72,
    "peak_db": -4.1,
    "rms_db": -21.4
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "582d96a9",
+   "text": "Life support is a suggestion until it is not. The tank is at four. Bots first, Anvil second.",
+   "clip": "overseer_line_582d96a9",
+   "hash": "774a0816f670",
+   "seconds": 6.17,
+   "peak_db": -3.4,
+   "rms_db": -21.5
   },
   {
    "speaker": "overseer",
@@ -3946,13 +3957,13 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "711b3750",
-   "text": "Compact scrip insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
-   "clip": "overseer_line_711b3750",
-   "hash": "3a061a04d456",
-   "seconds": 5.31,
-   "peak_db": -2.8,
-   "rms_db": -21.4
+   "key": "7a257415",
+   "text": "Haul walked the purse home. EU is in the chest. Do not click the crate.",
+   "clip": "overseer_line_7a257415",
+   "hash": "2ca831b60419",
+   "seconds": 4.11,
+   "peak_db": -3.3,
+   "rms_db": -21.7
   },
   {
    "speaker": "overseer",
@@ -3968,17 +3979,6 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "8090f602",
-   "text": "Life support is a suggestion until it is not. The tank is at four. People first, Anvil second.",
-   "clip": "overseer_line_8090f602",
-   "hash": "e8796c9e7dda",
-   "seconds": 6.17,
-   "peak_db": -2.2,
-   "rms_db": -21.5
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
    "key": "80b5f553",
    "text": "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.",
    "clip": "overseer_line_80b5f553",
@@ -3990,13 +3990,13 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "815b811e",
-   "text": "Tax collector killed on the road",
-   "clip": "overseer_line_815b811e",
-   "hash": "754ded927d20",
-   "seconds": 1.72,
-   "peak_db": -3.0,
-   "rms_db": -20.7
+   "key": "8e1f500b",
+   "text": "Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
+   "clip": "overseer_line_8e1f500b",
+   "hash": "3e31a58a7337",
+   "seconds": 5.38,
+   "peak_db": -2.2,
+   "rms_db": -21.4
   },
   {
    "speaker": "overseer",
@@ -4012,24 +4012,13 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "9158d19f",
-   "text": "See the crate on wheels? That is your tax collector. We are not calling it that. Do not click it.",
-   "clip": "overseer_line_9158d19f",
-   "hash": "93ee668db104",
-   "seconds": 4.98,
-   "peak_db": -5.1,
-   "rms_db": -21.5
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "91bbb142",
-   "text": "Level 6 wreck, Compact scrip insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
-   "clip": "overseer_line_91bbb142",
-   "hash": "e65dbce3a38f",
-   "seconds": 6.29,
-   "peak_db": -3.7,
-   "rms_db": -21.4
+   "key": "a2520e89",
+   "text": "See the crate on wheels? That is Haul walking EU home. Do not click it.",
+   "clip": "overseer_line_a2520e89",
+   "hash": "1a98853c967e",
+   "seconds": 4.05,
+   "peak_db": -1.5,
+   "rms_db": -21.2
   },
   {
    "speaker": "overseer",
@@ -4045,17 +4034,6 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "b2cd8f49",
-   "text": "Credits were napping on the HAB. A mite just made a withdrawal.",
-   "clip": "overseer_line_b2cd8f49",
-   "hash": "45889aec7d4a",
-   "seconds": 3.32,
-   "peak_db": -4.0,
-   "rms_db": -21.2
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
    "key": "b9f28637",
    "text": "Nobody is standing. You have twenty seconds of optimism left.",
    "clip": "overseer_line_b9f28637",
@@ -4067,17 +4045,6 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "c50b7429",
-   "text": "Haul walked the purse home. That is your tax collector. We are not calling it that.",
-   "clip": "overseer_line_c50b7429",
-   "hash": "dd917e25f3eb",
-   "seconds": 4.36,
-   "peak_db": -4.0,
-   "rms_db": -21.6
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
    "key": "c573fa67",
    "text": "Flag still unpaid. The Compact does not work for exposure.",
    "clip": "overseer_line_c573fa67",
@@ -4085,6 +4052,39 @@
    "seconds": 3.6,
    "peak_db": -4.1,
    "rms_db": -21.8
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "d4b4e4ba",
+   "text": "That red chip is water, not a coupon. EU will not drink itself. Build a farm or stop collecting idle bots.",
+   "clip": "overseer_line_d4b4e4ba",
+   "hash": "18b9722f2282",
+   "seconds": 7.14,
+   "peak_db": -3.8,
+   "rms_db": -21.4
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "d53ee54d",
+   "text": "Level 6 wreck, Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
+   "clip": "overseer_line_d53ee54d",
+   "hash": "0e19bd589d94",
+   "seconds": 6.43,
+   "peak_db": -2.7,
+   "rms_db": -21.4
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "dfcd23b3",
+   "text": "Worker bots run the yard. Contract units take bounties. Same mind, different jobs.",
+   "clip": "overseer_line_dfcd23b3",
+   "hash": "bc66a4014bbd",
+   "seconds": 5.43,
+   "peak_db": -3.7,
+   "rms_db": -21.5
   },
   {
    "speaker": "overseer",

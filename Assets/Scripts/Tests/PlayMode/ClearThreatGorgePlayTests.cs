@@ -46,7 +46,7 @@ namespace SolarMajesty.Tests
             var pays = new System.Collections.Generic.List<int>();
             void OnLog(string condition, string stack, LogType type)
             {
-                if (condition != null && condition.Contains("flag_ClearThreat"))
+                if (condition != null && condition.StartsWith("[Credits]") && condition.Contains("Clear Threat"))
                 {
                     pays.Add(ParseGross(condition));
                     log.AppendLine(condition);
@@ -206,19 +206,17 @@ namespace SolarMajesty.Tests
 
         private static int ParseGross(string line)
         {
-            int plus = line.IndexOf('+');
-            int eu = line.IndexOf(" EU");
-            int semi = line.IndexOf(" to guild");
-            int paren = line.LastIndexOf('(', semi);
-            if (plus < 0 || eu < 0 || semi < 0 || paren < 0) return 0;
-            int.TryParse(line.Substring(plus + 1, eu - plus - 1).Trim(), out int kept);
-            int taxStart = paren + 1;
-            int taxLen = semi - taxStart;
-            string taxText = line.Substring(taxStart, taxLen);
-            int cut = taxText.LastIndexOf(';');
-            if (cut >= 0) taxText = taxText.Substring(cut + 1);
-            int.TryParse(taxText.Trim(), out int tax);
-            return kept + tax;
+            const string mark = "Bounty ";
+            int at = line.IndexOf(mark);
+            if (at < 0) return 0;
+            int start = at + mark.Length;
+            int eu = line.IndexOf(" EU", start);
+            if (eu < 0) return 0;
+            string text = line.Substring(start, eu - start);
+            text = text.Replace(",", "").Replace(".", "").Replace(" ", "")
+                .Replace("\u00A0", "").Replace("\u202F", "");
+            int.TryParse(text, out int gross);
+            return gross;
         }
 
         private static string HeroLine()

@@ -47,7 +47,7 @@ namespace SolarMajesty
                 case GrokBeat.Drop:
                     return "Welcome to a rock that already has a landlord. Raise a Commons before the Freeholds invoice the crater.";
                 case GrokBeat.FirstHab:
-                    return "Worker bots run the yard. Mechs take the contracts. Try not to mix them up — it gets philosophical.";
+                    return "Worker bots run the yard. Contract units take bounties. Same mind, different jobs.";
                 case GrokBeat.FirstFlag:
                     return "That is a decree, not a leash. Post it. If nobody wants it, that is a you problem.";
                 case GrokBeat.GreedAsk:
