@@ -23,9 +23,15 @@ namespace SolarMajesty
         public bool Shaken { get; private set; }
         /// <summary>
         /// Hurt badly enough to run for the inn. Stays set until health clears
-        /// <see cref="SpecialistBrainTuning.fleeResumeHealth"/> (the inn heal climbs there).
+        /// <see cref="SpecialistBrainTuning.fleeResumeHealth"/>, or until the hero
+        /// reaches the inn door and hands off to rest.
         /// </summary>
         public bool FleeLatched { get; private set; }
+        /// <summary>
+        /// Resting at the inn below <see cref="SpecialistBrainTuning.restLeaveHealth"/>.
+        /// Holds until that line so a Defend flag cannot win on the way up.
+        /// </summary>
+        public bool RestLatched { get; private set; }
         public int WorkTasks { get; private set; }
         public int RelaxTasks { get; private set; }
 
@@ -40,6 +46,8 @@ namespace SolarMajesty
         private SpecialistAction _holdAction = SpecialistAction.Idle;
         private string _holdReason = "";
         private BrainDecision _held;
+        private Vector3 _refuge;
+        private float _flagClaimReadyAt;
 
         /// <summary>Forget everything (hero respawned / revived).</summary>
         public void Reset()
@@ -48,6 +56,7 @@ namespace SolarMajesty
             Relaxing = false;
             Shaken = false;
             FleeLatched = false;
+            RestLatched = false;
             WorkTasks = RelaxTasks = 0;
             _phaseSeconds = 0f;
             _lastTaskAt = -999f;
@@ -58,6 +67,8 @@ namespace SolarMajesty
             _holdAction = SpecialistAction.Idle;
             _holdReason = "";
             _held = default;
+            _refuge = default;
+            _flagClaimReadyAt = 0f;
         }
 
         /// <summary>
@@ -85,23 +96,78 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Apply dwell, then latch flee until health is back above the resume line.
-        /// Reaching the inn is what applies that heal (<c>TickFlee</c>); the latch drops once
-        /// health crosses <see cref="SpecialistBrainTuning.fleeResumeHealth"/>, including there.
+        /// Apply dwell, then the rest / flee latches.
+        /// Away from the inn, flee stays latched until health clears
+        /// <see cref="SpecialistBrainTuning.fleeResumeHealth"/>. At the inn door, flee hands
+        /// off to rest immediately — including the 28% HP a hero stands up with — and rest
+        /// holds until <see cref="SpecialistBrainTuning.restLeaveHealth"/>. Leaving rest
+        /// starts <see cref="SpecialistBrainTuning.restFlagCooldownSeconds"/> before another
+        /// flag (Defend included) can be claimed.
         /// </summary>
         public BrainDecision Commit(BrainDecision proposed, SpecialistBrainTuning tuning, float health, float now, bool atInn)
         {
             if (tuning == null) tuning = new SpecialistBrainTuning();
-            float exit = tuning.fleeResumeHealth;
-            bool healed = health >= exit || (atInn && health >= exit);
-            bool force = proposed.Action == SpecialistAction.Flee ||
+            RememberRefuge(proposed);
+
+            float fleeExit = tuning.fleeResumeHealth;
+            float restLeave = tuning.restLeaveHealth;
+            if (restLeave < fleeExit) restLeave = fleeExit;
+
+            // The door is already the refuge. Staying in Flee here heals in place and then
+            // grabs the Defend flag the moment the flee latch drops.
+            bool handoff = atInn && health < restLeave &&
+                           (FleeLatched ||
+                            proposed.Action == SpecialistAction.Flee ||
+                            (_holdValid && _holdAction == SpecialistAction.Flee));
+            if (handoff)
+            {
+                proposed = BrainDecision.Rest(
+                    Mathf.Max(proposed.Score, 0.7f),
+                    "rest_at_inn",
+                    _refuge);
+            }
+
+            bool healed = health >= fleeExit;
+            bool force = handoff ||
+                         proposed.Action == SpecialistAction.Flee ||
                          (_holdValid && _holdAction == SpecialistAction.Flee && healed);
             var decision = HoldDecision(proposed, now, tuning.decisionDwellSeconds, force);
+
+            if (RestLatched && health >= restLeave)
+            {
+                RestLatched = false;
+                _flagClaimReadyAt = now + Mathf.Max(0f, tuning.restFlagCooldownSeconds);
+            }
+
+            if (decision.Action == SpecialistAction.PursueFlag && now < _flagClaimReadyAt)
+            {
+                decision = atInn
+                    ? BrainDecision.Rest(Mathf.Max(decision.Score, 0.55f), "rest_cooldown", _refuge)
+                    : BrainDecision.Wander(_refuge, decision.Score, "rest_cooldown");
+            }
+
+            if (atInn && decision.Action == SpecialistAction.Rest && health < restLeave)
+                RestLatched = true;
+
+            if (RestLatched && health < restLeave)
+            {
+                string reason = decision.Reason == "rest_at_inn" ? "rest_at_inn" : "rest_until_healed";
+                decision = BrainDecision.Rest(Mathf.Max(decision.Score, 0.7f), reason, _refuge);
+            }
+
             if (decision.Action == SpecialistAction.Flee)
                 FleeLatched = true;
-            else if (healed)
+            else if (healed || handoff)
                 FleeLatched = false;
             return decision;
+        }
+
+        private void RememberRefuge(BrainDecision proposed)
+        {
+            if (proposed.Action != SpecialistAction.Rest && proposed.Action != SpecialistAction.Flee)
+                return;
+            if (proposed.TargetPosition.sqrMagnitude <= 0.01f) return;
+            _refuge = proposed.TargetPosition;
         }
 
         /// <summary>Advance safety and the phase clock by simulation seconds.</summary>
