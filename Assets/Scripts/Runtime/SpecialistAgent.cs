@@ -2486,7 +2486,7 @@ namespace SolarMajesty
                 _agent.isStopped = true;
                 _agent.ResetPath();
                 Vector3 warp = new Vector3(next.x, 0.02f, next.z);
-                if (NavMesh.SamplePosition(warp, out NavMeshHit hit, 2.5f, NavMesh.AllAreas) && _agent.Warp(hit.position))
+                if (SampleForAgent(warp, out NavMeshHit hit) && StepAgentTo(hit.position))
                 {
                     Vector3 seated = transform.position;
                     seated.x = hit.position.x;
@@ -2517,6 +2517,32 @@ namespace SolarMajesty
         }
 
         /// <summary>Put the pivot on the terrain. A recovered mech was saved under the surface.</summary>
+        /// <summary>
+        /// Sample only this agent's NavMesh. An AllAreas sample can land on another agent type's mesh,
+        /// and warping there logs "Failed to create agent".
+        /// </summary>
+        private bool SampleForAgent(Vector3 point, out NavMeshHit hit)
+        {
+            var filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = NavMesh.AllAreas };
+            return NavMesh.SamplePosition(point, out hit, 2.5f, filter);
+        }
+        /// <summary>
+        /// Short hops slide the agent along its mesh with Move. Warp re-creates the agent, and near
+        /// carved river cells that logs "Failed to create agent" even on a sampled point.
+        /// </summary>
+        private bool StepAgentTo(Vector3 onMesh)
+        {
+            Vector3 delta = onMesh - _agent.nextPosition;
+            delta.y = 0f;
+            // Move only along a clear straight line on the mesh; a hop across a carved edge still warps.
+            var filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = NavMesh.AllAreas };
+            if (delta.sqrMagnitude < 1f && !NavMesh.Raycast(_agent.nextPosition, onMesh, out _, filter))
+            {
+                _agent.Move(delta);
+                return true;
+            }
+            return _agent.Warp(onMesh);
+        }
         private void SeatOnTerrain()
         {
             if (TerrainDataBake.Current == null) return;
@@ -2525,10 +2551,10 @@ namespace SolarMajesty
             p.y = TerrainDataBake.GroundHeight(p);
             transform.position = p;
             Vector3 probe = new Vector3(p.x, 0.02f, p.z);
-            // Warp only to a sampled point on the mesh: warping off it logs "Failed to create agent".
+            // Seat only onto a sampled point of this agent's mesh, never a raw off-mesh warp.
             if (_agent != null && _agent.enabled && _agent.isOnNavMesh &&
-                NavMesh.SamplePosition(probe, out NavMeshHit hit, 2.5f, NavMesh.AllAreas))
-                _agent.Warp(hit.position);
+                SampleForAgent(probe, out NavMeshHit hit))
+                StepAgentTo(hit.position);
         }
 
         /// <summary>
