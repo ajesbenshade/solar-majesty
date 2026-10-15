@@ -101,7 +101,7 @@ namespace SolarMajesty
               .Append(Word(p.Workaholic, "lazy", "diligent", "workaholic")).Append(". ");
             sb.Append("Right now you are ").Append(Safe(p.Situation, "between jobs")).Append(". ");
             sb.Append("Health ").Append(Pct(p.Health01)).Append(", tired ").Append(Pct(p.Fatigue01))
-              .Append(", purse ").Append(Mathf.Max(0, p.Credits)).Append(" EU. ");
+              .Append(", holds ").Append(Mathf.Max(0, p.Credits)).Append(" EU. ");
             if (p.Recent != null && p.Recent.Count > 0)
             {
                 sb.Append("Lately: ");

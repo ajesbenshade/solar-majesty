@@ -468,7 +468,7 @@ namespace SolarMajesty
                 return starter.HallName;
             switch (cls)
             {
-                case SpecialistClass.HarvesterBot: return "Strip Guild";
+                case SpecialistClass.HarvesterBot: return "Harvest Lodge";
                 case SpecialistClass.SurveyorBot: return "Chart Lodge";
                 case SpecialistClass.TerraformerBot: return "Bloom Compact";
                 case SpecialistClass.CourierBot: return "Haul Lodge";

@@ -2747,7 +2747,7 @@ namespace SolarMajesty
                 SyncNarrativeCivic();
             }
             else if (id == TechId.HarvestDoctrine)
-                LogOverseer("Harvest Doctrine. Strip Guild is licensed. Mines and haul improve.");
+                LogOverseer("Harvest Doctrine. Harvest Lodge is licensed. Mines and haul improve.");
             else if (id == TechId.SurveyDoctrine)
                 LogOverseer("Survey Doctrine. Chart Lodge is licensed. Labs tick faster.");
             else if (id == TechId.AegisDoctrine)
@@ -4383,7 +4383,7 @@ namespace SolarMajesty
             if (any && !_faunaRetreated)
             {
                 _faunaRetreated = true;
-                LogOverseer("Dens quiet — campus pests scatter: " + JoinEnglish(names) + ".");
+                LogOverseer("Dens quiet — yard pests scatter: " + JoinEnglish(names) + ".");
             }
         }
 
@@ -4539,7 +4539,7 @@ namespace SolarMajesty
 
         private static string JoinEnglish(List<string> parts)
         {
-            if (parts == null || parts.Count == 0) return "campus pests";
+            if (parts == null || parts.Count == 0) return "yard pests";
             if (parts.Count == 1) return parts[0];
             if (parts.Count == 2) return parts[0] + " and " + parts[1];
             var sb = new System.Text.StringBuilder();
