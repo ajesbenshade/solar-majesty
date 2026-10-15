@@ -158,7 +158,7 @@ namespace SolarMajesty
             _loop?.RefreshFlagInterest();
             string kind = selected.Data != null ? selected.Data.flagType.ToString() : "Flag";
             Debug.Log(
-                $"[Flags] {kind} bounty ${before:F0} -> ${selected.CurrentBounty:F0} " +
+                $"[Flags] {kind} bounty {before:N0} EU -> {selected.CurrentBounty:N0} EU " +
                 $"escrow {escrowBefore} -> {selected.EscrowMetals} EU");
         }
 
@@ -356,7 +356,7 @@ namespace SolarMajesty
             SpawnMarker(handle, world);
             DemoAudio.PlayFlagPost(world);
             _loop?.NotifyFlagPosted(handle);
-            Debug.Log($"[Flags] Posted {data.flagType} bounty=${handle.CurrentBounty:F0} escrow={escrow} EU at {world}");
+            Debug.Log($"[Flags] Posted {data.flagType} bounty={handle.CurrentBounty:N0} EU escrow={escrow} EU at {world}");
             return handle;
         }
 

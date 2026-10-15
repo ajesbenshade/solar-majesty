@@ -30,7 +30,7 @@ namespace SolarMajesty
         [Range(1, 64)] public int maxCatchUpTicks = 8;
 
         [Header("Hero tax carry (Majesty 2 TaxCashCard)")]
-        [Tooltip("On: heroes carry their guild tax and walk it in. Off: tax lands in the till instantly.")]
+        [Tooltip("On: heroes carry their till share and walk it in. Off: the share lands in the till instantly.")]
         public bool taxCarryEnabled = true;
         [Tooltip("Carried tax that sends a hero to its guild to pay (Majesty 2 SatietyBarrier 250).")]
         [Min(1)] public int taxCarryBarrier = 250;

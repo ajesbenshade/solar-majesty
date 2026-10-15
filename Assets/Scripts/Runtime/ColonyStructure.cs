@@ -433,7 +433,7 @@ namespace SolarMajesty
             {
                 case SpecialistClass.EngineerBot: return "ENG";
                 case SpecialistClass.DefenseMech: return "DEF";
-                case SpecialistClass.Medic: return "MED";
+                case SpecialistClass.Medic: return "REP";
                 case SpecialistClass.HarvesterBot: return "HARV";
                 case SpecialistClass.SurveyorBot: return "SURV";
                 case SpecialistClass.TerraformerBot: return "TERR";
@@ -643,7 +643,7 @@ namespace SolarMajesty
                 case BuildingCategory.ScoutWorkshop: return "Scout Workshop";
                 case BuildingCategory.EngineerWorkshop: return "Engineer Workshop";
                 case BuildingCategory.DefenseWorkshop: return "Defense Workshop";
-                case BuildingCategory.MedicWorkshop: return "Medic Workshop";
+                case BuildingCategory.MedicWorkshop: return "Repair Workshop";
                 case BuildingCategory.HarvesterWorkshop: return "Harvester Workshop";
                 case BuildingCategory.SurveyorWorkshop: return "Surveyor Workshop";
                 case BuildingCategory.TerraformerWorkshop: return "Terraformer Workshop";

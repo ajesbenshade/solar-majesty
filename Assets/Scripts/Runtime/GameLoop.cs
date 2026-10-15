@@ -490,7 +490,7 @@ namespace SolarMajesty
             {
                 _levyHomeLogged = true;
                 LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
-                Alerts.Push("levy_home", $"Tax collector walked {amount} EU home", AlertSeverity.Good, Time.unscaledTime, at);
+                Alerts.Push("levy_home", $"Haul walked {amount:N0} EU home", AlertSeverity.Good, Time.unscaledTime, at);
             }
         }
 
@@ -3035,10 +3035,10 @@ namespace SolarMajesty
                         b.description = "more energy farther out";
                         break;
                     case BuildingCategory.Habitat:
-                        b.description = $"villagers build · {MajestyEconomy.HouseDailyFlat} EU/day";
+                        b.description = $"bots build · {MajestyEconomy.HouseDailyFlat:N0} EU/day";
                         break;
                     case BuildingCategory.Farm:
-                        b.description = $"tax {MajestyEconomy.FarmDailyTax}/day";
+                        b.description = $"{MajestyEconomy.FarmDailyTax:N0} EU/day";
                         break;
                     case BuildingCategory.LandingPad:
                         b.description = "launch craft";
@@ -3048,7 +3048,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Power:
                         b.displayName = "Solar Farm";
-                        b.description = $"villagers build · {MajestyEconomy.SolarFarmDailyTax} EU/day";
+                        b.description = $"bots build · {MajestyEconomy.SolarFarmDailyTax:N0} EU/day";
                         break;
                     case BuildingCategory.ClimateLoom:
                     case BuildingCategory.AegisSpire:
@@ -3068,7 +3068,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Market:
                         b.displayName = "Market Stall";
-                        b.description = $"tax {MajestyEconomy.MarketDailyTax}/day";
+                        b.description = $"{MajestyEconomy.MarketDailyTax:N0} EU/day";
                         break;
                     case BuildingCategory.Blacksmith:
                         b.displayName = "Blacksmith";
@@ -3080,7 +3080,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Watchtower:
                         b.displayName = "Watchtower";
-                        b.description = "+1 tax collector";
+                        b.description = "+1 Haul";
                         break;
                     case BuildingCategory.AidStation:
                         b.displayName = "Aid Station";
@@ -5327,7 +5327,7 @@ namespace SolarMajesty
             b.powerGen = PowerGenFor(cat, name);
             b.description = cat switch
             {
-                BuildingCategory.Inn => "wrecks wait — credits only",
+                BuildingCategory.Inn => "wrecks wait — EU only",
                 BuildingCategory.Defense => "auto-fires 18 m",
                 BuildingCategory.Mining => "does not grow EU",
                 BuildingCategory.ClimateLoom => "unlock from ★ tech — bonus while standing",
@@ -5381,7 +5381,7 @@ namespace SolarMajesty
                 CreateBuilding("Watchtower", BuildingCategory.Watchtower, 36, 2, 10f, 4, 4),
                 CreateBuilding("Aid Station", BuildingCategory.AidStation, 38, 2, 10f, 4, 4),
                 CreateBuilding("Defense Workshop", BuildingCategory.DefenseWorkshop, 38, 5, 12f, 4, 4),
-                CreateBuilding("Medic Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
+                CreateBuilding("Repair Workshop", BuildingCategory.MedicWorkshop, 34, 4, 12f, 4, 4),
                 CreateGuildHall(RobotGuildId.Horizon),
                 CreateGuildHall(RobotGuildId.Anvil),
                 CreateGuildHall(RobotGuildId.Aegis),
@@ -6504,7 +6504,7 @@ namespace SolarMajesty
             SyncLaunchGate();
             SnapCampusCamera();
             HideDropClaimIfSettled();
-            LogOverseer($"Campus restored — {restored} modules on {(_body != null ? _body.DisplayName : celestialBody.ToString())}.");
+            LogOverseer($"Yard restored — {restored} modules on {(_body != null ? _body.DisplayName : celestialBody.ToString())}.");
             Debug.Log($"[GameLoop] Restored {restored} campus pieces.");
         }
 
@@ -6994,7 +6994,7 @@ namespace SolarMajesty
         {
             SpecialistClass.EngineerBot => "Engineer Workshop",
             SpecialistClass.DefenseMech => "Defense Workshop",
-            SpecialistClass.Medic => "Medic Workshop",
+            SpecialistClass.Medic => "Repair Workshop",
             SpecialistClass.HarvesterBot => "Harvester Workshop",
             SpecialistClass.SurveyorBot => "Surveyor Workshop",
             SpecialistClass.TerraformerBot => "Terraformer Workshop",
