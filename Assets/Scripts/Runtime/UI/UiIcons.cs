@@ -434,8 +434,6 @@ namespace SolarMajesty
 
         // ---- HUD colour icons -----------------------------------------------
 
-        private static readonly Color CoinGold = new Color(1f, 0.81f, 0.38f);
-        private static readonly Color CoinDeep = new Color(0.70f, 0.47f, 0.15f);
 
         private static readonly Color CellInk = new Color(0.05f, 0.06f, 0.08f);
         private static readonly Color CellCarbon = new Color(0.10f, 0.11f, 0.13f);
