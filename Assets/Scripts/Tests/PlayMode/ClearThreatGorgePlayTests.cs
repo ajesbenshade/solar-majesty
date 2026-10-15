@@ -114,10 +114,14 @@ namespace SolarMajesty.Tests
                 Assert.AreEqual(1, pays.FindAll(v => v == 20800).Count, "the stacked 20,800 pays once. " + log);
 
                 var heroes = Object.FindObjectsByType<SpecialistAgent>(FindObjectsSortMode.None);
+                // A mech that stood up inside the scrap window can roll a scrap on this down, so skip it.
+                var stoodUpAt = typeof(SpecialistAgent).GetField("_stoodUpAt",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 SpecialistAgent flee = null;
                 for (int i = 0; i < heroes.Length; i++)
                 {
-                    if (heroes[i] != null && heroes[i].IsAlive && !heroes[i].IsScrapped)
+                    if (heroes[i] != null && heroes[i].IsAlive && !heroes[i].IsUntargetable
+                        && (float)stoodUpAt.GetValue(heroes[i]) <= Time.time - OverseerRules.ScrapWindow)
                     {
                         flee = heroes[i];
                         break;
@@ -126,6 +130,7 @@ namespace SolarMajesty.Tests
                 Assert.IsNotNull(flee, "a living hero has to be able to flee home");
                 float hp = flee.HealthNormalized;
                 flee.ApplyDamage(5f, false);
+                Assert.IsFalse(flee.IsScrapped, "the scripted down has to test recovery, not scrapping");
                 Assert.IsTrue(flee.IsIncapacitated, "the scripted hit has to drop the hero");
 
                 float recoverGame = 0f;
@@ -134,6 +139,7 @@ namespace SolarMajesty.Tests
                 while (recoverGame < 240f && Time.realtimeSinceStartup - recoverStart < 120f)
                 {
                     PushFast();
+                    Assert.IsTrue(flee != null && !flee.IsScrapped, "the recovering hero was destroyed or scrapped");
                     float door = Flat(flee.transform.position, ColonyLayout.InnOutpost);
                     if (!flee.IsIncapacitated && door < KingdomLife.RefugeArrive && flee.HealthNormalized > hp * 0.5f)
                     {
