@@ -3450,7 +3450,17 @@ namespace SolarMajesty
                 _rebindNote = "Controls reset to defaults.";
                 _rebindNoteAlarm = false;
             }
-            return y + 34f;
+            y += 34f;
+
+            // Controller: the stick drives the cursor, so the one setting worth exposing is its speed.
+            GUI.Label(new Rect(c.x, y, c.width, 14f),
+                GamepadInput.ControllerActive ? "CONTROLLER  ·  IN USE" : "CONTROLLER", _section);
+            y += 18f;
+            int speed = GamepadInput.CursorSpeed;
+            if (Chip(new Rect(c.x, y, c.width, 26f), $"CURSOR SPEED  ·  {GamepadMap.SpeedNames[speed]}", false))
+                GamepadInput.CursorSpeed = (speed + 1) % GamepadMap.SpeedPresets.Length;
+            y += 32f;
+            return WrapBlock(c, y, GamepadMap.Summary) + 4f;
         }
 
         /// <summary>

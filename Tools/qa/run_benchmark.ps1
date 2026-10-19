@@ -24,7 +24,9 @@ param(
   # 0 Very Low .. 5 Ultra; omit to use the game's own pick for this PC.
   [int]$Quality = -1,
   # Save a same-framing screenshot of each world to Logs\shot-<world>-<quality>.png.
-  [switch]$Shots
+  [switch]$Shots,
+  # Passed through to the game, e.g. "-handheld" to preview the Steam Deck layout.
+  [string]$ExtraArgs = ''
 )
 $ErrorActionPreference = 'Stop'
 $exe = Join-Path (Resolve-Path $GameDir).Path 'SolarMajesty.exe'
@@ -42,6 +44,7 @@ $gameArgs = "-benchmark -benchmarkBodies $Bodies -benchmarkSeconds $Seconds -ben
   "-logFile `"$(Join-Path $tmp 'Player.log')`""
 if ($Quality -ge 0) { $gameArgs += " -benchmarkQuality $Quality" }
 if ($Shots) { $gameArgs += " -benchmarkShots" }
+if ($ExtraArgs) { $gameArgs += " $ExtraArgs" }
 
 Write-Host "[bench] $Bodies, ${Seconds}s each, ${Width}x$Height" -ForegroundColor Yellow
 $p = Start-Process $exe -ArgumentList $gameArgs -PassThru

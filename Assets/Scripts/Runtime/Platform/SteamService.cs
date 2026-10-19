@@ -28,6 +28,9 @@ namespace SolarMajesty
         /// <summary>Why Steam is not running, for the log and the settings screen.</summary>
         public static string Status { get; private set; } = "Not started";
 
+        /// <summary>Running on a Steam Deck (controller first, 1280x800).</summary>
+        public static bool OnSteamDeck { get; private set; }
+
         /// <summary>Raised when the Steam overlay opens (true) or closes (false).</summary>
         public static event Action<bool> OverlayToggled;
 
@@ -48,6 +51,7 @@ namespace SolarMajesty
             Ready = false;
             Status = "Not started";
             OverlayToggled = null;
+            OnSteamDeck = false;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -70,8 +74,16 @@ namespace SolarMajesty
             TryStart();
         }
 
+        /// <summary>Bigger default HUD for a small screen held close; the player's slider still wins.</summary>
+        private static void UseHandheldLayout()
+        {
+            HudScaleMath.Handheld = true;
+            DemoSettings.RefreshHudScale(Screen.width, Screen.height);
+        }
+
         private void TryStart()
         {
+            if (SteamConfig.HandheldByArgs(Environment.GetCommandLineArgs())) UseHandheldLayout();
 #if DISABLESTEAMWORKS
             Status = "Steam is not supported on this platform";
 #else
@@ -128,7 +140,10 @@ namespace SolarMajesty
             }
 
             Ready = true;
+            OnSteamDeck = SteamUtils.IsSteamRunningOnSteamDeck();
+            if (OnSteamDeck) UseHandheldLayout();
             Status = SteamConfig.IsTestApp ? "Connected (test app 480)" : "Connected";
+            if (OnSteamDeck) Status += " on Steam Deck";
             Debug.Log($"[Steam] {Status} as {SteamFriends.GetPersonaName()} — app {SteamUtils.GetAppID()}");
 
             _overlay = Callback<GameOverlayActivated_t>.Create(OnOverlay);
@@ -249,6 +264,23 @@ namespace SolarMajesty
         {
             if (_loop == null) _loop = FindAnyObjectByType<GameLoop>();
             return _loop;
+        }
+
+        /// <summary>
+        /// Steam's on-screen keyboard for a text field (hero chat, flag orders) when there is no
+        /// physical keyboard: on the Deck or in Big Picture. It types into the focused field. The
+        /// fields sit low on screen, so the keyboard is told to keep the bottom strip clear.
+        /// </summary>
+        public static void ShowFloatingKeyboard()
+        {
+#if !DISABLESTEAMWORKS
+            if (!Ready) return;
+            if (!OnSteamDeck && !SteamUtils.IsSteamInBigPictureMode()) return;
+            int h = Screen.height / 4;
+            SteamUtils.ShowFloatingGamepadTextInput(
+                EFloatingGamepadTextInputMode.k_EFloatingGamepadTextInputModeModeSingleLine,
+                0, Screen.height - h, Screen.width, h);
+#endif
         }
 
         /// <summary>Open a Steam store or web page in the overlay, or the system browser without Steam.</summary>

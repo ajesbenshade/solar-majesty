@@ -24,11 +24,21 @@ namespace SolarMajesty
             return Mathf.Clamp(snapped, Min, Max);
         }
 
-        /// <summary>1080p → 100%, 1440p → 135%, 2160p → 200%, 720p → 75%.</summary>
-        public static float AutoForHeight(int screenHeight)
+        /// <summary>
+        /// A small screen held close (Steam Deck, other PC handhelds). Auto scale then never goes
+        /// below 100 %: at 1280x800 the plain height rule gave 75 %, which shrank the 9 px HUD text
+        /// to about 7 px on a 7" screen. Set by the runtime on the Deck or with <c>-handheld</c>.
+        /// </summary>
+        public static bool Handheld;
+
+        /// <summary>1080p → 100%, 1440p → 135%, 2160p → 200%, 720p → 75% (100% on a handheld).</summary>
+        public static float AutoForHeight(int screenHeight) => AutoForHeight(screenHeight, Handheld);
+
+        public static float AutoForHeight(int screenHeight, bool handheld)
         {
             if (screenHeight <= 0) return 1f;
             float raw = Mathf.Clamp(screenHeight / ReferenceHeight, Min, Max);
+            if (handheld) raw = Mathf.Max(raw, 1f);
             return RoundToStep(raw);
         }
 

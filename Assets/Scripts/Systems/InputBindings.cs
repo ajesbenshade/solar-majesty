@@ -136,18 +136,27 @@ namespace SolarMajesty
         /// </summary>
         public static bool TextEntryActive;
 
+        /// <summary>Controller hooks, set by <c>GamepadInput</c> (Runtime) so every hotkey also has a button.</summary>
+        public static Func<GameAction, bool> PadDown;
+        public static Func<GameAction, bool> PadHeld;
+
+        /// <summary>True while the controller is the active device, so hints name buttons instead of keys.</summary>
+        public static Func<bool> PadHints;
+
         public static bool Down(GameAction action)
         {
             if (TextEntryActive) return false;
             KeyCode key = Key(action);
-            return key != KeyCode.None && Input.GetKeyDown(key);
+            if (key != KeyCode.None && Input.GetKeyDown(key)) return true;
+            return PadDown != null && PadDown(action);
         }
 
         public static bool Held(GameAction action)
         {
             if (TextEntryActive) return false;
             KeyCode key = Key(action);
-            return key != KeyCode.None && Input.GetKey(key);
+            if (key != KeyCode.None && Input.GetKey(key)) return true;
+            return PadHeld != null && PadHeld(action);
         }
 
         /// <summary>The action already using this key, or null.</summary>
@@ -217,6 +226,11 @@ namespace SolarMajesty
         /// <summary>Readable key name for the controls screen and hint text.</summary>
         public static string Label(GameAction action)
         {
+            if (PadHints != null && PadHints())
+            {
+                PadButton pad = GamepadMap.ButtonFor(action);
+                if (pad != PadButton.None) return GamepadMap.Label(pad);
+            }
             Load();
             if (LabelCache.TryGetValue(action, out string cached)) return cached;
             string label = KeyLabel(Key(action));

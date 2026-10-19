@@ -44,6 +44,8 @@ namespace SolarMajesty
             if (lowerName.Contains("vega") && !lowerName.Contains("rx")) return true;
             if (lowerName.Contains("radeon") && lowerName.Contains("780m")) return true;
             if (lowerName.Contains("radeon") && lowerName.Contains("680m")) return true;
+            if (lowerName.Contains("custom gpu 0405") || lowerName.Contains("custom gpu 0932")) return true; // Steam Deck LCD / OLED
+            if (lowerName.Contains("van gogh")) return true;
             return false;
         }
     }

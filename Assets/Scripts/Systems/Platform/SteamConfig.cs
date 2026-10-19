@@ -55,6 +55,18 @@ namespace SolarMajesty
             return sb.ToString();
         }
 
+        /// <summary><c>-handheld</c>: the Deck layout on other PC handhelds, or to preview it on a desktop.</summary>
+        public static bool HandheldByArgs(string[] args)
+        {
+            if (args == null) return false;
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (string.Equals(args[i], "-handheld", System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
         /// <summary>True when the command line asks for no Steam.</summary>
         public static bool SteamDisabledByArgs(string[] args)
         {

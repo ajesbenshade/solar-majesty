@@ -89,7 +89,9 @@ is in it being honest, not in it being all ticked.
 - [x] Frame cap selector
 - [x] Rebindable keys with conflict rejection ([InputBindings.cs](../Assets/Scripts/Systems/InputBindings.cs))
 - [x] Runtime input routed through `InputBindings` (33 actions; hints and tutorial copy follow rebinds via `{key:Action}` tokens). Fixed by design: Esc, number keys 0–9, modifiers, mouse, dialog Enter/Space
-- [ ] Gamepad support
+- [x] Gamepad support: virtual cursor with real OS clicks (works with the IMGUI HUD), button actions through `InputBindings`, stick pan, trigger zoom, controller-mode hints; PlayMode-tested with a virtual pad
+- [x] Steam Deck: detection, controller-first start, 100 % HUD at 1280×800 (`-handheld` to preview), Medium tier, Steam floating keyboard for text fields
+- [ ] Play an hour on a real controller and a real Steam Deck before claiming more than Partial Controller Support
 - [ ] Independent UI text scaling
 
 ## Localization

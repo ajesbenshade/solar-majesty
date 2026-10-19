@@ -60,7 +60,16 @@ Publish the stats/achievements config. Achievements set while the config is unpu
 
 **Rich Presence:** Community → Rich Presence → upload `Tools/steam/rich_presence_english.vdf`.
 
-**Steam Input:** not supported yet. Set "Keyboard/mouse only" and do not claim controller support.
+**Steam Input:** the game reads XInput pads itself (left stick moves the cursor, A/B click, right stick
+pans, triggers zoom; layout in Settings → Controller). Under Steam Input → set the default configuration to
+the **Gamepad** template and leave "Steam Input" opt-in off, so Steam passes the pad through as an Xbox
+controller. Claim **Partial Controller Support** until someone has played a full hour on a pad and a Deck.
+
+**Steam Deck:** detected through Steamworks. It starts in controller mode, keeps the HUD at 100 % at
+1280×800 (every font at least 9 px), picks the Medium tier, and opens Steam's floating keyboard for hero
+chat and flag orders. Preview the layout on a desktop with `-handheld` ([1280×800 capture](ReviewEvidence/steam-deck-1280x800-handheld.png)).
+Before submitting for Deck review, play the first hour on a real Deck: cursor speed, text size and the
+on-screen keyboard are the parts automated tests cannot judge.
 
 ## 4. Build and upload
 

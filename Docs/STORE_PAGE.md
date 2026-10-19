@@ -54,7 +54,7 @@ online. It is off by default and the game is complete without it.
 > Fill in (a realistic estimate, for example "about 9–12 months").
 
 **How is the full version planned to differ from the Early Access version?**
-> Fill in from the roadmap. Candidates already tracked in the repository: controller support,
+> Fill in from the roadmap. Candidates already tracked in the repository: full controller support,
 > localisation, deeper per-world objectives, more fauna and robot animation, UI polish
 > (migrating the remaining HUD), and balance from player feedback.
 
@@ -62,7 +62,7 @@ online. It is off by default and the game is complete without it.
 > Five playable worlds from Earth to Europa, a guided start on Earth, ten robot classes, research,
 > guilds, doctrines, challenges, Endless and Ironman modes, full save and load with Steam Cloud,
 > twelve Steam achievements, and optional on-device AI voices and chat. English only. Keyboard and
-> mouse only.
+> mouse, with partial controller support (Steam Deck included).
 
 **Will the game be priced differently during and after Early Access?**
 > Fill in.
