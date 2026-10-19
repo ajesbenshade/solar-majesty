@@ -28,6 +28,13 @@ namespace SolarMajesty
         /// <summary>Hidden until earned, for the ones that would spoil a surprise.</summary>
         public bool Secret;
         public Func<RunStats, bool> Test;
+
+        /// <summary>
+        /// In-game list and toast text in the current language. Steam shows its own copy, localized
+        /// on the partner site; <see cref="Title"/> and <see cref="Description"/> stay English.
+        /// </summary>
+        public string TitleText => Loc.S(Title);
+        public string DescriptionText => Loc.S(Description);
     }
 
     /// <summary>

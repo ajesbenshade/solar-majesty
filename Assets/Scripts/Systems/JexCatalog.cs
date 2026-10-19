@@ -84,6 +84,30 @@ namespace SolarMajesty
         }
 
         public static string Say(JexBeat beat) => Format(Line(beat));
+
+        // Localization. Line/Say stay English: baked voice clips are keyed by a hash of the exact
+        // English text (VoiceBank.LineKey, Tools/audio/render_voices.py), so the voice lookup must
+        // see English. Tools/loc/extract.py collects the Line() literals; translate for display only.
+
+        /// <summary><see cref="Line"/> in the current language, for display.</summary>
+        public static string LineText(JexBeat beat) => Loc.S(Line(beat));
+
+        /// <summary><see cref="Say"/> in the current language, for display.</summary>
+        public static string SayText(JexBeat beat) => Format(LineText(beat));
+
+        /// <summary>
+        /// Display text for an English overseer line that may carry the "Jex — " prefix from
+        /// <see cref="Format"/>: the prefix is kept and the line itself is translated, so a
+        /// voice-keyed line can travel as English and be translated where it is drawn.
+        /// </summary>
+        public static string DisplayText(string englishLine)
+        {
+            if (string.IsNullOrEmpty(englishLine)) return englishLine;
+            string prefix = Speaker + " — ";
+            if (englishLine.StartsWith(prefix, System.StringComparison.Ordinal))
+                return prefix + Loc.S(englishLine.Substring(prefix.Length));
+            return Loc.S(englishLine);
+        }
     }
 
     /// <summary>

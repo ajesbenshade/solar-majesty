@@ -43,6 +43,9 @@ namespace SolarMajesty
         public OrbitalPowerId id;
         public string displayName;
         public string description;
+        /// <summary>Player-facing text in the current language; the fields stay English (tuning data).</summary>
+        public string DisplayNameText => Loc.S(displayName);
+        public string DescriptionText => Loc.S(description);
         public OrbitalTarget target;
         [Tooltip("1 = Orbital Uplink research, 2 = Orbital Constellation research.")]
         [Range(1, 2)] public int tier;

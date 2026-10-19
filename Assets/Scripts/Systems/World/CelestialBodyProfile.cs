@@ -33,6 +33,16 @@ namespace SolarMajesty
         public string FailLog;
         public string EndlessLog;
 
+        // The fields above stay English: DisplayName and ShortCode also name assets and logs, and the
+        // catalog is built once. Show the player these instead (Tools/loc/extract.py collects the
+        // literals assigned in CelestialBodyCatalog).
+        public string DisplayNameText => Loc.S(DisplayName);
+        public string BriefingText => Loc.S(Briefing);
+        public string ArrivalLogText => Loc.S(ArrivalLog);
+        public string VictoryLogText => Loc.S(VictoryLog);
+        public string FailLogText => Loc.S(FailLog);
+        public string EndlessLogText => Loc.S(EndlessLog);
+
         [Header("Surface")]
         public Color GroundLight;
         public Color GroundDark;

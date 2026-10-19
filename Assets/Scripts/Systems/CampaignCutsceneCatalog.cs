@@ -41,6 +41,38 @@ namespace SolarMajesty
                 return parts.Count == 0 ? (Title ?? "") : string.Join(" ", parts.ToArray());
             }
         }
+
+        /// <summary>Title in the current language. <see cref="Title"/> and <see cref="Body"/> stay English.</summary>
+        public string TitleText => Loc.S(Title);
+
+        /// <summary>Body paragraphs in the current language.</summary>
+        public string[] BodyText
+        {
+            get
+            {
+                if (Body == null || Body.Length == 0) return System.Array.Empty<string>();
+                var lines = new string[Body.Length];
+                for (int i = 0; i < Body.Length; i++)
+                    lines[i] = Loc.S(Body[i]);
+                return lines;
+            }
+        }
+
+        /// <summary><see cref="LogParagraph"/> in the current language (each paragraph translated, then joined).</summary>
+        public string LogParagraphText
+        {
+            get
+            {
+                if (Body == null || Body.Length == 0) return TitleText ?? "";
+                var parts = new List<string>(Body.Length);
+                for (int i = 0; i < Body.Length; i++)
+                {
+                    if (!string.IsNullOrEmpty(Body[i]))
+                        parts.Add(Loc.S(Body[i]).Trim());
+                }
+                return parts.Count == 0 ? (TitleText ?? "") : string.Join(" ", parts.ToArray());
+            }
+        }
     }
 
     /// <summary>Nine W2 text beats. Belt / Europa stay catalog-only.</summary>

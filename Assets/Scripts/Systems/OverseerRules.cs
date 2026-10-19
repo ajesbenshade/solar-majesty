@@ -360,25 +360,25 @@ namespace SolarMajesty
             switch (kind)
             {
                 case FlagRefusalKind.Greed:
-                    return $"{cls} wants {ask} — raise +";
+                    return Loc.F("{0} wants {1} — raise +", cls, ask);
                 case FlagRefusalKind.TooFar:
-                    return $"too far for {cls} — {reachMeters}m";
+                    return Loc.F("too far for {0} — {1}m", cls, reachMeters);
                 case FlagRefusalKind.Hurt:
-                    return $"{cls} is hurt — wait";
+                    return Loc.F("{0} is hurt — wait", cls);
                 case FlagRefusalKind.NotMyJob:
-                    return $"not a {cls} job";
+                    return Loc.F("not a {0} job", cls);
                 case FlagRefusalKind.Tired:
-                    return $"{cls} is tired — wait";
+                    return Loc.F("{0} is tired — wait", cls);
                 case FlagRefusalKind.Hunting:
-                    return $"{cls} is hunting pests";
+                    return Loc.F("{0} is hunting pests", cls);
                 case FlagRefusalKind.Orders:
-                    return $"orders exclude {cls}";
+                    return Loc.F("orders exclude {0}", cls);
                 case FlagRefusalKind.Ignored:
                     if (ask > 0 && bounty + 0.5f >= ask)
-                        return $"{cls} won't take the walk";
-                    return "Ignored — raise bounty (+)";
+                        return Loc.F("{0} won't take the walk", cls);
+                    return Loc.S("Ignored — raise bounty (+)");
                 default:
-                    return "Ignored — raise bounty (+)";
+                    return Loc.S("Ignored — raise bounty (+)");
             }
         }
     }

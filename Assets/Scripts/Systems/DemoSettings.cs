@@ -140,7 +140,7 @@ namespace SolarMajesty
         public static string ResolutionLabel =>
             ResolutionWidth >= 640 && ResolutionHeight >= 480
                 ? $"{ResolutionWidth}×{ResolutionHeight}"
-                : "DISPLAY";
+                : Loc.S("DISPLAY");
 
         public static int ResolutionIndex()
         {
@@ -542,26 +542,26 @@ namespace SolarMajesty
 
         public static string ContinueButtonLabel()
         {
-            if (!SaveExists) return "CONTINUE  ·  no save";
+            if (!SaveExists) return Loc.S("CONTINUE  ·  no save");
             var body = CelestialBodyCatalog.Get(BodySeed.LoadSavedBody());
-            string name = body != null ? body.DisplayName : "last drop";
+            string name = body != null ? body.DisplayNameText : Loc.S("last drop");
             int met = GamePrefs.GetInt(SaveMetKey, 0);
-            return $"CONTINUE  ·  {name}  ·  EU {met}";
+            return Loc.F("CONTINUE  ·  {0}  ·  EU {1}", name, met);
         }
 
         public static string ContinueDetail()
         {
             if (!string.IsNullOrEmpty(SaveLoadNotice)) return SaveLoadNotice;
             if (!SaveExists)
-                return "No continue slot yet. New Game drops Luna (Mars if you already skipped or cleared the hour). Continue restores that body's campus.";
+                return Loc.S("No continue slot yet. New Game drops Luna (Mars if you already skipped or cleared the hour). Continue restores that body's campus.");
             int reg = GamePrefs.GetInt(SaveRegKey, 0);
             int ice = GamePrefs.GetInt(SaveIceKey, 0);
             int met = GamePrefs.GetInt(SaveMetKey, 0);
             int pwr = GamePrefs.GetInt(SavePwrKey, 0);
             int tech = ResearchManager.SavedUnlockCount();
             int modules = CampusSnapshot.SlotCount(LoadCampus(BodySeed.LoadSavedBody()));
-            string campus = modules > 0 ? $"{modules} modules" : "empty campus";
-            return $"REG {reg}  ICE {ice}  EU {met}  PWR {pwr}  ·  {campus}  ·  {tech} techs";
+            string campus = modules > 0 ? Loc.F("{0} modules", modules) : Loc.S("empty campus");
+            return Loc.F("REG {0}  ICE {1}  EU {2}  PWR {3}  ·  {4}  ·  {5} techs", reg, ice, met, pwr, campus, tech);
         }
     }
 }

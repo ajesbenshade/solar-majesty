@@ -34,6 +34,17 @@ namespace SolarMajesty
         public float CooldownSeconds;
 
         public SpecialistClass[] Occupants => new[] { Class };
+
+        // The string fields above stay English: HallName names the hall building and TryMatch
+        // compares it. Show the player these (Tools/loc/extract.py collects the catalog literals).
+        public string HallNameText => Loc.S(HallName);
+        public string ShortNameText => Loc.S(ShortName);
+        public string MottoText => Loc.S(Motto);
+        public string WantsText => Loc.S(Wants);
+        public string IgnoresText => Loc.S(Ignores);
+        public string CatalogLineText => Loc.S(CatalogLine);
+        public string BenefitNameText => Loc.S(BenefitName);
+        public string BenefitBlurbText => Loc.S(BenefitBlurb);
     }
 
     /// <summary>

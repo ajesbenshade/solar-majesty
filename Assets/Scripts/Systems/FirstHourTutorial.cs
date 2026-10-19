@@ -53,10 +53,11 @@ namespace SolarMajesty
 
         public static string Beat(int step, bool highBuildAlready)
         {
-            if (step <= 0) return WorkshopBeat;
-            if (step == 1) return highBuildAlready ? CancelHighBeat : CheapBuildBeat;
-            if (step == 2) return RaisePriceBeat;
-            return PestBeat;
+            // The consts stay English (tests and key-token checks read them); the beat shown is translated.
+            if (step <= 0) return Loc.S(WorkshopBeat);
+            if (step == 1) return highBuildAlready ? Loc.S(CancelHighBeat) : Loc.S(CheapBuildBeat);
+            if (step == 2) return Loc.S(RaisePriceBeat);
+            return Loc.S(PestBeat);
         }
     }
 }

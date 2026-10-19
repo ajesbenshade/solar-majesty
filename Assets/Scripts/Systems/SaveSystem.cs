@@ -568,6 +568,6 @@ namespace SolarMajesty
         public CelestialBodyId Body;
         public double PlaySeconds;
 
-        public string Label => Slot == SaveSystem.AutosaveSlot ? "AUTO" : $"SLOT {Slot}";
+        public string Label => Slot == SaveSystem.AutosaveSlot ? Loc.S("AUTO") : Loc.F("SLOT {0}", Slot);
     }
 }

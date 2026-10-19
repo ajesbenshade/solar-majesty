@@ -51,7 +51,7 @@ namespace SolarMajesty
         private bool _gridBound;
 
         /// <summary>Red-ghost line when the footprint runs through something already standing.</summary>
-        public const string BlockedByBuilding = "Blocked by a building.";
+        public static string BlockedByBuilding => Loc.S("Blocked by a building.");
 
 
         /// <summary>The waystation inn is occupied but never part of the tube graph.</summary>
