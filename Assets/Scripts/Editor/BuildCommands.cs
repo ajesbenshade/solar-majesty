@@ -77,6 +77,7 @@ namespace SolarMajesty.EditorTools
                 string folderPath = Path.GetDirectoryName(outputPath);
                 WriteSteamAppId(folderPath);
                 WriteBuildInfo(folderPath, target);
+                CopyNotices(folderPath);
                 if (target == BuildTarget.StandaloneOSX)
                     PlaytestHandoff.WriteMac(folderPath);
                 else if (target == BuildTarget.StandaloneWindows64)
@@ -106,6 +107,23 @@ namespace SolarMajesty.EditorTools
             catch (Exception e)
             {
                 Debug.LogWarning("[Build] Could not write steam_appid.txt: " + e.Message);
+            }
+        }
+
+        /// <summary>MIT and SDK notices for code compiled into the player must ship with it.</summary>
+        private static void CopyNotices(string folder)
+        {
+            const string source = "Tools/release/THIRD-PARTY-NOTICES.txt";
+            try
+            {
+                if (File.Exists(source))
+                    File.Copy(source, Path.Combine(folder, "THIRD-PARTY-NOTICES.txt"), overwrite: true);
+                else
+                    Debug.LogWarning("[Build] " + source + " is missing; the build ships without license notices.");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not copy notices: " + e.Message);
             }
         }
 

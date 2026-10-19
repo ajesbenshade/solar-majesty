@@ -117,6 +117,16 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void ProfileDirArgument_Parses()
+        {
+            Assert.That(GamePrefs.ParseProfileDirArgument(new[] { "Game.exe", "-profileDir", @"C:\tmp\p" }), Is.EqualTo(@"C:\tmp\p"));
+            Assert.That(GamePrefs.ParseProfileDirArgument(new[] { "Game.exe", "-profileDir=D:/x" }), Is.EqualTo("D:/x"));
+            Assert.That(GamePrefs.ParseProfileDirArgument(new[] { "Game.exe", "-profileDir", "-nosteam" }), Is.Null);
+            Assert.That(GamePrefs.ParseProfileDirArgument(new[] { "Game.exe" }), Is.Null);
+            Assert.That(GamePrefs.ParseProfileDirArgument(null), Is.Null);
+        }
+
+        [Test]
         public void Save_WhenClean_DoesNotCreateAFile()
         {
             GamePrefs.Save();

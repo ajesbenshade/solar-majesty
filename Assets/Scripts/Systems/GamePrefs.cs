@@ -84,10 +84,68 @@ namespace SolarMajesty
             }
         }
 
-        public static string Directory =>
-            !string.IsNullOrEmpty(_directoryOverride)
-                ? _directoryOverride
-                : Path.Combine(Application.persistentDataPath, Application.isEditor ? EditorFolderName : FolderName);
+        public static string Directory
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_directoryOverride)) return _directoryOverride;
+                if (!_argChecked)
+                {
+                    _argChecked = true;
+                    _argDirectory = ParseProfileDirArgument(Environment.GetCommandLineArgs());
+                }
+                if (!string.IsNullOrEmpty(_argDirectory)) return _argDirectory;
+                return Path.Combine(Application.persistentDataPath, Application.isEditor ? EditorFolderName : FolderName);
+            }
+        }
+
+        private static bool _argChecked;
+        private static string _argDirectory;
+
+        /// <summary>
+        /// <c>-profileDir &lt;path&gt;</c> or <c>-profileDir=&lt;path&gt;</c>: keep prefs somewhere else, like
+        /// <c>-saveDir</c> does for saves. Benchmarks and QA runs use both so they never touch a real profile.
+        /// </summary>
+        public static string ParseProfileDirArgument(string[] args)
+        {
+            if (args == null) return null;
+            const string name = "-profileDir";
+            for (int i = 0; i < args.Length; i++)
+            {
+                string a = args[i];
+                if (string.IsNullOrEmpty(a)) continue;
+                if (a.StartsWith(name + "=", StringComparison.OrdinalIgnoreCase))
+                {
+                    string v = a.Substring(name.Length + 1).Trim();
+                    if (v.Length > 0) return v;
+                }
+                else if (string.Equals(a, name, StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length &&
+                         !string.IsNullOrWhiteSpace(args[i + 1]) && !args[i + 1].StartsWith("-", StringComparison.Ordinal))
+                {
+                    return args[i + 1].Trim();
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Whether the old registry PlayerPrefs are read (migration) and cleared (deletes). Off for a
+        /// <c>-profileDir</c> run, so a benchmark's New Game can never wipe or import a real player's values.
+        /// </summary>
+        private static bool LegacyEnabled
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_directoryOverride)) return true; // tests point here and exercise migration
+                _ = Directory; // resolves the -profileDir argument once
+                return string.IsNullOrEmpty(_argDirectory);
+            }
+        }
+
+        private static bool HasLegacy(string key) => LegacyEnabled && PlayerPrefs.HasKey(key);
+
+        /// <summary>True when prefs are going somewhere other than the player's real profile.</summary>
+        public static bool IsIsolated => !string.IsNullOrEmpty(_directoryOverride) || !string.IsNullOrEmpty(ParseProfileDirArgument(Environment.GetCommandLineArgs()));
 
         public static string FilePath => Path.Combine(Directory, FileName);
 
@@ -103,7 +161,7 @@ namespace SolarMajesty
             if (IsMachineKey(key)) return PlayerPrefs.GetInt(key, defaultValue);
             if (TryGet(key, out Entry e))
                 return e.Kind == Kind.Int ? e.I : defaultValue;
-            if (!PlayerPrefs.HasKey(key)) return defaultValue;
+            if (!HasLegacy(key)) return defaultValue;
             int legacy = PlayerPrefs.GetInt(key, defaultValue);
             Put(key, new Entry { Kind = Kind.Int, I = legacy });
             return legacy;
@@ -114,7 +172,7 @@ namespace SolarMajesty
             if (IsMachineKey(key)) return PlayerPrefs.GetFloat(key, defaultValue);
             if (TryGet(key, out Entry e))
                 return e.Kind == Kind.Float ? e.F : defaultValue;
-            if (!PlayerPrefs.HasKey(key)) return defaultValue;
+            if (!HasLegacy(key)) return defaultValue;
             float legacy = PlayerPrefs.GetFloat(key, defaultValue);
             Put(key, new Entry { Kind = Kind.Float, F = legacy });
             return legacy;
@@ -125,7 +183,7 @@ namespace SolarMajesty
             if (IsMachineKey(key)) return PlayerPrefs.GetString(key, defaultValue);
             if (TryGet(key, out Entry e))
                 return e.Kind == Kind.String ? e.S : defaultValue;
-            if (!PlayerPrefs.HasKey(key)) return defaultValue;
+            if (!HasLegacy(key)) return defaultValue;
             string legacy = PlayerPrefs.GetString(key, defaultValue);
             Put(key, new Entry { Kind = Kind.String, S = legacy });
             return legacy;
@@ -153,7 +211,7 @@ namespace SolarMajesty
         {
             if (string.IsNullOrEmpty(key)) return false;
             if (IsMachineKey(key)) return PlayerPrefs.HasKey(key);
-            return TryGet(key, out _) || PlayerPrefs.HasKey(key);
+            return TryGet(key, out _) || HasLegacy(key);
         }
 
         public static void DeleteKey(string key)
@@ -162,7 +220,7 @@ namespace SolarMajesty
             Load();
             if (Store.Remove(key)) _dirty = true;
             // Also clear the legacy copy, or the next read would migrate it straight back.
-            PlayerPrefs.DeleteKey(key);
+            if (LegacyEnabled) PlayerPrefs.DeleteKey(key);
         }
 
         public static void DeleteAll()
@@ -170,7 +228,7 @@ namespace SolarMajesty
             Load();
             Store.Clear();
             _dirty = true;
-            PlayerPrefs.DeleteAll();
+            if (LegacyEnabled) PlayerPrefs.DeleteAll();
         }
 
         /// <summary>Write pending changes. Safe to call often; does nothing when clean.</summary>
@@ -298,6 +356,8 @@ namespace SolarMajesty
         {
             // Domain reload may be off in the editor; never carry a stale copy into play mode.
             _directoryOverride = null;
+            _argChecked = false;
+            _argDirectory = null;
             Reload();
         }
 

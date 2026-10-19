@@ -1861,6 +1861,26 @@ namespace SolarMajesty
                 DemoSettings.MarkTutorialDone();
         }
 
+        /// <summary>
+        /// Alt+F4, the window's close button and Steam's Stop skip the QUIT button's save.
+        /// Autosave runs every 20 s; this closes that gap.
+        /// </summary>
+        private void OnApplicationQuit()
+        {
+            bool inColony = Screen == DemoScreen.Playing || Screen == DemoScreen.Paused ||
+                            (Screen == DemoScreen.Settings && _settingsReturn == DemoScreen.Paused);
+            if (!inColony) return;
+            try
+            {
+                PersistSession();
+                GamePrefs.Save();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[GameLoop] Save on quit failed: " + e.Message);
+            }
+        }
+
         private void TickAutosave()
         {
             _autosaveTimer += Time.unscaledDeltaTime;
