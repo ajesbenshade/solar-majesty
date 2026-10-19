@@ -383,12 +383,12 @@
    "speaker": "hero.CourierBot",
    "cue": "select",
    "take": 1,
-   "text": "Package, pad, or purse?",
+   "text": "Package, pad, or till?",
    "clip": "hero_courierbot_select_1",
-   "hash": "19e0bdf1f2ce",
-   "seconds": 1.46,
-   "peak_db": -4.7,
-   "rms_db": -20.5
+   "hash": "7525a30d512c",
+   "seconds": 1.44,
+   "peak_db": -4.4,
+   "rms_db": -20.6
   },
   {
    "speaker": "hero.CourierBot",

@@ -100,7 +100,7 @@
   },
 
   "hero.CourierBot": {
-    "select":  ["Haul here! Deliveries?", "Package, pad, or purse?", "Wheels ready!"],
+    "select":  ["Haul here! Deliveries?", "Package, pad, or till?", "Wheels ready!"],
     "claim":   ["Hauling the flag. Keep the path clear.", "Special delivery! On my way.", "Signed, sealed, rolling."],
     "refused": ["Not on my route. Okay!", "Another courier's problem.", "Denied delivery. Noted."],
     "hunt":    ["I deliver packages, not punches.", "Is that thing a customer?", "Detouring. Carefully."],
