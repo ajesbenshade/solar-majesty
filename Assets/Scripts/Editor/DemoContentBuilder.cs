@@ -234,7 +234,7 @@ namespace SolarMajesty.EditorTools
             switch (cat)
             {
                 case BuildingCategory.Defense: return "auto-fires 18 m";
-                case BuildingCategory.Mining: return "does not grow MET";
+                case BuildingCategory.Mining: return "does not grow EU";
                 case BuildingCategory.ClimateLoom:
                 case BuildingCategory.AegisSpire:
                 case BuildingCategory.DeepArchive:

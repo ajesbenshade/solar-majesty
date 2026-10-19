@@ -2868,22 +2868,50 @@ namespace SolarMajesty
             const string word = "SOLAR MAJESTY";
             float wx = M + 14f;
             float wy = M + 10f;
-            HudSkin.Band(new Rect(wx - 120f, wy - 20f, 820f, 130f), 0.35f);
-            HudSkin.ShadowLabel(new Rect(wx, wy, 700f, 52f), word, _titleWord, 0.55f);
-            float ww = _titleWord.CalcSize(new GUIContent(word)).x;
-            HudSkin.Pill(new Rect(wx + 1f, wy + 56f, 28f, 3f), Accent);
-            HudSkin.RuleH(new Rect(wx + 34f, wy + 57f, Mathf.Max(80f, ww - 34f), 1f), new Color(Gold.r, Gold.g, Gold.b, 0.9f));
-            HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 66f, 620f, 18f),
-                DemoSettings.FirstHourDemo
-                    ? "Click Earth to land. You are the Overseer — heroes choose their own work."
-                    : "Click a world to land. You are the Overseer — heroes choose their own work.",
-                _tagline, 0.7f);
             var prevCaps = _caps.normal.textColor;
-            _caps.normal.textColor = Gold;
-            HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 86f, 400f, 14f), ReplayRules.HudTag, _caps, 0.7f);
-            _caps.normal.textColor = prevCaps;
+            var wordColor = GUI.color;
+            var wordMatrix = GUI.matrix;
+            var wordEnabled = GUI.enabled;
+            try
+            {
+                HudSkin.Band(new Rect(wx - 120f, wy - 20f, 820f, 130f), 0.35f);
+                HudSkin.ShadowLabel(new Rect(wx, wy, 700f, 52f), word, _titleWord, 0.55f);
+                float ww = _titleWord.CalcSize(new GUIContent(word)).x;
+                HudSkin.Pill(new Rect(wx + 1f, wy + 56f, 28f, 3f), Accent);
+                HudSkin.RuleH(new Rect(wx + 34f, wy + 57f, Mathf.Max(80f, ww - 34f), 1f), new Color(Gold.r, Gold.g, Gold.b, 0.9f));
+                HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 66f, 620f, 18f),
+                    DemoSettings.FirstHourDemo
+                        ? "Click Earth to land. You are the Overseer — heroes choose their own work."
+                        : "Click a world to land. You are the Overseer — heroes choose their own work.",
+                    _tagline, 0.7f);
+                _caps.normal.textColor = Gold;
+                HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 86f, 400f, 14f), ReplayRules.HudTag, _caps, 0.7f);
+            }
+            catch (ExitGUIException) { throw; }
+            catch (System.Exception e) { HudSafety.LogOnce("TitleWordmark:" + e.Message, e); }
+            finally
+            {
+                _caps.normal.textColor = prevCaps;
+                GUI.color = wordColor;
+                GUI.matrix = wordMatrix;
+                GUI.enabled = wordEnabled;
+            }
 
-            DrawTitlePlanetLabels();
+            var savedColor = GUI.color;
+            var savedMatrix = GUI.matrix;
+            var savedEnabled = GUI.enabled;
+            try
+            {
+                DrawTitlePlanetLabels();
+            }
+            catch (ExitGUIException) { throw; }
+            catch (System.Exception e) { HudSafety.LogOnce("TitlePlanetLabels:" + e.Message, e); }
+            finally
+            {
+                GUI.color = savedColor;
+                GUI.matrix = savedMatrix;
+                GUI.enabled = savedEnabled;
+            }
 
             if (_confirmNewGame || _titleLoad)
             {
@@ -2929,18 +2957,32 @@ namespace SolarMajesty
             _hitRects.Add(r);
             bool hot = r.Contains(Event.current.mousePosition);
             NoteHover(r, hot);
-            if (primary)
+            var savedColor = GUI.color;
+            var savedMatrix = GUI.matrix;
+            var savedEnabled = GUI.enabled;
+            try
             {
-                HudSkin.Glow(r, new Color(Accent.r, Accent.g, Accent.b, hot ? 0.55f : 0.35f), 0.6f);
-                HudSkin.DrawPlate(r, HudSkin.Plate.Primary, hot);
-                HudSkin.Pill(new Rect(r.x + 7f, r.y + 9f, 3f, r.height - 18f), new Color(Ink.r, Ink.g, Ink.b, 0.55f));
+                if (primary)
+                {
+                    HudSkin.Glow(r, new Color(Accent.r, Accent.g, Accent.b, hot ? 0.55f : 0.35f), 0.6f);
+                    HudSkin.DrawPlate(r, HudSkin.Plate.Primary, hot);
+                    HudSkin.Pill(new Rect(r.x + 7f, r.y + 9f, 3f, r.height - 18f), new Color(Ink.r, Ink.g, Ink.b, 0.55f));
+                }
+                else
+                {
+                    HudSkin.Panel(r, hot ? 0.95f : 0.72f, false);
+                    HudSkin.Pill(new Rect(r.x + 7f, r.y + 9f, 3f, r.height - 18f),
+                        hot ? Accent : new Color(Gold.r, Gold.g, Gold.b, 0.45f));
+                    if (hot) HudSkin.RuleH(new Rect(r.x, r.yMax - 1f, r.width, 1f), Gold);
+                }
             }
-            else
+            catch (ExitGUIException) { throw; }
+            catch (System.Exception e) { HudSafety.LogOnce("TitleButton:" + e.Message, e); }
+            finally
             {
-                HudSkin.Panel(r, hot ? 0.95f : 0.72f, false);
-                HudSkin.Pill(new Rect(r.x + 7f, r.y + 9f, 3f, r.height - 18f),
-                    hot ? Accent : new Color(Gold.r, Gold.g, Gold.b, 0.45f));
-                if (hot) HudSkin.RuleH(new Rect(r.x, r.yMax - 1f, r.width, 1f), Gold);
+                GUI.color = savedColor;
+                GUI.matrix = savedMatrix;
+                GUI.enabled = savedEnabled;
             }
             var style = primary ? _titleButtonOn : _titleButton;
             return GUI.Button(r, label, style);

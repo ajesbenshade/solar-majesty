@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.BuildingData
   displayName: OPS Drop-off
   category: 3
-  description: does not grow MET
+  description: does not grow EU
   footprintWidth: 4
   footprintHeight: 4
   buildCost:
