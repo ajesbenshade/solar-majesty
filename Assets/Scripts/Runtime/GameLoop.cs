@@ -1186,6 +1186,7 @@ namespace SolarMajesty
         /// <summary>Title orrery click. Never posts flags or specialist orders.</summary>
         public void PlayBodyFromTitle(CelestialBodyId body, bool cheatUnlock)
         {
+            cheatUnlock &= DevTools.Enabled;
             if (DemoSettings.FirstHourDemo && body != CelestialBodyId.Earth)
             {
                 string craft = Research != null
@@ -1207,7 +1208,9 @@ namespace SolarMajesty
             {
                 case SolarSystemTitlePick.Outcome.Locked:
                     _overseerHud?.Notify(
-                        $"{profile.DisplayName} is locked. Conquer the inner worlds first — or Shift+click.",
+                        DevTools.Enabled
+                            ? $"{profile.DisplayName} is locked. Conquer the inner worlds first — or Shift+click (dev tools)."
+                            : $"{profile.DisplayName} is locked. Conquer the inner worlds first.",
                         3.5f);
                     return;
                 case SolarSystemTitlePick.Outcome.StartNewOnBody:
@@ -1333,8 +1336,8 @@ namespace SolarMajesty
             ApplyReplayToBrain();
             _overseerHud?.Notify(
                 on
-                    ? "Earth demo on. Guilds, Belt, and Europa are hidden. New Game to start clean."
-                    : "Full campaign on. Other worlds, guilds, and replay rules are back.",
+                    ? "Guided start on. Earth first; guilds and the outer worlds open when you clear it. New Game to start clean."
+                    : "Guided start skipped. Every unlocked world, the guilds and replay rules are open.",
                 4f);
         }
 
@@ -2322,6 +2325,8 @@ namespace SolarMajesty
             HandleSessionHotkeys();
             HandleBodyHopHotkeys();
             FlushDebugBodyHop();
+            if (ErrorLog.TakeFirstNotice() != null)
+                _overseerHud?.Notify("Something went wrong. Details were saved — Settings → Open logs folder.", 6f);
             if (!IsPlaying) return;
 
             HandleToolHotkeys();
@@ -5117,6 +5122,7 @@ namespace SolarMajesty
 
         private void HandleBodyHopHotkeys()
         {
+            if (!DevTools.Enabled) return;
             if (InputBindings.TextEntryActive) return; // typing flag orders
             if (Screen != DemoScreen.Playing && Screen != DemoScreen.Paused) return;
             if (!Input.GetKeyDown(KeyCode.F10)) return;
@@ -5162,21 +5168,22 @@ namespace SolarMajesty
             if (Input.GetKeyDown(KeyCode.T) && _overseerHud != null)
                 _overseerHud.ToggleTechPanel();
 
-            if (Input.GetKeyDown(KeyCode.F8) && _debugHud != null)
-                _debugHud.ToggleVisible();
-
             if (Input.GetKeyDown(KeyCode.F6))
                 FocusCampus(0);
             if (Input.GetKeyDown(KeyCode.F7))
                 FocusCampus(1);
-            if (Input.GetKeyDown(KeyCode.F9))
-                SeedCampusBAttract();
 
             if (Input.GetKeyDown(KeyCode.P))
                 FormParty();
             if (Input.GetKeyDown(KeyCode.LeftBracket))
                 DisbandSelectedParty();
 
+            if (!DevTools.Enabled) return;
+
+            if (Input.GetKeyDown(KeyCode.F8) && _debugHud != null)
+                _debugHud.ToggleVisible();
+            if (Input.GetKeyDown(KeyCode.F9))
+                SeedCampusBAttract();
             if (Input.GetKeyDown(KeyCode.R))
                 DebugFatigueAll(0.92f);
         }

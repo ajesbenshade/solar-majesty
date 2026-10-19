@@ -1470,6 +1470,7 @@ namespace SolarMajesty
         /// <summary>F10 during Playing/Paused even when a HUD button has IMGUI focus.</summary>
         private void HandleDebugHopKeys()
         {
+            if (!DevTools.Enabled) return;
             if (_loop.Screen != DemoScreen.Playing && _loop.Screen != DemoScreen.Paused) return;
             var e = Event.current;
             if (e == null || e.type != EventType.KeyDown || e.keyCode != KeyCode.F10) return;
@@ -2966,15 +2967,16 @@ namespace SolarMajesty
                 bool demoLocked = DemoSettings.FirstHourDemo && body != CelestialBodyId.Earth;
 
                 string tag;
-                if (demoLocked) tag = "FULL CAMPAIGN";
+                if (demoLocked) tag = "AFTER EARTH";
                 else if (!unlocked) tag = CampaignProgress.IsParked(body) ? "PARKED" : "LOCKED";
                 else if (DemoSettings.SaveExists && body == _loop.ActiveBody) tag = "YOUR COLONY";
                 else tag = "";
 
                 if (hot)
                 {
-                    if (demoLocked) tag = "SETTINGS → DEMO → FULL CAMPAIGN";
-                    else if (!unlocked) tag = shift ? "CLICK TO UNLOCK" : "LOCKED  ·  SHIFT+CLICK";
+                    if (demoLocked) tag = "CLEAR EARTH FIRST  ·  OR SKIP IN SETTINGS";
+                    else if (!unlocked)
+                        tag = !DevTools.Enabled ? "LOCKED" : shift ? "CLICK TO UNLOCK" : "LOCKED  ·  SHIFT+CLICK";
                     else if (DemoSettings.SaveExists && body == _loop.ActiveBody) tag = "CLICK TO CONTINUE";
                     else tag = "CLICK TO LAND";
                 }
@@ -3297,6 +3299,9 @@ namespace SolarMajesty
             string tutLabel = _loop.IsTutorialActive ? "TUTORIAL  ·  ON" : "REPLAY TUTORIAL";
             if (Chip(new Rect(c.x, y, 220f, 26f), tutLabel, _loop.IsTutorialActive))
                 _loop.RestartTutorial();
+            string logsLabel = ErrorLog.Count > 0 ? $"OPEN LOGS FOLDER  ·  {ErrorLog.Count}" : "OPEN LOGS FOLDER";
+            if (Chip(new Rect(c.x + 228f, y, Mathf.Max(120f, c.width - 228f), 26f), logsLabel, ErrorLog.Count > 0))
+                ErrorLog.OpenFolder();
             y += 32f;
 
             bool marsLessons = DemoSettings.MarsJexLessons;
@@ -3316,13 +3321,13 @@ namespace SolarMajesty
             y += 8f;
             if (DemoSettings.FirstHourDemo)
             {
-                GUI.Label(new Rect(c.x, y, c.width, 14f), "DEMO", _section);
+                GUI.Label(new Rect(c.x, y, c.width, 14f), "GUIDED START", _section);
                 y += 18f;
-                if (Chip(new Rect(c.x, y, c.width, 26f), "FULL CAMPAIGN", false))
+                if (Chip(new Rect(c.x, y, c.width, 26f), "SKIP GUIDED START", false))
                     _loop.SetFirstHourDemo(false);
                 y += 30f;
                 y = WrapBlock(c, y,
-                    "Earth only. Learn how bounties influence the Engineer. Guilds, Belt, and Europa stay hidden until you turn the full campaign on.");
+                    "Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before.");
             }
             else
             {
@@ -3357,7 +3362,7 @@ namespace SolarMajesty
                 y = WrapBlock(c, y,
                     "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue.");
                 y += 4f;
-                if (Chip(new Rect(c.x, y, c.width, 26f), "EARTH DEMO", false))
+                if (Chip(new Rect(c.x, y, c.width, 26f), "REPLAY GUIDED START", false))
                     _loop.SetFirstHourDemo(true);
                 y += 30f;
             }

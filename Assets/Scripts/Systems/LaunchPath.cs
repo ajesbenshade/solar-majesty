@@ -9,13 +9,13 @@ namespace SolarMajesty
     /// </summary>
     public static class LaunchPath
     {
-        /// <summary>Settings panel, DEMO section, FULL CAMPAIGN chip.</summary>
-        public const string FullCampaignWhere = "Settings → Demo → Full Campaign";
+        /// <summary>Settings panel, GUIDED START section, SKIP GUIDED START chip.</summary>
+        public const string FullCampaignWhere = "Settings → Guided Start → Skip";
 
         public static string Chain(string craft) => $"{craft} research → launch";
 
         public static string ToggleNote =>
-            $"Luna needs Full Campaign: {FullCampaignWhere}.";
+            $"Clear Earth to open Luna, or skip the guided start ({FullCampaignWhere}).";
 
         /// <summary>Objective column, title toast, and the win-banner note share this sentence.</summary>
         public static string ObjectiveText(bool fullCampaignOn, bool launchReady, string craft)

@@ -170,7 +170,7 @@ namespace SolarMajesty
             get
             {
                 if (ReplayRules.IsEndless)
-                    return "Campaign hop is off. Shift+F10 still unlocks body chips.";
+                    return "Endless mode: no launch to the next world. Keep the colony standing.";
                 if (DemoSettings.FirstHourDemo)
                 {
                     string craft = _loop != null && _loop.Research != null
@@ -179,7 +179,7 @@ namespace SolarMajesty
                     return LaunchPath.ObjectiveText(false, false, craft);
                 }
                 if (_loop == null || !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "Mars holds. Earth, Belt, and Europa stay parked — Shift+click chips to load them.";
+                    return "The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title.";
                 var next = CampaignProgress.NextAfter(_loop.ActiveBody);
                 string name = next.HasValue
                     ? CelestialBodyCatalog.Get(next.Value).DisplayName

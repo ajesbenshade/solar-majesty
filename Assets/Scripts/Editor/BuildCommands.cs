@@ -41,6 +41,9 @@ namespace SolarMajesty.EditorTools
         private static bool Run(BuildTarget target, string folder, string artifact)
         {
             ShaderVariantKeeper.Create(); // runtime glass / glow must survive variant stripping
+            string version = ArgValue("-smVersion");
+            if (!string.IsNullOrEmpty(version))
+                PlayerSettings.bundleVersion = version;
             string root = ArgValue("-smBuildPath") ?? DefaultOutputRoot;
             string outputPath = Path.Combine(root, folder, artifact);
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? root);
@@ -72,6 +75,8 @@ namespace SolarMajesty.EditorTools
             if (summary.result == BuildResult.Succeeded)
             {
                 string folderPath = Path.GetDirectoryName(outputPath);
+                WriteSteamAppId(folderPath);
+                WriteBuildInfo(folderPath, target);
                 if (target == BuildTarget.StandaloneOSX)
                     PlaytestHandoff.WriteMac(folderPath);
                 else if (target == BuildTarget.StandaloneWindows64)
@@ -85,6 +90,68 @@ namespace SolarMajesty.EditorTools
 
             Debug.LogError($"[Build] {summary.result} with {summary.totalErrors} error(s).");
             return false;
+        }
+
+        /// <summary>
+        /// steam_appid.txt lets a build started outside Steam (QA, playtesters with the zip) reach
+        /// the Steam API. Tools/steam/upload_to_steam.ps1 leaves it out of the depot, because Steam
+        /// passes the app ID itself when it launches the game.
+        /// </summary>
+        private static void WriteSteamAppId(string folder)
+        {
+            try
+            {
+                File.WriteAllText(Path.Combine(folder, "steam_appid.txt"), SteamConfig.AppId.ToString());
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not write steam_appid.txt: " + e.Message);
+            }
+        }
+
+        /// <summary>Version, commit and time next to the exe, so a bug report can name its build.</summary>
+        private static void WriteBuildInfo(string folder, BuildTarget target)
+        {
+            try
+            {
+                string commit = Git("rev-parse --short HEAD") ?? "unknown";
+                string dirty = string.IsNullOrEmpty(Git("status --porcelain --untracked-files=no")) ? "" : "-dirty";
+                File.WriteAllText(Path.Combine(folder, "build_info.txt"),
+                    $"version={PlayerSettings.bundleVersion}\n" +
+                    $"commit={commit}{dirty}\n" +
+                    $"target={target}\n" +
+                    $"built_utc={DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}\n" +
+                    $"unity={Application.unityVersion}\n" +
+                    $"steam_app={SteamConfig.AppId}\n");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not write build_info.txt: " + e.Message);
+            }
+        }
+
+        private static string Git(string args)
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo("git", args)
+                {
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = Directory.GetCurrentDirectory()
+                };
+                using (var p = System.Diagnostics.Process.Start(psi))
+                {
+                    string output = p.StandardOutput.ReadToEnd().Trim();
+                    p.WaitForExit(5000);
+                    return p.ExitCode == 0 ? output : null;
+                }
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static string ArgValue(string flag)
