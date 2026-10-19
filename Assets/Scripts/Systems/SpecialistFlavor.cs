@@ -28,7 +28,7 @@ namespace SolarMajesty
 
         public static string ClaimLine(string displayName, SpecialistClass cls, FlagType type)
         {
-            string who = string.IsNullOrEmpty(displayName) ? ClassCallsign(cls) : displayName;
+            string who = string.IsNullOrEmpty(displayName) ? ClassCallsign(cls) : Loc.S(displayName);
             switch (cls)
             {
                 case SpecialistClass.EngineerBot:

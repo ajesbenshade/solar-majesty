@@ -98,7 +98,8 @@ is in it being honest, not in it being all ticked.
 
 - [x] Source-keyed lookup with English fallback, JSON tables, Settings → Language, pseudo-locale for QA ([Localization.cs](../Assets/Scripts/Systems/Localization.cs), [LOCALIZATION.md](LOCALIZATION.md))
 - [x] Strings extracted into a table: 1,400+ player-facing strings wrapped and collected by [extract.py](../Tools/loc/extract.py); what remains is mostly model prompts, ids and debug text ([status](LOCALIZATION_STATUS.md))
-- [ ] Machine translation pass and community correction
+- [x] French table, 100 % (`Resources/Locale/fr.json`), checked in game
+- [ ] Native French review before listing French on Steam; more languages and community correction
 - [x] Font fallback for non-Latin scripts on Windows (CJK, Indic, Thai); bundle an open font before shipping CJK on Steam Deck
 
 ## Before Early Access

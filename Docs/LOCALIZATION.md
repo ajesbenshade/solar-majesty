@@ -75,6 +75,14 @@ language:
   Sans CJK, SIL OFL) under `Assets/Resources/UI/Fonts/` is the reliable fix.
 - **Right-to-left** scripts (Arabic, Hebrew) need shaping that IMGUI does not do; out of scope for now.
 
+## Shipped languages
+
+- **English** (source).
+- **Français**: all 1,403 strings, translated with a shared glossary and checked by a validator
+  (placeholders, key tokens, line breaks, upper-case labels); verified in game on Earth and Mars
+  ([capture](ReviewEvidence/french-mars-hud.png)). It has not had a native speaker's review yet:
+  do one before listing French on the store page.
+
 ## What is not localized yet
 
 - Strings listed in [LOCALIZATION_STATUS.md](LOCALIZATION_STATUS.md) under "unwrapped".

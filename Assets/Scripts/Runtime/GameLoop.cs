@@ -4242,7 +4242,7 @@ namespace SolarMajesty
 
             if (!HasOrbitalTarget(def, aim, out string none))
             {
-                LogOverseer(Loc.F("{0}: {1}", def.displayName, none));
+                LogOverseer(Loc.F("{0}: {1}", def.DisplayNameText, none));
                 return false;
             }
             if (cost > 0 && !Resources.TrySpend(ResourceId.Metals, cost)) return false;
