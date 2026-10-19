@@ -147,6 +147,9 @@ namespace SolarMajesty
             var options = col.cookingOptions;
             _cookCollider = col;
             _cookMesh = mesh;
+            // However the scene goes away (our reload, a direct LoadScene, quitting), the ground's
+            // OnDestroy waits for the worker before the mesh it is reading can be freed.
+            if (col.GetComponent<CookGuard>() == null) col.gameObject.AddComponent<CookGuard>();
             _cook = System.Threading.Tasks.Task.Run(() => Physics.BakeMesh(id, convex, options));
         }
 
@@ -181,6 +184,12 @@ namespace SolarMajesty
             private void LateUpdate() => Tick();
 
             private void OnApplicationQuit() => CompletePending();
+        }
+
+        /// <summary>Sits on the ground while a cook may be running; see <see cref="StartCook"/>.</summary>
+        private sealed class CookGuard : MonoBehaviour
+        {
+            private void OnDestroy() => CompletePending();
         }
     }
 }

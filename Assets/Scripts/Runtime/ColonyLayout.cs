@@ -31,7 +31,7 @@ namespace SolarMajesty
         /// <summary>Landing pad — still a landmark, not a 40m plate.</summary>
         public const float PadScale = 0.18f;
 
-        /// <summary>Starship placeholder height landmark.</summary>
+        /// <summary>Scale for the pad's parked craft in showcase stills.</summary>
         public const float ShipScale = 0.18f;
 
         /// <summary>Colony Commons footprint in cells (18 m): the walled citadel, three guild halls wide.</summary>
@@ -87,7 +87,6 @@ namespace SolarMajesty
         {
             if (string.IsNullOrEmpty(resourcesPath)) return ModuleScale;
             if (resourcesPath.Contains("LandingPad")) return PadScale;
-            if (resourcesPath.Contains("Starship")) return ShipScale;
             return ModuleScale;
         }
 
@@ -162,7 +161,6 @@ namespace SolarMajesty
             new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(8f, 0f, -12f), 0f, 3, 3),
             new ShowcasePiece("Buildings/SM_PWR1_SolarArray", new Vector3(-8f, 0f, -12f), 0f, 3, 3),
             new ShowcasePiece("Environment/SM_LandingPad", new Vector3(16f, 0f, 0f), 0f, 6, 6, PadScale),
-            new ShowcasePiece("Environment/SM_Starship_Placeholder", new Vector3(16f, 0f, 0f), 0f, 0, 0, ShipScale),
         };
 
         /// <summary>Smaller second-body outpost — also yaw 0, buildings on the cardinals.</summary>

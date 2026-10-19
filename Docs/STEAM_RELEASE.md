@@ -151,5 +151,3 @@ These are tracked in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) and are not so
 - Controller support (leave it unclaimed until done).
 - Make the GitHub repository private. It contains Unity Asset Store packages (BOXOPHOBIC, Kevin Iglesias,
   Polytope Studio) whose license does not allow public redistribution of their source files.
-- The rocket on the landing pad is modelled on SpaceX's Starship. The name is gone from the game; the
-  silhouette is a trade-dress risk worth a redesign pass before the trailer.

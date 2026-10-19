@@ -112,7 +112,7 @@ is in it being honest, not in it being all ticked.
 - [ ] Steam page, capsule art, screenshots
 - [ ] Steam content survey incl. AI disclosure (draft text in [STEAM_RELEASE.md](STEAM_RELEASE.md))
 - [ ] Trademark check on "Solar Majesty"; GitHub repository made private (Asset Store packages are committed)
-- [ ] Landing-pad rocket redesigned away from the Starship silhouette
+- [x] Landing-pad rocket redesigned as the original Colony Lifter (legs, strap-on boosters, domed capsule; no flaps or ogive nose); the Starship placeholder model is out of the build ([render](ReviewEvidence/colony-lifter-pad.png))
 - [ ] Trailer
 - [ ] Demo build for a Next Fest
 - [ ] Phase 4 exit review re-run against a fresh still

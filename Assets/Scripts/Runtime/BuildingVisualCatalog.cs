@@ -131,9 +131,8 @@ namespace SolarMajesty
             return LoadByPath(path);
         }
 
-        /// <summary>Optional showcase pieces (dome, starship) for greybox colony look.</summary>
+        /// <summary>Optional showcase pieces for the greybox colony look.</summary>
         public static GameObject LoadCommandDome() => LoadByPath("Buildings/SM_CommandDome_CentralHub");
-        public static GameObject LoadStarship() => LoadByPath("Environment/SM_Starship_Placeholder");
         public static GameObject LoadSolarArray() => LoadByPath("Buildings/SM_PWR1_SolarArray");
         public static GameObject LoadLaboratory() => LoadByPath("Buildings/SM_LAB1_LaboratoryModule");
 
