@@ -318,7 +318,9 @@ namespace SolarMajesty
                 string orders = _handle.Orders != null && _handle.Orders.HasRules
                     ? $"\nORDERS  {_handle.Orders.Summary()}"
                     : "";
-                string keys = _selected ? "  ·  +/− bounty" : "";
+                string keys = _selected
+                    ? $"  ·  {InputBindings.Hint(GameAction.BountyUp)}/{InputBindings.Hint(GameAction.BountyDown)} bounty"
+                    : "";
                 _metaLabel.text = $"{type}  ·  {interest}\n{claimTxt}  ·  RMB cancel{keys}  ·  w {work:F1}{orders}";
                 _metaLabel.color = _handle.InterestCount > 0
                     ? new Color(0.85f, 1f, 0.55f)

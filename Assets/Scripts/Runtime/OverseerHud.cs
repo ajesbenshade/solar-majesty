@@ -66,6 +66,10 @@ namespace SolarMajesty
         private float _cardMeasuredH;
         private Vector2 _settingsScroll;
         private float _settingsContentH = 700f;
+        private static readonly GameAction[] RebindableActions = (GameAction[])System.Enum.GetValues(typeof(GameAction));
+        private GameAction? _rebinding;
+        private string _rebindNote;
+        private bool _rebindNoteAlarm;
         private string _tooltip;
         private Rect _tooltipAnchor;
 
@@ -194,7 +198,7 @@ namespace SolarMajesty
             string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
                 ? body.Briefing
                 : "Colony Commons is down. Build anywhere on open ground.";
-            Toast(briefing, 6.5f);
+            Toast(InputBindings.ExpandKeyTokens(briefing), 6.5f);
         }
 
         public void Notify(string message, float seconds)
@@ -292,7 +296,8 @@ namespace SolarMajesty
                 SimSpeed.TogglePause();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(hold, paused ? "RESUME   ·   SPACE" : "HOLD   ·   SPACE");
+            string holdKey = InputBindings.Hint(GameAction.TogglePause).ToUpperInvariant();
+            Tooltip(hold, paused ? $"RESUME   ·   {holdKey}" : $"HOLD   ·   {holdKey}");
             x += btn + 4f;
 
             var slower = new Rect(x, r.y, btn, h);
@@ -301,7 +306,7 @@ namespace SolarMajesty
                 SimSpeed.Slower();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(slower, "SLOWER   ·   ,");
+            Tooltip(slower, $"SLOWER   ·   {InputBindings.Hint(GameAction.SpeedDown).ToUpperInvariant()}");
             x += btn + 2f;
 
             var readout = new Rect(x, r.y, r.xMax - x - btn - 2f, h);
@@ -321,7 +326,7 @@ namespace SolarMajesty
                 SimSpeed.Faster();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(faster, "FASTER   ·   .");
+            Tooltip(faster, $"FASTER   ·   {InputBindings.Hint(GameAction.SpeedUp).ToUpperInvariant()}");
 
             // One pip per running speed; the 1× pip is brass so the default is easy to find again.
             int steps = SimSpeed.Multipliers.Length - 1;
@@ -608,7 +613,10 @@ namespace SolarMajesty
                 GUI.FocusControl(null);
                 orders = chat = false;
             }
-            InputBindings.TextEntryActive = orders || chat;
+            // Waiting for a new key binding counts as typing: the key is for the binding, not the game.
+            if (_rebinding.HasValue && _loop.Screen != DemoScreen.Settings)
+                _rebinding = null;
+            InputBindings.TextEntryActive = orders || chat || _rebinding.HasValue;
         }
 
         private static string FormatRate(int rate)
@@ -710,23 +718,23 @@ namespace SolarMajesty
             float midR = c.xMax - right - 18f;
             float x = midL + Mathf.Max(0f, (midR - midL - verbsW) * 0.5f);
             float vy = c.y + 3f;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphBuild, "BUILD", "B", _loop.ActiveTool == OverseerTool.Build))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphBuild, "BUILD", InputBindings.Hint(GameAction.ToolBuild), _loop.ActiveTool == OverseerTool.Build))
                 _loop.ToggleTool(OverseerTool.Build);
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphFlag, "BOUNTY FLAG", "G", _loop.ActiveTool == OverseerTool.Flag))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphFlag, "BOUNTY FLAG", InputBindings.Hint(GameAction.ToolFlag), _loop.ActiveTool == OverseerTool.Flag))
                 _loop.ToggleTool(OverseerTool.Flag);
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Sun, "ORBITAL SUPPORT", "N", _loop.ActiveTool == OverseerTool.Orbital))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Sun, "ORBITAL SUPPORT", InputBindings.Hint(GameAction.ToolOrbital), _loop.ActiveTool == OverseerTool.Orbital))
                 _loop.ToggleTool(OverseerTool.Orbital);
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphTech, "RESEARCH", "T", _techOpen))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphTech, "RESEARCH", InputBindings.Hint(GameAction.ToolTech), _techOpen))
                 ToggleTechPanel();
             x += sq + gap;
             if (SquareAction(new Rect(x, vy, sq, sq), IconId.Camp, "SWITCH YARD", "A/B", false))
                 _loop.FocusCampus(1 - _loop.FocusedCampus);
             x += sq + gap;
             int partyCount = _loop.Parties != null ? _loop.Parties.Count : 0;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Party, "FORM PARTY", "P", partyCount > 0))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Party, "FORM PARTY", InputBindings.Hint(GameAction.ToolParty), partyCount > 0))
                 _loop.FormParty();
             x += sq + gap;
             if (SquareAction(new Rect(x, vy, sq, sq), IconId.Menu, "MENU", "Esc", false))
@@ -996,7 +1004,7 @@ namespace SolarMajesty
             float panelH = Mathf.Clamp(_sh - M - MapSize - 24f - top, 220f, 480f);
             var rect = new Rect(_sw - M - panelW, top, panelW, panelH);
             RightColumnBottom = rect.yMax;
-            var c = Panel(rect, "Research · T");
+            var c = Panel(rect, $"Research · {InputBindings.Hint(GameAction.ToolTech)}");
             if (GUI.Button(new Rect(rect.xMax - 68f, rect.y + 8f, 56f, 18f), "CLOSE", _chipOff))
                 _techOpen = false;
 
@@ -1121,7 +1129,7 @@ namespace SolarMajesty
                     ? $"recharging {Mathf.CeilToInt(wait)} s"
                     : $"click the map · {input.CursorCost} EU here (x{input.CursorMultiplier:0} from uplink)";
                 DrawMinimizedToolStrip(OverseerTool.Orbital, 360f,
-                    armed.displayName.ToUpperInvariant(), hint, "N");
+                    armed.displayName.ToUpperInvariant(), hint, InputBindings.Hint(GameAction.ToolOrbital));
                 return;
             }
 
@@ -1203,14 +1211,14 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, c.y, c.width, 13f), FlagBoardLine(), _micro);
             float y = c.y + 17f;
 
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F1  Explore  ·  survey 22 m / 90 s", fp.ExploreFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F2  Clear Threat", fp.ClearThreatFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F3  Build Here", fp.BuildFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F4  Extract", fp.ExtractFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "F5  Defend  ·  watch 50 s after", fp.DefendFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "I   Research Site", fp.ResearchSiteFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "O   Outpost", fp.OutpostFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), "U   Terraform", fp.TerraformFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKey(GameAction.FlagExplore) + "Explore  ·  survey 22 m / 90 s", fp.ExploreFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKey(GameAction.FlagClearThreat) + "Clear Threat", fp.ClearThreatFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKey(GameAction.FlagBuild) + "Build Here", fp.BuildFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKey(GameAction.FlagExtract) + "Extract", fp.ExtractFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKey(GameAction.FlagDefend) + "Defend  ·  watch 50 s after", fp.DefendFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKey(GameAction.FlagResearchSite) + "Research Site", fp.ResearchSiteFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKey(GameAction.FlagOutpost) + "Outpost", fp.OutpostFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKey(GameAction.FlagTerraform) + "Terraform", fp.TerraformFlag);
 
             y += 4f;
             int shown = fp.ShownBounty;
@@ -1226,7 +1234,7 @@ namespace SolarMajesty
             var prevC = _micro.normal.textColor;
             _micro.normal.textColor = canPay ? TextMuted : Alarm;
             string placeHint = posted
-                ? "this pole · +/− edits this bounty"
+                ? $"this pole · {BountyKeys()} edits this bounty"
                 : canPay
                     ? $"next post · escrow {shown} EU"
                     : $"next post · need {shown} EU";
@@ -1236,6 +1244,12 @@ namespace SolarMajesty
             y += 18f;
             DrawOrdersField(fp, new Rect(c.x, y, c.width, 40f));
         }
+
+        /// <summary>Flag-list key column: the bound key, padded so the flag names stay aligned.</summary>
+        private static string FlagKey(GameAction action) => InputBindings.Hint(action).PadRight(3) + " ";
+
+        private static string BountyKeys() =>
+            $"{InputBindings.Hint(GameAction.BountyUp)}/{InputBindings.Hint(GameAction.BountyDown)}";
 
         private const string OrdersControl = "sm_flag_orders";
         private bool _ordersFieldDrawn;
@@ -1302,7 +1316,7 @@ namespace SolarMajesty
             {
                 string name = bp.Selected != null ? bp.Selected.displayName : "module";
                 DrawMinimizedToolStrip(OverseerTool.Build, 320f,
-                    name.ToUpperInvariant(), "click the map to place · click here for the list", "B");
+                    name.ToUpperInvariant(), "click the map to place · click here for the list", InputBindings.Hint(GameAction.ToolBuild));
                 return;
             }
 
@@ -1451,10 +1465,10 @@ namespace SolarMajesty
             if (hot) HudSkin.RuleH(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Gold);
             GUI.Label(new Rect(c.x, c.y - 6f, open.width - Pad, 18f), FlagStripLabel(fp), _value);
             GUI.Label(new Rect(c.x, c.y + 9f, open.width - Pad, 12f),
-                fp.HasSelectedPosted ? "this pole · +/− edits it" : "next post · click the map", _micro);
+                fp.HasSelectedPosted ? $"this pole · {BountyKeys()} edits it" : "next post · click the map", _micro);
             if (GUI.Button(open, GUIContent.none, GUIStyle.none))
                 ExpandMenu(OverseerTool.Flag);
-            Tooltip(open, "OPEN THE FLAG LIST   ·   G");
+            Tooltip(open, $"OPEN THE FLAG LIST   ·   {InputBindings.Hint(GameAction.ToolFlag).ToUpperInvariant()}");
         }
 
         private bool Chip(Rect r, string label, bool on) =>
@@ -1570,7 +1584,7 @@ namespace SolarMajesty
             y += 16f;
             if (flagN <= 0)
             {
-                GUI.Label(new Rect(c.x, y, c.width, 14f), "No flags posted — G to bounty.", _micro);
+                GUI.Label(new Rect(c.x, y, c.width, 14f), $"No flags posted — {InputBindings.Hint(GameAction.ToolFlag)} to bounty.", _micro);
             }
             else
             {
@@ -1724,7 +1738,7 @@ namespace SolarMajesty
                         bill > 0 && _loop.CanPayYard))
                     _loop.PayFobotYard();
                 GUI.Label(new Rect(c.x + 148f, row + 4f, c.width - 148f, 16f),
-                    "Y  ·  120s", _micro);
+                    $"{InputBindings.Hint(GameAction.PayYard)}  ·  120s", _micro);
             }
             else if (st.IsLandingPad)
             {
@@ -1980,7 +1994,8 @@ namespace SolarMajesty
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
                     Truncate($"{Truncate(a.LastReason, 14)} · {a.SuitLabel} · {gene}", 42), _micro);
                 row += 18f;
-                if (GUI.Button(new Rect(c.x, row, c.width, 22f), n == 1 ? "TALK  ·  ENTER" : "TALK", _chipOff))
+                if (GUI.Button(new Rect(c.x, row, c.width, 22f),
+                        n == 1 ? $"TALK  ·  {InputBindings.Hint(GameAction.Confirm).ToUpperInvariant()}" : "TALK", _chipOff))
                 {
                     _loop.SelectOnly(a);
                     OpenChat(a);
@@ -2734,7 +2749,8 @@ namespace SolarMajesty
             _banner.normal.textColor = prev;
 
             GUI.Label(new Rect(c.x, c.y + 32f, c.width, 48f), mission.WinDetail, _wrap != null ? _wrap : _body);
-            if (GUI.Button(new Rect(c.x, c.yMax - 30f, Mathf.Min(220f, c.width), 28f), "CONTINUE OVERSEEING  ·  Y", _chipOn))
+            if (GUI.Button(new Rect(c.x, c.yMax - 30f, Mathf.Min(220f, c.width), 28f),
+                    $"CONTINUE OVERSEEING  ·  {InputBindings.Hint(GameAction.PayYard).ToUpperInvariant()}", _chipOn))
             {
                 _winDismissed = true;
                 mission.DismissWinToSandbox();
@@ -2800,11 +2816,12 @@ namespace SolarMajesty
                     $"FOBOT YARD  {met} EU  (120s)", _body);
                 GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
                     !_loop.HasFobotYard
-                        ? "Dock a Fobot Yard. Y does not skip the building."
+                        ? $"Dock a Fobot Yard. {InputBindings.Hint(GameAction.PayYard)} does not skip the building."
                         : _loop.FieldReviveReadyIn > 0.5f
                             ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Bill is by level, EU only."
-                            : "Inspect the yard or press Y. ICE is not on the bill.", _muted);
-                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "FOBOT YARD  ·  Y", _chipOn))
+                            : $"Inspect the yard or press {InputBindings.Hint(GameAction.PayYard)}. ICE is not on the bill.", _muted);
+                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f),
+                        $"FOBOT YARD  ·  {InputBindings.Hint(GameAction.PayYard).ToUpperInvariant()}", _chipOn))
                     _loop.PayFobotYard();
             }
         }
@@ -2815,7 +2832,7 @@ namespace SolarMajesty
             bool cutsceneUp = _loop.TryPeekCutscene(out _);
             if ((_loop.NeedsFieldRevive || _loop.CanPayYard) &&
                 !(_loop.Mission != null && _loop.Mission.IsLost) &&
-                Input.GetKeyDown(KeyCode.Y))
+                InputBindings.Down(GameAction.PayYard))
                 _loop.PayFobotYard();
             if (!_loop.NeedsFieldRevive &&
                 !(_loop.Mission != null && _loop.Mission.IsLost))
@@ -2829,7 +2846,7 @@ namespace SolarMajesty
 
             if (ReplayRules.IsEndless &&
                 _loop.Mission != null && _loop.Mission.IsWon &&
-                Input.GetKeyDown(KeyCode.Y) && !_loop.IsOutpostOverwhelmed)
+                InputBindings.Down(GameAction.PayYard) && !_loop.IsOutpostOverwhelmed)
             {
                 _winDismissed = true;
                 _loop.Mission.DismissWinToSandbox();
@@ -2837,7 +2854,8 @@ namespace SolarMajesty
 
             // Enter talks to the one selected hero (not while typing, a card is up, or a cut plays).
             if (ReferenceEquals(_chatAgent, null) && !InputBindings.TextEntryActive && _loop.SelectedStructure == null &&
-                (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) &&
+                (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) ||
+                 InputBindings.Down(GameAction.Confirm)) &&
                 !cutsceneUp && !_loop.TryPeekCutscene(out _))
             {
                 var sel = _loop.SelectedAgents;
@@ -3160,6 +3178,7 @@ namespace SolarMajesty
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
             var panel = Panel(rect, "Settings");
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
+            HandleRebindKey();
 
             // Everything above BACK scrolls when the window is shorter than the list.
             var view = new Rect(panel.x, panel.y, panel.width, panel.height - 44f);
@@ -3317,6 +3336,8 @@ namespace SolarMajesty
                 "Luna: Jex lectures. Mars: failure asides unless lessons are on.", _micro);
             y += 28f;
 
+            y = DrawControls(c, y);
+
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 8f;
             if (DemoSettings.FirstHourDemo)
@@ -3357,7 +3378,7 @@ namespace SolarMajesty
                 }
                 y += 30f;
 
-                y = WrapBlock(c, y, ReplayRules.StanceHint + " " + ReplayRules.ChallengeHint);
+                y = WrapBlock(c, y, ReplayRules.StanceHint + " " + InputBindings.ExpandKeyTokens(ReplayRules.ChallengeHint));
                 y = WrapBlock(c, y, ReplayRules.IronmanHint);
                 y = WrapBlock(c, y,
                     "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue.");
@@ -3372,6 +3393,97 @@ namespace SolarMajesty
 
             if (GUI.Button(new Rect(panel.x, panel.yMax - 34f, panel.width, 32f), "BACK  ·  Esc", _chipOn))
                 _loop.CloseSettings();
+        }
+
+        /// <summary>
+        /// One chip per rebindable action. Legacy input follows the keyboard layout, so this is how
+        /// an AZERTY player gets panning back under their left hand.
+        /// </summary>
+        private float DrawControls(Rect c, float y)
+        {
+            Fill(new Rect(c.x, y, c.width, 1f), Hairline);
+            y += 8f;
+            GUI.Label(new Rect(c.x, y, c.width, 14f), "CONTROLS", _section);
+            y += 18f;
+
+            float half = (c.width - 8f) * 0.5f;
+            for (int i = 0; i < RebindableActions.Length; i++)
+            {
+                GameAction action = RebindableActions[i];
+                bool waiting = _rebinding == action;
+                string key = waiting ? "PRESS A KEY…" : InputBindings.Label(action).ToUpperInvariant();
+                var r = new Rect(i % 2 == 0 ? c.x : c.x + half + 8f, y, half, 26f);
+                if (Chip(r, $"{InputBindings.DisplayName(action).ToUpperInvariant()}  ·  {key}", waiting))
+                {
+                    _rebinding = waiting ? (GameAction?)null : action;
+                    _rebindNote = null;
+                }
+                if (i % 2 == 1 || i == RebindableActions.Length - 1) y += 32f;
+            }
+
+            if (!string.IsNullOrEmpty(_rebindNote))
+            {
+                var prevC = _micro.normal.textColor;
+                if (_rebindNoteAlarm) _micro.normal.textColor = Alarm;
+                GUI.Label(new Rect(c.x, y, c.width, 16f), _rebindNote, _micro);
+                _micro.normal.textColor = prevC;
+                y += 20f;
+            }
+            else
+            {
+                y = WrapBlock(c, y, _rebinding.HasValue
+                    ? "Press the new key. Esc cancels."
+                    : "Click an action, then press its new key. Esc, number keys, Shift and Ctrl stay fixed.");
+            }
+
+            if (Chip(new Rect(c.x, y, c.width, 26f), "RESET CONTROLS", false))
+            {
+                InputBindings.ResetToDefaults();
+                _rebinding = null;
+                _rebindNote = "Controls reset to defaults.";
+                _rebindNoteAlarm = false;
+            }
+            return y + 34f;
+        }
+
+        /// <summary>
+        /// The key press that ends a rebind. Read from IMGUI so it lands before any button sees it;
+        /// a refused key ends the wait with a note rather than leaving the player stuck in it.
+        /// </summary>
+        private void HandleRebindKey()
+        {
+            Event e = Event.current;
+            if (!_rebinding.HasValue || e == null || e.type != EventType.KeyDown || e.keyCode == KeyCode.None)
+                return;
+
+            GameAction action = _rebinding.Value;
+            KeyCode key = e.keyCode;
+            e.Use();
+            _rebinding = null;
+            _rebindNoteAlarm = true;
+            string keyLabel = InputBindings.KeyLabel(key);
+
+            if (key == KeyCode.Escape)
+            {
+                _rebindNote = null;
+                return;
+            }
+            if (InputBindings.IsReserved(key))
+            {
+                _rebindNote = $"{keyLabel} stays fixed (build slots and modifiers).";
+                return;
+            }
+            GameAction? clash = InputBindings.Conflict(action, key);
+            if (clash.HasValue)
+            {
+                _rebindNote = $"{keyLabel} already does {InputBindings.DisplayName(clash.Value)}.";
+                return;
+            }
+            if (InputBindings.TryRebind(action, key))
+            {
+                _rebindNote = $"{InputBindings.DisplayName(action)}  ·  {InputBindings.Label(action)}";
+                _rebindNoteAlarm = false;
+            }
         }
 
         /// <summary>Wrapped paragraph at its measured height; returns the y below it.</summary>
@@ -3455,7 +3567,8 @@ namespace SolarMajesty
 
             string line;
             if (DemoSettings.FirstHourDemo)
-                line = FirstHourTutorial.Beat(_loop.TutorialStep, _loop.FirstHourBuildAlreadyTempting);
+                line = InputBindings.ExpandKeyTokens(
+                    FirstHourTutorial.Beat(_loop.TutorialStep, _loop.FirstHourBuildAlreadyTempting));
             else
             {
                 string[] beats =
@@ -3464,8 +3577,8 @@ namespace SolarMajesty
                     "2/6  Haul walks out of the Commons and carries each building's EU home.",
                     "3/6  Keep the yard clear of mobs — bots build houses and solar farms that pay EU.",
                     "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
-                    "5/6  G, Build, leave it at 700. Watch the Engineer.",
-                    "6/6  They named a price. Select the flag and press + until the chip reads tempted."
+                    $"5/6  {InputBindings.Hint(GameAction.ToolFlag)}, Build, leave it at 700. Watch the Engineer.",
+                    $"6/6  They named a price. Select the flag and press {InputBindings.Hint(GameAction.BountyUp)} until the chip reads tempted."
                 };
                 int step = Mathf.Clamp(_loop.TutorialStep, 0, beats.Length - 1);
                 if (_loop.TutorialWantsPriceLesson)

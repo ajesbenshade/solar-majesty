@@ -750,9 +750,9 @@ namespace SolarMajesty
         private void HandleOverlayHotkeys()
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
-            if (Input.GetKeyDown(KeyCode.V))
+            if (InputBindings.Down(GameAction.CycleOverlay))
             {
-                // V cycles off → danger → coverage. The power overlay retired with the grid.
+                // Cycles off → danger → coverage. The power overlay retired with the grid.
                 OverlayMode = OverlayMode switch
                 {
                     MapOverlayMode.None => MapOverlayMode.Danger,
@@ -765,7 +765,7 @@ namespace SolarMajesty
             }
 
             // Jump to whatever is going most wrong right now.
-            if (Input.GetKeyDown(KeyCode.Backspace))
+            if (InputBindings.Down(GameAction.JumpToAlert))
             {
                 Alert urgent = Alerts.MostUrgentWithPosition();
                 if (urgent != null)
@@ -1115,7 +1115,7 @@ namespace SolarMajesty
             RearmStillHoldIfEditorShutter();
             _overseerHud?.OnSessionPlaying();
             if (loadStockpile)
-                LogOverseer("World held. Space resumes at 1×.", 5.5f);
+                LogOverseer($"World held. {InputBindings.Hint(GameAction.TogglePause)} resumes at 1×.", 5.5f);
             BeginNarrativeSession();
             if (ReplayRules.Mode != ColonyRunMode.Campaign ||
                 ReplayRules.Challenge != ChallengeId.None ||
@@ -1703,7 +1703,8 @@ namespace SolarMajesty
         private void HandleSessionHotkeys()
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
-            if (Input.GetKeyDown(KeyCode.Escape))
+            // Escape always backs out, whatever Cancel is bound to.
+            if (Input.GetKeyDown(KeyCode.Escape) || InputBindings.Down(GameAction.Cancel))
             {
                 bool placing = activeTool == OverseerTool.Build || activeTool == OverseerTool.Flag;
                 switch (SessionHotkeys.OnEscape(
@@ -1815,7 +1816,7 @@ namespace SolarMajesty
             Vector3 home = ColonyLayout.CampusOrigin + new Vector3(10f, 0f, 6f);
             if (SpawnFaunaAt(FaunaKind.Creeper, home) == null) return;
             _tutorialPestSpawned = true;
-            LogOverseer("Soil creeper on the yard — post Defend (F5).");
+            LogOverseer($"Soil creeper on the yard — post Defend ({InputBindings.Hint(GameAction.FlagDefend)}).");
         }
 
         private bool HasAnyWorkshop()
@@ -2462,11 +2463,11 @@ namespace SolarMajesty
             if (_victoryHold) return;
             if (InputBindings.TextEntryActive) return; // typing flag orders
 
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (InputBindings.Down(GameAction.TogglePause))
                 SimSpeed.TogglePause();
-            else if (Input.GetKeyDown(KeyCode.Period))
+            else if (InputBindings.Down(GameAction.SpeedUp))
                 SimSpeed.Faster();
-            else if (Input.GetKeyDown(KeyCode.Comma))
+            else if (InputBindings.Down(GameAction.SpeedDown))
                 SimSpeed.Slower();
             else
                 return;
@@ -2758,7 +2759,7 @@ namespace SolarMajesty
             if (def != null && def.SecretProject)
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
             else if (id == TechId.OrbitalUplink)
-                LogOverseer("Orbital Uplink online. Press N: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit.");
+                LogOverseer($"Orbital Uplink online. Press {InputBindings.Hint(GameAction.ToolOrbital)}: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit.");
             else if (id == TechId.OrbitalConstellation)
                 LogOverseer("Constellation complete: Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.");
             else if (id == TechId.ExtractBasics && !DemoSettings.FirstHourDemo)
@@ -2793,7 +2794,7 @@ namespace SolarMajesty
             else if (id == TechId.AegisDoctrine)
                 LogOverseer("Aegis Doctrine. Grid draw drops 15%. The rim breathes easier.");
             else if (id == TechId.TerraformCharter)
-                LogOverseer("Terraform Charter. Bloom Compact is licensed. Post Terraform (U) on farms.");
+                LogOverseer($"Terraform Charter. Bloom Compact is licensed. Post Terraform ({InputBindings.Hint(GameAction.FlagTerraform)}) on farms.");
             else if (id == TechId.FreightDoctrine)
                 LogOverseer("Freight Doctrine. Haul Lodge is licensed — they take Outpost cheap.");
             else if (id == TechId.CoreSampling)
@@ -5194,27 +5195,27 @@ namespace SolarMajesty
             if (InputBindings.TextEntryActive) return; // typing flag orders
             if (!IsPlaying) return;
 
-            if (Input.GetKeyDown(KeyCode.Tab))
+            if (InputBindings.Down(GameAction.CycleTool))
             {
                 if (activeTool == OverseerTool.Flag) ApplyTool(OverseerTool.Build);
                 else if (activeTool == OverseerTool.Build) ApplyTool(OverseerTool.None);
                 else ApplyTool(OverseerTool.Flag);
             }
 
-            if (Input.GetKeyDown(KeyCode.B)) ToggleTool(OverseerTool.Build);
-            if (Input.GetKeyDown(KeyCode.G)) ToggleTool(OverseerTool.Flag);
-            if (Input.GetKeyDown(KeyCode.N)) ToggleTool(OverseerTool.Orbital);
-            if (Input.GetKeyDown(KeyCode.T) && _overseerHud != null)
+            if (InputBindings.Down(GameAction.ToolBuild)) ToggleTool(OverseerTool.Build);
+            if (InputBindings.Down(GameAction.ToolFlag)) ToggleTool(OverseerTool.Flag);
+            if (InputBindings.Down(GameAction.ToolOrbital)) ToggleTool(OverseerTool.Orbital);
+            if (InputBindings.Down(GameAction.ToolTech) && _overseerHud != null)
                 _overseerHud.ToggleTechPanel();
 
-            if (Input.GetKeyDown(KeyCode.F6))
+            if (InputBindings.Down(GameAction.FocusCampusA))
                 FocusCampus(0);
-            if (Input.GetKeyDown(KeyCode.F7))
+            if (InputBindings.Down(GameAction.FocusCampusB))
                 FocusCampus(1);
 
-            if (Input.GetKeyDown(KeyCode.P))
+            if (InputBindings.Down(GameAction.ToolParty))
                 FormParty();
-            if (Input.GetKeyDown(KeyCode.LeftBracket))
+            if (InputBindings.Down(GameAction.DisbandParty))
                 DisbandSelectedParty();
 
             if (!DevTools.Enabled) return;
@@ -5718,7 +5719,7 @@ namespace SolarMajesty
                     if (Research.ActiveTech == TechId.None)
                     {
                         Research.AddScience(science);
-                        LogOverseer($"Research Site logged — +{science:F0} science banked. Pick a tech (T).");
+                        LogOverseer($"Research Site logged — +{science:F0} science banked. Pick a tech ({InputBindings.Hint(GameAction.ToolTech)}).");
                         return;
                     }
                     Research.AddScience(science);

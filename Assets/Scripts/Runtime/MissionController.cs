@@ -111,7 +111,7 @@ namespace SolarMajesty
                 if (!DensCleared)
                 {
                     if (LairCount > 0)
-                        return $"Clear dens — {UnclearedLairs} left (F2 Clear Threat)";
+                        return $"Clear dens — {UnclearedLairs} left ({InputBindings.Hint(GameAction.FlagClearThreat)} Clear Threat)";
                     return "Clear remaining fauna near campus";
                 }
                 if (!SustainComplete)
@@ -125,7 +125,7 @@ namespace SolarMajesty
                         !_loop.Research.HasLaunchUnlockFor(_loop.ActiveBody))
                     {
                         string craft = _loop.Research.LaunchTechLabel(_loop.ActiveBody);
-                        return $"Research {craft} (TECH · T) — then place a Landing Pad";
+                        return $"Research {craft} (TECH · {InputBindings.Hint(GameAction.ToolTech)}) — then place a Landing Pad";
                     }
                     return "Place a Landing Pad — departure craft stages there";
                 }
