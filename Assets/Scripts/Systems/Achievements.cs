@@ -202,8 +202,8 @@ namespace SolarMajesty
             Load();
             Unlocked.Clear();
             UnlockedThisRun.Clear();
-            PlayerPrefs.DeleteKey(PrefsKey);
-            PlayerPrefs.Save();
+            GamePrefs.DeleteKey(PrefsKey);
+            GamePrefs.Save();
         }
 
         private static void Load()
@@ -211,7 +211,7 @@ namespace SolarMajesty
             if (_loaded) return;
             _loaded = true;
 
-            string raw = PlayerPrefs.GetString(PrefsKey, "");
+            string raw = GamePrefs.GetString(PrefsKey, "");
             if (string.IsNullOrEmpty(raw)) return;
 
             string[] parts = raw.Split(',');
@@ -226,7 +226,7 @@ namespace SolarMajesty
         {
             if (Unlocked.Count == 0)
             {
-                PlayerPrefs.DeleteKey(PrefsKey);
+                GamePrefs.DeleteKey(PrefsKey);
                 return;
             }
 
@@ -239,8 +239,8 @@ namespace SolarMajesty
                 first = false;
             }
 
-            PlayerPrefs.SetString(PrefsKey, sb.ToString());
-            PlayerPrefs.Save();
+            GamePrefs.SetString(PrefsKey, sb.ToString());
+            GamePrefs.Save();
         }
     }
 }

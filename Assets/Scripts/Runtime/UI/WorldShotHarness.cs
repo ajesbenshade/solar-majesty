@@ -28,12 +28,12 @@ namespace SolarMajesty
             if (Enum.TryParse(Arg("-smWorldShotBody") ?? "", true, out CelestialBodyId parsed))
                 body = parsed;
 
-            PlayerPrefs.DeleteAll();
+            GamePrefs.DeleteAll();
             SaveSystem.DeleteAll();
-            PlayerPrefs.SetInt(DemoSettings.FirstHourKey, 0);
-            PlayerPrefs.SetInt(DemoSettings.FullscreenKey, 0);
-            PlayerPrefs.SetInt(DemoSettings.TutorialKey, 1);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(DemoSettings.FirstHourKey, 0);
+            GamePrefs.SetInt(DemoSettings.FullscreenKey, 0);
+            GamePrefs.SetInt(DemoSettings.TutorialKey, 1);
+            GamePrefs.Save();
             CampaignProgress.DebugUnlockAll();
             DemoSettings.ClearSave();
             BodySeed.SetBody(body);

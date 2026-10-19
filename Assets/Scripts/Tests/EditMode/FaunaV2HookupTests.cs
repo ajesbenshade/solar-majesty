@@ -7,7 +7,7 @@ namespace SolarMajesty.Tests
     /// <summary>
     /// Gameplay hookup for fauna v2 art: keep authored materials, mount the animated stalker
     /// FBX without a yaw flip, play Down before destroy, and do not add procedural legs.
-    /// The loop stays inactive so GameLoop.Awake never reads the real save folder or PlayerPrefs.
+    /// The loop stays inactive so GameLoop.Awake never reads the real save folder or GamePrefs.
     /// </summary>
     public class FaunaV2HookupTests
     {

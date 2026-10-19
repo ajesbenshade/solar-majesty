@@ -55,7 +55,7 @@ namespace SolarMajesty
                 WriteFloat(_floats[i]);
             for (int i = 0; i < _strings.Count; i++)
                 WriteString(_strings[i]);
-            PlayerPrefs.Save();
+            GamePrefs.Save();
             DemoSettings.ReloadFlagsFromPrefs();
             CampaignProgress.ReloadFromPrefs();
             BodySeed.ReloadFromPrefs();
@@ -141,30 +141,30 @@ namespace SolarMajesty
         }
 
         private static void AddInt(string key) =>
-            _ints.Add(new IntSlot { Key = key, Had = PlayerPrefs.HasKey(key), Value = PlayerPrefs.GetInt(key, 0) });
+            _ints.Add(new IntSlot { Key = key, Had = GamePrefs.HasKey(key), Value = GamePrefs.GetInt(key, 0) });
 
         private static void AddFloat(string key) =>
-            _floats.Add(new FloatSlot { Key = key, Had = PlayerPrefs.HasKey(key), Value = PlayerPrefs.GetFloat(key, 0f) });
+            _floats.Add(new FloatSlot { Key = key, Had = GamePrefs.HasKey(key), Value = GamePrefs.GetFloat(key, 0f) });
 
         private static void AddString(string key) =>
-            _strings.Add(new StringSlot { Key = key, Had = PlayerPrefs.HasKey(key), Value = PlayerPrefs.GetString(key, "") });
+            _strings.Add(new StringSlot { Key = key, Had = GamePrefs.HasKey(key), Value = GamePrefs.GetString(key, "") });
 
         private static void WriteInt(IntSlot slot)
         {
-            if (slot.Had) PlayerPrefs.SetInt(slot.Key, slot.Value);
-            else PlayerPrefs.DeleteKey(slot.Key);
+            if (slot.Had) GamePrefs.SetInt(slot.Key, slot.Value);
+            else GamePrefs.DeleteKey(slot.Key);
         }
 
         private static void WriteFloat(FloatSlot slot)
         {
-            if (slot.Had) PlayerPrefs.SetFloat(slot.Key, slot.Value);
-            else PlayerPrefs.DeleteKey(slot.Key);
+            if (slot.Had) GamePrefs.SetFloat(slot.Key, slot.Value);
+            else GamePrefs.DeleteKey(slot.Key);
         }
 
         private static void WriteString(StringSlot slot)
         {
-            if (slot.Had) PlayerPrefs.SetString(slot.Key, slot.Value ?? "");
-            else PlayerPrefs.DeleteKey(slot.Key);
+            if (slot.Had) GamePrefs.SetString(slot.Key, slot.Value ?? "");
+            else GamePrefs.DeleteKey(slot.Key);
         }
     }
 }

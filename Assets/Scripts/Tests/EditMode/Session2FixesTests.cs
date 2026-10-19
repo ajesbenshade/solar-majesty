@@ -65,8 +65,8 @@ namespace SolarMajesty.Tests
         public void Continue_HoldsAndResumesAtOneX_WithoutClearingTheSavedSpeed()
         {
             const string key = "SM_GameSpeed_v2";
-            bool had = PlayerPrefs.HasKey(key);
-            int prev = PlayerPrefs.GetInt(key, 0);
+            bool had = GamePrefs.HasKey(key);
+            int prev = GamePrefs.GetInt(key, 0);
             try
             {
                 int fast = System.Array.IndexOf(SimSpeed.Multipliers, 4f);
@@ -84,9 +84,9 @@ namespace SolarMajesty.Tests
             }
             finally
             {
-                if (had) PlayerPrefs.SetInt(key, prev);
-                else PlayerPrefs.DeleteKey(key);
-                PlayerPrefs.Save();
+                if (had) GamePrefs.SetInt(key, prev);
+                else GamePrefs.DeleteKey(key);
+                GamePrefs.Save();
                 SimSpeed.Load();
             }
         }
@@ -94,34 +94,34 @@ namespace SolarMajesty.Tests
         [Test]
         public void PrefsShield_RestoresCampaignAndDemoFlags()
         {
-            bool hadDemo = PlayerPrefs.HasKey(DemoSettings.FirstHourKey);
-            int demo = PlayerPrefs.GetInt(DemoSettings.FirstHourKey, 1);
-            bool hadMax = PlayerPrefs.HasKey("SM_CampaignMaxBody");
-            int max = PlayerPrefs.GetInt("SM_CampaignMaxBody", 0);
+            bool hadDemo = GamePrefs.HasKey(DemoSettings.FirstHourKey);
+            int demo = GamePrefs.GetInt(DemoSettings.FirstHourKey, 1);
+            bool hadMax = GamePrefs.HasKey("SM_CampaignMaxBody");
+            int max = GamePrefs.GetInt("SM_CampaignMaxBody", 0);
             try
             {
                 DeveloperPrefsShield.Capture();
-                PlayerPrefs.SetInt(DemoSettings.FirstHourKey, demo == 1 ? 0 : 1);
-                PlayerPrefs.SetInt("SM_CampaignMaxBody", (int)CelestialBodyId.Europa);
-                PlayerPrefs.Save();
+                GamePrefs.SetInt(DemoSettings.FirstHourKey, demo == 1 ? 0 : 1);
+                GamePrefs.SetInt("SM_CampaignMaxBody", (int)CelestialBodyId.Europa);
+                GamePrefs.Save();
                 DemoSettings.FirstHourDemo = false;
                 CampaignProgress.UnlockThrough(CelestialBodyId.Europa);
 
                 DeveloperPrefsShield.Restore();
 
-                if (hadDemo) Assert.AreEqual(demo, PlayerPrefs.GetInt(DemoSettings.FirstHourKey));
-                else Assert.IsFalse(PlayerPrefs.HasKey(DemoSettings.FirstHourKey));
-                if (hadMax) Assert.AreEqual(max, PlayerPrefs.GetInt("SM_CampaignMaxBody"));
-                else Assert.IsFalse(PlayerPrefs.HasKey("SM_CampaignMaxBody"));
+                if (hadDemo) Assert.AreEqual(demo, GamePrefs.GetInt(DemoSettings.FirstHourKey));
+                else Assert.IsFalse(GamePrefs.HasKey(DemoSettings.FirstHourKey));
+                if (hadMax) Assert.AreEqual(max, GamePrefs.GetInt("SM_CampaignMaxBody"));
+                else Assert.IsFalse(GamePrefs.HasKey("SM_CampaignMaxBody"));
                 Assert.AreEqual(hadDemo ? demo == 1 : true, DemoSettings.FirstHourDemo);
             }
             finally
             {
-                if (hadDemo) PlayerPrefs.SetInt(DemoSettings.FirstHourKey, demo);
-                else PlayerPrefs.DeleteKey(DemoSettings.FirstHourKey);
-                if (hadMax) PlayerPrefs.SetInt("SM_CampaignMaxBody", max);
-                else PlayerPrefs.DeleteKey("SM_CampaignMaxBody");
-                PlayerPrefs.Save();
+                if (hadDemo) GamePrefs.SetInt(DemoSettings.FirstHourKey, demo);
+                else GamePrefs.DeleteKey(DemoSettings.FirstHourKey);
+                if (hadMax) GamePrefs.SetInt("SM_CampaignMaxBody", max);
+                else GamePrefs.DeleteKey("SM_CampaignMaxBody");
+                GamePrefs.Save();
                 DemoSettings.ReloadFlagsFromPrefs();
                 CampaignProgress.ReloadFromPrefs();
             }

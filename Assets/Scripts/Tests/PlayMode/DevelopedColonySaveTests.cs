@@ -103,7 +103,7 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(SaveSystem.Write(0, saved));
             DemoSettings.WriteCampus(CelestialBodyId.Earth, "");
             DemoSettings.WriteRoster(CelestialBodyId.Earth, "");
-            PlayerPrefs.SetInt(ReplayRules.StanceKey, (int)DoctrineStance.OpenHands);
+            GamePrefs.SetInt(ReplayRules.StanceKey, (int)DoctrineStance.OpenHands);
 
             for (int round = 0; round < 2; round++)
             {
