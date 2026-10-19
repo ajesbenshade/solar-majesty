@@ -3325,6 +3325,21 @@ namespace SolarMajesty
 
             y = WrapBlock(c, y, "Severity is also shown by icon and prefix, so colour is never the only cue.") + 6f;
 
+            // Language: every table shipped in Resources/Locale, plus the QA pseudo-language with dev tools.
+            var languages = Loc.Available;
+            if (languages.Count > 1)
+            {
+                if (Chip(new Rect(c.x, y, c.width, 26f),
+                        $"{Loc.S("LANGUAGE")}  ·  {Loc.NameOf(Loc.Language).ToUpperInvariant()}", Loc.Language != Loc.DefaultLanguage))
+                {
+                    int at = 0;
+                    for (int i = 0; i < languages.Count; i++)
+                        if (languages[i].Code == Loc.Language) at = i;
+                    Loc.SetLanguage(languages[(at + 1) % languages.Count].Code);
+                }
+                y += 32f;
+            }
+
             string tutLabel = _loop.IsTutorialActive ? "TUTORIAL  ·  ON" : "REPLAY TUTORIAL";
             if (Chip(new Rect(c.x, y, 220f, 26f), tutLabel, _loop.IsTutorialActive))
                 _loop.RestartTutorial();
