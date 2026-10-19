@@ -3,9 +3,12 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Colony Commons as the Majesty 2 castle: a walled citadel. Four corner towers with gun
-    /// turrets, armoured curtain walls with a battlement walk, a gatehouse on the front (-Z) face,
-    /// a courtyard, and a three-storey keep carrying the command tier and comms spire.
+    /// Colony Commons as the AI core (canon: the player is the central AI): a walled machine
+    /// citadel in white ceramic, carbon and gunmetal with sparing cyan glow. Four corner towers
+    /// topped with relay pylon heads, bulkhead-panelled curtain walls with ceramic capping, a
+    /// gatehouse on the front (-Z) face, a courtyard, and a three-storey keep whose glowing core
+    /// window is the light source, flanked by radiator vanes and cable trunks, carrying the
+    /// command tier and comms spire.
     /// Big masses are named primitives (the construction stages classify them); everything else
     /// goes through <see cref="DetailBatch"/>, a handful of merged meshes.
     /// The play camera sits at yaw 45°, so the -Z and -X faces are what the player sees first.
@@ -155,7 +158,7 @@ namespace SolarMajesty
 
             // ---------------------------------------------------------------- shell
             k.Stage = SShell;
-            // Wall cladding panels, base course and the battlement walk with merlons.
+            // Wall cladding panels, bulkhead seams, base course and ceramic capping.
             foreach (var f in WallFaces(T))
             {
                 bool front = f.N.z < -0.5f;
@@ -164,11 +167,12 @@ namespace SolarMajesty
                     if (front && Mathf.Abs(x) < gateHalf + 0.4f) continue;
                     FBox(k, f, x, CitPlinth + 1.75f, 1.02f, 1.6f, 0.04f, Cream2);
                 }
-                for (float x = -T + 1.75f; x <= T - 1.75f; x += 0.9f)
+                for (float x = -T + 1.5f; x <= T - 1.5f; x += 2.2f)
                 {
-                    if (front && Mathf.Abs(x) < gateHalf + 0.3f) continue;
-                    FBox(k, f, x, wallTop + 0.25f, 0.5f, 0.5f, 0.3f, hull);   // merlon
+                    if (front && Mathf.Abs(x) < gateHalf + 0.4f) continue;
+                    FBox(k, f, x, CitPlinth + 1.7f, 0.06f, 2.5f, 0.06f, Graphite);   // bulkhead seam
                 }
+                k.Box(f.P(0f, wallTop + 0.06f, -0.5f), new Vector3(T * 2f - 3f, 0.12f, 1.1f), f.Rot, hull);   // ceramic capping
                 FBox(k, f, 0f, CitPlinth + 0.45f, T * 2f - 3f, 0.5f, 0.08f, Carbon);   // base course
                 FBox(k, f, 0f, wallTop - 0.05f, T * 2f - 3f, 0.1f, 0.12f, Graphite);   // coping
             }
@@ -176,17 +180,11 @@ namespace SolarMajesty
             k.Box(new Vector3(0f, wallTop + 0.02f, T - 0.1f), new Vector3(T * 2f - 3f, 0.04f, 1.2f), PadDeck);
             k.Box(new Vector3(-T + 0.1f, wallTop + 0.02f, 0f), new Vector3(1.2f, 0.04f, T * 2f - 3f), PadDeck);
             k.Box(new Vector3(T - 0.1f, wallTop + 0.02f, 0f), new Vector3(1.2f, 0.04f, T * 2f - 3f), PadDeck);
-            // Tower merlons and roofs.
+            // Tower roofs.
             for (int i = 0; i < 4; i++)
             {
                 Vector3 c = TowerCentre(i, T);
                 float top = CitPlinth + CitTowerH + 0.24f;
-                for (int m = 0; m < 10; m++)
-                {
-                    Vector3 dir = Dir(m * 36f);
-                    k.Box(c + dir * 1.55f + Vector3.up * (top + 0.25f), new Vector3(0.5f, 0.5f, 0.32f),
-                        Quaternion.Euler(0f, m * 36f, 0f), hull);
-                }
                 k.Cyl(c + Vector3.up * (top + 0.02f), 2.9f, 0.04f, PadDeck);
             }
             // Keep storey bands and the gatehouse armour.
@@ -208,13 +206,6 @@ namespace SolarMajesty
             LightBar(k, gate, 0f, CitPlinth + 3.4f, gateHalf * 2f, CyanEmit);
             WallLamp(k, gate, -gateHalf - 0.55f, CitPlinth + 3.2f, WarmEmit);
             WallLamp(k, gate, gateHalf + 0.55f, CitPlinth + 3.2f, WarmEmit);
-            for (int s = -1; s <= 1; s += 2)
-            {
-                // Colony banners on the gate pylons.
-                FBox(k, gate, s * (gateHalf + 0.55f), CitPlinth + 2.2f, 0.7f, 2.4f, 0.1f, Orange);
-                FBox(k, gate, s * (gateHalf + 0.55f), CitPlinth + 2.2f, 0.26f, 2.2f, 0.12f, White);
-                FBox(k, gate, s * (gateHalf + 0.55f), CitPlinth + 3.45f, 0.84f, 0.08f, 0.14f, Graphite);
-            }
 
             // Wall slits and lamps.
             foreach (var f in WallFaces(T))
@@ -250,7 +241,7 @@ namespace SolarMajesty
                 FBox(k, f, 0f, CitPlinth + 0.3f, T * 2f - 3f, 0.6f, 0.06f, Carbon);
             }
 
-            // Towers: window bands, nav lights, turrets, banners.
+            // Towers: window bands, nav lights, relay pylon heads.
             for (int i = 0; i < 4; i++)
             {
                 Vector3 c = TowerCentre(i, T);
@@ -267,23 +258,12 @@ namespace SolarMajesty
                     k.Cyl(c + Vector3.up * (y + 0.38f), 3.08f, 0.06f, Carbon);
                 }
                 k.Cyl(c + Vector3.up * (CitPlinth + CitTowerH - 0.3f), 3.06f, 0.12f, Orange);
-                // Turret.
-                k.Cyl(c + Vector3.up * (top + 0.2f), 1.1f, 0.4f, Graphite);
-                k.Box(c + Vector3.up * (top + 0.62f), new Vector3(0.9f, 0.5f, 0.9f), Quaternion.Euler(0f, 45f + i * 90f, 0f), hull);
-                Vector3 aim = Dir(225f + i * 90f);
-                for (int g = -1; g <= 1; g += 2)
-                {
-                    Vector3 side = Vector3.Cross(aim, Vector3.up) * (g * 0.16f);
-                    k.Rod(c + side + Vector3.up * (top + 0.65f), c + side + aim * 1.25f + Vector3.up * (top + 0.75f), 0.09f, Carbon);
-                }
-                k.Ball(c + Vector3.up * (top + 0.92f), 0.18f, Cyan, CyanEmit);
+                // Relay pylon head.
+                k.Cyl(c + Vector3.up * (top + 0.6f), 0.5f, 1.2f, Carbon);
+                k.Box(c + Vector3.up * (top + 1.325f), new Vector3(0.7f, 0.25f, 0.7f), hull);
+                k.Ball(c + Vector3.up * (top + 1.52f), 0.14f, Cyan, CyanEmit);
                 for (int n = 0; n < 4; n++)
                     NavLight(k, c + Dir(n * 90f + 45f) * 1.6f + Vector3.up * (top + 0.5f), n % 2 == 0 ? RedEmit : CyanEmit);
-                // Pennant mast.
-                Vector3 mast = c + Dir(45f + i * 90f) * 0.9f + Vector3.up * top;
-                k.Rod(mast, mast + Vector3.up * 2.0f, 0.05f, Steel);
-                k.Box(mast + Vector3.up * 1.65f + Dir(135f + i * 90f) * 0.35f, new Vector3(0.7f, 0.42f, 0.03f),
-                    Quaternion.Euler(0f, 135f + i * 90f, 0f), Orange);
             }
 
             // Keep: lit windows on every storey, a balcony over the court, roof plant.
@@ -297,14 +277,33 @@ namespace SolarMajesty
                     for (int c = 0; c < cols; c++)
                     {
                         float x = -half + 0.6f + (c + 0.5f) * (half * 2f - 1.2f) / cols;
-                        bool lit = (c + s) % 3 != 0;
-                        Window(k, f, x, y, 0.62f, 0.95f, lit ? WarmGlass : Glass, lit ? WarmEmit : GlassEmit);
+                        if (f.N.z < -0.5f && Mathf.Abs(x) < 1.3f) continue;   // clear for the core window
+                        bool lit = (c + s) % 4 == 0;
+                        Window(k, f, x, y, 0.62f, 0.95f, Glass, lit ? CyanEmit * 0.35f : GlassEmit);
                     }
+                }
+                if (Mathf.Abs(f.N.x) > 0.5f)
+                {
+                    // Angled radiator vanes.
+                    for (int v = -1; v <= 1; v++)
+                        k.Box(new Vector3(f.O.x + f.N.x * 0.8f, CitPlinth + CitKeepH * 0.5f, kz + v * 1.6f), new Vector3(0.08f, 3.2f, 1.4f),
+                            Quaternion.Euler(0f, 0f, f.N.x > 0f ? -25f : 25f), Graphite);
                 }
                 LightBar(k, f, 0f, CitPlinth + CitKeepH - 0.25f, half * 1.6f, CyanEmit);
             }
             var keepFront = new Face(new Vector3(0f, 0f, kz - kd * 0.5f), Vector3.back);
             Door(k, keepFront, 0f, 1.5f, 2.0f, Graphite, CitPlinth);
+            // Glowing core window: the AI core is the light source.
+            float coreY = CitPlinth + CitKeepH * 0.55f;
+            FBox(k, keepFront, 0f, coreY, 1.6f, 3.4f, 0.06f, Carbon);
+            FBox(k, keepFront, 0f, coreY, 0.5f, 3.0f, 0.09f, Cyan, CyanEmit * 0.6f);
+            // Cable trunks from the keep corners down to the ground.
+            for (int sx = -1; sx <= 1; sx += 2)
+            for (int sz = -1; sz <= 1; sz += 2)
+            {
+                var cableTop = new Vector3(sx * (kw * 0.5f + 0.05f), keepTop - 0.4f, kz + sz * (kd * 0.5f + 0.05f));
+                k.Rod(cableTop, new Vector3(cableTop.x + sx * 1.0f, CitPlinth + 0.05f, cableTop.z + sz * 1.0f), 0.24f, Carbon);
+            }
             FBox(k, keepFront, 0f, CitPlinth + CitKeepStorey * 2f + 0.05f, kw * 0.6f, 0.12f, 0.9f, Graphite);
             Railing(k, keepFront.P(-kw * 0.3f, CitPlinth + CitKeepStorey * 2f + 0.1f, 0.85f),
                 keepFront.P(kw * 0.3f, CitPlinth + CitKeepStorey * 2f + 0.1f, 0.85f), 0.5f, Steel);
@@ -313,7 +312,7 @@ namespace SolarMajesty
             {
                 float a = r * 22.5f;
                 k.Box(new Vector3(0f, keepTop + 0.95f, kz) + Dir(a) * (kd * 0.39f + 0.01f), new Vector3(0.55f, 0.6f, 0.04f),
-                    Quaternion.Euler(0f, a, 0f), WarmGlass, WarmEmit);
+                    Quaternion.Euler(0f, a, 0f), Glass, CyanEmit * 0.4f);
             }
             Railing(k, new Vector3(-kw * 0.45f, keepTop + 0.16f, kz - kd * 0.45f), new Vector3(kw * 0.45f, keepTop + 0.16f, kz - kd * 0.45f), 0.45f, Steel);
             Railing(k, new Vector3(-kw * 0.45f, keepTop + 0.16f, kz + kd * 0.45f), new Vector3(kw * 0.45f, keepTop + 0.16f, kz + kd * 0.45f), 0.45f, Steel);
