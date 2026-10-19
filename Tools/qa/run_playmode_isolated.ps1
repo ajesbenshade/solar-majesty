@@ -48,12 +48,14 @@ New-Item -ItemType Directory -Force $OutDir | Out-Null
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $results = Join-Path $OutDir "playmode-$stamp.xml"
 $log = Join-Path $OutDir "playmode-$stamp.log"
-$unityArgs = @('-batchmode', '-projectPath', $wt, '-runTests', '-testPlatform', 'PlayMode',
-  '-testResults', $results, '-logFile', $log)
-if ($Filter) { $unityArgs += @('-testFilter', $Filter) }
+# One quoted string: Start-Process joins an array with bare spaces, which splits paths like "solar majesty".
+$unityArgs = "-batchmode -projectPath `"$wt`" -runTests -testPlatform PlayMode -testResults `"$results`" -logFile `"$log`""
+if ($Filter) { $unityArgs += " -testFilter `"$Filter`"" }
 
 Say "running PlayMode tests on $($commit.Substring(0, 8))$(if ($Filter) { " ($Filter)" })"
-$p = Start-Process $Unity -ArgumentList $unityArgs -PassThru -Wait
+# WaitForExit on Unity itself: -Wait would also wait for the licensing client Unity leaves running.
+$p = Start-Process $Unity -ArgumentList $unityArgs -PassThru
+$p.WaitForExit()
 if (-not (Test-Path $results)) { throw "No results written (exit $($p.ExitCode)). Log: $log" }
 
 [xml]$x = Get-Content $results

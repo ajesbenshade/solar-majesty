@@ -31,11 +31,11 @@ New-Item -ItemType Directory -Force (Join-Path $tmp 'Saves'), (Join-Path $tmp 'P
 $logs = Join-Path $env:USERPROFILE 'AppData\LocalLow\SolarMajesty\Solar Majesty\Logs'
 $before = @(Get-ChildItem $logs -Filter 'benchmark-*.json' -ErrorAction SilentlyContinue | ForEach-Object FullName)
 
-$gameArgs = @('-benchmark', '-benchmarkBodies', $Bodies, '-benchmarkSeconds', $Seconds, '-benchmarkSpeed', $Speed,
-  '-saveDir', (Join-Path $tmp 'Saves'), '-profileDir', (Join-Path $tmp 'Profile'),
-  '-nosteam', '-noai', '-screen-width', $Width, '-screen-height', $Height,
-  '-screen-fullscreen', $(if ($Fullscreen) { '1' } else { '0' }),
-  '-logFile', (Join-Path $tmp 'Player.log'))
+# One quoted string: Start-Process joins an array with bare spaces, which would split a path with a space in it.
+$gameArgs = "-benchmark -benchmarkBodies $Bodies -benchmarkSeconds $Seconds -benchmarkSpeed $Speed " +
+  "-saveDir `"$(Join-Path $tmp 'Saves')`" -profileDir `"$(Join-Path $tmp 'Profile')`" " +
+  "-nosteam -noai -screen-width $Width -screen-height $Height -screen-fullscreen $(if ($Fullscreen) { '1' } else { '0' }) " +
+  "-logFile `"$(Join-Path $tmp 'Player.log')`""
 
 Write-Host "[bench] $Bodies, ${Seconds}s each, ${Width}x$Height" -ForegroundColor Yellow
 $p = Start-Process $exe -ArgumentList $gameArgs -PassThru
