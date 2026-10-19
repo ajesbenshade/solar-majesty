@@ -14,9 +14,9 @@ namespace SolarMajesty
         /// <summary>Only scene in the build. Bodies swap inside it via <c>BodySeed</c>.</summary>
         public const string CampaignScenePath = "Assets/Scenes/LunarOutpost_Sandbox.unity";
 
-        public const string ContinueToLuna = "Continue to Luna";
-        public const string LunaComingSoon = "Luna coming soon";
-        public const string MainMenu = "Main Menu";
+        public static string ContinueToLuna => Loc.S("Continue to Luna");
+        public static string LunaComingSoon => Loc.S("Luna coming soon");
+        public static string MainMenu => Loc.S("Main Menu");
 
         public readonly struct View
         {
@@ -83,16 +83,16 @@ namespace SolarMajesty
             {
                 return new View(
                     false,
-                    "KEEP COLONIZING",
-                    "Gates are met. Worker bots stay on this claim. The treasury keeps ticking in EU.",
+                    Loc.S("KEEP COLONIZING"),
+                    Loc.S("Gates are met. Worker bots stay on this claim. The treasury keeps ticking in EU."),
                     null,
                     null,
                     false);
             }
 
             string headline = HeadlineFor(current);
-            const string body =
-                "You are the central AI. Worker bots secured this claim: dens are quiet, the treasury is holding in EU, and the craft is on the pad.";
+            string body = Loc.S(
+                "You are the central AI. Worker bots secured this claim: dens are quiet, the treasury is holding in EU, and the craft is on the pad.");
 
             var next = CampaignProgress.NextAfter(current);
             if (!next.HasValue || !nextBuilt)
@@ -102,14 +102,14 @@ namespace SolarMajesty
                 {
                     soon = next.Value == CelestialBodyId.Luna
                         ? LunaComingSoon
-                        : NameOf(next.Value) + " coming soon";
+                        : Loc.F("{0} coming soon", NameOf(next.Value));
                 }
                 return new View(true, headline, body, null, soon, true);
             }
 
             string label = next.Value == CelestialBodyId.Luna
                 ? ContinueToLuna
-                : "Continue to " + NameOf(next.Value);
+                : Loc.F("Continue to {0}", NameOf(next.Value));
             return new View(true, headline, body, label, null, true);
         }
 
@@ -156,14 +156,14 @@ namespace SolarMajesty
         private static string HeadlineFor(CelestialBodyId id)
         {
             string name = NameOf(id);
-            return string.IsNullOrEmpty(name) ? "CLAIM SECURED" : name.ToUpperInvariant() + " SECURED";
+            return string.IsNullOrEmpty(name) ? Loc.S("CLAIM SECURED") : Loc.F("{0} SECURED", name.ToUpperInvariant());
         }
 
         private static string NameOf(CelestialBodyId id)
         {
             var profile = CelestialBodyCatalog.Get(id);
             if (profile == null || profile.Id != id) return "";
-            return profile.DisplayName ?? "";
+            return profile.DisplayNameText ?? "";
         }
     }
 }

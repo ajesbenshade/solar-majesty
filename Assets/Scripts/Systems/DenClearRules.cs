@@ -345,8 +345,8 @@ namespace SolarMajesty
         public static string Caption(string title, int count, int bounty)
         {
             if (count <= 1) return null;
-            if (string.IsNullOrEmpty(title)) title = "Flag";
-            return title + " ×" + count.ToString() + " — " + bounty.ToString("N0") + " EU";
+            if (string.IsNullOrEmpty(title)) title = Loc.S("Flag");
+            return Loc.F("{0} ×{1} — {2:N0} EU", title, count, bounty);
         }
 
         public static bool IsRepresentative(IReadOnlyList<Item> all, int index, float radius)

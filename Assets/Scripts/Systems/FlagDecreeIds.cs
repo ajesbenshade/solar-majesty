@@ -30,6 +30,10 @@ namespace SolarMajesty
             Title = title;
             Intent = intent;
         }
+
+        // Title stays English: TryMatchTitle matches posted flags against it. Show these instead.
+        public string TitleText => Loc.S(Title);
+        public string IntentText => Loc.S(Intent);
     }
 
     /// <summary>

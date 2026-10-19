@@ -16,13 +16,13 @@ namespace SolarMajesty
             if (action == SpecialistAction.Hunt)
                 return HuntLine(cls);
             if (action == SpecialistAction.Flee)
-                return "Falling back to the rest beacon.";
+                return Loc.S("Falling back to the rest beacon.");
             if (action == SpecialistAction.Rest)
                 return reason != null && reason.IndexOf("seeking", System.StringComparison.Ordinal) >= 0
-                    ? "Heading to the inn."
-                    : "Resting. Shop if the EU is there.";
+                    ? Loc.S("Heading to the inn.")
+                    : Loc.S("Resting. Shop if the EU is there.");
             if (action == SpecialistAction.Repair)
-                return "Patching a hull. Pay me when it holds.";
+                return Loc.S("Patching a hull. Pay me when it holds.");
             return IdleLine(cls, reason);
         }
 
@@ -32,35 +32,35 @@ namespace SolarMajesty
             switch (cls)
             {
                 case SpecialistClass.EngineerBot:
-                    return $"{who}: Build's on the books. Don't cheap out mid-weld.";
+                    return Loc.F("{0}: Build's on the books. Don't cheap out mid-weld.", who);
                 case SpecialistClass.DefenseMech:
                     return type == FlagType.DefendArea
-                        ? $"{who}: Rim watch. Nothing crosses."
-                        : $"{who}: Hunting the den. Stay behind the shield.";
+                        ? Loc.F("{0}: Rim watch. Nothing crosses.", who)
+                        : Loc.F("{0}: Hunting the den. Stay behind the shield.", who);
                 case SpecialistClass.SentinelMech:
-                    return $"{who}: Perimeter locked. I hold. I do not wander.";
+                    return Loc.F("{0}: Perimeter locked. I hold. I do not wander.", who);
                 case SpecialistClass.Medic:
-                    return $"{who}: On the wounded. I am not a hunter.";
+                    return Loc.F("{0}: On the wounded. I am not a hunter.", who);
                 case SpecialistClass.HarvesterBot:
-                    return $"{who}: Ore first. Dens can wait.";
+                    return Loc.F("{0}: Ore first. Dens can wait.", who);
                 case SpecialistClass.GeologistBot:
                     return type == FlagType.ResearchSite
-                        ? $"{who}: Core sample logged. Lab can eat this."
-                        : $"{who}: Reading the crust. Haul follows.";
+                        ? Loc.F("{0}: Core sample logged. Lab can eat this.", who)
+                        : Loc.F("{0}: Reading the crust. Haul follows.", who);
                 case SpecialistClass.SurveyorBot:
                     return type == FlagType.ResearchSite
-                        ? $"{who}: Site mapped. Science into the tree."
-                        : $"{who}: Charting the apron. No fights.";
+                        ? Loc.F("{0}: Site mapped. Science into the tree.", who)
+                        : Loc.F("{0}: Charting the apron. No fights.", who);
                 case SpecialistClass.ScoutDrone:
-                    return $"{who}: Cheap Explore. Forty EU and I'm gone.";
+                    return Loc.F("{0}: Cheap Explore. Forty EU and I'm gone.", who);
                 case SpecialistClass.CourierBot:
                     return type == FlagType.EstablishOutpost
-                        ? $"{who}: Claim the cyan disc. Freight after."
-                        : $"{who}: Hauling the flag. Keep the path clear.";
+                        ? Loc.F("{0}: Claim the cyan disc. Freight after.", who)
+                        : Loc.F("{0}: Hauling the flag. Keep the path clear.", who);
                 case SpecialistClass.TerraformerBot:
-                    return $"{who}: Greening this crust. Slow work. Worth it.";
+                    return Loc.F("{0}: Greening this crust. Slow work. Worth it.", who);
                 default:
-                    return $"{who} took {FlagShort(type)}.";
+                    return Loc.F("{0} took {1}.", who, FlagLabel(type));
             }
         }
 
@@ -81,6 +81,10 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// English flag-type word for ids, logs and model prompts. Show the player
+        /// <see cref="FlagLabel"/> instead.
+        /// </summary>
         public static string FlagShort(FlagType type)
         {
             switch (type)
@@ -97,29 +101,46 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary><see cref="FlagShort"/> in the current language, for on-screen labels.</summary>
+        public static string FlagLabel(FlagType type)
+        {
+            switch (type)
+            {
+                case FlagType.Explore: return Loc.S("Explore");
+                case FlagType.ClearThreat: return Loc.S("Clear Threat");
+                case FlagType.Build: return Loc.S("Build");
+                case FlagType.Extract: return Loc.S("Extract");
+                case FlagType.DefendArea: return Loc.S("Defend");
+                case FlagType.ResearchSite: return Loc.S("Research Site");
+                case FlagType.EstablishOutpost: return Loc.S("Outpost");
+                case FlagType.Terraform: return Loc.S("Terraform");
+                default: return Loc.S("flag");
+            }
+        }
+
         private static string FlagWorkLine(SpecialistClass cls, FlagType type)
         {
-            string job = FlagShort(type);
+            string job = FlagLabel(type);
             switch (cls)
             {
-                case SpecialistClass.EngineerBot: return $"Welding {job}. Pay holds.";
+                case SpecialistClass.EngineerBot: return Loc.F("Welding {0}. Pay holds.", job);
                 case SpecialistClass.DefenseMech: return type == FlagType.DefendArea
-                    ? "Holding the rim."
-                    : "Clearing the den.";
-                case SpecialistClass.SentinelMech: return "Watching the perimeter.";
-                case SpecialistClass.Medic: return "Covering the wounded.";
-                case SpecialistClass.HarvesterBot: return "Stripping the node.";
+                    ? Loc.S("Holding the rim.")
+                    : Loc.S("Clearing the den.");
+                case SpecialistClass.SentinelMech: return Loc.S("Watching the perimeter.");
+                case SpecialistClass.Medic: return Loc.S("Covering the wounded.");
+                case SpecialistClass.HarvesterBot: return Loc.S("Stripping the node.");
                 case SpecialistClass.GeologistBot: return type == FlagType.ResearchSite
-                    ? "Sampling for the lab."
-                    : "Reading ore.";
+                    ? Loc.S("Sampling for the lab.")
+                    : Loc.S("Reading ore.");
                 case SpecialistClass.SurveyorBot: return type == FlagType.ResearchSite
-                    ? "Logging the site."
-                    : "Charting ahead.";
+                    ? Loc.S("Logging the site.")
+                    : Loc.S("Charting ahead.");
                 case SpecialistClass.CourierBot: return type == FlagType.EstablishOutpost
-                    ? "Staking the outpost."
-                    : "Running freight.";
-                case SpecialistClass.TerraformerBot: return "Weaving the crust.";
-                default: return $"On {job}.";
+                    ? Loc.S("Staking the outpost.")
+                    : Loc.S("Running freight.");
+                case SpecialistClass.TerraformerBot: return Loc.S("Weaving the crust.");
+                default: return Loc.F("On {0}.", job);
             }
         }
 
@@ -127,9 +148,9 @@ namespace SolarMajesty
         {
             switch (cls)
             {
-                case SpecialistClass.DefenseMech: return "Hunting fauna. No bounty needed.";
-                case SpecialistClass.SentinelMech: return "Pest on the rim — engaging.";
-                default: return "Chasing yard pests.";
+                case SpecialistClass.DefenseMech: return Loc.S("Hunting fauna. No bounty needed.");
+                case SpecialistClass.SentinelMech: return Loc.S("Pest on the rim — engaging.");
+                default: return Loc.S("Chasing yard pests.");
             }
         }
 
@@ -138,35 +159,35 @@ namespace SolarMajesty
             if (reason != null)
             {
                 if (reason.IndexOf("workshop", System.StringComparison.Ordinal) >= 0)
-                    return "At the workshop. Flags nearby pull harder.";
+                    return Loc.S("At the workshop. Flags nearby pull harder.");
                 if (reason.IndexOf("patrol", System.StringComparison.Ordinal) >= 0)
-                    return "Patrolling the Commons.";
+                    return Loc.S("Patrolling the Commons.");
                 if (reason.IndexOf("tinker", System.StringComparison.Ordinal) >= 0)
-                    return "Tinkering in town. Raise EU for Build.";
+                    return Loc.S("Tinkering in town. Raise EU for Build.");
                 if (reason.IndexOf("triage", System.StringComparison.Ordinal) >= 0)
-                    return "Triage at the inn.";
+                    return Loc.S("Triage at the inn.");
                 if (reason.IndexOf("party", System.StringComparison.Ordinal) >= 0)
-                    return "Following the party.";
+                    return Loc.S("Following the party.");
                 if (reason.IndexOf("levy_home", System.StringComparison.Ordinal) >= 0)
-                    return "Walking the purse home. Do not click me.";
+                    return Loc.S("Walking the purse home. Do not click me.");
                 if (reason.IndexOf("levy_collect", System.StringComparison.Ordinal) >= 0)
-                    return "EU is sitting in building purses. Haul will get around to it.";
+                    return Loc.S("EU is sitting in building purses. Haul will get around to it.");
                 if (reason.IndexOf("frontier", System.StringComparison.Ordinal) >= 0)
-                    return "Wandering the apron.";
+                    return Loc.S("Wandering the apron.");
             }
 
             switch (cls)
             {
-                case SpecialistClass.EngineerBot: return "Idle. Build flags need real pay.";
-                case SpecialistClass.DefenseMech: return "Idle. Post Clear Threat or Defend.";
-                case SpecialistClass.SentinelMech: return "Idle. Defend is cheap for me.";
-                case SpecialistClass.Medic: return "Idle near the wounded.";
-                case SpecialistClass.HarvesterBot: return "Idle. Extract is cheap.";
-                case SpecialistClass.GeologistBot: return "Idle. Extract or Research Site.";
-                case SpecialistClass.SurveyorBot: return "Idle. Explore or Research Site.";
-                case SpecialistClass.CourierBot: return "Idle. Explore, Outpost, or walk the levy.";
-                case SpecialistClass.TerraformerBot: return "Idle. Terraform is cheap.";
-                default: return "Idle. Cheap Explore will do.";
+                case SpecialistClass.EngineerBot: return Loc.S("Idle. Build flags need real pay.");
+                case SpecialistClass.DefenseMech: return Loc.S("Idle. Post Clear Threat or Defend.");
+                case SpecialistClass.SentinelMech: return Loc.S("Idle. Defend is cheap for me.");
+                case SpecialistClass.Medic: return Loc.S("Idle near the wounded.");
+                case SpecialistClass.HarvesterBot: return Loc.S("Idle. Extract is cheap.");
+                case SpecialistClass.GeologistBot: return Loc.S("Idle. Extract or Research Site.");
+                case SpecialistClass.SurveyorBot: return Loc.S("Idle. Explore or Research Site.");
+                case SpecialistClass.CourierBot: return Loc.S("Idle. Explore, Outpost, or walk the levy.");
+                case SpecialistClass.TerraformerBot: return Loc.S("Idle. Terraform is cheap.");
+                default: return Loc.S("Idle. Cheap Explore will do.");
             }
         }
     }

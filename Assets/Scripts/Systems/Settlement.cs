@@ -50,12 +50,12 @@ namespace SolarMajesty
             get
             {
                 if (!HasCommons)
-                    return "raise Colony Commons first";
+                    return Loc.S("raise Colony Commons first");
                 if (Treasury < TreasuryGoal)
-                    return $"grow the treasury to {TreasuryGoal:N0} EU (now {Treasury:N0})";
+                    return Loc.F("grow the treasury to {0:N0} EU (now {1:N0})", TreasuryGoal, Treasury);
                 if (NetMetalsPerMin < IncomeGoalPerMin)
-                    return $"keep income at {IncomeGoalPerMin:N0}+ EU/min — Haul, mines, till share";
-                return "holding — keep the treasury and income up";
+                    return Loc.F("keep income at {0:N0}+ EU/min — Haul, mines, till share", IncomeGoalPerMin);
+                return Loc.S("holding — keep the treasury and income up");
             }
         }
 

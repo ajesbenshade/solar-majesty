@@ -16,7 +16,7 @@ namespace SolarMajesty
     {
         public const float WindowSeconds = 60f;
         public const float HintIntervalSeconds = 180f;
-        public const string Hint = "Guard Haul's route with a Defend flag.";
+        public static string Hint => Loc.S("Guard Haul's route with a Defend flag.");
 
         bool _open;
         float _start;
@@ -37,17 +37,17 @@ namespace SolarMajesty
             switch (cause)
             {
                 case LevyLossCause.Destroyed:
-                    facts = $"{who} was destroyed; {amount} EU lost.";
+                    facts = Loc.F("{0} was destroyed; {1} EU lost.", who, amount);
                     break;
                 case LevyLossCause.Mugged:
                     facts = string.IsNullOrEmpty(attacker)
-                        ? $"{who} was mugged for {amount} EU."
-                        : $"{Article(attacker)} {attacker} mugged {who} for {amount} EU.";
+                        ? Loc.F("{0} was mugged for {1} EU.", who, amount)
+                        : Loc.F("{0} {1} mugged {2} for {3} EU.", Article(attacker), Loc.S(attacker), who, amount);
                     break;
                 default:
                     facts = string.IsNullOrEmpty(attacker)
-                        ? $"{who} was hit and dropped {amount} EU."
-                        : $"{who} was hit by {Article(attacker).ToLowerInvariant()} {attacker} and dropped {amount} EU.";
+                        ? Loc.F("{0} was hit and dropped {1} EU.", who, amount)
+                        : Loc.F("{0} was hit by {1} {2} and dropped {3} EU.", who, Article(attacker).ToLowerInvariant(), Loc.S(attacker), amount);
                     break;
             }
             return includeHint ? facts + " " + Hint : facts;

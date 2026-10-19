@@ -60,43 +60,43 @@ namespace SolarMajesty
             var g = RobotGuildCatalog.Get(id);
             if (g == null)
             {
-                line = "No such lodge.";
+                line = Loc.S("No such lodge.");
                 return false;
             }
 
             if (!hallStanding)
             {
-                line = $"Dock {g.HallName} first.";
+                line = Loc.F("Dock {0} first.", g.HallNameText);
                 return false;
             }
 
             if (research == null || !research.IsUnlocked(g.BenefitTech))
             {
-                line = $"Research {g.BenefitName} at the lab.";
+                line = Loc.F("Research {0} at the lab.", g.BenefitNameText);
                 return false;
             }
 
             if (Slot(id, _remain) > 0f)
             {
-                line = $"{g.BenefitName} is already running.";
+                line = Loc.F("{0} is already running.", g.BenefitNameText);
                 return false;
             }
 
             if (Slot(id, _cool) > 0f)
             {
-                line = $"{g.BenefitName} cooling down ({Slot(id, _cool):F0}s).";
+                line = Loc.F("{0} cooling down ({1:F0}s).", g.BenefitNameText, Slot(id, _cool));
                 return false;
             }
 
             if (resources == null || !resources.TrySpend(ResourceId.Metals, g.ActivateCost))
             {
-                line = $"{g.BenefitName} needs {g.ActivateCost} EU.";
+                line = Loc.F("{0} needs {1} EU.", g.BenefitNameText, g.ActivateCost);
                 return false;
             }
 
             SetSlot(id, _remain, g.DurationSeconds);
             SetSlot(id, _cool, 0f);
-            line = $"{g.ShortName}: {g.BenefitName} — {g.ActivateCost} EU.";
+            line = Loc.F("{0}: {1} — {2} EU.", g.ShortNameText, g.BenefitNameText, g.ActivateCost);
             return true;
         }
 

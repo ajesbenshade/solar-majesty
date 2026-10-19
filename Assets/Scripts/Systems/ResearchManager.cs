@@ -245,9 +245,9 @@ namespace SolarMajesty
         {
             var profile = CelestialBodyCatalog.Get(body);
             if (profile == null || profile.LaunchTech == TechId.None)
-                return "departure";
+                return Loc.S("departure");
             var def = TechCatalog.Get(profile.LaunchTech);
-            return def != null ? def.DisplayName : profile.LaunchTech.ToString();
+            return def != null ? def.DisplayNameText : profile.LaunchTech.ToString();
         }
 
         public TechId LaunchTechId(CelestialBodyId body)

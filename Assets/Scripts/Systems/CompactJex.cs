@@ -2,11 +2,16 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Scripted Compact asides for the Majesty toys. Not decree toasts. Not an LLM.
+    ///
+    /// Localization: templated lines are formatted with <c>Loc.F</c> here (no baked clip can match
+    /// them anyway). Fixed lines (<c>=&gt; "..."</c>) are voice-keyed by their exact English text, so they
+    /// return English; Tools/audio/render_voices.py scrapes them and Tools/loc/extract.py collects
+    /// them, and the display path translates them with <c>Loc.S</c> after the voice lookup.
     /// </summary>
     public static class CompactJex
     {
         public static string LevyStolen(int amount, string where) =>
-            $"The purse is gone. {amount} EU walked off {where}. That was not a sale.";
+            Loc.F("The purse is gone. {0} EU walked off {1}. That was not a sale.", amount, where);
 
         /// <summary>
         /// One line for a burst of purse thefts. Templated (the numbers change), so it is
@@ -15,30 +20,31 @@ namespace SolarMajesty
         public static string PestsLifted(int amount, int buildings)
         {
             int n = buildings < 1 ? 1 : buildings;
-            string purses = n == 1 ? "building purse" : "building purses";
-            return $"Pests lifted {amount} EU from {n} {purses}.";
+            return n == 1
+                ? Loc.F("Pests lifted {0} EU from {1} building purse.", amount, n)
+                : Loc.F("Pests lifted {0} EU from {1} building purses.", amount, n);
         }
 
         public static string LevyDelivered(int amount) =>
-            $"Haul dumped {amount} EU at the chest. The walk was the joke.";
+            Loc.F("Haul dumped {0} EU at the chest. The walk was the joke.", amount);
 
         public static string PurseSitting(int amount) =>
-            $"{amount} EU is sitting in building purses. Haul will not teleport it.";
+            Loc.F("{0} EU is sitting in building purses. Haul will not teleport it.", amount);
 
         public static string YardBill(int credits) =>
-            $"The yard wants {credits} EU. Level is the scandal, not the corpse.";
+            Loc.F("The yard wants {0} EU. Level is the scandal, not the corpse.", credits);
 
         public static string YardNeedsBuilding() =>
             "Dock a Fobot Yard. Y is not a miracle. It is an invoice.";
 
         public static string SiphonPaid(int credits, int ice, int reg) =>
-            $"Pad paid out +{credits} EU. −{ice} ICE −{reg} REG. The tank still has lunch.";
+            Loc.F("Pad paid out +{0} EU. −{1} ICE −{2} REG. The tank still has lunch.", credits, ice, reg);
 
         public static string SiphonBlocked(int reserve) =>
-            $"Stall is closed. We do not export lunch until the tank is past {reserve}. Try not dying.";
+            Loc.F("Stall is closed. We do not export lunch until the tank is past {0}. Try not dying.", reserve);
 
         public static string DenCharted(string who) =>
-            $"A den crawled out of the fog. {who} walked it. Clear Threat is now a place, not a rumor.";
+            Loc.F("A den crawled out of the fog. {0} walked it. Clear Threat is now a place, not a rumor.", who);
 
         public static string OpenHandsHint() =>
             "Open Hands: they will take a cheap flag. Hunger is past the greed gate. Courage is not.";

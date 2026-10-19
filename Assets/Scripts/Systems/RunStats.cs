@@ -70,8 +70,8 @@ namespace SolarMajesty
             {
                 var span = TimeSpan.FromSeconds(Seconds);
                 return span.TotalHours >= 1d
-                    ? $"{(int)span.TotalHours}h {span.Minutes}m"
-                    : $"{span.Minutes}m {span.Seconds}s";
+                    ? Loc.F("{0}h {1}m", (int)span.TotalHours, span.Minutes)
+                    : Loc.F("{0}m {1}s", span.Minutes, span.Seconds);
             }
         }
 
@@ -80,21 +80,21 @@ namespace SolarMajesty
         {
             return new List<(string, string)>
             {
-                ("Time served", Duration),
-                ("Bounties posted", FlagsPosted.ToString()),
-                ("Bounties completed", $"{FlagsCompleted}  ({CompletionRate * 100f:F0}%)"),
-                ("Bounties refused", FlagsRefused.ToString()),
-                ("Highest bounty", $"{HighestBounty} EU"),
-                ("Paid out", $"{BountyPaid} EU"),
-                ("Till share", $"{TitheCollected} EU"),
-                ("Modules built", ModulesBuilt.ToString()),
-                ("Modules lost", ModulesLost.ToString()),
-                ("Robots fabricated", RobotsFabricated.ToString()),
-                ("Robots scrapped", $"{RobotsScrapped}  ({ScrapRate * 100f:F0}%)"),
-                ("Fauna cleared", FaunaKilled.ToString()),
-                ("Dens cleared", DensCleared.ToString()),
-                ("Peak population", PeakPopulation.ToString()),
-                ("Tech unlocked", TechUnlocked.ToString())
+                (Loc.S("Time served"), Duration),
+                (Loc.S("Bounties posted"), FlagsPosted.ToString()),
+                (Loc.S("Bounties completed"), Loc.F("{0}  ({1:F0}%)", FlagsCompleted, CompletionRate * 100f)),
+                (Loc.S("Bounties refused"), FlagsRefused.ToString()),
+                (Loc.S("Highest bounty"), Loc.F("{0} EU", HighestBounty)),
+                (Loc.S("Paid out"), Loc.F("{0} EU", BountyPaid)),
+                (Loc.S("Till share"), Loc.F("{0} EU", TitheCollected)),
+                (Loc.S("Modules built"), ModulesBuilt.ToString()),
+                (Loc.S("Modules lost"), ModulesLost.ToString()),
+                (Loc.S("Robots fabricated"), RobotsFabricated.ToString()),
+                (Loc.S("Robots scrapped"), Loc.F("{0}  ({1:F0}%)", RobotsScrapped, ScrapRate * 100f)),
+                (Loc.S("Fauna cleared"), FaunaKilled.ToString()),
+                (Loc.S("Dens cleared"), DensCleared.ToString()),
+                (Loc.S("Peak population"), PeakPopulation.ToString()),
+                (Loc.S("Tech unlocked"), TechUnlocked.ToString())
             };
         }
 
@@ -105,18 +105,18 @@ namespace SolarMajesty
         public string PlaystyleVerdict()
         {
             if (FlagsPosted == 0)
-                return "You posted nothing. The colony built itself or it did not build at all.";
+                return Loc.S("You posted nothing. The colony built itself or it did not build at all.");
             if (ScrapRate > 0.45f)
-                return "You spent robots like ammunition.";
+                return Loc.S("You spent robots like ammunition.");
             if (FlagsRefused > FlagsCompleted && FlagsCompleted > 0)
-                return "Your workforce turned down more than it took. A tight purse, or a hard sell.";
+                return Loc.S("Your workforce turned down more than it took. A tight purse, or a hard sell.");
             if (CompletionRate > 0.85f && HighestBounty > 1400)
-                return "You paid whatever it cost and the work always got done.";
+                return Loc.S("You paid whatever it cost and the work always got done.");
             if (ModulesLost == 0 && FaunaKilled > 10)
-                return "Nothing you built was ever lost.";
+                return Loc.S("Nothing you built was ever lost.");
             if (CompletionRate > 0.7f)
-                return "A steady administration. The bounties were priced about right.";
-            return "A working colony, run on a thin margin.";
+                return Loc.S("A steady administration. The bounties were priced about right.");
+            return Loc.S("A working colony, run on a thin margin.");
         }
     }
 }

@@ -51,13 +51,13 @@ namespace SolarMajesty
         {
             if (!HasRules) return "";
             var parts = new List<string>(5);
-            if (minLevel > 0 && maxLevel > 0) parts.Add($"L{minLevel}–{maxLevel}");
-            else if (minLevel > 0) parts.Add($"L{minLevel}+");
-            else if (maxLevel > 0) parts.Add($"L{maxLevel} or lower");
-            if (onlyClassMask != 0) parts.Add(ClassList(onlyClassMask) + " only");
-            if (bannedClassMask != 0) parts.Add("no " + ClassList(bannedClassMask));
-            if (minHealth > 0f) parts.Add($"HP {Mathf.RoundToInt(minHealth * 100f)}%+");
-            if (strict) parts.Add("strict");
+            if (minLevel > 0 && maxLevel > 0) parts.Add(Loc.F("L{0}–{1}", minLevel, maxLevel));
+            else if (minLevel > 0) parts.Add(Loc.F("L{0}+", minLevel));
+            else if (maxLevel > 0) parts.Add(Loc.F("L{0} or lower", maxLevel));
+            if (onlyClassMask != 0) parts.Add(Loc.F("{0} only", ClassList(onlyClassMask)));
+            if (bannedClassMask != 0) parts.Add(Loc.F("no {0}", ClassList(bannedClassMask)));
+            if (minHealth > 0f) parts.Add(Loc.F("HP {0}%+", Mathf.RoundToInt(minHealth * 100f)));
+            if (strict) parts.Add(Loc.S("strict"));
             return string.Join(" · ", parts);
         }
 
@@ -68,7 +68,7 @@ namespace SolarMajesty
             {
                 if ((mask & Bit(cls)) == 0) continue;
                 if (sb.Length > 0) sb.Append('/');
-                sb.Append(FlagOrdersParser.ShortName(cls));
+                sb.Append(Loc.S(FlagOrdersParser.ShortName(cls)));
             }
             return sb.ToString();
         }
