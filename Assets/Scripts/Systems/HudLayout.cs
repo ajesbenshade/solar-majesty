@@ -128,13 +128,54 @@ namespace SolarMajesty
         /// </summary>
         public static string LevyLine(int tills, int collectors, int bags, int daily)
         {
-            string full = Loc.F("TILLS {0:N0} · COLLECTORS {1} carrying {2:N0} · EU {3:N0}/day", tills, collectors, bags, daily);
-            if (full.Length <= LevyBudget) return full;
-            string mid = Loc.F("TILLS {0:N0} · {1} HAUL · {2:N0} BAGS · EU {3:N0}/day", tills, collectors, bags, daily);
-            if (mid.Length <= LevyBudget) return mid;
-            string compact = Loc.F("TILLS {0:N0} · HAUL {1} · EU {2:N0}/day", tills, collectors, daily);
-            if (compact.Length <= LevyBudget) return compact;
-            return Loc.F("T {0:N0} · C {1} · EU {2:N0}", tills, collectors, daily);
+            var v = LevyVariants(tills, collectors, bags, daily);
+            for (int i = 0; i < v.Length - 1; i++)
+                if (v[i].Length <= LevyBudget) return v[i];
+            return v[v.Length - 1];
+        }
+
+        /// <summary>The levy wordings, most to least verbose.</summary>
+        public static string[] LevyVariants(int tills, int collectors, int bags, int daily) => new[]
+        {
+            Loc.F("TILLS {0:N0} · COLLECTORS {1} carrying {2:N0} · EU {3:N0}/day", tills, collectors, bags, daily),
+            Loc.F("TILLS {0:N0} · {1} HAUL · {2:N0} BAGS · EU {3:N0}/day", tills, collectors, bags, daily),
+            Loc.F("TILLS {0:N0} · HAUL {1} · EU {2:N0}/day", tills, collectors, daily),
+            Loc.F("T {0:N0} · C {1} · EU {2:N0}", tills, collectors, daily),
+        };
+
+        /// <summary>
+        /// First variant whose measured width fits <paramref name="maxWidth"/>; otherwise the shortest
+        /// variant cut with an ellipsis. <paramref name="measure"/> and <paramref name="maxWidth"/> may be
+        /// in different units: <paramref name="scale"/> converts measured width into maxWidth's units
+        /// (leave 1 when both are in the same GUI space).
+        /// </summary>
+        public static string FitText(string[] variants, System.Func<string, float> measure, float maxWidth, float scale = 1f)
+        {
+            if (variants == null || variants.Length == 0) return "";
+            float limit = maxWidth / Mathf.Max(0.01f, scale);
+            for (int i = 0; i < variants.Length; i++)
+                if (measure(variants[i]) <= limit) return variants[i];
+
+            const string ellipsis = "…";
+            string s = variants[variants.Length - 1];
+            for (int n = s.Length - 1; n > 0; n--)
+            {
+                string cut = s.Substring(0, n).TrimEnd() + ellipsis;
+                if (measure(cut) <= limit) return cut;
+            }
+            return measure(ellipsis) <= limit ? ellipsis : "";
+        }
+
+        /// <summary>Levy line that fits <paramref name="maxWidth"/>; identical wording to <see cref="LevyLine"/> when it fits.</summary>
+        public static string LevyLineFit(int tills, int collectors, int bags, int daily,
+            System.Func<string, float> measure, float maxWidth, float scale = 1f)
+        {
+            var v = LevyVariants(tills, collectors, bags, daily);
+            // Keep the char-budget pick as the first choice so wording never changes when it fits.
+            string preferred = LevyLine(tills, collectors, bags, daily);
+            int start = System.Array.IndexOf(v, preferred);
+            if (start > 0) v = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Skip(v, start));
+            return FitText(v, measure, maxWidth, scale);
         }
 
         /// <summary>Income under the treasury number. Stays inside the crest plate.</summary>

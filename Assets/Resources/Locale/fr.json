@@ -6028,11 +6028,6 @@
    "tr": "ne génère pas d'EU"
   },
   {
-   "en": "does not grow MET",
-   "key": "",
-   "tr": "ne génère pas de MET"
-  },
-  {
    "en": "done",
    "key": "",
    "tr": "terminé"
@@ -7018,5 +7013,11 @@
    "tr": "“{0}”  ·  {1} N{2}  ·  {3}"
   }
  ],
- "obsolete": []
+ "obsolete": [
+  {
+   "en": "does not grow MET",
+   "key": "",
+   "tr": "ne génère pas de MET"
+  }
+ ]
 }
