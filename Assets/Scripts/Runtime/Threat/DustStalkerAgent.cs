@@ -66,7 +66,59 @@ namespace SolarMajesty
         public bool IsRaiding => _raiding && IsAlive;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
         public FaunaKind Kind { get; private set; } = FaunaKind.Stalker;
+        /// <summary>English role noun. Stays English: Laya's mob prompt reads it. Show <see cref="RoleLabelShown"/>.</summary>
         public string RoleLabel => string.IsNullOrEmpty(_roleNoun) ? Kind.ToString() : _roleNoun;
+
+        /// <summary><see cref="RoleLabel"/> in the player's language, for on-screen text.</summary>
+        public string RoleLabelShown => Shown(RoleLabel);
+
+        /// <summary>
+        /// Display copy of the English role words held in _roleNoun / _roleVerb, which stay English
+        /// because they also feed the Laya mob prompt.
+        /// </summary>
+        private static string Shown(string role)
+        {
+            if (string.IsNullOrEmpty(role)) return role;
+            if (role.StartsWith("ALPHA ", System.StringComparison.Ordinal))
+                return Loc.F("ALPHA {0}", Shown(role.Substring(6)));
+            return role switch
+            {
+                "MITE" => Loc.S("MITE"),
+                "MITE STEAL" => Loc.S("MITE STEAL"),
+                "LEECH" => Loc.S("LEECH"),
+                "LEECH DRAIN" => Loc.S("LEECH DRAIN"),
+                "WISP" => Loc.S("WISP"),
+                "WISP DRAIN" => Loc.S("WISP DRAIN"),
+                "TICK" => Loc.S("TICK"),
+                "TICK STEAL" => Loc.S("TICK STEAL"),
+                "CREEPER" => Loc.S("CREEPER"),
+                "CREEP STEAL" => Loc.S("CREEP STEAL"),
+                "HOPPER" => Loc.S("HOPPER"),
+                "RAID" => Loc.S("RAID"),
+                "JUNK" => Loc.S("JUNK"),
+                "AGGRO" => Loc.S("AGGRO"),
+                "ROCK MITE" => Loc.S("ROCK MITE"),
+                "ORE STEAL" => Loc.S("ORE STEAL"),
+                "FISSURE LEECH" => Loc.S("FISSURE LEECH"),
+                "FISSURE DRAIN" => Loc.S("FISSURE DRAIN"),
+                "DUST WISP" => Loc.S("DUST WISP"),
+                "DUST DRAIN" => Loc.S("DUST DRAIN"),
+                "ICE WISP" => Loc.S("ICE WISP"),
+                "ICE DRAIN" => Loc.S("ICE DRAIN"),
+                "ROCK TICK" => Loc.S("ROCK TICK"),
+                "DUST TICK" => Loc.S("DUST TICK"),
+                "CAMP STEAL" => Loc.S("CAMP STEAL"),
+                "DUST CREEPER" => Loc.S("DUST CREEPER"),
+                "FARM STEAL" => Loc.S("FARM STEAL"),
+                "ICE CREEPER" => Loc.S("ICE CREEPER"),
+                "ICE STEAL" => Loc.S("ICE STEAL"),
+                "SOIL CREEPER" => Loc.S("SOIL CREEPER"),
+                "DUST HOPPER" => Loc.S("DUST HOPPER"),
+                "SHARD HOPPER" => Loc.S("SHARD HOPPER"),
+                "ASH HOPPER" => Loc.S("ASH HOPPER"),
+                _ => role
+            };
+        }
 
         public static bool IsCampusPest(FaunaKind kind) =>
             kind == FaunaKind.Mite || kind == FaunaKind.Leech ||
@@ -306,7 +358,7 @@ namespace SolarMajesty
             _baseScale = transform.localScale;
             _roleNoun = "ALPHA " + RoleLabel.ToUpperInvariant();
             gameObject.name += "_Alpha";
-            if (_label != null) _label.text = _roleNoun;
+            if (_label != null) _label.text = Shown(_roleNoun);
             ApplyFrenzyScale();
         }
 
@@ -1267,13 +1319,15 @@ namespace SolarMajesty
                 if (show)
                 {
                     if (_retreating)
-                        _label.text = "SCATTER";
+                        _label.text = Loc.S("SCATTER");
                     else if (Kind == FaunaKind.JunkBot)
-                        _label.text = _roleVerb ?? "JUNK";
+                        _label.text = _roleVerb != null ? Shown(_roleVerb) : Loc.S("JUNK");
                     else if (IsCampusPest(Kind))
-                        _label.text = _raiding ? (_roleVerb ?? "RAID") : (_roleNoun ?? "PEST");
+                        _label.text = _raiding
+                            ? (_roleVerb != null ? Shown(_roleVerb) : Loc.S("RAID"))
+                            : (_roleNoun != null ? Shown(_roleNoun) : Loc.S("PEST"));
                     else
-                        _label.text = "AGGRO";
+                        _label.text = Loc.S("AGGRO");
                     if (Camera.main != null)
                     {
                         _label.transform.rotation = Quaternion.LookRotation(

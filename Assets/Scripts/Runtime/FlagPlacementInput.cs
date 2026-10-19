@@ -152,7 +152,7 @@ namespace SolarMajesty
                 out bool treasuryShort);
             bounty = pending;
             if (treasuryShort)
-                _loop?.LogOverseer("Not enough EU to raise that bounty.");
+                _loop?.LogOverseer(Loc.S("Not enough EU to raise that bounty."));
 
             if (selected == null || Mathf.Approximately(selected.CurrentBounty, before))
                 return;
@@ -330,8 +330,8 @@ namespace SolarMajesty
             handle.Orders = _pendingParsed ?? FlagOrdersParser.Parse(_pendingOrders);
             string read = handle.Orders.Summary();
             _loop?.LogOverseer(string.IsNullOrEmpty(read)
-                ? $"Orders posted: \"{_pendingOrders}\" — not understood; heroes will ignore them."
-                : $"Orders posted: {read}");
+                ? Loc.F("Orders posted: \"{0}\" — not understood; heroes will ignore them.", _pendingOrders)
+                : Loc.F("Orders posted: {0}", read));
             if (!handle.Orders.HasRules)
                 LayaFlagOrders.TryUnderstand(handle, _loop); // optional local model, async
             PendingOrders = "";

@@ -160,9 +160,9 @@ namespace SolarMajesty
             string tag = nodeType switch
             {
                 ResourceNodeType.Metals => "EU",
-                ResourceNodeType.Ice => "ICE",
-                ResourceNodeType.Fissile => "PWR",
-                _ => "REG"
+                ResourceNodeType.Ice => Loc.S("ICE"),
+                ResourceNodeType.Fissile => Loc.S("PWR"),
+                _ => Loc.S("REG")
             };
             _yieldLabel.text = IsDepleted ? $"{tag} —" : $"{tag} {remaining}";
             _yieldLabel.color = IsDepleted

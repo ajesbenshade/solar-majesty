@@ -147,7 +147,7 @@ namespace SolarMajesty
                         (_resources == null || _resources.CanAfford(_placer.CostFor(Selected)));
                 if (valid && _placer.ExtraPlacementRule != null)
                     valid = _placer.ExtraPlacementRule(cell, Selected);
-                if (!valid) block = "Can't build there.";
+                if (!valid) block = Loc.S("Can't build there.");
             }
             _blockReason = valid ? null : block;
             ColonyVisualUtility.ApplyGhostTint(_ghost, valid);
