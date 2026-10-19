@@ -279,5 +279,44 @@ namespace SolarMajesty.Tests
             Assert.LessOrEqual(left.xMax + gap, right.xMin + 0.01f,
                 $"expected {left} to clear {right} by {gap}");
         }
+
+        private static float SevenPx(string s) => s.Length * 7f;
+
+        [Test]
+        public void LevyLineFit_WhenWideEnough_KeepsExactWording()
+        {
+            Assert.AreEqual(HudLayout.LevyLine(20, 2, 0, 230),
+                HudLayout.LevyLineFit(20, 2, 0, 230, SevenPx, 10000f));
+            Assert.AreEqual(HudLayout.LevyLine(12345, 12, 999, 99999),
+                HudLayout.LevyLineFit(12345, 12, 999, 99999, SevenPx, 10000f));
+        }
+
+        [Test]
+        public void LevyLineFit_WhenNarrow_ShortensWording()
+        {
+            string wide = HudLayout.LevyLine(20, 2, 0, 230);
+            string narrow = HudLayout.LevyLineFit(20, 2, 0, 230, SevenPx, wide.Length * 7f - 1f);
+            Assert.Less(narrow.Length, wide.Length);
+            Assert.That(narrow, Does.Contain("230"));
+        }
+
+        [Test]
+        public void LevyLineFit_NeverExceedsWidth()
+        {
+            for (float w = 0f; w <= 400f; w += 7f)
+            {
+                string s = HudLayout.LevyLineFit(12345, 12, 999, 99999, SevenPx, w);
+                Assert.LessOrEqual(SevenPx(s), w, $"width {w}: '{s}'");
+            }
+        }
+
+        [Test]
+        public void LevyLineFit_RespectsScale()
+        {
+            string at1 = HudLayout.LevyLineFit(20, 2, 0, 230, SevenPx, 300f, 1f);
+            string at2 = HudLayout.LevyLineFit(20, 2, 0, 230, SevenPx, 300f, 2f);
+            Assert.Less(at2.Length, at1.Length);
+            Assert.LessOrEqual(SevenPx(at2) * 2f, 300f);
+        }
     }
 }

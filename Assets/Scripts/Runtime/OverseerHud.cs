@@ -805,7 +805,11 @@ namespace SolarMajesty
             int bags = village != null ? village.Collectors.GoldInTransit : 0;
             int collectors = village != null ? village.Collectors.Count : 0;
             int daily = village != null ? village.DailyBuildingTax() : 0;
-            GUI.Label(r, HudLayout.LevyLine(tills, collectors, bags, daily), _microCenter);
+            // r and CalcSize are both in GUI.matrix space (the HUD scale is applied by the matrix), so scale = 1.
+            var content = new GUIContent();
+            string line = HudLayout.LevyLineFit(tills, collectors, bags, daily,
+                t => { content.text = t; return _microCenter.CalcSize(content).x; }, r.width);
+            GUI.Label(r, line, _microCenter);
         }
 
         private void DrawClockAndThreat(Rect r)
