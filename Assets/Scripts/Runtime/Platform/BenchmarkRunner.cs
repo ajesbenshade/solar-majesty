@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using Unity.Profiling;
 using UnityEngine.Profiling;
 
 namespace SolarMajesty
@@ -54,8 +55,32 @@ namespace SolarMajesty
             public int errors;
             /// <summary>False when frame times show the OS was not presenting the window; fps is then meaningless.</summary>
             public bool drawn = true;
+            /// <summary>The worst frames: when they happened and what else happened that frame.</summary>
+            public List<Spike> spikes = new List<Spike>();
             public string note;
         }
+
+        [Serializable]
+        private sealed class Spike
+        {
+            public float atSeconds;
+            public float ms;
+            public float saveMs;
+            public bool saveInFrame;
+            public int gcCount;
+            /// <summary>Development builds only: where the frame went, in ms, for the systems that usually own a spike.</summary>
+            public string breakdown;
+        }
+
+        // Profiler markers are only recorded in development builds; in release they read zero.
+        private static readonly string[] SpikeMarkers =
+        {
+            "Update.ScriptRunBehaviourUpdate", "PreLateUpdate.ScriptRunBehaviourLateUpdate",
+            "FixedUpdate.ScriptRunBehaviourFixedUpdate", "FixedUpdate.PhysicsFixedUpdate",
+            "GC.Collect", "Update.ScriptRunDelayedTasks", "PreUpdate.AIUpdatePostScript",
+            "PostLateUpdate.FinishFrameRendering", "Loading.ReadObject", "Destroy"
+        };
+        private readonly List<ProfilerRecorder> _recorders = new List<ProfilerRecorder>();
 
         [Serializable]
         private sealed class Report
@@ -176,6 +201,13 @@ namespace SolarMajesty
             var frames = new List<float>(Mathf.CeilToInt(seconds * 120f));
             float elapsed = 0f, nextHop = 0f;
             int hop = 0;
+            var spikes = new List<Spike>();
+            int gcBefore = GC.CollectionCount(0);
+            if (Debug.isDebugBuild && _recorders.Count == 0)
+            {
+                foreach (string m in SpikeMarkers)
+                    _recorders.Add(ProfilerRecorder.StartNew(ProfilerCategory.Internal, m, 4));
+            }
             while (elapsed < seconds)
             {
                 if (cam != null && elapsed >= nextHop)
@@ -192,8 +224,20 @@ namespace SolarMajesty
                 float dt = Time.unscaledDeltaTime;
                 frames.Add(dt * 1000f);
                 elapsed += dt;
+                if (dt * 1000f > 33.4f)
+                {
+                    int gc = GC.CollectionCount(0);
+                    spikes.Add(new Spike { atSeconds = elapsed, ms = dt * 1000f, saveMs = GameLoop.LastSaveMs, saveInFrame = GameLoop.LastSaveFrame >= Time.frameCount - 1, gcCount = gc - gcBefore, breakdown = Breakdown() });
+                    gcBefore = gc;
+                }
             }
 
+            spikes.Sort((a, b) => b.ms.CompareTo(a.ms));
+            if (spikes.Count > 8) spikes.RemoveRange(8, spikes.Count - 8);
+            result.spikes = spikes;
+            foreach (var s in spikes)
+                Debug.Log(string.Format(CultureInfo.InvariantCulture, "[Benchmark] {0} spike {1:F0} ms at {2:F1}s (save in frame {3}, last save {4:F0} ms, gen0 GCs {5}) {6}",
+                    result.world, s.ms, s.atSeconds, s.saveInFrame, s.saveMs, s.gcCount, s.breakdown));
             frames.Sort();
             int n = frames.Count;
             float sum = 0f;
@@ -231,6 +275,27 @@ namespace SolarMajesty
             Debug.Log(string.Format(CultureInfo.InvariantCulture,
                 "[Benchmark] {0}: {1:F1} fps avg · p50 {2:F1} ms · p99 {3:F1} ms · max {4:F0} ms · {5:F1}% > 33 ms · {6} errors",
                 result.world, result.avgFps, result.p50Ms, result.p99Ms, result.maxMs, result.pctOver33Ms, result.errors));
+        }
+
+        /// <summary>Time per marker in the frame that just ended, which is the slow one being reported.</summary>
+        private string Breakdown()
+        {
+            if (_recorders.Count == 0) return "";
+            var sb = new StringBuilder();
+            for (int i = 0; i < _recorders.Count; i++)
+            {
+                var r = _recorders[i];
+                if (!r.Valid || r.Count == 0) continue;
+                double ms = r.LastValue / 1e6;
+                if (ms >= 2.0) sb.Append(SpikeMarkers[i]).Append('=').Append(ms.ToString("F0", CultureInfo.InvariantCulture)).Append(' ');
+            }
+            return sb.ToString().Trim();
+        }
+
+        private void OnDestroy()
+        {
+            foreach (var r in _recorders) r.Dispose();
+            _recorders.Clear();
         }
 
         private static void ApplyRequestedResolution()

@@ -79,17 +79,33 @@ namespace SolarMajesty
             return mesh;
         }
 
+        // Managed copies of the terrain mesh, kept so a graded pad does not reallocate ~5 MB of
+        // vertex/colour/normal arrays (mesh.vertices copies the whole thing on every read).
+        private static Mesh _cachedMesh;
+        private static Vector3[] _verts;
+        private static Color[] _colors;
+        private static Vector3[] _normals;
+
         /// <summary>
         /// Re-read heights inside a world-space rectangle after <see cref="TerrainDataBake.LevelFootprint"/>
-        /// graded a pad. Only the touched vertices move; normals are recomputed for the mesh.
+        /// graded a pad. Only the touched vertices move, and only their normals are recomputed:
+        /// the whole-mesh RecalculateNormals plus array copies cost tens of ms each time a building landed.
         /// </summary>
         public static void RefreshRegion(Mesh mesh, TerrainBake bake, Vector3 center, Vector2 halfExtents)
         {
             if (mesh == null || bake == null) return;
             int n = Resolution;
             if (mesh.vertexCount != n * n) return;
-            var verts = mesh.vertices;
-            var colors = mesh.colors;
+            if (_cachedMesh != mesh || _verts == null || _verts.Length != n * n)
+            {
+                _cachedMesh = mesh;
+                _verts = mesh.vertices;
+                _colors = mesh.colors;
+                _normals = mesh.normals;
+                if (_normals == null || _normals.Length != _verts.Length) _normals = new Vector3[_verts.Length];
+            }
+            var verts = _verts;
+            var colors = _colors;
             float sx = bake.WorldWidth / (n - 1), sz = bake.WorldHeight / (n - 1);
             int i0 = Mathf.Max(0, Mathf.FloorToInt((center.x - halfExtents.x) / sx) - 1);
             int i1 = Mathf.Min(n - 1, Mathf.CeilToInt((center.x + halfExtents.x) / sx) + 1);
@@ -105,10 +121,30 @@ namespace SolarMajesty
                 if (colors != null && colors.Length == verts.Length)
                     colors[k] = VertexColor(bake, v.x, v.z, v.y);
             }
-            mesh.vertices = verts;
-            if (colors != null && colors.Length == verts.Length) mesh.colors = colors;
-            mesh.RecalculateNormals();
+            // Normals from the height grid, one ring wider so the pad's edge blends into its neighbours.
+            int ni0 = Mathf.Max(0, i0 - 1), ni1 = Mathf.Min(n - 1, i1 + 1);
+            int nj0 = Mathf.Max(0, j0 - 1), nj1 = Mathf.Min(n - 1, j1 + 1);
+            for (int j = nj0; j <= nj1; j++)
+            for (int i = ni0; i <= ni1; i++)
+                _normals[j * n + i] = GridNormal(verts, n, i, j, sx, sz);
+
+            mesh.SetVertices(verts);
+            if (colors != null && colors.Length == verts.Length) mesh.SetColors(colors);
+            mesh.SetNormals(_normals);
             mesh.RecalculateBounds();
+        }
+
+        /// <summary>Central-difference normal of a height-grid vertex (one-sided at the border).</summary>
+        public static Vector3 GridNormal(Vector3[] verts, int n, int i, int j, float sx, float sz)
+        {
+            int k = j * n + i;
+            int l = i > 0 ? k - 1 : k, r = i < n - 1 ? k + 1 : k;
+            int d = j > 0 ? k - n : k, u = j < n - 1 ? k + n : k;
+            float dx = (r - l) * sx; // 2 cells inside, 1 at the edge
+            float dz = ((u - d) / n) * sz;
+            float slopeX = dx > 0f ? (verts[r].y - verts[l].y) / dx : 0f;
+            float slopeZ = dz > 0f ? (verts[u].y - verts[d].y) / dz : 0f;
+            return new Vector3(-slopeX, 1f, -slopeZ).normalized;
         }
 
         /// <summary>R exposure (height), GBA base splat for shaders that read vertex colour.</summary>

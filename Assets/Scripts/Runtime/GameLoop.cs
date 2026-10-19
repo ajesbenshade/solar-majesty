@@ -1257,6 +1257,7 @@ namespace SolarMajesty
             Time.timeScale = 0f;
             ApplyTool(OverseerTool.None);
             PersistSession();
+            SaveSystem.Flush(); // a paused colony is on disk: the player may close the game from here
         }
 
         public void ResumePlay()
@@ -1297,12 +1298,14 @@ namespace SolarMajesty
         public void ReturnToTitle()
         {
             PersistSession();
+            SaveSystem.Flush();
             EnterTitle();
         }
 
         public void QuitDemo()
         {
             PersistSession();
+            SaveSystem.Flush();
             Time.timeScale = 1f;
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
@@ -1874,6 +1877,7 @@ namespace SolarMajesty
             try
             {
                 PersistSession();
+                SaveSystem.Flush();
                 GamePrefs.Save();
             }
             catch (System.Exception e)
@@ -2122,17 +2126,25 @@ namespace SolarMajesty
             if (!Placer.TryRestore(data, origin, world, 1f, out _))
                 return false;
 
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             Transform root = buildingRoot != null ? buildingRoot : transform;
             GameObject go = ModularBuildingFactory.Spawn(data.category, world, root, fw, fh, grid.CellSize);
             go.name = $"Bld_Village_{data.category}";
+            double tSpawn = sw.Elapsed.TotalMilliseconds;
             TerrainGrading.LevelUnder(go);
+            double tGrade = sw.Elapsed.TotalMilliseconds;
             CampusNavMesh.AddObstacle(go);
             Village?.RegisterPlacedBuilding(data, data.category, go, world);
             CampusDressing.DressPlaced(data, go, _body);
+            double tDress = sw.Elapsed.TotalMilliseconds;
             DemoVfx.BuildComplete(world);
             if (_campusNav != null)
                 NotifyCampusExpanded();
             PersistSession();
+            double tTotal = sw.Elapsed.TotalMilliseconds;
+            if (tTotal > 30.0)
+                Debug.Log($"[Perf] village {data.category}: spawn {tSpawn:F0} ms, grade {tGrade - tSpawn:F0} ms, " +
+                          $"dress {tDress - tGrade:F0} ms, rest {tTotal - tDress:F0} ms");
             return true;
         }
 
@@ -5186,6 +5198,8 @@ namespace SolarMajesty
 
         private static void ReloadActiveScene()
         {
+            TerrainGrading.CompletePending(); // a worker may still be reading the old ground mesh
+            SaveSystem.Flush();
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             UnityEngine.SceneManagement.SceneManager.LoadScene(scene.buildIndex);
         }
@@ -5780,6 +5794,22 @@ namespace SolarMajesty
 
         private void PersistSession()
         {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            PersistSessionNow();
+            watch.Stop();
+            LastSaveMs = (float)watch.Elapsed.TotalMilliseconds;
+            LastSaveFrame = Time.frameCount;
+            if (LastSaveMs > 30f)
+                Debug.Log($"[Save] autosave took {LastSaveMs:F0} ms");
+        }
+
+        /// <summary>Main-thread cost of the last save, for the benchmark's spike report.</summary>
+        public static float LastSaveMs { get; private set; }
+
+        public static int LastSaveFrame { get; private set; } = -1;
+
+        private void PersistSessionNow()
+        {
             DemoSettings.WriteStockpile(Resources);
             DemoSettings.WriteRoster(celestialBody, SpecialistRoster.Encode(CaptureRoster()));
             if (Placer != null)
@@ -5789,11 +5819,15 @@ namespace SolarMajesty
             }
 
             var snapshot = CaptureSave("autosave");
-            SaveSystem.WriteWorld(snapshot);
-            SaveSystem.Write(SaveSystem.AutosaveSlot, snapshot);
             int home = CampaignSlots.ActiveSlot;
+            var paths = new List<string>(3)
+            {
+                SaveSystem.WorldPath(celestialBody),
+                SaveSystem.SlotPath(SaveSystem.AutosaveSlot)
+            };
             if (CampaignSlots.IsPlayerSlot(home))
-                SaveSystem.Write(home, snapshot);
+                paths.Add(SaveSystem.SlotPath(home));
+            SaveSystem.WriteAutosave(snapshot, paths);
         }
 
         /// <summary>Player-triggered save into one of the numbered slots.</summary>

@@ -65,7 +65,7 @@ namespace SolarMajesty.EditorTools
                 locationPathName = outputPath,
                 target = target,
                 targetGroup = BuildPipeline.GetBuildTargetGroup(target),
-                options = BuildOptions.None
+                options = HasArg("-smDevelopment") ? BuildOptions.Development : BuildOptions.None
             };
 
             Debug.Log($"[Build] {target} -> {outputPath} ({scenes.Length} scene(s))");
@@ -171,6 +171,9 @@ namespace SolarMajesty.EditorTools
                 return null;
             }
         }
+
+        private static bool HasArg(string flag) =>
+            Array.IndexOf(Environment.GetCommandLineArgs(), flag) >= 0;
 
         private static string ArgValue(string flag)
         {
