@@ -185,6 +185,11 @@ namespace SolarMajesty
 
             if (loop.IsTutorialActive) loop.SkipTutorial();
             ApplyRequestedResolution(); // the game re-applies the player's saved display settings on boot
+            int quality = (int)ParseFloat(ArgValue("-benchmarkQuality"), -1f);
+            if (quality >= 0 && quality < QualitySettings.names.Length)
+                QualitySettings.SetQualityLevel(quality, true);
+            QualitySettings.vSyncCount = 0; // a quality level brings its own vsync; measure uncapped
+            Application.targetFrameRate = -1;
             SimSpeed.Set(speedIndex);
             Time.timeScale = SimSpeed.TimeScale;
 
@@ -196,6 +201,18 @@ namespace SolarMajesty
 
             float t = 0f;
             while (t < Warmup) { t += Time.unscaledDeltaTime; yield return null; }
+
+            if (HasArg("-benchmarkShots") && cam != null)
+            {
+                // Same framing every run, so tiers and builds can be compared side by side.
+                cam.FocusOn(ColonyLayout.CampusOrigin, 14f);
+                float settle = 0f;
+                while (settle < 1.5f) { settle += Time.unscaledDeltaTime; yield return null; }
+                string q = QualitySettings.names[QualitySettings.GetQualityLevel()].Replace(' ', '_');
+                ScreenCapture.CaptureScreenshot(Path.Combine(ErrorLog.Directory, $"shot-{body}-{q}.png"));
+                yield return null;
+                yield return null;
+            }
 
             int errorsBefore = ErrorLog.Count;
             var frames = new List<float>(Mathf.CeilToInt(seconds * 120f));
@@ -298,6 +315,9 @@ namespace SolarMajesty
             _recorders.Clear();
         }
 
+        private static float RenderScale() =>
+            QualitySettings.renderPipeline is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset urp ? urp.renderScale : 1f;
+
         private static void ApplyRequestedResolution()
         {
             int w = (int)ParseFloat(ArgValue("-screen-width"), 0f);
@@ -326,7 +346,7 @@ namespace SolarMajesty
                 gpu = SystemInfo.graphicsDeviceName,
                 gpuMemoryMb = SystemInfo.graphicsMemorySize,
                 ramMb = SystemInfo.systemMemorySize,
-                resolution = $"{Screen.width}x{Screen.height}",
+                resolution = $"{Screen.width}x{Screen.height} (render scale {RenderScale():F2})",
                 quality = QualitySettings.names.Length > 0 ? QualitySettings.names[QualitySettings.GetQualityLevel()] : "",
                 startedUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 passed = _results.Count > 0 && _results.TrueForAll(r => r.errors == 0 && string.IsNullOrEmpty(r.note)),

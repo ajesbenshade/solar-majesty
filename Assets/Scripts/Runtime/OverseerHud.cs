@@ -78,6 +78,7 @@ namespace SolarMajesty
         private GUIStyle _brand;
         private GUIStyle _section;
         private GUIStyle _body;
+        private GUIStyle _bodyWrap;
         private GUIStyle _muted;
         private GUIStyle _micro;
         private GUIStyle _microRight;
@@ -433,6 +434,7 @@ namespace SolarMajesty
             _brand = Label(display, 17, FontStyle.Bold, TextPrimary, TextAnchor.MiddleLeft);
             _section = Label(display, 11, FontStyle.Bold, Gold, TextAnchor.MiddleLeft);
             _body = Label(body, 12, FontStyle.Normal, TextPrimary, TextAnchor.MiddleLeft);
+            _bodyWrap = null; // rebuilt from _body on next use
             _muted = Label(body, 11, FontStyle.Normal, TextMuted, TextAnchor.MiddleLeft);
             _micro = Label(body, 10, FontStyle.Normal, TextMuted, TextAnchor.MiddleLeft);
             _microRight = Label(body, 10, FontStyle.Normal, TextMuted, TextAnchor.MiddleRight);
@@ -2631,9 +2633,16 @@ namespace SolarMajesty
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.03f, 0.05f), 0.35f);
             _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
+            // Lines wrap and the card grows to fit; a fixed one-row label clipped longer story lines.
+            const float cardW = 540f;
+            if (_bodyWrap == null) _bodyWrap = new GUIStyle(_body) { wordWrap = true, alignment = TextAnchor.UpperLeft };
+            float textW = cardW - Pad * 2f;
             int lines = cut.Body != null ? cut.Body.Length : 0;
-            float h = 100f + lines * 28f;
-            var rect = new Rect((_sw - 540f) * 0.5f, _sh * 0.22f, 540f, h);
+            float bodyH = 0f;
+            for (int i = 0; i < lines; i++)
+                bodyH += Mathf.Max(18f, _bodyWrap.CalcHeight(new GUIContent(cut.Body[i]), textW)) + 10f;
+            float h = 100f + bodyH;
+            var rect = new Rect((_sw - cardW) * 0.5f, _sh * 0.22f, cardW, h);
             var c = Panel(rect, null, false);
             HudSkin.ModalChrome(rect, Gold);
             _hitRects.Add(rect);
@@ -2644,13 +2653,11 @@ namespace SolarMajesty
             _banner.normal.textColor = prev;
 
             float y = c.y + 34f;
-            if (cut.Body != null)
+            for (int i = 0; i < lines; i++)
             {
-                for (int i = 0; i < cut.Body.Length; i++)
-                {
-                    GUI.Label(new Rect(c.x, y, c.width, 26f), cut.Body[i], _body);
-                    y += 28f;
-                }
+                float lineH = Mathf.Max(18f, _bodyWrap.CalcHeight(new GUIContent(cut.Body[i]), c.width));
+                GUI.Label(new Rect(c.x, y + 5f, c.width, lineH), cut.Body[i], _bodyWrap);
+                y += lineH + 10f;
             }
 
             if (GUI.Button(new Rect(c.x, c.yMax - 30f, 180f, 30f), "CONTINUE  ·  SPACE", _chipOn))

@@ -106,7 +106,8 @@ is in it being honest, not in it being all ticked.
 - [x] Benchmark/soak mode (`-benchmark`, [run_benchmark.ps1](../Tools/qa/run_benchmark.ps1)): all five worlds run 30–40 s at 3× with 0 errors; the ~120 ms NavMesh hitch on campus growth is fixed (async rebuild)
 - [x] Measured on a high-end PC (Ryzen 9 7900X, RTX 3080, 1080p Ultra, 2026-10-19): 450–574 fps average, worst frame ≤ 26 ms on every world after removing the autosave (~35 ms + GC) and terrain-grading (77 ms) main-thread work
 - [ ] 60 fps on minimum-spec hardware: run [run_benchmark.ps1](../Tools/qa/run_benchmark.ps1) on a low-end PC with the desktop unlocked; 200-agent stress still unmeasured
-- [ ] Real low/medium graphics tiers: only Ultra has its own URP asset, the other five quality levels share one, so "Low" saves little
+- [x] Real graphics tiers: Low (80% + FSR, no SSAO, 1 shadow cascade to 60 m), Medium (no MSAA/SSAO), High (2x MSAA, 2 cascades), Ultra unchanged; regenerate with **Solar Majesty → Render → Create Quality Tiers**. First launch picks a tier from the GPU ([QualityAutoDetect.cs](../Assets/Scripts/Systems/QualityAutoDetect.cs)). Screenshots checked on Earth and Mars at Low/Medium/Ultra
+- [ ] Low tier measured on an actual integrated GPU
 - [ ] Full playthrough on all five bodies without an exception
 - [ ] Steam page, capsule art, screenshots
 - [ ] Steam content survey incl. AI disclosure (draft text in [STEAM_RELEASE.md](STEAM_RELEASE.md))

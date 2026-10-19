@@ -20,7 +20,11 @@ param(
   [int]$Width = 1920,
   [int]$Height = 1080,
   [switch]$Fullscreen,
-  [switch]$KeepTemp
+  [switch]$KeepTemp,
+  # 0 Very Low .. 5 Ultra; omit to use the game's own pick for this PC.
+  [int]$Quality = -1,
+  # Save a same-framing screenshot of each world to Logs\shot-<world>-<quality>.png.
+  [switch]$Shots
 )
 $ErrorActionPreference = 'Stop'
 $exe = Join-Path (Resolve-Path $GameDir).Path 'SolarMajesty.exe'
@@ -36,6 +40,8 @@ $gameArgs = "-benchmark -benchmarkBodies $Bodies -benchmarkSeconds $Seconds -ben
   "-saveDir `"$(Join-Path $tmp 'Saves')`" -profileDir `"$(Join-Path $tmp 'Profile')`" " +
   "-nosteam -noai -screen-width $Width -screen-height $Height -screen-fullscreen $(if ($Fullscreen) { '1' } else { '0' }) " +
   "-logFile `"$(Join-Path $tmp 'Player.log')`""
+if ($Quality -ge 0) { $gameArgs += " -benchmarkQuality $Quality" }
+if ($Shots) { $gameArgs += " -benchmarkShots" }
 
 Write-Host "[bench] $Bodies, ${Seconds}s each, ${Width}x$Height" -ForegroundColor Yellow
 $p = Start-Process $exe -ArgumentList $gameArgs -PassThru
