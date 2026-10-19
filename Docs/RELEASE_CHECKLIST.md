@@ -29,7 +29,7 @@ is in it being honest, not in it being all ticked.
 - [x] Restore of live robots and fauna positions, den scouted/cleared, node remaining, mission hold, and formed parties
 - [x] Alert feed with dedupe, severity, and jump-to ([AlertFeed.cs](../Assets/Scripts/Systems/AlertFeed.cs))
 - [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs))
-- [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs))
+- [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs)); evaluated every 2 s of play; Solar Conquest is campaign-wide (it was unreachable); per-world stats survive Continue
 - [x] Named robots with service records ([SpecialistIdentity.cs](../Assets/Scripts/Systems/SpecialistIdentity.cs))
 - [x] Campaign progress and settings in a file ([GamePrefs.cs](../Assets/Scripts/Systems/GamePrefs.cs)) so Steam Cloud syncs the whole campaign; registry values migrate on first read
 - [x] Developer cheats (F10 hop, Shift+click unlock, F8/F9/R) gated to editor, dev builds and `-devtools` ([DevTools.cs](../Assets/Scripts/Systems/DevTools.cs))
@@ -78,7 +78,7 @@ is in it being honest, not in it being all ticked.
 - [x] Map overlays for power, threat, and defence coverage ([MapOverlay.cs](../Assets/Scripts/Runtime/UI/MapOverlay.cs))
 - [ ] Remaining IMGUI panels migrated to UI Toolkit (`OverseerHud.cs` is still ~2,100 lines)
 - [ ] Tooltips on every panel
-- [ ] Controls screen generated from `InputBindings` (the binding system exists; the screen does not)
+- [x] Controls screen generated from `InputBindings`: Settings → CONTROLS, click to rebind, conflict and reserved-key refusal, reset
 
 ## Accessibility
 
@@ -88,7 +88,7 @@ is in it being honest, not in it being all ticked.
 - [x] Severity carried by icon and text prefix as well as colour
 - [x] Frame cap selector
 - [x] Rebindable keys with conflict rejection ([InputBindings.cs](../Assets/Scripts/Systems/InputBindings.cs))
-- [ ] Runtime input routed through `InputBindings` (roughly 100 literal `KeyCode` sites remain)
+- [x] Runtime input routed through `InputBindings` (33 actions; hints and tutorial copy follow rebinds via `{key:Action}` tokens). Fixed by design: Esc, number keys 0–9, modifiers, mouse, dialog Enter/Space
 - [ ] Gamepad support
 - [ ] Independent UI text scaling
 
@@ -103,7 +103,9 @@ is in it being honest, not in it being all ticked.
 
 - [ ] **The 45–90 minute external playtest** ([PLAYTEST_PROTOCOL.md](PLAYTEST_PROTOCOL.md)) — still the single
       largest open risk; nobody outside the project has played this
-- [ ] 60 fps with 200 agents, profiled rather than assumed
+- [x] Benchmark/soak mode (`-benchmark`, [run_benchmark.ps1](../Tools/qa/run_benchmark.ps1)): all five worlds run 30–40 s at 3× with 0 errors; the ~120 ms NavMesh hitch on campus growth is fixed (async rebuild)
+- [ ] 60 fps on minimum-spec hardware: run the benchmark with the desktop **unlocked** (locked-screen runs report `drawn=false`); 200-agent stress still unmeasured
+- [ ] Real low/medium graphics tiers: only Ultra has its own URP asset, the other five quality levels share one, so "Low" saves little
 - [ ] Full playthrough on all five bodies without an exception
 - [ ] Steam page, capsule art, screenshots
 - [ ] Steam content survey incl. AI disclosure (draft text in [STEAM_RELEASE.md](STEAM_RELEASE.md))
