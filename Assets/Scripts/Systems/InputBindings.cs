@@ -175,7 +175,7 @@ namespace SolarMajesty
             if (_loaded) return;
             _loaded = true;
 
-            string raw = PlayerPrefs.GetString(PrefsKey, "");
+            string raw = GamePrefs.GetString(PrefsKey, "");
             if (string.IsNullOrEmpty(raw)) return;
 
             string[] entries = raw.Split(';');
@@ -201,8 +201,8 @@ namespace SolarMajesty
                 sb.Append((int)kv.Key).Append(':').Append((int)kv.Value);
                 first = false;
             }
-            PlayerPrefs.SetString(PrefsKey, sb.ToString());
-            PlayerPrefs.Save();
+            GamePrefs.SetString(PrefsKey, sb.ToString());
+            GamePrefs.Save();
         }
     }
 }

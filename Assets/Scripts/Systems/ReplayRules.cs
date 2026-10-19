@@ -151,19 +151,19 @@ namespace SolarMajesty
 
         public static void Load()
         {
-            Mode = (ColonyRunMode)Mathf.Clamp(PlayerPrefs.GetInt(ModeKey, 0), 0, 1);
-            Challenge = (ChallengeId)Mathf.Clamp(PlayerPrefs.GetInt(ChallengeKey, 0), 0, 3);
-            Stance = (DoctrineStance)Mathf.Clamp(PlayerPrefs.GetInt(StanceKey, 0), 0, 3);
-            Ironman = PlayerPrefs.GetInt(IronmanKey, 0) == 1;
+            Mode = (ColonyRunMode)Mathf.Clamp(GamePrefs.GetInt(ModeKey, 0), 0, 1);
+            Challenge = (ChallengeId)Mathf.Clamp(GamePrefs.GetInt(ChallengeKey, 0), 0, 3);
+            Stance = (DoctrineStance)Mathf.Clamp(GamePrefs.GetInt(StanceKey, 0), 0, 3);
+            Ironman = GamePrefs.GetInt(IronmanKey, 0) == 1;
         }
 
         public static void Save()
         {
-            PlayerPrefs.SetInt(ModeKey, (int)Mode);
-            PlayerPrefs.SetInt(ChallengeKey, (int)Challenge);
-            PlayerPrefs.SetInt(StanceKey, (int)Stance);
-            PlayerPrefs.SetInt(IronmanKey, Ironman ? 1 : 0);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(ModeKey, (int)Mode);
+            GamePrefs.SetInt(ChallengeKey, (int)Challenge);
+            GamePrefs.SetInt(StanceKey, (int)Stance);
+            GamePrefs.SetInt(IronmanKey, Ironman ? 1 : 0);
+            GamePrefs.Save();
         }
 
         /// <summary>Copy the title-screen preference into the live run. Call from EnterPlaying when not restoring a save.</summary>
@@ -199,11 +199,11 @@ namespace SolarMajesty
             Stance = DoctrineStance.Balanced;
             Ironman = false;
             IronmanRun = false;
-            PlayerPrefs.DeleteKey(ModeKey);
-            PlayerPrefs.DeleteKey(ChallengeKey);
-            PlayerPrefs.DeleteKey(StanceKey);
-            PlayerPrefs.DeleteKey(IronmanKey);
-            PlayerPrefs.Save();
+            GamePrefs.DeleteKey(ModeKey);
+            GamePrefs.DeleteKey(ChallengeKey);
+            GamePrefs.DeleteKey(StanceKey);
+            GamePrefs.DeleteKey(IronmanKey);
+            GamePrefs.Save();
         }
     }
 }

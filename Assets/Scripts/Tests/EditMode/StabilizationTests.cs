@@ -63,8 +63,8 @@ namespace SolarMajesty.Tests
         {
             bool demo = DemoSettings.FirstHourDemo;
             const string key = "SM_CampaignResearch";
-            bool had = PlayerPrefs.HasKey(key);
-            string previous = PlayerPrefs.GetString(key);
+            bool had = GamePrefs.HasKey(key);
+            string previous = GamePrefs.GetString(key);
             try
             {
                 DemoSettings.FirstHourDemo = true;
@@ -87,8 +87,8 @@ namespace SolarMajesty.Tests
             finally
             {
                 DemoSettings.FirstHourDemo = demo;
-                if (had) PlayerPrefs.SetString(key, previous); else PlayerPrefs.DeleteKey(key);
-                PlayerPrefs.Save();
+                if (had) GamePrefs.SetString(key, previous); else GamePrefs.DeleteKey(key);
+                GamePrefs.Save();
             }
         }
 
@@ -96,8 +96,8 @@ namespace SolarMajesty.Tests
         public void SwitchedResearch_RoundTripsAllProjects_WithoutDuplicatingScience()
         {
             const string key = "SM_CampaignResearch";
-            bool had = PlayerPrefs.HasKey(key);
-            string previous = PlayerPrefs.GetString(key);
+            bool had = GamePrefs.HasKey(key);
+            string previous = GamePrefs.GetString(key);
             bool demo = DemoSettings.FirstHourDemo;
             try
             {
@@ -119,8 +119,8 @@ namespace SolarMajesty.Tests
             finally
             {
                 DemoSettings.FirstHourDemo = demo;
-                if (had) PlayerPrefs.SetString(key, previous); else PlayerPrefs.DeleteKey(key);
-                PlayerPrefs.Save();
+                if (had) GamePrefs.SetString(key, previous); else GamePrefs.DeleteKey(key);
+                GamePrefs.Save();
             }
         }
 

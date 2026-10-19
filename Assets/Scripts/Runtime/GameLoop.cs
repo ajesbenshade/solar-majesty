@@ -4675,7 +4675,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// EditMode hookup tests arm threat without booting <see cref="Awake"/>,
-        /// which reads the player save folder and PlayerPrefs.
+        /// which reads the player save folder and GamePrefs.
         /// </summary>
         internal void ArmThreat(ThreatPressure threat) => Threat = threat ?? new ThreatPressure();
 
@@ -4942,8 +4942,8 @@ namespace SolarMajesty
             DemoSettings.WriteRoster(celestialBody, "");
             // A retry starts a funded new colony, not the previous losing stockpile.
             DemoSettings.SaveExists = false;
-            PlayerPrefs.SetInt(DemoSettings.SaveFlagKey, 0);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(DemoSettings.SaveFlagKey, 0);
+            GamePrefs.Save();
         }
 
         public void RestartMission()
@@ -5001,8 +5001,8 @@ namespace SolarMajesty
             if (DemoSettings.FirstHourDemo)
             {
                 DemoSettings.FirstHourDemo = false;
-                PlayerPrefs.SetInt(DemoSettings.FirstHourKey, 0);
-                PlayerPrefs.Save();
+                GamePrefs.SetInt(DemoSettings.FirstHourKey, 0);
+                GamePrefs.Save();
             }
             if (SimSpeed.IsPaused)
                 SimSpeed.Resume();

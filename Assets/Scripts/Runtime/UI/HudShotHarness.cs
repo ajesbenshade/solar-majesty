@@ -30,12 +30,12 @@ namespace SolarMajesty
 
             // The preview build has its own product name, so this only wipes its own state: every run
             // starts from an empty claim instead of a campus restored from the last run.
-            PlayerPrefs.DeleteAll();
+            GamePrefs.DeleteAll();
             SaveSystem.DeleteAll();
-            PlayerPrefs.SetInt(DemoSettings.FirstHourKey, body == CelestialBodyId.Earth ? 1 : 0);
-            PlayerPrefs.SetInt(DemoSettings.FullscreenKey, 0);
-            PlayerPrefs.SetInt(DemoSettings.TutorialKey, 0);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(DemoSettings.FirstHourKey, body == CelestialBodyId.Earth ? 1 : 0);
+            GamePrefs.SetInt(DemoSettings.FullscreenKey, 0);
+            GamePrefs.SetInt(DemoSettings.TutorialKey, 0);
+            GamePrefs.Save();
             CampaignProgress.DebugUnlockAll();
             DemoSettings.ClearSave();
             BodySeed.SetBody(body);

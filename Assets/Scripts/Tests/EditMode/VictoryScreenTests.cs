@@ -115,7 +115,7 @@ namespace SolarMajesty.Tests
 
             Assert.AreEqual(CelestialBodyId.Luna, CampaignProgress.HighestUnlocked);
             Assert.IsTrue(CampaignProgress.IsUnlocked(CelestialBodyId.Luna));
-            Assert.AreEqual((int)CelestialBodyId.Luna, PlayerPrefs.GetInt(CampaignProgress.MaxKey));
+            Assert.AreEqual((int)CelestialBodyId.Luna, GamePrefs.GetInt(CampaignProgress.MaxKey));
             Assert.AreEqual("SM_CampaignMaxBody", CampaignProgress.MaxKey);
         }
 

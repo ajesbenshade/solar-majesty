@@ -29,7 +29,7 @@ namespace SolarMajesty
 
         public static void Load()
         {
-            string saved = PlayerPrefs.GetString(PrefsKey, DefaultLanguage);
+            string saved = GamePrefs.GetString(PrefsKey, DefaultLanguage);
             SetLanguage(saved);
         }
 
@@ -41,8 +41,8 @@ namespace SolarMajesty
             Table.Clear();
             Missing.Clear();
 
-            PlayerPrefs.SetString(PrefsKey, code);
-            PlayerPrefs.Save();
+            GamePrefs.SetString(PrefsKey, code);
+            GamePrefs.Save();
 
             if (code == DefaultLanguage) return;   // English is the source; no table needed.
 

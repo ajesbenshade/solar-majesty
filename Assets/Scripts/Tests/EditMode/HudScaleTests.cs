@@ -54,19 +54,19 @@ namespace SolarMajesty.Tests
             int[] prevInt = new int[ints.Length];
             for (int i = 0; i < floats.Length; i++)
             {
-                hadFloat[i] = PlayerPrefs.HasKey(floats[i]);
-                prevFloat[i] = PlayerPrefs.GetFloat(floats[i], 0f);
+                hadFloat[i] = GamePrefs.HasKey(floats[i]);
+                prevFloat[i] = GamePrefs.GetFloat(floats[i], 0f);
             }
             for (int i = 0; i < ints.Length; i++)
             {
-                hadInt[i] = PlayerPrefs.HasKey(ints[i]);
-                prevInt[i] = PlayerPrefs.GetInt(ints[i], 0);
+                hadInt[i] = GamePrefs.HasKey(ints[i]);
+                prevInt[i] = GamePrefs.GetInt(ints[i], 0);
             }
 
             try
             {
-                PlayerPrefs.DeleteKey(DemoSettings.HudAutoKey);
-                PlayerPrefs.Save();
+                GamePrefs.DeleteKey(DemoSettings.HudAutoKey);
+                GamePrefs.Save();
                 DemoSettings.Load();
                 Assert.IsTrue(DemoSettings.HudScaleAuto, "A missing auto key stays on auto.");
 
@@ -82,39 +82,39 @@ namespace SolarMajesty.Tests
             finally
             {
                 Restore();
-                PlayerPrefs.Save();
+                GamePrefs.Save();
                 DemoSettings.Load();
                 // Load consumes the boot-play key when it is set. Put every snapshot back after that.
                 Restore();
-                PlayerPrefs.Save();
+                GamePrefs.Save();
             }
 
             for (int i = 0; i < floats.Length; i++)
             {
                 if (hadFloat[i])
-                    Assert.AreEqual(prevFloat[i], PlayerPrefs.GetFloat(floats[i]), 0.0001f);
+                    Assert.AreEqual(prevFloat[i], GamePrefs.GetFloat(floats[i]), 0.0001f);
                 else
-                    Assert.IsFalse(PlayerPrefs.HasKey(floats[i]), floats[i]);
+                    Assert.IsFalse(GamePrefs.HasKey(floats[i]), floats[i]);
             }
             for (int i = 0; i < ints.Length; i++)
             {
                 if (hadInt[i])
-                    Assert.AreEqual(prevInt[i], PlayerPrefs.GetInt(ints[i]));
+                    Assert.AreEqual(prevInt[i], GamePrefs.GetInt(ints[i]));
                 else
-                    Assert.IsFalse(PlayerPrefs.HasKey(ints[i]), ints[i]);
+                    Assert.IsFalse(GamePrefs.HasKey(ints[i]), ints[i]);
             }
 
             void Restore()
             {
                 for (int i = 0; i < floats.Length; i++)
                 {
-                    if (hadFloat[i]) PlayerPrefs.SetFloat(floats[i], prevFloat[i]);
-                    else PlayerPrefs.DeleteKey(floats[i]);
+                    if (hadFloat[i]) GamePrefs.SetFloat(floats[i], prevFloat[i]);
+                    else GamePrefs.DeleteKey(floats[i]);
                 }
                 for (int i = 0; i < ints.Length; i++)
                 {
-                    if (hadInt[i]) PlayerPrefs.SetInt(ints[i], prevInt[i]);
-                    else PlayerPrefs.DeleteKey(ints[i]);
+                    if (hadInt[i]) GamePrefs.SetInt(ints[i], prevInt[i]);
+                    else GamePrefs.DeleteKey(ints[i]);
                 }
             }
         }
