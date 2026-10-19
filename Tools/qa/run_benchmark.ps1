@@ -52,7 +52,8 @@ if (-not $report) { throw "No report written. Log: $(Join-Path $tmp 'Player.log'
 
 $j = Get-Content $report.FullName -Raw | ConvertFrom-Json
 "{0} | {1} ({2} cores) | {3} ({4} MB) | {5} MB RAM | {6} | {7}" -f $j.version, $j.cpu, $j.cpuCores, $j.gpu, $j.gpuMemoryMb, $j.ramMb, $j.resolution, $j.quality
-$j.worlds | Format-Table world, avgFps, p50Ms, p95Ms, p99Ms, maxMs, pctOver33Ms, robots, fauna, errors, note -AutoSize | Out-String
+$j.worlds | Select-Object world, drawn, @{n="fps";e={[math]::Round($_.avgFps,1)}}, @{n="p50ms";e={[math]::Round($_.p50Ms,2)}}, @{n="p99ms";e={[math]::Round($_.p99Ms,2)}}, @{n="maxms";e={[math]::Round($_.maxMs,0)}}, @{n="%>33ms";e={[math]::Round($_.pctOver33Ms,2)}}, robots, fauna, errors, note | Format-Table -AutoSize | Out-String
+if (@($j.worlds | Where-Object { -not $_.drawn }).Count) { Write-Warning "Some worlds were not drawn (locked or minimised window): their fps is meaningless. Errors still count." }
 "report: $($report.FullName)"
 if (-not $KeepTemp) { Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue } else { "temp kept: $tmp" }
 exit $p.ExitCode

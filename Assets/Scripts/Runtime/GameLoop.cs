@@ -3611,6 +3611,13 @@ namespace SolarMajesty
             return agent;
         }
 
+        private void RebindAgentsToNavMesh()
+        {
+            if (this == null || _campusNav == null) return;
+            for (int i = 0; i < _agents.Count; i++)
+                _agents[i]?.BindNavMesh(_campusNav);
+        }
+
         private void EnsureNavMesh()
         {
             _campusNav = GetComponent<CampusNavMesh>();
@@ -3932,11 +3939,7 @@ namespace SolarMajesty
 
         {
             if (_campusNav != null && grid != null)
-            {
-                _campusNav.Build(grid);
-                for (int i = 0; i < _agents.Count; i++)
-                    _agents[i]?.BindNavMesh(_campusNav);
-            }
+                _campusNav.Rebuild(grid, RebindAgentsToNavMesh);
 
             RefreshSuitCrossings();
 

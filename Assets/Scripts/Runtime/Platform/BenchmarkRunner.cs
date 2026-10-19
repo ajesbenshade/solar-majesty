@@ -29,6 +29,7 @@ namespace SolarMajesty
         private const float BootTimeout = 90f;
         private const float Warmup = 6f;
         private const float CameraHop = 3f;
+        private const float NotDrawnMs = 1f;
 
         private readonly List<WorldResult> _results = new List<WorldResult>();
         private string _outPath;
@@ -51,6 +52,8 @@ namespace SolarMajesty
             public int robots;
             public int fauna;
             public int errors;
+            /// <summary>False when frame times show the OS was not presenting the window; fps is then meaningless.</summary>
+            public bool drawn = true;
             public string note;
         }
 
@@ -156,6 +159,7 @@ namespace SolarMajesty
             }
 
             if (loop.IsTutorialActive) loop.SkipTutorial();
+            ApplyRequestedResolution(); // the game re-applies the player's saved display settings on boot
             SimSpeed.Set(speedIndex);
             Time.timeScale = SimSpeed.TimeScale;
 
@@ -214,10 +218,28 @@ namespace SolarMajesty
             result.robots = FindObjectsByType<SpecialistAgent>(FindObjectsSortMode.None).Length;
             result.fauna = FindObjectsByType<DustStalkerAgent>(FindObjectsSortMode.None).Length;
             result.errors = ErrorLog.Count - errorsBefore;
+            if (result.p50Ms < NotDrawnMs)
+            {
+                // No real frame of this game renders in under a millisecond; the OS was not presenting
+                // the window (locked screen, minimised, covered on some drivers). Say so rather than
+                // publish a fantasy frame rate.
+                result.drawn = false;
+                Debug.LogWarning("[Benchmark] " + result.world + ": frames under 1 ms — the window was not being drawn (locked or minimised). " +
+                                 "Errors still count; rerun with the desktop unlocked for real frame rates.");
+            }
 
             Debug.Log(string.Format(CultureInfo.InvariantCulture,
                 "[Benchmark] {0}: {1:F1} fps avg · p50 {2:F1} ms · p99 {3:F1} ms · max {4:F0} ms · {5:F1}% > 33 ms · {6} errors",
                 result.world, result.avgFps, result.p50Ms, result.p99Ms, result.maxMs, result.pctOver33Ms, result.errors));
+        }
+
+        private static void ApplyRequestedResolution()
+        {
+            int w = (int)ParseFloat(ArgValue("-screen-width"), 0f);
+            int h = (int)ParseFloat(ArgValue("-screen-height"), 0f);
+            if (w <= 0 || h <= 0) return;
+            bool full = ArgValue("-screen-fullscreen") == "1";
+            Screen.SetResolution(w, h, full ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
         }
 
         private static float Pct(List<float> sorted, float q)

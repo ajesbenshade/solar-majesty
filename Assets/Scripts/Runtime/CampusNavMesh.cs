@@ -11,8 +11,14 @@ namespace SolarMajesty
     {
         private NavMeshSurface _surface;
         private bool _built;
+        private AsyncOperation _update;
+        private bool _updateAgain;
+        private System.Action _onUpdated;
 
         public bool IsReady => _built && _surface != null;
+
+        /// <summary>True while a background rebuild is running.</summary>
+        public bool IsUpdating => _update != null && !_update.isDone;
 
         public void Build(IsoGrid grid)
         {
@@ -22,6 +28,56 @@ namespace SolarMajesty
             _surface.BuildNavMesh();
             _built = true;
             Debug.Log("[CampusNavMesh] Runtime NavMesh built (ground walkable, buildings carve).");
+        }
+
+        /// <summary>
+        /// Rebuild in the background during play. A full <see cref="Build"/> blocks the main thread
+        /// for ~120 ms, which the benchmark caught as a hitch every time the campus grew. Requests
+        /// that arrive while one is running are folded into a single follow-up pass.
+        /// </summary>
+        public void Rebuild(IsoGrid grid, System.Action onDone)
+        {
+            if (grid == null) return;
+            if (!_built || _surface == null || _surface.navMeshData == null)
+            {
+                Build(grid);
+                onDone?.Invoke();
+                return;
+            }
+
+            _onUpdated += onDone;
+            if (IsUpdating)
+            {
+                _updateAgain = true;
+                return;
+            }
+            StartUpdate();
+        }
+
+        private void StartUpdate()
+        {
+            _updateAgain = false;
+            _update = _surface.UpdateNavMesh(_surface.navMeshData);
+            if (_update == null)
+            {
+                FinishUpdate();
+                return;
+            }
+            _update.completed += _ => FinishUpdate();
+        }
+
+        private void FinishUpdate()
+        {
+            if (this == null) return; // scene unloaded mid-update
+            if (_updateAgain)
+            {
+                StartUpdate();
+                return;
+            }
+            _update = null;
+            var done = _onUpdated;
+            _onUpdated = null;
+            done?.Invoke();
         }
 
         public static void AddObstacle(GameObject go, float minHeight = 3f)
