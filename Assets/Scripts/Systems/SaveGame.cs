@@ -37,6 +37,11 @@ namespace SolarMajesty
         public string rosterBlob;
         public bool firstHourDemo;
         public bool tutorialDone;
+        /// <summary>
+        /// This world's tallies, so achievements like Full Crew or Rebuilder survive quit and Continue.
+        /// Older files read as zeros, which is what they already had after a reload.
+        /// </summary>
+        public RunStats stats = new RunStats();
 
         public bool MatchesWorld(CelestialBodyId expectedBody, int expectedSeed) =>
             body == (int)expectedBody && seed == expectedSeed;
