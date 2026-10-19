@@ -133,7 +133,7 @@ CALL_RULES = {
     "Systems/FaunaAfflictions.cs": {"A": [1]},
 }
 
-DICT_RULES = {"Systems/AdvisorToastCatalog.cs"}
+DICT_RULES = {"Systems/AdvisorToastCatalog.cs", "Systems/InputBindings.cs"}
 
 RETURN_RULES = {
     "Systems/JexCatalog.cs": ["Line"],
@@ -300,7 +300,44 @@ def collect():
         for _, text in catalog_literals(short, code, idents):
             if text.strip():
                 sources.setdefault(text, rel)
+        # Names built in code stay English (they are matched and saved) and are translated where
+        # shown with Loc.S(name): CreateBuilding("Colony Commons", ...), x.displayName = "...".
+        for m in NAME_IN_CODE.finditer(code):
+            text = unescape(m.group(1))
+            if text.strip():
+                sources.setdefault(text, rel)
+    for text, rel in asset_names():
+        sources.setdefault(text, rel)
     return sources, keyed
+
+
+# Building/flag/robot names created in code, shown through Loc.S(...displayName).
+NAME_IN_CODE = re.compile(r'(?:CreateBuilding\(\s*|\b(?:displayName|description)\s*=\s*)' + LIT)
+
+# The same names on ScriptableObject assets (Assets/Data, Assets/Resources).
+ASSET_FIELD = re.compile(r'^\s+(displayName|description):\s*(.*)$')
+
+
+def asset_names():
+    out = []
+    for root in (os.path.join(ROOT, "Assets", "Data"), os.path.join(ROOT, "Assets", "Resources")):
+        for base, _, files in os.walk(root):
+            for f in files:
+                if not f.endswith(".asset"):
+                    continue
+                path = os.path.join(base, f)
+                rel = os.path.relpath(path, ROOT).replace("\\", "/")
+                with open(path, encoding="utf-8", errors="replace") as fh:
+                    for line in fh:
+                        m = ASSET_FIELD.match(line)
+                        if not m:
+                            continue
+                        value = m.group(2).strip()
+                        if len(value) >= 2 and value[0] in "'\"" and value[-1] == value[0]:
+                            value = value[1:-1].replace("''", "'") if value[0] == "'" else unescape(value[1:-1])
+                        if value and re.search(r"[A-Za-z]{2}", value):
+                            out.append((value, rel))
+    return out
 
 
 # ---- unwrapped report ------------------------------------------------------------------------------

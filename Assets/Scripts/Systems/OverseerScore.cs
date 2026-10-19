@@ -17,7 +17,7 @@ namespace SolarMajesty
         public int Roster;
         public int Pace;
 
-        public string Summary => $"RATING {Letter}  ·  {Total}";
+        public string Summary => Loc.F("RATING {0}  ·  {1}", Letter, Total);
         public string Breakdown =>
             $"dens {Dens}  ·  hold {Sustain}  ·  launch {Launch}  ·  stock {Economy}  ·  roster {Roster}  ·  pace {Pace}";
     }

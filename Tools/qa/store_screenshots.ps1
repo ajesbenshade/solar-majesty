@@ -13,7 +13,9 @@ param(
   [string]$Bodies = 'Earth,Luna,Mars,Belt,Europa',
   [int]$Run = 35,
   [string]$OutDir = 'Builds\StoreShots',
-  [switch]$Diorama
+  [switch]$Diorama,
+  # Passed through to the game, e.g. "-language qps" to check text in the pseudo-language.
+  [string]$ExtraArgs = ''
 )
 $ErrorActionPreference = 'Stop'
 $exe = Join-Path (Resolve-Path $GameDir).Path 'SolarMajesty.exe'
@@ -30,6 +32,7 @@ $gameArgs = "-storeshots `"$OutDir`" -storeshotBodies $Bodies -storeshotRun $Run
   "-nosteam -noai -screen-width 1920 -screen-height 1080 -screen-fullscreen 0 " +
   "-logFile `"$(Join-Path $tmp 'Player.log')`""
 if ($Diorama) { $gameArgs += " -diorama" }
+if ($ExtraArgs) { $gameArgs += " $ExtraArgs" }
 
 Write-Host "[shots] $Bodies -> $OutDir" -ForegroundColor Yellow
 $p = Start-Process $exe -ArgumentList $gameArgs -PassThru

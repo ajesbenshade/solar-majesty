@@ -80,8 +80,26 @@ namespace SolarMajesty
         };
 
         /// <summary>Names the camel-case split would get wrong or leave vague.</summary>
+        // Every action is listed (not left to the camel-case split) so the extractor puts each
+        // name in the string tables; DisplayName translates them.
         private static readonly Dictionary<GameAction, string> Names = new Dictionary<GameAction, string>
         {
+            { GameAction.PanUp, "Pan Up" },
+            { GameAction.PanDown, "Pan Down" },
+            { GameAction.PanLeft, "Pan Left" },
+            { GameAction.PanRight, "Pan Right" },
+            { GameAction.ZoomIn, "Zoom In" },
+            { GameAction.ZoomOut, "Zoom Out" },
+            { GameAction.TogglePause, "Toggle Pause" },
+            { GameAction.SpeedUp, "Speed Up" },
+            { GameAction.SpeedDown, "Speed Down" },
+            { GameAction.CycleOverlay, "Cycle Overlay" },
+            { GameAction.FocusCampusA, "Focus Campus A" },
+            { GameAction.FocusCampusB, "Focus Campus B" },
+            { GameAction.Cancel, "Cancel" },
+            { GameAction.Confirm, "Confirm" },
+            { GameAction.CycleTool, "Cycle Tool" },
+            { GameAction.DisbandParty, "Disband Party" },
             { GameAction.ToolBuild, "Build Catalog" },
             { GameAction.ToolFlag, "Bounty Flags" },
             { GameAction.ToolTech, "Research" },
@@ -315,7 +333,7 @@ namespace SolarMajesty
         /// <summary>Human-readable action name: the camel-case split, unless a clearer name is listed.</summary>
         public static string DisplayName(GameAction action)
         {
-            if (Names.TryGetValue(action, out string named)) return named;
+            if (Names.TryGetValue(action, out string named)) return Loc.S(named);
             string raw = action.ToString();
             var sb = new System.Text.StringBuilder(raw.Length + 4);
             for (int i = 0; i < raw.Length; i++)

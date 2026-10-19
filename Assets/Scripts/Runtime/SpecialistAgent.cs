@@ -174,7 +174,7 @@ namespace SolarMajesty
         public string SuitLabel =>
             equippedSuit == ShopItemId.None
                 ? Loc.S("no suit")
-                : (ShopCatalog.Get(equippedSuit)?.DisplayName ?? Loc.S("suit"));
+                : (ShopCatalog.Get(equippedSuit)?.DisplayNameText ?? Loc.S("suit"));
         public string Status => _status;
         public string FlavorLine { get; private set; } = Loc.S("Booting.");
 
@@ -354,7 +354,7 @@ namespace SolarMajesty
             if (string.IsNullOrEmpty(reason) || !reason.StartsWith(prefix)) return false;
             string raw = reason.Substring(prefix.Length);
             if (System.Enum.TryParse(raw, out FlagType type))
-                label = SpecialistFlavor.FlagShort(type);
+                label = SpecialistFlavor.FlagLabel(type);
             else
                 label = raw;
             return true;
@@ -435,7 +435,7 @@ namespace SolarMajesty
             {
                 DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.78f, 0.22f));
                 DemoAudio.PlayLevelUp(transform.position);
-                _loop?.LogOverseer(Loc.F("{0} reached L{1}.", data?.displayName, level));
+                _loop?.LogOverseer(Loc.F("{0} reached L{1}.", Loc.S(data?.displayName), level));
                 Debug.Log($"[XP] {data?.displayName} level {level} ({reason}) xp={xp}");
                 CharacterVoice.Cue(this, VoiceCue.LevelUp, HeroNarrator.Report(this, NarrationKind.LevelUp));
             }
@@ -2071,7 +2071,7 @@ namespace SolarMajesty
             LastAbility = a.displayName;
             DemoVfx.WorkSpark(at, color);
             if (!string.IsNullOrEmpty(a.displayName))
-                ShowRefusal(a.displayName.ToUpperInvariant());
+                ShowRefusal(a.DisplayNameText.ToUpperInvariant());
         }
 
         private void TickWanderTown(float dt)

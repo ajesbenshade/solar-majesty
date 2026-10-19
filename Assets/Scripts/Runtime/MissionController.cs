@@ -105,7 +105,7 @@ namespace SolarMajesty
                     if (ReplayRules.IsEndless)
                         return Loc.S("Keep colonizing — dens quiet, colony holding");
                     if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                        return Loc.F("{0} holds — campaign spine complete", _loop.BodyProfile?.DisplayName ?? Loc.S("Outpost"));
+                        return Loc.F("{0} holds — campaign spine complete", _loop.BodyProfile?.DisplayNameText ?? Loc.S("Outpost"));
                     return Loc.S("Outpost secured — advance the campaign");
                 }
                 if (!DensCleared)
@@ -153,14 +153,14 @@ namespace SolarMajesty
                 {
                     var endless = _loop != null ? _loop.BodyProfile : null;
                     if (endless != null && !string.IsNullOrEmpty(endless.EndlessLog))
-                        return endless.EndlessLog;
+                        return endless.EndlessLogText;
                     return Loc.S("Gates met. Stay on this world — rating stands while you keep expanding.");
                 }
                 var body = _loop != null ? _loop.BodyProfile : null;
                 if (body != null && CampaignCutsceneCatalog.TryGetVictory(body.Id, out var cut))
-                    return cut.LogParagraph;
+                    return cut.LogParagraphText;
                 if (body != null && !string.IsNullOrEmpty(body.VictoryLog))
-                    return body.VictoryLog;
+                    return body.VictoryLogText;
                 return Loc.S("Dens cleared · colony sustained · launch ready.");
             }
         }
@@ -182,7 +182,7 @@ namespace SolarMajesty
                     return Loc.S("The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title.");
                 var next = CampaignProgress.NextAfter(_loop.ActiveBody);
                 string name = next.HasValue
-                    ? CelestialBodyCatalog.Get(next.Value).DisplayName
+                    ? CelestialBodyCatalog.Get(next.Value).DisplayNameText
                     : Loc.S("the next body");
                 return Loc.F("Stage departure, or keep overseeing here. Next: {0}.", name);
             }
@@ -202,7 +202,7 @@ namespace SolarMajesty
                 if (_loop != null && _loop.RobotCount == 0)
                     return Loc.S("No robots left and no re-fab in the shop. Rebuild a workshop, or retry.");
                 if (body != null && !string.IsNullOrEmpty(body.FailLog))
-                    return body.FailLog;
+                    return body.FailLogText;
                 return Loc.S("Every specialist is incapacitated. Revive the party to retake the plaza.");
             }
         }

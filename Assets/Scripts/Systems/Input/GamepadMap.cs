@@ -74,9 +74,8 @@ namespace SolarMajesty
         }
 
         /// <summary>One-line layout summary for the settings screen.</summary>
-        public const string Summary =
-            "Left stick: cursor · A: click · B: cancel / right-click · Right stick: pan · LT/RT: zoom · " +
-            "X: flags · Y: build · LB/RB: speed · R3: hold · Menu: pause · View: research · D-pad: overlay, tools, bounty";
+        public static string Summary => Loc.S(
+            "Left stick: cursor · A: click · B: cancel / right-click · Right stick: pan · LT/RT: zoom · X: flags · Y: build · LB/RB: speed · R3: hold · Menu: pause · View: research · D-pad: overlay, tools, bounty");
 
         // ---- virtual cursor -------------------------------------------------------------------------
 
@@ -86,6 +85,10 @@ namespace SolarMajesty
         /// <summary>Cursor speed presets, as a fraction of the screen height per second at full tilt.</summary>
         public static readonly float[] SpeedPresets = { 0.55f, 0.85f, 1.25f };
         public static readonly string[] SpeedNames = { "SLOW", "NORMAL", "FAST" };
+
+        /// <summary>A speed preset's name in the current language.</summary>
+        public static string SpeedName(int preset) =>
+            preset <= 0 ? Loc.S("SLOW") : preset >= SpeedPresets.Length - 1 ? Loc.S("FAST") : Loc.S("NORMAL");
 
         /// <summary>Radial dead zone, rescaled so movement starts smoothly at the edge of it.</summary>
         public static Vector2 ApplyDeadZone(Vector2 stick)

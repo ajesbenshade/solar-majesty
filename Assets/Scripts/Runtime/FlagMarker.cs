@@ -268,8 +268,8 @@ namespace SolarMajesty
                     if (ReferenceEquals(flag, _handle))
                         mine = items.Count;
                     string title = !string.IsNullOrEmpty(flag.Data.displayName)
-                        ? flag.Data.displayName
-                        : SpecialistFlavor.FlagShort(flag.Data.flagType);
+                        ? Loc.S(flag.Data.displayName)
+                        : SpecialistFlavor.FlagLabel(flag.Data.flagType);
                     items.Add(new FlagLabelStack.Item
                     {
                         World = flag.WorldPosition,
@@ -307,8 +307,8 @@ namespace SolarMajesty
             if (_metaLabel != null)
             {
                 string type = _handle.Data != null && !string.IsNullOrEmpty(_handle.Data.displayName)
-                    ? _handle.Data.displayName
-                    : (_handle.Data != null ? SpecialistFlavor.FlagShort(_handle.Data.flagType) : "?");
+                    ? Loc.S(_handle.Data.displayName)
+                    : (_handle.Data != null ? SpecialistFlavor.FlagLabel(_handle.Data.flagType) : "?");
                 float work = _manager != null ? _manager.GetWorkRemaining(_handle) : 0f;
                 int claims = _handle.ClaimCount;
                 string claimTxt = claims > 0 ? Loc.F("CLAIMED x{0}", claims) : Loc.S("OPEN");

@@ -96,10 +96,10 @@ is in it being honest, not in it being all ticked.
 
 ## Localization
 
-- [x] Lookup with English fallback ([Localization.cs](../Assets/Scripts/Systems/Localization.cs))
-- [ ] Strings extracted into a table (~2,360 literals still inline)
+- [x] Source-keyed lookup with English fallback, JSON tables, Settings → Language, pseudo-locale for QA ([Localization.cs](../Assets/Scripts/Systems/Localization.cs), [LOCALIZATION.md](LOCALIZATION.md))
+- [x] Strings extracted into a table: 1,400+ player-facing strings wrapped and collected by [extract.py](../Tools/loc/extract.py); what remains is mostly model prompts, ids and debug text ([status](LOCALIZATION_STATUS.md))
 - [ ] Machine translation pass and community correction
-- [ ] Font fallback for non-Latin scripts
+- [x] Font fallback for non-Latin scripts on Windows (CJK, Indic, Thai); bundle an open font before shipping CJK on Steam Deck
 
 ## Before Early Access
 

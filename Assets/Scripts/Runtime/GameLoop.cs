@@ -636,7 +636,7 @@ namespace SolarMajesty
         /// on-screen copy is translated.
         /// </summary>
         public void LogOverseerScript(string english, float seconds = 4.2f) =>
-            LogOverseer(Loc.S(english), english, seconds);
+            LogOverseer(JexCatalog.DisplayText(english), english, seconds); // keeps the "Jex — " prefix, translates the line
 
         private void LogOverseer(string shown, string spoken, float seconds)
         {
@@ -760,7 +760,7 @@ namespace SolarMajesty
         {
             if (def == null) return;
             // Good alerts are never spoken, so the message can be the translated copy.
-            RaiseAlert($"ach_{def.Id}", Loc.F("Achievement — {0}", def.Title), AlertSeverity.Good);
+            RaiseAlert($"ach_{def.Id}", Loc.F("Achievement — {0}", def.TitleText), AlertSeverity.Good);
             PlaytestTelemetry.Record("achievement", "id", def.Id.ToString());
         }
 
@@ -979,7 +979,7 @@ namespace SolarMajesty
                 !CampaignCutsceneCatalog.TryGetArrival(_body.Id, out _) &&
                 !string.IsNullOrEmpty(_body.ArrivalLog))
             {
-                Log.Push(_body.ArrivalLog);
+                Log.Push(_body.ArrivalLogText);
             }
 
             if (DemoSettings.BootStraightIntoPlay)
@@ -1226,8 +1226,8 @@ namespace SolarMajesty
                 case SolarSystemTitlePick.Outcome.Locked:
                     _overseerHud?.Notify(
                         DevTools.Enabled
-                            ? Loc.F("{0} is locked. Conquer the inner worlds first — or Shift+click (dev tools).", profile.DisplayName)
-                            : Loc.F("{0} is locked. Conquer the inner worlds first.", profile.DisplayName),
+                            ? Loc.F("{0} is locked. Conquer the inner worlds first — or Shift+click (dev tools).", profile.DisplayNameText)
+                            : Loc.F("{0} is locked. Conquer the inner worlds first.", profile.DisplayNameText),
                         3.5f);
                     return;
                 case SolarSystemTitlePick.Outcome.StartNewOnBody:
@@ -1396,7 +1396,7 @@ namespace SolarMajesty
                      NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree) &&
                      _narrative.TryTakePostToast(decree.Id, out var toast))
             {
-                LogOverseer(toast.Line, 6.5f);
+                LogOverseer(toast.LineText, 6.5f);
             }
 
             if (handle.InterestCount <= 0)
@@ -1446,7 +1446,7 @@ namespace SolarMajesty
                 return;
             _narrative.NoteClaimed(decree.Id);
             if (_narrative.TryTakeClaimToast(decree.Id, out var toast))
-                LogOverseer(toast.Line, 6.5f);
+                LogOverseer(toast.LineText, 6.5f);
             if (_narrative.TryTakeClaimAside(decree.Id, out string aside))
                 Log.Push(aside);
         }
@@ -1576,7 +1576,7 @@ namespace SolarMajesty
                      AdvisorArrival.ShouldSpeak(travelKey, loaded.HasCommons) &&
                      _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
-                LogOverseer(toast.Line, 6.8f);
+                LogOverseer(toast.LineText, 6.8f);
             }
         }
 
@@ -2786,7 +2786,7 @@ namespace SolarMajesty
             Debug.Log($"[GameLoop] Tech unlocked: {id}");
             var def = TechCatalog.Get(id);
             if (def != null && def.SecretProject)
-                LogOverseer(Loc.F("Secret Project complete: {0}.", def.DisplayName));
+                LogOverseer(Loc.F("Secret Project complete: {0}.", def.DisplayNameText));
             else if (id == TechId.OrbitalUplink)
                 LogOverseer(Loc.F("Orbital Uplink online. Press {0}: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit.", InputBindings.Hint(GameAction.ToolOrbital)));
             else if (id == TechId.OrbitalConstellation)
@@ -2813,7 +2813,7 @@ namespace SolarMajesty
                 EnsureNarrative();
                 _narrative.NoteCompleted(FlagDecreeIds.EarthCharterTheHall);
                 if (_narrative.TryTakeCompleteToast(AdvisorToastCatalog.CompleteCharterTheHall, out var charterToast))
-                    Log.Push(charterToast.Line);
+                    Log.Push(charterToast.LineText);
                 SyncNarrativeCivic();
             }
             else if (id == TechId.HarvestDoctrine)
@@ -2922,7 +2922,7 @@ namespace SolarMajesty
                 if (!string.IsNullOrEmpty(completeKey) &&
                     _narrative.TryTakeCompleteToast(completeKey, out var stagedToast))
                 {
-                    Log.Push(stagedToast.Line);
+                    Log.Push(stagedToast.LineText);
                 }
                 SyncNarrativeCivic();
             }
@@ -3288,7 +3288,7 @@ namespace SolarMajesty
                 if (Time.time >= _hireNagAt)
                 {
                     _hireNagAt = Time.time + 30f;
-                    LogOverseer(Loc.F("{0} is ready — hiring its {1} costs {2} EU.", workshop.DisplayName, ColonyStructure.ClassLabel(cls.Value), hire));
+                    LogOverseer(Loc.F("{0} is ready — hiring its {1} costs {2} EU.", Loc.S(workshop.DisplayName), ColonyStructure.ClassLabel(cls.Value), hire));
                 }
                 return false;
             }
@@ -3327,8 +3327,8 @@ namespace SolarMajesty
             if (announce)
             {
                 _overseerHud?.Notify(hire > 0
-                    ? Loc.F("{0} hired at {1} — {2} EU.", label, workshop.DisplayName, hire)
-                    : Loc.F("{0} fabricated at {1}.", label, workshop.DisplayName), 3.2f);
+                    ? Loc.F("{0} hired at {1} — {2} EU.", label, Loc.S(workshop.DisplayName), hire)
+                    : Loc.F("{0} fabricated at {1}.", label, Loc.S(workshop.DisplayName)), 3.2f);
                 DemoAudio.PlayRobotSpawn(pos);
                 DemoVfx.ClaimRing(pos, TintForClass(cls.Value));
             }
@@ -5777,7 +5777,7 @@ namespace SolarMajesty
                     }
                     Research.AddScience(science);
                     var active = TechCatalog.Get(Research.ActiveTech);
-                    string techName = active != null ? active.DisplayName : Loc.S("tech");
+                    string techName = active != null ? active.DisplayNameText : Loc.S("tech");
                     LogOverseer(Loc.F("Research Site: +{0:F0} science into {1}.", science, techName));
                     break;
                 case FlagType.EstablishOutpost:
@@ -6679,7 +6679,7 @@ namespace SolarMajesty
             SyncLaunchGate();
             SnapCampusCamera();
             HideDropClaimIfSettled();
-            LogOverseer(Loc.F("Yard restored — {0} modules on {1}.", restored, _body != null ? _body.DisplayName : celestialBody.ToString()));
+            LogOverseer(Loc.F("Yard restored — {0} modules on {1}.", restored, _body != null ? _body.DisplayNameText : celestialBody.ToString()));
             Debug.Log($"[GameLoop] Restored {restored} campus pieces.");
         }
 
@@ -6828,7 +6828,7 @@ namespace SolarMajesty
 
             NotifyCampusExpanded();
             PersistSession();
-            LogOverseer(Loc.F("{0} destroyed — rebuild before the next raid.", st.DisplayName));
+            LogOverseer(Loc.F("{0} destroyed — rebuild before the next raid.", Loc.S(st.DisplayName)));
         }
 
         public void SetSelectedWorkplaceClass(SpecialistClass cls)
