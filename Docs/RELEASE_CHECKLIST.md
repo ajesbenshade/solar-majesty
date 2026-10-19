@@ -111,7 +111,8 @@ is in it being honest, not in it being all ticked.
 - [x] Real graphics tiers: Low (80% + FSR, no SSAO, 1 shadow cascade to 60 m), Medium (no MSAA/SSAO), High (2x MSAA, 2 cascades), Ultra unchanged; regenerate with **Solar Majesty → Render → Create Quality Tiers**. First launch picks a tier from the GPU ([QualityAutoDetect.cs](../Assets/Scripts/Systems/QualityAutoDetect.cs)). Screenshots checked on Earth and Mars at Low/Medium/Ultra
 - [ ] Low tier measured on an actual integrated GPU
 - [ ] Full playthrough on all five bodies without an exception
-- [ ] Steam page, capsule art, screenshots
+- [x] Store screenshots: 9 at 1920×1080 across all five worlds ([Docs/StoreScreenshots](StoreScreenshots/README.md)); re-capture with [store_screenshots.ps1](../Tools/qa/store_screenshots.ps1)
+- [ ] Steam page and capsule art
 - [ ] Steam content survey incl. AI disclosure (draft text in [STEAM_RELEASE.md](STEAM_RELEASE.md))
 - [ ] Trademark check on "Solar Majesty"; GitHub repository made private (Asset Store packages are committed)
 - [x] Landing-pad rocket redesigned as the original Colony Lifter (legs, strap-on boosters, domed capsule; no flaps or ogive nose); the Starship placeholder model is out of the build ([render](ReviewEvidence/colony-lifter-pad.png))

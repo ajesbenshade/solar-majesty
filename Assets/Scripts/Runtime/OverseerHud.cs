@@ -494,9 +494,12 @@ namespace SolarMajesty
 
         // ---- frame --------------------------------------------------------------
 
+        /// <summary>Store screenshots without any HUD.</summary>
+        public static bool HideForCapture;
+
         private void OnGUI()
         {
-            if (_loop == null) return;
+            if (_loop == null || HideForCapture) return;
             EnsureStyles();
             GUI.skin = HudSkin.Skin();
             HandleDebugHopKeys();

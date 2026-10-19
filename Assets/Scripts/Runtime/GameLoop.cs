@@ -3949,6 +3949,28 @@ namespace SolarMajesty
         /// and drop queued W2 cut / ArrivalLog / travel-toast overlays so they cannot cover the campus.
         /// Stamp HAB latches EverHadHab without a census — that is the still15 fail overlay.
         /// </summary>
+        /// <summary>
+        /// Store screenshots: one robot of every class, standing in a loose ring around the
+        /// Commons, as a colony mid-game would have. Not reachable from play.
+        /// </summary>
+        public int SpawnShowcaseCrew()
+        {
+            int spawned = 0;
+            var classes = (SpecialistClass[])System.Enum.GetValues(typeof(SpecialistClass));
+            for (int i = 0; i < classes.Length; i++)
+            {
+                SpecialistData data = DataForClass(classes[i]);
+                if (data == null) continue;
+                // Golden-angle spiral at mixed distances, so robots do not stand in a tidy ring or a clump.
+                float a = i * 2.399963f;
+                float r = 7f + (i % 4) * 3.5f;
+                Vector3 pos = ColonyLayout.CampusOrigin + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                if (grid != null) pos = grid.SnapToCellCenter(pos);
+                if (SpawnOne(data, pos, TintForClass(classes[i])) != null) spawned++;
+            }
+            return spawned;
+        }
+
         public void PrepareStillCaptureWorld()
         {
             StillCaptureHold.Arm();

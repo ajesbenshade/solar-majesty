@@ -104,7 +104,7 @@ and run the smoke list below before you touch `default`.
 | Library hero | 3840×1240 (no text) |
 | Library logo | 1280×720 PNG with transparency |
 | Page background | 1438×810 (optional) |
-| Screenshots | at least 5, 1920×1080, gameplay only |
+| Screenshots | at least 5, 1920×1080, gameplay only: nine ready in [Docs/StoreScreenshots](StoreScreenshots/README.md) |
 | Trailer | recommended; gameplay first in the first 5 seconds |
 
 No third-party marks anywhere in these: no SpaceX, Starship, xAI or Grok names or logos.
