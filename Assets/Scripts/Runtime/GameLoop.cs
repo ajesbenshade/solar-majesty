@@ -489,7 +489,7 @@ namespace SolarMajesty
             if (!_levyHomeLogged)
             {
                 _levyHomeLogged = true;
-                LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
+                LogOverseer(OverseerRules.JexLevyHome, 6.2f);
                 Alerts.Push("levy_home", $"Haul walked {amount:N0} EU home", AlertSeverity.Good, Time.unscaledTime, at);
             }
         }
@@ -564,7 +564,7 @@ namespace SolarMajesty
         private float _reviveReadyAt;
         private bool _revivePenaltyApplied;
         private bool _yardBillLogged;
-        private readonly GrokSession _grok = new GrokSession();
+        private readonly JexSession _jex = new JexSession();
         private int _lastTithe;
         private float _purseToastAt;
         private readonly List<TimedDisc> _surveys = new List<TimedDisc>(4);
@@ -637,28 +637,28 @@ namespace SolarMajesty
                 OverseerVoice.SpeakIfScripted(line);
         }
 
-        public bool GrokLessonsOn => GrokAdvisor.TrainingWheels(celestialBody);
+        public bool JexLessonsOn => JexAdvisor.TrainingWheels(celestialBody);
 
         /// <summary>Stalker drank the tank. Failure aside, not a sale.</summary>
-        public void NoteIceSiphon() => TryGrok(GrokBeat.StalkerSiphon, true);
+        public void NoteIceSiphon() => TryJex(JexBeat.StalkerSiphon, true);
 
-        private bool TryGrok(GrokBeat beat, bool condition = true)
+        private bool TryJex(JexBeat beat, bool condition = true)
         {
             if (StillCaptureHold.Active) return false;
-            bool wheels = GrokAdvisor.TrainingWheels(celestialBody);
-            if (!_grok.TrySpeak(beat, wheels, condition)) return false;
-            LogOverseer(GrokCatalog.Say(beat), 6.2f);
+            bool wheels = JexAdvisor.TrainingWheels(celestialBody);
+            if (!_jex.TrySpeak(beat, wheels, condition)) return false;
+            LogOverseer(JexCatalog.Say(beat), 6.2f);
             return true;
         }
 
-        private void TickGrok()
+        private void TickJex()
         {
             if (StillCaptureHold.Active) return;
             if (Settlement != null && Settlement.CoreHabs > 0)
-                TryGrok(GrokBeat.FirstHab);
+                TryJex(JexBeat.FirstHab);
             bool rosterTicking = _everHadRobot && RobotCount <= 0 &&
                                  _emptyRosterTimer > 0.05f && !EmptyRosterFailed;
-            TryGrok(GrokBeat.EmptyRoster, rosterTicking);
+            TryJex(JexBeat.EmptyRoster, rosterTicking);
         }
 
         /// <summary>
@@ -692,7 +692,7 @@ namespace SolarMajesty
             if (!_levyHomeLogged)
             {
                 _levyHomeLogged = true;
-                LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
+                LogOverseer(OverseerRules.JexLevyHome, 6.2f);
             }
             else
                 LogOverseer($"Haul deposited {amount} EU at Commons.");
@@ -706,7 +706,7 @@ namespace SolarMajesty
             Settlement?.NoteLevyStolen(amount);
             if (fromHab)
             {
-                AnnounceLevyLine(OverseerRules.GrokLevyStolenHab, "levy_stolen_hab", at);
+                AnnounceLevyLine(OverseerRules.JexLevyStolenHab, "levy_stolen_hab", at);
                 return;
             }
 
@@ -1363,9 +1363,9 @@ namespace SolarMajesty
             BroadcastRefusalChips(handle);
 
             EnsureNarrative();
-            bool wheels = GrokAdvisor.TrainingWheels(celestialBody);
+            bool wheels = JexAdvisor.TrainingWheels(celestialBody);
 
-            if (TryGrok(GrokBeat.FirstFlag))
+            if (TryJex(JexBeat.FirstFlag))
             {
                 // first-flag lesson; decree copy waits for the next post
             }
@@ -1379,9 +1379,9 @@ namespace SolarMajesty
             if (handle.InterestCount <= 0)
             {
                 if (wheels)
-                    TryGrok(GrokBeat.GreedAsk);
+                    TryJex(JexBeat.GreedAsk);
                 else
-                    TryGrok(GrokBeat.Refusal);
+                    TryJex(JexBeat.Refusal);
             }
 
             string interest = InterestLine(handle);
@@ -1544,12 +1544,12 @@ namespace SolarMajesty
             // Continue/Load rebuilds the narrative tracker, so a first-run key would
             // speak again. The loaded campus is the source of truth, not that fresh tracker.
             var loaded = CurrentNarrativeHint();
-            if (announce && celestialBody == CelestialBodyId.Luna && TryGrok(GrokBeat.Drop))
+            if (announce && celestialBody == CelestialBodyId.Luna && TryJex(JexBeat.Drop))
             {
                 // Luna training-wheels drop. W2 arrival copy stays in the catalog.
             }
             else if (announce &&
-                     GrokAdvisor.TrainingWheels(celestialBody) &&
+                     JexAdvisor.TrainingWheels(celestialBody) &&
                      AdvisorArrival.ShouldSpeak(travelKey, loaded.HasCommons) &&
                      _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
@@ -2352,7 +2352,7 @@ namespace SolarMajesty
             TickTutorial();
             TickAutosave();
             TickJunkYard(Time.deltaTime);
-            TickGrok();
+            TickJex();
             TickLevyRaid();
             TickPurseThefts();
             if (_glanceCooldown > 0f)
@@ -4807,7 +4807,7 @@ namespace SolarMajesty
             if (amount <= 0 || HasLivingCourier) return;
             if (Time.time < _purseToastAt) return;
             _purseToastAt = Time.time + 48f;
-            LogOverseer(CompactGrok.PurseSitting(amount));
+            LogOverseer(CompactJex.PurseSitting(amount));
         }
 
         public void NotifyLevyStolen(int amount, string where)
@@ -4852,7 +4852,7 @@ namespace SolarMajesty
             if (amount <= 0 || Settlement == null) return;
             Settlement.NoteLevyDelivered(amount);
             NoteTreasuryIncome(amount);
-            LogOverseer(CompactGrok.LevyDelivered(amount));
+            LogOverseer(CompactJex.LevyDelivered(amount));
         }
 
         public void RetryParty() => PayFobotYard();
@@ -4870,14 +4870,14 @@ namespace SolarMajesty
             }
             if (!HasFobotYard)
             {
-                LogOverseer(CompactGrok.YardNeedsBuilding());
+                LogOverseer(CompactJex.YardNeedsBuilding());
                 return;
             }
 
             var yard = FindFobotYard();
             if (yard == null || !yard.IsAlive)
             {
-                LogOverseer(OverseerRules.GrokYardMissing, 6.2f);
+                LogOverseer(OverseerRules.JexYardMissing, 6.2f);
                 return;
             }
 
@@ -4890,22 +4890,22 @@ namespace SolarMajesty
             ComputeReviveBill(out int met, out _);
             if (met <= 0)
             {
-                if (!TryGrok(GrokBeat.YardUnaffordable, true))
-                    LogOverseer(CompactGrok.YardBill(met));
+                if (!TryJex(JexBeat.YardUnaffordable, true))
+                    LogOverseer(CompactJex.YardBill(met));
                 return;
             }
 
             if (Economy == null || !Economy.CanAffordRevive(met))
             {
-                if (!TryGrok(GrokBeat.YardUnaffordable, true))
-                    LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
+                if (!TryJex(JexBeat.YardUnaffordable, true))
+                    LogOverseer(OverseerRules.JexYardUnaffordable, 6.2f);
                 return;
             }
 
             if (!Economy.TrySpendRevive(met))
             {
-                if (!TryGrok(GrokBeat.YardUnaffordable, true))
-                    LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
+                if (!TryJex(JexBeat.YardUnaffordable, true))
+                    LogOverseer(OverseerRules.JexYardUnaffordable, 6.2f);
                 return;
             }
 
@@ -4926,11 +4926,11 @@ namespace SolarMajesty
             if (!_yardBillLogged)
             {
                 _yardBillLogged = true;
-                if (!TryGrok(GrokBeat.YardBill))
-                    LogOverseer(OverseerRules.GrokYardFirstBill, 6.4f);
+                if (!TryJex(JexBeat.YardBill))
+                    LogOverseer(OverseerRules.JexYardFirstBill, 6.4f);
             }
-            else if (!TryGrok(GrokBeat.YardBill))
-                LogOverseer(CompactGrok.YardBill(met));
+            else if (!TryJex(JexBeat.YardBill))
+                LogOverseer(CompactJex.YardBill(met));
             Debug.Log("[GameLoop] Fobot Yard paid.");
         }
 
@@ -7697,7 +7697,7 @@ namespace SolarMajesty
                     if (l == null || l.IsCleared || l.IsScouted) continue;
                     if (!DenChart.InDisc(at, l.WorldPosition, DenChart.PassiveChartRadius)) continue;
                     l.MarkScouted();
-                    LogOverseer(CompactGrok.DenCharted(
+                    LogOverseer(CompactJex.DenCharted(
                         ColonyStructure.ClassLabel(agent.Data.specialistClass)));
                 }
             }

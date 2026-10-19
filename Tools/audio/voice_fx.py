@@ -100,7 +100,7 @@ def _presence(x: np.ndarray, sr: int, hz: float, gain: float) -> np.ndarray:
 
 
 PRESETS = {
-    # Grok: must be the most intelligible voice in the game. Clean, slight digital doubling.
+    # Jex: must be the most intelligible voice in the game. Clean, slight digital doubling.
     "overseer": lambda x, sr: _room(
         _presence(_chorus(_filt(x, _butter("highpass", 90, sr)), sr, 9.0, 0.6, 0.35, 0.18), sr, 2600, 0.25),
         sr, 0.18, 0.08),

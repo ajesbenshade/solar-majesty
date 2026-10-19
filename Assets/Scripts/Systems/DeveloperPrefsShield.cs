@@ -84,7 +84,7 @@ namespace SolarMajesty
             AddInt(DemoSettings.ReduceMotionKey);
             AddInt(DemoSettings.ColorBlindKey);
             AddInt(DemoSettings.FrameCapKey);
-            AddInt(DemoSettings.MarsGrokLessonsKey);
+            AddInt(DemoSettings.MarsJexLessonsKey);
             AddInt(DemoSettings.DayCycleKey);
             AddInt(DemoSettings.DioramaCameraKey);
             AddInt(DemoSettings.TiltShiftKey);
