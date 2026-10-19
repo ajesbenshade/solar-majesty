@@ -59,8 +59,11 @@ namespace SolarMajesty
             Object.Destroy(c.gameObject);
             _respawnAt.Add(_simTime + MajestyEconomy.CollectorRespawnSeconds);
             int back = Mathf.RoundToInt(MajestyEconomy.CollectorRespawnSeconds);
-            _loop.LogOverseer($"The Commons sends another Haul in {back} s.");
-            _loop.RaiseAlert("collector_killed", "Haul down on the road", AlertSeverity.Warning, at);
+            _loop.LogOverseer(Loc.F("The Commons sends another Haul in {0} s.", back));
+            // The English literal stays first: render_voices.py bakes RaiseAlert("key", "line") and the
+            // voice bank finds the clip by that exact text. The translated copy is only shown.
+            _loop.RaiseAlert("collector_killed", "Haul down on the road", AlertSeverity.Warning, at,
+                Loc.S("Haul down on the road"));
         }
 
         public SaveCollectors Capture()
@@ -150,7 +153,7 @@ namespace SolarMajesty
             if (_logTimer <= 0f && _pendingLog > 0)
             {
                 _logTimer = 45f;
-                _loop.LogOverseer($"Haul carried {_pendingLog:N0} EU home.");
+                _loop.LogOverseer(Loc.F("Haul carried {0:N0} EU home.", _pendingLog));
                 _pendingLog = 0;
             }
         }
@@ -306,7 +309,7 @@ namespace SolarMajesty
         /// <summary>Out between buildings — the stretch mobs ambush.</summary>
         public bool IsTravelling => IsAlive && _state != State.Resting;
         public ColonyStructure Target { get; private set; }
-        public string Status { get; private set; } = "resting";
+        public string Status { get; private set; } = Loc.S("resting");
 
         private static Material _bodyMat;
         private static Material _goldMat;
@@ -472,7 +475,7 @@ namespace SolarMajesty
             switch (_state)
             {
                 case State.Resting:
-                    Status = "resting";
+                    Status = Loc.S("resting");
                     _rest -= dt;
                     if (_rest > 0f) return;
                     _rest = 2f;
@@ -485,7 +488,7 @@ namespace SolarMajesty
                         PickNext();
                         return;
                     }
-                    Status = $"walking to {Target.DisplayName}";
+                    Status = Loc.F("walking to {0}", Target.DisplayName);
                     if (MoveTo(Target.WorldPosition, dt))
                     {
                         int take = Target.CollectLevy();
@@ -502,7 +505,7 @@ namespace SolarMajesty
                         _state = State.Resting;
                         return;
                     }
-                    Status = $"carrying {Carry} EU home";
+                    Status = Loc.F("carrying {0} EU home", Carry);
                     if (MoveTo(chest.WorldPosition, dt))
                     {
                         _director.Deposit(Carry, chest.WorldPosition);

@@ -172,7 +172,7 @@ namespace SolarMajesty
                 CharacterVoice.SpeakNarrated(agent, line); // aloud too, when SPOKEN · LOCAL TTS is up
                 n.Spoken++;
                 if (kind == NarrationKind.LevelUp || (selected && NarrationScheduler.IsBigMoment(kind)))
-                    n._loop?.LogOverseer($"{agent.Data.displayName} L{agent.Level}: “{line}”");
+                    n._loop?.LogOverseer(Loc.F("{0} L{1}: “{2}”", agent.Data.displayName, agent.Level, line));
             });
             return true;
         }
@@ -389,7 +389,7 @@ namespace SolarMajesty
             if (_chatCts != null) { _chatCts.Dispose(); _chatCts = null; }
             if (cancelled && string.IsNullOrEmpty(final))
             {
-                _lastError = "no answer in time";
+                _lastError = Loc.S("no answer in time");
                 return;
             }
             if (agent == null) return;
@@ -397,7 +397,7 @@ namespace SolarMajesty
             string reply = HeroConversation.CleanReply(final, agent.Record.Name, log.Lines);
             if (reply == null)
             {
-                _lastError = error ?? "the line went quiet — say that again?";
+                _lastError = error ?? Loc.S("the line went quiet — say that again?");
                 return;
             }
             log.Add(false, reply);

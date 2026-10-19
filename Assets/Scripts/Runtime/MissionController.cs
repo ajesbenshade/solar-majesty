@@ -103,21 +103,21 @@ namespace SolarMajesty
                 if (_state == MissionState.Won)
                 {
                     if (ReplayRules.IsEndless)
-                        return "Keep colonizing — dens quiet, colony holding";
+                        return Loc.S("Keep colonizing — dens quiet, colony holding");
                     if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                        return $"{_loop.BodyProfile?.DisplayName ?? "Outpost"} holds — campaign spine complete";
-                    return "Outpost secured — advance the campaign";
+                        return Loc.F("{0} holds — campaign spine complete", _loop.BodyProfile?.DisplayName ?? Loc.S("Outpost"));
+                    return Loc.S("Outpost secured — advance the campaign");
                 }
                 if (!DensCleared)
                 {
                     if (LairCount > 0)
-                        return $"Clear dens — {UnclearedLairs} left ({InputBindings.Hint(GameAction.FlagClearThreat)} Clear Threat)";
-                    return "Clear remaining fauna near campus";
+                        return Loc.F("Clear dens — {0} left ({1} Clear Threat)", UnclearedLairs, InputBindings.Hint(GameAction.FlagClearThreat));
+                    return Loc.S("Clear remaining fauna near campus");
                 }
                 if (!SustainComplete)
                 {
-                    string hint = _loop?.Settlement != null ? _loop.Settlement.SustainHint : "hold population";
-                    return $"Sustain — {hint}";
+                    string hint = _loop?.Settlement != null ? _loop.Settlement.SustainHint : Loc.S("hold population");
+                    return Loc.F("Sustain — {0}", hint);
                 }
                 if (!LaunchReady)
                 {
@@ -125,11 +125,11 @@ namespace SolarMajesty
                         !_loop.Research.HasLaunchUnlockFor(_loop.ActiveBody))
                     {
                         string craft = _loop.Research.LaunchTechLabel(_loop.ActiveBody);
-                        return $"Research {craft} (TECH · {InputBindings.Hint(GameAction.ToolTech)}) — then place a Landing Pad";
+                        return Loc.F("Research {0} (TECH · {1}) — then place a Landing Pad", craft, InputBindings.Hint(GameAction.ToolTech));
                     }
-                    return "Place a Landing Pad — departure craft stages there";
+                    return Loc.S("Place a Landing Pad — departure craft stages there");
                 }
-                return "Securing…";
+                return Loc.S("Securing…");
             }
         }
 
@@ -138,10 +138,10 @@ namespace SolarMajesty
             get
             {
                 if (ReplayRules.IsEndless)
-                    return "KEEP COLONIZING";
+                    return Loc.S("KEEP COLONIZING");
                 if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "SOLAR CONQUEST COMPLETE";
-                return "OUTPOST SECURED";
+                    return Loc.S("SOLAR CONQUEST COMPLETE");
+                return Loc.S("OUTPOST SECURED");
             }
         }
 
@@ -154,14 +154,14 @@ namespace SolarMajesty
                     var endless = _loop != null ? _loop.BodyProfile : null;
                     if (endless != null && !string.IsNullOrEmpty(endless.EndlessLog))
                         return endless.EndlessLog;
-                    return "Gates met. Stay on this world — rating stands while you keep expanding.";
+                    return Loc.S("Gates met. Stay on this world — rating stands while you keep expanding.");
                 }
                 var body = _loop != null ? _loop.BodyProfile : null;
                 if (body != null && CampaignCutsceneCatalog.TryGetVictory(body.Id, out var cut))
                     return cut.LogParagraph;
                 if (body != null && !string.IsNullOrEmpty(body.VictoryLog))
                     return body.VictoryLog;
-                return "Dens cleared · colony sustained · launch ready.";
+                return Loc.S("Dens cleared · colony sustained · launch ready.");
             }
         }
 
@@ -170,25 +170,25 @@ namespace SolarMajesty
             get
             {
                 if (ReplayRules.IsEndless)
-                    return "Endless mode: no launch to the next world. Keep the colony standing.";
+                    return Loc.S("Endless mode: no launch to the next world. Keep the colony standing.");
                 if (DemoSettings.FirstHourDemo)
                 {
                     string craft = _loop != null && _loop.Research != null
                         ? _loop.Research.LaunchTechLabel(CelestialBodyId.Earth)
-                        : "Lunar Rocket";
+                        : Loc.S("Lunar Rocket");
                     return LaunchPath.ObjectiveText(false, false, craft);
                 }
                 if (_loop == null || !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title.";
+                    return Loc.S("The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title.");
                 var next = CampaignProgress.NextAfter(_loop.ActiveBody);
                 string name = next.HasValue
                     ? CelestialBodyCatalog.Get(next.Value).DisplayName
-                    : "the next body";
-                return $"Stage departure, or keep overseeing here. Next: {name}.";
+                    : Loc.S("the next body");
+                return Loc.F("Stage departure, or keep overseeing here. Next: {0}.", name);
             }
         }
 
-        public string FailHeadline => WasDeadlineFail ? "MISSION TIME EXPIRED" : "OUTPOST LOST";
+        public string FailHeadline => WasDeadlineFail ? Loc.S("MISSION TIME EXPIRED") : Loc.S("OUTPOST LOST");
 
         public string FailDetail
         {
@@ -196,14 +196,14 @@ namespace SolarMajesty
             {
                 var body = _loop != null ? _loop.BodyProfile : null;
                 if (WasDeadlineFail)
-                    return "The window to secure the outpost closed. Restart for a tighter run.";
+                    return Loc.S("The window to secure the outpost closed. Restart for a tighter run.");
                 if (_loop != null && _loop.ColonyExtinct)
-                    return "The Colony Commons fell and the treasury with it. Retry this body, or New Game.";
+                    return Loc.S("The Colony Commons fell and the treasury with it. Retry this body, or New Game.");
                 if (_loop != null && _loop.RobotCount == 0)
-                    return "No robots left and no re-fab in the shop. Rebuild a workshop, or retry.";
+                    return Loc.S("No robots left and no re-fab in the shop. Rebuild a workshop, or retry.");
                 if (body != null && !string.IsNullOrEmpty(body.FailLog))
                     return body.FailLog;
-                return "Every specialist is incapacitated. Revive the party to retake the plaza.";
+                return Loc.S("Every specialist is incapacitated. Revive the party to retake the plaza.");
             }
         }
 
@@ -399,7 +399,7 @@ namespace SolarMajesty
             if (DensCleared && !_loggedDens)
             {
                 _loggedDens = true;
-                _loop.LogOverseer("Dens quiet. Fauna no longer holds the plaza.");
+                _loop.LogOverseer(Loc.S("Dens quiet. Fauna no longer holds the plaza."));
             }
         }
 
@@ -420,7 +420,7 @@ namespace SolarMajesty
             if (SustainComplete && !_loggedSustain)
             {
                 _loggedSustain = true;
-                _loop.LogOverseer($"Treasury holding — {set.Treasury:N0}/{treasuryGoal:N0} EU for {Mathf.RoundToInt(sustainHoldSeconds)}s.");
+                _loop.LogOverseer(Loc.F("Treasury holding — {0:N0}/{1:N0} EU for {2}s.", set.Treasury, treasuryGoal, Mathf.RoundToInt(sustainHoldSeconds)));
             }
         }
 
@@ -433,7 +433,7 @@ namespace SolarMajesty
             if (!_loggedFrenzy)
             {
                 _loggedFrenzy = true;
-                _loop?.LogOverseer("Dens frenzy — they know you're leaving.");
+                _loop?.LogOverseer(Loc.S("Dens frenzy — they know you're leaving."));
             }
         }
 
