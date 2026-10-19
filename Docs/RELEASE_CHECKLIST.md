@@ -104,7 +104,8 @@ is in it being honest, not in it being all ticked.
 - [ ] **The 45–90 minute external playtest** ([PLAYTEST_PROTOCOL.md](PLAYTEST_PROTOCOL.md)) — still the single
       largest open risk; nobody outside the project has played this
 - [x] Benchmark/soak mode (`-benchmark`, [run_benchmark.ps1](../Tools/qa/run_benchmark.ps1)): all five worlds run 30–40 s at 3× with 0 errors; the ~120 ms NavMesh hitch on campus growth is fixed (async rebuild)
-- [ ] 60 fps on minimum-spec hardware: run the benchmark with the desktop **unlocked** (locked-screen runs report `drawn=false`); 200-agent stress still unmeasured
+- [x] Measured on a high-end PC (Ryzen 9 7900X, RTX 3080, 1080p Ultra, 2026-10-19): 450–574 fps average, worst frame ≤ 26 ms on every world after removing the autosave (~35 ms + GC) and terrain-grading (77 ms) main-thread work
+- [ ] 60 fps on minimum-spec hardware: run [run_benchmark.ps1](../Tools/qa/run_benchmark.ps1) on a low-end PC with the desktop unlocked; 200-agent stress still unmeasured
 - [ ] Real low/medium graphics tiers: only Ultra has its own URP asset, the other five quality levels share one, so "Low" saves little
 - [ ] Full playthrough on all five bodies without an exception
 - [ ] Steam page, capsule art, screenshots
