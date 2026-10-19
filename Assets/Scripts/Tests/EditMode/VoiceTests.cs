@@ -24,10 +24,10 @@ namespace SolarMajesty.Tests
         [Test]
         public void LineKey_IgnoresSpeakerPrefixCaseAndPunctuation()
         {
-            string line = GrokCatalog.Line(GrokBeat.FirstFlag);
-            Assert.AreEqual(VoiceBank.LineKey(line), VoiceBank.LineKey(GrokCatalog.Say(GrokBeat.FirstFlag)));
+            string line = JexCatalog.Line(JexBeat.FirstFlag);
+            Assert.AreEqual(VoiceBank.LineKey(line), VoiceBank.LineKey(JexCatalog.Say(JexBeat.FirstFlag)));
             Assert.AreEqual(VoiceBank.LineKey("Nope. Nope. Inn!"), VoiceBank.LineKey("  nope nope — INN "));
-            Assert.AreEqual("nope nope inn", VoiceBank.NormalizeLine("Grok — Nope... Nope, inn?"));
+            Assert.AreEqual("nope nope inn", VoiceBank.NormalizeLine("Jex — Nope... Nope, inn?"));
             Assert.AreNotEqual(VoiceBank.LineKey("Level 6"), VoiceBank.LineKey("Level 7"));
         }
 
@@ -181,21 +181,21 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void ShippedBank_EveryScriptedGrokLineIsVoiced()
+        public void ShippedBank_EveryScriptedJexLineIsVoiced()
         {
             var bank = Shipped();
             var missing = new List<string>();
-            foreach (GrokBeat beat in (GrokBeat[])Enum.GetValues(typeof(GrokBeat)))
+            foreach (JexBeat beat in (JexBeat[])Enum.GetValues(typeof(JexBeat)))
             {
-                string line = GrokCatalog.Line(beat);
+                string line = JexCatalog.Line(beat);
                 if (!string.IsNullOrEmpty(line) && !bank.TryGetLine(line, out _)) missing.Add(beat.ToString());
             }
             foreach (FieldInfo f in typeof(OverseerRules).GetFields(BindingFlags.Public | BindingFlags.Static))
             {
-                if (!f.IsLiteral || f.FieldType != typeof(string) || !f.Name.StartsWith("Grok")) continue;
+                if (!f.IsLiteral || f.FieldType != typeof(string) || !f.Name.StartsWith("Jex")) continue;
                 if (!bank.TryGetLine((string)f.GetRawConstantValue(), out _)) missing.Add(f.Name);
             }
-            Assert.IsEmpty(missing, "Unvoiced Grok lines (re-run Tools/audio/render_voices.py): " + string.Join(", ", missing));
+            Assert.IsEmpty(missing, "Unvoiced Jex lines (re-run Tools/audio/render_voices.py): " + string.Join(", ", missing));
         }
 
         [Test]
@@ -213,7 +213,7 @@ namespace SolarMajesty.Tests
             var bank = Shipped();
             Assert.IsTrue(bank.TryPickBark(VoiceBank.SpeakerFor(SpecialistClass.EngineerBot), VoiceCue.Claim, null, out var bark));
             Assert.IsNotNull(Resources.Load<AudioClip>("Audio/Voices/" + bark.Clip), bark.Clip);
-            Assert.IsTrue(bank.TryGetLine(GrokCatalog.Line(GrokBeat.Drop), out var line));
+            Assert.IsTrue(bank.TryGetLine(JexCatalog.Line(JexBeat.Drop), out var line));
             Assert.IsNotNull(Resources.Load<AudioClip>("Audio/Voices/" + line.Clip), line.Clip);
         }
     }

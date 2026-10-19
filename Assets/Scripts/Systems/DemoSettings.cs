@@ -32,7 +32,7 @@ namespace SolarMajesty
         public const string ReduceMotionKey = "SM_Set_ReduceMotion";
         public const string ColorBlindKey = "SM_Set_ColorBlind";
         public const string FrameCapKey = "SM_Set_FrameCap";
-        public const string MarsGrokLessonsKey = "SM_Set_MarsGrokLessons";
+        public const string MarsJexLessonsKey = "SM_Set_MarsGrokLessons";
         public const string DayCycleKey = "SM_Set_DayCycle";
         public const string DioramaCameraKey = "SM_Set_DioramaCamera";
         public const string TiltShiftKey = "SM_Set_TiltShift";
@@ -105,7 +105,7 @@ namespace SolarMajesty
         /// </summary>
         public static bool FirstHourDemo;
         /// <summary>Mars optional training wheels. Default off — failure asides only.</summary>
-        public static bool MarsGrokLessons;
+        public static bool MarsJexLessons;
 
         /// <summary>Sun moves through golden hour and a blue-hour night. Off = the tuned still look.</summary>
         public static bool DayCycle = true;
@@ -297,7 +297,7 @@ namespace SolarMajesty
             ReduceMotion = PlayerPrefs.GetInt(ReduceMotionKey, 0) == 1;
             ColorBlindMode = PlayerPrefs.GetInt(ColorBlindKey, 0);
             FrameCap = PlayerPrefs.GetInt(FrameCapKey, 0);
-            MarsGrokLessons = PlayerPrefs.GetInt(MarsGrokLessonsKey, 0) == 1;
+            MarsJexLessons = PlayerPrefs.GetInt(MarsJexLessonsKey, 0) == 1;
             DayCycle = PlayerPrefs.GetInt(DayCycleKey, 1) == 1;
             DioramaCamera = PlayerPrefs.GetInt(DioramaCameraKey, 0) == 1 || HasArg("-diorama");
             TiltShift = PlayerPrefs.GetInt(TiltShiftKey, 1) == 1;
@@ -409,7 +409,7 @@ namespace SolarMajesty
             // Do not write that over a saved full-campaign stance.
             if (!FirstHourDemo)
                 ReplayRules.Save();
-            PlayerPrefs.SetInt(MarsGrokLessonsKey, MarsGrokLessons ? 1 : 0);
+            PlayerPrefs.SetInt(MarsJexLessonsKey, MarsJexLessons ? 1 : 0);
             PlayerPrefs.Save();
         }
 

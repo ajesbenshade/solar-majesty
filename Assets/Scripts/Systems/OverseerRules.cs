@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Committed overhaul numbers from Docs/GROK_GAMEPLAY_OVERHAUL.md.
+    /// Committed overhaul numbers from Docs/JEX_GAMEPLAY_OVERHAUL.md.
     /// Does not change SpecialistBrain.ScoreFlag.
     /// </summary>
     public static class OverseerRules
@@ -15,21 +15,21 @@ namespace SolarMajesty
         public const float RefabSeconds = 40f;
         public const float SalvageCreditFrac = 0.40f;
 
-        /// <summary>Generic hire base for yard bills when the class is unknown (Majesty: hire + ½ per level).</summary>
+        /// <summary>Generic hire base for yard bills when the class is unknown (Majesty: hire + ┬╜ per level).</summary>
         public const int ReviveMet = 400;
         /// <summary>ICE is not a shop currency. Yard bills are credits (MET) only.</summary>
         public const int ReviveIce = 0;
-        /// <summary>Yard bill grows by mech level: L1 = base, then ×1.5 per step.</summary>
+        /// <summary>Yard bill grows by mech level: L1 = base, then ├ù1.5 per step.</summary>
         public const float ReviveCostGrowth = 1.5f;
         public const int ReviveCostMaxSteps = 8;
         public const float FobotYardArrive = 28f;
 
-        public const string GrokYardFirstBill =
+        public const string JexYardFirstBill =
             "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.";
-        public const string GrokYardUnaffordable =
+        public const string JexYardUnaffordable =
             "Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
-        public const string GrokYardMissing =
-            "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building.";
+        public const string JexYardMissing =
+            "No Fobot Yard. Wrecks wait. Dock an Inn ΓÇö that is the yard. Y does not skip the building.";
         public const float ReviveCooldown = 120f;
         public const float ReviveHp = 0.50f;
         public const float ReviveFatigue = 0.40f;
@@ -94,9 +94,9 @@ namespace SolarMajesty
 
         /// <summary>
         /// How far (m) a hero will notice a Clear Threat flag.
-        /// Defense's personal radius is considerBase + explore×perPoint, floored by
-        /// considerRange×0.7 — about 56 m (explore 0.08, will not wander, patrol ring 20 m).
-        /// The sandbox is 384 m (256×1.5). Dens sample that whole board outside a ~21 m
+        /// Defense's personal radius is considerBase + explore├ùperPoint, floored by
+        /// considerRange├ù0.7 ΓÇö about 56 m (explore 0.08, will not wander, patrol ring 20 m).
+        /// The sandbox is 384 m (256├ù1.5). Dens sample that whole board outside a ~21 m
         /// campus exclusion, so a den on the rim is permanently "too far for DEF".
         /// Bounty cannot extend the hard gate, and nothing the player builds does either.
         /// 560 m is the map diagonal (543 m) plus terrain-height margin, so any den on
@@ -190,11 +190,11 @@ namespace SolarMajesty
         /// <summary>HAB purse left this long can be stolen by fauna at the door. 3 tax ticks.</summary>
         public const float LevyHabStaleSeconds = 72f;
 
-        public const string GrokLevyStolenCourier =
+        public const string JexLevyStolenCourier =
             "Haul lost the levy on the road.";
-        public const string GrokLevyStolenHab =
+        public const string JexLevyStolenHab =
             "EU was napping on the HAB. A mite just made a withdrawal.";
-        public const string GrokLevyHome =
+        public const string JexLevyHome =
             "Haul walked the batteries home. EU is in the till. Do not click the crate.";
 
         public const float PressureInterval = 75f;
@@ -282,7 +282,7 @@ namespace SolarMajesty
 
         public static int YardBill(int level, SpecialistClass cls) => MajestyEconomy.ResurrectCost(cls, level);
 
-        /// <summary>Legacy name — yard bills use level, not revive count.</summary>
+        /// <summary>Legacy name ΓÇö yard bills use level, not revive count.</summary>
         public static int ReviveMetals(int level) => YardBill(level);
 
         /// <summary>Yard bill scales with hero level (L1 = base).</summary>
@@ -301,7 +301,7 @@ namespace SolarMajesty
             return xp;
         }
 
-        /// <summary>XP to go from <paramref name="fromLevel"/> to fromLevel+1. L1→2 = 40.</summary>
+        /// <summary>XP to go from <paramref name="fromLevel"/> to fromLevel+1. L1ΓåÆ2 = 40.</summary>
         public static int XpForNext(int fromLevel)
         {
             int l = Mathf.Clamp(fromLevel, 1, LevelCap - 1);
@@ -352,7 +352,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// Flag-log line when a hero will not take the flag. A bounty that already meets the
-        /// ask does not say "raise bounty" — that lever is spent.
+        /// ask does not say "raise bounty" ΓÇö that lever is spent.
         /// </summary>
         public static string FlagRefusalLine(FlagRefusalKind kind, string cls, int ask, int reachMeters, float bounty)
         {
@@ -360,15 +360,15 @@ namespace SolarMajesty
             switch (kind)
             {
                 case FlagRefusalKind.Greed:
-                    return $"{cls} wants {ask} — raise +";
+                    return $"{cls} wants {ask} ΓÇö raise +";
                 case FlagRefusalKind.TooFar:
-                    return $"too far for {cls} — {reachMeters}m";
+                    return $"too far for {cls} ΓÇö {reachMeters}m";
                 case FlagRefusalKind.Hurt:
-                    return $"{cls} is hurt — wait";
+                    return $"{cls} is hurt ΓÇö wait";
                 case FlagRefusalKind.NotMyJob:
                     return $"not a {cls} job";
                 case FlagRefusalKind.Tired:
-                    return $"{cls} is tired — wait";
+                    return $"{cls} is tired ΓÇö wait";
                 case FlagRefusalKind.Hunting:
                     return $"{cls} is hunting pests";
                 case FlagRefusalKind.Orders:
@@ -376,9 +376,9 @@ namespace SolarMajesty
                 case FlagRefusalKind.Ignored:
                     if (ask > 0 && bounty + 0.5f >= ask)
                         return $"{cls} won't take the walk";
-                    return "Ignored — raise bounty (+)";
+                    return "Ignored ΓÇö raise bounty (+)";
                 default:
-                    return "Ignored — raise bounty (+)";
+                    return "Ignored ΓÇö raise bounty (+)";
             }
         }
     }

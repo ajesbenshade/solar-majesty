@@ -44,7 +44,7 @@ namespace SolarMajesty.Tests
                 DemoSettings.FrameCapKey, DemoSettings.DayCycleKey, DemoSettings.DioramaCameraKey,
                 DemoSettings.TiltShiftKey, DemoSettings.CloudShadowsKey, DemoSettings.HeroVoicesKey,
                 DemoSettings.CharacterVoicesKey, DemoSettings.HeroSpeechKey, DemoSettings.FirstHourKey,
-                DemoSettings.MarsGrokLessonsKey, DemoSettings.BootPlayKey, DemoSettings.TutorialKey,
+                DemoSettings.MarsJexLessonsKey, DemoSettings.BootPlayKey, DemoSettings.TutorialKey,
                 DemoSettings.SaveFlagKey, DemoSettings.PlanetArchitectureKey,
                 ReplayRules.ModeKey, ReplayRules.ChallengeKey, ReplayRules.StanceKey, ReplayRules.IronmanKey
             };

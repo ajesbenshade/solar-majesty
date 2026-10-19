@@ -83,7 +83,7 @@ namespace SolarMajesty
         /// <summary>
         /// Synthesise <paramref name="line"/> in <paramref name="voice"/> and hand back a clip on the
         /// main thread (null on failure). Playback, placement and rationing belong to the caller
-        /// (CharacterVoice for heroes, OverseerVoice for Grok), so live lines obey the same
+        /// (CharacterVoice for heroes, OverseerVoice for Jex), so live lines obey the same
         /// VoiceDirector as baked barks and are never spoken twice. Returns false when nothing was
         /// sent: speech off, server down, another line in flight, or voices muted.
         /// </summary>
