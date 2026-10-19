@@ -1,0 +1,13 @@
+api_name,display_name,description,hidden
+ACH_FIRST_CONTRACT,"Terms Accepted","Have a robot complete its first bounty.",0
+ACH_HARD_BARGAIN,"Hard Bargain","Post a bounty of 2,500 EU or more.",0
+ACH_SKINFLINT,"Skinflint","Clear a body having never posted a bounty above 900 EU.",0
+ACH_FULL_CREW,"Full Crew","Have eight robots fabricated in one run.",0
+ACH_CLEAN_SHEET,"Clean Sheet","Clear a body without losing a single module.",0
+ACH_DEN_BREAKER,"Den Breaker","Clear ten dens in one run.",0
+ACH_SELF_SUFFICIENT,"Self-Sufficient","Bank 2,000 EU into the till.",0
+ACH_REBUILDER,"Rebuilder","Re-fabricate five scrapped robots and still clear the body.",0
+ACH_HOMESTEADER,"Homesteader","Reach a population of 20.",0
+ACH_VETERAN,"Long Service","Have one robot complete 40 contracts.",0
+ACH_SOLAR_CONQUEST,"Solar Conquest","Take every body from Earth to Europa.",0
+ACH_IRONMAN,"No Second Draft","Clear a body in Ironman.",1

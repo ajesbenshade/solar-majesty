@@ -74,3 +74,7 @@ Tools/local_ai/*.log
 Tools/audio/.venv/
 Tools/audio/models/
 Tools/audio/preview/
+
+# Written by Steamworks.NET for editor runs (Valve test app 480). Builds get theirs from BuildCommands.
+/steam_appid.txt
+/sm-results.xml
