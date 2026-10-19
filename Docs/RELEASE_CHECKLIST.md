@@ -6,12 +6,17 @@ is in it being honest, not in it being all ticked.
 ## Build and pipeline
 
 - [x] Assembly definitions split (`SolarMajesty.Systems` / `.Runtime` / `.Editor` / `.Tests.EditMode`)
-- [x] Automated EditMode tests (129 passing)
+- [x] Automated EditMode tests (775 passing, 2026-10-19)
 - [x] CI on push and nightly ([.github/workflows/ci.yml](../.github/workflows/ci.yml))
 - [x] Headless build command ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs))
 - [x] Standalone player builds (macOS verified)
 - [x] Bundle identifier set (`com.solarmajesty.solarmajesty`)
 - [ ] Application icons for every platform size
+- [x] Steamworks: API startup, achievements, overlay pause, rich presence ([STEAM_RELEASE.md](STEAM_RELEASE.md)) — on test app 480 until the real App ID exists
+- [x] SteamPipe staging and upload script ([upload_to_steam.ps1](../Tools/steam/upload_to_steam.ps1)), dry-run verified
+- [x] Achievement icons, 256 px achieved + locked ([make_achievement_icons.py](../Tools/steam/make_achievement_icons.py))
+- [x] Build stamp (`build_info.txt`), version 0.9.0, single-instance player
+- [ ] Real App ID in `SteamConfig.AppId`, Auto-Cloud rules, achievements and rich presence uploaded on the partner site
 - [ ] Code signing and notarisation (macOS), Authenticode (Windows)
 - [ ] `UNITY_LICENSE` / `UNITY_EMAIL` / `UNITY_PASSWORD` secrets added to the GitHub repo so CI can run
 
@@ -26,6 +31,10 @@ is in it being honest, not in it being all ticked.
 - [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs))
 - [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs))
 - [x] Named robots with service records ([SpecialistIdentity.cs](../Assets/Scripts/Systems/SpecialistIdentity.cs))
+- [x] Campaign progress and settings in a file ([GamePrefs.cs](../Assets/Scripts/Systems/GamePrefs.cs)) so Steam Cloud syncs the whole campaign; registry values migrate on first read
+- [x] Developer cheats (F10 hop, Shift+click unlock, F8/F9/R) gated to editor, dev builds and `-devtools` ([DevTools.cs](../Assets/Scripts/Systems/DevTools.cs))
+- [x] Persistent error log with Settings → Open Logs Folder ([ErrorLog.cs](../Assets/Scripts/Systems/ErrorLog.cs))
+- [x] Live-AI content guard on chat input, streaming text and replies ([AiContentGuard.cs](../Assets/Scripts/Systems/Narration/AiContentGuard.cs))
 - [ ] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`)
 - [x] Ironman wired to the run configuration (`ReplayRules.Ironman` chip, latched at New Game / Continue; blocks manual saves and body restarts; No Second Draft evaluates on body conquest)
 
@@ -97,6 +106,9 @@ is in it being honest, not in it being all ticked.
 - [ ] 60 fps with 200 agents, profiled rather than assumed
 - [ ] Full playthrough on all five bodies without an exception
 - [ ] Steam page, capsule art, screenshots
+- [ ] Steam content survey incl. AI disclosure (draft text in [STEAM_RELEASE.md](STEAM_RELEASE.md))
+- [ ] Trademark check on "Solar Majesty"; GitHub repository made private (Asset Store packages are committed)
+- [ ] Landing-pad rocket redesigned away from the Starship silhouette
 - [ ] Trailer
 - [ ] Demo build for a Next Fest
 - [ ] Phase 4 exit review re-run against a fresh still

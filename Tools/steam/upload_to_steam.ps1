@@ -6,8 +6,8 @@
         -AppId 1234560 -DepotId 1234561 -SteamUser my_build_account -Description "EA 0.9.0 RC1"
 
   What it does:
-    1. Copies the game into Builds\Steam\content (leaving out Burst debug symbols and any
-       steam_appid.txt; Steam supplies the app ID when it launches the game).
+    1. Copies the game into Builds\Steam\content (leaving out Burst debug symbols, the playtester
+       PLAYTEST.txt and any steam_appid.txt; Steam supplies the app ID when it launches the game).
     2. Copies the ai folder in beside the exe, as LocalAiHost expects.
     3. Writes app_build_<app>.vdf and depot_build_<depot>.vdf into Builds\Steam\scripts.
     4. Runs steamcmd +run_app_build. Steam Guard will prompt the first time.
@@ -34,6 +34,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 function Say($m) { Write-Host "[steam] $m" -ForegroundColor Yellow }
+# steamcmd's VDF reader does not expect a byte-order mark, which Set-Content -Encoding UTF8 writes on PowerShell 5.
+function Write-NoBom {
+  param([Parameter(ValueFromPipeline = $true)][string]$Text, [string]$Path)
+  process { [IO.File]::WriteAllText($Path, $Text, (New-Object Text.UTF8Encoding($false))) }
+}
 
 if ($AppId -eq 480) { throw 'App 480 is Valve''s test app; upload needs your real app ID.' }
 
@@ -63,7 +68,7 @@ New-Item -ItemType Directory -Force $Content, $Scripts, $Output | Out-Null
 # robocopy exit codes below 8 mean success.
 & robocopy $GameDir $Content /E /NFL /NDL /NJH /NJS /NP /R:1 /W:1 `
   /XD '*_BurstDebugInformation_DoNotShip' '*_BackUpThisFolder_ButDontShipItWithYourGame' 'ai' `
-  /XF 'steam_appid.txt' '*.pdb' | Out-Null
+  /XF 'steam_appid.txt' 'PLAYTEST.txt' '*.pdb' | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy (game) failed with $LASTEXITCODE" }
 
 if ($AiDir) {
@@ -88,9 +93,10 @@ $depotVdf = Join-Path $Scripts "depot_build_$DepotId.vdf"
 	}
 	"FileExclusion" "*.pdb"
 	"FileExclusion" "steam_appid.txt"
+	"FileExclusion" "PLAYTEST.txt"
 	"FileExclusion" "ai\\*.log"
 }
-"@ | Set-Content -Encoding UTF8 $depotVdf
+"@ | Write-NoBom -Path $depotVdf
 
 $appVdf = Join-Path $Scripts "app_build_$AppId.vdf"
 $desc = $Description.Replace('"', "'")
@@ -108,7 +114,7 @@ $desc = $Description.Replace('"', "'")
 		"$DepotId" "$depotVdf"
 	}
 }
-"@ | Set-Content -Encoding UTF8 $appVdf
+"@ | Write-NoBom -Path $appVdf
 
 Say "wrote $appVdf"
 if (-not $SteamUser) {
