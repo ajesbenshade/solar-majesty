@@ -25,7 +25,10 @@ param(
   [switch]$NoChat,
   [switch]$NoVoice,
   [switch]$SkipLlama,
-  [switch]$SkipVerify
+  [switch]$SkipVerify,
+  # Where players ask for GPL source (THIRD-PARTY-NOTICES written offer). Set it to your support
+  # email or URL before a store build.
+  [string]$SourceOfferContact = 'the support contact on the Solar Majesty Steam store page'
 )
 $ErrorActionPreference = 'Stop'
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -111,6 +114,9 @@ if (-not $NoVoice) {
 }
 
 # --- notices ------------------------------------------------------------------------------------
+$EspeakVersion = 'unknown version'
+$espeakInfo = Get-ChildItem (Join-Path $Venv 'Lib\site-packages') -Directory -Filter 'espeakng_loader-*.dist-info' -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($espeakInfo) { $EspeakVersion = $espeakInfo.Name -replace '^espeakng_loader-(.+)\.dist-info$', '$1' }
 @"
 Solar Majesty - local AI pack: third-party software and models
 ================================================================
@@ -127,9 +133,29 @@ phonemizer                                            GPL-3.0      https://githu
 espeak-ng (espeakng_loader)                           GPL-3.0      https://github.com/espeak-ng/espeak-ng
 
 phonemizer and espeak-ng are GPL-3.0 programs the voice server runs as a separate process.
-Their source is in python\Lib\site-packages (Python code) and at the links above. The game itself
-does not link them. To switch the AI off entirely, start SolarMajesty.exe with -noai or delete this folder.
+The game itself does not link them. Their license texts are in licenses\. The Python source of
+phonemizer is in python\Lib\site-packages. espeak-ng ships as a compiled library
+(espeakng_loader\espeak-ng.dll, from espeakng_loader $EspeakVersion).
+
+Written offer (GPL-3.0 section 6): for at least three years from the date you received this copy,
+we will give anyone the complete corresponding source code of the GPL-3.0 components above, for no
+more than the cost of physically performing that distribution. Ask through $SourceOfferContact.
+
+To switch the AI off entirely, start SolarMajesty.exe with -noai or delete this folder.
 "@ | Set-Content -Encoding UTF8 (Join-Path $Ai 'THIRD-PARTY-NOTICES.txt')
+
+# GPL and other license texts travel with the binaries they cover.
+$licenses = Join-Path $Ai 'licenses'
+New-Item -ItemType Directory -Force $licenses | Out-Null
+$site = Join-Path $Venv 'Lib\site-packages'
+foreach ($pkg in @('phonemizer', 'espeakng_loader', 'kokoro_onnx', 'onnxruntime', 'numpy')) {
+  Get-ChildItem $site -Directory -Filter "$pkg-*.dist-info" -ErrorAction SilentlyContinue | ForEach-Object {
+    $dest = Join-Path $licenses $pkg
+    New-Item -ItemType Directory -Force $dest | Out-Null
+    Get-ChildItem $_.FullName -Recurse -File | Where-Object { $_.Name -match '^(LICEN[CS]E|COPYING|NOTICE)' } |
+      Copy-Item -Destination $dest -Force
+  }
+}
 
 # --- verify -------------------------------------------------------------------------------------
 if (-not $SkipVerify) {

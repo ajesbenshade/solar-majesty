@@ -58,11 +58,11 @@ namespace SolarMajesty
             ",\"chat_template_kwargs\":{\"enable_thinking\":false},\"reasoning_effort\":\"none\"";
 
         public const string SystemPrompt =
-            "You voice autonomous specialists in a Majesty-style space colony game. Reply with ONE " +
+            "You voice autonomous robot heroes in a space colony game. Reply with ONE " +
             "punchy first-person line, at most 9 words, that the hero mutters right now. Speak in the " +
             "given voice. Be specific and a little funny. Never reuse wording from earlier replies. " +
             "Use only the facts given. Reply in English. No emoji, no " +
-            "quotes, no explanations.";
+            "quotes, no explanations. " + AiContentGuard.PromptRule;
 
         /// <summary>Example exchanges: small models copy tone and length from these far better than from rules.</summary>
         static readonly string[,] Examples =
@@ -214,6 +214,7 @@ namespace SolarMajesty
             if (lower.Contains("as an ai") || lower.Contains("language model") || lower.StartsWith("i cannot") ||
                 lower.StartsWith("i can't help"))
                 return null;
+            if (!AiContentGuard.AllowsOutput(t)) return null;
             if (t.Length > MaxChars)
             {
                 int cut = t.LastIndexOf(' ', MaxChars - 1);
