@@ -277,6 +277,86 @@ namespace SolarMajesty.Tests
             }
         }
 
+        // ---------------------------------------------------------------- the run tallies
+
+        [Test]
+        public void RunStats_DenBrokenWithAHeroOnIt_CountsTheDenAndThePaidBounty()
+        {
+            var loop = MakeLoop(out _, out var flags, metals: 1000);
+            var lair = MakeLair(loop, out var resident);
+            FlagBountySync.TryPost(flags, loop.Economy, ClearData(), lair.WorldPosition, 600f);
+            var hero = MakeHero(flags);
+            lair.ApplyStructureDamage(10f, hero);
+            resident.SetHealthForTests(0f);
+            lair.Tick();
+
+            Assert.AreEqual(1, loop.Stats.DensCleared);
+            Assert.AreEqual(1, loop.Stats.FlagsCompleted, "Terms Accepted reads this");
+            Assert.AreEqual(600, loop.Stats.BountyPaid);
+        }
+
+        [Test]
+        public void RunStats_QuietDenNobodyWorked_CountsTheDenButNoBounty()
+        {
+            var loop = MakeLoop(out _, out var flags, metals: 1000);
+            var lair = MakeLair(loop, out var resident);
+            FlagBountySync.TryPost(flags, loop.Economy, ClearData(), lair.WorldPosition, 600f);
+            resident.SetHealthForTests(0f);
+            lair.Tick();
+
+            Assert.AreEqual(1, loop.Stats.DensCleared);
+            Assert.AreEqual(0, loop.Stats.FlagsCompleted, "the escrow went back; nobody earned it");
+            Assert.AreEqual(0, loop.Stats.BountyPaid);
+        }
+
+        [Test]
+        public void RunStats_EveryKill_IsCounted()
+        {
+            var loop = MakeLoop(out _, out _, metals: 0);
+            loop.OnFaunaKilled(FaunaKind.Stalker, Vector3.zero);
+            loop.OnFaunaKilled(FaunaKind.JunkBot, Vector3.zero, 0f);
+            Assert.AreEqual(2, loop.Stats.FaunaKilled);
+        }
+
+        /// <summary>
+        /// The summary screen, the verdict and the achievements read these tallies; only four were
+        /// ever recorded. Every bounty run ended "You posted nothing", and Terms Accepted, Hard Bargain,
+        /// Skinflint, Full Crew, Den Breaker and Rebuilder could never be earned while Clean Sheet came
+        /// free with any conquest (autoplay: the verdict after 73 bounties).
+        /// </summary>
+        [Test]
+        public void RunStats_EveryTallyTheGameReads_IsRecordedSomewhere()
+        {
+            var sources = new System.Text.StringBuilder();
+            foreach (var dir in new[] { "Scripts/Runtime", "Scripts/Systems" })
+                foreach (var file in Directory.GetFiles(Path.Combine(Application.dataPath, dir), "*.cs", SearchOption.AllDirectories))
+                    if (!file.EndsWith("RunStats.cs"))
+                        sources.Append(File.ReadAllText(file)).Append('\n');
+            string code = sources.ToString();
+
+            var recordedBy = new Dictionary<string, string>
+            {
+                { "FlagsPosted", "Stats.FlagsPosted++" },
+                { "FlagsCompleted", "Stats.FlagsCompleted++" },
+                { "FlagsRefused", "Stats.FlagsRefused++" },
+                { "HighestBounty", "Stats.NoteBounty(" },
+                { "BountyPaid", "Stats.BountyPaid +=" },
+                { "TitheCollected", "Stats.TitheCollected +=" },
+                { "ModulesBuilt", "Stats.ModulesBuilt++" },
+                { "ModulesLost", "Stats.ModulesLost++" },
+                { "RobotsFabricated", "Stats.RobotsFabricated++" },
+                { "RobotsScrapped", "Stats.RobotsScrapped++" },
+                { "FaunaKilled", "Stats.FaunaKilled++" },
+                { "DensCleared", "Stats.DensCleared++" },
+                { "TechUnlocked", "Stats.TechUnlocked++" },
+                { "BodiesConquered", "Stats.BodiesConquered++" },
+            };
+            foreach (var kv in recordedBy)
+                StringAssert.Contains(kv.Value, code, $"RunStats.{kv.Key} is read by the summary, verdict or an achievement but never recorded");
+            // Not checked: PeakPopulation (Homesteader, "Reach a population of 20"). The gold-only
+            // economy took population out of the game; that achievement needs a design decision.
+        }
+
         // ---------------------------------------------------------------- a hire or re-fab across a save
 
         [Test]

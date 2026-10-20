@@ -1373,6 +1373,7 @@ namespace SolarMajesty
             int refund = handle.EscrowMetals;
             Economy?.RefundBountyEscrow(refund);
             Flags.Cancel(handle);
+            Stats.FlagsCancelled++;
             if (Economy != null)
                 Economy.MatchReserved(FlagBountySync.Sum(Flags.Flags));
             _overseerHud?.Notify(refund > 0 ? Loc.F("Flag cancelled — {0} EU returned.", refund) : Loc.S("Flag cancelled."), 2.4f);
@@ -1383,6 +1384,12 @@ namespace SolarMajesty
         {
             RefreshFlagInterest();
             if (handle == null) return;
+            // The run tallies were never recorded: the summary read zeros, every verdict was "You
+            // posted nothing", and half the achievements could not be earned (autoplay).
+            Stats.FlagsPosted++;
+            Stats.NoteBounty(Mathf.RoundToInt(handle.CurrentBounty));
+            if (handle.InterestCount <= 0 && _agents.Count > 0)
+                Stats.FlagsRefused++;
             BroadcastRefusalChips(handle);
 
             EnsureNarrative();
@@ -1465,6 +1472,11 @@ namespace SolarMajesty
 
         private void OnFlagWorkCompleted(FlagHandle handle)
         {
+            if (handle != null)
+            {
+                Stats.FlagsCompleted++;
+                Stats.BountyPaid += FlagBountySync.Amount(handle);
+            }
             if (handle != null && _flagInput != null && ReferenceEquals(_flagInput.SelectedPosted, handle))
                 _flagInput.ClearPostedSelection();
             NotifyFlagCompleted(handle);
@@ -2779,6 +2791,7 @@ namespace SolarMajesty
 
         private void OnTechUnlocked(TechId id)
         {
+            Stats.TechUnlocked++;
             RefreshTechEffects();
             SyncLaunchGate();
             DemoAudio.PlayResearch();
@@ -3326,6 +3339,7 @@ namespace SolarMajesty
             string label = data.displayName ?? cls.Value.ToString();
             if (announce)
             {
+                Stats.RobotsFabricated++; // not the restore of a saved robot
                 _overseerHud?.Notify(hire > 0
                     ? Loc.F("{0} hired at {1} — {2} EU.", label, Loc.S(workshop.DisplayName), hire)
                     : Loc.F("{0} fabricated at {1}.", label, Loc.S(workshop.DisplayName)), 3.2f);
@@ -3374,6 +3388,7 @@ namespace SolarMajesty
                 var order = _completedBuilds[i];
                 if (order?.Data == null) continue;
                 if (!order.IsRefab) DemoAudio.PlayBuildComplete(order.WorldPosition);
+                if (!order.IsRefab) Stats.ModulesBuilt++;
             if (order.IsRefab)
                     {
                         var shop = Village?.FindNear(order.WorldPosition, 6f);
@@ -6939,6 +6954,7 @@ namespace SolarMajesty
         public void NotifyStructureDestroyed(ColonyStructure st)
         {
             if (st == null) return;
+            Stats.ModulesLost++;
             if (SelectedStructure == st)
                 SelectedStructure = null;
 
@@ -7220,6 +7236,7 @@ namespace SolarMajesty
             string label = ColonyStructure.ClassLabel(cls);
             _agents.Remove(agent);
             if (Agent == agent) Agent = _agents.Count > 0 ? _agents[0] : null;
+            Stats.RobotsScrapped++;
             RegisterCorpse(rec);
             NoteMechDeath(agent.transform.position);
             var shop = FindWorkshopFor(cls);
@@ -7242,6 +7259,7 @@ namespace SolarMajesty
 
         public void OnFaunaKilled(FaunaKind kind, Vector3 world, float rewardMul = 1f, SpecialistAgent killer = null)
         {
+            Stats.FaunaKilled++;
             FaunaKilledHook?.Invoke(kind, rewardMul);
             if (rewardMul <= 0f || killer == null || killer.IsScrapped) return;
             rewardMul = Mathf.Max(1f, rewardMul);
@@ -7264,7 +7282,11 @@ namespace SolarMajesty
                 Economy?.ReleaseBountyEscrow(escrow);
             if (hero == null || hero.IsScrapped) return;
             if (pay > 0)
+            {
                 hero.EarnCredits(pay, "flag_ClearThreat");
+                Stats.FlagsCompleted++;
+                Stats.BountyPaid += pay;
+            }
             if (grantXp)
                 hero.GrantXp(OverseerRules.XpForFlag(FlagType.ClearThreat) + OverseerRules.XpDen, "den");
         }

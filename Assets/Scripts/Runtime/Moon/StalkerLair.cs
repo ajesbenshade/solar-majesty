@@ -286,7 +286,8 @@ namespace SolarMajesty
             var hint = transform.Find("FogHint");
             if (hint != null) hint.gameObject.SetActive(false);
             ApplyClearedLook();
-            if (!announce) return;
+            if (!announce) return; // a restore: the clear is already in the saved tallies
+            if (_loop != null) _loop.Stats.DensCleared++;
             if (Application.isPlaying) DemoVfx.ClaimRing(transform.position, new Color(0.35f, 0.9f, 0.55f));
             Debug.Log("[Lair] Cleared stalker den.");
         }
