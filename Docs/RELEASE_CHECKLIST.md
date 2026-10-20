@@ -6,7 +6,7 @@ is in it being honest, not in it being all ticked.
 ## Build and pipeline
 
 - [x] Assembly definitions split (`SolarMajesty.Systems` / `.Runtime` / `.Editor` / `.Tests.EditMode`)
-- [x] Automated EditMode tests (846 passing, 2026-10-20)
+- [x] Automated EditMode tests (854 passing, 2026-10-20)
 - [x] CI on push and nightly ([.github/workflows/ci.yml](../.github/workflows/ci.yml))
 - [x] Headless build command ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs))
 - [x] Standalone player builds (macOS verified)
@@ -28,8 +28,9 @@ is in it being honest, not in it being all ticked.
 - [x] Save covers flags, escrow, robot health and purse, fauna — the gaps the old continue slot had
 - [x] Restore of live robots and fauna positions, den scouted/cleared, node remaining, mission hold, and formed parties
 - [x] Alert feed with dedupe, severity, and jump-to ([AlertFeed.cs](../Assets/Scripts/Systems/AlertFeed.cs))
-- [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs))
-- [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs)); evaluated every 2 s of play; Solar Conquest is campaign-wide (it was unreachable); per-world stats survive Continue
+- [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs)); the tallies are recorded since 2026-10-20 (before, only four were ever written: the summary read zeros and every verdict was "You posted nothing")
+- [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs)); evaluated every 2 s of play; Solar Conquest is campaign-wide (it was unreachable); per-world stats survive Continue; Terms Accepted, Hard Bargain, Skinflint, Full Crew, Den Breaker and Rebuilder read tallies nothing recorded and could not be earned, and Clean Sheet came free with any conquest (fixed 2026-10-20)
+- [ ] Homesteader ("Reach a population of 20") reads a population the gold-only economy removed, so it cannot be earned: redefine or retire it before the achievements go up on the partner site
 - [x] Named robots with service records ([SpecialistIdentity.cs](../Assets/Scripts/Systems/SpecialistIdentity.cs))
 - [x] Campaign progress and settings in a file ([GamePrefs.cs](../Assets/Scripts/Systems/GamePrefs.cs)) so Steam Cloud syncs the whole campaign; registry values migrate on first read
 - [x] Developer cheats (F10 hop, Shift+click unlock, F8/F9/R) gated to editor, dev builds and `-devtools` ([DevTools.cs](../Assets/Scripts/Systems/DevTools.cs))

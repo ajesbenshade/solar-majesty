@@ -21,10 +21,16 @@ are slow). On every world it also:
 
 - pauses (Esc) → **Settings** → back → **Resume**;
 - **saves** to slot 2 and **loads** it, then goes to the **title** and **Continues**, comparing buildings,
-  EU, ICE, techs, active research, dens cleared and scouted, bounties, robots, launch gate and conquered
-  worlds before and after (fauna may only go down: Continue puts back at most 8 per den);
+  EU, ICE, techs, active research, dens cleared and scouted, bounties, robots, workshops waiting to hire,
+  re-fabs under way, launch gate and conquered worlds before and after (fauna may only go down: Continue
+  puts back at most 8 per den);
 - on Mars it presses **QUIT**; the script starts the game again and the run carries on from the title's
   **Continue**.
+
+A scrapped robot is re-fabbed at its workshop (**RE-FAB**) as soon as the treasury can pay. A lost colony
+(**OUTPOST LOST**) is restarted with **RESTART MISSION**, at most twice per world; robots lost, re-fabs and
+restarts are in the report, with each world's summary-screen tallies and verdict and the achievements
+earned.
 
 At the end it checks **SOLAR CONQUEST COMPLETE**, every world marked conquered, the Solar Conquest
 achievement, **Main Menu**, and that Continue lands back on the won Europa colony.
