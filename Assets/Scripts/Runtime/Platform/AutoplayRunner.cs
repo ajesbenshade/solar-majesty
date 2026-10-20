@@ -96,6 +96,8 @@ namespace SolarMajesty
             public int robotsLost;
             public int refabs;
             public string winHeadline;
+            /// <summary>The world's summary-screen tallies and verdict at the win.</summary>
+            public string tallies;
             public List<string> milestones = new List<string>();
         }
 
@@ -115,6 +117,8 @@ namespace SolarMajesty
             public List<BodyRun> bodies;
             public bool conqueredEveryWorld;
             public bool solarConquestAchievement;
+            /// <summary>Every achievement held by the throwaway profile at the end.</summary>
+            public List<string> achievements;
             public string verdict;
         }
 
@@ -441,6 +445,10 @@ namespace SolarMajesty
             _body.winHeadline = mission.WinHeadline;
             Milestone($"VICTORY on {bodyId} — \"{mission.WinHeadline}\" after {_body.simSeconds / 60f:F1} sim-min " +
                       $"({_body.realSeconds / 60f:F1} real-min), rating {loop.CurrentRating.Letter}");
+            var rows = new List<string>();
+            foreach (var row in loop.Stats.SummaryRows()) rows.Add($"{row.Label} {row.Value}");
+            _body.tallies = string.Join(" · ", rows) + " · \"" + loop.Stats.PlaystyleVerdict() + "\"";
+            Milestone("tallies: " + _body.tallies);
 
             if (!CampaignProgress.HasConquered(bodyId))
                 Fail($"{bodyId} won but not marked conquered");
@@ -1486,8 +1494,11 @@ namespace SolarMajesty
                 bodies = _state.bodies,
                 conqueredEveryWorld = CampaignProgress.ConqueredEveryWorld,
                 solarConquestAchievement = Achievements.IsUnlocked(AchievementId.SolarConquest),
+                achievements = new List<string>(),
                 verdict = Loop != null ? Loop.Stats.PlaystyleVerdict() : ""
             };
+            foreach (var def in Achievements.Definitions)
+                if (Achievements.IsUnlocked(def.Id)) summary.achievements.Add(def.Title);
             try
             {
                 string dir = Path.GetDirectoryName(_outPath);
@@ -1509,6 +1520,7 @@ namespace SolarMajesty
                     b.body, b.won ? "won " : "open", b.simSeconds / 60f, b.realSeconds / 60f, b.buildingsPlaced,
                     b.bountiesPosted, b.densCleared, b.restarts, b.settingsChecked ? "+" : "-",
                     b.saveLoadChecked ? "+" : "-", b.titleContinueChecked ? "+" : "-", b.relaunchChecked ? " R+" : "");
+            sb.Append("  achievements: ").Append(string.Join(", ", summary.achievements)).Append('\n');
             foreach (var e in errorList) sb.Append("  ! ").Append(e).Append('\n');
             sb.Append("  summary: ").Append(_outPath);
             Debug.Log(sb.ToString());

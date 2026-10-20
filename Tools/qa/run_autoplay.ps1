@@ -121,6 +121,9 @@ if (Test-Path $report) {
       $b.buildingsPlaced, $b.bountiesPosted, $b.densCleared, $b.robotsLost, $b.refabs, $b.restarts, $checks
   }
   ""
+  "achievements: " + ($j.achievements -join ', ')
+  "last verdict: " + $j.verdict
+  ""
   "report: $report"
 } else {
   Write-Warning "No summary written (exit $code)."
