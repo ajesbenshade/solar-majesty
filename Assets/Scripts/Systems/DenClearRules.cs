@@ -143,6 +143,22 @@ namespace SolarMajesty
             flag != null && flag.Data != null && flag.Data.flagType == FlagType.ClearThreat;
     }
 
+    /// <summary>
+    /// The first of a world's three win gates. It is about the dens: every den cleared and none
+    /// of the fauna that came out of them still alive (residents, pressure waves, campus yard
+    /// pests). Town spawns from the kingdom table (burrow pests, edge raiders, wreck junk) keep
+    /// coming after the dens are quiet, like Majesty sewers; they are a nuisance for bounties and
+    /// never hold the gate, or every burrow pest would close it again until a robot killed it.
+    /// </summary>
+    public static class DensGate
+    {
+        public static bool Met(int lairs, int unclearedLairs, int denFaunaAlive) =>
+            lairs > 0 ? unclearedLairs <= 0 && denFaunaAlive <= 0 : denFaunaAlive <= 0;
+
+        /// <summary>Whether one creature holds the gate.</summary>
+        public static bool Holds(bool alive, bool townSpawn) => alive && !townSpawn;
+    }
+
     /// <summary>Which saved fauna a Continue is allowed to put back.</summary>
     public static class FaunaRestoreCap
     {

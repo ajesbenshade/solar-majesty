@@ -302,6 +302,9 @@ namespace SolarMajesty
         public float py;
         public float pz;
         public float health;
+        // Kingdom spawn table row + 1 (town burrow, edge raider, wreck junk); 0 for den fauna.
+        // Town spawns never hold the dens gate (DensGate), so Continue has to keep the tag.
+        public int townSpawnSlot;
     }
 
     [Serializable]
