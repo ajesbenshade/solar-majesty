@@ -7,6 +7,7 @@ from PIL import Image,ImageDraw
 W=4.0;bx=bz=W*0.88;hx=hz=bx/2;tall=2.28;y=0.18+tall/2;top=0.18+tall
 TAN=(0.78,0.62,0.46);SEAMT=(0.54,0.40,0.28);WH=(0.88,0.82,0.74);CER=(0.92,0.88,0.82)
 GR=(0.16,0.17,0.19);CAR=(0.26,0.24,0.22);OR=(0.96,0.42,0.08);CY=(0.22,0.84,0.98);CYE=(0.1,0.5,0.7)
+AM=(0.95,0.74,0.26);AME=(0.35,0.24,0.05)
 PV=(0.10,0.16,0.30);WARM=(0.6,0.4,0.15);ST=(0.42,0.44,0.48)
 def P(b,c,e=None):return (b,c,e,1)
 def common(shell,seam,port,porte,hatch,frame):
@@ -33,16 +34,16 @@ def before():
         P(box((hx+0.1,0.35,0),(0.09,0.09,bz-0.8)),OR),P(box((hx*0.62,top+0.4,hz-0.48),(0.5,0.05,0.5),rotx(-30)),ST)]
     return o
 def after():
-    o=common(WH,GR,CY,CYE,GR,GR)
-    o+=[P(box((hx*0.2,top+0.11,hz-0.58),(0.5,0.03,0.5)),CY,CYE),P(box((-hx-0.12,1.2,0),(0.05,1.2,1.2)),GR),
+    o=common(WH,GR,AM,AME,GR,GR)
+    o+=[P(box((hx*0.2,top+0.11,hz-0.58),(0.5,0.03,0.5)),AM,AME),P(box((-hx-0.12,1.2,0),(0.05,1.2,1.2)),GR),
         P(box((-hx-0.13,1.3,-0.62),(0.1,0.1,0.1)),CY,CYE),P(box((-hx-0.13,1.3,0.62),(0.1,0.1,0.1)),CY,CYE)]
     for cx in(-hx*0.5,hx*0.5):
         o+=[P(box((cx,0.2,-hz-0.4),(0.9,0.06,0.7)),GR),P(box((cx,0.75,-hz-0.03),(0.7,1.1,0.06)),CAR),
             P(box((cx-0.3,0.75,-hz-0.25),(0.08,0.5,0.45)),CAR),P(box((cx+0.3,0.75,-hz-0.25),(0.08,0.5,0.45)),CAR),
-            P(box((cx,1.05,-hz-0.07),(0.5,0.06,0.02)),CY,CYE)]
+            P(box((cx,1.05,-hz-0.07),(0.5,0.06,0.02)),AM,AME)]
     sy=0.18+tall*0.78
-    o+=[P(box((0,sy,-hz-0.03),(bx,0.06,0.03)),CY,CYE),P(box((0,sy,hz+0.03),(bx,0.06,0.03)),CY,CYE),
-        P(box((-hx-0.03,sy,0),(0.03,0.06,bz)),CY,CYE),P(box((hx+0.03,sy,0),(0.03,0.06,bz)),CY,CYE)]
+    o+=[P(box((0,sy,-hz-0.03),(bx,0.06,0.03)),AM,AME),P(box((0,sy,hz+0.03),(bx,0.06,0.03)),AM,AME),
+        P(box((-hx-0.03,sy,0),(0.03,0.06,bz)),AM,AME),P(box((hx+0.03,sy,0),(0.03,0.06,bz)),AM,AME)]
     return o
 for tag,fn in(('before',before),('after',after)):
     o=fn()
@@ -54,5 +55,5 @@ w,h=ims[0][0].size;sheet=Image.new('RGB',(w*3,h*2+60),(20,20,24));d=ImageDraw.Dr
 for r,row in enumerate(ims):
     for c,im in enumerate(row):
         sheet.paste(im,(c*w,40+r*(h+10)));d.text((c*w+8,46+r*(h+10)),f"{('BEFORE db63256 (tan HAB)','AFTER art/charging-pods')[r]} - {('overseer','close-up','night')[c]}",fill=(255,255,255))
-d.text((8,10),"Charging pods (colony HOUSES -> CHARGERS). ROUGH matplotlib mock-ups, NOT Unity captures.",fill=(255,220,120))
+d.text((8,10),"Charging pods (colony HOUSES -> CHARGERS). ROUGH matplotlib mock-ups, NOT Unity captures. Amber charge lights.",fill=(255,220,120))
 sheet.save('contact_sheet.png')

@@ -26,6 +26,10 @@ namespace SolarMajesty
         private static readonly Color PadDeck = new Color(0.34f, 0.30f, 0.26f);
         private static readonly Color Cyan = new Color(0.22f, 0.84f, 0.98f);
         private static readonly Color CyanEmit = new Color(0.20f, 1.15f, 1.65f);
+        // Charging-pod charge light: yellow-gold and dimmer than CyanEmit, kept clear of the
+        // orange CommonsStripe (0.96/0.42/0.08) so pods don't read as Commons trim.
+        private static readonly Color ChargeAmber = new Color(0.95f, 0.74f, 0.26f);
+        private static readonly Color ChargeAmberEmit = new Color(0.80f, 0.56f, 0.12f);
         private static readonly Color Ice = new Color(0.52f, 0.76f, 0.86f);
         private static readonly Color IceEmit = new Color(0.12f, 0.55f, 0.95f);
         private static readonly Color Dust = new Color(0.52f, 0.36f, 0.22f);
@@ -83,7 +87,7 @@ namespace SolarMajesty
         public static void BuildHabitat(Transform root, float w, float d, Color hull)
         {
             // Charging pod for the worker bots (canon: charging station): boxy ceramic hull,
-            // graphite seams, cyan charge lights, roof solar. Part names, positions and scales are
+            // graphite seams, amber charge lights, roof solar. Part names, positions and scales are
             // unchanged from the tan HAB so footprint, bounds, stages and lookups stay identical.
             // Do not restore the graphite-rim HAB-1 cylinder (HabCarbonBand / HabFrontRim).
             _ = hull;
@@ -114,18 +118,18 @@ namespace SolarMajesty
                 new Vector3(0f, y, 0f),
                 new Vector3(bx + 0.03f, tall + 0.02f, 0.05f), tanSeam);
 
-            // Cyan charge indicators on the camera-facing long sides (were orange portholes).
+            // Amber charge indicators on the camera-facing long sides (were orange portholes).
             for (int i = 0; i < 3; i++)
             {
                 float px = (i - 1) * bx * 0.28f;
                 Prim(root, "Dress_HabPorthole_" + i, PrimitiveType.Cylinder,
                     new Vector3(px, y + 0.22f, bz * 0.51f),
-                    new Vector3(0.38f, 0.05f, 0.38f), Cyan,
-                    Quaternion.Euler(90f, 0f, 0f), CyanEmit);
+                    new Vector3(0.38f, 0.05f, 0.38f), ChargeAmber,
+                    Quaternion.Euler(90f, 0f, 0f), ChargeAmberEmit);
                 Prim(root, "Dress_HabPortholeB_" + i, PrimitiveType.Cylinder,
                     new Vector3(px, y + 0.22f, -bz * 0.51f),
-                    new Vector3(0.38f, 0.05f, 0.38f), Cyan,
-                    Quaternion.Euler(90f, 0f, 0f), CyanEmit);
+                    new Vector3(0.38f, 0.05f, 0.38f), ChargeAmber,
+                    Quaternion.Euler(90f, 0f, 0f), ChargeAmberEmit);
             }
 
             Prim(root, "Dress_HabHatchFrame", PrimitiveType.Cube,
