@@ -109,7 +109,7 @@ namespace SolarMajesty
             if (ScrapRate > 0.45f)
                 return "You spent robots like ammunition.";
             if (FlagsRefused > FlagsCompleted && FlagsCompleted > 0)
-                return "Your workforce turned down more than it took. A tight purse, or a hard sell.";
+                return "Your workforce turned down more than it took. A low battery, or a hard sell.";
             if (CompletionRate > 0.85f && HighestBounty > 1400)
                 return "You paid whatever it cost and the work always got done.";
             if (ModulesLost == 0 && FaunaKilled > 10)

@@ -148,9 +148,9 @@ namespace SolarMajesty
                 if (reason.IndexOf("party", System.StringComparison.Ordinal) >= 0)
                     return "Following the party.";
                 if (reason.IndexOf("levy_home", System.StringComparison.Ordinal) >= 0)
-                    return "Walking the purse home. Do not click me.";
+                    return "Walking the batteries home. Do not click me.";
                 if (reason.IndexOf("levy_collect", System.StringComparison.Ordinal) >= 0)
-                    return "EU is sitting in building purses. Haul will get around to it.";
+                    return "EU is sitting in building batteries. Haul will get around to it.";
                 if (reason.IndexOf("frontier", System.StringComparison.Ordinal) >= 0)
                     return "Wandering the apron.";
             }

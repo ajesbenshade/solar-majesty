@@ -8,7 +8,7 @@ namespace SolarMajesty.Tests
         public void SittingLevy_NamesThePooledPurses_NotOneHab()
         {
             string line = CompactGrok.PurseSitting(900);
-            StringAssert.Contains("900 EU is sitting in building purses", line);
+            StringAssert.Contains("900 EU is sitting in building batteries", line);
             StringAssert.DoesNotContain("napping on a HAB", line);
             StringAssert.DoesNotContain("napping on the HAB", line);
         }

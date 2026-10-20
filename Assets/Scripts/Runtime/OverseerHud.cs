@@ -667,18 +667,27 @@ namespace SolarMajesty
             return HudLayout.FitText(variants, t => { _chipMeasure.text = t; return style.CalcSize(_chipMeasure).x; }, maxWidth);
         }
 
+        internal const string ChargersLabel = "CHARGERS";
+
+        /// <summary>Which icon a stockpile chip label gets; null means a coloured dot.</summary>
+        internal static IconId? ChipIconFor(string label)
+        {
+            if (label.StartsWith("REG")) return IconId.Regolith;
+            if (label.StartsWith("ICE")) return IconId.Ice;
+            if (label.StartsWith("EU")) return IconId.Coin;
+            if (label.StartsWith("PWR")) return IconId.Power;
+            if (label.StartsWith("BEDS")) return IconId.Beds;
+            if (label.StartsWith("HEROES")) return IconId.Robot;
+            if (label.StartsWith(ChargersLabel)) return IconId.House;
+            if (label.StartsWith("HAUL")) return IconId.Bag;
+            if (label.StartsWith("BOTS") || label.StartsWith("HALTED")) return IconId.Hammer;
+            return null;
+        }
+
         private static Texture2D ChipIcon(string label)
         {
-            if (label.StartsWith("REG")) return UiIcons.Get(IconId.Regolith);
-            if (label.StartsWith("ICE")) return UiIcons.Get(IconId.Ice);
-            if (label.StartsWith("EU")) return UiIcons.Get(IconId.Coin);
-            if (label.StartsWith("PWR")) return UiIcons.Get(IconId.Power);
-            if (label.StartsWith("BEDS")) return UiIcons.Get(IconId.Beds);
-            if (label.StartsWith("HEROES")) return UiIcons.Get(IconId.Robot);
-            if (label.StartsWith("HOUSES")) return UiIcons.Get(IconId.House);
-            if (label.StartsWith("HAUL")) return UiIcons.Get(IconId.Bag);
-            if (label.StartsWith("BOTS") || label.StartsWith("HALTED")) return UiIcons.Get(IconId.Hammer);
-            return null;
+            var id = ChipIconFor(label);
+            return id.HasValue ? UiIcons.Get(id.Value) : null;
         }
 
         private static Color ChipSwatch(string label)
@@ -801,7 +810,7 @@ namespace SolarMajesty
             float cw = HudLayout.StockpileChipWidth(r.width);
             float ch = 28f;
             ResourceChip(new Rect(r.x, top, cw, ch), "HEROES", heroes, heroes <= 0);
-            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top, cw, ch), "HOUSES", houses, false,
+            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top, cw, ch), ChargersLabel, houses, false,
                 solar > 0 ? $"{solar} solar" : null);
             ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", collectors, collectors <= 0 || replacing > 0,
                 replacing > 0 ? $"-{replacing} replacing" : (bags > 0 ? $"{bags} carried" : null));
@@ -2165,7 +2174,7 @@ namespace SolarMajesty
                 var prevAlign = who.alignment;
                 who.normal.textColor = player ? new Color(1f, 0.82f, 0.6f) : Gold;
                 who.alignment = player ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
-                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? "OVERSEER" : heroName.ToUpperInvariant(), who);
+                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? "THE CORE" : heroName.ToUpperInvariant(), who);
                 who.normal.textColor = prevColor;
                 who.alignment = prevAlign;
                 GUI.Label(new Rect(x + 10f, y + 19f, textW, textH), text, _chatText);
@@ -2357,7 +2366,7 @@ namespace SolarMajesty
 
             if (living <= 0)
             {
-                const string hintText = "Build anywhere on open ground · houses pay EU · a workshop fabricates a mech";
+                const string hintText = "Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech";
                 var hint = new Rect(M, _contentBottom - 8f - 26f, _micro.CalcSize(new GUIContent(hintText)).x + 46f, 26f);
                 _hitRects.Add(hint);
                 HudSkin.Panel(hint, 0.9f, false);
@@ -2897,8 +2906,8 @@ namespace SolarMajesty
                 HudSkin.RuleH(new Rect(wx + 34f, wy + 57f, Mathf.Max(80f, ww - 34f), 1f), new Color(Gold.r, Gold.g, Gold.b, 0.9f));
                 HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 66f, 620f, 18f),
                     DemoSettings.FirstHourDemo
-                        ? "Click Earth to land. You are the Overseer — heroes choose their own work."
-                        : "Click a world to land. You are the Overseer — heroes choose their own work.",
+                        ? "Click Earth to land. You are the Core. Your bots do the work."
+                        : "Click a world to land. You are the Core. Your bots do the work.",
                     _tagline, 0.7f);
                 _caps.normal.textColor = Gold;
                 HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 86f, 400f, 14f), ReplayRules.HudTag, _caps, 0.7f);
@@ -3309,7 +3318,7 @@ namespace SolarMajesty
             y += 32f;
 
             // Baked voices need nothing running. The LOCAL rows add LLM-written lines and speak them.
-            if (Chip(new Rect(c.x, y, c.width, 26f), "CHARACTER VOICES  ·  BAKED BARKS + OVERSEER", DemoSettings.CharacterVoices))
+            if (Chip(new Rect(c.x, y, c.width, 26f), "CHARACTER VOICES  ·  BAKED BARKS + CORE", DemoSettings.CharacterVoices))
             {
                 DemoSettings.CharacterVoices = !DemoSettings.CharacterVoices;
                 DemoSettings.SaveSettings();
@@ -3413,7 +3422,7 @@ namespace SolarMajesty
                 y = WrapBlock(c, y, ReplayRules.StanceHint + " " + ReplayRules.ChallengeHint);
                 y = WrapBlock(c, y, ReplayRules.IronmanHint);
                 y = WrapBlock(c, y,
-                    "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue.");
+                    "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue.");
                 y += 4f;
                 if (Chip(new Rect(c.x, y, c.width, 26f), "EARTH DEMO", false))
                     _loop.SetFirstHourDemo(true);
@@ -3515,7 +3524,7 @@ namespace SolarMajesty
                 {
                     "1/6  COMMONS — Colony Commons is already on the claim. It holds the treasury.",
                     "2/6  Haul walks out of the Commons and carries each building's EU home.",
-                    "3/6  Keep the yard clear of mobs — bots build houses and solar farms that pay EU.",
+                    "3/6  Keep the yard clear of mobs — bots build charging stations and solar farms that pay EU.",
                     "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
                     "5/6  G, Build, leave it at 700. Watch the Engineer.",
                     "6/6  They named a price. Select the flag and press + until the chip reads tempted."

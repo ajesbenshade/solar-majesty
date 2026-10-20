@@ -195,7 +195,7 @@ namespace SolarMajesty
         public const string GrokLevyStolenHab =
             "EU was napping on the HAB. A mite just made a withdrawal.";
         public const string GrokLevyHome =
-            "Haul walked the purse home. EU is in the chest. Do not click the crate.";
+            "Haul walked the batteries home. EU is in the chest. Do not click the crate.";
 
         public const float PressureInterval = 75f;
         public const float FrenzyPressure = 50f;

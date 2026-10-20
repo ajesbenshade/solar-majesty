@@ -757,12 +757,12 @@
    "speaker": "hero.DefenseMech",
    "cue": "select",
    "take": 2,
-   "text": "Say the word, Overseer.",
+   "text": "Say the word, Core.",
    "clip": "hero_defensemech_select_2",
-   "hash": "f720f91eefc3",
-   "seconds": 1.58,
-   "peak_db": -5.6,
-   "rms_db": -20.8
+   "hash": "b1da49e142c4",
+   "seconds": 1.22,
+   "peak_db": -6.4,
+   "rms_db": -21.0
   },
   {
    "speaker": "hero.DefenseMech",
@@ -3738,12 +3738,12 @@
    "speaker": "overseer",
    "cue": "alert_warning",
    "take": 0,
-   "text": "Overseer, heads up.",
+   "text": "Core, heads up.",
    "clip": "overseer_alert_warning_0",
-   "hash": "3275d3a6d02f",
-   "seconds": 1.31,
-   "peak_db": -4.4,
-   "rms_db": -21.6
+   "hash": "e4cabd5a4d71",
+   "seconds": 0.94,
+   "peak_db": -6.3,
+   "rms_db": -21.2
   },
   {
    "speaker": "overseer",
@@ -3832,17 +3832,6 @@
    "seconds": 1.33,
    "peak_db": -5.5,
    "rms_db": -20.6
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "0cd99e35",
-   "text": "EU is sitting in building purses. Haul will get around to it. Or a mite will. Gambling!",
-   "clip": "overseer_line_0cd99e35",
-   "hash": "4e7df0b18f20",
-   "seconds": 5.15,
-   "peak_db": -4.6,
-   "rms_db": -21.6
   },
   {
    "speaker": "overseer",
@@ -3957,13 +3946,24 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "7a257415",
-   "text": "Haul walked the purse home. EU is in the chest. Do not click the crate.",
-   "clip": "overseer_line_7a257415",
-   "hash": "2ca831b60419",
-   "seconds": 4.11,
-   "peak_db": -3.3,
-   "rms_db": -21.7
+   "key": "62cdb686",
+   "text": "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!",
+   "clip": "overseer_line_62cdb686",
+   "hash": "3505d1c4df0b",
+   "seconds": 5.15,
+   "peak_db": -4.9,
+   "rms_db": -21.5
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "7dec0237",
+   "text": "Haul walked the batteries home. EU is in the chest. Do not click the crate.",
+   "clip": "overseer_line_7dec0237",
+   "hash": "0a8636ae20be",
+   "seconds": 4.24,
+   "peak_db": -2.6,
+   "rms_db": -21.6
   },
   {
    "speaker": "overseer",
