@@ -4774,6 +4774,14 @@ namespace SolarMajesty
         /// </summary>
         internal void ArmThreat(ThreatPressure threat) => Threat = threat ?? new ThreatPressure();
 
+        /// <summary>EditMode: the stockpile, bounty board and escrow without running Awake.</summary>
+        internal void ArmEconomyForTests(ResourceManager resources, FlagManager flags)
+        {
+            Resources = resources;
+            Flags = flags;
+            Economy = new SimpleEconomy(resources) { ResupplyEnabled = false };
+        }
+
         /// <summary>
         /// Spawn one stalker at a world point (lair / wave helpers).
         /// Mounts <c>SM_Unit_DustStalker</c> the same way as the other fauna so Idle/Walk/Strike/Down play.
@@ -5239,9 +5247,18 @@ namespace SolarMajesty
         {
             TerrainGrading.CompletePending(); // a worker may still be reading the old ground mesh
             SaveSystem.Flush();
+            HoldWorldForSceneLoad();
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             UnityEngine.SceneManagement.SceneManager.LoadScene(scene.buildIndex);
         }
+
+        /// <summary>
+        /// The frame that loads the next scene takes its delta time before the new colony's Awake
+        /// can hold the world, so it ran up to a third of a second of simulation at the old speed:
+        /// a Continue that says "World held" finished research and moved fauna before the player
+        /// saw it (autoplay: a tech at 39/40 completed during Load). Awake sets the real speed.
+        /// </summary>
+        internal static void HoldWorldForSceneLoad() => Time.timeScale = 0f;
 
         private void HandleToolHotkeys()
         {
@@ -6196,6 +6213,7 @@ namespace SolarMajesty
             var restoredAgents = RestoreAgents(save.agents, restoredFlags, save.rosterBlob != null);
             RestoreParties(save.parties, restoredAgents);
             var restoredLairs = RestoreWorldBoard(save);
+            CloseQuietDenPoles();
             RestoreFauna(save.fauna, restoredLairs);
             RestoreBuildingBoard(save);
             RestoreLevyPurses(save.buildings);
@@ -7146,6 +7164,60 @@ namespace SolarMajesty
                 hero.EarnCredits(pay, "flag_ClearThreat");
             if (grantXp)
                 hero.GrantXp(OverseerRules.XpForFlag(FlagType.ClearThreat) + OverseerRules.XpDen, "den");
+        }
+
+        /// <summary>
+        /// The den went quiet because its last resident died, not because a hero broke the mound.
+        /// Its Clear Threat poles close all the same: the robot that broke in or holds the warrant
+        /// is paid, and with nobody on it the escrow goes back to the treasury.
+        /// </summary>
+        public void ResolveQuietDen(StalkerLair lair, SpecialistAgent striker)
+        {
+            if (lair == null || Flags == null) return;
+            var hero = striker != null && !striker.IsScrapped ? striker : DenWarrantHolder(lair.WorldPosition);
+            if (hero != null)
+            {
+                ResolveDenClear(lair, hero, grantXp: true);
+                return;
+            }
+            int pay = ClearThreatMerge.Take(
+                Flags, lair.WorldPosition, OverseerRules.ClearThreatSameDenMeters, out int escrow);
+            if (pay > 0)
+                Economy?.RefundBountyEscrow(escrow);
+        }
+
+        /// <summary>Closes Clear Threat poles left standing on dens that are already quiet (older saves).</summary>
+        private void CloseQuietDenPoles()
+        {
+            if (_world == null || Flags == null) return;
+            var lairs = _world.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                var l = lairs[i];
+                if (l == null || !l.IsCleared) continue;
+                int pay = ClearThreatMerge.Take(
+                    Flags, l.WorldPosition, OverseerRules.ClearThreatSameDenMeters, out int escrow);
+                if (pay > 0)
+                    Economy?.RefundBountyEscrow(escrow);
+            }
+        }
+
+        private SpecialistAgent DenWarrantHolder(Vector3 den)
+        {
+            SpecialistAgent best = null;
+            float bestD = OverseerRules.ClearThreatSameDenMeters;
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                var a = _agents[i];
+                if (a == null || a.IsScrapped) continue;
+                var f = a.ActiveFlag;
+                if (f?.Data == null || f.Data.flagType != FlagType.ClearThreat) continue;
+                float d = FlatDist(f.WorldPosition, den);
+                if (d > bestD) continue;
+                bestD = d;
+                best = a;
+            }
+            return best;
         }
 
         private ColonyStructure FindWorkshopFor(SpecialistClass cls)

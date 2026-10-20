@@ -98,6 +98,9 @@ namespace SolarMajesty
             if (_spawned.Count == 0)
             {
                 MarkCleared();
+                // Its Clear Threat poles close too; left standing, robots kept walking to a
+                // dead den and the escrow stayed locked (autoplay, Earth).
+                _loop?.ResolveQuietDen(this, _lastStriker);
                 return;
             }
 

@@ -110,8 +110,13 @@ namespace SolarMajesty
                 }
                 if (!DensCleared)
                 {
-                    if (LairCount > 0)
+                    if (LairCount > 0 && UnclearedLairs > 0)
                         return Loc.F("Clear dens — {0} left ({1} Clear Threat)", UnclearedLairs, InputBindings.Hint(GameAction.FlagClearThreat));
+                    // Every den is quiet but the gate still waits on fauna that came out of them
+                    // (pressure waves do not scatter). "Clear dens — 0 left" sent players looking
+                    // for a den that was not there (autoplay, Earth: six sim-minutes of it).
+                    if (LairCount > 0 && StalkersRemaining > 0)
+                        return Loc.F("Dens quiet — hunt the last {0} fauna ({1} Clear Threat)", StalkersRemaining, InputBindings.Hint(GameAction.FlagClearThreat));
                     return Loc.S("Clear remaining fauna near campus");
                 }
                 if (!SustainComplete)
@@ -356,6 +361,15 @@ namespace SolarMajesty
             DensCleared = densCleared;
             _sustainElapsed = sustainComplete ? sustainHoldSeconds : 0f;
             _launchReady = launchReady;
+        }
+
+        /// <summary>EditMode: the den board as <see cref="RefreshGates"/> would read it.</summary>
+        internal void SetDenCountsForTests(int lairs, int uncleared, int stalkers)
+        {
+            LairCount = lairs;
+            UnclearedLairs = uncleared;
+            StalkersRemaining = stalkers;
+            DensCleared = lairs > 0 ? uncleared <= 0 && stalkers <= 0 : stalkers <= 0;
         }
 
         /// <summary>
