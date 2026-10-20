@@ -36,11 +36,13 @@ def before():
 def after():
     o=common(WH,GR,AM,AME,GR,GR)
     o+=[P(box((hx*0.2,top+0.11,hz-0.58),(0.5,0.03,0.5)),AM,AME),P(box((-hx-0.12,1.2,0),(0.05,1.2,1.2)),GR),
-        P(box((-hx-0.13,1.3,-0.62),(0.1,0.1,0.1)),CY,CYE),P(box((-hx-0.13,1.3,0.62),(0.1,0.1,0.1)),CY,CYE)]
+        P(box((-hx-0.13,1.3,-0.62),(0.1,0.1,0.1)),AM,AME),P(box((-hx-0.13,1.3,0.62),(0.1,0.1,0.1)),AM,AME)]
     for cx in(-hx*0.5,hx*0.5):
         o+=[P(box((cx,0.2,-hz-0.4),(0.9,0.06,0.7)),GR),P(box((cx,0.75,-hz-0.03),(0.7,1.1,0.06)),CAR),
             P(box((cx-0.3,0.75,-hz-0.25),(0.08,0.5,0.45)),CAR),P(box((cx+0.3,0.75,-hz-0.25),(0.08,0.5,0.45)),CAR),
             P(box((cx,1.05,-hz-0.07),(0.5,0.06,0.02)),AM,AME)]
+    o+=[P(box((-hx-0.04,1.72,0),(0.055,0.034,0.8)),AM,AME),P(box((0,0.98,-hz-0.03),(bx*0.8,0.034,0.055)),AM,AME)]
+    for (x,z) in((-hx+0.1,-hz+0.1),(hx-0.1,-hz+0.1),(-hx+0.1,hz-0.1)):o.append(P(box((x,top+0.28,z),(0.08,0.08,0.08)),AM,(0.16,0.11,0.02)))
     sy=0.18+tall*0.78
     o+=[P(box((0,sy,-hz-0.03),(bx,0.06,0.03)),AM,AME),P(box((0,sy,hz+0.03),(bx,0.06,0.03)),AM,AME),
         P(box((-hx-0.03,sy,0),(0.03,0.06,bz)),AM,AME),P(box((hx+0.03,sy,0),(0.03,0.06,bz)),AM,AME)]
@@ -55,5 +57,5 @@ w,h=ims[0][0].size;sheet=Image.new('RGB',(w*3,h*2+60),(20,20,24));d=ImageDraw.Dr
 for r,row in enumerate(ims):
     for c,im in enumerate(row):
         sheet.paste(im,(c*w,40+r*(h+10)));d.text((c*w+8,46+r*(h+10)),f"{('BEFORE db63256 (tan HAB)','AFTER art/charging-pods')[r]} - {('overseer','close-up','night')[c]}",fill=(255,255,255))
-d.text((8,10),"Charging pods (colony HOUSES -> CHARGERS). ROUGH matplotlib mock-ups, NOT Unity captures. Amber charge lights.",fill=(255,220,120))
+d.text((8,10),"Charging pods (colony HOUSES -> CHARGERS). ROUGH matplotlib mock-ups, NOT Unity captures. Amber charge lights, no cyan on pods.",fill=(255,220,120))
 sheet.save('contact_sheet.png')

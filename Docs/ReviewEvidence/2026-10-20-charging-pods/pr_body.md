@@ -2,17 +2,17 @@
 
 ## ⛔ HOLD MERGE — Aaron reviews the before/after shots first.
 
-Restyles the colony house (`BuildingCategory.Habitat`, `HeroBuildingKits.BuildHabitat` + `HeroBuildingDetail.DetailHabitat`) from the tan HAB box into a charging pod for the worker bots, matching the AI core palette from #93: warm ceramic white shell, graphite/carbon seams and frames, warm amber charge lights (yellow-gold `ChargeAmber` 0.95/0.74/0.26, emit 0.80/0.56/0.12: dimmer than CyanEmit and distinct from the orange CommonsStripe 0.96/0.42/0.08). Cyan stays only on the existing accents (door light bar, wall lamps, nav lights, front light bar, one status LED).
+Restyles the colony house (`BuildingCategory.Habitat`, `HeroBuildingKits.BuildHabitat` + `HeroBuildingDetail.DetailHabitat`) from the tan HAB box into a charging pod for the worker bots, matching the AI core palette from #93: warm ceramic white shell, graphite/carbon seams and frames, warm amber charge lights (yellow-gold `ChargeAmber` 0.95/0.74/0.26, emit 0.80/0.56/0.12: dimmer than CyanEmit and distinct from the orange CommonsStripe 0.96/0.42/0.08). No cyan on the pods (cyan is reserved for the Core): door light bar, door wall lamps, front light bar and both cabinet status LEDs are amber; the 3 roof nav lights are dim amber (ChargeAmberEmit × 0.45). `LightBar`/`NavLight` got lens-colour overloads; the old signatures still default to cyan for other kits.
 
 Shots in `Docs/ReviewEvidence/2026-10-20-charging-pods/` (`contact_sheet.png`: before/after, overseer / close-up / night). **They are rough matplotlib mock-ups, not Unity captures.** Please replace them with real Play-mode captures before merge.
 
 ## What changed
 - Shell `Dress_HabShell` tan → ceramic white (`HabTan` value; field name kept). Belt and seams → graphite.
 - Portholes `Dress_HabPorthole(B)_0..2` orange → amber charge indicators. Fit-out window glass warm → amber. The green status LED → amber.
-- Hatch `Dress_HabHatch` orange → graphite, inside the same carbon frame. Street door on -X keeps its position and size, with a graphite leaf. Wall lamps warm → cyan.
+- Hatch `Dress_HabHatch` orange → graphite, inside the same carbon frame. Street door on -X keeps its position and size, with a graphite leaf. Wall lamps warm → amber.
 - Roof PV frames orange → graphite. PV cells, deck and cell lines are unchanged.
 - Added two bot charging cradles on the front (-Z) face (floor pad, back plate, two arms, amber contact strip) and a wrap-around amber charge strip at 78% height. All boxes.
-- Removed the 3 roof HVAC units, the white roof tank, the dish and the orange conduit. Yellow railing → graphite, red nav light → cyan.
+- Removed the 3 roof HVAC units, the white roof tank, the dish and the orange conduit. Yellow railing → graphite, nav lights (red + 2 cyan) → dim amber.
 - Wall cladding uses a new HAB-only `CeramicPanel` helper. `Panel` (tan) stays as-is for other kits.
 
 ## Unchanged (hard constraints)
