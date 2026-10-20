@@ -6,23 +6,53 @@ namespace SolarMajesty
     /// Steam settings and the names the Steamworks partner site must match. Pure data so the
     /// mapping is unit-tested; <c>SteamService</c> (Runtime) is the only code that talks to Steam.
     ///
-    /// Before release: replace <see cref="AppId"/> with the app ID from the Steamworks partner
-    /// site and set <see cref="RelaunchThroughSteam"/> to true. Docs/STEAM_RELEASE.md has the list.
+    /// Before release: replace <see cref="FullGameAppId"/> (and <see cref="DemoAppId"/> for the
+    /// Next Fest demo) with the app IDs from the Steamworks partner site. Relaunching through
+    /// Steam turns itself on for any ID other than 480. Docs/STEAM_RELEASE.md has the list.
     /// </summary>
     public static class SteamConfig
     {
-        /// <summary>480 is Valve's public test app (Spacewar). Swap for the real app ID.</summary>
-        public const uint AppId = 480;
+        /// <summary>Valve's public test app (Spacewar).</summary>
+        public const uint TestAppId = 480;
 
-        /// <summary>True once <see cref="AppId"/> is the real app, not the 480 test app.</summary>
-        public static bool IsTestApp => AppId == 480;
+        /// <summary>480 is Valve's public test app (Spacewar). Swap for the real app ID.</summary>
+        public const uint FullGameAppId = TestAppId;
+
+        /// <summary>
+        /// The Steam demo is its own app with its own App ID and depot (Steamworks: the game's
+        /// "Create a demo" page). TODO(steam): replace 480 with the demo App ID once the demo app
+        /// exists. It must differ from <see cref="FullGameAppId"/>; SteamConfigTests enforces that.
+        /// </summary>
+        public const uint DemoAppId = TestAppId;
+
+        /// <summary>App ID of the build that is running: the demo's in the demo player.</summary>
+        public static uint AppId => AppIdFor(DemoBuild.CompiledAsDemo);
+
+        /// <summary>App ID for a flavour. The editor's build script asks for the demo's this way.</summary>
+        public static uint AppIdFor(bool demo) => demo ? DemoAppId : FullGameAppId;
+
+        /// <summary>True while <see cref="AppId"/> is the 480 test app, not the real one.</summary>
+        public static bool IsTestApp => IsTestAppId(AppId);
+
+        public static bool IsTestAppId(uint appId) => appId == TestAppId;
 
         /// <summary>
         /// When true, a release build started outside Steam asks Steam to relaunch it (Valve's
         /// RestartAppIfNecessary). Must stay false while <see cref="AppId"/> is 480, or the game
         /// would hand itself to Spacewar.
         /// </summary>
-        public static bool RelaunchThroughSteam => !IsTestApp;
+        public static bool RelaunchThroughSteam => RelaunchThroughSteamFor(AppId);
+
+        public static bool RelaunchThroughSteamFor(uint appId) => !IsTestAppId(appId);
+
+        /// <summary>
+        /// The full game's store page: where the demo's "Wishlist on Steam" button goes. Always
+        /// the full game, never the demo app. TODO(steam): follows <see cref="FullGameAppId"/>,
+        /// so it points at Spacewar's page until the real App ID is in.
+        /// </summary>
+        public static string StorePageUrl => StorePageUrlFor(FullGameAppId);
+
+        public static string StorePageUrlFor(uint appId) => "https://store.steampowered.com/app/" + appId + "/";
 
         /// <summary>Command-line switch that skips Steam entirely (offline QA, the AI pack, CI).</summary>
         public const string NoSteamArg = "-nosteam";

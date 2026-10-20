@@ -190,6 +190,7 @@ namespace SolarMajesty
             {
                 AchievementDef def = Defs[i];
                 if (Unlocked.Contains(def.Id)) continue;
+                if (!DemoBuild.AchievementInDemo(def.Id)) continue; // campaign-only: not in the Steam demo
                 if (def.Test == null || !def.Test(stats)) continue;
 
                 Unlocked.Add(def.Id);

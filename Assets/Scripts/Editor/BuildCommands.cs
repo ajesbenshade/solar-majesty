@@ -31,6 +31,20 @@ namespace SolarMajesty.EditorTools
 
         public static void BuildLinux() => RunOrExit(BuildTarget.StandaloneLinux64, "Linux", "SolarMajesty.x86_64");
 
+        [MenuItem("Solar Majesty/Build/Windows 64-bit Demo (Next Fest)", priority = 210)]
+        public static void BuildWindowsDemoMenu() => RunDemo(BuildTarget.StandaloneWindows64, "Windows", DemoBuild.ExeName);
+
+        /// <summary>
+        /// The Steam demo: Earth only, its own App ID, product name and save folders.
+        /// CI: -executeMethod SolarMajesty.EditorTools.BuildCommands.BuildWindowsDemo -smBuildPath Builds\Demo
+        /// </summary>
+        public static void BuildWindowsDemo()
+        {
+            bool ok = RunDemo(BuildTarget.StandaloneWindows64, "Windows", DemoBuild.ExeName);
+            if (Application.isBatchMode)
+                EditorApplication.Exit(ok ? 0 : 1);
+        }
+
         private static void RunOrExit(BuildTarget target, string folder, string artifact)
         {
             bool ok = Run(target, folder, artifact);
@@ -38,7 +52,34 @@ namespace SolarMajesty.EditorTools
                 EditorApplication.Exit(ok ? 0 : 1);
         }
 
-        private static bool Run(BuildTarget target, string folder, string artifact)
+        /// <summary>
+        /// The demo flavour: the SM_DEMO define goes to this build only (extraScriptingDefines, not
+        /// ProjectSettings), and the product name and bundle id are swapped for the build and put
+        /// back afterwards, so the full game's settings never change.
+        /// </summary>
+        private static bool RunDemo(BuildTarget target, string folder, string artifact)
+        {
+            var named = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(BuildPipeline.GetBuildTargetGroup(target));
+            string product = PlayerSettings.productName;
+            string bundle = PlayerSettings.GetApplicationIdentifier(named);
+            try
+            {
+                PlayerSettings.productName = DemoBuild.ProductName;
+                PlayerSettings.SetApplicationIdentifier(named, DemoBuild.BundleId);
+                return Run(target, folder, artifact, demo: true);
+            }
+            finally
+            {
+                PlayerSettings.productName = product;
+                PlayerSettings.SetApplicationIdentifier(named, bundle);
+                AssetDatabase.SaveAssets();
+            }
+        }
+
+        private static bool Run(BuildTarget target, string folder, string artifact) =>
+            Run(target, folder, artifact, demo: false);
+
+        private static bool Run(BuildTarget target, string folder, string artifact, bool demo)
         {
             ShaderVariantKeeper.Create(); // runtime glass / glow must survive variant stripping
             AppIconSetup.EnsureAssigned(); // no-op when ProjectSettings already carry the icon
@@ -66,18 +107,20 @@ namespace SolarMajesty.EditorTools
                 locationPathName = outputPath,
                 target = target,
                 targetGroup = BuildPipeline.GetBuildTargetGroup(target),
-                options = HasArg("-smDevelopment") ? BuildOptions.Development : BuildOptions.None
+                options = HasArg("-smDevelopment") ? BuildOptions.Development : BuildOptions.None,
+                extraScriptingDefines = demo ? new[] { DemoBuild.Define } : null
             };
 
-            Debug.Log($"[Build] {target} -> {outputPath} ({scenes.Length} scene(s))");
+            Debug.Log($"[Build] {target} -> {outputPath} ({scenes.Length} scene(s))" +
+                      (demo ? $" · DEMO ({DemoBuild.Define}, \"{PlayerSettings.productName}\", app {SteamConfig.AppIdFor(true)})" : ""));
             BuildReport report = BuildPipeline.BuildPlayer(options);
             BuildSummary summary = report.summary;
 
             if (summary.result == BuildResult.Succeeded)
             {
                 string folderPath = Path.GetDirectoryName(outputPath);
-                WriteSteamAppId(folderPath);
-                WriteBuildInfo(folderPath, target);
+                WriteSteamAppId(folderPath, demo);
+                WriteBuildInfo(folderPath, target, demo);
                 CopyNotices(folderPath);
                 if (target == BuildTarget.StandaloneOSX)
                     PlaytestHandoff.WriteMac(folderPath);
@@ -99,11 +142,11 @@ namespace SolarMajesty.EditorTools
         /// the Steam API. Tools/steam/upload_to_steam.ps1 leaves it out of the depot, because Steam
         /// passes the app ID itself when it launches the game.
         /// </summary>
-        private static void WriteSteamAppId(string folder)
+        private static void WriteSteamAppId(string folder, bool demo)
         {
             try
             {
-                File.WriteAllText(Path.Combine(folder, "steam_appid.txt"), SteamConfig.AppId.ToString());
+                File.WriteAllText(Path.Combine(folder, "steam_appid.txt"), SteamConfig.AppIdFor(demo).ToString());
             }
             catch (Exception e)
             {
@@ -129,7 +172,7 @@ namespace SolarMajesty.EditorTools
         }
 
         /// <summary>Version, commit and time next to the exe, so a bug report can name its build.</summary>
-        private static void WriteBuildInfo(string folder, BuildTarget target)
+        private static void WriteBuildInfo(string folder, BuildTarget target, bool demo)
         {
             try
             {
@@ -141,7 +184,8 @@ namespace SolarMajesty.EditorTools
                     $"target={target}\n" +
                     $"built_utc={DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}\n" +
                     $"unity={Application.unityVersion}\n" +
-                    $"steam_app={SteamConfig.AppId}\n");
+                    $"flavour={(demo ? "demo" : "full")}\n" +
+                    $"steam_app={SteamConfig.AppIdFor(demo)}\n");
             }
             catch (Exception e)
             {

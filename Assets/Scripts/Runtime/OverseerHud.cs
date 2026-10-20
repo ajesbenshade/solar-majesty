@@ -8,7 +8,7 @@ namespace SolarMajesty
     /// mission stakes, specialist cards (selected only), win/fail banners.
     /// DebugHud stays on F8 for deep scores.
     /// </summary>
-    public class OverseerHud : MonoBehaviour
+    public partial class OverseerHud : MonoBehaviour
     {
         // Smoked glass over the world, brass for structure, orange only for what is live.
         // Palette and baked chrome live in HudSkin so the alert feed matches.
@@ -833,7 +833,7 @@ namespace SolarMajesty
             ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", Loc.S("HAUL"), collectors, collectors <= 0 || replacing > 0,
                 replacing > 0 ? Loc.F("-{0} replacing", replacing) : (bags > 0 ? Loc.F("{0} carried", bags) : null));
             ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? "HALTED" : "BOTS", halted ? Loc.S("HALTED") : Loc.S("BOTS"),
-                building ? pct : 0, halted, building ? Loc.S("% built") : Loc.S("idle"));
+                building ? pct : 0, halted, building ? Loc.S("% built") : Loc.S("idle"));
         }
 
         /// <summary>Where the gold is on its way home: building tills, collector bags, daily tax.</summary>
@@ -2200,7 +2200,7 @@ namespace SolarMajesty
                 var prevAlign = who.alignment;
                 who.normal.textColor = player ? new Color(1f, 0.82f, 0.6f) : Gold;
                 who.alignment = player ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
-                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? Loc.S("THE CORE") : heroName.ToUpperInvariant(), who);
+                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? Loc.S("THE CORE") : heroName.ToUpperInvariant(), who);
                 who.normal.textColor = prevColor;
                 who.alignment = prevAlign;
                 GUI.Label(new Rect(x + 10f, y + 19f, textW, textH), text, _chatText);
@@ -2392,7 +2392,7 @@ namespace SolarMajesty
 
             if (living <= 0)
             {
-                string hintText = Loc.S("Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech");
+                string hintText = Loc.S("Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech");
                 var hint = new Rect(M, _contentBottom - 8f - 26f, _micro.CalcSize(new GUIContent(hintText)).x + 46f, 26f);
                 _hitRects.Add(hint);
                 HudSkin.Panel(hint, 0.9f, false);
@@ -2710,6 +2710,12 @@ namespace SolarMajesty
             if (StillCaptureHold.Active || ReplayRules.IsEndless || _winDismissed) return false;
             var mission = _loop.Mission;
             if (mission == null || !mission.IsWon) return false;
+            if (DemoEndOffer.Applies(_loop.ActiveBody, won: true, endless: false))
+            {
+                if (!_loop.VictoryHeld) return false; // KEEP PLAYING EARTH released it
+                DrawDemoEnd(); // Steam demo: OverseerHud.DemoEnd.cs
+                return true;
+            }
             bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
             DrawCampaignVictory(VictoryOffer.For(_loop.ActiveBody, nextBuilt, endless: false));
             return true;
@@ -2942,7 +2948,7 @@ namespace SolarMajesty
                 HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 66f, 620f, 18f),
                     DemoSettings.FirstHourDemo
                         ? Loc.S("Click Earth to land. You are the Core. Your bots do the work.")
-                        : Loc.S("Click a world to land. You are the Core. Your bots do the work."),
+                        : Loc.S("Click a world to land. You are the Core. Your bots do the work."),
                     _tagline, 0.7f);
                 _caps.normal.textColor = Gold;
                 HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 86f, 400f, 14f), ReplayRules.HudTag, _caps, 0.7f);
@@ -3355,7 +3361,7 @@ namespace SolarMajesty
             y += 32f;
 
             // Baked voices need nothing running. The LOCAL rows add LLM-written lines and speak them.
-            if (Chip(new Rect(c.x, y, c.width, 26f), Loc.S("CHARACTER VOICES  ·  BAKED BARKS + CORE"), DemoSettings.CharacterVoices))
+            if (Chip(new Rect(c.x, y, c.width, 26f), Loc.S("CHARACTER VOICES  ·  BAKED BARKS + CORE"), DemoSettings.CharacterVoices))
             {
                 DemoSettings.CharacterVoices = !DemoSettings.CharacterVoices;
                 DemoSettings.SaveSettings();
@@ -3422,17 +3428,20 @@ namespace SolarMajesty
             y += 32f;
 
             bool marsLessons = DemoSettings.MarsJexLessons;
-            if (Chip(new Rect(c.x, y, c.width, 26f),
-                    marsLessons ? Loc.S("MARS JEX LESSONS  ·  ON") : Loc.S("MARS JEX LESSONS  ·  OFF"),
-                    marsLessons))
+            if (!DemoBuild.Active) // Luna/Mars lessons: not in the Earth-only Steam demo
             {
-                DemoSettings.MarsJexLessons = !DemoSettings.MarsJexLessons;
-                DemoSettings.SaveSettings();
+                if (Chip(new Rect(c.x, y, c.width, 26f),
+                        marsLessons ? Loc.S("MARS JEX LESSONS  ·  ON") : Loc.S("MARS JEX LESSONS  ·  OFF"),
+                        marsLessons))
+                {
+                    DemoSettings.MarsJexLessons = !DemoSettings.MarsJexLessons;
+                    DemoSettings.SaveSettings();
+                }
+                y += 22f;
+                GUI.Label(new Rect(c.x, y, c.width, 16f),
+                    Loc.S("Luna: Jex lectures. Mars: failure asides unless lessons are on."), _micro);
+                y += 28f;
             }
-            y += 22f;
-            GUI.Label(new Rect(c.x, y, c.width, 16f),
-                Loc.S("Luna: Jex lectures. Mars: failure asides unless lessons are on."), _micro);
-            y += 28f;
 
             y = DrawControls(c, y);
 
@@ -3442,11 +3451,16 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.S("GUIDED START"), _section);
                 y += 18f;
-                if (Chip(new Rect(c.x, y, c.width, 26f), Loc.S("SKIP GUIDED START"), false))
-                    _loop.SetFirstHourDemo(false);
-                y += 30f;
-                y = WrapBlock(c, y,
-                    Loc.S("Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before."));
+                if (DemoBuild.Active)
+                    y = WrapBlock(c, y, DemoEndOffer.SettingsNote); // no way out of the Earth demo
+                else
+                {
+                    if (Chip(new Rect(c.x, y, c.width, 26f), Loc.S("SKIP GUIDED START"), false))
+                        _loop.SetFirstHourDemo(false);
+                    y += 30f;
+                    y = WrapBlock(c, y,
+                        Loc.S("Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before."));
+                }
             }
             else
             {
@@ -3479,7 +3493,7 @@ namespace SolarMajesty
                 y = WrapBlock(c, y, ReplayRules.StanceHint + " " + InputBindings.ExpandKeyTokens(ReplayRules.ChallengeHint));
                 y = WrapBlock(c, y, ReplayRules.IronmanHint);
                 y = WrapBlock(c, y,
-                    Loc.S("Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue."));
+                    Loc.S("Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue."));
                 y += 4f;
                 if (Chip(new Rect(c.x, y, c.width, 26f), Loc.S("REPLAY GUIDED START"), false))
                     _loop.SetFirstHourDemo(true);
@@ -3686,7 +3700,7 @@ namespace SolarMajesty
                     Loc.S("3/6  Keep the yard clear of mobs — bots build charging stations and solar farms that pay EU."),
                     Loc.S("4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes."),
                     Loc.F("5/6  {0}, Build, leave it at 700. Watch the Engineer.", InputBindings.Hint(GameAction.ToolFlag)),
-                    Loc.F("6/6  They named a price. Select the flag and press {0} until the chip reads tempted.", InputBindings.Hint(GameAction.BountyUp))
+                    Loc.F("6/6  They named a price. Select the flag and press {0} until the chip reads tempted.", InputBindings.Hint(GameAction.BountyUp))
                 };
                 int step = Mathf.Clamp(_loop.TutorialStep, 0, beats.Length - 1);
                 if (_loop.TutorialWantsPriceLesson)

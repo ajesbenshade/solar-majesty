@@ -71,6 +71,7 @@ namespace SolarMajesty
         {
             if (scenesInBuild <= 0) return false;
             if (!CampaignProgress.IsOnSpine(id)) return false;
+            if (!DemoBuild.BodyInDemo(id)) return false; // the Steam demo ends on Earth (DemoEndOffer)
             var profile = CelestialBodyCatalog.Get(id);
             return profile != null
                 && profile.Id == id

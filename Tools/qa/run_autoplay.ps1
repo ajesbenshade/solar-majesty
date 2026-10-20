@@ -11,7 +11,14 @@
   Continues, checking nothing is lost. Midway through -RelaunchOn (Mars by default) it presses QUIT;
   this script starts the game again and the run carries on from the title's Continue.
 
-  Exit code 0 = the campaign was won on all five worlds with no error logged.
+  -Demo plays the Steam demo player (SolarMajestyDemo.exe, BuildCommands.BuildWindowsDemo) instead:
+  Earth only, relaunch check on Earth, and the run passes when Earth's win ends on the
+  end-of-demo screen (captured as autoplay-<time>-demo-end.png next to the report), nothing past
+  Earth unlocks, and KEEP PLAYING EARTH carries on.
+
+    powershell -ExecutionPolicy Bypass -File Tools\qa\run_autoplay.ps1 -Demo -GameDir Builds\Demo\Windows
+
+  Exit code 0 = the campaign was won on all five worlds (or, with -Demo, Earth to the demo's end) with no error logged.
   Report: <OutDir>\autoplay-<time>.json plus both Player logs. Your saves and settings are never
   touched: -saveDir and -profileDir point at a temp folder that is deleted afterwards.
 #>
@@ -40,22 +47,35 @@ param(
   # keeps the run fast; the harness waits on game state either way).
   [switch]$Beats,
   [switch]$KeepTemp,
+  # The Steam demo player: Earth only, ends on the end-of-demo screen.
+  [switch]$Demo,
   [string]$ExtraArgs = ''
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 
+$exeName = 'SolarMajesty.exe'
+$buildMethod = 'BuildWindows'
+if ($Demo) {
+  $exeName = 'SolarMajestyDemo.exe'
+  $buildMethod = 'BuildWindowsDemo'
+  if (-not $PSBoundParameters.ContainsKey('GameDir')) { $GameDir = 'Builds\AutoplayDemo\Windows' }
+  if (-not $PSBoundParameters.ContainsKey('RelaunchOn')) { $RelaunchOn = 'Earth' }
+  if ($RelaunchOn -and $RelaunchOn -ne 'Earth') { throw '-Demo is Earth only: use -RelaunchOn Earth or -RelaunchOn ""' }
+  if ($From) { throw '-Demo is Earth only: -From does not apply' }
+}
+
 if ($Build) {
   $buildRoot = Split-Path (Join-Path $root $GameDir) -Parent
   $buildLog = Join-Path ([IO.Path]::GetTempPath()) ("sm-autoplay-build-" + [Guid]::NewGuid().ToString('N') + ".log")
-  Write-Host "[autoplay] building release player -> $buildRoot" -ForegroundColor Yellow
-  $b = Start-Process $Unity -ArgumentList "-batchmode -quit -projectPath `"$root`" -executeMethod SolarMajesty.EditorTools.BuildCommands.BuildWindows -smBuildPath `"$buildRoot`" -logFile `"$buildLog`"" -PassThru -Wait
+  Write-Host "[autoplay] building release player ($buildMethod) -> $buildRoot" -ForegroundColor Yellow
+  $b = Start-Process $Unity -ArgumentList "-batchmode -quit -projectPath `"$root`" -executeMethod SolarMajesty.EditorTools.BuildCommands.$buildMethod -smBuildPath `"$buildRoot`" -logFile `"$buildLog`"" -PassThru -Wait
   Select-String -Path $buildLog -Pattern '\[Build\]|error CS' | ForEach-Object { $_.Line }
   if ($b.ExitCode -ne 0) { throw "Build failed (exit $($b.ExitCode)). Log: $buildLog" }
 }
 
-$exe = Join-Path (Resolve-Path (Join-Path $root $GameDir)).Path 'SolarMajesty.exe'
-if (-not (Test-Path $exe)) { throw "No SolarMajesty.exe in $GameDir (use -Build)" }
+$exe = Join-Path (Resolve-Path (Join-Path $root $GameDir)).Path $exeName
+if (-not (Test-Path $exe)) { throw "No $exeName in $GameDir (use -Build)" }
 New-Item -ItemType Directory -Force (Join-Path $root $OutDir) | Out-Null
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $report = Join-Path (Resolve-Path (Join-Path $root $OutDir)).Path "autoplay-$stamp.json"
@@ -125,6 +145,9 @@ if (Test-Path $report) {
   "last verdict: " + $j.verdict
   ""
   "report: $report"
+  $shot = $report -replace '\.json$', '-demo-end.png'
+  if (Test-Path $shot) { "end-of-demo screen: $shot" }
+  elseif ($Demo) { Write-Warning 'No end-of-demo screenshot was written.' }
 } else {
   Write-Warning "No summary written (exit $code)."
   if ($code -eq 0) { $code = 4 }

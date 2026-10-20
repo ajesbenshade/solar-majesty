@@ -26,6 +26,36 @@ Regenerate authored content (SOs + unit prefabs): **Solar Majesty → Build Demo
 
 Play opens on the **title screen** — a solar-system orrery, not a frozen drop. **Click Earth** to drop. The playable demo is Earth only; Settings → **Full campaign** shows the other worlds again. **New Game** wipes the continue slot and returns to the system (confirms if a save exists). **Continue** restores that body's **campus** (modules + workshop robots), stockpile, research, population, open flags, living fauna, and specialist HP. **Esc** pauses (Resume / Settings / Title / Quit). The Earth tutorial is four skippable beats (Engineer workshop → Build at $70 → raise the price → Defend the creeper). Commons and a HAB are already on the claim. Settings can replay it. Full campaign keeps the older six-beat dock tutorial.
 
+## Steam demo build (Next Fest)
+
+The **guided start** above (`DemoSettings.FirstHourDemo`, `DemoSlice`) is a mode of the full game: Settings can
+skip it and open the campaign. The **Steam demo** is a separate player built from the same project with the
+`SM_DEMO` define, where nothing can open the campaign.
+
+- **Build:** menu **Solar Majesty → Build → Windows 64-bit Demo (Next Fest)**, or
+  `-executeMethod SolarMajesty.EditorTools.BuildCommands.BuildWindowsDemo -smBuildPath Builds\Demo`.
+  Output `Builds\Demo\Windows\SolarMajestyDemo.exe`, window title "Solar Majesty Demo", `build_info.txt` says
+  `flavour=demo` and the demo App ID. The define, product name and bundle id apply to that build only;
+  ProjectSettings are left as they were (`DemoBuildTests` fails if `SM_DEMO` or the demo name leaks into them).
+- **Content:** Earth only, with the guided start always on (the Settings switch to skip it, the replay
+  modes, Ironman and the Mars lesson toggle are not shown). Other worlds are hidden from the HUD's world chips;
+  clicking one on the title says it is in the full game. A save or profile that names another world falls
+  back to Earth.
+- **End:** Earth's win (dens, sustain, Lunar Rocket + pad) plays the victory beat, then the **end-of-demo
+  screen** instead of "Continue to Luna": **WISHLIST ON STEAM** (the full game's store page in the Steam
+  overlay, or the browser without Steam), **KEEP PLAYING EARTH** (the colony runs on as a sandbox), **QUIT**.
+  Continuing a won Earth later shows the screen again. Nothing past Earth unlocks.
+- **Achievements:** Solar Conquest and No Second Draft (Ironman) are left out. The others unlock locally but
+  are not sent to Steam, since the demo app has no achievements configured.
+- **Saves:** `%USERPROFILE%\AppData\LocalLow\SolarMajesty\Solar Majesty Demo\DemoSaves` and `…\DemoProfile`,
+  so a demo colony never touches the full game's saves or campaign. A later full-game import is sketched (not
+  built) in [STEAM_RELEASE.md → Next Fest demo](STEAM_RELEASE.md#7-next-fest-demo).
+- **Check it:** `Tools\qa\run_autoplay.ps1 -Demo -GameDir Builds\Demo\Windows` plays the demo from New
+  Campaign to the end screen (quit + relaunch + Continue on Earth on the way), fails if Luna unlocks or Solar
+  Conquest fires, and saves the end screen as `autoplay-<time>-demo-end.png` next to its report.
+- **Ship it:** `Tools\steam\upload_to_steam.ps1 -Demo` to the demo app's depot; the partner-site steps and
+  the Next Fest timing are in [STEAM_RELEASE.md](STEAM_RELEASE.md#7-next-fest-demo).
+
 ## Controls
 
 | Input | Action |

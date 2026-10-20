@@ -454,6 +454,12 @@ namespace SolarMajesty
                 Fail($"{bodyId} won but not marked conquered");
             yield return WaitReal(1.5f);
 
+            if (DemoEndOffer.Applies(bodyId, true, ReplayRules.IsEndless))
+            {
+                yield return DemoEnd(bodyId);
+                yield break;
+            }
+
             var next = CampaignProgress.NextAfter(bodyId);
             var offer = VictoryOffer.For(bodyId, VictoryOffer.NextIsBuilt(bodyId), ReplayRules.IsEndless);
             if (next.HasValue)
@@ -502,6 +508,49 @@ namespace SolarMajesty
             else
                 Milestone("Continue after the campaign lands on the won world");
             yield return WaitReal(2f);
+            _finished = true;
+        }
+
+        /// <summary>
+        /// Steam demo: Earth's win must end on the demo screen, not a launch. Checks nothing past
+        /// Earth opened, captures the screen next to the report, then presses KEEP PLAYING EARTH
+        /// and checks the colony runs on.
+        /// </summary>
+        private IEnumerator DemoEnd(CelestialBodyId bodyId)
+        {
+            var loop = Loop;
+            Milestone("demo build: Earth won → expecting the end-of-demo screen");
+            var next = CampaignProgress.NextAfter(bodyId);
+            if (next.HasValue && CampaignProgress.IsUnlocked(next.Value))
+                Fail($"demo victory unlocked {next.Value}");
+            if (VictoryOffer.NextIsBuilt(bodyId))
+                Fail("demo victory offers a launch");
+            yield return WaitFor(() => Loop == loop && loop.VictoryHeld && !CameraBeatDirector.Active, 60f,
+                "the end-of-demo screen");
+            if (_failure != null) yield break;
+            yield return WaitReal(2.5f); // the HUD draws it; achievements are evaluated every two seconds
+            if (Achievements.IsUnlocked(AchievementId.SolarConquest))
+                Fail("Solar Conquest unlocked in the demo");
+
+            string dir = Path.GetDirectoryName(_outPath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                string shot = Path.Combine(dir, Path.GetFileNameWithoutExtension(_outPath) + "-demo-end.png");
+                ScreenCapture.CaptureScreenshot(shot, 1);
+                Milestone("end-of-demo screen captured → " + shot);
+                yield return WaitReal(1f);
+            }
+
+            Milestone("end-of-demo → \"" + DemoEndOffer.Label(DemoEndOffer.Choice.KeepPlaying) + "\"");
+            loop.ContinueAfterDemoEnd(); // the KEEP PLAYING EARTH button
+            yield return WaitFor(() => !loop.VictoryHeld && Time.timeScale > 0f, 20f, "the colony to run after the demo end");
+            if (_failure != null) yield break;
+            float simStart = Time.time;
+            yield return WaitFor(() => Time.time - simStart > 20f, 60f, "20 sim-seconds of Earth after the demo end");
+            if (_failure == null && (Loop != loop || !loop.IsPlaying || loop.ActiveBody != bodyId))
+                Fail($"after KEEP PLAYING the game is on {Loop?.ActiveBody}, playing={Loop?.IsPlaying}");
+            else if (_failure == null)
+                Milestone("demo complete — Earth keeps running after the end screen");
             _finished = true;
         }
 
@@ -1495,7 +1544,8 @@ namespace SolarMajesty
                                    $"(settings {b.settingsChecked}, save/load {b.saveLoadChecked}, title/continue {b.titleContinueChecked})";
                     if (_failure != null) break;
                 }
-                int expected = (int)CelestialBodyCatalog.Last - (int)_from + 1;
+                // The Steam demo is Earth only and ends on its own screen (DemoEnd).
+                int expected = DemoBuild.Active ? 1 : (int)CelestialBodyCatalog.Last - (int)_from + 1;
                 if (_failure == null && _state.bodies.Count < expected)
                     _failure = $"only {_state.bodies.Count} of {expected} worlds were played";
                 if (_failure == null && _relaunchOn.HasValue && _state.relaunches == 0)
