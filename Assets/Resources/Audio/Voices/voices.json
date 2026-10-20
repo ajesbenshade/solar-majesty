@@ -757,12 +757,12 @@
    "speaker": "hero.DefenseMech",
    "cue": "select",
    "take": 2,
-   "text": "Say the word, Overseer.",
+   "text": "Say the word, Core.",
    "clip": "hero_defensemech_select_2",
-   "hash": "f720f91eefc3",
-   "seconds": 1.58,
-   "peak_db": -5.6,
-   "rms_db": -20.8
+   "hash": "b1da49e142c4",
+   "seconds": 1.22,
+   "peak_db": -6.4,
+   "rms_db": -21.0
   },
   {
    "speaker": "hero.DefenseMech",
@@ -3738,12 +3738,12 @@
    "speaker": "overseer",
    "cue": "alert_warning",
    "take": 0,
-   "text": "Overseer, heads up.",
+   "text": "Core, heads up.",
    "clip": "overseer_alert_warning_0",
-   "hash": "3275d3a6d02f",
-   "seconds": 1.31,
-   "peak_db": -4.4,
-   "rms_db": -21.6
+   "hash": "e4cabd5a4d71",
+   "seconds": 0.94,
+   "peak_db": -6.3,
+   "rms_db": -21.2
   },
   {
    "speaker": "overseer",

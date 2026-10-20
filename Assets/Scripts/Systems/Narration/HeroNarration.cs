@@ -71,7 +71,7 @@ namespace SolarMajesty
               "Six hundred for a den? I'd clear two." },
             { "Hero: level 1 Scout Drone on Luna. Voice: cowardly — nervous, looking for an exit. Now: badly hurt and running back to the inn.",
               "Nope. Nope. Inn. Now." },
-            { "Hero: level 5 Engineer Bot on Earth. Voice: workaholic — lives for the job. Now: is not allowed to take the build bounty because the overseer's orders say \"level 6 or higher\".",
+            { "Hero: level 5 Engineer Bot on Earth. Voice: workaholic — lives for the job. Now: is not allowed to take the build bounty because the Core's orders say \"level 6 or higher\".",
               "Level six? I've welded worse blindfolded." },
         };
 
@@ -112,7 +112,7 @@ namespace SolarMajesty
                     return $"just took the {flag} bounty paying {m.Bounty:N0} EU" +
                            (string.IsNullOrEmpty(m.Orders) ? "" : $" (orders on it: \"{Clip(m.Orders, 80)}\")");
                 case NarrationKind.Refused:
-                    return $"is not allowed to take the {flag} bounty because the overseer's orders say \"{Clip(m.Orders, 80)}\"";
+                    return $"is not allowed to take the {flag} bounty because the Core's orders say \"{Clip(m.Orders, 80)}\"";
                 case NarrationKind.Flee: return "badly hurt and running back to the inn";
                 case NarrationKind.Hunt: return "going to hunt nearby hostile fauna, no bounty";
                 case NarrationKind.Repair: return "going to patch a damaged colony module for a small fee";

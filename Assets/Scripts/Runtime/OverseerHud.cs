@@ -2165,7 +2165,7 @@ namespace SolarMajesty
                 var prevAlign = who.alignment;
                 who.normal.textColor = player ? new Color(1f, 0.82f, 0.6f) : Gold;
                 who.alignment = player ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
-                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? "OVERSEER" : heroName.ToUpperInvariant(), who);
+                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? "THE CORE" : heroName.ToUpperInvariant(), who);
                 who.normal.textColor = prevColor;
                 who.alignment = prevAlign;
                 GUI.Label(new Rect(x + 10f, y + 19f, textW, textH), text, _chatText);
@@ -2897,8 +2897,8 @@ namespace SolarMajesty
                 HudSkin.RuleH(new Rect(wx + 34f, wy + 57f, Mathf.Max(80f, ww - 34f), 1f), new Color(Gold.r, Gold.g, Gold.b, 0.9f));
                 HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 66f, 620f, 18f),
                     DemoSettings.FirstHourDemo
-                        ? "Click Earth to land. You are the Overseer — heroes choose their own work."
-                        : "Click a world to land. You are the Overseer — heroes choose their own work.",
+                        ? "Click Earth to land. You are the Core. Your bots do the work."
+                        : "Click a world to land. You are the Core. Your bots do the work.",
                     _tagline, 0.7f);
                 _caps.normal.textColor = Gold;
                 HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 86f, 400f, 14f), ReplayRules.HudTag, _caps, 0.7f);
@@ -3309,7 +3309,7 @@ namespace SolarMajesty
             y += 32f;
 
             // Baked voices need nothing running. The LOCAL rows add LLM-written lines and speak them.
-            if (Chip(new Rect(c.x, y, c.width, 26f), "CHARACTER VOICES  ·  BAKED BARKS + OVERSEER", DemoSettings.CharacterVoices))
+            if (Chip(new Rect(c.x, y, c.width, 26f), "CHARACTER VOICES  ·  BAKED BARKS + CORE", DemoSettings.CharacterVoices))
             {
                 DemoSettings.CharacterVoices = !DemoSettings.CharacterVoices;
                 DemoSettings.SaveSettings();

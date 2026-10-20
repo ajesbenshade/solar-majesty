@@ -68,7 +68,7 @@ namespace SolarMajesty.EditorTools
         public static string WindowsReadme =>
             "Solar Majesty — Windows playtest\n" +
             "================================\n" +
-            "Early overseer-loop demo (not a finished game). No Unity install needed.\n" +
+            "Early Core colony demo (not a finished game). No Unity install needed.\n" +
             "\n" +
             "How to run\n" +
             "----------\n" +
@@ -82,7 +82,7 @@ namespace SolarMajesty.EditorTools
         public static string MacReadme =>
             "Solar Majesty — macOS playtest\n" +
             "==============================\n" +
-            "Early overseer-loop demo (not a finished game). No Unity install needed.\n" +
+            "Early Core colony demo (not a finished game). No Unity install needed.\n" +
             "\n" +
             "How to run\n" +
             "----------\n" +
