@@ -95,7 +95,7 @@ namespace SolarMajesty
             if (!count) return new[] { rate };
             {
                 string second = words[1];
-                string abbr = second.Length > 4 ? second.Substring(0, 4) + "." : second;
+                string abbr = second.Length > 5 ? second.Substring(0, 4) + "." : second;
                 list.Add(words[0] + " " + abbr);
             }
             list.Add(words[0]);
