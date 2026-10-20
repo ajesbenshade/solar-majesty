@@ -102,8 +102,8 @@ namespace SolarMajesty
         {
             ChallengeId.Austere => Loc.S("AUSTERE"),
             ChallengeId.Swarm => Loc.S("SWARM"),
-            ChallengeId.TightPurse => Loc.S("TIGHT PURSE"),
-            _ => Loc.S("STANDARD")
+            ChallengeId.TightPurse => Loc.S("LOW BATTERY"),
+            _ => Loc.S("STANDARD")
         };
 
         public static string StanceLabel => Stance switch
@@ -140,8 +140,8 @@ namespace SolarMajesty
         {
             ChallengeId.Austere => Loc.S("Austere: 55% starting stockpile (New Game / reload). Commons + HAB + workshop still fit."),
             ChallengeId.Swarm => Loc.S("Swarm: more fauna (cap ×1.50) at a slower spawn cadence (reload). Post {key:FlagDefend}/{key:FlagClearThreat}."),
-            ChallengeId.TightPurse => Loc.S("Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged."),
-            _ => Loc.S("Standard: no challenge modifiers.")
+            ChallengeId.TightPurse => Loc.S("Low Battery: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged."),
+            _ => Loc.S("Standard: no challenge modifiers.")
         };
 
         public static string IronmanHint =>

@@ -103,9 +103,9 @@
    "tr": "3/4  Sélectionnez ce fanion et appuyez sur {key:BountyUp} jusqu'à ce que le mât indique tenté."
   },
   {
-   "en": "3/6  Keep the yard clear of mobs — bots build houses and solar farms that pay EU.",
+   "en": "3/6  Keep the yard clear of mobs — bots build charging stations and solar farms that pay EU.",
    "key": "",
-   "tr": "3/6  Gardez la cour libre de monstres — les bots construisent des maisons et des fermes solaires qui rapportent des EU."
+   "tr": "3/6  Gardez la cour libre de monstres — les bots construisent des stations de recharge et des fermes solaires qui rapportent des EU."
   },
   {
    "en": "4/4  A soil creeper is on the yard. Press {key:ToolFlag}, {key:FlagDefend} Defend, and post it on the bug. If the pole says ignored, build a Defense workshop (key 2).",
@@ -698,9 +698,9 @@
    "tr": "Construire ici"
   },
   {
-   "en": "Build anywhere on open ground · houses pay EU · a workshop fabricates a mech",
+   "en": "Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech",
    "key": "",
-   "tr": "Construisez n'importe où en terrain dégagé · les maisons rapportent des EU · un atelier fabrique un méca"
+   "tr": "Construisez n'importe où en terrain dégagé · les chargeurs rapportent des EU · un atelier fabrique un méca"
   },
   {
    "en": "Build catalog",
@@ -738,9 +738,14 @@
    "tr": "DÉFI  ·  {0}"
   },
   {
-   "en": "CHARACTER VOICES  ·  BAKED BARKS + OVERSEER",
+   "en": "CHARACTER VOICES  ·  BAKED BARKS + CORE",
    "key": "",
-   "tr": "VOIX DES PERSONNAGES  ·  RÉPLIQUES + SUPERVISEUR"
+   "tr": "VOIX DES PERSONNAGES  ·  RÉPLIQUES + NOYAU"
+  },
+  {
+   "en": "CHARGERS",
+   "key": "",
+   "tr": "CHARGEURS"
   },
   {
    "en": "CHILLED",
@@ -1013,14 +1018,14 @@
    "tr": "Nettoyage de la tanière."
   },
   {
-   "en": "Click Earth to land. You are the Overseer — heroes choose their own work.",
+   "en": "Click Earth to land. You are the Core. Your bots do the work.",
    "key": "",
-   "tr": "Cliquez sur la Terre pour atterrir. Vous êtes le Superviseur — les héros choisissent leur travail."
+   "tr": "Cliquez sur la Terre pour atterrir. Vous êtes le Noyau. Vos bots font le travail."
   },
   {
-   "en": "Click a world to land. You are the Overseer — heroes choose their own work.",
+   "en": "Click a world to land. You are the Core. Your bots do the work.",
    "key": "",
-   "tr": "Cliquez sur un monde pour atterrir. Vous êtes le Superviseur — les héros choisissent leur travail."
+   "tr": "Cliquez sur un monde pour atterrir. Vous êtes le Noyau. Vos bots font le travail."
   },
   {
    "en": "Click an action, then press its new key. Esc, number keys, Shift and Ctrl stay fixed.",
@@ -1068,9 +1073,9 @@
    "tr": "Les Communs de la colonie sont déjà debout."
   },
   {
-   "en": "Colony Commons is down — build workshops, houses and shops anywhere nearby.",
+   "en": "Colony Commons is down — build workshops, charging stations and shops anywhere nearby.",
    "key": "",
-   "tr": "Les Communs de la colonie sont posés — construisez ateliers, maisons et boutiques n'importe où à proximité."
+   "tr": "Les Communs de la colonie sont posés — construisez ateliers, stations de recharge et boutiques n'importe où à proximité."
   },
   {
    "en": "Colony Commons is down. Build anywhere on open ground.",
@@ -1558,14 +1563,14 @@
    "tr": "EU"
   },
   {
-   "en": "EU is sitting in building purses. Haul will get around to it.",
+   "en": "EU is sitting in building batteries. Haul will get around to it.",
    "key": "",
-   "tr": "Les EU dorment dans les bourses des bâtiments. Haul finira par s'en occuper."
+   "tr": "Les EU dorment dans les batteries des bâtiments. Haul finira par s'en occuper."
   },
   {
-   "en": "EU is sitting in building purses. Haul will get around to it. Or a mite will. Gambling!",
+   "en": "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!",
    "key": "",
-   "tr": "Les EU dorment dans les bourses des bâtiments. Haul finira par s'en occuper. Ou un acarien. Les paris sont ouverts !"
+   "tr": "Les EU dorment dans les batteries des bâtiments. Haul finira par s'en occuper. Ou un acarien. Les paris sont ouverts !"
   },
   {
    "en": "EU was napping on the HAB. A mite just made a withdrawal.",
@@ -2308,11 +2313,6 @@
    "tr": "SAUTEUR"
   },
   {
-   "en": "HOUSES",
-   "key": "",
-   "tr": "LOGIS"
-  },
-  {
    "en": "HP",
    "key": "",
    "tr": "PV"
@@ -2438,9 +2438,9 @@
    "tr": "Haul a pris le disque. Ils ont déjà dit : le fret ensuite. Croyez-les."
   },
   {
-   "en": "Haul walked the purse home. EU is in the chest. Do not click the crate.",
+   "en": "Haul walked the batteries home. EU is in the chest. Do not click the crate.",
    "key": "",
-   "tr": "Haul a ramené la bourse à pied. Les EU sont dans le coffre. Ne cliquez pas sur le caisson."
+   "tr": "Haul a ramené les batteries à pied. Les EU sont dans le coffre. Ne cliquez pas sur le caisson."
   },
   {
    "en": "Haul walked {0:N0} EU home",
@@ -2908,6 +2908,11 @@
    "tr": "VERROUILLÉ  ·  MAJ+CLIC"
   },
   {
+   "en": "LOW BATTERY",
+   "key": "",
+   "tr": "BATTERIE FAIBLE"
+  },
+  {
    "en": "LOW · {0}",
    "key": "",
    "tr": "BAS · {0}"
@@ -3086,6 +3091,11 @@
    "en": "Long Service",
    "key": "",
    "tr": "Longs états de service"
+  },
+  {
+   "en": "Low Battery: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
+   "key": "",
+   "tr": "Batterie faible : vaisseau terrien ×1.55 plus lent et +80 EU de frais de quai. Le stock largué est inchangé."
   },
   {
    "en": "Lower Bounty",
@@ -3603,11 +3613,6 @@
    "tr": "AVANT-POSTE SÉCURISÉ"
   },
   {
-   "en": "OVERSEER",
-   "key": "",
-   "tr": "SUPERVISEUR"
-  },
-  {
    "en": "Objectives",
    "key": "",
    "tr": "Objectifs"
@@ -3893,14 +3898,14 @@
    "tr": "Nuisible en lisière — j'engage."
   },
   {
-   "en": "Pests lifted {0} EU from {1} building purse.",
+   "en": "Pests drained {0} EU from {1} building batteries.",
    "key": "",
-   "tr": "Les nuisibles ont chipé {0} EU dans {1} bourse de bâtiment."
+   "tr": "Les nuisibles ont vidé {0} EU de {1} batteries de bâtiments."
   },
   {
-   "en": "Pests lifted {0} EU from {1} building purses.",
+   "en": "Pests drained {0} EU from {1} building battery.",
    "key": "",
-   "tr": "Les nuisibles ont chipé {0} EU dans {1} bourses de bâtiments."
+   "tr": "Les nuisibles ont vidé {0} EU de {1} batterie de bâtiment."
   },
   {
    "en": "Pick a Watchtower.",
@@ -4968,9 +4973,9 @@
    "tr": "Tir-dard"
   },
   {
-   "en": "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue.",
+   "en": "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue.",
    "key": "",
-   "tr": "Le stock et la faune s'appliquent à la Nouvelle partie / au rechargement. La faim, le courage, la portée et l'attrait des ateliers de la doctrine s'appliquent en direct. Les règles de vaisseau de Bourse serrée s'appliquent en quittant les Paramètres. Ironman se verrouille à Nouvelle partie ou Continuer."
+   "tr": "Le stock et la faune s'appliquent à la Nouvelle partie / au rechargement. La faim, le courage, la portée et l'attrait des ateliers de la doctrine s'appliquent en direct. Les règles de vaisseau de Batterie faible s'appliquent en quittant les Paramètres. Ironman se verrouille à Nouvelle partie ou Continuer."
   },
   {
    "en": "String the Solar Field",
@@ -5108,6 +5113,11 @@
    "tr": "TERR"
   },
   {
+   "en": "THE CORE",
+   "key": "",
+   "tr": "LE NOYAU"
+  },
+  {
    "en": "THE SOLAR SYSTEM IS YOURS",
    "key": "",
    "tr": "LE SYSTÈME SOLAIRE EST À VOUS"
@@ -5131,11 +5141,6 @@
    "en": "TICK STEAL",
    "key": "",
    "tr": "VOL DE TIQUE"
-  },
-  {
-   "en": "TIGHT PURSE",
-   "key": "",
-   "tr": "BOURSE SERRÉE"
   },
   {
    "en": "TILLS {0:N0} · COLLECTORS {1} carrying {2:N0} · EU {3:N0}/day",
@@ -5318,9 +5323,9 @@
    "tr": "Les Communs de la colonie sont tombés, et le trésor avec eux. Réessayez sur ce corps céleste, ou Nouvelle partie."
   },
   {
-   "en": "The Commons and a house are down. Build an Engineer workshop anywhere nearby.",
+   "en": "The Commons and a charging station are down. Build an Engineer workshop anywhere nearby.",
    "key": "",
-   "tr": "Les Communs et une maison sont à terre. Construisez un atelier d'Ingénieur à proximité."
+   "tr": "Les Communs et une station de recharge sont à terre. Construisez un atelier d'Ingénieur à proximité."
   },
   {
    "en": "The Commons sends another Haul in {0} s.",
@@ -5351,6 +5356,11 @@
    "en": "The Rocks Have a Name",
    "key": "",
    "tr": "Les rochers ont un nom"
+  },
+  {
+   "en": "The battery is drained. {0} EU walked off {1}. That was not a sale.",
+   "key": "",
+   "tr": "La batterie est vide. {0} EU ont filé {1}. Ce n'était pas une vente."
   },
   {
    "en": "The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title.",
@@ -5411,11 +5421,6 @@
    "en": "The outpost is gone.",
    "key": "",
    "tr": "L'avant-poste est perdu."
-  },
-  {
-   "en": "The purse is gone. {0} EU walked off {1}. That was not a sale.",
-   "key": "",
-   "tr": "La bourse a disparu. {0} EU ont filé {1}. Ce n'était pas une vente."
   },
   {
    "en": "The real bill is staying. Stay, and you pay forever.",
@@ -5496,11 +5501,6 @@
    "en": "Ticks steal from mines. Rim watch.",
    "key": "",
    "tr": "Les tiques volent les mines. Veille du périmètre."
-  },
-  {
-   "en": "Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
-   "key": "",
-   "tr": "Bourse serrée : vaisseau terrien ×1.55 plus lent et +80 EU de frais de quai. Le stock largué est inchangé."
   },
   {
    "en": "Till Audit",
@@ -5688,9 +5688,9 @@
    "tr": "Ramène l'impôt"
   },
   {
-   "en": "Walking the purse home. Do not click me.",
+   "en": "Walking the batteries home. Do not click me.",
    "key": "",
-   "tr": "Je ramène la bourse. Ne cliquez pas sur moi."
+   "tr": "Je ramène les batteries. Ne cliquez pas sur moi."
   },
   {
    "en": "Walks HAB purses to Commons or a far Watchtower.",
@@ -5958,9 +5958,9 @@
    "tr": "Vous avez dépensé les robots comme des munitions."
   },
   {
-   "en": "Your workforce turned down more than it took. A tight purse, or a hard sell.",
+   "en": "Your workforce turned down more than it took. A low battery, or a hard sell.",
    "key": "",
-   "tr": "Vos effectifs ont refusé plus qu'ils n'ont accepté. Bourse serrée, ou vente difficile."
+   "tr": "Vos effectifs ont refusé plus qu'ils n'ont accepté. Batterie faible, ou vente difficile."
   },
   {
    "en": "Zoom In",
@@ -6006,6 +6006,11 @@
    "en": "carrying {0} EU home",
    "key": "",
    "tr": "ramène {0} EU"
+  },
+  {
+   "en": "charging station",
+   "key": "",
+   "tr": "station de recharge"
   },
   {
    "en": "cheap flags, dens",
@@ -6126,11 +6131,6 @@
    "en": "holding — keep the treasury and income up",
    "key": "",
    "tr": "maintien — gardez trésor et revenus hauts"
-  },
-  {
-   "en": "house",
-   "key": "",
-   "tr": "maison"
   },
   {
    "en": "idle",
@@ -6538,9 +6538,9 @@
    "tr": "{0} EU"
   },
   {
-   "en": "{0} EU is sitting in building purses. Haul will not teleport it.",
+   "en": "{0} EU is sitting in building batteries. Haul will not teleport it.",
    "key": "",
-   "tr": "{0} EU dorment dans les bourses des bâtiments. Haul ne va pas les téléporter."
+   "tr": "{0} EU dorment dans les batteries des bâtiments. Haul ne va pas les téléporter."
   },
   {
    "en": "{0} EU pulled from the tills",
@@ -7049,6 +7049,116 @@
   }
  ],
  "obsolete": [
+  {
+   "en": "3/6  Keep the yard clear of mobs — bots build houses and solar farms that pay EU.",
+   "key": "",
+   "tr": "3/6  Gardez la cour libre de monstres — les bots construisent des maisons et des fermes solaires qui rapportent des EU."
+  },
+  {
+   "en": "Build anywhere on open ground · houses pay EU · a workshop fabricates a mech",
+   "key": "",
+   "tr": "Construisez n'importe où en terrain dégagé · les maisons rapportent des EU · un atelier fabrique un méca"
+  },
+  {
+   "en": "CHARACTER VOICES  ·  BAKED BARKS + OVERSEER",
+   "key": "",
+   "tr": "VOIX DES PERSONNAGES  ·  RÉPLIQUES + SUPERVISEUR"
+  },
+  {
+   "en": "Click Earth to land. You are the Overseer — heroes choose their own work.",
+   "key": "",
+   "tr": "Cliquez sur la Terre pour atterrir. Vous êtes le Superviseur — les héros choisissent leur travail."
+  },
+  {
+   "en": "Click a world to land. You are the Overseer — heroes choose their own work.",
+   "key": "",
+   "tr": "Cliquez sur un monde pour atterrir. Vous êtes le Superviseur — les héros choisissent leur travail."
+  },
+  {
+   "en": "Colony Commons is down — build workshops, houses and shops anywhere nearby.",
+   "key": "",
+   "tr": "Les Communs de la colonie sont posés — construisez ateliers, maisons et boutiques n'importe où à proximité."
+  },
+  {
+   "en": "EU is sitting in building purses. Haul will get around to it.",
+   "key": "",
+   "tr": "Les EU dorment dans les bourses des bâtiments. Haul finira par s'en occuper."
+  },
+  {
+   "en": "EU is sitting in building purses. Haul will get around to it. Or a mite will. Gambling!",
+   "key": "",
+   "tr": "Les EU dorment dans les bourses des bâtiments. Haul finira par s'en occuper. Ou un acarien. Les paris sont ouverts !"
+  },
+  {
+   "en": "HOUSES",
+   "key": "",
+   "tr": "LOGIS"
+  },
+  {
+   "en": "Haul walked the purse home. EU is in the chest. Do not click the crate.",
+   "key": "",
+   "tr": "Haul a ramené la bourse à pied. Les EU sont dans le coffre. Ne cliquez pas sur le caisson."
+  },
+  {
+   "en": "OVERSEER",
+   "key": "",
+   "tr": "SUPERVISEUR"
+  },
+  {
+   "en": "Pests lifted {0} EU from {1} building purse.",
+   "key": "",
+   "tr": "Les nuisibles ont chipé {0} EU dans {1} bourse de bâtiment."
+  },
+  {
+   "en": "Pests lifted {0} EU from {1} building purses.",
+   "key": "",
+   "tr": "Les nuisibles ont chipé {0} EU dans {1} bourses de bâtiments."
+  },
+  {
+   "en": "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue.",
+   "key": "",
+   "tr": "Le stock et la faune s'appliquent à la Nouvelle partie / au rechargement. La faim, le courage, la portée et l'attrait des ateliers de la doctrine s'appliquent en direct. Les règles de vaisseau de Bourse serrée s'appliquent en quittant les Paramètres. Ironman se verrouille à Nouvelle partie ou Continuer."
+  },
+  {
+   "en": "TIGHT PURSE",
+   "key": "",
+   "tr": "BOURSE SERRÉE"
+  },
+  {
+   "en": "The Commons and a house are down. Build an Engineer workshop anywhere nearby.",
+   "key": "",
+   "tr": "Les Communs et une maison sont à terre. Construisez un atelier d'Ingénieur à proximité."
+  },
+  {
+   "en": "The purse is gone. {0} EU walked off {1}. That was not a sale.",
+   "key": "",
+   "tr": "La bourse a disparu. {0} EU ont filé {1}. Ce n'était pas une vente."
+  },
+  {
+   "en": "Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
+   "key": "",
+   "tr": "Bourse serrée : vaisseau terrien ×1.55 plus lent et +80 EU de frais de quai. Le stock largué est inchangé."
+  },
+  {
+   "en": "Walking the purse home. Do not click me.",
+   "key": "",
+   "tr": "Je ramène la bourse. Ne cliquez pas sur moi."
+  },
+  {
+   "en": "Your workforce turned down more than it took. A tight purse, or a hard sell.",
+   "key": "",
+   "tr": "Vos effectifs ont refusé plus qu'ils n'ont accepté. Bourse serrée, ou vente difficile."
+  },
+  {
+   "en": "house",
+   "key": "",
+   "tr": "maison"
+  },
+  {
+   "en": "{0} EU is sitting in building purses. Haul will not teleport it.",
+   "key": "",
+   "tr": "{0} EU dorment dans les bourses des bâtiments. Haul ne va pas les téléporter."
+  },
   {
    "en": "does not grow MET",
    "key": "",

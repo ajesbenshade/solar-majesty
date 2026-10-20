@@ -103,9 +103,9 @@
    "tr": "3/4  Select that flag and press {key:BountyUp} until the pole says tempted."
   },
   {
-   "en": "3/6  Keep the yard clear of mobs — bots build houses and solar farms that pay EU.",
+   "en": "3/6  Keep the yard clear of mobs — bots build charging stations and solar farms that pay EU.",
    "key": "",
-   "tr": "3/6  Keep the yard clear of mobs — bots build houses and solar farms that pay EU."
+   "tr": "3/6  Keep the yard clear of mobs — bots build charging stations and solar farms that pay EU."
   },
   {
    "en": "4/4  A soil creeper is on the yard. Press {key:ToolFlag}, {key:FlagDefend} Defend, and post it on the bug. If the pole says ignored, build a Defense workshop (key 2).",
@@ -698,9 +698,9 @@
    "tr": "Build Here"
   },
   {
-   "en": "Build anywhere on open ground · houses pay EU · a workshop fabricates a mech",
+   "en": "Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech",
    "key": "",
-   "tr": "Build anywhere on open ground · houses pay EU · a workshop fabricates a mech"
+   "tr": "Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech"
   },
   {
    "en": "Build catalog",
@@ -738,9 +738,14 @@
    "tr": "CHAL  ·  {0}"
   },
   {
-   "en": "CHARACTER VOICES  ·  BAKED BARKS + OVERSEER",
+   "en": "CHARACTER VOICES  ·  BAKED BARKS + CORE",
    "key": "",
-   "tr": "CHARACTER VOICES  ·  BAKED BARKS + OVERSEER"
+   "tr": "CHARACTER VOICES  ·  BAKED BARKS + CORE"
+  },
+  {
+   "en": "CHARGERS",
+   "key": "",
+   "tr": "CHARGERS"
   },
   {
    "en": "CHILLED",
@@ -1013,14 +1018,14 @@
    "tr": "Clearing the den."
   },
   {
-   "en": "Click Earth to land. You are the Overseer — heroes choose their own work.",
+   "en": "Click Earth to land. You are the Core. Your bots do the work.",
    "key": "",
-   "tr": "Click Earth to land. You are the Overseer — heroes choose their own work."
+   "tr": "Click Earth to land. You are the Core. Your bots do the work."
   },
   {
-   "en": "Click a world to land. You are the Overseer — heroes choose their own work.",
+   "en": "Click a world to land. You are the Core. Your bots do the work.",
    "key": "",
-   "tr": "Click a world to land. You are the Overseer — heroes choose their own work."
+   "tr": "Click a world to land. You are the Core. Your bots do the work."
   },
   {
    "en": "Click an action, then press its new key. Esc, number keys, Shift and Ctrl stay fixed.",
@@ -1068,9 +1073,9 @@
    "tr": "Colony Commons is already standing."
   },
   {
-   "en": "Colony Commons is down — build workshops, houses and shops anywhere nearby.",
+   "en": "Colony Commons is down — build workshops, charging stations and shops anywhere nearby.",
    "key": "",
-   "tr": "Colony Commons is down — build workshops, houses and shops anywhere nearby."
+   "tr": "Colony Commons is down — build workshops, charging stations and shops anywhere nearby."
   },
   {
    "en": "Colony Commons is down. Build anywhere on open ground.",
@@ -1558,14 +1563,14 @@
    "tr": "EU"
   },
   {
-   "en": "EU is sitting in building purses. Haul will get around to it.",
+   "en": "EU is sitting in building batteries. Haul will get around to it.",
    "key": "",
-   "tr": "EU is sitting in building purses. Haul will get around to it."
+   "tr": "EU is sitting in building batteries. Haul will get around to it."
   },
   {
-   "en": "EU is sitting in building purses. Haul will get around to it. Or a mite will. Gambling!",
+   "en": "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!",
    "key": "",
-   "tr": "EU is sitting in building purses. Haul will get around to it. Or a mite will. Gambling!"
+   "tr": "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!"
   },
   {
    "en": "EU was napping on the HAB. A mite just made a withdrawal.",
@@ -2308,11 +2313,6 @@
    "tr": "HOPPER"
   },
   {
-   "en": "HOUSES",
-   "key": "",
-   "tr": "HOUSES"
-  },
-  {
    "en": "HP",
    "key": "",
    "tr": "HP"
@@ -2438,9 +2438,9 @@
    "tr": "Haul took the disc. They already said freight after. Believe them."
   },
   {
-   "en": "Haul walked the purse home. EU is in the chest. Do not click the crate.",
+   "en": "Haul walked the batteries home. EU is in the chest. Do not click the crate.",
    "key": "",
-   "tr": "Haul walked the purse home. EU is in the chest. Do not click the crate."
+   "tr": "Haul walked the batteries home. EU is in the chest. Do not click the crate."
   },
   {
    "en": "Haul walked {0:N0} EU home",
@@ -2908,6 +2908,11 @@
    "tr": "LOCKED  ·  SHIFT+CLICK"
   },
   {
+   "en": "LOW BATTERY",
+   "key": "",
+   "tr": "LOW BATTERY"
+  },
+  {
    "en": "LOW · {0}",
    "key": "",
    "tr": "LOW · {0}"
@@ -3086,6 +3091,11 @@
    "en": "Long Service",
    "key": "",
    "tr": "Long Service"
+  },
+  {
+   "en": "Low Battery: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
+   "key": "",
+   "tr": "Low Battery: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged."
   },
   {
    "en": "Lower Bounty",
@@ -3603,11 +3613,6 @@
    "tr": "OUTPOST SECURED"
   },
   {
-   "en": "OVERSEER",
-   "key": "",
-   "tr": "OVERSEER"
-  },
-  {
    "en": "Objectives",
    "key": "",
    "tr": "Objectives"
@@ -3893,14 +3898,14 @@
    "tr": "Pest on the rim — engaging."
   },
   {
-   "en": "Pests lifted {0} EU from {1} building purse.",
+   "en": "Pests drained {0} EU from {1} building batteries.",
    "key": "",
-   "tr": "Pests lifted {0} EU from {1} building purse."
+   "tr": "Pests drained {0} EU from {1} building batteries."
   },
   {
-   "en": "Pests lifted {0} EU from {1} building purses.",
+   "en": "Pests drained {0} EU from {1} building battery.",
    "key": "",
-   "tr": "Pests lifted {0} EU from {1} building purses."
+   "tr": "Pests drained {0} EU from {1} building battery."
   },
   {
    "en": "Pick a Watchtower.",
@@ -4968,9 +4973,9 @@
    "tr": "Stingshot"
   },
   {
-   "en": "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue.",
+   "en": "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue.",
    "key": "",
-   "tr": "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue."
+   "tr": "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue."
   },
   {
    "en": "String the Solar Field",
@@ -5108,6 +5113,11 @@
    "tr": "TERR"
   },
   {
+   "en": "THE CORE",
+   "key": "",
+   "tr": "THE CORE"
+  },
+  {
    "en": "THE SOLAR SYSTEM IS YOURS",
    "key": "",
    "tr": "THE SOLAR SYSTEM IS YOURS"
@@ -5131,11 +5141,6 @@
    "en": "TICK STEAL",
    "key": "",
    "tr": "TICK STEAL"
-  },
-  {
-   "en": "TIGHT PURSE",
-   "key": "",
-   "tr": "TIGHT PURSE"
   },
   {
    "en": "TILLS {0:N0} · COLLECTORS {1} carrying {2:N0} · EU {3:N0}/day",
@@ -5318,9 +5323,9 @@
    "tr": "The Colony Commons fell and the treasury with it. Retry this body, or New Game."
   },
   {
-   "en": "The Commons and a house are down. Build an Engineer workshop anywhere nearby.",
+   "en": "The Commons and a charging station are down. Build an Engineer workshop anywhere nearby.",
    "key": "",
-   "tr": "The Commons and a house are down. Build an Engineer workshop anywhere nearby."
+   "tr": "The Commons and a charging station are down. Build an Engineer workshop anywhere nearby."
   },
   {
    "en": "The Commons sends another Haul in {0} s.",
@@ -5351,6 +5356,11 @@
    "en": "The Rocks Have a Name",
    "key": "",
    "tr": "The Rocks Have a Name"
+  },
+  {
+   "en": "The battery is drained. {0} EU walked off {1}. That was not a sale.",
+   "key": "",
+   "tr": "The battery is drained. {0} EU walked off {1}. That was not a sale."
   },
   {
    "en": "The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title.",
@@ -5411,11 +5421,6 @@
    "en": "The outpost is gone.",
    "key": "",
    "tr": "The outpost is gone."
-  },
-  {
-   "en": "The purse is gone. {0} EU walked off {1}. That was not a sale.",
-   "key": "",
-   "tr": "The purse is gone. {0} EU walked off {1}. That was not a sale."
   },
   {
    "en": "The real bill is staying. Stay, and you pay forever.",
@@ -5496,11 +5501,6 @@
    "en": "Ticks steal from mines. Rim watch.",
    "key": "",
    "tr": "Ticks steal from mines. Rim watch."
-  },
-  {
-   "en": "Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
-   "key": "",
-   "tr": "Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged."
   },
   {
    "en": "Till Audit",
@@ -5688,9 +5688,9 @@
    "tr": "Walking levy home"
   },
   {
-   "en": "Walking the purse home. Do not click me.",
+   "en": "Walking the batteries home. Do not click me.",
    "key": "",
-   "tr": "Walking the purse home. Do not click me."
+   "tr": "Walking the batteries home. Do not click me."
   },
   {
    "en": "Walks HAB purses to Commons or a far Watchtower.",
@@ -5958,9 +5958,9 @@
    "tr": "You spent robots like ammunition."
   },
   {
-   "en": "Your workforce turned down more than it took. A tight purse, or a hard sell.",
+   "en": "Your workforce turned down more than it took. A low battery, or a hard sell.",
    "key": "",
-   "tr": "Your workforce turned down more than it took. A tight purse, or a hard sell."
+   "tr": "Your workforce turned down more than it took. A low battery, or a hard sell."
   },
   {
    "en": "Zoom In",
@@ -6006,6 +6006,11 @@
    "en": "carrying {0} EU home",
    "key": "",
    "tr": "carrying {0} EU home"
+  },
+  {
+   "en": "charging station",
+   "key": "",
+   "tr": "charging station"
   },
   {
    "en": "cheap flags, dens",
@@ -6126,11 +6131,6 @@
    "en": "holding — keep the treasury and income up",
    "key": "",
    "tr": "holding — keep the treasury and income up"
-  },
-  {
-   "en": "house",
-   "key": "",
-   "tr": "house"
   },
   {
    "en": "idle",
@@ -6538,9 +6538,9 @@
    "tr": "{0} EU"
   },
   {
-   "en": "{0} EU is sitting in building purses. Haul will not teleport it.",
+   "en": "{0} EU is sitting in building batteries. Haul will not teleport it.",
    "key": "",
-   "tr": "{0} EU is sitting in building purses. Haul will not teleport it."
+   "tr": "{0} EU is sitting in building batteries. Haul will not teleport it."
   },
   {
    "en": "{0} EU pulled from the tills",

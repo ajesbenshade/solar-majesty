@@ -11,7 +11,7 @@ namespace SolarMajesty
     public static class CompactJex
     {
         public static string LevyStolen(int amount, string where) =>
-            Loc.F("The purse is gone. {0} EU walked off {1}. That was not a sale.", amount, where);
+            Loc.F("The battery is drained. {0} EU walked off {1}. That was not a sale.", amount, where);
 
         /// <summary>
         /// One line for a burst of purse thefts. Templated (the numbers change), so it is
@@ -21,15 +21,15 @@ namespace SolarMajesty
         {
             int n = buildings < 1 ? 1 : buildings;
             return n == 1
-                ? Loc.F("Pests lifted {0} EU from {1} building purse.", amount, n)
-                : Loc.F("Pests lifted {0} EU from {1} building purses.", amount, n);
+                ? Loc.F("Pests drained {0} EU from {1} building battery.", amount, n)
+                : Loc.F("Pests drained {0} EU from {1} building batteries.", amount, n);
         }
 
         public static string LevyDelivered(int amount) =>
             Loc.F("Haul dumped {0} EU at the chest. The walk was the joke.", amount);
 
         public static string PurseSitting(int amount) =>
-            Loc.F("{0} EU is sitting in building purses. Haul will not teleport it.", amount);
+            Loc.F("{0} EU is sitting in building batteries. Haul will not teleport it.", amount);
 
         public static string YardBill(int credits) =>
             Loc.F("The yard wants {0} EU. Level is the scandal, not the corpse.", credits);

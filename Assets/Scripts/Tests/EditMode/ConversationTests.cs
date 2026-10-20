@@ -41,6 +41,15 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void SystemPrompt_PlayerIsTheCore()
+        {
+            string p = HeroConversation.SystemPrompt(Rivet());
+            StringAssert.Contains("The player is the Core", p);
+            StringAssert.Contains("Call the player \"the Core\"", p);
+            StringAssert.DoesNotContain("player is the Overseer", p);
+        }
+
+        [Test]
         public void Request_StreamsWithThinkingOffAndTrimsHistory()
         {
             var history = new List<ChatLine>();

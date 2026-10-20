@@ -207,7 +207,7 @@ namespace SolarMajesty
         }
 
         private static string VillageName(BuildingCategory cat) =>
-            cat == BuildingCategory.Power ? Loc.S("solar farm") : Loc.S("house");
+            cat == BuildingCategory.Power ? Loc.S("solar farm") : Loc.S("charging station");
 
         public void RegisterPlacedBuilding(BuildingCategory cat, GameObject go, Vector3 world) =>
             RegisterPlacedBuilding(null, cat, go, world);

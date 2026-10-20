@@ -30,7 +30,7 @@
   },
 
   "hero.DefenseMech": {
-    "select":  ["Aegis online. Point me at trouble.", "Shield up. Standing by.", "Say the word, Overseer."],
+    "select":  ["Aegis online. Point me at trouble.", "Shield up. Standing by.", "Say the word, Core."],
     "claim":   ["Den marked. Stay behind the shield.", "Target accepted. Nothing gets past me.", "I'll hold the line."],
     "refused": ["Orders say no. I obey.", "Understood. Standing down.", "Not my fight today."],
     "hunt":    ["Hostile contact. Engaging.", "Something's out there. Not for long.", "Sweeping the perimeter."],
@@ -142,7 +142,7 @@
   },
 
   "overseer": {
-    "alert_warning":  ["Overseer, heads up.", "Something needs your attention.", "Warning. Look sharp."],
+    "alert_warning":  ["Core, heads up.", "Something needs your attention.", "Warning. Look sharp."],
     "alert_critical": ["Critical alert. This one matters.", "We are losing something. Now.", "Red alert. Please act before it becomes a lesson."],
     "module_lost":    ["We lost a module.", "Module destroyed. That was load bearing.", "One less building. Noted."],
     "hero_down":      ["Robot down.", "One of ours is down.", "Another one for the yard."],

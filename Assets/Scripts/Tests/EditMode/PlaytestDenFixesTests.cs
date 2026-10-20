@@ -327,11 +327,11 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(3, window.Buildings);
             Assert.IsFalse(window.Flush(59f, false, out _));
             Assert.IsTrue(window.Flush(60f, false, out string line));
-            Assert.AreEqual("Pests lifted 60 EU from 3 building purses.", line);
+            Assert.AreEqual("Pests drained 60 EU from 3 building batteries.", line);
             Assert.AreEqual(
-                "Pests lifted 10 EU from 1 building purse.",
+                "Pests drained 10 EU from 1 building battery.",
                 CompactJex.PestsLifted(10, 1));
-            StringAssert.Contains("20 EU walked off HAB-1", CompactJex.LevyStolen(20, "HAB-1"));
+            StringAssert.Contains("20 EU walked off HAB-1", CompactJex.LevyStolen(20, "HAB-1"));
 
             var manifest = Resources.Load<TextAsset>("Audio/Voices/voices");
             if (manifest != null)

@@ -61,6 +61,9 @@ anything clipped will not fit German or French either.
    - Keep every placeholder (`{0}`, `{1:N0}`) and every `{key:...}` token exactly; their order may change.
    - Keep `·` separators and UPPER-CASE where the English is upper-case (buttons and headers).
    - "EU" is the in-game currency, and Jex is the advisor's name: keep both.
+   - Canon terms (French in use): the player is **the Core** (le Noyau), houses are **charging
+     stations** (stations de recharge, HUD chip CHARGEURS), building purses are **batteries**, and the
+     Tight Purse challenge is **Low Battery** (Batterie faible).
 3. Re-run the extractor whenever the game changes; it adds new strings and never deletes a translation.
 4. Check it in game with `-language fr`.
 

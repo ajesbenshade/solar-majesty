@@ -826,7 +826,7 @@ namespace SolarMajesty
             FaunaKind.Leech or FaunaKind.Wisp => "power node",
             FaunaKind.Hopper => "habitat",
             FaunaKind.JunkBot => "colony robot",
-            _ => "village house"
+            _ => "charging station"
         };
 
         private bool RaidTargetInReach()

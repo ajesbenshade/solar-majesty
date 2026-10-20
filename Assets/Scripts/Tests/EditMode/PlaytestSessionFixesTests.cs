@@ -293,6 +293,14 @@ namespace SolarMajesty.Tests
         };
 
         [Test]
+        public void ChargersChip_KeepsTheChargingStationIcon()
+        {
+            Assert.AreEqual("CHARGERS", OverseerHud.ChargersLabel);
+            Assert.AreEqual(IconId.House, OverseerHud.ChipIconFor(OverseerHud.ChargersLabel));
+            Assert.IsNull(OverseerHud.ChipIconFor("HOUSES"), "the old label is gone; nothing should still key on it");
+        }
+
+        [Test]
         public void ChipRateVariants_AbbreviateAndDedupe()
         {
             CollectionAssert.AreEqual(new[] { "330 carried", "330 carr.", "330" }, HudLayout.ChipRateVariants("330 carried"));
