@@ -76,6 +76,35 @@ namespace SolarMajesty
             label = new Rect(labelX, chip.y + 2f, number.xMin - TextGap - labelX, 12f);
         }
 
+        public const float StockpileW = 244f;
+        public const float StockpileChipGap = 6f;
+
+        /// <summary>Width of one chip in the 2×2 stockpile grid.</summary>
+        public static float StockpileChipWidth(float stockpileWidth = StockpileW) =>
+            (stockpileWidth - StockpileChipGap) * 0.5f;
+
+        /// <summary>The chip rate wording, most to least verbose: full, first word + abbreviated second, first token.</summary>
+        public static string[] ChipRateVariants(string rate)
+        {
+            if (string.IsNullOrEmpty(rate)) return new[] { "" };
+            var list = new System.Collections.Generic.List<string> { rate };
+            var words = rate.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+            // Only counts compact ("330 carried" -> "330"); a unit like "% built" stays whole.
+            bool count = words.Length >= 2 && words[0].Length > 0
+                && (char.IsDigit(words[0][0]) || (words[0].Length > 1 && (words[0][0] == '-' || words[0][0] == '+') && char.IsDigit(words[0][1])));
+            if (!count) return new[] { rate };
+            {
+                string second = words[1];
+                string abbr = second.Length > 5 ? second.Substring(0, 4) + "." : second;
+                list.Add(words[0] + " " + abbr);
+            }
+            list.Add(words[0]);
+            var result = new System.Collections.Generic.List<string>();
+            foreach (var s in list)
+                if (!result.Contains(s)) result.Add(s);
+            return result.ToArray();
+        }
+
         /// <summary>Building or power row: the price column starts after the name.</summary>
         public static void SplitRow(float rowX, float rowY, float rowWidth, float rowHeight, float nameX, float costWidth, out Rect name, out Rect cost)
         {
