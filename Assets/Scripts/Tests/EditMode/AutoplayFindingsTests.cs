@@ -116,6 +116,98 @@ namespace SolarMajesty.Tests
             StringAssert.StartsWith("Sustain", mission.ObjectiveLabel, "the next gate once the plaza is clear");
         }
 
+        [Test]
+        public void PressureWaves_TopUpTheLooseFauna_ButNeverPastWhatContinueKeeps()
+        {
+            Assert.AreEqual(OverseerRules.MaxFaunaPerDen, OverseerRules.MaxPressureFauna,
+                "live pressure and the Continue cap (FaunaRestoreCap) must agree");
+            Assert.AreEqual(2, OverseerRules.PressureWaveSize(2, 0));
+            Assert.AreEqual(2, OverseerRules.PressureWaveSize(2, OverseerRules.MaxPressureFauna - 2));
+            Assert.AreEqual(1, OverseerRules.PressureWaveSize(2, OverseerRules.MaxPressureFauna - 1));
+            Assert.AreEqual(0, OverseerRules.PressureWaveSize(2, OverseerRules.MaxPressureFauna));
+            Assert.AreEqual(0, OverseerRules.PressureWaveSize(2, 80), "the 80-stalker pile-up a slow Earth reached");
+
+            // An hour of waves on a colony that never fights back stays at the cap.
+            int loose = 0;
+            for (int wave = 0; wave < 48; wave++)
+                loose += OverseerRules.PressureWaveSize(2, loose);
+            Assert.AreEqual(OverseerRules.MaxPressureFauna, loose);
+        }
+
+        [Test]
+        public void RaidingPests_SitOnTheWall_WhereARobotCanStrikeThem()
+        {
+            var raided = new[]
+            {
+                BuildingCategory.Farm, BuildingCategory.Mine, BuildingCategory.RegolithCamp,
+                BuildingCategory.Power, BuildingCategory.Habitat
+            };
+            const float agentRadius = 0.4f; // SpecialistAgent's NavMeshAgent
+            foreach (var cat in raided)
+            {
+                float half = ColonyLayout.FootprintMeters(cat) * 0.5f;
+                float standOff = DustStalkerAgent.RaidStandOff(cat);
+                Assert.Greater(standOff, half,
+                    $"{cat}: a raider inside the carved footprint is out of every robot's reach");
+                Assert.LessOrEqual(Mathf.Abs(standOff - (half + agentRadius)), KingdomLife.HuntRange,
+                    $"{cat}: a robot at the wall must have the raider in melee");
+            }
+        }
+
+        // ---------------------------------------------------------------- the walk to the guild till
+
+        [Test]
+        public void DutyWalk_ThatStopsClosing_GivesUp_KeepsTheTax_AndTriesAgainLater()
+        {
+            var t = new EconomyTuning();
+            var purse = new DutyPurse();
+            purse.Add(300);
+            Assert.IsTrue(purse.WantsToPay(t, 0f));
+
+            float now = 0f;
+            bool gaveUp = false;
+            purse.NoteWalk(6f, 0.5f, now); // first sample: the hero is parked at a boxed-in till
+            for (int i = 0; i < 40 && !gaveUp; i++)
+            {
+                now += 0.5f;
+                gaveUp = purse.NoteWalk(6f, 0.5f, now);
+            }
+
+            Assert.IsTrue(gaveUp, "a walk that cannot finish must end");
+            Assert.LessOrEqual(now, DutyPurse.WalkPatience + 1f);
+            Assert.AreEqual(300, purse.Carry, "giving up keeps the tax");
+            Assert.IsFalse(purse.WantsToPay(t, now + 1f), "back to bounties and hunting for a while");
+            Assert.IsTrue(purse.WantsToPay(t, now + DutyPurse.RetrySeconds + 0.1f), "then it walks again");
+        }
+
+        [Test]
+        public void DutyWalk_ThatKeepsClosing_NeverGivesUp()
+        {
+            var purse = new DutyPurse();
+            purse.Add(300);
+            float distance = 120f, now = 0f;
+            for (int i = 0; i < 200; i++) // 100 s of a long walk home
+            {
+                now += 0.5f;
+                distance -= 0.55f;
+                Assert.IsFalse(purse.NoteWalk(distance, 0.5f, now), $"gave up at {now}s while closing");
+            }
+        }
+
+        [Test]
+        public void DutyWalk_Paying_ClearsTheRetry()
+        {
+            var t = new EconomyTuning();
+            var purse = new DutyPurse();
+            purse.Add(300);
+            purse.NoteWalk(6f, 1f, 0f);
+            Assert.IsTrue(purse.NoteWalk(6f, DutyPurse.WalkPatience + 1f, 20f));
+            Assert.IsFalse(purse.WantsToPay(t, 21f));
+            Assert.AreEqual(300, purse.Pay());
+            purse.Add(300);
+            Assert.IsTrue(purse.WantsToPay(t, 21f), "a hero who paid is not still waiting out an old give-up");
+        }
+
         // ---------------------------------------------------------------- loading holds the world
 
         [Test]

@@ -1161,7 +1161,7 @@ namespace SolarMajesty
                 }
             }
 
-            var dutyTill = _duty.WantsToPay(MajestyEconomy.Tuning) ? GuildTill() : null;
+            var dutyTill = _duty.WantsToPay(MajestyEconomy.Tuning, Time.time) ? GuildTill() : null;
             if (dutyTill != null && !dutyTill.IsAlive) dutyTill = null;
 
             float hunger = Mathf.Clamp01(greedHunger + ReplayRules.GreedHungerBias);
@@ -1228,6 +1228,8 @@ namespace SolarMajesty
                            decision.Reason != _lastDecision.Reason ||
                            !ReferenceEquals(decision.TargetFlag, _lastDecision.TargetFlag);
 
+            if (changed && decision.Reason == "pay_duty")
+                _duty.ResetWalk();
             _lastDecision = decision;
 
             if (decision.Action == SpecialistAction.PursueFlag && decision.TargetFlag != null)
@@ -1830,7 +1832,10 @@ namespace SolarMajesty
             var t = MajestyEconomy.Tuning;
             var till = GuildTill();
             if (till == null || !till.IsAlive) return;
-            if (FlatDistance(transform.position, till.WorldPosition) > Mathf.Max(1f, t.taxPayArrive) + 1.5f)
+            // At the building, not at its centre: the walls (and the NavMesh carved around them)
+            // stop a hero a few metres out, further at a corner.
+            float reach = Mathf.Max(1f, t.taxPayArrive) + 1.5f + ColonyLayout.FootprintMeters(till.Category) * 0.5f;
+            if (FlatDistance(transform.position, till.WorldPosition) > reach)
                 return;
             int paid = _duty.Pay();
             till.AccrueLevy(paid);
@@ -2080,6 +2085,14 @@ namespace SolarMajesty
             if (dest.sqrMagnitude < 0.01f)
                 dest = KingdomLife.Plaza(ColonyLayout.NearestCampusIndex(transform.position));
 
+            if (_lastDecision.Reason == "pay_duty" &&
+                _duty.NoteWalk(FlatDistance(transform.position, dest), dt, Time.time))
+            {
+                Debug.Log($"[Specialist] {data?.displayName} cannot reach its guild till — keeps {_duty.Carry} EU of tax for later.");
+                _thinkTimer = 0f; // back to bounties and hunting now
+                return;
+            }
+
             float arrive = Mathf.Max(0.8f, idleWanderRadius * 0.55f);
             if (FlatDistance(transform.position, dest) < arrive)
             {
@@ -2100,14 +2113,26 @@ namespace SolarMajesty
             if (TickAidStation(dt))
                 return;
 
-            SetDestination(dest);
-            MoveFallback(dest, EffectiveMoveSpeed * 0.72f * dt);
+            // A walk across the map (home from a den, to the guild till) travels the way Rest and
+            // Flee do. The agent's own path ends at the river a Clear Threat walk forded on the way
+            // out, and the hero stood there for the rest of the world (autoplay, Earth: Defense
+            // Mechs "patrolling" / "pay_duty" 100-250 m out on a partial path).
+            if (FlatDistance(transform.position, dest) > LongWalkMeters)
+                AdvanceToward(dest, dt, false);
+            else
+            {
+                SetDestination(dest);
+                MoveFallback(dest, EffectiveMoveSpeed * 0.72f * dt);
+            }
             _status = _lastDecision.Reason ?? "wandering";
             TryPartyFollowWork(dt);
             TickTerraformerVocation(dt);
             TickWorkshopRepair(dt);
             TickGuildAndMarket(dt);
         }
+
+        /// <summary>Wander walks longer than this use route travel (fords included) instead of the agent path.</summary>
+        internal const float LongWalkMeters = 30f;
 
         private void TickIdle(float dt)
         {

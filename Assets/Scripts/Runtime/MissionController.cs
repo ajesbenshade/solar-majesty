@@ -476,8 +476,10 @@ namespace SolarMajesty
                 }
             }
 
+            int size = OverseerRules.PressureWaveSize(Mathf.Max(1, pressureStalkerCount), LooseFaunaAlive());
+            if (size <= 0) return;
             int spawned = _loop.SpawnStalkerWave(
-                Mathf.Max(1, pressureStalkerCount),
+                size,
                 10f,
                 origin);
             if (spawned > 0)
@@ -534,6 +536,24 @@ namespace SolarMajesty
                     Debug.Log("[Mission] Defeat — outpost overwhelmed.");
                 _loop.LogOverseer(FailDetail);
             }
+        }
+
+        /// <summary>Living fauna that are not a den's residents (pressure waves, yard pests).</summary>
+        private int LooseFaunaAlive()
+        {
+            int residents = 0;
+            var lairs = _loop.World != null ? _loop.World.Lairs : null;
+            if (lairs != null)
+            {
+                for (int i = 0; i < lairs.Count; i++)
+                {
+                    var spawned = lairs[i] != null ? lairs[i].Spawned : null;
+                    if (spawned == null) continue;
+                    for (int j = 0; j < spawned.Count; j++)
+                        if (spawned[j] != null && spawned[j].IsAlive) residents++;
+                }
+            }
+            return Mathf.Max(0, CountLivingStalkers() - residents);
         }
 
         private int CountLivingStalkers()
