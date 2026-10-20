@@ -578,8 +578,9 @@ namespace SolarMajesty
 
                 EnsureStyles();
                 float s = Mathf.Max(0.6f, DemoSettings.HudScale); // the player's UI Scale (auto-by-height by default)
-                _captionStyle.fontSize = Mathf.RoundToInt(26 * s);
-                _hintStyle.fontSize = Mathf.RoundToInt(15 * s);
+                // Captions are subtitles: they follow the player's TEXT SIZE as well as the UI scale.
+                _captionStyle.fontSize = Mathf.RoundToInt(HudTextScale.Font(26) * s);
+                _hintStyle.fontSize = Mathf.RoundToInt(HudTextScale.Font(15) * s);
                 if (!string.IsNullOrEmpty(_caption))
                     GUI.Label(new Rect(0f, h - bar, w, bar), _caption, _captionStyle);
                 GUI.Label(new Rect(0f, h - bar, w - 28f * s, bar), SkipHint(), _hintStyle);

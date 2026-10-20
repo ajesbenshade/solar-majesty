@@ -14,6 +14,8 @@ namespace SolarMajesty
         public const string HudKey = "SM_Set_Hud";
         /// <summary>1 (or a missing key) follows screen height. 0 is an explicit slider choice.</summary>
         public const string HudAutoKey = "SM_Set_HudAuto";
+        /// <summary>HUD text size, 0.9–1.5. Separate from the HUD scale.</summary>
+        public const string TextScaleKey = "SM_Set_TextScale";
         public const string InvertKey = "SM_Set_InvertPan";
         public const string TutorialKey = "SM_TutorialDone";
         public const string SaveFlagKey = "SM_SaveExists";
@@ -56,6 +58,8 @@ namespace SolarMajesty
         public static bool HudScaleAuto = true;
         /// <summary>Last slider choice, in 5% steps. Stored even while auto is on.</summary>
         public static float HudScaleExplicit = 1f;
+        /// <summary>HUD text size (1 = 100 %). Applied through <see cref="HudTextScale"/>.</summary>
+        public static float TextScale => HudTextScale.Factor;
         public static bool InvertPan;
         public static bool TutorialDone;
         public static bool SaveExists;
@@ -286,6 +290,10 @@ namespace SolarMajesty
             HudScaleAuto = GamePrefs.GetInt(HudAutoKey, 1) == 1;
             HudScaleExplicit = HudScaleMath.RoundToStep(GamePrefs.GetFloat(HudKey, 1f));
             RefreshHudScale(Screen.width, Screen.height);
+            HudTextScale.Set(GamePrefs.GetFloat(TextScaleKey, HudTextScale.Default));
+            // QA: -textScale 1.5 checks a text size for one run without touching the saved choice.
+            float? argScale = ParseTextScaleArgument(System.Environment.GetCommandLineArgs());
+            if (argScale.HasValue) HudTextScale.Set(argScale.Value);
             InvertPan = GamePrefs.GetInt(InvertKey, 0) == 1;
             TutorialDone = GamePrefs.GetInt(TutorialKey, 0) == 1;
             SaveExists = GamePrefs.GetInt(SaveFlagKey, 0) == 1;
@@ -347,6 +355,36 @@ namespace SolarMajesty
             RefreshHudScale(Screen.width, Screen.height);
         }
 
+        /// <summary><c>-textScale 1.3</c> or <c>-textScale=130%</c>; null when absent or unreadable.</summary>
+        public static float? ParseTextScaleArgument(string[] args)
+        {
+            if (args == null) return null;
+            const string name = "-textScale";
+            for (int i = 0; i < args.Length; i++)
+            {
+                string a = args[i];
+                if (string.IsNullOrEmpty(a)) continue;
+                string v = null;
+                if (a.StartsWith(name + "=", System.StringComparison.OrdinalIgnoreCase)) v = a.Substring(name.Length + 1);
+                else if (string.Equals(a, name, System.StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length) v = args[i + 1];
+                if (v == null) continue;
+                v = v.Trim();
+                bool percent = v.EndsWith("%");
+                if (percent) v = v.TrimEnd('%');
+                if (float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float f))
+                    return HudTextScale.RoundToStep(percent || f > 3f ? f / 100f : f);
+            }
+            return null;
+        }
+
+        /// <summary>Settings → TEXT SIZE. Snaps to 10 % steps and saves.</summary>
+        public static void SetTextScale(float value)
+        {
+            HudTextScale.Set(value);
+            GamePrefs.SetFloat(TextScaleKey, HudTextScale.Factor);
+            GamePrefs.Save();
+        }
+
         public static void SetHudScaleAuto()
         {
             HudScaleAuto = true;
@@ -393,6 +431,7 @@ namespace SolarMajesty
             GamePrefs.SetFloat(VoiceKey, Voice);
             GamePrefs.SetFloat(HudKey, HudScaleExplicit);
             GamePrefs.SetInt(HudAutoKey, HudScaleAuto ? 1 : 0);
+            GamePrefs.SetFloat(TextScaleKey, HudTextScale.Factor);
             GamePrefs.SetInt(InvertKey, InvertPan ? 1 : 0);
             GamePrefs.SetInt(QualityKey, QualityIndex);
             GamePrefs.SetInt(FullscreenKey, Fullscreen ? 1 : 0);

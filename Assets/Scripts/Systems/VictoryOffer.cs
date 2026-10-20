@@ -119,8 +119,9 @@ namespace SolarMajesty
         /// </summary>
         public static Rect PanelRect(float viewW, float viewH)
         {
-            const float preferredW = 520f;
-            const float preferredH = 248f;
+            // Grows with the player's TEXT SIZE (identical at 100 %).
+            float preferredW = HudTextScale.Width(520f);
+            float preferredH = HudTextScale.Line(248f);
             float width = Mathf.Min(preferredW, Mathf.Max(280f, viewW - 32f));
             float height = Mathf.Min(preferredH, Mathf.Max(180f, viewH - 32f));
             float x = Mathf.Clamp((viewW - width) * 0.5f, 8f, Mathf.Max(8f, viewW - width - 8f));

@@ -28,6 +28,10 @@ Rules:
 - **Voice lines:** baked Overseer voice clips are found by a hash of the exact English line
   (`VoiceBank.LineKey`). The voice and any dedupe must keep receiving the English; translate only
   what is drawn.
+- **Tooltips:** HUD tooltip words live in `HudTips.cs` (title, body, key). Put a key in the tip's
+  Key field or as a `{key:Action}` token in a `Loc.S` body.
+- **Text size:** check new panels at Settings → TEXT SIZE 150 % (`-textScale 1.5`) as well as with
+  the pseudo-language; size rows with `HudTextScale.Line` and widths with `HudTextScale.Width`.
 - English text changes make the old translation stale; the extractor moves it to `obsolete` so a
   translator can reuse it.
 
@@ -81,7 +85,7 @@ language:
 ## Shipped languages
 
 - **English** (source).
-- **Français**: all 1,403 strings, translated with a shared glossary and checked by a validator
+- **Français**: all 1,562 strings (HUD tooltips included), translated with a shared glossary and checked by a validator
   (placeholders, key tokens, line breaks, upper-case labels); verified in game on Earth and Mars
   ([capture](ReviewEvidence/french-mars-hud.png)). It has not had a native speaker's review yet:
   do one before listing French on the store page.

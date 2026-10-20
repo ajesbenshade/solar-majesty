@@ -79,7 +79,8 @@ is in it being honest, not in it being all ticked.
 - [x] Procedural icon set ([UiIcons.cs](../Assets/Scripts/Runtime/UI/UiIcons.cs)), wired into the resource chips
 - [x] Map overlays for power, threat, and defence coverage ([MapOverlay.cs](../Assets/Scripts/Runtime/UI/MapOverlay.cs))
 - [ ] Remaining IMGUI panels migrated to UI Toolkit (`OverseerHud.cs` is still ~2,100 lines)
-- [ ] Tooltips on every panel
+- [x] Tooltips on every panel: one system ([HudTooltip.cs](../Assets/Scripts/Runtime/UI/HudTooltip.cs), placement and hover delay in [HudTooltipMath.cs](../Assets/Scripts/Systems/HudTooltipMath.cs)): 0.45 s rest, follows the cursor, flips and clamps on screen, wraps, works with the gamepad's virtual cursor (it moves the OS cursor), hidden while typing, rebinding, dragging or during camera beats. Every tip's words live in [HudTips.cs](../Assets/Scripts/Systems/HudTips.cs): stockpile chips, treasury, levy, clock/threat, speed controls, dock verbs, build/flag/orbital/research rows, bounty −/+, orders, panel headers, minimap, alerts, overlay legend, building and robot cards, title, pause and every Settings option. Labels cut to fit ("…") show their full text as a tooltip. French complete; EditMode tests for placement, delay and the catalog
+- [ ] Visual pass of tooltips and TEXT SIZE in a build (Deck 1280×800 `-handheld`, 1080p, 4K × en/fr/qps × 100 %/150 %): `Tools/qa/hud_text_scale_shots.ps1` with a development player. Not done yet: the capture session's desktop was disconnected, so the player rendered blank frames
 - [x] Controls screen generated from `InputBindings`: Settings → CONTROLS, click to rebind, conflict and reserved-key refusal, reset
 
 ## Accessibility
@@ -94,7 +95,7 @@ is in it being honest, not in it being all ticked.
 - [x] Gamepad support: virtual cursor with real OS clicks (works with the IMGUI HUD), button actions through `InputBindings`, stick pan, trigger zoom, controller-mode hints; PlayMode-tested with a virtual pad
 - [x] Steam Deck: detection, controller-first start, 100 % HUD at 1280×800 (`-handheld` to preview), Medium tier, Steam floating keyboard for text fields
 - [ ] Play an hour on a real controller and a real Steam Deck before claiming more than Partial Controller Support
-- [ ] Independent UI text scaling
+- [x] Independent UI text scaling: Settings → TEXT SIZE, 90–150 % in 10 % steps, separate from UI SCALE, saved in GamePrefs (`SM_Set_TextScale`; `-textScale 1.5` for one QA run). Applied in `HudSkin.Text` (display type capped at +6 px), the alert feed, placement refusals and cutscene captions; the dock, chips, catalogs, cards, dialogs and Settings rows grow with it ([HudTextScale.cs](../Assets/Scripts/Systems/HudTextScale.cs), `HudLayout.DockHeight` / `ChipHeight`), long labels fall back to `FitText` with an ellipsis. Identical layout at 100 %. Visual pass pending (see Interface)
 
 ## Localization
 
