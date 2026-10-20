@@ -282,6 +282,55 @@ namespace SolarMajesty.Tests
 
         private static float SevenPx(string s) => s.Length * 7f;
 
+        // Models glyph widths snapped to whole screen pixels, expressed back in GUI units.
+        private static System.Func<string, float> SnappedMeasure(float scale) =>
+            s => Mathf.Ceil(s.Length * 6.5f * scale) / scale + 1f;
+
+        private static readonly (int w, int h, float scale)[] ChipViews =
+        {
+            (1280, 800, 1.25f),
+            (3840, 2160, 2f),
+        };
+
+        [Test]
+        public void ChipRateVariants_AbbreviateAndDedupe()
+        {
+            CollectionAssert.AreEqual(new[] { "330 carried", "330 carr.", "330" }, HudLayout.ChipRateVariants("330 carried"));
+            CollectionAssert.AreEqual(new[] { "-2 replacing", "-2 repl.", "-2" }, HudLayout.ChipRateVariants("-2 replacing"));
+            CollectionAssert.AreEqual(new[] { "3 solar", "3" }, HudLayout.ChipRateVariants("3 solar"));
+            CollectionAssert.AreEqual(new[] { "idle" }, HudLayout.ChipRateVariants("idle"));
+            CollectionAssert.AreEqual(new[] { "% built" }, HudLayout.ChipRateVariants("% built"));
+        }
+
+        [Test]
+        public void ChipRate_FitsLabelRect_AtEachView()
+        {
+            foreach (var (sw, sh, requested) in ChipViews)
+            {
+                float scale = HudScaleMath.ClampToFit(requested, sw, sh);
+                float viewW = sw / scale;
+                Assert.GreaterOrEqual(viewW, HudScaleMath.MinViewWidth);
+                float cw = HudLayout.StockpileChipWidth();
+                HudLayout.ChipText(new Rect(0f, 0f, cw, 28f), out var labelRect, out _);
+                var measure = SnappedMeasure(scale);
+
+                foreach (var rate in new[] { "330 carried", "-2 replacing", "3 solar" })
+                {
+                    string fit = HudLayout.FitText(HudLayout.ChipRateVariants(rate), measure, labelRect.width);
+                    Assert.LessOrEqual(measure(fit), labelRect.width, $"'{fit}' at {sw}x{sh} scale {scale}");
+                    Assert.IsNotEmpty(fit);
+                }
+            }
+        }
+
+        [Test]
+        public void ChipRate_KeepsFullWording_WhenWide()
+        {
+            var measure = SnappedMeasure(2f);
+            foreach (var rate in new[] { "330 carried", "-2 replacing", "3 solar", "% built", "idle" })
+                Assert.AreEqual(rate, HudLayout.FitText(HudLayout.ChipRateVariants(rate), measure, 10000f));
+        }
+
         [Test]
         public void LevyLineFit_WhenWideEnough_KeepsExactWording()
         {
