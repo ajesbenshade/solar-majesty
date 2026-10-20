@@ -68,6 +68,10 @@ twice, 16.2 and 15.4 real-min, 0 errors, no restarts. Every victory beat and lau
 that arrive while a beat is still playing; before that the bot's instant **Continue** cut each victory
 beat short (`Aborted`).
 
+After the drone-housing, dens-gate, tooltips/text-size and demo merges (2026-10-20, `-Beats`): passed in 17.2
+real-min, 0 errors, no restarts; every beat `Completed`, no dens-gate reopen warnings, and Homesteader
+unlocked alongside Solar Conquest.
+
 ---
 
 ## 10-minute boot (must pass)
