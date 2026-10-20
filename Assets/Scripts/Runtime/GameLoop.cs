@@ -5999,6 +5999,7 @@ namespace SolarMajesty
             OverlayBuildingBoard(save);
             save.villageGrowth = Village?.CaptureGrowth();
             save.collectors = Village?.Collectors.Capture();
+            CaptureRefabs(save.refabs);
 
             if (Flags != null)
             {
@@ -6204,6 +6205,7 @@ namespace SolarMajesty
                 });
             RestoreCampus(savedCampus, save.settlement.population);
             RetryUnpaidCorpses();
+            RestoreRefabs(save.refabs);
 
             var restoredFlags = RestoreFlags(save.flags);
             if (Flags != null)
@@ -6411,10 +6413,13 @@ namespace SolarMajesty
                     agent.RestoreActiveFlag(restoredFlags[idx]);
             }
 
+            var refabsLeft = RefabsByClass();
             for (int a = _agents.Count - 1; a >= 0; a--)
             {
                 var extra = _agents[a];
                 if (extra == null || used.Contains(extra)) continue;
+                if (Village != null)
+                    ReturnToHireQueue(extra, Village.Structures, refabsLeft);
                 _agents.RemoveAt(a);
                 if (Agent == extra)
                     Agent = _agents.Count > 0 ? _agents[0] : null;
@@ -6426,6 +6431,104 @@ namespace SolarMajesty
 
             return restored;
         }
+
+        /// <summary>
+        /// The campus restore fabricates a robot at every finished workshop and the roster restore
+        /// then drops the ones the save did not have. One dropped at a workshop whose robot was still
+        /// waiting for its hire (the treasury was short) left the workshop marked "robot online" with
+        /// nobody there, out of the hire queue for good: after a load, Continue or relaunch the colony
+        /// was a robot down for the rest of the world (autoplay, Mars: one Defense Mech for 55 minutes,
+        /// the second workshop's hire nag gone). Put the workshop back in the queue, unless a re-fab
+        /// of that class (<paramref name="refabsLeft"/>, used up one robot at a time) is already
+        /// bringing the robot back.
+        /// </summary>
+        internal void ReturnToHireQueue(SpecialistAgent dropped, IReadOnlyList<ColonyStructure> structures,
+            Dictionary<SpecialistClass, int> refabsLeft)
+        {
+            if (dropped == null || structures == null) return;
+            for (int i = 0; i < structures.Count; i++)
+            {
+                var st = structures[i];
+                if (st == null || !st.IsWorkshop) continue;
+                bool hers = false;
+                var workers = st.Workers;
+                for (int w = 0; w < workers.Count; w++)
+                    if (ReferenceEquals(workers[w], dropped)) { hers = true; break; }
+                if (!hers) continue;
+                st.ClockOut(dropped);
+                st.ClearRobotFabricated();
+                if (dropped.Data != null && refabsLeft != null &&
+                    refabsLeft.TryGetValue(dropped.Data.specialistClass, out int left) && left > 0)
+                {
+                    refabsLeft[dropped.Data.specialistClass] = left - 1;
+                    return;
+                }
+                if (st.IsAlive && !_awaitingHire.Contains(st))
+                    _awaitingHire.Add(st);
+                return;
+            }
+        }
+
+        /// <summary>Re-fabs under way, by the class each will bring back.</summary>
+        private Dictionary<SpecialistClass, int> RefabsByClass()
+        {
+            var byClass = new Dictionary<SpecialistClass, int>();
+            if (Placer == null) return byClass;
+            var orders = Placer.Orders;
+            for (int i = 0; i < orders.Count; i++)
+            {
+                var o = orders[i];
+                if (o == null || !o.IsRefab || o.IsComplete) continue;
+                byClass.TryGetValue(o.RefabClass.Value, out int n);
+                byClass[o.RefabClass.Value] = n + 1;
+            }
+            return byClass;
+        }
+
+        private void CaptureRefabs(List<SaveRefab> into)
+        {
+            if (into == null || Placer == null) return;
+            var orders = Placer.Orders;
+            for (int i = 0; i < orders.Count; i++)
+            {
+                var o = orders[i];
+                if (o == null || !o.IsRefab || o.IsComplete) continue;
+                into.Add(new SaveRefab
+                {
+                    specialistClass = (int)o.RefabClass.Value,
+                    px = o.WorldPosition.x,
+                    pz = o.WorldPosition.z,
+                    progressSeconds = o.ProgressSeconds
+                });
+            }
+        }
+
+        /// <summary>
+        /// A re-fab under way when the game was saved carries on where it was: queuing it spent the
+        /// wreck and the EU, and before it was saved a load, Continue or relaunch lost the robot.
+        /// Runs before the roster restore, so the workshop is not also put up for a hire.
+        /// </summary>
+        private void RestoreRefabs(List<SaveRefab> saved)
+        {
+            if (saved == null || Placer == null || Village == null) return;
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var r = saved[i];
+                if (r == null) continue;
+                var shop = Village.FindNear(new Vector3(r.px, 0f, r.pz), 4f);
+                if (shop == null || !shop.IsAlive || !shop.IsWorkshop || shop.SourceData == null) continue;
+                Vector2Int cell = grid != null ? grid.WorldToCell(shop.WorldPosition) : Vector2Int.zero;
+                if (!Placer.TryEnqueueRefab(shop.SourceData, cell, shop.WorldPosition, 0, OverseerRules.RefabSeconds,
+                        (SpecialistClass)r.specialistClass, out var order))
+                    continue;
+                order.ProgressSeconds = Mathf.Clamp(r.progressSeconds, 0f, Mathf.Max(0f, order.RequiredSeconds - 0.05f));
+            }
+        }
+
+        /// <summary>Finished workshops still waiting for the treasury to pay their robot's hire.</summary>
+        public int AwaitingHireCount => _awaitingHire.Count;
+
+        internal bool IsAwaitingHire(ColonyStructure workshop) => _awaitingHire.Contains(workshop);
 
         private void RestoreParties(List<SaveParty> saved, List<SpecialistAgent> restoredAgents)
         {

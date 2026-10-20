@@ -257,6 +257,83 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(purse.WantsToPay(t, 21f), "a hero who paid is not still waiting out an old give-up");
         }
 
+        [Test]
+        public void DutyWalk_ToTheCommons_FindsGroundAtItsWalls_AndPaysThere()
+        {
+            var t = new EconomyTuning();
+            float half = ColonyLayout.FootprintMeters(BuildingCategory.Commons) * 0.5f;
+            float sample = SpecialistAgent.TillSampleRadius(BuildingCategory.Commons);
+            // The ordinary 5 m sample from the castle's centre lands inside its walls: no mesh, no path.
+            Assert.Greater(half, 5f, "the Commons is wider than an ordinary walk samples");
+            Assert.Greater(sample, half + 1f, "the tax walk looks past the walls for ground");
+            foreach (var till in new[]
+                     {
+                         BuildingCategory.Commons, BuildingCategory.DefenseWorkshop,
+                         BuildingCategory.EngineerWorkshop, BuildingCategory.GuildHall
+                     })
+            {
+                Assert.Greater(SpecialistAgent.TillReach(till, t.taxPayArrive), SpecialistAgent.TillSampleRadius(till),
+                    $"{till}: wherever the walk can end, the tax is handed in");
+            }
+        }
+
+        // ---------------------------------------------------------------- a hire or re-fab across a save
+
+        [Test]
+        public void Load_WorkshopStillWaitingForItsHire_GoesBackInTheHireQueue()
+        {
+            var loop = MakeLoop(out _, out var flags, metals: 0);
+            var shop = MakeWorkshop(BuildingCategory.DefenseWorkshop);
+            // The campus restore fabricated a robot there; the save had none, so the roster drops it.
+            var dropped = MakeHero(flags);
+            shop.MarkRobotFabricated();
+            Assert.IsTrue(shop.TryClockIn(dropped));
+
+            loop.ReturnToHireQueue(dropped, new[] { shop }, new Dictionary<SpecialistClass, int>());
+
+            Assert.IsFalse(shop.RobotFabricated, "nobody is there: the workshop does not say its robot is online");
+            Assert.IsTrue(loop.IsAwaitingHire(shop), "it hires as soon as the treasury can pay, as it would have before the save");
+            Assert.AreEqual(1, loop.AwaitingHireCount);
+            CollectionAssert.DoesNotContain(shop.Workers, dropped);
+        }
+
+        [Test]
+        public void Load_ReFabUnderWay_BringsTheRobotBackWithoutASecondHire()
+        {
+            var loop = MakeLoop(out _, out var flags, metals: 0);
+            var shop = MakeWorkshop(BuildingCategory.DefenseWorkshop);
+            var dropped = MakeHero(flags);
+            shop.MarkRobotFabricated();
+            Assert.IsTrue(shop.TryClockIn(dropped));
+            var refabs = new Dictionary<SpecialistClass, int> { { SpecialistClass.DefenseMech, 1 } };
+
+            loop.ReturnToHireQueue(dropped, new[] { shop }, refabs);
+
+            Assert.IsFalse(loop.IsAwaitingHire(shop), "the re-fab brings this robot back; no hire on top of it");
+            Assert.IsFalse(shop.RobotFabricated, "the re-fab finishing fabricates there");
+            Assert.AreEqual(0, refabs[SpecialistClass.DefenseMech], "one re-fab covers one robot");
+        }
+
+        [Test]
+        public void Save_ReFabsUnderWay_RoundTripThroughTheSaveFile()
+        {
+            var save = new SaveGame();
+            save.refabs.Add(new SaveRefab
+            {
+                specialistClass = (int)SpecialistClass.DefenseMech, px = 12.5f, pz = -3f, progressSeconds = 17f
+            });
+            var back = JsonUtility.FromJson<SaveGame>(JsonUtility.ToJson(save));
+            Assert.AreEqual(1, back.refabs.Count);
+            Assert.AreEqual((int)SpecialistClass.DefenseMech, back.refabs[0].specialistClass);
+            Assert.AreEqual(12.5f, back.refabs[0].px);
+            Assert.AreEqual(-3f, back.refabs[0].pz);
+            Assert.AreEqual(17f, back.refabs[0].progressSeconds);
+
+            var older = JsonUtility.FromJson<SaveGame>("{\"version\":7,\"body\":2}");
+            Assert.IsNotNull(older.refabs, "a save from before re-fabs were kept still loads");
+            Assert.AreEqual(0, older.refabs.Count);
+        }
+
         // ---------------------------------------------------------------- loading holds the world
 
         [Test]
@@ -317,6 +394,15 @@ namespace SolarMajesty.Tests
             var hero = go.AddComponent<SpecialistAgent>();
             hero.BindForTravelTest(data, flags, new SpecialistBrain());
             return hero;
+        }
+
+        private ColonyStructure MakeWorkshop(BuildingCategory category)
+        {
+            var go = new GameObject("workshop");
+            _created.Add(go);
+            var st = go.AddComponent<ColonyStructure>();
+            st.Configure(StructureRole.Workshop, null, 48f, category);
+            return st;
         }
 
         private FlagData ClearData()

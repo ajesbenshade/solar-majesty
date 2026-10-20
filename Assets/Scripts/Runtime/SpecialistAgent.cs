@@ -1852,10 +1852,7 @@ namespace SolarMajesty
             var t = MajestyEconomy.Tuning;
             var till = GuildTill();
             if (till == null || !till.IsAlive) return;
-            // At the building, not at its centre: the walls (and the NavMesh carved around them)
-            // stop a hero a few metres out, further at a corner.
-            float reach = Mathf.Max(1f, t.taxPayArrive) + 1.5f + ColonyLayout.FootprintMeters(till.Category) * 0.5f;
-            if (FlatDistance(transform.position, till.WorldPosition) > reach)
+            if (FlatDistance(transform.position, till.WorldPosition) > TillReach(till.Category, t.taxPayArrive))
                 return;
             int paid = _duty.Pay();
             till.AccrueLevy(paid);
@@ -1865,6 +1862,23 @@ namespace SolarMajesty
             if (_lastDecision.Reason == "pay_duty")
                 _thinkTimer = 0f; // decide what to do next right away
         }
+
+        /// <summary>
+        /// How near the till's centre a hero hands its tax in: at the building, not at its centre.
+        /// The walls (and the NavMesh carved around them) stop a hero a few metres out, further at a corner.
+        /// </summary>
+        internal static float TillReach(BuildingCategory till, float taxPayArrive) =>
+            Mathf.Max(1f, taxPayArrive) + 1.5f + ColonyLayout.FootprintMeters(till) * 0.5f;
+
+        /// <summary>
+        /// How far from the till's centre the tax walk looks for ground to stand on; always inside
+        /// <see cref="TillReach"/>. A hero away from its workshop pays at the Commons, which is 18 m
+        /// across: the 5 m an ordinary walk samples found no NavMesh there, the agent got no path,
+        /// and the walk stopped where long-walk travel hands over, 30 m out. Defense Mechs, always in
+        /// the field, carried 450-1,500 EU of tax for whole worlds (autoplay).
+        /// </summary>
+        internal static float TillSampleRadius(BuildingCategory till) =>
+            ColonyLayout.FootprintMeters(till) * 0.5f + 4f;
 
         private void DropLevy(string reason)
         {
@@ -2141,7 +2155,8 @@ namespace SolarMajesty
                 AdvanceToward(dest, dt, false);
             else
             {
-                SetDestination(dest);
+                var dutyTill = _lastDecision.Reason == "pay_duty" ? GuildTill() : null;
+                SetDestination(dest, false, dutyTill != null ? TillSampleRadius(dutyTill.Category) : 0f);
                 MoveFallback(dest, EffectiveMoveSpeed * 0.72f * dt);
             }
             _status = _lastDecision.Reason ?? "wandering";
