@@ -595,7 +595,7 @@ namespace SolarMajesty
             var mission = loop.Mission;
             int treasury = Treasury(loop);
             int goal = mission != null ? mission.TreasuryGoal : 5000;
-            bool densOpen = mission == null || !mission.DensCleared;
+            bool densOpen = DensOpen(loop);
             // Once the dens are quiet and the craft is staged, the only thing left is the treasury:
             // stop building and let it fill.
             if (!densOpen && mission != null && mission.LaunchReady && treasury < goal + 1500) return;
@@ -629,6 +629,26 @@ namespace SolarMajesty
                 }
                 return;
             }
+        }
+
+        /// <summary>
+        /// Dens left to clear, or fauna out in the field that the objective still names. A pest a
+        /// town burrow sends into the yard turns the dens gate off for a few seconds; the robots at
+        /// home hunt it for free, and it is no reason to spend the treasury the sustain gate needs.
+        /// </summary>
+        private static bool DensOpen(GameLoop loop)
+        {
+            var mission = loop.Mission;
+            if (mission == null) return true;
+            if (mission.DensCleared) return false;
+            var world = loop.World;
+            if (world != null)
+                foreach (var l in world.Lairs)
+                    if (l != null && !l.IsCleared) return true;
+            Vector3 hub = ColonyLayout.CampusOrigin;
+            foreach (var s in loop.Stalkers)
+                if (s != null && s.IsAlive && Flat(s.transform.position, hub) >= 30f) return true;
+            return false;
         }
 
         private static int LaunchBill(GameLoop loop)
