@@ -658,19 +658,31 @@ namespace SolarMajesty
             HudLayout.ChipText(r, out var labelRect, out var numberRect);
             var prevLabel = _chipLabel.normal.textColor;
             _chipLabel.normal.textColor = alarm ? Alarm : TextMuted;
-            GUI.Label(labelRect, label, _chipLabel);
+            // Rects and CalcSize share the GUI.matrix space, so scale = 1.
+            GUI.Label(labelRect, FitChipText(_chipLabel, new[] { label }, labelRect.width), _chipLabel);
             _chipLabel.normal.textColor = prevLabel;
             if (!string.IsNullOrEmpty(rate))
             {
                 var rateRect = labelRect;
                 rateRect.y = r.y + 13f;
-                GUI.Label(rateRect, rate, _micro);
+                // The amount is right-aligned and usually 1-3 digits: let the rate use the slack.
+                _chipMeasure.text = amount.ToString();
+                float amountW = Mathf.Min(numberRect.width, _number.CalcSize(_chipMeasure).x);
+                rateRect.width = Mathf.Max(rateRect.width, numberRect.xMax - amountW - HudLayout.TextGap - rateRect.x);
+                GUI.Label(rateRect, FitChipText(_micro, HudLayout.ChipRateVariants(rate), rateRect.width), _micro);
             }
 
             var prevAnchor = _number.alignment;
             _number.alignment = TextAnchor.MiddleRight;
-            GUI.Label(numberRect, amount.ToString(), _number);
+            GUI.Label(numberRect, FitChipText(_number, new[] { amount.ToString() }, numberRect.width), _number);
             _number.alignment = prevAnchor;
+        }
+
+        private static readonly GUIContent _chipMeasure = new GUIContent();
+
+        private static string FitChipText(GUIStyle style, string[] variants, float maxWidth)
+        {
+            return HudLayout.FitText(variants, t => { _chipMeasure.text = t; return style.CalcSize(_chipMeasure).x; }, maxWidth);
         }
 
         private static Texture2D ChipIcon(string label)
@@ -804,14 +816,14 @@ namespace SolarMajesty
             int pct = village != null ? Mathf.RoundToInt(village.VillageProgress01 * 100f) : 0;
 
             float top = r.y + 17f;
-            float cw = (r.width - 6f) * 0.5f;
+            float cw = HudLayout.StockpileChipWidth(r.width);
             float ch = 28f;
             ResourceChip(new Rect(r.x, top, cw, ch), "HEROES", Loc.S("HEROES"), heroes, heroes <= 0);
-            ResourceChip(new Rect(r.x + cw + 6f, top, cw, ch), "HOUSES", Loc.S("HOUSES"), houses, false,
+            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top, cw, ch), "HOUSES", Loc.S("HOUSES"), houses, false,
                 solar > 0 ? Loc.F("{0} solar", solar) : null);
             ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", Loc.S("HAUL"), collectors, collectors <= 0 || replacing > 0,
                 replacing > 0 ? Loc.F("-{0} replacing", replacing) : (bags > 0 ? Loc.F("{0} carried", bags) : null));
-            ResourceChip(new Rect(r.x + cw + 6f, top + ch + 4f, cw, ch), halted ? "HALTED" : "BOTS", halted ? Loc.S("HALTED") : Loc.S("BOTS"),
+            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? "HALTED" : "BOTS", halted ? Loc.S("HALTED") : Loc.S("BOTS"),
                 building ? pct : 0, halted, building ? Loc.S("% built") : Loc.S("idle"));
         }
 
