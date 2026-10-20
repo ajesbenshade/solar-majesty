@@ -5117,6 +5117,10 @@ namespace SolarMajesty
         /// <summary>Victory button. Loads the next body when that level exists.</summary>
         public void ContinueAfterVictory()
         {
+            // The verdict only appears once the victory beat ends. A press that arrives during a beat
+            // anyway (a harness, a queued click) is ignored rather than cutting the beat short.
+            if (CameraBeatDirector.Active)
+                return;
             if (!VictoryOffer.NextIsBuilt(celestialBody))
                 return;
             _victoryHold = false;
@@ -5137,6 +5141,8 @@ namespace SolarMajesty
         /// <summary>Victory button. Progress is already stored; this only leaves the colony.</summary>
         public void ExitVictoryToTitle()
         {
+            if (CameraBeatDirector.Active)
+                return; // same rule as ContinueAfterVictory: the verdict is not up during a beat
             _victoryHold = false;
             ReturnToTitle();
         }

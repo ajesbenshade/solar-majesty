@@ -53,6 +53,12 @@ lost its first colony there in three runs (it won after **RESTART MISSION**) and
 in a junk-bot spiral, so expect a restart there and read the report before calling a failure a
 regression.
 
+With the camera beats on (`-Beats`, default boost, 2026-10-20, after the steam-release merge): passed
+twice, 16.2 and 15.4 real-min, 0 errors, no restarts. Every victory beat and launch beat ended
+`Completed` (`[CameraBeat] ... ended:` in the Player logs) once the verdict buttons ignored presses
+that arrive while a beat is still playing; before that the bot's instant **Continue** cut each victory
+beat short (`Aborted`).
+
 ---
 
 ## 10-minute boot (must pass)
