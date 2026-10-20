@@ -422,6 +422,11 @@ namespace SolarMajesty
                 save.villageGrowth = null;
                 save.collectors = null;
             }
+            // Before v8 nothing wrote the drone census (gold-only builds left it 0; older builds
+            // stored colonists). Settlement.RestoreDrones clamps it to the berths and seeds the
+            // starter crew when it is 0, and the next drone waits a full interval.
+            if (save.version < 8 && save.settlement != null)
+                save.settlement.droneSeconds = 0f;
             bool legacyFaunaOwnership = save.version < 4;
             bool legacyGoldScale = save.version < MajestyEconomy.GoldScaleSaveVersion;
             if (save.version < SaveGame.CurrentVersion)

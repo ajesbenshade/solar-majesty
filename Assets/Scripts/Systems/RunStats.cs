@@ -93,7 +93,7 @@ namespace SolarMajesty
                 (Loc.S("Robots scrapped"), Loc.F("{0}  ({1:F0}%)", RobotsScrapped, ScrapRate * 100f)),
                 (Loc.S("Fauna cleared"), FaunaKilled.ToString()),
                 (Loc.S("Dens cleared"), DensCleared.ToString()),
-                (Loc.S("Peak population"), PeakPopulation.ToString()),
+                (Loc.S("Peak drones"), PeakPopulation.ToString()),
                 (Loc.S("Tech unlocked"), TechUnlocked.ToString())
             };
         }

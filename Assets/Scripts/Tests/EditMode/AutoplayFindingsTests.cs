@@ -350,11 +350,11 @@ namespace SolarMajesty.Tests
                 { "DensCleared", "Stats.DensCleared++" },
                 { "TechUnlocked", "Stats.TechUnlocked++" },
                 { "BodiesConquered", "Stats.BodiesConquered++" },
+                // Homesteader: the worker drones housed at the charging stations.
+                { "PeakPopulation", "Stats.NotePopulation(Settlement.Drones)" },
             };
             foreach (var kv in recordedBy)
                 StringAssert.Contains(kv.Value, code, $"RunStats.{kv.Key} is read by the summary, verdict or an achievement but never recorded");
-            // Not checked: PeakPopulation (Homesteader, "Reach a population of 20"). The gold-only
-            // economy took population out of the game; that achievement needs a design decision.
         }
 
         // ---------------------------------------------------------------- a hire or re-fab across a save

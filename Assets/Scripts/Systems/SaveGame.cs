@@ -14,7 +14,7 @@ namespace SolarMajesty
     public sealed class SaveGame
     {
         /// <summary>Bump when a field's meaning changes. Readers reject unknown future versions.</summary>
-        public const int CurrentVersion = 7; // v7: village projects and tax collectors
+        public const int CurrentVersion = 8; // v8: settlement.population counts worker drones (+ droneSeconds)
 
         public int version = CurrentVersion;
         public string gameVersion = "";
@@ -143,8 +143,14 @@ namespace SolarMajesty
     [Serializable]
     public sealed class SaveSettlementState
     {
+        /// <summary>
+        /// Worker drones housed at the charging stations (v8). Older saves hold 0 (gold-only builds)
+        /// or the retired colonist census; either way it is clamped to the berths on load.
+        /// </summary>
         public int population;
         public int populationGoal;
+        /// <summary>Seconds until the next drone (v8); 0 means a full interval.</summary>
+        public float droneSeconds;
         public int villageHabs;
         public int bonusBeds;
         public bool hasOutpost;

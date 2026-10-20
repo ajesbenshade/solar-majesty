@@ -2973,6 +2973,11 @@
    "tr": "L'hospitalité, ligne par ligne"
   },
   {
+   "en": "House 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "Abritez 20 drones ouvriers dans vos stations de recharge."
+  },
+  {
    "en": "How fast the controller stick moves the cursor.",
    "key": "",
    "tr": "La vitesse à laquelle le stick de la manette déplace le curseur."
@@ -4443,9 +4448,9 @@
    "tr": "Paie le robot qui abat la faune ou la tanière au mât. Les mécas de défense les apprécient."
   },
   {
-   "en": "Peak population",
+   "en": "Peak drones",
    "key": "",
-   "tr": "Pic de population"
+   "tr": "Pic de drones"
   },
   {
    "en": "Perimeter Doctrine",
@@ -4826,11 +4831,6 @@
    "en": "Re-fabricate five scrapped robots and still clear the body.",
    "key": "",
    "tr": "Refabriquez cinq robots mis à la ferraille et terminez quand même l'astre."
-  },
-  {
-   "en": "Reach a population of 20.",
-   "key": "",
-   "tr": "Atteignez une population de 20."
   },
   {
    "en": "Read hero lines aloud through a local text-to-speech server.",
@@ -5373,9 +5373,9 @@
    "tr": "Projet secret. Les labos se souviennent de chaque échantillon. Placez le monument Archive."
   },
   {
-   "en": "Secret Project. Spare beds, faster births, greener farms. Growth path.",
+   "en": "Secret Project. Spare charging berths, faster drone builds, greener farms. Growth path.",
    "key": "",
-   "tr": "Projet secret. Lits en rab, naissances plus rapides, fermes plus vertes. Voie de la croissance."
+   "tr": "Projet secret. Places de recharge en rab, drones fabriqués plus vite, fermes plus vertes. Voie de la croissance."
   },
   {
    "en": "Secret Project. Weave weather for the crust — farms surge. Place the Loom landmark.",
@@ -7738,6 +7738,11 @@
    "tr": "prime {0}/{1}"
   },
   {
+   "en": "{0}/{1} drones",
+   "key": "",
+   "tr": "{0}/{1} drones"
+  },
+  {
    "en": "{0}/{1} left",
    "key": "",
    "tr": "{0}/{1} restants"
@@ -7849,6 +7854,21 @@
   }
  ],
  "obsolete": [
+  {
+   "en": "Secret Project. Spare beds, faster births, greener farms. Growth path.",
+   "key": "",
+   "tr": "Projet secret. Lits en rab, naissances plus rapides, fermes plus vertes. Voie de la croissance."
+  },
+  {
+   "en": "Peak population",
+   "key": "",
+   "tr": "Pic de population"
+  },
+  {
+   "en": "Reach a population of 20.",
+   "key": "",
+   "tr": "Atteignez une population de 20."
+  },
   {
    "en": "FASTER   ·   {0}",
    "key": "",

@@ -2973,6 +2973,11 @@
    "tr": "Hospitality, Itemized"
   },
   {
+   "en": "House 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "House 20 worker drones at your charging stations."
+  },
+  {
    "en": "How fast the controller stick moves the cursor.",
    "key": "",
    "tr": "How fast the controller stick moves the cursor."
@@ -4443,9 +4448,9 @@
    "tr": "Pays the robot that kills the fauna or den at the pole. Defense mechs like these."
   },
   {
-   "en": "Peak population",
+   "en": "Peak drones",
    "key": "",
-   "tr": "Peak population"
+   "tr": "Peak drones"
   },
   {
    "en": "Perimeter Doctrine",
@@ -4826,11 +4831,6 @@
    "en": "Re-fabricate five scrapped robots and still clear the body.",
    "key": "",
    "tr": "Re-fabricate five scrapped robots and still clear the body."
-  },
-  {
-   "en": "Reach a population of 20.",
-   "key": "",
-   "tr": "Reach a population of 20."
   },
   {
    "en": "Read hero lines aloud through a local text-to-speech server.",
@@ -5373,9 +5373,9 @@
    "tr": "Secret Project. Labs remember every sample. Place the Archive landmark."
   },
   {
-   "en": "Secret Project. Spare beds, faster births, greener farms. Growth path.",
+   "en": "Secret Project. Spare charging berths, faster drone builds, greener farms. Growth path.",
    "key": "",
-   "tr": "Secret Project. Spare beds, faster births, greener farms. Growth path."
+   "tr": "Secret Project. Spare charging berths, faster drone builds, greener farms. Growth path."
   },
   {
    "en": "Secret Project. Weave weather for the crust — farms surge. Place the Loom landmark.",
@@ -7736,6 +7736,11 @@
    "en": "{0}/{1} bounty",
    "key": "",
    "tr": "{0}/{1} bounty"
+  },
+  {
+   "en": "{0}/{1} drones",
+   "key": "",
+   "tr": "{0}/{1} drones"
   },
   {
    "en": "{0}/{1} left",

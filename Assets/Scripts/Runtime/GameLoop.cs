@@ -2430,6 +2430,7 @@ namespace SolarMajesty
             Stats.Tick(Time.deltaTime);
             if (Settlement != null && Settlement.HasCommons) _commonsEverStood = true;
             if (Placer != null) Stats.NoteModules(Placer.Pieces.Count);
+            if (Settlement != null) Stats.NotePopulation(Settlement.Drones);
 
             // Time.deltaTime is already scaled by SimSpeed, so a fixed-step loop gives the pure
             // systems identical results at any frame rate or game speed.
@@ -2904,6 +2905,8 @@ namespace SolarMajesty
             if (Settlement != null)
             {
                 Settlement.SetTechYieldBonus(_tech.MineYieldBonus);
+                Settlement.BonusBerths = _tech.ExtraBeds;
+                Settlement.DroneIntervalScale = _tech.GrowIntervalScale;
             }
 
             if (Economy != null)
@@ -5939,7 +5942,7 @@ namespace SolarMajesty
             if (Placer != null)
             {
                 var slots = CaptureCampusSlots();
-                DemoSettings.WriteCampus(celestialBody, CampusSnapshot.Encode(0, slots));
+                DemoSettings.WriteCampus(celestialBody, CampusSnapshot.Encode(Settlement != null ? Settlement.Drones : 0, slots));
             }
 
             var snapshot = CaptureSave("autosave");
@@ -6025,6 +6028,8 @@ namespace SolarMajesty
             if (Settlement != null)
             {
                 save.settlement.villageHabs = Settlement.VillageHabs;
+                save.settlement.population = Settlement.Drones;
+                save.settlement.droneSeconds = Settlement.DroneTimer;
                 save.settlement.hasOutpost = Settlement.HasOutpost;
                 save.settlement.everHadHab = Settlement.EverHadHab;
             }
@@ -6271,7 +6276,7 @@ namespace SolarMajesty
                     W = building.w, H = building.h, ProgressMilli = building.progressMilli,
                     VillageHab = building.villageHab
                 });
-            RestoreCampus(savedCampus, save.settlement.population);
+            RestoreCampus(savedCampus, save.settlement.population, save.settlement.droneSeconds);
             RetryUnpaidCorpses();
             RestoreRefabs(save.refabs);
 
@@ -6850,7 +6855,7 @@ namespace SolarMajesty
             RestoreCampus(slots, pop);
         }
 
-        private void RestoreCampus(List<CampusSlot> slots, int pop)
+        private void RestoreCampus(List<CampusSlot> slots, int pop, float droneSeconds = 0f)
         {
             if (Placer == null || grid == null || Placer.Pieces.Count > 0) return;
             slots.Sort((a, b) => CampusSnapshot.Rank(a.Category).CompareTo(CampusSnapshot.Rank(b.Category)));
@@ -6861,6 +6866,10 @@ namespace SolarMajesty
                 if (RestoreCampusSlot(slots[i]))
                     restored++;
             }
+            // The charging stations stand again; put their worker drones back on them (after the
+            // research berths, so a Gene Vault colony is not clamped short).
+            RefreshTechEffects();
+            Settlement?.RestoreDrones(pop, droneSeconds);
 
             if (restored <= 0) return;
 
