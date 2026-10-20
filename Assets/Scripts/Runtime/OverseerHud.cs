@@ -516,6 +516,7 @@ namespace SolarMajesty
             if (CameraBeatDirector.HidesHud && _loop.Screen == DemoScreen.Playing)
             {
                 PointerBlocksWorld = true; // the camera beat draws its own letterbox; nothing here is clickable
+                _tips.Reset(); // no tooltip carries over the beat
                 return;
             }
             EnsureStyles();
