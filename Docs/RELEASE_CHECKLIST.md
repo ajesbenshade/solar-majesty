@@ -11,7 +11,7 @@ is in it being honest, not in it being all ticked.
 - [x] Headless build command ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs))
 - [x] Standalone player builds (macOS verified)
 - [x] Bundle identifier set (`com.solarmajesty.solarmajesty`)
-- [ ] Application icons for every platform size
+- [x] Application icon: 1024 px master plus separately drawn 16–512 px sizes in [Assets/Art/Icon](../Assets/Art/Icon), assigned to the Default Icon and every Standalone slot by [AppIconSetup.cs](../Assets/Scripts/Editor/AppIconSetup.cs) (re-asserted before each build, guarded by `AppIconTests`); Windows `.ico` (16–256 px); Steam client `.ico` and 184 px community icon in [Docs/StoreArt](StoreArt/README.md). Checked in the Windows exe; macOS and Linux players use the same Standalone set but were not built
 - [x] Steamworks: API startup, achievements, overlay pause, rich presence ([STEAM_RELEASE.md](STEAM_RELEASE.md)) — on test app 480 until the real App ID exists
 - [x] SteamPipe staging and upload script ([upload_to_steam.ps1](../Tools/steam/upload_to_steam.ps1)), dry-run verified
 - [x] Achievement icons, 256 px achieved + locked ([make_achievement_icons.py](../Tools/steam/make_achievement_icons.py))
@@ -112,8 +112,10 @@ is in it being honest, not in it being all ticked.
 - [x] Real graphics tiers: Low (80% + FSR, no SSAO, 1 shadow cascade to 60 m), Medium (no MSAA/SSAO), High (2x MSAA, 2 cascades), Ultra unchanged; regenerate with **Solar Majesty → Render → Create Quality Tiers**. First launch picks a tier from the GPU ([QualityAutoDetect.cs](../Assets/Scripts/Systems/QualityAutoDetect.cs)). Screenshots checked on Earth and Mars at Low/Medium/Ultra
 - [ ] Low tier measured on an actual integrated GPU
 - [ ] Full playthrough on all five bodies without an exception
-- [x] Store screenshots: 9 at 1920×1080 across all five worlds ([Docs/StoreScreenshots](StoreScreenshots/README.md)); re-capture with [store_screenshots.ps1](../Tools/qa/store_screenshots.ps1)
-- [ ] Steam page and capsule art
+- [x] Store screenshots: 9 at 1920×1080 across all five worlds ([Docs/StoreScreenshots](StoreScreenshots/README.md)); re-capture with [store_screenshots.ps1](../Tools/qa/store_screenshots.ps1). They predate the AI-core Commons (#93): re-capture before uploading
+- [x] Steam capsule and library art at the current Steamworks sizes (header, small, main and vertical capsules, page background, library capsule, hero and logo), composed from in-game renders with a Cinzel (OFL) wordmark: [Docs/StoreArt](StoreArt/README.md), rebuilt by [make_store_art.py](../Tools/steam/make_store_art.py) from `store_screenshots.ps1 -Keyart` renders
+- [ ] Steam store page assembled on the partner site: upload the art, check it in Steamworks' capsule preview, answer the "Fill in" questions in [STORE_PAGE.md](STORE_PAGE.md)
+- [ ] Human artist pass on the key art, logo and icon before launch: today's art is programmer art composed from game renders, and the logo is a 2D take on the 3D intro title
 - [ ] Steam content survey incl. AI disclosure (draft text in [STEAM_RELEASE.md](STEAM_RELEASE.md))
 - [ ] Trademark check on "Solar Majesty"; GitHub repository made private (Asset Store packages are committed)
 - [x] Landing-pad rocket redesigned as the original Colony Lifter (legs, strap-on boosters, domed capsule; no flaps or ogive nose); the Starship placeholder model is out of the build ([render](ReviewEvidence/colony-lifter-pad.png))
