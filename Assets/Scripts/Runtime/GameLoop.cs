@@ -1373,6 +1373,7 @@ namespace SolarMajesty
             int refund = handle.EscrowMetals;
             Economy?.RefundBountyEscrow(refund);
             Flags.Cancel(handle);
+            Stats.FlagsCancelled++;
             if (Economy != null)
                 Economy.MatchReserved(FlagBountySync.Sum(Flags.Flags));
             _overseerHud?.Notify(refund > 0 ? Loc.F("Flag cancelled — {0} EU returned.", refund) : Loc.S("Flag cancelled."), 2.4f);
@@ -1383,6 +1384,12 @@ namespace SolarMajesty
         {
             RefreshFlagInterest();
             if (handle == null) return;
+            // The run tallies were never recorded: the summary read zeros, every verdict was "You
+            // posted nothing", and half the achievements could not be earned (autoplay).
+            Stats.FlagsPosted++;
+            Stats.NoteBounty(Mathf.RoundToInt(handle.CurrentBounty));
+            if (handle.InterestCount <= 0 && _agents.Count > 0)
+                Stats.FlagsRefused++;
             BroadcastRefusalChips(handle);
 
             EnsureNarrative();
@@ -1465,6 +1472,11 @@ namespace SolarMajesty
 
         private void OnFlagWorkCompleted(FlagHandle handle)
         {
+            if (handle != null)
+            {
+                Stats.FlagsCompleted++;
+                Stats.BountyPaid += FlagBountySync.Amount(handle);
+            }
             if (handle != null && _flagInput != null && ReferenceEquals(_flagInput.SelectedPosted, handle))
                 _flagInput.ClearPostedSelection();
             NotifyFlagCompleted(handle);
@@ -2784,6 +2796,7 @@ namespace SolarMajesty
 
         private void OnTechUnlocked(TechId id)
         {
+            Stats.TechUnlocked++;
             RefreshTechEffects();
             SyncLaunchGate();
             DemoAudio.PlayResearch();
@@ -3331,6 +3344,7 @@ namespace SolarMajesty
             string label = data.displayName ?? cls.Value.ToString();
             if (announce)
             {
+                Stats.RobotsFabricated++; // not the restore of a saved robot
                 _overseerHud?.Notify(hire > 0
                     ? Loc.F("{0} hired at {1} — {2} EU.", label, Loc.S(workshop.DisplayName), hire)
                     : Loc.F("{0} fabricated at {1}.", label, Loc.S(workshop.DisplayName)), 3.2f);
@@ -3379,6 +3393,7 @@ namespace SolarMajesty
                 var order = _completedBuilds[i];
                 if (order?.Data == null) continue;
                 if (!order.IsRefab) DemoAudio.PlayBuildComplete(order.WorldPosition);
+                if (!order.IsRefab) Stats.ModulesBuilt++;
             if (order.IsRefab)
                     {
                         var shop = Village?.FindNear(order.WorldPosition, 6f);
@@ -4779,6 +4794,14 @@ namespace SolarMajesty
         /// </summary>
         internal void ArmThreat(ThreatPressure threat) => Threat = threat ?? new ThreatPressure();
 
+        /// <summary>EditMode: the stockpile, bounty board and escrow without running Awake.</summary>
+        internal void ArmEconomyForTests(ResourceManager resources, FlagManager flags)
+        {
+            Resources = resources;
+            Flags = flags;
+            Economy = new SimpleEconomy(resources) { ResupplyEnabled = false };
+        }
+
         /// <summary>
         /// Spawn one stalker at a world point (lair / wave helpers).
         /// Mounts <c>SM_Unit_DustStalker</c> the same way as the other fauna so Idle/Walk/Strike/Down play.
@@ -5263,9 +5286,18 @@ namespace SolarMajesty
         {
             TerrainGrading.CompletePending(); // a worker may still be reading the old ground mesh
             SaveSystem.Flush();
+            HoldWorldForSceneLoad();
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             UnityEngine.SceneManagement.SceneManager.LoadScene(scene.buildIndex);
         }
+
+        /// <summary>
+        /// The frame that loads the next scene takes its delta time before the new colony's Awake
+        /// can hold the world, so it ran up to a third of a second of simulation at the old speed:
+        /// a Continue that says "World held" finished research and moved fauna before the player
+        /// saw it (autoplay: a tech at 39/40 completed during Load). Awake sets the real speed.
+        /// </summary>
+        internal static void HoldWorldForSceneLoad() => Time.timeScale = 0f;
 
         private void HandleToolHotkeys()
         {
@@ -6006,6 +6038,7 @@ namespace SolarMajesty
             OverlayBuildingBoard(save);
             save.villageGrowth = Village?.CaptureGrowth();
             save.collectors = Village?.Collectors.Capture();
+            CaptureRefabs(save.refabs);
 
             if (Flags != null)
             {
@@ -6211,6 +6244,7 @@ namespace SolarMajesty
                 });
             RestoreCampus(savedCampus, save.settlement.population);
             RetryUnpaidCorpses();
+            RestoreRefabs(save.refabs);
 
             var restoredFlags = RestoreFlags(save.flags);
             if (Flags != null)
@@ -6220,6 +6254,7 @@ namespace SolarMajesty
             var restoredAgents = RestoreAgents(save.agents, restoredFlags, save.rosterBlob != null);
             RestoreParties(save.parties, restoredAgents);
             var restoredLairs = RestoreWorldBoard(save);
+            CloseQuietDenPoles();
             RestoreFauna(save.fauna, restoredLairs);
             RestoreBuildingBoard(save);
             RestoreLevyPurses(save.buildings);
@@ -6417,10 +6452,13 @@ namespace SolarMajesty
                     agent.RestoreActiveFlag(restoredFlags[idx]);
             }
 
+            var refabsLeft = RefabsByClass();
             for (int a = _agents.Count - 1; a >= 0; a--)
             {
                 var extra = _agents[a];
                 if (extra == null || used.Contains(extra)) continue;
+                if (Village != null)
+                    ReturnToHireQueue(extra, Village.Structures, refabsLeft);
                 _agents.RemoveAt(a);
                 if (Agent == extra)
                     Agent = _agents.Count > 0 ? _agents[0] : null;
@@ -6432,6 +6470,104 @@ namespace SolarMajesty
 
             return restored;
         }
+
+        /// <summary>
+        /// The campus restore fabricates a robot at every finished workshop and the roster restore
+        /// then drops the ones the save did not have. One dropped at a workshop whose robot was still
+        /// waiting for its hire (the treasury was short) left the workshop marked "robot online" with
+        /// nobody there, out of the hire queue for good: after a load, Continue or relaunch the colony
+        /// was a robot down for the rest of the world (autoplay, Mars: one Defense Mech for 55 minutes,
+        /// the second workshop's hire nag gone). Put the workshop back in the queue, unless a re-fab
+        /// of that class (<paramref name="refabsLeft"/>, used up one robot at a time) is already
+        /// bringing the robot back.
+        /// </summary>
+        internal void ReturnToHireQueue(SpecialistAgent dropped, IReadOnlyList<ColonyStructure> structures,
+            Dictionary<SpecialistClass, int> refabsLeft)
+        {
+            if (dropped == null || structures == null) return;
+            for (int i = 0; i < structures.Count; i++)
+            {
+                var st = structures[i];
+                if (st == null || !st.IsWorkshop) continue;
+                bool hers = false;
+                var workers = st.Workers;
+                for (int w = 0; w < workers.Count; w++)
+                    if (ReferenceEquals(workers[w], dropped)) { hers = true; break; }
+                if (!hers) continue;
+                st.ClockOut(dropped);
+                st.ClearRobotFabricated();
+                if (dropped.Data != null && refabsLeft != null &&
+                    refabsLeft.TryGetValue(dropped.Data.specialistClass, out int left) && left > 0)
+                {
+                    refabsLeft[dropped.Data.specialistClass] = left - 1;
+                    return;
+                }
+                if (st.IsAlive && !_awaitingHire.Contains(st))
+                    _awaitingHire.Add(st);
+                return;
+            }
+        }
+
+        /// <summary>Re-fabs under way, by the class each will bring back.</summary>
+        private Dictionary<SpecialistClass, int> RefabsByClass()
+        {
+            var byClass = new Dictionary<SpecialistClass, int>();
+            if (Placer == null) return byClass;
+            var orders = Placer.Orders;
+            for (int i = 0; i < orders.Count; i++)
+            {
+                var o = orders[i];
+                if (o == null || !o.IsRefab || o.IsComplete) continue;
+                byClass.TryGetValue(o.RefabClass.Value, out int n);
+                byClass[o.RefabClass.Value] = n + 1;
+            }
+            return byClass;
+        }
+
+        private void CaptureRefabs(List<SaveRefab> into)
+        {
+            if (into == null || Placer == null) return;
+            var orders = Placer.Orders;
+            for (int i = 0; i < orders.Count; i++)
+            {
+                var o = orders[i];
+                if (o == null || !o.IsRefab || o.IsComplete) continue;
+                into.Add(new SaveRefab
+                {
+                    specialistClass = (int)o.RefabClass.Value,
+                    px = o.WorldPosition.x,
+                    pz = o.WorldPosition.z,
+                    progressSeconds = o.ProgressSeconds
+                });
+            }
+        }
+
+        /// <summary>
+        /// A re-fab under way when the game was saved carries on where it was: queuing it spent the
+        /// wreck and the EU, and before it was saved a load, Continue or relaunch lost the robot.
+        /// Runs before the roster restore, so the workshop is not also put up for a hire.
+        /// </summary>
+        private void RestoreRefabs(List<SaveRefab> saved)
+        {
+            if (saved == null || Placer == null || Village == null) return;
+            for (int i = 0; i < saved.Count; i++)
+            {
+                var r = saved[i];
+                if (r == null) continue;
+                var shop = Village.FindNear(new Vector3(r.px, 0f, r.pz), 4f);
+                if (shop == null || !shop.IsAlive || !shop.IsWorkshop || shop.SourceData == null) continue;
+                Vector2Int cell = grid != null ? grid.WorldToCell(shop.WorldPosition) : Vector2Int.zero;
+                if (!Placer.TryEnqueueRefab(shop.SourceData, cell, shop.WorldPosition, 0, OverseerRules.RefabSeconds,
+                        (SpecialistClass)r.specialistClass, out var order))
+                    continue;
+                order.ProgressSeconds = Mathf.Clamp(r.progressSeconds, 0f, Mathf.Max(0f, order.RequiredSeconds - 0.05f));
+            }
+        }
+
+        /// <summary>Finished workshops still waiting for the treasury to pay their robot's hire.</summary>
+        public int AwaitingHireCount => _awaitingHire.Count;
+
+        internal bool IsAwaitingHire(ColonyStructure workshop) => _awaitingHire.Contains(workshop);
 
         private void RestoreParties(List<SaveParty> saved, List<SpecialistAgent> restoredAgents)
         {
@@ -6842,6 +6978,7 @@ namespace SolarMajesty
         public void NotifyStructureDestroyed(ColonyStructure st)
         {
             if (st == null) return;
+            Stats.ModulesLost++;
             if (SelectedStructure == st)
                 SelectedStructure = null;
 
@@ -7123,6 +7260,7 @@ namespace SolarMajesty
             string label = ColonyStructure.ClassLabel(cls);
             _agents.Remove(agent);
             if (Agent == agent) Agent = _agents.Count > 0 ? _agents[0] : null;
+            Stats.RobotsScrapped++;
             RegisterCorpse(rec);
             NoteMechDeath(agent.transform.position);
             var shop = FindWorkshopFor(cls);
@@ -7145,6 +7283,7 @@ namespace SolarMajesty
 
         public void OnFaunaKilled(FaunaKind kind, Vector3 world, float rewardMul = 1f, SpecialistAgent killer = null)
         {
+            Stats.FaunaKilled++;
             FaunaKilledHook?.Invoke(kind, rewardMul);
             if (rewardMul <= 0f || killer == null || killer.IsScrapped) return;
             rewardMul = Mathf.Max(1f, rewardMul);
@@ -7167,9 +7306,67 @@ namespace SolarMajesty
                 Economy?.ReleaseBountyEscrow(escrow);
             if (hero == null || hero.IsScrapped) return;
             if (pay > 0)
+            {
                 hero.EarnCredits(pay, "flag_ClearThreat");
+                Stats.FlagsCompleted++;
+                Stats.BountyPaid += pay;
+            }
             if (grantXp)
                 hero.GrantXp(OverseerRules.XpForFlag(FlagType.ClearThreat) + OverseerRules.XpDen, "den");
+        }
+
+        /// <summary>
+        /// The den went quiet because its last resident died, not because a hero broke the mound.
+        /// Its Clear Threat poles close all the same: the robot that broke in or holds the warrant
+        /// is paid, and with nobody on it the escrow goes back to the treasury.
+        /// </summary>
+        public void ResolveQuietDen(StalkerLair lair, SpecialistAgent striker)
+        {
+            if (lair == null || Flags == null) return;
+            var hero = striker != null && !striker.IsScrapped ? striker : DenWarrantHolder(lair.WorldPosition);
+            if (hero != null)
+            {
+                ResolveDenClear(lair, hero, grantXp: true);
+                return;
+            }
+            int pay = ClearThreatMerge.Take(
+                Flags, lair.WorldPosition, OverseerRules.ClearThreatSameDenMeters, out int escrow);
+            if (pay > 0)
+                Economy?.RefundBountyEscrow(escrow);
+        }
+
+        /// <summary>Closes Clear Threat poles left standing on dens that are already quiet (older saves).</summary>
+        private void CloseQuietDenPoles()
+        {
+            if (_world == null || Flags == null) return;
+            var lairs = _world.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                var l = lairs[i];
+                if (l == null || !l.IsCleared) continue;
+                int pay = ClearThreatMerge.Take(
+                    Flags, l.WorldPosition, OverseerRules.ClearThreatSameDenMeters, out int escrow);
+                if (pay > 0)
+                    Economy?.RefundBountyEscrow(escrow);
+            }
+        }
+
+        private SpecialistAgent DenWarrantHolder(Vector3 den)
+        {
+            SpecialistAgent best = null;
+            float bestD = OverseerRules.ClearThreatSameDenMeters;
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                var a = _agents[i];
+                if (a == null || a.IsScrapped) continue;
+                var f = a.ActiveFlag;
+                if (f?.Data == null || f.Data.flagType != FlagType.ClearThreat) continue;
+                float d = FlatDist(f.WorldPosition, den);
+                if (d > bestD) continue;
+                bestD = d;
+                best = a;
+            }
+            return best;
         }
 
         private ColonyStructure FindWorkshopFor(SpecialistClass cls)

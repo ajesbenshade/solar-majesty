@@ -6,7 +6,7 @@ is in it being honest, not in it being all ticked.
 ## Build and pipeline
 
 - [x] Assembly definitions split (`SolarMajesty.Systems` / `.Runtime` / `.Editor` / `.Tests.EditMode`)
-- [x] Automated EditMode tests (775 passing, 2026-10-19)
+- [x] Automated EditMode tests (854 passing, 2026-10-20)
 - [x] CI on push and nightly ([.github/workflows/ci.yml](../.github/workflows/ci.yml))
 - [x] Headless build command ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs))
 - [x] Standalone player builds (macOS verified)
@@ -28,8 +28,9 @@ is in it being honest, not in it being all ticked.
 - [x] Save covers flags, escrow, robot health and purse, fauna — the gaps the old continue slot had
 - [x] Restore of live robots and fauna positions, den scouted/cleared, node remaining, mission hold, and formed parties
 - [x] Alert feed with dedupe, severity, and jump-to ([AlertFeed.cs](../Assets/Scripts/Systems/AlertFeed.cs))
-- [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs))
-- [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs)); evaluated every 2 s of play; Solar Conquest is campaign-wide (it was unreachable); per-world stats survive Continue
+- [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs)); the tallies are recorded since 2026-10-20 (before, only four were ever written: the summary read zeros and every verdict was "You posted nothing")
+- [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs)); evaluated every 2 s of play; Solar Conquest is campaign-wide (it was unreachable); per-world stats survive Continue; Terms Accepted, Hard Bargain, Skinflint, Full Crew, Den Breaker and Rebuilder read tallies nothing recorded and could not be earned, and Clean Sheet came free with any conquest (fixed 2026-10-20)
+- [ ] Homesteader ("Reach a population of 20") reads a population the gold-only economy removed, so it cannot be earned: redefine or retire it before the achievements go up on the partner site
 - [x] Named robots with service records ([SpecialistIdentity.cs](../Assets/Scripts/Systems/SpecialistIdentity.cs))
 - [x] Campaign progress and settings in a file ([GamePrefs.cs](../Assets/Scripts/Systems/GamePrefs.cs)) so Steam Cloud syncs the whole campaign; registry values migrate on first read
 - [x] Developer cheats (F10 hop, Shift+click unlock, F8/F9/R) gated to editor, dev builds and `-devtools` ([DevTools.cs](../Assets/Scripts/Systems/DevTools.cs))
@@ -112,7 +113,8 @@ is in it being honest, not in it being all ticked.
 - [ ] 60 fps on minimum-spec hardware: run [run_benchmark.ps1](../Tools/qa/run_benchmark.ps1) on a low-end PC with the desktop unlocked; 200-agent stress still unmeasured
 - [x] Real graphics tiers: Low (80% + FSR, no SSAO, 1 shadow cascade to 60 m), Medium (no MSAA/SSAO), High (2x MSAA, 2 cascades), Ultra unchanged; regenerate with **Solar Majesty → Render → Create Quality Tiers**. First launch picks a tier from the GPU ([QualityAutoDetect.cs](../Assets/Scripts/Systems/QualityAutoDetect.cs)). Screenshots checked on Earth and Mars at Low/Medium/Ultra
 - [ ] Low tier measured on an actual integrated GPU
-- [ ] Full playthrough on all five bodies without an exception
+- [x] Full playthrough on all five bodies without an exception — automated, on release builds: [run_autoplay.ps1](../Tools/qa/run_autoplay.ps1) ([SMOKE_TEST.md](SMOKE_TEST.md)) plays New Campaign through Earth, Luna, Mars, Belt and Europa to SOLAR CONQUEST COMPLETE with 0 errors or exceptions, checking settings, save → load and title → Continue on every world and a quit + relaunch on Mars (2026-10-20: 10–14 real-min a run, ~2.7–3.9 sim-hours; 4 of the last 5 full runs passed). The 14 bugs it turned up are fixed, with EditMode regressions for all but the NavMesh pocket hop. It is a bot, not a person: the human end-to-end pass is the external playtest above
+- [ ] Europa balance: in 4 of those 5 runs the bot lost its first Europa colony (won after Restart Mission) or, once, stalled with 0 EU. Every robot down raises a junk bot beside it and a wreck raises one every 12 s (up to 3); each takes 10 EU per 2.4 s from the robot it bites or the treasury (~250 EU/min), more than a young Europa colony earns, and robots rest and flee to the inn in the middle of them. Decide whether that spiral is intended
 - [x] Store screenshots: 9 at 1920×1080 across all five worlds ([Docs/StoreScreenshots](StoreScreenshots/README.md)); re-capture with [store_screenshots.ps1](../Tools/qa/store_screenshots.ps1). They predate the AI-core Commons (#93): re-capture before uploading
 - [x] Steam capsule and library art at the current Steamworks sizes (header, small, main and vertical capsules, page background, library capsule, hero and logo), composed from in-game renders with a Cinzel (OFL) wordmark: [Docs/StoreArt](StoreArt/README.md), rebuilt by [make_store_art.py](../Tools/steam/make_store_art.py) from `store_screenshots.ps1 -Keyart` renders
 - [ ] Steam store page assembled on the partner site: upload the art, check it in Steamworks' capsule preview, answer the "Fill in" questions in [STORE_PAGE.md](STORE_PAGE.md)

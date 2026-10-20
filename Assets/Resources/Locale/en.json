@@ -1433,6 +1433,11 @@
    "tr": "Dens frenzy — they know you're leaving."
   },
   {
+   "en": "Dens quiet — hunt the last {0} fauna ({1} Clear Threat)",
+   "key": "",
+   "tr": "Dens quiet — hunt the last {0} fauna ({1} Clear Threat)"
+  },
+  {
    "en": "Dens quiet — yard pests scatter: {0}.",
    "key": "",
    "tr": "Dens quiet — yard pests scatter: {0}."

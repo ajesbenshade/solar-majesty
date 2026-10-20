@@ -6,6 +6,55 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 
 ---
 
+## Automated campaign (autoplay) — run on every release build
+
+```
+powershell -ExecutionPolicy Bypass -File Tools\qa\run_autoplay.ps1 -Build
+```
+
+Builds a release player and plays the whole campaign in it on a throwaway profile (`-autoplay`,
+[AutoplayRunner.cs](../Assets/Scripts/Runtime/Platform/AutoplayRunner.cs)): New Campaign, then Earth →
+Luna → Mars → Belt → Europa through the player's own controls — build-menu placement (the same commit
+as a click on a valid ghost), Clear Threat / Explore bounties and their +/−, the tech panel, the
+victory **Continue to …** button — with the world at up to 20× the 1× pace (it backs off when frames
+are slow). On every world it also:
+
+- pauses (Esc) → **Settings** → back → **Resume**;
+- **saves** to slot 2 and **loads** it, then goes to the **title** and **Continues**, comparing buildings,
+  EU, ICE, techs, active research, dens cleared and scouted, bounties, robots, workshops waiting to hire,
+  re-fabs under way, launch gate and conquered worlds before and after (fauna may only go down: Continue
+  puts back at most 8 per den);
+- on Mars it presses **QUIT**; the script starts the game again and the run carries on from the title's
+  **Continue**.
+
+A scrapped robot is re-fabbed at its workshop (**RE-FAB**) as soon as the treasury can pay. A lost colony
+(**OUTPOST LOST**) is restarted with **RESTART MISSION**, at most twice per world; robots lost, re-fabs and
+restarts are in the report, with each world's summary-screen tallies and verdict and the achievements
+earned.
+
+At the end it checks **SOLAR CONQUEST COMPLETE**, every world marked conquered, the Solar Conquest
+achievement, **Main Menu**, and that Continue lands back on the won Europa colony.
+
+It fails (exit 1; JSON report and both Player logs in `Builds/Autoplay/Reports`) on any error,
+exception or assert in the log, on a stall (no progress on dens, research, treasury, gates or
+buildings for 15 sim-minutes; the report lists every robot's job and where the fauna are), or on the
+timeout. `-From Mars` starts the campaign on a later world to iterate on one world; `-Beats` keeps the
+victory / launch camera beats (passed `-nobeats` by default); `-Boost`, `-Quality`, `-StallMinutes`
+tune the run.
+
+It does **not** replace the passes below: it never looks at the screen (art, HUD layout, clipped
+text), calls what the buttons call instead of moving a mouse, presses the tutorial's SKIP, plays one
+seed per world in the default campaign rules (no Ironman, Endless, challenges or stances), and no
+controller or Steam Deck.
+
+Last runs (2026-10-20, Windows release build, `-Boost 10`): passed in 9.6–13.5 real-min. A clean run
+took Earth 19, Luna 30, Mars 39, Belt 31 and Europa 41 sim-minutes. Europa is the hard world: the bot
+lost its first colony there in three runs (it won after **RESTART MISSION**) and stalled once with 0 EU
+in a junk-bot spiral, so expect a restart there and read the report before calling a failure a
+regression.
+
+---
+
 ## 10-minute boot (must pass)
 
 - [ ] Title is the solar-system **orrery** (not a frozen drop). WASD pans, **Q** zooms out, **E** zooms in. Mouse does not pan or zoom. Tagline names the Overseer fantasy. Click Earth. Belt and Europa are not on the body chips. Shift+click does not leave Earth. Settings → **Full campaign** turns the other worlds back on.

@@ -11,7 +11,21 @@ namespace SolarMajesty
     /// </summary>
     public sealed class DutyPurse
     {
+        /// <summary>Game seconds a tax walk may go without getting closer before the hero gives up.</summary>
+        public const float WalkPatience = 15f;
+
+        /// <summary>Game seconds a hero that gave up keeps the tax before trying the walk again.</summary>
+        public const float RetrySeconds = 90f;
+
+        private const float ProgressMeters = 0.5f;
+
         public int Carry { get; private set; }
+
+        /// <summary>Game time before which the hero does not try the walk again (it gave up).</summary>
+        public float RetryAt { get; private set; } = float.NegativeInfinity;
+
+        private float _best = float.MaxValue;
+        private float _stall;
 
         public void Add(int tax)
         {
@@ -22,11 +36,47 @@ namespace SolarMajesty
         public bool WantsToPay(EconomyTuning t) =>
             t != null && t.taxCarryEnabled && Carry >= Mathf.Max(1, t.taxCarryBarrier);
 
+        /// <summary>Full enough, and not resting from a walk that could not be finished.</summary>
+        public bool WantsToPay(EconomyTuning t, float now) => WantsToPay(t) && now >= RetryAt;
+
+        /// <summary>
+        /// One step of the walk to the till. A till boxed in by other buildings, or a hero stranded
+        /// where no path leads home, used to hold the hero in that walk forever: it never took a
+        /// bounty or hunted again, and a world whose last fauna needed it could not be won
+        /// (autoplay, Earth: every Defense Mech ended there). Returns true once the hero has gone
+        /// <see cref="WalkPatience"/> without getting closer; the tax stays in the purse and the
+        /// walk is not tried again until <see cref="RetryAt"/>.
+        /// </summary>
+        public bool NoteWalk(float distance, float dt, float now)
+        {
+            if (dt <= 0f) return false;
+            if (distance < _best - ProgressMeters)
+            {
+                _best = distance;
+                _stall = 0f;
+                return false;
+            }
+            _stall += dt;
+            if (_stall < WalkPatience) return false;
+            RetryAt = now + RetrySeconds;
+            ResetWalk();
+            return true;
+        }
+
+        /// <summary>A new walk starts with no history.</summary>
+        public void ResetWalk()
+        {
+            _best = float.MaxValue;
+            _stall = 0f;
+        }
+
         /// <summary>Hand everything in. Returns the amount paid.</summary>
         public int Pay()
         {
             int n = Carry;
             Carry = 0;
+            RetryAt = float.NegativeInfinity;
+            ResetWalk();
             return n;
         }
 

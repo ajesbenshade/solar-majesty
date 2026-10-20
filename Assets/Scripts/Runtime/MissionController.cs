@@ -110,8 +110,13 @@ namespace SolarMajesty
                 }
                 if (!DensCleared)
                 {
-                    if (LairCount > 0)
+                    if (LairCount > 0 && UnclearedLairs > 0)
                         return Loc.F("Clear dens — {0} left ({1} Clear Threat)", UnclearedLairs, InputBindings.Hint(GameAction.FlagClearThreat));
+                    // Every den is quiet but the gate still waits on fauna that came out of them
+                    // (pressure waves do not scatter). "Clear dens — 0 left" sent players looking
+                    // for a den that was not there (autoplay, Earth: six sim-minutes of it).
+                    if (LairCount > 0 && StalkersRemaining > 0)
+                        return Loc.F("Dens quiet — hunt the last {0} fauna ({1} Clear Threat)", StalkersRemaining, InputBindings.Hint(GameAction.FlagClearThreat));
                     return Loc.S("Clear remaining fauna near campus");
                 }
                 if (!SustainComplete)
@@ -358,6 +363,15 @@ namespace SolarMajesty
             _launchReady = launchReady;
         }
 
+        /// <summary>EditMode: the den board as <see cref="RefreshGates"/> would read it.</summary>
+        internal void SetDenCountsForTests(int lairs, int uncleared, int stalkers)
+        {
+            LairCount = lairs;
+            UnclearedLairs = uncleared;
+            StalkersRemaining = stalkers;
+            DensCleared = lairs > 0 ? uncleared <= 0 && stalkers <= 0 : stalkers <= 0;
+        }
+
         /// <summary>
         /// EditMode: the same gate check <see cref="Tick"/> uses, without audio, VFX, or a scene load.
         /// </summary>
@@ -462,8 +476,10 @@ namespace SolarMajesty
                 }
             }
 
+            int size = OverseerRules.PressureWaveSize(Mathf.Max(1, pressureStalkerCount), LooseFaunaAlive());
+            if (size <= 0) return;
             int spawned = _loop.SpawnStalkerWave(
-                Mathf.Max(1, pressureStalkerCount),
+                size,
                 10f,
                 origin);
             if (spawned > 0)
@@ -525,6 +541,24 @@ namespace SolarMajesty
                     Debug.Log("[Mission] Defeat — outpost overwhelmed.");
                 _loop.LogOverseer(FailDetail);
             }
+        }
+
+        /// <summary>Living fauna that are not a den's residents (pressure waves, yard pests).</summary>
+        private int LooseFaunaAlive()
+        {
+            int residents = 0;
+            var lairs = _loop.World != null ? _loop.World.Lairs : null;
+            if (lairs != null)
+            {
+                for (int i = 0; i < lairs.Count; i++)
+                {
+                    var spawned = lairs[i] != null ? lairs[i].Spawned : null;
+                    if (spawned == null) continue;
+                    for (int j = 0; j < spawned.Count; j++)
+                        if (spawned[j] != null && spawned[j].IsAlive) residents++;
+                }
+            }
+            return Mathf.Max(0, CountLivingStalkers() - residents);
         }
 
         private int CountLivingStalkers()

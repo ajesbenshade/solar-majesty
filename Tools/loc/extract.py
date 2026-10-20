@@ -360,11 +360,19 @@ def looks_player_facing(text):
     return True
 
 
+# Dev-only QA harnesses (gated by DevTools / command-line flags): their text is log output and
+# review captions, never shown to players, so the unwrapped report leaves them out.
+DEV_ONLY = ("AutoplayRunner.cs", "BenchmarkRunner.cs", "BeatShotHarness.cs", "HudShotHarness.cs",
+            "StoreShotHarness.cs")
+
+
 def unwrapped_report():
     rows = []
     idents = loc_identifiers()
     for path, short, code in _stripped_files():
         rel = os.path.relpath(path, ROOT).replace("\\", "/")
+        if rel.endswith(DEV_ONLY):
+            continue
         # Literal offsets a catalog rule already collects (or that are designer notes).
         covered = {off for off, _ in catalog_literals(short, code, idents)}
         covered.update(not_shown_literals(short, code))

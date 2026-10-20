@@ -1161,7 +1161,7 @@ namespace SolarMajesty
                 }
             }
 
-            var dutyTill = _duty.WantsToPay(MajestyEconomy.Tuning) ? GuildTill() : null;
+            var dutyTill = _duty.WantsToPay(MajestyEconomy.Tuning, Time.time) ? GuildTill() : null;
             if (dutyTill != null && !dutyTill.IsAlive) dutyTill = null;
 
             float hunger = Mathf.Clamp01(greedHunger + ReplayRules.GreedHungerBias);
@@ -1228,6 +1228,8 @@ namespace SolarMajesty
                            decision.Reason != _lastDecision.Reason ||
                            !ReferenceEquals(decision.TargetFlag, _lastDecision.TargetFlag);
 
+            if (changed && decision.Reason == "pay_duty")
+                _duty.ResetWalk();
             _lastDecision = decision;
 
             if (decision.Action == SpecialistAction.PursueFlag && decision.TargetFlag != null)
@@ -1240,6 +1242,8 @@ namespace SolarMajesty
                     _claimedActive = true;
                     _buildLaborHit = false;
                     _stuckWatch.Reset();
+                    _approach.Reset();
+                    _approachFlag = _activeFlag;
                     _forceRepath = false;
                     _directTravel = false;
                     _navStall = 0f;
@@ -1359,7 +1363,7 @@ namespace SolarMajesty
             Vector3 target = _activeFlag.WorldPosition;
             float dist = FlatDistance(transform.position, target);
 
-            if (dist > arriveDistance)
+            if (dist > arriveDistance && !BlockedAtFlag(dist, dt))
             {
                 SetDestination(target);
                 MoveFallback(target, EffectiveMoveSpeed * dt);
@@ -1368,6 +1372,24 @@ namespace SolarMajesty
             }
 
             WorkArrivedFlag(dt);
+        }
+
+        private readonly FlagApproachWatch _approach = new FlagApproachWatch();
+        private FlagHandle _approachFlag;
+
+        /// <summary>
+        /// A pole inside a building (a pest on the Commons, a flag dropped on a roof) is as close as
+        /// a hero can get from the wall: the footprint's NavMesh is carved. Work it from there
+        /// instead of walking into the wall for good. Clear Threat has its own approach and watch.
+        /// </summary>
+        private bool BlockedAtFlag(float dist, float dt)
+        {
+            if (!ReferenceEquals(_approachFlag, _activeFlag))
+            {
+                _approachFlag = _activeFlag;
+                _approach.Reset();
+            }
+            return _approach.Note(dist, dt);
         }
 
         private void TickClearThreat(float dt)
@@ -1830,7 +1852,7 @@ namespace SolarMajesty
             var t = MajestyEconomy.Tuning;
             var till = GuildTill();
             if (till == null || !till.IsAlive) return;
-            if (FlatDistance(transform.position, till.WorldPosition) > Mathf.Max(1f, t.taxPayArrive) + 1.5f)
+            if (FlatDistance(transform.position, till.WorldPosition) > TillReach(till.Category, t.taxPayArrive))
                 return;
             int paid = _duty.Pay();
             till.AccrueLevy(paid);
@@ -1840,6 +1862,23 @@ namespace SolarMajesty
             if (_lastDecision.Reason == "pay_duty")
                 _thinkTimer = 0f; // decide what to do next right away
         }
+
+        /// <summary>
+        /// How near the till's centre a hero hands its tax in: at the building, not at its centre.
+        /// The walls (and the NavMesh carved around them) stop a hero a few metres out, further at a corner.
+        /// </summary>
+        internal static float TillReach(BuildingCategory till, float taxPayArrive) =>
+            Mathf.Max(1f, taxPayArrive) + 1.5f + ColonyLayout.FootprintMeters(till) * 0.5f;
+
+        /// <summary>
+        /// How far from the till's centre the tax walk looks for ground to stand on; always inside
+        /// <see cref="TillReach"/>. A hero away from its workshop pays at the Commons, which is 18 m
+        /// across: the 5 m an ordinary walk samples found no NavMesh there, the agent got no path,
+        /// and the walk stopped where long-walk travel hands over, 30 m out. Defense Mechs, always in
+        /// the field, carried 450-1,500 EU of tax for whole worlds (autoplay).
+        /// </summary>
+        internal static float TillSampleRadius(BuildingCategory till) =>
+            ColonyLayout.FootprintMeters(till) * 0.5f + 4f;
 
         private void DropLevy(string reason)
         {
@@ -2080,6 +2119,14 @@ namespace SolarMajesty
             if (dest.sqrMagnitude < 0.01f)
                 dest = KingdomLife.Plaza(ColonyLayout.NearestCampusIndex(transform.position));
 
+            if (_lastDecision.Reason == "pay_duty" &&
+                _duty.NoteWalk(FlatDistance(transform.position, dest), dt, Time.time))
+            {
+                Debug.Log($"[Specialist] {data?.displayName} cannot reach its guild till — keeps {_duty.Carry} EU of tax for later.");
+                _thinkTimer = 0f; // back to bounties and hunting now
+                return;
+            }
+
             float arrive = Mathf.Max(0.8f, idleWanderRadius * 0.55f);
             if (FlatDistance(transform.position, dest) < arrive)
             {
@@ -2100,14 +2147,27 @@ namespace SolarMajesty
             if (TickAidStation(dt))
                 return;
 
-            SetDestination(dest);
-            MoveFallback(dest, EffectiveMoveSpeed * 0.72f * dt);
+            // A walk across the map (home from a den, to the guild till) travels the way Rest and
+            // Flee do. The agent's own path ends at the river a Clear Threat walk forded on the way
+            // out, and the hero stood there for the rest of the world (autoplay, Earth: Defense
+            // Mechs "patrolling" / "pay_duty" 100-250 m out on a partial path).
+            if (FlatDistance(transform.position, dest) > LongWalkMeters)
+                AdvanceToward(dest, dt, false);
+            else
+            {
+                var dutyTill = _lastDecision.Reason == "pay_duty" ? GuildTill() : null;
+                SetDestination(dest, false, dutyTill != null ? TillSampleRadius(dutyTill.Category) : 0f);
+                MoveFallback(dest, EffectiveMoveSpeed * 0.72f * dt);
+            }
             _status = _lastDecision.Reason ?? "wandering";
             TryPartyFollowWork(dt);
             TickTerraformerVocation(dt);
             TickWorkshopRepair(dt);
             TickGuildAndMarket(dt);
         }
+
+        /// <summary>Wander walks longer than this use route travel (fords included) instead of the agent path.</summary>
+        internal const float LongWalkMeters = 30f;
 
         private void TickIdle(float dt)
         {
@@ -2423,7 +2483,62 @@ namespace SolarMajesty
             else
                 _noCloser += dt;
 
+            TickPocketEscape(target, dt);
             SeatOnTerrain();
+        }
+
+        /// <summary>Game seconds without moving, with no route, before a hero hops out of a pocket.</summary>
+        internal const float PocketHopSeconds = 6f;
+
+        private Vector3 _pocketRef;
+        private float _pocketStall;
+
+        /// <summary>
+        /// A straight-line step snaps onto the nearest mesh, which can carry a hero across a thin
+        /// carved ring (rocks round a den) into a pocket that no path leaves; stepping back out, the
+        /// nearest mesh is always the pocket again. With no route and no movement for a few seconds,
+        /// look further along the way for mesh on the other side and hop there, the way it came in
+        /// (autoplay, Earth: a Defense Mech fled at 40% health from 104 m out for the rest of the
+        /// world and the last den was never cleared).
+        /// </summary>
+        private void TickPocketEscape(Vector3 target, float dt)
+        {
+            if (_route != null || _agent == null || !_agent.enabled || !_agent.isOnNavMesh)
+            {
+                _pocketStall = 0f;
+                _pocketRef = transform.position;
+                return;
+            }
+            if (FlatDistance(transform.position, _pocketRef) > 1f)
+            {
+                _pocketRef = transform.position;
+                _pocketStall = 0f;
+                return;
+            }
+            _pocketStall += dt;
+            if (_pocketStall < PocketHopSeconds) return;
+            _pocketStall = 0f;
+
+            Vector3 from = transform.position;
+            Vector3 dir = target - from;
+            dir.y = 0f;
+            float len = dir.magnitude;
+            if (len < 3f) return;
+            dir /= len;
+            for (float d = 2f; d <= Mathf.Min(10f, len); d += 1.5f)
+            {
+                Vector3 probe = from + dir * d;
+                probe.y = 0.02f;
+                if (TravelWet(probe) || !SampleForAgent(probe, out NavMeshHit hit)) continue;
+                Vector3 gained = hit.position - from;
+                gained.y = 0f;
+                if (Vector3.Dot(gained, dir) < 1.5f) continue; // the sample fell back into the pocket
+                if (!_agent.Warp(hit.position)) continue;
+                _route = null;
+                _pocketRef = transform.position;
+                Debug.Log($"[Specialist] {data?.displayName} hops out of a pocket in the mesh ({Vector3.Dot(gained, dir):F1} m).");
+                return;
+            }
         }
 
         private void RebuildRoute(Vector3 target, bool denWalk)
@@ -2438,8 +2553,9 @@ namespace SolarMajesty
                 return;
             }
 
-            if (NavCornerPath.TryBuild(transform.position, target, 8f, out Vector3[] corners, out NavMeshPathStatus status) &&
-                status == NavMeshPathStatus.PathComplete)
+            // Dry if there is a way; otherwise the same single ford a den walk would take, so a
+            // hero who forded out to a den can walk (rest, flee, go home) back across.
+            if (NavCornerPath.TryWalkRoute(transform.position, target, TravelWet, out Vector3[] corners))
             {
                 _route = corners;
                 return;

@@ -1433,6 +1433,11 @@
    "tr": "Frénésie des tanières — elles savent que vous partez."
   },
   {
+   "en": "Dens quiet — hunt the last {0} fauna ({1} Clear Threat)",
+   "key": "",
+   "tr": "Tanières calmes — chassez les {0} dernières bêtes ({1} Éliminer la menace)"
+  },
+  {
    "en": "Dens quiet — yard pests scatter: {0}.",
    "key": "",
    "tr": "Tanières calmes — les nuisibles de la cour se dispersent : {0}."
