@@ -2448,7 +2448,62 @@ namespace SolarMajesty
             else
                 _noCloser += dt;
 
+            TickPocketEscape(target, dt);
             SeatOnTerrain();
+        }
+
+        /// <summary>Game seconds without moving, with no route, before a hero hops out of a pocket.</summary>
+        internal const float PocketHopSeconds = 6f;
+
+        private Vector3 _pocketRef;
+        private float _pocketStall;
+
+        /// <summary>
+        /// A straight-line step snaps onto the nearest mesh, which can carry a hero across a thin
+        /// carved ring (rocks round a den) into a pocket that no path leaves; stepping back out, the
+        /// nearest mesh is always the pocket again. With no route and no movement for a few seconds,
+        /// look further along the way for mesh on the other side and hop there, the way it came in
+        /// (autoplay, Earth: a Defense Mech fled at 40% health from 104 m out for the rest of the
+        /// world and the last den was never cleared).
+        /// </summary>
+        private void TickPocketEscape(Vector3 target, float dt)
+        {
+            if (_route != null || _agent == null || !_agent.enabled || !_agent.isOnNavMesh)
+            {
+                _pocketStall = 0f;
+                _pocketRef = transform.position;
+                return;
+            }
+            if (FlatDistance(transform.position, _pocketRef) > 1f)
+            {
+                _pocketRef = transform.position;
+                _pocketStall = 0f;
+                return;
+            }
+            _pocketStall += dt;
+            if (_pocketStall < PocketHopSeconds) return;
+            _pocketStall = 0f;
+
+            Vector3 from = transform.position;
+            Vector3 dir = target - from;
+            dir.y = 0f;
+            float len = dir.magnitude;
+            if (len < 3f) return;
+            dir /= len;
+            for (float d = 2f; d <= Mathf.Min(10f, len); d += 1.5f)
+            {
+                Vector3 probe = from + dir * d;
+                probe.y = 0.02f;
+                if (TravelWet(probe) || !SampleForAgent(probe, out NavMeshHit hit)) continue;
+                Vector3 gained = hit.position - from;
+                gained.y = 0f;
+                if (Vector3.Dot(gained, dir) < 1.5f) continue; // the sample fell back into the pocket
+                if (!_agent.Warp(hit.position)) continue;
+                _route = null;
+                _pocketRef = transform.position;
+                Debug.Log($"[Specialist] {data?.displayName} hops out of a pocket in the mesh ({Vector3.Dot(gained, dir):F1} m).");
+                return;
+            }
         }
 
         private void RebuildRoute(Vector3 target, bool denWalk)
