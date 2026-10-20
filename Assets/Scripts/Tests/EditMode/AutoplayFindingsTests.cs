@@ -154,6 +154,31 @@ namespace SolarMajesty.Tests
             }
         }
 
+        // ---------------------------------------------------------------- the way home across a river
+
+        [Test]
+        public void WalkRoute_HomeAcrossARiver_FordsInsteadOfStoppingAtTheBank()
+        {
+            // The hero forded east to a den; home is back across a 10 m river (no dry way round).
+            System.Func<Vector3, bool> river = p => p.x > 20f && p.x < 30f;
+            Vector3 hero = new Vector3(45f, 0f, 3f), home = new Vector3(0f, 0f, 0f);
+
+            Assert.IsTrue(NavCornerPath.TryWalkRoute(hero, home, river, out var corners),
+                "a hero across the river must still have a way home");
+            bool crosses = false;
+            for (int i = 1; i < corners.Length; i++)
+                if (corners[i - 1].x >= 30f && corners[i].x <= 20f) crosses = true;
+            Assert.IsTrue(crosses, "the route steps from the far bank to the near bank");
+            Assert.Less(NavCornerPath.Flat(corners[corners.Length - 1], home), 6f, "and ends at home");
+        }
+
+        [Test]
+        public void WalkRoute_TooWideToFord_HasNoRoute()
+        {
+            System.Func<Vector3, bool> lake = p => p.x > 10f && p.x < 10f + NavCornerPath.MaxFordMeters + 12f;
+            Assert.IsFalse(NavCornerPath.TryWalkRoute(new Vector3(70f, 0f, 0f), Vector3.zero, lake, out _));
+        }
+
         // ---------------------------------------------------------------- the walk to the guild till
 
         [Test]

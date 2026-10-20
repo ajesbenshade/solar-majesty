@@ -1136,7 +1136,7 @@ namespace SolarMajesty
             _aggro = true;
             _raiding = true;
             _threat?.Report(_sourceId, aggroPressure);
-            if (dist > RaidStandOff(target.Category))
+            if (dist > RaidStandOff(target))
             {
                 transform.position = MoveFlatToward(dest, moveSpeed * 1.2f * dt);
                 return true;
@@ -1167,6 +1167,20 @@ namespace SolarMajesty
         /// </summary>
         public static float RaidStandOff(BuildingCategory category) =>
             Mathf.Max(2.4f, ColonyLayout.FootprintMeters(category) * 0.5f + 0.3f);
+
+        /// <summary>The same, and outside the NavMesh the building actually carves (its obstacle is sized from the model, which can overhang the footprint).</summary>
+        private static float RaidStandOff(ColonyStructure target)
+        {
+            float standOff = RaidStandOff(target.Category);
+            var obstacle = target.GetComponent<UnityEngine.AI.NavMeshObstacle>();
+            if (obstacle != null && obstacle.enabled && obstacle.carving)
+            {
+                Vector3 size = Vector3.Scale(obstacle.size, target.transform.lossyScale);
+                float half = Mathf.Max(Mathf.Abs(size.x), Mathf.Abs(size.z)) * 0.5f;
+                standOff = Mathf.Max(standOff, half + 0.5f);
+            }
+            return standOff;
+        }
 
         private bool ShouldAbortRaid()
         {

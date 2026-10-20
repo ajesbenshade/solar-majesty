@@ -2463,8 +2463,9 @@ namespace SolarMajesty
                 return;
             }
 
-            if (NavCornerPath.TryBuild(transform.position, target, 8f, out Vector3[] corners, out NavMeshPathStatus status) &&
-                status == NavMeshPathStatus.PathComplete)
+            // Dry if there is a way; otherwise the same single ford a den walk would take, so a
+            // hero who forded out to a den can walk (rest, flee, go home) back across.
+            if (NavCornerPath.TryWalkRoute(transform.position, target, TravelWet, out Vector3[] corners))
             {
                 _route = corners;
                 return;
