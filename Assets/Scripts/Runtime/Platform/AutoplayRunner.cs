@@ -133,6 +133,8 @@ namespace SolarMajesty
             public int lairsScouted;
             public int flags;
             public int robots;
+            public int hiresWaiting;
+            public int refabs;
             public bool launchReady;
             public int conquered;
             public int fauna;
@@ -1067,9 +1069,13 @@ namespace SolarMajesty
                 lairsCleared = ClearedLairs(loop),
                 flags = loop.Flags != null ? loop.Flags.Flags.Count : 0,
                 robots = Robots(loop),
+                hiresWaiting = loop.AwaitingHireCount,
                 launchReady = loop.Mission != null && loop.Mission.LaunchReady,
                 conquered = CampaignProgress.ConqueredMask
             };
+            if (loop.Placer != null)
+                foreach (var o in loop.Placer.Orders)
+                    if (o != null && o.IsRefab && !o.IsComplete) s.refabs++;
             foreach (var f in loop.Stalkers)
                 if (f != null && f.IsAlive) s.fauna++;
             if (loop.World != null)
@@ -1114,6 +1120,8 @@ namespace SolarMajesty
             Check("dens scouted", a.lairsScouted, b.lairsScouted);
             Check("bounties", a.flags, b.flags);
             Check("robots", a.robots, b.robots);
+            Check("workshops waiting to hire", a.hiresWaiting, b.hiresWaiting);
+            Check("re-fabs under way", a.refabs, b.refabs);
             Check("launch ready", a.launchReady, b.launchReady);
             Check("conquered", a.conquered, b.conquered);
             // Continue deliberately puts back at most OverseerRules.MaxFaunaPerDen per den, so fewer
@@ -1263,12 +1271,13 @@ namespace SolarMajesty
                     r.LastEvent == "awaiting_stockpile" ? " (awaiting EU)" : "");
             return string.Format(CultureInfo.InvariantCulture,
                 "{0} t={1:F0}s · EU {2}/{3} · income {4:F0}/{5}/min · sustain {6:F0}/{7:F0}s · dens {8}/{9} left (fauna {10}) · " +
-                "launch {11} · tech {12} [{13} done] · robots {14} · buildings {15} · bounties {16} · objective \"{17}\"",
+                "launch {11} · tech {12} [{13} done] · robots {14} · buildings {15} · bounties {16} · till share {18} EU · objective \"{17}\"",
                 _body?.body, _body?.simSeconds ?? 0f, Treasury(loop), m?.TreasuryGoal ?? 0,
                 set?.NetMetalsPerMin ?? 0f, set?.IncomeGoalPerMin ?? 0, m?.SustainElapsed ?? 0f, m?.SustainRequired ?? 0f,
                 m?.UnclearedLairs ?? 0, m?.LairCount ?? 0, m?.StalkersRemaining ?? 0,
                 m != null && m.LaunchReady ? "ready" : "no", tech, r?.UnlockedCount ?? 0,
-                Robots(loop), loop.Placer?.Pieces.Count ?? 0, loop.Flags?.Flags.Count ?? 0, m?.ObjectiveLabel);
+                Robots(loop), loop.Placer?.Pieces.Count ?? 0, loop.Flags?.Flags.Count ?? 0, m?.ObjectiveLabel,
+                loop.Stats != null ? loop.Stats.TitheCollected : 0);
         }
 
         /// <summary>Every robot (what it is doing and where) and the fauna by kind and distance.</summary>
