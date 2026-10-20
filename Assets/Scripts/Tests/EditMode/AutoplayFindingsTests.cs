@@ -179,6 +179,30 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(NavCornerPath.TryWalkRoute(new Vector3(70f, 0f, 0f), Vector3.zero, lake, out _));
         }
 
+        // ---------------------------------------------------------------- a pole inside a building
+
+        [Test]
+        public void FlagApproach_AtTheWallOfABuilding_WorksThePoleFromThere()
+        {
+            var watch = new FlagApproachWatch();
+            float t = 0f;
+            bool work = false;
+            // Walks in from 40 m, then stops at the Commons wall 3 m from a pole inside it.
+            for (float d = 40f; d > 3f; d -= 0.5f) Assert.IsFalse(watch.Note(d, 0.1f), "still closing");
+            for (int i = 0; i < 100 && !work; i++) { t += 0.1f; work = watch.Note(3f, 0.1f); }
+            Assert.IsTrue(work, "a hero at the wall works the pole instead of walking into it forever");
+            Assert.LessOrEqual(t, FlagApproachWatch.Seconds + 0.2f);
+        }
+
+        [Test]
+        public void FlagApproach_FarFromThePole_KeepsWalking()
+        {
+            var watch = new FlagApproachWatch();
+            watch.Note(60f, 0.1f);
+            for (int i = 0; i < 200; i++)
+                Assert.IsFalse(watch.Note(60f, 0.1f), "a stuck hero 60 m out does not count as at the pole");
+        }
+
         // ---------------------------------------------------------------- the walk to the guild till
 
         [Test]

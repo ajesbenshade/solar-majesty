@@ -1242,6 +1242,8 @@ namespace SolarMajesty
                     _claimedActive = true;
                     _buildLaborHit = false;
                     _stuckWatch.Reset();
+                    _approach.Reset();
+                    _approachFlag = _activeFlag;
                     _forceRepath = false;
                     _directTravel = false;
                     _navStall = 0f;
@@ -1361,7 +1363,7 @@ namespace SolarMajesty
             Vector3 target = _activeFlag.WorldPosition;
             float dist = FlatDistance(transform.position, target);
 
-            if (dist > arriveDistance)
+            if (dist > arriveDistance && !BlockedAtFlag(dist, dt))
             {
                 SetDestination(target);
                 MoveFallback(target, EffectiveMoveSpeed * dt);
@@ -1370,6 +1372,24 @@ namespace SolarMajesty
             }
 
             WorkArrivedFlag(dt);
+        }
+
+        private readonly FlagApproachWatch _approach = new FlagApproachWatch();
+        private FlagHandle _approachFlag;
+
+        /// <summary>
+        /// A pole inside a building (a pest on the Commons, a flag dropped on a roof) is as close as
+        /// a hero can get from the wall: the footprint's NavMesh is carved. Work it from there
+        /// instead of walking into the wall for good. Clear Threat has its own approach and watch.
+        /// </summary>
+        private bool BlockedAtFlag(float dist, float dt)
+        {
+            if (!ReferenceEquals(_approachFlag, _activeFlag))
+            {
+                _approachFlag = _activeFlag;
+                _approach.Reset();
+            }
+            return _approach.Note(dist, dt);
         }
 
         private void TickClearThreat(float dt)
