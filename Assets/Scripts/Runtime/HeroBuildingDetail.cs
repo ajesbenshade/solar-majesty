@@ -281,15 +281,15 @@ namespace SolarMajesty
                 for (int i = 0; i < 3; i++)
                 {
                     float wBay = i == 1 ? 1.26f : bayW;
-                    Panel(k, f, zBays[i], 0.72f, wBay, 0.82f);
-                    Panel(k, f, zBays[i], 2.14f, wBay, 0.38f);
+                    CeramicPanel(k, f, zBays[i], 0.72f, wBay, 0.82f);
+                    CeramicPanel(k, f, zBays[i], 2.14f, wBay, 0.38f);
                 }
             float sideBay = hz - 0.9f - 0.22f;
             foreach (var f in new[] { left, right })
             {
-                Panel(k, f, -(hz + 0.9f) * 0.5f, 1.25f, sideBay, 1.8f);
-                Panel(k, f, (hz + 0.9f) * 0.5f, 1.25f, sideBay, 1.8f);
-                Panel(k, f, 0f, 2.2f, 1.5f, 0.3f);
+                CeramicPanel(k, f, -(hz + 0.9f) * 0.5f, 1.25f, sideBay, 1.8f);
+                CeramicPanel(k, f, (hz + 0.9f) * 0.5f, 1.25f, sideBay, 1.8f);
+                CeramicPanel(k, f, 0f, 2.2f, 1.5f, 0.3f);
             }
             k.Box(new Vector3(0f, top + 0.07f, -hz + 0.05f), new Vector3(bx, 0.14f, 0.1f), Carbon);
             k.Box(new Vector3(0f, top + 0.07f, hz - 0.05f), new Vector3(bx, 0.14f, 0.1f), Carbon);
@@ -304,23 +304,23 @@ namespace SolarMajesty
                 float px = (i - 1) * bx * 0.28f;
                 foreach (float s in new[] { -1f, 1f })
                 {
-                    k.Cyl(new Vector3(px, py, s * (hz + 0.105f)), 0.25f, 0.02f, Quaternion.Euler(90f, 0f, 0f), WarmGlass, WarmEmit);
+                    k.Cyl(new Vector3(px, py, s * (hz + 0.105f)), 0.25f, 0.02f, Quaternion.Euler(90f, 0f, 0f), Cyan, CyanEmit);
                     k.Box(new Vector3(px, py + 0.26f, s * (hz + 0.07f)), new Vector3(0.5f, 0.04f, 0.14f), Carbon);
                 }
             }
             // Street-side door on -X with canopy, sign, lamps and steps.
-            Door(k, left, 0f, 0.72f, 1.2f, Orange, 0.22f);
+            Door(k, left, 0f, 0.72f, 1.2f, Graphite, 0.22f);
             FBox(k, left, 0f, 1.62f, 1.2f, 0.05f, 0.5f, Carbon);
             LightBar(k, left, 0f, 1.72f, 0.8f, CyanEmit);
-            WallLamp(k, left, -0.62f, 1.3f, WarmEmit);
-            WallLamp(k, left, 0.62f, 1.3f, WarmEmit);
+            WallLamp(k, left, -0.62f, 1.3f, CyanEmit);
+            WallLamp(k, left, 0.62f, 1.3f, CyanEmit);
             k.Box(new Vector3(-hx - 0.3f, 0.26f, 0f), new Vector3(0.36f, 0.08f, 0.9f), Concrete);
             // Vents, conduits, service cabinet.
             Grille(k, front, 0f, 0.55f, 0.8f, 0.28f);
             Grille(k, back, 0f, 0.55f, 0.8f, 0.28f);
             Grille(k, right, -(hz + 0.9f) * 0.5f, 0.5f, 0.7f, 0.24f);
             FBox(k, left, (hz + 0.9f) * 0.5f, 0.75f, 0.5f, 0.66f, 0.16f, Graphite);
-            FBox(k, left, (hz + 0.9f) * 0.5f, 1.0f, 0.36f, 0.05f, 0.17f, Orange);
+            FBox(k, left, (hz + 0.9f) * 0.5f, 1.0f, 0.36f, 0.05f, 0.17f, Carbon);
             FBox(k, left, (hz + 0.9f) * 0.5f - 0.14f, 0.62f, 0.05f, 0.05f, 0.17f, Cyan, GreenEmit);
             FBox(k, left, (hz + 0.9f) * 0.5f - 0.04f, 0.62f, 0.05f, 0.05f, 0.17f, Cyan, CyanEmit);
             PipeRun(k, new[]
@@ -330,29 +330,31 @@ namespace SolarMajesty
             }, 0.07f, Steel);
             PipeRun(k, new[]
             {
-                new Vector3(hx + 0.1f, 0.35f, -hz + 0.4f), new Vector3(hx + 0.1f, 0.35f, hz - 0.4f)
-            }, 0.09f, Orange);
-            PipeRun(k, new[]
-            {
                 new Vector3(hx + 0.1f, 0.5f, -hz + 0.4f), new Vector3(hx + 0.1f, 0.5f, hz - 0.4f)
             }, 0.06f, Steel);
             LightBar(k, front, 0f, 0.98f, bx * 0.8f, CyanEmit * 0.8f);
-            // Roof: HVAC strip on the front, tank + mast + hatch on the back strip.
-            float roofZf = -hz + 0.36f;
-            RoofUnit(k, new Vector3(-hx * 0.55f, top, roofZf), 0.55f, 0.42f, 0.26f);
-            RoofUnit(k, new Vector3(0f, top, roofZf), 0.55f, 0.42f, 0.26f);
-            RoofUnit(k, new Vector3(hx * 0.55f, top, roofZf), 0.55f, 0.42f, 0.26f);
+            // Charging pod: two bot cradles on the front (-Z) face, boxes only (12 tris each).
+            foreach (float cx in new[] { -hx * 0.5f, hx * 0.5f })
+            {
+                k.Box(new Vector3(cx, 0.2f, -hz - 0.4f), new Vector3(0.9f, 0.06f, 0.7f), Graphite);
+                k.Box(new Vector3(cx, 0.2f + 0.55f, -hz - 0.03f), new Vector3(0.7f, 1.1f, 0.06f), Carbon);
+                k.Box(new Vector3(cx - 0.3f, 0.75f, -hz - 0.25f), new Vector3(0.08f, 0.5f, 0.45f), Carbon);
+                k.Box(new Vector3(cx + 0.3f, 0.75f, -hz - 0.25f), new Vector3(0.08f, 0.5f, 0.45f), Carbon);
+                k.Box(new Vector3(cx, 1.05f, -hz - 0.07f), new Vector3(0.5f, 0.06f, 0.02f), Cyan, CyanEmit);
+            }
+            // Wrap-around cyan charge-light strip.
+            float stripY = y0 + 2.28f * 0.78f;
+            k.Box(new Vector3(0f, stripY, -hz - 0.03f), new Vector3(bx, 0.06f, 0.03f), Cyan, CyanEmit);
+            k.Box(new Vector3(0f, stripY, hz + 0.03f), new Vector3(bx, 0.06f, 0.03f), Cyan, CyanEmit);
+            k.Box(new Vector3(-hx - 0.03f, stripY, 0f), new Vector3(0.03f, 0.06f, bz), Cyan, CyanEmit);
+            k.Box(new Vector3(hx + 0.03f, stripY, 0f), new Vector3(0.03f, 0.06f, bz), Cyan, CyanEmit);
+            // Roof: maintenance hatch, mast and nav lights (HVAC units, tank and dish removed for the pod).
             float roofZb = hz - 0.58f;
-            k.Cyl(new Vector3(-hx * 0.45f, top + 0.3f, roofZb), 0.5f, 1.2f, Quaternion.Euler(0f, 0f, 90f), White);
-            k.Cyl(new Vector3(-hx * 0.45f, top + 0.3f, roofZb), 0.53f, 0.05f, Quaternion.Euler(0f, 0f, 90f), Carbon);
-            k.Box(new Vector3(-hx * 0.45f - 0.4f, top + 0.08f, roofZb), new Vector3(0.1f, 0.16f, 0.44f), Graphite);
-            k.Box(new Vector3(-hx * 0.45f + 0.4f, top + 0.08f, roofZb), new Vector3(0.1f, 0.16f, 0.44f), Graphite);
             k.Box(new Vector3(hx * 0.2f, top + 0.05f, roofZb), new Vector3(0.6f, 0.1f, 0.6f), Graphite);
-            k.Box(new Vector3(hx * 0.2f, top + 0.11f, roofZb), new Vector3(0.5f, 0.03f, 0.5f), Orange);
+            k.Box(new Vector3(hx * 0.2f, top + 0.11f, roofZb), new Vector3(0.5f, 0.03f, 0.5f), Cyan, CyanEmit * 0.6f);
             Antenna(k, new Vector3(hx - 0.35f, top, hz - 0.35f), 1.5f);
-            Dish(k, new Vector3(hx * 0.62f, top, roofZb + 0.1f), 0.5f, 225f, -30f);
-            Railing(k, new Vector3(-hx + 0.15f, top + 0.14f, hz - 0.15f), new Vector3(hx - 0.15f, top + 0.14f, hz - 0.15f), 0.3f, Yellow);
-            NavLight(k, new Vector3(-hx + 0.1f, top + 0.14f, -hz + 0.1f), RedEmit);
+            Railing(k, new Vector3(-hx + 0.15f, top + 0.14f, hz - 0.15f), new Vector3(hx - 0.15f, top + 0.14f, hz - 0.15f), 0.3f, Graphite);
+            NavLight(k, new Vector3(-hx + 0.1f, top + 0.14f, -hz + 0.1f), CyanEmit);
             NavLight(k, new Vector3(hx - 0.1f, top + 0.14f, -hz + 0.1f), CyanEmit);
             NavLight(k, new Vector3(-hx + 0.1f, top + 0.14f, hz - 0.1f), CyanEmit);
             // PV cell grid lines on the roof array (same layout as BuildHabitat).
@@ -368,6 +370,16 @@ namespace SolarMajesty
                     k.Box(cell + new Vector3(0f, -0.14f, cellD * 0.3f), new Vector3(0.05f, 0.2f, 0.05f), Steel);
                 }
             k.Build();
+        }
+
+        private static readonly Color CeramicPanelC = new Color(0.92f, 0.88f, 0.82f);
+
+        /// <summary>Charging-pod cladding: ceramic panel with a graphite seam (HAB only; Panel stays tan for other kits).</summary>
+        private static void CeramicPanel(DetailBatch k, in Face f, float x, float y, float w, float h)
+        {
+            if (w <= 0.05f || h <= 0.05f) return;
+            FBox(k, f, x, y, w, h, 0.03f, CeramicPanelC);
+            FBox(k, f, x, y + h * 0.5f - 0.03f, w * 0.96f, 0.02f, 0.04f, Graphite);
         }
 
         private static void Panel(DetailBatch k, in Face f, float x, float y, float w, float h)

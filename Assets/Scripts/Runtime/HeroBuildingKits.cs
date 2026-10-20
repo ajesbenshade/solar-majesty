@@ -76,16 +76,19 @@ namespace SolarMajesty
         /// </summary>
         public const float HabBoxFill = 0.88f;
 
-        /// <summary>Beige/tan hull from the locked campus still — not sheet-white, not graphite-rim.</summary>
-        public static readonly Color HabTan = new Color(0.78f, 0.62f, 0.46f);
+        /// <summary>Charging-pod ceramic hull (canon: charging station). Warm ceramic white, not sheet-white.
+        /// Field name kept for API stability.</summary>
+        public static readonly Color HabTan = new Color(0.88f, 0.82f, 0.74f);
 
         public static void BuildHabitat(Transform root, float w, float d, Color hull)
         {
-            // Locked still: boxy beige/tan HAB with roof solar. Do not restore the
-            // graphite-rim HAB-1 cylinder (HabCarbonBand / HabFrontRim).
+            // Charging pod for the worker bots (canon: charging station): boxy ceramic hull,
+            // graphite seams, cyan charge lights, roof solar. Part names, positions and scales are
+            // unchanged from the tan HAB so footprint, bounds, stages and lookups stay identical.
+            // Do not restore the graphite-rim HAB-1 cylinder (HabCarbonBand / HabFrontRim).
             _ = hull;
             Color tan = HabTan;
-            Color tanSeam = new Color(0.54f, 0.40f, 0.28f);
+            Color tanSeam = Graphite;
             Color pv = new Color(0.10f, 0.16f, 0.30f);
             float bx = w * HabBoxFill;
             float bz = d * HabBoxFill;
@@ -111,18 +114,18 @@ namespace SolarMajesty
                 new Vector3(0f, y, 0f),
                 new Vector3(bx + 0.03f, tall + 0.02f, 0.05f), tanSeam);
 
-            // Orange portholes on the camera-facing long sides (locked still).
+            // Cyan charge indicators on the camera-facing long sides (were orange portholes).
             for (int i = 0; i < 3; i++)
             {
                 float px = (i - 1) * bx * 0.28f;
                 Prim(root, "Dress_HabPorthole_" + i, PrimitiveType.Cylinder,
                     new Vector3(px, y + 0.22f, bz * 0.51f),
-                    new Vector3(0.38f, 0.05f, 0.38f), Orange,
-                    Quaternion.Euler(90f, 0f, 0f));
+                    new Vector3(0.38f, 0.05f, 0.38f), Cyan,
+                    Quaternion.Euler(90f, 0f, 0f), CyanEmit);
                 Prim(root, "Dress_HabPortholeB_" + i, PrimitiveType.Cylinder,
                     new Vector3(px, y + 0.22f, -bz * 0.51f),
-                    new Vector3(0.38f, 0.05f, 0.38f), Orange,
-                    Quaternion.Euler(90f, 0f, 0f));
+                    new Vector3(0.38f, 0.05f, 0.38f), Cyan,
+                    Quaternion.Euler(90f, 0f, 0f), CyanEmit);
             }
 
             Prim(root, "Dress_HabHatchFrame", PrimitiveType.Cube,
@@ -130,7 +133,7 @@ namespace SolarMajesty
                 new Vector3(0.08f, 1.15f, 0.72f), Carbon);
             Prim(root, "Dress_HabHatch", PrimitiveType.Cube,
                 new Vector3(bx * 0.50f, y - 0.15f, 0f),
-                new Vector3(0.06f, 0.95f, 0.55f), Orange);
+                new Vector3(0.06f, 0.95f, 0.55f), Graphite);
 
             float roofY = y + tall * 0.5f;
             Prim(root, "Dress_HabSolarDeck", PrimitiveType.Cube,
@@ -152,7 +155,7 @@ namespace SolarMajesty
                     Vector3 at = new Vector3(
                         originX + c * pitchX, roofY + 0.18f, originZ + r * pitchZ);
                     Prim(root, "Dress_HabSolarFrame_" + r + "_" + c, PrimitiveType.Cube,
-                        at, new Vector3(cellW * 1.08f, 0.04f, cellD * 1.08f), Orange, tilt);
+                        at, new Vector3(cellW * 1.08f, 0.04f, cellD * 1.08f), Graphite, tilt);
                     Prim(root, "Dress_HabSolarCell_" + r + "_" + c, PrimitiveType.Cube,
                         at + new Vector3(0f, 0.03f, 0f),
                         new Vector3(cellW, 0.03f, cellD), pv, tilt);
