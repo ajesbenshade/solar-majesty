@@ -296,8 +296,41 @@ namespace SolarMajesty.Tests
         public void ChargersChip_KeepsTheChargingStationIcon()
         {
             Assert.AreEqual("CHARGERS", OverseerHud.ChargersLabel);
-            Assert.AreEqual(IconId.House, OverseerHud.ChipIconFor(OverseerHud.ChargersLabel));
+            Assert.AreEqual(IconId.Charger, OverseerHud.ChipIconFor(OverseerHud.ChargersLabel));
             Assert.IsNull(OverseerHud.ChipIconFor("HOUSES"), "the old label is gone; nothing should still key on it");
+        }
+
+        /// <summary>Bold display caps at size s: ~0.72 s per glyph, snapped to whole screen pixels.</summary>
+        private static System.Func<string, int, float> CapsMeasure(float scale) =>
+            (s, size) => Mathf.Ceil(s.Length * size * 0.72f * scale) / scale + 1f;
+
+        [Test]
+        public void ChargersLabel_FitsInFull_At1080p100_And4K200()
+        {
+            foreach (var (sw, sh, requested) in new[] { (1920, 1080, 1f), (3840, 2160, 2f) })
+            {
+                float scale = HudScaleMath.ClampToFit(requested, sw, sh);
+                Assert.AreEqual(requested, scale, 0.001f, $"{sw}x{sh} keeps its scale");
+                var measure = CapsMeasure(scale);
+                float cw = HudLayout.StockpileChipWidth();
+                HudLayout.ChipText(new Rect(0f, 0f, cw, 28f), out var labelRect, out var numberRect);
+                foreach (string amount in new[] { "4", "99", "999" })
+                {
+                    float w = HudLayout.ChipLabelWidth(labelRect, numberRect, measure(amount, 14));
+                    int size = HudLayout.FitFontSize(s => measure(OverseerHud.ChargersLabel, s), w, 10);
+                    Assert.GreaterOrEqual(size, HudLayout.ChipLabelMinSize);
+                    Assert.LessOrEqual(measure(OverseerHud.ChargersLabel, size), w,
+                        $"CHARGERS at {size}pt fits {w}px with amount {amount} at {sw}x{sh}");
+                }
+            }
+        }
+
+        [Test]
+        public void FitFontSize_KeepsBaseWhenRoomy_AndStopsAtTheFloor()
+        {
+            Assert.AreEqual(10, HudLayout.FitFontSize(s => s * 5f, 1000f, 10));
+            Assert.AreEqual(8, HudLayout.FitFontSize(s => s * 5f, 41f, 10));
+            Assert.AreEqual(HudLayout.ChipLabelMinSize, HudLayout.FitFontSize(s => s * 50f, 1f, 10));
         }
 
         [Test]

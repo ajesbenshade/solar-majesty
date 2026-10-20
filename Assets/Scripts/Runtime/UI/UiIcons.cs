@@ -34,7 +34,9 @@ namespace SolarMajesty
         Coin,
         House,
         Bag,
-        Hammer
+        Hammer,
+        // Appended so existing values keep their numbers.
+        Charger
     }
 
     /// <summary>
@@ -104,6 +106,7 @@ namespace SolarMajesty
                 case IconId.Sun: DrawSun(px); break;
                 case IconId.Coin: DrawCoin(px); break;
                 case IconId.House: DrawHouse(px); break;
+                case IconId.Charger: DrawCharger(px); break;
                 case IconId.Bag: DrawBag(px); break;
                 case IconId.Hammer: DrawHammer(px); break;
             }
@@ -478,6 +481,13 @@ namespace SolarMajesty
         }
 
         /// <summary>Pitched-roof house: tax-paying homes.</summary>
+        /// <summary>Charging station: one bold cyan lightning bolt, two overlapping wedges.</summary>
+        private static void DrawCharger(Color[] px)
+        {
+            Tri(px, new Vector2(42f, 60f), new Vector2(14f, 27f), new Vector2(36f, 27f), Cyan);
+            Tri(px, new Vector2(22f, 4f), new Vector2(50f, 37f), new Vector2(28f, 37f), Cyan);
+        }
+
         private static void DrawHouse(Color[] px)
         {
             Box(px, 14f, 8f, 50f, 34f, Bone);
