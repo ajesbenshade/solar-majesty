@@ -31,6 +31,13 @@ Before you register the name, run a trademark search on **"Solar Majesty"**. *Ma
 Paradox Interactive's series, and this game is openly inspired by it. A clearance check now costs far
 less than a rename after launch.
 
+Preliminary web check (2026-10-19): no game, product or trademark filing named "Solar Majesty"
+turned up; the only hits were a T-shirt graphic and a cargo ship. That is not clearance. The risk
+is "Majesty" itself: Paradox has owned the series IP since 2007 and still sells it on Steam in the
+same genre. Before paying for the app, search USPTO (Trademark Search), EUIPO eSearch and the WIPO
+Global Brand Database for MAJESTY in class 9/41, and ideally get a one-off opinion from a trademark
+attorney. Keep the store copy free of comparisons to *Majesty* (it currently has none).
+
 ## 2. Swap in the real App ID (code, 2 minutes)
 
 In `Assets/Scripts/Systems/Platform/SteamConfig.cs` change `AppId = 480` to your App ID.
