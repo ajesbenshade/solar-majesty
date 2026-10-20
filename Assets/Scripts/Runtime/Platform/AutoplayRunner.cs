@@ -283,6 +283,7 @@ namespace SolarMajesty
             _flagPostedAt.Clear();
             _refusedSpots.Clear();
             _claimed.Clear();
+            _pestSince.Clear();
             if (_body == null)
             {
                 _body = new BodyRun { body = bodyId.ToString() };
@@ -787,13 +788,24 @@ namespace SolarMajesty
             // is within reach of where they stand, so a pest across the yard waits for a price.
             // One cheap pole at a time; with too little for a den bounty this comes first, since
             // a bled treasury never gets there.
+            // Only a pest that has been in the yard a while: most are hunted for free by the robot
+            // at home, and a pole on every creeper the farm attracts costs more than it steals.
+            var seenNow = new HashSet<DustStalkerAgent>();
+            foreach (var s in loop.Stalkers)
+                if (s != null && s.IsAlive && Flat(s.transform.position, hub) < 30f)
+                {
+                    seenNow.Add(s);
+                    if (!_pestSince.ContainsKey(s)) _pestSince[s] = _body.simSeconds;
+                }
+            foreach (var gonePest in new List<DustStalkerAgent>(_pestSince.Keys))
+                if (!seenNow.Contains(gonePest)) _pestSince.Remove(gonePest);
             if (fighters > 0 && pestPoles == 0 && lairs.Count > 0)
             {
                 DustStalkerAgent pest = null;
                 float bestPest = 30f;
-                foreach (var s in loop.Stalkers)
+                foreach (var s in seenNow)
                 {
-                    if (s == null || !s.IsAlive) continue;
+                    if (_body.simSeconds - _pestSince[s] < 60f) continue;
                     float d = Flat(s.transform.position, hub);
                     if (d >= bestPest) continue;
                     if (HasFlagNear(flags, FlagType.ClearThreat, s.transform.position, 14f) ||
@@ -896,6 +908,7 @@ namespace SolarMajesty
 
         private readonly List<Vector3> _refusedSpots = new List<Vector3>();
         private readonly HashSet<FlagHandle> _claimed = new HashSet<FlagHandle>();
+        private readonly Dictionary<DustStalkerAgent, float> _pestSince = new Dictionary<DustStalkerAgent, float>();
 
         private bool IsRefusedSpot(Vector3 at)
         {

@@ -6,7 +6,7 @@ is in it being honest, not in it being all ticked.
 ## Build and pipeline
 
 - [x] Assembly definitions split (`SolarMajesty.Systems` / `.Runtime` / `.Editor` / `.Tests.EditMode`)
-- [x] Automated EditMode tests (775 passing, 2026-10-19)
+- [x] Automated EditMode tests (846 passing, 2026-10-20)
 - [x] CI on push and nightly ([.github/workflows/ci.yml](../.github/workflows/ci.yml))
 - [x] Headless build command ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs))
 - [x] Standalone player builds (macOS verified)
