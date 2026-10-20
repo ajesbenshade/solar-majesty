@@ -83,6 +83,11 @@
    "tr": "1/6  COMMUNS — Les Communs de la colonie sont déjà sur la concession. Ils gardent le trésor."
   },
   {
+   "en": "1× is the colony's normal pace.",
+   "key": "",
+   "tr": "1× est le rythme normal de la colonie."
+  },
+  {
    "en": "2/4  Press {key:ToolFlag}, choose Build, leave the bounty at 700. If the Engineer ignores it, raise the bounty.",
    "key": "",
    "tr": "2/4  Appuyez sur {key:ToolFlag}, choisissez Construire, laissez la prime à 700. Si l'Ingénieur l'ignore, augmentez la prime."
@@ -143,6 +148,31 @@
    "tr": "Une tanière est sortie du brouillard. {0} l'a arpentée. Éliminer la menace est désormais un lieu, pas une rumeur."
   },
   {
+   "en": "A one-time payment: the tower fires on fauna within 18 m.",
+   "key": "",
+   "tr": "Un paiement unique : la tour tire sur la faune à moins de 18 m."
+  },
+  {
+   "en": "A robot stands watch at the pole: 50 s of cover after it arrives.",
+   "key": "",
+   "tr": "Un robot monte la garde au mât : 50 s de couverture après son arrivée."
+  },
+  {
+   "en": "A robot studies the pole: science for the active tech, more inside a survey.",
+   "key": "",
+   "tr": "Un robot étudie le mât : de la science pour la technologie en cours, davantage dans un relevé."
+  },
+  {
+   "en": "A robot surveys 22 m around the pole for 90 s and charts the dens inside. Extract and Research Site flags pay extra in a survey.",
+   "key": "",
+   "tr": "Un robot fait un relevé de 22 m autour du mât pendant 90 s et cartographie les tanières dedans. Les fanions Extraire et Site de recherche rapportent plus dans un relevé."
+  },
+  {
+   "en": "A short boost for this guild's robots once its tech is researched. It costs EU and then cools down.",
+   "key": "",
+   "tr": "Un bref bonus pour les robots de cette guilde une fois sa technologie recherchée. Il coûte des EU puis doit se recharger."
+  },
+  {
    "en": "A steady administration. The bounties were priced about right.",
    "key": "",
    "tr": "Une administration solide. Les primes étaient à peu près au bon prix."
@@ -153,6 +183,11 @@
    "tr": "Un bastion incapable de garder l'énergie ou le déjeuner, c'est un pique-nique raté avec une meilleure poussière."
   },
   {
+   "en": "A terraform pulse: farms on this world grow greener.",
+   "key": "",
+   "tr": "Une impulsion de terraformation : les fermes de ce monde verdissent."
+  },
+  {
    "en": "A working colony, run on a thin margin.",
    "key": "",
    "tr": "Une colonie qui tourne, avec une marge mince."
@@ -161,6 +196,11 @@
    "en": "A {0:0}%",
    "key": "",
    "tr": "A {0:0}%"
+  },
+  {
+   "en": "ABANDON BODY",
+   "key": "",
+   "tr": "ABANDONNER L'ASTRE"
   },
   {
    "en": "ABANDON BODY  ·  new seed",
@@ -193,6 +233,11 @@
    "tr": "AGGRO"
   },
   {
+   "en": "ALERT",
+   "key": "",
+   "tr": "ALERTE"
+  },
+  {
    "en": "ALPHA {0}",
    "key": "",
    "tr": "ALPHA {0}"
@@ -201,6 +246,11 @@
    "en": "AMBIENCE",
    "key": "",
    "tr": "AMBIANCE"
+  },
+  {
+   "en": "ARM LASERS",
+   "key": "",
+   "tr": "ARMER LES LASERS"
   },
   {
    "en": "ARM LASERS {0} EU",
@@ -221,6 +271,11 @@
    "en": "AUTO",
    "key": "",
    "tr": "AUTO"
+  },
+  {
+   "en": "Aa · the quick robot",
+   "key": "",
+   "tr": "Aa · le robot agile"
   },
   {
    "en": "Achievement — {0}",
@@ -503,6 +558,11 @@
    "tr": "Esplanade d'autorité sur roche grise."
   },
   {
+   "en": "BACK",
+   "key": "",
+   "tr": "RETOUR"
+  },
+  {
    "en": "BACK  ·  Esc",
    "key": "",
    "tr": "RETOUR  ·  Esc"
@@ -541,6 +601,26 @@
    "en": "BUILD",
    "key": "",
    "tr": "CONSTRUIRE"
+  },
+  {
+   "en": "BUILD CATALOG",
+   "key": "",
+   "tr": "CATALOGUE DE CONSTRUCTION"
+  },
+  {
+   "en": "BUILD HERE",
+   "key": "",
+   "tr": "CONSTRUIRE ICI"
+  },
+  {
+   "en": "Back to the colony.",
+   "key": "",
+   "tr": "Retour à la colonie."
+  },
+  {
+   "en": "Back to your last colony, where autosave left it.",
+   "key": "",
+   "tr": "Retour à votre dernière colonie, là où la sauvegarde automatique l'a laissée."
   },
   {
    "en": "Balanced: no hunger, courage, or workshop nudge.",
@@ -698,6 +778,11 @@
    "tr": "Construire ici"
   },
   {
+   "en": "Build a fresh level 1 robot from the wreck. The old chassis is gone for good.",
+   "key": "",
+   "tr": "Fabriquer un robot neuf de niveau 1 à partir de l'épave. L'ancien châssis disparaît pour de bon."
+  },
+  {
    "en": "Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech",
    "key": "",
    "tr": "Construisez n'importe où en terrain dégagé · les chargeurs rapportent des EU · un atelier fabrique un méca"
@@ -708,6 +793,11 @@
    "tr": "Catalogue de construction"
   },
   {
+   "en": "Builder bots grow the village on their own. The number is the current building's progress.",
+   "key": "",
+   "tr": "Les bots bâtisseurs agrandissent le village d'eux-mêmes. Le nombre indique l'avancement du bâtiment en cours."
+  },
+  {
    "en": "Building",
    "key": "",
    "tr": "Construction"
@@ -716,6 +806,11 @@
    "en": "Building a {0} robot…",
    "key": "",
    "tr": "Construction d'un robot {0}…"
+  },
+  {
+   "en": "Buildings going up. Bots work faster while the yard is safe.",
+   "key": "",
+   "tr": "Les bâtiments en cours. Les bots travaillent plus vite tant que la cour est sûre."
   },
   {
    "en": "Bulwark",
@@ -738,6 +833,16 @@
    "tr": "DÉFI  ·  {0}"
   },
   {
+   "en": "CHALLENGE",
+   "key": "",
+   "tr": "DÉFI"
+  },
+  {
+   "en": "CHARACTER VOICES",
+   "key": "",
+   "tr": "VOIX DES PERSONNAGES"
+  },
+  {
    "en": "CHARACTER VOICES  ·  BAKED BARKS + CORE",
    "key": "",
    "tr": "VOIX DES PERSONNAGES  ·  RÉPLIQUES + NOYAU"
@@ -746,6 +851,11 @@
    "en": "CHARGERS",
    "key": "",
    "tr": "CHARGEURS"
+  },
+  {
+   "en": "CHARGING STATIONS",
+   "key": "",
+   "tr": "STATIONS DE RECHARGE"
   },
   {
    "en": "CHILLED",
@@ -766,6 +876,11 @@
    "en": "CLEAR EARTH FIRST  ·  OR SKIP IN SETTINGS",
    "key": "",
    "tr": "TERMINEZ D'ABORD LA TERRE  ·  OU PASSEZ DANS LES PARAMÈTRES"
+  },
+  {
+   "en": "CLEAR THREAT",
+   "key": "",
+   "tr": "ÉLIMINER LA MENACE"
   },
   {
    "en": "CLICK TO CONTINUE",
@@ -798,6 +913,11 @@
    "tr": "COLONIE"
   },
   {
+   "en": "COLOUR VISION",
+   "key": "",
+   "tr": "VISION DES COULEURS"
+  },
+  {
    "en": "COLOUR VISION  ·  {0}",
    "key": "",
    "tr": "VISION DES COULEURS  ·  {0}"
@@ -806,6 +926,16 @@
    "en": "COMMONS first, then HAB and workshops anywhere on open ground.",
    "key": "",
    "tr": "Les COMMUNS d'abord, puis HAB et ateliers n'importe où en terrain dégagé."
+  },
+  {
+   "en": "CONSTRUCTION",
+   "key": "",
+   "tr": "CONSTRUCTION"
+  },
+  {
+   "en": "CONTINUE",
+   "key": "",
+   "tr": "CONTINUER"
   },
   {
    "en": "CONTINUE  ·  SPACE",
@@ -863,9 +993,19 @@
    "tr": "RAMPEUR"
   },
   {
+   "en": "CURSOR SPEED",
+   "key": "",
+   "tr": "VITESSE DU CURSEUR"
+  },
+  {
    "en": "CURSOR SPEED  ·  {0}",
    "key": "",
    "tr": "VITESSE DU CURSEUR  ·  {0}"
+  },
+  {
+   "en": "Campaign moves on after a win; Endless keeps the colony running.",
+   "key": "",
+   "tr": "La campagne continue après une victoire ; Sans fin garde la colonie en marche."
   },
   {
    "en": "Can't build on water.",
@@ -948,6 +1088,16 @@
    "tr": "Chasse aux nuisibles de la cour."
   },
   {
+   "en": "Choose what your labs study next. More labs, faster science.",
+   "key": "",
+   "tr": "Choisir ce que vos labos étudient ensuite. Plus de labos, plus de science."
+  },
+  {
+   "en": "Claims the forward outpost near the second yard. More power draw; a Mine on site pays it back.",
+   "key": "",
+   "tr": "Revendique l'avant-poste près de la deuxième cour. Plus de consommation d'énergie ; une Mine sur place la rembourse."
+  },
+  {
    "en": "Class kits, pulses, flag pull. Anvil is the dwarf forge hall.",
    "key": "",
    "tr": "Kits de classe, impulsions, attraction des fanions. Anvil est la maison-forge naine."
@@ -1023,6 +1173,21 @@
    "tr": "Cliquez sur la Terre pour atterrir. Vous êtes le Noyau. Vos bots font le travail."
   },
   {
+   "en": "Click a building, then click open ground to place it. Each copy of a building costs more than the last.",
+   "key": "",
+   "tr": "Cliquez sur un bâtiment, puis sur un terrain dégagé pour le placer. Chaque exemplaire d'un bâtiment coûte plus cher que le précédent."
+  },
+  {
+   "en": "Click a power, then click the map. The price grows with distance from your nearest uplink.",
+   "key": "",
+   "tr": "Cliquez sur un pouvoir, puis sur la carte. Le prix augmente avec la distance à votre liaison la plus proche."
+  },
+  {
+   "en": "Click a tech to study it. Science comes from labs and Research Site flags; the launch tech is pinned on top.",
+   "key": "",
+   "tr": "Cliquez sur une technologie pour l'étudier. La science vient des labos et des fanions Site de recherche ; la technologie de lancement est épinglée en haut."
+  },
+  {
    "en": "Click a world to land. You are the Core. Your bots do the work.",
    "key": "",
    "tr": "Cliquez sur un monde pour atterrir. Vous êtes le Noyau. Vos bots font le travail."
@@ -1031,6 +1196,41 @@
    "en": "Click an action, then press its new key. Esc, number keys, Shift and Ctrl stay fixed.",
    "key": "",
    "tr": "Cliquez sur une action, puis appuyez sur sa nouvelle touche. Esc, les touches numériques, Shift et Ctrl restent fixes."
+  },
+  {
+   "en": "Click to look at it; that also clears it. {key:JumpToAlert} jumps to the newest.",
+   "key": "",
+   "tr": "Cliquez pour la regarder ; cela l'efface aussi. {key:JumpToAlert} saute à la plus récente."
+  },
+  {
+   "en": "Click to look there. Gold: buildings. Blue: robots and charted dens. Red: fauna. Flags in their colours.",
+   "key": "",
+   "tr": "Cliquez pour regarder à cet endroit. Or : bâtiments. Bleu : robots et tanières cartographiées. Rouge : faune. Les fanions dans leurs couleurs."
+  },
+  {
+   "en": "Click to run at this speed.",
+   "key": "",
+   "tr": "Cliquez pour jouer à cette vitesse."
+  },
+  {
+   "en": "Click to step through your monitor's modes.",
+   "key": "",
+   "tr": "Cliquez pour parcourir les modes de votre écran."
+  },
+  {
+   "en": "Click to study. {0:F0} science.",
+   "key": "",
+   "tr": "Cliquez pour l'étudier. {0:F0} de science."
+  },
+  {
+   "en": "Click to switch language. Voices stay in English.",
+   "key": "",
+   "tr": "Cliquez pour changer de langue. Les voix restent en anglais."
+  },
+  {
+   "en": "Click, then press the new key. Esc cancels.",
+   "key": "",
+   "tr": "Cliquez, puis appuyez sur la nouvelle touche. Esc annule."
   },
   {
    "en": "Climate Loom",
@@ -1048,6 +1248,11 @@
    "tr": "Métier climatique. Les fermes s'emballent. Placez le monument Métier 6×6."
   },
   {
+   "en": "Close the game. Autosave keeps your colony.",
+   "key": "",
+   "tr": "Fermer le jeu. La sauvegarde automatique garde votre colonie."
+  },
+  {
    "en": "Closed-loop air and water for a lasting colony.",
    "key": "",
    "tr": "Air et eau en circuit fermé pour une colonie durable."
@@ -1056,6 +1261,11 @@
    "en": "Collecting HAB levy",
    "key": "",
    "tr": "Collecte de l'impôt HAB"
+  },
+  {
+   "en": "Collectors who walk building tills home to the Commons. The small line is EU in their bags. Red while one is being replaced.",
+   "key": "",
+   "tr": "Les collecteurs qui rapportent à pied la caisse des bâtiments aux Communs. La petite ligne indique les EU dans leurs sacs. En rouge pendant le remplacement de l'un d'eux."
   },
   {
    "en": "Colony Commons",
@@ -1081,6 +1291,11 @@
    "en": "Colony Commons is down. Build anywhere on open ground.",
    "key": "",
    "tr": "Les Communs de la colonie sont posés. Construisez n'importe où en terrain dégagé."
+  },
+  {
+   "en": "Colony days since landing. The tag underneath is this run's mode and challenge.",
+   "key": "",
+   "tr": "Jours de colonie depuis l'atterrissage. L'étiquette dessous indique le mode et le défi de la partie."
   },
   {
    "en": "Colony recorded to slot {0}.",
@@ -1163,6 +1378,11 @@
    "tr": "Continuer vers {0}"
   },
   {
+   "en": "Contract robots that take your bounties. Each workshop fabricates one; build more workshops for more heroes.",
+   "key": "",
+   "tr": "Les robots sous contrat qui prennent vos primes. Chaque atelier en fabrique un ; construisez plus d'ateliers pour plus de héros."
+  },
+  {
    "en": "Controls reset to defaults.",
    "key": "",
    "tr": "Commandes réinitialisées."
@@ -1196,6 +1416,16 @@
    "en": "Core. Takes Extract and Research Site cheap; shy of dens.",
    "key": "",
    "tr": "Core. Prend Extraire et Site de recherche à bas prix ; fuit les tanières."
+  },
+  {
+   "en": "Cost {0}.",
+   "key": "",
+   "tr": "Coût {0}."
+  },
+  {
+   "en": "Cost {0}. Not enough yet.",
+   "key": "",
+   "tr": "Coût {0}. Pas encore assez."
   },
   {
    "en": "Courier Bot",
@@ -1278,6 +1508,11 @@
    "tr": "COUVERTURE DÉFENSIVE"
   },
   {
+   "en": "DEFEND",
+   "key": "",
+   "tr": "DÉFENDRE"
+  },
+  {
    "en": "DIORAMA CAMERA",
    "key": "",
    "tr": "CAMÉRA DIORAMA"
@@ -1306,6 +1541,11 @@
    "en": "DRAINED",
    "key": "",
    "tr": "ÉPUISÉ"
+  },
+  {
+   "en": "DROP MANIFEST",
+   "key": "",
+   "tr": "MANIFESTE DE LARGAGE"
   },
   {
    "en": "DUST CREEPER",
@@ -1483,9 +1723,24 @@
    "tr": "Amarrez d'abord {0}."
   },
   {
+   "en": "Drag and edge-pan move the camera the other way.",
+   "key": "",
+   "tr": "Le glisser et le défilement aux bords déplacent la caméra dans l'autre sens."
+  },
+  {
+   "en": "Drag to set the volume.",
+   "key": "",
+   "tr": "Faites glisser pour régler le volume."
+  },
+  {
    "en": "Drain on Power. Pair with dens.",
    "key": "",
    "tr": "Draine l'énergie. Associé aux tanières."
+  },
+  {
+   "en": "Drifting cloud shadows on worlds with weather.",
+   "key": "",
+   "tr": "Des ombres de nuages qui dérivent sur les mondes qui ont une météo."
   },
   {
    "en": "Drop manifest",
@@ -1563,6 +1818,11 @@
    "tr": "EU"
   },
   {
+   "en": "EU in the Commons. Bounties, buildings and orbital powers are paid from it. Below: income per minute and EU locked in posted bounties.",
+   "key": "",
+   "tr": "Les EU des Communs. Primes, bâtiments et pouvoirs orbitaux se paient avec. Dessous : revenu par minute et EU bloqués dans les primes posées."
+  },
+  {
    "en": "EU is sitting in building batteries. Haul will get around to it.",
    "key": "",
    "tr": "Les EU dorment dans les batteries des bâtiments. Haul finira par s'en occuper."
@@ -1573,6 +1833,11 @@
    "tr": "Les EU dorment dans les batteries des bâtiments. Haul finira par s'en occuper. Ou un acarien. Les paris sont ouverts !"
   },
   {
+   "en": "EU on its way home: sitting in building tills, carried by collectors, and the tax the buildings pay each day.",
+   "key": "",
+   "tr": "Les EU en route : dans la caisse des bâtiments, dans les sacs des collecteurs, et l'impôt que les bâtiments paient chaque jour."
+  },
+  {
    "en": "EU was napping on the HAB. A mite just made a withdrawal.",
    "key": "",
    "tr": "Des EU faisaient la sieste sur le HAB. Un acarien vient d'effectuer un retrait."
@@ -1581,6 +1846,16 @@
    "en": "EU {0}",
    "key": "",
    "tr": "EU {0}"
+  },
+  {
+   "en": "EXPLORE",
+   "key": "",
+   "tr": "EXPLORER"
+  },
+  {
+   "en": "EXTRACT",
+   "key": "",
+   "tr": "EXTRAIRE"
   },
   {
    "en": "Earth",
@@ -1658,6 +1933,11 @@
    "tr": "Mode Sans fin : pas de lancement vers le monde suivant. Gardez la colonie debout."
   },
   {
+   "en": "Enemies are near the build site, so the bots stopped. Post a Clear Threat bounty ({key:ToolFlag}) and they carry on.",
+   "key": "",
+   "tr": "Des ennemis rôdent près du chantier, les bots se sont arrêtés. Posez une prime Éliminer la menace ({key:ToolFlag}) et ils reprennent."
+  },
+  {
    "en": "Engineer Bot",
    "key": "",
    "tr": "Ingénieur"
@@ -1676,6 +1956,11 @@
    "en": "Engineers weld 40% faster while the pulse lasts.",
    "key": "",
    "tr": "Les ingénieurs soudent 40 % plus vite pendant l'impulsion."
+  },
+  {
+   "en": "Error logs to attach to a bug report. The number counts errors this session.",
+   "key": "",
+   "tr": "Les journaux d'erreurs à joindre à un rapport de bug. Le nombre compte les erreurs de cette session."
   },
   {
    "en": "Escort Drone",
@@ -1713,9 +1998,19 @@
    "tr": "Europe tient. Le système extérieur est ouvert. Supervisez en bac à sable ou réensemencez cette glace."
   },
   {
+   "en": "Every key back to its default.",
+   "key": "",
+   "tr": "Chaque touche revient à sa valeur par défaut."
+  },
+  {
    "en": "Every ore deposit has a mine.",
    "key": "",
    "tr": "Chaque gisement a sa mine."
+  },
+  {
+   "en": "Every robot and what it is doing. Click a row to select that robot.",
+   "key": "",
+   "tr": "Chaque robot et ce qu'il fait. Cliquez sur une ligne pour sélectionner ce robot."
   },
   {
    "en": "Every specialist is incapacitated. Revive the party to retake the plaza.",
@@ -1778,9 +2073,9 @@
    "tr": "RAPIDE"
   },
   {
-   "en": "FASTER   ·   {0}",
+   "en": "FASTER",
    "key": "",
-   "tr": "PLUS VITE   ·   {0}"
+   "tr": "PLUS VITE"
   },
   {
    "en": "FATIGUE",
@@ -1808,6 +2103,11 @@
    "tr": "RÉPARER"
   },
   {
+   "en": "FLAG",
+   "key": "",
+   "tr": "FANION"
+  },
+  {
    "en": "FLAG HERE",
    "key": "",
    "tr": "FANION ICI"
@@ -1816,6 +2116,11 @@
    "en": "FLAG LOG",
    "key": "",
    "tr": "JOURNAL DES FANIONS"
+  },
+  {
+   "en": "FLAG ORDERS",
+   "key": "",
+   "tr": "ORDRES DE FANION"
   },
   {
    "en": "FLEE",
@@ -1836,6 +2141,11 @@
    "en": "FORM PARTY",
    "key": "",
    "tr": "FORMER UN GROUPE"
+  },
+  {
+   "en": "FRAME CAP",
+   "key": "",
+   "tr": "LIMITE D'IMAGES"
   },
   {
    "en": "FRAME CAP  ·  {0}",
@@ -1876,6 +2186,11 @@
    "en": "Fauna cleared",
    "key": "",
    "tr": "Faune éliminée"
+  },
+  {
+   "en": "Fauna pressure around the yard in view. High threat halts building and wears robots down. Clearing dens lowers it.",
+   "key": "",
+   "tr": "La pression de la faune autour de la cour affichée. Une menace élevée arrête les chantiers et use les robots. Nettoyer les tanières la fait baisser."
   },
   {
    "en": "Field Shell",
@@ -2003,6 +2318,11 @@
    "tr": "Les fanions près de cette maison les attirent (aucun nouveau robot)."
   },
   {
+   "en": "Flags you have posted. Their EU is held until a robot finishes the job. Post one with {key:ToolFlag}.",
+   "key": "",
+   "tr": "Les fanions que vous avez posés. Leurs EU sont bloqués jusqu'à ce qu'un robot finisse le travail. Posez-en un avec {key:ToolFlag}."
+  },
+  {
    "en": "Fleeing to inn",
    "key": "",
    "tr": "Fuite vers l'auberge"
@@ -2048,6 +2368,11 @@
    "tr": "Centrer → {0}"
   },
   {
+   "en": "Follow the screen height: 100% at 1080p, more on bigger screens.",
+   "key": "",
+   "tr": "Suivre la hauteur de l'écran : 100 % en 1080p, davantage sur les grands écrans."
+  },
+  {
    "en": "Following the party.",
    "key": "",
    "tr": "Avec le groupe."
@@ -2083,6 +2408,11 @@
    "tr": "Avant-poste avancé revendiqué. Consommation PWR accrue ; un dépôt adapté sur place paie mieux."
   },
   {
+   "en": "Freeze the colony. You can still look around, build and post bounties.",
+   "key": "",
+   "tr": "Figer la colonie. Vous pouvez toujours regarder, construire et poser des primes."
+  },
+  {
    "en": "Freight Doctrine",
    "key": "",
    "tr": "Doctrine du fret"
@@ -2108,6 +2438,11 @@
    "tr": "Reposé"
   },
   {
+   "en": "From {0} EU next to an uplink. Recharge {1:0} s.",
+   "key": "",
+   "tr": "À partir de {0} EU près d'une liaison. Recharge {1:0} s."
+  },
+  {
    "en": "Full Crew",
    "key": "",
    "tr": "Équipage complet"
@@ -2118,9 +2453,9 @@
    "tr": "Constellation complète : Barrage orbital, Piège IEM, Champ Aegis, Balise de relève, Essaim de réparation."
   },
   {
-   "en": "GAME SPEED   ·   1× IS THE COLONY'S NORMAL PACE",
+   "en": "GAME SPEED",
    "key": "",
-   "tr": "VITESSE DU JEU   ·   1× EST LE RYTHME NORMAL DE LA COLONIE"
+   "tr": "VITESSE DU JEU"
   },
   {
    "en": "GEO",
@@ -2141,6 +2476,11 @@
    "en": "GUIDED START",
    "key": "",
    "tr": "DÉPART GUIDÉ"
+  },
+  {
+   "en": "GUILD BENEFIT",
+   "key": "",
+   "tr": "AVANTAGE DE GUILDE"
   },
   {
    "en": "Gates are met. Worker bots stay on this claim. The treasury keeps ticking in EU.",
@@ -2188,6 +2528,16 @@
    "tr": "Bonus géologue +{0} EU au dépôt."
   },
   {
+   "en": "Go back to the Earth lesson.",
+   "key": "",
+   "tr": "Revenir à la leçon sur Terre."
+  },
+  {
+   "en": "Graphics preset. Lower it if the frame rate drops.",
+   "key": "",
+   "tr": "Préréglage graphique. Baissez-le si la fluidité chute."
+  },
+  {
    "en": "Greenhouse Farm",
    "key": "",
    "tr": "Ferme sous serre"
@@ -2201,6 +2551,11 @@
    "en": "Grid, Wisps, Garden",
    "key": "",
    "tr": "Réseau, feux follets, jardin"
+  },
+  {
+   "en": "Group the selected robots (or those resting at the beacon) into a party that rests and hunts together.",
+   "key": "",
+   "tr": "Réunir les robots sélectionnés (ou ceux qui se reposent à la balise) en un groupe qui se repose et chasse ensemble."
   },
   {
    "en": "Grow the treasury",
@@ -2288,6 +2643,11 @@
    "tr": "SOIN"
   },
   {
+   "en": "HERO LINES",
+   "key": "",
+   "tr": "RÉPLIQUES DES HÉROS"
+  },
+  {
    "en": "HERO LINES · LOCAL LLM",
    "key": "",
    "tr": "RÉPLIQUES DES HÉROS · LLM LOCAL"
@@ -2301,11 +2661,6 @@
    "en": "HOLD",
    "key": "",
    "tr": "PAUSE"
-  },
-  {
-   "en": "HOLD   ·   {0}",
-   "key": "",
-   "tr": "SUSPENDRE   ·   {0}"
   },
   {
    "en": "HOPPER",
@@ -2503,6 +2858,11 @@
    "tr": "Les héros achètent des potions. Le surplus d'ICE/REG est converti en EU au-delà de la réserve."
   },
   {
+   "en": "Hide the advisor's lessons. Settings can replay them.",
+   "key": "",
+   "tr": "Masquer les leçons du conseiller. Les paramètres permettent de les rejouer."
+  },
+  {
    "en": "Highest bounty",
    "key": "",
    "tr": "Prime la plus élevée"
@@ -2596,6 +2956,21 @@
    "en": "Hospitality, Itemized",
    "key": "",
    "tr": "L'hospitalité, ligne par ligne"
+  },
+  {
+   "en": "How fast the controller stick moves the cursor.",
+   "key": "",
+   "tr": "La vitesse à laquelle le stick de la manette déplace le curseur."
+  },
+  {
+   "en": "How your robots lean: braver, greedier or more careful.",
+   "key": "",
+   "tr": "Le penchant de vos robots : plus courageux, plus avides ou plus prudents."
+  },
+  {
+   "en": "Hull integrity. A robot at zero is a wreck until the yard stands it up.",
+   "key": "",
+   "tr": "Intégrité de la coque. Un robot à zéro reste une épave jusqu'à ce que le chantier le remette sur pied."
   },
   {
    "en": "Hunt the Wisps",
@@ -2823,6 +3198,11 @@
    "tr": "ÉPAVE"
   },
   {
+   "en": "Jex keeps teaching on Mars instead of only commenting on mistakes.",
+   "key": "",
+   "tr": "Jex continue d'enseigner sur Mars au lieu de seulement commenter les erreurs."
+  },
+  {
    "en": "Jump to Alert",
    "key": "",
    "tr": "Aller à l'alerte"
@@ -2841,6 +3221,11 @@
    "en": "KEEP COLONIZING",
    "key": "",
    "tr": "CONTINUER LA COLONISATION"
+  },
+  {
+   "en": "Keep a copy of this colony in a numbered slot.",
+   "key": "",
+   "tr": "Garder une copie de cette colonie dans un emplacement numéroté."
   },
   {
    "en": "Keep colonizing — dens quiet, colony holding",
@@ -2918,6 +3303,11 @@
    "tr": "BAS · {0}"
   },
   {
+   "en": "LOWER BOUNTY",
+   "key": "",
+   "tr": "BAISSER LA PRIME"
+  },
+  {
    "en": "Lab + TECH tree",
    "key": "",
    "tr": "Labo + arbre TECH"
@@ -2971,6 +3361,11 @@
    "en": "Launch craft",
    "key": "",
    "tr": "Lancer le vaisseau"
+  },
+  {
+   "en": "Leave to the title screen. Autosave keeps this colony.",
+   "key": "",
+   "tr": "Retourner à l'écran titre. La sauvegarde automatique garde cette colonie."
   },
   {
    "en": "Left stick: cursor · A: click · B: cancel / right-click · Right stick: pan · LT/RT: zoom · X: flags · Y: build · LB/RB: speed · R3: hold · Menu: pause · View: research · D-pad: overlay, tools, bounty",
@@ -3038,6 +3433,11 @@
    "tr": "Cotte légère d'éclaireur."
   },
   {
+   "en": "Limit frames per second to save power and heat.",
+   "key": "",
+   "tr": "Limiter les images par seconde pour économiser énergie et chaleur."
+  },
+  {
    "en": "Load",
    "key": "",
    "tr": "Charger"
@@ -3051,6 +3451,11 @@
    "en": "Load a saved colony. Other slots stay on disk.",
    "key": "",
    "tr": "Charger une colonie sauvegardée. Les autres emplacements restent sur le disque."
+  },
+  {
+   "en": "Locked: research opens it.",
+   "key": "",
+   "tr": "Verrouillé : la recherche le débloque."
   },
   {
    "en": "Locks every hostile in 6 m in place for 6 s.",
@@ -3193,6 +3598,16 @@
    "tr": "COLONIE MAJESTY"
   },
   {
+   "en": "MAP",
+   "key": "",
+   "tr": "CARTE"
+  },
+  {
+   "en": "MARS JEX LESSONS",
+   "key": "",
+   "tr": "LEÇONS DE JEX SUR MARS"
+  },
+  {
    "en": "MARS JEX LESSONS  ·  OFF",
    "key": "",
    "tr": "LEÇONS DE JEX SUR MARS  ·  DÉSACTIVÉES"
@@ -3233,6 +3648,11 @@
    "tr": "VOL D'ACARIEN"
   },
   {
+   "en": "MODE",
+   "key": "",
+   "tr": "MODE"
+  },
+  {
    "en": "MODE  ·  {0}",
    "key": "",
    "tr": "MODE  ·  {0}"
@@ -3266,6 +3686,11 @@
    "en": "Main Menu",
    "key": "",
    "tr": "Menu principal"
+  },
+  {
+   "en": "Map overlay. {key:CycleOverlay} shows the next one or turns it off.",
+   "key": "",
+   "tr": "Calque de carte. {key:CycleOverlay} affiche le suivant ou le désactive."
   },
   {
    "en": "Map the apron. Root of the research tree.",
@@ -3363,6 +3788,11 @@
    "tr": "Les mines ne se construisent que sur un gisement de minerai, dans les terres sauvages."
   },
   {
+   "en": "Miniature-style depth of field when zoomed in.",
+   "key": "",
+   "tr": "Profondeur de champ façon maquette en zoom rapproché."
+  },
+  {
    "en": "Modules built",
    "key": "",
    "tr": "Modules construits"
@@ -3376,11 +3806,6 @@
    "en": "NEED TECH",
    "key": "",
    "tr": "TECH REQUISE"
-  },
-  {
-   "en": "NEEDS {0}",
-   "key": "",
-   "tr": "REQUIERT {0}"
   },
   {
    "en": "NEW CAMPAIGN",
@@ -3418,6 +3843,16 @@
    "tr": "Largage de nanites. Restaure 50 % d'un bâtiment endommagé."
   },
   {
+   "en": "Needs {0} first.",
+   "key": "",
+   "tr": "Nécessite d'abord {0}."
+  },
+  {
+   "en": "Needs {0}.",
+   "key": "",
+   "tr": "Nécessite {0}."
+  },
+  {
    "en": "New campaign",
    "key": "",
    "tr": "Nouvelle campagne"
@@ -3436,6 +3871,11 @@
    "en": "No building selected.",
    "key": "",
    "tr": "Aucun bâtiment sélectionné."
+  },
+  {
+   "en": "No camera shake or pulsing; the launch and victory beats become short still shots.",
+   "key": "",
+   "tr": "Ni tremblement de caméra ni pulsations ; le lancement et la victoire deviennent de courts plans fixes."
   },
   {
    "en": "No continue slot yet. New Game drops Luna (Mars if you already skipped or cleared the hour). Continue restores that body's campus.",
@@ -3508,6 +3948,11 @@
    "tr": "Plus personne debout. Il vous reste vingt secondes d'optimisme."
   },
   {
+   "en": "Not available yet.",
+   "key": "",
+   "tr": "Pas encore disponible."
+  },
+  {
    "en": "Not enough EU to raise that bounty.",
    "key": "",
    "tr": "Pas assez d'EU pour augmenter cette prime."
@@ -3531,6 +3976,11 @@
    "en": "Nuclear Mine",
    "key": "",
    "tr": "Mine nucléaire"
+  },
+  {
+   "en": "OBJECTIVES",
+   "key": "",
+   "tr": "OBJECTIFS"
   },
   {
    "en": "OFF",
@@ -3563,14 +4013,9 @@
    "tr": "OUVRIR LE DOSSIER DES JOURNAUX  ·  {0}"
   },
   {
-   "en": "OPEN THE FLAG LIST   ·   {0}",
+   "en": "OPEN THE LIST",
    "key": "",
-   "tr": "OUVRIR LA LISTE DES FANIONS   ·   {0}"
-  },
-  {
-   "en": "OPEN THE LIST   ·   {0}",
-   "key": "",
-   "tr": "OUVRIR LA LISTE   ·   {0}"
+   "tr": "OUVRIR LA LISTE"
   },
   {
    "en": "OPS Drop-off",
@@ -3603,6 +4048,11 @@
    "tr": "VOL DE MINERAI"
   },
   {
+   "en": "OUTPOST",
+   "key": "",
+   "tr": "AVANT-POSTE"
+  },
+  {
    "en": "OUTPOST LOST",
    "key": "",
    "tr": "AVANT-POSTE PERDU"
@@ -3611,6 +4061,11 @@
    "en": "OUTPOST SECURED",
    "key": "",
    "tr": "AVANT-POSTE SÉCURISÉ"
+  },
+  {
+   "en": "OVERSEER RATING",
+   "key": "",
+   "tr": "NOTE DU SURVEILLANT"
   },
   {
    "en": "Objectives",
@@ -3628,6 +4083,21 @@
    "tr": "Sur {0}."
   },
   {
+   "en": "One autosave, no manual save or load. Set before New Game.",
+   "key": "",
+   "tr": "Une seule sauvegarde automatique, ni sauvegarde ni chargement manuels. À régler avant une nouvelle partie."
+  },
+  {
+   "en": "One speed step down.",
+   "key": "",
+   "tr": "Un cran de vitesse en moins."
+  },
+  {
+   "en": "One speed step up.",
+   "key": "",
+   "tr": "Un cran de vitesse en plus."
+  },
+  {
    "en": "Open Hands: cheaper flags (hunger +0.26, past the 0.75 greed bypass). Less courage.",
    "key": "",
    "tr": "Mains ouvertes : fanions moins chers (faim +0,26, au-delà du seuil d'avidité de 0,75). Moins de courage."
@@ -3638,9 +4108,39 @@
    "tr": "Mains ouvertes : ils prendront un fanion bon marché. La faim a passé le seuil d'avidité. Le courage, non."
   },
   {
+   "en": "Open a colony from a save slot.",
+   "key": "",
+   "tr": "Ouvrir une colonie depuis un emplacement de sauvegarde."
+  },
+  {
+   "en": "Open a conversation with this robot. It runs on a small model on this computer.",
+   "key": "",
+   "tr": "Ouvrir une conversation avec ce robot. Elle tourne sur un petit modèle sur cet ordinateur."
+  },
+  {
    "en": "Open run: manual slot saves and body restarts stay available.",
    "key": "",
    "tr": "Partie libre : sauvegardes manuelles et redémarrages d'astre toujours disponibles."
+  },
+  {
+   "en": "Open the build catalog. Pick a building, then click open ground to place it.",
+   "key": "",
+   "tr": "Ouvrir le catalogue de construction. Choisissez un bâtiment, puis cliquez sur un terrain dégagé pour le placer."
+  },
+  {
+   "en": "Open the full campaign: guilds, research and every world.",
+   "key": "",
+   "tr": "Ouvrir la campagne complète : guildes, recherche et tous les mondes."
+  },
+  {
+   "en": "Optional handicaps for a harder run.",
+   "key": "",
+   "tr": "Des handicaps facultatifs pour une partie plus dure."
+  },
+  {
+   "en": "Optional rules for the next flag in plain words, like \"stay away unless level 9+\" or \"no scouts\". The line below shows what the robots understood.",
+   "key": "",
+   "tr": "Des règles facultatives pour le prochain fanion, en clair, comme « stay away unless level 9+ » ou « no scouts ». La ligne dessous montre ce que les robots ont compris."
   },
   {
    "en": "Orbital Barrage",
@@ -3753,6 +4253,11 @@
    "tr": "PATROUILLE"
   },
   {
+   "en": "PAY THE YARD",
+   "key": "",
+   "tr": "PAYER LE CHANTIER"
+  },
+  {
    "en": "PAY YARD",
    "key": "",
    "tr": "PAYER LE CHANTIER"
@@ -3818,6 +4323,11 @@
    "tr": "Versé"
   },
   {
+   "en": "Palettes for deuteranopia, protanopia and tritanopia.",
+   "key": "",
+   "tr": "Palettes pour la deutéranopie, la protanopie et la tritanopie."
+  },
+  {
    "en": "Pan Down",
    "key": "",
    "tr": "Défiler vers le bas"
@@ -3836,6 +4346,11 @@
    "en": "Pan Up",
    "key": "",
    "tr": "Défiler vers le haut"
+  },
+  {
+   "en": "Pan the camera when the cursor touches the screen edge.",
+   "key": "",
+   "tr": "Déplacer la caméra quand le curseur touche le bord de l'écran."
   },
   {
    "en": "Party of {0} formed at the rest beacon.",
@@ -3858,6 +4373,11 @@
    "tr": "En patrouille aux Communs."
   },
   {
+   "en": "Pause: save, load, settings, quit.",
+   "key": "",
+   "tr": "Pause : sauvegarder, charger, paramètres, quitter."
+  },
+  {
    "en": "Paused",
    "key": "",
    "tr": "En pause"
@@ -3868,6 +4388,11 @@
    "tr": "Payez des EU ici pour remettre les épaves sur pied."
   },
   {
+   "en": "Pay EU to stand a wrecked robot back up. The bill grows with its level; it takes 120 s.",
+   "key": "",
+   "tr": "Payez des EU pour remettre sur pied un robot en épave. La facture suit son niveau ; il faut 120 s."
+  },
+  {
    "en": "Pay EU to stand wrecks. Bill scales with level.",
    "key": "",
    "tr": "Payez des EU pour relever les épaves. La facture suit le niveau."
@@ -3876,6 +4401,21 @@
    "en": "Pay holds. Then we weld.",
    "key": "",
    "tr": "Paiement d'abord. Ensuite, on soude."
+  },
+  {
+   "en": "Pays a robot to work the build site at the pole. Engineers like these.",
+   "key": "",
+   "tr": "Paie un robot pour travailler sur le chantier au mât. Les ingénieurs les apprécient."
+  },
+  {
+   "en": "Pays a robot to work the resource node at the pole and carry the yield to a drop-off.",
+   "key": "",
+   "tr": "Paie un robot pour exploiter le gisement au mât et porter la récolte à un dépôt."
+  },
+  {
+   "en": "Pays the robot that kills the fauna or den at the pole. Defense mechs like these.",
+   "key": "",
+   "tr": "Paie le robot qui abat la faune ou la tanière au mât. Les mécas de défense les apprécient."
   },
   {
    "en": "Peak population",
@@ -3891,6 +4431,11 @@
    "en": "Perimeter Doctrine. Rim Watch is licensed — they take Defend cheap.",
    "key": "",
    "tr": "Doctrine du périmètre. Rim Watch est agréée — elle prend Défendre à bas prix."
+  },
+  {
+   "en": "Perspective camera: zoom out to see the horizon and the sky.",
+   "key": "",
+   "tr": "Caméra en perspective : dézoomez pour voir l'horizon et le ciel."
   },
   {
    "en": "Pest on the rim — engaging.",
@@ -3918,6 +4463,11 @@
    "tr": "Choisissez un bâtiment · clic gauche sur un terrain libre"
   },
   {
+   "en": "Pick a flag, then click the map to post it. The bounty is held from the treasury until a robot finishes the job.",
+   "key": "",
+   "tr": "Choisissez un fanion, puis cliquez sur la carte pour le poser. La prime est bloquée sur le trésor jusqu'à ce qu'un robot finisse le travail."
+  },
+  {
    "en": "Pick a power · LMB on the map · cost x1-x15 by distance from an uplink",
    "key": "",
    "tr": "Choisissez un pouvoir · clic gauche sur la carte · coût x1-x15 selon la distance à une liaison"
@@ -3941,6 +4491,16 @@
    "en": "Post a bounty of 2,500 EU or more.",
    "key": "",
    "tr": "Affichez une prime de 2 500 EU ou plus."
+  },
+  {
+   "en": "Post a bounty on this building so robots come to work or defend it.",
+   "key": "",
+   "tr": "Poser une prime sur ce bâtiment pour que des robots viennent y travailler ou le défendre."
+  },
+  {
+   "en": "Post a bounty. Robots decide whether it is worth the trip; a bigger bounty tempts more of them.",
+   "key": "",
+   "tr": "Poser une prime. Les robots décident si le trajet en vaut la peine ; une prime plus grosse en tente davantage."
   },
   {
    "en": "Posted {0}  ·  claimed {1}  ·  bots keep their EU share",
@@ -4038,9 +4598,19 @@
    "tr": "RAID"
   },
   {
+   "en": "RAISE BOUNTY",
+   "key": "",
+   "tr": "AUGMENTER LA PRIME"
+  },
+  {
    "en": "RATING {0}  ·  {1}",
    "key": "",
    "tr": "NOTE {0}  ·  {1}"
+  },
+  {
+   "en": "RE-FAB",
+   "key": "",
+   "tr": "REFAB"
   },
   {
    "en": "RE-FAB L1 {0} EU",
@@ -4093,9 +4663,19 @@
    "tr": "RECHERCHE"
   },
   {
+   "en": "RESEARCH SITE",
+   "key": "",
+   "tr": "SITE DE RECHERCHE"
+  },
+  {
    "en": "RESET CONTROLS",
    "key": "",
    "tr": "RÉINITIALISER LES COMMANDES"
+  },
+  {
+   "en": "RESOLUTION",
+   "key": "",
+   "tr": "RÉSOLUTION"
   },
   {
    "en": "RESOLUTION  ·  {0}",
@@ -4113,9 +4693,9 @@
    "tr": "RECOMMENCER LA MISSION"
   },
   {
-   "en": "RESUME   ·   {0}",
+   "en": "RESUME",
    "key": "",
-   "tr": "REPRENDRE   ·   {0}"
+   "tr": "REPRENDRE"
   },
   {
    "en": "RESUME  ·  Esc",
@@ -4136,6 +4716,11 @@
    "en": "ROCK TICK",
    "key": "",
    "tr": "TIQUE DES ROCHES"
+  },
+  {
+   "en": "ROSTER",
+   "key": "",
+   "tr": "EFFECTIF"
   },
   {
    "en": "Radiation outside the Commons — robots take damage far from campus.",
@@ -4223,6 +4808,11 @@
    "tr": "Atteignez une population de 20."
   },
   {
+   "en": "Read hero lines aloud through a local text-to-speech server.",
+   "key": "",
+   "tr": "Lire les répliques des héros à voix haute via un serveur de synthèse vocale local."
+  },
+  {
    "en": "Read the crust. Better mine ticks. Unlocks Geologist shop.",
    "key": "",
    "tr": "Lisez la croûte. Mines plus productives. Débloque la boutique Géologue."
@@ -4246,6 +4836,11 @@
    "en": "Receipt and Warrant",
    "key": "",
    "tr": "Reçu et mandat"
+  },
+  {
+   "en": "Recorded robot barks and the Core's voice. Nothing to install.",
+   "key": "",
+   "tr": "Répliques enregistrées des robots et voix du Noyau. Rien à installer."
   },
   {
    "en": "Red dust. Wisps drain Power ({key:FlagClearThreat}); dust creepers chew farms ({key:FlagDefend}). Hold pop 16, then Belt Hauler.",
@@ -4308,6 +4903,11 @@
    "tr": "Réparation du module"
   },
   {
+   "en": "Replay the advisor's lessons from the start.",
+   "key": "",
+   "tr": "Rejouer les leçons du conseiller depuis le début."
+  },
+  {
    "en": "Replay: {0}. Doctrine nudges hunger/courage/workshop pull only.",
    "key": "",
    "tr": "Rejeu : {0}. La doctrine n'ajuste que faim/courage/attrait des ateliers."
@@ -4351,6 +4951,11 @@
    "en": "Research · {0}",
    "key": "",
    "tr": "Recherche · {0}"
+  },
+  {
+   "en": "Researched.",
+   "key": "",
+   "tr": "Recherchée."
   },
   {
    "en": "Researched. A Landing Pad stages the craft.",
@@ -4421,6 +5026,11 @@
    "en": "Robots scrapped",
    "key": "",
    "tr": "Robots mis à la ferraille"
+  },
+  {
+   "en": "Robots write their own lines with a small local language model. Needs the local server; nothing leaves this computer.",
+   "key": "",
+   "tr": "Les robots écrivent leurs propres répliques avec un petit modèle de langage local. Nécessite le serveur local ; rien ne quitte cet ordinateur."
   },
   {
    "en": "Rock Tick",
@@ -4528,14 +5138,19 @@
    "tr": "LENT"
   },
   {
-   "en": "SLOWER   ·   {0}",
+   "en": "SLOWER",
    "key": "",
-   "tr": "PLUS LENT   ·   {0}"
+   "tr": "PLUS LENT"
   },
   {
    "en": "SOIL CREEPER",
    "key": "",
    "tr": "RAMPEUR DES SOLS"
+  },
+  {
+   "en": "SOL",
+   "key": "",
+   "tr": "SOL"
   },
   {
    "en": "SOL {0}",
@@ -4548,9 +5163,19 @@
    "tr": "CONQUÊTE SOLAIRE ACHEVÉE"
   },
   {
+   "en": "SPOKEN",
+   "key": "",
+   "tr": "PARLÉ"
+  },
+  {
    "en": "SPOKEN · LOCAL TTS",
    "key": "",
    "tr": "VOIX · SYNTHÈSE LOCALE"
+  },
+  {
+   "en": "STANCE",
+   "key": "",
+   "tr": "POSTURE"
   },
   {
    "en": "STANCE  ·  {0}",
@@ -4611,6 +5236,11 @@
    "en": "Satellite pass. Charts every den within 30 m.",
    "key": "",
    "tr": "Passage satellite. Cartographie chaque tanière dans un rayon de 30 m."
+  },
+  {
+   "en": "Satellite powers paid in EU. Cheap next to an uplink, up to 15× the price far from one.",
+   "key": "",
+   "tr": "Des pouvoirs satellites payés en EU. Bon marché près d'une liaison, jusqu'à 15× le prix loin d'elle."
   },
   {
    "en": "Saturation strike. Hits every hostile in 7 m.",
@@ -4803,6 +5433,16 @@
    "tr": "Simulation figée. La sauvegarde auto suit cette colonie. Sauvegarder en garde une copie dans un emplacement numéroté."
   },
   {
+   "en": "Size of the HUD's words only, from 90% to 150%. Panels grow to fit; icons and the map keep their size.",
+   "key": "",
+   "tr": "Taille des seuls textes de l'interface, de 90 % à 150 %. Les panneaux s'agrandissent pour suivre ; les icônes et la carte gardent leur taille."
+  },
+  {
+   "en": "Size of the whole HUD: panels, icons and text. AUTO follows the screen height.",
+   "key": "",
+   "tr": "Taille de toute l'interface : panneaux, icônes et texte. AUTO suit la hauteur de l'écran."
+  },
+  {
    "en": "Skinflint",
    "key": "",
    "tr": "Radin"
@@ -4876,6 +5516,11 @@
    "en": "Something went wrong. Details were saved — Settings → Open logs folder.",
    "key": "",
    "tr": "Un problème est survenu. Les détails ont été enregistrés — Paramètres → Ouvrir le dossier des journaux."
+  },
+  {
+   "en": "Sound, display, text size, accessibility and controls.",
+   "key": "",
+   "tr": "Son, affichage, taille du texte, accessibilité et commandes."
   },
   {
    "en": "Specialist",
@@ -4968,6 +5613,16 @@
    "tr": "Bonus permanent. À débloquer via une technologie ★."
   },
   {
+   "en": "Start over in a save slot of your choice. Other slots stay.",
+   "key": "",
+   "tr": "Recommencer dans l'emplacement de votre choix. Les autres emplacements restent."
+  },
+  {
+   "en": "Start the clock again.",
+   "key": "",
+   "tr": "Relancer le temps."
+  },
+  {
    "en": "Stingshot",
    "key": "",
    "tr": "Tir-dard"
@@ -5006,6 +5661,11 @@
    "en": "Stripping the node.",
    "key": "",
    "tr": "Épuisement du gisement."
+  },
+  {
+   "en": "Studying: {0:F0}% of {1:F0} science.",
+   "key": "",
+   "tr": "En étude : {0:F0} % de {1:F0} de science."
   },
   {
    "en": "Stun Slam",
@@ -5088,6 +5748,16 @@
    "tr": "Essaim : plus de faune (plafond ×1,50) mais apparitions plus lentes (rechargement). Posez {key:FlagDefend}/{key:FlagClearThreat}."
   },
   {
+   "en": "Swing the camera between the home yard and the forward camp.",
+   "key": "",
+   "tr": "Basculer la caméra entre la cour principale et le camp avancé."
+  },
+  {
+   "en": "Switch between fullscreen and a window.",
+   "key": "",
+   "tr": "Basculer entre plein écran et fenêtre."
+  },
+  {
    "en": "T {0:N0} · C {1} · EU {2:N0}",
    "key": "",
    "tr": "T {0:N0} · C {1} · EU {2:N0}"
@@ -5111,6 +5781,16 @@
    "en": "TERR",
    "key": "",
    "tr": "TERR"
+  },
+  {
+   "en": "TERRAFORM",
+   "key": "",
+   "tr": "TERRAFORMER"
+  },
+  {
+   "en": "TEXT SIZE",
+   "key": "",
+   "tr": "TAILLE DU TEXTE"
   },
   {
    "en": "THE CORE",
@@ -5158,6 +5838,11 @@
    "tr": "CAISSES {0:N0} · {1} HAUL · {2:N0} SACS · EU {3:N0}/jour"
   },
   {
+   "en": "TILT-SHIFT",
+   "key": "",
+   "tr": "TILT-SHIFT"
+  },
+  {
    "en": "TILT-SHIFT (DIORAMA)",
    "key": "",
    "tr": "TILT-SHIFT (DIORAMA)"
@@ -5188,6 +5873,11 @@
    "tr": "VILLE"
   },
   {
+   "en": "TREASURY",
+   "key": "",
+   "tr": "TRÉSOR"
+  },
+  {
    "en": "TRY AGAIN — this body is lost.",
    "key": "",
    "tr": "RÉESSAYER — cet astre est perdu."
@@ -5196,6 +5886,11 @@
    "en": "TURN ON HERO LINES",
    "key": "",
    "tr": "ACTIVER LES RÉPLIQUES DES HÉROS"
+  },
+  {
+   "en": "TUTORIAL",
+   "key": "",
+   "tr": "TUTORIEL"
   },
   {
    "en": "TUTORIAL  ·  ON",
@@ -5358,6 +6053,11 @@
    "tr": "Les rochers ont un nom"
   },
   {
+   "en": "The armed pick stays ready; click the map to use it, or here to choose another.",
+   "key": "",
+   "tr": "Le choix armé reste prêt ; cliquez sur la carte pour l'utiliser, ou ici pour en choisir un autre."
+  },
+  {
    "en": "The battery is drained. {0} EU walked off {1}. That was not a sale.",
    "key": "",
    "tr": "La batterie est vide. {0} EU ont filé {1}. Ce n'était pas une vente."
@@ -5448,6 +6148,11 @@
    "tr": "Le champ solaire est dans les comptes. Les feux follets savent lire. Aegis traque la lumière qui ne devrait pas avoir de bouche."
   },
   {
+   "en": "The sun moves through golden hour and a blue-hour night. Off keeps the still look.",
+   "key": "",
+   "tr": "Le soleil passe par l'heure dorée et une nuit d'heure bleue. Désactivé, l'éclairage reste fixe."
+  },
+  {
    "en": "The window to secure the outpost closed. Restart for a tighter run.",
    "key": "",
    "tr": "Le délai pour sécuriser l'avant-poste est écoulé. Recommencez pour une partie plus serrée."
@@ -5493,6 +6198,11 @@
    "tr": "Ceci est la colonne vertébrale industrielle. Pas une seconde cour terrienne. Pas une station de pesée Freehold avec un pire éclairage."
   },
   {
+   "en": "Throw this world away and land again on a new map.",
+   "key": "",
+   "tr": "Abandonner ce monde et atterrir à nouveau sur une nouvelle carte."
+  },
+  {
    "en": "Ticks are stealing from the weigh-station. That is not a den hunt. That is a rim watch with worse lighting.",
    "key": "",
    "tr": "Des tiques volent la station de pesée. Ce n'est pas une chasse aux tanières. C'est une veille du périmètre avec un pire éclairage."
@@ -5521,6 +6231,11 @@
    "en": "Tinkering in town. Raise EU for Build.",
    "key": "",
    "tr": "Bricole en ville. Montez les EU pour Construire."
+  },
+  {
+   "en": "Tired robots work slower and head home to rest and shop.",
+   "key": "",
+   "tr": "Les robots fatigués travaillent plus lentement et rentrent se reposer et faire leurs achats."
   },
   {
    "en": "Toggle Pause",
@@ -5676,6 +6391,16 @@
    "en": "WORK",
    "key": "",
    "tr": "TRAVAIL"
+  },
+  {
+   "en": "WORKER BOTS",
+   "key": "",
+   "tr": "BOTS OUVRIERS"
+  },
+  {
+   "en": "WRITTEN ORDERS",
+   "key": "",
+   "tr": "ORDRES ÉCRITS"
   },
   {
    "en": "Waiting for the local model  ·  Tools/local_ai/start_narrator.sh --no-game",
@@ -5843,6 +6568,31 @@
    "tr": "Soude {0}. La paie tient."
   },
   {
+   "en": "What clears this world. Tick all three and the next world opens.",
+   "key": "",
+   "tr": "Ce qui achève ce monde. Cochez les trois et le monde suivant s'ouvre."
+  },
+  {
+   "en": "What the next flag pays, or the selected pole's bounty. Robots keep their share; the till takes its cut.",
+   "key": "",
+   "tr": "Ce que rapporte le prochain fanion, ou la prime du mât sélectionné. Les robots gardent leur part ; la caisse prend sa commission."
+  },
+  {
+   "en": "What to build first and what it costs.",
+   "key": "",
+   "tr": "Quoi construire d'abord, et à quel prix."
+  },
+  {
+   "en": "Where worker bots recharge. Each station pays EU into its till. Bots raise new ones while the yard is safe; the small line counts solar farms.",
+   "key": "",
+   "tr": "Là où les robots ouvriers se rechargent. Chaque station verse des EU dans sa caisse. Les bots en élèvent de nouvelles tant que la cour est sûre ; la petite ligne compte les fermes solaires."
+  },
+  {
+   "en": "Which robot class this building serves. Flags near it pull that class.",
+   "key": "",
+   "tr": "La classe de robot que sert ce bâtiment. Les fanions proches attirent cette classe."
+  },
+  {
    "en": "Wisps drink grids. Creepers chew furrows. The Compact expects both handled without a Sol accent.",
    "key": "",
    "tr": "Les feux follets boivent les réseaux. Les rampeurs rongent les sillons. Le Compact attend que les deux soient réglés sans accent Sol."
@@ -5956,6 +6706,16 @@
    "en": "You spent robots like ammunition.",
    "key": "",
    "tr": "Vous avez dépensé les robots comme des munitions."
+  },
+  {
+   "en": "Your newest flags, their bounties, and whether a robot has claimed them.",
+   "key": "",
+   "tr": "Vos fanions les plus récents, leurs primes, et si un robot les a pris."
+  },
+  {
+   "en": "Your robots, charging stations, haulers and builder bots at a glance. Hover a chip to see what raises it.",
+   "key": "",
+   "tr": "Vos robots, stations de recharge, porteurs et bots bâtisseurs d'un coup d'œil. Survolez une pastille pour voir ce qui la fait monter."
   },
   {
    "en": "Your workforce turned down more than it took. A low battery, or a hard sell.",
@@ -6473,11 +7233,6 @@
    "tr": "{0:N0} EU/jour"
   },
   {
-   "en": "{0}   ·   recharge {1:0} s",
-   "key": "",
-   "tr": "{0}   ·   recharge {1:0} s"
-  },
-  {
    "en": "{0}  ({1:F0}%)",
    "key": "",
    "tr": "{0}  ({1:F0} %)"
@@ -6541,6 +7296,16 @@
    "en": "{0} EU is sitting in building batteries. Haul will not teleport it.",
    "key": "",
    "tr": "{0} EU dorment dans les batteries des bâtiments. Haul ne va pas les téléporter."
+  },
+  {
+   "en": "{0} EU less. Fewer robots will find the job worth it.",
+   "key": "",
+   "tr": "{0} EU de moins. Moins de robots trouveront le travail rentable."
+  },
+  {
+   "en": "{0} EU more. More robots, and braver ones, will take the job.",
+   "key": "",
+   "tr": "{0} EU de plus. Plus de robots, et des plus courageux, prendront le travail."
   },
   {
    "en": "{0} EU pulled from the tills",
@@ -7049,6 +7814,51 @@
   }
  ],
  "obsolete": [
+  {
+   "en": "FASTER   ·   {0}",
+   "key": "",
+   "tr": "PLUS VITE   ·   {0}"
+  },
+  {
+   "en": "GAME SPEED   ·   1× IS THE COLONY'S NORMAL PACE",
+   "key": "",
+   "tr": "VITESSE DU JEU   ·   1× EST LE RYTHME NORMAL DE LA COLONIE"
+  },
+  {
+   "en": "HOLD   ·   {0}",
+   "key": "",
+   "tr": "SUSPENDRE   ·   {0}"
+  },
+  {
+   "en": "NEEDS {0}",
+   "key": "",
+   "tr": "REQUIERT {0}"
+  },
+  {
+   "en": "OPEN THE FLAG LIST   ·   {0}",
+   "key": "",
+   "tr": "OUVRIR LA LISTE DES FANIONS   ·   {0}"
+  },
+  {
+   "en": "OPEN THE LIST   ·   {0}",
+   "key": "",
+   "tr": "OUVRIR LA LISTE   ·   {0}"
+  },
+  {
+   "en": "RESUME   ·   {0}",
+   "key": "",
+   "tr": "REPRENDRE   ·   {0}"
+  },
+  {
+   "en": "SLOWER   ·   {0}",
+   "key": "",
+   "tr": "PLUS LENT   ·   {0}"
+  },
+  {
+   "en": "{0}   ·   recharge {1:0} s",
+   "key": "",
+   "tr": "{0}   ·   recharge {1:0} s"
+  },
   {
    "en": "3/6  Keep the yard clear of mobs — bots build houses and solar farms that pay EU.",
    "key": "",

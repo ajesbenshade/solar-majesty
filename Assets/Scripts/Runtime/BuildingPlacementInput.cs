@@ -246,6 +246,7 @@ namespace SolarMajesty
                 };
                 _refuseStyle.normal.textColor = new Color(1f, 0.88f, 0.45f);
             }
+            _refuseStyle.fontSize = HudTextScale.Font(14); // follows Settings → TEXT SIZE
 
             // Same scale-from-origin matrix as the overseer HUD, so the refusal tracks UI SCALE.
             DemoSettings.RefreshHudScale(Screen.width, Screen.height);
