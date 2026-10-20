@@ -2598,6 +2598,11 @@
    "tr": "L'hospitalité, ligne par ligne"
   },
   {
+   "en": "House 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "Abritez 20 drones ouvriers dans vos stations de recharge."
+  },
+  {
    "en": "Hunt the Wisps",
    "key": "",
    "tr": "Chasser les feux follets"
@@ -3878,9 +3883,9 @@
    "tr": "Paiement d'abord. Ensuite, on soude."
   },
   {
-   "en": "Peak population",
+   "en": "Peak drones",
    "key": "",
-   "tr": "Pic de population"
+   "tr": "Pic de drones"
   },
   {
    "en": "Perimeter Doctrine",
@@ -4216,11 +4221,6 @@
    "en": "Re-fabricate five scrapped robots and still clear the body.",
    "key": "",
    "tr": "Refabriquez cinq robots mis à la ferraille et terminez quand même l'astre."
-  },
-  {
-   "en": "Reach a population of 20.",
-   "key": "",
-   "tr": "Atteignez une population de 20."
   },
   {
    "en": "Read the crust. Better mine ticks. Unlocks Geologist shop.",
@@ -6938,6 +6938,11 @@
    "tr": "prime {0}/{1}"
   },
   {
+   "en": "{0}/{1} drones",
+   "key": "",
+   "tr": "{0}/{1} drones"
+  },
+  {
    "en": "{0}/{1} left",
    "key": "",
    "tr": "{0}/{1} restants"
@@ -7049,6 +7054,16 @@
   }
  ],
  "obsolete": [
+  {
+   "en": "Peak population",
+   "key": "",
+   "tr": "Pic de population"
+  },
+  {
+   "en": "Reach a population of 20.",
+   "key": "",
+   "tr": "Atteignez une population de 20."
+  },
   {
    "en": "3/6  Keep the yard clear of mobs — bots build houses and solar farms that pay EU.",
    "key": "",

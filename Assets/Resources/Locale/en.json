@@ -2598,6 +2598,11 @@
    "tr": "Hospitality, Itemized"
   },
   {
+   "en": "House 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "House 20 worker drones at your charging stations."
+  },
+  {
    "en": "Hunt the Wisps",
    "key": "",
    "tr": "Hunt the Wisps"
@@ -3878,9 +3883,9 @@
    "tr": "Pay holds. Then we weld."
   },
   {
-   "en": "Peak population",
+   "en": "Peak drones",
    "key": "",
-   "tr": "Peak population"
+   "tr": "Peak drones"
   },
   {
    "en": "Perimeter Doctrine",
@@ -4216,11 +4221,6 @@
    "en": "Re-fabricate five scrapped robots and still clear the body.",
    "key": "",
    "tr": "Re-fabricate five scrapped robots and still clear the body."
-  },
-  {
-   "en": "Reach a population of 20.",
-   "key": "",
-   "tr": "Reach a population of 20."
   },
   {
    "en": "Read the crust. Better mine ticks. Unlocks Geologist shop.",
@@ -6936,6 +6936,11 @@
    "en": "{0}/{1} bounty",
    "key": "",
    "tr": "{0}/{1} bounty"
+  },
+  {
+   "en": "{0}/{1} drones",
+   "key": "",
+   "tr": "{0}/{1} drones"
   },
   {
    "en": "{0}/{1} left",

@@ -48,6 +48,12 @@ namespace SolarMajesty
     {
         private const string PrefsKey = "SM_Achievements";
 
+        /// <summary>
+        /// Homesteader: worker drones housed at once on one world (RunStats.PeakPopulation, the
+        /// Settlement drone census). 20 needs 7 charging stations, or 6 with the Gene Vault.
+        /// </summary>
+        public const int HomesteaderDrones = 20;
+
         private static readonly List<AchievementDef> Defs = new List<AchievementDef>
         {
             new AchievementDef
@@ -110,8 +116,8 @@ namespace SolarMajesty
             {
                 Id = AchievementId.Homesteader,
                 Title = "Homesteader",
-                Description = "Reach a population of 20.",
-                Test = s => s.PeakPopulation >= 20
+                Description = "House 20 worker drones at your charging stations.",
+                Test = s => s.PeakPopulation >= HomesteaderDrones
             },
             new AchievementDef
             {
