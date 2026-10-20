@@ -308,6 +308,9 @@ namespace SolarMajesty
         public float py;
         public float pz;
         public float health;
+        // DensGate.EncodeSlot: 0 den fauna, kingdom spawn table row + 1 (town burrow, edge raider,
+        // wreck junk), -1 scrap-pile junk. Town spawns never hold the dens gate, so Continue keeps the tag.
+        public int townSpawnSlot;
     }
 
     [Serializable]

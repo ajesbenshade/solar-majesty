@@ -49,6 +49,7 @@ namespace SolarMajesty
         private bool _frenzy;
 
         public MissionState State => _state;
+        /// <summary>Living fauna that hold the dens gate (town spawns never do, see <see cref="DensGate"/>).</summary>
         public int StalkersRemaining { get; private set; }
         public bool IsWon => _state == MissionState.Won;
         public bool IsLost => _state == MissionState.Lost;
@@ -290,7 +291,7 @@ namespace SolarMajesty
         {
             if (_loop == null) return;
 
-            StalkersRemaining = CountLivingStalkers();
+            StalkersRemaining = CountDenFauna(_loop.Stalkers);
             RefreshGates();
 
             if (StillCaptureHold.Active)
@@ -369,8 +370,12 @@ namespace SolarMajesty
             LairCount = lairs;
             UnclearedLairs = uncleared;
             StalkersRemaining = stalkers;
-            DensCleared = lairs > 0 ? uncleared <= 0 && stalkers <= 0 : stalkers <= 0;
+            DensCleared = DensGate.Met(lairs, uncleared, stalkers);
         }
+
+        /// <summary>EditMode: the den board with the live fauna list, counted as <see cref="Tick"/> counts it.</summary>
+        internal void SetDenBoardForTests(int lairs, int uncleared, System.Collections.Generic.IReadOnlyList<DustStalkerAgent> fauna) =>
+            SetDenCountsForTests(lairs, uncleared, CountDenFauna(fauna));
 
         /// <summary>
         /// EditMode: the same gate check <see cref="Tick"/> uses, without audio, VFX, or a scene load.
@@ -405,10 +410,7 @@ namespace SolarMajesty
                 UnclearedLairs = _loop.World.UnclearedLairCount;
             }
 
-            if (LairCount > 0)
-                DensCleared = UnclearedLairs <= 0 && StalkersRemaining <= 0;
-            else
-                DensCleared = StalkersRemaining <= 0;
+            DensCleared = DensGate.Met(LairCount, UnclearedLairs, StalkersRemaining);
 
             if (DensCleared && !_loggedDens)
             {
@@ -559,6 +561,23 @@ namespace SolarMajesty
                 }
             }
             return Mathf.Max(0, CountLivingStalkers() - residents);
+        }
+
+        /// <summary>
+        /// Fauna holding the dens gate: alive and not a town spawn. Burrow pests, edge raiders and
+        /// wreck junk keep coming after the last den; counting them flipped the gate open and shut
+        /// (autoplay: repeated "gates 1/3 / 2/3" after every den was cleared).
+        /// </summary>
+        internal static int CountDenFauna(System.Collections.Generic.IReadOnlyList<DustStalkerAgent> fauna)
+        {
+            if (fauna == null) return 0;
+            int n = 0;
+            for (int i = 0; i < fauna.Count; i++)
+            {
+                var s = fauna[i];
+                if (s != null && DensGate.Holds(s.IsAlive, s.IsTownSpawn)) n++;
+            }
+            return n;
         }
 
         private int CountLivingStalkers()

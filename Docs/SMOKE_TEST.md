@@ -53,6 +53,15 @@ lost its first colony there in three runs (it won after **RESTART MISSION**) and
 in a junk-bot spiral, so expect a restart there and read the report before calling a failure a
 regression.
 
+Dens gate after the last den (2026-10-20): town spawns (kingdom-table burrow pests, edge raiders,
+wreck junk, and scrap-pile junk bots) no longer hold the dens gate (`DensGate`); before, each one
+flipped it off until a robot killed it, and the log showed repeated `gates 1/3` / `gates 2/3` lines.
+The run now logs one gate line per world once the last den clears, and warns
+`dens gate reopened after the last den` if anything brings the flicker back; the bot no longer
+filters yard pests out of the gate itself. Only one copy of the game can run at a time ("Another
+instance is already running"): two autoplay runs at once leave the relaunched game on that dialog
+until the script's timeout.
+
 With the camera beats on (`-Beats`, default boost, 2026-10-20, after the steam-release merge): passed
 twice, 16.2 and 15.4 real-min, 0 errors, no restarts. Every victory beat and launch beat ended
 `Completed` (`[CameraBeat] ... ended:` in the Player logs) once the verdict buttons ignored presses
@@ -111,6 +120,7 @@ beat short (`Aborted`).
 - [ ] Belt: dark islets, fat MET nodes, farms starve, **Icebreaker**, **TO EURO**. Seed line shows **LOW-G**. Rock mites and ticks on mines (**F5**). Shard hoppers on HABs (**F2**).
 - [ ] Europa: ice plates, ICE-heavy nodes, PWR draw high, **SOLAR CONQUEST COMPLETE**. Seed line shows **RAD**. Walk a robot off campus — cyan flash and HP drain. Fissure leeches and ice wisps on Power (**F2**). Ice creepers on farms (**F5**).
 - [ ] Clear all dens: overseer log that campus pests scatter by name (creepers, hoppers, mites, ticks, leeches, wisps); they walk off and despawn.
+- [ ] After the last den: town burrow pests, edge raiders and wreck junk keep coming, but the **dens** checkbox stays ticked and the objective moves on (they are bounty work, not the gate).
 - [ ] Launch hop spends freight MET/ICE (or a 12% jettison line if the stockpile cannot pay).
 - [ ] Construction sparks + complete burst; extract ping; each body sun/grade reads different.
 - [ ] No click-to-move. Outdoor units are workshop robots only.

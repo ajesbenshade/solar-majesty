@@ -302,6 +302,7 @@ namespace SolarMajesty
             float lastDecide = -99f, lastStatus = 0f, stallClock = 0f;
             float best = -1f;
             int lastCleared = ClearedLairs(loop), lastTechs = loop.Research?.UnlockedCount ?? 0, lastGates = 0;
+            bool lastDens = false;
             int lastRobots = Robots(loop);
             float statusReal = Time.realtimeSinceStartup;
             int frames = 0;
@@ -373,6 +374,12 @@ namespace SolarMajesty
                 if (gates != lastGates && mission != null)
                     Milestone($"gates {gates}/3 — dens {(mission.DensCleared ? "✓" : "·")} sustain {(mission.SustainComplete ? "✓" : "·")} launch {(mission.LaunchReady ? "✓" : "·")}");
                 lastGates = gates;
+                // The dens gate only closes again if something that counts toward it comes back
+                // after the last den: a regression of the town-burrow flicker (DensGate).
+                bool densNow = mission != null && mission.DensCleared;
+                if (lastDens && !densNow && mission != null && mission.UnclearedLairs <= 0)
+                    Debug.LogWarning(Tag + $"dens gate reopened after the last den ({mission.StalkersRemaining} den fauna alive)");
+                lastDens = densNow;
                 int robots = Robots(loop);
                 if (robots < lastRobots) _body.robotsLost += lastRobots - robots;
                 lastRobots = robots;
@@ -760,23 +767,13 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Dens left to clear, or fauna out in the field that the objective still names. A pest a
-        /// town burrow sends into the yard turns the dens gate off for a few seconds; the robots at
-        /// home hunt it for free, and it is no reason to spend the treasury the sustain gate needs.
+        /// Dens left to clear, or den fauna the objective still names. Town burrow pests no longer
+        /// hold the gate (DensGate), so the gate itself is the answer.
         /// </summary>
         private static bool DensOpen(GameLoop loop)
         {
             var mission = loop.Mission;
-            if (mission == null) return true;
-            if (mission.DensCleared) return false;
-            var world = loop.World;
-            if (world != null)
-                foreach (var l in world.Lairs)
-                    if (l != null && !l.IsCleared) return true;
-            Vector3 hub = ColonyLayout.CampusOrigin;
-            foreach (var s in loop.Stalkers)
-                if (s != null && s.IsAlive && Flat(s.transform.position, hub) >= 30f) return true;
-            return false;
+            return mission == null || !mission.DensCleared;
         }
 
         private static int LaunchBill(GameLoop loop)
@@ -992,14 +989,14 @@ namespace SolarMajesty
             bool stragglers = lairs.Count == 0 && mission != null && !mission.DensCleared;
             if (fighters > 0 && stragglers && pestPoles < 2)
             {
-                // Only the ones out in the field: a pest in the yard is in reach of the robots at
-                // home (town burrows keep sending a few after the dens are quiet), and a 900 EU
-                // pole on every one of them is money the sustain gate needs.
+                // Only fauna that hold the gate: town spawns keep coming after the dens are quiet
+                // and never do (DensGate), and yard pests that are already scattering leave on
+                // their own. The yard ones are left to the robots at home.
                 DustStalkerAgent nearest = null;
                 float best = float.MaxValue;
                 foreach (var s in loop.Stalkers)
                 {
-                    if (s == null || !s.IsAlive) continue;
+                    if (s == null || !s.IsAlive || s.IsTownSpawn || s.IsRetreating) continue;
                     float d = Flat(s.transform.position, hub);
                     if (d < 30f) continue;
                     if (d >= best || HasFlagNear(flags, FlagType.ClearThreat, s.transform.position, 14f)) continue;

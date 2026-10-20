@@ -134,6 +134,119 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(OverseerRules.MaxPressureFauna, loose);
         }
 
+        // ------------------------------------------- town burrows after the last den (gate flicker)
+
+        [Test]
+        public void DensGate_IsEveryDenAndTheirFauna_NotTownSpawns()
+        {
+            Assert.IsTrue(DensGate.Met(lairs: 3, unclearedLairs: 0, denFaunaAlive: 0));
+            Assert.IsFalse(DensGate.Met(3, 1, 0), "a den still standing");
+            Assert.IsFalse(DensGate.Met(3, 0, 1), "a den straggler still alive");
+            Assert.IsTrue(DensGate.Met(0, 0, 0), "a world without dens: just the fauna");
+            Assert.IsFalse(DensGate.Met(0, 0, 2));
+
+            Assert.IsTrue(DensGate.Holds(alive: true, townSpawn: false));
+            Assert.IsFalse(DensGate.Holds(alive: true, townSpawn: true), "burrow pests, raiders, wreck junk");
+            Assert.IsFalse(DensGate.Holds(alive: false, townSpawn: false));
+        }
+
+        [Test]
+        public void TownBurrowPests_DoNotReopenTheDensGate_AfterTheLastDen()
+        {
+            var mission = MakeMission();
+            var fauna = new List<DustStalkerAgent>();
+
+            mission.SetDenBoardForTests(lairs: 3, uncleared: 0, fauna);
+            Assert.IsTrue(mission.DensCleared);
+            Assert.AreEqual(1, mission.GatesComplete);
+
+            // Town burrows keep sending a mite, a hopper, a leech pair; robots kill them; more come.
+            // The autoplay log read "gates 1/3 - dens ·" / "gates 1/3 - dens ✓" over and over.
+            for (int wave = 0; wave < 12; wave++)
+            {
+                var pest = MakeFauna();
+                pest.MarkTownSpawn(wave % 3);
+                fauna.Add(pest);
+                mission.SetDenBoardForTests(3, 0, fauna);
+                Assert.IsTrue(mission.DensCleared, $"wave {wave}: a burrow pest is not a den");
+                Assert.AreEqual(0, mission.StalkersRemaining, "the objective names no fauna to hunt");
+                Assert.AreEqual(1, mission.GatesComplete, "the gate HUD holds still");
+                StringAssert.StartsWith("Sustain", mission.ObjectiveLabel);
+
+                pest.SetHealthForTests(0f);
+                mission.SetDenBoardForTests(3, 0, fauna);
+                Assert.IsTrue(mission.DensCleared);
+            }
+        }
+
+        [Test]
+        public void DenStragglers_StillHoldTheGate_WhileTownPestsDoNot()
+        {
+            var mission = MakeMission();
+            var townPest = MakeFauna();
+            townPest.MarkTownSpawn(0);
+            var straggler = MakeFauna(); // a pressure-wave stalker that wandered off its den
+            var fauna = new List<DustStalkerAgent> { townPest, straggler };
+
+            mission.SetDenBoardForTests(lairs: 3, uncleared: 0, fauna);
+            Assert.IsFalse(mission.DensCleared, "den fauna still hold the gate");
+            Assert.AreEqual(1, mission.StalkersRemaining, "only the straggler is named");
+            StringAssert.StartsWith("Dens quiet — hunt the last 1 fauna", mission.ObjectiveLabel);
+
+            straggler.SetHealthForTests(0f);
+            mission.SetDenBoardForTests(3, 0, fauna);
+            Assert.IsTrue(mission.DensCleared, "the town pest left alive does not matter");
+
+            // A den still standing holds the gate whatever the town is doing.
+            mission.SetDenBoardForTests(3, 1, new List<DustStalkerAgent>());
+            Assert.IsFalse(mission.DensCleared);
+        }
+
+        [Test]
+        public void TownSpawnTag_SurvivesTheSaveFile_AndOldSavesReadAsDenFauna()
+        {
+            var agent = MakeFauna();
+            Assert.IsFalse(agent.IsTownSpawn);
+            Assert.AreEqual(-1, agent.TownSpawnEntry);
+            agent.MarkTownSpawn(2);
+            Assert.IsTrue(agent.IsTownSpawn);
+            Assert.AreEqual(2, agent.TownSpawnEntry);
+
+            var saved = new SaveFauna
+            {
+                kind = (int)FaunaKind.Leech, health = 0.5f,
+                townSpawnSlot = DensGate.EncodeSlot(agent.IsTownSpawn, agent.TownSpawnEntry)
+            };
+            var back = JsonUtility.FromJson<SaveFauna>(JsonUtility.ToJson(saved));
+            Assert.IsTrue(DensGate.DecodeSlot(back.townSpawnSlot, out int row));
+            Assert.AreEqual(2, row, "the row comes back, so its live cap still counts it");
+
+            // Scrap-pile junk is a town spawn outside the table.
+            var junk = MakeFauna();
+            junk.MarkTownSpawn();
+            Assert.IsTrue(junk.IsTownSpawn);
+            Assert.AreEqual(-1, junk.TownSpawnEntry);
+            Assert.IsTrue(DensGate.DecodeSlot(DensGate.EncodeSlot(true, -1), out row));
+            Assert.AreEqual(-1, row);
+
+            Assert.AreEqual(0, DensGate.EncodeSlot(false, -1));
+            var old = JsonUtility.FromJson<SaveFauna>("{\"lairIndex\":-1,\"kind\":1,\"health\":0.5}");
+            Assert.IsFalse(DensGate.DecodeSlot(old.townSpawnSlot, out _), "a save from before the tag restores as den fauna");
+        }
+
+        [Test]
+        public void ScrapPileJunkBots_DoNotHoldTheDensGate()
+        {
+            // Autoplay, Europa: a junk bot off a wrecked robot's scrap pile closed the gate for 90 s
+            // after the last den.
+            var mission = MakeMission();
+            var junk = MakeFauna();
+            junk.MarkTownSpawn();
+            mission.SetDenBoardForTests(lairs: 9, uncleared: 0, new List<DustStalkerAgent> { junk });
+            Assert.IsTrue(mission.DensCleared);
+            Assert.AreEqual(0, mission.StalkersRemaining);
+        }
+
         [Test]
         public void RaidingPests_SitOnTheWall_WhereARobotCanStrikeThem()
         {
@@ -461,6 +574,23 @@ namespace SolarMajesty.Tests
             resident.SetHealthForTests(40f);
             lair.BindRestored(resident);
             return lair;
+        }
+
+        private MissionController MakeMission()
+        {
+            var go = new GameObject("mission");
+            _created.Add(go);
+            var mission = go.AddComponent<MissionController>();
+            mission.ArmForTests(densCleared: false, sustainComplete: false, launchReady: false);
+            return mission;
+        }
+
+        private DustStalkerAgent MakeFauna()
+        {
+            var agent = new GameObject("fauna").AddComponent<DustStalkerAgent>();
+            _created.Add(agent.gameObject);
+            agent.SetHealthForTests(40f);
+            return agent;
         }
 
         private SpecialistAgent MakeHero(FlagManager flags)

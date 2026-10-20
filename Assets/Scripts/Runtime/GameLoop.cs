@@ -4102,19 +4102,23 @@ namespace SolarMajesty
                     if (req.Elite)
                         agent.MakeElite(kingdomThreat.eliteHealthMul, kingdomThreat.eliteBiteMul,
                             kingdomThreat.eliteScaleMul, kingdomThreat.eliteRewardMul);
-                    if (!_kingdomSpawns.TryGetValue(req.EntryIndex, out var list))
-                        _kingdomSpawns[req.EntryIndex] = list = new List<DustStalkerAgent>();
-                    list.Add(agent);
+                    TrackKingdomSpawn(req.EntryIndex, agent);
                     AnnounceKingdomSpawn(req, agent);
                 }
             }
         }
 
-        private bool IsKingdomSpawn(DustStalkerAgent agent)
+        /// <summary>
+        /// Tag a kingdom-table spawn and count it against its row's cap. The tag keeps it off the
+        /// dens gate (<see cref="DensGate"/>) and survives Continue.
+        /// </summary>
+        private void TrackKingdomSpawn(int entry, DustStalkerAgent agent)
         {
-            foreach (var list in _kingdomSpawns.Values)
-                if (list.Contains(agent)) return true;
-            return false;
+            if (agent == null || entry < 0) return;
+            agent.MarkTownSpawn(entry);
+            if (!_kingdomSpawns.TryGetValue(entry, out var list))
+                _kingdomSpawns[entry] = list = new List<DustStalkerAgent>();
+            list.Add(agent);
         }
 
         /// <summary>
@@ -4496,7 +4500,7 @@ namespace SolarMajesty
                 var s = _stalkers[i];
                 if (s == null || !s.IsAlive) continue;
                 if (!DustStalkerAgent.IsCampusPest(s.Kind)) continue;
-                if (IsKingdomSpawn(s)) continue; // town burrows outlive the dens
+                if (s.IsTownSpawn) continue; // town burrows outlive the dens
                 string label = (s.RoleLabelShown ?? s.Kind.ToString()).ToLowerInvariant();
                 if (!names.Contains(label)) names.Add(label);
                 s.BeginRetreat();
@@ -6139,7 +6143,8 @@ namespace SolarMajesty
                     py = p.y,
                     pz = p.z,
                     health = s.Health01,
-                    lairIndex = SavedLairIndex(s)
+                    lairIndex = SavedLairIndex(s),
+                    townSpawnSlot = DensGate.EncodeSlot(s.IsTownSpawn, s.TownSpawnEntry)
                 });
             }
 
@@ -6685,6 +6690,7 @@ namespace SolarMajesty
                     _stalkers[i].DespawnQuiet();
             }
             _stalkers.Clear();
+            _kingdomSpawns.Clear();
 
             if (saved == null) return;
             var lairIndex = new int[saved.Count];
@@ -6701,6 +6707,11 @@ namespace SolarMajesty
                 if (!keep[i] || s.health <= 0.001f) continue;
                 var agent = SpawnFaunaAt((FaunaKind)s.kind, new Vector3(s.px, s.py, s.pz));
                 agent?.RestoreHealth01(s.health);
+                if (agent != null && DensGate.DecodeSlot(s.townSpawnSlot, out int row))
+                {
+                    if (row >= 0) TrackKingdomSpawn(row, agent);
+                    else agent.MarkTownSpawn();
+                }
                 if (lairs != null && lairs.TryGetValue(s.lairIndex, out var owner))
                     owner.TrackRestoredFauna(agent);
             }
@@ -7925,7 +7936,9 @@ namespace SolarMajesty
             Vector3 home = near.sqrMagnitude > 0.01f ? near : yard;
             Vector2 jitter = Random.insideUnitCircle * 2.2f;
             Vector3 spawn = home + new Vector3(jitter.x, 0f, jitter.y);
-            if (SpawnFaunaAt(FaunaKind.JunkBot, spawn) == null) return;
+            var junk = SpawnFaunaAt(FaunaKind.JunkBot, spawn);
+            if (junk == null) return;
+            junk.MarkTownSpawn(); // the colony's own wrecks, not a den: never holds the dens gate
             if (CountFauna(FaunaKind.JunkBot) == 1)
                 LogOverseer(Loc.S("Junk bots rising from the scrap pile — post Clear Threat."));
         }
