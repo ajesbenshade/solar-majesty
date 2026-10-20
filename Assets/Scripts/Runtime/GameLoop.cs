@@ -6118,7 +6118,7 @@ namespace SolarMajesty
                     pz = p.z,
                     health = s.Health01,
                     lairIndex = SavedLairIndex(s),
-                    townSpawnSlot = s.TownSpawnEntry + 1
+                    townSpawnSlot = DensGate.EncodeSlot(s.IsTownSpawn, s.TownSpawnEntry)
                 });
             }
 
@@ -6681,8 +6681,11 @@ namespace SolarMajesty
                 if (!keep[i] || s.health <= 0.001f) continue;
                 var agent = SpawnFaunaAt((FaunaKind)s.kind, new Vector3(s.px, s.py, s.pz));
                 agent?.RestoreHealth01(s.health);
-                if (s.townSpawnSlot > 0)
-                    TrackKingdomSpawn(s.townSpawnSlot - 1, agent);
+                if (agent != null && DensGate.DecodeSlot(s.townSpawnSlot, out int row))
+                {
+                    if (row >= 0) TrackKingdomSpawn(row, agent);
+                    else agent.MarkTownSpawn();
+                }
                 if (lairs != null && lairs.TryGetValue(s.lairIndex, out var owner))
                     owner.TrackRestoredFauna(agent);
             }
@@ -7903,7 +7906,9 @@ namespace SolarMajesty
             Vector3 home = near.sqrMagnitude > 0.01f ? near : yard;
             Vector2 jitter = Random.insideUnitCircle * 2.2f;
             Vector3 spawn = home + new Vector3(jitter.x, 0f, jitter.y);
-            if (SpawnFaunaAt(FaunaKind.JunkBot, spawn) == null) return;
+            var junk = SpawnFaunaAt(FaunaKind.JunkBot, spawn);
+            if (junk == null) return;
+            junk.MarkTownSpawn(); // the colony's own wrecks, not a den: never holds the dens gate
             if (CountFauna(FaunaKind.JunkBot) == 1)
                 LogOverseer(Loc.S("Junk bots rising from the scrap pile — post Clear Threat."));
         }

@@ -212,12 +212,39 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(agent.IsTownSpawn);
             Assert.AreEqual(2, agent.TownSpawnEntry);
 
-            var saved = new SaveFauna { kind = (int)FaunaKind.Leech, health = 0.5f, townSpawnSlot = agent.TownSpawnEntry + 1 };
+            var saved = new SaveFauna
+            {
+                kind = (int)FaunaKind.Leech, health = 0.5f,
+                townSpawnSlot = DensGate.EncodeSlot(agent.IsTownSpawn, agent.TownSpawnEntry)
+            };
             var back = JsonUtility.FromJson<SaveFauna>(JsonUtility.ToJson(saved));
-            Assert.AreEqual(3, back.townSpawnSlot);
+            Assert.IsTrue(DensGate.DecodeSlot(back.townSpawnSlot, out int row));
+            Assert.AreEqual(2, row, "the row comes back, so its live cap still counts it");
 
+            // Scrap-pile junk is a town spawn outside the table.
+            var junk = MakeFauna();
+            junk.MarkTownSpawn();
+            Assert.IsTrue(junk.IsTownSpawn);
+            Assert.AreEqual(-1, junk.TownSpawnEntry);
+            Assert.IsTrue(DensGate.DecodeSlot(DensGate.EncodeSlot(true, -1), out row));
+            Assert.AreEqual(-1, row);
+
+            Assert.AreEqual(0, DensGate.EncodeSlot(false, -1));
             var old = JsonUtility.FromJson<SaveFauna>("{\"lairIndex\":-1,\"kind\":1,\"health\":0.5}");
-            Assert.AreEqual(0, old.townSpawnSlot, "a save from before the tag restores as den fauna");
+            Assert.IsFalse(DensGate.DecodeSlot(old.townSpawnSlot, out _), "a save from before the tag restores as den fauna");
+        }
+
+        [Test]
+        public void ScrapPileJunkBots_DoNotHoldTheDensGate()
+        {
+            // Autoplay, Europa: a junk bot off a wrecked robot's scrap pile closed the gate for 90 s
+            // after the last den.
+            var mission = MakeMission();
+            var junk = MakeFauna();
+            junk.MarkTownSpawn();
+            mission.SetDenBoardForTests(lairs: 9, uncleared: 0, new List<DustStalkerAgent> { junk });
+            Assert.IsTrue(mission.DensCleared);
+            Assert.AreEqual(0, mission.StalkersRemaining);
         }
 
         [Test]

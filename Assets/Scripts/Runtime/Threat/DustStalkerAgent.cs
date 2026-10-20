@@ -334,18 +334,21 @@ namespace SolarMajesty
         public bool IsElite { get; private set; }
 
         /// <summary>
-        /// Row of the kingdom spawn table that sent this creature (town burrow, edge raider, wreck
-        /// junk), or -1 for den residents, pressure waves and campus yard pests.
+        /// Came from the town rather than a den: the kingdom spawn table (town burrow, edge raider,
+        /// wreck junk) or the scrap pile's junk bots. Town spawns keep coming after the dens are
+        /// cleared (Majesty sewers), so they never hold the dens gate (<see cref="DensGate"/>).
         /// </summary>
+        public bool IsTownSpawn { get; private set; }
+
+        /// <summary>Kingdom spawn table row that sent it, or -1 (den fauna, scrap-pile junk).</summary>
         public int TownSpawnEntry { get; private set; } = -1;
 
-        /// <summary>
-        /// Sent by the kingdom spawn table rather than a den. Town spawns keep coming after the dens
-        /// are cleared (Majesty sewers), so they never hold the dens gate (<see cref="DensGate"/>).
-        /// </summary>
-        public bool IsTownSpawn => TownSpawnEntry >= 0;
-
-        public void MarkTownSpawn(int entry) => TownSpawnEntry = Mathf.Max(0, entry);
+        /// <param name="entry">Kingdom spawn table row, or -1 for a town spawn outside the table.</param>
+        public void MarkTownSpawn(int entry = -1)
+        {
+            IsTownSpawn = true;
+            TownSpawnEntry = Mathf.Max(-1, entry);
+        }
 
         /// <summary>Kill purse / XP multiplier (elites pay more).</summary>
         public float RewardMultiplier { get; private set; } = 1f;

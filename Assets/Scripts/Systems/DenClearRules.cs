@@ -157,6 +157,19 @@ namespace SolarMajesty
 
         /// <summary>Whether one creature holds the gate.</summary>
         public static bool Holds(bool alive, bool townSpawn) => alive && !townSpawn;
+
+        /// <summary>
+        /// SaveFauna.townSpawnSlot: 0 den fauna (and every save from before the tag), row + 1 for
+        /// a kingdom spawn table row, -1 for a town spawn outside the table (scrap-pile junk).
+        /// </summary>
+        public static int EncodeSlot(bool townSpawn, int entry) =>
+            !townSpawn ? 0 : entry >= 0 ? entry + 1 : -1;
+
+        public static bool DecodeSlot(int slot, out int entry)
+        {
+            entry = slot > 0 ? slot - 1 : -1;
+            return slot != 0;
+        }
     }
 
     /// <summary>Which saved fauna a Continue is allowed to put back.</summary>
