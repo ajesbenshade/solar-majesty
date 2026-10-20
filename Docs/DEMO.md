@@ -52,7 +52,9 @@ skip it and open the campaign. The **Steam demo** is a separate player built fro
   built) in [STEAM_RELEASE.md → Next Fest demo](STEAM_RELEASE.md#7-next-fest-demo).
 - **Check it:** `Tools\qa\run_autoplay.ps1 -Demo -GameDir Builds\Demo\Windows` plays the demo from New
   Campaign to the end screen (quit + relaunch + Continue on Earth on the way), fails if Luna unlocks or Solar
-  Conquest fires, and saves the end screen as `autoplay-<time>-demo-end.png` next to its report.
+  Conquest fires, and saves the end screen as `autoplay-<time>-demo-end.png` next to its report. The
+  screenshot needs an unlocked desktop: with Windows locked the player renders nothing (OnGUI is not called),
+  so the harness warns "blank frame" instead of saving a grey image.
 - **Ship it:** `Tools\steam\upload_to_steam.ps1 -Demo` to the demo app's depot; the partner-site steps and
   the Next Fest timing are in [STEAM_RELEASE.md](STEAM_RELEASE.md#7-next-fest-demo).
 

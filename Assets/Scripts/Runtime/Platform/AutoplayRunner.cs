@@ -536,9 +536,22 @@ namespace SolarMajesty
             if (!string.IsNullOrEmpty(dir))
             {
                 string shot = Path.Combine(dir, Path.GetFileNameWithoutExtension(_outPath) + "-demo-end.png");
-                ScreenCapture.CaptureScreenshot(shot, 1);
-                Milestone("end-of-demo screen captured → " + shot);
-                yield return WaitReal(1f);
+                yield return new WaitForEndOfFrame();
+                var tex = ScreenCapture.CaptureScreenshotAsTexture();
+                if (tex != null)
+                {
+                    // With the Windows desktop locked the player renders nothing (OnGUI is not even
+                    // called), and the capture is one flat grey. Say so instead of passing it off as evidence.
+                    if (IsFlat(tex))
+                        Debug.LogWarning(Tag + "end-of-demo screenshot is a blank frame (desktop locked or window " +
+                                         "minimized?); not saved. Rerun with the desktop unlocked to see the screen.");
+                    else
+                    {
+                        File.WriteAllBytes(shot, tex.EncodeToPNG());
+                        Milestone("end-of-demo screen captured → " + shot);
+                    }
+                    Destroy(tex);
+                }
             }
 
             Milestone("end-of-demo → \"" + DemoEndOffer.Label(DemoEndOffer.Choice.KeepPlaying) + "\"");
@@ -552,6 +565,20 @@ namespace SolarMajesty
             else if (_failure == null)
                 Milestone("demo complete — Earth keeps running after the end screen");
             _finished = true;
+        }
+
+        /// <summary>True when a sampled grid of pixels is all one colour (nothing was rendered).</summary>
+        private static bool IsFlat(Texture2D tex)
+        {
+            Color first = tex.GetPixel(0, 0);
+            for (int y = 0; y < 8; y++)
+            for (int x = 0; x < 8; x++)
+            {
+                Color c = tex.GetPixel(x * tex.width / 8 + tex.width / 16, y * tex.height / 8 + tex.height / 16);
+                if (Mathf.Abs(c.r - first.r) + Mathf.Abs(c.g - first.g) + Mathf.Abs(c.b - first.b) > 0.02f)
+                    return false;
+            }
+            return true;
         }
 
         // ---------------------------------------------------------------- the player's decisions

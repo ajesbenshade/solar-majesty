@@ -6,7 +6,7 @@ is in it being honest, not in it being all ticked.
 ## Build and pipeline
 
 - [x] Assembly definitions split (`SolarMajesty.Systems` / `.Runtime` / `.Editor` / `.Tests.EditMode`)
-- [x] Automated EditMode tests (854 passing, 2026-10-20)
+- [x] Automated EditMode tests (919 passing, 2026-10-20)
 - [x] CI on push and nightly ([.github/workflows/ci.yml](../.github/workflows/ci.yml))
 - [x] Headless build command ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs))
 - [x] Standalone player builds (macOS verified)
@@ -123,5 +123,8 @@ is in it being honest, not in it being all ticked.
 - [ ] Trademark check on "Solar Majesty"; GitHub repository made private (Asset Store packages are committed)
 - [x] Landing-pad rocket redesigned as the original Colony Lifter (legs, strap-on boosters, domed capsule; no flaps or ogive nose); the Starship placeholder model is out of the build ([render](ReviewEvidence/colony-lifter-pad.png))
 - [ ] Trailer
-- [ ] Demo build for a Next Fest
+- [x] Demo build for a Next Fest: `BuildCommands.BuildWindowsDemo` makes `SolarMajestyDemo.exe` ("Solar Majesty Demo") with the `SM_DEMO` define for that build only (ProjectSettings untouched; checked that the full build's `SolarMajesty.Systems.dll` has `CompiledAsDemo=false` and the demo's `true`). Earth only, guided start locked on, Settings switches that open the campaign hidden, Solar Conquest / Ironman left out, own `DemoSaves` / `DemoProfile`. Earth's win ends on an end-of-demo screen (Wishlist on Steam via the overlay or browser / Keep playing Earth / Quit). `run_autoplay.ps1 -Demo` plays it from New Campaign through a quit + relaunch to the end screen and on (passed 2026-10-20, 0 errors); `upload_to_steam.ps1 -Demo` stages the demo depot (dry-run verified). See [DEMO.md](DEMO.md#steam-demo-build-next-fest) and [STEAM_RELEASE.md](STEAM_RELEASE.md#7-next-fest-demo)
+- [ ] Look at the end-of-demo screen in a build (English and French) and press Wishlist with Steam running: every automated run so far had the desktop locked, so the screen was reached and driven but never seen
+- [ ] Demo app created on Steamworks, its App ID in `SteamConfig.DemoAppId` (480 placeholder today), the real `FullGameAppId` so Wishlist opens our page, demo store presence and build reviewed, Next Fest registration
+- [ ] Full-game import of demo progress (sketched in STEAM_RELEASE.md, not built)
 - [ ] Phase 4 exit review re-run against a fresh still
