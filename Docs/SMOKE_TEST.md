@@ -47,6 +47,12 @@ text), calls what the buttons call instead of moving a mouse, presses the tutori
 seed per world in the default campaign rules (no Ironman, Endless, challenges or stances), and no
 controller or Steam Deck.
 
+Last runs (2026-10-20, Windows release build, `-Boost 10`): passed in 9.6–13.5 real-min. A clean run
+took Earth 19, Luna 30, Mars 39, Belt 31 and Europa 41 sim-minutes. Europa is the hard world: the bot
+lost its first colony there in three runs (it won after **RESTART MISSION**) and stalled once with 0 EU
+in a junk-bot spiral, so expect a restart there and read the report before calling a failure a
+regression.
+
 ---
 
 ## 10-minute boot (must pass)
