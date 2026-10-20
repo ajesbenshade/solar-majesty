@@ -59,7 +59,7 @@ is in it being honest, not in it being all ticked.
 - [x] Tread scrolling on tracked classes
 - [x] Camera shake on impacts, module loss, and construction
 - [x] Edge scroll and mouse wheel zoom
-- [ ] Scripted camera beat for launch and victory
+- [x] Scripted camera beat for launch and victory ([CameraBeatDirector.cs](../Assets/Scripts/Runtime/Motion/CameraBeatDirector.cs); every duration, distance and curve in `CameraBeatTuning` in [CameraBeat.cs](../Assets/Scripts/Systems/CameraBeat.cs)). Launch (7.3 s): ease in to a clear 3/4 view of the pad, ignition hold with flame, pad dust and rumble, crane up as the Colony Lifter climbs out of frame, fade to the next world. Victory (6.9 s, on every body conquest including the last): slow orbit and pull-back over the colony, then the verdict. Skip with Esc, click, or pad A/B/Menu; HUD and name tags hidden, world input blocked (Esc skips instead of pausing), camera restored exactly; the world runs at 1x during a beat and the player's speed or victory hold comes back after; a destroyed lifter or a scene change ends the beat without a softlock. Checked in a release build with `-beatshots` on Mars and Earth, including the real win → verdict → CONTINUE → next world path ([frames](ReviewEvidence/launch-beat/)). Release builds lack `Skybox/Panoramic` (see [GOLDEN_HOUR_AND_SKY.md](GOLDEN_HOUR_AND_SKY.md)), so beats clear to the body's sky colour there instead of the painted panorama
 
 ## Audio
 
@@ -83,7 +83,7 @@ is in it being honest, not in it being all ticked.
 ## Accessibility
 
 - [x] Colourblind palettes: deuteranopia, protanopia, tritanopia ([Accessibility.cs](../Assets/Scripts/Systems/Accessibility.cs))
-- [x] Reduce motion (suppresses camera shake)
+- [x] Reduce motion (suppresses camera shake; the launch and victory beats become short still shots)
 - [x] HUD scale
 - [x] Severity carried by icon and text prefix as well as colour
 - [x] Frame cap selector

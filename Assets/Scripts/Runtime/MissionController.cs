@@ -500,6 +500,11 @@ namespace SolarMajesty
                 ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
                 new Color(0.35f, 0.95f, 0.55f));
             _loop.LogOverseer(offer.Body);
+            // Slow orbit over the colony before the verdict draws (the HUD waits for it).
+            bool spineDone = !ReplayRules.IsEndless && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue;
+            CameraBeatDirector.PlayVictory(_loop, ColonyLayout.CampusOriginFor(_loop.FocusedCampus), spineDone
+                ? Loc.S("THE SOLAR SYSTEM IS YOURS")
+                : Loc.F("{0} CONQUERED", CelestialBodyCatalog.Get(_loop.ActiveBody).DisplayNameText.ToUpperInvariant()));
             if (ReplayRules.IsEndless)
                 Debug.Log("[Mission] Victory — keep colonizing. Rating stands.");
             else

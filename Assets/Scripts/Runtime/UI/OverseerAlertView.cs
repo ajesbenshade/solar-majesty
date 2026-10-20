@@ -40,7 +40,7 @@ namespace SolarMajesty
         private void OnGUI()
         {
             if (Event.current.type == EventType.Layout) _hitRects.Clear();
-            if (_loop == null || _loop.Screen != DemoScreen.Playing) return;
+            if (_loop == null || _loop.Screen != DemoScreen.Playing || CameraBeatDirector.HidesHud) return;
 
             EnsureStyles();
 

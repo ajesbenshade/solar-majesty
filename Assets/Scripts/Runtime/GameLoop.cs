@@ -1723,6 +1723,7 @@ namespace SolarMajesty
         private void HandleSessionHotkeys()
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
+            if (CameraBeatDirector.BlocksInput) return; // Esc skips the camera beat, it does not pause
             // Escape always backs out, whatever Cancel is bound to.
             if (Input.GetKeyDown(KeyCode.Escape) || InputBindings.Down(GameAction.Cancel))
             {
@@ -2393,11 +2394,15 @@ namespace SolarMajesty
                 _overseerHud?.Notify(Loc.S("Something went wrong. Details were saved — Settings → Open logs folder."), 6f);
             if (!IsPlaying) return;
 
-            HandleToolHotkeys();
-            HandleSpeedHotkeys();
-            HandleOverlayHotkeys();
-            HandleSelection();
-            TryCancelFlagUnderCursor();
+            // A camera beat owns input while it plays (and on the frame its skip key lands).
+            if (!CameraBeatDirector.BlocksInput)
+            {
+                HandleToolHotkeys();
+                HandleSpeedHotkeys();
+                HandleOverlayHotkeys();
+                HandleSelection();
+                TryCancelFlagUnderCursor();
+            }
             PushThreatToSpecialists();
             _world?.TickLairs(Placer != null ? Placer.Pieces.Count : 0);
             RefreshPowerBudget();
@@ -5129,7 +5134,26 @@ namespace SolarMajesty
             }
 
             Vector3 pad = ColonyLayout.CampusOrigin + new Vector3(16f, 0f, 0f);
+            // The launch camera beat lights the engines itself and departs when it ends (or is skipped).
+            if (CameraBeatDirector.PlayLaunch(this, LaunchSite.Craft, pad, LaunchCaption(),
+                    () => LaunchSite.PlayDeparture(pad), Depart))
+                return;
             LaunchSite.PlayDeparture(pad);
+            Depart();
+        }
+
+        private string LaunchCaption()
+        {
+            var next = CampaignProgress.NextAfter(celestialBody);
+            return next.HasValue
+                ? Loc.F("LIFTOFF  ·  BOUND FOR {0}", CelestialBodyCatalog.Get(next.Value).DisplayNameText.ToUpperInvariant())
+                : Loc.S("LIFTOFF");
+        }
+
+        /// <summary>Freight, save and travel to the next world. Runs once the launch beat hands off.</summary>
+        private void Depart()
+        {
+            if (this == null) return; // the scene went away under the beat
             string freight = PayInterBodyFreight();
             PersistSession();
             CampaignProgress.UnlockNextFrom(celestialBody);

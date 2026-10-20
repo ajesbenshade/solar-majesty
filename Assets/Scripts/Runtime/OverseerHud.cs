@@ -500,6 +500,11 @@ namespace SolarMajesty
         private void OnGUI()
         {
             if (_loop == null || HideForCapture) return;
+            if (CameraBeatDirector.HidesHud && _loop.Screen == DemoScreen.Playing)
+            {
+                PointerBlocksWorld = true; // the camera beat draws its own letterbox; nothing here is clickable
+                return;
+            }
             EnsureStyles();
             GUI.skin = HudSkin.Skin();
             HandleDebugHopKeys();

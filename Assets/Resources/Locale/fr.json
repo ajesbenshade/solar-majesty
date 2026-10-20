@@ -1543,6 +1543,11 @@
    "tr": "ENTRÉE envoyer  ·  Esc fermer  ·  {0}"
   },
   {
+   "en": "ESC / CLICK  ·  SKIP",
+   "key": "",
+   "tr": "ESC / CLIC  ·  PASSER"
+  },
+  {
    "en": "EU",
    "key": "",
    "tr": "EU"
@@ -2871,6 +2876,16 @@
    "en": "LEVY {0}",
    "key": "",
    "tr": "IMPÔT {0}"
+  },
+  {
+   "en": "LIFTOFF",
+   "key": "",
+   "tr": "DÉCOLLAGE"
+  },
+  {
+   "en": "LIFTOFF  ·  BOUND FOR {0}",
+   "key": "",
+   "tr": "DÉCOLLAGE  ·  CAP SUR {0}"
   },
   {
    "en": "LOAD",
@@ -5088,6 +5103,11 @@
    "tr": "TERR"
   },
   {
+   "en": "THE SOLAR SYSTEM IS YOURS",
+   "key": "",
+   "tr": "LE SYSTÈME SOLAIRE EST À VOUS"
+  },
+  {
    "en": "THREAT",
    "key": "",
    "tr": "MENACE"
@@ -6496,6 +6516,16 @@
    "en": "{0}  ·  {1}\n{2}  ·  RMB cancel{3}  ·  w {4:F1}{5}",
    "key": "",
    "tr": "{0}  ·  {1}\n{2}  ·  clic droit : annuler{3}  ·  p {4:F1}{5}"
+  },
+  {
+   "en": "{0} / {1} / {2}  ·  SKIP",
+   "key": "",
+   "tr": "{0} / {1} / {2}  ·  PASSER"
+  },
+  {
+   "en": "{0} CONQUERED",
+   "key": "",
+   "tr": "{0}  ·  CONQUÊTE ACHEVÉE"
   },
   {
    "en": "{0} EU",
