@@ -1947,7 +1947,7 @@ namespace SolarMajesty
                              celestialBody == CelestialBodyId.Earth &&
                              !StillCaptureHold.Active;
             if (!demoShell)
-                Log.Push("Colony Commons is down — build workshops, houses and shops anywhere nearby.");
+                Log.Push("Colony Commons is down — build workshops, charging stations and shops anywhere nearby.");
             Debug.Log("[GameLoop] Auto-placed Colony Commons on the Campus A claim.");
         }
 
@@ -1992,7 +1992,7 @@ namespace SolarMajesty
                 if (_campusNav != null)
                     NotifyCampusExpanded();
                 SnapCampusCamera();
-                Log.Push("The Commons and a house are down. Build an Engineer workshop anywhere nearby.");
+                Log.Push("The Commons and a charging station are down. Build an Engineer workshop anywhere nearby.");
                 Debug.Log("[GameLoop] First-hour shell placed (Commons, HAB).");
                 return;
             }

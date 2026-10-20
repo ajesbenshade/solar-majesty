@@ -327,9 +327,9 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(3, window.Buildings);
             Assert.IsFalse(window.Flush(59f, false, out _));
             Assert.IsTrue(window.Flush(60f, false, out string line));
-            Assert.AreEqual("Pests lifted 60 EU from 3 building purses.", line);
+            Assert.AreEqual("Pests drained 60 EU from 3 building batteries.", line);
             Assert.AreEqual(
-                "Pests lifted 10 EU from 1 building purse.",
+                "Pests drained 10 EU from 1 building battery.",
                 CompactGrok.PestsLifted(10, 1));
             StringAssert.Contains("20 EU walked off HAB-1", CompactGrok.LevyStolen(20, "HAB-1"));
 

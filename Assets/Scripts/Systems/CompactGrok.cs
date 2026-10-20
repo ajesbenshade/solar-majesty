@@ -6,7 +6,7 @@ namespace SolarMajesty
     public static class CompactGrok
     {
         public static string LevyStolen(int amount, string where) =>
-            $"The purse is gone. {amount} EU walked off {where}. That was not a sale.";
+            $"The battery is drained. {amount} EU walked off {where}. That was not a sale.";
 
         /// <summary>
         /// One line for a burst of purse thefts. Templated (the numbers change), so it is
@@ -15,15 +15,15 @@ namespace SolarMajesty
         public static string PestsLifted(int amount, int buildings)
         {
             int n = buildings < 1 ? 1 : buildings;
-            string purses = n == 1 ? "building purse" : "building purses";
-            return $"Pests lifted {amount} EU from {n} {purses}.";
+            string purses = n == 1 ? "building battery" : "building batteries";
+            return $"Pests drained {amount} EU from {n} {purses}.";
         }
 
         public static string LevyDelivered(int amount) =>
             $"Haul dumped {amount} EU at the chest. The walk was the joke.";
 
         public static string PurseSitting(int amount) =>
-            $"{amount} EU is sitting in building purses. Haul will not teleport it.";
+            $"{amount} EU is sitting in building batteries. Haul will not teleport it.";
 
         public static string YardBill(int credits) =>
             $"The yard wants {credits} EU. Level is the scandal, not the corpse.";

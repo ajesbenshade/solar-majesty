@@ -16,14 +16,14 @@ namespace SolarMajesty.EditorTools
             "What to try (Earth, 10–20 minutes)\n" +
             "----------------------------------\n" +
             "Title is a solar-system orrery. Click Earth. Meadow drop, no starter robots.\n" +
-            "The Colony Commons and one house are already standing.\n" +
+            "The Colony Commons and one charging station are already standing.\n" +
             "Press B, then 1, and place the Engineer workshop anywhere on open ground.\n" +
             "Wait until the robot is standing. You never click-to-move units.\n" +
             "Press G, choose Build, leave the bounty at 700. Watch the Engineer respond.\n" +
             "If ignored, select the flag and press + until tempted. If accepted, continue.\n" +
             "A soil creeper shows up. Press G, F5 Defend, and post it on the bug.\n" +
             "If the pole says ignored, build a Defense workshop (key 2) and post F5 again.\n" +
-            "Keep mobs away: bots build houses and solar farms only while the yard is safe.\n" +
+            "Keep mobs away: bots build charging stations and solar farms only while the yard is safe.\n" +
             "Mines go only at ore deposits (an amber light column marks each, far out): farther\n" +
             "from the Commons pays more energy, but Haul must walk it home and mobs\n" +
             "ambush them on the way. Landing pads and temples also need their marked zones.\n" +
