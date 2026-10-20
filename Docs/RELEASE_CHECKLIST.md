@@ -67,8 +67,9 @@ is in it being honest, not in it being all ticked.
 - [x] Pooled 3D positional one-shots ([SpatialAudio.cs](../Assets/Scripts/Runtime/Audio/SpatialAudio.cs))
 - [x] Adaptive four-stem generative score ([AdaptiveMusic.cs](../Assets/Scripts/Runtime/Audio/AdaptiveMusic.cs))
 - [x] Synthesised Overseer voice and robot chirps ([OverseerVoice.cs](../Assets/Scripts/Runtime/Audio/OverseerVoice.cs))
-- [ ] Existing one-shots migrated from 2D `DemoAudio` to `SpatialAudio`
-- [ ] Missing clips authored: `sfx_extract`, `sfx_build_complete`, `sfx_research` (currently fall through to synthesis)
+- [x] World-located one-shots play through `SpatialAudio`, with a rolloff that follows the overseer camera; UI, alerts, outcomes and research stay 2D ([SfxRouting.cs](../Assets/Scripts/Systems/SfxRouting.cs), [AUDIO.md](AUDIO.md#2d-or-3d)). The 2D fallback covers a missing or non-finite position. One position-less world call remains: caravan gold in `OverseerHud`, which plays 2D.
+- [x] `sfx_extract`, `sfx_build_complete`, `sfx_research`: 3 rendered takes each from `Tools/audio/sfx_events.py`. They were already shipping and the checklist was stale. `DemoAudioRoutingTests` now fails if any event has no authored clip.
+- [ ] Listen pass in a build: 3D balance at default and max zoom, in both the ortho and diorama lenses. The tuning is numeric and hasn't been checked by ear. Positioned SFX at screen centre are now ~6 dB louder than before (their 2D level), so check them against the music and voices.
 
 ## Interface
 
