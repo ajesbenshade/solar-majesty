@@ -523,6 +523,20 @@ namespace SolarMajesty
             PostBounties(loop);
         }
 
+        /// <summary>A workshop with a wreck to re-fab and no re-fab under way.</summary>
+        private static bool WreckWaiting(GameLoop loop)
+        {
+            var village = loop.Village;
+            if (village == null) return false;
+            foreach (var st in village.Structures)
+            {
+                if (st == null || !st.IsAlive || !st.IsWorkshop) continue;
+                var cls = ColonyStructure.RobotClassForWorkshop(st.Category);
+                if (cls.HasValue && loop.HasWreckFor(cls.Value) && loop.RefabAt(st) == null) return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// A scrapped robot leaves a wreck, and the scrap pile raises junk bots every few seconds
         /// until it is gone (Europa: a colony that never re-fabbed lost every robot). The workshop
@@ -629,6 +643,7 @@ namespace SolarMajesty
             var input = loop.BuildInput;
             if (input == null || loop.Grid == null || loop.Placer == null) return;
             if (_body.simSeconds - _lastBuildAt < 4f) return;
+            if (WreckWaiting(loop)) return; // the re-fab is bought first
             var mission = loop.Mission;
             int treasury = Treasury(loop);
             int goal = mission != null ? mission.TreasuryGoal : 5000;
@@ -832,9 +847,11 @@ namespace SolarMajesty
             // The objective says "Clear dens — F2 Clear Threat": the nearest den or two get a
             // Clear Threat bounty as soon as there is someone to fight. A scout, if there is one,
             // charts the next den out so the fight there is shorter.
+            // A wreck waiting for its re-fab raises junk bots until it is gone: that money comes first.
+            bool wreck = WreckWaiting(loop);
             foreach (var lair in lairs)
             {
-                if (fighters == 0 || denPoles >= 2) break;
+                if (fighters == 0 || denPoles >= 2 || wreck) break;
                 if (HasFlagNear(flags, FlagType.ClearThreat, lair.WorldPosition, OverseerRules.ClearThreatSameDenMeters)) continue;
                 if (Post(loop, FlagType.ClearThreat, lair.WorldPosition, 900f, $"den {Flat(lair.WorldPosition, hub):F0} m out"))
                     denPoles++;
@@ -856,13 +873,20 @@ namespace SolarMajesty
                 }
             foreach (var gonePest in new List<DustStalkerAgent>(_pestSince.Keys))
                 if (!seenNow.Contains(gonePest)) _pestSince.Remove(gonePest);
-            if (fighters > 0 && pestPoles == 0 && lairs.Count > 0)
+            // Junk bots come first and at once: they bite robots and take EU from them or the
+            // treasury every couple of seconds ("Junk bots rising from the scrap pile — post Clear Threat").
+            bool junkInYard = false;
+            foreach (var s in seenNow)
+                if (DustStalkerAgent.IsJunk(s.Kind)) { junkInYard = true; break; }
+            if (fighters > 0 && pestPoles == 0 && (lairs.Count > 0 || junkInYard))
             {
                 DustStalkerAgent pest = null;
                 float bestPest = 30f;
                 foreach (var s in seenNow)
                 {
-                    if (_body.simSeconds - _pestSince[s] < 60f) continue;
+                    bool junk = DustStalkerAgent.IsJunk(s.Kind);
+                    if (junkInYard && !junk) continue;
+                    if (!junk && _body.simSeconds - _pestSince[s] < 60f) continue;
                     float d = Flat(s.transform.position, hub);
                     if (d >= bestPest) continue;
                     if (HasFlagNear(flags, FlagType.ClearThreat, s.transform.position, 14f) ||
