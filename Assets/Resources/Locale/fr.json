@@ -1653,6 +1653,11 @@
    "tr": "Maison de défense · Éliminer / Défendre"
   },
   {
+   "en": "Demo: Earth only. Luna, Mars, the Belt, Europa, guilds and replay modes are in the full game.",
+   "key": "",
+   "tr": "Démo : Terre uniquement. Luna, Mars, la Ceinture, Europe, les guildes et les modes de rejeu sont dans le jeu complet."
+  },
+  {
    "en": "Den Breaker",
    "key": "",
    "tr": "Briseur de tanières"
@@ -1788,6 +1793,11 @@
    "tr": "Piège IEM"
   },
   {
+   "en": "END OF THE DEMO",
+   "key": "",
+   "tr": "FIN DE LA DÉMO"
+  },
+  {
    "en": "ENDLESS",
    "key": "",
    "tr": "SANS FIN"
@@ -1886,6 +1896,11 @@
    "en": "Earth holds. The Lunar Rocket is on the pad, not in a toast.",
    "key": "",
    "tr": "La Terre tient. La Fusée lunaire est sur l'aire, pas en train de griller."
+  },
+  {
+   "en": "Earth is secured. Thank you for playing the Solar Majesty demo. In the full game the Colony Lifter flies on to Luna, Mars, the Belt and Europa, with guilds, markets and the whole tech tree. Wishlist it to hear the moment it launches.",
+   "key": "",
+   "tr": "La Terre est sécurisée. Merci d'avoir joué à la démo de Solar Majesty. Dans le jeu complet, le Colony Lifter repart vers Luna, Mars, la Ceinture et Europe, avec les guildes, les marchés et tout l'arbre technologique. Ajoutez-le à votre liste de souhaits pour être prévenu dès sa sortie."
   },
   {
    "en": "Earth outpost lost. Revive the robots or restart the drop.",
@@ -3223,6 +3238,11 @@
    "tr": "CONTINUER LA COLONISATION"
   },
   {
+   "en": "KEEP PLAYING EARTH",
+   "key": "",
+   "tr": "CONTINUER SUR TERRE"
+  },
+  {
    "en": "Keep a copy of this colony in a numbered slot.",
    "key": "",
    "tr": "Garder une copie de cette colonie dans un emplacement numéroté."
@@ -4131,6 +4151,11 @@
    "en": "Open the full campaign: guilds, research and every world.",
    "key": "",
    "tr": "Ouvrir la campagne complète : guildes, recherche et tous les mondes."
+  },
+  {
+   "en": "Opening the Solar Majesty store page…",
+   "key": "",
+   "tr": "Ouverture de la page Steam de Solar Majesty…"
   },
   {
    "en": "Optional handicaps for a harder run.",
@@ -6378,6 +6403,11 @@
    "tr": "FENÊTRÉ"
   },
   {
+   "en": "WISHLIST ON STEAM",
+   "key": "",
+   "tr": "LISTE DE SOUHAITS STEAM"
+  },
+  {
    "en": "WISP",
    "key": "",
    "tr": "FEU FOLLET"
@@ -7451,6 +7481,11 @@
    "en": "{0} is hurt — wait",
    "key": "",
    "tr": "{0} est blessé — attendez"
+  },
+  {
+   "en": "{0} is in the full game. This demo is Earth only.",
+   "key": "",
+   "tr": "{0} est dans le jeu complet. Cette démo se limite à la Terre."
   },
   {
    "en": "{0} is locked. Conquer the inner worlds first — or Shift+click (dev tools).",

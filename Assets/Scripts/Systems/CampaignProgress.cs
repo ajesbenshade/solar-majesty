@@ -97,6 +97,8 @@ namespace SolarMajesty
         {
             if (IsParked(id))
                 return false;
+            if (!DemoBuild.BodyInDemo(id))
+                return false; // the Steam demo is Earth only, whatever the profile says
             return SpineRank(id) <= SpineRank(HighestUnlocked);
         }
 
@@ -115,6 +117,7 @@ namespace SolarMajesty
         public static void UnlockThrough(CelestialBodyId id)
         {
             if ((int)id <= (int)HighestUnlocked) return;
+            if (!DemoBuild.BodyInDemo(id)) return;
             int last = (int)CelestialBodyCatalog.Last;
             int next = Mathf.Clamp((int)id, (int)CelestialBodyId.Earth, last);
             HighestUnlocked = (CelestialBodyId)next;
@@ -131,6 +134,7 @@ namespace SolarMajesty
 
             var next = NextAfter(conquered);
             if (!next.HasValue) return;
+            if (!DemoBuild.BodyInDemo(next.Value)) return; // the demo ends on Earth; the conquest bit is still kept
             if (SpineRank(next.Value) > SpineRank(HighestUnlocked))
             {
                 HighestUnlocked = next.Value;

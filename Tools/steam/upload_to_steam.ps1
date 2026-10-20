@@ -13,6 +13,14 @@
     4. Runs steamcmd +run_app_build. Steam Guard will prompt the first time.
     5. With -Preview, it builds the manifests without uploading, to check file lists.
 
+  -Demo stages the Next Fest demo instead (BuildCommands.BuildWindowsDemo): it expects
+  SolarMajestyDemo.exe and a build_info.txt that says flavour=demo, refuses -AiDir (the demo depot
+  is the player only), and works in Builds\SteamDemo so it never mixes with the game's staging.
+  -AppId / -DepotId are the demo app's own (Steamworks: the game's "Create new Demo"), not the game's.
+
+    powershell -ExecutionPolicy Bypass -File Tools\steam\upload_to_steam.ps1 -Demo `
+        -GameDir Builds\Demo\Windows -AppId 1234570 -DepotId 1234571 -SteamUser my_build_account
+
   The build lands on the branch named by -SetLive (default: none, so nothing reaches players
   until you set it live on the partner site). Never pass "default" here for a release candidate.
 
@@ -30,7 +38,9 @@ param(
   [string]$Description = "Solar Majesty $(Get-Date -Format 'yyyy-MM-dd HH:mm')",
   [string]$SetLive = '',
   [string]$WorkDir = 'Builds\Steam',
-  [switch]$Preview
+  [switch]$Preview,
+  # The Next Fest demo player and depot (see the header).
+  [switch]$Demo
 )
 $ErrorActionPreference = 'Stop'
 function Say($m) { Write-Host "[steam] $m" -ForegroundColor Yellow }
@@ -42,8 +52,26 @@ function Write-NoBom {
 
 if ($AppId -eq 480) { throw 'App 480 is Valve''s test app; upload needs your real app ID.' }
 
+$exeName = 'SolarMajesty.exe'
+if ($Demo) {
+  $exeName = 'SolarMajestyDemo.exe'
+  if ($AiDir) { throw '-Demo ships the player only; the local-AI pack stays in the full game''s depot. Drop -AiDir.' }
+  if (-not $PSBoundParameters.ContainsKey('WorkDir')) { $WorkDir = 'Builds\SteamDemo' }
+  if (-not $PSBoundParameters.ContainsKey('Description')) { $Description = "Solar Majesty Demo $(Get-Date -Format 'yyyy-MM-dd HH:mm')" }
+}
+
 $GameDir = (Resolve-Path $GameDir).Path
-if (-not (Test-Path (Join-Path $GameDir 'SolarMajesty.exe'))) { throw "No SolarMajesty.exe in $GameDir" }
+if (-not (Test-Path (Join-Path $GameDir $exeName))) { throw "No $exeName in $GameDir$(if ($Demo) { ' (build it with BuildCommands.BuildWindowsDemo)' })" }
+# build_info.txt names the flavour (BuildCommands): never ship the demo into the game's depot or the reverse.
+$info = Join-Path $GameDir 'build_info.txt'
+if (Test-Path $info) {
+  $flavour = (Select-String -Path $info -Pattern '^flavour=(\w+)' | Select-Object -First 1)
+  $isDemoBuild = $flavour -and $flavour.Matches[0].Groups[1].Value -eq 'demo'
+  if ($Demo -and -not $isDemoBuild) { throw "$info does not say flavour=demo: this is not a demo build." }
+  if (-not $Demo -and $isDemoBuild) { throw "$info says flavour=demo: upload it with -Demo to the demo app, not the game." }
+} elseif ($Demo) {
+  throw "No build_info.txt in $GameDir; rebuild with BuildCommands.BuildWindowsDemo."
+}
 if (-not (Test-Path (Join-Path $GameDir 'steam_api64.dll')) -and
     -not (Get-ChildItem $GameDir -Recurse -Filter 'steam_api64.dll' -ErrorAction SilentlyContinue)) {
   throw "steam_api64.dll is missing from $GameDir. Rebuild with the Steamworks.NET package installed."

@@ -118,7 +118,9 @@ namespace SolarMajesty.EditorTools
         private static void ConfigurePlayerSettings()
         {
             PlayerSettings.companyName = "SolarMajesty";
-            PlayerSettings.productName = "Solar Majesty Demo";
+            // "Solar Majesty Demo" is the Steam demo player's name (DemoBuild.ProductName), set only
+            // for BuildWindowsDemo. The project itself is the full game.
+            PlayerSettings.productName = "Solar Majesty";
         }
 
         /// <summary>Assign a basic URP pipeline so FBX/Lit materials render (not pink).</summary>

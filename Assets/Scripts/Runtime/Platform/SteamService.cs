@@ -218,6 +218,8 @@ namespace SolarMajesty
 
         private void Unlock(AchievementId id)
         {
+            // The demo app has no achievements on the partner site; demo unlocks stay local.
+            if (!DemoBuild.PushAchievementsToSteam(DemoBuild.Active)) return;
             string api = SteamConfig.AchievementApiName(id);
             if (SteamUserStats.GetAchievement(api, out bool already) && already) return;
             if (SteamUserStats.SetAchievement(api))
@@ -295,6 +297,24 @@ namespace SolarMajesty
             }
 #endif
             Application.OpenURL(url);
+        }
+
+        /// <summary>
+        /// The demo's "Wishlist on Steam": the full game's store page in the Steam overlay (where
+        /// the wishlist button is one click away), or <paramref name="fallbackUrl"/> in the browser
+        /// when Steam or its overlay is unavailable.
+        /// </summary>
+        public static void OpenStorePage(uint appId, string fallbackUrl)
+        {
+#if !DISABLESTEAMWORKS
+            if (Ready && SteamUtils.IsOverlayEnabled())
+            {
+                SteamFriends.ActivateGameOverlayToStore(new AppId_t(appId), EOverlayToStoreFlag.k_EOverlayToStoreFlag_None);
+                return;
+            }
+#endif
+            if (!string.IsNullOrEmpty(fallbackUrl))
+                Application.OpenURL(fallbackUrl);
         }
     }
 }

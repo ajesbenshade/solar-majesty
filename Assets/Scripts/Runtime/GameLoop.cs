@@ -1204,6 +1204,11 @@ namespace SolarMajesty
         public void PlayBodyFromTitle(CelestialBodyId body, bool cheatUnlock)
         {
             cheatUnlock &= DevTools.Enabled;
+            if (!DemoBuild.BodyInDemo(body))
+            {
+                _overseerHud?.Notify(DemoEndOffer.WorldLocked(CelestialBodyCatalog.Get(body)?.DisplayNameText), 4f);
+                return;
+            }
             if (DemoSettings.FirstHourDemo && body != CelestialBodyId.Earth)
             {
                 string craft = Research != null
@@ -2019,7 +2024,7 @@ namespace SolarMajesty
                              celestialBody == CelestialBodyId.Earth &&
                              !StillCaptureHold.Active;
             if (!demoShell)
-                Log.Push(Loc.S("Colony Commons is down — build workshops, charging stations and shops anywhere nearby."));
+                Log.Push(Loc.S("Colony Commons is down — build workshops, charging stations and shops anywhere nearby."));
             Debug.Log("[GameLoop] Auto-placed Colony Commons on the Campus A claim.");
         }
 
@@ -2064,7 +2069,7 @@ namespace SolarMajesty
                 if (_campusNav != null)
                     NotifyCampusExpanded();
                 SnapCampusCamera();
-                Log.Push(Loc.S("The Commons and a charging station are down. Build an Engineer workshop anywhere nearby."));
+                Log.Push(Loc.S("The Commons and a charging station are down. Build an Engineer workshop anywhere nearby."));
                 Debug.Log("[GameLoop] First-hour shell placed (Commons, HAB).");
                 return;
             }
@@ -5145,6 +5150,24 @@ namespace SolarMajesty
                 return; // same rule as ContinueAfterVictory: the verdict is not up during a beat
             _victoryHold = false;
             ReturnToTitle();
+        }
+
+        /// <summary>True while a won world holds the sim behind its verdict (or the demo's end screen).</summary>
+        public bool VictoryHeld => _victoryHold;
+
+        /// <summary>
+        /// Steam demo end screen, KEEP PLAYING EARTH: release the victory hold and run the won colony
+        /// as a sandbox. Same beat rule as <see cref="ContinueAfterVictory"/>.
+        /// </summary>
+        public void ContinueAfterDemoEnd()
+        {
+            if (CameraBeatDirector.Active)
+                return;
+            _victoryHold = false;
+            _mission?.DismissWinToSandbox();
+            if (SimSpeed.IsPaused)
+                SimSpeed.Resume();
+            Time.timeScale = SimSpeed.TimeScale;
         }
 
         /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>

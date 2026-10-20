@@ -20,6 +20,7 @@ namespace SolarMajesty
 
         public static bool ShowBody(CelestialBodyId id)
         {
+            if (DemoBuild.Active) return DemoBuild.BodyInDemo(true, id); // Steam demo: Earth only
             if (!DemoSettings.FirstHourDemo) return true;
             return id != CelestialBodyId.Belt && id != CelestialBodyId.Europa;
         }

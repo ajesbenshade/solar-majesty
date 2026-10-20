@@ -40,9 +40,10 @@ attorney. Keep the store copy free of comparisons to *Majesty* (it currently has
 
 ## 2. Swap in the real App ID (code, 2 minutes)
 
-In `Assets/Scripts/Systems/Platform/SteamConfig.cs` change `AppId = 480` to your App ID.
+In `Assets/Scripts/Systems/Platform/SteamConfig.cs` change `FullGameAppId = TestAppId` to your App ID
+(and `DemoAppId` once the demo app exists, see [section 7](#7-next-fest-demo)).
 `RelaunchThroughSteam` turns itself on for any ID other than 480. Then rebuild.
-`SteamConfigTests` keeps the 480 safety rule honest.
+`SteamConfigTests` keeps the 480 safety rule honest for both the game and the demo.
 
 ## 3. Steamworks app configuration
 
@@ -159,6 +160,74 @@ the game collects nothing; playtest telemetry and error logs stay on the player'
 8. Hero voices · local AI on: a hero speaks a generated line within about a minute. Then start with
    `-noai`: no `llama-server` process appears.
 9. Unplug the network and start from the exe with Steam closed: the game still plays (achievements wait).
+
+## 7. Next Fest demo
+
+The demo is a **separate player** and, on Steam, a **separate app**. It plays Earth to its win and then
+shows an end-of-demo screen: **Wishlist on Steam** (the full game's store page in the Steam overlay, or the
+browser without Steam), **Keep playing Earth**, **Quit**. What it locks and why is in
+[DEMO.md → Steam demo build](DEMO.md#steam-demo-build-next-fest).
+
+**What the code already does**
+
+| Area | Where | Notes |
+|---|---|---|
+| Demo build | `BuildCommands.BuildWindowsDemo` ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs)) | `SM_DEMO` via `extraScriptingDefines` for that build only; product name "Solar Majesty Demo", `SolarMajestyDemo.exe`, bundle id `…solarmajesty.demo`, all put back afterwards. ProjectSettings never change |
+| Demo rules | [DemoBuild.cs](../Assets/Scripts/Systems/Platform/DemoBuild.cs), [DemoEndOffer.cs](../Assets/Scripts/Systems/DemoEndOffer.cs) | Earth only, end screen, no Solar Conquest / Ironman, own folders. Tested in `DemoBuildTests` |
+| Demo App ID | `SteamConfig.DemoAppId` | **480 placeholder (TODO)**. The demo player reads it; `steam_appid.txt` and `build_info.txt` carry it |
+| Wishlist target | `SteamConfig.StorePageUrl` | Always the **full game's** page (`FullGameAppId`), never the demo's |
+| Saves | `LocalLow\SolarMajesty\Solar Majesty Demo\DemoSaves`, `…\DemoProfile` | Can never collide with the game's `Saves` / `Profile` |
+| Achievements | local only in the demo | The demo app has none on the partner site; `SteamService` does not call `SetAchievement` there |
+| Upload | `upload_to_steam.ps1 -Demo` | Checks for `SolarMajestyDemo.exe`, refuses the AI pack, stages into `Builds\SteamDemo` |
+
+**On the partner site (you)**
+
+1. Base game app → **All Associated Packages, DLC, Demos and Tools** → **Create new Demo**. Steam creates the
+   demo app with its own **App ID** and a free package. Note the demo's **depot ID** (usually demo App ID + 1).
+2. Put the IDs in code: `SteamConfig.DemoAppId` (and `FullGameAppId` if it is still 480). `SteamConfigTests`
+   checks the demo ID differs from the game's and that a real demo ID never sits under a 480 game ID.
+3. Demo app → **Installation → General**: executable `SolarMajestyDemo.exe`, Windows 64-bit, no arguments.
+   No AI pack: the demo depot is the player only (a few hundred MB, not 4 GB).
+4. Demo app → **Steam Cloud** (optional): Auto-Cloud root `WinAppDataLocalLow`, subdirectories
+   `SolarMajesty/Solar Majesty Demo/DemoSaves` and `SolarMajesty/Solar Majesty Demo/DemoProfile`.
+5. No achievements, stats or rich presence on the demo app. Leave them on the full game only.
+6. Choose how the demo shows: the **Download Demo** button on the game's store page (default), and optionally
+   its own demo store page. Fill in the demo's store presence and submit it for **review**; the demo build is
+   reviewed too. Allow a few business days.
+7. Build, stage and upload:
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.5.10f1\Editor\Unity.exe" -batchmode -quit -projectPath . `
+  -executeMethod SolarMajesty.EditorTools.BuildCommands.BuildWindowsDemo -smBuildPath Builds\Demo -smVersion 0.9.0 -logFile demo-build.log
+
+powershell -ExecutionPolicy Bypass -File Tools\qa\run_autoplay.ps1 -Demo -GameDir Builds\Demo\Windows   # Earth → end screen
+
+powershell -ExecutionPolicy Bypass -File Tools\steam\upload_to_steam.ps1 -Demo -GameDir Builds\Demo\Windows `
+  -AppId <DEMO_APP_ID> -DepotId <DEMO_DEPOT_ID> -SteamUser <build_account> -Description "Demo 0.9.0 Next Fest"
+```
+
+   Set it live on a private branch first, install it through Steam on a clean PC, play Earth to the end
+   screen and press **Wishlist on Steam**: the overlay must open the **full game's** page.
+
+**Next Fest timing.** Steam Next Fest runs three times a year (February, June and October, about a week each).
+Valve's rules change between editions, so read the current *Steam Next Fest* page under Steamworks →
+*Upcoming Events* before planning. As of writing, the rules that shape our schedule are:
+
+- **Register** on that page before its deadline, typically about two months ahead of the event.
+- The game must be **unreleased**, with a **public Coming Soon store page**. A game takes part in **one** Next
+  Fest only, so do not spend it on a rough demo.
+- The demo must be **approved and live** before the event, in time for the press preview (around a week
+  before), and stay available for the whole festival.
+- Valve recommends launching the demo shortly **before** the fest rather than months earlier, because the
+  festival traffic is what the demo is for. Expect most wishlists in the festival week itself.
+- Budget for the demo store review, the build review, the upload, and a clean-PC install check: about **three
+  weeks** before the press preview.
+
+**Importing demo progress later (not built).** The demo writes its own `DemoProfile\prefs.json` (Earth's
+conquest bit, tutorial done, settings) and `DemoSaves\` (save slots plus Earth's `world0.json`). The full game could offer "continue from
+the demo" by reading those from `..\Solar Majesty Demo\` on first launch. The save format is the same
+versioned `SaveSystem` file, so the import would be a copy plus `CampaignProgress.MarkConquered(Earth)`.
+Nothing does this yet.
 
 ## Still open before Early Access
 

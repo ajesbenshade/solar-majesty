@@ -8,7 +8,7 @@ namespace SolarMajesty
     /// mission stakes, specialist cards (selected only), win/fail banners.
     /// DebugHud stays on F8 for deep scores.
     /// </summary>
-    public class OverseerHud : MonoBehaviour
+    public partial class OverseerHud : MonoBehaviour
     {
         // Smoked glass over the world, brass for structure, orange only for what is live.
         // Palette and baked chrome live in HudSkin so the alert feed matches.
@@ -2872,6 +2872,12 @@ namespace SolarMajesty
             if (StillCaptureHold.Active || ReplayRules.IsEndless || _winDismissed) return false;
             var mission = _loop.Mission;
             if (mission == null || !mission.IsWon) return false;
+            if (DemoEndOffer.Applies(_loop.ActiveBody, won: true, endless: false))
+            {
+                if (!_loop.VictoryHeld) return false; // KEEP PLAYING EARTH released it
+                DrawDemoEnd(); // Steam demo: OverseerHud.DemoEnd.cs
+                return true;
+            }
             bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
             DrawCampaignVictory(VictoryOffer.For(_loop.ActiveBody, nextBuilt, endless: false));
             return true;
@@ -3620,15 +3626,18 @@ namespace SolarMajesty
             y += RowStep;
 
             bool marsLessons = DemoSettings.MarsJexLessons;
-            if (Chip(new Rect(c.x, y, c.width, RowH),
-                    marsLessons ? Loc.S("MARS JEX LESSONS  ·  ON") : Loc.S("MARS JEX LESSONS  ·  OFF"),
-                    marsLessons, HudTips.MarsLessons()))
+            if (!DemoBuild.Active) // Luna/Mars lessons: not in the Earth-only Steam demo
             {
-                DemoSettings.MarsJexLessons = !DemoSettings.MarsJexLessons;
-                DemoSettings.SaveSettings();
+                if (Chip(new Rect(c.x, y, c.width, RowH),
+                        marsLessons ? Loc.S("MARS JEX LESSONS  ·  ON") : Loc.S("MARS JEX LESSONS  ·  OFF"),
+                        marsLessons, HudTips.MarsLessons()))
+                {
+                    DemoSettings.MarsJexLessons = !DemoSettings.MarsJexLessons;
+                    DemoSettings.SaveSettings();
+                }
+                y += RowH + 2f;
+                y = WrapBlock(c, y, Loc.S("Luna: Jex lectures. Mars: failure asides unless lessons are on.")) + 6f;
             }
-            y += RowH + 2f;
-            y = WrapBlock(c, y, Loc.S("Luna: Jex lectures. Mars: failure asides unless lessons are on.")) + 6f;
 
             y = DrawControls(c, y);
 
@@ -3638,11 +3647,16 @@ namespace SolarMajesty
             {
                 FitLabel(new Rect(c.x, y, c.width, L(14f)), Loc.S("GUIDED START"), _section);
                 y += L(18f);
-                if (Chip(new Rect(c.x, y, c.width, RowH), Loc.S("SKIP GUIDED START"), false, HudTips.GuidedStart(true)))
-                    _loop.SetFirstHourDemo(false);
-                y += RowH + 4f;
-                y = WrapBlock(c, y,
-                    Loc.S("Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before."));
+                if (DemoBuild.Active)
+                    y = WrapBlock(c, y, DemoEndOffer.SettingsNote); // no way out of the Earth demo
+                else
+                {
+                    if (Chip(new Rect(c.x, y, c.width, RowH), Loc.S("SKIP GUIDED START"), false, HudTips.GuidedStart(true)))
+                        _loop.SetFirstHourDemo(false);
+                    y += RowH + 4f;
+                    y = WrapBlock(c, y,
+                        Loc.S("Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before."));
+                }
             }
             else
             {

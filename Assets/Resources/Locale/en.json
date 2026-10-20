@@ -1653,6 +1653,11 @@
    "tr": "Defense hall · Clear / Defend"
   },
   {
+   "en": "Demo: Earth only. Luna, Mars, the Belt, Europa, guilds and replay modes are in the full game.",
+   "key": "",
+   "tr": "Demo: Earth only. Luna, Mars, the Belt, Europa, guilds and replay modes are in the full game."
+  },
+  {
    "en": "Den Breaker",
    "key": "",
    "tr": "Den Breaker"
@@ -1788,6 +1793,11 @@
    "tr": "EMP Snare"
   },
   {
+   "en": "END OF THE DEMO",
+   "key": "",
+   "tr": "END OF THE DEMO"
+  },
+  {
    "en": "ENDLESS",
    "key": "",
    "tr": "ENDLESS"
@@ -1886,6 +1896,11 @@
    "en": "Earth holds. The Lunar Rocket is on the pad, not in a toast.",
    "key": "",
    "tr": "Earth holds. The Lunar Rocket is on the pad, not in a toast."
+  },
+  {
+   "en": "Earth is secured. Thank you for playing the Solar Majesty demo. In the full game the Colony Lifter flies on to Luna, Mars, the Belt and Europa, with guilds, markets and the whole tech tree. Wishlist it to hear the moment it launches.",
+   "key": "",
+   "tr": "Earth is secured. Thank you for playing the Solar Majesty demo. In the full game the Colony Lifter flies on to Luna, Mars, the Belt and Europa, with guilds, markets and the whole tech tree. Wishlist it to hear the moment it launches."
   },
   {
    "en": "Earth outpost lost. Revive the robots or restart the drop.",
@@ -3223,6 +3238,11 @@
    "tr": "KEEP COLONIZING"
   },
   {
+   "en": "KEEP PLAYING EARTH",
+   "key": "",
+   "tr": "KEEP PLAYING EARTH"
+  },
+  {
    "en": "Keep a copy of this colony in a numbered slot.",
    "key": "",
    "tr": "Keep a copy of this colony in a numbered slot."
@@ -4131,6 +4151,11 @@
    "en": "Open the full campaign: guilds, research and every world.",
    "key": "",
    "tr": "Open the full campaign: guilds, research and every world."
+  },
+  {
+   "en": "Opening the Solar Majesty store page…",
+   "key": "",
+   "tr": "Opening the Solar Majesty store page…"
   },
   {
    "en": "Optional handicaps for a harder run.",
@@ -6378,6 +6403,11 @@
    "tr": "WINDOWED"
   },
   {
+   "en": "WISHLIST ON STEAM",
+   "key": "",
+   "tr": "WISHLIST ON STEAM"
+  },
+  {
    "en": "WISP",
    "key": "",
    "tr": "WISP"
@@ -7451,6 +7481,11 @@
    "en": "{0} is hurt — wait",
    "key": "",
    "tr": "{0} is hurt — wait"
+  },
+  {
+   "en": "{0} is in the full game. This demo is Earth only.",
+   "key": "",
+   "tr": "{0} is in the full game. This demo is Earth only."
   },
   {
    "en": "{0} is locked. Conquer the inner worlds first — or Shift+click (dev tools).",

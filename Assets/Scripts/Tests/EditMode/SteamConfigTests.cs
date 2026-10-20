@@ -52,6 +52,42 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void TestApp_NeverRelaunchesThroughSteam_InEitherFlavour()
+        {
+            // The demo player reads DemoAppId; the same 480 rule must hold for it.
+            foreach (bool demo in new[] { false, true })
+            {
+                uint app = SteamConfig.AppIdFor(demo);
+                if (SteamConfig.IsTestAppId(app))
+                    Assert.That(SteamConfig.RelaunchThroughSteamFor(app), Is.False, demo ? "demo" : "full");
+                else
+                    Assert.That(SteamConfig.RelaunchThroughSteamFor(app), Is.True, demo ? "demo" : "full");
+            }
+            Assert.That(SteamConfig.AppId, Is.EqualTo(SteamConfig.FullGameAppId), "the editor is the full game");
+        }
+
+        [Test]
+        public void DemoApp_IsItsOwnApp_OnceRealIdsAreIn()
+        {
+            // Placeholders may both be 480. A real demo ID must not reuse the game's, and a demo
+            // app only exists under a real game app, so a real demo ID needs the real game ID too
+            // (the wishlist button would otherwise send players to Spacewar's page).
+            bool fullTest = SteamConfig.IsTestAppId(SteamConfig.FullGameAppId);
+            bool demoTest = SteamConfig.IsTestAppId(SteamConfig.DemoAppId);
+            if (!fullTest && !demoTest)
+                Assert.That(SteamConfig.DemoAppId, Is.Not.EqualTo(SteamConfig.FullGameAppId));
+            if (!demoTest)
+                Assert.That(fullTest, Is.False, "the demo App ID is in but the game's is still 480");
+        }
+
+        [Test]
+        public void Wishlist_GoesToTheFullGamesStorePage()
+        {
+            Assert.That(SteamConfig.StorePageUrl,
+                Is.EqualTo("https://store.steampowered.com/app/" + SteamConfig.FullGameAppId + "/"));
+        }
+
+        [Test]
         public void NoSteamArg_IsCaseInsensitive()
         {
             Assert.That(SteamConfig.SteamDisabledByArgs(new[] { "Game.exe", "-NoSteam" }), Is.True);

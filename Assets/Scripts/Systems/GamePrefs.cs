@@ -20,7 +20,8 @@ namespace SolarMajesty
     /// </summary>
     public static class GamePrefs
     {
-        private const string FolderName = "Profile";
+        /// <summary>"Profile", or "DemoProfile" in the Steam demo so it never touches the game's campaign.</summary>
+        private static string FolderName => DemoBuild.ProfileFolder(DemoBuild.CompiledAsDemo);
         private const string EditorFolderName = "Profile-Editor";
         private const string FileName = "prefs.json";
         private const int FileVersion = 1;
