@@ -297,6 +297,9 @@ namespace SolarMajesty.Tests
         {
             Assert.AreEqual("CHARGERS", OverseerHud.ChargersLabel);
             Assert.AreEqual(IconId.Charger, OverseerHud.ChipIconFor(OverseerHud.ChargersLabel));
+            var art = UiIcons.Get(IconId.Charger);
+            Assert.IsNotNull(art, "CHARGERS icon art loads");
+            Assert.AreSame(Resources.Load<Texture2D>(UiIcons.ChargerIconPath), art, "uses the authored icon, not a procedural one");
             Assert.IsNull(OverseerHud.ChipIconFor("HOUSES"), "the old label is gone; nothing should still key on it");
         }
 
