@@ -1005,7 +1005,7 @@ namespace SolarMajesty
                 research.TrySelect(id);
 
             string mark = done ? Loc.S("DONE") : active ? "…" : can ? Loc.S("GO") : "—";
-            GUI.Label(new Rect(row.x + 6f, row.y + 2f, row.width - 52f, 16f), def.DisplayName, _value);
+            GUI.Label(new Rect(row.x + 6f, row.y + 2f, row.width - 52f, 16f), def.DisplayNameText, _value);
             var prev = _microRight.normal.textColor;
             _microRight.normal.textColor = done ? Good : can ? TextPrimary : TextMuted;
             GUI.Label(new Rect(row.xMax - 44f, row.y + 2f, 40f, 16f), mark, _microRight);
@@ -1698,7 +1698,7 @@ namespace SolarMajesty
             HudSkin.RuleH(new Rect(rect.x, rect.y, rect.width, 1f), Accent);
 
             float row = c.y;
-            GUI.Label(new Rect(c.x, row, c.width, 16f), st.DisplayName, _value);
+            GUI.Label(new Rect(c.x, row, c.width, 16f), Loc.S(st.DisplayName), _value);
             row += 18f;
 
             string role = st.IsWorkshop
