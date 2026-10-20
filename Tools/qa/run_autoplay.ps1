@@ -36,6 +36,9 @@ param(
   [int]$Quality = -1,
   [string]$OutDir = 'Builds\Autoplay\Reports',
   [switch]$FailFast,
+  # Leave the victory / launch camera beats on (they are skipped with -nobeats by default, which
+  # keeps the run fast; the harness waits on game state either way).
+  [switch]$Beats,
   [switch]$KeepTemp,
   [string]$ExtraArgs = ''
 )
@@ -70,6 +73,7 @@ function Invoke-Game([string]$extra, [string]$log, [int]$budgetSeconds) {
   if ($FailFast) { $gameArgs += " -autoplayFailFast" }
   if ($Quality -ge 0) { $gameArgs += " -autoplayQuality $Quality" }
   if ($From) { $gameArgs += " -autoplayFrom $From" }
+  if (-not $Beats) { $gameArgs += " -nobeats" }
   if ($ExtraArgs) { $gameArgs += " $ExtraArgs" }
   $p = Start-Process $exe -ArgumentList $gameArgs -PassThru
   if (-not $p.WaitForExit($budgetSeconds * 1000)) {

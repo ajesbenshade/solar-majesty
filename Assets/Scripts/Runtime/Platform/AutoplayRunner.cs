@@ -454,8 +454,13 @@ namespace SolarMajesty
                 if (!CampaignProgress.IsUnlocked(next.Value))
                     Fail($"victory on {bodyId} did not unlock {next.Value}");
                 Milestone($"victory → \"{offer.ContinueLabel}\" (launch)");
-                Loop.ContinueAfterVictory(); // the Continue to … button
-                yield return WaitFor(() => Loop != null && Loop.IsPlaying && Loop.ActiveBody == next.Value,
+                // The Continue to … button. Wait on the next world, not on time: a victory camera
+                // beat can hold the panel back and a launch shot can play before the load. A press
+                // the game ignored (panel not up yet) is pressed again; one it took is not.
+                var won = Loop;
+                yield return PressUntil(() => won.ContinueAfterVictory(),
+                    () => Loop != null && Loop.IsPlaying && Loop.ActiveBody == next.Value,
+                    () => won != null && won.ActiveBody == bodyId && won.Mission != null && won.Mission.IsWon,
                     120f, $"arrival on {next.Value}");
                 yield break;
             }
@@ -471,8 +476,11 @@ namespace SolarMajesty
             if (offer.CanContinue)
                 Fail("the last world offers a launch to nowhere");
             Milestone("campaign complete — victory → Main Menu");
-            Loop.ExitVictoryToTitle(); // the Main Menu button
-            yield return WaitFor(() => Loop != null && Loop.Screen == DemoScreen.Title, 30f, "the title after the campaign");
+            var last = Loop;
+            yield return PressUntil(() => last.ExitVictoryToTitle(), // the Main Menu button
+                () => Loop != null && Loop.Screen == DemoScreen.Title,
+                () => last != null && last.IsPlaying,
+                60f, "the title after the campaign");
             yield return WaitReal(1f);
             // The finished campaign still Continues, into its won world.
             Loop.ContinueGame();
@@ -512,10 +520,15 @@ namespace SolarMajesty
                 pick = FirstSelectableTowards(r, launch, new HashSet<TechId>());
             if (pick == TechId.None)
             {
-                // Then whatever the panel recommends, skipping the costly secret projects.
+                // Then whatever the panel recommends, skipping the costly secret projects. A tech
+                // with an EU bill on completion takes that money the moment it is there, so it waits
+                // until the treasury has more than this world's goal (bounties come first).
+                int goal = loop.Mission != null ? loop.Mission.TreasuryGoal : 5000;
+                bool flush = Treasury(loop) > goal;
                 foreach (var t in TechCatalog.All)
                 {
                     if (t.SecretProject || !r.CanSelect(t.Id)) continue;
+                    if (!flush && t.CompleteCost != null && t.CompleteCost.Length > 0) continue;
                     pick = t.Id;
                     break;
                 }
@@ -553,12 +566,12 @@ namespace SolarMajesty
         {
             (BuildingCategory.EngineerWorkshop, 1, true),
             (BuildingCategory.DefenseWorkshop, 1, true),
-            (BuildingCategory.ScoutWorkshop, 1, true),
-            (BuildingCategory.Laboratory, 1, true),
             (BuildingCategory.Farm, 1, true),
             (BuildingCategory.DefenseWorkshop, 2, true),
             (BuildingCategory.LandingPad, 1, true),
+            (BuildingCategory.Laboratory, 1, false),
             (BuildingCategory.Market, 1, false),
+            (BuildingCategory.ScoutWorkshop, 1, false),
             (BuildingCategory.MedicWorkshop, 1, false),
             (BuildingCategory.Watchtower, 1, false),
             (BuildingCategory.SentinelWorkshop, 1, false),
@@ -638,6 +651,9 @@ namespace SolarMajesty
             if (cost != null)
                 foreach (var c in cost)
                     if (c.resource == ResourceId.Metals) metals += c.amount;
+            // A workshop is only worth it with the money to hire its robot when it is done.
+            var cls = ColonyStructure.RobotClassForWorkshop(data.category);
+            if (cls.HasValue) metals += MajestyEconomy.HireCost(cls.Value);
             return metals;
         }
 
@@ -747,6 +763,7 @@ namespace SolarMajesty
             {
                 if (f?.Data == null) continue;
                 if (f.Data.flagType == FlagType.Explore) explorePoles++;
+                if (f.Data.flagType == FlagType.DefendArea) { pestPoles++; continue; }
                 if (f.Data.flagType != FlagType.ClearThreat) continue;
                 bool onDen = false;
                 foreach (var l in lairs)
@@ -764,6 +781,33 @@ namespace SolarMajesty
                 if (Post(loop, FlagType.ClearThreat, lair.WorldPosition, 900f, $"den {Flat(lair.WorldPosition, hub):F0} m out"))
                     denPoles++;
             }
+
+            // Pests in the yard: leeches on the power node, mites at the purses and a halted
+            // village bleed the treasury (the advisor says to post a flag). Robots only hunt what
+            // is within reach of where they stand, so a pest across the yard waits for a price.
+            // One cheap pole at a time; with too little for a den bounty this comes first, since
+            // a bled treasury never gets there.
+            if (fighters > 0 && pestPoles == 0 && lairs.Count > 0)
+            {
+                DustStalkerAgent pest = null;
+                float bestPest = 30f;
+                foreach (var s in loop.Stalkers)
+                {
+                    if (s == null || !s.IsAlive) continue;
+                    float d = Flat(s.transform.position, hub);
+                    if (d >= bestPest) continue;
+                    if (HasFlagNear(flags, FlagType.ClearThreat, s.transform.position, 14f) ||
+                        HasFlagNear(flags, FlagType.DefendArea, s.transform.position, 14f)) continue;
+                    bestPest = d;
+                    pest = s;
+                }
+                // Creepers, mites and ticks answer to Defend Area (the advisor says so; the pole
+                // itself wears them down while a robot holds it); the rest to Clear Threat.
+                var kind = pest != null && DustStalkerAgent.UsesDefendCounter(pest.Kind) ? FlagType.DefendArea : FlagType.ClearThreat;
+                if (pest != null && Post(loop, kind, pest.transform.position, 300f,
+                        $"{pest.RoleLabel} {bestPest:F0} m from the Commons"))
+                    pestPoles++;
+            }
             foreach (var lair in lairs)
             {
                 if (scouts == 0 || explorePoles >= 1) break;
@@ -774,28 +818,28 @@ namespace SolarMajesty
                     explorePoles++;
             }
 
-            // Pests in the yard, or stragglers left once the dens are quiet: a price on the nearest one.
+            // Dens quiet but the objective still names fauna: a price on the nearest stragglers.
             var mission = loop.Mission;
             bool stragglers = lairs.Count == 0 && mission != null && !mission.DensCleared;
-            // A den still waiting for its pole comes first; yard pests only with money to spare.
-            bool denWaiting = lairs.Count > 0 && denPoles == 0;
-            bool spare = !denWaiting || Treasury(loop) > 2000;
-            if (fighters > 0 && pestPoles < (stragglers ? 2 : 1) && (stragglers || spare))
+            if (fighters > 0 && stragglers && pestPoles < 2)
             {
+                // Only the ones out in the field: a pest in the yard is in reach of the robots at
+                // home (town burrows keep sending a few after the dens are quiet), and a 900 EU
+                // pole on every one of them is money the sustain gate needs.
                 DustStalkerAgent nearest = null;
-                float best = stragglers ? float.MaxValue : 28f;
+                float best = float.MaxValue;
                 foreach (var s in loop.Stalkers)
                 {
                     if (s == null || !s.IsAlive) continue;
                     float d = Flat(s.transform.position, hub);
-                    if (d >= best) continue;
-                    if (HasFlagNear(flags, FlagType.ClearThreat, s.transform.position, 14f)) continue;
+                    if (d < 30f) continue;
+                    if (d >= best || HasFlagNear(flags, FlagType.ClearThreat, s.transform.position, 14f)) continue;
                     best = d;
                     nearest = s;
                 }
                 if (nearest != null)
-                    Post(loop, FlagType.ClearThreat, nearest.transform.position, stragglers ? 900f : 500f,
-                        $"{nearest.RoleLabel} {best:F0} m from the Commons");
+                    Post(loop, FlagType.ClearThreat, nearest.transform.position, 900f,
+                        $"straggler {nearest.RoleLabel} {best:F0} m from the Commons");
             }
 
             // Nobody on it after a minute: read the pole. Out of everyone's reach, take it down
@@ -810,8 +854,8 @@ namespace SolarMajesty
                 string pole = f.InterestLabel ?? "";
                 bool tooFar = f.InterestCount == 0 && pole.IndexOf("too far", StringComparison.OrdinalIgnoreCase) >= 0;
                 // A pole on a yard pest that has moved off or died has nothing left to clear.
-                bool stalePest = f.Data.flagType == FlagType.ClearThreat && !NearDen(world, f.WorldPosition) &&
-                                 !FaunaNear(loop, f.WorldPosition, 15f);
+                bool stalePest = (f.Data.flagType == FlagType.ClearThreat || f.Data.flagType == FlagType.DefendArea) &&
+                                 !NearDen(world, f.WorldPosition) && !FaunaNear(loop, f.WorldPosition, 15f);
                 if (tooFar || stalePest)
                 {
                     if (tooFar) _refusedSpots.Add(f.WorldPosition);
@@ -1046,10 +1090,28 @@ namespace SolarMajesty
         private void EnsureRunning(GameLoop loop)
         {
             // Continue and Load hold the world (HOLD); a player presses the speed button to go on.
-            if (SimSpeed.Index == TopSpeedIndex && !SimSpeed.IsPaused) return;
-            SimSpeed.Set(TopSpeedIndex);
-            loop.OnSpeedChanged();
+            if (SimSpeed.Index != TopSpeedIndex || SimSpeed.IsPaused)
+            {
+                SimSpeed.Set(TopSpeedIndex);
+                loop.OnSpeedChanged();
+            }
+
+            // Keep each frame's slice of world time small: on a slow frame (another game on the
+            // GPU, a loading hitch) the boost backs off instead of moving robots and fauna a whole
+            // second per frame while the fixed-step economy drops the excess.
+            _frameDt = Mathf.Lerp(_frameDt, Mathf.Clamp(Time.unscaledDeltaTime, 0.001f, 0.25f), 0.05f);
+            float topScale = SimSpeed.Multipliers[TopSpeedIndex] * SimSpeed.BasePace;
+            float want = Mathf.Clamp(MaxSimStep / (topScale * _frameDt), 1f, _boost);
+            if (Mathf.Abs(want - SimSpeed.HarnessBoost) > 0.25f)
+            {
+                SimSpeed.HarnessBoost = want;
+                loop.ApplySimSpeed();
+            }
         }
+
+        /// <summary>Most world time one frame may take (four 20 Hz steps).</summary>
+        private const float MaxSimStep = 0.2f;
+        private float _frameDt = 1f / 60f;
 
         private static void DismissCutscenes(GameLoop loop)
         {
@@ -1066,6 +1128,37 @@ namespace SolarMajesty
                 try { ok = done(); }
                 catch (Exception) { ok = false; }
                 if (ok) yield break;
+                yield return null;
+            }
+            Fail($"timed out after {realSeconds:0} s waiting for {what}");
+        }
+
+        /// <summary>
+        /// Press a button, then wait for the state it leads to. If the game is still in the state
+        /// where the press should have counted (<paramref name="stillThere"/>) after a while, the
+        /// press was not taken (a camera beat held the panel back) and it is pressed again. The
+        /// gap is longer than a launch shot, so a press that was taken is never doubled.
+        /// </summary>
+        private IEnumerator PressUntil(Action press, Func<bool> done, Func<bool> stillThere, float realSeconds, string what)
+        {
+            const float Repress = 12f;
+            float until = Time.realtimeSinceStartup + realSeconds;
+            float next = 0f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                bool ok;
+                try { ok = done(); }
+                catch (Exception) { ok = false; }
+                if (ok) yield break;
+                bool again;
+                try { again = stillThere(); }
+                catch (Exception) { again = false; }
+                if (again && Time.realtimeSinceStartup >= next)
+                {
+                    if (next > 0f) Milestone("press again — " + what);
+                    press();
+                    next = Time.realtimeSinceStartup + Repress;
+                }
                 yield return null;
             }
             Fail($"timed out after {realSeconds:0} s waiting for {what}");
@@ -1126,10 +1219,17 @@ namespace SolarMajesty
             foreach (var a in loop.Agents)
             {
                 if (a == null || a.Data == null) continue;
-                sb.AppendFormat(CultureInfo.InvariantCulture, " {0}:{1}/{2} f{3:F2} h{4:F2} {5:F0}m{6}",
+                var nav = a.GetComponent<UnityEngine.AI.NavMeshAgent>();
+                string path = nav == null || !nav.enabled ? "noagent"
+                    : !nav.isOnNavMesh ? "offmesh"
+                    : nav.pathPending ? "pending"
+                    : !nav.hasPath ? "nopath"
+                    : nav.pathStatus == UnityEngine.AI.NavMeshPathStatus.PathComplete ? "path"
+                    : nav.pathStatus == UnityEngine.AI.NavMeshPathStatus.PathPartial ? "partial" : "invalid";
+                sb.AppendFormat(CultureInfo.InvariantCulture, " {0}:{1}/{2} f{3:F2} h{4:F2} {5:F0}m {6}{7}{8}",
                     ColonyStructure.ClassLabel(a.Data.specialistClass), a.CurrentAction, a.LastReason,
-                    a.Fatigue, a.HealthNormalized, Flat(a.transform.position, hub),
-                    a.IsIncapacitated ? " DOWN" : "");
+                    a.Fatigue, a.HealthNormalized, Flat(a.transform.position, hub), path,
+                    a.IsIncapacitated ? " DOWN" : "", RouteToTarget(loop, a));
             }
             sb.Append(" ] fauna[");
             var kinds = new SortedDictionary<string, (int n, float near, float far)>();
@@ -1147,6 +1247,47 @@ namespace SolarMajesty
             return sb.ToString();
         }
 
+        /// <summary>
+        /// For a robot on a Clear Threat walk: what lies between it and the target. The longest run
+        /// of water on the straight line, and whether the NavMesh has a dry path there.
+        /// </summary>
+        private static string RouteToTarget(GameLoop loop, SpecialistAgent a)
+        {
+            if (loop.World == null) return "";
+            var f = a.ActiveFlag;
+            Vector3 from = a.transform.position, to;
+            if (f?.Data != null && f.Data.flagType == FlagType.ClearThreat)
+            {
+                to = f.WorldPosition;
+                var lair = loop.World.FindNearestLair(to, 12f);
+                if (lair != null) to = lair.WorldPosition;
+            }
+            else if (a.LastReason == "clear_threat_yield")
+            {
+                StalkerLair nearest = null;
+                foreach (var l in loop.World.Lairs)
+                    if (l != null && !l.IsCleared && (nearest == null || Flat(l.WorldPosition, from) < Flat(nearest.WorldPosition, from)))
+                        nearest = l;
+                if (nearest == null) return "";
+                to = nearest.WorldPosition;
+            }
+            else return "";
+            float len = Flat(from, to), wetRun = 0f, longest = 0f;
+            for (float s = 0f; s <= len; s += 1f)
+            {
+                Vector3 p = Vector3.Lerp(from, to, len > 0f ? s / len : 1f);
+                if (loop.World.IsOverWater(p, 0.35f)) { wetRun += 1f; longest = Mathf.Max(longest, wetRun); }
+                else wetRun = 0f;
+            }
+            string dry = "?";
+            var path = new UnityEngine.AI.NavMeshPath();
+            if (UnityEngine.AI.NavMesh.SamplePosition(new Vector3(from.x, 0.02f, from.z), out var hs, 8f, UnityEngine.AI.NavMesh.AllAreas) &&
+                UnityEngine.AI.NavMesh.SamplePosition(new Vector3(to.x, 0.02f, to.z), out var he, 16f, UnityEngine.AI.NavMesh.AllAreas) &&
+                UnityEngine.AI.NavMesh.CalculatePath(hs.position, he.position, UnityEngine.AI.NavMesh.AllAreas, path))
+                dry = path.status.ToString();
+            return string.Format(CultureInfo.InvariantCulture, " →target {0:F0}m wet {1:F0}m dry:{2}", len, longest, dry);
+        }
+
         private float _treasuryHigh;
 
         private float ProgressScore(GameLoop loop)
@@ -1157,6 +1298,10 @@ namespace SolarMajesty
             if (t > _treasuryHigh) _treasuryHigh = t;
             float score = 0f;
             if (m != null) score += m.GatesComplete * 1000f + Mathf.Floor(m.SustainElapsed / 5f) * 5f;
+            // Fewer fauna than ever before on this world is progress toward the dens gate (the
+            // straggler hunt after the last den can take a while).
+            if (m != null && m.StalkersRemaining < _faunaLow) _faunaLow = m.StalkersRemaining;
+            score += Mathf.Max(0, 300 - _faunaLow) * 5f;
             score += ClearedLairs(loop) * 200f;
             if (loop.World != null)
                 foreach (var l in loop.World.Lairs) if (l != null && l.IsScouted) score += 40f;
@@ -1171,11 +1316,14 @@ namespace SolarMajesty
 
         private BodyRun FindBodyRun(CelestialBodyId id)
         {
-            foreach (var b in _state.bodies)
-                if (b.body == id.ToString()) { _treasuryHigh = 0f; return b; }
             _treasuryHigh = 0f;
+            _faunaLow = int.MaxValue;
+            foreach (var b in _state.bodies)
+                if (b.body == id.ToString()) return b;
             return null;
         }
+
+        private int _faunaLow = int.MaxValue;
 
         private static int Treasury(GameLoop loop) => loop.Resources != null ? loop.Resources.Get(ResourceId.Metals) : 0;
 
