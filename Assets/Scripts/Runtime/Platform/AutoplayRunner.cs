@@ -94,6 +94,7 @@ namespace SolarMajesty
             public int techsStarted;
             public int densCleared;
             public int robotsLost;
+            public int refabs;
             public string winHeadline;
             public List<string> milestones = new List<string>();
         }
@@ -506,9 +507,35 @@ namespace SolarMajesty
                 Milestone("tutorial — SKIP (step " + loop.TutorialStep + ")");
                 loop.SkipTutorial(); // the tutorial bar's SKIP
             }
+            Refab(loop);
             ChooseResearch(loop, body);
             Build(loop);
             PostBounties(loop);
+        }
+
+        /// <summary>
+        /// A scrapped robot leaves a wreck, and the scrap pile raises junk bots every few seconds
+        /// until it is gone (Europa: a colony that never re-fabbed lost every robot). The workshop
+        /// panel's RE-FAB chip builds a level-1 robot from the wreck; press it as soon as it is
+        /// affordable, before anything else is bought.
+        /// </summary>
+        private void Refab(GameLoop loop)
+        {
+            var village = loop.Village;
+            if (village == null) return;
+            foreach (var st in village.Structures)
+            {
+                if (st == null || !st.IsAlive || !st.IsWorkshop) continue;
+                var cls = ColonyStructure.RobotClassForWorkshop(st.Category);
+                if (!cls.HasValue || !loop.HasWreckFor(cls.Value) || loop.RefabAt(st) != null) continue;
+                int met = OverseerRules.RefabMetals(st.SourceData);
+                if (Treasury(loop) < met) continue;
+                if (loop.TryRefabRookie(st))
+                {
+                    _body.refabs++;
+                    Milestone($"RE-FAB {ColonyStructure.ClassLabel(cls.Value)} at {st.DisplayName} ({met} EU)");
+                }
+            }
         }
 
         private void ChooseResearch(GameLoop loop, CelestialBodyId body)

@@ -110,7 +110,17 @@ if (Test-Path $report) {
   $j = Get-Content $report -Raw -Encoding UTF8 | ConvertFrom-Json
   ""
   "{0}  {1:N1} real-min  relaunches {2}  errors {3}  {4}" -f ($(if ($j.passed) { 'PASSED' } else { 'FAILED' })), ($j.realSeconds / 60), $j.relaunches, $j.errorCount, $j.failure
-  $j.bodies | Select-Object body, won, @{n = 'simMin'; e = { [math]::Round($_.simSeconds / 60, 1) } }, @{n = 'realMin'; e = { [math]::Round($_.realSeconds / 60, 1) } }, buildingsPlaced, bountiesPosted, densCleared, restarts, settingsChecked, saveLoadChecked, titleContinueChecked, relaunchChecked | Format-Table -AutoSize | Out-String -Width 300
+  # Plain lines: Format-Table drops columns that do not fit the console, whatever Out-String's width.
+  # checks = settings / save-load / title-Continue / relaunch (+ done, - not on this world).
+  $row = "{0,-7} {1,-5} {2,6} {3,7} {4,5} {5,8} {6,4} {7,10} {8,6} {9,8} {10,6}"
+  $row -f 'body', 'won', 'simMin', 'realMin', 'built', 'bounties', 'dens', 'robotsLost', 'refabs', 'restarts', 'checks'
+  foreach ($b in $j.bodies) {
+    $checks = (@($b.settingsChecked, $b.saveLoadChecked, $b.titleContinueChecked, $b.relaunchChecked) |
+      ForEach-Object { if ($_) { '+' } else { '-' } }) -join ''
+    $row -f $b.body, $b.won, ('{0:N1}' -f ($b.simSeconds / 60)), ('{0:N1}' -f ($b.realSeconds / 60)),
+      $b.buildingsPlaced, $b.bountiesPosted, $b.densCleared, $b.robotsLost, $b.refabs, $b.restarts, $checks
+  }
+  ""
   "report: $report"
 } else {
   Write-Warning "No summary written (exit $code)."
