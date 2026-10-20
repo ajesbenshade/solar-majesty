@@ -115,6 +115,9 @@ and run the smoke list below before you touch `default`.
 | Trailer | recommended; gameplay first in the first 5 seconds |
 
 No third-party marks anywhere in these: no SpaceX, Starship, xAI or Grok names or logos.
+All eight graphics, plus the community icon (184×184 JPG) and the client icon (`.ico`), are ready
+in [Docs/StoreArt](StoreArt/README.md), with where each one goes; rebuild them with
+`Tools/steam/make_store_art.py`.
 
 **Content survey: AI-generated content disclosure** (required). An honest starting point:
 
@@ -163,7 +166,7 @@ These are tracked in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) and are not so
 
 - The uncoached 45–90 minute external playtest (the largest open risk).
 - A profiling pass on minimum-spec hardware, then the system requirements.
-- Achievement icons and store art.
+- Upload the store and library art ([Docs/StoreArt](StoreArt/README.md)) and give it a human artist pass.
 - Controller support (leave it unclaimed until done).
 - Make the GitHub repository private. It contains Unity Asset Store packages (BOXOPHOBIC, Kevin Iglesias,
   Polytope Studio) whose license does not allow public redistribution of their source files.

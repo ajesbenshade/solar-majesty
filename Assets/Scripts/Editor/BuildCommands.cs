@@ -41,6 +41,7 @@ namespace SolarMajesty.EditorTools
         private static bool Run(BuildTarget target, string folder, string artifact)
         {
             ShaderVariantKeeper.Create(); // runtime glass / glow must survive variant stripping
+            AppIconSetup.EnsureAssigned(); // no-op when ProjectSettings already carry the icon
             string version = ArgValue("-smVersion");
             if (!string.IsNullOrEmpty(version))
                 PlayerSettings.bundleVersion = version;

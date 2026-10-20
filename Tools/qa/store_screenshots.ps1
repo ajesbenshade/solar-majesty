@@ -3,6 +3,7 @@
 
     powershell -ExecutionPolicy Bypass -File Tools\qa\store_screenshots.ps1 -GameDir Builds\SteamRC\Windows
     ... -Bodies Earth,Mars -Run 40 -OutDir Docs\StoreShots
+    ... -Keyart     (adds large HUD-free renders for Tools/steam/make_store_art.py)
 
   For each world: a working colony, a crew of every robot class, bounties on the nearest dens,
   some time running at 2x, then 1920x1080 captures with and without the HUD. Keep the desktop
@@ -14,6 +15,7 @@ param(
   [int]$Run = 35,
   [string]$OutDir = 'Builds\StoreShots',
   [switch]$Diorama,
+  [switch]$Keyart,
   # Passed through to the game, e.g. "-language qps" to check text in the pseudo-language.
   [string]$ExtraArgs = ''
 )
@@ -32,11 +34,12 @@ $gameArgs = "-storeshots `"$OutDir`" -storeshotBodies $Bodies -storeshotRun $Run
   "-nosteam -noai -screen-width 1920 -screen-height 1080 -screen-fullscreen 0 " +
   "-logFile `"$(Join-Path $tmp 'Player.log')`""
 if ($Diorama) { $gameArgs += " -diorama" }
+if ($Keyart) { $gameArgs += " -storeshotKeyart" }
 if ($ExtraArgs) { $gameArgs += " $ExtraArgs" }
 
 Write-Host "[shots] $Bodies -> $OutDir" -ForegroundColor Yellow
 $p = Start-Process $exe -ArgumentList $gameArgs -PassThru
-$budget = 120 + ($Bodies.Split(',').Count * ($Run + 90))
+$budget = 120 + ($Bodies.Split(',').Count * ($Run + $(if ($Keyart) { 330 } else { 90 })))
 if (-not $p.WaitForExit($budget * 1000)) {
   Stop-Process -Id $p.Id -Force
   throw "Screenshots did not finish in $budget s. Log: $(Join-Path $tmp 'Player.log')"
