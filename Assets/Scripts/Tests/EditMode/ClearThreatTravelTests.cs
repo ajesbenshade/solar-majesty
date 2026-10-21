@@ -101,6 +101,14 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void ReleaseMessage_KeepsPrefix_AndAddsDenDistanceRoute()
+        {
+            string msg = SpecialistAgent.ClearThreatReleaseMessage("Defense Mech", "StalkerLair_3", 14.26f, "ford");
+            StringAssert.StartsWith(ReleaseLog, msg);
+            Assert.AreEqual(ReleaseLog + " den=StalkerLair_3 dist=14.3m route=ford", msg);
+        }
+
+        [Test]
         public void Approach_StandsOutsideTheFootprint_AndInsideAttackRange()
         {
             Vector3 den = new Vector3(48f, 0f, 0f);
@@ -197,7 +205,8 @@ namespace SolarMajesty.Tests
 
                 Sim(hero, 12f, 1f);
                 Assert.AreEqual(1, hits);
-                Assert.AreEqual(ReleaseLog, last);
+                StringAssert.StartsWith(ReleaseLog, last);
+                StringAssert.IsMatch(@" den=\S.* dist=\d+\.\dm route=(corner|ford|fallback|direct)$", last);
                 Assert.AreEqual(0, flag.ClaimCount);
                 Assert.IsNull(hero.ActiveFlag);
                 Assert.AreNotEqual(SpecialistAction.PursueFlag, hero.CurrentAction);

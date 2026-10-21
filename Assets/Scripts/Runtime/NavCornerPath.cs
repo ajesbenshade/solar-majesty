@@ -49,9 +49,21 @@ namespace SolarMajesty
             float attackRange,
             int attempt,
             Func<Vector3, bool> isWater,
-            out Vector3[] corners)
+            out Vector3[] corners) =>
+            TryDenRoute(from, den, attackRange, attempt, isWater, out corners, out _);
+
+        /// <summary>As above; <paramref name="viaFord"/> is true when the accepted route is a ford crossing.</summary>
+        public static bool TryDenRoute(
+            Vector3 from,
+            Vector3 den,
+            float attackRange,
+            int attempt,
+            Func<Vector3, bool> isWater,
+            out Vector3[] corners,
+            out bool viaFord)
         {
             corners = null;
+            viaFord = false;
             float ring = Mathf.Clamp(attackRange * 0.7f, 4f, Mathf.Max(4f, attackRange - 0.75f));
             Vector3 pref = from - den;
             pref.y = 0f;
@@ -77,7 +89,11 @@ namespace SolarMajesty
 
             if (isWater == null) return false;
             if (TryFord(from, den, ring, isWater, out corners) &&
-                EndsWithinAttackRange(corners, den, attackRange)) return true;
+                EndsWithinAttackRange(corners, den, attackRange))
+            {
+                viaFord = true;
+                return true;
+            }
             corners = null;
             return false;
         }
