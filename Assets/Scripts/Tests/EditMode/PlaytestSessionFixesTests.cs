@@ -329,6 +329,8 @@ namespace SolarMajesty.Tests
                     float w = HudLayout.ChipLabelWidth(labelRect, numberRect, amountWidth);
                     int size = HudLayout.FitFontSize(s => measure(OverseerHud.ChargersLabel, s), w, 10);
                     Assert.GreaterOrEqual(size, HudLayout.ChipLabelMinSize);
+                    TestContext.WriteLine($"CHARGERS {sw}x{sh} amount={amount} size={size}pt width={measure(OverseerHud.ChargersLabel, size):0.0}/{w:0.0}");
+                    Assert.GreaterOrEqual(size, 9, $"CHARGERS stays at 9pt or more at {sw}x{sh} with amount {amount}");
                     Assert.LessOrEqual(measure(OverseerHud.ChargersLabel, size), w,
                         $"CHARGERS at {size}pt fits {w}px with amount {amount} at {sw}x{sh}");
                     Assert.LessOrEqual(labelRect.x + measure(OverseerHud.ChargersLabel, size) + HudLayout.TextGap,
