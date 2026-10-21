@@ -2435,7 +2435,8 @@ namespace SolarMajesty
             }
 
             if (NavCornerPath.TryBuild(transform.position, target, 8f, out Vector3[] corners, out NavMeshPathStatus status) &&
-                status == NavMeshPathStatus.PathComplete)
+                status == NavMeshPathStatus.PathComplete &&
+                (!denWalk || NavCornerPath.EndsWithinAttackRange(corners, target, OverseerRules.ClearThreatAttackRange)))
             {
                 _route = corners;
                 return;

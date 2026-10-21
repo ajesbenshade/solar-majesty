@@ -70,14 +70,22 @@ namespace SolarMajesty
                 if (!TryBuild(from, candidate, 8f, out Vector3[] built, out NavMeshPathStatus st))
                     continue;
                 if (st != NavMeshPathStatus.PathComplete) continue;
-                if (Flat(built[built.Length - 1], den) > attackRange + 1.25f) continue;
+                if (!EndsWithinAttackRange(built, den, attackRange)) continue;
                 corners = built;
                 return true;
             }
 
             if (isWater == null) return false;
-            return TryFord(from, den, ring, isWater, out corners);
+            if (TryFord(from, den, ring, isWater, out corners) &&
+                EndsWithinAttackRange(corners, den, attackRange)) return true;
+            corners = null;
+            return false;
         }
+
+        /// <summary>A sampled endpoint must permit an attack, even when the path is complete.</summary>
+        public static bool EndsWithinAttackRange(Vector3[] corners, Vector3 den, float attackRange) =>
+            corners != null && corners.Length > 0 &&
+            Flat(corners[corners.Length - 1], den) <= attackRange;
 
         static bool TryFord(Vector3 from, Vector3 den, float ring, Func<Vector3, bool> isWater, out Vector3[] corners)
         {
