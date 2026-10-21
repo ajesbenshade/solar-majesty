@@ -45,6 +45,7 @@ namespace SolarMajesty.Tests
             foreach (string file in Directory.GetFiles(scripts, "*.cs", SearchOption.AllDirectories))
             {
                 string relative = file.Substring(scripts.Length + 1).Replace('\\', '/');
+                // MajestyAnalog.cs is dev-only: only EditMode assertions consume its catalog; no player-facing callers.
                 if (relative.StartsWith("Tests/", StringComparison.Ordinal) || relative == "Systems/MajestyAnalog.cs")
                     continue; // Tests and the internal comparison table are not player copy.
 
