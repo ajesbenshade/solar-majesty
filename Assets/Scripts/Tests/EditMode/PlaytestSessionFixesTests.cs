@@ -303,9 +303,13 @@ namespace SolarMajesty.Tests
             Assert.IsNull(OverseerHud.ChipIconFor("HOUSES"), "the old label is gone; nothing should still key on it");
         }
 
-        /// <summary>Bold display caps at size s: ~0.72 s per glyph, snapped to whole screen pixels.</summary>
         private static System.Func<string, int, float> CapsMeasure(float scale) =>
-            (s, size) => Mathf.Ceil(s.Length * size * 0.72f * scale) / scale + 1f;
+            (s, size) =>
+            {
+                // CalcSize and chip rectangles use logical GUI units at either HUD scale.
+                var style = HudSkin.Text(HudSkin.Display, size, FontStyle.Bold, Color.white, TextAnchor.MiddleLeft);
+                return style.CalcSize(new GUIContent(s)).x;
+            };
 
         [Test]
         public void ChargersLabel_FitsInFull_At1080p100_And4K200()
@@ -315,15 +319,20 @@ namespace SolarMajesty.Tests
                 float scale = HudScaleMath.ClampToFit(requested, sw, sh);
                 Assert.AreEqual(requested, scale, 0.001f, $"{sw}x{sh} keeps its scale");
                 var measure = CapsMeasure(scale);
+                Assume.That(measure(OverseerHud.ChargersLabel, 10) > 0f, "fonts measure in this Unity mode");
+                var numberStyle = HudSkin.Text(HudSkin.Numeric, 17, FontStyle.Bold, Color.white, TextAnchor.MiddleRight);
                 float cw = HudLayout.StockpileChipWidth();
                 HudLayout.ChipText(new Rect(0f, 0f, cw, 28f), out var labelRect, out var numberRect);
                 foreach (string amount in new[] { "4", "99", "999" })
                 {
-                    float w = HudLayout.ChipLabelWidth(labelRect, numberRect, measure(amount, 14));
+                    float amountWidth = numberStyle.CalcSize(new GUIContent(amount)).x;
+                    float w = HudLayout.ChipLabelWidth(labelRect, numberRect, amountWidth);
                     int size = HudLayout.FitFontSize(s => measure(OverseerHud.ChargersLabel, s), w, 10);
                     Assert.GreaterOrEqual(size, HudLayout.ChipLabelMinSize);
                     Assert.LessOrEqual(measure(OverseerHud.ChargersLabel, size), w,
                         $"CHARGERS at {size}pt fits {w}px with amount {amount} at {sw}x{sh}");
+                    Assert.LessOrEqual(labelRect.x + measure(OverseerHud.ChargersLabel, size) + HudLayout.TextGap,
+                        numberRect.xMax - Mathf.Min(numberRect.width, amountWidth), "label leaves the amount its gap");
                 }
             }
         }
