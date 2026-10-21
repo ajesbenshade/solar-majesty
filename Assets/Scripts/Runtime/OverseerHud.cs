@@ -726,18 +726,18 @@ namespace SolarMajesty
             var rect = new Rect(DockLeft(), top, w, DockH);
             var c = Panel(rect, null, false);
 
-            DrawStockpile(new Rect(c.x, c.y, 244f, c.height));
+            DrawStockpile(new Rect(c.x, c.y, HudLayout.StockpileW, c.height));
 
             float right = 186f;
             var divider = new Color(Gold.r, Gold.g, Gold.b, 0.45f);
-            HudSkin.RuleV(new Rect(c.x + 254f, rect.y + 6f, 1f, rect.height - 12f), divider);
+            HudSkin.RuleV(new Rect(c.x + HudLayout.StockpileW + 10f, rect.y + 6f, 1f, rect.height - 12f), divider);
             HudSkin.RuleV(new Rect(c.xMax - right - 10f, rect.y + 6f, 1f, rect.height - 12f), divider);
 
             // Verbs: build, bounty, orbital, research, campus, party, menu. Never unit orders.
             float sq = 48f;
             float gap = 6f;
             float verbsW = sq * 7f + gap * 6f;
-            float midL = c.x + 262f;
+            float midL = c.x + HudLayout.StockpileW + 18f;
             float midR = c.xMax - right - 18f;
             float x = midL + Mathf.Max(0f, (midR - midL - verbsW) * 0.5f);
             float vy = c.y + 3f;

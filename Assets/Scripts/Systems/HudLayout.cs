@@ -12,7 +12,7 @@ namespace SolarMajesty
         public const float Margin = 16f;
         public const float Pad = 12f;
         public const float DockH = 100f;
-        public const float DockW = 860f;
+        public const float DockW = 872f; // +12 with StockpileW so CHARGERS stays at 9pt or more
         public const float CrestW = 240f;
         public const float CrestH = 52f;
         public const float CrestRise = 30f;
@@ -97,7 +97,7 @@ namespace SolarMajesty
             return minSize;
         }
 
-        public const float StockpileW = 244f;
+        public const float StockpileW = 256f;
         public const float StockpileChipGap = 6f;
 
         /// <summary>Width of one chip in the 2×2 stockpile grid.</summary>
