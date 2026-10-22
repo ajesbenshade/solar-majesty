@@ -2524,6 +2524,10 @@ namespace SolarMajesty
             return true;
         }
 
+        internal bool FordDetached => false;
+
+        internal void UseAgentForTravelTest(NavMeshAgent agent) => _agent = agent;
+
         private bool TravelWet(Vector3 p)
         {
             if (TravelBlocked != null && TravelBlocked(p)) return true;
