@@ -1307,6 +1307,16 @@ namespace SolarMajesty
             if (!_incapacitated && !_scrapped)
                 TryLevyExchange();
 
+            // Couriers keep the till fed while working flags: carried levy goes in first, and an
+            // empty courier checks the stops at least every CourierLevyCadence seconds.
+            if (data != null && data.specialistClass == SpecialistClass.CourierBot)
+            {
+                _sinceLevyHandIn += dt;
+                if (LevyRun.CourierLevyDue(_lastDecision.Action, _levyCarry, _sinceLevyHandIn) &&
+                    !_incapacitated && !_scrapped && TickLevy(dt, true))
+                    return;
+            }
+
             switch (_lastDecision.Action)
             {
                 case SpecialistAction.PursueFlag:
@@ -1717,12 +1727,20 @@ namespace SolarMajesty
             ConsiderGuildUpgrade();
         }
 
-        private bool TickLevy(float dt)
+        private float _sinceLevyHandIn;
+
+        /// <summary>Test rig: where the levy chest is (null = none). Set together with <see cref="LevyDeliveredForTest"/>.</summary>
+        internal System.Func<Vector3, Vector3?> LevyChestForTest;
+        /// <summary>Test rig: receives the delivered line instead of the colony log.</summary>
+        internal System.Action<int, string> LevyDeliveredForTest;
+
+        private bool TickLevy(float dt, bool duringFlag = false)
         {
             if (data == null || data.specialistClass != SpecialistClass.CourierBot) return false;
             if (_incapacitated || _scrapped) return false;
-            if (_loop?.Village == null) return false;
-            if (_lastDecision.Action == SpecialistAction.PursueFlag ||
+            bool rig = LevyChestForTest != null;
+            if (!rig && _loop?.Village == null) return false;
+            if ((!duringFlag && _lastDecision.Action == SpecialistAction.PursueFlag) ||
                 _lastDecision.Action == SpecialistAction.Hunt ||
                 _lastDecision.Action == SpecialistAction.Flee ||
                 _lastDecision.Action == SpecialistAction.Rest)
@@ -1730,26 +1748,42 @@ namespace SolarMajesty
 
             if (_levyCarry > 0)
             {
-                var chest = _loop.Village.NearestLevyChest(transform.position);
-                if (chest == null) return false;
-                if (FlatDistance(transform.position, chest.WorldPosition) > LevyRun.DepositArrive)
+                Vector3 chestPos;
+                bool tower = false;
+                if (rig)
                 {
-                    SetDestination(chest.WorldPosition);
-                    MoveFallback(chest.WorldPosition, EffectiveMoveSpeed * dt);
-                    _status = chest.IsWatchtower ? "levy_tower" : "levy_home";
+                    Vector3? p = LevyChestForTest(transform.position);
+                    if (!p.HasValue) return false;
+                    chestPos = p.Value;
+                }
+                else
+                {
+                    var chest = _loop.Village.NearestLevyChest(transform.position);
+                    if (chest == null) return false;
+                    chestPos = chest.WorldPosition;
+                    tower = chest.IsWatchtower;
+                }
+                if (FlatDistance(transform.position, chestPos) > LevyRun.DepositArrive)
+                {
+                    SetDestination(chestPos);
+                    MoveFallback(chestPos, EffectiveMoveSpeed * dt);
+                    _status = tower ? "levy_tower" : "levy_home";
                     return true;
                 }
 
                 int n = _levyCarry;
                 _levyCarry = 0;
-                _loop.DeliverLevy(n);
+                _sinceLevyHandIn = 0f;
+                if (rig) LevyDeliveredForTest?.Invoke(n, CompactGrok.LevyDelivered(n));
+                else _loop.DeliverLevy(n);
                 _status = "levy_delivered";
                 DemoVfx.ClaimRing(transform.position, new Color(0.96f, 0.78f, 0.22f));
                 return true;
             }
 
+            if (rig) return false;
             var stop = _loop.Village.NearestLevyStop(transform.position, 80f);
-            if (stop == null) return false;
+            if (stop == null) { _sinceLevyHandIn = 0f; return false; }
             if (FlatDistance(transform.position, stop.WorldPosition) > LevyRun.CollectArrive)
             {
                 SetDestination(stop.WorldPosition);
@@ -1759,7 +1793,7 @@ namespace SolarMajesty
             }
 
             int take = stop.TakeLevy();
-            if (take <= 0) return false;
+            if (take <= 0) { _sinceLevyHandIn = 0f; return false; }
             _levyCarry += take;
             _status = "levy_loaded";
             return true;
