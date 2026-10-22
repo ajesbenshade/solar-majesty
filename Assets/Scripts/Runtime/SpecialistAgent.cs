@@ -795,6 +795,7 @@ namespace SolarMajesty
                 fatigue = debugFatigueValue;
 
             float dt = Time.deltaTime;
+            if (_fordDetached && !TravelWet(transform.position)) ReattachAfterFord();
             TickYield(dt);
             TickRecovery(dt);
             if (_incapacitated)
@@ -2328,6 +2329,7 @@ namespace SolarMajesty
             if (data == null || _brain == null || _flags == null || _scrapped)
                 return;
             if (dt < 0f) dt = 0f;
+            if (_fordDetached && !TravelWet(transform.position)) ReattachAfterFord();
             TickYield(dt);
             TickRecovery(dt);
             if (_incapacitated)
@@ -2499,12 +2501,22 @@ namespace SolarMajesty
                 else return false;
             }
 
-            // A ford is off the mesh on purpose. Warping would snap the hero back to the near bank.
+            // A ford is off the mesh on purpose. Warping would snap the hero back to the near bank,
+            // and so would a live agent: it clamps its transform to the mesh every frame. Detach the
+            // agent's position while wading and re-seat it on the far bank.
             if (ford)
             {
+                if (_agent != null && _agent.enabled && _agent.updatePosition)
+                {
+                    _agent.isStopped = true;
+                    _agent.ResetPath();
+                    _agent.updatePosition = false;
+                    _fordDetached = true;
+                }
                 transform.position = next;
                 return true;
             }
+            ReattachAfterFord();
 
             if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
             {
@@ -2524,7 +2536,21 @@ namespace SolarMajesty
             return true;
         }
 
-        internal bool FordDetached => false;
+        private bool _fordDetached;
+
+        /// <summary>True while a ford has the agent's position detached from the transform.</summary>
+        internal bool FordDetached => _fordDetached;
+
+        /// <summary>Back on dry ground: put the agent where the hero is and let it drive the transform again.</summary>
+        private void ReattachAfterFord()
+        {
+            if (!_fordDetached) return;
+            _fordDetached = false;
+            if (_agent == null || !_agent.enabled) return;
+            if (SampleForAgent(new Vector3(transform.position.x, 0.02f, transform.position.z), out NavMeshHit hit))
+                _agent.Warp(hit.position);
+            _agent.updatePosition = true;
+        }
 
         internal void UseAgentForTravelTest(NavMeshAgent agent) => _agent = agent;
 
