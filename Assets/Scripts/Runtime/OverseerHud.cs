@@ -1349,11 +1349,14 @@ namespace SolarMajesty
             _contentBottom = rect.y;
             var c = Panel(rect, "Build catalog");
 
-            GUI.Label(new Rect(c.x, c.y, c.width, 13f),
-                DemoSettings.FirstHourDemo
+            // The row is too narrow for long blurbs, so the selected building's full blurb
+            // (e.g. the Watchtower canon line) shows in the hint line above the list.
+            string hint = !DemoSettings.FirstHourDemo && bp.Selected != null && !string.IsNullOrEmpty(bp.Selected.description)
+                ? FitChipText(_micro, new[] { bp.Selected.description }, c.width)
+                : DemoSettings.FirstHourDemo
                     ? "1 Engineer workshop · LMB on open ground"
-                    : "Pick a building · LMB on open ground",
-                _micro);
+                    : "Pick a building · LMB on open ground";
+            GUI.Label(new Rect(c.x, c.y, c.width, 13f), hint, _micro);
             float y = c.y + 17f;
 
             var view = new Rect(c.x, y, c.width, c.yMax - y);
@@ -1385,7 +1388,11 @@ namespace SolarMajesty
                 var nameStyle = on ? _onText : _action;
                 var prevColor = nameStyle.normal.textColor;
                 if (!on && (!canAfford || locked)) nameStyle.normal.textColor = TextMuted;
-                GUI.Label(nameRect, BuildRowLabel(b), nameStyle);
+                string rowStat = b.category == BuildingCategory.Watchtower ? HudLayout.WatchtowerStat : null;
+                string rowText = !string.IsNullOrEmpty(b.description)
+                    ? FitChipText(nameStyle, HudLayout.BuildRowVariants(b.displayName, b.description, rowStat), nameRect.width)
+                    : BuildRowLabel(b);
+                GUI.Label(nameRect, rowText, nameStyle);
                 nameStyle.normal.textColor = prevColor;
 
                 var costStyle = _microRight;

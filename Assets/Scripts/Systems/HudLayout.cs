@@ -98,6 +98,21 @@ namespace SolarMajesty
         }
 
         public const float StockpileW = 256f;
+
+        /// <summary>Canon Watchtower blurb; the build list and the building card both use it.</summary>
+        public const string WatchtowerBlurb = "Guard post and levy till. Arm lasers for EU.";
+        /// <summary>Short stat appended to the Watchtower row when the row has room.</summary>
+        public const string WatchtowerStat = "+1 Haul";
+
+        /// <summary>
+        /// Build-list row text, longest first: "name · blurb · stat" if it fits, else "name · blurb".
+        /// The blurb always wins over the stat.
+        /// </summary>
+        public static string[] BuildRowVariants(string name, string description, string stat)
+        {
+            string row = string.IsNullOrEmpty(description) ? name : name + "  ·  " + description;
+            return string.IsNullOrEmpty(stat) ? new[] { row } : new[] { row + "  ·  " + stat, row };
+        }
         public const float StockpileChipGap = 6f;
 
         /// <summary>Width of one chip in the 2×2 stockpile grid.</summary>

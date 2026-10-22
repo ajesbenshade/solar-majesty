@@ -16,6 +16,19 @@ namespace SolarMajesty
         public const float FarFromCommons = 24f;
         public const float TowerPreferSlack = 4f;
 
+        /// <summary>An empty Courier Bot on a flag checks the levy stops at least this often.</summary>
+        public const float CourierLevyCadence = 45f;
+
+        /// <summary>
+        /// Courier Bot only: run a levy hand-in now, even with a flag open? Carried levy always goes
+        /// in first; an empty courier goes collecting once the cadence has passed. Only while on a flag.
+        /// </summary>
+        public static bool CourierLevyDue(SpecialistAction action, int carry, float sinceHandIn)
+        {
+            if (action != SpecialistAction.PursueFlag) return false;
+            return carry > 0 || sinceHandIn >= CourierLevyCadence;
+        }
+
         public static int Accrue(int population, bool overcrowded)
         {
             if (population <= 0) return 0;
