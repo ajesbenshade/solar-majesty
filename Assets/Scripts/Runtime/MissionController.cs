@@ -564,7 +564,7 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Fauna holding the dens gate: alive and not a town spawn. Burrow pests, edge raiders and
+        /// Fauna holding the dens gate: alive, not a town spawn, and not a yard pest or junk (<see cref="HoldsDens"/>). Burrow pests, edge raiders and
         /// wreck junk keep coming after the last den; counting them flipped the gate open and shut
         /// (autoplay: repeated "gates 1/3 / 2/3" after every den was cleared).
         /// </summary>
@@ -575,10 +575,18 @@ namespace SolarMajesty
             for (int i = 0; i < fauna.Count; i++)
             {
                 var s = fauna[i];
-                if (s != null && DensGate.Holds(s.IsAlive, s.IsTownSpawn)) n++;
+                if (s != null && DensGate.Holds(s.IsAlive, s.IsTownSpawn) && HoldsDens(s.Kind, s.IsAlive, false)) n++;
             }
             return n;
         }
+
+        /// <summary>
+        /// Does this fauna keep the dens gate open? Den stalkers do. The kingdom spawn table (alpha
+        /// raiders at the colony edge, town burrows, scrapyard junk) keeps running after the dens are
+        /// cleared, and yard pests are campus ecology, so neither can hold back the victory.
+        /// </summary>
+        internal static bool HoldsDens(FaunaKind kind, bool alive, bool kingdomSpawn) =>
+            alive && !kingdomSpawn && !DustStalkerAgent.IsCampusPest(kind) && !DustStalkerAgent.IsJunk(kind);
 
         private int CountLivingStalkers()
         {
@@ -587,7 +595,7 @@ namespace SolarMajesty
             for (int i = 0; i < _loop.Stalkers.Count; i++)
             {
                 var s = _loop.Stalkers[i];
-                if (s != null && s.IsAlive) n++;
+                if (s != null && HoldsDens(s.Kind, s.IsAlive, _loop.IsKingdomSpawn(s))) n++;
             }
             return n;
         }

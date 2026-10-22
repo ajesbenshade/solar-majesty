@@ -4111,6 +4111,9 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>A kingdom-table or other town spawn (the saved tag; see <see cref="TrackKingdomSpawn"/>).</summary>
+        internal bool IsKingdomSpawn(DustStalkerAgent agent) => agent != null && agent.IsTownSpawn;
+
         /// <summary>
         /// Tag a kingdom-table spawn and count it against its row's cap. The tag keeps it off the
         /// dens gate (<see cref="DensGate"/>) and survives Continue.
