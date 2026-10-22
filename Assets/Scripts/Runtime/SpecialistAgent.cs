@@ -2487,7 +2487,11 @@ namespace SolarMajesty
         {
             Vector3 next = Vector3.MoveTowards(transform.position, new Vector3(corner.x, transform.position.y, corner.z), step);
             bool wet = TravelWet(next);
-            bool ford = wet && FlatDistance(transform.position, corner) <= NavCornerPath.MaxFordMeters + 1.5f;
+            bool fordRange = FlatDistance(transform.position, corner) <= NavCornerPath.MaxFordMeters + 1.5f;
+            // The mesh stops short of the water (agent radius plus the wet margin). A dry step into
+            // that strip samples back onto the bank, so the hero never gets wet. Water just ahead on
+            // the way to a ford corner counts as the ford.
+            bool ford = fordRange && (wet || WetAhead(next, corner, 3f));
             if (wet && !ford)
             {
                 Vector3 dir = next - transform.position;
@@ -2534,6 +2538,18 @@ namespace SolarMajesty
             }
             transform.position = next;
             return true;
+        }
+
+        private bool WetAhead(Vector3 from, Vector3 corner, float meters)
+        {
+            Vector3 dir = corner - from;
+            dir.y = 0f;
+            float len = Mathf.Min(meters, dir.magnitude);
+            if (len < 0.01f) return false;
+            dir.Normalize();
+            for (float d = 0.5f; d <= len + 0.001f; d += 0.5f)
+                if (TravelWet(from + dir * d)) return true;
+            return false;
         }
 
         private bool _fordDetached;
