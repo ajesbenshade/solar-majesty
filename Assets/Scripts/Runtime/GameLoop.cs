@@ -557,6 +557,9 @@ namespace SolarMajesty
         private bool _bodyHopUnlock;
         /// <summary>Victory panel is up. Time scale stays at 0 until Continue or Main Menu.</summary>
         private bool _victoryHold;
+
+        /// <summary>True only while the campaign victory panel holds the world.</summary>
+        public bool IsVictoryHeld => _victoryHold;
         private GameObject _outpostBeacon;
         private readonly Dictionary<EntityId, float> _extractStamp = new Dictionary<EntityId, float>(8);
         private readonly List<ConstructionOrder> _completedBuilds = new List<ConstructionOrder>(8);
@@ -6087,11 +6090,11 @@ namespace SolarMajesty
                 _mission.RestoreFrom(save.mission);
                 if (save.mission != null && save.mission.launchReady)
                     _launchCraftStaged = true;
-                if (_mission.IsWon && !ReplayRules.IsEndless)
-                {
-                    _victoryHold = true;
+                // A won save resumes as normal play. The victory panel and its hold belong to
+                // the moment the gates latch, not to every later Continue (session 17 freeze).
+                _victoryHold = VictoryOffer.HoldOnRestore(_mission.IsWon, ReplayRules.IsEndless);
+                if (_victoryHold)
                     Time.timeScale = 0f;
-                }
             }
 
             _playSeconds = save.playSeconds;
