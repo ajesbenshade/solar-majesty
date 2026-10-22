@@ -34,7 +34,9 @@ namespace SolarMajesty
         Coin,
         House,
         Bag,
-        Hammer
+        Hammer,
+        // Appended so existing values keep their numbers.
+        Charger
     }
 
     /// <summary>
@@ -51,8 +53,20 @@ namespace SolarMajesty
 
         private static readonly Dictionary<IconId, Texture2D> Cache = new Dictionary<IconId, Texture2D>(16);
 
+        /// <summary>Resources path of the 3D Artist's CHARGERS icon (amber pod and bolt).</summary>
+        public const string ChargerIconPath = "UI/Icons/SM_Icon_Chargers";
+
+        private static Texture2D _charger;
+
         public static Texture2D Get(IconId id)
         {
+            // Authored art (Resources asset): not cached in Cache, so Clear() never destroys it.
+            if (id == IconId.Charger)
+            {
+                if (_charger == null) _charger = Resources.Load<Texture2D>(ChargerIconPath);
+                if (_charger != null) return _charger;
+            }
+
             if (Cache.TryGetValue(id, out Texture2D cached) && cached != null)
                 return cached;
 

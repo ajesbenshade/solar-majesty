@@ -12,7 +12,7 @@ namespace SolarMajesty
         public const float Margin = 16f;
         public const float Pad = 12f;
         public const float DockH = 100f;
-        public const float DockW = 860f;
+        public const float DockW = 872f; // +12 with StockpileW so CHARGERS stays at 9pt or more
         public const float CrestW = 240f;
         public const float CrestH = 52f;
         public const float CrestRise = 30f;
@@ -109,7 +109,28 @@ namespace SolarMajesty
         public static Rect ChipRate(Rect chip, Rect label) =>
             new Rect(label.x, chip.y + HudTextScale.Line(13f), label.width, label.height);
 
-        public const float StockpileW = 244f;
+        /// <summary>Smallest chip label size that still reads at HUD scale 1.</summary>
+        public const int ChipLabelMinSize = 8;
+
+        /// <summary>
+        /// Width the chip label may use: up to the right-aligned amount plus a gap, never less than
+        /// the <see cref="ChipText"/> column. The amount is usually 1-3 digits, so this is the slack.
+        /// </summary>
+        public static float ChipLabelWidth(Rect labelRect, Rect numberRect, float amountWidth) =>
+            Mathf.Max(labelRect.width, numberRect.xMax - Mathf.Min(numberRect.width, amountWidth) - TextGap - labelRect.x);
+
+        /// <summary>
+        /// Largest font size from <paramref name="baseSize"/> down to <paramref name="minSize"/> whose
+        /// measured width fits; the text itself is never shortened. Returns minSize if nothing fits.
+        /// </summary>
+        public static int FitFontSize(System.Func<int, float> widthAtSize, float maxWidth, int baseSize, int minSize = ChipLabelMinSize)
+        {
+            for (int s = baseSize; s > minSize; s--)
+                if (widthAtSize(s) <= maxWidth) return s;
+            return minSize;
+        }
+
+        public const float StockpileW = 256f;
         public const float StockpileChipGap = 6f;
 
         /// <summary>Width of one chip in the 2×2 stockpile grid.</summary>

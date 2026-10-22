@@ -208,7 +208,7 @@ namespace SolarMajesty
         public const string JexLevyStolenHab =
             "EU was napping on the HAB. A mite just made a withdrawal.";
         public const string JexLevyHome =
-            "Haul walked the batteries home. EU is in the chest. Do not click the crate.";
+            "Haul walked the batteries home. EU is in the till. Do not click the crate.";
 
         public const float PressureInterval = 75f;
         public const float FrenzyPressure = 50f;

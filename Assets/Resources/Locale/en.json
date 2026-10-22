@@ -2808,9 +2808,9 @@
    "tr": "Haul took the disc. They already said freight after. Believe them."
   },
   {
-   "en": "Haul walked the batteries home. EU is in the chest. Do not click the crate.",
+   "en": "Haul walked the batteries home. EU is in the till. Do not click the crate.",
    "key": "",
-   "tr": "Haul walked the batteries home. EU is in the chest. Do not click the crate."
+   "tr": "Haul walked the batteries home. EU is in the till. Do not click the crate."
   },
   {
    "en": "Haul walked {0:N0} EU home",

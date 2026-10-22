@@ -296,8 +296,55 @@ namespace SolarMajesty.Tests
         public void ChargersChip_KeepsTheChargingStationIcon()
         {
             Assert.AreEqual("CHARGERS", OverseerHud.ChargersLabel);
-            Assert.AreEqual(IconId.House, OverseerHud.ChipIconFor(OverseerHud.ChargersLabel));
+            Assert.AreEqual(IconId.Charger, OverseerHud.ChipIconFor(OverseerHud.ChargersLabel));
+            var art = UiIcons.Get(IconId.Charger);
+            Assert.IsNotNull(art, "CHARGERS icon art loads");
+            Assert.AreSame(Resources.Load<Texture2D>(UiIcons.ChargerIconPath), art, "uses the authored icon, not a procedural one");
             Assert.IsNull(OverseerHud.ChipIconFor("HOUSES"), "the old label is gone; nothing should still key on it");
+        }
+
+        private static System.Func<string, int, float> CapsMeasure(float scale) =>
+            (s, size) =>
+            {
+                // CalcSize and chip rectangles use logical GUI units at either HUD scale.
+                var style = HudSkin.Text(HudSkin.Display, size, FontStyle.Bold, Color.white, TextAnchor.MiddleLeft);
+                return style.CalcSize(new GUIContent(s)).x;
+            };
+
+        [Test]
+        public void ChargersLabel_FitsInFull_At1080p100_And4K200()
+        {
+            foreach (var (sw, sh, requested) in new[] { (1920, 1080, 1f), (3840, 2160, 2f) })
+            {
+                float scale = HudScaleMath.ClampToFit(requested, sw, sh);
+                Assert.AreEqual(requested, scale, 0.001f, $"{sw}x{sh} keeps its scale");
+                var measure = CapsMeasure(scale);
+                Assume.That(measure(OverseerHud.ChargersLabel, 10) > 0f, "fonts measure in this Unity mode");
+                var numberStyle = HudSkin.Text(HudSkin.Numeric, 17, FontStyle.Bold, Color.white, TextAnchor.MiddleRight);
+                float cw = HudLayout.StockpileChipWidth();
+                HudLayout.ChipText(new Rect(0f, 0f, cw, 28f), out var labelRect, out var numberRect);
+                foreach (string amount in new[] { "4", "99", "999" })
+                {
+                    float amountWidth = numberStyle.CalcSize(new GUIContent(amount)).x;
+                    float w = HudLayout.ChipLabelWidth(labelRect, numberRect, amountWidth);
+                    int size = HudLayout.FitFontSize(s => measure(OverseerHud.ChargersLabel, s), w, 10);
+                    Assert.GreaterOrEqual(size, HudLayout.ChipLabelMinSize);
+                    TestContext.WriteLine($"CHARGERS {sw}x{sh} amount={amount} size={size}pt width={measure(OverseerHud.ChargersLabel, size):0.0}/{w:0.0}");
+                    Assert.GreaterOrEqual(size, 9, $"CHARGERS stays at 9pt or more at {sw}x{sh} with amount {amount}");
+                    Assert.LessOrEqual(measure(OverseerHud.ChargersLabel, size), w,
+                        $"CHARGERS at {size}pt fits {w}px with amount {amount} at {sw}x{sh}");
+                    Assert.LessOrEqual(labelRect.x + measure(OverseerHud.ChargersLabel, size) + HudLayout.TextGap,
+                        numberRect.xMax - Mathf.Min(numberRect.width, amountWidth), "label leaves the amount its gap");
+                }
+            }
+        }
+
+        [Test]
+        public void FitFontSize_KeepsBaseWhenRoomy_AndStopsAtTheFloor()
+        {
+            Assert.AreEqual(10, HudLayout.FitFontSize(s => s * 5f, 1000f, 10));
+            Assert.AreEqual(8, HudLayout.FitFontSize(s => s * 5f, 41f, 10));
+            Assert.AreEqual(HudLayout.ChipLabelMinSize, HudLayout.FitFontSize(s => s * 50f, 1f, 10));
         }
 
         [Test]

@@ -2808,9 +2808,9 @@
    "tr": "Haul a pris le disque. Ils ont déjà dit : le fret ensuite. Croyez-les."
   },
   {
-   "en": "Haul walked the batteries home. EU is in the chest. Do not click the crate.",
+   "en": "Haul walked the batteries home. EU is in the till. Do not click the crate.",
    "key": "",
-   "tr": "Haul a ramené les batteries à pied. Les EU sont dans le coffre. Ne cliquez pas sur le caisson."
+   "tr": "Haul a ramené les batteries à pied. Les EU sont dans la caisse. Ne cliquez pas sur le caisson."
   },
   {
    "en": "Haul walked {0:N0} EU home",
@@ -7854,6 +7854,11 @@
   }
  ],
  "obsolete": [
+  {
+   "en": "Haul walked the batteries home. EU is in the chest. Do not click the crate.",
+   "key": "",
+   "tr": "Haul a ramené les batteries à pied. Les EU sont dans le coffre. Ne cliquez pas sur le caisson."
+  },
   {
    "en": "Secret Project. Spare beds, faster births, greener farms. Growth path.",
    "key": "",
