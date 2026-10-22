@@ -2694,7 +2694,9 @@ namespace SolarMajesty
         {
             if (StillCaptureHold.Active || ReplayRules.IsEndless || _winDismissed) return false;
             var mission = _loop.Mission;
-            if (mission == null || !mission.IsWon) return false;
+            if (mission == null ||
+                !VictoryOffer.ShowPanel(mission.IsWon, _loop.IsVictoryHeld, ReplayRules.IsEndless, _winDismissed))
+                return false;
             bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
             DrawCampaignVictory(VictoryOffer.For(_loop.ActiveBody, nextBuilt, endless: false));
             return true;
