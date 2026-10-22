@@ -1734,6 +1734,14 @@ namespace SolarMajesty
         /// <summary>Test rig: receives the delivered line instead of the colony log.</summary>
         internal System.Action<int, string> LevyDeliveredForTest;
 
+        /// <summary>Walkable spot nearest a levy chest; the chest centre itself when there is no mesh.</summary>
+        private static Vector3 ChestApproach(Vector3 chest)
+        {
+            return NavMesh.SamplePosition(chest, out NavMeshHit hit, LevyRun.ChestApproachSample, NavMesh.AllAreas)
+                ? hit.position
+                : chest;
+        }
+
         private bool TickLevy(float dt, bool duringFlag = false)
         {
             if (data == null || data.specialistClass != SpecialistClass.CourierBot) return false;
@@ -1763,10 +1771,11 @@ namespace SolarMajesty
                     chestPos = chest.WorldPosition;
                     tower = chest.IsWatchtower;
                 }
-                if (FlatDistance(transform.position, chestPos) > LevyRun.DepositArrive)
+                Vector3 approach = ChestApproach(chestPos);
+                if (!LevyRun.AtChest(FlatDistance(transform.position, chestPos), FlatDistance(transform.position, approach)))
                 {
-                    SetDestination(chestPos);
-                    MoveFallback(chestPos, EffectiveMoveSpeed * dt);
+                    SetDestination(approach);
+                    MoveFallback(approach, EffectiveMoveSpeed * dt);
                     _status = tower ? "levy_tower" : "levy_home";
                     return true;
                 }
