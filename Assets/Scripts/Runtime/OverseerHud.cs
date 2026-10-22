@@ -640,8 +640,18 @@ namespace SolarMajesty
             HudLayout.ChipText(r, out var labelRect, out var numberRect);
             var prevLabel = _chipLabel.normal.textColor;
             _chipLabel.normal.textColor = alarm ? Alarm : TextMuted;
-            // Rects and CalcSize share the GUI.matrix space, so scale = 1.
-            GUI.Label(labelRect, FitChipText(_chipLabel, new[] { label }, labelRect.width), _chipLabel);
+            // Rects and CalcSize share the GUI.matrix space, so scale = 1. The label is never
+            // shortened: it takes the slack beside the amount, then steps its font down to fit.
+            _chipMeasure.text = amount.ToString();
+            float labelW = HudLayout.ChipLabelWidth(labelRect, numberRect, _number.CalcSize(_chipMeasure).x);
+            var labelFit = new Rect(labelRect.x, labelRect.y, labelW, labelRect.height);
+            int prevSize = _chipLabel.fontSize;
+            _chipLabel.fontSize = HudLayout.FitFontSize(s =>
+            {
+                _chipLabel.fontSize = s; _chipMeasure.text = label; return _chipLabel.CalcSize(_chipMeasure).x;
+            }, labelW, prevSize);
+            GUI.Label(labelFit, label, _chipLabel);
+            _chipLabel.fontSize = prevSize;
             _chipLabel.normal.textColor = prevLabel;
             if (!string.IsNullOrEmpty(rate))
             {
@@ -678,7 +688,7 @@ namespace SolarMajesty
             if (label.StartsWith("PWR")) return IconId.Power;
             if (label.StartsWith("BEDS")) return IconId.Beds;
             if (label.StartsWith("HEROES")) return IconId.Robot;
-            if (label.StartsWith(ChargersLabel)) return IconId.House;
+            if (label.StartsWith(ChargersLabel)) return IconId.Charger;
             if (label.StartsWith("HAUL")) return IconId.Bag;
             if (label.StartsWith("BOTS") || label.StartsWith("HALTED")) return IconId.Hammer;
             return null;
@@ -716,18 +726,18 @@ namespace SolarMajesty
             var rect = new Rect(DockLeft(), top, w, DockH);
             var c = Panel(rect, null, false);
 
-            DrawStockpile(new Rect(c.x, c.y, 244f, c.height));
+            DrawStockpile(new Rect(c.x, c.y, HudLayout.StockpileW, c.height));
 
             float right = 186f;
             var divider = new Color(Gold.r, Gold.g, Gold.b, 0.45f);
-            HudSkin.RuleV(new Rect(c.x + 254f, rect.y + 6f, 1f, rect.height - 12f), divider);
+            HudSkin.RuleV(new Rect(c.x + HudLayout.StockpileW + 10f, rect.y + 6f, 1f, rect.height - 12f), divider);
             HudSkin.RuleV(new Rect(c.xMax - right - 10f, rect.y + 6f, 1f, rect.height - 12f), divider);
 
             // Verbs: build, bounty, orbital, research, campus, party, menu. Never unit orders.
             float sq = 48f;
             float gap = 6f;
             float verbsW = sq * 7f + gap * 6f;
-            float midL = c.x + 262f;
+            float midL = c.x + HudLayout.StockpileW + 18f;
             float midR = c.xMax - right - 18f;
             float x = midL + Mathf.Max(0f, (midR - midL - verbsW) * 0.5f);
             float vy = c.y + 3f;

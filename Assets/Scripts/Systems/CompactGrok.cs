@@ -20,7 +20,7 @@ namespace SolarMajesty
         }
 
         public static string LevyDelivered(int amount) =>
-            $"Haul dumped {amount} EU at the chest. The walk was the joke.";
+            $"Haul dumped {amount} EU at the till. The walk was the joke.";
 
         public static string PurseSitting(int amount) =>
             $"{amount} EU is sitting in building batteries. Haul will not teleport it.";
