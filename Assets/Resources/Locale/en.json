@@ -688,6 +688,11 @@
    "tr": "Berserk"
   },
   {
+   "en": "Berth 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "Berth 20 worker drones at your charging stations."
+  },
+  {
    "en": "Blacksmith",
    "key": "",
    "tr": "Blacksmith"
@@ -971,6 +976,11 @@
    "en": "CONTROLS",
    "key": "",
    "tr": "CONTROLS"
+  },
+  {
+   "en": "CORE RATING",
+   "key": "",
+   "tr": "CORE RATING"
   },
   {
    "en": "CORRODED",
@@ -2583,9 +2593,9 @@
    "tr": "Guard Haul's route with a Defend flag."
   },
   {
-   "en": "Guard post and levy chest. Arm lasers for EU.",
+   "en": "Guard post and levy till. Arm lasers for EU.",
    "key": "",
-   "tr": "Guard post and levy chest. Arm lasers for EU."
+   "tr": "Guard post and levy till. Arm lasers for EU."
   },
   {
    "en": "Guard posted. Haul can drop EU here when Commons is far.",
@@ -2788,9 +2798,9 @@
    "tr": "Haul down on the road"
   },
   {
-   "en": "Haul dumped {0} EU at the chest. The walk was the joke.",
+   "en": "Haul dumped {0} EU at the till. The walk was the joke.",
    "key": "",
-   "tr": "Haul dumped {0} EU at the chest. The walk was the joke."
+   "tr": "Haul dumped {0} EU at the till. The walk was the joke."
   },
   {
    "en": "Haul lost the levy on the road.",
@@ -2971,11 +2981,6 @@
    "en": "Hospitality, Itemized",
    "key": "",
    "tr": "Hospitality, Itemized"
-  },
-  {
-   "en": "House 20 worker drones at your charging stations.",
-   "key": "",
-   "tr": "House 20 worker drones at your charging stations."
   },
   {
    "en": "How fast the controller stick moves the cursor.",
@@ -4086,11 +4091,6 @@
    "en": "OUTPOST SECURED",
    "key": "",
    "tr": "OUTPOST SECURED"
-  },
-  {
-   "en": "OVERSEER RATING",
-   "key": "",
-   "tr": "OVERSEER RATING"
   },
   {
    "en": "Objectives",

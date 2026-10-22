@@ -5576,7 +5576,7 @@ namespace SolarMajesty
                 BuildingCategory.Market => Loc.S("Potions and a regen necklace. Heroes buy with EU."),
                 BuildingCategory.Blacksmith => Loc.S("Guild arms and armor. Heroes buy with EU."),
                 BuildingCategory.FobotYard => Loc.S("Pay EU here to stand wrecks up."),
-                BuildingCategory.Watchtower => Loc.S("Guard post and levy chest. Arm lasers for EU."),
+                BuildingCategory.Watchtower => Loc.S("Guard post and levy till. Arm lasers for EU."),
                 BuildingCategory.AidStation => Loc.S("Hurt robots pay EU for a patch. Triage clocks in."),
                 _ => b.description
             };

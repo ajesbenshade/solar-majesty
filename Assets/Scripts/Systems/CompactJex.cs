@@ -26,7 +26,7 @@ namespace SolarMajesty
         }
 
         public static string LevyDelivered(int amount) =>
-            Loc.F("Haul dumped {0} EU at the chest. The walk was the joke.", amount);
+            Loc.F("Haul dumped {0} EU at the till. The walk was the joke.", amount);
 
         public static string PurseSitting(int amount) =>
             Loc.F("{0} EU is sitting in building batteries. Haul will not teleport it.", amount);

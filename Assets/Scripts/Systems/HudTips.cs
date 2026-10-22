@@ -54,7 +54,7 @@ namespace SolarMajesty
         public static HudTip Threat() => new HudTip(Loc.S("THREAT"),
             Loc.S("Fauna pressure around the yard in view. High threat halts building and wears robots down. Clearing dens lowers it."));
 
-        public static HudTip Rating(string summary) => new HudTip(Loc.S("OVERSEER RATING"), summary);
+        public static HudTip Rating(string summary) => new HudTip(Loc.S("CORE RATING"), summary);
 
         // ---- speed ------------------------------------------------------------------------------
 

@@ -688,6 +688,11 @@
    "tr": "Berserk"
   },
   {
+   "en": "Berth 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "Logez 20 drones ouvriers dans vos stations de recharge."
+  },
+  {
    "en": "Blacksmith",
    "key": "",
    "tr": "Forge"
@@ -971,6 +976,11 @@
    "en": "CONTROLS",
    "key": "",
    "tr": "COMMANDES"
+  },
+  {
+   "en": "CORE RATING",
+   "key": "",
+   "tr": "NOTE DU NOYAU"
   },
   {
    "en": "CORRODED",
@@ -2583,9 +2593,9 @@
    "tr": "Protégez la route de Haul avec un fanion Défendre."
   },
   {
-   "en": "Guard post and levy chest. Arm lasers for EU.",
+   "en": "Guard post and levy till. Arm lasers for EU.",
    "key": "",
-   "tr": "Poste de garde et coffre d'impôt. Armez les lasers contre des EU."
+   "tr": "Poste de garde et caisse de l'impôt. Armez les lasers contre des EU."
   },
   {
    "en": "Guard posted. Haul can drop EU here when Commons is far.",
@@ -2788,9 +2798,9 @@
    "tr": "Haul à terre sur la route"
   },
   {
-   "en": "Haul dumped {0} EU at the chest. The walk was the joke.",
+   "en": "Haul dumped {0} EU at the till. The walk was the joke.",
    "key": "",
-   "tr": "Haul a déposé {0} EU au coffre. La blague, c'était la marche."
+   "tr": "Haul a déposé {0} EU à la caisse. La marche, c'était la blague."
   },
   {
    "en": "Haul lost the levy on the road.",
@@ -2971,11 +2981,6 @@
    "en": "Hospitality, Itemized",
    "key": "",
    "tr": "L'hospitalité, ligne par ligne"
-  },
-  {
-   "en": "House 20 worker drones at your charging stations.",
-   "key": "",
-   "tr": "Abritez 20 drones ouvriers dans vos stations de recharge."
   },
   {
    "en": "How fast the controller stick moves the cursor.",
@@ -4086,11 +4091,6 @@
    "en": "OUTPOST SECURED",
    "key": "",
    "tr": "AVANT-POSTE SÉCURISÉ"
-  },
-  {
-   "en": "OVERSEER RATING",
-   "key": "",
-   "tr": "NOTE DU SURVEILLANT"
   },
   {
    "en": "Objectives",
@@ -7854,6 +7854,26 @@
   }
  ],
  "obsolete": [
+  {
+   "en": "House 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "Abritez 20 drones ouvriers dans vos stations de recharge."
+  },
+  {
+   "en": "OVERSEER RATING",
+   "key": "",
+   "tr": "NOTE DU SURVEILLANT"
+  },
+  {
+   "en": "Guard post and levy chest. Arm lasers for EU.",
+   "key": "",
+   "tr": "Poste de garde et coffre d'impôt. Armez les lasers contre des EU."
+  },
+  {
+   "en": "Haul dumped {0} EU at the chest. The walk was the joke.",
+   "key": "",
+   "tr": "Haul a déposé {0} EU au coffre. La blague, c'était la marche."
+  },
   {
    "en": "Haul walked the batteries home. EU is in the chest. Do not click the crate.",
    "key": "",

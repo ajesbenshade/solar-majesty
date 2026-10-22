@@ -116,7 +116,7 @@ namespace SolarMajesty
             {
                 Id = AchievementId.Homesteader,
                 Title = "Homesteader",
-                Description = "House 20 worker drones at your charging stations.",
+                Description = "Berth 20 worker drones at your charging stations.",
                 Test = s => s.PeakPopulation >= HomesteaderDrones
             },
             new AchievementDef
