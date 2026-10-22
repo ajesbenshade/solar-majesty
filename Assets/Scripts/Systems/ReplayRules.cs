@@ -106,6 +106,9 @@ namespace SolarMajesty
             _ => "STANDARD"
         };
 
+        /// <summary>Shown in the New Campaign dialog so the chosen challenge is visible before START.</summary>
+        public static string NewCampaignChallengeLine => "CHALLENGE  ·  " + ChallengeLabel;
+
         public static string StanceLabel => Stance switch
         {
             DoctrineStance.OpenHands => "OPEN HANDS",

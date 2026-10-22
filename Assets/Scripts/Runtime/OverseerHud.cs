@@ -3073,13 +3073,18 @@ namespace SolarMajesty
 
         private void DrawCampaignDialog(bool newCampaign)
         {
-            float h = newCampaign ? 400f : 360f;
+            float h = newCampaign ? 418f : 360f;
             var rect = new Rect((_sw - 460f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 460f, h);
             var c = Panel(rect, newCampaign ? "New campaign" : "Load");
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
             float y = WrapBlock(c, c.y, newCampaign
                 ? $"Drop on {_pendingNewGameBody}. Only the chosen slot is replaced. Other saves stay. Autosave will follow this new colony — save the current one first if you still need it."
                 : "Load a saved colony. Other slots stay on disk.");
+            if (newCampaign)
+            {
+                GUI.Label(new Rect(c.x, y, c.width, 14f), ReplayRules.NewCampaignChallengeLine, _micro);
+                y += 18f;
+            }
             var slots = SaveSystem.ListSlots();
             for (int i = 0; i < slots.Count; i++)
             {
