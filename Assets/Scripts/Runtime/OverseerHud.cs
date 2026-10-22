@@ -2890,11 +2890,12 @@ namespace SolarMajesty
         {
             if (StillCaptureHold.Active || ReplayRules.IsEndless || _winDismissed) return false;
             var mission = _loop.Mission;
-            if (mission == null || !mission.IsWon) return false;
+            if (mission == null ||
+                !VictoryOffer.ShowPanel(mission.IsWon, _loop.IsVictoryHeld, ReplayRules.IsEndless, _winDismissed))
+                return false;
             if (DemoEndOffer.Applies(_loop.ActiveBody, won: true, endless: false))
             {
-                if (!_loop.VictoryHeld) return false; // KEEP PLAYING EARTH released it
-                DrawDemoEnd(); // Steam demo: OverseerHud.DemoEnd.cs
+                DrawDemoEnd(); // Steam demo: OverseerHud.DemoEnd.cs; KEEP PLAYING EARTH releases the hold
                 return true;
             }
             bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);

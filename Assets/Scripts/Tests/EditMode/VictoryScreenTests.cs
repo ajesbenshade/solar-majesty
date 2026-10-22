@@ -120,6 +120,43 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void WonSave_Continue_PlaysOn_WithoutTheVictoryPanel()
+        {
+            // Session 17: Main Menu then Continue on a won save re-held the world at timeScale 0
+            // with the panel already dismissed, so nothing could release it.
+            Assert.IsFalse(VictoryOffer.HoldOnRestore(won: true, endless: false), "a won save must not re-hold");
+            Assert.IsFalse(VictoryOffer.HoldOnRestore(won: false, endless: false));
+            Assert.IsFalse(VictoryOffer.HoldOnRestore(won: true, endless: true));
+
+            Assert.IsTrue(VictoryOffer.ShowPanel(won: true, held: true, endless: false, dismissed: false), "the latch still shows it");
+            Assert.IsFalse(VictoryOffer.ShowPanel(won: true, held: false, endless: false, dismissed: false), "continued won save: no panel");
+            Assert.IsFalse(VictoryOffer.ShowPanel(won: true, held: true, endless: false, dismissed: true));
+            Assert.IsFalse(VictoryOffer.ShowPanel(won: true, held: true, endless: true, dismissed: false));
+
+            var host = new GameObject("WonSaveContinue");
+            try
+            {
+                var mission = host.AddComponent<MissionController>();
+                mission.RestoreFrom(new SaveMissionState { state = (int)MissionState.Won, densCleared = true, launchReady = true });
+                Assert.IsTrue(mission.IsWon, "the save id and state stay Won");
+                Assert.IsFalse(VictoryOffer.HoldOnRestore(mission.IsWon, endless: false));
+
+                mission.EvaluateVictoryForTests();
+                Assert.IsTrue(mission.IsWon);
+                Assert.IsFalse(
+                    VictoryOffer.ShouldLatch(mission.IsWon, mission.IsLost, mission.AllGatesMet, true),
+                    "a restored win never re-latches the panel");
+            }
+            finally
+            {
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(host);
+                else
+                    UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
         public void Panel_StaysInsideTheScaledView()
         {
             var atScale = VictoryOffer.PanelRectForScreen(1920, 1080, 1.5f);

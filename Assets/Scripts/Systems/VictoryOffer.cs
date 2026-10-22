@@ -53,6 +53,18 @@ namespace SolarMajesty
         public static bool DemoBlocksDepart(bool firstHourDemo, bool fromVictory) =>
             firstHourDemo && !fromVictory;
 
+        /// <summary>
+        /// Loading a won save never re-holds the world: Continue on a won colony keeps playing.
+        /// </summary>
+        public static bool HoldOnRestore(bool won, bool endless) => false;
+
+        /// <summary>
+        /// The campaign panel shows only while the latch holds the world. A won save that was
+        /// continued (no hold) plays on without the panel coming back.
+        /// </summary>
+        public static bool ShowPanel(bool won, bool held, bool endless, bool dismissed) =>
+            won && held && !endless && !dismissed;
+
         public static bool NextIsBuilt(CelestialBodyId current)
         {
             var next = CampaignProgress.NextAfter(current);
