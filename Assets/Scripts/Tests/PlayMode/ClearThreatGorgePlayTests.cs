@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
@@ -113,7 +114,7 @@ namespace SolarMajesty.Tests
                 Assert.IsTrue(den.IsCleared, "a claimed mech has to break the mound. " + log);
                 Assert.AreEqual(1, pays.FindAll(v => v == 20800).Count, "the stacked 20,800 pays once. " + log);
 
-                var heroes = Object.FindObjectsByType<SpecialistAgent>(FindObjectsSortMode.None);
+                var heroes = Object.FindObjectsByType<SpecialistAgent>(FindObjectsSortMode.InstanceID);
                 // A mech that stood up inside the scrap window can roll a scrap on this down, so skip it.
                 var stoodUpAt = typeof(SpecialistAgent).GetField("_stoodUpAt",
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -128,6 +129,19 @@ namespace SolarMajesty.Tests
                     }
                 }
                 Assert.IsNotNull(flee, "a living hero has to be able to flee home");
+
+                // The den phase leaves heroes anywhere on the map. A far-away hero can
+                // exhaust the 40 s retreat cap, take another down and roll for scrap.
+                // Start this separate recovery check on the inn's mesh, outside its door,
+                // so it tests the walk home rather than an arbitrary cross-map journey.
+                Vector3 recoveryStart = ColonyLayout.InnOutpost + new Vector3(20f, 0f, 0f);
+                Assert.IsTrue(NavMesh.SamplePosition(recoveryStart, out var recoverySpot, 3f, NavMesh.AllAreas),
+                    "the recovery start must be on the inn's nearby mesh");
+                Assert.Greater(Flat(recoverySpot.position, ColonyLayout.InnOutpost), KingdomLife.RefugeArrive,
+                    "recovery must include a walk to the inn");
+                var agent = flee.GetComponent<NavMeshAgent>();
+                Assert.IsTrue(agent != null && agent.enabled && agent.Warp(recoverySpot.position),
+                    "the recovery hero must start on the inn's nearby mesh");
                 float hp = flee.HealthNormalized;
                 flee.ApplyDamage(5f, false);
                 Assert.IsFalse(flee.IsScrapped, "the scripted down has to test recovery, not scrapping");

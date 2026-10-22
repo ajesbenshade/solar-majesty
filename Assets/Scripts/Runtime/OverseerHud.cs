@@ -3292,7 +3292,7 @@ namespace SolarMajesty
         private void DrawCampaignDialog(bool newCampaign)
         {
             // The dialog hugs what it drew last pass (wrapped copy, slot count, text size).
-            float h = Mathf.Max(newCampaign ? 400f : 360f, _dialogMeasuredH);
+            float h = Mathf.Max(newCampaign ? 418f : 360f, _dialogMeasuredH);
             h = Mathf.Min(h, _sh - 20f);
             float dw = Mathf.Min(W(460f), _sw - M * 2f);
             var rect = new Rect((_sw - dw) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), dw, h);
@@ -3301,6 +3301,11 @@ namespace SolarMajesty
             float y = WrapBlock(c, c.y, newCampaign
                 ? Loc.F("Drop on {0}. Only the chosen slot is replaced. Other saves stay. Autosave will follow this new colony — save the current one first if you still need it.", _pendingNewGameBody)
                 : Loc.S("Load a saved colony. Other slots stay on disk."));
+            if (newCampaign)
+            {
+                FitLabel(new Rect(c.x, y, c.width, L(14f)), ReplayRules.NewCampaignChallengeLine, _micro);
+                y += L(18f);
+            }
             var slots = SaveSystem.ListSlots();
             float slotH = L(28f);
             for (int i = 0; i < slots.Count; i++)

@@ -348,6 +348,20 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void NewCampaignDialog_NamesTheSelectedChallenge()
+        {
+            var before = ReplayRules.Challenge;
+            try
+            {
+                ReplayRules.Challenge = ChallengeId.TightPurse;
+                Assert.AreEqual("CHALLENGE  ·  LOW BATTERY", ReplayRules.NewCampaignChallengeLine);
+                ReplayRules.Challenge = ChallengeId.None;
+                Assert.AreEqual("CHALLENGE  ·  STANDARD", ReplayRules.NewCampaignChallengeLine);
+            }
+            finally { ReplayRules.Challenge = before; }
+        }
+
+        [Test]
         public void ChipRateVariants_AbbreviateAndDedupe()
         {
             CollectionAssert.AreEqual(new[] { "330 carried", "330 carr.", "330" }, HudLayout.ChipRateVariants("330 carried"));
