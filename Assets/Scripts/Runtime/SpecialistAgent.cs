@@ -2428,21 +2428,46 @@ namespace SolarMajesty
             _routeCorner = 0;
             if (denWalk && NavCornerPath.TryDenRoute(
                     transform.position, target, OverseerRules.ClearThreatAttackRange,
-                    _approachAttempt, TravelWet, out Vector3[] denCorners))
+                    _approachAttempt, TravelWet, out Vector3[] denCorners, out bool viaFord))
             {
                 _route = denCorners;
+                _routeKind = viaFord ? "ford" : "corner";
                 return;
             }
 
             if (NavCornerPath.TryBuild(transform.position, target, 8f, out Vector3[] corners, out NavMeshPathStatus status) &&
-                status == NavMeshPathStatus.PathComplete)
+                status == NavMeshPathStatus.PathComplete &&
+                (!denWalk || NavCornerPath.EndsWithinAttackRange(corners, target, OverseerRules.ClearThreatAttackRange)))
             {
                 _route = corners;
+                _routeKind = "fallback";
                 return;
             }
 
             _route = null;
+            _routeKind = null;
         }
+
+        /// <summary>Route type for logs: corner, ford, fallback, or direct (no route; stepping straight).</summary>
+        private string RouteKindForLog => _route != null && _route.Length > 0 && !string.IsNullOrEmpty(_routeKind) ? _routeKind : "direct";
+
+        private string _routeKind;
+
+        /// <summary>Den label for logs: the lair object's name, else the flag's runtime ID.</summary>
+        private string ClearThreatDenLabel()
+        {
+            if (_activeFlag != null && _world != null)
+            {
+                var lair = _world.FindNearestLair(_activeFlag.WorldPosition, 12f);
+                if (lair != null) return lair.name;
+            }
+            return _activeFlag != null ? "flag " + _activeFlag.RuntimeId : "none";
+        }
+
+        /// <summary>Keeps the "[ClearThreat] X released the claim — no progress." prefix for log parsers.</summary>
+        internal static string ClearThreatReleaseMessage(string who, string den, float distance, string route) =>
+            $"[ClearThreat] {who} released the claim — no progress. den={den} dist=" +
+            distance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + $"m route={route}";
 
         private Vector3 NextCorner(Vector3 fallback)
         {
@@ -2613,7 +2638,8 @@ namespace SolarMajesty
         {
             if (_activeFlag == null) return;
             string who = data != null && !string.IsNullOrEmpty(data.displayName) ? data.displayName : "Hero";
-            Debug.Log($"[ClearThreat] {who} released the claim — no progress.");
+            Debug.Log(ClearThreatReleaseMessage(who, ClearThreatDenLabel(),
+                FlatDistance(transform.position, ClearThreatDenCenter()), RouteKindForLog));
             _yieldThreatId = _activeFlag.RuntimeId;
             _yieldThreatSeconds = OverseerRules.ClearThreatYieldSeconds;
             ReleaseClaim();
