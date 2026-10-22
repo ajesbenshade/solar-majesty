@@ -3902,6 +3902,17 @@
   {
    "speaker": "overseer",
    "cue": "line",
+   "key": "4ad5ebf5",
+   "text": "Haul walked the batteries home. EU is in the till. Do not click the crate.",
+   "clip": "overseer_line_4ad5ebf5",
+   "hash": "fe82760d7b79",
+   "seconds": 4.09,
+   "peak_db": -2.8,
+   "rms_db": -21.7
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
    "key": "4ee4328e",
    "text": "Dock a Fobot Yard. Y is not a miracle. It is an invoice.",
    "clip": "overseer_line_4ee4328e",
@@ -3953,17 +3964,6 @@
    "seconds": 5.15,
    "peak_db": -4.9,
    "rms_db": -21.5
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "7dec0237",
-   "text": "Haul walked the batteries home. EU is in the chest. Do not click the crate.",
-   "clip": "overseer_line_7dec0237",
-   "hash": "0a8636ae20be",
-   "seconds": 4.24,
-   "peak_db": -2.6,
-   "rms_db": -21.6
   },
   {
    "speaker": "overseer",

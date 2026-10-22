@@ -5384,7 +5384,7 @@ namespace SolarMajesty
                 BuildingCategory.Market => "Potions and a regen necklace. Heroes buy with EU.",
                 BuildingCategory.Blacksmith => "Guild arms and armor. Heroes buy with EU.",
                 BuildingCategory.FobotYard => "Pay EU here to stand wrecks up.",
-                BuildingCategory.Watchtower => "Guard post and levy chest. Arm lasers for EU.",
+                BuildingCategory.Watchtower => "Guard post and levy till. Arm lasers for EU.",
                 BuildingCategory.AidStation => "Hurt robots pay EU for a patch. Triage clocks in.",
                 _ => b.description
             };
