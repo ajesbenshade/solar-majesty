@@ -1432,11 +1432,14 @@ namespace SolarMajesty
             _contentBottom = rect.y;
             var c = Panel(rect, Loc.S("Build catalog"), true, HudTips.BuildCatalog());
 
-            FitLabel(new Rect(c.x, c.y, c.width, L(13f)),
-                DemoSettings.FirstHourDemo
+            // The row is too narrow for long blurbs, so the selected building's full blurb
+            // (e.g. the Watchtower canon line) shows in the hint line above the list.
+            string hint = !DemoSettings.FirstHourDemo && bp.Selected != null && !string.IsNullOrEmpty(bp.Selected.description)
+                ? Loc.S(bp.Selected.description)
+                : DemoSettings.FirstHourDemo
                     ? Loc.S("1 Engineer workshop · LMB on open ground")
-                    : Loc.S("Pick a building · LMB on open ground"),
-                _micro);
+                    : Loc.S("Pick a building · LMB on open ground");
+            FitLabel(new Rect(c.x, c.y, c.width, L(13f)), hint, _micro);
             float y = c.y + L(17f);
 
             var view = new Rect(c.x, y, c.width, c.yMax - y);
@@ -1471,9 +1474,15 @@ namespace SolarMajesty
                 var nameStyle = on ? _onText : _action;
                 var prevColor = nameStyle.normal.textColor;
                 if (!on && (!canAfford || locked)) nameStyle.normal.textColor = TextMuted;
-                string full = BuildRowLabel(b);
                 string label = Loc.S(b.displayName);
-                GUI.Label(nameRect, FitChipText(nameStyle, new[] { full, label }, nameRect.width), nameStyle);
+                string rowStat = b.category == BuildingCategory.Watchtower ? Loc.S("+1 Haul") : null;
+                var variants = new List<string>();
+                if (!string.IsNullOrEmpty(b.description))
+                    variants.AddRange(HudLayout.BuildRowVariants(label, Loc.S(b.description), rowStat));
+                else
+                    variants.Add(BuildRowLabel(b));
+                variants.Add(label);
+                GUI.Label(nameRect, FitChipText(nameStyle, variants.ToArray(), nameRect.width), nameStyle);
                 nameStyle.normal.textColor = prevColor;
 
                 var costStyle = _microRight;
@@ -1483,7 +1492,7 @@ namespace SolarMajesty
                 GUI.Label(costRect, FitChipText(costStyle, new[] { locked ? Loc.S("NEED TECH") : cost }, costRect.width), costStyle);
                 costStyle.normal.textColor = prevCost;
 
-                string what = !string.IsNullOrEmpty(b.description) ? Loc.S(b.description) : (full != label ? full : null);
+                string what = !string.IsNullOrEmpty(b.description) ? Loc.S(b.description) : (BuildRowLabel(b) != label ? BuildRowLabel(b) : null);
                 Tooltip(r, HudTips.BuildEntry(label.ToUpperInvariant(), what, cost, locked, canAfford,
                     slot <= 9 ? BuildHotkeyLabel(slot) : null));
 

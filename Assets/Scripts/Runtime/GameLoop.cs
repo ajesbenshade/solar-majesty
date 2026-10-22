@@ -3185,7 +3185,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Watchtower:
                         b.displayName = "Watchtower";
-                        b.description = Loc.S("+1 Haul");
+                        b.description = Loc.S("Guard post and levy till. Arm lasers for EU.") /* HudLayout.WatchtowerBlurb */;
                         break;
                     case BuildingCategory.AidStation:
                         b.displayName = "Aid Station";
