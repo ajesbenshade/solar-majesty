@@ -29,8 +29,6 @@ namespace SolarMajesty.Tests
             Pair("Systems/Voice/VoiceBank.cs", "\"overseer\""), // speaker constant and FX switch
             Pair("Systems/CompactGrok.cs", "Pests drained {amount} EU from {n} {purses}."), // interpolation variable
             Pair("Systems/Narration/HeroConversation.cs", "never \\\"Overseer\\\""), // instruction to avoid the name
-            Pair("Systems/OverseerRules.cs", "Haul walked the batteries home. EU is in the chest. Do not click the crate."), // separate PR
-            Pair("Assets/Resources/Audio/Voices/voices.json", "Haul walked the batteries home. EU is in the chest. Do not click the crate."), // same deferred line
             Pair("Assets/Resources/Audio/Voices/voices.json", "\"speaker\":\"overseer\"") // metadata only; text is checked separately
         };
 
