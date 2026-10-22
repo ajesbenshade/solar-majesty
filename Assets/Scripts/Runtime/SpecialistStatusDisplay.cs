@@ -24,9 +24,16 @@ namespace SolarMajesty
             Refresh(force: true);
         }
 
+        /// <summary>Store screenshots without overhead tags (they pile up when robots stand together).</summary>
+        public static bool HideForCapture;
+
         private void LateUpdate()
         {
             if (_agent == null) return;
+            bool show = !HideForCapture;
+            if (_orb != null && _orb.gameObject.activeSelf != show) _orb.gameObject.SetActive(show);
+            if (_label != null && _label.gameObject.activeSelf != show) _label.gameObject.SetActive(show);
+            if (!show) return;
             Refresh(force: false);
             Billboard();
         }
@@ -71,18 +78,18 @@ namespace SolarMajesty
             {
                 c = new Color(0.95f, 0.32f, 0.26f);
                 text = _agent.RecoverSecondsLeft > 0.05f
-                    ? $"DOWN {_agent.RecoverSecondsLeft:F0}s"
-                    : $"L{_agent.Level} DOWN";
+                    ? Loc.F("DOWN {0:F0}s", _agent.RecoverSecondsLeft)
+                    : Loc.F("L{0} DOWN", _agent.Level);
             }
             else if (_agent.LevyCarried > 0)
             {
                 c = new Color(0.98f, 0.82f, 0.22f);
-                text = $"LEVY {_agent.LevyCarried}";
+                text = Loc.F("LEVY {0}", _agent.LevyCarried);
             }
             else if (_agent.DutyCarry > 0 && _agent.LastReason == "pay_duty")
             {
                 c = new Color(0.98f, 0.82f, 0.22f);
-                text = $"EU {_agent.DutyCarry}";
+                text = Loc.F("EU {0}", _agent.DutyCarry);
             }
             else if (!string.IsNullOrEmpty(_agent.RefusalChip))
             {
@@ -95,39 +102,39 @@ namespace SolarMajesty
             {
                 case SpecialistAction.Rest:
                     c = new Color(0.45f, 0.75f, 1f);
-                    text = _agent.Status != null && _agent.Status.Contains("seeking") ? "INN" : "REST";
+                    text = _agent.Status != null && _agent.Status.Contains("seeking") ? Loc.S("INN") : Loc.S("REST");
                     break;
                 case SpecialistAction.Flee:
                     c = new Color(0.95f, 0.32f, 0.26f);
-                    text = "FLEE";
+                    text = Loc.S("FLEE");
                     break;
                 case SpecialistAction.Hunt:
                     c = new Color(0.95f, 0.35f, 0.2f);
-                    text = _agent.Status == "engaging" ? "FIGHT" : "HUNT";
+                    text = _agent.Status == "engaging" ? Loc.S("FIGHT") : Loc.S("HUNT");
                     break;
                 case SpecialistAction.Repair:
                     c = new Color(0.45f, 0.85f, 1f);
-                    text = "FIX";
+                    text = Loc.S("FIX");
                     break;
                 case SpecialistAction.Wander:
                     c = new Color(0.72f, 0.78f, 0.55f);
-                    text = _agent.LastReason != null && _agent.LastReason.Contains("party_follow") ? "PARTY"
-                        : _agent.LastReason != null && _agent.LastReason.Contains("workshop") ? "DUTY"
-                        : _agent.LastReason != null && _agent.LastReason.Contains("patrol") ? "PATROL"
-                        : _agent.LastReason != null && _agent.LastReason.Contains("tinker") ? "TOWN"
-                        : _agent.LastReason != null && _agent.LastReason.Contains("triage") ? "HEAL"
-                        : _agent.LastReason != null && _agent.LastReason.Contains("levy_") ? "LEVY"
-                        : "SCOUT";
+                    text = _agent.LastReason != null && _agent.LastReason.Contains("party_follow") ? Loc.S("PARTY")
+                        : _agent.LastReason != null && _agent.LastReason.Contains("workshop") ? Loc.S("DUTY")
+                        : _agent.LastReason != null && _agent.LastReason.Contains("patrol") ? Loc.S("PATROL")
+                        : _agent.LastReason != null && _agent.LastReason.Contains("tinker") ? Loc.S("TOWN")
+                        : _agent.LastReason != null && _agent.LastReason.Contains("triage") ? Loc.S("HEAL")
+                        : _agent.LastReason != null && _agent.LastReason.Contains("levy_") ? Loc.S("LEVY")
+                        : Loc.S("SCOUT");
                     break;
                 case SpecialistAction.PursueFlag:
                     c = new Color(1f, 0.55f, 0.15f);
                     text = _agent.Status != null && _agent.Status.StartsWith("working")
-                        ? "WORK"
-                        : "PURSUE";
+                        ? Loc.S("WORK")
+                        : Loc.S("PURSUE");
                     break;
                 default:
                     c = new Color(0.7f, 0.7f, 0.75f);
-                    text = "IDLE";
+                    text = Loc.S("IDLE");
                     break;
             }
             }

@@ -48,6 +48,20 @@ namespace SolarMajesty.EditorTools
             "             open with no pole: they set the next post, labeled on the panel.\n" +
             "P            Form a party (max 4)     [ disband\n" +
             "\n" +
+            "Local AI (included in the full package)\n" +
+            "---------------------------------------\n" +
+            "If the ai folder sits next to SolarMajesty.exe, the game starts its models by itself.\n" +
+            "There is nothing to install. Heroes speak live lines, you can talk to a selected hero,\n" +
+            "and they speak aloud. Everything runs on this PC; nothing is sent anywhere.\n" +
+            "- The first minute after launch the models load from disk. Until they answer, heroes use\n" +
+            "  the written lines, then switch to live ones. That is normal.\n" +
+            "- Memory: chat needs about 12 GB of RAM; with 8 GB you get live lines and voices only;\n" +
+            "  below 6 GB the game runs without the models.\n" +
+            "- The models run at low priority so the game stays smooth. To turn them off, start\n" +
+            "  SolarMajesty.exe with -noai (or delete the ai folder).\n" +
+            "- If lines or voices never arrive, please send the files in\n" +
+            "  %USERPROFILE%\\AppData\\LocalLow\\SolarMajesty\\Solar Majesty\\ai\\ along with the telemetry.\n" +
+            "\n" +
             "Telemetry (please zip this folder back)\n" +
             "---------------------------------------\n" +
             "macOS:   ~/Library/Application Support/SolarMajesty/Solar Majesty/Playtest/\n" +

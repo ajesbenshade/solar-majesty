@@ -1,6 +1,6 @@
 # Solar Majesty
 
-**SpaceXAI Colonization Protocol** — Majesty 2–style indirect control, rethemed as solar-system colonization.
+**Indirect-control colony builder** — post bounties, and autonomous robots across the solar system decide whether the job is worth it. Your sarcastic advisor, Jex, keeps score.
 
 You never control units. You build infrastructure, post flags/bounties, and manage the economy. Autonomous specialists accept or ignore work based on personality and greed.
 

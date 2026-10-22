@@ -87,7 +87,7 @@ namespace SolarMajesty
             }
             string env = Environment.GetEnvironmentVariable("SOLAR_LAYA_URL");
             if (!string.IsNullOrEmpty(env)) return env;
-            return PlayerPrefs.GetInt(PrefKey, 0) == 1 ? DefaultUrl : null;
+            return GamePrefs.GetInt(PrefKey, 0) == 1 ? DefaultUrl : null;
         }
 
         void Awake()

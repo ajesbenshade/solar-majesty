@@ -143,6 +143,35 @@ namespace SolarMajesty
             flag != null && flag.Data != null && flag.Data.flagType == FlagType.ClearThreat;
     }
 
+    /// <summary>
+    /// The first of a world's three win gates. It is about the dens: every den cleared and none
+    /// of the fauna that came out of them still alive (residents, pressure waves, campus yard
+    /// pests). Town spawns from the kingdom table (burrow pests, edge raiders, wreck junk) keep
+    /// coming after the dens are quiet, like Majesty sewers; they are a nuisance for bounties and
+    /// never hold the gate, or every burrow pest would close it again until a robot killed it.
+    /// </summary>
+    public static class DensGate
+    {
+        public static bool Met(int lairs, int unclearedLairs, int denFaunaAlive) =>
+            lairs > 0 ? unclearedLairs <= 0 && denFaunaAlive <= 0 : denFaunaAlive <= 0;
+
+        /// <summary>Whether one creature holds the gate.</summary>
+        public static bool Holds(bool alive, bool townSpawn) => alive && !townSpawn;
+
+        /// <summary>
+        /// SaveFauna.townSpawnSlot: 0 den fauna (and every save from before the tag), row + 1 for
+        /// a kingdom spawn table row, -1 for a town spawn outside the table (scrap-pile junk).
+        /// </summary>
+        public static int EncodeSlot(bool townSpawn, int entry) =>
+            !townSpawn ? 0 : entry >= 0 ? entry + 1 : -1;
+
+        public static bool DecodeSlot(int slot, out int entry)
+        {
+            entry = slot > 0 ? slot - 1 : -1;
+            return slot != 0;
+        }
+    }
+
     /// <summary>Which saved fauna a Continue is allowed to put back.</summary>
     public static class FaunaRestoreCap
     {
@@ -267,7 +296,7 @@ namespace SolarMajesty
             return true;
         }
 
-        string Line() => CompactGrok.PestsLifted(_amount, _places.Count);
+        string Line() => CompactJex.PestsLifted(_amount, _places.Count);
 
         void AddPlace(string where)
         {
@@ -345,8 +374,8 @@ namespace SolarMajesty
         public static string Caption(string title, int count, int bounty)
         {
             if (count <= 1) return null;
-            if (string.IsNullOrEmpty(title)) title = "Flag";
-            return title + " ×" + count.ToString() + " — " + bounty.ToString("N0") + " EU";
+            if (string.IsNullOrEmpty(title)) title = Loc.S("Flag");
+            return Loc.F("{0} ×{1} — {2:N0} EU", title, count, bounty);
         }
 
         public static bool IsRepresentative(IReadOnlyList<Item> all, int index, float radius)

@@ -28,6 +28,12 @@ namespace SolarMajesty
         private Material _skyMat;
         private float _skyExposureBase = 1f;
 
+        /// <summary>
+        /// Store-shot harness only: holds the light cycle at this mission time (seconds) while set,
+        /// so key art can be rendered in the low afternoon sun. Null = normal behaviour.
+        /// </summary>
+        public static double? CaptureElapsed;
+
         /// <summary>Last applied state (read by sky / focus effects).</summary>
         public static SunState Current { get; private set; }
 
@@ -79,7 +85,7 @@ namespace SolarMajesty
             if (_loop == null || (_loop.Screen != DemoScreen.Playing && _loop.Screen != DemoScreen.Paused)) return;
 
             bool live = DemoSettings.DayCycle && !StillCaptureHold.Active && _loop.Mission != null;
-            double t = live ? _loop.Mission.MissionElapsed : 0.0;
+            double t = CaptureElapsed ?? (live ? _loop.Mission.MissionElapsed : 0.0);
             var s = SunPath.Evaluate(_body, t);
             Current = s;
 

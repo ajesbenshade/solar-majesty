@@ -31,7 +31,7 @@ Harness renders of the sky band at full zoom-out (flat fog-colour ground; not an
 
 ## Build note
 
-`Skybox/Panoramic` is reached only through `Shader.Find`. Run **Solar Majesty → Render → Configure URP For Look Target** once, which now adds it (and `Skybox/Procedural`) to Always Included Shaders. Without it, the diorama camera still works but shows the tuned sky; the game warns once.
+`Skybox/Panoramic` is reached only through `Shader.Find`, so player builds strip it unless an included asset references it. The keeper material `Resources/ShaderKeep/SM_Keep_SkyPanorama.mat` is that reference: `ShaderVariantKeeper` (run before every build by `BuildCommands`) writes it, and `ShaderKeepTests` fails if it goes missing. `Skybox/Procedural` ships through the scene's default skybox. Without the panorama shader the diorama camera and camera beats still work, but show the tuned sky colour; the game warns once (`[Sky] ... missing` in Player.log).
 
 ## Tuning knobs
 

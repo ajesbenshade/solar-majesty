@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -16,7 +17,8 @@ namespace SolarMajesty
         public const int PlayerSlotCount = 3;
         public const int SlotCount = PlayerSlotCount + 1;
 
-        private const string FolderName = "Saves";
+        /// <summary>"Saves", or "DemoSaves" in the Steam demo so demo colonies never share the game's slots.</summary>
+        private static string FolderName => DemoBuild.SaveFolder(DemoBuild.CompiledAsDemo);
         private const string Extension = ".json";
 
         /// <summary>
@@ -25,7 +27,18 @@ namespace SolarMajesty
         /// crashed run cannot touch the player's real colony files. A player build sets it from
         /// <c>-saveDir</c> before the first load; with no argument it stays null.
         /// </summary>
-        public static string DirectoryOverride { get; set; }
+        public static string DirectoryOverride
+        {
+            get => _directoryOverride;
+            set
+            {
+                // Let queued autosaves land where they were aimed before anything moves or deletes it.
+                Flush();
+                _directoryOverride = value;
+            }
+        }
+
+        private static string _directoryOverride;
 
         private static bool _loggedSaveDirectory;
 
@@ -102,7 +115,11 @@ namespace SolarMajesty
         public static string SlotPath(int slot) =>
             Path.Combine(SaveDirectory, $"slot{Mathf.Clamp(slot, 0, SlotCount - 1)}{Extension}");
 
-        public static bool Exists(int slot) => File.Exists(SlotPath(slot)) || File.Exists(SlotPath(slot) + ".bak");
+        public static bool Exists(int slot)
+        {
+            Flush();
+            return File.Exists(SlotPath(slot)) || File.Exists(SlotPath(slot) + ".bak");
+        }
 
         public static bool AnyExists()
         {
@@ -134,8 +151,132 @@ namespace SolarMajesty
 
         private static bool IsNewerFile(string path)
         {
+            Flush();
             TryReadFile(path, out _, out bool newer);
             return newer;
+        }
+
+        // ---- background autosave writes --------------------------------------------------------
+
+        // Files this session wrote, with the write time it left on them. Guarded by WriteGate (the
+        // background writer records into it). A file whose time changed since is checked again.
+        private static readonly Dictionary<string, DateTime> OwnPaths = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+
+        private static void MarkOwn(string path)
+        {
+            try
+            {
+                DateTime t = File.GetLastWriteTimeUtc(path);
+                lock (WriteGate) OwnPaths[path] = t;
+            }
+            catch
+            {
+                lock (WriteGate) OwnPaths.Remove(path);
+            }
+        }
+
+        private static bool IsOwnUnchanged(string path)
+        {
+            DateTime t;
+            lock (WriteGate)
+            {
+                if (!OwnPaths.TryGetValue(path, out t)) return false;
+            }
+            try { return File.Exists(path) && File.GetLastWriteTimeUtc(path) == t; }
+            catch { return false; }
+        }
+        private static readonly object WriteGate = new object();
+        private static Task _writes = Task.CompletedTask;
+
+        /// <summary>
+        /// Autosave: serialise once on the main thread, then write every path on one background
+        /// queue. The main-thread version cost ~35 ms and set off a large GC every 20 s, which the
+        /// benchmark measured as a ~115 ms hitch. Every read, delete and listing waits for the queue,
+        /// and quitting flushes it, so nothing ever sees a half-finished autosave.
+        /// </summary>
+        public static void WriteAutosave(SaveGame save, IList<string> paths)
+        {
+            if (save == null || paths == null || paths.Count == 0) return;
+
+            var targets = new List<string>(paths.Count);
+            for (int i = 0; i < paths.Count; i++)
+            {
+                string p = paths[i];
+                if (string.IsNullOrEmpty(p) || targets.Contains(p)) continue;
+                // A file this session already wrote is this build's version: skip re-reading and
+                // parsing it. Autosave used to parse each target and its .bak every 20 s.
+                if (!IsOwnUnchanged(p) && (IsNewerFile(p) || IsNewerFile(p + ".bak")))
+                {
+                    Debug.LogWarning($"[SaveSystem] Refusing to overwrite a newer-build save at {p}.");
+                    continue;
+                }
+                targets.Add(p);
+            }
+            if (targets.Count == 0) return;
+
+            Stamp(save);
+            string json = JsonUtility.ToJson(save, prettyPrint: true);
+            string dir = SaveDirectory;
+
+            lock (WriteGate)
+            {
+                _writes = _writes.ContinueWith(_ =>
+                {
+                    try { Directory.CreateDirectory(dir); }
+                    catch (Exception e) { Debug.LogError($"[SaveSystem] Cannot create {dir}: {e.Message}"); return; }
+                    for (int i = 0; i < targets.Count; i++)
+                    {
+                        if (WriteText(targets[i], json)) MarkOwn(targets[i]);
+                    }
+                }, TaskScheduler.Default);
+            }
+        }
+
+        /// <summary>Wait for queued autosave writes. Cheap when nothing is pending.</summary>
+        public static void Flush()
+        {
+            Task pending;
+            lock (WriteGate) pending = _writes;
+            if (pending.IsCompleted) return;
+            try { pending.Wait(); }
+            catch (Exception e) { Debug.LogError("[SaveSystem] Background save failed: " + e.Message); }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void HookQuit()
+        {
+            lock (WriteGate) OwnPaths.Clear();
+            Application.quitting -= Flush;
+            Application.quitting += Flush;
+        }
+
+        private static void Stamp(SaveGame save)
+        {
+            save.version = SaveGame.CurrentVersion;
+            save.gameVersion = Application.version;
+            save.buildGuid = Application.buildGUID;
+            save.savedAtUtc = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        }
+
+        /// <summary>Atomic write: temp file, then replace keeping the previous file as .bak.</summary>
+        private static bool WriteText(string path, string json)
+        {
+            string temp = path + ".tmp";
+            try
+            {
+                File.WriteAllText(temp, json);
+                if (File.Exists(path))
+                    File.Replace(temp, path, path + ".bak");
+                else
+                    File.Move(temp, path);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveSystem] Write to {path} failed: {e.Message}");
+                TryDelete(temp);
+                return false;
+            }
         }
 
         private static bool WritePath(string path, SaveGame save)
@@ -147,32 +288,20 @@ namespace SolarMajesty
                 return false;
             }
 
-            save.version = SaveGame.CurrentVersion;
-            save.gameVersion = Application.version;
-            save.buildGuid = Application.buildGUID;
-            save.savedAtUtc = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
-            string temp = path + ".tmp";
-
+            Stamp(save);
+            Flush(); // keep order with any queued autosave of the same file
             try
             {
                 Directory.CreateDirectory(SaveDirectory);
-                File.WriteAllText(temp, JsonUtility.ToJson(save, prettyPrint: true));
-
-                // Keep the previous complete snapshot while atomically replacing the current one.
-                if (File.Exists(path))
-                    File.Replace(temp, path, path + ".bak");
-                else
-                    File.Move(temp, path);
-
-                return true;
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SaveSystem] Write to {path} failed: {e.Message}");
-                TryDelete(temp);
+                Debug.LogError($"[SaveSystem] Cannot create {SaveDirectory}: {e.Message}");
                 return false;
             }
+            bool ok = WriteText(path, JsonUtility.ToJson(save, prettyPrint: true));
+            if (ok) MarkOwn(path);
+            return ok;
         }
 
         public static bool TryRead(int slot, out SaveGame save)
@@ -182,6 +311,7 @@ namespace SolarMajesty
 
         private static bool TryReadPath(string path, out SaveGame save)
         {
+            Flush();
             if (TryReadFile(path, out save, out bool newer)) return true;
             if (newer) return false; // Do not roll a newer-build save back behind the player's back.
             if (TryReadFile(path + ".bak", out save, out _))
@@ -292,6 +422,11 @@ namespace SolarMajesty
                 save.villageGrowth = null;
                 save.collectors = null;
             }
+            // Before v8 nothing wrote the drone census (gold-only builds left it 0; older builds
+            // stored colonists). Settlement.RestoreDrones clamps it to the berths and seeds the
+            // starter crew when it is 0, and the next drone waits a full interval.
+            if (save.version < 8 && save.settlement != null)
+                save.settlement.droneSeconds = 0f;
             bool legacyFaunaOwnership = save.version < 4;
             bool legacyGoldScale = save.version < MajestyEconomy.GoldScaleSaveVersion;
             if (save.version < SaveGame.CurrentVersion)
@@ -359,6 +494,8 @@ namespace SolarMajesty
 
         private static void DeleteSnapshot(string path)
         {
+            Flush();
+            lock (WriteGate) OwnPaths.Remove(path);
             TryDelete(path);
             TryDelete(path + ".bak");
             TryDelete(path + ".tmp");
@@ -437,6 +574,6 @@ namespace SolarMajesty
         public CelestialBodyId Body;
         public double PlaySeconds;
 
-        public string Label => Slot == SaveSystem.AutosaveSlot ? "AUTO" : $"SLOT {Slot}";
+        public string Label => Slot == SaveSystem.AutosaveSlot ? Loc.S("AUTO") : Loc.F("SLOT {0}", Slot);
     }
 }

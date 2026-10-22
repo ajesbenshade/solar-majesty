@@ -55,6 +55,13 @@ namespace SolarMajesty
         public float ResearchRateBonus;
         public bool SecretProject;
 
+        /// <summary>
+        /// Player-facing name and description in the current language. <see cref="DisplayName"/> and
+        /// <see cref="Description"/> stay English (logs, tests, the catalog literals the extractor reads).
+        /// </summary>
+        public string DisplayNameText => Loc.S(DisplayName);
+        public string DescriptionText => Loc.S(Description);
+
         public TechDef(
             TechId id,
             string name,

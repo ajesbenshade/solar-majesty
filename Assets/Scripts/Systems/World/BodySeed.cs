@@ -20,7 +20,7 @@ namespace SolarMajesty
             bool randomizeIfMissing = false)
         {
             Body = body;
-            PlayerPrefs.SetInt(BodyPrefsKey, (int)body);
+            GamePrefs.SetInt(BodyPrefsKey, (int)body);
 
             if (inspectorOverride != 0)
             {
@@ -29,9 +29,9 @@ namespace SolarMajesty
             }
 
             string key = SeedKey(body);
-            if (PlayerPrefs.HasKey(key))
+            if (GamePrefs.HasKey(key))
             {
-                Current = PlayerPrefs.GetInt(key, 10007);
+                Current = GamePrefs.GetInt(key, 10007);
                 return;
             }
 
@@ -43,21 +43,22 @@ namespace SolarMajesty
 
         /// <summary>Load last selected body from prefs (Earth if unset).</summary>
         public static CelestialBodyId LoadSavedBody() =>
-            (CelestialBodyId)PlayerPrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Earth);
+            DemoBuild.ClampBody(DemoBuild.Active,
+                (CelestialBodyId)GamePrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Earth));
 
         /// <summary>Point the in-memory body and seed at prefs. Does not write.</summary>
         public static void ReloadFromPrefs()
         {
             Body = LoadSavedBody();
             string key = SeedKey(Body);
-            Current = PlayerPrefs.HasKey(key) ? PlayerPrefs.GetInt(key, DefaultSeed(Body)) : DefaultSeed(Body);
+            Current = GamePrefs.HasKey(key) ? GamePrefs.GetInt(key, DefaultSeed(Body)) : DefaultSeed(Body);
         }
 
         public static void SetBody(CelestialBodyId body)
         {
             Body = body;
-            PlayerPrefs.SetInt(BodyPrefsKey, (int)body);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(BodyPrefsKey, (int)body);
+            GamePrefs.Save();
         }
 
         public static void AdvanceForNextConquest()
@@ -79,8 +80,8 @@ namespace SolarMajesty
 
         private static void PersistSeed()
         {
-            PlayerPrefs.SetInt(SeedKey(Body), Current);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(SeedKey(Body), Current);
+            GamePrefs.Save();
         }
 
         private static string SeedKey(CelestialBodyId body) => SeedPrefix + body;

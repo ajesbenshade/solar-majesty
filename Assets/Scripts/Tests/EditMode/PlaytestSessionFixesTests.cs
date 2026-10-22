@@ -43,15 +43,15 @@ namespace SolarMajesty.Tests
         [Test]
         public void Resolution_PersistsAcrossLoad()
         {
-            bool hadW = PlayerPrefs.HasKey(DemoSettings.ResolutionWKey);
-            bool hadH = PlayerPrefs.HasKey(DemoSettings.ResolutionHKey);
-            int prevW = PlayerPrefs.GetInt(DemoSettings.ResolutionWKey, 0);
-            int prevH = PlayerPrefs.GetInt(DemoSettings.ResolutionHKey, 0);
+            bool hadW = GamePrefs.HasKey(DemoSettings.ResolutionWKey);
+            bool hadH = GamePrefs.HasKey(DemoSettings.ResolutionHKey);
+            int prevW = GamePrefs.GetInt(DemoSettings.ResolutionWKey, 0);
+            int prevH = GamePrefs.GetInt(DemoSettings.ResolutionHKey, 0);
             // SaveSettings also writes the UI-scale auto flag; put it back too.
-            bool hadHudAuto = PlayerPrefs.HasKey(DemoSettings.HudAutoKey);
-            int prevHudAuto = PlayerPrefs.GetInt(DemoSettings.HudAutoKey, 1);
-            bool hadBoot = PlayerPrefs.HasKey(DemoSettings.BootPlayKey);
-            int boot = PlayerPrefs.GetInt(DemoSettings.BootPlayKey, 0);
+            bool hadHudAuto = GamePrefs.HasKey(DemoSettings.HudAutoKey);
+            int prevHudAuto = GamePrefs.GetInt(DemoSettings.HudAutoKey, 1);
+            bool hadBoot = GamePrefs.HasKey(DemoSettings.BootPlayKey);
+            int boot = GamePrefs.GetInt(DemoSettings.BootPlayKey, 0);
             try
             {
                 DemoSettings.ResolutionWidth = 1920;
@@ -66,19 +66,19 @@ namespace SolarMajesty.Tests
             }
             finally
             {
-                if (hadW) PlayerPrefs.SetInt(DemoSettings.ResolutionWKey, prevW);
-                else PlayerPrefs.DeleteKey(DemoSettings.ResolutionWKey);
-                if (hadH) PlayerPrefs.SetInt(DemoSettings.ResolutionHKey, prevH);
-                else PlayerPrefs.DeleteKey(DemoSettings.ResolutionHKey);
-                if (hadHudAuto) PlayerPrefs.SetInt(DemoSettings.HudAutoKey, prevHudAuto);
-                else PlayerPrefs.DeleteKey(DemoSettings.HudAutoKey);
-                if (hadBoot) PlayerPrefs.SetInt(DemoSettings.BootPlayKey, boot);
-                else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
-                PlayerPrefs.Save();
+                if (hadW) GamePrefs.SetInt(DemoSettings.ResolutionWKey, prevW);
+                else GamePrefs.DeleteKey(DemoSettings.ResolutionWKey);
+                if (hadH) GamePrefs.SetInt(DemoSettings.ResolutionHKey, prevH);
+                else GamePrefs.DeleteKey(DemoSettings.ResolutionHKey);
+                if (hadHudAuto) GamePrefs.SetInt(DemoSettings.HudAutoKey, prevHudAuto);
+                else GamePrefs.DeleteKey(DemoSettings.HudAutoKey);
+                if (hadBoot) GamePrefs.SetInt(DemoSettings.BootPlayKey, boot);
+                else GamePrefs.DeleteKey(DemoSettings.BootPlayKey);
+                GamePrefs.Save();
                 DemoSettings.Load();
-                if (hadBoot) PlayerPrefs.SetInt(DemoSettings.BootPlayKey, boot);
-                else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
-                PlayerPrefs.Save();
+                if (hadBoot) GamePrefs.SetInt(DemoSettings.BootPlayKey, boot);
+                else GamePrefs.DeleteKey(DemoSettings.BootPlayKey);
+                GamePrefs.Save();
             }
         }
 
@@ -172,35 +172,35 @@ namespace SolarMajesty.Tests
         [Test]
         public void EdgeScroll_Load_UsesTheSavedChoiceWhenOneExists()
         {
-            bool had = PlayerPrefs.HasKey(DemoSettings.EdgeScrollKey);
-            int prev = PlayerPrefs.GetInt(DemoSettings.EdgeScrollKey, 0);
-            bool hadBoot = PlayerPrefs.HasKey(DemoSettings.BootPlayKey);
-            int boot = PlayerPrefs.GetInt(DemoSettings.BootPlayKey, 0);
+            bool had = GamePrefs.HasKey(DemoSettings.EdgeScrollKey);
+            int prev = GamePrefs.GetInt(DemoSettings.EdgeScrollKey, 0);
+            bool hadBoot = GamePrefs.HasKey(DemoSettings.BootPlayKey);
+            int boot = GamePrefs.GetInt(DemoSettings.BootPlayKey, 0);
             try
             {
-                PlayerPrefs.DeleteKey(DemoSettings.EdgeScrollKey);
+                GamePrefs.DeleteKey(DemoSettings.EdgeScrollKey);
                 DemoSettings.Load();
                 Assert.IsTrue(DemoSettings.EdgeScroll, "no saved choice means edge scroll is on");
 
-                PlayerPrefs.SetInt(DemoSettings.EdgeScrollKey, 0);
+                GamePrefs.SetInt(DemoSettings.EdgeScrollKey, 0);
                 DemoSettings.Load();
                 Assert.IsFalse(DemoSettings.EdgeScroll, "an explicit off stays off");
 
-                PlayerPrefs.SetInt(DemoSettings.EdgeScrollKey, 1);
+                GamePrefs.SetInt(DemoSettings.EdgeScrollKey, 1);
                 DemoSettings.Load();
                 Assert.IsTrue(DemoSettings.EdgeScroll);
             }
             finally
             {
-                if (had) PlayerPrefs.SetInt(DemoSettings.EdgeScrollKey, prev);
-                else PlayerPrefs.DeleteKey(DemoSettings.EdgeScrollKey);
-                if (hadBoot) PlayerPrefs.SetInt(DemoSettings.BootPlayKey, boot);
-                else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
-                PlayerPrefs.Save();
+                if (had) GamePrefs.SetInt(DemoSettings.EdgeScrollKey, prev);
+                else GamePrefs.DeleteKey(DemoSettings.EdgeScrollKey);
+                if (hadBoot) GamePrefs.SetInt(DemoSettings.BootPlayKey, boot);
+                else GamePrefs.DeleteKey(DemoSettings.BootPlayKey);
+                GamePrefs.Save();
                 DemoSettings.Load();
-                if (hadBoot) PlayerPrefs.SetInt(DemoSettings.BootPlayKey, boot);
-                else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
-                PlayerPrefs.Save();
+                if (hadBoot) GamePrefs.SetInt(DemoSettings.BootPlayKey, boot);
+                else GamePrefs.DeleteKey(DemoSettings.BootPlayKey);
+                GamePrefs.Save();
             }
         }
 

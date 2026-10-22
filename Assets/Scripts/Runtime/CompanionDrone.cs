@@ -138,7 +138,7 @@ namespace SolarMajesty
             if (n > 0)
             {
                 DemoVfx.ClaimRing(transform.position, _def.color);
-                _owner?.ShowRefusal("TAUNT");
+                _owner?.ShowRefusal(Loc.S("TAUNT"));
             }
         }
 

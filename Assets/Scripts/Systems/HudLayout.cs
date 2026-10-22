@@ -25,8 +25,31 @@ namespace SolarMajesty
         public const int LevyBudget = 46;
         public const int TreasuryBudget = 26;
 
+        /// <summary>Rows of text inside the dock at 100 % (colony header and two chip rows; verbs and levy line).</summary>
+        public const float DockTextRows = 76f;
+
+        /// <summary>Dock height: grows with TEXT SIZE so the chips' two lines and the clock column fit.</summary>
+        public static float DockHeight => DockH + HudTextScale.Grow(DockTextRows);
+
+        /// <summary>Objectives / alert column width; widens with TEXT SIZE.</summary>
+        public static float ObjectivesWidth => HudTextScale.Width(ObjectivesW);
+
         public static float DockWidth(float viewW) =>
-            Mathf.Min(DockW, viewW - Margin * 3f - MapSize - 12f);
+            Mathf.Min(HudTextScale.Width(DockW), viewW - Margin * 3f - MapSize - 12f);
+
+        /// <summary>
+        /// Dock columns: stockpile, verbs, clock. At 100 % they are 244 / the rest / 186; extra width
+        /// from a larger TEXT SIZE goes to the text columns, never below the verbs' own width.
+        /// </summary>
+        public static void DockColumns(float contentW, out float stockpileW, out float clockW)
+        {
+            stockpileW = StockpileW;
+            clockW = 186f;
+            float extra = contentW - (DockW - Pad * 2f);
+            if (extra <= 0f) return;
+            stockpileW += extra * 0.55f;
+            clockW += extra * 0.45f;
+        }
 
         /// <summary>Centred, but never under the minimap on narrow screens.</summary>
         public static float DockLeft(float viewW)
@@ -35,7 +58,7 @@ namespace SolarMajesty
             return Mathf.Max(Margin, Mathf.Min((viewW - w) * 0.5f, viewW - Margin - MapSize - 12f - w));
         }
 
-        public static float DockTop(float viewH) => viewH - Margin - DockH;
+        public static float DockTop(float viewH) => viewH - Margin - DockHeight;
 
         public static Rect Crest(float viewW, float viewH)
         {
@@ -65,16 +88,26 @@ namespace SolarMajesty
 
         public static Rect Objectives(float viewW)
         {
-            return new Rect(viewW - Margin - ObjectivesW, Margin, ObjectivesW, 200f);
+            float w = ObjectivesWidth;
+            return new Rect(viewW - Margin - w, Margin, w, 200f);
         }
+
+        /// <summary>Stockpile chip height: two text lines (label over rate) beside the amount.</summary>
+        public static float ChipHeight => HudTextScale.Line(28f);
 
         /// <summary>Label and rate share the left column; the amount keeps the right edge.</summary>
         public static void ChipText(Rect chip, out Rect label, out Rect number)
         {
-            number = new Rect(chip.xMax - 40f, chip.y, 36f, chip.height);
+            // The amount column follows the number font (17 px at 100 %).
+            float numW = 36f * HudTextScale.Font(17) / 17f;
+            number = new Rect(chip.xMax - numW - 4f, chip.y, numW, chip.height);
             float labelX = chip.x + 29f;
-            label = new Rect(labelX, chip.y + 2f, number.xMin - TextGap - labelX, 12f);
+            label = new Rect(labelX, chip.y + 2f, number.xMin - TextGap - labelX, HudTextScale.Line(12f));
         }
+
+        /// <summary>The rate line under a chip label.</summary>
+        public static Rect ChipRate(Rect chip, Rect label) =>
+            new Rect(label.x, chip.y + HudTextScale.Line(13f), label.width, label.height);
 
         /// <summary>Smallest chip label size that still reads at HUD scale 1.</summary>
         public const int ChipLabelMinSize = 8;
@@ -119,6 +152,16 @@ namespace SolarMajesty
         public static float StockpileChipWidth(float stockpileWidth = StockpileW) =>
             (stockpileWidth - StockpileChipGap) * 0.5f;
 
+        /// <summary>
+        /// CHARGERS chip rate: worker drones housed / berths ("12/16 drones"); heroes are counted
+        /// on their own chip. With no berths yet it falls back to the solar farm count.
+        /// </summary>
+        public static string ChargersRate(int drones, int capacity, int solarFarms)
+        {
+            if (capacity > 0) return Loc.F("{0}/{1} drones", drones, capacity);
+            return solarFarms > 0 ? Loc.F("{0} solar", solarFarms) : null;
+        }
+
         /// <summary>The chip rate wording, most to least verbose: full, first word + abbreviated second, first token.</summary>
         public static string[] ChipRateVariants(string rate)
         {
@@ -151,7 +194,7 @@ namespace SolarMajesty
 
         public static void StatLine(Rect row, out Rect label, out Rect value)
         {
-            float labelW = Mathf.Min(72f, row.width * 0.45f);
+            float labelW = Mathf.Min(HudTextScale.Width(72f), row.width * 0.45f);
             label = new Rect(row.x, row.y, labelW, row.height);
             float valueX = label.xMax + TextGap;
             value = new Rect(valueX, row.y, Mathf.Max(0f, row.xMax - valueX), row.height);
@@ -162,27 +205,31 @@ namespace SolarMajesty
         {
             speed = new Rect(panel.xMax - 116f, panel.y - 2f, 116f, 28f);
             float solX = panel.x + 18f;
-            sol = new Rect(solX, panel.y - 1f, Mathf.Max(0f, speed.xMin - TextGap - solX), 15f);
-            tag = new Rect(panel.x, panel.y + 15f, Mathf.Max(0f, speed.xMin - TextGap - panel.x), 12f);
+            float solH = HudTextScale.Line(15f);
+            sol = new Rect(solX, panel.y - 1f, Mathf.Max(0f, speed.xMin - TextGap - solX), solH);
+            tag = new Rect(panel.x, panel.y + solH, Mathf.Max(0f, speed.xMin - TextGap - panel.x), HudTextScale.Line(12f));
         }
 
         public static void Tutorial(float viewW, float barH, out Rect bar, out Rect text, out Rect skip)
         {
             float left = Margin;
-            float right = viewW - Margin - ObjectivesW - 12f;
+            float right = viewW - Margin - ObjectivesWidth - 12f;
             float w = Mathf.Min(720f, Mathf.Max(240f, right - left));
             float x = Mathf.Clamp((viewW - w) * 0.5f, left, Mathf.Max(left, right - w));
             bar = new Rect(x, Margin, w, barH);
             float contentX = bar.x + Pad;
             float contentRight = bar.xMax - Pad;
-            skip = new Rect(contentRight - 72f, bar.center.y - 13f, 72f, 26f);
+            float skipW = HudTextScale.Width(72f);
+            float skipH = HudTextScale.Line(26f);
+            skip = new Rect(contentRight - skipW, bar.center.y - skipH * 0.5f, skipW, skipH);
             float textX = contentX + 42f;
             text = new Rect(textX, bar.y + Pad, Mathf.Max(0f, skip.xMin - PanelGap - textX), barH - 16f);
         }
 
         public static void Stake(Rect row, out Rect label, out Rect value)
         {
-            value = new Rect(row.xMax - 140f, row.y, 140f, row.height);
+            float valueW = HudTextScale.Width(140f);
+            value = new Rect(row.xMax - valueW, row.y, valueW, row.height);
             float labelX = row.x + 19f;
             label = new Rect(labelX, row.y, Mathf.Max(0f, value.xMin - TextGap - labelX), row.height);
         }
@@ -202,10 +249,10 @@ namespace SolarMajesty
         /// <summary>The levy wordings, most to least verbose.</summary>
         public static string[] LevyVariants(int tills, int collectors, int bags, int daily) => new[]
         {
-            $"TILLS {tills:N0} · COLLECTORS {collectors} carrying {bags:N0} · EU {daily:N0}/day",
-            $"TILLS {tills:N0} · {collectors} HAUL · {bags:N0} BAGS · EU {daily:N0}/day",
-            $"TILLS {tills:N0} · HAUL {collectors} · EU {daily:N0}/day",
-            $"T {tills:N0} · C {collectors} · EU {daily:N0}",
+            Loc.F("TILLS {0:N0} · COLLECTORS {1} carrying {2:N0} · EU {3:N0}/day", tills, collectors, bags, daily),
+            Loc.F("TILLS {0:N0} · {1} HAUL · {2:N0} BAGS · EU {3:N0}/day", tills, collectors, bags, daily),
+            Loc.F("TILLS {0:N0} · HAUL {1} · EU {2:N0}/day", tills, collectors, daily),
+            Loc.F("T {0:N0} · C {1} · EU {2:N0}", tills, collectors, daily),
         };
 
         /// <summary>
@@ -246,12 +293,12 @@ namespace SolarMajesty
         /// <summary>Income under the treasury number. Stays inside the crest plate.</summary>
         public static string TreasuryLine(float perMin, int escrow, bool thin)
         {
-            string head = perMin >= 1f ? $"+{perMin:F0}/MIN" : "NO INCOME";
-            if (thin) head = "LOW · " + head;
+            string head = perMin >= 1f ? Loc.F("+{0:F0}/MIN", perMin) : Loc.S("NO INCOME");
+            if (thin) head = Loc.F("LOW · {0}", head);
             if (escrow <= 0) return head;
-            string withBounties = head + $" · {escrow:N0} BOUNTIES";
+            string withBounties = Loc.F("{0} · {1:N0} BOUNTIES", head, escrow);
             if (withBounties.Length <= TreasuryBudget) return withBounties;
-            string withOut = head + $" · {escrow:N0} OUT";
+            string withOut = Loc.F("{0} · {1:N0} OUT", head, escrow);
             if (withOut.Length <= TreasuryBudget) return withOut;
             return head;
         }

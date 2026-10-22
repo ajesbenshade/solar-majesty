@@ -96,28 +96,28 @@ namespace SolarMajesty
         public static float ConsiderRangeScale =>
             Stance == DoctrineStance.SurveyFirst ? 1.50f : 1f;
 
-        public static string ModeLabel => Mode == ColonyRunMode.Endless ? "ENDLESS" : "CAMPAIGN";
+        public static string ModeLabel => Mode == ColonyRunMode.Endless ? Loc.S("ENDLESS") : Loc.S("CAMPAIGN");
 
         public static string ChallengeLabel => Challenge switch
         {
-            ChallengeId.Austere => "AUSTERE",
-            ChallengeId.Swarm => "SWARM",
-            ChallengeId.TightPurse => "LOW BATTERY",
-            _ => "STANDARD"
+            ChallengeId.Austere => Loc.S("AUSTERE"),
+            ChallengeId.Swarm => Loc.S("SWARM"),
+            ChallengeId.TightPurse => Loc.S("LOW BATTERY"),
+            _ => Loc.S("STANDARD")
         };
 
         /// <summary>Shown in the New Campaign dialog so the chosen challenge is visible before START.</summary>
-        public static string NewCampaignChallengeLine => "CHALLENGE  ·  " + ChallengeLabel;
+        public static string NewCampaignChallengeLine => Loc.F("CHALLENGE  ·  {0}", ChallengeLabel);
 
         public static string StanceLabel => Stance switch
         {
-            DoctrineStance.OpenHands => "OPEN HANDS",
-            DoctrineStance.AegisWatch => "AEGIS WATCH",
-            DoctrineStance.SurveyFirst => "SURVEY FIRST",
-            _ => "BALANCED"
+            DoctrineStance.OpenHands => Loc.S("OPEN HANDS"),
+            DoctrineStance.AegisWatch => Loc.S("AEGIS WATCH"),
+            DoctrineStance.SurveyFirst => Loc.S("SURVEY FIRST"),
+            _ => Loc.S("BALANCED")
         };
 
-        public static string IronmanLabel => Ironman ? "IRONMAN" : "OPEN";
+        public static string IronmanLabel => Ironman ? Loc.S("IRONMAN") : Loc.S("OPEN");
 
         public static string HudTag
         {
@@ -126,47 +126,47 @@ namespace SolarMajesty
                 string tag = ModeLabel;
                 if (Challenge != ChallengeId.None) tag += "  ·  " + ChallengeLabel;
                 if (Stance != DoctrineStance.Balanced) tag += "  ·  " + StanceLabel;
-                if (IronmanRun || Ironman) tag += "  ·  IRONMAN";
+                if (IronmanRun || Ironman) tag += "  ·  " + Loc.S("IRONMAN");
                 return tag;
             }
         }
 
         public static string StanceHint => Stance switch
         {
-            DoctrineStance.OpenHands => "Open Hands: cheaper flags (hunger +0.26, past the 0.75 greed bypass). Less courage.",
-            DoctrineStance.AegisWatch => "Aegis Watch: braver hunts (courage ×1.22) and stronger workshop pull (+0.18).",
-            DoctrineStance.SurveyFirst => "Survey First: longer consider range (×1.50) and modest shop pull (+0.10).",
-            _ => "Balanced: no hunger, courage, or workshop nudge."
+            DoctrineStance.OpenHands => Loc.S("Open Hands: cheaper flags (hunger +0.26, past the 0.75 greed bypass). Less courage."),
+            DoctrineStance.AegisWatch => Loc.S("Aegis Watch: braver hunts (courage ×1.22) and stronger workshop pull (+0.18)."),
+            DoctrineStance.SurveyFirst => Loc.S("Survey First: longer consider range (×1.50) and modest shop pull (+0.10)."),
+            _ => Loc.S("Balanced: no hunger, courage, or workshop nudge.")
         };
 
         public static string ChallengeHint => Challenge switch
         {
-            ChallengeId.Austere => "Austere: 55% starting stockpile (New Game / reload). Commons + HAB + workshop still fit.",
-            ChallengeId.Swarm => "Swarm: more fauna (cap ×1.50) at a slower spawn cadence (reload). Post F5/F2.",
-            ChallengeId.TightPurse => "Low Battery: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
-            _ => "Standard: no challenge modifiers."
+            ChallengeId.Austere => Loc.S("Austere: 55% starting stockpile (New Game / reload). Commons + HAB + workshop still fit."),
+            ChallengeId.Swarm => Loc.S("Swarm: more fauna (cap ×1.50) at a slower spawn cadence (reload). Post {key:FlagDefend}/{key:FlagClearThreat}."),
+            ChallengeId.TightPurse => Loc.S("Low Battery: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged."),
+            _ => Loc.S("Standard: no challenge modifiers.")
         };
 
         public static string IronmanHint =>
             Ironman
-                ? "Ironman: no manual saves, no body restart or abandon. Autosave still covers a crash. Latches at New Game / Continue."
-                : "Open run: manual slot saves and body restarts stay available.";
+                ? Loc.S("Ironman: no manual saves, no body restart or abandon. Autosave still covers a crash. Latches at New Game / Continue.")
+                : Loc.S("Open run: manual slot saves and body restarts stay available.");
 
         public static void Load()
         {
-            Mode = (ColonyRunMode)Mathf.Clamp(PlayerPrefs.GetInt(ModeKey, 0), 0, 1);
-            Challenge = (ChallengeId)Mathf.Clamp(PlayerPrefs.GetInt(ChallengeKey, 0), 0, 3);
-            Stance = (DoctrineStance)Mathf.Clamp(PlayerPrefs.GetInt(StanceKey, 0), 0, 3);
-            Ironman = PlayerPrefs.GetInt(IronmanKey, 0) == 1;
+            Mode = (ColonyRunMode)Mathf.Clamp(GamePrefs.GetInt(ModeKey, 0), 0, 1);
+            Challenge = (ChallengeId)Mathf.Clamp(GamePrefs.GetInt(ChallengeKey, 0), 0, 3);
+            Stance = (DoctrineStance)Mathf.Clamp(GamePrefs.GetInt(StanceKey, 0), 0, 3);
+            Ironman = GamePrefs.GetInt(IronmanKey, 0) == 1;
         }
 
         public static void Save()
         {
-            PlayerPrefs.SetInt(ModeKey, (int)Mode);
-            PlayerPrefs.SetInt(ChallengeKey, (int)Challenge);
-            PlayerPrefs.SetInt(StanceKey, (int)Stance);
-            PlayerPrefs.SetInt(IronmanKey, Ironman ? 1 : 0);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(ModeKey, (int)Mode);
+            GamePrefs.SetInt(ChallengeKey, (int)Challenge);
+            GamePrefs.SetInt(StanceKey, (int)Stance);
+            GamePrefs.SetInt(IronmanKey, Ironman ? 1 : 0);
+            GamePrefs.Save();
         }
 
         /// <summary>Copy the title-screen preference into the live run. Call from EnterPlaying when not restoring a save.</summary>
@@ -202,11 +202,11 @@ namespace SolarMajesty
             Stance = DoctrineStance.Balanced;
             Ironman = false;
             IronmanRun = false;
-            PlayerPrefs.DeleteKey(ModeKey);
-            PlayerPrefs.DeleteKey(ChallengeKey);
-            PlayerPrefs.DeleteKey(StanceKey);
-            PlayerPrefs.DeleteKey(IronmanKey);
-            PlayerPrefs.Save();
+            GamePrefs.DeleteKey(ModeKey);
+            GamePrefs.DeleteKey(ChallengeKey);
+            GamePrefs.DeleteKey(StanceKey);
+            GamePrefs.DeleteKey(IronmanKey);
+            GamePrefs.Save();
         }
     }
 }

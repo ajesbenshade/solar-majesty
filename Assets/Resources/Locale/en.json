@@ -1,0 +1,7861 @@
+{
+ "code": "en",
+ "name": "English",
+ "strings": [
+  {
+   "en": " · bots {0}/{1}",
+   "key": "",
+   "tr": " · bots {0}/{1}"
+  },
+  {
+   "en": " · levy {0}",
+   "key": "",
+   "tr": " · levy {0}"
+  },
+  {
+   "en": " · need metals/ice",
+   "key": "",
+   "tr": " · need metals/ice"
+  },
+  {
+   "en": "% built",
+   "key": "",
+   "tr": "% built"
+  },
+  {
+   "en": "+1 Haul",
+   "key": "",
+   "tr": "+1 Haul"
+  },
+  {
+   "en": "+{0:F0}/MIN",
+   "key": "",
+   "tr": "+{0:F0}/MIN"
+  },
+  {
+   "en": "+{0} EU campus {1}",
+   "key": "",
+   "tr": "+{0} EU campus {1}"
+  },
+  {
+   "en": "+{0} EU outpost {1}",
+   "key": "",
+   "tr": "+{0} EU outpost {1}"
+  },
+  {
+   "en": "+{0} EU {1}",
+   "key": "",
+   "tr": "+{0} EU {1}"
+  },
+  {
+   "en": ", and ",
+   "key": "",
+   "tr": ", and "
+  },
+  {
+   "en": "-{0} replacing",
+   "key": "",
+   "tr": "-{0} replacing"
+  },
+  {
+   "en": "1 Engineer workshop · LMB on open ground",
+   "key": "",
+   "tr": "1 Engineer workshop · LMB on open ground"
+  },
+  {
+   "en": "1 den charted",
+   "key": "",
+   "tr": "1 den charted"
+  },
+  {
+   "en": "1 robot rebooted",
+   "key": "",
+   "tr": "1 robot rebooted"
+  },
+  {
+   "en": "1/4  WORKSHOP — press {key:ToolBuild}, then 1. Place the Engineer workshop anywhere near the Commons. Wait until the robot is standing.",
+   "key": "",
+   "tr": "1/4  WORKSHOP — press {key:ToolBuild}, then 1. Place the Engineer workshop anywhere near the Commons. Wait until the robot is standing."
+  },
+  {
+   "en": "1/6  COMMONS — Colony Commons is already on the claim. It holds the treasury.",
+   "key": "",
+   "tr": "1/6  COMMONS — Colony Commons is already on the claim. It holds the treasury."
+  },
+  {
+   "en": "1× is the colony's normal pace.",
+   "key": "",
+   "tr": "1× is the colony's normal pace."
+  },
+  {
+   "en": "2/4  Press {key:ToolFlag}, choose Build, leave the bounty at 700. If the Engineer ignores it, raise the bounty.",
+   "key": "",
+   "tr": "2/4  Press {key:ToolFlag}, choose Build, leave the bounty at 700. If the Engineer ignores it, raise the bounty."
+  },
+  {
+   "en": "2/4  That Build flag has attracted an Engineer. The colony is ready for the next lesson.",
+   "key": "",
+   "tr": "2/4  That Build flag has attracted an Engineer. The colony is ready for the next lesson."
+  },
+  {
+   "en": "2/6  Haul walks out of the Commons and carries each building's EU home.",
+   "key": "",
+   "tr": "2/6  Haul walks out of the Commons and carries each building's EU home."
+  },
+  {
+   "en": "3/4  Select that flag and press {key:BountyUp} until the pole says tempted.",
+   "key": "",
+   "tr": "3/4  Select that flag and press {key:BountyUp} until the pole says tempted."
+  },
+  {
+   "en": "3/6  Keep the yard clear of mobs — bots build charging stations and solar farms that pay EU.",
+   "key": "",
+   "tr": "3/6  Keep the yard clear of mobs — bots build charging stations and solar farms that pay EU."
+  },
+  {
+   "en": "4/4  A soil creeper is on the yard. Press {key:ToolFlag}, {key:FlagDefend} Defend, and post it on the bug. If the pole says ignored, build a Defense workshop (key 2).",
+   "key": "",
+   "tr": "4/4  A soil creeper is on the yard. Press {key:ToolFlag}, {key:FlagDefend} Defend, and post it on the bug. If the pole says ignored, build a Defense workshop (key 2)."
+  },
+  {
+   "en": "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
+   "key": "",
+   "tr": "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes."
+  },
+  {
+   "en": "5/6  {0}, Build, leave it at 700. Watch the Engineer.",
+   "key": "",
+   "tr": "5/6  {0}, Build, leave it at 700. Watch the Engineer."
+  },
+  {
+   "en": "6/6  They named a price. Select the flag and press {0} until the chip reads tempted.",
+   "key": "",
+   "tr": "6/6  They named a price. Select the flag and press {0} until the chip reads tempted."
+  },
+  {
+   "en": "A claim disc in the grass is a picnic. Raise a Commons before anyone files us as scenery.",
+   "key": "",
+   "tr": "A claim disc in the grass is a picnic. Raise a Commons before anyone files us as scenery."
+  },
+  {
+   "en": "A crater Commons that pays rent is a nicer picnic. We did not come for nicer.",
+   "key": "",
+   "tr": "A crater Commons that pays rent is a nicer picnic. We did not come for nicer."
+  },
+  {
+   "en": "A den crawled out of the fog. {0} walked it. Clear Threat is now a place, not a rumor.",
+   "key": "",
+   "tr": "A den crawled out of the fog. {0} walked it. Clear Threat is now a place, not a rumor."
+  },
+  {
+   "en": "A one-time payment: the tower fires on fauna within 18 m.",
+   "key": "",
+   "tr": "A one-time payment: the tower fires on fauna within 18 m."
+  },
+  {
+   "en": "A robot stands watch at the pole: 50 s of cover after it arrives.",
+   "key": "",
+   "tr": "A robot stands watch at the pole: 50 s of cover after it arrives."
+  },
+  {
+   "en": "A robot studies the pole: science for the active tech, more inside a survey.",
+   "key": "",
+   "tr": "A robot studies the pole: science for the active tech, more inside a survey."
+  },
+  {
+   "en": "A robot surveys 22 m around the pole for 90 s and charts the dens inside. Extract and Research Site flags pay extra in a survey.",
+   "key": "",
+   "tr": "A robot surveys 22 m around the pole for 90 s and charts the dens inside. Extract and Research Site flags pay extra in a survey."
+  },
+  {
+   "en": "A short boost for this guild's robots once its tech is researched. It costs EU and then cools down.",
+   "key": "",
+   "tr": "A short boost for this guild's robots once its tech is researched. It costs EU and then cools down."
+  },
+  {
+   "en": "A steady administration. The bounties were priced about right.",
+   "key": "",
+   "tr": "A steady administration. The bounties were priced about right."
+  },
+  {
+   "en": "A stronghold that cannot keep Power or lunch is a failed picnic with better dust.",
+   "key": "",
+   "tr": "A stronghold that cannot keep Power or lunch is a failed picnic with better dust."
+  },
+  {
+   "en": "A terraform pulse: farms on this world grow greener.",
+   "key": "",
+   "tr": "A terraform pulse: farms on this world grow greener."
+  },
+  {
+   "en": "A working colony, run on a thin margin.",
+   "key": "",
+   "tr": "A working colony, run on a thin margin."
+  },
+  {
+   "en": "A {0:0}%",
+   "key": "",
+   "tr": "A {0:0}%"
+  },
+  {
+   "en": "ABANDON BODY",
+   "key": "",
+   "tr": "ABANDON BODY"
+  },
+  {
+   "en": "ABANDON BODY  ·  new seed",
+   "key": "",
+   "tr": "ABANDON BODY  ·  new seed"
+  },
+  {
+   "en": "ACCESSIBILITY",
+   "key": "",
+   "tr": "ACCESSIBILITY"
+  },
+  {
+   "en": "ACTIVATE {0} EU",
+   "key": "",
+   "tr": "ACTIVATE {0} EU"
+  },
+  {
+   "en": "AEGIS WATCH",
+   "key": "",
+   "tr": "AEGIS WATCH"
+  },
+  {
+   "en": "AFTER EARTH",
+   "key": "",
+   "tr": "AFTER EARTH"
+  },
+  {
+   "en": "AGGRO",
+   "key": "",
+   "tr": "AGGRO"
+  },
+  {
+   "en": "ALERT",
+   "key": "",
+   "tr": "ALERT"
+  },
+  {
+   "en": "ALPHA {0}",
+   "key": "",
+   "tr": "ALPHA {0}"
+  },
+  {
+   "en": "AMBIENCE",
+   "key": "",
+   "tr": "AMBIENCE"
+  },
+  {
+   "en": "ARM LASERS",
+   "key": "",
+   "tr": "ARM LASERS"
+  },
+  {
+   "en": "ARM LASERS {0} EU",
+   "key": "",
+   "tr": "ARM LASERS {0} EU"
+  },
+  {
+   "en": "ASH HOPPER",
+   "key": "",
+   "tr": "ASH HOPPER"
+  },
+  {
+   "en": "AUSTERE",
+   "key": "",
+   "tr": "AUSTERE"
+  },
+  {
+   "en": "AUTO",
+   "key": "",
+   "tr": "AUTO"
+  },
+  {
+   "en": "Aa · the quick robot",
+   "key": "",
+   "tr": "Aa · the quick robot"
+  },
+  {
+   "en": "Achievement — {0}",
+   "key": "",
+   "tr": "Achievement — {0}"
+  },
+  {
+   "en": "Activate at Aegis Lodge: robots shrug bites, batteries hit harder. Costs EU.",
+   "key": "",
+   "tr": "Activate at Aegis Lodge: robots shrug bites, batteries hit harder. Costs EU."
+  },
+  {
+   "en": "Activate at Anvil Compact: engineers weld faster. Costs EU.",
+   "key": "",
+   "tr": "Activate at Anvil Compact: engineers weld faster. Costs EU."
+  },
+  {
+   "en": "Activate at Horizon Lodge: scouts run hot and mark dens. Costs EU.",
+   "key": "",
+   "tr": "Activate at Horizon Lodge: scouts run hot and mark dens. Costs EU."
+  },
+  {
+   "en": "Activate at Triage Compact: everyone on the dirt patches HP. Costs EU.",
+   "key": "",
+   "tr": "Activate at Triage Compact: everyone on the dirt patches HP. Costs EU."
+  },
+  {
+   "en": "Active den",
+   "key": "",
+   "tr": "Active den"
+  },
+  {
+   "en": "Active: {0}",
+   "key": "",
+   "tr": "Active: {0}"
+  },
+  {
+   "en": "Aegis",
+   "key": "",
+   "tr": "Aegis"
+  },
+  {
+   "en": "Aegis / Horizon / Triage halls",
+   "key": "",
+   "tr": "Aegis / Horizon / Triage halls"
+  },
+  {
+   "en": "Aegis Doctrine",
+   "key": "",
+   "tr": "Aegis Doctrine"
+  },
+  {
+   "en": "Aegis Doctrine. Grid draw drops 15%. The rim breathes easier.",
+   "key": "",
+   "tr": "Aegis Doctrine. Grid draw drops 15%. The rim breathes easier."
+  },
+  {
+   "en": "Aegis Field",
+   "key": "",
+   "tr": "Aegis Field"
+  },
+  {
+   "en": "Aegis Lodge",
+   "key": "",
+   "tr": "Aegis Lodge"
+  },
+  {
+   "en": "Aegis Mail",
+   "key": "",
+   "tr": "Aegis Mail"
+  },
+  {
+   "en": "Aegis Pike",
+   "key": "",
+   "tr": "Aegis Pike"
+  },
+  {
+   "en": "Aegis Shell",
+   "key": "",
+   "tr": "Aegis Shell"
+  },
+  {
+   "en": "Aegis Spire",
+   "key": "",
+   "tr": "Aegis Spire"
+  },
+  {
+   "en": "Aegis Spire. Grid draw and rim pressure drop. Place the 6×6 Spire.",
+   "key": "",
+   "tr": "Aegis Spire. Grid draw and rim pressure drop. Place the 6×6 Spire."
+  },
+  {
+   "en": "Aegis Watch: braver hunts (courage ×1.22) and stronger workshop pull (+0.18).",
+   "key": "",
+   "tr": "Aegis Watch: braver hunts (courage ×1.22) and stronger workshop pull (+0.18)."
+  },
+  {
+   "en": "Aegis Watchfire",
+   "key": "",
+   "tr": "Aegis Watchfire"
+  },
+  {
+   "en": "Aegis Watchfire researched. Inspect Aegis Lodge and spend EU to harden the roster.",
+   "key": "",
+   "tr": "Aegis Watchfire researched. Inspect Aegis Lodge and spend EU to harden the roster."
+  },
+  {
+   "en": "Aegis accepted the warrant. The hoppers did not.",
+   "key": "",
+   "tr": "Aegis accepted the warrant. The hoppers did not."
+  },
+  {
+   "en": "Aegis hunts light that should not have a mouth. Compact work.",
+   "key": "",
+   "tr": "Aegis hunts light that should not have a mouth. Compact work."
+  },
+  {
+   "en": "Aegis hunts. Stay behind the shield and out of the toast.",
+   "key": "",
+   "tr": "Aegis hunts. Stay behind the shield and out of the toast."
+  },
+  {
+   "en": "Aegis. Cheap Clear Threat is fine; will not wander or tinker.",
+   "key": "",
+   "tr": "Aegis. Cheap Clear Threat is fine; will not wander or tinker."
+  },
+  {
+   "en": "Afterburner",
+   "key": "",
+   "tr": "Afterburner"
+  },
+  {
+   "en": "Aid Station",
+   "key": "",
+   "tr": "Aid Station"
+  },
+  {
+   "en": "Aid Station · paid patch",
+   "key": "",
+   "tr": "Aid Station · paid patch"
+  },
+  {
+   "en": "Anvil",
+   "key": "",
+   "tr": "Anvil"
+  },
+  {
+   "en": "Anvil Compact",
+   "key": "",
+   "tr": "Anvil Compact"
+  },
+  {
+   "en": "Anvil Overtime",
+   "key": "",
+   "tr": "Anvil Overtime"
+  },
+  {
+   "en": "Anvil Overtime researched. Inspect Anvil Compact and spend EU to weld faster.",
+   "key": "",
+   "tr": "Anvil Overtime researched. Inspect Anvil Compact and spend EU to weld faster."
+  },
+  {
+   "en": "Anvil Plate",
+   "key": "",
+   "tr": "Anvil Plate"
+  },
+  {
+   "en": "Anvil Rig",
+   "key": "",
+   "tr": "Anvil Rig"
+  },
+  {
+   "en": "Anvil Sledge",
+   "key": "",
+   "tr": "Anvil Sledge"
+  },
+  {
+   "en": "Anvil fortifies. Aegis will pretend it was their idea.",
+   "key": "",
+   "tr": "Anvil fortifies. Aegis will pretend it was their idea."
+  },
+  {
+   "en": "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.",
+   "key": "",
+   "tr": "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites."
+  },
+  {
+   "en": "Anvil took the weld. Try not to look surprised.",
+   "key": "",
+   "tr": "Anvil took the weld. Try not to look surprised."
+  },
+  {
+   "en": "Anvil wants 790. He can count. Raise the bounty or enjoy the scenery.",
+   "key": "",
+   "tr": "Anvil wants 790. He can count. Raise the bounty or enjoy the scenery."
+  },
+  {
+   "en": "Anvil welds for the Compact now. Try a guild-proud bounty. They notice.",
+   "key": "",
+   "tr": "Anvil welds for the Compact now. Try a guild-proud bounty. They notice."
+  },
+  {
+   "en": "Anvil will not weld for pocket change. Seventy is a suggestion; tempted is a fact. Raise the bounty until the chip admits it.",
+   "key": "",
+   "tr": "Anvil will not weld for pocket change. Seventy is a suggestion; tempted is a fact. Raise the bounty until the chip admits it."
+  },
+  {
+   "en": "Anvil will take a pad weld if you stop being cute with the bounty.",
+   "key": "",
+   "tr": "Anvil will take a pad weld if you stop being cute with the bounty."
+  },
+  {
+   "en": "Anvil will weld a crater court if the EU is honest.",
+   "key": "",
+   "tr": "Anvil will weld a crater court if the EU is honest."
+  },
+  {
+   "en": "Anvil. Greedy builder. Ignores cheap flags until pay is right.",
+   "key": "",
+   "tr": "Anvil. Greedy builder. Ignores cheap flags until pay is right."
+  },
+  {
+   "en": "Arc Bolt",
+   "key": "",
+   "tr": "Arc Bolt"
+  },
+  {
+   "en": "Arming lasers needs {0} EU.",
+   "key": "",
+   "tr": "Arming lasers needs {0} EU."
+  },
+  {
+   "en": "Ash Hopper",
+   "key": "",
+   "tr": "Ash Hopper"
+  },
+  {
+   "en": "Ash hoppers on the HAB — post Clear Threat.",
+   "key": "",
+   "tr": "Ash hoppers on the HAB — post Clear Threat."
+  },
+  {
+   "en": "Ash hoppers on the HAB — sabotage flavor.",
+   "key": "",
+   "tr": "Ash hoppers on the HAB — sabotage flavor."
+  },
+  {
+   "en": "Ash hoppers will test the HAB. Dust ticks will test the mines. Neither is the real bill.",
+   "key": "",
+   "tr": "Ash hoppers will test the HAB. Dust ticks will test the mines. Neither is the real bill."
+  },
+  {
+   "en": "Assign a class. Flags near this hall pull them (no new robot).",
+   "key": "",
+   "tr": "Assign a class. Flags near this hall pull them (no new robot)."
+  },
+  {
+   "en": "Asteroid Belt",
+   "key": "",
+   "tr": "Asteroid Belt"
+  },
+  {
+   "en": "At the workshop. Flags nearby pull harder.",
+   "key": "",
+   "tr": "At the workshop. Flags nearby pull harder."
+  },
+  {
+   "en": "At workshop",
+   "key": "",
+   "tr": "At workshop"
+  },
+  {
+   "en": "Austere: 55% starting stockpile (New Game / reload). Commons + HAB + workshop still fit.",
+   "key": "",
+   "tr": "Austere: 55% starting stockpile (New Game / reload). Commons + HAB + workshop still fit."
+  },
+  {
+   "en": "Authority plaza on grey rock.",
+   "key": "",
+   "tr": "Authority plaza on grey rock."
+  },
+  {
+   "en": "BACK",
+   "key": "",
+   "tr": "BACK"
+  },
+  {
+   "en": "BACK  ·  Esc",
+   "key": "",
+   "tr": "BACK  ·  Esc"
+  },
+  {
+   "en": "BALANCED",
+   "key": "",
+   "tr": "BALANCED"
+  },
+  {
+   "en": "BLEEDING",
+   "key": "",
+   "tr": "BLEEDING"
+  },
+  {
+   "en": "BOTS",
+   "key": "",
+   "tr": "BOTS"
+  },
+  {
+   "en": "BOUNTIES",
+   "key": "",
+   "tr": "BOUNTIES"
+  },
+  {
+   "en": "BOUNTY",
+   "key": "",
+   "tr": "BOUNTY"
+  },
+  {
+   "en": "BOUNTY FLAG",
+   "key": "",
+   "tr": "BOUNTY FLAG"
+  },
+  {
+   "en": "BUILD",
+   "key": "",
+   "tr": "BUILD"
+  },
+  {
+   "en": "BUILD CATALOG",
+   "key": "",
+   "tr": "BUILD CATALOG"
+  },
+  {
+   "en": "BUILD HERE",
+   "key": "",
+   "tr": "BUILD HERE"
+  },
+  {
+   "en": "Back to the colony.",
+   "key": "",
+   "tr": "Back to the colony."
+  },
+  {
+   "en": "Back to your last colony, where autosave left it.",
+   "key": "",
+   "tr": "Back to your last colony, where autosave left it."
+  },
+  {
+   "en": "Balanced: no hunger, courage, or workshop nudge.",
+   "key": "",
+   "tr": "Balanced: no hunger, courage, or workshop nudge."
+  },
+  {
+   "en": "Bank 2,000 EU into the till.",
+   "key": "",
+   "tr": "Bank 2,000 EU into the till."
+  },
+  {
+   "en": "Battery / watch",
+   "key": "",
+   "tr": "Battery / watch"
+  },
+  {
+   "en": "Beastslayer",
+   "key": "",
+   "tr": "Beastslayer"
+  },
+  {
+   "en": "Beds and EU for the worker bots.",
+   "key": "",
+   "tr": "Beds and EU for the worker bots."
+  },
+  {
+   "en": "Beds on the books. The meadow just became a ledger.",
+   "key": "",
+   "tr": "Beds on the books. The meadow just became a ledger."
+  },
+  {
+   "en": "Belt Hauler",
+   "key": "",
+   "tr": "Belt Hauler"
+  },
+  {
+   "en": "Belt Hauler staged. The rocks are a body. They are not this week’s copy.",
+   "key": "",
+   "tr": "Belt Hauler staged. The rocks are a body. They are not this week’s copy."
+  },
+  {
+   "en": "Belt claim holds. Icebreaker staged — Europa's crust is next.",
+   "key": "",
+   "tr": "Belt claim holds. Icebreaker staged — Europa's crust is next."
+  },
+  {
+   "en": "Belt claim holds. Keep stripping the rocks — rating stands, no hop.",
+   "key": "",
+   "tr": "Belt claim holds. Keep stripping the rocks — rating stands, no hop."
+  },
+  {
+   "en": "Belt insertion. Tether the Commons. Rock mites and ticks follow the ore — Defend Area. Shard hoppers raid HABs — Clear Threat.",
+   "key": "",
+   "tr": "Belt insertion. Tether the Commons. Rock mites and ticks follow the ore — Defend Area. Shard hoppers raid HABs — Clear Threat."
+  },
+  {
+   "en": "Belt is the next freight frontier. It is a name. It is not this week’s map.",
+   "key": "",
+   "tr": "Belt is the next freight frontier. It is a name. It is not this week’s map."
+  },
+  {
+   "en": "Berserk",
+   "key": "",
+   "tr": "Berserk"
+  },
+  {
+   "en": "Berth 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "Berth 20 worker drones at your charging stations."
+  },
+  {
+   "en": "Blacksmith",
+   "key": "",
+   "tr": "Blacksmith"
+  },
+  {
+   "en": "Blocked by a building.",
+   "key": "",
+   "tr": "Blocked by a building."
+  },
+  {
+   "en": "Bloom slow farm-yield bump.",
+   "key": "",
+   "tr": "Bloom slow farm-yield bump."
+  },
+  {
+   "en": "Bloom took the slow work. Worth it, they said. Check the yield before you argue.",
+   "key": "",
+   "tr": "Bloom took the slow work. Worth it, they said. Check the yield before you argue."
+  },
+  {
+   "en": "Bloom will weave the crust if you pay for a garden. The Compact creed is not a picnic blanket.",
+   "key": "",
+   "tr": "Bloom will weave the crust if you pay for a garden. The Compact creed is not a picnic blanket."
+  },
+  {
+   "en": "Bloom. Greens the crust. Takes Terraform cheap; slow to fight or wander.",
+   "key": "",
+   "tr": "Bloom. Greens the crust. Takes Terraform cheap; slow to fight or wander."
+  },
+  {
+   "en": "Booting.",
+   "key": "",
+   "tr": "Booting."
+  },
+  {
+   "en": "Bots built a {0}. It pays {1:N0} EU a day.",
+   "key": "",
+   "tr": "Bots built a {0}. It pays {1:N0} EU a day."
+  },
+  {
+   "en": "Bots stake out a {0} — keep the yard clear.",
+   "key": "",
+   "tr": "Bots stake out a {0} — keep the yard clear."
+  },
+  {
+   "en": "Bounties completed",
+   "key": "",
+   "tr": "Bounties completed"
+  },
+  {
+   "en": "Bounties posted",
+   "key": "",
+   "tr": "Bounties posted"
+  },
+  {
+   "en": "Bounties refused",
+   "key": "",
+   "tr": "Bounties refused"
+  },
+  {
+   "en": "Bounty Flags",
+   "key": "",
+   "tr": "Bounty Flags"
+  },
+  {
+   "en": "Bounty escrowed from EU. Bots keep their EU share; the till takes its cut.",
+   "key": "",
+   "tr": "Bounty escrowed from EU. Bots keep their EU share; the till takes its cut."
+  },
+  {
+   "en": "Browning out",
+   "key": "",
+   "tr": "Browning out"
+  },
+  {
+   "en": "Build",
+   "key": "",
+   "tr": "Build"
+  },
+  {
+   "en": "Build Catalog",
+   "key": "",
+   "tr": "Build Catalog"
+  },
+  {
+   "en": "Build Here",
+   "key": "",
+   "tr": "Build Here"
+  },
+  {
+   "en": "Build a fresh level 1 robot from the wreck. The old chassis is gone for good.",
+   "key": "",
+   "tr": "Build a fresh level 1 robot from the wreck. The old chassis is gone for good."
+  },
+  {
+   "en": "Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech",
+   "key": "",
+   "tr": "Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech"
+  },
+  {
+   "en": "Build catalog",
+   "key": "",
+   "tr": "Build catalog"
+  },
+  {
+   "en": "Builder bots grow the village on their own. The number is the current building's progress.",
+   "key": "",
+   "tr": "Builder bots grow the village on their own. The number is the current building's progress."
+  },
+  {
+   "en": "Building",
+   "key": "",
+   "tr": "Building"
+  },
+  {
+   "en": "Building a {0} robot…",
+   "key": "",
+   "tr": "Building a {0} robot…"
+  },
+  {
+   "en": "Buildings going up. Bots work faster while the yard is safe.",
+   "key": "",
+   "tr": "Buildings going up. Bots work faster while the yard is safe."
+  },
+  {
+   "en": "Bulwark",
+   "key": "",
+   "tr": "Bulwark"
+  },
+  {
+   "en": "CAMP STEAL",
+   "key": "",
+   "tr": "CAMP STEAL"
+  },
+  {
+   "en": "CAMPAIGN",
+   "key": "",
+   "tr": "CAMPAIGN"
+  },
+  {
+   "en": "CHAL  ·  {0}",
+   "key": "",
+   "tr": "CHAL  ·  {0}"
+  },
+  {
+   "en": "CHALLENGE",
+   "key": "",
+   "tr": "CHALLENGE"
+  },
+  {
+   "en": "CHALLENGE  ·  {0}",
+   "key": "",
+   "tr": "CHALLENGE  ·  {0}"
+  },
+  {
+   "en": "CHARACTER VOICES",
+   "key": "",
+   "tr": "CHARACTER VOICES"
+  },
+  {
+   "en": "CHARACTER VOICES  ·  BAKED BARKS + CORE",
+   "key": "",
+   "tr": "CHARACTER VOICES  ·  BAKED BARKS + CORE"
+  },
+  {
+   "en": "CHARGERS",
+   "key": "",
+   "tr": "CHARGERS"
+  },
+  {
+   "en": "CHARGING STATIONS",
+   "key": "",
+   "tr": "CHARGING STATIONS"
+  },
+  {
+   "en": "CHILLED",
+   "key": "",
+   "tr": "CHILLED"
+  },
+  {
+   "en": "CLAIM SECURED",
+   "key": "",
+   "tr": "CLAIM SECURED"
+  },
+  {
+   "en": "CLAIMED x{0}",
+   "key": "",
+   "tr": "CLAIMED x{0}"
+  },
+  {
+   "en": "CLEAR EARTH FIRST  ·  OR SKIP IN SETTINGS",
+   "key": "",
+   "tr": "CLEAR EARTH FIRST  ·  OR SKIP IN SETTINGS"
+  },
+  {
+   "en": "CLEAR THREAT",
+   "key": "",
+   "tr": "CLEAR THREAT"
+  },
+  {
+   "en": "CLICK TO CONTINUE",
+   "key": "",
+   "tr": "CLICK TO CONTINUE"
+  },
+  {
+   "en": "CLICK TO LAND",
+   "key": "",
+   "tr": "CLICK TO LAND"
+  },
+  {
+   "en": "CLICK TO UNLOCK",
+   "key": "",
+   "tr": "CLICK TO UNLOCK"
+  },
+  {
+   "en": "CLOSE",
+   "key": "",
+   "tr": "CLOSE"
+  },
+  {
+   "en": "CLOUD SHADOWS",
+   "key": "",
+   "tr": "CLOUD SHADOWS"
+  },
+  {
+   "en": "COLONY",
+   "key": "",
+   "tr": "COLONY"
+  },
+  {
+   "en": "COLOUR VISION",
+   "key": "",
+   "tr": "COLOUR VISION"
+  },
+  {
+   "en": "COLOUR VISION  ·  {0}",
+   "key": "",
+   "tr": "COLOUR VISION  ·  {0}"
+  },
+  {
+   "en": "COMMONS first, then HAB and workshops anywhere on open ground.",
+   "key": "",
+   "tr": "COMMONS first, then HAB and workshops anywhere on open ground."
+  },
+  {
+   "en": "CONSTRUCTION",
+   "key": "",
+   "tr": "CONSTRUCTION"
+  },
+  {
+   "en": "CONTINUE",
+   "key": "",
+   "tr": "CONTINUE"
+  },
+  {
+   "en": "CONTINUE  ·  SPACE",
+   "key": "",
+   "tr": "CONTINUE  ·  SPACE"
+  },
+  {
+   "en": "CONTINUE  ·  no save",
+   "key": "",
+   "tr": "CONTINUE  ·  no save"
+  },
+  {
+   "en": "CONTINUE  ·  {0}  ·  EU {1}",
+   "key": "",
+   "tr": "CONTINUE  ·  {0}  ·  EU {1}"
+  },
+  {
+   "en": "CONTINUE OVERSEEING  ·  {0}",
+   "key": "",
+   "tr": "CONTINUE OVERSEEING  ·  {0}"
+  },
+  {
+   "en": "CONTROLLER",
+   "key": "",
+   "tr": "CONTROLLER"
+  },
+  {
+   "en": "CONTROLLER  ·  IN USE",
+   "key": "",
+   "tr": "CONTROLLER  ·  IN USE"
+  },
+  {
+   "en": "CONTROLS",
+   "key": "",
+   "tr": "CONTROLS"
+  },
+  {
+   "en": "CORE RATING",
+   "key": "",
+   "tr": "CORE RATING"
+  },
+  {
+   "en": "CORRODED",
+   "key": "",
+   "tr": "CORRODED"
+  },
+  {
+   "en": "COUR",
+   "key": "",
+   "tr": "COUR"
+  },
+  {
+   "en": "CREEP STEAL",
+   "key": "",
+   "tr": "CREEP STEAL"
+  },
+  {
+   "en": "CREEPER",
+   "key": "",
+   "tr": "CREEPER"
+  },
+  {
+   "en": "CURSOR SPEED",
+   "key": "",
+   "tr": "CURSOR SPEED"
+  },
+  {
+   "en": "CURSOR SPEED  ·  {0}",
+   "key": "",
+   "tr": "CURSOR SPEED  ·  {0}"
+  },
+  {
+   "en": "Campaign moves on after a win; Endless keeps the colony running.",
+   "key": "",
+   "tr": "Campaign moves on after a win; Endless keeps the colony running."
+  },
+  {
+   "en": "Can't build on water.",
+   "key": "",
+   "tr": "Can't build on water."
+  },
+  {
+   "en": "Can't build there.",
+   "key": "",
+   "tr": "Can't build there."
+  },
+  {
+   "en": "Cancel",
+   "key": "",
+   "tr": "Cancel"
+  },
+  {
+   "en": "Challenge",
+   "key": "",
+   "tr": "Challenge"
+  },
+  {
+   "en": "Chart first. Fight never.",
+   "key": "",
+   "tr": "Chart first. Fight never."
+  },
+  {
+   "en": "Chart logged the site. The lab can eat the sample; the hall can eat the ego.",
+   "key": "",
+   "tr": "Chart logged the site. The lab can eat the sample; the hall can eat the ego."
+  },
+  {
+   "en": "Chart or Horizon took a tariff lane. Nobody fights a contour line. Good.",
+   "key": "",
+   "tr": "Chart or Horizon took a tariff lane. Nobody fights a contour line. Good."
+  },
+  {
+   "en": "Chart the Tariff Rille",
+   "key": "",
+   "tr": "Chart the Tariff Rille"
+  },
+  {
+   "en": "Chart the apron so the court knows where the orange disc ends and the meadow begins. Fog can wait. Guessing is undignified.",
+   "key": "",
+   "tr": "Chart the apron so the court knows where the orange disc ends and the meadow begins. Fog can wait. Guessing is undignified."
+  },
+  {
+   "en": "Chart the packed-dust plaza.",
+   "key": "",
+   "tr": "Chart the packed-dust plaza."
+  },
+  {
+   "en": "Chart the rille. Horizon marks the lanes the Freeholds bill. Smugglers use the same lines. So will we.",
+   "key": "",
+   "tr": "Chart the rille. Horizon marks the lanes the Freeholds bill. Smugglers use the same lines. So will we."
+  },
+  {
+   "en": "Chart. Maps and samples. Loves Explore and Research Site; shy of fights.",
+   "key": "",
+   "tr": "Chart. Maps and samples. Loves Explore and Research Site; shy of fights."
+  },
+  {
+   "en": "Charter the Hall",
+   "key": "",
+   "tr": "Charter the Hall"
+  },
+  {
+   "en": "Charter the hall. A court without a guild is stationery. Field Survey, then Hab Ops, then the Charter — dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact.",
+   "key": "",
+   "tr": "Charter the hall. A court without a guild is stationery. Field Survey, then Hab Ops, then the Charter — dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact."
+  },
+  {
+   "en": "Charting ahead.",
+   "key": "",
+   "tr": "Charting ahead."
+  },
+  {
+   "en": "Chasing yard pests.",
+   "key": "",
+   "tr": "Chasing yard pests."
+  },
+  {
+   "en": "Choose what your labs study next. More labs, faster science.",
+   "key": "",
+   "tr": "Choose what your labs study next. More labs, faster science."
+  },
+  {
+   "en": "Claims the forward outpost near the second yard. More power draw; a Mine on site pays it back.",
+   "key": "",
+   "tr": "Claims the forward outpost near the second yard. More power draw; a Mine on site pays it back."
+  },
+  {
+   "en": "Class kits, pulses, flag pull. Anvil is the dwarf forge hall.",
+   "key": "",
+   "tr": "Class kits, pulses, flag pull. Anvil is the dwarf forge hall."
+  },
+  {
+   "en": "Clean Sheet",
+   "key": "",
+   "tr": "Clean Sheet"
+  },
+  {
+   "en": "Clear Earth to open Luna, or skip the guided start ({0}).",
+   "key": "",
+   "tr": "Clear Earth to open Luna, or skip the guided start ({0})."
+  },
+  {
+   "en": "Clear Threat",
+   "key": "",
+   "tr": "Clear Threat"
+  },
+  {
+   "en": "Clear Threat / Defend",
+   "key": "",
+   "tr": "Clear Threat / Defend"
+  },
+  {
+   "en": "Clear Threat. Explore is the chart decree.",
+   "key": "",
+   "tr": "Clear Threat. Explore is the chart decree."
+  },
+  {
+   "en": "Clear a body having never posted a bounty above 900 EU.",
+   "key": "",
+   "tr": "Clear a body having never posted a bounty above 900 EU."
+  },
+  {
+   "en": "Clear a body in Ironman.",
+   "key": "",
+   "tr": "Clear a body in Ironman."
+  },
+  {
+   "en": "Clear a body without losing a single module.",
+   "key": "",
+   "tr": "Clear a body without losing a single module."
+  },
+  {
+   "en": "Clear dens",
+   "key": "",
+   "tr": "Clear dens"
+  },
+  {
+   "en": "Clear dens — {0} left ({1} Clear Threat)",
+   "key": "",
+   "tr": "Clear dens — {0} left ({1} Clear Threat)"
+  },
+  {
+   "en": "Clear remaining fauna near campus",
+   "key": "",
+   "tr": "Clear remaining fauna near campus"
+  },
+  {
+   "en": "Clear ten dens in one run.",
+   "key": "",
+   "tr": "Clear ten dens in one run."
+  },
+  {
+   "en": "Clearing the den.",
+   "key": "",
+   "tr": "Clearing the den."
+  },
+  {
+   "en": "Click Earth to land. You are the Core. Your bots do the work.",
+   "key": "",
+   "tr": "Click Earth to land. You are the Core. Your bots do the work."
+  },
+  {
+   "en": "Click a building, then click open ground to place it. Each copy of a building costs more than the last.",
+   "key": "",
+   "tr": "Click a building, then click open ground to place it. Each copy of a building costs more than the last."
+  },
+  {
+   "en": "Click a power, then click the map. The price grows with distance from your nearest uplink.",
+   "key": "",
+   "tr": "Click a power, then click the map. The price grows with distance from your nearest uplink."
+  },
+  {
+   "en": "Click a tech to study it. Science comes from labs and Research Site flags; the launch tech is pinned on top.",
+   "key": "",
+   "tr": "Click a tech to study it. Science comes from labs and Research Site flags; the launch tech is pinned on top."
+  },
+  {
+   "en": "Click a world to land. You are the Core. Your bots do the work.",
+   "key": "",
+   "tr": "Click a world to land. You are the Core. Your bots do the work."
+  },
+  {
+   "en": "Click an action, then press its new key. Esc, number keys, Shift and Ctrl stay fixed.",
+   "key": "",
+   "tr": "Click an action, then press its new key. Esc, number keys, Shift and Ctrl stay fixed."
+  },
+  {
+   "en": "Click to look at it; that also clears it. {key:JumpToAlert} jumps to the newest.",
+   "key": "",
+   "tr": "Click to look at it; that also clears it. {key:JumpToAlert} jumps to the newest."
+  },
+  {
+   "en": "Click to look there. Gold: buildings. Blue: robots and charted dens. Red: fauna. Flags in their colours.",
+   "key": "",
+   "tr": "Click to look there. Gold: buildings. Blue: robots and charted dens. Red: fauna. Flags in their colours."
+  },
+  {
+   "en": "Click to run at this speed.",
+   "key": "",
+   "tr": "Click to run at this speed."
+  },
+  {
+   "en": "Click to step through your monitor's modes.",
+   "key": "",
+   "tr": "Click to step through your monitor's modes."
+  },
+  {
+   "en": "Click to study. {0:F0} science.",
+   "key": "",
+   "tr": "Click to study. {0:F0} science."
+  },
+  {
+   "en": "Click to switch language. Voices stay in English.",
+   "key": "",
+   "tr": "Click to switch language. Voices stay in English."
+  },
+  {
+   "en": "Click, then press the new key. Esc cancels.",
+   "key": "",
+   "tr": "Click, then press the new key. Esc cancels."
+  },
+  {
+   "en": "Climate Loom",
+   "key": "",
+   "tr": "Climate Loom"
+  },
+  {
+   "en": "Climate Loom / Aegis Spire / Deep Archive",
+   "key": "",
+   "tr": "Climate Loom / Aegis Spire / Deep Archive"
+  },
+  {
+   "en": "Climate Loom. Farms surge. Place the 6×6 Loom landmark.",
+   "key": "",
+   "tr": "Climate Loom. Farms surge. Place the 6×6 Loom landmark."
+  },
+  {
+   "en": "Close the game. Autosave keeps your colony.",
+   "key": "",
+   "tr": "Close the game. Autosave keeps your colony."
+  },
+  {
+   "en": "Closed-loop air and water for a lasting colony.",
+   "key": "",
+   "tr": "Closed-loop air and water for a lasting colony."
+  },
+  {
+   "en": "Collecting HAB levy",
+   "key": "",
+   "tr": "Collecting HAB levy"
+  },
+  {
+   "en": "Collectors who walk building tills home to the Commons. The small line is EU in their bags. Red while one is being replaced.",
+   "key": "",
+   "tr": "Collectors who walk building tills home to the Commons. The small line is EU in their bags. Red while one is being replaced."
+  },
+  {
+   "en": "Colony Commons",
+   "key": "",
+   "tr": "Colony Commons"
+  },
+  {
+   "en": "Colony Commons as Ares civic.",
+   "key": "",
+   "tr": "Colony Commons as Ares civic."
+  },
+  {
+   "en": "Colony Commons is already standing.",
+   "key": "",
+   "tr": "Colony Commons is already standing."
+  },
+  {
+   "en": "Colony Commons is down — build workshops, charging stations and shops anywhere nearby.",
+   "key": "",
+   "tr": "Colony Commons is down — build workshops, charging stations and shops anywhere nearby."
+  },
+  {
+   "en": "Colony Commons is down. Build anywhere on open ground.",
+   "key": "",
+   "tr": "Colony Commons is down. Build anywhere on open ground."
+  },
+  {
+   "en": "Colony days since landing. The tag underneath is this run's mode and challenge.",
+   "key": "",
+   "tr": "Colony days since landing. The tag underneath is this run's mode and challenge."
+  },
+  {
+   "en": "Colony recorded to slot {0}.",
+   "key": "",
+   "tr": "Colony recorded to slot {0}."
+  },
+  {
+   "en": "Colony restored — {0} modules, {1} bounties, {2} robots, {3} fauna, {4} dens, {5} parties.",
+   "key": "",
+   "tr": "Colony restored — {0} modules, {1} bounties, {2} robots, {3} fauna, {4} dens, {5} parties."
+  },
+  {
+   "en": "Colony robots take less bite. Batteries hit harder.",
+   "key": "",
+   "tr": "Colony robots take less bite. Batteries hit harder."
+  },
+  {
+   "en": "Combat gate — three dens.",
+   "key": "",
+   "tr": "Combat gate — three dens."
+  },
+  {
+   "en": "Commission the Belt Hauler",
+   "key": "",
+   "tr": "Commission the Belt Hauler"
+  },
+  {
+   "en": "Commission the Belt Hauler — and place the pad. Science without a landing is a Compact joke we do not tell twice. The rocks are next. We are not writing their decrees today.",
+   "key": "",
+   "tr": "Commission the Belt Hauler — and place the pad. Science without a landing is a Compact joke we do not tell twice. The rocks are next. We are not writing their decrees today."
+  },
+  {
+   "en": "Commission the Mars Ship",
+   "key": "",
+   "tr": "Commission the Mars Ship"
+  },
+  {
+   "en": "Commission the Mars Ship. The Compact is not a rumor. It is 100 science, 1,100 EU, 20 PWR, and a pad you still have to weld.",
+   "key": "",
+   "tr": "Commission the Mars Ship. The Compact is not a rumor. It is 100 science, 1,100 EU, 20 PWR, and a pad you still have to weld."
+  },
+  {
+   "en": "Commons is down on the claim. Build a HAB anywhere on open ground. Soil creepers chew farms ({key:FlagDefend}). Hold pop 8, then Lunar Rocket.",
+   "key": "",
+   "tr": "Commons is down on the claim. Build a HAB anywhere on open ground. Soil creepers chew farms ({key:FlagDefend}). Hold pop 8, then Lunar Rocket."
+  },
+  {
+   "en": "Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
+   "key": "",
+   "tr": "Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice."
+  },
+  {
+   "en": "Compact Ground",
+   "key": "",
+   "tr": "Compact Ground"
+  },
+  {
+   "en": "Confirm",
+   "key": "",
+   "tr": "Confirm"
+  },
+  {
+   "en": "Constellation complete: Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.",
+   "key": "",
+   "tr": "Constellation complete: Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm."
+  },
+  {
+   "en": "Construction",
+   "key": "",
+   "tr": "Construction"
+  },
+  {
+   "en": "Continue to Luna",
+   "key": "",
+   "tr": "Continue to Luna"
+  },
+  {
+   "en": "Continue to {0}",
+   "key": "",
+   "tr": "Continue to {0}"
+  },
+  {
+   "en": "Contract robots that take your bounties. Each workshop fabricates one; build more workshops for more heroes.",
+   "key": "",
+   "tr": "Contract robots that take your bounties. Each workshop fabricates one; build more workshops for more heroes."
+  },
+  {
+   "en": "Controls reset to defaults.",
+   "key": "",
+   "tr": "Controls reset to defaults."
+  },
+  {
+   "en": "Cooldown {0:F0}s",
+   "key": "",
+   "tr": "Cooldown {0:F0}s"
+  },
+  {
+   "en": "Cooldown {0:F0}s. Bill is by level, EU only.",
+   "key": "",
+   "tr": "Cooldown {0:F0}s. Bill is by level, EU only."
+  },
+  {
+   "en": "Core Sampling",
+   "key": "",
+   "tr": "Core Sampling"
+  },
+  {
+   "en": "Core Sampling. Core Lodge is licensed. Mines tick harder.",
+   "key": "",
+   "tr": "Core Sampling. Core Lodge is licensed. Mines tick harder."
+  },
+  {
+   "en": "Core Shot",
+   "key": "",
+   "tr": "Core Shot"
+  },
+  {
+   "en": "Core. Takes Extract and Research Site cheap; shy of dens.",
+   "key": "",
+   "tr": "Core. Takes Extract and Research Site cheap; shy of dens."
+  },
+  {
+   "en": "Cost {0}.",
+   "key": "",
+   "tr": "Cost {0}."
+  },
+  {
+   "en": "Cost {0}. Not enough yet.",
+   "key": "",
+   "tr": "Cost {0}. Not enough yet."
+  },
+  {
+   "en": "Courier Bot",
+   "key": "",
+   "tr": "Courier Bot"
+  },
+  {
+   "en": "Courier Workshop",
+   "key": "",
+   "tr": "Courier Workshop"
+  },
+  {
+   "en": "Courier claims Yard B.",
+   "key": "",
+   "tr": "Courier claims Yard B."
+  },
+  {
+   "en": "Court, Beds, Charter",
+   "key": "",
+   "tr": "Court, Beds, Charter"
+  },
+  {
+   "en": "Covering the wounded.",
+   "key": "",
+   "tr": "Covering the wounded."
+  },
+  {
+   "en": "Craft strong enough to leave this body.",
+   "key": "",
+   "tr": "Craft strong enough to leave this body."
+  },
+  {
+   "en": "Cratered grey. Ash hoppers press HABs ({key:FlagClearThreat}). Dust ticks on ore ({key:FlagDefend}). Hold pop 12, then Mars Ship.",
+   "key": "",
+   "tr": "Cratered grey. Ash hoppers press HABs ({key:FlagClearThreat}). Dust ticks on ore ({key:FlagDefend}). Hold pop 12, then Mars Ship."
+  },
+  {
+   "en": "Creepers chew Compact farms.",
+   "key": "",
+   "tr": "Creepers chew Compact farms."
+  },
+  {
+   "en": "Cryo Lock",
+   "key": "",
+   "tr": "Cryo Lock"
+  },
+  {
+   "en": "Cyan disc — Compact forward lodge.",
+   "key": "",
+   "tr": "Cyan disc — Compact forward lodge."
+  },
+  {
+   "en": "Cycle Overlay",
+   "key": "",
+   "tr": "Cycle Overlay"
+  },
+  {
+   "en": "Cycle Tool",
+   "key": "",
+   "tr": "Cycle Tool"
+  },
+  {
+   "en": "DAY / NIGHT CYCLE",
+   "key": "",
+   "tr": "DAY / NIGHT CYCLE"
+  },
+  {
+   "en": "DEADLINE",
+   "key": "",
+   "tr": "DEADLINE"
+  },
+  {
+   "en": "DEF",
+   "key": "",
+   "tr": "DEF"
+  },
+  {
+   "en": "DEFENCE COVERAGE",
+   "key": "",
+   "tr": "DEFENCE COVERAGE"
+  },
+  {
+   "en": "DEFEND",
+   "key": "",
+   "tr": "DEFEND"
+  },
+  {
+   "en": "DIORAMA CAMERA",
+   "key": "",
+   "tr": "DIORAMA CAMERA"
+  },
+  {
+   "en": "DISPLAY",
+   "key": "",
+   "tr": "DISPLAY"
+  },
+  {
+   "en": "DONE",
+   "key": "",
+   "tr": "DONE"
+  },
+  {
+   "en": "DOWN",
+   "key": "",
+   "tr": "DOWN"
+  },
+  {
+   "en": "DOWN {0:F0}s",
+   "key": "",
+   "tr": "DOWN {0:F0}s"
+  },
+  {
+   "en": "DRAINED",
+   "key": "",
+   "tr": "DRAINED"
+  },
+  {
+   "en": "DROP MANIFEST",
+   "key": "",
+   "tr": "DROP MANIFEST"
+  },
+  {
+   "en": "DUST CREEPER",
+   "key": "",
+   "tr": "DUST CREEPER"
+  },
+  {
+   "en": "DUST DRAIN",
+   "key": "",
+   "tr": "DUST DRAIN"
+  },
+  {
+   "en": "DUST HOPPER",
+   "key": "",
+   "tr": "DUST HOPPER"
+  },
+  {
+   "en": "DUST TICK",
+   "key": "",
+   "tr": "DUST TICK"
+  },
+  {
+   "en": "DUST WISP",
+   "key": "",
+   "tr": "DUST WISP"
+  },
+  {
+   "en": "DUTY",
+   "key": "",
+   "tr": "DUTY"
+  },
+  {
+   "en": "Decrees",
+   "key": "",
+   "tr": "Decrees"
+  },
+  {
+   "en": "Deep Archive",
+   "key": "",
+   "tr": "Deep Archive"
+  },
+  {
+   "en": "Deep Archive. Labs remember every sample. Place the 6×6 Archive.",
+   "key": "",
+   "tr": "Deep Archive. Labs remember every sample. Place the 6×6 Archive."
+  },
+  {
+   "en": "Deep Survey",
+   "key": "",
+   "tr": "Deep Survey"
+  },
+  {
+   "en": "Deep mapping. Labs tick faster. Unlocks Surveyor shop.",
+   "key": "",
+   "tr": "Deep mapping. Labs tick faster. Unlocks Surveyor shop."
+  },
+  {
+   "en": "Defend",
+   "key": "",
+   "tr": "Defend"
+  },
+  {
+   "en": "Defend  ·  watch 50 s after",
+   "key": "",
+   "tr": "Defend  ·  watch 50 s after"
+  },
+  {
+   "en": "Defend Area",
+   "key": "",
+   "tr": "Defend Area"
+  },
+  {
+   "en": "Defend watch — 50 s of 4 dps cover.",
+   "key": "",
+   "tr": "Defend watch — 50 s of 4 dps cover."
+  },
+  {
+   "en": "Defense Battery",
+   "key": "",
+   "tr": "Defense Battery"
+  },
+  {
+   "en": "Defense Battery  ·  auto-fires 18 m",
+   "key": "",
+   "tr": "Defense Battery  ·  auto-fires 18 m"
+  },
+  {
+   "en": "Defense Battery / workshop labour.",
+   "key": "",
+   "tr": "Defense Battery / workshop labour."
+  },
+  {
+   "en": "Defense Mech",
+   "key": "",
+   "tr": "Defense Mech"
+  },
+  {
+   "en": "Defense Workshop",
+   "key": "",
+   "tr": "Defense Workshop"
+  },
+  {
+   "en": "Defense hall · Clear / Defend",
+   "key": "",
+   "tr": "Defense hall · Clear / Defend"
+  },
+  {
+   "en": "Demo: Earth only. Luna, Mars, the Belt, Europa, guilds and replay modes are in the full game.",
+   "key": "",
+   "tr": "Demo: Earth only. Luna, Mars, the Belt, Europa, guilds and replay modes are in the full game."
+  },
+  {
+   "en": "Den Breaker",
+   "key": "",
+   "tr": "Den Breaker"
+  },
+  {
+   "en": "Dens",
+   "key": "",
+   "tr": "Dens"
+  },
+  {
+   "en": "Dens cleared",
+   "key": "",
+   "tr": "Dens cleared"
+  },
+  {
+   "en": "Dens cleared · colony sustained · launch ready.",
+   "key": "",
+   "tr": "Dens cleared · colony sustained · launch ready."
+  },
+  {
+   "en": "Dens frenzy — they know you're leaving.",
+   "key": "",
+   "tr": "Dens frenzy — they know you're leaving."
+  },
+  {
+   "en": "Dens quiet — hunt the last {0} fauna ({1} Clear Threat)",
+   "key": "",
+   "tr": "Dens quiet — hunt the last {0} fauna ({1} Clear Threat)"
+  },
+  {
+   "en": "Dens quiet — yard pests scatter: {0}.",
+   "key": "",
+   "tr": "Dens quiet — yard pests scatter: {0}."
+  },
+  {
+   "en": "Dens quiet. Fauna no longer holds the plaza.",
+   "key": "",
+   "tr": "Dens quiet. Fauna no longer holds the plaza."
+  },
+  {
+   "en": "Disband Party",
+   "key": "",
+   "tr": "Disband Party"
+  },
+  {
+   "en": "Do not wave at the trajectory. They will invoice the wave.",
+   "key": "",
+   "tr": "Do not wave at the trajectory. They will invoice the wave."
+  },
+  {
+   "en": "Dock a Fobot Yard. Y is not a miracle. It is an invoice.",
+   "key": "",
+   "tr": "Dock a Fobot Yard. Y is not a miracle. It is an invoice."
+  },
+  {
+   "en": "Dock a Fobot Yard. {0} does not skip the building.",
+   "key": "",
+   "tr": "Dock a Fobot Yard. {0} does not skip the building."
+  },
+  {
+   "en": "Dock fee is forty EU. Ice and ore have owners. The lanes have owners.",
+   "key": "",
+   "tr": "Dock fee is forty EU. Ice and ore have owners. The lanes have owners."
+  },
+  {
+   "en": "Dock {0} first.",
+   "key": "",
+   "tr": "Dock {0} first."
+  },
+  {
+   "en": "Drag and edge-pan move the camera the other way.",
+   "key": "",
+   "tr": "Drag and edge-pan move the camera the other way."
+  },
+  {
+   "en": "Drag to set the volume.",
+   "key": "",
+   "tr": "Drag to set the volume."
+  },
+  {
+   "en": "Drain on Power. Pair with dens.",
+   "key": "",
+   "tr": "Drain on Power. Pair with dens."
+  },
+  {
+   "en": "Drifting cloud shadows on worlds with weather.",
+   "key": "",
+   "tr": "Drifting cloud shadows on worlds with weather."
+  },
+  {
+   "en": "Drop manifest",
+   "key": "",
+   "tr": "Drop manifest"
+  },
+  {
+   "en": "Drop on {0}. Only the chosen slot is replaced. Other saves stay. Autosave will follow this new colony — save the current one first if you still need it.",
+   "key": "",
+   "tr": "Drop on {0}. Only the chosen slot is replaced. Other saves stay. Autosave will follow this new colony — save the current one first if you still need it."
+  },
+  {
+   "en": "Dust Stalker",
+   "key": "",
+   "tr": "Dust Stalker"
+  },
+  {
+   "en": "Dust creepers on the farm — post Defend Area.",
+   "key": "",
+   "tr": "Dust creepers on the farm — post Defend Area."
+  },
+  {
+   "en": "Dust hoppers at the Commons — post Clear Threat.",
+   "key": "",
+   "tr": "Dust hoppers at the Commons — post Clear Threat."
+  },
+  {
+   "en": "Dust ticks on the ore — post Defend Area.",
+   "key": "",
+   "tr": "Dust ticks on the ore — post Defend Area."
+  },
+  {
+   "en": "Dust wisps on the grid — post Clear Threat.",
+   "key": "",
+   "tr": "Dust wisps on the grid — post Clear Threat."
+  },
+  {
+   "en": "EDGE SCROLL",
+   "key": "",
+   "tr": "EDGE SCROLL"
+  },
+  {
+   "en": "EMP Snare",
+   "key": "",
+   "tr": "EMP Snare"
+  },
+  {
+   "en": "END OF THE DEMO",
+   "key": "",
+   "tr": "END OF THE DEMO"
+  },
+  {
+   "en": "ENDLESS",
+   "key": "",
+   "tr": "ENDLESS"
+  },
+  {
+   "en": "ENG",
+   "key": "",
+   "tr": "ENG"
+  },
+  {
+   "en": "ENTANGLED",
+   "key": "",
+   "tr": "ENTANGLED"
+  },
+  {
+   "en": "ENTER send  ·  ESC close  ·  {0}",
+   "key": "",
+   "tr": "ENTER send  ·  ESC close  ·  {0}"
+  },
+  {
+   "en": "ESC / CLICK  ·  SKIP",
+   "key": "",
+   "tr": "ESC / CLICK  ·  SKIP"
+  },
+  {
+   "en": "EU",
+   "key": "",
+   "tr": "EU"
+  },
+  {
+   "en": "EU in the Commons. Bounties, buildings and orbital powers are paid from it. Below: income per minute and EU locked in posted bounties.",
+   "key": "",
+   "tr": "EU in the Commons. Bounties, buildings and orbital powers are paid from it. Below: income per minute and EU locked in posted bounties."
+  },
+  {
+   "en": "EU is sitting in building batteries. Haul will get around to it.",
+   "key": "",
+   "tr": "EU is sitting in building batteries. Haul will get around to it."
+  },
+  {
+   "en": "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!",
+   "key": "",
+   "tr": "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!"
+  },
+  {
+   "en": "EU on its way home: sitting in building tills, carried by collectors, and the tax the buildings pay each day.",
+   "key": "",
+   "tr": "EU on its way home: sitting in building tills, carried by collectors, and the tax the buildings pay each day."
+  },
+  {
+   "en": "EU was napping on the HAB. A mite just made a withdrawal.",
+   "key": "",
+   "tr": "EU was napping on the HAB. A mite just made a withdrawal."
+  },
+  {
+   "en": "EU {0}",
+   "key": "",
+   "tr": "EU {0}"
+  },
+  {
+   "en": "EXPLORE",
+   "key": "",
+   "tr": "EXPLORE"
+  },
+  {
+   "en": "EXTRACT",
+   "key": "",
+   "tr": "EXTRACT"
+  },
+  {
+   "en": "Earth",
+   "key": "",
+   "tr": "Earth"
+  },
+  {
+   "en": "Earth drop confirmed. Colony Commons is live. Raise a HAB on open ground. Soil creepers follow the farms — Defend Area.",
+   "key": "",
+   "tr": "Earth drop confirmed. Colony Commons is live. Raise a HAB on open ground. Soil creepers follow the farms — Defend Area."
+  },
+  {
+   "en": "Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before.",
+   "key": "",
+   "tr": "Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before."
+  },
+  {
+   "en": "Earth holds. Keep colonizing this crust — rating stands, no hop.",
+   "key": "",
+   "tr": "Earth holds. Keep colonizing this crust — rating stands, no hop."
+  },
+  {
+   "en": "Earth holds. Lunar Rocket on the pad. Trajectory locked: Luna. The Freeholds already have a receipt prepared.",
+   "key": "",
+   "tr": "Earth holds. Lunar Rocket on the pad. Trajectory locked: Luna. The Freeholds already have a receipt prepared."
+  },
+  {
+   "en": "Earth holds. The Lunar Rocket is on the pad, not in a toast.",
+   "key": "",
+   "tr": "Earth holds. The Lunar Rocket is on the pad, not in a toast."
+  },
+  {
+   "en": "Earth is secured. Thank you for playing the Solar Majesty demo. In the full game the Colony Lifter flies on to Luna, Mars, the Belt and Europa, with guilds, markets and the whole tech tree. Wishlist it to hear the moment it launches.",
+   "key": "",
+   "tr": "Earth is secured. Thank you for playing the Solar Majesty demo. In the full game the Colony Lifter flies on to Luna, Mars, the Belt and Europa, with guilds, markets and the whole tech tree. Wishlist it to hear the moment it launches."
+  },
+  {
+   "en": "Earth outpost lost. Revive the robots or restart the drop.",
+   "key": "",
+   "tr": "Earth outpost lost. Revive the robots or restart the drop."
+  },
+  {
+   "en": "Earth secured. Lunar Rocket is on the pad — trajectory to Luna is open.",
+   "key": "",
+   "tr": "Earth secured. Lunar Rocket is on the pad — trajectory to Luna is open."
+  },
+  {
+   "en": "Earth ship waved off — no Landing Pad",
+   "key": "",
+   "tr": "Earth ship waved off — no Landing Pad"
+  },
+  {
+   "en": "Earth ship waved off — no Landing Pad.",
+   "key": "",
+   "tr": "Earth ship waved off — no Landing Pad."
+  },
+  {
+   "en": "Eight FlagTypes. Heroes take or refuse. No click-to-move.",
+   "key": "",
+   "tr": "Eight FlagTypes. Heroes take or refuse. No click-to-move."
+  },
+  {
+   "en": "Empty bay. Hurt robots pay {0} EU.",
+   "key": "",
+   "tr": "Empty bay. Hurt robots pay {0} EU."
+  },
+  {
+   "en": "Empty beds — seed crew arrives with the first HAB.",
+   "key": "",
+   "tr": "Empty beds — seed crew arrives with the first HAB."
+  },
+  {
+   "en": "Empty post. Aegis / Rim Watch will clock in.",
+   "key": "",
+   "tr": "Empty post. Aegis / Rim Watch will clock in."
+  },
+  {
+   "en": "Endless mode: no launch to the next world. Keep the colony standing.",
+   "key": "",
+   "tr": "Endless mode: no launch to the next world. Keep the colony standing."
+  },
+  {
+   "en": "Enemies are near the build site, so the bots stopped. Post a Clear Threat bounty ({key:ToolFlag}) and they carry on.",
+   "key": "",
+   "tr": "Enemies are near the build site, so the bots stopped. Post a Clear Threat bounty ({key:ToolFlag}) and they carry on."
+  },
+  {
+   "en": "Engineer Bot",
+   "key": "",
+   "tr": "Engineer Bot"
+  },
+  {
+   "en": "Engineer Workshop",
+   "key": "",
+   "tr": "Engineer Workshop"
+  },
+  {
+   "en": "Engineer hall · greedy Build",
+   "key": "",
+   "tr": "Engineer hall · greedy Build"
+  },
+  {
+   "en": "Engineers weld 40% faster while the pulse lasts.",
+   "key": "",
+   "tr": "Engineers weld 40% faster while the pulse lasts."
+  },
+  {
+   "en": "Error logs to attach to a bug report. The number counts errors this session.",
+   "key": "",
+   "tr": "Error logs to attach to a bug report. The number counts errors this session."
+  },
+  {
+   "en": "Escort Drone",
+   "key": "",
+   "tr": "Escort Drone"
+  },
+  {
+   "en": "Establish Outpost",
+   "key": "",
+   "tr": "Establish Outpost"
+  },
+  {
+   "en": "Europa",
+   "key": "",
+   "tr": "Europa"
+  },
+  {
+   "en": "Europa can wait in the catalog. We are not writing their decrees.",
+   "key": "",
+   "tr": "Europa can wait in the catalog. We are not writing their decrees."
+  },
+  {
+   "en": "Europa descent. Radiation outside the Commons. Fissure leeches and ice wisps on Power — Clear Threat. Ice creepers chew greenhouses — Defend Area.",
+   "key": "",
+   "tr": "Europa descent. Radiation outside the Commons. Fissure leeches and ice wisps on Power — Clear Threat. Ice creepers chew greenhouses — Defend Area."
+  },
+  {
+   "en": "Europa holds. Keep colonizing the ice — rating stands, no hop.",
+   "key": "",
+   "tr": "Europa holds. Keep colonizing the ice — rating stands, no hop."
+  },
+  {
+   "en": "Europa holds. Outer system is open. Oversee in sandbox or reseed this ice.",
+   "key": "",
+   "tr": "Europa holds. Outer system is open. Oversee in sandbox or reseed this ice."
+  },
+  {
+   "en": "Every key back to its default.",
+   "key": "",
+   "tr": "Every key back to its default."
+  },
+  {
+   "en": "Every ore deposit has a mine.",
+   "key": "",
+   "tr": "Every ore deposit has a mine."
+  },
+  {
+   "en": "Every robot and what it is doing. Click a row to select that robot.",
+   "key": "",
+   "tr": "Every robot and what it is doing. Click a row to select that robot."
+  },
+  {
+   "en": "Every specialist is incapacitated. Revive the party to retake the plaza.",
+   "key": "",
+   "tr": "Every specialist is incapacitated. Revive the party to retake the plaza."
+  },
+  {
+   "en": "Every temple site is taken.",
+   "key": "",
+   "tr": "Every temple site is taken."
+  },
+  {
+   "en": "Every trade zone is taken.",
+   "key": "",
+   "tr": "Every trade zone is taken."
+  },
+  {
+   "en": "Everyone on the dirt patches HP for a short window.",
+   "key": "",
+   "tr": "Everyone on the dirt patches HP for a short window."
+  },
+  {
+   "en": "Explore",
+   "key": "",
+   "tr": "Explore"
+  },
+  {
+   "en": "Explore  ·  survey 22 m / 90 s",
+   "key": "",
+   "tr": "Explore  ·  survey 22 m / 90 s"
+  },
+  {
+   "en": "Explore / Build",
+   "key": "",
+   "tr": "Explore / Build"
+  },
+  {
+   "en": "Extract",
+   "key": "",
+   "tr": "Extract"
+  },
+  {
+   "en": "Extract Basics",
+   "key": "",
+   "tr": "Extract Basics"
+  },
+  {
+   "en": "Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in EU.",
+   "key": "",
+   "tr": "Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in EU."
+  },
+  {
+   "en": "FARM STEAL",
+   "key": "",
+   "tr": "FARM STEAL"
+  },
+  {
+   "en": "FAST",
+   "key": "",
+   "tr": "FAST"
+  },
+  {
+   "en": "FASTER",
+   "key": "",
+   "tr": "FASTER"
+  },
+  {
+   "en": "FATIGUE",
+   "key": "",
+   "tr": "FATIGUE"
+  },
+  {
+   "en": "FIGHT",
+   "key": "",
+   "tr": "FIGHT"
+  },
+  {
+   "en": "FISSURE DRAIN",
+   "key": "",
+   "tr": "FISSURE DRAIN"
+  },
+  {
+   "en": "FISSURE LEECH",
+   "key": "",
+   "tr": "FISSURE LEECH"
+  },
+  {
+   "en": "FIX",
+   "key": "",
+   "tr": "FIX"
+  },
+  {
+   "en": "FLAG",
+   "key": "",
+   "tr": "FLAG"
+  },
+  {
+   "en": "FLAG HERE",
+   "key": "",
+   "tr": "FLAG HERE"
+  },
+  {
+   "en": "FLAG LOG",
+   "key": "",
+   "tr": "FLAG LOG"
+  },
+  {
+   "en": "FLAG ORDERS",
+   "key": "",
+   "tr": "FLAG ORDERS"
+  },
+  {
+   "en": "FLEE",
+   "key": "",
+   "tr": "FLEE"
+  },
+  {
+   "en": "FOBOT YARD  {0} EU  (120s)",
+   "key": "",
+   "tr": "FOBOT YARD  {0} EU  (120s)"
+  },
+  {
+   "en": "FOBOT YARD  ·  {0}",
+   "key": "",
+   "tr": "FOBOT YARD  ·  {0}"
+  },
+  {
+   "en": "FORM PARTY",
+   "key": "",
+   "tr": "FORM PARTY"
+  },
+  {
+   "en": "FRAME CAP",
+   "key": "",
+   "tr": "FRAME CAP"
+  },
+  {
+   "en": "FRAME CAP  ·  {0}",
+   "key": "",
+   "tr": "FRAME CAP  ·  {0}"
+  },
+  {
+   "en": "FREE",
+   "key": "",
+   "tr": "FREE"
+  },
+  {
+   "en": "FULLSCREEN",
+   "key": "",
+   "tr": "FULLSCREEN"
+  },
+  {
+   "en": "Fabricate mechs for contract work. Worker bots run the yard.",
+   "key": "",
+   "tr": "Fabricate mechs for contract work. Worker bots run the yard."
+  },
+  {
+   "en": "Fabricates {0} — flags nearby pull them.",
+   "key": "",
+   "tr": "Fabricates {0} — flags nearby pull them."
+  },
+  {
+   "en": "Falling back to the rest beacon.",
+   "key": "",
+   "tr": "Falling back to the rest beacon."
+  },
+  {
+   "en": "Farm and mine doctrine for a living stockpile.",
+   "key": "",
+   "tr": "Farm and mine doctrine for a living stockpile."
+  },
+  {
+   "en": "Fauna cleared",
+   "key": "",
+   "tr": "Fauna cleared"
+  },
+  {
+   "en": "Fauna pressure around the yard in view. High threat halts building and wears robots down. Clearing dens lowers it.",
+   "key": "",
+   "tr": "Fauna pressure around the yard in view. High threat halts building and wears robots down. Clearing dens lowers it."
+  },
+  {
+   "en": "Field Shell",
+   "key": "",
+   "tr": "Field Shell"
+  },
+  {
+   "en": "Field Survey",
+   "key": "",
+   "tr": "Field Survey"
+  },
+  {
+   "en": "Field kit. Light armor, faster rest heal.",
+   "key": "",
+   "tr": "Field kit. Light armor, faster rest heal."
+  },
+  {
+   "en": "Field lance. Light damage, extra regen.",
+   "key": "",
+   "tr": "Field lance. Light damage, extra regen."
+  },
+  {
+   "en": "Field triage so parties return from the rim.",
+   "key": "",
+   "tr": "Field triage so parties return from the rim."
+  },
+  {
+   "en": "Fills the ICE tank (lungs), not the wallet.",
+   "key": "",
+   "tr": "Fills the ICE tank (lungs), not the wallet."
+  },
+  {
+   "en": "Find richer nodes and quieter approaches.",
+   "key": "",
+   "tr": "Find richer nodes and quieter approaches."
+  },
+  {
+   "en": "First civic dock. Levy home chest.",
+   "key": "",
+   "tr": "First civic dock. Levy home chest."
+  },
+  {
+   "en": "First civic landmark; tutorial court opens.",
+   "key": "",
+   "tr": "First civic landmark; tutorial court opens."
+  },
+  {
+   "en": "Fissure leeches on the grid — post Clear Threat.",
+   "key": "",
+   "tr": "Fissure leeches on the grid — post Clear Threat."
+  },
+  {
+   "en": "Flag",
+   "key": "",
+   "tr": "Flag"
+  },
+  {
+   "en": "Flag cancelled — {0} EU returned.",
+   "key": "",
+   "tr": "Flag cancelled — {0} EU returned."
+  },
+  {
+   "en": "Flag cancelled.",
+   "key": "",
+   "tr": "Flag cancelled."
+  },
+  {
+   "en": "Flag orders",
+   "key": "",
+   "tr": "Flag orders"
+  },
+  {
+   "en": "Flag posted — fabricate a workshop robot before anyone can take it.",
+   "key": "",
+   "tr": "Flag posted — fabricate a workshop robot before anyone can take it."
+  },
+  {
+   "en": "Flag still unpaid. The Compact does not work for exposure.",
+   "key": "",
+   "tr": "Flag still unpaid. The Compact does not work for exposure."
+  },
+  {
+   "en": "Flag: Build Here",
+   "key": "",
+   "tr": "Flag: Build Here"
+  },
+  {
+   "en": "Flag: Clear Threat",
+   "key": "",
+   "tr": "Flag: Clear Threat"
+  },
+  {
+   "en": "Flag: Defend",
+   "key": "",
+   "tr": "Flag: Defend"
+  },
+  {
+   "en": "Flag: Explore",
+   "key": "",
+   "tr": "Flag: Explore"
+  },
+  {
+   "en": "Flag: Extract",
+   "key": "",
+   "tr": "Flag: Extract"
+  },
+  {
+   "en": "Flag: Outpost",
+   "key": "",
+   "tr": "Flag: Outpost"
+  },
+  {
+   "en": "Flag: Research Site",
+   "key": "",
+   "tr": "Flag: Research Site"
+  },
+  {
+   "en": "Flag: Terraform",
+   "key": "",
+   "tr": "Flag: Terraform"
+  },
+  {
+   "en": "Flags near this hall pull them (no new robot).",
+   "key": "",
+   "tr": "Flags near this hall pull them (no new robot)."
+  },
+  {
+   "en": "Flags you have posted. Their EU is held until a robot finishes the job. Post one with {key:ToolFlag}.",
+   "key": "",
+   "tr": "Flags you have posted. Their EU is held until a robot finishes the job. Post one with {key:ToolFlag}."
+  },
+  {
+   "en": "Fleeing to inn",
+   "key": "",
+   "tr": "Fleeing to inn"
+  },
+  {
+   "en": "Fobot Yard",
+   "key": "",
+   "tr": "Fobot Yard"
+  },
+  {
+   "en": "Fobot Yard / Continue",
+   "key": "",
+   "tr": "Fobot Yard / Continue"
+  },
+  {
+   "en": "Fobot Yard Bay",
+   "key": "",
+   "tr": "Fobot Yard Bay"
+  },
+  {
+   "en": "Fobot Yard cooling down — {0:F0}s.",
+   "key": "",
+   "tr": "Fobot Yard cooling down — {0:F0}s."
+  },
+  {
+   "en": "Fobot Yard · wrecks wait",
+   "key": "",
+   "tr": "Fobot Yard · wrecks wait"
+  },
+  {
+   "en": "Focus Campus A",
+   "key": "",
+   "tr": "Focus Campus A"
+  },
+  {
+   "en": "Focus Campus B",
+   "key": "",
+   "tr": "Focus Campus B"
+  },
+  {
+   "en": "Focus → {0}",
+   "key": "",
+   "tr": "Focus → {0}"
+  },
+  {
+   "en": "Follow the screen height: 100% at 1080p, more on bigger screens.",
+   "key": "",
+   "tr": "Follow the screen height: 100% at 1080p, more on bigger screens."
+  },
+  {
+   "en": "Following the party.",
+   "key": "",
+   "tr": "Following the party."
+  },
+  {
+   "en": "Forge hammer. Damage and weld.",
+   "key": "",
+   "tr": "Forge hammer. Damage and weld."
+  },
+  {
+   "en": "Form Party",
+   "key": "",
+   "tr": "Form Party"
+  },
+  {
+   "en": "Fortify the Perimeter",
+   "key": "",
+   "tr": "Fortify the Perimeter"
+  },
+  {
+   "en": "Fortify the perimeter. Battery turrets are dressing — they look like courage. The labour is still a Build on a Battery or workshop order.",
+   "key": "",
+   "tr": "Fortify the perimeter. Battery turrets are dressing — they look like courage. The labour is still a Build on a Battery or workshop order."
+  },
+  {
+   "en": "Forward outpost claimed from the flag. Extra PWR draw — drop a Mine on site.",
+   "key": "",
+   "tr": "Forward outpost claimed from the flag. Extra PWR draw — drop a Mine on site."
+  },
+  {
+   "en": "Forward outpost claimed. Extra PWR draw; a matching drop-off on site pays better.",
+   "key": "",
+   "tr": "Forward outpost claimed. Extra PWR draw; a matching drop-off on site pays better."
+  },
+  {
+   "en": "Freeze the colony. You can still look around, build and post bounties.",
+   "key": "",
+   "tr": "Freeze the colony. You can still look around, build and post bounties."
+  },
+  {
+   "en": "Freight Doctrine",
+   "key": "",
+   "tr": "Freight Doctrine"
+  },
+  {
+   "en": "Freight Doctrine. Haul Lodge is licensed — they take Outpost cheap.",
+   "key": "",
+   "tr": "Freight Doctrine. Haul Lodge is licensed — they take Outpost cheap."
+  },
+  {
+   "en": "Freight paid: −{0} EU.",
+   "key": "",
+   "tr": "Freight paid: −{0} EU."
+  },
+  {
+   "en": "Freight short — 12% of the stockpile jettisoned to make mass.",
+   "key": "",
+   "tr": "Freight short — 12% of the stockpile jettisoned to make mass."
+  },
+  {
+   "en": "Fresh",
+   "key": "",
+   "tr": "Fresh"
+  },
+  {
+   "en": "From {0} EU next to an uplink. Recharge {1:0} s.",
+   "key": "",
+   "tr": "From {0} EU next to an uplink. Recharge {1:0} s."
+  },
+  {
+   "en": "Full Crew",
+   "key": "",
+   "tr": "Full Crew"
+  },
+  {
+   "en": "Full constellation: Orbital Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.",
+   "key": "",
+   "tr": "Full constellation: Orbital Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm."
+  },
+  {
+   "en": "GAME SPEED",
+   "key": "",
+   "tr": "GAME SPEED"
+  },
+  {
+   "en": "GEO",
+   "key": "",
+   "tr": "GEO"
+  },
+  {
+   "en": "GNAWED",
+   "key": "",
+   "tr": "GNAWED"
+  },
+  {
+   "en": "GO",
+   "key": "",
+   "tr": "GO"
+  },
+  {
+   "en": "GUIDED START",
+   "key": "",
+   "tr": "GUIDED START"
+  },
+  {
+   "en": "GUILD BENEFIT",
+   "key": "",
+   "tr": "GUILD BENEFIT"
+  },
+  {
+   "en": "Gates are met. Worker bots stay on this claim. The treasury keeps ticking in EU.",
+   "key": "",
+   "tr": "Gates are met. Worker bots stay on this claim. The treasury keeps ticking in EU."
+  },
+  {
+   "en": "Gates met. Stay on this world — rating stands while you keep expanding.",
+   "key": "",
+   "tr": "Gates met. Stay on this world — rating stands while you keep expanding."
+  },
+  {
+   "en": "Gene Vault",
+   "key": "",
+   "tr": "Gene Vault"
+  },
+  {
+   "en": "Gene: Focus",
+   "key": "",
+   "tr": "Gene: Focus"
+  },
+  {
+   "en": "Gene: Swift",
+   "key": "",
+   "tr": "Gene: Swift"
+  },
+  {
+   "en": "Gene: Valor",
+   "key": "",
+   "tr": "Gene: Valor"
+  },
+  {
+   "en": "Geologist Bot",
+   "key": "",
+   "tr": "Geologist Bot"
+  },
+  {
+   "en": "Geologist Workshop",
+   "key": "",
+   "tr": "Geologist Workshop"
+  },
+  {
+   "en": "Geologist bonus +{0} EU at the drop-off.",
+   "key": "",
+   "tr": "Geologist bonus +{0} EU at the drop-off."
+  },
+  {
+   "en": "Go back to the Earth lesson.",
+   "key": "",
+   "tr": "Go back to the Earth lesson."
+  },
+  {
+   "en": "Graphics preset. Lower it if the frame rate drops.",
+   "key": "",
+   "tr": "Graphics preset. Lower it if the frame rate drops."
+  },
+  {
+   "en": "Greenhouse Farm",
+   "key": "",
+   "tr": "Greenhouse Farm"
+  },
+  {
+   "en": "Grid is skinny. Everyone is working at seventy percent, including your patience.",
+   "key": "",
+   "tr": "Grid is skinny. Everyone is working at seventy percent, including your patience."
+  },
+  {
+   "en": "Grid, Wisps, Garden",
+   "key": "",
+   "tr": "Grid, Wisps, Garden"
+  },
+  {
+   "en": "Group the selected robots (or those resting at the beacon) into a party that rests and hunts together.",
+   "key": "",
+   "tr": "Group the selected robots (or those resting at the beacon) into a party that rests and hunts together."
+  },
+  {
+   "en": "Grow the treasury",
+   "key": "",
+   "tr": "Grow the treasury"
+  },
+  {
+   "en": "Guard Haul's route with a Defend flag.",
+   "key": "",
+   "tr": "Guard Haul's route with a Defend flag."
+  },
+  {
+   "en": "Guard post and levy till. Arm lasers for EU.",
+   "key": "",
+   "tr": "Guard post and levy till. Arm lasers for EU."
+  },
+  {
+   "en": "Guard posted. Haul can drop EU here when Commons is far.",
+   "key": "",
+   "tr": "Guard posted. Haul can drop EU here when Commons is far."
+  },
+  {
+   "en": "Guided start on. Earth first; guilds and the outer worlds open when you clear it. New Game to start clean.",
+   "key": "",
+   "tr": "Guided start on. Earth first; guilds and the outer worlds open when you clear it. New Game to start clean."
+  },
+  {
+   "en": "Guided start skipped. Every unlocked world, the guilds and replay rules are open.",
+   "key": "",
+   "tr": "Guided start skipped. Every unlocked world, the guilds and replay rules are open."
+  },
+  {
+   "en": "Guild Charter",
+   "key": "",
+   "tr": "Guild Charter"
+  },
+  {
+   "en": "Guild Charter signed. Dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact. Flags near the hall pull that class.",
+   "key": "",
+   "tr": "Guild Charter signed. Dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact. Flags near the hall pull that class."
+  },
+  {
+   "en": "Guild Charter signed. Dock Horizon, Anvil, Aegis, or Triage. Flags near CMD-1 dress pull that ego.",
+   "key": "",
+   "tr": "Guild Charter signed. Dock Horizon, Anvil, Aegis, or Triage. Flags near CMD-1 dress pull that ego."
+  },
+  {
+   "en": "Guild Hall · assign a class",
+   "key": "",
+   "tr": "Guild Hall · assign a class"
+  },
+  {
+   "en": "Guild Hall — assign a class",
+   "key": "",
+   "tr": "Guild Hall — assign a class"
+  },
+  {
+   "en": "Guild arms and armor. Heroes buy with EU.",
+   "key": "",
+   "tr": "Guild arms and armor. Heroes buy with EU."
+  },
+  {
+   "en": "HAB purses",
+   "key": "",
+   "tr": "HAB purses"
+  },
+  {
+   "en": "HALTED",
+   "key": "",
+   "tr": "HALTED"
+  },
+  {
+   "en": "HARV",
+   "key": "",
+   "tr": "HARV"
+  },
+  {
+   "en": "HAUL",
+   "key": "",
+   "tr": "HAUL"
+  },
+  {
+   "en": "HEAL",
+   "key": "",
+   "tr": "HEAL"
+  },
+  {
+   "en": "HERO LINES",
+   "key": "",
+   "tr": "HERO LINES"
+  },
+  {
+   "en": "HERO LINES · LOCAL LLM",
+   "key": "",
+   "tr": "HERO LINES · LOCAL LLM"
+  },
+  {
+   "en": "HEROES",
+   "key": "",
+   "tr": "HEROES"
+  },
+  {
+   "en": "HOLD",
+   "key": "",
+   "tr": "HOLD"
+  },
+  {
+   "en": "HOPPER",
+   "key": "",
+   "tr": "HOPPER"
+  },
+  {
+   "en": "HP",
+   "key": "",
+   "tr": "HP"
+  },
+  {
+   "en": "HP {0}%+",
+   "key": "",
+   "tr": "HP {0}%+"
+  },
+  {
+   "en": "HUNT",
+   "key": "",
+   "tr": "HUNT"
+  },
+  {
+   "en": "HUNTING",
+   "key": "",
+   "tr": "HUNTING"
+  },
+  {
+   "en": "Hab Module (HAB-1)",
+   "key": "",
+   "tr": "Hab Module (HAB-1)"
+  },
+  {
+   "en": "Hab Ops",
+   "key": "",
+   "tr": "Hab Ops"
+  },
+  {
+   "en": "Habitat · worker bots",
+   "key": "",
+   "tr": "Habitat · worker bots"
+  },
+  {
+   "en": "Hard Bargain",
+   "key": "",
+   "tr": "Hard Bargain"
+  },
+  {
+   "en": "Hardened Plating",
+   "key": "",
+   "tr": "Hardened Plating"
+  },
+  {
+   "en": "Hardened grid. Colony power draw drops 15%. Pairs with Aegis Watch and Rim Watch.",
+   "key": "",
+   "tr": "Hardened grid. Colony power draw drops 15%. Pairs with Aegis Watch and Rim Watch."
+  },
+  {
+   "en": "Hardplate Suit",
+   "key": "",
+   "tr": "Hardplate Suit"
+  },
+  {
+   "en": "Harvest Doctrine",
+   "key": "",
+   "tr": "Harvest Doctrine"
+  },
+  {
+   "en": "Harvest Doctrine. Harvest Lodge is licensed. Mines and haul improve.",
+   "key": "",
+   "tr": "Harvest Doctrine. Harvest Lodge is licensed. Mines and haul improve."
+  },
+  {
+   "en": "Harvester Bot",
+   "key": "",
+   "tr": "Harvester Bot"
+  },
+  {
+   "en": "Harvester Workshop",
+   "key": "",
+   "tr": "Harvester Workshop"
+  },
+  {
+   "en": "Haul (Courier)",
+   "key": "",
+   "tr": "Haul (Courier)"
+  },
+  {
+   "en": "Haul carried {0:N0} EU home.",
+   "key": "",
+   "tr": "Haul carried {0:N0} EU home."
+  },
+  {
+   "en": "Haul claimed the disc. Freight after. They have a slogan. It works.",
+   "key": "",
+   "tr": "Haul claimed the disc. Freight after. They have a slogan. It works."
+  },
+  {
+   "en": "Haul claims between campuses. Unlocks Courier shop.",
+   "key": "",
+   "tr": "Haul claims between campuses. Unlocks Courier shop."
+  },
+  {
+   "en": "Haul deposited {0} EU at Commons.",
+   "key": "",
+   "tr": "Haul deposited {0} EU at Commons."
+  },
+  {
+   "en": "Haul down on the road",
+   "key": "",
+   "tr": "Haul down on the road"
+  },
+  {
+   "en": "Haul dumped {0} EU at the till. The walk was the joke.",
+   "key": "",
+   "tr": "Haul dumped {0} EU at the till. The walk was the joke."
+  },
+  {
+   "en": "Haul lost the levy on the road.",
+   "key": "",
+   "tr": "Haul lost the levy on the road."
+  },
+  {
+   "en": "Haul the levy. They call it a tariff.",
+   "key": "",
+   "tr": "Haul the levy. They call it a tariff."
+  },
+  {
+   "en": "Haul took the disc. They already said freight after. Believe them.",
+   "key": "",
+   "tr": "Haul took the disc. They already said freight after. Believe them."
+  },
+  {
+   "en": "Haul walked the batteries home. EU is in the till. Do not click the crate.",
+   "key": "",
+   "tr": "Haul walked the batteries home. EU is in the till. Do not click the crate."
+  },
+  {
+   "en": "Haul walked {0:N0} EU home",
+   "key": "",
+   "tr": "Haul walked {0:N0} EU home"
+  },
+  {
+   "en": "Haul. Cheap Explore and Outpost; will not hunt dens.",
+   "key": "",
+   "tr": "Haul. Cheap Explore and Outpost; will not hunt dens."
+  },
+  {
+   "en": "Hauler Mech",
+   "key": "",
+   "tr": "Hauler Mech"
+  },
+  {
+   "en": "Have a robot complete its first bounty.",
+   "key": "",
+   "tr": "Have a robot complete its first bounty."
+  },
+  {
+   "en": "Have eight robots fabricated in one run.",
+   "key": "",
+   "tr": "Have eight robots fabricated in one run."
+  },
+  {
+   "en": "Have one robot complete 40 contracts.",
+   "key": "",
+   "tr": "Have one robot complete 40 contracts."
+  },
+  {
+   "en": "Heading to the inn.",
+   "key": "",
+   "tr": "Heading to the inn."
+  },
+  {
+   "en": "Health Potion",
+   "key": "",
+   "tr": "Health Potion"
+  },
+  {
+   "en": "Heavy armor. Permanent, slight speed cost.",
+   "key": "",
+   "tr": "Heavy armor. Permanent, slight speed cost."
+  },
+  {
+   "en": "Heavy transfer ship for the next conquest.",
+   "key": "",
+   "tr": "Heavy transfer ship for the next conquest."
+  },
+  {
+   "en": "Hero lines are off. Conversations run on a small model on this computer — nothing leaves it.",
+   "key": "",
+   "tr": "Hero lines are off. Conversations run on a small model on this computer — nothing leaves it."
+  },
+  {
+   "en": "Heroes buy potions. Surplus ICE/REG siphons to EU above reserve.",
+   "key": "",
+   "tr": "Heroes buy potions. Surplus ICE/REG siphons to EU above reserve."
+  },
+  {
+   "en": "Hide the advisor's lessons. Settings can replay them.",
+   "key": "",
+   "tr": "Hide the advisor's lessons. Settings can replay them."
+  },
+  {
+   "en": "Highest bounty",
+   "key": "",
+   "tr": "Highest bounty"
+  },
+  {
+   "en": "Hold farm pests without a hunt.",
+   "key": "",
+   "tr": "Hold farm pests without a hunt."
+  },
+  {
+   "en": "Hold the yard. Then we name the rocks. We do not write their decrees today.",
+   "key": "",
+   "tr": "Hold the yard. Then we name the rocks. We do not write their decrees today."
+  },
+  {
+   "en": "Holding the rim.",
+   "key": "",
+   "tr": "Holding the rim."
+  },
+  {
+   "en": "Home to worker bots. Contract mechs take the bounties.",
+   "key": "",
+   "tr": "Home to worker bots. Contract mechs take the bounties."
+  },
+  {
+   "en": "Homesteader",
+   "key": "",
+   "tr": "Homesteader"
+  },
+  {
+   "en": "Horizon",
+   "key": "",
+   "tr": "Horizon"
+  },
+  {
+   "en": "Horizon Lodge",
+   "key": "",
+   "tr": "Horizon Lodge"
+  },
+  {
+   "en": "Horizon Needle",
+   "key": "",
+   "tr": "Horizon Needle"
+  },
+  {
+   "en": "Horizon Optics",
+   "key": "",
+   "tr": "Horizon Optics"
+  },
+  {
+   "en": "Horizon Pulse",
+   "key": "",
+   "tr": "Horizon Pulse"
+  },
+  {
+   "en": "Horizon Pulse researched. Inspect Horizon Lodge and spend EU to mark dens.",
+   "key": "",
+   "tr": "Horizon Pulse researched. Inspect Horizon Lodge and spend EU to mark dens."
+  },
+  {
+   "en": "Horizon Weave",
+   "key": "",
+   "tr": "Horizon Weave"
+  },
+  {
+   "en": "Horizon can chart the apron. Anvil can weld. Neither makes the green infinite.",
+   "key": "",
+   "tr": "Horizon can chart the apron. Anvil can weld. Neither makes the green infinite."
+  },
+  {
+   "en": "Horizon maps the meadow so the court knows the apron.",
+   "key": "",
+   "tr": "Horizon maps the meadow so the court knows the apron."
+  },
+  {
+   "en": "Horizon priced the dust. Forty EU. They did not stay for the speech.",
+   "key": "",
+   "tr": "Horizon priced the dust. Forty EU. They did not stay for the speech."
+  },
+  {
+   "en": "Horizon took the cheap Explore. Forty EU and a disappearing act — classic.",
+   "key": "",
+   "tr": "Horizon took the cheap Explore. Forty EU and a disappearing act — classic."
+  },
+  {
+   "en": "Horizon. Cheap Explore. Ignores fights.",
+   "key": "",
+   "tr": "Horizon. Cheap Explore. Ignores fights."
+  },
+  {
+   "en": "Hospitality, Itemized",
+   "key": "",
+   "tr": "Hospitality, Itemized"
+  },
+  {
+   "en": "How fast the controller stick moves the cursor.",
+   "key": "",
+   "tr": "How fast the controller stick moves the cursor."
+  },
+  {
+   "en": "How your robots lean: braver, greedier or more careful.",
+   "key": "",
+   "tr": "How your robots lean: braver, greedier or more careful."
+  },
+  {
+   "en": "Hull integrity. A robot at zero is a wreck until the yard stands it up.",
+   "key": "",
+   "tr": "Hull integrity. A robot at zero is a wreck until the yard stands it up."
+  },
+  {
+   "en": "Hunt the Wisps",
+   "key": "",
+   "tr": "Hunt the Wisps"
+  },
+  {
+   "en": "Hunt the wisps. They drink the grid like it is complimentary. It is not. Pair with the ten dens when the plaza gets loud.",
+   "key": "",
+   "tr": "Hunt the wisps. They drink the grid like it is complimentary. It is not. Pair with the ten dens when the plaza gets loud."
+  },
+  {
+   "en": "Hunting fauna",
+   "key": "",
+   "tr": "Hunting fauna"
+  },
+  {
+   "en": "Hunting fauna. No bounty needed.",
+   "key": "",
+   "tr": "Hunting fauna. No bounty needed."
+  },
+  {
+   "en": "Hurt robots pay EU for a patch. Triage clocks in.",
+   "key": "",
+   "tr": "Hurt robots pay EU for a patch. Triage clocks in."
+  },
+  {
+   "en": "ICE",
+   "key": "",
+   "tr": "ICE"
+  },
+  {
+   "en": "ICE CREEPER",
+   "key": "",
+   "tr": "ICE CREEPER"
+  },
+  {
+   "en": "ICE DRAIN",
+   "key": "",
+   "tr": "ICE DRAIN"
+  },
+  {
+   "en": "ICE STEAL",
+   "key": "",
+   "tr": "ICE STEAL"
+  },
+  {
+   "en": "ICE WISP",
+   "key": "",
+   "tr": "ICE WISP"
+  },
+  {
+   "en": "ICE and REG have a ceiling on this meadow. Eight bots and a farm do not impress anyone who already owns a lane.",
+   "key": "",
+   "tr": "ICE and REG have a ceiling on this meadow. Eight bots and a farm do not impress anyone who already owns a lane."
+  },
+  {
+   "en": "ICE for life support. Creepers follow the harvest.",
+   "key": "",
+   "tr": "ICE for life support. Creepers follow the harvest."
+  },
+  {
+   "en": "IDLE",
+   "key": "",
+   "tr": "IDLE"
+  },
+  {
+   "en": "INN",
+   "key": "",
+   "tr": "INN"
+  },
+  {
+   "en": "INVERT CAMERA PAN",
+   "key": "",
+   "tr": "INVERT CAMERA PAN"
+  },
+  {
+   "en": "IRON  ·  {0}",
+   "key": "",
+   "tr": "IRON  ·  {0}"
+  },
+  {
+   "en": "IRONMAN",
+   "key": "",
+   "tr": "IRONMAN"
+  },
+  {
+   "en": "IRONMAN — no abandon, no new seed.",
+   "key": "",
+   "tr": "IRONMAN — no abandon, no new seed."
+  },
+  {
+   "en": "IRONMAN — no manual save or load.",
+   "key": "",
+   "tr": "IRONMAN — no manual save or load."
+  },
+  {
+   "en": "Ice Wisp",
+   "key": "",
+   "tr": "Ice Wisp"
+  },
+  {
+   "en": "Ice creepers on the greenhouse — post Defend Area.",
+   "key": "",
+   "tr": "Ice creepers on the greenhouse — post Defend Area."
+  },
+  {
+   "en": "Ice crust, radiation. Fissure leeches and ice wisps drain Power ({key:FlagClearThreat}). Ice creepers on farms ({key:FlagDefend}). Hold pop 14.",
+   "key": "",
+   "tr": "Ice crust, radiation. Fissure leeches and ice wisps drain Power ({key:FlagClearThreat}). Ice creepers on farms ({key:FlagDefend}). Hold pop 14."
+  },
+  {
+   "en": "Ice wisps off the crust — post Clear Threat.",
+   "key": "",
+   "tr": "Ice wisps off the crust — post Clear Threat."
+  },
+  {
+   "en": "Icebreaker",
+   "key": "",
+   "tr": "Icebreaker"
+  },
+  {
+   "en": "Idle",
+   "key": "",
+   "tr": "Idle"
+  },
+  {
+   "en": "Idle near the wounded.",
+   "key": "",
+   "tr": "Idle near the wounded."
+  },
+  {
+   "en": "Idle. Build flags need real pay.",
+   "key": "",
+   "tr": "Idle. Build flags need real pay."
+  },
+  {
+   "en": "Idle. Cheap Explore will do.",
+   "key": "",
+   "tr": "Idle. Cheap Explore will do."
+  },
+  {
+   "en": "Idle. Defend is cheap for me.",
+   "key": "",
+   "tr": "Idle. Defend is cheap for me."
+  },
+  {
+   "en": "Idle. Explore or Research Site.",
+   "key": "",
+   "tr": "Idle. Explore or Research Site."
+  },
+  {
+   "en": "Idle. Explore, Outpost, or walk the levy.",
+   "key": "",
+   "tr": "Idle. Explore, Outpost, or walk the levy."
+  },
+  {
+   "en": "Idle. Extract is cheap.",
+   "key": "",
+   "tr": "Idle. Extract is cheap."
+  },
+  {
+   "en": "Idle. Extract or Research Site.",
+   "key": "",
+   "tr": "Idle. Extract or Research Site."
+  },
+  {
+   "en": "Idle. Post Clear Threat or Defend.",
+   "key": "",
+   "tr": "Idle. Post Clear Threat or Defend."
+  },
+  {
+   "en": "Idle. Terraform is cheap.",
+   "key": "",
+   "tr": "Idle. Terraform is cheap."
+  },
+  {
+   "en": "Ignored — raise bounty (+)",
+   "key": "",
+   "tr": "Ignored — raise bounty (+)"
+  },
+  {
+   "en": "Inspect the yard or press {0}. ICE is not on the bill.",
+   "key": "",
+   "tr": "Inspect the yard or press {0}. ICE is not on the bill."
+  },
+  {
+   "en": "Instant chassis patch.",
+   "key": "",
+   "tr": "Instant chassis patch."
+  },
+  {
+   "en": "Ironman latches at New Game. This run stays as started.",
+   "key": "",
+   "tr": "Ironman latches at New Game. This run stays as started."
+  },
+  {
+   "en": "Ironman — manual saves are closed. Autosave still covers a crash.",
+   "key": "",
+   "tr": "Ironman — manual saves are closed. Autosave still covers a crash."
+  },
+  {
+   "en": "Ironman — no second draft. This body cannot be restarted.",
+   "key": "",
+   "tr": "Ironman — no second draft. This body cannot be restarted."
+  },
+  {
+   "en": "Ironman — reloads are closed.",
+   "key": "",
+   "tr": "Ironman — reloads are closed."
+  },
+  {
+   "en": "Ironman — this body is lost. No restart.",
+   "key": "",
+   "tr": "Ironman — this body is lost. No restart."
+  },
+  {
+   "en": "Ironman: no manual saves, no body restart or abandon. Autosave still covers a crash. Latches at New Game / Continue.",
+   "key": "",
+   "tr": "Ironman: no manual saves, no body restart or abandon. Autosave still covers a crash. Latches at New Game / Continue."
+  },
+  {
+   "en": "JUNK",
+   "key": "",
+   "tr": "JUNK"
+  },
+  {
+   "en": "Jex keeps teaching on Mars instead of only commenting on mistakes.",
+   "key": "",
+   "tr": "Jex keeps teaching on Mars instead of only commenting on mistakes."
+  },
+  {
+   "en": "Jump to Alert",
+   "key": "",
+   "tr": "Jump to Alert"
+  },
+  {
+   "en": "Junk Bot",
+   "key": "",
+   "tr": "Junk Bot"
+  },
+  {
+   "en": "Junk bots rising from the scrap pile — post Clear Threat.",
+   "key": "",
+   "tr": "Junk bots rising from the scrap pile — post Clear Threat."
+  },
+  {
+   "en": "KEEP COLONIZING",
+   "key": "",
+   "tr": "KEEP COLONIZING"
+  },
+  {
+   "en": "KEEP PLAYING EARTH",
+   "key": "",
+   "tr": "KEEP PLAYING EARTH"
+  },
+  {
+   "en": "Keep a copy of this colony in a numbered slot.",
+   "key": "",
+   "tr": "Keep a copy of this colony in a numbered slot."
+  },
+  {
+   "en": "Keep colonizing — dens quiet, colony holding",
+   "key": "",
+   "tr": "Keep colonizing — dens quiet, colony holding"
+  },
+  {
+   "en": "Kinetic Lance",
+   "key": "",
+   "tr": "Kinetic Lance"
+  },
+  {
+   "en": "Kingdom vocation",
+   "key": "",
+   "tr": "Kingdom vocation"
+  },
+  {
+   "en": "LANGUAGE",
+   "key": "",
+   "tr": "LANGUAGE"
+  },
+  {
+   "en": "LEECH",
+   "key": "",
+   "tr": "LEECH"
+  },
+  {
+   "en": "LEECH DRAIN",
+   "key": "",
+   "tr": "LEECH DRAIN"
+  },
+  {
+   "en": "LEVY",
+   "key": "",
+   "tr": "LEVY"
+  },
+  {
+   "en": "LEVY {0}",
+   "key": "",
+   "tr": "LEVY {0}"
+  },
+  {
+   "en": "LIFTOFF",
+   "key": "",
+   "tr": "LIFTOFF"
+  },
+  {
+   "en": "LIFTOFF  ·  BOUND FOR {0}",
+   "key": "",
+   "tr": "LIFTOFF  ·  BOUND FOR {0}"
+  },
+  {
+   "en": "LOAD",
+   "key": "",
+   "tr": "LOAD"
+  },
+  {
+   "en": "LOCKED",
+   "key": "",
+   "tr": "LOCKED"
+  },
+  {
+   "en": "LOCKED  ·  SHIFT+CLICK",
+   "key": "",
+   "tr": "LOCKED  ·  SHIFT+CLICK"
+  },
+  {
+   "en": "LOW BATTERY",
+   "key": "",
+   "tr": "LOW BATTERY"
+  },
+  {
+   "en": "LOW · {0}",
+   "key": "",
+   "tr": "LOW · {0}"
+  },
+  {
+   "en": "LOWER BOUNTY",
+   "key": "",
+   "tr": "LOWER BOUNTY"
+  },
+  {
+   "en": "Lab + TECH tree",
+   "key": "",
+   "tr": "Lab + TECH tree"
+  },
+  {
+   "en": "Lab Module (LAB-1)",
+   "key": "",
+   "tr": "Lab Module (LAB-1)"
+  },
+  {
+   "en": "Lab Science",
+   "key": "",
+   "tr": "Lab Science"
+  },
+  {
+   "en": "Labs {0} · rate {1:F1}/s · tip {2}",
+   "key": "",
+   "tr": "Labs {0} · rate {1:F1}/s · tip {2}"
+  },
+  {
+   "en": "Landing Pad",
+   "key": "",
+   "tr": "Landing Pad"
+  },
+  {
+   "en": "Landing Pad + Market",
+   "key": "",
+   "tr": "Landing Pad + Market"
+  },
+  {
+   "en": "Landing pads only fit inside an EU trade ring.",
+   "key": "",
+   "tr": "Landing pads only fit inside an EU trade ring."
+  },
+  {
+   "en": "Landmark — bonuses while standing.",
+   "key": "",
+   "tr": "Landmark — bonuses while standing."
+  },
+  {
+   "en": "Lasers already armed.",
+   "key": "",
+   "tr": "Lasers already armed."
+  },
+  {
+   "en": "Lasers armed — 18 m.",
+   "key": "",
+   "tr": "Lasers armed — 18 m."
+  },
+  {
+   "en": "Launch craft",
+   "key": "",
+   "tr": "Launch craft"
+  },
+  {
+   "en": "Leave to the title screen. Autosave keeps this colony.",
+   "key": "",
+   "tr": "Leave to the title screen. Autosave keeps this colony."
+  },
+  {
+   "en": "Left stick: cursor · A: click · B: cancel / right-click · Right stick: pan · LT/RT: zoom · X: flags · Y: build · LB/RB: speed · R3: hold · Menu: pause · View: research · D-pad: overlay, tools, bounty",
+   "key": "",
+   "tr": "Left stick: cursor · A: click · B: cancel / right-click · Right stick: pan · LT/RT: zoom · X: flags · Y: build · LB/RB: speed · R3: hold · Menu: pause · View: research · D-pad: overlay, tools, bounty"
+  },
+  {
+   "en": "Legacy inn gene — unused.",
+   "key": "",
+   "tr": "Legacy inn gene — unused."
+  },
+  {
+   "en": "Level 6 wreck, Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
+   "key": "",
+   "tr": "Level 6 wreck, Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice."
+  },
+  {
+   "en": "Levy the Meadow Farm",
+   "key": "",
+   "tr": "Levy the Meadow Farm"
+  },
+  {
+   "en": "Levy the meadow farm. ICE is life support, not a beverage program. Creepers will RSVP.",
+   "key": "",
+   "tr": "Levy the meadow farm. ICE is life support, not a beverage program. Creepers will RSVP."
+  },
+  {
+   "en": "Levy walked home · {0} EU",
+   "key": "",
+   "tr": "Levy walked home · {0} EU"
+  },
+  {
+   "en": "License Horizon Lodge, Anvil Compact, Aegis Lodge, and Triage Compact. Flags near a hall pull that class.",
+   "key": "",
+   "tr": "License Horizon Lodge, Anvil Compact, Aegis Lodge, and Triage Compact. Flags near a hall pull that class."
+  },
+  {
+   "en": "License a Terraformer shop. Greener farms when they work Terraform flags.",
+   "key": "",
+   "tr": "License a Terraformer shop. Greener farms when they work Terraform flags."
+  },
+  {
+   "en": "Life Support",
+   "key": "",
+   "tr": "Life Support"
+  },
+  {
+   "en": "Life Support. Dock an Aid Station — hurt robots pay EU for a patch.",
+   "key": "",
+   "tr": "Life Support. Dock an Aid Station — hurt robots pay EU for a patch."
+  },
+  {
+   "en": "Life support is a suggestion until it is not. The tank is at four. Bots first, Anvil second.",
+   "key": "",
+   "tr": "Life support is a suggestion until it is not. The tank is at four. Bots first, Anvil second."
+  },
+  {
+   "en": "Light EVA plating. Permanent armor.",
+   "key": "",
+   "tr": "Light EVA plating. Permanent armor."
+  },
+  {
+   "en": "Light scout mail.",
+   "key": "",
+   "tr": "Light scout mail."
+  },
+  {
+   "en": "Limit frames per second to save power and heat.",
+   "key": "",
+   "tr": "Limit frames per second to save power and heat."
+  },
+  {
+   "en": "Load",
+   "key": "",
+   "tr": "Load"
+  },
+  {
+   "en": "Load a colony. Other slots stay on disk.",
+   "key": "",
+   "tr": "Load a colony. Other slots stay on disk."
+  },
+  {
+   "en": "Load a saved colony. Other slots stay on disk.",
+   "key": "",
+   "tr": "Load a saved colony. Other slots stay on disk."
+  },
+  {
+   "en": "Locked: research opens it.",
+   "key": "",
+   "tr": "Locked: research opens it."
+  },
+  {
+   "en": "Locks every hostile in 6 m in place for 6 s.",
+   "key": "",
+   "tr": "Locks every hostile in 6 m in place for 6 s."
+  },
+  {
+   "en": "Lodge arms and armor, paid in EU.",
+   "key": "",
+   "tr": "Lodge arms and armor, paid in EU."
+  },
+  {
+   "en": "Lodge arms and armor. Heroes buy with their EU.",
+   "key": "",
+   "tr": "Lodge arms and armor. Heroes buy with their EU."
+  },
+  {
+   "en": "Lodge carbine. Permanent damage.",
+   "key": "",
+   "tr": "Lodge carbine. Permanent damage."
+  },
+  {
+   "en": "Lodge plating. Permanent armor.",
+   "key": "",
+   "tr": "Lodge plating. Permanent armor."
+  },
+  {
+   "en": "Lodge spear. Permanent damage.",
+   "key": "",
+   "tr": "Lodge spear. Permanent damage."
+  },
+  {
+   "en": "Logging the site.",
+   "key": "",
+   "tr": "Logging the site."
+  },
+  {
+   "en": "Long Service",
+   "key": "",
+   "tr": "Long Service"
+  },
+  {
+   "en": "Low Battery: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
+   "key": "",
+   "tr": "Low Battery: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged."
+  },
+  {
+   "en": "Lower Bounty",
+   "key": "",
+   "tr": "Lower Bounty"
+  },
+  {
+   "en": "Luna",
+   "key": "",
+   "tr": "Luna"
+  },
+  {
+   "en": "Luna coming soon",
+   "key": "",
+   "tr": "Luna coming soon"
+  },
+  {
+   "en": "Luna holds. Keep colonizing the craters — rating stands, no hop.",
+   "key": "",
+   "tr": "Luna holds. Keep colonizing the craters — rating stands, no hop."
+  },
+  {
+   "en": "Luna holds. Mars Ship staged. Next body: Mars.",
+   "key": "",
+   "tr": "Luna holds. Mars Ship staged. Next body: Mars."
+  },
+  {
+   "en": "Luna holds. Mars Ship staged. Next body: Mars. Pack guild manners. The Compact does not curtsy.",
+   "key": "",
+   "tr": "Luna holds. Mars Ship staged. Next body: Mars. Pack guild manners. The Compact does not curtsy."
+  },
+  {
+   "en": "Luna holds. Mars Ship staged. Pack guild manners.",
+   "key": "",
+   "tr": "Luna holds. Mars Ship staged. Pack guild manners."
+  },
+  {
+   "en": "Luna insertion complete. Ash hoppers seek pressure at the HAB — Clear Threat. Dust ticks follow the mines.",
+   "key": "",
+   "tr": "Luna insertion complete. Ash hoppers seek pressure at the HAB — Clear Threat. Dust ticks follow the mines."
+  },
+  {
+   "en": "Luna insertion. The Freeholds smile like a weigh-station.",
+   "key": "",
+   "tr": "Luna insertion. The Freeholds smile like a weigh-station."
+  },
+  {
+   "en": "Luna insertion. The Freeholds smile like a weigh-station. Dock fee is forty EU. They call it hospitality. We call it a line item.",
+   "key": "",
+   "tr": "Luna insertion. The Freeholds smile like a weigh-station. Dock fee is forty EU. They call it hospitality. We call it a line item."
+  },
+  {
+   "en": "Luna plaza is overrun. Revive or reseed this crater field.",
+   "key": "",
+   "tr": "Luna plaza is overrun. Revive or reseed this crater field."
+  },
+  {
+   "en": "Luna: Jex lectures. Mars: failure asides unless lessons are on.",
+   "key": "",
+   "tr": "Luna: Jex lectures. Mars: failure asides unless lessons are on."
+  },
+  {
+   "en": "Lunar Rocket",
+   "key": "",
+   "tr": "Lunar Rocket"
+  },
+  {
+   "en": "Lunar Rocket is on the pad. The meadow just became a departure lounge.",
+   "key": "",
+   "tr": "Lunar Rocket is on the pad. The meadow just became a departure lounge."
+  },
+  {
+   "en": "L{0} DOWN",
+   "key": "",
+   "tr": "L{0} DOWN"
+  },
+  {
+   "en": "L{0} or lower",
+   "key": "",
+   "tr": "L{0} or lower"
+  },
+  {
+   "en": "L{0}+",
+   "key": "",
+   "tr": "L{0}+"
+  },
+  {
+   "en": "L{0}–{1}",
+   "key": "",
+   "tr": "L{0}–{1}"
+  },
+  {
+   "en": "MAJESTY COLONY",
+   "key": "",
+   "tr": "MAJESTY COLONY"
+  },
+  {
+   "en": "MAP",
+   "key": "",
+   "tr": "MAP"
+  },
+  {
+   "en": "MARS JEX LESSONS",
+   "key": "",
+   "tr": "MARS JEX LESSONS"
+  },
+  {
+   "en": "MARS JEX LESSONS  ·  OFF",
+   "key": "",
+   "tr": "MARS JEX LESSONS  ·  OFF"
+  },
+  {
+   "en": "MARS JEX LESSONS  ·  ON",
+   "key": "",
+   "tr": "MARS JEX LESSONS  ·  ON"
+  },
+  {
+   "en": "MASTER",
+   "key": "",
+   "tr": "MASTER"
+  },
+  {
+   "en": "MED",
+   "key": "",
+   "tr": "MED"
+  },
+  {
+   "en": "MENU",
+   "key": "",
+   "tr": "MENU"
+  },
+  {
+   "en": "MISSION TIME EXPIRED",
+   "key": "",
+   "tr": "MISSION TIME EXPIRED"
+  },
+  {
+   "en": "MITE",
+   "key": "",
+   "tr": "MITE"
+  },
+  {
+   "en": "MITE STEAL",
+   "key": "",
+   "tr": "MITE STEAL"
+  },
+  {
+   "en": "MODE",
+   "key": "",
+   "tr": "MODE"
+  },
+  {
+   "en": "MODE  ·  {0}",
+   "key": "",
+   "tr": "MODE  ·  {0}"
+  },
+  {
+   "en": "MOVE {0:F1}  ·  WORK {1:F2}  ·  status",
+   "key": "",
+   "tr": "MOVE {0:F1}  ·  WORK {1:F2}  ·  status"
+  },
+  {
+   "en": "MUSIC",
+   "key": "",
+   "tr": "MUSIC"
+  },
+  {
+   "en": "Magic Potion",
+   "key": "",
+   "tr": "Magic Potion"
+  },
+  {
+   "en": "Maim",
+   "key": "",
+   "tr": "Maim"
+  },
+  {
+   "en": "Main Belt",
+   "key": "",
+   "tr": "Main Belt"
+  },
+  {
+   "en": "Main Menu",
+   "key": "",
+   "tr": "Main Menu"
+  },
+  {
+   "en": "Map overlay. {key:CycleOverlay} shows the next one or turns it off.",
+   "key": "",
+   "tr": "Map overlay. {key:CycleOverlay} shows the next one or turns it off."
+  },
+  {
+   "en": "Map the apron. Root of the research tree.",
+   "key": "",
+   "tr": "Map the apron. Root of the research tree."
+  },
+  {
+   "en": "Mark the crater lanes the Freeholds bill.",
+   "key": "",
+   "tr": "Mark the crater lanes the Freeholds bill."
+  },
+  {
+   "en": "Market Stall",
+   "key": "",
+   "tr": "Market Stall"
+  },
+  {
+   "en": "Mars",
+   "key": "",
+   "tr": "Mars"
+  },
+  {
+   "en": "Mars Ship",
+   "key": "",
+   "tr": "Mars Ship"
+  },
+  {
+   "en": "Mars Ship staged. The Compact will not send a welcome basket.",
+   "key": "",
+   "tr": "Mars Ship staged. The Compact will not send a welcome basket."
+  },
+  {
+   "en": "Mars descent. Compact ground. Dust already filing opinions about Power.",
+   "key": "",
+   "tr": "Mars descent. Compact ground. Dust already filing opinions about Power."
+  },
+  {
+   "en": "Mars descent. Compact ground. Dust wisps already have opinions about Power. Raise the seat before the dust files a claim of its own.",
+   "key": "",
+   "tr": "Mars descent. Compact ground. Dust wisps already have opinions about Power. Raise the seat before the dust files a claim of its own."
+  },
+  {
+   "en": "Mars descent. Dust wisps on Power — Clear Threat. Dust creepers on farms — Defend Area.",
+   "key": "",
+   "tr": "Mars descent. Dust wisps on Power — Clear Threat. Dust creepers on farms — Defend Area."
+  },
+  {
+   "en": "Mars holds. Belt Hauler is on the pad — trajectory into the rocks is open.",
+   "key": "",
+   "tr": "Mars holds. Belt Hauler is on the pad — trajectory into the rocks is open."
+  },
+  {
+   "en": "Mars holds. Belt Hauler on the pad. Trajectory into the rocks is open.",
+   "key": "",
+   "tr": "Mars holds. Belt Hauler on the pad. Trajectory into the rocks is open."
+  },
+  {
+   "en": "Mars holds. Belt Hauler on the pad. Trajectory into the rocks is open. Belt can wait for its own map.",
+   "key": "",
+   "tr": "Mars holds. Belt Hauler on the pad. Trajectory into the rocks is open. Belt can wait for its own map."
+  },
+  {
+   "en": "Mars holds. Keep colonizing the red crust — rating stands, no hop.",
+   "key": "",
+   "tr": "Mars holds. Keep colonizing the red crust — rating stands, no hop."
+  },
+  {
+   "en": "Mars outpost overwhelmed. The red plaza is not yours until the party stands.",
+   "key": "",
+   "tr": "Mars outpost overwhelmed. The red plaza is not yours until the party stands."
+  },
+  {
+   "en": "Med Protocols",
+   "key": "",
+   "tr": "Med Protocols"
+  },
+  {
+   "en": "Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in EU.",
+   "key": "",
+   "tr": "Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in EU."
+  },
+  {
+   "en": "Med-Drop",
+   "key": "",
+   "tr": "Med-Drop"
+  },
+  {
+   "en": "Medic hall · Defend, no dens",
+   "key": "",
+   "tr": "Medic hall · Defend, no dens"
+  },
+  {
+   "en": "Mines can only be built at an ore deposit, out in the wilds.",
+   "key": "",
+   "tr": "Mines can only be built at an ore deposit, out in the wilds."
+  },
+  {
+   "en": "Miniature-style depth of field when zoomed in.",
+   "key": "",
+   "tr": "Miniature-style depth of field when zoomed in."
+  },
+  {
+   "en": "Modules built",
+   "key": "",
+   "tr": "Modules built"
+  },
+  {
+   "en": "Modules lost",
+   "key": "",
+   "tr": "Modules lost"
+  },
+  {
+   "en": "NEED TECH",
+   "key": "",
+   "tr": "NEED TECH"
+  },
+  {
+   "en": "NEW CAMPAIGN",
+   "key": "",
+   "tr": "NEW CAMPAIGN"
+  },
+  {
+   "en": "NO",
+   "key": "",
+   "tr": "NO"
+  },
+  {
+   "en": "NO INCOME",
+   "key": "",
+   "tr": "NO INCOME"
+  },
+  {
+   "en": "NORMAL",
+   "key": "",
+   "tr": "NORMAL"
+  },
+  {
+   "en": "NOT NOW",
+   "key": "",
+   "tr": "NOT NOW"
+  },
+  {
+   "en": "Nanite Regen",
+   "key": "",
+   "tr": "Nanite Regen"
+  },
+  {
+   "en": "Nanite drop. Restores 50% of a damaged building.",
+   "key": "",
+   "tr": "Nanite drop. Restores 50% of a damaged building."
+  },
+  {
+   "en": "Needs {0} first.",
+   "key": "",
+   "tr": "Needs {0} first."
+  },
+  {
+   "en": "Needs {0}.",
+   "key": "",
+   "tr": "Needs {0}."
+  },
+  {
+   "en": "New campaign",
+   "key": "",
+   "tr": "New campaign"
+  },
+  {
+   "en": "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building.",
+   "key": "",
+   "tr": "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building."
+  },
+  {
+   "en": "No Second Draft",
+   "key": "",
+   "tr": "No Second Draft"
+  },
+  {
+   "en": "No building selected.",
+   "key": "",
+   "tr": "No building selected."
+  },
+  {
+   "en": "No camera shake or pulsing; the launch and victory beats become short still shots.",
+   "key": "",
+   "tr": "No camera shake or pulsing; the launch and victory beats become short still shots."
+  },
+  {
+   "en": "No continue slot yet. New Game drops Luna (Mars if you already skipped or cleared the hour). Continue restores that body's campus.",
+   "key": "",
+   "tr": "No continue slot yet. New Game drops Luna (Mars if you already skipped or cleared the hour). Continue restores that body's campus."
+  },
+  {
+   "en": "No flags posted — {0} to bounty.",
+   "key": "",
+   "tr": "No flags posted — {0} to bounty."
+  },
+  {
+   "en": "No one is down — the Fobot Yard is for wrecks and incapacitated robots.",
+   "key": "",
+   "tr": "No one is down — the Fobot Yard is for wrecks and incapacitated robots."
+  },
+  {
+   "en": "No one working here yet.",
+   "key": "",
+   "tr": "No one working here yet."
+  },
+  {
+   "en": "No ore deposit was marked on this map.",
+   "key": "",
+   "tr": "No ore deposit was marked on this map."
+  },
+  {
+   "en": "No robots left and no re-fab in the shop. Rebuild a workshop, or retry.",
+   "key": "",
+   "tr": "No robots left and no re-fab in the shop. Rebuild a workshop, or retry."
+  },
+  {
+   "en": "No site in 28 m — paid for showing up.",
+   "key": "",
+   "tr": "No site in 28 m — paid for showing up."
+  },
+  {
+   "en": "No soil. Metal rush. Rock mites and ticks swarm mines ({key:FlagDefend}). Shard hoppers test the Commons ({key:FlagClearThreat}). Then Icebreaker.",
+   "key": "",
+   "tr": "No soil. Metal rush. Rock mites and ticks swarm mines ({key:FlagDefend}). Shard hoppers test the Commons ({key:FlagClearThreat}). Then Icebreaker."
+  },
+  {
+   "en": "No such lodge.",
+   "key": "",
+   "tr": "No such lodge."
+  },
+  {
+   "en": "No temple site was marked on this map.",
+   "key": "",
+   "tr": "No temple site was marked on this map."
+  },
+  {
+   "en": "No trade ring was marked on this map.",
+   "key": "",
+   "tr": "No trade ring was marked on this map."
+  },
+  {
+   "en": "No wreck for this shop. Pay the Fobot Yard to stand this ego up.",
+   "key": "",
+   "tr": "No wreck for this shop. Pay the Fobot Yard to stand this ego up."
+  },
+  {
+   "en": "No wrecks. Dock this yard before anyone goes down.",
+   "key": "",
+   "tr": "No wrecks. Dock this yard before anyone goes down."
+  },
+  {
+   "en": "Nobody is standing. You have twenty seconds of optimism left.",
+   "key": "",
+   "tr": "Nobody is standing. You have twenty seconds of optimism left."
+  },
+  {
+   "en": "Not available yet.",
+   "key": "",
+   "tr": "Not available yet."
+  },
+  {
+   "en": "Not enough EU to raise that bounty.",
+   "key": "",
+   "tr": "Not enough EU to raise that bounty."
+  },
+  {
+   "en": "Not enough EU.",
+   "key": "",
+   "tr": "Not enough EU."
+  },
+  {
+   "en": "Nothing crosses the rim.",
+   "key": "",
+   "tr": "Nothing crosses the rim."
+  },
+  {
+   "en": "Nothing you built was ever lost.",
+   "key": "",
+   "tr": "Nothing you built was ever lost."
+  },
+  {
+   "en": "Nuclear Mine",
+   "key": "",
+   "tr": "Nuclear Mine"
+  },
+  {
+   "en": "OBJECTIVES",
+   "key": "",
+   "tr": "OBJECTIVES"
+  },
+  {
+   "en": "OFF",
+   "key": "",
+   "tr": "OFF"
+  },
+  {
+   "en": "ON",
+   "key": "",
+   "tr": "ON"
+  },
+  {
+   "en": "OPEN",
+   "key": "",
+   "tr": "OPEN"
+  },
+  {
+   "en": "OPEN HANDS",
+   "key": "",
+   "tr": "OPEN HANDS"
+  },
+  {
+   "en": "OPEN LOGS FOLDER",
+   "key": "",
+   "tr": "OPEN LOGS FOLDER"
+  },
+  {
+   "en": "OPEN LOGS FOLDER  ·  {0}",
+   "key": "",
+   "tr": "OPEN LOGS FOLDER  ·  {0}"
+  },
+  {
+   "en": "OPEN THE LIST",
+   "key": "",
+   "tr": "OPEN THE LIST"
+  },
+  {
+   "en": "OPS Drop-off",
+   "key": "",
+   "tr": "OPS Drop-off"
+  },
+  {
+   "en": "OPS Drop-off  ·  does not grow EU",
+   "key": "",
+   "tr": "OPS Drop-off  ·  does not grow EU"
+  },
+  {
+   "en": "ORBITAL SUPPORT",
+   "key": "",
+   "tr": "ORBITAL SUPPORT"
+  },
+  {
+   "en": "ORDERS",
+   "key": "",
+   "tr": "ORDERS"
+  },
+  {
+   "en": "ORDERS  {0}",
+   "key": "",
+   "tr": "ORDERS  {0}"
+  },
+  {
+   "en": "ORE STEAL",
+   "key": "",
+   "tr": "ORE STEAL"
+  },
+  {
+   "en": "OUTPOST",
+   "key": "",
+   "tr": "OUTPOST"
+  },
+  {
+   "en": "OUTPOST LOST",
+   "key": "",
+   "tr": "OUTPOST LOST"
+  },
+  {
+   "en": "OUTPOST SECURED",
+   "key": "",
+   "tr": "OUTPOST SECURED"
+  },
+  {
+   "en": "Objectives",
+   "key": "",
+   "tr": "Objectives"
+  },
+  {
+   "en": "On duty: ",
+   "key": "",
+   "tr": "On duty: "
+  },
+  {
+   "en": "On {0}.",
+   "key": "",
+   "tr": "On {0}."
+  },
+  {
+   "en": "One autosave, no manual save or load. Set before New Game.",
+   "key": "",
+   "tr": "One autosave, no manual save or load. Set before New Game."
+  },
+  {
+   "en": "One speed step down.",
+   "key": "",
+   "tr": "One speed step down."
+  },
+  {
+   "en": "One speed step up.",
+   "key": "",
+   "tr": "One speed step up."
+  },
+  {
+   "en": "Open Hands: cheaper flags (hunger +0.26, past the 0.75 greed bypass). Less courage.",
+   "key": "",
+   "tr": "Open Hands: cheaper flags (hunger +0.26, past the 0.75 greed bypass). Less courage."
+  },
+  {
+   "en": "Open Hands: they will take a cheap flag. Hunger is past the greed gate. Courage is not.",
+   "key": "",
+   "tr": "Open Hands: they will take a cheap flag. Hunger is past the greed gate. Courage is not."
+  },
+  {
+   "en": "Open a colony from a save slot.",
+   "key": "",
+   "tr": "Open a colony from a save slot."
+  },
+  {
+   "en": "Open a conversation with this robot. It runs on a small model on this computer.",
+   "key": "",
+   "tr": "Open a conversation with this robot. It runs on a small model on this computer."
+  },
+  {
+   "en": "Open run: manual slot saves and body restarts stay available.",
+   "key": "",
+   "tr": "Open run: manual slot saves and body restarts stay available."
+  },
+  {
+   "en": "Open the build catalog. Pick a building, then click open ground to place it.",
+   "key": "",
+   "tr": "Open the build catalog. Pick a building, then click open ground to place it."
+  },
+  {
+   "en": "Open the full campaign: guilds, research and every world.",
+   "key": "",
+   "tr": "Open the full campaign: guilds, research and every world."
+  },
+  {
+   "en": "Opening the Solar Majesty store page…",
+   "key": "",
+   "tr": "Opening the Solar Majesty store page…"
+  },
+  {
+   "en": "Optional handicaps for a harder run.",
+   "key": "",
+   "tr": "Optional handicaps for a harder run."
+  },
+  {
+   "en": "Optional rules for the next flag in plain words, like \"stay away unless level 9+\" or \"no scouts\". The line below shows what the robots understood.",
+   "key": "",
+   "tr": "Optional rules for the next flag in plain words, like \"stay away unless level 9+\" or \"no scouts\". The line below shows what the robots understood."
+  },
+  {
+   "en": "Orbital Barrage",
+   "key": "",
+   "tr": "Orbital Barrage"
+  },
+  {
+   "en": "Orbital Constellation",
+   "key": "",
+   "tr": "Orbital Constellation"
+  },
+  {
+   "en": "Orbital Skyhook",
+   "key": "",
+   "tr": "Orbital Skyhook"
+  },
+  {
+   "en": "Orbital Support",
+   "key": "",
+   "tr": "Orbital Support"
+  },
+  {
+   "en": "Orbital Uplink",
+   "key": "",
+   "tr": "Orbital Uplink"
+  },
+  {
+   "en": "Orbital Uplink online. Press {0}: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit.",
+   "key": "",
+   "tr": "Orbital Uplink online. Press {0}: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit."
+  },
+  {
+   "en": "Orbital support",
+   "key": "",
+   "tr": "Orbital support"
+  },
+  {
+   "en": "Orders posted: \"{0}\" — not understood; heroes will ignore them.",
+   "key": "",
+   "tr": "Orders posted: \"{0}\" — not understood; heroes will ignore them."
+  },
+  {
+   "en": "Orders posted: {0}",
+   "key": "",
+   "tr": "Orders posted: {0}"
+  },
+  {
+   "en": "Orders understood: {0}",
+   "key": "",
+   "tr": "Orders understood: {0}"
+  },
+  {
+   "en": "Ore Mine",
+   "key": "",
+   "tr": "Ore Mine"
+  },
+  {
+   "en": "Ore Refining",
+   "key": "",
+   "tr": "Ore Refining"
+  },
+  {
+   "en": "Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in EU.",
+   "key": "",
+   "tr": "Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in EU."
+  },
+  {
+   "en": "Outpost",
+   "key": "",
+   "tr": "Outpost"
+  },
+  {
+   "en": "Outpost already claimed — the survey sells for +80 EU.",
+   "key": "",
+   "tr": "Outpost already claimed — the survey sells for +80 EU."
+  },
+  {
+   "en": "Outpost flag too far from the forward camp.",
+   "key": "",
+   "tr": "Outpost flag too far from the forward camp."
+  },
+  {
+   "en": "Outpost secured — advance the campaign",
+   "key": "",
+   "tr": "Outpost secured — advance the campaign"
+  },
+  {
+   "en": "Overlay: {0}.",
+   "key": "",
+   "tr": "Overlay: {0}."
+  },
+  {
+   "en": "Overlays off.",
+   "key": "",
+   "tr": "Overlays off."
+  },
+  {
+   "en": "PARKED",
+   "key": "",
+   "tr": "PARKED"
+  },
+  {
+   "en": "PARTY",
+   "key": "",
+   "tr": "PARTY"
+  },
+  {
+   "en": "PATROL",
+   "key": "",
+   "tr": "PATROL"
+  },
+  {
+   "en": "PAY THE YARD",
+   "key": "",
+   "tr": "PAY THE YARD"
+  },
+  {
+   "en": "PAY YARD",
+   "key": "",
+   "tr": "PAY YARD"
+  },
+  {
+   "en": "PAY {0} EU",
+   "key": "",
+   "tr": "PAY {0} EU"
+  },
+  {
+   "en": "PEST",
+   "key": "",
+   "tr": "PEST"
+  },
+  {
+   "en": "POISONED",
+   "key": "",
+   "tr": "POISONED"
+  },
+  {
+   "en": "POWER GRID",
+   "key": "",
+   "tr": "POWER GRID"
+  },
+  {
+   "en": "PRESS A KEY…",
+   "key": "",
+   "tr": "PRESS A KEY…"
+  },
+  {
+   "en": "PURSUE",
+   "key": "",
+   "tr": "PURSUE"
+  },
+  {
+   "en": "PWR",
+   "key": "",
+   "tr": "PWR"
+  },
+  {
+   "en": "PWR-1 landmark labour. Wisps will come.",
+   "key": "",
+   "tr": "PWR-1 landmark labour. Wisps will come."
+  },
+  {
+   "en": "Pad labour. Pair with Lunar Rocket research.",
+   "key": "",
+   "tr": "Pad labour. Pair with Lunar Rocket research."
+  },
+  {
+   "en": "Pad paid out +{0} EU. −{1} ICE −{2} REG. The tank still has lunch.",
+   "key": "",
+   "tr": "Pad paid out +{0} EU. −{1} ICE −{2} REG. The tank still has lunch."
+  },
+  {
+   "en": "Pad paid out. Dock fee already left. The Freeholds send their love. It is itemized.",
+   "key": "",
+   "tr": "Pad paid out. Dock fee already left. The Freeholds send their love. It is itemized."
+  },
+  {
+   "en": "Paid out",
+   "key": "",
+   "tr": "Paid out"
+  },
+  {
+   "en": "Palettes for deuteranopia, protanopia and tritanopia.",
+   "key": "",
+   "tr": "Palettes for deuteranopia, protanopia and tritanopia."
+  },
+  {
+   "en": "Pan Down",
+   "key": "",
+   "tr": "Pan Down"
+  },
+  {
+   "en": "Pan Left",
+   "key": "",
+   "tr": "Pan Left"
+  },
+  {
+   "en": "Pan Right",
+   "key": "",
+   "tr": "Pan Right"
+  },
+  {
+   "en": "Pan Up",
+   "key": "",
+   "tr": "Pan Up"
+  },
+  {
+   "en": "Pan the camera when the cursor touches the screen edge.",
+   "key": "",
+   "tr": "Pan the camera when the cursor touches the screen edge."
+  },
+  {
+   "en": "Party of {0} formed at the rest beacon.",
+   "key": "",
+   "tr": "Party of {0} formed at the rest beacon."
+  },
+  {
+   "en": "Party of {0} — {1} leads. Followers rest and hunt together.",
+   "key": "",
+   "tr": "Party of {0} — {1} leads. Followers rest and hunt together."
+  },
+  {
+   "en": "Patching a hull. Pay me when it holds.",
+   "key": "",
+   "tr": "Patching a hull. Pay me when it holds."
+  },
+  {
+   "en": "Patrolling the Commons.",
+   "key": "",
+   "tr": "Patrolling the Commons."
+  },
+  {
+   "en": "Pause: save, load, settings, quit.",
+   "key": "",
+   "tr": "Pause: save, load, settings, quit."
+  },
+  {
+   "en": "Paused",
+   "key": "",
+   "tr": "Paused"
+  },
+  {
+   "en": "Pay EU here to stand wrecks up.",
+   "key": "",
+   "tr": "Pay EU here to stand wrecks up."
+  },
+  {
+   "en": "Pay EU to stand a wrecked robot back up. The bill grows with its level; it takes 120 s.",
+   "key": "",
+   "tr": "Pay EU to stand a wrecked robot back up. The bill grows with its level; it takes 120 s."
+  },
+  {
+   "en": "Pay EU to stand wrecks. Bill scales with level.",
+   "key": "",
+   "tr": "Pay EU to stand wrecks. Bill scales with level."
+  },
+  {
+   "en": "Pay holds. Then we weld.",
+   "key": "",
+   "tr": "Pay holds. Then we weld."
+  },
+  {
+   "en": "Pays a robot to work the build site at the pole. Engineers like these.",
+   "key": "",
+   "tr": "Pays a robot to work the build site at the pole. Engineers like these."
+  },
+  {
+   "en": "Pays a robot to work the resource node at the pole and carry the yield to a drop-off.",
+   "key": "",
+   "tr": "Pays a robot to work the resource node at the pole and carry the yield to a drop-off."
+  },
+  {
+   "en": "Pays the robot that kills the fauna or den at the pole. Defense mechs like these.",
+   "key": "",
+   "tr": "Pays the robot that kills the fauna or den at the pole. Defense mechs like these."
+  },
+  {
+   "en": "Peak drones",
+   "key": "",
+   "tr": "Peak drones"
+  },
+  {
+   "en": "Perimeter Doctrine",
+   "key": "",
+   "tr": "Perimeter Doctrine"
+  },
+  {
+   "en": "Perimeter Doctrine. Rim Watch is licensed — they take Defend cheap.",
+   "key": "",
+   "tr": "Perimeter Doctrine. Rim Watch is licensed — they take Defend cheap."
+  },
+  {
+   "en": "Perspective camera: zoom out to see the horizon and the sky.",
+   "key": "",
+   "tr": "Perspective camera: zoom out to see the horizon and the sky."
+  },
+  {
+   "en": "Pest on the rim — engaging.",
+   "key": "",
+   "tr": "Pest on the rim — engaging."
+  },
+  {
+   "en": "Pests drained {0} EU from {1} building batteries.",
+   "key": "",
+   "tr": "Pests drained {0} EU from {1} building batteries."
+  },
+  {
+   "en": "Pests drained {0} EU from {1} building battery.",
+   "key": "",
+   "tr": "Pests drained {0} EU from {1} building battery."
+  },
+  {
+   "en": "Pick a Watchtower.",
+   "key": "",
+   "tr": "Pick a Watchtower."
+  },
+  {
+   "en": "Pick a building · LMB on open ground",
+   "key": "",
+   "tr": "Pick a building · LMB on open ground"
+  },
+  {
+   "en": "Pick a flag, then click the map to post it. The bounty is held from the treasury until a robot finishes the job.",
+   "key": "",
+   "tr": "Pick a flag, then click the map to post it. The bounty is held from the treasury until a robot finishes the job."
+  },
+  {
+   "en": "Pick a power · LMB on the map · cost x1-x15 by distance from an uplink",
+   "key": "",
+   "tr": "Pick a power · LMB on the map · cost x1-x15 by distance from an uplink"
+  },
+  {
+   "en": "Place Colony Commons on the landing site.",
+   "key": "",
+   "tr": "Place Colony Commons on the landing site."
+  },
+  {
+   "en": "Place a Landing Pad — departure craft stages there",
+   "key": "",
+   "tr": "Place a Landing Pad — departure craft stages there"
+  },
+  {
+   "en": "Planetary Anvil",
+   "key": "",
+   "tr": "Planetary Anvil"
+  },
+  {
+   "en": "Post a bounty of 2,500 EU or more.",
+   "key": "",
+   "tr": "Post a bounty of 2,500 EU or more."
+  },
+  {
+   "en": "Post a bounty on this building so robots come to work or defend it.",
+   "key": "",
+   "tr": "Post a bounty on this building so robots come to work or defend it."
+  },
+  {
+   "en": "Post a bounty. Robots decide whether it is worth the trip; a bigger bounty tempts more of them.",
+   "key": "",
+   "tr": "Post a bounty. Robots decide whether it is worth the trip; a bigger bounty tempts more of them."
+  },
+  {
+   "en": "Posted {0}  ·  claimed {1}  ·  bots keep their EU share",
+   "key": "",
+   "tr": "Posted {0}  ·  claimed {1}  ·  bots keep their EU share"
+  },
+  {
+   "en": "Posts Aegis or Rim Watch. Levy chest. Arm lasers.",
+   "key": "",
+   "tr": "Posts Aegis or Rim Watch. Levy chest. Arm lasers."
+  },
+  {
+   "en": "Potions + necklace. Pays {0} EU/day into its till.",
+   "key": "",
+   "tr": "Potions + necklace. Pays {0} EU/day into its till."
+  },
+  {
+   "en": "Potions and a regen necklace. Heroes buy with EU.",
+   "key": "",
+   "tr": "Potions and a regen necklace. Heroes buy with EU."
+  },
+  {
+   "en": "Power Node",
+   "key": "",
+   "tr": "Power Node"
+  },
+  {
+   "en": "Power Node (PWR-1)",
+   "key": "",
+   "tr": "Power Node (PWR-1)"
+  },
+  {
+   "en": "Power Strike",
+   "key": "",
+   "tr": "Power Strike"
+  },
+  {
+   "en": "Power Systems",
+   "key": "",
+   "tr": "Power Systems"
+  },
+  {
+   "en": "Powered",
+   "key": "",
+   "tr": "Powered"
+  },
+  {
+   "en": "Press the new key. Esc cancels.",
+   "key": "",
+   "tr": "Press the new key. Esc cancels."
+  },
+  {
+   "en": "Pressure seals and crew bunks for growth.",
+   "key": "",
+   "tr": "Pressure seals and crew bunks for growth."
+  },
+  {
+   "en": "Progress via research & conquest gates",
+   "key": "",
+   "tr": "Progress via research & conquest gates"
+  },
+  {
+   "en": "Protocols that speed further research.",
+   "key": "",
+   "tr": "Protocols that speed further research."
+  },
+  {
+   "en": "Proven",
+   "key": "",
+   "tr": "Proven"
+  },
+  {
+   "en": "Purge",
+   "key": "",
+   "tr": "Purge"
+  },
+  {
+   "en": "QUALITY",
+   "key": "",
+   "tr": "QUALITY"
+  },
+  {
+   "en": "QUALITY  ·  {0}",
+   "key": "",
+   "tr": "QUALITY  ·  {0}"
+  },
+  {
+   "en": "QUIT",
+   "key": "",
+   "tr": "QUIT"
+  },
+  {
+   "en": "RAID",
+   "key": "",
+   "tr": "RAID"
+  },
+  {
+   "en": "RAISE BOUNTY",
+   "key": "",
+   "tr": "RAISE BOUNTY"
+  },
+  {
+   "en": "RATING {0}  ·  {1}",
+   "key": "",
+   "tr": "RATING {0}  ·  {1}"
+  },
+  {
+   "en": "RE-FAB",
+   "key": "",
+   "tr": "RE-FAB"
+  },
+  {
+   "en": "RE-FAB L1 {0} EU",
+   "key": "",
+   "tr": "RE-FAB L1 {0} EU"
+  },
+  {
+   "en": "RE-FAB {0}:{1:00} {2}",
+   "key": "",
+   "tr": "RE-FAB {0}:{1:00} {2}"
+  },
+  {
+   "en": "REDUCE MOTION",
+   "key": "",
+   "tr": "REDUCE MOTION"
+  },
+  {
+   "en": "REG",
+   "key": "",
+   "tr": "REG"
+  },
+  {
+   "en": "REG {0}  ICE {1}  EU {2}  PWR {3}  ·  {4}  ·  {5} techs",
+   "key": "",
+   "tr": "REG {0}  ICE {1}  EU {2}  PWR {3}  ·  {4}  ·  {5} techs"
+  },
+  {
+   "en": "REP",
+   "key": "",
+   "tr": "REP"
+  },
+  {
+   "en": "REPLAY  ·  MODE / CHALLENGE / STANCE / IRONMAN",
+   "key": "",
+   "tr": "REPLAY  ·  MODE / CHALLENGE / STANCE / IRONMAN"
+  },
+  {
+   "en": "REPLAY GUIDED START",
+   "key": "",
+   "tr": "REPLAY GUIDED START"
+  },
+  {
+   "en": "REPLAY TUTORIAL",
+   "key": "",
+   "tr": "REPLAY TUTORIAL"
+  },
+  {
+   "en": "RESEARCH",
+   "key": "",
+   "tr": "RESEARCH"
+  },
+  {
+   "en": "RESEARCH SITE",
+   "key": "",
+   "tr": "RESEARCH SITE"
+  },
+  {
+   "en": "RESET CONTROLS",
+   "key": "",
+   "tr": "RESET CONTROLS"
+  },
+  {
+   "en": "RESOLUTION",
+   "key": "",
+   "tr": "RESOLUTION"
+  },
+  {
+   "en": "RESOLUTION  ·  {0}",
+   "key": "",
+   "tr": "RESOLUTION  ·  {0}"
+  },
+  {
+   "en": "REST",
+   "key": "",
+   "tr": "REST"
+  },
+  {
+   "en": "RESTART MISSION",
+   "key": "",
+   "tr": "RESTART MISSION"
+  },
+  {
+   "en": "RESUME",
+   "key": "",
+   "tr": "RESUME"
+  },
+  {
+   "en": "RESUME  ·  Esc",
+   "key": "",
+   "tr": "RESUME  ·  Esc"
+  },
+  {
+   "en": "ROBOT",
+   "key": "",
+   "tr": "ROBOT"
+  },
+  {
+   "en": "ROCK MITE",
+   "key": "",
+   "tr": "ROCK MITE"
+  },
+  {
+   "en": "ROCK TICK",
+   "key": "",
+   "tr": "ROCK TICK"
+  },
+  {
+   "en": "ROSTER",
+   "key": "",
+   "tr": "ROSTER"
+  },
+  {
+   "en": "Radiation outside the Commons — robots take damage far from campus.",
+   "key": "",
+   "tr": "Radiation outside the Commons — robots take damage far from campus."
+  },
+  {
+   "en": "Radiation-hardened lander for Europa's crust.",
+   "key": "",
+   "tr": "Radiation-hardened lander for Europa's crust."
+  },
+  {
+   "en": "Raise Bounty",
+   "key": "",
+   "tr": "Raise Bounty"
+  },
+  {
+   "en": "Raise Colony Commons first.",
+   "key": "",
+   "tr": "Raise Colony Commons first."
+  },
+  {
+   "en": "Raise a Commons on grey rock. Authority that sits in a crater still has to sit somewhere. Same civic gate as Earth. HUD still says COMMONS.",
+   "key": "",
+   "tr": "Raise a Commons on grey rock. Authority that sits in a crater still has to sit somewhere. Same civic gate as Earth. HUD still says COMMONS."
+  },
+  {
+   "en": "Raise the Commons",
+   "key": "",
+   "tr": "Raise the Commons"
+  },
+  {
+   "en": "Raise the Commons first. A court that meets in the dirt is a picnic, not a reign. Place the civic, then post Build on the live order.",
+   "key": "",
+   "tr": "Raise the Commons first. A court that meets in the dirt is a picnic, not a reign. Place the civic, then post Build on the live order."
+  },
+  {
+   "en": "Raise the Compact Seat",
+   "key": "",
+   "tr": "Raise the Compact Seat"
+  },
+  {
+   "en": "Raise the Compact seat. HUD still says COMMONS. The guild will forgive a Sol accent. It will not forgive a dirt court.",
+   "key": "",
+   "tr": "Raise the Compact seat. HUD still says COMMONS. The guild will forgive a Sol accent. It will not forgive a dirt court."
+  },
+  {
+   "en": "Raise the Crater Commons",
+   "key": "",
+   "tr": "Raise the Crater Commons"
+  },
+  {
+   "en": "Raise the First HAB",
+   "key": "",
+   "tr": "Raise the First HAB"
+  },
+  {
+   "en": "Raise the first HAB. Beds become EU, and EU does not walk itself home from a meadow. Anvil hangs the doors — square frames, not speeches.",
+   "key": "",
+   "tr": "Raise the first HAB. Beds become EU, and EU does not walk itself home from a meadow. Anvil hangs the doors — square frames, not speeches."
+  },
+  {
+   "en": "Raise the seat — HUD still says COMMONS — before the dust files a claim of its own.",
+   "key": "",
+   "tr": "Raise the seat — HUD still says COMMONS — before the dust files a claim of its own."
+  },
+  {
+   "en": "Re-fab needs {0} EU at {1}.",
+   "key": "",
+   "tr": "Re-fab needs {0} EU at {1}."
+  },
+  {
+   "en": "Re-fab queued — new {0} at L1, {1} EU / 40 s. The wreck is gone.",
+   "key": "",
+   "tr": "Re-fab queued — new {0} at L1, {1} EU / 40 s. The wreck is gone."
+  },
+  {
+   "en": "Re-fabricate five scrapped robots and still clear the body.",
+   "key": "",
+   "tr": "Re-fabricate five scrapped robots and still clear the body."
+  },
+  {
+   "en": "Read hero lines aloud through a local text-to-speech server.",
+   "key": "",
+   "tr": "Read hero lines aloud through a local text-to-speech server."
+  },
+  {
+   "en": "Read the crust. Better mine ticks. Unlocks Geologist shop.",
+   "key": "",
+   "tr": "Read the crust. Better mine ticks. Unlocks Geologist shop."
+  },
+  {
+   "en": "Reading ore.",
+   "key": "",
+   "tr": "Reading ore."
+  },
+  {
+   "en": "Reboots downed robots in 6 m on the spot. Wrecks still need the Fobot Yard.",
+   "key": "",
+   "tr": "Reboots downed robots in 6 m on the spot. Wrecks still need the Fobot Yard."
+  },
+  {
+   "en": "Rebuilder",
+   "key": "",
+   "tr": "Rebuilder"
+  },
+  {
+   "en": "Receipt and Warrant",
+   "key": "",
+   "tr": "Receipt and Warrant"
+  },
+  {
+   "en": "Recorded robot barks and the Core's voice. Nothing to install.",
+   "key": "",
+   "tr": "Recorded robot barks and the Core's voice. Nothing to install."
+  },
+  {
+   "en": "Red dust. Wisps drain Power ({key:FlagClearThreat}); dust creepers chew farms ({key:FlagDefend}). Hold pop 16, then Belt Hauler.",
+   "key": "",
+   "tr": "Red dust. Wisps drain Power ({key:FlagClearThreat}); dust creepers chew farms ({key:FlagDefend}). Hold pop 16, then Belt Hauler."
+  },
+  {
+   "en": "Regen Necklace",
+   "key": "",
+   "tr": "Regen Necklace"
+  },
+  {
+   "en": "Regolith Camp",
+   "key": "",
+   "tr": "Regolith Camp"
+  },
+  {
+   "en": "Regolith Mite",
+   "key": "",
+   "tr": "Regolith Mite"
+  },
+  {
+   "en": "Regolith mites on the farm — post Defend Area.",
+   "key": "",
+   "tr": "Regolith mites on the farm — post Defend Area."
+  },
+  {
+   "en": "Remote audit: 30% of every till straight to the treasury. Free.",
+   "key": "",
+   "tr": "Remote audit: 30% of every till straight to the treasury. Free."
+  },
+  {
+   "en": "Repair",
+   "key": "",
+   "tr": "Repair"
+  },
+  {
+   "en": "Repair Swarm",
+   "key": "",
+   "tr": "Repair Swarm"
+  },
+  {
+   "en": "Repair Workshop",
+   "key": "",
+   "tr": "Repair Workshop"
+  },
+  {
+   "en": "Repair hall · Defend, no dens",
+   "key": "",
+   "tr": "Repair hall · Defend, no dens"
+  },
+  {
+   "en": "Repair pod for one robot: +60% hull, clears poison, slow and stun.",
+   "key": "",
+   "tr": "Repair pod for one robot: +60% hull, clears poison, slow and stun."
+  },
+  {
+   "en": "Repairing module",
+   "key": "",
+   "tr": "Repairing module"
+  },
+  {
+   "en": "Replay the advisor's lessons from the start.",
+   "key": "",
+   "tr": "Replay the advisor's lessons from the start."
+  },
+  {
+   "en": "Replay: {0}. Doctrine nudges hunger/courage/workshop pull only.",
+   "key": "",
+   "tr": "Replay: {0}. Doctrine nudges hunger/courage/workshop pull only."
+  },
+  {
+   "en": "Research",
+   "key": "",
+   "tr": "Research"
+  },
+  {
+   "en": "Research Site",
+   "key": "",
+   "tr": "Research Site"
+  },
+  {
+   "en": "Research Site logged — +{0:F0} science banked. Pick a tech ({1}).",
+   "key": "",
+   "tr": "Research Site logged — +{0:F0} science banked. Pick a tech ({1})."
+  },
+  {
+   "en": "Research Site: +{0:F0} science into {1}.",
+   "key": "",
+   "tr": "Research Site: +{0:F0} science into {1}."
+  },
+  {
+   "en": "Research {0}",
+   "key": "",
+   "tr": "Research {0}"
+  },
+  {
+   "en": "Research {0} (TECH · {1}) — then place a Landing Pad",
+   "key": "",
+   "tr": "Research {0} (TECH · {1}) — then place a Landing Pad"
+  },
+  {
+   "en": "Research {0} at the lab.",
+   "key": "",
+   "tr": "Research {0} at the lab."
+  },
+  {
+   "en": "Research · {0}",
+   "key": "",
+   "tr": "Research · {0}"
+  },
+  {
+   "en": "Researched.",
+   "key": "",
+   "tr": "Researched."
+  },
+  {
+   "en": "Researched. A Landing Pad stages the craft.",
+   "key": "",
+   "tr": "Researched. A Landing Pad stages the craft."
+  },
+  {
+   "en": "Rest and fatigue. No shop.",
+   "key": "",
+   "tr": "Rest and fatigue. No shop."
+  },
+  {
+   "en": "Resting / shopping",
+   "key": "",
+   "tr": "Resting / shopping"
+  },
+  {
+   "en": "Resting. Shop if the EU is there.",
+   "key": "",
+   "tr": "Resting. Shop if the EU is there."
+  },
+  {
+   "en": "Resupply dock fee. Siphon is the caravan.",
+   "key": "",
+   "tr": "Resupply dock fee. Siphon is the caravan."
+  },
+  {
+   "en": "Retry this body, or return to title.",
+   "key": "",
+   "tr": "Retry this body, or return to title."
+  },
+  {
+   "en": "Revive Beacon",
+   "key": "",
+   "tr": "Revive Beacon"
+  },
+  {
+   "en": "Rim or Aegis on a greenhouse. The Compact keeps its lunch.",
+   "key": "",
+   "tr": "Rim or Aegis on a greenhouse. The Compact keeps its lunch."
+  },
+  {
+   "en": "Rim took the watch. The levy continues. Poetry later.",
+   "key": "",
+   "tr": "Rim took the watch. The levy continues. Poetry later."
+  },
+  {
+   "en": "Rim watch on a farm. Very dignified. Very necessary.",
+   "key": "",
+   "tr": "Rim watch on a farm. Very dignified. Very necessary."
+  },
+  {
+   "en": "Rim. Cheap Defend Area; will not wander or tinker.",
+   "key": "",
+   "tr": "Rim. Cheap Defend Area; will not wander or tinker."
+  },
+  {
+   "en": "Roaming fauna",
+   "key": "",
+   "tr": "Roaming fauna"
+  },
+  {
+   "en": "Robots fabricated",
+   "key": "",
+   "tr": "Robots fabricated"
+  },
+  {
+   "en": "Robots scrapped",
+   "key": "",
+   "tr": "Robots scrapped"
+  },
+  {
+   "en": "Robots write their own lines with a small local language model. Needs the local server; nothing leaves this computer.",
+   "key": "",
+   "tr": "Robots write their own lines with a small local language model. Needs the local server; nothing leaves this computer."
+  },
+  {
+   "en": "Rock Tick",
+   "key": "",
+   "tr": "Rock Tick"
+  },
+  {
+   "en": "Rock mites on the ore — post Defend Area.",
+   "key": "",
+   "tr": "Rock mites on the ore — post Defend Area."
+  },
+  {
+   "en": "Rock ticks on the ore — post Defend Area.",
+   "key": "",
+   "tr": "Rock ticks on the ore — post Defend Area."
+  },
+  {
+   "en": "Root the Hopper Saboteurs",
+   "key": "",
+   "tr": "Root the Hopper Saboteurs"
+  },
+  {
+   "en": "Roster · status",
+   "key": "",
+   "tr": "Roster · status"
+  },
+  {
+   "en": "Running freight.",
+   "key": "",
+   "tr": "Running freight."
+  },
+  {
+   "en": "SAVE",
+   "key": "",
+   "tr": "SAVE"
+  },
+  {
+   "en": "SCATTER",
+   "key": "",
+   "tr": "SCATTER"
+  },
+  {
+   "en": "SCOUT",
+   "key": "",
+   "tr": "SCOUT"
+  },
+  {
+   "en": "SCRAP RISK — {0} just stood up. Another down in 90 s can scrap them.",
+   "key": "",
+   "tr": "SCRAP RISK — {0} just stood up. Another down in 90 s can scrap them."
+  },
+  {
+   "en": "SCT {0}  ENG {1}  DEF {2}  MED {3}",
+   "key": "",
+   "tr": "SCT {0}  ENG {1}  DEF {2}  MED {3}"
+  },
+  {
+   "en": "SEND",
+   "key": "",
+   "tr": "SEND"
+  },
+  {
+   "en": "SENT",
+   "key": "",
+   "tr": "SENT"
+  },
+  {
+   "en": "SETTINGS",
+   "key": "",
+   "tr": "SETTINGS"
+  },
+  {
+   "en": "SFX",
+   "key": "",
+   "tr": "SFX"
+  },
+  {
+   "en": "SHAKEN",
+   "key": "",
+   "tr": "SHAKEN"
+  },
+  {
+   "en": "SHARD HOPPER",
+   "key": "",
+   "tr": "SHARD HOPPER"
+  },
+  {
+   "en": "SKIP",
+   "key": "",
+   "tr": "SKIP"
+  },
+  {
+   "en": "SKIP GUIDED START",
+   "key": "",
+   "tr": "SKIP GUIDED START"
+  },
+  {
+   "en": "SLOT {0}",
+   "key": "",
+   "tr": "SLOT {0}"
+  },
+  {
+   "en": "SLOW",
+   "key": "",
+   "tr": "SLOW"
+  },
+  {
+   "en": "SLOWER",
+   "key": "",
+   "tr": "SLOWER"
+  },
+  {
+   "en": "SOIL CREEPER",
+   "key": "",
+   "tr": "SOIL CREEPER"
+  },
+  {
+   "en": "SOL",
+   "key": "",
+   "tr": "SOL"
+  },
+  {
+   "en": "SOL {0}",
+   "key": "",
+   "tr": "SOL {0}"
+  },
+  {
+   "en": "SOLAR CONQUEST COMPLETE",
+   "key": "",
+   "tr": "SOLAR CONQUEST COMPLETE"
+  },
+  {
+   "en": "SPOKEN",
+   "key": "",
+   "tr": "SPOKEN"
+  },
+  {
+   "en": "SPOKEN · LOCAL TTS",
+   "key": "",
+   "tr": "SPOKEN · LOCAL TTS"
+  },
+  {
+   "en": "STANCE",
+   "key": "",
+   "tr": "STANCE"
+  },
+  {
+   "en": "STANCE  ·  {0}",
+   "key": "",
+   "tr": "STANCE  ·  {0}"
+  },
+  {
+   "en": "STANDARD",
+   "key": "",
+   "tr": "STANDARD"
+  },
+  {
+   "en": "START IN SLOT {0}",
+   "key": "",
+   "tr": "START IN SLOT {0}"
+  },
+  {
+   "en": "STUNNED",
+   "key": "",
+   "tr": "STUNNED"
+  },
+  {
+   "en": "SURV",
+   "key": "",
+   "tr": "SURV"
+  },
+  {
+   "en": "SURVEY FIRST",
+   "key": "",
+   "tr": "SURVEY FIRST"
+  },
+  {
+   "en": "SWARM",
+   "key": "",
+   "tr": "SWARM"
+  },
+  {
+   "en": "SWITCH YARD",
+   "key": "",
+   "tr": "SWITCH YARD"
+  },
+  {
+   "en": "Salvage {0} EU.",
+   "key": "",
+   "tr": "Salvage {0} EU."
+  },
+  {
+   "en": "Sampling for the lab.",
+   "key": "",
+   "tr": "Sampling for the lab."
+  },
+  {
+   "en": "Satellite link: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit. Cheaper near an uplink.",
+   "key": "",
+   "tr": "Satellite link: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit. Cheaper near an uplink."
+  },
+  {
+   "en": "Satellite pass. Charts every den within 30 m.",
+   "key": "",
+   "tr": "Satellite pass. Charts every den within 30 m."
+  },
+  {
+   "en": "Satellite powers paid in EU. Cheap next to an uplink, up to 15× the price far from one.",
+   "key": "",
+   "tr": "Satellite powers paid in EU. Cheap next to an uplink, up to 15× the price far from one."
+  },
+  {
+   "en": "Saturation strike. Hits every hostile in 7 m.",
+   "key": "",
+   "tr": "Saturation strike. Hits every hostile in 7 m."
+  },
+  {
+   "en": "Save",
+   "key": "",
+   "tr": "Save"
+  },
+  {
+   "en": "Say something to {0}…",
+   "key": "",
+   "tr": "Say something to {0}…"
+  },
+  {
+   "en": "Science banked {0:F0}. ",
+   "key": "",
+   "tr": "Science banked {0:F0}. "
+  },
+  {
+   "en": "Science ticks. Secret Projects are monuments.",
+   "key": "",
+   "tr": "Science ticks. Secret Projects are monuments."
+  },
+  {
+   "en": "Science toward Belt Hauler; still need a pad.",
+   "key": "",
+   "tr": "Science toward Belt Hauler; still need a pad."
+  },
+  {
+   "en": "Science toward Guild Charter, then dock Horizon, Anvil, Aegis, or Triage.",
+   "key": "",
+   "tr": "Science toward Guild Charter, then dock Horizon, Anvil, Aegis, or Triage."
+  },
+  {
+   "en": "Science toward Mars Ship.",
+   "key": "",
+   "tr": "Science toward Mars Ship."
+  },
+  {
+   "en": "Scout Drone",
+   "key": "",
+   "tr": "Scout Drone"
+  },
+  {
+   "en": "Scout Workshop",
+   "key": "",
+   "tr": "Scout Workshop"
+  },
+  {
+   "en": "Scout hall · cheap Explore",
+   "key": "",
+   "tr": "Scout hall · cheap Explore"
+  },
+  {
+   "en": "Scout visor. Permanent speed.",
+   "key": "",
+   "tr": "Scout visor. Permanent speed."
+  },
+  {
+   "en": "Scouts run hot and mark dens in a wide disc.",
+   "key": "",
+   "tr": "Scouts run hot and mark dens in a wide disc."
+  },
+  {
+   "en": "Seal the Near Dens",
+   "key": "",
+   "tr": "Seal the Near Dens"
+  },
+  {
+   "en": "Seasoned",
+   "key": "",
+   "tr": "Seasoned"
+  },
+  {
+   "en": "Secret Project complete: {0}.",
+   "key": "",
+   "tr": "Secret Project complete: {0}."
+  },
+  {
+   "en": "Secret Project landmark",
+   "key": "",
+   "tr": "Secret Project landmark"
+  },
+  {
+   "en": "Secret Project. A foundry that never cools — mines and haul surge. Extract/haul rush.",
+   "key": "",
+   "tr": "Secret Project. A foundry that never cools — mines and haul surge. Extract/haul rush."
+  },
+  {
+   "en": "Secret Project. A tower that calms the grid and the rim. Place the Spire landmark.",
+   "key": "",
+   "tr": "Secret Project. A tower that calms the grid and the rim. Place the Spire landmark."
+  },
+  {
+   "en": "Secret Project. Cheap freight and free Earth dockings. Extract/haul rush.",
+   "key": "",
+   "tr": "Secret Project. Cheap freight and free Earth dockings. Extract/haul rush."
+  },
+  {
+   "en": "Secret Project. Labs remember every sample. Place the Archive landmark.",
+   "key": "",
+   "tr": "Secret Project. Labs remember every sample. Place the Archive landmark."
+  },
+  {
+   "en": "Secret Project. Spare charging berths, faster drone builds, greener farms. Growth path.",
+   "key": "",
+   "tr": "Secret Project. Spare charging berths, faster drone builds, greener farms. Growth path."
+  },
+  {
+   "en": "Secret Project. Weave weather for the crust — farms surge. Place the Loom landmark.",
+   "key": "",
+   "tr": "Secret Project. Weave weather for the crust — farms surge. Place the Loom landmark."
+  },
+  {
+   "en": "Securing…",
+   "key": "",
+   "tr": "Securing…"
+  },
+  {
+   "en": "See the crate on wheels? That is Haul walking EU home. Do not click it.",
+   "key": "",
+   "tr": "See the crate on wheels? That is Haul walking EU home. Do not click it."
+  },
+  {
+   "en": "Self-Sufficient",
+   "key": "",
+   "tr": "Self-Sufficient"
+  },
+  {
+   "en": "Sentinel Mech",
+   "key": "",
+   "tr": "Sentinel Mech"
+  },
+  {
+   "en": "Sentinel Workshop",
+   "key": "",
+   "tr": "Sentinel Workshop"
+  },
+  {
+   "en": "Sentinel watch — 70 s of 4 dps cover.",
+   "key": "",
+   "tr": "Sentinel watch — 70 s of 4 dps cover."
+  },
+  {
+   "en": "Serving",
+   "key": "",
+   "tr": "Serving"
+  },
+  {
+   "en": "Settings",
+   "key": "",
+   "tr": "Settings"
+  },
+  {
+   "en": "Settings → Guided Start → Skip",
+   "key": "",
+   "tr": "Settings → Guided Start → Skip"
+  },
+  {
+   "en": "Severity is also shown by icon and prefix, so colour is never the only cue.",
+   "key": "",
+   "tr": "Severity is also shown by icon and prefix, so colour is never the only cue."
+  },
+  {
+   "en": "Shard hoppers on the Commons — post Clear Threat.",
+   "key": "",
+   "tr": "Shard hoppers on the Commons — post Clear Threat."
+  },
+  {
+   "en": "Shield projector. One robot takes no damage for 15 s.",
+   "key": "",
+   "tr": "Shield projector. One robot takes no damage for 15 s."
+  },
+  {
+   "en": "Ship landed — caravan worth {0} EU to the Market till.",
+   "key": "",
+   "tr": "Ship landed — caravan worth {0} EU to the Market till."
+  },
+  {
+   "en": "Ship landed — caravan worth {0} EU to the Market till. Dock fee {1} EU already left.",
+   "key": "",
+   "tr": "Ship landed — caravan worth {0} EU to the Market till. Dock fee {1} EU already left."
+  },
+  {
+   "en": "Simulation frozen. Autosave follows this colony. Save keeps a copy in a numbered slot.",
+   "key": "",
+   "tr": "Simulation frozen. Autosave follows this colony. Save keeps a copy in a numbered slot."
+  },
+  {
+   "en": "Size of the HUD's words only, from 90% to 150%. Panels grow to fit; icons and the map keep their size.",
+   "key": "",
+   "tr": "Size of the HUD's words only, from 90% to 150%. Panels grow to fit; icons and the map keep their size."
+  },
+  {
+   "en": "Size of the whole HUD: panels, icons and text. AUTO follows the screen height.",
+   "key": "",
+   "tr": "Size of the whole HUD: panels, icons and text. AUTO follows the screen height."
+  },
+  {
+   "en": "Skinflint",
+   "key": "",
+   "tr": "Skinflint"
+  },
+  {
+   "en": "Slot {0} write failed.",
+   "key": "",
+   "tr": "Slot {0} write failed."
+  },
+  {
+   "en": "Slow HP regen while worn.",
+   "key": "",
+   "tr": "Slow HP regen while worn."
+  },
+  {
+   "en": "Snare Shot",
+   "key": "",
+   "tr": "Snare Shot"
+  },
+  {
+   "en": "Softmail. Armor and regen.",
+   "key": "",
+   "tr": "Softmail. Armor and regen."
+  },
+  {
+   "en": "Soil Creeper",
+   "key": "",
+   "tr": "Soil Creeper"
+  },
+  {
+   "en": "Soil creeper on the yard — post Defend ({0}).",
+   "key": "",
+   "tr": "Soil creeper on the yard — post Defend ({0})."
+  },
+  {
+   "en": "Soil creepers on the farm — post Defend Area.",
+   "key": "",
+   "tr": "Soil creepers on the farm — post Defend Area."
+  },
+  {
+   "en": "Sol Authority’s legitimacy is expansion. Farms fill the tank. They are not why we rule.",
+   "key": "",
+   "tr": "Sol Authority’s legitimacy is expansion. Farms fill the tank. They are not why we rule."
+  },
+  {
+   "en": "Solar Conquest",
+   "key": "",
+   "tr": "Solar Conquest"
+  },
+  {
+   "en": "Solar Farm",
+   "key": "",
+   "tr": "Solar Farm"
+  },
+  {
+   "en": "Someone cut the hoppers loose on the HAB. Aegis takes warrants, not sermons.",
+   "key": "",
+   "tr": "Someone cut the hoppers loose on the HAB. Aegis takes warrants, not sermons."
+  },
+  {
+   "en": "Someone cut the hoppers loose on the HAB. Post a warrant, not a sermon. Clear Threat. Ask later who paid them.",
+   "key": "",
+   "tr": "Someone cut the hoppers loose on the HAB. Post a warrant, not a sermon. Clear Threat. Ask later who paid them."
+  },
+  {
+   "en": "Something just drank a unit of ice. That was not a sale.",
+   "key": "",
+   "tr": "Something just drank a unit of ice. That was not a sale."
+  },
+  {
+   "en": "Something went wrong. Details were saved — Settings → Open logs folder.",
+   "key": "",
+   "tr": "Something went wrong. Details were saved — Settings → Open logs folder."
+  },
+  {
+   "en": "Sound, display, text size, accessibility and controls.",
+   "key": "",
+   "tr": "Sound, display, text size, accessibility and controls."
+  },
+  {
+   "en": "Specialist",
+   "key": "",
+   "tr": "Specialist"
+  },
+  {
+   "en": "Speed Down",
+   "key": "",
+   "tr": "Speed Down"
+  },
+  {
+   "en": "Speed Up",
+   "key": "",
+   "tr": "Speed Up"
+  },
+  {
+   "en": "Speed {0}.",
+   "key": "",
+   "tr": "Speed {0}."
+  },
+  {
+   "en": "Stable power for launch prep and deep work.",
+   "key": "",
+   "tr": "Stable power for launch prep and deep work."
+  },
+  {
+   "en": "Stage departure, or keep overseeing here. Next: {0}.",
+   "key": "",
+   "tr": "Stage departure, or keep overseeing here. Next: {0}."
+  },
+  {
+   "en": "Stage the Lunar Rocket",
+   "key": "",
+   "tr": "Stage the Lunar Rocket"
+  },
+  {
+   "en": "Stage the Lunar Rocket. Pad labour is a Build on the order. Science is 70 + 550 EU. A trajectory without a pad is a toast to vacuum.",
+   "key": "",
+   "tr": "Stage the Lunar Rocket. Pad labour is a Build on the order. Science is 70 + 550 EU. A trajectory without a pad is a toast to vacuum."
+  },
+  {
+   "en": "Stake Yard B",
+   "key": "",
+   "tr": "Stake Yard B"
+  },
+  {
+   "en": "Stake Yard B. A Compact forward lodge — not a Freehold weigh-station, not a Sol picnic. Cyan disc. Haul already knows.",
+   "key": "",
+   "tr": "Stake Yard B. A Compact forward lodge — not a Freehold weigh-station, not a Sol picnic. Cyan disc. Haul already knows."
+  },
+  {
+   "en": "Stake the Far Rim",
+   "key": "",
+   "tr": "Stake the Far Rim"
+  },
+  {
+   "en": "Stake the far rim. The cyan disc is Yard B, not a picnic site. Haul claims it. Freight after.",
+   "key": "",
+   "tr": "Stake the far rim. The cyan disc is Yard B, not a picnic site. Haul claims it. Freight after."
+  },
+  {
+   "en": "Staking the outpost.",
+   "key": "",
+   "tr": "Staking the outpost."
+  },
+  {
+   "en": "Stall is closed. We do not export lunch until the tank is fat. Try twelve. Try not dying.",
+   "key": "",
+   "tr": "Stall is closed. We do not export lunch until the tank is fat. Try twelve. Try not dying."
+  },
+  {
+   "en": "Stall is closed. We do not export lunch until the tank is past {0}. Try not dying.",
+   "key": "",
+   "tr": "Stall is closed. We do not export lunch until the tank is past {0}. Try not dying."
+  },
+  {
+   "en": "Stand-up bill {0} EU. Cost scales with level.",
+   "key": "",
+   "tr": "Stand-up bill {0} EU. Cost scales with level."
+  },
+  {
+   "en": "Standard: no challenge modifiers.",
+   "key": "",
+   "tr": "Standard: no challenge modifiers."
+  },
+  {
+   "en": "Standing bonus. Unlock from ★ tech.",
+   "key": "",
+   "tr": "Standing bonus. Unlock from ★ tech."
+  },
+  {
+   "en": "Start over in a save slot of your choice. Other slots stay.",
+   "key": "",
+   "tr": "Start over in a save slot of your choice. Other slots stay."
+  },
+  {
+   "en": "Start the clock again.",
+   "key": "",
+   "tr": "Start the clock again."
+  },
+  {
+   "en": "Stingshot",
+   "key": "",
+   "tr": "Stingshot"
+  },
+  {
+   "en": "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue.",
+   "key": "",
+   "tr": "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue."
+  },
+  {
+   "en": "String the Solar Field",
+   "key": "",
+   "tr": "String the Solar Field"
+  },
+  {
+   "en": "String the solar field. PWR-1 first. Wisps RSVP themselves. We do not send thank-you notes.",
+   "key": "",
+   "tr": "String the solar field. PWR-1 first. Wisps RSVP themselves. We do not send thank-you notes."
+  },
+  {
+   "en": "Strip took the levy. Dens can wait — they said so themselves.",
+   "key": "",
+   "tr": "Strip took the levy. Dens can wait — they said so themselves."
+  },
+  {
+   "en": "Strip-mine doctrine. Better haul and mine ticks. Unlocks Harvester shop.",
+   "key": "",
+   "tr": "Strip-mine doctrine. Better haul and mine ticks. Unlocks Harvester shop."
+  },
+  {
+   "en": "Strip. Ore-hungry. Takes Extract cheap; ignores dens and tubes.",
+   "key": "",
+   "tr": "Strip. Ore-hungry. Takes Extract cheap; ignores dens and tubes."
+  },
+  {
+   "en": "Stripping the node.",
+   "key": "",
+   "tr": "Stripping the node."
+  },
+  {
+   "en": "Studying: {0:F0}% of {1:F0} science.",
+   "key": "",
+   "tr": "Studying: {0:F0}% of {1:F0} science."
+  },
+  {
+   "en": "Stun Slam",
+   "key": "",
+   "tr": "Stun Slam"
+  },
+  {
+   "en": "Stun Strike",
+   "key": "",
+   "tr": "Stun Strike"
+  },
+  {
+   "en": "Sunburst",
+   "key": "",
+   "tr": "Sunburst"
+  },
+  {
+   "en": "Survey Doctrine",
+   "key": "",
+   "tr": "Survey Doctrine"
+  },
+  {
+   "en": "Survey Doctrine. Chart Lodge is licensed. Labs tick faster.",
+   "key": "",
+   "tr": "Survey Doctrine. Chart Lodge is licensed. Labs tick faster."
+  },
+  {
+   "en": "Survey First: longer consider range (×1.50) and modest shop pull (+0.10).",
+   "key": "",
+   "tr": "Survey First: longer consider range (×1.50) and modest shop pull (+0.10)."
+  },
+  {
+   "en": "Survey Sweep",
+   "key": "",
+   "tr": "Survey Sweep"
+  },
+  {
+   "en": "Survey disc 22 m / 90 s — Extract and Research Site pay extra inside.",
+   "key": "",
+   "tr": "Survey disc 22 m / 90 s — Extract and Research Site pay extra inside."
+  },
+  {
+   "en": "Survey disc 22 m — charted {0} den(s). Extract and Research Site pay extra inside.",
+   "key": "",
+   "tr": "Survey disc 22 m — charted {0} den(s). Extract and Research Site pay extra inside."
+  },
+  {
+   "en": "Survey the Claim",
+   "key": "",
+   "tr": "Survey the Claim"
+  },
+  {
+   "en": "Survey the Red Apron",
+   "key": "",
+   "tr": "Survey the Red Apron"
+  },
+  {
+   "en": "Survey the red apron. Chart the packed-dust plaza the Compact will actually sit on — white hulls, square docks, a Commons that is not a rumor.",
+   "key": "",
+   "tr": "Survey the red apron. Chart the packed-dust plaza the Compact will actually sit on — white hulls, square docks, a Commons that is not a rumor."
+  },
+  {
+   "en": "Surveyor Bot",
+   "key": "",
+   "tr": "Surveyor Bot"
+  },
+  {
+   "en": "Surveyor Workshop",
+   "key": "",
+   "tr": "Surveyor Workshop"
+  },
+  {
+   "en": "Sustain — {0}",
+   "key": "",
+   "tr": "Sustain — {0}"
+  },
+  {
+   "en": "Swarm: more fauna (cap ×1.50) at a slower spawn cadence (reload). Post {key:FlagDefend}/{key:FlagClearThreat}.",
+   "key": "",
+   "tr": "Swarm: more fauna (cap ×1.50) at a slower spawn cadence (reload). Post {key:FlagDefend}/{key:FlagClearThreat}."
+  },
+  {
+   "en": "Swing the camera between the home yard and the forward camp.",
+   "key": "",
+   "tr": "Swing the camera between the home yard and the forward camp."
+  },
+  {
+   "en": "Switch between fullscreen and a window.",
+   "key": "",
+   "tr": "Switch between fullscreen and a window."
+  },
+  {
+   "en": "T {0:N0} · C {1} · EU {2:N0}",
+   "key": "",
+   "tr": "T {0:N0} · C {1} · EU {2:N0}"
+  },
+  {
+   "en": "TALK",
+   "key": "",
+   "tr": "TALK"
+  },
+  {
+   "en": "TALK  ·  {0}",
+   "key": "",
+   "tr": "TALK  ·  {0}"
+  },
+  {
+   "en": "TAUNT",
+   "key": "",
+   "tr": "TAUNT"
+  },
+  {
+   "en": "TERR",
+   "key": "",
+   "tr": "TERR"
+  },
+  {
+   "en": "TERRAFORM",
+   "key": "",
+   "tr": "TERRAFORM"
+  },
+  {
+   "en": "TEXT SIZE",
+   "key": "",
+   "tr": "TEXT SIZE"
+  },
+  {
+   "en": "THE CORE",
+   "key": "",
+   "tr": "THE CORE"
+  },
+  {
+   "en": "THE SOLAR SYSTEM IS YOURS",
+   "key": "",
+   "tr": "THE SOLAR SYSTEM IS YOURS"
+  },
+  {
+   "en": "THREAT",
+   "key": "",
+   "tr": "THREAT"
+  },
+  {
+   "en": "THREAT PRESSURE",
+   "key": "",
+   "tr": "THREAT PRESSURE"
+  },
+  {
+   "en": "TICK",
+   "key": "",
+   "tr": "TICK"
+  },
+  {
+   "en": "TICK STEAL",
+   "key": "",
+   "tr": "TICK STEAL"
+  },
+  {
+   "en": "TILLS {0:N0} · COLLECTORS {1} carrying {2:N0} · EU {3:N0}/day",
+   "key": "",
+   "tr": "TILLS {0:N0} · COLLECTORS {1} carrying {2:N0} · EU {3:N0}/day"
+  },
+  {
+   "en": "TILLS {0:N0} · HAUL {1} · EU {2:N0}/day",
+   "key": "",
+   "tr": "TILLS {0:N0} · HAUL {1} · EU {2:N0}/day"
+  },
+  {
+   "en": "TILLS {0:N0} · {1} HAUL · {2:N0} BAGS · EU {3:N0}/day",
+   "key": "",
+   "tr": "TILLS {0:N0} · {1} HAUL · {2:N0} BAGS · EU {3:N0}/day"
+  },
+  {
+   "en": "TILT-SHIFT",
+   "key": "",
+   "tr": "TILT-SHIFT"
+  },
+  {
+   "en": "TILT-SHIFT (DIORAMA)",
+   "key": "",
+   "tr": "TILT-SHIFT (DIORAMA)"
+  },
+  {
+   "en": "TIRED",
+   "key": "",
+   "tr": "TIRED"
+  },
+  {
+   "en": "TITLE",
+   "key": "",
+   "tr": "TITLE"
+  },
+  {
+   "en": "TOO CHEAP",
+   "key": "",
+   "tr": "TOO CHEAP"
+  },
+  {
+   "en": "TOO FAR",
+   "key": "",
+   "tr": "TOO FAR"
+  },
+  {
+   "en": "TOWN",
+   "key": "",
+   "tr": "TOWN"
+  },
+  {
+   "en": "TREASURY",
+   "key": "",
+   "tr": "TREASURY"
+  },
+  {
+   "en": "TRY AGAIN — this body is lost.",
+   "key": "",
+   "tr": "TRY AGAIN — this body is lost."
+  },
+  {
+   "en": "TURN ON HERO LINES",
+   "key": "",
+   "tr": "TURN ON HERO LINES"
+  },
+  {
+   "en": "TUTORIAL",
+   "key": "",
+   "tr": "TUTORIAL"
+  },
+  {
+   "en": "TUTORIAL  ·  ON",
+   "key": "",
+   "tr": "TUTORIAL  ·  ON"
+  },
+  {
+   "en": "Take every body from Earth to Europa.",
+   "key": "",
+   "tr": "Take every body from Earth to Europa."
+  },
+  {
+   "en": "Tech unlocked",
+   "key": "",
+   "tr": "Tech unlocked"
+  },
+  {
+   "en": "Temples can only be built on a marked temple site.",
+   "key": "",
+   "tr": "Temples can only be built on a marked temple site."
+  },
+  {
+   "en": "Temporary work and courage.",
+   "key": "",
+   "tr": "Temporary work and courage."
+  },
+  {
+   "en": "Terms Accepted",
+   "key": "",
+   "tr": "Terms Accepted"
+  },
+  {
+   "en": "Terraform",
+   "key": "",
+   "tr": "Terraform"
+  },
+  {
+   "en": "Terraform Charter",
+   "key": "",
+   "tr": "Terraform Charter"
+  },
+  {
+   "en": "Terraform Charter. Bloom Compact is licensed. Post Terraform ({0}) on farms.",
+   "key": "",
+   "tr": "Terraform Charter. Bloom Compact is licensed. Post Terraform ({0}) on farms."
+  },
+  {
+   "en": "Terraform pulse — farms tick greener on this crust.",
+   "key": "",
+   "tr": "Terraform pulse — farms tick greener on this crust."
+  },
+  {
+   "en": "Terraformer Bot",
+   "key": "",
+   "tr": "Terraformer Bot"
+  },
+  {
+   "en": "Terraformer Workshop",
+   "key": "",
+   "tr": "Terraformer Workshop"
+  },
+  {
+   "en": "Tethered ore barge for the asteroid belt.",
+   "key": "",
+   "tr": "Tethered ore barge for the asteroid belt."
+  },
+  {
+   "en": "That building doesn't fit here.",
+   "key": "",
+   "tr": "That building doesn't fit here."
+  },
+  {
+   "en": "That building is retired.",
+   "key": "",
+   "tr": "That building is retired."
+  },
+  {
+   "en": "That building needs research first.",
+   "key": "",
+   "tr": "That building needs research first."
+  },
+  {
+   "en": "That is a court. It is not a solar power.",
+   "key": "",
+   "tr": "That is a court. It is not a solar power."
+  },
+  {
+   "en": "That is a decree, not a leash. Post it. If nobody wants it, that is a you problem.",
+   "key": "",
+   "tr": "That is a decree, not a leash. Post it. If nobody wants it, that is a you problem."
+  },
+  {
+   "en": "That ore deposit already has a mine.",
+   "key": "",
+   "tr": "That ore deposit already has a mine."
+  },
+  {
+   "en": "That red chip is water, not a coupon. EU will not drink itself. Build a farm or stop collecting idle bots.",
+   "key": "",
+   "tr": "That red chip is water, not a coupon. EU will not drink itself. Build a farm or stop collecting idle bots."
+  },
+  {
+   "en": "That slot is empty.",
+   "key": "",
+   "tr": "That slot is empty."
+  },
+  {
+   "en": "That spot is off the map.",
+   "key": "",
+   "tr": "That spot is off the map."
+  },
+  {
+   "en": "That temple site is already taken.",
+   "key": "",
+   "tr": "That temple site is already taken."
+  },
+  {
+   "en": "That trade ring is already taken.",
+   "key": "",
+   "tr": "That trade ring is already taken."
+  },
+  {
+   "en": "The Colony Commons fell and the treasury with it. Retry this body, or New Game.",
+   "key": "",
+   "tr": "The Colony Commons fell and the treasury with it. Retry this body, or New Game."
+  },
+  {
+   "en": "The Commons and a charging station are down. Build an Engineer workshop anywhere nearby.",
+   "key": "",
+   "tr": "The Commons and a charging station are down. Build an Engineer workshop anywhere nearby."
+  },
+  {
+   "en": "The Commons sends another Haul in {0} s.",
+   "key": "",
+   "tr": "The Commons sends another Haul in {0} s."
+  },
+  {
+   "en": "The Commons stands. The HAB is a ledger. The hall has a charter.",
+   "key": "",
+   "tr": "The Commons stands. The HAB is a ledger. The hall has a charter."
+  },
+  {
+   "en": "The Compact does not curtsy. It charters.",
+   "key": "",
+   "tr": "The Compact does not curtsy. It charters."
+  },
+  {
+   "en": "The Freeholds already have a receipt prepared. Forty EU at the dock. They call it hospitality.",
+   "key": "",
+   "tr": "The Freeholds already have a receipt prepared. Forty EU at the dock. They call it hospitality."
+  },
+  {
+   "en": "The Meadow Is Not a Reign",
+   "key": "",
+   "tr": "The Meadow Is Not a Reign"
+  },
+  {
+   "en": "The Rocks Have a Name",
+   "key": "",
+   "tr": "The Rocks Have a Name"
+  },
+  {
+   "en": "The armed pick stays ready; click the map to use it, or here to choose another.",
+   "key": "",
+   "tr": "The armed pick stays ready; click the map to use it, or here to choose another."
+  },
+  {
+   "en": "The battery is drained. {0} EU walked off {1}. That was not a sale.",
+   "key": "",
+   "tr": "The battery is drained. {0} EU walked off {1}. That was not a sale."
+  },
+  {
+   "en": "The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title.",
+   "key": "",
+   "tr": "The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title."
+  },
+  {
+   "en": "The colony has grown — {0}s are burrowing in town.",
+   "key": "",
+   "tr": "The colony has grown — {0}s are burrowing in town."
+  },
+  {
+   "en": "The court does not share the meadow. Three dens. Seal them before the creepers start charging rent.",
+   "key": "",
+   "tr": "The court does not share the meadow. Three dens. Seal them before the creepers start charging rent."
+  },
+  {
+   "en": "The cradle is a closing book. Sol Authority still stamps decrees; the meadow does not stamp them back.",
+   "key": "",
+   "tr": "The cradle is a closing book. Sol Authority still stamps decrees; the meadow does not stamp them back."
+  },
+  {
+   "en": "The crown is a solar power, or it was a meadow with a rocket. Choose which log we keep.",
+   "key": "",
+   "tr": "The crown is a solar power, or it was a meadow with a rocket. Choose which log we keep."
+  },
+  {
+   "en": "The crust took them. Revive, or the ice closes over the claim.",
+   "key": "",
+   "tr": "The crust took them. Revive, or the ice closes over the claim."
+  },
+  {
+   "en": "The grid is on the books. The wisps can read.",
+   "key": "",
+   "tr": "The grid is on the books. The wisps can read."
+  },
+  {
+   "en": "The lab ate the sample. The pad will eat Anvil’s afternoon.",
+   "key": "",
+   "tr": "The lab ate the sample. The pad will eat Anvil’s afternoon."
+  },
+  {
+   "en": "The lab logged the haul. Anvil still wants a pad. Pay both.",
+   "key": "",
+   "tr": "The lab logged the haul. Anvil still wants a pad. Pay both."
+  },
+  {
+   "en": "The lanes were spoken for before we arrived. Buy them with EU, or leave them behind.",
+   "key": "",
+   "tr": "The lanes were spoken for before we arrived. Buy them with EU, or leave them behind."
+  },
+  {
+   "en": "The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic.",
+   "key": "",
+   "tr": "The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic."
+  },
+  {
+   "en": "The outpost is gone.",
+   "key": "",
+   "tr": "The outpost is gone."
+  },
+  {
+   "en": "The real bill is staying. Stay, and you pay forever.",
+   "key": "",
+   "tr": "The real bill is staying. Stay, and you pay forever."
+  },
+  {
+   "en": "The receipt is in the stockpile. Do not lose it. The Freeholds will ask.",
+   "key": "",
+   "tr": "The receipt is in the stockpile. Do not lose it. The Freeholds will ask."
+  },
+  {
+   "en": "The red yard is where a crown becomes industrial — or becomes a story about a meadow.",
+   "key": "",
+   "tr": "The red yard is where a crown becomes industrial — or becomes a story about a meadow."
+  },
+  {
+   "en": "The rocks took the outpost. Revive the robots or abandon this cluster.",
+   "key": "",
+   "tr": "The rocks took the outpost. Revive the robots or abandon this cluster."
+  },
+  {
+   "en": "The solar field is on the books. The wisps can read. Aegis hunts light that should not have a mouth.",
+   "key": "",
+   "tr": "The solar field is on the books. The wisps can read. Aegis hunts light that should not have a mouth."
+  },
+  {
+   "en": "The sun moves through golden hour and a blue-hour night. Off keeps the still look.",
+   "key": "",
+   "tr": "The sun moves through golden hour and a blue-hour night. Off keeps the still look."
+  },
+  {
+   "en": "The window to secure the outpost closed. Restart for a tighter run.",
+   "key": "",
+   "tr": "The window to secure the outpost closed. Restart for a tighter run."
+  },
+  {
+   "en": "The wounded come first.",
+   "key": "",
+   "tr": "The wounded come first."
+  },
+  {
+   "en": "The yard wants {0} EU. Level is the scandal, not the corpse.",
+   "key": "",
+   "tr": "The yard wants {0} EU. Level is the scandal, not the corpse."
+  },
+  {
+   "en": "Thermal Lance",
+   "key": "",
+   "tr": "Thermal Lance"
+  },
+  {
+   "en": "They call it a tariff. Strip and Core hauled the receipt. Do not lose it.",
+   "key": "",
+   "tr": "They call it a tariff. Strip and Core hauled the receipt. Do not lose it."
+  },
+  {
+   "en": "They call it a tariff. We call it EU with a receipt. Weigh the Freehold ore. Strip and Core haul the levy.",
+   "key": "",
+   "tr": "They call it a tariff. We call it EU with a receipt. Weigh the Freehold ore. Strip and Core haul the levy."
+  },
+  {
+   "en": "They want a garden. Pay for a garden. Bloom weaves +0.08 and will invoice you for every grain.",
+   "key": "",
+   "tr": "They want a garden. Pay for a garden. Bloom weaves +0.08 and will invoice you for every grain."
+  },
+  {
+   "en": "This colony was saved by a newer game version. Update the game to Continue; your save is unchanged.",
+   "key": "",
+   "tr": "This colony was saved by a newer game version. Update the game to Continue; your save is unchanged."
+  },
+  {
+   "en": "This is the industrial spine. Not a second Earth court. Not a Freehold weigh-station with worse lighting.",
+   "key": "",
+   "tr": "This is the industrial spine. Not a second Earth court. Not a Freehold weigh-station with worse lighting."
+  },
+  {
+   "en": "Throw this world away and land again on a new map.",
+   "key": "",
+   "tr": "Throw this world away and land again on a new map."
+  },
+  {
+   "en": "Ticks are stealing from the weigh-station. That is not a den hunt. That is a rim watch with worse lighting.",
+   "key": "",
+   "tr": "Ticks are stealing from the weigh-station. That is not a den hunt. That is a rim watch with worse lighting."
+  },
+  {
+   "en": "Ticks steal from mines. Rim watch.",
+   "key": "",
+   "tr": "Ticks steal from mines. Rim watch."
+  },
+  {
+   "en": "Till Audit",
+   "key": "",
+   "tr": "Till Audit"
+  },
+  {
+   "en": "Till share",
+   "key": "",
+   "tr": "Till share"
+  },
+  {
+   "en": "Time served",
+   "key": "",
+   "tr": "Time served"
+  },
+  {
+   "en": "Tinkering in town. Raise EU for Build.",
+   "key": "",
+   "tr": "Tinkering in town. Raise EU for Build."
+  },
+  {
+   "en": "Tired robots work slower and head home to rest and shop.",
+   "key": "",
+   "tr": "Tired robots work slower and head home to rest and shop."
+  },
+  {
+   "en": "Toggle Pause",
+   "key": "",
+   "tr": "Toggle Pause"
+  },
+  {
+   "en": "Tool harness. Permanent work rate.",
+   "key": "",
+   "tr": "Tool harness. Permanent work rate."
+  },
+  {
+   "en": "Trade ship landed — caravan EU waits in the Market till for a collector.",
+   "key": "",
+   "tr": "Trade ship landed — caravan EU waits in the Market till for a collector."
+  },
+  {
+   "en": "Trade ships land here. Each caravan pays EU into the Market till.",
+   "key": "",
+   "tr": "Trade ships land here. Each caravan pays EU into the Market till."
+  },
+  {
+   "en": "Trajectory Locked — Luna",
+   "key": "",
+   "tr": "Trajectory Locked — Luna"
+  },
+  {
+   "en": "Trajectory Locked — Mars",
+   "key": "",
+   "tr": "Trajectory Locked — Mars"
+  },
+  {
+   "en": "Treasury holding — {0:N0}/{1:N0} EU for {2}s.",
+   "key": "",
+   "tr": "Treasury holding — {0:N0}/{1:N0} EU for {2}s."
+  },
+  {
+   "en": "Triage",
+   "key": "",
+   "tr": "Triage"
+  },
+  {
+   "en": "Triage Compact",
+   "key": "",
+   "tr": "Triage Compact"
+  },
+  {
+   "en": "Triage Field Aid",
+   "key": "",
+   "tr": "Triage Field Aid"
+  },
+  {
+   "en": "Triage Field Aid researched. Inspect Triage Compact and spend EU to patch the dirt.",
+   "key": "",
+   "tr": "Triage Field Aid researched. Inspect Triage Compact and spend EU to patch the dirt."
+  },
+  {
+   "en": "Triage Injector",
+   "key": "",
+   "tr": "Triage Injector"
+  },
+  {
+   "en": "Triage Mail",
+   "key": "",
+   "tr": "Triage Mail"
+  },
+  {
+   "en": "Triage Pack",
+   "key": "",
+   "tr": "Triage Pack"
+  },
+  {
+   "en": "Triage at the inn.",
+   "key": "",
+   "tr": "Triage at the inn."
+  },
+  {
+   "en": "Triage posted. Patch {0} EU.",
+   "key": "",
+   "tr": "Triage posted. Patch {0} EU."
+  },
+  {
+   "en": "Triage. Stays near the wounded. Defends; will not hunt dens.",
+   "key": "",
+   "tr": "Triage. Stays near the wounded. Defends; will not hunt dens."
+  },
+  {
+   "en": "Tungsten rod from orbit. Kills a stalker outright.",
+   "key": "",
+   "tr": "Tungsten rod from orbit. Kills a stalker outright."
+  },
+  {
+   "en": "Turn ore into structural metals at scale.",
+   "key": "",
+   "tr": "Turn ore into structural metals at scale."
+  },
+  {
+   "en": "Tutorial reset — Commons, then HAB, workshop, flag, bounty.",
+   "key": "",
+   "tr": "Tutorial reset — Commons, then HAB, workshop, flag, bounty."
+  },
+  {
+   "en": "Tutorial reset — workshop, Build at 700, raise the price, then Defend.",
+   "key": "",
+   "tr": "Tutorial reset — workshop, Build at 700, raise the price, then Defend."
+  },
+  {
+   "en": "UI SCALE",
+   "key": "",
+   "tr": "UI SCALE"
+  },
+  {
+   "en": "UNCAPPED",
+   "key": "",
+   "tr": "UNCAPPED"
+  },
+  {
+   "en": "Uncovered module",
+   "key": "",
+   "tr": "Uncovered module"
+  },
+  {
+   "en": "VOICES",
+   "key": "",
+   "tr": "VOICES"
+  },
+  {
+   "en": "Venom Strike",
+   "key": "",
+   "tr": "Venom Strike"
+  },
+  {
+   "en": "Veteran",
+   "key": "",
+   "tr": "Veteran"
+  },
+  {
+   "en": "WINDOWED",
+   "key": "",
+   "tr": "WINDOWED"
+  },
+  {
+   "en": "WISHLIST ON STEAM",
+   "key": "",
+   "tr": "WISHLIST ON STEAM"
+  },
+  {
+   "en": "WISP",
+   "key": "",
+   "tr": "WISP"
+  },
+  {
+   "en": "WISP DRAIN",
+   "key": "",
+   "tr": "WISP DRAIN"
+  },
+  {
+   "en": "WORK",
+   "key": "",
+   "tr": "WORK"
+  },
+  {
+   "en": "WORKER BOTS",
+   "key": "",
+   "tr": "WORKER BOTS"
+  },
+  {
+   "en": "WRITTEN ORDERS",
+   "key": "",
+   "tr": "WRITTEN ORDERS"
+  },
+  {
+   "en": "Waiting for the local model  ·  Tools/local_ai/start_narrator.sh --no-game",
+   "key": "",
+   "tr": "Waiting for the local model  ·  Tools/local_ai/start_narrator.sh --no-game"
+  },
+  {
+   "en": "Walking levy home",
+   "key": "",
+   "tr": "Walking levy home"
+  },
+  {
+   "en": "Walking the batteries home. Do not click me.",
+   "key": "",
+   "tr": "Walking the batteries home. Do not click me."
+  },
+  {
+   "en": "Walks HAB purses to Commons or a far Watchtower.",
+   "key": "",
+   "tr": "Walks HAB purses to Commons or a far Watchtower."
+  },
+  {
+   "en": "Wandering the apron.",
+   "key": "",
+   "tr": "Wandering the apron."
+  },
+  {
+   "en": "Wants {0} · ignores {1}",
+   "key": "",
+   "tr": "Wants {0} · ignores {1}"
+  },
+  {
+   "en": "Ward the Dust Furrows",
+   "key": "",
+   "tr": "Ward the Dust Furrows"
+  },
+  {
+   "en": "Ward the Furrows",
+   "key": "",
+   "tr": "Ward the Furrows"
+  },
+  {
+   "en": "Ward the Weigh-Station",
+   "key": "",
+   "tr": "Ward the Weigh-Station"
+  },
+  {
+   "en": "Ward the dust furrows. Compact farms do not get abandoned for a prettier den hunt. Creepers chew; we hold.",
+   "key": "",
+   "tr": "Ward the dust furrows. Compact farms do not get abandoned for a prettier den hunt. Creepers chew; we hold."
+  },
+  {
+   "en": "Ward the furrows. Soil creepers chew farms. Aegis and Triage will hold a field cheaper than they will hunt a den. Tempt them accordingly.",
+   "key": "",
+   "tr": "Ward the furrows. Soil creepers chew farms. Aegis and Triage will hold a field cheaper than they will hunt a den. Tempt them accordingly."
+  },
+  {
+   "en": "Watch the rim. Unlocks Sentinel shop — they take Defend cheap.",
+   "key": "",
+   "tr": "Watch the rim. Unlocks Sentinel shop — they take Defend cheap."
+  },
+  {
+   "en": "Watching the perimeter.",
+   "key": "",
+   "tr": "Watching the perimeter."
+  },
+  {
+   "en": "Watchmail. Heaviest lodge armor.",
+   "key": "",
+   "tr": "Watchmail. Heaviest lodge armor."
+  },
+  {
+   "en": "Watchtower",
+   "key": "",
+   "tr": "Watchtower"
+  },
+  {
+   "en": "Watchtower lasers armed — {0} EU.",
+   "key": "",
+   "tr": "Watchtower lasers armed — {0} EU."
+  },
+  {
+   "en": "Watchtower · guard post",
+   "key": "",
+   "tr": "Watchtower · guard post"
+  },
+  {
+   "en": "Watchtower · lasers armed",
+   "key": "",
+   "tr": "Watchtower · lasers armed"
+  },
+  {
+   "en": "Watt Leech",
+   "key": "",
+   "tr": "Watt Leech"
+  },
+  {
+   "en": "Watt leeches on the Power Node — post Clear Threat.",
+   "key": "",
+   "tr": "Watt leeches on the Power Node — post Clear Threat."
+  },
+  {
+   "en": "Waystation Inn",
+   "key": "",
+   "tr": "Waystation Inn"
+  },
+  {
+   "en": "We call it the first bill of a longer reign.",
+   "key": "",
+   "tr": "We call it the first bill of a longer reign."
+  },
+  {
+   "en": "We couldn't read this colony or its backup. Your save files are unchanged.",
+   "key": "",
+   "tr": "We couldn't read this colony or its backup. Your save files are unchanged."
+  },
+  {
+   "en": "We have paid the Freehold tithe long enough to learn the lesson: ice and ore without a seat is someone else’s spine.",
+   "key": "",
+   "tr": "We have paid the Freehold tithe long enough to learn the lesson: ice and ore without a seat is someone else’s spine."
+  },
+  {
+   "en": "We stay here, we become tenants of a farm. We leave, we remain a crown.",
+   "key": "",
+   "tr": "We stay here, we become tenants of a farm. We leave, we remain a crown."
+  },
+  {
+   "en": "Weave the Crust",
+   "key": "",
+   "tr": "Weave the Crust"
+  },
+  {
+   "en": "Weaving the crust.",
+   "key": "",
+   "tr": "Weaving the crust."
+  },
+  {
+   "en": "Weigh the Freehold Ore",
+   "key": "",
+   "tr": "Weigh the Freehold Ore"
+  },
+  {
+   "en": "Weigh-station · tank vs wallet",
+   "key": "",
+   "tr": "Weigh-station · tank vs wallet"
+  },
+  {
+   "en": "Welcome to a rock that already has a landlord. Raise a Commons before the Freeholds invoice the crater.",
+   "key": "",
+   "tr": "Welcome to a rock that already has a landlord. Raise a Commons before the Freeholds invoice the crater."
+  },
+  {
+   "en": "Weld Strike",
+   "key": "",
+   "tr": "Weld Strike"
+  },
+  {
+   "en": "Welder plate. Heavy armor.",
+   "key": "",
+   "tr": "Welder plate. Heavy armor."
+  },
+  {
+   "en": "Welding {0}. Pay holds.",
+   "key": "",
+   "tr": "Welding {0}. Pay holds."
+  },
+  {
+   "en": "What clears this world. Tick all three and the next world opens.",
+   "key": "",
+   "tr": "What clears this world. Tick all three and the next world opens."
+  },
+  {
+   "en": "What the next flag pays, or the selected pole's bounty. Robots keep their share; the till takes its cut.",
+   "key": "",
+   "tr": "What the next flag pays, or the selected pole's bounty. Robots keep their share; the till takes its cut."
+  },
+  {
+   "en": "What to build first and what it costs.",
+   "key": "",
+   "tr": "What to build first and what it costs."
+  },
+  {
+   "en": "Where worker bots recharge. Each station pays EU into its till. Bots raise new ones while the yard is safe; the small line counts solar farms.",
+   "key": "",
+   "tr": "Where worker bots recharge. Each station pays EU into its till. Bots raise new ones while the yard is safe; the small line counts solar farms."
+  },
+  {
+   "en": "Which robot class this building serves. Flags near it pull that class.",
+   "key": "",
+   "tr": "Which robot class this building serves. Flags near it pull that class."
+  },
+  {
+   "en": "Wisps drink grids. Creepers chew furrows. The Compact expects both handled without a Sol accent.",
+   "key": "",
+   "tr": "Wisps drink grids. Creepers chew furrows. The Compact expects both handled without a Sol accent."
+  },
+  {
+   "en": "Worker bots bunk here — EU sits until a bot walks it home.",
+   "key": "",
+   "tr": "Worker bots bunk here — EU sits until a bot walks it home."
+  },
+  {
+   "en": "Worker bots print EU. Haul walks it home.",
+   "key": "",
+   "tr": "Worker bots print EU. Haul walks it home."
+  },
+  {
+   "en": "Worker bots run the yard. Contract units take bounties. Same mind, different jobs.",
+   "key": "",
+   "tr": "Worker bots run the yard. Contract units take bounties. Same mind, different jobs."
+  },
+  {
+   "en": "Working a flag",
+   "key": "",
+   "tr": "Working a flag"
+  },
+  {
+   "en": "Workshop · fabricating…",
+   "key": "",
+   "tr": "Workshop · fabricating…"
+  },
+  {
+   "en": "Workshop · robot online",
+   "key": "",
+   "tr": "Workshop · robot online"
+  },
+  {
+   "en": "Workshops",
+   "key": "",
+   "tr": "Workshops"
+  },
+  {
+   "en": "World held.",
+   "key": "",
+   "tr": "World held."
+  },
+  {
+   "en": "World held. {0} resumes at 1×.",
+   "key": "",
+   "tr": "World held. {0} resumes at 1×."
+  },
+  {
+   "en": "Wrecks are drawing junk bots to the yard.",
+   "key": "",
+   "tr": "Wrecks are drawing junk bots to the yard."
+  },
+  {
+   "en": "Wrecks wait here. Pay EU to stand THIS ego up.",
+   "key": "",
+   "tr": "Wrecks wait here. Pay EU to stand THIS ego up."
+  },
+  {
+   "en": "Write this colony into a slot. Other slots stay.",
+   "key": "",
+   "tr": "Write this colony into a slot. Other slots stay."
+  },
+  {
+   "en": "YARD IDLE",
+   "key": "",
+   "tr": "YARD IDLE"
+  },
+  {
+   "en": "YOUR COLONY",
+   "key": "",
+   "tr": "YOUR COLONY"
+  },
+  {
+   "en": "Yard A",
+   "key": "",
+   "tr": "Yard A"
+  },
+  {
+   "en": "Yard B",
+   "key": "",
+   "tr": "Yard B"
+  },
+  {
+   "en": "Yard lasers. Watchtower lasers are the rim version.",
+   "key": "",
+   "tr": "Yard lasers. Watchtower lasers are the rim version."
+  },
+  {
+   "en": "Yard restored — {0} modules on {1}.",
+   "key": "",
+   "tr": "Yard restored — {0} modules on {1}."
+  },
+  {
+   "en": "You are the central AI. Worker bots secured this claim: dens are quiet, the treasury is holding in EU, and the craft is on the pad.",
+   "key": "",
+   "tr": "You are the central AI. Worker bots secured this claim: dens are quiet, the treasury is holding in EU, and the craft is on the pad."
+  },
+  {
+   "en": "You paid whatever it cost and the work always got done.",
+   "key": "",
+   "tr": "You paid whatever it cost and the work always got done."
+  },
+  {
+   "en": "You posted nothing. The colony built itself or it did not build at all.",
+   "key": "",
+   "tr": "You posted nothing. The colony built itself or it did not build at all."
+  },
+  {
+   "en": "You spent robots like ammunition.",
+   "key": "",
+   "tr": "You spent robots like ammunition."
+  },
+  {
+   "en": "Your newest flags, their bounties, and whether a robot has claimed them.",
+   "key": "",
+   "tr": "Your newest flags, their bounties, and whether a robot has claimed them."
+  },
+  {
+   "en": "Your robots, charging stations, haulers and builder bots at a glance. Hover a chip to see what raises it.",
+   "key": "",
+   "tr": "Your robots, charging stations, haulers and builder bots at a glance. Hover a chip to see what raises it."
+  },
+  {
+   "en": "Your workforce turned down more than it took. A low battery, or a hard sell.",
+   "key": "",
+   "tr": "Your workforce turned down more than it took. A low battery, or a hard sell."
+  },
+  {
+   "en": "Zoom In",
+   "key": "",
+   "tr": "Zoom In"
+  },
+  {
+   "en": "Zoom Out",
+   "key": "",
+   "tr": "Zoom Out"
+  },
+  {
+   "en": "auto-fires 18 m",
+   "key": "",
+   "tr": "auto-fires 18 m"
+  },
+  {
+   "en": "bots",
+   "key": "",
+   "tr": "bots"
+  },
+  {
+   "en": "bots build · {0:N0} EU/day",
+   "key": "",
+   "tr": "bots build · {0:N0} EU/day"
+  },
+  {
+   "en": "bots resting",
+   "key": "",
+   "tr": "bots resting"
+  },
+  {
+   "en": "bots settling in",
+   "key": "",
+   "tr": "bots settling in"
+  },
+  {
+   "en": "building a {0}",
+   "key": "",
+   "tr": "building a {0}"
+  },
+  {
+   "en": "carrying {0} EU home",
+   "key": "",
+   "tr": "carrying {0} EU home"
+  },
+  {
+   "en": "charging station",
+   "key": "",
+   "tr": "charging station"
+  },
+  {
+   "en": "cheap flags, dens",
+   "key": "",
+   "tr": "cheap flags, dens"
+  },
+  {
+   "en": "claimed",
+   "key": "",
+   "tr": "claimed"
+  },
+  {
+   "en": "click the map to place · click here for the list",
+   "key": "",
+   "tr": "click the map to place · click here for the list"
+  },
+  {
+   "en": "click the map · {0} EU here (x{1:0} from uplink)",
+   "key": "",
+   "tr": "click the map · {0} EU here (x{1:0} from uplink)"
+  },
+  {
+   "en": "couriers",
+   "key": "",
+   "tr": "couriers"
+  },
+  {
+   "en": "defense mechs",
+   "key": "",
+   "tr": "defense mechs"
+  },
+  {
+   "en": "dens",
+   "key": "",
+   "tr": "dens"
+  },
+  {
+   "en": "departure",
+   "key": "",
+   "tr": "departure"
+  },
+  {
+   "en": "does not grow EU",
+   "key": "",
+   "tr": "does not grow EU"
+  },
+  {
+   "en": "done",
+   "key": "",
+   "tr": "done"
+  },
+  {
+   "en": "down {0}x",
+   "key": "",
+   "tr": "down {0}x"
+  },
+  {
+   "en": "downed",
+   "key": "",
+   "tr": "downed"
+  },
+  {
+   "en": "empty campus",
+   "key": "",
+   "tr": "empty campus"
+  },
+  {
+   "en": "engineers",
+   "key": "",
+   "tr": "engineers"
+  },
+  {
+   "en": "fights",
+   "key": "",
+   "tr": "fights"
+  },
+  {
+   "en": "flag",
+   "key": "",
+   "tr": "flag"
+  },
+  {
+   "en": "free",
+   "key": "",
+   "tr": "free"
+  },
+  {
+   "en": "gene {0:F0}s",
+   "key": "",
+   "tr": "gene {0:F0}s"
+  },
+  {
+   "en": "geologists",
+   "key": "",
+   "tr": "geologists"
+  },
+  {
+   "en": "grow the treasury to {0:N0} EU (now {1:N0})",
+   "key": "",
+   "tr": "grow the treasury to {0:N0} EU (now {1:N0})"
+  },
+  {
+   "en": "harvesters",
+   "key": "",
+   "tr": "harvesters"
+  },
+  {
+   "en": "hero gear",
+   "key": "",
+   "tr": "hero gear"
+  },
+  {
+   "en": "hold population",
+   "key": "",
+   "tr": "hold population"
+  },
+  {
+   "en": "holding — keep the treasury and income up",
+   "key": "",
+   "tr": "holding — keep the treasury and income up"
+  },
+  {
+   "en": "idle",
+   "key": "",
+   "tr": "idle"
+  },
+  {
+   "en": "keep income at {0:N0}+ EU/min — Haul, mines, till share",
+   "key": "",
+   "tr": "keep income at {0:N0}+ EU/min — Haul, mines, till share"
+  },
+  {
+   "en": "last drop",
+   "key": "",
+   "tr": "last drop"
+  },
+  {
+   "en": "launch craft",
+   "key": "",
+   "tr": "launch craft"
+  },
+  {
+   "en": "levy {0} EU",
+   "key": "",
+   "tr": "levy {0} EU"
+  },
+  {
+   "en": "loose haul · {0}%",
+   "key": "",
+   "tr": "loose haul · {0}%"
+  },
+  {
+   "en": "module",
+   "key": "",
+   "tr": "module"
+  },
+  {
+   "en": "more energy farther out",
+   "key": "",
+   "tr": "more energy farther out"
+  },
+  {
+   "en": "nanites restored the hull",
+   "key": "",
+   "tr": "nanites restored the hull"
+  },
+  {
+   "en": "needs {0}",
+   "key": "",
+   "tr": "needs {0}"
+  },
+  {
+   "en": "new chassis · wreck gone",
+   "key": "",
+   "tr": "new chassis · wreck gone"
+  },
+  {
+   "en": "next post · click the map",
+   "key": "",
+   "tr": "next post · click the map"
+  },
+  {
+   "en": "next post · escrow {0} EU",
+   "key": "",
+   "tr": "next post · escrow {0} EU"
+  },
+  {
+   "en": "next post · need {0} EU",
+   "key": "",
+   "tr": "next post · need {0} EU"
+  },
+  {
+   "en": "no answer in time",
+   "key": "",
+   "tr": "no answer in time"
+  },
+  {
+   "en": "no damaged building in the target ring.",
+   "key": "",
+   "tr": "no damaged building in the target ring."
+  },
+  {
+   "en": "no downed robot in the target ring.",
+   "key": "",
+   "tr": "no downed robot in the target ring."
+  },
+  {
+   "en": "no hostile in the target ring.",
+   "key": "",
+   "tr": "no hostile in the target ring."
+  },
+  {
+   "en": "no open ground near the Commons",
+   "key": "",
+   "tr": "no open ground near the Commons"
+  },
+  {
+   "en": "no record yet",
+   "key": "",
+   "tr": "no record yet"
+  },
+  {
+   "en": "no robot in the target ring.",
+   "key": "",
+   "tr": "no robot in the target ring."
+  },
+  {
+   "en": "no robots yet",
+   "key": "",
+   "tr": "no robots yet"
+  },
+  {
+   "en": "no suit",
+   "key": "",
+   "tr": "no suit"
+  },
+  {
+   "en": "no uncharted dens",
+   "key": "",
+   "tr": "no uncharted dens"
+  },
+  {
+   "en": "no {0}",
+   "key": "",
+   "tr": "no {0}"
+  },
+  {
+   "en": "none posted",
+   "key": "",
+   "tr": "none posted"
+  },
+  {
+   "en": "not a {0} job",
+   "key": "",
+   "tr": "not a {0} job"
+  },
+  {
+   "en": "not understood — heroes will ignore it",
+   "key": "",
+   "tr": "not understood — heroes will ignore it"
+  },
+  {
+   "en": "not understood — local AI will try on post",
+   "key": "",
+   "tr": "not understood — local AI will try on post"
+  },
+  {
+   "en": "open",
+   "key": "",
+   "tr": "open"
+  },
+  {
+   "en": "optional · e.g. \"stay away unless level 9+\"",
+   "key": "",
+   "tr": "optional · e.g. \"stay away unless level 9+\""
+  },
+  {
+   "en": "orders exclude {0}",
+   "key": "",
+   "tr": "orders exclude {0}"
+  },
+  {
+   "en": "raise Colony Commons first",
+   "key": "",
+   "tr": "raise Colony Commons first"
+  },
+  {
+   "en": "ready on pad",
+   "key": "",
+   "tr": "ready on pad"
+  },
+  {
+   "en": "ready on pad. {0}",
+   "key": "",
+   "tr": "ready on pad. {0}"
+  },
+  {
+   "en": "recharging {0} s",
+   "key": "",
+   "tr": "recharging {0} s"
+  },
+  {
+   "en": "repair",
+   "key": "",
+   "tr": "repair"
+  },
+  {
+   "en": "research",
+   "key": "",
+   "tr": "research"
+  },
+  {
+   "en": "resting",
+   "key": "",
+   "tr": "resting"
+  },
+  {
+   "en": "scouts",
+   "key": "",
+   "tr": "scouts"
+  },
+  {
+   "en": "scrapped",
+   "key": "",
+   "tr": "scrapped"
+  },
+  {
+   "en": "sentinels",
+   "key": "",
+   "tr": "sentinels"
+  },
+  {
+   "en": "shop at rest beacon",
+   "key": "",
+   "tr": "shop at rest beacon"
+  },
+  {
+   "en": "solar farm",
+   "key": "",
+   "tr": "solar farm"
+  },
+  {
+   "en": "strict",
+   "key": "",
+   "tr": "strict"
+  },
+  {
+   "en": "suit",
+   "key": "",
+   "tr": "suit"
+  },
+  {
+   "en": "surveyors",
+   "key": "",
+   "tr": "surveyors"
+  },
+  {
+   "en": "tech",
+   "key": "",
+   "tr": "tech"
+  },
+  {
+   "en": "terraformers",
+   "key": "",
+   "tr": "terraformers"
+  },
+  {
+   "en": "the line went quiet — say that again?",
+   "key": "",
+   "tr": "the line went quiet — say that again?"
+  },
+  {
+   "en": "the next body",
+   "key": "",
+   "tr": "the next body"
+  },
+  {
+   "en": "the tills are empty.",
+   "key": "",
+   "tr": "the tills are empty."
+  },
+  {
+   "en": "this pole · {0} edits it",
+   "key": "",
+   "tr": "this pole · {0} edits it"
+  },
+  {
+   "en": "this pole · {0} edits this bounty",
+   "key": "",
+   "tr": "this pole · {0} edits this bounty"
+  },
+  {
+   "en": "too far for {0} — {1}m",
+   "key": "",
+   "tr": "too far for {0} — {1}m"
+  },
+  {
+   "en": "understood: {0}",
+   "key": "",
+   "tr": "understood: {0}"
+  },
+  {
+   "en": "unlock from ★ tech — bonus while standing",
+   "key": "",
+   "tr": "unlock from ★ tech — bonus while standing"
+  },
+  {
+   "en": "via {0} · {1}%",
+   "key": "",
+   "tr": "via {0} · {1}%"
+  },
+  {
+   "en": "waiting — enemies near the settlement",
+   "key": "",
+   "tr": "waiting — enemies near the settlement"
+  },
+  {
+   "en": "walking to {0}",
+   "key": "",
+   "tr": "walking to {0}"
+  },
+  {
+   "en": "wrecks wait — EU only",
+   "key": "",
+   "tr": "wrecks wait — EU only"
+  },
+  {
+   "en": "yard full",
+   "key": "",
+   "tr": "yard full"
+  },
+  {
+   "en": "yard pests",
+   "key": "",
+   "tr": "yard pests"
+  },
+  {
+   "en": "{0:F0}/{1:F0} science",
+   "key": "",
+   "tr": "{0:F0}/{1:F0} science"
+  },
+  {
+   "en": "{0:N0} EU",
+   "key": "",
+   "tr": "{0:N0} EU"
+  },
+  {
+   "en": "{0:N0} EU sitting — a bot walks it home.",
+   "key": "",
+   "tr": "{0:N0} EU sitting — a bot walks it home."
+  },
+  {
+   "en": "{0:N0} EU — bots carry it to Commons.",
+   "key": "",
+   "tr": "{0:N0} EU — bots carry it to Commons."
+  },
+  {
+   "en": "{0:N0} EU/day",
+   "key": "",
+   "tr": "{0:N0} EU/day"
+  },
+  {
+   "en": "{0}  ({1:F0}%)",
+   "key": "",
+   "tr": "{0}  ({1:F0}%)"
+  },
+  {
+   "en": "{0}  L{1}",
+   "key": "",
+   "tr": "{0}  L{1}"
+  },
+  {
+   "en": "{0}  {1:N0} EU  ·  {2}{3}",
+   "key": "",
+   "tr": "{0}  {1:N0} EU  ·  {2}{3}"
+  },
+  {
+   "en": "{0}  ·  120s",
+   "key": "",
+   "tr": "{0}  ·  120s"
+  },
+  {
+   "en": "{0}  ·  COLONY",
+   "key": "",
+   "tr": "{0}  ·  COLONY"
+  },
+  {
+   "en": "{0}  ·  bonus while standing",
+   "key": "",
+   "tr": "{0}  ·  bonus while standing"
+  },
+  {
+   "en": "{0}  ·  empty",
+   "key": "",
+   "tr": "{0}  ·  empty"
+  },
+  {
+   "en": "{0}  ·  locked",
+   "key": "",
+   "tr": "{0}  ·  locked"
+  },
+  {
+   "en": "{0}  ·  {1}\n{2}  ·  RMB cancel{3}  ·  w {4:F1}{5}",
+   "key": "",
+   "tr": "{0}  ·  {1}\n{2}  ·  RMB cancel{3}  ·  w {4:F1}{5}"
+  },
+  {
+   "en": "{0} / {1} / {2}  ·  SKIP",
+   "key": "",
+   "tr": "{0} / {1} / {2}  ·  SKIP"
+  },
+  {
+   "en": "{0} CONQUERED",
+   "key": "",
+   "tr": "{0} CONQUERED"
+  },
+  {
+   "en": "{0} EU",
+   "key": "",
+   "tr": "{0} EU"
+  },
+  {
+   "en": "{0} EU is sitting in building batteries. Haul will not teleport it.",
+   "key": "",
+   "tr": "{0} EU is sitting in building batteries. Haul will not teleport it."
+  },
+  {
+   "en": "{0} EU less. Fewer robots will find the job worth it.",
+   "key": "",
+   "tr": "{0} EU less. Fewer robots will find the job worth it."
+  },
+  {
+   "en": "{0} EU more. More robots, and braver ones, will take the job.",
+   "key": "",
+   "tr": "{0} EU more. More robots, and braver ones, will take the job."
+  },
+  {
+   "en": "{0} EU pulled from the tills",
+   "key": "",
+   "tr": "{0} EU pulled from the tills"
+  },
+  {
+   "en": "{0} FPS",
+   "key": "",
+   "tr": "{0} FPS"
+  },
+  {
+   "en": "{0} L{1}",
+   "key": "",
+   "tr": "{0} L{1}"
+  },
+  {
+   "en": "{0} L{1}: “{2}”",
+   "key": "",
+   "tr": "{0} L{1}: “{2}”"
+  },
+  {
+   "en": "{0} SECURED",
+   "key": "",
+   "tr": "{0} SECURED"
+  },
+  {
+   "en": "{0} already does {1}.",
+   "key": "",
+   "tr": "{0} already does {1}."
+  },
+  {
+   "en": "{0} and {1}",
+   "key": "",
+   "tr": "{0} and {1}"
+  },
+  {
+   "en": "{0} carried",
+   "key": "",
+   "tr": "{0} carried"
+  },
+  {
+   "en": "{0} coming soon",
+   "key": "",
+   "tr": "{0} coming soon"
+  },
+  {
+   "en": "{0} contract",
+   "key": "",
+   "tr": "{0} contract"
+  },
+  {
+   "en": "{0} contracts",
+   "key": "",
+   "tr": "{0} contracts"
+  },
+  {
+   "en": "{0} cooling down ({1:F0}s).",
+   "key": "",
+   "tr": "{0} cooling down ({1:F0}s)."
+  },
+  {
+   "en": "{0} costs {1} EU here (x{2:0} from the uplink).",
+   "key": "",
+   "tr": "{0} costs {1} EU here (x{2:0} from the uplink)."
+  },
+  {
+   "en": "{0} dens charted",
+   "key": "",
+   "tr": "{0} dens charted"
+  },
+  {
+   "en": "{0} destroyed",
+   "key": "",
+   "tr": "{0} destroyed"
+  },
+  {
+   "en": "{0} destroyed — rebuild before the next raid.",
+   "key": "",
+   "tr": "{0} destroyed — rebuild before the next raid."
+  },
+  {
+   "en": "{0} destroyed.",
+   "key": "",
+   "tr": "{0} destroyed."
+  },
+  {
+   "en": "{0} fabricated at {1}.",
+   "key": "",
+   "tr": "{0} fabricated at {1}."
+  },
+  {
+   "en": "{0} fauna",
+   "key": "",
+   "tr": "{0} fauna"
+  },
+  {
+   "en": "{0} glances up from the work. Ask about the job, the colony, or what it would take.",
+   "key": "",
+   "tr": "{0} glances up from the work. Ask about the job, the colony, or what it would take."
+  },
+  {
+   "en": "{0} halted — enemies near",
+   "key": "",
+   "tr": "{0} halted — enemies near"
+  },
+  {
+   "en": "{0} hired at {1} — {2} EU.",
+   "key": "",
+   "tr": "{0} hired at {1} — {2} EU."
+  },
+  {
+   "en": "{0} hit",
+   "key": "",
+   "tr": "{0} hit"
+  },
+  {
+   "en": "{0} hit, {1} destroyed",
+   "key": "",
+   "tr": "{0} hit, {1} destroyed"
+  },
+  {
+   "en": "{0} holds — campaign spine complete",
+   "key": "",
+   "tr": "{0} holds — campaign spine complete"
+  },
+  {
+   "en": "{0} hostile locked for {1:0} s",
+   "key": "",
+   "tr": "{0} hostile locked for {1:0} s"
+  },
+  {
+   "en": "{0} is already running.",
+   "key": "",
+   "tr": "{0} is already running."
+  },
+  {
+   "en": "{0} is hunting pests",
+   "key": "",
+   "tr": "{0} is hunting pests"
+  },
+  {
+   "en": "{0} is hurt — wait",
+   "key": "",
+   "tr": "{0} is hurt — wait"
+  },
+  {
+   "en": "{0} is in the full game. This demo is Earth only.",
+   "key": "",
+   "tr": "{0} is in the full game. This demo is Earth only."
+  },
+  {
+   "en": "{0} is locked. Conquer the inner worlds first — or Shift+click (dev tools).",
+   "key": "",
+   "tr": "{0} is locked. Conquer the inner worlds first — or Shift+click (dev tools)."
+  },
+  {
+   "en": "{0} is locked. Conquer the inner worlds first.",
+   "key": "",
+   "tr": "{0} is locked. Conquer the inner worlds first."
+  },
+  {
+   "en": "{0} is ready — hiring its {1} costs {2} EU.",
+   "key": "",
+   "tr": "{0} is ready — hiring its {1} costs {2} EU."
+  },
+  {
+   "en": "{0} is taking a while…",
+   "key": "",
+   "tr": "{0} is taking a while…"
+  },
+  {
+   "en": "{0} is talking…",
+   "key": "",
+   "tr": "{0} is talking…"
+  },
+  {
+   "en": "{0} is thinking…",
+   "key": "",
+   "tr": "{0} is thinking…"
+  },
+  {
+   "en": "{0} is tired — wait",
+   "key": "",
+   "tr": "{0} is tired — wait"
+  },
+  {
+   "en": "{0} kill",
+   "key": "",
+   "tr": "{0} kill"
+  },
+  {
+   "en": "{0} kills",
+   "key": "",
+   "tr": "{0} kills"
+  },
+  {
+   "en": "{0} modules",
+   "key": "",
+   "tr": "{0} modules"
+  },
+  {
+   "en": "{0} needs {1} EU.",
+   "key": "",
+   "tr": "{0} needs {1} EU."
+  },
+  {
+   "en": "{0} needs {1} research.",
+   "key": "",
+   "tr": "{0} needs {1} research."
+  },
+  {
+   "en": "{0} only",
+   "key": "",
+   "tr": "{0} only"
+  },
+  {
+   "en": "{0} patched",
+   "key": "",
+   "tr": "{0} patched"
+  },
+  {
+   "en": "{0} patched and cleansed",
+   "key": "",
+   "tr": "{0} patched and cleansed"
+  },
+  {
+   "en": "{0} posted",
+   "key": "",
+   "tr": "{0} posted"
+  },
+  {
+   "en": "{0} reached L{1}.",
+   "key": "",
+   "tr": "{0} reached L{1}."
+  },
+  {
+   "en": "{0} recharging — {1} s.",
+   "key": "",
+   "tr": "{0} recharging — {1} s."
+  },
+  {
+   "en": "{0} research → launch",
+   "key": "",
+   "tr": "{0} research → launch"
+  },
+  {
+   "en": "{0} researched. Place a Landing Pad to stage the craft.",
+   "key": "",
+   "tr": "{0} researched. Place a Landing Pad to stage the craft."
+  },
+  {
+   "en": "{0} robots rebooted",
+   "key": "",
+   "tr": "{0} robots rebooted"
+  },
+  {
+   "en": "{0} s",
+   "key": "",
+   "tr": "{0} s"
+  },
+  {
+   "en": "{0} scrapped — wreck in the Fobot Yard. Stand-up {1} EU (L{2}).",
+   "key": "",
+   "tr": "{0} scrapped — wreck in the Fobot Yard. Stand-up {1} EU (L{2})."
+  },
+  {
+   "en": "{0} shielded for {1:0} s",
+   "key": "",
+   "tr": "{0} shielded for {1:0} s"
+  },
+  {
+   "en": "{0} sighted at the colony edge — post Clear Threat.",
+   "key": "",
+   "tr": "{0} sighted at the colony edge — post Clear Threat."
+  },
+  {
+   "en": "{0} solar",
+   "key": "",
+   "tr": "{0} solar"
+  },
+  {
+   "en": "{0} staged on the Landing Pad. Launch gate is open.",
+   "key": "",
+   "tr": "{0} staged on the Landing Pad. Launch gate is open."
+  },
+  {
+   "en": "{0} stays fixed (build slots and modifiers).",
+   "key": "",
+   "tr": "{0} stays fixed (build slots and modifiers)."
+  },
+  {
+   "en": "{0} tempted · {1}",
+   "key": "",
+   "tr": "{0} tempted · {1}"
+  },
+  {
+   "en": "{0} tempted: {1}",
+   "key": "",
+   "tr": "{0} tempted: {1}"
+  },
+  {
+   "en": "{0} took {1}.",
+   "key": "",
+   "tr": "{0} took {1}."
+  },
+  {
+   "en": "{0} wants {1} — raise +",
+   "key": "",
+   "tr": "{0} wants {1} — raise +"
+  },
+  {
+   "en": "{0} was destroyed; {1} EU lost.",
+   "key": "",
+   "tr": "{0} was destroyed; {1} EU lost."
+  },
+  {
+   "en": "{0} was hit and dropped {1} EU.",
+   "key": "",
+   "tr": "{0} was hit and dropped {1} EU."
+  },
+  {
+   "en": "{0} was hit by {1} {2} and dropped {3} EU.",
+   "key": "",
+   "tr": "{0} was hit by {1} {2} and dropped {3} EU."
+  },
+  {
+   "en": "{0} was mugged for {1} EU.",
+   "key": "",
+   "tr": "{0} was mugged for {1} EU."
+  },
+  {
+   "en": "{0} won't take the walk",
+   "key": "",
+   "tr": "{0} won't take the walk"
+  },
+  {
+   "en": "{0} {1:F0}s",
+   "key": "",
+   "tr": "{0} {1:F0}s"
+  },
+  {
+   "en": "{0} {1} mugged {2} for {3} EU.",
+   "key": "",
+   "tr": "{0} {1} mugged {2} for {3} EU."
+  },
+  {
+   "en": "{0} {1} — {2:N0} EU dropped.",
+   "key": "",
+   "tr": "{0} {1} — {2:N0} EU dropped."
+  },
+  {
+   "en": "{0} · till {1} EU",
+   "key": "",
+   "tr": "{0} · till {1} EU"
+  },
+  {
+   "en": "{0} · {1:N0} BOUNTIES",
+   "key": "",
+   "tr": "{0} · {1:N0} BOUNTIES"
+  },
+  {
+   "en": "{0} · {1:N0} OUT",
+   "key": "",
+   "tr": "{0} · {1:N0} OUT"
+  },
+  {
+   "en": "{0} · {1} · Asks {2:N0} EU · Holds {3:N0} EU{4}",
+   "key": "",
+   "tr": "{0} · {1} · Asks {2:N0} EU · Holds {3:N0} EU{4}"
+  },
+  {
+   "en": "{0} ×{1} — {2:N0} EU",
+   "key": "",
+   "tr": "{0} ×{1} — {2:N0} EU"
+  },
+  {
+   "en": "{0} — {1} ({2} EU).",
+   "key": "",
+   "tr": "{0} — {1} ({2} EU)."
+  },
+  {
+   "en": "{0} — {1}.",
+   "key": "",
+   "tr": "{0} — {1}."
+  },
+  {
+   "en": "{0}+ EU",
+   "key": "",
+   "tr": "{0}+ EU"
+  },
+  {
+   "en": "{0}. {1}",
+   "key": "",
+   "tr": "{0}. {1}"
+  },
+  {
+   "en": "{0}/{1} bounty",
+   "key": "",
+   "tr": "{0}/{1} bounty"
+  },
+  {
+   "en": "{0}/{1} drones",
+   "key": "",
+   "tr": "{0}/{1} drones"
+  },
+  {
+   "en": "{0}/{1} left",
+   "key": "",
+   "tr": "{0}/{1} left"
+  },
+  {
+   "en": "{0}: Build's on the books. Don't cheap out mid-weld.",
+   "key": "",
+   "tr": "{0}: Build's on the books. Don't cheap out mid-weld."
+  },
+  {
+   "en": "{0}: Charting the apron. No fights.",
+   "key": "",
+   "tr": "{0}: Charting the apron. No fights."
+  },
+  {
+   "en": "{0}: Cheap Explore. Forty EU and I'm gone.",
+   "key": "",
+   "tr": "{0}: Cheap Explore. Forty EU and I'm gone."
+  },
+  {
+   "en": "{0}: Claim the cyan disc. Freight after.",
+   "key": "",
+   "tr": "{0}: Claim the cyan disc. Freight after."
+  },
+  {
+   "en": "{0}: Core sample logged. Lab can eat this.",
+   "key": "",
+   "tr": "{0}: Core sample logged. Lab can eat this."
+  },
+  {
+   "en": "{0}: Greening this crust. Slow work. Worth it.",
+   "key": "",
+   "tr": "{0}: Greening this crust. Slow work. Worth it."
+  },
+  {
+   "en": "{0}: Hauling the flag. Keep the path clear.",
+   "key": "",
+   "tr": "{0}: Hauling the flag. Keep the path clear."
+  },
+  {
+   "en": "{0}: Hunting the den. Stay behind the shield.",
+   "key": "",
+   "tr": "{0}: Hunting the den. Stay behind the shield."
+  },
+  {
+   "en": "{0}: On the wounded. I am not a hunter.",
+   "key": "",
+   "tr": "{0}: On the wounded. I am not a hunter."
+  },
+  {
+   "en": "{0}: Ore first. Dens can wait.",
+   "key": "",
+   "tr": "{0}: Ore first. Dens can wait."
+  },
+  {
+   "en": "{0}: Perimeter locked. I hold. I do not wander.",
+   "key": "",
+   "tr": "{0}: Perimeter locked. I hold. I do not wander."
+  },
+  {
+   "en": "{0}: Reading the crust. Haul follows.",
+   "key": "",
+   "tr": "{0}: Reading the crust. Haul follows."
+  },
+  {
+   "en": "{0}: Rim watch. Nothing crosses.",
+   "key": "",
+   "tr": "{0}: Rim watch. Nothing crosses."
+  },
+  {
+   "en": "{0}: Site mapped. Science into the tree.",
+   "key": "",
+   "tr": "{0}: Site mapped. Science into the tree."
+  },
+  {
+   "en": "{0}: {1}",
+   "key": "",
+   "tr": "{0}: {1}"
+  },
+  {
+   "en": "{0}: {1} — {2} EU.",
+   "key": "",
+   "tr": "{0}: {1} — {2} EU."
+  },
+  {
+   "en": "{0}Click a tech to start — next pick {1}.",
+   "key": "",
+   "tr": "{0}Click a tech to start — next pick {1}."
+  },
+  {
+   "en": "{0}Tree complete — launch tech unlocked.",
+   "key": "",
+   "tr": "{0}Tree complete — launch tech unlocked."
+  },
+  {
+   "en": "{0}h {1}m",
+   "key": "",
+   "tr": "{0}h {1}m"
+  },
+  {
+   "en": "{0}m {1}s",
+   "key": "",
+   "tr": "{0}m {1}s"
+  },
+  {
+   "en": "“{0}”  ·  {1} L{2}  ·  {3}",
+   "key": "",
+   "tr": "“{0}”  ·  {1} L{2}  ·  {3}"
+  }
+ ]
+}

@@ -15,24 +15,24 @@ namespace SolarMajesty.Tests
         [SetUp]
         public void SetUp()
         {
-            _hadMax = PlayerPrefs.HasKey(MaxKey);
-            _hadFresh = PlayerPrefs.HasKey(FreshKey);
-            _savedMax = PlayerPrefs.GetInt(MaxKey, (int)CelestialBodyId.Earth);
-            _savedFresh = PlayerPrefs.GetInt(FreshKey, 0);
-            PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
-            PlayerPrefs.SetInt(FreshKey, 1);
-            PlayerPrefs.Save();
+            _hadMax = GamePrefs.HasKey(MaxKey);
+            _hadFresh = GamePrefs.HasKey(FreshKey);
+            _savedMax = GamePrefs.GetInt(MaxKey, (int)CelestialBodyId.Earth);
+            _savedFresh = GamePrefs.GetInt(FreshKey, 0);
+            GamePrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
+            GamePrefs.SetInt(FreshKey, 1);
+            GamePrefs.Save();
             CampaignProgress.Ensure();
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (_hadMax) PlayerPrefs.SetInt(MaxKey, _savedMax);
-            else PlayerPrefs.DeleteKey(MaxKey);
-            if (_hadFresh) PlayerPrefs.SetInt(FreshKey, _savedFresh);
-            else PlayerPrefs.DeleteKey(FreshKey);
-            PlayerPrefs.Save();
+            if (_hadMax) GamePrefs.SetInt(MaxKey, _savedMax);
+            else GamePrefs.DeleteKey(MaxKey);
+            if (_hadFresh) GamePrefs.SetInt(FreshKey, _savedFresh);
+            else GamePrefs.DeleteKey(FreshKey);
+            GamePrefs.Save();
             CampaignProgress.Ensure();
         }
 

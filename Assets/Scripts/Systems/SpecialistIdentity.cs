@@ -25,6 +25,9 @@ namespace SolarMajesty
         /// <summary>Earned title, upgraded as the record grows.</summary>
         public string Rank => RankFor(FlagsCompleted, Kills);
 
+        /// <summary><see cref="Rank"/> in the current language. Rank stays English (it feeds model prompts).</summary>
+        public string RankText => Loc.S(Rank);
+
         public string FullName => $"{Name} \"{Designation}\"";
 
         /// <summary>One-line service summary for the inspect panel and the death notice.</summary>
@@ -33,12 +36,13 @@ namespace SolarMajesty
             get
             {
                 if (FlagsCompleted == 0 && Kills == 0)
-                    return "no record yet";
+                    return Loc.S("no record yet");
 
                 var parts = new List<string>(4);
-                if (FlagsCompleted > 0) parts.Add($"{FlagsCompleted} contract{(FlagsCompleted == 1 ? "" : "s")}");
-                if (Kills > 0) parts.Add($"{Kills} kill{(Kills == 1 ? "" : "s")}");
-                if (TimesDowned > 0) parts.Add($"down {TimesDowned}x");
+                if (FlagsCompleted > 0)
+                    parts.Add(FlagsCompleted == 1 ? Loc.F("{0} contract", FlagsCompleted) : Loc.F("{0} contracts", FlagsCompleted));
+                if (Kills > 0) parts.Add(Kills == 1 ? Loc.F("{0} kill", Kills) : Loc.F("{0} kills", Kills));
+                if (TimesDowned > 0) parts.Add(Loc.F("down {0}x", TimesDowned));
                 return string.Join(" · ", parts);
             }
         }

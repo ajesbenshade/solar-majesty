@@ -6,6 +6,74 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 
 ---
 
+## Automated campaign (autoplay) — run on every release build
+
+```
+powershell -ExecutionPolicy Bypass -File Tools\qa\run_autoplay.ps1 -Build
+```
+
+Builds a release player and plays the whole campaign in it on a throwaway profile (`-autoplay`,
+[AutoplayRunner.cs](../Assets/Scripts/Runtime/Platform/AutoplayRunner.cs)): New Campaign, then Earth →
+Luna → Mars → Belt → Europa through the player's own controls — build-menu placement (the same commit
+as a click on a valid ghost), Clear Threat / Explore bounties and their +/−, the tech panel, the
+victory **Continue to …** button — with the world at up to 20× the 1× pace (it backs off when frames
+are slow). On every world it also:
+
+- pauses (Esc) → **Settings** → back → **Resume**;
+- **saves** to slot 2 and **loads** it, then goes to the **title** and **Continues**, comparing buildings,
+  EU, ICE, techs, active research, dens cleared and scouted, bounties, robots, workshops waiting to hire,
+  re-fabs under way, launch gate and conquered worlds before and after (fauna may only go down: Continue
+  puts back at most 8 per den);
+- on Mars it presses **QUIT**; the script starts the game again and the run carries on from the title's
+  **Continue**.
+
+A scrapped robot is re-fabbed at its workshop (**RE-FAB**) as soon as the treasury can pay. A lost colony
+(**OUTPOST LOST**) is restarted with **RESTART MISSION**, at most twice per world; robots lost, re-fabs and
+restarts are in the report, with each world's summary-screen tallies and verdict and the achievements
+earned.
+
+At the end it checks **SOLAR CONQUEST COMPLETE**, every world marked conquered, the Solar Conquest
+achievement, **Main Menu**, and that Continue lands back on the won Europa colony.
+
+It fails (exit 1; JSON report and both Player logs in `Builds/Autoplay/Reports`) on any error,
+exception or assert in the log, on a stall (no progress on dens, research, treasury, gates or
+buildings for 15 sim-minutes; the report lists every robot's job and where the fauna are), or on the
+timeout. `-From Mars` starts the campaign on a later world to iterate on one world; `-Beats` keeps the
+victory / launch camera beats (passed `-nobeats` by default); `-Boost`, `-Quality`, `-StallMinutes`
+tune the run.
+
+It does **not** replace the passes below: it never looks at the screen (art, HUD layout, clipped
+text), calls what the buttons call instead of moving a mouse, presses the tutorial's SKIP, plays one
+seed per world in the default campaign rules (no Ironman, Endless, challenges or stances), and no
+controller or Steam Deck.
+
+Last runs (2026-10-20, Windows release build, `-Boost 10`): passed in 9.6–13.5 real-min. A clean run
+took Earth 19, Luna 30, Mars 39, Belt 31 and Europa 41 sim-minutes. Europa is the hard world: the bot
+lost its first colony there in three runs (it won after **RESTART MISSION**) and stalled once with 0 EU
+in a junk-bot spiral, so expect a restart there and read the report before calling a failure a
+regression.
+
+Dens gate after the last den (2026-10-20): town spawns (kingdom-table burrow pests, edge raiders,
+wreck junk, and scrap-pile junk bots) no longer hold the dens gate (`DensGate`); before, each one
+flipped it off until a robot killed it, and the log showed repeated `gates 1/3` / `gates 2/3` lines.
+The run now logs one gate line per world once the last den clears, and warns
+`dens gate reopened after the last den` if anything brings the flicker back; the bot no longer
+filters yard pests out of the gate itself. Only one copy of the game can run at a time ("Another
+instance is already running"): two autoplay runs at once leave the relaunched game on that dialog
+until the script's timeout.
+
+With the camera beats on (`-Beats`, default boost, 2026-10-20, after the steam-release merge): passed
+twice, 16.2 and 15.4 real-min, 0 errors, no restarts. Every victory beat and launch beat ended
+`Completed` (`[CameraBeat] ... ended:` in the Player logs) once the verdict buttons ignored presses
+that arrive while a beat is still playing; before that the bot's instant **Continue** cut each victory
+beat short (`Aborted`).
+
+After the drone-housing, dens-gate, tooltips/text-size and demo merges (2026-10-20, `-Beats`): passed in 17.2
+real-min, 0 errors, no restarts; every beat `Completed`, no dens-gate reopen warnings, and Homesteader
+unlocked alongside Solar Conquest.
+
+---
+
 ## 10-minute boot (must pass)
 
 - [ ] Title is the solar-system **orrery** (not a frozen drop). WASD pans, **Q** zooms out, **E** zooms in. Mouse does not pan or zoom. Tagline names the Overseer fantasy. Click Earth. Belt and Europa are not on the body chips. Shift+click does not leave Earth. Settings → **Full campaign** turns the other worlds back on.
@@ -56,6 +124,7 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 - [ ] Belt: dark islets, fat MET nodes, farms starve, **Icebreaker**, **TO EURO**. Seed line shows **LOW-G**. Rock mites and ticks on mines (**F5**). Shard hoppers on HABs (**F2**).
 - [ ] Europa: ice plates, ICE-heavy nodes, PWR draw high, **SOLAR CONQUEST COMPLETE**. Seed line shows **RAD**. Walk a robot off campus — cyan flash and HP drain. Fissure leeches and ice wisps on Power (**F2**). Ice creepers on farms (**F5**).
 - [ ] Clear all dens: overseer log that campus pests scatter by name (creepers, hoppers, mites, ticks, leeches, wisps); they walk off and despawn.
+- [ ] After the last den: town burrow pests, edge raiders and wreck junk keep coming, but the **dens** checkbox stays ticked and the objective moves on (they are bounty work, not the gate).
 - [ ] Launch hop spends freight MET/ICE (or a 12% jettison line if the stockpile cannot pay).
 - [ ] Construction sparks + complete burst; extract ping; each body sun/grade reads different.
 - [ ] No click-to-move. Outdoor units are workshop robots only.

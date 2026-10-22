@@ -1,0 +1,15 @@
+"lang"
+{
+	"Language"	"english"
+	"Tokens"
+	{
+		"#AtTitle"		"At the title screen"
+		"#Governing"	"Overseeing a colony on {#World_%world%}"
+		"#Paused"		"Paused on {#World_%world%}"
+		"#World_Earth"	"Earth"
+		"#World_Luna"	"the Moon"
+		"#World_Mars"	"Mars"
+		"#World_Belt"	"the Asteroid Belt"
+		"#World_Europa"	"Europa"
+	}
+}

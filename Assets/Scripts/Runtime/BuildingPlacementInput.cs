@@ -147,7 +147,7 @@ namespace SolarMajesty
                         (_resources == null || _resources.CanAfford(_placer.CostFor(Selected)));
                 if (valid && _placer.ExtraPlacementRule != null)
                     valid = _placer.ExtraPlacementRule(cell, Selected);
-                if (!valid) block = "Can't build there.";
+                if (!valid) block = Loc.S("Can't build there.");
             }
             _blockReason = valid ? null : block;
             ColonyVisualUtility.ApplyGhostTint(_ghost, valid);
@@ -160,10 +160,7 @@ namespace SolarMajesty
             {
                 if (_placer.TryPlace(Selected, cell, snapped, out ConstructionOrder order, out string fail))
                 {
-                    GameObject built = SpawnBuildingVisual(order);
-                    SpawnConstructionSite(order, built);
-                    DemoAudio.PlayBuildPlace(snapped);
-                    Debug.Log($"[Build] Placed {Selected.displayName} @ {cell}");
+                    CommitPlaced(order, snapped, cell);
 
                     // One building per pick: drop the ghost and hand back the normal pointer.
                     // Shift-click keeps the tool armed to place several.
@@ -191,6 +188,39 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Place <paramref name="data"/> with its footprint origin at <paramref name="cell"/>, exactly
+        /// as a click on a valid ghost does: same refusal check, same spend, same visual and site.
+        /// For QA harnesses (<c>-autoplay</c>) that play through the HUD's own placement path.
+        /// </summary>
+        public bool TryPlaceAt(BuildingData data, Vector2Int cell, out string reason)
+        {
+            reason = null;
+            if (_placer == null || data == null)
+            {
+                reason = "no placer";
+                return false;
+            }
+            reason = _loop != null ? _loop.PlacementBlockReason(data, cell) : null;
+            if (reason != null) return false;
+            Vector3 snapped = FootprintWorldCenter(cell, data);
+            if (!_placer.TryPlace(data, cell, snapped, out ConstructionOrder order, out string fail))
+            {
+                reason = fail;
+                return false;
+            }
+            CommitPlaced(order, snapped, cell);
+            return true;
+        }
+
+        private void CommitPlaced(ConstructionOrder order, Vector3 snapped, Vector2Int cell)
+        {
+            GameObject built = SpawnBuildingVisual(order);
+            SpawnConstructionSite(order, built);
+            DemoAudio.PlayBuildPlace(snapped);
+            Debug.Log($"[Build] Placed {order.Data.displayName} @ {cell}");
+        }
+
         private float _zoneHintAt;
         private string _blockReason;
         private GUIStyle _refuseStyle;
@@ -216,6 +246,7 @@ namespace SolarMajesty
                 };
                 _refuseStyle.normal.textColor = new Color(1f, 0.88f, 0.45f);
             }
+            _refuseStyle.fontSize = HudTextScale.Font(14); // follows Settings → TEXT SIZE
 
             // Same scale-from-origin matrix as the overseer HUD, so the refusal tracks UI SCALE.
             DemoSettings.RefreshHudScale(Screen.width, Screen.height);

@@ -49,6 +49,7 @@ namespace SolarMajesty
         private bool _frenzy;
 
         public MissionState State => _state;
+        /// <summary>Living fauna that hold the dens gate (town spawns never do, see <see cref="DensGate"/>).</summary>
         public int StalkersRemaining { get; private set; }
         public bool IsWon => _state == MissionState.Won;
         public bool IsLost => _state == MissionState.Lost;
@@ -103,21 +104,26 @@ namespace SolarMajesty
                 if (_state == MissionState.Won)
                 {
                     if (ReplayRules.IsEndless)
-                        return "Keep colonizing — dens quiet, colony holding";
+                        return Loc.S("Keep colonizing — dens quiet, colony holding");
                     if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                        return $"{_loop.BodyProfile?.DisplayName ?? "Outpost"} holds — campaign spine complete";
-                    return "Outpost secured — advance the campaign";
+                        return Loc.F("{0} holds — campaign spine complete", _loop.BodyProfile?.DisplayNameText ?? Loc.S("Outpost"));
+                    return Loc.S("Outpost secured — advance the campaign");
                 }
                 if (!DensCleared)
                 {
-                    if (LairCount > 0)
-                        return $"Clear dens — {UnclearedLairs} left (F2 Clear Threat)";
-                    return "Clear remaining fauna near campus";
+                    if (LairCount > 0 && UnclearedLairs > 0)
+                        return Loc.F("Clear dens — {0} left ({1} Clear Threat)", UnclearedLairs, InputBindings.Hint(GameAction.FlagClearThreat));
+                    // Every den is quiet but the gate still waits on fauna that came out of them
+                    // (pressure waves do not scatter). "Clear dens — 0 left" sent players looking
+                    // for a den that was not there (autoplay, Earth: six sim-minutes of it).
+                    if (LairCount > 0 && StalkersRemaining > 0)
+                        return Loc.F("Dens quiet — hunt the last {0} fauna ({1} Clear Threat)", StalkersRemaining, InputBindings.Hint(GameAction.FlagClearThreat));
+                    return Loc.S("Clear remaining fauna near campus");
                 }
                 if (!SustainComplete)
                 {
-                    string hint = _loop?.Settlement != null ? _loop.Settlement.SustainHint : "hold population";
-                    return $"Sustain — {hint}";
+                    string hint = _loop?.Settlement != null ? _loop.Settlement.SustainHint : Loc.S("hold population");
+                    return Loc.F("Sustain — {0}", hint);
                 }
                 if (!LaunchReady)
                 {
@@ -125,11 +131,11 @@ namespace SolarMajesty
                         !_loop.Research.HasLaunchUnlockFor(_loop.ActiveBody))
                     {
                         string craft = _loop.Research.LaunchTechLabel(_loop.ActiveBody);
-                        return $"Research {craft} (TECH · T) — then place a Landing Pad";
+                        return Loc.F("Research {0} (TECH · {1}) — then place a Landing Pad", craft, InputBindings.Hint(GameAction.ToolTech));
                     }
-                    return "Place a Landing Pad — departure craft stages there";
+                    return Loc.S("Place a Landing Pad — departure craft stages there");
                 }
-                return "Securing…";
+                return Loc.S("Securing…");
             }
         }
 
@@ -138,10 +144,10 @@ namespace SolarMajesty
             get
             {
                 if (ReplayRules.IsEndless)
-                    return "KEEP COLONIZING";
+                    return Loc.S("KEEP COLONIZING");
                 if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "SOLAR CONQUEST COMPLETE";
-                return "OUTPOST SECURED";
+                    return Loc.S("SOLAR CONQUEST COMPLETE");
+                return Loc.S("OUTPOST SECURED");
             }
         }
 
@@ -153,15 +159,15 @@ namespace SolarMajesty
                 {
                     var endless = _loop != null ? _loop.BodyProfile : null;
                     if (endless != null && !string.IsNullOrEmpty(endless.EndlessLog))
-                        return endless.EndlessLog;
-                    return "Gates met. Stay on this world — rating stands while you keep expanding.";
+                        return endless.EndlessLogText;
+                    return Loc.S("Gates met. Stay on this world — rating stands while you keep expanding.");
                 }
                 var body = _loop != null ? _loop.BodyProfile : null;
                 if (body != null && CampaignCutsceneCatalog.TryGetVictory(body.Id, out var cut))
-                    return cut.LogParagraph;
+                    return cut.LogParagraphText;
                 if (body != null && !string.IsNullOrEmpty(body.VictoryLog))
-                    return body.VictoryLog;
-                return "Dens cleared · colony sustained · launch ready.";
+                    return body.VictoryLogText;
+                return Loc.S("Dens cleared · colony sustained · launch ready.");
             }
         }
 
@@ -170,25 +176,25 @@ namespace SolarMajesty
             get
             {
                 if (ReplayRules.IsEndless)
-                    return "Campaign hop is off. Shift+F10 still unlocks body chips.";
+                    return Loc.S("Endless mode: no launch to the next world. Keep the colony standing.");
                 if (DemoSettings.FirstHourDemo)
                 {
                     string craft = _loop != null && _loop.Research != null
                         ? _loop.Research.LaunchTechLabel(CelestialBodyId.Earth)
-                        : "Lunar Rocket";
+                        : Loc.S("Lunar Rocket");
                     return LaunchPath.ObjectiveText(false, false, craft);
                 }
                 if (_loop == null || !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "Mars holds. Earth, Belt, and Europa stay parked — Shift+click chips to load them.";
+                    return Loc.S("The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title.");
                 var next = CampaignProgress.NextAfter(_loop.ActiveBody);
                 string name = next.HasValue
-                    ? CelestialBodyCatalog.Get(next.Value).DisplayName
-                    : "the next body";
-                return $"Stage departure, or keep overseeing here. Next: {name}.";
+                    ? CelestialBodyCatalog.Get(next.Value).DisplayNameText
+                    : Loc.S("the next body");
+                return Loc.F("Stage departure, or keep overseeing here. Next: {0}.", name);
             }
         }
 
-        public string FailHeadline => WasDeadlineFail ? "MISSION TIME EXPIRED" : "OUTPOST LOST";
+        public string FailHeadline => WasDeadlineFail ? Loc.S("MISSION TIME EXPIRED") : Loc.S("OUTPOST LOST");
 
         public string FailDetail
         {
@@ -196,14 +202,14 @@ namespace SolarMajesty
             {
                 var body = _loop != null ? _loop.BodyProfile : null;
                 if (WasDeadlineFail)
-                    return "The window to secure the outpost closed. Restart for a tighter run.";
+                    return Loc.S("The window to secure the outpost closed. Restart for a tighter run.");
                 if (_loop != null && _loop.ColonyExtinct)
-                    return "The Colony Commons fell and the treasury with it. Retry this body, or New Game.";
+                    return Loc.S("The Colony Commons fell and the treasury with it. Retry this body, or New Game.");
                 if (_loop != null && _loop.RobotCount == 0)
-                    return "No robots left and no re-fab in the shop. Rebuild a workshop, or retry.";
+                    return Loc.S("No robots left and no re-fab in the shop. Rebuild a workshop, or retry.");
                 if (body != null && !string.IsNullOrEmpty(body.FailLog))
-                    return body.FailLog;
-                return "Every specialist is incapacitated. Revive the party to retake the plaza.";
+                    return body.FailLogText;
+                return Loc.S("Every specialist is incapacitated. Revive the party to retake the plaza.");
             }
         }
 
@@ -285,7 +291,7 @@ namespace SolarMajesty
         {
             if (_loop == null) return;
 
-            StalkersRemaining = CountLivingStalkers();
+            StalkersRemaining = CountDenFauna(_loop.Stalkers);
             RefreshGates();
 
             if (StillCaptureHold.Active)
@@ -358,6 +364,19 @@ namespace SolarMajesty
             _launchReady = launchReady;
         }
 
+        /// <summary>EditMode: the den board as <see cref="RefreshGates"/> would read it.</summary>
+        internal void SetDenCountsForTests(int lairs, int uncleared, int stalkers)
+        {
+            LairCount = lairs;
+            UnclearedLairs = uncleared;
+            StalkersRemaining = stalkers;
+            DensCleared = DensGate.Met(lairs, uncleared, stalkers);
+        }
+
+        /// <summary>EditMode: the den board with the live fauna list, counted as <see cref="Tick"/> counts it.</summary>
+        internal void SetDenBoardForTests(int lairs, int uncleared, System.Collections.Generic.IReadOnlyList<DustStalkerAgent> fauna) =>
+            SetDenCountsForTests(lairs, uncleared, CountDenFauna(fauna));
+
         /// <summary>
         /// EditMode: the same gate check <see cref="Tick"/> uses, without audio, VFX, or a scene load.
         /// </summary>
@@ -391,15 +410,12 @@ namespace SolarMajesty
                 UnclearedLairs = _loop.World.UnclearedLairCount;
             }
 
-            if (LairCount > 0)
-                DensCleared = UnclearedLairs <= 0 && StalkersRemaining <= 0;
-            else
-                DensCleared = StalkersRemaining <= 0;
+            DensCleared = DensGate.Met(LairCount, UnclearedLairs, StalkersRemaining);
 
             if (DensCleared && !_loggedDens)
             {
                 _loggedDens = true;
-                _loop.LogOverseer("Dens quiet. Fauna no longer holds the plaza.");
+                _loop.LogOverseer(Loc.S("Dens quiet. Fauna no longer holds the plaza."));
             }
         }
 
@@ -420,7 +436,7 @@ namespace SolarMajesty
             if (SustainComplete && !_loggedSustain)
             {
                 _loggedSustain = true;
-                _loop.LogOverseer($"Treasury holding — {set.Treasury:N0}/{treasuryGoal:N0} EU for {Mathf.RoundToInt(sustainHoldSeconds)}s.");
+                _loop.LogOverseer(Loc.F("Treasury holding — {0:N0}/{1:N0} EU for {2}s.", set.Treasury, treasuryGoal, Mathf.RoundToInt(sustainHoldSeconds)));
             }
         }
 
@@ -433,7 +449,7 @@ namespace SolarMajesty
             if (!_loggedFrenzy)
             {
                 _loggedFrenzy = true;
-                _loop?.LogOverseer("Dens frenzy — they know you're leaving.");
+                _loop?.LogOverseer(Loc.S("Dens frenzy — they know you're leaving."));
             }
         }
 
@@ -462,8 +478,10 @@ namespace SolarMajesty
                 }
             }
 
+            int size = OverseerRules.PressureWaveSize(Mathf.Max(1, pressureStalkerCount), LooseFaunaAlive());
+            if (size <= 0) return;
             int spawned = _loop.SpawnStalkerWave(
-                Mathf.Max(1, pressureStalkerCount),
+                size,
                 10f,
                 origin);
             if (spawned > 0)
@@ -500,6 +518,11 @@ namespace SolarMajesty
                 ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
                 new Color(0.35f, 0.95f, 0.55f));
             _loop.LogOverseer(offer.Body);
+            // Slow orbit over the colony before the verdict draws (the HUD waits for it).
+            bool spineDone = !ReplayRules.IsEndless && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue;
+            CameraBeatDirector.PlayVictory(_loop, ColonyLayout.CampusOriginFor(_loop.FocusedCampus), spineDone
+                ? Loc.S("THE SOLAR SYSTEM IS YOURS")
+                : Loc.F("{0} CONQUERED", CelestialBodyCatalog.Get(_loop.ActiveBody).DisplayNameText.ToUpperInvariant()));
             if (ReplayRules.IsEndless)
                 Debug.Log("[Mission] Victory — keep colonizing. Rating stands.");
             else
@@ -520,6 +543,41 @@ namespace SolarMajesty
                     Debug.Log("[Mission] Defeat — outpost overwhelmed.");
                 _loop.LogOverseer(FailDetail);
             }
+        }
+
+        /// <summary>Living fauna that are not a den's residents (pressure waves, yard pests).</summary>
+        private int LooseFaunaAlive()
+        {
+            int residents = 0;
+            var lairs = _loop.World != null ? _loop.World.Lairs : null;
+            if (lairs != null)
+            {
+                for (int i = 0; i < lairs.Count; i++)
+                {
+                    var spawned = lairs[i] != null ? lairs[i].Spawned : null;
+                    if (spawned == null) continue;
+                    for (int j = 0; j < spawned.Count; j++)
+                        if (spawned[j] != null && spawned[j].IsAlive) residents++;
+                }
+            }
+            return Mathf.Max(0, CountLivingStalkers() - residents);
+        }
+
+        /// <summary>
+        /// Fauna holding the dens gate: alive, not a town spawn, and not a yard pest or junk (<see cref="HoldsDens"/>). Burrow pests, edge raiders and
+        /// wreck junk keep coming after the last den; counting them flipped the gate open and shut
+        /// (autoplay: repeated "gates 1/3 / 2/3" after every den was cleared).
+        /// </summary>
+        internal static int CountDenFauna(System.Collections.Generic.IReadOnlyList<DustStalkerAgent> fauna)
+        {
+            if (fauna == null) return 0;
+            int n = 0;
+            for (int i = 0; i < fauna.Count; i++)
+            {
+                var s = fauna[i];
+                if (s != null && DensGate.Holds(s.IsAlive, s.IsTownSpawn) && HoldsDens(s.Kind, s.IsAlive, false)) n++;
+            }
+            return n;
         }
 
         /// <summary>

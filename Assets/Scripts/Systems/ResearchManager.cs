@@ -35,22 +35,22 @@ namespace SolarMajesty
 
         public static void WipeUnlocks()
         {
-            PlayerPrefs.DeleteKey(PrefsKey);
-            PlayerPrefs.DeleteKey(LegacyPrefsKey);
-            PlayerPrefs.Save();
+            GamePrefs.DeleteKey(PrefsKey);
+            GamePrefs.DeleteKey(LegacyPrefsKey);
+            GamePrefs.Save();
         }
 
         private void Load()
         {
-            string raw = PlayerPrefs.GetString(PrefsKey, "");
+            string raw = GamePrefs.GetString(PrefsKey, "");
             if (string.IsNullOrEmpty(raw))
             {
-                raw = PlayerPrefs.GetString(LegacyPrefsKey, "");
+                raw = GamePrefs.GetString(LegacyPrefsKey, "");
                 if (!string.IsNullOrEmpty(raw))
                 {
-                    PlayerPrefs.SetString(PrefsKey, raw);
-                    PlayerPrefs.DeleteKey(LegacyPrefsKey);
-                    PlayerPrefs.Save();
+                    GamePrefs.SetString(PrefsKey, raw);
+                    GamePrefs.DeleteKey(LegacyPrefsKey);
+                    GamePrefs.Save();
                 }
             }
             if (string.IsNullOrEmpty(raw)) return;
@@ -70,8 +70,8 @@ namespace SolarMajesty
         {
             if (_unlocked.Count == 0)
             {
-                PlayerPrefs.DeleteKey(PrefsKey);
-                PlayerPrefs.Save();
+                GamePrefs.DeleteKey(PrefsKey);
+                GamePrefs.Save();
                 return;
             }
             var sb = new System.Text.StringBuilder();
@@ -82,8 +82,8 @@ namespace SolarMajesty
                 sb.Append((int)id);
                 first = false;
             }
-            PlayerPrefs.SetString(PrefsKey, sb.ToString());
-            PlayerPrefs.Save();
+            GamePrefs.SetString(PrefsKey, sb.ToString());
+            GamePrefs.Save();
         }
 
         public int UnlockedCount => _unlocked.Count;
@@ -146,7 +146,7 @@ namespace SolarMajesty
 
         public static int SavedUnlockCount()
         {
-            string raw = PlayerPrefs.GetString(PrefsKey, "");
+            string raw = GamePrefs.GetString(PrefsKey, "");
             if (string.IsNullOrEmpty(raw)) return 0;
             int n = 0;
             var parts = raw.Split(',');
@@ -245,9 +245,9 @@ namespace SolarMajesty
         {
             var profile = CelestialBodyCatalog.Get(body);
             if (profile == null || profile.LaunchTech == TechId.None)
-                return "departure";
+                return Loc.S("departure");
             var def = TechCatalog.Get(profile.LaunchTech);
-            return def != null ? def.DisplayName : profile.LaunchTech.ToString();
+            return def != null ? def.DisplayNameText : profile.LaunchTech.ToString();
         }
 
         public TechId LaunchTechId(CelestialBodyId body)

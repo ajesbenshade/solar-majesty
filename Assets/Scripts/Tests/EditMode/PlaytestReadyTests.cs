@@ -23,35 +23,35 @@ namespace SolarMajesty.Tests
         [SetUp]
         public void SetUp()
         {
-            _hadSave = PlayerPrefs.HasKey(SaveFlag);
-            _hadMet = PlayerPrefs.HasKey(SaveMet);
-            _hadBoot = PlayerPrefs.HasKey(DemoSettings.BootPlayKey);
+            _hadSave = GamePrefs.HasKey(SaveFlag);
+            _hadMet = GamePrefs.HasKey(SaveMet);
+            _hadBoot = GamePrefs.HasKey(DemoSettings.BootPlayKey);
             _savedExistsFlag = DemoSettings.SaveExists;
-            _savedSave = PlayerPrefs.GetInt(SaveFlag, 0);
-            _savedMet = PlayerPrefs.GetInt(SaveMet, 0);
-            _savedBoot = PlayerPrefs.GetInt(DemoSettings.BootPlayKey, 0);
+            _savedSave = GamePrefs.GetInt(SaveFlag, 0);
+            _savedMet = GamePrefs.GetInt(SaveMet, 0);
+            _savedBoot = GamePrefs.GetInt(DemoSettings.BootPlayKey, 0);
         }
 
         [TearDown]
         public void TearDown()
         {
             DemoSettings.SaveExists = _savedExistsFlag;
-            if (_hadSave) PlayerPrefs.SetInt(SaveFlag, _savedSave);
-            else PlayerPrefs.DeleteKey(SaveFlag);
-            if (_hadMet) PlayerPrefs.SetInt(SaveMet, _savedMet);
-            else PlayerPrefs.DeleteKey(SaveMet);
-            if (_hadBoot) PlayerPrefs.SetInt(DemoSettings.BootPlayKey, _savedBoot);
-            else PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
-            PlayerPrefs.Save();
+            if (_hadSave) GamePrefs.SetInt(SaveFlag, _savedSave);
+            else GamePrefs.DeleteKey(SaveFlag);
+            if (_hadMet) GamePrefs.SetInt(SaveMet, _savedMet);
+            else GamePrefs.DeleteKey(SaveMet);
+            if (_hadBoot) GamePrefs.SetInt(DemoSettings.BootPlayKey, _savedBoot);
+            else GamePrefs.DeleteKey(DemoSettings.BootPlayKey);
+            GamePrefs.Save();
         }
 
         [Test]
         public void ContinueCopy_SaysCredNotMet()
         {
             DemoSettings.SaveExists = true;
-            PlayerPrefs.SetInt(SaveFlag, 1);
-            PlayerPrefs.SetInt(SaveMet, 170);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(SaveFlag, 1);
+            GamePrefs.SetInt(SaveMet, 170);
+            GamePrefs.Save();
 
             string label = DemoSettings.ContinueButtonLabel();
             string detail = DemoSettings.ContinueDetail();
@@ -64,8 +64,8 @@ namespace SolarMajesty.Tests
         [Test]
         public void BootStraightIntoPlay_UnsetPrefsMeansOff()
         {
-            PlayerPrefs.DeleteKey(DemoSettings.BootPlayKey);
-            Assert.AreEqual(0, PlayerPrefs.GetInt(DemoSettings.BootPlayKey, 0),
+            GamePrefs.DeleteKey(DemoSettings.BootPlayKey);
+            Assert.AreEqual(0, GamePrefs.GetInt(DemoSettings.BootPlayKey, 0),
                 "player builds must not skip title; BootStraightIntoPlay is editor still / CaptureStill only");
         }
 

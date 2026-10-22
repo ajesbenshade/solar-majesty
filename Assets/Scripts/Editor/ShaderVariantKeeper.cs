@@ -16,6 +16,8 @@ namespace SolarMajesty.EditorTools
     public static class ShaderVariantKeeper
     {
         private const string Folder = "Assets/Resources/ShaderKeep";
+        // ShaderKeepTests checks this asset by path.
+        private const string KeepSkyPanorama = "SM_Keep_SkyPanorama";
 
         [MenuItem("Solar Majesty/Build/Keep Runtime Shader Variants", priority = 199)]
         public static void Create()
@@ -33,6 +35,9 @@ namespace SolarMajesty.EditorTools
             Keep("Universal Render Pipeline/Lit", "SM_Keep_LitCutout", transparent: false, emission: false, cutout: true);
             // Instanced ground cover loads this material at runtime (GroundCover.MaterialPath).
             Keep(GroundCover.ShaderName, "SM_Keep_GroundCover", transparent: false, emission: false);
+            // The diorama and camera-beat sky is built with Shader.Find, so nothing else references the
+            // shader and player builds strip it (flat colour band instead of the painted sky).
+            Keep(SkyPanorama.ShaderName, KeepSkyPanorama, transparent: false, emission: false);
             AssetDatabase.SaveAssets();
             Debug.Log("[ShaderVariantKeeper] Keeper materials written to " + Folder);
         }

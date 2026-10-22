@@ -4,7 +4,7 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Departure craft marker on the landing pad once launch tech is ready.
-    /// Reuses the Phase 4 parked pad ship (Dress_Starship) when present.
+    /// Reuses the pad's parked Colony Lifter when present, otherwise builds one.
     /// </summary>
     public static class LaunchSite
     {
@@ -13,6 +13,16 @@ namespace SolarMajesty
         private static bool _spawnedReadyFx;
 
         public static Vector3 PadWorld => ColonyLayout.CampusOrigin + new Vector3(16f, 0f, 0f);
+
+        /// <summary>The craft on the pad (staged, or the parked lifter), for the launch camera beat. May be null.</summary>
+        public static Transform Craft
+        {
+            get
+            {
+                var craft = _craft != null ? _craft : FindExistingShip(null);
+                return craft != null ? craft.transform : null;
+            }
+        }
 
         public static void EnsureReady(Transform parent, bool heavyShip)
         {
@@ -26,21 +36,12 @@ namespace SolarMajesty
             _craft = FindExistingShip(parent);
             if (_craft == null)
             {
-                Vector3 pad = PadWorld;
-                GameObject prefab = BuildingVisualCatalog.LoadStarship();
-                if (prefab != null)
-                {
-                    _craft = ColonyVisualUtility.InstantiateOriented(prefab, pad, parent, 0f);
-                    float scale = heavyShip ? ColonyLayout.ShipScale * 1.15f : ColonyLayout.ShipScale;
-                    _craft.transform.localScale = Vector3.one * scale;
-                }
-                else
-                {
-                    _craft = new GameObject(heavyShip ? "MarsShip" : "LunarRocket");
-                    if (parent != null) _craft.transform.SetParent(parent, false);
-                    _craft.transform.position = pad;
-                    BuildStack(_craft.transform, heavyShip);
-                }
+                _craft = new GameObject(heavyShip ? "MarsLifter" : "LunarLifter");
+                if (parent != null) _craft.transform.SetParent(parent, false);
+                _craft.transform.position = PadWorld;
+                // The heavier Mars-bound craft is the same design, a size up.
+                _craft.transform.localScale = Vector3.one * (heavyShip ? 1.15f : 1f);
+                HeroBuildingKits.BuildColonyLifter(_craft.transform);
 
                 ColonyVisualUtility.EnsureUrpMaterials(_craft);
                 ColonyVisualUtility.SnapToGround(_craft);
@@ -108,7 +109,7 @@ namespace SolarMajesty
                     var t = rends[i];
                     if (t == null) continue;
                     string n = t.name;
-                    if (n.IndexOf("Starship", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    if (n == HeroBuildingKits.LifterObjectName ||
                         n.IndexOf("DepartureCraft", System.StringComparison.OrdinalIgnoreCase) >= 0)
                         return t.gameObject;
                 }
@@ -119,49 +120,10 @@ namespace SolarMajesty
             {
                 var t = all[i];
                 if (t == null) continue;
-                if (t.name.IndexOf("Starship", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                if (t.name == HeroBuildingKits.LifterObjectName)
                     return t.gameObject;
             }
             return null;
-        }
-
-        private static void BuildStack(Transform root, bool heavy)
-        {
-            float h = heavy ? 4.2f : 3.2f;
-            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Fuselage";
-            body.transform.SetParent(root, false);
-            body.transform.localPosition = new Vector3(0f, h * 0.45f, 0f);
-            body.transform.localScale = new Vector3(heavy ? 1.1f : 0.85f, h * 0.5f, heavy ? 1.1f : 0.85f);
-            Object.Destroy(body.GetComponent<Collider>());
-            Tint(body, new Color(0.86f, 0.88f, 0.9f));
-
-            var nose = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            nose.name = "Nose";
-            nose.transform.SetParent(root, false);
-            nose.transform.localPosition = new Vector3(0f, h * 0.95f, 0f);
-            nose.transform.localScale = Vector3.one * (heavy ? 0.95f : 0.75f);
-            Object.Destroy(nose.GetComponent<Collider>());
-            Tint(nose, new Color(0.96f, 0.42f, 0.08f));
-
-            var fin = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            fin.name = "Fin";
-            fin.transform.SetParent(root, false);
-            fin.transform.localPosition = new Vector3(0.55f, 0.55f, 0f);
-            fin.transform.localScale = new Vector3(0.12f, 0.9f, 0.55f);
-            Object.Destroy(fin.GetComponent<Collider>());
-            Tint(fin, new Color(0.08f, 0.08f, 0.09f));
-        }
-
-        private static void Tint(GameObject go, Color c)
-        {
-            var rend = go.GetComponent<Renderer>();
-            if (rend == null) return;
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                   ?? Shader.Find("Sprites/Default"));
-            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
-            else if (mat.HasProperty("_Color")) mat.color = c;
-            rend.sharedMaterial = mat;
         }
     }
 }

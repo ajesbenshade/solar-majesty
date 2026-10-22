@@ -90,7 +90,7 @@ namespace SolarMajesty
             if (!string.IsNullOrEmpty(p.Designation)) sb.Append(" \"").Append(p.Designation).Append('"');
             sb.Append(", a level ").Append(Mathf.Max(1, p.Level)).Append(' ').Append(Safe(p.ClassName, "specialist"));
             if (!string.IsNullOrEmpty(p.Rank)) sb.Append(" (").Append(p.Rank.ToLowerInvariant()).Append(" service record)");
-            sb.Append(", one of the autonomous robot heroes of a Majesty-style space colony");
+            sb.Append(", one of the autonomous robot heroes of a space colony run by indirect command");
             if (!string.IsNullOrEmpty(p.World)) sb.Append(" on ").Append(p.World);
             sb.Append(". The player is the Core, the central AI that coordinates the colony's robot AIs: it posts bounty flags and builds, but you choose your own work. Call the player \"the Core\", never \"Overseer\". ");
 
@@ -119,7 +119,9 @@ namespace SolarMajesty
               .Append("You are a frontier robot, not an assistant: never offer help, never ask what they want, never say 'let me know'. Have opinions. ")
               .Append("You cannot promise to change what you do; if asked, name your price. ")
               .Append("Answer exactly what was asked, in your own words; never repeat an earlier reply. ")
-              .Append("Talk like a blunt, funny frontier worker: contractions, short clauses, concrete details from your situation. /no_think");
+              .Append("Talk like a blunt, funny frontier worker: contractions, short clauses, concrete details from your situation. ")
+              .Append(AiContentGuard.PromptRule)
+              .Append("/no_think");
             return sb.ToString();
         }
 
@@ -194,7 +196,8 @@ namespace SolarMajesty
             if (string.IsNullOrEmpty(raw)) return "";
             string s = StripThinking(raw, out bool openThink);
             if (openThink) return "";
-            return Tidy(s, false, speaker);
+            string view = Tidy(s, false, speaker);
+            return AiContentGuard.AllowsOutput(view) ? view : "";
         }
 
         /// <summary>The finished reply: one tidy paragraph, capped at a sentence boundary. Null if unusable.</summary>
@@ -208,6 +211,7 @@ namespace SolarMajesty
             if (s.Length < 2) return null;
             string lower = s.ToLowerInvariant();
             if (lower.Contains("as an ai") || lower.Contains("language model")) return null;
+            if (!AiContentGuard.AllowsOutput(s)) return null;
             return s;
         }
 

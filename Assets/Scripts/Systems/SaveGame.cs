@@ -14,7 +14,7 @@ namespace SolarMajesty
     public sealed class SaveGame
     {
         /// <summary>Bump when a field's meaning changes. Readers reject unknown future versions.</summary>
-        public const int CurrentVersion = 7; // v7: village projects and tax collectors
+        public const int CurrentVersion = 8; // v8: settlement.population counts worker drones (+ droneSeconds)
 
         public int version = CurrentVersion;
         public string gameVersion = "";
@@ -37,6 +37,11 @@ namespace SolarMajesty
         public string rosterBlob;
         public bool firstHourDemo;
         public bool tutorialDone;
+        /// <summary>
+        /// This world's tallies, so achievements like Full Crew or Rebuilder survive quit and Continue.
+        /// Older files read as zeros, which is what they already had after a reload.
+        /// </summary>
+        public RunStats stats = new RunStats();
 
         public bool MatchesWorld(CelestialBodyId expectedBody, int expectedSeed) =>
             body == (int)expectedBody && seed == expectedSeed;
@@ -60,6 +65,11 @@ namespace SolarMajesty
         public List<SaveLair> lairs = new List<SaveLair>();
         public List<SaveParty> parties = new List<SaveParty>();
         public List<SaveRosterEntry> roster = new List<SaveRosterEntry>();
+        /// <summary>
+        /// Re-fabs under way. The wreck is spent and the EU paid when one is queued, so a save
+        /// without them lost the robot. Empty in older saves.
+        /// </summary>
+        public List<SaveRefab> refabs = new List<SaveRefab>();
 
         /// <summary>Human-readable one-liner for a load menu row.</summary>
         public string Describe()
@@ -133,8 +143,14 @@ namespace SolarMajesty
     [Serializable]
     public sealed class SaveSettlementState
     {
+        /// <summary>
+        /// Worker drones housed at the charging stations (v8). Older saves hold 0 (gold-only builds)
+        /// or the retired colonist census; either way it is clamped to the berths on load.
+        /// </summary>
         public int population;
         public int populationGoal;
+        /// <summary>Seconds until the next drone (v8); 0 means a full interval.</summary>
+        public float droneSeconds;
         public int villageHabs;
         public int bonusBeds;
         public bool hasOutpost;
@@ -272,6 +288,16 @@ namespace SolarMajesty
         public bool corpse;
     }
 
+    /// <summary>A re-fab under way at a workshop (its centre on the plane).</summary>
+    [Serializable]
+    public sealed class SaveRefab
+    {
+        public int specialistClass;
+        public float px;
+        public float pz;
+        public float progressSeconds;
+    }
+
     [Serializable]
     public sealed class SaveFauna
     {
@@ -282,6 +308,9 @@ namespace SolarMajesty
         public float py;
         public float pz;
         public float health;
+        // DensGate.EncodeSlot: 0 den fauna, kingdom spawn table row + 1 (town burrow, edge raider,
+        // wreck junk), -1 scrap-pile junk. Town spawns never hold the dens gate, so Continue keeps the tag.
+        public int townSpawnSlot;
     }
 
     [Serializable]

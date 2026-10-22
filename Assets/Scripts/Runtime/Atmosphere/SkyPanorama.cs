@@ -29,7 +29,7 @@ namespace SolarMajesty
             if (shader == null)
             {
                 _shaderMissing = true; // warn once; the diorama camera still works, just without sky art
-                Debug.LogWarning($"[Sky] {ShaderName} missing — run Solar Majesty → Render → Configure URP For Look Target (adds it to Always Included Shaders).");
+                Debug.LogWarning($"[Sky] {ShaderName} missing — run Solar Majesty → Build → Keep Runtime Shader Variants (Resources/ShaderKeep keeps it in player builds).");
                 return false;
             }
 

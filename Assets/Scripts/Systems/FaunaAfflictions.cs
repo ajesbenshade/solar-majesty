@@ -15,6 +15,8 @@ namespace SolarMajesty
         public string id;
         [Tooltip("Word flashed over the robot, e.g. CORRODED.")]
         public string label;
+        /// <summary><see cref="label"/> in the current language; the field stays English (tuning data).</summary>
+        public string LabelText => Loc.S(label);
         public FaunaKind kind;
         [Tooltip("Only alpha (elite) creatures of this kind use it.")]
         public bool eliteOnly;

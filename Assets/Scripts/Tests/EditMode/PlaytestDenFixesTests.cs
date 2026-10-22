@@ -330,8 +330,8 @@ namespace SolarMajesty.Tests
             Assert.AreEqual("Pests drained 60 EU from 3 building batteries.", line);
             Assert.AreEqual(
                 "Pests drained 10 EU from 1 building battery.",
-                CompactGrok.PestsLifted(10, 1));
-            StringAssert.Contains("20 EU walked off HAB-1", CompactGrok.LevyStolen(20, "HAB-1"));
+                CompactJex.PestsLifted(10, 1));
+            StringAssert.Contains("20 EU walked off HAB-1", CompactJex.LevyStolen(20, "HAB-1"));
 
             var manifest = Resources.Load<TextAsset>("Audio/Voices/voices");
             if (manifest != null)

@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Committed overhaul numbers from Docs/GROK_GAMEPLAY_OVERHAUL.md.
+    /// Committed overhaul numbers from Docs/JEX_GAMEPLAY_OVERHAUL.md.
     /// Does not change SpecialistBrain.ScoreFlag.
     /// </summary>
     public static class OverseerRules
@@ -24,11 +24,11 @@ namespace SolarMajesty
         public const int ReviveCostMaxSteps = 8;
         public const float FobotYardArrive = 28f;
 
-        public const string GrokYardFirstBill =
+        public const string JexYardFirstBill =
             "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.";
-        public const string GrokYardUnaffordable =
+        public const string JexYardUnaffordable =
             "Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
-        public const string GrokYardMissing =
+        public const string JexYardMissing =
             "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building.";
         public const float ReviveCooldown = 120f;
         public const float ReviveHp = 0.50f;
@@ -132,6 +132,19 @@ namespace SolarMajesty
         /// <summary>Continue will not put more than this many saved fauna back on one den.</summary>
         public const int MaxFaunaPerDen = 8;
 
+        /// <summary>
+        /// Den pressure waves top the loose fauna (everything that is not a den resident) up to
+        /// this many and no further. Uncapped, two stalkers every 75 s piled 40-80 onto a colony
+        /// still working on its dens (autoplay, Earth), every one of which the dens gate then
+        /// wanted dead, while Continue put back only this many (<see cref="FaunaRestoreCap"/>
+        /// counts loose fauna as one group): a save and load changed the fight.
+        /// </summary>
+        public const int MaxPressureFauna = MaxFaunaPerDen;
+
+        /// <summary>How many of a requested pressure wave may spawn with this many loose fauna alive.</summary>
+        public static int PressureWaveSize(int requested, int looseAlive) =>
+            Mathf.Clamp(MaxPressureFauna - Mathf.Max(0, looseAlive), 0, Mathf.Max(0, requested));
+
         /// <summary>Game-seconds without closing on a Clear Threat before one repath, then a release.</summary>
         public const float ClearThreatStuckSeconds = 10f;
 
@@ -190,12 +203,12 @@ namespace SolarMajesty
         /// <summary>HAB purse left this long can be stolen by fauna at the door. 3 tax ticks.</summary>
         public const float LevyHabStaleSeconds = 72f;
 
-        public const string GrokLevyStolenCourier =
+        public const string JexLevyStolenCourier =
             "Haul lost the levy on the road.";
-        public const string GrokLevyStolenHab =
+        public const string JexLevyStolenHab =
             "EU was napping on the HAB. A mite just made a withdrawal.";
-        public const string GrokLevyHome =
-            "Haul walked the batteries home. EU is in the till. Do not click the crate.";
+        public const string JexLevyHome =
+            "Haul walked the batteries home. EU is in the till. Do not click the crate.";
 
         public const float PressureInterval = 75f;
         public const float FrenzyPressure = 50f;
@@ -360,25 +373,25 @@ namespace SolarMajesty
             switch (kind)
             {
                 case FlagRefusalKind.Greed:
-                    return $"{cls} wants {ask} — raise +";
+                    return Loc.F("{0} wants {1} — raise +", cls, ask);
                 case FlagRefusalKind.TooFar:
-                    return $"too far for {cls} — {reachMeters}m";
+                    return Loc.F("too far for {0} — {1}m", cls, reachMeters);
                 case FlagRefusalKind.Hurt:
-                    return $"{cls} is hurt — wait";
+                    return Loc.F("{0} is hurt — wait", cls);
                 case FlagRefusalKind.NotMyJob:
-                    return $"not a {cls} job";
+                    return Loc.F("not a {0} job", cls);
                 case FlagRefusalKind.Tired:
-                    return $"{cls} is tired — wait";
+                    return Loc.F("{0} is tired — wait", cls);
                 case FlagRefusalKind.Hunting:
-                    return $"{cls} is hunting pests";
+                    return Loc.F("{0} is hunting pests", cls);
                 case FlagRefusalKind.Orders:
-                    return $"orders exclude {cls}";
+                    return Loc.F("orders exclude {0}", cls);
                 case FlagRefusalKind.Ignored:
                     if (ask > 0 && bounty + 0.5f >= ask)
-                        return $"{cls} won't take the walk";
-                    return "Ignored — raise bounty (+)";
+                        return Loc.F("{0} won't take the walk", cls);
+                    return Loc.S("Ignored — raise bounty (+)");
                 default:
-                    return "Ignored — raise bounty (+)";
+                    return Loc.S("Ignored — raise bounty (+)");
             }
         }
     }

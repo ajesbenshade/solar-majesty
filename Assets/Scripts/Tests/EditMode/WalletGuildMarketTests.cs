@@ -197,12 +197,12 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void CompactGrok_HasTheBoardAsides()
+        public void CompactJex_HasTheBoardAsides()
         {
-            StringAssert.Contains("EU", CompactGrok.LevyStolen(4, "HAB"));
-            StringAssert.Contains("invoice", CompactGrok.YardNeedsBuilding());
-            StringAssert.Contains("lunch", CompactGrok.SiphonBlocked(12));
-            StringAssert.Contains("fog", CompactGrok.DenCharted("SCOUT"));
+            StringAssert.Contains("EU", CompactJex.LevyStolen(4, "HAB"));
+            StringAssert.Contains("invoice", CompactJex.YardNeedsBuilding());
+            StringAssert.Contains("lunch", CompactJex.SiphonBlocked(12));
+            StringAssert.Contains("fog", CompactJex.DenCharted("SCOUT"));
         }
 
         [Test]

@@ -1,5 +1,5 @@
 {
-  "_doc": "Authored barks, baked by render_voices.py into Assets/Resources/Audio/Voices/. Keys are speaker -> cue -> takes. Cues must match VoiceCue in Assets/Scripts/Systems/Voice/VoiceBank.cs. Keep hero barks short (<= 8 words) and name-free: every robot of a class shares them. Overseer lines from GrokCatalog/OverseerRules/CompactGrok are extracted from the C# sources automatically; the overseer entries here are the generic alert fallbacks.",
+  "_doc": "Authored barks, baked by render_voices.py into Assets/Resources/Audio/Voices/. Keys are speaker -> cue -> takes. Cues must match VoiceCue in Assets/Scripts/Systems/Voice/VoiceBank.cs. Keep hero barks short (<= 8 words) and name-free: every robot of a class shares them. Overseer lines from JexCatalog/OverseerRules/CompactJex are extracted from the C# sources automatically; the overseer entries here are the generic alert fallbacks.",
 
   "hero.EngineerBot": {
     "select":  ["Clock's running, boss.", "Talk fast. I bill by the minute.", "Got a job? Got EU?"],

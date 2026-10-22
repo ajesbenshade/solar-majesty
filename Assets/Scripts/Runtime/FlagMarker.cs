@@ -254,7 +254,7 @@ namespace SolarMajesty
         {
             if (_handle == null) return;
 
-            string bountyText = $"{FlagBountySync.Amount(_handle):N0} EU";
+            string bountyText = Loc.F("{0:N0} EU", FlagBountySync.Amount(_handle));
             _stackHidden = false;
             if (_manager != null && _handle.Data != null)
             {
@@ -268,8 +268,8 @@ namespace SolarMajesty
                     if (ReferenceEquals(flag, _handle))
                         mine = items.Count;
                     string title = !string.IsNullOrEmpty(flag.Data.displayName)
-                        ? flag.Data.displayName
-                        : SpecialistFlavor.FlagShort(flag.Data.flagType);
+                        ? Loc.S(flag.Data.displayName)
+                        : SpecialistFlavor.FlagLabel(flag.Data.flagType);
                     items.Add(new FlagLabelStack.Item
                     {
                         World = flag.WorldPosition,
@@ -307,19 +307,21 @@ namespace SolarMajesty
             if (_metaLabel != null)
             {
                 string type = _handle.Data != null && !string.IsNullOrEmpty(_handle.Data.displayName)
-                    ? _handle.Data.displayName
-                    : (_handle.Data != null ? SpecialistFlavor.FlagShort(_handle.Data.flagType) : "?");
+                    ? Loc.S(_handle.Data.displayName)
+                    : (_handle.Data != null ? SpecialistFlavor.FlagLabel(_handle.Data.flagType) : "?");
                 float work = _manager != null ? _manager.GetWorkRemaining(_handle) : 0f;
                 int claims = _handle.ClaimCount;
-                string claimTxt = claims > 0 ? $"CLAIMED x{claims}" : "OPEN";
+                string claimTxt = claims > 0 ? Loc.F("CLAIMED x{0}", claims) : Loc.S("OPEN");
                 string interest = string.IsNullOrEmpty(_handle.InterestLabel)
                     ? (claims > 0 ? claimTxt : "…")
                     : _handle.InterestLabel;
                 string orders = _handle.Orders != null && _handle.Orders.HasRules
-                    ? $"\nORDERS  {_handle.Orders.Summary()}"
+                    ? "\n" + Loc.F("ORDERS  {0}", _handle.Orders.Summary())
                     : "";
-                string keys = _selected ? "  ·  +/− bounty" : "";
-                _metaLabel.text = $"{type}  ·  {interest}\n{claimTxt}  ·  RMB cancel{keys}  ·  w {work:F1}{orders}";
+                string keys = _selected
+                    ? "  ·  " + Loc.F("{0}/{1} bounty", InputBindings.Hint(GameAction.BountyUp), InputBindings.Hint(GameAction.BountyDown))
+                    : "";
+                _metaLabel.text = Loc.F("{0}  ·  {1}\n{2}  ·  RMB cancel{3}  ·  w {4:F1}{5}", type, interest, claimTxt, keys, work, orders);
                 _metaLabel.color = _handle.InterestCount > 0
                     ? new Color(0.85f, 1f, 0.55f)
                     : new Color(1f, 0.55f, 0.35f);

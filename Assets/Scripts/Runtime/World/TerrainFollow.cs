@@ -102,6 +102,57 @@ namespace SolarMajesty
             }
         }
 
+        // Re-cooking the ground's MeshCollider (295k triangles) on the main thread was the ~75 ms
+        // hitch every time a building landed. Physics.BakeMesh cooks it on a worker; assigning the
+        // mesh afterwards reuses that cooked data. While a cook runs the mesh must not change, so
+        // new pads wait in Pending until it finishes (a frame or two); raycasts meanwhile hit the
+        // previous collider, which only differs under the new pad.
+        private static System.Threading.Tasks.Task _cook;
+        private static MeshCollider _cookCollider;
+        private static Mesh _cookMesh;
+
+        /// <summary>Block until a background collider cook finishes. Call before the scene unloads.</summary>
+        public static void CompletePending()
+        {
+            if (_cook == null) return;
+            try { _cook.Wait(); }
+            catch (System.Exception e) { Debug.LogWarning("[TerrainGrading] Collider cook failed: " + e.Message); }
+            _cook = null;
+            _cookCollider = null;
+            _cookMesh = null;
+        }
+
+        private static void Tick()
+        {
+            if (_cook != null)
+            {
+                if (!_cook.IsCompleted) return;
+                bool ok = !_cook.IsFaulted;
+                _cook = null;
+                if (ok && _cookCollider != null && _cookMesh != null)
+                {
+                    _cookCollider.sharedMesh = null;
+                    _cookCollider.sharedMesh = _cookMesh;
+                }
+                _cookCollider = null;
+                _cookMesh = null;
+            }
+            Flush();
+        }
+
+        private static void StartCook(MeshCollider col, Mesh mesh)
+        {
+            var id = mesh.GetEntityId();
+            bool convex = col.convex;
+            var options = col.cookingOptions;
+            _cookCollider = col;
+            _cookMesh = mesh;
+            // However the scene goes away (our reload, a direct LoadScene, quitting), the ground's
+            // OnDestroy waits for the worker before the mesh it is reading can be freed.
+            if (col.GetComponent<CookGuard>() == null) col.gameObject.AddComponent<CookGuard>();
+            _cook = System.Threading.Tasks.Task.Run(() => Physics.BakeMesh(id, convex, options));
+        }
+
         private static void Flush()
         {
             var bake = TerrainDataBake.Current;
@@ -125,15 +176,20 @@ namespace SolarMajesty
             if (!changed || ground == null) return;
             var col = ground.GetComponent<MeshCollider>();
             if (col != null && mesh != null)
-            {
-                col.sharedMesh = null;
-                col.sharedMesh = mesh;
-            }
+                StartCook(col, mesh);
         }
 
         private sealed class Runner : MonoBehaviour
         {
-            private void LateUpdate() => Flush();
+            private void LateUpdate() => Tick();
+
+            private void OnApplicationQuit() => CompletePending();
+        }
+
+        /// <summary>Sits on the ground while a cook may be running; see <see cref="StartCook"/>.</summary>
+        private sealed class CookGuard : MonoBehaviour
+        {
+            private void OnDestroy() => CompletePending();
         }
     }
 }

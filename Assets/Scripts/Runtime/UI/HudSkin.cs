@@ -76,13 +76,29 @@ namespace SolarMajesty
             _body = Resources.Load<Font>("UI/Fonts/HudBody") ?? OsFont(BodyFaces, installed) ?? _display;
         }
 
+        /// <summary>
+        /// Glyph fallbacks behind the chosen face, so a translation into Cyrillic, Greek, Chinese,
+        /// Japanese, Korean or an Indic script draws its letters instead of boxes. Windows ships all
+        /// of these; any that are missing are skipped.
+        /// </summary>
+        private static readonly string[] ScriptFallbacks =
+        {
+            "Segoe UI", "Segoe UI Symbol", "Microsoft YaHei UI", "Microsoft JhengHei UI", "Yu Gothic UI",
+            "Malgun Gothic", "Nirmala UI", "Leelawadee UI", "Arial Unicode MS"
+        };
+
         private static Font OsFont(string[] faces, HashSet<string> installed)
         {
             if (installed == null || installed.Count == 0) return null;
             for (int i = 0; i < faces.Length; i++)
             {
                 if (!installed.Contains(faces[i])) continue;
-                var font = Font.CreateDynamicFontFromOSFont(faces[i], 14);
+                var chain = new List<string> { faces[i] };
+                foreach (string f in ScriptFallbacks)
+                {
+                    if (installed.Contains(f) && !chain.Contains(f)) chain.Add(f);
+                }
+                var font = Font.CreateDynamicFontFromOSFont(chain.ToArray(), 14);
                 if (font != null)
                 {
                     font.hideFlags = HideFlags.HideAndDontSave;
@@ -92,11 +108,16 @@ namespace SolarMajesty
             return null;
         }
 
+        /// <summary>
+        /// Label style. <paramref name="size"/> is the size at 100 % text; the player's TEXT SIZE
+        /// (<see cref="HudTextScale"/>) is applied here, so a cached style is rebuilt when
+        /// <see cref="HudTextScale.Version"/> changes.
+        /// </summary>
         public static GUIStyle Text(Font font, int size, FontStyle style, Color color, TextAnchor anchor) =>
             new GUIStyle
             {
                 font = font,
-                fontSize = size,
+                fontSize = HudTextScale.Font(size),
                 fontStyle = style,
                 alignment = anchor,
                 wordWrap = false,
@@ -363,12 +384,16 @@ namespace SolarMajesty
         // ---- skin (scrollbars, sliders, text field) --------------------------------------------
 
         private static GUISkin _skin;
+        private static int _skinTextVersion = -1;
 
         /// <summary>Copy of the default skin with slim scrollbars, brass sliders, and a glass text field. Call inside OnGUI.</summary>
         public static GUISkin Skin()
         {
-            if (_skin != null) return _skin;
+            if (_skin != null && _skinTextVersion == HudTextScale.Version) return _skin;
+            _skinTextVersion = HudTextScale.Version;
             EnsureChrome();
+            // A TEXT SIZE change rebuilds the skin (the text field's font). The old copy may still be
+            // GUI.skin for this pass, so it is left for the GC rather than destroyed mid-frame.
             _skin = UnityEngine.Object.Instantiate(GUI.skin);
             _skin.hideFlags = HideFlags.HideAndDontSave;
             _skin.font = Body;
@@ -414,7 +439,7 @@ namespace SolarMajesty
             _skin.textField = new GUIStyle
             {
                 font = Body,
-                fontSize = 12,
+                fontSize = HudTextScale.Font(12),
                 alignment = TextAnchor.MiddleLeft,
                 padding = new RectOffset(8, 8, 2, 2),
                 border = new RectOffset(PlateBorder, PlateBorder, PlateBorder, PlateBorder),

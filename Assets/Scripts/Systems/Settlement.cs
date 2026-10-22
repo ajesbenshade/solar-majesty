@@ -33,6 +33,71 @@ namespace SolarMajesty
         public bool EverHadHab { get; private set; }
         public int Habs => CoreHabs + VillageHabs;
 
+        // ---------------------------------------------------------------- worker drones
+        // The economy's worker drones (not the heroes) live at the charging stations. These are
+        // the pre-gold-economy population rules, renamed: 3 berths a station, a starter crew of 2
+        // with the first station, one more drone every 18 s while a berth is free, and drones
+        // that lose their berth (a station destroyed) are lost. Gene Vault adds 3 berths and,
+        // with the Climate Loom, shortens the interval. Homesteader reads the peak.
+
+        /// <summary>Drones one charging station houses (the old HAB bed count).</summary>
+        public const int DronesPerCharger = 3;
+        /// <summary>Drones that arrive with the first charging station.</summary>
+        public const int StarterDrones = 2;
+        /// <summary>Seconds between drones while a berth is free (the old birth interval).</summary>
+        public const float BaseDroneInterval = 18f;
+
+        /// <summary>Worker drones housed at the charging stations.</summary>
+        public int Drones { get; private set; }
+        /// <summary>Extra berths from research (Gene Vault).</summary>
+        public int BonusBerths { get; set; }
+        /// <summary>Research scale on <see cref="BaseDroneInterval"/> (Gene Vault, Climate Loom).</summary>
+        public float DroneIntervalScale { get; set; } = 1f;
+        public int DroneCapacity => DroneCapacityFor(Habs, BonusBerths);
+        public int FreeBerths => Mathf.Max(0, DroneCapacity - Drones);
+        public float DroneInterval => BaseDroneInterval * Mathf.Clamp(DroneIntervalScale, 0.25f, 2f);
+        /// <summary>Seconds until the next drone, while a berth is free.</summary>
+        public float DroneTimer => _droneTimer;
+        public bool CanAddDrone => Drones > 0 && Drones < DroneCapacity;
+
+        public static int DroneCapacityFor(int chargers, int bonusBerths = 0) =>
+            chargers <= 0 ? 0 : chargers * DronesPerCharger + Mathf.Max(0, bonusBerths);
+
+        /// <summary>A save's drone count, clamped to the berths standing; a charged yard with none gets the starter crew.</summary>
+        public void RestoreDrones(int drones, float timer = 0f)
+        {
+            Drones = Mathf.Clamp(drones, 0, DroneCapacity);
+            if (Drones <= 0) SeedStarterDrones();
+            _droneTimer = timer > 0f ? Mathf.Min(timer, DroneInterval) : DroneInterval;
+        }
+
+        private void SeedStarterDrones()
+        {
+            if (Drones > 0 || Habs <= 0) return;
+            Drones = Mathf.Min(StarterDrones, DroneCapacity);
+        }
+
+        private void ClampDrones()
+        {
+            if (Drones > DroneCapacity) Drones = DroneCapacity;
+        }
+
+        private void TickDrones(float dt)
+        {
+            if (!CanAddDrone)
+            {
+                _droneTimer = DroneInterval;
+                return;
+            }
+            _droneTimer -= dt;
+            if (_droneTimer > 0f) return;
+            _droneTimer += DroneInterval;
+            if (_droneTimer <= 0f) _droneTimer = DroneInterval;
+            Drones++;
+        }
+
+        private float _droneTimer = BaseDroneInterval;
+
         /// <summary>Sustain objective: treasury to hold and income to keep (set per body).</summary>
         public int TreasuryGoal { get; private set; } = 5000;
         public int IncomeGoalPerMin { get; private set; } = OverseerRules.SustainMetPerMin;
@@ -50,12 +115,12 @@ namespace SolarMajesty
             get
             {
                 if (!HasCommons)
-                    return "raise Colony Commons first";
+                    return Loc.S("raise Colony Commons first");
                 if (Treasury < TreasuryGoal)
-                    return $"grow the treasury to {TreasuryGoal:N0} EU (now {Treasury:N0})";
+                    return Loc.F("grow the treasury to {0:N0} EU (now {1:N0})", TreasuryGoal, Treasury);
                 if (NetMetalsPerMin < IncomeGoalPerMin)
-                    return $"keep income at {IncomeGoalPerMin:N0}+ EU/min — Haul, mines, till share";
-                return "holding — keep the treasury and income up";
+                    return Loc.F("keep income at {0:N0}+ EU/min — Haul, mines, till share", IncomeGoalPerMin);
+                return Loc.S("holding — keep the treasury and income up");
             }
         }
 
@@ -113,6 +178,8 @@ namespace SolarMajesty
         {
             if (dt <= 0f || _resources == null) return;
 
+            TickDrones(dt);
+
             _taxTimer -= dt;
             if (_taxTimer <= 0f)
             {
@@ -131,7 +198,7 @@ namespace SolarMajesty
                 case BuildingCategory.Farm: Farms++; break;
                 case BuildingCategory.Mine: Mines++; break;
                 case BuildingCategory.Power: SolarFarms++; break;
-                case BuildingCategory.Habitat: CoreHabs++; EverHadHab = true; break;
+                case BuildingCategory.Habitat: CoreHabs++; EverHadHab = true; SeedStarterDrones(); break;
                 case BuildingCategory.GuildHall: GuildCount++; break;
             }
         }
@@ -165,6 +232,7 @@ namespace SolarMajesty
                     GuildCount = Mathf.Max(0, GuildCount - 1);
                     break;
             }
+            ClampDrones();
         }
 
         public void ClaimOutpost() => HasOutpost = true;
@@ -173,9 +241,14 @@ namespace SolarMajesty
         {
             VillageHabs++;
             EverHadHab = true;
+            SeedStarterDrones();
         }
 
-        public void LoseVillageHab() => VillageHabs = Mathf.Max(0, VillageHabs - 1);
+        public void LoseVillageHab()
+        {
+            VillageHabs = Mathf.Max(0, VillageHabs - 1);
+            ClampDrones();
+        }
 
         /// <summary>Majesty days elapsed since the runtime last paid civic daily tax into tills.</summary>
         public int PendingDays { get; private set; }

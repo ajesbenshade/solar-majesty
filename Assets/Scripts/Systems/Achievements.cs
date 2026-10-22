@@ -28,6 +28,13 @@ namespace SolarMajesty
         /// <summary>Hidden until earned, for the ones that would spoil a surprise.</summary>
         public bool Secret;
         public Func<RunStats, bool> Test;
+
+        /// <summary>
+        /// In-game list and toast text in the current language. Steam shows its own copy, localized
+        /// on the partner site; <see cref="Title"/> and <see cref="Description"/> stay English.
+        /// </summary>
+        public string TitleText => Loc.S(Title);
+        public string DescriptionText => Loc.S(Description);
     }
 
     /// <summary>
@@ -40,6 +47,12 @@ namespace SolarMajesty
     public static class Achievements
     {
         private const string PrefsKey = "SM_Achievements";
+
+        /// <summary>
+        /// Homesteader: worker drones housed at once on one world (RunStats.PeakPopulation, the
+        /// Settlement drone census). 20 needs 7 charging stations, or 6 with the Gene Vault.
+        /// </summary>
+        public const int HomesteaderDrones = 20;
 
         private static readonly List<AchievementDef> Defs = new List<AchievementDef>
         {
@@ -103,8 +116,8 @@ namespace SolarMajesty
             {
                 Id = AchievementId.Homesteader,
                 Title = "Homesteader",
-                Description = "Reach a population of 20.",
-                Test = s => s.PeakPopulation >= 20
+                Description = "Berth 20 worker drones at your charging stations.",
+                Test = s => s.PeakPopulation >= HomesteaderDrones
             },
             new AchievementDef
             {
@@ -122,7 +135,8 @@ namespace SolarMajesty
                 Id = AchievementId.SolarConquest,
                 Title = "Solar Conquest",
                 Description = "Take every body from Earth to Europa.",
-                Test = s => s.BodiesConquered >= 5
+                // Campaign-wide: each world is its own scene load, so per-run stats never pass 1.
+                Test = _ => CampaignProgress.ConqueredEveryWorld
             },
             new AchievementDef
             {
@@ -177,18 +191,22 @@ namespace SolarMajesty
             if (stats == null) return;
             Load();
 
+            bool changed = false;
             for (int i = 0; i < Defs.Count; i++)
             {
                 AchievementDef def = Defs[i];
                 if (Unlocked.Contains(def.Id)) continue;
+                if (!DemoBuild.AchievementInDemo(def.Id)) continue; // campaign-only: not in the Steam demo
                 if (def.Test == null || !def.Test(stats)) continue;
 
                 Unlocked.Add(def.Id);
                 UnlockedThisRun.Add(def.Id);
+                changed = true;
                 Earned?.Invoke(def);
             }
 
-            Save();
+            // Called every few seconds of play; only touch storage when something unlocked.
+            if (changed) Save();
         }
 
         public static void BeginRun()
@@ -202,8 +220,8 @@ namespace SolarMajesty
             Load();
             Unlocked.Clear();
             UnlockedThisRun.Clear();
-            PlayerPrefs.DeleteKey(PrefsKey);
-            PlayerPrefs.Save();
+            GamePrefs.DeleteKey(PrefsKey);
+            GamePrefs.Save();
         }
 
         private static void Load()
@@ -211,7 +229,7 @@ namespace SolarMajesty
             if (_loaded) return;
             _loaded = true;
 
-            string raw = PlayerPrefs.GetString(PrefsKey, "");
+            string raw = GamePrefs.GetString(PrefsKey, "");
             if (string.IsNullOrEmpty(raw)) return;
 
             string[] parts = raw.Split(',');
@@ -226,7 +244,7 @@ namespace SolarMajesty
         {
             if (Unlocked.Count == 0)
             {
-                PlayerPrefs.DeleteKey(PrefsKey);
+                GamePrefs.DeleteKey(PrefsKey);
                 return;
             }
 
@@ -239,8 +257,8 @@ namespace SolarMajesty
                 first = false;
             }
 
-            PlayerPrefs.SetString(PrefsKey, sb.ToString());
-            PlayerPrefs.Save();
+            GamePrefs.SetString(PrefsKey, sb.ToString());
+            GamePrefs.Save();
         }
     }
 }

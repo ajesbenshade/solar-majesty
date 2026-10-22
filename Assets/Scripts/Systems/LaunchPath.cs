@@ -9,23 +9,23 @@ namespace SolarMajesty
     /// </summary>
     public static class LaunchPath
     {
-        /// <summary>Settings panel, DEMO section, FULL CAMPAIGN chip.</summary>
-        public const string FullCampaignWhere = "Settings → Demo → Full Campaign";
+        /// <summary>Settings panel, GUIDED START section, SKIP GUIDED START chip.</summary>
+        public const string FullCampaignWhere = "Settings → Guided Start → Skip";
 
-        public static string Chain(string craft) => $"{craft} research → launch";
+        public static string Chain(string craft) => Loc.F("{0} research → launch", craft);
 
         public static string ToggleNote =>
-            $"Luna needs Full Campaign: {FullCampaignWhere}.";
+            Loc.F("Clear Earth to open Luna, or skip the guided start ({0}).", Loc.S(FullCampaignWhere));
 
         /// <summary>Objective column, title toast, and the win-banner note share this sentence.</summary>
         public static string ObjectiveText(bool fullCampaignOn, bool launchReady, string craft)
         {
-            string name = string.IsNullOrEmpty(craft) ? "Lunar Rocket" : craft;
+            string name = string.IsNullOrEmpty(craft) ? Loc.S("Lunar Rocket") : craft;
             if (fullCampaignOn)
-                return launchReady ? "ready on pad" : Chain(name);
+                return launchReady ? Loc.S("ready on pad") : Chain(name);
             if (launchReady)
-                return $"ready on pad. {ToggleNote}";
-            return $"{Chain(name)}. {ToggleNote}";
+                return Loc.F("ready on pad. {0}", ToggleNote);
+            return Loc.F("{0}. {1}", Chain(name), ToggleNote);
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace SolarMajesty
                 if (unlocked != null && unlocked.Contains(need)) continue;
                 var pre = TechCatalog.Get(need);
                 if (sb.Length > 0) sb.Append(", ");
-                sb.Append(pre != null ? pre.DisplayName : need.ToString());
+                sb.Append(pre != null ? pre.DisplayNameText : need.ToString());
             }
             return sb.ToString();
         }

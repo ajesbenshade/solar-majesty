@@ -52,7 +52,7 @@ namespace SolarMajesty
         private int _projSalt;
 
         /// <summary>What the villagers are doing, for the HUD.</summary>
-        public string VillageStatus { get; private set; } = "bots settling in";
+        public string VillageStatus { get; private set; } = Loc.S("bots settling in");
         public float VillageProgress01 => _proj != null && _proj.RequiredSeconds > 0f
             ? Mathf.Clamp01(_proj.ProgressSeconds / _proj.RequiredSeconds) : 0f;
         public bool VillageHalted { get; private set; }
@@ -79,7 +79,7 @@ namespace SolarMajesty
             _growCooldown = Mathf.Max(0f, saved.cooldown);
             _projSalt = saved.plotSalt;
             VillageHalted = false;
-            VillageStatus = "bots resting";
+            VillageStatus = Loc.S("bots resting");
             if (!saved.hasProject) return;
             var category = (BuildingCategory)saved.category;
             if (!VillageGrowth.IsVillageBuilt(category)) return;
@@ -92,7 +92,7 @@ namespace SolarMajesty
             StartProject(data, cell, world, announce: false);
             _proj.ProgressSeconds = Mathf.Clamp(saved.progress, 0f, _proj.RequiredSeconds);
             VillageHalted = !_loop.IsSettlementSafe(world);
-            VillageStatus = VillageHalted ? $"{VillageName(category)} halted — enemies near" : $"building a {VillageName(category)}";
+            VillageStatus = VillageHalted ? Loc.F("{0} halted — enemies near", VillageName(category)) : Loc.F("building a {0}", VillageName(category));
         }
 
         private void TickVillageGrowth(float dt, Settlement set)
@@ -105,26 +105,26 @@ namespace SolarMajesty
                 _growCooldown -= dt;
                 if (_growCooldown > 0f)
                 {
-                    VillageStatus = "bots resting";
+                    VillageStatus = Loc.S("bots resting");
                     return;
                 }
                 var next = VillageGrowth.NextProject(set.Habs, set.SolarFarms);
                 if (!next.HasValue)
                 {
-                    VillageStatus = "yard full";
+                    VillageStatus = Loc.S("yard full");
                     _growCooldown = 30f;
                     return;
                 }
                 var data = _loop.VillageData(next.Value);
                 if (data == null || !_loop.TryFindVillagePlot(data, _projSalt++, out Vector2Int cell, out Vector3 world))
                 {
-                    VillageStatus = "no open ground near the Commons";
+                    VillageStatus = Loc.S("no open ground near the Commons");
                     _growCooldown = 10f;
                     return;
                 }
                 if (!_loop.IsSettlementSafe(world))
                 {
-                    VillageStatus = "waiting — enemies near the settlement";
+                    VillageStatus = Loc.S("waiting — enemies near the settlement");
                     VillageHalted = true;
                     _growCooldown = 3f;
                     return;
@@ -138,11 +138,11 @@ namespace SolarMajesty
             string what = VillageName(_projData.category);
             if (!safe)
             {
-                VillageStatus = $"{what} halted — enemies near";
+                VillageStatus = Loc.F("{0} halted — enemies near", what);
                 return;
             }
             _proj.ProgressSeconds += dt;
-            VillageStatus = $"building a {what}";
+            VillageStatus = Loc.F("building a {0}", what);
             if (!_proj.IsComplete) return;
             FinishProject();
         }
@@ -179,7 +179,7 @@ namespace SolarMajesty
                 var v = VillagerAgent.Spawn(_root, home + new Vector3(i * 1.2f, 0f, 1.5f), world + new Vector3(i * 1.5f - 0.75f, 0f, 0f));
                 if (v != null) _builders.Add(v);
             }
-            if (announce) _loop.LogOverseer($"Bots stake out a {VillageName(data.category)} — keep the yard clear.");
+            if (announce) _loop.LogOverseer(Loc.F("Bots stake out a {0} — keep the yard clear.", VillageName(data.category)));
         }
 
         private void FinishProject()
@@ -192,7 +192,7 @@ namespace SolarMajesty
             ClearProject();
             _growCooldown = VillageGrowth.CooldownSeconds;
             if (raised)
-                _loop.LogOverseer($"Bots built a {VillageName(data.category)}. It pays {MajestyEconomy.DailyTax(data.category):N0} EU a day.");
+                _loop.LogOverseer(Loc.F("Bots built a {0}. It pays {1:N0} EU a day.", VillageName(data.category), MajestyEconomy.DailyTax(data.category)));
         }
 
         private void ClearProject()
@@ -207,7 +207,7 @@ namespace SolarMajesty
         }
 
         private static string VillageName(BuildingCategory cat) =>
-            cat == BuildingCategory.Power ? "solar farm" : "charging station";
+            cat == BuildingCategory.Power ? Loc.S("solar farm") : Loc.S("charging station");
 
         public void RegisterPlacedBuilding(BuildingCategory cat, GameObject go, Vector3 world) =>
             RegisterPlacedBuilding(null, cat, go, world);

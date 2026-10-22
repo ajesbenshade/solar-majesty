@@ -31,6 +31,20 @@ namespace SolarMajesty.EditorTools
 
         public static void BuildLinux() => RunOrExit(BuildTarget.StandaloneLinux64, "Linux", "SolarMajesty.x86_64");
 
+        [MenuItem("Solar Majesty/Build/Windows 64-bit Demo (Next Fest)", priority = 210)]
+        public static void BuildWindowsDemoMenu() => RunDemo(BuildTarget.StandaloneWindows64, "Windows", DemoBuild.ExeName);
+
+        /// <summary>
+        /// The Steam demo: Earth only, its own App ID, product name and save folders.
+        /// CI: -executeMethod SolarMajesty.EditorTools.BuildCommands.BuildWindowsDemo -smBuildPath Builds\Demo
+        /// </summary>
+        public static void BuildWindowsDemo()
+        {
+            bool ok = RunDemo(BuildTarget.StandaloneWindows64, "Windows", DemoBuild.ExeName);
+            if (Application.isBatchMode)
+                EditorApplication.Exit(ok ? 0 : 1);
+        }
+
         private static void RunOrExit(BuildTarget target, string folder, string artifact)
         {
             bool ok = Run(target, folder, artifact);
@@ -38,9 +52,40 @@ namespace SolarMajesty.EditorTools
                 EditorApplication.Exit(ok ? 0 : 1);
         }
 
-        private static bool Run(BuildTarget target, string folder, string artifact)
+        /// <summary>
+        /// The demo flavour: the SM_DEMO define goes to this build only (extraScriptingDefines, not
+        /// ProjectSettings), and the product name and bundle id are swapped for the build and put
+        /// back afterwards, so the full game's settings never change.
+        /// </summary>
+        private static bool RunDemo(BuildTarget target, string folder, string artifact)
+        {
+            var named = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(BuildPipeline.GetBuildTargetGroup(target));
+            string product = PlayerSettings.productName;
+            string bundle = PlayerSettings.GetApplicationIdentifier(named);
+            try
+            {
+                PlayerSettings.productName = DemoBuild.ProductName;
+                PlayerSettings.SetApplicationIdentifier(named, DemoBuild.BundleId);
+                return Run(target, folder, artifact, demo: true);
+            }
+            finally
+            {
+                PlayerSettings.productName = product;
+                PlayerSettings.SetApplicationIdentifier(named, bundle);
+                AssetDatabase.SaveAssets();
+            }
+        }
+
+        private static bool Run(BuildTarget target, string folder, string artifact) =>
+            Run(target, folder, artifact, demo: false);
+
+        private static bool Run(BuildTarget target, string folder, string artifact, bool demo)
         {
             ShaderVariantKeeper.Create(); // runtime glass / glow must survive variant stripping
+            AppIconSetup.EnsureAssigned(); // no-op when ProjectSettings already carry the icon
+            string version = ArgValue("-smVersion");
+            if (!string.IsNullOrEmpty(version))
+                PlayerSettings.bundleVersion = version;
             string root = ArgValue("-smBuildPath") ?? DefaultOutputRoot;
             string outputPath = Path.Combine(root, folder, artifact);
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? root);
@@ -62,16 +107,21 @@ namespace SolarMajesty.EditorTools
                 locationPathName = outputPath,
                 target = target,
                 targetGroup = BuildPipeline.GetBuildTargetGroup(target),
-                options = BuildOptions.None
+                options = HasArg("-smDevelopment") ? BuildOptions.Development : BuildOptions.None,
+                extraScriptingDefines = demo ? new[] { DemoBuild.Define } : null
             };
 
-            Debug.Log($"[Build] {target} -> {outputPath} ({scenes.Length} scene(s))");
+            Debug.Log($"[Build] {target} -> {outputPath} ({scenes.Length} scene(s))" +
+                      (demo ? $" · DEMO ({DemoBuild.Define}, \"{PlayerSettings.productName}\", app {SteamConfig.AppIdFor(true)})" : ""));
             BuildReport report = BuildPipeline.BuildPlayer(options);
             BuildSummary summary = report.summary;
 
             if (summary.result == BuildResult.Succeeded)
             {
                 string folderPath = Path.GetDirectoryName(outputPath);
+                WriteSteamAppId(folderPath, demo);
+                WriteBuildInfo(folderPath, target, demo);
+                CopyNotices(folderPath);
                 if (target == BuildTarget.StandaloneOSX)
                     PlaytestHandoff.WriteMac(folderPath);
                 else if (target == BuildTarget.StandaloneWindows64)
@@ -86,6 +136,89 @@ namespace SolarMajesty.EditorTools
             Debug.LogError($"[Build] {summary.result} with {summary.totalErrors} error(s).");
             return false;
         }
+
+        /// <summary>
+        /// steam_appid.txt lets a build started outside Steam (QA, playtesters with the zip) reach
+        /// the Steam API. Tools/steam/upload_to_steam.ps1 leaves it out of the depot, because Steam
+        /// passes the app ID itself when it launches the game.
+        /// </summary>
+        private static void WriteSteamAppId(string folder, bool demo)
+        {
+            try
+            {
+                File.WriteAllText(Path.Combine(folder, "steam_appid.txt"), SteamConfig.AppIdFor(demo).ToString());
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not write steam_appid.txt: " + e.Message);
+            }
+        }
+
+        /// <summary>MIT and SDK notices for code compiled into the player must ship with it.</summary>
+        private static void CopyNotices(string folder)
+        {
+            const string source = "Tools/release/THIRD-PARTY-NOTICES.txt";
+            try
+            {
+                if (File.Exists(source))
+                    File.Copy(source, Path.Combine(folder, "THIRD-PARTY-NOTICES.txt"), overwrite: true);
+                else
+                    Debug.LogWarning("[Build] " + source + " is missing; the build ships without license notices.");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not copy notices: " + e.Message);
+            }
+        }
+
+        /// <summary>Version, commit and time next to the exe, so a bug report can name its build.</summary>
+        private static void WriteBuildInfo(string folder, BuildTarget target, bool demo)
+        {
+            try
+            {
+                string commit = Git("rev-parse --short HEAD") ?? "unknown";
+                string dirty = string.IsNullOrEmpty(Git("status --porcelain --untracked-files=no")) ? "" : "-dirty";
+                File.WriteAllText(Path.Combine(folder, "build_info.txt"),
+                    $"version={PlayerSettings.bundleVersion}\n" +
+                    $"commit={commit}{dirty}\n" +
+                    $"target={target}\n" +
+                    $"built_utc={DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}\n" +
+                    $"unity={Application.unityVersion}\n" +
+                    $"flavour={(demo ? "demo" : "full")}\n" +
+                    $"steam_app={SteamConfig.AppIdFor(demo)}\n");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not write build_info.txt: " + e.Message);
+            }
+        }
+
+        private static string Git(string args)
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo("git", args)
+                {
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = Directory.GetCurrentDirectory()
+                };
+                using (var p = System.Diagnostics.Process.Start(psi))
+                {
+                    string output = p.StandardOutput.ReadToEnd().Trim();
+                    p.WaitForExit(5000);
+                    return p.ExitCode == 0 ? output : null;
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static bool HasArg(string flag) =>
+            Array.IndexOf(Environment.GetCommandLineArgs(), flag) >= 0;
 
         private static string ArgValue(string flag)
         {

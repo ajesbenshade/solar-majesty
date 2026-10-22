@@ -1,0 +1,68 @@
+<#
+  Runs the built game's -benchmark mode against a throwaway profile and prints the result.
+
+    powershell -ExecutionPolicy Bypass -File Tools\qa\run_benchmark.ps1 -GameDir Builds\SteamRC\Windows
+    ... -Bodies Earth,Mars -Seconds 60 -Width 1920 -Height 1080
+
+  Every world gets a fresh colony; the game sweeps the camera while the simulation runs at speed,
+  then writes Logs\benchmark-*.json under the real persistent data folder and quits.
+  Exit code 0 = all worlds ran without an exception. Your saves and settings are never touched:
+  -saveDir and -profileDir point at a temp folder that is deleted afterwards.
+
+  Run it on the slowest PC you want to support, with the window in front, to fill in the
+  store page's minimum requirements.
+#>
+param(
+  [Parameter(Mandatory = $true)][string]$GameDir,
+  [string]$Bodies = 'Earth,Luna,Mars,Belt,Europa',
+  [int]$Seconds = 45,
+  [int]$Speed = 7,
+  [int]$Width = 1920,
+  [int]$Height = 1080,
+  [switch]$Fullscreen,
+  [switch]$KeepTemp,
+  # 0 Very Low .. 5 Ultra; omit to use the game's own pick for this PC.
+  [int]$Quality = -1,
+  # Save a same-framing screenshot of each world to Logs\shot-<world>-<quality>.png.
+  [switch]$Shots,
+  # Passed through to the game, e.g. "-handheld" to preview the Steam Deck layout.
+  [string]$ExtraArgs = ''
+)
+$ErrorActionPreference = 'Stop'
+$exe = Join-Path (Resolve-Path $GameDir).Path 'SolarMajesty.exe'
+if (-not (Test-Path $exe)) { throw "No SolarMajesty.exe in $GameDir" }
+
+$tmp = Join-Path ([IO.Path]::GetTempPath()) ("sm-bench-" + [Guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force (Join-Path $tmp 'Saves'), (Join-Path $tmp 'Profile') | Out-Null
+$logs = Join-Path $env:USERPROFILE 'AppData\LocalLow\SolarMajesty\Solar Majesty\Logs'
+$before = @(Get-ChildItem $logs -Filter 'benchmark-*.json' -ErrorAction SilentlyContinue | ForEach-Object FullName)
+
+# One quoted string: Start-Process joins an array with bare spaces, which would split a path with a space in it.
+$gameArgs = "-benchmark -benchmarkBodies $Bodies -benchmarkSeconds $Seconds -benchmarkSpeed $Speed " +
+  "-saveDir `"$(Join-Path $tmp 'Saves')`" -profileDir `"$(Join-Path $tmp 'Profile')`" " +
+  "-nosteam -noai -screen-width $Width -screen-height $Height -screen-fullscreen $(if ($Fullscreen) { '1' } else { '0' }) " +
+  "-logFile `"$(Join-Path $tmp 'Player.log')`""
+if ($Quality -ge 0) { $gameArgs += " -benchmarkQuality $Quality" }
+if ($Shots) { $gameArgs += " -benchmarkShots" }
+if ($ExtraArgs) { $gameArgs += " $ExtraArgs" }
+
+Write-Host "[bench] $Bodies, ${Seconds}s each, ${Width}x$Height" -ForegroundColor Yellow
+$p = Start-Process $exe -ArgumentList $gameArgs -PassThru
+$budget = 120 + ($Bodies.Split(',').Count * ($Seconds + 60))
+if (-not $p.WaitForExit($budget * 1000)) {
+  Stop-Process -Id $p.Id -Force
+  throw "Benchmark did not finish in $budget s. Log: $(Join-Path $tmp 'Player.log')"
+}
+
+$report = Get-ChildItem $logs -Filter 'benchmark-*.json' -ErrorAction SilentlyContinue |
+  Where-Object { $before -notcontains $_.FullName } | Sort-Object LastWriteTime | Select-Object -Last 1
+Select-String -Path (Join-Path $tmp 'Player.log') -Pattern '\[Benchmark\]' | ForEach-Object { $_.Line }
+if (-not $report) { throw "No report written. Log: $(Join-Path $tmp 'Player.log')" }
+
+$j = Get-Content $report.FullName -Raw | ConvertFrom-Json
+"{0} | {1} ({2} cores) | {3} ({4} MB) | {5} MB RAM | {6} | {7}" -f $j.version, $j.cpu, $j.cpuCores, $j.gpu, $j.gpuMemoryMb, $j.ramMb, $j.resolution, $j.quality
+$j.worlds | Select-Object world, drawn, @{n="fps";e={[math]::Round($_.avgFps,1)}}, @{n="p50ms";e={[math]::Round($_.p50Ms,2)}}, @{n="p99ms";e={[math]::Round($_.p99Ms,2)}}, @{n="maxms";e={[math]::Round($_.maxMs,0)}}, @{n="%>33ms";e={[math]::Round($_.pctOver33Ms,2)}}, robots, fauna, errors, note | Format-Table -AutoSize | Out-String
+if (@($j.worlds | Where-Object { -not $_.drawn }).Count) { Write-Warning "Some worlds were not drawn (locked or minimised window): their fps is meaningless. Errors still count." }
+"report: $($report.FullName)"
+if (-not $KeepTemp) { Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue } else { "temp kept: $tmp" }
+exit $p.ExitCode

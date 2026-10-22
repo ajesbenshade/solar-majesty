@@ -4,6 +4,7 @@ namespace SolarMajesty
 {
     /// <summary>
     /// Player posts / adjusts bounty flags only. Never commands specialists.
+    /// Default keys (rebindable through <see cref="InputBindings"/>):
     /// F1 Explore · F2 ClearThreat · F3 Build · F4 Extract · F5 Defend · I Research Site · O Outpost · U Terraform
     /// Runs after <see cref="GameLoop"/> so a click that selects a pole is consumed before this posts.
     /// </summary>
@@ -151,10 +152,11 @@ namespace SolarMajesty
                 out bool treasuryShort);
             bounty = pending;
             if (treasuryShort)
-                _loop?.LogOverseer("Not enough EU to raise that bounty.");
+                _loop?.LogOverseer(Loc.S("Not enough EU to raise that bounty."));
 
             if (selected == null || Mathf.Approximately(selected.CurrentBounty, before))
                 return;
+            _loop?.Stats.NoteBounty(Mathf.RoundToInt(selected.CurrentBounty));
             _loop?.RefreshFlagInterest();
             string kind = selected.Data != null ? selected.Data.flagType.ToString() : "Flag";
             Debug.Log(
@@ -266,21 +268,21 @@ namespace SolarMajesty
             // Typing flag orders: no flag hotkeys; mouse placement below still works.
             if (!InputBindings.TextEntryActive)
             {
-                if (Input.GetKeyDown(KeyCode.F1) && exploreFlag != null)
+                if (InputBindings.Down(GameAction.FlagExplore) && exploreFlag != null)
                     Select(exploreFlag);
-                if (Input.GetKeyDown(KeyCode.F2) && clearThreatFlag != null)
+                if (InputBindings.Down(GameAction.FlagClearThreat) && clearThreatFlag != null)
                     Select(clearThreatFlag);
-                if (Input.GetKeyDown(KeyCode.F3) && buildFlag != null)
+                if (InputBindings.Down(GameAction.FlagBuild) && buildFlag != null)
                     Select(buildFlag);
-                if (Input.GetKeyDown(KeyCode.F4) && extractFlag != null)
+                if (InputBindings.Down(GameAction.FlagExtract) && extractFlag != null)
                     Select(extractFlag);
-                if (Input.GetKeyDown(KeyCode.F5) && defendFlag != null)
+                if (InputBindings.Down(GameAction.FlagDefend) && defendFlag != null)
                     Select(defendFlag);
-                if (Input.GetKeyDown(KeyCode.I) && researchSiteFlag != null)
+                if (InputBindings.Down(GameAction.FlagResearchSite) && researchSiteFlag != null)
                     Select(researchSiteFlag);
-                if (Input.GetKeyDown(KeyCode.O) && outpostFlag != null)
+                if (InputBindings.Down(GameAction.FlagOutpost) && outpostFlag != null)
                     Select(outpostFlag);
-                if (Input.GetKeyDown(KeyCode.U) && terraformFlag != null)
+                if (InputBindings.Down(GameAction.FlagTerraform) && terraformFlag != null)
                     Select(terraformFlag);
             }
 
@@ -329,8 +331,8 @@ namespace SolarMajesty
             handle.Orders = _pendingParsed ?? FlagOrdersParser.Parse(_pendingOrders);
             string read = handle.Orders.Summary();
             _loop?.LogOverseer(string.IsNullOrEmpty(read)
-                ? $"Orders posted: \"{_pendingOrders}\" — not understood; heroes will ignore them."
-                : $"Orders posted: {read}");
+                ? Loc.F("Orders posted: \"{0}\" — not understood; heroes will ignore them.", _pendingOrders)
+                : Loc.F("Orders posted: {0}", read));
             if (!handle.Orders.HasRules)
                 LayaFlagOrders.TryUnderstand(handle, _loop); // optional local model, async
             PendingOrders = "";
@@ -362,8 +364,9 @@ namespace SolarMajesty
 
         private void HandleBountyKeys()
         {
-            bool plus = Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus);
-            bool minus = Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus);
+            // The numpad keys stay fixed so a rebind never strands the bounty without a key.
+            bool plus = InputBindings.Down(GameAction.BountyUp) || Input.GetKeyDown(KeyCode.KeypadPlus);
+            bool minus = InputBindings.Down(GameAction.BountyDown) || Input.GetKeyDown(KeyCode.KeypadMinus);
             if (!plus && !minus) return;
 
             float step = Mathf.Max(bountyStep, MajestyEconomy.FlagBountyStep);
