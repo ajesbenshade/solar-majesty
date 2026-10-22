@@ -3990,7 +3990,7 @@ namespace SolarMajesty
             }
         }
 
-        private bool IsKingdomSpawn(DustStalkerAgent agent)
+        internal bool IsKingdomSpawn(DustStalkerAgent agent)
         {
             foreach (var list in _kingdomSpawns.Values)
                 if (list.Contains(agent)) return true;

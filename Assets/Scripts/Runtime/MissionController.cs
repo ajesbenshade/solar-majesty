@@ -522,6 +522,14 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Does this fauna keep the dens gate open? Den stalkers do. The kingdom spawn table (alpha
+        /// raiders at the colony edge, town burrows, scrapyard junk) keeps running after the dens are
+        /// cleared, and yard pests are campus ecology, so neither can hold back the victory.
+        /// </summary>
+        internal static bool HoldsDens(FaunaKind kind, bool alive, bool kingdomSpawn) =>
+            alive && !kingdomSpawn && !DustStalkerAgent.IsCampusPest(kind) && !DustStalkerAgent.IsJunk(kind);
+
         private int CountLivingStalkers()
         {
             if (_loop == null || _loop.Stalkers == null) return 0;
@@ -529,7 +537,7 @@ namespace SolarMajesty
             for (int i = 0; i < _loop.Stalkers.Count; i++)
             {
                 var s = _loop.Stalkers[i];
-                if (s != null && s.IsAlive) n++;
+                if (s != null && HoldsDens(s.Kind, s.IsAlive, _loop.IsKingdomSpawn(s))) n++;
             }
             return n;
         }
