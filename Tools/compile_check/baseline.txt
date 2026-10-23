@@ -1,0 +1,13 @@
+Editor/AudioImportRules.cs: error CS1061: 'AudioImporterSampleSettings' does not contain a definition for 'preloadAudioData' and no accessible extension method 'preloadAudioData' accepting a first argument of type 'AudioImporterSampleSettings' could be found (are you missing a using directive or an assembly reference?)
+Editor/ReleaseStamp.cs: error CS0103: The name 'NamedBuildTarget' does not exist in the current context
+Editor/ReleaseStamp.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'GetIconSizes'
+Editor/ReleaseStamp.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'SetIcons'
+Editor/WindowsPlaytestBuilder.cs: error CS0103: The name 'NamedBuildTarget' does not exist in the current context
+Editor/WindowsPlaytestBuilder.cs: error CS0103: The name 'StandaloneBuildSubtarget' does not exist in the current context
+Editor/WindowsPlaytestBuilder.cs: error CS0117: 'BuildPlayerOptions' does not contain a definition for 'subtarget'
+Runtime/DemoAtmosphere.cs: error CS0117: 'RenderSettings' does not contain a definition for 'customReflectionTexture'
+Runtime/DemoAtmosphere.cs: error CS1501: No overload for method 'FindObjectsByType' takes 0 arguments
+Runtime/GameLoop.cs: error CS1061: 'EntityId' does not contain a definition for 'CompareTo' and no accessible extension method 'CompareTo' accepting a first argument of type 'EntityId' could be found (are you missing a using directive or an assembly reference?)
+Runtime/LaunchSite.cs: error CS1501: No overload for method 'FindObjectsByType' takes 0 arguments
+Runtime/SpecialistAgent.cs: error CS0103: The name 'GetEntityId' does not exist in the current context
+Runtime/Threat/DustStalkerAgent.cs: error CS1501: No overload for method 'FindObjectsByType' takes 0 arguments

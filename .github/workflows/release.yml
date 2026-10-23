@@ -1,0 +1,350 @@
+name: Release
+
+# Push a tag to cut a release:   git tag v0.1.0 && git push origin v0.1.0
+# Tests, builds macOS / Windows / Linux with that version, zips them and publishes a GitHub
+# Release. Signing and store uploads run only when their secrets exist. Setup and the secret
+# list: Docs/RELEASE_PIPELINE.md.
+
+on:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  UNITY_VERSION: 6000.5.10f1
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  prepare:
+    name: Preflight and version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      sign_windows: ${{ steps.optional.outputs.sign_windows }}
+      sign_macos: ${{ steps.optional.outputs.sign_macos }}
+      itch: ${{ steps.optional.outputs.itch }}
+      steam: ${{ steps.optional.outputs.steam }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: Tools/release
+
+      - name: Check Unity license secrets
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: bash Tools/release/check-unity-secrets.sh
+
+      - name: Resolve version from tag
+        id: version
+        run: |
+          version=$(bash Tools/release/version.sh)
+          case "$version" in
+            0.0.0-dev*)
+              echo "::error title=Not a version tag::'${GITHUB_REF_NAME}' is not vX.Y.Z (optionally -suffix). Delete it and push a tag like v0.1.0."
+              exit 1
+              ;;
+          esac
+          echo "Release version: $version"
+
+      # Each optional stage runs only if all of its secrets are set. Only true/false leaves this
+      # step; the secrets themselves stay in the jobs that use them.
+      - name: Detect optional signing and store secrets
+        id: optional
+        env:
+          WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+          APPLE_CERT_P12_BASE64: ${{ secrets.APPLE_CERT_P12_BASE64 }}
+          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_TARGET: ${{ vars.ITCH_TARGET || secrets.ITCH_TARGET }}
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+          STEAM_APP_ID: ${{ vars.STEAM_APP_ID || secrets.STEAM_APP_ID }}
+          STEAM_DEPOT_WINDOWS: ${{ vars.STEAM_DEPOT_WINDOWS || secrets.STEAM_DEPOT_WINDOWS }}
+          STEAM_DEPOT_MACOS: ${{ vars.STEAM_DEPOT_MACOS || secrets.STEAM_DEPOT_MACOS }}
+          STEAM_DEPOT_LINUX: ${{ vars.STEAM_DEPOT_LINUX || secrets.STEAM_DEPOT_LINUX }}
+        run: |
+          all_set() { for v in "$@"; do [ -n "${!v:-}" ] || return 1; done; }
+          flag() { if all_set "${@:2}"; then echo "$1=true"; else echo "$1=false"; fi; }
+          {
+            flag sign_windows WINDOWS_CERT_PFX_BASE64 WINDOWS_CERT_PASSWORD
+            flag sign_macos APPLE_CERT_P12_BASE64 APPLE_CERT_PASSWORD APPLE_TEAM_ID APPLE_ID APPLE_APP_PASSWORD
+            flag itch BUTLER_API_KEY ITCH_TARGET
+            if all_set STEAM_USERNAME STEAM_CONFIG_VDF STEAM_APP_ID &&
+              { [ -n "$STEAM_DEPOT_WINDOWS" ] || [ -n "$STEAM_DEPOT_MACOS" ] || [ -n "$STEAM_DEPOT_LINUX" ]; }; then
+              echo "steam=true"
+            else
+              echo "steam=false"
+            fi
+          } | tee -a "$GITHUB_OUTPUT"
+
+  tests:
+    name: ${{ matrix.testMode }} tests
+    needs: prepare
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: true
+      matrix:
+        testMode: [editmode, playmode]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      - uses: actions/cache@v6
+        with:
+          path: Library
+          key: Library-tests-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-tests-
+            Library-
+
+      - name: Run ${{ matrix.testMode }} tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          # See ci.yml: the container only sees variables listed here.
+          GAME_CI_DOCKER_ENV: |
+            CI=true
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          cliVersion: v0.1.72
+          testMode: ${{ matrix.testMode }}
+          artifactsPath: test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: release ${{ matrix.testMode }} results
+          # Soak and Perf run nightly in ci.yml; a release gates on the same suite as a PR.
+          customParameters: ${{ matrix.testMode == 'playmode' && '-smCI -testCategory !Soak;!Perf' || '-smCI' }}
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: release-test-results-${{ matrix.testMode }}
+          path: test-results
+          retention-days: 30
+          if-no-files-found: warn
+
+  build:
+    name: Build ${{ matrix.targetPlatform }}
+    needs: [prepare, tests]
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: true
+      matrix:
+        targetPlatform:
+          - StandaloneOSX
+          - StandaloneWindows64
+          - StandaloneLinux64
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Free disk space for the Unity image
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      - uses: actions/cache@v6
+        with:
+          path: Library
+          key: Library-${{ matrix.targetPlatform }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ matrix.targetPlatform }}-
+            Library-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: ${{ matrix.targetPlatform }}
+          buildName: SolarMajesty
+          buildMethod: SolarMajesty.EditorTools.BuildCommands.BuildFromCommandLine
+          versioning: Custom
+          version: ${{ env.VERSION }}
+          customParameters: -smVersion ${{ env.VERSION }} -smCommit ${{ github.sha }}
+
+      - name: Take ownership of the build
+        run: sudo chown -R "$(id -u):$(id -g)" build
+
+      - name: Authenticode-sign Windows player
+        if: matrix.targetPlatform == 'StandaloneWindows64' && needs.prepare.outputs.sign_windows == 'true'
+        env:
+          WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: bash Tools/release/sign-windows.sh build/StandaloneWindows64
+
+      - name: Zip player
+        id: zip
+        run: |
+          zip_path=$(bash Tools/release/package.sh "${{ matrix.targetPlatform }}" "build/${{ matrix.targetPlatform }}" "$VERSION" dist)
+          echo "path=$zip_path" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SolarMajesty-${{ matrix.targetPlatform }}
+          path: ${{ steps.zip.outputs.path }}
+          retention-days: 7
+          if-no-files-found: error
+          compression-level: 0
+
+  sign-macos:
+    # codesign / notarytool only exist on macOS.
+    name: Sign and notarize macOS
+    needs: [prepare, build]
+    if: needs.prepare.outputs.sign_macos == 'true'
+    runs-on: macos-15
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: Tools/release
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: SolarMajesty-StandaloneOSX
+          path: dist
+
+      - name: Codesign, notarize, staple
+        env:
+          APPLE_CERT_P12_BASE64: ${{ secrets.APPLE_CERT_P12_BASE64 }}
+          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          zip="dist/SolarMajesty-${VERSION}-macOS.zip"
+          bash Tools/release/sign-macos.sh "$zip" "$zip"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SolarMajesty-StandaloneOSX-signed
+          path: dist/SolarMajesty-${{ env.VERSION }}-macOS.zip
+          retention-days: 7
+          if-no-files-found: error
+          compression-level: 0
+
+  release:
+    name: GitHub Release
+    needs: [prepare, build, sign-macos]
+    # sign-macos is optional: run when it succeeded or was skipped, never after it failed.
+    if: >-
+      always() &&
+      needs.build.result == 'success' &&
+      (needs.sign-macos.result == 'success' || needs.sign-macos.result == 'skipped')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: SolarMajesty-Standalone*
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v8
+        if: needs.sign-macos.result == 'success'
+        with:
+          name: SolarMajesty-StandaloneOSX-signed
+          path: dist-signed
+
+      - name: Pick signed builds and write checksums
+        run: |
+          # The signed macOS zip has the unsigned one's file name; it wins when present.
+          if [ -d dist-signed ]; then
+            mv -f dist-signed/*.zip dist/
+          fi
+          cd dist
+          ls -l
+          sha256sum SolarMajesty-*.zip | tee SHA256SUMS.txt
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          name: Solar Majesty ${{ env.VERSION }}
+          tag_name: ${{ github.ref_name }}
+          prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/SolarMajesty-*.zip
+            dist/SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-dist
+          path: dist
+          retention-days: 7
+          compression-level: 0
+
+  itch:
+    name: Upload to itch.io
+    needs: [prepare, release]
+    if: needs.prepare.outputs.itch == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: Tools/release
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-dist
+          path: dist
+
+      - name: butler push
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_TARGET: ${{ vars.ITCH_TARGET || secrets.ITCH_TARGET }}
+        run: bash Tools/release/upload-itch.sh dist "${{ needs.prepare.outputs.version }}"
+
+  steam:
+    name: Upload to Steam
+    needs: [prepare, release]
+    if: needs.prepare.outputs.steam == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: Tools/release
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-dist
+          path: dist
+
+      - name: steamcmd run_app_build
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+          STEAM_APP_ID: ${{ vars.STEAM_APP_ID || secrets.STEAM_APP_ID }}
+          STEAM_DEPOT_WINDOWS: ${{ vars.STEAM_DEPOT_WINDOWS || secrets.STEAM_DEPOT_WINDOWS }}
+          STEAM_DEPOT_MACOS: ${{ vars.STEAM_DEPOT_MACOS || secrets.STEAM_DEPOT_MACOS }}
+          STEAM_DEPOT_LINUX: ${{ vars.STEAM_DEPOT_LINUX || secrets.STEAM_DEPOT_LINUX }}
+          STEAM_BRANCH: ${{ vars.STEAM_BRANCH }}
+        run: bash Tools/release/upload-steam.sh dist "${{ needs.prepare.outputs.version }}"

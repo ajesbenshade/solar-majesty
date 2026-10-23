@@ -14,6 +14,9 @@ namespace SolarMajesty
 
         public static Vector3 PadWorld => ColonyLayout.CampusOrigin + new Vector3(16f, 0f, 0f);
 
+        /// <summary>The staged departure craft, or null (the launch camera beat lifts it).</summary>
+        public static Transform Craft => _craft != null ? _craft.transform : null;
+
         public static void EnsureReady(Transform parent, bool heavyShip)
         {
             if (_craft != null)

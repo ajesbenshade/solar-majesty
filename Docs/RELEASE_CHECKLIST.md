@@ -11,9 +11,11 @@ is in it being honest, not in it being all ticked.
 - [x] Headless build command ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs))
 - [x] Standalone player builds (macOS verified)
 - [x] Bundle identifier set (`com.solarmajesty.solarmajesty`)
-- [ ] Application icons for every platform size
-- [ ] Code signing and notarisation (macOS), Authenticode (Windows)
-- [ ] `UNITY_LICENSE` / `UNITY_EMAIL` / `UNITY_PASSWORD` secrets added to the GitHub repo so CI can run
+- [x] Application icons for every platform size (`Assets/Art/Icons/SM_AppIcon_*`, 16–1024 px, assigned at build time by `ReleaseStamp`; **Solar Majesty → Build → Apply App Icons** saves them into ProjectSettings)
+- [ ] Code signing and notarisation (macOS), Authenticode (Windows) — pipeline steps exist in `release.yml` and run once the certificates are added as secrets ([RELEASE_PIPELINE.md](RELEASE_PIPELINE.md)); not yet exercised
+- [ ] `UNITY_LICENSE` / `UNITY_EMAIL` / `UNITY_PASSWORD` secrets added to the GitHub repo so CI can run — CI now fails fast with instructions until they are ([RELEASE_PIPELINE.md](RELEASE_PIPELINE.md))
+- [x] Compile check that needs no Unity licence, on every push and PR ([Tools/compile_check](../Tools/compile_check/README.md))
+- [x] Versioned builds (tag `vX.Y.Z` or `0.0.0-dev+sha`) with `build-info.json`, tagged GitHub Releases, optional itch.io / Steam upload ([release.yml](../.github/workflows/release.yml))
 
 ## Systems
 
@@ -26,7 +28,7 @@ is in it being honest, not in it being all ticked.
 - [x] Run statistics and end-of-run verdict ([RunStats.cs](../Assets/Scripts/Systems/RunStats.cs))
 - [x] Achievements, persisted ([Achievements.cs](../Assets/Scripts/Systems/Achievements.cs))
 - [x] Named robots with service records ([SpecialistIdentity.cs](../Assets/Scripts/Systems/SpecialistIdentity.cs))
-- [ ] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`)
+- [x] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`): optional `Resources/Data` overrides, code tables stay the default ([DATA_CATALOGS.md](DATA_CATALOGS.md))
 - [x] Ironman wired to the run configuration (`ReplayRules.Ironman` chip, latched at New Game / Continue; blocks manual saves and body restarts; No Second Draft evaluates on body conquest)
 
 ## Look
@@ -41,7 +43,7 @@ is in it being honest, not in it being all ticked.
 - [x] Scatter props share cached instanced materials instead of one material each
 - [ ] Fresh Mars still captured as a spaced overseer campus (run **Solar Majesty > Render > Capture Mars Still** in the editor; batch mode cannot drive play mode). Do not score vs the retired VisualTarget PNG.
 - [ ] Campus landmark pass: pad, Starship, solar, extractors readable when placed — empty dirt OK, not fill-every-patch
-- [ ] LOD chains on the hero building meshes
+- [x] LOD chains on the hero building meshes (every spawned building gets a LODGroup: detail drops at 4 % screen height, culls at 1 %; [BuildingLod.cs](../Assets/Scripts/Runtime/BuildingLod.cs), [BuildingLodRules.cs](../Assets/Scripts/Systems/World/BuildingLodRules.cs))
 
 ## Motion
 
@@ -50,7 +52,8 @@ is in it being honest, not in it being all ticked.
 - [x] Tread scrolling on tracked classes
 - [x] Camera shake on impacts, module loss, and construction
 - [x] Edge scroll and mouse wheel zoom
-- [ ] Scripted camera beat for launch and victory
+- [x] Scripted camera beat for launch and victory ([CameraDirector.cs](../Assets/Scripts/Runtime/Camera/CameraDirector.cs); skipped under Reduce Motion, any input hands back control; needs an in-editor play check)
+- [x] Controller support for camera, speed and pause via the legacy Input Manager ([CONTROLS.md](CONTROLS.md)); no pointer or HUD navigation by controller; needs a play check with a real pad
 
 ## Audio
 
@@ -58,8 +61,8 @@ is in it being honest, not in it being all ticked.
 - [x] Pooled 3D positional one-shots ([SpatialAudio.cs](../Assets/Scripts/Runtime/Audio/SpatialAudio.cs))
 - [x] Adaptive four-stem generative score ([AdaptiveMusic.cs](../Assets/Scripts/Runtime/Audio/AdaptiveMusic.cs))
 - [x] Synthesised Overseer voice and robot chirps ([OverseerVoice.cs](../Assets/Scripts/Runtime/Audio/OverseerVoice.cs))
-- [ ] Existing one-shots migrated from 2D `DemoAudio` to `SpatialAudio`
-- [ ] Missing clips authored: `sfx_extract`, `sfx_build_complete`, `sfx_research` (currently fall through to synthesis)
+- [x] Existing one-shots migrated from 2D `DemoAudio` to `SpatialAudio` (world events are positioned; UI, alerts, research and outcomes stay 2D on purpose; see [AUDIO.md](AUDIO.md#spatial-or-2d))
+- [x] Missing clips authored: `sfx_extract`, `sfx_build_complete`, `sfx_research` (three rendered takes each in `Resources/Audio/Sfx/`, guarded by `SfxClipCoverageTests`)
 
 ## Interface
 
@@ -69,7 +72,7 @@ is in it being honest, not in it being all ticked.
 - [x] Map overlays for power, threat, and defence coverage ([MapOverlay.cs](../Assets/Scripts/Runtime/UI/MapOverlay.cs))
 - [ ] Remaining IMGUI panels migrated to UI Toolkit (`OverseerHud.cs` is still ~2,100 lines)
 - [ ] Tooltips on every panel
-- [ ] Controls screen generated from `InputBindings` (the binding system exists; the screen does not)
+- [x] Controls screen generated from `InputBindings` (Settings → CONTROLS: grouped list, click-to-rebind with conflict and reserved-key refusal, reset to defaults, read-only controller map; [CONTROLS.md](CONTROLS.md#rebinding-keys)); needs a play check
 
 ## Accessibility
 
@@ -79,8 +82,8 @@ is in it being honest, not in it being all ticked.
 - [x] Severity carried by icon and text prefix as well as colour
 - [x] Frame cap selector
 - [x] Rebindable keys with conflict rejection ([InputBindings.cs](../Assets/Scripts/Systems/InputBindings.cs))
-- [ ] Runtime input routed through `InputBindings` (roughly 100 literal `KeyCode` sites remain)
-- [ ] Gamepad support
+- [x] Runtime input routed through `InputBindings` (every gameplay hotkey; defaults equal the old keys; only Esc, Shift, mouse buttons and text-box Enter/Esc stay literal on purpose)
+- [x] Gamepad support (see the controller line under Motion and [CONTROLS.md](CONTROLS.md#controller))
 - [ ] Independent UI text scaling
 
 ## Localization

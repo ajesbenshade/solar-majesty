@@ -12,8 +12,9 @@ Continue restores **campus + stockpile + research + body + open flags + living f
 - [ ] Earth meadow drop: **produced meadow**, **cobalt sky**, HUD REG/ICE/**CRED**/PWR/BEDS. **Commons and a HAB** are already on the claim. No starter robots. Not the old grey-tan plane. Not Mars orange.
 - [ ] Yield labels on resource nodes (`REG` / `MET` / `ICE`) — no `MissingComponentException`.
 - [ ] Tutorial 1/4: **B**, then **1**, place the Engineer workshop on open ground. Build list does not show guild halls, market, blacksmith, Fobot Yard, watchtower, aid station, or wonders. Wait until the Engineer is standing. Empty ground click does **not** repath the robot.
-- [ ] 2/4: **G**, Build, leave it at **$70**. An Explore flag does not advance this beat. A Build flag posted above $70 does not either — the bar says to right-click it and post 70 again.
-- [ ] 3/4: Select that flag and press **+** until the pole says tempted (~$90).
+- [ ] 2/4: **G**, then **F3** Build, click open ground, leave it at **700**. An Explore flag does not advance this beat. A Build flag the Engineer already takes skips straight to 4/4 (no repost).
+- [ ] 3/4: Click that Build pole to select it and press **+** until the pole says tempted (~900). **+** with no pole selected and the flag tool closed says to click a pole first.
+- [ ] Touch nothing for 30 s on any beat (world running): a hint repeats it with the exact keys, once per quiet spell. A flag post the treasury cannot cover says so (it used to do nothing).
 - [ ] 4/4: A soil creeper is on the yard. **F5 Defend** on it. If the Engineer ignores it, dock a Defense workshop (key 2) and post F5 again.
 - [ ] **SKIP** dismisses the bar. Settings → **Replay tutorial** brings it back. **T** opens research and does not list Guild Charter, secret projects, Mars Ship, Belt Hauler, or Icebreaker.
 - [ ] Dens, sustain, and launch stay visible. You do not have to clear Earth.

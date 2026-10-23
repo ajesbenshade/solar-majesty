@@ -19,8 +19,8 @@ namespace SolarMajesty.EditorTools
             "The Colony Commons and one charging station are already standing.\n" +
             "Press B, then 1, and place the Engineer workshop anywhere on open ground.\n" +
             "Wait until the robot is standing. You never click-to-move units.\n" +
-            "Press G, choose Build, leave the bounty at 700. Watch the Engineer respond.\n" +
-            "If ignored, select the flag and press + until tempted. If accepted, continue.\n" +
+            "Press G, then F3 (Build), click open ground, leave the bounty at 700. Watch the Engineer.\n" +
+            "If ignored, click the Build pole to select it and press + until tempted. If accepted, continue.\n" +
             "A soil creeper shows up. Press G, F5 Defend, and post it on the bug.\n" +
             "If the pole says ignored, build a Defense workshop (key 2) and post F5 again.\n" +
             "Keep mobs away: bots build charging stations and solar farms only while the yard is safe.\n" +
@@ -52,6 +52,7 @@ namespace SolarMajesty.EditorTools
             "---------------------------------------\n" +
             "macOS:   ~/Library/Application Support/SolarMajesty/Solar Majesty/Playtest/\n" +
             "Windows: %USERPROFILE%\\AppData\\LocalLow\\SolarMajesty\\Solar Majesty\\Playtest/\n" +
+            "Linux:   ~/.config/unity3d/SolarMajesty/Solar Majesty/Playtest/\n" +
             "One JSON-lines file per session (session-*.jsonl). Nothing leaves the machine on its own.\n" +
             "\n" +
             "Notes\n" +

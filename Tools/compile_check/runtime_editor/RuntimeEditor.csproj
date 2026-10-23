@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Common.props" />
+  <PropertyGroup>
+    <AssemblyName>SolarMajesty.RuntimeEditor</AssemblyName>
+    <DefineConstants>$(DefineConstants);UNITY_EDITOR</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)Assets/Scripts/Runtime/**/*.cs" />
+    <Compile Include="$(RepoRoot)Assets/Scripts/Editor/**/*.cs" />
+    <Compile Include="../stubs/PackageStubs.cs" />
+    <Compile Include="../stubs/EditorPackageStubs.cs" />
+    <ProjectReference Include="../systems/Systems.csproj" />
+    <Reference Include="System.Net.Http" />
+    <PackageReference Include="UnityTechnologies.UnityEditor" Version="2020.2.2.1" PrivateAssets="all" />
+  </ItemGroup>
+</Project>
