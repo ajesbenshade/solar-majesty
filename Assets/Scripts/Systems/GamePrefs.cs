@@ -32,7 +32,11 @@ namespace SolarMajesty
             DemoSettings.FullscreenKey,
             DemoSettings.ResolutionWKey,
             DemoSettings.ResolutionHKey,
-            DemoSettings.FrameCapKey
+            DemoSettings.FrameCapKey,
+            // UI Scale is sized to this PC's screen (AUTO follows its height), so a scale chosen on a
+            // 4K desktop must not roam to a 1080p laptop or a Steam Deck.
+            DemoSettings.HudKey,
+            DemoSettings.HudAutoKey
         };
 
         private enum Kind : byte { Int = 0, Float = 1, String = 2 }
