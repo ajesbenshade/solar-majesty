@@ -4308,6 +4308,16 @@
    "tr": "NUISIBLE"
   },
   {
+   "en": "PLAY INTRO ON LAUNCH  ·  OFF",
+   "key": "",
+   "tr": "INTRO AU LANCEMENT  ·  NON"
+  },
+  {
+   "en": "PLAY INTRO ON LAUNCH  ·  ON",
+   "key": "",
+   "tr": "INTRO AU LANCEMENT  ·  OUI"
+  },
+  {
    "en": "POISONED",
    "key": "",
    "tr": "EMPOISONNÉ"
@@ -4686,6 +4696,11 @@
    "en": "REPLAY GUIDED START",
    "key": "",
    "tr": "REJOUER LE DÉPART GUIDÉ"
+  },
+  {
+   "en": "REPLAY INTRO",
+   "key": "",
+   "tr": "REVOIR L'INTRO"
   },
   {
    "en": "REPLAY TUTORIAL",
@@ -6141,6 +6156,11 @@
    "en": "The lanes were spoken for before we arrived. Buy them with EU, or leave them behind.",
    "key": "",
    "tr": "Les voies étaient prises avant notre arrivée. Achetez-les en EU, ou laissez-les derrière vous."
+  },
+  {
+   "en": "The launch intro plays once, the first time the title opens. Replay plays it now.",
+   "key": "",
+   "tr": "L'intro se joue une fois, à la première ouverture de l'écran titre. « Revoir » la rejoue maintenant."
   },
   {
    "en": "The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic.",

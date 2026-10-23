@@ -513,6 +513,7 @@ namespace SolarMajesty
         private void OnGUI()
         {
             if (_loop == null || HideForCapture) return;
+            if (_loop.Screen == DemoScreen.Intro) return;
             if (CameraBeatDirector.HidesHud && _loop.Screen == DemoScreen.Playing)
             {
                 PointerBlocksWorld = true; // the camera beat draws its own letterbox; nothing here is clickable
@@ -3179,6 +3180,10 @@ namespace SolarMajesty
                 return;
             }
 
+            if (_loop.TitleButtonsBlocked && Event.current != null &&
+                (Event.current.isMouse || Event.current.type == EventType.KeyDown))
+                Event.current.Use();
+
             float bw = W(240f);
             float bh = L(34f);
             float x = M + 14f;
@@ -3649,6 +3654,16 @@ namespace SolarMajesty
             if (Chip(new Rect(c.x + halfW + 8f, y, halfW, RowH), logsLabel, ErrorLog.Count > 0, HudTips.Logs()))
                 ErrorLog.OpenFolder();
             y += RowStep;
+
+            if (Chip(new Rect(c.x, y, c.width, RowH),
+                    IntroLaunch.PlayOnLaunch ? Loc.S("PLAY INTRO ON LAUNCH  ·  ON") : Loc.S("PLAY INTRO ON LAUNCH  ·  OFF"),
+                    IntroLaunch.PlayOnLaunch))
+                IntroLaunch.SetPlayOnLaunch(!IntroLaunch.PlayOnLaunch);
+            y += RowStep;
+            if (Chip(new Rect(c.x, y, c.width, RowH), Loc.S("REPLAY INTRO"), false))
+                _loop.ReplayIntro();
+            y += RowH + 2f;
+            y = WrapBlock(c, y, Loc.S("The launch intro plays once, the first time the title opens. Replay plays it now.")) + 6f;
 
             bool marsLessons = DemoSettings.MarsJexLessons;
             if (!DemoBuild.Active) // Luna/Mars lessons: not in the Earth-only Steam demo

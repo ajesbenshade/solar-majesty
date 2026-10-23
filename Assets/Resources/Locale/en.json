@@ -4308,6 +4308,16 @@
    "tr": "PEST"
   },
   {
+   "en": "PLAY INTRO ON LAUNCH  ·  OFF",
+   "key": "",
+   "tr": "PLAY INTRO ON LAUNCH  ·  OFF"
+  },
+  {
+   "en": "PLAY INTRO ON LAUNCH  ·  ON",
+   "key": "",
+   "tr": "PLAY INTRO ON LAUNCH  ·  ON"
+  },
+  {
    "en": "POISONED",
    "key": "",
    "tr": "POISONED"
@@ -4686,6 +4696,11 @@
    "en": "REPLAY GUIDED START",
    "key": "",
    "tr": "REPLAY GUIDED START"
+  },
+  {
+   "en": "REPLAY INTRO",
+   "key": "",
+   "tr": "REPLAY INTRO"
   },
   {
    "en": "REPLAY TUTORIAL",
@@ -6141,6 +6156,11 @@
    "en": "The lanes were spoken for before we arrived. Buy them with EU, or leave them behind.",
    "key": "",
    "tr": "The lanes were spoken for before we arrived. Buy them with EU, or leave them behind."
+  },
+  {
+   "en": "The launch intro plays once, the first time the title opens. Replay plays it now.",
+   "key": "",
+   "tr": "The launch intro plays once, the first time the title opens. Replay plays it now."
   },
   {
    "en": "The meadow is empty and the court is a rumor. Sol Authority does not hold court in the grass. Raise a Commons before anyone calls this a picnic.",
