@@ -22,7 +22,7 @@ namespace SolarMajesty
         /// <summary>Spoken by the hero when the player's line is refused.</summary>
         private static readonly string[] Deflections =
         {
-            "Not touching that one, Overseer. Post a bounty instead.",
+            "Not touching that one, Core. Post a bounty instead.",
             "Channel's for colony business. Try again.",
             "I've got dens to clear. Ask me something useful.",
             "Static on the line. Didn't catch that, and I'm not asking twice."
