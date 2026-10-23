@@ -1230,6 +1230,10 @@ namespace SolarMajesty
         /// </summary>
         public static readonly Color LifterHullFill = new Color(0.14f, 0.12f, 0.10f);
 
+        /// <summary>Cargo-capsule windows: pale warm white at low emission. Cyan is the Core's colour and amber is the chargers', so the Lifter uses neither.</summary>
+        private static readonly Color LifterWindowGlow = new Color(1.00f, 0.93f, 0.78f);
+        private static readonly Color LifterWindowEmit = new Color(0.30f, 0.26f, 0.18f);
+
         /// <summary>Name of the parked craft's own object under the pad, which LaunchSite reuses.</summary>
         public const string LifterObjectName = "Dress_ColonyLifter";
 
@@ -1300,13 +1304,11 @@ namespace SolarMajesty
                     off + new Vector3(0f, 0.30f, 0f), new Vector3(0.34f, 0.14f, 0.34f), dark);
             }
 
-            // Lower stage: wide cream drum with an orange band and a graphite collar.
+            // Lower stage: wide cream drum with an orange band (one dark band on the stack is the capsule, so no collar here).
             Prim(root, "Dress_LifterLower", PrimitiveType.Cylinder,
                 new Vector3(0f, 2.05f, 0f), new Vector3(1.10f, 1.25f, 1.10f), White, LifterHullFill);
             Prim(root, "Dress_LifterBand", PrimitiveType.Cylinder,
                 new Vector3(0f, h * LifterBandT, 0f), new Vector3(1.14f, 0.16f, 1.14f), Orange);
-            Prim(root, "Dress_LifterCollar", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.38f, 0f), new Vector3(1.00f, 0.10f, 1.00f), Graphite);
 
             // Strap-on boosters, either side, with orange nose tips and dark bases.
             for (int side = -1; side <= 1; side += 2)
@@ -1331,7 +1333,7 @@ namespace SolarMajesty
             Prim(root, "Dress_LifterCapsule", PrimitiveType.Cylinder,
                 new Vector3(0f, 5.42f, 0f), new Vector3(1.02f, 0.28f, 1.02f), Graphite);
             Prim(root, "Dress_LifterWindows", PrimitiveType.Cylinder,
-                new Vector3(0f, 5.46f, 0f), new Vector3(1.05f, 0.07f, 1.05f), Cyan, CyanEmit * 0.4f);
+                new Vector3(0f, 5.46f, 0f), new Vector3(1.05f, 0.07f, 1.05f), LifterWindowGlow, LifterWindowEmit);
             Prim(root, "Dress_LifterDome", PrimitiveType.Sphere,
                 new Vector3(0f, 5.70f, 0f), new Vector3(1.02f, 0.62f, 1.02f), White, LifterHullFill);
 

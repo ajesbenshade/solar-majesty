@@ -31,9 +31,6 @@ namespace SolarMajesty
         /// <summary>Landing pad — still a landmark, not a 40m plate.</summary>
         public const float PadScale = 0.18f;
 
-        /// <summary>Scale for the pad's parked craft in showcase stills.</summary>
-        public const float ShipScale = 0.18f;
-
         /// <summary>Colony Commons footprint in cells (18 m): the walled citadel, three guild halls wide.</summary>
         public const int CommonsSide = 12;
 
