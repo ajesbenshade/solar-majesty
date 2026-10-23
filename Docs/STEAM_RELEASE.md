@@ -16,9 +16,9 @@ Target: **Steam Early Access, Windows 10/11 64-bit**, local AI pack in the base 
 | Cloud-ready saves | [GamePrefs.cs](../Assets/Scripts/Systems/GamePrefs.cs), [SaveSystem.cs](../Assets/Scripts/Systems/SaveSystem.cs) | Campaign progress moved out of the registry into files |
 | Upload | [Tools/steam/upload_to_steam.ps1](../Tools/steam/upload_to_steam.ps1) | Stages game + `ai\`, writes SteamPipe VDFs, runs steamcmd |
 | No cheats in release | [DevTools.cs](../Assets/Scripts/Systems/DevTools.cs) | F10 / Shift+click unlocks only in editor, dev builds or `-devtools` |
-| Error log | [ErrorLog.cs](../Assets/Scripts/Systems/ErrorLog.cs) | `Logs\errors-*.log`, Settings → Open Logs Folder |
+| Error log | [ErrorLog.cs](../Assets/Scripts/Systems/ErrorLog.cs) | `Logs\errors-*.log`, pause menu "REPORT A BUG  ·  open logs" |
 | Live-AI guardrail | [AiContentGuard.cs](../Assets/Scripts/Systems/Narration/AiContentGuard.cs) | Screens chat input, streaming text and replies |
-| Build stamp | `build_info.txt` next to the exe | version, commit, time, Steam app |
+| Build stamp | `StreamingAssets/build-info.json` ([ReleaseStamp.cs](../Assets/Scripts/Editor/ReleaseStamp.cs)) | version and commit; `-smVersion` / `-smCommit` set them |
 
 ## 1. Register (you)
 
@@ -40,7 +40,7 @@ attorney. Keep the store copy free of comparisons to *Majesty* (it currently has
 
 ## 2. Swap in the real App ID (code, 2 minutes)
 
-In `Assets/Scripts/Systems/Platform/SteamConfig.cs` change `AppId = 480` to your App ID.
+In `Assets/Scripts/Systems/Platform/SteamConfig.cs` change `AppId = TestAppId` (480) to your App ID, and update `SteamConfigTests.AppId_IsValvesSpacewarTestApp_NotARealId` with it.
 `RelaunchThroughSteam` turns itself on for any ID other than 480. Then rebuild.
 `SteamConfigTests` keeps the 480 safety rule honest.
 
@@ -72,17 +72,15 @@ Publish the stats/achievements config. Achievements set while the config is unpu
 ## 4. Build and upload
 
 ```powershell
-# Release player (writes build_info.txt and steam_appid.txt next to the exe)
+# Release player (writes build-info.json and steam_appid.txt; steam_appid.txt holds 480 until you swap it)
 & "C:\Program Files\Unity\Hub\Editor\6000.5.10f1\Editor\Unity.exe" -batchmode -quit -projectPath . `
   -executeMethod SolarMajesty.EditorTools.BuildCommands.BuildWindows -smBuildPath Builds\SteamRC -smVersion 0.9.0
 
-# AI pack (see BETA_PACKAGE.md). Set -SourceOfferContact to your support email or URL.
-powershell -ExecutionPolicy Bypass -File Tools\local_ai\build_ai_pack.ps1 -OutDir Builds\Beta\stage `
-  -LlamaZip <llama-bNNNN-bin-win-cpu-x64.zip> -SourceOfferContact support@example.com
+# AI pack: Tools\local_ai\build_ai_pack.ps1 is not on main yet (it is in the local-AI follow-up PR). Skip -AiDir until it lands.
 
 # SteamPipe (leaves steam_appid.txt and debug symbols out; lands on no branch until you set it live)
 powershell -ExecutionPolicy Bypass -File Tools\steam\upload_to_steam.ps1 -GameDir Builds\SteamRC\Windows `
-  -AiDir Builds\Beta\stage\ai -AppId <APP_ID> -DepotId <DEPOT_ID> -SteamUser <build_account> -Description "EA 0.9.0 RC1"
+  -AppId <APP_ID> -DepotId <DEPOT_ID> -SteamUser <build_account> -Description "EA 0.9.0 RC1"
 ```
 
 Set the build live on a private `beta` branch first, install it through the Steam client on a clean PC,
@@ -143,7 +141,7 @@ the game collects nothing; playtest telemetry and error logs stay on the player'
 4. Earn **Terms Accepted** (first completed bounty). The Steam toast appears.
 5. Save, quit, start on a second PC with the same account: Continue restores the colony and campaign.
 6. F10 and Shift+click on a locked world do nothing; locked worlds say "LOCKED" only.
-7. Settings → Open Logs Folder opens `...\LocalLow\SolarMajesty\Solar Majesty\Logs`.
+7. The pause menu's "REPORT A BUG  ·  open logs" opens `...\LocalLow\SolarMajesty\Solar Majesty\Logs`.
 8. Hero voices · local AI on: a hero speaks a generated line within about a minute. Then start with
    `-noai`: no `llama-server` process appears.
 9. Unplug the network and start from the exe with Steam closed: the game still plays (achievements wait).
