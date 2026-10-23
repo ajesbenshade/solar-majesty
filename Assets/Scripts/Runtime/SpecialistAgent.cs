@@ -90,6 +90,14 @@ namespace SolarMajesty
         private bool _navStallReady;
         private bool _directTravel;
         private Vector3 _navStallSample;
+        private Vector3[] _route;
+        private int _routeCorner;
+        private Vector3 _routeGoal;
+        private int _approachAttempt;
+        private float _bestGoalDist = float.MaxValue;
+        private float _noCloser;
+        /// <summary>EditMode: extra blocked cells, such as a river the navmesh does not carve.</summary>
+        internal System.Func<Vector3, bool> TravelBlocked;
         /// <summary>EditMode: a nav path that stays pending and never moves the body.</summary>
         internal bool PretendStalledNav;
         private bool _forceRepath;
@@ -319,7 +327,37 @@ namespace SolarMajesty
             credits += kept;
             greedHunger = Mathf.Clamp01(greedHunger - Mathf.Clamp01(MajestyEconomy.ToBrain(amount) / 120f) * 0.35f);
             if (!string.IsNullOrEmpty(reason))
-                Debug.Log($"[Credits] {data?.displayName} +{kept:F0} EU ({reason}; {tax} to guild) → {credits:F0}");
+                Debug.Log(FormatCreditGain(data != null ? data.displayName : null, amount, kept, tax, credits, reason));
+        }
+
+        /// <summary>
+        /// Flag bounties name the full purse and both shares. A bare "+kept (flag_ClearThreat)"
+        /// reads as if half the bounty vanished.
+        /// </summary>
+        private static string FormatCreditGain(string who, float amount, float kept, int tax, float balance, string reason)
+        {
+            if (TryFlagLabel(reason, out string label))
+            {
+                int gross = Mathf.RoundToInt(amount);
+                int share = gross - tax;
+                string name = string.IsNullOrEmpty(who) ? "mech" : who;
+                return $"[Credits] Bounty {gross:N0} EU: {share:N0} EU to {name}, {tax:N0} EU to the till — {label}";
+            }
+
+            return $"[Credits] {who} +{kept:N0} EU ({reason}; {tax:N0} EU to the till) → {balance:N0}";
+        }
+
+        private static bool TryFlagLabel(string reason, out string label)
+        {
+            label = null;
+            const string prefix = "flag_";
+            if (string.IsNullOrEmpty(reason) || !reason.StartsWith(prefix)) return false;
+            string raw = reason.Substring(prefix.Length);
+            if (System.Enum.TryParse(raw, out FlagType type))
+                label = SpecialistFlavor.FlagShort(type);
+            else
+                label = raw;
+            return true;
         }
 
         /// <summary>The till this hero's guild tax lands in: workshop / guild hall, else Commons.</summary>
@@ -757,6 +795,7 @@ namespace SolarMajesty
                 fatigue = debugFatigueValue;
 
             float dt = Time.deltaTime;
+            if (_fordDetached && !TravelWet(transform.position)) ReattachAfterFord();
             TickYield(dt);
             TickRecovery(dt);
             if (_incapacitated)
@@ -859,7 +898,7 @@ namespace SolarMajesty
             _loop?.OnRobotScrapped(this, salvage);
             DemoVfx.DeathBurst(transform.position, bodyTint);
             DemoAudio.PlayRobotDown(transform.position);
-            Debug.Log($"[Specialist] {data?.displayName} SCRAPPED — salvage {salvage} MET");
+            Debug.Log($"[Specialist] {data?.displayName} scrapped — salvage {salvage} EU to the till");
             Destroy(gameObject);
         }
 
@@ -926,14 +965,23 @@ namespace SolarMajesty
         {
             if (_retreatLeft > 0f)
             {
-                if (KingdomLife.AtRest(transform.position, OutpostClaimed))
+                // The inn building carves the mesh, so the door is about 9 m from the beacon.
+                // Wake-up health is 28%. Hand that flee off to rest before the next think
+                // can claim a flag, and latch rest until the leave line.
+                if (KingdomLife.AtRefuge(transform.position, OutpostClaimed))
+                {
                     _retreatLeft = 0f;
+                    var rest = _motives.Commit(
+                        BrainDecision.Rest(0.9f, "recovering_at_inn", RestPosition),
+                        _brain.Tuning, healthNormalized, Time.time, true);
+                    ApplyDecision(rest);
+                }
                 else
                 {
                     ApplyDecision(BrainDecision.Flee(RestPosition, 0.95f, "flee_to_inn"));
-                    _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
-                    return;
                 }
+                _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
+                return;
             }
 
             _thinkTimer -= dt;
@@ -951,17 +999,6 @@ namespace SolarMajesty
             {
                 decision = _brain.Evaluate(BuildContext(), _flags.Flags, bodyDanger);
             }
-            if (decision.Action != SpecialistAction.Flee &&
-                _lastDecision.Action == SpecialistAction.Rest &&
-                KingdomLife.AtRest(transform.position, OutpostClaimed) &&
-                (fatigue > 0.22f || healthNormalized < 0.82f))
-            {
-                decision = BrainDecision.Rest(
-                    Mathf.Max(decision.Score, 0.6f),
-                    "recovering_at_inn",
-                    RestPosition);
-            }
-
             Party?.PromoteIfNeeded();
             if (Party != null && !Party.IsLeader(this) &&
                 decision.Action != SpecialistAction.Flee)
@@ -970,8 +1007,12 @@ namespace SolarMajesty
                 if (lead != null && lead.IsAlive)
                     decision = FollowLeader(lead);
             }
-            bool atInn = KingdomLife.AtRest(transform.position, OutpostClaimed);
-            decision = _motives.Commit(decision, _brain.Tuning, healthNormalized, Time.time, atInn);
+            // The inn door is outside the 3.2 m disc. Commit treats that door as the inn:
+            // Flee at wake-up HP hands off to Rest, Rest holds until restLeaveHealth, and a
+            // Defend flag cannot be reclaimed until the post-rest cooldown. The old 0.82 disc
+            // release and 0.85 refuge pull fought across the 1.75 s dwell and flipped every ~2 s.
+            bool atDoor = KingdomLife.AtRefuge(transform.position, OutpostClaimed);
+            decision = _motives.Commit(decision, _brain.Tuning, healthNormalized, Time.time, atDoor);
 
             // A stuck Clear Threat was let go. Do not pick the same flag straight back up,
             // or the release log fires again and the warrant never frees.
@@ -1204,6 +1245,10 @@ namespace SolarMajesty
                     _directTravel = false;
                     _navStall = 0f;
                     _navStallReady = false;
+                    _route = null;
+                    _approachAttempt = 0;
+                    _bestGoalDist = float.MaxValue;
+                    _noCloser = 0f;
                     _watchReady = false;
                     _combatCredit = 0f;
                     DemoAudio.PlayClaim(transform.position);
@@ -1261,6 +1306,16 @@ namespace SolarMajesty
         {
             if (!_incapacitated && !_scrapped)
                 TryLevyExchange();
+
+            // Couriers keep the till fed while working flags: carried levy goes in first, and an
+            // empty courier checks the stops at least every CourierLevyCadence seconds.
+            if (data != null && data.specialistClass == SpecialistClass.CourierBot)
+            {
+                _sinceLevyHandIn += dt;
+                if (LevyRun.CourierLevyDue(_lastDecision.Action, _levyCarry, _sinceLevyHandIn) &&
+                    !_incapacitated && !_scrapped && TickLevy(dt, true))
+                    return;
+            }
 
             switch (_lastDecision.Action)
             {
@@ -1332,16 +1387,16 @@ namespace SolarMajesty
             bool chipped = TryChipDen(dt);
             if (_activeFlag == null) return;
 
-            Vector3 approach = ClearThreatDestination(_activeFlag);
-            float toApproach = FlatDistance(transform.position, approach);
+            Vector3 den = ClearThreatDenCenter();
+            float toDen = FlatDistance(transform.position, den);
             Vector3 before = _watchReady ? _watchSample : transform.position;
 
-            if (toApproach > arriveDistance)
+            if (toDen > OverseerRules.ClearThreatAttackRange)
             {
                 bool engaged = TryEngageThreatInReach(dt);
                 if (!engaged)
                 {
-                    AdvanceToward(approach, dt, _forceRepath);
+                    AdvanceToward(den, dt, _forceRepath);
                     _forceRepath = false;
                 }
 
@@ -1350,7 +1405,7 @@ namespace SolarMajesty
                 _watchReady = true;
                 bool inCombat = engaged || chipped || _combatCredit > 0f;
                 _stuckWatch.Note(
-                    FlatDistance(transform.position, approach), dt, moved, inCombat,
+                    toDen, dt, moved, inCombat,
                     out bool repath, out bool release);
                 if (_combatCredit > 0f)
                     _combatCredit = Mathf.Max(0f, _combatCredit - dt);
@@ -1358,7 +1413,7 @@ namespace SolarMajesty
                 {
                     _forceRepath = true;
                     if (!engaged)
-                        AdvanceToward(approach, dt, true);
+                        AdvanceToward(den, dt, true);
                 }
                 if (release)
                 {
@@ -1424,10 +1479,7 @@ namespace SolarMajesty
             if (_invulnLeft > 0f)
                 _invulnLeft = Mathf.Max(0f, _invulnLeft - dt);
             if (_retreatLeft <= 0f) return;
-            if (KingdomLife.AtRest(transform.position, OutpostClaimed))
-                _retreatLeft = 0f;
-            else
-                _retreatLeft = Mathf.Max(0f, _retreatLeft - dt);
+            _retreatLeft = Mathf.Max(0f, _retreatLeft - dt);
         }
 
         /// <summary>Just stood up. Brief immunity, then a walk home before the next fight.</summary>
@@ -1522,7 +1574,7 @@ namespace SolarMajesty
                     DemoAudio.PlayCredits(transform.position);
                     DemoVfx.ClaimRing(transform.position, new Color(0.3f, 1f, 0.5f));
                 }
-                Debug.Log($"[Specialist] {data.displayName} completed {completedType} bounty=${bounty:F0}");
+                Debug.Log($"[Specialist] {data.displayName} completed {SpecialistFlavor.FlagShort(completedType)} bounty={bounty:N0} EU");
                 ReleaseClaim();
                 _activeFlag = null;
                 _status = "completed_flag";
@@ -1605,7 +1657,7 @@ namespace SolarMajesty
         private void TickRest(float dt)
         {
             Vector3 inn = RestPosition;
-            if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
+            if (FlatDistance(transform.position, inn) > KingdomLife.RefugeArrive)
             {
                 AdvanceToward(inn, dt, false);
                 _status = "seeking_inn";
@@ -1624,7 +1676,7 @@ namespace SolarMajesty
         {
             TrySelfAbility(AbilityTrigger.Flee);
             Vector3 inn = RestPosition;
-            if (FlatDistance(transform.position, inn) > KingdomLife.InnArrive)
+            if (FlatDistance(transform.position, inn) > KingdomLife.RefugeArrive)
             {
                 AdvanceToward(inn, dt, false);
                 _status = "fleeing";
@@ -1675,12 +1727,28 @@ namespace SolarMajesty
             ConsiderGuildUpgrade();
         }
 
-        private bool TickLevy(float dt)
+        private float _sinceLevyHandIn;
+
+        /// <summary>Test rig: where the levy chest is (null = none). Set together with <see cref="LevyDeliveredForTest"/>.</summary>
+        internal System.Func<Vector3, Vector3?> LevyChestForTest;
+        /// <summary>Test rig: receives the delivered line instead of the colony log.</summary>
+        internal System.Action<int, string> LevyDeliveredForTest;
+
+        /// <summary>Walkable spot nearest a levy chest; the chest centre itself when there is no mesh.</summary>
+        private static Vector3 ChestApproach(Vector3 chest)
+        {
+            return NavMesh.SamplePosition(chest, out NavMeshHit hit, LevyRun.ChestApproachSample, NavMesh.AllAreas)
+                ? hit.position
+                : chest;
+        }
+
+        private bool TickLevy(float dt, bool duringFlag = false)
         {
             if (data == null || data.specialistClass != SpecialistClass.CourierBot) return false;
             if (_incapacitated || _scrapped) return false;
-            if (_loop?.Village == null) return false;
-            if (_lastDecision.Action == SpecialistAction.PursueFlag ||
+            bool rig = LevyChestForTest != null;
+            if (!rig && _loop?.Village == null) return false;
+            if ((!duringFlag && _lastDecision.Action == SpecialistAction.PursueFlag) ||
                 _lastDecision.Action == SpecialistAction.Hunt ||
                 _lastDecision.Action == SpecialistAction.Flee ||
                 _lastDecision.Action == SpecialistAction.Rest)
@@ -1688,26 +1756,43 @@ namespace SolarMajesty
 
             if (_levyCarry > 0)
             {
-                var chest = _loop.Village.NearestLevyChest(transform.position);
-                if (chest == null) return false;
-                if (FlatDistance(transform.position, chest.WorldPosition) > LevyRun.DepositArrive)
+                Vector3 chestPos;
+                bool tower = false;
+                if (rig)
                 {
-                    SetDestination(chest.WorldPosition);
-                    MoveFallback(chest.WorldPosition, EffectiveMoveSpeed * dt);
-                    _status = chest.IsWatchtower ? "levy_tower" : "levy_home";
+                    Vector3? p = LevyChestForTest(transform.position);
+                    if (!p.HasValue) return false;
+                    chestPos = p.Value;
+                }
+                else
+                {
+                    var chest = _loop.Village.NearestLevyChest(transform.position);
+                    if (chest == null) return false;
+                    chestPos = chest.WorldPosition;
+                    tower = chest.IsWatchtower;
+                }
+                Vector3 approach = ChestApproach(chestPos);
+                if (!LevyRun.AtChest(FlatDistance(transform.position, chestPos), FlatDistance(transform.position, approach)))
+                {
+                    SetDestination(approach);
+                    MoveFallback(approach, EffectiveMoveSpeed * dt);
+                    _status = tower ? "levy_tower" : "levy_home";
                     return true;
                 }
 
                 int n = _levyCarry;
                 _levyCarry = 0;
-                _loop.DeliverLevy(n);
+                _sinceLevyHandIn = 0f;
+                if (rig) LevyDeliveredForTest?.Invoke(n, CompactGrok.LevyDelivered(n));
+                else _loop.DeliverLevy(n);
                 _status = "levy_delivered";
                 DemoVfx.ClaimRing(transform.position, new Color(0.96f, 0.78f, 0.22f));
                 return true;
             }
 
+            if (rig) return false;
             var stop = _loop.Village.NearestLevyStop(transform.position, 80f);
-            if (stop == null) return false;
+            if (stop == null) { _sinceLevyHandIn = 0f; return false; }
             if (FlatDistance(transform.position, stop.WorldPosition) > LevyRun.CollectArrive)
             {
                 SetDestination(stop.WorldPosition);
@@ -1717,7 +1802,7 @@ namespace SolarMajesty
             }
 
             int take = stop.TakeLevy();
-            if (take <= 0) return false;
+            if (take <= 0) { _sinceLevyHandIn = 0f; return false; }
             _levyCarry += take;
             _status = "levy_loaded";
             return true;
@@ -1772,7 +1857,7 @@ namespace SolarMajesty
         {
             int lost = _duty.Drop(fraction);
             if (lost > 0)
-                _loop?.LogOverseer($"{Record.Name} {reason} — {lost} EU of guild tax lost.");
+                _loop?.LogOverseer($"{Record.Name} {reason} — {lost:N0} EU dropped.");
         }
 
         /// <summary>
@@ -2287,6 +2372,7 @@ namespace SolarMajesty
             if (data == null || _brain == null || _flags == null || _scrapped)
                 return;
             if (dt < 0f) dt = 0f;
+            if (_fordDetached && !TravelWet(transform.position)) ReattachAfterFord();
             TickYield(dt);
             TickRecovery(dt);
             if (_incapacitated)
@@ -2338,56 +2424,251 @@ namespace SolarMajesty
             if (SuppressTravelForTests) return;
             if (dt < 0f) dt = 0f;
             float step = EffectiveMoveSpeed * dt;
-            if (FlatDistance(transform.position, target) <= arriveDistance)
+            float arrive = IsClearThreat(_activeFlag) && _lastDecision.Action == SpecialistAction.PursueFlag
+                ? OverseerRules.ClearThreatAttackRange
+                : arriveDistance;
+            if (FlatDistance(transform.position, target) <= arrive)
             {
+                _route = null;
                 _directTravel = false;
                 _navStall = 0f;
+                _noCloser = 0f;
                 return;
             }
 
-            bool onMesh = (_agent != null && _agent.isOnNavMesh) || PretendStalledNav;
-            if (!onMesh)
-            {
-                MoveFallback(target, step);
-                return;
-            }
-
-            if (_directTravel)
+            if (PretendStalledNav)
             {
                 StepRegardless(target, step);
                 return;
             }
 
-            if (!PretendStalledNav)
-                SetDestination(target, force, OverseerRules.DenFootprintMeters);
+            bool denWalk = IsClearThreat(_activeFlag) && _lastDecision.Action == SpecialistAction.PursueFlag;
+            bool goalMoved = FlatDistance(_routeGoal, target) > 3f;
+            bool stalled = _noCloser >= NavCornerPath.StallReplanSeconds;
+            if (force || _route == null || goalMoved || stalled)
+            {
+                if (stalled) _approachAttempt++;
+                RebuildRoute(target, denWalk);
+                _noCloser = 0f;
+            }
 
-            bool carried = PretendStalledNav || NavPathCarries(target);
-            float moved = _navStallReady ? FlatDistance(transform.position, _navStallSample) : 0f;
-            _navStallSample = transform.position;
-            _navStallReady = true;
-            if (moved > Mathf.Max(0.05f, step * 0.35f))
-                _navStall = 0f;
+            Vector3 corner = NextCorner(target);
+            StepAlongRoute(corner, step);
+
+            float along = FlatDistance(transform.position, target);
+            if (along < _bestGoalDist - 0.75f)
+            {
+                _bestGoalDist = along;
+                _noCloser = 0f;
+            }
             else
-                _navStall += dt;
+                _noCloser += dt;
 
-            // A path that never moves the body is how a claimed mech stands in the colony.
-            if (_navStall >= 1.25f)
-                _directTravel = true;
-            if (carried && !_directTravel)
+            SeatOnTerrain();
+        }
+
+        private void RebuildRoute(Vector3 target, bool denWalk)
+        {
+            _routeGoal = target;
+            _routeCorner = 0;
+            if (denWalk && NavCornerPath.TryDenRoute(
+                    transform.position, target, OverseerRules.ClearThreatAttackRange,
+                    _approachAttempt, TravelWet, out Vector3[] denCorners, out bool viaFord))
+            {
+                _route = denCorners;
+                _routeKind = viaFord ? "ford" : "corner";
                 return;
-            StepRegardless(target, step);
+            }
+
+            if (NavCornerPath.TryBuild(transform.position, target, 8f, out Vector3[] corners, out NavMeshPathStatus status) &&
+                status == NavMeshPathStatus.PathComplete &&
+                (!denWalk || NavCornerPath.EndsWithinAttackRange(corners, target, OverseerRules.ClearThreatAttackRange)))
+            {
+                _route = corners;
+                _routeKind = "fallback";
+                return;
+            }
+
+            _route = null;
+            _routeKind = null;
+        }
+
+        /// <summary>Route type for logs: corner, ford, fallback, or direct (no route; stepping straight).</summary>
+        private string RouteKindForLog => _route != null && _route.Length > 0 && !string.IsNullOrEmpty(_routeKind) ? _routeKind : "direct";
+
+        private string _routeKind;
+
+        /// <summary>Den label for logs: the lair object's name, else the flag's runtime ID.</summary>
+        private string ClearThreatDenLabel()
+        {
+            if (_activeFlag != null && _world != null)
+            {
+                var lair = _world.FindNearestLair(_activeFlag.WorldPosition, 12f);
+                if (lair != null) return lair.name;
+            }
+            return _activeFlag != null ? "flag " + _activeFlag.RuntimeId : "none";
+        }
+
+        /// <summary>Keeps the "[ClearThreat] X released the claim — no progress." prefix for log parsers.</summary>
+        internal static string ClearThreatReleaseMessage(string who, string den, float distance, string route) =>
+            $"[ClearThreat] {who} released the claim — no progress. den={den} dist=" +
+            distance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + $"m route={route}";
+
+        private Vector3 NextCorner(Vector3 fallback)
+        {
+            if (_route == null || _route.Length == 0) return fallback;
+            while (_routeCorner < _route.Length - 1 &&
+                   FlatDistance(transform.position, _route[_routeCorner]) < 1.35f)
+                _routeCorner++;
+            return _route[Mathf.Min(_routeCorner, _route.Length - 1)];
+        }
+
+        /// <summary>
+        /// Follow the corner. A wet cell is refused unless it is a short ford the route asked for.
+        /// </summary>
+        private bool StepAlongRoute(Vector3 corner, float step)
+        {
+            Vector3 next = Vector3.MoveTowards(transform.position, new Vector3(corner.x, transform.position.y, corner.z), step);
+            bool wet = TravelWet(next);
+            bool fordRange = FlatDistance(transform.position, corner) <= NavCornerPath.MaxFordMeters + 1.5f;
+            // The mesh stops short of the water (agent radius plus the wet margin). A dry step into
+            // that strip samples back onto the bank, so the hero never gets wet. Water just ahead on
+            // the way to a ford corner counts as the ford.
+            bool ford = fordRange && (wet || WetAhead(next, corner, 3f));
+            if (wet && !ford)
+            {
+                Vector3 dir = next - transform.position;
+                dir.y = 0f;
+                if (dir.sqrMagnitude < 0.0001f) return false;
+                Vector3 side = new Vector3(-dir.z, 0f, dir.x).normalized * step;
+                Vector3 left = transform.position + side;
+                Vector3 right = transform.position - side;
+                if (!TravelWet(left)) next = left;
+                else if (!TravelWet(right)) next = right;
+                else return false;
+            }
+
+            // A ford is off the mesh on purpose. Warping would snap the hero back to the near bank,
+            // and so would a live agent: it clamps its transform to the mesh every frame. Detach the
+            // agent's position while wading and re-seat it on the far bank.
+            if (ford)
+            {
+                if (_agent != null && _agent.enabled && _agent.updatePosition)
+                {
+                    _agent.isStopped = true;
+                    _agent.ResetPath();
+                    _agent.updatePosition = false;
+                    _fordDetached = true;
+                }
+                transform.position = next;
+                return true;
+            }
+            ReattachAfterFord();
+
+            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+                _agent.ResetPath();
+                Vector3 warp = new Vector3(next.x, 0.02f, next.z);
+                if (SampleForAgent(warp, out NavMeshHit hit) && StepAgentTo(hit.position))
+                {
+                    Vector3 seated = transform.position;
+                    seated.x = hit.position.x;
+                    seated.z = hit.position.z;
+                    transform.position = seated;
+                    return true;
+                }
+            }
+            transform.position = next;
+            return true;
+        }
+
+        private bool WetAhead(Vector3 from, Vector3 corner, float meters)
+        {
+            Vector3 dir = corner - from;
+            dir.y = 0f;
+            float len = Mathf.Min(meters, dir.magnitude);
+            if (len < 0.01f) return false;
+            dir.Normalize();
+            for (float d = 0.5f; d <= len + 0.001f; d += 0.5f)
+                if (TravelWet(from + dir * d)) return true;
+            return false;
+        }
+
+        private bool _fordDetached;
+
+        /// <summary>True while a ford has the agent's position detached from the transform.</summary>
+        internal bool FordDetached => _fordDetached;
+
+        /// <summary>Back on dry ground: put the agent where the hero is and let it drive the transform again.</summary>
+        private void ReattachAfterFord()
+        {
+            if (!_fordDetached) return;
+            _fordDetached = false;
+            if (_agent == null || !_agent.enabled) return;
+            if (SampleForAgent(new Vector3(transform.position.x, 0.02f, transform.position.z), out NavMeshHit hit))
+                _agent.Warp(hit.position);
+            _agent.updatePosition = true;
+        }
+
+        internal void UseAgentForTravelTest(NavMeshAgent agent) => _agent = agent;
+
+        private bool TravelWet(Vector3 p)
+        {
+            if (TravelBlocked != null && TravelBlocked(p)) return true;
+            return _world != null && _world.IsOverWater(p, 0.35f);
+        }
+
+        private Vector3 ClearThreatDenCenter()
+        {
+            Vector3 den = _activeFlag != null ? _activeFlag.WorldPosition : transform.position;
+            if (_world != null)
+            {
+                var lair = _world.FindNearestLair(den, 12f);
+                if (lair != null) den = lair.WorldPosition;
+            }
+            return den;
         }
 
         /// <summary>Put the pivot on the terrain. A recovered mech was saved under the surface.</summary>
+        /// <summary>
+        /// Sample only this agent's NavMesh. An AllAreas sample can land on another agent type's mesh,
+        /// and warping there logs "Failed to create agent".
+        /// </summary>
+        private bool SampleForAgent(Vector3 point, out NavMeshHit hit)
+        {
+            var filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = NavMesh.AllAreas };
+            return NavMesh.SamplePosition(point, out hit, 2.5f, filter);
+        }
+        /// <summary>
+        /// Short hops slide the agent along its mesh with Move. Warp re-creates the agent, and near
+        /// carved river cells that logs "Failed to create agent" even on a sampled point.
+        /// </summary>
+        private bool StepAgentTo(Vector3 onMesh)
+        {
+            Vector3 delta = onMesh - _agent.nextPosition;
+            delta.y = 0f;
+            // Move only along a clear straight line on the mesh; a hop across a carved edge still warps.
+            var filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = NavMesh.AllAreas };
+            if (delta.sqrMagnitude < 1f && !NavMesh.Raycast(_agent.nextPosition, onMesh, out _, filter))
+            {
+                _agent.Move(delta);
+                return true;
+            }
+            return _agent.Warp(onMesh);
+        }
         private void SeatOnTerrain()
         {
             if (TerrainDataBake.Current == null) return;
+            if (TravelWet(transform.position)) return;
             Vector3 p = transform.position;
             p.y = TerrainDataBake.GroundHeight(p);
             transform.position = p;
             Vector3 probe = new Vector3(p.x, 0.02f, p.z);
-            if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
-                _agent.Warp(probe);
+            // Seat only onto a sampled point of this agent's mesh, never a raw off-mesh warp.
+            if (_agent != null && _agent.enabled && _agent.isOnNavMesh &&
+                SampleForAgent(probe, out NavMeshHit hit))
+                StepAgentTo(hit.position);
         }
 
         /// <summary>
@@ -2446,7 +2727,8 @@ namespace SolarMajesty
         {
             if (_activeFlag == null) return;
             string who = data != null && !string.IsNullOrEmpty(data.displayName) ? data.displayName : "Hero";
-            Debug.Log($"[ClearThreat] {who} released the claim — no progress.");
+            Debug.Log(ClearThreatReleaseMessage(who, ClearThreatDenLabel(),
+                FlatDistance(transform.position, ClearThreatDenCenter()), RouteKindForLog));
             _yieldThreatId = _activeFlag.RuntimeId;
             _yieldThreatSeconds = OverseerRules.ClearThreatYieldSeconds;
             ReleaseClaim();
@@ -2613,7 +2895,7 @@ namespace SolarMajesty
         public string DebugLine()
         {
             string flagInfo = _activeFlag != null
-                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):F0}"
+                ? $"{_activeFlag.Data.flagType} b={FlagBountySync.Amount(_activeFlag):N0} EU"
                 : "-";
             string nav = _agent != null && _agent.isOnNavMesh ? "nav" : "direct";
             return $"{data?.displayName ?? "?"} L{Level} | {_lastDecision.Action} | " +

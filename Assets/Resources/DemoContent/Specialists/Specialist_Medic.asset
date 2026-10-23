@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SolarMajesty.SpecialistData
   specialistClass: 3
-  displayName: Medic
+  displayName: Repair
   description: Triage. Stays near the wounded. Defends; will not hunt dens.
   baseGreed: 0.24
   courage: 0.42

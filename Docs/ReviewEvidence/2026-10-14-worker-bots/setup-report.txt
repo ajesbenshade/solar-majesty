@@ -1,0 +1,25 @@
+Engineer: bot importer already set up
+Hydroponics: bot importer already set up
+Medic: bot importer already set up
+Hauler: bot importer already set up
+idle clip 'SM_WorkerBot@Idle' len=4.00s human=True loop=True
+prefab Assets/Resources/Colonists/SM_Colonist_Engineer.prefab guid kept=True
+prefab Assets/Resources/Colonists/SM_Colonist_Hydroponics.prefab guid kept=True
+prefab Assets/Resources/Colonists/SM_Colonist_Medic.prefab guid kept=True
+prefab Assets/Resources/Colonists/SM_Colonist_Hauler.prefab guid kept=True
+delete Assets/Art/Colonists/SM_Colonist_Engineer.fbx: False
+delete Assets/Art/Colonists/SM_Colonist_Hydroponics.fbx: False
+delete Assets/Art/Colonists/SM_Colonist_Medic.fbx: False
+delete Assets/Art/Colonists/SM_Colonist_Hauler.fbx: False
+delete Assets/Art/Colonists/T_Colonist_Suit.png: False
+delete Assets/Art/Colonists/SM_Colonist_F.overrideController: False
+delete Assets/Art/Colonists/Materials/SM_Art_Colonist_Role_Engineer.mat: False
+delete Assets/Art/Colonists/Materials/SM_Art_Colonist_Role_Hydroponics.mat: False
+delete Assets/Art/Colonists/Materials/SM_Art_Colonist_Role_Medic.mat: False
+delete Assets/Art/Colonists/Materials/SM_Art_Colonist_Role_Hauler.mat: False
+delete Assets/Art/Colonists/Materials/SM_Art_Colonist_Suit.mat: False
+Engineer: tris=1782 mats=[SM_Art_WorkerBot_Chassis,SM_Art_WorkerBot_Role_Engineer] clips=[SM_WorkerBot@Idle:4.00,SM_Colonist@Stride:1.20] avatar=SM_WorkerBot_EngineerAvatar
+Hydroponics: tris=1818 mats=[SM_Art_WorkerBot_Chassis,SM_Art_WorkerBot_Role_Hydroponics] clips=[SM_WorkerBot@Idle:4.00,SM_Colonist@Stride:1.20] avatar=SM_WorkerBot_HydroponicsAvatar
+Medic: tris=1910 mats=[SM_Art_WorkerBot_Chassis,SM_Art_WorkerBot_Role_Medic] clips=[SM_WorkerBot@Idle:4.00,SM_Colonist@Stride:1.20] avatar=SM_WorkerBot_MedicAvatar
+Hauler: tris=1954 mats=[SM_Art_WorkerBot_Chassis,SM_Art_WorkerBot_Role_Hauler] clips=[SM_WorkerBot@Idle:4.00,SM_Colonist@Stride:1.20] avatar=SM_WorkerBot_HaulerAvatar
+ok=True

@@ -41,6 +41,15 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void SystemPrompt_PlayerIsTheCore()
+        {
+            string p = HeroConversation.SystemPrompt(Rivet());
+            StringAssert.Contains("The player is the Core", p);
+            StringAssert.Contains("Call the player \"the Core\"", p);
+            StringAssert.DoesNotContain("player is the Overseer", p);
+        }
+
+        [Test]
         public void Request_StreamsWithThinkingOffAndTrimsHistory()
         {
             var history = new List<ChatLine>();
@@ -163,7 +172,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(1, log.Events.Count);
 
             var claim = new HeroMoment { Kind = NarrationKind.Claim, FlagType = "den", Bounty = 450 };
-            Assert.AreEqual("took the den bounty for 450 credits", HeroConversation.EventLine(claim));
+            Assert.AreEqual("took the den bounty for 450 EU", HeroConversation.EventLine(claim));
             Assert.IsNull(HeroConversation.EventLine(new HeroMoment { Kind = NarrationKind.Wander }));
         }
 

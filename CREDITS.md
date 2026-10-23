@@ -13,6 +13,21 @@ This file lists the third-party content checked into this repo, its license, and
 - **In repo:** `Blender/fonts/Cinzel-Black.ttf`, outside `Assets/`.
 - **Use:** source lettering for the 3D title logo (`Blender/scripts/sm_title_logo.py`). Builds ship only the mesh geometry, never the font file.
 
+## Audio
+
+### Intro sting
+
+| | |
+|---|---|
+| Clip | `Assets/Resources/Intro/IntroSting.ogg` |
+| Source file | `jingles_STEEL07.ogg` from Kenney's *85 Short Music Jingles* |
+| Author | Kenney (Kenney Vleugels), [kenney.nl](https://kenney.nl) |
+| Download | [OpenGameArt: 85 Short music jingles](https://opengameart.org/content/85-short-music-jingles) |
+| Pack page | [Kenney Music Jingles](https://kenney.nl/assets/music-jingles) |
+| License | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
+Attribution is not required by the license. The rest of the soundtrack and sound effects are generated in `Tools/audio/` (see [Docs/AUDIO.md](Docs/AUDIO.md)).
+
 ## Unity Asset Store packages (Standard Unity Asset Store EULA)
 
 ### Kevin Iglesias: Human Animations ("Human Basic Motions FREE")
@@ -26,8 +41,8 @@ This file lists the third-party content checked into this repo, its license, and
   - `SpineProxy.cs`
   - the Human Basic Motions demo controller and dummy prefabs
 - **Use:**
-  - **Colonists (`Assets/Art/Colonists`, `Assets/Resources/Colonists`):** play `Idle01` (Kevin Iglesias) through Unity Humanoid retargeting. The walk is original: the colony-stride clip `Assets/Art/Colonists/Anim/SM_Colonist@Stride.fbx`, authored by `Blender/scripts/sm_colonist_stride.py`, not `Walk01_Forward`. Their skeleton reuses Kevin Iglesias's joint names and hierarchy (`B-hips` … `B-toe.R`), re-proportioned in `Blender/scripts/sm_colonists.py`. **No Kevin Iglesias mesh is used in the colonists.**
-  - **`SuitCrossingWalker` / `VendorDressingKit`:** also reference these clips.
+  - **`SuitCrossingWalker` / `VendorDressingKit`:** the only users of this rig. The vendor and the crossing walkers play the `Idle01` and `Walk01_Forward` clips through Unity Humanoid retargeting.
+  - **Worker-bot villagers (`Assets/Art/Colonists`, `Assets/Resources/Colonists`):** no Kevin Iglesias mesh or clip. Their idle (`SM_WorkerBot@Idle.fbx`) and stride are original, authored by `Blender/scripts/sm_worker_bots.py`. Only the joint names and hierarchy (`B-hips` to `B-toe.R`) follow Kevin Iglesias's convention.
 - **Notes:** no standalone redistribution. **Review before the repo is made public** (see the note at the top).
 
 ### BOXOPHOBIC: Terrain Data Baker

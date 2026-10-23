@@ -16,19 +16,19 @@ namespace SolarMajesty.EditorTools
             "What to try (Earth, 10–20 minutes)\n" +
             "----------------------------------\n" +
             "Title is a solar-system orrery. Click Earth. Meadow drop, no starter robots.\n" +
-            "The Colony Commons and one house are already standing.\n" +
+            "The Colony Commons and one charging station are already standing.\n" +
             "Press B, then 1, and place the Engineer workshop anywhere on open ground.\n" +
             "Wait until the robot is standing. You never click-to-move units.\n" +
             "Press G, then F3 (Build), click open ground, leave the bounty at 700. Watch the Engineer.\n" +
             "If ignored, click the Build pole to select it and press + until tempted. If accepted, continue.\n" +
             "A soil creeper shows up. Press G, F5 Defend, and post it on the bug.\n" +
             "If the pole says ignored, build a Defense workshop (key 2) and post F5 again.\n" +
-            "Keep mobs away: villagers raise houses and solar farms only while the yard is safe.\n" +
+            "Keep mobs away: bots build charging stations and solar farms only while the yard is safe.\n" +
             "Mines go only at ore deposits (an amber light column marks each, far out): farther\n" +
-            "from the Commons pays more energy, but tax collectors must walk it home and mobs\n" +
+            "from the Commons pays more energy, but Haul must walk it home and mobs\n" +
             "ambush them on the way. Landing pads and temples also need their marked zones.\n" +
             "SKIP dismisses the tutorial bar. Esc cancels a placement ghost; Esc again opens pause.\n" +
-            "From there, Title → Continue brings the campus back.\n" +
+            "From there, Title → Continue brings the yard back.\n" +
             "Stop whenever you get bored. That moment is the useful data.\n" +
             "\n" +
             "Controls\n" +
@@ -57,9 +57,9 @@ namespace SolarMajesty.EditorTools
             "\n" +
             "Notes\n" +
             "-----\n" +
-            "- Energy units (EU) are the only currency. Buildings fill their tills; tax collectors\n" +
-            "  carry the energy to the Commons or a Watchtower. Flags escrow EU.\n" +
-            "- Continue restores campus + treasury + research + open flags + fauna + specialist HP.\n" +
+            "- Energy units (EU) are the only currency. Buildings fill their tills; Haul\n" +
+            "  carries the energy to the Commons or a Watchtower. Flags escrow EU.\n" +
+            "- Continue restores the yard + treasury + research + open flags + fauna + specialist HP.\n" +
             "- If the Engineer ignores a cheap Build, raise its bounty. If already accepted, continue.\n" +
             "- This build is Earth only. Dens, sustain, and launch stay on the HUD. You do not have to finish Earth.\n" +
             "- Settings → Full campaign shows the other worlds. Leave it off for this session.\n" +
@@ -69,7 +69,7 @@ namespace SolarMajesty.EditorTools
         public static string WindowsReadme =>
             "Solar Majesty — Windows playtest\n" +
             "================================\n" +
-            "Early overseer-loop demo (not a finished game). No Unity install needed.\n" +
+            "Early Core colony demo (not a finished game). No Unity install needed.\n" +
             "\n" +
             "How to run\n" +
             "----------\n" +
@@ -83,7 +83,7 @@ namespace SolarMajesty.EditorTools
         public static string MacReadme =>
             "Solar Majesty — macOS playtest\n" +
             "==============================\n" +
-            "Early overseer-loop demo (not a finished game). No Unity install needed.\n" +
+            "Early Core colony demo (not a finished game). No Unity install needed.\n" +
             "\n" +
             "How to run\n" +
             "----------\n" +

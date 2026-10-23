@@ -70,18 +70,18 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void LiveHab_BoxyTanHull_RoofSolar_NoGraphiteRim()
+        public void LiveHab_CeramicChargingPod_RoofSolar_NoGraphiteRim()
         {
             var hab = ModularBuildingFactory.Spawn(
                 BuildingCategory.Habitat, Vector3.zero, _root.transform);
             Transform shell = FindChild(hab.transform, "Dress_HabShell");
-            Assert.IsNotNull(shell, "locked still HAB is a boxy hull, not HAB-1 cylinder");
-            Color tan = Albedo(shell);
-            Assert.Greater(tan.r, 0.70f, "HAB hull stays beige/tan");
-            Assert.Greater(tan.g, 0.50f);
-            Assert.Less(tan.g, 0.72f);
-            Assert.Less(tan.b, 0.55f);
-            Assert.Less(tan.grayscale, 0.80f, "tan must not flatten to sheet-white");
+            Assert.IsNotNull(shell, "charging pod is a boxy hull, not HAB-1 cylinder");
+            Color ceramic = Albedo(shell);
+            Assert.Greater(ceramic.r, 0.78f, "charging pod hull is warm ceramic white");
+            Assert.Greater(ceramic.g, 0.78f);
+            Assert.Greater(ceramic.b, 0.65f);
+            Assert.Less(ceramic.b, ceramic.r, "ceramic stays warm, not cool sheet-white");
+            Assert.IsNotNull(FindChild(hab.transform, "Dress_HabHatch"), "entry hatch stays");
             Assert.Greater(shell.localScale.x, shell.localScale.y,
                 "HAB reads as a box fill of the 4×4, not a lying cylinder");
             Assert.AreEqual(shell.localScale.x, shell.localScale.z, 0.08f);

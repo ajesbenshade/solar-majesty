@@ -14,7 +14,7 @@ namespace SolarMajesty
     /// </summary>
     public sealed class LevyRaidNotice
     {
-        public const float WindowSeconds = 18f;
+        public const float WindowSeconds = 60f;
         public const float HintIntervalSeconds = 180f;
         public const string Hint = "Guard Haul's route with a Defend flag.";
 

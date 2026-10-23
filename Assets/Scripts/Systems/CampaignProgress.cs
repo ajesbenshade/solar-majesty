@@ -8,7 +8,7 @@ namespace SolarMajesty
     /// </summary>
     public static class CampaignProgress
     {
-        private const string MaxKey = "SM_CampaignMaxBody";
+        public const string MaxKey = "SM_CampaignMaxBody";
         private const string FreshKey = "SM_CampaignInitialized";
         private const string TravelLogKey = "SM_PendingTravelLog";
         private const string CutsKey = "SM_NarrativeCutsShown";

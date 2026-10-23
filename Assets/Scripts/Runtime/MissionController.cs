@@ -343,6 +343,31 @@ namespace SolarMajesty
             _winLatched = true;
         }
 
+        /// <summary>EditMode: set the three gates without a live colony or a world refresh.</summary>
+        public void ArmForTests(bool densCleared, bool sustainComplete, bool launchReady)
+        {
+            _loop = null;
+            _armed = true;
+            _state = MissionState.Active;
+            _winLatched = false;
+            _loseLatched = false;
+            if (sustainHoldSeconds < 1f)
+                sustainHoldSeconds = 40f;
+            DensCleared = densCleared;
+            _sustainElapsed = sustainComplete ? sustainHoldSeconds : 0f;
+            _launchReady = launchReady;
+        }
+
+        /// <summary>
+        /// EditMode: the same gate check <see cref="Tick"/> uses, without audio, VFX, or a scene load.
+        /// </summary>
+        public void EvaluateVictoryForTests()
+        {
+            if (_state == MissionState.Won || _state == MissionState.Lost) return;
+            if (AllGatesMet)
+                EnterWon();
+        }
+
         /// <summary>
         /// CaptureStill shutter: drop a latched OUTPOST LOST so the fail modal cannot cover the campus.
         /// No-op unless <see cref="StillCaptureHold"/> is armed.
@@ -447,35 +472,40 @@ namespace SolarMajesty
 
         private void EnterWon()
         {
+            if (!VictoryOffer.ShouldLatch(
+                    _state == MissionState.Won,
+                    _state == MissionState.Lost,
+                    AllGatesMet,
+                    _winLatched))
+                return;
+
             _state = MissionState.Won;
-            if (!_winLatched)
-            {
-                _winLatched = true;
-                _loop?.NoteBodyConquered();
-                // The score's stinger is the fanfare; the SFX one is the fallback, never both.
-                bool sting = AdaptiveMusic.PlayStinger(true);
-                if (!sting) DemoAudio.PlayVictory();
-                OverseerVoice.SpeakCue(VoiceCue.Victory, AlertSeverity.Critical, sting ? 4.2f : 0.8f);
-                DemoVfx.ClaimRing(
-                    ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
-                    new Color(0.35f, 0.95f, 0.55f));
-                string travelKey = AdvisorToastCatalog.TravelKeyForVictory(_loop.ActiveBody);
-                if (!ReplayRules.IsEndless &&
-                    !string.IsNullOrEmpty(travelKey) &&
-                    AdvisorToastCatalog.TryGetTravel(travelKey, out var travelToast))
-                {
-                    _loop.Log.Push(WinDetail);
-                    _loop.LogOverseer(travelToast.Line);
-                }
-                else
-                    _loop.LogOverseer(WinDetail);
-                if (ReplayRules.IsEndless)
-                    Debug.Log("[Mission] Victory — keep colonizing. Rating stands.");
-                else
-                    Debug.Log("[Mission] Victory — dens cleared, colony sustained, launch ready.");
-                if (!ReplayRules.IsEndless && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    Debug.Log("[Mission] Campaign spine complete.");
-            }
+            _winLatched = true;
+
+            // EditMode tests latch the gates without a colony, a stinger, or a scene load.
+            if (_loop == null || !Application.isPlaying)
+                return;
+
+            _loop.NoteBodyConquered();
+            bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
+            var offer = VictoryOffer.For(_loop.ActiveBody, nextBuilt, ReplayRules.IsEndless);
+            if (offer.HoldSim)
+                _loop.HoldForVictory();
+
+            // The score's stinger is the fanfare; the SFX one is the fallback, never both.
+            bool sting = AdaptiveMusic.PlayStinger(true);
+            if (!sting) DemoAudio.PlayVictory();
+            OverseerVoice.SpeakCue(VoiceCue.Victory, AlertSeverity.Critical, sting ? 4.2f : 0.8f);
+            DemoVfx.ClaimRing(
+                ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
+                new Color(0.35f, 0.95f, 0.55f));
+            _loop.LogOverseer(offer.Body);
+            if (ReplayRules.IsEndless)
+                Debug.Log("[Mission] Victory — keep colonizing. Rating stands.");
+            else
+                Debug.Log("[Mission] Victory — dens cleared, colony sustained, launch ready.");
+            if (!ReplayRules.IsEndless && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
+                Debug.Log("[Mission] Campaign spine complete.");
         }
 
         private void EnterLost()
@@ -492,6 +522,14 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Does this fauna keep the dens gate open? Den stalkers do. The kingdom spawn table (alpha
+        /// raiders at the colony edge, town burrows, scrapyard junk) keeps running after the dens are
+        /// cleared, and yard pests are campus ecology, so neither can hold back the victory.
+        /// </summary>
+        internal static bool HoldsDens(FaunaKind kind, bool alive, bool kingdomSpawn) =>
+            alive && !kingdomSpawn && !DustStalkerAgent.IsCampusPest(kind) && !DustStalkerAgent.IsJunk(kind);
+
         private int CountLivingStalkers()
         {
             if (_loop == null || _loop.Stalkers == null) return 0;
@@ -499,7 +537,7 @@ namespace SolarMajesty
             for (int i = 0; i < _loop.Stalkers.Count; i++)
             {
                 var s = _loop.Stalkers[i];
-                if (s != null && s.IsAlive) n++;
+                if (s != null && HoldsDens(s.Kind, s.IsAlive, _loop.IsKingdomSpawn(s))) n++;
             }
             return n;
         }

@@ -10,6 +10,8 @@ namespace SolarMajesty
     public static class KingdomLife
     {
         public const float InnArrive = 3.2f;
+        /// <summary>The waystation mesh carves the beacon. The door is about 9 m out, so recovery starts here.</summary>
+        public const float RefugeArrive = 12f;
         public const float InnPartyRadius = 7.5f;
         public const float HuntRange = 3.4f;
 
@@ -35,6 +37,14 @@ namespace SolarMajesty
 
         public static bool AtRest(Vector3 world, bool outpostClaimed) =>
             Flat(world, RestNear(world, outpostClaimed)) < InnArrive;
+
+        /// <summary>
+        /// Inside the carved inn, including the door itself. Flee stops at
+        /// <c>distance &lt;= RefugeArrive</c>, so the boundary has to count or a hero
+        /// standing on the threshold stays in Flee.
+        /// </summary>
+        public static bool AtRefuge(Vector3 world, bool outpostClaimed) =>
+            Flat(world, RestNear(world, outpostClaimed)) <= RefugeArrive;
 
         public static Vector3 Workshop(int campus) =>
             campus <= 0

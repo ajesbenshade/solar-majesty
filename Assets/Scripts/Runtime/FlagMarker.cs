@@ -254,7 +254,7 @@ namespace SolarMajesty
         {
             if (_handle == null) return;
 
-            string bountyText = $"$ {FlagBountySync.Amount(_handle):F0}";
+            string bountyText = $"{FlagBountySync.Amount(_handle):N0} EU";
             _stackHidden = false;
             if (_manager != null && _handle.Data != null)
             {

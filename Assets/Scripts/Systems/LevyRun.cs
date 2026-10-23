@@ -16,6 +16,31 @@ namespace SolarMajesty
         public const float FarFromCommons = 24f;
         public const float TowerPreferSlack = 4f;
 
+        /// <summary>An empty Courier Bot on a flag checks the levy stops at least this often.</summary>
+        public const float CourierLevyCadence = 45f;
+
+        /// <summary>
+        /// The Commons centre sits inside its carved footprint, ~9 m from the nearest walkable mesh,
+        /// so a courier aimed at the centre can never get within <see cref="DepositArrive"/>. It walks
+        /// to the mesh point nearest the chest (searched this far out) and hands in there.
+        /// </summary>
+        public const float ChestApproachSample = 16f;
+
+        /// <summary>At the chest: close to its centre, or to the walkable approach point beside it.</summary>
+        public static bool AtChest(float distCenter, float distApproach) =>
+            distCenter <= DepositArrive || distApproach <= DepositArrive;
+
+
+        /// <summary>
+        /// Courier Bot only: run a levy hand-in now, even with a flag open? Carried levy always goes
+        /// in first; an empty courier goes collecting once the cadence has passed. Only while on a flag.
+        /// </summary>
+        public static bool CourierLevyDue(SpecialistAction action, int carry, float sinceHandIn)
+        {
+            if (action != SpecialistAction.PursueFlag) return false;
+            return carry > 0 || sinceHandIn >= CourierLevyCadence;
+        }
+
         public static int Accrue(int population, bool overcrowded)
         {
             if (population <= 0) return 0;

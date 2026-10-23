@@ -12,7 +12,7 @@ namespace SolarMajesty
         public const float Margin = 16f;
         public const float Pad = 12f;
         public const float DockH = 100f;
-        public const float DockW = 860f;
+        public const float DockW = 872f; // +12 with StockpileW so CHARGERS stays at 9pt or more
         public const float CrestW = 240f;
         public const float CrestH = 52f;
         public const float CrestRise = 30f;
@@ -76,6 +76,71 @@ namespace SolarMajesty
             label = new Rect(labelX, chip.y + 2f, number.xMin - TextGap - labelX, 12f);
         }
 
+        /// <summary>Smallest chip label size that still reads at HUD scale 1.</summary>
+        public const int ChipLabelMinSize = 8;
+
+        /// <summary>
+        /// Width the chip label may use: up to the right-aligned amount plus a gap, never less than
+        /// the <see cref="ChipText"/> column. The amount is usually 1-3 digits, so this is the slack.
+        /// </summary>
+        public static float ChipLabelWidth(Rect labelRect, Rect numberRect, float amountWidth) =>
+            Mathf.Max(labelRect.width, numberRect.xMax - Mathf.Min(numberRect.width, amountWidth) - TextGap - labelRect.x);
+
+        /// <summary>
+        /// Largest font size from <paramref name="baseSize"/> down to <paramref name="minSize"/> whose
+        /// measured width fits; the text itself is never shortened. Returns minSize if nothing fits.
+        /// </summary>
+        public static int FitFontSize(System.Func<int, float> widthAtSize, float maxWidth, int baseSize, int minSize = ChipLabelMinSize)
+        {
+            for (int s = baseSize; s > minSize; s--)
+                if (widthAtSize(s) <= maxWidth) return s;
+            return minSize;
+        }
+
+        public const float StockpileW = 256f;
+
+        /// <summary>Canon Watchtower blurb; the build list and the building card both use it.</summary>
+        public const string WatchtowerBlurb = "Guard post and levy till. Arm lasers for EU.";
+        /// <summary>Short stat appended to the Watchtower row when the row has room.</summary>
+        public const string WatchtowerStat = "+1 Haul";
+
+        /// <summary>
+        /// Build-list row text, longest first: "name · blurb · stat" if it fits, else "name · blurb".
+        /// The blurb always wins over the stat.
+        /// </summary>
+        public static string[] BuildRowVariants(string name, string description, string stat)
+        {
+            string row = string.IsNullOrEmpty(description) ? name : name + "  ·  " + description;
+            return string.IsNullOrEmpty(stat) ? new[] { row } : new[] { row + "  ·  " + stat, row };
+        }
+        public const float StockpileChipGap = 6f;
+
+        /// <summary>Width of one chip in the 2×2 stockpile grid.</summary>
+        public static float StockpileChipWidth(float stockpileWidth = StockpileW) =>
+            (stockpileWidth - StockpileChipGap) * 0.5f;
+
+        /// <summary>The chip rate wording, most to least verbose: full, first word + abbreviated second, first token.</summary>
+        public static string[] ChipRateVariants(string rate)
+        {
+            if (string.IsNullOrEmpty(rate)) return new[] { "" };
+            var list = new System.Collections.Generic.List<string> { rate };
+            var words = rate.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+            // Only counts compact ("330 carried" -> "330"); a unit like "% built" stays whole.
+            bool count = words.Length >= 2 && words[0].Length > 0
+                && (char.IsDigit(words[0][0]) || (words[0].Length > 1 && (words[0][0] == '-' || words[0][0] == '+') && char.IsDigit(words[0][1])));
+            if (!count) return new[] { rate };
+            {
+                string second = words[1];
+                string abbr = second.Length > 5 ? second.Substring(0, 4) + "." : second;
+                list.Add(words[0] + " " + abbr);
+            }
+            list.Add(words[0]);
+            var result = new System.Collections.Generic.List<string>();
+            foreach (var s in list)
+                if (!result.Contains(s)) result.Add(s);
+            return result.ToArray();
+        }
+
         /// <summary>Building or power row: the price column starts after the name.</summary>
         public static void SplitRow(float rowX, float rowY, float rowWidth, float rowHeight, float nameX, float costWidth, out Rect name, out Rect cost)
         {
@@ -128,13 +193,54 @@ namespace SolarMajesty
         /// </summary>
         public static string LevyLine(int tills, int collectors, int bags, int daily)
         {
-            string full = $"TILLS {tills:N0} · COLLECTORS {collectors} carrying {bags:N0} · TAX {daily:N0}/day";
-            if (full.Length <= LevyBudget) return full;
-            string mid = $"TILLS {tills:N0} · {collectors} TAXMEN · {bags:N0} BAGS · TAX {daily:N0}/day";
-            if (mid.Length <= LevyBudget) return mid;
-            string compact = $"TILLS {tills:N0} · TAXMEN {collectors} · TAX {daily:N0}/day";
-            if (compact.Length <= LevyBudget) return compact;
-            return $"T {tills:N0} · C {collectors} · TAX {daily:N0}";
+            var v = LevyVariants(tills, collectors, bags, daily);
+            for (int i = 0; i < v.Length - 1; i++)
+                if (v[i].Length <= LevyBudget) return v[i];
+            return v[v.Length - 1];
+        }
+
+        /// <summary>The levy wordings, most to least verbose.</summary>
+        public static string[] LevyVariants(int tills, int collectors, int bags, int daily) => new[]
+        {
+            $"TILLS {tills:N0} · COLLECTORS {collectors} carrying {bags:N0} · EU {daily:N0}/day",
+            $"TILLS {tills:N0} · {collectors} HAUL · {bags:N0} BAGS · EU {daily:N0}/day",
+            $"TILLS {tills:N0} · HAUL {collectors} · EU {daily:N0}/day",
+            $"T {tills:N0} · C {collectors} · EU {daily:N0}",
+        };
+
+        /// <summary>
+        /// First variant whose measured width fits <paramref name="maxWidth"/>; otherwise the shortest
+        /// variant cut with an ellipsis. <paramref name="measure"/> and <paramref name="maxWidth"/> may be
+        /// in different units: <paramref name="scale"/> converts measured width into maxWidth's units
+        /// (leave 1 when both are in the same GUI space).
+        /// </summary>
+        public static string FitText(string[] variants, System.Func<string, float> measure, float maxWidth, float scale = 1f)
+        {
+            if (variants == null || variants.Length == 0) return "";
+            float limit = maxWidth / Mathf.Max(0.01f, scale);
+            for (int i = 0; i < variants.Length; i++)
+                if (measure(variants[i]) <= limit) return variants[i];
+
+            const string ellipsis = "…";
+            string s = variants[variants.Length - 1];
+            for (int n = s.Length - 1; n > 0; n--)
+            {
+                string cut = s.Substring(0, n).TrimEnd() + ellipsis;
+                if (measure(cut) <= limit) return cut;
+            }
+            return measure(ellipsis) <= limit ? ellipsis : "";
+        }
+
+        /// <summary>Levy line that fits <paramref name="maxWidth"/>; identical wording to <see cref="LevyLine"/> when it fits.</summary>
+        public static string LevyLineFit(int tills, int collectors, int bags, int daily,
+            System.Func<string, float> measure, float maxWidth, float scale = 1f)
+        {
+            var v = LevyVariants(tills, collectors, bags, daily);
+            // Keep the char-budget pick as the first choice so wording never changes when it fits.
+            string preferred = LevyLine(tills, collectors, bags, daily);
+            int start = System.Array.IndexOf(v, preferred);
+            if (start > 0) v = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Skip(v, start));
+            return FitText(v, measure, maxWidth, scale);
         }
 
         /// <summary>Income under the treasury number. Stays inside the crest plate.</summary>

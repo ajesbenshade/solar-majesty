@@ -56,7 +56,7 @@ namespace SolarMajesty
                         var f = o.TargetFlag;
                         dist = f != null ? Vector3.Distance(ctx.Position, f.WorldPosition) : 0f;
                         desc = f?.Data != null
-                            ? $"Take the {f.Data.flagType} bounty paying {Mathf.RoundToInt(f.CurrentBounty)} credits, " +
+                            ? $"Take the {f.Data.flagType} bounty paying {Mathf.RoundToInt(f.CurrentBounty):N0} EU, " +
                               $"{Mathf.RoundToInt(dist)}m away, risk {Pct(f.Risk)}, {f.ClaimCount} others on it."
                             : "Take a posted bounty.";
                         break;
@@ -77,7 +77,7 @@ namespace SolarMajesty
                         desc = o.Reason switch
                         {
                             "triage" => "Tend to a wounded colleague.",
-                            "levy_home" or "levy_collect" => "Walk the tax levy route.",
+                            "levy_home" or "levy_collect" => "Walk EU home.",
                             "workshop_duty" => "Work a shift at the guild workshop.",
                             "patrolling" => "Patrol the colony perimeter.",
                             _ => "Wander the frontier, no job."

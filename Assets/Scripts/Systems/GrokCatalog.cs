@@ -47,29 +47,29 @@ namespace SolarMajesty
                 case GrokBeat.Drop:
                     return "Welcome to a rock that already has a landlord. Raise a Commons before the Freeholds invoice the crater.";
                 case GrokBeat.FirstHab:
-                    return "Colonists run the village. Robots take the contracts. Try not to mix them up — it gets philosophical.";
+                    return "Worker bots run the yard. Contract units take bounties. Same mind, different jobs.";
                 case GrokBeat.FirstFlag:
                     return "That is a decree, not a leash. Post it. If nobody wants it, that is a you problem.";
                 case GrokBeat.GreedAsk:
                     return "Anvil wants 790. He can count. Raise the bounty or enjoy the scenery.";
                 case GrokBeat.LevyWalk:
-                    return "See the crate on wheels? That is your tax collector. We are not calling it that. Do not click it.";
+                    return "See the crate on wheels? That is Haul walking EU home. Do not click it.";
                 case GrokBeat.PurseSitting:
-                    return "Credits are sitting in building purses. Haul will get around to it. Or a mite will. Gambling!";
+                    return "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!";
                 case GrokBeat.YardBill:
                     return "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.";
                 case GrokBeat.TankVsWallet:
-                    return "That red chip is water, not a coupon. Credits will not drink themselves. Build a farm or stop collecting roommates.";
+                    return "That red chip is water, not a coupon. EU will not drink itself. Build a farm or stop collecting idle bots.";
                 case GrokBeat.Refusal:
                     return "Flag still unpaid. The Compact does not work for exposure.";
                 case GrokBeat.IceCritical:
-                    return "Life support is a suggestion until it is not. The tank is at four. People first, Anvil second.";
+                    return "Life support is a suggestion until it is not. The tank is at four. Bots first, Anvil second.";
                 case GrokBeat.PowerShort:
                     return "Grid is skinny. Everyone is working at seventy percent, including your patience.";
                 case GrokBeat.PurseStolen:
                     return "Haul lost the levy on the road.";
                 case GrokBeat.YardUnaffordable:
-                    return "Level 6 wreck, Compact scrip insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
+                    return "Level 6 wreck, Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
                 case GrokBeat.EmptyRoster:
                     return "Nobody is standing. You have twenty seconds of optimism left.";
                 case GrokBeat.MarketPayout:

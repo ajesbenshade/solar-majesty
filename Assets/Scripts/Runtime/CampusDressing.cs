@@ -29,10 +29,12 @@ namespace SolarMajesty
             if (BuildingPlacer.IsRetired(data.category))
                 return;
 
-            // Shield bubbles on the defences only; over the Commons it read as a blue blob.
+            // Shield emitters on the defences only. The translucent blue bubble read as a
+            // "weird blue globe" (Aaron 2026-10-15); emitter posts keep the shield idea in the
+            // machine-colony palette without hiding the kit.
             if (data.category == BuildingCategory.Defense ||
                 data.category == BuildingCategory.Watchtower)
-                SpawnShieldBubble(go.transform, false);
+                SpawnShieldEmitter(go.transform, data.category == BuildingCategory.Watchtower);
 
             if (data.category == BuildingCategory.Commons ||
                 data.category == BuildingCategory.Power ||
@@ -121,27 +123,51 @@ namespace SolarMajesty
             }
         }
 
-        private static void SpawnShieldBubble(Transform root, bool commons)
+        private static readonly Color EmitterCeramic = new Color(0.88f, 0.82f, 0.74f);
+        private static readonly Color EmitterCarbon = new Color(0.16f, 0.17f, 0.19f);
+        private static readonly Color EmitterGunmetal = new Color(0.30f, 0.32f, 0.35f);
+        private static readonly Color EmitterCyan = new Color(0.22f, 0.84f, 0.98f);
+        private static readonly Color EmitterCyanEmit = new Color(0.20f, 1.15f, 1.65f);
+
+        /// <summary>
+        /// Four squat ceramic shield-emitter pods on gunmetal feet at the corners of the old
+        /// bubble footprint (radius 2.7), each with a carbon cap and a thin cyan light band.
+        /// Watchtowers also get a carbon mast with a ceramic dish and a cyan beacon.
+        /// Visual only: no colliders, parented under one Dress_Shield holder.
+        /// </summary>
+        private static void SpawnShieldEmitter(Transform root, bool watchtower)
         {
-            var bubble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            bubble.name = "Dress_Shield";
-            bubble.transform.SetParent(root, false);
-            bubble.transform.localPosition = new Vector3(0f, commons ? 2.4f : 1.6f, 0f);
-            bubble.transform.localScale = commons
-                ? new Vector3(8.6f, 5.2f, 8.6f)
-                : new Vector3(5.4f, 3.2f, 5.4f);
-            ColonyVisualUtility.DestroyNow(bubble.GetComponent<Collider>());
-            var rend = bubble.GetComponent<Renderer>();
-            if (rend == null) return;
-            var mat = NewLit("SM_DressShield");
-            var c = new Color(0.35f, 0.72f, 1f, 0.16f);
-            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
-            if (mat.HasProperty("_Color")) mat.color = c;
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.82f);
-            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.05f);
-            ColonyVisualUtility.ApplyTransparent(mat);
-            rend.sharedMaterial = mat;
-            rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            var holder = new GameObject("Dress_Shield");
+            holder.transform.SetParent(root, false);
+            const float r = 2.7f * 0.7071f;
+            for (int i = 0; i < 4; i++)
+            {
+                float sx = (i & 1) == 0 ? -1f : 1f, sz = (i & 2) == 0 ? -1f : 1f;
+                var at = new Vector3(sx * r, 0f, sz * r);
+                Part(holder.transform, "Dress_ShieldFoot_" + i, PrimitiveType.Cylinder, at + new Vector3(0f, 0.10f, 0f), new Vector3(0.95f, 0.10f, 0.95f), EmitterGunmetal, 0.30f);
+                Part(holder.transform, "Dress_ShieldPod_" + i, PrimitiveType.Cylinder, at + new Vector3(0f, 0.55f, 0f), new Vector3(0.72f, 0.38f, 0.72f), EmitterCeramic, 0.22f);
+                Part(holder.transform, "Dress_ShieldBand_" + i, PrimitiveType.Cylinder, at + new Vector3(0f, 0.68f, 0f), new Vector3(0.75f, 0.04f, 0.75f), EmitterCyan, 0.4f, EmitterCyanEmit);
+                Part(holder.transform, "Dress_ShieldCap_" + i, PrimitiveType.Cylinder, at + new Vector3(0f, 0.96f, 0f), new Vector3(0.56f, 0.06f, 0.56f), EmitterCarbon, 0.30f);
+            }
+            if (!watchtower) return;
+            var m = new Vector3(r, 0f, -r);
+            Part(holder.transform, "Dress_ShieldMast", PrimitiveType.Cylinder, m + new Vector3(0f, 1.9f, 0f), new Vector3(0.10f, 1.2f, 0.10f), EmitterCarbon, 0.30f);
+            var dish = Part(holder.transform, "Dress_ShieldDish", PrimitiveType.Cylinder, m + new Vector3(0f, 2.9f, 0.12f), new Vector3(0.62f, 0.04f, 0.62f), EmitterCeramic, 0.22f);
+            dish.transform.localRotation = Quaternion.Euler(35f, 0f, 0f);
+            Part(holder.transform, "Dress_ShieldBeacon", PrimitiveType.Sphere, m + new Vector3(0f, 3.18f, 0f), new Vector3(0.14f, 0.14f, 0.14f), EmitterCyan, 0.4f, EmitterCyanEmit);
+        }
+
+        private static GameObject Part(Transform parent, string name, PrimitiveType type, Vector3 local, Vector3 scale,
+            Color c, float smooth, Color emission = default)
+        {
+            var go = GameObject.CreatePrimitive(type);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            go.transform.localScale = scale;
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>());
+            Tint(go, c, smooth, emission);
+            return go;
         }
 
         /// <summary>

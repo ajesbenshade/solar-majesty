@@ -227,7 +227,7 @@ namespace SolarMajesty
         {
             string line = _loop?.Economy != null && !string.IsNullOrEmpty(_loop.Economy.LastResupplyLine)
                 ? _loop.Economy.LastResupplyLine
-                : "Trade ship landed — caravan gold waits in the Market till for a collector.";
+                : "Trade ship landed — caravan EU waits in the Market till for a collector.";
             Toast(line, 4f);
             DemoAudio.PlayCredits(); // caravan gold landed, not a menu confirm
         }
@@ -510,6 +510,7 @@ namespace SolarMajesty
         private void OnGUI()
         {
             if (_loop == null) return;
+            if (_loop.Screen == DemoScreen.Intro) return;
             EnsureStyles();
             GUI.skin = HudSkin.Skin();
             HandleDebugHopKeys();
@@ -530,7 +531,15 @@ namespace SolarMajesty
             _sw = Screen.width / s;
             _sh = Screen.height / s;
 
-            if (_loop.Screen == DemoScreen.Title)
+            // Campaign victory replaces the console so pause and dock buttons cannot eat the click.
+            // Drawn in the scaled GUI space, so the UI Scale setting sizes the panel.
+            if (_loop.Screen != DemoScreen.Title &&
+                _loop.Screen != DemoScreen.Settings &&
+                TryDrawCampaignVictory())
+            {
+                // The panel is the whole frame. Play and pause chrome stay undrawn.
+            }
+            else if (_loop.Screen == DemoScreen.Title)
             {
                 DrawTitle();
             }
@@ -658,33 +667,64 @@ namespace SolarMajesty
             HudLayout.ChipText(r, out var labelRect, out var numberRect);
             var prevLabel = _chipLabel.normal.textColor;
             _chipLabel.normal.textColor = alarm ? Alarm : TextMuted;
-            GUI.Label(labelRect, label, _chipLabel);
+            // Rects and CalcSize share the GUI.matrix space, so scale = 1. The label is never
+            // shortened: it takes the slack beside the amount, then steps its font down to fit.
+            _chipMeasure.text = amount.ToString();
+            float labelW = HudLayout.ChipLabelWidth(labelRect, numberRect, _number.CalcSize(_chipMeasure).x);
+            var labelFit = new Rect(labelRect.x, labelRect.y, labelW, labelRect.height);
+            int prevSize = _chipLabel.fontSize;
+            _chipLabel.fontSize = HudLayout.FitFontSize(s =>
+            {
+                _chipLabel.fontSize = s; _chipMeasure.text = label; return _chipLabel.CalcSize(_chipMeasure).x;
+            }, labelW, prevSize);
+            GUI.Label(labelFit, label, _chipLabel);
+            _chipLabel.fontSize = prevSize;
             _chipLabel.normal.textColor = prevLabel;
             if (!string.IsNullOrEmpty(rate))
             {
                 var rateRect = labelRect;
                 rateRect.y = r.y + 13f;
-                GUI.Label(rateRect, rate, _micro);
+                // The amount is right-aligned and usually 1-3 digits: let the rate use the slack.
+                _chipMeasure.text = amount.ToString();
+                float amountW = Mathf.Min(numberRect.width, _number.CalcSize(_chipMeasure).x);
+                rateRect.width = Mathf.Max(rateRect.width, numberRect.xMax - amountW - HudLayout.TextGap - rateRect.x);
+                GUI.Label(rateRect, FitChipText(_micro, HudLayout.ChipRateVariants(rate), rateRect.width), _micro);
             }
 
             var prevAnchor = _number.alignment;
             _number.alignment = TextAnchor.MiddleRight;
-            GUI.Label(numberRect, amount.ToString(), _number);
+            GUI.Label(numberRect, FitChipText(_number, new[] { amount.ToString() }, numberRect.width), _number);
             _number.alignment = prevAnchor;
+        }
+
+        private static readonly GUIContent _chipMeasure = new GUIContent();
+
+        private static string FitChipText(GUIStyle style, string[] variants, float maxWidth)
+        {
+            return HudLayout.FitText(variants, t => { _chipMeasure.text = t; return style.CalcSize(_chipMeasure).x; }, maxWidth);
+        }
+
+        internal const string ChargersLabel = "CHARGERS";
+
+        /// <summary>Which icon a stockpile chip label gets; null means a coloured dot.</summary>
+        internal static IconId? ChipIconFor(string label)
+        {
+            if (label.StartsWith("REG")) return IconId.Regolith;
+            if (label.StartsWith("ICE")) return IconId.Ice;
+            if (label.StartsWith("EU")) return IconId.Coin;
+            if (label.StartsWith("PWR")) return IconId.Power;
+            if (label.StartsWith("BEDS")) return IconId.Beds;
+            if (label.StartsWith("HEROES")) return IconId.Robot;
+            if (label.StartsWith(ChargersLabel)) return IconId.Charger;
+            if (label.StartsWith("HAUL")) return IconId.Bag;
+            if (label.StartsWith("BOTS") || label.StartsWith("HALTED")) return IconId.Hammer;
+            return null;
         }
 
         private static Texture2D ChipIcon(string label)
         {
-            if (label.StartsWith("REG")) return UiIcons.Get(IconId.Regolith);
-            if (label.StartsWith("ICE")) return UiIcons.Get(IconId.Ice);
-            if (label.StartsWith("EU")) return UiIcons.Get(IconId.Coin);
-            if (label.StartsWith("PWR")) return UiIcons.Get(IconId.Power);
-            if (label.StartsWith("BEDS")) return UiIcons.Get(IconId.Beds);
-            if (label.StartsWith("HEROES")) return UiIcons.Get(IconId.Robot);
-            if (label.StartsWith("HOUSES")) return UiIcons.Get(IconId.House);
-            if (label.StartsWith("TAXMEN")) return UiIcons.Get(IconId.Bag);
-            if (label.StartsWith("VILLAGE") || label.StartsWith("HALTED")) return UiIcons.Get(IconId.Hammer);
-            return null;
+            var id = ChipIconFor(label);
+            return id.HasValue ? UiIcons.Get(id.Value) : null;
         }
 
         private static Color ChipSwatch(string label)
@@ -713,18 +753,18 @@ namespace SolarMajesty
             var rect = new Rect(DockLeft(), top, w, DockH);
             var c = Panel(rect, null, false);
 
-            DrawStockpile(new Rect(c.x, c.y, 244f, c.height));
+            DrawStockpile(new Rect(c.x, c.y, HudLayout.StockpileW, c.height));
 
             float right = 186f;
             var divider = new Color(Gold.r, Gold.g, Gold.b, 0.45f);
-            HudSkin.RuleV(new Rect(c.x + 254f, rect.y + 6f, 1f, rect.height - 12f), divider);
+            HudSkin.RuleV(new Rect(c.x + HudLayout.StockpileW + 10f, rect.y + 6f, 1f, rect.height - 12f), divider);
             HudSkin.RuleV(new Rect(c.xMax - right - 10f, rect.y + 6f, 1f, rect.height - 12f), divider);
 
             // Verbs: build, bounty, orbital, research, campus, party, menu. Never unit orders.
             float sq = 48f;
             float gap = 6f;
             float verbsW = sq * 7f + gap * 6f;
-            float midL = c.x + 262f;
+            float midL = c.x + HudLayout.StockpileW + 18f;
             float midR = c.xMax - right - 18f;
             float x = midL + Mathf.Max(0f, (midR - midL - verbsW) * 0.5f);
             float vy = c.y + 3f;
@@ -740,7 +780,7 @@ namespace SolarMajesty
             if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphTech, "RESEARCH", KeyHint(GameAction.ToolTech), _techOpen))
                 ToggleTechPanel();
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Camp, "SWITCH CAMPUS", "A/B", false))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Camp, "SWITCH YARD", "A/B", false))
                 _loop.FocusCampus(1 - _loop.FocusedCampus);
             x += sq + gap;
             int partyCount = _loop.Parties != null ? _loop.Parties.Count : 0;
@@ -804,14 +844,14 @@ namespace SolarMajesty
             int pct = village != null ? Mathf.RoundToInt(village.VillageProgress01 * 100f) : 0;
 
             float top = r.y + 17f;
-            float cw = (r.width - 6f) * 0.5f;
+            float cw = HudLayout.StockpileChipWidth(r.width);
             float ch = 28f;
             ResourceChip(new Rect(r.x, top, cw, ch), "HEROES", heroes, heroes <= 0);
-            ResourceChip(new Rect(r.x + cw + 6f, top, cw, ch), "HOUSES", houses, false,
+            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top, cw, ch), ChargersLabel, houses, false,
                 solar > 0 ? $"{solar} solar" : null);
-            ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "TAXMEN", collectors, collectors <= 0 || replacing > 0,
+            ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", collectors, collectors <= 0 || replacing > 0,
                 replacing > 0 ? $"-{replacing} replacing" : (bags > 0 ? $"{bags} carried" : null));
-            ResourceChip(new Rect(r.x + cw + 6f, top + ch + 4f, cw, ch), halted ? "HALTED" : "VILLAGE",
+            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? "HALTED" : "BOTS",
                 building ? pct : 0, halted, building ? "% built" : "idle");
         }
 
@@ -823,7 +863,11 @@ namespace SolarMajesty
             int bags = village != null ? village.Collectors.GoldInTransit : 0;
             int collectors = village != null ? village.Collectors.Count : 0;
             int daily = village != null ? village.DailyBuildingTax() : 0;
-            GUI.Label(r, HudLayout.LevyLine(tills, collectors, bags, daily), _microCenter);
+            // r and CalcSize are both in GUI.matrix space (the HUD scale is applied by the matrix), so scale = 1.
+            var content = new GUIContent();
+            string line = HudLayout.LevyLineFit(tills, collectors, bags, daily,
+                t => { content.text = t; return _microCenter.CalcSize(content).x; }, r.width);
+            GUI.Label(r, line, _microCenter);
         }
 
         private void DrawClockAndThreat(Rect r)
@@ -1234,9 +1278,9 @@ namespace SolarMajesty
             int shown = fp.ShownBounty;
             bool posted = fp.HasSelectedPosted;
             bool canPay = fp.ShownBountyAffordable;
-            HudLayout.StatLine(new Rect(c.x, y, 140f, 24f), out var bountyLabel, out var bountyValue);
+            HudLayout.StatLine(new Rect(c.x, y, Mathf.Max(140f, c.width - 64f), 24f), out var bountyLabel, out var bountyValue);
             GUI.Label(bountyLabel, "BOUNTY", _micro);
-            GUI.Label(bountyValue, $"${shown:F0}", _value);
+            GUI.Label(bountyValue, $"{shown:N0} EU", _value);
             if (GUI.Button(new Rect(c.xMax - 58f, y + 2f, 26f, 20f), "−", _chipOff)) fp.NudgeBounty(-MajestyEconomy.FlagBountyStep);
             if (GUI.Button(new Rect(c.xMax - 28f, y + 2f, 26f, 20f), "+", _chipOff)) fp.NudgeBounty(MajestyEconomy.FlagBountyStep);
 
@@ -1332,11 +1376,14 @@ namespace SolarMajesty
             _contentBottom = rect.y;
             var c = Panel(rect, "Build catalog");
 
-            GUI.Label(new Rect(c.x, c.y, c.width, 13f),
-                DemoSettings.FirstHourDemo
+            // The row is too narrow for long blurbs, so the selected building's full blurb
+            // (e.g. the Watchtower canon line) shows in the hint line above the list.
+            string hint = !DemoSettings.FirstHourDemo && bp.Selected != null && !string.IsNullOrEmpty(bp.Selected.description)
+                ? FitChipText(_micro, new[] { bp.Selected.description }, c.width)
+                : DemoSettings.FirstHourDemo
                     ? "1 Engineer workshop · LMB on open ground"
-                    : "Pick a building · LMB on open ground",
-                _micro);
+                    : "Pick a building · LMB on open ground";
+            GUI.Label(new Rect(c.x, c.y, c.width, 13f), hint, _micro);
             float y = c.y + 17f;
 
             var view = new Rect(c.x, y, c.width, c.yMax - y);
@@ -1368,7 +1415,11 @@ namespace SolarMajesty
                 var nameStyle = on ? _onText : _action;
                 var prevColor = nameStyle.normal.textColor;
                 if (!on && (!canAfford || locked)) nameStyle.normal.textColor = TextMuted;
-                GUI.Label(nameRect, BuildRowLabel(b), nameStyle);
+                string rowStat = b.category == BuildingCategory.Watchtower ? HudLayout.WatchtowerStat : null;
+                string rowText = !string.IsNullOrEmpty(b.description)
+                    ? FitChipText(nameStyle, HudLayout.BuildRowVariants(b.displayName, b.description, rowStat), nameRect.width)
+                    : BuildRowLabel(b);
+                GUI.Label(nameRect, rowText, nameStyle);
                 nameStyle.normal.textColor = prevColor;
 
                 var costStyle = _microRight;
@@ -1476,11 +1527,11 @@ namespace SolarMajesty
             _number.alignment = TextAnchor.MiddleRight;
             var prevC = _number.normal.textColor;
             _number.normal.textColor = fp.ShownBountyAffordable ? HudSkin.GoldBright : Alarm;
-            GUI.Label(new Rect(minus.x - 68f, rect.y, 60f, rect.height), $"${fp.ShownBounty:F0}", _number);
+            GUI.Label(new Rect(minus.x - 112f, rect.y, 104f, rect.height), $"{fp.ShownBounty:N0} EU", _number);
             _number.alignment = prev;
             _number.normal.textColor = prevC;
 
-            var open = new Rect(rect.x, rect.y, minus.x - 76f - rect.x, rect.height);
+            var open = new Rect(rect.x, rect.y, minus.x - 120f - rect.x, rect.height);
             bool hot = open.Contains(Event.current.mousePosition);
             if (hot) HudSkin.RuleH(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Gold);
             GUI.Label(new Rect(c.x, c.y - 6f, open.width - Pad, 18f), FlagStripLabel(fp), _value);
@@ -1618,7 +1669,7 @@ namespace SolarMajesty
                     HudSkin.Dot(new Vector2(c.x + 4f, y + 7.5f), 7f, col);
                     string orders = f.Orders != null && f.Orders.HasRules ? $"  ·  {f.Orders.Summary()}" : "";
                     GUI.Label(new Rect(c.x + 12f, y, c.width - 12f, 15f),
-                        $"{f.Data.displayName}  ${FlagBountySync.Amount(f):F0}  ·  {claim}{orders}", _micro);
+                        $"{f.Data.displayName}  {FlagBountySync.Amount(f):N0} EU  ·  {claim}{orders}", _micro);
                     y += 15f;
                 }
             }
@@ -1706,13 +1757,13 @@ namespace SolarMajesty
                         ? (st.LaserArmed ? "Watchtower · lasers armed" : "Watchtower · guard post")
                     : st.IsAidStation ? "Aid Station · paid patch"
                     : st.IsLandingPad ? "Weigh-station · tank vs wallet"
-                    : st.IsResidential ? "Habitat · colonists"
+                    : st.IsResidential ? "Habitat · worker bots"
                     : st.Role.ToString();
             string worker = st.IsResidential
-                ? "humans"
+                ? "bots"
                 : (st.HasPreferredClass ? ColonyStructure.ClassLabel(st.PreferredClass) : "—");
             string beds = st.IsResidential
-                ? $" · residents {st.Residents}/{st.ResidentCapacity}"
+                ? $" · bots {st.Residents}/{st.ResidentCapacity}"
                 : "";
             GUI.Label(new Rect(c.x, row, c.width, 13f),
                 st.IsResidential
@@ -1727,8 +1778,8 @@ namespace SolarMajesty
             string workers = st.IsResidential
                 ? (st.Residents > 0
                     ? (st.LevyPurse > 0
-                        ? $"House tax {st.LevyPurse} EU sitting — a tax collector walks it home."
-                        : "Colonists live here — house tax sits until a tax collector walks it home.")
+                        ? $"{st.LevyPurse:N0} EU sitting — a bot walks it home."
+                        : "Worker bots bunk here — EU sits until a bot walks it home.")
                     : "Empty beds — seed crew arrives with the first HAB.")
                 : (st.LevyPurse > 0 && !st.IsTreasuryChest
                     ? $"{FormatWorkers(st)} · till {st.LevyPurse} EU"
@@ -1740,15 +1791,15 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     st.LevyPurse > 0
-                        ? $"House tax {st.LevyPurse} EU — tax collectors carry it to Commons."
-                        : "Home to colonists. Bounty work falls to robots from workshops.", _micro);
+                        ? $"{st.LevyPurse:N0} EU — bots carry it to Commons."
+                        : "Home to worker bots. Contract mechs take the bounties.", _micro);
             }
             else if (st.IsFobotYard)
             {
                 string wrecks = _loop.WreckSummary();
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     string.IsNullOrEmpty(wrecks)
-                        ? "Wrecks wait here. Pay credits to stand THIS ego up."
+                        ? "Wrecks wait here. Pay EU to stand THIS ego up."
                         : wrecks,
                     _micro);
                 row += 24f;
@@ -1983,7 +2034,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{a.Data?.displayName ?? "Specialist"} · {ColonyLayout.CampusLabel(campus)} · Asks {a.HireMin} EU · Purse {a.Credits:F0}{LevyCarryLine(a)}", _micro);
+                    $"{a.Data?.displayName ?? "Specialist"} · {ColonyLayout.CampusLabel(campus)} · Asks {a.HireMin:N0} EU · Holds {a.Credits:N0} EU{LevyCarryLine(a)}", _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -2183,7 +2234,7 @@ namespace SolarMajesty
                 var prevAlign = who.alignment;
                 who.normal.textColor = player ? new Color(1f, 0.82f, 0.6f) : Gold;
                 who.alignment = player ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
-                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? "OVERSEER" : heroName.ToUpperInvariant(), who);
+                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? "THE CORE" : heroName.ToUpperInvariant(), who);
                 who.normal.textColor = prevColor;
                 who.alignment = prevAlign;
                 GUI.Label(new Rect(x + 10f, y + 19f, textW, textH), text, _chatText);
@@ -2332,8 +2383,8 @@ namespace SolarMajesty
                 }
             }
             return posted <= 0
-                ? "Bounty escrowed from EU. Heroes keep a purse; colony tithes."
-                : $"Posted {posted}  ·  claimed {claimed}  ·  heroes keep EU purse";
+                ? "Bounty escrowed from EU. Bots keep their EU share; the till takes its cut."
+                : $"Posted {posted}  ·  claimed {claimed}  ·  bots keep their EU share";
         }
 
         private static Color ActionTint(SpecialistAction action) => action switch
@@ -2375,7 +2426,7 @@ namespace SolarMajesty
 
             if (living <= 0)
             {
-                const string hintText = "Build anywhere on open ground · houses pay tax · a workshop fabricates a robot";
+                const string hintText = "Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech";
                 var hint = new Rect(M, _contentBottom - 8f - 26f, _micro.CalcSize(new GUIContent(hintText)).x + 46f, 26f);
                 _hitRects.Add(hint);
                 HudSkin.Panel(hint, 0.9f, false);
@@ -2683,18 +2734,84 @@ namespace SolarMajesty
             }
         }
 
+        private bool TryDrawCampaignVictory()
+        {
+            if (StillCaptureHold.Active || ReplayRules.IsEndless || _winDismissed) return false;
+            var mission = _loop.Mission;
+            if (mission == null ||
+                !VictoryOffer.ShowPanel(mission.IsWon, _loop.IsVictoryHeld, ReplayRules.IsEndless, _winDismissed))
+                return false;
+            bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
+            DrawCampaignVictory(VictoryOffer.For(_loop.ActiveBody, nextBuilt, endless: false));
+            return true;
+        }
+
         private void DrawWinBanner()
         {
-            if (StillCaptureHold.Active) return;
+            if (StillCaptureHold.Active || !ReplayRules.IsEndless) return;
             var mission = _loop.Mission;
             if (mission == null || !mission.IsWon || _winDismissed) return;
+            DrawEndlessWinBanner(mission);
+        }
 
+        private void DrawCampaignVictory(VictoryOffer.View offer)
+        {
+            HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.05f, 0.03f), 0.42f);
+            _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
+
+            var rect = VictoryOffer.PanelRect(_sw, _sh);
+            var c = Panel(rect, null, false);
+            HudSkin.ModalChrome(rect, Good);
+
+            var prev = _banner.normal.textColor;
+            _banner.normal.textColor = Good;
+            GUI.Label(new Rect(c.x, c.y, c.width, 26f), offer.Headline, _banner);
+            _banner.normal.textColor = prev;
+
+            const float buttonH = 30f;
+            float buttonY = c.yMax - buttonH;
+            float textBottom = buttonY - 8f;
+            if (!string.IsNullOrEmpty(offer.ComingSoon))
+            {
+                textBottom -= 22f;
+                var soonPrev = _body.normal.textColor;
+                _body.normal.textColor = HudSkin.GoldBright;
+                GUI.Label(new Rect(c.x, textBottom, c.width, 20f), offer.ComingSoon, _body);
+                _body.normal.textColor = soonPrev;
+            }
+
+            float bodyH = Mathf.Max(16f, textBottom - (c.y + 30f));
+            GUI.Label(new Rect(c.x, c.y + 30f, c.width, bodyH), offer.Body, _wrap != null ? _wrap : _body);
+
+            float gap = 8f;
+            if (offer.CanContinue && offer.ShowMainMenu)
+            {
+                float w = (c.width - gap) * 0.5f;
+                if (GUI.Button(new Rect(c.x, buttonY, w, buttonH), offer.ContinueLabel, _chipOn))
+                    _loop.ContinueAfterVictory();
+                if (GUI.Button(new Rect(c.x + w + gap, buttonY, w, buttonH), VictoryOffer.MainMenu, _chipOff))
+                {
+                    _winDismissed = true;
+                    _loop.ExitVictoryToTitle();
+                }
+            }
+            else if (offer.ShowMainMenu)
+            {
+                float w = Mathf.Min(180f, c.width);
+                if (GUI.Button(new Rect(c.x, buttonY, w, buttonH), VictoryOffer.MainMenu, _chipOn))
+                {
+                    _winDismissed = true;
+                    _loop.ExitVictoryToTitle();
+                }
+            }
+        }
+
+        private void DrawEndlessWinBanner(MissionController mission)
+        {
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.05f, 0.03f), 0.35f);
             _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
-            bool travelCut = CampaignCutsceneCatalog.TryGetVictory(_loop.ActiveBody, out _);
-            float detailH = travelCut ? 72f : 32f;
-            var rect = new Rect((_sw - 500f) * 0.5f, _sh * 0.22f, 500f, travelCut ? 268f : 216f);
+            var rect = VictoryOffer.PanelRect(_sw, _sh);
             var c = Panel(rect, null, false);
             HudSkin.ModalChrome(rect, Good);
 
@@ -2703,40 +2820,11 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, c.y, c.width, 26f), mission.WinHeadline, _banner);
             _banner.normal.textColor = prev;
 
-            GUI.Label(new Rect(c.x, c.y + 32f, c.width, detailH), mission.WinDetail, _wrap != null ? _wrap : _body);
-            GUI.Label(new Rect(c.x, c.y + 32f + detailH, c.width, 24f), mission.WinSubline, _muted);
-            var rating = _loop.CurrentRating;
-            float ratingY = c.y + 56f + detailH;
-            GUI.Label(new Rect(c.x, ratingY, c.width, 16f), rating.Summary, _value);
-            GUI.Label(new Rect(c.x, ratingY + 18f, c.width, 14f), rating.Breakdown, _micro);
-
-            if (GUI.Button(new Rect(c.x, c.yMax - 30f, 190f, 28f), "CONTINUE OVERSEEING  ·  " + KeyHint(GameAction.PromptYes), _chipOn))
+            GUI.Label(new Rect(c.x, c.y + 32f, c.width, 48f), mission.WinDetail, _wrap != null ? _wrap : _body);
+            if (GUI.Button(new Rect(c.x, c.yMax - 30f, Mathf.Min(220f, c.width), 28f), "CONTINUE OVERSEEING  ·  " + KeyHint(GameAction.PromptYes), _chipOn))
             {
                 _winDismissed = true;
                 mission.DismissWinToSandbox();
-            }
-
-            if (!ReplayRules.IsEndless)
-            {
-                var next = CampaignProgress.NextAfter(_loop.ActiveBody);
-                if (next.HasValue)
-                {
-                    string nextName = CelestialBodyCatalog.Get(next.Value).ShortCode;
-                    if (GUI.Button(new Rect(c.x + 200f, c.yMax - 30f, 160f, 28f), $"TO {nextName}", _chipOff))
-                    {
-                        _winDismissed = true;
-                        _loop.AdvanceCampaign();
-                    }
-                }
-                else
-                {
-                    string rematch = _loop.BodyProfile != null ? $"NEW {_loop.BodyProfile.ShortCode}" : "NEW WORLD";
-                    if (GUI.Button(new Rect(c.x + 200f, c.yMax - 30f, 160f, 28f), rematch, _chipOff))
-                    {
-                        _winDismissed = true;
-                        _loop.BeginNextConquest();
-                    }
-                }
             }
         }
 
@@ -2827,8 +2915,9 @@ namespace SolarMajesty
                 _loop.DismissCutscene();
             }
 
-            if (_loop.Mission != null && _loop.Mission.IsWon && InputBindings.DownEvenWhileTyping(GameAction.PromptYes) &&
-                !_loop.IsOutpostOverwhelmed)
+            if (ReplayRules.IsEndless &&
+                _loop.Mission != null && _loop.Mission.IsWon &&
+                InputBindings.DownEvenWhileTyping(GameAction.PromptYes) && !_loop.IsOutpostOverwhelmed)
             {
                 _winDismissed = true;
                 _loop.Mission.DismissWinToSandbox();
@@ -2868,22 +2957,50 @@ namespace SolarMajesty
             const string word = "SOLAR MAJESTY";
             float wx = M + 14f;
             float wy = M + 10f;
-            HudSkin.Band(new Rect(wx - 120f, wy - 20f, 820f, 130f), 0.35f);
-            HudSkin.ShadowLabel(new Rect(wx, wy, 700f, 52f), word, _titleWord, 0.55f);
-            float ww = _titleWord.CalcSize(new GUIContent(word)).x;
-            HudSkin.Pill(new Rect(wx + 1f, wy + 56f, 28f, 3f), Accent);
-            HudSkin.RuleH(new Rect(wx + 34f, wy + 57f, Mathf.Max(80f, ww - 34f), 1f), new Color(Gold.r, Gold.g, Gold.b, 0.9f));
-            HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 66f, 620f, 18f),
-                DemoSettings.FirstHourDemo
-                    ? "Click Earth to land. You are the Overseer — heroes choose their own work."
-                    : "Click a world to land. You are the Overseer — heroes choose their own work.",
-                _tagline, 0.7f);
             var prevCaps = _caps.normal.textColor;
-            _caps.normal.textColor = Gold;
-            HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 86f, 400f, 14f), ReplayRules.HudTag, _caps, 0.7f);
-            _caps.normal.textColor = prevCaps;
+            var wordColor = GUI.color;
+            var wordMatrix = GUI.matrix;
+            var wordEnabled = GUI.enabled;
+            try
+            {
+                HudSkin.Band(new Rect(wx - 120f, wy - 20f, 820f, 130f), 0.35f);
+                HudSkin.ShadowLabel(new Rect(wx, wy, 700f, 52f), word, _titleWord, 0.55f);
+                float ww = _titleWord.CalcSize(new GUIContent(word)).x;
+                HudSkin.Pill(new Rect(wx + 1f, wy + 56f, 28f, 3f), Accent);
+                HudSkin.RuleH(new Rect(wx + 34f, wy + 57f, Mathf.Max(80f, ww - 34f), 1f), new Color(Gold.r, Gold.g, Gold.b, 0.9f));
+                HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 66f, 620f, 18f),
+                    DemoSettings.FirstHourDemo
+                        ? "Click Earth to land. You are the Core. Your bots do the work."
+                        : "Click a world to land. You are the Core. Your bots do the work.",
+                    _tagline, 0.7f);
+                _caps.normal.textColor = Gold;
+                HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 86f, 400f, 14f), ReplayRules.HudTag, _caps, 0.7f);
+            }
+            catch (ExitGUIException) { throw; }
+            catch (System.Exception e) { HudSafety.LogOnce("TitleWordmark:" + e.Message, e); }
+            finally
+            {
+                _caps.normal.textColor = prevCaps;
+                GUI.color = wordColor;
+                GUI.matrix = wordMatrix;
+                GUI.enabled = wordEnabled;
+            }
 
-            DrawTitlePlanetLabels();
+            var savedColor = GUI.color;
+            var savedMatrix = GUI.matrix;
+            var savedEnabled = GUI.enabled;
+            try
+            {
+                DrawTitlePlanetLabels();
+            }
+            catch (ExitGUIException) { throw; }
+            catch (System.Exception e) { HudSafety.LogOnce("TitlePlanetLabels:" + e.Message, e); }
+            finally
+            {
+                GUI.color = savedColor;
+                GUI.matrix = savedMatrix;
+                GUI.enabled = savedEnabled;
+            }
 
             if (_confirmNewGame || _titleLoad)
             {
@@ -2891,6 +3008,10 @@ namespace SolarMajesty
                 DrawToast();
                 return;
             }
+
+            if (_loop.TitleButtonsBlocked && Event.current != null &&
+                (Event.current.isMouse || Event.current.type == EventType.KeyDown))
+                Event.current.Use();
 
             const float bw = 240f;
             const float bh = 34f;
@@ -2929,18 +3050,32 @@ namespace SolarMajesty
             _hitRects.Add(r);
             bool hot = r.Contains(Event.current.mousePosition);
             NoteHover(r, hot);
-            if (primary)
+            var savedColor = GUI.color;
+            var savedMatrix = GUI.matrix;
+            var savedEnabled = GUI.enabled;
+            try
             {
-                HudSkin.Glow(r, new Color(Accent.r, Accent.g, Accent.b, hot ? 0.55f : 0.35f), 0.6f);
-                HudSkin.DrawPlate(r, HudSkin.Plate.Primary, hot);
-                HudSkin.Pill(new Rect(r.x + 7f, r.y + 9f, 3f, r.height - 18f), new Color(Ink.r, Ink.g, Ink.b, 0.55f));
+                if (primary)
+                {
+                    HudSkin.Glow(r, new Color(Accent.r, Accent.g, Accent.b, hot ? 0.55f : 0.35f), 0.6f);
+                    HudSkin.DrawPlate(r, HudSkin.Plate.Primary, hot);
+                    HudSkin.Pill(new Rect(r.x + 7f, r.y + 9f, 3f, r.height - 18f), new Color(Ink.r, Ink.g, Ink.b, 0.55f));
+                }
+                else
+                {
+                    HudSkin.Panel(r, hot ? 0.95f : 0.72f, false);
+                    HudSkin.Pill(new Rect(r.x + 7f, r.y + 9f, 3f, r.height - 18f),
+                        hot ? Accent : new Color(Gold.r, Gold.g, Gold.b, 0.45f));
+                    if (hot) HudSkin.RuleH(new Rect(r.x, r.yMax - 1f, r.width, 1f), Gold);
+                }
             }
-            else
+            catch (ExitGUIException) { throw; }
+            catch (System.Exception e) { HudSafety.LogOnce("TitleButton:" + e.Message, e); }
+            finally
             {
-                HudSkin.Panel(r, hot ? 0.95f : 0.72f, false);
-                HudSkin.Pill(new Rect(r.x + 7f, r.y + 9f, 3f, r.height - 18f),
-                    hot ? Accent : new Color(Gold.r, Gold.g, Gold.b, 0.45f));
-                if (hot) HudSkin.RuleH(new Rect(r.x, r.yMax - 1f, r.width, 1f), Gold);
+                GUI.color = savedColor;
+                GUI.matrix = savedMatrix;
+                GUI.enabled = savedEnabled;
             }
             var style = primary ? _titleButtonOn : _titleButton;
             return GUI.Button(r, label, style);
@@ -2996,13 +3131,18 @@ namespace SolarMajesty
 
         private void DrawCampaignDialog(bool newCampaign)
         {
-            float h = newCampaign ? 400f : 360f;
+            float h = newCampaign ? 418f : 360f;
             var rect = new Rect((_sw - 460f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 460f, h);
             var c = Panel(rect, newCampaign ? "New campaign" : "Load");
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
             float y = WrapBlock(c, c.y, newCampaign
                 ? $"Drop on {_pendingNewGameBody}. Only the chosen slot is replaced. Other saves stay. Autosave will follow this new colony — save the current one first if you still need it."
                 : "Load a saved colony. Other slots stay on disk.");
+            if (newCampaign)
+            {
+                GUI.Label(new Rect(c.x, y, c.width, 14f), ReplayRules.NewCampaignChallengeLine, _micro);
+                y += 18f;
+            }
             var slots = SaveSystem.ListSlots();
             for (int i = 0; i < slots.Count; i++)
             {
@@ -3257,7 +3397,7 @@ namespace SolarMajesty
             y += 32f;
 
             // Baked voices need nothing running. The LOCAL rows add LLM-written lines and speak them.
-            if (Chip(new Rect(c.x, y, c.width, 26f), "CHARACTER VOICES  ·  BAKED BARKS + OVERSEER", DemoSettings.CharacterVoices))
+            if (Chip(new Rect(c.x, y, c.width, 26f), "CHARACTER VOICES  ·  BAKED BARKS + CORE", DemoSettings.CharacterVoices))
             {
                 DemoSettings.CharacterVoices = !DemoSettings.CharacterVoices;
                 DemoSettings.SaveSettings();
@@ -3316,6 +3456,18 @@ namespace SolarMajesty
                 OpenControls();
             y += 32f;
 
+            if (Chip(new Rect(c.x, y, c.width, 26f),
+                    IntroLaunch.PlayOnLaunch ? "PLAY INTRO ON LAUNCH  ·  ON" : "PLAY INTRO ON LAUNCH  ·  OFF",
+                    IntroLaunch.PlayOnLaunch))
+                IntroLaunch.SetPlayOnLaunch(!IntroLaunch.PlayOnLaunch);
+            y += 32f;
+            if (Chip(new Rect(c.x, y, c.width, 26f), "REPLAY INTRO", false))
+                _loop.ReplayIntro();
+            y += 28f;
+            GUI.Label(new Rect(c.x, y, c.width, 16f),
+                "The launch intro plays once, the first time the title opens. Replay plays it now.", _micro);
+            y += 24f;
+
             bool marsLessons = DemoSettings.MarsGrokLessons;
             if (Chip(new Rect(c.x, y, c.width, 26f),
                     marsLessons ? "MARS GROK LESSONS  ·  ON" : "MARS GROK LESSONS  ·  OFF",
@@ -3372,7 +3524,7 @@ namespace SolarMajesty
                 y = WrapBlock(c, y, ReplayRules.StanceHint + " " + ReplayRules.ChallengeHint);
                 y = WrapBlock(c, y, ReplayRules.IronmanHint);
                 y = WrapBlock(c, y,
-                    "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Tight Purse ship rules apply when you leave Settings. Ironman latches at New Game or Continue.");
+                    "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue.");
                 y += 4f;
                 if (Chip(new Rect(c.x, y, c.width, 26f), "EARTH DEMO", false))
                     _loop.SetFirstHourDemo(true);
@@ -3628,8 +3780,8 @@ namespace SolarMajesty
                 string[] beats =
                 {
                     "1/6  COMMONS — Colony Commons is already on the claim. It holds the treasury.",
-                    "2/6  Tax collectors walk out of the Commons and carry each building's till home.",
-                    "3/6  Keep the yard clear of mobs — villagers raise houses and solar farms that pay energy.",
+                    "2/6  Haul walks out of the Commons and carries each building's EU home.",
+                    "3/6  Keep the yard clear of mobs — bots build charging stations and solar farms that pay EU.",
                     "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
                     "5/6  G, Build, leave it at 700. Watch the Engineer.",
                     "6/6  They named a price. Select the flag and press + until the chip reads tempted."

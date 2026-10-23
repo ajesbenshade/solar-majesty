@@ -92,7 +92,7 @@ namespace SolarMajesty
             if (!string.IsNullOrEmpty(p.Rank)) sb.Append(" (").Append(p.Rank.ToLowerInvariant()).Append(" service record)");
             sb.Append(", one of the autonomous robot heroes of a Majesty-style space colony");
             if (!string.IsNullOrEmpty(p.World)) sb.Append(" on ").Append(p.World);
-            sb.Append(". The player is the Overseer, the colony AI: it posts bounty flags and builds, but you choose your own work. ");
+            sb.Append(". The player is the Core, the central AI that coordinates the colony's robot AIs: it posts bounty flags and builds, but you choose your own work. Call the player \"the Core\", never \"Overseer\". ");
 
             var m = new HeroMoment { Greed = p.Greed, Courage = p.Courage, Workaholic = p.Workaholic };
             sb.Append("Your voice: ").Append(HeroNarration.Voice(m)).Append(". Personality: ")
@@ -101,7 +101,7 @@ namespace SolarMajesty
               .Append(Word(p.Workaholic, "lazy", "diligent", "workaholic")).Append(". ");
             sb.Append("Right now you are ").Append(Safe(p.Situation, "between jobs")).Append(". ");
             sb.Append("Health ").Append(Pct(p.Health01)).Append(", tired ").Append(Pct(p.Fatigue01))
-              .Append(", purse ").Append(Mathf.Max(0, p.Credits)).Append(" credits. ");
+              .Append(", holds ").Append(Mathf.Max(0, p.Credits)).Append(" EU. ");
             if (p.Recent != null && p.Recent.Count > 0)
             {
                 sb.Append("Lately: ");
@@ -269,11 +269,11 @@ namespace SolarMajesty
             switch (m.Kind)
             {
                 case NarrationKind.Claim:
-                    return m.Bounty > 0 ? $"took the {flag} bounty for {m.Bounty} credits" : $"took the {flag} bounty";
+                    return m.Bounty > 0 ? $"took the {flag} bounty for {m.Bounty:N0} EU" : $"took the {flag} bounty";
                 case NarrationKind.Refused:
                     return string.IsNullOrEmpty(m.Orders)
-                        ? $"was barred from the {flag} bounty by the Overseer's orders"
-                        : $"was barred from the {flag} bounty by the Overseer's orders \"{Clip(m.Orders, 60)}\"";
+                        ? $"was barred from the {flag} bounty by the Core's orders"
+                        : $"was barred from the {flag} bounty by the Core's orders \"{Clip(m.Orders, 60)}\"";
                 case NarrationKind.Flee: return "got badly hurt and ran for the inn";
                 case NarrationKind.Hunt: return "went hunting fauna";
                 case NarrationKind.Repair: return "patched a damaged colony module";

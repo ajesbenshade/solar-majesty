@@ -20,7 +20,7 @@ namespace SolarMajesty
             if (action == SpecialistAction.Rest)
                 return reason != null && reason.IndexOf("seeking", System.StringComparison.Ordinal) >= 0
                     ? "Heading to the inn."
-                    : "Resting. Shop if the credits are there.";
+                    : "Resting. Shop if the EU is there.";
             if (action == SpecialistAction.Repair)
                 return "Patching a hull. Pay me when it holds.";
             return IdleLine(cls, reason);
@@ -52,7 +52,7 @@ namespace SolarMajesty
                         ? $"{who}: Site mapped. Science into the tree."
                         : $"{who}: Charting the apron. No fights.";
                 case SpecialistClass.ScoutDrone:
-                    return $"{who}: Cheap Explore. Forty credits and I'm gone.";
+                    return $"{who}: Cheap Explore. Forty EU and I'm gone.";
                 case SpecialistClass.CourierBot:
                     return type == FlagType.EstablishOutpost
                         ? $"{who}: Claim the cyan disc. Freight after."
@@ -129,7 +129,7 @@ namespace SolarMajesty
             {
                 case SpecialistClass.DefenseMech: return "Hunting fauna. No bounty needed.";
                 case SpecialistClass.SentinelMech: return "Pest on the rim — engaging.";
-                default: return "Chasing campus pests.";
+                default: return "Chasing yard pests.";
             }
         }
 
@@ -142,15 +142,15 @@ namespace SolarMajesty
                 if (reason.IndexOf("patrol", System.StringComparison.Ordinal) >= 0)
                     return "Patrolling the Commons.";
                 if (reason.IndexOf("tinker", System.StringComparison.Ordinal) >= 0)
-                    return "Tinkering in town. Raise $ for Build.";
+                    return "Tinkering in town. Raise EU for Build.";
                 if (reason.IndexOf("triage", System.StringComparison.Ordinal) >= 0)
                     return "Triage at the inn.";
                 if (reason.IndexOf("party", System.StringComparison.Ordinal) >= 0)
                     return "Following the party.";
                 if (reason.IndexOf("levy_home", System.StringComparison.Ordinal) >= 0)
-                    return "Walking the purse home. Do not click me.";
+                    return "Walking the batteries home. Do not click me.";
                 if (reason.IndexOf("levy_collect", System.StringComparison.Ordinal) >= 0)
-                    return "Credits are sitting in building purses. Haul will get around to it.";
+                    return "EU is sitting in building batteries. Haul will get around to it.";
                 if (reason.IndexOf("frontier", System.StringComparison.Ordinal) >= 0)
                     return "Wandering the apron.";
             }

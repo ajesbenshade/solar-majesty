@@ -8,10 +8,10 @@ using UnityEngine;
 namespace SolarMajesty.Tests
 {
     /// <summary>
-    /// Guards for colonists v1 (art batch 3): the four suited villager prefabs, their Humanoid rig on the
-    /// Kevin Iglesias Idle01 and the original colony-stride Walk, +Z facing (fauna v1 shipped facing -Z and
-    /// walked backwards), feet planted at 2.4 m/s without a scurry, boots on the (displaced) ground, and the
-    /// VillagerAgent.Spawn hookup that replaced the capsule placeholder.
+    /// Guards for the worker-bot villagers (canon): the four Humanoid prefabs (role IDs unchanged, Medic =
+    /// Repair bot), the original worker-bot Idle and colony-stride Walk (no Kevin Iglesias clips), +Z facing
+    /// (fauna v1 shipped facing -Z and walked backwards), feet planted at 2.4 m/s, feet on the (displaced)
+    /// ground, and the VillagerAgent.Spawn hookup with <see cref="ColonistArt.Enabled"/> on.
     /// </summary>
     public class ColonistArtTests
     {
@@ -32,21 +32,28 @@ namespace SolarMajesty.Tests
         }
 
         [TestCaseSource(nameof(Variants))]
-        public void Prefab_IsBudgetedSuitWithSuitAndRoleMaterials(string variant)
+        public void Prefab_IsBudgetedWorkerBotWithChassisAndRoleMaterials(string variant)
         {
             var prefab = LoadPrefab(variant);
             var smr = prefab.GetComponentInChildren<SkinnedMeshRenderer>(true);
-            Assert.IsNotNull(smr, "skinned suit");
+            Assert.IsNotNull(smr, "skinned worker bot");
             Assert.IsNotNull(smr.sharedMesh);
             int tris = smr.sharedMesh.triangles.Length / 3;
-            Assert.That(tris, Is.InRange(1000, 2000), "triangle budget");
+            Assert.That(tris, Is.InRange(1500, 2000), "triangle budget (~1.5-2k)");
             var mats = smr.sharedMaterials;
             Assert.AreEqual(2, mats.Length);
-            Assert.AreEqual("SM_Art_Colonist_Suit", mats[0].name);
-            Assert.AreEqual("SM_Art_Colonist_Role_" + variant, mats[1].name);
+            Assert.AreEqual("SM_Art_WorkerBot_Chassis", mats[0].name);
+            Assert.AreEqual("SM_Art_WorkerBot_Role_" + variant, mats[1].name);
             foreach (var m in mats)
+            {
                 StringAssert.StartsWith("Universal Render Pipeline/", m.shader.name);
-            Assert.IsNotNull(mats[0].GetTexture("_BaseMap"), "suit palette atlas");
+                Assert.IsTrue(m.IsKeywordEnabled("_EMISSION"), m.name + " emissive (sensor / role beacon)");
+                Assert.IsNotNull(m.GetTexture("_EmissionMap"), m.name + " emission mask");
+            }
+            Assert.IsNotNull(mats[0].GetTexture("_BaseMap"), "chassis palette atlas");
+            Color role = mats[1].GetColor("_BaseColor");
+            Assert.Greater(role.maxColorComponent - Mathf.Min(role.r, Mathf.Min(role.g, role.b)), 0.4f, "saturated role paint");
+            Assert.Greater(mats[1].GetColor("_EmissionColor").maxColorComponent, 1f, "role beacon glows (HDR)");
         }
 
         private const float VillagerSpeed = 2.4f; // VillagerAgent.moveSpeed (design speed, drives the economy)
@@ -68,7 +75,7 @@ namespace SolarMajesty.Tests
         }
 
         [TestCaseSource(nameof(Variants))]
-        public void Prefab_IsHumanoidOnIdle01AndColonyStride(string variant)
+        public void Prefab_IsHumanoidOnWorkerBotIdleAndColonyStride(string variant)
         {
             var anim = LoadPrefab(variant).GetComponentInChildren<Animator>(true);
             Assert.IsNotNull(anim);
@@ -81,7 +88,11 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(baseCtrl, "SM_Colonist.controller");
             Assert.IsTrue(baseCtrl.parameters.Any(p => p.name == ColonistArt.SpeedParam && p.type == AnimatorControllerParameterType.Float));
             var clips = rac.animationClips.Select(c => c.name).ToArray();
-            Assert.IsTrue(clips.Any(n => n.Contains("Idle01")), "Idle01 in " + string.Join(",", clips));
+            Assert.IsTrue(clips.Contains("SM_WorkerBot@Idle"), "worker-bot idle in " + string.Join(",", clips));
+            Assert.IsFalse(clips.Any(n => n.Contains("Idle01") || n.StartsWith("Human")), "no Kevin Iglesias clips: " + string.Join(",", clips));
+            var idle = rac.animationClips.First(c => c.name == "SM_WorkerBot@Idle");
+            Assert.IsTrue(idle.humanMotion && idle.isLooping, "looping humanoid idle");
+            Assert.AreEqual(4f, idle.length, 0.05f, "4 s idle loop");
             Assert.IsTrue(clips.Contains("SM_Colonist@Stride"), "colony stride in " + string.Join(",", clips));
             Assert.IsFalse(clips.Any(n => n.Contains("Walk01")), "Walk01 scurry retired: " + string.Join(",", clips));
             var stride = rac.animationClips.First(c => c.name == "SM_Colonist@Stride");
@@ -100,7 +111,7 @@ namespace SolarMajesty.Tests
         }
 
         [TestCaseSource(nameof(Variants))]
-        public void Stride_PlantedFootKeepsUpWithTheVillager_AndBootsTouchGround(string variant)
+        public void Stride_PlantedFootKeepsUpWithTheVillager_AndFeetTouchGround(string variant)
         {
             var root = new GameObject("StrideRoot");
             try
@@ -115,7 +126,7 @@ namespace SolarMajesty.Tests
                 // Idle: boots on the ground.
                 anim.SetFloat(ColonistArt.SpeedHash, 0f);
                 anim.Update(1f);
-                Assert.AreEqual(0f, LowestVertexY(smr, tmp), 0.03f, "idle boots on the ground");
+                Assert.AreEqual(0f, LowestVertexY(smr, tmp), 0.03f, "idle feet on the ground");
 
                 // Move the root at 2.4 m/s exactly like VillagerAgent and let ColonistArt pick the playback rate.
                 ColonistArt.Drive(anim, VillagerSpeed);
@@ -145,7 +156,7 @@ namespace SolarMajesty.Tests
                 slides.Sort();
                 Assert.Less(slides[slides.Count / 2], 0.05f * VillagerSpeed, "planted foot slides under 5% of ground speed");
                 lows.Sort();
-                Assert.AreEqual(0f, lows[0], 0.03f, "boots touch the ground while striding (no hover, no sinking)");
+                Assert.AreEqual(0f, lows[0], 0.03f, "feet touch the ground while striding (no hover, no sinking)");
             }
             finally
             {
@@ -224,8 +235,9 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void VillagerSpawn_WearsSuit_FacesWork_AndCyclesRoles()
+        public void VillagerSpawn_WearsWorkerBot_FacesWork_AndCyclesRoles()
         {
+            Assert.IsTrue(ColonistArt.Enabled, "worker-bot villagers are on");
             var parent = new GameObject("ColonistArtTests");
             try
             {
@@ -238,15 +250,20 @@ namespace SolarMajesty.Tests
                     Assert.IsNotNull(v);
                     Assert.IsNull(v.transform.Find("Body"), "capsule placeholder replaced");
                     var visual = v.transform.Find("Visual");
-                    Assert.IsNotNull(visual, "suit mounted as Visual");
+                    Assert.IsNotNull(visual, "worker bot mounted as Visual");
                     Assert.IsNotNull(visual.GetComponentInChildren<Animator>());
-                    Assert.Greater(Vector3.Dot(v.transform.forward, (work - home).normalized), 0.99f, "faces its work site");
                     var smr = visual.GetComponentInChildren<SkinnedMeshRenderer>();
-                    Assert.AreEqual("SM_Art_Colonist_Suit", smr.sharedMaterials[0].name, "no runtime material remap");
+                    Assert.AreEqual("SM_Art_WorkerBot_Chassis", smr.sharedMaterials[0].name, "no runtime material remap");
                     roles.Add(smr.sharedMaterials[1].name);
-                    Assert.AreEqual(0f, v.transform.position.y, 1e-4f, "pivot (boot soles) on the ground");
+                    Assert.AreEqual(0f, v.transform.position.y, 1e-4f, "pivot (soles) on the ground");
+                    Assert.Greater(Vector3.Dot(v.transform.forward, (work - home).normalized), 0.99f, "faces its work site");
+                    var speed = typeof(VillagerAgent).GetField("moveSpeed", BindingFlags.Instance | BindingFlags.NonPublic);
+                    Assert.IsNotNull(speed);
+                    Assert.AreEqual(VillagerSpeed, (float)speed.GetValue(v), "design speed unchanged");
                 }
                 Assert.AreEqual(ColonistArt.Variants.Length, roles.Count, "consecutive villagers cycle roles");
+                CollectionAssert.AreEqual(new[] { "Engineer", "Hydroponics", "Medic", "Hauler" }, ColonistArt.Variants,
+                    "saved role IDs unchanged (Medic holds the Repair bot)");
             }
             finally
             {
@@ -269,18 +286,21 @@ namespace SolarMajesty.Tests
                 };
                 Vector3 home = new Vector3(50f, 0f, 25f);           // ground +0.2 m
                 var v = VillagerAgent.Spawn(parent.transform, home, home + new Vector3(0f, 0f, 50f));
-                Assert.AreEqual(0.2f, v.transform.position.y, 1e-3f, "spawns standing on the terrain, not on y = 0");
+                Assert.IsNotNull(v.transform.Find("Visual"), "worker bot mounted");
+                const float homeGround = 0.2f;
+                Assert.AreEqual(homeGround, v.transform.position.y, 1e-3f, "spawns standing on the terrain, not on y = 0");
                 var anim = Animate(v.gameObject);
                 anim.Update(0.5f);
                 var tmp = new Mesh();
-                Assert.AreEqual(0.2f, LowestVertexY(v.GetComponentInChildren<SkinnedMeshRenderer>(), tmp), 0.03f, "boots on the terrain");
+                Assert.AreEqual(homeGround, LowestVertexY(v.GetComponentInChildren<SkinnedMeshRenderer>(), tmp), 0.03f, "feet on the terrain");
                 Object.DestroyImmediate(tmp);
+                float aboveGround = v.transform.position.y - homeGround;
 
                 var follow = v.GetComponent<TerrainFollow>();
                 Assert.IsNotNull(follow, "keeps following the ground while walking");
                 v.transform.position = new Vector3(50f, v.transform.position.y, 75f); // ground -0.2 m
                 typeof(TerrainFollow).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(follow, null);
-                Assert.AreEqual(-0.2f, v.transform.position.y, 1e-3f, "drops into the dip instead of hovering");
+                Assert.AreEqual(-0.2f + aboveGround, v.transform.position.y, 1e-3f, "drops into the dip instead of hovering");
             }
             finally
             {

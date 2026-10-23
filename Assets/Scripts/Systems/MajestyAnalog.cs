@@ -25,7 +25,7 @@ namespace SolarMajesty
             {
                 MajestyLoop = "Houses / gold",
                 CompactName = "HAB purses",
-                Toy = "Colonists print EU. Haul walks it home."
+                Toy = "Worker bots print EU. Haul walks it home."
             },
             new MajestyAnalogDef
             {
@@ -91,7 +91,7 @@ namespace SolarMajesty
             {
                 MajestyLoop = "Magic tower",
                 CompactName = "Defense Battery",
-                Toy = "Campus lasers. Watchtower lasers are the rim version."
+                Toy = "Yard lasers. Watchtower lasers are the rim version."
             },
             new MajestyAnalogDef
             {
@@ -109,7 +109,7 @@ namespace SolarMajesty
             {
                 MajestyLoop = "Hero recruit",
                 CompactName = "Workshops",
-                Toy = "Fabricate robots for contract work. Colonists run the village."
+                Toy = "Fabricate mechs for contract work. Worker bots run the yard."
             },
             new MajestyAnalogDef
             {

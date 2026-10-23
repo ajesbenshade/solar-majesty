@@ -234,7 +234,7 @@ namespace SolarMajesty.EditorTools
             switch (cat)
             {
                 case BuildingCategory.Defense: return "auto-fires 18 m";
-                case BuildingCategory.Mining: return "does not grow MET";
+                case BuildingCategory.Mining: return "does not grow EU";
                 case BuildingCategory.ClimateLoom:
                 case BuildingCategory.AegisSpire:
                 case BuildingCategory.DeepArchive:
@@ -243,7 +243,7 @@ namespace SolarMajesty.EditorTools
                 case BuildingCategory.Market: return "Potions and a regen necklace. Heroes buy with EU.";
                 case BuildingCategory.Blacksmith: return "Guild arms and armor. Heroes buy with EU.";
                 case BuildingCategory.FobotYard: return "Pay EU here to stand wrecks up.";
-                case BuildingCategory.Watchtower: return "Guard post and levy chest. Arm lasers for EU.";
+                case BuildingCategory.Watchtower: return "Guard post and levy till. Arm lasers for EU.";
                 case BuildingCategory.AidStation: return "Hurt robots pay EU for a patch. Triage clocks in.";
                 default: return "";
             }

@@ -279,5 +279,162 @@ namespace SolarMajesty.Tests
             Assert.LessOrEqual(left.xMax + gap, right.xMin + 0.01f,
                 $"expected {left} to clear {right} by {gap}");
         }
+
+        private static float SevenPx(string s) => s.Length * 7f;
+
+        // Models glyph widths snapped to whole screen pixels, expressed back in GUI units.
+        private static System.Func<string, float> SnappedMeasure(float scale) =>
+            s => Mathf.Ceil(s.Length * 6.5f * scale) / scale + 1f;
+
+        private static readonly (int w, int h, float scale)[] ChipViews =
+        {
+            (1280, 800, 1.25f),
+            (3840, 2160, 2f),
+        };
+
+        [Test]
+        public void ChargersChip_KeepsTheChargingStationIcon()
+        {
+            Assert.AreEqual("CHARGERS", OverseerHud.ChargersLabel);
+            Assert.AreEqual(IconId.Charger, OverseerHud.ChipIconFor(OverseerHud.ChargersLabel));
+            var art = UiIcons.Get(IconId.Charger);
+            Assert.IsNotNull(art, "CHARGERS icon art loads");
+            Assert.AreSame(Resources.Load<Texture2D>(UiIcons.ChargerIconPath), art, "uses the authored icon, not a procedural one");
+            Assert.IsNull(OverseerHud.ChipIconFor("HOUSES"), "the old label is gone; nothing should still key on it");
+        }
+
+        private static System.Func<string, int, float> CapsMeasure(float scale) =>
+            (s, size) =>
+            {
+                // CalcSize and chip rectangles use logical GUI units at either HUD scale.
+                var style = HudSkin.Text(HudSkin.Display, size, FontStyle.Bold, Color.white, TextAnchor.MiddleLeft);
+                return style.CalcSize(new GUIContent(s)).x;
+            };
+
+        [Test]
+        public void ChargersLabel_FitsInFull_At1080p100_And4K200()
+        {
+            foreach (var (sw, sh, requested) in new[] { (1920, 1080, 1f), (3840, 2160, 2f) })
+            {
+                float scale = HudScaleMath.ClampToFit(requested, sw, sh);
+                Assert.AreEqual(requested, scale, 0.001f, $"{sw}x{sh} keeps its scale");
+                var measure = CapsMeasure(scale);
+                Assume.That(measure(OverseerHud.ChargersLabel, 10) > 0f, "fonts measure in this Unity mode");
+                var numberStyle = HudSkin.Text(HudSkin.Numeric, 17, FontStyle.Bold, Color.white, TextAnchor.MiddleRight);
+                float cw = HudLayout.StockpileChipWidth();
+                HudLayout.ChipText(new Rect(0f, 0f, cw, 28f), out var labelRect, out var numberRect);
+                foreach (string amount in new[] { "4", "99", "999" })
+                {
+                    float amountWidth = numberStyle.CalcSize(new GUIContent(amount)).x;
+                    float w = HudLayout.ChipLabelWidth(labelRect, numberRect, amountWidth);
+                    int size = HudLayout.FitFontSize(s => measure(OverseerHud.ChargersLabel, s), w, 10);
+                    Assert.GreaterOrEqual(size, HudLayout.ChipLabelMinSize);
+                    TestContext.WriteLine($"CHARGERS {sw}x{sh} amount={amount} size={size}pt width={measure(OverseerHud.ChargersLabel, size):0.0}/{w:0.0}");
+                    Assert.GreaterOrEqual(size, 9, $"CHARGERS stays at 9pt or more at {sw}x{sh} with amount {amount}");
+                    Assert.LessOrEqual(measure(OverseerHud.ChargersLabel, size), w,
+                        $"CHARGERS at {size}pt fits {w}px with amount {amount} at {sw}x{sh}");
+                    Assert.LessOrEqual(labelRect.x + measure(OverseerHud.ChargersLabel, size) + HudLayout.TextGap,
+                        numberRect.xMax - Mathf.Min(numberRect.width, amountWidth), "label leaves the amount its gap");
+                }
+            }
+        }
+
+        [Test]
+        public void FitFontSize_KeepsBaseWhenRoomy_AndStopsAtTheFloor()
+        {
+            Assert.AreEqual(10, HudLayout.FitFontSize(s => s * 5f, 1000f, 10));
+            Assert.AreEqual(8, HudLayout.FitFontSize(s => s * 5f, 41f, 10));
+            Assert.AreEqual(HudLayout.ChipLabelMinSize, HudLayout.FitFontSize(s => s * 50f, 1f, 10));
+        }
+
+        [Test]
+        public void NewCampaignDialog_NamesTheSelectedChallenge()
+        {
+            var before = ReplayRules.Challenge;
+            try
+            {
+                ReplayRules.Challenge = ChallengeId.TightPurse;
+                Assert.AreEqual("CHALLENGE  ·  LOW BATTERY", ReplayRules.NewCampaignChallengeLine);
+                ReplayRules.Challenge = ChallengeId.None;
+                Assert.AreEqual("CHALLENGE  ·  STANDARD", ReplayRules.NewCampaignChallengeLine);
+            }
+            finally { ReplayRules.Challenge = before; }
+        }
+
+        [Test]
+        public void ChipRateVariants_AbbreviateAndDedupe()
+        {
+            CollectionAssert.AreEqual(new[] { "330 carried", "330 carr.", "330" }, HudLayout.ChipRateVariants("330 carried"));
+            CollectionAssert.AreEqual(new[] { "-2 replacing", "-2 repl.", "-2" }, HudLayout.ChipRateVariants("-2 replacing"));
+            CollectionAssert.AreEqual(new[] { "3 solar", "3" }, HudLayout.ChipRateVariants("3 solar"));
+            CollectionAssert.AreEqual(new[] { "idle" }, HudLayout.ChipRateVariants("idle"));
+            CollectionAssert.AreEqual(new[] { "% built" }, HudLayout.ChipRateVariants("% built"));
+        }
+
+        [Test]
+        public void ChipRate_FitsLabelRect_AtEachView()
+        {
+            foreach (var (sw, sh, requested) in ChipViews)
+            {
+                float scale = HudScaleMath.ClampToFit(requested, sw, sh);
+                float viewW = sw / scale;
+                Assert.GreaterOrEqual(viewW, HudScaleMath.MinViewWidth);
+                float cw = HudLayout.StockpileChipWidth();
+                HudLayout.ChipText(new Rect(0f, 0f, cw, 28f), out var labelRect, out _);
+                var measure = SnappedMeasure(scale);
+
+                foreach (var rate in new[] { "330 carried", "-2 replacing", "3 solar" })
+                {
+                    string fit = HudLayout.FitText(HudLayout.ChipRateVariants(rate), measure, labelRect.width);
+                    Assert.LessOrEqual(measure(fit), labelRect.width, $"'{fit}' at {sw}x{sh} scale {scale}");
+                    Assert.IsNotEmpty(fit);
+                }
+            }
+        }
+
+        [Test]
+        public void ChipRate_KeepsFullWording_WhenWide()
+        {
+            var measure = SnappedMeasure(2f);
+            foreach (var rate in new[] { "330 carried", "-2 replacing", "3 solar", "% built", "idle" })
+                Assert.AreEqual(rate, HudLayout.FitText(HudLayout.ChipRateVariants(rate), measure, 10000f));
+        }
+
+        [Test]
+        public void LevyLineFit_WhenWideEnough_KeepsExactWording()
+        {
+            Assert.AreEqual(HudLayout.LevyLine(20, 2, 0, 230),
+                HudLayout.LevyLineFit(20, 2, 0, 230, SevenPx, 10000f));
+            Assert.AreEqual(HudLayout.LevyLine(12345, 12, 999, 99999),
+                HudLayout.LevyLineFit(12345, 12, 999, 99999, SevenPx, 10000f));
+        }
+
+        [Test]
+        public void LevyLineFit_WhenNarrow_ShortensWording()
+        {
+            string wide = HudLayout.LevyLine(20, 2, 0, 230);
+            string narrow = HudLayout.LevyLineFit(20, 2, 0, 230, SevenPx, wide.Length * 7f - 1f);
+            Assert.Less(narrow.Length, wide.Length);
+            Assert.That(narrow, Does.Contain("230"));
+        }
+
+        [Test]
+        public void LevyLineFit_NeverExceedsWidth()
+        {
+            for (float w = 0f; w <= 400f; w += 7f)
+            {
+                string s = HudLayout.LevyLineFit(12345, 12, 999, 99999, SevenPx, w);
+                Assert.LessOrEqual(SevenPx(s), w, $"width {w}: '{s}'");
+            }
+        }
+
+        [Test]
+        public void LevyLineFit_RespectsScale()
+        {
+            string at1 = HudLayout.LevyLineFit(20, 2, 0, 230, SevenPx, 300f, 1f);
+            string at2 = HudLayout.LevyLineFit(20, 2, 0, 230, SevenPx, 300f, 2f);
+            Assert.Less(at2.Length, at1.Length);
+            Assert.LessOrEqual(SevenPx(at2) * 2f, 300f);
+        }
     }
 }

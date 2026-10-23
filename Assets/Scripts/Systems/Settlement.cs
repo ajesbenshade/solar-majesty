@@ -54,7 +54,7 @@ namespace SolarMajesty
                 if (Treasury < TreasuryGoal)
                     return $"grow the treasury to {TreasuryGoal:N0} EU (now {Treasury:N0})";
                 if (NetMetalsPerMin < IncomeGoalPerMin)
-                    return $"keep income at {IncomeGoalPerMin:N0}+ EU/min — tax collectors, mines, guild tax";
+                    return $"keep income at {IncomeGoalPerMin:N0}+ EU/min — Haul, mines, till share";
                 return "holding — keep the treasury and income up";
             }
         }

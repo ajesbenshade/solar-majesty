@@ -88,7 +88,7 @@ namespace SolarMajesty
             yield return Shot("01_tutorial");
 
             loop.SkipTutorial();
-            hud?.Notify("Trade ship landed — caravan gold waits in the Market till for a collector.", 30f);
+            hud?.Notify("Trade ship landed — caravan EU waits in the Market till for a collector.", 30f);
             loop.Alerts?.Push("hudshot_warn", "Dens stirring east of the pad", AlertSeverity.Warning, Time.unscaledTime, loop.transform.position);
             loop.Alerts?.Push("hudshot_crit", "Habitat hull breach — send a repair crew", AlertSeverity.Critical, Time.unscaledTime, loop.transform.position);
             yield return Wait(0.5f);

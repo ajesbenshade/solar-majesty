@@ -151,6 +151,10 @@ namespace SolarMajesty
         public float panicHealthCeiling = 0.62f;
         [Tooltip("Once fleeing, keep going until health reaches this. Clearly above the enter line so a hero bouncing through 0.49–0.65 cannot flip back to workshop duty. The inn heal is what climbs to this line.")]
         [Range(0.5f, 1f)] public float fleeResumeHealth = 0.8f;
+        [Tooltip("Once resting at the inn, stay until health reaches this. Above the old 0.82/0.85 release band so a heal ticking through that band cannot hand a Defend flag back every dwell.")]
+        [Range(0.5f, 1f)] public float restLeaveHealth = 0.92f;
+        [Tooltip("After rest ends, ignore flag claims for this long. Longer than the decision dwell so Rest and Defend cannot trade places every couple of seconds.")]
+        public float restFlagCooldownSeconds = 4f;
         [Tooltip("A new action has to stick at least this long. Stops a decision from flipping on every think.")]
         public float decisionDwellSeconds = 1.75f;
         public float fleeScore = 0.95f;
@@ -187,7 +191,7 @@ namespace SolarMajesty
         public float repairAcceptFactor = 0.82f;
 
         [Header("Pay duty")]
-        [Tooltip("Score of walking carried guild tax home. Heroes finish a flag or hunt first.")]
+        [Tooltip("Score of walking carried EU home. Heroes finish a flag or hunt first.")]
         public float dutyScore = 0.6f;
 
         [Header("Idle behaviour scores")]

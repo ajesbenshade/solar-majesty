@@ -3,8 +3,9 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Colonist that connects village HABs and works camps. Not player-commanded.
-    /// Wears an authored suit from <see cref="ColonistArt"/> (falls back to the capsule placeholder).
+    /// Worker bot that connects village HABs and works camps. Not player-commanded.
+    /// Wears an authored worker bot from <see cref="ColonistArt"/> while <see cref="ColonistArt.Enabled"/>
+    /// is on (falls back to the capsule placeholder).
     /// </summary>
     public class VillagerAgent : MonoBehaviour
     {
@@ -67,7 +68,7 @@ namespace SolarMajesty
             var suit = ColonistArt.Attach(go.transform, s_spawned++);
             if (suit != null)
             {
-                // The suit's pivot is at the boot soles; its skinned bind-pose bounds are padded ~5 cm,
+                // The bot's pivot is at its soles; its skinned bind-pose bounds are padded ~5 cm,
                 // so seat the root on the ground directly instead of snapping by renderer bounds.
                 go.transform.position = new Vector3(home.x, ground, home.z);
                 TerrainFollow.Attach(go);
@@ -81,14 +82,15 @@ namespace SolarMajesty
             body.name = "Body";
             body.transform.SetParent(go.transform, false);
             body.transform.localScale = new Vector3(0.35f, 0.45f, 0.35f);
-            Object.Destroy(body.GetComponent<Collider>());
+            // Object.Destroy throws in EditMode; the spawn tests exercise this fallback.
+            ColonyVisualUtility.DestroyNow(body.GetComponent<Collider>());
 
             var band = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             band.name = "Band";
             band.transform.SetParent(go.transform, false);
             band.transform.localPosition = new Vector3(0f, 0.15f, 0f);
             band.transform.localScale = new Vector3(0.42f, 0.06f, 0.42f);
-            Object.Destroy(band.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(band.GetComponent<Collider>());
 
             ColonyVisualUtility.EnsureUrpMaterials(go);
             ColonyVisualUtility.SnapToGround(go, ground);

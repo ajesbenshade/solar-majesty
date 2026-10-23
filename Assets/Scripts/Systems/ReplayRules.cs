@@ -102,9 +102,12 @@ namespace SolarMajesty
         {
             ChallengeId.Austere => "AUSTERE",
             ChallengeId.Swarm => "SWARM",
-            ChallengeId.TightPurse => "TIGHT PURSE",
+            ChallengeId.TightPurse => "LOW BATTERY",
             _ => "STANDARD"
         };
+
+        /// <summary>Shown in the New Campaign dialog so the chosen challenge is visible before START.</summary>
+        public static string NewCampaignChallengeLine => "CHALLENGE  ·  " + ChallengeLabel;
 
         public static string StanceLabel => Stance switch
         {
@@ -140,7 +143,7 @@ namespace SolarMajesty
         {
             ChallengeId.Austere => "Austere: 55% starting stockpile (New Game / reload). Commons + HAB + workshop still fit.",
             ChallengeId.Swarm => "Swarm: more fauna (cap ×1.50) at a slower spawn cadence (reload). Post F5/F2.",
-            ChallengeId.TightPurse => "Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
+            ChallengeId.TightPurse => "Low Battery: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
             _ => "Standard: no challenge modifiers."
         };
 

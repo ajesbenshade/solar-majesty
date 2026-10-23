@@ -22,14 +22,82 @@ namespace SolarMajesty
         /// <summary>
         /// When set, saves are read and written here instead of
         /// <c>Application.persistentDataPath/Saves</c>. Tests point this at a temp folder so a
-        /// crashed run cannot touch the player's real colony files. Null in the game.
+        /// crashed run cannot touch the player's real colony files. A player build sets it from
+        /// <c>-saveDir</c> before the first load; with no argument it stays null.
         /// </summary>
         public static string DirectoryOverride { get; set; }
+
+        private static bool _loggedSaveDirectory;
 
         public static string SaveDirectory =>
             string.IsNullOrEmpty(DirectoryOverride)
                 ? Path.Combine(Application.persistentDataPath, FolderName)
                 : DirectoryOverride;
+
+        /// <summary>
+        /// Read <c>-saveDir &lt;path&gt;</c> or <c>-saveDir=&lt;path&gt;</c>. A missing or empty
+        /// value does not count. Does not change <see cref="DirectoryOverride"/>.
+        /// </summary>
+        public static bool TryParseSaveDirArgument(string[] args, out string path)
+        {
+            path = null;
+            if (args == null) return false;
+            const string name = "-saveDir";
+            const string prefix = "-saveDir=";
+            for (int i = 0; i < args.Length; i++)
+            {
+                string arg = args[i];
+                if (string.IsNullOrEmpty(arg)) continue;
+                if (arg.Length > prefix.Length &&
+                    arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    string value = arg.Substring(prefix.Length).Trim();
+                    if (value.Length == 0) continue;
+                    path = value;
+                    return true;
+                }
+
+                if (!string.Equals(arg, name, StringComparison.OrdinalIgnoreCase)) continue;
+                if (i + 1 >= args.Length) return false;
+                string next = args[i + 1];
+                if (string.IsNullOrWhiteSpace(next) || next.StartsWith("-", StringComparison.Ordinal))
+                    continue;
+                path = next.Trim();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Point <see cref="DirectoryOverride"/> at <c>-saveDir</c> when that argument is present.
+        /// Absent, empty, or flag-like values leave the current directory alone, including the
+        /// null default that resolves to <c>persistentDataPath/Saves</c>.
+        /// </summary>
+        public static void ApplySaveDirArgument(string[] args)
+        {
+            if (TryParseSaveDirArgument(args, out string path))
+                DirectoryOverride = path;
+        }
+
+        /// <summary>Log <see cref="SaveDirectory"/> the first time this process asks.</summary>
+        public static void LogSaveDirectoryOnce()
+        {
+            if (_loggedSaveDirectory) return;
+            _loggedSaveDirectory = true;
+            Debug.Log("[SaveSystem] Save directory: " + SaveDirectory);
+        }
+
+        // Player builds only. Editor play mode and EditMode tests own DirectoryOverride;
+        // the editor command line must not retarget the player's saves.
+#if !UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ApplyCommandLineSaveDirectory()
+        {
+            ApplySaveDirArgument(System.Environment.GetCommandLineArgs());
+            LogSaveDirectoryOnce();
+        }
+#endif
 
         public static string SlotPath(int slot) =>
             Path.Combine(SaveDirectory, $"slot{Mathf.Clamp(slot, 0, SlotCount - 1)}{Extension}");

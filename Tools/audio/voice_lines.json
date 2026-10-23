@@ -2,7 +2,7 @@
   "_doc": "Authored barks, baked by render_voices.py into Assets/Resources/Audio/Voices/. Keys are speaker -> cue -> takes. Cues must match VoiceCue in Assets/Scripts/Systems/Voice/VoiceBank.cs. Keep hero barks short (<= 8 words) and name-free: every robot of a class shares them. Overseer lines from GrokCatalog/OverseerRules/CompactGrok are extracted from the C# sources automatically; the overseer entries here are the generic alert fallbacks.",
 
   "hero.EngineerBot": {
-    "select":  ["Clock's running, boss.", "Talk fast. I bill by the minute.", "Got a job? Got credits?"],
+    "select":  ["Clock's running, boss.", "Talk fast. I bill by the minute.", "Got a job? Got EU?"],
     "claim":   ["Now that's a bounty I can weld.", "On the books. Don't cheap out on me.", "Paid work. Finally."],
     "refused": ["Not allowed? Fine. Your loss, not mine.", "Orders say no. My wallet says ouch.", "Somebody else can have that one."],
     "hunt":    ["Hunting? I'd rather be welding.", "Fine. Hazard pay better be real.", "I'll poke it. From a distance."],
@@ -17,7 +17,7 @@
 
   "hero.ScoutDrone": {
     "select":  ["Rotors hot! Where to?", "Scout here. Make it quick.", "Ooh, a task? Maybe?"],
-    "claim":   ["Mapping it! Back before lunch.", "Explore flag? Say no more!", "Easy credits. Zoom!"],
+    "claim":   ["Mapping it! Back before lunch.", "Explore flag? Say no more!", "Easy EU. Zoom!"],
     "refused": ["Too junior? Rude.", "Fine, I'll just hover here.", "Nobody wants a scout. Story of my life."],
     "hunt":    ["I'll point. Someone else bite.", "Tagging the target! Probably.", "Is this a scout job? It's not."],
     "flee":    ["Nope nope nope nope!", "Retreat! Retreat! Me first!", "Rotors, don't fail me now!"],
@@ -30,7 +30,7 @@
   },
 
   "hero.DefenseMech": {
-    "select":  ["Aegis online. Point me at trouble.", "Shield up. Standing by.", "Say the word, Overseer."],
+    "select":  ["Aegis online. Point me at trouble.", "Shield up. Standing by.", "Say the word, Core."],
     "claim":   ["Den marked. Stay behind the shield.", "Target accepted. Nothing gets past me.", "I'll hold the line."],
     "refused": ["Orders say no. I obey.", "Understood. Standing down.", "Not my fight today."],
     "hunt":    ["Hostile contact. Engaging.", "Something's out there. Not for long.", "Sweeping the perimeter."],
@@ -44,17 +44,17 @@
   },
 
   "hero.Medic": {
-    "select":  ["Triage here. Who's leaking?", "Medic. Try not to need me.", "Vitals look fine. For now."],
+    "select":  ["Triage here. Who's leaking?", "Repair. Try not to need me.", "Vitals look fine. For now."],
     "claim":   ["On the wounded. Keep them breathing.", "I'll take it. Gently.", "Patients first. Bounty second."],
     "refused": ["Not cleared for that. Noted.", "Somebody else then. Carefully.", "Orders say no. I'll stay close."],
     "hunt":    ["I am not a hunter. But fine.", "Violence. Not my department.", "Keep your distance, creature."],
     "flee":    ["I can't heal anyone if I'm scrap!", "Falling back to the inn!", "Too hot here. Moving!"],
     "repair":  ["Hulls are just patients with rivets.", "Stitching the module.", "Hold still. This will sting."],
-    "rest":    ["Even medics need a checkup.", "Resting. Page me if it's serious.", "Recharge. Then rounds."],
+    "rest":    ["Even repair bots need a checkup.", "Resting. Page me if it's serious.", "Recharge. Then rounds."],
     "wander":  ["Rounds. Nobody's bleeding. Good.", "Checking on the colony.", "Quiet shift. I'll take it."],
     "levelup": ["Better tools. Fewer funerals.", "Certification updated.", "Faster hands. Steadier nerves."],
-    "hurt":    ["Ow. Physician, heal thyself.", "Hey! I'm the medic!", "That will need a bandage."],
-    "down":    ["Who heals the healer...", "Pulse... weak...", "Medic down. Irony noted."]
+    "hurt":    ["Ow. Physician, heal thyself.", "Hey! I'm the repair bot!", "That will need a bandage."],
+    "down":    ["Who heals the healer...", "Pulse... weak...", "Repair down. Irony noted."]
   },
 
   "hero.HarvesterBot": {
@@ -100,7 +100,7 @@
   },
 
   "hero.CourierBot": {
-    "select":  ["Haul here! Deliveries?", "Package, pad, or purse?", "Wheels ready!"],
+    "select":  ["Haul here! Deliveries?", "Package, pad, or till?", "Wheels ready!"],
     "claim":   ["Hauling the flag. Keep the path clear.", "Special delivery! On my way.", "Signed, sealed, rolling."],
     "refused": ["Not on my route. Okay!", "Another courier's problem.", "Denied delivery. Noted."],
     "hunt":    ["I deliver packages, not punches.", "Is that thing a customer?", "Detouring. Carefully."],
@@ -142,7 +142,7 @@
   },
 
   "overseer": {
-    "alert_warning":  ["Overseer, heads up.", "Something needs your attention.", "Warning. Look sharp."],
+    "alert_warning":  ["Core, heads up.", "Something needs your attention.", "Warning. Look sharp."],
     "alert_critical": ["Critical alert. This one matters.", "We are losing something. Now.", "Red alert. Please act before it becomes a lesson."],
     "module_lost":    ["We lost a module.", "Module destroyed. That was load bearing.", "One less building. Noted."],
     "hero_down":      ["Robot down.", "One of ours is down.", "Another one for the yard."],

@@ -167,7 +167,7 @@ namespace SolarMajesty
                     Motto = "The wounded come first.",
                     Wants = "Defend",
                     Ignores = "dens",
-                    CatalogLine = "Medic hall · Defend, no dens",
+                    CatalogLine = "Repair hall · Defend, no dens",
                     Banner = new Color(0.52f, 0.76f, 0.86f),
                     BenefitTech = TechId.TriageFieldAid,
                     BenefitName = "Triage Field Aid",
