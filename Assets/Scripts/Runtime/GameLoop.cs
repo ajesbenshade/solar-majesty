@@ -2016,6 +2016,28 @@ namespace SolarMajesty
             PlaytestTelemetry.RecordIdleHint(TutorialStep, hint);
         }
 
+        /// <summary>
+        /// Alt+F4, the window's close button and Steam's Stop skip the QUIT button's save.
+        /// Autosave runs every 20 s; this closes that gap. Player builds only: the editor
+        /// and test runs must not write the developer's save when play mode stops.
+        /// </summary>
+        private void OnApplicationQuit()
+        {
+            if (Application.isEditor || Application.isBatchMode) return;
+            bool inColony = Screen == DemoScreen.Playing || Screen == DemoScreen.Paused ||
+                            (Screen == DemoScreen.Settings && _settingsReturn == DemoScreen.Paused);
+            if (!inColony) return;
+            try
+            {
+                PersistSession();
+                GamePrefs.Save();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[GameLoop] Save on quit failed: " + e.Message);
+            }
+        }
+
         private void TickAutosave()
         {
             _autosaveTimer += Time.unscaledDeltaTime;

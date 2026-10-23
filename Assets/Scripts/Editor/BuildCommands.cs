@@ -122,6 +122,7 @@ namespace SolarMajesty.EditorTools
                     PlaytestHandoff.WriteWindows(folderPath);
 
                 WriteSteamAppId(folderPath);
+                CopyNotices(folderPath);
 
                 Debug.Log(
                     $"[Build] Succeeded: {summary.totalSize / (1024 * 1024)} MB in " +
@@ -150,6 +151,22 @@ namespace SolarMajesty.EditorTools
             }
         }
 
+        /// <summary>MIT and SDK notices for code compiled into the player must ship with it.</summary>
+        private static void CopyNotices(string folder)
+        {
+            const string source = "Tools/release/THIRD-PARTY-NOTICES.txt";
+            try
+            {
+                if (File.Exists(source))
+                    File.Copy(source, Path.Combine(folder, "THIRD-PARTY-NOTICES.txt"), overwrite: true);
+                else
+                    Debug.LogWarning("[Build] " + source + " is missing; the build ships without license notices.");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not copy notices: " + e.Message);
+            }
+        }
         private static bool TryParseTarget(string name, out BuildTarget target, out string folder, out string artifact)
         {
             folder = artifact = null;
