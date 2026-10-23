@@ -332,7 +332,7 @@ namespace SolarMajesty.Tests
                 {
                     var a = agents[i];
                     if (a == null) continue;
-                    int id = a.GetInstanceID();
+                    int id = a.GetEntityId().GetHashCode();
                     Vector3 pos = a.transform.position;
                     if (!_tracks.TryGetValue(id, out var t))
                     {
