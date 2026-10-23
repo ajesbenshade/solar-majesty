@@ -1,6 +1,6 @@
 namespace SolarMajesty
 {
-    /// <summary>Scripted Jex beats. Catalog only ΓÇö never a live LLM.</summary>
+    /// <summary>Scripted Jex beats. Catalog only — never a live LLM.</summary>
     public enum JexBeat
     {
         Drop = 0,
@@ -38,7 +38,7 @@ namespace SolarMajesty
             beat <= JexBeat.TankVsWallet || beat == JexBeat.MarketPayout;
 
         public static string Format(string line) =>
-            string.IsNullOrEmpty(line) ? Speaker : Speaker + " ΓÇö " + line;
+            string.IsNullOrEmpty(line) ? Speaker : Speaker + " — " + line;
 
         public static string Line(JexBeat beat)
         {
@@ -88,7 +88,7 @@ namespace SolarMajesty
 
     /// <summary>
     /// Luna (and Earth until parked-bodies) default training wheels on.
-    /// Mars default off ΓÇö failure asides only. Optional Mars lessons toggle.
+    /// Mars default off — failure asides only. Optional Mars lessons toggle.
     /// </summary>
     public static class JexAdvisor
     {

@@ -395,7 +395,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(14, count);
             Assert.AreEqual(22400, bounty);
             Assert.AreEqual(
-                "Clear Threat ├ù14 ΓÇö " + 22400.ToString("N0") + " EU",
+                "Clear Threat ×14 — " + 22400.ToString("N0") + " EU",
                 FlagLabelStack.Caption("Clear Threat", count, bounty));
         }
 
