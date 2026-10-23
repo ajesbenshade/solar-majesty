@@ -6,6 +6,21 @@ namespace SolarMajesty.Tests
 {
     public class SteamConfigTests
     {
+        [Test]
+        public void AppId_IsValvesSpacewarTestApp_NotARealId()
+        {
+            // 480 is Valve's public test app. A real App ID must come from the partner site and is
+            // not committed to this repo; swapping it in means updating this test on purpose.
+            Assert.That(SteamConfig.AppId, Is.EqualTo(480u));
+            Assert.That(SteamConfig.IsTestApp, Is.True);
+        }
+
+        [Test]
+        public void TestApp_NeverRelaunchesThroughSteam()
+        {
+            // RestartAppIfNecessary(480) would hand the player to Spacewar.
+            Assert.That(SteamConfig.RelaunchThroughSteam, Is.False);
+        }
         [TestCase(AchievementId.FirstContract, "ACH_FIRST_CONTRACT")]
         [TestCase(AchievementId.SelfSufficient, "ACH_SELF_SUFFICIENT")]
         [TestCase(AchievementId.Ironman, "ACH_IRONMAN")]

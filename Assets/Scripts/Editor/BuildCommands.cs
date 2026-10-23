@@ -121,6 +121,8 @@ namespace SolarMajesty.EditorTools
                 else if (target == BuildTarget.StandaloneWindows64)
                     PlaytestHandoff.WriteWindows(folderPath);
 
+                WriteSteamAppId(folderPath);
+
                 Debug.Log(
                     $"[Build] Succeeded: {summary.totalSize / (1024 * 1024)} MB in " +
                     $"{summary.totalTime.TotalSeconds:F1}s -> {outputPath}");
@@ -129,6 +131,23 @@ namespace SolarMajesty.EditorTools
 
             Debug.LogError($"[Build] {summary.result} with {summary.totalErrors} error(s).");
             return false;
+        }
+
+        /// <summary>
+        /// steam_appid.txt lets a build started outside Steam (QA, a zip) reach the Steam client.
+        /// It holds SteamConfig.AppId, today Valve's 480 Spacewar test app, not a real app ID.
+        /// It is gitignored, and the SteamPipe script leaves it out of the depot.
+        /// </summary>
+        private static void WriteSteamAppId(string folder)
+        {
+            try
+            {
+                File.WriteAllText(Path.Combine(folder, "steam_appid.txt"), SteamConfig.AppId.ToString());
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not write steam_appid.txt: " + e.Message);
+            }
         }
 
         private static bool TryParseTarget(string name, out BuildTarget target, out string folder, out string artifact)

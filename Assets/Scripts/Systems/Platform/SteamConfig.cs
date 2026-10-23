@@ -11,11 +11,19 @@ namespace SolarMajesty
     /// </summary>
     public static class SteamConfig
     {
-        /// <summary>The Steam app ID. 0 means none is set; the next commit points it at Valve's test app.</summary>
-        public const uint AppId = 0;
+        /// <summary>Valve's public test app, Spacewar. Not Solar Majesty's app ID.</summary>
+        public const uint TestAppId = 480;
+
+        /// <summary>
+        /// PLACEHOLDER. 480 is Valve's public Spacewar test app, which every Steam account can run;
+        /// it is NOT a real Solar Majesty app ID, and no real ID is committed here. It lets the
+        /// overlay, achievements and rich presence be exercised before the Steamworks app exists.
+        /// TODO(steam): replace with the app ID from the Steamworks partner site.
+        /// </summary>
+        public const uint AppId = TestAppId;
 
         /// <summary>True while <see cref="AppId"/> is Valve's 480 test app (Spacewar), not a real app.</summary>
-        public static bool IsTestApp => AppId == 480;
+        public static bool IsTestApp => AppId == TestAppId;
 
         /// <summary>
         /// When true, a release build started outside Steam asks Steam to relaunch it (Valve's

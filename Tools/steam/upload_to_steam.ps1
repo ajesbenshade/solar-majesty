@@ -33,6 +33,8 @@ param(
   [switch]$Preview
 )
 $ErrorActionPreference = 'Stop'
+# 480 is Valve's public Spacewar test app. Nothing real can be uploaded to it.
+if ($AppId -eq 480) { throw 'App 480 is Valve''s test app; upload needs your real app ID.' }
 function Say($m) { Write-Host "[steam] $m" -ForegroundColor Yellow }
 # steamcmd's VDF reader does not expect a byte-order mark, which Set-Content -Encoding UTF8 writes on PowerShell 5.
 function Write-NoBom {
