@@ -247,6 +247,12 @@ namespace SolarMajesty
             if (n == null || agent == null || line == null || !n._online || n._replying) return false;
             n._chatAgent = agent;
             var log = n.LogOf(agent);
+            if (!AiContentGuard.AllowsInput(line))
+            {
+                // Never forwarded to the model, never echoed back: the hero just refuses.
+                log.Add(false, AiContentGuard.Deflection(agent.Record.Name, log.Lines.Count));
+                return true;
+            }
             log.Add(true, line);
             var persona = n.BuildPersona(agent);
             string body = HeroConversation.BuildRequest(n._chatModel, persona, log.Lines);
