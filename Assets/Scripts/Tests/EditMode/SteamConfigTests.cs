@@ -21,6 +21,7 @@ namespace SolarMajesty.Tests
             // RestartAppIfNecessary(480) would hand the player to Spacewar.
             Assert.That(SteamConfig.RelaunchThroughSteam, Is.False);
         }
+
         [TestCase(AchievementId.FirstContract, "ACH_FIRST_CONTRACT")]
         [TestCase(AchievementId.SelfSufficient, "ACH_SELF_SUFFICIENT")]
         [TestCase(AchievementId.Ironman, "ACH_IRONMAN")]
@@ -56,14 +57,6 @@ namespace SolarMajesty.Tests
         public void UpperSnake_HandlesAcronymsAndDigits(string input, string expected)
         {
             Assert.That(SteamConfig.UpperSnake(input), Is.EqualTo(expected));
-        }
-
-        [Test]
-        public void TestApp_NeverRelaunchesThroughSteam()
-        {
-            // Relaunching under app 480 would start Valve's Spacewar instead of the game.
-            if (SteamConfig.IsTestApp)
-                Assert.That(SteamConfig.RelaunchThroughSteam, Is.False);
         }
 
         [Test]
