@@ -3852,7 +3852,7 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Pad + Starship, PWR-1/solar, water farm, regolith camp. Island yards
+        /// Pad + Colony Lifter, PWR-1/solar, water farm, regolith camp. Island yards
         /// (MinYardGapCells 4) — ExtraPlacementRule would park forward yards on
         /// Campus B.
         /// </summary>
@@ -7128,8 +7128,6 @@ namespace SolarMajesty
         {
             if (go == null || Village == null) return;
             if (string.IsNullOrEmpty(resourcesPath)) return;
-            if (resourcesPath.Contains("Starship"))
-                return;
 
             BuildingCategory cat;
             if (resourcesPath.Contains("HAB")) cat = BuildingCategory.Habitat;
