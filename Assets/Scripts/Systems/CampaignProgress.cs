@@ -13,6 +13,7 @@ namespace SolarMajesty
         private const string TravelLogKey = "SM_PendingTravelLog";
         private const string CutsKey = "SM_NarrativeCutsShown";
         private const string LunaHourKey = "SM_LunaHourCleared";
+        public const string ConqueredKey = "SM_CampaignConquered";
 
         public static CelestialBodyId HighestUnlocked { get; private set; } = CelestialBodyId.Earth;
 
@@ -24,6 +25,34 @@ namespace SolarMajesty
         /// <summary>Survives New Game. Returning players skip the Luna hour.</summary>
         public static bool HasClearedLunaHour =>
             GamePrefs.GetInt(LunaHourKey, 0) == 1;
+
+        /// <summary>Bit per world secured in this campaign. Cleared by a new campaign.</summary>
+        public static int ConqueredMask => GamePrefs.GetInt(ConqueredKey, 0);
+
+        public static bool HasConquered(CelestialBodyId id) => (ConqueredMask & (1 << (int)id)) != 0;
+
+        /// <summary>Every world on the spine secured in this campaign (the Solar Conquest achievement).</summary>
+        public static bool ConqueredEveryWorld
+        {
+            get
+            {
+                var all = CelestialBodyCatalog.All;
+                if (all == null || all.Length == 0) return false;
+                for (int i = 0; i < all.Length; i++)
+                {
+                    if (IsOnSpine(all[i]) && !HasConquered(all[i])) return false;
+                }
+                return true;
+            }
+        }
+
+        public static void MarkConquered(CelestialBodyId id)
+        {
+            int mask = ConqueredMask | (1 << (int)id);
+            if (mask == ConqueredMask) return;
+            GamePrefs.SetInt(ConqueredKey, mask);
+            GamePrefs.Save();
+        }
 
         public static CelestialBodyId NewGameBody =>
             CelestialBodyId.Earth;
@@ -141,6 +170,7 @@ namespace SolarMajesty
             GamePrefs.SetInt(FreshKey, 1);
             GamePrefs.DeleteKey(TravelLogKey);
             GamePrefs.DeleteKey(CutsKey);
+            GamePrefs.DeleteKey(ConqueredKey);
             ResearchManager.WipeUnlocks();
             BodySeed.SetBody(HighestUnlocked);
             GamePrefs.Save();
@@ -157,6 +187,7 @@ namespace SolarMajesty
             GamePrefs.SetInt(FreshKey, 1);
             GamePrefs.DeleteKey(TravelLogKey);
             GamePrefs.DeleteKey(CutsKey);
+            GamePrefs.DeleteKey(ConqueredKey);
             ResearchManager.WipeUnlocks();
             BodySeed.SetBody(drop);
             GamePrefs.Save();

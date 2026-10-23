@@ -2038,6 +2038,20 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Achievements were only checked when a world fell, so "Terms Accepted" (first bounty)
+        /// popped an hour late alongside everything else. Check every two seconds of play instead.
+        /// </summary>
+        private void TickAchievements()
+        {
+            _achievementTimer += Time.unscaledDeltaTime;
+            if (_achievementTimer < 2f) return;
+            _achievementTimer = 0f;
+            Achievements.Evaluate(Stats);
+        }
+
+        private float _achievementTimer;
+
         private void TickAutosave()
         {
             _autosaveTimer += Time.unscaledDeltaTime;
@@ -2543,6 +2557,7 @@ namespace SolarMajesty
             TickTutorial();
             TickPlaytestIdle();
             TickAutosave();
+            TickAchievements();
             TickJunkYard(Time.deltaTime);
             TickJex();
             TickLevyRaid();
@@ -5156,6 +5171,7 @@ namespace SolarMajesty
         /// <summary>Body gate met — increment conquest count and evaluate achievements (Ironman, Skinflint, Clean Sheet).</summary>
         public void NoteBodyConquered()
         {
+            CampaignProgress.MarkConquered(celestialBody);
             Stats.BodiesConquered++;
             Achievements.Evaluate(Stats);
             // Victory camera beat over the Commons. No-op under Reduce Motion, in batch, or with no rig.
@@ -6015,7 +6031,8 @@ namespace SolarMajesty
                 highestUnlocked = (int)CampaignProgress.HighestUnlocked,
                 rosterBlob = SpecialistRoster.Encode(CaptureRoster()),
                 firstHourDemo = DemoSettings.FirstHourDemo,
-                tutorialDone = DemoSettings.TutorialDone
+                tutorialDone = DemoSettings.TutorialDone,
+                stats = JsonUtility.FromJson<RunStats>(JsonUtility.ToJson(Stats))
             };
 
             if (Resources != null)
@@ -6260,6 +6277,8 @@ namespace SolarMajesty
             ReplayRules.Restore(save.replay);
             ReplayRules.ApplyIronmanFromSave(save.replay);
             Achievements.IronmanActive = ReplayRules.IronmanRun;
+            if (save.stats != null)
+                JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(save.stats), Stats);
             if (save.rosterBlob != null)
                 LoadRosterMemory(save.rosterBlob);
             else

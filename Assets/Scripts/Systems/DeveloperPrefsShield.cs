@@ -103,6 +103,7 @@ namespace SolarMajesty
             AddInt(CampaignSlots.ActiveSlotKey);
             AddInt(CampaignSlots.PendingLoadKey);
             AddInt("SM_CampaignMaxBody");
+            AddInt(CampaignProgress.ConqueredKey);
             AddInt("SM_CampaignInitialized");
             AddInt("SM_LunaHourCleared");
             AddInt("SM_CelestialBody");

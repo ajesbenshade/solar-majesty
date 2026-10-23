@@ -122,7 +122,8 @@ namespace SolarMajesty
                 Id = AchievementId.SolarConquest,
                 Title = "Solar Conquest",
                 Description = "Take every body from Earth to Europa.",
-                Test = s => s.BodiesConquered >= 5
+                // Campaign-wide: each world is its own scene load, so per-run stats never pass 1.
+                Test = _ => CampaignProgress.ConqueredEveryWorld
             },
             new AchievementDef
             {
@@ -177,6 +178,7 @@ namespace SolarMajesty
             if (stats == null) return;
             Load();
 
+            bool changed = false;
             for (int i = 0; i < Defs.Count; i++)
             {
                 AchievementDef def = Defs[i];
@@ -185,10 +187,12 @@ namespace SolarMajesty
 
                 Unlocked.Add(def.Id);
                 UnlockedThisRun.Add(def.Id);
+                changed = true;
                 Earned?.Invoke(def);
             }
 
-            Save();
+            // Called every few seconds of play; only touch storage when something unlocked.
+            if (changed) Save();
         }
 
         public static void BeginRun()
