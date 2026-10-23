@@ -42,11 +42,11 @@ namespace SolarMajesty.Tests
             StringAssert.Contains("Lunar Rocket", text);
             StringAssert.Contains("research", text);
             StringAssert.Contains("launch", text);
-            StringAssert.Contains("Settings → Demo → Full Campaign", text);
-            StringAssert.Contains("Luna needs Full Campaign", text);
+            StringAssert.Contains("Settings → Guided Start → Skip", text);
+            StringAssert.Contains("Clear Earth to open Luna", text);
 
             string ready = LaunchPath.ObjectiveText(false, true, "Lunar Rocket");
-            StringAssert.Contains("Settings → Demo → Full Campaign", ready);
+            StringAssert.Contains("Settings → Guided Start → Skip", ready);
 
             Assert.AreEqual("Lunar Rocket research → launch", LaunchPath.ObjectiveText(true, false, "Lunar Rocket"));
             Assert.AreEqual("ready on pad", LaunchPath.ObjectiveText(true, true, "Lunar Rocket"));
