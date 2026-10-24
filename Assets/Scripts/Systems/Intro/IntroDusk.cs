@@ -23,19 +23,27 @@ namespace SolarMajesty
     }
 
     /// <summary>
-    /// Dusk treatment for the launch intro. The sky already reads orange; this lowers and warms
-    /// the key light and the ambient fill so the ground does too. Callers snapshot first and restore
+    /// Earth-at-dusk treatment for the launch intro: a low gold sun, a blue-hour sky overhead and
+    /// green meadow bounce from below, so the campus reads as Earth rather than a red Luna/Mars plain.
+    /// No cyan here; cyan is reserved for the Core. Callers snapshot first and restore
     /// those snapshots — these methods never touch a live light.
     /// </summary>
     public static class IntroDusk
     {
-        public const float MaxElevation = 12f;
+        public const float MaxElevation = 8f;
 
-        static readonly Color WarmSun = new Color(1f, 0.46f, 0.16f, 1f);
-        static readonly Color WarmFill = new Color(1f, 0.58f, 0.32f, 1f);
-        static readonly Color WarmSky = new Color(0.62f, 0.28f, 0.12f, 1f);
-        static readonly Color WarmEquator = new Color(0.40f, 0.22f, 0.10f, 1f);
-        static readonly Color WarmGround = new Color(0.10f, 0.05f, 0.03f, 1f);
+        // Golden-hour key, not red: keeps grass green under it.
+        static readonly Color WarmSun = new Color(1f, 0.62f, 0.30f, 1f);
+        // Fill is skylight: soft blue-violet (blue-hour), never cyan.
+        static readonly Color WarmFill = new Color(0.52f, 0.54f, 0.82f, 1f);
+        static readonly Color WarmSky = new Color(0.34f, 0.36f, 0.58f, 1f);
+        // Warm peach at the horizon band where the sun sits.
+        static readonly Color WarmEquator = new Color(0.58f, 0.40f, 0.26f, 1f);
+        // Meadow bounce.
+        static readonly Color WarmGround = new Color(0.12f, 0.20f, 0.08f, 1f);
+        static readonly Color DuskFog = new Color(0.40f, 0.44f, 0.30f, 1f);
+        static readonly Color DuskSkyTint = new Color(0.82f, 0.62f, 0.58f, 1f);
+        static readonly Color DuskSkyGround = new Color(0.16f, 0.24f, 0.10f, 1f);
 
         public static float Elevation(Quaternion rotation)
         {
@@ -84,24 +92,26 @@ namespace SolarMajesty
             };
         }
 
-        /// <summary>Earth's fog is a pale blue. Pull that haze into the dusk band under the sun.</summary>
+        /// <summary>Earth's fog is a pale blue. Pull it to a dim green-gold meadow haze (green dominant, no cyan).</summary>
         public static Color TintFog(Color current) =>
-            Tint(current, new Color(0.50f, 0.22f, 0.08f, 1f), 0.9f, 0.65f);
+            Tint(current, DuskFog, 0.85f, 0.75f);
 
-        /// <summary>Procedural sky tint. A blue multiplier is the pale band under an orange sun disk.</summary>
+        /// <summary>Procedural sky tint. Only partly warmed, so the zenith keeps Earth's blue-hour blue
+        /// over a rose horizon instead of going all orange.</summary>
         public static Color TintSkyTint(Color current)
         {
-            var color = Color.Lerp(current, new Color(1f, 0.40f, 0.14f, 1f), 0.8f);
+            var color = Color.Lerp(current, DuskSkyTint, 0.55f);
             color.a = 1f;
             return color;
         }
 
-        /// <summary>Skybox ground color, the hemisphere under the horizon.</summary>
+        /// <summary>Skybox ground color, the hemisphere under the horizon: dark meadow green.</summary>
         public static Color TintSkyGround(Color current) =>
-            Tint(current, new Color(0.16f, 0.07f, 0.03f, 1f), 0.8f, 0.6f);
+            Tint(current, DuskSkyGround, 0.8f, 0.7f);
 
-        /// <summary>Thick Rayleigh air reads as a blue stripe. Ease it toward a thin dusk haze.</summary>
-        public static float TintAtmosphere(float current) => Mathf.Lerp(current, 0.28f, 0.82f);
+        /// <summary>Thin the Rayleigh band a little so it does not read as a cyan stripe, but keep enough
+        /// air for an Earth sky (Luna/Mars read comes from stripping it).</summary>
+        public static float TintAtmosphere(float current) => Mathf.Lerp(current, 0.6f, 0.6f);
 
         static Color Tint(Color current, Color warm, float toward, float dim)
         {

@@ -72,6 +72,52 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(IntroLaunch.ShouldAutoPlay(new IntroBootContext(false, false, false, true)));
         }
 
+        private static IntroBootContext ColdTitleWithSaves =>
+            new IntroBootContext(false, false, false, false, savesExist: true);
+
+        [Test]
+        public void FreshProfile_NoSaves_PlaysOnce()
+        {
+            Assert.IsFalse(GamePrefs.HasKey(IntroLaunch.SeenKey));
+            Assert.IsTrue(IntroLaunch.ShouldAutoPlay(IntroBootContext.ColdTitle));
+            IntroLaunch.MarkSeen();
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(IntroBootContext.ColdTitle));
+        }
+
+        [Test]
+        public void Upgrader_WithSavesAndNoIntroSeen_PlaysOnce()
+        {
+            // SM_SaveExists=1 plus save files on disk, but SM_IntroSeen was never written.
+            Assert.IsFalse(IntroLaunch.HasSeen);
+            Assert.IsTrue(IntroLaunch.ShouldAutoPlay(ColdTitleWithSaves));
+            IntroLaunch.MarkSeen(); // finished or skipped
+            Assert.AreEqual(1, GamePrefs.GetInt(IntroLaunch.SeenKey, 0));
+        }
+
+        [Test]
+        public void SecondLaunch_AfterSeen_DoesNotPlay_WithOrWithoutSaves()
+        {
+            IntroLaunch.MarkSeen();
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(ColdTitleWithSaves));
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(IntroBootContext.ColdTitle));
+        }
+
+        [Test]
+        public void IntroOnLaunchOff_SkipsUpgraderAndFreshProfile()
+        {
+            IntroLaunch.SetPlayOnLaunch(false);
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(ColdTitleWithSaves));
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(IntroBootContext.ColdTitle));
+            Assert.IsFalse(IntroLaunch.HasSeen, "turning it off must not mark it seen");
+        }
+
+        [Test]
+        public void Upgrader_ContinueOrLoadInProgress_StillNeverWaits()
+        {
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(new IntroBootContext(true, false, false, false, savesExist: true)));
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(new IntroBootContext(false, false, true, false, savesExist: true)));
+        }
+
         [Test]
         public void Skip_RequiresAKeyClickOrGamepadButton()
         {
@@ -527,25 +573,41 @@ namespace SolarMajesty.Tests
                 Assert.Less(IntroDusk.Elevation(sun.transform.rotation), IntroDusk.MaxElevation + 0.05f);
                 Assert.AreEqual(1.4f * 0.4f, sun.intensity, 0.001f);
                 Assert.Greater(sun.color.r, sun.color.b);
-                Assert.Greater(RenderSettings.ambientSkyColor.r, RenderSettings.ambientSkyColor.b);
+                // Blue-hour sky fill, green meadow bounce: reads as Earth, not a red plain.
+                var paleAmbient = new IntroAmbientSample
+                {
+                    Sky = new Color(0.62f, 0.72f, 0.86f, 1f),
+                    Equator = new Color(0.55f, 0.58f, 0.55f, 1f),
+                    Ground = new Color(0.30f, 0.30f, 0.26f, 1f),
+                    Flat = new Color(0.5f, 0.5f, 0.5f, 1f),
+                    Intensity = 1f
+                };
+                var duskAmbient = IntroDusk.TintAmbient(paleAmbient);
+                Assert.Greater(duskAmbient.Sky.b, duskAmbient.Sky.r);
+                Assert.Greater(duskAmbient.Ground.g, duskAmbient.Ground.r);
+                Assert.Greater(duskAmbient.Ground.g, duskAmbient.Ground.b);
                 Assert.AreNotEqual(sky, RenderSettings.ambientSkyColor);
 
                 Color paleFog = new Color(0.76f, 0.86f, 0.94f, 1f);
                 Color duskFog = IntroDusk.TintFog(paleFog);
-                Assert.Greater(duskFog.r, duskFog.b);
+                Assert.Greater(duskFog.g, duskFog.r);
+                Assert.Greater(duskFog.g, duskFog.b);
                 Assert.Less(duskFog.b, paleFog.b);
                 Assert.Greater(ColorGap(RenderSettings.fogColor, fog), 0.02f);
-                Assert.Greater(RenderSettings.fogColor.r, RenderSettings.fogColor.b);
+                Assert.Greater(RenderSettings.fogColor.g, RenderSettings.fogColor.b);
                 if (hasTint)
                 {
                     Color tintNow = liveSky.GetColor("_SkyTint");
-                    Assert.Greater(tintNow.r, tintNow.b);
+                    // Warmed toward a rose horizon, but the zenith keeps some blue-hour blue.
+                    Assert.Greater(tintNow.r, skyTint.r);
+                    Assert.Less(tintNow.b, skyTint.b);
                     Assert.Greater(ColorGap(tintNow, skyTint), 0.05f);
                 }
                 if (hasGround)
                 {
                     Color groundNow = liveSky.GetColor("_GroundColor");
-                    Assert.Greater(groundNow.r, groundNow.b);
+                    Assert.Greater(groundNow.g, groundNow.r);
+                    Assert.Greater(groundNow.g, groundNow.b);
                 }
                 if (hasAir)
                     Assert.Less(liveSky.GetFloat("_AtmosphereThickness"), atmosphere - 0.2f);

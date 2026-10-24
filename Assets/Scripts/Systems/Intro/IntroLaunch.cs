@@ -9,17 +9,25 @@ namespace SolarMajesty
         public readonly bool ReturningFromSession;
         public readonly bool ContinueOrLoadReady;
         public readonly bool StillCapture;
+        /// <summary>
+        /// Saves are on disk (Continue is available). Does not block the intro on its own:
+        /// a player upgrading with saves who has never seen it still gets it once.
+        /// </summary>
+        public readonly bool SavesExist;
 
+        /// <param name="continueOrLoadReady">This boot is carrying out a Continue or Load right now.</param>
         public IntroBootContext(
             bool bootStraightIntoPlay,
             bool returningFromSession,
             bool continueOrLoadReady,
-            bool stillCapture)
+            bool stillCapture,
+            bool savesExist = false)
         {
             BootStraightIntoPlay = bootStraightIntoPlay;
             ReturningFromSession = returningFromSession;
             ContinueOrLoadReady = continueOrLoadReady;
             StillCapture = stillCapture;
+            SavesExist = savesExist;
         }
 
         /// <summary>Cold open onto the title, with nothing to Continue or Load.</summary>
@@ -28,7 +36,9 @@ namespace SolarMajesty
     }
 
     /// <summary>
-    /// First-launch gate. The intro plays once, on a cold open to the title.
+    /// First-launch gate. The intro plays once, on a cold open to the title, including for a
+    /// player who already has saves but has never seen it (SM_IntroSeen unset); finishing or
+    /// skipping it sets SM_IntroSeen. SM_IntroOnLaunch = 0 turns it off.
     /// Continue, Load, New Game reloads, and returning from a colony never wait on it.
     /// </summary>
     public static class IntroLaunch
