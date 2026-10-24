@@ -132,7 +132,9 @@ namespace SolarMajesty.Tests
             DemoSettings.FirstHourDemo = false;
             Assert.IsTrue(DemoSlice.ShowBuilding(BuildingCategory.GuildHall));
             Assert.IsTrue(DemoSlice.ShowTech(TechId.GuildCharter));
-            Assert.IsTrue(DemoSlice.ShowBody(CelestialBodyId.Europa));
+            // Belt and Europa never reach the player, even with the full campaign on.
+            Assert.IsFalse(DemoSlice.ShowBody(CelestialBodyId.Belt));
+            Assert.IsFalse(DemoSlice.ShowBody(CelestialBodyId.Europa));
         }
 
         private static BuildingData Building(BuildingCategory cat)

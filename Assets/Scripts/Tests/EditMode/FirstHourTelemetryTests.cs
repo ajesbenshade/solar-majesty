@@ -135,7 +135,7 @@ namespace SolarMajesty.Tests
         {
             StringAssert.Contains("B, then 1", FirstHourHints.PlaceWorkshop);
             StringAssert.Contains("F3", FirstHourHints.PostCheapBuild);
-            StringAssert.Contains("700", FirstHourHints.PostCheapBuild);
+            StringAssert.Contains("400", FirstHourHints.PostCheapBuild);
             StringAssert.Contains("Click the Build pole", FirstHourHints.RaiseBuildPrice);
             StringAssert.Contains("+", FirstHourHints.RaiseBuildPrice);
             StringAssert.Contains("F5", FirstHourHints.PostDefend);

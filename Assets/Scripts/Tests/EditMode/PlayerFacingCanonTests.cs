@@ -9,6 +9,27 @@ namespace SolarMajesty.Tests
 {
     public class PlayerFacingCanonTests
     {
+        [Test]
+        public void TitleWorldList_OnlyShowsEarthLunaMars([Values(true, false)] bool firstHourDemo)
+        {
+            bool prior = DemoSettings.FirstHourDemo;
+            try
+            {
+                DemoSettings.FirstHourDemo = firstHourDemo;
+                var shown = new List<CelestialBodyId>();
+                foreach (CelestialBodyId id in Enum.GetValues(typeof(CelestialBodyId)))
+                    if (DemoSlice.ShowBody(id)) shown.Add(id);
+                CollectionAssert.AreEqual(
+                    new[] { CelestialBodyId.Earth, CelestialBodyId.Luna, CelestialBodyId.Mars }, shown);
+                // No "Continue to"/"Next:" offer past Mars.
+                Assert.IsFalse(CampaignProgress.NextAfter(CelestialBodyId.Mars).HasValue);
+            }
+            finally
+            {
+                DemoSettings.FirstHourDemo = prior;
+            }
+        }
+
         private static readonly Regex Forbidden = new Regex(
             @"\b(overseer|overseeing|oversee|houses?|purses?|chest|" +
             // Retired kingdom / court voice and the old faction names.
@@ -30,7 +51,7 @@ namespace SolarMajesty.Tests
             "Systems/FlagDecreeIds.cs", // body ID tokens
             "Systems/SaveGame.cs", // save body names
             "Systems/DeveloperPrefsShield.cs", // dev prefs keys
-            "Runtime/SolarSystemTitleView.cs" // title orrery labels for locked bodies
+            "Runtime/SolarSystemTitleView.cs" // unrendered orrery pick captions (bodies hidden by DemoSlice.ShowBody)
         };
 
         // Tokenize before looking for words: comments, character literals and diagnostic/editor

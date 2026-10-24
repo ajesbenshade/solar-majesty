@@ -1278,6 +1278,8 @@ namespace SolarMajesty
         public void PlayBodyFromTitle(CelestialBodyId body, bool cheatUnlock)
         {
             cheatUnlock &= DevTools.Enabled;
+            // Hidden worlds (Belt, Europa) are scenery on the title: no label, no toast.
+            if (!DemoSlice.ShowBody(body)) return;
             if (DemoSettings.FirstHourDemo && body != CelestialBodyId.Earth)
             {
                 string craft = Research != null
@@ -1424,7 +1426,7 @@ namespace SolarMajesty
             _tutorialPestSpawned = false;
             _overseerHud?.Notify(
                 DemoSettings.FirstHourDemo
-                    ? "Tutorial reset — workshop, Build at 700, raise the price, then Defend."
+                    ? "Tutorial reset — workshop, Build at 400, raise the price, then Defend."
                     : "Tutorial reset — Commons, then charging station, workshop, flag, bounty.",
                 4f);
         }
@@ -3289,7 +3291,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Blacksmith:
                         b.displayName = "Blacksmith";
-                        b.description = "hero gear";
+                        b.description = "bot gear";
                         break;
                     case BuildingCategory.FobotYard:
                         b.displayName = "Fobot Yard";

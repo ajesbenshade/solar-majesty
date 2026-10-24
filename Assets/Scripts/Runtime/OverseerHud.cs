@@ -3785,7 +3785,7 @@ namespace SolarMajesty
                     "2/6  Courier bots haul each building's EU to the till.",
                     "3/6  Keep the yard clear of mobs. Place charging stations and solar farms — they pay EU.",
                     "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
-                    "5/6  G, Build, leave it at 700. Watch the Engineer.",
+                    "5/6  G, Build, leave it at 400. Watch the Engineer.",
                     "6/6  They named a price. Select the flag and press + until the chip reads tempted."
                 };
                 int step = Mathf.Clamp(_loop.TutorialStep, 0, beats.Length - 1);

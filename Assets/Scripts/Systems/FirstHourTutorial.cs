@@ -13,7 +13,7 @@ namespace SolarMajesty
         public const string WorkshopBeat =
             "1/4  WORKSHOP — press B, then 1. Place the Engineer workshop anywhere near the Commons. Wait until the robot is standing.";
         public const string CheapBuildBeat =
-            "2/4  Press G, then F3 (Build), and click open ground. Leave the bounty at 700. If the Engineer ignores it, raise the bounty.";
+            "2/4  Press G, then F3 (Build), and click open ground. Leave the bounty at 400. If the Engineer ignores it, raise the bounty.";
         public const string CancelHighBeat =
             "2/4  That Build flag has attracted an Engineer. The colony is ready for the next lesson.";
         public const string RaisePriceBeat =

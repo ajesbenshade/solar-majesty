@@ -13,7 +13,7 @@ namespace SolarMajesty
         public const string WorkshopHireShort =
             "The workshop is done, but hiring its Engineer costs EU. Courier bots are hauling it to the till.";
         public const string PostCheapBuild =
-            "Stuck? Press G, then F3 (Build), and click open ground. Leave the bounty at 700 and watch the Engineer.";
+            "Stuck? Press G, then F3 (Build), and click open ground. Leave the bounty at 400 and watch the Engineer.";
         public const string RaiseBuildPrice =
             "The Engineer wants more. Click the Build pole to select it, then press + (or + on the flag panel) a few times.";
         public const string PostDefend =

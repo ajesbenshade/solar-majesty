@@ -243,7 +243,7 @@ namespace SolarMajesty.EditorTools
                 case BuildingCategory.Market: return "Potions and a regen necklace. Bots buy with EU.";
                 case BuildingCategory.Blacksmith: return "Guild arms and armor. Bots buy with EU.";
                 case BuildingCategory.FobotYard: return "Pay EU here to stand wrecks up.";
-                case BuildingCategory.Watchtower: return "Guard post and haul drop. Arm lasers for EU.";
+                case BuildingCategory.Watchtower: return HudLayout.WatchtowerBlurb;
                 case BuildingCategory.AidStation: return "Hurt robots pay EU for a patch. Triage clocks in.";
                 default: return "";
             }

@@ -19,7 +19,7 @@ namespace SolarMajesty.EditorTools
             "The Colony Commons and one charging station are already standing.\n" +
             "Press B, then 1, and place the Engineer workshop anywhere on open ground.\n" +
             "Wait until the robot is standing. You never click-to-move units.\n" +
-            "Press G, then F3 (Build), click open ground, leave the bounty at 700. Watch the Engineer.\n" +
+            "Press G, then F3 (Build), click open ground, leave the bounty at 400. Watch the Engineer.\n" +
             "If ignored, click the Build pole to select it and press + until tempted. If accepted, continue.\n" +
             "A soil creeper shows up. Press G, F5 Defend, and post it on the bug.\n" +
             "If the pole says ignored, build a Defense workshop (key 2) and post F5 again.\n" +

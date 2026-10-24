@@ -144,7 +144,7 @@ namespace SolarMajesty
             { TravelMarsToBelt, new AdvisorToast(TravelMarsToBelt, null, AdvisorFireWhen.Travel,
                 "Mars holds. The Colony Lifter Mk III is on the pad. Earth, Luna and Mars are done.") },
             { LessonEarthGreedBuild, new AdvisorToast(LessonEarthGreedBuild, null, AdvisorFireWhen.Post,
-                "Anvil will not weld for pocket change. Seven hundred is a suggestion; tempted is a fact. Raise the bounty until the chip says so.") }
+                "Anvil will not weld for pocket change. Four hundred is a suggestion; tempted is a fact. Raise the bounty until the chip says so.") }
         };
 
         private static readonly Dictionary<string, AdvisorToast> Completes = new Dictionary<string, AdvisorToast>
