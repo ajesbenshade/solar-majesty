@@ -96,7 +96,7 @@ namespace SolarMajesty
                 return new View(
                     false,
                     "KEEP COLONIZING",
-                    "Gates are met. Worker bots stay on this claim. The treasury keeps ticking in EU.",
+                    "Gates are met. Worker bots stay on this claim. The till keeps filling with EU.",
                     null,
                     null,
                     false);
@@ -104,7 +104,7 @@ namespace SolarMajesty
 
             string headline = HeadlineFor(current);
             const string body =
-                "You are the central AI. Worker bots secured this claim: dens are quiet, the treasury is holding in EU, and the craft is on the pad.";
+                "Dens are quiet, the till is holding, and the craft is on the pad.";
 
             var next = CampaignProgress.NextAfter(current);
             if (!next.HasValue || !nextBuilt)

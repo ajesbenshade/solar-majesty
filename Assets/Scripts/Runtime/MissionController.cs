@@ -110,9 +110,9 @@ namespace SolarMajesty
                 }
                 if (!DensCleared)
                 {
-                    if (LairCount > 0)
+                    if (LairCount > 0 && UnclearedLairs > 0)
                         return $"Clear dens — {UnclearedLairs} left (F2 Clear Threat)";
-                    return "Clear remaining fauna near campus";
+                    return $"Clear the den stalkers — {StalkersRemaining} left (F2 Clear Threat)";
                 }
                 if (!SustainComplete)
                 {
@@ -140,7 +140,7 @@ namespace SolarMajesty
                 if (ReplayRules.IsEndless)
                     return "KEEP COLONIZING";
                 if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "SOLAR CONQUEST COMPLETE";
+                    return "CAMPAIGN COMPLETE";
                 return "OUTPOST SECURED";
             }
         }
@@ -175,16 +175,16 @@ namespace SolarMajesty
                 {
                     string craft = _loop != null && _loop.Research != null
                         ? _loop.Research.LaunchTechLabel(CelestialBodyId.Earth)
-                        : "Lunar Rocket";
+                        : "Colony Lifter";
                     return LaunchPath.ObjectiveText(false, false, craft);
                 }
                 if (_loop == null || !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
-                    return "The campaign is complete — every world from Earth to Europa is yours. Revisit any of them from the title.";
+                    return "The campaign is complete: Earth, Luna and Mars are running. Revisit any of them from the title.";
                 var next = CampaignProgress.NextAfter(_loop.ActiveBody);
                 string name = next.HasValue
                     ? CelestialBodyCatalog.Get(next.Value).DisplayName
                     : "the next body";
-                return $"Stage departure, or keep overseeing here. Next: {name}.";
+                return $"Stage departure, or keep building here. Next: {name}.";
             }
         }
 
@@ -198,12 +198,12 @@ namespace SolarMajesty
                 if (WasDeadlineFail)
                     return "The window to secure the outpost closed. Restart for a tighter run.";
                 if (_loop != null && _loop.ColonyExtinct)
-                    return "The Colony Commons fell and the treasury with it. Retry this body, or New Game.";
+                    return "The Colony Commons fell and the till with it. Retry this body, or New Game.";
                 if (_loop != null && _loop.RobotCount == 0)
                     return "No robots left and no re-fab in the shop. Rebuild a workshop, or retry.";
                 if (body != null && !string.IsNullOrEmpty(body.FailLog))
                     return body.FailLog;
-                return "Every specialist is incapacitated. Revive the party to retake the plaza.";
+                return "Every bot is down. Revive the crew to retake the yard.";
             }
         }
 
@@ -399,7 +399,7 @@ namespace SolarMajesty
             if (DensCleared && !_loggedDens)
             {
                 _loggedDens = true;
-                _loop.LogOverseer("Dens quiet. Fauna no longer holds the plaza.");
+                _loop.LogOverseer("Dens quiet. The yard is clear.");
             }
         }
 
@@ -420,7 +420,7 @@ namespace SolarMajesty
             if (SustainComplete && !_loggedSustain)
             {
                 _loggedSustain = true;
-                _loop.LogOverseer($"Treasury holding — {set.Treasury:N0}/{treasuryGoal:N0} EU for {Mathf.RoundToInt(sustainHoldSeconds)}s.");
+                _loop.LogOverseer($"Till holding — {set.Treasury:N0}/{treasuryGoal:N0} EU for {Mathf.RoundToInt(sustainHoldSeconds)}s.");
             }
         }
 

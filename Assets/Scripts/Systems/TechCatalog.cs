@@ -87,8 +87,8 @@ namespace SolarMajesty
 
                 new TechDef(
                     TechId.HabOps,
-                    "Hab Ops",
-                    "Pressure seals and crew bunks for growth.",
+                    "Charger Ops",
+                    "More charging slots for growth.",
                     28f,
                     new[] { TechId.FieldSurvey }),
 
@@ -144,7 +144,7 @@ namespace SolarMajesty
 
                 new TechDef(
                     TechId.LunarRocket,
-                    "Lunar Rocket",
+                    "Colony Lifter",
                     "Craft strong enough to leave this body.",
                     70f,
                     new[] { TechId.LifeSupport, TechId.OreRefining, TechId.PowerSystems },
@@ -153,8 +153,8 @@ namespace SolarMajesty
 
                 new TechDef(
                     TechId.MarsShip,
-                    "Mars Ship",
-                    "Heavy transfer ship for the next conquest.",
+                    "Colony Lifter Mk II",
+                    "Heavier lifter for the hop to Mars.",
                     100f,
                     new[] { TechId.LunarRocket, TechId.DeepSurvey, TechId.MedProtocols },
                     ResearchCost(110, 20),
@@ -162,8 +162,8 @@ namespace SolarMajesty
 
                 new TechDef(
                     TechId.BeltHauler,
-                    "Belt Hauler",
-                    "Tethered ore barge for the asteroid belt.",
+                    "Colony Lifter Mk III",
+                    "Final lifter. Mars is the end of the campaign.",
                     120f,
                     new[] { TechId.MarsShip, TechId.OreRefining },
                     ResearchCost(90, 25),
@@ -172,7 +172,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.Icebreaker,
                     "Icebreaker",
-                    "Radiation-hardened lander for Europa's crust.",
+                    "Radiation-hardened lander. Not used in the campaign.",
                     140f,
                     new[] { TechId.BeltHauler, TechId.LifeSupport, TechId.PowerSystems },
                     ResearchCost(120, 30),
@@ -181,7 +181,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.GuildCharter,
                     "Guild Charter",
-                    "License Horizon Lodge, Anvil Compact, Aegis Lodge, and Triage Compact. Flags near a hall pull that class.",
+                    "License Horizon Lodge, Anvil Lodge, Aegis Lodge, and Triage Lodge. Flags near a hall pull that class.",
                     32f,
                     new[] { TechId.HabOps }),
 
@@ -228,7 +228,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.GeneVault,
                     "Gene Vault",
-                    "Secret Project. Spare beds, faster births, greener farms. Growth path.",
+                    "Secret Project. Spare charging slots, faster builds, greener farms. Growth path.",
                     150f,
                     new[] { TechId.LifeSupport, TechId.MedProtocols },
                     Wallet.Credits(1400),
@@ -301,7 +301,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.AnvilOvertime,
                     "Anvil Overtime",
-                    "Activate at Anvil Compact: engineers weld faster. Costs EU.",
+                    "Activate at Anvil Lodge: engineers weld faster. Costs EU.",
                     36f,
                     new[] { TechId.GuildCharter },
                     Wallet.Credits(250)),
@@ -317,7 +317,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.TriageFieldAid,
                     "Triage Field Aid",
-                    "Activate at Triage Compact: everyone on the dirt patches HP. Costs EU.",
+                    "Activate at Triage Lodge: everyone on the dirt patches HP. Costs EU.",
                     36f,
                     new[] { TechId.GuildCharter },
                     Wallet.Credits(250)),

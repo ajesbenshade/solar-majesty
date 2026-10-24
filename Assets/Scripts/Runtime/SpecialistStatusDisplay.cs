@@ -95,7 +95,7 @@ namespace SolarMajesty
             {
                 case SpecialistAction.Rest:
                     c = new Color(0.45f, 0.75f, 1f);
-                    text = _agent.Status != null && _agent.Status.Contains("seeking") ? "INN" : "REST";
+                    text = _agent.Status != null && _agent.Status.Contains("seeking") ? "YARD" : "REST";
                     break;
                 case SpecialistAction.Flee:
                     c = new Color(0.95f, 0.32f, 0.26f);
@@ -111,7 +111,7 @@ namespace SolarMajesty
                     break;
                 case SpecialistAction.Wander:
                     c = new Color(0.72f, 0.78f, 0.55f);
-                    text = _agent.LastReason != null && _agent.LastReason.Contains("party_follow") ? "PARTY"
+                    text = _agent.LastReason != null && _agent.LastReason.Contains("party_follow") ? "SQUAD"
                         : _agent.LastReason != null && _agent.LastReason.Contains("workshop") ? "DUTY"
                         : _agent.LastReason != null && _agent.LastReason.Contains("patrol") ? "PATROL"
                         : _agent.LastReason != null && _agent.LastReason.Contains("tinker") ? "TOWN"

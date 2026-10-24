@@ -714,7 +714,7 @@ namespace SolarMajesty
             if (label.StartsWith("EU")) return IconId.Coin;
             if (label.StartsWith("PWR")) return IconId.Power;
             if (label.StartsWith("BEDS")) return IconId.Beds;
-            if (label.StartsWith("HEROES")) return IconId.Robot;
+            if (label.StartsWith("BOTS")) return IconId.Robot;
             if (label.StartsWith(ChargersLabel)) return IconId.Charger;
             if (label.StartsWith("HAUL")) return IconId.Bag;
             if (label.StartsWith("BOTS") || label.StartsWith("HALTED")) return IconId.Hammer;
@@ -784,7 +784,7 @@ namespace SolarMajesty
                 _loop.FocusCampus(1 - _loop.FocusedCampus);
             x += sq + gap;
             int partyCount = _loop.Parties != null ? _loop.Parties.Count : 0;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Party, "FORM PARTY", KeyHint(GameAction.ToolParty), partyCount > 0))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Party, "FORM SQUAD", KeyHint(GameAction.ToolParty), partyCount > 0))
                 _loop.FormParty();
             x += sq + gap;
             if (SquareAction(new Rect(x, vy, sq, sq), IconId.Menu, "MENU", "Esc", false))
@@ -846,7 +846,7 @@ namespace SolarMajesty
             float top = r.y + 17f;
             float cw = HudLayout.StockpileChipWidth(r.width);
             float ch = 28f;
-            ResourceChip(new Rect(r.x, top, cw, ch), "HEROES", heroes, heroes <= 0);
+            ResourceChip(new Rect(r.x, top, cw, ch), "BOTS", heroes, heroes <= 0);
             ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top, cw, ch), ChargersLabel, houses, false,
                 solar > 0 ? $"{solar} solar" : null);
             ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", collectors, collectors <= 0 || replacing > 0,
@@ -1333,7 +1333,7 @@ namespace SolarMajesty
                 ? "optional · e.g. \"stay away unless level 9+\""
                 : !string.IsNullOrEmpty(read) ? "understood: " + read
                 : LayaBridge.Instance != null && LayaBridge.Instance.Online ? "not understood — local AI will try on post"
-                : "not understood — heroes will ignore it";
+                : "not understood — bots will ignore it";
             GUI.Label(new Rect(r.x, r.y + 22f, r.width, 14f), line, _micro);
         }
 
@@ -1465,7 +1465,7 @@ namespace SolarMajesty
                 return $"{b.displayName}  ·  {b.description}";
             switch (b.category)
             {
-                case BuildingCategory.Defense: return "Defense Battery  ·  auto-fires 18 m";
+                case BuildingCategory.Defense: return "Laser Turret  ·  auto-fires 18 m";
                 case BuildingCategory.Mining: return "OPS Drop-off  ·  does not grow EU";
                 case BuildingCategory.Mine: return "Nuclear Mine";
                 case BuildingCategory.Power: return "Solar Farm";
@@ -1611,7 +1611,7 @@ namespace SolarMajesty
                 "Clear dens",
                 mission.LairCount > 0
                     ? $"{mission.UnclearedLairs}/{mission.LairCount} left"
-                    : $"{mission.StalkersRemaining} fauna");
+                    : $"{mission.StalkersRemaining} den stalkers left");
             y += 20f;
 
             var set = _loop.Settlement;
@@ -1619,13 +1619,13 @@ namespace SolarMajesty
                 ? $"{mission.TreasuryCurrent:N0}/{mission.TreasuryGoal:N0} · {_loop.FormatHold(mission.SustainElapsed)}/{_loop.FormatHold(mission.SustainRequired)}"
                 : _loop.FormatHold(mission.SustainElapsed);
             Stake(new Rect(c.x, y, c.width, 20f), mission.SustainComplete,
-                "Grow the treasury",
+                "Fill the till",
                 sustainVal);
             y += 20f;
 
             string launchNeed = _loop.Research != null
                 ? _loop.Research.LaunchTechLabel(_loop.ActiveBody)
-                : "Lunar Rocket";
+                : "Colony Lifter";
             bool fullCampaign = !DemoSettings.FirstHourDemo;
             string launchLine = LaunchPath.ObjectiveText(fullCampaign, mission.LaunchReady, launchNeed);
             Stake(new Rect(c.x, y, c.width, 20f), mission.LaunchReady,
@@ -1758,7 +1758,7 @@ namespace SolarMajesty
                         ? (st.LaserArmed ? "Watchtower · lasers armed" : "Watchtower · guard post")
                     : st.IsAidStation ? "Aid Station · paid patch"
                     : st.IsLandingPad ? "Weigh-station · tank vs wallet"
-                    : st.IsResidential ? "Habitat · worker bots"
+                    : st.IsResidential ? "Charging station · worker bots"
                     : st.Role.ToString();
             string worker = st.IsResidential
                 ? "bots"
@@ -1781,9 +1781,9 @@ namespace SolarMajesty
                     ? (st.LevyPurse > 0
                         ? $"{st.LevyPurse:N0} EU sitting — a bot walks it home."
                         : "Worker bots bunk here — EU sits until a bot walks it home.")
-                    : "Empty beds — seed crew arrives with the first HAB.")
+                    : "Empty charging slots — seed crew arrives with the first charging station.")
                 : (st.LevyPurse > 0 && !st.IsTreasuryChest
-                    ? $"{FormatWorkers(st)} · till {st.LevyPurse} EU"
+                    ? $"{FormatWorkers(st)} · battery {st.LevyPurse} EU"
                     : FormatWorkers(st));
             GUI.Label(new Rect(c.x, row, c.width, 13f), workers, _micro);
             row += 16f;
@@ -1920,7 +1920,7 @@ namespace SolarMajesty
             else if (st.Category == BuildingCategory.Blacksmith)
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    "Lodge arms and armor. Heroes buy with their EU.", _micro);
+                    "Lodge arms and armor. Bots buy with their EU.", _micro);
             }
             else if (!st.ClassLocked)
             {
@@ -1962,7 +1962,7 @@ namespace SolarMajesty
             if (GUI.Button(new Rect(c.x, row, 116f, 24f), "FLAG HERE", _chipOff))
                 _loop.PostAttractFlagOnSelected();
             GUI.Label(new Rect(c.x + 124f, row + 4f, c.width - 124f, 20f),
-                "Progress via research & conquest gates", _micro);
+                "Progress via research & campaign gates", _micro);
             _cardFor = st;
             _cardMeasuredH = Mathf.Max(96f, row + 24f + Pad - rect.y);
         }
@@ -2170,8 +2170,8 @@ namespace SolarMajesty
             if (!HeroNarrator.Enabled)
             {
                 var msg = new Rect(view.x + 20f, view.y + view.height * 0.5f - 40f, view.width - 40f, 36f);
-                GUI.Label(msg, "Hero lines are off. Conversations run on a small model on this computer — nothing leaves it.", _wrap);
-                if (Chip(new Rect(view.center.x - 110f, msg.yMax + 6f, 220f, 28f), "TURN ON HERO LINES", true))
+                GUI.Label(msg, "Bot lines are off. Conversations run on a small model on this computer — nothing leaves it.", _wrap);
+                if (Chip(new Rect(view.center.x - 110f, msg.yMax + 6f, 220f, 28f), "TURN ON BOT LINES", true))
                 {
                     DemoSettings.HeroVoices = true;
                     DemoSettings.SaveSettings();
@@ -2349,7 +2349,7 @@ namespace SolarMajesty
             {
                 SpecialistAction.PursueFlag => "Working a flag",
                 SpecialistAction.Rest => "Resting / shopping",
-                SpecialistAction.Flee => "Fleeing to inn",
+                SpecialistAction.Flee => "Fleeing to the Fobot Yard",
                 SpecialistAction.Hunt => "Hunting fauna",
                 SpecialistAction.Repair => "Repairing module",
                 SpecialistAction.Wander => a.LastReason != null && a.LastReason.Contains("workshop")
@@ -2357,8 +2357,8 @@ namespace SolarMajesty
                     : a.LastReason != null && a.LastReason.Contains("levy_home")
                         ? "Walking levy home"
                         : a.LastReason != null && a.LastReason.Contains("levy_collect")
-                            ? "Collecting HAB levy"
-                            : "Kingdom vocation",
+                            ? "Collecting building batteries"
+                            : "On duty",
                 _ => "Idle"
             };
             return string.IsNullOrEmpty(a.Status) ? action : $"{action} — {a.Status}";
@@ -2822,7 +2822,7 @@ namespace SolarMajesty
             _banner.normal.textColor = prev;
 
             GUI.Label(new Rect(c.x, c.y + 32f, c.width, 48f), mission.WinDetail, _wrap != null ? _wrap : _body);
-            if (GUI.Button(new Rect(c.x, c.yMax - 30f, Mathf.Min(220f, c.width), 28f), "CONTINUE OVERSEEING  ·  " + KeyHint(GameAction.PromptYes), _chipOn))
+            if (GUI.Button(new Rect(c.x, c.yMax - 30f, Mathf.Min(220f, c.width), 28f), "KEEP BUILDING  ·  " + KeyHint(GameAction.PromptYes), _chipOn))
             {
                 _winDismissed = true;
                 mission.DismissWinToSandbox();
@@ -2891,7 +2891,7 @@ namespace SolarMajesty
                         ? "Dock a Fobot Yard. Y does not skip the building."
                         : _loop.FieldReviveReadyIn > 0.5f
                             ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Bill is by level, EU only."
-                            : $"Inspect the yard or press {InputBindings.Label(GameAction.PromptYes)}. ICE is not on the bill.", _muted);
+                            : $"Inspect the yard or press {InputBindings.Label(GameAction.PromptYes)}.", _muted);
                 if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "FOBOT YARD  ·  " + KeyHint(GameAction.PromptYes), _chipOn))
                     _loop.PayFobotYard();
             }
@@ -3407,7 +3407,7 @@ namespace SolarMajesty
             y += 32f;
 
             // Lines come from a local LLM; SPOKEN reads them aloud through a local TTS server.
-            if (Chip(new Rect(c.x, y, visHalf, 26f), "HERO LINES · LOCAL LLM", DemoSettings.HeroVoices))
+            if (Chip(new Rect(c.x, y, visHalf, 26f), "BOT LINES · LOCAL LLM", DemoSettings.HeroVoices))
             {
                 DemoSettings.HeroVoices = !DemoSettings.HeroVoices;
                 DemoSettings.SaveSettings();
@@ -3472,7 +3472,7 @@ namespace SolarMajesty
 
             bool marsLessons = DemoSettings.MarsJexLessons;
             if (Chip(new Rect(c.x, y, c.width, 26f),
-                    marsLessons ? "MARS GROK LESSONS  ·  ON" : "MARS GROK LESSONS  ·  OFF",
+                    marsLessons ? "MARS JEX LESSONS  ·  ON" : "MARS JEX LESSONS  ·  OFF",
                     marsLessons))
             {
                 DemoSettings.MarsJexLessons = !DemoSettings.MarsJexLessons;
@@ -3781,9 +3781,9 @@ namespace SolarMajesty
             {
                 string[] beats =
                 {
-                    "1/6  COMMONS — Colony Commons is already on the claim. It holds the treasury.",
-                    "2/6  Haul walks out of the Commons and carries each building's EU home.",
-                    "3/6  Keep the yard clear of mobs — bots build charging stations and solar farms that pay EU.",
+                    "1/6  COMMONS — Colony Commons is already on the claim. It holds the till.",
+                    "2/6  Courier bots haul each building's EU to the till.",
+                    "3/6  Keep the yard clear of mobs. Place charging stations and solar farms — they pay EU.",
                     "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
                     "5/6  G, Build, leave it at 700. Watch the Engineer.",
                     "6/6  They named a price. Select the flag and press + until the chip reads tempted."
@@ -3832,7 +3832,7 @@ namespace SolarMajesty
             var rect = new Rect(M, M, TopW, 118f);
             var c = Panel(rect, "Drop manifest");
             float y = c.y;
-            GUI.Label(new Rect(c.x, y, c.width, 13f), "COMMONS first, then HAB and workshops anywhere on open ground.", _micro);
+            GUI.Label(new Rect(c.x, y, c.width, 13f), "COMMONS first, then charging stations and workshops anywhere on open ground.", _micro);
             y += 16f;
             for (int w = 0; w < want.Length; w++)
             {

@@ -19,7 +19,7 @@ namespace SolarMajesty
                 return "Falling back to the rest beacon.";
             if (action == SpecialistAction.Rest)
                 return reason != null && reason.IndexOf("seeking", System.StringComparison.Ordinal) >= 0
-                    ? "Heading to the inn."
+                    ? "Heading to the Fobot Yard."
                     : "Resting. Shop if the EU is there.";
             if (action == SpecialistAction.Repair)
                 return "Patching a hull. Pay me when it holds.";
@@ -144,9 +144,9 @@ namespace SolarMajesty
                 if (reason.IndexOf("tinker", System.StringComparison.Ordinal) >= 0)
                     return "Tinkering in town. Raise EU for Build.";
                 if (reason.IndexOf("triage", System.StringComparison.Ordinal) >= 0)
-                    return "Triage at the inn.";
+                    return "Triage at the yard.";
                 if (reason.IndexOf("party", System.StringComparison.Ordinal) >= 0)
-                    return "Following the party.";
+                    return "Following the squad.";
                 if (reason.IndexOf("levy_home", System.StringComparison.Ordinal) >= 0)
                     return "Walking the batteries home. Do not click me.";
                 if (reason.IndexOf("levy_collect", System.StringComparison.Ordinal) >= 0)

@@ -10,7 +10,28 @@ namespace SolarMajesty.Tests
     public class PlayerFacingCanonTests
     {
         private static readonly Regex Forbidden = new Regex(
-            @"\b(overseer|houses?|purses?|chest)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            @"\b(overseer|overseeing|oversee|houses?|purses?|chest|" +
+            // Retired kingdom / court voice and the old faction names.
+            @"court|crown|reigns?|kingdom|compact|freeholds?|sol authority|tithe|plaza|party|conquest|conquer|" +
+            // Retired building and crew words: charging stations, bots and the Fobot Yard replace them.
+            @"habs?|beds|inn|heroes|hero lines|" +
+            // Retired ship names: player text says Colony Lifter.
+            @"lunar rocket|mars ship|belt hauler)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        // The campaign ends at Mars. Belt and Europa stay catalog-only, so their names may only
+        // appear in the files that define or persist those catalog bodies.
+        private static readonly Regex OuterWorlds = new Regex(
+            @"\b(belt|europa)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        private static readonly HashSet<string> OuterWorldFiles = new HashSet<string>
+        {
+            "Systems/World/CelestialBodyCatalog.cs", // catalog-only body definitions
+            "Systems/FlagDecreeIds.cs", // body ID tokens
+            "Systems/SaveGame.cs", // save body names
+            "Systems/DeveloperPrefsShield.cs", // dev prefs keys
+            "Runtime/SolarSystemTitleView.cs" // title orrery labels for locked bodies
+        };
 
         // Tokenize before looking for words: comments, character literals and diagnostic/editor
         // calls must not turn into text hits. Strings include regular, interpolated and verbatim forms.
@@ -28,6 +49,21 @@ namespace SolarMajesty.Tests
             Pair("Runtime/SuitCrossingWalker.cs", "B-chest"), // bone ID
             Pair("Systems/Voice/VoiceBank.cs", "\"overseer\""), // speaker constant and FX switch
             Pair("Systems/CompactJex.cs", "Pests drained {amount} EU from {n} {purses}."), // interpolation variable
+            Pair("Systems/StillCampusDensity.cs", "hab={Hab}"), // diagnostic dump
+            Pair("Systems/StillCampusDensity.cs", "inn={Inn}"), // diagnostic dump
+            Pair("Systems/StillCampusDensity.cs", "workshop+inn"), // layout key
+            Pair("Systems/StillCampusDensity.cs", "\"inn+wonder\""), // layout key
+            Pair("Systems/StillCampusDensity.cs", "\"inn\""), // layout key
+            Pair("Systems/SpecialistFlavor.cs", "\"party\""), // reason ID
+            Pair("Runtime/SpecialistAgent.cs", "\"inn\""), // reason ID
+            Pair("Runtime/HeroBuildingDetail.cs", "\"Hab\""), // art key
+            Pair("Runtime/GameLoop.cs", "\"inn\""), // asset name token
+            Pair("Runtime/GameLoop.cs", "\"hab\""), // asset name token
+            Pair("Runtime/GameLoop.cs", "\"HAB\""), // asset path check
+            Pair("Runtime/GameLoop.cs", "{party.Count}"), // interpolation variable
+            Pair("Runtime/OverseerHud.cs", "\"BEDS\""), // legacy chip label match
+            Pair("Runtime/OverseerHud.cs", "{beds}"), // interpolation variable
+            Pair("Editor/BuildCommands.cs", "THIRD-PARTY-NOTICES"), // file name
             Pair("Systems/Narration/HeroConversation.cs", "never \\\"Overseer\\\""), // instruction to avoid the name
             Pair("Assets/Resources/Audio/Voices/voices.json", "\"speaker\":\"overseer\"") // metadata only; text is checked separately
         };
@@ -85,6 +121,11 @@ namespace SolarMajesty.Tests
 
         private static void Check(string file, string literal, List<string> failures)
         {
+            if (OuterWorlds.IsMatch(literal) && !OuterWorldFiles.Contains(file))
+            {
+                failures.Add(file + ": " + literal);
+                return;
+            }
             if (!Forbidden.IsMatch(literal)) return;
             foreach (var allowed in Allowed)
                 if (file == allowed.Key && literal.Contains(allowed.Value)) return;
@@ -111,6 +152,27 @@ namespace SolarMajesty.Tests
             Check("other.cs", "B-chest", failures);
             Check("Systems/CompactJex.cs", "A purse is full.", failures);
             Assert.AreEqual(4, failures.Count);
+        }
+
+        [Test]
+        public void Scanner_CatchesRetiredVoiceWithWordBoundaries()
+        {
+            var failures = new List<string>();
+            ScanCSharp("sample.cs", "a = \"The court does not curtsy.\"; b = \"Raise the first HAB.\"; " +
+                "c = \"Heroes buy with EU.\"; d = \"Stage the Lunar Rocket.\"; e = \"Europa is next.\"; " +
+                "f = \"Back to the inn!\"; g = \"Keep overseeing.\"; h = \"The Compact charters.\";", failures);
+            Assert.AreEqual(8, failures.Count, string.Join("\n", failures));
+
+            failures.Clear();
+            // Word boundaries: longer words that merely contain a banned stem stay legal.
+            ScanCSharp("sample.cs", "a = \"Inner dens\"; b = \"Courtyard\"; c = \"Habitat\"; " +
+                "d = \"Hero\"; e = \"Beltway\"; f = \"Compactor\"; g = \"ACH_SOLAR_CONQUEST\";", failures);
+            Assert.AreEqual(0, failures.Count, string.Join("\n", failures));
+
+            failures.Clear();
+            Check("Systems/World/CelestialBodyCatalog.cs", "\"Europa\"", failures);
+            Check("Systems/AdvisorToastCatalog.cs", "\"Europa\"", failures);
+            Assert.AreEqual(1, failures.Count);
         }
     }
 }

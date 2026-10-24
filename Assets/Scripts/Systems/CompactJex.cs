@@ -1,7 +1,7 @@
 namespace SolarMajesty
 {
     /// <summary>
-    /// Scripted Compact asides for the Majesty toys. Not decree toasts. Not an LLM.
+    /// Scripted Jex asides for the Majesty toys. Not decree toasts. Not an LLM.
     /// </summary>
     public static class CompactJex
     {
@@ -20,10 +20,10 @@ namespace SolarMajesty
         }
 
         public static string LevyDelivered(int amount) =>
-            $"Haul dumped {amount} EU at the till. The walk was the joke.";
+            $"Courier hauled {amount} EU to the till.";
 
         public static string PurseSitting(int amount) =>
-            $"{amount} EU is sitting in building batteries. Haul will not teleport it.";
+            $"{amount} EU is sitting in building batteries. Couriers will not teleport it.";
 
         public static string YardBill(int credits) =>
             $"The yard wants {credits} EU. Level is the scandal, not the corpse.";
@@ -32,10 +32,10 @@ namespace SolarMajesty
             "Dock a Fobot Yard. Y is not a miracle. It is an invoice.";
 
         public static string SiphonPaid(int credits, int ice, int reg) =>
-            $"Pad paid out +{credits} EU. −{ice} ICE −{reg} REG. The tank still has lunch.";
+            $"Pad paid out +{credits} EU.";
 
         public static string SiphonBlocked(int reserve) =>
-            $"Stall is closed. We do not export lunch until the tank is past {reserve}. Try not dying.";
+            "Stall is closed. Nothing to sell yet. Try not dying.";
 
         public static string DenCharted(string who) =>
             $"A den crawled out of the fog. {who} walked it. Clear Threat is now a place, not a rumor.";

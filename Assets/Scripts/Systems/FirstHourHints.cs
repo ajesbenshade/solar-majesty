@@ -9,9 +9,9 @@ namespace SolarMajesty
         public const string PlaceWorkshop =
             "Stuck? Press B, then 1, and click open ground near the Commons to place the Engineer workshop.";
         public const string WorkshopRising =
-            "The workshop is going up. Its Engineer walks out on his own when it is done. You never order units.";
+            "The workshop is going up. Its Engineer walks out on its own when it is done. You never order units.";
         public const string WorkshopHireShort =
-            "The workshop is done, but hiring its Engineer costs EU. Tax collectors are bringing it to the Commons.";
+            "The workshop is done, but hiring its Engineer costs EU. Courier bots are hauling it to the till.";
         public const string PostCheapBuild =
             "Stuck? Press G, then F3 (Build), and click open ground. Leave the bounty at 700 and watch the Engineer.";
         public const string RaiseBuildPrice =

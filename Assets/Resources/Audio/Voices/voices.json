@@ -1065,11 +1065,11 @@
    "speaker": "hero.EngineerBot",
    "cue": "rest",
    "take": 0,
-   "text": "Torque arm's shot. Inn time.",
+   "text": "Torque arm's shot. Yard time.",
    "clip": "hero_engineerbot_rest_0",
-   "hash": "dd7f31634f62",
-   "seconds": 2.33,
-   "peak_db": -4.5,
+   "hash": "3815f9e7d52e",
+   "seconds": 2.47,
+   "peak_db": -4.0,
    "rms_db": -22.5
   },
   {
@@ -1615,11 +1615,11 @@
    "speaker": "hero.HarvesterBot",
    "cue": "flee",
    "take": 2,
-   "text": "Back to the inn!",
+   "text": "Back to the yard!",
    "clip": "hero_harvesterbot_flee_2",
-   "hash": "b97e38c2e4c1",
-   "seconds": 1.28,
-   "peak_db": -3.5,
+   "hash": "7e5caaf5f1ae",
+   "seconds": 1.37,
+   "peak_db": -3.9,
    "rms_db": -21.7
   },
   {
@@ -1967,12 +1967,12 @@
    "speaker": "hero.Medic",
    "cue": "flee",
    "take": 1,
-   "text": "Falling back to the inn!",
+   "text": "Falling back to the yard!",
    "clip": "hero_medic_flee_1",
-   "hash": "8dc1d52a72b2",
-   "seconds": 1.3,
-   "peak_db": -4.1,
-   "rms_db": -20.9
+   "hash": "6b24ea421d9b",
+   "seconds": 1.37,
+   "peak_db": -5.2,
+   "rms_db": -21.0
   },
   {
    "speaker": "hero.Medic",
@@ -3836,24 +3836,13 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "0f8712fb",
-   "text": "Pad paid out. Dock fee already left. The Freeholds send their love. It is itemized.",
-   "clip": "overseer_line_0f8712fb",
-   "hash": "6234da66462f",
-   "seconds": 5.01,
-   "peak_db": -2.7,
-   "rms_db": -21.4
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "15466bc2",
-   "text": "Welcome to a rock that already has a landlord. Raise a Commons before the Freeholds invoice the crater.",
-   "clip": "overseer_line_15466bc2",
-   "hash": "0acc84cac419",
-   "seconds": 6.05,
-   "peak_db": -3.7,
-   "rms_db": -21.7
+   "key": "03712025",
+   "text": "Pad paid out. EU is in the till.",
+   "clip": "overseer_line_03712025",
+   "hash": "5d90403f9985",
+   "seconds": 2.0,
+   "peak_db": -4.0,
+   "rms_db": -21.2
   },
   {
    "speaker": "overseer",
@@ -3869,24 +3858,35 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "3140f16a",
-   "text": "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building.",
-   "clip": "overseer_line_3140f16a",
-   "hash": "715d5b51b824",
-   "seconds": 5.56,
-   "peak_db": -3.9,
-   "rms_db": -21.5
+   "key": "222e6f08",
+   "text": "Anvil wants 790. It can count. Raise the bounty or enjoy the scenery.",
+   "clip": "overseer_line_222e6f08",
+   "hash": "4ea8a1310b61",
+   "seconds": 5.79,
+   "peak_db": -2.4,
+   "rms_db": -21.1
   },
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "32b59ebd",
-   "text": "EU was napping on the HAB. A mite just made a withdrawal.",
-   "clip": "overseer_line_32b59ebd",
-   "hash": "4d01fa422f0d",
-   "seconds": 3.25,
-   "peak_db": -2.8,
-   "rms_db": -21.2
+   "key": "25c3cbc9",
+   "text": "A courier lost its EU on the road.",
+   "clip": "overseer_line_25c3cbc9",
+   "hash": "36cc32fd90ab",
+   "seconds": 1.97,
+   "peak_db": -4.5,
+   "rms_db": -20.7
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "2698bb57",
+   "text": "Something just drained a battery. That was not a sale.",
+   "clip": "overseer_line_2698bb57",
+   "hash": "247e252b7eb5",
+   "seconds": 2.83,
+   "peak_db": -1.7,
+   "rms_db": -21.0
   },
   {
    "speaker": "overseer",
@@ -3902,13 +3902,13 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "4ad5ebf5",
-   "text": "Haul walked the batteries home. EU is in the till. Do not click the crate.",
-   "clip": "overseer_line_4ad5ebf5",
-   "hash": "fe82760d7b79",
-   "seconds": 4.09,
-   "peak_db": -2.8,
-   "rms_db": -21.7
+   "key": "3a252c26",
+   "text": "EU was sitting in a charger battery. A mite just made a withdrawal.",
+   "clip": "overseer_line_3a252c26",
+   "hash": "09c754789d2a",
+   "seconds": 3.84,
+   "peak_db": -5.0,
+   "rms_db": -21.1
   },
   {
    "speaker": "overseer",
@@ -3924,39 +3924,6 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "582d96a9",
-   "text": "Life support is a suggestion until it is not. The tank is at four. Bots first, Anvil second.",
-   "clip": "overseer_line_582d96a9",
-   "hash": "774a0816f670",
-   "seconds": 6.17,
-   "peak_db": -3.4,
-   "rms_db": -21.5
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "5ac8315c",
-   "text": "Stall is closed. We do not export lunch until the tank is fat. Try twelve. Try not dying.",
-   "clip": "overseer_line_5ac8315c",
-   "hash": "01ecdc5eeaef",
-   "seconds": 5.76,
-   "peak_db": -4.0,
-   "rms_db": -21.6
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "5b89593f",
-   "text": "Something just drank a unit of ice. That was not a sale.",
-   "clip": "overseer_line_5b89593f",
-   "hash": "1c03276706f9",
-   "seconds": 3.2,
-   "peak_db": -2.6,
-   "rms_db": -21.1
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
    "key": "62cdb686",
    "text": "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!",
    "clip": "overseer_line_62cdb686",
@@ -3968,46 +3935,24 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "7f201696",
-   "text": "Anvil wants 790. He can count. Raise the bounty or enjoy the scenery.",
-   "clip": "overseer_line_7f201696",
-   "hash": "ade4838bc660",
-   "seconds": 5.25,
-   "peak_db": -3.6,
-   "rms_db": -21.2
+   "key": "97bc1961",
+   "text": "Charging station is up. Worker bots live there. Bounty bots take the flags.",
+   "clip": "overseer_line_97bc1961",
+   "hash": "3e90d653f7f0",
+   "seconds": 4.86,
+   "peak_db": -3.0,
+   "rms_db": -21.5
   },
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "80b5f553",
-   "text": "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.",
-   "clip": "overseer_line_80b5f553",
-   "hash": "ff187624e286",
-   "seconds": 6.14,
-   "peak_db": -4.1,
-   "rms_db": -21.4
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "8e1f500b",
-   "text": "Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
-   "clip": "overseer_line_8e1f500b",
-   "hash": "3e31a58a7337",
-   "seconds": 5.38,
-   "peak_db": -2.2,
-   "rms_db": -21.4
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
-   "key": "90c9051c",
-   "text": "Grid is skinny. Everyone is working at seventy percent, including your patience.",
-   "clip": "overseer_line_90c9051c",
-   "hash": "43f9d62510cd",
-   "seconds": 4.69,
-   "peak_db": -2.0,
-   "rms_db": -21.4
+   "key": "a007bf8f",
+   "text": "Flag still unpaid. Bots do not work for exposure.",
+   "clip": "overseer_line_a007bf8f",
+   "hash": "ed47bcdd3860",
+   "seconds": 3.31,
+   "peak_db": -4.3,
+   "rms_db": -21.5
   },
   {
    "speaker": "overseer",
@@ -4023,13 +3968,57 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "a7a2646e",
-   "text": "Haul lost the levy on the road.",
-   "clip": "overseer_line_a7a2646e",
-   "hash": "77c6e007ab7e",
-   "seconds": 1.64,
-   "peak_db": -4.8,
-   "rms_db": -21.1
+   "key": "a37e1022",
+   "text": "EU is running low. Bots first, Anvil second.",
+   "clip": "overseer_line_a37e1022",
+   "hash": "d11848068b8b",
+   "seconds": 3.15,
+   "peak_db": -4.2,
+   "rms_db": -21.3
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "b1943d12",
+   "text": "No Fobot Yard. Wrecks wait. Build the yard first. Y does not skip the building.",
+   "clip": "overseer_line_b1943d12",
+   "hash": "92a376b7ddc2",
+   "seconds": 5.06,
+   "peak_db": -4.0,
+   "rms_db": -21.5
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "b402de1e",
+   "text": "The till is skinny. Everyone is working slower, including your patience.",
+   "clip": "overseer_line_b402de1e",
+   "hash": "b3926426e82f",
+   "seconds": 4.05,
+   "peak_db": -1.0,
+   "rms_db": -19.5
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "b5effb76",
+   "text": "New rock, same rules. Raise a Commons before anything else.",
+   "clip": "overseer_line_b5effb76",
+   "hash": "e1d0c632ca69",
+   "seconds": 3.52,
+   "peak_db": -4.3,
+   "rms_db": -21.2
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "b7103510",
+   "text": "Courier hauled the batteries to the till. Do not click the crate.",
+   "clip": "overseer_line_b7103510",
+   "hash": "83d708dc2b4c",
+   "seconds": 3.25,
+   "peak_db": -4.7,
+   "rms_db": -21.4
   },
   {
    "speaker": "overseer",
@@ -4045,13 +4034,13 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "c573fa67",
-   "text": "Flag still unpaid. The Compact does not work for exposure.",
-   "clip": "overseer_line_c573fa67",
-   "hash": "e1608505491a",
-   "seconds": 3.6,
-   "peak_db": -4.1,
-   "rms_db": -21.8
+   "key": "d018a7f6",
+   "text": "Level 6 wreck, not enough EU. Re-fab a rookie or start a bake sale.",
+   "clip": "overseer_line_d018a7f6",
+   "hash": "c79a0ae3dbe0",
+   "seconds": 4.19,
+   "peak_db": -2.9,
+   "rms_db": -21.4
   },
   {
    "speaker": "overseer",
@@ -4067,24 +4056,35 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "d53ee54d",
-   "text": "Level 6 wreck, Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.",
-   "clip": "overseer_line_d53ee54d",
-   "hash": "0e19bd589d94",
-   "seconds": 6.43,
-   "peak_db": -2.7,
-   "rms_db": -21.4
+   "key": "d6bcae1c",
+   "text": "Stall is closed. Nothing to sell yet. Try not dying.",
+   "clip": "overseer_line_d6bcae1c",
+   "hash": "fe9b34ef3108",
+   "seconds": 2.92,
+   "peak_db": -1.5,
+   "rms_db": -21.3
   },
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "dfcd23b3",
-   "text": "Worker bots run the yard. Contract units take bounties. Same mind, different jobs.",
-   "clip": "overseer_line_dfcd23b3",
-   "hash": "bc66a4014bbd",
-   "seconds": 5.43,
-   "peak_db": -3.7,
+   "key": "d7e47f14",
+   "text": "Anvil is in the Fobot Yard. Standing it up costs more than the Scout. That is called having favorites.",
+   "clip": "overseer_line_d7e47f14",
+   "hash": "3458b1176620",
+   "seconds": 6.02,
+   "peak_db": -4.1,
    "rms_db": -21.5
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "e53a6118",
+   "text": "Not enough EU. Re-fab a rookie or start a bake sale.",
+   "clip": "overseer_line_e53a6118",
+   "hash": "096bc4ff3610",
+   "seconds": 3.16,
+   "peak_db": -2.9,
+   "rms_db": -21.1
   },
   {
    "speaker": "overseer",
@@ -4156,12 +4156,12 @@
    "speaker": "overseer",
    "cue": "victory",
    "take": 2,
-   "text": "Done. The Compact is almost impressed.",
+   "text": "Done. The Core is almost impressed.",
    "clip": "overseer_victory_2",
-   "hash": "7fa73f9c7056",
-   "seconds": 2.18,
-   "peak_db": -4.1,
-   "rms_db": -21.4
+   "hash": "b07b52864d5a",
+   "seconds": 1.91,
+   "peak_db": -4.6,
+   "rms_db": -21.5
   }
  ]
 }

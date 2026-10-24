@@ -58,7 +58,7 @@ namespace SolarMajesty
             ",\"chat_template_kwargs\":{\"enable_thinking\":false},\"reasoning_effort\":\"none\"";
 
         public const string SystemPrompt =
-            "You voice autonomous robot heroes in a space colony game. Reply with ONE " +
+            "You voice autonomous worker bots in a space colony game. Reply with ONE " +
             "punchy first-person line, at most 9 words, that the hero mutters right now. Speak in the " +
             "given voice. Be specific and a little funny. Never reuse wording from earlier replies. " +
             "Use only the facts given. Reply in English. No emoji, no " +
@@ -69,8 +69,8 @@ namespace SolarMajesty
         {
             { "Hero: level 3 Defense Mech on Mars. Voice: greedy — always about the money. Now: just took the den bounty paying 600 EU.",
               "Six hundred for a den? I'd clear two." },
-            { "Hero: level 1 Scout Drone on Luna. Voice: cowardly — nervous, looking for an exit. Now: badly hurt and running back to the inn.",
-              "Nope. Nope. Inn. Now." },
+            { "Hero: level 1 Scout Drone on Luna. Voice: cowardly — nervous, looking for an exit. Now: badly hurt and running back to the Fobot Yard.",
+              "Nope. Nope. Yard. Now." },
             { "Hero: level 5 Engineer Bot on Earth. Voice: workaholic — lives for the job. Now: is not allowed to take the build bounty because the Core's orders say \"level 6 or higher\".",
               "Level six? I've welded worse blindfolded." },
         };
@@ -113,10 +113,10 @@ namespace SolarMajesty
                            (string.IsNullOrEmpty(m.Orders) ? "" : $" (orders on it: \"{Clip(m.Orders, 80)}\")");
                 case NarrationKind.Refused:
                     return $"is not allowed to take the {flag} bounty because the Core's orders say \"{Clip(m.Orders, 80)}\"";
-                case NarrationKind.Flee: return "badly hurt and running back to the inn";
+                case NarrationKind.Flee: return "badly hurt and running back to the Fobot Yard";
                 case NarrationKind.Hunt: return "going to hunt nearby hostile fauna, no bounty";
                 case NarrationKind.Repair: return "going to patch a damaged colony module for a small fee";
-                case NarrationKind.Rest: return "heading to the inn to rest and heal";
+                case NarrationKind.Rest: return "heading to the Fobot Yard to rest and heal";
                 case NarrationKind.LevelUp: return $"just reached level {Mathf.Max(1, m.Level)}";
                 default:
                     return m.Reason switch

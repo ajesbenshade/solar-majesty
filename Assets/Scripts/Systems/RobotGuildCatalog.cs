@@ -125,7 +125,7 @@ namespace SolarMajesty
                 new RobotGuildDef
                 {
                     Id = RobotGuildId.Anvil,
-                    HallName = "Anvil Compact",
+                    HallName = "Anvil Lodge",
                     ShortName = "Anvil",
                     Class = SpecialistClass.EngineerBot,
                     Motto = "Pay holds. Then we weld.",
@@ -161,7 +161,7 @@ namespace SolarMajesty
                 new RobotGuildDef
                 {
                     Id = RobotGuildId.Triage,
-                    HallName = "Triage Compact",
+                    HallName = "Triage Lodge",
                     ShortName = "Triage",
                     Class = SpecialistClass.Medic,
                     Motto = "The wounded come first.",

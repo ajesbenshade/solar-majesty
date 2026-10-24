@@ -346,7 +346,7 @@ namespace SolarMajesty
             handle.Orders = _pendingParsed ?? FlagOrdersParser.Parse(_pendingOrders);
             string read = handle.Orders.Summary();
             _loop?.LogOverseer(string.IsNullOrEmpty(read)
-                ? $"Orders posted: \"{_pendingOrders}\" — not understood; heroes will ignore them."
+                ? $"Orders posted: \"{_pendingOrders}\" — not understood; bots will ignore them."
                 : $"Orders posted: {read}");
             if (!handle.Orders.HasRules)
                 LayaFlagOrders.TryUnderstand(handle, _loop); // optional local model, async

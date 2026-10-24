@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// Pad weigh-station math. Surplus ICE (and silent REG) become Compact scrip
+    /// Pad stall math. Surplus ICE (and silent REG) become EU
     /// only while the tank is above reserve. No FlagType. Does not touch ScoreFlag.
     /// </summary>
     public static class MarketMath
@@ -18,9 +18,9 @@ namespace SolarMajesty
         public const float IntervalSeconds = 24f;
 
         public const string JexPayout =
-            "Pad paid out. Dock fee already left. The Freeholds send their love. It is itemized.";
+            "Pad paid out. EU is in the till.";
         public const string JexBlocked =
-            "Stall is closed. We do not export lunch until the tank is fat. Try twelve. Try not dying.";
+            "Stall is closed. Nothing to sell yet. Try not dying.";
 
         public static int IceReserve(int population) =>
             Mathf.Max(IceReserveFloor, IcePerColonist * Mathf.Max(0, population));

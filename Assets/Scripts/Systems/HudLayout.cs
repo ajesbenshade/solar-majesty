@@ -100,7 +100,7 @@ namespace SolarMajesty
         public const float StockpileW = 256f;
 
         /// <summary>Canon Watchtower blurb; the build list and the building card both use it.</summary>
-        public const string WatchtowerBlurb = "Guard post and levy till. Arm lasers for EU.";
+        public const string WatchtowerBlurb = "Guard post and haul drop. Arm lasers for EU.";
         /// <summary>Short stat appended to the Watchtower row when the row has room.</summary>
         public const string WatchtowerStat = "+1 Haul";
 

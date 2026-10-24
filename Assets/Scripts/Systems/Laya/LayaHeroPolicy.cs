@@ -70,7 +70,7 @@ namespace SolarMajesty
                         break;
                     case SpecialistAction.Rest:
                         label = "rest";
-                        desc = "Go back to the inn to rest and heal.";
+                        desc = "Go back to the Fobot Yard to rest and heal.";
                         break;
                     case SpecialistAction.Wander:
                         label = "wander";

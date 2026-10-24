@@ -90,7 +90,7 @@ namespace SolarMajesty
             if (!string.IsNullOrEmpty(p.Designation)) sb.Append(" \"").Append(p.Designation).Append('"');
             sb.Append(", a level ").Append(Mathf.Max(1, p.Level)).Append(' ').Append(Safe(p.ClassName, "specialist"));
             if (!string.IsNullOrEmpty(p.Rank)) sb.Append(" (").Append(p.Rank.ToLowerInvariant()).Append(" service record)");
-            sb.Append(", one of the autonomous robot heroes of a space colony run by indirect command");
+            sb.Append(", one of the autonomous worker bots of a space colony run by indirect command");
             if (!string.IsNullOrEmpty(p.World)) sb.Append(" on ").Append(p.World);
             sb.Append(". The player is the Core, the central AI that coordinates the colony's robot AIs: it posts bounty flags and builds, but you choose your own work. Call the player \"the Core\", never \"Overseer\". ");
 
@@ -278,10 +278,10 @@ namespace SolarMajesty
                     return string.IsNullOrEmpty(m.Orders)
                         ? $"was barred from the {flag} bounty by the Core's orders"
                         : $"was barred from the {flag} bounty by the Core's orders \"{Clip(m.Orders, 60)}\"";
-                case NarrationKind.Flee: return "got badly hurt and ran for the inn";
+                case NarrationKind.Flee: return "got badly hurt and ran for the Fobot Yard";
                 case NarrationKind.Hunt: return "went hunting fauna";
                 case NarrationKind.Repair: return "patched a damaged colony module";
-                case NarrationKind.Rest: return "rested up at the inn";
+                case NarrationKind.Rest: return "rested up at the Fobot Yard";
                 case NarrationKind.LevelUp: return $"reached level {Mathf.Max(1, m.Level)}";
                 default: return null;
             }

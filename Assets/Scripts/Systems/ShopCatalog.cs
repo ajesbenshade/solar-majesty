@@ -266,7 +266,7 @@ namespace SolarMajesty
                 Kind = ShopItemKind.ConsumableGene,
                 Vendor = ShopVendor.Inn,
                 DisplayName = "Gene: Valor",
-                Description = "Legacy inn gene — unused.",
+                Description = "Legacy gene — unused.",
                 Cost = 350,
                 CourageBonus = 0.22f,
                 DurationSeconds = 90f
@@ -277,7 +277,7 @@ namespace SolarMajesty
                 Kind = ShopItemKind.ConsumableGene,
                 Vendor = ShopVendor.Inn,
                 DisplayName = "Gene: Focus",
-                Description = "Legacy inn gene — unused.",
+                Description = "Legacy gene — unused.",
                 Cost = 300,
                 WorkBonus = 0.28f,
                 DurationSeconds = 75f
@@ -288,7 +288,7 @@ namespace SolarMajesty
                 Kind = ShopItemKind.ConsumableGene,
                 Vendor = ShopVendor.Inn,
                 DisplayName = "Gene: Swift",
-                Description = "Legacy inn gene — unused.",
+                Description = "Legacy gene — unused.",
                 Cost = 280,
                 SpeedBonus = 0.22f,
                 DurationSeconds = 60f

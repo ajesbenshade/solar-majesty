@@ -497,7 +497,7 @@ namespace SolarMajesty
             {
                 _levyHomeLogged = true;
                 LogOverseer(OverseerRules.JexLevyHome, 6.2f);
-                Alerts.Push("levy_home", $"Haul walked {amount:N0} EU home", AlertSeverity.Good, Time.unscaledTime, at);
+                Alerts.Push("levy_home", $"Courier hauled {amount:N0} EU to the till.", AlertSeverity.Good, Time.unscaledTime, at);
             }
         }
 
@@ -710,8 +710,8 @@ namespace SolarMajesty
                 LogOverseer(OverseerRules.JexLevyHome, 6.2f);
             }
             else
-                LogOverseer($"Haul deposited {amount} EU at Commons.");
-            Alerts.Push("levy_home", $"Levy walked home · {amount} EU", AlertSeverity.Good, Time.unscaledTime, at);
+                LogOverseer($"Courier hauled {amount} EU to the till.");
+            Alerts.Push("levy_home", $"Courier hauled {amount} EU to the till.", AlertSeverity.Good, Time.unscaledTime, at);
         }
 
         public void NoteLevyStolen(
@@ -1281,7 +1281,7 @@ namespace SolarMajesty
             {
                 string craft = Research != null
                     ? Research.LaunchTechLabel(CelestialBodyId.Earth)
-                    : "Lunar Rocket";
+                    : "Colony Lifter";
                 _overseerHud?.Notify(LaunchPath.ObjectiveText(false, false, craft), 5f);
                 return;
             }
@@ -1299,8 +1299,8 @@ namespace SolarMajesty
                 case SolarSystemTitlePick.Outcome.Locked:
                     _overseerHud?.Notify(
                         DevTools.Enabled
-                            ? $"{profile.DisplayName} is locked. Conquer the inner worlds first — or Shift+click (dev tools)."
-                            : $"{profile.DisplayName} is locked. Conquer the inner worlds first.",
+                            ? $"{profile.DisplayName} is locked. Clear the inner worlds first — or Shift+click (dev tools)."
+                            : $"{profile.DisplayName} is locked. Clear the inner worlds first.",
                         3.5f);
                     return;
                 case SolarSystemTitlePick.Outcome.StartNewOnBody:
@@ -1424,7 +1424,7 @@ namespace SolarMajesty
             _overseerHud?.Notify(
                 DemoSettings.FirstHourDemo
                     ? "Tutorial reset — workshop, Build at 700, raise the price, then Defend."
-                    : "Tutorial reset — Commons, then HAB, workshop, flag, bounty.",
+                    : "Tutorial reset — Commons, then charging station, workshop, flag, bounty.",
                 4f);
         }
 
@@ -2939,14 +2939,14 @@ namespace SolarMajesty
             else if (id == TechId.HorizonPulse)
                 LogOverseer("Horizon Pulse researched. Inspect Horizon Lodge and spend EU to mark dens.");
             else if (id == TechId.AnvilOvertime)
-                LogOverseer("Anvil Overtime researched. Inspect Anvil Compact and spend EU to weld faster.");
+                LogOverseer("Anvil Overtime researched. Inspect Anvil Lodge and spend EU to weld faster.");
             else if (id == TechId.AegisWatchfire)
                 LogOverseer("Aegis Watchfire researched. Inspect Aegis Lodge and spend EU to harden the roster.");
             else if (id == TechId.TriageFieldAid)
-                LogOverseer("Triage Field Aid researched. Inspect Triage Compact and spend EU to patch the dirt.");
+                LogOverseer("Triage Field Aid researched. Inspect Triage Lodge and spend EU to patch the dirt.");
             else if (id == TechId.GuildCharter)
             {
-                LogOverseer("Guild Charter signed. Dock Horizon Lodge, Anvil Compact, Aegis Lodge, or Triage Compact. Flags near the hall pull that class.");
+                LogOverseer("Guild Charter signed. Dock Horizon Lodge, Anvil Lodge, Aegis Lodge, or Triage Lodge. Flags near the hall pull that class.");
                 EnsureNarrative();
                 _narrative.NoteCompleted(FlagDecreeIds.EarthCharterTheHall);
                 if (_narrative.TryTakeCompleteToast(AdvisorToastCatalog.CompleteCharterTheHall, out var charterToast))
@@ -2960,9 +2960,9 @@ namespace SolarMajesty
             else if (id == TechId.AegisDoctrine)
                 LogOverseer("Aegis Doctrine. Grid draw drops 15%. The rim breathes easier.");
             else if (id == TechId.TerraformCharter)
-                LogOverseer("Terraform Charter. Bloom Compact is licensed. Post Terraform (U) on farms.");
+                LogOverseer("Terraform Charter. Bloom Lodge is licensed. Post Terraform (U) on farms.");
             else if (id == TechId.FreightDoctrine)
-                LogOverseer("Freight Doctrine. Haul Lodge is licensed — they take Outpost cheap.");
+                LogOverseer("Freight Doctrine. The Courier Workshop is licensed. Couriers take Outpost flags cheap.");
             else if (id == TechId.CoreSampling)
                 LogOverseer("Core Sampling. Core Lodge is licensed. Mines tick harder.");
             else if (id == TechId.PerimeterDoctrine)
@@ -3154,12 +3154,12 @@ namespace SolarMajesty
                     starterBuildings = new[]
                     {
                         CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, ColonyLayout.CommonsSide, ColonyLayout.CommonsSide),
-                        CreateBuilding("Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4),
+                        CreateBuilding("Charging Station", BuildingCategory.Habitat, 50, 8, 12f, 4, 4),
                         CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4),
                         CreateBuilding("OPS Drop-off", BuildingCategory.Mining, 45, 6, 14f, 4, 4),
                         CreateBuilding("Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4),
                         CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6),
-                        CreateBuilding("Defense Battery", BuildingCategory.Defense, 60, 8, 16f, 4, 4)
+                        CreateBuilding("Laser Turret", BuildingCategory.Defense, 60, 8, 16f, 4, 4)
                     };
                 }
             }
@@ -3239,7 +3239,7 @@ namespace SolarMajesty
                         b.displayName = "Colony Commons";
                         break;
                     case BuildingCategory.Defense:
-                        b.displayName = "Defense Battery";
+                        b.displayName = "Laser Turret";
                         b.description = "auto-fires 18 m";
                         break;
                     case BuildingCategory.Mining:
@@ -4678,7 +4678,7 @@ namespace SolarMajesty
                 : null;
             string wispLine = _body != null && _body.RadiationDrainPerSecond > 0f
                 ? "Ice wisps off the crust — post Clear Threat."
-                : "Dust wisps on the grid — post Clear Threat.";
+                : "Dust wisps on the solar farms — post Clear Threat.";
             if (pwr != null && TrySpawnCampusKind(
                     FaunaKind.Wisp, wisps, wispCap, pwr.WorldPosition, campus, wispLine))
                 return;
@@ -4695,7 +4695,7 @@ namespace SolarMajesty
                 return;
 
             string leechLine = _body != null && _body.RadiationDrainPerSecond > 0f
-                ? "Fissure leeches on the grid — post Clear Threat."
+                ? "Fissure leeches on the solar farms — post Clear Threat."
                 : "Watt leeches on the Power Node — post Clear Threat.";
             if (pwr != null && TrySpawnCampusKind(
                     FaunaKind.Leech, leeches, leechCap, pwr.WorldPosition, campus, leechLine))
@@ -4735,12 +4735,12 @@ namespace SolarMajesty
 
         private string HopperFirstLog()
         {
-            if (_body == null) return "Ash hoppers on the HAB — post Clear Threat.";
+            if (_body == null) return "Ash hoppers on the charging stations — post Clear Threat.";
             switch (_body.Id)
             {
                 case CelestialBodyId.Mars: return "Dust hoppers at the Commons — post Clear Threat.";
                 case CelestialBodyId.Belt: return "Shard hoppers on the Commons — post Clear Threat.";
-                default: return "Ash hoppers on the HAB — post Clear Threat.";
+                default: return "Ash hoppers on the charging stations — post Clear Threat.";
             }
         }
 
@@ -5237,7 +5237,7 @@ namespace SolarMajesty
             {
                 string craft = Research != null
                     ? Research.LaunchTechLabel(CelestialBodyId.Earth)
-                    : "Lunar Rocket";
+                    : "Colony Lifter";
                 _overseerHud?.Notify(LaunchPath.ObjectiveText(false, false, craft), 5f);
                 return;
             }
@@ -5325,7 +5325,7 @@ namespace SolarMajesty
             {
                 string craft = Research != null
                     ? Research.LaunchTechLabel(CelestialBodyId.Earth)
-                    : "Lunar Rocket";
+                    : "Colony Lifter";
                 _overseerHud?.Notify(LaunchPath.ObjectiveText(false, false, craft), 5f);
                 return;
             }
@@ -5607,8 +5607,8 @@ namespace SolarMajesty
                 BuildingCategory.AegisSpire => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.DeepArchive => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.GuildHall => "Guild Hall — assign a class",
-                BuildingCategory.Market => "Potions and a regen necklace. Heroes buy with EU.",
-                BuildingCategory.Blacksmith => "Guild arms and armor. Heroes buy with EU.",
+                BuildingCategory.Market => "Potions and a regen necklace. Bots buy with EU.",
+                BuildingCategory.Blacksmith => "Guild arms and armor. Bots buy with EU.",
                 BuildingCategory.FobotYard => "Pay EU here to stand wrecks up.",
                 BuildingCategory.Watchtower => HudLayout.WatchtowerBlurb,
                 BuildingCategory.AidStation => "Hurt robots pay EU for a patch. Triage clocks in.",
@@ -5922,7 +5922,7 @@ namespace SolarMajesty
                     }
                     Settlement?.ClaimOutpost();
                     LightOutpostBeacon();
-                    LogOverseer("Forward outpost claimed from the flag. Extra PWR draw — drop a Mine on site.");
+                    LogOverseer("Forward outpost claimed from the flag. Drop a Mine on site.");
                     break;
                 case FlagType.Terraform:
                     Settlement?.AddTerraformPulse();
@@ -5943,7 +5943,7 @@ namespace SolarMajesty
 
             Settlement.ClaimOutpost();
             LightOutpostBeacon();
-            LogOverseer("Forward outpost claimed. Extra PWR draw; a matching drop-off on site pays better.");
+            LogOverseer("Forward outpost claimed. A matching drop-off on site pays better.");
         }
 
         private void LightOutpostBeacon()
@@ -7002,7 +7002,7 @@ namespace SolarMajesty
             _parties.Add(party);
             DemoAudio.PlayPartyForm(leader.transform.position);
             DemoVfx.ClaimRing(leader.transform.position, new Color(0.96f, 0.42f, 0.08f));
-            LogOverseer($"Party of {party.Count} — {ColonyStructure.ClassLabel(leader.Data != null ? leader.Data.specialistClass : SpecialistClass.ScoutDrone)} leads. Followers rest and hunt together.");
+            LogOverseer($"Squad of {party.Count} — {ColonyStructure.ClassLabel(leader.Data != null ? leader.Data.specialistClass : SpecialistClass.ScoutDrone)} leads. Followers rest and hunt together.");
             Debug.Log($"[Party] Formed #{party.Id} from selection leader={leader.Data?.displayName} size={party.Count}");
             return true;
         }
@@ -7043,7 +7043,7 @@ namespace SolarMajesty
             _parties.Add(party);
             DemoAudio.PlayPartyForm(ColonyLayout.InnOutpost);
             DemoVfx.ClaimRing(ColonyLayout.InnOutpost, new Color(0.96f, 0.42f, 0.08f));
-            LogOverseer($"Party of {party.Count} formed at the rest beacon.");
+            LogOverseer($"Squad of {party.Count} formed at the rest beacon.");
             Debug.Log($"[Party] Formed #{party.Id} leader={leader.Data?.displayName} size={party.Count}");
         }
 

@@ -45,39 +45,39 @@ namespace SolarMajesty
             switch (beat)
             {
                 case JexBeat.Drop:
-                    return "Welcome to a rock that already has a landlord. Raise a Commons before the Freeholds invoice the crater.";
+                    return "New rock, same rules. Raise a Commons before anything else.";
                 case JexBeat.FirstHab:
-                    return "Worker bots run the yard. Contract units take bounties. Same mind, different jobs.";
+                    return "Charging station is up. Worker bots live there. Bounty bots take the flags.";
                 case JexBeat.FirstFlag:
                     return "That is a decree, not a leash. Post it. If nobody wants it, that is a you problem.";
                 case JexBeat.GreedAsk:
-                    return "Anvil wants 790. He can count. Raise the bounty or enjoy the scenery.";
+                    return "Anvil wants 790. It can count. Raise the bounty or enjoy the scenery.";
                 case JexBeat.LevyWalk:
                     return "See the crate on wheels? That is Haul walking EU home. Do not click it.";
                 case JexBeat.PurseSitting:
                     return "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!";
                 case JexBeat.YardBill:
-                    return "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.";
+                    return "Anvil is in the Fobot Yard. Standing it up costs more than the Scout. That is called having favorites.";
                 case JexBeat.TankVsWallet:
                     return "That red chip is water, not a coupon. EU will not drink itself. Build a farm or stop collecting idle bots.";
                 case JexBeat.Refusal:
-                    return "Flag still unpaid. The Compact does not work for exposure.";
+                    return "Flag still unpaid. Bots do not work for exposure.";
                 case JexBeat.IceCritical:
-                    return "Life support is a suggestion until it is not. The tank is at four. Bots first, Anvil second.";
+                    return "EU is running low. Bots first, Anvil second.";
                 case JexBeat.PowerShort:
-                    return "Grid is skinny. Everyone is working at seventy percent, including your patience.";
+                    return "The till is skinny. Everyone is working slower, including your patience.";
                 case JexBeat.PurseStolen:
-                    return "Haul lost the levy on the road.";
+                    return "A courier lost its EU on the road.";
                 case JexBeat.YardUnaffordable:
-                    return "Level 6 wreck, Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
+                    return "Level 6 wreck, not enough EU. Re-fab a rookie or start a bake sale.";
                 case JexBeat.EmptyRoster:
                     return "Nobody is standing. You have twenty seconds of optimism left.";
                 case JexBeat.MarketPayout:
-                    return "Pad paid out. Dock fee already left. The Freeholds send their love. It is itemized.";
+                    return "Pad paid out. EU is in the till.";
                 case JexBeat.MarketBlocked:
-                    return "Stall is closed. We do not export lunch until the tank is fat. Try twelve. Try not dying.";
+                    return "Stall is closed. Nothing to sell yet. Try not dying.";
                 case JexBeat.StalkerSiphon:
-                    return "Something just drank a unit of ice. That was not a sale.";
+                    return "Something just drained a battery. That was not a sale.";
                 default:
                     return "";
             }

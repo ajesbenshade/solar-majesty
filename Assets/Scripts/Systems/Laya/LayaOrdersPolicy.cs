@@ -18,13 +18,13 @@ namespace SolarMajesty
         public const float StrictProbability = 0.7f;
 
         public static string BuildState(string ordersText) =>
-            $"Written orders pinned to a bounty flag for autonomous colony heroes: \"{ordersText}\"";
+            $"Written orders pinned to a bounty flag for autonomous colony bots: \"{ordersText}\"";
 
         public static List<LayaQuestion> BuildQuestions()
         {
             var levels = new List<LayaOption> { new LayaOption { Label = "any", Description = "No level requirement; any hero may go." } };
             for (int l = 2; l <= OverseerRules.LevelCap; l++)
-                levels.Add(new LayaOption { Label = "level_" + l, Description = $"Only heroes level {l} or higher may go." });
+                levels.Add(new LayaOption { Label = "level_" + l, Description = $"Only bots level {l} or higher may go." });
 
             var classes = new List<LayaOption> { new LayaOption { Label = "anyone", Description = "Any kind of hero may go." } };
             foreach (SpecialistClass cls in Enum.GetValues(typeof(SpecialistClass)))

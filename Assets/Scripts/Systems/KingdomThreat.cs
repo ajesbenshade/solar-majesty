@@ -79,7 +79,7 @@ namespace SolarMajesty
         [Tooltip("Metres from the chosen building where burrow pests appear.")]
         public float burrowSpawnDistance = 5f;
 
-        [Header("Kingdom value and safety fields")]
+        [Header("Colony value and safety fields")]
         [Tooltip("Per-category worth. Categories not listed use the fallback values below.")]
         public BuildingWorth[] buildingWorth = DefaultWorth();
         public float fallbackValue = 0.2f;

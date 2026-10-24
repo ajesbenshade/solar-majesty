@@ -470,8 +470,8 @@ namespace SolarMajesty
             {
                 case SpecialistClass.HarvesterBot: return "Harvest Lodge";
                 case SpecialistClass.SurveyorBot: return "Chart Lodge";
-                case SpecialistClass.TerraformerBot: return "Bloom Compact";
-                case SpecialistClass.CourierBot: return "Haul Lodge";
+                case SpecialistClass.TerraformerBot: return "Bloom Lodge";
+                case SpecialistClass.CourierBot: return "Courier Workshop";
                 case SpecialistClass.GeologistBot: return "Core Lodge";
                 case SpecialistClass.SentinelMech: return "Rim Watch";
                 default: return "Horizon Lodge";
@@ -630,13 +630,13 @@ namespace SolarMajesty
 
         private static string DefaultName(BuildingCategory cat, StructureRole role)
         {
-            if (role == StructureRole.VillageHab) return "Village HAB";
+            if (role == StructureRole.VillageHab) return "Village Charger";
             if (role == StructureRole.Inn) return "Fobot Yard";
             switch (cat)
             {
                 case BuildingCategory.Inn: return "Fobot Yard";
                 case BuildingCategory.Commons: return "Colony Commons";
-                case BuildingCategory.Habitat: return "Habitat";
+                case BuildingCategory.Habitat: return "Charging Station";
                 case BuildingCategory.Farm: return "Greenhouse Farm";
                 case BuildingCategory.Mine: return "Nuclear Mine";
                 case BuildingCategory.RegolithCamp: return "Regolith Camp";
@@ -661,7 +661,7 @@ namespace SolarMajesty
                 case BuildingCategory.DeepArchive: return "Deep Archive";
                 case BuildingCategory.Power: return "Solar Farm";
                 case BuildingCategory.Laboratory: return "Laboratory";
-                case BuildingCategory.Defense: return "Defense Battery";
+                case BuildingCategory.Defense: return "Laser Turret";
                 case BuildingCategory.Mining: return "Ops Unit";
                 case BuildingCategory.LandingPad: return "Landing Pad";
                 default: return "Module";
