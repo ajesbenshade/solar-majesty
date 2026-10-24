@@ -23,9 +23,9 @@ Checked on Basement-1 (v2 re-key): ran `IntroBuilder.BuildAll` and compared the 
 | --- | --- |
 | 0.0–1.1 s | Low, south-west of the Earth globe. The Americas face the lens against the dusk sky, and the lit citadel sits lower right. The camera drifts in slowly, then speeds up. |
 | 1.0–1.5 s | Passes under Earth's south side. Earth slides off frame left, and the aim glides onto the citadel. |
-| 1.5–2.3 s | Crests low (about 30 m) over the dark plain and comes down toward the colony, citadel centred. |
+| 1.5–2.3 s | Crests low (about 30 m) over the green campus meadow and comes down toward the colony, citadel centred. |
 | 2.3–3.35 s | Drops to about 19 m and tilts up off the citadel onto the title slot, ending on a push-in down the title axis. The title (on at 2.85 s) grows in the centre of the frame against the sky. |
-| 3.35–5.0 s | Held: camera 11 m in front of the title slot on yaw 45, pitch 9° **up**, FOV 35 (position about (173.05, 19.78, 171.05)). The title fills about 61% of the width at 16:9 and about 68% at 16:10, centred, with the horizon about 0.14 frame-heights below its lower edge, so the letters read against the mauve sky. The hold is 1.05 s before the 4.4 s fade. |
+| 3.35–5.0 s | Held: camera 11 m in front of the title slot on yaw 45, pitch 9° **up**, FOV 35 (position about (173.05, 19.78, 171.05)). The title fills about 61% of the width at 16:9 and about 68% at 16:10, centred, with the horizon about 0.14 frame-heights below its lower edge, so the letters read against the blue-hour sky. The hold is 1.05 s before the 4.4 s fade. |
 
 Motion: the path is a Hermite spline, re-parameterised by arc length. Speed starts at 22% and reaches
 full by mid-path, then lands with zero velocity and zero acceleration at the end. Peak speed is about 45 m/s
