@@ -132,7 +132,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(AdvisorToastCatalog.TravelEarthEmptyDrop, AdvisorToastCatalog.TravelKeyForArrival(CelestialBodyId.Earth));
             Assert.AreEqual(AdvisorToastCatalog.TravelEarthToLuna, AdvisorToastCatalog.TravelKeyForVictory(CelestialBodyId.Earth));
             Assert.IsTrue(AdvisorToastCatalog.TryGetTravel(AdvisorToastCatalog.TravelEarthEmptyDrop, out var toast));
-            StringAssert.Contains("picnic", toast.Line);
+            StringAssert.Contains("Raise a Commons", toast.Line);
         }
     }
 

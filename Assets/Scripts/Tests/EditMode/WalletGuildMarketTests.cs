@@ -201,7 +201,7 @@ namespace SolarMajesty.Tests
         {
             StringAssert.Contains("EU", CompactJex.LevyStolen(4, "HAB"));
             StringAssert.Contains("invoice", CompactJex.YardNeedsBuilding());
-            StringAssert.Contains("lunch", CompactJex.SiphonBlocked(12));
+            StringAssert.Contains("Nothing to sell yet", CompactJex.SiphonBlocked(12));
             StringAssert.Contains("fog", CompactJex.DenCharted("SCOUT"));
         }
 
