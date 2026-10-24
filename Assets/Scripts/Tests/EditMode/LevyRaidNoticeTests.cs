@@ -49,7 +49,7 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(raid.TryFlush(40f, false, ref hintAt, out string held));
             Assert.IsNull(held);
             Assert.IsTrue(raid.TryFlush(61f, false, ref hintAt, out string message));
-            Assert.AreEqual("Haul was hit by a Dust Stalker and dropped 30 EU.", message);
+            Assert.AreEqual("Dust Stalker hit Haul: dropped 30 EU.", message);
 
             Assert.IsFalse(raid.TryFlush(21f, true, ref hintAt, out string again));
             Assert.IsNull(again);
