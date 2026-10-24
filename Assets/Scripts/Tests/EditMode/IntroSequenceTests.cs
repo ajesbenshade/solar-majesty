@@ -72,6 +72,52 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(IntroLaunch.ShouldAutoPlay(new IntroBootContext(false, false, false, true)));
         }
 
+        private static IntroBootContext ColdTitleWithSaves =>
+            new IntroBootContext(false, false, false, false, savesExist: true);
+
+        [Test]
+        public void FreshProfile_NoSaves_PlaysOnce()
+        {
+            Assert.IsFalse(GamePrefs.HasKey(IntroLaunch.SeenKey));
+            Assert.IsTrue(IntroLaunch.ShouldAutoPlay(IntroBootContext.ColdTitle));
+            IntroLaunch.MarkSeen();
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(IntroBootContext.ColdTitle));
+        }
+
+        [Test]
+        public void Upgrader_WithSavesAndNoIntroSeen_PlaysOnce()
+        {
+            // SM_SaveExists=1 plus save files on disk, but SM_IntroSeen was never written.
+            Assert.IsFalse(IntroLaunch.HasSeen);
+            Assert.IsTrue(IntroLaunch.ShouldAutoPlay(ColdTitleWithSaves));
+            IntroLaunch.MarkSeen(); // finished or skipped
+            Assert.AreEqual(1, GamePrefs.GetInt(IntroLaunch.SeenKey, 0));
+        }
+
+        [Test]
+        public void SecondLaunch_AfterSeen_DoesNotPlay_WithOrWithoutSaves()
+        {
+            IntroLaunch.MarkSeen();
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(ColdTitleWithSaves));
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(IntroBootContext.ColdTitle));
+        }
+
+        [Test]
+        public void IntroOnLaunchOff_SkipsUpgraderAndFreshProfile()
+        {
+            IntroLaunch.SetPlayOnLaunch(false);
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(ColdTitleWithSaves));
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(IntroBootContext.ColdTitle));
+            Assert.IsFalse(IntroLaunch.HasSeen, "turning it off must not mark it seen");
+        }
+
+        [Test]
+        public void Upgrader_ContinueOrLoadInProgress_StillNeverWaits()
+        {
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(new IntroBootContext(true, false, false, false, savesExist: true)));
+            Assert.IsFalse(IntroLaunch.ShouldAutoPlay(new IntroBootContext(false, false, true, false, savesExist: true)));
+        }
+
         [Test]
         public void Skip_RequiresAKeyClickOrGamepadButton()
         {

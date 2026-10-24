@@ -1056,8 +1056,9 @@ namespace SolarMajesty
             new IntroBootContext(
                 DemoSettings.BootStraightIntoPlay,
                 returningFromSession: false,
-                continueOrLoadReady: DemoSettings.SaveExists || _bootSlot >= 0,
-                StillCaptureHold.Active);
+                continueOrLoadReady: _bootSlot >= 0,
+                StillCaptureHold.Active,
+                savesExist: DemoSettings.SaveExists);
 
         private void BeginIntro(bool force)
         {
