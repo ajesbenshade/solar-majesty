@@ -51,7 +51,7 @@ namespace SolarMajesty
                 case JexBeat.FirstFlag:
                     return "That is a decree, not a leash. Post it. If nobody wants it, that is a you problem.";
                 case JexBeat.GreedAsk:
-                    return "Anvil wants 790. It can count. Raise the bounty or enjoy the scenery.";
+                    return "Post it at 400 first. If Anvil walks past, raise the bounty.";
                 case JexBeat.LevyWalk:
                     return "See the crate on wheels? That is Haul walking EU home. Do not click it.";
                 case JexBeat.PurseSitting:

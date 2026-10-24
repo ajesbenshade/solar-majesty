@@ -3858,17 +3858,6 @@
   {
    "speaker": "overseer",
    "cue": "line",
-   "key": "222e6f08",
-   "text": "Anvil wants 790. It can count. Raise the bounty or enjoy the scenery.",
-   "clip": "overseer_line_222e6f08",
-   "hash": "4ea8a1310b61",
-   "seconds": 5.79,
-   "peak_db": -2.4,
-   "rms_db": -21.1
-  },
-  {
-   "speaker": "overseer",
-   "cue": "line",
    "key": "25c3cbc9",
    "text": "A courier lost its EU on the road.",
    "clip": "overseer_line_25c3cbc9",
@@ -3920,6 +3909,17 @@
    "seconds": 3.72,
    "peak_db": -4.1,
    "rms_db": -21.4
+  },
+  {
+   "speaker": "overseer",
+   "cue": "line",
+   "key": "61f08e98",
+   "text": "Post it at 400 first. If Anvil walks past, raise the bounty.",
+   "clip": "overseer_line_61f08e98",
+   "hash": "cefb5503d699",
+   "seconds": 4.33,
+   "peak_db": -4.5,
+   "rms_db": -21.6
   },
   {
    "speaker": "overseer",
