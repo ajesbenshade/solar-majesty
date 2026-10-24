@@ -146,7 +146,7 @@ namespace SolarMajesty.Tests
         {
             string cheap = FirstHourTutorial.Beat(1, highBuildAlready: false);
             StringAssert.Contains("F3", cheap);
-            StringAssert.Contains("700", cheap);
+            StringAssert.Contains("400", cheap);
             StringAssert.Contains("Click that Build pole", FirstHourTutorial.Beat(2, false));
             StringAssert.Contains("F5", FirstHourTutorial.Beat(FirstHourTutorial.PestStep, false));
         }
