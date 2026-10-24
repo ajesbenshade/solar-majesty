@@ -104,7 +104,7 @@ namespace SolarMajesty
 
             string headline = HeadlineFor(current);
             const string body =
-                "Dens are quiet, the till is holding, and the craft is on the pad.";
+                "Worker bots secured this claim. Dens are quiet, the till holds its EU, and the craft is on the pad.";
 
             var next = CampaignProgress.NextAfter(current);
             if (!next.HasValue || !nextBuilt)
