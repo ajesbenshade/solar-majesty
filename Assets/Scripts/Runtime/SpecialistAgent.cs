@@ -1783,7 +1783,7 @@ namespace SolarMajesty
                 int n = _levyCarry;
                 _levyCarry = 0;
                 _sinceLevyHandIn = 0f;
-                if (rig) LevyDeliveredForTest?.Invoke(n, CompactGrok.LevyDelivered(n));
+                if (rig) LevyDeliveredForTest?.Invoke(n, CompactJex.LevyDelivered(n));
                 else _loop.DeliverLevy(n);
                 _status = "levy_delivered";
                 DemoVfx.ClaimRing(transform.position, new Color(0.96f, 0.78f, 0.22f));

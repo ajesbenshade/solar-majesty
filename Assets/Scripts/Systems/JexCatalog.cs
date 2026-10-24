@@ -1,7 +1,7 @@
 namespace SolarMajesty
 {
-    /// <summary>Scripted Grok beats. Catalog only — never a live LLM.</summary>
-    public enum GrokBeat
+    /// <summary>Scripted Jex beats. Catalog only — never a live LLM.</summary>
+    public enum JexBeat
     {
         Drop = 0,
         FirstHab = 1,
@@ -23,74 +23,74 @@ namespace SolarMajesty
     }
 
     /// <summary>
-    /// Grok (SpaceXAI) advisor copy from Docs/MARS_COLONY_MAJESTY_LOOPS.md.
+    /// Jex (SpaceXAI) advisor copy from Docs/MARS_COLONY_MAJESTY_LOOPS.md.
     /// Lessons are training wheels. Failures speak on Mars with wheels off.
     /// Does not replace SpecialistFlavor.
     /// LevyWalk / PurseSitting / PurseStolen wait for levy visibility.
     /// MarketPayout / MarketBlocked wait for pad trickle. Catalogued here so those
-    /// slices can call GrokCatalog.Say without inventing copy.
+    /// slices can call JexCatalog.Say without inventing copy.
     /// </summary>
-    public static class GrokCatalog
+    public static class JexCatalog
     {
-        public const string Speaker = "Grok";
+        public const string Speaker = "Jex";
 
-        public static bool IsLesson(GrokBeat beat) =>
-            beat <= GrokBeat.TankVsWallet || beat == GrokBeat.MarketPayout;
+        public static bool IsLesson(JexBeat beat) =>
+            beat <= JexBeat.TankVsWallet || beat == JexBeat.MarketPayout;
 
         public static string Format(string line) =>
             string.IsNullOrEmpty(line) ? Speaker : Speaker + " — " + line;
 
-        public static string Line(GrokBeat beat)
+        public static string Line(JexBeat beat)
         {
             switch (beat)
             {
-                case GrokBeat.Drop:
+                case JexBeat.Drop:
                     return "Welcome to a rock that already has a landlord. Raise a Commons before the Freeholds invoice the crater.";
-                case GrokBeat.FirstHab:
+                case JexBeat.FirstHab:
                     return "Worker bots run the yard. Contract units take bounties. Same mind, different jobs.";
-                case GrokBeat.FirstFlag:
+                case JexBeat.FirstFlag:
                     return "That is a decree, not a leash. Post it. If nobody wants it, that is a you problem.";
-                case GrokBeat.GreedAsk:
+                case JexBeat.GreedAsk:
                     return "Anvil wants 790. He can count. Raise the bounty or enjoy the scenery.";
-                case GrokBeat.LevyWalk:
+                case JexBeat.LevyWalk:
                     return "See the crate on wheels? That is Haul walking EU home. Do not click it.";
-                case GrokBeat.PurseSitting:
+                case JexBeat.PurseSitting:
                     return "EU is sitting in building batteries. Haul will get around to it. Or a mite will. Gambling!";
-                case GrokBeat.YardBill:
+                case JexBeat.YardBill:
                     return "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.";
-                case GrokBeat.TankVsWallet:
+                case JexBeat.TankVsWallet:
                     return "That red chip is water, not a coupon. EU will not drink itself. Build a farm or stop collecting idle bots.";
-                case GrokBeat.Refusal:
+                case JexBeat.Refusal:
                     return "Flag still unpaid. The Compact does not work for exposure.";
-                case GrokBeat.IceCritical:
+                case JexBeat.IceCritical:
                     return "Life support is a suggestion until it is not. The tank is at four. Bots first, Anvil second.";
-                case GrokBeat.PowerShort:
+                case JexBeat.PowerShort:
                     return "Grid is skinny. Everyone is working at seventy percent, including your patience.";
-                case GrokBeat.PurseStolen:
+                case JexBeat.PurseStolen:
                     return "Haul lost the levy on the road.";
-                case GrokBeat.YardUnaffordable:
+                case JexBeat.YardUnaffordable:
                     return "Level 6 wreck, Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
-                case GrokBeat.EmptyRoster:
+                case JexBeat.EmptyRoster:
                     return "Nobody is standing. You have twenty seconds of optimism left.";
-                case GrokBeat.MarketPayout:
+                case JexBeat.MarketPayout:
                     return "Pad paid out. Dock fee already left. The Freeholds send their love. It is itemized.";
-                case GrokBeat.MarketBlocked:
+                case JexBeat.MarketBlocked:
                     return "Stall is closed. We do not export lunch until the tank is fat. Try twelve. Try not dying.";
-                case GrokBeat.StalkerSiphon:
+                case JexBeat.StalkerSiphon:
                     return "Something just drank a unit of ice. That was not a sale.";
                 default:
                     return "";
             }
         }
 
-        public static string Say(GrokBeat beat) => Format(Line(beat));
+        public static string Say(JexBeat beat) => Format(Line(beat));
     }
 
     /// <summary>
     /// Luna (and Earth until parked-bodies) default training wheels on.
     /// Mars default off — failure asides only. Optional Mars lessons toggle.
     /// </summary>
-    public static class GrokAdvisor
+    public static class JexAdvisor
     {
         public static bool DefaultTrainingWheels(CelestialBodyId body) =>
             body == CelestialBodyId.Luna || body == CelestialBodyId.Earth;
@@ -98,34 +98,34 @@ namespace SolarMajesty
         public static bool TrainingWheels(CelestialBodyId body)
         {
             if (body == CelestialBodyId.Mars)
-                return DemoSettings.MarsGrokLessons;
+                return DemoSettings.MarsJexLessons;
             return DefaultTrainingWheels(body);
         }
 
-        public static bool Allows(CelestialBodyId body, GrokBeat beat)
+        public static bool Allows(CelestialBodyId body, JexBeat beat)
         {
-            if (!GrokCatalog.IsLesson(beat)) return true;
+            if (!JexCatalog.IsLesson(beat)) return true;
             return TrainingWheels(body);
         }
     }
 
-    /// <summary>Once-per-stretch latches so Grok does not lecture twice.</summary>
-    public sealed class GrokSession
+    /// <summary>Once-per-stretch latches so Jex does not lecture twice.</summary>
+    public sealed class JexSession
     {
         private readonly bool[] _taken = new bool[17];
 
-        public bool TrySpeak(GrokBeat beat, bool wheels, bool condition)
+        public bool TrySpeak(JexBeat beat, bool wheels, bool condition)
         {
             int i = (int)beat;
             if (i < 0 || i >= _taken.Length) return false;
             if (!condition)
             {
-                if (!GrokCatalog.IsLesson(beat))
+                if (!JexCatalog.IsLesson(beat))
                     _taken[i] = false;
                 return false;
             }
 
-            if (GrokCatalog.IsLesson(beat) && !wheels) return false;
+            if (JexCatalog.IsLesson(beat) && !wheels) return false;
             if (_taken[i]) return false;
             _taken[i] = true;
             return true;

@@ -7,8 +7,8 @@
 
 Sources:
   - Tools/audio/voice_lines.json: authored hero barks and generic Overseer alerts.
-  - Overseer (Grok) lines extracted from the C# sources: GrokCatalog.Line, OverseerRules.Grok*
-    constants, non-interpolated CompactGrok lines, and literal RaiseAlert messages. Scraping the
+  - Overseer (Jex) lines extracted from the C# sources: JexCatalog.Line, OverseerRules.Jex*
+    constants, non-interpolated CompactJex lines, and literal RaiseAlert messages. Scraping the
     real sources means a copy edit in C# is re-voiced on the next bake instead of drifting.
 
 The bake is incremental: each clip records a hash of (text, cast entry, FX code), and unchanged
@@ -47,15 +47,15 @@ def _unescape(s: str) -> str:
 def extract_overseer_lines() -> list[str]:
     lines: list[str] = []
 
-    grok = (SCRIPTS / "Systems" / "GrokCatalog.cs").read_text(encoding="utf-8")
-    body = grok[grok.index("public static string Line("):grok.index("public static string Say(")]
+    jex = (SCRIPTS / "Systems" / "JexCatalog.cs").read_text(encoding="utf-8")
+    body = jex[jex.index("public static string Line("):jex.index("public static string Say(")]
     lines += [_unescape(m) for m in re.findall(r"return\s+" + STRING + r"\s*;", body)]
 
     rules = (SCRIPTS / "Systems" / "OverseerRules.cs").read_text(encoding="utf-8")
-    for m in re.finditer(r"const\s+string\s+Grok\w+\s*=\s*((?:" + STRING + r"\s*\+?\s*)+);", rules, re.S):
+    for m in re.finditer(r"const\s+string\s+Jex\w+\s*=\s*((?:" + STRING + r"\s*\+?\s*)+);", rules, re.S):
         lines.append("".join(_unescape(p) for p in re.findall(STRING, m.group(1))))
 
-    compact = (SCRIPTS / "Systems" / "CompactGrok.cs").read_text(encoding="utf-8")
+    compact = (SCRIPTS / "Systems" / "CompactJex.cs").read_text(encoding="utf-8")
     # Only fixed lines; interpolated ($"...{amount}...") lines stay text (or go live via HeroSpeaker).
     lines += [_unescape(m) for m in re.findall(r"=>\s*" + STRING + r"\s*;", compact)]
 

@@ -496,7 +496,7 @@ namespace SolarMajesty
             if (!_levyHomeLogged)
             {
                 _levyHomeLogged = true;
-                LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
+                LogOverseer(OverseerRules.JexLevyHome, 6.2f);
                 Alerts.Push("levy_home", $"Haul walked {amount:N0} EU home", AlertSeverity.Good, Time.unscaledTime, at);
             }
         }
@@ -579,7 +579,7 @@ namespace SolarMajesty
         private float _reviveReadyAt;
         private bool _revivePenaltyApplied;
         private bool _yardBillLogged;
-        private readonly GrokSession _grok = new GrokSession();
+        private readonly JexSession _jex = new JexSession();
         private int _lastTithe;
         private float _purseToastAt;
         private readonly List<TimedDisc> _surveys = new List<TimedDisc>(4);
@@ -652,28 +652,28 @@ namespace SolarMajesty
                 OverseerVoice.SpeakIfScripted(line);
         }
 
-        public bool GrokLessonsOn => GrokAdvisor.TrainingWheels(celestialBody);
+        public bool JexLessonsOn => JexAdvisor.TrainingWheels(celestialBody);
 
         /// <summary>Stalker drank the tank. Failure aside, not a sale.</summary>
-        public void NoteIceSiphon() => TryGrok(GrokBeat.StalkerSiphon, true);
+        public void NoteIceSiphon() => TryJex(JexBeat.StalkerSiphon, true);
 
-        private bool TryGrok(GrokBeat beat, bool condition = true)
+        private bool TryJex(JexBeat beat, bool condition = true)
         {
             if (StillCaptureHold.Active) return false;
-            bool wheels = GrokAdvisor.TrainingWheels(celestialBody);
-            if (!_grok.TrySpeak(beat, wheels, condition)) return false;
-            LogOverseer(GrokCatalog.Say(beat), 6.2f);
+            bool wheels = JexAdvisor.TrainingWheels(celestialBody);
+            if (!_jex.TrySpeak(beat, wheels, condition)) return false;
+            LogOverseer(JexCatalog.Say(beat), 6.2f);
             return true;
         }
 
-        private void TickGrok()
+        private void TickJex()
         {
             if (StillCaptureHold.Active) return;
             if (Settlement != null && Settlement.CoreHabs > 0)
-                TryGrok(GrokBeat.FirstHab);
+                TryJex(JexBeat.FirstHab);
             bool rosterTicking = _everHadRobot && RobotCount <= 0 &&
                                  _emptyRosterTimer > 0.05f && !EmptyRosterFailed;
-            TryGrok(GrokBeat.EmptyRoster, rosterTicking);
+            TryJex(JexBeat.EmptyRoster, rosterTicking);
         }
 
         /// <summary>
@@ -707,7 +707,7 @@ namespace SolarMajesty
             if (!_levyHomeLogged)
             {
                 _levyHomeLogged = true;
-                LogOverseer(OverseerRules.GrokLevyHome, 6.2f);
+                LogOverseer(OverseerRules.JexLevyHome, 6.2f);
             }
             else
                 LogOverseer($"Haul deposited {amount} EU at Commons.");
@@ -721,7 +721,7 @@ namespace SolarMajesty
             Settlement?.NoteLevyStolen(amount);
             if (fromHab)
             {
-                AnnounceLevyLine(OverseerRules.GrokLevyStolenHab, "levy_stolen_hab", at);
+                AnnounceLevyLine(OverseerRules.JexLevyStolenHab, "levy_stolen_hab", at);
                 return;
             }
 
@@ -1276,6 +1276,7 @@ namespace SolarMajesty
         /// <summary>Title orrery click. Never posts flags or specialist orders.</summary>
         public void PlayBodyFromTitle(CelestialBodyId body, bool cheatUnlock)
         {
+            cheatUnlock &= DevTools.Enabled;
             if (DemoSettings.FirstHourDemo && body != CelestialBodyId.Earth)
             {
                 string craft = Research != null
@@ -1297,7 +1298,9 @@ namespace SolarMajesty
             {
                 case SolarSystemTitlePick.Outcome.Locked:
                     _overseerHud?.Notify(
-                        $"{profile.DisplayName} is locked. Conquer the inner worlds first — or Shift+click.",
+                        DevTools.Enabled
+                            ? $"{profile.DisplayName} is locked. Conquer the inner worlds first — or Shift+click (dev tools)."
+                            : $"{profile.DisplayName} is locked. Conquer the inner worlds first.",
                         3.5f);
                     return;
                 case SolarSystemTitlePick.Outcome.StartNewOnBody:
@@ -1431,8 +1434,8 @@ namespace SolarMajesty
             ApplyReplayToBrain();
             _overseerHud?.Notify(
                 on
-                    ? "Earth demo on. Guilds, Belt, and Europa are hidden. New Game to start clean."
-                    : "Full campaign on. Other worlds, guilds, and replay rules are back.",
+                    ? "Guided start on. Earth first; guilds and the outer worlds open when you clear it. New Game to start clean."
+                    : "Guided start skipped. Every unlocked world, the guilds and replay rules are open.",
                 4f);
         }
 
@@ -1463,9 +1466,9 @@ namespace SolarMajesty
             BroadcastRefusalChips(handle);
 
             EnsureNarrative();
-            bool wheels = GrokAdvisor.TrainingWheels(celestialBody);
+            bool wheels = JexAdvisor.TrainingWheels(celestialBody);
 
-            if (TryGrok(GrokBeat.FirstFlag))
+            if (TryJex(JexBeat.FirstFlag))
             {
                 // first-flag lesson; decree copy waits for the next post
             }
@@ -1479,9 +1482,9 @@ namespace SolarMajesty
             if (handle.InterestCount <= 0)
             {
                 if (wheels)
-                    TryGrok(GrokBeat.GreedAsk);
+                    TryJex(JexBeat.GreedAsk);
                 else
-                    TryGrok(GrokBeat.Refusal);
+                    TryJex(JexBeat.Refusal);
             }
 
             string interest = InterestLine(handle);
@@ -1644,12 +1647,12 @@ namespace SolarMajesty
             // Continue/Load rebuilds the narrative tracker, so a first-run key would
             // speak again. The loaded campus is the source of truth, not that fresh tracker.
             var loaded = CurrentNarrativeHint();
-            if (announce && celestialBody == CelestialBodyId.Luna && TryGrok(GrokBeat.Drop))
+            if (announce && celestialBody == CelestialBodyId.Luna && TryJex(JexBeat.Drop))
             {
                 // Luna training-wheels drop. W2 arrival copy stays in the catalog.
             }
             else if (announce &&
-                     GrokAdvisor.TrainingWheels(celestialBody) &&
+                     JexAdvisor.TrainingWheels(celestialBody) &&
                      AdvisorArrival.ShouldSpeak(travelKey, loaded.HasCommons) &&
                      _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
@@ -2012,6 +2015,42 @@ namespace SolarMajesty
             LogOverseer(hint, 7f);
             PlaytestTelemetry.RecordIdleHint(TutorialStep, hint);
         }
+
+        /// <summary>
+        /// Alt+F4, the window's close button and Steam's Stop skip the QUIT button's save.
+        /// Autosave runs every 20 s; this closes that gap. Player builds only: the editor
+        /// and test runs must not write the developer's save when play mode stops.
+        /// </summary>
+        private void OnApplicationQuit()
+        {
+            if (Application.isEditor || Application.isBatchMode) return;
+            bool inColony = Screen == DemoScreen.Playing || Screen == DemoScreen.Paused ||
+                            (Screen == DemoScreen.Settings && _settingsReturn == DemoScreen.Paused);
+            if (!inColony) return;
+            try
+            {
+                PersistSession();
+                GamePrefs.Save();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[GameLoop] Save on quit failed: " + e.Message);
+            }
+        }
+
+        /// <summary>
+        /// Achievements were only checked when a world fell, so "Terms Accepted" (first bounty)
+        /// popped an hour late alongside everything else. Check every two seconds of play instead.
+        /// </summary>
+        private void TickAchievements()
+        {
+            _achievementTimer += Time.unscaledDeltaTime;
+            if (_achievementTimer < 2f) return;
+            _achievementTimer = 0f;
+            Achievements.Evaluate(Stats);
+        }
+
+        private float _achievementTimer;
 
         private void TickAutosave()
         {
@@ -2518,8 +2557,9 @@ namespace SolarMajesty
             TickTutorial();
             TickPlaytestIdle();
             TickAutosave();
+            TickAchievements();
             TickJunkYard(Time.deltaTime);
-            TickGrok();
+            TickJex();
             TickLevyRaid();
             TickPurseThefts();
             if (_glanceCooldown > 0f)
@@ -3812,7 +3852,7 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Pad + Starship, PWR-1/solar, water farm, regolith camp. Island yards
+        /// Pad + Colony Lifter, PWR-1/solar, water farm, regolith camp. Island yards
         /// (MinYardGapCells 4) — ExtraPlacementRule would park forward yards on
         /// Campus B.
         /// </summary>
@@ -4842,7 +4882,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// EditMode hookup tests arm threat without booting <see cref="Awake"/>,
-        /// which reads the player save folder and PlayerPrefs.
+        /// which reads the player save folder and GamePrefs.
         /// </summary>
         internal void ArmThreat(ThreatPressure threat) => Threat = threat ?? new ThreatPressure();
 
@@ -4974,7 +5014,7 @@ namespace SolarMajesty
             if (amount <= 0 || HasLivingCourier) return;
             if (Time.time < _purseToastAt) return;
             _purseToastAt = Time.time + 48f;
-            LogOverseer(CompactGrok.PurseSitting(amount));
+            LogOverseer(CompactJex.PurseSitting(amount));
         }
 
         public void NotifyLevyStolen(int amount, string where)
@@ -5019,7 +5059,7 @@ namespace SolarMajesty
             if (amount <= 0 || Settlement == null) return;
             Settlement.NoteLevyDelivered(amount);
             NoteTreasuryIncome(amount);
-            LogOverseer(CompactGrok.LevyDelivered(amount));
+            LogOverseer(CompactJex.LevyDelivered(amount));
         }
 
         public void RetryParty() => PayFobotYard();
@@ -5037,14 +5077,14 @@ namespace SolarMajesty
             }
             if (!HasFobotYard)
             {
-                LogOverseer(CompactGrok.YardNeedsBuilding());
+                LogOverseer(CompactJex.YardNeedsBuilding());
                 return;
             }
 
             var yard = FindFobotYard();
             if (yard == null || !yard.IsAlive)
             {
-                LogOverseer(OverseerRules.GrokYardMissing, 6.2f);
+                LogOverseer(OverseerRules.JexYardMissing, 6.2f);
                 return;
             }
 
@@ -5057,22 +5097,22 @@ namespace SolarMajesty
             ComputeReviveBill(out int met, out _);
             if (met <= 0)
             {
-                if (!TryGrok(GrokBeat.YardUnaffordable, true))
-                    LogOverseer(CompactGrok.YardBill(met));
+                if (!TryJex(JexBeat.YardUnaffordable, true))
+                    LogOverseer(CompactJex.YardBill(met));
                 return;
             }
 
             if (Economy == null || !Economy.CanAffordRevive(met))
             {
-                if (!TryGrok(GrokBeat.YardUnaffordable, true))
-                    LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
+                if (!TryJex(JexBeat.YardUnaffordable, true))
+                    LogOverseer(OverseerRules.JexYardUnaffordable, 6.2f);
                 return;
             }
 
             if (!Economy.TrySpendRevive(met))
             {
-                if (!TryGrok(GrokBeat.YardUnaffordable, true))
-                    LogOverseer(OverseerRules.GrokYardUnaffordable, 6.2f);
+                if (!TryJex(JexBeat.YardUnaffordable, true))
+                    LogOverseer(OverseerRules.JexYardUnaffordable, 6.2f);
                 return;
             }
 
@@ -5093,11 +5133,11 @@ namespace SolarMajesty
             if (!_yardBillLogged)
             {
                 _yardBillLogged = true;
-                if (!TryGrok(GrokBeat.YardBill))
-                    LogOverseer(OverseerRules.GrokYardFirstBill, 6.4f);
+                if (!TryJex(JexBeat.YardBill))
+                    LogOverseer(OverseerRules.JexYardFirstBill, 6.4f);
             }
-            else if (!TryGrok(GrokBeat.YardBill))
-                LogOverseer(CompactGrok.YardBill(met));
+            else if (!TryJex(JexBeat.YardBill))
+                LogOverseer(CompactJex.YardBill(met));
             Debug.Log("[GameLoop] Fobot Yard paid.");
         }
 
@@ -5109,8 +5149,8 @@ namespace SolarMajesty
             DemoSettings.WriteRoster(celestialBody, "");
             // A retry starts a funded new colony, not the previous losing stockpile.
             DemoSettings.SaveExists = false;
-            PlayerPrefs.SetInt(DemoSettings.SaveFlagKey, 0);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(DemoSettings.SaveFlagKey, 0);
+            GamePrefs.Save();
         }
 
         public void RestartMission()
@@ -5131,6 +5171,7 @@ namespace SolarMajesty
         /// <summary>Body gate met — increment conquest count and evaluate achievements (Ironman, Skinflint, Clean Sheet).</summary>
         public void NoteBodyConquered()
         {
+            CampaignProgress.MarkConquered(celestialBody);
             Stats.BodiesConquered++;
             Achievements.Evaluate(Stats);
             // Victory camera beat over the Commons. No-op under Reduce Motion, in batch, or with no rig.
@@ -5170,8 +5211,8 @@ namespace SolarMajesty
             if (DemoSettings.FirstHourDemo)
             {
                 DemoSettings.FirstHourDemo = false;
-                PlayerPrefs.SetInt(DemoSettings.FirstHourKey, 0);
-                PlayerPrefs.Save();
+                GamePrefs.SetInt(DemoSettings.FirstHourKey, 0);
+                GamePrefs.Save();
             }
             if (SimSpeed.IsPaused)
                 SimSpeed.Resume();
@@ -5299,6 +5340,7 @@ namespace SolarMajesty
 
         private void HandleBodyHopHotkeys()
         {
+            if (!DevTools.Enabled) return;
             if (InputBindings.TextEntryActive) return; // typing flag orders
             if (Screen != DemoScreen.Playing && Screen != DemoScreen.Paused) return;
             if (!InputBindings.Down(GameAction.DebugNextWorld)) return;
@@ -5345,21 +5387,22 @@ namespace SolarMajesty
             if (InputBindings.Down(GameAction.ToolTech) && _overseerHud != null)
                 _overseerHud.ToggleTechPanel();
 
-            if (InputBindings.Down(GameAction.DebugHud) && _debugHud != null)
-                _debugHud.ToggleVisible();
-
             if (InputBindings.Down(GameAction.FocusCampusA))
                 FocusCampus(0);
             if (InputBindings.Down(GameAction.FocusCampusB))
                 FocusCampus(1);
-            if (InputBindings.Down(GameAction.DebugSeedCampusB))
-                SeedCampusBAttract();
 
             if (InputBindings.Down(GameAction.ToolParty))
                 FormParty();
             if (InputBindings.Down(GameAction.DisbandParty))
                 DisbandSelectedParty();
 
+            if (!DevTools.Enabled) return;
+
+            if (InputBindings.Down(GameAction.DebugHud) && _debugHud != null)
+                _debugHud.ToggleVisible();
+            if (InputBindings.Down(GameAction.DebugSeedCampusB))
+                SeedCampusBAttract();
             if (InputBindings.Down(GameAction.DebugFatigue))
                 DebugFatigueAll(0.92f);
         }
@@ -5988,7 +6031,8 @@ namespace SolarMajesty
                 highestUnlocked = (int)CampaignProgress.HighestUnlocked,
                 rosterBlob = SpecialistRoster.Encode(CaptureRoster()),
                 firstHourDemo = DemoSettings.FirstHourDemo,
-                tutorialDone = DemoSettings.TutorialDone
+                tutorialDone = DemoSettings.TutorialDone,
+                stats = JsonUtility.FromJson<RunStats>(JsonUtility.ToJson(Stats))
             };
 
             if (Resources != null)
@@ -6233,6 +6277,8 @@ namespace SolarMajesty
             ReplayRules.Restore(save.replay);
             ReplayRules.ApplyIronmanFromSave(save.replay);
             Achievements.IronmanActive = ReplayRules.IronmanRun;
+            if (save.stats != null)
+                JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(save.stats), Stats);
             if (save.rosterBlob != null)
                 LoadRosterMemory(save.rosterBlob);
             else
@@ -7082,8 +7128,6 @@ namespace SolarMajesty
         {
             if (go == null || Village == null) return;
             if (string.IsNullOrEmpty(resourcesPath)) return;
-            if (resourcesPath.Contains("Starship"))
-                return;
 
             BuildingCategory cat;
             if (resourcesPath.Contains("HAB")) cat = BuildingCategory.Habitat;
@@ -7880,7 +7924,7 @@ namespace SolarMajesty
                     if (l == null || l.IsCleared || l.IsScouted) continue;
                     if (!DenChart.InDisc(at, l.WorldPosition, DenChart.PassiveChartRadius)) continue;
                     l.MarkScouted();
-                    LogOverseer(CompactGrok.DenCharted(
+                    LogOverseer(CompactJex.DenCharted(
                         ColonyStructure.ClassLabel(agent.Data.specialistClass)));
                 }
             }

@@ -78,6 +78,15 @@ Attribution is not required by the license. The rest of the soundtrack and sound
 - **License:** MIT. See `Assets/Shaders/Uber Stylized Water/Third Party/*/LICENSE`.
 - **Use:** the water shader includes `CustomLighting.hlsl`.
 
+## Platform SDKs
+
+### Steamworks.NET
+- **Author:** Riley Labrecque, © 2013-2022
+- **Source:** https://github.com/rlabrecque/Steamworks.NET, release `2025.164.1`, installed through the Unity Package Manager (`Packages/manifest.json`), not checked into `Assets/`.
+- **License:** MIT. Its text ships in builds as `THIRD-PARTY-NOTICES.txt` (`Tools/release/`).
+- **Use:** the Steam API wrapper behind `SteamService` (achievements, overlay, rich presence).
+- **Bundled:** Valve's `steam_api64.dll`, redistributed under the Steamworks SDK Access Agreement.
+
 ## Development tooling (not shipped in builds)
 
 ### dream-loop agent skill

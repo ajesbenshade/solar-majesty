@@ -267,7 +267,7 @@ namespace SolarMajesty
             return true;
         }
 
-        string Line() => CompactGrok.PestsLifted(_amount, _places.Count);
+        string Line() => CompactJex.PestsLifted(_amount, _places.Count);
 
         void AddPlace(string where)
         {

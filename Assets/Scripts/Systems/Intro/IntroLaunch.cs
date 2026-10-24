@@ -36,23 +36,23 @@ namespace SolarMajesty
         public const string SeenKey = "SM_IntroSeen";
         public const string PlayOnLaunchKey = "SM_IntroOnLaunch";
 
-        public static bool HasSeen => PlayerPrefs.GetInt(SeenKey, 0) == 1;
+        public static bool HasSeen => GamePrefs.GetInt(SeenKey, 0) == 1;
 
         /// <summary>Missing key stays on. A stored 0 is an explicit off.</summary>
         public static bool PlayOnLaunch =>
-            !PlayerPrefs.HasKey(PlayOnLaunchKey) || PlayerPrefs.GetInt(PlayOnLaunchKey, 1) != 0;
+            !GamePrefs.HasKey(PlayOnLaunchKey) || GamePrefs.GetInt(PlayOnLaunchKey, 1) != 0;
 
         public static void SetPlayOnLaunch(bool on)
         {
-            PlayerPrefs.SetInt(PlayOnLaunchKey, on ? 1 : 0);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(PlayOnLaunchKey, on ? 1 : 0);
+            GamePrefs.Save();
         }
 
         public static void MarkSeen()
         {
             if (HasSeen) return;
-            PlayerPrefs.SetInt(SeenKey, 1);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(SeenKey, 1);
+            GamePrefs.Save();
         }
 
         public static bool ShouldAutoPlay(IntroBootContext boot)

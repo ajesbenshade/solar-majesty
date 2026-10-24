@@ -98,34 +98,40 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void LivePad_StarshipTwoCarbonBands_SoftTerminator()
+        public void LivePad_ColonyLifter_IsAnOriginalCraft()
         {
             var pad = ModularBuildingFactory.Spawn(
                 BuildingCategory.LandingPad, Vector3.zero, _root.transform);
-            Transform lo = FindChild(pad.transform, "Dress_ShipBand_0");
-            Transform hi = FindChild(pad.transform, "Dress_ShipBand_1");
-            Transform body = FindChild(pad.transform, "Dress_StarshipBody");
-            Assert.IsNotNull(lo, "lower carbon band");
-            Assert.IsNotNull(hi, "upper carbon band");
-            Assert.IsNotNull(body, "procedural cream hull — placeholder FBX skipped");
-            Assert.IsNull(FindChild(pad.transform, "Dress_StarshipStripe"),
-                "orange hull stripes are not the concept rocket");
-            Assert.IsNull(FindChild(pad.transform, "Dress_StarshipBandHi"));
-            Assert.IsNull(FindChild(pad.transform, "Dress_Starship"),
-                "SM_Starship_Placeholder stays off the pad (LaunchSite still uses it)");
+            Transform lifter = FindChild(pad.transform, HeroBuildingKits.LifterObjectName);
+            Assert.IsNotNull(lifter, "the pad parks a Colony Lifter LaunchSite can reuse");
 
-            float h = HeroBuildingKits.StarshipStackHeight;
-            float loLen = lo.localScale.y * 2f;
-            float hiLen = hi.localScale.y * 2f;
-            Assert.Greater(loLen / h, 0.08f, "lower band must read thick at ortho 10");
-            Assert.Less(loLen / h, 0.16f);
-            Assert.Greater(hiLen / h, 0.06f, "upper band stays a readable ring");
-            Assert.Less(hiLen / h, 0.14f);
-            Assert.Less(Albedo(lo).grayscale, 0.20f, "bands stay near-black, not orange");
-            Assert.Less(Albedo(hi).grayscale, 0.20f);
-            Assert.AreEqual(h * HeroBuildingKits.StarshipBandLoT, lo.localPosition.y, 0.02f);
-            Assert.AreEqual(h * HeroBuildingKits.StarshipBandHiT, hi.localPosition.y, 0.02f);
+            // The parts that make it read as its own design at isometric distance.
+            for (int i = 0; i < 4; i++)
+            {
+                Assert.IsNotNull(FindChild(lifter, "Dress_LifterLeg_" + i), "landing leg " + i);
+                Assert.IsNotNull(FindChild(lifter, "Dress_LifterFoot_" + i), "foot pad " + i);
+            }
+            Assert.IsNotNull(FindChild(lifter, "Dress_LifterBooster_L"));
+            Assert.IsNotNull(FindChild(lifter, "Dress_LifterBooster_R"));
+            Assert.IsNotNull(FindChild(lifter, "Dress_LifterDome"), "blunt cargo dome, not an ogive nose");
 
+            // No real-world rocket's trade dress: no flaps, no single-side heat shield, no old names.
+            foreach (Transform t in pad.GetComponentsInChildren<Transform>(true))
+            {
+                StringAssert.DoesNotContain("Starship", t.name);
+                StringAssert.DoesNotContain("Flap", t.name);
+                StringAssert.DoesNotContain("Heat", t.name);
+            }
+
+            float h = HeroBuildingKits.LifterStackHeight;
+            Transform band = FindChild(lifter, "Dress_LifterBand");
+            Assert.AreEqual(h * HeroBuildingKits.LifterBandT, band.localPosition.y, 0.02f);
+            Color orange = Albedo(band);
+            Assert.Greater(orange.r - orange.b, 0.5f, "the stage band is the colony orange");
+            var beacon = FindChild(lifter, "Dress_LifterBeacon");
+            Assert.AreEqual(h, beacon.localPosition.y + beacon.localScale.y * 0.5f, 0.15f, "stack height");
+
+            Transform body = FindChild(lifter, "Dress_LifterLower");
             Color hull = Albedo(body);
             Assert.Greater(hull.r - hull.b, 0.08f, "hull is warm cream, not cool white");
             Assert.Greater(hull.grayscale, 0.70f);

@@ -121,6 +121,9 @@ namespace SolarMajesty.EditorTools
                 else if (target == BuildTarget.StandaloneWindows64)
                     PlaytestHandoff.WriteWindows(folderPath);
 
+                WriteSteamAppId(folderPath);
+                CopyNotices(folderPath);
+
                 Debug.Log(
                     $"[Build] Succeeded: {summary.totalSize / (1024 * 1024)} MB in " +
                     $"{summary.totalTime.TotalSeconds:F1}s -> {outputPath}");
@@ -131,6 +134,39 @@ namespace SolarMajesty.EditorTools
             return false;
         }
 
+        /// <summary>
+        /// steam_appid.txt lets a build started outside Steam (QA, a zip) reach the Steam client.
+        /// It holds SteamConfig.AppId, today Valve's 480 Spacewar test app, not a real app ID.
+        /// It is gitignored, and the SteamPipe script leaves it out of the depot.
+        /// </summary>
+        private static void WriteSteamAppId(string folder)
+        {
+            try
+            {
+                File.WriteAllText(Path.Combine(folder, "steam_appid.txt"), SteamConfig.AppId.ToString());
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not write steam_appid.txt: " + e.Message);
+            }
+        }
+
+        /// <summary>MIT and SDK notices for code compiled into the player must ship with it.</summary>
+        private static void CopyNotices(string folder)
+        {
+            const string source = "Tools/release/THIRD-PARTY-NOTICES.txt";
+            try
+            {
+                if (File.Exists(source))
+                    File.Copy(source, Path.Combine(folder, "THIRD-PARTY-NOTICES.txt"), overwrite: true);
+                else
+                    Debug.LogWarning("[Build] " + source + " is missing; the build ships without license notices.");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Build] Could not copy notices: " + e.Message);
+            }
+        }
         private static bool TryParseTarget(string name, out BuildTarget target, out string folder, out string artifact)
         {
             folder = artifact = null;

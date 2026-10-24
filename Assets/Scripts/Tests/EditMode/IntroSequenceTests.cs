@@ -16,12 +16,12 @@ namespace SolarMajesty.Tests
         [SetUp]
         public void SetUp()
         {
-            _hadSeen = PlayerPrefs.HasKey(IntroLaunch.SeenKey);
-            _hadLaunch = PlayerPrefs.HasKey(IntroLaunch.PlayOnLaunchKey);
-            _seen = PlayerPrefs.GetInt(IntroLaunch.SeenKey, 0);
-            _launch = PlayerPrefs.GetInt(IntroLaunch.PlayOnLaunchKey, 1);
-            PlayerPrefs.DeleteKey(IntroLaunch.SeenKey);
-            PlayerPrefs.DeleteKey(IntroLaunch.PlayOnLaunchKey);
+            _hadSeen = GamePrefs.HasKey(IntroLaunch.SeenKey);
+            _hadLaunch = GamePrefs.HasKey(IntroLaunch.PlayOnLaunchKey);
+            _seen = GamePrefs.GetInt(IntroLaunch.SeenKey, 0);
+            _launch = GamePrefs.GetInt(IntroLaunch.PlayOnLaunchKey, 1);
+            GamePrefs.DeleteKey(IntroLaunch.SeenKey);
+            GamePrefs.DeleteKey(IntroLaunch.PlayOnLaunchKey);
         }
 
         [TearDown]
@@ -29,11 +29,11 @@ namespace SolarMajesty.Tests
         {
             // Windows stores these as SM_IntroSeen_h<hash> / SM_IntroOnLaunch_h<hash>.
             // DeleteKey removes that registry value. Always run, including after a failed test.
-            if (_hadSeen) PlayerPrefs.SetInt(IntroLaunch.SeenKey, _seen);
-            else PlayerPrefs.DeleteKey(IntroLaunch.SeenKey);
-            if (_hadLaunch) PlayerPrefs.SetInt(IntroLaunch.PlayOnLaunchKey, _launch);
-            else PlayerPrefs.DeleteKey(IntroLaunch.PlayOnLaunchKey);
-            PlayerPrefs.Save();
+            if (_hadSeen) GamePrefs.SetInt(IntroLaunch.SeenKey, _seen);
+            else GamePrefs.DeleteKey(IntroLaunch.SeenKey);
+            if (_hadLaunch) GamePrefs.SetInt(IntroLaunch.PlayOnLaunchKey, _launch);
+            else GamePrefs.DeleteKey(IntroLaunch.PlayOnLaunchKey);
+            GamePrefs.Save();
         }
 
         [Test]

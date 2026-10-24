@@ -17,9 +17,9 @@ namespace SolarMajesty
         public const int RegToMet = 10;
         public const float IntervalSeconds = 24f;
 
-        public const string GrokPayout =
+        public const string JexPayout =
             "Pad paid out. Dock fee already left. The Freeholds send their love. It is itemized.";
-        public const string GrokBlocked =
+        public const string JexBlocked =
             "Stall is closed. We do not export lunch until the tank is fat. Try twelve. Try not dying.";
 
         public static int IceReserve(int population) =>

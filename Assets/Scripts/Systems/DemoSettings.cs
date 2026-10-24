@@ -32,7 +32,7 @@ namespace SolarMajesty
         public const string ReduceMotionKey = "SM_Set_ReduceMotion";
         public const string ColorBlindKey = "SM_Set_ColorBlind";
         public const string FrameCapKey = "SM_Set_FrameCap";
-        public const string MarsGrokLessonsKey = "SM_Set_MarsGrokLessons";
+        public const string MarsJexLessonsKey = "SM_Set_MarsGrokLessons";
         public const string DayCycleKey = "SM_Set_DayCycle";
         public const string DioramaCameraKey = "SM_Set_DioramaCamera";
         public const string TiltShiftKey = "SM_Set_TiltShift";
@@ -105,7 +105,7 @@ namespace SolarMajesty
         /// </summary>
         public static bool FirstHourDemo;
         /// <summary>Mars optional training wheels. Default off — failure asides only.</summary>
-        public static bool MarsGrokLessons;
+        public static bool MarsJexLessons;
 
         /// <summary>Sun moves through golden hour and a blue-hour night. Off = the tuned still look.</summary>
         public static bool DayCycle = true;
@@ -266,55 +266,55 @@ namespace SolarMajesty
         /// <summary>Read the flags play-mode tests rewrite, without applying display or consuming boot.</summary>
         public static void ReloadFlagsFromPrefs()
         {
-            TutorialDone = PlayerPrefs.GetInt(TutorialKey, 0) == 1;
-            SaveExists = PlayerPrefs.GetInt(SaveFlagKey, 0) == 1;
-            BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
-            FirstHourDemo = PlayerPrefs.GetInt(FirstHourKey, 1) == 1;
-            EdgeScroll = ResolveEdgeScroll(PlayerPrefs.HasKey(EdgeScrollKey), PlayerPrefs.GetInt(EdgeScrollKey, 1));
+            TutorialDone = GamePrefs.GetInt(TutorialKey, 0) == 1;
+            SaveExists = GamePrefs.GetInt(SaveFlagKey, 0) == 1;
+            BootStraightIntoPlay = GamePrefs.GetInt(BootPlayKey, 0) == 1;
+            FirstHourDemo = GamePrefs.GetInt(FirstHourKey, 1) == 1;
+            EdgeScroll = ResolveEdgeScroll(GamePrefs.HasKey(EdgeScrollKey), GamePrefs.GetInt(EdgeScrollKey, 1));
         }
 
         public static void Load()
         {
-            Master = PlayerPrefs.GetFloat(MasterKey, 1f);
-            Sfx = PlayerPrefs.GetFloat(SfxKey, 1f);
-            Ambient = PlayerPrefs.GetFloat(AmbientKey, 1f);
+            Master = GamePrefs.GetFloat(MasterKey, 1f);
+            Sfx = GamePrefs.GetFloat(SfxKey, 1f);
+            Ambient = GamePrefs.GetFloat(AmbientKey, 1f);
             // Music used to ride the ambience slider; inherit it so an old mute stays muted.
-            Music = PlayerPrefs.GetFloat(MusicKey, Ambient);
-            Voice = PlayerPrefs.GetFloat(VoiceKey, 1f);
+            Music = GamePrefs.GetFloat(MusicKey, Ambient);
+            Voice = GamePrefs.GetFloat(VoiceKey, 1f);
             // A missing auto key stays on auto. SaveSettings always writes HudKey, so an old
             // 0.85–1.25 value must not count as an explicit choice.
-            HudScaleAuto = PlayerPrefs.GetInt(HudAutoKey, 1) == 1;
-            HudScaleExplicit = HudScaleMath.RoundToStep(PlayerPrefs.GetFloat(HudKey, 1f));
+            HudScaleAuto = GamePrefs.GetInt(HudAutoKey, 1) == 1;
+            HudScaleExplicit = HudScaleMath.RoundToStep(GamePrefs.GetFloat(HudKey, 1f));
             RefreshHudScale(Screen.width, Screen.height);
-            InvertPan = PlayerPrefs.GetInt(InvertKey, 0) == 1;
-            TutorialDone = PlayerPrefs.GetInt(TutorialKey, 0) == 1;
-            SaveExists = PlayerPrefs.GetInt(SaveFlagKey, 0) == 1;
-            QualityIndex = PlayerPrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
-            Fullscreen = PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) == 1;
-            ResolutionWidth = PlayerPrefs.GetInt(ResolutionWKey, 0);
-            ResolutionHeight = PlayerPrefs.GetInt(ResolutionHKey, 0);
-            EdgeScroll = ResolveEdgeScroll(PlayerPrefs.HasKey(EdgeScrollKey), PlayerPrefs.GetInt(EdgeScrollKey, 1));
-            ReduceMotion = PlayerPrefs.GetInt(ReduceMotionKey, 0) == 1;
-            ColorBlindMode = PlayerPrefs.GetInt(ColorBlindKey, 0);
-            FrameCap = PlayerPrefs.GetInt(FrameCapKey, 0);
-            MarsGrokLessons = PlayerPrefs.GetInt(MarsGrokLessonsKey, 0) == 1;
-            DayCycle = PlayerPrefs.GetInt(DayCycleKey, 1) == 1;
-            DioramaCamera = PlayerPrefs.GetInt(DioramaCameraKey, 0) == 1 || HasArg("-diorama");
-            TiltShift = PlayerPrefs.GetInt(TiltShiftKey, 1) == 1;
-            CloudShadows = PlayerPrefs.GetInt(CloudShadowsKey, 1) == 1;
-            HeroVoices = PlayerPrefs.GetInt(HeroVoicesKey, 0) == 1;
-            CharacterVoices = PlayerPrefs.GetInt(CharacterVoicesKey, 1) == 1;
-            HeroSpeech = PlayerPrefs.GetInt(HeroSpeechKey, 0) == 1;
-            PlanetArchitecture = PlayerPrefs.GetInt(PlanetArchitectureKey, 1) == 1 && !HasArg("-classic-buildings");
-            BootStraightIntoPlay = PlayerPrefs.GetInt(BootPlayKey, 0) == 1;
-            FirstHourDemo = PlayerPrefs.GetInt(FirstHourKey, 1) == 1;
+            InvertPan = GamePrefs.GetInt(InvertKey, 0) == 1;
+            TutorialDone = GamePrefs.GetInt(TutorialKey, 0) == 1;
+            SaveExists = GamePrefs.GetInt(SaveFlagKey, 0) == 1;
+            QualityIndex = GamePrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
+            Fullscreen = GamePrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) == 1;
+            ResolutionWidth = GamePrefs.GetInt(ResolutionWKey, 0);
+            ResolutionHeight = GamePrefs.GetInt(ResolutionHKey, 0);
+            EdgeScroll = ResolveEdgeScroll(GamePrefs.HasKey(EdgeScrollKey), GamePrefs.GetInt(EdgeScrollKey, 1));
+            ReduceMotion = GamePrefs.GetInt(ReduceMotionKey, 0) == 1;
+            ColorBlindMode = GamePrefs.GetInt(ColorBlindKey, 0);
+            FrameCap = GamePrefs.GetInt(FrameCapKey, 0);
+            MarsJexLessons = GamePrefs.GetInt(MarsJexLessonsKey, 0) == 1;
+            DayCycle = GamePrefs.GetInt(DayCycleKey, 1) == 1;
+            DioramaCamera = GamePrefs.GetInt(DioramaCameraKey, 0) == 1 || HasArg("-diorama");
+            TiltShift = GamePrefs.GetInt(TiltShiftKey, 1) == 1;
+            CloudShadows = GamePrefs.GetInt(CloudShadowsKey, 1) == 1;
+            HeroVoices = GamePrefs.GetInt(HeroVoicesKey, 0) == 1;
+            CharacterVoices = GamePrefs.GetInt(CharacterVoicesKey, 1) == 1;
+            HeroSpeech = GamePrefs.GetInt(HeroSpeechKey, 0) == 1;
+            PlanetArchitecture = GamePrefs.GetInt(PlanetArchitectureKey, 1) == 1 && !HasArg("-classic-buildings");
+            BootStraightIntoPlay = GamePrefs.GetInt(BootPlayKey, 0) == 1;
+            FirstHourDemo = GamePrefs.GetInt(FirstHourKey, 1) == 1;
             ReplayRules.Load();
             if (FirstHourDemo)
                 ClampReplayForDemo();
             if (BootStraightIntoPlay)
             {
-                PlayerPrefs.DeleteKey(BootPlayKey);
-                PlayerPrefs.Save();
+                GamePrefs.DeleteKey(BootPlayKey);
+                GamePrefs.Save();
                 BootStraightIntoPlay = true;
             }
             ApplyDisplay();
@@ -381,44 +381,44 @@ namespace SolarMajesty
 
         public static void SaveSettings()
         {
-            PlayerPrefs.SetFloat(MasterKey, Master);
-            PlayerPrefs.SetFloat(SfxKey, Sfx);
-            PlayerPrefs.SetFloat(AmbientKey, Ambient);
-            PlayerPrefs.SetFloat(MusicKey, Music);
-            PlayerPrefs.SetFloat(VoiceKey, Voice);
-            PlayerPrefs.SetFloat(HudKey, HudScaleExplicit);
-            PlayerPrefs.SetInt(HudAutoKey, HudScaleAuto ? 1 : 0);
-            PlayerPrefs.SetInt(InvertKey, InvertPan ? 1 : 0);
-            PlayerPrefs.SetInt(QualityKey, QualityIndex);
-            PlayerPrefs.SetInt(FullscreenKey, Fullscreen ? 1 : 0);
-            PlayerPrefs.SetInt(ResolutionWKey, ResolutionWidth);
-            PlayerPrefs.SetInt(ResolutionHKey, ResolutionHeight);
-            PlayerPrefs.SetInt(EdgeScrollKey, EdgeScroll ? 1 : 0);
-            PlayerPrefs.SetInt(ReduceMotionKey, ReduceMotion ? 1 : 0);
-            PlayerPrefs.SetInt(ColorBlindKey, ColorBlindMode);
-            PlayerPrefs.SetInt(FrameCapKey, FrameCap);
-            PlayerPrefs.SetInt(DayCycleKey, DayCycle ? 1 : 0);
-            PlayerPrefs.SetInt(DioramaCameraKey, DioramaCamera ? 1 : 0);
-            PlayerPrefs.SetInt(TiltShiftKey, TiltShift ? 1 : 0);
-            PlayerPrefs.SetInt(CloudShadowsKey, CloudShadows ? 1 : 0);
-            PlayerPrefs.SetInt(HeroVoicesKey, HeroVoices ? 1 : 0);
-            PlayerPrefs.SetInt(CharacterVoicesKey, CharacterVoices ? 1 : 0);
-            PlayerPrefs.SetInt(HeroSpeechKey, HeroSpeech ? 1 : 0);
-            PlayerPrefs.SetInt(FirstHourKey, FirstHourDemo ? 1 : 0);
+            GamePrefs.SetFloat(MasterKey, Master);
+            GamePrefs.SetFloat(SfxKey, Sfx);
+            GamePrefs.SetFloat(AmbientKey, Ambient);
+            GamePrefs.SetFloat(MusicKey, Music);
+            GamePrefs.SetFloat(VoiceKey, Voice);
+            GamePrefs.SetFloat(HudKey, HudScaleExplicit);
+            GamePrefs.SetInt(HudAutoKey, HudScaleAuto ? 1 : 0);
+            GamePrefs.SetInt(InvertKey, InvertPan ? 1 : 0);
+            GamePrefs.SetInt(QualityKey, QualityIndex);
+            GamePrefs.SetInt(FullscreenKey, Fullscreen ? 1 : 0);
+            GamePrefs.SetInt(ResolutionWKey, ResolutionWidth);
+            GamePrefs.SetInt(ResolutionHKey, ResolutionHeight);
+            GamePrefs.SetInt(EdgeScrollKey, EdgeScroll ? 1 : 0);
+            GamePrefs.SetInt(ReduceMotionKey, ReduceMotion ? 1 : 0);
+            GamePrefs.SetInt(ColorBlindKey, ColorBlindMode);
+            GamePrefs.SetInt(FrameCapKey, FrameCap);
+            GamePrefs.SetInt(DayCycleKey, DayCycle ? 1 : 0);
+            GamePrefs.SetInt(DioramaCameraKey, DioramaCamera ? 1 : 0);
+            GamePrefs.SetInt(TiltShiftKey, TiltShift ? 1 : 0);
+            GamePrefs.SetInt(CloudShadowsKey, CloudShadows ? 1 : 0);
+            GamePrefs.SetInt(HeroVoicesKey, HeroVoices ? 1 : 0);
+            GamePrefs.SetInt(CharacterVoicesKey, CharacterVoices ? 1 : 0);
+            GamePrefs.SetInt(HeroSpeechKey, HeroSpeech ? 1 : 0);
+            GamePrefs.SetInt(FirstHourKey, FirstHourDemo ? 1 : 0);
             // The demo forces campaign / no challenge / balanced in memory.
             // Do not write that over a saved full-campaign stance.
             if (!FirstHourDemo)
                 ReplayRules.Save();
-            PlayerPrefs.SetInt(MarsGrokLessonsKey, MarsGrokLessons ? 1 : 0);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(MarsJexLessonsKey, MarsJexLessons ? 1 : 0);
+            GamePrefs.Save();
         }
 
         /// <summary>Open or close the Earth demo. Does not wipe the continue slot.</summary>
         public static void SetFirstHourDemo(bool on)
         {
             FirstHourDemo = on;
-            PlayerPrefs.SetInt(FirstHourKey, on ? 1 : 0);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(FirstHourKey, on ? 1 : 0);
+            GamePrefs.Save();
             if (on)
                 ClampReplayForDemo();
             else
@@ -439,37 +439,37 @@ namespace SolarMajesty
         public static void MarkTutorialDone()
         {
             TutorialDone = true;
-            PlayerPrefs.SetInt(TutorialKey, 1);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(TutorialKey, 1);
+            GamePrefs.Save();
         }
 
         public static void ResetTutorial()
         {
             TutorialDone = false;
-            PlayerPrefs.DeleteKey(TutorialKey);
-            PlayerPrefs.Save();
+            GamePrefs.DeleteKey(TutorialKey);
+            GamePrefs.Save();
         }
 
         public static void WriteStockpile(ResourceManager resources)
         {
             if (resources == null) return;
-            PlayerPrefs.SetInt(SaveFlagKey, 1);
-            PlayerPrefs.SetInt(SaveRegKey, resources.Get(ResourceId.Regolith));
-            PlayerPrefs.SetInt(SaveIceKey, resources.Get(ResourceId.WaterIce));
-            PlayerPrefs.SetInt(SaveMetKey, resources.Get(ResourceId.Metals));
-            PlayerPrefs.SetInt(SavePwrKey, resources.Get(ResourceId.Power));
+            GamePrefs.SetInt(SaveFlagKey, 1);
+            GamePrefs.SetInt(SaveRegKey, resources.Get(ResourceId.Regolith));
+            GamePrefs.SetInt(SaveIceKey, resources.Get(ResourceId.WaterIce));
+            GamePrefs.SetInt(SaveMetKey, resources.Get(ResourceId.Metals));
+            GamePrefs.SetInt(SavePwrKey, resources.Get(ResourceId.Power));
             SaveExists = true;
-            PlayerPrefs.Save();
+            GamePrefs.Save();
         }
 
         public static bool TryLoadStockpile(ResourceManager resources)
         {
-            if (resources == null || PlayerPrefs.GetInt(SaveFlagKey, 0) == 0)
+            if (resources == null || GamePrefs.GetInt(SaveFlagKey, 0) == 0)
                 return false;
-            resources.Set(ResourceId.Regolith, PlayerPrefs.GetInt(SaveRegKey, 0));
-            resources.Set(ResourceId.WaterIce, PlayerPrefs.GetInt(SaveIceKey, 0));
-            resources.Set(ResourceId.Metals, PlayerPrefs.GetInt(SaveMetKey, 0));
-            resources.Set(ResourceId.Power, PlayerPrefs.GetInt(SavePwrKey, 0));
+            resources.Set(ResourceId.Regolith, GamePrefs.GetInt(SaveRegKey, 0));
+            resources.Set(ResourceId.WaterIce, GamePrefs.GetInt(SaveIceKey, 0));
+            resources.Set(ResourceId.Metals, GamePrefs.GetInt(SaveMetKey, 0));
+            resources.Set(ResourceId.Power, GamePrefs.GetInt(SavePwrKey, 0));
             SaveExists = true;
             return true;
         }
@@ -477,14 +477,14 @@ namespace SolarMajesty
         public static void ClearSave()
         {
             SaveExists = false;
-            PlayerPrefs.DeleteKey(SaveFlagKey);
-            PlayerPrefs.DeleteKey(SaveRegKey);
-            PlayerPrefs.DeleteKey(SaveIceKey);
-            PlayerPrefs.DeleteKey(SaveMetKey);
-            PlayerPrefs.DeleteKey(SavePwrKey);
+            GamePrefs.DeleteKey(SaveFlagKey);
+            GamePrefs.DeleteKey(SaveRegKey);
+            GamePrefs.DeleteKey(SaveIceKey);
+            GamePrefs.DeleteKey(SaveMetKey);
+            GamePrefs.DeleteKey(SavePwrKey);
             ClearCampus();
             ClearRoster();
-            PlayerPrefs.Save();
+            GamePrefs.Save();
         }
 
         public static string CampusKey(CelestialBodyId body) => CampusKeyPrefix + (int)body;
@@ -492,20 +492,20 @@ namespace SolarMajesty
         public static void WriteCampus(CelestialBodyId body, string blob)
         {
             if (string.IsNullOrEmpty(blob))
-                PlayerPrefs.DeleteKey(CampusKey(body));
+                GamePrefs.DeleteKey(CampusKey(body));
             else
-                PlayerPrefs.SetString(CampusKey(body), blob);
-            PlayerPrefs.Save();
+                GamePrefs.SetString(CampusKey(body), blob);
+            GamePrefs.Save();
         }
 
         public static string LoadCampus(CelestialBodyId body) =>
-            PlayerPrefs.GetString(CampusKey(body), "");
+            GamePrefs.GetString(CampusKey(body), "");
 
         public static void ClearCampus()
         {
             var bodies = CelestialBodyCatalog.All;
             for (int i = 0; i < bodies.Length; i++)
-                PlayerPrefs.DeleteKey(CampusKey(bodies[i]));
+                GamePrefs.DeleteKey(CampusKey(bodies[i]));
         }
 
         public static string RosterKey(CelestialBodyId body) => RosterKeyPrefix + (int)body;
@@ -513,26 +513,26 @@ namespace SolarMajesty
         public static void WriteRoster(CelestialBodyId body, string blob)
         {
             if (string.IsNullOrEmpty(blob))
-                PlayerPrefs.DeleteKey(RosterKey(body));
+                GamePrefs.DeleteKey(RosterKey(body));
             else
-                PlayerPrefs.SetString(RosterKey(body), blob);
-            PlayerPrefs.Save();
+                GamePrefs.SetString(RosterKey(body), blob);
+            GamePrefs.Save();
         }
 
         public static string LoadRoster(CelestialBodyId body) =>
-            PlayerPrefs.GetString(RosterKey(body), "");
+            GamePrefs.GetString(RosterKey(body), "");
 
         public static void ClearRoster()
         {
             var bodies = CelestialBodyCatalog.All;
             for (int i = 0; i < bodies.Length; i++)
-                PlayerPrefs.DeleteKey(RosterKey(bodies[i]));
+                GamePrefs.DeleteKey(RosterKey(bodies[i]));
         }
 
         public static void RequestBootIntoPlay()
         {
-            PlayerPrefs.SetInt(BootPlayKey, 1);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(BootPlayKey, 1);
+            GamePrefs.Save();
         }
 
         public static string ContinueButtonLabel()
@@ -540,7 +540,7 @@ namespace SolarMajesty
             if (!SaveExists) return "CONTINUE  ·  no save";
             var body = CelestialBodyCatalog.Get(BodySeed.LoadSavedBody());
             string name = body != null ? body.DisplayName : "last drop";
-            int met = PlayerPrefs.GetInt(SaveMetKey, 0);
+            int met = GamePrefs.GetInt(SaveMetKey, 0);
             return $"CONTINUE  ·  {name}  ·  EU {met}";
         }
 
@@ -549,10 +549,10 @@ namespace SolarMajesty
             if (!string.IsNullOrEmpty(SaveLoadNotice)) return SaveLoadNotice;
             if (!SaveExists)
                 return "No continue slot yet. New Game drops Luna (Mars if you already skipped or cleared the hour). Continue restores that body's campus.";
-            int reg = PlayerPrefs.GetInt(SaveRegKey, 0);
-            int ice = PlayerPrefs.GetInt(SaveIceKey, 0);
-            int met = PlayerPrefs.GetInt(SaveMetKey, 0);
-            int pwr = PlayerPrefs.GetInt(SavePwrKey, 0);
+            int reg = GamePrefs.GetInt(SaveRegKey, 0);
+            int ice = GamePrefs.GetInt(SaveIceKey, 0);
+            int met = GamePrefs.GetInt(SaveMetKey, 0);
+            int pwr = GamePrefs.GetInt(SavePwrKey, 0);
             int tech = ResearchManager.SavedUnlockCount();
             int modules = CampusSnapshot.SlotCount(LoadCampus(BodySeed.LoadSavedBody()));
             string campus = modules > 0 ? $"{modules} modules" : "empty campus";

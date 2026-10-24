@@ -44,7 +44,7 @@ Every world has four sample-locked stems that loop seamlessly: `bed`, `rhythm`, 
 | Tension | fauna threat > 0.22 or payroll thin | .85 / .6 / .45 / .65 |
 | Crisis | threat > 0.55 or a critical alert | .75 / 1 / .25 / 1 |
 
-World changes crossfade over 3 s. The title theme fades in whenever the solar-system title view is up. On victory and on a lost colony, the stinger ducks the score and Grok speaks after it. The SFX fanfare only plays if a stinger is missing. If any of a world's stems is missing, the original procedural synth takes over.
+World changes crossfade over 3 s. The title theme fades in whenever the solar-system title view is up. On victory and on a lost colony, the stinger ducks the score and Jex speaks after it. The SFX fanfare only plays if a stinger is missing. If any of a world's stems is missing, the original procedural synth takes over.
 
 ```bash
 Tools/audio/.venv/bin/python Tools/audio/render_music.py              # all worlds + title + stings (~100 s)
@@ -116,7 +116,7 @@ Voices come from **Kokoro-82M** (Apache-2.0), rendered on your machine, plus a r
 
 | Speaker | Callsign | Kokoro voice | Pitch | FX |
 |---|---|---|---|---|
-| Overseer (Grok) | — | `af_heart` | 0 | `overseer`: clean, slight digital doubling |
+| Overseer (Jex) | — | `af_heart` | 0 | `overseer`: clean, slight digital doubling |
 | Engineer Bot | Anvil | `am_onyx` | −1 | `servo` |
 | Scout Drone | Horizon | `am_puck` | +3 | `drone`: small radio speaker |
 | Defense Mech | Aegis | `am_michael` | −3 | `mech`: armoured resonance |
@@ -133,10 +133,10 @@ Pitch changes keep the tempo: the line is synthesised at a compensating speed, t
 ### What gets said
 
 - **Hero barks**: `Tools/audio/voice_lines.json`, 3 takes of 11 moments per class (`select`, `claim`, `refused`, `hunt`, `flee`, `repair`, `rest`, `wander`, `levelup`, `hurt`, `down`). Barks are short and name-free, because every robot of a class shares them. The hero's card line changes to match what was said (except for pain noises and hellos).
-- **Overseer lines**: every scripted Grok line is taken from the C# sources at bake time: `GrokCatalog.Line`, `OverseerRules.Grok*`, fixed `CompactGrok` lines, and literal `RaiseAlert` messages. The game finds a clip by a hash of the line's normalised text (`VoiceBank.LineKey`, mirrored in `voice_common.py`). Anything passed to `GameLoop.LogOverseer` that has a baked clip is spoken. Status chatter stays text.
+- **Overseer lines**: every scripted Jex line is taken from the C# sources at bake time: `JexCatalog.Line`, `OverseerRules.Jex*`, fixed `CompactJex` lines, and literal `RaiseAlert` messages. The game finds a clip by a hash of the line's normalised text (`VoiceBank.LineKey`, mirrored in `voice_common.py`). Anything passed to `GameLoop.LogOverseer` that has a baked clip is spoken. Status chatter stays text.
 - **Overseer fallbacks**: warnings with no baked line get a generic alert (`alert_warning`, `alert_critical`, `module_lost`). With no bank at all, the original vocoder babble plays.
 
-The bake is incremental and re-voices changed lines only. `VoiceTests.ShippedBank_*` fails if a Grok line or a hero moment has no clip. Run `render_voices.py` after editing copy.
+The bake is incremental and re-voices changed lines only. `VoiceTests.ShippedBank_*` fails if a Jex line or a hero moment has no clip. Run `render_voices.py` after editing copy.
 
 ```bash
 Tools/audio/.venv/bin/python Tools/audio/render_voices.py             # bake what changed (~1 s per line on an M4)
@@ -149,7 +149,7 @@ Tools/audio/.venv/bin/python Tools/audio/render_voices.py --preview   # one audi
 
 `VoiceDirector` rations voices so twenty robots don't turn into noise:
 
-- The Overseer outranks heroes. Heroes don't start lines while Grok is talking, except to answer a click. A critical alert interrupts a lesson. A scripted line that arrives while Grok is busy waits up to 8 s for its turn.
+- The Overseer outranks heroes. Heroes don't start lines while Jex is talking, except to answer a click. A critical alert interrupts a lesson. A scripted line that arrives while Jex is busy waits up to 8 s for its turn.
 - Clicking a hero always gets an answer (with a double-click debounce).
 - Unselected heroes speak only at big moments (claim, flee, level up, refused by orders, down). Routine moments (hunt, repair, rest, wander) are voiced for the selected hero only.
 - At most 2 hero voices at once, 0.9 s between line starts, per-hero cooldowns. Hurt barks are rate-limited across the whole colony.
@@ -163,7 +163,7 @@ With the local LLM narrator on ([HERO_NARRATION.md](HERO_NARRATION.md)), heroes 
 Tools/local_ai/start_narrator.sh --no-game   # LLM on :8080 + Kokoro voice server on :8880
 ```
 
-In the editor, turn on Settings → **HERO LINES · LOCAL LLM** and **SPOKEN · LOCAL TTS**, or pass `-voice [url]` / set `SOLAR_VOICE_URL`. Server setup is in [HERO_NARRATION.md](HERO_NARRATION.md). When the narrator takes a moment, the hero waits up to 4.5 s for its line. `HeroSpeaker` fetches the line from the voice server and `CharacterVoice` plays it, under the same `VoiceDirector` rules as the barks, so a line is never spoken twice. Otherwise the hero plays its bark. Overseer warnings with no baked line (alerts with module names in them, say) also go live. Interpolated `CompactGrok` log lines stay text for now.
+In the editor, turn on Settings → **HERO LINES · LOCAL LLM** and **SPOKEN · LOCAL TTS**, or pass `-voice [url]` / set `SOLAR_VOICE_URL`. Server setup is in [HERO_NARRATION.md](HERO_NARRATION.md). When the narrator takes a moment, the hero waits up to 4.5 s for its line. `HeroSpeaker` fetches the line from the voice server and `CharacterVoice` plays it, under the same `VoiceDirector` rules as the barks, so a line is never spoken twice. Otherwise the hero plays its bark. Overseer warnings with no baked line (alerts with module names in them, say) also go live. Interpolated `CompactJex` log lines stay text for now.
 
 Live lines use the speaker's `cast.json` entry, which the bake copies into `voices.json`. The request asks for speed ÷ pitch ratio and plays back at the pitch ratio, as the bake does, so a robot's live voice has the same Kokoro voice, pitch and pace as its barks. The server can't run `voice_fx.py`, so live lines get `HeroSpeech.ApplyRobot` at a matching strength instead: close to the baked robot processing, but not identical.
 
@@ -172,7 +172,7 @@ Live lines use the speaker's `cast.json` entry, which the bake copies into `voic
 - `Systems/Voice/VoiceBank.cs`: manifest parsing, bark takes (never the same take twice in a row), line keys. Pure.
 - `Systems/Voice/VoiceDirector.cs`: who may speak now. Pure.
 - `Runtime/Audio/CharacterVoice.cs`: hero barks, voice sources, narration hand-off.
-- `Runtime/Audio/OverseerVoice.cs`: Grok's voice and fallbacks.
+- `Runtime/Audio/OverseerVoice.cs`: Jex's voice and fallbacks.
 - `Runtime/Narration/HeroSpeaker.cs` + `Systems/Narration/HeroSpeech.cs`: the local TTS link (request, WAV decode, radio filter).
 - `Editor/AudioImportRules.cs`: import settings by folder (music streamed, voices compressed in memory, SFX decoded on load).
 - Tests: `Tests/EditMode/VoiceTests.cs`.

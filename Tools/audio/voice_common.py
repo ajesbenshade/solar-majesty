@@ -18,7 +18,7 @@ MODEL_URLS = {
 BANK_DIR = REPO / "Assets" / "Resources" / "Audio" / "Voices"
 MANIFEST = BANK_DIR / "voices.json"
 
-SPEAKER_PREFIXES = ("Grok — ", "Grok - ", "Grok: ")
+SPEAKER_PREFIXES = ("Jex — ", "Jex - ", "Jex: ", "Grok — ", "Grok - ", "Grok: ")
 
 
 def load_cast() -> dict:

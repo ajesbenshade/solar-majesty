@@ -116,13 +116,13 @@ namespace SolarMajesty
             if (!persist)
                 return;
             _resumeWithoutPersist = false;
-            PlayerPrefs.SetInt(PrefsKey, _index);
+            GamePrefs.SetInt(PrefsKey, _index);
         }
 
         /// <summary>The player's saved speed, so a new session starts at the pace they like.</summary>
         public static void Load()
         {
-            int saved = PlayerPrefs.GetInt(PrefsKey, NormalIndex);
+            int saved = GamePrefs.GetInt(PrefsKey, NormalIndex);
             LastRunningIndex = Mathf.Clamp(saved, 1, Multipliers.Length - 1);
             _index = LastRunningIndex;
             _resumeWithoutPersist = false;

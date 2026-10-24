@@ -49,7 +49,7 @@ namespace SolarMajesty
                 if (!_prefLoaded)
                 {
                     _prefLoaded = true;
-                    _enabled = PlayerPrefs.GetInt(PrefsKey, 1) == 1;
+                    _enabled = GamePrefs.GetInt(PrefsKey, 1) == 1;
                 }
                 return _enabled;
             }
@@ -57,8 +57,8 @@ namespace SolarMajesty
             {
                 _prefLoaded = true;
                 _enabled = value;
-                PlayerPrefs.SetInt(PrefsKey, value ? 1 : 0);
-                PlayerPrefs.Save();
+                GamePrefs.SetInt(PrefsKey, value ? 1 : 0);
+                GamePrefs.Save();
             }
         }
 

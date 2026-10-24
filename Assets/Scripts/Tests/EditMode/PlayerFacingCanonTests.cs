@@ -27,7 +27,7 @@ namespace SolarMajesty.Tests
             Pair("Runtime/SpecialistAgent.cs", "purse="), // diagnostic state dump
             Pair("Runtime/SuitCrossingWalker.cs", "B-chest"), // bone ID
             Pair("Systems/Voice/VoiceBank.cs", "\"overseer\""), // speaker constant and FX switch
-            Pair("Systems/CompactGrok.cs", "Pests drained {amount} EU from {n} {purses}."), // interpolation variable
+            Pair("Systems/CompactJex.cs", "Pests drained {amount} EU from {n} {purses}."), // interpolation variable
             Pair("Systems/Narration/HeroConversation.cs", "never \\\"Overseer\\\""), // instruction to avoid the name
             Pair("Assets/Resources/Audio/Voices/voices.json", "\"speaker\":\"overseer\"") // metadata only; text is checked separately
         };
@@ -109,7 +109,7 @@ namespace SolarMajesty.Tests
             ScanCSharp("sample.cs", "string text = @\"First line\nOverseer\"; " +
                 "Log.Push(\"Guard post and levy chest.\");", failures);
             Check("other.cs", "B-chest", failures);
-            Check("Systems/CompactGrok.cs", "A purse is full.", failures);
+            Check("Systems/CompactJex.cs", "A purse is full.", failures);
             Assert.AreEqual(4, failures.Count);
         }
     }

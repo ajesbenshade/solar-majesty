@@ -136,66 +136,66 @@ namespace SolarMajesty.Tests
         }
     }
 
-    public class GrokAdvisorTests
+    public class JexAdvisorTests
     {
         [TearDown]
-        public void TearDown() => DemoSettings.MarsGrokLessons = false;
+        public void TearDown() => DemoSettings.MarsJexLessons = false;
 
         [Test]
         public void LunaAndEarth_DefaultLessonsOn_MarsOff()
         {
-            Assert.IsTrue(GrokAdvisor.DefaultTrainingWheels(CelestialBodyId.Luna));
-            Assert.IsTrue(GrokAdvisor.DefaultTrainingWheels(CelestialBodyId.Earth));
-            Assert.IsFalse(GrokAdvisor.DefaultTrainingWheels(CelestialBodyId.Mars));
-            Assert.IsFalse(GrokAdvisor.TrainingWheels(CelestialBodyId.Mars));
-            Assert.IsFalse(GrokAdvisor.TrainingWheels(CelestialBodyId.Belt));
+            Assert.IsTrue(JexAdvisor.DefaultTrainingWheels(CelestialBodyId.Luna));
+            Assert.IsTrue(JexAdvisor.DefaultTrainingWheels(CelestialBodyId.Earth));
+            Assert.IsFalse(JexAdvisor.DefaultTrainingWheels(CelestialBodyId.Mars));
+            Assert.IsFalse(JexAdvisor.TrainingWheels(CelestialBodyId.Mars));
+            Assert.IsFalse(JexAdvisor.TrainingWheels(CelestialBodyId.Belt));
         }
 
         [Test]
         public void MarsLessonsToggle_TurnsWheelsOn()
         {
-            DemoSettings.MarsGrokLessons = true;
-            Assert.IsTrue(GrokAdvisor.TrainingWheels(CelestialBodyId.Mars));
-            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.FirstFlag));
+            DemoSettings.MarsJexLessons = true;
+            Assert.IsTrue(JexAdvisor.TrainingWheels(CelestialBodyId.Mars));
+            Assert.IsTrue(JexAdvisor.Allows(CelestialBodyId.Mars, JexBeat.FirstFlag));
         }
 
         [Test]
         public void MarsDefault_BlocksLessons_AllowsFailures()
         {
-            Assert.IsFalse(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.Drop));
-            Assert.IsFalse(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.GreedAsk));
-            Assert.IsFalse(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.MarketPayout));
-            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.Refusal));
-            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.IceCritical));
-            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.EmptyRoster));
-            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.MarketBlocked));
-            Assert.IsTrue(GrokAdvisor.Allows(CelestialBodyId.Mars, GrokBeat.StalkerSiphon));
+            Assert.IsFalse(JexAdvisor.Allows(CelestialBodyId.Mars, JexBeat.Drop));
+            Assert.IsFalse(JexAdvisor.Allows(CelestialBodyId.Mars, JexBeat.GreedAsk));
+            Assert.IsFalse(JexAdvisor.Allows(CelestialBodyId.Mars, JexBeat.MarketPayout));
+            Assert.IsTrue(JexAdvisor.Allows(CelestialBodyId.Mars, JexBeat.Refusal));
+            Assert.IsTrue(JexAdvisor.Allows(CelestialBodyId.Mars, JexBeat.IceCritical));
+            Assert.IsTrue(JexAdvisor.Allows(CelestialBodyId.Mars, JexBeat.EmptyRoster));
+            Assert.IsTrue(JexAdvisor.Allows(CelestialBodyId.Mars, JexBeat.MarketBlocked));
+            Assert.IsTrue(JexAdvisor.Allows(CelestialBodyId.Mars, JexBeat.StalkerSiphon));
         }
 
         [Test]
         public void Lessons_AreWheelsOnly_FailuresAlwaysAllowed()
         {
-            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.Drop));
-            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.GreedAsk));
-            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.YardBill));
-            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.TankVsWallet));
-            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.LevyWalk));
-            Assert.IsTrue(GrokCatalog.IsLesson(GrokBeat.MarketPayout));
-            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.Refusal));
-            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.PurseStolen));
-            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.YardUnaffordable));
-            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.MarketBlocked));
-            Assert.IsFalse(GrokCatalog.IsLesson(GrokBeat.StalkerSiphon));
+            Assert.IsTrue(JexCatalog.IsLesson(JexBeat.Drop));
+            Assert.IsTrue(JexCatalog.IsLesson(JexBeat.GreedAsk));
+            Assert.IsTrue(JexCatalog.IsLesson(JexBeat.YardBill));
+            Assert.IsTrue(JexCatalog.IsLesson(JexBeat.TankVsWallet));
+            Assert.IsTrue(JexCatalog.IsLesson(JexBeat.LevyWalk));
+            Assert.IsTrue(JexCatalog.IsLesson(JexBeat.MarketPayout));
+            Assert.IsFalse(JexCatalog.IsLesson(JexBeat.Refusal));
+            Assert.IsFalse(JexCatalog.IsLesson(JexBeat.PurseStolen));
+            Assert.IsFalse(JexCatalog.IsLesson(JexBeat.YardUnaffordable));
+            Assert.IsFalse(JexCatalog.IsLesson(JexBeat.MarketBlocked));
+            Assert.IsFalse(JexCatalog.IsLesson(JexBeat.StalkerSiphon));
         }
 
         [Test]
         public void Catalog_HasEveryBeatAndNeverSellsIce()
         {
-            foreach (GrokBeat beat in System.Enum.GetValues(typeof(GrokBeat)))
+            foreach (JexBeat beat in System.Enum.GetValues(typeof(JexBeat)))
             {
-                string line = GrokCatalog.Line(beat);
+                string line = JexCatalog.Line(beat);
                 Assert.IsFalse(string.IsNullOrEmpty(line), beat.ToString());
-                StringAssert.StartsWith("Grok — ", GrokCatalog.Say(beat));
+                StringAssert.StartsWith("Jex — ", JexCatalog.Say(beat));
                 StringAssert.DoesNotContain("spend 15 ice", line.ToLowerInvariant());
             }
         }
@@ -203,15 +203,15 @@ namespace SolarMajesty.Tests
         [Test]
         public void Session_LessonsNeedWheels_FailuresRisingEdge()
         {
-            var grok = new GrokSession();
-            Assert.IsFalse(grok.TrySpeak(GrokBeat.FirstFlag, wheels: false, condition: true));
-            Assert.IsTrue(grok.TrySpeak(GrokBeat.FirstFlag, wheels: true, condition: true));
-            Assert.IsFalse(grok.TrySpeak(GrokBeat.FirstFlag, wheels: true, condition: true), "once");
+            var jex = new JexSession();
+            Assert.IsFalse(jex.TrySpeak(JexBeat.FirstFlag, wheels: false, condition: true));
+            Assert.IsTrue(jex.TrySpeak(JexBeat.FirstFlag, wheels: true, condition: true));
+            Assert.IsFalse(jex.TrySpeak(JexBeat.FirstFlag, wheels: true, condition: true), "once");
 
-            Assert.IsTrue(grok.TrySpeak(GrokBeat.PowerShort, wheels: false, condition: true));
-            Assert.IsFalse(grok.TrySpeak(GrokBeat.PowerShort, wheels: false, condition: true));
-            Assert.IsFalse(grok.TrySpeak(GrokBeat.PowerShort, wheels: false, condition: false));
-            Assert.IsTrue(grok.TrySpeak(GrokBeat.PowerShort, wheels: false, condition: true), "clears when the grid recovers");
+            Assert.IsTrue(jex.TrySpeak(JexBeat.PowerShort, wheels: false, condition: true));
+            Assert.IsFalse(jex.TrySpeak(JexBeat.PowerShort, wheels: false, condition: true));
+            Assert.IsFalse(jex.TrySpeak(JexBeat.PowerShort, wheels: false, condition: false));
+            Assert.IsTrue(jex.TrySpeak(JexBeat.PowerShort, wheels: false, condition: true), "clears when the grid recovers");
         }
     }
 

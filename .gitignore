@@ -79,3 +79,6 @@ Tools/audio/preview/
 !Tools/compile_check/**/*.csproj
 Tools/compile_check/**/bin/
 Tools/compile_check/**/obj/
+
+/sm-results.xml
+/steam_appid.txt

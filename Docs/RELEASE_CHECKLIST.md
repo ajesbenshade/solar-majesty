@@ -31,6 +31,13 @@ is in it being honest, not in it being all ticked.
 - [x] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`): optional `Resources/Data` overrides, code tables stay the default ([DATA_CATALOGS.md](DATA_CATALOGS.md))
 - [x] Ironman wired to the run configuration (`ReplayRules.Ironman` chip, latched at New Game / Continue; blocks manual saves and body restarts; No Second Draft evaluates on body conquest)
 
+- [x] Steam Early Access readiness, first pass (#92 port): Steamworks.NET achievements, overlay pause and rich presence ([STEAM_RELEASE.md](STEAM_RELEASE.md)); `SteamConfig.AppId` is **480, Valve's Spacewar test app**, not a real ID
+- [x] Dev shortcuts (F10 world hop, Shift+click unlock, F8/F9/R debug keys) are off in release builds ([DevTools.cs](../Assets/Scripts/Systems/DevTools.cs)); `-devtools` turns them on
+- [x] Prefs live in `Profile/prefs.json` (`GamePrefs`) so Steam Cloud can sync them; the old registry values migrate on first read. Per-PC keys (quality, fullscreen, resolution, frame cap, UI Scale) stay in PlayerPrefs; saved key bindings keep main's `GameAction` numbers (`PrefsMigrationTests`)
+- [x] Error log, build stamp and key rebinding come from #82 (`ErrorLog`, `ReleaseStamp`, `InputBindings`); not duplicated by the #92 port
+- [x] Live-AI content guard ([AiContentGuard.cs](../Assets/Scripts/Systems/Narration/AiContentGuard.cs)) for the Steam AI-disclosure form; `THIRD-PARTY-NOTICES.txt` ships with builds
+- [ ] Still to land from #92: localization, demo build, store art and capsules, benchmark / background autosave / async NavMesh, local-AI packager, QA autoplay fixes (listed in the #92 port PR)
+
 ## Look
 
 - [x] ACES tonemapping and per-body white balance

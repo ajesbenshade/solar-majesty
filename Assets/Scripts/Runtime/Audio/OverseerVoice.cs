@@ -4,9 +4,9 @@ using UnityEngine;
 namespace SolarMajesty
 {
     /// <summary>
-    /// The Overseer's (Grok's) voice.
+    /// The Overseer's (Jex's) voice.
     ///
-    /// Scripted Grok lines are baked with Kokoro TTS (Tools/audio/render_voices.py) and found by
+    /// Scripted Jex lines are baked with Kokoro TTS (Tools/audio/render_voices.py) and found by
     /// their text, so anything that logs a catalogued line is spoken without knowing the bank
     /// exists. Warnings with names or numbers in them go live through HeroSpeaker when SPOKEN is up. Warnings with
     /// no voiced line get a short generic alert, and a build with no bank at all falls back to the
@@ -63,12 +63,12 @@ namespace SolarMajesty
                 return;
             }
 
-            // Lines that couldn't be baked (names, numbers) go live in Grok's cast voice when SPOKEN is up.
+            // Lines that couldn't be baked (names, numbers) go live in Jex's cast voice when SPOKEN is up.
             float asked = Time.unscaledTime;
             bool sent = false;
             if (CharacterVoice.Bank.TryGetCast(VoiceBank.OverseerSpeaker, out VoiceCast cast))
             {
-                // Grok's cast pitch is 0, so the clip plays at its native rate.
+                // Jex's cast pitch is 0, so the clip plays at its native rate.
                 HeroVoiceSpec voice = VoiceBank.LiveSpec(cast, out _);
                 sent = HeroSpeaker.Request(voice, line, clip =>
                 {
@@ -94,7 +94,7 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Grok lessons often arrive back to back (first HAB, then first flag). Hold the newest
+        /// Jex lessons often arrive back to back (first HAB, then first flag). Hold the newest
         /// scripted line for when the current one ends instead of losing it.
         /// </summary>
         private static void PlayOrHold(AudioClip clip, int priority, AlertSeverity severity)

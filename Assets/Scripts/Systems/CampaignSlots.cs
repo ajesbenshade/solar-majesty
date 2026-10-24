@@ -28,49 +28,49 @@ namespace SolarMajesty
         public static void BeginFresh(int chosen)
         {
             int slot = SlotReplacedByNewCampaign(chosen);
-            PlayerPrefs.SetInt(ActiveSlotKey, slot);
-            PlayerPrefs.SetInt(FreshKey, 1);
-            PlayerPrefs.DeleteKey(PendingLoadKey);
-            PlayerPrefs.SetString(StampKey, DateTime.UtcNow.ToString("yyyyMMddHHmmssfff"));
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(ActiveSlotKey, slot);
+            GamePrefs.SetInt(FreshKey, 1);
+            GamePrefs.DeleteKey(PendingLoadKey);
+            GamePrefs.SetString(StampKey, DateTime.UtcNow.ToString("yyyyMMddHHmmssfff"));
+            GamePrefs.Save();
         }
 
         public static bool ConsumeFresh()
         {
-            if (PlayerPrefs.GetInt(FreshKey, 0) != 1) return false;
-            PlayerPrefs.DeleteKey(FreshKey);
-            PlayerPrefs.Save();
+            if (GamePrefs.GetInt(FreshKey, 0) != 1) return false;
+            GamePrefs.DeleteKey(FreshKey);
+            GamePrefs.Save();
             return true;
         }
 
         public static void MarkPendingLoad(int slot)
         {
-            PlayerPrefs.SetInt(PendingLoadKey, slot);
+            GamePrefs.SetInt(PendingLoadKey, slot);
             if (slot >= 0 && slot < SaveSystem.SlotCount)
-                PlayerPrefs.SetInt(ActiveSlotKey, slot);
-            PlayerPrefs.DeleteKey(FreshKey);
-            PlayerPrefs.Save();
+                GamePrefs.SetInt(ActiveSlotKey, slot);
+            GamePrefs.DeleteKey(FreshKey);
+            GamePrefs.Save();
         }
 
         public static int ConsumePendingLoad()
         {
-            if (!PlayerPrefs.HasKey(PendingLoadKey)) return -1;
-            int slot = PlayerPrefs.GetInt(PendingLoadKey, -1);
-            PlayerPrefs.DeleteKey(PendingLoadKey);
-            PlayerPrefs.Save();
+            if (!GamePrefs.HasKey(PendingLoadKey)) return -1;
+            int slot = GamePrefs.GetInt(PendingLoadKey, -1);
+            GamePrefs.DeleteKey(PendingLoadKey);
+            GamePrefs.Save();
             return slot;
         }
 
         public static int ActiveSlot =>
-            PlayerPrefs.GetInt(ActiveSlotKey, SaveSystem.AutosaveSlot);
+            GamePrefs.GetInt(ActiveSlotKey, SaveSystem.AutosaveSlot);
 
-        public static string Stamp => PlayerPrefs.GetString(StampKey, "");
+        public static string Stamp => GamePrefs.GetString(StampKey, "");
 
         public static void AdoptStamp(string stamp)
         {
-            if (string.IsNullOrEmpty(stamp)) PlayerPrefs.DeleteKey(StampKey);
-            else PlayerPrefs.SetString(StampKey, stamp);
-            PlayerPrefs.Save();
+            if (string.IsNullOrEmpty(stamp)) GamePrefs.DeleteKey(StampKey);
+            else GamePrefs.SetString(StampKey, stamp);
+            GamePrefs.Save();
         }
 
         public static bool LiveSnapshotMatches(string snapshotStamp) =>

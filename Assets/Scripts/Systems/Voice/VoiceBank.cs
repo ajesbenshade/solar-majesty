@@ -18,7 +18,7 @@ namespace SolarMajesty
         LevelUp,
         Hurt,
         Down,
-        /// <summary>An Overseer line baked from its exact text (GrokCatalog, OverseerRules, …).</summary>
+        /// <summary>An Overseer line baked from its exact text (JexCatalog, OverseerRules, …).</summary>
         Line,
         AlertWarning,
         AlertCritical,
@@ -259,7 +259,7 @@ namespace SolarMajesty
 
         // ---- line keys (mirror of Tools/audio/voice_common.py) --------------------------------
 
-        private static readonly string[] SpeakerPrefixes = { "Grok — ", "Grok - ", "Grok: " };
+        private static readonly string[] SpeakerPrefixes = { "Jex — ", "Jex - ", "Jex: ", "Grok — ", "Grok - ", "Grok: " };
 
         /// <summary>
         /// Lower-case ASCII letters and digits, single spaces between runs, speaker prefix removed.

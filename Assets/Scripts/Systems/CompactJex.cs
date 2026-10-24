@@ -3,7 +3,7 @@ namespace SolarMajesty
     /// <summary>
     /// Scripted Compact asides for the Majesty toys. Not decree toasts. Not an LLM.
     /// </summary>
-    public static class CompactGrok
+    public static class CompactJex
     {
         public static string LevyStolen(int amount, string where) =>
             $"The battery is drained. {amount} EU walked off {where}. That was not a sale.";

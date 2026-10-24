@@ -283,7 +283,7 @@ namespace SolarMajesty
                     return tag;
                 }
                 if (n.StartsWith("Dress_Arch")) arch = true;
-                if (n.Contains("Starship") || n.Contains("ParkedShip") || n.Contains("Rocket")) ship = true;
+                if (n.Contains("Lifter") || n.Contains("ParkedShip") || n.Contains("Rocket")) ship = true;
             }
             if (ship) return FitOut;
             if (arch) return Shell;

@@ -13,6 +13,7 @@ namespace SolarMajesty
         private const string TravelLogKey = "SM_PendingTravelLog";
         private const string CutsKey = "SM_NarrativeCutsShown";
         private const string LunaHourKey = "SM_LunaHourCleared";
+        public const string ConqueredKey = "SM_CampaignConquered";
 
         public static CelestialBodyId HighestUnlocked { get; private set; } = CelestialBodyId.Earth;
 
@@ -23,7 +24,35 @@ namespace SolarMajesty
 
         /// <summary>Survives New Game. Returning players skip the Luna hour.</summary>
         public static bool HasClearedLunaHour =>
-            PlayerPrefs.GetInt(LunaHourKey, 0) == 1;
+            GamePrefs.GetInt(LunaHourKey, 0) == 1;
+
+        /// <summary>Bit per world secured in this campaign. Cleared by a new campaign.</summary>
+        public static int ConqueredMask => GamePrefs.GetInt(ConqueredKey, 0);
+
+        public static bool HasConquered(CelestialBodyId id) => (ConqueredMask & (1 << (int)id)) != 0;
+
+        /// <summary>Every world on the spine secured in this campaign (the Solar Conquest achievement).</summary>
+        public static bool ConqueredEveryWorld
+        {
+            get
+            {
+                var all = CelestialBodyCatalog.All;
+                if (all == null || all.Length == 0) return false;
+                for (int i = 0; i < all.Length; i++)
+                {
+                    if (IsOnSpine(all[i]) && !HasConquered(all[i])) return false;
+                }
+                return true;
+            }
+        }
+
+        public static void MarkConquered(CelestialBodyId id)
+        {
+            int mask = ConqueredMask | (1 << (int)id);
+            if (mask == ConqueredMask) return;
+            GamePrefs.SetInt(ConqueredKey, mask);
+            GamePrefs.Save();
+        }
 
         public static CelestialBodyId NewGameBody =>
             CelestialBodyId.Earth;
@@ -31,34 +60,34 @@ namespace SolarMajesty
         /// <summary>Match <see cref="HighestUnlocked"/> to prefs without writing them.</summary>
         public static void ReloadFromPrefs()
         {
-            if (!PlayerPrefs.HasKey(FreshKey))
+            if (!GamePrefs.HasKey(FreshKey))
             {
                 HighestUnlocked = CelestialBodyId.Earth;
                 return;
             }
 
-            HighestUnlocked = (CelestialBodyId)PlayerPrefs.GetInt(MaxKey, (int)CelestialBodyId.Earth);
+            HighestUnlocked = (CelestialBodyId)GamePrefs.GetInt(MaxKey, (int)CelestialBodyId.Earth);
             HighestUnlocked = MigrateHighest(HighestUnlocked);
         }
 
         public static void Ensure()
         {
-            if (!PlayerPrefs.HasKey(FreshKey))
+            if (!GamePrefs.HasKey(FreshKey))
             {
                 HighestUnlocked = CelestialBodyId.Earth;
-                PlayerPrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
-                PlayerPrefs.SetInt(FreshKey, 1);
+                GamePrefs.SetInt(MaxKey, (int)CelestialBodyId.Earth);
+                GamePrefs.SetInt(FreshKey, 1);
                 BodySeed.SetBody(CelestialBodyId.Earth);
-                PlayerPrefs.Save();
+                GamePrefs.Save();
                 return;
             }
 
-            HighestUnlocked = (CelestialBodyId)PlayerPrefs.GetInt(MaxKey, (int)CelestialBodyId.Earth);
+            HighestUnlocked = (CelestialBodyId)GamePrefs.GetInt(MaxKey, (int)CelestialBodyId.Earth);
             HighestUnlocked = MigrateHighest(HighestUnlocked);
             int last = (int)CelestialBodyCatalog.Last;
             if ((int)HighestUnlocked < 0 || (int)HighestUnlocked > last)
                 HighestUnlocked = CelestialBodyId.Earth;
-            PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
+            GamePrefs.SetInt(MaxKey, (int)HighestUnlocked);
         }
 
         /// <summary>Preserve existing five-world unlocks.</summary>
@@ -89,9 +118,9 @@ namespace SolarMajesty
             int last = (int)CelestialBodyCatalog.Last;
             int next = Mathf.Clamp((int)id, (int)CelestialBodyId.Earth, last);
             HighestUnlocked = (CelestialBodyId)next;
-            PlayerPrefs.SetInt(MaxKey, next);
-            PlayerPrefs.SetInt(FreshKey, 1);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(MaxKey, next);
+            GamePrefs.SetInt(FreshKey, 1);
+            GamePrefs.Save();
         }
 
         /// <summary>Call when the current body is conquered (all gates met / win dismissed into next).</summary>
@@ -105,31 +134,31 @@ namespace SolarMajesty
             if (SpineRank(next.Value) > SpineRank(HighestUnlocked))
             {
                 HighestUnlocked = next.Value;
-                PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
-                PlayerPrefs.Save();
+                GamePrefs.SetInt(MaxKey, (int)HighestUnlocked);
+                GamePrefs.Save();
                 Debug.Log($"[Campaign] Unlocked {HighestUnlocked}");
             }
         }
 
         public static void NoteLunaHourCleared()
         {
-            PlayerPrefs.SetInt(LunaHourKey, 1);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(LunaHourKey, 1);
+            GamePrefs.Save();
         }
 
         public static void QueueTravelLog(string line)
         {
             if (string.IsNullOrEmpty(line)) return;
-            PlayerPrefs.SetString(TravelLogKey, line);
-            PlayerPrefs.Save();
+            GamePrefs.SetString(TravelLogKey, line);
+            GamePrefs.Save();
         }
 
         public static string ConsumeTravelLog()
         {
-            if (!PlayerPrefs.HasKey(TravelLogKey)) return null;
-            string line = PlayerPrefs.GetString(TravelLogKey, "");
-            PlayerPrefs.DeleteKey(TravelLogKey);
-            PlayerPrefs.Save();
+            if (!GamePrefs.HasKey(TravelLogKey)) return null;
+            string line = GamePrefs.GetString(TravelLogKey, "");
+            GamePrefs.DeleteKey(TravelLogKey);
+            GamePrefs.Save();
             return string.IsNullOrEmpty(line) ? null : line;
         }
 
@@ -137,13 +166,14 @@ namespace SolarMajesty
         public static void ResetCampaign()
         {
             HighestUnlocked = NewGameBody;
-            PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
-            PlayerPrefs.SetInt(FreshKey, 1);
-            PlayerPrefs.DeleteKey(TravelLogKey);
-            PlayerPrefs.DeleteKey(CutsKey);
+            GamePrefs.SetInt(MaxKey, (int)HighestUnlocked);
+            GamePrefs.SetInt(FreshKey, 1);
+            GamePrefs.DeleteKey(TravelLogKey);
+            GamePrefs.DeleteKey(CutsKey);
+            GamePrefs.DeleteKey(ConqueredKey);
             ResearchManager.WipeUnlocks();
             BodySeed.SetBody(HighestUnlocked);
-            PlayerPrefs.Save();
+            GamePrefs.Save();
         }
 
         /// <summary>New Game drop. Mars notes the Luna hour so the next New Game stays on Mars.</summary>
@@ -153,19 +183,20 @@ namespace SolarMajesty
                 NoteLunaHourCleared();
 
             HighestUnlocked = IsOnSpine(drop) ? drop : NewGameBody;
-            PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
-            PlayerPrefs.SetInt(FreshKey, 1);
-            PlayerPrefs.DeleteKey(TravelLogKey);
-            PlayerPrefs.DeleteKey(CutsKey);
+            GamePrefs.SetInt(MaxKey, (int)HighestUnlocked);
+            GamePrefs.SetInt(FreshKey, 1);
+            GamePrefs.DeleteKey(TravelLogKey);
+            GamePrefs.DeleteKey(CutsKey);
+            GamePrefs.DeleteKey(ConqueredKey);
             ResearchManager.WipeUnlocks();
             BodySeed.SetBody(drop);
-            PlayerPrefs.Save();
+            GamePrefs.Save();
         }
 
         public static bool WasCutShown(string id)
         {
             if (string.IsNullOrEmpty(id)) return false;
-            string raw = PlayerPrefs.GetString(CutsKey, "");
+            string raw = GamePrefs.GetString(CutsKey, "");
             if (string.IsNullOrEmpty(raw)) return false;
             string[] parts = raw.Split('|');
             for (int i = 0; i < parts.Length; i++)
@@ -178,19 +209,19 @@ namespace SolarMajesty
         public static void NoteCutShown(string id)
         {
             if (string.IsNullOrEmpty(id) || WasCutShown(id)) return;
-            string raw = PlayerPrefs.GetString(CutsKey, "");
+            string raw = GamePrefs.GetString(CutsKey, "");
             raw = string.IsNullOrEmpty(raw) ? id : raw + "|" + id;
-            PlayerPrefs.SetString(CutsKey, raw);
-            PlayerPrefs.Save();
+            GamePrefs.SetString(CutsKey, raw);
+            GamePrefs.Save();
         }
 
         /// <summary>Debug cheat (Shift+F10): unlock the full catalog including parked bodies.</summary>
         public static void DebugUnlockAll()
         {
             HighestUnlocked = CelestialBodyCatalog.Last;
-            PlayerPrefs.SetInt(MaxKey, (int)HighestUnlocked);
-            PlayerPrefs.SetInt(FreshKey, 1);
-            PlayerPrefs.Save();
+            GamePrefs.SetInt(MaxKey, (int)HighestUnlocked);
+            GamePrefs.SetInt(FreshKey, 1);
+            GamePrefs.Save();
             Debug.Log($"[Campaign] Debug unlocked all bodies through {HighestUnlocked}.");
         }
 
@@ -208,13 +239,13 @@ namespace SolarMajesty
         public static void ResetAllForTests()
         {
             HighestUnlocked = CelestialBodyId.Earth;
-            PlayerPrefs.DeleteKey(MaxKey);
-            PlayerPrefs.DeleteKey(FreshKey);
-            PlayerPrefs.DeleteKey(TravelLogKey);
-            PlayerPrefs.DeleteKey(CutsKey);
-            PlayerPrefs.DeleteKey(LunaHourKey);
-            PlayerPrefs.DeleteKey("SM_CelestialBody");
-            PlayerPrefs.Save();
+            GamePrefs.DeleteKey(MaxKey);
+            GamePrefs.DeleteKey(FreshKey);
+            GamePrefs.DeleteKey(TravelLogKey);
+            GamePrefs.DeleteKey(CutsKey);
+            GamePrefs.DeleteKey(LunaHourKey);
+            GamePrefs.DeleteKey("SM_CelestialBody");
+            GamePrefs.Save();
         }
     }
 }

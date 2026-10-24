@@ -1215,38 +1215,33 @@ namespace SolarMajesty
                 new Vector3(width, 0.07f, 0.07f), Concrete);
         }
 
-        /// <summary>
-        /// Concept stack height used by the procedural pad rocket (metres).
-        /// </summary>
-        public const float StarshipStackHeight = 7.4f;
+        /// <summary>Height of the Colony Lifter from pad to beacon tip (metres).</summary>
+        public const float LifterStackHeight = 7.4f;
 
-        /// <summary>Lower carbon band centre as a fraction of <see cref="StarshipStackHeight"/>.</summary>
-        public const float StarshipBandLoT = 0.30f;
+        /// <summary>Centre of the lower stage's orange band, as a fraction of <see cref="LifterStackHeight"/>.</summary>
+        public const float LifterBandT = 0.30f;
 
-        /// <summary>Upper carbon band centre as a fraction of <see cref="StarshipStackHeight"/>.</summary>
-        public const float StarshipBandHiT = 0.58f;
-
-        /// <summary>
-        /// Unity cylinder <c>scale.y</c> is half-height. Lower band is ~11 % of the stack
-        /// so it reads as the concept's thick black ring at play ortho 10.
-        /// </summary>
-        public const float StarshipBandLoHalf = StarshipStackHeight * 0.055f;
-
-        /// <summary>Upper band ~9 % of the stack — slightly thinner than the lower ring.</summary>
-        public const float StarshipBandHiHalf = StarshipStackHeight * 0.045f;
+        /// <summary>Strap-on boosters sit this far either side of the core (metres).</summary>
+        public const float LifterBoosterOffset = 1.32f;
 
         /// <summary>
         /// Tiny warm fill on cream hulls so the shaded flank reads ~55 % of lit
-        /// (concept terminator), not the placeholder FBX's 33 % brown core.
+        /// (concept terminator) instead of dropping to a brown core.
         /// </summary>
-        public static readonly Color StarshipHullFill = new Color(0.14f, 0.12f, 0.10f);
+        public static readonly Color LifterHullFill = new Color(0.14f, 0.12f, 0.10f);
+
+        /// <summary>Cargo-capsule windows: pale warm white at low emission. Cyan is the Core's colour and amber is the chargers', so the Lifter uses neither.</summary>
+        private static readonly Color LifterWindowGlow = new Color(1.00f, 0.93f, 0.78f);
+        private static readonly Color LifterWindowEmit = new Color(0.30f, 0.26f, 0.18f);
+
+        /// <summary>Name of the parked craft's own object under the pad, which LaunchSite reuses.</summary>
+        public const string LifterObjectName = "Dress_ColonyLifter";
 
         private static void SpawnParkedShip(Transform root)
         {
-            // SM_Starship_Placeholder is cool-white and its shaded flank drops to ~33 %
-            // of lit. Concept rocket is warm cream with two thick black bands and a soft
-            // terminator. LaunchSite still uses LoadStarship() for the live craft.
-            BuildProceduralShip(root);
+            var lifter = new GameObject(LifterObjectName).transform;
+            lifter.SetParent(root, false);
+            BuildColonyLifter(lifter);
         }
 
         /// <summary>
@@ -1272,42 +1267,81 @@ namespace SolarMajesty
             return root;
         }
 
-        private static void BuildProceduralShip(Transform root)
+        /// <summary>
+        /// The Colony Lifter: the pad's parked craft and the departure craft. An original design
+        /// that reads at isometric distance through things the old rocket did not have: four
+        /// splayed landing legs, two strap-on boosters with orange tips, a stepped two-stage body
+        /// and a domed cargo capsule with a window ring. Deliberately no aft/forward flaps, no
+        /// ogive nose and no single-side heat shield, which are a real-world launch vehicle's
+        /// signature features. Built from primitives at the root's origin, base on the ground.
+        /// </summary>
+        public static void BuildColonyLifter(Transform root)
         {
-            const float h = StarshipStackHeight;
-            // Near-black so the bands read at ortho 10 (Carbon 0.26 washed to charcoal).
-            Color band = new Color(0.08f, 0.07f, 0.07f);
+            const float h = LifterStackHeight;
+            Color dark = new Color(0.08f, 0.07f, 0.07f);
 
-            Prim(root, "Dress_StarshipSkirt", PrimitiveType.Cylinder,
-                new Vector3(0f, 0.42f, 0f),
-                new Vector3(1.28f, 0.22f, 1.28f), Graphite);
-            Prim(root, "Dress_StarshipBody", PrimitiveType.Cylinder,
-                new Vector3(0f, 3.20f, 0f),
-                new Vector3(1.04f, 2.65f, 1.04f), White, StarshipHullFill);
-            Prim(root, "Dress_StarshipHeat", PrimitiveType.Cube,
-                new Vector3(0f, 2.85f, -0.44f),
-                new Vector3(0.82f, 4.4f, 0.16f), Carbon);
-            Prim(root, "Dress_ShipBand_0", PrimitiveType.Cylinder,
-                new Vector3(0f, h * StarshipBandLoT, 0f),
-                new Vector3(1.16f, StarshipBandLoHalf, 1.16f), band);
-            Prim(root, "Dress_ShipBand_1", PrimitiveType.Cylinder,
-                new Vector3(0f, h * StarshipBandHiT, 0f),
-                new Vector3(1.16f, StarshipBandHiHalf, 1.16f), band);
-            Prim(root, "Dress_StarshipNose", PrimitiveType.Sphere,
-                new Vector3(0f, h * 0.90f, 0f),
-                new Vector3(1.04f, 1.35f, 1.04f), White, StarshipHullFill);
-            Prim(root, "Dress_StarshipFin_L", PrimitiveType.Cube,
-                new Vector3(0.08f, 1.05f, 0.58f),
-                new Vector3(0.12f, 1.25f, 0.55f), Carbon);
-            Prim(root, "Dress_StarshipFin_R", PrimitiveType.Cube,
-                new Vector3(0.08f, 1.05f, -0.58f),
-                new Vector3(0.12f, 1.25f, 0.55f), Carbon);
-            Prim(root, "Dress_StarshipFlap_L", PrimitiveType.Cube,
-                new Vector3(0.12f, 5.55f, 0.42f),
-                new Vector3(0.08f, 0.72f, 0.38f), Carbon);
-            Prim(root, "Dress_StarshipFlap_R", PrimitiveType.Cube,
-                new Vector3(0.12f, 5.55f, -0.42f),
-                new Vector3(0.08f, 0.72f, 0.38f), Carbon);
+            // Landing legs: splayed struts with round feet, at the diagonals.
+            for (int i = 0; i < 4; i++)
+            {
+                float yaw = 45f + i * 90f;
+                var dir = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
+                Prim(root, "Dress_LifterLeg_" + i, PrimitiveType.Cube,
+                    dir * 1.30f + new Vector3(0f, 0.62f, 0f),
+                    new Vector3(0.14f, 1.30f, 0.14f), Graphite,
+                    Quaternion.LookRotation(dir) * Quaternion.Euler(-28f, 0f, 0f));
+                Prim(root, "Dress_LifterFoot_" + i, PrimitiveType.Cylinder,
+                    dir * 1.62f + new Vector3(0f, 0.04f, 0f),
+                    new Vector3(0.42f, 0.04f, 0.42f), Steel);
+            }
+
+            // Engine section: skirt and three bells underneath.
+            Prim(root, "Dress_LifterSkirt", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.62f, 0f), new Vector3(1.30f, 0.20f, 1.30f), Graphite);
+            for (int i = 0; i < 3; i++)
+            {
+                var off = Quaternion.Euler(0f, i * 120f, 0f) * new Vector3(0f, 0f, 0.36f);
+                Prim(root, "Dress_LifterBell_" + i, PrimitiveType.Cylinder,
+                    off + new Vector3(0f, 0.30f, 0f), new Vector3(0.34f, 0.14f, 0.34f), dark);
+            }
+
+            // Lower stage: wide cream drum with an orange band (one dark band on the stack is the capsule, so no collar here).
+            Prim(root, "Dress_LifterLower", PrimitiveType.Cylinder,
+                new Vector3(0f, 2.05f, 0f), new Vector3(1.10f, 1.25f, 1.10f), White, LifterHullFill);
+            Prim(root, "Dress_LifterBand", PrimitiveType.Cylinder,
+                new Vector3(0f, h * LifterBandT, 0f), new Vector3(1.14f, 0.16f, 1.14f), Orange);
+
+            // Strap-on boosters, either side, with orange nose tips and dark bases.
+            for (int side = -1; side <= 1; side += 2)
+            {
+                string tag = side < 0 ? "L" : "R";
+                var x = new Vector3(side * LifterBoosterOffset, 0f, 0f);
+                Prim(root, "Dress_LifterBooster_" + tag, PrimitiveType.Cylinder,
+                    x + new Vector3(0f, 1.95f, 0f), new Vector3(0.50f, 1.25f, 0.50f), White, LifterHullFill);
+                Prim(root, "Dress_LifterBoosterTip_" + tag, PrimitiveType.Sphere,
+                    x + new Vector3(0f, 3.22f, 0f), new Vector3(0.50f, 0.62f, 0.50f), Orange);
+                Prim(root, "Dress_LifterBoosterBase_" + tag, PrimitiveType.Cylinder,
+                    x + new Vector3(0f, 0.62f, 0f), new Vector3(0.56f, 0.10f, 0.56f), dark);
+                Prim(root, "Dress_LifterStrut_" + tag, PrimitiveType.Cube,
+                    new Vector3(side * 0.95f, 2.60f, 0f), new Vector3(0.40f, 0.10f, 0.16f), Graphite);
+            }
+
+            // Upper stage: narrower drum, stepped in from the lower one.
+            Prim(root, "Dress_LifterUpper", PrimitiveType.Cylinder,
+                new Vector3(0f, 4.30f, 0f), new Vector3(0.86f, 0.85f, 0.86f), White, LifterHullFill);
+
+            // Cargo capsule: a short wide drum with a window ring, capped by a low dome.
+            Prim(root, "Dress_LifterCapsule", PrimitiveType.Cylinder,
+                new Vector3(0f, 5.42f, 0f), new Vector3(1.02f, 0.28f, 1.02f), Graphite);
+            Prim(root, "Dress_LifterWindows", PrimitiveType.Cylinder,
+                new Vector3(0f, 5.46f, 0f), new Vector3(1.05f, 0.07f, 1.05f), LifterWindowGlow, LifterWindowEmit);
+            Prim(root, "Dress_LifterDome", PrimitiveType.Sphere,
+                new Vector3(0f, 5.70f, 0f), new Vector3(1.02f, 0.62f, 1.02f), White, LifterHullFill);
+
+            // Antenna mast and beacon.
+            Prim(root, "Dress_LifterMast", PrimitiveType.Cylinder,
+                new Vector3(0f, 6.55f, 0f), new Vector3(0.06f, 0.50f, 0.06f), Steel);
+            Prim(root, "Dress_LifterBeacon", PrimitiveType.Sphere,
+                new Vector3(0f, h - 0.12f, 0f), new Vector3(0.16f, 0.16f, 0.16f), Orange, Orange * 1.6f);
         }
 
         /// <summary>
