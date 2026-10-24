@@ -1206,7 +1206,7 @@ namespace SolarMajesty
             RearmStillHoldIfEditorShutter();
             _overseerHud?.OnSessionPlaying();
             if (loadStockpile)
-                LogOverseer("World held. Space resumes at 1×.", 5.5f);
+                LogOverseer(KeyHints.Fill("World held. {TogglePause} resumes at 1×."), 5.5f);
             BeginNarrativeSession();
             if (ReplayRules.Mode != ColonyRunMode.Campaign ||
                 ReplayRules.Challenge != ChallengeId.None ||
@@ -1922,7 +1922,7 @@ namespace SolarMajesty
             Vector3 home = ColonyLayout.CampusOrigin + new Vector3(10f, 0f, 6f);
             if (SpawnFaunaAt(FaunaKind.Creeper, home) == null) return;
             _tutorialPestSpawned = true;
-            LogOverseer("Soil creeper on the yard — post Defend (F5).");
+            LogOverseer(KeyHints.Fill("Soil creeper on the yard — post Defend ({FlagDefend})."));
         }
 
         private bool HasEngineerWorkshop()
@@ -2928,7 +2928,7 @@ namespace SolarMajesty
             if (def != null && def.SecretProject)
                 LogOverseer($"Secret Project complete: {def.DisplayName}.");
             else if (id == TechId.OrbitalUplink)
-                LogOverseer("Orbital Uplink online. Press N: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit.");
+                LogOverseer(KeyHints.Fill("Orbital Uplink online. Press {ToolOrbital}: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit."));
             else if (id == TechId.OrbitalConstellation)
                 LogOverseer("Constellation complete: Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.");
             else if (id == TechId.ExtractBasics && !DemoSettings.FirstHourDemo)
@@ -3158,9 +3158,9 @@ namespace SolarMajesty
                     {
                         CreateBuilding("Colony Commons", BuildingCategory.Commons, 70, 10, 18f, ColonyLayout.CommonsSide, ColonyLayout.CommonsSide),
                         CreateBuilding("Charging Station", BuildingCategory.Habitat, 50, 8, 12f, 4, 4),
-                        CreateBuilding("Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4),
+                        CreateBuilding("Power Node", BuildingCategory.Power, 35, 0, 8f, 4, 4),
                         CreateBuilding("OPS Drop-off", BuildingCategory.Mining, 45, 6, 14f, 4, 4),
-                        CreateBuilding("Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4),
+                        CreateBuilding("Lab Module", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4),
                         CreateBuilding("Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6),
                         CreateBuilding("Laser Turret", BuildingCategory.Defense, 60, 8, 16f, 4, 4)
                     };
@@ -3243,7 +3243,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Defense:
                         b.displayName = "Laser Turret";
-                        b.description = "auto-fires 18 m";
+                        b.description = "18 m gun";
                         break;
                     case BuildingCategory.Mining:
                         b.displayName = "OPS Drop-off";
@@ -3251,19 +3251,19 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Mine:
                         b.displayName = "Nuclear Mine";
-                        b.description = "more energy farther out";
+                        b.description = "far pays";
                         break;
                     case BuildingCategory.Habitat:
                         b.description = $"bots build · {MajestyEconomy.HouseDailyFlat:N0} EU/day";
                         break;
                     case BuildingCategory.Farm:
-                        b.description = $"{MajestyEconomy.FarmDailyTax:N0} EU/day";
+                        b.description = $"{MajestyEconomy.FarmDailyTax:N0}/day";
                         break;
                     case BuildingCategory.LandingPad:
-                        b.description = "launch craft";
+                        b.description = "launches";
                         break;
                     case BuildingCategory.Laboratory:
-                        b.description = "research";
+                        b.description = "tech";
                         break;
                     case BuildingCategory.Power:
                         b.displayName = "Solar Farm";
@@ -3287,7 +3287,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Market:
                         b.displayName = "Market Stall";
-                        b.description = $"{MajestyEconomy.MarketDailyTax:N0} EU/day";
+                        b.description = $"{MajestyEconomy.MarketDailyTax:N0}/day";
                         break;
                     case BuildingCategory.Blacksmith:
                         b.displayName = "Blacksmith";
@@ -5604,13 +5604,13 @@ namespace SolarMajesty
             b.description = cat switch
             {
                 BuildingCategory.Inn => "wrecks wait — EU only",
-                BuildingCategory.Defense => "auto-fires 18 m",
+                BuildingCategory.Defense => "18 m gun",
                 BuildingCategory.Mining => "does not grow EU",
                 BuildingCategory.ClimateLoom => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.AegisSpire => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.DeepArchive => "unlock from ★ tech — bonus while standing",
                 BuildingCategory.GuildHall => "Guild Hall — assign a class",
-                BuildingCategory.Market => "Potions and a regen necklace. Bots buy with EU.",
+                BuildingCategory.Market => "potions",
                 BuildingCategory.Blacksmith => "Guild arms and armor. Bots buy with EU.",
                 BuildingCategory.FobotYard => "Pay EU here to stand wrecks up.",
                 BuildingCategory.Watchtower => HudLayout.WatchtowerBlurb,

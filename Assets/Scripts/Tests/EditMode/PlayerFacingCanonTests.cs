@@ -34,8 +34,8 @@ namespace SolarMajesty.Tests
             @"\b(overseer|overseeing|oversee|houses?|purses?|chest|" +
             // Retired kingdom / court voice and the old faction names.
             @"court|crown|reigns?|kingdom|compact|freeholds?|sol authority|tithe|plaza|party|conquest|conquer|" +
-            // Retired building and crew words: charging stations, bots and the Fobot Yard replace them.
-            @"habs?|beds|inn|heroes|hero lines|" +
+            // Retired building and crew words: charging stations, bots, the till and the Fobot Yard replace them.
+            @"habs?|beds|inn|hero|heroes|treasury|" +
             // Retired ship names: player text says Colony Lifter.
             @"lunar rocket|mars ship|belt hauler)\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
@@ -86,6 +86,11 @@ namespace SolarMajesty.Tests
             Pair("Runtime/OverseerHud.cs", "{beds}"), // interpolation variable
             Pair("Editor/BuildCommands.cs", "THIRD-PARTY-NOTICES"), // file name
             Pair("Systems/Narration/HeroConversation.cs", "never \\\"Overseer\\\""), // instruction to avoid the name
+            Pair("Systems/Voice/VoiceBank.cs", "\"hero.\""), // voice speaker ID prefix
+            Pair("Systems/Narration/HeroNarration.cs", "\"the hero\""), // filter for model reasoning, never shown
+            Pair("Runtime/FlagPlacementInput.cs", "\"treasury\""), // telemetry reason ID
+            Pair("Systems/Settlement.cs", "{Treasury:N0}"), // interpolation variable
+            Pair("Runtime/MissionController.cs", "{set.Treasury:N0}/{treasuryGoal:N0}"), // interpolation variables
             Pair("Assets/Resources/Audio/Voices/voices.json", "\"speaker\":\"overseer\"") // metadata only; text is checked separately
         };
 
@@ -181,13 +186,14 @@ namespace SolarMajesty.Tests
             var failures = new List<string>();
             ScanCSharp("sample.cs", "a = \"The court does not curtsy.\"; b = \"Raise the first HAB.\"; " +
                 "c = \"Heroes buy with EU.\"; d = \"Stage the Lunar Rocket.\"; e = \"Europa is next.\"; " +
-                "f = \"Back to the inn!\"; g = \"Keep overseeing.\"; h = \"The Compact charters.\";", failures);
-            Assert.AreEqual(8, failures.Count, string.Join("\n", failures));
+                "f = \"Back to the inn!\"; g = \"Keep overseeing.\"; h = \"The Compact charters.\"; " +
+                "i = \"Talk to the hero.\"; j = \"The treasury is full.\";", failures);
+            Assert.AreEqual(10, failures.Count, string.Join("\n", failures));
 
             failures.Clear();
             // Word boundaries: longer words that merely contain a banned stem stay legal.
             ScanCSharp("sample.cs", "a = \"Inner dens\"; b = \"Courtyard\"; c = \"Habitat\"; " +
-                "d = \"Hero\"; e = \"Beltway\"; f = \"Compactor\"; g = \"ACH_SOLAR_CONQUEST\";", failures);
+                "d = \"Heroic\"; e = \"Beltway\"; f = \"Compactor\"; g = \"ACH_SOLAR_CONQUEST\";", failures);
             Assert.AreEqual(0, failures.Count, string.Join("\n", failures));
 
             failures.Clear();

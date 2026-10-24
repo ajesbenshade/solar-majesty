@@ -46,8 +46,8 @@ namespace SolarMajesty
                     break;
                 default:
                     facts = string.IsNullOrEmpty(attacker)
-                        ? $"{who} was hit and dropped {amount} EU."
-                        : $"{who} was hit by {Article(attacker).ToLowerInvariant()} {attacker} and dropped {amount} EU.";
+                        ? $"{who} was hit: dropped {amount} EU."
+                        : $"{attacker} hit {who}: dropped {amount} EU.";
                     break;
             }
             return includeHint ? facts + " " + Hint : facts;

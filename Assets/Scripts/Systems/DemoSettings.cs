@@ -549,14 +549,11 @@ namespace SolarMajesty
             if (!string.IsNullOrEmpty(SaveLoadNotice)) return SaveLoadNotice;
             if (!SaveExists)
                 return "No continue slot yet. New Game drops Luna (Mars if you already skipped or cleared the hour). Continue restores that body's campus.";
-            int reg = GamePrefs.GetInt(SaveRegKey, 0);
-            int ice = GamePrefs.GetInt(SaveIceKey, 0);
             int met = GamePrefs.GetInt(SaveMetKey, 0);
-            int pwr = GamePrefs.GetInt(SavePwrKey, 0);
             int tech = ResearchManager.SavedUnlockCount();
             int modules = CampusSnapshot.SlotCount(LoadCampus(BodySeed.LoadSavedBody()));
             string campus = modules > 0 ? $"{modules} modules" : "empty campus";
-            return $"REG {reg}  ICE {ice}  EU {met}  PWR {pwr}  ·  {campus}  ·  {tech} techs";
+            return $"EU {met}  ·  {campus}  ·  {tech} techs";
         }
     }
 }

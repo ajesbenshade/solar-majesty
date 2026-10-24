@@ -1079,7 +1079,7 @@ namespace SolarMajesty
                 y += 12f;
                 GUI.Label(new Rect(c.x, y, c.width, 13f),
                     $"{research.ActiveProgress:F0}/{research.ActiveCost:F0} science" +
-                    (research.LastEvent == "awaiting_stockpile" ? " · need metals/ice" : ""),
+                    (research.LastEvent == "awaiting_stockpile" ? " · need EU" : ""),
                     _micro);
                 y += 18f;
             }
@@ -1465,7 +1465,7 @@ namespace SolarMajesty
                 return $"{b.displayName}  ·  {b.description}";
             switch (b.category)
             {
-                case BuildingCategory.Defense: return "Laser Turret  ·  auto-fires 18 m";
+                case BuildingCategory.Defense: return "Laser Turret  ·  18 m gun";
                 case BuildingCategory.Mining: return "OPS Drop-off  ·  does not grow EU";
                 case BuildingCategory.Mine: return "Nuclear Mine";
                 case BuildingCategory.Power: return "Solar Farm";
@@ -1570,25 +1570,15 @@ namespace SolarMajesty
         private static string FormatBuildCost(ResourceAmount[] cost)
         {
             if (cost == null || cost.Length == 0) return "free";
-            var parts = new System.Text.StringBuilder();
+            // Player text has one currency. Internal resource IDs (Regolith, WaterIce, Power) stay,
+            // but every line of a cost reads as EU, so the parts are summed into one figure.
+            int total = 0;
             for (int i = 0; i < cost.Length; i++)
-            {
-                if (i > 0) parts.Append(" · ");
-                parts.Append(cost[i].amount);
-                parts.Append(' ');
-                parts.Append(ShortResource(cost[i].resource));
-            }
-            return parts.ToString();
+                total += cost[i].amount;
+            return $"{total} {ShortResource(ResourceId.Metals)}";
         }
 
-        private static string ShortResource(ResourceId id) => id switch
-        {
-            ResourceId.Regolith => "REG",
-            ResourceId.WaterIce => "ICE",
-            ResourceId.Metals => "EU",
-            ResourceId.Power => "PWR",
-            _ => id.ToString().ToUpperInvariant()
-        };
+        internal static string ShortResource(ResourceId id) => "EU";
 
         private void DrawMissionPanel()
         {

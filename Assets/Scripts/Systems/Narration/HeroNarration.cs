@@ -59,7 +59,7 @@ namespace SolarMajesty
 
         public const string SystemPrompt =
             "You voice autonomous worker bots in a space colony game. Reply with ONE " +
-            "punchy first-person line, at most 9 words, that the hero mutters right now. Speak in the " +
+            "punchy first-person line, at most 9 words, that the bot mutters right now. Speak in the " +
             "given voice. Be specific and a little funny. Never reuse wording from earlier replies. " +
             "Use only the facts given. Reply in English. No emoji, no " +
             "quotes, no explanations. " + AiContentGuard.PromptRule;
@@ -67,11 +67,11 @@ namespace SolarMajesty
         /// <summary>Example exchanges: small models copy tone and length from these far better than from rules.</summary>
         static readonly string[,] Examples =
         {
-            { "Hero: level 3 Defense Mech on Mars. Voice: greedy — always about the money. Now: just took the den bounty paying 600 EU.",
+            { "Bot: level 3 Defense Mech on Mars. Voice: greedy — always about the money. Now: just took the den bounty paying 600 EU.",
               "Six hundred for a den? I'd clear two." },
-            { "Hero: level 1 Scout Drone on Luna. Voice: cowardly — nervous, looking for an exit. Now: badly hurt and running back to the Fobot Yard.",
+            { "Bot: level 1 Scout Drone on Luna. Voice: cowardly — nervous, looking for an exit. Now: badly hurt and running back to the Fobot Yard.",
               "Nope. Nope. Yard. Now." },
-            { "Hero: level 5 Engineer Bot on Earth. Voice: workaholic — lives for the job. Now: is not allowed to take the build bounty because the Core's orders say \"level 6 or higher\".",
+            { "Bot: level 5 Engineer Bot on Earth. Voice: workaholic — lives for the job. Now: is not allowed to take the build bounty because the Core's orders say \"level 6 or higher\".",
               "Level six? I've welded worse blindfolded." },
         };
 
@@ -79,7 +79,7 @@ namespace SolarMajesty
         public static string Describe(in HeroMoment m)
         {
             var sb = new StringBuilder(260);
-            sb.Append("Hero: level ").Append(Mathf.Max(1, m.Level)).Append(' ').Append(Safe(m.ClassName, "specialist"));
+            sb.Append("Bot: level ").Append(Mathf.Max(1, m.Level)).Append(' ').Append(Safe(m.ClassName, "specialist"));
             if (!string.IsNullOrEmpty(m.World)) sb.Append(" on ").Append(m.World);
             sb.Append(". Voice: ").Append(Voice(m)).Append(". Personality: ")
               .Append(Word(m.Greed, "modest", "fair", "greedy")).Append(", ")
@@ -224,7 +224,7 @@ namespace SolarMajesty
         }
 
         static readonly string[] ReasoningOpeners =
-            { "okay", "ok,", "let me", "let's see", "hmm", "the hero", "the user", "first,", "so,", "i need to", "alright" };
+            { "okay", "ok,", "let me", "let's see", "hmm", "the bot", "the hero", "the user", "first,", "so,", "i need to", "alright" };
 
         /// <summary>True when text is the model thinking about the prompt rather than speaking a line.</summary>
         public static bool LooksLikeReasoning(string s)

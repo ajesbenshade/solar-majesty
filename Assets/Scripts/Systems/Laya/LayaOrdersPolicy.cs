@@ -22,18 +22,18 @@ namespace SolarMajesty
 
         public static List<LayaQuestion> BuildQuestions()
         {
-            var levels = new List<LayaOption> { new LayaOption { Label = "any", Description = "No level requirement; any hero may go." } };
+            var levels = new List<LayaOption> { new LayaOption { Label = "any", Description = "No level requirement; any bot may go." } };
             for (int l = 2; l <= OverseerRules.LevelCap; l++)
                 levels.Add(new LayaOption { Label = "level_" + l, Description = $"Only bots level {l} or higher may go." });
 
-            var classes = new List<LayaOption> { new LayaOption { Label = "anyone", Description = "Any kind of hero may go." } };
+            var classes = new List<LayaOption> { new LayaOption { Label = "anyone", Description = "Any kind of bot may go." } };
             foreach (SpecialistClass cls in Enum.GetValues(typeof(SpecialistClass)))
                 classes.Add(new LayaOption { Label = cls.ToString(), Description = $"Only {FlagOrdersParser.ShortName(cls)} may go." });
 
             return new List<LayaQuestion>
             {
-                new LayaQuestion { Id = MinLevelId, Type = "choice", Instructions = "What minimum hero level do these orders require?", Options = levels },
-                new LayaQuestion { Id = ClassId, Type = "choice", Instructions = "Which kind of hero do these orders allow?", Options = classes },
+                new LayaQuestion { Id = MinLevelId, Type = "choice", Instructions = "What minimum bot level do these orders require?", Options = levels },
+                new LayaQuestion { Id = ClassId, Type = "choice", Instructions = "Which kind of bot do these orders allow?", Options = classes },
                 new LayaQuestion { Id = StrictId, Type = "noul", Instructions = "Are these orders absolute, with no exceptions allowed?" }
             };
         }

@@ -111,8 +111,8 @@ namespace SolarMajesty
                 if (!DensCleared)
                 {
                     if (LairCount > 0 && UnclearedLairs > 0)
-                        return $"Clear dens — {UnclearedLairs} left (F2 Clear Threat)";
-                    return $"Clear the den stalkers — {StalkersRemaining} left (F2 Clear Threat)";
+                        return $"Clear dens — {UnclearedLairs} left ({InputBindings.Label(GameAction.FlagClearThreat)} Clear Threat)";
+                    return $"Clear the den stalkers — {StalkersRemaining} left ({InputBindings.Label(GameAction.FlagClearThreat)} Clear Threat)";
                 }
                 if (!SustainComplete)
                 {
