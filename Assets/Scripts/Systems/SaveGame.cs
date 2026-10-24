@@ -72,7 +72,7 @@ namespace SolarMajesty
             string when = string.IsNullOrEmpty(savedAtUtc) ? "unknown" : savedAtUtc;
             var hours = TimeSpan.FromSeconds(playSeconds);
             return $"{BodyName((CelestialBodyId)body)} · {buildings.Count} modules · " +
-                   $"{agents.Count} robots · {hours:hh\\:mm} · {when}";
+                   $"{agents.Count} {(agents.Count == 1 ? "robot" : "robots")} · {hours:hh\\:mm} · {when}";
         }
 
         private static string BodyName(CelestialBodyId id)

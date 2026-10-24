@@ -108,6 +108,12 @@ namespace SolarMajesty
         /// Build-list row text, longest first: "name · blurb · stat" if it fits, else "name · blurb".
         /// The blurb always wins over the stat.
         /// </summary>
+        /// <summary>
+        /// Longest "name  ·  hint" catalog row that shows whole at 100% UI scale
+        /// ("Laser Turret  ·  18 m gun" fits; "Greenhouse Farm  ·  50/day" was cut).
+        /// </summary>
+        public const int MaxBuildRowChars = 25;
+
         public static string[] BuildRowVariants(string name, string description, string stat)
         {
             string row = string.IsNullOrEmpty(description) ? name : name + "  ·  " + description;

@@ -3229,7 +3229,7 @@ namespace SolarMajesty
         }
 
         /// <summary>CMD-1 sheet is Guild dress; Defense bunker is not "Command".</summary>
-        private static void NormalizeCatalogNames(BuildingData[] buildings)
+        public static void NormalizeCatalogNames(BuildingData[] buildings)
         {
             if (buildings == null) return;
             for (int i = 0; i < buildings.Length; i++)
@@ -3257,6 +3257,8 @@ namespace SolarMajesty
                         b.description = $"bots build · {MajestyEconomy.HouseDailyFlat:N0} EU/day";
                         break;
                     case BuildingCategory.Farm:
+                        // "Greenhouse Farm" left no room for the hint in the catalog row.
+                        b.displayName = "Greenhouse";
                         b.description = $"{MajestyEconomy.FarmDailyTax:N0}/day";
                         break;
                     case BuildingCategory.LandingPad:
@@ -5645,7 +5647,7 @@ namespace SolarMajesty
         {
             var extra = new[]
             {
-                CreateBuilding("Greenhouse Farm", BuildingCategory.Farm, 28, 4, 10f, 4, 4),
+                CreateBuilding("Greenhouse", BuildingCategory.Farm, 28, 4, 10f, 4, 4),
                 CreateBuilding("Ore Mine", BuildingCategory.Mine, 32, 4, 12f, 4, 4),
                 CreateBuilding("Regolith Camp", BuildingCategory.RegolithCamp, 22, 0, 9f, 4, 4),
                 CreateBuilding("Scout Workshop", BuildingCategory.ScoutWorkshop, 36, 4, 12f, 4, 4),
