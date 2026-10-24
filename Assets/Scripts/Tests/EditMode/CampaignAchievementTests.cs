@@ -32,7 +32,8 @@ namespace SolarMajesty.Tests
         public void SolarConquest_NeedsEveryWorldInTheCampaign()
         {
             var stats = new RunStats { BodiesConquered = 1 };
-            var all = CelestialBodyCatalog.All;
+            // Player-visible campaign: Earth, Luna, Mars. Belt and Europa are not required.
+            var all = new[] { CelestialBodyId.Earth, CelestialBodyId.Luna, CelestialBodyId.Mars };
             for (int i = 0; i < all.Length - 1; i++)
             {
                 CampaignProgress.MarkConquered(all[i]);

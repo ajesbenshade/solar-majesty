@@ -31,7 +31,7 @@ namespace SolarMajesty
 
         public static bool HasConquered(CelestialBodyId id) => (ConqueredMask & (1 << (int)id)) != 0;
 
-        /// <summary>Every world on the spine secured in this campaign (the Solar Conquest achievement).</summary>
+        /// <summary>Every player-visible world (Earth, Luna, Mars) secured in this campaign (the Campaign Complete achievement).</summary>
         public static bool ConqueredEveryWorld
         {
             get
@@ -40,7 +40,7 @@ namespace SolarMajesty
                 if (all == null || all.Length == 0) return false;
                 for (int i = 0; i < all.Length; i++)
                 {
-                    if (IsOnSpine(all[i]) && !HasConquered(all[i])) return false;
+                    if (IsOnSpine(all[i]) && DemoSlice.ShowBody(all[i]) && !HasConquered(all[i])) return false;
                 }
                 return true;
             }
@@ -105,7 +105,9 @@ namespace SolarMajesty
         public static CelestialBodyId? NextAfter(CelestialBodyId current)
         {
             if (!IsOnSpine(current) || current == CelestialBodyCatalog.Last) return null;
-            return (CelestialBodyId)((int)current + 1);
+            var next = (CelestialBodyId)((int)current + 1);
+            // The player campaign ends at Mars; hidden worlds are never offered as "next".
+            return DemoSlice.ShowBody(next) ? next : (CelestialBodyId?)null;
         }
 
         /// <summary>

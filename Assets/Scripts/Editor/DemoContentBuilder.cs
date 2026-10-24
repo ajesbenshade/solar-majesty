@@ -81,11 +81,11 @@ namespace SolarMajesty.EditorTools
 
             WriteBuilding("Building_Commons", "Colony Commons", BuildingCategory.Commons, 70, 10, 18f, ColonyLayout.CommonsSide, ColonyLayout.CommonsSide);
             WriteBuilding("Building_LandingPad", "Landing Pad", BuildingCategory.LandingPad, 40, 5, 10f, 6, 6);
-            WriteBuilding("Building_HAB1", "Hab Module (HAB-1)", BuildingCategory.Habitat, 50, 8, 12f, 4, 4);
+            WriteBuilding("Building_HAB1", "Charging Station", BuildingCategory.Habitat, 50, 8, 12f, 4, 4);
             WriteBuilding("Building_PWR1", "Power Node (PWR-1)", BuildingCategory.Power, 35, 0, 8f, 4, 4);
             WriteBuilding("Building_OPS1", "OPS Drop-off", BuildingCategory.Mining, 45, 6, 14f, 4, 4);
             WriteBuilding("Building_LAB1", "Lab Module (LAB-1)", BuildingCategory.Laboratory, 55, 10, 14f, 4, 4);
-            WriteBuilding("Building_CMD1", "Defense Battery", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
+            WriteBuilding("Building_CMD1", "Laser Turret", BuildingCategory.Defense, 60, 8, 16f, 4, 4);
             WriteStarterGuilds();
             WriteBuilding("Building_Market", "Market Stall", BuildingCategory.Market, 34, 2, 10f, 4, 4);
             WriteBuilding("Building_Blacksmith", "Blacksmith", BuildingCategory.Blacksmith, 48, 4, 12f, 4, 4);
@@ -240,10 +240,10 @@ namespace SolarMajesty.EditorTools
                 case BuildingCategory.DeepArchive:
                     return "unlock from ★ tech — bonus while standing";
                 case BuildingCategory.GuildHall: return "Guild Hall — assign a class";
-                case BuildingCategory.Market: return "Potions and a regen necklace. Heroes buy with EU.";
-                case BuildingCategory.Blacksmith: return "Guild arms and armor. Heroes buy with EU.";
+                case BuildingCategory.Market: return "Potions and a regen necklace. Bots buy with EU.";
+                case BuildingCategory.Blacksmith: return "Guild arms and armor. Bots buy with EU.";
                 case BuildingCategory.FobotYard: return "Pay EU here to stand wrecks up.";
-                case BuildingCategory.Watchtower: return "Guard post and levy till. Arm lasers for EU.";
+                case BuildingCategory.Watchtower: return HudLayout.WatchtowerBlurb;
                 case BuildingCategory.AidStation: return "Hurt robots pay EU for a patch. Triage clocks in.";
                 default: return "";
             }

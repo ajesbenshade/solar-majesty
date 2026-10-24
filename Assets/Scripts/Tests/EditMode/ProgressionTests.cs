@@ -463,10 +463,10 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void ConqueringEachWorld_UnlocksTheNext_UntilEuropa()
+        public void ConqueringEachWorld_UnlocksTheNext_UntilMars()
         {
             CampaignProgress.Ensure();
-            for (int i = (int)CelestialBodyId.Earth; i < (int)CelestialBodyId.Europa; i++)
+            for (int i = (int)CelestialBodyId.Earth; i < (int)CelestialBodyId.Mars; i++)
             {
                 var current = (CelestialBodyId)i;
                 var next = (CelestialBodyId)(i + 1);
@@ -475,6 +475,10 @@ namespace SolarMajesty.Tests
                 CampaignProgress.UnlockNextFrom(current);
                 Assert.IsTrue(CampaignProgress.IsUnlocked(next));
             }
+            // The player campaign ends at Mars: Belt is never offered or unlocked as "next".
+            Assert.IsFalse(CampaignProgress.NextAfter(CelestialBodyId.Mars).HasValue);
+            CampaignProgress.UnlockNextFrom(CelestialBodyId.Mars);
+            Assert.IsFalse(CampaignProgress.IsUnlocked(CelestialBodyId.Belt));
             Assert.IsFalse(CampaignProgress.NextAfter(CelestialBodyId.Europa).HasValue);
         }
 

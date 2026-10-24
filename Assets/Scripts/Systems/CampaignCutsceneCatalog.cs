@@ -43,7 +43,7 @@ namespace SolarMajesty
         }
     }
 
-    /// <summary>Nine W2 text beats. Belt / Europa stay catalog-only.</summary>
+    /// <summary>Nine W2 text beats for Earth, Luna and Mars. The campaign ends on Mars.</summary>
     public static class CampaignCutsceneCatalog
     {
         public const string EarthPrologue = "cut.earth.prologue";
@@ -58,59 +58,59 @@ namespace SolarMajesty
 
         private static readonly CampaignCutscene[] Table =
         {
-            new CampaignCutscene(EarthPrologue, "The Meadow Is Not a Reign", CutsceneKind.Modal,
-                "The cradle is a closing book. Sol Authority still stamps decrees; the meadow does not stamp them back.",
-                "A claim disc in the grass is a picnic. Raise a Commons before anyone files us as scenery.",
-                "Horizon can chart the apron. Anvil can weld. Neither makes the green infinite.",
-                "We stay here, we become tenants of a farm. We leave, we remain a crown."),
+            new CampaignCutscene(EarthPrologue, "The Core Wakes", CutsceneKind.Modal,
+                "You are the Core. Your bots do the work.",
+                "The orange disc is the claim. Raise a Commons on it first.",
+                "Horizon can chart the apron. Anvil can weld. You post the flags and pay the bounties.",
+                "Earth is the first stop. Luna and Mars come after."),
 
-            new CampaignCutscene(EarthMidCourt, "Court, Beds, Charter", CutsceneKind.Modal,
-                "The Commons stands. The HAB is a ledger. The hall has a charter.",
-                "That is a court. It is not a solar power.",
-                "ICE and REG have a ceiling on this meadow. Eight bots and a farm do not impress anyone who already owns a lane.",
-                "Sol Authority’s legitimacy is expansion. Farms fill the tank. They are not why we rule."),
+            new CampaignCutscene(EarthMidCourt, "Commons, Chargers, Charter", CutsceneKind.Modal,
+                "The Commons stands. The charging stations fill their batteries. The hall has a charter.",
+                "Couriers carry the EU to the till.",
+                "A meadow only pays so much. Eight bots and a farm are a start.",
+                "Clear the dens, fill the till, and stage the Colony Lifter."),
 
             new CampaignCutscene(EarthToLuna, "Trajectory Locked — Luna", CutsceneKind.TravelLog,
-                "Earth holds. The Lunar Rocket is on the pad, not in a toast.",
-                "The Freeholds already have a receipt prepared. Forty EU at the dock. They call it hospitality.",
-                "We call it the first bill of a longer reign.",
-                "Do not wave at the trajectory. They will invoice the wave."),
+                "Earth holds. The Colony Lifter is on the pad.",
+                "Luna is grey rock and thin margins.",
+                "The bots that ride up start over on grey rock.",
+                "Next stop: Luna."),
 
             new CampaignCutscene(LunaArrival, "Hospitality, Itemized", CutsceneKind.Modal,
-                "Luna insertion. The Freeholds smile like a weigh-station.",
-                "Dock fee is forty EU. Ice and ore have owners. The lanes have owners.",
-                "Ash hoppers will test the HAB. Dust ticks will test the mines. Neither is the real bill.",
-                "The real bill is staying. Stay, and you pay forever."),
+                "Luna insertion. Grey rock, thin margins.",
+                "No supply ships land here. The mines pay the bills.",
+                "Ash hoppers will hit the charging stations. Dust ticks will hit the mines.",
+                "Raise a Commons, then keep the till ahead of the fees."),
 
-            new CampaignCutscene(LunaMidWarrant, "Receipt and Warrant", CutsceneKind.Modal,
-                "They call it a tariff. Strip and Core hauled the receipt. Do not lose it.",
-                "Someone cut the hoppers loose on the HAB. Aegis takes warrants, not sermons.",
-                "The lanes were spoken for before we arrived. Buy them with EU, or leave them behind.",
-                "A crater Commons that pays rent is a nicer picnic. We did not come for nicer."),
+            new CampaignCutscene(LunaMidWarrant, "Ore and Hoppers", CutsceneKind.Modal,
+                "The rille ore is paying. Courier bots haul it to the till.",
+                "Ash hoppers are on the charging stations. Aegis takes Clear Threat flags.",
+                "Pay the bounty and the bots go. Underpay and they wait.",
+                "Hold the crater, then stage the next lifter."),
 
             new CampaignCutscene(LunaToMars, "Trajectory Locked — Mars", CutsceneKind.TravelLog,
-                "Luna holds. Mars Ship staged. Pack guild manners.",
-                "The Compact does not curtsy. It charters.",
-                "We have paid the Freehold tithe long enough to learn the lesson: ice and ore without a seat is someone else’s spine.",
-                "The red yard is where a crown becomes industrial — or becomes a story about a meadow."),
+                "Luna holds. The Colony Lifter Mk II is staged.",
+                "Mars is the last stop of the campaign.",
+                "More dens, more wisps, a bigger till to fill.",
+                "Next stop: Mars."),
 
-            new CampaignCutscene(MarsArrival, "Compact Ground", CutsceneKind.Modal,
-                "Mars descent. Compact ground. Dust already filing opinions about Power.",
-                "Raise the seat — HUD still says COMMONS — before the dust files a claim of its own.",
-                "This is the industrial spine. Not a second Earth court. Not a Freehold weigh-station with worse lighting.",
-                "Wisps drink grids. Creepers chew furrows. The Compact expects both handled without a Sol accent."),
+            new CampaignCutscene(MarsArrival, "Red Ground", CutsceneKind.Modal,
+                "Mars descent. Red dust and busy dens.",
+                "Raise the Commons first. The HUD calls it COMMONS.",
+                "This is the big yard. Clear the dens and fill the till.",
+                "Wisps raid the solar farms. Creepers chew the furrows. Post flags for both."),
 
-            new CampaignCutscene(MarsMidCrust, "Grid, Wisps, Garden", CutsceneKind.Modal,
-                "The solar field is on the books. The wisps can read. Aegis hunts light that should not have a mouth.",
-                "Bloom will weave the crust if you pay for a garden. The Compact creed is not a picnic blanket.",
-                "A stronghold that cannot keep Power or lunch is a failed picnic with better dust.",
-                "Hold the yard. Then we name the rocks. We do not write their decrees today."),
+            new CampaignCutscene(MarsMidCrust, "Solar, Wisps, Garden", CutsceneKind.Modal,
+                "The solar field is paying. The wisps noticed. Aegis hunts them.",
+                "Bloom will weave the crust if you pay for a garden.",
+                "A yard that cannot keep its farms running cannot keep its bots.",
+                "Hold the yard. Then stage the last lifter."),
 
-            new CampaignCutscene(MarsBeltNamed, "The Rocks Have a Name", CutsceneKind.TravelLog,
-                "Mars holds. Belt Hauler on the pad. Trajectory into the rocks is open.",
-                "Belt is the next freight frontier. It is a name. It is not this week’s map.",
-                "Europa can wait in the catalog. We are not writing their decrees.",
-                "The crown is a solar power, or it was a meadow with a rocket. Choose which log we keep.")
+            new CampaignCutscene(MarsBeltNamed, "Campaign Complete", CutsceneKind.TravelLog,
+                "Mars holds. The Colony Lifter Mk III is on the pad.",
+                "Earth, Luna and Mars are running.",
+                "Mars is the last stop for now.",
+                "The bots keep working. Revisit any world from the title.")
         };
 
         public static IReadOnlyList<CampaignCutscene> All => Table;

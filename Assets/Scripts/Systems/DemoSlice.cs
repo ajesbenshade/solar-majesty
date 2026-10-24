@@ -18,11 +18,12 @@ namespace SolarMajesty
             return !DemoSettings.FirstHourDemo || rank < CampaignOnly;
         }
 
-        public static bool ShowBody(CelestialBodyId id)
-        {
-            if (!DemoSettings.FirstHourDemo) return true;
-            return id != CelestialBodyId.Belt && id != CelestialBodyId.Europa;
-        }
+        /// <summary>
+        /// Worlds a player can see: Earth, Luna and Mars, in every mode. Belt and Europa stay
+        /// in the catalog and in saves (IDs unchanged) but never reach the title or the HUD.
+        /// </summary>
+        public static bool ShowBody(CelestialBodyId id) =>
+            id == CelestialBodyId.Earth || id == CelestialBodyId.Luna || id == CelestialBodyId.Mars;
 
         public static bool ShowTech(TechId id)
         {

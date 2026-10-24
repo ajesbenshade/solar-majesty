@@ -20,7 +20,7 @@ namespace SolarMajesty
         /// <summary>Objective column, title toast, and the win-banner note share this sentence.</summary>
         public static string ObjectiveText(bool fullCampaignOn, bool launchReady, string craft)
         {
-            string name = string.IsNullOrEmpty(craft) ? "Lunar Rocket" : craft;
+            string name = string.IsNullOrEmpty(craft) ? "Colony Lifter" : craft;
             if (fullCampaignOn)
                 return launchReady ? "ready on pad" : Chain(name);
             if (launchReady)

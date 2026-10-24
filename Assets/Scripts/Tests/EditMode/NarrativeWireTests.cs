@@ -23,14 +23,14 @@ namespace SolarMajesty.Tests
         public void TryMatchTitle_DoesNotCrossBodies()
         {
             Assert.IsFalse(FlagDecreeIds.TryMatchTitle("Raise the Commons", CelestialBodyId.Luna, out _));
-            Assert.IsFalse(FlagDecreeIds.TryMatchTitle("Raise the Compact Seat", CelestialBodyId.Earth, out _));
+            Assert.IsFalse(FlagDecreeIds.TryMatchTitle("Raise the Mars Commons", CelestialBodyId.Earth, out _));
         }
 
         [Test]
         public void TryMatchPosted_UsesTitleBeforeUniqueType()
         {
             Assert.IsTrue(FlagDecreeIds.TryMatchPosted(
-                FlagType.Build, "Raise the First HAB", CelestialBodyId.Earth, out var d));
+                FlagType.Build, "Place the First Charging Station", CelestialBodyId.Earth, out var d));
             Assert.AreEqual(FlagDecreeIds.EarthDockTheFirstHab, d.Id);
         }
 
@@ -132,7 +132,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(AdvisorToastCatalog.TravelEarthEmptyDrop, AdvisorToastCatalog.TravelKeyForArrival(CelestialBodyId.Earth));
             Assert.AreEqual(AdvisorToastCatalog.TravelEarthToLuna, AdvisorToastCatalog.TravelKeyForVictory(CelestialBodyId.Earth));
             Assert.IsTrue(AdvisorToastCatalog.TryGetTravel(AdvisorToastCatalog.TravelEarthEmptyDrop, out var toast));
-            StringAssert.Contains("picnic", toast.Line);
+            StringAssert.Contains("Raise a Commons", toast.Line);
         }
     }
 
@@ -278,7 +278,7 @@ namespace SolarMajesty.Tests
             afterHab.HasWorkshopOrder = true;
             Assert.IsFalse(NarrativeBeatTracker.TryInferBuild(
                 CelestialBodyId.Earth, afterHab, out _),
-                "workshop labour must not title-match Stage the Lunar Rocket");
+                "workshop labour must not title-match Stage the Colony Lifter");
 
             afterHab.HasWorkshopOrder = false;
             afterHab.HasPadOrder = true;
@@ -335,7 +335,7 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(NarrativeBeatTracker.TryResolvePosted(
                 handle, CelestialBodyId.Earth, hint, out var decree));
             Assert.AreEqual(FlagDecreeIds.EarthStageTheLunarRocket, decree.Id);
-            Assert.AreEqual("Stage the Lunar Rocket", handle.Title);
+            Assert.AreEqual("Stage the Colony Lifter", handle.Title);
         }
 
         [Test]

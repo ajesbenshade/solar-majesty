@@ -25,11 +25,11 @@ namespace SolarMajesty
         public const float FobotYardArrive = 28f;
 
         public const string JexYardFirstBill =
-            "Anvil is in the Fobot Yard. Standing him up costs more than the Scout. That is called having favorites.";
+            "Anvil is in the Fobot Yard. Standing it up costs more than the Scout. That is called having favorites.";
         public const string JexYardUnaffordable =
-            "Compact EU insufficient. Re-fab a rookie or start a bake sale. Do not pay in ice.";
+            "Not enough EU. Re-fab a rookie or start a bake sale.";
         public const string JexYardMissing =
-            "No Fobot Yard. Wrecks wait. Dock an Inn — that is the yard. Y does not skip the building.";
+            "No Fobot Yard. Wrecks wait. Build the yard first. Y does not skip the building.";
         public const float ReviveCooldown = 120f;
         public const float ReviveHp = 0.50f;
         public const float ReviveFatigue = 0.40f;
@@ -185,17 +185,17 @@ namespace SolarMajesty
         public const float CourierResupplyScale = 0.85f;
         public const float CourierOutpostWork = 1.20f;
 
-        /// <summary>Courier picks up / deposits when this close to a HAB or Commons center.</summary>
+        /// <summary>Courier picks up / deposits when this close to a charging station or Commons center.</summary>
         public const float LevyArrive = 4.2f;
-        /// <summary>HAB purse left this long can be stolen by fauna at the door. 3 tax ticks.</summary>
+        /// <summary>Charger battery left this long can be stolen by fauna at the door. 3 tax ticks.</summary>
         public const float LevyHabStaleSeconds = 72f;
 
         public const string JexLevyStolenCourier =
-            "Haul lost the levy on the road.";
+            "A courier lost its EU on the road.";
         public const string JexLevyStolenHab =
-            "EU was napping on the HAB. A mite just made a withdrawal.";
+            "EU was sitting in a charger battery. A mite just made a withdrawal.";
         public const string JexLevyHome =
-            "Haul walked the batteries home. EU is in the till. Do not click the crate.";
+            "Courier hauled the batteries to the till. Do not click the crate.";
 
         public const float PressureInterval = 75f;
         public const float FrenzyPressure = 50f;

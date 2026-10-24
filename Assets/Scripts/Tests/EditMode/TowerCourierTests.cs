@@ -46,15 +46,15 @@ namespace SolarMajesty.Tests
         [Test]
         public void Watchtower_BlurbIsCanon_AndStatOnlyWhenItFits()
         {
-            Assert.AreEqual("Guard post and levy till. Arm lasers for EU.", HudLayout.WatchtowerBlurb);
+            Assert.AreEqual("Sentry", HudLayout.WatchtowerBlurb);
             var v = HudLayout.BuildRowVariants("Watchtower", HudLayout.WatchtowerBlurb, HudLayout.WatchtowerStat);
-            Assert.AreEqual("Watchtower  ·  Guard post and levy till. Arm lasers for EU.  ·  +1 Haul", v[0]);
-            Assert.AreEqual("Watchtower  ·  Guard post and levy till. Arm lasers for EU.", v[1]);
+            Assert.AreEqual("Watchtower  ·  Sentry  ·  +1 Haul", v[0]);
+            Assert.AreEqual("Watchtower  ·  Sentry", v[1]);
 
             System.Func<string, float> measure = s => s.Length * 6f;
             Assert.AreEqual(v[0], HudLayout.FitText(v, measure, 1000f), "room for the stat line");
             Assert.AreEqual(v[1], HudLayout.FitText(v, measure, v[1].Length * 6f), "the blurb wins over the stat");
-            StringAssert.DoesNotContain("+1 Haul", HudLayout.FitText(v, measure, 200f));
+            StringAssert.DoesNotContain("+1 Haul", HudLayout.FitText(v, measure, v[1].Length * 6f + 1f));
         }
 
         [Test]
@@ -106,7 +106,7 @@ namespace SolarMajesty.Tests
 
             Assert.AreEqual(50, delivered);
             Assert.IsNotNull(line, "carried levy must reach the till while a flag is open");
-            StringAssert.StartsWith("Haul dumped 50 EU at the till.", line);
+            StringAssert.StartsWith("Courier hauled 50 EU to the till.", line);
             CollectionAssert.Contains(_flags.Flags, flag, "the flag is still open");
         }
     }

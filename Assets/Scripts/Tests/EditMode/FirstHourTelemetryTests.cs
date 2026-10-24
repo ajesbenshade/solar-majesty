@@ -135,7 +135,7 @@ namespace SolarMajesty.Tests
         {
             StringAssert.Contains("B, then 1", FirstHourHints.PlaceWorkshop);
             StringAssert.Contains("F3", FirstHourHints.PostCheapBuild);
-            StringAssert.Contains("700", FirstHourHints.PostCheapBuild);
+            StringAssert.Contains("400", FirstHourHints.PostCheapBuild);
             StringAssert.Contains("Click the Build pole", FirstHourHints.RaiseBuildPrice);
             StringAssert.Contains("+", FirstHourHints.RaiseBuildPrice);
             StringAssert.Contains("F5", FirstHourHints.PostDefend);
@@ -146,7 +146,7 @@ namespace SolarMajesty.Tests
         {
             string cheap = FirstHourTutorial.Beat(1, highBuildAlready: false);
             StringAssert.Contains("F3", cheap);
-            StringAssert.Contains("700", cheap);
+            StringAssert.Contains("400", cheap);
             StringAssert.Contains("Click that Build pole", FirstHourTutorial.Beat(2, false));
             StringAssert.Contains("F5", FirstHourTutorial.Beat(FirstHourTutorial.PestStep, false));
         }

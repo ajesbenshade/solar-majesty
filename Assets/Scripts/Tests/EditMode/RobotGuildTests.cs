@@ -36,9 +36,9 @@ namespace SolarMajesty.Tests
         public void HallNames_MatchColonyStructureCallsigns()
         {
             Assert.AreEqual("Horizon Lodge", ColonyStructure.GuildNameFor(SpecialistClass.ScoutDrone));
-            Assert.AreEqual("Anvil Compact", ColonyStructure.GuildNameFor(SpecialistClass.EngineerBot));
+            Assert.AreEqual("Anvil Lodge", ColonyStructure.GuildNameFor(SpecialistClass.EngineerBot));
             Assert.AreEqual("Aegis Lodge", ColonyStructure.GuildNameFor(SpecialistClass.DefenseMech));
-            Assert.AreEqual("Triage Compact", ColonyStructure.GuildNameFor(SpecialistClass.Medic));
+            Assert.AreEqual("Triage Lodge", ColonyStructure.GuildNameFor(SpecialistClass.Medic));
 
             for (int i = 0; i < RobotGuildCatalog.Starter.Length; i++)
             {
@@ -51,7 +51,7 @@ namespace SolarMajesty.Tests
         public void TryMatch_ReadsPreferredOccupants()
         {
             var data = ScriptableObject.CreateInstance<BuildingData>();
-            data.displayName = "Anvil Compact";
+            data.displayName = "Anvil Lodge";
             data.category = BuildingCategory.GuildHall;
             data.preferredOccupants = new[] { SpecialistClass.EngineerBot };
 
@@ -99,7 +99,7 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(st.ClassLocked);
             Assert.IsFalse(st.HasPreferredClass);
             st.SetPreferredClass(SpecialistClass.Medic);
-            Assert.AreEqual("Triage Compact", st.DisplayName);
+            Assert.AreEqual("Triage Lodge", st.DisplayName);
 
             Object.DestroyImmediate(go);
             Object.DestroyImmediate(data);

@@ -120,8 +120,8 @@ namespace SolarMajesty
             new AchievementDef
             {
                 Id = AchievementId.SolarConquest,
-                Title = "Solar Conquest",
-                Description = "Take every body from Earth to Europa.",
+                Title = "Campaign Complete",
+                Description = "Run Earth, Luna and Mars.",
                 // Campaign-wide: each world is its own scene load, so per-run stats never pass 1.
                 Test = _ => CampaignProgress.ConqueredEveryWorld
             },

@@ -150,7 +150,7 @@ namespace SolarMajesty
             if (_logTimer <= 0f && _pendingLog > 0)
             {
                 _logTimer = 45f;
-                _loop.LogOverseer($"Haul carried {_pendingLog:N0} EU home.");
+                _loop.LogOverseer($"Courier hauled {_pendingLog:N0} EU to the till.");
                 _pendingLog = 0;
             }
         }

@@ -2726,7 +2726,7 @@ namespace SolarMajesty
         private void ReleaseClearThreatStuck()
         {
             if (_activeFlag == null) return;
-            string who = data != null && !string.IsNullOrEmpty(data.displayName) ? data.displayName : "Hero";
+            string who = data != null && !string.IsNullOrEmpty(data.displayName) ? data.displayName : "Bot";
             Debug.Log(ClearThreatReleaseMessage(who, ClearThreatDenLabel(),
                 FlatDistance(transform.position, ClearThreatDenCenter()), RouteKindForLog));
             _yieldThreatId = _activeFlag.RuntimeId;

@@ -127,7 +127,7 @@ namespace SolarMajesty
                 description = "Satellite pass. Charts every den within 30 m.",
                 target = OrbitalTarget.Ground, tier = 1, cost = 250, cooldownSeconds = 20f, radius = 30f },
             new OrbitalPowerDef { id = OrbitalPowerId.TillAudit, displayName = "Till Audit",
-                description = "Remote audit: 30% of every till straight to the treasury. Free.",
+                description = "Remote audit: 30% of every building battery straight to the till. Free.",
                 target = OrbitalTarget.Colony, tier = 1, cost = 0, cooldownSeconds = 180f, magnitude = 0.3f },
         };
 

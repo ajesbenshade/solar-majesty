@@ -66,7 +66,7 @@ namespace SolarMajesty.Tests
             AssertEuWording(offer.Headline);
             AssertEuWording(offer.Body);
             AssertEuWording(offer.ContinueLabel);
-            StringAssert.Contains("central AI", offer.Body);
+            StringAssert.Contains("craft is on the pad", offer.Body);
             StringAssert.Contains("worker bots", offer.Body.ToLowerInvariant());
             StringAssert.Contains("EU", offer.Body);
         }

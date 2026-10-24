@@ -19,7 +19,7 @@ namespace SolarMajesty.EditorTools
             "The Colony Commons and one charging station are already standing.\n" +
             "Press B, then 1, and place the Engineer workshop anywhere on open ground.\n" +
             "Wait until the robot is standing. You never click-to-move units.\n" +
-            "Press G, then F3 (Build), click open ground, leave the bounty at 700. Watch the Engineer.\n" +
+            "Press G, then F3 (Build), click open ground, leave the bounty at 400. Watch the Engineer.\n" +
             "If ignored, click the Build pole to select it and press + until tempted. If accepted, continue.\n" +
             "A soil creeper shows up. Press G, F5 Defend, and post it on the bug.\n" +
             "If the pole says ignored, build a Defense workshop (key 2) and post F5 again.\n" +
@@ -46,7 +46,7 @@ namespace SolarMajesty.EditorTools
             "+ / -        Raise / lower the selected flag's bounty (numpad too). These are not speed.\n" +
             "             The panel's − / + do the same. Nothing selected: no change. Flag tool\n" +
             "             open with no pole: they set the next post, labeled on the panel.\n" +
-            "P            Form a party (max 4)     [ disband\n" +
+            "P            Form a squad (max 4)     [ disband\n" +
             "\n" +
             "Telemetry (please zip this folder back)\n" +
             "---------------------------------------\n" +
@@ -57,9 +57,9 @@ namespace SolarMajesty.EditorTools
             "\n" +
             "Notes\n" +
             "-----\n" +
-            "- Energy units (EU) are the only currency. Buildings fill their tills; Haul\n" +
-            "  carries the energy to the Commons or a Watchtower. Flags escrow EU.\n" +
-            "- Continue restores the yard + treasury + research + open flags + fauna + specialist HP.\n" +
+            "- Energy units (EU) are the only currency. Buildings fill their batteries; Courier\n" +
+            "  bots carry the energy to the Commons or a Watchtower. Flags escrow EU.\n" +
+            "- Continue restores the yard + till + research + open flags + fauna + specialist HP.\n" +
             "- If the Engineer ignores a cheap Build, raise its bounty. If already accepted, continue.\n" +
             "- This build is Earth only. Dens, sustain, and launch stay on the HUD. You do not have to finish Earth.\n" +
             "- Settings → Full campaign shows the other worlds. Leave it off for this session.\n" +

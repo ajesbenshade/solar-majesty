@@ -91,7 +91,7 @@ namespace SolarMajesty.Tests
             Time.timeScale = 1f;
 
             Assert.AreEqual(40, delivered, $"courier stopped at {go.transform.position} status={hero.Status}");
-            StringAssert.StartsWith("Haul dumped 40 EU at the till.", line);
+            StringAssert.StartsWith("Courier hauled 40 EU to the till.", line);
             Assert.AreEqual(0, hero.LevyCarry);
         }
 

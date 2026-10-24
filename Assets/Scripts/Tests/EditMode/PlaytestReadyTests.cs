@@ -170,9 +170,9 @@ namespace SolarMajesty.Tests
         {
             Assert.AreEqual(4, RobotGuildCatalog.StarterCount);
             Assert.AreEqual("Horizon Lodge", RobotGuildCatalog.Get(RobotGuildId.Horizon).HallName);
-            Assert.AreEqual("Anvil Compact", RobotGuildCatalog.Get(RobotGuildId.Anvil).HallName);
+            Assert.AreEqual("Anvil Lodge", RobotGuildCatalog.Get(RobotGuildId.Anvil).HallName);
             Assert.AreEqual("Aegis Lodge", RobotGuildCatalog.Get(RobotGuildId.Aegis).HallName);
-            Assert.AreEqual("Triage Compact", RobotGuildCatalog.Get(RobotGuildId.Triage).HallName);
+            Assert.AreEqual("Triage Lodge", RobotGuildCatalog.Get(RobotGuildId.Triage).HallName);
         }
 
         private static CampusSlot Slot(

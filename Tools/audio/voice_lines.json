@@ -8,7 +8,7 @@
     "hunt":    ["Hunting? I'd rather be welding.", "Fine. Hazard pay better be real.", "I'll poke it. From a distance."],
     "flee":    ["Nope! Too many teeth!", "I'm an engineer, not a snack!", "Falling back. Strategically. Quickly."],
     "repair":  ["Leaky hull. My favorite kind of money.", "I'll patch it. Invoice to follow.", "Hold still, you ugly module."],
-    "rest":    ["Torque arm's shot. Inn time.", "Recharge first. Then the overtime.", "Break. Paid break, ideally."],
+    "rest":    ["Torque arm's shot. Yard time.", "Recharge first. Then the overtime.", "Break. Paid break, ideally."],
     "wander":  ["Nothing to build? Weird.", "Idle hands. Unpaid hands.", "Somebody post a flag already."],
     "levelup": ["Promotion! That's a raise, right?", "New level. New rates.", "Better welds. Bigger invoices."],
     "hurt":    ["Ow! That's my good arm!", "Hey! I'm billing you for that!", "Paint job's ruined!"],
@@ -48,7 +48,7 @@
     "claim":   ["On the wounded. Keep them breathing.", "I'll take it. Gently.", "Patients first. Bounty second."],
     "refused": ["Not cleared for that. Noted.", "Somebody else then. Carefully.", "Orders say no. I'll stay close."],
     "hunt":    ["I am not a hunter. But fine.", "Violence. Not my department.", "Keep your distance, creature."],
-    "flee":    ["I can't heal anyone if I'm scrap!", "Falling back to the inn!", "Too hot here. Moving!"],
+    "flee":    ["I can't heal anyone if I'm scrap!", "Falling back to the yard!", "Too hot here. Moving!"],
     "repair":  ["Hulls are just patients with rivets.", "Stitching the module.", "Hold still. This will sting."],
     "rest":    ["Even repair bots need a checkup.", "Resting. Page me if it's serious.", "Recharge. Then rounds."],
     "wander":  ["Rounds. Nobody's bleeding. Good.", "Checking on the colony.", "Quiet shift. I'll take it."],
@@ -62,7 +62,7 @@
     "claim":   ["Ore first. Everything else later.", "Good rocks there. I'm going.", "That's a lot of ore. Yes."],
     "refused": ["No rocks for me? Sad.", "Okay. More ore for someone else.", "Orders say no. I dig elsewhere."],
     "hunt":    ["Ore doesn't bite. That does.", "I'll hit it with a drill.", "Fine. Then back to digging."],
-    "flee":    ["Too spicy! Leaving!", "Drill's not a weapon! Running!", "Back to the inn!"],
+    "flee":    ["Too spicy! Leaving!", "Drill's not a weapon! Running!", "Back to the yard!"],
     "repair":  ["I dig holes. Fine, I'll fill one.", "Patch now. Dig later.", "Rock goes in the crack."],
     "rest":    ["Hopper's full. So am I.", "Nap. Then rocks.", "Treads need a break."],
     "wander":  ["Looking for shiny rocks.", "Hmm. That one looks heavy.", "Where's the ore?"],
@@ -146,7 +146,7 @@
     "alert_critical": ["Critical alert. This one matters.", "We are losing something. Now.", "Red alert. Please act before it becomes a lesson."],
     "module_lost":    ["We lost a module.", "Module destroyed. That was load bearing.", "One less building. Noted."],
     "hero_down":      ["Robot down.", "One of ours is down.", "Another one for the yard."],
-    "victory":        ["Objective complete. I will pretend I expected this.", "Victory. Try to look surprised.", "Done. The Compact is almost impressed."],
+    "victory":        ["Objective complete. I will pretend I expected this.", "Victory. Try to look surprised.", "Done. The Core is almost impressed."],
     "defeat":         ["That went poorly. Again?", "Colony lost. We will call it a learning experience.", "Well. That is one way to end it."]
   }
 }
