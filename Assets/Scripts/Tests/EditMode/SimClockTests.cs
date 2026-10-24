@@ -368,7 +368,7 @@ namespace SolarMajesty.Tests
 
             StringAssert.Contains("Europa", text);
             StringAssert.Contains("1 modules", text);
-            StringAssert.Contains("1 robots", text);
+            StringAssert.Contains("1 robot ", text);
         }
 
         [Test]

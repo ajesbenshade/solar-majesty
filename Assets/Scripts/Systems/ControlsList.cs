@@ -91,7 +91,7 @@ namespace SolarMajesty
             { GameAction.ToolOrbital, "Orbital tool" },
             { GameAction.ToolParty, "Form a squad" },
             { GameAction.DisbandParty, "Disband the squad" },
-            { GameAction.Confirm, "Talk to the hero / dismiss a card" },
+            { GameAction.Confirm, "Talk to the bot / dismiss a card" },
             { GameAction.CycleOverlay, "Map overlay" },
             { GameAction.FlagExplore, "Explore flag" },
             { GameAction.FlagClearThreat, "Clear Threat flag" },

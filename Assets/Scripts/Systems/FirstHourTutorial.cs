@@ -10,16 +10,22 @@ namespace SolarMajesty
         public const int Goal = 4;
         public const int PestStep = 3;
 
-        public const string WorkshopBeat =
-            "1/4  WORKSHOP — press B, then 1. Place the Engineer workshop anywhere near the Commons. Wait until the robot is standing.";
-        public const string CheapBuildBeat =
-            "2/4  Press G, then F3 (Build), and click open ground. Leave the bounty at 400. If the Engineer ignores it, raise the bounty.";
+        // Key names come from the live bindings: {GameAction} tokens are filled by KeyHints.
+        public static string WorkshopBeat => KeyHints.Fill(WorkshopBeatText);
+        public static string CheapBuildBeat => KeyHints.Fill(CheapBuildBeatText);
+        public static string RaisePriceBeat => KeyHints.Fill(RaisePriceBeatText);
+        public static string PestBeat => KeyHints.Fill(PestBeatText);
+
+        private const string WorkshopBeatText =
+            "1/4  WORKSHOP — press {ToolBuild}, then {BuildSlot1}. Place the Engineer workshop anywhere near the Commons. Wait until the robot is standing.";
+        private const string CheapBuildBeatText =
+            "2/4  Press {ToolFlag}, then {FlagBuild} (Build), and click open ground. Leave the bounty at 400. If the Engineer ignores it, raise the bounty.";
         public const string CancelHighBeat =
             "2/4  That Build flag has attracted an Engineer. The colony is ready for the next lesson.";
-        public const string RaisePriceBeat =
-            "3/4  Click that Build pole to select it, then press + until the pole says tempted.";
-        public const string PestBeat =
-            "4/4  A soil creeper is on the yard. Press G, F5 Defend, and post it on the bug. If the pole says ignored, build a Defense workshop (key 2).";
+        private const string RaisePriceBeatText =
+            "3/4  Click that Build pole to select it, then press {BountyUp} until the pole says tempted.";
+        private const string PestBeatText =
+            "4/4  A soil creeper is on the yard. Press {ToolFlag}, {FlagDefend} Defend, and post it on the bug. If the pole says ignored, build a Defense workshop (key {BuildSlot2}).";
 
         public static int Advance(
             int step,

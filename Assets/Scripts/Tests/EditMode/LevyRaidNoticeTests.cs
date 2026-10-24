@@ -11,10 +11,10 @@ namespace SolarMajesty.Tests
                 "A Dust Stalker mugged Haul for 30 EU.",
                 LevyRaidNotice.Compose(30, LevyLossCause.Mugged, "Dust Stalker", "Haul", false));
             Assert.AreEqual(
-                "Haul was hit and dropped 12 EU.",
+                "Haul was hit: dropped 12 EU.",
                 LevyRaidNotice.Compose(12, LevyLossCause.Hit, null, "Haul", false));
             Assert.AreEqual(
-                "Haul was hit by a Dust Stalker and dropped 12 EU.",
+                "Dust Stalker hit Haul: dropped 12 EU.",
                 LevyRaidNotice.Compose(12, LevyLossCause.Hit, "Dust Stalker", "Haul", false));
             Assert.AreEqual(
                 "Haul was destroyed; 45 EU lost.",
@@ -49,7 +49,7 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(raid.TryFlush(40f, false, ref hintAt, out string held));
             Assert.IsNull(held);
             Assert.IsTrue(raid.TryFlush(61f, false, ref hintAt, out string message));
-            Assert.AreEqual("Haul was hit by a Dust Stalker and dropped 30 EU.", message);
+            Assert.AreEqual("Dust Stalker hit Haul: dropped 30 EU.", message);
 
             Assert.IsFalse(raid.TryFlush(21f, true, ref hintAt, out string again));
             Assert.IsNull(again);

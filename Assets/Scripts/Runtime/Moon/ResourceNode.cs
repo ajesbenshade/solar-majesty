@@ -157,13 +157,8 @@ namespace SolarMajesty
         private void RefreshYieldLabel()
         {
             if (_yieldLabel == null) return;
-            string tag = nodeType switch
-            {
-                ResourceNodeType.Metals => "EU",
-                ResourceNodeType.Ice => "ICE",
-                ResourceNodeType.Fissile => "PWR",
-                _ => "REG"
-            };
+            // Every node pays out as EU in player text; nodeType stays the internal kind.
+            const string tag = "EU";
             _yieldLabel.text = IsDepleted ? $"{tag} —" : $"{tag} {remaining}";
             _yieldLabel.color = IsDepleted
                 ? new Color(0.55f, 0.52f, 0.48f)
