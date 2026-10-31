@@ -289,7 +289,12 @@ namespace SolarMajesty
             InvertPan = GamePrefs.GetInt(InvertKey, 0) == 1;
             TutorialDone = GamePrefs.GetInt(TutorialKey, 0) == 1;
             SaveExists = GamePrefs.GetInt(SaveFlagKey, 0) == 1;
-            QualityIndex = GamePrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
+            // First launch: pick from the GPU instead of the project default (Ultra), which an
+            // integrated GPU cannot carry. A saved choice always wins.
+            QualityIndex = GamePrefs.HasKey(QualityKey)
+                ? GamePrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel())
+                : QualityAutoDetect.Pick(SystemInfo.graphicsDeviceName, SystemInfo.graphicsMemorySize,
+                    SystemInfo.systemMemorySize, QualitySettings.names.Length);
             Fullscreen = GamePrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) == 1;
             ResolutionWidth = GamePrefs.GetInt(ResolutionWKey, 0);
             ResolutionHeight = GamePrefs.GetInt(ResolutionHKey, 0);
