@@ -85,6 +85,20 @@ Default budgets are deliberately loose, because CI runners have no GPU and the e
 
 Set `SM_PERF_OUT=/path/perf.jsonl` to append one JSON line per run, so CI can chart the trend.
 
+### Release-build benchmark
+
+The perf budget above is an editor tripwire with a fixed frame step, so it cannot show real frame rates or one-frame hitches. For those, run the **player** with `-benchmark` (`Assets/Scripts/Runtime/Platform/BenchmarkRunner.cs`):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Tools\qa\run_benchmark.ps1 -GameDir Builds\Windows -Bodies Earth,Mars -Seconds 45
+```
+
+- It starts a fresh colony on each world, runs at speed while the camera sweeps near and far, and writes `Logs/benchmark-*.json` (fps, p50/p95/p99/max frame time, % over 16/33 ms, memory, agent counts, errors, the 8 worst frames and whether an autosave ran in them). Exit code 1 on any logged error.
+- It refuses to run without `-saveDir` **and** `-profileDir`; the script points both at a temp folder, so the player's saves, prefs and registry values are never touched.
+- `-Quality 0..5` forces a tier, `-Shots` saves a same-framing screenshot per world for comparing tiers.
+- A build made with `-smDevelopment` (a development player) also records per-system profiler times for each spike.
+- **`drawn=false`** means frame times were under 1 ms: the OS was not presenting the window (locked desktop, minimised). The fps is then meaningless; errors still count. Rerun with the desktop unlocked.
+
 ---
 
 ## Running locally

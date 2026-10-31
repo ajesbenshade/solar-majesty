@@ -36,7 +36,11 @@ is in it being honest, not in it being all ticked.
 - [x] Prefs live in `Profile/prefs.json` (`GamePrefs`) so Steam Cloud can sync them; the old registry values migrate on first read. Per-PC keys (quality, fullscreen, resolution, frame cap, UI Scale) stay in PlayerPrefs; saved key bindings keep main's `GameAction` numbers (`PrefsMigrationTests`)
 - [x] Error log, build stamp and key rebinding come from #82 (`ErrorLog`, `ReleaseStamp`, `InputBindings`); not duplicated by the #92 port
 - [x] Live-AI content guard ([AiContentGuard.cs](../Assets/Scripts/Systems/Narration/AiContentGuard.cs)) for the Steam AI-disclosure form; `THIRD-PARTY-NOTICES.txt` ships with builds
-- [ ] Still to land from #92: localization, demo build, store art and capsules, benchmark / background autosave / async NavMesh, local-AI packager, QA autoplay fixes (listed in the #92 port PR)
+- [x] Performance work ported from #92: release-build benchmark (`-benchmark`, [run_benchmark.ps1](../Tools/qa/run_benchmark.ps1), isolated by `-saveDir` + `-profileDir`), in-play NavMesh rebuilds run async, the ground collider re-cooks on a worker when a building lands, autosave serialises once and writes on a background queue (flushed on pause, return-to-title, quit and every read/delete)
+- [x] Real graphics tiers: Low (80% + FSR, no SSAO, 1 shadow cascade to 60 m), Medium (no MSAA/SSAO), High (2x MSAA, 2 cascades), Ultra unchanged; regenerate with **Solar Majesty → Render → Create Quality Tiers**. First launch picks a tier from the GPU ([QualityAutoDetect.cs](../Assets/Scripts/Systems/QualityAutoDetect.cs)); a saved choice always wins
+- [ ] Re-measure the ported performance work on `main` with the desktop unlocked (#92's numbers, RTX 3080 1080p Ultra: worst frame Mars 117 → 39 ms, Belt 112 → 24 ms, Earth 39 → 26 ms; 450–570 fps average)
+- [ ] Low tier measured on an actual integrated GPU
+- [ ] Still to land from #92: localization, demo build, store art and capsules, local-AI packager, QA autoplay fixes (listed in the #92 port PR)
 
 ## Look
 
@@ -104,7 +108,7 @@ is in it being honest, not in it being all ticked.
 
 - [ ] **The 45–90 minute external playtest** ([PLAYTEST_PROTOCOL.md](PLAYTEST_PROTOCOL.md)) — still the single
       largest open risk; nobody outside the project has played this
-- [ ] 60 fps with 200 agents, profiled rather than assumed
+- [ ] 60 fps on minimum-spec hardware: run [run_benchmark.ps1](../Tools/qa/run_benchmark.ps1) on a low-end PC with the desktop unlocked (locked-screen runs report `drawn=false`); 200-agent stress still unmeasured
 - [ ] Full playthrough on all five bodies without an exception
 - [ ] Steam page, capsule art, screenshots
 - [ ] Trailer
