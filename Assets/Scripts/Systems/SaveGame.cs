@@ -65,6 +65,11 @@ namespace SolarMajesty
         public List<SaveLair> lairs = new List<SaveLair>();
         public List<SaveParty> parties = new List<SaveParty>();
         public List<SaveRosterEntry> roster = new List<SaveRosterEntry>();
+        /// <summary>
+        /// Re-fabs under way. The wreck is spent and the EU paid when one is queued, so a save
+        /// without them lost the robot. Empty in older saves.
+        /// </summary>
+        public List<SaveRefab> refabs = new List<SaveRefab>();
 
         /// <summary>Human-readable one-liner for a load menu row.</summary>
         public string Describe()
@@ -275,6 +280,16 @@ namespace SolarMajesty
         public int reviveCount;
         public int suit;
         public bool corpse;
+    }
+
+    /// <summary>A re-fab under way at a workshop (its centre on the plane).</summary>
+    [Serializable]
+    public sealed class SaveRefab
+    {
+        public int specialistClass;
+        public float px;
+        public float pz;
+        public float progressSeconds;
     }
 
     [Serializable]

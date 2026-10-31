@@ -132,6 +132,19 @@ namespace SolarMajesty
         /// <summary>Continue will not put more than this many saved fauna back on one den.</summary>
         public const int MaxFaunaPerDen = 8;
 
+        /// <summary>
+        /// Den pressure waves top the loose fauna (everything that is not a den resident) up to
+        /// this many and no further. Uncapped, two stalkers every 75 s piled 40-80 onto a colony
+        /// still working on its dens (autoplay, Earth), every one of which the dens gate then
+        /// wanted dead, while Continue put back only this many (<see cref="FaunaRestoreCap"/>
+        /// counts loose fauna as one group): a save and load changed the fight.
+        /// </summary>
+        public const int MaxPressureFauna = MaxFaunaPerDen;
+
+        /// <summary>How many of a requested pressure wave may spawn with this many loose fauna alive.</summary>
+        public static int PressureWaveSize(int requested, int looseAlive) =>
+            Mathf.Clamp(MaxPressureFauna - Mathf.Max(0, looseAlive), 0, Mathf.Max(0, requested));
+
         /// <summary>Game-seconds without closing on a Clear Threat before one repath, then a release.</summary>
         public const float ClearThreatStuckSeconds = 10f;
 

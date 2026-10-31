@@ -165,6 +165,7 @@ namespace SolarMajesty
 
             if (selected == null || Mathf.Approximately(selected.CurrentBounty, before))
                 return;
+            _loop?.Stats.NoteBounty(Mathf.RoundToInt(selected.CurrentBounty));
             _loop?.RefreshFlagInterest();
             string kind = selected.Data != null ? selected.Data.flagType.ToString() : "Flag";
             PlaytestTelemetry.RecordFlagBounty(kind, before, selected.CurrentBounty, selected.InterestCount);
