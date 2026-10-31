@@ -10,8 +10,9 @@ namespace SolarMajesty
     /// Tools/audio/render_sfx.py, several takes per event), then the legacy single clip
     /// Resources/Audio/sfx_&lt;event&gt;, then a procedural chord so a missing file never goes silent.
     /// Everything is routed through <see cref="SoundBus"/> so the settings sliders and ducking
-    /// apply. World-position overloads go through <see cref="SpatialAudio"/>; UI, outcomes and
-    /// alerts stay 2D because they are about the colony, not a spot on the map.
+    /// apply. World-position overloads go through <see cref="SpatialAudio"/> (falling back to 2D
+    /// without a usable position); UI, outcomes and alerts stay 2D because they are about the
+    /// colony, not a spot on the map. <see cref="SfxRouting"/> holds the split.
     /// Each event is rate limited, so a frame in which twenty robots claim flags plays one claim.
     /// Phase 5E: Ambient A/B crossfade on F6/F7 (SFX stays on a separate source).
     /// </summary>
@@ -20,13 +21,6 @@ namespace SolarMajesty
         private const string SfxFolder = "Audio/Sfx/";
         private const string LegacyFolder = "Audio/";
         private const int MaxVariants = 6;
-
-        /// <summary>
-        /// The listener rides the camera ~30 m above the ground and SpatialAudio rolls off
-        /// linearly from 6 to 70 m, so a positioned sound at screen centre lands ~4 dB under the
-        /// same clip played 2D. This makes up most of that.
-        /// </summary>
-        private const float SpatialMakeup = 1.35f;
 
         /// <summary>Spatial pitch jitter; small because variants already supply the variety.</summary>
         private const float SpatialJitter = 0.03f;
@@ -463,33 +457,58 @@ namespace SolarMajesty
         // ------------------------------------------------------------------------------------
 
         /// <summary>2D one-shot. Returns false when rate limited.</summary>
-        private static bool Play(SfxEvent e)
+        private static bool Play(SfxEvent e) => Emit(e, false, default);
+
+        /// <summary>
+        /// One-shot at a world position. World-located events (<see cref="SfxRouting.IsWorldEvent"/>)
+        /// go through the pooled 3D voices; anything else, or a non-finite position, or no 3D
+        /// player, falls back to 2D so the sound is never lost.
+        /// </summary>
+        private static bool PlayAt(SfxEvent e, Vector3 at) => Emit(e, true, at);
+
+        private static bool Emit(SfxEvent e, bool hasPosition, Vector3 at)
         {
             if (!Application.isPlaying) return false;
             if (!Limiter.TryAcquire(e.Key, Time.unscaledTime, e.Limit)) return false;
             Ensure();
+
+            AudioClip clip = PickClip(e, out bool procedural);
+            if (clip == null) return false;
+            // Same gain in both spaces: SpatialAudio's rolloff is full volume out to the ground at
+            // screen centre, so a positioned sound in the middle of the view matches its 2D level.
+            float gain = Mathf.Clamp01(procedural ? e.FallbackVolume : e.Gain);
+
+            bool spatialReady = hasPosition && SfxRouting.IsWorldEvent(e.Key) && SpatialAudio.Ready;
+            if (SfxRouting.Route(e.Key, hasPosition, at, spatialReady) == SfxSpace.Spatial)
+            {
+                SpatialAudio.PlayAt(clip, at, gain, e.Channel, SpatialJitter);
+                return true;
+            }
+
             if (_sfx == null) return false;
-
-            AudioClip clip = PickClip(e, out bool procedural);
-            if (clip == null) return false;
-            float gain = procedural ? e.FallbackVolume : e.Gain;
-            _sfx.PlayOneShot(clip, Mathf.Clamp01(gain) * SoundBus.Volume(e.Channel));
+            _sfx.PlayOneShot(clip, gain * SoundBus.Volume(e.Channel));
             return true;
         }
 
-        /// <summary>Positioned one-shot through the pooled 3D voices.</summary>
-        private static bool PlayAt(SfxEvent e, Vector3 at)
+        /// <summary>Every event key DemoAudio can play (tests check each one has authored takes).</summary>
+        internal static IEnumerable<string> EventKeys
         {
-            if (!Application.isPlaying) return false;
-            if (!Limiter.TryAcquire(e.Key, Time.unscaledTime, e.Limit)) return false;
-            Ensure();
-
-            AudioClip clip = PickClip(e, out bool procedural);
-            if (clip == null) return false;
-            float gain = procedural ? e.FallbackVolume : e.Gain * SpatialMakeup;
-            SpatialAudio.PlayAt(clip, at, Mathf.Clamp01(gain), e.Channel, SpatialJitter);
-            return true;
+            get
+            {
+                foreach (SfxEvent e in AllEvents) yield return e.Key;
+            }
         }
+
+        /// <summary>How many authored takes the loader finds for an event (0 = procedural fallback).</summary>
+        internal static int AuthoredTakeCount(string key) => Variants(key).Length;
+
+        private static readonly SfxEvent[] AllEvents =
+        {
+            UiHover, UiClick, Retry, FlagPost, Claim, Bite, RobotHit, StalkerAggro, StalkerDeath,
+            BuildPlace, BuildComplete, ConstructionTick, Extract, Research, LevelUp, Credits,
+            RobotDown, RobotSpawn, PartyForm, Repair, Heal, Equip, LaunchReady, Launch,
+            AlertWarning, AlertCritical, Fail, Victory,
+        };
 
         private static AudioClip PickClip(SfxEvent e, out bool procedural)
         {
@@ -536,6 +555,8 @@ namespace SolarMajesty
             if (Procedural.TryGetValue(e.Key, out AudioClip clip) && clip != null) return clip;
             clip = BuildChord("chord_" + e.Key, e.FallbackHz, e.FallbackSeconds, e.FallbackVolume);
             Procedural[e.Key] = clip;
+            // Once per event: a shipped build should never print this (DemoAudioRoutingTests).
+            Debug.LogWarning($"[DemoAudio] No clip for '{e.Key}' in Resources/{SfxFolder}; using the synthesised fallback.");
             return clip;
         }
 
