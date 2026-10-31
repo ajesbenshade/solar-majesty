@@ -1057,7 +1057,7 @@ namespace SolarMajesty
                 DemoSettings.BootStraightIntoPlay,
                 returningFromSession: false,
                 continueOrLoadReady: _bootSlot >= 0,
-                StillCaptureHold.Active,
+                StillCaptureHold.Active || IntroLaunch.SkippedByCommandLine(System.Environment.GetCommandLineArgs()),
                 savesExist: DemoSettings.SaveExists);
 
         private void BeginIntro(bool force)
@@ -4094,6 +4094,28 @@ namespace SolarMajesty
             if (data.category == BuildingCategory.LandingPad)
                 SyncLaunchGate();
             return true;
+        }
+
+        /// <summary>
+        /// Store screenshots: one robot of every class, standing in a loose ring around the
+        /// Commons, as a colony mid-game would have. Not reachable from play.
+        /// </summary>
+        public int SpawnShowcaseCrew()
+        {
+            int spawned = 0;
+            var classes = (SpecialistClass[])System.Enum.GetValues(typeof(SpecialistClass));
+            for (int i = 0; i < classes.Length; i++)
+            {
+                SpecialistData data = DataForClass(classes[i]);
+                if (data == null) continue;
+                // Golden-angle spiral at mixed distances, so robots do not stand in a tidy ring or a clump.
+                float a = i * 2.399963f;
+                float r = 7f + (i % 4) * 3.5f;
+                Vector3 pos = ColonyLayout.CampusOrigin + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
+                if (grid != null) pos = grid.SnapToCellCenter(pos);
+                if (SpawnOne(data, pos, TintForClass(classes[i])) != null) spawned++;
+            }
+            return spawned;
         }
 
         /// <summary>

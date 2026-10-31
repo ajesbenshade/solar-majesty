@@ -941,6 +941,15 @@ namespace SolarMajesty.Tests
             return go.AddComponent<IntroSequence>();
         }
 
+        [Test]
+        public void CaptureAndNoIntroFlags_SkipTheAutomaticIntro()
+        {
+            Assert.IsTrue(IntroLaunch.SkippedByCommandLine(new[] { "SolarMajesty.exe", "-NoIntro" }));
+            Assert.IsTrue(IntroLaunch.SkippedByCommandLine(new[] { "SolarMajesty.exe", "-storeshots", "out" }));
+            Assert.IsFalse(IntroLaunch.SkippedByCommandLine(new[] { "SolarMajesty.exe", "-language", "fr" }));
+            Assert.IsFalse(IntroLaunch.SkippedByCommandLine(null));
+        }
+
         private static Camera NewCamera()
         {
             var go = new GameObject("intro-cam");

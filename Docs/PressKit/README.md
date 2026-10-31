@@ -113,10 +113,11 @@ Do not use these as screenshots:
   `.png` name (1024 px wide) showing the retired tube-web campus.
 - `SM_MarsCampaign_PlayModeStill.png` and `…Still5.png` are under 1000 px wide.
 
-The **app icon** (dark metallic tile, gold HUD bevel, rust planet with an orbit ring and the Colony
-Commons dome) is at [`Assets/Art/Icons/SM_AppIcon_1024.png`](../../Assets/Art/Icons/SM_AppIcon_1024.png),
-with every smaller size beside it. Still missing: logo lockup, capsule art, key art and a trailer.
-See [STORE_PAGE.md](STORE_PAGE.md) for the store image sizes.
+The **app icon** (an ivory planet with a copper crown and ring on a dusk badge, the same emblem as
+the "O" of the logo) is at [`Assets/Art/Icons/SM_AppIcon_1024.png`](../../Assets/Art/Icons/SM_AppIcon_1024.png),
+with every smaller size beside it. The logo, capsules and key art (programmer art from in-game
+renders) are in [`Docs/StoreArt/`](../StoreArt/README.md). Still missing: an artist pass on those,
+and a trailer. See [STORE_PAGE.md](STORE_PAGE.md) for the store image sizes.
 
 ## Credits
 

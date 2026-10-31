@@ -95,8 +95,9 @@ namespace SolarMajesty.EditorTools
                 options = BuildOptions.None
             };
 
-            // Version and icons are applied for this build only; the version is put back after so
-            // a local build leaves ProjectSettings untouched. build-info.json is written by
+            // The app icon is committed in ProjectSettings; ApplyIcons only re-assigns it if it has
+            // drifted. The version is applied for this build only and put back after, so a local
+            // build leaves ProjectSettings untouched. build-info.json is written by
             // BuildInfoPostprocess while the version is still applied.
             ReleaseStamp.ApplyIcons();
             ReleaseStamp.Snapshot previous = ReleaseStamp.ApplyVersion(ReleaseStamp.ResolveVersion());

@@ -1,6 +1,7 @@
 Editor/AudioImportRules.cs: error CS1061: 'AudioImporterSampleSettings' does not contain a definition for 'preloadAudioData' and no accessible extension method 'preloadAudioData' accepting a first argument of type 'AudioImporterSampleSettings' could be found (are you missing a using directive or an assembly reference?)
 Editor/ReleaseStamp.cs: error CS0103: The name 'NamedBuildTarget' does not exist in the current context
 Editor/ReleaseStamp.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'GetIconSizes'
+Editor/ReleaseStamp.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'GetIcons'
 Editor/ReleaseStamp.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'SetIcons'
 Editor/WindowsPlaytestBuilder.cs: error CS0103: The name 'NamedBuildTarget' does not exist in the current context
 Editor/WindowsPlaytestBuilder.cs: error CS0103: The name 'StandaloneBuildSubtarget' does not exist in the current context
@@ -11,3 +12,6 @@ Runtime/GameLoop.cs: error CS1061: 'EntityId' does not contain a definition for 
 Runtime/LaunchSite.cs: error CS1501: No overload for method 'FindObjectsByType' takes 0 arguments
 Runtime/SpecialistAgent.cs: error CS0103: The name 'GetEntityId' does not exist in the current context
 Runtime/Threat/DustStalkerAgent.cs: error CS1501: No overload for method 'FindObjectsByType' takes 0 arguments
+Tests/EditMode/AppIconTests.cs: error CS0103: The name 'NamedBuildTarget' does not exist in the current context
+Tests/EditMode/AppIconTests.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'GetIconSizes'
+Tests/EditMode/AppIconTests.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'GetIcons'

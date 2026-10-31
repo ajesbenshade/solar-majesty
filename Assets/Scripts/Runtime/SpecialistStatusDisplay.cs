@@ -24,9 +24,16 @@ namespace SolarMajesty
             Refresh(force: true);
         }
 
+        /// <summary>Store screenshots without overhead tags (they pile up when robots stand together).</summary>
+        public static bool HideForCapture;
+
         private void LateUpdate()
         {
             if (_agent == null) return;
+            bool show = !HideForCapture;
+            if (_orb != null && _orb.gameObject.activeSelf != show) _orb.gameObject.SetActive(show);
+            if (_label != null && _label.gameObject.activeSelf != show) _label.gameObject.SetActive(show);
+            if (!show) return;
             Refresh(force: false);
             Billboard();
         }
