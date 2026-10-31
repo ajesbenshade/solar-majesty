@@ -11,3 +11,4 @@ Runtime/GameLoop.cs: error CS1061: 'EntityId' does not contain a definition for 
 Runtime/LaunchSite.cs: error CS1501: No overload for method 'FindObjectsByType' takes 0 arguments
 Runtime/SpecialistAgent.cs: error CS0103: The name 'GetEntityId' does not exist in the current context
 Runtime/Threat/DustStalkerAgent.cs: error CS1501: No overload for method 'FindObjectsByType' takes 0 arguments
+Runtime/World/TerrainFollow.cs: error CS1501: No overload for method 'BakeMesh' takes 3 arguments
