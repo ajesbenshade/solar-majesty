@@ -38,8 +38,20 @@ namespace SolarMajesty
 
         public static float Multiplier => Multipliers[_index];
 
+        /// <summary>
+        /// QA harnesses only (<c>-autoplay</c>): an extra factor on every running speed so a full
+        /// campaign can be played in minutes. Always 1 for players; nothing in the game UI sets it.
+        /// </summary>
+        public static float HarnessBoost
+        {
+            get => _harnessBoost;
+            set => _harnessBoost = value > 0f ? value : 1f;
+        }
+
+        private static float _harnessBoost = 1f;
+
         /// <summary>What <c>Time.timeScale</c> should be: the chosen step times <see cref="BasePace"/>.</summary>
-        public static float TimeScale => Multiplier * BasePace;
+        public static float TimeScale => Multiplier * BasePace * _harnessBoost;
 
         public static bool IsPaused => _index == 0;
 
