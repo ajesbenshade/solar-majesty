@@ -41,6 +41,8 @@ namespace UnityEngine.Rendering.Universal
     public enum AntialiasingMode { None, FastApproximateAntialiasing, SubpixelMorphologicalAntiAliasing, TemporalAntiAliasing }
     public enum AntialiasingQuality { Low, Medium, High }
     public class UniversalAdditionalCameraData : MonoBehaviour { public bool renderPostProcessing, renderShadows, stopNaN, dithering; public AntialiasingMode antialiasing; public AntialiasingQuality antialiasingQuality; public LayerMask volumeLayerMask; public Transform volumeTrigger; public bool requiresDepthTexture, requiresColorTexture; public void SetRenderer(int i) { } }
+    // Create takes the renderer data, an editor-stub type, so it is typed loosely here.
+    public class UniversalRenderPipelineAsset : UnityEngine.Rendering.RenderPipelineAsset { public bool useSRPBatcher; public float renderScale = 1f; public static UniversalRenderPipelineAsset Create(UnityEngine.ScriptableObject d = null) => null; public override UnityEngine.Rendering.RenderPipeline CreatePipeline() => null; }
     public class UniversalAdditionalLightData : MonoBehaviour { public bool usePipelineSettings; public int additionalLightsShadowResolutionTier; public Texture lightCookieTexture; public Vector2 lightCookieSize, lightCookieOffset; }
 }
 namespace Unity.AI.Navigation
