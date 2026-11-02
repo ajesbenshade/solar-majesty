@@ -228,7 +228,7 @@ namespace SolarMajesty
                 new TechDef(
                     TechId.GeneVault,
                     "Gene Vault",
-                    "Secret Project. Spare charging slots, faster builds, greener farms. Growth path.",
+                    "Secret Project. Spare charging berths, faster drone builds, greener farms. Growth path.",
                     150f,
                     new[] { TechId.LifeSupport, TechId.MedProtocols },
                     Wallet.Credits(1400),
