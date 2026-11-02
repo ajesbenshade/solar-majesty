@@ -121,6 +121,7 @@ FIELD_RULES = {
         ["HallName", "ShortName", "Motto", "Wants", "Ignores", "CatalogLine", "BenefitName", "BenefitBlurb"],
     "Systems/OrbitalPowers.cs": ["displayName", "description"],
     "Systems/ClassAbilities.cs": ["displayName"],
+    "Systems/ControlsList.cs": ["Title"],
     "Systems/SpecialistPersonality.cs": ["displayName", "description"],
 }
 
@@ -133,7 +134,10 @@ CALL_RULES = {
     "Systems/FaunaAfflictions.cs": {"A": [1]},
 }
 
-DICT_RULES = {"Systems/AdvisorToastCatalog.cs", "Systems/InputBindings.cs"}
+DICT_RULES = {"Systems/AdvisorToastCatalog.cs", "Systems/InputBindings.cs", "Systems/ControlsList.cs"}
+
+# Literals inside tuple initializers: ("CAMERA", new[] {...}) and ("Left stick", "Pan").
+TUPLE_RULES = {"Systems/ControlsList.cs"}
 
 RETURN_RULES = {
     "Systems/JexCatalog.cs": ["Line"],
@@ -142,6 +146,9 @@ RETURN_RULES = {
     "Systems/SpecialistIdentity.cs": ["RankFor"],
     "Systems/FlagOrdersParser.cs": ["ShortName"],
     "Systems/SpecialistFlavor.cs": ["FlagShort"],
+    "Systems/InputBindings.cs": ["ReservedReason"],
+    "Systems/SaveGame.cs": ["BodyName"],
+    "Runtime/ColonyStructure.cs": ["GuildNameFor", "DefaultName"],
 }
 
 CONST_RULES = {
@@ -249,6 +256,12 @@ def catalog_literals(rel, code, loc_idents):
             text = _run_text(m.group(1))
             if text is not None:
                 found.append((m.start(1), text))
+    if rel in TUPLE_RULES:
+        for m in re.finditer(r'\(\s*(' + LIT_RUN + r')\s*,\s*(?:(' + LIT_RUN + r')\s*\)|new\b)', code):
+            for g in (1, 2):
+                text = _run_text(m.group(g)) if m.group(g) else None
+                if text is not None:
+                    found.append((m.start(g), text))
     for name in RETURN_RULES.get(rel, []):
         spans = [(0, len(code))] if name == "*" else _method_body(code, name)
         for a, b in spans:
@@ -312,7 +325,7 @@ def collect():
 
 
 # Building/flag/robot names created in code, shown through Loc.S(...displayName).
-NAME_IN_CODE = re.compile(r'(?:CreateBuilding\(\s*|\b(?:displayName|description)\s*=\s*)' + LIT)
+NAME_IN_CODE = re.compile(r'(?:CreateBuilding\(\s*|CreateFlag\(\s*FlagType\.\w+\s*,\s*|\b(?:displayName|description)\s*=\s*)' + LIT)
 
 # The same names on ScriptableObject assets (Assets/Data, Assets/Resources).
 ASSET_FIELD = re.compile(r'^\s+(displayName|description):\s*(.*)$')
@@ -363,7 +376,7 @@ def looks_player_facing(text):
 # Dev-only QA harnesses (gated by DevTools / command-line flags): their text is log output and
 # review captions, never shown to players, so the unwrapped report leaves them out.
 DEV_ONLY = ("AutoplayRunner.cs", "BenchmarkRunner.cs", "BeatShotHarness.cs", "HudShotHarness.cs",
-            "StoreShotHarness.cs")
+            "StoreShotHarness.cs", "SaveSnapshotDiff.cs", "DebugHud.cs")
 
 
 def unwrapped_report():

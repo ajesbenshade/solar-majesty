@@ -55,8 +55,8 @@ namespace SolarMajesty
         /// <summary>A flag click the till could not cover. The post used to fail silently.</summary>
         public static string PostRefused(string flagName, int cost)
         {
-            string name = string.IsNullOrEmpty(flagName) ? "flag" : flagName;
-            return $"Not enough EU to post {name} at {cost}. Right-click a flag to cancel it for a refund, or lower the bounty with −.";
+            string name = string.IsNullOrEmpty(flagName) ? Loc.S("flag") : Loc.S(flagName);
+            return Loc.F("Not enough EU to post {0} at {1}. Right-click a flag to cancel it for a refund, or lower the bounty with −.", name, cost);
         }
     }
 }

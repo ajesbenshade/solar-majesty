@@ -1223,7 +1223,7 @@ namespace SolarMajesty
                 var nameStyle = on ? _onText : _action;
                 var prevName = nameStyle.normal.textColor;
                 if (!on && (locked || wait > 0f)) nameStyle.normal.textColor = TextMuted;
-                GUI.Label(nameRect, $"{p.displayName}  ·  {p.description}", nameStyle);
+                GUI.Label(nameRect, $"{p.DisplayNameText}  ·  {p.DescriptionText}", nameStyle);
                 nameStyle.normal.textColor = prevName;
 
                 var costStyle = _microRight;
@@ -1415,9 +1415,9 @@ namespace SolarMajesty
                 var nameStyle = on ? _onText : _action;
                 var prevColor = nameStyle.normal.textColor;
                 if (!on && (!canAfford || locked)) nameStyle.normal.textColor = TextMuted;
-                string rowStat = b.category == BuildingCategory.Watchtower ? HudLayout.WatchtowerStat : null;
+                string rowStat = b.category == BuildingCategory.Watchtower ? Loc.S(HudLayout.WatchtowerStat) : null;
                 string rowText = !string.IsNullOrEmpty(b.description)
-                    ? FitChipText(nameStyle, HudLayout.BuildRowVariants(b.displayName, b.description, rowStat), nameRect.width)
+                    ? FitChipText(nameStyle, HudLayout.BuildRowVariants(Loc.S(b.displayName), Loc.S(b.description), rowStat), nameRect.width)
                     : BuildRowLabel(b);
                 GUI.Label(nameRect, rowText, nameStyle);
                 nameStyle.normal.textColor = prevColor;
