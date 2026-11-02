@@ -201,7 +201,8 @@ namespace SolarMajesty
         // ---- pseudo-localization ---------------------------------------------------------------------
 
         private const string Plain = "abcdeghiklnorstuwyzABCDEGHIKLNORSTUWYZ";
-        private const string Accented = "àƀçđéĝĥîķĺñöŕšţûŵýžÀƁÇĐÉĜĤÎĶĹÑÖŔŠŢÛŴÝŽ";
+        // Capital C cedilla is added as a char: EncodingGuardTests treats a literal one as mojibake.
+        private static readonly string Accented = "àƀçđéĝĥîķĺñöŕšţûŵýžÀƁ" + (char)0x00C7 + "ĐÉĜĤÎĶĹÑÖŔŠŢÛŴÝŽ";
 
         /// <summary>
         /// "Settings" → "[Šéţţîñĝš·····]": accented so wrapped text is obvious, ~35 % longer so

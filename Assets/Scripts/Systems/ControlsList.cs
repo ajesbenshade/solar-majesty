@@ -81,8 +81,6 @@ namespace SolarMajesty
             { GameAction.PanDown, "Pan Down" },
             { GameAction.PanLeft, "Pan Left" },
             { GameAction.PanRight, "Pan Right" },
-            { GameAction.SpeedUp, "Speed Up" },
-            { GameAction.SpeedDown, "Speed Down" },
             { GameAction.FocusCampusA, "Focus Campus A" },
             { GameAction.FocusCampusB, "Focus Campus B" },
             { GameAction.ZoomIn, "Zoom in" },
