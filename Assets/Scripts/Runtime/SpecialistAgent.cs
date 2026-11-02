@@ -173,10 +173,10 @@ namespace SolarMajesty
         public float GeneSecondsLeft => _geneTimer;
         public string SuitLabel =>
             equippedSuit == ShopItemId.None
-                ? "no suit"
-                : (ShopCatalog.Get(equippedSuit)?.DisplayName ?? "suit");
+                ? Loc.S("no suit")
+                : (ShopCatalog.Get(equippedSuit)?.DisplayNameText ?? Loc.S("suit"));
         public string Status => _status;
-        public string FlavorLine { get; private set; } = "Booting.";
+        public string FlavorLine { get; private set; } = Loc.S("Booting.");
 
         private SpecialistServiceRecord _record;
 
@@ -354,7 +354,7 @@ namespace SolarMajesty
             if (string.IsNullOrEmpty(reason) || !reason.StartsWith(prefix)) return false;
             string raw = reason.Substring(prefix.Length);
             if (System.Enum.TryParse(raw, out FlagType type))
-                label = SpecialistFlavor.FlagShort(type);
+                label = SpecialistFlavor.FlagLabel(type);
             else
                 label = raw;
             return true;
@@ -435,7 +435,7 @@ namespace SolarMajesty
             {
                 DemoVfx.ClaimRing(transform.position, new Color(0.95f, 0.78f, 0.22f));
                 DemoAudio.PlayLevelUp(transform.position);
-                _loop?.LogOverseer($"{data?.displayName} reached L{level}.");
+                _loop?.LogOverseer(Loc.F("{0} reached L{1}.", Loc.S(data?.displayName), level));
                 Debug.Log($"[XP] {data?.displayName} level {level} ({reason}) xp={xp}");
                 CharacterVoice.Cue(this, VoiceCue.LevelUp, HeroNarrator.Report(this, NarrationKind.LevelUp));
             }
@@ -921,7 +921,7 @@ namespace SolarMajesty
                 if (!_scrapRiskLogged)
                 {
                     _scrapRiskLogged = true;
-                    _loop?.LogOverseer($"SCRAP RISK — {data.displayName} just stood up. Another down in 90 s can scrap them.");
+                    _loop?.LogOverseer(Loc.F("SCRAP RISK — {0} just stood up. Another down in 90 s can scrap them.", data.displayName));
                 }
                 Debug.Log($"[Specialist] {data.displayName} recovered");
             }
@@ -1555,7 +1555,7 @@ namespace SolarMajesty
                 else if (completedType == FlagType.Build)
                 {
                     if (!_buildLaborHit)
-                        _loop?.LogOverseer("No site in 28 m — paid for showing up.");
+                        _loop?.LogOverseer(Loc.S("No site in 28 m — paid for showing up."));
                 }
                 else if (completedType == FlagType.ResearchSite ||
                          completedType == FlagType.EstablishOutpost ||
@@ -1857,7 +1857,11 @@ namespace SolarMajesty
         {
             int lost = _duty.Drop(fraction);
             if (lost > 0)
-                _loop?.LogOverseer($"{Record.Name} {reason} — {lost:N0} EU dropped.");
+            {
+                // reason is an id ("downed" / "scrapped"); show the word, not the id.
+                string shown = reason == "downed" ? Loc.S("downed") : reason == "scrapped" ? Loc.S("scrapped") : reason;
+                _loop?.LogOverseer(Loc.F("{0} {1} — {2:N0} EU dropped.", Record.Name, shown, lost));
+            }
         }
 
         /// <summary>
@@ -2111,7 +2115,7 @@ namespace SolarMajesty
             LastAbility = a.displayName;
             DemoVfx.WorkSpark(at, color);
             if (!string.IsNullOrEmpty(a.displayName))
-                ShowRefusal(a.displayName.ToUpperInvariant());
+                ShowRefusal(a.DisplayNameText.ToUpperInvariant());
         }
 
         private void TickWanderTown(float dt)

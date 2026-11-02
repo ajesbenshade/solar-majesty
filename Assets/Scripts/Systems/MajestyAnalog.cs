@@ -9,6 +9,10 @@ namespace SolarMajesty
         public string MajestyLoop;
         public string CompactName;
         public string Toy;
+
+        // MajestyLoop is a designer note (never shown). CompactName and Toy are player-facing copy.
+        public string CompactNameText => Loc.S(CompactName);
+        public string ToyText => Loc.S(Toy);
     }
 
     public static class MajestyAnalog

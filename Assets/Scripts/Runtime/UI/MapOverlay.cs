@@ -63,9 +63,9 @@ namespace SolarMajesty
         {
             switch (mode)
             {
-                case MapOverlayMode.Power: return "POWER GRID";
-                case MapOverlayMode.Danger: return "THREAT PRESSURE";
-                case MapOverlayMode.Coverage: return "DEFENCE COVERAGE";
+                case MapOverlayMode.Power: return Loc.S("POWER GRID");
+                case MapOverlayMode.Danger: return Loc.S("THREAT PRESSURE");
+                case MapOverlayMode.Coverage: return Loc.S("DEFENCE COVERAGE");
                 default: return "";
             }
         }
@@ -76,16 +76,16 @@ namespace SolarMajesty
             switch (mode)
             {
                 case MapOverlayMode.Power:
-                    list.Add(new LegendEntry(PowerOk, "Powered"));
-                    list.Add(new LegendEntry(PowerShort, "Browning out"));
+                    list.Add(new LegendEntry(PowerOk, Loc.S("Powered")));
+                    list.Add(new LegendEntry(PowerShort, Loc.S("Browning out")));
                     break;
                 case MapOverlayMode.Danger:
-                    list.Add(new LegendEntry(DangerHot, "Active den"));
-                    list.Add(new LegendEntry(DangerWarm, "Roaming fauna"));
+                    list.Add(new LegendEntry(DangerHot, Loc.S("Active den")));
+                    list.Add(new LegendEntry(DangerWarm, Loc.S("Roaming fauna")));
                     break;
                 case MapOverlayMode.Coverage:
-                    list.Add(new LegendEntry(CoverGood, "Battery / watch"));
-                    list.Add(new LegendEntry(CoverGap, "Uncovered module"));
+                    list.Add(new LegendEntry(CoverGood, Loc.S("Battery / watch")));
+                    list.Add(new LegendEntry(CoverGap, Loc.S("Uncovered module")));
                     break;
             }
             return list;

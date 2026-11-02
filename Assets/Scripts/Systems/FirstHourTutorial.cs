@@ -11,10 +11,10 @@ namespace SolarMajesty
         public const int PestStep = 3;
 
         // Key names come from the live bindings: {GameAction} tokens are filled by KeyHints.
-        public static string WorkshopBeat => KeyHints.Fill(WorkshopBeatText);
-        public static string CheapBuildBeat => KeyHints.Fill(CheapBuildBeatText);
-        public static string RaisePriceBeat => KeyHints.Fill(RaisePriceBeatText);
-        public static string PestBeat => KeyHints.Fill(PestBeatText);
+        public static string WorkshopBeat => KeyHints.Fill(Loc.S(WorkshopBeatText));
+        public static string CheapBuildBeat => KeyHints.Fill(Loc.S(CheapBuildBeatText));
+        public static string RaisePriceBeat => KeyHints.Fill(Loc.S(RaisePriceBeatText));
+        public static string PestBeat => KeyHints.Fill(Loc.S(PestBeatText));
 
         private const string WorkshopBeatText =
             "1/4  WORKSHOP — press {ToolBuild}, then {BuildSlot1}. Place the Engineer workshop anywhere near the Commons. Wait until the robot is standing.";
@@ -58,8 +58,10 @@ namespace SolarMajesty
 
         public static string Beat(int step, bool highBuildAlready)
         {
+            // The consts stay English (tests and key-token checks read them); the beat shown is translated
+            // (the *Beat properties translate before filling the key tokens).
             if (step <= 0) return WorkshopBeat;
-            if (step == 1) return highBuildAlready ? CancelHighBeat : CheapBuildBeat;
+            if (step == 1) return highBuildAlready ? Loc.S(CancelHighBeat) : CheapBuildBeat;
             if (step == 2) return RaisePriceBeat;
             return PestBeat;
         }

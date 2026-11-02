@@ -144,14 +144,14 @@ namespace SolarMajesty
             switch (kind)
             {
                 case BuildZoneKind.TradePost:
-                    if (insideTakenZone) return "That trade ring is already taken.";
-                    return anyZoneFree ? "Landing pads only fit inside an EU trade ring." : "Every trade zone is taken.";
+                    if (insideTakenZone) return Loc.S("That trade ring is already taken.");
+                    return anyZoneFree ? Loc.S("Landing pads only fit inside an EU trade ring.") : Loc.S("Every trade zone is taken.");
                 case BuildZoneKind.Mine:
-                    if (insideTakenZone) return "That ore deposit already has a mine.";
-                    return anyZoneFree ? "Mines can only be built at an ore deposit, out in the wilds." : "Every ore deposit has a mine.";
+                    if (insideTakenZone) return Loc.S("That ore deposit already has a mine.");
+                    return anyZoneFree ? Loc.S("Mines can only be built at an ore deposit, out in the wilds.") : Loc.S("Every ore deposit has a mine.");
                 default:
-                    if (insideTakenZone) return "That temple site is already taken.";
-                    return anyZoneFree ? "Temples can only be built on a marked temple site." : "Every temple site is taken.";
+                    if (insideTakenZone) return Loc.S("That temple site is already taken.");
+                    return anyZoneFree ? Loc.S("Temples can only be built on a marked temple site.") : Loc.S("Every temple site is taken.");
             }
         }
 

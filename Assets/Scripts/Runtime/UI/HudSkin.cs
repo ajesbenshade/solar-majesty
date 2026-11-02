@@ -76,13 +76,29 @@ namespace SolarMajesty
             _body = Resources.Load<Font>("UI/Fonts/HudBody") ?? OsFont(BodyFaces, installed) ?? _display;
         }
 
+        /// <summary>
+        /// Glyph fallbacks behind the chosen face, so a translation into Cyrillic, Greek, Chinese,
+        /// Japanese, Korean or an Indic script draws its letters instead of boxes. Windows ships all
+        /// of these; any that are missing are skipped.
+        /// </summary>
+        private static readonly string[] ScriptFallbacks =
+        {
+            "Segoe UI", "Segoe UI Symbol", "Microsoft YaHei UI", "Microsoft JhengHei UI", "Yu Gothic UI",
+            "Malgun Gothic", "Nirmala UI", "Leelawadee UI", "Arial Unicode MS"
+        };
+
         private static Font OsFont(string[] faces, HashSet<string> installed)
         {
             if (installed == null || installed.Count == 0) return null;
             for (int i = 0; i < faces.Length; i++)
             {
                 if (!installed.Contains(faces[i])) continue;
-                var font = Font.CreateDynamicFontFromOSFont(faces[i], 14);
+                var chain = new List<string> { faces[i] };
+                foreach (string f in ScriptFallbacks)
+                {
+                    if (installed.Contains(f) && !chain.Contains(f)) chain.Add(f);
+                }
+                var font = Font.CreateDynamicFontFromOSFont(chain.ToArray(), 14);
                 if (font != null)
                 {
                     font.hideFlags = HideFlags.HideAndDontSave;

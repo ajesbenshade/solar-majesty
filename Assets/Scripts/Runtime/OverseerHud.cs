@@ -212,8 +212,8 @@ namespace SolarMajesty
                 return;
             var body = _loop.BodyProfile;
             string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
-                ? body.Briefing
-                : "Colony Commons is down. Build anywhere on open ground.";
+                ? body.BriefingText
+                : Loc.S("Colony Commons is down. Build anywhere on open ground.");
             Toast(briefing, 6.5f);
         }
 
@@ -227,7 +227,7 @@ namespace SolarMajesty
         {
             string line = _loop?.Economy != null && !string.IsNullOrEmpty(_loop.Economy.LastResupplyLine)
                 ? _loop.Economy.LastResupplyLine
-                : "Trade ship landed — caravan EU waits in the Market till for a collector.";
+                : Loc.S("Trade ship landed — caravan EU waits in the Market till for a collector.");
             Toast(line, 4f);
             DemoAudio.PlayCredits(); // caravan gold landed, not a menu confirm
         }
@@ -236,7 +236,7 @@ namespace SolarMajesty
         {
             string line = _loop?.Economy != null && !string.IsNullOrEmpty(_loop.Economy.LastResupplyLine)
                 ? _loop.Economy.LastResupplyLine
-                : "Earth ship waved off — no Landing Pad.";
+                : Loc.S("Earth ship waved off — no Landing Pad.");
             Toast(line, 4.5f);
         }
 
@@ -312,7 +312,7 @@ namespace SolarMajesty
                 SimSpeed.TogglePause();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(hold, (paused ? "RESUME   ·   " : "HOLD   ·   ") + KeyHint(GameAction.TogglePause));
+            Tooltip(hold, paused ? Loc.F("RESUME   ·   {0}", KeyHint(GameAction.TogglePause)) : Loc.F("HOLD   ·   {0}", KeyHint(GameAction.TogglePause)));
             x += btn + 4f;
 
             var slower = new Rect(x, r.y, btn, h);
@@ -321,7 +321,7 @@ namespace SolarMajesty
                 SimSpeed.Slower();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(slower, "SLOWER   ·   " + KeyHint(GameAction.SpeedDown));
+            Tooltip(slower, Loc.F("SLOWER   ·   {0}", KeyHint(GameAction.SpeedDown)));
             x += btn + 2f;
 
             var readout = new Rect(x, r.y, r.xMax - x - btn - 2f, h);
@@ -330,10 +330,10 @@ namespace SolarMajesty
             var prevColor = _numberSmall.normal.textColor;
             _numberSmall.alignment = TextAnchor.MiddleCenter;
             _numberSmall.normal.textColor = paused ? Alarm : TextPrimary;
-            GUI.Label(readout, paused ? "HOLD" : SimSpeed.Label, _numberSmall);
+            GUI.Label(readout, paused ? Loc.S("HOLD") : SimSpeed.Label, _numberSmall);
             _numberSmall.alignment = prev;
             _numberSmall.normal.textColor = prevColor;
-            Tooltip(readout, "GAME SPEED   ·   1× IS THE COLONY'S NORMAL PACE");
+            Tooltip(readout, Loc.S("GAME SPEED   ·   1× IS THE COLONY'S NORMAL PACE"));
 
             var faster = new Rect(readout.xMax + 2f, r.y, btn, h);
             if (SpeedButton(faster, null, "+", false, !SimSpeed.IsFastest || paused))
@@ -341,7 +341,7 @@ namespace SolarMajesty
                 SimSpeed.Faster();
                 _loop.OnSpeedChanged();
             }
-            Tooltip(faster, "FASTER   ·   " + KeyHint(GameAction.SpeedUp));
+            Tooltip(faster, Loc.F("FASTER   ·   {0}", KeyHint(GameAction.SpeedUp)));
 
             // One pip per running speed; the 1× pip is brass so the default is easy to find again.
             int steps = SimSpeed.Multipliers.Length - 1;
@@ -648,7 +648,7 @@ namespace SolarMajesty
         /// One stockpile readout: icon, small-caps label with its rate underneath, and the number
         /// right-aligned where the eye lands. Alarm pulses a red halo instead of recolouring the chip.
         /// </summary>
-        private void ResourceChip(Rect r, string label, int amount, bool alarm = false, string rate = null)
+        private void ResourceChip(Rect r, string key, string label, int amount, bool alarm = false, string rate = null)
         {
             if (alarm)
             {
@@ -660,9 +660,9 @@ namespace SolarMajesty
 
             // A drawn glyph reads instantly where a coloured square only reads once learned.
             var icon = new Rect(r.x + 6f, r.y + (r.height - 18f) * 0.5f, 18f, 18f);
-            Texture2D tex = ChipIcon(label);
+            Texture2D tex = ChipIcon(key);
             if (tex != null) HudSkin.Icon(icon, tex, Color.white);
-            else HudSkin.Dot(icon.center, 10f, ChipSwatch(label));
+            else HudSkin.Dot(icon.center, 10f, ChipSwatch(key));
 
             HudLayout.ChipText(r, out var labelRect, out var numberRect);
             var prevLabel = _chipLabel.normal.textColor;
@@ -768,26 +768,26 @@ namespace SolarMajesty
             float midR = c.xMax - right - 18f;
             float x = midL + Mathf.Max(0f, (midR - midL - verbsW) * 0.5f);
             float vy = c.y + 3f;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphBuild, "BUILD", KeyHint(GameAction.ToolBuild), _loop.ActiveTool == OverseerTool.Build))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphBuild, Loc.S("BUILD"), KeyHint(GameAction.ToolBuild), _loop.ActiveTool == OverseerTool.Build))
                 _loop.ToggleTool(OverseerTool.Build);
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphFlag, "BOUNTY FLAG", KeyHint(GameAction.ToolFlag), _loop.ActiveTool == OverseerTool.Flag))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphFlag, Loc.S("BOUNTY FLAG"), KeyHint(GameAction.ToolFlag), _loop.ActiveTool == OverseerTool.Flag))
                 _loop.ToggleTool(OverseerTool.Flag);
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Sun, "ORBITAL SUPPORT", KeyHint(GameAction.ToolOrbital), _loop.ActiveTool == OverseerTool.Orbital))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Sun, Loc.S("ORBITAL SUPPORT"), KeyHint(GameAction.ToolOrbital), _loop.ActiveTool == OverseerTool.Orbital))
                 _loop.ToggleTool(OverseerTool.Orbital);
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphTech, "RESEARCH", KeyHint(GameAction.ToolTech), _techOpen))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.GlyphTech, Loc.S("RESEARCH"), KeyHint(GameAction.ToolTech), _techOpen))
                 ToggleTechPanel();
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Camp, "SWITCH YARD", "A/B", false))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Camp, Loc.S("SWITCH YARD"), "A/B", false))
                 _loop.FocusCampus(1 - _loop.FocusedCampus);
             x += sq + gap;
             int partyCount = _loop.Parties != null ? _loop.Parties.Count : 0;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Party, "FORM SQUAD", KeyHint(GameAction.ToolParty), partyCount > 0))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Party, Loc.S("FORM SQUAD"), KeyHint(GameAction.ToolParty), partyCount > 0))
                 _loop.FormParty();
             x += sq + gap;
-            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Menu, "MENU", "Esc", false))
+            if (SquareAction(new Rect(x, vy, sq, sq), IconId.Menu, Loc.S("MENU"), "Esc", false))
                 _loop.TogglePause();
 
             DrawLevyLine(new Rect(midL, vy + sq + 7f, midR - midL, 14f));
@@ -829,7 +829,7 @@ namespace SolarMajesty
         private void DrawStockpile(Rect r)
         {
             GUI.Label(new Rect(r.x, r.y - 2f, r.width, 14f),
-                $"{(_loop.BodyProfile != null ? _loop.BodyProfile.DisplayName.ToUpperInvariant() : "COLONY")}  ·  COLONY", _section);
+                Loc.F("{0}  ·  COLONY", _loop.BodyProfile != null ? _loop.BodyProfile.DisplayNameText.ToUpperInvariant() : Loc.S("COLONY")), _section);
 
             var set = _loop.Settlement;
             var village = _loop.Village;
@@ -846,13 +846,13 @@ namespace SolarMajesty
             float top = r.y + 17f;
             float cw = HudLayout.StockpileChipWidth(r.width);
             float ch = 28f;
-            ResourceChip(new Rect(r.x, top, cw, ch), "BOTS", heroes, heroes <= 0);
-            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top, cw, ch), ChargersLabel, houses, false,
-                solar > 0 ? $"{solar} solar" : null);
-            ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", collectors, collectors <= 0 || replacing > 0,
-                replacing > 0 ? $"-{replacing} replacing" : (bags > 0 ? $"{bags} carried" : null));
-            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? "HALTED" : "BOTS",
-                building ? pct : 0, halted, building ? "% built" : "idle");
+            ResourceChip(new Rect(r.x, top, cw, ch), "BOTS", Loc.S("BOTS"), heroes, heroes <= 0);
+            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top, cw, ch), ChargersLabel, Loc.S(ChargersLabel), houses, false,
+                solar > 0 ? Loc.F("{0} solar", solar) : null);
+            ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", Loc.S("HAUL"), collectors, collectors <= 0 || replacing > 0,
+                replacing > 0 ? Loc.F("-{0} replacing", replacing) : (bags > 0 ? Loc.F("{0} carried", bags) : null));
+            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? "HALTED" : "BOTS", halted ? Loc.S("HALTED") : Loc.S("BOTS"),
+                building ? pct : 0, halted, building ? Loc.S("% built") : Loc.S("idle"));
         }
 
         /// <summary>Where the gold is on its way home: building tills, collector bags, daily tax.</summary>
@@ -875,20 +875,20 @@ namespace SolarMajesty
             int sol = 1 + Mathf.FloorToInt((_loop.Mission != null ? _loop.Mission.MissionElapsed : 0f) / MajestyEconomy.DaySeconds);
             HudLayout.ClockHeader(r, out var solRect, out var tagRect, out var speedRect);
             HudSkin.Icon(new Rect(r.x, r.y, 13f, 13f), UiIcons.Get(IconId.Sun), Gold);
-            GUI.Label(solRect, $"SOL {sol}", _section);
+            GUI.Label(solRect, Loc.F("SOL {0}", sol), _section);
             GUI.Label(tagRect, ReplayRules.HudTag, _micro);
             DrawSpeedControl(speedRect);
 
             int posted = _loop.Flags != null && _loop.Flags.Flags != null ? _loop.Flags.Flags.Count : 0;
             var bountyRow = new Rect(r.x, r.y + 30f, r.width, 13f);
             HudLayout.StatLine(bountyRow, out var bountyLabel, out var bountyValue);
-            GUI.Label(bountyLabel, "BOUNTIES", _caps);
-            GUI.Label(bountyValue, posted <= 0 ? "none posted" : $"{posted} posted", _microRight);
+            GUI.Label(bountyLabel, Loc.S("BOUNTIES"), _caps);
+            GUI.Label(bountyValue, posted <= 0 ? Loc.S("none posted") : Loc.F("{0} posted", posted), _microRight);
 
             float threat = _loop.FocusedLocalThreat;
             var threatRow = new Rect(r.x, r.y + 44f, r.width, 13f);
             HudLayout.StatLine(threatRow, out var threatLabel, out var threatValue);
-            GUI.Label(threatLabel, "THREAT", _caps);
+            GUI.Label(threatLabel, Loc.S("THREAT"), _caps);
             var prev = _microRight.normal.textColor;
             _microRight.normal.textColor = threat > 0.6f ? Alarm : threat > 0.3f ? Accent : TextMuted;
             GUI.Label(threatValue, $"{threat * 100f:F0}%", _microRight);
@@ -1032,8 +1032,8 @@ namespace SolarMajesty
             if (GUI.Button(row, GUIContent.none, active ? _rowOn : _rowOff) && can)
                 research.TrySelect(id);
 
-            string mark = done ? "DONE" : active ? "…" : can ? "GO" : "—";
-            GUI.Label(new Rect(row.x + 6f, row.y + 2f, row.width - 52f, 16f), def.DisplayName, _value);
+            string mark = done ? Loc.S("DONE") : active ? "…" : can ? Loc.S("GO") : "—";
+            GUI.Label(new Rect(row.x + 6f, row.y + 2f, row.width - 52f, 16f), def.DisplayNameText, _value);
             var prev = _microRight.normal.textColor;
             _microRight.normal.textColor = done ? Good : can ? TextPrimary : TextMuted;
             GUI.Label(new Rect(row.xMax - 44f, row.y + 2f, 40f, 16f), mark, _microRight);
@@ -1041,8 +1041,8 @@ namespace SolarMajesty
 
             string need = research.UnmetPrerequisiteLabel(id);
             string detail = done
-                ? "Researched. A Landing Pad stages the craft."
-                : string.IsNullOrEmpty(need) ? def.Description : "needs " + need;
+                ? Loc.S("Researched. A Landing Pad stages the craft.")
+                : string.IsNullOrEmpty(need) ? def.DescriptionText : Loc.F("needs {0}", need);
             GUI.Label(new Rect(row.x + 6f, row.y + 18f, row.width - 12f, 16f), Truncate(detail, 64), _micro);
             return y + 40f;
         }
@@ -1058,28 +1058,28 @@ namespace SolarMajesty
             float panelH = Mathf.Clamp(_sh - M - MapSize - 24f - top, 220f, 480f);
             var rect = new Rect(_sw - M - panelW, top, panelW, panelH);
             RightColumnBottom = rect.yMax;
-            var c = Panel(rect, "Research · " + KeyHint(GameAction.ToolTech));
-            if (GUI.Button(new Rect(rect.xMax - 68f, rect.y + 8f, 56f, 18f), "CLOSE", _chipOff))
+            var c = Panel(rect, Loc.F("Research · {0}", KeyHint(GameAction.ToolTech)));
+            if (GUI.Button(new Rect(rect.xMax - 68f, rect.y + 8f, 56f, 18f), Loc.S("CLOSE"), _chipOff))
                 _techOpen = false;
 
             string launch = research.LaunchTechLabel(_loop.ActiveBody);
             GUI.Label(new Rect(c.x, c.y, c.width, 14f),
-                $"Labs {research.LabCount} · rate {research.CurrentRate:F1}/s · tip {launch}", _micro);
+                Loc.F("Labs {0} · rate {1:F1}/s · tip {2}", research.LabCount, research.CurrentRate, launch), _micro);
             float y = c.y + 18f;
             y = DrawLaunchTechPin(c, y, research);
 
             if (research.ActiveTech != TechId.None)
             {
                 var active = TechCatalog.Get(research.ActiveTech);
-                string name = active != null ? active.DisplayName : research.ActiveTech.ToString();
+                string name = active != null ? active.DisplayNameText : research.ActiveTech.ToString();
                 float frac = research.ActiveCost > 0f ? research.ActiveProgress / research.ActiveCost : 0f;
-                GUI.Label(new Rect(c.x, y, c.width, 14f), $"Active: {name}", _body);
+                GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.F("Active: {0}", name), _body);
                 y += 16f;
                 Meter(new Rect(c.x, y, c.width, 7f), frac, Accent);
                 y += 12f;
                 GUI.Label(new Rect(c.x, y, c.width, 13f),
-                    $"{research.ActiveProgress:F0}/{research.ActiveCost:F0} science" +
-                    (research.LastEvent == "awaiting_stockpile" ? " · need EU" : ""),
+                    Loc.F("{0:F0}/{1:F0} science", research.ActiveProgress, research.ActiveCost) +
+                    (research.LastEvent == "awaiting_stockpile" ? Loc.S(" · need EU") : ""),
                     _micro);
                 y += 18f;
             }
@@ -1088,11 +1088,11 @@ namespace SolarMajesty
                 var rec = research.RecommendedNext();
                 var recDef = TechCatalog.Get(rec);
                 string bank = research.BankedScience > 0.5f
-                    ? $"Science banked {research.BankedScience:F0}. "
+                    ? Loc.F("Science banked {0:F0}. ", research.BankedScience)
                     : "";
                 string tip = recDef != null
-                    ? $"{bank}Click a tech to start — next pick {recDef.DisplayName}."
-                    : $"{bank}Tree complete — launch tech unlocked.";
+                    ? Loc.F("{0}Click a tech to start — next pick {1}.", bank, recDef.DisplayNameText)
+                    : Loc.F("{0}Tree complete — launch tech unlocked.", bank);
                 GUI.Label(new Rect(c.x, y, c.width, 14f), tip, _muted);
                 y += 20f;
             }
@@ -1128,9 +1128,9 @@ namespace SolarMajesty
                 if (GUI.Button(row, GUIContent.none, active ? _rowOn : _rowOff) && can)
                     research.TrySelect(t.Id);
 
-                string mark = done ? "DONE" : active ? "…" : can ? (t.SecretProject ? "★" : "GO") : "—";
+                string mark = done ? Loc.S("DONE") : active ? "…" : can ? (t.SecretProject ? "★" : Loc.S("GO")) : "—";
                 Color markC = done ? Good : active ? Accent : can ? TextPrimary : TextMuted;
-                string title = t.SecretProject ? $"★ {t.DisplayName}" : t.DisplayName;
+                string title = t.SecretProject ? $"★ {t.DisplayNameText}" : t.DisplayNameText;
                 GUI.Label(new Rect(row.x + 6f, row.y + 4f, row.width - 50f, 16f), title, _value);
                 var prev = _microRight.normal.textColor;
                 _microRight.normal.textColor = markC;
@@ -1138,7 +1138,7 @@ namespace SolarMajesty
                 _microRight.normal.textColor = prev;
 
                 GUI.Label(new Rect(row.x + 6f, row.y + 22f, row.width - 12f, 24f),
-                    Truncate(t.Description, 58), _micro);
+                    Truncate(t.DescriptionText, 58), _micro);
 
                 if (!done)
                 {
@@ -1180,19 +1180,19 @@ namespace SolarMajesty
             {
                 float wait = orbital.ReadyIn(armed.id);
                 string hint = wait > 0f
-                    ? $"recharging {Mathf.CeilToInt(wait)} s"
-                    : $"click the map · {input.CursorCost} EU here (x{input.CursorMultiplier:0} from uplink)";
+                    ? Loc.F("recharging {0} s", Mathf.CeilToInt(wait))
+                    : Loc.F("click the map · {0} EU here (x{1:0} from uplink)", input.CursorCost, input.CursorMultiplier);
                 DrawMinimizedToolStrip(OverseerTool.Orbital, 360f,
-                    armed.displayName.ToUpperInvariant(), hint, KeyHint(GameAction.ToolOrbital));
+                    armed.DisplayNameText.ToUpperInvariant(), hint, KeyHint(GameAction.ToolOrbital));
                 return;
             }
 
             float popupH = 58f + powers.Length * 28f;
             var rect = HudLayout.ToolPopup(_sw, _sh, 360f, popupH);
             _contentBottom = rect.y;
-            var c = Panel(rect, "Orbital support");
+            var c = Panel(rect, Loc.S("Orbital support"));
             GUI.Label(new Rect(c.x, c.y, c.width, 13f),
-                "Pick a power · LMB on the map · cost x1-x15 by distance from an uplink", _micro);
+                Loc.S("Pick a power · LMB on the map · cost x1-x15 by distance from an uplink"), _micro);
             float y = c.y + 17f;
 
             int treasury = _loop.Resources != null ? _loop.Resources.Get(ResourceId.Metals) : 0;
@@ -1229,20 +1229,20 @@ namespace SolarMajesty
                 var costStyle = _microRight;
                 var prevCost = costStyle.normal.textColor;
                 string right;
-                if (locked) { right = "NEED TECH"; costStyle.normal.textColor = TextMuted; }
-                else if (wait > 0f) { right = $"{Mathf.CeilToInt(wait)} s"; costStyle.normal.textColor = TextMuted; }
-                else if (p.cost <= 0) right = "FREE";
+                if (locked) { right = Loc.S("NEED TECH"); costStyle.normal.textColor = TextMuted; }
+                else if (wait > 0f) { right = Loc.F("{0} s", Mathf.CeilToInt(wait)); costStyle.normal.textColor = TextMuted; }
+                else if (p.cost <= 0) right = Loc.S("FREE");
                 else
                 {
-                    right = $"{p.cost}+ EU";
+                    right = Loc.F("{0}+ EU", p.cost);
                     if (p.cost > treasury) costStyle.normal.textColor = Alarm;
                 }
                 GUI.Label(costRect, right, costStyle);
                 costStyle.normal.textColor = prevCost;
 
                 Tooltip(r, locked
-                    ? $"NEEDS {TechCatalog.Get(OrbitalTuning.TechFor(p.tier))?.DisplayName?.ToUpperInvariant()}"
-                    : $"{p.displayName.ToUpperInvariant()}   ·   recharge {p.cooldownSeconds:0} s");
+                    ? Loc.F("NEEDS {0}", TechCatalog.Get(OrbitalTuning.TechFor(p.tier))?.DisplayNameText?.ToUpperInvariant())
+                    : Loc.F("{0}   ·   recharge {1:0} s", p.DisplayNameText.ToUpperInvariant(), p.cooldownSeconds));
                 y += 28f;
             }
         }
@@ -1260,27 +1260,27 @@ namespace SolarMajesty
 
             var rect = HudLayout.ToolPopup(_sw, _sh, 300f, 398f);
             _contentBottom = rect.y;
-            var c = Panel(rect, "Flag orders");
+            var c = Panel(rect, Loc.S("Flag orders"));
 
             GUI.Label(new Rect(c.x, c.y, c.width, 13f), FlagBoardLine(), _micro);
             float y = c.y + 17f;
 
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagExplore) + "Explore  ·  survey 22 m / 90 s", fp.ExploreFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagClearThreat) + "Clear Threat", fp.ClearThreatFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagBuild) + "Build Here", fp.BuildFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagExtract) + "Extract", fp.ExtractFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagDefend) + "Defend  ·  watch 50 s after", fp.DefendFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagResearchSite) + "Research Site", fp.ResearchSiteFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagOutpost) + "Outpost", fp.OutpostFlag);
-            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagTerraform) + "Terraform", fp.TerraformFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagExplore) + Loc.S("Explore  ·  survey 22 m / 90 s"), fp.ExploreFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagClearThreat) + Loc.S("Clear Threat"), fp.ClearThreatFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagBuild) + Loc.S("Build Here"), fp.BuildFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagExtract) + Loc.S("Extract"), fp.ExtractFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagDefend) + Loc.S("Defend  ·  watch 50 s after"), fp.DefendFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagResearchSite) + Loc.S("Research Site"), fp.ResearchSiteFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagOutpost) + Loc.S("Outpost"), fp.OutpostFlag);
+            y = FlagRow(fp, new Rect(c.x, y, c.width, 24f), FlagKeyColumn(GameAction.FlagTerraform) + Loc.S("Terraform"), fp.TerraformFlag);
 
             y += 4f;
             int shown = fp.ShownBounty;
             bool posted = fp.HasSelectedPosted;
             bool canPay = fp.ShownBountyAffordable;
             HudLayout.StatLine(new Rect(c.x, y, Mathf.Max(140f, c.width - 64f), 24f), out var bountyLabel, out var bountyValue);
-            GUI.Label(bountyLabel, "BOUNTY", _micro);
-            GUI.Label(bountyValue, $"{shown:N0} EU", _value);
+            GUI.Label(bountyLabel, Loc.S("BOUNTY"), _micro);
+            GUI.Label(bountyValue, Loc.F("{0:N0} EU", shown), _value);
             if (GUI.Button(new Rect(c.xMax - 58f, y + 2f, 26f, 20f), "−", _chipOff)) fp.NudgeBounty(-MajestyEconomy.FlagBountyStep);
             if (GUI.Button(new Rect(c.xMax - 28f, y + 2f, 26f, 20f), "+", _chipOff)) fp.NudgeBounty(MajestyEconomy.FlagBountyStep);
 
@@ -1288,10 +1288,10 @@ namespace SolarMajesty
             var prevC = _micro.normal.textColor;
             _micro.normal.textColor = canPay ? TextMuted : Alarm;
             string placeHint = posted
-                ? "this pole · +/− edits this bounty"
+                ? Loc.S("this pole · +/− edits this bounty")
                 : canPay
-                    ? $"next post · escrow {shown} EU"
-                    : $"next post · need {shown} EU";
+                    ? Loc.F("next post · escrow {0} EU", shown)
+                    : Loc.F("next post · need {0} EU", shown);
             GUI.Label(new Rect(c.x, y, c.width, 13f), placeHint, _micro);
             _micro.normal.textColor = prevC;
 
@@ -1310,7 +1310,7 @@ namespace SolarMajesty
         {
             _ordersFieldDrawn = true;
             var field = new Rect(r.x + 52f, r.y, r.width - 52f, 20f);
-            GUI.Label(new Rect(r.x, r.y + 2f, 52f, 18f), "ORDERS", _micro);
+            GUI.Label(new Rect(r.x, r.y + 2f, 52f, 18f), Loc.S("ORDERS"), _micro);
 
             var e = Event.current;
             bool focused = GUI.GetNameOfFocusedControl() == OrdersControl;
@@ -1330,10 +1330,10 @@ namespace SolarMajesty
 
             string read = fp.PendingOrdersSummary;
             string line = string.IsNullOrWhiteSpace(fp.PendingOrders)
-                ? "optional · e.g. \"stay away unless level 9+\""
-                : !string.IsNullOrEmpty(read) ? "understood: " + read
-                : LayaBridge.Instance != null && LayaBridge.Instance.Online ? "not understood — local AI will try on post"
-                : "not understood — bots will ignore it";
+                ? Loc.S("optional · e.g. \"stay away unless level 9+\"")
+                : !string.IsNullOrEmpty(read) ? Loc.F("understood: {0}", read)
+                : LayaBridge.Instance != null && LayaBridge.Instance.Online ? Loc.S("not understood — local AI will try on post")
+                : Loc.S("not understood — bots will ignore it");
             GUI.Label(new Rect(r.x, r.y + 22f, r.width, 14f), line, _micro);
         }
 
@@ -1362,9 +1362,9 @@ namespace SolarMajesty
 
             if (_buildMinimized)
             {
-                string name = bp.Selected != null ? bp.Selected.displayName : "module";
+                string name = bp.Selected != null ? Loc.S(bp.Selected.displayName) : Loc.S("module");
                 DrawMinimizedToolStrip(OverseerTool.Build, 320f,
-                    name.ToUpperInvariant(), "click the map to place · click here for the list", KeyHint(GameAction.ToolBuild));
+                    name.ToUpperInvariant(), Loc.S("click the map to place · click here for the list"), KeyHint(GameAction.ToolBuild));
                 return;
             }
 
@@ -1374,15 +1374,15 @@ namespace SolarMajesty
             float popupH = 58f + Mathf.Min(336f, fullH);
             var rect = HudLayout.ToolPopup(_sw, _sh, 320f, popupH);
             _contentBottom = rect.y;
-            var c = Panel(rect, "Build catalog");
+            var c = Panel(rect, Loc.S("Build catalog"));
 
             // The row is too narrow for long blurbs, so the selected building's full blurb
             // (e.g. the Watchtower canon line) shows in the hint line above the list.
             string hint = !DemoSettings.FirstHourDemo && bp.Selected != null && !string.IsNullOrEmpty(bp.Selected.description)
-                ? FitChipText(_micro, new[] { bp.Selected.description }, c.width)
+                ? FitChipText(_micro, new[] { Loc.S(bp.Selected.description) }, c.width)
                 : DemoSettings.FirstHourDemo
-                    ? "1 Engineer workshop · LMB on open ground"
-                    : "Pick a building · LMB on open ground";
+                    ? Loc.S("1 Engineer workshop · LMB on open ground")
+                    : Loc.S("Pick a building · LMB on open ground");
             GUI.Label(new Rect(c.x, c.y, c.width, 13f), hint, _micro);
             float y = c.y + 17f;
 
@@ -1426,7 +1426,7 @@ namespace SolarMajesty
                 var prevCost = costStyle.normal.textColor;
                 if (locked) costStyle.normal.textColor = TextMuted;
                 else if (!canAfford) costStyle.normal.textColor = Alarm;
-                GUI.Label(costRect, locked ? "NEED TECH" : FormatBuildCost(CostOf(b)), costStyle);
+                GUI.Label(costRect, locked ? Loc.S("NEED TECH") : FormatBuildCost(CostOf(b)), costStyle);
                 costStyle.normal.textColor = prevCost;
 
                 rowY += 28f;
@@ -1460,20 +1460,20 @@ namespace SolarMajesty
 
         private static string BuildRowLabel(BuildingData b)
         {
-            if (b == null) return "module";
+            if (b == null) return Loc.S("module");
             if (!string.IsNullOrEmpty(b.description))
-                return $"{b.displayName}  ·  {b.description}";
+                return $"{Loc.S(b.displayName)}  ·  {Loc.S(b.description)}";
             switch (b.category)
             {
-                case BuildingCategory.Defense: return "Laser Turret  ·  18 m gun";
-                case BuildingCategory.Mining: return "OPS Drop-off  ·  does not grow EU";
-                case BuildingCategory.Mine: return "Nuclear Mine";
-                case BuildingCategory.Power: return "Solar Farm";
+                case BuildingCategory.Defense: return Loc.S("Laser Turret  ·  18 m gun");
+                case BuildingCategory.Mining: return Loc.S("OPS Drop-off  ·  does not grow EU");
+                case BuildingCategory.Mine: return Loc.S("Nuclear Mine");
+                case BuildingCategory.Power: return Loc.S("Solar Farm");
                 case BuildingCategory.ClimateLoom:
                 case BuildingCategory.AegisSpire:
                 case BuildingCategory.DeepArchive:
-                    return $"{b.displayName}  ·  bonus while standing";
-                default: return b.displayName;
+                    return Loc.F("{0}  ·  bonus while standing", Loc.S(b.displayName));
+                default: return Loc.S(b.displayName);
             }
         }
 
@@ -1481,8 +1481,8 @@ namespace SolarMajesty
         {
             var data = fp != null ? fp.SelectedFlag : null;
             string name = data != null && !string.IsNullOrEmpty(data.displayName)
-                ? data.displayName
-                : "flag";
+                ? Loc.S(data.displayName)
+                : Loc.S("flag");
             return name.ToUpperInvariant();
         }
 
@@ -1506,7 +1506,7 @@ namespace SolarMajesty
             GUI.Label(keyRect, key, _tooltipStyle);
             if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
                 ExpandMenu(tool);
-            Tooltip(rect, $"OPEN THE LIST   ·   {key}");
+            Tooltip(rect, Loc.F("OPEN THE LIST   ·   {0}", key));
         }
 
         /// <summary>Collapsed flag catalog: the armed flag, its bounty with − / +, and a way back to the list.</summary>
@@ -1527,7 +1527,7 @@ namespace SolarMajesty
             _number.alignment = TextAnchor.MiddleRight;
             var prevC = _number.normal.textColor;
             _number.normal.textColor = fp.ShownBountyAffordable ? HudSkin.GoldBright : Alarm;
-            GUI.Label(new Rect(minus.x - 112f, rect.y, 104f, rect.height), $"{fp.ShownBounty:N0} EU", _number);
+            GUI.Label(new Rect(minus.x - 112f, rect.y, 104f, rect.height), Loc.F("{0:N0} EU", fp.ShownBounty), _number);
             _number.alignment = prev;
             _number.normal.textColor = prevC;
 
@@ -1536,10 +1536,10 @@ namespace SolarMajesty
             if (hot) HudSkin.RuleH(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), Gold);
             GUI.Label(new Rect(c.x, c.y - 6f, open.width - Pad, 18f), FlagStripLabel(fp), _value);
             GUI.Label(new Rect(c.x, c.y + 9f, open.width - Pad, 12f),
-                fp.HasSelectedPosted ? "this pole · +/− edits it" : "next post · click the map", _micro);
+                fp.HasSelectedPosted ? Loc.S("this pole · +/− edits it") : Loc.S("next post · click the map"), _micro);
             if (GUI.Button(open, GUIContent.none, GUIStyle.none))
                 ExpandMenu(OverseerTool.Flag);
-            Tooltip(open, "OPEN THE FLAG LIST   ·   " + KeyHint(GameAction.ToolFlag));
+            Tooltip(open, Loc.F("OPEN THE FLAG LIST   ·   {0}", KeyHint(GameAction.ToolFlag)));
         }
 
         private bool Chip(Rect r, string label, bool on) =>
@@ -1569,7 +1569,7 @@ namespace SolarMajesty
 
         private static string FormatBuildCost(ResourceAmount[] cost)
         {
-            if (cost == null || cost.Length == 0) return "free";
+            if (cost == null || cost.Length == 0) return Loc.S("free");
             // Player text has one currency. Internal resource IDs (Regolith, WaterIce, Power) stay,
             // but every line of a cost reads as EU, so the parts are summed into one figure.
             int total = 0;
@@ -1594,14 +1594,14 @@ namespace SolarMajesty
 
             var rect = new Rect(_sw - M - 300f, _playTop > 1f ? _playTop : M, 300f, h);
             RightColumnBottom = rect.yMax;
-            var c = Panel(rect, "Objectives");
+            var c = Panel(rect, Loc.S("Objectives"));
             float y = c.y;
 
             Stake(new Rect(c.x, y, c.width, 20f), mission.DensCleared,
-                "Clear dens",
+                Loc.S("Clear dens"),
                 mission.LairCount > 0
-                    ? $"{mission.UnclearedLairs}/{mission.LairCount} left"
-                    : $"{mission.StalkersRemaining} den stalkers left");
+                    ? Loc.F("{0}/{1} left", mission.UnclearedLairs, mission.LairCount)
+                    : Loc.F("{0} den stalkers left", mission.StalkersRemaining));
             y += 20f;
 
             var set = _loop.Settlement;
@@ -1609,17 +1609,17 @@ namespace SolarMajesty
                 ? $"{mission.TreasuryCurrent:N0}/{mission.TreasuryGoal:N0} · {_loop.FormatHold(mission.SustainElapsed)}/{_loop.FormatHold(mission.SustainRequired)}"
                 : _loop.FormatHold(mission.SustainElapsed);
             Stake(new Rect(c.x, y, c.width, 20f), mission.SustainComplete,
-                "Fill the till",
+                Loc.S("Fill the till"),
                 sustainVal);
             y += 20f;
 
             string launchNeed = _loop.Research != null
                 ? _loop.Research.LaunchTechLabel(_loop.ActiveBody)
-                : "Colony Lifter";
+                : Loc.S("Colony Lifter");
             bool fullCampaign = !DemoSettings.FirstHourDemo;
             string launchLine = LaunchPath.ObjectiveText(fullCampaign, mission.LaunchReady, launchNeed);
             Stake(new Rect(c.x, y, c.width, 20f), mission.LaunchReady,
-                "Launch craft",
+                Loc.S("Launch craft"),
                 fullCampaign ? launchLine : LaunchPath.Chain(launchNeed));
             y += 22f;
             if (!fullCampaign)
@@ -1635,17 +1635,17 @@ namespace SolarMajesty
             {
                 float left = Mathf.Max(0f, mission.MissionDeadline - mission.MissionElapsed);
                 float frac = mission.MissionDeadline > 0f ? left / mission.MissionDeadline : 0f;
-                GUI.Label(new Rect(c.x, y, 120f, 14f), "DEADLINE", _micro);
+                GUI.Label(new Rect(c.x, y, 120f, 14f), Loc.S("DEADLINE"), _micro);
                 GUI.Label(new Rect(c.xMax - 60f, y, 60f, 14f), _loop.FormatHold(left), _microRight);
                 Meter(new Rect(c.x, y + 16f, c.width, 5f), frac, frac < 0.25f ? Alarm : Accent);
                 y += 26f;
             }
 
-            GUI.Label(new Rect(c.x, y, c.width, 14f), "FLAG LOG", _section);
+            GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.S("FLAG LOG"), _section);
             y += 16f;
             if (flagN <= 0)
             {
-                GUI.Label(new Rect(c.x, y, c.width, 14f), "No flags posted — G to bounty.", _micro);
+                GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.S("No flags posted · G to bounty."), _micro);
             }
             else
             {
@@ -1654,13 +1654,13 @@ namespace SolarMajesty
                     var f = flags[flags.Count - flagN + i];
                     if (f?.Data == null) continue;
                     string claim = f.ClaimCount > 0
-                        ? "claimed"
-                        : (string.IsNullOrEmpty(f.InterestLabel) ? "open" : f.InterestLabel);
+                        ? Loc.S("claimed")
+                        : (string.IsNullOrEmpty(f.InterestLabel) ? Loc.S("open") : f.InterestLabel);
                     Color col = f.Data != null ? f.Data.bannerColor : Gold;
                     HudSkin.Dot(new Vector2(c.x + 4f, y + 7.5f), 7f, col);
                     string orders = f.Orders != null && f.Orders.HasRules ? $"  ·  {f.Orders.Summary()}" : "";
                     GUI.Label(new Rect(c.x + 12f, y, c.width - 12f, 15f),
-                        $"{f.Data.displayName}  {FlagBountySync.Amount(f):N0} EU  ·  {claim}{orders}", _micro);
+                        Loc.F("{0}  {1:N0} EU  ·  {2}{3}", Loc.S(f.Data.displayName), FlagBountySync.Amount(f), claim, orders), _micro);
                     y += 15f;
                 }
             }
@@ -1701,13 +1701,13 @@ namespace SolarMajesty
             y += 14f;
             string label;
             if (!researched)
-                label = $"Research {guild.BenefitName}";
+                label = Loc.F("Research {0}", guild.BenefitNameText);
             else if (dir.IsActive(guild.Id))
-                label = $"{guild.BenefitName} {dir.Remaining(guild.Id):F0}s";
+                label = Loc.F("{0} {1:F0}s", guild.BenefitNameText, dir.Remaining(guild.Id));
             else if (dir.CooldownLeft(guild.Id) > 0.5f)
-                label = $"Cooldown {dir.CooldownLeft(guild.Id):F0}s";
+                label = Loc.F("Cooldown {0:F0}s", dir.CooldownLeft(guild.Id));
             else
-                label = $"ACTIVATE {guild.ActivateCost} EU";
+                label = Loc.F("ACTIVATE {0} EU", guild.ActivateCost);
             bool can = researched &&
                        dir.CanActivate(guild.Id, _loop.Research, _loop.Resources, true);
             if (Chip(new Rect(x, y, Mathf.Min(220f, width), 22f), label, can) && can)
@@ -1733,28 +1733,28 @@ namespace SolarMajesty
             HudSkin.RuleH(new Rect(rect.x, rect.y, rect.width, 1f), Accent);
 
             float row = c.y;
-            GUI.Label(new Rect(c.x, row, c.width, 16f), st.DisplayName, _value);
+            GUI.Label(new Rect(c.x, row, c.width, 16f), Loc.S(st.DisplayName), _value);
             row += 18f;
 
             string role = st.IsWorkshop
-                ? (RefabLabel(st) ?? (st.RobotFabricated ? "Workshop · robot online" : "Workshop · fabricating…"))
+                ? (RefabLabel(st) ?? (st.RobotFabricated ? Loc.S("Workshop · robot online") : Loc.S("Workshop · fabricating…")))
                 : st.IsGuild
                     ? (st.HasPreferredClass
-                        ? (RobotGuildCatalog.ForClass(st.PreferredClass)?.CatalogLine ?? st.DisplayName)
-                        : "Guild Hall · assign a class")
-                    : st.IsWonder ? "Secret Project landmark"
-                    : st.IsFobotYard || st.Category == BuildingCategory.FobotYard ? "Fobot Yard · wrecks wait"
+                        ? (RobotGuildCatalog.ForClass(st.PreferredClass)?.CatalogLineText ?? Loc.S(st.DisplayName))
+                        : Loc.S("Guild Hall · assign a class"))
+                    : st.IsWonder ? Loc.S("Secret Project landmark")
+                    : st.IsFobotYard || st.Category == BuildingCategory.FobotYard ? Loc.S("Fobot Yard · wrecks wait")
                     : st.IsWatchtower
-                        ? (st.LaserArmed ? "Watchtower · lasers armed" : "Watchtower · guard post")
-                    : st.IsAidStation ? "Aid Station · paid patch"
-                    : st.IsLandingPad ? "Weigh-station · tank vs wallet"
-                    : st.IsResidential ? "Charging station · worker bots"
+                        ? (st.LaserArmed ? Loc.S("Watchtower · lasers armed") : Loc.S("Watchtower · guard post"))
+                    : st.IsAidStation ? Loc.S("Aid Station · paid patch")
+                    : st.IsLandingPad ? Loc.S("Weigh-station · tank vs wallet")
+                    : st.IsResidential ? Loc.S("Charging station · worker bots")
                     : st.Role.ToString();
             string worker = st.IsResidential
-                ? "bots"
+                ? Loc.S("bots")
                 : (st.HasPreferredClass ? ColonyStructure.ClassLabel(st.PreferredClass) : "—");
             string beds = st.IsResidential
-                ? $" · bots {st.Residents}/{st.ResidentCapacity}"
+                ? Loc.F(" · bots {0}/{1}", st.Residents, st.ResidentCapacity)
                 : "";
             GUI.Label(new Rect(c.x, row, c.width, 13f),
                 st.IsResidential
@@ -1763,17 +1763,17 @@ namespace SolarMajesty
                 _micro);
             row += 15f;
 
-            Bar(new Rect(c.x, row, c.width, 14f), "HP", st.Health01, HpFill);
+            Bar(new Rect(c.x, row, c.width, 14f), Loc.S("HP"), st.Health01, HpFill);
             row += 18f;
 
             string workers = st.IsResidential
                 ? (st.Residents > 0
                     ? (st.LevyPurse > 0
-                        ? $"{st.LevyPurse:N0} EU sitting — a bot walks it home."
-                        : "Worker bots bunk here — EU sits until a bot walks it home.")
-                    : "Empty charging slots — seed crew arrives with the first charging station.")
+                        ? Loc.F("{0:N0} EU sitting · a bot walks it home.", st.LevyPurse)
+                        : Loc.S("Worker bots bunk here · EU sits until a bot walks it home."))
+                    : Loc.S("Empty charging slots · seed crew arrives with the first charging station."))
                 : (st.LevyPurse > 0 && !st.IsTreasuryChest
-                    ? $"{FormatWorkers(st)} · battery {st.LevyPurse} EU"
+                    ? Loc.F("{0} · battery {1} EU", FormatWorkers(st), st.LevyPurse)
                     : FormatWorkers(st));
             GUI.Label(new Rect(c.x, row, c.width, 13f), workers, _micro);
             row += 16f;
@@ -1782,20 +1782,20 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     st.LevyPurse > 0
-                        ? $"{st.LevyPurse:N0} EU — bots carry it to Commons."
-                        : "Home to worker bots. Contract mechs take the bounties.", _micro);
+                        ? Loc.F("{0:N0} EU — bots carry it to Commons.", st.LevyPurse)
+                        : Loc.S("Home to worker bots. Contract mechs take the bounties."), _micro);
             }
             else if (st.IsFobotYard)
             {
                 string wrecks = _loop.WreckSummary();
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     string.IsNullOrEmpty(wrecks)
-                        ? "Wrecks wait here. Pay EU to stand THIS ego up."
+                        ? Loc.S("Wrecks wait here. Pay EU to stand THIS ego up.")
                         : wrecks,
                     _micro);
                 row += 24f;
                 int bill = _loop.FieldReviveMet;
-                if (Chip(new Rect(c.x, row, 140f, 22f), bill > 0 ? $"PAY {bill} EU" : "PAY YARD",
+                if (Chip(new Rect(c.x, row, 140f, 22f), bill > 0 ? Loc.F("PAY {0} EU", bill) : Loc.S("PAY YARD"),
                         bill > 0 && _loop.CanPayYard))
                     _loop.PayFobotYard();
                 GUI.Label(new Rect(c.x + 148f, row + 4f, c.width - 148f, 16f),
@@ -1804,7 +1804,7 @@ namespace SolarMajesty
             else if (st.IsLandingPad)
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    "Trade ships land here. Each caravan pays EU into the Market till.", _micro);
+                    Loc.S("Trade ships land here. Each caravan pays EU into the Market till."), _micro);
             }
             else if (st.IsGuild)
             {
@@ -1816,32 +1816,32 @@ namespace SolarMajesty
                     GUI.Label(new Rect(c.x, row, c.width, 13f), guild.Motto, _micro);
                     row += 14f;
                     GUI.Label(new Rect(c.x, row, c.width, 13f),
-                        $"Wants {guild.Wants} · ignores {guild.Ignores}", _micro);
+                        Loc.F("Wants {0} · ignores {1}", guild.WantsText, guild.IgnoresText), _micro);
                     row += 14f;
                     GUI.Label(new Rect(c.x, row, c.width, 13f),
-                        "Flags near this hall pull them (no new robot).", _micro);
+                        Loc.S("Flags near this hall pull them (no new robot)."), _micro);
                     row += 14f;
                     row = DrawGuildBenefit(c.x, row, c.width, guild);
                 }
                 else
                 {
                     GUI.Label(new Rect(c.x, row, c.width, 13f),
-                        "Assign a class. Flags near this hall pull them (no new robot).", _micro);
+                        Loc.S("Assign a class. Flags near this hall pull them (no new robot)."), _micro);
                     row += 14f;
                 }
 
                 if (!st.ClassLocked)
                 {
-                    if (Chip(new Rect(c.x, row, 54f, 22f), "SCOUT",
+                    if (Chip(new Rect(c.x, row, 54f, 22f), Loc.S("SCOUT"),
                             st.HasPreferredClass && st.PreferredClass == SpecialistClass.ScoutDrone))
                         _loop.SetSelectedWorkplaceClass(SpecialistClass.ScoutDrone);
-                    if (Chip(new Rect(c.x + 58f, row, 54f, 22f), "ENG",
+                    if (Chip(new Rect(c.x + 58f, row, 54f, 22f), Loc.S("ENG"),
                             st.HasPreferredClass && st.PreferredClass == SpecialistClass.EngineerBot))
                         _loop.SetSelectedWorkplaceClass(SpecialistClass.EngineerBot);
-                    if (Chip(new Rect(c.x + 116f, row, 54f, 22f), "DEF",
+                    if (Chip(new Rect(c.x + 116f, row, 54f, 22f), Loc.S("DEF"),
                             st.HasPreferredClass && st.PreferredClass == SpecialistClass.DefenseMech))
                         _loop.SetSelectedWorkplaceClass(SpecialistClass.DefenseMech);
-                    if (Chip(new Rect(c.x + 174f, row, 54f, 22f), "MED",
+                    if (Chip(new Rect(c.x + 174f, row, 54f, 22f), Loc.S("MED"),
                             st.HasPreferredClass && st.PreferredClass == SpecialistClass.Medic))
                         _loop.SetSelectedWorkplaceClass(SpecialistClass.Medic);
                 }
@@ -1851,8 +1851,8 @@ namespace SolarMajesty
                 int met = _loop.FieldReviveMet;
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
                     _loop.NeedsFieldRevive
-                        ? $"Stand-up bill {met} EU. Cost scales with level."
-                        : "No wrecks. Dock this yard before anyone goes down.", _micro);
+                        ? Loc.F("Stand-up bill {0} EU. Cost scales with level.", met)
+                        : Loc.S("No wrecks. Dock this yard before anyone goes down."), _micro);
                 var wrecks = _loop.Corpses;
                 if (wrecks != null && wrecks.Count > 0)
                 {
@@ -1871,7 +1871,7 @@ namespace SolarMajesty
                 bool canPay = _loop.NeedsFieldRevive && _loop.HasFobotYard &&
                               _loop.FieldReviveReadyIn <= 0.5f;
                 if (Chip(new Rect(c.x, row, 220f, 22f),
-                        canPay ? $"PAY {met} EU" : "YARD IDLE", canPay) && canPay)
+                        canPay ? Loc.F("PAY {0} EU", met) : Loc.S("YARD IDLE"), canPay) && canPay)
                     _loop.RetryParty();
             }
             else if (st.IsWatchtower)
@@ -1879,19 +1879,19 @@ namespace SolarMajesty
                 int guards = st.WorkerCount;
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
                     guards > 0
-                        ? "Guard posted. Haul can drop EU here when Commons is far."
-                        : "Empty post. Aegis / Rim Watch will clock in.", _micro);
+                        ? Loc.S("Guard posted. Haul can drop EU here when Commons is far.")
+                        : Loc.S("Empty post. Aegis / Rim Watch will clock in."), _micro);
                 row += 16f;
                 if (st.LaserArmed)
                 {
-                    GUI.Label(new Rect(c.x, row, c.width, 22f), "Lasers armed — 18 m.", _micro);
+                    GUI.Label(new Rect(c.x, row, c.width, 22f), Loc.S("Lasers armed — 18 m."), _micro);
                 }
                 else
                 {
                     bool can = _loop.Resources != null &&
                                _loop.Resources.Get(ResourceId.Metals) >= OverseerRules.WatchtowerLaserCost;
                     if (Chip(new Rect(c.x, row, 220f, 22f),
-                            $"ARM LASERS {OverseerRules.WatchtowerLaserCost} EU", can) && can)
+                            Loc.F("ARM LASERS {0} EU", OverseerRules.WatchtowerLaserCost), can) && can)
                         _loop.TryArmWatchtower(st);
                 }
             }
@@ -1899,31 +1899,31 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     st.WorkerCount > 0
-                        ? $"Triage posted. Patch {OverseerRules.AidStationHealCost} EU."
-                        : $"Empty bay. Hurt robots pay {OverseerRules.AidStationHealCost} EU.", _micro);
+                        ? Loc.F("Triage posted. Patch {0} EU.", OverseerRules.AidStationHealCost)
+                        : Loc.F("Empty bay. Hurt robots pay {0} EU.", OverseerRules.AidStationHealCost), _micro);
             }
             else if (st.Category == BuildingCategory.Market)
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    $"Potions + necklace. Pays {MajestyEconomy.MarketDailyTax} EU/day into its till.", _micro);
+                    Loc.F("Potions + necklace. Pays {0} EU/day into its till.", MajestyEconomy.MarketDailyTax), _micro);
             }
             else if (st.Category == BuildingCategory.Blacksmith)
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
-                    "Lodge arms and armor. Bots buy with their EU.", _micro);
+                    Loc.S("Lodge arms and armor. Bots buy with their EU."), _micro);
             }
             else if (!st.ClassLocked)
             {
-                if (Chip(new Rect(c.x, row, 54f, 22f), "SCOUT",
+                if (Chip(new Rect(c.x, row, 54f, 22f), Loc.S("SCOUT"),
                         st.HasPreferredClass && st.PreferredClass == SpecialistClass.ScoutDrone))
                     _loop.SetSelectedWorkplaceClass(SpecialistClass.ScoutDrone);
-                if (Chip(new Rect(c.x + 58f, row, 54f, 22f), "ENG",
+                if (Chip(new Rect(c.x + 58f, row, 54f, 22f), Loc.S("ENG"),
                         st.HasPreferredClass && st.PreferredClass == SpecialistClass.EngineerBot))
                     _loop.SetSelectedWorkplaceClass(SpecialistClass.EngineerBot);
-                if (Chip(new Rect(c.x + 116f, row, 54f, 22f), "DEF",
+                if (Chip(new Rect(c.x + 116f, row, 54f, 22f), Loc.S("DEF"),
                         st.HasPreferredClass && st.PreferredClass == SpecialistClass.DefenseMech))
                     _loop.SetSelectedWorkplaceClass(SpecialistClass.DefenseMech);
-                if (Chip(new Rect(c.x + 174f, row, 54f, 22f), "MED",
+                if (Chip(new Rect(c.x + 174f, row, 54f, 22f), Loc.S("MED"),
                         st.HasPreferredClass && st.PreferredClass == SpecialistClass.Medic))
                     _loop.SetSelectedWorkplaceClass(SpecialistClass.Medic);
             }
@@ -1931,42 +1931,42 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, row, c.width, 22f),
                     st.IsWonder
-                        ? "Landmark — bonuses while standing."
+                        ? Loc.S("Landmark — bonuses while standing.")
                         : st.RobotFabricated
-                            ? $"Fabricates {ColonyStructure.ClassLabel(st.PreferredClass)} — flags nearby pull them."
-                            : $"Building a {ColonyStructure.ClassLabel(st.PreferredClass)} robot…",
+                            ? Loc.F("Fabricates {0} — flags nearby pull them.", ColonyStructure.ClassLabel(st.PreferredClass))
+                            : Loc.F("Building a {0} robot…", ColonyStructure.ClassLabel(st.PreferredClass)),
                     _micro);
                 var wreckClass = ColonyStructure.RobotClassForWorkshop(st.Category);
                 if (wreckClass.HasValue && _loop.HasWreckFor(wreckClass.Value))
                 {
                     row += 24f;
                     int met = OverseerRules.RefabMetals(st.SourceData);
-                    if (Chip(new Rect(c.x, row, 150f, 22f), $"RE-FAB L1 {met} EU", true))
+                    if (Chip(new Rect(c.x, row, 150f, 22f), Loc.F("RE-FAB L1 {0} EU", met), true))
                         _loop.TryRefabRookie(st);
                     GUI.Label(new Rect(c.x + 158f, row + 4f, c.width - 158f, 16f),
-                        "new chassis · wreck gone", _micro);
+                        Loc.S("new chassis · wreck gone"), _micro);
                 }
             }
             row += 26f;
 
-            if (GUI.Button(new Rect(c.x, row, 116f, 24f), "FLAG HERE", _chipOff))
+            if (GUI.Button(new Rect(c.x, row, 116f, 24f), Loc.S("FLAG HERE"), _chipOff))
                 _loop.PostAttractFlagOnSelected();
             GUI.Label(new Rect(c.x + 124f, row + 4f, c.width - 124f, 20f),
-                "Progress via research & campaign gates", _micro);
+                Loc.S("Progress via research & campaign gates"), _micro);
             _cardFor = st;
             _cardMeasuredH = Mathf.Max(96f, row + 24f + Pad - rect.y);
         }
 
         private static string FormatWorkers(ColonyStructure st)
         {
-            if (st.WorkerCount <= 0) return "No one working here yet.";
-            var names = new System.Text.StringBuilder("On duty: ");
+            if (st.WorkerCount <= 0) return Loc.S("No one working here yet.");
+            var names = new System.Text.StringBuilder(Loc.S("On duty: "));
             for (int i = 0; i < st.Workers.Count; i++)
             {
                 var w = st.Workers[i];
                 if (w == null) continue;
                 if (i > 0) names.Append(", ");
-                names.Append(w.Data != null ? w.Data.displayName : "Specialist");
+                names.Append(w.Data != null ? Loc.S(w.Data.displayName) : Loc.S("Specialist"));
             }
             return names.ToString();
         }
@@ -1978,8 +1978,8 @@ namespace SolarMajesty
             float left = Mathf.Max(0f, order.RequiredSeconds - order.ProgressSeconds);
             string cls = order.RefabClass.HasValue
                 ? ColonyStructure.ClassLabel(order.RefabClass.Value)
-                : "ROBOT";
-            return $"RE-FAB {Mathf.FloorToInt(left / 60f)}:{Mathf.FloorToInt(left % 60f):00} {cls}";
+                : Loc.S("ROBOT");
+            return Loc.F("RE-FAB {0}:{1:00} {2}", Mathf.FloorToInt(left / 60f), Mathf.FloorToInt(left % 60f), cls);
         }
 
         private void DrawSpecialistCards()
@@ -2007,9 +2007,9 @@ namespace SolarMajesty
                 HudSkin.Pill(new Rect(rect.x + 4f, rect.y + 12f, 3f, rect.height - 24f), tint);
 
                 float row = c.y;
-                GUI.Label(new Rect(c.x, row, c.width - 50f, 16f), $"{a.Record.Name}  L{a.Level}", _value);
+                GUI.Label(new Rect(c.x, row, c.width - 50f, 16f), Loc.F("{0}  L{1}", a.Record.Name, a.Level), _value);
                 {
-                    string tagLabel = a.IsIncapacitated ? "DOWN" : RosterStatus(a);
+                    string tagLabel = a.IsIncapacitated ? Loc.S("DOWN") : RosterStatus(a);
                     Color tagFill = a.IsIncapacitated ? Alarm
                         : a.CurrentAction == SpecialistAction.PursueFlag ? Accent
                         : a.CurrentAction == SpecialistAction.Rest ? new Color(0.55f, 0.78f, 1f)
@@ -2025,7 +2025,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"{a.Data?.displayName ?? "Specialist"} · {ColonyLayout.CampusLabel(campus)} · Asks {a.HireMin:N0} EU · Holds {a.Credits:N0} EU{LevyCarryLine(a)}", _micro);
+                    Loc.F("{0} · {1} · Asks {2:N0} EU · Holds {3:N0} EU{4}", Loc.S(a.Data?.displayName) ?? Loc.S("Specialist"), ColonyLayout.CampusLabel(campus), a.HireMin, a.Credits, LevyCarryLine(a)), _micro);
                 row += 16f;
 
                 var prevAct = _action.normal.textColor;
@@ -2039,23 +2039,23 @@ namespace SolarMajesty
                     row += 14f;
                 }
 
-                Bar(new Rect(c.x, row, c.width, 14f), "HP", a.HealthNormalized, HpFill);
+                Bar(new Rect(c.x, row, c.width, 14f), Loc.S("HP"), a.HealthNormalized, HpFill);
                 row += 16f;
-                Bar(new Rect(c.x, row, c.width, 14f), "FATIGUE", a.Fatigue, FatigueFill);
+                Bar(new Rect(c.x, row, c.width, 14f), Loc.S("FATIGUE"), a.Fatigue, FatigueFill);
                 row += 16f;
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
-                    $"MOVE {a.EffectiveMoveSpeed:F1}  ·  WORK {a.EffectiveWorkRate:F2}  ·  status", _micro);
+                    Loc.F("MOVE {0:F1}  ·  WORK {1:F2}  ·  status", a.EffectiveMoveSpeed, a.EffectiveWorkRate), _micro);
                 row += 15f;
 
                 string gene = a.LevyCarried > 0
-                    ? $"levy {a.LevyCarried} EU"
+                    ? Loc.F("levy {0} EU", a.LevyCarried)
                     : a.GeneSecondsLeft > 0.5f
-                        ? $"gene {a.GeneSecondsLeft:F0}s"
-                        : "shop at rest beacon";
+                        ? Loc.F("gene {0:F0}s", a.GeneSecondsLeft)
+                        : Loc.S("shop at rest beacon");
                 GUI.Label(new Rect(c.x, row, c.width, 13f),
                     Truncate($"{Truncate(a.LastReason, 14)} · {a.SuitLabel} · {gene}", 42), _micro);
                 row += 18f;
-                if (GUI.Button(new Rect(c.x, row, c.width, 22f), n == 1 ? "TALK  ·  " + KeyHint(GameAction.Confirm) : "TALK", _chipOff))
+                if (GUI.Button(new Rect(c.x, row, c.width, 22f), n == 1 ? Loc.F("TALK  ·  {0}", KeyHint(GameAction.Confirm)) : Loc.S("TALK"), _chipOff))
                 {
                     _loop.SelectOnly(a);
                     OpenChat(a);
@@ -2119,9 +2119,9 @@ namespace SolarMajesty
             HudSkin.Icon(HudSkin.Expand(medal, -8f), UiIcons.Get(IconId.Robot), Color.white);
             GUI.Label(new Rect(c.x + 44f, c.y - 1f, c.width - 130f, 20f), name, _chatTitle);
             GUI.Label(new Rect(c.x + 44f, c.y + 18f, c.width - 130f, 14f),
-                $"“{record.Designation}”  ·  {a.Data?.displayName ?? "Specialist"} L{a.Level}  ·  {record.Rank}", _micro);
+                Loc.F("“{0}”  ·  {1} L{2}  ·  {3}", record.Designation, Loc.S(a.Data?.displayName) ?? Loc.S("Specialist"), a.Level, record.RankText), _micro);
 
-            string tagLabel = a.IsIncapacitated ? "DOWN" : RosterStatus(a);
+            string tagLabel = a.IsIncapacitated ? Loc.S("DOWN") : RosterStatus(a);
             var tag = new Rect(c.xMax - 82f, c.y + 3f, 46f, 14f);
             HudSkin.Pill(tag, a.IsIncapacitated ? Alarm : Good);
             var prevPill = _pill.normal.textColor;
@@ -2142,11 +2142,11 @@ namespace SolarMajesty
             string status;
             Color statusColor = TextMuted;
             if (!HeroNarrator.Enabled) status = "";
-            else if (!HeroNarrator.ChatOnline) status = "Waiting for the local model  ·  Tools/local_ai/start_narrator.sh --no-game";
-            else if (HeroNarrator.Replying && !HeroNarrator.ReplyStarted) status = HeroNarrator.ReplyWait > 3f ? $"{name} is taking a while…" : $"{name} is thinking…";
-            else if (HeroNarrator.Replying) status = $"{name} is talking…";
+            else if (!HeroNarrator.ChatOnline) status = Loc.S("Waiting for the local model  ·  Tools/local_ai/start_narrator.sh --no-game");
+            else if (HeroNarrator.Replying && !HeroNarrator.ReplyStarted) status = HeroNarrator.ReplyWait > 3f ? Loc.F("{0} is taking a while…", name) : Loc.F("{0} is thinking…", name);
+            else if (HeroNarrator.Replying) status = Loc.F("{0} is talking…", name);
             else if (!string.IsNullOrEmpty(HeroNarrator.LastChatError)) { status = HeroNarrator.LastChatError; statusColor = Alarm; }
-            else status = $"ENTER send  ·  ESC close  ·  {HeroNarrator.ServerLabel}";
+            else status = Loc.F("ENTER send  ·  ESC close  ·  {0}", HeroNarrator.ServerLabel);
             var prevMicro = _micro.normal.textColor;
             _micro.normal.textColor = statusColor;
             GUI.Label(new Rect(c.x, view.yMax + 3f, c.width, 14f), status, _micro);
@@ -2160,8 +2160,8 @@ namespace SolarMajesty
             if (!HeroNarrator.Enabled)
             {
                 var msg = new Rect(view.x + 20f, view.y + view.height * 0.5f - 40f, view.width - 40f, 36f);
-                GUI.Label(msg, "Bot lines are off. Conversations run on a small model on this computer — nothing leaves it.", _wrap);
-                if (Chip(new Rect(view.center.x - 110f, msg.yMax + 6f, 220f, 28f), "TURN ON BOT LINES", true))
+                GUI.Label(msg, Loc.S("Bot lines are off. Conversations run on a small model on this computer · nothing leaves it."), _wrap);
+                if (Chip(new Rect(view.center.x - 110f, msg.yMax + 6f, 220f, 28f), Loc.S("TURN ON BOT LINES"), true))
                 {
                     DemoSettings.HeroVoices = true;
                     DemoSettings.SaveSettings();
@@ -2180,7 +2180,7 @@ namespace SolarMajesty
             if (count == 0 && !replying)
             {
                 GUI.Label(new Rect(view.x + 24f, view.y + view.height * 0.5f - 20f, view.width - 48f, 40f),
-                    $"{name} glances up from the work. Ask about the job, the colony, or what it would take.", _chatHint);
+                    Loc.F("{0} glances up from the work. Ask about the job, the colony, or what it would take.", name), _chatHint);
                 return;
             }
 
@@ -2225,7 +2225,7 @@ namespace SolarMajesty
                 var prevAlign = who.alignment;
                 who.normal.textColor = player ? new Color(1f, 0.82f, 0.6f) : Gold;
                 who.alignment = player ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
-                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? "THE CORE" : heroName.ToUpperInvariant(), who);
+                GUI.Label(new Rect(x + 10f, y + 5f, bw - 20f, 12f), player ? Loc.S("THE CORE") : heroName.ToUpperInvariant(), who);
                 who.normal.textColor = prevColor;
                 who.alignment = prevAlign;
                 GUI.Label(new Rect(x + 10f, y + 19f, textW, textH), text, _chatText);
@@ -2265,7 +2265,7 @@ namespace SolarMajesty
             GUI.SetNextControlName(ChatControl);
             _chatInput = GUI.TextField(field, _chatInput ?? "", HeroConversation.MaxPlayerChars);
             if (string.IsNullOrEmpty(_chatInput))
-                GUI.Label(new Rect(field.x + 9f, field.y, field.width - 16f, field.height), $"Say something to {name}…", _chatPlaceholder);
+                GUI.Label(new Rect(field.x + 9f, field.y, field.width - 16f, field.height), Loc.F("Say something to {0}…", name), _chatPlaceholder);
             if (_chatFocusPending)
             {
                 GUI.FocusControl(ChatControl);
@@ -2275,7 +2275,7 @@ namespace SolarMajesty
             bool ready = canSend && !string.IsNullOrWhiteSpace(_chatInput);
             var prev = GUI.color;
             if (!ready) GUI.color = new Color(prev.r, prev.g, prev.b, prev.a * 0.45f);
-            if (GUI.Button(new Rect(r.xMax - 70f, r.y, 70f, r.height), "SEND", _chipOn) && ready)
+            if (GUI.Button(new Rect(r.xMax - 70f, r.y, 70f, r.height), Loc.S("SEND"), _chipOn) && ready)
                 SendChat(a);
             GUI.color = prev;
         }
@@ -2337,26 +2337,26 @@ namespace SolarMajesty
                 return a.FlavorLine;
             string action = a.CurrentAction switch
             {
-                SpecialistAction.PursueFlag => "Working a flag",
-                SpecialistAction.Rest => "Resting / shopping",
-                SpecialistAction.Flee => "Fleeing to the Fobot Yard",
-                SpecialistAction.Hunt => "Hunting fauna",
-                SpecialistAction.Repair => "Repairing module",
+                SpecialistAction.PursueFlag => Loc.S("Working a flag"),
+                SpecialistAction.Rest => Loc.S("Resting / shopping"),
+                SpecialistAction.Flee => Loc.S("Fleeing to the Fobot Yard"),
+                SpecialistAction.Hunt => Loc.S("Hunting fauna"),
+                SpecialistAction.Repair => Loc.S("Repairing module"),
                 SpecialistAction.Wander => a.LastReason != null && a.LastReason.Contains("workshop")
-                    ? "At workshop"
+                    ? Loc.S("At workshop")
                     : a.LastReason != null && a.LastReason.Contains("levy_home")
-                        ? "Walking levy home"
+                        ? Loc.S("Walking levy home")
                         : a.LastReason != null && a.LastReason.Contains("levy_collect")
-                            ? "Collecting building batteries"
-                            : "On duty",
-                _ => "Idle"
+                            ? Loc.S("Collecting building batteries")
+                            : Loc.S("On duty"),
+                _ => Loc.S("Idle")
             };
             return string.IsNullOrEmpty(a.Status) ? action : $"{action} — {a.Status}";
         }
 
         private static string LevyCarryLine(SpecialistAgent a)
         {
-            return a != null && a.LevyCarry > 0 ? $" · levy {a.LevyCarry}" : "";
+            return a != null && a.LevyCarry > 0 ? Loc.F(" · levy {0}", a.LevyCarry) : "";
         }
 
         private string FlagBoardLine()
@@ -2374,8 +2374,8 @@ namespace SolarMajesty
                 }
             }
             return posted <= 0
-                ? "Bounty escrowed from EU. Bots keep their EU share; the till takes its cut."
-                : $"Posted {posted}  ·  claimed {claimed}  ·  bots keep their EU share";
+                ? Loc.S("Bounty escrowed from EU. Bots keep their EU share; the till takes its cut.")
+                : Loc.F("Posted {0}  ·  claimed {1}  ·  bots keep their EU share", posted, claimed);
         }
 
         private static Color ActionTint(SpecialistAction action) => action switch
@@ -2417,7 +2417,7 @@ namespace SolarMajesty
 
             if (living <= 0)
             {
-                const string hintText = "Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech";
+                string hintText = Loc.S("Build anywhere on open ground · chargers pay EU · a workshop fabricates a mech");
                 var hint = new Rect(M, _contentBottom - 8f - 26f, _micro.CalcSize(new GUIContent(hintText)).x + 46f, 26f);
                 _hitRects.Add(hint);
                 HudSkin.Panel(hint, 0.9f, false);
@@ -2429,7 +2429,7 @@ namespace SolarMajesty
             int rows = Mathf.Min(8, living);
             float h = 44f + rows * 18f;
             var rect = new Rect(M, _contentBottom - 8f - h, 268f, h);
-            var c = Panel(rect, "Roster · status");
+            var c = Panel(rect, Loc.S("Roster · status"));
             float y = c.y;
             GUI.Label(new Rect(c.x, y, c.width, 14f), ClassReadout(agents), _micro);
             y += 16f;
@@ -2445,7 +2445,7 @@ namespace SolarMajesty
                     _loop.SelectOnly(a);
                 HudSkin.Dot(new Vector2(row.x + 6f, row.center.y), 6f, ClassTint(cls));
                 GUI.Label(new Rect(row.x + 14f, row.y, 66f, 16f),
-                    $"{ColonyStructure.ClassLabel(cls)} L{a.Level}", _micro);
+                    Loc.F("{0} L{1}", ColonyStructure.ClassLabel(cls), a.Level), _micro);
                 GUI.Label(new Rect(row.x + 80f, row.y, 44f, 16f), status, _body);
                 GUI.Label(new Rect(row.x + 126f, row.y, row.width - 126f, 16f),
                     Truncate(a.FlavorLine, 14), _micro);
@@ -2474,21 +2474,21 @@ namespace SolarMajesty
                     }
                 }
             }
-            string line = $"SCT {sct}  ENG {eng}  DEF {def}  MED {med}";
+            string line = Loc.F("SCT {0}  ENG {1}  DEF {2}  MED {3}", sct, eng, def, med);
             return extra > 0 ? line + $"  +{extra}" : line;
         }
 
         private static string RosterStatus(SpecialistAgent a)
         {
-            if (a.IsIncapacitated) return "DOWN";
+            if (a.IsIncapacitated) return Loc.S("DOWN");
             switch (a.CurrentAction)
             {
-                case SpecialistAction.PursueFlag: return "WORK";
-                case SpecialistAction.Rest: return "REST";
-                case SpecialistAction.Hunt: return "HUNT";
-                case SpecialistAction.Flee: return "FLEE";
-                case SpecialistAction.Repair: return "FIX";
-                default: return "IDLE";
+                case SpecialistAction.PursueFlag: return Loc.S("WORK");
+                case SpecialistAction.Rest: return Loc.S("REST");
+                case SpecialistAction.Hunt: return Loc.S("HUNT");
+                case SpecialistAction.Flee: return Loc.S("FLEE");
+                case SpecialistAction.Repair: return Loc.S("FIX");
+                default: return Loc.S("IDLE");
             }
         }
 
@@ -2605,7 +2605,7 @@ namespace SolarMajesty
             }
 
             HudSkin.Tex(dial, HudSkin.MinimapBezel, Color.white);
-            HudSkin.ShadowLabel(new Rect(rect.x, rect.yMax - 13f, rect.width, 12f), "MAJESTY COLONY", _capsCenter, 0.9f);
+            HudSkin.ShadowLabel(new Rect(rect.x, rect.yMax - 13f, rect.width, 12f), Loc.S("MAJESTY COLONY"), _capsCenter, 0.9f);
 
             var e = Event.current;
             Vector2 mouse = e.mousePosition;
@@ -2630,7 +2630,7 @@ namespace SolarMajesty
             float h = 40f + rows * 26f;
             float mapTop = _sh - M - MapSize;
             var rect = new Rect(_sw - M - 286f, mapTop - 8f - h, 286f, h);
-            var c = Panel(rect, "Construction");
+            var c = Panel(rect, Loc.S("Construction"));
 
             float y = c.y;
             for (int i = 0; i < _loop.Placer.Orders.Count && i < rows; i++)
@@ -2638,7 +2638,7 @@ namespace SolarMajesty
                 var o = _loop.Placer.Orders[i];
                 if (o == null) continue;
                 float p = o.RequiredSeconds > 0f ? Mathf.Clamp01(o.ProgressSeconds / o.RequiredSeconds) : 1f;
-                GUI.Label(new Rect(c.x, y, c.width - 46f, 14f), o.Data?.displayName ?? "Building", _action);
+                GUI.Label(new Rect(c.x, y, c.width - 46f, 14f), o.Data?.displayName ?? Loc.S("Building"), _action);
                 GUI.Label(new Rect(c.xMax - 44f, y, 44f, 14f), $"{p * 100f:F0}%", _microRight);
                 Meter(new Rect(c.x, y + 16f, c.width, 5f), p, Accent);
                 y += 26f;
@@ -2691,7 +2691,8 @@ namespace SolarMajesty
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.03f, 0.05f), 0.35f);
             _hitRects.Add(new Rect(0f, 0f, _sw, _sh));
 
-            int lines = cut.Body != null ? cut.Body.Length : 0;
+            string[] bodyText = cut.BodyText;
+            int lines = bodyText != null ? bodyText.Length : 0;
             float h = 100f + lines * 28f;
             var rect = new Rect((_sw - 540f) * 0.5f, _sh * 0.22f, 540f, h);
             var c = Panel(rect, null, false);
@@ -2706,14 +2707,14 @@ namespace SolarMajesty
             float y = c.y + 34f;
             if (cut.Body != null)
             {
-                for (int i = 0; i < cut.Body.Length; i++)
+                for (int i = 0; i < bodyText.Length; i++)
                 {
-                    GUI.Label(new Rect(c.x, y, c.width, 26f), cut.Body[i], _body);
+                    GUI.Label(new Rect(c.x, y, c.width, 26f), bodyText[i], _body);
                     y += 28f;
                 }
             }
 
-            if (GUI.Button(new Rect(c.x, c.yMax - 30f, 180f, 30f), $"CONTINUE  ·  {KeyHint(GameAction.TogglePause)}", _chipOn))
+            if (GUI.Button(new Rect(c.x, c.yMax - 30f, 180f, 30f), Loc.F("CONTINUE  ·  {0}", KeyHint(GameAction.TogglePause)), _chipOn))
                 _loop.DismissCutscene();
 
             if (Event.current.type == EventType.KeyDown &&
@@ -2812,7 +2813,7 @@ namespace SolarMajesty
             _banner.normal.textColor = prev;
 
             GUI.Label(new Rect(c.x, c.y + 32f, c.width, 48f), mission.WinDetail, _wrap != null ? _wrap : _body);
-            if (GUI.Button(new Rect(c.x, c.yMax - 30f, Mathf.Min(220f, c.width), 28f), "KEEP BUILDING  ·  " + KeyHint(GameAction.PromptYes), _chipOn))
+            if (GUI.Button(new Rect(c.x, c.yMax - 30f, Mathf.Min(220f, c.width), 28f), Loc.F("KEEP BUILDING  ·  {0}", KeyHint(GameAction.PromptYes)), _chipOn))
             {
                 _winDismissed = true;
                 mission.DismissWinToSandbox();
@@ -2847,27 +2848,27 @@ namespace SolarMajesty
 
             var prev = _banner.normal.textColor;
             _banner.normal.textColor = Alarm;
-            GUI.Label(new Rect(c.x, c.y, c.width, 26f), mission != null ? mission.FailHeadline : "OUTPOST LOST", _banner);
+            GUI.Label(new Rect(c.x, c.y, c.width, 26f), mission != null ? mission.FailHeadline : Loc.S("OUTPOST LOST"), _banner);
             _banner.normal.textColor = prev;
 
             if (deadline || lost)
             {
                 GUI.Label(new Rect(c.x, c.y + 32f, c.width, 32f),
-                    mission != null ? mission.FailDetail : "The outpost is gone.", _body);
+                    mission != null ? mission.FailDetail : Loc.S("The outpost is gone."), _body);
                 if (ReplayRules.BlocksManualSavesAndReloads)
                 {
                     GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
-                        "Ironman — this body is lost. No restart.", _muted);
-                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 140f, 28f), "TITLE", _chipOff))
+                        Loc.S("Ironman — this body is lost. No restart."), _muted);
+                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 140f, 28f), Loc.S("TITLE"), _chipOff))
                         _loop.ReturnToTitle();
                 }
                 else
                 {
                     GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
-                        ReplayRules.IsEndless ? "TRY AGAIN — this body is lost." : "Retry this body, or return to title.", _muted);
-                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), "RESTART MISSION", _chipOn))
+                        ReplayRules.IsEndless ? Loc.S("TRY AGAIN — this body is lost.") : Loc.S("Retry this body, or return to title."), _muted);
+                    if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), Loc.S("RESTART MISSION"), _chipOn))
                         _loop.RestartMission();
-                    if (GUI.Button(new Rect(c.x + 176f, c.yMax - 30f, 140f, 28f), "TITLE", _chipOff))
+                    if (GUI.Button(new Rect(c.x + 176f, c.yMax - 30f, 140f, 28f), Loc.S("TITLE"), _chipOff))
                         _loop.ReturnToTitle();
                 }
             }
@@ -2875,14 +2876,14 @@ namespace SolarMajesty
             {
                 int met = _loop.FieldReviveMet;
                 GUI.Label(new Rect(c.x, c.y + 32f, c.width, 36f),
-                    $"FOBOT YARD  {met} EU  (120s)", _body);
+                    Loc.F("FOBOT YARD  {0} EU  (120s)", met), _body);
                 GUI.Label(new Rect(c.x, c.y + 70f, c.width, 16f),
                     !_loop.HasFobotYard
-                        ? "Dock a Fobot Yard. Y does not skip the building."
+                        ? Loc.S("Dock a Fobot Yard. Y does not skip the building.")
                         : _loop.FieldReviveReadyIn > 0.5f
-                            ? $"Cooldown {_loop.FieldReviveReadyIn:F0}s. Bill is by level, EU only."
-                            : $"Inspect the yard or press {InputBindings.Label(GameAction.PromptYes)}.", _muted);
-                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), "FOBOT YARD  ·  " + KeyHint(GameAction.PromptYes), _chipOn))
+                            ? Loc.F("Cooldown {0:F0}s. Bill is by level, EU only.", _loop.FieldReviveReadyIn)
+                            : Loc.F("Inspect the yard or press {0}.", InputBindings.Label(GameAction.PromptYes)), _muted);
+                if (GUI.Button(new Rect(c.x, c.yMax - 30f, 220f, 28f), Loc.F("FOBOT YARD  ·  {0}", KeyHint(GameAction.PromptYes)), _chipOn))
                     _loop.PayFobotYard();
             }
         }
@@ -2926,7 +2927,7 @@ namespace SolarMajesty
             if (_loop.FocusedCampus != _lastFocusToast)
             {
                 _lastFocusToast = _loop.FocusedCampus;
-                Toast($"Focus → {ColonyLayout.CampusLabel(_lastFocusToast)}", 2.2f);
+                Toast(Loc.F("Focus → {0}", ColonyLayout.CampusLabel(_lastFocusToast)), 2.2f);
             }
         }
 
@@ -2961,8 +2962,8 @@ namespace SolarMajesty
                 HudSkin.RuleH(new Rect(wx + 34f, wy + 57f, Mathf.Max(80f, ww - 34f), 1f), new Color(Gold.r, Gold.g, Gold.b, 0.9f));
                 HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 66f, 620f, 18f),
                     DemoSettings.FirstHourDemo
-                        ? "Click Earth to land. You are the Core. Your bots do the work."
-                        : "Click a world to land. You are the Core. Your bots do the work.",
+                        ? Loc.S("Click Earth to land. You are the Core. Your bots do the work.")
+                        : Loc.S("Click a world to land. You are the Core. Your bots do the work."),
                     _tagline, 0.7f);
                 _caps.normal.textColor = Gold;
                 HudSkin.ShadowLabel(new Rect(wx + 1f, wy + 86f, 400f, 14f), ReplayRules.HudTag, _caps, 0.7f);
@@ -3008,16 +3009,16 @@ namespace SolarMajesty
             const float bh = 34f;
             float x = M + 14f;
             float y = _sh - M - 8f - bh;
-            if (TitleButton(new Rect(x, y, bw, bh), "QUIT", false))
+            if (TitleButton(new Rect(x, y, bw, bh), Loc.S("QUIT"), false))
                 _loop.QuitDemo();
             y -= bh + 6f;
-            if (TitleButton(new Rect(x, y, bw, bh), "SETTINGS", false))
+            if (TitleButton(new Rect(x, y, bw, bh), Loc.S("SETTINGS"), false))
                 _loop.OpenSettings();
             y -= bh + 6f;
-            if (TitleButton(new Rect(x, y, bw, bh), "LOAD", false))
+            if (TitleButton(new Rect(x, y, bw, bh), Loc.S("LOAD"), false))
                 _titleLoad = true;
             y -= bh + 6f;
-            if (TitleButton(new Rect(x, y, bw, bh), "NEW CAMPAIGN", !DemoSettings.SaveExists))
+            if (TitleButton(new Rect(x, y, bw, bh), Loc.S("NEW CAMPAIGN"), !DemoSettings.SaveExists))
             {
                 _pendingNewGameBody = CampaignProgress.NewGameBody;
                 _pendingUnlockThrough = false;
@@ -3092,25 +3093,25 @@ namespace SolarMajesty
                 bool demoLocked = DemoSettings.FirstHourDemo && body != CelestialBodyId.Earth;
 
                 string tag;
-                if (demoLocked) tag = "AFTER EARTH";
-                else if (!unlocked) tag = CampaignProgress.IsParked(body) ? "PARKED" : "LOCKED";
-                else if (DemoSettings.SaveExists && body == _loop.ActiveBody) tag = "YOUR COLONY";
+                if (demoLocked) tag = Loc.S("AFTER EARTH");
+                else if (!unlocked) tag = CampaignProgress.IsParked(body) ? Loc.S("PARKED") : Loc.S("LOCKED");
+                else if (DemoSettings.SaveExists && body == _loop.ActiveBody) tag = Loc.S("YOUR COLONY");
                 else tag = "";
 
                 if (hot)
                 {
-                    if (demoLocked) tag = "CLEAR EARTH FIRST  ·  OR SKIP IN SETTINGS";
+                    if (demoLocked) tag = Loc.S("CLEAR EARTH FIRST  ·  OR SKIP IN SETTINGS");
                     else if (!unlocked)
-                        tag = !DevTools.Enabled ? "LOCKED" : shift ? "CLICK TO UNLOCK" : "LOCKED  ·  SHIFT+CLICK";
-                    else if (DemoSettings.SaveExists && body == _loop.ActiveBody) tag = "CLICK TO CONTINUE";
-                    else tag = "CLICK TO LAND";
+                        tag = !DevTools.Enabled ? Loc.S("LOCKED") : shift ? Loc.S("CLICK TO UNLOCK") : Loc.S("LOCKED  ·  SHIFT+CLICK");
+                    else if (DemoSettings.SaveExists && body == _loop.ActiveBody) tag = Loc.S("CLICK TO CONTINUE");
+                    else tag = Loc.S("CLICK TO LAND");
                 }
 
                 float y = p.y + r + 6f;
                 var nameRect = new Rect(p.x - 90f, y, 180f, 16f);
                 _planetName.normal.textColor = hot ? Color.white
                     : (unlocked && !demoLocked ? TextPrimary : TextMuted);
-                HudSkin.ShadowLabel(nameRect, profile.DisplayName.ToUpperInvariant(), _planetName, 0.85f);
+                HudSkin.ShadowLabel(nameRect, profile.DisplayNameText.ToUpperInvariant(), _planetName, 0.85f);
                 if (!string.IsNullOrEmpty(tag))
                 {
                     _planetTag.normal.textColor = hot ? Accent : TextMuted;
@@ -3125,11 +3126,11 @@ namespace SolarMajesty
         {
             float h = newCampaign ? 418f : 360f;
             var rect = new Rect((_sw - 460f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 460f, h);
-            var c = Panel(rect, newCampaign ? "New campaign" : "Load");
+            var c = Panel(rect, newCampaign ? Loc.S("New campaign") : Loc.S("Load"));
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
             float y = WrapBlock(c, c.y, newCampaign
-                ? $"Drop on {_pendingNewGameBody}. Only the chosen slot is replaced. Other saves stay. Autosave will follow this new colony — save the current one first if you still need it."
-                : "Load a saved colony. Other slots stay on disk.");
+                ? Loc.F("Drop on {0}. Only the chosen slot is replaced. Other saves stay. Autosave will follow this new colony · save the current one first if you still need it.", _pendingNewGameBody)
+                : Loc.S("Load a saved colony. Other slots stay on disk."));
             if (newCampaign)
             {
                 GUI.Label(new Rect(c.x, y, c.width, 14f), ReplayRules.NewCampaignChallengeLine, _micro);
@@ -3148,13 +3149,13 @@ namespace SolarMajesty
                     else if (info.Occupied)
                         _loop.LoadFromSlot(info.Slot);
                     else
-                        Notify("That slot is empty.", 2.2f);
+                        Notify(Loc.S("That slot is empty."), 2.2f);
                 }
                 y += 34f;
             }
             y += 6f;
             if (newCampaign && GUI.Button(new Rect(c.x, y, c.width, 32f),
-                    $"START IN SLOT {_newCampaignSlot}", _chipOn))
+                    Loc.F("START IN SLOT {0}", _newCampaignSlot), _chipOn))
             {
                 int slot = _newCampaignSlot;
                 var body = _pendingNewGameBody;
@@ -3167,7 +3168,7 @@ namespace SolarMajesty
             }
             if (!newCampaign) y -= 4f;
             float backY = newCampaign ? y + 40f : y;
-            if (GUI.Button(new Rect(c.x, backY, c.width, 28f), "BACK  ·  Esc", _chipOff))
+            if (GUI.Button(new Rect(c.x, backY, c.width, 28f), Loc.S("BACK  ·  Esc"), _chipOff))
             {
                 _confirmNewGame = false;
                 _titleLoad = false;
@@ -3193,57 +3194,57 @@ namespace SolarMajesty
             bool iron = ReplayRules.BlocksManualSavesAndReloads;
             float h = iron ? 372f : 432f;
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 440f, h);
-            var c = Panel(rect, "Paused");
+            var c = Panel(rect, Loc.S("Paused"));
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
             float y = WrapBlock(c, c.y,
-                "Simulation frozen. Autosave follows this colony. Save keeps a copy in a numbered slot.");
-            if (GUI.Button(new Rect(c.x, y, c.width, 32f), "RESUME  ·  Esc", _chipOn))
+                Loc.S("Simulation frozen. Autosave follows this colony. Save keeps a copy in a numbered slot."));
+            if (GUI.Button(new Rect(c.x, y, c.width, 32f), Loc.S("RESUME  ·  Esc"), _chipOn))
                 _loop.ResumePlay();
             y += 40f;
             if (iron)
             {
-                GUI.Label(new Rect(c.x, y, c.width, 18f), "IRONMAN — no manual save or load.", _muted);
+                GUI.Label(new Rect(c.x, y, c.width, 18f), Loc.S("IRONMAN — no manual save or load."), _muted);
                 y += 26f;
             }
             else
             {
                 float half = (c.width - 8f) * 0.5f;
-                if (GUI.Button(new Rect(c.x, y, half, 32f), "SAVE", _chipOff))
+                if (GUI.Button(new Rect(c.x, y, half, 32f), Loc.S("SAVE"), _chipOff))
                 {
                     _pauseSlots = true;
                     _pauseSlotsAreLoad = false;
                 }
-                if (GUI.Button(new Rect(c.x + half + 8f, y, half, 32f), "LOAD", _chipOff))
+                if (GUI.Button(new Rect(c.x + half + 8f, y, half, 32f), Loc.S("LOAD"), _chipOff))
                 {
                     _pauseSlots = true;
                     _pauseSlotsAreLoad = true;
                 }
                 y += 40f;
             }
-            if (GUI.Button(new Rect(c.x, y, c.width, 32f), "SETTINGS", _chipOff))
+            if (GUI.Button(new Rect(c.x, y, c.width, 32f), Loc.S("SETTINGS"), _chipOff))
                 _loop.OpenSettings();
             y += 40f;
-            if (GUI.Button(new Rect(c.x, y, c.width, 32f), "TITLE", _chipOff))
+            if (GUI.Button(new Rect(c.x, y, c.width, 32f), Loc.S("TITLE"), _chipOff))
                 _loop.ReturnToTitle();
             y += 40f;
             if (iron)
             {
-                GUI.Label(new Rect(c.x, y, c.width, 18f), "IRONMAN — no abandon, no new seed.", _muted);
+                GUI.Label(new Rect(c.x, y, c.width, 18f), Loc.S("IRONMAN — no abandon, no new seed."), _muted);
                 y += 26f;
             }
-            else if (GUI.Button(new Rect(c.x, y, c.width, 32f), "ABANDON BODY  ·  new seed", _chipOff))
+            else if (GUI.Button(new Rect(c.x, y, c.width, 32f), Loc.S("ABANDON BODY  ·  new seed"), _chipOff))
             {
                 DemoSettings.RequestBootIntoPlay();
                 _loop.RestartMission();
             }
             if (!iron) y += 40f;
-            if (GUI.Button(new Rect(c.x, y, c.width, 32f), "QUIT", _chipOff))
+            if (GUI.Button(new Rect(c.x, y, c.width, 32f), Loc.S("QUIT"), _chipOff))
                 _loop.QuitDemo();
             y += 40f;
-            if (GUI.Button(new Rect(c.x, y, c.width, 24f), "REPORT A BUG  ·  open logs", _chipOff))
+            if (GUI.Button(new Rect(c.x, y, c.width, 24f), Loc.S("REPORT A BUG  ·  open logs"), _chipOff))
             {
                 string path = ErrorLogHook.OpenLogsFolder();
-                Notify(string.IsNullOrEmpty(path) ? "Logs folder opened." : "Log path copied — attach that file to your report.", 4f);
+                Notify(string.IsNullOrEmpty(path) ? Loc.S("Logs folder opened.") : Loc.S("Log path copied — attach that file to your report."), 4f);
             }
         }
 
@@ -3251,11 +3252,11 @@ namespace SolarMajesty
         {
             float h = _pauseSlotsAreLoad ? 340f : 300f;
             var rect = new Rect((_sw - 480f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 480f, h);
-            var c = Panel(rect, _pauseSlotsAreLoad ? "Load" : "Save");
+            var c = Panel(rect, _pauseSlotsAreLoad ? Loc.S("Load") : Loc.S("Save"));
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
             float y = WrapBlock(c, c.y, _pauseSlotsAreLoad
-                ? "Load a colony. Other slots stay on disk."
-                : "Write this colony into a slot. Other slots stay.");
+                ? Loc.S("Load a colony. Other slots stay on disk.")
+                : Loc.S("Write this colony into a slot. Other slots stay."));
             var slots = SaveSystem.ListSlots();
             for (int i = 0; i < slots.Count; i++)
             {
@@ -3266,7 +3267,7 @@ namespace SolarMajesty
                     if (_pauseSlotsAreLoad)
                     {
                         if (info.Occupied) _loop.LoadFromSlot(info.Slot);
-                        else Notify("That slot is empty.", 2.2f);
+                        else Notify(Loc.S("That slot is empty."), 2.2f);
                     }
                     else if (_loop.SaveToSlot(info.Slot))
                         _pauseSlots = false;
@@ -3274,14 +3275,14 @@ namespace SolarMajesty
                 y += 34f;
             }
             y += 6f;
-            if (GUI.Button(new Rect(c.x, y, c.width, 28f), "BACK  ·  Esc", _chipOn))
+            if (GUI.Button(new Rect(c.x, y, c.width, 28f), Loc.S("BACK  ·  Esc"), _chipOn))
                 _pauseSlots = false;
         }
 
         private static string SlotButtonLabel(SaveSlotInfo info)
         {
             if (!info.Occupied || string.IsNullOrEmpty(info.Summary))
-                return $"{info.Label}  ·  empty";
+                return Loc.F("{0}  ·  empty", info.Label);
             string summary = info.Summary;
             if (summary.Length > 52) summary = summary.Substring(0, 51) + "…";
             return $"{info.Label}  ·  {summary}";
@@ -3294,7 +3295,7 @@ namespace SolarMajesty
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f), 0.55f);
             float h = Mathf.Min(764f, Mathf.Max(460f, _sh - 24f));
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
-            var panel = Panel(rect, "Settings");
+            var panel = Panel(rect, Loc.S("Settings"));
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
 
             // Everything above BACK scrolls when the window is shorter than the list.
@@ -3307,19 +3308,19 @@ namespace SolarMajesty
             // Two columns of mix sliders, then a full-width UI scale row.
             float colW = (c.width - 16f) * 0.5f;
             float colX = c.x + colW + 16f;
-            SettingsSlider(c.x, y, colW, "MASTER", ref DemoSettings.Master);
-            y = SettingsSlider(colX, y, colW, "MUSIC", ref DemoSettings.Music);
-            SettingsSlider(c.x, y, colW, "SFX", ref DemoSettings.Sfx);
-            y = SettingsSlider(colX, y, colW, "VOICES", ref DemoSettings.Voice);
-            SettingsSlider(c.x, y, colW, "AMBIENCE", ref DemoSettings.Ambient);
+            SettingsSlider(c.x, y, colW, Loc.S("MASTER"), ref DemoSettings.Master);
+            y = SettingsSlider(colX, y, colW, Loc.S("MUSIC"), ref DemoSettings.Music);
+            SettingsSlider(c.x, y, colW, Loc.S("SFX"), ref DemoSettings.Sfx);
+            y = SettingsSlider(colX, y, colW, Loc.S("VOICES"), ref DemoSettings.Voice);
+            SettingsSlider(c.x, y, colW, Loc.S("AMBIENCE"), ref DemoSettings.Ambient);
             y += 28f;
             y = UiScaleRow(c.x, y, c.width);
             y += 6f;
 
-            if (Chip(new Rect(c.x, y, 200f, 26f), "INVERT CAMERA PAN", DemoSettings.InvertPan))
+            if (Chip(new Rect(c.x, y, 200f, 26f), Loc.S("INVERT CAMERA PAN"), DemoSettings.InvertPan))
                 DemoSettings.InvertPan = !DemoSettings.InvertPan;
             // Perspective camera: zoom out to see the horizon and the sky.
-            if (Chip(new Rect(c.x + 208f, y, c.width - 208f, 26f), "DIORAMA CAMERA", DemoSettings.DioramaCamera))
+            if (Chip(new Rect(c.x + 208f, y, c.width - 208f, 26f), Loc.S("DIORAMA CAMERA"), DemoSettings.DioramaCamera))
             {
                 DemoSettings.DioramaCamera = !DemoSettings.DioramaCamera;
                 DemoSettings.SaveSettings();
@@ -3327,13 +3328,13 @@ namespace SolarMajesty
             y += 32f;
 
             if (Chip(new Rect(c.x, y, 200f, 26f),
-                    DemoSettings.Fullscreen ? "FULLSCREEN" : "WINDOWED", DemoSettings.Fullscreen))
+                    DemoSettings.Fullscreen ? Loc.S("FULLSCREEN") : Loc.S("WINDOWED"), DemoSettings.Fullscreen))
             {
                 DemoSettings.Fullscreen = !DemoSettings.Fullscreen;
                 DemoSettings.ApplyDisplay();
                 DemoSettings.SaveSettings();
             }
-            if (Chip(new Rect(c.x + 208f, y, c.width - 208f, 26f), "DAY / NIGHT CYCLE", DemoSettings.DayCycle))
+            if (Chip(new Rect(c.x + 208f, y, c.width - 208f, 26f), Loc.S("DAY / NIGHT CYCLE"), DemoSettings.DayCycle))
             {
                 DemoSettings.DayCycle = !DemoSettings.DayCycle;
                 DemoSettings.SaveSettings();
@@ -3341,7 +3342,7 @@ namespace SolarMajesty
             y += 32f;
 
             if (Chip(new Rect(c.x, y, c.width, 26f),
-                    $"RESOLUTION  ·  {DemoSettings.ResolutionLabel}",
+                    Loc.F("RESOLUTION  ·  {0}", DemoSettings.ResolutionLabel),
                     DemoSettings.ResolutionWidth >= 640))
             {
                 DemoSettings.CycleResolution();
@@ -3350,11 +3351,11 @@ namespace SolarMajesty
             y += 32f;
 
             var qualityNames = QualitySettings.names;
-            string qLabel = "QUALITY";
+            string qLabel = Loc.S("QUALITY");
             if (qualityNames != null && qualityNames.Length > 0)
             {
                 DemoSettings.QualityIndex = Mathf.Clamp(DemoSettings.QualityIndex, 0, qualityNames.Length - 1);
-                qLabel = $"QUALITY  ·  {qualityNames[DemoSettings.QualityIndex].ToUpperInvariant()}";
+                qLabel = Loc.F("QUALITY  ·  {0}", qualityNames[DemoSettings.QualityIndex].ToUpperInvariant());
             }
             if (Chip(new Rect(c.x, y, c.width, 26f), qLabel, false) && qualityNames != null && qualityNames.Length > 0)
             {
@@ -3366,8 +3367,8 @@ namespace SolarMajesty
             int[] caps = { 0, 30, 60, 120, 144 };
             int capIndex = System.Array.IndexOf(caps, DemoSettings.FrameCap);
             if (capIndex < 0) capIndex = 0;
-            string capLabel = DemoSettings.FrameCap <= 0 ? "UNCAPPED" : $"{DemoSettings.FrameCap} FPS";
-            if (Chip(new Rect(c.x, y, c.width, 26f), $"FRAME CAP  ·  {capLabel}", DemoSettings.FrameCap > 0))
+            string capLabel = DemoSettings.FrameCap <= 0 ? Loc.S("UNCAPPED") : Loc.F("{0} FPS", DemoSettings.FrameCap);
+            if (Chip(new Rect(c.x, y, c.width, 26f), Loc.F("FRAME CAP  ·  {0}", capLabel), DemoSettings.FrameCap > 0))
             {
                 DemoSettings.FrameCap = caps[(capIndex + 1) % caps.Length];
                 DemoSettings.ApplyDisplay();
@@ -3375,12 +3376,12 @@ namespace SolarMajesty
             y += 32f;
 
             float visHalf = (c.width - 8f) * 0.5f;
-            if (Chip(new Rect(c.x, y, visHalf, 26f), "TILT-SHIFT (DIORAMA)", DemoSettings.TiltShift))
+            if (Chip(new Rect(c.x, y, visHalf, 26f), Loc.S("TILT-SHIFT (DIORAMA)"), DemoSettings.TiltShift))
             {
                 DemoSettings.TiltShift = !DemoSettings.TiltShift;
                 DemoSettings.SaveSettings();
             }
-            if (Chip(new Rect(c.x + visHalf + 8f, y, visHalf, 26f), "CLOUD SHADOWS", DemoSettings.CloudShadows))
+            if (Chip(new Rect(c.x + visHalf + 8f, y, visHalf, 26f), Loc.S("CLOUD SHADOWS"), DemoSettings.CloudShadows))
             {
                 DemoSettings.CloudShadows = !DemoSettings.CloudShadows;
                 DemoSettings.SaveSettings();
@@ -3389,7 +3390,7 @@ namespace SolarMajesty
             y += 32f;
 
             // Baked voices need nothing running. The LOCAL rows add LLM-written lines and speak them.
-            if (Chip(new Rect(c.x, y, c.width, 26f), "CHARACTER VOICES  ·  BAKED BARKS + CORE", DemoSettings.CharacterVoices))
+            if (Chip(new Rect(c.x, y, c.width, 26f), Loc.S("CHARACTER VOICES  ·  BAKED BARKS + CORE"), DemoSettings.CharacterVoices))
             {
                 DemoSettings.CharacterVoices = !DemoSettings.CharacterVoices;
                 DemoSettings.SaveSettings();
@@ -3397,12 +3398,12 @@ namespace SolarMajesty
             y += 32f;
 
             // Lines come from a local LLM; SPOKEN reads them aloud through a local TTS server.
-            if (Chip(new Rect(c.x, y, visHalf, 26f), "BOT LINES · LOCAL LLM", DemoSettings.HeroVoices))
+            if (Chip(new Rect(c.x, y, visHalf, 26f), Loc.S("BOT LINES · LOCAL LLM"), DemoSettings.HeroVoices))
             {
                 DemoSettings.HeroVoices = !DemoSettings.HeroVoices;
                 DemoSettings.SaveSettings();
             }
-            if (Chip(new Rect(c.x + visHalf + 8f, y, visHalf, 26f), "SPOKEN · LOCAL TTS", DemoSettings.HeroSpeech))
+            if (Chip(new Rect(c.x + visHalf + 8f, y, visHalf, 26f), Loc.S("SPOKEN · LOCAL TTS"), DemoSettings.HeroSpeech))
             {
                 DemoSettings.HeroSpeech = !DemoSettings.HeroSpeech;
                 DemoSettings.SaveSettings();
@@ -3411,58 +3412,73 @@ namespace SolarMajesty
 
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 8f;
-            GUI.Label(new Rect(c.x, y, c.width, 14f), "ACCESSIBILITY", _section);
+            GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.S("ACCESSIBILITY"), _section);
             y += 18f;
 
             float halfW = (c.width - 8f) * 0.5f;
-            if (Chip(new Rect(c.x, y, halfW, 26f), "EDGE SCROLL", DemoSettings.EdgeScroll))
+            if (Chip(new Rect(c.x, y, halfW, 26f), Loc.S("EDGE SCROLL"), DemoSettings.EdgeScroll))
                 DemoSettings.EdgeScroll = !DemoSettings.EdgeScroll;
-            if (Chip(new Rect(c.x + halfW + 8f, y, halfW, 26f), "REDUCE MOTION", DemoSettings.ReduceMotion))
+            if (Chip(new Rect(c.x + halfW + 8f, y, halfW, 26f), Loc.S("REDUCE MOTION"), DemoSettings.ReduceMotion))
                 DemoSettings.ReduceMotion = !DemoSettings.ReduceMotion;
             y += 32f;
 
             // Controller support (Docs/CONTROLS.md). Saved at once; off is for a drifting or stray device.
-            string padState = !GamepadInput.Enabled ? "OFF"
-                : !GamepadInput.AxesAvailable ? "ON  ·  NOT SET UP"
-                : GamepadInput.Connected ? "ON" : "ON  ·  NONE CONNECTED";
-            if (Chip(new Rect(c.x, y, c.width, 26f), $"CONTROLLER  ·  {padState}", GamepadInput.Enabled))
+            string padState = !GamepadInput.Enabled ? Loc.S("OFF")
+                : !GamepadInput.AxesAvailable ? Loc.S("ON  ·  NOT SET UP")
+                : GamepadInput.Connected ? Loc.S("ON") : Loc.S("ON  ·  NONE CONNECTED");
+            if (Chip(new Rect(c.x, y, c.width, 26f), Loc.F("CONTROLLER  ·  {0}", padState), GamepadInput.Enabled))
                 GamepadInput.Enabled = !GamepadInput.Enabled;
             y += 32f;
 
             var cbMode = Accessibility.Mode;
             if (Chip(new Rect(c.x, y, c.width, 26f),
-                    $"COLOUR VISION  ·  {Accessibility.ModeLabel(cbMode).ToUpperInvariant()}",
+                    Loc.F("COLOUR VISION  ·  {0}", Accessibility.ModeLabel(cbMode).ToUpperInvariant()),
                     cbMode != ColorBlindMode.Off))
             {
                 Accessibility.Mode = (ColorBlindMode)(((int)cbMode + 1) % 4);
             }
             y += 32f;
 
-            y = WrapBlock(c, y, "Severity is also shown by icon and prefix, so colour is never the only cue.") + 6f;
+            y = WrapBlock(c, y, Loc.S("Severity is also shown by icon and prefix, so colour is never the only cue.")) + 6f;
 
-            string tutLabel = _loop.IsTutorialActive ? "TUTORIAL  ·  ON" : "REPLAY TUTORIAL";
+            // Language: every table shipped in Resources/Locale, plus the QA pseudo-language with dev tools.
+            var languages = Loc.Available;
+            if (languages.Count > 1)
+            {
+                if (Chip(new Rect(c.x, y, c.width, 26f),
+                        $"{Loc.S("LANGUAGE")}  ·  {Loc.NameOf(Loc.Language).ToUpperInvariant()}", Loc.Language != Loc.DefaultLanguage))
+                {
+                    int at = 0;
+                    for (int i = 0; i < languages.Count; i++)
+                        if (languages[i].Code == Loc.Language) at = i;
+                    Loc.SetLanguage(languages[(at + 1) % languages.Count].Code);
+                }
+                y += 32f;
+            }
+
+            string tutLabel = _loop.IsTutorialActive ? Loc.S("TUTORIAL  ·  ON") : Loc.S("REPLAY TUTORIAL");
             if (Chip(new Rect(c.x, y, 220f, 26f), tutLabel, _loop.IsTutorialActive))
                 _loop.RestartTutorial();
             // Key list and rebinding, on a screen of its own (Docs/CONTROLS.md).
-            if (Chip(new Rect(c.x + 228f, y, c.width - 228f, 26f), "CONTROLS", false))
+            if (Chip(new Rect(c.x + 228f, y, c.width - 228f, 26f), Loc.S("CONTROLS"), false))
                 OpenControls();
             y += 32f;
 
             if (Chip(new Rect(c.x, y, c.width, 26f),
-                    IntroLaunch.PlayOnLaunch ? "PLAY INTRO ON LAUNCH  ·  ON" : "PLAY INTRO ON LAUNCH  ·  OFF",
+                    IntroLaunch.PlayOnLaunch ? Loc.S("PLAY INTRO ON LAUNCH  ·  ON") : Loc.S("PLAY INTRO ON LAUNCH  ·  OFF"),
                     IntroLaunch.PlayOnLaunch))
                 IntroLaunch.SetPlayOnLaunch(!IntroLaunch.PlayOnLaunch);
             y += 32f;
-            if (Chip(new Rect(c.x, y, c.width, 26f), "REPLAY INTRO", false))
+            if (Chip(new Rect(c.x, y, c.width, 26f), Loc.S("REPLAY INTRO"), false))
                 _loop.ReplayIntro();
             y += 28f;
             GUI.Label(new Rect(c.x, y, c.width, 16f),
-                "The launch intro plays once, the first time the title opens. Replay plays it now.", _micro);
+                Loc.S("The launch intro plays once, the first time the title opens. Replay plays it now."), _micro);
             y += 24f;
 
             bool marsLessons = DemoSettings.MarsJexLessons;
             if (Chip(new Rect(c.x, y, c.width, 26f),
-                    marsLessons ? "MARS JEX LESSONS  ·  ON" : "MARS JEX LESSONS  ·  OFF",
+                    marsLessons ? Loc.S("MARS JEX LESSONS  ·  ON") : Loc.S("MARS JEX LESSONS  ·  OFF"),
                     marsLessons))
             {
                 DemoSettings.MarsJexLessons = !DemoSettings.MarsJexLessons;
@@ -3470,44 +3486,44 @@ namespace SolarMajesty
             }
             y += 22f;
             GUI.Label(new Rect(c.x, y, c.width, 16f),
-                "Luna: Jex lectures. Mars: failure asides unless lessons are on.", _micro);
+                Loc.S("Luna: Jex lectures. Mars: failure asides unless lessons are on."), _micro);
             y += 28f;
 
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 8f;
             if (DemoSettings.FirstHourDemo)
             {
-                GUI.Label(new Rect(c.x, y, c.width, 14f), "GUIDED START", _section);
+                GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.S("GUIDED START"), _section);
                 y += 18f;
-                if (Chip(new Rect(c.x, y, c.width, 26f), "SKIP GUIDED START", false))
+                if (Chip(new Rect(c.x, y, c.width, 26f), Loc.S("SKIP GUIDED START"), false))
                     _loop.SetFirstHourDemo(false);
                 y += 30f;
                 y = WrapBlock(c, y,
-                    "Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before.");
+                    Loc.S("Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before."));
             }
             else
             {
-                GUI.Label(new Rect(c.x, y, c.width, 14f), "REPLAY  ·  MODE / CHALLENGE / STANCE / IRONMAN", _section);
+                GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.S("REPLAY  ·  MODE / CHALLENGE / STANCE / IRONMAN"), _section);
                 y += 18f;
 
                 float half = (c.width - 8f) * 0.5f;
                 if (Chip(new Rect(c.x, y, half, 26f),
-                        $"MODE  ·  {ReplayRules.ModeLabel}", ReplayRules.IsEndless))
+                        Loc.F("MODE  ·  {0}", ReplayRules.ModeLabel), ReplayRules.IsEndless))
                     ReplayRules.CycleMode();
                 if (Chip(new Rect(c.x + half + 8f, y, half, 26f),
-                        $"CHAL  ·  {ReplayRules.ChallengeLabel}", ReplayRules.Challenge != ChallengeId.None))
+                        Loc.F("CHAL  ·  {0}", ReplayRules.ChallengeLabel), ReplayRules.Challenge != ChallengeId.None))
                     ReplayRules.CycleChallenge();
                 y += 32f;
 
                 if (Chip(new Rect(c.x, y, half, 26f),
-                        $"STANCE  ·  {ReplayRules.StanceLabel}", ReplayRules.Stance != DoctrineStance.Balanced))
+                        Loc.F("STANCE  ·  {0}", ReplayRules.StanceLabel), ReplayRules.Stance != DoctrineStance.Balanced))
                     ReplayRules.CycleStance();
                 bool ironmanOn = _loop.RunConfigLocked ? ReplayRules.IronmanRun : ReplayRules.Ironman;
                 if (Chip(new Rect(c.x + half + 8f, y, half, 26f),
-                        $"IRON  ·  {(ironmanOn ? "ON" : "OFF")}", ironmanOn))
+                        Loc.F("IRON  ·  {0}", ironmanOn ? Loc.S("ON") : Loc.S("OFF")), ironmanOn))
                 {
                     if (_loop.RunConfigLocked)
-                        Notify("Ironman latches at New Game. This run stays as started.", 3.5f);
+                        Notify(Loc.S("Ironman latches at New Game. This run stays as started."), 3.5f);
                     else
                         ReplayRules.CycleIronman();
                 }
@@ -3516,9 +3532,9 @@ namespace SolarMajesty
                 y = WrapBlock(c, y, ReplayRules.StanceHint + " " + ReplayRules.ChallengeHint);
                 y = WrapBlock(c, y, ReplayRules.IronmanHint);
                 y = WrapBlock(c, y,
-                    "Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue.");
+                    Loc.S("Stockpile and fauna apply on New Game / reload. Doctrine hunger, courage, range, and workshop pull apply live. Low Battery ship rules apply when you leave Settings. Ironman latches at New Game or Continue."));
                 y += 4f;
-                if (Chip(new Rect(c.x, y, c.width, 26f), "REPLAY GUIDED START", false))
+                if (Chip(new Rect(c.x, y, c.width, 26f), Loc.S("REPLAY GUIDED START"), false))
                     _loop.SetFirstHourDemo(true);
                 y += 30f;
             }
@@ -3526,7 +3542,7 @@ namespace SolarMajesty
             _settingsContentH = y + 4f;
             GUI.EndScrollView();
 
-            if (GUI.Button(new Rect(panel.x, panel.yMax - 34f, panel.width, 32f), "BACK  ·  Esc", _chipOn))
+            if (GUI.Button(new Rect(panel.x, panel.yMax - 34f, panel.width, 32f), Loc.S("BACK  ·  Esc"), _chipOn))
                 _loop.CloseSettings();
         }
 
@@ -3558,7 +3574,7 @@ namespace SolarMajesty
             HudSkin.Vignette(new Rect(0, 0, _sw, _sh), new Color(0.02f, 0.02f, 0.03f), 0.55f);
             float h = Mathf.Min(764f, Mathf.Max(460f, _sh - 24f));
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), 440f, h);
-            var panel = Panel(rect, "Controls");
+            var panel = Panel(rect, Loc.S("Controls"));
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
 
             // The waiting rebind takes the key event before any control can see it.
@@ -3569,7 +3585,7 @@ namespace SolarMajesty
                 {
                     case ControlsList.CaptureStep.Cancel:
                         _rebindTarget = null;
-                        _controlsMsg = "Rebind cancelled.";
+                        _controlsMsg = Loc.S("Rebind cancelled.");
                         _controlsMsgBad = false;
                         e.Use();
                         break;
@@ -3598,7 +3614,7 @@ namespace SolarMajesty
             _controlsScroll = GUI.BeginScrollView(view, _controlsScroll, c);
             float y = c.y;
 
-            GUI.Label(new Rect(c.x, y, c.width, 14f), "Click a key, then press the new one. Esc cancels.", _micro);
+            GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.S("Click a key, then press the new one. Esc cancels."), _micro);
             y += 20f;
 
             const float keyW = 156f;
@@ -3607,7 +3623,7 @@ namespace SolarMajesty
                 var group = _controlsGroups[g];
                 Fill(new Rect(c.x, y, c.width, 1f), Hairline);
                 y += 6f;
-                GUI.Label(new Rect(c.x, y, c.width, 14f), group.Title, _section);
+                GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.S(group.Title), _section);
                 y += 18f;
 
                 for (int i = 0; i < group.Rows.Count; i++)
@@ -3615,28 +3631,28 @@ namespace SolarMajesty
                     var row = group.Rows[i];
                     if (!row.IsDefault)
                         HudSkin.Pill(new Rect(c.x, y + 5f, 3f, 12f), Gold);
-                    GUI.Label(new Rect(c.x + 8f, y, c.width - keyW - 16f, 22f), row.Name, _body);
+                    GUI.Label(new Rect(c.x + 8f, y, c.width - keyW - 16f, 22f), ControlsList.NameText(row.Action), _body);
 
                     var keyRect = new Rect(c.xMax - keyW, y + 1f, keyW, 20f);
                     if (row.Fixed)
                     {
                         HudSkin.Well(keyRect);
-                        GUI.Label(keyRect, row.Key.ToUpperInvariant() + "  ·  FIXED", _microCenter);
+                        GUI.Label(keyRect, Loc.F("{0}  ·  FIXED", row.Key.ToUpperInvariant()), _microCenter);
                     }
                     else
                     {
                         bool waiting = _rebindTarget.HasValue && _rebindTarget.Value == row.Action;
-                        if (Chip(keyRect, waiting ? "PRESS A KEY" : row.Key.ToUpperInvariant(), waiting))
+                        if (Chip(keyRect, waiting ? Loc.S("PRESS A KEY") : row.Key.ToUpperInvariant(), waiting))
                         {
                             if (waiting)
                             {
                                 _rebindTarget = null;
-                                _controlsMsg = "Rebind cancelled.";
+                                _controlsMsg = Loc.S("Rebind cancelled.");
                             }
                             else
                             {
                                 _rebindTarget = row.Action;
-                                _controlsMsg = $"Press a key for {row.Name}. Esc cancels.";
+                                _controlsMsg = Loc.F("Press a key for {0}. Esc cancels.", ControlsList.NameText(row.Action));
                             }
                             _controlsMsgBad = false;
                         }
@@ -3648,15 +3664,15 @@ namespace SolarMajesty
 
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 6f;
-            GUI.Label(new Rect(c.x, y, c.width, 14f), "CONTROLLER", _section);
+            GUI.Label(new Rect(c.x, y, c.width, 14f), Loc.S("CONTROLLER"), _section);
             y += 18f;
             y = WrapBlock(c, y,
-                "Fixed layout (Xbox-style pad on Windows). The controller cannot click HUD buttons or place things; use the mouse for those. Settings → CONTROLLER turns it off.");
+                Loc.S("Fixed layout (Xbox-style pad on Windows). The controller cannot click HUD buttons or place things; use the mouse for those. Settings → CONTROLLER turns it off."));
             var pads = ControlsList.ControllerRows;
             for (int i = 0; i < pads.Length; i++)
             {
-                GUI.Label(new Rect(c.x + 8f, y, 150f, 18f), pads[i].Button, _value);
-                GUI.Label(new Rect(c.x + 164f, y, c.width - 164f, 18f), pads[i].Action, _muted);
+                GUI.Label(new Rect(c.x + 8f, y, 150f, 18f), Loc.S(pads[i].Button), _value);
+                GUI.Label(new Rect(c.x + 164f, y, c.width - 164f, 18f), Loc.S(pads[i].Action), _muted);
                 y += 20f;
             }
 
@@ -3673,15 +3689,15 @@ namespace SolarMajesty
             }
 
             float half = (panel.width - 8f) * 0.5f;
-            if (GUI.Button(new Rect(panel.x, panel.yMax - 34f, half, 32f), "RESET TO DEFAULTS", _chipOff))
+            if (GUI.Button(new Rect(panel.x, panel.yMax - 34f, half, 32f), Loc.S("RESET TO DEFAULTS"), _chipOff))
             {
                 InputBindings.ResetToDefaults();
                 _rebindTarget = null;
                 _controlsGroups = null;
-                _controlsMsg = "Every key is back to its default.";
+                _controlsMsg = Loc.S("Every key is back to its default.");
                 _controlsMsgBad = false;
             }
-            if (GUI.Button(new Rect(panel.x + half + 8f, panel.yMax - 34f, half, 32f), "BACK  ·  Esc", _chipOn))
+            if (GUI.Button(new Rect(panel.x + half + 8f, panel.yMax - 34f, half, 32f), Loc.S("BACK  ·  Esc"), _chipOn))
                 CloseControls();
         }
 
@@ -3708,9 +3724,9 @@ namespace SolarMajesty
             if (!_uiScaleGesture.Dragging)
                 _uiScaleGesture.SyncApplied(applied);
             float shown = _uiScaleGesture.Dragging ? _uiScaleGesture.Shown : applied;
-            string pct = auto ? $"A {shown * 100f:0}%" : $"{shown * 100f:0}%";
+            string pct = auto ? Loc.F("A {0:0}%", shown * 100f) : $"{shown * 100f:0}%";
 
-            GUI.Label(new Rect(x, y, 78f, 18f), "UI SCALE", _caps);
+            GUI.Label(new Rect(x, y, 78f, 18f), Loc.S("UI SCALE"), _caps);
             const float autoW = 52f;
             const float valueW = 64f;
             float right = x + width;
@@ -3734,7 +3750,7 @@ namespace SolarMajesty
                 DemoSettings.SaveSettings();
             }
             GUI.Label(new Rect(right - autoW - valueW - 4f, y, valueW, 18f), pct, _microRight);
-            if (GUI.Button(new Rect(right - autoW, y - 2f, autoW, 22f), "AUTO", auto ? _chipOn : _chipOff))
+            if (GUI.Button(new Rect(right - autoW, y - 2f, autoW, 22f), Loc.S("AUTO"), auto ? _chipOn : _chipOff))
             {
                 _uiScaleGesture.Cancel();
                 DemoSettings.ToggleHudScaleAuto(Screen.width, Screen.height);
@@ -3771,12 +3787,12 @@ namespace SolarMajesty
             {
                 string[] beats =
                 {
-                    "1/6  COMMONS — Colony Commons is already on the claim. It holds the till.",
-                    "2/6  Courier bots haul each building's EU to the till.",
-                    "3/6  Keep the yard clear of mobs. Place charging stations and solar farms — they pay EU.",
-                    "4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes.",
-                    "5/6  G, Build, leave it at 400. Watch the Engineer.",
-                    "6/6  They named a price. Select the flag and press + until the chip reads tempted."
+                    Loc.S("1/6  COMMONS — Colony Commons is already on the claim. It holds the till."),
+                    Loc.S("2/6  Courier bots haul each building's EU to the till."),
+                    Loc.S("3/6  Keep the yard clear of mobs. Place charging stations and solar farms — they pay EU."),
+                    Loc.S("4/6  Workshop — build Scout / Engineer / Defense. A robot fabricates when it finishes."),
+                    Loc.S("5/6  G, Build, leave it at 400. Watch the Engineer."),
+                    Loc.S("6/6  They named a price. Select the flag and press + until the chip reads tempted.")
                 };
                 int step = Mathf.Clamp(_loop.TutorialStep, 0, beats.Length - 1);
                 if (_loop.TutorialWantsPriceLesson)
@@ -3800,7 +3816,7 @@ namespace SolarMajesty
             _wrap.normal.textColor = TextPrimary;
             GUI.Label(textRect, line, _wrap);
             _wrap.normal.textColor = prevText;
-            if (GUI.Button(skipRect, "SKIP", _chipOff))
+            if (GUI.Button(skipRect, Loc.S("SKIP"), _chipOff))
                 _loop.SkipTutorial();
         }
 
@@ -3820,9 +3836,9 @@ namespace SolarMajesty
             };
 
             var rect = new Rect(M, M, TopW, 118f);
-            var c = Panel(rect, "Drop manifest");
+            var c = Panel(rect, Loc.S("Drop manifest"));
             float y = c.y;
-            GUI.Label(new Rect(c.x, y, c.width, 13f), "COMMONS first, then charging stations and workshops anywhere on open ground.", _micro);
+            GUI.Label(new Rect(c.x, y, c.width, 13f), Loc.S("COMMONS first, then charging stations and workshops anywhere on open ground."), _micro);
             y += 16f;
             for (int w = 0; w < want.Length; w++)
             {
@@ -3837,7 +3853,7 @@ namespace SolarMajesty
                 }
                 if (found == null) continue;
                 GUI.Label(new Rect(c.x, y, c.width, 14f),
-                    $"{found.displayName}  ·  {FormatBuildCost(CostOf(found))}", _micro);
+                    $"{Loc.S(found.displayName)}  ·  {FormatBuildCost(CostOf(found))}", _micro);
                 y += 15f;
             }
         }

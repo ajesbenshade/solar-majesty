@@ -7,11 +7,11 @@ namespace SolarMajesty
     public static class FirstHourHints
     {
         // Key names come from the live bindings: {GameAction} tokens are filled by KeyHints.
-        public static string PlaceWorkshop => KeyHints.Fill(PlaceWorkshopText);
-        public static string PostCheapBuild => KeyHints.Fill(PostCheapBuildText);
-        public static string RaiseBuildPrice => KeyHints.Fill(RaiseBuildPriceText);
-        public static string PostDefend => KeyHints.Fill(PostDefendText);
-        public static string BountyNeedsPole => KeyHints.Fill(BountyNeedsPoleText);
+        public static string PlaceWorkshop => KeyHints.Fill(Loc.S(PlaceWorkshopText));
+        public static string PostCheapBuild => KeyHints.Fill(Loc.S(PostCheapBuildText));
+        public static string RaiseBuildPrice => KeyHints.Fill(Loc.S(RaiseBuildPriceText));
+        public static string PostDefend => KeyHints.Fill(Loc.S(PostDefendText));
+        public static string BountyNeedsPole => KeyHints.Fill(Loc.S(BountyNeedsPoleText));
 
         private const string PlaceWorkshopText =
             "Stuck? Press {ToolBuild}, then {BuildSlot1}, and click open ground near the Commons to place the Engineer workshop.";
@@ -38,7 +38,7 @@ namespace SolarMajesty
             if (step == 0)
             {
                 if (!workshopPlaced) return PlaceWorkshop;
-                return awaitingHire ? WorkshopHireShort : WorkshopRising;
+                return awaitingHire ? Loc.S(WorkshopHireShort) : Loc.S(WorkshopRising);
             }
             if (step == 1) return PostCheapBuild;
             if (step == 2) return RaiseBuildPrice;

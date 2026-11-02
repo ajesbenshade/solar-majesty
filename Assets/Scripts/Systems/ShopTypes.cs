@@ -60,5 +60,9 @@ namespace SolarMajesty
         public float RegenPerSecond;
         public float DurationSeconds;
         public float DamageBonus;
+
+        /// <summary>Player-facing text in the current language; the fields above stay English.</summary>
+        public string DisplayNameText => Loc.S(DisplayName);
+        public string DescriptionText => Loc.S(Description);
     }
 }
