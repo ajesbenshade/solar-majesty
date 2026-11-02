@@ -1,7 +1,7 @@
 "AppBuild"
 {
 	"AppID" "@STEAM_APP_ID@"
-	"Desc" "Solar Majesty @VERSION@"
+	"Desc" "@PRODUCT@ @VERSION@"
 	"ContentRoot" "@CONTENT_ROOT@"
 	"BuildOutput" "@BUILD_OUTPUT@"
 @SETLIVE_LINE@

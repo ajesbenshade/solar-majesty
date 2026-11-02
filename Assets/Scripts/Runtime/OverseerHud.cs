@@ -8,7 +8,7 @@ namespace SolarMajesty
     /// mission stakes, specialist cards (selected only), win/fail banners.
     /// DebugHud stays on F8 for deep scores.
     /// </summary>
-    public class OverseerHud : MonoBehaviour
+    public partial class OverseerHud : MonoBehaviour
     {
         // Smoked glass over the world, brass for structure, orange only for what is live.
         // Palette and baked chrome live in HudSkin so the alert feed matches.
@@ -2732,6 +2732,14 @@ namespace SolarMajesty
             if (mission == null ||
                 !VictoryOffer.ShowPanel(mission.IsWon, _loop.IsVictoryHeld, ReplayRules.IsEndless, _winDismissed))
                 return false;
+            // Steam demo: Earth's win ends on the end-of-demo screen (OverseerHud.DemoEnd.cs),
+            // behind the same ShowPanel latch, so KEEP PLAYING EARTH or a continued save plays on.
+            if (DemoEndOffer.Show(DemoBuild.Active, _loop.ActiveBody, mission.IsWon, _loop.IsVictoryHeld,
+                    ReplayRules.IsEndless, _winDismissed))
+            {
+                DrawDemoEnd();
+                return true;
+            }
             bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
             DrawCampaignVictory(VictoryOffer.For(_loop.ActiveBody, nextBuilt, endless: false));
             return true;
@@ -3460,18 +3468,21 @@ namespace SolarMajesty
                 "The launch intro plays once, the first time the title opens. Replay plays it now.", _micro);
             y += 24f;
 
-            bool marsLessons = DemoSettings.MarsJexLessons;
-            if (Chip(new Rect(c.x, y, c.width, 26f),
-                    marsLessons ? "MARS JEX LESSONS  ·  ON" : "MARS JEX LESSONS  ·  OFF",
-                    marsLessons))
+            if (!DemoBuild.Active) // Luna/Mars lessons: not in the Earth-only Steam demo
             {
-                DemoSettings.MarsJexLessons = !DemoSettings.MarsJexLessons;
-                DemoSettings.SaveSettings();
+                bool marsLessons = DemoSettings.MarsJexLessons;
+                if (Chip(new Rect(c.x, y, c.width, 26f),
+                        marsLessons ? "MARS JEX LESSONS  ·  ON" : "MARS JEX LESSONS  ·  OFF",
+                        marsLessons))
+                {
+                    DemoSettings.MarsJexLessons = !DemoSettings.MarsJexLessons;
+                    DemoSettings.SaveSettings();
+                }
+                y += 22f;
+                GUI.Label(new Rect(c.x, y, c.width, 16f),
+                    "Luna: Jex lectures. Mars: failure asides unless lessons are on.", _micro);
+                y += 28f;
             }
-            y += 22f;
-            GUI.Label(new Rect(c.x, y, c.width, 16f),
-                "Luna: Jex lectures. Mars: failure asides unless lessons are on.", _micro);
-            y += 28f;
 
             Fill(new Rect(c.x, y, c.width, 1f), Hairline);
             y += 8f;
@@ -3479,11 +3490,16 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, y, c.width, 14f), "GUIDED START", _section);
                 y += 18f;
-                if (Chip(new Rect(c.x, y, c.width, 26f), "SKIP GUIDED START", false))
-                    _loop.SetFirstHourDemo(false);
-                y += 30f;
-                y = WrapBlock(c, y,
-                    "Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before.");
+                if (DemoBuild.Active)
+                    y = WrapBlock(c, y, DemoEndOffer.SettingsNote); // no way out of the Earth demo
+                else
+                {
+                    if (Chip(new Rect(c.x, y, c.width, 26f), "SKIP GUIDED START", false))
+                        _loop.SetFirstHourDemo(false);
+                    y += 30f;
+                    y = WrapBlock(c, y,
+                        "Earth first: learn how bounties sway your robots. Guilds and the outer worlds open when you clear Earth. Skip this if you have played before.");
+                }
             }
             else
             {

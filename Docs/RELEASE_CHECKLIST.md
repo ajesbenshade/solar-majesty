@@ -108,5 +108,8 @@ is in it being honest, not in it being all ticked.
 - [ ] Full playthrough on all five bodies without an exception
 - [ ] Steam page, capsule art, screenshots
 - [ ] Trailer
-- [ ] Demo build for a Next Fest
+- [x] Demo build for a Next Fest: `BuildCommands.BuildWindowsDemo` (or `BuildFromCommandLine -smDemo`, the release workflow's opt-in `build-demo` job) makes `SolarMajestyDemo.exe` ("Solar Majesty Demo") with the `SM_DEMO` define for that build only. Earth only, guided start locked on, Campaign Complete / Ironman left out, own `DemoSaves` / `DemoProfile`, end-of-demo screen (Wishlist on Steam / Keep playing Earth / Quit) behind the victory hold. See [DEMO.md](DEMO.md#steam-demo-build-next-fest) and [STEAM_RELEASE.md](STEAM_RELEASE.md#7-next-fest-demo)
+- [ ] Look at the end-of-demo screen in a demo build and press Wishlist with Steam running
+- [ ] Demo app created on Steamworks, its App ID in `SteamConfig.DemoAppId` (480 placeholder today), the real `FullGameAppId` so Wishlist opens our page, demo store presence and build reviewed, Next Fest registration
+- [ ] Full-game import of demo progress (sketched in STEAM_RELEASE.md, not built)
 - [ ] Phase 4 exit review re-run against a fresh still

@@ -21,8 +21,13 @@ namespace SolarMajesty
         /// <summary>
         /// Worlds a player can see: Earth, Luna and Mars, in every mode. Belt and Europa stay
         /// in the catalog and in saves (IDs unchanged) but never reach the title or the HUD.
+        /// The Steam demo player (<see cref="DemoBuild"/>) shows Earth only.
         /// </summary>
         public static bool ShowBody(CelestialBodyId id) =>
+            ShowBodyInFullGame(id) && DemoBuild.BodyInDemo(id);
+
+        /// <summary>The full game's worlds: Earth, Luna and Mars.</summary>
+        public static bool ShowBodyInFullGame(CelestialBodyId id) =>
             id == CelestialBodyId.Earth || id == CelestialBodyId.Luna || id == CelestialBodyId.Mars;
 
         public static bool ShowTech(TechId id)

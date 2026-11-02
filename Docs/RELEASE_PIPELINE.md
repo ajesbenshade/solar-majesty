@@ -282,6 +282,24 @@ per platform, renders [`steam/app_build.vdf.template`](../Tools/release/steam/ap
 and [`steam/depot.vdf.template`](../Tools/release/steam/depot.vdf.template), and runs
 `steamcmd +run_app_build`.
 
+### Steam Next Fest demo
+
+The Earth-only demo is its own player and its own Steam app (see
+[STEAM_RELEASE.md → Next Fest demo](STEAM_RELEASE.md#7-next-fest-demo)). The release workflow builds it only
+when asked:
+
+| Name | Kind | Value |
+|------|------|-------|
+| `BUILD_DEMO` | variable | `true` adds the `build-demo` job: Windows, `BuildFromCommandLine -smDemo`, zipped as `SolarMajestyDemo-<version>-Windows.zip` (artifact only, not on the GitHub Release) |
+| `STEAM_DEMO_APP_ID` | variable | the demo app id (must differ from `STEAM_APP_ID`) |
+| `STEAM_DEMO_DEPOT_WINDOWS` | variable | the demo app's Windows depot id |
+
+With all of those plus `STEAM_USERNAME` / `STEAM_CONFIG_VDF`, the `steam-demo` job runs
+`upload-steam.sh dist <version> demo`, which uses the demo app and depot and refuses any zip whose
+`build-info.json` does not say `"flavour": "demo"`. The full-game upload refuses a demo zip the same way.
+`STEAM_BRANCH` applies to both. Locally, `package.sh <platform> <build> <version> <out> demo` and
+`Tools\steam\upload_to_steam.ps1 -Demo` are the same two steps.
+
 ---
 
 ## 6. App icons
@@ -308,7 +326,7 @@ without mipmaps, so the 16 and 32 px sizes stay crisp.
 | `Tools/release/package.sh` | per-platform zip that keeps permissions; leaves out Unity's `DoNotShip` folders |
 | `Tools/release/sign-windows.sh` / `sign-macos.sh` | signing |
 | `Tools/release/upload-itch.sh` / `upload-steam.sh` | store uploads |
-| `Assets/Scripts/Editor/BuildCommands.cs` | build entry points; `BuildFromCommandLine` is the CI one |
+| `Assets/Scripts/Editor/BuildCommands.cs` | build entry points; `BuildFromCommandLine` is the CI one (`-smDemo` for the Steam demo) |
 | `Assets/Scripts/Editor/ReleaseStamp.cs` | version, icons, `build-info.json` |
 | `Assets/Scripts/Systems/BuildVersion.cs` | the version rule and build-info reader (tested) |
 

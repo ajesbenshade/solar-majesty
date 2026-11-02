@@ -102,8 +102,16 @@ namespace SolarMajesty
         /// <summary>
         /// Earth greed-beat demo. Default on. Settings can open the full campaign
         /// without deleting guilds, Belt, or Europa from the repo.
+        /// Always on in the Steam demo player (<see cref="DemoBuild.Active"/>): nothing there can
+        /// open the full campaign, whatever a save or the profile says.
         /// </summary>
-        public static bool FirstHourDemo;
+        public static bool FirstHourDemo
+        {
+            get => _firstHourDemo || DemoBuild.Active;
+            set => _firstHourDemo = value;
+        }
+
+        private static bool _firstHourDemo;
         /// <summary>Mars optional training wheels. Default off — failure asides only.</summary>
         public static bool MarsJexLessons;
 

@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Zips one platform's player for distribution.
 #
-#   Tools/release/package.sh <targetPlatform> <build_dir> <version> <out_dir>
+#   Tools/release/package.sh <targetPlatform> <build_dir> <version> <out_dir> [full|demo]
 #
 #   targetPlatform  StandaloneWindows64 | StandaloneLinux64 | StandaloneOSX (game-ci names)
 #   build_dir       folder holding the player (game-ci: build/<targetPlatform>)
 #   version         e.g. 1.2.0 or 0.0.0-dev+abc1234
 #   out_dir         where SolarMajesty-<version>-<Windows|Linux|macOS>.zip is written
+#   flavour         optional: "demo" for the Steam Next Fest demo player (BuildCommands -smDemo);
+#                   its zip and top folder are SolarMajestyDemo-<version>-<label>, so the two never mix
 #
 # Windows / Linux zips hold one top folder; the macOS zip holds SolarMajesty.app at its root.
 # Unix permissions and symlinks are kept (zip -y; ditto on macOS), which upload-artifact alone
@@ -14,8 +16,8 @@
 # Prints the zip path.
 set -euo pipefail
 
-if [ $# -ne 4 ]; then
-  echo "usage: $0 <targetPlatform> <build_dir> <version> <out_dir>" >&2
+if [ $# -ne 4 ] && [ $# -ne 5 ]; then
+  echo "usage: $0 <targetPlatform> <build_dir> <version> <out_dir> [full|demo]" >&2
   exit 2
 fi
 
@@ -23,6 +25,16 @@ platform="$1"
 build_dir="$2"
 version="$3"
 out_dir="$4"
+flavour="${5:-full}"
+
+case "$flavour" in
+  full) name="SolarMajesty" ;;
+  demo) name="SolarMajestyDemo" ;;
+  *)
+    echo "unknown flavour: $flavour (full or demo)" >&2
+    exit 2
+    ;;
+esac
 
 case "$platform" in
   StandaloneWindows64) label="Windows" ;;
@@ -41,7 +53,7 @@ fi
 
 mkdir -p "$out_dir"
 out_dir=$(cd "$out_dir" && pwd)
-zip_name="SolarMajesty-${version}-${label}.zip"
+zip_name="${name}-${version}-${label}.zip"
 zip_path="$out_dir/$zip_name"
 rm -f "$zip_path"
 
@@ -62,7 +74,7 @@ if [ "$platform" = "StandaloneOSX" ]; then
 else
   stage=$(mktemp -d)
   trap 'rm -rf "$stage"' EXIT
-  top="SolarMajesty-${version}-${label}"
+  top="${name}-${version}-${label}"
   mkdir -p "$stage/$top"
   # Copy without Unity's debug-symbol side folders.
   (cd "$build_dir" && tar -cf - \
