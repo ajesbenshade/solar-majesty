@@ -29,12 +29,18 @@ namespace SolarMajesty
                 body = parsed;
 
             // The preview build has its own product name, so this only wipes its own state: every run
-            // starts from an empty claim instead of a campus restored from the last run.
+            // starts from an empty claim instead of a campus restored from the last run. A development
+            // build of the game itself (BuildCommands -smDevelopment) shares the player's product
+            // name, so its profile and saves are kept beside the stills instead.
+            GamePrefs.DirectoryOverride = Path.Combine(dir, "_profile");
+            if (!SaveSystem.TryParseSaveDirArgument(Environment.GetCommandLineArgs(), out _))
+                SaveSystem.DirectoryOverride = Path.Combine(dir, "_saves");
             GamePrefs.DeleteAll();
             SaveSystem.DeleteAll();
             GamePrefs.SetInt(DemoSettings.FirstHourKey, body == CelestialBodyId.Earth ? 1 : 0);
             GamePrefs.SetInt(DemoSettings.FullscreenKey, 0);
             GamePrefs.SetInt(DemoSettings.TutorialKey, 0);
+            // For a TEXT SIZE capture pass -textScale 1.5 (read by DemoSettings.Load).
             GamePrefs.Save();
             CampaignProgress.DebugUnlockAll();
             DemoSettings.ClearSave();
@@ -95,8 +101,18 @@ namespace SolarMajesty
             yield return Shot("02_play");
             hud?.ClearToast();
 
+            // Tooltips: a QA pointer stands in for the mouse over each control (HudTooltip.QaScreenPointer),
+            // then rests for the hover delay.
+            HudTooltip.RecordAnchors = true;
+            yield return HoverShot("16_tip_chip", "CHARGING STATIONS");
+            yield return HoverShot("17_tip_speed", "HOLD");
+
             loop.ToggleTool(OverseerTool.Build);
             yield return Shot("03_build");
+            var bi = loop.BuildInput;
+            if (bi != null && bi.Catalog != null && bi.VisibleIndices.Count > 1 && bi.Catalog[bi.VisibleIndices[1]] != null)
+                yield return HoverShot("18_tip_build", bi.Catalog[bi.VisibleIndices[1]].displayName.ToUpperInvariant());
+            ParkCursor();
             // What a click on a catalog row does: arm the building, then the list gets out of the way.
             loop.SetTool(OverseerTool.Build);
             loop.BuildInput?.SelectBuilding(loop.BuildInput.VisibleIndices.Count > 0 ? loop.BuildInput.VisibleIndices[0] : 0);
@@ -105,6 +121,8 @@ namespace SolarMajesty
 
             loop.ToggleTool(OverseerTool.Flag);
             yield return Shot("04_flag");
+            yield return HoverShot("19_tip_bounty", "RAISE BOUNTY");
+            ParkCursor();
             loop.SetTool(OverseerTool.Flag);
             if (loop.FlagInput != null && loop.FlagInput.ExploreFlag != null)
                 loop.FlagInput.SelectFlag(loop.FlagInput.ExploreFlag);
@@ -178,14 +196,20 @@ namespace SolarMajesty
 
             loop.TogglePause();
             yield return Shot("08_pause");
+            yield return HoverShot("20_tip_pause", "SAVE");
+            ParkCursor();
             loop.OpenSettings();
             yield return Shot("09_settings");
+            yield return HoverShot("21_tip_settings", "TEXT SIZE");
+            ParkCursor();
             loop.CloseSettings();
             loop.ResumePlay();
 
             loop.ReturnToTitle();
             yield return Wait(3f);
             yield return Shot("10_title");
+            yield return HoverShot("22_tip_title", "SETTINGS");
+            ParkCursor();
 
             Debug.Log($"[HudShot] Wrote stills to {_dir}");
             Application.Quit(0);
@@ -257,6 +281,28 @@ namespace SolarMajesty
             float until = Time.realtimeSinceStartup + seconds;
             while (Time.realtimeSinceStartup < until) yield return null;
         }
+
+        /// <summary>
+        /// Points the QA pointer at the control whose tooltip title is <paramref name="title"/>, waits
+        /// out the hover delay, and captures. Logs the tip it saw.
+        /// </summary>
+        private IEnumerator HoverShot(string name, string title)
+        {
+            yield return Wait(0.3f);
+            if (!HudTooltip.Anchors.TryGetValue(title, out Rect r))
+            {
+                Debug.LogWarning($"[HudShot] no tooltip anchor titled '{title}'");
+                yield break;
+            }
+            HudTooltip.QaScreenPointer = r.center;
+            yield return Wait(HudTooltipMath.Delay + 0.8f);
+            var hud = FindFirstObjectByType<OverseerHud>();
+            Debug.Log($"[HudShot] hover '{title}' at {r.center} (screen {r}) → shown '{hud?.ShownTooltip}'");
+            yield return Shot(name);
+        }
+
+        /// <summary>Hands the pointer back to the mouse so no tooltip stays open in the next still.</summary>
+        private static void ParkCursor() => HudTooltip.QaScreenPointer = null;
 
         private IEnumerator Shot(string name)
         {

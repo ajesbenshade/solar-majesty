@@ -84,7 +84,8 @@ is in it being honest, not in it being all ticked.
 - [x] Procedural icon set ([UiIcons.cs](../Assets/Scripts/Runtime/UI/UiIcons.cs)), wired into the resource chips
 - [x] Map overlays for power, threat, and defence coverage ([MapOverlay.cs](../Assets/Scripts/Runtime/UI/MapOverlay.cs))
 - [ ] Remaining IMGUI panels migrated to UI Toolkit (`OverseerHud.cs` is still ~2,100 lines)
-- [ ] Tooltips on every panel
+- [x] Tooltips on every panel: one system ([HudTooltip.cs](../Assets/Scripts/Runtime/UI/HudTooltip.cs), placement and hover delay in [HudTooltipMath.cs](../Assets/Scripts/Systems/HudTooltipMath.cs)): 0.45 s rest, follows the cursor, flips and clamps on screen, wraps, hidden while typing, rebinding or dragging. Every tip's words live in [HudTips.cs](../Assets/Scripts/Systems/HudTips.cs) (plain English for now; localization comes later): stockpile chips, till, tills line, clock/threat, speed controls, dock verbs, build/flag/orbital/research rows, bounty −/+, orders, panel headers, minimap, alerts, overlay legend, building and bot cards, title, pause, every Settings option and the controls screen. Labels cut to fit ("…") show their full text as a tooltip. EditMode tests for placement, delay and the catalog
+- [ ] Visual pass of tooltips and TEXT SIZE in a build (1280×800, 1080p, 4K × 100 %/150 %): `Tools/qa/hud_text_scale_shots.ps1` with a development player (`BuildCommands.BuildWindows -smDevelopment`). Needs an unlocked, connected desktop; a locked session renders blank frames
 - [x] Controls screen generated from `InputBindings` (Settings → CONTROLS: grouped list, click-to-rebind with conflict and reserved-key refusal, reset to defaults, read-only controller map; [CONTROLS.md](CONTROLS.md#rebinding-keys)); needs a play check
 
 ## Accessibility
@@ -97,7 +98,7 @@ is in it being honest, not in it being all ticked.
 - [x] Rebindable keys with conflict rejection ([InputBindings.cs](../Assets/Scripts/Systems/InputBindings.cs))
 - [x] Runtime input routed through `InputBindings` (every gameplay hotkey; defaults equal the old keys; only Esc, Shift, mouse buttons and text-box Enter/Esc stay literal on purpose)
 - [x] Gamepad support (see the controller line under Motion and [CONTROLS.md](CONTROLS.md#controller))
-- [ ] Independent UI text scaling
+- [x] Independent UI text scaling: Settings → TEXT SIZE, 90–150 % in 10 % steps, separate from UI SCALE, saved in GamePrefs (`SM_Set_TextScale`; `-textScale 1.5` for one QA run). Applied in `HudSkin.Text` (display type capped at +6 px), the alert feed and placement refusals; the dock, chips, catalogs, cards, dialogs and Settings rows grow with it ([HudTextScale.cs](../Assets/Scripts/Systems/HudTextScale.cs), `HudLayout.DockHeight` / `ChipHeight`), long labels fall back to `FitText` with an ellipsis. Identical layout at 100 %. Visual pass pending (see Interface)
 
 ## Localization
 

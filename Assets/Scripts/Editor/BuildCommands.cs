@@ -93,7 +93,8 @@ namespace SolarMajesty.EditorTools
                 target = target,
                 targetGroup = BuildPipeline.GetBuildTargetGroup(target),
                 // -smDevelopment: a development player, so the benchmark's spike report can read
-                // per-system profiler markers. Release builds never pass it.
+                // per-system profiler markers and the HUD capture harness (HudShotHarness) runs.
+                // Release builds never pass it.
                 options = HasArg("-smDevelopment") ? BuildOptions.Development : BuildOptions.None
             };
 
@@ -223,5 +224,7 @@ namespace SolarMajesty.EditorTools
             }
             return null;
         }
+
+        private static bool HasArg(string flag) => Array.IndexOf(Environment.GetCommandLineArgs(), flag) >= 0;
     }
 }
