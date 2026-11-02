@@ -37,7 +37,9 @@ namespace SolarMajesty.Tests
             // Retired building and crew words: charging stations, bots, the till and the Fobot Yard replace them.
             @"habs?|beds|inn|hero|heroes|treasury|" +
             // Retired ship names: player text says Colony Lifter.
-            @"lunar rocket|mars ship|belt hauler)\b",
+            @"lunar rocket|mars ship|belt hauler|" +
+            // 'Majesty' alone is a third-party trademark in the genre; only the product name "Solar Majesty" may show.
+            @"(?<!solar[\s_-]?)majesty)\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         // The campaign ends at Mars. Belt and Europa stay catalog-only, so their names may only
@@ -60,7 +62,7 @@ namespace SolarMajesty.Tests
             @"(?<comment>//[^\r\n]*|/\*[\s\S]*?\*/)|" +
             "(?<literal>\\$?@\"(?:\"\"|[^\"])*\"|@\\$\"(?:\"\"|[^\"])*\"|\\$?\"(?:\\\\[\\s\\S]|[^\"\\\\])*\")|" +
             @"(?<character>'(?:\\.|[^'\\])*')|" +
-            @"(?<skip>(?:\b(?:UnityEngine\s*\.\s*)?Debug\s*\.\s*Log(?:Warning|Error|Exception|Assertion|Format|WarningFormat|ErrorFormat)?|\[\s*(?:UnityEngine\s*\.\s*)?Tooltip(?:Attribute)?)\s*\()|" +
+            @"(?<skip>(?:\b(?:UnityEngine\s*\.\s*)?Debug\s*\.\s*Log(?:Warning|Error|Exception|Assertion|Format|WarningFormat|ErrorFormat)?|\[\s*(?:UnityEngine\s*\.\s*)?(?:Tooltip|Header)(?:Attribute)?)\s*\()|" +
             @"(?<paren>[()])");
 
         // File + literal snippet, never line numbers. Each exception is deliberately narrow.
@@ -91,6 +93,7 @@ namespace SolarMajesty.Tests
             Pair("Runtime/FlagPlacementInput.cs", "\"treasury\""), // telemetry reason ID
             Pair("Systems/Settlement.cs", "{Treasury:N0}"), // interpolation variable
             Pair("Runtime/MissionController.cs", "{set.Treasury:N0}/{treasuryGoal:N0}"), // interpolation variables
+            Pair("Editor/IntroBuilder.cs", "\"SOLAR, O, MAJESTY\""), // timeline clip name, editor only
             Pair("Assets/Resources/Audio/Voices/voices.json", "\"speaker\":\"overseer\"") // metadata only; text is checked separately
         };
 
@@ -162,7 +165,7 @@ namespace SolarMajesty.Tests
         public void Scanner_IgnoresCommentsDiagnosticsAndInspectorTooltips()
         {
             var failures = new List<string>();
-            ScanCSharp("sample.cs", "// house\n/* purse */\n[Tooltip(\"houses\")] " +
+            ScanCSharp("sample.cs", "// house\n/* purse */\n[Tooltip(\"houses\")] [Header(\"Majesty 2 inns\")] " +
                 "Debug.Log(Format(\"overseer\")); Debug.LogWarning(\"chest\"); " +
                 "Log.Push(\"house\"); string bark = @\"purses\"; " +
                 "string hint = $\"chest {amount}\"; Tooltip(\"house\");", failures);
@@ -200,6 +203,19 @@ namespace SolarMajesty.Tests
             Check("Systems/World/CelestialBodyCatalog.cs", "\"Europa\"", failures);
             Check("Systems/AdvisorToastCatalog.cs", "\"Europa\"", failures);
             Assert.AreEqual(1, failures.Count);
+        }
+
+        [Test]
+        public void Scanner_CatchesBareMajestyButKeepsTheProductName()
+        {
+            var failures = new List<string>();
+            ScanCSharp("sample.cs", "a = \"MAJESTY COLONY\"; b = \"Your Majesty\"; c = \"Majesty 2\";", failures);
+            Assert.AreEqual(3, failures.Count, string.Join("\n", failures));
+
+            failures.Clear();
+            ScanCSharp("sample.cs", "a = \"SOLAR MAJESTY\"; b = \"Solar Majesty/Build\"; c = \"Solar-Majesty\"; " +
+                "d = \"SolarMajesty.exe\";", failures);
+            Assert.AreEqual(0, failures.Count, string.Join("\n", failures));
         }
     }
 }

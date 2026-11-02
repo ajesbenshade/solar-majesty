@@ -303,6 +303,23 @@ namespace SolarMajesty.Tests
             Assert.IsNull(OverseerHud.ChipIconFor("HOUSES"), "the old label is gone; nothing should still key on it");
         }
 
+        [Test]
+        public void StockpileChips_BotsAndBuildAreDistinct_AndBuildGetsTheHammer()
+        {
+            Assert.AreNotEqual(OverseerHud.BotsLabel, OverseerHud.BuildLabel, "robot count and construction need their own labels");
+            Assert.AreEqual(IconId.Robot, OverseerHud.ChipIconFor(OverseerHud.BotsLabel));
+            Assert.AreEqual(IconId.Hammer, OverseerHud.ChipIconFor(OverseerHud.BuildLabel));
+            Assert.AreEqual(IconId.Hammer, OverseerHud.ChipIconFor(OverseerHud.HaltedLabel));
+        }
+
+        [Test]
+        public void MinimapCaption_NamesTheWorld_NotTheTrademark()
+        {
+            Assert.AreEqual("EARTH · COLONY", OverseerHud.MinimapCaption("Earth"));
+            Assert.AreEqual("COLONY", OverseerHud.MinimapCaption(null));
+            StringAssert.DoesNotContain("MAJESTY", OverseerHud.MinimapCaption("Mars"));
+        }
+
         private static System.Func<string, int, float> CapsMeasure(float scale) =>
             (s, size) =>
             {

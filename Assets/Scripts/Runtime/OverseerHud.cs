@@ -705,6 +705,9 @@ namespace SolarMajesty
         }
 
         internal const string ChargersLabel = "CHARGERS";
+        internal const string BotsLabel = "BOTS";
+        internal const string BuildLabel = "BUILD";
+        internal const string HaltedLabel = "HALTED";
 
         /// <summary>Which icon a stockpile chip label gets; null means a coloured dot.</summary>
         internal static IconId? ChipIconFor(string label)
@@ -714,10 +717,10 @@ namespace SolarMajesty
             if (label.StartsWith("EU")) return IconId.Coin;
             if (label.StartsWith("PWR")) return IconId.Power;
             if (label.StartsWith("BEDS")) return IconId.Beds;
-            if (label.StartsWith("BOTS")) return IconId.Robot;
+            if (label.StartsWith(BotsLabel)) return IconId.Robot;
             if (label.StartsWith(ChargersLabel)) return IconId.Charger;
             if (label.StartsWith("HAUL")) return IconId.Bag;
-            if (label.StartsWith("BOTS") || label.StartsWith("HALTED")) return IconId.Hammer;
+            if (label.StartsWith(BuildLabel) || label.StartsWith(HaltedLabel)) return IconId.Hammer;
             return null;
         }
 
@@ -846,12 +849,12 @@ namespace SolarMajesty
             float top = r.y + 17f;
             float cw = HudLayout.StockpileChipWidth(r.width);
             float ch = 28f;
-            ResourceChip(new Rect(r.x, top, cw, ch), "BOTS", heroes, heroes <= 0);
+            ResourceChip(new Rect(r.x, top, cw, ch), BotsLabel, heroes, heroes <= 0);
             ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top, cw, ch), ChargersLabel, houses, false,
                 solar > 0 ? $"{solar} solar" : null);
             ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", collectors, collectors <= 0 || replacing > 0,
                 replacing > 0 ? $"-{replacing} replacing" : (bags > 0 ? $"{bags} carried" : null));
-            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? "HALTED" : "BOTS",
+            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? HaltedLabel : BuildLabel,
                 building ? pct : 0, halted, building ? "% built" : "idle");
         }
 
@@ -2492,6 +2495,10 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>Caption under the minimap dial: the world, as the dock reads it ("EARTH · COLONY").</summary>
+        internal static string MinimapCaption(string world) =>
+            string.IsNullOrEmpty(world) ? "COLONY" : $"{world.ToUpperInvariant()} · COLONY";
+
         private void DrawMinimap()
         {
             float size = MapSize;
@@ -2605,7 +2612,7 @@ namespace SolarMajesty
             }
 
             HudSkin.Tex(dial, HudSkin.MinimapBezel, Color.white);
-            HudSkin.ShadowLabel(new Rect(rect.x, rect.yMax - 13f, rect.width, 12f), "MAJESTY COLONY", _capsCenter, 0.9f);
+            HudSkin.ShadowLabel(new Rect(rect.x, rect.yMax - 13f, rect.width, 12f), MinimapCaption(_loop.BodyProfile != null ? _loop.BodyProfile.DisplayName : null), _capsCenter, 0.9f);
 
             var e = Event.current;
             Vector2 mouse = e.mousePosition;
