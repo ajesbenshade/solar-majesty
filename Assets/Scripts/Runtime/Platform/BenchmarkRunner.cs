@@ -124,7 +124,7 @@ namespace SolarMajesty
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = -1;
 
-            string[] bodies = (ArgValue("-benchmarkBodies") ?? "Earth,Luna,Mars,Belt,Europa").Split(',');
+            string[] bodies = (ArgValue("-benchmarkBodies") ?? "Earth,Luna,Mars").Split(',');
             float seconds = ParseFloat(ArgValue("-benchmarkSeconds"), 45f);
             int speedIndex = Mathf.Clamp((int)ParseFloat(ArgValue("-benchmarkSpeed"), 7f), 1, SimSpeed.Multipliers.Length - 1);
 

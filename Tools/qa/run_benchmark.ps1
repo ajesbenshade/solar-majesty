@@ -14,7 +14,7 @@
 #>
 param(
   [Parameter(Mandatory = $true)][string]$GameDir,
-  [string]$Bodies = 'Earth,Luna,Mars,Belt,Europa',
+  [string]$Bodies = 'Earth,Luna,Mars',
   [int]$Seconds = 45,
   [int]$Speed = 7,
   [int]$Width = 1920,
