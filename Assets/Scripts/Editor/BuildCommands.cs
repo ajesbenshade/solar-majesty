@@ -92,7 +92,9 @@ namespace SolarMajesty.EditorTools
                 locationPathName = outputPath,
                 target = target,
                 targetGroup = BuildPipeline.GetBuildTargetGroup(target),
-                options = BuildOptions.None
+                // -smDevelopment: a development player, so the benchmark's spike report can read
+                // per-system profiler markers. Release builds never pass it.
+                options = HasArg("-smDevelopment") ? BuildOptions.Development : BuildOptions.None
             };
 
             // The app icon is committed in ProjectSettings; ApplyIcons only re-assigns it if it has
@@ -207,6 +209,9 @@ namespace SolarMajesty.EditorTools
                 return path + ".exe";
             return path;
         }
+
+        private static bool HasArg(string flag) =>
+            Array.IndexOf(Environment.GetCommandLineArgs(), flag) >= 0;
 
         private static string ArgValue(string flag)
         {

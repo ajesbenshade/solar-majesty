@@ -15,3 +15,4 @@ Runtime/Threat/DustStalkerAgent.cs: error CS1501: No overload for method 'FindOb
 Tests/EditMode/AppIconTests.cs: error CS0103: The name 'NamedBuildTarget' does not exist in the current context
 Tests/EditMode/AppIconTests.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'GetIconSizes'
 Tests/EditMode/AppIconTests.cs: error CS0117: 'PlayerSettings' does not contain a definition for 'GetIcons'
+Runtime/World/TerrainFollow.cs: error CS1501: No overload for method 'BakeMesh' takes 3 arguments

@@ -93,12 +93,7 @@ namespace SolarMajesty
             get
             {
                 if (!string.IsNullOrEmpty(_directoryOverride)) return _directoryOverride;
-                if (!_argChecked)
-                {
-                    _argChecked = true;
-                    _argDirectory = ParseProfileDirArgument(Environment.GetCommandLineArgs());
-                }
-                if (!string.IsNullOrEmpty(_argDirectory)) return _argDirectory;
+                if (!string.IsNullOrEmpty(ArgDirectory)) return ArgDirectory;
                 return Path.Combine(Application.persistentDataPath, Application.isEditor ? EditorFolderName : FolderName);
             }
         }
@@ -106,10 +101,23 @@ namespace SolarMajesty
         private static bool _argChecked;
         private static string _argDirectory;
 
+        /// <summary>The <c>-profileDir</c> argument of this process, read once; null when absent.</summary>
+        private static string ArgDirectory
+        {
+            get
+            {
+                if (!_argChecked)
+                {
+                    _argChecked = true;
+                    _argDirectory = ParseProfileDirArgument(Environment.GetCommandLineArgs());
+                }
+                return _argDirectory;
+            }
+        }
+
         /// <summary>
         /// <c>-profileDir &lt;path&gt;</c> or <c>-profileDir=&lt;path&gt;</c>: keep prefs somewhere else, like
-        /// <c>-saveDir</c> does for saves. Capture, benchmark and QA runs use both so they never
-        /// touch a real profile.
+        /// <c>-saveDir</c> does for saves. Capture, benchmark and QA runs use both so they never touch a real profile.
         /// </summary>
         public static string ParseProfileDirArgument(string[] args)
         {
@@ -134,25 +142,21 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Whether the old registry PlayerPrefs are read (migration) and cleared (deletes). Off for a
-        /// <c>-profileDir</c> run, so an isolated run's New Game can never wipe or import a real player's values.
+        /// Whether the registry PlayerPrefs are touched at all: legacy reads (migration), deletes, and
+        /// the machine-local display keys. Off for a <c>-profileDir</c> run, so an isolated run's New Game
+        /// can never wipe, import or overwrite a real player's values; everything goes to its file.
         /// </summary>
-        private static bool LegacyEnabled
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(_directoryOverride)) return true; // tests point here and exercise migration
-                _ = Directory; // resolves the -profileDir argument once
-                return string.IsNullOrEmpty(_argDirectory);
-            }
-        }
+        private static bool RegistryEnabled =>
+            !string.IsNullOrEmpty(_directoryOverride) // tests point here and exercise migration
+            || string.IsNullOrEmpty(ArgDirectory);
 
-        private static bool HasLegacy(string key) => LegacyEnabled && PlayerPrefs.HasKey(key);
+        private static bool HasLegacy(string key) => RegistryEnabled && PlayerPrefs.HasKey(key);
+
+        /// <summary>A machine-local key that is actually stored in PlayerPrefs this run.</summary>
+        private static bool InRegistry(string key) => RegistryEnabled && IsMachineKey(key);
 
         /// <summary>True when prefs are going somewhere other than the player's real profile.</summary>
-        public static bool IsIsolated =>
-            !string.IsNullOrEmpty(_directoryOverride) ||
-            !string.IsNullOrEmpty(ParseProfileDirArgument(Environment.GetCommandLineArgs()));
+        public static bool IsIsolated => !string.IsNullOrEmpty(_directoryOverride) || !string.IsNullOrEmpty(ArgDirectory);
 
         public static string FilePath => Path.Combine(Directory, FileName);
 
@@ -165,7 +169,7 @@ namespace SolarMajesty
 
         public static int GetInt(string key, int defaultValue = 0)
         {
-            if (IsMachineKey(key)) return PlayerPrefs.GetInt(key, defaultValue);
+            if (InRegistry(key)) return PlayerPrefs.GetInt(key, defaultValue);
             if (TryGet(key, out Entry e))
                 return e.Kind == Kind.Int ? e.I : defaultValue;
             if (!HasLegacy(key)) return defaultValue;
@@ -176,7 +180,7 @@ namespace SolarMajesty
 
         public static float GetFloat(string key, float defaultValue = 0f)
         {
-            if (IsMachineKey(key)) return PlayerPrefs.GetFloat(key, defaultValue);
+            if (InRegistry(key)) return PlayerPrefs.GetFloat(key, defaultValue);
             if (TryGet(key, out Entry e))
                 return e.Kind == Kind.Float ? e.F : defaultValue;
             if (!HasLegacy(key)) return defaultValue;
@@ -187,7 +191,7 @@ namespace SolarMajesty
 
         public static string GetString(string key, string defaultValue = "")
         {
-            if (IsMachineKey(key)) return PlayerPrefs.GetString(key, defaultValue);
+            if (InRegistry(key)) return PlayerPrefs.GetString(key, defaultValue);
             if (TryGet(key, out Entry e))
                 return e.Kind == Kind.String ? e.S : defaultValue;
             if (!HasLegacy(key)) return defaultValue;
@@ -198,26 +202,26 @@ namespace SolarMajesty
 
         public static void SetInt(string key, int value)
         {
-            if (IsMachineKey(key)) { PlayerPrefs.SetInt(key, value); return; }
+            if (InRegistry(key)) { PlayerPrefs.SetInt(key, value); return; }
             Put(key, new Entry { Kind = Kind.Int, I = value });
         }
 
         public static void SetFloat(string key, float value)
         {
-            if (IsMachineKey(key)) { PlayerPrefs.SetFloat(key, value); return; }
+            if (InRegistry(key)) { PlayerPrefs.SetFloat(key, value); return; }
             Put(key, new Entry { Kind = Kind.Float, F = value });
         }
 
         public static void SetString(string key, string value)
         {
-            if (IsMachineKey(key)) { PlayerPrefs.SetString(key, value); return; }
+            if (InRegistry(key)) { PlayerPrefs.SetString(key, value); return; }
             Put(key, new Entry { Kind = Kind.String, S = value ?? "" });
         }
 
         public static bool HasKey(string key)
         {
             if (string.IsNullOrEmpty(key)) return false;
-            if (IsMachineKey(key)) return PlayerPrefs.HasKey(key);
+            if (InRegistry(key)) return PlayerPrefs.HasKey(key);
             return TryGet(key, out _) || HasLegacy(key);
         }
 
@@ -227,7 +231,7 @@ namespace SolarMajesty
             Load();
             if (Store.Remove(key)) _dirty = true;
             // Also clear the legacy copy, or the next read would migrate it straight back.
-            if (LegacyEnabled) PlayerPrefs.DeleteKey(key);
+            if (RegistryEnabled) PlayerPrefs.DeleteKey(key);
         }
 
         public static void DeleteAll()
@@ -235,7 +239,7 @@ namespace SolarMajesty
             Load();
             Store.Clear();
             _dirty = true;
-            if (LegacyEnabled) PlayerPrefs.DeleteAll();
+            if (RegistryEnabled) PlayerPrefs.DeleteAll();
         }
 
         /// <summary>Write pending changes. Safe to call often; does nothing when clean.</summary>
