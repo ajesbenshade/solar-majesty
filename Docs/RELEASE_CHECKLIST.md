@@ -36,7 +36,7 @@ is in it being honest, not in it being all ticked.
 - [x] Prefs live in `Profile/prefs.json` (`GamePrefs`) so Steam Cloud can sync them; the old registry values migrate on first read. Per-PC keys (quality, fullscreen, resolution, frame cap, UI Scale) stay in PlayerPrefs; saved key bindings keep main's `GameAction` numbers (`PrefsMigrationTests`)
 - [x] Error log, build stamp and key rebinding come from #82 (`ErrorLog`, `ReleaseStamp`, `InputBindings`); not duplicated by the #92 port
 - [x] Live-AI content guard ([AiContentGuard.cs](../Assets/Scripts/Systems/Narration/AiContentGuard.cs)) for the Steam AI-disclosure form; `THIRD-PARTY-NOTICES.txt` ships with builds
-- [ ] Still to land from #92: localization, demo build, store art and capsules, benchmark / background autosave / async NavMesh, local-AI packager, QA autoplay fixes (listed in the #92 port PR)
+- [ ] Still to land from #92: demo build, store art and capsules, benchmark / background autosave / async NavMesh, local-AI packager, QA autoplay fixes (listed in the #92 port PR)
 
 ## Look
 
@@ -96,8 +96,10 @@ is in it being honest, not in it being all ticked.
 ## Localization
 
 - [x] Source-keyed lookup with English fallback, JSON tables, Settings → Language, pseudo-locale for QA ([Localization.cs](../Assets/Scripts/Systems/Localization.cs), [LOCALIZATION.md](LOCALIZATION.md))
-- [x] Strings extracted into a table: 1,400+ player-facing strings wrapped and collected by [extract.py](../Tools/loc/extract.py); what remains is mostly model prompts, ids and debug text ([status](LOCALIZATION_STATUS.md))
-- [ ] Machine translation pass and community correction
+- [x] Strings extracted into a table: 1,450+ player-facing strings wrapped and collected by [extract.py](../Tools/loc/extract.py); what remains is mostly model prompts, ids and debug text ([status](LOCALIZATION_STATUS.md))
+- [x] French table, 100 % (`Resources/Locale/fr.json`): 1,456 strings, placeholders and key tokens validated
+- [ ] Native French review before listing French on Steam; more languages and community correction
+- [ ] Wrap and translate the strings added by the other #92 port PRs once they merge (`python Tools/loc/extract.py --report`)
 - [x] Font fallback for non-Latin scripts on Windows (CJK, Indic, Thai); bundle an open font before shipping CJK on Steam Deck
 
 ## Before Early Access
