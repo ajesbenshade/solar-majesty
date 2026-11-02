@@ -1,11 +1,9 @@
 # Steam store screenshots
 
-> **Recapture before uploading.** These were taken on the #92 branch and predate the AI-core
-> reshape (the player is now the Core), the charging stations and
-> the canon copy pass: the HUD shots still say "treasury", and 03, 07 and 08 show the Asteroid Belt
-> and Europa, which players no longer reach (the campaign ends at Mars). Recapture on a current
-> release build with the command below. It needs an unlocked desktop with the game window in front;
-> a locked screen or a screen saver captures black frames.
+> **Captured 2026-11-02** on a current release build of this branch (AI-core Commons, charging
+> pods, Colony Lifter). Only no-HUD shots for now: the live HUD shows a red "BOTS 0" chip next to
+> a second "BOTS" chip and labels the minimap "MAJESTY COLONY". Fix those, then add a HUD shot and
+> a den shot (the raw captures include both) before uploading; Steam wants at least five.
 
 Captured from the release build (no development watermark) at 1920×1080 on Ultra by
 `Tools/qa/store_screenshots.ps1`, which runs the game's `-storeshots` mode against a throwaway
@@ -16,15 +14,12 @@ bounties on the nearest dens, and a minute of play at 2× before the camera fram
 
 | File | Shows |
 |---|---|
-| 01_earth_colony.jpg | Earth colony: citadel Commons, landing pad with the Colony Lifter, solar and farm yards |
-| 02_mars_colony_gameplay.jpg | Mars colony with the full HUD: objectives, till (labelled "treasury" in this old capture), robot tags |
-| 03_europa_colony.jpg | Europa colony on the ice, robots at work |
-| 04_earth_den_bounty.jpg | A den and its creatures under a live 1,800 EU Clear Threat bounty |
-| 05_luna_den.jpg | A Moon den with its creatures |
-| 06_mars_colony.jpg | Mars colony, closer, no HUD |
-| 07_belt_wide.jpg | The Asteroid Belt colony and its surroundings |
-| 08_europa_den.jpg | A Europa den on the ice |
-| 09_luna_colony_gameplay.jpg | Moon colony with the full HUD |
+| 01_earth_colony_wide.jpg | Earth colony on the meadow: AI-core Commons, charging pod, solar yard, the Colony Lifter on its pad |
+| 02_mars_colony_wide.jpg | Mars colony beside a mesa: the Commons, mining scaffold and the Colony Lifter |
+| 03_luna_colony_wide.jpg | Moon colony among craters, with a den to the right |
+| 04_earth_colony.jpg | Earth colony, closer |
+| 05_mars_colony.jpg | Mars colony, closer |
+| 06_luna_colony.jpg | Moon colony, closer |
 
 Upload at least five; Steam shows the first four on the store page and in search results, so put a
 HUD shot and a den shot among them. Re-capture after visual changes:
