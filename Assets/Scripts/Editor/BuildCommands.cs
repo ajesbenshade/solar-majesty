@@ -92,7 +92,8 @@ namespace SolarMajesty.EditorTools
                 locationPathName = outputPath,
                 target = target,
                 targetGroup = BuildPipeline.GetBuildTargetGroup(target),
-                options = BuildOptions.None
+                // -smDevelopment: a development player, for the HUD capture harness (HudShotHarness).
+                options = HasArg("-smDevelopment") ? BuildOptions.Development : BuildOptions.None
             };
 
             // Version and icons are applied for this build only; the version is put back after so
@@ -217,5 +218,7 @@ namespace SolarMajesty.EditorTools
             }
             return null;
         }
+
+        private static bool HasArg(string flag) => Array.IndexOf(Environment.GetCommandLineArgs(), flag) >= 0;
     }
 }

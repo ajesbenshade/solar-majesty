@@ -58,22 +58,30 @@ namespace SolarMajesty
             GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(s, s, 1f));
 
             if (_hud == null) _hud = GetComponent<OverseerHud>();
+            // Drawn in front of the console so this view's tooltip is never under a HUD panel.
+            GUI.depth = -1;
+            _tips.Begin(HudPointer.ScreenToGui(Input.mousePosition, Screen.height, s));
             DrawFeed(sw, _hud != null ? _hud.RightColumnBottom + 10f : 96f);
             DrawLegend(Screen.height / s);
+            _tips.Draw(sw, Screen.height / s, false);
 
             GUI.matrix = prev;
         }
 
+        private readonly HudTooltip _tips = new HudTooltip();
+
         private void DrawFeed(float sw, float top)
         {
-            const float width = 300f;
+            float width = HudLayout.ObjectivesWidth;
             float x = sw - width - 16f;
             float y = top;
 
             for (int i = 0; i < _sorted.Count; i++)
             {
                 Alert alert = _sorted[i];
-                var rect = new Rect(x, y, width, 36f);
+                // Two lines of message at 100 % text; the card grows when larger text needs a third.
+                float textH = _text.CalcHeight(new GUIContent(alert.DisplayMessage), width - 66f);
+                var rect = new Rect(x, y, width, Mathf.Max(36f, textH + 6f));
                 if (Event.current.type == EventType.Layout) _hitRects.Add(rect);
                 Color sev = ColorFor(alert.Severity);
                 bool critical = alert.Severity == AlertSeverity.Critical;
@@ -96,12 +104,13 @@ namespace SolarMajesty
                     _loop.Alerts.Acknowledge(alert);
                 }
 
-                GUI.Label(new Rect(rect.x + 40f, rect.y + 3f, rect.width - 66f, 30f), alert.DisplayMessage, _text);
+                GUI.Label(new Rect(rect.x + 40f, rect.y + 3f, rect.width - 66f, rect.height - 6f), alert.DisplayMessage, _text);
                 if (alert.HasPosition)
-                    HudSkin.Icon(new Rect(rect.xMax - 20f, rect.y + 13f, 10f, 10f), UiIcons.Get(IconId.Play),
+                    HudSkin.Icon(new Rect(rect.xMax - 20f, rect.center.y - 5f, 10f, 10f), UiIcons.Get(IconId.Play),
                         hot ? HudSkin.GoldBright : HudSkin.TextFaint);
+                _tips.Offer(rect, HudTips.Alert());
 
-                y += 42f;
+                y += rect.height + 6f;
             }
         }
 
@@ -118,24 +127,32 @@ namespace SolarMajesty
             if (mode == MapOverlayMode.None) return;
 
             var entries = MapOverlay.LegendFor(mode);
-            float height = 32f + entries.Count * 18f;
-            var box = new Rect(16f, sh - 96f - height, 180f, height);
+            float rowH = HudTextScale.Line(18f);
+            float titleH = HudTextScale.Line(16f);
+            float height = 12f + titleH + 4f + entries.Count * rowH;
+            float boxW = HudTextScale.Width(180f);
+            // Above the console, which grows with TEXT SIZE too.
+            var box = new Rect(16f, sh - 96f - HudTextScale.Grow(HudLayout.DockTextRows) - height, boxW, height);
             HudSkin.Panel(box);
-            GUI.Label(new Rect(box.x + 12f, box.y + 8f, box.width - 20f, 16f), MapOverlay.TitleFor(mode), _legendTitle);
+            GUI.Label(new Rect(box.x + 12f, box.y + 8f, box.width - 20f, titleH), MapOverlay.TitleFor(mode), _legendTitle);
 
-            float y = box.y + 28f;
+            float y = box.y + 12f + titleH;
             for (int i = 0; i < entries.Count; i++)
             {
                 Color c = entries[i].Color;
-                HudSkin.Dot(new Vector2(box.x + 17f, y + 8f), 10f, new Color(c.r, c.g, c.b, Mathf.Max(0.8f, c.a)));
-                GUI.Label(new Rect(box.x + 28f, y, box.width - 34f, 16f), entries[i].Label, _legendLabel);
-                y += 18f;
+                HudSkin.Dot(new Vector2(box.x + 17f, y + rowH * 0.5f - 1f), 10f, new Color(c.r, c.g, c.b, Mathf.Max(0.8f, c.a)));
+                GUI.Label(new Rect(box.x + 28f, y, box.width - 34f, rowH - 2f), entries[i].Label, _legendLabel);
+                y += rowH;
             }
+            _tips.Offer(box, HudTips.Overlay(MapOverlay.TitleFor(mode)));
         }
+
+        private int _stylesVersion = -1;
 
         private void EnsureStyles()
         {
-            if (_text != null) return;
+            if (_text != null && _stylesVersion == HudTextScale.Version) return;
+            _stylesVersion = HudTextScale.Version;
 
             _text = HudSkin.Text(HudSkin.Body, 12, FontStyle.Normal, HudSkin.TextPrimary, TextAnchor.MiddleLeft);
             _text.wordWrap = true;
