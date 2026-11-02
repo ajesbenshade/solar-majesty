@@ -43,7 +43,8 @@ namespace SolarMajesty
 
         /// <summary>Load last selected body from prefs (Earth if unset).</summary>
         public static CelestialBodyId LoadSavedBody() =>
-            (CelestialBodyId)GamePrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Earth);
+            DemoBuild.ClampBody(DemoBuild.Active,
+                (CelestialBodyId)GamePrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Earth));
 
         /// <summary>Point the in-memory body and seed at prefs. Does not write.</summary>
         public static void ReloadFromPrefs()

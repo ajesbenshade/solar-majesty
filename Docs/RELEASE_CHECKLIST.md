@@ -119,5 +119,8 @@ is in it being honest, not in it being all ticked.
 - [ ] Steam store page assembled on the partner site: upload the art, check it in Steamworks' capsule preview, answer the bracketed Early Access questions in [PressKit/STORE_PAGE.md](PressKit/STORE_PAGE.md)
 - [ ] Human artist pass on the key art, logo and icon before launch: today's art is programmer art composed from game renders, and the logo is a 2D take on the 3D intro title
 - [ ] Trailer
-- [ ] Demo build for a Next Fest
+- [x] Demo build for a Next Fest: `BuildCommands.BuildWindowsDemo` (or `BuildFromCommandLine -smDemo`, the release workflow's opt-in `build-demo` job) makes `SolarMajestyDemo.exe` ("Solar Majesty Demo") with the `SM_DEMO` define for that build only. Earth only, guided start locked on, Campaign Complete / Ironman left out, own `DemoSaves` / `DemoProfile`, end-of-demo screen (Wishlist on Steam / Keep playing Earth / Quit) behind the victory hold. See [DEMO.md](DEMO.md#steam-demo-build-next-fest) and [STEAM_RELEASE.md](STEAM_RELEASE.md#7-next-fest-demo)
+- [ ] Look at the end-of-demo screen in a demo build and press Wishlist with Steam running
+- [ ] Demo app created on Steamworks, its App ID in `SteamConfig.DemoAppId` (480 placeholder today), the real `FullGameAppId` so Wishlist opens our page, demo store presence and build reviewed, Next Fest registration
+- [ ] Full-game import of demo progress (sketched in STEAM_RELEASE.md, not built)
 - [ ] Phase 4 exit review re-run against a fresh still

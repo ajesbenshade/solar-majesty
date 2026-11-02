@@ -1278,6 +1278,12 @@ namespace SolarMajesty
         public void PlayBodyFromTitle(CelestialBodyId body, bool cheatUnlock)
         {
             cheatUnlock &= DevTools.Enabled;
+            // Steam demo: Luna and Mars are in the full game only.
+            if (DemoSlice.ShowBodyInFullGame(body) && !DemoBuild.BodyInDemo(body))
+            {
+                _overseerHud?.Notify(DemoEndOffer.WorldLocked(CelestialBodyCatalog.Get(body)?.DisplayName), 4f);
+                return;
+            }
             // Hidden worlds (Belt, Europa) are scenery on the title: no label, no toast.
             if (!DemoSlice.ShowBody(body)) return;
             if (DemoSettings.FirstHourDemo && body != CelestialBodyId.Earth)
@@ -5320,6 +5326,21 @@ namespace SolarMajesty
                 return; // same rule as ContinueAfterVictory: the verdict is not up during a beat
             _victoryHold = false;
             ReturnToTitle();
+        }
+
+        /// <summary>
+        /// Steam demo end screen, KEEP PLAYING EARTH: release the victory hold and run the won colony
+        /// as a sandbox. The end screen draws only while held (<see cref="DemoEndOffer.Show"/>), so
+        /// it does not come back, the same as Continue on a won save.
+        /// </summary>
+        public void ContinueAfterDemoEnd()
+        {
+            _victoryHold = false;
+            _mission?.DismissWinToSandbox();
+            if (SimSpeed.IsPaused)
+                SimSpeed.Resume();
+            Time.timeScale = SimSpeed.TimeScale;
+            PersistSession();
         }
 
         /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>

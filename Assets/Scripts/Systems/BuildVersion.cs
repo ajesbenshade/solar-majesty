@@ -123,13 +123,22 @@ namespace SolarMajesty
         }
 
         /// <summary>Small flat JSON object; hand-written so it needs no serializer.</summary>
-        public static string ToJson(string version, string commit, string platform, DateTime builtUtc)
+        public static string ToJson(string version, string commit, string platform, DateTime builtUtc) =>
+            ToJson(version, commit, platform, builtUtc, null);
+
+        /// <summary>
+        /// Same, plus <c>"flavour"</c> (<c>full</c> or <c>demo</c>, see <see cref="DemoBuild.Flavour"/>)
+        /// when given: the upload scripts read it so a demo never lands in the game's depot.
+        /// </summary>
+        public static string ToJson(string version, string commit, string platform, DateTime builtUtc, string flavour)
         {
             var sb = new StringBuilder();
             sb.Append("{\n");
             Field(sb, "version", version, false);
             Field(sb, "commit", commit ?? "", false);
             Field(sb, "platform", platform ?? "", false);
+            if (!string.IsNullOrEmpty(flavour))
+                Field(sb, "flavour", flavour, false);
             Field(sb, "builtUtc", builtUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture), true);
             sb.Append("}\n");
             return sb.ToString();

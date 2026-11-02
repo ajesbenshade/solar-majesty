@@ -17,7 +17,8 @@ namespace SolarMajesty
         public const int PlayerSlotCount = 3;
         public const int SlotCount = PlayerSlotCount + 1;
 
-        private const string FolderName = "Saves";
+        /// <summary>"Saves", or "DemoSaves" in the Steam demo so demo colonies never share the game's slots.</summary>
+        private static string FolderName => DemoBuild.SaveFolder(DemoBuild.CompiledAsDemo);
         private const string Extension = ".json";
 
         /// <summary>

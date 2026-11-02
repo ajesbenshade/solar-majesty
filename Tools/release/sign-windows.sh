@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Authenticode-signs the Windows player on Linux with osslsigncode.
 #
-#   Tools/release/sign-windows.sh <build_dir>
+#   Tools/release/sign-windows.sh <build_dir> [exe_name]
+#
+#   exe_name defaults to SolarMajesty.exe; the Steam demo passes SolarMajestyDemo.exe.
 #
 # Environment:
 #   WINDOWS_CERT_PFX_BASE64  base64 of the code-signing certificate + key (.pfx / .p12)
@@ -13,8 +15,8 @@
 # hardware tokens / cloud HSMs and cannot be exported as a .pfx; see Docs/RELEASE_PIPELINE.md.
 set -euo pipefail
 
-if [ $# -ne 1 ]; then
-  echo "usage: $0 <build_dir>" >&2
+if [ $# -ne 1 ] && [ $# -ne 2 ]; then
+  echo "usage: $0 <build_dir> [exe_name]" >&2
   exit 2
 fi
 build_dir="$1"
@@ -27,7 +29,7 @@ if ! command -v osslsigncode >/dev/null 2>&1; then
   sudo apt-get install -y -qq osslsigncode
 fi
 
-exe="$build_dir/SolarMajesty.exe"
+exe="$build_dir/${2:-SolarMajesty.exe}"
 if [ ! -f "$exe" ]; then
   echo "not found: $exe" >&2
   exit 1
