@@ -35,6 +35,35 @@ namespace SolarMajesty
         /// <summary>Command-line switch that skips Steam entirely (offline QA, the AI pack, CI).</summary>
         public const string NoSteamArg = "-nosteam";
 
+        /// <summary>Command-line switch for the handheld layout on other PC handhelds, or to preview it on a desktop.</summary>
+        public const string HandheldArg = "-handheld";
+
+        /// <summary>True when the command line asks for the handheld layout.</summary>
+        public static bool HandheldByArgs(string[] args)
+        {
+            if (args == null) return false;
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (string.Equals(args[i], HandheldArg, System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Steam Deck hardware, known before Steam starts: Steam sets <c>SteamDeck=1</c> in the
+        /// environment of games it launches on a Deck, and the APU reports itself by name
+        /// (LCD "AMD Custom GPU 0405", OLED "0932", or the "Van Gogh" / "Sephiroth" code names
+        /// under some drivers). <c>SteamService</c> confirms it with Steam once Steam is up.
+        /// </summary>
+        public static bool LooksLikeSteamDeck(string gpuName, string steamDeckEnv)
+        {
+            if (steamDeckEnv != null && steamDeckEnv.Trim() == "1") return true;
+            string n = (gpuName ?? "").ToLowerInvariant();
+            return n.Contains("custom gpu 0405") || n.Contains("custom gpu 0932") ||
+                   n.Contains("van gogh") || n.Contains("sephiroth");
+        }
+
         /// <summary>
         /// Steam API name for an achievement: ACH_ plus the enum name in upper snake case
         /// (FirstContract → ACH_FIRST_CONTRACT). These are the names to enter on the partner site.

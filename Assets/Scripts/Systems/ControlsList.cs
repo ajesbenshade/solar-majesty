@@ -112,7 +112,8 @@ namespace SolarMajesty
 
         /// <summary>
         /// The controller layout (Docs/CONTROLS.md, Runtime/Camera/GamepadInput.cs). Read-only:
-        /// controller buttons are fixed in the Input Manager, not in this table.
+        /// controller buttons are fixed in the Input Manager, not in this table. Rows marked
+        /// "pointer" apply in pointer mode (Back; always on in menus, placement tools and research).
         /// </summary>
         public static readonly (string Button, string Action)[] ControllerRows =
         {
@@ -125,7 +126,11 @@ namespace SolarMajesty
             ("Y", "Research panel"),
             ("LB / RB", "Slower / faster"),
             ("Start", "Pause menu (closes Settings)"),
-            ("Back", "Unassigned")
+            ("Back", "Pointer mode on / off"),
+            ("L3", "Jump to the most urgent alert"),
+            ("Left stick (pointer)", "Move the pointer; push an edge to pan"),
+            ("A / R3 (pointer)", "Left click / right click"),
+            ("D-pad (pointer)", "Up: overlay · Down: tool · Left / Right: bounty")
         };
 
         public static string NameOf(GameAction action) =>

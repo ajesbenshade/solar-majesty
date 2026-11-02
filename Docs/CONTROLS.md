@@ -1,6 +1,6 @@
 # Controls
 
-Solar Majesty is a mouse-and-keyboard game first. A controller can drive the camera, game speed and the main menus, but it cannot point and click (see [Controller limits](#controller-limits)).
+Solar Majesty is a mouse-and-keyboard game first. A controller drives the camera and game speed, and in pointer mode it moves the real pointer and clicks, so every HUD button, menu and placement works from a pad or a Steam Deck (see [Pointer mode](#pointer-mode)).
 
 Most keys do nothing while you are typing flag orders.
 
@@ -12,7 +12,7 @@ Most keys do nothing while you are typing flag orders.
 | Zoom out / in | `Q` / `E`, or the mouse wheel (zooms toward the cursor; the wheel scrolls a panel when the pointer is over one) | Left trigger / right trigger, or right stick down / up |
 | Orbit | Hold middle mouse and drag (yaw, plus a little pitch) | Right stick left / right (yaw) |
 | Focus Campus A / B | `F6` / `F7` | — |
-| Jump to most urgent alert | `Backspace` | `A` |
+| Jump to most urgent alert | `Backspace` | `A` (camera mode) or `L3` |
 
 Settings → INVERT CAMERA PAN flips the pan direction for keys, edge scroll and the stick alike.
 
@@ -98,7 +98,9 @@ Some keys are fixed on purpose and can't be rebound or taken by another action:
 
 ## Controller
 
-Any XInput controller (Xbox and compatible pads) works on Windows. Controller support is on by default, and nothing is read until a controller is plugged in. Settings → **CONTROLLER** turns it off, for example when a drifting or stray device keeps nudging the map. The chip also reports **NONE CONNECTED** or **NOT SET UP** (the Input Manager axes are missing).
+Any XInput controller (Xbox and compatible pads) works on Windows, and the Steam Deck's built-in controls present themselves as one. Controller support is on by default, and nothing is read until a controller is plugged in. Settings → **CONTROLLER** turns it off, for example when a drifting or stray device keeps nudging the map. The chip also reports **IN USE**, **NONE CONNECTED** or **NOT SET UP** (the Input Manager axes are missing).
+
+**Controller mode** follows the last device you touched. Any stick, trigger or button turns it on, and hints (tooltips, tutorial lines, the hold message) then name pad buttons instead of keys where the pad has one. Moving the mouse or typing turns it off. The Steam Deck starts in controller mode.
 
 Feel: sticks have a radial deadzone (20% of travel), and the rest of the travel follows a curve, so a small tilt moves the camera slowly and a full tilt moves it at full speed. Diagonals are not faster than straight lines. Pan speed scales with zoom, as with the keys.
 
@@ -113,7 +115,34 @@ Feel: sticks have a radial deadzone (20% of travel), and the rest of the travel 
 | `Y` | Research panel |
 | `LB` / `RB` | Slower / faster |
 | `Start` | Pause menu |
-| `Back` | Reserved (unassigned) |
+| `Back` | Pointer mode on / off |
+| `L3` (left stick press) | Jump to the most urgent alert (works in both modes) |
+
+### Pointer mode
+
+The HUD is drawn with IMGUI, which has no controller focus navigation, so the pad moves the real OS pointer instead and sends genuine mouse clicks. Every existing button, placement and selection then works unchanged.
+
+Pointer mode is **always on** outside play (title screen, pause menu, Settings, banners), while a placement tool (Build, Flag, Orbital) is active, and while research is open. During ordinary play, `Back` turns it on and off.
+
+| Button | In pointer mode |
+|---|---|
+| Left stick | Move the pointer (small tilts are fine, a held full tilt speeds up). Push it against a screen edge to pan; with **EDGE SCROLL** on, the normal edge margin pans. |
+| `A` | Left click (press and release follow the button, so drags and click-on-release placement work) |
+| `R3` (right stick press) | Right click (cancel the flag under the pointer) |
+| D-pad up / down | Map overlay / cycle tool (Flag → Build → none) |
+| D-pad left / right | Lower / raise the selected flag's bounty |
+| Right stick, triggers, `B`, `X`, `Y`, `LB` / `RB`, `Start` | Same as camera mode |
+
+Settings → **POINTER SPEED** picks SLOW, NORMAL (default) or FAST.
+
+### Steam Deck and handhelds
+
+On a Steam Deck (detected from the `SteamDeck=1` environment variable Steam sets, the Deck's GPU name, or Steam itself), or on any PC started with `-handheld`:
+
+- **UI Scale AUTO** never goes below 100%, so the HUD is 100% at 1280×800 instead of 75%. A scale picked on the slider still wins.
+- **Quality** starts on **Medium** on first launch. A saved quality choice still wins (quality is machine-local, so a desktop's Ultra never roams to the Deck through Steam Cloud).
+- The game starts in controller mode.
+- Clicking into a text field (flag orders) while the controller is in use opens Steam's floating keyboard (on the Deck or in Big Picture), placed so it leaves the bottom strip clear.
 
 ### How it is wired
 
@@ -128,11 +157,12 @@ The game uses Unity's **legacy Input Manager** (`activeInputHandler: 0`, no Inpu
 | `SM_PadA` `B` `X` `Y` | `joystick button 0` `1` `2` `3` |
 | `SM_PadLB`, `SM_PadRB` | `joystick button 4`, `5` |
 | `SM_PadBack`, `SM_PadStart` | `joystick button 6`, `7` |
+| `SM_PadL3`, `SM_PadR3` | `joystick button 8`, `9` (stick presses) |
 
 This is the Xbox layout as Unity's legacy input reports it on **Windows**. macOS and Linux drivers number the axes and buttons differently: triggers and the D-pad in particular may not respond, or may land on other controls. If you need those platforms, edit the axis numbers in **Project Settings → Input Manager**. The code only refers to the `SM_Pad*` names.
 
-Code: `Runtime/Camera/GamepadInput.cs` reads the axes. `GamepadMath.cs` shapes the input (deadzone, curve, trigger and stick zoom, shoulder buttons) and is unit tested. `IsometricCameraController.cs` applies it. On first use, every `SM_Pad*` name is probed once. If any is missing, controller support switches off for the session with one warning instead of throwing every frame. Nothing is read in batch mode.
+Code: `Runtime/Camera/GamepadInput.cs` reads the axes, tracks controller mode and pointer mode, moves the pointer (Win32 `SetCursorPos`) and sends clicks (Win32 `SendInput`; Proton implements both on the Deck). `GamepadMath.cs` shapes the input (deadzone, curve, trigger and stick zoom, shoulder buttons, pointer speed, edge push, button names for hints) and is unit tested. `IsometricCameraController.cs` applies the camera side. Pad buttons for rebindable actions (L3, the pointer-mode D-pad) reach the game through `InputBindings.Down`, and hints read `InputBindings.PadHint`. `Systems/Platform/HandheldMode.cs` holds the Deck / `-handheld` defaults. On first use, every `SM_Pad*` name is probed once. If any is missing, controller support switches off for the session with one warning instead of throwing every frame. Nothing is read in batch mode, except from the virtual pad the PlayMode tests use (`GamepadPlayTests`).
 
 ### Controller limits
 
-The legacy Input Manager cannot move the OS cursor, and the HUD is drawn with IMGUI, which has no controller focus navigation. So a controller **cannot** place buildings, post or pick flags, select robots, click HUD buttons (the victory banner, the pause menu entries, Settings chips), or use the title screen's world picker. Use the mouse for those. A virtual cursor or full UI navigation would need either the Input System package or the UI Toolkit migration, and neither is in scope for this release.
+Pointer mode relies on the Windows pointer calls, so it works on Windows and on the Steam Deck (Proton) but not in a native macOS or Linux build. There is still no focus navigation between HUD buttons: you aim at them with the pointer.

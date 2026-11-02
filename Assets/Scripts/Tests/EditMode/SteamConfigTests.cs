@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace SolarMajesty.Tests
 {
@@ -73,6 +74,55 @@ namespace SolarMajesty.Tests
             Assert.That(SteamConfig.PresenceToken(false, false), Is.EqualTo("#AtTitle"));
             Assert.That(SteamConfig.PresenceToken(true, false), Is.EqualTo("#Governing"));
             Assert.That(SteamConfig.PresenceToken(true, true), Is.EqualTo("#Paused"));
+        }
+
+        [Test]
+        public void HandheldArg_IsCaseInsensitive()
+        {
+            Assert.That(SteamConfig.HandheldByArgs(new[] { "game.exe", "-HANDHELD" }), Is.True);
+            Assert.That(SteamConfig.HandheldByArgs(new[] { "game.exe", "-nosteam" }), Is.False);
+            Assert.That(SteamConfig.HandheldByArgs(null), Is.False);
+        }
+
+        [Test]
+        public void SteamDeck_IsRecognisedFromTheEnvironmentOrTheGpu()
+        {
+            Assert.That(SteamConfig.LooksLikeSteamDeck("NVIDIA GeForce RTX 3080", "1"), Is.True, "Steam sets SteamDeck=1");
+            Assert.That(SteamConfig.LooksLikeSteamDeck("AMD Custom GPU 0405", null), Is.True, "LCD");
+            Assert.That(SteamConfig.LooksLikeSteamDeck("AMD Custom GPU 0932", ""), Is.True, "OLED");
+            Assert.That(SteamConfig.LooksLikeSteamDeck("AMD VANGOGH (van gogh, LLVM)", null), Is.True);
+            Assert.That(SteamConfig.LooksLikeSteamDeck("AMD Radeon(TM) Graphics", "0"), Is.False);
+            Assert.That(SteamConfig.LooksLikeSteamDeck(null, null), Is.False);
+        }
+
+        [Test]
+        public void HandheldQuality_StartsOnMedium_ButASavedChoiceWins()
+        {
+            Assert.That(HandheldMode.StartingQuality(false, 0, 5, true, 6), Is.EqualTo(2), "Deck, first launch: Medium");
+            Assert.That(HandheldMode.StartingQuality(false, 0, 5, false, 6), Is.EqualTo(5), "desktop: project default");
+            Assert.That(HandheldMode.StartingQuality(true, 4, 5, true, 6), Is.EqualTo(4), "saved choice wins on the Deck");
+            Assert.That(HandheldMode.StartingQuality(false, 0, 5, true, 2), Is.EqualTo(1), "never past the last tier");
+            Assert.That(QualitySettings.names[HandheldMode.DefaultQualityLevel], Is.EqualTo("Medium"));
+        }
+
+        [Test]
+        public void HandheldMode_ConfirmedDeck_TurnsOnTheHandheldHudScale()
+        {
+            bool wasHandheld = HudScaleMath.Handheld;
+            try
+            {
+                HandheldMode.ResetForTests();
+                Assert.That(HandheldMode.Active, Is.False);
+                HandheldMode.ConfirmSteamDeck();
+                Assert.That(HandheldMode.OnSteamDeck, Is.True);
+                Assert.That(HandheldMode.Active, Is.True);
+                Assert.That(HudScaleMath.AutoForHeight(800), Is.EqualTo(1f).Within(0.001f));
+            }
+            finally
+            {
+                HandheldMode.ResetForTests();
+                HudScaleMath.Handheld = wasHandheld;
+            }
         }
     }
 }

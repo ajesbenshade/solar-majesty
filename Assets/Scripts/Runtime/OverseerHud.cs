@@ -1446,6 +1446,8 @@ namespace SolarMajesty
         /// <summary>The action's current key in HUD caps ("SPACE", "B", "F1"), cached per key.</summary>
         private static string KeyHint(GameAction action)
         {
+            string pad = InputBindings.PadHint(action); // controller in use: name its button
+            if (pad != null) return pad;
             KeyCode key = InputBindings.Key(action);
             if (!KeyHints.TryGetValue(key, out string hint))
             {
@@ -3424,9 +3426,15 @@ namespace SolarMajesty
             // Controller support (Docs/CONTROLS.md). Saved at once; off is for a drifting or stray device.
             string padState = !GamepadInput.Enabled ? "OFF"
                 : !GamepadInput.AxesAvailable ? "ON  ·  NOT SET UP"
-                : GamepadInput.Connected ? "ON" : "ON  ·  NONE CONNECTED";
+                : !GamepadInput.Connected ? "ON  ·  NONE CONNECTED"
+                : GamepadInput.ControllerActive ? "ON  ·  IN USE" : "ON";
             if (Chip(new Rect(c.x, y, c.width, 26f), $"CONTROLLER  ·  {padState}", GamepadInput.Enabled))
                 GamepadInput.Enabled = !GamepadInput.Enabled;
+            y += 32f;
+            int pointerSpeed = GamepadInput.PointerSpeed;
+            if (Chip(new Rect(c.x, y, c.width, 26f),
+                    $"POINTER SPEED  ·  {GamepadMath.PointerSpeedNames[pointerSpeed]}", false))
+                GamepadInput.PointerSpeed = (pointerSpeed + 1) % GamepadMath.PointerSpeeds.Length;
             y += 32f;
 
             var cbMode = Accessibility.Mode;
@@ -3651,7 +3659,7 @@ namespace SolarMajesty
             GUI.Label(new Rect(c.x, y, c.width, 14f), "CONTROLLER", _section);
             y += 18f;
             y = WrapBlock(c, y,
-                "Fixed layout (Xbox-style pad on Windows). The controller cannot click HUD buttons or place things; use the mouse for those. Settings → CONTROLLER turns it off.");
+                "Fixed layout (Xbox-style pad on Windows and Steam Deck). Back switches pointer mode, where the left stick moves the pointer and A clicks; it is always on in menus, placement tools and research. Settings → CONTROLLER turns the pad off.");
             var pads = ControlsList.ControllerRows;
             for (int i = 0; i < pads.Length; i++)
             {

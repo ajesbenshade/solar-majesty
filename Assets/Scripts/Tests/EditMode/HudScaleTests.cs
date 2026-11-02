@@ -16,6 +16,28 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void Handheld_Gets100PercentAt1280x800_AndLargerScreensAreUnchanged()
+        {
+            Assert.AreEqual(0.75f, HudScaleMath.AutoForHeight(800, false), 0.001f, "desktop rule at 800 px");
+            Assert.AreEqual(1f, HudScaleMath.AutoForHeight(800, true), 0.001f, "Steam Deck: 100%");
+            Assert.AreEqual(1f, HudScaleMath.ClampToFit(HudScaleMath.AutoForHeight(800, true), 1280, 800), 0.001f,
+                "1280x800 still fits the 1024x640 floor at 100%");
+            Assert.AreEqual(1.35f, HudScaleMath.AutoForHeight(1440, true), 0.001f);
+
+            bool was = HudScaleMath.Handheld;
+            try
+            {
+                HudScaleMath.Handheld = true;
+                Assert.AreEqual(1f, HudScaleMath.Effective(true, 0.75f, 1280, 800), 0.001f, "AUTO follows the flag");
+                Assert.AreEqual(0.8f, HudScaleMath.Effective(false, 0.8f, 1280, 800), 0.001f, "the slider still wins");
+            }
+            finally
+            {
+                HudScaleMath.Handheld = was;
+            }
+        }
+
+        [Test]
         public void Effective_Clamps200PercentOn1080p_AndKeepsItOn4KAndUltrawide()
         {
             float fit = HudScaleMath.Effective(false, 2f, 1920, 1080);

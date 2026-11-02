@@ -24,6 +24,17 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void Fill_NamesPadButtons_WhileTheControllerIsInUse()
+        {
+            const string template = "World held. {TogglePause} resumes. Build with {ToolBuild}.";
+            string Pad(GameAction a) => GamepadMath.ButtonLabel(a, false);
+            Assert.AreEqual("World held. X resumes. Build with B.",
+                KeyHints.Fill(template, InputBindings.DefaultKey, Pad), "no pad button for Build: the key stays");
+            Assert.AreEqual("World held. Space resumes. Build with B.",
+                KeyHints.Fill(template, InputBindings.DefaultKey, a => null), "mouse and keyboard in use");
+        }
+
+        [Test]
         public void Fill_LeavesUnknownTokensAndPlainTextAlone()
         {
             Assert.AreEqual("{NotAnAction} stays", KeyHints.Fill("{NotAnAction} stays", InputBindings.DefaultKey));

@@ -285,11 +285,14 @@ namespace SolarMajesty
             // 0.85–1.25 value must not count as an explicit choice.
             HudScaleAuto = GamePrefs.GetInt(HudAutoKey, 1) == 1;
             HudScaleExplicit = HudScaleMath.RoundToStep(GamePrefs.GetFloat(HudKey, 1f));
+            HandheldMode.DetectOnce(); // Steam Deck or -handheld: 100% auto HUD, Medium quality to start
             RefreshHudScale(Screen.width, Screen.height);
             InvertPan = GamePrefs.GetInt(InvertKey, 0) == 1;
             TutorialDone = GamePrefs.GetInt(TutorialKey, 0) == 1;
             SaveExists = GamePrefs.GetInt(SaveFlagKey, 0) == 1;
-            QualityIndex = GamePrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
+            QualityIndex = HandheldMode.StartingQuality(GamePrefs.HasKey(QualityKey),
+                GamePrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel()), QualitySettings.GetQualityLevel(),
+                HandheldMode.Active, QualitySettings.names.Length);
             Fullscreen = GamePrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) == 1;
             ResolutionWidth = GamePrefs.GetInt(ResolutionWKey, 0);
             ResolutionHeight = GamePrefs.GetInt(ResolutionHKey, 0);

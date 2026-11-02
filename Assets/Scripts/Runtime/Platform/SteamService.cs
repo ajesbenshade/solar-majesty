@@ -129,6 +129,11 @@ namespace SolarMajesty
 
             Ready = true;
             Status = SteamConfig.IsTestApp ? "Connected (test app 480)" : "Connected";
+            if (SteamUtils.IsSteamRunningOnSteamDeck())
+            {
+                Status += " on Steam Deck";
+                UseSteamDeckDefaults();
+            }
             Debug.Log($"[Steam] {Status} as {SteamFriends.GetPersonaName()} — app {SteamUtils.GetAppID()}");
 
             _overlay = Callback<GameOverlayActivated_t>.Create(OnOverlay);
@@ -249,6 +254,46 @@ namespace SolarMajesty
         {
             if (_loop == null) _loop = FindAnyObjectByType<GameLoop>();
             return _loop;
+        }
+
+        /// <summary>
+        /// Steam confirmed a Deck that the hardware check missed: handheld HUD scale now, and the
+        /// Medium tier unless the player already chose one.
+        /// </summary>
+        private static void UseSteamDeckDefaults()
+        {
+            bool wasHandheld = HandheldMode.Active;
+            HandheldMode.ConfirmSteamDeck();
+            if (wasHandheld) return;
+            DemoSettings.RefreshHudScale(Screen.width, Screen.height);
+            if (GamePrefs.HasKey(DemoSettings.QualityKey)) return;
+            DemoSettings.QualityIndex = HandheldMode.StartingQuality(false, 0, QualitySettings.GetQualityLevel(), true,
+                QualitySettings.names.Length);
+            QualitySettings.SetQualityLevel(DemoSettings.QualityIndex, true);
+        }
+
+        /// <summary>
+        /// Steam's on-screen keyboard for a text field (flag orders, chat) when a controller is in
+        /// use on the Deck or in Big Picture. It types into the focused field. The fields sit low on
+        /// screen, so the keyboard is asked to keep the bottom strip clear.
+        /// </summary>
+        public static void ShowFloatingKeyboard()
+        {
+#if !DISABLESTEAMWORKS
+            if (!Ready) return;
+            try
+            {
+                if (!HandheldMode.OnSteamDeck && !SteamUtils.IsSteamInBigPictureMode()) return;
+                int h = Screen.height / 4;
+                SteamUtils.ShowFloatingGamepadTextInput(
+                    EFloatingGamepadTextInputMode.k_EFloatingGamepadTextInputModeModeSingleLine,
+                    0, Screen.height - h, Screen.width, h);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Steam] Floating keyboard unavailable: " + e.Message);
+            }
+#endif
         }
 
         /// <summary>Open a Steam store or web page in the overlay, or the system browser without Steam.</summary>
