@@ -68,8 +68,9 @@ is in it being honest, not in it being all ticked.
 - [x] Pooled 3D positional one-shots ([SpatialAudio.cs](../Assets/Scripts/Runtime/Audio/SpatialAudio.cs))
 - [x] Adaptive four-stem generative score ([AdaptiveMusic.cs](../Assets/Scripts/Runtime/Audio/AdaptiveMusic.cs))
 - [x] Synthesised Overseer voice and robot chirps ([OverseerVoice.cs](../Assets/Scripts/Runtime/Audio/OverseerVoice.cs))
-- [x] Existing one-shots migrated from 2D `DemoAudio` to `SpatialAudio` (world events are positioned; UI, alerts, research and outcomes stay 2D on purpose; see [AUDIO.md](AUDIO.md#spatial-or-2d))
-- [x] Missing clips authored: `sfx_extract`, `sfx_build_complete`, `sfx_research` (three rendered takes each in `Resources/Audio/Sfx/`, guarded by `SfxClipCoverageTests`)
+- [x] World-located one-shots play through `SpatialAudio`, with a rolloff that follows the overseer camera; UI, alerts, outcomes and research stay 2D ([SfxRouting.cs](../Assets/Scripts/Systems/SfxRouting.cs), [AUDIO.md](AUDIO.md#2d-or-3d)). The 2D fallback covers a missing or non-finite position. One position-less world call remains: the trade-ship gold in `OverseerHud`, which plays 2D.
+- [x] Missing clips authored: `sfx_extract`, `sfx_build_complete`, `sfx_research` (three rendered takes each in `Resources/Audio/Sfx/`, guarded by `SfxClipCoverageTests`; `DemoAudioRoutingTests` also fails if any event the game plays has no authored take)
+- [ ] Listen pass in a build: 3D balance at default and max zoom, in both the ortho and diorama lenses. The tuning is numeric and hasn't been checked by ear. Positioned SFX at screen centre are now ~6 dB louder than before (their 2D level), so check them against the music and voices.
 
 ## Interface
 
