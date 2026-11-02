@@ -73,5 +73,59 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(-1, GamepadMath.SpeedStep(true, false));
             Assert.AreEqual(0, GamepadMath.SpeedStep(true, true));
         }
+
+        [Test]
+        public void PointerStep_RestsInTheDeadzone_AndScalesWithTiltHoldAndPreset()
+        {
+            Assert.AreEqual(Vector2.zero, GamepadMath.PointerStep(0.1f, 0.1f, 0f, 800f, 1, 0.016f));
+            Assert.AreEqual(Vector2.zero, GamepadMath.PointerStep(1f, 0f, 0f, 800f, 1, 0f), "no time, no move");
+
+            Vector2 full = GamepadMath.PointerStep(1f, 0f, 1f, 800f, 1, 1f);
+            Vector2 half = GamepadMath.PointerStep(0.6f, 0f, 1f, 800f, 1, 1f);
+            Assert.Greater(full.x, 0f);
+            Assert.AreEqual(0f, full.y, Eps);
+            Assert.Less(half.x, full.x * 0.5f, "small tilts are slow (curve)");
+
+            Vector2 fresh = GamepadMath.PointerStep(1f, 0f, 0f, 800f, 1, 1f);
+            Assert.Less(fresh.x, full.x, "a held stick ramps up");
+
+            Vector2 slow = GamepadMath.PointerStep(1f, 0f, 1f, 800f, 0, 1f);
+            Vector2 fast = GamepadMath.PointerStep(1f, 0f, 1f, 800f, 2, 1f);
+            Assert.Less(slow.x, full.x);
+            Assert.Greater(fast.x, full.x);
+            Assert.AreEqual(fast.x, GamepadMath.PointerStep(1f, 0f, 1f, 800f, 99, 1f).x, Eps, "preset clamped");
+
+            // A full tilt held for a second crosses most of a 1280x800 screen on NORMAL.
+            Assert.Greater(full.x, 800f * 0.85f);
+            Vector2 up = GamepadMath.PointerStep(0f, 1f, 1f, 800f, 1, 1f);
+            Assert.Greater(up.y, 0f, "stick up moves the pointer up (Unity screen space)");
+        }
+
+        [Test]
+        public void EdgePush_PansOnlyWhenPushingOutwardAtAnEdge()
+        {
+            const float w = 1280f, h = 800f;
+            Assert.AreEqual(Vector2.zero, GamepadMath.EdgePush(new Vector2(640f, 400f), 1f, 0f, w, h), "mid-screen");
+            Assert.Greater(GamepadMath.EdgePush(new Vector2(w - 1f, 400f), 1f, 0f, w, h).x, 0.9f, "right edge, pushing right");
+            Assert.AreEqual(Vector2.zero, GamepadMath.EdgePush(new Vector2(w - 1f, 400f), -1f, 0f, w, h), "pulling away");
+            Assert.Less(GamepadMath.EdgePush(new Vector2(0f, 400f), -1f, 0f, w, h).x, -0.9f);
+            Assert.Less(GamepadMath.EdgePush(new Vector2(640f, 0f), 0f, -1f, w, h).y, -0.9f);
+            Assert.Greater(GamepadMath.EdgePush(new Vector2(640f, h - 1f), 0f, 1f, w, h).y, 0.9f);
+            Assert.AreEqual(Vector2.zero, GamepadMath.EdgePush(new Vector2(w - 1f, 400f), 0.1f, 0f, w, h), "deadzone");
+        }
+
+        [Test]
+        public void ButtonLabels_NameTheCameraButtons_AndTheDpadOnlyInPointerMode()
+        {
+            Assert.AreEqual("X", GamepadMath.ButtonLabel(GameAction.TogglePause, false));
+            Assert.AreEqual("LB", GamepadMath.ButtonLabel(GameAction.SpeedDown, true));
+            Assert.AreEqual("RB", GamepadMath.ButtonLabel(GameAction.SpeedUp, false));
+            Assert.AreEqual("Y", GamepadMath.ButtonLabel(GameAction.ToolTech, false));
+            Assert.AreEqual("L3", GamepadMath.ButtonLabel(GameAction.JumpToAlert, false));
+            Assert.IsNull(GamepadMath.ButtonLabel(GameAction.CycleOverlay, false), "the D-pad pans in camera mode");
+            Assert.AreEqual("D-pad Up", GamepadMath.ButtonLabel(GameAction.CycleOverlay, true));
+            Assert.AreEqual("D-pad Right", GamepadMath.ButtonLabel(GameAction.BountyUp, true));
+            Assert.IsNull(GamepadMath.ButtonLabel(GameAction.ToolBuild, true), "no button: the hint keeps the key");
+        }
     }
 }

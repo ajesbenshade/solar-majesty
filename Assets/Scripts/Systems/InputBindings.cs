@@ -175,12 +175,28 @@ namespace SolarMajesty
         /// </summary>
         public static bool TextEntryActive;
 
+        /// <summary>
+        /// Controller hook, set by <c>GamepadInput</c> (Runtime): true when the action's pad button
+        /// went down this frame. Only for actions the camera does not already read from the pad.
+        /// </summary>
+        public static Func<GameAction, bool> PadDown;
+
+        /// <summary>
+        /// Controller hook, set by <c>GamepadInput</c>: the pad button to name in hints while the
+        /// controller is the device in use, or null to name the key.
+        /// </summary>
+        public static Func<GameAction, string> PadLabel;
+
         public static bool Down(GameAction action)
         {
             if (TextEntryActive) return false;
             KeyCode key = Key(action);
-            return key != KeyCode.None && Input.GetKeyDown(key);
+            if (key != KeyCode.None && Input.GetKeyDown(key)) return true;
+            return PadDown != null && PadDown(action);
         }
+
+        /// <summary>The pad button for hint text while the controller is in use, else null.</summary>
+        public static string PadHint(GameAction action) => PadLabel?.Invoke(action);
 
         public static bool Held(GameAction action)
         {

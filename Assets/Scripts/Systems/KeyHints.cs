@@ -13,16 +13,24 @@ namespace SolarMajesty
         private static readonly Regex Token = new Regex(@"\{([A-Za-z0-9]+)\}", RegexOptions.Compiled);
 
         /// <summary>The template with every {GameAction} token replaced by its current key.</summary>
-        public static string Fill(string template) => Fill(template, InputBindings.Key);
+        public static string Fill(string template) => Fill(template, InputBindings.Key, InputBindings.PadHint);
 
         /// <summary>The same fill against any key lookup (tests pass their own).</summary>
-        public static string Fill(string template, Func<GameAction, KeyCode> keyOf)
+        public static string Fill(string template, Func<GameAction, KeyCode> keyOf) => Fill(template, keyOf, null);
+
+        /// <summary>
+        /// The fill with a controller lookup: while the pad is the device in use, an action with a
+        /// pad button names the button ("X resumes") instead of the key.
+        /// </summary>
+        public static string Fill(string template, Func<GameAction, KeyCode> keyOf, Func<GameAction, string> padOf)
         {
             if (string.IsNullOrEmpty(template) || keyOf == null) return template;
             return Token.Replace(template, m =>
-                Enum.TryParse(m.Groups[1].Value, out GameAction action)
-                    ? Label(action, keyOf(action))
-                    : m.Value);
+            {
+                if (!Enum.TryParse(m.Groups[1].Value, out GameAction action)) return m.Value;
+                string pad = padOf?.Invoke(action);
+                return pad ?? Label(action, keyOf(action));
+            });
         }
 
         /// <summary>

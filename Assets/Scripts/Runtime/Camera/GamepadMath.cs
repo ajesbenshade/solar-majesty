@@ -55,6 +55,64 @@ namespace SolarMajesty
             return rightBumperDown ? 1 : -1;
         }
 
+        // ---- pointer mode (virtual cursor) ----------------------------------------------------------
+
+        /// <summary>Pointer speed presets, as a fraction of the screen height per second at full tilt.</summary>
+        public static readonly float[] PointerSpeeds = { 0.55f, 0.85f, 1.25f };
+        public static readonly string[] PointerSpeedNames = { "SLOW", "NORMAL", "FAST" };
+
+        /// <summary>
+        /// Pixels the pointer moves this frame. The stick curve gives fine control for small tilts,
+        /// and a short ramp while the stick is held lets a long move cross the screen quickly.
+        /// </summary>
+        public static Vector2 PointerStep(float x, float y, float heldSeconds, float screenHeight, int speedPreset, float dt)
+        {
+            Vector2 v = Stick(x, y, StickDeadzone, 2.2f);
+            float m = Mathf.Sqrt(v.x * v.x + v.y * v.y);
+            if (m <= 0f || screenHeight <= 0f || dt <= 0f) return new Vector2(0f, 0f);
+            float preset = PointerSpeeds[Mathf.Clamp(speedPreset, 0, PointerSpeeds.Length - 1)];
+            float ramp = Mathf.Lerp(0.55f, 1.25f, Mathf.Clamp01(heldSeconds / 0.6f));
+            float scale = preset * screenHeight * ramp * dt;
+            return new Vector2(v.x * scale, v.y * scale);
+        }
+
+        /// <summary>
+        /// Camera pan from a pointer held against the screen edge while the stick keeps pushing
+        /// outward, for when Settings → EDGE SCROLL is off. Screen coordinates, origin bottom left.
+        /// </summary>
+        public static Vector2 EdgePush(Vector2 pointer, float stickX, float stickY, float width, float height, float margin = 2f)
+        {
+            Vector2 s = Stick(stickX, stickY);
+            float h = 0f, v = 0f;
+            if (pointer.x <= margin && s.x < 0f) h = s.x;
+            else if (pointer.x >= width - 1f - margin && s.x > 0f) h = s.x;
+            if (pointer.y <= margin && s.y < 0f) v = s.y;
+            else if (pointer.y >= height - 1f - margin && s.y > 0f) v = s.y;
+            return new Vector2(h, v);
+        }
+
+        /// <summary>
+        /// The controller button shown in hints for an action, or null when it has none in this
+        /// mode (the hint then names the key). The D-pad only carries actions in pointer mode;
+        /// in camera mode it pans.
+        /// </summary>
+        public static string ButtonLabel(GameAction action, bool pointerMode)
+        {
+            switch (action)
+            {
+                case GameAction.TogglePause: return "X";
+                case GameAction.SpeedDown: return "LB";
+                case GameAction.SpeedUp: return "RB";
+                case GameAction.ToolTech: return "Y";
+                case GameAction.JumpToAlert: return "L3";
+                case GameAction.CycleOverlay: return pointerMode ? "D-pad Up" : null;
+                case GameAction.CycleTool: return pointerMode ? "D-pad Down" : null;
+                case GameAction.BountyDown: return pointerMode ? "D-pad Left" : null;
+                case GameAction.BountyUp: return pointerMode ? "D-pad Right" : null;
+                default: return null;
+            }
+        }
+
         /// <summary>True once a raw stick is clearly off centre (used to hand control back from a camera beat).</summary>
         public static bool IsDeflected(float x, float y, float deadzone = StickDeadzone) =>
             x * x + y * y > deadzone * deadzone;
