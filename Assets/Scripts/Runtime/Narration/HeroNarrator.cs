@@ -16,6 +16,7 @@ namespace SolarMajesty
     /// Settings → HERO VOICES, <c>-narrator [url]</c>, or <c>SOLAR_NARRATOR_URL</c>. Ambient lines
     /// replace the hero's template flavour line when they arrive in time; the player can also talk
     /// to a selected hero, with replies streamed word by word. With no server the templates stay.
+    /// With no developer server set, the bundled pack's models (<see cref="LocalAiHost"/>) are used.
     /// Presentation only — the model voices decisions, it never makes them.
     /// See Docs/HERO_NARRATION.md.
     /// </summary>
@@ -52,6 +53,8 @@ namespace SolarMajesty
         private volatile bool _online;
         private volatile bool _probing;
         private volatile bool _isOllama;
+        /// <summary>Talking to the bundled pack: its URL and model names are fixed, nothing to pick.</summary>
+        private bool _hosted;
         private float _probeTimer;
         private float _warmTimer;
         private GameLoop _loop;
@@ -118,9 +121,11 @@ namespace SolarMajesty
                 var go = new GameObject("HeroNarrator");
                 DontDestroyOnLoad(go);
                 _instance = go.AddComponent<HeroNarrator>();
-                _instance._baseUrl = (_cliUrl ?? DefaultUrl).TrimEnd('/');
-                _instance._model = _cliModel ?? DefaultModel;
-                _instance._chatModel = _cliChatModel ?? _instance._model;
+                bool hosted = _cliUrl == null && LocalAiHost.NarratorUrl != null;
+                _instance._hosted = hosted;
+                _instance._baseUrl = (_cliUrl ?? (hosted ? LocalAiHost.NarratorUrl : DefaultUrl)).TrimEnd('/');
+                _instance._model = _cliModel ?? (hosted ? LocalAiHost.NarratorModel : null) ?? DefaultModel;
+                _instance._chatModel = _cliChatModel ?? (hosted ? LocalAiHost.ChatModel : null) ?? _instance._model;
                 HeroSpeaker.Warm();
                 return _instance;
             }
@@ -506,7 +511,7 @@ namespace SolarMajesty
             try
             {
                 // With no explicit URL, try llama.cpp's port, then Ollama's.
-                string[] candidates = _cliUrl != null
+                string[] candidates = _cliUrl != null || _hosted
                     ? new[] { _baseUrl }
                     : new[] { DefaultUrl, OllamaUrl };
                 for (int i = 0; i < candidates.Length && !_online; i++)
@@ -519,15 +524,19 @@ namespace SolarMajesty
                         if (!res.IsSuccessStatusCode) continue;
                         string models = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
                         _baseUrl = url;
-                        if (_cliModel == null)
+                        // The bundled pack's names are fixed; its router lists the chat model only once loaded.
+                        if (!_hosted)
                         {
-                            string pick = HeroConversation.PickModel(models, PreferredModels);
-                            if (pick != null) _model = pick;
+                            if (_cliModel == null)
+                            {
+                                string pick = HeroConversation.PickModel(models, PreferredModels);
+                                if (pick != null) _model = pick;
+                            }
+                            // An explicit -narrator-model means "this one" for chat too, unless -chat-model says otherwise.
+                            if (_cliChatModel != null) _chatModel = _cliChatModel;
+                            else if (_cliModel != null) _chatModel = _model;
+                            else _chatModel = HeroConversation.PickModel(models, PreferredChatModels) ?? _model;
                         }
-                        // An explicit -narrator-model means "this one" for chat too, unless -chat-model says otherwise.
-                        if (_cliChatModel != null) _chatModel = _cliChatModel;
-                        else if (_cliModel != null) _chatModel = _model;
-                        else _chatModel = HeroConversation.PickModel(models, PreferredChatModels) ?? _model;
                         _isOllama = await IsOllama(url).ConfigureAwait(false);
                         _online = true;
                         Debug.Log($"[Narrator] online at {_baseUrl} (lines \"{_model}\", chat \"{_chatModel}\"{(_isOllama ? ", Ollama" : "")})");

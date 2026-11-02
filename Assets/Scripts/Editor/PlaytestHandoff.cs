@@ -78,7 +78,25 @@ namespace SolarMajesty.EditorTools
             "3. Windows SmartScreen may warn (unsigned build). More info → Run anyway.\n" +
             "4. Alt+Enter toggles fullscreen.\n" +
             "\n" +
+            LocalAiNotes +
             SessionNotes;
+
+        /// <summary>The bundled local AI (LocalAiHost) is Windows only: the ai folder next to the exe.</summary>
+        public static string LocalAiNotes =>
+            "Local AI (the ai folder, when your package has one)\n" +
+            "---------------------------------------------------\n" +
+            "Settings → BOT LINES lets the bots write their own lines and talk with you; SPOKEN reads\n" +
+            "them aloud. Both are off until you turn them on. The models in the ai folder then start by\n" +
+            "themselves; there is nothing to install. Everything runs on this PC; nothing is sent anywhere.\n" +
+            "- The first minute after turning them on the models load from disk. Until they answer,\n" +
+            "  bots use their written lines, then switch to live ones. That is normal.\n" +
+            "- Memory: talking needs about 12 GB of RAM; with 8 GB you get live lines and voices only;\n" +
+            "  below 6 GB the game runs without the models.\n" +
+            "- The models run at low priority so the game stays smooth. To keep them off whatever the\n" +
+            "  settings say, start SolarMajesty.exe with -noai (or delete the ai folder).\n" +
+            "- If lines or voices never arrive, please send the files in\n" +
+            "  %USERPROFILE%\\AppData\\LocalLow\\SolarMajesty\\Solar Majesty\\ai\\ along with the telemetry.\n" +
+            "\n";
 
         public static string MacReadme =>
             "Solar Majesty — macOS playtest\n" +

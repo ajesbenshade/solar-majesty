@@ -3113,6 +3113,11 @@
    "tr": "Load a saved colony. Other slots stay on disk."
   },
   {
+   "en": "Loading the local model  ·  about a minute",
+   "key": "",
+   "tr": "Loading the local model  ·  about a minute"
+  },
+  {
    "en": "Locks every hostile in 6 m in place for 6 s.",
    "key": "",
    "tr": "Locks every hostile in 6 m in place for 6 s."
@@ -5591,6 +5596,11 @@
    "en": "The launch intro plays once, the first time the title opens. Replay plays it now.",
    "key": "",
    "tr": "The launch intro plays once, the first time the title opens. Replay plays it now."
+  },
+  {
+   "en": "The local model did not start  ·  logs in LocalLow/SolarMajesty/Solar Majesty/ai",
+   "key": "",
+   "tr": "The local model did not start  ·  logs in LocalLow/SolarMajesty/Solar Majesty/ai"
   },
   {
    "en": "The meadow is empty. Raise a Commons. Nothing works until it stands.",

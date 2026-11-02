@@ -4,6 +4,8 @@ Optional and off by default. Heroes mutter short, in-character lines about what 
 
 **The model voices decisions; it never makes them.** `SpecialistBrain` still decides everything. The narrator gets only the facts of the moment (class, level, dominant trait, health, purse, the bounty, the player's written orders) and returns one line.
 
+The Windows game ships these models in its `ai` folder and starts them itself when the settings are on: see [LOCAL_AI_PACK.md](LOCAL_AI_PACK.md). The launchers below are for development, and for macOS / Linux.
+
 ## Quick start (one command)
 
 ```bash

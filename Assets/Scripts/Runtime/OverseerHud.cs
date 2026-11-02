@@ -2300,7 +2300,9 @@ namespace SolarMajesty
             string status;
             Color statusColor = TextMuted;
             if (!HeroNarrator.Enabled) status = "";
-            else if (!HeroNarrator.ChatOnline) status = Loc.S("Waiting for the local model  ·  Tools/local_ai/start_narrator.sh --no-game");
+            else if (!HeroNarrator.ChatOnline && !LocalAiHost.Installed) status = Loc.S("Waiting for the local model  ·  Tools/local_ai/start_narrator.sh --no-game");
+            else if (!HeroNarrator.ChatOnline && LocalAiHost.Status == LocalAiHost.State.Failed) { status = Loc.S("The local model did not start  ·  logs in LocalLow/SolarMajesty/Solar Majesty/ai"); statusColor = Alarm; }
+            else if (!HeroNarrator.ChatOnline) status = Loc.S("Loading the local model  ·  about a minute");
             else if (HeroNarrator.Replying && !HeroNarrator.ReplyStarted) status = HeroNarrator.ReplyWait > 3f ? Loc.F("{0} is taking a while…", name) : Loc.F("{0} is thinking…", name);
             else if (HeroNarrator.Replying) status = Loc.F("{0} is talking…", name);
             else if (!string.IsNullOrEmpty(HeroNarrator.LastChatError)) { status = HeroNarrator.LastChatError; statusColor = Alarm; }

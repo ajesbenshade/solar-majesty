@@ -69,7 +69,7 @@ namespace SolarMajesty
                 var go = new GameObject("HeroSpeaker");
                 DontDestroyOnLoad(go);
                 _instance = go.AddComponent<HeroSpeaker>();
-                _instance._baseUrl = (_cliUrl ?? DefaultUrl).TrimEnd('/');
+                _instance._baseUrl = (_cliUrl ?? LocalAiHost.VoiceUrl ?? DefaultUrl).TrimEnd('/');
                 return _instance;
             }
         }
