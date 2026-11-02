@@ -1492,7 +1492,11 @@ namespace SolarMajesty
                                    $"(settings {b.settingsChecked}, save/load {b.saveLoadChecked}, title/continue {b.titleContinueChecked})";
                     if (_failure != null) break;
                 }
-                int expected = (int)CelestialBodyCatalog.Last - (int)_from + 1;
+                // The campaign chain, not the catalog: main ends the campaign at Mars and keeps
+                // Belt and Europa catalog-only.
+                int expected = 1;
+                for (var b = CampaignProgress.NextAfter(_from); b.HasValue && expected < 16; b = CampaignProgress.NextAfter(b.Value))
+                    expected++;
                 if (_failure == null && _state.bodies.Count < expected)
                     _failure = $"only {_state.bodies.Count} of {expected} worlds were played";
                 if (_failure == null && _relaunchOn.HasValue && _state.relaunches == 0)
