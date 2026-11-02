@@ -442,6 +442,7 @@ namespace SolarMajesty
         private void HandleGamepadButtons(GameLoop loop)
         {
             if (loop == null || !GamepadInput.Active) return;
+            if (CameraDirector.BlocksInput) return; // the press skips the camera beat, it does not pause
 
             if (GamepadInput.Pressed(GamepadInput.ButtonStart))
             {

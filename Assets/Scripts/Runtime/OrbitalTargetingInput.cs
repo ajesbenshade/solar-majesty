@@ -49,7 +49,7 @@ namespace SolarMajesty
 
         private void Update()
         {
-            if (!_enabled || _loop == null || !_loop.IsPlaying || !Selected.HasValue)
+            if (!_enabled || _loop == null || !_loop.IsPlaying || !Selected.HasValue || CameraDirector.BlocksInput)
             {
                 ShowRing(false);
                 return;

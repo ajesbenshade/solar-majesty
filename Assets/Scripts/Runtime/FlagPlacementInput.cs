@@ -266,6 +266,7 @@ namespace SolarMajesty
         {
             if (_flags == null) return;
             if (_loop != null && !_loop.IsPlaying) return;
+            if (CameraDirector.BlocksInput) return; // a camera beat owns input
 
             // +/− edits the selected pole. With the flag tool open and nothing selected, it sets
             // the next post. With nothing selected and the tool closed, it does nothing. Speed is comma / period.
