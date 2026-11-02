@@ -125,6 +125,16 @@ namespace SolarMajesty
         public static float StockpileChipWidth(float stockpileWidth = StockpileW) =>
             (stockpileWidth - StockpileChipGap) * 0.5f;
 
+        /// <summary>
+        /// CHARGERS chip rate: worker drones housed / berths ("12/16 drones"); the Core's bots are counted
+        /// on their own chip. With no berths yet it falls back to the solar farm count.
+        /// </summary>
+        public static string ChargersRate(int drones, int capacity, int solarFarms)
+        {
+            if (capacity > 0) return $"{drones}/{capacity} drones";
+            return solarFarms > 0 ? $"{solarFarms} solar" : null;
+        }
+
         /// <summary>The chip rate wording, most to least verbose: full, first word + abbreviated second, first token.</summary>
         public static string[] ChipRateVariants(string rate)
         {

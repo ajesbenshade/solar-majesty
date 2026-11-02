@@ -93,7 +93,7 @@ namespace SolarMajesty
                 ("Robots scrapped", $"{RobotsScrapped}  ({ScrapRate * 100f:F0}%)"),
                 ("Fauna cleared", FaunaKilled.ToString()),
                 ("Dens cleared", DensCleared.ToString()),
-                ("Peak population", PeakPopulation.ToString()),
+                ("Peak drones", PeakPopulation.ToString()),
                 ("Tech unlocked", TechUnlocked.ToString())
             };
         }

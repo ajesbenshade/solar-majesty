@@ -848,7 +848,7 @@ namespace SolarMajesty
             float ch = 28f;
             ResourceChip(new Rect(r.x, top, cw, ch), "BOTS", heroes, heroes <= 0);
             ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top, cw, ch), ChargersLabel, houses, false,
-                solar > 0 ? $"{solar} solar" : null);
+                HudLayout.ChargersRate(set != null ? set.Drones : 0, set != null ? set.DroneCapacity : 0, solar));
             ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", collectors, collectors <= 0 || replacing > 0,
                 replacing > 0 ? $"-{replacing} replacing" : (bags > 0 ? $"{bags} carried" : null));
             ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? "HALTED" : "BOTS",

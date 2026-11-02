@@ -383,7 +383,7 @@ namespace SolarMajesty.Tests
                 HudLayout.ChipText(new Rect(0f, 0f, cw, 28f), out var labelRect, out _);
                 var measure = SnappedMeasure(scale);
 
-                foreach (var rate in new[] { "330 carried", "-2 replacing", "3 solar" })
+                foreach (var rate in new[] { "330 carried", "-2 replacing", "3 solar", "21/36 drones" })
                 {
                     string fit = HudLayout.FitText(HudLayout.ChipRateVariants(rate), measure, labelRect.width);
                     Assert.LessOrEqual(measure(fit), labelRect.width, $"'{fit}' at {sw}x{sh} scale {scale}");
@@ -396,7 +396,7 @@ namespace SolarMajesty.Tests
         public void ChipRate_KeepsFullWording_WhenWide()
         {
             var measure = SnappedMeasure(2f);
-            foreach (var rate in new[] { "330 carried", "-2 replacing", "3 solar", "% built", "idle" })
+            foreach (var rate in new[] { "330 carried", "-2 replacing", "3 solar", "21/36 drones", "% built", "idle" })
                 Assert.AreEqual(rate, HudLayout.FitText(HudLayout.ChipRateVariants(rate), measure, 10000f));
         }
 
