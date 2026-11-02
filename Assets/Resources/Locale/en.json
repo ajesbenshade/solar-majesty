@@ -143,6 +143,11 @@
    "tr": "A"
   },
   {
+   "en": "A / R3 (pointer)",
+   "key": "",
+   "tr": "A / R3 (pointer)"
+  },
+  {
    "en": "A courier claimed Yard B. Freight after. They have a slogan. It works.",
    "key": "",
    "tr": "A courier claimed Yard B. Freight after. They have a slogan. It works."
@@ -246,6 +251,11 @@
    "en": "AUTO",
    "key": "",
    "tr": "AUTO"
+  },
+  {
+   "en": "Aa · the quick bot",
+   "key": "",
+   "tr": "Aa · the quick bot"
   },
   {
    "en": "Achievement — {0}",
@@ -578,11 +588,6 @@
    "tr": "BOUNTY"
   },
   {
-   "en": "BOUNTY FLAG",
-   "key": "",
-   "tr": "BOUNTY FLAG"
-  },
-  {
    "en": "BUILD",
    "key": "",
    "tr": "BUILD"
@@ -651,6 +656,11 @@
    "en": "Berserk",
    "key": "",
    "tr": "Berserk"
+  },
+  {
+   "en": "Berth 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "Berth 20 worker drones at your charging stations."
   },
   {
    "en": "Blacksmith",
@@ -1388,6 +1398,11 @@
    "tr": "Cycle Flag → Build → none"
   },
   {
+   "en": "D-pad (pointer)",
+   "key": "",
+   "tr": "D-pad (pointer)"
+  },
+  {
    "en": "DAY / NIGHT CYCLE",
    "key": "",
    "tr": "DAY / NIGHT CYCLE"
@@ -1546,6 +1561,11 @@
    "en": "Defense hall · Clear / Defend",
    "key": "",
    "tr": "Defense hall · Clear / Defend"
+  },
+  {
+   "en": "Demo: Earth only. Luna, Mars, guilds and replay modes are in the full game.",
+   "key": "",
+   "tr": "Demo: Earth only. Luna, Mars, guilds and replay modes are in the full game."
   },
   {
    "en": "Den Breaker",
@@ -1913,11 +1933,6 @@
    "tr": "FARM STEAL"
   },
   {
-   "en": "FASTER   ·   {0}",
-   "key": "",
-   "tr": "FASTER   ·   {0}"
-  },
-  {
    "en": "FATIGUE",
    "key": "",
    "tr": "FATIGUE"
@@ -1971,11 +1986,6 @@
    "en": "FOBOT YARD  ·  {0}",
    "key": "",
    "tr": "FOBOT YARD  ·  {0}"
-  },
-  {
-   "en": "FORM SQUAD",
-   "key": "",
-   "tr": "FORM SQUAD"
   },
   {
    "en": "FRAME CAP  ·  {0}",
@@ -2093,9 +2103,9 @@
    "tr": "Fissure leeches on the solar farms — post Clear Threat."
   },
   {
-   "en": "Fixed layout (Xbox-style pad on Windows). The controller cannot click HUD buttons or place things; use the mouse for those. Settings → CONTROLLER turns it off.",
+   "en": "Fixed layout (Xbox-style pad on Windows and Steam Deck). Back switches pointer mode, where the left stick moves the pointer and A clicks; it is always on in menus, placement tools and research. Settings → CONTROLLER turns the pad off.",
    "key": "",
-   "tr": "Fixed layout (Xbox-style pad on Windows). The controller cannot click HUD buttons or place things; use the mouse for those. Settings → CONTROLLER turns it off."
+   "tr": "Fixed layout (Xbox-style pad on Windows and Steam Deck). Back switches pointer mode, where the left stick moves the pointer and A clicks; it is always on in menus, placement tools and research. Settings → CONTROLLER turns the pad off."
   },
   {
    "en": "Flag",
@@ -2238,6 +2248,11 @@
    "tr": "Fresh"
   },
   {
+   "en": "From {0} EU next to an uplink. Recharge {1:0} s.",
+   "key": "",
+   "tr": "From {0} EU next to an uplink. Recharge {1:0} s."
+  },
+  {
    "en": "Full Crew",
    "key": "",
    "tr": "Full Crew"
@@ -2246,11 +2261,6 @@
    "en": "Full constellation: Orbital Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.",
    "key": "",
    "tr": "Full constellation: Orbital Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm."
-  },
-  {
-   "en": "GAME SPEED   ·   1× IS THE COLONY'S NORMAL PACE",
-   "key": "",
-   "tr": "GAME SPEED   ·   1× IS THE COLONY'S NORMAL PACE"
   },
   {
    "en": "GEO",
@@ -2411,11 +2421,6 @@
    "en": "HOLD",
    "key": "",
    "tr": "HOLD"
-  },
-  {
-   "en": "HOLD   ·   {0}",
-   "key": "",
-   "tr": "HOLD   ·   {0}"
   },
   {
    "en": "HOPPER",
@@ -2898,6 +2903,11 @@
    "tr": "Kinetic Lance"
   },
   {
+   "en": "L3",
+   "key": "",
+   "tr": "L3"
+  },
+  {
    "en": "LANGUAGE",
    "key": "",
    "tr": "LANGUAGE"
@@ -3031,6 +3041,16 @@
    "en": "Lay out the solar field. It pays EU. Wisps will come for it.",
    "key": "",
    "tr": "Lay out the solar field. It pays EU. Wisps will come for it."
+  },
+  {
+   "en": "Left click / right click",
+   "key": "",
+   "tr": "Left click / right click"
+  },
+  {
+   "en": "Left stick (pointer)",
+   "key": "",
+   "tr": "Left stick (pointer)"
   },
   {
    "en": "Left stick / D-pad",
@@ -3228,11 +3248,6 @@
    "tr": "L{0}–{1}"
   },
   {
-   "en": "MAJESTY COLONY",
-   "key": "",
-   "tr": "MAJESTY COLONY"
-  },
-  {
    "en": "MARS JEX LESSONS  ·  OFF",
    "key": "",
    "tr": "MARS JEX LESSONS  ·  OFF"
@@ -3246,16 +3261,6 @@
    "en": "MASTER",
    "key": "",
    "tr": "MASTER"
-  },
-  {
-   "en": "MED",
-   "key": "",
-   "tr": "MED"
-  },
-  {
-   "en": "MENU",
-   "key": "",
-   "tr": "MENU"
   },
   {
    "en": "MISSION TIME EXPIRED",
@@ -3443,14 +3448,14 @@
    "tr": "More dens, more wisps, a bigger till to fill."
   },
   {
+   "en": "Move the pointer; push an edge to pan",
+   "key": "",
+   "tr": "Move the pointer; push an edge to pan"
+  },
+  {
    "en": "NEED TECH",
    "key": "",
    "tr": "NEED TECH"
-  },
-  {
-   "en": "NEEDS {0}",
-   "key": "",
-   "tr": "NEEDS {0}"
   },
   {
    "en": "NEW CAMPAIGN",
@@ -3481,6 +3486,11 @@
    "en": "Nanite drop. Restores 50% of a damaged building.",
    "key": "",
    "tr": "Nanite drop. Restores 50% of a damaged building."
+  },
+  {
+   "en": "Needs {0}.",
+   "key": "",
+   "tr": "Needs {0}."
   },
   {
    "en": "New campaign",
@@ -3643,6 +3653,11 @@
    "tr": "ON"
   },
   {
+   "en": "ON  ·  IN USE",
+   "key": "",
+   "tr": "ON  ·  IN USE"
+  },
+  {
    "en": "ON  ·  NONE CONNECTED",
    "key": "",
    "tr": "ON  ·  NONE CONNECTED"
@@ -3663,16 +3678,6 @@
    "tr": "OPEN HANDS"
   },
   {
-   "en": "OPEN THE FLAG LIST   ·   {0}",
-   "key": "",
-   "tr": "OPEN THE FLAG LIST   ·   {0}"
-  },
-  {
-   "en": "OPEN THE LIST   ·   {0}",
-   "key": "",
-   "tr": "OPEN THE LIST   ·   {0}"
-  },
-  {
    "en": "OPS Drop-off",
    "key": "",
    "tr": "OPS Drop-off"
@@ -3681,11 +3686,6 @@
    "en": "OPS Drop-off  ·  does not grow EU",
    "key": "",
    "tr": "OPS Drop-off  ·  does not grow EU"
-  },
-  {
-   "en": "ORBITAL SUPPORT",
-   "key": "",
-   "tr": "ORBITAL SUPPORT"
   },
   {
    "en": "ORDERS",
@@ -3908,6 +3908,11 @@
    "tr": "PLAY INTRO ON LAUNCH  ·  ON"
   },
   {
+   "en": "POINTER SPEED  ·  {0}",
+   "key": "",
+   "tr": "POINTER SPEED  ·  {0}"
+  },
+  {
    "en": "POISONED",
    "key": "",
    "tr": "POISONED"
@@ -4018,9 +4023,9 @@
    "tr": "Pay the bounty and the bots go. Underpay and they wait."
   },
   {
-   "en": "Peak population",
+   "en": "Peak drones",
    "key": "",
-   "tr": "Peak population"
+   "tr": "Peak drones"
   },
   {
    "en": "Perimeter Doctrine",
@@ -4086,6 +4091,11 @@
    "en": "Planetary Anvil",
    "key": "",
    "tr": "Planetary Anvil"
+  },
+  {
+   "en": "Pointer mode on / off",
+   "key": "",
+   "tr": "Pointer mode on / off"
   },
   {
    "en": "Post a bounty of 2,500 EU or more.",
@@ -4228,11 +4238,6 @@
    "tr": "REPORT A BUG  ·  open logs"
   },
   {
-   "en": "RESEARCH",
-   "key": "",
-   "tr": "RESEARCH"
-  },
-  {
    "en": "RESET TO DEFAULTS",
    "key": "",
    "tr": "RESET TO DEFAULTS"
@@ -4251,11 +4256,6 @@
    "en": "RESTART MISSION",
    "key": "",
    "tr": "RESTART MISSION"
-  },
-  {
-   "en": "RESUME   ·   {0}",
-   "key": "",
-   "tr": "RESUME   ·   {0}"
   },
   {
    "en": "RESUME  ·  Esc",
@@ -4351,11 +4351,6 @@
    "en": "Re-fabricate five scrapped robots and still clear the body.",
    "key": "",
    "tr": "Re-fabricate five scrapped robots and still clear the body."
-  },
-  {
-   "en": "Reach a population of 20.",
-   "key": "",
-   "tr": "Reach a population of 20."
   },
   {
    "en": "Read the crust. Better mine ticks. Unlocks Geologist shop.",
@@ -4698,11 +4693,6 @@
    "tr": "SLOT {0}"
   },
   {
-   "en": "SLOWER   ·   {0}",
-   "key": "",
-   "tr": "SLOWER   ·   {0}"
-  },
-  {
    "en": "SOIL CREEPER",
    "key": "",
    "tr": "SOIL CREEPER"
@@ -4761,11 +4751,6 @@
    "en": "SWARM",
    "key": "",
    "tr": "SWARM"
-  },
-  {
-   "en": "SWITCH YARD",
-   "key": "",
-   "tr": "SWITCH YARD"
   },
   {
    "en": "Salvage {0} EU.",
@@ -4893,9 +4878,9 @@
    "tr": "Secret Project. Labs remember every sample. Place the Archive landmark."
   },
   {
-   "en": "Secret Project. Spare charging slots, faster builds, greener farms. Growth path.",
+   "en": "Secret Project. Spare charging berths, faster drone builds, greener farms. Growth path.",
    "key": "",
-   "tr": "Secret Project. Spare charging slots, faster builds, greener farms. Growth path."
+   "tr": "Secret Project. Spare charging berths, faster drone builds, greener farms. Growth path."
   },
   {
    "en": "Secret Project. Weave weather for the crust — farms surge. Place the Loom landmark.",
@@ -5306,6 +5291,11 @@
    "en": "TERR",
    "key": "",
    "tr": "TERR"
+  },
+  {
+   "en": "TEXT SIZE",
+   "key": "",
+   "tr": "TEXT SIZE"
   },
   {
    "en": "THE CORE",
@@ -5848,14 +5838,14 @@
    "tr": "UNCAPPED"
   },
   {
-   "en": "Unassigned",
-   "key": "",
-   "tr": "Unassigned"
-  },
-  {
    "en": "Uncovered module",
    "key": "",
    "tr": "Uncovered module"
+  },
+  {
+   "en": "Up: overlay · Down: tool · Left / Right: bounty",
+   "key": "",
+   "tr": "Up: overlay · Down: tool · Left / Right: bounty"
   },
   {
    "en": "VOICES",
@@ -6693,11 +6683,6 @@
    "tr": "{0:N0}/day"
   },
   {
-   "en": "{0}   ·   recharge {1:0} s",
-   "key": "",
-   "tr": "{0}   ·   recharge {1:0} s"
-  },
-  {
    "en": "{0}  ({1:F0}%)",
    "key": "",
    "tr": "{0}  ({1:F0}%)"
@@ -7053,11 +7038,6 @@
    "tr": "{0} sighted at the colony edge — post Clear Threat."
   },
   {
-   "en": "{0} solar",
-   "key": "",
-   "tr": "{0} solar"
-  },
-  {
    "en": "{0} staged on the Landing Pad. Launch gate is open.",
    "key": "",
    "tr": "{0} staged on the Landing Pad. Launch gate is open."
@@ -7116,6 +7096,11 @@
    "en": "{0} {1} — {2:N0} EU dropped.",
    "key": "",
    "tr": "{0} {1} — {2:N0} EU dropped."
+  },
+  {
+   "en": "{0} · COLONY",
+   "key": "",
+   "tr": "{0} · COLONY"
   },
   {
    "en": "{0} · battery {1} EU",

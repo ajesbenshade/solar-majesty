@@ -143,6 +143,11 @@
    "tr": "A"
   },
   {
+   "en": "A / R3 (pointer)",
+   "key": "",
+   "tr": "A / R3 (pointeur)"
+  },
+  {
    "en": "A courier claimed Yard B. Freight after. They have a slogan. It works.",
    "key": "",
    "tr": "Un coursier a pris le Chantier B. Le fret ensuite. Ils ont un slogan. Il marche."
@@ -246,6 +251,11 @@
    "en": "AUTO",
    "key": "",
    "tr": "AUTO"
+  },
+  {
+   "en": "Aa · the quick bot",
+   "key": "",
+   "tr": "Aa · le bot rapide"
   },
   {
    "en": "Achievement — {0}",
@@ -578,11 +588,6 @@
    "tr": "PRIME"
   },
   {
-   "en": "BOUNTY FLAG",
-   "key": "",
-   "tr": "FANION DE PRIME"
-  },
-  {
    "en": "BUILD",
    "key": "",
    "tr": "CONSTRUIRE"
@@ -651,6 +656,11 @@
    "en": "Berserk",
    "key": "",
    "tr": "Berserk"
+  },
+  {
+   "en": "Berth 20 worker drones at your charging stations.",
+   "key": "",
+   "tr": "Logez 20 drones ouvriers dans vos stations de recharge."
   },
   {
    "en": "Blacksmith",
@@ -1388,6 +1398,11 @@
    "tr": "Alterner Fanion → Construire → aucun"
   },
   {
+   "en": "D-pad (pointer)",
+   "key": "",
+   "tr": "Croix directionnelle (pointeur)"
+  },
+  {
    "en": "DAY / NIGHT CYCLE",
    "key": "",
    "tr": "CYCLE JOUR / NUIT"
@@ -1546,6 +1561,11 @@
    "en": "Defense hall · Clear / Defend",
    "key": "",
    "tr": "Maison de défense · Éliminer / Défendre"
+  },
+  {
+   "en": "Demo: Earth only. Luna, Mars, guilds and replay modes are in the full game.",
+   "key": "",
+   "tr": "Démo : Terre uniquement. Luna, Mars, les guildes et les modes de rejeu sont dans le jeu complet."
   },
   {
    "en": "Den Breaker",
@@ -1913,11 +1933,6 @@
    "tr": "VOL DE FERME"
   },
   {
-   "en": "FASTER   ·   {0}",
-   "key": "",
-   "tr": "PLUS VITE   ·   {0}"
-  },
-  {
    "en": "FATIGUE",
    "key": "",
    "tr": "FATIGUE"
@@ -1971,11 +1986,6 @@
    "en": "FOBOT YARD  ·  {0}",
    "key": "",
    "tr": "CHANTIER FOBOT  ·  {0}"
-  },
-  {
-   "en": "FORM SQUAD",
-   "key": "",
-   "tr": "FORMER UNE ESCOUADE"
   },
   {
    "en": "FRAME CAP  ·  {0}",
@@ -2093,9 +2103,9 @@
    "tr": "Sangsues des failles sur les fermes solaires — posez Éliminer la menace."
   },
   {
-   "en": "Fixed layout (Xbox-style pad on Windows). The controller cannot click HUD buttons or place things; use the mouse for those. Settings → CONTROLLER turns it off.",
+   "en": "Fixed layout (Xbox-style pad on Windows and Steam Deck). Back switches pointer mode, where the left stick moves the pointer and A clicks; it is always on in menus, placement tools and research. Settings → CONTROLLER turns the pad off.",
    "key": "",
-   "tr": "Disposition fixe (manette type Xbox sous Windows). La manette ne peut ni cliquer sur les boutons du HUD ni placer quoi que ce soit ; utilisez la souris pour cela. Paramètres → MANETTE la désactive."
+   "tr": "Disposition fixe (manette type Xbox sous Windows et Steam Deck). Retour active le mode pointeur, où le stick gauche déplace le pointeur et A clique ; il est toujours actif dans les menus, les outils de placement et la recherche. Paramètres → MANETTE désactive la manette."
   },
   {
    "en": "Flag",
@@ -2238,6 +2248,11 @@
    "tr": "Reposé"
   },
   {
+   "en": "From {0} EU next to an uplink. Recharge {1:0} s.",
+   "key": "",
+   "tr": "À partir de {0} EU près d’une liaison montante. Recharge {1:0} s."
+  },
+  {
    "en": "Full Crew",
    "key": "",
    "tr": "Équipage complet"
@@ -2246,11 +2261,6 @@
    "en": "Full constellation: Orbital Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.",
    "key": "",
    "tr": "Constellation complète : Barrage orbital, Piège IEM, Champ Aegis, Balise de relève, Essaim de réparation."
-  },
-  {
-   "en": "GAME SPEED   ·   1× IS THE COLONY'S NORMAL PACE",
-   "key": "",
-   "tr": "VITESSE DU JEU   ·   1× EST LE RYTHME NORMAL DE LA COLONIE"
   },
   {
    "en": "GEO",
@@ -2411,11 +2421,6 @@
    "en": "HOLD",
    "key": "",
    "tr": "PAUSE"
-  },
-  {
-   "en": "HOLD   ·   {0}",
-   "key": "",
-   "tr": "SUSPENDRE   ·   {0}"
   },
   {
    "en": "HOPPER",
@@ -2898,6 +2903,11 @@
    "tr": "Lance cinétique"
   },
   {
+   "en": "L3",
+   "key": "",
+   "tr": "L3"
+  },
+  {
    "en": "LANGUAGE",
    "key": "",
    "tr": "LANGUE"
@@ -3031,6 +3041,16 @@
    "en": "Lay out the solar field. It pays EU. Wisps will come for it.",
    "key": "",
    "tr": "Déployez le champ solaire. Il rapporte des EU. Les feux follets viendront le chercher."
+  },
+  {
+   "en": "Left click / right click",
+   "key": "",
+   "tr": "Clic gauche / clic droit"
+  },
+  {
+   "en": "Left stick (pointer)",
+   "key": "",
+   "tr": "Stick gauche (pointeur)"
   },
   {
    "en": "Left stick / D-pad",
@@ -3228,11 +3248,6 @@
    "tr": "N{0}–{1}"
   },
   {
-   "en": "MAJESTY COLONY",
-   "key": "",
-   "tr": "COLONIE MAJESTY"
-  },
-  {
    "en": "MARS JEX LESSONS  ·  OFF",
    "key": "",
    "tr": "LEÇONS DE JEX SUR MARS  ·  DÉSACTIVÉES"
@@ -3246,16 +3261,6 @@
    "en": "MASTER",
    "key": "",
    "tr": "GÉNÉRAL"
-  },
-  {
-   "en": "MED",
-   "key": "",
-   "tr": "MÉD"
-  },
-  {
-   "en": "MENU",
-   "key": "",
-   "tr": "MENU"
   },
   {
    "en": "MISSION TIME EXPIRED",
@@ -3443,14 +3448,14 @@
    "tr": "Plus de tanières, plus de feux follets, une plus grosse caisse à remplir."
   },
   {
+   "en": "Move the pointer; push an edge to pan",
+   "key": "",
+   "tr": "Déplacer le pointeur ; poussez vers un bord pour défiler"
+  },
+  {
    "en": "NEED TECH",
    "key": "",
    "tr": "TECH REQUISE"
-  },
-  {
-   "en": "NEEDS {0}",
-   "key": "",
-   "tr": "REQUIERT {0}"
   },
   {
    "en": "NEW CAMPAIGN",
@@ -3481,6 +3486,11 @@
    "en": "Nanite drop. Restores 50% of a damaged building.",
    "key": "",
    "tr": "Largage de nanites. Restaure 50 % d'un bâtiment endommagé."
+  },
+  {
+   "en": "Needs {0}.",
+   "key": "",
+   "tr": "Requiert {0}."
   },
   {
    "en": "New campaign",
@@ -3643,6 +3653,11 @@
    "tr": "ACTIVÉ"
   },
   {
+   "en": "ON  ·  IN USE",
+   "key": "",
+   "tr": "ACTIVÉ  ·  EN SERVICE"
+  },
+  {
    "en": "ON  ·  NONE CONNECTED",
    "key": "",
    "tr": "ACTIVÉ  ·  AUCUNE MANETTE"
@@ -3663,16 +3678,6 @@
    "tr": "MAINS OUVERTES"
   },
   {
-   "en": "OPEN THE FLAG LIST   ·   {0}",
-   "key": "",
-   "tr": "OUVRIR LA LISTE DES FANIONS   ·   {0}"
-  },
-  {
-   "en": "OPEN THE LIST   ·   {0}",
-   "key": "",
-   "tr": "OUVRIR LA LISTE   ·   {0}"
-  },
-  {
    "en": "OPS Drop-off",
    "key": "",
    "tr": "Dépôt OPS"
@@ -3681,11 +3686,6 @@
    "en": "OPS Drop-off  ·  does not grow EU",
    "key": "",
    "tr": "Dépôt OPS  ·  n'augmente pas les EU"
-  },
-  {
-   "en": "ORBITAL SUPPORT",
-   "key": "",
-   "tr": "SOUTIEN ORBITAL"
   },
   {
    "en": "ORDERS",
@@ -3908,6 +3908,11 @@
    "tr": "INTRO AU LANCEMENT  ·  OUI"
   },
   {
+   "en": "POINTER SPEED  ·  {0}",
+   "key": "",
+   "tr": "VITESSE DU POINTEUR  ·  {0}"
+  },
+  {
    "en": "POISONED",
    "key": "",
    "tr": "EMPOISONNÉ"
@@ -4018,9 +4023,9 @@
    "tr": "Payez la prime et les bots y vont. Sous-payez et ils attendent."
   },
   {
-   "en": "Peak population",
+   "en": "Peak drones",
    "key": "",
-   "tr": "Pic de population"
+   "tr": "Pic de drones"
   },
   {
    "en": "Perimeter Doctrine",
@@ -4086,6 +4091,11 @@
    "en": "Planetary Anvil",
    "key": "",
    "tr": "Enclume planétaire"
+  },
+  {
+   "en": "Pointer mode on / off",
+   "key": "",
+   "tr": "Mode pointeur activé / désactivé"
   },
   {
    "en": "Post a bounty of 2,500 EU or more.",
@@ -4228,11 +4238,6 @@
    "tr": "SIGNALER UN BUG  ·  ouvrir les journaux"
   },
   {
-   "en": "RESEARCH",
-   "key": "",
-   "tr": "RECHERCHE"
-  },
-  {
    "en": "RESET TO DEFAULTS",
    "key": "",
    "tr": "RÉTABLIR LES DÉFAUTS"
@@ -4251,11 +4256,6 @@
    "en": "RESTART MISSION",
    "key": "",
    "tr": "RECOMMENCER LA MISSION"
-  },
-  {
-   "en": "RESUME   ·   {0}",
-   "key": "",
-   "tr": "REPRENDRE   ·   {0}"
   },
   {
    "en": "RESUME  ·  Esc",
@@ -4351,11 +4351,6 @@
    "en": "Re-fabricate five scrapped robots and still clear the body.",
    "key": "",
    "tr": "Refabriquez cinq robots mis à la ferraille et terminez quand même l'astre."
-  },
-  {
-   "en": "Reach a population of 20.",
-   "key": "",
-   "tr": "Atteignez une population de 20."
   },
   {
    "en": "Read the crust. Better mine ticks. Unlocks Geologist shop.",
@@ -4698,11 +4693,6 @@
    "tr": "EMPLACEMENT {0}"
   },
   {
-   "en": "SLOWER   ·   {0}",
-   "key": "",
-   "tr": "PLUS LENT   ·   {0}"
-  },
-  {
    "en": "SOIL CREEPER",
    "key": "",
    "tr": "RAMPEUR DES SOLS"
@@ -4761,11 +4751,6 @@
    "en": "SWARM",
    "key": "",
    "tr": "ESSAIM"
-  },
-  {
-   "en": "SWITCH YARD",
-   "key": "",
-   "tr": "CHANGER DE CHANTIER"
   },
   {
    "en": "Salvage {0} EU.",
@@ -4893,9 +4878,9 @@
    "tr": "Projet secret. Les labos se souviennent de chaque échantillon. Placez le monument Archive."
   },
   {
-   "en": "Secret Project. Spare charging slots, faster builds, greener farms. Growth path.",
+   "en": "Secret Project. Spare charging berths, faster drone builds, greener farms. Growth path.",
    "key": "",
-   "tr": "Projet secret. Emplacements de recharge en plus, constructions plus rapides, fermes plus vertes. Voie de croissance."
+   "tr": "Projet secret. Places de recharge en plus, drones construits plus vite, fermes plus vertes. Voie de croissance."
   },
   {
    "en": "Secret Project. Weave weather for the crust — farms surge. Place the Loom landmark.",
@@ -5306,6 +5291,11 @@
    "en": "TERR",
    "key": "",
    "tr": "TERR"
+  },
+  {
+   "en": "TEXT SIZE",
+   "key": "",
+   "tr": "TAILLE DU TEXTE"
   },
   {
    "en": "THE CORE",
@@ -5848,14 +5838,14 @@
    "tr": "ILLIMITÉ"
   },
   {
-   "en": "Unassigned",
-   "key": "",
-   "tr": "Non assigné"
-  },
-  {
    "en": "Uncovered module",
    "key": "",
    "tr": "Module à découvert"
+  },
+  {
+   "en": "Up: overlay · Down: tool · Left / Right: bounty",
+   "key": "",
+   "tr": "Haut : calque · Bas : outil · Gauche / Droite : prime"
   },
   {
    "en": "VOICES",
@@ -6693,11 +6683,6 @@
    "tr": "{0:N0}/jour"
   },
   {
-   "en": "{0}   ·   recharge {1:0} s",
-   "key": "",
-   "tr": "{0}   ·   recharge {1:0} s"
-  },
-  {
    "en": "{0}  ({1:F0}%)",
    "key": "",
    "tr": "{0}  ({1:F0} %)"
@@ -7053,11 +7038,6 @@
    "tr": "{0} repéré en bordure de colonie — posez Éliminer la menace."
   },
   {
-   "en": "{0} solar",
-   "key": "",
-   "tr": "{0} solaire"
-  },
-  {
    "en": "{0} staged on the Landing Pad. Launch gate is open.",
    "key": "",
    "tr": "{0} prêt sur l'Aire d'atterrissage. Le lancement est ouvert."
@@ -7116,6 +7096,11 @@
    "en": "{0} {1} — {2:N0} EU dropped.",
    "key": "",
    "tr": "{0} {1} — {2:N0} EU lâchés."
+  },
+  {
+   "en": "{0} · COLONY",
+   "key": "",
+   "tr": "COLONIE · {0}"
   },
   {
    "en": "{0} · battery {1} EU",
@@ -7284,6 +7269,121 @@
   }
  ],
  "obsolete": [
+  {
+   "en": "BOUNTY FLAG",
+   "key": "",
+   "tr": "FANION DE PRIME"
+  },
+  {
+   "en": "FASTER   ·   {0}",
+   "key": "",
+   "tr": "PLUS VITE   ·   {0}"
+  },
+  {
+   "en": "FORM SQUAD",
+   "key": "",
+   "tr": "FORMER UNE ESCOUADE"
+  },
+  {
+   "en": "Fixed layout (Xbox-style pad on Windows). The controller cannot click HUD buttons or place things; use the mouse for those. Settings → CONTROLLER turns it off.",
+   "key": "",
+   "tr": "Disposition fixe (manette type Xbox sous Windows). La manette ne peut ni cliquer sur les boutons du HUD ni placer quoi que ce soit ; utilisez la souris pour cela. Paramètres → MANETTE la désactive."
+  },
+  {
+   "en": "GAME SPEED   ·   1× IS THE COLONY'S NORMAL PACE",
+   "key": "",
+   "tr": "VITESSE DU JEU   ·   1× EST LE RYTHME NORMAL DE LA COLONIE"
+  },
+  {
+   "en": "HOLD   ·   {0}",
+   "key": "",
+   "tr": "SUSPENDRE   ·   {0}"
+  },
+  {
+   "en": "MAJESTY COLONY",
+   "key": "",
+   "tr": "COLONIE MAJESTY"
+  },
+  {
+   "en": "MED",
+   "key": "",
+   "tr": "MÉD"
+  },
+  {
+   "en": "MENU",
+   "key": "",
+   "tr": "MENU"
+  },
+  {
+   "en": "NEEDS {0}",
+   "key": "",
+   "tr": "REQUIERT {0}"
+  },
+  {
+   "en": "OPEN THE FLAG LIST   ·   {0}",
+   "key": "",
+   "tr": "OUVRIR LA LISTE DES FANIONS   ·   {0}"
+  },
+  {
+   "en": "OPEN THE LIST   ·   {0}",
+   "key": "",
+   "tr": "OUVRIR LA LISTE   ·   {0}"
+  },
+  {
+   "en": "ORBITAL SUPPORT",
+   "key": "",
+   "tr": "SOUTIEN ORBITAL"
+  },
+  {
+   "en": "Peak population",
+   "key": "",
+   "tr": "Pic de population"
+  },
+  {
+   "en": "RESEARCH",
+   "key": "",
+   "tr": "RECHERCHE"
+  },
+  {
+   "en": "RESUME   ·   {0}",
+   "key": "",
+   "tr": "REPRENDRE   ·   {0}"
+  },
+  {
+   "en": "Reach a population of 20.",
+   "key": "",
+   "tr": "Atteignez une population de 20."
+  },
+  {
+   "en": "SLOWER   ·   {0}",
+   "key": "",
+   "tr": "PLUS LENT   ·   {0}"
+  },
+  {
+   "en": "SWITCH YARD",
+   "key": "",
+   "tr": "CHANGER DE CHANTIER"
+  },
+  {
+   "en": "Secret Project. Spare charging slots, faster builds, greener farms. Growth path.",
+   "key": "",
+   "tr": "Projet secret. Emplacements de recharge en plus, constructions plus rapides, fermes plus vertes. Voie de croissance."
+  },
+  {
+   "en": "Unassigned",
+   "key": "",
+   "tr": "Non assigné"
+  },
+  {
+   "en": "{0}   ·   recharge {1:0} s",
+   "key": "",
+   "tr": "{0}   ·   recharge {1:0} s"
+  },
+  {
+   "en": "{0} solar",
+   "key": "",
+   "tr": "{0} solaire"
+  },
   {
    "en": "Speed Down",
    "key": "",

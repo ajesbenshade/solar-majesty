@@ -888,7 +888,7 @@ namespace SolarMajesty
                 HudLayout.ChargersRate(set != null ? set.Drones : 0, set != null ? set.DroneCapacity : 0, solar));
             ResourceChip(new Rect(r.x, top + ch + 4f, cw, ch), "HAUL", Loc.S("HAUL"), collectors, collectors <= 0 || replacing > 0,
                 replacing > 0 ? Loc.F("-{0} replacing", replacing) : (bags > 0 ? Loc.F("{0} carried", bags) : null));
-            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? HaltedLabel : BuildLabel, Loc.S(halted ? HaltedLabel : BuildLabel),
+            ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? HaltedLabel : BuildLabel, halted ? Loc.S(HaltedLabel) : Loc.S(BuildLabel),
                 building ? pct : 0, halted, building ? Loc.S("% built") : Loc.S("idle"), halted ? "HALTED" : "WORKERS");
         }
 
