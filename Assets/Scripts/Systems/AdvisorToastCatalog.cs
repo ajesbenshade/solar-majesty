@@ -27,6 +27,9 @@ namespace SolarMajesty
             When = when;
             Line = line;
         }
+
+        /// <summary>The line in the current language. <see cref="Line"/> stays English.</summary>
+        public string LineText => Loc.S(Line);
     }
 
     /// <summary>

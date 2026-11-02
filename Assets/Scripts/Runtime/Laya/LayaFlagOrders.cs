@@ -19,7 +19,7 @@ namespace SolarMajesty
                 if (flag.Orders != orders || orders.HasRules) return; // replaced or already read
                 if (!LayaProtocol.TryParseAnswers(reply, out var answers)) return;
                 if (LayaOrdersPolicy.Apply(orders, answers) && loop != null)
-                    loop.LogOverseer($"Orders understood: {orders.Summary()}");
+                    loop.LogOverseer(Loc.F("Orders understood: {0}", orders.Summary()));
             });
         }
     }

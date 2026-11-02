@@ -271,12 +271,14 @@ namespace SolarMajesty
                     _ => node.Harvest(Tuning.otherPerHarvest) / 2
                 };
                 int got = Deliver(ResourceId.Metals, Gold(ore), haul);
-                RecordExtract($"+{got} EU {tag}", got);
+                RecordExtract(Loc.F("+{0} EU {1}", got, tag), got);
                 return;
             }
 
             int fallback = Deliver(ResourceId.Metals, Gold(campusIndex <= 0 ? Tuning.campusFallbackOre : Tuning.outpostFallbackOre), haul);
-            RecordExtract($"+{fallback} EU {(campusIndex <= 0 ? "campus" : "outpost")} {tag}", fallback);
+            RecordExtract(campusIndex <= 0
+                ? Loc.F("+{0} EU campus {1}", fallback, tag)
+                : Loc.F("+{0} EU outpost {1}", fallback, tag), fallback);
         }
 
         /// <summary>Ore units → CRED (one ore chunk is worth <see cref="MajestyEconomy.GoldScale"/>).</summary>
@@ -293,8 +295,8 @@ namespace SolarMajesty
         {
             int pct = Mathf.RoundToInt(efficiency * 100f);
             if (string.IsNullOrEmpty(via))
-                return $"loose haul · {pct}%";
-            return $"via {via} · {pct}%";
+                return Loc.F("loose haul · {0}%", pct);
+            return Loc.F("via {0} · {1}%", via, pct);
         }
 
         private void RecordExtract(string line, int amount)
@@ -308,7 +310,7 @@ namespace SolarMajesty
             LastResupplyDocked = false;
             if (ResupplyRequiresPad && !HasDock)
             {
-                LastResupplyLine = "Earth ship waved off — no Landing Pad";
+                LastResupplyLine = Loc.S("Earth ship waved off — no Landing Pad");
                 return false;
             }
 
@@ -320,8 +322,8 @@ namespace SolarMajesty
 
             LastResupplyDocked = true;
             LastResupplyLine = ResupplyDockFee > 0
-                ? $"Ship landed — caravan worth {LastCaravanGold} EU to the Market till. Dock fee {ResupplyDockFee} EU already left."
-                : $"Ship landed — caravan worth {LastCaravanGold} EU to the Market till.";
+                ? Loc.F("Ship landed — caravan worth {0} EU to the Market till. Dock fee {1} EU already left.", LastCaravanGold, ResupplyDockFee)
+                : Loc.F("Ship landed — caravan worth {0} EU to the Market till.", LastCaravanGold);
             return true;
         }
     }

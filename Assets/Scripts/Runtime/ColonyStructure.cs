@@ -431,16 +431,16 @@ namespace SolarMajesty
         {
             switch (cls)
             {
-                case SpecialistClass.EngineerBot: return "ENG";
-                case SpecialistClass.DefenseMech: return "DEF";
-                case SpecialistClass.Medic: return "REP";
-                case SpecialistClass.HarvesterBot: return "HARV";
-                case SpecialistClass.SurveyorBot: return "SURV";
-                case SpecialistClass.TerraformerBot: return "TERR";
-                case SpecialistClass.CourierBot: return "COUR";
-                case SpecialistClass.GeologistBot: return "GEO";
-                case SpecialistClass.SentinelMech: return "SENT";
-                default: return "SCOUT";
+                case SpecialistClass.EngineerBot: return Loc.S("ENG");
+                case SpecialistClass.DefenseMech: return Loc.S("DEF");
+                case SpecialistClass.Medic: return Loc.S("REP");
+                case SpecialistClass.HarvesterBot: return Loc.S("HARV");
+                case SpecialistClass.SurveyorBot: return Loc.S("SURV");
+                case SpecialistClass.TerraformerBot: return Loc.S("TERR");
+                case SpecialistClass.CourierBot: return Loc.S("COUR");
+                case SpecialistClass.GeologistBot: return Loc.S("GEO");
+                case SpecialistClass.SentinelMech: return Loc.S("SENT");
+                default: return Loc.S("SCOUT");
             }
         }
 
@@ -736,8 +736,9 @@ namespace SolarMajesty
             if (loop != null)
             {
                 loop.ShakeCamera(0.85f, transform.position);
+                // English for the Overseer voice (live line, "destroyed" picks the module-lost bark).
                 loop.RaiseAlert("module_lost", $"{DisplayName} destroyed.",
-                    AlertSeverity.Critical, transform.position);
+                    AlertSeverity.Critical, transform.position, Loc.F("{0} destroyed.", DisplayName));
             }
             Destroy(gameObject);
         }

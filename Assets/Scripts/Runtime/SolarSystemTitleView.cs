@@ -163,7 +163,7 @@ namespace SolarMajesty
                 HoveredBody = _hover.Body;
                 bool locked = !CampaignProgress.IsUnlocked(_hover.Body);
                 HoverCaption = locked
-                    ? $"{_hover.Caption}  ·  locked"
+                    ? Loc.F("{0}  ·  locked", _hover.Caption)
                     : _hover.Caption;
             }
             else
@@ -256,13 +256,13 @@ namespace SolarMajesty
             SpawnSun(_pivot);
             var earthAnchor = Anchor(_pivot, "EarthAnchor",
                 SolarSystemOrbits.OnOrbit(SolarSystemOrbits.EarthOrbit, 0.55f));
-            var earth = SpawnBody(earthAnchor, "Earth", CelestialBodyId.Earth, "Earth",
+            var earth = SpawnBody(earthAnchor, "Earth", CelestialBodyId.Earth, Loc.S("Earth"),
                 Vector3.zero, SolarSystemOrbits.EarthScale, Color.white, "Earth", 22f);
             SpawnClouds(earth.transform);
-            SpawnBody(earthAnchor, "Luna", CelestialBodyId.Luna, "Luna",
+            SpawnBody(earthAnchor, "Luna", CelestialBodyId.Luna, Loc.S("Luna"),
                 SolarSystemOrbits.OnOrbit(SolarSystemOrbits.LunaOrbit, 1.1f),
                 SolarSystemOrbits.LunaScale, Color.white, "Luna", -8f);
-            SpawnBody(_pivot, "Mars", CelestialBodyId.Mars, "Mars",
+            SpawnBody(_pivot, "Mars", CelestialBodyId.Mars, Loc.S("Mars"),
                 SolarSystemOrbits.OnOrbit(SolarSystemOrbits.MarsOrbit, 2.05f),
                 SolarSystemOrbits.MarsScale, Color.white, "Mars", 18f);
             SpawnBelt(_pivot);
@@ -271,7 +271,7 @@ namespace SolarMajesty
             var jupiter = SpawnGlobe(jupiterAnchor, "Jupiter",
                 Vector3.zero, SolarSystemOrbits.JupiterScale, Color.white, "Jupiter");
             RegisterSpin(jupiter.transform, 32f);
-            SpawnBody(jupiterAnchor, "Europa", CelestialBodyId.Europa, "Europa",
+            SpawnBody(jupiterAnchor, "Europa", CelestialBodyId.Europa, Loc.S("Europa"),
                 SolarSystemOrbits.OnOrbit(SolarSystemOrbits.EuropaOrbit, 0.4f),
                 SolarSystemOrbits.EuropaScale, Color.white, "Europa", 11f);
 
@@ -299,7 +299,7 @@ namespace SolarMajesty
 
         private void SpawnBelt(Transform parent)
         {
-            var hub = SpawnBody(parent, "Belt", CelestialBodyId.Belt, "Main Belt",
+            var hub = SpawnBody(parent, "Belt", CelestialBodyId.Belt, Loc.S("Main Belt"),
                 SolarSystemOrbits.OnOrbit(SolarSystemOrbits.BeltOrbit, 3.35f),
                 SolarSystemOrbits.BeltHubScale, Color.white, "Ceres", 9f);
             hub.GetComponent<SolarSystemPickTarget>().PickMul = 3.6f;

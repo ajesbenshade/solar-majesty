@@ -496,8 +496,8 @@ namespace SolarMajesty
             if (!_levyHomeLogged)
             {
                 _levyHomeLogged = true;
-                LogOverseer(OverseerRules.JexLevyHome, 6.2f);
-                Alerts.Push("levy_home", $"Courier hauled {amount:N0} EU to the till.", AlertSeverity.Good, Time.unscaledTime, at);
+                LogOverseerScript(OverseerRules.JexLevyHome, 6.2f);
+                Alerts.Push("levy_home", Loc.F("Courier hauled {0:N0} EU to the till.", amount), AlertSeverity.Good, Time.unscaledTime, at);
             }
         }
 
@@ -640,16 +640,27 @@ namespace SolarMajesty
         /// <summary>Active ground overlay. Cycled with V.</summary>
         public MapOverlayMode OverlayMode { get; private set; } = MapOverlayMode.None;
 
+        /// <summary>Show a line in the Overseer log. <paramref name="line"/> is already in the player's language (Loc.S / Loc.F).</summary>
         public void LogOverseer(string line) => LogOverseer(line, 4.2f);
 
-        public void LogOverseer(string line, float seconds)
+        public void LogOverseer(string line, float seconds) => LogOverseer(line, line, seconds);
+
+        /// <summary>
+        /// A baked Overseer script line (JexCatalog, OverseerRules.Jex*, CompactJex fixed lines).
+        /// Pass the English: the voice bank keys its clips on the exact English text, so only the
+        /// on-screen copy is translated.
+        /// </summary>
+        public void LogOverseerScript(string english, float seconds = 4.2f) =>
+            LogOverseer(JexCatalog.DisplayText(english), english, seconds); // keeps the "Jex — " prefix, translates the line
+
+        private void LogOverseer(string shown, string spoken, float seconds)
         {
             if (StillCaptureHold.Active) return;
-            bool fresh = Log.Push(line);
-            _overseerHud?.Notify(line, seconds);
+            bool fresh = Log.Push(shown);
+            _overseerHud?.Notify(shown, seconds);
             // A repeat inside the dedupe window must not speak the line again.
             if (fresh)
-                OverseerVoice.SpeakIfScripted(line);
+                OverseerVoice.SpeakIfScripted(spoken);
         }
 
         public bool JexLessonsOn => JexAdvisor.TrainingWheels(celestialBody);
@@ -662,7 +673,7 @@ namespace SolarMajesty
             if (StillCaptureHold.Active) return false;
             bool wheels = JexAdvisor.TrainingWheels(celestialBody);
             if (!_jex.TrySpeak(beat, wheels, condition)) return false;
-            LogOverseer(JexCatalog.Say(beat), 6.2f);
+            LogOverseerScript(JexCatalog.Say(beat), 6.2f);
             return true;
         }
 
@@ -678,21 +689,25 @@ namespace SolarMajesty
 
         /// <summary>
         /// Raise an alert as well as logging. Use a stable key so repeats collapse into one row
-        /// rather than flooding the feed.
+        /// rather than flooding the feed. <paramref name="message"/> stays English because the
+        /// Overseer voice speaks it (baked clips are keyed on the English text, live lines use an
+        /// English voice); <paramref name="shown"/> is the translated copy for the screen.
         /// </summary>
-        public void RaiseAlert(string key, string message, AlertSeverity severity)
+        public void RaiseAlert(string key, string message, AlertSeverity severity, string shown = null)
         {
-            Alerts.Push(key, message, severity, Time.unscaledTime);
-            Log.Push(message);
+            shown ??= message;
+            Alerts.Push(string.IsNullOrEmpty(key) ? message : key, shown, severity, Time.unscaledTime);
+            Log.Push(shown);
             DemoAudio.PlayAlert(severity);
             if (severity >= AlertSeverity.Warning)
                 OverseerVoice.Speak(message, severity);
         }
 
-        public void RaiseAlert(string key, string message, AlertSeverity severity, Vector3 at)
+        public void RaiseAlert(string key, string message, AlertSeverity severity, Vector3 at, string shown = null)
         {
-            Alerts.Push(key, message, severity, Time.unscaledTime, at);
-            Log.Push(message);
+            shown ??= message;
+            Alerts.Push(string.IsNullOrEmpty(key) ? message : key, shown, severity, Time.unscaledTime, at);
+            Log.Push(shown);
             DemoAudio.PlayAlert(severity);
             if (severity >= AlertSeverity.Warning)
                 OverseerVoice.Speak(message, severity);
@@ -707,11 +722,11 @@ namespace SolarMajesty
             if (!_levyHomeLogged)
             {
                 _levyHomeLogged = true;
-                LogOverseer(OverseerRules.JexLevyHome, 6.2f);
+                LogOverseerScript(OverseerRules.JexLevyHome, 6.2f);
             }
             else
-                LogOverseer($"Courier hauled {amount} EU to the till.");
-            Alerts.Push("levy_home", $"Courier hauled {amount} EU to the till.", AlertSeverity.Good, Time.unscaledTime, at);
+                LogOverseer(Loc.F("Courier hauled {0} EU to the till.", amount));
+            Alerts.Push("levy_home", Loc.F("Courier hauled {0} EU to the till.", amount), AlertSeverity.Good, Time.unscaledTime, at);
         }
 
         public void NoteLevyStolen(
@@ -721,7 +736,7 @@ namespace SolarMajesty
             Settlement?.NoteLevyStolen(amount);
             if (fromHab)
             {
-                AnnounceLevyLine(OverseerRules.JexLevyStolenHab, "levy_stolen_hab", at);
+                AnnounceLevyLine(OverseerRules.JexLevyStolenHab, Loc.S(OverseerRules.JexLevyStolenHab), "levy_stolen_hab", at);
                 return;
             }
 
@@ -744,21 +759,23 @@ namespace SolarMajesty
         void FlushLevyRaid(Vector3 at, bool force)
         {
             if (_levyRaid.TryFlush(Time.time, force, ref _levyHintAt, out string line))
-                AnnounceLevyLine(line, "levy_stolen_courier", at);
+                AnnounceLevyLine(line, line, "levy_stolen_courier", at);
         }
 
-        void AnnounceLevyLine(string line, string key, Vector3 at)
+        // spoken: English, for the voice bank; shown: the on-screen copy.
+        void AnnounceLevyLine(string spoken, string shown, string key, Vector3 at)
         {
-            LogOverseer(line, 6.2f);
-            Alerts.Push(key, line, AlertSeverity.Warning, Time.unscaledTime, at);
+            LogOverseer(shown, spoken, 6.2f);
+            Alerts.Push(key, shown, AlertSeverity.Warning, Time.unscaledTime, at);
             DemoAudio.PlayAlertWarning();
-            OverseerVoice.Speak(line, AlertSeverity.Warning);
+            OverseerVoice.Speak(spoken, AlertSeverity.Warning);
         }
 
         private void OnAchievementEarned(AchievementDef def)
         {
             if (def == null) return;
-            RaiseAlert($"ach_{def.Id}", $"Achievement — {def.Title}", AlertSeverity.Good);
+            // Good alerts are never spoken, so the message can be the translated copy.
+            RaiseAlert($"ach_{def.Id}", Loc.F("Achievement — {0}", def.TitleText), AlertSeverity.Good);
             PlaytestTelemetry.Record("achievement", "id", def.Id.ToString());
         }
 
@@ -775,8 +792,8 @@ namespace SolarMajesty
                     _ => MapOverlayMode.None
                 };
                 LogOverseer(OverlayMode == MapOverlayMode.None
-                    ? "Overlays off."
-                    : $"Overlay: {MapOverlay.TitleFor(OverlayMode)}.");
+                    ? Loc.S("Overlays off.")
+                    : Loc.F("Overlay: {0}.", MapOverlay.TitleFor(OverlayMode)));
             }
 
             // Jump to whatever is going most wrong right now.
@@ -810,7 +827,7 @@ namespace SolarMajesty
         {
             if (_radWarned) return;
             _radWarned = true;
-            LogOverseer("Radiation outside the Commons — robots take damage far from campus.");
+            LogOverseer(Loc.S("Radiation outside the Commons — robots take damage far from campus."));
         }
 
         /// <summary>HUD helper for hold timer display.</summary>
@@ -891,12 +908,12 @@ namespace SolarMajesty
             else if (string.IsNullOrEmpty(CampaignSlots.Stamp) && SaveSystem.IsNewerVersion(SaveSystem.AutosaveSlot))
             {
                 DemoSettings.SaveExists = true;
-                DemoSettings.SaveLoadNotice = "This colony was saved by a newer game version. Update the game to Continue; your save is unchanged.";
+                DemoSettings.SaveLoadNotice = Loc.S("This colony was saved by a newer game version. Update the game to Continue; your save is unchanged.");
             }
             else if (string.IsNullOrEmpty(CampaignSlots.Stamp) && SaveSystem.Exists(SaveSystem.AutosaveSlot))
             {
                 DemoSettings.SaveExists = true;
-                DemoSettings.SaveLoadNotice = "We couldn't read this colony or its backup. Your save files are unchanged.";
+                DemoSettings.SaveLoadNotice = Loc.S("We couldn't read this colony or its backup. Your save files are unchanged.");
             }
             if (!CampaignProgress.IsUnlocked(celestialBody))
                 celestialBody = CelestialBodyId.Earth;
@@ -977,7 +994,7 @@ namespace SolarMajesty
                 !CampaignCutsceneCatalog.TryGetArrival(_body.Id, out _) &&
                 !string.IsNullOrEmpty(_body.ArrivalLog))
             {
-                Log.Push(_body.ArrivalLog);
+                Log.Push(_body.ArrivalLogText);
             }
 
             // One scene builds the colony and then opens the title. The intro is an overlay
@@ -1108,14 +1125,14 @@ namespace SolarMajesty
             bool guardAutosave = _bootSlot < 0 && string.IsNullOrEmpty(CampaignSlots.Stamp);
             if (loadStockpile && guardAutosave && SaveSystem.IsNewerVersion(SaveSystem.AutosaveSlot))
             {
-                DemoSettings.SaveLoadNotice = "This colony was saved by a newer game version. Update the game to Continue; your save is unchanged.";
+                DemoSettings.SaveLoadNotice = Loc.S("This colony was saved by a newer game version. Update the game to Continue; your save is unchanged.");
                 EnterTitle();
                 return;
             }
             if (loadStockpile && guardAutosave && SaveSystem.Exists(SaveSystem.AutosaveSlot) &&
                 !SaveSystem.TryRead(SaveSystem.AutosaveSlot, out _))
             {
-                DemoSettings.SaveLoadNotice = "We couldn't read this colony or its backup. Your save files are unchanged.";
+                DemoSettings.SaveLoadNotice = Loc.S("We couldn't read this colony or its backup. Your save files are unchanged.");
                 EnterTitle();
                 return;
             }
@@ -1206,14 +1223,14 @@ namespace SolarMajesty
             RearmStillHoldIfEditorShutter();
             _overseerHud?.OnSessionPlaying();
             if (loadStockpile)
-                LogOverseer(KeyHints.Fill("World held. {TogglePause} resumes at 1×."), 5.5f);
+                LogOverseer(KeyHints.Fill(Loc.S("World held. {TogglePause} resumes at 1×.")), 5.5f);
             BeginNarrativeSession();
             if (ReplayRules.Mode != ColonyRunMode.Campaign ||
                 ReplayRules.Challenge != ChallengeId.None ||
                 ReplayRules.Stance != DoctrineStance.Balanced ||
                 ReplayRules.IronmanRun)
             {
-                LogOverseer($"Replay: {ReplayRules.HudTag}. Doctrine nudges hunger/courage/workshop pull only.");
+                LogOverseer(Loc.F("Replay: {0}. Doctrine nudges hunger/courage/workshop pull only.", ReplayRules.HudTag));
             }
         }
 
@@ -1290,7 +1307,7 @@ namespace SolarMajesty
             {
                 string craft = Research != null
                     ? Research.LaunchTechLabel(CelestialBodyId.Earth)
-                    : "Colony Lifter";
+                    : Loc.S("Colony Lifter");
                 _overseerHud?.Notify(LaunchPath.ObjectiveText(false, false, craft), 5f);
                 return;
             }
@@ -1308,8 +1325,8 @@ namespace SolarMajesty
                 case SolarSystemTitlePick.Outcome.Locked:
                     _overseerHud?.Notify(
                         DevTools.Enabled
-                            ? $"{profile.DisplayName} is locked. Clear the inner worlds first — or Shift+click (dev tools)."
-                            : $"{profile.DisplayName} is locked. Clear the inner worlds first.",
+                            ? Loc.F("{0} is locked. Clear the inner worlds first — or Shift+click (dev tools).", profile.DisplayNameText)
+                            : Loc.F("{0} is locked. Clear the inner worlds first.", profile.DisplayNameText),
                         3.5f);
                     return;
                 case SolarSystemTitlePick.Outcome.StartNewOnBody:
@@ -1435,8 +1452,8 @@ namespace SolarMajesty
             _tutorialPestSpawned = false;
             _overseerHud?.Notify(
                 DemoSettings.FirstHourDemo
-                    ? "Tutorial reset — workshop, Build at 400, raise the price, then Defend."
-                    : "Tutorial reset — Commons, then charging station, workshop, flag, bounty.",
+                    ? Loc.S("Tutorial reset — workshop, Build at 400, raise the price, then Defend.")
+                    : Loc.S("Tutorial reset — Commons, then charging station, workshop, flag, bounty."),
                 4f);
         }
 
@@ -1446,8 +1463,8 @@ namespace SolarMajesty
             ApplyReplayToBrain();
             _overseerHud?.Notify(
                 on
-                    ? "Guided start on. Earth first; guilds and the outer worlds open when you clear it. New Game to start clean."
-                    : "Guided start skipped. Every unlocked world, the guilds and replay rules are open.",
+                    ? Loc.S("Guided start on. Earth first; guilds and the outer worlds open when you clear it. New Game to start clean.")
+                    : Loc.S("Guided start skipped. Every unlocked world, the guilds and replay rules are open."),
                 4f);
         }
 
@@ -1468,7 +1485,7 @@ namespace SolarMajesty
             Stats.FlagsCancelled++;
             if (Economy != null)
                 Economy.MatchReserved(FlagBountySync.Sum(Flags.Flags));
-            _overseerHud?.Notify(refund > 0 ? $"Flag cancelled — {refund} EU returned." : "Flag cancelled.", 2.4f);
+            _overseerHud?.Notify(refund > 0 ? Loc.F("Flag cancelled — {0} EU returned.", refund) : Loc.S("Flag cancelled."), 2.4f);
             Debug.Log("[Flags] Cancelled — metals refunded.");
         }
 
@@ -1495,7 +1512,7 @@ namespace SolarMajesty
                      NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree) &&
                      _narrative.TryTakePostToast(decree.Id, out var toast))
             {
-                LogOverseer(toast.Line, 6.5f);
+                LogOverseer(toast.LineText, 6.5f);
             }
 
             if (handle.InterestCount <= 0)
@@ -1545,7 +1562,7 @@ namespace SolarMajesty
                 return;
             _narrative.NoteClaimed(decree.Id);
             if (_narrative.TryTakeClaimToast(decree.Id, out var toast))
-                LogOverseer(toast.Line, 6.5f);
+                LogOverseer(toast.LineText, 6.5f);
             if (_narrative.TryTakeClaimAside(decree.Id, out string aside))
                 Log.Push(aside);
         }
@@ -1577,10 +1594,10 @@ namespace SolarMajesty
         private string InterestLine(FlagHandle handle)
         {
             if (_agents.Count == 0)
-                return "Flag posted — fabricate a workshop robot before anyone can take it.";
+                return Loc.S("Flag posted — fabricate a workshop robot before anyone can take it.");
             if (handle.InterestCount <= 0)
                 return handle.InterestLabel;
-            return $"{handle.InterestCount} tempted: {handle.InterestLabel}";
+            return Loc.F("{0} tempted: {1}", handle.InterestCount, handle.InterestLabel);
         }
 
         private void EnsureNarrative()
@@ -1680,7 +1697,7 @@ namespace SolarMajesty
                      AdvisorArrival.ShouldSpeak(travelKey, loaded.HasCommons) &&
                      _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
-                LogOverseer(toast.Line, 6.8f);
+                LogOverseer(toast.LineText, 6.8f);
             }
         }
 
@@ -1759,9 +1776,9 @@ namespace SolarMajesty
                 }
                 flag.InterestCount = n;
                 if (n > 0)
-                    flag.InterestLabel = $"{n} tempted · {names}";
+                    flag.InterestLabel = Loc.F("{0} tempted · {1}", n, names);
                 else if (_agents.Count == 0)
-                    flag.InterestLabel = "no robots yet";
+                    flag.InterestLabel = Loc.S("no robots yet");
                 else
                     flag.InterestLabel = RefusalSubtitle(flag, nearestMatch);
             }
@@ -1770,7 +1787,7 @@ namespace SolarMajesty
         private string RefusalSubtitle(FlagHandle flag, SpecialistAgent agent)
         {
             if (flag == null || agent == null || Brain == null)
-                return "Ignored — raise bounty (+)";
+                return Loc.S("Ignored — raise bounty (+)");
             var kind = Brain.ExplainFlag(agent.PeekContext(), flag, agent.BodyDanger);
             var data = agent.Data;
             string cls = ColonyStructure.ClassLabel(data != null ? data.specialistClass : SpecialistClass.ScoutDrone);
@@ -1800,13 +1817,13 @@ namespace SolarMajesty
                 if (dist > consider) continue;
                 string chip = kind switch
                 {
-                    FlagRefusalKind.Greed => "TOO CHEAP",
-                    FlagRefusalKind.TooFar => "TOO FAR",
-                    FlagRefusalKind.Hurt => "NOT NOW",
-                    FlagRefusalKind.NotMyJob => "NO",
-                    FlagRefusalKind.Hunting => "HUNTING",
-                    FlagRefusalKind.Orders => "ORDERS",
-                    FlagRefusalKind.Tired => "TIRED",
+                    FlagRefusalKind.Greed => Loc.S("TOO CHEAP"),
+                    FlagRefusalKind.TooFar => Loc.S("TOO FAR"),
+                    FlagRefusalKind.Hurt => Loc.S("NOT NOW"),
+                    FlagRefusalKind.NotMyJob => Loc.S("NO"),
+                    FlagRefusalKind.Hunting => Loc.S("HUNTING"),
+                    FlagRefusalKind.Orders => Loc.S("ORDERS"),
+                    FlagRefusalKind.Tired => Loc.S("TIRED"),
                     _ => null
                 };
                 if (!string.IsNullOrEmpty(chip))
@@ -1944,7 +1961,7 @@ namespace SolarMajesty
             Vector3 home = ColonyLayout.CampusOrigin + new Vector3(10f, 0f, 6f);
             if (SpawnFaunaAt(FaunaKind.Creeper, home) == null) return;
             _tutorialPestSpawned = true;
-            LogOverseer(KeyHints.Fill("Soil creeper on the yard — post Defend ({FlagDefend})."));
+            LogOverseer(KeyHints.Fill(Loc.S("Soil creeper on the yard — post Defend ({FlagDefend}).")));
         }
 
         private bool HasEngineerWorkshop()
@@ -2167,7 +2184,7 @@ namespace SolarMajesty
                              celestialBody == CelestialBodyId.Earth &&
                              !StillCaptureHold.Active;
             if (!demoShell)
-                Log.Push("Colony Commons is down — build workshops, charging stations and shops anywhere nearby.");
+                Log.Push(Loc.S("Colony Commons is down — build workshops, charging stations and shops anywhere nearby."));
             Debug.Log("[GameLoop] Auto-placed Colony Commons on the Campus A claim.");
         }
 
@@ -2212,7 +2229,7 @@ namespace SolarMajesty
                 if (_campusNav != null)
                     NotifyCampusExpanded();
                 SnapCampusCamera();
-                Log.Push("The Commons and a charging station are down. Build an Engineer workshop anywhere nearby.");
+                Log.Push(Loc.S("The Commons and a charging station are down. Build an Engineer workshop anywhere nearby."));
                 Debug.Log("[GameLoop] First-hour shell placed (Commons, HAB).");
                 return;
             }
@@ -2371,9 +2388,9 @@ namespace SolarMajesty
             {
                 switch (kind)
                 {
-                    case BuildZoneKind.TradePost: return "No trade ring was marked on this map.";
-                    case BuildZoneKind.Mine: return "No ore deposit was marked on this map.";
-                    default: return "No temple site was marked on this map.";
+                    case BuildZoneKind.TradePost: return Loc.S("No trade ring was marked on this map.");
+                    case BuildZoneKind.Mine: return Loc.S("No ore deposit was marked on this map.");
+                    default: return Loc.S("No temple site was marked on this map.");
                 }
             }
             var taken = TakenCenters(kind);
@@ -2390,27 +2407,27 @@ namespace SolarMajesty
         /// </summary>
         public string PlacementBlockReason(BuildingData data, Vector2Int cell)
         {
-            if (data == null) return "No building selected.";
-            if (BuildingPlacer.IsRetired(data.category)) return "That building is retired.";
+            if (data == null) return Loc.S("No building selected.");
+            if (BuildingPlacer.IsRetired(data.category)) return Loc.S("That building is retired.");
             string extra = ExtraPlacementReason(cell, data);
             if (extra != null) return extra;
             string occupied = BuildingPlacer.OccupancyBlock(Placer, data, cell);
             if (occupied != null) return occupied;
             if (Resources != null && Placer != null && !Resources.CanAfford(Placer.CostFor(data)))
-                return "Not enough EU.";
+                return Loc.S("Not enough EU.");
             return null;
         }
 
         /// <summary>Null when the extra placement rule accepts the footprint. Same order as the rule itself.</summary>
         private string ExtraPlacementReason(Vector2Int cell, BuildingData data)
         {
-            if (data == null) return "No building selected.";
-            if (grid == null) return "That spot is off the map.";
+            if (data == null) return Loc.S("No building selected.");
+            if (grid == null) return Loc.S("That spot is off the map.");
             for (int x = 0; x < data.footprintWidth; x++)
             for (int y = 0; y < data.footprintHeight; y++)
             {
                 if (!grid.InBounds(new Vector2Int(cell.x + x, cell.y + y)))
-                    return "That spot is off the map.";
+                    return Loc.S("That spot is off the map.");
             }
 
             bool hasCommons = (Settlement != null && Settlement.HasCommons) ||
@@ -2418,9 +2435,9 @@ namespace SolarMajesty
 
             if (data.category == BuildingCategory.Commons)
             {
-                if (hasCommons) return "Colony Commons is already standing.";
+                if (hasCommons) return Loc.S("Colony Commons is already standing.");
                 if (Placer == null || !Placer.OverlapsSoftClaim(cell, data.footprintWidth, data.footprintHeight))
-                    return "Place Colony Commons on the landing site.";
+                    return Loc.S("Place Colony Commons on the landing site.");
                 return null;
             }
 
@@ -2428,16 +2445,16 @@ namespace SolarMajesty
                 return null;
 
             if (!hasCommons)
-                return "Raise Colony Commons first.";
+                return Loc.S("Raise Colony Commons first.");
 
             if (!IsBuildingUnlocked(data.category))
-                return "That building needs research first.";
+                return Loc.S("That building needs research first.");
 
             if (FootprintOverWater(cell, data.footprintWidth, data.footprintHeight))
-                return "Can't build on water.";
+                return Loc.S("Can't build on water.");
 
             if (!ZoneAllows(data, cell))
-                return ZoneBlockReason(data, cell) ?? "That building doesn't fit here.";
+                return ZoneBlockReason(data, cell) ?? Loc.S("That building doesn't fit here.");
             return null;
         }
 
@@ -2684,7 +2701,7 @@ namespace SolarMajesty
         public void OnSpeedChanged()
         {
             ApplySimSpeed();
-            LogOverseer(SimSpeed.IsPaused ? "World held." : $"Speed {SimSpeed.Label}.");
+            LogOverseer(SimSpeed.IsPaused ? Loc.S("World held.") : Loc.F("Speed {0}.", SimSpeed.Label));
             PlaytestTelemetry.Record("speed_change", "speed", SimSpeed.Label);
         }
 
@@ -2963,61 +2980,61 @@ namespace SolarMajesty
             Debug.Log($"[GameLoop] Tech unlocked: {id}");
             var def = TechCatalog.Get(id);
             if (def != null && def.SecretProject)
-                LogOverseer($"Secret Project complete: {def.DisplayName}.");
+                LogOverseer(Loc.F("Secret Project complete: {0}.", def.DisplayNameText));
             else if (id == TechId.OrbitalUplink)
-                LogOverseer(KeyHints.Fill("Orbital Uplink online. Press {ToolOrbital}: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit."));
+                LogOverseer(KeyHints.Fill(Loc.S("Orbital Uplink online. Press {ToolOrbital}: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit.")));
             else if (id == TechId.OrbitalConstellation)
-                LogOverseer("Constellation complete: Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm.");
+                LogOverseer(Loc.S("Constellation complete: Barrage, EMP Snare, Aegis Field, Revive Beacon, Repair Swarm."));
             else if (id == TechId.ExtractBasics && !DemoSettings.FirstHourDemo)
-                LogOverseer("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in EU.");
+                LogOverseer(Loc.S("Extract Basics. Dock a Market Stall — potions and a regen necklace, paid in EU."));
             else if (id == TechId.OreRefining && !DemoSettings.FirstHourDemo)
-                LogOverseer("Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in EU.");
+                LogOverseer(Loc.S("Ore Refining. Dock a Blacksmith — lodge arms and armor, paid in EU."));
             else if (id == TechId.MedProtocols)
-                LogOverseer("Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in EU.");
+                LogOverseer(Loc.S("Med Protocols. Dock a Fobot Yard — wrecks stand up here, paid in EU."));
             else if (id == TechId.LifeSupport && !DemoSettings.FirstHourDemo)
-                LogOverseer("Life Support. Dock an Aid Station — hurt robots pay EU for a patch.");
+                LogOverseer(Loc.S("Life Support. Dock an Aid Station — hurt robots pay EU for a patch."));
             else if (id == TechId.HorizonPulse)
-                LogOverseer("Horizon Pulse researched. Inspect Horizon Lodge and spend EU to mark dens.");
+                LogOverseer(Loc.S("Horizon Pulse researched. Inspect Horizon Lodge and spend EU to mark dens."));
             else if (id == TechId.AnvilOvertime)
-                LogOverseer("Anvil Overtime researched. Inspect Anvil Lodge and spend EU to weld faster.");
+                LogOverseer(Loc.S("Anvil Overtime researched. Inspect Anvil Lodge and spend EU to weld faster."));
             else if (id == TechId.AegisWatchfire)
-                LogOverseer("Aegis Watchfire researched. Inspect Aegis Lodge and spend EU to harden the roster.");
+                LogOverseer(Loc.S("Aegis Watchfire researched. Inspect Aegis Lodge and spend EU to harden the roster."));
             else if (id == TechId.TriageFieldAid)
-                LogOverseer("Triage Field Aid researched. Inspect Triage Lodge and spend EU to patch the dirt.");
+                LogOverseer(Loc.S("Triage Field Aid researched. Inspect Triage Lodge and spend EU to patch the dirt."));
             else if (id == TechId.GuildCharter)
             {
-                LogOverseer("Guild Charter signed. Dock Horizon Lodge, Anvil Lodge, Aegis Lodge, or Triage Lodge. Flags near the hall pull that class.");
+                LogOverseer(Loc.S("Guild Charter signed. Dock Horizon Lodge, Anvil Lodge, Aegis Lodge, or Triage Lodge. Flags near the hall pull that class."));
                 EnsureNarrative();
                 _narrative.NoteCompleted(FlagDecreeIds.EarthCharterTheHall);
                 if (_narrative.TryTakeCompleteToast(AdvisorToastCatalog.CompleteCharterTheHall, out var charterToast))
-                    Log.Push(charterToast.Line);
+                    Log.Push(charterToast.LineText);
                 SyncNarrativeCivic();
             }
             else if (id == TechId.HarvestDoctrine)
-                LogOverseer("Harvest Doctrine. Harvest Lodge is licensed. Mines and haul improve.");
+                LogOverseer(Loc.S("Harvest Doctrine. Harvest Lodge is licensed. Mines and haul improve."));
             else if (id == TechId.SurveyDoctrine)
-                LogOverseer("Survey Doctrine. Chart Lodge is licensed. Labs tick faster.");
+                LogOverseer(Loc.S("Survey Doctrine. Chart Lodge is licensed. Labs tick faster."));
             else if (id == TechId.AegisDoctrine)
-                LogOverseer("Aegis Doctrine. Grid draw drops 15%. The rim breathes easier.");
+                LogOverseer(Loc.S("Aegis Doctrine. Grid draw drops 15%. The rim breathes easier."));
             else if (id == TechId.TerraformCharter)
-                LogOverseer("Terraform Charter. Bloom Lodge is licensed. Post Terraform (U) on farms.");
+                LogOverseer(Loc.S("Terraform Charter. Bloom Lodge is licensed. Post Terraform (U) on farms."));
             else if (id == TechId.FreightDoctrine)
-                LogOverseer("Freight Doctrine. The Courier Workshop is licensed. Couriers take Outpost flags cheap.");
+                LogOverseer(Loc.S("Freight Doctrine. The Courier Workshop is licensed. Couriers take Outpost flags cheap."));
             else if (id == TechId.CoreSampling)
-                LogOverseer("Core Sampling. Core Lodge is licensed. Mines tick harder.");
+                LogOverseer(Loc.S("Core Sampling. Core Lodge is licensed. Mines tick harder."));
             else if (id == TechId.PerimeterDoctrine)
-                LogOverseer("Perimeter Doctrine. Rim Watch is licensed — they take Defend cheap.");
+                LogOverseer(Loc.S("Perimeter Doctrine. Rim Watch is licensed — they take Defend cheap."));
             else if (id == TechId.ClimateLoom)
-                LogOverseer("Climate Loom. Farms surge. Place the 6×6 Loom landmark.");
+                LogOverseer(Loc.S("Climate Loom. Farms surge. Place the 6×6 Loom landmark."));
             else if (id == TechId.AegisSpire)
-                LogOverseer("Aegis Spire. Grid draw and rim pressure drop. Place the 6×6 Spire.");
+                LogOverseer(Loc.S("Aegis Spire. Grid draw and rim pressure drop. Place the 6×6 Spire."));
             else if (id == TechId.DeepArchive)
-                LogOverseer("Deep Archive. Labs remember every sample. Place the 6×6 Archive.");
+                LogOverseer(Loc.S("Deep Archive. Labs remember every sample. Place the 6×6 Archive."));
             if (Research != null && Research.HasLaunchUnlockFor(celestialBody) &&
                 Settlement != null && !Settlement.HasPad)
             {
                 string craft = Research.LaunchTechLabel(celestialBody);
-                LogOverseer($"{craft} researched. Place a Landing Pad to stage the craft.");
+                LogOverseer(Loc.F("{0} researched. Place a Landing Pad to stage the craft.", craft));
             }
         }
 
@@ -3095,13 +3112,13 @@ namespace SolarMajesty
             if (!wasReady)
             {
                 string craft = Research.LaunchTechLabel(celestialBody);
-                LogOverseer($"{craft} staged on the Landing Pad. Launch gate is open.");
+                LogOverseer(Loc.F("{0} staged on the Landing Pad. Launch gate is open.", craft));
                 EnsureNarrative();
                 string completeKey = AdvisorToastCatalog.CompleteKeyForCraft(celestialBody);
                 if (!string.IsNullOrEmpty(completeKey) &&
                     _narrative.TryTakeCompleteToast(completeKey, out var stagedToast))
                 {
-                    Log.Push(stagedToast.Line);
+                    Log.Push(stagedToast.LineText);
                 }
                 SyncNarrativeCivic();
             }
@@ -3286,19 +3303,19 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Mining:
                         b.displayName = "OPS Drop-off";
-                        b.description = "does not grow EU";
+                        b.description = Loc.S("does not grow EU");
                         break;
                     case BuildingCategory.Mine:
                         b.displayName = "Nuclear Mine";
                         b.description = "far pays";
                         break;
                     case BuildingCategory.Habitat:
-                        b.description = $"bots build · {MajestyEconomy.HouseDailyFlat:N0} EU/day";
+                        b.description = Loc.F("bots build · {0:N0} EU/day", MajestyEconomy.HouseDailyFlat);
                         break;
                     case BuildingCategory.Farm:
                         // "Greenhouse Farm" left no room for the hint in the catalog row.
                         b.displayName = "Greenhouse";
-                        b.description = $"{MajestyEconomy.FarmDailyTax:N0}/day";
+                        b.description = Loc.F("{0:N0}/day", MajestyEconomy.FarmDailyTax);
                         break;
                     case BuildingCategory.LandingPad:
                         b.description = "launches";
@@ -3308,12 +3325,12 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.Power:
                         b.displayName = "Solar Farm";
-                        b.description = $"bots build · {MajestyEconomy.SolarFarmDailyTax:N0} EU/day";
+                        b.description = Loc.F("bots build · {0:N0} EU/day", MajestyEconomy.SolarFarmDailyTax);
                         break;
                     case BuildingCategory.ClimateLoom:
                     case BuildingCategory.AegisSpire:
                     case BuildingCategory.DeepArchive:
-                        b.description = "unlock from ★ tech — bonus while standing";
+                        b.description = Loc.S("unlock from ★ tech — bonus while standing");
                         break;
                     case BuildingCategory.GuildHall:
                         if (RobotGuildCatalog.TryMatch(b, out var guild))
@@ -3324,11 +3341,11 @@ namespace SolarMajesty
                                 b.preferredOccupants = guild.Occupants;
                         }
                         else
-                            b.description = "Guild Hall — assign a class";
+                            b.description = Loc.S("Guild Hall — assign a class");
                         break;
                     case BuildingCategory.Market:
                         b.displayName = "Market Stall";
-                        b.description = $"{MajestyEconomy.MarketDailyTax:N0}/day";
+                        b.description = Loc.F("{0:N0}/day", MajestyEconomy.MarketDailyTax);
                         break;
                     case BuildingCategory.Blacksmith:
                         b.displayName = "Blacksmith";
@@ -3336,7 +3353,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.FobotYard:
                         b.displayName = "Fobot Yard";
-                        b.description = "Pay EU here to stand wrecks up.";
+                        b.description = Loc.S("Pay EU here to stand wrecks up.");
                         break;
                     case BuildingCategory.Watchtower:
                         b.displayName = "Watchtower";
@@ -3344,7 +3361,7 @@ namespace SolarMajesty
                         break;
                     case BuildingCategory.AidStation:
                         b.displayName = "Aid Station";
-                        b.description = "Hurt robots pay EU for a patch. Triage clocks in.";
+                        b.description = Loc.S("Hurt robots pay EU for a patch. Triage clocks in.");
                         break;
                 }
             }
@@ -3469,7 +3486,7 @@ namespace SolarMajesty
                 if (Time.time >= _hireNagAt)
                 {
                     _hireNagAt = Time.time + 30f;
-                    LogOverseer($"{workshop.DisplayName} is ready — hiring its {ColonyStructure.ClassLabel(cls.Value)} costs {hire} EU.");
+                    LogOverseer(Loc.F("{0} is ready — hiring its {1} costs {2} EU.", Loc.S(workshop.DisplayName), ColonyStructure.ClassLabel(cls.Value), hire));
                 }
                 return false;
             }
@@ -3509,8 +3526,8 @@ namespace SolarMajesty
             {
                 Stats.RobotsFabricated++; // not the restore of a saved robot
                 _overseerHud?.Notify(hire > 0
-                    ? $"{label} hired at {workshop.DisplayName} — {hire} EU."
-                    : $"{label} fabricated at {workshop.DisplayName}.", 3.2f);
+                    ? Loc.F("{0} hired at {1} — {2} EU.", label, Loc.S(workshop.DisplayName), hire)
+                    : Loc.F("{0} fabricated at {1}.", label, Loc.S(workshop.DisplayName)), 3.2f);
                 DemoAudio.PlayRobotSpawn(pos);
                 DemoVfx.ClaimRing(pos, TintForClass(cls.Value));
             }
@@ -4319,13 +4336,13 @@ namespace SolarMajesty
         {
             if (req.Site == KingdomSpawnSite.ColonyEdge)
             {
-                LogOverseer($"{agent.RoleLabel} sighted at the colony edge — post Clear Threat.");
+                LogOverseer(Loc.F("{0} sighted at the colony edge — post Clear Threat.", agent.RoleLabelShown));
                 return;
             }
             if (!_kingdomAnnounced.Add(req.EntryIndex)) return;
             LogOverseer(req.Site == KingdomSpawnSite.Burrow
-                ? $"The colony has grown — {agent.RoleLabel.ToLowerInvariant()}s are burrowing in town."
-                : "Wrecks are drawing junk bots to the yard.");
+                ? Loc.F("The colony has grown — {0}s are burrowing in town.", agent.RoleLabelShown.ToLowerInvariant())
+                : Loc.S("Wrecks are drawing junk bots to the yard."));
         }
 
         private bool TryKingdomSpawnPoint(KingdomSpawnSite site, out Vector3 at)
@@ -4411,13 +4428,13 @@ namespace SolarMajesty
             {
                 case OrbitalCastCheck.Ok: break;
                 case OrbitalCastCheck.Locked:
-                    LogOverseer($"{def.displayName} needs {TechCatalog.Get(OrbitalTuning.TechFor(def.tier))?.DisplayName} research.");
+                    LogOverseer(Loc.F("{0} needs {1} research.", def.displayName, TechCatalog.Get(OrbitalTuning.TechFor(def.tier))?.DisplayName));
                     return false;
                 case OrbitalCastCheck.Cooling:
-                    LogOverseer($"{def.displayName} recharging — {Mathf.CeilToInt(_orbital.ReadyIn(id))} s.");
+                    LogOverseer(Loc.F("{0} recharging — {1} s.", def.displayName, Mathf.CeilToInt(_orbital.ReadyIn(id))));
                     return false;
                 case OrbitalCastCheck.TooPoor:
-                    LogOverseer($"{def.displayName} costs {cost} EU here (x{_orbital.Tuning.RangeMultiplier(uplink):0} from the uplink).");
+                    LogOverseer(Loc.F("{0} costs {1} EU here (x{2:0} from the uplink).", def.displayName, cost, _orbital.Tuning.RangeMultiplier(uplink)));
                     return false;
                 default:
                     return false;
@@ -4425,14 +4442,14 @@ namespace SolarMajesty
 
             if (!HasOrbitalTarget(def, aim, out string none))
             {
-                LogOverseer($"{def.displayName}: {none}");
+                LogOverseer(Loc.F("{0}: {1}", def.displayName, none));
                 return false;
             }
             if (cost > 0 && !Resources.TrySpend(ResourceId.Metals, cost)) return false;
 
             string done = ApplyOrbitalEffect(def, aim);
             _orbital.StartCooldown(id);
-            LogOverseer(cost > 0 ? $"{def.displayName} — {done} ({cost} EU)." : $"{def.displayName} — {done}.");
+            LogOverseer(cost > 0 ? Loc.F("{0} — {1} ({2} EU).", def.displayName, done, cost) : Loc.F("{0} — {1}.", def.displayName, done));
             return true;
         }
 
@@ -4442,21 +4459,21 @@ namespace SolarMajesty
             switch (def.target)
             {
                 case OrbitalTarget.Fauna:
-                    none = "no hostile in the target ring.";
+                    none = Loc.S("no hostile in the target ring.");
                     return NearestFaunaAt(at, def.radius) != null;
                 case OrbitalTarget.Robot:
-                    none = "no robot in the target ring.";
+                    none = Loc.S("no robot in the target ring.");
                     return NearestRobotAt(at, def.radius) != null;
                 case OrbitalTarget.DownedRobot:
-                    none = "no downed robot in the target ring.";
+                    none = Loc.S("no downed robot in the target ring.");
                     for (int i = 0; i < _agents.Count; i++)
                         if (IsDownedIn(_agents[i], at, def.radius)) return true;
                     return false;
                 case OrbitalTarget.Structure:
-                    none = "no damaged building in the target ring.";
+                    none = Loc.S("no damaged building in the target ring.");
                     return NearestDamagedAt(at, def.radius) != null;
                 case OrbitalTarget.Colony:
-                    none = "the tills are empty.";
+                    none = Loc.S("the tills are empty.");
                     return Village != null && Village.TotalSittingLevy() > 0;
                 default:
                     return true;
@@ -4470,11 +4487,11 @@ namespace SolarMajesty
                 case OrbitalPowerId.KineticLance:
                 {
                     var s = NearestFaunaAt(at, def.radius);
-                    string who = s.RoleLabel.ToLowerInvariant();
+                    string who = s.RoleLabelShown.ToLowerInvariant();
                     DemoVfx.OrbitalStrike(s.transform.position, new Color(1f, 0.85f, 0.55f), 1.5f);
                     DemoAudio.PlayRobotHit(s.transform.position);
                     s.ApplyOrbitalDamage(def.magnitude);
-                    return s.IsAlive ? $"{who} hit" : $"{who} destroyed";
+                    return s.IsAlive ? Loc.F("{0} hit", who) : Loc.F("{0} destroyed", who);
                 }
                 case OrbitalPowerId.OrbitalBarrage:
                 {
@@ -4487,14 +4504,14 @@ namespace SolarMajesty
                         hit++;
                         if (!s.IsAlive) killed++;
                     }
-                    return $"{hit} hit, {killed} destroyed";
+                    return Loc.F("{0} hit, {1} destroyed", hit, killed);
                 }
                 case OrbitalPowerId.EmpSnare:
                 {
                     DemoVfx.OrbitalStrike(at, new Color(0.55f, 0.75f, 1f), def.radius);
                     int n = 0;
                     foreach (var s in FaunaInRing(at, def.radius)) { s.Stun(def.durationSeconds); n++; }
-                    return $"{n} hostile locked for {def.durationSeconds:0} s";
+                    return Loc.F("{0} hostile locked for {1:0} s", n, def.durationSeconds);
                 }
                 case OrbitalPowerId.MedDrop:
                 {
@@ -4503,7 +4520,7 @@ namespace SolarMajesty
                     int cleansed = a.Statuses.ClearHarmful();
                     DemoVfx.OrbitalStrike(a.transform.position, new Color(0.45f, 1f, 0.55f), 1.5f);
                     DemoAudio.PlayHeal(a.transform.position);
-                    return cleansed > 0 ? $"{a.Record.Name} patched and cleansed" : $"{a.Record.Name} patched";
+                    return cleansed > 0 ? Loc.F("{0} patched and cleansed", a.Record.Name) : Loc.F("{0} patched", a.Record.Name);
                 }
                 case OrbitalPowerId.AegisField:
                 {
@@ -4511,7 +4528,7 @@ namespace SolarMajesty
                     a.ApplyAegisField(def.durationSeconds);
                     DemoVfx.OrbitalStrike(a.transform.position, new Color(0.6f, 0.85f, 1f), 2f);
                     DemoAudio.PlayHeal(a.transform.position);
-                    return $"{a.Record.Name} shielded for {def.durationSeconds:0} s";
+                    return Loc.F("{0} shielded for {1:0} s", a.Record.Name, def.durationSeconds);
                 }
                 case OrbitalPowerId.ReviveBeacon:
                 {
@@ -4525,7 +4542,7 @@ namespace SolarMajesty
                         a.FieldRevive();
                         n++;
                     }
-                    return n == 1 ? "1 robot rebooted" : $"{n} robots rebooted";
+                    return n == 1 ? Loc.S("1 robot rebooted") : Loc.F("{0} robots rebooted", n);
                 }
                 case OrbitalPowerId.RepairSwarm:
                 {
@@ -4533,7 +4550,7 @@ namespace SolarMajesty
                     b.RestoreHealth01(Mathf.Min(1f, b.Health01 + def.magnitude));
                     DemoVfx.OrbitalStrike(b.WorldPosition, new Color(1f, 0.75f, 0.3f), 3f);
                     DemoAudio.PlayRepair(b.WorldPosition);
-                    return "nanites restored the hull";
+                    return Loc.S("nanites restored the hull");
                 }
                 case OrbitalPowerId.SurveySweep:
                 {
@@ -4552,7 +4569,7 @@ namespace SolarMajesty
                             charted++;
                         }
                     }
-                    return charted == 0 ? "no uncharted dens" : charted == 1 ? "1 den charted" : $"{charted} dens charted";
+                    return charted == 0 ? Loc.S("no uncharted dens") : charted == 1 ? Loc.S("1 den charted") : Loc.F("{0} dens charted", charted);
                 }
                 case OrbitalPowerId.TillAudit:
                 {
@@ -4571,10 +4588,10 @@ namespace SolarMajesty
                     }
                     DemoVfx.ClaimRing(ColonyLayout.CampusOrigin, new Color(0.96f, 0.78f, 0.22f));
                     DemoAudio.PlayCredits(ColonyLayout.CampusOrigin);
-                    return $"{total} EU pulled from the tills";
+                    return Loc.F("{0} EU pulled from the tills", total);
                 }
                 default:
-                    return "done";
+                    return Loc.S("done");
             }
         }
 
@@ -4652,7 +4669,7 @@ namespace SolarMajesty
                 if (s == null || !s.IsAlive) continue;
                 if (!DustStalkerAgent.IsCampusPest(s.Kind)) continue;
                 if (IsKingdomSpawn(s)) continue; // town burrows outlive the dens
-                string label = (s.RoleLabel ?? s.Kind.ToString()).ToLowerInvariant();
+                string label = (s.RoleLabelShown ?? s.Kind.ToString()).ToLowerInvariant();
                 if (!names.Contains(label)) names.Add(label);
                 s.BeginRetreat();
                 any = true;
@@ -4661,7 +4678,7 @@ namespace SolarMajesty
             if (any && !_faunaRetreated)
             {
                 _faunaRetreated = true;
-                LogOverseer("Dens quiet — yard pests scatter: " + JoinEnglish(names) + ".");
+                LogOverseer(Loc.F("Dens quiet — yard pests scatter: {0}.", JoinEnglish(names)));
             }
         }
 
@@ -4737,8 +4754,8 @@ namespace SolarMajesty
                 ? Village.NearestByCategory(campus, 80f, BuildingCategory.Mine, BuildingCategory.Mining)
                 : null;
             string tickLine = _body != null && _body.Id == CelestialBodyId.Belt
-                ? "Rock ticks on the ore — post Defend Area."
-                : "Dust ticks on the ore — post Defend Area.";
+                ? Loc.S("Rock ticks on the ore — post Defend Area.")
+                : Loc.S("Dust ticks on the ore — post Defend Area.");
             if (mine != null && TrySpawnCampusKind(
                     FaunaKind.Tick, ticks, tickCap,
                     mine.WorldPosition, campus, tickLine))
@@ -4748,8 +4765,8 @@ namespace SolarMajesty
                 ? Village.NearestPower(campus, 80f)
                 : null;
             string wispLine = _body != null && _body.RadiationDrainPerSecond > 0f
-                ? "Ice wisps off the crust — post Clear Threat."
-                : "Dust wisps on the solar farms — post Clear Threat.";
+                ? Loc.S("Ice wisps off the crust — post Clear Threat.")
+                : Loc.S("Dust wisps on the solar farms — post Clear Threat.");
             if (pwr != null && TrySpawnCampusKind(
                     FaunaKind.Wisp, wisps, wispCap, pwr.WorldPosition, campus, wispLine))
                 return;
@@ -4758,16 +4775,16 @@ namespace SolarMajesty
                 ? Village.NearestExtractor(campus, 80f)
                 : null;
             string miteLine = _body != null && _body.PreferMineMites
-                ? "Rock mites on the ore — post Defend Area."
-                : "Regolith mites on the farm — post Defend Area.";
+                ? Loc.S("Rock mites on the ore — post Defend Area.")
+                : Loc.S("Regolith mites on the farm — post Defend Area.");
             if (camp != null && TrySpawnCampusKind(
                     FaunaKind.Mite, mites, miteCap,
                     camp.WorldPosition, campus, miteLine))
                 return;
 
             string leechLine = _body != null && _body.RadiationDrainPerSecond > 0f
-                ? "Fissure leeches on the solar farms — post Clear Threat."
-                : "Watt leeches on the Power Node — post Clear Threat.";
+                ? Loc.S("Fissure leeches on the solar farms — post Clear Threat.")
+                : Loc.S("Watt leeches on the Power Node — post Clear Threat.");
             if (pwr != null && TrySpawnCampusKind(
                     FaunaKind.Leech, leeches, leechCap, pwr.WorldPosition, campus, leechLine))
                 return;
@@ -4795,35 +4812,35 @@ namespace SolarMajesty
 
         private string CreeperFirstLog()
         {
-            if (_body == null) return "Soil creepers on the farm — post Defend Area.";
+            if (_body == null) return Loc.S("Soil creepers on the farm — post Defend Area.");
             switch (_body.Id)
             {
-                case CelestialBodyId.Mars: return "Dust creepers on the farm — post Defend Area.";
-                case CelestialBodyId.Europa: return "Ice creepers on the greenhouse — post Defend Area.";
-                default: return "Soil creepers on the farm — post Defend Area.";
+                case CelestialBodyId.Mars: return Loc.S("Dust creepers on the farm — post Defend Area.");
+                case CelestialBodyId.Europa: return Loc.S("Ice creepers on the greenhouse — post Defend Area.");
+                default: return Loc.S("Soil creepers on the farm — post Defend Area.");
             }
         }
 
         private string HopperFirstLog()
         {
-            if (_body == null) return "Ash hoppers on the charging stations — post Clear Threat.";
+            if (_body == null) return Loc.S("Ash hoppers on the charging stations — post Clear Threat.");
             switch (_body.Id)
             {
-                case CelestialBodyId.Mars: return "Dust hoppers at the Commons — post Clear Threat.";
-                case CelestialBodyId.Belt: return "Shard hoppers on the Commons — post Clear Threat.";
-                default: return "Ash hoppers on the charging stations — post Clear Threat.";
+                case CelestialBodyId.Mars: return Loc.S("Dust hoppers at the Commons — post Clear Threat.");
+                case CelestialBodyId.Belt: return Loc.S("Shard hoppers on the Commons — post Clear Threat.");
+                default: return Loc.S("Ash hoppers on the charging stations — post Clear Threat.");
             }
         }
 
         private static string JoinEnglish(List<string> parts)
         {
-            if (parts == null || parts.Count == 0) return "yard pests";
+            if (parts == null || parts.Count == 0) return Loc.S("yard pests");
             if (parts.Count == 1) return parts[0];
-            if (parts.Count == 2) return parts[0] + " and " + parts[1];
+            if (parts.Count == 2) return Loc.F("{0} and {1}", parts[0], parts[1]);
             var sb = new System.Text.StringBuilder();
             for (int i = 0; i < parts.Count; i++)
             {
-                if (i > 0) sb.Append(i == parts.Count - 1 ? ", and " : ", ");
+                if (i > 0) sb.Append(i == parts.Count - 1 ? Loc.S(", and ") : ", ");
                 sb.Append(parts[i]);
             }
             return sb.ToString();
@@ -5110,25 +5127,25 @@ namespace SolarMajesty
         {
             if (tower == null || !tower.IsWatchtower || !tower.IsAlive)
             {
-                LogOverseer("Pick a Watchtower.");
+                LogOverseer(Loc.S("Pick a Watchtower."));
                 return false;
             }
 
             if (tower.LaserArmed)
             {
-                LogOverseer("Lasers already armed.");
+                LogOverseer(Loc.S("Lasers already armed."));
                 return false;
             }
 
             if (Resources == null ||
                 !Resources.TrySpend(ResourceId.Metals, OverseerRules.WatchtowerLaserCost))
             {
-                LogOverseer($"Arming lasers needs {OverseerRules.WatchtowerLaserCost} EU.");
+                LogOverseer(Loc.F("Arming lasers needs {0} EU.", OverseerRules.WatchtowerLaserCost));
                 return false;
             }
 
             tower.ArmLasers();
-            LogOverseer($"Watchtower lasers armed — {OverseerRules.WatchtowerLaserCost} EU.");
+            LogOverseer(Loc.F("Watchtower lasers armed — {0} EU.", OverseerRules.WatchtowerLaserCost));
             DemoVfx.ClaimRing(tower.WorldPosition, new Color(0.95f, 0.35f, 0.2f));
             return true;
         }
@@ -5151,25 +5168,25 @@ namespace SolarMajesty
         {
             if (!HasDownedRobot && !HasScrapCorpse)
             {
-                LogOverseer("No one is down — the Fobot Yard is for wrecks and incapacitated robots.");
+                LogOverseer(Loc.S("No one is down — the Fobot Yard is for wrecks and incapacitated robots."));
                 return;
             }
             if (!HasFobotYard)
             {
-                LogOverseer(CompactJex.YardNeedsBuilding());
+                LogOverseerScript(CompactJex.YardNeedsBuilding());
                 return;
             }
 
             var yard = FindFobotYard();
             if (yard == null || !yard.IsAlive)
             {
-                LogOverseer(OverseerRules.JexYardMissing, 6.2f);
+                LogOverseerScript(OverseerRules.JexYardMissing, 6.2f);
                 return;
             }
 
             if (Time.time < _reviveReadyAt)
             {
-                LogOverseer($"Fobot Yard cooling down — {FieldReviveReadyIn:F0}s.");
+                LogOverseer(Loc.F("Fobot Yard cooling down — {0:F0}s.", FieldReviveReadyIn));
                 return;
             }
 
@@ -5184,14 +5201,14 @@ namespace SolarMajesty
             if (Economy == null || !Economy.CanAffordRevive(met))
             {
                 if (!TryJex(JexBeat.YardUnaffordable, true))
-                    LogOverseer(OverseerRules.JexYardUnaffordable, 6.2f);
+                    LogOverseerScript(OverseerRules.JexYardUnaffordable, 6.2f);
                 return;
             }
 
             if (!Economy.TrySpendRevive(met))
             {
                 if (!TryJex(JexBeat.YardUnaffordable, true))
-                    LogOverseer(OverseerRules.JexYardUnaffordable, 6.2f);
+                    LogOverseerScript(OverseerRules.JexYardUnaffordable, 6.2f);
                 return;
             }
 
@@ -5213,7 +5230,7 @@ namespace SolarMajesty
             {
                 _yardBillLogged = true;
                 if (!TryJex(JexBeat.YardBill))
-                    LogOverseer(OverseerRules.JexYardFirstBill, 6.4f);
+                    LogOverseerScript(OverseerRules.JexYardFirstBill, 6.4f);
             }
             else if (!TryJex(JexBeat.YardBill))
                 LogOverseer(CompactJex.YardBill(met));
@@ -5236,7 +5253,7 @@ namespace SolarMajesty
         {
             if (ReplayRules.BlocksManualSavesAndReloads)
             {
-                LogOverseer("Ironman — no second draft. This body cannot be restarted.");
+                LogOverseer(Loc.S("Ironman — no second draft. This body cannot be restarted."));
                 return;
             }
             ClearCurrentWorldForRetry();
@@ -5353,7 +5370,7 @@ namespace SolarMajesty
             {
                 string craft = Research != null
                     ? Research.LaunchTechLabel(CelestialBodyId.Earth)
-                    : "Colony Lifter";
+                    : Loc.S("Colony Lifter");
                 _overseerHud?.Notify(LaunchPath.ObjectiveText(false, false, craft), 5f);
                 return;
             }
@@ -5408,11 +5425,11 @@ namespace SolarMajesty
             if (paid)
             {
                 Resources.TrySpend(ResourceId.Metals, met);
-                return $"Freight paid: −{met} EU.";
+                return Loc.F("Freight paid: −{0} EU.", met);
             }
 
             Resources.ApplyLoss(0.12f);
-            return "Freight short — 12% of the stockpile jettisoned to make mass.";
+            return Loc.S("Freight short — 12% of the stockpile jettisoned to make mass.");
         }
 
         /// <summary>Switch world without advancing that body's seed. Respects campaign unlocks unless cheating.</summary>
@@ -5442,7 +5459,7 @@ namespace SolarMajesty
             {
                 string craft = Research != null
                     ? Research.LaunchTechLabel(CelestialBodyId.Earth)
-                    : "Colony Lifter";
+                    : Loc.S("Colony Lifter");
                 _overseerHud?.Notify(LaunchPath.ObjectiveText(false, false, craft), 5f);
                 return;
             }
@@ -5728,18 +5745,18 @@ namespace SolarMajesty
             b.powerGen = PowerGenFor(cat, name);
             b.description = cat switch
             {
-                BuildingCategory.Inn => "wrecks wait — EU only",
-                BuildingCategory.Defense => "18 m gun",
-                BuildingCategory.Mining => "does not grow EU",
-                BuildingCategory.ClimateLoom => "unlock from ★ tech — bonus while standing",
-                BuildingCategory.AegisSpire => "unlock from ★ tech — bonus while standing",
-                BuildingCategory.DeepArchive => "unlock from ★ tech — bonus while standing",
-                BuildingCategory.GuildHall => "Guild Hall — assign a class",
-                BuildingCategory.Market => "potions",
-                BuildingCategory.Blacksmith => "Guild arms and armor. Bots buy with EU.",
-                BuildingCategory.FobotYard => "Pay EU here to stand wrecks up.",
-                BuildingCategory.Watchtower => HudLayout.WatchtowerBlurb,
-                BuildingCategory.AidStation => "Hurt robots pay EU for a patch. Triage clocks in.",
+                BuildingCategory.Inn => Loc.S("wrecks wait — EU only"),
+                BuildingCategory.Defense => Loc.S("18 m gun"),
+                BuildingCategory.Mining => Loc.S("does not grow EU"),
+                BuildingCategory.ClimateLoom => Loc.S("unlock from ★ tech — bonus while standing"),
+                BuildingCategory.AegisSpire => Loc.S("unlock from ★ tech — bonus while standing"),
+                BuildingCategory.DeepArchive => Loc.S("unlock from ★ tech — bonus while standing"),
+                BuildingCategory.GuildHall => Loc.S("Guild Hall — assign a class"),
+                BuildingCategory.Market => Loc.S("potions"),
+                BuildingCategory.Blacksmith => Loc.S("Guild arms and armor. Bots buy with EU."),
+                BuildingCategory.FobotYard => Loc.S("Pay EU here to stand wrecks up."),
+                BuildingCategory.Watchtower => Loc.S(HudLayout.WatchtowerBlurb),
+                BuildingCategory.AidStation => Loc.S("Hurt robots pay EU for a patch. Triage clocks in."),
                 _ => b.description
             };
             b.preferredOccupants = DefaultOccupants(cat);
@@ -5988,7 +6005,7 @@ namespace SolarMajesty
                 (site.Category == BuildingCategory.Mine || site.Category == BuildingCategory.Mining))
             {
                 Resources?.Add(ResourceId.Metals, OverseerRules.GeologistExtractExtraMet);
-                LogOverseer($"Geologist bonus +{OverseerRules.GeologistExtractExtraMet} EU at the drop-off.");
+                LogOverseer(Loc.F("Geologist bonus +{0} EU at the drop-off.", OverseerRules.GeologistExtractExtraMet));
             }
         }
 
@@ -6000,8 +6017,8 @@ namespace SolarMajesty
                     AddSurveyDisc(at);
                     int charted = ScoutDensInDisc(at);
                     LogOverseer(charted > 0
-                        ? $"Survey disc 22 m — charted {charted} den(s). Extract and Research Site pay extra inside."
-                        : "Survey disc 22 m / 90 s — Extract and Research Site pay extra inside.");
+                        ? Loc.F("Survey disc 22 m — charted {0} den(s). Extract and Research Site pay extra inside.", charted)
+                        : Loc.S("Survey disc 22 m / 90 s — Extract and Research Site pay extra inside."));
                     break;
                 case FlagType.DefendArea:
                     float extra = 0f;
@@ -6011,8 +6028,8 @@ namespace SolarMajesty
                     AddDefendWatch(at, extra);
                     DemoVfx.ClaimRing(at, new Color(0.96f, 0.48f, 0.18f));
                     LogOverseer(extra > 0f
-                        ? "Sentinel watch — 70 s of 4 dps cover."
-                        : "Defend watch — 50 s of 4 dps cover.");
+                        ? Loc.S("Sentinel watch — 70 s of 4 dps cover.")
+                        : Loc.S("Defend watch — 50 s of 4 dps cover."));
                     break;
                 case FlagType.ResearchSite:
                     if (Research == null)
@@ -6026,35 +6043,35 @@ namespace SolarMajesty
                     if (Research.ActiveTech == TechId.None)
                     {
                         Research.AddScience(science);
-                        LogOverseer($"Research Site logged — +{science:F0} science banked. Pick a tech (T).");
+                        LogOverseer(Loc.F("Research Site logged — +{0:F0} science banked. Pick a tech (T).", science));
                         return;
                     }
                     Research.AddScience(science);
                     var active = TechCatalog.Get(Research.ActiveTech);
-                    string techName = active != null ? active.DisplayName : "tech";
-                    LogOverseer($"Research Site: +{science:F0} science into {techName}.");
+                    string techName = active != null ? active.DisplayNameText : Loc.S("tech");
+                    LogOverseer(Loc.F("Research Site: +{0:F0} science into {1}.", science, techName));
                     break;
                 case FlagType.EstablishOutpost:
                     if (Settlement != null && Settlement.HasOutpost)
                     {
                         Resources?.Add(ResourceId.Metals, 80);
-                        LogOverseer("Outpost already claimed — the survey sells for +80 EU.");
+                        LogOverseer(Loc.S("Outpost already claimed — the survey sells for +80 EU."));
                         return;
                     }
                     float dx = at.x - ColonyLayout.CampusBOrigin.x;
                     float dz = at.z - ColonyLayout.CampusBOrigin.z;
                     if (dx * dx + dz * dz > 18f * 18f)
                     {
-                        LogOverseer("Outpost flag too far from the forward camp.");
+                        LogOverseer(Loc.S("Outpost flag too far from the forward camp."));
                         return;
                     }
                     Settlement?.ClaimOutpost();
                     LightOutpostBeacon();
-                    LogOverseer("Forward outpost claimed from the flag. Drop a Mine on site.");
+                    LogOverseer(Loc.S("Forward outpost claimed from the flag. Drop a Mine on site."));
                     break;
                 case FlagType.Terraform:
                     Settlement?.AddTerraformPulse();
-                    LogOverseer("Terraform pulse — farms tick greener on this crust.");
+                    LogOverseer(Loc.S("Terraform pulse — farms tick greener on this crust."));
                     break;
             }
         }
@@ -6071,7 +6088,7 @@ namespace SolarMajesty
 
             Settlement.ClaimOutpost();
             LightOutpostBeacon();
-            LogOverseer("Forward outpost claimed. A matching drop-off on site pays better.");
+            LogOverseer(Loc.S("Forward outpost claimed. A matching drop-off on site pays better."));
         }
 
         private void LightOutpostBeacon()
@@ -6128,11 +6145,11 @@ namespace SolarMajesty
         {
             if (ReplayRules.BlocksManualSavesAndReloads)
             {
-                LogOverseer("Ironman — manual saves are closed. Autosave still covers a crash.");
+                LogOverseer(Loc.S("Ironman — manual saves are closed. Autosave still covers a crash."));
                 return false;
             }
             bool ok = SaveSystem.Write(slot, CaptureSave($"slot {slot}"));
-            LogOverseer(ok ? $"Colony recorded to slot {slot}." : $"Slot {slot} write failed.");
+            LogOverseer(ok ? Loc.F("Colony recorded to slot {0}.", slot) : Loc.F("Slot {0} write failed.", slot));
             PlaytestTelemetry.Record("save", "slot", slot);
             return ok;
         }
@@ -6142,12 +6159,12 @@ namespace SolarMajesty
         {
             if (ReplayRules.BlocksManualSavesAndReloads)
             {
-                LogOverseer("Ironman — reloads are closed.");
+                LogOverseer(Loc.S("Ironman — reloads are closed."));
                 return false;
             }
             if (slot < 0 || slot >= SaveSystem.SlotCount || !SaveSystem.TryRead(slot, out var save))
             {
-                LogOverseer("That slot is empty.");
+                LogOverseer(Loc.S("That slot is empty."));
                 return false;
             }
             CampaignSlots.AdoptStamp(save.campaignStamp);
@@ -6488,8 +6505,8 @@ namespace SolarMajesty
             int dens = save.lairs != null ? save.lairs.Count : 0;
             int parties = save.parties != null ? save.parties.Count : 0;
             LogOverseer(
-                $"Colony restored — {modules} modules, {bounties} bounties, {robots} robots, " +
-                $"{fauna} fauna, {dens} dens, {parties} parties.");
+                Loc.F("Colony restored — {0} modules, {1} bounties, {2} robots, {3} fauna, {4} dens, {5} parties.",
+                    modules, bounties, robots, fauna, dens, parties));
             PlaytestTelemetry.Record("load", "modules", modules);
             return true;
         }
@@ -7043,7 +7060,7 @@ namespace SolarMajesty
             SyncLaunchGate();
             SnapCampusCamera();
             HideDropClaimIfSettled();
-            LogOverseer($"Yard restored — {restored} modules on {(_body != null ? _body.DisplayName : celestialBody.ToString())}.");
+            LogOverseer(Loc.F("Yard restored — {0} modules on {1}.", restored, _body != null ? _body.DisplayNameText : celestialBody.ToString()));
             Debug.Log($"[GameLoop] Restored {restored} campus pieces.");
         }
 
@@ -7193,7 +7210,7 @@ namespace SolarMajesty
 
             NotifyCampusExpanded();
             PersistSession();
-            LogOverseer($"{st.DisplayName} destroyed — rebuild before the next raid.");
+            LogOverseer(Loc.F("{0} destroyed — rebuild before the next raid.", Loc.S(st.DisplayName)));
         }
 
         public void SetSelectedWorkplaceClass(SpecialistClass cls)
@@ -7261,7 +7278,7 @@ namespace SolarMajesty
             _parties.Add(party);
             DemoAudio.PlayPartyForm(leader.transform.position);
             DemoVfx.ClaimRing(leader.transform.position, new Color(0.96f, 0.42f, 0.08f));
-            LogOverseer($"Squad of {party.Count} — {ColonyStructure.ClassLabel(leader.Data != null ? leader.Data.specialistClass : SpecialistClass.ScoutDrone)} leads. Followers rest and hunt together.");
+            LogOverseer(Loc.F("Squad of {0} — {1} leads. Followers rest and hunt together.", party.Count, ColonyStructure.ClassLabel(leader.Data != null ? leader.Data.specialistClass : SpecialistClass.ScoutDrone)));
             Debug.Log($"[Party] Formed #{party.Id} from selection leader={leader.Data?.displayName} size={party.Count}");
             return true;
         }
@@ -7302,7 +7319,7 @@ namespace SolarMajesty
             _parties.Add(party);
             DemoAudio.PlayPartyForm(ColonyLayout.InnOutpost);
             DemoVfx.ClaimRing(ColonyLayout.InnOutpost, new Color(0.96f, 0.42f, 0.08f));
-            LogOverseer($"Squad of {party.Count} formed at the rest beacon.");
+            LogOverseer(Loc.F("Squad of {0} formed at the rest beacon.", party.Count));
             Debug.Log($"[Party] Formed #{party.Id} leader={leader.Data?.displayName} size={party.Count}");
         }
 
@@ -7470,9 +7487,9 @@ namespace SolarMajesty
             var shop = FindWorkshopFor(cls);
             if (shop != null && shop.IsAlive)
                 shop.ClearRobotFabricated();
-            string salvageTxt = salvage > 0 ? $" Salvage {salvage} EU." : "";
+            string salvageTxt = salvage > 0 ? " " + Loc.F("Salvage {0} EU.", salvage) : "";
             int bill = OverseerRules.YardBill(rec.Level, rec.Class);
-            LogOverseer($"{label} scrapped — wreck in the Fobot Yard. Stand-up {bill} EU (L{rec.Level}).{salvageTxt}");
+            LogOverseer(Loc.F("{0} scrapped — wreck in the Fobot Yard. Stand-up {1} EU (L{2}).", label, bill, rec.Level) + salvageTxt);
         }
 
         public void NoteMechDeath(Vector3 world)
@@ -7944,17 +7961,17 @@ namespace SolarMajesty
             if (!cls.HasValue) return false;
             if (!TryGetCorpse(cls.Value, out var rec))
             {
-                LogOverseer("No wreck for this shop. Pay the Fobot Yard to stand this ego up.");
+                LogOverseer(Loc.S("No wreck for this shop. Pay the Fobot Yard to stand this ego up."));
                 return false;
             }
 
             if (!TryEnqueueScrapRefab(rec, alreadyPaid: false, out int met, out _, out string shopName))
             {
-                LogOverseer($"Re-fab needs {OverseerRules.RefabMetals(shop.SourceData)} EU at {shopName}.");
+                LogOverseer(Loc.F("Re-fab needs {0} EU at {1}.", OverseerRules.RefabMetals(shop.SourceData), shopName));
                 return false;
             }
 
-            LogOverseer($"Re-fab queued — new {ColonyStructure.ClassLabel(cls.Value)} at L1, {met} EU / 40 s. The wreck is gone.");
+            LogOverseer(Loc.F("Re-fab queued — new {0} at L1, {1} EU / 40 s. The wreck is gone.", ColonyStructure.ClassLabel(cls.Value), met));
             return true;
         }
 
@@ -8093,7 +8110,7 @@ namespace SolarMajesty
             Vector3 spawn = home + new Vector3(jitter.x, 0f, jitter.y);
             if (SpawnFaunaAt(FaunaKind.JunkBot, spawn) == null) return;
             if (CountFauna(FaunaKind.JunkBot) == 1)
-                LogOverseer("Junk bots rising from the scrap pile — post Clear Threat.");
+                LogOverseer(Loc.S("Junk bots rising from the scrap pile — post Clear Threat."));
         }
 
         private Vector3 ScrapyardPosition()

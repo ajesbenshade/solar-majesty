@@ -74,10 +74,13 @@ namespace SolarMajesty
         /// <summary>Human-readable one-liner for a load menu row.</summary>
         public string Describe()
         {
-            string when = string.IsNullOrEmpty(savedAtUtc) ? "unknown" : savedAtUtc;
+            string when = string.IsNullOrEmpty(savedAtUtc) ? Loc.S("unknown") : savedAtUtc;
             var hours = TimeSpan.FromSeconds(playSeconds);
-            return $"{BodyName((CelestialBodyId)body)} · {buildings.Count} modules · " +
-                   $"{agents.Count} {(agents.Count == 1 ? "robot" : "robots")} · {hours:hh\\:mm} · {when}";
+            string robots = agents.Count == 1
+                ? Loc.F("{0} robot", agents.Count)
+                : Loc.F("{0} robots", agents.Count);
+            return Loc.F("{0} · {1} modules · {2} · {3} · {4}",
+                Loc.S(BodyName((CelestialBodyId)body)), buildings.Count, robots, hours.ToString("hh\\:mm"), when);
         }
 
         private static string BodyName(CelestialBodyId id)

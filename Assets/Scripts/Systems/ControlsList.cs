@@ -77,6 +77,12 @@ namespace SolarMajesty
         /// </summary>
         private static readonly Dictionary<GameAction, string> Names = new Dictionary<GameAction, string>
         {
+            { GameAction.PanUp, "Pan Up" },
+            { GameAction.PanDown, "Pan Down" },
+            { GameAction.PanLeft, "Pan Left" },
+            { GameAction.PanRight, "Pan Right" },
+            { GameAction.FocusCampusA, "Focus Campus A" },
+            { GameAction.FocusCampusB, "Focus Campus B" },
             { GameAction.ZoomIn, "Zoom in" },
             { GameAction.ZoomOut, "Zoom out" },
             { GameAction.JumpToAlert, "Jump to the most urgent alert" },
@@ -135,6 +141,17 @@ namespace SolarMajesty
 
         public static string NameOf(GameAction action) =>
             Names.TryGetValue(action, out string name) ? name : InputBindings.DisplayName(action);
+
+        /// <summary>
+        /// <see cref="NameOf"/> in the current language. Names stay English in the table (tests and
+        /// rebind checks read them); the screen translates them here.
+        /// </summary>
+        public static string NameText(GameAction action)
+        {
+            if (action >= GameAction.BuildSlot1 && action <= GameAction.BuildSlot10)
+                return Loc.F("Build Slot {0}", action - GameAction.BuildSlot1 + 1);
+            return Loc.S(NameOf(action));
+        }
 
         /// <summary>The live table, grouped for the screen.</summary>
         public static List<Group> Build() => Build(InputBindings.Key);
@@ -201,13 +218,13 @@ namespace SolarMajesty
             switch (check)
             {
                 case InputBindings.RebindCheck.Ok:
-                    return $"{NameOf(action)} is now {keyName}.";
+                    return Loc.F("{0} is now {1}.", NameText(action), keyName);
                 case InputBindings.RebindCheck.Fixed:
-                    return $"{NameOf(action)} always stays on {InputBindings.KeyLabel(InputBindings.DefaultKey(action))}.";
+                    return Loc.F("{0} always stays on {1}.", NameText(action), InputBindings.KeyLabel(InputBindings.DefaultKey(action)));
                 case InputBindings.RebindCheck.Reserved:
-                    return $"{keyName} can't be bound: {InputBindings.ReservedReason(key)}.";
+                    return Loc.F("{0} can't be bound: {1}.", keyName, Loc.S(InputBindings.ReservedReason(key)));
                 case InputBindings.RebindCheck.Conflict:
-                    return $"{keyName} is already {NameOf(conflictWith)}. Move that first, or pick another key.";
+                    return Loc.F("{0} is already {1}. Move that first, or pick another key.", keyName, NameText(conflictWith));
                 default:
                     return "";
             }

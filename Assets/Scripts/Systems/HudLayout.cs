@@ -255,10 +255,10 @@ namespace SolarMajesty
         /// <summary>The levy wordings, most to least verbose.</summary>
         public static string[] LevyVariants(int tills, int collectors, int bags, int daily) => new[]
         {
-            $"TILLS {tills:N0} · COLLECTORS {collectors} carrying {bags:N0} · EU {daily:N0}/day",
-            $"TILLS {tills:N0} · {collectors} HAUL · {bags:N0} BAGS · EU {daily:N0}/day",
-            $"TILLS {tills:N0} · HAUL {collectors} · EU {daily:N0}/day",
-            $"T {tills:N0} · C {collectors} · EU {daily:N0}",
+            Loc.F("TILLS {0:N0} · COLLECTORS {1} carrying {2:N0} · EU {3:N0}/day", tills, collectors, bags, daily),
+            Loc.F("TILLS {0:N0} · {1} HAUL · {2:N0} BAGS · EU {3:N0}/day", tills, collectors, bags, daily),
+            Loc.F("TILLS {0:N0} · HAUL {1} · EU {2:N0}/day", tills, collectors, daily),
+            Loc.F("T {0:N0} · C {1} · EU {2:N0}", tills, collectors, daily),
         };
 
         /// <summary>
@@ -299,12 +299,12 @@ namespace SolarMajesty
         /// <summary>Income under the treasury number. Stays inside the crest plate.</summary>
         public static string TreasuryLine(float perMin, int escrow, bool thin)
         {
-            string head = perMin >= 1f ? $"+{perMin:F0}/MIN" : "NO INCOME";
-            if (thin) head = "LOW · " + head;
+            string head = perMin >= 1f ? Loc.F("+{0:F0}/MIN", perMin) : Loc.S("NO INCOME");
+            if (thin) head = Loc.F("LOW · {0}", head);
             if (escrow <= 0) return head;
-            string withBounties = head + $" · {escrow:N0} BOUNTIES";
+            string withBounties = Loc.F("{0} · {1:N0} BOUNTIES", head, escrow);
             if (withBounties.Length <= TreasuryBudget) return withBounties;
-            string withOut = head + $" · {escrow:N0} OUT";
+            string withOut = Loc.F("{0} · {1:N0} OUT", head, escrow);
             if (withOut.Length <= TreasuryBudget) return withOut;
             return head;
         }

@@ -40,6 +40,8 @@ namespace SolarMajesty
     {
         public string id;
         public string displayName;
+        /// <summary><see cref="displayName"/> in the current language; the field stays English (tuning data).</summary>
+        public string DisplayNameText => Loc.S(displayName);
         public SpecialistClass specialistClass;
         public AbilityTrigger trigger;
         [Tooltip("Robot level needed (Majesty 0 / 5 / 10 maps to our 1 / 3 / 6).")]
@@ -76,6 +78,8 @@ namespace SolarMajesty
     {
         public string id;
         public string displayName;
+        /// <summary><see cref="displayName"/> in the current language; the field stays English (tuning data).</summary>
+        public string DisplayNameText => Loc.S(displayName);
         [Min(0.1f)] public float hull;
         [Tooltip("Damage per second to fauna (a robot's normal strike is about 8).")]
         [Min(0f)] public float dps;
