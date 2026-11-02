@@ -3113,6 +3113,11 @@
    "tr": "Charger une colonie sauvegardée. Les autres emplacements restent sur le disque."
   },
   {
+   "en": "Loading the local model  ·  about a minute",
+   "key": "",
+   "tr": "Chargement du modèle local  ·  environ une minute"
+  },
+  {
    "en": "Locks every hostile in 6 m in place for 6 s.",
    "key": "",
    "tr": "Immobilise tout ennemi dans un rayon de 6 m pendant 6 s."
@@ -5591,6 +5596,11 @@
    "en": "The launch intro plays once, the first time the title opens. Replay plays it now.",
    "key": "",
    "tr": "L'intro se joue une fois, à la première ouverture de l'écran titre. « Revoir » la rejoue maintenant."
+  },
+  {
+   "en": "The local model did not start  ·  logs in LocalLow/SolarMajesty/Solar Majesty/ai",
+   "key": "",
+   "tr": "Le modèle local n'a pas démarré  ·  journaux dans LocalLow/SolarMajesty/Solar Majesty/ai"
   },
   {
    "en": "The meadow is empty. Raise a Commons. Nothing works until it stands.",

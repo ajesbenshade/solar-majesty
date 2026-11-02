@@ -260,8 +260,8 @@ namespace SolarMajesty
         public static HudTip TiltShift() => new HudTip("TILT-SHIFT", "Miniature-style depth of field when zoomed in.");
         public static HudTip CloudShadows() => new HudTip("CLOUD SHADOWS", "Drifting cloud shadows on worlds with weather.");
         public static HudTip CharacterVoices() => new HudTip("CHARACTER VOICES", "Recorded bot barks and the Core's voice. Nothing to install.");
-        public static HudTip BotLines() => new HudTip("BOT LINES", "Bots write their own lines with a small local language model. Needs the local server; nothing leaves this computer.");
-        public static HudTip Spoken() => new HudTip("SPOKEN", "Read bot lines aloud through a local text-to-speech server.");
+        public static HudTip BotLines() => new HudTip("BOT LINES", "Bots write their own lines with a small language model that runs on this computer. Nothing leaves it.");
+        public static HudTip Spoken() => new HudTip("SPOKEN", "Read bot lines aloud with a text-to-speech voice that runs on this computer.");
         public static HudTip EdgeScroll() => new HudTip("EDGE SCROLL", "Pan the camera when the cursor touches the screen edge.");
         public static HudTip ReduceMotion() => new HudTip("REDUCE MOTION", "No camera shake or pulsing; the launch and victory beats become short still shots.");
         public static HudTip Controller() => new HudTip("CONTROLLER", "Use a gamepad for the camera and speed. Back switches pointer mode, where the left stick moves the pointer and A clicks.");

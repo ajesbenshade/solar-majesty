@@ -2,7 +2,7 @@
   Stages a Windows build (plus the bundled local-AI pack) and uploads it to Steam with SteamPipe.
 
     powershell -ExecutionPolicy Bypass -File Tools\steam\upload_to_steam.ps1 `
-        -GameDir Builds\Steam\Windows -AiDir Builds\Beta\stage\ai `
+        -GameDir Builds\Steam\Windows -AiDir Builds\AiPack\ai `
         -AppId 1234560 -DepotId 1234561 -SteamUser my_build_account -Description "EA 0.9.0 RC1"
 
   What it does:

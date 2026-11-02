@@ -79,11 +79,13 @@ Publish the stats/achievements config. Achievements set while the config is unpu
 & "C:\Program Files\Unity\Hub\Editor\6000.5.10f1\Editor\Unity.exe" -batchmode -quit -projectPath . `
   -executeMethod SolarMajesty.EditorTools.BuildCommands.BuildWindows -smBuildPath Builds\SteamRC -smVersion 0.9.0
 
-# AI pack: Tools\local_ai\build_ai_pack.ps1 is not on main yet (it is in the local-AI follow-up PR). Skip -AiDir until it lands.
+# AI pack (Docs/LOCAL_AI_PACK.md): llama.cpp, the Qwen3 and Kokoro weights, portable Python
+powershell -ExecutionPolicy Bypass -File Tools\local_ai\build_ai_pack.ps1 -OutDir Builds\AiPack -LlamaZip <zip> `
+  -SourceOfferContact "<support email or URL>"
 
 # SteamPipe (leaves steam_appid.txt and debug symbols out; lands on no branch until you set it live)
 powershell -ExecutionPolicy Bypass -File Tools\steam\upload_to_steam.ps1 -GameDir Builds\SteamRC\Windows `
-  -AppId <APP_ID> -DepotId <DEPOT_ID> -SteamUser <build_account> -Description "EA 0.9.0 RC1"
+  -AiDir Builds\AiPack\ai -AppId <APP_ID> -DepotId <DEPOT_ID> -SteamUser <build_account> -Description "EA 0.9.0 RC1"
 ```
 
 Set the build live on a private `beta` branch first, install it through the Steam client on a clean PC,

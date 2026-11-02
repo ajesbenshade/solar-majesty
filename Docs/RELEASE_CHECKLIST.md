@@ -41,7 +41,8 @@ is in it being honest, not in it being all ticked.
 - [x] Real graphics tiers: Low (80% + FSR, no SSAO, 1 shadow cascade to 60 m), Medium (no MSAA/SSAO), High (2x MSAA, 2 cascades), Ultra unchanged; regenerate with **Solar Majesty → Render → Create Quality Tiers**. First launch picks a tier from the GPU ([QualityAutoDetect.cs](../Assets/Scripts/Systems/QualityAutoDetect.cs)); a saved choice always wins
 - [ ] Re-measure the ported performance work on `main` with the desktop unlocked (#92's numbers, RTX 3080 1080p Ultra: worst frame Mars 117 → 39 ms, Belt 112 → 24 ms, Earth 39 → 26 ms; 450–570 fps average)
 - [ ] Low tier measured on an actual integrated GPU
-- [ ] Still to land from #92: the bundled local AI (`LocalAiHost`, `build_ai_pack.ps1`, `package_beta.ps1`). Everything else landed in #109 and #114–#123
+- [x] Still to land from #92: the bundled local AI (`LocalAiHost`, `build_ai_pack.ps1`, `package_beta.ps1`). Everything else landed in #109 and #114–#123. `LocalAiHost` starts the `ai` folder only while BOT LINES or SPOKEN is on; `package_beta.ps1` became [`Tools/release/package-windows.ps1`](../Tools/release/package-windows.ps1) ([LOCAL_AI_PACK.md](LOCAL_AI_PACK.md))
+- [ ] Build the AI pack on the release PC and run [LOCAL_AI_PACK.md](LOCAL_AI_PACK.md#checking-a-build)'s checks on a packaged build (the port was tested without a pack: this machine has no models or Kokoro venv)
 
 ## Look
 
