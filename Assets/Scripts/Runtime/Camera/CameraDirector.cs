@@ -6,10 +6,14 @@ namespace SolarMajesty
     /// Short scripted camera beats: the launch (frame the pad, follow the craft up, come home)
     /// and victory (slow pull-back and part orbit over the Commons). Presentation only.
     ///
-    /// Rules: skipped under Reduce Motion, in batch mode and with no camera rig; any player
-    /// input after a short grace window ends the beat at once; the rig's exact pose (position,
-    /// rotation, zoom and its internal pan/orbit targets) is put back when the beat ends, however
-    /// it ends. Timing and curves are in <see cref="CameraBeatMath"/>.
+    /// Rules: skipped under Reduce Motion, in batch mode, with <c>-nobeats</c> and with no camera
+    /// rig; any player input after a short grace window ends the beat at once; the rig's exact pose
+    /// (position, rotation, zoom and its internal pan/orbit targets) is put back when the beat ends,
+    /// however it ends. Timing and curves are in <see cref="CameraBeatMath"/>.
+    ///
+    /// While a beat plays the gameplay HUD is hidden (<see cref="HidesHud"/>) and a letterbox,
+    /// a caption and a skip hint replace it; world input stands down (<see cref="BlocksInput"/>), so
+    /// the key or click that skips the beat never also pauses, selects or places anything.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CameraDirector : MonoBehaviour
@@ -38,6 +42,60 @@ namespace SolarMajesty
         private Transform _craft;
         private Vector3 _craftStart;
         private float _nextPlume;
+        private string _caption;
+        private GUIStyle _captionStyle, _hintStyle;
+
+        /// <summary>Tests and capture harnesses can force beats on or off; null follows the defaults.</summary>
+        public static bool? EnabledOverride;
+
+        private static CameraDirector _current;
+        private static int _blockThroughFrame = -1;
+        private static bool _blockUntilRelease;
+        private static bool? _argDisabled;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            _current = null;
+            _blockThroughFrame = -1;
+            _blockUntilRelease = false;
+            _argDisabled = null;
+        }
+
+        /// <summary>A beat is playing somewhere.</summary>
+        public static bool Active => _current != null && _current._beat != Beat.None;
+
+        /// <summary>
+        /// World input must stand down: a beat is playing, it ended this frame or the last, or the
+        /// mouse button that skipped it is still held.
+        /// </summary>
+        public static bool BlocksInput
+        {
+            get
+            {
+                if (_blockUntilRelease && !(Input.GetMouseButton(0) || Input.GetMouseButton(1)))
+                    _blockUntilRelease = false;
+                return CameraBeatMath.BlocksInput(Active, Time.frameCount, _blockThroughFrame, _blockUntilRelease);
+            }
+        }
+
+        /// <summary>
+        /// The gameplay HUD should not draw. Same window as <see cref="BlocksInput"/>: a HUD button
+        /// redrawn under the skip click would otherwise take that click.
+        /// </summary>
+        public static bool HidesHud => BlocksInput;
+
+        /// <summary>Beats play unless overridden, or the game was started with <c>-nobeats</c>.</summary>
+        public static bool Enabled
+        {
+            get
+            {
+                if (EnabledOverride.HasValue) return EnabledOverride.Value;
+                if (!_argDisabled.HasValue)
+                    _argDisabled = CameraBeatMath.ArgsDisableBeats(System.Environment.GetCommandLineArgs());
+                return !_argDisabled.Value;
+            }
+        }
 
         /// <summary>True while a beat owns <paramref name="rig"/>.</summary>
         public static bool IsPlaying(IsometricCameraController rig) =>
@@ -46,13 +104,15 @@ namespace SolarMajesty
         /// <summary>Beats run only in a live, windowed game with motion allowed.</summary>
         public static bool CanPlay(IsometricCameraController rig) =>
             rig != null && rig.isActiveAndEnabled && Application.isPlaying && !Application.isBatchMode &&
-            !DemoSettings.ReduceMotion && rig.GetComponent<Camera>() != null;
+            Enabled && !DemoSettings.ReduceMotion && rig.GetComponent<Camera>() != null;
 
         /// <summary>
         /// Launch beat over <paramref name="pad"/>. <paramref name="craft"/> (may be null) is lifted
-        /// along the ascent. Returns false and does nothing when a beat is not allowed.
+        /// along the ascent. <paramref name="caption"/> (may be null) shows in the letterbox.
+        /// Returns false and does nothing when a beat is not allowed.
         /// </summary>
-        public static bool TryPlayLaunch(IsometricCameraController rig, Vector3 pad, Transform craft)
+        public static bool TryPlayLaunch(IsometricCameraController rig, Vector3 pad, Transform craft,
+            string caption = null)
         {
             // Frame the craft itself: a reused parked ship need not sit exactly on the pad marker.
             Vector3 from = craft != null ? craft.position : pad;
@@ -61,14 +121,17 @@ namespace SolarMajesty
             d._craft = craft;
             d._craftStart = from;
             d._nextPlume = CameraBeatMath.LaunchFrameSeconds;
+            d._caption = caption;
             return true;
         }
 
         /// <summary>Victory beat over <paramref name="commons"/>. Returns false when not allowed.</summary>
-        public static bool TryPlayVictory(IsometricCameraController rig, Vector3 commons)
+        public static bool TryPlayVictory(IsometricCameraController rig, Vector3 commons, string caption = null)
         {
             var d = For(rig);
-            return d != null && d.Begin(Beat.Victory, commons);
+            if (d == null || !d.Begin(Beat.Victory, commons)) return false;
+            d._caption = caption;
+            return true;
         }
 
         private static CameraDirector For(IsometricCameraController rig)
@@ -108,6 +171,9 @@ namespace SolarMajesty
             _elapsed = 0f;
             _target = target;
             _craft = null;
+            _caption = null;
+            _current = this;
+            Debug.Log($"[CameraBeat] {beat} beat started.");
             return true;
         }
 
@@ -118,6 +184,7 @@ namespace SolarMajesty
             {
                 // Someone else took the rig back (a hard camera snap); just forget the beat.
                 _beat = Beat.None;
+                _blockThroughFrame = Time.frameCount + 1;
                 return;
             }
 
@@ -193,11 +260,52 @@ namespace SolarMajesty
                 // The craft has left; the scene reload that follows a launch rebuilds the pad.
                 _craft.gameObject.SetActive(false);
             }
+            Debug.Log($"[CameraBeat] {_beat} beat ended after {_elapsed:F1}s.");
             _beat = Beat.None;
             _craft = null;
             if (_rig != null) _rig.EndDirected();
+            // Swallow this frame's and the next frame's input: the skip key must not also pause,
+            // and a held skip click must not land on the map or a HUD button once it redraws.
+            _blockThroughFrame = Time.frameCount + 1;
+            _blockUntilRelease = Input.GetMouseButton(0) || Input.GetMouseButton(1);
         }
 
         private void OnDisable() => Stop();
+
+        private void OnDestroy()
+        {
+            if (_current == this) _current = null;
+        }
+
+        // ---- overlay: letterbox, caption, skip hint -----------------------------------------------
+
+        private void OnGUI()
+        {
+            if (_beat == Beat.None) return;
+            GUI.depth = -100;
+            float w = Screen.width, h = Screen.height;
+            float bar = CameraBeatMath.LetterboxHeight(_elapsed, h);
+            Color prev = GUI.color;
+            GUI.color = Color.black;
+            GUI.DrawTexture(new Rect(0f, 0f, w, bar), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(0f, h - bar, w, bar), Texture2D.whiteTexture);
+            GUI.color = prev;
+
+            EnsureStyles();
+            float s = Mathf.Max(0.6f, DemoSettings.HudScale); // the player's UI Scale
+            _captionStyle.fontSize = Mathf.RoundToInt(26f * s);
+            _hintStyle.fontSize = Mathf.RoundToInt(15f * s);
+            if (!string.IsNullOrEmpty(_caption))
+                GUI.Label(new Rect(0f, h - bar, w, bar), _caption, _captionStyle);
+            GUI.Label(new Rect(0f, h - bar, w - 28f * s, bar), CameraBeatMath.SkipHint(GamepadInput.Active), _hintStyle);
+        }
+
+        private void EnsureStyles()
+        {
+            if (_captionStyle != null) return;
+            _captionStyle = HudSkin.Text(HudSkin.Display, 26, FontStyle.Bold, HudSkin.GoldBright, TextAnchor.MiddleCenter);
+            _hintStyle = HudSkin.Text(HudSkin.Body, 15, FontStyle.Normal, HudSkin.WithAlpha(HudSkin.TextPrimary, 0.7f),
+                TextAnchor.MiddleRight);
+        }
     }
 }

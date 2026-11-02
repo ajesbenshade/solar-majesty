@@ -1806,6 +1806,7 @@ namespace SolarMajesty
         private void HandleSessionHotkeys()
         {
             if (InputBindings.TextEntryActive) return; // typing flag orders
+            if (CameraDirector.BlocksInput) return; // Esc skips the camera beat, it does not pause
             if (InputBindings.Down(GameAction.Cancel)) // fixed on Esc (InputBindings.IsFixed)
             {
                 bool placing = activeTool == OverseerTool.Build || activeTool == OverseerTool.Flag;
@@ -2532,11 +2533,15 @@ namespace SolarMajesty
             FlushDebugBodyHop();
             if (!IsPlaying) return;
 
-            HandleToolHotkeys();
-            HandleSpeedHotkeys();
-            HandleOverlayHotkeys();
-            HandleSelection();
-            TryCancelFlagUnderCursor();
+            // A camera beat owns input while it plays (and on the frames its skip key lands).
+            if (!CameraDirector.BlocksInput)
+            {
+                HandleToolHotkeys();
+                HandleSpeedHotkeys();
+                HandleOverlayHotkeys();
+                HandleSelection();
+                TryCancelFlagUnderCursor();
+            }
             PushThreatToSpecialists();
             _world?.TickLairs(Placer != null ? Placer.Pieces.Count : 0);
             RefreshPowerBudget();
@@ -5182,8 +5187,24 @@ namespace SolarMajesty
             CampaignProgress.MarkConquered(celestialBody);
             Stats.BodiesConquered++;
             Achievements.Evaluate(Stats);
-            // Victory camera beat over the Commons. No-op under Reduce Motion, in batch, or with no rig.
-            CameraDirector.TryPlayVictory(_isoCam, ColonyLayout.CampusOriginFor(FocusedCampus));
+            // Victory camera beat over the Commons after every win (Earth, Luna and the final Mars).
+            // The verdict draws once it ends: the HUD is hidden for the beat. No-op under Reduce
+            // Motion, in batch, with -nobeats, or with no rig.
+            CameraDirector.TryPlayVictory(_isoCam, ColonyLayout.CampusOriginFor(FocusedCampus), VictoryCaption());
+        }
+
+        private string VictoryCaption()
+        {
+            string headline = VictoryOffer.For(celestialBody, nextBuilt: true, endless: ReplayRules.IsEndless).Headline;
+            bool final = !ReplayRules.IsEndless && !CampaignProgress.NextAfter(celestialBody).HasValue;
+            return final ? headline + "  ·  CAMPAIGN COMPLETE" : headline;
+        }
+
+        private string LaunchCaption()
+        {
+            var next = CampaignProgress.NextAfter(celestialBody);
+            var profile = next.HasValue ? CelestialBodyCatalog.Get(next.Value) : null;
+            return CameraBeatMath.LaunchCaption(profile != null ? profile.DisplayName : null);
         }
 
         /// <summary>Same-body reseed (sandbox rematch).</summary>
@@ -5211,6 +5232,10 @@ namespace SolarMajesty
         /// <summary>Victory button. Loads the next body when that level exists.</summary>
         public void ContinueAfterVictory()
         {
+            // The verdict only appears once the victory beat ends. A press that arrives during a beat
+            // anyway (a harness, a queued key) is ignored rather than cutting the beat short.
+            if (CameraDirector.Active)
+                return;
             if (!VictoryOffer.NextIsBuilt(celestialBody))
                 return;
             _victoryHold = false;
@@ -5231,6 +5256,8 @@ namespace SolarMajesty
         /// <summary>Victory button. Progress is already stored; this only leaves the colony.</summary>
         public void ExitVictoryToTitle()
         {
+            if (CameraDirector.Active)
+                return; // same rule as ContinueAfterVictory: the verdict is not up during a beat
             _victoryHold = false;
             ReturnToTitle();
         }
@@ -5251,6 +5278,7 @@ namespace SolarMajesty
             }
 
             Vector3 pad = ColonyLayout.CampusOrigin + new Vector3(16f, 0f, 0f);
+            string caption = LaunchCaption();
             LaunchSite.PlayDeparture(pad);
             string freight = PayInterBodyFreight();
             PersistSession();
@@ -5273,7 +5301,7 @@ namespace SolarMajesty
             DemoAudio.PlayRetry();
             // Launch camera beat: everything above is already committed; only the reload waits
             // for the beat (any input skips it). Without a beat the reload is immediate, as before.
-            if (CameraDirector.TryPlayLaunch(_isoCam, pad, LaunchSite.Craft))
+            if (CameraDirector.TryPlayLaunch(_isoCam, pad, LaunchSite.Craft, caption))
                 StartCoroutine(ReloadAfterLaunchBeat());
             else
                 ReloadActiveScene();

@@ -77,7 +77,8 @@ namespace SolarMajesty
         private void Update()
         {
             if (_placer == null) return;
-            if (_loop != null && !_loop.IsPlaying)
+            // A camera beat owns input (and the frame): no ghost, no hotkeys, no placing on the skip click.
+            if ((_loop != null && !_loop.IsPlaying) || CameraDirector.BlocksInput)
             {
                 if (_ghost != null) _ghost.SetActive(false);
                 if (_footprint != null) _footprint.SetActive(false);

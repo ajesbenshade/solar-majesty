@@ -511,6 +511,13 @@ namespace SolarMajesty
         {
             if (_loop == null) return;
             if (_loop.Screen == DemoScreen.Intro) return;
+            if (CameraDirector.HidesHud && _loop.Screen == DemoScreen.Playing)
+            {
+                // The camera beat draws its own letterbox and caption; nothing here is clickable.
+                _hitRects.Clear();
+                PointerBlocksWorld = true;
+                return;
+            }
             EnsureStyles();
             GUI.skin = HudSkin.Skin();
             HandleDebugHopKeys();

@@ -115,6 +115,71 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(CameraBeatMath.ShouldCancel(3f, true));
         }
 
+        [Test]
+        public void NoBeatsSwitch_IsFoundInAnyCase()
+        {
+            Assert.IsFalse(CameraBeatMath.ArgsDisableBeats(null));
+            Assert.IsFalse(CameraBeatMath.ArgsDisableBeats(new[] { "SolarMajesty.exe", "-saveDir", "x" }));
+            Assert.IsTrue(CameraBeatMath.ArgsDisableBeats(new[] { "SolarMajesty.exe", "-nobeats" }));
+            Assert.IsTrue(CameraBeatMath.ArgsDisableBeats(new[] { "SolarMajesty.exe", "-NoBeats", "-screen-width", "1600" }));
+            Assert.IsFalse(CameraBeatMath.ArgsDisableBeats(new[] { "-nobeatsx" }), "whole argument only");
+        }
+
+        [Test]
+        public void InputBlock_CoversTheBeat_TheSkipFrames_AndAHeldSkipClick()
+        {
+            Assert.IsTrue(CameraBeatMath.BlocksInput(true, 100, -1, false), "while the beat plays");
+            // The beat ended on frame 100 (block through 101).
+            Assert.IsTrue(CameraBeatMath.BlocksInput(false, 100, 101, false), "the frame the skip lands");
+            Assert.IsTrue(CameraBeatMath.BlocksInput(false, 101, 101, false), "and the next");
+            Assert.IsFalse(CameraBeatMath.BlocksInput(false, 102, 101, false), "then the world has input back");
+            Assert.IsTrue(CameraBeatMath.BlocksInput(false, 140, 101, true), "until the skip click is released");
+        }
+
+        [Test]
+        public void Letterbox_EasesIn_ThenHolds()
+        {
+            Assert.AreEqual(0f, CameraBeatMath.LetterboxHeight(0f, 1000f), Eps);
+            Assert.AreEqual(50f, CameraBeatMath.LetterboxHeight(CameraBeatMath.LetterboxInSeconds * 0.5f, 1000f), 0.01f);
+            Assert.AreEqual(100f, CameraBeatMath.LetterboxHeight(CameraBeatMath.LetterboxInSeconds, 1000f), 0.01f);
+            Assert.AreEqual(100f, CameraBeatMath.LetterboxHeight(30f, 1000f), 0.01f);
+        }
+
+        [Test]
+        public void Captions_NameTheNextWorld()
+        {
+            Assert.AreEqual("LIFTOFF", CameraBeatMath.LaunchCaption(null));
+            Assert.AreEqual("LIFTOFF", CameraBeatMath.LaunchCaption(""));
+            Assert.AreEqual("LIFTOFF  ·  BOUND FOR MARS", CameraBeatMath.LaunchCaption("Mars"));
+            StringAssert.Contains("SKIP", CameraBeatMath.SkipHint(false));
+            StringAssert.Contains("BUTTON", CameraBeatMath.SkipHint(true));
+        }
+
+        [Test]
+        public void Director_AtRest_NeitherHidesTheHud_NorBlocksInput()
+        {
+            Assert.IsFalse(CameraDirector.Active);
+            Assert.IsFalse(CameraDirector.HidesHud);
+            Assert.IsFalse(CameraDirector.BlocksInput);
+        }
+
+        [Test]
+        public void Director_EnabledOverride_WinsOverTheCommandLine()
+        {
+            bool? prior = CameraDirector.EnabledOverride;
+            try
+            {
+                CameraDirector.EnabledOverride = false;
+                Assert.IsFalse(CameraDirector.Enabled);
+                CameraDirector.EnabledOverride = true;
+                Assert.IsTrue(CameraDirector.Enabled);
+            }
+            finally
+            {
+                CameraDirector.EnabledOverride = prior;
+            }
+        }
+
         private static void AssertNear(Vector3 expected, Vector3 actual)
         {
             Assert.AreEqual(expected.x, actual.x, 0.001f);

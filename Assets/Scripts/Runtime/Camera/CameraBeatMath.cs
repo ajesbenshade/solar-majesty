@@ -112,6 +112,49 @@ namespace SolarMajesty
         public static bool ShouldCancel(float elapsed, bool playerInput) =>
             playerInput && elapsed >= InputGrace;
 
+        // ---- presentation around the beat ------------------------------------------------------
+
+        /// <summary>Command-line switch that turns beats off (automation, capture rigs).</summary>
+        public const string DisableArg = "-nobeats";
+
+        /// <summary>Letterbox bars reach this fraction of the screen height (each bar).</summary>
+        public const float LetterboxFraction = 0.1f;
+
+        /// <summary>The bars ease in over this long, so the cut into the beat is not a hard frame.</summary>
+        public const float LetterboxInSeconds = 0.5f;
+
+        /// <summary>True when <paramref name="args"/> carries <see cref="DisableArg"/> (any case).</summary>
+        public static bool ArgsDisableBeats(string[] args)
+        {
+            if (args == null) return false;
+            for (int i = 0; i < args.Length; i++)
+                if (string.Equals(args[i], DisableArg, System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
+        }
+
+        /// <summary>Height of each letterbox bar, in pixels, <paramref name="elapsed"/> into a beat.</summary>
+        public static float LetterboxHeight(float elapsed, float screenHeight) =>
+            screenHeight * LetterboxFraction * Mathf.Clamp01(elapsed / LetterboxInSeconds);
+
+        /// <summary>
+        /// World input (hotkeys, clicks, Esc-to-pause) stands down while a beat plays, on the frame
+        /// it ended and the one after (so the key that skipped it is not also a command), and while
+        /// the mouse button that skipped it is still held.
+        /// </summary>
+        public static bool BlocksInput(bool active, int frame, int blockThroughFrame, bool skipButtonHeld) =>
+            active || frame <= blockThroughFrame || skipButtonHeld;
+
+        /// <summary>Hint in the bottom bar. Any key, click or pad button skips (after the grace window).</summary>
+        public static string SkipHint(bool gamepad) =>
+            gamepad ? "ANY BUTTON  ·  SKIP" : "ANY KEY / CLICK  ·  SKIP";
+
+        /// <summary>Launch caption: where the Colony Lifter is bound. Empty name gives a bare liftoff.</summary>
+        public static string LaunchCaption(string nextBodyName) =>
+            string.IsNullOrEmpty(nextBodyName)
+                ? "LIFTOFF"
+                : "LIFTOFF  ·  BOUND FOR " + nextBodyName.ToUpperInvariant();
+
         public static Vector3 LerpPoint(Vector3 a, Vector3 b, float t)
         {
             t = Mathf.Clamp01(t);
