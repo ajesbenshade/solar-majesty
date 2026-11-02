@@ -20,6 +20,7 @@ namespace SolarMajesty.EditorTools
 
             var importer = (TextureImporter)assetImporter;
             importer.textureType = TextureImporterType.Default;
+            importer.textureShape = TextureImporterShape.Texture2D; // a square 1024 px PNG otherwise imported as a cubemap
             importer.mipmapEnabled = false;
             importer.npotScale = TextureImporterNPOTScale.None;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
