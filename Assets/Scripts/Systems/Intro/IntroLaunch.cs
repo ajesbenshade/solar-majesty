@@ -65,6 +65,26 @@ namespace SolarMajesty
             GamePrefs.Save();
         }
 
+        /// <summary>
+        /// QA and capture runs start on a throwaway profile, so they would always look like a first
+        /// launch: <c>-nointro</c> and <c>-storeshots</c> skip the automatic intro.
+        /// Settings → Replay intro still works.
+        /// </summary>
+        public static bool SkippedByCommandLine(string[] args)
+        {
+            if (args == null) return false;
+            foreach (string a in args)
+            {
+                if (string.IsNullOrEmpty(a)) continue;
+                switch (a.ToLowerInvariant())
+                {
+                    case "-nointro": case "-storeshots":
+                        return true;
+                }
+            }
+            return false;
+        }
+
         public static bool ShouldAutoPlay(IntroBootContext boot)
         {
             if (boot.BootStraightIntoPlay) return false;

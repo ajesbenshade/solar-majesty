@@ -11,7 +11,8 @@ is in it being honest, not in it being all ticked.
 - [x] Headless build command ([BuildCommands.cs](../Assets/Scripts/Editor/BuildCommands.cs))
 - [x] Standalone player builds (macOS verified)
 - [x] Bundle identifier set (`com.solarmajesty.solarmajesty`)
-- [x] Application icons for every platform size (`Assets/Art/Icons/SM_AppIcon_*`, 16–1024 px, assigned at build time by `ReleaseStamp`; **Solar Majesty → Build → Apply App Icons** saves them into ProjectSettings)
+- [x] Application icon (the crowned, ringed planet that is also the "O" of the logo): `Assets/Art/Icons/SM_AppIcon_*`, a 1024 px master plus separately drawn 16–512 px sizes and a Windows `.ico` (16–256 px), made by [make_store_art.py](../Tools/steam/make_store_art.py) `icon`. Committed as the Default Icon and every Standalone slot in ProjectSettings; `ReleaseStamp.ApplyIcons` re-asserts it before each build (writes only on drift), guarded by `AppIconTests`. Steam client `.ico` and 184 px community icon in [Docs/StoreArt](StoreArt/README.md)
+- [ ] Icon checked in a fresh Windows build (exe resource and taskbar) after the #92 port; macOS and Linux use the same Standalone set
 - [ ] Code signing and notarisation (macOS), Authenticode (Windows) — pipeline steps exist in `release.yml` and run once the certificates are added as secrets ([RELEASE_PIPELINE.md](RELEASE_PIPELINE.md)); not yet exercised
 - [ ] `UNITY_LICENSE` / `UNITY_EMAIL` / `UNITY_PASSWORD` secrets added to the GitHub repo so CI can run — CI now fails fast with instructions until they are ([RELEASE_PIPELINE.md](RELEASE_PIPELINE.md))
 - [x] Compile check that needs no Unity licence, on every push and PR ([Tools/compile_check](../Tools/compile_check/README.md))
@@ -36,7 +37,7 @@ is in it being honest, not in it being all ticked.
 - [x] Prefs live in `Profile/prefs.json` (`GamePrefs`) so Steam Cloud can sync them; the old registry values migrate on first read. Per-PC keys (quality, fullscreen, resolution, frame cap, UI Scale) stay in PlayerPrefs; saved key bindings keep main's `GameAction` numbers (`PrefsMigrationTests`)
 - [x] Error log, build stamp and key rebinding come from #82 (`ErrorLog`, `ReleaseStamp`, `InputBindings`); not duplicated by the #92 port
 - [x] Live-AI content guard ([AiContentGuard.cs](../Assets/Scripts/Systems/Narration/AiContentGuard.cs)) for the Steam AI-disclosure form; `THIRD-PARTY-NOTICES.txt` ships with builds
-- [ ] Still to land from #92: localization, demo build, store art and capsules, benchmark / background autosave / async NavMesh, local-AI packager, QA autoplay fixes (listed in the #92 port PR)
+- [ ] Still to land from #92: localization, demo build, benchmark / background autosave / async NavMesh, local-AI packager, QA autoplay fixes (listed in the #92 port PR). Store art, capsules, icon and store-shot harness landed in the store-art port
 
 ## Look
 
@@ -107,7 +108,11 @@ is in it being honest, not in it being all ticked.
       largest open risk; nobody outside the project has played this
 - [ ] 60 fps with 200 agents, profiled rather than assumed
 - [ ] Full playthrough on all five bodies without an exception
-- [ ] Steam page, capsule art, screenshots
+- [x] Steam capsule and library art at the current Steamworks sizes (header, small, main and vertical capsules, page background, library capsule, hero and logo), composed from in-game renders with a Cinzel (OFL) wordmark: [Docs/StoreArt](StoreArt/README.md), rebuilt by [make_store_art.py](../Tools/steam/make_store_art.py) from `store_screenshots.ps1 -Keyart` renders. The page background is a Europa render: swap it for Earth, Moon or Mars, since the campaign now ends at Mars
+- [ ] Store screenshots: 9 at 1920×1080 in [Docs/StoreScreenshots](StoreScreenshots/README.md), but they **predate the AI-core reshape and charging stations** (and show Belt and Europa, which players no longer reach). Recapture with [store_screenshots.ps1](../Tools/qa/store_screenshots.ps1) on a current release build; needs an unlocked desktop with the game window in front
+- [ ] Key-art renders recaptured on the current build (`store_screenshots.ps1 -Keyart`) and the capsules recomposed (`make_store_art.py all --shots Builds/StoreShots`)
+- [ ] Steam store page assembled on the partner site: upload the art, check it in Steamworks' capsule preview, answer the bracketed Early Access questions in [PressKit/STORE_PAGE.md](PressKit/STORE_PAGE.md)
+- [ ] Human artist pass on the key art, logo and icon before launch: today's art is programmer art composed from game renders, and the logo is a 2D take on the 3D intro title
 - [ ] Trailer
 - [ ] Demo build for a Next Fest
 - [ ] Phase 4 exit review re-run against a fresh still

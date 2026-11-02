@@ -287,11 +287,15 @@ and [`steam/depot.vdf.template`](../Tools/release/steam/depot.vdf.template), and
 ## 6. App icons
 
 [`Assets/Art/Icons/`](../Assets/Art/Icons/) holds `SM_AppIcon_<size>.png` at 1024, 512, 256, 128,
-64, 48, 32 and 16 px, drawn per size by
-[`Tools/release/icons/make_app_icons.py`](../Tools/release/icons/make_app_icons.py)
-(`python3` + `numpy`). Every build assigns them as the default and Standalone icons. To store them
-in `ProjectSettings` for builds made some other way, run **Solar Majesty → Build → Apply App
-Icons** once and commit `ProjectSettings/ProjectSettings.asset`.
+64, 48, 32 and 16 px, plus `SM_AppIcon.ico` (16–256 px, for installers and shortcuts), drawn by
+`python Tools/steam/make_store_art.py icon` (Python 3 + Pillow + numpy; the 16–32 px sizes are
+drawn separately so they still read). The same script makes the Steam client and community icons
+and the store art in [`Docs/StoreArt/`](StoreArt/README.md). The assignment is committed in
+`ProjectSettings/ProjectSettings.asset`, and every build calls `ReleaseStamp.ApplyIcons`, which
+re-assigns them only if something differs, so a build leaves ProjectSettings clean. After changing
+the icon set, run **Solar Majesty → Build → Apply App Icons** (or
+`-executeMethod SolarMajesty.EditorTools.ReleaseStamp.ApplyIconsBatch`) and commit
+`ProjectSettings/ProjectSettings.asset`.
 [`IconImportRules`](../Assets/Scripts/Editor/IconImportRules.cs) keeps them uncompressed and
 without mipmaps, so the 16 and 32 px sizes stay crisp.
 
