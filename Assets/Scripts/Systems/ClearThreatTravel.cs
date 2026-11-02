@@ -41,6 +41,44 @@ namespace SolarMajesty
     }
 
     /// <summary>
+    /// The walk to any other pole. A pole inside a building (a pest on the Commons, a flag dropped
+    /// on a roof) cannot be reached: the footprint's NavMesh is carved and the hero stops at the
+    /// wall. Once it is within <see cref="Reach"/> and has not got closer for <see cref="Seconds"/>,
+    /// it works the pole from where it stands. Before this, both Defense Mechs on Luna held a Defend
+    /// pole 6 m inside the Commons for the rest of the world while the pests stole the treasury dry
+    /// (autoplay). The first sample only records distance.
+    /// </summary>
+    public sealed class FlagApproachWatch
+    {
+        public const float Reach = 12f;
+        public const float Seconds = 3f;
+        public const float ProgressMeters = 0.3f;
+
+        private float _best = -1f;
+        private float _stall;
+
+        /// <summary>True when the hero should work the pole from here.</summary>
+        public bool Note(float distance, float dt)
+        {
+            if (_best < 0f || distance < _best - ProgressMeters)
+            {
+                _best = distance;
+                _stall = 0f;
+                return false;
+            }
+            if (distance > Reach) return false;
+            _stall += Mathf.Max(0f, dt);
+            return _stall >= Seconds;
+        }
+
+        public void Reset()
+        {
+            _best = -1f;
+            _stall = 0f;
+        }
+    }
+
+    /// <summary>
     /// Progress toward one Clear Threat. A class, not a struct, so the repath bit
     /// cannot be lost on a copy. The first sample only records distance.
     /// </summary>

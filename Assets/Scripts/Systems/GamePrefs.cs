@@ -108,7 +108,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// <c>-profileDir &lt;path&gt;</c> or <c>-profileDir=&lt;path&gt;</c>: keep prefs somewhere else, like
-        /// <c>-saveDir</c> does for saves. Capture runs (store screenshots) use both so they never
+        /// <c>-saveDir</c> does for saves. Capture, benchmark and QA runs use both so they never
         /// touch a real profile.
         /// </summary>
         public static string ParseProfileDirArgument(string[] args)
@@ -135,7 +135,7 @@ namespace SolarMajesty
 
         /// <summary>
         /// Whether the old registry PlayerPrefs are read (migration) and cleared (deletes). Off for a
-        /// <c>-profileDir</c> run, so a capture run's New Game can never wipe or import a real player's values.
+        /// <c>-profileDir</c> run, so an isolated run's New Game can never wipe or import a real player's values.
         /// </summary>
         private static bool LegacyEnabled
         {

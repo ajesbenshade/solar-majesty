@@ -98,6 +98,24 @@ namespace SolarMajesty
             return false;
         }
 
+        /// <summary>
+        /// A route to any point: a complete dry path, or, when a river splits the mesh, the same
+        /// single short ford a den walk takes. Without it a hero who forded out to a den had no way
+        /// back: no dry path exists and a straight line stops at the bank, so Rest, Flee and the walk
+        /// home left it standing there (autoplay: Defense Mechs stranded 100-250 m out on Earth).
+        /// </summary>
+        public static bool TryWalkRoute(Vector3 from, Vector3 goal, Func<Vector3, bool> isWater, out Vector3[] corners)
+        {
+            if (TryBuild(from, goal, 8f, out corners, out NavMeshPathStatus status) &&
+                status == NavMeshPathStatus.PathComplete)
+                return true;
+            corners = null;
+            return isWater != null && TryFord(from, goal, WalkArrive, isWater, out corners);
+        }
+
+        /// <summary>How close a ford route to a plain point has to end.</summary>
+        const float WalkArrive = 2f;
+
         /// <summary>A sampled endpoint must permit an attack, even when the path is complete.</summary>
         public static bool EndsWithinAttackRange(Vector3[] corners, Vector3 den, float attackRange) =>
             corners != null && corners.Length > 0 &&

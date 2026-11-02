@@ -462,8 +462,10 @@ namespace SolarMajesty
                 }
             }
 
+            int size = OverseerRules.PressureWaveSize(Mathf.Max(1, pressureStalkerCount), LooseFaunaAlive());
+            if (size <= 0) return;
             int spawned = _loop.SpawnStalkerWave(
-                Mathf.Max(1, pressureStalkerCount),
+                size,
                 10f,
                 origin);
             if (spawned > 0)
@@ -529,6 +531,30 @@ namespace SolarMajesty
         /// </summary>
         internal static bool HoldsDens(FaunaKind kind, bool alive, bool kingdomSpawn) =>
             alive && !kingdomSpawn && !DustStalkerAgent.IsCampusPest(kind) && !DustStalkerAgent.IsJunk(kind);
+
+        /// <summary>
+        /// Living fauna that hold the dens gate and are not a den's residents (pressure waves and
+        /// their stragglers).
+        /// </summary>
+        private int LooseFaunaAlive()
+        {
+            int residents = 0;
+            var lairs = _loop.World != null ? _loop.World.Lairs : null;
+            if (lairs != null)
+            {
+                for (int i = 0; i < lairs.Count; i++)
+                {
+                    var spawned = lairs[i] != null ? lairs[i].Spawned : null;
+                    if (spawned == null) continue;
+                    for (int j = 0; j < spawned.Count; j++)
+                    {
+                        var s = spawned[j];
+                        if (s != null && HoldsDens(s.Kind, s.IsAlive, _loop.IsKingdomSpawn(s))) residents++;
+                    }
+                }
+            }
+            return Mathf.Max(0, CountLivingStalkers() - residents);
+        }
 
         private int CountLivingStalkers()
         {
