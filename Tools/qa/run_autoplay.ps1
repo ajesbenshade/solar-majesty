@@ -1,5 +1,5 @@
 <#
-  Plays the whole campaign (Earth -> Luna -> Mars -> Belt -> Europa) in the built game with
+  Plays the whole campaign (Earth -> Luna -> Mars) in the built game with
   -autoplay, on a throwaway profile, and fails on any exception, error log, stall or timeout.
 
     powershell -ExecutionPolicy Bypass -File Tools\qa\run_autoplay.ps1 -Build

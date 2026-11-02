@@ -295,7 +295,7 @@ namespace SolarMajesty
             {
                 _body = new BodyRun { body = bodyId.ToString() };
                 _state.bodies.Add(_body);
-                Milestone($"arrived on {bodyId} (seed {BodySeed.Current}, treasury {Treasury(loop)} EU, " +
+                Milestone($"arrived on {bodyId} (seed {BodySeed.Current}, till {TillEu(loop)} EU, " +
                           $"goal {loop.Mission?.TreasuryGoal ?? 0} EU, {loop.World?.Lairs.Count ?? 0} dens)");
             }
 
@@ -349,7 +349,7 @@ namespace SolarMajesty
 
                 if (loop.NeedsFieldRevive && loop.CanPayYard)
                 {
-                    Milestone("field party down — FOBOT YARD");
+                    Milestone("field crew down — FOBOT YARD");
                     loop.PayFobotYard();
                 }
 
@@ -491,7 +491,7 @@ namespace SolarMajesty
                 Fail("campaign over but not every world is marked conquered (mask " + CampaignProgress.ConqueredMask + ")");
             yield return WaitReal(2.5f); // achievements are evaluated every two seconds of play
             if (!Achievements.IsUnlocked(AchievementId.SolarConquest))
-                Fail("Solar Conquest achievement not earned at the end of the campaign");
+                Fail("AchievementId.SolarConquest not earned at the end of the campaign");
             if (offer.CanContinue)
                 Fail("the last world offers a launch to nowhere");
             Milestone("campaign complete — victory → Main Menu");
@@ -560,7 +560,7 @@ namespace SolarMajesty
                 var cls = ColonyStructure.RobotClassForWorkshop(st.Category);
                 if (!cls.HasValue || !loop.HasWreckFor(cls.Value) || loop.RefabAt(st) != null) continue;
                 int met = OverseerRules.RefabMetals(st.SourceData);
-                if (Treasury(loop) < met) continue;
+                if (TillEu(loop) < met) continue;
                 if (loop.TryRefabRookie(st))
                 {
                     _body.refabs++;
@@ -583,7 +583,7 @@ namespace SolarMajesty
                 // with an EU bill on completion takes that money the moment it is there, so it waits
                 // until the treasury has more than this world's goal (bounties come first).
                 int goal = loop.Mission != null ? loop.Mission.TreasuryGoal : 5000;
-                bool flush = Treasury(loop) > goal;
+                bool flush = TillEu(loop) > goal;
                 foreach (var t in TechCatalog.All)
                 {
                     if (t.SecretProject || !r.CanSelect(t.Id)) continue;
@@ -652,7 +652,7 @@ namespace SolarMajesty
             if (_body.simSeconds - _lastBuildAt < 4f) return;
             if (WreckWaiting(loop)) return; // the re-fab is bought first
             var mission = loop.Mission;
-            int treasury = Treasury(loop);
+            int treasury = TillEu(loop);
             int goal = mission != null ? mission.TreasuryGoal : 5000;
             bool densOpen = DensOpen(loop);
             // Once the dens are quiet and the craft is staged, the only thing left is the treasury:
@@ -959,7 +959,7 @@ namespace SolarMajesty
                 if (f.InterestCount > 0) continue;
                 if (pole.IndexOf("raise", StringComparison.OrdinalIgnoreCase) < 0 &&
                     pole.IndexOf("won't take", StringComparison.OrdinalIgnoreCase) < 0) continue;
-                if (f.CurrentBounty >= 3000f || Treasury(loop) < 600) continue;
+                if (f.CurrentBounty >= 3000f || TillEu(loop) < 600) continue;
                 float before = f.CurrentBounty;
                 input.SelectPosted(f);
                 for (int i = 0; i < 4; i++) input.NudgeBounty(MajestyEconomy.FlagBountyStep);
@@ -999,7 +999,7 @@ namespace SolarMajesty
             var input = loop.FlagInput;
             var data = input != null ? input.FlagFor(type) : null;
             if (data == null) return false;
-            if (Treasury(loop) < bounty + 200f) return false;
+            if (TillEu(loop) < bounty + 200f) return false;
             var handle = input.PostFlagAt(data, at, bounty);
             if (handle == null) return false;
             _flagPostedAt[handle] = _body.simSeconds;
@@ -1301,7 +1301,7 @@ namespace SolarMajesty
             return string.Format(CultureInfo.InvariantCulture,
                 "{0} t={1:F0}s · EU {2}/{3} · income {4:F0}/{5}/min · sustain {6:F0}/{7:F0}s · dens {8}/{9} left (fauna {10}) · " +
                 "launch {11} · tech {12} [{13} done] · robots {14} · buildings {15} · bounties {16} · till share {18} EU · objective \"{17}\"",
-                _body?.body, _body?.simSeconds ?? 0f, Treasury(loop), m?.TreasuryGoal ?? 0,
+                _body?.body, _body?.simSeconds ?? 0f, TillEu(loop), m?.TreasuryGoal ?? 0,
                 set?.NetMetalsPerMin ?? 0f, set?.IncomeGoalPerMin ?? 0, m?.SustainElapsed ?? 0f, m?.SustainRequired ?? 0f,
                 m?.UnclearedLairs ?? 0, m?.LairCount ?? 0, m?.StalkersRemaining ?? 0,
                 m != null && m.LaunchReady ? "ready" : "no", tech, r?.UnlockedCount ?? 0,
@@ -1392,7 +1392,7 @@ namespace SolarMajesty
         {
             var m = loop.Mission;
             var r = loop.Research;
-            int t = Treasury(loop);
+            int t = TillEu(loop);
             if (t > _treasuryHigh) _treasuryHigh = t;
             float score = 0f;
             if (m != null) score += m.GatesComplete * 1000f + Mathf.Floor(m.SustainElapsed / 5f) * 5f;
@@ -1423,7 +1423,7 @@ namespace SolarMajesty
 
         private int _faunaLow = int.MaxValue;
 
-        private static int Treasury(GameLoop loop) => loop.Resources != null ? loop.Resources.Get(ResourceId.Metals) : 0;
+        private static int TillEu(GameLoop loop) => loop.Resources != null ? loop.Resources.Get(ResourceId.Metals) : 0;
 
         private static int ClearedLairs(GameLoop loop)
         {
