@@ -186,6 +186,9 @@ namespace SolarMajesty
 
         /// <summary>Bumps on every decision change, so a late narration line can tell it is stale.</summary>
         public int NarrationStamp { get; private set; }
+
+        /// <summary>Names this robot in overseer commands and saves (<see cref="EntityIds"/>). Zero until spawned by the game loop.</summary>
+        public int EntityId { get; set; }
         private float _nextWeldSfx;
 
         /// <summary>A line from <see cref="HeroNarrator"/> replaces the template flavour line.</summary>

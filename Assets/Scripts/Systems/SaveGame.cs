@@ -31,6 +31,8 @@ namespace SolarMajesty
         public long simSteps;
         /// <summary>Simulation random stream (<see cref="SimRng.State"/>). Zero on older saves.</summary>
         public long rngState;
+        /// <summary>Next robot id (<see cref="EntityIds.NextId"/>). Zero on older saves.</summary>
+        public int nextEntityId;
 
         public int body;
         public int seed;
@@ -245,6 +247,8 @@ namespace SolarMajesty
         public int downCount;
         /// <summary>Index into <see cref="SaveGame.flags"/> the robot was soft-claiming, or -1.</summary>
         public int claimedFlagIndex = -1;
+        /// <summary>Stable robot id. Zero on older saves: the robot keeps the id it was spawned with.</summary>
+        public int entityId;
         /// <summary>HAB tax the Courier is carrying to Commons. Distinct from personal credits.</summary>
         public int levyCarry;
         /// <summary>Guild tax carried but not yet handed in.</summary>

@@ -294,8 +294,7 @@ namespace SolarMajesty
             var hold = new Rect(x, r.y, btn, h);
             if (SpeedButton(hold, UiIcons.Get(paused ? IconId.Play : IconId.Pause), null, paused, true))
             {
-                SimSpeed.TogglePause();
-                _loop.OnSpeedChanged();
+                _loop.ChangeSpeed(SimSpeedChange.TogglePause);
             }
             string holdKey = InputBindings.Hint(GameAction.TogglePause).ToUpperInvariant();
             Tooltip(hold, paused ? Loc.F("RESUME   ·   {0}", holdKey) : Loc.F("HOLD   ·   {0}", holdKey));
@@ -304,8 +303,7 @@ namespace SolarMajesty
             var slower = new Rect(x, r.y, btn, h);
             if (SpeedButton(slower, null, "−", false, !SimSpeed.IsSlowest))
             {
-                SimSpeed.Slower();
-                _loop.OnSpeedChanged();
+                _loop.ChangeSpeed(SimSpeedChange.Slower);
             }
             Tooltip(slower, Loc.F("SLOWER   ·   {0}", InputBindings.Hint(GameAction.SpeedDown).ToUpperInvariant()));
             x += btn + 2f;
@@ -324,8 +322,7 @@ namespace SolarMajesty
             var faster = new Rect(readout.xMax + 2f, r.y, btn, h);
             if (SpeedButton(faster, null, "+", false, !SimSpeed.IsFastest || paused))
             {
-                SimSpeed.Faster();
-                _loop.OnSpeedChanged();
+                _loop.ChangeSpeed(SimSpeedChange.Faster);
             }
             Tooltip(faster, Loc.F("FASTER   ·   {0}", InputBindings.Hint(GameAction.SpeedUp).ToUpperInvariant()));
 
@@ -345,8 +342,7 @@ namespace SolarMajesty
                 HudSkin.Pill(pip, c);
                 if (GUI.Button(hit, GUIContent.none, GUIStyle.none))
                 {
-                    SimSpeed.Set(i);
-                    _loop.OnSpeedChanged();
+                    _loop.ChangeSpeed(SimSpeedChange.Set, i);
                 }
                 Tooltip(hit, SimSpeed.LabelFor(i));
             }

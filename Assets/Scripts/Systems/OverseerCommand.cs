@@ -19,7 +19,18 @@ namespace SolarMajesty
         ArmWatchtower = 8,
         RefabRookie = 9,
         SetWorkplaceClass = 10,
-        PostAttractFlag = 11
+        PostAttractFlag = 11,
+        FormParty = 12,
+        DisbandParty = 13,
+        ChangeSpeed = 14
+    }
+
+    public enum SimSpeedChange
+    {
+        Set = 0,
+        Faster = 1,
+        Slower = 2,
+        TogglePause = 3
     }
 
     /// <summary>
@@ -43,7 +54,8 @@ namespace SolarMajesty
         /// <summary>
         /// Build catalog index (PlaceBuilding), <see cref="FlagType"/> (PostFlag),
         /// <see cref="OrbitalPowerId"/> (CastOrbital), <see cref="RobotGuildId"/>
-        /// (ActivateGuildBenefit) or <see cref="SpecialistClass"/> (SetWorkplaceClass).
+        /// (ActivateGuildBenefit), <see cref="SpecialistClass"/> (SetWorkplaceClass) or
+        /// <see cref="SimSpeedChange"/> (ChangeSpeed).
         /// </summary>
         public int content;
         public int cellX;
@@ -53,8 +65,13 @@ namespace SolarMajesty
         public float z;
         /// <summary>Bounty (PostFlag, PostAttractFlag) or bounty change (StepBounty).</summary>
         public float amount;
-        /// <summary><see cref="FlagHandle.RuntimeId"/> (CancelFlag, StepBounty).</summary>
+        /// <summary>
+        /// <see cref="FlagHandle.RuntimeId"/> (CancelFlag, StepBounty), party id (DisbandParty)
+        /// or speed index (ChangeSpeed with <see cref="SimSpeedChange.Set"/>).
+        /// </summary>
         public int target;
+        /// <summary>Robot ids (FormParty). Empty means "whoever is at the rest beacon".</summary>
+        public int[] ids;
         /// <summary>Free-text flag orders (PostFlag). Empty when there are none.</summary>
         public string text;
 
@@ -117,6 +134,15 @@ namespace SolarMajesty
             command.amount = bounty;
             return command;
         }
+
+        public static OverseerCommand FormParty(int[] robotIds) =>
+            new OverseerCommand { kind = OverseerCommandKind.FormParty, ids = robotIds ?? new int[0] };
+
+        public static OverseerCommand DisbandParty(int partyId) =>
+            new OverseerCommand { kind = OverseerCommandKind.DisbandParty, target = partyId };
+
+        public static OverseerCommand ChangeSpeed(SimSpeedChange change, int index = 0) =>
+            new OverseerCommand { kind = OverseerCommandKind.ChangeSpeed, content = (int)change, target = index };
 
         private static OverseerCommand At(OverseerCommandKind kind, Vector3 world, int content = 0) =>
             new OverseerCommand { kind = kind, content = content, x = world.x, y = world.y, z = world.z };

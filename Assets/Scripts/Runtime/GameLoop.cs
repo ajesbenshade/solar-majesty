@@ -438,6 +438,7 @@ namespace SolarMajesty
         // Simulation randomness: seeded from the world seed and carried in the save.
         private readonly SimRng _simRng = new SimRng(1);
         private System.Func<float, float> _simRngRange;
+        private readonly EntityIds _entityIds = new EntityIds();
         private AdaptiveMusic _music;
         private double _playSeconds;
         private DebugHud _debugHud;
@@ -1415,7 +1416,33 @@ namespace SolarMajesty
                 case OverseerCommandKind.PostAttractFlag:
                     ApplyAttractFlag(StructureAt(command.World), command.amount);
                     break;
+                case OverseerCommandKind.FormParty:
+                    if (!TryFormPartyFrom(AgentsById(command.ids)))
+                        FormPartyAtInn();
+                    break;
+                case OverseerCommandKind.DisbandParty:
+                    ApplyDisbandParty(command.target);
+                    break;
+                case OverseerCommandKind.ChangeSpeed:
+                    ApplySpeedChange((SimSpeedChange)command.content, command.target);
+                    break;
             }
+        }
+
+        private List<SpecialistAgent> AgentsById(int[] ids)
+        {
+            var found = new List<SpecialistAgent>(ids != null ? ids.Length : 0);
+            if (ids == null) return found;
+            for (int i = 0; i < ids.Length; i++)
+            {
+                for (int a = 0; a < _agents.Count; a++)
+                {
+                    if (_agents[a] == null || _agents[a].EntityId != ids[i]) continue;
+                    found.Add(_agents[a]);
+                    break;
+                }
+            }
+            return found;
         }
 
         /// <summary>
@@ -2592,19 +2619,31 @@ namespace SolarMajesty
             if (InputBindings.TextEntryActive) return; // typing flag orders
 
             if (InputBindings.Down(GameAction.TogglePause))
-                SimSpeed.TogglePause();
+                ChangeSpeed(SimSpeedChange.TogglePause);
             else if (InputBindings.Down(GameAction.SpeedUp))
-                SimSpeed.Faster();
+                ChangeSpeed(SimSpeedChange.Faster);
             else if (InputBindings.Down(GameAction.SpeedDown))
-                SimSpeed.Slower();
-            else
-                return;
+                ChangeSpeed(SimSpeedChange.Slower);
+        }
 
+        /// <summary>A speed change from any control (keys or the HUD).</summary>
+        public void ChangeSpeed(SimSpeedChange change, int index = 0) =>
+            Commands.Enqueue(OverseerCommand.ChangeSpeed(change, index));
+
+        private void ApplySpeedChange(SimSpeedChange change, int index)
+        {
+            switch (change)
+            {
+                case SimSpeedChange.Faster: SimSpeed.Faster(); break;
+                case SimSpeedChange.Slower: SimSpeed.Slower(); break;
+                case SimSpeedChange.TogglePause: SimSpeed.TogglePause(); break;
+                default: SimSpeed.Set(index); break;
+            }
             OnSpeedChanged();
         }
 
-        /// <summary>Apply a speed change from any control (keys or the HUD) and note it once.</summary>
-        public void OnSpeedChanged()
+        /// <summary>Push the chosen speed to the clock and note it once.</summary>
+        private void OnSpeedChanged()
         {
             ApplySimSpeed();
             LogOverseer(SimSpeed.IsPaused ? Loc.S("World held.") : Loc.F("Speed {0}.", SimSpeed.Label));
@@ -3752,6 +3791,7 @@ namespace SolarMajesty
             var agent = root.GetComponent<SpecialistAgent>();
             if (agent == null) agent = root.AddComponent<SpecialistAgent>();
             agent.Initialize(data, Flags, Brain, Economy, tint, Placer, _campusNav, _world);
+            agent.EntityId = _entityIds.Next();
             return agent;
         }
 
@@ -6021,6 +6061,7 @@ namespace SolarMajesty
                 playSeconds = _playSeconds,
                 simSteps = _sim.TotalSteps,
                 rngState = _simRng.State,
+                nextEntityId = _entityIds.NextId,
                 body = (int)celestialBody,
                 seed = BodySeed.Current,
                 highestUnlocked = (int)CampaignProgress.HighestUnlocked,
@@ -6115,6 +6156,7 @@ namespace SolarMajesty
                 save.agents.Add(new SaveAgent
                 {
                     specialistClass = (int)a.Data.specialistClass,
+                    entityId = a.EntityId,
                     hasVeteranRecord = true,
                     veteran = a.ToRecord(corpse: false),
                     px = p.x,
@@ -6322,6 +6364,7 @@ namespace SolarMajesty
             _sim.Restore(save.simSteps);
             // Saves from before the seeded stream keep the one this world started with.
             if (save.rngState != 0) _simRng.State = save.rngState;
+            _entityIds.Reserve(save.nextEntityId - 1);
             RefreshTechEffects();
             SyncLaunchGate();
 
@@ -6466,6 +6509,11 @@ namespace SolarMajesty
 
                 used.Add(agent);
                 restored.Add(agent);
+                if (s.entityId > 0)
+                {
+                    agent.EntityId = s.entityId;
+                    _entityIds.Reserve(s.entityId);
+                }
                 agent.RestoreWorldPose(pose);
                 if (s.hasVeteranRecord)
                     agent.ApplyRecord(s.veteran);
@@ -6973,8 +7021,13 @@ namespace SolarMajesty
         /// <summary>Form a party from the current selection, else from heroes at the rest beacon.</summary>
         public void FormParty()
         {
-            if (TryFormPartyFrom(_selected)) return;
-            FormPartyAtInn();
+            var ids = new List<int>(_selected.Count);
+            for (int i = 0; i < _selected.Count; i++)
+            {
+                if (_selected[i] != null && _selected[i].EntityId > 0)
+                    ids.Add(_selected[i].EntityId);
+            }
+            Commands.Enqueue(OverseerCommand.FormParty(ids.ToArray()));
         }
 
         private bool TryFormPartyFrom(IReadOnlyList<SpecialistAgent> pool)
@@ -7059,9 +7112,20 @@ namespace SolarMajesty
             if (party == null && _parties.Count > 0)
                 party = _parties[_parties.Count - 1];
             if (party == null) return;
-            _parties.Remove(party);
-            party.Disband();
-            Debug.Log("[Party] Disbanded.");
+            Commands.Enqueue(OverseerCommand.DisbandParty(party.Id));
+        }
+
+        private void ApplyDisbandParty(int partyId)
+        {
+            for (int i = 0; i < _parties.Count; i++)
+            {
+                HeroParty party = _parties[i];
+                if (party == null || party.Id != partyId) continue;
+                _parties.RemoveAt(i);
+                party.Disband();
+                Debug.Log("[Party] Disbanded.");
+                return;
+            }
         }
 
         private static float FlatDist(Vector3 a, Vector3 b)

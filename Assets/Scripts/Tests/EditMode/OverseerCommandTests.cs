@@ -136,6 +136,30 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(OverseerCommandKind.PayFobotYard, OverseerCommand.PayFobotYard().kind);
         }
 
+        [Test]
+        public void FormParty_KeepsRobotIdsThroughJson()
+        {
+            OverseerCommand formed = OverseerCommand.FormParty(new[] { 4, 9, 2 });
+
+            var back = JsonUtility.FromJson<OverseerCommand>(JsonUtility.ToJson(formed));
+
+            Assert.AreEqual(OverseerCommandKind.FormParty, back.kind);
+            CollectionAssert.AreEqual(new[] { 4, 9, 2 }, back.ids);
+            Assert.IsEmpty(OverseerCommand.FormParty(null).ids, "no selection means the rest-beacon party");
+        }
+
+        [Test]
+        public void SpeedAndDisband_CarryTheirTarget()
+        {
+            OverseerCommand set = OverseerCommand.ChangeSpeed(SimSpeedChange.Set, 6);
+            OverseerCommand toggle = OverseerCommand.ChangeSpeed(SimSpeedChange.TogglePause);
+
+            Assert.AreEqual((int)SimSpeedChange.Set, set.content);
+            Assert.AreEqual(6, set.target);
+            Assert.AreEqual((int)SimSpeedChange.TogglePause, toggle.content);
+            Assert.AreEqual(3, OverseerCommand.DisbandParty(3).target);
+        }
+
         /// <summary>The log is only useful for replay and network play if it survives serialisation.</summary>
         [Test]
         public void Command_RoundTripsThroughJson()
