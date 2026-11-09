@@ -67,6 +67,28 @@ No player-visible features. This is what makes the rest possible.
 same state hash; a second `ColonyState` can run in the same process; all existing tests pass and
 old saves load.
 
+### 6A status (2026-11-09, branch `claude/phase-6a-foundation`)
+
+Done, with 906 EditMode tests and the isolated PlayMode suite passing:
+
+- `OverseerCommandQueue`: all fourteen colony-changing player actions are commands, drained before the simulation steps. `-recordcommands` writes the log to the logs folder.
+- `ColonySim`: owns the clock, the seeded `SimRng`, robot ids, the queue and the pure systems. `GameLoop` supplies the scene through `IColonySimHost`. A sim runs headless, replays a log and hashes its state.
+- `OverseerSession`: one `ColonySim` per overseer in one process, commands routed by overseer id.
+- Worlds as data: every world has a key; a registered `CelestialBodyProfile` boots, plays and saves under its own key and seed, borrowing authored content from the Sol world its `Id` names. `WorldDatabase` registers worlds from an asset.
+- Architecture is chosen from `EnvironmentTraits` through `ArchPreset`.
+- `TechCatalog` reads a `TechDatabase` asset when one ships.
+- Robots decide on the fixed step (`SpecialistAgent.SimTick`); simulation rolls draw from `SimRng`.
+
+Still open:
+
+- Robot and fauna movement and work run per frame, so a replay reproduces the scene-free state and robot decisions' order, not positions or work totals. Closing this needs fixed-step movement with render interpolation.
+- The 200-odd branches on `CelestialBodyId` remain. A registered world takes its dressing, sky, music and narrative from the Sol world it borrows; those become data in 6B as the generator needs them.
+- A registered world shares the borrowed world's travel snapshot file (`world<N>.json`) and campus and roster prefs. Key those by world key before the two can be played in one campaign.
+- Headless command execution covers six of fourteen kinds; the rest act on robots or structures.
+- `ReplayRules`, the robot roster and `BodySeed` are still process-wide statics. The sim carries a `RunRules` snapshot, but the game reads the statics.
+- `ShopCatalog` and the Sol world profiles are still code. No database assets are committed.
+- A command log from a session that began with Continue starts from loaded state and cannot be replayed from the seed alone.
+
 ## 6B – Procedural star systems (8–12 weeks)
 
 - **`StarSystemGenerator`** (pure, seeded): star class → 3–9 bodies with orbit, size and type.
