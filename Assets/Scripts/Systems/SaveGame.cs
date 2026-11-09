@@ -29,6 +29,8 @@ namespace SolarMajesty
         public string campaignStamp = "";
         public double playSeconds;
         public long simSteps;
+        /// <summary>Simulation random stream (<see cref="SimRng.State"/>). Zero on older saves.</summary>
+        public long rngState;
 
         public int body;
         public int seed;

@@ -138,6 +138,19 @@ namespace SolarMajesty
         public void NudgeBounty(float delta)
         {
             var selected = SelectedPosted;
+            // A posted flag's bounty is colony state, so the change goes through the command queue.
+            // The next-post bounty is only a panel value and stays local.
+            if (selected != null && _loop != null && selected.RuntimeId is int id)
+            {
+                _loop.Commands.Enqueue(OverseerCommand.StepBounty(id, delta));
+                return;
+            }
+            ApplyBountyStep(selected, delta);
+        }
+
+        /// <summary>Command executor: step <paramref name="selected"/>, or the next-post bounty when it is null.</summary>
+        public void ApplyBountyStep(FlagHandle selected, float delta)
+        {
             float before = selected != null ? selected.CurrentBounty : 0f;
             int escrowBefore = selected != null ? selected.EscrowMetals : 0;
             float pending = bounty;
@@ -169,8 +182,24 @@ namespace SolarMajesty
             if (_flags == null || data == null) return null;
             FlagData prev = _selected;
             _selected = data;
-            FlagHandle handle = TryPost(data, world, bountyAmount);
+            FlagHandle handle = TryPost(data, world, bountyAmount, _pendingOrders);
             _selected = prev;
+            return handle;
+        }
+
+        /// <summary>Command executor for a player post: the post, its marker and the selection change.</summary>
+        public FlagHandle ExecutePost(FlagType type, Vector3 world, float bountyAmount, string orders)
+        {
+            FlagData data = FlagFor(type);
+            if (_flags == null || data == null) return null;
+            FlagData prev = _selected;
+            _selected = data; // SpawnMarker reads the selected flag's prefab
+            FlagHandle handle = TryPost(data, world, bountyAmount, orders);
+            _selected = prev;
+            if (handle == null)
+                Debug.Log("[Flags] Cannot post — not enough metals in the stockpile.");
+            else
+                ClearPostedSelection();
             return handle;
         }
 
@@ -317,27 +346,29 @@ namespace SolarMajesty
                 return;
             }
 
-            FlagHandle handle = TryPost(_selected, world, bounty);
-            if (handle == null)
-                Debug.Log("[Flags] Cannot post — not enough metals in the stockpile.");
+            if (_loop != null)
+                _loop.Commands.Enqueue(
+                    OverseerCommand.PostFlag(_selected.flagType, world, bounty, _pendingOrders));
             else
-                ClearPostedSelection();
+                ExecutePost(_selected.flagType, world, bounty, _pendingOrders);
         }
 
-        private void AttachPendingOrders(FlagHandle handle)
+        private void AttachOrders(FlagHandle handle, string orders)
         {
-            if (string.IsNullOrWhiteSpace(_pendingOrders)) return;
-            handle.Orders = _pendingParsed ?? FlagOrdersParser.Parse(_pendingOrders);
+            if (string.IsNullOrWhiteSpace(orders)) return;
+            handle.Orders = FlagOrdersParser.Parse(orders);
             string read = handle.Orders.Summary();
             _loop?.LogOverseer(string.IsNullOrEmpty(read)
-                ? Loc.F("Orders posted: \"{0}\" — not understood; heroes will ignore them.", _pendingOrders)
+                ? Loc.F("Orders posted: \"{0}\" — not understood; heroes will ignore them.", orders)
                 : Loc.F("Orders posted: {0}", read));
             if (!handle.Orders.HasRules)
                 LayaFlagOrders.TryUnderstand(handle, _loop); // optional local model, async
-            PendingOrders = "";
+            // Only the orders this flag used are spent; text typed since then is for the next flag.
+            if (orders == _pendingOrders)
+                PendingOrders = "";
         }
 
-        private FlagHandle TryPost(FlagData data, Vector3 world, float bountyAmount)
+        private FlagHandle TryPost(FlagData data, Vector3 world, float bountyAmount, string orders)
         {
             if (data == null || _flags == null) return null;
 
@@ -353,7 +384,7 @@ namespace SolarMajesty
                 if (lair != null && lair.IsScouted)
                     _flags.ScalePostedWork(handle, OverseerRules.ScoutedDenWorkMul);
             }
-            AttachPendingOrders(handle);
+            AttachOrders(handle, orders);
             SpawnMarker(handle, world);
             DemoAudio.PlayFlagPost(world);
             _loop?.NotifyFlagPosted(handle);

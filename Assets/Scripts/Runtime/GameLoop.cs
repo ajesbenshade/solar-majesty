@@ -27,7 +27,7 @@ namespace SolarMajesty
     /// Player may only place buildings and post flags — never command specialists.
     /// </summary>
     [DefaultExecutionOrder(-50)]
-    public class GameLoop : MonoBehaviour
+    public class GameLoop : MonoBehaviour, IOverseerCommandExecutor
     {
         [Header("Scene refs")]
         [SerializeField] private IsoGrid grid;
@@ -435,6 +435,9 @@ namespace SolarMajesty
         private readonly HashSet<int> _kingdomAnnounced = new HashSet<int>();
         private int _heroDeaths;
         private readonly SimClock _sim = new SimClock();
+        // Simulation randomness: seeded from the world seed and carried in the save.
+        private readonly SimRng _simRng = new SimRng(1);
+        private System.Func<float, float> _simRngRange;
         private AdaptiveMusic _music;
         private double _playSeconds;
         private DebugHud _debugHud;
@@ -919,6 +922,7 @@ namespace SolarMajesty
                      && CampaignSlots.LiveSnapshotMatches(latestSave.campaignStamp))
                 BodySeed.SetAndPersist(latestSave.seed);
 
+            _simRng.Reseed(BodySeed.Current);
             EnsureSceneRefs();
             BuildPureSystems();
             EnsureContent();
@@ -1365,7 +1369,44 @@ namespace SolarMajesty
         {
         }
 
+        /// <summary>
+        /// Player actions that change the colony. Input and HUD code queue them here; they are
+        /// applied in <see cref="Update"/> just before the simulation steps.
+        /// </summary>
+        public OverseerCommandQueue Commands { get; } = new OverseerCommandQueue();
+
+        void IOverseerCommandExecutor.Execute(in OverseerCommand command)
+        {
+            switch (command.kind)
+            {
+                case OverseerCommandKind.PlaceBuilding:
+                    _buildInput?.ExecutePlace(command.content, command.Cell, command.World);
+                    break;
+                case OverseerCommandKind.PostFlag:
+                    _flagInput?.ExecutePost((FlagType)command.content, command.World, command.amount, command.text);
+                    break;
+                case OverseerCommandKind.CancelFlag:
+                    // The flag may have completed between the click and the drain.
+                    if (Flags != null && Flags.TryGet(command.target, out FlagHandle cancelled))
+                        ApplyCancelFlag(cancelled);
+                    break;
+                case OverseerCommandKind.StepBounty:
+                    if (Flags != null && Flags.TryGet(command.target, out FlagHandle stepped))
+                        _flagInput?.ApplyBountyStep(stepped, command.amount);
+                    break;
+            }
+        }
+
         public void CancelFlag(FlagHandle handle)
+        {
+            if (handle == null || Flags == null) return;
+            if (handle.RuntimeId is int id)
+                Commands.Enqueue(OverseerCommand.CancelFlag(id));
+            else
+                ApplyCancelFlag(handle);
+        }
+
+        private void ApplyCancelFlag(FlagHandle handle)
         {
             if (handle == null || Flags == null) return;
             if (_flagInput != null && ReferenceEquals(_flagInput.SelectedPosted, handle))
@@ -2408,6 +2449,9 @@ namespace SolarMajesty
             Stats.Tick(Time.deltaTime);
             if (Settlement != null && Settlement.HasCommons) _commonsEverStood = true;
             if (Placer != null) Stats.NoteModules(Placer.Pieces.Count);
+
+            // Commands land on a step boundary, and still apply while the game speed is on hold.
+            Commands.Drain(_sim.TotalSteps, this);
 
             // Time.deltaTime is already scaled by SimSpeed, so a fixed-step loop gives the pure
             // systems identical results at any frame rate or game speed.
@@ -4062,7 +4106,8 @@ namespace SolarMajesty
             if (DemoSettings.FirstHourDemo || InFaunaGrace) return;
             _kingdomThreat.SetTuning(kingdomThreat);
 
-            _kingdomThreat.Tick(dt, KingdomValue, _heroDeaths, KingdomAlive, _kingdomRequests);
+            _kingdomThreat.Tick(dt, KingdomValue, _heroDeaths, KingdomAlive, _kingdomRequests,
+                _simRngRange ??= _simRng.Range);
             for (int r = 0; r < _kingdomRequests.Count; r++)
             {
                 var req = _kingdomRequests[r];
@@ -5920,6 +5965,7 @@ namespace SolarMajesty
                 campaignStamp = CampaignSlots.Stamp ?? "",
                 playSeconds = _playSeconds,
                 simSteps = _sim.TotalSteps,
+                rngState = _simRng.State,
                 body = (int)celestialBody,
                 seed = BodySeed.Current,
                 highestUnlocked = (int)CampaignProgress.HighestUnlocked,
@@ -6219,6 +6265,8 @@ namespace SolarMajesty
 
             _playSeconds = save.playSeconds;
             _sim.Restore(save.simSteps);
+            // Saves from before the seeded stream keep the one this world started with.
+            if (save.rngState != 0) _simRng.State = save.rngState;
             RefreshTechEffects();
             SyncLaunchGate();
 

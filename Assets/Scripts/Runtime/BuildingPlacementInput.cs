@@ -158,27 +158,22 @@ namespace SolarMajesty
                 (_cam == null || !_cam.SuppressWorldClick) &&
                 (_loop == null || !_loop.WorldClickUsedBySelection))
             {
-                if (_placer.TryPlace(Selected, cell, snapped, out ConstructionOrder order, out string fail))
-                {
-                    GameObject built = SpawnBuildingVisual(order);
-                    SpawnConstructionSite(order, built);
-                    DemoAudio.PlayBuildPlace(snapped);
-                    Debug.Log($"[Build] Placed {Selected.displayName} @ {cell}");
-
-                    // One building per pick: drop the ghost and hand back the normal pointer.
-                    // Shift-click keeps the tool armed to place several.
-                    bool keepPlacing = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-                    if (!keepPlacing)
-                    {
-                        _ghost.SetActive(false);
-                        _footprint.SetActive(false);
-                        if (_loop != null) _loop.SetTool(OverseerTool.None);
-                        else enabledPlacement = false;
-                    }
-                }
+                // The placement was just validated, so the tool is released now; the build itself
+                // happens when the command queue drains.
+                if (_loop != null)
+                    _loop.Commands.Enqueue(OverseerCommand.PlaceBuilding(selectedIndex, cell, snapped));
                 else
+                    ExecutePlace(selectedIndex, cell, snapped);
+
+                // One building per pick: drop the ghost and hand back the normal pointer.
+                // Shift-click keeps the tool armed to place several.
+                bool keepPlacing = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                if (!keepPlacing)
                 {
-                    Debug.Log($"[Build] Failed: {fail}");
+                    _ghost.SetActive(false);
+                    _footprint.SetActive(false);
+                    if (_loop != null) _loop.SetTool(OverseerTool.None);
+                    else enabledPlacement = false;
                 }
             }
             else if (Input.GetMouseButtonUp(0) && !valid && _loop != null && Time.time >= _zoneHintAt)
@@ -189,6 +184,27 @@ namespace SolarMajesty
                     _loop.LogOverseer(_blockReason);
                 }
             }
+        }
+
+        /// <summary>Command executor: pay for and queue the building, then spawn its site visuals.</summary>
+        public bool ExecutePlace(int catalogIndex, Vector2Int cell, Vector3 world)
+        {
+            BuildingData data = catalog != null && catalogIndex >= 0 && catalogIndex < catalog.Length
+                ? catalog[catalogIndex]
+                : null;
+            if (data == null || _placer == null) return false;
+
+            if (!_placer.TryPlace(data, cell, world, out ConstructionOrder order, out string fail))
+            {
+                Debug.Log($"[Build] Failed: {fail}");
+                return false;
+            }
+
+            GameObject built = SpawnBuildingVisual(order);
+            SpawnConstructionSite(order, built);
+            DemoAudio.PlayBuildPlace(world);
+            Debug.Log($"[Build] Placed {data.displayName} @ {cell}");
+            return true;
         }
 
         private float _zoneHintAt;

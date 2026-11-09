@@ -48,6 +48,7 @@
 - [Phase 4 – Visual Target (Art Production)](05_PHASE_4_VISUAL_TARGET.md)
 - [Phase 4 exit review (blocked)](PHASE_4_EXIT.md)
 - [Phase 5 – Production Values & Ship](06_PHASE_5_PRODUCTION_VALUES_SHIP.md)
+- [Phase 6 – Beyond Sol: procedural systems, galaxy layer, multiplayer](07_PHASE_6_GALAXY_AND_MULTIPLAYER.md) (proposed; after Early Access)
 - [Mars colony — Majesty loops](../MARS_COLONY_MAJESTY_LOOPS.md) (gameplay north star after Phase 4; not EXIT)
 - [Flag-hero local LLM](FLAG_HERO_LOCAL_LLM.md) (parked stretch; typed flag orders + bundled llama.cpp. Not Phase 4. Not Phase 5 ship. Grok advisor stays catalog.)
 
