@@ -1017,6 +1017,19 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// With -recordcommands, leave this world's applied commands in the logs folder when the
+        /// scene goes away (quit, travel, restart).
+        /// </summary>
+        private void WriteCommandLog()
+        {
+            if (Sim == null || !Sim.Commands.Record || Sim.Commands.Log.Count == 0) return;
+            string body = _body != null ? _body.ShortCode : celestialBody.ToString();
+            CommandLog log = CommandLog.From(Sim, body, BodySeed.Current, Application.version);
+            string path = log.Write(ErrorLog.Directory, CommandLog.FileName(body, BodySeed.Current, System.DateTime.UtcNow));
+            if (path != null) Debug.Log($"[CommandLog] {log.commands.Count} commands -> {path}");
+        }
+
         private void OnDestroy()
         {
             if (Economy != null)
@@ -1024,6 +1037,7 @@ namespace SolarMajesty
                 Economy.UpkeepApplied -= OnUpkeepTithe;
             }
             Achievements.Earned -= OnAchievementEarned;
+            WriteCommandLog();
             PlaytestTelemetry.RecordQuit(
                 Screen.ToString(),
                 celestialBody,
@@ -2869,6 +2883,7 @@ namespace SolarMajesty
             _simRng = Sim.Rng;
             _entityIds = Sim.EntityIds;
             _orbital = Sim.Orbital;
+            Sim.Commands.Record = CommandLog.Requested(System.Environment.GetCommandLineArgs());
 
             Resources = Sim.Resources;
             if (seedStartingResources)
@@ -6066,6 +6081,7 @@ namespace SolarMajesty
                 rngState = _simRng.State,
                 nextEntityId = _entityIds.NextId,
                 body = (int)celestialBody,
+                bodyKey = CelestialBodyCatalog.KeyOf(celestialBody),
                 seed = BodySeed.Current,
                 highestUnlocked = (int)CampaignProgress.HighestUnlocked,
                 rosterBlob = SpecialistRoster.Encode(CaptureRoster()),

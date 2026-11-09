@@ -173,13 +173,13 @@ namespace SolarMajesty
         static readonly Color KitCarbon = new Color(0.26f, 0.24f, 0.22f);
         static readonly Color KitYellow = new Color(0.95f, 0.82f, 0.12f);
 
-        public static ArchStyle Style(CelestialBodyId id) => id switch
+        public static ArchStyle Style(ArchPreset preset) => preset switch
         {
-            CelestialBodyId.Earth => StyleEarth(),
-            CelestialBodyId.Luna => StyleLuna(),
-            CelestialBodyId.Mars => StyleMars(),
-            CelestialBodyId.Belt => StyleBelt(),
-            CelestialBodyId.Europa => StyleEuropa(),
+            ArchPreset.Arcology => StyleEarth(),
+            ArchPreset.ShieldedOutpost => StyleLuna(),
+            ArchPreset.PrintedColony => StyleMars(),
+            ArchPreset.AnchoredStation => StyleBelt(),
+            ArchPreset.CryoBase => StyleEuropa(),
             _ => StyleLuna()
         };
 
@@ -234,37 +234,37 @@ namespace SolarMajesty
         /// Re-dress a shared kit colour for this world (orange trim becomes Luna gold foil, Europa
         /// cyan, Belt hazard yellow, Earth teal; white shells follow the world's hull). False = keep.
         /// </summary>
-        public static bool TryRemap(CelestialBodyId id, Color c, out Color result)
+        public static bool TryRemap(ArchPreset preset, Color c, out Color result)
         {
             result = c;
-            if (id == CelestialBodyId.Mars) return false; // Mars is the tuned reference look
-            var s = Style(id);
+            if (preset == ArchPreset.PrintedColony) return false; // Mars is the tuned reference look
+            var s = Style(preset);
             if (Near(c, KitOrange)) { result = s.Trim; return true; }
             if (Near(c, KitWhite) || Near(c, KitTan)) { result = s.Hull; return true; }
-            if (Near(c, KitYellow) && id == CelestialBodyId.Europa) { result = s.Trim; return true; }
-            if (Near(c, KitCarbon) && id == CelestialBodyId.Belt) { result = s.Dark; return true; }
+            if (Near(c, KitYellow) && preset == ArchPreset.CryoBase) { result = s.Trim; return true; }
+            if (Near(c, KitCarbon) && preset == ArchPreset.AnchoredStation) { result = s.Dark; return true; }
             return false;
         }
 
         /// <summary>
         /// Same re-dress keyed by the shared art-library material name (<c>SM_Art_WhiteHull</c>,
         /// <c>SM_Art_Orange</c>, <c>SM_Art_BlackCarbon</c>…), which is what kit prims carry once
-        /// IndustrialArtDressing has run. Falls back to <see cref="TryRemap(CelestialBodyId, Color, out Color)"/>.
+        /// IndustrialArtDressing has run. Falls back to <see cref="TryRemap(ArchPreset, Color, out Color)"/>.
         /// </summary>
-        public static bool TryRemapMaterial(CelestialBodyId id, string materialName, Color current, out Color result)
+        public static bool TryRemapMaterial(ArchPreset preset, string materialName, Color current, out Color result)
         {
             result = current;
-            if (id == CelestialBodyId.Mars) return false;
+            if (preset == ArchPreset.PrintedColony) return false;
             if (!string.IsNullOrEmpty(materialName) && materialName.StartsWith("SM_Art_"))
             {
-                var s = Style(id);
+                var s = Style(preset);
                 string slot = materialName.Substring(7);
                 if (slot.StartsWith("WhiteHull")) { result = s.Hull; return true; }
                 if (slot.StartsWith("Orange")) { result = s.Trim; return true; }
-                if (slot.StartsWith("BlackCarbon") && id == CelestialBodyId.Belt) { result = s.Dark; return true; }
+                if (slot.StartsWith("BlackCarbon") && preset == ArchPreset.AnchoredStation) { result = s.Dark; return true; }
                 return false; // other library slots (steel, glass, solar, cyan…) read right everywhere
             }
-            return TryRemap(id, current, out result);
+            return TryRemap(preset, current, out result);
         }
 
         static bool Near(Color a, Color b)
@@ -279,16 +279,16 @@ namespace SolarMajesty
         /// building's local space with the ground at y 0. <paramref name="seed"/> varies small
         /// details between neighbours. Each world lives in its own file (PlanetArchitecture.Earth.cs…).
         /// </summary>
-        public static List<ArchPart> Adapt(CelestialBodyId id, ArchArchetype a, KitShape shape, int seed)
+        public static List<ArchPart> Adapt(ArchPreset preset, ArchArchetype a, KitShape shape, int seed)
         {
             var p = new Builder(shape, seed);
-            switch (id)
+            switch (preset)
             {
-                case CelestialBodyId.Earth: Earth(p, a); break;
-                case CelestialBodyId.Luna: Luna(p, a); break;
-                case CelestialBodyId.Mars: Mars(p, a); break;
-                case CelestialBodyId.Belt: Belt(p, a); break;
-                case CelestialBodyId.Europa: Europa(p, a); break;
+                case ArchPreset.Arcology: Earth(p, a); break;
+                case ArchPreset.ShieldedOutpost: Luna(p, a); break;
+                case ArchPreset.PrintedColony: Mars(p, a); break;
+                case ArchPreset.AnchoredStation: Belt(p, a); break;
+                case ArchPreset.CryoBase: Europa(p, a); break;
             }
             return p.Parts;
         }
@@ -297,8 +297,8 @@ namespace SolarMajesty
         /// Stand-in box of <paramref name="h"/> with a flat roof over the hull and face-centre
         /// doorways — offline previews and tests.
         /// </summary>
-        public static List<ArchPart> Adapt(CelestialBodyId id, ArchArchetype a, float w, float d, float h, int seed) =>
-            Adapt(id, a, KitShape.FlatBox(RepresentativeOf(a), w, d, Mathf.Max(0.8f, h)), seed);
+        public static List<ArchPart> Adapt(ArchPreset preset, ArchArchetype a, float w, float d, float h, int seed) =>
+            Adapt(preset, a, KitShape.FlatBox(RepresentativeOf(a), w, d, Mathf.Max(0.8f, h)), seed);
 
         /// <summary>Fraction of the footprint from centre to an Earth power-node turbine.</summary>
         public const float WindTurbineAlong = 0.34f;

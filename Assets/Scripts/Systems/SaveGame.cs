@@ -35,6 +35,8 @@ namespace SolarMajesty
         public int nextEntityId;
 
         public int body;
+        /// <summary>The same world by its text key (<see cref="CelestialBodyProfile.Key"/>). Empty on older saves.</summary>
+        public string bodyKey = "";
         public int seed;
         public int highestUnlocked;
         // Null only on legacy saves; an empty encoded roster is a valid snapshot.

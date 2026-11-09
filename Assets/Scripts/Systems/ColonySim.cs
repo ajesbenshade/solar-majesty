@@ -46,6 +46,9 @@ namespace SolarMajesty
         /// <summary>Construction and the economy advance on this beat, not every step.</summary>
         public const float EconomyBeatSeconds = 0.25f;
 
+        /// <summary>Whose colony this is. Commands carry the same id (<see cref="OverseerCommand.overseer"/>).</summary>
+        public int OverseerId { get; set; } = OverseerCommand.LocalOverseer;
+
         public SimClock Clock { get; } = new SimClock();
         public SimRng Rng { get; }
         public EntityIds EntityIds { get; } = new EntityIds();

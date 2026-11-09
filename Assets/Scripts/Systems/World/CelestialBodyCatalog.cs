@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SolarMajesty
@@ -25,11 +26,16 @@ namespace SolarMajesty
         public static CelestialBodyId[] All => AllBodies;
         public static CelestialBodyId Last => AllBodies[AllBodies.Length - 1];
 
-        public static CelestialBodyProfile Earth() => _earth ??= BuildEarth();
-        public static CelestialBodyProfile Luna() => _luna ??= BuildLuna();
-        public static CelestialBodyProfile Mars() => _mars ??= BuildMars();
-        public static CelestialBodyProfile Belt() => _belt ??= BuildBelt();
-        public static CelestialBodyProfile Europa() => _europa ??= BuildEuropa();
+        public static CelestialBodyProfile Earth() => _earth ??=
+            Sol(BuildEarth(), "sol.earth", new EnvironmentTraits(Atmosphere.Breathable, 1f, 15f, 0f));
+        public static CelestialBodyProfile Luna() => _luna ??=
+            Sol(BuildLuna(), "sol.luna", new EnvironmentTraits(Atmosphere.None, 0.165f, -20f, 0.6f));
+        public static CelestialBodyProfile Mars() => _mars ??=
+            Sol(BuildMars(), "sol.mars", new EnvironmentTraits(Atmosphere.Thin, 0.38f, -60f, 0.4f));
+        public static CelestialBodyProfile Belt() => _belt ??=
+            Sol(BuildBelt(), "sol.belt", new EnvironmentTraits(Atmosphere.None, 0.01f, -70f, 0.5f));
+        public static CelestialBodyProfile Europa() => _europa ??=
+            Sol(BuildEuropa(), "sol.europa", new EnvironmentTraits(Atmosphere.None, 0.134f, -160f, 1f));
 
         public static CelestialBodyProfile Get(CelestialBodyId id)
         {
@@ -43,6 +49,55 @@ namespace SolarMajesty
                 default: return Luna();
             }
         }
+
+        private static CelestialBodyProfile Sol(CelestialBodyProfile profile, string key, EnvironmentTraits traits)
+        {
+            profile.Key = key;
+            profile.Traits = traits;
+            return profile;
+        }
+
+        /// <summary>Keys under this prefix belong to the hand-authored worlds and cannot be registered over.</summary>
+        public const string SolPrefix = "sol.";
+
+        // Worlds added at run time (generated systems). The five Sol worlds are not in here.
+        private static readonly Dictionary<string, CelestialBodyProfile> Registered =
+            new Dictionary<string, CelestialBodyProfile>(System.StringComparer.Ordinal);
+
+        public static string KeyOf(CelestialBodyId id) => Get(id).Key;
+
+        /// <summary>Find a world by its text key: a Sol world or one added with <see cref="Register"/>.</summary>
+        public static bool TryGet(string key, out CelestialBodyProfile profile)
+        {
+            profile = null;
+            if (string.IsNullOrEmpty(key)) return false;
+            for (int i = 0; i < AllBodies.Length; i++)
+            {
+                CelestialBodyProfile sol = Get(AllBodies[i]);
+                if (sol.Key != key) continue;
+                profile = sol;
+                return true;
+            }
+            return Registered.TryGetValue(key, out profile);
+        }
+
+        /// <summary>
+        /// Add a world that is not one of the five. False when it has no key, the key is taken, or
+        /// the key is in the Sol namespace.
+        /// </summary>
+        public static bool Register(CelestialBodyProfile profile)
+        {
+            if (profile == null || string.IsNullOrEmpty(profile.Key)) return false;
+            if (profile.Key.StartsWith(SolPrefix, System.StringComparison.Ordinal)) return false;
+            if (Registered.ContainsKey(profile.Key)) return false;
+            Registered.Add(profile.Key, profile);
+            return true;
+        }
+
+        public static int RegisteredCount => Registered.Count;
+
+        /// <summary>Forget every registered world (a new galaxy, or a test's cleanup).</summary>
+        public static void ClearRegistered() => Registered.Clear();
 
         public static CelestialBodyId Next(CelestialBodyId id)
         {

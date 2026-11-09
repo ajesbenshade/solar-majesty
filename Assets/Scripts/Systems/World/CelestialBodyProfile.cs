@@ -25,6 +25,10 @@ namespace SolarMajesty
     public sealed class CelestialBodyProfile
     {
         public CelestialBodyId Id;
+        /// <summary>Stable text id ("sol.mars"). Saves and generated worlds name a body by this, not by the enum.</summary>
+        public string Key;
+        /// <summary>The physical facts architecture answers to.</summary>
+        public EnvironmentTraits Traits;
         public string DisplayName;
         public string ShortCode;
         public string Briefing;
