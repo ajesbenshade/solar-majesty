@@ -446,6 +446,33 @@ namespace SolarMajesty
 
         /// <summary>The seeded stream for simulation rolls. Cosmetic randomness must not draw from it.</summary>
         public SimRng Rng => _simRng;
+
+        /// <summary>True once this loop steps robots' decisions on the fixed tick (see <see cref="SpecialistAgent.SimTick"/>).</summary>
+        public bool DrivesAgentSim { get; private set; }
+
+        /// <summary>
+        /// <see cref="ColonySim.StateHash"/> plus the robots and fauna this scene holds: who exists,
+        /// their class, level, experience and purse. Positions and health are left out because
+        /// movement still runs per frame.
+        /// </summary>
+        public ulong WorldHash()
+        {
+            ulong h = Sim != null ? Sim.StateHash() : 0UL;
+            h = ColonySim.Combine(h, _agents.Count);
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                SpecialistAgent a = _agents[i];
+                if (a == null || a.Data == null) continue;
+                SpecialistRecord r = a.ToRecord(corpse: false);
+                h = ColonySim.Combine(h, a.EntityId);
+                h = ColonySim.Combine(h, (int)r.Class);
+                h = ColonySim.Combine(h, r.Level);
+                h = ColonySim.Combine(h, r.Xp);
+                h = ColonySim.Combine(h, r.Credits);
+                h = ColonySim.Combine(h, a.IsIncapacitated ? 1 : 0);
+            }
+            return ColonySim.Combine(h, _stalkers.Count);
+        }
         private AdaptiveMusic _music;
         private double _playSeconds;
         private DebugHud _debugHud;
@@ -1026,6 +1053,7 @@ namespace SolarMajesty
             if (Sim == null || !Sim.Commands.Record || Sim.Commands.Log.Count == 0) return;
             string body = _body != null ? _body.ShortCode : celestialBody.ToString();
             CommandLog log = CommandLog.From(Sim, body, BodySeed.Current, Application.version);
+            log.worldHash = WorldHash().ToString("x16");
             string path = log.Write(ErrorLog.Directory, CommandLog.FileName(body, BodySeed.Current, System.DateTime.UtcNow));
             if (path != null) Debug.Log($"[CommandLog] {log.commands.Count} commands -> {path}");
         }
@@ -2608,6 +2636,11 @@ namespace SolarMajesty
             TickFlagInterest(dt);
             TickCampusEcology(dt);
             TickKingdomThreat(dt);
+            // Robots decide in spawn order, so the rolls they draw come in the same order every run.
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                if (_agents[i] != null) _agents[i].SimTick(dt);
+            }
         }
 
         void IColonySimHost.TickBoard(float dt) => TickCampusBoard(dt);
@@ -2888,6 +2921,7 @@ namespace SolarMajesty
             Sim.Rules = RunRules.Current();
             Sim.HasGuildHall = id => FindGuildHall(id) != null;
             Sim.UplinkDistance = UplinkDistance;
+            DrivesAgentSim = true;
 
             Resources = Sim.Resources;
             if (seedStartingResources)

@@ -802,13 +802,39 @@ namespace SolarMajesty
                 fatigue = debugFatigueValue;
 
             float dt = Time.deltaTime;
+            // In play the game loop runs the decision half on the fixed step, before this Update.
+            // A robot with no loop driving it (tests) runs both halves here, as it always did.
+            if (_loop == null || !_loop.DrivesAgentSim)
+                SimTick(dt);
+
+            if (_incapacitated)
+            {
+                SetAgentStopped(true);
+                TickWorkPulse(dt);
+                return;
+            }
+
+            TickBehaviour(dt);
+            TickWorkPulse(dt);
+            if (_agent != null && _agent.enabled)
+                _agent.speed = EffectiveMoveSpeed;
+        }
+
+        /// <summary>
+        /// The decision half of a robot's tick: recovery, needs, statuses, motives and thinking,
+        /// with the rolls they make. Runs on the fixed simulation step so a robot decides at the
+        /// same pace at any frame rate. Movement and work stay in <see cref="Update"/>.
+        /// </summary>
+        public void SimTick(float dt)
+        {
+            if (data == null || _brain == null || _flags == null)
+                return;
+
             TickYield(dt);
             TickRecovery(dt);
             if (_incapacitated)
             {
-                SetAgentStopped(true);
                 TickIncapacitated(dt);
-                TickWorkPulse(dt);
                 return;
             }
 
@@ -823,10 +849,6 @@ namespace SolarMajesty
             TickGene(dt);
             TickMedic(dt);
             TickThink(dt);
-            TickBehaviour(dt);
-            TickWorkPulse(dt);
-            if (_agent != null && _agent.enabled)
-                _agent.speed = EffectiveMoveSpeed;
         }
 
         private void TickGene(float dt)

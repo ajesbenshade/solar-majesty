@@ -28,6 +28,8 @@ namespace SolarMajesty
         public long steps;
         /// <summary><see cref="ColonySim.StateHash"/> at <see cref="steps"/>, as hex.</summary>
         public string stateHash = "";
+        /// <summary>The scene's hash over the sim plus robots and fauna. Empty when written without a scene.</summary>
+        public string worldHash = "";
         public List<OverseerCommand> commands = new List<OverseerCommand>();
 
         public static bool Requested(string[] args)

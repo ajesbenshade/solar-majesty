@@ -279,6 +279,13 @@ namespace SolarMajesty
             return h;
         }
 
+        /// <summary>Fold one more value into a hash, for callers that extend <see cref="StateHash"/>.</summary>
+        public static ulong Combine(ulong h, long value)
+        {
+            Mix(ref h, value);
+            return h;
+        }
+
         private static void Mix(ref ulong h, long value)
         {
             for (int i = 0; i < 8; i++)
