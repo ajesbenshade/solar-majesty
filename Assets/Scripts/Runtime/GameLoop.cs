@@ -27,7 +27,7 @@ namespace SolarMajesty
     /// Player may only place buildings and post flags — never command specialists.
     /// </summary>
     [DefaultExecutionOrder(-50)]
-    public class GameLoop : MonoBehaviour, IOverseerCommandExecutor
+    public class GameLoop : MonoBehaviour, IOverseerCommandExecutor, IColonySimHost
     {
         [Header("Scene refs")]
         [SerializeField] private IsoGrid grid;
@@ -84,7 +84,10 @@ namespace SolarMajesty
         [SerializeField] private int worldSeedOverride = 0;
         [SerializeField] private bool advanceSeedOnRestart = true;
 
-        // Pure systems
+        /// <summary>The colony simulation: clock, random stream, command queue and pure systems.</summary>
+        public ColonySim Sim { get; private set; }
+
+        // Pure systems (this scene's view of <see cref="Sim"/>)
         public ResourceManager Resources { get; private set; }
         public FlagManager Flags { get; private set; }
         public BuildingPlacer Placer { get; private set; }
@@ -407,7 +410,6 @@ namespace SolarMajesty
         private IsometricCameraController _isoCam;
         private string _stillLeftoverNote = "none";
         private Transform _threatRoot;
-        private float _constructionTick;
 
         [Header("Tuning (Inspector)")]
         [SerializeField] private SpecialistBrainTuning brainTuning = new SpecialistBrainTuning();
@@ -434,11 +436,13 @@ namespace SolarMajesty
             new Dictionary<int, List<DustStalkerAgent>>();
         private readonly HashSet<int> _kingdomAnnounced = new HashSet<int>();
         private int _heroDeaths;
-        private readonly SimClock _sim = new SimClock();
+        // These stand alone until BuildPureSystems points them at the sim, so a loop whose Awake has
+        // not run (EditMode tests) still has a clock, a stream and ids.
+        private SimClock _sim = new SimClock();
         // Simulation randomness: seeded from the world seed and carried in the save.
-        private readonly SimRng _simRng = new SimRng(1);
+        private SimRng _simRng = new SimRng(1);
         private System.Func<float, float> _simRngRange;
-        private readonly EntityIds _entityIds = new EntityIds();
+        private EntityIds _entityIds = new EntityIds();
 
         /// <summary>The seeded stream for simulation rolls. Cosmetic randomness must not draw from it.</summary>
         public SimRng Rng => _simRng;
@@ -566,7 +570,6 @@ namespace SolarMajesty
         private bool _victoryHold;
         private GameObject _outpostBeacon;
         private readonly Dictionary<EntityId, float> _extractStamp = new Dictionary<EntityId, float>(8);
-        private readonly List<ConstructionOrder> _completedBuilds = new List<ConstructionOrder>(8);
         private float _emptyRosterTimer;
         private float _reviveReadyAt;
         private bool _revivePenaltyApplied;
@@ -926,7 +929,6 @@ namespace SolarMajesty
                      && CampaignSlots.LiveSnapshotMatches(latestSave.campaignStamp))
                 BodySeed.SetAndPersist(latestSave.seed);
 
-            _simRng.Reseed(BodySeed.Current);
             EnsureSceneRefs();
             BuildPureSystems();
             EnsureContent();
@@ -1377,7 +1379,8 @@ namespace SolarMajesty
         /// Player actions that change the colony. Input and HUD code queue them here; they are
         /// applied in <see cref="Update"/> just before the simulation steps.
         /// </summary>
-        public OverseerCommandQueue Commands { get; } = new OverseerCommandQueue();
+        public OverseerCommandQueue Commands => Sim != null ? Sim.Commands : _bareCommands;
+        private readonly OverseerCommandQueue _bareCommands = new OverseerCommandQueue(); // before Awake
 
         void IOverseerCommandExecutor.Execute(in OverseerCommand command)
         {
@@ -1496,11 +1499,7 @@ namespace SolarMajesty
             if (handle == null || Flags == null) return;
             if (_flagInput != null && ReferenceEquals(_flagInput.SelectedPosted, handle))
                 _flagInput.ClearPostedSelection();
-            int refund = handle.EscrowMetals;
-            Economy?.RefundBountyEscrow(refund);
-            Flags.Cancel(handle);
-            if (Economy != null)
-                Economy.MatchReserved(FlagBountySync.Sum(Flags.Flags));
+            int refund = Sim.CancelFlag(handle);
             _overseerHud?.Notify(refund > 0 ? Loc.F("Flag cancelled — {0} EU returned.", refund) : Loc.S("Flag cancelled."), 2.4f);
             Debug.Log("[Flags] Cancelled — metals refunded.");
         }
@@ -2574,42 +2573,47 @@ namespace SolarMajesty
         /// One fixed simulation step. Everything in here must be safe to run several times in a
         /// single frame (catch-up) and zero times in a frame (paused or a very fast frame).
         /// </summary>
-        private void TickSimulation(float dt)
+        private void TickSimulation(float dt) => Sim.Step(dt, this);
+
+        // IColonySimHost: the scene's share of a step, called by ColonySim.Step in this order.
+
+        void IColonySimHost.TickVillage(float dt) => Village?.Tick(dt);
+
+        void IColonySimHost.ResearchInputs(out int labs, out int workers, out float rateMultiplier, out float extraRate)
         {
-            if (Settlement != null)
-            {
-                Settlement.Tick(dt);
-            }
-            Village?.Tick(dt);
-            TickResearch(dt);
-            GuildBenefits?.Tick(dt);
+            CountLabs(out labs, out workers);
+            rateMultiplier = _body != null ? _body.ResearchRateMultiplier : 1f;
+            extraRate = HasAliveCategory(BuildingCategory.DeepArchive) ? 0.55f : 0f;
+        }
+
+        void IColonySimHost.AfterResearch() => SyncLaunchGate();
+
+        void IColonySimHost.TickWorld(float dt)
+        {
             TickEmptyRosterFail(dt);
             TickFlagInterest(dt);
             TickCampusEcology(dt);
             TickKingdomThreat(dt);
-            _orbital?.Tick(dt);
-            TickCampusBoard(dt);
-
-            _constructionTick += dt;
-            if (_constructionTick >= 0.25f)
-            {
-                ProcessCompletedConstruction();
-
-                var living = new List<SpecialistData>(_agents.Count);
-                for (int i = 0; i < _agents.Count; i++)
-                {
-                    if (_agents[i] != null && _agents[i].Data != null)
-                        living.Add(_agents[i].Data);
-                }
-                if (Economy != null)
-                {
-                    RefreshCaravanValue();
-                    Economy.Tick(_constructionTick, living);
-                }
-                TickAwaitingHires();
-                _constructionTick = 0f;
-            }
         }
+
+        void IColonySimHost.TickBoard(float dt) => TickCampusBoard(dt);
+
+        void IColonySimHost.OnConstructionCompleted(List<ConstructionOrder> completed) =>
+            ProcessCompletedConstruction(completed);
+
+        IReadOnlyList<SpecialistData> IColonySimHost.PrepareEconomyBeat()
+        {
+            var living = new List<SpecialistData>(_agents.Count);
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                if (_agents[i] != null && _agents[i].Data != null)
+                    living.Add(_agents[i].Data);
+            }
+            RefreshCaravanValue();
+            return living;
+        }
+
+        void IColonySimHost.AfterEconomyBeat() => TickAwaitingHires();
 
         /// <summary>
         /// Space holds the world. Comma / period step the speed down and up.
@@ -2855,15 +2859,26 @@ namespace SolarMajesty
 
         private void BuildPureSystems()
         {
-            Resources = new ResourceManager();
+            // The tunings are global, so they are in place before the sim builds its economy.
+            SpecialistBrainTuning.Active = brainTuning ??= new SpecialistBrainTuning();
+            MajestyEconomy.ApplyTuning(economyTuning ??= new EconomyTuning());
+
+            // The sim owns the pure state; the properties below are this scene's view of it.
+            Sim = new ColonySim(BodySeed.Current, economyTuning, orbitalTuning ??= new OrbitalTuning());
+            _sim = Sim.Clock;
+            _simRng = Sim.Rng;
+            _entityIds = Sim.EntityIds;
+            _orbital = Sim.Orbital;
+
+            Resources = Sim.Resources;
             if (seedStartingResources)
                 ApplyStarterStockpile();
             if (DemoSettings.BootStraightIntoPlay && DemoSettings.SaveExists)
                 DemoSettings.TryLoadStockpile(Resources);
 
-            Flags = new FlagManager();
+            Flags = Sim.Flags;
             Flags.FlagCompleted += OnFlagWorkCompleted;
-            Placer = new BuildingPlacer(Resources);
+            Placer = Sim.Placer;
             if (grid != null)
                 Placer.BindGrid(grid.CellSize, grid.Origin);
             Placer.HasCommons = () =>
@@ -2876,29 +2891,27 @@ namespace SolarMajesty
                 Placer.ExtraPlacementRule = (cell, data) => ExtraPlacementReason(cell, data) == null;
             }
 
-            SpecialistBrainTuning.Active = brainTuning ??= new SpecialistBrainTuning();
-            MajestyEconomy.ApplyTuning(economyTuning ??= new EconomyTuning());
             Brain = new SpecialistBrain { Tuning = brainTuning };
             _kingdomThreat = new KingdomThreatDirector(kingdomThreat ??= new KingdomThreatTuning());
-            _orbital = new OrbitalDirector(orbitalTuning ??= new OrbitalTuning());
             _kingdomSpawns.Clear();
             _kingdomAnnounced.Clear();
             _heroDeaths = 0;
             ApplyReplayToBrain();
             // Mines are the trade posts now; no supply ships land with cargo.
-            Economy = new SimpleEconomy(Resources, economyTuning) { ResupplyEnabled = false };
+            Economy = Sim.Economy;
+            Economy.ResupplyEnabled = false;
             float resupply = economyTuning.resupplyBaseSeconds * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
             int fee = _body != null ? Mathf.Max(0, _body.ResupplyDockFee) : 0;
             Economy.ConfigureResupply(resupply, fee);
-            Settlement = new Settlement(Resources);
+            Settlement = Sim.Settlement;
             if (_body != null)
                 Settlement.SetBodyYield(_body.MineYieldScale);
             // Rebind after Settlement exists (constructor order).
             Placer.HasCommons = () =>
                 (Settlement != null && Settlement.HasCommons) || Placer.HasCommonsModule;
-            Research = new ResearchManager(Resources);
+            Research = Sim.Research;
             Research.TechUnlocked += OnTechUnlocked;
-            GuildBenefits = new GuildBenefitDirector();
+            GuildBenefits = Sim.GuildBenefits;
             Economy.UpkeepApplied += OnUpkeepTithe;
             // Majesty gold loop: trade and mine gold sit in tills until a tax collector walks it home.
             Economy.TillSink = PayTradeGold;
@@ -3067,16 +3080,6 @@ namespace SolarMajesty
                 }
                 SyncNarrativeCivic();
             }
-        }
-
-        private void TickResearch(float dt)
-        {
-            if (Research == null) return;
-            CountLabs(out int labs, out int workers);
-            float mult = _body != null ? _body.ResearchRateMultiplier : 1f;
-            float archive = HasAliveCategory(BuildingCategory.DeepArchive) ? 0.55f : 0f;
-            Research.Tick(dt, labs, workers, mult, archive);
-            SyncLaunchGate();
         }
 
         private void EnsureContent()
@@ -3505,14 +3508,11 @@ namespace SolarMajesty
             _ => new Color(0.35f, 0.85f, 1f)
         };
 
-        private void ProcessCompletedConstruction()
+        private void ProcessCompletedConstruction(List<ConstructionOrder> completed)
         {
-            if (Placer == null) return;
-            _completedBuilds.Clear();
-            Placer.TickConstruction(_constructionTick, _completedBuilds);
-            for (int i = 0; i < _completedBuilds.Count; i++)
+            for (int i = 0; i < completed.Count; i++)
             {
-                var order = _completedBuilds[i];
+                var order = completed[i];
                 if (order?.Data == null) continue;
                 if (!order.IsRefab) DemoAudio.PlayBuildComplete(order.WorldPosition);
             if (order.IsRefab)
@@ -3530,7 +3530,7 @@ namespace SolarMajesty
                 if (st != null && st.Category == order.Data.category)
                     TryFabricateRobot(st, chargeHire: true);
             }
-            if (_completedBuilds.Count > 0)
+            if (completed.Count > 0)
                 SyncNarrativeCivic();
         }
 
