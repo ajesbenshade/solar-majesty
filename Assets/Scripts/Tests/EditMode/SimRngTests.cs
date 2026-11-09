@@ -64,6 +64,33 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void RangeWithBounds_StaysBetweenThem()
+        {
+            var rng = new SimRng(21);
+            for (int i = 0; i < 2000; i++)
+            {
+                float v = rng.Range(0.7f, 1.3f);
+                Assert.GreaterOrEqual(v, 0.7f);
+                Assert.Less(v, 1.3f);
+            }
+        }
+
+        [Test]
+        public void InsideUnitCircle_StaysInsideAndCoversAllFourQuadrants()
+        {
+            var rng = new SimRng(8);
+            int quadrants = 0;
+            for (int i = 0; i < 2000; i++)
+            {
+                UnityEngine.Vector2 p = rng.InsideUnitCircle();
+                Assert.LessOrEqual(p.sqrMagnitude, 1f + 1e-5f);
+                quadrants |= 1 << ((p.x >= 0f ? 1 : 0) + (p.y >= 0f ? 2 : 0));
+            }
+
+            Assert.AreEqual(0b1111, quadrants);
+        }
+
+        [Test]
         public void Next_StaysInRangeAndReachesBothEnds()
         {
             var rng = new SimRng(11);

@@ -36,6 +36,21 @@ namespace SolarMajesty
         /// <summary>Uniform in [0, <paramref name="max"/>).</summary>
         public float Range(float max) => Value() * max;
 
+        /// <summary>Uniform in [<paramref name="min"/>, <paramref name="max"/>).</summary>
+        public float Range(float min, float max) => min + Value() * (max - min);
+
+        /// <summary>Uniform point inside the unit circle.</summary>
+        public UnityEngine.Vector2 InsideUnitCircle()
+        {
+            // Rejection sampling: about 4 in 5 tries land inside, and no trig is involved.
+            while (true)
+            {
+                float x = Value() * 2f - 1f;
+                float y = Value() * 2f - 1f;
+                if (x * x + y * y <= 1f) return new UnityEngine.Vector2(x, y);
+            }
+        }
+
         /// <summary>Uniform integer in [<paramref name="minInclusive"/>, <paramref name="maxExclusive"/>).</summary>
         public int Next(int minInclusive, int maxExclusive)
         {

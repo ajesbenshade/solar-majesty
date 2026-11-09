@@ -278,6 +278,14 @@ namespace SolarMajesty
         }
 
         private GameLoop _loop;
+
+        // Simulation rolls draw from the world stream. Fauna built without a game loop (tests) has none.
+        private float SimRange(float min, float max) =>
+            _loop != null ? _loop.Rng.Range(min, max) : Random.Range(min, max);
+
+        private Vector2 SimCircle() =>
+            _loop != null ? _loop.Rng.InsideUnitCircle() : Random.insideUnitCircle;
+
         private float _stealTimer;
         private bool _raiding;
         private bool _preferMines;
@@ -1437,11 +1445,11 @@ namespace SolarMajesty
 
         private void PickWanderTarget()
         {
-            _wanderTimer = wanderRetargetSeconds * Random.Range(0.7f, 1.3f);
+            _wanderTimer = wanderRetargetSeconds * SimRange(0.7f, 1.3f);
             var world = _loop != null ? _loop.World : null;
             for (int attempt = 0; attempt < 10; attempt++)
             {
-                Vector2 r = Random.insideUnitCircle * wanderRadius;
+                Vector2 r = SimCircle() * wanderRadius;
                 Vector3 candidate = _home + new Vector3(r.x, 0f, r.y);
                 if (world == null || !world.IsOverWater(candidate, 1.0f))
                 {

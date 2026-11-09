@@ -75,6 +75,10 @@ namespace SolarMajesty
         private float _clipsLookup;
         private GameLoop _loop;
 
+        // Simulation rolls draw from the world stream. An agent built without a game loop (tests) has none.
+        private float SimRange(float min, float max) =>
+            _loop != null ? _loop.Rng.Range(min, max) : Random.Range(min, max);
+
         private float _thinkTimer;
         private BrainDecision _lastDecision;
         private LayaHeroDriver _laya;
@@ -687,7 +691,7 @@ namespace SolarMajesty
             _geneCourage = _geneSpeed = _geneWork = 0f;
             _incapacitated = false;
             _recoverTimer = 0f;
-            _thinkTimer = Random.Range(0f, thinkIntervalMax);
+            _thinkTimer = SimRange(0f, thinkIntervalMax);
             _lastDecision = BrainDecision.Idle(0f, "spawn");
             _status = "idle";
             FlavorLine = SpecialistFlavor.CardLine(data.specialistClass, SpecialistAction.Idle, "spawn", null);
@@ -850,7 +854,7 @@ namespace SolarMajesty
         {
             if (_scrapped) return;
             bool secondDown = _stoodUpAt > 0f && Time.time - _stoodUpAt < OverseerRules.ScrapWindow;
-            if (secondDown && Random.value < OverseerRules.ScrapChance)
+            if (secondDown && SimRange(0f, 1f) < OverseerRules.ScrapChance)
             {
                 ScrapSelf();
                 return;
@@ -982,13 +986,13 @@ namespace SolarMajesty
                 {
                     ApplyDecision(BrainDecision.Flee(RestPosition, 0.95f, "flee_to_inn"));
                 }
-                _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
+                _thinkTimer = SimRange(thinkIntervalMin, thinkIntervalMax);
                 return;
             }
 
             _thinkTimer -= dt;
             if (_thinkTimer > 0f) return;
-            _thinkTimer = Random.Range(thinkIntervalMin, thinkIntervalMax);
+            _thinkTimer = SimRange(thinkIntervalMin, thinkIntervalMax);
 
             // Optional local Laya model picks among the options the utility gates allow.
             BrainDecision decision;

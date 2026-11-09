@@ -439,6 +439,9 @@ namespace SolarMajesty
         private readonly SimRng _simRng = new SimRng(1);
         private System.Func<float, float> _simRngRange;
         private readonly EntityIds _entityIds = new EntityIds();
+
+        /// <summary>The seeded stream for simulation rolls. Cosmetic randomness must not draw from it.</summary>
+        public SimRng Rng => _simRng;
         private AdaptiveMusic _music;
         private double _playSeconds;
         private DebugHud _debugHud;
@@ -4290,7 +4293,7 @@ namespace SolarMajesty
             at = ColonyLayout.CampusOrigin;
             if (site == KingdomSpawnSite.Scrapyard)
             {
-                Vector2 j = Random.insideUnitCircle * 2.2f;
+                Vector2 j = _simRng.InsideUnitCircle() * 2.2f;
                 at = ScrapyardPosition() + new Vector3(j.x, 0f, j.y);
                 return true;
             }
@@ -4308,7 +4311,7 @@ namespace SolarMajesty
             }
             if (alive == 0) return false;
 
-            Vector2 dir = Random.insideUnitCircle.normalized;
+            Vector2 dir = _simRng.InsideUnitCircle().normalized;
             if (dir.sqrMagnitude < 0.01f) dir = Vector2.up;
             if (site == KingdomSpawnSite.ColonyEdge)
             {
@@ -4317,7 +4320,7 @@ namespace SolarMajesty
                 return true;
             }
 
-            int pick = Random.Range(0, alive);
+            int pick = _simRng.Next(0, alive);
             for (int i = 0; i < list.Count; i++)
             {
                 var s = list[i];
@@ -4788,18 +4791,18 @@ namespace SolarMajesty
 
         private Vector3 CampusFaunaOrigin()
         {
-            if (Settlement != null && Settlement.HasOutpost && Random.value > 0.42f)
+            if (Settlement != null && Settlement.HasOutpost && _simRng.Value() > 0.42f)
                 return ColonyLayout.CampusBOrigin;
             return ColonyLayout.CampusOrigin;
         }
 
-        private static Vector3 FaunaSpawnNear(Vector3 target, Vector3 campus)
+        private Vector3 FaunaSpawnNear(Vector3 target, Vector3 campus)
         {
             Vector3 away = target - campus;
             away.y = 0f;
             if (away.sqrMagnitude < 0.25f) away = Vector3.forward;
             away.Normalize();
-            Vector2 jitter = Random.insideUnitCircle * 2.5f;
+            Vector2 jitter = _simRng.InsideUnitCircle() * 2.5f;
             return target + away * 9f + new Vector3(jitter.x, 0f, jitter.y);
         }
 
@@ -4967,7 +4970,7 @@ namespace SolarMajesty
 
             float r = Mathf.Max(10f, radius);
             int spawned = 0;
-            float phase = Random.Range(0f, Mathf.PI * 2f);
+            float phase = _simRng.Range(0f, Mathf.PI * 2f);
 
             for (int i = 0; i < count; i++)
             {
@@ -7838,7 +7841,7 @@ namespace SolarMajesty
             if (CountFauna(FaunaKind.JunkBot) >= OverseerRules.JunkBotCap) return;
             Vector3 yard = ScrapyardPosition();
             Vector3 home = near.sqrMagnitude > 0.01f ? near : yard;
-            Vector2 jitter = Random.insideUnitCircle * 2.2f;
+            Vector2 jitter = _simRng.InsideUnitCircle() * 2.2f;
             Vector3 spawn = home + new Vector3(jitter.x, 0f, jitter.y);
             if (SpawnFaunaAt(FaunaKind.JunkBot, spawn) == null) return;
             if (CountFauna(FaunaKind.JunkBot) == 1)
