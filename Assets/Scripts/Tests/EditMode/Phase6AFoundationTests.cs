@@ -90,6 +90,46 @@ namespace SolarMajesty.Tests
             Assert.AreEqual("commands-mars-10007-20261109-200403.json", name);
         }
 
+        // ---- Run rules and scene-free commands ----------------------------------------------
+
+        [Test]
+        public void StateHash_SeesTheRunRules_AndTheLogCarriesThem()
+        {
+            ColonySim plain = NewSim();
+            ColonySim ironman = NewSim();
+            ironman.Rules = new RunRules { ironman = true };
+            ironman.BodyKey = "sol.mars";
+
+            Assert.AreNotEqual(plain.StateHash(), ironman.StateHash());
+
+            CommandLog log = CommandLog.From(ironman, "MARS", ironman.Seed, "0.9.0");
+            Assert.AreEqual("sol.mars", log.bodyKey);
+            Assert.IsTrue(log.rules.ironman);
+            Assert.AreEqual(5, log.seed);
+        }
+
+        [Test]
+        public void GuildBenefit_WithoutAHall_ChargesNothing()
+        {
+            ColonySim sim = NewSim();
+            sim.Commands.Enqueue(OverseerCommand.ActivateGuildBenefit((RobotGuildId)0));
+
+            sim.RunSteps(1);
+
+            Assert.AreEqual(5000, sim.Resources.Get(ResourceId.Metals));
+        }
+
+        [Test]
+        public void OrbitalCharge_OfALockedPower_ChargesNothing()
+        {
+            ColonySim sim = NewSim();
+            sim.Commands.Enqueue(OverseerCommand.CastOrbital((OrbitalPowerId)0, Vector3.zero));
+
+            sim.RunSteps(1);
+
+            Assert.AreEqual(5000, sim.Resources.Get(ResourceId.Metals));
+        }
+
         // ---- World keys -------------------------------------------------------------------
 
         [Test]

@@ -2884,6 +2884,10 @@ namespace SolarMajesty
             _entityIds = Sim.EntityIds;
             _orbital = Sim.Orbital;
             Sim.Commands.Record = CommandLog.Requested(System.Environment.GetCommandLineArgs());
+            Sim.BodyKey = CelestialBodyCatalog.KeyOf(celestialBody);
+            Sim.Rules = RunRules.Current();
+            Sim.HasGuildHall = id => FindGuildHall(id) != null;
+            Sim.UplinkDistance = UplinkDistance;
 
             Resources = Sim.Resources;
             if (seedStartingResources)
@@ -6331,6 +6335,7 @@ namespace SolarMajesty
             }
 
             ReplayRules.Restore(save.replay);
+            if (Sim != null) Sim.Rules = RunRules.Current();
             ReplayRules.ApplyIronmanFromSave(save.replay);
             Achievements.IronmanActive = ReplayRules.IronmanRun;
             if (save.stats != null)

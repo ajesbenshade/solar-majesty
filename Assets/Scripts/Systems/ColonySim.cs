@@ -49,6 +49,15 @@ namespace SolarMajesty
         /// <summary>Whose colony this is. Commands carry the same id (<see cref="OverseerCommand.overseer"/>).</summary>
         public int OverseerId { get; set; } = OverseerCommand.LocalOverseer;
 
+        /// <summary>The world seed the random stream started from.</summary>
+        public int Seed { get; }
+
+        /// <summary>Which world this colony stands on (<see cref="CelestialBodyProfile.Key"/>).</summary>
+        public string BodyKey { get; set; } = "";
+
+        /// <summary>The run's rules as they stood when the colony began, so a replay can check it runs under the same ones.</summary>
+        public RunRules Rules { get; set; }
+
         public SimClock Clock { get; } = new SimClock();
         public SimRng Rng { get; }
         public EntityIds EntityIds { get; } = new EntityIds();
@@ -69,11 +78,18 @@ namespace SolarMajesty
         /// <summary>Flag palette lookup for <see cref="OverseerCommandKind.PostFlag"/>.</summary>
         public Func<FlagType, FlagData> FlagCatalog { get; set; }
 
+        /// <summary>Whether a guild's hall stands. The scene answers; without one, no hall does.</summary>
+        public Func<RobotGuildId, bool> HasGuildHall { get; set; }
+
+        /// <summary>Distance from a point to the nearest casting building. The scene answers; without one, zero.</summary>
+        public Func<Vector3, float> UplinkDistance { get; set; }
+
         private readonly List<ConstructionOrder> _completed = new List<ConstructionOrder>(8);
         private float _beat;
 
         public ColonySim(int seed, EconomyTuning economyTuning = null, OrbitalTuning orbitalTuning = null)
         {
+            Seed = seed;
             Rng = new SimRng(seed);
             Resources = new ResourceManager();
             Flags = new FlagManager();
@@ -187,7 +203,32 @@ namespace SolarMajesty
                     if (Flags.TryGet(command.target, out FlagHandle stepped))
                         FlagClick.TryStepBounty(Flags, Economy, stepped, command.amount);
                     break;
+                case OverseerCommandKind.ActivateGuildBenefit:
+                    var guild = (RobotGuildId)command.content;
+                    GuildBenefits.TryActivate(guild, Research, Resources,
+                        HasGuildHall != null && HasGuildHall(guild), out _);
+                    break;
+                case OverseerCommandKind.CastOrbital:
+                    TryChargeOrbital((OrbitalPowerId)command.content, command.World, out _);
+                    break;
             }
+        }
+
+        /// <summary>
+        /// The treasury and cooldown half of an orbital cast: check, pay, start the recharge. What
+        /// the power does to the map needs a scene.
+        /// </summary>
+        public bool TryChargeOrbital(OrbitalPowerId id, Vector3 at, out int cost)
+        {
+            cost = 0;
+            if (!Orbital.Tuning.TryGet(id, out OrbitalPowerDef def)) return false;
+            float uplink = def.target == OrbitalTarget.Colony || UplinkDistance == null ? 0f : UplinkDistance(at);
+            cost = Orbital.CostAt(id, uplink);
+            OrbitalCastCheck check = Orbital.Check(id, Research.IsUnlocked, Resources.Get(ResourceId.Metals), uplink);
+            if (check != OrbitalCastCheck.Ok) return false;
+            if (cost > 0 && !Resources.TrySpend(ResourceId.Metals, cost)) return false;
+            Orbital.StartCooldown(id);
+            return true;
         }
 
         /// <summary>
@@ -198,6 +239,10 @@ namespace SolarMajesty
         {
             ulong h = 14695981039346656037UL; // FNV-1a
             Mix(ref h, Clock.TotalSteps);
+            Mix(ref h, Rules.mode);
+            Mix(ref h, Rules.challenge);
+            Mix(ref h, Rules.stance);
+            Mix(ref h, Rules.ironman ? 1 : 0);
             Mix(ref h, Rng.State);
             Mix(ref h, EntityIds.NextId);
             Mix(ref h, Resources.Get(ResourceId.Regolith));

@@ -20,7 +20,10 @@ namespace SolarMajesty
         public int version = 1;
         public string gameVersion = "";
         public string body = "";
+        /// <summary>The world's text key (<see cref="CelestialBodyProfile.Key"/>).</summary>
+        public string bodyKey = "";
         public int seed;
+        public RunRules rules;
         /// <summary>Simulation steps run when the log was written.</summary>
         public long steps;
         /// <summary><see cref="ColonySim.StateHash"/> at <see cref="steps"/>, as hex.</summary>
@@ -45,7 +48,9 @@ namespace SolarMajesty
             {
                 gameVersion = gameVersion ?? "",
                 body = body ?? "",
+                bodyKey = sim.BodyKey ?? "",
                 seed = seed,
+                rules = sim.Rules,
                 steps = sim.Clock.TotalSteps,
                 stateHash = sim.StateHash().ToString("x16")
             };
