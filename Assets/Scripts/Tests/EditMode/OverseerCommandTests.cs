@@ -115,6 +115,27 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(2, queue.Log[0].tick);
         }
 
+        [Test]
+        public void StructureCommands_CarryThePositionAndTheirOwnPayload()
+        {
+            var at = new Vector3(12f, 0.4f, -6f);
+
+            OverseerCommand cls = OverseerCommand.SetWorkplaceClass(at, SpecialistClass.Medic);
+            OverseerCommand attract = OverseerCommand.PostAttractFlag(at, 650f);
+            OverseerCommand orbital = OverseerCommand.CastOrbital((OrbitalPowerId)2, at);
+
+            Assert.AreEqual(OverseerCommandKind.SetWorkplaceClass, cls.kind);
+            Assert.AreEqual(at, cls.World);
+            Assert.AreEqual((int)SpecialistClass.Medic, cls.content);
+            Assert.AreEqual(OverseerCommandKind.PostAttractFlag, attract.kind);
+            Assert.AreEqual(650f, attract.amount);
+            Assert.AreEqual(at, attract.World);
+            Assert.AreEqual(2, orbital.content);
+            Assert.AreEqual(at, OverseerCommand.ArmWatchtower(at).World);
+            Assert.AreEqual(at, OverseerCommand.RefabRookie(at).World);
+            Assert.AreEqual(OverseerCommandKind.PayFobotYard, OverseerCommand.PayFobotYard().kind);
+        }
+
         /// <summary>The log is only useful for replay and network play if it survives serialisation.</summary>
         [Test]
         public void Command_RoundTripsThroughJson()

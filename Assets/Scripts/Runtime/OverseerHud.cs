@@ -1175,7 +1175,7 @@ namespace SolarMajesty
                 {
                     if (p.target == OrbitalTarget.Colony)
                     {
-                        _loop.TryCastOrbital(p.id, Vector3.zero);
+                        _loop.CastOrbital(p.id, Vector3.zero);
                     }
                     else
                     {
@@ -1671,7 +1671,7 @@ namespace SolarMajesty
             bool can = researched &&
                        dir.CanActivate(guild.Id, _loop.Research, _loop.Resources, true);
             if (Chip(new Rect(x, y, Mathf.Min(220f, width), 22f), label, can) && can)
-                _loop.TryActivateGuildBenefit(guild.Id);
+                _loop.ActivateGuildBenefit(guild.Id);
             return y + 24f;
         }
 
@@ -1852,7 +1852,7 @@ namespace SolarMajesty
                                _loop.Resources.Get(ResourceId.Metals) >= OverseerRules.WatchtowerLaserCost;
                     if (Chip(new Rect(c.x, row, 220f, 22f),
                             Loc.F("ARM LASERS {0} EU", OverseerRules.WatchtowerLaserCost), can) && can)
-                        _loop.TryArmWatchtower(st);
+                        _loop.ArmWatchtower(st);
                 }
             }
             else if (st.IsAidStation)
@@ -1902,7 +1902,7 @@ namespace SolarMajesty
                     row += 24f;
                     int met = OverseerRules.RefabMetals(st.SourceData);
                     if (Chip(new Rect(c.x, row, 150f, 22f), Loc.F("RE-FAB L1 {0} EU", met), true))
-                        _loop.TryRefabRookie(st);
+                        _loop.RefabRookie(st);
                     GUI.Label(new Rect(c.x + 158f, row + 4f, c.width - 158f, 16f),
                         Loc.S("new chassis · wreck gone"), _micro);
                 }

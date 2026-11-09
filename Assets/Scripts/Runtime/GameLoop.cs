@@ -1394,7 +1394,62 @@ namespace SolarMajesty
                     if (Flags != null && Flags.TryGet(command.target, out FlagHandle stepped))
                         _flagInput?.ApplyBountyStep(stepped, command.amount);
                     break;
+                case OverseerCommandKind.CastOrbital:
+                    ApplyCastOrbital((OrbitalPowerId)command.content, command.World);
+                    break;
+                case OverseerCommandKind.ActivateGuildBenefit:
+                    ApplyGuildBenefit((RobotGuildId)command.content);
+                    break;
+                case OverseerCommandKind.PayFobotYard:
+                    ApplyPayFobotYard();
+                    break;
+                case OverseerCommandKind.ArmWatchtower:
+                    ApplyArmWatchtower(StructureAt(command.World));
+                    break;
+                case OverseerCommandKind.RefabRookie:
+                    ApplyRefabRookie(StructureAt(command.World));
+                    break;
+                case OverseerCommandKind.SetWorkplaceClass:
+                    StructureAt(command.World)?.SetPreferredClass((SpecialistClass)command.content);
+                    break;
+                case OverseerCommandKind.PostAttractFlag:
+                    ApplyAttractFlag(StructureAt(command.World), command.amount);
+                    break;
             }
+        }
+
+        /// <summary>
+        /// The structure a command names by position. Null when it was destroyed before the drain.
+        /// </summary>
+        private ColonyStructure StructureAt(Vector3 world)
+        {
+            const float tolerance = 0.5f;
+            ColonyStructure st = Village != null ? Village.FindNear(world, tolerance) : null;
+            if (st != null) return st;
+            // Not every selectable structure is on the village list.
+            st = SelectedStructure;
+            if (st == null || !st.IsAlive) return null;
+            Vector3 d = st.WorldPosition - world;
+            d.y = 0f;
+            return d.sqrMagnitude <= tolerance * tolerance ? st : null;
+        }
+
+        public void CastOrbital(OrbitalPowerId id, Vector3 at) =>
+            Commands.Enqueue(OverseerCommand.CastOrbital(id, at));
+
+        public void ActivateGuildBenefit(RobotGuildId id) =>
+            Commands.Enqueue(OverseerCommand.ActivateGuildBenefit(id));
+
+        public void PayFobotYard() => Commands.Enqueue(OverseerCommand.PayFobotYard());
+
+        public void ArmWatchtower(ColonyStructure tower)
+        {
+            if (tower != null) Commands.Enqueue(OverseerCommand.ArmWatchtower(tower.WorldPosition));
+        }
+
+        public void RefabRookie(ColonyStructure shop)
+        {
+            if (shop != null) Commands.Enqueue(OverseerCommand.RefabRookie(shop.WorldPosition));
         }
 
         public void CancelFlag(FlagHandle handle)
@@ -4259,7 +4314,7 @@ namespace SolarMajesty
         /// charged unless there is something to hit. Majesty 2: the ruler pays per cast, more the
         /// farther the target is from a casting building.
         /// </summary>
-        public bool TryCastOrbital(OrbitalPowerId id, Vector3 at)
+        private bool ApplyCastOrbital(OrbitalPowerId id, Vector3 at)
         {
             if (_orbital == null || Resources == null) return false;
             if (!_orbital.Tuning.TryGet(id, out var def)) return false;
@@ -4960,7 +5015,7 @@ namespace SolarMajesty
                 LogOverseer(flushed);
         }
 
-        public bool TryArmWatchtower(ColonyStructure tower)
+        private bool ApplyArmWatchtower(ColonyStructure tower)
         {
             if (tower == null || !tower.IsWatchtower || !tower.IsAlive)
             {
@@ -5001,7 +5056,7 @@ namespace SolarMajesty
         /// Y / inspect pay. Requires a living Fobot Yard (Inn or dedicated yard). Credits only.
         /// Stands downed robots and resurrects yard wrecks as the same ego.
         /// </summary>
-        public void PayFobotYard()
+        private void ApplyPayFobotYard()
         {
             if (!HasDownedRobot && !HasScrapCorpse)
             {
@@ -6881,12 +6936,19 @@ namespace SolarMajesty
 
         public void SetSelectedWorkplaceClass(SpecialistClass cls)
         {
-            SelectedStructure?.SetPreferredClass(cls);
+            var st = SelectedStructure;
+            if (st != null) Commands.Enqueue(OverseerCommand.SetWorkplaceClass(st.WorldPosition, cls));
         }
 
         public void PostAttractFlagOnSelected()
         {
             var st = SelectedStructure;
+            if (st == null || _flagInput == null) return;
+            Commands.Enqueue(OverseerCommand.PostAttractFlag(st.WorldPosition, _flagInput.Bounty));
+        }
+
+        private void ApplyAttractFlag(ColonyStructure st, float panelBounty)
+        {
             if (st == null || _flagInput == null) return;
             SpecialistClass cls = st.HasPreferredClass ? st.PreferredClass : SpecialistClass.ScoutDrone;
             FlagType type = ColonyStructure.AttractFlagFor(cls);
@@ -6903,7 +6965,7 @@ namespace SolarMajesty
                 st.Category == BuildingCategory.RegolithCamp)
                 data = extractFlagData;
             if (data == null) return;
-            float bounty = _flagInput.Bounty >= MajestyEconomy.FlagMinBounty ? _flagInput.Bounty : data.defaultBounty;
+            float bounty = panelBounty >= MajestyEconomy.FlagMinBounty ? panelBounty : data.defaultBounty;
             _flagInput.PostFlagAt(data, st.WorldPosition, bounty);
             DemoVfx.ClaimRing(st.WorldPosition, new Color(1f, 0.85f, 0.2f));
         }
@@ -7265,7 +7327,7 @@ namespace SolarMajesty
             return null;
         }
 
-        public bool TryActivateGuildBenefit(RobotGuildId id)
+        private bool ApplyGuildBenefit(RobotGuildId id)
         {
             if (GuildBenefits == null) return false;
             bool hall = FindGuildHall(id) != null;
@@ -7560,7 +7622,7 @@ namespace SolarMajesty
         /// True scrap: new chassis at level 1, 70% workshop MET, 40 s. Consumes the wreck.
         /// Distinct from Fobot Yard, which resurrects this ego.
         /// </summary>
-        public bool TryRefabRookie(ColonyStructure shop)
+        private bool ApplyRefabRookie(ColonyStructure shop)
         {
             if (shop == null || !shop.IsAlive || !shop.IsWorkshop) return false;
             var cls = ColonyStructure.RobotClassForWorkshop(shop.Category);

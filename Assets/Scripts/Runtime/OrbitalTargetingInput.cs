@@ -80,7 +80,7 @@ namespace SolarMajesty
             if (!Input.GetMouseButtonUp(0)) return;
             if (_cam != null && _cam.SuppressWorldClick) return;
             if (Input.GetMouseButton(1) || Input.GetMouseButton(2)) return;
-            _loop.TryCastOrbital(id, world);
+            _loop.CastOrbital(id, world);
         }
 
         private bool TryGround(out Vector3 world)

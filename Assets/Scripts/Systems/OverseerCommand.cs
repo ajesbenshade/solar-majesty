@@ -12,7 +12,14 @@ namespace SolarMajesty
         PlaceBuilding = 1,
         PostFlag = 2,
         CancelFlag = 3,
-        StepBounty = 4
+        StepBounty = 4,
+        CastOrbital = 5,
+        ActivateGuildBenefit = 6,
+        PayFobotYard = 7,
+        ArmWatchtower = 8,
+        RefabRookie = 9,
+        SetWorkplaceClass = 10,
+        PostAttractFlag = 11
     }
 
     /// <summary>
@@ -33,14 +40,18 @@ namespace SolarMajesty
         public long tick;
         /// <summary>Order of issue within a run. Stamped by the queue.</summary>
         public int sequence;
-        /// <summary>Build catalog index (PlaceBuilding) or <see cref="FlagType"/> (PostFlag).</summary>
+        /// <summary>
+        /// Build catalog index (PlaceBuilding), <see cref="FlagType"/> (PostFlag),
+        /// <see cref="OrbitalPowerId"/> (CastOrbital), <see cref="RobotGuildId"/>
+        /// (ActivateGuildBenefit) or <see cref="SpecialistClass"/> (SetWorkplaceClass).
+        /// </summary>
         public int content;
         public int cellX;
         public int cellY;
         public float x;
         public float y;
         public float z;
-        /// <summary>Bounty (PostFlag) or bounty change (StepBounty).</summary>
+        /// <summary>Bounty (PostFlag, PostAttractFlag) or bounty change (StepBounty).</summary>
         public float amount;
         /// <summary><see cref="FlagHandle.RuntimeId"/> (CancelFlag, StepBounty).</summary>
         public int target;
@@ -79,6 +90,36 @@ namespace SolarMajesty
 
         public static OverseerCommand StepBounty(int flagId, float delta) =>
             new OverseerCommand { kind = OverseerCommandKind.StepBounty, target = flagId, amount = delta };
+
+        public static OverseerCommand CastOrbital(OrbitalPowerId power, Vector3 world) =>
+            At(OverseerCommandKind.CastOrbital, world, (int)power);
+
+        public static OverseerCommand ActivateGuildBenefit(RobotGuildId guild) =>
+            new OverseerCommand { kind = OverseerCommandKind.ActivateGuildBenefit, content = (int)guild };
+
+        public static OverseerCommand PayFobotYard() =>
+            new OverseerCommand { kind = OverseerCommandKind.PayFobotYard };
+
+        // Structures have no id yet, so a command names one by where it stands.
+
+        public static OverseerCommand ArmWatchtower(Vector3 structureAt) =>
+            At(OverseerCommandKind.ArmWatchtower, structureAt);
+
+        public static OverseerCommand RefabRookie(Vector3 structureAt) =>
+            At(OverseerCommandKind.RefabRookie, structureAt);
+
+        public static OverseerCommand SetWorkplaceClass(Vector3 structureAt, SpecialistClass cls) =>
+            At(OverseerCommandKind.SetWorkplaceClass, structureAt, (int)cls);
+
+        public static OverseerCommand PostAttractFlag(Vector3 structureAt, float bounty)
+        {
+            OverseerCommand command = At(OverseerCommandKind.PostAttractFlag, structureAt);
+            command.amount = bounty;
+            return command;
+        }
+
+        private static OverseerCommand At(OverseerCommandKind kind, Vector3 world, int content = 0) =>
+            new OverseerCommand { kind = kind, content = content, x = world.x, y = world.y, z = world.z };
     }
 
     public interface IOverseerCommandExecutor
