@@ -52,6 +52,17 @@ namespace SolarMajesty
         public bool MatchesWorld(CelestialBodyId expectedBody, int expectedSeed) =>
             body == (int)expectedBody && seed == expectedSeed;
 
+        /// <summary>
+        /// As above, and the world keys must agree. A save from before keys existed counts as the
+        /// Sol world its number names.
+        /// </summary>
+        public bool MatchesWorld(CelestialBodyProfile expected, int expectedSeed)
+        {
+            if (expected == null || !MatchesWorld(expected.Id, expectedSeed)) return false;
+            string mine = string.IsNullOrEmpty(bodyKey) ? CelestialBodyCatalog.KeyOf(expected.Id) : bodyKey;
+            return mine == expected.Key;
+        }
+
         public SaveStockpile stockpile = new SaveStockpile();
         public SaveSettlementState settlement = new SaveSettlementState();
         public SaveResearchState research = new SaveResearchState();

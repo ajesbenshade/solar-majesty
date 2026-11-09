@@ -174,6 +174,23 @@ namespace SolarMajesty.Tests
             Assert.IsFalse(CelestialBodyCatalog.TryGet("nowhere", out _));
         }
 
+        [Test]
+        public void SaveMatchesWorld_ByKey_SoABorrowedLookIsNotTheSolWorld()
+        {
+            CelestialBodyProfile ares = CelestialBodyCatalog.Mars().Copy();
+            ares.Key = "test.ares";
+            var onAres = new SaveGame { body = (int)CelestialBodyId.Mars, seed = 7, bodyKey = "test.ares" };
+            var legacyMars = new SaveGame { body = (int)CelestialBodyId.Mars, seed = 7 };
+
+            Assert.IsTrue(onAres.MatchesWorld(ares, 7));
+            Assert.IsFalse(onAres.MatchesWorld(CelestialBodyCatalog.Mars(), 7));
+            Assert.IsFalse(onAres.MatchesWorld(ares, 8));
+            Assert.IsTrue(legacyMars.MatchesWorld(CelestialBodyCatalog.Mars(), 7), "a save from before keys is the Sol world");
+            Assert.IsFalse(legacyMars.MatchesWorld(ares, 7));
+            Assert.AreSame(CelestialBodyCatalog.Mars().GroundCover, ares.GroundCover, "a copy shares arrays");
+            Assert.AreEqual("sol.mars", CelestialBodyCatalog.Mars().Key, "copying does not rename the original");
+        }
+
         // ---- Architecture by trait --------------------------------------------------------
 
         /// <summary>The five authored worlds must land on their own sets, or Sol would change its look.</summary>

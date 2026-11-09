@@ -57,8 +57,26 @@ namespace SolarMajesty
         {
             Body = body;
             GamePrefs.SetInt(BodyPrefsKey, (int)body);
+            GamePrefs.SetString(KeyPrefsKey, ""); // a Sol world: no registered world is selected
             GamePrefs.Save();
         }
+
+        private const string KeyPrefsKey = "SM_BodyKey";
+
+        /// <summary>
+        /// Select a world registered with <see cref="CelestialBodyCatalog.Register"/> for the next
+        /// boot. The body pref follows the Sol world it borrows authored content from.
+        /// </summary>
+        public static void SetWorld(CelestialBodyProfile world)
+        {
+            Body = world.Id;
+            GamePrefs.SetInt(BodyPrefsKey, (int)world.Id);
+            GamePrefs.SetString(KeyPrefsKey, world.Key ?? "");
+            GamePrefs.Save();
+        }
+
+        /// <summary>The registered world chosen for this boot, or empty for a Sol world.</summary>
+        public static string LoadSavedKey() => GamePrefs.GetString(KeyPrefsKey, "");
 
         public static void AdvanceForNextConquest()
         {

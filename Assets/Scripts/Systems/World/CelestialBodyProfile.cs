@@ -29,6 +29,11 @@ namespace SolarMajesty
         public string Key;
         /// <summary>The physical facts architecture answers to.</summary>
         public EnvironmentTraits Traits;
+        /// <summary>World seed for a registered world. Zero on the Sol worlds, whose seeds live in prefs.</summary>
+        public int Seed;
+
+        /// <summary>A copy to start a new world from. Arrays are shared with the original.</summary>
+        public CelestialBodyProfile Copy() => (CelestialBodyProfile)MemberwiseClone();
         public string DisplayName;
         public string ShortCode;
         public string Briefing;

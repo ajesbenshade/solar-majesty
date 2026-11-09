@@ -883,6 +883,7 @@ namespace SolarMajesty
             Achievements.Earned += OnAchievementEarned;
             CampaignProgress.Ensure();
             celestialBody = BodySeed.LoadSavedBody();
+            string worldKey = BodySeed.LoadSavedKey();
             bool freshCampaign = CampaignSlots.ConsumeFresh();
             int pendingSlot = freshCampaign ? -1 : CampaignSlots.ConsumePendingLoad();
             SaveGame pendingSave = null;
@@ -898,6 +899,7 @@ namespace SolarMajesty
                 DemoSettings.SaveExists = true;
                 CampaignSlots.AdoptStamp(pendingSave.campaignStamp);
                 celestialBody = (CelestialBodyId)pendingSave.body;
+                worldKey = pendingSave.bodyKey;
                 CampaignProgress.UnlockThrough((CelestialBodyId)pendingSave.highestUnlocked);
                 CampaignProgress.UnlockThrough((CelestialBodyId)pendingSave.body);
                 ReplayRules.Restore(pendingSave.replay);
@@ -917,7 +919,10 @@ namespace SolarMajesty
                 CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.body);
                 // An explicit travel/retry request takes precedence over the last active planet.
                 if (!DemoSettings.BootStraightIntoPlay)
+                {
                     celestialBody = (CelestialBodyId)bootSave.body;
+                    worldKey = bootSave.bodyKey;
+                }
                 ReplayRules.Restore(bootSave.replay);
                 if (bootSave.rosterBlob != null)
                 {
@@ -937,14 +942,33 @@ namespace SolarMajesty
                 DemoSettings.SaveExists = true;
                 DemoSettings.SaveLoadNotice = Loc.S("We couldn't read this colony or its backup. Your save files are unchanged.");
             }
-            if (!CampaignProgress.IsUnlocked(celestialBody))
-                celestialBody = CelestialBodyId.Earth;
-            _body = CelestialBodyCatalog.Get(celestialBody);
+            // A world outside Sol is a registered profile. The enum then names the Sol world it
+            // borrows authored content from, and campaign unlocks do not apply to it.
+            if (CelestialBodyCatalog.TryGetRegistered(worldKey, out CelestialBodyProfile registered))
+            {
+                _body = registered;
+                celestialBody = registered.Id;
+            }
+            else
+            {
+                if (!CampaignProgress.IsUnlocked(celestialBody))
+                    celestialBody = CelestialBodyId.Earth;
+                _body = CelestialBodyCatalog.Get(celestialBody);
+            }
             ModularBuildingFactory.BindBody(_body);
             IndustrialArtDressing.BindBody(_body);
-            BodySeed.Ensure(celestialBody, worldSeedOverride);
+            if (registered != null)
+            {
+                // A registered world brings its own seed. It is used for this boot only, so the
+                // seed stored for the Sol world it borrows from is left alone.
+                int ownSeed = pendingOk ? pendingSave.seed : registered.Seed;
+                BodySeed.Ensure(celestialBody, ownSeed != 0 ? ownSeed : worldSeedOverride);
+            }
+            else
+                BodySeed.Ensure(celestialBody, worldSeedOverride);
             // Choose the world seed before generating its terrain, nodes and lairs.
-            if (pendingOk)
+            if (registered != null) { }
+            else if (pendingOk)
                 BodySeed.SetAndPersist(pendingSave.seed);
             else if (!freshCampaign && worldSeedOverride == 0
                      && SaveSystem.TryReadWorld(celestialBody, out var worldSave)
@@ -1116,9 +1140,9 @@ namespace SolarMajesty
                 else if (SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var auto)
                          && CampaignSlots.LiveSnapshotMatches(auto.campaignStamp))
                     latest = auto;
-                SaveGame save = latest != null && latest.MatchesWorld(celestialBody, BodySeed.Current) ? latest : null;
+                SaveGame save = latest != null && latest.MatchesWorld(_body, BodySeed.Current) ? latest : null;
                 if (save == null && SaveSystem.TryReadWorld(celestialBody, out var destination)
-                                 && destination.MatchesWorld(celestialBody, BodySeed.Current)
+                                 && destination.MatchesWorld(_body, BodySeed.Current)
                                  && CampaignSlots.LiveSnapshotMatches(destination.campaignStamp))
                 {
                     save = destination;
@@ -1244,6 +1268,29 @@ namespace SolarMajesty
             BodySeed.SetBody(body);
             ReloadActiveScene();
         }
+
+        /// <summary>
+        /// New game on a world registered with <see cref="CelestialBodyCatalog.Register"/>. False
+        /// when no world has that key.
+        /// </summary>
+        public bool StartNewGameOnWorld(string worldKey, int slot = 1)
+        {
+            if (!CelestialBodyCatalog.TryGetRegistered(worldKey, out CelestialBodyProfile world)) return false;
+            ResearchManager.WipeUnlocks();
+            CampaignProgress.ResetCampaign();
+            BeginFreshFiles(slot);
+            SimSpeed.Load();
+            DemoSettings.ClearSave();
+            DemoSettings.ResetTutorial();
+            ReplayRules.Save();
+            DemoSettings.RequestBootIntoPlay();
+            BodySeed.SetWorld(world);
+            ReloadActiveScene();
+            return true;
+        }
+
+        /// <summary>The world being played, as data.</summary>
+        public CelestialBodyProfile ActiveWorld => _body;
 
         /// <summary>Delete the chosen slot only, and stamp this boot as a new campaign.</summary>
         private void BeginFreshFiles(int slot)
@@ -2917,7 +2964,7 @@ namespace SolarMajesty
             _entityIds = Sim.EntityIds;
             _orbital = Sim.Orbital;
             Sim.Commands.Record = CommandLog.Requested(System.Environment.GetCommandLineArgs());
-            Sim.BodyKey = CelestialBodyCatalog.KeyOf(celestialBody);
+            Sim.BodyKey = _body != null ? _body.Key : CelestialBodyCatalog.KeyOf(celestialBody);
             Sim.Rules = RunRules.Current();
             Sim.HasGuildHall = id => FindGuildHall(id) != null;
             Sim.UplinkDistance = UplinkDistance;
@@ -6119,7 +6166,7 @@ namespace SolarMajesty
                 rngState = _simRng.State,
                 nextEntityId = _entityIds.NextId,
                 body = (int)celestialBody,
-                bodyKey = CelestialBodyCatalog.KeyOf(celestialBody),
+                bodyKey = _body != null ? _body.Key : CelestialBodyCatalog.KeyOf(celestialBody),
                 seed = BodySeed.Current,
                 highestUnlocked = (int)CampaignProgress.HighestUnlocked,
                 rosterBlob = SpecialistRoster.Encode(CaptureRoster()),
@@ -6346,7 +6393,7 @@ namespace SolarMajesty
         public bool ApplySave(SaveGame save)
         {
             // Never pour one planet's entities onto another planet (or a regenerated seed).
-            if (save == null || !save.MatchesWorld(celestialBody, BodySeed.Current)) return false;
+            if (save == null || !save.MatchesWorld(_body ?? CelestialBodyCatalog.Get(celestialBody), BodySeed.Current)) return false;
 
             if (Resources != null)
             {

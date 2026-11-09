@@ -94,6 +94,17 @@ namespace SolarMajesty
             return true;
         }
 
+        /// <summary>
+        /// Find a world added with <see cref="Register"/>. Such a world is all data: its
+        /// <see cref="CelestialBodyProfile.Id"/> names the Sol world whose authored content
+        /// (dressing, sky, music, narrative) it borrows.
+        /// </summary>
+        public static bool TryGetRegistered(string key, out CelestialBodyProfile profile)
+        {
+            profile = null;
+            return !string.IsNullOrEmpty(key) && Registered.TryGetValue(key, out profile);
+        }
+
         public static int RegisteredCount => Registered.Count;
 
         /// <summary>Forget every registered world (a new galaxy, or a test's cleanup).</summary>
