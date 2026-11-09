@@ -22,6 +22,7 @@ namespace SolarMajesty
     /// Data-only description of a conquerable world. World gen, dressing, and atmosphere
     /// read this — add a new planet by adding a catalog entry, not a new generator.
     /// </summary>
+    [System.Serializable]
     public sealed class CelestialBodyProfile
     {
         public CelestialBodyId Id;

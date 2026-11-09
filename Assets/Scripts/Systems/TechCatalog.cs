@@ -10,7 +10,24 @@ namespace SolarMajesty
     {
         private static TechDef[] _all;
 
-        public static IReadOnlyList<TechDef> All => _all ??= Build();
+        public static IReadOnlyList<TechDef> All => _all ??= Load();
+
+        /// <summary>The tree comes from a <see cref="TechDatabase"/> asset when one ships, else from the code below.</summary>
+        private static TechDef[] Load()
+        {
+            var asset = Resources.Load<TechDatabase>(TechDatabase.ResourcePath);
+            return asset != null && asset.entries.Count > 0 ? asset.ToDefs() : Build();
+        }
+
+        /// <summary>
+        /// Drop the cached tree and read it again: from <paramref name="database"/> when given,
+        /// else from the shipped asset, else (or with <paramref name="useAsset"/> false) from code.
+        /// </summary>
+        public static void Reload(TechDatabase database = null, bool useAsset = true)
+        {
+            if (database != null && database.entries.Count > 0) _all = database.ToDefs();
+            else _all = useAsset ? Load() : Build();
+        }
 
         public static TechDef Get(TechId id)
         {

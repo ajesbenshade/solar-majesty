@@ -882,6 +882,7 @@ namespace SolarMajesty
             Achievements.BeginRun();
             Achievements.Earned += OnAchievementEarned;
             CampaignProgress.Ensure();
+            WorldDatabase.RegisterShipped(); // worlds beyond the five, when an asset ships them
             celestialBody = BodySeed.LoadSavedBody();
             string worldKey = BodySeed.LoadSavedKey();
             bool freshCampaign = CampaignSlots.ConsumeFresh();

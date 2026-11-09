@@ -191,6 +191,74 @@ namespace SolarMajesty.Tests
             Assert.AreEqual("sol.mars", CelestialBodyCatalog.Mars().Key, "copying does not rename the original");
         }
 
+        // ---- Catalogs as assets -----------------------------------------------------------
+
+        [Test]
+        public void TechCatalog_ReadsADatabase_AndGoesBackToTheBuiltInTree()
+        {
+            int builtIn = TechCatalog.All.Count;
+            var db = ScriptableObject.CreateInstance<TechDatabase>();
+            _created.Add(db);
+            db.CopyFrom(TechCatalog.All);
+            db.entries.RemoveRange(2, db.entries.Count - 2);
+            db.entries[0].scienceCost = 999f;
+
+            try
+            {
+                TechCatalog.Reload(db);
+
+                Assert.AreEqual(2, TechCatalog.All.Count);
+                Assert.AreEqual(999f, TechCatalog.All[0].ScienceCost);
+                Assert.AreEqual(db.entries[1].displayName, TechCatalog.Get(db.entries[1].id).DisplayName);
+            }
+            finally
+            {
+                TechCatalog.Reload();
+            }
+
+            Assert.AreEqual(builtIn, TechCatalog.All.Count);
+        }
+
+        [Test]
+        public void TechDatabase_RoundTripsTheBuiltInTree()
+        {
+            TechCatalog.Reload(useAsset: false);
+            var db = ScriptableObject.CreateInstance<TechDatabase>();
+            _created.Add(db);
+            db.CopyFrom(TechCatalog.All);
+
+            TechDef[] back = db.ToDefs();
+
+            Assert.AreEqual(TechCatalog.All.Count, back.Length);
+            for (int i = 0; i < back.Length; i++)
+            {
+                TechDef a = TechCatalog.All[i];
+                Assert.AreEqual(a.Id, back[i].Id);
+                Assert.AreEqual(a.DisplayName, back[i].DisplayName);
+                Assert.AreEqual(a.ScienceCost, back[i].ScienceCost);
+                Assert.AreEqual(a.Prerequisites.Length, back[i].Prerequisites.Length);
+                Assert.AreEqual(a.UnlocksLaunch, back[i].UnlocksLaunch);
+                Assert.AreEqual(a.CompleteCost == null ? 0 : a.CompleteCost.Length,
+                    back[i].CompleteCost == null ? 0 : back[i].CompleteCost.Length);
+            }
+            TechCatalog.Reload();
+        }
+
+        [Test]
+        public void WorldDatabase_RegistersItsWorlds_Once()
+        {
+            var db = ScriptableObject.CreateInstance<WorldDatabase>();
+            _created.Add(db);
+            CelestialBodyProfile ares = CelestialBodyCatalog.Mars().Copy();
+            ares.Key = "test.ares";
+            db.worlds.Add(ares);
+            db.worlds.Add(new CelestialBodyProfile { Key = "sol.fake" });
+
+            Assert.AreEqual(1, db.RegisterAll(), "the Sol namespace is refused");
+            Assert.AreEqual(0, db.RegisterAll(), "a second boot adds nothing");
+            Assert.IsTrue(CelestialBodyCatalog.TryGetRegistered("test.ares", out _));
+        }
+
         // ---- Architecture by trait --------------------------------------------------------
 
         /// <summary>The five authored worlds must land on their own sets, or Sol would change its look.</summary>
