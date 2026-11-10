@@ -33,6 +33,9 @@ namespace SolarMajesty
         [SerializeField] private float missionDeadlineSeconds = 900f;
 
         private GameLoop _loop;
+
+        // The rules of the colony on screen; the process-wide settings when there is none.
+        private RunRules Rules => _loop != null ? _loop.Rules : RunRules.Current();
         private MissionState _state = MissionState.Active;
         private bool _armed;
         private bool _winLatched;
@@ -102,7 +105,7 @@ namespace SolarMajesty
             {
                 if (_state == MissionState.Won)
                 {
-                    if (ReplayRules.IsEndless)
+                    if (Rules.IsEndless)
                         return Loc.S("Keep colonizing — dens quiet, colony holding");
                     if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
                         return Loc.F("{0} holds — campaign spine complete", _loop.BodyProfile?.DisplayNameText ?? Loc.S("Outpost"));
@@ -137,7 +140,7 @@ namespace SolarMajesty
         {
             get
             {
-                if (ReplayRules.IsEndless)
+                if (Rules.IsEndless)
                     return Loc.S("KEEP COLONIZING");
                 if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
                     return Loc.S("SOLAR CONQUEST COMPLETE");
@@ -149,7 +152,7 @@ namespace SolarMajesty
         {
             get
             {
-                if (ReplayRules.IsEndless)
+                if (Rules.IsEndless)
                 {
                     var endless = _loop != null ? _loop.BodyProfile : null;
                     if (endless != null && !string.IsNullOrEmpty(endless.EndlessLog))
@@ -169,7 +172,7 @@ namespace SolarMajesty
         {
             get
             {
-                if (ReplayRules.IsEndless)
+                if (Rules.IsEndless)
                     return Loc.S("Endless mode: no launch to the next world. Keep the colony standing.");
                 if (DemoSettings.FirstHourDemo)
                 {
@@ -488,7 +491,7 @@ namespace SolarMajesty
 
             _loop.NoteBodyConquered();
             bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
-            var offer = VictoryOffer.For(_loop.ActiveBody, nextBuilt, ReplayRules.IsEndless);
+            var offer = VictoryOffer.For(_loop.ActiveBody, nextBuilt, Rules.IsEndless);
             if (offer.HoldSim)
                 _loop.HoldForVictory();
 
@@ -500,11 +503,11 @@ namespace SolarMajesty
                 ColonyLayout.CampusOriginFor(_loop.FocusedCampus),
                 new Color(0.35f, 0.95f, 0.55f));
             _loop.LogOverseer(offer.Body);
-            if (ReplayRules.IsEndless)
+            if (Rules.IsEndless)
                 Debug.Log("[Mission] Victory — keep colonizing. Rating stands.");
             else
                 Debug.Log("[Mission] Victory — dens cleared, colony sustained, launch ready.");
-            if (!ReplayRules.IsEndless && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
+            if (!Rules.IsEndless && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
                 Debug.Log("[Mission] Campaign spine complete.");
         }
 

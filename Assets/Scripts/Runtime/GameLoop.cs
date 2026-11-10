@@ -164,7 +164,34 @@ namespace SolarMajesty
         public float LastStillOrtho { get; private set; }
         public CelestialBodyProfile BodyProfile => _body;
         public PlanetaryWorldGen World => _world;
-        public int MoonSeedValue => BodySeed.Current;
+        public int MoonSeedValue => WorldSeed;
+
+        /// <summary>The seed this colony's world was generated from. The sim owns it once it exists.</summary>
+        public int WorldSeed => Sim != null ? Sim.Seed : BodySeed.Current;
+
+        /// <summary>
+        /// The rules this colony runs under, read from its sim. The local overseer's follow the
+        /// title-screen settings; <see cref="PinRules"/> gives a colony rules of its own (a replay,
+        /// or a second overseer in the same process).
+        /// </summary>
+        public RunRules Rules
+        {
+            get
+            {
+                if (Sim == null) return RunRules.Current();
+                if (!_rulesPinned) Sim.Rules = RunRules.Current();
+                return Sim.Rules;
+            }
+        }
+
+        private bool _rulesPinned;
+
+        public void PinRules(RunRules rules)
+        {
+            if (Sim == null) return;
+            Sim.Rules = rules;
+            _rulesPinned = true;
+        }
 
         public void SetTool(OverseerTool tool) => ApplyTool(tool);
 
@@ -201,7 +228,7 @@ namespace SolarMajesty
         public void ApplyReplayToBrain()
         {
             if (Brain == null) return;
-            Brain.ConsiderRangeScale = Mathf.Clamp(ReplayRules.ConsiderRangeScale, 0.8f, 1.55f);
+            Brain.ConsiderRangeScale = Mathf.Clamp(Rules.ConsiderRangeScale, 0.8f, 1.55f);
         }
 
         private OverseerScoreInput BuildScoreInput()
@@ -1042,7 +1069,7 @@ namespace SolarMajesty
             else
                 EnterTitle();
 
-            Debug.Log($"[GameLoop] Demo ready — {_body.DisplayName} seed={BodySeed.Current}" +
+            Debug.Log($"[GameLoop] Demo ready — {_body.DisplayName} seed={WorldSeed}" +
                       (StartsEmpty ? " (empty start)." : "."));
         }
 
@@ -1073,10 +1100,10 @@ namespace SolarMajesty
         {
             if (Sim == null || !Sim.Commands.Record || Sim.Commands.Log.Count == 0) return;
             string body = _body != null ? _body.ShortCode : celestialBody.ToString();
-            CommandLog log = CommandLog.From(Sim, body, BodySeed.Current, Application.version);
+            CommandLog log = CommandLog.From(Sim, body, WorldSeed, Application.version);
             log.BeginFrom(_sessionStart);
             log.worldHash = WorldHash().ToString("x16");
-            string path = log.Write(ErrorLog.Directory, CommandLog.FileName(body, BodySeed.Current, System.DateTime.UtcNow));
+            string path = log.Write(ErrorLog.Directory, CommandLog.FileName(body, WorldSeed, System.DateTime.UtcNow));
             if (path != null) Debug.Log($"[CommandLog] {log.commands.Count} commands -> {path}");
         }
 
@@ -1138,9 +1165,9 @@ namespace SolarMajesty
                 else if (SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var auto)
                          && CampaignSlots.LiveSnapshotMatches(auto.campaignStamp))
                     latest = auto;
-                SaveGame save = latest != null && latest.MatchesWorld(_body, BodySeed.Current) ? latest : null;
+                SaveGame save = latest != null && latest.MatchesWorld(_body, WorldSeed) ? latest : null;
                 if (save == null && SaveSystem.TryReadWorld(_body, out var destination)
-                                 && destination.MatchesWorld(_body, BodySeed.Current)
+                                 && destination.MatchesWorld(_body, WorldSeed)
                                  && CampaignSlots.LiveSnapshotMatches(destination.campaignStamp))
                 {
                     save = destination;
@@ -3024,7 +3051,7 @@ namespace SolarMajesty
         private void ApplyStarterStockpile()
         {
             var body = _body ?? CelestialBodyCatalog.Get(celestialBody);
-            float scale = Mathf.Clamp(ReplayRules.StartStockpileScale, 0.35f, 1f);
+            float scale = Mathf.Clamp(Rules.StartStockpileScale, 0.35f, 1f);
             // CRED is the only currency; the retired ICE / REG / PWR stocks stay at zero.
             Resources.Set(ResourceId.Regolith, 0);
             Resources.Set(ResourceId.WaterIce, 0);
@@ -3142,10 +3169,10 @@ namespace SolarMajesty
             {
                 float resupply = 90f * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
                 resupply *= Mathf.Max(0.4f, _tech.ResupplyIntervalScale);
-                resupply *= Mathf.Max(0.4f, ReplayRules.ResupplyIntervalScale);
+                resupply *= Mathf.Max(0.4f, Rules.ResupplyIntervalScale);
                 int fee = _body != null ? Mathf.Max(0, _body.ResupplyDockFee) : 0;
                 fee = Mathf.Max(0, fee - _tech.ResupplyFeeDiscount);
-                fee += Mathf.Max(0, ReplayRules.ExtraDockFee);
+                fee += Mathf.Max(0, Rules.ExtraDockFee);
                 Economy.SetResupplyRules(resupply, fee);
             }
         }
@@ -4274,7 +4301,7 @@ namespace SolarMajesty
             float expand = _body != null ? _body.ExpansionThreat : 0.018f;
             ambient += expand * Mathf.Min(14, pieces);
             ambient *= Mathf.Clamp(_tech.AmbientThreatScale, 0.35f, 1.2f);
-            ambient *= Mathf.Clamp(ReplayRules.AmbientThreatMul, 0.7f, 1.8f);
+            ambient *= Mathf.Clamp(Rules.AmbientThreatMul, 0.7f, 1.8f);
             int uncleared = _world != null ? _world.UnclearedLairCount : 1;
             bool densQuiet = _world != null && _world.Lairs.Count > 0 && uncleared <= 0;
             if (densQuiet)
@@ -4287,7 +4314,7 @@ namespace SolarMajesty
             if (densQuiet)
             {
                 RetreatCampusFauna();
-                _ecologyCooldown = 18f * ReplayRules.FaunaSpawnIntervalScale;
+                _ecologyCooldown = 18f * Rules.FaunaSpawnIntervalScale;
                 return;
             }
 
@@ -4747,21 +4774,21 @@ namespace SolarMajesty
             int hoppers = CountFauna(FaunaKind.Hopper);
             int uncleared = _world != null ? _world.UnclearedLairCount : 0;
             int cap = _body != null ? Mathf.Max(2, _body.CampusFaunaCap) : 4;
-            cap = Mathf.Max(2, Mathf.RoundToInt(cap * ReplayRules.FaunaCapScale));
+            cap = Mathf.Max(2, Mathf.RoundToInt(cap * Rules.FaunaCapScale));
             if (Settlement.HasOutpost) cap += 2;
             cap += uncleared;
             if (mites + leeches + ticks + wisps + creepers + hoppers >= cap)
             {
-                _ecologyCooldown = 12f * ReplayRules.FaunaSpawnIntervalScale;
+                _ecologyCooldown = 12f * Rules.FaunaSpawnIntervalScale;
                 return;
             }
 
-            float miteW = (_body != null ? _body.MiteSpawnWeight : 1f) * ReplayRules.FaunaWeightMul;
-            float leechW = (_body != null ? _body.LeechSpawnWeight : 1f) * ReplayRules.FaunaWeightMul;
-            float tickW = (_body != null ? _body.TickSpawnWeight : 0f) * ReplayRules.FaunaWeightMul;
-            float wispW = (_body != null ? _body.WispSpawnWeight : 0f) * ReplayRules.FaunaWeightMul;
-            float creeperW = (_body != null ? _body.CreeperSpawnWeight : 0f) * ReplayRules.FaunaWeightMul;
-            float hopperW = (_body != null ? _body.HopperSpawnWeight : 0f) * ReplayRules.FaunaWeightMul;
+            float miteW = (_body != null ? _body.MiteSpawnWeight : 1f) * Rules.FaunaWeightMul;
+            float leechW = (_body != null ? _body.LeechSpawnWeight : 1f) * Rules.FaunaWeightMul;
+            float tickW = (_body != null ? _body.TickSpawnWeight : 0f) * Rules.FaunaWeightMul;
+            float wispW = (_body != null ? _body.WispSpawnWeight : 0f) * Rules.FaunaWeightMul;
+            float creeperW = (_body != null ? _body.CreeperSpawnWeight : 0f) * Rules.FaunaWeightMul;
+            float hopperW = (_body != null ? _body.HopperSpawnWeight : 0f) * Rules.FaunaWeightMul;
             int kindCap = Mathf.Min(3, 1 + uncleared / 3);
             int miteCap = miteW > 0.05f ? kindCap : 0;
             int leechCap = leechW > 0.05f ? kindCap : 0;
@@ -4833,7 +4860,7 @@ namespace SolarMajesty
                     FaunaKind.Leech, leeches, leechCap, pwr.WorldPosition, campus, leechLine))
                 return;
 
-            _ecologyCooldown = 8f * ReplayRules.FaunaSpawnIntervalScale;
+            _ecologyCooldown = 8f * Rules.FaunaSpawnIntervalScale;
         }
 
         private bool TrySpawnCampusKind(
@@ -4850,7 +4877,7 @@ namespace SolarMajesty
                 if (!campusPlaced)
                     GlanceAt(home, force: true);
             }
-            _ecologyCooldown = 10f * ReplayRules.FaunaSpawnIntervalScale;
+            _ecologyCooldown = 10f * Rules.FaunaSpawnIntervalScale;
             return true;
         }
 
@@ -5009,7 +5036,7 @@ namespace SolarMajesty
             _radWarned = false;
             _world = GetComponent<PlanetaryWorldGen>();
             if (_world == null) _world = gameObject.AddComponent<PlanetaryWorldGen>();
-            _world.Generate(this, grid, BodySeed.Current, _body);
+            _world.Generate(this, grid, WorldSeed, _body);
         }
 
         /// <summary>
@@ -5287,7 +5314,7 @@ namespace SolarMajesty
 
         public void RestartMission()
         {
-            if (ReplayRules.BlocksManualSavesAndReloads)
+            if (Rules.BlocksManualSavesAndReloads)
             {
                 LogOverseer(Loc.S("Ironman — no second draft. This body cannot be restarted."));
                 return;
@@ -5323,7 +5350,7 @@ namespace SolarMajesty
         /// </summary>
         public void HoldForVictory()
         {
-            if (ReplayRules.IsEndless || _victoryHold) return;
+            if (Rules.IsEndless || _victoryHold) return;
             _victoryHold = true;
             Time.timeScale = 0f;
             VictoryOffer.RecordProgress(celestialBody);
@@ -6116,7 +6143,7 @@ namespace SolarMajesty
         /// <summary>Player-triggered save into one of the numbered slots.</summary>
         public bool SaveToSlot(int slot)
         {
-            if (ReplayRules.BlocksManualSavesAndReloads)
+            if (Rules.BlocksManualSavesAndReloads)
             {
                 LogOverseer(Loc.S("Ironman — manual saves are closed. Autosave still covers a crash."));
                 return false;
@@ -6130,7 +6157,7 @@ namespace SolarMajesty
         /// <summary>Load a slot through the existing snapshot. Other slots are left on disk.</summary>
         public bool LoadFromSlot(int slot)
         {
-            if (ReplayRules.BlocksManualSavesAndReloads)
+            if (Rules.BlocksManualSavesAndReloads)
             {
                 LogOverseer(Loc.S("Ironman — reloads are closed."));
                 return false;
@@ -6168,7 +6195,7 @@ namespace SolarMajesty
                 nextEntityId = _entityIds.NextId,
                 body = (int)celestialBody,
                 bodyKey = _body != null ? _body.Key : CelestialBodyCatalog.KeyOf(celestialBody),
-                seed = BodySeed.Current,
+                seed = WorldSeed,
                 highestUnlocked = (int)CampaignProgress.HighestUnlocked,
                 rosterBlob = SpecialistRoster.Encode(CaptureRoster()),
                 firstHourDemo = DemoSettings.FirstHourDemo,
@@ -6201,10 +6228,11 @@ namespace SolarMajesty
                 save.research.progress = Research.CaptureProgress();
             }
 
-                save.replay.mode = (int)ReplayRules.Mode;
-                save.replay.challenge = (int)ReplayRules.Challenge;
-                save.replay.stance = (int)ReplayRules.Stance;
-                save.replay.ironman = ReplayRules.IronmanRun;
+                RunRules rules = Rules;
+                save.replay.mode = rules.mode;
+                save.replay.challenge = rules.challenge;
+                save.replay.stance = rules.stance;
+                save.replay.ironman = rules.ironman;
 
             var slots = CaptureCampusSlots();
             for (int i = 0; i < slots.Count; i++)
@@ -6394,7 +6422,7 @@ namespace SolarMajesty
         public bool ApplySave(SaveGame save)
         {
             // Never pour one planet's entities onto another planet (or a regenerated seed).
-            if (save == null || !save.MatchesWorld(_body ?? CelestialBodyCatalog.Get(celestialBody), BodySeed.Current)) return false;
+            if (save == null || !save.MatchesWorld(_body ?? CelestialBodyCatalog.Get(celestialBody), WorldSeed)) return false;
 
             if (Resources != null)
             {
@@ -6459,7 +6487,7 @@ namespace SolarMajesty
                 _mission.RestoreFrom(save.mission);
                 if (save.mission != null && save.mission.launchReady)
                     _launchCraftStaged = true;
-                if (_mission.IsWon && !ReplayRules.IsEndless)
+                if (_mission.IsWon && !Rules.IsEndless)
                 {
                     _victoryHold = true;
                     Time.timeScale = 0f;
@@ -7577,11 +7605,11 @@ namespace SolarMajesty
 
             float resupply = Economy.Tuning.resupplyBaseSeconds * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
             resupply *= Mathf.Max(0.4f, _tech.ResupplyIntervalScale);
-            resupply *= Mathf.Max(0.4f, ReplayRules.ResupplyIntervalScale);
+            resupply *= Mathf.Max(0.4f, Rules.ResupplyIntervalScale);
             resupply *= courier;
             int fee = _body != null ? Mathf.Max(0, _body.ResupplyDockFee) : 0;
             fee = Mathf.Max(0, fee - _tech.ResupplyFeeDiscount);
-            fee += Mathf.Max(0, ReplayRules.ExtraDockFee);
+            fee += Mathf.Max(0, Rules.ExtraDockFee);
             Economy.SetResupplyRules(resupply, fee);
         }
 

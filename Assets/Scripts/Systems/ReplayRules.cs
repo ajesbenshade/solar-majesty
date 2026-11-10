@@ -59,42 +59,21 @@ namespace SolarMajesty
         /// </summary>
         public static bool IronmanRun { get; private set; }
 
-        public static bool IsEndless => Mode == ColonyRunMode.Endless;
-
-        /// <summary>True once the current run latched Ironman — blocks SaveToSlot and RestartMission.</summary>
-        public static bool BlocksManualSavesAndReloads => IronmanRun;
-
-        /// <summary>
-        /// Austere Earth: 3,400 CRED × 0.55 = 1,870. Commons 500 + HAB 150 + a Rogues-tier
-        /// workshop 250 + hire 100 = 1,000. Leftover ~870 CRED for the first flags. Do not drop below 0.50.
-        /// </summary>
-        public static float StartStockpileScale => Challenge == ChallengeId.Austere ? 0.55f : 1f;
-        public static float ResupplyIntervalScale => Challenge == ChallengeId.TightPurse ? 1.55f : 1f;
-        public static int ExtraDockFee => Challenge == ChallengeId.TightPurse ? 80 : 0;
-        public static float FaunaCapScale => Challenge == ChallengeId.Swarm ? 1.50f : 1f;
-        public static float AmbientThreatMul => Challenge == ChallengeId.Swarm ? 1.28f : 1f;
-        public static float FaunaWeightMul => Challenge == ChallengeId.Swarm ? 1.22f : 1f;
-        /// <summary>Swarm stretches spawn cadence so cap fills over a session, not a two-minute dump.</summary>
-        public static float FaunaSpawnIntervalScale => Challenge == ChallengeId.Swarm ? 1.35f : 1f;
-
-        /// <summary>
-        /// Open Hands +0.26 on spawn hunger 0.55 → 0.81, which clears the 0.75 cheap-flag greed bypass.
-        /// </summary>
-        public static float GreedHungerBias =>
-            Stance == DoctrineStance.OpenHands ? 0.26f :
-            Stance == DoctrineStance.AegisWatch ? -0.08f : 0f;
-
-        public static float CourageScale =>
-            Stance == DoctrineStance.AegisWatch ? 1.22f :
-            Stance == DoctrineStance.OpenHands ? 0.90f : 1f;
-
-        public static float WorkshopBonusExtra =>
-            Stance == DoctrineStance.AegisWatch ? 0.18f :
-            Stance == DoctrineStance.SurveyFirst ? 0.10f : 0f;
-
-        /// <summary>Survey First 1.50 → Brain.ConsiderRange 120; Evaluate uses max(explore, range×0.7) ≈ 84 m vs 75.</summary>
-        public static float ConsiderRangeScale =>
-            Stance == DoctrineStance.SurveyFirst ? 1.50f : 1f;
+        // What the settings do to a run is defined once, on RunRules. These read the process-wide
+        // settings; a colony reads its own through GameLoop.Rules.
+        public static bool IsEndless => RunRules.Current().IsEndless;
+        public static bool BlocksManualSavesAndReloads => RunRules.Current().BlocksManualSavesAndReloads;
+        public static float StartStockpileScale => RunRules.Current().StartStockpileScale;
+        public static float ResupplyIntervalScale => RunRules.Current().ResupplyIntervalScale;
+        public static int ExtraDockFee => RunRules.Current().ExtraDockFee;
+        public static float FaunaCapScale => RunRules.Current().FaunaCapScale;
+        public static float AmbientThreatMul => RunRules.Current().AmbientThreatMul;
+        public static float FaunaWeightMul => RunRules.Current().FaunaWeightMul;
+        public static float FaunaSpawnIntervalScale => RunRules.Current().FaunaSpawnIntervalScale;
+        public static float GreedHungerBias => RunRules.Current().GreedHungerBias;
+        public static float CourageScale => RunRules.Current().CourageScale;
+        public static float WorkshopBonusExtra => RunRules.Current().WorkshopBonusExtra;
+        public static float ConsiderRangeScale => RunRules.Current().ConsiderRangeScale;
 
         public static string ModeLabel => Mode == ColonyRunMode.Endless ? Loc.S("ENDLESS") : Loc.S("CAMPAIGN");
 

@@ -183,6 +183,24 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(5000, sim.Resources.Get(ResourceId.Metals));
         }
 
+        [Test]
+        public void RunRules_CarryTheirOwnEffects_WhateverTheProcessSettingsSay()
+        {
+            ReplayRules.ResetForTests();
+            var swarm = new RunRules { mode = (int)ColonyRunMode.Endless, challenge = (int)ChallengeId.Swarm, stance = (int)DoctrineStance.SurveyFirst };
+
+            Assert.IsTrue(swarm.IsEndless);
+            Assert.AreEqual(1.50f, swarm.FaunaCapScale);
+            Assert.AreEqual(1.50f, swarm.ConsiderRangeScale);
+            Assert.IsFalse(ReplayRules.IsEndless, "the process-wide settings are untouched");
+            Assert.AreEqual(1f, ReplayRules.FaunaCapScale);
+
+            ReplayRules.Challenge = ChallengeId.TightPurse;
+            Assert.AreEqual(80, ReplayRules.ExtraDockFee, "the static view reads the same definitions");
+            Assert.AreEqual(80, RunRules.Current().ExtraDockFee);
+            ReplayRules.ResetForTests();
+        }
+
         // ---- World keys -------------------------------------------------------------------
 
         [Test]

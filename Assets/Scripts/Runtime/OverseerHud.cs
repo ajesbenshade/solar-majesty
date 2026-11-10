@@ -34,6 +34,9 @@ namespace SolarMajesty
         private const float MapSize = HudLayout.MapSize;
 
         private GameLoop _loop;
+
+        // The rules of the colony on screen; the process-wide settings when there is none.
+        private RunRules Rules => _loop != null ? _loop.Rules : RunRules.Current();
         private bool _failLatched;
         private bool _winDismissed;
         private bool _deadlineDismissed;
@@ -2689,7 +2692,7 @@ namespace SolarMajesty
 
         private bool TryDrawCampaignVictory()
         {
-            if (StillCaptureHold.Active || ReplayRules.IsEndless || _winDismissed) return false;
+            if (StillCaptureHold.Active || Rules.IsEndless || _winDismissed) return false;
             var mission = _loop.Mission;
             if (mission == null || !mission.IsWon) return false;
             bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
@@ -2699,7 +2702,7 @@ namespace SolarMajesty
 
         private void DrawWinBanner()
         {
-            if (StillCaptureHold.Active || !ReplayRules.IsEndless) return;
+            if (StillCaptureHold.Active || !Rules.IsEndless) return;
             var mission = _loop.Mission;
             if (mission == null || !mission.IsWon || _winDismissed) return;
             DrawEndlessWinBanner(mission);
@@ -2815,7 +2818,7 @@ namespace SolarMajesty
             {
                 GUI.Label(new Rect(c.x, c.y + 32f, c.width, 32f),
                     mission != null ? mission.FailDetail : Loc.S("The outpost is gone."), _body);
-                if (ReplayRules.BlocksManualSavesAndReloads)
+                if (Rules.BlocksManualSavesAndReloads)
                 {
                     GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
                         Loc.S("Ironman — this body is lost. No restart."), _muted);
@@ -2825,7 +2828,7 @@ namespace SolarMajesty
                 else
                 {
                     GUI.Label(new Rect(c.x, c.y + 66f, c.width, 16f),
-                        ReplayRules.IsEndless ? Loc.S("TRY AGAIN — this body is lost.") : Loc.S("Retry this body, or return to title."), _muted);
+                        Rules.IsEndless ? Loc.S("TRY AGAIN — this body is lost.") : Loc.S("Retry this body, or return to title."), _muted);
                     if (GUI.Button(new Rect(c.x, c.yMax - 30f, 160f, 28f), Loc.S("RESTART MISSION"), _chipOn))
                         _loop.RestartMission();
                     if (GUI.Button(new Rect(c.x + 176f, c.yMax - 30f, 140f, 28f), Loc.S("TITLE"), _chipOff))
@@ -2867,7 +2870,7 @@ namespace SolarMajesty
                 _loop.DismissCutscene();
             }
 
-            if (ReplayRules.IsEndless &&
+            if (Rules.IsEndless &&
                 _loop.Mission != null && _loop.Mission.IsWon &&
                 InputBindings.Down(GameAction.PayYard) && !_loop.IsOutpostOverwhelmed)
             {
@@ -3143,7 +3146,7 @@ namespace SolarMajesty
                 return;
             }
 
-            bool iron = ReplayRules.BlocksManualSavesAndReloads;
+            bool iron = Rules.BlocksManualSavesAndReloads;
             float h = iron ? 340f : 400f;
             var rect = new Rect((_sw - 440f) * 0.5f, Mathf.Max(24f, (_sh - h) * 0.5f), 440f, h);
             var c = Panel(rect, Loc.S("Paused"));

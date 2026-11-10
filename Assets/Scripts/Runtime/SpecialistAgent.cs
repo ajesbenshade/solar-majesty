@@ -75,6 +75,9 @@ namespace SolarMajesty
         private float _clipsLookup;
         private GameLoop _loop;
 
+        // The rules of the colony on screen; the process-wide settings when there is none.
+        private RunRules Rules => _loop != null ? _loop.Rules : RunRules.Current();
+
         // Simulation rolls draw from the world stream. An agent built without a game loop (tests) has none.
         private float SimRange(float min, float max) =>
             _loop != null ? _loop.Rng.Range(min, max) : Random.Range(min, max);
@@ -245,7 +248,7 @@ namespace SolarMajesty
         }
 
         public float EffectiveCourage =>
-            Mathf.Clamp01(((data != null ? data.courage : 0.5f) + _geneCourage) * ReplayRules.CourageScale);
+            Mathf.Clamp01(((data != null ? data.courage : 0.5f) + _geneCourage) * Rules.CourageScale);
 
         public float ArmorMitigation
         {
@@ -1193,7 +1196,7 @@ namespace SolarMajesty
             var dutyTill = _duty.WantsToPay(MajestyEconomy.Tuning) ? GuildTill() : null;
             if (dutyTill != null && !dutyTill.IsAlive) dutyTill = null;
 
-            float hunger = Mathf.Clamp01(greedHunger + ReplayRules.GreedHungerBias);
+            float hunger = Mathf.Clamp01(greedHunger + Rules.GreedHungerBias);
             if (_loop != null && _loop.Resources != null &&
                 _loop.Resources.Get(ResourceId.Metals) < OverseerRules.ThinMetals)
                 hunger = Mathf.Clamp01(hunger + OverseerRules.ThinMetalsHunger);
@@ -1217,7 +1220,7 @@ namespace SolarMajesty
                 HasWorkshop = hasWorkshop,
                 FlagWorkshopBonus = hasWorkshop
                     ? 0.22f + (_loop != null && _loop.Settlement != null && _loop.Settlement.HasGuild ? 0.16f : 0f)
-                      + ReplayRules.WorkshopBonusExtra
+                      + Rules.WorkshopBonusExtra
                     : 0f,
                 HasPatient = hasPatient,
                 PatientPosition = patient,
