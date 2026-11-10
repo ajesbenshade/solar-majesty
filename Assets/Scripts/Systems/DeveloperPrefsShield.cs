@@ -123,6 +123,7 @@ namespace SolarMajesty
 
         private static void CaptureStrings()
         {
+            AddString("SM_BodyKey"); // the registered or generated world selected for the next boot
             AddString("SM_CampaignResearch");
             AddString("SM_ResearchUnlocks");
             AddString("SM_PendingTravelLog");

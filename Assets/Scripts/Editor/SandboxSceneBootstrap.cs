@@ -23,8 +23,10 @@ namespace SolarMajesty.EditorTools
 
         static SandboxSceneBootstrap()
         {
-            // CI and build scripts open their own scenes; never race them.
+            // CI and build scripts open their own scenes; never race them. A windowed test run
+            // plays its own scene too.
             if (Application.isBatchMode) return;
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-runTests") >= 0) return;
 
             EditorApplication.delayCall += OpenIfNothingLoaded;
             EditorApplication.playModeStateChanged += OnPlayModeChanged;
