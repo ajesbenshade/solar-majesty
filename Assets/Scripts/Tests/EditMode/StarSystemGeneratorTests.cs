@@ -56,7 +56,8 @@ namespace SolarMajesty.Tests
             var archetypes = new HashSet<WorldArchetype>();
             var stars = new HashSet<StarClass>();
             var keys = new HashSet<string>();
-            for (int seed = 1; seed <= 400; seed++)
+            var modifiers = new HashSet<WorldModifier>();
+            for (int seed = 1; seed <= 1000; seed++)
             {
                 StarSystem system = StarSystemGenerator.Generate(seed);
                 stars.Add(system.Star);
@@ -82,9 +83,17 @@ namespace SolarMajesty.Tests
                     Assert.AreEqual(4, p.ResourceWeights.Length, where);
                     Assert.Greater(p.ResourceWeights[0] + p.ResourceWeights[1] + p.ResourceWeights[2] + p.ResourceWeights[3], 0, where);
                     Assert.That(p.PopulationGoal, Is.InRange(10, 16), where);
-                    Assert.That(p.MoveSpeedScale, Is.InRange(0.82f, 1.18f), where);
-                    Assert.That(p.PowerDrawScale, Is.InRange(0.85f, 1.6f), where);
-                    Assert.That(p.AmbientThreat, Is.InRange(0.08f, 0.22f), where);
+                    Assert.That(p.MoveSpeedScale, Is.InRange(0.77f, 1.18f), where);
+                    Assert.That(p.PowerDrawScale, Is.InRange(0.85f, 1.8f), where);
+                    Assert.That(p.AmbientThreat, Is.InRange(0.08f, 0.27f), where);
+                    Assert.That(p.Modifiers.Length, Is.InRange(WorldModifiers.MinPerWorld, WorldModifiers.MaxPerWorld), where);
+                    for (int m = 0; m < p.Modifiers.Length; m++)
+                    {
+                        modifiers.Add(p.Modifiers[m]);
+                        Assert.IsTrue(WorldModifiers.Fits(p.Modifiers[m], body.Traits), where + " " + p.Modifiers[m]);
+                        if (m > 0) Assert.Less((int)p.Modifiers[m - 1], (int)p.Modifiers[m], where + ": no repeats, fixed order");
+                        StringAssert.Contains(WorldModifiers.Name(p.Modifiers[m]), p.Briefing, where);
+                    }
                     Assert.That(p.SunIntensity, Is.InRange(0.6f, 2.6f), where);
                     Assert.GreaterOrEqual(p.ResourceNodeCount, 10, where);
                     Assert.GreaterOrEqual(p.LairCount, 3, where);
@@ -96,8 +105,9 @@ namespace SolarMajesty.Tests
                 }
             }
 
-            Assert.AreEqual(8, archetypes.Count, "every archetype turns up in 400 systems");
+            Assert.AreEqual(8, archetypes.Count, "every archetype turns up in 1,000 systems");
             Assert.AreEqual(5, stars.Count, "and every star class");
+            Assert.AreEqual(6, modifiers.Count, "and every modifier");
         }
 
         /// <summary>The buildings a world gets must be the set that suits the terrain it wears.</summary>
@@ -146,7 +156,7 @@ namespace SolarMajesty.Tests
             for (int i = 1; i < system.Bodies.Count; i++)
             {
                 Assert.Less(system.Bodies[i].Insolation, system.Bodies[i - 1].Insolation);
-                Assert.GreaterOrEqual(system.Bodies[i].Profile.PowerDrawScale, system.Bodies[i - 1].Profile.PowerDrawScale,
+                Assert.GreaterOrEqual(WithoutStorms(system.Bodies[i].Profile), WithoutStorms(system.Bodies[i - 1].Profile) - 0.0001f,
                     "farther out never draws less power");
             }
         }
@@ -197,6 +207,33 @@ namespace SolarMajesty.Tests
 
             Assert.IsTrue(StarSystemGenerator.TryFromArgs(new[] { "-system", "my homeworld" }, out system, out _));
             Assert.AreEqual(SystemSeedCode.FromText("my homeworld"), system.Seed);
+        }
+
+        private static float WithoutStorms(CelestialBodyProfile p) =>
+            System.Array.IndexOf(p.Modifiers, WorldModifier.DustStorms) >= 0 ? p.PowerDrawScale / 1.12f : p.PowerDrawScale;
+
+        /// <summary>A modifier changes the numbers the game reads, and only the ones it names.</summary>
+        [Test]
+        public void Modifiers_ChangeTheProfile()
+        {
+            CelestialBodyProfile plain = CelestialBodyCatalog.Mars().Copy();
+            foreach (WorldModifier m in System.Enum.GetValues(typeof(WorldModifier)))
+            {
+                CelestialBodyProfile changed = plain.Copy();
+                WorldModifiers.Apply(changed, m);
+                Assert.AreNotEqual(JsonUtility.ToJson(plain), JsonUtility.ToJson(changed), m.ToString());
+                Assert.IsNotEmpty(WorldModifiers.Name(m));
+                Assert.IsNotEmpty(WorldModifiers.Effect(m));
+            }
+
+            CelestialBodyProfile hives = plain.Copy();
+            WorldModifiers.Apply(hives, WorldModifier.HostileHives);
+            Assert.Greater(hives.LairCount, plain.LairCount);
+            Assert.Greater(hives.AmbientThreat, plain.AmbientThreat);
+            Assert.AreEqual(plain.MineYieldScale, hives.MineYieldScale);
+
+            Assert.IsFalse(WorldModifiers.Fits(WorldModifier.DustStorms, new EnvironmentTraits(Atmosphere.None, 0.2f, -20f, 0.5f)));
+            Assert.IsEmpty(CelestialBodyCatalog.Mars().Modifiers, "Sol worlds have none");
         }
 
         private static string Describe(StarSystem s)

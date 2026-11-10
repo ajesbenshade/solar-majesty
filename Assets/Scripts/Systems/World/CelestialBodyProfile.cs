@@ -94,6 +94,8 @@ namespace SolarMajesty
         public EnvironmentTraits Traits;
         /// <summary>World seed for a registered world. Zero on the Sol worlds, whose seeds live in prefs.</summary>
         public int Seed;
+        /// <summary>Standing conditions of a generated world, already applied to the numbers below. Empty on the Sol worlds.</summary>
+        public WorldModifier[] Modifiers = new WorldModifier[0];
 
         /// <summary>A copy to start a new world from. Arrays are shared with the original.</summary>
         public CelestialBodyProfile Copy() => (CelestialBodyProfile)MemberwiseClone();

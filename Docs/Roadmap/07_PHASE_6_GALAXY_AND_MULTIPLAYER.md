@@ -1,6 +1,6 @@
 # Phase 6 – Beyond Sol: Procedural Systems, Galaxy Layer, Multiplayer
 
-**Status:** 6A done on branch `claude/phase-6a-foundation` (2026-11-09), not merged. 6B–6D not started. Does not block Phase 5 or the Early Access launch.
+**Status:** 6A done on branch `claude/phase-6a-foundation` (2026-11-09), not merged. 6B started on `claude/phase-6b-procedural`, which builds on it. 6C–6D not started. Does not block Phase 5 or the Early Access launch.
 **Goal:** Turn a five-world campaign into an open-ended game: generated star systems to conquer,
 a galaxy layer that ties colonies together, rival overseers, and multiplayer.
 
@@ -111,6 +111,26 @@ Limits that stay, and why:
 
 **Exit:** 1,000-seed soak with zero exceptions and a bot win rate inside the tuning band; ten
 generated worlds reviewed by eye for readability; shareable seed strings reproduce a system exactly.
+
+### 6B status (2026-11-09, branch `claude/phase-6b-procedural`)
+
+Done, with 926 EditMode tests passing and three generated worlds booting in the isolated PlayMode project:
+
+- `StarSystemGenerator.Generate(seed)`: a star of one of five classes, then three to nine bodies. Orbit and luminosity give each body its starlight, which sets its temperature, its power draw and which archetypes can be there.
+- `WorldArchetypes`: all eight archetypes build a full `CelestialBodyProfile` with its own palette, light, layout counts, resource weights, yields, move speed, radiation, threat and population goal. Each wears the authored terrain, ground, fauna, sound and props of the nearest Sol world, and the gas-giant moon wears Luna's ground under Europa's sky.
+- `WorldModifiers`: each world has two or three of dust storms, stellar flares, quakes, rich veins, ancient ruins and hostile hives, named in its briefing.
+- `SystemSeedCode`: a seed is seven characters ("7K2M-9AX"); any other text hashes to a seed. A world's key ("gen.7k2m9ax.2") is all that is stored, and the boot builds its system again from it.
+- `-system <seed> [-world <n>]` on the command line plays a generated world. Without `-world` it picks the body with the most Earth-like starlight.
+
+Not done yet:
+
+- No new terrain kits. Volcanic is Mars's terrain repainted, the archipelago is Earth's with more lakes, and there are no lava or water hazards.
+- Modifiers are standing changes to a world's numbers. Storms, flares and quakes do not happen as events during play.
+- Fauna are the borrowed Sol world's, with their speed and aggression varied. There is no fauna assembler.
+- Names are generated; briefings are composed in English and are not in the localization tables.
+- No bot overseer and no win-rate soak. The 1,000-seed test checks that every system is well formed, not that it can be won.
+- No title-screen entry, no "Beyond Sol" mode and no victory flow: a generated world has no launch tech and nowhere to go next.
+- Nobody has looked at a generated world on screen.
 
 ## 6C – Galaxy layer and rival overseers (8–12 weeks)
 

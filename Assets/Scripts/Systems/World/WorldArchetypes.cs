@@ -146,6 +146,10 @@ namespace SolarMajesty
             p.PopulationGoal = rng.Next(10, 17);
             p.SustainHoldSeconds = 40f;
 
+            p.Modifiers = WorldModifiers.Roll(rng, system.Star, body.Traits);
+            for (int i = 0; i < p.Modifiers.Length; i++)
+                WorldModifiers.Apply(p, p.Modifiers[i]);
+
             Briefing(p, system, body, s);
             return p;
         }
@@ -276,7 +280,11 @@ namespace SolarMajesty
         {
             string temp = Mathf.RoundToInt(body.Traits.TemperatureC) + " C";
             string gravity = body.Traits.Gravity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " g";
-            p.Briefing = s.Kind + ", " + temp + ", " + gravity + ". " + s.Brief + " Hold pop " + p.PopulationGoal + ".";
+            var conditions = new System.Text.StringBuilder();
+            for (int i = 0; i < p.Modifiers.Length; i++)
+                conditions.Append(i == 0 ? " " : ", ").Append(WorldModifiers.Name(p.Modifiers[i]));
+            if (conditions.Length > 0) conditions.Append('.');
+            p.Briefing = s.Kind + ", " + temp + ", " + gravity + ". " + s.Brief + conditions + " Hold pop " + p.PopulationGoal + ".";
             p.ArrivalLog = body.Name + " insertion complete. " + s.Kind + " in the " + system.Name + " system, seed " + system.Code + ".";
             p.VictoryLog = body.Name + " holds. The " + system.Name + " system has a colony.";
             p.FailLog = body.Name + " plaza is overrun. Revive or reseed this world.";
