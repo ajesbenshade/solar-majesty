@@ -1,0 +1,358 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8282c073a5392948af232139571e8f4, type: 3}
+  m_Name: TechDatabase
+  m_EditorClassIdentifier: SolarMajesty.Systems::SolarMajesty.TechDatabase
+  entries:
+  - id: 1
+    displayName: Field Survey
+    description: Map the apron. Root of the research tree.
+    scienceCost: 18
+    prerequisites: 
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 2
+    displayName: Hab Ops
+    description: Pressure seals and crew bunks for growth.
+    scienceCost: 28
+    prerequisites: 01000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 3
+    displayName: Extract Basics
+    description: Farm and mine doctrine for a living stockpile.
+    scienceCost: 28
+    prerequisites: 01000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 4
+    displayName: Lab Science
+    description: Protocols that speed further research.
+    scienceCost: 28
+    prerequisites: 01000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0.35
+    secretProject: 0
+  - id: 5
+    displayName: Life Support
+    description: Closed-loop air and water for a lasting colony.
+    scienceCost: 40
+    prerequisites: 02000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 6
+    displayName: Ore Refining
+    description: Turn ore into structural metals at scale.
+    scienceCost: 40
+    prerequisites: 03000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 7
+    displayName: Power Systems
+    description: Stable power for launch prep and deep work.
+    scienceCost: 40
+    prerequisites: 03000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 8
+    displayName: Med Protocols
+    description: Field triage so parties return from the rim.
+    scienceCost: 36
+    prerequisites: 05000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 9
+    displayName: Deep Survey
+    description: Find richer nodes and quieter approaches.
+    scienceCost: 45
+    prerequisites: 04000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 10
+    displayName: Lunar Rocket
+    description: Craft strong enough to leave this body.
+    scienceCost: 70
+    prerequisites: 050000000600000007000000
+    completeCost:
+    - resource: 2
+      amount: 550
+    unlocksLaunch: 1
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 11
+    displayName: Mars Ship
+    description: Heavy transfer ship for the next conquest.
+    scienceCost: 100
+    prerequisites: 0a0000000900000008000000
+    completeCost:
+    - resource: 2
+      amount: 1100
+    unlocksLaunch: 1
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 12
+    displayName: Belt Hauler
+    description: Tethered ore barge for the asteroid belt.
+    scienceCost: 120
+    prerequisites: 0b00000006000000
+    completeCost:
+    - resource: 2
+      amount: 900
+    unlocksLaunch: 1
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 13
+    displayName: Icebreaker
+    description: Radiation-hardened lander for Europa's crust.
+    scienceCost: 140
+    prerequisites: 0c0000000500000007000000
+    completeCost:
+    - resource: 2
+      amount: 1200
+    unlocksLaunch: 1
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 14
+    displayName: Guild Charter
+    description: License Horizon Lodge, Anvil Compact, Aegis Lodge, and Triage Compact.
+      Flags near a hall pull that class.
+    scienceCost: 32
+    prerequisites: 02000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 15
+    displayName: Harvest Doctrine
+    description: Strip-mine doctrine. Better haul and mine ticks. Unlocks Harvester
+      shop.
+    scienceCost: 48
+    prerequisites: 06000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 16
+    displayName: Aegis Doctrine
+    description: Hardened grid. Colony power draw drops 15%. Pairs with Aegis Watch
+      and Rim Watch.
+    scienceCost: 48
+    prerequisites: 07000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 17
+    displayName: Survey Doctrine
+    description: Deep mapping. Labs tick faster. Unlocks Surveyor shop.
+    scienceCost: 48
+    prerequisites: 09000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0.4
+    secretProject: 0
+  - id: 18
+    displayName: Planetary Anvil
+    description: "Secret Project. A foundry that never cools \u2014 mines and haul
+      surge. Extract/haul rush."
+    scienceCost: 160
+    prerequisites: 0f00000006000000
+    completeCost:
+    - resource: 2
+      amount: 1200
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 1
+  - id: 19
+    displayName: Orbital Skyhook
+    description: Secret Project. Cheap freight and free Earth dockings. Extract/haul
+      rush.
+    scienceCost: 160
+    prerequisites: 100000000a000000
+    completeCost:
+    - resource: 2
+      amount: 1000
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 1
+  - id: 20
+    displayName: Gene Vault
+    description: Secret Project. Spare beds, faster births, greener farms. Growth
+      path.
+    scienceCost: 150
+    prerequisites: 0500000008000000
+    completeCost:
+    - resource: 2
+      amount: 1400
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 1
+  - id: 21
+    displayName: Terraform Charter
+    description: License a Terraformer shop. Greener farms when they work Terraform
+      flags.
+    scienceCost: 44
+    prerequisites: 0500000003000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 22
+    displayName: Freight Doctrine
+    description: Haul claims between campuses. Unlocks Courier shop.
+    scienceCost: 44
+    prerequisites: 0200000003000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 23
+    displayName: Core Sampling
+    description: Read the crust. Better mine ticks. Unlocks Geologist shop.
+    scienceCost: 42
+    prerequisites: 0300000004000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 24
+    displayName: Perimeter Doctrine
+    description: "Watch the rim. Unlocks Sentinel shop \u2014 they take Defend cheap."
+    scienceCost: 52
+    prerequisites: 10000000
+    completeCost: []
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 25
+    displayName: Climate Loom
+    description: "Secret Project. Weave weather for the crust \u2014 farms surge.
+      Place the Loom landmark."
+    scienceCost: 155
+    prerequisites: 1500000005000000
+    completeCost:
+    - resource: 2
+      amount: 1600
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 1
+  - id: 26
+    displayName: Aegis Spire
+    description: Secret Project. A tower that calms the grid and the rim. Place the
+      Spire landmark.
+    scienceCost: 165
+    prerequisites: 1800000010000000
+    completeCost:
+    - resource: 2
+      amount: 1100
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 1
+  - id: 27
+    displayName: Deep Archive
+    description: Secret Project. Labs remember every sample. Place the Archive landmark.
+    scienceCost: 150
+    prerequisites: 1100000009000000
+    completeCost:
+    - resource: 2
+      amount: 800
+    unlocksLaunch: 0
+    researchRateBonus: 0.55
+    secretProject: 1
+  - id: 28
+    displayName: Horizon Pulse
+    description: 'Activate at Horizon Lodge: scouts run hot and mark dens. Costs
+      EU.'
+    scienceCost: 36
+    prerequisites: 0e000000
+    completeCost:
+    - resource: 2
+      amount: 250
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 29
+    displayName: Anvil Overtime
+    description: 'Activate at Anvil Compact: engineers weld faster. Costs EU.'
+    scienceCost: 36
+    prerequisites: 0e000000
+    completeCost:
+    - resource: 2
+      amount: 250
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 30
+    displayName: Aegis Watchfire
+    description: 'Activate at Aegis Lodge: robots shrug bites, batteries hit harder.
+      Costs EU.'
+    scienceCost: 40
+    prerequisites: 0e000000
+    completeCost:
+    - resource: 2
+      amount: 500
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 31
+    displayName: Triage Field Aid
+    description: 'Activate at Triage Compact: everyone on the dirt patches HP. Costs
+      EU.'
+    scienceCost: 36
+    prerequisites: 0e000000
+    completeCost:
+    - resource: 2
+      amount: 250
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 32
+    displayName: Orbital Uplink
+    description: 'Satellite link: Kinetic Lance, Med-Drop, Survey Sweep, Till Audit.
+      Cheaper near an uplink.'
+    scienceCost: 32
+    prerequisites: 04000000
+    completeCost:
+    - resource: 2
+      amount: 300
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0
+  - id: 33
+    displayName: Orbital Constellation
+    description: 'Full constellation: Orbital Barrage, EMP Snare, Aegis Field, Revive
+      Beacon, Repair Swarm.'
+    scienceCost: 60
+    prerequisites: 2000000009000000
+    completeCost:
+    - resource: 2
+      amount: 1000
+    unlocksLaunch: 0
+    researchRateBonus: 0
+    secretProject: 0

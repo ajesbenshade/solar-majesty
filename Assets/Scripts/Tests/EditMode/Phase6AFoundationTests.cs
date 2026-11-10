@@ -316,6 +316,105 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void ShopCatalog_ReadsADatabase_AndGoesBackToTheShippedCatalog()
+        {
+            int shipped = ShopCatalog.All.Count;
+            var db = ScriptableObject.CreateInstance<ShopDatabase>();
+            _created.Add(db);
+            db.CopyFrom(ShopCatalog.All);
+            db.entries.RemoveRange(3, db.entries.Count - 3);
+            db.entries[0].cost = 12345;
+
+            try
+            {
+                ShopCatalog.Reload(db);
+
+                Assert.AreEqual(3, ShopCatalog.All.Count);
+                Assert.AreEqual(12345, ShopCatalog.Get(db.entries[0].id).Cost);
+            }
+            finally
+            {
+                ShopCatalog.Reload();
+            }
+
+            Assert.AreEqual(shipped, ShopCatalog.All.Count);
+        }
+
+        [Test]
+        public void ShopDatabase_RoundTripsTheBuiltInCatalog()
+        {
+            ShopCatalog.Reload(useAsset: false);
+            try
+            {
+                var db = ScriptableObject.CreateInstance<ShopDatabase>();
+                _created.Add(db);
+                db.CopyFrom(ShopCatalog.All);
+                List<ShopItemDef> back = db.ToDefs();
+
+                Assert.AreEqual(ShopCatalog.All.Count, back.Count);
+                for (int i = 0; i < back.Count; i++)
+                    Assert.AreEqual(JsonUtility.ToJson(ShopDatabase.Entry.From(ShopCatalog.All[i])),
+                        JsonUtility.ToJson(ShopDatabase.Entry.From(back[i])));
+                Assert.IsTrue(back.Exists(d => d.ForClass == null), "an item for any class stays for any class");
+                Assert.IsTrue(back.Exists(d => d.ForClass == SpecialistClass.ScoutDrone));
+            }
+            finally
+            {
+                ShopCatalog.Reload();
+            }
+        }
+
+        /// <summary>The shipped databases carry everything the code does, so no entry silently falls back.</summary>
+        [Test]
+        public void ShippedDatabases_CoverTheBuiltInCatalogs()
+        {
+            var tech = Resources.Load<TechDatabase>(TechDatabase.ResourcePath);
+            var shop = Resources.Load<ShopDatabase>(ShopDatabase.ResourcePath);
+            var worlds = Resources.Load<WorldDatabase>(WorldDatabase.ResourcePath);
+            Assert.IsNotNull(tech, "Resources/Data/TechDatabase.asset");
+            Assert.IsNotNull(shop, "Resources/Data/ShopDatabase.asset");
+            Assert.IsNotNull(worlds, "Resources/Data/WorldDatabase.asset");
+
+            TechCatalog.Reload(useAsset: false);
+            ShopCatalog.Reload(useAsset: false);
+            try
+            {
+                foreach (TechDef def in TechCatalog.All)
+                    Assert.IsTrue(tech.entries.Exists(e => e.id == def.Id), "tech " + def.Id);
+                foreach (ShopItemDef def in ShopCatalog.All)
+                    Assert.IsTrue(shop.entries.Exists(e => e.id == def.Id), "shop item " + def.Id);
+            }
+            finally
+            {
+                TechCatalog.Reload();
+                ShopCatalog.Reload();
+            }
+
+            foreach (CelestialBodyId id in CelestialBodyCatalog.All)
+            {
+                CelestialBodyProfile builtIn = CelestialBodyCatalog.BuiltIn(id);
+                CelestialBodyProfile shipped = worlds.FindSol(builtIn.Key);
+                Assert.IsNotNull(shipped, builtIn.Key);
+                Assert.AreEqual(id, shipped.Id);
+                Assert.AreEqual(builtIn.Key, CelestialBodyCatalog.Get(id).Key, "the catalog serves the shipped world");
+            }
+        }
+
+        [Test]
+        public void SolWorld_FromTheAsset_IsTheBuiltInWorld_UntilSomeoneTunesIt()
+        {
+            var db = ScriptableObject.CreateInstance<WorldDatabase>();
+            _created.Add(db);
+            db.sol.Add(CelestialBodyCatalog.BuiltIn(CelestialBodyId.Mars));
+
+            CelestialBodyProfile back = db.FindSol("sol.mars");
+
+            Assert.AreEqual(JsonUtility.ToJson(CelestialBodyCatalog.BuiltIn(CelestialBodyId.Mars)), JsonUtility.ToJson(back));
+            Assert.AreNotSame(db.sol[0], back, "play gets a copy, never the asset's own object");
+            Assert.IsNull(db.FindSol("sol.europa"));
+        }
+
+        [Test]
         public void WorldDatabase_RegistersItsWorlds_Once()
         {
             var db = ScriptableObject.CreateInstance<WorldDatabase>();

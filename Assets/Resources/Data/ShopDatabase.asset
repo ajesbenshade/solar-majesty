@@ -1,0 +1,335 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01498ff10a38e01429a12ecb5bf9a702, type: 3}
+  m_Name: ShopDatabase
+  m_EditorClassIdentifier: SolarMajesty.Systems::SolarMajesty.ShopDatabase
+  entries:
+  - id: 20
+    kind: 0
+    vendor: 1
+    classOnly: 1
+    forClass: 1
+    displayName: Horizon Optics
+    description: Scout visor. Permanent speed.
+    cost: 150
+    armorMitigation: 0
+    speedBonus: 0.18
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 21
+    kind: 0
+    vendor: 1
+    classOnly: 1
+    forClass: 0
+    displayName: Anvil Rig
+    description: Tool harness. Permanent work rate.
+    cost: 200
+    armorMitigation: 0.08
+    speedBonus: 0
+    workBonus: 0.18
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 22
+    kind: 0
+    vendor: 1
+    classOnly: 1
+    forClass: 2
+    displayName: Aegis Shell
+    description: Lodge plating. Permanent armor.
+    cost: 250
+    armorMitigation: 0.22
+    speedBonus: 0
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 23
+    kind: 0
+    vendor: 1
+    classOnly: 1
+    forClass: 3
+    displayName: Triage Pack
+    description: Field kit. Light armor, faster rest heal.
+    cost: 180
+    armorMitigation: 0.1
+    speedBonus: 0
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0.02
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 1
+    kind: 0
+    vendor: 1
+    classOnly: 1
+    forClass: 2
+    displayName: Field Shell
+    description: Light EVA plating. Permanent armor.
+    cost: 200
+    armorMitigation: 0.18
+    speedBonus: 0
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 2
+    kind: 0
+    vendor: 1
+    classOnly: 1
+    forClass: 2
+    displayName: Hardplate Suit
+    description: Heavy armor. Permanent, slight speed cost.
+    cost: 400
+    armorMitigation: 0.32
+    speedBonus: -0.06
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 30
+    kind: 2
+    vendor: 2
+    classOnly: 0
+    forClass: 0
+    displayName: Health Potion
+    description: Instant chassis patch.
+    cost: 20
+    armorMitigation: 0
+    speedBonus: 0
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0.45
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 31
+    kind: 2
+    vendor: 2
+    classOnly: 0
+    forClass: 0
+    displayName: Magic Potion
+    description: Temporary work and courage.
+    cost: 40
+    armorMitigation: 0
+    speedBonus: 0
+    workBonus: 0.22
+    courageBonus: 0.16
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 50
+    damageBonus: 0
+  - id: 32
+    kind: 3
+    vendor: 2
+    classOnly: 0
+    forClass: 0
+    displayName: Regen Necklace
+    description: Slow HP regen while worn.
+    cost: 300
+    armorMitigation: 0
+    speedBonus: 0
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0.035
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 40
+    kind: 4
+    vendor: 3
+    classOnly: 1
+    forClass: 1
+    displayName: Horizon Needle
+    description: Lodge carbine. Permanent damage.
+    cost: 350
+    armorMitigation: 0
+    speedBonus: 0.06
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0.22
+  - id: 41
+    kind: 0
+    vendor: 3
+    classOnly: 1
+    forClass: 1
+    displayName: Horizon Weave
+    description: Light scout mail.
+    cost: 300
+    armorMitigation: 0.16
+    speedBonus: 0.08
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 42
+    kind: 4
+    vendor: 3
+    classOnly: 1
+    forClass: 0
+    displayName: Anvil Sledge
+    description: Forge hammer. Damage and weld.
+    cost: 375
+    armorMitigation: 0
+    speedBonus: 0
+    workBonus: 0.12
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0.18
+  - id: 43
+    kind: 0
+    vendor: 3
+    classOnly: 1
+    forClass: 0
+    displayName: Anvil Plate
+    description: Welder plate. Heavy armor.
+    cost: 400
+    armorMitigation: 0.28
+    speedBonus: -0.04
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 44
+    kind: 4
+    vendor: 3
+    classOnly: 1
+    forClass: 2
+    displayName: Aegis Pike
+    description: Lodge spear. Permanent damage.
+    cost: 400
+    armorMitigation: 0
+    speedBonus: 0
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0.28
+  - id: 45
+    kind: 0
+    vendor: 3
+    classOnly: 1
+    forClass: 2
+    displayName: Aegis Mail
+    description: Watchmail. Heaviest lodge armor.
+    cost: 480
+    armorMitigation: 0.38
+    speedBonus: -0.08
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 46
+    kind: 4
+    vendor: 3
+    classOnly: 1
+    forClass: 3
+    displayName: Triage Injector
+    description: Field lance. Light damage, extra regen.
+    cost: 340
+    armorMitigation: 0
+    speedBonus: 0
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0.03
+    durationSeconds: 0
+    damageBonus: 0.1
+  - id: 47
+    kind: 0
+    vendor: 3
+    classOnly: 1
+    forClass: 3
+    displayName: Triage Mail
+    description: Softmail. Armor and regen.
+    cost: 350
+    armorMitigation: 0.18
+    speedBonus: 0
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0.02
+    durationSeconds: 0
+    damageBonus: 0
+  - id: 10
+    kind: 1
+    vendor: 0
+    classOnly: 0
+    forClass: 0
+    displayName: 'Gene: Valor'
+    description: "Legacy inn gene \u2014 unused."
+    cost: 350
+    armorMitigation: 0
+    speedBonus: 0
+    workBonus: 0
+    courageBonus: 0.22
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 90
+    damageBonus: 0
+  - id: 11
+    kind: 1
+    vendor: 0
+    classOnly: 0
+    forClass: 0
+    displayName: 'Gene: Focus'
+    description: "Legacy inn gene \u2014 unused."
+    cost: 300
+    armorMitigation: 0
+    speedBonus: 0
+    workBonus: 0.28
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 75
+    damageBonus: 0
+  - id: 12
+    kind: 1
+    vendor: 0
+    classOnly: 0
+    forClass: 0
+    displayName: 'Gene: Swift'
+    description: "Legacy inn gene \u2014 unused."
+    cost: 280
+    armorMitigation: 0
+    speedBonus: 0.22
+    workBonus: 0
+    courageBonus: 0
+    healAmount: 0
+    regenPerSecond: 0
+    durationSeconds: 60
+    damageBonus: 0

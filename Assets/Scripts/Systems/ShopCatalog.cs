@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SolarMajesty
 {
@@ -10,7 +11,28 @@ namespace SolarMajesty
     /// </summary>
     public static class ShopCatalog
     {
-        private static readonly List<ShopItemDef> Items = new List<ShopItemDef>
+        private static List<ShopItemDef> _items;
+
+        private static List<ShopItemDef> Items => _items ??= Load();
+
+        /// <summary>The catalog comes from a <see cref="ShopDatabase"/> asset when one ships, else from the code below.</summary>
+        private static List<ShopItemDef> Load()
+        {
+            var asset = Resources.Load<ShopDatabase>(ShopDatabase.ResourcePath);
+            return asset != null && asset.entries.Count > 0 ? asset.ToDefs() : BuiltIn();
+        }
+
+        /// <summary>
+        /// Drop the cached catalog and read it again: from <paramref name="database"/> when given,
+        /// else from the shipped asset, else (or with <paramref name="useAsset"/> false) from code.
+        /// </summary>
+        public static void Reload(ShopDatabase database = null, bool useAsset = true)
+        {
+            if (database != null && database.entries.Count > 0) _items = database.ToDefs();
+            else _items = useAsset ? Load() : BuiltIn();
+        }
+
+        private static List<ShopItemDef> BuiltIn() => new List<ShopItemDef>
         {
             new ShopItemDef
             {

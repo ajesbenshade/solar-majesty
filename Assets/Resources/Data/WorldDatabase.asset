@@ -1,0 +1,820 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 800aaf524c4abee438f102776921d53c, type: 3}
+  m_Name: WorldDatabase
+  m_EditorClassIdentifier: SolarMajesty.Systems::SolarMajesty.WorldDatabase
+  sol:
+  - Id: 0
+    Key: sol.earth
+    Traits:
+      Atmosphere: 2
+      Gravity: 1
+      TemperatureC: 15
+      Radiation: 0
+    Seed: 0
+    DisplayName: Earth
+    ShortCode: EARTH
+    Briefing: Commons is down on the claim. Build a HAB anywhere on open ground.
+      Soil creepers chew farms ({key:FlagDefend}). Hold pop 8, then Lunar Rocket.
+    ArrivalLog: "Earth drop confirmed. Colony Commons is live. Raise a HAB on open
+      ground. Soil creepers follow the farms \u2014 Defend Area."
+    VictoryLog: "Earth secured. Lunar Rocket is on the pad \u2014 trajectory to Luna
+      is open."
+    FailLog: Earth outpost lost. Revive the robots or restart the drop.
+    EndlessLog: "Earth holds. Keep colonizing this crust \u2014 rating stands, no
+      hop."
+    GroundLight: {r: 0.44, g: 0.64, b: 0.28, a: 1}
+    GroundDark: {r: 0.18, g: 0.3, b: 0.12, a: 1}
+    Horizon: {r: 0.62, g: 0.76, b: 0.86, a: 1}
+    RockColor: {r: 0.4, g: 0.36, b: 0.3, a: 1}
+    CraterRim: {r: 0.38, g: 0.4, b: 0.32, a: 1}
+    CraterFloor: {r: 0.2, g: 0.26, b: 0.16, a: 1}
+    DuneColor: {r: 0.52, g: 0.48, b: 0.26, a: 1}
+    SoilNodeColor: {r: 0.44, g: 0.32, b: 0.16, a: 1}
+    LairRim: {r: 0.2, g: 0.1, b: 0.08, a: 1}
+    LairPit: {r: 0.08, g: 0.05, b: 0.04, a: 1}
+    SkyTop: {r: 0.48, g: 0.72, b: 0.96, a: 1}
+    SkyHorizon: {r: 0.88, g: 0.92, b: 0.97, a: 1}
+    SunColor: {r: 1, g: 0.97, b: 0.9, a: 1}
+    SunIntensity: 1.42
+    SunEuler: {x: 38, y: -32, z: 0}
+    GradeFilter: {r: 0.98, g: 1, b: 1.04, a: 1}
+    AmbientHum: 72
+    FillColor: {r: 0.58, g: 0.7, b: 0.9, a: 1}
+    AmbientSky: {r: 0.46, g: 0.62, b: 0.88, a: 1}
+    AmbientEquator: {r: 0.4, g: 0.5, b: 0.34, a: 1}
+    AmbientGround: {r: 0.1, g: 0.14, b: 0.08, a: 1}
+    FogColor: {r: 0.76, g: 0.86, b: 0.94, a: 1}
+    FogStart: 26
+    FogEnd: 200
+    AtmosphereThickness: 1.28
+    SkyExposure: 1.32
+    CraterCount: 0
+    RockCount: 110
+    DuneCount: 0
+    LakeCount: 8
+    RiverCount: 5
+    ForestPatchCount: 56
+    RockFormationCount: 16
+    PoiCount: 14
+    GroundCover:
+    - Kind: 0
+      Density: 80
+      ScaleMin: 0.38
+      ScaleMax: 0.72
+      ColorA: {r: 0.3, g: 0.5, b: 0.17, a: 1}
+      ColorB: {r: 0.46, g: 0.62, b: 0.23, a: 1}
+      SplatAffinity: {x: 0.5, y: 0.05, z: 1, w: 0.6}
+      ClusterScale: 9
+      ClusterThreshold: 0.18
+      CastShadows: 0
+      Sink: 0
+    - Kind: 0
+      Density: 12
+      ScaleMin: 0.4
+      ScaleMax: 0.7
+      ColorA: {r: 0.55, g: 0.58, b: 0.27, a: 1}
+      ColorB: {r: 0.66, g: 0.62, b: 0.34, a: 1}
+      SplatAffinity: {x: 0.6, y: 0.1, z: 1, w: 0.2}
+      ClusterScale: 16
+      ClusterThreshold: 0.55
+      CastShadows: 0
+      Sink: 0
+    - Kind: 1
+      Density: 8
+      ScaleMin: 0.55
+      ScaleMax: 0.85
+      ColorA: {r: 0.46, g: 0.6, b: 0.22, a: 1}
+      ColorB: {r: 0.66, g: 0.64, b: 0.32, a: 1}
+      SplatAffinity: {x: 0.3, y: 0, z: 1, w: 0.8}
+      ClusterScale: 14
+      ClusterThreshold: 0.55
+      CastShadows: 0
+      Sink: 0
+    - Kind: 2
+      Density: 3.4
+      ScaleMin: 0.65
+      ScaleMax: 1
+      ColorA: {r: 0.95, g: 0.3, b: 0.28, a: 1}
+      ColorB: {r: 0.98, g: 0.82, b: 0.3, a: 1}
+      SplatAffinity: {x: 0.2, y: 0, z: 1, w: 0.3}
+      ClusterScale: 7
+      ClusterThreshold: 0.62
+      CastShadows: 0
+      Sink: 0
+    - Kind: 2
+      Density: 3
+      ScaleMin: 0.65
+      ScaleMax: 1
+      ColorA: {r: 0.96, g: 0.96, b: 0.98, a: 1}
+      ColorB: {r: 0.68, g: 0.56, b: 0.96, a: 1}
+      SplatAffinity: {x: 0.2, y: 0, z: 1, w: 0.3}
+      ClusterScale: 8
+      ClusterThreshold: 0.64
+      CastShadows: 0
+      Sink: 0
+    - Kind: 5
+      Density: 1.4
+      ScaleMin: 0.5
+      ScaleMax: 0.95
+      ColorA: {r: 0.24, g: 0.46, b: 0.17, a: 1}
+      ColorB: {r: 0.38, g: 0.58, b: 0.2, a: 1}
+      SplatAffinity: {x: 0.3, y: 0.1, z: 1, w: 0.6}
+      ClusterScale: 12
+      ClusterThreshold: 0.6
+      CastShadows: 0
+      Sink: 0
+    - Kind: 4
+      Density: 0.8
+      ScaleMin: 0.7
+      ScaleMax: 1.5
+      ColorA: {r: 0.18, g: 0.36, b: 0.13, a: 1}
+      ColorB: {r: 0.32, g: 0.5, b: 0.18, a: 1}
+      SplatAffinity: {x: 0.3, y: 0.2, z: 1, w: 0.4}
+      ClusterScale: 18
+      ClusterThreshold: 0.5
+      CastShadows: 1
+      Sink: 0
+    - Kind: 12
+      Density: 7
+      ScaleMin: 0.65
+      ScaleMax: 1.05
+      ColorA: {r: 0.4, g: 0.55, b: 0.24, a: 1}
+      ColorB: {r: 0.58, g: 0.62, b: 0.3, a: 1}
+      SplatAffinity: {x: 0, y: 0, z: 0, w: 1}
+      ClusterScale: 0
+      ClusterThreshold: 0
+      CastShadows: 0
+      Sink: 0
+    - Kind: 3
+      Density: 2.6
+      ScaleMin: 0.5
+      ScaleMax: 1
+      ColorA: {r: 0.54, g: 0.51, b: 0.47, a: 1}
+      ColorB: {r: 0.68, g: 0.64, b: 0.58, a: 1}
+      SplatAffinity: {x: 0.6, y: 1, z: 0.12, w: 0.3}
+      ClusterScale: 10
+      ClusterThreshold: 0.4
+      CastShadows: 0
+      Sink: 0
+    - Kind: 6
+      Density: 0.14
+      ScaleMin: 0.45
+      ScaleMax: 0.75
+      ColorA: {r: 0.8, g: 0.2, b: 0.14, a: 1}
+      ColorB: {r: 0.62, g: 0.44, b: 0.26, a: 1}
+      SplatAffinity: {x: 0.4, y: 0.1, z: 1, w: 0.5}
+      ClusterScale: 10
+      ClusterThreshold: 0.7
+      CastShadows: 0
+      Sink: 0
+    - Kind: 13
+      Density: 0.7
+      ScaleMin: 0.8
+      ScaleMax: 1.2
+      ColorA: {r: 0.42, g: 0.32, b: 0.22, a: 1}
+      ColorB: {r: 0.56, g: 0.44, b: 0.28, a: 1}
+      SplatAffinity: {x: 1, y: 0.2, z: 0.5, w: 0}
+      ClusterScale: 12
+      ClusterThreshold: 0.6
+      CastShadows: 0
+      Sink: 0
+    ResourceNodeCount: 10
+    LairCount: 3
+    CampusExclusion: 20
+    MinSpacing: 8
+    IcePolarBias: 0.25
+    WaterDeep: {r: 0.08, g: 0.28, b: 0.48, a: 1}
+    WaterShallow: {r: 0.22, g: 0.58, b: 0.64, a: 1}
+    ForestCanopy: {r: 0.16, g: 0.52, b: 0.18, a: 1}
+    ForestTrunk: {r: 0.32, g: 0.18, b: 0.08, a: 1}
+    ResourceWeights: 04000000030000000300000001000000
+    Kit: 0
+    LaunchTech: 10
+    ExtractYieldScale: 1
+    FarmYieldScale: 1
+    MineYieldScale: 1
+    PowerDrawScale: 1
+    AsteroidIsletCount: 0
+    IcePlateCount: 0
+    PopulationGoal: 8
+    SustainHoldSeconds: 25
+    ResearchRateMultiplier: 1.35
+    ResupplyIntervalScale: 0.78
+    ResupplyDockFee: 0
+    FreightMetals: 8
+    FreightIce: 4
+    OutpostPowerDraw: 2
+    StartRegolith: 110
+    StartWaterIce: 70
+    StartMetals: 3400
+    StartPower: 120
+    MoveSpeedScale: 1
+    RadiationDrainPerSecond: 0
+    RadiationSafeRadius: 22
+    AmbientThreat: 0.12
+    ExpansionThreat: 0.018
+    CampusFaunaCap: 5
+    MiteSpawnWeight: 0.65
+    LeechSpawnWeight: 1
+    TickSpawnWeight: 0.2
+    WispSpawnWeight: 0
+    CreeperSpawnWeight: 1.65
+    HopperSpawnWeight: 0
+    FaunaSpeedScale: 1
+    FaunaAggroScale: 1
+    LairStalkerBudget: 2
+    PreferMineMites: 0
+    FaunaMiteTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaLeechTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaCreeperTint: {r: 0.28, g: 0.42, b: 0.16, a: 1}
+    FaunaHopperTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaWispTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaTickTint: {r: 0, g: 0, b: 0, a: 0}
+  - Id: 1
+    Key: sol.luna
+    Traits:
+      Atmosphere: 0
+      Gravity: 0.165
+      TemperatureC: -20
+      Radiation: 0.6
+    Seed: 0
+    DisplayName: Luna
+    ShortCode: LUNA
+    Briefing: Cratered grey. Ash hoppers press HABs ({key:FlagClearThreat}). Dust
+      ticks on ore ({key:FlagDefend}). Hold pop 12, then Mars Ship.
+    ArrivalLog: "Luna insertion complete. Ash hoppers seek pressure at the HAB \u2014
+      Clear Threat. Dust ticks follow the mines."
+    VictoryLog: 'Luna holds. Mars Ship staged. Next body: Mars.'
+    FailLog: Luna plaza is overrun. Revive or reseed this crater field.
+    EndlessLog: "Luna holds. Keep colonizing the craters \u2014 rating stands, no
+      hop."
+    GroundLight: {r: 0.62, g: 0.58, b: 0.52, a: 1}
+    GroundDark: {r: 0.22, g: 0.2, b: 0.19, a: 1}
+    Horizon: {r: 0.14, g: 0.13, b: 0.12, a: 1}
+    RockColor: {r: 0.36, g: 0.34, b: 0.32, a: 1}
+    CraterRim: {r: 0.7, g: 0.66, b: 0.6, a: 1}
+    CraterFloor: {r: 0.16, g: 0.15, b: 0.14, a: 1}
+    DuneColor: {r: 0.48, g: 0.45, b: 0.4, a: 1}
+    SoilNodeColor: {r: 0.52, g: 0.48, b: 0.4, a: 1}
+    LairRim: {r: 0.18, g: 0.08, b: 0.08, a: 1}
+    LairPit: {r: 0.08, g: 0.04, b: 0.05, a: 1}
+    SkyTop: {r: 0.03, g: 0.04, b: 0.09, a: 1}
+    SkyHorizon: {r: 0.28, g: 0.24, b: 0.2, a: 1}
+    SunColor: {r: 1, g: 0.94, b: 0.86, a: 1}
+    SunIntensity: 1.45
+    SunEuler: {x: 48, y: -35, z: 0}
+    GradeFilter: {r: 0.94, g: 0.96, b: 1, a: 1}
+    AmbientHum: 48
+    FillColor: {r: 0.35, g: 0.48, b: 0.72, a: 1}
+    AmbientSky: {r: 0.28, g: 0.32, b: 0.42, a: 1}
+    AmbientEquator: {r: 0.22, g: 0.2, b: 0.18, a: 1}
+    AmbientGround: {r: 0.12, g: 0.1, b: 0.09, a: 1}
+    FogColor: {r: 0.18, g: 0.17, b: 0.16, a: 1}
+    FogStart: 90
+    FogEnd: 420
+    AtmosphereThickness: 0.15
+    SkyExposure: 0.55
+    CraterCount: 96
+    RockCount: 70
+    DuneCount: 0
+    LakeCount: 0
+    RiverCount: 0
+    ForestPatchCount: 0
+    RockFormationCount: 12
+    PoiCount: 9
+    GroundCover:
+    - Kind: 3
+      Density: 10
+      ScaleMin: 0.4
+      ScaleMax: 0.95
+      ColorA: {r: 0.5, g: 0.49, b: 0.47, a: 1}
+      ColorB: {r: 0.72, g: 0.71, b: 0.69, a: 1}
+      SplatAffinity: {x: 1, y: 1, z: 0.6, w: 1}
+      ClusterScale: 10
+      ClusterThreshold: 0.3
+      CastShadows: 0
+      Sink: 0
+    - Kind: 7
+      Density: 4.5
+      ScaleMin: 0.6
+      ScaleMax: 1.3
+      ColorA: {r: 0.46, g: 0.45, b: 0.44, a: 1}
+      ColorB: {r: 0.64, g: 0.63, b: 0.61, a: 1}
+      SplatAffinity: {x: 0.3, y: 1, z: 0.3, w: 0.4}
+      ClusterScale: 16
+      ClusterThreshold: 0.42
+      CastShadows: 0
+      Sink: 0
+    - Kind: 8
+      Density: 0.55
+      ScaleMin: 0.6
+      ScaleMax: 1.9
+      ColorA: {r: 0.5, g: 0.49, b: 0.47, a: 1}
+      ColorB: {r: 0.68, g: 0.67, b: 0.65, a: 1}
+      SplatAffinity: {x: 0.4, y: 1, z: 0.3, w: 0.4}
+      ClusterScale: 0
+      ClusterThreshold: 0
+      CastShadows: 1
+      Sink: 0.12
+    ResourceNodeCount: 24
+    LairCount: 8
+    CampusExclusion: 22
+    MinSpacing: 9
+    IcePolarBias: 0.55
+    WaterDeep: {r: 0.12, g: 0.28, b: 0.42, a: 1}
+    WaterShallow: {r: 0.22, g: 0.48, b: 0.55, a: 1}
+    ForestCanopy: {r: 0.14, g: 0.32, b: 0.12, a: 1}
+    ForestTrunk: {r: 0.28, g: 0.18, b: 0.1, a: 1}
+    ResourceWeights: 05000000030000000200000002000000
+    Kit: 0
+    LaunchTech: 11
+    ExtractYieldScale: 1
+    FarmYieldScale: 1
+    MineYieldScale: 1
+    PowerDrawScale: 1
+    AsteroidIsletCount: 0
+    IcePlateCount: 0
+    PopulationGoal: 12
+    SustainHoldSeconds: 40
+    ResearchRateMultiplier: 1
+    ResupplyIntervalScale: 1.11
+    ResupplyDockFee: 40
+    FreightMetals: 16
+    FreightIce: 8
+    OutpostPowerDraw: 2
+    StartRegolith: 90
+    StartWaterIce: 55
+    StartMetals: 3000
+    StartPower: 110
+    MoveSpeedScale: 1
+    RadiationDrainPerSecond: 0
+    RadiationSafeRadius: 22
+    AmbientThreat: 0.12
+    ExpansionThreat: 0.018
+    CampusFaunaCap: 5
+    MiteSpawnWeight: 0.25
+    LeechSpawnWeight: 0.65
+    TickSpawnWeight: 1.15
+    WispSpawnWeight: 0
+    CreeperSpawnWeight: 0
+    HopperSpawnWeight: 1.7
+    FaunaSpeedScale: 1
+    FaunaAggroScale: 1
+    LairStalkerBudget: 2
+    PreferMineMites: 0
+    FaunaMiteTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaLeechTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaCreeperTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaHopperTint: {r: 0.52, g: 0.5, b: 0.46, a: 1}
+    FaunaWispTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaTickTint: {r: 0, g: 0, b: 0, a: 0}
+  - Id: 2
+    Key: sol.mars
+    Traits:
+      Atmosphere: 1
+      Gravity: 0.38
+      TemperatureC: -60
+      Radiation: 0.4
+    Seed: 0
+    DisplayName: Mars
+    ShortCode: MARS
+    Briefing: Red dust. Wisps drain Power ({key:FlagClearThreat}); dust creepers
+      chew farms ({key:FlagDefend}). Hold pop 16, then Belt Hauler.
+    ArrivalLog: "Mars descent. Dust wisps on Power \u2014 Clear Threat. Dust creepers
+      on farms \u2014 Defend Area."
+    VictoryLog: "Mars holds. Belt Hauler is on the pad \u2014 trajectory into the
+      rocks is open."
+    FailLog: Mars outpost overwhelmed. The red plaza is not yours until the party
+      stands.
+    EndlessLog: "Mars holds. Keep colonizing the red crust \u2014 rating stands,
+      no hop."
+    GroundLight: {r: 0.66, g: 0.53, b: 0.4, a: 1}
+    GroundDark: {r: 0.44, g: 0.29, b: 0.2, a: 1}
+    Horizon: {r: 0.56, g: 0.32, b: 0.2, a: 1}
+    RockColor: {r: 0.36, g: 0.24, b: 0.16, a: 1}
+    CraterRim: {r: 0.6, g: 0.38, b: 0.24, a: 1}
+    CraterFloor: {r: 0.32, g: 0.19, b: 0.12, a: 1}
+    DuneColor: {r: 0.52, g: 0.28, b: 0.14, a: 1}
+    SoilNodeColor: {r: 0.62, g: 0.32, b: 0.16, a: 1}
+    LairRim: {r: 0.22, g: 0.07, b: 0.05, a: 1}
+    LairPit: {r: 0.1, g: 0.03, b: 0.02, a: 1}
+    SkyTop: {r: 0.68, g: 0.4, b: 0.2, a: 1}
+    SkyHorizon: {r: 0.94, g: 0.62, b: 0.32, a: 1}
+    SunColor: {r: 1, g: 0.91, b: 0.72, a: 1}
+    SunIntensity: 1.12
+    SunEuler: {x: 38, y: -20, z: 0}
+    GradeFilter: {r: 1, g: 0.99, b: 0.97, a: 1}
+    AmbientHum: 58
+    FillColor: {r: 0.92, g: 0.9, b: 0.88, a: 1}
+    AmbientSky: {r: 0.72, g: 0.62, b: 0.54, a: 1}
+    AmbientEquator: {r: 0.58, g: 0.46, b: 0.38, a: 1}
+    AmbientGround: {r: 0.34, g: 0.22, b: 0.14, a: 1}
+    FogColor: {r: 0.98, g: 0.61, b: 0.4, a: 1}
+    FogStart: 48
+    FogEnd: 95
+    AtmosphereThickness: 1.08
+    SkyExposure: 1.1
+    CraterCount: 56
+    RockCount: 80
+    DuneCount: 64
+    LakeCount: 0
+    RiverCount: 0
+    ForestPatchCount: 0
+    RockFormationCount: 16
+    PoiCount: 10
+    GroundCover:
+    - Kind: 3
+      Density: 11
+      ScaleMin: 0.4
+      ScaleMax: 0.95
+      ColorA: {r: 0.52, g: 0.25, b: 0.12, a: 1}
+      ColorB: {r: 0.68, g: 0.36, b: 0.19, a: 1}
+      SplatAffinity: {x: 1, y: 1, z: 0.7, w: 0.6}
+      ClusterScale: 9
+      ClusterThreshold: 0.3
+      CastShadows: 0
+      Sink: 0
+    - Kind: 7
+      Density: 5
+      ScaleMin: 0.6
+      ScaleMax: 1.35
+      ColorA: {r: 0.42, g: 0.2, b: 0.1, a: 1}
+      ColorB: {r: 0.58, g: 0.3, b: 0.16, a: 1}
+      SplatAffinity: {x: 0.3, y: 1, z: 0.4, w: 0.2}
+      ClusterScale: 15
+      ClusterThreshold: 0.42
+      CastShadows: 0
+      Sink: 0
+    - Kind: 8
+      Density: 0.65
+      ScaleMin: 0.6
+      ScaleMax: 2
+      ColorA: {r: 0.44, g: 0.22, b: 0.11, a: 1}
+      ColorB: {r: 0.6, g: 0.32, b: 0.17, a: 1}
+      SplatAffinity: {x: 0.3, y: 1, z: 0.3, w: 0.3}
+      ClusterScale: 0
+      ClusterThreshold: 0
+      CastShadows: 1
+      Sink: 0.12
+    ResourceNodeCount: 24
+    LairCount: 10
+    CampusExclusion: 22
+    MinSpacing: 8.5
+    IcePolarBias: 0.82
+    WaterDeep: {r: 0.12, g: 0.28, b: 0.42, a: 1}
+    WaterShallow: {r: 0.22, g: 0.48, b: 0.55, a: 1}
+    ForestCanopy: {r: 0.14, g: 0.32, b: 0.12, a: 1}
+    ForestTrunk: {r: 0.28, g: 0.18, b: 0.1, a: 1}
+    ResourceWeights: 03000000050000000200000002000000
+    Kit: 0
+    LaunchTech: 12
+    ExtractYieldScale: 1
+    FarmYieldScale: 1
+    MineYieldScale: 1
+    PowerDrawScale: 1
+    AsteroidIsletCount: 0
+    IcePlateCount: 0
+    PopulationGoal: 16
+    SustainHoldSeconds: 50
+    ResearchRateMultiplier: 0.9
+    ResupplyIntervalScale: 1.33
+    ResupplyDockFee: 60
+    FreightMetals: 22
+    FreightIce: 10
+    OutpostPowerDraw: 2
+    StartRegolith: 100
+    StartWaterIce: 65
+    StartMetals: 3200
+    StartPower: 120
+    MoveSpeedScale: 1
+    RadiationDrainPerSecond: 0
+    RadiationSafeRadius: 22
+    AmbientThreat: 0.12
+    ExpansionThreat: 0.018
+    CampusFaunaCap: 6
+    MiteSpawnWeight: 0.7
+    LeechSpawnWeight: 0.4
+    TickSpawnWeight: 0.2
+    WispSpawnWeight: 1.25
+    CreeperSpawnWeight: 1.15
+    HopperSpawnWeight: 0.55
+    FaunaSpeedScale: 1
+    FaunaAggroScale: 1
+    LairStalkerBudget: 2
+    PreferMineMites: 0
+    FaunaMiteTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaLeechTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaCreeperTint: {r: 0.62, g: 0.32, b: 0.14, a: 1}
+    FaunaHopperTint: {r: 0.72, g: 0.38, b: 0.16, a: 1}
+    FaunaWispTint: {r: 0.82, g: 0.52, b: 0.28, a: 1}
+    FaunaTickTint: {r: 0, g: 0, b: 0, a: 0}
+  - Id: 3
+    Key: sol.belt
+    Traits:
+      Atmosphere: 0
+      Gravity: 0.01
+      TemperatureC: -70
+      Radiation: 0.5
+    Seed: 0
+    DisplayName: Asteroid Belt
+    ShortCode: BELT
+    Briefing: No soil. Metal rush. Rock mites and ticks swarm mines ({key:FlagDefend}).
+      Shard hoppers test the Commons ({key:FlagClearThreat}). Then Icebreaker.
+    ArrivalLog: "Belt insertion. Tether the Commons. Rock mites and ticks follow
+      the ore \u2014 Defend Area. Shard hoppers raid HABs \u2014 Clear Threat."
+    VictoryLog: "Belt claim holds. Icebreaker staged \u2014 Europa's crust is next."
+    FailLog: The rocks took the outpost. Revive the robots or abandon this cluster.
+    EndlessLog: "Belt claim holds. Keep stripping the rocks \u2014 rating stands,
+      no hop."
+    GroundLight: {r: 0.4, g: 0.37, b: 0.33, a: 1}
+    GroundDark: {r: 0.17, g: 0.16, b: 0.15, a: 1}
+    Horizon: {r: 0.04, g: 0.04, b: 0.05, a: 1}
+    RockColor: {r: 0.38, g: 0.34, b: 0.3, a: 1}
+    CraterRim: {r: 0.28, g: 0.26, b: 0.24, a: 1}
+    CraterFloor: {r: 0.12, g: 0.11, b: 0.1, a: 1}
+    DuneColor: {r: 0.3, g: 0.28, b: 0.24, a: 1}
+    SoilNodeColor: {r: 0.45, g: 0.42, b: 0.36, a: 1}
+    LairRim: {r: 0.16, g: 0.08, b: 0.06, a: 1}
+    LairPit: {r: 0.06, g: 0.03, b: 0.03, a: 1}
+    SkyTop: {r: 0.01, g: 0.01, b: 0.02, a: 1}
+    SkyHorizon: {r: 0.08, g: 0.07, b: 0.09, a: 1}
+    SunColor: {r: 1, g: 0.95, b: 0.85, a: 1}
+    SunIntensity: 1.55
+    SunEuler: {x: 22, y: 48, z: 0}
+    GradeFilter: {r: 0.92, g: 0.93, b: 1, a: 1}
+    AmbientHum: 38
+    FillColor: {r: 0.36, g: 0.38, b: 0.48, a: 1}
+    AmbientSky: {r: 0.2, g: 0.22, b: 0.3, a: 1}
+    AmbientEquator: {r: 0.22, g: 0.2, b: 0.19, a: 1}
+    AmbientGround: {r: 0.09, g: 0.08, b: 0.08, a: 1}
+    FogColor: {r: 0.12, g: 0.12, b: 0.14, a: 1}
+    FogStart: 40
+    FogEnd: 220
+    AtmosphereThickness: 0.04
+    SkyExposure: 0.42
+    CraterCount: 18
+    RockCount: 220
+    DuneCount: 0
+    LakeCount: 0
+    RiverCount: 0
+    ForestPatchCount: 0
+    RockFormationCount: 12
+    PoiCount: 9
+    GroundCover:
+    - Kind: 7
+      Density: 9
+      ScaleMin: 0.5
+      ScaleMax: 1.2
+      ColorA: {r: 0.42, g: 0.38, b: 0.34, a: 1}
+      ColorB: {r: 0.6, g: 0.54, b: 0.46, a: 1}
+      SplatAffinity: {x: 1, y: 1, z: 1, w: 1}
+      ClusterScale: 10
+      ClusterThreshold: 0.3
+      CastShadows: 0
+      Sink: 0
+    - Kind: 3
+      Density: 6
+      ScaleMin: 0.45
+      ScaleMax: 0.9
+      ColorA: {r: 0.56, g: 0.52, b: 0.47, a: 1}
+      ColorB: {r: 0.72, g: 0.64, b: 0.5, a: 1}
+      SplatAffinity: {x: 1, y: 1, z: 1, w: 1}
+      ClusterScale: 8
+      ClusterThreshold: 0.35
+      CastShadows: 0
+      Sink: 0
+    - Kind: 8
+      Density: 0.8
+      ScaleMin: 0.6
+      ScaleMax: 2
+      ColorA: {r: 0.4, g: 0.37, b: 0.34, a: 1}
+      ColorB: {r: 0.56, g: 0.51, b: 0.46, a: 1}
+      SplatAffinity: {x: 0.5, y: 1, z: 0.5, w: 0.5}
+      ClusterScale: 0
+      ClusterThreshold: 0
+      CastShadows: 1
+      Sink: 0.12
+    - Kind: 9
+      Density: 0.55
+      ScaleMin: 0.6
+      ScaleMax: 1.4
+      ColorA: {r: 0.6, g: 0.42, b: 1, a: 1}
+      ColorB: {r: 0.32, g: 0.86, b: 0.92, a: 1}
+      SplatAffinity: {x: 0.5, y: 1, z: 1, w: 1}
+      ClusterScale: 20
+      ClusterThreshold: 0.58
+      CastShadows: 1
+      Sink: 0
+    ResourceNodeCount: 28
+    LairCount: 7
+    CampusExclusion: 16
+    MinSpacing: 6.5
+    IcePolarBias: 0.2
+    WaterDeep: {r: 0.12, g: 0.28, b: 0.42, a: 1}
+    WaterShallow: {r: 0.22, g: 0.48, b: 0.55, a: 1}
+    ForestCanopy: {r: 0.14, g: 0.32, b: 0.12, a: 1}
+    ForestTrunk: {r: 0.28, g: 0.18, b: 0.1, a: 1}
+    ResourceWeights: 02000000070000000200000004000000
+    Kit: 1
+    LaunchTech: 13
+    ExtractYieldScale: 1.35
+    FarmYieldScale: 0.35
+    MineYieldScale: 1.45
+    PowerDrawScale: 1.1
+    AsteroidIsletCount: 22
+    IcePlateCount: 0
+    PopulationGoal: 10
+    SustainHoldSeconds: 35
+    ResearchRateMultiplier: 1.05
+    ResupplyIntervalScale: 1.67
+    ResupplyDockFee: 80
+    FreightMetals: 30
+    FreightIce: 8
+    OutpostPowerDraw: 3
+    StartRegolith: 70
+    StartWaterIce: 40
+    StartMetals: 3800
+    StartPower: 110
+    MoveSpeedScale: 1.18
+    RadiationDrainPerSecond: 0
+    RadiationSafeRadius: 22
+    AmbientThreat: 0.1
+    ExpansionThreat: 0.022
+    CampusFaunaCap: 6
+    MiteSpawnWeight: 1.7
+    LeechSpawnWeight: 0.35
+    TickSpawnWeight: 1.6
+    WispSpawnWeight: 0
+    CreeperSpawnWeight: 0
+    HopperSpawnWeight: 0.95
+    FaunaSpeedScale: 1.28
+    FaunaAggroScale: 1.15
+    LairStalkerBudget: 2
+    PreferMineMites: 1
+    FaunaMiteTint: {r: 0.38, g: 0.32, b: 0.28, a: 1}
+    FaunaLeechTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaCreeperTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaHopperTint: {r: 0.4, g: 0.38, b: 0.36, a: 1}
+    FaunaWispTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaTickTint: {r: 0, g: 0, b: 0, a: 0}
+  - Id: 4
+    Key: sol.europa
+    Traits:
+      Atmosphere: 0
+      Gravity: 0.134
+      TemperatureC: -160
+      Radiation: 1
+    Seed: 0
+    DisplayName: Europa
+    ShortCode: EURO
+    Briefing: Ice crust, radiation. Fissure leeches and ice wisps drain Power ({key:FlagClearThreat}).
+      Ice creepers on farms ({key:FlagDefend}). Hold pop 14.
+    ArrivalLog: "Europa descent. Radiation outside the Commons. Fissure leeches and
+      ice wisps on Power \u2014 Clear Threat. Ice creepers chew greenhouses \u2014
+      Defend Area."
+    VictoryLog: Europa holds. Outer system is open. Oversee in sandbox or reseed
+      this ice.
+    FailLog: The crust took them. Revive, or the ice closes over the claim.
+    EndlessLog: "Europa holds. Keep colonizing the ice \u2014 rating stands, no hop."
+    GroundLight: {r: 0.78, g: 0.88, b: 0.92, a: 1}
+    GroundDark: {r: 0.42, g: 0.52, b: 0.58, a: 1}
+    Horizon: {r: 0.18, g: 0.28, b: 0.38, a: 1}
+    RockColor: {r: 0.55, g: 0.62, b: 0.68, a: 1}
+    CraterRim: {r: 0.62, g: 0.72, b: 0.78, a: 1}
+    CraterFloor: {r: 0.32, g: 0.42, b: 0.52, a: 1}
+    DuneColor: {r: 0.7, g: 0.82, b: 0.88, a: 1}
+    SoilNodeColor: {r: 0.85, g: 0.92, b: 0.95, a: 1}
+    LairRim: {r: 0.12, g: 0.18, b: 0.28, a: 1}
+    LairPit: {r: 0.04, g: 0.08, b: 0.14, a: 1}
+    SkyTop: {r: 0.06, g: 0.1, b: 0.22, a: 1}
+    SkyHorizon: {r: 0.35, g: 0.48, b: 0.62, a: 1}
+    SunColor: {r: 0.82, g: 0.9, b: 1, a: 1}
+    SunIntensity: 0.85
+    SunEuler: {x: 28, y: 12, z: 0}
+    GradeFilter: {r: 0.82, g: 0.94, b: 1, a: 1}
+    AmbientHum: 44
+    FillColor: {r: 0.35, g: 0.55, b: 0.75, a: 1}
+    AmbientSky: {r: 0.22, g: 0.32, b: 0.48, a: 1}
+    AmbientEquator: {r: 0.4, g: 0.52, b: 0.58, a: 1}
+    AmbientGround: {r: 0.18, g: 0.24, b: 0.28, a: 1}
+    FogColor: {r: 0.55, g: 0.7, b: 0.82, a: 1}
+    FogStart: 35
+    FogEnd: 200
+    AtmosphereThickness: 0.22
+    SkyExposure: 0.62
+    CraterCount: 24
+    RockCount: 48
+    DuneCount: 0
+    LakeCount: 0
+    RiverCount: 0
+    ForestPatchCount: 0
+    RockFormationCount: 10
+    PoiCount: 9
+    GroundCover:
+    - Kind: 10
+      Density: 2.6
+      ScaleMin: 0.5
+      ScaleMax: 1.4
+      ColorA: {r: 0.82, g: 0.92, b: 1, a: 1}
+      ColorB: {r: 0.95, g: 0.98, b: 1, a: 1}
+      SplatAffinity: {x: 1, y: 1, z: 0.3, w: 0}
+      ClusterScale: 14
+      ClusterThreshold: 0.45
+      CastShadows: 1
+      Sink: 0
+    - Kind: 7
+      Density: 6
+      ScaleMin: 0.5
+      ScaleMax: 1.1
+      ColorA: {r: 0.76, g: 0.85, b: 0.92, a: 1}
+      ColorB: {r: 0.92, g: 0.96, b: 1, a: 1}
+      SplatAffinity: {x: 1, y: 1, z: 0.5, w: 0.5}
+      ClusterScale: 10
+      ClusterThreshold: 0.3
+      CastShadows: 0
+      Sink: 0
+    - Kind: 3
+      Density: 4.5
+      ScaleMin: 0.45
+      ScaleMax: 0.9
+      ColorA: {r: 0.62, g: 0.42, b: 0.32, a: 1}
+      ColorB: {r: 0.76, g: 0.56, b: 0.45, a: 1}
+      SplatAffinity: {x: 0, y: 0.2, z: 1, w: 0}
+      ClusterScale: 8
+      ClusterThreshold: 0.3
+      CastShadows: 0
+      Sink: 0
+    - Kind: 9
+      Density: 0.12
+      ScaleMin: 0.6
+      ScaleMax: 1.2
+      ColorA: {r: 0.55, g: 0.85, b: 1, a: 1}
+      ColorB: {r: 0.76, g: 0.95, b: 1, a: 1}
+      SplatAffinity: {x: 1, y: 1, z: 1, w: 1}
+      ClusterScale: 18
+      ClusterThreshold: 0.6
+      CastShadows: 1
+      Sink: 0
+    ResourceNodeCount: 22
+    LairCount: 9
+    CampusExclusion: 20
+    MinSpacing: 8
+    IcePolarBias: 0.12
+    WaterDeep: {r: 0.12, g: 0.32, b: 0.48, a: 1}
+    WaterShallow: {r: 0.55, g: 0.78, b: 0.88, a: 1}
+    ForestCanopy: {r: 0.14, g: 0.32, b: 0.12, a: 1}
+    ForestTrunk: {r: 0.28, g: 0.18, b: 0.1, a: 1}
+    ResourceWeights: 02000000020000000700000003000000
+    Kit: 2
+    LaunchTech: 0
+    ExtractYieldScale: 1.15
+    FarmYieldScale: 1.4
+    MineYieldScale: 0.6
+    PowerDrawScale: 1.55
+    AsteroidIsletCount: 0
+    IcePlateCount: 16
+    PopulationGoal: 14
+    SustainHoldSeconds: 45
+    ResearchRateMultiplier: 0.8
+    ResupplyIntervalScale: 2
+    ResupplyDockFee: 100
+    FreightMetals: 0
+    FreightIce: 0
+    OutpostPowerDraw: 3
+    StartRegolith: 80
+    StartWaterIce: 95
+    StartMetals: 2600
+    StartPower: 150
+    MoveSpeedScale: 0.88
+    RadiationDrainPerSecond: 0.012
+    RadiationSafeRadius: 22
+    AmbientThreat: 0.16
+    ExpansionThreat: 0.02
+    CampusFaunaCap: 6
+    MiteSpawnWeight: 0.3
+    LeechSpawnWeight: 1.8
+    TickSpawnWeight: 0
+    WispSpawnWeight: 1.6
+    CreeperSpawnWeight: 1.05
+    HopperSpawnWeight: 0
+    FaunaSpeedScale: 0.92
+    FaunaAggroScale: 1.22
+    LairStalkerBudget: 3
+    PreferMineMites: 0
+    FaunaMiteTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaLeechTint: {r: 0.32, g: 0.82, b: 0.95, a: 1}
+    FaunaCreeperTint: {r: 0.72, g: 0.88, b: 0.9, a: 1}
+    FaunaHopperTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaWispTint: {r: 0, g: 0, b: 0, a: 0}
+    FaunaTickTint: {r: 0, g: 0, b: 0, a: 0}
+  worlds: []

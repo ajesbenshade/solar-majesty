@@ -35,7 +35,7 @@ is in it being honest, not in it being all ticked.
 - [x] Developer cheats (F10 hop, Shift+click unlock, F8/F9/R) gated to editor, dev builds and `-devtools` ([DevTools.cs](../Assets/Scripts/Systems/DevTools.cs))
 - [x] Persistent error log with Settings → Open Logs Folder ([ErrorLog.cs](../Assets/Scripts/Systems/ErrorLog.cs))
 - [x] Live-AI content guard on chat input, streaming text and replies ([AiContentGuard.cs](../Assets/Scripts/Systems/Narration/AiContentGuard.cs))
-- [ ] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`)
+- [x] Hardcoded catalogs moved to ScriptableObject databases (`TechCatalog`, `ShopCatalog`, `CelestialBodyCatalog`): assets in `Assets/Resources/Data`, re-exported from the built-in fallbacks with Solar Majesty > Data > Export All Databases
 - [x] Ironman wired to the run configuration (`ReplayRules.Ironman` chip, latched at New Game / Continue; blocks manual saves and body restarts; No Second Draft evaluates on body conquest)
 
 ## Look

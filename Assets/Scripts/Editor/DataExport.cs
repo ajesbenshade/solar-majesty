@@ -22,14 +22,41 @@ namespace SolarMajesty.EditorTools
             Debug.Log($"[DataExport] {db.entries.Count} techs -> {AssetDatabase.GetAssetPath(db)}");
         }
 
-        [MenuItem("Solar Majesty/Data/Create World Database", priority = 301)]
-        public static void CreateWorldDatabase()
+        [MenuItem("Solar Majesty/Data/Export Shop Database", priority = 301)]
+        public static void ExportShopDatabase()
         {
-            var db = LoadOrCreate<WorldDatabase>("WorldDatabase");
+            ShopCatalog.Reload(useAsset: false);
+            var db = LoadOrCreate<ShopDatabase>("ShopDatabase");
+            db.CopyFrom(ShopCatalog.All);
             EditorUtility.SetDirty(db);
             AssetDatabase.SaveAssets();
+            ShopCatalog.Reload();
+            Debug.Log($"[DataExport] {db.entries.Count} shop items -> {AssetDatabase.GetAssetPath(db)}");
+        }
+
+        /// <summary>Writes the five built-in Sol worlds. Worlds beyond the five in the asset are kept.</summary>
+        [MenuItem("Solar Majesty/Data/Export World Database", priority = 302)]
+        public static void ExportWorldDatabase()
+        {
+            var db = LoadOrCreate<WorldDatabase>("WorldDatabase");
+            db.sol.Clear();
+            CelestialBodyId[] bodies = CelestialBodyCatalog.All;
+            for (int i = 0; i < bodies.Length; i++)
+                db.sol.Add(CelestialBodyCatalog.BuiltIn(bodies[i]));
+            EditorUtility.SetDirty(db);
+            AssetDatabase.SaveAssets();
+            CelestialBodyCatalog.Reload();
             Selection.activeObject = db;
-            Debug.Log($"[DataExport] World database at {AssetDatabase.GetAssetPath(db)}");
+            Debug.Log($"[DataExport] {db.sol.Count} Sol worlds -> {AssetDatabase.GetAssetPath(db)}");
+        }
+
+        /// <summary>All three databases from the built-in catalogs. Also the batch-mode entry point.</summary>
+        [MenuItem("Solar Majesty/Data/Export All Databases", priority = 320)]
+        public static void ExportAll()
+        {
+            ExportTechDatabase();
+            ExportShopDatabase();
+            ExportWorldDatabase();
         }
 
         private static T LoadOrCreate<T>(string name) where T : ScriptableObject

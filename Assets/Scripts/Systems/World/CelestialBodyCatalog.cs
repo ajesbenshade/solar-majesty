@@ -26,16 +26,49 @@ namespace SolarMajesty
         public static CelestialBodyId[] All => AllBodies;
         public static CelestialBodyId Last => AllBodies[AllBodies.Length - 1];
 
-        public static CelestialBodyProfile Earth() => _earth ??=
-            Sol(BuildEarth(), "sol.earth", new EnvironmentTraits(Atmosphere.Breathable, 1f, 15f, 0f));
-        public static CelestialBodyProfile Luna() => _luna ??=
-            Sol(BuildLuna(), "sol.luna", new EnvironmentTraits(Atmosphere.None, 0.165f, -20f, 0.6f));
-        public static CelestialBodyProfile Mars() => _mars ??=
-            Sol(BuildMars(), "sol.mars", new EnvironmentTraits(Atmosphere.Thin, 0.38f, -60f, 0.4f));
-        public static CelestialBodyProfile Belt() => _belt ??=
-            Sol(BuildBelt(), "sol.belt", new EnvironmentTraits(Atmosphere.None, 0.01f, -70f, 0.5f));
-        public static CelestialBodyProfile Europa() => _europa ??=
-            Sol(BuildEuropa(), "sol.europa", new EnvironmentTraits(Atmosphere.None, 0.134f, -160f, 1f));
+        public static CelestialBodyProfile Earth() => _earth ??= Load(CelestialBodyId.Earth);
+        public static CelestialBodyProfile Luna() => _luna ??= Load(CelestialBodyId.Luna);
+        public static CelestialBodyProfile Mars() => _mars ??= Load(CelestialBodyId.Mars);
+        public static CelestialBodyProfile Belt() => _belt ??= Load(CelestialBodyId.Belt);
+        public static CelestialBodyProfile Europa() => _europa ??= Load(CelestialBodyId.Europa);
+
+        // Off only while exporting or testing the built-in profiles.
+        private static bool _useAsset = true;
+
+        /// <summary>A Sol world comes from the <see cref="WorldDatabase"/> asset when one carries it, else from the code below.</summary>
+        private static CelestialBodyProfile Load(CelestialBodyId id)
+        {
+            CelestialBodyProfile builtIn = BuiltIn(id);
+            CelestialBodyProfile shipped = _useAsset ? WorldDatabase.ShippedSol(builtIn.Key) : null;
+            if (shipped == null) return builtIn;
+            shipped.Id = id;
+            return shipped;
+        }
+
+        /// <summary>The profile as written in code: the fallback, and what the exporter writes out.</summary>
+        public static CelestialBodyProfile BuiltIn(CelestialBodyId id)
+        {
+            switch (id)
+            {
+                case CelestialBodyId.Earth:
+                    return Sol(BuildEarth(), "sol.earth", new EnvironmentTraits(Atmosphere.Breathable, 1f, 15f, 0f));
+                case CelestialBodyId.Mars:
+                    return Sol(BuildMars(), "sol.mars", new EnvironmentTraits(Atmosphere.Thin, 0.38f, -60f, 0.4f));
+                case CelestialBodyId.Belt:
+                    return Sol(BuildBelt(), "sol.belt", new EnvironmentTraits(Atmosphere.None, 0.01f, -70f, 0.5f));
+                case CelestialBodyId.Europa:
+                    return Sol(BuildEuropa(), "sol.europa", new EnvironmentTraits(Atmosphere.None, 0.134f, -160f, 1f));
+                default:
+                    return Sol(BuildLuna(), "sol.luna", new EnvironmentTraits(Atmosphere.None, 0.165f, -20f, 0.6f));
+            }
+        }
+
+        /// <summary>Drop the cached Sol profiles and read them again, from the asset or (false) from code.</summary>
+        public static void Reload(bool useAsset = true)
+        {
+            _useAsset = useAsset;
+            _earth = _luna = _mars = _belt = _europa = null;
+        }
 
         public static CelestialBodyProfile Get(CelestialBodyId id)
         {
