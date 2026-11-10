@@ -1,6 +1,6 @@
 # Phase 6 – Beyond Sol: Procedural Systems, Galaxy Layer, Multiplayer
 
-**Status:** Proposed (2026-11-09). Not started. Does not block Phase 5 or the Early Access launch.
+**Status:** 6A done on branch `claude/phase-6a-foundation` (2026-11-09), not merged. 6B–6D not started. Does not block Phase 5 or the Early Access launch.
 **Goal:** Turn a five-world campaign into an open-ended game: generated star systems to conquer,
 a galaxy layer that ties colonies together, rival overseers, and multiplayer.
 
@@ -69,25 +69,25 @@ old saves load.
 
 ### 6A status (2026-11-09, branch `claude/phase-6a-foundation`)
 
-Done, with 906 EditMode tests and the isolated PlayMode suite passing:
+Done, with 918 EditMode tests and the isolated PlayMode suite passing:
 
-- `OverseerCommandQueue`: all fourteen colony-changing player actions are commands, drained before the simulation steps. `-recordcommands` writes the log to the logs folder.
-- `ColonySim`: owns the clock, the seeded `SimRng`, robot ids, the queue and the pure systems. `GameLoop` supplies the scene through `IColonySimHost`. A sim runs headless, replays a log and hashes its state.
+- `OverseerCommandQueue`: all fourteen colony-changing player actions are commands, drained before the simulation steps. `-recordcommands` writes the log to the logs folder. A log from a session that began with Continue carries the save it resumed (`CommandLog.start`) and replays from it.
+- `ColonySim`: owns the clock, the seeded `SimRng`, robot ids, the queue, the pure systems, the run's rules and its seed. `GameLoop` supplies the scene through `IColonySimHost` and reads `Rules` and `WorldSeed` from the sim. A sim runs headless, captures and restores its scene-free state, replays a log and hashes its state.
+- Headless commands: nine of fourteen kinds take effect with no scene. A sim without a scene keeps a `StructureBoard` of its finished buildings for the three commands that name one. A speed change has nothing to do in a step, and the other four act on robots.
 - `OverseerSession`: one `ColonySim` per overseer in one process, commands routed by overseer id.
-- Worlds as data: every world has a key; a registered `CelestialBodyProfile` boots, plays and saves under its own key and seed, borrowing authored content from the Sol world its `Id` names. `WorldDatabase` registers worlds from an asset.
+- Worlds as data: every world has a key. A registered `CelestialBodyProfile` boots, plays and saves under its own key, with its own seed, travel snapshot file, campus and roster. `CelestialBodyProfile.Authored(aspect)` names which Sol world's terrain, ground, sky, fauna, sound, props and story a world uses, so a world can mix them.
 - Architecture is chosen from `EnvironmentTraits` through `ArchPreset`.
-- `TechCatalog` reads a `TechDatabase` asset when one ships.
-- Robots decide on the fixed step (`SpecialistAgent.SimTick`); simulation rolls draw from `SimRng`.
+- Catalogs: `TechCatalog`, `ShopCatalog` and the five Sol profiles load from assets in `Assets/Resources/Data`. The code stays as the fallback and as the source for Solar Majesty > Data > Export All Databases.
+- Fixed step: robots decide and act on the 20 Hz step (`SpecialistAgent.SimTick`), fauna run entirely on it, and `SimPose` draws a body between its last two simulated positions. `GameLoop.DrivesAgentSim = false` runs them per frame again.
 
-Still open:
+Limits that stay, and why:
 
-- Robot and fauna movement and work run per frame, so a replay reproduces the scene-free state and robot decisions' order, not positions or work totals. Closing this needs fixed-step movement with render interpolation.
-- The 200-odd branches on `CelestialBodyId` remain. A registered world takes its dressing, sky, music and narrative from the Sol world it borrows; those become data in 6B as the generator needs them.
-- A registered world shares the borrowed world's travel snapshot file (`world<N>.json`) and campus and roster prefs. Key those by world key before the two can be played in one campaign.
-- Headless command execution covers six of fourteen kinds; the rest act on robots or structures.
-- `ReplayRules`, the robot roster and `BodySeed` are still process-wide statics. The sim carries a `RunRules` snapshot, but the game reads the statics.
-- `ShopCatalog` and the Sol world profiles are still code. No database assets are committed.
-- A command log from a session that began with Continue starts from loaded state and cannot be replayed from the seed alone.
+- A robot's travel along a NavMesh path is still moved by Unity's `NavMeshAgent` every frame. Unity cannot step its agents at a fixed rate, so closing this means replacing the agent with our own path follower and local avoidance. Robot positions therefore still differ slightly between two runs of the same log; the world hash leaves them out.
+- Robots exist only in a scene, so paying the Fobot Yard, re-fabbing a rookie and forming or disbanding a party do nothing in a headless sim. The headless structure board gives a building a preferred class only from its `BuildingData`, not from the per-category defaults `ColonyStructure` applies.
+- `CelestialBodyId` remains as the name of an authored content set and as the campaign order. Campaign code (unlocks, launch tech, victory offers, the first-hour demo) still reads it; a world outside Sol is not part of that campaign.
+- `ReplayRules` and `BodySeed` remain as the title-screen settings and the prefs store. A colony reads its own rules through `GameLoop.Rules`; only a colony given rules with `PinRules` stops following the settings.
+- Nothing in the UI starts a registered world or a mixed one yet. That arrives with the 6B generator.
+- Nobody has watched fixed-step travel on screen. The PlayMode test checks that robots reach and work a flag and that no body jumps between frames, not how it looks.
 
 ## 6B – Procedural star systems (8–12 weeks)
 
