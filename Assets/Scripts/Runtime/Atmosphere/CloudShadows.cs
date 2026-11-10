@@ -34,13 +34,13 @@ namespace SolarMajesty
             Vector2 wind = Vector2.zero;
             if (DemoSettings.CloudShadows && body != null)
             {
-                if (body.Id == CelestialBodyId.Earth)
+                if (body.Authored(WorldAspect.Sky) == CelestialBodyId.Earth)
                 {
                     cookie = _earthCookie != null ? _earthCookie : (_earthCookie = Build("SM_EarthCloudCookie", 1337, 0.50f, 0.70f, 0.50f));
                     size = 96f;
                     wind = new Vector2(1.6f, 0.7f);
                 }
-                else if (body.Id == CelestialBodyId.Mars)
+                else if (body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars)
                 {
                     cookie = _marsCookie != null ? _marsCookie : (_marsCookie = Build("SM_MarsDustCookie", 4242, 0.40f, 0.80f, 0.82f));
                     size = 150f;

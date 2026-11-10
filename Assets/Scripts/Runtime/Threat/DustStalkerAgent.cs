@@ -537,7 +537,7 @@ namespace SolarMajesty
                 _preferMines = body.PreferMineMites;
                 if (body.FaunaMiteTint.a > 0.05f)
                     stalkerColor = body.FaunaMiteTint;
-                if (body.Id == CelestialBodyId.Belt)
+                if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Belt)
                 {
                     gameObject.name = "RockMite";
                     _roleNoun = "ROCK MITE";
@@ -549,7 +549,7 @@ namespace SolarMajesty
             {
                 if (body.FaunaLeechTint.a > 0.05f)
                     stalkerColor = body.FaunaLeechTint;
-                if (body.Id == CelestialBodyId.Europa)
+                if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Europa)
                 {
                     gameObject.name = "FissureLeech";
                     _roleNoun = "FISSURE LEECH";
@@ -561,7 +561,7 @@ namespace SolarMajesty
             {
                 if (body.FaunaWispTint.a > 0.05f)
                     stalkerColor = body.FaunaWispTint;
-                if (body.Id == CelestialBodyId.Mars)
+                if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Mars)
                 {
                     gameObject.name = "DustWisp";
                     stalkerColor = body.FaunaWispTint.a > 0.05f
@@ -571,7 +571,7 @@ namespace SolarMajesty
                     _roleVerb = "DUST DRAIN";
                     if (_label != null) _label.color = new Color(1f, 0.72f, 0.42f);
                 }
-                else if (body.Id == CelestialBodyId.Europa)
+                else if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Europa)
                 {
                     gameObject.name = "IceWisp";
                     _roleNoun = "ICE WISP";
@@ -584,14 +584,14 @@ namespace SolarMajesty
                 _preferMines = true;
                 if (body.FaunaTickTint.a > 0.05f)
                     stalkerColor = body.FaunaTickTint;
-                if (body.Id == CelestialBodyId.Belt)
+                if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Belt)
                 {
                     gameObject.name = "RockTick";
                     _roleNoun = "ROCK TICK";
                     _roleVerb = "ORE STEAL";
                     if (_label != null) _label.color = new Color(0.88f, 0.68f, 0.38f);
                 }
-                else if (body.Id == CelestialBodyId.Luna || body.Id == CelestialBodyId.Earth)
+                else if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Luna || body.Authored(WorldAspect.Fauna) == CelestialBodyId.Earth)
                 {
                     gameObject.name = "DustTick";
                     _roleNoun = "DUST TICK";
@@ -604,14 +604,14 @@ namespace SolarMajesty
                 _preferFarms = true;
                 if (body.FaunaCreeperTint.a > 0.05f)
                     stalkerColor = body.FaunaCreeperTint;
-                if (body.Id == CelestialBodyId.Mars)
+                if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Mars)
                 {
                     gameObject.name = "DustCreeper";
                     _roleNoun = "DUST CREEPER";
                     _roleVerb = "FARM STEAL";
                     if (_label != null) _label.color = new Color(1f, 0.62f, 0.32f);
                 }
-                else if (body.Id == CelestialBodyId.Europa)
+                else if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Europa)
                 {
                     gameObject.name = "IceCreeper";
                     _roleNoun = "ICE CREEPER";
@@ -635,14 +635,14 @@ namespace SolarMajesty
             {
                 if (body.FaunaHopperTint.a > 0.05f)
                     stalkerColor = body.FaunaHopperTint;
-                if (body.Id == CelestialBodyId.Mars)
+                if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Mars)
                 {
                     gameObject.name = "DustHopper";
                     _roleNoun = "DUST HOPPER";
                     _roleVerb = "RAID";
                     if (_label != null) _label.color = new Color(1f, 0.68f, 0.38f);
                 }
-                else if (body.Id == CelestialBodyId.Belt)
+                else if (body.Authored(WorldAspect.Fauna) == CelestialBodyId.Belt)
                 {
                     gameObject.name = "ShardHopper";
                     _roleNoun = "SHARD HOPPER";
@@ -709,7 +709,44 @@ namespace SolarMajesty
             _threat?.Clear(_sourceId);
         }
 
-        private void Update() => Tick(Time.deltaTime);
+        private void Update()
+        {
+            // In play the game loop runs this animal on the fixed step (SimTick) and only the
+            // dressing runs per frame. With no loop driving it (tests) everything runs here.
+            if (_loop == null || !_loop.DrivesAgentSim)
+            {
+                Tick(Time.deltaTime);
+                return;
+            }
+            if (!_downed && IsAlive && _threat != null)
+                TickPresentation(Time.deltaTime);
+        }
+
+        // Where this animal is on the fixed step, and where it is drawn between steps.
+        private SimPose _pose;
+        private bool _inSimStep;
+
+        /// <summary>One fixed simulation step, run from the game loop.</summary>
+        public void SimTick(float dt)
+        {
+            Vector3 before = transform.position;
+            _inSimStep = true;
+            try
+            {
+                Tick(dt);
+            }
+            finally
+            {
+                _inSimStep = false;
+            }
+            if (this != null) _pose.Stepped(transform, before);
+        }
+
+        /// <summary>Before a frame's commands and steps: stand on the simulated position.</summary>
+        public void SimBegin() => _pose.Begin(transform);
+
+        /// <summary>After a frame's steps: draw this animal part-way through its last step.</summary>
+        public void SimPresent(float alpha) => _pose.Present(transform, alpha);
 
         /// <summary>One simulation step. EditMode tests advance the corpse timer without waiting on the player loop.</summary>
         internal void Tick(float dt)
@@ -1302,6 +1339,8 @@ namespace SolarMajesty
 
         private void TickPresentation(float dt)
         {
+            // On the fixed step the dressing waits for Update, which runs it every frame.
+            if (_inSimStep) return;
             FaceFlat(Vector3.zero);
 
             // Growl on the rising edge of aggro: the "it has seen you" cue, not a loop.
@@ -1510,6 +1549,7 @@ namespace SolarMajesty
             if (delta.sqrMagnitude >= 0.0001f)
                 _faceDir = delta.normalized;
             if (_faceDir.sqrMagnitude < 0.0001f) return;
+            if (_inSimStep) return; // a step only sets the heading; the turn is drawn per frame
             Quaternion look = Quaternion.LookRotation(_faceDir, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(
                 transform.rotation, look, 640f * Time.deltaTime);

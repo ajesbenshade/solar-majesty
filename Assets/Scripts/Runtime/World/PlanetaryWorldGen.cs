@@ -57,9 +57,9 @@ namespace SolarMajesty
         /// Drop camera is ortho 16 — 20 m exclusion hid the Earth biome and left Mars a tiled plane.
         /// </summary>
         private float VistaExclusion =>
-            _body != null && (_body.Id == CelestialBodyId.Earth
-                || _body.Id == CelestialBodyId.Mars
-                || _body.Id == CelestialBodyId.Luna)
+            _body != null && (_body.Authored(WorldAspect.Terrain) == CelestialBodyId.Earth
+                || _body.Authored(WorldAspect.Terrain) == CelestialBodyId.Mars
+                || _body.Authored(WorldAspect.Terrain) == CelestialBodyId.Luna)
                 ? 11.2f
                 : (_body != null ? _body.CampusExclusion : 20f);
 
@@ -72,7 +72,7 @@ namespace SolarMajesty
             _grid = grid;
             _body = body ?? CelestialBodyCatalog.Earth();
             _bake = TerrainDataBake.Current;
-            if (_bake != null && _bake.BodyId != _body.Id) _bake = null;
+            if (_bake != null && _bake.BodyId != _body.Authored(WorldAspect.Terrain)) _bake = null;
             _nodes.Clear();
             _lairs.Clear();
             _zones.Clear();
@@ -597,8 +597,8 @@ namespace SolarMajesty
         private GameObject SpawnTree(Transform parent, Vector3 local, System.Random rng)
         {
             float h = Mathf.Lerp(1.1f, 2.6f, (float)rng.NextDouble());
-            int variant = _body.Id == CelestialBodyId.Earth ? rng.Next(0, 8) : rng.Next(0, 2);
-            var meshPrefab = EnvironmentMeshCatalog.LoadTree(variant, _body.Id);
+            int variant = _body.Authored(WorldAspect.Terrain) == CelestialBodyId.Earth ? rng.Next(0, 8) : rng.Next(0, 2);
+            var meshPrefab = EnvironmentMeshCatalog.LoadTree(variant, _body.Authored(WorldAspect.Terrain));
             if (meshPrefab != null)
             {
                 GameObject mesh = EnvironmentMeshCatalog.IsVendorNature(meshPrefab)
@@ -831,7 +831,7 @@ namespace SolarMajesty
                 rocksPlaced++;
 
                 float s = Mathf.Lerp(0.28f, 0.92f, (float)rng.NextDouble());
-                var meshPrefab = EnvironmentMeshCatalog.LoadRock(i, _body.Id);
+                var meshPrefab = EnvironmentMeshCatalog.LoadRock(i, _body.Authored(WorldAspect.Terrain));
                 if (meshPrefab != null)
                 {
                     GameObject mesh;
@@ -867,7 +867,7 @@ namespace SolarMajesty
                     continue;
                 }
 
-                bool cluster = _body.Id == CelestialBodyId.Mars && rng.NextDouble() < 0.32;
+                bool cluster = _body.Authored(WorldAspect.Terrain) == CelestialBodyId.Mars && rng.NextDouble() < 0.32;
                 int lobes = cluster ? 2 + rng.Next(0, 2) : 1;
                 var rock = new GameObject($"Rock_{i}");
                 rock.transform.SetParent(root, false);
@@ -987,7 +987,7 @@ namespace SolarMajesty
                 go.transform.SetParent(root, false);
                 go.transform.position = new Vector3(pos.x, GroundY(pos), pos.z);
                 var lair = go.AddComponent<StalkerLair>();
-                Color soil = _body.Id == CelestialBodyId.Earth
+                Color soil = _body.Authored(WorldAspect.Terrain) == CelestialBodyId.Earth
                     ? new Color(0.40f, 0.31f, 0.22f)
                     : Color.Lerp(_body.GroundDark, _body.GroundLight, 0.45f);
                 Color stone = Color.Lerp(_body.RockColor, _body.GroundLight, 0.35f);

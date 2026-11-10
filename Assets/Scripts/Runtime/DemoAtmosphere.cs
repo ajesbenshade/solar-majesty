@@ -64,10 +64,10 @@ namespace SolarMajesty
             sun.shadows = LightShadows.Soft;
             // Mars concept wants long readable shadows, not hard black plates: shadowed dirt
             // should hold >= 60 % of lit-dirt luminance (dream-loop round 6 Tier 2 gate).
-            sun.shadowStrength = body.Id == CelestialBodyId.Mars
+            sun.shadowStrength = body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars
                 ? 0.46f
-                : body.Id == CelestialBodyId.Luna ? 0.90f
-                : body.Id == CelestialBodyId.Earth ? 0.84f : 0.72f;
+                : body.Authored(WorldAspect.Sky) == CelestialBodyId.Luna ? 0.90f
+                : body.Authored(WorldAspect.Sky) == CelestialBodyId.Earth ? 0.84f : 0.72f;
             sun.shadowBias = 0.04f;
             sun.shadowNormalBias = 0.55f;
             sun.shadowNearPlane = 0.2f;
@@ -92,8 +92,8 @@ namespace SolarMajesty
             if (fill == null) fill = go.AddComponent<Light>();
             fill.type = LightType.Directional;
             fill.color = body.FillColor;
-            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.50f
-                : body.Id == CelestialBodyId.Earth ? 0.34f : 0.28f;
+            fill.intensity = body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars ? 0.50f
+                : body.Authored(WorldAspect.Sky) == CelestialBodyId.Earth ? 0.34f : 0.28f;
             fill.shadows = LightShadows.None;
             return fill;
         }
@@ -109,7 +109,7 @@ namespace SolarMajesty
             // Glossy surfaces mirror the environment. The Procedural skybox keeps a Rayleigh-blue
             // zenith even with an orange tint, which put a cool cast on every white hull; Mars
             // reflects a warm dust cubemap instead (salmon horizon, muted ochre zenith).
-            if (body.Id == CelestialBodyId.Mars)
+            if (body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars)
             {
                 RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Custom;
                 RenderSettings.customReflectionTexture = MarsReflectionCube(body);
@@ -126,7 +126,7 @@ namespace SolarMajesty
             RenderSettings.fog = true;
             RenderSettings.fogColor = body.FogColor;
 
-            if (body.Id == CelestialBodyId.Mars)
+            if (body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars)
             {
                 // Linear so the far ground tints without washing hulls. Catalog FogStart/FogEnd
                 // are the play-ortho 10 hint; SyncFog stretches them with live camera depth so
@@ -171,7 +171,7 @@ namespace SolarMajesty
                 _dioramaFog = false;
                 ConfigureAmbientAndFog(body);
             }
-            if (body.Id != CelestialBodyId.Mars) return;
+            if (body.Authored(WorldAspect.Sky) != CelestialBodyId.Mars) return;
 
             ComputeMarsLinearFog(
                 body,
@@ -293,11 +293,11 @@ namespace SolarMajesty
         {
             if (cam == null) return;
             // Mars: salmon haze clear (not dark void) so the upper ortho band never goes black.
-            cam.backgroundColor = body != null && body.Id == CelestialBodyId.Mars
+            cam.backgroundColor = body != null && body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars
                 ? PlanetaryMapDressing.VoidFillColor(body)
                 : PlanetaryMapDressing.VoidFillColor(body);
             cam.farClipPlane = Mathf.Max(cam.farClipPlane, 2000f);
-            if (body != null && body.Id == CelestialBodyId.Mars)
+            if (body != null && body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars)
                 cam.clearFlags = CameraClearFlags.SolidColor;
             else if (cam.clearFlags != CameraClearFlags.Skybox)
                 cam.clearFlags = CameraClearFlags.SolidColor;
@@ -342,13 +342,13 @@ namespace SolarMajesty
             if (!profile.TryGet(out ColorAdjustments color))
                 color = profile.Add<ColorAdjustments>(true);
             color.colorFilter.Override(body.GradeFilter);
-            if (body.Id == CelestialBodyId.Earth)
+            if (body.Authored(WorldAspect.Sky) == CelestialBodyId.Earth)
             {
                 color.contrast.Override(12f);
                 color.saturation.Override(14f);
                 color.postExposure.Override(0.10f);
             }
-            else if (body.Id == CelestialBodyId.Mars)
+            else if (body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars)
             {
                 color.contrast.Override(11f);
                 color.saturation.Override(4f);
@@ -385,7 +385,7 @@ namespace SolarMajesty
                 balance = profile.Add<WhiteBalance>(true);
             balance.active = true;
 
-            switch (body.Id)
+            switch (body.Authored(WorldAspect.Sky))
             {
                 case CelestialBodyId.Mars:
                     balance.temperature.Override(-16f);

@@ -91,7 +91,7 @@ namespace SolarMajesty
         public static Color GoldenColor(CelestialBodyProfile body, Color baseColor)
         {
             if (body == null) return baseColor;
-            return body.Id switch
+            return body.Authored(WorldAspect.Sky) switch
             {
                 CelestialBodyId.Earth => new Color(1f, 0.64f, 0.36f),
                 CelestialBodyId.Mars => new Color(0.80f, 0.86f, 1f),
@@ -103,7 +103,7 @@ namespace SolarMajesty
         public static Color NightColor(CelestialBodyProfile body)
         {
             if (body == null) return new Color(0.5f, 0.58f, 0.8f);
-            return body.Id switch
+            return body.Authored(WorldAspect.Sky) switch
             {
                 CelestialBodyId.Earth => new Color(0.46f, 0.56f, 0.86f),
                 CelestialBodyId.Luna => new Color(0.56f, 0.66f, 0.96f),

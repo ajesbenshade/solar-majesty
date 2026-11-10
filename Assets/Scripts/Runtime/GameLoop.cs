@@ -126,6 +126,9 @@ namespace SolarMajesty
         public GuildBenefitDirector GuildBenefits { get; private set; }
         public IReadOnlyList<HeroParty> Parties => _parties;
         public CelestialBodyId ActiveBody => celestialBody;
+
+        /// <summary>Whose decrees, cutscenes and advisor lines this world tells.</summary>
+        private CelestialBodyId StoryBody => _body != null ? _body.Authored(WorldAspect.Story) : celestialBody;
         public bool StartsEmpty => !spawnShowcaseColony;
         public bool SpawnWaystationInn => spawnWaystationInn;
         public DemoScreen Screen { get; private set; } = DemoScreen.Title;
@@ -474,8 +477,12 @@ namespace SolarMajesty
         /// <summary>The seeded stream for simulation rolls. Cosmetic randomness must not draw from it.</summary>
         public SimRng Rng => _simRng;
 
-        /// <summary>True once this loop steps robots' decisions on the fixed tick (see <see cref="SpecialistAgent.SimTick"/>).</summary>
-        public bool DrivesAgentSim { get; private set; }
+        /// <summary>
+        /// True once this loop steps robots and fauna on the fixed tick (see
+        /// <see cref="SpecialistAgent.SimTick"/>). Turn off to run them per frame again, as they
+        /// did before the fixed step; do it before the first frame of play.
+        /// </summary>
+        public bool DrivesAgentSim { get; set; }
 
         /// <summary>
         /// <see cref="ColonySim.StateHash"/> plus the robots and fauna this scene holds: who exists,
@@ -712,7 +719,7 @@ namespace SolarMajesty
                 OverseerVoice.SpeakIfScripted(spoken);
         }
 
-        public bool JexLessonsOn => JexAdvisor.TrainingWheels(celestialBody);
+        public bool JexLessonsOn => JexAdvisor.TrainingWheels(StoryBody);
 
         /// <summary>Stalker drank the tank. Failure aside, not a sale.</summary>
         public void NoteIceSiphon() => TryJex(JexBeat.StalkerSiphon, true);
@@ -720,7 +727,7 @@ namespace SolarMajesty
         private bool TryJex(JexBeat beat, bool condition = true)
         {
             if (StillCaptureHold.Active) return false;
-            bool wheels = JexAdvisor.TrainingWheels(celestialBody);
+            bool wheels = JexAdvisor.TrainingWheels(StoryBody);
             if (!_jex.TrySpeak(beat, wheels, condition)) return false;
             LogOverseerScript(JexCatalog.Say(beat), 6.2f);
             return true;
@@ -1058,7 +1065,7 @@ namespace SolarMajesty
             // W2 arrival cuts replace stale Earth ArrivalLog and overlay Luna/Mars fauna tees.
             if (!StillCaptureHold.Active &&
                 _body != null &&
-                !CampaignCutsceneCatalog.TryGetArrival(_body.Id, out _) &&
+                !CampaignCutsceneCatalog.TryGetArrival(StoryBody, out _) &&
                 !string.IsNullOrEmpty(_body.ArrivalLog))
             {
                 Log.Push(_body.ArrivalLogText);
@@ -1628,14 +1635,14 @@ namespace SolarMajesty
             BroadcastRefusalChips(handle);
 
             EnsureNarrative();
-            bool wheels = JexAdvisor.TrainingWheels(celestialBody);
+            bool wheels = JexAdvisor.TrainingWheels(StoryBody);
 
             if (TryJex(JexBeat.FirstFlag))
             {
                 // first-flag lesson; decree copy waits for the next post
             }
             else if (wheels &&
-                     NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree) &&
+                     NarrativeBeatTracker.TryResolvePosted(handle, StoryBody, CurrentNarrativeHint(), out var decree) &&
                      _narrative.TryTakePostToast(decree.Id, out var toast))
             {
                 LogOverseer(toast.LineText, 6.5f);
@@ -1684,7 +1691,7 @@ namespace SolarMajesty
             }
 
             EnsureNarrative();
-            if (!NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree))
+            if (!NarrativeBeatTracker.TryResolvePosted(handle, StoryBody, CurrentNarrativeHint(), out var decree))
                 return;
             _narrative.NoteClaimed(decree.Id);
             if (_narrative.TryTakeClaimToast(decree.Id, out var toast))
@@ -1696,7 +1703,7 @@ namespace SolarMajesty
         public void NotifyFlagCompleted(FlagHandle handle)
         {
             EnsureNarrative();
-            if (!NarrativeBeatTracker.TryResolvePosted(handle, celestialBody, CurrentNarrativeHint(), out var decree))
+            if (!NarrativeBeatTracker.TryResolvePosted(handle, StoryBody, CurrentNarrativeHint(), out var decree))
             {
                 SyncNarrativeCivic();
                 return;
@@ -1785,7 +1792,7 @@ namespace SolarMajesty
             if (StillCaptureHold.Active) return;
             EnsureNarrative();
             bool charter = Research != null && Research.IsUnlocked(TechId.GuildCharter);
-            _narrative.SyncCivic(celestialBody, CurrentNarrativeHint(), charter, _launchCraftStaged);
+            _narrative.SyncCivic(StoryBody, CurrentNarrativeHint(), charter, _launchCraftStaged);
         }
 
         private void BeginNarrativeSession()
@@ -1794,7 +1801,7 @@ namespace SolarMajesty
             if (StillCaptureHold.Active) return;
             SyncNarrativeCivic();
 
-            string arrivalKey = CampaignCutsceneCatalog.ArrivalKey(celestialBody);
+            string arrivalKey = CampaignCutsceneCatalog.ArrivalKey(StoryBody);
             bool hop = !string.IsNullOrEmpty(_consumedTravelLog);
             bool freshDrop = !_continuedColony;
             if (!string.IsNullOrEmpty(arrivalKey) &&
@@ -1804,17 +1811,17 @@ namespace SolarMajesty
                 _narrative.EnqueueCut(arrivalKey);
             }
 
-            string travelKey = AdvisorToastCatalog.TravelKeyForArrival(celestialBody);
+            string travelKey = AdvisorToastCatalog.TravelKeyForArrival(StoryBody);
             bool announce = hop || freshDrop;
             // Continue/Load rebuilds the narrative tracker, so a first-run key would
             // speak again. The loaded campus is the source of truth, not that fresh tracker.
             var loaded = CurrentNarrativeHint();
-            if (announce && celestialBody == CelestialBodyId.Luna && TryJex(JexBeat.Drop))
+            if (announce && StoryBody == CelestialBodyId.Luna && TryJex(JexBeat.Drop))
             {
                 // Luna training-wheels drop. W2 arrival copy stays in the catalog.
             }
             else if (announce &&
-                     JexAdvisor.TrainingWheels(celestialBody) &&
+                     JexAdvisor.TrainingWheels(StoryBody) &&
                      AdvisorArrival.ShouldSpeak(travelKey, loaded.HasCommons) &&
                      _narrative.TryTakeTravelToast(travelKey, out var toast))
             {
@@ -2651,6 +2658,9 @@ namespace SolarMajesty
             if (Settlement != null && Settlement.HasCommons) _commonsEverStood = true;
             if (Placer != null) Stats.NoteModules(Placer.Pieces.Count);
 
+            // Robots and fauna stand on their simulated positions while commands and steps run.
+            BeginSimPoses();
+
             // Commands land on a step boundary, and still apply while the game speed is on hold.
             Commands.Drain(_sim.TotalSteps, this);
 
@@ -2659,6 +2669,9 @@ namespace SolarMajesty
             int steps = _sim.Advance(Time.deltaTime);
             for (int s = 0; s < steps; s++)
                 TickSimulation(_sim.StepSeconds);
+
+            // Then they are drawn part-way through their last step, so 20 Hz travel reads smooth.
+            PresentSimPoses(_sim.Alpha);
 
             RefreshSustainRates();
             TickCourierPad();
@@ -2692,6 +2705,32 @@ namespace SolarMajesty
         /// </summary>
         private void TickSimulation(float dt) => Sim.Step(dt, this);
 
+        private void BeginSimPoses()
+        {
+            if (!DrivesAgentSim) return;
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                if (_agents[i] != null) _agents[i].SimBegin();
+            }
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                if (_stalkers[i] != null) _stalkers[i].SimBegin();
+            }
+        }
+
+        private void PresentSimPoses(float alpha)
+        {
+            if (!DrivesAgentSim) return;
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                if (_agents[i] != null) _agents[i].SimPresent(alpha);
+            }
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                if (_stalkers[i] != null) _stalkers[i].SimPresent(alpha);
+            }
+        }
+
         // IColonySimHost: the scene's share of a step, called by ColonySim.Step in this order.
 
         void IColonySimHost.TickVillage(float dt) => Village?.Tick(dt);
@@ -2711,10 +2750,15 @@ namespace SolarMajesty
             TickFlagInterest(dt);
             TickCampusEcology(dt);
             TickKingdomThreat(dt);
-            // Robots decide in spawn order, so the rolls they draw come in the same order every run.
+            // Robots, then fauna, each in spawn order, so the rolls they draw come in the same
+            // order every run. A step may spawn or remove a body, so the counts are read each pass.
             for (int i = 0; i < _agents.Count; i++)
             {
                 if (_agents[i] != null) _agents[i].SimTick(dt);
+            }
+            for (int i = 0; i < _stalkers.Count; i++)
+            {
+                if (_stalkers[i] != null) _stalkers[i].SimTick(dt);
             }
         }
 
@@ -3200,7 +3244,7 @@ namespace SolarMajesty
                 string craft = Research.LaunchTechLabel(celestialBody);
                 LogOverseer(Loc.F("{0} staged on the Landing Pad. Launch gate is open.", craft));
                 EnsureNarrative();
-                string completeKey = AdvisorToastCatalog.CompleteKeyForCraft(celestialBody);
+                string completeKey = AdvisorToastCatalog.CompleteKeyForCraft(StoryBody);
                 if (!string.IsNullOrEmpty(completeKey) &&
                     _narrative.TryTakeCompleteToast(completeKey, out var stagedToast))
                 {
@@ -3484,7 +3528,7 @@ namespace SolarMajesty
             mainCamera.nearClipPlane = 0.3f;
             // Deep horizon floor lives near y=-80; far clip must reach it at max ortho.
             mainCamera.farClipPlane = 2000f;
-            if (_body != null && _body.Id == CelestialBodyId.Mars)
+            if (_body != null && _body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars)
             {
                 // Dream-loop: salmon haze clear — Skybox was reading as a hard black cut.
                 mainCamera.clearFlags = CameraClearFlags.SolidColor;
@@ -4824,7 +4868,7 @@ namespace SolarMajesty
             var mine = Village != null
                 ? Village.NearestByCategory(campus, 80f, BuildingCategory.Mine, BuildingCategory.Mining)
                 : null;
-            string tickLine = _body != null && _body.Id == CelestialBodyId.Belt
+            string tickLine = _body != null && _body.Authored(WorldAspect.Fauna) == CelestialBodyId.Belt
                 ? Loc.S("Rock ticks on the ore — post Defend Area.")
                 : Loc.S("Dust ticks on the ore — post Defend Area.");
             if (mine != null && TrySpawnCampusKind(
@@ -4884,7 +4928,7 @@ namespace SolarMajesty
         private string CreeperFirstLog()
         {
             if (_body == null) return Loc.S("Soil creepers on the farm — post Defend Area.");
-            switch (_body.Id)
+            switch (_body.Authored(WorldAspect.Fauna))
             {
                 case CelestialBodyId.Mars: return Loc.S("Dust creepers on the farm — post Defend Area.");
                 case CelestialBodyId.Europa: return Loc.S("Ice creepers on the greenhouse — post Defend Area.");
@@ -4895,7 +4939,7 @@ namespace SolarMajesty
         private string HopperFirstLog()
         {
             if (_body == null) return Loc.S("Ash hoppers on the HAB — post Clear Threat.");
-            switch (_body.Id)
+            switch (_body.Authored(WorldAspect.Fauna))
             {
                 case CelestialBodyId.Mars: return Loc.S("Dust hoppers at the Commons — post Clear Threat.");
                 case CelestialBodyId.Belt: return Loc.S("Shard hoppers on the Commons — post Clear Threat.");

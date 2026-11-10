@@ -124,7 +124,7 @@ namespace SolarMajesty
         }
 
         private static bool HasAir(CelestialBodyProfile body) =>
-            body != null && (body.Id == CelestialBodyId.Earth || body.Id == CelestialBodyId.Mars);
+            body != null && (body.Authored(WorldAspect.Sky) == CelestialBodyId.Earth || body.Authored(WorldAspect.Sky) == CelestialBodyId.Mars);
 
         private static Color Opaque(Color c)
         {

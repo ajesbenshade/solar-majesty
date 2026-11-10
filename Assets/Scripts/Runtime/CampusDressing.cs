@@ -110,7 +110,7 @@ namespace SolarMajesty
             }
 
             // Overview isometric: denser crates / cones on Mars only. Earth meadow stays sparse.
-            if (body != null && body.Id == CelestialBodyId.Mars && _count < MaxProps - 3)
+            if (body != null && body.Authored(WorldAspect.Props) == CelestialBodyId.Mars && _count < MaxProps - 3)
             {
                 SpawnPallet(origin + offsetB * 1.25f, body, parent);
                 SpawnCone(origin - offset * 1.2f, body, parent);
@@ -177,7 +177,7 @@ namespace SolarMajesty
         private static void SpawnApron(
             Vector3 origin, CelestialBodyProfile body, Transform parent, BuildingCategory cat)
         {
-            bool mars = body != null && body.Id == CelestialBodyId.Mars;
+            bool mars = body != null && body.Authored(WorldAspect.Props) == CelestialBodyId.Mars;
             float dia = cat == BuildingCategory.LandingPad ? 6.4f
                 : cat == BuildingCategory.Commons ? 5.1f
                 : 4.2f;

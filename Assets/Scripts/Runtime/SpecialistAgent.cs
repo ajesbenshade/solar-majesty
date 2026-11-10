@@ -805,33 +805,63 @@ namespace SolarMajesty
                 fatigue = debugFatigueValue;
 
             float dt = Time.deltaTime;
-            // In play the game loop runs the decision half on the fixed step, before this Update.
-            // A robot with no loop driving it (tests) runs both halves here, as it always did.
+            // In play the game loop runs the robot on the fixed step (SimTick); only the work
+            // pulse, which is dressing, runs per frame. A robot with no loop driving it (tests)
+            // runs everything here, as it always did.
             if (_loop == null || !_loop.DrivesAgentSim)
-                SimTick(dt);
+            {
+                TickDecide(dt);
+                TickAct(dt);
+            }
+            TickWorkPulse(dt);
+        }
 
+        // Where this robot is on the fixed step, and where it is drawn between steps.
+        private SimPose _pose;
+
+        /// <summary>
+        /// One fixed simulation step of this robot: it decides, then acts on the decision
+        /// (travel, work, combat, shopping). Runs from the game loop so a robot does the same
+        /// work at any frame rate. Travel along a NavMesh path is still carried by Unity's
+        /// agent frame by frame; steps the robot takes itself happen here and are drawn
+        /// smoothly by <see cref="SimPresent"/>.
+        /// </summary>
+        public void SimTick(float dt)
+        {
+            if (data == null || _brain == null || _flags == null)
+                return;
+
+            Vector3 before = transform.position;
+            TickDecide(dt);
+            TickAct(dt);
+            _pose.Stepped(transform, before);
+        }
+
+        /// <summary>Before a frame's commands and steps: stand on the simulated position.</summary>
+        public void SimBegin() => _pose.Begin(transform);
+
+        /// <summary>After a frame's steps: draw this robot part-way through its last step.</summary>
+        public void SimPresent(float alpha) => _pose.Present(transform, alpha);
+
+        private void TickAct(float dt)
+        {
             if (_incapacitated)
             {
                 SetAgentStopped(true);
-                TickWorkPulse(dt);
                 return;
             }
 
             TickBehaviour(dt);
-            TickWorkPulse(dt);
             if (_agent != null && _agent.enabled)
                 _agent.speed = EffectiveMoveSpeed;
         }
 
         /// <summary>
         /// The decision half of a robot's tick: recovery, needs, statuses, motives and thinking,
-        /// with the rolls they make. Runs on the fixed simulation step so a robot decides at the
-        /// same pace at any frame rate. Movement and work stay in <see cref="Update"/>.
+        /// with the rolls they make.
         /// </summary>
-        public void SimTick(float dt)
+        private void TickDecide(float dt)
         {
-            if (data == null || _brain == null || _flags == null)
-                return;
 
             TickYield(dt);
             TickRecovery(dt);

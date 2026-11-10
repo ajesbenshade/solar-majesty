@@ -53,9 +53,9 @@ namespace SolarMajesty
             float amount = 0.18f;
             if (body != null)
             {
-                if (body.Id == CelestialBodyId.Mars) amount = 0.04f;
-                else if (body.Id == CelestialBodyId.Europa) amount = 0.12f;
-                else if (body.Id == CelestialBodyId.Earth) amount = 0.10f;
+                if (body.Authored(WorldAspect.Props) == CelestialBodyId.Mars) amount = 0.04f;
+                else if (body.Authored(WorldAspect.Props) == CelestialBodyId.Europa) amount = 0.12f;
+                else if (body.Authored(WorldAspect.Props) == CelestialBodyId.Earth) amount = 0.10f;
             }
             if (_ready && next == _dustColor && Mathf.Approximately(amount, _dustAmount))
                 return;

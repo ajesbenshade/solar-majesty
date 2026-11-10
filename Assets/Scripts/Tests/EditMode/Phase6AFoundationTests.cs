@@ -429,6 +429,78 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(CelestialBodyCatalog.TryGetRegistered("test.ares", out _));
         }
 
+        [Test]
+        public void AWorld_TakesEachAuthoredPartFromTheWorldItNames()
+        {
+            CelestialBodyProfile mars = CelestialBodyCatalog.Mars();
+            foreach (WorldAspect aspect in System.Enum.GetValues(typeof(WorldAspect)))
+                Assert.AreEqual(CelestialBodyId.Mars, mars.Authored(aspect), "a Sol world is itself throughout");
+
+            CelestialBodyProfile mixed = mars.Copy();
+            mixed.Key = "test.mixed";
+            mixed.MixFrom(CelestialBodyId.Mars);
+            mixed.SkyFrom = CelestialBodyId.Europa;
+            mixed.FaunaFrom = CelestialBodyId.Belt;
+
+            Assert.AreEqual(CelestialBodyId.Mars, mixed.Authored(WorldAspect.Ground));
+            Assert.AreEqual(CelestialBodyId.Europa, mixed.Authored(WorldAspect.Sky));
+            Assert.AreEqual(CelestialBodyId.Belt, mixed.Authored(WorldAspect.Fauna));
+            Assert.AreEqual(SkyPainter.StarCount(CelestialBodyCatalog.Europa()), SkyPainter.StarCount(mixed),
+                "the sky is painted for the world the sky names");
+            Assert.IsFalse(mars.MixedContent, "the copy was mixed, not Mars");
+        }
+
+        // ---- Fixed-step movement ----------------------------------------------------------
+
+        [Test]
+        public void SimPose_DrawsBetweenSteps_AndStandsOnTheStepWhileItRuns()
+        {
+            var go = new GameObject("body");
+            _created.Add(go);
+            Transform t = go.transform;
+            var pose = new SimPose();
+
+            // One step walks the body a metre.
+            pose.Begin(t);
+            Vector3 before = t.position;
+            t.position = new Vector3(1f, 0f, 0f);
+            pose.Stepped(t, before);
+            pose.Present(t, 0.25f);
+            Assert.AreEqual(0.25f, t.position.x, 1e-5f, "drawn a quarter of the way through the step");
+
+            // Dressing may bob it between frames; the next frame's steps still start from the step's end.
+            t.position += Vector3.up * 0.1f;
+            pose.Begin(t);
+            Assert.AreEqual(new Vector3(1f, 0f, 0f), t.position);
+
+            // A step that does not move the transform hands it back (standing, or carried by a NavMeshAgent).
+            pose.Stepped(t, t.position);
+            Assert.IsFalse(pose.Gliding);
+            t.position = new Vector3(5f, 0f, 5f);
+            pose.Begin(t);
+            pose.Present(t, 0.5f);
+            Assert.AreEqual(new Vector3(5f, 0f, 5f), t.position, "an idle pose never moves the body");
+        }
+
+        [Test]
+        public void SimPose_KeepsAMoveMadeOutsideTheSimulation()
+        {
+            var go = new GameObject("body");
+            _created.Add(go);
+            Transform t = go.transform;
+            var pose = new SimPose();
+            Vector3 before = t.position;
+            t.position = new Vector3(1f, 0f, 0f);
+            pose.Stepped(t, before);
+            pose.Present(t, 0.5f);
+
+            t.position = new Vector3(40f, 0f, -12f); // a recall, a load, a spawn
+            pose.Begin(t);
+
+            Assert.AreEqual(new Vector3(40f, 0f, -12f), t.position, "the teleport is not undone");
+            Assert.IsFalse(pose.Gliding);
+        }
+
         // ---- Architecture by trait --------------------------------------------------------
 
         /// <summary>The five authored worlds must land on their own sets, or Sol would change its look.</summary>

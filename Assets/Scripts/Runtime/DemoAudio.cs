@@ -186,7 +186,7 @@ namespace SolarMajesty
         {
             Ensure();
             _hum = body != null ? body.AmbientHum : 55f;
-            string id = body != null ? body.Id.ToString().ToLowerInvariant() : null;
+            string id = body != null ? body.Authored(WorldAspect.Sound).ToString().ToLowerInvariant() : null;
             AudioClip worldA = id != null ? Resources.Load<AudioClip>(SfxFolder + WorldBedPrefix + id) : null;
             AudioClip worldB = id != null ? Resources.Load<AudioClip>(SfxFolder + WorldBedPrefix + id + "_b") : null;
             if (worldB == null) worldB = worldA;

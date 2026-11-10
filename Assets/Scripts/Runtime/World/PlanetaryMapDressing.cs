@@ -37,15 +37,15 @@ namespace SolarMajesty
                 groundMat.SetColor("_BaseColor", body.GroundLight);
                 groundMat.SetColor("_DarkColor", body.GroundDark);
                 groundMat.SetColor("_RockColor", body.RockColor);
-                groundMat.SetFloat("_MacroScale", body.Id == CelestialBodyId.Earth ? 34f : 46f);
+                groundMat.SetFloat("_MacroScale", body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth ? 34f : 46f);
                 groundMat.SetFloat("_MacroStrength", 0.38f);
                 groundMat.SetFloat("_DetailScale", 2.4f);
                 groundMat.SetFloat("_DetailStrength",
-                    body.Id == CelestialBodyId.Europa ? 0.12f
-                    : body.Id == CelestialBodyId.Mars ? 0.40f
-                    : body.Id == CelestialBodyId.Luna ? 0.38f
+                    body.Authored(WorldAspect.Ground) == CelestialBodyId.Europa ? 0.12f
+                    : body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars ? 0.40f
+                    : body.Authored(WorldAspect.Ground) == CelestialBodyId.Luna ? 0.38f
                     : 0.24f);
-                groundMat.SetFloat("_Smoothness", body.Id == CelestialBodyId.Europa ? 0.30f : 0.06f);
+                groundMat.SetFloat("_Smoothness", body.Authored(WorldAspect.Ground) == CelestialBodyId.Europa ? 0.30f : 0.06f);
                 BindAuthoredGroundDetail(groundMat, body);
                 BindTerrainBake(groundMat, ground, body);
 
@@ -69,13 +69,13 @@ namespace SolarMajesty
             Texture2D albedo = null;
             Texture2D normal = null;
             bool authored = false;
-            if (body.Id == CelestialBodyId.Earth)
+            if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth)
             {
                 albedo = EnvironmentMeshCatalog.LoadEarthAlbedo();
                 normal = EnvironmentMeshCatalog.LoadEarthNormal();
                 authored = albedo != null;
             }
-            else if (body.Id == CelestialBodyId.Mars)
+            else if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars)
             {
                 albedo = EnvironmentMeshCatalog.LoadMarsAlbedo();
                 normal = EnvironmentMeshCatalog.LoadMarsNormal();
@@ -84,12 +84,12 @@ namespace SolarMajesty
 
             if (!authored)
             {
-                albedo = BuildAlbedo(body.Id == CelestialBodyId.Mars || body.Id == CelestialBodyId.Earth ? 256 : 128, body);
-                normal = BuildNormal(body.Id == CelestialBodyId.Earth ? 192 : 128);
+                albedo = BuildAlbedo(body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars || body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth ? 256 : 128, body);
+                normal = BuildNormal(body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth ? 192 : 128);
             }
             else if (normal == null)
             {
-                normal = BuildNormal(body.Id == CelestialBodyId.Earth ? 192 : 128);
+                normal = BuildNormal(body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth ? 192 : 128);
             }
 
             albedo.wrapMode = TextureWrapMode.Repeat;
@@ -104,12 +104,12 @@ namespace SolarMajesty
             // Dense tiles so authored meadow/regolith detail matches water foam scale.
             // Slightly non-square UV scale breaks iso-aligned checker banding.
             Vector2 tileScale;
-            if (body.Id == CelestialBodyId.Earth)
+            if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth)
             {
                 float t = Mathf.Max(22f, worldW / 14f);
                 tileScale = new Vector2(t * 1.07f, t * 0.91f);
             }
-            else if (body.Id == CelestialBodyId.Mars)
+            else if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars)
             {
                 float t = Mathf.Max(20f, worldW / 16f);
                 tileScale = new Vector2(t * 0.94f, t * 1.08f);
@@ -133,7 +133,7 @@ namespace SolarMajesty
             }
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", Color.white);
             if (mat.HasProperty("_Smoothness"))
-                mat.SetFloat("_Smoothness", body.Id == CelestialBodyId.Earth ? 0.14f : 0.08f);
+                mat.SetFloat("_Smoothness", body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth ? 0.14f : 0.08f);
             if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
 
             rend.sharedMaterial = mat;
@@ -152,7 +152,7 @@ namespace SolarMajesty
             if (groundMat == null || body == null) return;
             Texture2D albedo = null;
             Texture2D normal = null;
-            if (body.Id == CelestialBodyId.Earth)
+            if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth)
             {
                 albedo = EnvironmentMeshCatalog.LoadEarthAlbedo();
                 normal = EnvironmentMeshCatalog.LoadEarthNormal();
@@ -179,15 +179,15 @@ namespace SolarMajesty
             }
 
             if (groundMat.HasProperty("_DetailTexScale"))
-                groundMat.SetFloat("_DetailTexScale", body.Id == CelestialBodyId.Mars ? 8.5f : 6.5f);
+                groundMat.SetFloat("_DetailTexScale", body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars ? 8.5f : 6.5f);
             // TDB splat albedo dominates; authored Mars grit stays as a secondary multiply.
             if (groundMat.HasProperty("_DetailTexAmount"))
                 groundMat.SetFloat("_DetailTexAmount",
-                    body.Id == CelestialBodyId.Mars ? 0.52f
-                    : body.Id == CelestialBodyId.Europa ? 0.14f
+                    body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars ? 0.52f
+                    : body.Authored(WorldAspect.Ground) == CelestialBodyId.Europa ? 0.14f
                     : 0.40f);
             if (groundMat.HasProperty("_DetailMeanLuma"))
-                groundMat.SetFloat("_DetailMeanLuma", body.Id == CelestialBodyId.Earth ? 0.41f : 0.44f);
+                groundMat.SetFloat("_DetailMeanLuma", body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth ? 0.41f : 0.44f);
         }
 
         /// <summary>
@@ -212,7 +212,7 @@ namespace SolarMajesty
 
             Color grass;
             Color wet;
-            CelestialBodyId id = body != null ? body.Id : CelestialBodyId.Mars;
+            CelestialBodyId id = body != null ? body.Authored(WorldAspect.Ground) : CelestialBodyId.Mars;
             switch (id)
             {
                 case CelestialBodyId.Earth:
@@ -259,7 +259,7 @@ namespace SolarMajesty
             F("_SplatAmount", 1f);
             F("_SlopeStart", 0.30f);
             F("_SlopeEnd", 0.70f);
-            switch (body.Id)
+            switch (body.Authored(WorldAspect.Ground))
             {
                 case CelestialBodyId.Mars:
                     C("_BaseColor", new Color(0.58f, 0.27f, 0.12f));
@@ -342,7 +342,7 @@ namespace SolarMajesty
                     F("_Smoothness", 0.05f);
                     break;
             }
-            BindNaturalSplatTiles(m, body.Id);
+            BindNaturalSplatTiles(m, body.Authored(WorldAspect.Ground));
         }
 
         /// <summary>
@@ -513,13 +513,13 @@ namespace SolarMajesty
         public static Color VoidFillColor(CelestialBodyProfile body)
         {
             if (body == null) body = CelestialBodyCatalog.Earth();
-            if (body.Id == CelestialBodyId.Earth)
+            if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth)
                 return Color.Lerp(body.GroundDark, body.GroundLight, 0.18f);
             // Mars Game-tab was a hard black sky cut — use salmon haze as the miss/clear
             // fill so the top of the ortho frame reads atmosphere, not void.
-            if (body.Id == CelestialBodyId.Mars)
+            if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars)
                 return Color.Lerp(body.FogColor, body.SkyHorizon, 0.45f);
-            if (body.Id == CelestialBodyId.Luna)
+            if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Luna)
                 return Color.Lerp(body.GroundDark, body.SkyTop, 0.35f);
             return Color.Lerp(body.GroundDark, body.GroundLight, 0.12f);
         }
@@ -585,11 +585,11 @@ namespace SolarMajesty
             {
                 var sky = new Material(shader) { name = $"SM_{body.ShortCode}_Sky" };
                 // Procedural _SkyTint multiplies the atmosphere. Dark catalog blues read as dusk greybox.
-                Color tint = body.Id == CelestialBodyId.Earth
+                Color tint = body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth
                     ? new Color(0.62f, 0.78f, 1f)
-                    : body.Id == CelestialBodyId.Mars
+                    : body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars
                         ? new Color(0.95f, 0.58f, 0.32f)
-                        : body.Id == CelestialBodyId.Luna
+                        : body.Authored(WorldAspect.Ground) == CelestialBodyId.Luna
                             ? new Color(0.06f, 0.06f, 0.08f)
                             : body.SkyTop;
                 // Must match terrain void — default Procedural ground is mustard/olive yellow.
@@ -599,9 +599,9 @@ namespace SolarMajesty
                     sky.SetFloat("_AtmosphereThickness", body.AtmosphereThickness);
                 if (sky.HasProperty("_Exposure")) sky.SetFloat("_Exposure", body.SkyExposure);
                 if (sky.HasProperty("_SunSize"))
-                    sky.SetFloat("_SunSize", body.Id == CelestialBodyId.Earth ? 0.042f : 0.04f);
+                    sky.SetFloat("_SunSize", body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth ? 0.042f : 0.04f);
                 if (sky.HasProperty("_SunSizeConvergence"))
-                    sky.SetFloat("_SunSizeConvergence", body.Id == CelestialBodyId.Earth ? 5f : 5f);
+                    sky.SetFloat("_SunSizeConvergence", body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth ? 5f : 5f);
                 RenderSettings.skybox = sky;
                 DynamicGI.UpdateEnvironment();
                 SkyPanorama.NoteTunedSky(sky); // diorama sky restores to this one
@@ -620,7 +620,7 @@ namespace SolarMajesty
             cam.backgroundColor = voidFill;
             // Mars ortho overseer: procedural skybox often reads black in the upper
             // third. Solid haze fill matches the dream-loop concept sky band.
-            if (body != null && (body.Id == CelestialBodyId.Mars || body.Id == CelestialBodyId.Luna))
+            if (body != null && (body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars || body.Authored(WorldAspect.Ground) == CelestialBodyId.Luna))
                 cam.clearFlags = CameraClearFlags.SolidColor;
             else
                 cam.clearFlags = hasSkybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
@@ -635,10 +635,10 @@ namespace SolarMajesty
                 filterMode = FilterMode.Bilinear
             };
             var pixels = new Color[size * size];
-            bool earthy = body.Id == CelestialBodyId.Earth;
+            bool earthy = body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth;
             bool ice = body.Kit == TerrainKit.IceCrust;
             bool belt = body.Kit == TerrainKit.AsteroidField;
-            bool mars = body.Id == CelestialBodyId.Mars;
+            bool mars = body.Authored(WorldAspect.Ground) == CelestialBodyId.Mars;
             for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
             {
@@ -711,7 +711,7 @@ namespace SolarMajesty
                 old.name = "DustDevilRoot_old";
                 Object.Destroy(old);
             }
-            if (body == null || body.Id != CelestialBodyId.Mars) return;
+            if (body == null || body.Authored(WorldAspect.Ground) != CelestialBodyId.Mars) return;
 
             float worldW = grid != null ? grid.WorldWidth : 384f;
             float worldH = grid != null ? grid.WorldHeight : 384f;
@@ -772,7 +772,7 @@ namespace SolarMajesty
                 oldVista.name = "EarthVistaRoot_old";
                 Object.Destroy(oldVista);
             }
-            if (body == null || body.Id != CelestialBodyId.Earth) return;
+            if (body == null || body.Authored(WorldAspect.Ground) != CelestialBodyId.Earth) return;
 
             Vector3 campus = ColonyLayout.CampusOrigin;
             var root = new GameObject("EarthVistaRoot").transform;
@@ -826,7 +826,7 @@ namespace SolarMajesty
                 old.name = "MarsVistaRoot_old";
                 Object.Destroy(old);
             }
-            if (body == null || body.Id != CelestialBodyId.Mars) return;
+            if (body == null || body.Authored(WorldAspect.Ground) != CelestialBodyId.Mars) return;
 
             Vector3 campus = ColonyLayout.CampusOrigin;
             var root = new GameObject("MarsVistaRoot").transform;
@@ -930,7 +930,7 @@ namespace SolarMajesty
 
         private static void SpawnGrassTuft(Transform parent, Vector3 world, CelestialBodyProfile body, int salt)
         {
-            var grassPrefab = body != null && body.Id == CelestialBodyId.Earth
+            var grassPrefab = body != null && body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth
                 ? EnvironmentMeshCatalog.LoadEarthGrass(salt)
                 : null;
             if (grassPrefab != null)
@@ -976,7 +976,7 @@ namespace SolarMajesty
         private static void SpawnVistaTree(Transform parent, Vector3 world, CelestialBodyProfile body, int salt)
         {
             float h = 1.55f + (salt % 4) * 0.28f;
-            var prefab = EnvironmentMeshCatalog.LoadTree(salt, body != null ? body.Id : CelestialBodyId.Earth);
+            var prefab = EnvironmentMeshCatalog.LoadTree(salt, body != null ? body.Authored(WorldAspect.Ground) : CelestialBodyId.Earth);
             GameObject mesh = null;
             if (prefab != null)
             {

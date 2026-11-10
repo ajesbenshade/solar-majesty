@@ -235,7 +235,7 @@ namespace SolarMajesty
         /// </summary>
         private GameObject MakeOutcropRock(int variant, float size, System.Random rng)
         {
-            var prefab = EnvironmentMeshCatalog.LoadRock(variant, _body.Id);
+            var prefab = EnvironmentMeshCatalog.LoadRock(variant, _body.Authored(WorldAspect.Terrain));
             if (prefab != null && EnvironmentMeshCatalog.IsVendorNature(prefab))
                 return EnvironmentMeshCatalog.InstantiateVendorNature(prefab, "Outcrop", size);
             GameObject rock;
@@ -256,7 +256,7 @@ namespace SolarMajesty
                 rock.transform.localScale = new Vector3(size * 1.2f, size * 0.8f, size);
             }
             Color c = Color.Lerp(_body.RockColor, _body.GroundLight, (float)rng.NextDouble() * 0.35f);
-            Tint(rock, c, _body.Id == CelestialBodyId.Europa ? 0.5f : 0.06f, UnityEngine.Rendering.ShadowCastingMode.On);
+            Tint(rock, c, _body.Authored(WorldAspect.Terrain) == CelestialBodyId.Europa ? 0.5f : 0.06f, UnityEngine.Rendering.ShadowCastingMode.On);
             return rock;
         }
 
@@ -327,7 +327,7 @@ namespace SolarMajesty
             if (_body.PoiCount <= 0) return;
             var root = new GameObject("PointsOfInterest").transform;
             root.SetParent(_worldRoot, false);
-            var themes = PoiThemes(_body.Id);
+            var themes = PoiThemes(_body.Authored(WorldAspect.Terrain));
             int made = 0;
             for (int attempt = 0; attempt < _body.PoiCount * 10 && made < _body.PoiCount; attempt++)
             {

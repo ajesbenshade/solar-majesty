@@ -160,7 +160,7 @@ namespace SolarMajesty
                     return Loc.S("Gates met. Stay on this world — rating stands while you keep expanding.");
                 }
                 var body = _loop != null ? _loop.BodyProfile : null;
-                if (body != null && CampaignCutsceneCatalog.TryGetVictory(body.Id, out var cut))
+                if (body != null && CampaignCutsceneCatalog.TryGetVictory(body.Authored(WorldAspect.Story), out var cut))
                     return cut.LogParagraphText;
                 if (body != null && !string.IsNullOrEmpty(body.VictoryLog))
                     return body.VictoryLogText;

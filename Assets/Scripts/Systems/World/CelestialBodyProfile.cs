@@ -11,6 +11,25 @@ namespace SolarMajesty
         Europa = 4
     }
 
+    /// <summary>The parts of a world that are hand-authored per Sol world.</summary>
+    public enum WorldAspect
+    {
+        /// <summary>The height field and its features: craters, canyons, islets, ice plates.</summary>
+        Terrain,
+        /// <summary>Ground material, splat tiles and map dressing.</summary>
+        Ground,
+        /// <summary>Sky, sun path, lighting grade, clouds and haze.</summary>
+        Sky,
+        /// <summary>How the fauna look and what the alerts call them.</summary>
+        Fauna,
+        /// <summary>Music and ambience.</summary>
+        Sound,
+        /// <summary>Campus dressing, building finish, trees and rocks.</summary>
+        Props,
+        /// <summary>Decrees, cutscenes, advisor lines and tutorial beats.</summary>
+        Story
+    }
+
     public enum TerrainKit
     {
         Standard = 0,
@@ -25,7 +44,50 @@ namespace SolarMajesty
     [System.Serializable]
     public sealed class CelestialBodyProfile
     {
+        /// <summary>
+        /// The Sol world this one takes its authored content from, and its place in the campaign
+        /// when it is one of the five. A world is identified by <see cref="Key"/>, not by this.
+        /// </summary>
         public CelestialBodyId Id;
+
+        [Header("Authored content")]
+        [Tooltip("Off: every part of this world comes from the Sol world Id names. On: each part names its own.")]
+        public bool MixedContent;
+        public CelestialBodyId TerrainFrom;
+        public CelestialBodyId GroundFrom;
+        public CelestialBodyId SkyFrom;
+        public CelestialBodyId FaunaFrom;
+        public CelestialBodyId SoundFrom;
+        public CelestialBodyId PropsFrom;
+        public CelestialBodyId StoryFrom;
+
+        /// <summary>
+        /// Which Sol world's hand-authored content one part of this world uses. Code that picks
+        /// art, sound or story by world asks this, so a generated world can wear Mars's ground
+        /// under Europa's sky.
+        /// </summary>
+        public CelestialBodyId Authored(WorldAspect aspect)
+        {
+            if (!MixedContent) return Id;
+            switch (aspect)
+            {
+                case WorldAspect.Terrain: return TerrainFrom;
+                case WorldAspect.Ground: return GroundFrom;
+                case WorldAspect.Sky: return SkyFrom;
+                case WorldAspect.Fauna: return FaunaFrom;
+                case WorldAspect.Sound: return SoundFrom;
+                case WorldAspect.Props: return PropsFrom;
+                case WorldAspect.Story: return StoryFrom;
+                default: return Id;
+            }
+        }
+
+        /// <summary>Take every part from <paramref name="from"/>, then override the ones that differ.</summary>
+        public void MixFrom(CelestialBodyId from)
+        {
+            MixedContent = true;
+            TerrainFrom = GroundFrom = SkyFrom = FaunaFrom = SoundFrom = PropsFrom = StoryFrom = from;
+        }
         /// <summary>Stable text id ("sol.mars"). Saves and generated worlds name a body by this, not by the enum.</summary>
         public string Key;
         /// <summary>The physical facts architecture answers to.</summary>

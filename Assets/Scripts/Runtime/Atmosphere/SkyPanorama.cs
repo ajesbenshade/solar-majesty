@@ -33,11 +33,11 @@ namespace SolarMajesty
                 return false;
             }
 
-            if (_tex == null || _builtFor != body.Id)
+            if (_tex == null || _builtFor != body.Authored(WorldAspect.Sky))
             {
                 if (_tex != null) Object.Destroy(_tex);
                 _tex = Build(body);
-                _builtFor = body.Id;
+                _builtFor = body.Authored(WorldAspect.Sky);
             }
             if (_mat == null) _mat = new Material(shader) { name = "SM_SkyPanorama" };
             _mat.SetTexture("_MainTex", _tex);
@@ -66,7 +66,7 @@ namespace SolarMajesty
         public static void EnsureShowing(Camera cam, CelestialBodyProfile body)
         {
             if (body == null || _shaderMissing) return;
-            if (!_installed || _mat == null || RenderSettings.skybox != _mat || _builtFor != body.Id)
+            if (!_installed || _mat == null || RenderSettings.skybox != _mat || _builtFor != body.Authored(WorldAspect.Sky))
             {
                 Install(cam, body);
                 return;
@@ -112,7 +112,7 @@ namespace SolarMajesty
             }
 
             if (airless) PaintMilkyWay(px, w, h);
-            if (stars > 0) PaintStars(px, w, h, stars, (int)body.Id * 7919 + 17, airless ? 1f : 0.35f);
+            if (stars > 0) PaintStars(px, w, h, stars, (int)body.Authored(WorldAspect.Sky) * 7919 + 17, airless ? 1f : 0.35f);
             if (planet.Kind != SkyPlanetKind.None) PaintPlanet(px, w, h, planet, SkyPainter.ToSun(body.SunEuler), airless);
 
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false)

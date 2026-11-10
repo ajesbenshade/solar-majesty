@@ -183,7 +183,7 @@ namespace SolarMajesty
             if (loop == null) return;
 
             var body = loop.BodyProfile;
-            if (body != null) SetWorld(body.Id);
+            if (body != null) SetWorld(body.Authored(WorldAspect.Sound));
 
             _moodHold -= dt;
             MusicMood next = Classify(loop);

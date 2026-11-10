@@ -161,7 +161,7 @@ namespace SolarMajesty
         public static TerrainBake Generate(float worldWidth, float worldHeight, int seed, CelestialBodyProfile body)
         {
             int n = MapResolution;
-            CelestialBodyId id = body != null ? body.Id : CelestialBodyId.Earth;
+            CelestialBodyId id = body != null ? body.Authored(WorldAspect.Terrain) : CelestialBodyId.Earth;
             var g = new Grid(n, worldWidth, worldHeight);
             var bake = new TerrainBake
             {
@@ -203,7 +203,7 @@ namespace SolarMajesty
         public static float AmplitudeFor(CelestialBodyProfile body)
         {
             if (body == null) return 4f;
-            switch (body.Id)
+            switch (body.Authored(WorldAspect.Terrain))
             {
                 case CelestialBodyId.Mars: return 6f;
                 case CelestialBodyId.Luna: return 6f;

@@ -17,14 +17,14 @@ namespace SolarMajesty
         /// <summary>Greybox hull tint per body. Hero kits lerp a white shell toward this grade.</summary>
         public static void BindBody(CelestialBodyProfile body)
         {
-            _body = body != null ? body.Id : (CelestialBodyId?)null;
+            _body = body != null ? body.Authored(WorldAspect.Props) : (CelestialBodyId?)null;
             if (body == null)
             {
                 _bodyHull = new Color(0.62f, 0.66f, 0.72f);
                 return;
             }
 
-            switch (body.Id)
+            switch (body.Authored(WorldAspect.Props))
             {
                 case CelestialBodyId.Earth:
                     _bodyHull = new Color(0.74f, 0.78f, 0.74f);

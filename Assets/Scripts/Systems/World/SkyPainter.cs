@@ -36,13 +36,13 @@ namespace SolarMajesty
         public const float ViewAzimuth = 45f;
 
         public static bool IsAirless(CelestialBodyProfile body) =>
-            body == null || (body.Id != CelestialBodyId.Earth && body.Id != CelestialBodyId.Mars);
+            body == null || (body.Authored(WorldAspect.Sky) != CelestialBodyId.Earth && body.Authored(WorldAspect.Sky) != CelestialBodyId.Mars);
 
         /// <summary>Number of stars to scatter (0 on Earth by day-sky, a few on dusty Mars).</summary>
         public static int StarCount(CelestialBodyProfile body)
         {
             if (body == null) return 0;
-            return body.Id switch
+            return body.Authored(WorldAspect.Sky) switch
             {
                 CelestialBodyId.Earth => 0,
                 CelestialBodyId.Mars => 0, // bright dusty day sky: stars would read as noise
@@ -53,7 +53,7 @@ namespace SolarMajesty
         public static SkyPlanet PlanetFor(CelestialBodyProfile body)
         {
             if (body == null) return default;
-            return body.Id switch
+            return body.Authored(WorldAspect.Sky) switch
             {
                 CelestialBodyId.Luna => new SkyPlanet { Kind = SkyPlanetKind.Earth, AzimuthDeg = ViewAzimuth + 14f, ElevationDeg = 4.5f, RadiusDeg = 5.2f },
                 CelestialBodyId.Europa => new SkyPlanet { Kind = SkyPlanetKind.Jupiter, AzimuthDeg = ViewAzimuth - 10f, ElevationDeg = 7f, RadiusDeg = 11f },
