@@ -917,8 +917,11 @@ namespace SolarMajesty
             Achievements.Earned += OnAchievementEarned;
             CampaignProgress.Ensure();
             WorldDatabase.RegisterShipped(); // worlds beyond the five, when an asset ships them
+            SelectLaunchSystemOnce();
             celestialBody = BodySeed.LoadSavedBody();
             string worldKey = BodySeed.LoadSavedKey();
+            // A generated world is stored as its key alone; its system is built again from it.
+            StarSystemGenerator.EnsureRegistered(worldKey);
             bool freshCampaign = CampaignSlots.ConsumeFresh();
             int pendingSlot = freshCampaign ? -1 : CampaignSlots.ConsumePendingLoad();
             SaveGame pendingSave = null;
@@ -1310,6 +1313,7 @@ namespace SolarMajesty
         /// </summary>
         public bool StartNewGameOnWorld(string worldKey, int slot = 1)
         {
+            StarSystemGenerator.EnsureRegistered(worldKey);
             if (!CelestialBodyCatalog.TryGetRegistered(worldKey, out CelestialBodyProfile world)) return false;
             ResearchManager.WipeUnlocks();
             CampaignProgress.ResetCampaign();
@@ -1326,6 +1330,22 @@ namespace SolarMajesty
 
         /// <summary>The world being played, as data.</summary>
         public CelestialBodyProfile ActiveWorld => _body;
+
+        private static bool _launchSystemRead;
+
+        // -system <seed> [-world <n>] selects a generated world for this run. Read once per
+        // process, so choosing another world later in the session is not undone by a reload.
+        private static void SelectLaunchSystemOnce()
+        {
+            if (_launchSystemRead) return;
+            _launchSystemRead = true;
+            if (!StarSystemGenerator.TryFromArgs(System.Environment.GetCommandLineArgs(),
+                    out StarSystem system, out SystemBody body) || body == null)
+                return;
+            StarSystemGenerator.Register(system);
+            BodySeed.SetWorld(body.Profile);
+            Debug.Log($"[StarSystem] {system.Name} ({system.Code}), {system.Star}: playing {body.Name}, {body.Archetype}.");
+        }
 
         /// <summary>Delete the chosen slot only, and stamp this boot as a new campaign.</summary>
         private void BeginFreshFiles(int slot)
