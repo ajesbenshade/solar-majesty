@@ -808,7 +808,7 @@ namespace SolarMajesty
             // In play the game loop runs the robot on the fixed step (SimTick); only the work
             // pulse, which is dressing, runs per frame. A robot with no loop driving it (tests)
             // runs everything here, as it always did.
-            if (_loop == null || !_loop.DrivesAgentSim)
+            if (_loop == null || !_loop.Steps(this))
             {
                 TickDecide(dt);
                 TickAct(dt);

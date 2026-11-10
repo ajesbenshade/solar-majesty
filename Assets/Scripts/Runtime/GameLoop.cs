@@ -2705,6 +2705,9 @@ namespace SolarMajesty
         /// </summary>
         private void TickSimulation(float dt) => Sim.Step(dt, this);
 
+        /// <summary>True when this loop steps <paramref name="agent"/>. A robot it does not know (a showcase stand-in) runs itself.</summary>
+        public bool Steps(SpecialistAgent agent) => DrivesAgentSim && _agents.Contains(agent);
+
         private void BeginSimPoses()
         {
             if (!DrivesAgentSim) return;
@@ -4282,9 +4285,10 @@ namespace SolarMajesty
         /// </summary>
         /// <summary>
         /// Store screenshots: one robot of every class, standing in a loose ring around the
-        /// Commons, as a colony mid-game would have. Not reachable from play.
+        /// Commons, as a colony mid-game would have. Not reachable from play. With
+        /// <paramref name="joinColony"/> they join the roster and are stepped with it (tests).
         /// </summary>
-        public int SpawnShowcaseCrew()
+        public int SpawnShowcaseCrew(bool joinColony = false)
         {
             int spawned = 0;
             var classes = (SpecialistClass[])System.Enum.GetValues(typeof(SpecialistClass));
@@ -4297,7 +4301,12 @@ namespace SolarMajesty
                 float r = 7f + (i % 4) * 3.5f;
                 Vector3 pos = ColonyLayout.CampusOrigin + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r;
                 if (grid != null) pos = grid.SnapToCellCenter(pos);
-                if (SpawnOne(data, pos, TintForClass(classes[i])) != null) spawned++;
+                SpecialistAgent agent = SpawnOne(data, pos, TintForClass(classes[i]));
+                if (agent == null) continue;
+                spawned++;
+                if (!joinColony) continue;
+                _agents.Add(agent);
+                agent.BindNavMesh(_campusNav);
             }
             return spawned;
         }

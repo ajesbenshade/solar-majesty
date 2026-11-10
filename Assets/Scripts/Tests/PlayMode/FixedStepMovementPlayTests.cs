@@ -57,7 +57,7 @@ namespace SolarMajesty.Tests
             var loop = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
             Assert.IsTrue(loop.DrivesAgentSim, "play runs robots and fauna on the fixed step");
             // A new colony starts empty; stand a crew up the way the store-shot harness does.
-            Assert.Greater(loop.SpawnShowcaseCrew(), 0);
+            Assert.Greater(loop.SpawnShowcaseCrew(joinColony: true), 0);
             yield return null;
             Assert.Greater(loop.Agents.Count, 0);
 
