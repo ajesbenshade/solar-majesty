@@ -62,6 +62,13 @@ namespace SolarMajesty
         private bool _pauseSlots;
         private bool _pauseSlotsAreLoad;
         private bool _pendingUnlockThrough;
+
+        // Beyond Sol dialog: a typed seed, the system it generates and the body picked in it.
+        private bool _beyondSol;
+        private string _seedText = "";
+        private string _seedTextBuilt;
+        private StarSystem _seedSystem;
+        private int _seedBodyPick;
         private int _newCampaignSlot = 1;
         private CelestialBodyId _pendingNewGameBody = CelestialBodyId.Earth;
         private float _toastStart;
@@ -131,7 +138,24 @@ namespace SolarMajesty
             return HudPointer.OverRects(_hitRects, guiMouse);
         }
 
-        public bool TitleConfirmOpen => _confirmNewGame || _titleLoad;
+        public bool TitleConfirmOpen => _confirmNewGame || _titleLoad || _beyondSol;
+
+        /// <summary>Open the Beyond Sol dialog on a seed (any text), or on a fresh random one.</summary>
+        public void PromptBeyondSol(string seedText = null)
+        {
+            _seedText = string.IsNullOrEmpty(seedText)
+                ? SystemSeedCode.Format(UnityEngine.Random.Range(int.MinValue, int.MaxValue))
+                : seedText;
+            _seedTextBuilt = null;
+            _newCampaignSlot = CampaignSlots.SlotReplacedByNewCampaign(_newCampaignSlot);
+            _confirmNewGame = false;
+            _titleLoad = false;
+            _beyondSol = true;
+        }
+
+        /// <summary>The system the Beyond Sol dialog is showing, and the body picked in it.</summary>
+        public StarSystem BeyondSolSystem => _beyondSol ? _seedSystem : null;
+        public int BeyondSolPick => _seedBodyPick;
 
         /// <summary>Esc on the pause screen closes Save/Load before it resumes.</summary>
         public bool ConsumePauseSubmenuEscape()
@@ -192,6 +216,7 @@ namespace SolarMajesty
         {
             _confirmNewGame = false;
             _titleLoad = false;
+            _beyondSol = false;
             _pauseSlots = false;
             if (StillCaptureHold.Active) return;
             if (_loop == null || !_loop.StartsEmpty) return;
@@ -2958,6 +2983,12 @@ namespace SolarMajesty
                 GUI.enabled = savedEnabled;
             }
 
+            if (_beyondSol)
+            {
+                DrawBeyondSolDialog();
+                DrawToast();
+                return;
+            }
             if (_confirmNewGame || _titleLoad)
             {
                 DrawCampaignDialog(_confirmNewGame);
@@ -2978,6 +3009,12 @@ namespace SolarMajesty
             if (TitleButton(new Rect(x, y, bw, bh), Loc.S("LOAD"), false))
                 _titleLoad = true;
             y -= bh + 6f;
+            if (!DemoSettings.FirstHourDemo)
+            {
+                if (TitleButton(new Rect(x, y, bw, bh), Loc.S("BEYOND SOL"), false))
+                    PromptBeyondSol();
+                y -= bh + 6f;
+            }
             if (TitleButton(new Rect(x, y, bw, bh), Loc.S("NEW CAMPAIGN"), !DemoSettings.SaveExists))
             {
                 _pendingNewGameBody = CampaignProgress.NewGameBody;
@@ -2995,6 +3032,104 @@ namespace SolarMajesty
             }
 
             DrawToast();
+        }
+
+        /// <summary>
+        /// Skirmish on a generated star system. The player types or rolls a seed, sees the
+        /// system it makes, picks a body and a slot, and lands.
+        /// </summary>
+        private void DrawBeyondSolDialog()
+        {
+            if (_seedTextBuilt != _seedText || _seedSystem == null)
+            {
+                _seedSystem = StarSystemGenerator.Generate(SystemSeedCode.FromText(_seedText));
+                _seedTextBuilt = _seedText;
+                _seedBodyPick = StarSystemGenerator.Homeliest(_seedSystem).Index;
+            }
+            StarSystem system = _seedSystem;
+            _seedBodyPick = Mathf.Clamp(_seedBodyPick, 0, system.Bodies.Count - 1);
+            SystemBody pick = system.Bodies[_seedBodyPick];
+
+            const float w = 560f;
+            float h = Mathf.Min(_sh - 16f, 400f + system.Bodies.Count * 26f);
+            var rect = new Rect((_sw - w) * 0.5f, Mathf.Max(8f, (_sh - h) * 0.5f), w, h);
+            var c = Panel(rect, Loc.S("Beyond Sol"));
+            HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
+
+            float y = c.y;
+            GUI.Label(new Rect(c.x, y + 5f, 50f, 18f), Loc.S("SEED"), _micro);
+            _seedText = GUI.TextField(new Rect(c.x + 50f, y, c.width - 50f - 96f, 24f), _seedText ?? "", 32);
+            if (GUI.Button(new Rect(c.xMax - 90f, y, 90f, 24f), Loc.S("ROLL"), _chipOff))
+            {
+                _seedText = SystemSeedCode.Format(UnityEngine.Random.Range(int.MinValue, int.MaxValue));
+                GUI.FocusControl(null);
+            }
+            y += 30f;
+            GUI.Label(new Rect(c.x, y, c.width, 18f),
+                Loc.F("{0} system  ·  {1}  ·  {2}", system.Name, Loc.S(StarSystemGenerator.StarName(system.Star)), system.Code),
+                _body);
+            y += 24f;
+
+            for (int i = 0; i < system.Bodies.Count; i++)
+            {
+                SystemBody b = system.Bodies[i];
+                string row = Loc.F("{0}  ·  {1}  ·  {2} C  ·  {3} g",
+                    b.Name, Loc.S(WorldArchetypes.KindOf(b.Archetype)),
+                    Mathf.RoundToInt(b.Traits.TemperatureC),
+                    b.Traits.Gravity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture));
+                if (GUI.Button(new Rect(c.x, y, c.width, 23f), row, i == _seedBodyPick ? _rowOn : _rowOff))
+                    _seedBodyPick = i;
+                y += 26f;
+            }
+            y += 4f;
+
+            y = WrapBlock(c, y, pick.Profile.BriefingText);
+            for (int i = 0; i < pick.Profile.Modifiers.Length; i++)
+            {
+                WorldModifier m = pick.Profile.Modifiers[i];
+                y = WrapBlock(c, y, Loc.S(WorldModifiers.Name(m)) + ": " + Loc.S(WorldModifiers.Effect(m)));
+            }
+
+            // Pinned to the bottom so the buttons do not move as the briefing changes length.
+            float by = c.yMax - 28f;
+            if (GUI.Button(new Rect(c.x, by, c.width, 28f), Loc.S("BACK  ·  Esc"), _chipOff))
+                _beyondSol = false;
+            by -= 38f;
+            if (GUI.Button(new Rect(c.x, by, c.width, 32f),
+                    Loc.F("LAND ON {0}  ·  SLOT {1}", pick.Name.ToUpperInvariant(), _newCampaignSlot), _chipOn))
+            {
+                _beyondSol = false;
+                StarSystemGenerator.Register(system);
+                _loop.StartNewGameOnWorld(pick.Key, _newCampaignSlot);
+                return;
+            }
+            by -= 34f;
+            var slots = SaveSystem.ListSlots();
+            int shown = 0;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i].Slot != SaveSystem.AutosaveSlot) shown++;
+            }
+            float sw = shown > 0 ? (c.width - (shown - 1) * 6f) / shown : c.width;
+            float sx = c.x;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var info = slots[i];
+                if (info.Slot == SaveSystem.AutosaveSlot) continue;
+                string label = info.Occupied ? Loc.F("SLOT {0}  ·  in use", info.Slot) : Loc.F("SLOT {0}  ·  empty", info.Slot);
+                if (GUI.Button(new Rect(sx, by, sw, 26f), label, info.Slot == _newCampaignSlot ? _chipOn : _chipOff))
+                    _newCampaignSlot = info.Slot;
+                sx += sw + 6f;
+            }
+            by -= 20f;
+            GUI.Label(new Rect(c.x, by, c.width, 16f),
+                Loc.S("Starts a new colony. Only the chosen slot is replaced; autosave follows the new colony."), _micro);
+
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+            {
+                _beyondSol = false;
+                Event.current.Use();
+            }
         }
 
         private bool TitleButton(Rect r, string label, bool primary)

@@ -139,6 +139,19 @@ namespace SolarMajesty
             return system;
         }
 
+        /// <summary>What the title screen calls a star class.</summary>
+        public static string StarName(StarClass star)
+        {
+            switch (star)
+            {
+                case StarClass.RedDwarf: return "Red dwarf";
+                case StarClass.Orange: return "Orange star";
+                case StarClass.Yellow: return "Yellow star";
+                case StarClass.White: return "White star";
+                default: return "Blue star";
+            }
+        }
+
         /// <summary>Equilibrium temperature in Celsius for a bare rock at this insolation.</summary>
         public static float EquilibriumC(float insolation) =>
             278f * Mathf.Pow(Mathf.Max(insolation, 0.0001f), 0.25f) - 273f;
