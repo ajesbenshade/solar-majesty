@@ -168,6 +168,7 @@ namespace SolarMajesty.Tests
             DemoSettings.ClearSave();
             CampaignProgress.ResetCampaign();
             DemoSettings.SetFirstHourDemo(false);
+            DemoSettings.MarkTutorialDone(); // as the Beyond Sol dialog starts a colony
 
             Assert.IsNotNull(body);
             StarSystemGenerator.EnsureRegistered(body.Key);

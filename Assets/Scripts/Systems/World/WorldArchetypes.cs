@@ -182,46 +182,86 @@ namespace SolarMajesty
 
         private static void Palette(CelestialBodyProfile p, WorldArchetype archetype, SimRng rng)
         {
-            float hue = rng.Range(-0.06f, 0.06f);
-            float sat = rng.Range(0.85f, 1.2f);
-            float val = rng.Range(0.9f, 1.08f);
+            float hue = rng.Range(-0.04f, 0.04f);
+            float sat = rng.Range(0.85f, 1.15f);
+            float val = rng.Range(0.92f, 1.08f);
             Color pull = Color.clear;
             float pullAmount = 0f;
             switch (archetype)
             {
                 case WorldArchetype.RockyDesert:
-                    hue = rng.Range(-0.08f, 0.12f); // rust through ochre to sand
+                    // Rust through ochre to pale sand, never the pink side of red.
+                    hue = rng.Range(-0.015f, 0.09f);
+                    sat = rng.Range(0.5f, 1.05f);
+                    val = rng.Range(0.95f, 1.25f);
+                    break;
+                case WorldArchetype.IceShell:
+                    // The ice has no colour to turn; the stained cracks take all of it.
+                    hue = rng.Range(-0.08f, 0.5f);
+                    break;
+                case WorldArchetype.AsteroidCluster:
+                    if (rng.Value() < 0.5f)
+                    {
+                        pull = new Color(0.46f, 0.30f, 0.22f); // iron-rich rubble
+                        pullAmount = rng.Range(0.2f, 0.4f);
+                    }
                     break;
                 case WorldArchetype.Volcanic:
-                    pull = new Color(0.10f, 0.09f, 0.10f);
-                    pullAmount = 0.72f;
+                    pull = new Color(0.10f, 0.09f, 0.10f); // basalt
+                    pullAmount = rng.Range(0.62f, 0.78f);
                     break;
                 case WorldArchetype.TidallyLocked:
                     pull = new Color(0.30f, 0.24f, 0.22f);
                     pullAmount = 0.35f;
                     break;
                 case WorldArchetype.GasGiantMoon:
-                    pull = new Color(0.46f, 0.40f, 0.32f);
-                    pullAmount = 0.4f;
+                    pull = new Color(0.62f, 0.54f, 0.28f); // sulphur frost
+                    pullAmount = rng.Range(0.35f, 0.55f);
                     break;
                 case WorldArchetype.OceanArchipelago:
+                    hue = rng.Range(-0.06f, 0.10f); // olive through green to teal
                     pull = new Color(0.78f, 0.72f, 0.56f); // sand
-                    pullAmount = 0.3f;
+                    pullAmount = 0.2f;
+                    break;
+                case WorldArchetype.GardenWorld:
+                    hue = rng.Range(-0.08f, 0.14f);
                     break;
             }
 
-            p.GroundLight = Shade(p.GroundLight, hue, sat, val, pull, pullAmount);
-            p.GroundDark = Shade(p.GroundDark, hue, sat, val, pull, pullAmount);
-            p.RockColor = Shade(p.RockColor, hue, sat, val, pull, pullAmount);
-            p.CraterRim = Shade(p.CraterRim, hue, sat, val, pull, pullAmount);
-            p.CraterFloor = Shade(p.CraterFloor, hue, sat, val, pull, pullAmount);
-            p.DuneColor = Shade(p.DuneColor, hue, sat, val, pull, pullAmount);
+            // The same turn is applied to the borrowed world's ground material when it is drawn.
+            p.Repainted = true;
+            p.PaletteHue = hue;
+            p.PaletteSaturation = sat;
+            p.PaletteValue = val;
+            p.PalettePull = pull;
+            p.PalettePullAmount = pullAmount;
+
+            p.GroundLight = p.Repaint(p.GroundLight);
+            p.GroundDark = p.Repaint(p.GroundDark);
+            p.RockColor = p.Repaint(p.RockColor);
+            p.CraterRim = p.Repaint(p.CraterRim);
+            p.CraterFloor = p.Repaint(p.CraterFloor);
+            p.DuneColor = p.Repaint(p.DuneColor);
+            p.Horizon = p.Repaint(p.Horizon);
+            p.ForestCanopy = p.Repaint(p.ForestCanopy);
+            if (p.GroundCover != null && p.GroundCover.Length > 0)
+            {
+                // The array is shared with the Sol world it was copied from.
+                var cover = (GroundCoverLayer[])p.GroundCover.Clone();
+                for (int i = 0; i < cover.Length; i++)
+                {
+                    cover[i].ColorA = p.Repaint(cover[i].ColorA);
+                    cover[i].ColorB = p.Repaint(cover[i].ColorB);
+                }
+                p.GroundCover = cover;
+            }
             p.SoilNodeColor = Shade(p.SoilNodeColor, hue, sat, val, pull, pullAmount * 0.5f);
-            p.Horizon = Shade(p.Horizon, hue, sat, val, pull, pullAmount);
-            p.FogColor = Shade(p.FogColor, hue, sat, val, pull, pullAmount * 0.6f);
-            p.SkyHorizon = Shade(p.SkyHorizon, hue, sat, 1f, pull, 0f);
-            p.AmbientEquator = Shade(p.AmbientEquator, hue, sat, 1f, pull, pullAmount * 0.4f);
-            p.AmbientGround = Shade(p.AmbientGround, hue, sat, 1f, pull, pullAmount * 0.4f);
+            // The air takes half the turn the ground does: haze should hint at the ground, not match it.
+            float airHue = hue * 0.5f;
+            p.FogColor = Shade(p.FogColor, airHue, sat, val, pull, pullAmount * 0.6f);
+            p.SkyHorizon = Shade(p.SkyHorizon, airHue, sat, 1f, pull, 0f);
+            p.AmbientEquator = Shade(p.AmbientEquator, airHue, sat, 1f, pull, pullAmount * 0.4f);
+            p.AmbientGround = Shade(p.AmbientGround, airHue, sat, 1f, pull, pullAmount * 0.4f);
 
             if (archetype == WorldArchetype.Volcanic)
             {
@@ -236,8 +276,6 @@ namespace SolarMajesty
             }
             else if (archetype == WorldArchetype.OceanArchipelago || archetype == WorldArchetype.GardenWorld)
             {
-                float leaf = rng.Range(-0.1f, 0.16f); // olive through green to teal
-                p.ForestCanopy = Shade(p.ForestCanopy, leaf, sat, 1f, pull, 0f);
                 p.WaterDeep = Shade(p.WaterDeep, rng.Range(-0.05f, 0.05f), 1f, 1f, pull, 0f);
                 p.WaterShallow = Shade(p.WaterShallow, rng.Range(-0.05f, 0.05f), 1f, 1f, pull, 0f);
             }

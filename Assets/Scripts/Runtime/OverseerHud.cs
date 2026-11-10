@@ -1621,7 +1621,11 @@ namespace SolarMajesty
                 ? _loop.Research.LaunchTechLabel(_loop.BodyProfile)
                 : Loc.S("Lunar Rocket");
             bool fullCampaign = !DemoSettings.FirstHourDemo;
-            string launchLine = LaunchPath.ObjectiveText(fullCampaign, mission.LaunchReady, launchNeed);
+            bool padOnly = fullCampaign && !mission.LaunchReady && _loop.Research != null &&
+                           _loop.Research.LaunchTechId(_loop.BodyProfile) == TechId.None;
+            string launchLine = padOnly
+                ? Loc.S("place a Landing Pad")
+                : LaunchPath.ObjectiveText(fullCampaign, mission.LaunchReady, launchNeed);
             Stake(new Rect(c.x, y, c.width, 20f), mission.LaunchReady,
                 Loc.S("Launch craft"),
                 fullCampaign ? launchLine : LaunchPath.Chain(launchNeed));

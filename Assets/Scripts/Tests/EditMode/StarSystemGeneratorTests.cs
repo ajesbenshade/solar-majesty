@@ -209,6 +209,44 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(SystemSeedCode.FromText("my homeworld"), system.Seed);
         }
 
+        /// <summary>A generated world wears a Sol world's ground in its own colours.</summary>
+        [Test]
+        public void GeneratedWorld_RepaintsTheGroundItBorrows()
+        {
+            var rust = new Color(0.58f, 0.27f, 0.12f);
+            Assert.IsFalse(CelestialBodyCatalog.Mars().Repainted);
+            Assert.AreEqual(rust, CelestialBodyCatalog.Mars().Repaint(rust), "a Sol world keeps its authored colours");
+
+            CelestialBodyProfile volcanic = FirstOf(WorldArchetype.Volcanic).Profile;
+            Assert.IsTrue(volcanic.Repainted);
+            Color basalt = volcanic.Repaint(rust);
+            Color.RGBToHSV(basalt, out _, out _, out float value);
+            Assert.Less(value, 0.32f, "Mars rust becomes dark basalt");
+            Assert.AreEqual(1f, basalt.a);
+
+            // A desert is never the pink side of red, and is not simply Mars again.
+            int different = 0;
+            for (int seed = 1; seed <= 200; seed++)
+            {
+                foreach (SystemBody body in StarSystemGenerator.Generate(seed).Bodies)
+                {
+                    Assert.IsTrue(body.Profile.Repainted, $"seed {seed}");
+                    if (body.Archetype != WorldArchetype.RockyDesert) continue;
+                    Color sand = body.Profile.Repaint(rust);
+                    Color.RGBToHSV(sand, out float hue, out _, out _);
+                    Assert.That(hue, Is.InRange(0.02f, 0.2f), $"seed {seed}");
+                    if (Mathf.Abs(sand.r - rust.r) + Mathf.Abs(sand.g - rust.g) + Mathf.Abs(sand.b - rust.b) > 0.12f) different++;
+                }
+            }
+            Assert.Greater(different, 20, "most deserts are visibly not Mars");
+
+            // The undergrowth is repainted too, on a copy: Mars keeps its own.
+            Assert.AreNotSame(CelestialBodyCatalog.Mars().GroundCover, volcanic.GroundCover);
+            Assert.AreEqual(CelestialBodyCatalog.Mars().GroundCover.Length, volcanic.GroundCover.Length);
+            Assert.AreEqual(CelestialBodyCatalog.BuiltIn(CelestialBodyId.Mars).GroundCover[0].ColorA,
+                CelestialBodyCatalog.Mars().GroundCover[0].ColorA);
+        }
+
         [Test]
         public void ExampleCode_IsARealCode()
         {

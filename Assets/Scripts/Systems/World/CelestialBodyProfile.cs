@@ -129,6 +129,34 @@ namespace SolarMajesty
         public Color LairRim;
         public Color LairPit;
 
+        [Header("Generated palette")]
+        [Tooltip("On for a generated world: it wears a Sol world's ground and undergrowth in its own colours.")]
+        public bool Repainted;
+        [Tooltip("Hue turn, as a fraction of the colour wheel.")]
+        public float PaletteHue;
+        public float PaletteSaturation = 1f;
+        public float PaletteValue = 1f;
+        public Color PalettePull;
+        [Range(0f, 1f)] public float PalettePullAmount;
+
+        /// <summary>
+        /// One authored colour in this world's own palette: its hue is turned, its saturation
+        /// and brightness scaled, then it is pulled toward <see cref="PalettePull"/>. A world
+        /// that is not <see cref="Repainted"/> returns the colour unchanged.
+        /// </summary>
+        public Color Repaint(Color c)
+        {
+            if (!Repainted) return c;
+            Color.RGBToHSV(c, out float h, out float s, out float v);
+            Color shaded = Color.HSVToRGB(
+                Mathf.Repeat(h + PaletteHue, 1f),
+                Mathf.Clamp01(s * PaletteSaturation),
+                Mathf.Clamp01(v * PaletteValue));
+            if (PalettePullAmount > 0f) shaded = Color.Lerp(shaded, PalettePull, PalettePullAmount);
+            shaded.a = c.a;
+            return shaded;
+        }
+
         [Header("Sky / light")]
         public Color SkyTop;
         public Color SkyHorizon;

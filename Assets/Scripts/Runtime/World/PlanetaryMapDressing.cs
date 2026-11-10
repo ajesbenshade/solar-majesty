@@ -343,6 +343,32 @@ namespace SolarMajesty
                     break;
             }
             BindNaturalSplatTiles(m, body.Authored(WorldAspect.Ground));
+            if (body.Repainted) RepaintGround(m, body);
+        }
+
+        private static readonly string[] GroundColorProps =
+        {
+            "_BaseColor", "_DarkColor", "_RockColor", "_GrassColor", "_WetColor", "_EjectaColor", "_StrataColor"
+        };
+
+        /// <summary>
+        /// A generated world wears a Sol world's ground in its own colours: every colour the
+        /// palette above set is turned by the world's own hue, saturation, brightness and pull.
+        /// </summary>
+        private static void RepaintGround(Material m, CelestialBodyProfile body)
+        {
+            for (int i = 0; i < GroundColorProps.Length; i++)
+            {
+                if (m.HasProperty(GroundColorProps[i]))
+                    m.SetColor(GroundColorProps[i], body.Repaint(m.GetColor(GroundColorProps[i])));
+            }
+            // Earth's meadow tile keeps its own green unless it is told to take the layer colour.
+            if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth && m.HasProperty("_SplatDesat"))
+            {
+                Vector4 desat = m.GetVector("_SplatDesat");
+                desat.z = Mathf.Max(desat.z, 0.7f);
+                m.SetVector("_SplatDesat", desat);
+            }
         }
 
         /// <summary>
