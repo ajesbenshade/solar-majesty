@@ -879,6 +879,16 @@ namespace SolarMajesty
             _isoCam.AddShake(strength * falloff);
         }
 
+        private bool _lavaWarned;
+
+        /// <summary>Tell the overseer once per world that lava hurts.</summary>
+        public void NoteLavaExposure()
+        {
+            if (_lavaWarned) return;
+            _lavaWarned = true;
+            LogOverseer(Loc.S("Lava burns a robot that crosses it — robots do not route around the channels."));
+        }
+
         public void NoteRadiationExposure()
         {
             if (_radWarned) return;
@@ -2553,6 +2563,8 @@ namespace SolarMajesty
             if (!IsBuildingUnlocked(data.category))
                 return Loc.S("That building needs research first.");
 
+            if (FootprintOverLava(cell, data.footprintWidth, data.footprintHeight))
+                return Loc.S("Can't build on lava.");
             if (FootprintOverWater(cell, data.footprintWidth, data.footprintHeight))
                 return Loc.S("Can't build on water.");
 
@@ -2580,6 +2592,23 @@ namespace SolarMajesty
             {
                 var p = corner + new Vector3(w * ix * 0.5f, 0f, h * iz * 0.5f);
                 if (_world.IsOverWater(p, 0.2f)) return true;
+            }
+            // The colony's own plot search asks only this, and lava is no better to build on.
+            return FootprintOverLava(origin, width, height);
+        }
+
+        /// <summary>True when lava runs under the footprint. Sampled every two metres: a channel is narrow.</summary>
+        private bool FootprintOverLava(Vector2Int origin, int width, int height)
+        {
+            if (_world == null || grid == null || !_world.HasLava) return false;
+            float cs = grid.CellSize;
+            Vector3 corner = grid.CellToWorld(origin) - new Vector3(cs * 0.5f, 0f, cs * 0.5f);
+            float w = width * cs, h = height * cs;
+            int nx = Mathf.Max(2, Mathf.CeilToInt(w / 2f)), nz = Mathf.Max(2, Mathf.CeilToInt(h / 2f));
+            for (int ix = 0; ix <= nx; ix++)
+            for (int iz = 0; iz <= nz; iz++)
+            {
+                if (_world.IsOverLava(corner + new Vector3(w * ix / nx, 0f, h * iz / nz), 0.8f)) return true;
             }
             return false;
         }
@@ -5119,6 +5148,7 @@ namespace SolarMajesty
         {
             _faunaRetreated = false;
             _radWarned = false;
+            _lavaWarned = false;
             _world = GetComponent<PlanetaryWorldGen>();
             if (_world == null) _world = gameObject.AddComponent<PlanetaryWorldGen>();
             _world.Generate(this, grid, WorldSeed, _body);

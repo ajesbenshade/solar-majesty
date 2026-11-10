@@ -145,6 +145,7 @@ RETURN_RULES = {
     "Systems/SpecialistFlavor.cs": ["FlagShort"],
     "Systems/World/WorldModifiers.cs": ["Name", "Effect"],
     "Systems/World/StarSystemGenerator.cs": ["StarName"],
+    "Systems/World/WorldArchetypes.cs": ["KitNote"],
 }
 
 CONST_RULES = {

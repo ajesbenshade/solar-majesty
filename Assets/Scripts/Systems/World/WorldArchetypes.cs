@@ -155,6 +155,10 @@ namespace SolarMajesty
             for (int i = 0; i < p.Modifiers.Length; i++)
                 WorldModifiers.Apply(p, p.Modifiers[i]);
 
+            // Rolled last, so every earlier roll for this world is what it was before kits existed.
+            if (body.Archetype == WorldArchetype.RockyDesert && rng.Value() < 0.5f)
+                p.Kit = TerrainKit.DuneSea;
+
             Briefing(p, system, body, s);
             return p;
         }
@@ -299,11 +303,13 @@ namespace SolarMajesty
             {
                 case WorldArchetype.Volcanic:
                     p.CraterCount = Mathf.Max(p.CraterCount, rng.Next(50, 90)); // calderas and vents
+                    p.Kit = TerrainKit.Volcanic;
                     p.DuneCount = 0;
                     p.RockFormationCount += rng.Next(4, 10);
                     break;
                 case WorldArchetype.OceanArchipelago:
                     p.LakeCount = Mathf.Max(p.LakeCount, 4) + rng.Next(5, 10);
+                    p.Kit = TerrainKit.Archipelago; // the sea replaces the lakes and rivers
                     p.RiverCount = Scaled(rng, p.RiverCount);
                     p.ForestPatchCount = Mathf.Max(2, Scaled(rng, p.ForestPatchCount) / 2);
                     break;
@@ -330,11 +336,25 @@ namespace SolarMajesty
             for (int i = 0; i < p.Modifiers.Length; i++)
                 conditions.Append(i == 0 ? " " : ", ").Append(WorldModifiers.Name(p.Modifiers[i]));
             if (conditions.Length > 0) conditions.Append('.');
-            p.Briefing = s.Kind + ", " + temp + ", " + gravity + ". " + s.Brief + conditions + " Hold pop " + p.PopulationGoal + ".";
+            string ground = KitNote(p.Kit);
+            if (ground.Length > 0) ground = " " + ground;
+            p.Briefing = s.Kind + ", " + temp + ", " + gravity + ". " + s.Brief + ground + conditions + " Hold pop " + p.PopulationGoal + ".";
             p.ArrivalLog = body.Name + " insertion complete. " + s.Kind + " in the " + system.Name + " system, seed " + system.Code + ".";
             p.VictoryLog = body.Name + " holds. The " + system.Name + " system has a colony.";
             p.FailLog = body.Name + " plaza is overrun. Revive or reseed this world.";
             p.EndlessLog = body.Name + " holds. Keep colonizing; rating stands.";
+        }
+
+        /// <summary>What a terrain kit does to the colony, for the briefing. Empty when it does nothing worth saying.</summary>
+        public static string KitNote(TerrainKit kit)
+        {
+            switch (kit)
+            {
+                case TerrainKit.Volcanic: return "Lava channels burn robots that cross them.";
+                case TerrainKit.Archipelago: return "Sandbars join the islands.";
+                case TerrainKit.DuneSea: return "Loose dunes slow travel.";
+                default: return "";
+            }
         }
 
         private static Color Shade(Color c, float hueShift, float satMul, float valMul, Color pull, float pullAmount)

@@ -55,6 +55,17 @@ namespace SolarMajesty
         public readonly List<TerrainWater> Water = new List<TerrainWater>(64);
         public readonly List<TerrainRiver> Rivers = new List<TerrainRiver>(8);
 
+        /// <summary>Lava strength per texel, 0 to 1. Null unless the world's kit is volcanic.</summary>
+        public float[] Lava;
+        /// <summary>Lava channels as centrelines, for drawing. Point y is the lava surface.</summary>
+        public readonly List<TerrainRiver> LavaFlows = new List<TerrainRiver>(8);
+        /// <summary>Loose sand per texel, 0 to 1. Null unless the world's kit is a dune sea.</summary>
+        public float[] LooseSand;
+        /// <summary>True on an archipelago: ground below <see cref="TerrainDataBake.SeaLevel"/> is sea.</summary>
+        public bool HasSea;
+        /// <summary>Which coarse cells are wholly sea (<see cref="TerrainDataBake.SeaCellsPerSide"/> to a side, row-major).</summary>
+        public bool[] SeaCells;
+
         public float SampleHeight(float wx, float wz) => Sample(Heights, wx, wz);
 
         /// <summary>Splat weights at world XZ (nearest texel; dust only when there is no splat).</summary>
@@ -122,7 +133,7 @@ namespace SolarMajesty
     /// the yard pads, so placement, docking and NavMesh keep y = 0. Mirrored by
     /// Blender/scripts/terrain_proto (numpy + Blender previews).
     /// </summary>
-    public static class TerrainDataBake
+    public static partial class TerrainDataBake
     {
         public const int MapResolution = 512;
 
@@ -173,13 +184,30 @@ namespace SolarMajesty
                 Fresh = g.Fresh
             };
 
-            switch (id)
+            // A generated world's kit reshapes the ground of the Sol world it borrows.
+            TerrainKit kit = body != null ? body.Kit : TerrainKit.Standard;
+            switch (kit)
             {
-                case CelestialBodyId.Mars: GenMars(g, seed, body); break;
-                case CelestialBodyId.Luna: GenLuna(g, seed, body); break;
-                case CelestialBodyId.Belt: GenBelt(g, seed); break;
-                case CelestialBodyId.Europa: GenEuropa(g, seed); break;
-                default: GenEarth(g, seed, body, bake.Water, bake.Rivers); break;
+                case TerrainKit.Volcanic:
+                    GenMars(g, seed, body);
+                    CarveLava(g, seed, bake);
+                    break;
+                case TerrainKit.Archipelago:
+                    GenArchipelago(g, seed);
+                    break;
+                case TerrainKit.DuneSea:
+                    GenDuneSea(g, seed, bake);
+                    break;
+                default:
+                    switch (id)
+                    {
+                        case CelestialBodyId.Mars: GenMars(g, seed, body); break;
+                        case CelestialBodyId.Luna: GenLuna(g, seed, body); break;
+                        case CelestialBodyId.Belt: GenBelt(g, seed); break;
+                        case CelestialBodyId.Europa: GenEuropa(g, seed); break;
+                        default: GenEarth(g, seed, body, bake.Water, bake.Rivers); break;
+                    }
+                    break;
             }
 
             // Yard pads stay exactly level. Any non-finite sample (a float edge case in a generator)
@@ -195,6 +223,8 @@ namespace SolarMajesty
             }
             if (bad > 0)
                 Debug.LogWarning($"[TerrainDataBake] {id} seed={seed}: zeroed {bad} non-finite height samples.");
+            if (kit == TerrainKit.Archipelago)
+                FinishSea(g, bake);
 
             BakeMaps(bake, g, id);
             return bake;

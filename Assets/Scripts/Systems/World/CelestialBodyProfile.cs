@@ -34,7 +34,13 @@ namespace SolarMajesty
     {
         Standard = 0,
         AsteroidField = 1,
-        IceCrust = 2
+        IceCrust = 2,
+        /// <summary>Lava channels: they burn a robot standing in them and cannot be built on.</summary>
+        Volcanic = 3,
+        /// <summary>Islands and sandbars in a sea that cannot be built on or walked through.</summary>
+        Archipelago = 4,
+        /// <summary>Long dunes whose loose sand slows travel.</summary>
+        DuneSea = 5
     }
 
     /// <summary>

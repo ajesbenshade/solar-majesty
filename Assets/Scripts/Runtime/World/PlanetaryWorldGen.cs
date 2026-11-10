@@ -101,6 +101,9 @@ namespace SolarMajesty
             SpawnCraters(rng, placed);
             SpawnLakes(rng, placed);
             SpawnRivers(rng, placed);
+            // Kit features draw no random numbers, so a Sol world's layout is unchanged by them.
+            SpawnSea();
+            SpawnLava();
             SpawnForestPatches(rng, placed);
             SpawnDunes(rng, placed);
             SpawnAsteroidIslets(rng, placed);
@@ -1083,6 +1086,8 @@ namespace SolarMajesty
 
                 if (FlatDist(pos, ColonyLayout.CampusOrigin) < exclusion) continue;
                 if (FlatDist(pos, ColonyLayout.CampusBOrigin) < exclusion * 0.85f) continue;
+                // Nothing is placed in a sea or on lava. Worlds with neither skip the test.
+                if ((HasSea && IsOverWater(pos, 3f)) || IsOverLava(pos, 3f)) continue;
 
                 bool ok = true;
                 for (int i = 0; i < placed.Count; i++)
@@ -1121,6 +1126,7 @@ namespace SolarMajesty
         /// <summary>True if world XZ sits inside a lake/river footprint (plus margin in meters).</summary>
         public bool IsOverWater(Vector3 world, float margin = 0.5f)
         {
+            if (HasSea && SeaAt(world, margin)) return true;
             for (int i = 0; i < _water.Count; i++)
             {
                 if (ContainsWater(_water[i], world, margin))

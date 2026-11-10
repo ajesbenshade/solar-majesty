@@ -48,6 +48,24 @@ namespace SolarMajesty.Tests
         public IEnumerator Volcanic_BootsAndPlays() => BootsAndPlays(WorldArchetype.Volcanic);
 
         [UnityTest]
+        public IEnumerator DuneSea_BootsAndPlays()
+        {
+            SystemBody body = FirstWithKit(TerrainKit.DuneSea);
+            Assert.IsNotNull(body);
+            yield return Boot(body);
+            var loop = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
+            Assert.AreEqual(body.Key, loop.ActiveWorld.Key);
+            Assert.IsTrue(loop.World.HasLooseSand);
+            Assert.IsTrue(loop.Settlement.HasCommons);
+            Assert.AreEqual(1f, loop.World.TravelScaleAt(ColonyLayout.CampusOrigin), 0.001f, "the colony stands on firm ground");
+            Assert.IsTrue(loop.World.TryKitVista(out Vector3 dune));
+            Assert.Less(loop.World.TravelScaleAt(dune), 0.85f, "loose sand slows travel");
+            loop.ChangeSpeed(SimSpeedChange.Set, 4);
+            yield return new WaitForSeconds(2f);
+            Assert.Greater(loop.Sim.Clock.TotalSteps, 0L);
+        }
+
+        [UnityTest]
         public IEnumerator OceanArchipelago_BootsAndPlays() => BootsAndPlays(WorldArchetype.OceanArchipelago);
 
         /// <summary>
@@ -155,6 +173,74 @@ namespace SolarMajesty.Tests
                 yield return new WaitForSecondsRealtime(0.5f);
                 CelestialBodyCatalog.ClearRegistered();
             }
+
+            // The terrain kits keep clear of the colony, so each is shot where it shows.
+            foreach (TerrainKit kit in new[] { TerrainKit.Volcanic, TerrainKit.Archipelago, TerrainKit.DuneSea })
+            {
+                yield return Boot(FirstWithKit(kit));
+                var loop = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
+                var cam = UnityEngine.Object.FindFirstObjectByType<IsometricCameraController>();
+                if (cam != null && loop.World.TryKitVista(out Vector3 vista)) cam.FocusOn(vista, 26f);
+                yield return new WaitForSecondsRealtime(4f);
+                yield return new WaitForEndOfFrame();
+                ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "kit-" + kit + ".png"));
+                yield return new WaitForSecondsRealtime(0.5f);
+                CelestialBodyCatalog.ClearRegistered();
+            }
+        }
+
+        // The kit is on the map, and nothing the colony needs was put in the sea or on lava.
+        private static void AssertKit(GameLoop loop, WorldArchetype archetype)
+        {
+            PlanetaryWorldGen world = loop.World;
+            if (archetype == WorldArchetype.Volcanic)
+            {
+                Assert.IsTrue(world.HasLava);
+                Assert.IsTrue(world.TryKitVista(out Vector3 lava));
+                Assert.IsTrue(world.IsOverLava(lava), "the flow is where the bake says");
+                Assert.IsFalse(world.IsOverLava(ColonyLayout.CampusOrigin, 20f));
+            }
+            if (archetype == WorldArchetype.OceanArchipelago)
+            {
+                Assert.IsTrue(world.HasSea);
+                Assert.IsTrue(world.TryKitVista(out Vector3 sea));
+                Assert.IsTrue(world.IsOverWater(sea, 0f));
+                Assert.IsFalse(world.IsOverWater(ColonyLayout.CampusOrigin, 20f), "the Commons is well inland");
+            }
+            Assert.Greater(world.Nodes.Count, 5, "resources were placed");
+            Assert.Greater(world.Lairs.Count, 1, "dens were placed");
+            foreach (ResourceNode node in world.Nodes)
+            {
+                Assert.IsFalse(world.IsOverWater(node.transform.position, 0f), "a resource node in the water");
+                Assert.IsFalse(world.IsOverLava(node.transform.position), "a resource node on lava");
+            }
+            foreach (StalkerLair lair in world.Lairs)
+            {
+                Assert.IsFalse(world.IsOverWater(lair.transform.position, 0f), "a den in the water");
+                Assert.IsFalse(world.IsOverLava(lair.transform.position), "a den on lava");
+                // A den nobody can walk to can never be cleared, and the world could not be won.
+                var path = new UnityEngine.AI.NavMeshPath();
+                bool found = UnityEngine.AI.NavMesh.SamplePosition(Flat(lair.transform.position), out var hit, 8f, UnityEngine.AI.NavMesh.AllAreas)
+                             && UnityEngine.AI.NavMesh.SamplePosition(Flat(ColonyLayout.PartySpawn), out var from, 8f, UnityEngine.AI.NavMesh.AllAreas)
+                             && UnityEngine.AI.NavMesh.CalculatePath(from.position, hit.position, UnityEngine.AI.NavMesh.AllAreas, path);
+                Assert.IsTrue(found && path.status == UnityEngine.AI.NavMeshPathStatus.PathComplete,
+                    $"no way on foot to the den at {lair.transform.position}");
+            }
+        }
+
+        // The walkable ground is a flat sheet at y = 0, whatever the terrain above it does.
+        private static Vector3 Flat(Vector3 p) => new Vector3(p.x, 0f, p.z);
+
+        private static SystemBody FirstWithKit(TerrainKit kit)
+        {
+            for (int seed = 1; seed <= 200; seed++)
+            {
+                foreach (SystemBody body in StarSystemGenerator.Generate(seed).Bodies)
+                {
+                    if (body.Profile.Kit == kit) return body;
+                }
+            }
+            return null;
         }
 
         // Boot a generated world from its key alone, as after a restart.
@@ -200,6 +286,7 @@ namespace SolarMajesty.Tests
             yield return new WaitForSeconds(3f);
             Assert.Greater(loop.Sim.Clock.TotalSteps, 0L);
             Assert.AreNotEqual(0UL, loop.WorldHash());
+            AssertKit(loop, archetype); // after the wait, so the sea has been cut out of the walkable ground
 
             SaveGame snapshot = loop.CaptureSave("generated");
             Assert.AreEqual(key, snapshot.bodyKey);

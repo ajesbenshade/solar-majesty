@@ -229,7 +229,13 @@ namespace SolarMajesty
             (data != null ? data.moveSpeed : 3.5f) *
             (1f + _geneSpeed + SuitSpeedBonus()) *
             BodyMoveScale() *
+            _terrainMove *
             _statuses.SpeedMul;
+
+        // What the ground under the robot does to it, read once per simulation step.
+        private float _terrainMove = 1f;
+        private float _lavaFlash;
+        private bool _lavaToast;
 
         public float EffectiveWorkRate
         {
@@ -879,6 +885,7 @@ namespace SolarMajesty
             _motives.Tick(dt, _brain.Tuning, data.specialistClass, healthNormalized, bodyDanger,
                 _loop != null ? _loop.SafetyFieldAt(transform.position) : 0f);
             TickRadiation(dt);
+            TickGround(dt);
             TickGene(dt);
             TickMedic(dt);
             TickThink(dt);
@@ -2793,6 +2800,28 @@ namespace SolarMajesty
         }
 
         public void DebugSetFatigue(float value) => fatigue = Mathf.Clamp01(value);
+
+        /// <summary>Loose sand slows the robot; lava burns it for as long as it stands there.</summary>
+        private void TickGround(float dt)
+        {
+            if (_world == null)
+            {
+                _terrainMove = 1f;
+                return;
+            }
+            Vector3 here = transform.position;
+            _terrainMove = _world.TravelScaleAt(here);
+            if (!_world.IsOverLava(here)) return;
+
+            ApplyDamage(PlanetaryWorldGen.LavaDamagePerSecond * dt, false);
+            _lavaFlash -= dt;
+            if (_lavaFlash > 0f) return;
+            _lavaFlash = 1.2f;
+            DemoVfx.HitFlash(transform, new Color(1f, 0.5f, 0.1f));
+            if (_lavaToast) return;
+            _lavaToast = true;
+            _loop?.NoteLavaExposure();
+        }
 
         private void TickRadiation(float dt)
         {
