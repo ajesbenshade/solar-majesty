@@ -165,10 +165,13 @@ namespace SolarMajesty
         {
             // A dim, distant star still has to light a readable scene, so brightness moves only a little.
             float strength = Mathf.Clamp(Mathf.Pow(Mathf.Max(body.Insolation, 0.001f), 0.12f), 0.78f, 1.22f);
-            p.SunColor = system.SunColor;
+            // An eye settles to its star: the light carries a hint of the star's colour, not all
+            // of it, or every world of a red dwarf is the same orange whatever its ground.
+            Color light = Color.Lerp(Color.white, system.SunColor, 0.55f);
+            p.SunColor = light;
             p.SunIntensity *= strength;
-            p.FillColor = Color.Lerp(p.FillColor, Complement(system.SunColor), 0.25f);
-            p.GradeFilter = Color.Lerp(p.GradeFilter, system.SunColor, 0.35f);
+            p.FillColor = Color.Lerp(p.FillColor, Complement(light), 0.25f);
+            p.GradeFilter = Color.Lerp(p.GradeFilter, light, 0.25f);
             float yaw = rng.Range(-70f, 70f);
             float pitch = rng.Range(34f, 58f);
             if (body.Archetype == WorldArchetype.TidallyLocked)
@@ -190,10 +193,10 @@ namespace SolarMajesty
             switch (archetype)
             {
                 case WorldArchetype.RockyDesert:
-                    // Rust through ochre to pale sand, never the pink side of red.
-                    hue = rng.Range(-0.015f, 0.09f);
-                    sat = rng.Range(0.5f, 1.05f);
-                    val = rng.Range(0.95f, 1.25f);
+                    // Rust through ochre to pale sand: never the pink side of red, never lemon.
+                    hue = rng.Range(-0.015f, 0.06f);
+                    sat = rng.Range(0.45f, 0.9f);
+                    val = rng.Range(0.95f, 1.15f);
                     break;
                 case WorldArchetype.IceShell:
                     // The ice has no colour to turn; the stained cracks take all of it.

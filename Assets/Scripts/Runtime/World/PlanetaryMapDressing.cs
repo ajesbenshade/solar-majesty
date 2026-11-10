@@ -362,11 +362,12 @@ namespace SolarMajesty
                 if (m.HasProperty(GroundColorProps[i]))
                     m.SetColor(GroundColorProps[i], body.Repaint(m.GetColor(GroundColorProps[i])));
             }
-            // Earth's meadow tile keeps its own green unless it is told to take the layer colour.
+            // Earth's meadow tile keeps its own green unless it is told to lean toward the layer
+            // colour. A third of the way keeps the grass looking like grass.
             if (body.Authored(WorldAspect.Ground) == CelestialBodyId.Earth && m.HasProperty("_SplatDesat"))
             {
                 Vector4 desat = m.GetVector("_SplatDesat");
-                desat.z = Mathf.Max(desat.z, 0.7f);
+                desat.z = Mathf.Max(desat.z, 0.35f);
                 m.SetVector("_SplatDesat", desat);
             }
         }
