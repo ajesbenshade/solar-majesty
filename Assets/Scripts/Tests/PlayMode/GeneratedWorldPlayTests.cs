@@ -173,7 +173,7 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(body);
             StarSystemGenerator.EnsureRegistered(body.Key);
             Assert.IsTrue(CelestialBodyCatalog.TryGetRegistered(body.Key, out CelestialBodyProfile chosen));
-            BodySeed.SetWorld(chosen);
+            BodySeed.SetWorld(chosen, newColony: true);
             CelestialBodyCatalog.ClearRegistered();
             DemoSettings.RequestBootIntoPlay();
             yield return SceneManager.LoadSceneAsync("LunarOutpost_Sandbox");

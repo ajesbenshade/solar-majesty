@@ -1327,7 +1327,7 @@ namespace SolarMajesty
             DemoSettings.MarkTutorialDone(); // the guided start is taught in Sol, not out here
             ReplayRules.Save();
             DemoSettings.RequestBootIntoPlay();
-            BodySeed.SetWorld(world);
+            BodySeed.SetWorld(world, newColony: true);
             ReloadActiveScene();
             return true;
         }

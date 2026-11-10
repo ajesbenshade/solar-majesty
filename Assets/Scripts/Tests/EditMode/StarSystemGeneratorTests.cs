@@ -364,6 +364,40 @@ namespace SolarMajesty.Tests
             }
         }
 
+        /// <summary>A new colony stands on the world's own ground, whatever was played there before.</summary>
+        [Test]
+        public void NewColony_GoesBackToTheWorldsOwnSeed()
+        {
+            DeveloperPrefsShield.Capture();
+            SystemBody body = FirstOf(WorldArchetype.RockyDesert);
+            string stored = "SM_BodySeed_" + body.Key;
+            try
+            {
+                StarSystemGenerator.EnsureRegistered(body.Key);
+                CelestialBodyCatalog.TryGetRegistered(body.Key, out CelestialBodyProfile world);
+
+                BodySeed.SetWorld(world, newColony: true);
+                BodySeed.Ensure(world);
+                Assert.AreEqual(body.Seed, BodySeed.Current);
+
+                BodySeed.AdvanceForNextConquest(); // a retry moves the stored seed on
+                Assert.AreNotEqual(body.Seed, BodySeed.Current);
+                BodySeed.SetWorld(world);
+                BodySeed.Ensure(world);
+                Assert.AreNotEqual(body.Seed, BodySeed.Current, "carrying on keeps the ground the colony stands on");
+
+                BodySeed.SetWorld(world, newColony: true);
+                BodySeed.Ensure(world);
+                Assert.AreEqual(body.Seed, BodySeed.Current, "a new colony starts from the shared seed again");
+            }
+            finally
+            {
+                GamePrefs.DeleteKey(stored);
+                BodySeed.SetBody(CelestialBodyId.Earth);
+                DeveloperPrefsShield.Restore();
+            }
+        }
+
         private static SystemBody FirstOf(WorldArchetype archetype)
         {
             for (int seed = 1; seed <= 200; seed++)

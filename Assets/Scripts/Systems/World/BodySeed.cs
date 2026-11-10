@@ -103,13 +103,23 @@ namespace SolarMajesty
         /// <summary>
         /// Select a world registered with <see cref="CelestialBodyCatalog.Register"/> for the next
         /// boot. The body pref follows the Sol world it borrows authored content from.
+        /// <para>
+        /// A <paramref name="newColony"/> goes back to the world's own seed, whatever a colony
+        /// played there before left stored (a retry moves it on). That is what makes a shared
+        /// seed code give everyone the same ground.
+        /// </para>
         /// </summary>
-        public static void SetWorld(CelestialBodyProfile world)
+        public static void SetWorld(CelestialBodyProfile world, bool newColony = false)
         {
             Body = world.Id;
             WorldKey = CelestialBodyCatalog.IsRegisteredKey(world.Key) ? world.Key : "";
             GamePrefs.SetInt(BodyPrefsKey, (int)world.Id);
             GamePrefs.SetString(KeyPrefsKey, WorldKey);
+            if (newColony && WorldKey.Length > 0 && world.Seed != 0)
+            {
+                Current = world.Seed;
+                GamePrefs.SetInt(SeedKey(Body), Current);
+            }
             GamePrefs.Save();
         }
 
