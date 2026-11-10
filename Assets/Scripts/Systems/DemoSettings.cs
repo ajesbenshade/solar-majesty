@@ -572,10 +572,22 @@ namespace SolarMajesty
             GamePrefs.Save();
         }
 
+        /// <summary>The world Continue resumes: the registered or generated one selected, else the saved Sol body.</summary>
+        public static CelestialBodyProfile SavedWorld()
+        {
+            string key = BodySeed.LoadSavedKey();
+            if (!CelestialBodyCatalog.TryGetRegistered(key, out CelestialBodyProfile world))
+            {
+                StarSystemGenerator.EnsureRegistered(key);
+                CelestialBodyCatalog.TryGetRegistered(key, out world);
+            }
+            return world ?? CelestialBodyCatalog.Get(BodySeed.LoadSavedBody());
+        }
+
         public static string ContinueButtonLabel()
         {
             if (!SaveExists) return Loc.S("CONTINUE  ·  no save");
-            var body = CelestialBodyCatalog.Get(BodySeed.LoadSavedBody());
+            var body = SavedWorld();
             string name = body != null ? body.DisplayNameText : Loc.S("last drop");
             int met = GamePrefs.GetInt(SaveMetKey, 0);
             return Loc.F("CONTINUE  ·  {0}  ·  EU {1}", name, met);
@@ -591,7 +603,7 @@ namespace SolarMajesty
             int met = GamePrefs.GetInt(SaveMetKey, 0);
             int pwr = GamePrefs.GetInt(SavePwrKey, 0);
             int tech = ResearchManager.SavedUnlockCount();
-            int modules = CampusSnapshot.SlotCount(LoadCampus(BodySeed.LoadSavedBody()));
+            int modules = CampusSnapshot.SlotCount(LoadCampus(SavedWorld()));
             string campus = modules > 0 ? Loc.F("{0} modules", modules) : Loc.S("empty campus");
             return Loc.F("REG {0}  ICE {1}  EU {2}  PWR {3}  ·  {4}  ·  {5} techs", reg, ice, met, pwr, campus, tech);
         }

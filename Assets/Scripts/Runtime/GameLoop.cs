@@ -920,8 +920,6 @@ namespace SolarMajesty
             SelectLaunchSystemOnce();
             celestialBody = BodySeed.LoadSavedBody();
             string worldKey = BodySeed.LoadSavedKey();
-            // A generated world is stored as its key alone; its system is built again from it.
-            StarSystemGenerator.EnsureRegistered(worldKey);
             bool freshCampaign = CampaignSlots.ConsumeFresh();
             int pendingSlot = freshCampaign ? -1 : CampaignSlots.ConsumePendingLoad();
             SaveGame pendingSave = null;
@@ -939,7 +937,9 @@ namespace SolarMajesty
                 celestialBody = (CelestialBodyId)pendingSave.body;
                 worldKey = pendingSave.bodyKey;
                 CampaignProgress.UnlockThrough((CelestialBodyId)pendingSave.highestUnlocked);
-                CampaignProgress.UnlockThrough((CelestialBodyId)pendingSave.body);
+                // A world outside Sol borrows a Sol world's number; it unlocks nothing in the campaign.
+                if (!CelestialBodyCatalog.IsRegisteredKey(pendingSave.bodyKey))
+                    CampaignProgress.UnlockThrough((CelestialBodyId)pendingSave.body);
                 ReplayRules.Restore(pendingSave.replay);
                 if (pendingSave.rosterBlob != null)
                 {
@@ -954,7 +954,8 @@ namespace SolarMajesty
             {
                 DemoSettings.SaveExists = true;
                 CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.highestUnlocked);
-                CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.body);
+                if (!CelestialBodyCatalog.IsRegisteredKey(bootSave.bodyKey))
+                    CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.body);
                 // An explicit travel/retry request takes precedence over the last active planet.
                 if (!DemoSettings.BootStraightIntoPlay)
                 {
@@ -981,7 +982,10 @@ namespace SolarMajesty
                 DemoSettings.SaveLoadNotice = Loc.S("We couldn't read this colony or its backup. Your save files are unchanged.");
             }
             // A world outside Sol is a registered profile. The enum then names the Sol world it
-            // borrows authored content from, and campaign unlocks do not apply to it.
+            // borrows authored content from, and campaign unlocks do not apply to it. A generated
+            // world is stored as its key alone (in prefs or in the save just read), so its system
+            // is built again from the key here.
+            StarSystemGenerator.EnsureRegistered(worldKey);
             if (CelestialBodyCatalog.TryGetRegistered(worldKey, out CelestialBodyProfile registered))
             {
                 _body = registered;
@@ -1331,6 +1335,13 @@ namespace SolarMajesty
         /// <summary>The world being played, as data.</summary>
         public CelestialBodyProfile ActiveWorld => _body;
 
+        /// <summary>
+        /// True on a registered or generated world. Such a world is not a step of the Sol
+        /// campaign: winning it unlocks nothing there and offers no next planet, and the Sol
+        /// world whose number it borrows is not "the current planet".
+        /// </summary>
+        public bool OutsideCampaign => _body != null && CelestialBodyCatalog.IsRegisteredKey(_body.Key);
+
         private static bool _launchSystemRead;
 
         // -system <seed> [-world <n>] selects a generated world for this run. Read once per
@@ -1370,7 +1381,8 @@ namespace SolarMajesty
             var profile = CelestialBodyCatalog.Get(body);
             var outcome = SolarSystemTitlePick.Resolve(
                 body,
-                celestialBody,
+                // Outside Sol no planet is the current one: a click means go there, not carry on here.
+                OutsideCampaign ? (CelestialBodyId)(-1) : celestialBody,
                 DemoSettings.SaveExists,
                 CampaignProgress.IsUnlocked(body),
                 cheatUnlock);
@@ -3185,10 +3197,10 @@ namespace SolarMajesty
                 LogOverseer(Loc.S("Aegis Spire. Grid draw and rim pressure drop. Place the 6×6 Spire."));
             else if (id == TechId.DeepArchive)
                 LogOverseer(Loc.S("Deep Archive. Labs remember every sample. Place the 6×6 Archive."));
-            if (Research != null && Research.HasLaunchUnlockFor(celestialBody) &&
+            if (Research != null && Research.HasLaunchUnlockFor(_body) &&
                 Settlement != null && !Settlement.HasPad)
             {
-                string craft = Research.LaunchTechLabel(celestialBody);
+                string craft = Research.LaunchTechLabel(_body);
                 LogOverseer(Loc.F("{0} researched. Place a Landing Pad to stage the craft.", craft));
             }
         }
@@ -3247,7 +3259,7 @@ namespace SolarMajesty
         private void SyncLaunchGate()
         {
             if (_mission == null || Research == null) return;
-            bool tech = Research.HasLaunchUnlockFor(celestialBody);
+            bool tech = Research.HasLaunchUnlockFor(_body);
             bool pad = Settlement != null && Settlement.HasPad;
             if (!tech || !pad)
                 return;
@@ -3264,7 +3276,7 @@ namespace SolarMajesty
 
             if (!wasReady)
             {
-                string craft = Research.LaunchTechLabel(celestialBody);
+                string craft = Research.LaunchTechLabel(_body);
                 LogOverseer(Loc.F("{0} staged on the Landing Pad. Launch gate is open.", craft));
                 EnsureNarrative();
                 string completeKey = AdvisorToastCatalog.CompleteKeyForCraft(StoryBody);
@@ -5403,7 +5415,7 @@ namespace SolarMajesty
         /// <summary>Body gate met — increment conquest count and evaluate achievements (Ironman, Skinflint, Clean Sheet).</summary>
         public void NoteBodyConquered()
         {
-            CampaignProgress.MarkConquered(celestialBody);
+            if (!OutsideCampaign) CampaignProgress.MarkConquered(celestialBody);
             Stats.BodiesConquered++;
             Achievements.Evaluate(Stats);
         }
@@ -5426,14 +5438,14 @@ namespace SolarMajesty
             if (Rules.IsEndless || _victoryHold) return;
             _victoryHold = true;
             Time.timeScale = 0f;
-            VictoryOffer.RecordProgress(celestialBody);
+            if (!OutsideCampaign) VictoryOffer.RecordProgress(celestialBody);
             PersistSession();
         }
 
         /// <summary>Victory button. Loads the next body when that level exists.</summary>
         public void ContinueAfterVictory()
         {
-            if (!VictoryOffer.NextIsBuilt(celestialBody))
+            if (OutsideCampaign || !VictoryOffer.NextIsBuilt(celestialBody))
                 return;
             _victoryHold = false;
             // The Earth demo used to refuse this hop. Leaving it on would also hide Luna's
@@ -5463,6 +5475,8 @@ namespace SolarMajesty
         /// <summary>Campaign advance: unlock next body and travel there with a fresh seed.</summary>
         public void AdvanceCampaign(bool fromVictory)
         {
+            // Nothing follows a world outside Sol yet; the galaxy layer adds the onward route.
+            if (OutsideCampaign) return;
             if (VictoryOffer.DemoBlocksDepart(DemoSettings.FirstHourDemo, fromVictory))
             {
                 string craft = Research != null
@@ -5518,7 +5532,7 @@ namespace SolarMajesty
         /// <summary>Switch world without advancing that body's seed. Respects campaign unlocks unless cheating.</summary>
         public void SelectBody(CelestialBodyId body, bool allowLocked = false)
         {
-            if (body == celestialBody) return;
+            if (body == celestialBody && !OutsideCampaign) return;
             if (!allowLocked && !CampaignProgress.IsUnlocked(body))
             {
                 Debug.Log($"[GameLoop] {body} is locked — conquer the prior world first.");
@@ -6240,9 +6254,24 @@ namespace SolarMajesty
                 LogOverseer(Loc.S("That slot is empty."));
                 return false;
             }
+            // A save from outside Sol selects its own world, so its seed is stored under that
+            // world and the Sol world whose number it borrows keeps its own.
+            CelestialBodyProfile world = null;
+            if (CelestialBodyCatalog.IsRegisteredKey(save.bodyKey))
+            {
+                StarSystemGenerator.EnsureRegistered(save.bodyKey);
+                if (!CelestialBodyCatalog.TryGetRegistered(save.bodyKey, out world))
+                {
+                    LogOverseer(Loc.S("That colony stands on a world this game no longer has."));
+                    return false;
+                }
+            }
             CampaignSlots.AdoptStamp(save.campaignStamp);
             CampaignSlots.MarkPendingLoad(slot);
-            BodySeed.SetBody((CelestialBodyId)save.body);
+            if (world != null)
+                BodySeed.SetWorld(world);
+            else
+                BodySeed.SetBody((CelestialBodyId)save.body);
             BodySeed.SetAndPersist(save.seed);
             DemoSettings.SaveExists = true;
             DemoSettings.RequestBootIntoPlay();
@@ -6268,6 +6297,7 @@ namespace SolarMajesty
                 nextEntityId = _entityIds.NextId,
                 body = (int)celestialBody,
                 bodyKey = _body != null ? _body.Key : CelestialBodyCatalog.KeyOf(celestialBody),
+                bodyName = OutsideCampaign ? _body.DisplayName : "",
                 seed = WorldSeed,
                 highestUnlocked = (int)CampaignProgress.HighestUnlocked,
                 rosterBlob = SpecialistRoster.Encode(CaptureRoster()),

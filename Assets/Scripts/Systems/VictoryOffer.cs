@@ -60,6 +60,14 @@ namespace SolarMajesty
             return IsBuilt(next.Value);
         }
 
+        /// <summary>True for one of the five Sol worlds. A registered or generated world is not a step of the campaign.</summary>
+        public static bool InCampaign(CelestialBodyProfile world) =>
+            world != null && !CelestialBodyCatalog.IsRegisteredKey(world.Key);
+
+        /// <summary>As <see cref="NextIsBuilt(CelestialBodyId)"/>; nothing follows a world outside the campaign.</summary>
+        public static bool NextIsBuilt(CelestialBodyProfile current) =>
+            InCampaign(current) && NextIsBuilt(current.Id);
+
         public static bool IsBuilt(CelestialBodyId id) =>
             IsBuilt(id, SceneManager.sceneCountInBuildSettings);
 
@@ -91,8 +99,7 @@ namespace SolarMajesty
             }
 
             string headline = HeadlineFor(current);
-            string body = Loc.S(
-                "You are the central AI. Worker bots secured this claim: dens are quiet, the treasury is holding in EU, and the craft is on the pad.");
+            string body = SecuredBody;
 
             var next = CampaignProgress.NextAfter(current);
             if (!next.HasValue || !nextBuilt)
@@ -112,6 +119,26 @@ namespace SolarMajesty
                 : Loc.F("Continue to {0}", NameOf(next.Value));
             return new View(true, headline, body, label, null, true);
         }
+
+        /// <summary>
+        /// The offer for any world. One of the five Sol worlds gets the campaign offer above. A
+        /// world outside the campaign is secured under its own name and offers only the main
+        /// menu: there is no next planet to continue to.
+        /// </summary>
+        public static View For(CelestialBodyProfile current, bool nextBuilt, bool endless)
+        {
+            if (endless || current == null || InCampaign(current))
+                return For(current != null ? current.Id : CelestialBodyId.Earth, nextBuilt, endless);
+
+            string name = current.DisplayNameText;
+            string headline = string.IsNullOrEmpty(name)
+                ? Loc.S("CLAIM SECURED")
+                : Loc.F("{0} SECURED", name.ToUpperInvariant());
+            return new View(true, headline, SecuredBody, null, null, true);
+        }
+
+        private static string SecuredBody => Loc.S(
+            "You are the central AI. Worker bots secured this claim: dens are quiet, the treasury is holding in EU, and the craft is on the pad.");
 
         /// <summary>
         /// Virtual HUD rect. Callers pass width/height already divided by the UI Scale,

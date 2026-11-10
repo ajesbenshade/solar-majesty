@@ -95,7 +95,12 @@ namespace SolarMajesty
             Spec s = Specs[(int)archetype];
             float gravity = rng.Range(s.GravityMin, s.GravityMax);
             float radiation = rng.Range(s.RadiationMin, s.RadiationMax);
-            float temp = Mathf.Clamp(StarSystemGenerator.EquilibriumC(insolation) + s.Warming, s.TempMin, s.TempMax);
+            float temp = StarSystemGenerator.EquilibriumC(insolation) + s.Warming;
+            // Outside what this kind of world can be, settle in the near third of its range, not
+            // on the limit: otherwise a system is a row of identical readings.
+            float slack = (s.TempMax - s.TempMin) * 0.35f;
+            if (temp > s.TempMax) temp = s.TempMax - rng.Range(0f, slack);
+            else if (temp < s.TempMin) temp = s.TempMin + rng.Range(0f, slack);
             return new EnvironmentTraits(s.Air, gravity, Mathf.Round(temp), radiation);
         }
 

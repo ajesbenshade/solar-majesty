@@ -107,6 +107,8 @@ namespace SolarMajesty
                 {
                     if (Rules.IsEndless)
                         return Loc.S("Keep colonizing — dens quiet, colony holding");
+                    if (_loop != null && _loop.OutsideCampaign)
+                        return Loc.F("{0} holds — choose another world from the title", _loop.BodyProfile.DisplayNameText);
                     if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
                         return Loc.F("{0} holds — campaign spine complete", _loop.BodyProfile?.DisplayNameText ?? Loc.S("Outpost"));
                     return Loc.S("Outpost secured — advance the campaign");
@@ -125,9 +127,9 @@ namespace SolarMajesty
                 if (!LaunchReady)
                 {
                     if (_loop != null && _loop.Research != null &&
-                        !_loop.Research.HasLaunchUnlockFor(_loop.ActiveBody))
+                        !_loop.Research.HasLaunchUnlockFor(_loop.BodyProfile))
                     {
-                        string craft = _loop.Research.LaunchTechLabel(_loop.ActiveBody);
+                        string craft = _loop.Research.LaunchTechLabel(_loop.BodyProfile);
                         return Loc.F("Research {0} (TECH · {1}) — then place a Landing Pad", craft, InputBindings.Hint(GameAction.ToolTech));
                     }
                     return Loc.S("Place a Landing Pad — departure craft stages there");
@@ -142,6 +144,8 @@ namespace SolarMajesty
             {
                 if (Rules.IsEndless)
                     return Loc.S("KEEP COLONIZING");
+                if (_loop != null && _loop.OutsideCampaign)
+                    return Loc.S("OUTPOST SECURED");
                 if (_loop != null && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
                     return Loc.S("SOLAR CONQUEST COMPLETE");
                 return Loc.S("OUTPOST SECURED");
@@ -174,6 +178,8 @@ namespace SolarMajesty
             {
                 if (Rules.IsEndless)
                     return Loc.S("Endless mode: no launch to the next world. Keep the colony standing.");
+                if (_loop != null && _loop.OutsideCampaign)
+                    return Loc.S("This world is yours. Keep overseeing here, or choose another from the title.");
                 if (DemoSettings.FirstHourDemo)
                 {
                     string craft = _loop != null && _loop.Research != null
@@ -346,10 +352,13 @@ namespace SolarMajesty
             _winLatched = true;
         }
 
-        /// <summary>EditMode: set the three gates without a live colony or a world refresh.</summary>
-        public void ArmForTests(bool densCleared, bool sustainComplete, bool launchReady)
+        /// <summary>
+        /// Tests: set the three gates without a world refresh. EditMode drops the colony too; a
+        /// play test keeps it (<paramref name="keepColony"/>) so the win runs its real consequences.
+        /// </summary>
+        public void ArmForTests(bool densCleared, bool sustainComplete, bool launchReady, bool keepColony = false)
         {
-            _loop = null;
+            if (!keepColony) _loop = null;
             _armed = true;
             _state = MissionState.Active;
             _winLatched = false;
@@ -490,8 +499,8 @@ namespace SolarMajesty
                 return;
 
             _loop.NoteBodyConquered();
-            bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
-            var offer = VictoryOffer.For(_loop.ActiveBody, nextBuilt, Rules.IsEndless);
+            bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.BodyProfile);
+            var offer = VictoryOffer.For(_loop.BodyProfile, nextBuilt, Rules.IsEndless);
             if (offer.HoldSim)
                 _loop.HoldForVictory();
 
@@ -507,7 +516,7 @@ namespace SolarMajesty
                 Debug.Log("[Mission] Victory — keep colonizing. Rating stands.");
             else
                 Debug.Log("[Mission] Victory — dens cleared, colony sustained, launch ready.");
-            if (!Rules.IsEndless && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
+            if (!Rules.IsEndless && !_loop.OutsideCampaign && !CampaignProgress.NextAfter(_loop.ActiveBody).HasValue)
                 Debug.Log("[Mission] Campaign spine complete.");
         }
 

@@ -64,7 +64,7 @@ namespace SolarMajesty.Tests
             yield return new WaitForEndOfFrame();
             ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "title.png"));
             yield return new WaitForSecondsRealtime(0.5f);
-            foreach (string seed in new[] { "7K2M-9AX", "my homeworld", "0000-00Z" })
+            foreach (string seed in new[] { "1K2M-9AX", "my homeworld", "0000-00Z" })
             {
                 hud.PromptBeyondSol(seed);
                 yield return new WaitForSecondsRealtime(0.5f);

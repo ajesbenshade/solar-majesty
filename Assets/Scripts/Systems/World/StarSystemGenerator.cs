@@ -33,7 +33,7 @@ namespace SolarMajesty
         /// <summary>Place outward from the star, starting at 0.</summary>
         public int Index;
         public string Name;
-        /// <summary>World key ("gen.7k2m9ax.2"). The key alone is enough to build the world again.</summary>
+        /// <summary>World key ("gen.1k2m9ax.2"). The key alone is enough to build the world again.</summary>
         public string Key;
         public WorldArchetype Archetype;
         /// <summary>Orbit radius in astronomical units.</summary>
@@ -49,7 +49,7 @@ namespace SolarMajesty
     public sealed class StarSystem
     {
         public int Seed;
-        /// <summary>The seed as a player shares it ("7K2M-9AX").</summary>
+        /// <summary>The seed as a player shares it ("1K2M-9AX").</summary>
         public string Code;
         public string Name;
         public StarClass Star;
@@ -199,7 +199,7 @@ namespace SolarMajesty
             return CelestialBodyCatalog.TryGetRegistered(key, out _);
         }
 
-        /// <summary>Launch argument: <c>-system 7K2M-9AX</c> (or any text) plays a generated system.</summary>
+        /// <summary>Launch argument: <c>-system 1K2M-9AX</c> (or any text) plays a generated system.</summary>
         public const string SystemArgument = "-system";
         /// <summary>Launch argument: <c>-world 3</c> picks the third body out. Without it, the most temperate one.</summary>
         public const string WorldArgument = "-world";

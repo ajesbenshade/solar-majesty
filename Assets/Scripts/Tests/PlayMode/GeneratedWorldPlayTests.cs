@@ -50,7 +50,115 @@ namespace SolarMajesty.Tests
         [UnityTest]
         public IEnumerator OceanArchipelago_BootsAndPlays() => BootsAndPlays(WorldArchetype.OceanArchipelago);
 
-        private static IEnumerator BootsAndPlays(WorldArchetype archetype)
+        /// <summary>
+        /// Winning a world that wears Mars must not do what winning Mars does: unlock the Belt,
+        /// mark Mars conquered, or offer to fly there.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Victory_LeavesTheSolCampaignAlone()
+        {
+            SystemBody body = FirstOf(WorldArchetype.Volcanic);
+            yield return Boot(body);
+            var loop = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
+            Assert.IsTrue(loop.OutsideCampaign);
+            Assert.AreEqual(CelestialBodyId.Mars, loop.ActiveBody);
+            CelestialBodyId unlockedBefore = CampaignProgress.HighestUnlocked;
+            int conqueredBefore = CampaignProgress.ConqueredMask;
+            Assert.IsTrue(loop.Research.HasLaunchUnlockFor(loop.ActiveWorld), "no Sol launch tech stands in the way");
+
+            loop.Mission.ArmForTests(densCleared: true, sustainComplete: true, launchReady: true, keepColony: true);
+            loop.Mission.EvaluateVictoryForTests();
+            yield return null;
+
+            Assert.IsTrue(loop.Mission.IsWon);
+            Assert.AreEqual(unlockedBefore, CampaignProgress.HighestUnlocked, "nothing in Sol was unlocked");
+            Assert.AreEqual(conqueredBefore, CampaignProgress.ConqueredMask, "Mars was not conquered");
+            Assert.AreEqual(1, loop.Stats.BodiesConquered, "the win still counts for the run");
+            StringAssert.Contains(body.Name, loop.Mission.ObjectiveLabel);
+
+            VictoryOffer.View offer = VictoryOffer.For(loop.ActiveWorld, VictoryOffer.NextIsBuilt(loop.ActiveWorld), endless: false);
+            Assert.IsFalse(offer.CanContinue);
+            StringAssert.Contains(body.Name.ToUpperInvariant(), offer.Headline);
+
+            // The continue button's handler and the campaign advance both stay on this world.
+            loop.ContinueAfterVictory();
+            loop.AdvanceCampaign();
+            yield return null;
+            yield return null;
+            var still = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
+            Assert.AreSame(loop, still, "no hop was started");
+            Assert.AreEqual(body.Key, BodySeed.LoadSavedKey());
+            Assert.AreEqual(unlockedBefore, CampaignProgress.HighestUnlocked);
+        }
+
+        /// <summary>
+        /// A slot saved on a generated world loads back onto that world from a session that has
+        /// never heard of it, and does not write its seed over the Sol world it wears.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator SlotSave_LoadsBackOntoItsOwnWorld()
+        {
+            SystemBody body = FirstOf(WorldArchetype.Volcanic);
+            yield return Boot(body);
+            var loop = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
+            loop.ChangeSpeed(SimSpeedChange.Set, 4);
+            yield return new WaitForSeconds(2f);
+            Assert.IsTrue(loop.SaveToSlot(2));
+            Assert.IsTrue(SaveSystem.TryRead(2, out SaveGame written));
+            Assert.AreEqual(body.Key, written.bodyKey);
+            Assert.AreEqual(body.Name, written.bodyName);
+            StringAssert.StartsWith(body.Name, written.Describe());
+
+            // As a fresh process sitting on a Sol world: nothing registered, no world selected.
+            CelestialBodyCatalog.ClearRegistered();
+            BodySeed.SetBody(CelestialBodyId.Earth);
+            const string marsSeedKey = "SM_BodySeed_Mars";
+            GamePrefs.SetInt(marsSeedKey, 20011);
+            CelestialBodyId unlockedBefore = CampaignProgress.HighestUnlocked;
+
+            Assert.IsTrue(loop.LoadFromSlot(2));
+            GameLoop loaded = null;
+            float deadline = Time.realtimeSinceStartup + 30f;
+            while (Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+                loaded = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
+                if (loaded != null && loaded != loop && loaded.Screen == DemoScreen.Playing) break;
+            }
+            Assert.IsNotNull(loaded);
+            Assert.AreNotSame(loop, loaded);
+            Assert.AreEqual(body.Key, loaded.ActiveWorld.Key, "the save came back on its own world");
+            Assert.AreEqual(body.Seed, BodySeed.Current);
+            Assert.AreEqual(body.Key, BodySeed.LoadSavedKey());
+            Assert.Greater(loaded.Sim.Clock.TotalSteps, 0L, "the colony was restored, not started again");
+            Assert.AreEqual(20011, GamePrefs.GetInt(marsSeedKey, -1), "Mars keeps its own seed");
+            Assert.AreEqual(unlockedBefore, CampaignProgress.HighestUnlocked, "loading it unlocked nothing in Sol");
+        }
+
+        /// <summary>
+        /// Review shots of every archetype in play, for a person to look at. Runs only when
+        /// SM_SHOT_DIR names a folder, and only draws when Unity runs with a window (no -batchmode).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ReviewShots_EveryArchetype()
+        {
+            string dir = Environment.GetEnvironmentVariable("SM_SHOT_DIR");
+            if (string.IsNullOrEmpty(dir)) Assert.Ignore("Set SM_SHOT_DIR to write review shots.");
+            System.IO.Directory.CreateDirectory(dir);
+            foreach (WorldArchetype archetype in Enum.GetValues(typeof(WorldArchetype)))
+            {
+                SystemBody body = FirstOf(archetype);
+                yield return Boot(body);
+                yield return new WaitForSecondsRealtime(4f);
+                yield return new WaitForEndOfFrame();
+                ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "world-" + archetype + ".png"));
+                yield return new WaitForSecondsRealtime(0.5f);
+                CelestialBodyCatalog.ClearRegistered();
+            }
+        }
+
+        // Boot a generated world from its key alone, as after a restart.
+        private static IEnumerator Boot(SystemBody body)
         {
             if (Application.companyName != "SolarMajestyValidation" &&
                 Environment.GetEnvironmentVariable("CI") != "true")
@@ -61,18 +169,22 @@ namespace SolarMajesty.Tests
             CampaignProgress.ResetCampaign();
             DemoSettings.SetFirstHourDemo(false);
 
-            SystemBody body = FirstOf(archetype);
-            Assert.IsNotNull(body, "an early seed has a " + archetype);
-            string key = body.Key;
-
-            // Only the key is stored, as after a restart: the boot must build the system again.
-            StarSystemGenerator.EnsureRegistered(key);
-            Assert.IsTrue(CelestialBodyCatalog.TryGetRegistered(key, out CelestialBodyProfile chosen));
+            Assert.IsNotNull(body);
+            StarSystemGenerator.EnsureRegistered(body.Key);
+            Assert.IsTrue(CelestialBodyCatalog.TryGetRegistered(body.Key, out CelestialBodyProfile chosen));
             BodySeed.SetWorld(chosen);
             CelestialBodyCatalog.ClearRegistered();
             DemoSettings.RequestBootIntoPlay();
             yield return SceneManager.LoadSceneAsync("LunarOutpost_Sandbox");
             yield return null;
+        }
+
+        private static IEnumerator BootsAndPlays(WorldArchetype archetype)
+        {
+            SystemBody body = FirstOf(archetype);
+            Assert.IsNotNull(body, "an early seed has a " + archetype);
+            string key = body.Key;
+            yield return Boot(body);
 
             var loop = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
             Assert.IsNotNull(loop.ActiveWorld);

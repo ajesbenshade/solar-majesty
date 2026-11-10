@@ -209,6 +209,135 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(SystemSeedCode.FromText("my homeworld"), system.Seed);
         }
 
+        [Test]
+        public void ExampleCode_IsARealCode()
+        {
+            Assert.IsTrue(SystemSeedCode.TryParse("1K2M-9AX", out int seed));
+            Assert.AreEqual("1K2M-9AX", SystemSeedCode.Format(seed));
+            Assert.IsFalse(SystemSeedCode.TryParse("7K2M-9AX", out _), "a code starts with 0 to 3: seven characters hold 35 bits");
+            Assert.IsTrue(StarSystemGenerator.TryParseKey("gen.1k2m9ax.2", out int keySeed, out int index));
+            Assert.AreEqual(seed, keySeed);
+            Assert.AreEqual(1, index);
+        }
+
+        /// <summary>A system must not read as a row of identical temperatures.</summary>
+        [Test]
+        public void Temperatures_SpreadInsideAnArchetypesRange()
+        {
+            var ocean = new HashSet<float>();
+            var ice = new HashSet<float>();
+            for (int seed = 1; seed <= 300; seed++)
+            {
+                foreach (SystemBody body in StarSystemGenerator.Generate(seed).Bodies)
+                {
+                    if (body.Archetype == WorldArchetype.OceanArchipelago)
+                    {
+                        ocean.Add(body.Traits.TemperatureC);
+                        Assert.That(body.Traits.TemperatureC, Is.InRange(5f, 30f), $"seed {seed}");
+                    }
+                    else if (body.Archetype == WorldArchetype.IceShell)
+                    {
+                        ice.Add(body.Traits.TemperatureC);
+                        Assert.That(body.Traits.TemperatureC, Is.InRange(-230f, -125f), $"seed {seed}");
+                    }
+                }
+            }
+            Assert.GreaterOrEqual(ocean.Count, 8, "ocean worlds are not all at the top of their range");
+            Assert.GreaterOrEqual(ice.Count, 12, "ice shells are not all at -125");
+        }
+
+        /// <summary>A world outside Sol is secured under its own name and leads nowhere in the campaign.</summary>
+        [Test]
+        public void Victory_OnAGeneratedWorld_OffersOnlyTheMainMenu()
+        {
+            SystemBody body = FirstOf(WorldArchetype.Volcanic);
+            Assert.AreEqual(CelestialBodyId.Mars, body.Profile.Id, "it wears Mars, whose victory offers the Belt");
+            Assert.IsFalse(VictoryOffer.InCampaign(body.Profile));
+            Assert.IsTrue(VictoryOffer.InCampaign(CelestialBodyCatalog.Mars()));
+            Assert.IsFalse(VictoryOffer.NextIsBuilt(body.Profile));
+
+            VictoryOffer.View offer = VictoryOffer.For(body.Profile, nextBuilt: true, endless: false);
+            Assert.IsTrue(offer.HoldSim);
+            Assert.IsFalse(offer.CanContinue, "no next planet");
+            Assert.IsNull(offer.ComingSoon);
+            Assert.IsTrue(offer.ShowMainMenu);
+            Assert.AreEqual(body.Name.ToUpperInvariant() + " SECURED", offer.Headline);
+
+            VictoryOffer.View mars = VictoryOffer.For(CelestialBodyCatalog.Mars(), nextBuilt: true, endless: false);
+            Assert.AreEqual(VictoryOffer.For(CelestialBodyId.Mars, true, false).Headline, mars.Headline);
+            Assert.AreEqual(VictoryOffer.For(CelestialBodyId.Mars, true, false).ContinueLabel, mars.ContinueLabel);
+            Assert.AreEqual(offer.Body, mars.Body);
+            Assert.AreEqual(VictoryOffer.For(CelestialBodyId.Mars, true, true).Headline,
+                VictoryOffer.For(body.Profile, true, endless: true).Headline, "endless is the same everywhere");
+        }
+
+        /// <summary>The launch gate reads the world's own launch tech, not the Sol world it wears.</summary>
+        [Test]
+        public void LaunchGate_OnAGeneratedWorld_NeedsNoSolTech()
+        {
+            SystemBody body = FirstOf(WorldArchetype.Volcanic);
+            var research = new ResearchManager(new ResourceManager());
+            Assert.AreNotEqual(TechId.None, research.LaunchTechId(CelestialBodyId.Mars));
+            Assert.AreEqual(research.LaunchTechId(CelestialBodyId.Mars), research.LaunchTechId(CelestialBodyCatalog.Mars()));
+            Assert.AreEqual(research.LaunchTechLabel(CelestialBodyId.Mars), research.LaunchTechLabel(CelestialBodyCatalog.Mars()));
+
+            Assert.AreEqual(TechId.None, research.LaunchTechId(body.Profile));
+            Assert.IsTrue(research.HasLaunchUnlockFor(body.Profile));
+            Assert.AreEqual(research.LaunchTechLabel((CelestialBodyProfile)null), research.LaunchTechLabel(body.Profile));
+            Assert.AreNotEqual(research.LaunchTechLabel(CelestialBodyId.Mars), research.LaunchTechLabel(body.Profile));
+        }
+
+        [Test]
+        public void SaveOnAGeneratedWorld_IsListedUnderItsOwnName()
+        {
+            var sol = new SaveGame { body = (int)CelestialBodyId.Mars };
+            StringAssert.StartsWith("Mars ·", sol.Describe());
+            var beyond = new SaveGame { body = (int)CelestialBodyId.Mars, bodyKey = "gen.1k2m9ax.2", bodyName = "Thraen II" };
+            StringAssert.StartsWith("Thraen II ·", beyond.Describe());
+            SaveGame back = JsonUtility.FromJson<SaveGame>(JsonUtility.ToJson(beyond));
+            Assert.AreEqual("Thraen II", back.bodyName);
+        }
+
+        /// <summary>Continue names the generated world, and finds it again with nothing registered.</summary>
+        [Test]
+        public void SavedWorld_IsTheGeneratedOne_WhenThatIsWhatWasPlayed()
+        {
+            DeveloperPrefsShield.Capture();
+            try
+            {
+                BodySeed.SetBody(CelestialBodyId.Mars);
+                Assert.AreSame(CelestialBodyCatalog.Mars(), DemoSettings.SavedWorld());
+
+                SystemBody body = FirstOf(WorldArchetype.IceShell);
+                StarSystemGenerator.EnsureRegistered(body.Key);
+                Assert.IsTrue(CelestialBodyCatalog.TryGetRegistered(body.Key, out CelestialBodyProfile world));
+                BodySeed.SetWorld(world);
+                CelestialBodyCatalog.ClearRegistered(); // as after a restart
+                Assert.AreEqual(body.Key, DemoSettings.SavedWorld().Key);
+                Assert.AreEqual(body.Name, DemoSettings.SavedWorld().DisplayName);
+
+                BodySeed.SetBody(CelestialBodyId.Earth);
+                Assert.AreSame(CelestialBodyCatalog.Earth(), DemoSettings.SavedWorld());
+            }
+            finally
+            {
+                BodySeed.SetBody(CelestialBodyId.Earth);
+                DeveloperPrefsShield.Restore();
+            }
+        }
+
+        private static SystemBody FirstOf(WorldArchetype archetype)
+        {
+            for (int seed = 1; seed <= 200; seed++)
+            {
+                foreach (SystemBody body in StarSystemGenerator.Generate(seed).Bodies)
+                {
+                    if (body.Archetype == archetype) return body;
+                }
+            }
+            return null;
+        }
+
         private static float WithoutStorms(CelestialBodyProfile p) =>
             System.Array.IndexOf(p.Modifiers, WorldModifier.DustStorms) >= 0 ? p.PowerDrawScale / 1.12f : p.PowerDrawScale;
 

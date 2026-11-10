@@ -143,15 +143,24 @@ namespace SolarMajesty
         /// <summary>Open the Beyond Sol dialog on a seed (any text), or on a fresh random one.</summary>
         public void PromptBeyondSol(string seedText = null)
         {
-            _seedText = string.IsNullOrEmpty(seedText)
-                ? SystemSeedCode.Format(UnityEngine.Random.Range(int.MinValue, int.MaxValue))
-                : seedText;
+            int lastPlayed = -1;
+            if (string.IsNullOrEmpty(seedText))
+            {
+                // Offer the system last played, so its next world is two clicks away.
+                if (StarSystemGenerator.TryParseKey(BodySeed.LoadSavedKey(), out int lastSeed, out lastPlayed))
+                    seedText = SystemSeedCode.Format(lastSeed);
+                else
+                    seedText = SystemSeedCode.Format(UnityEngine.Random.Range(int.MinValue, int.MaxValue));
+            }
+            _seedText = seedText;
             _seedTextBuilt = null;
             _newCampaignSlot = CampaignSlots.SlotReplacedByNewCampaign(_newCampaignSlot);
             _confirmNewGame = false;
             _titleLoad = false;
             _beyondSol = true;
             RefreshBeyondSol();
+            if (lastPlayed >= 0 && lastPlayed < _seedSystem.Bodies.Count)
+                _seedBodyPick = lastPlayed;
         }
 
         // Build the system again when the seed text has changed, and pick its most Earth-like body.
@@ -231,9 +240,10 @@ namespace SolarMajesty
             if (StillCaptureHold.Active) return;
             if (_loop == null || !_loop.StartsEmpty) return;
             // W2 arrival cuts + advisor travel toasts replace the stale Earth briefing.
-            if (CampaignCutsceneCatalog.TryGetArrival(_loop.ActiveBody, out _))
-                return;
             var body = _loop.BodyProfile;
+            if (CampaignCutsceneCatalog.TryGetArrival(
+                    body != null ? body.Authored(WorldAspect.Story) : _loop.ActiveBody, out _))
+                return;
             string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
                 ? body.BriefingText
                 : Loc.S("Colony Commons is down. Build anywhere on open ground.");
@@ -1021,7 +1031,7 @@ namespace SolarMajesty
         /// </summary>
         private float DrawLaunchTechPin(Rect c, float y, ResearchManager research)
         {
-            TechId id = research.LaunchTechId(_loop.ActiveBody);
+            TechId id = research.LaunchTechId(_loop.BodyProfile);
             if (id == TechId.None || !DemoSlice.ShowTech(id)) return y;
             var def = TechCatalog.Get(id);
             if (def == null) return y;
@@ -1063,7 +1073,7 @@ namespace SolarMajesty
             if (GUI.Button(new Rect(rect.xMax - 68f, rect.y + 8f, 56f, 18f), Loc.S("CLOSE"), _chipOff))
                 _techOpen = false;
 
-            string launch = research.LaunchTechLabel(_loop.ActiveBody);
+            string launch = research.LaunchTechLabel(_loop.BodyProfile);
             GUI.Label(new Rect(c.x, c.y, c.width, 14f),
                 Loc.F("Labs {0} · rate {1:F1}/s · tip {2}", research.LabCount, research.CurrentRate, launch), _micro);
             float y = c.y + 18f;
@@ -1104,7 +1114,7 @@ namespace SolarMajesty
             float listH = c.yMax - y;
             var view = new Rect(c.x, y, c.width, listH);
             var techs = TechCatalog.All;
-            TechId pinned = research.LaunchTechId(_loop.ActiveBody);
+            TechId pinned = research.LaunchTechId(_loop.BodyProfile);
             int visibleTechs = 0;
             for (int i = 0; i < techs.Count; i++)
             {
@@ -1608,7 +1618,7 @@ namespace SolarMajesty
             y += 20f;
 
             string launchNeed = _loop.Research != null
-                ? _loop.Research.LaunchTechLabel(_loop.ActiveBody)
+                ? _loop.Research.LaunchTechLabel(_loop.BodyProfile)
                 : Loc.S("Lunar Rocket");
             bool fullCampaign = !DemoSettings.FirstHourDemo;
             string launchLine = LaunchPath.ObjectiveText(fullCampaign, mission.LaunchReady, launchNeed);
@@ -2730,8 +2740,8 @@ namespace SolarMajesty
             if (StillCaptureHold.Active || Rules.IsEndless || _winDismissed) return false;
             var mission = _loop.Mission;
             if (mission == null || !mission.IsWon) return false;
-            bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.ActiveBody);
-            DrawCampaignVictory(VictoryOffer.For(_loop.ActiveBody, nextBuilt, endless: false));
+            bool nextBuilt = VictoryOffer.NextIsBuilt(_loop.BodyProfile);
+            DrawCampaignVictory(VictoryOffer.For(_loop.BodyProfile, nextBuilt, endless: false));
             return true;
         }
 
@@ -3056,7 +3066,7 @@ namespace SolarMajesty
             SystemBody pick = system.Bodies[_seedBodyPick];
 
             const float w = 560f;
-            float h = Mathf.Min(_sh - 16f, 400f + system.Bodies.Count * 26f);
+            float h = Mathf.Min(_sh - 16f, 372f + system.Bodies.Count * 26f);
             var rect = new Rect((_sw - w) * 0.5f, Mathf.Max(8f, (_sh - h) * 0.5f), w, h);
             var c = Panel(rect, Loc.S("Beyond Sol"));
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
@@ -3088,14 +3098,16 @@ namespace SolarMajesty
             }
             y += 4f;
 
-            y = WrapBlock(c, y, pick.Profile.BriefingText);
+            // The buttons are pinned to the bottom so they do not move as the briefing changes
+            // length. On a short screen the briefing stops where they begin.
+            float footTop = c.yMax - 122f;
+            y = WrapBlockAbove(c, y, footTop, pick.Profile.BriefingText);
             for (int i = 0; i < pick.Profile.Modifiers.Length; i++)
             {
                 WorldModifier m = pick.Profile.Modifiers[i];
-                y = WrapBlock(c, y, Loc.S(WorldModifiers.Name(m)) + ": " + Loc.S(WorldModifiers.Effect(m)));
+                y = WrapBlockAbove(c, y, footTop, Loc.S(WorldModifiers.Name(m)) + ": " + Loc.S(WorldModifiers.Effect(m)));
             }
 
-            // Pinned to the bottom so the buttons do not move as the briefing changes length.
             float by = c.yMax - 28f;
             if (GUI.Button(new Rect(c.x, by, c.width, 28f), Loc.S("BACK  ·  Esc"), _chipOff))
                 _beyondSol = false;
@@ -3195,7 +3207,7 @@ namespace SolarMajesty
                 string tag;
                 if (demoLocked) tag = Loc.S("AFTER EARTH");
                 else if (!unlocked) tag = CampaignProgress.IsParked(body) ? Loc.S("PARKED") : Loc.S("LOCKED");
-                else if (DemoSettings.SaveExists && body == _loop.ActiveBody) tag = Loc.S("YOUR COLONY");
+                else if (DemoSettings.SaveExists && !_loop.OutsideCampaign && body == _loop.ActiveBody) tag = Loc.S("YOUR COLONY");
                 else tag = "";
 
                 if (hot)
@@ -3203,7 +3215,7 @@ namespace SolarMajesty
                     if (demoLocked) tag = Loc.S("CLEAR EARTH FIRST  ·  OR SKIP IN SETTINGS");
                     else if (!unlocked)
                         tag = !DevTools.Enabled ? Loc.S("LOCKED") : shift ? Loc.S("CLICK TO UNLOCK") : Loc.S("LOCKED  ·  SHIFT+CLICK");
-                    else if (DemoSettings.SaveExists && body == _loop.ActiveBody) tag = Loc.S("CLICK TO CONTINUE");
+                    else if (DemoSettings.SaveExists && !_loop.OutsideCampaign && body == _loop.ActiveBody) tag = Loc.S("CLICK TO CONTINUE");
                     else tag = Loc.S("CLICK TO LAND");
                 }
 
@@ -3720,6 +3732,14 @@ namespace SolarMajesty
         }
 
         /// <summary>Wrapped paragraph at its measured height; returns the y below it.</summary>
+        /// <summary>As <see cref="WrapBlock"/>, but draws nothing that would cross <paramref name="limit"/>.</summary>
+        private float WrapBlockAbove(Rect c, float y, float limit, string text)
+        {
+            if (string.IsNullOrEmpty(text)) return y;
+            float h = _wrap.CalcHeight(new GUIContent(text), c.width);
+            return y + h > limit ? limit : WrapBlock(c, y, text);
+        }
+
         private float WrapBlock(Rect c, float y, string text)
         {
             if (string.IsNullOrEmpty(text)) return y;

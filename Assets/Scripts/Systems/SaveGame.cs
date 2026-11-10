@@ -37,6 +37,8 @@ namespace SolarMajesty
         public int body;
         /// <summary>The same world by its text key (<see cref="CelestialBodyProfile.Key"/>). Empty on older saves.</summary>
         public string bodyKey = "";
+        /// <summary>The world's name when it is not one of the five Sol worlds, for the load menu. Empty otherwise.</summary>
+        public string bodyName = "";
         public int seed;
         public int highestUnlocked;
         // Null only on legacy saves; an empty encoded roster is a valid snapshot.
@@ -92,7 +94,8 @@ namespace SolarMajesty
         {
             string when = string.IsNullOrEmpty(savedAtUtc) ? "unknown" : savedAtUtc;
             var hours = TimeSpan.FromSeconds(playSeconds);
-            return $"{BodyName((CelestialBodyId)body)} · {buildings.Count} modules · " +
+            string where = string.IsNullOrEmpty(bodyName) ? BodyName((CelestialBodyId)body) : bodyName;
+            return $"{where} · {buildings.Count} modules · " +
                    $"{agents.Count} robots · {hours:hh\\:mm} · {when}";
         }
 

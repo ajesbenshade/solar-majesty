@@ -3,16 +3,17 @@
 namespace SolarMajesty
 {
     /// <summary>
-    /// A star system seed as text a player can type or share ("7K2M-9AX"). Seven Crockford
+    /// A star system seed as text a player can type or share ("1K2M-9AX"). Seven Crockford
     /// base-32 characters carry the 32-bit seed. Reading ignores case, spaces and dashes, and
-    /// takes O for 0 and I or L for 1, so a code survives being read aloud.
+    /// takes O for 0 and I or L for 1, so a code survives being read aloud. Seven characters
+    /// hold 35 bits, so a code starts with 0, 1, 2 or 3; anything else is not a code.
     /// </summary>
     public static class SystemSeedCode
     {
         private const string Alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
         public const int Length = 7;
 
-        /// <summary>The seed as seven characters with no dash ("7K2M9AX"): the form world keys use.</summary>
+        /// <summary>The seed as seven characters with no dash ("1K2M9AX"): the form world keys use.</summary>
         public static string Compact(int seed)
         {
             uint v = unchecked((uint)seed);
@@ -25,7 +26,7 @@ namespace SolarMajesty
             return new string(chars);
         }
 
-        /// <summary>The seed as shown to a player ("7K2M-9AX").</summary>
+        /// <summary>The seed as shown to a player ("1K2M-9AX").</summary>
         public static string Format(int seed)
         {
             string c = Compact(seed);

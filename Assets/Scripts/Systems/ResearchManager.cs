@@ -241,20 +241,20 @@ namespace SolarMajesty
             LastEvent = $"site_+{amount:F0}";
         }
 
-        public string LaunchTechLabel(CelestialBodyId body)
+        public string LaunchTechLabel(CelestialBodyId body) => LaunchTechLabel(CelestialBodyCatalog.Get(body));
+
+        /// <summary>The craft that leaves <paramref name="world"/>, by that world's own launch tech.</summary>
+        public string LaunchTechLabel(CelestialBodyProfile world)
         {
-            var profile = CelestialBodyCatalog.Get(body);
-            if (profile == null || profile.LaunchTech == TechId.None)
+            if (world == null || world.LaunchTech == TechId.None)
                 return Loc.S("departure");
-            var def = TechCatalog.Get(profile.LaunchTech);
-            return def != null ? def.DisplayNameText : profile.LaunchTech.ToString();
+            var def = TechCatalog.Get(world.LaunchTech);
+            return def != null ? def.DisplayNameText : world.LaunchTech.ToString();
         }
 
-        public TechId LaunchTechId(CelestialBodyId body)
-        {
-            var profile = CelestialBodyCatalog.Get(body);
-            return profile != null ? profile.LaunchTech : TechId.None;
-        }
+        public TechId LaunchTechId(CelestialBodyId body) => LaunchTechId(CelestialBodyCatalog.Get(body));
+
+        public TechId LaunchTechId(CelestialBodyProfile world) => world != null ? world.LaunchTech : TechId.None;
 
         public string UnmetPrerequisiteLabel(TechId id)
         {
@@ -262,12 +262,14 @@ namespace SolarMajesty
             return LaunchPath.UnmetPrerequisites(id, have);
         }
 
-        public bool HasLaunchUnlockFor(CelestialBodyId body)
+        public bool HasLaunchUnlockFor(CelestialBodyId body) => HasLaunchUnlockFor(CelestialBodyCatalog.Get(body));
+
+        /// <summary>True when <paramref name="world"/> needs no launch tech, or has it.</summary>
+        public bool HasLaunchUnlockFor(CelestialBodyProfile world)
         {
-            var profile = CelestialBodyCatalog.Get(body);
-            if (profile == null || profile.LaunchTech == TechId.None)
+            if (world == null || world.LaunchTech == TechId.None)
                 return true;
-            return IsUnlocked(profile.LaunchTech);
+            return IsUnlocked(world.LaunchTech);
         }
 
         public void Tick(float dt, int labCount, int labWorkers, float rateMultiplier = 1f, float extraRate = 0f)
