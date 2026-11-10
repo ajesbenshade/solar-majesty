@@ -14,6 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: SolarMajesty.Systems::SolarMajesty.WorldDatabase
   sol:
   - Id: 0
+    MixedContent: 0
+    TerrainFrom: 0
+    GroundFrom: 0
+    SkyFrom: 0
+    FaunaFrom: 0
+    SoundFrom: 0
+    PropsFrom: 0
+    StoryFrom: 0
     Key: sol.earth
     Traits:
       Atmosphere: 2
@@ -241,6 +249,14 @@ MonoBehaviour:
     FaunaWispTint: {r: 0, g: 0, b: 0, a: 0}
     FaunaTickTint: {r: 0, g: 0, b: 0, a: 0}
   - Id: 1
+    MixedContent: 0
+    TerrainFrom: 0
+    GroundFrom: 0
+    SkyFrom: 0
+    FaunaFrom: 0
+    SoundFrom: 0
+    PropsFrom: 0
+    StoryFrom: 0
     Key: sol.luna
     Traits:
       Atmosphere: 0
@@ -379,6 +395,14 @@ MonoBehaviour:
     FaunaWispTint: {r: 0, g: 0, b: 0, a: 0}
     FaunaTickTint: {r: 0, g: 0, b: 0, a: 0}
   - Id: 2
+    MixedContent: 0
+    TerrainFrom: 0
+    GroundFrom: 0
+    SkyFrom: 0
+    FaunaFrom: 0
+    SoundFrom: 0
+    PropsFrom: 0
+    StoryFrom: 0
     Key: sol.mars
     Traits:
       Atmosphere: 1
@@ -519,6 +543,14 @@ MonoBehaviour:
     FaunaWispTint: {r: 0.82, g: 0.52, b: 0.28, a: 1}
     FaunaTickTint: {r: 0, g: 0, b: 0, a: 0}
   - Id: 3
+    MixedContent: 0
+    TerrainFrom: 0
+    GroundFrom: 0
+    SkyFrom: 0
+    FaunaFrom: 0
+    SoundFrom: 0
+    PropsFrom: 0
+    StoryFrom: 0
     Key: sol.belt
     Traits:
       Atmosphere: 0
@@ -668,6 +700,14 @@ MonoBehaviour:
     FaunaWispTint: {r: 0, g: 0, b: 0, a: 0}
     FaunaTickTint: {r: 0, g: 0, b: 0, a: 0}
   - Id: 4
+    MixedContent: 0
+    TerrainFrom: 0
+    GroundFrom: 0
+    SkyFrom: 0
+    FaunaFrom: 0
+    SoundFrom: 0
+    PropsFrom: 0
+    StoryFrom: 0
     Key: sol.europa
     Traits:
       Atmosphere: 0

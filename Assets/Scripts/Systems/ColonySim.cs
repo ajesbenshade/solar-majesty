@@ -72,6 +72,9 @@ namespace SolarMajesty
         public GuildBenefitDirector GuildBenefits { get; }
         public OrbitalDirector Orbital { get; }
 
+        /// <summary>Finished buildings, kept here only when no scene holds them (see <see cref="StructureBoard"/>).</summary>
+        public StructureBoard Structures { get; } = new StructureBoard();
+
         /// <summary>Build menu, in the order <see cref="OverseerCommandKind.PlaceBuilding"/> indexes it.</summary>
         public IReadOnlyList<BuildingData> BuildCatalog { get; set; }
 
@@ -126,7 +129,17 @@ namespace SolarMajesty
 
             _completed.Clear();
             Placer.TickConstruction(_beat, _completed);
-            host?.OnConstructionCompleted(_completed);
+            if (host != null)
+                host.OnConstructionCompleted(_completed);
+            else
+            {
+                // No scene will raise these buildings, so the sim keeps its own record of them.
+                for (int i = 0; i < _completed.Count; i++)
+                {
+                    ConstructionOrder done = _completed[i];
+                    if (done != null && !done.IsRefab) Structures.Note(done.WorldPosition, done.Data);
+                }
+            }
             Economy.Tick(_beat, host?.PrepareEconomyBeat());
             host?.AfterEconomyBeat();
             _beat = 0f;
@@ -278,8 +291,9 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// The scene-free part of each command: treasury, flags and construction orders. Commands
-        /// that act on robots, structures or the clock speed need a scene and do nothing here.
+        /// The scene-free part of each command: treasury, flags, construction orders and the
+        /// buildings on <see cref="Structures"/>. Robots exist only in a scene, so the four
+        /// commands that act on them find nothing to act on here.
         /// </summary>
         public void Execute(in OverseerCommand command)
         {
@@ -316,7 +330,51 @@ namespace SolarMajesty
                 case OverseerCommandKind.CastOrbital:
                     TryChargeOrbital((OrbitalPowerId)command.content, command.World, out _);
                     break;
+                case OverseerCommandKind.ArmWatchtower:
+                    TryArmWatchtower(command.World);
+                    break;
+                case OverseerCommandKind.SetWorkplaceClass:
+                    StructureBoard.Entry workplace = Structures.Find(command.World);
+                    if (workplace == null || workplace.Category == BuildingCategory.Habitat) break;
+                    workplace.PreferredClass = (SpecialistClass)command.content;
+                    workplace.HasPreferredClass = true;
+                    break;
+                case OverseerCommandKind.PostAttractFlag:
+                    PostAttractFlag(command.World, command.amount);
+                    break;
+                case OverseerCommandKind.ChangeSpeed:
+                    // Speed sets how many steps a frame runs, never what a step does.
+                    break;
+                case OverseerCommandKind.PayFobotYard:
+                case OverseerCommandKind.RefabRookie:
+                case OverseerCommandKind.FormParty:
+                case OverseerCommandKind.DisbandParty:
+                    // These act on robots. A sim without a scene has none: nobody is down, there
+                    // is no wreck to re-fab and no one to form up.
+                    break;
             }
+        }
+
+        /// <summary>Pay to arm the watchtower standing at <paramref name="at"/>. False when there is none, it is armed, or the treasury is short.</summary>
+        public bool TryArmWatchtower(Vector3 at)
+        {
+            StructureBoard.Entry tower = Structures.Find(at);
+            if (tower == null || tower.Category != BuildingCategory.Watchtower || tower.LaserArmed) return false;
+            if (!Resources.TrySpend(ResourceId.Metals, OverseerRules.WatchtowerLaserCost)) return false;
+            tower.LaserArmed = true;
+            return true;
+        }
+
+        /// <summary>Post the flag that draws the building's preferred class to it. Returns the flag, or null.</summary>
+        public FlagHandle PostAttractFlag(Vector3 at, float panelBounty)
+        {
+            StructureBoard.Entry st = Structures.Find(at);
+            if (st == null || FlagCatalog == null) return null;
+            FlagType type = StructureBoard.AttractFlagFor(st.Category, st.HasPreferredClass, st.PreferredClass);
+            FlagData data = FlagCatalog(type) ?? FlagCatalog(FlagType.Explore);
+            if (data == null) return null;
+            float bounty = panelBounty >= MajestyEconomy.FlagMinBounty ? panelBounty : data.defaultBounty;
+            return FlagBountySync.TryPost(Flags, Economy, data, st.At, bounty);
         }
 
         /// <summary>
@@ -381,6 +439,18 @@ namespace SolarMajesty
                 Mix(ref h, o.ProgressSeconds);
             }
             Mix(ref h, Placer.Pieces.Count);
+
+            IReadOnlyList<StructureBoard.Entry> built = Structures.Entries;
+            Mix(ref h, built.Count);
+            for (int i = 0; i < built.Count; i++)
+            {
+                StructureBoard.Entry e = built[i];
+                Mix(ref h, e.At.x);
+                Mix(ref h, e.At.z);
+                Mix(ref h, (int)e.Category);
+                Mix(ref h, e.LaserArmed ? 1 : 0);
+                Mix(ref h, e.HasPreferredClass ? (int)e.PreferredClass + 1 : 0);
+            }
             return h;
         }
 

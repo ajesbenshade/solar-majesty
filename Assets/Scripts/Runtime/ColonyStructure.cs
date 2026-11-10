@@ -410,22 +410,7 @@ namespace SolarMajesty
                 _selectRing.SetActive(selected);
         }
 
-        public static FlagType AttractFlagFor(SpecialistClass cls)
-        {
-            switch (cls)
-            {
-                case SpecialistClass.EngineerBot: return FlagType.Build;
-                case SpecialistClass.DefenseMech: return FlagType.DefendArea;
-                case SpecialistClass.Medic: return FlagType.DefendArea;
-                case SpecialistClass.HarvesterBot: return FlagType.Extract;
-                case SpecialistClass.SurveyorBot: return FlagType.ResearchSite;
-                case SpecialistClass.TerraformerBot: return FlagType.Terraform;
-                case SpecialistClass.CourierBot: return FlagType.EstablishOutpost;
-                case SpecialistClass.GeologistBot: return FlagType.Extract;
-                case SpecialistClass.SentinelMech: return FlagType.DefendArea;
-                default: return FlagType.Explore;
-            }
-        }
+        public static FlagType AttractFlagFor(SpecialistClass cls) => StructureBoard.AttractFlagFor(cls);
 
         public static string ClassLabel(SpecialistClass cls)
         {

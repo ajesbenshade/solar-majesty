@@ -27,7 +27,14 @@ namespace SolarMajesty.Tests
             hab.footprintHeight = 2;
             hab.buildTimeSeconds = 30f;
             hab.buildCost = new[] { new ResourceAmount(ResourceId.Metals, 120) };
-            _buildings = new[] { hab };
+            var tower = ScriptableObject.CreateInstance<BuildingData>();
+            _created.Add(tower);
+            tower.displayName = "Watchtower";
+            tower.category = BuildingCategory.Watchtower;
+            tower.buildTimeSeconds = 5f;
+            tower.buildCost = new[] { new ResourceAmount(ResourceId.Metals, 100) };
+            tower.preferredOccupants = new[] { SpecialistClass.DefenseMech };
+            _buildings = new[] { hab, tower };
         }
 
         [TearDown]
@@ -153,6 +160,57 @@ namespace SolarMajesty.Tests
 
             Assert.AreNotEqual(baseline.StateHash(), keptFlag.StateHash());
             Assert.AreNotEqual(baseline.StateHash(), otherSeed.StateHash());
+        }
+
+        /// <summary>A sim with no scene keeps its own buildings, so commands that name one still land.</summary>
+        [Test]
+        public void StructureCommands_ActOnTheSimsOwnBuildings_WithNoScene()
+        {
+            ColonySim sim = NewSim();
+            var at = new Vector3(12f, 0f, 4f);
+            sim.Commands.Enqueue(OverseerCommand.ArmWatchtower(at));
+            sim.RunSteps(1);
+            int untouched = sim.Resources.Get(ResourceId.Metals);
+
+            sim.Commands.Enqueue(OverseerCommand.PlaceBuilding(1, new Vector2Int(8, 3), at));
+            sim.RunSteps(400);
+            Assert.AreEqual(1, sim.Structures.Entries.Count, "the finished tower is on the board");
+            int beforeArming = sim.Resources.Get(ResourceId.Metals);
+            Assert.Less(beforeArming, untouched, "arming a tower that is not there costs nothing; building one does");
+
+            sim.Commands.Enqueue(OverseerCommand.ArmWatchtower(at + new Vector3(0.2f, 0f, 0f)));
+            sim.Commands.Enqueue(OverseerCommand.ArmWatchtower(at)); // already armed: no second charge
+            sim.RunSteps(1);
+            Assert.IsTrue(sim.Structures.Find(at).LaserArmed);
+            Assert.AreEqual(beforeArming - OverseerRules.WatchtowerLaserCost, sim.Resources.Get(ResourceId.Metals));
+
+            sim.Commands.Enqueue(OverseerCommand.SetWorkplaceClass(at, SpecialistClass.ScoutDrone));
+            sim.Commands.Enqueue(OverseerCommand.PostAttractFlag(at, 150f));
+            sim.RunSteps(1);
+            Assert.AreEqual(SpecialistClass.ScoutDrone, sim.Structures.Find(at).PreferredClass);
+            Assert.AreEqual(1, sim.Flags.Flags.Count, "the tower calls for its class");
+            Assert.AreEqual(FlagType.Explore, sim.Flags.Flags[0].Data.flagType);
+            Assert.AreEqual(150f, sim.Flags.Flags[0].CurrentBounty);
+        }
+
+        [Test]
+        public void EveryCommandKind_IsSafeToRunWithNoScene()
+        {
+            ColonySim sim = NewSim();
+            sim.RunSteps(10);
+            ulong before = sim.StateHash();
+
+            // The robot commands and the speed change have nothing scene-free to do.
+            sim.Commands.Enqueue(OverseerCommand.PayFobotYard());
+            sim.Commands.Enqueue(OverseerCommand.RefabRookie(Vector3.zero));
+            sim.Commands.Enqueue(OverseerCommand.FormParty(new[] { 1, 2 }));
+            sim.Commands.Enqueue(OverseerCommand.DisbandParty(1));
+            sim.Commands.Enqueue(OverseerCommand.ChangeSpeed(SimSpeedChange.Faster));
+            sim.Commands.Drain(sim.Clock.TotalSteps, sim);
+
+            Assert.AreEqual(before, sim.StateHash());
+            foreach (OverseerCommandKind kind in System.Enum.GetValues(typeof(OverseerCommandKind)))
+                Assert.DoesNotThrow(() => sim.Execute(new OverseerCommand { kind = kind, ids = new int[0] }), kind.ToString());
         }
 
         [Test]
