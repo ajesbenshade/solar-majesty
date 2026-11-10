@@ -133,9 +133,19 @@
    "tr": "Un disque de concession dans l'herbe, c'est un pique-nique. Élevez des Communs avant qu'on nous classe dans le décor."
   },
   {
+   "en": "A cracked shell of ice over a dark sea. Ice is everywhere; ore is thin and power is dear.",
+   "key": "",
+   "tr": "Une coquille de glace fissurée au-dessus d'une mer sombre. La glace est partout ; le minerai est rare et l'énergie coûte cher."
+  },
+  {
    "en": "A crater Commons that pays rent is a nicer picnic. We did not come for nicer.",
    "key": "",
    "tr": "Des Communs de cratère qui paient un loyer, c'est un pique-nique plus agréable. Nous ne sommes pas venus pour l'agréable."
+  },
+  {
+   "en": "A cratered moon inside a giant's radiation belts. Crews tire fast away from shelter.",
+   "key": "",
+   "tr": "Une lune cratérisée dans les ceintures de radiations d'une géante. Les équipes s'épuisent vite loin d'un abri."
   },
   {
    "en": "A den crawled out of the fog. {0} walked it. Clear Threat is now a place, not a rumor.",
@@ -363,6 +373,11 @@
    "tr": "Poste de secours · soin payant"
   },
   {
+   "en": "Ancient ruins",
+   "key": "",
+   "tr": "Ruines anciennes"
+  },
+  {
    "en": "Anvil",
    "key": "",
    "tr": "Anvil"
@@ -483,6 +498,11 @@
    "tr": "Ceinture d'astéroïdes"
   },
   {
+   "en": "Asteroid cluster",
+   "key": "",
+   "tr": "Amas d'astéroïdes"
+  },
+  {
    "en": "At the workshop. Flags nearby pull harder.",
    "key": "",
    "tr": "À l'atelier. Les fanions proches attirent davantage."
@@ -511,6 +531,11 @@
    "en": "BALANCED",
    "key": "",
    "tr": "ÉQUILIBRÉ"
+  },
+  {
+   "en": "BEYOND SOL",
+   "key": "",
+   "tr": "AU-DELÀ DE SOL"
   },
   {
    "en": "BLEEDING",
@@ -608,6 +633,16 @@
    "tr": "Berserk"
   },
   {
+   "en": "Beyond Sol",
+   "key": "",
+   "tr": "Au-delà de Sol"
+  },
+  {
+   "en": "Black basalt and open vents. Fissile and metals run rich, ice is absent and the ground is hostile.",
+   "key": "",
+   "tr": "Basalte noir et évents ouverts. Matière fissile et métaux abondent, la glace manque et le sol est hostile."
+  },
+  {
    "en": "Blacksmith",
    "key": "",
    "tr": "Forge"
@@ -636,6 +671,11 @@
    "en": "Bloom. Greens the crust. Takes Terraform cheap; slow to fight or wander.",
    "key": "",
    "tr": "Bloom. Verdit la croûte. Prend Terraformer à bas prix ; lent à combattre ou à explorer."
+  },
+  {
+   "en": "Blue star",
+   "key": "",
+   "tr": "Étoile bleue"
   },
   {
    "en": "Booting.",
@@ -676,6 +716,11 @@
    "en": "Bounty escrowed from EU. Bots keep their EU share; the till takes its cut.",
    "key": "",
    "tr": "Prime bloquée sur les EU. Les bots gardent leur part ; la caisse prend sa commission."
+  },
+  {
+   "en": "Broken ground: more exposed ore and more rock outcrops.",
+   "key": "",
+   "tr": "Sol fracturé : plus de minerai à nu et davantage d'affleurements rocheux."
   },
   {
    "en": "Browning out",
@@ -1233,6 +1278,11 @@
    "tr": "Les rampeurs rongent les fermes du Compact."
   },
   {
+   "en": "Crews in the open tire from radiation.",
+   "key": "",
+   "tr": "À découvert, les équipes s'épuisent sous les radiations."
+  },
+  {
    "en": "Cryo Lock",
    "key": "",
    "tr": "Cryoverrou"
@@ -1493,6 +1543,11 @@
    "tr": "Rôdeur de poussière"
   },
   {
+   "en": "Dust and bare rock under thin air. Metals are close to the surface; water is not.",
+   "key": "",
+   "tr": "Poussière et roche nue sous un air ténu. Les métaux affleurent ; pas l'eau."
+  },
+  {
    "en": "Dust creepers on the farm — post Defend Area.",
    "key": "",
    "tr": "Rampeurs de poussière sur la ferme — posez Défendre la zone."
@@ -1501,6 +1556,11 @@
    "en": "Dust hoppers at the Commons — post Clear Threat.",
    "key": "",
    "tr": "Sauteurs de poussière aux Communs — posez Éliminer la menace."
+  },
+  {
+   "en": "Dust storms",
+   "key": "",
+   "tr": "Tempêtes de poussière"
   },
   {
    "en": "Dust ticks on the ore — post Defend Area.",
@@ -2128,6 +2188,16 @@
    "tr": "DÉPART GUIDÉ"
   },
   {
+   "en": "Garden world",
+   "key": "",
+   "tr": "Monde-jardin"
+  },
+  {
+   "en": "Gas-giant moon",
+   "key": "",
+   "tr": "Lune de géante gazeuse"
+  },
+  {
    "en": "Gates are met. Worker bots stay on this claim. The treasury keeps ticking in EU.",
    "key": "",
    "tr": "Les conditions sont remplies. Les robots ouvriers restent sur cette concession. Le trésor continue de tourner en EU."
@@ -2588,6 +2658,11 @@
    "tr": "L'hospitalité, ligne par ligne"
   },
   {
+   "en": "Hostile hives",
+   "key": "",
+   "tr": "Ruches hostiles"
+  },
+  {
    "en": "Hunt the Wisps",
    "key": "",
    "tr": "Chasser les feux follets"
@@ -2696,6 +2771,11 @@
    "en": "Ice crust, radiation. Fissure leeches and ice wisps drain Power ({key:FlagClearThreat}). Ice creepers on farms ({key:FlagDefend}). Hold pop 14.",
    "key": "",
    "tr": "Croûte de glace, radiations. Les sangsues des failles et les feux follets de glace drainent l'énergie ({key:FlagClearThreat}). Rampeurs des glaces sur les fermes ({key:FlagDefend}). Tenez une pop de 14."
+  },
+  {
+   "en": "Ice shell",
+   "key": "",
+   "tr": "Coquille de glace"
   },
   {
    "en": "Ice wisps off the crust — post Clear Threat.",
@@ -2846,6 +2926,11 @@
    "en": "Kingdom vocation",
    "key": "",
    "tr": "Vocation du royaume"
+  },
+  {
+   "en": "LAND ON {0}  ·  SLOT {1}",
+   "key": "",
+   "tr": "ATTERRIR SUR {0}  ·  EMPL. {1}"
   },
   {
    "en": "LANGUAGE",
@@ -3343,6 +3428,21 @@
    "tr": "Modules perdus"
   },
   {
+   "en": "More dens, and each one holds more.",
+   "key": "",
+   "tr": "Plus de tanières, et chacune abrite davantage de créatures."
+  },
+  {
+   "en": "More resource nodes and better mines; expansion draws more attention.",
+   "key": "",
+   "tr": "Plus de gisements et de meilleures mines ; l'expansion attire davantage l'attention."
+  },
+  {
+   "en": "More sites to explore and faster research.",
+   "key": "",
+   "tr": "Plus de sites à explorer et une recherche plus rapide."
+  },
+  {
    "en": "NEED TECH",
    "key": "",
    "tr": "TECH REQUISE"
@@ -3593,6 +3693,11 @@
    "tr": "Objectifs"
   },
   {
+   "en": "Ocean archipelago",
+   "key": "",
+   "tr": "Archipel océanique"
+  },
+  {
    "en": "On duty: ",
    "key": "",
    "tr": "En service : "
@@ -3601,6 +3706,11 @@
    "en": "On {0}.",
    "key": "",
    "tr": "Sur {0}."
+  },
+  {
+   "en": "One face always toward its star. You build on the twilight line, in long shadow.",
+   "key": "",
+   "tr": "Une face toujours tournée vers son étoile. Vous bâtissez sur la ligne du crépuscule, dans de longues ombres."
   },
   {
    "en": "Open Hands: cheaper flags (hunger +0.26, past the 0.75 greed bypass). Less courage.",
@@ -3613,9 +3723,19 @@
    "tr": "Mains ouvertes : ils prendront un fanion bon marché. La faim a passé le seuil d'avidité. Le courage, non."
   },
   {
+   "en": "Open air, forest and rivers. Easy living, and the wildlife knows it.",
+   "key": "",
+   "tr": "Air libre, forêts et rivières. La vie y est douce, et la faune le sait."
+  },
+  {
    "en": "Open run: manual slot saves and body restarts stay available.",
    "key": "",
    "tr": "Partie libre : sauvegardes manuelles et redémarrages d'astre toujours disponibles."
+  },
+  {
+   "en": "Orange star",
+   "key": "",
+   "tr": "Étoile orange"
   },
   {
    "en": "Orbital Barrage",
@@ -3958,6 +4078,11 @@
    "tr": "Systèmes énergétiques"
   },
   {
+   "en": "Power costs more, crews move slower and you see less far.",
+   "key": "",
+   "tr": "L'énergie coûte plus cher, les équipes avancent moins vite et l'on voit moins loin."
+  },
+  {
    "en": "Powered",
    "key": "",
    "tr": "Alimenté"
@@ -4006,6 +4131,11 @@
    "en": "QUIT",
    "key": "",
    "tr": "QUITTER"
+  },
+  {
+   "en": "Quakes",
+   "key": "",
+   "tr": "Séismes"
   },
   {
    "en": "RAID",
@@ -4111,6 +4241,11 @@
    "en": "ROCK TICK",
    "key": "",
    "tr": "TIQUE DES ROCHES"
+  },
+  {
+   "en": "ROLL",
+   "key": "",
+   "tr": "HASARD"
   },
   {
    "en": "Radiation outside the Commons — robots take damage far from campus.",
@@ -4226,6 +4361,11 @@
    "en": "Red dust. Wisps drain Power ({key:FlagClearThreat}); dust creepers chew farms ({key:FlagDefend}). Hold pop 16, then Belt Hauler.",
    "key": "",
    "tr": "Poussière rouge. Les feux follets drainent l'énergie ({key:FlagClearThreat}) ; les rampeurs de poussière rongent les fermes ({key:FlagDefend}). Tenez 16 de pop, puis Cargo de la Ceinture."
+  },
+  {
+   "en": "Red dwarf",
+   "key": "",
+   "tr": "Naine rouge"
   },
   {
    "en": "Regen Necklace",
@@ -4363,6 +4503,11 @@
    "tr": "Balise de relèvement"
   },
   {
+   "en": "Rich veins",
+   "key": "",
+   "tr": "Filons riches"
+  },
+  {
    "en": "Rim or Aegis on a greenhouse. The Compact keeps its lunch.",
    "key": "",
    "tr": "Rim ou Aegis sur une serre. Le Compact garde son déjeuner."
@@ -4413,6 +4558,11 @@
    "tr": "Tiques des roches sur le minerai — posez Défendre la zone."
   },
   {
+   "en": "Rocky desert",
+   "key": "",
+   "tr": "Désert rocheux"
+  },
+  {
    "en": "Root the Hopper Saboteurs",
    "key": "",
    "tr": "Débusquer les Sauteurs saboteurs"
@@ -4421,6 +4571,11 @@
    "en": "Roster · status",
    "key": "",
    "tr": "Effectif · état"
+  },
+  {
+   "en": "Rubble tied together by almost nothing. Rich ore, poor farms, and everything must be anchored.",
+   "key": "",
+   "tr": "Des gravats que presque rien ne retient ensemble. Minerai riche, fermes pauvres, et tout doit être ancré."
   },
   {
    "en": "Running freight.",
@@ -4451,6 +4606,11 @@
    "en": "SCT {0}  ENG {1}  DEF {2}  MED {3}",
    "key": "",
    "tr": "ÉCL {0}  ING {1}  DÉF {2}  MÉD {3}"
+  },
+  {
+   "en": "SEED",
+   "key": "",
+   "tr": "GRAINE"
   },
   {
    "en": "SEND",
@@ -4496,6 +4656,16 @@
    "en": "SLOT {0}",
    "key": "",
    "tr": "EMPLACEMENT {0}"
+  },
+  {
+   "en": "SLOT {0}  ·  empty",
+   "key": "",
+   "tr": "EMPL. {0}  ·  vide"
+  },
+  {
+   "en": "SLOT {0}  ·  in use",
+   "key": "",
+   "tr": "EMPL. {0}  ·  occupé"
   },
   {
    "en": "SLOW",
@@ -4943,6 +5113,16 @@
    "tr": "Bonus permanent. À débloquer via une technologie ★."
   },
   {
+   "en": "Starts a new colony. Only the chosen slot is replaced; autosave follows the new colony.",
+   "key": "",
+   "tr": "Lance une nouvelle colonie. Seul l'emplacement choisi est remplacé ; la sauvegarde automatique suit la nouvelle colonie."
+  },
+  {
+   "en": "Stellar flares",
+   "key": "",
+   "tr": "Éruptions stellaires"
+  },
+  {
    "en": "Stingshot",
    "key": "",
    "tr": "Tir-dard"
@@ -5248,6 +5428,11 @@
    "tr": "Ce bâtiment exige d'abord une recherche."
   },
   {
+   "en": "That colony stands on a world this game no longer has.",
+   "key": "",
+   "tr": "Cette colonie se trouve sur un monde que le jeu ne possède plus."
+  },
+  {
    "en": "That is a court. It is not a solar power.",
    "key": "",
    "tr": "C'est une cour. Pas une puissance solaire."
@@ -5463,6 +5648,11 @@
    "tr": "Ceci est la colonne vertébrale industrielle. Pas une seconde cour terrienne. Pas une station de pesée Freehold avec un pire éclairage."
   },
   {
+   "en": "This world is yours. Keep overseeing here, or choose another from the title.",
+   "key": "",
+   "tr": "Ce monde est à vous. Continuez à superviser ici, ou choisissez-en un autre depuis l'écran-titre."
+  },
+  {
    "en": "Ticks are stealing from the weigh-station. That is not a den hunt. That is a rim watch with worse lighting.",
    "key": "",
    "tr": "Des tiques volent la station de pesée. Ce n'est pas une chasse aux tanières. C'est une veille du périmètre avec un pire éclairage."
@@ -5471,6 +5661,11 @@
    "en": "Ticks steal from mines. Rim watch.",
    "key": "",
    "tr": "Les tiques volent les mines. Veille du périmètre."
+  },
+  {
+   "en": "Tidally locked",
+   "key": "",
+   "tr": "Rotation synchrone"
   },
   {
    "en": "Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
@@ -5633,6 +5828,11 @@
    "tr": "Vétéran"
   },
   {
+   "en": "Volcanic",
+   "key": "",
+   "tr": "Volcanique"
+  },
+  {
    "en": "WINDOWED",
    "key": "",
    "tr": "FENÊTRÉ"
@@ -5706,6 +5906,11 @@
    "en": "Ward the furrows. Soil creepers chew farms. Aegis and Triage will hold a field cheaper than they will hunt a den. Tempt them accordingly.",
    "key": "",
    "tr": "Protégez les sillons. Les rampeurs des sols rongent les fermes. Aegis et Triage tiendront un champ pour moins cher qu'ils ne chasseront une tanière. Tentez-les en conséquence."
+  },
+  {
+   "en": "Warm seas and scattered islands. Farms thrive, ore is scarce and water limits where you can build.",
+   "key": "",
+   "tr": "Mers chaudes et îles éparses. Les fermes prospèrent, le minerai est rare et l'eau limite les endroits où bâtir."
   },
   {
    "en": "Watch the rim. Unlocks Sentinel shop — they take Defend cheap.",
@@ -5818,6 +6023,11 @@
    "tr": "Soude {0}. La paie tient."
   },
   {
+   "en": "White star",
+   "key": "",
+   "tr": "Étoile blanche"
+  },
+  {
    "en": "Wisps drink grids. Creepers chew furrows. The Compact expects both handled without a Sol accent.",
    "key": "",
    "tr": "Les feux follets boivent les réseaux. Les rampeurs rongent les sillons. Le Compact attend que les deux soient réglés sans accent Sol."
@@ -5911,6 +6121,11 @@
    "en": "Yard restored — {0} modules on {1}.",
    "key": "",
    "tr": "Chantier restauré — {0} modules sur {1}."
+  },
+  {
+   "en": "Yellow star",
+   "key": "",
+   "tr": "Étoile jaune"
   },
   {
    "en": "You are the central AI. Worker bots secured this claim: dens are quiet, the treasury is holding in EU, and the craft is on the pad.",
@@ -6268,6 +6483,11 @@
    "tr": "les ordres excluent {0}"
   },
   {
+   "en": "place a Landing Pad",
+   "key": "",
+   "tr": "placez une aire d'atterrissage"
+  },
+  {
    "en": "raise Colony Commons first",
    "key": "",
    "tr": "érigez d'abord les Communs de la colonie"
@@ -6498,6 +6718,11 @@
    "tr": "{0}  ·  {1}\n{2}  ·  clic droit : annuler{3}  ·  p {4:F1}{5}"
   },
   {
+   "en": "{0}  ·  {1}  ·  {2} °C  ·  {3} g",
+   "key": "",
+   "tr": "{0}  ·  {1}  ·  {2} °C  ·  {3} g"
+  },
+  {
    "en": "{0} EU",
    "key": "",
    "tr": "{0} EU"
@@ -6631,6 +6856,11 @@
    "en": "{0} holds — campaign spine complete",
    "key": "",
    "tr": "{0} tient — fil de campagne achevé"
+  },
+  {
+   "en": "{0} holds — choose another world from the title",
+   "key": "",
+   "tr": "{0} tient — choisissez un autre monde depuis l'écran-titre"
   },
   {
    "en": "{0} hostile locked for {1:0} s",
@@ -6791,6 +7021,11 @@
    "en": "{0} stays fixed (build slots and modifiers).",
    "key": "",
    "tr": "{0} reste fixe (emplacements de construction et modificateurs)."
+  },
+  {
+   "en": "{0} system  ·  {1}  ·  {2}",
+   "key": "",
+   "tr": "Système {0}  ·  {1}  ·  {2}"
   },
   {
    "en": "{0} tempted · {1}",

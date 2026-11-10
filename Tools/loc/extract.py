@@ -131,6 +131,7 @@ CALL_RULES = {
     "Systems/CampaignCutsceneCatalog.cs": {"new CampaignCutscene": [1, "3+"]},
     "Systems/ClassAbilities.cs": {"Strike": [2], "Summon": [2], "Buff": [2]},
     "Systems/FaunaAfflictions.cs": {"A": [1]},
+    "Systems/World/WorldArchetypes.cs": {"new Spec": [15, 16]},
 }
 
 DICT_RULES = {"Systems/AdvisorToastCatalog.cs", "Systems/InputBindings.cs"}
@@ -142,6 +143,8 @@ RETURN_RULES = {
     "Systems/SpecialistIdentity.cs": ["RankFor"],
     "Systems/FlagOrdersParser.cs": ["ShortName"],
     "Systems/SpecialistFlavor.cs": ["FlagShort"],
+    "Systems/World/WorldModifiers.cs": ["Name", "Effect"],
+    "Systems/World/StarSystemGenerator.cs": ["StarName"],
 }
 
 CONST_RULES = {
@@ -328,15 +331,28 @@ def asset_names():
                 path = os.path.join(base, f)
                 rel = os.path.relpath(path, ROOT).replace("\\", "/")
                 with open(path, encoding="utf-8", errors="replace") as fh:
-                    for line in fh:
-                        m = ASSET_FIELD.match(line)
-                        if not m:
-                            continue
-                        value = m.group(2).strip()
-                        if len(value) >= 2 and value[0] in "'\"" and value[-1] == value[0]:
-                            value = value[1:-1].replace("''", "'") if value[0] == "'" else unescape(value[1:-1])
-                        if value and re.search(r"[A-Za-z]{2}", value):
-                            out.append((value, rel))
+                    lines = fh.read().splitlines()
+                i = 0
+                while i < len(lines):
+                    line = lines[i]
+                    i += 1
+                    m = ASSET_FIELD.match(line)
+                    if not m:
+                        continue
+                    indent = len(line) - len(line.lstrip())
+                    value = m.group(2).strip()
+                    # Unity wraps a long scalar onto deeper-indented lines; YAML folds them with a space.
+                    while i < len(lines) and lines[i].strip() and len(lines[i]) - len(lines[i].lstrip()) > indent:
+                        more = lines[i].strip()
+                        i += 1
+                        if value.endswith("\\") and not value.endswith("\\\\"):
+                            value = value[:-1] + more   # an escaped line break joins with no space
+                        else:
+                            value = value + " " + more
+                    if len(value) >= 2 and value[0] in "'\"" and value[-1] == value[0]:
+                        value = value[1:-1].replace("''", "'") if value[0] == "'" else unescape(value[1:-1])
+                    if value and re.search(r"[A-Za-z]{2}", value):
+                        out.append((value, rel))
     return out
 
 

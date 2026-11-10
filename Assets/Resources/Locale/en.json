@@ -133,9 +133,19 @@
    "tr": "A claim disc in the grass is a picnic. Raise a Commons before anyone files us as scenery."
   },
   {
+   "en": "A cracked shell of ice over a dark sea. Ice is everywhere; ore is thin and power is dear.",
+   "key": "",
+   "tr": "A cracked shell of ice over a dark sea. Ice is everywhere; ore is thin and power is dear."
+  },
+  {
    "en": "A crater Commons that pays rent is a nicer picnic. We did not come for nicer.",
    "key": "",
    "tr": "A crater Commons that pays rent is a nicer picnic. We did not come for nicer."
+  },
+  {
+   "en": "A cratered moon inside a giant's radiation belts. Crews tire fast away from shelter.",
+   "key": "",
+   "tr": "A cratered moon inside a giant's radiation belts. Crews tire fast away from shelter."
   },
   {
    "en": "A den crawled out of the fog. {0} walked it. Clear Threat is now a place, not a rumor.",
@@ -363,6 +373,11 @@
    "tr": "Aid Station · paid patch"
   },
   {
+   "en": "Ancient ruins",
+   "key": "",
+   "tr": "Ancient ruins"
+  },
+  {
    "en": "Anvil",
    "key": "",
    "tr": "Anvil"
@@ -483,6 +498,11 @@
    "tr": "Asteroid Belt"
   },
   {
+   "en": "Asteroid cluster",
+   "key": "",
+   "tr": "Asteroid cluster"
+  },
+  {
    "en": "At the workshop. Flags nearby pull harder.",
    "key": "",
    "tr": "At the workshop. Flags nearby pull harder."
@@ -511,6 +531,11 @@
    "en": "BALANCED",
    "key": "",
    "tr": "BALANCED"
+  },
+  {
+   "en": "BEYOND SOL",
+   "key": "",
+   "tr": "BEYOND SOL"
   },
   {
    "en": "BLEEDING",
@@ -608,6 +633,16 @@
    "tr": "Berserk"
   },
   {
+   "en": "Beyond Sol",
+   "key": "",
+   "tr": "Beyond Sol"
+  },
+  {
+   "en": "Black basalt and open vents. Fissile and metals run rich, ice is absent and the ground is hostile.",
+   "key": "",
+   "tr": "Black basalt and open vents. Fissile and metals run rich, ice is absent and the ground is hostile."
+  },
+  {
    "en": "Blacksmith",
    "key": "",
    "tr": "Blacksmith"
@@ -636,6 +671,11 @@
    "en": "Bloom. Greens the crust. Takes Terraform cheap; slow to fight or wander.",
    "key": "",
    "tr": "Bloom. Greens the crust. Takes Terraform cheap; slow to fight or wander."
+  },
+  {
+   "en": "Blue star",
+   "key": "",
+   "tr": "Blue star"
   },
   {
    "en": "Booting.",
@@ -676,6 +716,11 @@
    "en": "Bounty escrowed from EU. Bots keep their EU share; the till takes its cut.",
    "key": "",
    "tr": "Bounty escrowed from EU. Bots keep their EU share; the till takes its cut."
+  },
+  {
+   "en": "Broken ground: more exposed ore and more rock outcrops.",
+   "key": "",
+   "tr": "Broken ground: more exposed ore and more rock outcrops."
   },
   {
    "en": "Browning out",
@@ -1233,6 +1278,11 @@
    "tr": "Creepers chew Compact farms."
   },
   {
+   "en": "Crews in the open tire from radiation.",
+   "key": "",
+   "tr": "Crews in the open tire from radiation."
+  },
+  {
    "en": "Cryo Lock",
    "key": "",
    "tr": "Cryo Lock"
@@ -1493,6 +1543,11 @@
    "tr": "Dust Stalker"
   },
   {
+   "en": "Dust and bare rock under thin air. Metals are close to the surface; water is not.",
+   "key": "",
+   "tr": "Dust and bare rock under thin air. Metals are close to the surface; water is not."
+  },
+  {
    "en": "Dust creepers on the farm — post Defend Area.",
    "key": "",
    "tr": "Dust creepers on the farm — post Defend Area."
@@ -1501,6 +1556,11 @@
    "en": "Dust hoppers at the Commons — post Clear Threat.",
    "key": "",
    "tr": "Dust hoppers at the Commons — post Clear Threat."
+  },
+  {
+   "en": "Dust storms",
+   "key": "",
+   "tr": "Dust storms"
   },
   {
    "en": "Dust ticks on the ore — post Defend Area.",
@@ -2128,6 +2188,16 @@
    "tr": "GUIDED START"
   },
   {
+   "en": "Garden world",
+   "key": "",
+   "tr": "Garden world"
+  },
+  {
+   "en": "Gas-giant moon",
+   "key": "",
+   "tr": "Gas-giant moon"
+  },
+  {
    "en": "Gates are met. Worker bots stay on this claim. The treasury keeps ticking in EU.",
    "key": "",
    "tr": "Gates are met. Worker bots stay on this claim. The treasury keeps ticking in EU."
@@ -2588,6 +2658,11 @@
    "tr": "Hospitality, Itemized"
   },
   {
+   "en": "Hostile hives",
+   "key": "",
+   "tr": "Hostile hives"
+  },
+  {
    "en": "Hunt the Wisps",
    "key": "",
    "tr": "Hunt the Wisps"
@@ -2696,6 +2771,11 @@
    "en": "Ice crust, radiation. Fissure leeches and ice wisps drain Power ({key:FlagClearThreat}). Ice creepers on farms ({key:FlagDefend}). Hold pop 14.",
    "key": "",
    "tr": "Ice crust, radiation. Fissure leeches and ice wisps drain Power ({key:FlagClearThreat}). Ice creepers on farms ({key:FlagDefend}). Hold pop 14."
+  },
+  {
+   "en": "Ice shell",
+   "key": "",
+   "tr": "Ice shell"
   },
   {
    "en": "Ice wisps off the crust — post Clear Threat.",
@@ -2846,6 +2926,11 @@
    "en": "Kingdom vocation",
    "key": "",
    "tr": "Kingdom vocation"
+  },
+  {
+   "en": "LAND ON {0}  ·  SLOT {1}",
+   "key": "",
+   "tr": "LAND ON {0}  ·  SLOT {1}"
   },
   {
    "en": "LANGUAGE",
@@ -3343,6 +3428,21 @@
    "tr": "Modules lost"
   },
   {
+   "en": "More dens, and each one holds more.",
+   "key": "",
+   "tr": "More dens, and each one holds more."
+  },
+  {
+   "en": "More resource nodes and better mines; expansion draws more attention.",
+   "key": "",
+   "tr": "More resource nodes and better mines; expansion draws more attention."
+  },
+  {
+   "en": "More sites to explore and faster research.",
+   "key": "",
+   "tr": "More sites to explore and faster research."
+  },
+  {
    "en": "NEED TECH",
    "key": "",
    "tr": "NEED TECH"
@@ -3593,6 +3693,11 @@
    "tr": "Objectives"
   },
   {
+   "en": "Ocean archipelago",
+   "key": "",
+   "tr": "Ocean archipelago"
+  },
+  {
    "en": "On duty: ",
    "key": "",
    "tr": "On duty: "
@@ -3601,6 +3706,11 @@
    "en": "On {0}.",
    "key": "",
    "tr": "On {0}."
+  },
+  {
+   "en": "One face always toward its star. You build on the twilight line, in long shadow.",
+   "key": "",
+   "tr": "One face always toward its star. You build on the twilight line, in long shadow."
   },
   {
    "en": "Open Hands: cheaper flags (hunger +0.26, past the 0.75 greed bypass). Less courage.",
@@ -3613,9 +3723,19 @@
    "tr": "Open Hands: they will take a cheap flag. Hunger is past the greed gate. Courage is not."
   },
   {
+   "en": "Open air, forest and rivers. Easy living, and the wildlife knows it.",
+   "key": "",
+   "tr": "Open air, forest and rivers. Easy living, and the wildlife knows it."
+  },
+  {
    "en": "Open run: manual slot saves and body restarts stay available.",
    "key": "",
    "tr": "Open run: manual slot saves and body restarts stay available."
+  },
+  {
+   "en": "Orange star",
+   "key": "",
+   "tr": "Orange star"
   },
   {
    "en": "Orbital Barrage",
@@ -3958,6 +4078,11 @@
    "tr": "Power Systems"
   },
   {
+   "en": "Power costs more, crews move slower and you see less far.",
+   "key": "",
+   "tr": "Power costs more, crews move slower and you see less far."
+  },
+  {
    "en": "Powered",
    "key": "",
    "tr": "Powered"
@@ -4006,6 +4131,11 @@
    "en": "QUIT",
    "key": "",
    "tr": "QUIT"
+  },
+  {
+   "en": "Quakes",
+   "key": "",
+   "tr": "Quakes"
   },
   {
    "en": "RAID",
@@ -4111,6 +4241,11 @@
    "en": "ROCK TICK",
    "key": "",
    "tr": "ROCK TICK"
+  },
+  {
+   "en": "ROLL",
+   "key": "",
+   "tr": "ROLL"
   },
   {
    "en": "Radiation outside the Commons — robots take damage far from campus.",
@@ -4226,6 +4361,11 @@
    "en": "Red dust. Wisps drain Power ({key:FlagClearThreat}); dust creepers chew farms ({key:FlagDefend}). Hold pop 16, then Belt Hauler.",
    "key": "",
    "tr": "Red dust. Wisps drain Power ({key:FlagClearThreat}); dust creepers chew farms ({key:FlagDefend}). Hold pop 16, then Belt Hauler."
+  },
+  {
+   "en": "Red dwarf",
+   "key": "",
+   "tr": "Red dwarf"
   },
   {
    "en": "Regen Necklace",
@@ -4363,6 +4503,11 @@
    "tr": "Revive Beacon"
   },
   {
+   "en": "Rich veins",
+   "key": "",
+   "tr": "Rich veins"
+  },
+  {
    "en": "Rim or Aegis on a greenhouse. The Compact keeps its lunch.",
    "key": "",
    "tr": "Rim or Aegis on a greenhouse. The Compact keeps its lunch."
@@ -4413,6 +4558,11 @@
    "tr": "Rock ticks on the ore — post Defend Area."
   },
   {
+   "en": "Rocky desert",
+   "key": "",
+   "tr": "Rocky desert"
+  },
+  {
    "en": "Root the Hopper Saboteurs",
    "key": "",
    "tr": "Root the Hopper Saboteurs"
@@ -4421,6 +4571,11 @@
    "en": "Roster · status",
    "key": "",
    "tr": "Roster · status"
+  },
+  {
+   "en": "Rubble tied together by almost nothing. Rich ore, poor farms, and everything must be anchored.",
+   "key": "",
+   "tr": "Rubble tied together by almost nothing. Rich ore, poor farms, and everything must be anchored."
   },
   {
    "en": "Running freight.",
@@ -4451,6 +4606,11 @@
    "en": "SCT {0}  ENG {1}  DEF {2}  MED {3}",
    "key": "",
    "tr": "SCT {0}  ENG {1}  DEF {2}  MED {3}"
+  },
+  {
+   "en": "SEED",
+   "key": "",
+   "tr": "SEED"
   },
   {
    "en": "SEND",
@@ -4496,6 +4656,16 @@
    "en": "SLOT {0}",
    "key": "",
    "tr": "SLOT {0}"
+  },
+  {
+   "en": "SLOT {0}  ·  empty",
+   "key": "",
+   "tr": "SLOT {0}  ·  empty"
+  },
+  {
+   "en": "SLOT {0}  ·  in use",
+   "key": "",
+   "tr": "SLOT {0}  ·  in use"
   },
   {
    "en": "SLOW",
@@ -4943,6 +5113,16 @@
    "tr": "Standing bonus. Unlock from ★ tech."
   },
   {
+   "en": "Starts a new colony. Only the chosen slot is replaced; autosave follows the new colony.",
+   "key": "",
+   "tr": "Starts a new colony. Only the chosen slot is replaced; autosave follows the new colony."
+  },
+  {
+   "en": "Stellar flares",
+   "key": "",
+   "tr": "Stellar flares"
+  },
+  {
    "en": "Stingshot",
    "key": "",
    "tr": "Stingshot"
@@ -5248,6 +5428,11 @@
    "tr": "That building needs research first."
   },
   {
+   "en": "That colony stands on a world this game no longer has.",
+   "key": "",
+   "tr": "That colony stands on a world this game no longer has."
+  },
+  {
    "en": "That is a court. It is not a solar power.",
    "key": "",
    "tr": "That is a court. It is not a solar power."
@@ -5463,6 +5648,11 @@
    "tr": "This is the industrial spine. Not a second Earth court. Not a Freehold weigh-station with worse lighting."
   },
   {
+   "en": "This world is yours. Keep overseeing here, or choose another from the title.",
+   "key": "",
+   "tr": "This world is yours. Keep overseeing here, or choose another from the title."
+  },
+  {
    "en": "Ticks are stealing from the weigh-station. That is not a den hunt. That is a rim watch with worse lighting.",
    "key": "",
    "tr": "Ticks are stealing from the weigh-station. That is not a den hunt. That is a rim watch with worse lighting."
@@ -5471,6 +5661,11 @@
    "en": "Ticks steal from mines. Rim watch.",
    "key": "",
    "tr": "Ticks steal from mines. Rim watch."
+  },
+  {
+   "en": "Tidally locked",
+   "key": "",
+   "tr": "Tidally locked"
   },
   {
    "en": "Tight Purse: Earth ship ×1.55 slower and +80 EU dock fee. Drop stockpile is unchanged.",
@@ -5633,6 +5828,11 @@
    "tr": "Veteran"
   },
   {
+   "en": "Volcanic",
+   "key": "",
+   "tr": "Volcanic"
+  },
+  {
    "en": "WINDOWED",
    "key": "",
    "tr": "WINDOWED"
@@ -5706,6 +5906,11 @@
    "en": "Ward the furrows. Soil creepers chew farms. Aegis and Triage will hold a field cheaper than they will hunt a den. Tempt them accordingly.",
    "key": "",
    "tr": "Ward the furrows. Soil creepers chew farms. Aegis and Triage will hold a field cheaper than they will hunt a den. Tempt them accordingly."
+  },
+  {
+   "en": "Warm seas and scattered islands. Farms thrive, ore is scarce and water limits where you can build.",
+   "key": "",
+   "tr": "Warm seas and scattered islands. Farms thrive, ore is scarce and water limits where you can build."
   },
   {
    "en": "Watch the rim. Unlocks Sentinel shop — they take Defend cheap.",
@@ -5818,6 +6023,11 @@
    "tr": "Welding {0}. Pay holds."
   },
   {
+   "en": "White star",
+   "key": "",
+   "tr": "White star"
+  },
+  {
    "en": "Wisps drink grids. Creepers chew furrows. The Compact expects both handled without a Sol accent.",
    "key": "",
    "tr": "Wisps drink grids. Creepers chew furrows. The Compact expects both handled without a Sol accent."
@@ -5911,6 +6121,11 @@
    "en": "Yard restored — {0} modules on {1}.",
    "key": "",
    "tr": "Yard restored — {0} modules on {1}."
+  },
+  {
+   "en": "Yellow star",
+   "key": "",
+   "tr": "Yellow star"
   },
   {
    "en": "You are the central AI. Worker bots secured this claim: dens are quiet, the treasury is holding in EU, and the craft is on the pad.",
@@ -6268,6 +6483,11 @@
    "tr": "orders exclude {0}"
   },
   {
+   "en": "place a Landing Pad",
+   "key": "",
+   "tr": "place a Landing Pad"
+  },
+  {
    "en": "raise Colony Commons first",
    "key": "",
    "tr": "raise Colony Commons first"
@@ -6498,6 +6718,11 @@
    "tr": "{0}  ·  {1}\n{2}  ·  RMB cancel{3}  ·  w {4:F1}{5}"
   },
   {
+   "en": "{0}  ·  {1}  ·  {2} °C  ·  {3} g",
+   "key": "",
+   "tr": "{0}  ·  {1}  ·  {2} °C  ·  {3} g"
+  },
+  {
    "en": "{0} EU",
    "key": "",
    "tr": "{0} EU"
@@ -6631,6 +6856,11 @@
    "en": "{0} holds — campaign spine complete",
    "key": "",
    "tr": "{0} holds — campaign spine complete"
+  },
+  {
+   "en": "{0} holds — choose another world from the title",
+   "key": "",
+   "tr": "{0} holds — choose another world from the title"
   },
   {
    "en": "{0} hostile locked for {1:0} s",
@@ -6791,6 +7021,11 @@
    "en": "{0} stays fixed (build slots and modifiers).",
    "key": "",
    "tr": "{0} stays fixed (build slots and modifiers)."
+  },
+  {
+   "en": "{0} system  ·  {1}  ·  {2}",
+   "key": "",
+   "tr": "{0} system  ·  {1}  ·  {2}"
   },
   {
    "en": "{0} tempted · {1}",

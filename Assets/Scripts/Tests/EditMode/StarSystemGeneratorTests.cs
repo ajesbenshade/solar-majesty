@@ -247,6 +247,43 @@ namespace SolarMajesty.Tests
                 CelestialBodyCatalog.Mars().GroundCover[0].ColorA);
         }
 
+        /// <summary>What a briefing promises must be true of the world.</summary>
+        [Test]
+        public void Briefings_SayOnlyWhatTheNumbersDo()
+        {
+            for (int seed = 1; seed <= 300; seed++)
+            {
+                foreach (SystemBody body in StarSystemGenerator.Generate(seed).Bodies)
+                {
+                    CelestialBodyProfile p = body.Profile;
+                    string where = $"seed {seed} {body.Archetype}";
+                    switch (body.Archetype)
+                    {
+                        case WorldArchetype.GasGiantMoon:
+                            Assert.Greater(p.RadiationDrainPerSecond, 0f, where + ": crews tire away from shelter");
+                            break;
+                        case WorldArchetype.Volcanic:
+                            Assert.AreEqual(0, p.ResourceWeights[2], where + ": ice is absent");
+                            break;
+                        case WorldArchetype.IceShell:
+                            Assert.Greater(p.ResourceWeights[2], p.ResourceWeights[1], where + ": ice is everywhere, ore is thin");
+                            break;
+                        case WorldArchetype.AsteroidCluster:
+                            Assert.Less(p.FarmYieldScale, 0.6f, where + ": poor farms");
+                            Assert.Greater(p.MineYieldScale, 1.2f, where + ": rich ore");
+                            break;
+                        case WorldArchetype.OceanArchipelago:
+                            Assert.Greater(p.FarmYieldScale, 1.1f, where + ": farms thrive");
+                            Assert.GreaterOrEqual(p.LakeCount, 9, where + ": water limits where you can build");
+                            break;
+                    }
+                    if (System.Array.IndexOf(p.Modifiers, WorldModifier.StellarFlares) >= 0)
+                        Assert.Greater(p.RadiationDrainPerSecond, 0f, where + ": flares");
+                    StringAssert.Contains("\u00b0C", p.Briefing, where);
+                }
+            }
+        }
+
         [Test]
         public void ExampleCode_IsARealCode()
         {

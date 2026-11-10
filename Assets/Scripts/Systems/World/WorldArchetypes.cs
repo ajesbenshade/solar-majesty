@@ -76,7 +76,7 @@ namespace SolarMajesty
             new Spec(CelestialBodyId.Luna, CelestialBodyId.Luna, Atmosphere.None, 0.3f, 0.9f, 0.5f, 0.9f,
                 0f, -180f, 200f, new[] { 5, 4, 2, 3 }, 1.05f, 0.6f, 1.2f, 0.14f,
                 "Tidally locked", "One face always toward its star. You build on the twilight line, in long shadow."),
-            new Spec(CelestialBodyId.Luna, CelestialBodyId.Europa, Atmosphere.None, 0.1f, 0.25f, 0.7f, 1f,
+            new Spec(CelestialBodyId.Luna, CelestialBodyId.Europa, Atmosphere.None, 0.1f, 0.25f, 0.78f, 1f,
                 15f, -220f, -40f, new[] { 4, 3, 4, 3 }, 1.1f, 0.8f, 1f, 0.15f,
                 "Gas-giant moon", "A cratered moon inside a giant's radiation belts. Crews tire fast away from shelter."),
             new Spec(CelestialBodyId.Earth, CelestialBodyId.Earth, Atmosphere.Breathable, 0.8f, 1.1f, 0f, 0.05f,
@@ -324,7 +324,7 @@ namespace SolarMajesty
         // English, like every profile text: the display properties pass them through Loc.S.
         private static void Briefing(CelestialBodyProfile p, StarSystem system, SystemBody body, Spec s)
         {
-            string temp = Mathf.RoundToInt(body.Traits.TemperatureC) + " C";
+            string temp = Mathf.RoundToInt(body.Traits.TemperatureC) + " °C";
             string gravity = body.Traits.Gravity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " g";
             var conditions = new System.Text.StringBuilder();
             for (int i = 0; i < p.Modifiers.Length; i++)

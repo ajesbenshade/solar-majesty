@@ -3092,7 +3092,7 @@ namespace SolarMajesty
             for (int i = 0; i < system.Bodies.Count; i++)
             {
                 SystemBody b = system.Bodies[i];
-                string row = Loc.F("{0}  ·  {1}  ·  {2} C  ·  {3} g",
+                string row = Loc.F("{0}  ·  {1}  ·  {2} °C  ·  {3} g",
                     b.Name, Loc.S(WorldArchetypes.KindOf(b.Archetype)),
                     Mathf.RoundToInt(b.Traits.TemperatureC),
                     b.Traits.Gravity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture));

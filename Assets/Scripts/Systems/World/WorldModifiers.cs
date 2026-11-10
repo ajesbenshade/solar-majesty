@@ -47,10 +47,10 @@ namespace SolarMajesty
             {
                 case WorldModifier.DustStorms: return "Power costs more, crews move slower and you see less far.";
                 case WorldModifier.StellarFlares: return "Crews in the open tire from radiation.";
-                case WorldModifier.Quakes: return "Broken ground: more exposed ore, slower building sites.";
+                case WorldModifier.Quakes: return "Broken ground: more exposed ore and more rock outcrops.";
                 case WorldModifier.RichVeins: return "More resource nodes and better mines; expansion draws more attention.";
                 case WorldModifier.AncientRuins: return "More sites to explore and faster research.";
-                default: return "More lairs, and each one holds more.";
+                default: return "More dens, and each one holds more.";
             }
         }
 

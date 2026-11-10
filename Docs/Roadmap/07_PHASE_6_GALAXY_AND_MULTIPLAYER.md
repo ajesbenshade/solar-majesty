@@ -112,25 +112,32 @@ Limits that stay, and why:
 **Exit:** 1,000-seed soak with zero exceptions and a bot win rate inside the tuning band; ten
 generated worlds reviewed by eye for readability; shareable seed strings reproduce a system exactly.
 
-### 6B status (2026-11-09, branch `claude/phase-6b-procedural`)
+### 6B status (2026-11-10, branch `claude/phase-6b-procedural`)
 
-Done, with 926 EditMode tests passing and three generated worlds booting in the isolated PlayMode project:
+Done, with 935 EditMode tests passing and the isolated PlayMode suite passing (generated worlds boot, save, load and win there):
 
 - `StarSystemGenerator.Generate(seed)`: a star of one of five classes, then three to nine bodies. Orbit and luminosity give each body its starlight, which sets its temperature, its power draw and which archetypes can be there.
 - `WorldArchetypes`: all eight archetypes build a full `CelestialBodyProfile` with its own palette, light, layout counts, resource weights, yields, move speed, radiation, threat and population goal. Each wears the authored terrain, ground, fauna, sound and props of the nearest Sol world, and the gas-giant moon wears Luna's ground under Europa's sky.
 - `WorldModifiers`: each world has two or three of dust storms, stellar flares, quakes, rich veins, ancient ruins and hostile hives, named in its briefing.
-- `SystemSeedCode`: a seed is seven characters ("7K2M-9AX"); any other text hashes to a seed. A world's key ("gen.7k2m9ax.2") is all that is stored, and the boot builds its system again from it.
+- `SystemSeedCode`: a seed is seven characters ("1K2M-9AX"); any other text hashes to a seed. A world's key ("gen.1k2m9ax.2") is all that is stored, and the boot builds its system again from it.
 - `-system <seed> [-world <n>]` on the command line plays a generated world. Without `-world` it picks the body with the most Earth-like starlight.
+- Title screen: BEYOND SOL opens a dialog with a typed or rolled seed, the system it makes, a body list, the picked body's briefing and modifiers, and a slot. It offers the system last played first. A new colony always starts from the world's own seed, so a shared code gives the same ground.
+- A world outside Sol is not a step of the campaign (`GameLoop.OutsideCampaign`). Winning it unlocks and marks nothing in Sol and offers only the main menu. Its launch gate reads its own launch tech, so it asks for a Landing Pad and no research. A slot saved there loads back onto it from any session, and saves and Continue show its name.
+- Palette: a generated world repaints the ground material and undergrowth it borrows (`CelestialBodyProfile.Repaint`), so a volcanic world is dark basalt and a desert is not Mars again. Star colour tints the light only partly.
+- Review shots: two PlayMode tests write screenshots of the dialog and of all eight archetypes when `SM_SHOT_DIR` is set and Unity runs with a window. This is how the looks were checked.
+- The new text is in the localization tables, with French.
 
 Not done yet:
 
 - No new terrain kits. Volcanic is Mars's terrain repainted, the archipelago is Earth's with more lakes, and there are no lava or water hazards.
 - Modifiers are standing changes to a world's numbers. Storms, flares and quakes do not happen as events during play.
 - Fauna are the borrowed Sol world's, with their speed and aggression varied. There is no fauna assembler.
-- Names are generated; briefings are composed in English and are not in the localization tables.
+- Names are generated. The briefing paragraph and the arrival and victory log lines are composed in English; the dialog's rows and modifier lines are translated.
 - No bot overseer and no win-rate soak. The 1,000-seed test checks that every system is well formed, not that it can be won.
-- No title-screen entry, no "Beyond Sol" mode and no victory flow: a generated world has no launch tech and nowhere to go next.
-- Nobody has looked at a generated world on screen.
+- Beyond Sol is always on the title screen; it is not yet gated behind conquering Europa. A won world leads nowhere: the next world is picked from the title.
+- Worlds wear Sol props, so a moon of another star can show Luna's landers.
+- Every generated world played leaves its seed, campus, roster and travel snapshot in the profile. Nothing removes them yet.
+- The looks were checked from one screenshot per archetype, not in play. Tidally locked worlds are dark by design and need an eye on whether dens stay readable.
 
 ## 6C – Galaxy layer and rival overseers (8–12 weeks)
 
