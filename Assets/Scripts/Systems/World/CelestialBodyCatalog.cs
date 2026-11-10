@@ -107,6 +107,33 @@ namespace SolarMajesty
 
         public static int RegisteredCount => Registered.Count;
 
+        /// <summary>Every world added with <see cref="Register"/>.</summary>
+        public static IEnumerable<CelestialBodyProfile> RegisteredWorlds => Registered.Values;
+
+        /// <summary>True for a world added with <see cref="Register"/> (its key is outside the Sol namespace).</summary>
+        public static bool IsRegisteredKey(string key) =>
+            !string.IsNullOrEmpty(key) && !key.StartsWith(SolPrefix, System.StringComparison.Ordinal);
+
+        /// <summary>
+        /// The name a world's files and prefs are stored under. A Sol world keeps its number, so
+        /// existing saves still resolve; any other world uses its key, made safe for a file name.
+        /// </summary>
+        public static string StorageId(CelestialBodyProfile world) =>
+            world == null ? "0" : StorageId(world.Key, world.Id);
+
+        public static string StorageId(string key, CelestialBodyId borrowed)
+        {
+            if (!IsRegisteredKey(key)) return ((int)borrowed).ToString();
+            var sb = new System.Text.StringBuilder("-", key.Length + 1);
+            for (int i = 0; i < key.Length; i++)
+            {
+                char c = key[i];
+                bool safe = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-';
+                sb.Append(safe ? c : '_');
+            }
+            return sb.ToString();
+        }
+
         /// <summary>Forget every registered world (a new galaxy, or a test's cleanup).</summary>
         public static void ClearRegistered() => Registered.Clear();
 

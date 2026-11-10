@@ -506,11 +506,43 @@ namespace SolarMajesty
         public static string LoadCampus(CelestialBodyId body) =>
             GamePrefs.GetString(CampusKey(body), "");
 
+        // A registered world keeps its campus and roster under its own key, not the key of the
+        // Sol world it borrows its look from.
+        public static string CampusKey(CelestialBodyProfile world) =>
+            CampusKeyPrefix + CelestialBodyCatalog.StorageId(world);
+
+        public static void WriteCampus(CelestialBodyProfile world, string blob) => WriteBlob(CampusKey(world), blob);
+
+        public static string LoadCampus(CelestialBodyProfile world) =>
+            GamePrefs.GetString(CampusKey(world), "");
+
+        public static string RosterKey(CelestialBodyProfile world) =>
+            RosterKeyPrefix + CelestialBodyCatalog.StorageId(world);
+
+        public static void WriteRoster(CelestialBodyProfile world, string blob) => WriteBlob(RosterKey(world), blob);
+
+        public static string LoadRoster(CelestialBodyProfile world) =>
+            GamePrefs.GetString(RosterKey(world), "");
+
+        private static void WriteBlob(string key, string blob)
+        {
+            if (string.IsNullOrEmpty(blob))
+                GamePrefs.DeleteKey(key);
+            else
+                GamePrefs.SetString(key, blob);
+            GamePrefs.Save();
+        }
+
         public static void ClearCampus()
         {
             var bodies = CelestialBodyCatalog.All;
             for (int i = 0; i < bodies.Length; i++)
                 GamePrefs.DeleteKey(CampusKey(bodies[i]));
+            foreach (CelestialBodyProfile world in CelestialBodyCatalog.RegisteredWorlds)
+            {
+                GamePrefs.DeleteKey(CampusKey(world));
+                GamePrefs.DeleteKey(RosterKey(world));
+            }
         }
 
         public static string RosterKey(CelestialBodyId body) => RosterKeyPrefix + (int)body;

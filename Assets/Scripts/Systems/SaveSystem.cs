@@ -137,13 +137,24 @@ namespace SolarMajesty
         public static string WorldPath(CelestialBodyId body) =>
             Path.Combine(SaveDirectory, $"world{(int)body}.json");
 
+        /// <summary>A registered world has a snapshot file of its own, named by its key.</summary>
+        public static string WorldPath(CelestialBodyProfile world) =>
+            Path.Combine(SaveDirectory, $"world{CelestialBodyCatalog.StorageId(world)}.json");
+
         public static bool WriteWorld(SaveGame save) =>
-            save != null && WritePath(WorldPath((CelestialBodyId)save.body), save);
+            save != null && WritePath(Path.Combine(SaveDirectory,
+                $"world{CelestialBodyCatalog.StorageId(save.bodyKey, (CelestialBodyId)save.body)}.json"), save);
 
         public static bool TryReadWorld(CelestialBodyId body, out SaveGame save) =>
-            TryReadPath(WorldPath(body), out save) && save.body == (int)body;
+            TryReadPath(WorldPath(body), out save) && save.body == (int)body
+            && !CelestialBodyCatalog.IsRegisteredKey(save.bodyKey);
+
+        public static bool TryReadWorld(CelestialBodyProfile world, out SaveGame save) =>
+            TryReadPath(WorldPath(world), out save) && save.IsWorld(world);
 
         public static void DeleteWorld(CelestialBodyId body) => DeleteSnapshot(WorldPath(body));
+
+        public static void DeleteWorld(CelestialBodyProfile world) => DeleteSnapshot(WorldPath(world));
 
         public static bool IsNewerVersion(int slot) =>
             IsNewerFile(SlotPath(slot)) || IsNewerFile(SlotPath(slot) + ".bak");
@@ -501,6 +512,8 @@ namespace SolarMajesty
                 Delete(i);
             foreach (CelestialBodyId body in Enum.GetValues(typeof(CelestialBodyId)))
                 DeleteWorld(body);
+            foreach (CelestialBodyProfile world in CelestialBodyCatalog.RegisteredWorlds)
+                DeleteWorld(world);
         }
 
         /// <summary>Header info for every populated slot, for a load menu.</summary>

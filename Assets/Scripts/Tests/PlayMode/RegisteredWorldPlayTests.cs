@@ -83,6 +83,15 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(snapshot.MatchesWorld(ares, 424242));
             Assert.IsFalse(snapshot.MatchesWorld(CelestialBodyCatalog.Mars(), 424242), "not Mars, even with Mars's look");
 
+            // Its snapshot, campus and roster are its own: nothing is written where Mars keeps its.
+            Assert.IsTrue(SaveSystem.WriteWorld(snapshot));
+            Assert.AreNotEqual(SaveSystem.WorldPath(CelestialBodyId.Mars), SaveSystem.WorldPath(ares));
+            Assert.IsTrue(SaveSystem.TryReadWorld(ares, out SaveGame kept));
+            Assert.AreEqual("test.ares", kept.bodyKey);
+            Assert.IsFalse(System.IO.File.Exists(SaveSystem.WorldPath(CelestialBodyId.Mars)));
+            Assert.AreEqual("", DemoSettings.LoadRoster(CelestialBodyId.Mars));
+            Assert.AreEqual("", DemoSettings.LoadCampus(CelestialBodyId.Mars));
+
             BodySeed.SetBody(CelestialBodyId.Earth);
             Assert.AreEqual("", BodySeed.LoadSavedKey(), "choosing a Sol world leaves the registered one");
         }

@@ -958,26 +958,19 @@ namespace SolarMajesty
             }
             ModularBuildingFactory.BindBody(_body);
             IndustrialArtDressing.BindBody(_body);
-            if (registered != null)
-            {
-                // A registered world brings its own seed. It is used for this boot only, so the
-                // seed stored for the Sol world it borrows from is left alone.
-                int ownSeed = pendingOk ? pendingSave.seed : registered.Seed;
-                BodySeed.Ensure(celestialBody, ownSeed != 0 ? ownSeed : worldSeedOverride);
-            }
-            else
-                BodySeed.Ensure(celestialBody, worldSeedOverride);
+            // A registered world's seed, snapshot, campus and roster are stored under its own
+            // key, so the Sol world it borrows from is left alone.
+            BodySeed.Ensure(_body, worldSeedOverride);
             // Choose the world seed before generating its terrain, nodes and lairs.
-            if (registered != null) { }
-            else if (pendingOk)
+            if (pendingOk)
                 BodySeed.SetAndPersist(pendingSave.seed);
             else if (!freshCampaign && worldSeedOverride == 0
-                     && SaveSystem.TryReadWorld(celestialBody, out var worldSave)
+                     && SaveSystem.TryReadWorld(_body, out var worldSave)
                      && CampaignSlots.LiveSnapshotMatches(worldSave.campaignStamp))
                 BodySeed.SetAndPersist(worldSave.seed);
             else if (!freshCampaign && worldSeedOverride == 0
                      && SaveSystem.TryRead(SaveSystem.AutosaveSlot, out var latestSave)
-                     && latestSave.body == (int)celestialBody
+                     && latestSave.IsWorld(_body)
                      && CampaignSlots.LiveSnapshotMatches(latestSave.campaignStamp))
                 BodySeed.SetAndPersist(latestSave.seed);
 
@@ -1073,11 +1066,15 @@ namespace SolarMajesty
         /// With -recordcommands, leave this world's applied commands in the logs folder when the
         /// scene goes away (quit, travel, restart).
         /// </summary>
+        // The colony as this session found it, kept only while commands are being recorded.
+        private SaveGame _sessionStart;
+
         private void WriteCommandLog()
         {
             if (Sim == null || !Sim.Commands.Record || Sim.Commands.Log.Count == 0) return;
             string body = _body != null ? _body.ShortCode : celestialBody.ToString();
             CommandLog log = CommandLog.From(Sim, body, BodySeed.Current, Application.version);
+            log.BeginFrom(_sessionStart);
             log.worldHash = WorldHash().ToString("x16");
             string path = log.Write(ErrorLog.Directory, CommandLog.FileName(body, BodySeed.Current, System.DateTime.UtcNow));
             if (path != null) Debug.Log($"[CommandLog] {log.commands.Count} commands -> {path}");
@@ -1142,7 +1139,7 @@ namespace SolarMajesty
                          && CampaignSlots.LiveSnapshotMatches(auto.campaignStamp))
                     latest = auto;
                 SaveGame save = latest != null && latest.MatchesWorld(_body, BodySeed.Current) ? latest : null;
-                if (save == null && SaveSystem.TryReadWorld(celestialBody, out var destination)
+                if (save == null && SaveSystem.TryReadWorld(_body, out var destination)
                                  && destination.MatchesWorld(_body, BodySeed.Current)
                                  && CampaignSlots.LiveSnapshotMatches(destination.campaignStamp))
                 {
@@ -1175,6 +1172,9 @@ namespace SolarMajesty
                 }
             }
             _bootSlot = -1;
+            // A recorded session that carries on from a save replays from that save.
+            if (loadStockpile && Sim != null && Sim.Commands.Record)
+                _sessionStart = CaptureSave("session-start");
             if (!restoredSave)
             {
                 if (loadStockpile && latest != null)
@@ -5275,10 +5275,10 @@ namespace SolarMajesty
 
         private void ClearCurrentWorldForRetry()
         {
-            SaveSystem.DeleteWorld(celestialBody);
+            SaveSystem.DeleteWorld(_body);
             SaveSystem.Delete(SaveSystem.AutosaveSlot);
-            DemoSettings.WriteCampus(celestialBody, "");
-            DemoSettings.WriteRoster(celestialBody, "");
+            DemoSettings.WriteCampus(_body, "");
+            DemoSettings.WriteRoster(_body, "");
             // A retry starts a funded new colony, not the previous losing stockpile.
             DemoSettings.SaveExists = false;
             GamePrefs.SetInt(DemoSettings.SaveFlagKey, 0);
@@ -6094,18 +6094,18 @@ namespace SolarMajesty
         private void PersistSessionNow()
         {
             DemoSettings.WriteStockpile(Resources);
-            DemoSettings.WriteRoster(celestialBody, SpecialistRoster.Encode(CaptureRoster()));
+            DemoSettings.WriteRoster(_body, SpecialistRoster.Encode(CaptureRoster()));
             if (Placer != null)
             {
                 var slots = CaptureCampusSlots();
-                DemoSettings.WriteCampus(celestialBody, CampusSnapshot.Encode(0, slots));
+                DemoSettings.WriteCampus(_body, CampusSnapshot.Encode(0, slots));
             }
 
             var snapshot = CaptureSave("autosave");
             int home = CampaignSlots.ActiveSlot;
             var paths = new List<string>(3)
             {
-                SaveSystem.WorldPath(celestialBody),
+                SaveSystem.WorldPath(_body),
                 SaveSystem.SlotPath(SaveSystem.AutosaveSlot)
             };
             if (CampaignSlots.IsPlayerSlot(home))
@@ -6910,7 +6910,7 @@ namespace SolarMajesty
             if (Placer == null || grid == null) return;
             if (Placer.Pieces.Count > 0) return;
 
-            string raw = DemoSettings.LoadCampus(celestialBody);
+            string raw = DemoSettings.LoadCampus(_body);
             var slots = new List<CampusSlot>(16);
             if (!CampusSnapshot.TryDecode(raw, out int pop, slots) || slots.Count == 0)
                 return;
@@ -7661,7 +7661,7 @@ namespace SolarMajesty
             return list;
         }
 
-        private void LoadRosterMemory() => LoadRosterMemory(DemoSettings.LoadRoster(celestialBody));
+        private void LoadRosterMemory() => LoadRosterMemory(DemoSettings.LoadRoster(_body));
 
         private void LoadRosterMemory(string snapshot)
         {

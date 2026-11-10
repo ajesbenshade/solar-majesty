@@ -75,6 +75,59 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(read.stateHash, replayed.StateHash().ToString("x16"));
         }
 
+        /// <summary>A session that began with Continue replays from the colony it resumed.</summary>
+        [Test]
+        public void CommandLog_OfAResumedSession_ReplaysFromItsStartingSave()
+        {
+            ColonySim earlier = NewSim();
+            earlier.Commands.Enqueue(OverseerCommand.PostFlag(FlagType.Explore, new Vector3(3f, 0f, 9f), 300f));
+            earlier.RunSteps(200);
+            var resumedFrom = new SaveGame();
+            earlier.CaptureInto(resumedFrom);
+
+            // The next session: Continue, then play on with recording switched on.
+            ColonySim live = NewSim();
+            live.RestoreFrom(resumedFrom);
+            Assert.AreEqual(earlier.StateHash(), live.StateHash(), "a restored sim stands where the save was taken");
+            live.Commands.Record = true;
+            live.Commands.Enqueue(OverseerCommand.StepBounty(1, 100f));
+            live.RunSteps(300);
+
+            CommandLog log = CommandLog.From(live, "MARS", 5, "0.9.0");
+            log.BeginFrom(resumedFrom);
+            string path = log.Write(_dir, "resumed.json");
+            Assert.IsTrue(CommandLog.TryRead(path, out CommandLog read));
+            Assert.IsTrue(read.resumed);
+
+            ColonySim replayed = read.NewSim(_ => _explore);
+            replayed.Replay(read.commands, read.steps);
+            Assert.AreEqual(read.stateHash, replayed.StateHash().ToString("x16"));
+
+            // From the bare seed the same commands land on a different colony.
+            ColonySim fromSeed = NewSim(read.seed);
+            fromSeed.Clock.Restore(resumedFrom.simSteps);
+            fromSeed.Replay(read.commands, read.steps);
+            Assert.AreNotEqual(read.stateHash, fromSeed.StateHash().ToString("x16"));
+        }
+
+        [Test]
+        public void SaveSystem_GivesARegisteredWorldItsOwnFilesAndPrefs()
+        {
+            CelestialBodyProfile ares = CelestialBodyCatalog.Mars().Copy();
+            ares.Key = "test.ares/2";
+
+            Assert.AreEqual("2", CelestialBodyCatalog.StorageId(CelestialBodyCatalog.Mars()), "a Sol world keeps its number");
+            Assert.AreEqual("-test_ares_2", CelestialBodyCatalog.StorageId(ares));
+            Assert.AreEqual(SaveSystem.WorldPath(CelestialBodyId.Mars), SaveSystem.WorldPath(CelestialBodyCatalog.Mars()));
+            Assert.AreNotEqual(SaveSystem.WorldPath(CelestialBodyId.Mars), SaveSystem.WorldPath(ares));
+            Assert.AreEqual(DemoSettings.CampusKey(CelestialBodyId.Mars), DemoSettings.CampusKey(CelestialBodyCatalog.Mars()));
+            Assert.AreNotEqual(DemoSettings.RosterKey(CelestialBodyId.Mars), DemoSettings.RosterKey(ares));
+
+            var onAres = new SaveGame { body = (int)CelestialBodyId.Mars, bodyKey = ares.Key };
+            Assert.IsTrue(onAres.IsWorld(ares));
+            Assert.IsFalse(onAres.IsWorld(CelestialBodyCatalog.Mars()));
+        }
+
         [Test]
         public void CommandLog_TryRead_OfAMissingFile_IsFalse()
         {

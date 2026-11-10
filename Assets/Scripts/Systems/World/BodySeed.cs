@@ -12,6 +12,9 @@ namespace SolarMajesty
         private const string SeedPrefix = "SM_BodySeed_";
 
         public static CelestialBodyId Body { get; private set; } = CelestialBodyId.Earth;
+
+        /// <summary>Key of the registered world being played, or empty on a Sol world.</summary>
+        public static string WorldKey { get; private set; } = "";
         public static int Current { get; private set; } = 10007;
 
         public static void Ensure(
@@ -41,6 +44,38 @@ namespace SolarMajesty
             PersistSeed();
         }
 
+        /// <summary>
+        /// As <see cref="Ensure(CelestialBodyId,int,bool)"/> for any world. A registered world's
+        /// seed is stored under its own key and starts from <see cref="CelestialBodyProfile.Seed"/>.
+        /// </summary>
+        public static void Ensure(CelestialBodyProfile world, int inspectorOverride = 0)
+        {
+            WorldKey = CelestialBodyCatalog.IsRegisteredKey(world.Key) ? world.Key : "";
+            if (WorldKey.Length == 0)
+            {
+                Ensure(world.Id, inspectorOverride);
+                return;
+            }
+
+            Body = world.Id;
+            GamePrefs.SetInt(BodyPrefsKey, (int)world.Id);
+            if (inspectorOverride != 0)
+            {
+                Current = inspectorOverride;
+                return;
+            }
+
+            string key = SeedKey(Body);
+            if (GamePrefs.HasKey(key))
+            {
+                Current = GamePrefs.GetInt(key, 10007);
+                return;
+            }
+
+            Current = world.Seed != 0 ? world.Seed : DefaultSeed(Body);
+            PersistSeed();
+        }
+
         /// <summary>Load last selected body from prefs (Earth if unset).</summary>
         public static CelestialBodyId LoadSavedBody() =>
             (CelestialBodyId)GamePrefs.GetInt(BodyPrefsKey, (int)CelestialBodyId.Earth);
@@ -49,6 +84,7 @@ namespace SolarMajesty
         public static void ReloadFromPrefs()
         {
             Body = LoadSavedBody();
+            WorldKey = LoadSavedKey();
             string key = SeedKey(Body);
             Current = GamePrefs.HasKey(key) ? GamePrefs.GetInt(key, DefaultSeed(Body)) : DefaultSeed(Body);
         }
@@ -56,6 +92,7 @@ namespace SolarMajesty
         public static void SetBody(CelestialBodyId body)
         {
             Body = body;
+            WorldKey = "";
             GamePrefs.SetInt(BodyPrefsKey, (int)body);
             GamePrefs.SetString(KeyPrefsKey, ""); // a Sol world: no registered world is selected
             GamePrefs.Save();
@@ -70,8 +107,9 @@ namespace SolarMajesty
         public static void SetWorld(CelestialBodyProfile world)
         {
             Body = world.Id;
+            WorldKey = CelestialBodyCatalog.IsRegisteredKey(world.Key) ? world.Key : "";
             GamePrefs.SetInt(BodyPrefsKey, (int)world.Id);
-            GamePrefs.SetString(KeyPrefsKey, world.Key ?? "");
+            GamePrefs.SetString(KeyPrefsKey, WorldKey);
             GamePrefs.Save();
         }
 
@@ -101,7 +139,8 @@ namespace SolarMajesty
             GamePrefs.Save();
         }
 
-        private static string SeedKey(CelestialBodyId body) => SeedPrefix + body;
+        private static string SeedKey(CelestialBodyId body) =>
+            WorldKey.Length > 0 ? SeedPrefix + WorldKey : SeedPrefix + body;
 
         private static int DefaultSeed(CelestialBodyId body)
         {

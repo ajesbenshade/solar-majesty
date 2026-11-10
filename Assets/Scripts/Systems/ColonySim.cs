@@ -161,6 +161,111 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// Write the scene-free state into a save: clock, random stream, ids, stockpile, research,
+        /// outpost, orbital recharge, rules and open flags. The scene adds the rest.
+        /// </summary>
+        public void CaptureInto(SaveGame save)
+        {
+            save.simSteps = Clock.TotalSteps;
+            save.rngState = Rng.State;
+            save.nextEntityId = EntityIds.NextId;
+            save.seed = Seed;
+            save.bodyKey = BodyKey ?? "";
+            save.stockpile.regolith = Resources.Get(ResourceId.Regolith);
+            save.stockpile.waterIce = Resources.Get(ResourceId.WaterIce);
+            save.stockpile.metals = Resources.Get(ResourceId.Metals);
+            save.stockpile.power = Resources.Get(ResourceId.Power);
+            save.settlement.villageHabs = Settlement.VillageHabs;
+            save.settlement.hasOutpost = Settlement.HasOutpost;
+            save.settlement.everHadHab = Settlement.EverHadHab;
+
+            save.research.unlocked.Clear();
+            foreach (TechId id in Research.Unlocked)
+                save.research.unlocked.Add((int)id);
+            save.research.activeTech = (int)Research.ActiveTech;
+            save.research.activeProgress = Research.ActiveProgress;
+            save.research.bankedScience = Research.BankedScience;
+            save.research.progress = Research.CaptureProgress();
+
+            save.replay.mode = Rules.mode;
+            save.replay.challenge = Rules.challenge;
+            save.replay.stance = Rules.stance;
+            save.replay.ironman = Rules.ironman;
+            save.orbital = new SaveOrbital { cooldowns = Orbital.CaptureCooldowns() };
+
+            save.flags.Clear();
+            IReadOnlyList<FlagHandle> open = Flags.Flags;
+            for (int i = 0; i < open.Count; i++)
+            {
+                FlagHandle f = open[i];
+                if (f?.Data == null) continue;
+                save.flags.Add(new SaveFlag
+                {
+                    flagType = (int)f.Data.flagType,
+                    px = f.WorldPosition.x,
+                    py = f.WorldPosition.y,
+                    pz = f.WorldPosition.z,
+                    bounty = f.CurrentBounty,
+                    escrowMetals = f.EscrowMetals,
+                    postedWork = f.PostedWork,
+                    workDone = Mathf.Max(0f, f.PostedWork - Flags.GetWorkRemaining(f)),
+                    claimCount = Mathf.Max(0, f.ClaimCount),
+                    orders = f.Orders
+                });
+            }
+        }
+
+        /// <summary>
+        /// Put back what <see cref="CaptureInto"/> wrote. Flags need <see cref="FlagCatalog"/>.
+        /// Buildings, robots and fauna are the scene's to restore, so a sim restored alone
+        /// carries on from the saved treasury, research and board, on an empty campus.
+        /// </summary>
+        public void RestoreFrom(SaveGame save)
+        {
+            if (save == null) return;
+            Resources.Set(ResourceId.Regolith, save.stockpile.regolith);
+            Resources.Set(ResourceId.WaterIce, save.stockpile.waterIce);
+            Resources.Set(ResourceId.Metals, save.stockpile.metals);
+            Resources.Set(ResourceId.Power, save.stockpile.power);
+            Research.RestoreFrom(
+                save.research.unlocked,
+                (TechId)save.research.activeTech,
+                save.research.activeProgress,
+                save.research.bankedScience, save.research.progress);
+            if (save.settlement.hasOutpost) Settlement.ClaimOutpost();
+            Orbital.RestoreCooldowns(save.orbital?.cooldowns);
+            Rules = new RunRules
+            {
+                mode = save.replay.mode,
+                challenge = save.replay.challenge,
+                stance = save.replay.stance,
+                ironman = save.replay.ironman
+            };
+
+            Flags.ClearAll();
+            for (int i = 0; save.flags != null && i < save.flags.Count; i++)
+            {
+                SaveFlag s = save.flags[i];
+                FlagData data = FlagCatalog?.Invoke((FlagType)s.flagType);
+                if (data == null) continue;
+                float posted = s.postedWork > 0.01f ? s.postedWork : data.workRequired;
+                float remaining = posted - Mathf.Max(0f, s.workDone);
+                if (remaining <= 0.01f) continue;
+                FlagHandle handle = Flags.Post(data, new Vector3(s.px, s.py, s.pz), s.bounty);
+                handle.EscrowMetals = s.escrowMetals;
+                FlagBountySync.AdoptReserved(handle);
+                if (s.orders != null && !string.IsNullOrWhiteSpace(s.orders.text))
+                    handle.Orders = s.orders;
+                Flags.RestoreProgress(handle, posted, remaining);
+            }
+            Economy.MatchReserved(FlagBountySync.Sum(Flags.Flags));
+
+            Clock.Restore(save.simSteps);
+            if (save.rngState != 0) Rng.State = save.rngState;
+            EntityIds.Reserve(save.nextEntityId - 1);
+        }
+
         /// <summary>Return a flag's escrow and take it down. Returns the metals refunded.</summary>
         public int CancelFlag(FlagHandle flag)
         {

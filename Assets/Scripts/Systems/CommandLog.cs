@@ -31,6 +31,34 @@ namespace SolarMajesty
         /// <summary>The scene's hash over the sim plus robots and fauna. Empty when written without a scene.</summary>
         public string worldHash = "";
         public List<OverseerCommand> commands = new List<OverseerCommand>();
+        /// <summary>
+        /// True when the session carried on from a save (Continue, Load, arriving by travel).
+        /// The commands then replay from <see cref="start"/>, not from the bare seed.
+        /// </summary>
+        public bool resumed;
+        /// <summary>The colony as the session found it. Read only when <see cref="resumed"/>.</summary>
+        public SaveGame start;
+
+        /// <summary>Record the state the session carried on from, so the log replays from there.</summary>
+        public void BeginFrom(SaveGame sessionStart)
+        {
+            resumed = sessionStart != null;
+            start = sessionStart;
+        }
+
+        /// <summary>
+        /// A scene-free sim standing where this log's session began: the seed's fresh colony, or
+        /// the colony it resumed. Give it the catalogs, then <see cref="ColonySim.Replay"/>.
+        /// </summary>
+        public ColonySim NewSim(Func<FlagType, FlagData> flagCatalog = null, IReadOnlyList<BuildingData> buildCatalog = null)
+        {
+            var sim = new ColonySim(seed)
+            {
+                BodyKey = bodyKey, Rules = rules, FlagCatalog = flagCatalog, BuildCatalog = buildCatalog
+            };
+            if (resumed) sim.RestoreFrom(start);
+            return sim;
+        }
 
         public static bool Requested(string[] args)
         {

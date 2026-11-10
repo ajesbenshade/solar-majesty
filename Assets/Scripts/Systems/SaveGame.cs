@@ -56,9 +56,13 @@ namespace SolarMajesty
         /// As above, and the world keys must agree. A save from before keys existed counts as the
         /// Sol world its number names.
         /// </summary>
-        public bool MatchesWorld(CelestialBodyProfile expected, int expectedSeed)
+        public bool MatchesWorld(CelestialBodyProfile expected, int expectedSeed) =>
+            IsWorld(expected) && seed == expectedSeed;
+
+        /// <summary>True when this save was taken on <paramref name="expected"/>, whatever its seed.</summary>
+        public bool IsWorld(CelestialBodyProfile expected)
         {
-            if (expected == null || !MatchesWorld(expected.Id, expectedSeed)) return false;
+            if (expected == null || body != (int)expected.Id) return false;
             string mine = string.IsNullOrEmpty(bodyKey) ? CelestialBodyCatalog.KeyOf(expected.Id) : bodyKey;
             return mine == expected.Key;
         }
