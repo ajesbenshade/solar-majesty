@@ -56,7 +56,10 @@ namespace SolarMajesty.Tests
 
             var loop = UnityEngine.Object.FindFirstObjectByType<GameLoop>();
             Assert.IsTrue(loop.DrivesAgentSim, "play runs robots and fauna on the fixed step");
-            Assert.Greater(loop.Agents.Count, 0, "a new colony starts with robots");
+            // A new colony starts empty; stand a crew up the way the store-shot harness does.
+            Assert.Greater(loop.SpawnShowcaseCrew(), 0);
+            yield return null;
+            Assert.Greater(loop.Agents.Count, 0);
 
             var start = new Dictionary<SpecialistAgent, Vector3>();
             var last = new Dictionary<SpecialistAgent, Vector3>();
@@ -79,6 +82,13 @@ namespace SolarMajesty.Tests
             FlagHandle flag = loop.Flags.Flags[0];
             float posted = loop.Flags.GetWorkRemaining(flag);
 
+            // An animal out on the map: it has no NavMeshAgent, so every metre it covers is stepped.
+            DustStalkerAgent stalker = loop.SpawnStalkerAt(centre + new Vector3(-30f, 0f, -24f));
+            Vector3 stalkerStart = stalker.transform.position;
+            Vector3 stalkerLast = stalkerStart;
+            float stalkerFarthest = 0f;
+            float stalkerJump = 0f;
+
             float farthest = 0f;
             float worstJump = 0f;
             bool worked = false;
@@ -94,8 +104,15 @@ namespace SolarMajesty.Tests
                     worstJump = Mathf.Max(worstJump, Flat(p, last[a]));
                     last[a] = p;
                 }
+                if (stalker != null)
+                {
+                    Vector3 sp = stalker.transform.position;
+                    stalkerFarthest = Mathf.Max(stalkerFarthest, Flat(sp, stalkerStart));
+                    stalkerJump = Mathf.Max(stalkerJump, Flat(sp, stalkerLast));
+                    stalkerLast = sp;
+                }
                 worked = !loop.Flags.TryGet(flag.RuntimeId, out _) || loop.Flags.GetWorkRemaining(flag) < posted - 0.01f;
-                if (worked && farthest > 3f) break;
+                if (worked && farthest > 3f && stalkerFarthest > 1f) break;
             }
 
             Assert.Greater(loop.Sim.Clock.TotalSteps, 20L, "the fixed step ran");
@@ -103,6 +120,8 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(worked, "a robot reached the flag and worked it");
             // At 4x a robot covers well under a metre a frame. A larger jump is a snap, not travel.
             Assert.Less(worstJump, 4f, "robots are drawn without teleporting between steps");
+            Assert.Greater(stalkerFarthest, 1f, "an animal travelled");
+            Assert.Less(stalkerJump, 2f, "and was drawn between its steps, not hopped from one to the next");
         }
 
         private static float Flat(Vector3 a, Vector3 b)
