@@ -151,6 +151,16 @@ namespace SolarMajesty
             _confirmNewGame = false;
             _titleLoad = false;
             _beyondSol = true;
+            RefreshBeyondSol();
+        }
+
+        // Build the system again when the seed text has changed, and pick its most Earth-like body.
+        private void RefreshBeyondSol()
+        {
+            if (_seedTextBuilt == _seedText && _seedSystem != null) return;
+            _seedSystem = StarSystemGenerator.Generate(SystemSeedCode.FromText(_seedText));
+            _seedTextBuilt = _seedText;
+            _seedBodyPick = StarSystemGenerator.Homeliest(_seedSystem).Index;
         }
 
         /// <summary>The system the Beyond Sol dialog is showing, and the body picked in it.</summary>
@@ -3040,12 +3050,7 @@ namespace SolarMajesty
         /// </summary>
         private void DrawBeyondSolDialog()
         {
-            if (_seedTextBuilt != _seedText || _seedSystem == null)
-            {
-                _seedSystem = StarSystemGenerator.Generate(SystemSeedCode.FromText(_seedText));
-                _seedTextBuilt = _seedText;
-                _seedBodyPick = StarSystemGenerator.Homeliest(_seedSystem).Index;
-            }
+            RefreshBeyondSol();
             StarSystem system = _seedSystem;
             _seedBodyPick = Mathf.Clamp(_seedBodyPick, 0, system.Bodies.Count - 1);
             SystemBody pick = system.Bodies[_seedBodyPick];

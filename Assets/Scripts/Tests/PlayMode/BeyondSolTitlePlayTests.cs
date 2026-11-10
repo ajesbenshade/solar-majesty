@@ -40,6 +40,40 @@ namespace SolarMajesty.Tests
                 System.IO.Directory.Delete(_saveRoot, true);
         }
 
+        /// <summary>
+        /// Review shots of the dialog, for a person to look at. Runs only when SM_SHOT_DIR names a
+        /// folder, and only draws when Unity runs with a window (no -batchmode).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Dialog_ReviewShots()
+        {
+            string dir = Environment.GetEnvironmentVariable("SM_SHOT_DIR");
+            if (string.IsNullOrEmpty(dir)) Assert.Ignore("Set SM_SHOT_DIR to write review shots.");
+            if (Application.companyName != "SolarMajestyValidation")
+                Assert.Ignore("Run in the isolated validation project; this test resets its campaign.");
+
+            SaveSystem.DeleteAll();
+            DemoSettings.ClearSave();
+            CampaignProgress.ResetCampaign();
+            DemoSettings.SetFirstHourDemo(false);
+            yield return SceneManager.LoadSceneAsync("LunarOutpost_Sandbox");
+            yield return new WaitForSecondsRealtime(3f);
+            System.IO.Directory.CreateDirectory(dir);
+            var hud = UnityEngine.Object.FindFirstObjectByType<OverseerHud>();
+
+            yield return new WaitForEndOfFrame();
+            ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "title.png"));
+            yield return new WaitForSecondsRealtime(0.5f);
+            foreach (string seed in new[] { "7K2M-9AX", "my homeworld", "0000-00Z" })
+            {
+                hud.PromptBeyondSol(seed);
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return new WaitForEndOfFrame();
+                ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(dir, "beyond-sol-" + SystemSeedCode.Compact(SystemSeedCode.FromText(seed)) + ".png"));
+                yield return new WaitForSecondsRealtime(0.5f);
+            }
+        }
+
         [UnityTest]
         public IEnumerator TypedSeed_ShowsItsSystem_AndLandingStartsAColony()
         {
@@ -62,14 +96,10 @@ namespace SolarMajesty.Tests
             const string typed = "my homeworld";
             hud.PromptBeyondSol(typed);
             Assert.IsTrue(loop.TitleConfirmOpen, "the orrery ignores clicks while the dialog is up");
-            // The dialog builds the system when it draws.
-            StarSystem shown = null;
-            for (int i = 0; i < 30 && shown == null; i++)
-            {
-                yield return null;
-                shown = hud.BeyondSolSystem;
-            }
-            Assert.IsNotNull(shown, "the dialog drew");
+            yield return null;
+            yield return null;
+            StarSystem shown = hud.BeyondSolSystem;
+            Assert.IsNotNull(shown);
             Assert.AreEqual(SystemSeedCode.FromText(typed), shown.Seed);
             Assert.AreEqual(StarSystemGenerator.Homeliest(shown).Index, hud.BeyondSolPick, "the most Earth-like body is picked first");
 
