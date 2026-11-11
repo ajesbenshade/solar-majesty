@@ -301,6 +301,29 @@ namespace SolarMajesty
             GUI.Label(r, text, style);
         }
 
+        /// <summary>
+        /// Label with a dark one-pixel outline on all four sides plus a soft drop shadow, for text
+        /// that must stay legible over any ground (bright regolith, lit grass, salmon dust).
+        /// Costs five extra label draws, so keep it to a few short lines.
+        /// </summary>
+        public static void OutlineLabel(Rect r, string text, GUIStyle style, float outlineAlpha = 0.85f)
+        {
+            if (string.IsNullOrEmpty(text) || style == null) return;
+            var col = style.normal.textColor;
+            if (Repaint)
+            {
+                style.normal.textColor = new Color(0f, 0f, 0f, outlineAlpha * col.a);
+                GUI.Label(new Rect(r.x - 1f, r.y, r.width, r.height), text, style);
+                GUI.Label(new Rect(r.x + 1f, r.y, r.width, r.height), text, style);
+                GUI.Label(new Rect(r.x, r.y - 1f, r.width, r.height), text, style);
+                GUI.Label(new Rect(r.x, r.y + 1f, r.width, r.height), text, style);
+                style.normal.textColor = new Color(0f, 0f, 0f, outlineAlpha * 0.6f * col.a);
+                GUI.Label(new Rect(r.x + 1f, r.y + 2f, r.width, r.height), text, style);
+                style.normal.textColor = col;
+            }
+            GUI.Label(r, text, style);
+        }
+
         /// <summary>Brass L-brackets just outside the corners (modals, the crest, key cards).</summary>
         public static void CornerTicks(Rect r, Color c, float len = 9f, float t = 1.5f, float inset = -3f)
         {
