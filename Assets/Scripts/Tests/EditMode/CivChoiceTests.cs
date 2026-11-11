@@ -67,6 +67,23 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void GuidedEarthStart_PlaysNeutral_AndCarriesItOnToLuna()
+        {
+            // Decisions 1 and 6: the tutorial is the neutral civ, and it stays neutral after
+            // the move to Luna with no prompt (travel boots the carried choice).
+            Assert.AreEqual(CivId.None, CivChoice.ForNewGame(CivId.LumenConcord, CelestialBodyId.Earth, guidedStart: true));
+            Assert.IsTrue(CivChoice.IsGuidedStart(CelestialBodyId.Earth, true));
+            CivChoice.Set(CivChoice.ForNewGame(CivId.LumenConcord, CelestialBodyId.Earth, guidedStart: true));
+            Assert.AreEqual(CivId.None, CivChoice.Load(), "what a Luna boot with no save of its own reads");
+
+            Assert.AreEqual(CivId.LumenConcord, CivChoice.ForNewGame(CivId.LumenConcord, CelestialBodyId.Earth, guidedStart: false));
+            Assert.AreEqual(CivId.BastionMandate, CivChoice.ForNewGame(CivId.BastionMandate, CelestialBodyId.Mars, guidedStart: true),
+                "a drop past Earth is not the tutorial");
+            Assert.IsFalse(CivChoice.IsGuidedStart(CelestialBodyId.Mars, true));
+            Assert.AreEqual(CivId.None, CivChoice.ForNewGame((CivId)99, CelestialBodyId.Mars, guidedStart: false));
+        }
+
+        [Test]
         public void ChosenCiv_ReachesTheSave()
         {
             // The path a new campaign takes: the dialog stores the choice, the reloaded scene
