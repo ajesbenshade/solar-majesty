@@ -1705,27 +1705,63 @@ namespace SolarMajesty
 
         internal static string ShortResource(ResourceId id) => "EU";
 
+        // Objectives panel (playtests 27 and 28: small and dark at 1080p). It has its own, larger
+        // type on a near-opaque plate; neutral whites and the existing brass only.
+        private static readonly Color ObjectiveDetail = new Color(0.84f, 0.85f, 0.88f);
+        private GUIStyle _objTitle, _objSection, _objBody, _objDone, _objValue, _objHint, _objWrap;
+        private int _objStylesVersion = -1;
+
+        private void EnsureObjectiveStyles()
+        {
+            if (_objTitle != null && _objStylesVersion == HudTextScale.Version) return;
+            _objStylesVersion = HudTextScale.Version;
+            Font display = HudSkin.Display;
+            Font body = HudSkin.Body;
+            _objTitle = Label(display, 14, FontStyle.Bold, Gold, TextAnchor.MiddleLeft);
+            _objSection = Label(display, 12, FontStyle.Bold, Gold, TextAnchor.MiddleLeft);
+            _objBody = Label(body, 14, FontStyle.Normal, TextPrimary, TextAnchor.MiddleLeft);
+            _objDone = Label(body, 14, FontStyle.Normal, TextMuted, TextAnchor.MiddleLeft);
+            _objValue = Label(body, 12, FontStyle.Normal, ObjectiveDetail, TextAnchor.MiddleRight);
+            _objHint = Label(body, 12, FontStyle.Normal, ObjectiveDetail, TextAnchor.MiddleLeft);
+            _objWrap = Label(body, 12, FontStyle.Normal, ObjectiveDetail, TextAnchor.UpperLeft);
+            _objWrap.wordWrap = true;
+        }
+
         private void DrawMissionPanel()
         {
             var mission = _loop.Mission;
             if (mission == null) return;
+            EnsureObjectiveStyles();
 
             var flags = _loop.Flags != null ? _loop.Flags.Flags : null;
             int flagN = flags != null ? Mathf.Min(3, flags.Count) : 0;
-            float h = L(136f);
-            if (DemoSettings.FirstHourDemo) h += L(52f);
+            // First-frame estimate only; after that the panel hugs what it drew.
+            float h = L(140f);
+            if (DemoSettings.FirstHourDemo) h += L(40f);
             if (mission.DeadlineEnabled) h += L(26f);
-            h += L(18f + flagN * 16f);
+            h += L(17f) * Mathf.Max(1, flagN);
             // Wrapped lines (large text) can need more than the estimate: hug last pass's content.
             h = Mathf.Max(h, _missionMeasuredH);
 
             float panelW = HudLayout.ObjectivesWidth;
             var rect = new Rect(_sw - M - panelW, _playTop > 1f ? _playTop : M, panelW, h);
             RightColumnBottom = rect.yMax;
-            var c = Panel(rect, Loc.S("Objectives"), true, HudTips.Objectives());
+            // A second glass layer under the usual one: about 92-95 % opaque, so lit grass or
+            // bright regolith behind the panel no longer greys the text.
+            HudSkin.Panel(rect, 0.7f, false);
+            var c = Panel(rect, null);
             float y = c.y;
 
-            float stakeH = L(20f);
+            // Header at the panel's own size (Panel()'s shared header is 11 px).
+            HudSkin.Pill(new Rect(c.x, y + 1f, 3f, L(14f)), Accent);
+            FitLabel(new Rect(c.x + 9f, y - 1f, c.width - 9f, L(18f)),
+                Loc.S("Objectives").ToUpperInvariant(), _objTitle, HudTips.Objectives());
+            y += L(20f);
+            Fill(new Rect(c.x, y, c.width, 1f), new Color(1f, 1f, 1f, 0.10f));
+            HudSkin.RuleH(new Rect(c.x - 30f, y, 120f, 1f), new Color(Gold.r, Gold.g, Gold.b, 0.8f));
+            y += 7f;
+
+            float stakeH = L(24f);
             Stake(new Rect(c.x, y, c.width, stakeH), mission.DensCleared,
                 Loc.S("Clear dens"),
                 mission.LairCount > 0
@@ -1750,34 +1786,39 @@ namespace SolarMajesty
             Stake(new Rect(c.x, y, c.width, stakeH), mission.LaunchReady,
                 Loc.S("Launch craft"),
                 fullCampaign ? launchLine : LaunchPath.Chain(launchNeed));
-            y += L(22f);
-            if (!fullCampaign)
-                y = WrapBlock(c, y, launchLine) - 2f;
+            y += stakeH + L(2f);
+            if (!fullCampaign && !string.IsNullOrEmpty(launchLine))
+            {
+                float wrapH = _objWrap.CalcHeight(new GUIContent(launchLine), c.width);
+                GUI.Label(new Rect(c.x, y, c.width, wrapH), launchLine, _objWrap);
+                y += wrapH + 4f;
+            }
 
             if (set != null)
             {
-                FitLabel(new Rect(c.x, y, c.width, L(14f)), set.SustainHint, _micro);
-                y += L(16f);
+                FitLabel(new Rect(c.x, y, c.width, L(16f)), set.SustainHint, _objHint);
+                y += L(18f);
             }
 
             if (mission.DeadlineEnabled)
             {
                 float left = Mathf.Max(0f, mission.MissionDeadline - mission.MissionElapsed);
                 float frac = mission.MissionDeadline > 0f ? left / mission.MissionDeadline : 0f;
-                float timeW = W(60f);
-                FitLabel(new Rect(c.x, y, c.width - timeW - 6f, L(14f)), Loc.S("DEADLINE"), _micro);
-                GUI.Label(new Rect(c.xMax - timeW, y, timeW, L(14f)), _loop.FormatHold(left), _microRight);
-                Meter(new Rect(c.x, y + L(16f), c.width, 5f), frac, frac < 0.25f ? Alarm : Accent);
-                y += L(16f) + 10f;
+                float timeW = W(64f);
+                FitLabel(new Rect(c.x, y, c.width - timeW - 6f, L(16f)), Loc.S("DEADLINE"), _objHint);
+                GUI.Label(new Rect(c.xMax - timeW, y, timeW, L(16f)), _loop.FormatHold(left), _objValue);
+                Meter(new Rect(c.x, y + L(18f), c.width, 5f), frac, frac < 0.25f ? Alarm : Accent);
+                y += L(18f) + 10f;
             }
 
-            var logHead = new Rect(c.x, y, c.width, L(14f));
-            FitLabel(logHead, Loc.S("FLAG LOG"), _section, HudTips.FlagLog());
-            y += L(16f);
+            var logHead = new Rect(c.x, y, c.width, L(16f));
+            FitLabel(logHead, Loc.S("FLAG LOG"), _objSection, HudTips.FlagLog());
+            y += L(19f);
+            float lineH = L(17f);
             if (flagN <= 0)
             {
-                FitLabel(new Rect(c.x, y, c.width, L(14f)), Loc.S("No flags posted · G to bounty."), _micro);
-                y += L(14f);
+                FitLabel(new Rect(c.x, y, c.width, lineH), Loc.S("No flags posted · G to bounty."), _objHint);
+                y += lineH;
             }
             else
             {
@@ -1789,11 +1830,10 @@ namespace SolarMajesty
                         ? Loc.S("claimed")
                         : (string.IsNullOrEmpty(f.InterestLabel) ? Loc.S("open") : f.InterestLabel);
                     Color col = f.Data != null ? f.Data.bannerColor : Gold;
-                    float lineH = L(15f);
-                    HudSkin.Dot(new Vector2(c.x + 4f, y + lineH * 0.5f), 7f, col);
+                    HudSkin.Dot(new Vector2(c.x + 4f, y + lineH * 0.5f), 8f, col);
                     string orders = f.Orders != null && f.Orders.HasRules ? $"  ·  {f.Orders.Summary()}" : "";
-                    FitLabel(new Rect(c.x + 12f, y, c.width - 12f, lineH),
-                        Loc.F("{0}  {1:N0} EU  ·  {2}{3}", Loc.S(f.Data.displayName), FlagBountySync.Amount(f), claim, orders), _micro);
+                    FitLabel(new Rect(c.x + 13f, y, c.width - 13f, lineH),
+                        Loc.F("{0}  {1:N0} EU  ·  {2}{3}", Loc.S(f.Data.displayName), FlagBountySync.Amount(f), claim, orders), _objHint);
                     y += lineH;
                 }
             }
@@ -1802,12 +1842,13 @@ namespace SolarMajesty
 
         private float _missionMeasuredH;
 
+        /// <summary>One objective row: check, label, right-aligned progress. Objectives panel only.</summary>
         private void Stake(Rect r, bool done, string label, string value)
         {
-            CheckBox(new Rect(r.x, r.y + r.height * 0.5f - 6f, 11f, 11f), done);
+            CheckBox(new Rect(r.x, r.y + r.height * 0.5f - 6.5f, 13f, 13f), done);
             HudLayout.Stake(r, out var labelRect, out var valueRect);
             // Value first so the label can take what the value does not need.
-            var valueStyle = _microRight;
+            var valueStyle = _objValue;
             float valueW = Mathf.Min(valueRect.width, valueStyle.CalcSize(new GUIContent(value)).x);
             if (valueW < valueRect.width)
             {
@@ -1816,7 +1857,7 @@ namespace SolarMajesty
                 valueRect.x += spare;
                 valueRect.width = valueW;
             }
-            FitLabel(labelRect, label, done ? _muted : _body);
+            FitLabel(labelRect, label, done ? _objDone : _objBody);
             FitLabel(valueRect, value, valueStyle);
         }
 

@@ -19,7 +19,8 @@ namespace SolarMajesty
         /// <summary>Matches HudSkin.CrestPad. The drawn plate is larger than the crest rect.</summary>
         public const float CrestPad = 8f;
         public const float MapSize = 176f;
-        public const float ObjectivesW = 300f;
+        /// <summary>Objectives / alert column at 100 % text. 340 holds 14 px objective rows at 1080p (was 300).</summary>
+        public const float ObjectivesW = 340f;
         public const float PanelGap = 8f;
         public const float TextGap = 6f;
         public const int LevyBudget = 46;
@@ -234,9 +235,10 @@ namespace SolarMajesty
 
         public static void Stake(Rect row, out Rect label, out Rect value)
         {
-            float valueW = HudTextScale.Width(140f);
+            // Up to 190 for the 12 px progress text, never more than 60 % of a narrow row.
+            float valueW = Mathf.Min(HudTextScale.Width(190f), row.width * 0.6f);
             value = new Rect(row.xMax - valueW, row.y, valueW, row.height);
-            float labelX = row.x + 19f;
+            float labelX = row.x + 22f;
             label = new Rect(labelX, row.y, Mathf.Max(0f, value.xMin - TextGap - labelX), row.height);
         }
 

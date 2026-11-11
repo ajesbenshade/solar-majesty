@@ -228,6 +228,47 @@ namespace SolarMajesty.Tests
             AssertHud(1280f / 1.25f, 800f / 1.25f);
         }
 
+        /// <summary>Playtests 27 and 28: the Objectives panel was too small to read at 1080p.</summary>
+        [Test]
+        public void ObjectivesPanel_IsWideEnoughToRead_AndStaysTopRight()
+        {
+            float saved = HudTextScale.Factor;
+            try
+            {
+                HudTextScale.Set(1f);
+                Assert.GreaterOrEqual(HudLayout.ObjectivesW, 340f);
+                foreach (float viewW in new[] { 1024f, 1280f, 1920f })
+                {
+                    Rect panel = HudLayout.Objectives(viewW);
+                    Assert.AreEqual(viewW - HudLayout.Margin, panel.xMax, 0.01f, "anchored to the right margin");
+                    Assert.AreEqual(HudLayout.Margin, panel.y, 0.01f, "anchored to the top margin");
+                    // The tutorial bar keeps a readable width beside the wider panel.
+                    HudLayout.Tutorial(viewW, 60f, out var bar, out _, out _);
+                    AssertLeftOf(bar, panel, 12f);
+                    Assert.GreaterOrEqual(bar.width, 600f);
+                    Assert.GreaterOrEqual(bar.x, HudLayout.Margin - 0.01f);
+                }
+
+                // An objective row: the 14 px label and the 12 px progress text both have room.
+                var row = new Rect(0f, 0f, HudLayout.ObjectivesW - HudLayout.Pad * 2f, 24f);
+                HudLayout.Stake(row, out var label, out var value);
+                AssertLeftOf(label, value, HudLayout.TextGap);
+                Assert.GreaterOrEqual(value.width, 180f);
+                Assert.GreaterOrEqual(label.width, 90f);
+                Assert.GreaterOrEqual(label.x, 20f, "label clears the 16 px check ring");
+
+                // Larger TEXT SIZE still widens the column, and the bar still clears it.
+                HudTextScale.Set(HudTextScale.Max);
+                Assert.Greater(HudLayout.ObjectivesWidth, HudLayout.ObjectivesW);
+                HudLayout.Tutorial(1280f, 60f, out var bigBar, out _, out _);
+                AssertLeftOf(bigBar, HudLayout.Objectives(1280f), 12f);
+            }
+            finally
+            {
+                HudTextScale.Set(saved);
+            }
+        }
+
         static void AssertHud(float viewW, float viewH)
         {
             Rect crest = HudLayout.Crest(viewW, viewH);
