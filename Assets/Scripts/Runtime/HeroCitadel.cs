@@ -24,6 +24,15 @@ namespace SolarMajesty
         private const float CitTier1 = CitKeepH * 0.45f;  // bottom server tier height
         private const float CitTier2Top = CitKeepH * 0.8f; // top of the second tier, above the plinth
 
+        // The Core's own cyan. Cyan is reserved for the Core, and on Mars the shared kit cyan
+        // (pale lens 0.22/0.84/0.98, emission 0.20/1.15/1.65) washed out against sunlit cream
+        // cladding: a pale lens lit by the sun plus a modest glow tonemaps to near-white. The
+        // lens here is dark and saturated so sunlight adds little, and the emission is ~1.4x
+        // with half the red so it stays cyan through ACES instead of drifting to white.
+        // Used only in this file; the shared Cyan / CyanEmit are unchanged.
+        private static readonly Color CoreCyan = new Color(0.05f, 0.48f, 0.62f);
+        private static readonly Color CoreCyanEmit = new Color(0.10f, 1.60f, 2.30f);
+
         /// <summary>Top of the spire cap, where the crown comms and beacon mount.</summary>
         public const float CitadelCrownY = CitPlinth + CitKeepH + 4.55f;
 
@@ -214,7 +223,7 @@ namespace SolarMajesty
             FBox(k, gate, gateHalf * 0.5f, CitPlinth + 1.15f, gateHalf - 0.08f, 2.2f, 0.08f, Graphite);
             FBox(k, gate, 0f, CitPlinth + 1.15f, 0.04f, 2.2f, 0.09f, Orange);
             FBox(k, gate, 0f, CitPlinth + 2.65f, gateHalf * 2f - 0.4f, 0.2f, 0.06f, WarmGlass, WarmEmit);
-            LightBar(k, gate, 0f, CitPlinth + 3.12f, gateHalf * 2f, CyanEmit);
+            LightBar(k, gate, 0f, CitPlinth + 3.12f, gateHalf * 2f, CoreCyan, CoreCyanEmit);
             WallLamp(k, gate, -gateHalf - 0.55f, CitPlinth + 2.5f, WarmEmit);
             WallLamp(k, gate, gateHalf + 0.55f, CitPlinth + 2.5f, WarmEmit);
 
@@ -227,8 +236,8 @@ namespace SolarMajesty
                     if (front && Mathf.Abs(x) < gateHalf + 1.2f) continue;
                     WallLamp(k, f, x, CitPlinth + 1.75f, WarmEmit);
                 }
-                LightBar(k, f, front ? -(T - 3.1f) * 0.5f - gateHalf * 0.5f : 0f, wallTop - 0.2f, front ? 2.2f : T, CyanEmit);
-                if (front) LightBar(k, f, (T - 3.1f) * 0.5f + gateHalf * 0.5f, wallTop - 0.2f, 2.2f, CyanEmit);
+                LightBar(k, f, front ? -(T - 3.1f) * 0.5f - gateHalf * 0.5f : 0f, wallTop - 0.2f, front ? 2.2f : T, CoreCyan, CoreCyanEmit);
+                if (front) LightBar(k, f, (T - 3.1f) * 0.5f + gateHalf * 0.5f, wallTop - 0.2f, 2.2f, CoreCyan, CoreCyanEmit);
             }
 
             // Inner faces (seen across the court): a few service windows, the back door, a light bar.
@@ -242,8 +251,8 @@ namespace SolarMajesty
                     Window(k, f, x, CitPlinth + 1.2f, 0.6f, 0.45f, Glass, GlassEmit);
                 }
                 if (!front) Door(k, f, 0f, 1.1f, 1.6f, Graphite, CitPlinth);
-                LightBar(k, f, front ? -(T + gateHalf) * 0.5f : 0f, CitPlinth + 1.85f, front ? T - gateHalf - 1.5f : T * 1.2f, CyanEmit);
-                if (front) LightBar(k, f, (T + gateHalf) * 0.5f, CitPlinth + 1.85f, T - gateHalf - 1.5f, CyanEmit);
+                LightBar(k, f, front ? -(T + gateHalf) * 0.5f : 0f, CitPlinth + 1.85f, front ? T - gateHalf - 1.5f : T * 1.2f, CoreCyan, CoreCyanEmit);
+                if (front) LightBar(k, f, (T + gateHalf) * 0.5f, CitPlinth + 1.85f, T - gateHalf - 1.5f, CoreCyan, CoreCyanEmit);
             }
 
             // Pylon heads: cyan beacon and nav lights.
@@ -252,9 +261,13 @@ namespace SolarMajesty
                 Vector3 c = TowerCentre(i, T);
                 float top = CitPlinth + CitTowerH + 0.45f;
                 k.Box(c + Vector3.up * (top - 0.22f), new Vector3(1.34f, 0.08f, 1.34f), Graphite);
-                k.Ball(c + Vector3.up * (top + 0.16f), 0.26f, Cyan, CyanEmit);
+                k.Ball(c + Vector3.up * (top + 0.16f), 0.26f, CoreCyan, CoreCyanEmit);
                 for (int n = 0; n < 4; n++)
-                    NavLight(k, c + Dir(n * 90f + 45f) * 0.9f + Vector3.up * (top - 0.1f), n % 2 == 0 ? RedEmit : CyanEmit);
+                {
+                    Vector3 nav = c + Dir(n * 90f + 45f) * 0.9f + Vector3.up * (top - 0.1f);
+                    if (n % 2 == 0) NavLight(k, nav, RedEmit);
+                    else NavLight(k, nav, CoreCyan, CoreCyanEmit);
+                }
             }
 
             // Server tiers: rack seams and status lights on tier 1, radiator fins on both tiers' flanks.
@@ -266,9 +279,9 @@ namespace SolarMajesty
                 {
                     if (f.N.z < -0.5f && Mathf.Abs(x) < 1.1f) continue;   // keep door
                     FBox(k, f, x, CitPlinth + CitTier1 * 0.5f, 0.05f, CitTier1 - 0.5f, 0.05f, Graphite);
-                    FBox(k, f, x + 0.25f, CitPlinth + CitTier1 * 0.72f, 0.12f, 0.06f, 0.04f, Cyan, CyanEmit * 0.5f);
+                    FBox(k, f, x + 0.25f, CitPlinth + CitTier1 * 0.72f, 0.12f, 0.06f, 0.04f, CoreCyan, CoreCyanEmit * 0.5f);
                 }
-                LightBar(k, f, 0f, y1 - 0.22f, half * 1.6f, CyanEmit);
+                LightBar(k, f, 0f, y1 - 0.22f, half * 1.6f, CoreCyan, CoreCyanEmit);
                 if (side)
                 {
                     for (int v = -2; v <= 2; v++)
@@ -283,16 +296,21 @@ namespace SolarMajesty
             foreach (var f in KeepFaces(w2, d2, kz))
             {
                 float half = Mathf.Abs(f.N.x) > 0.5f ? d2 * 0.5f : w2 * 0.5f;
-                FBox(k, f, 0f, y2 - 0.45f, half * 2f - 0.1f, 0.22f, 0.05f, Cyan, CyanEmit * 0.7f);
+                // Graphite bezel: the band needs a dark edge to read against cream cladding.
+                FBox(k, f, 0f, y2 - 0.45f, half * 2f - 0.04f, 0.38f, 0.03f, Graphite);
+                FBox(k, f, 0f, y2 - 0.45f, half * 2f - 0.1f, 0.22f, 0.05f, CoreCyan, CoreCyanEmit * 0.7f);
             }
             var tier2Front = new Face(new Vector3(0f, 0f, kz - d2 * 0.5f), Vector3.back);
             float coreY = (y1 + y2) * 0.5f - 0.15f;
             FBox(k, tier2Front, 0f, coreY, 1.3f, 1.5f, 0.06f, Carbon);
-            FBox(k, tier2Front, 0f, coreY, 0.42f, 1.3f, 0.09f, Cyan, CyanEmit * 0.6f);
+            FBox(k, tier2Front, 0f, coreY, 0.42f, 1.3f, 0.09f, CoreCyan, CoreCyanEmit * 0.6f);
             // Tier 3: vertical cyan data seams.
             foreach (var f in KeepFaces(w3, d3, kz))
                 for (int s = -1; s <= 1; s += 2)
-                    FBox(k, f, s * 0.45f, (y2 + keepTop) * 0.5f, 0.06f, keepTop - y2 - 0.5f, 0.04f, Cyan, CyanEmit * 0.5f);
+                {
+                    FBox(k, f, s * 0.45f, (y2 + keepTop) * 0.5f, 0.16f, keepTop - y2 - 0.4f, 0.025f, Graphite);
+                    FBox(k, f, s * 0.45f, (y2 + keepTop) * 0.5f, 0.06f, keepTop - y2 - 0.5f, 0.04f, CoreCyan, CoreCyanEmit * 0.5f);
+                }
 
             var keepFront = new Face(new Vector3(0f, 0f, kz - kd * 0.5f), Vector3.back);
             Door(k, keepFront, 0f, 1.5f, 2.0f, Graphite, CitPlinth);
@@ -309,7 +327,7 @@ namespace SolarMajesty
             // Spire: cyan core ring on the lower segment, crown comms on the cap.
             for (int r = 0; r < 8; r++)
                 k.Box(new Vector3(0f, keepTop + 1.4f, kz) + Dir(r * 45f) * 0.76f, new Vector3(0.26f, 0.5f, 0.04f),
-                    Quaternion.Euler(0f, r * 45f, 0f), Cyan, CyanEmit);
+                    Quaternion.Euler(0f, r * 45f, 0f), CoreCyan, CoreCyanEmit);
             for (int i = 0; i < 3; i++)
             {
                 Vector3 p = new Vector3(0f, CitadelCrownY + 0.02f, kz) + Dir(i * 120f + 30f) * 0.32f;

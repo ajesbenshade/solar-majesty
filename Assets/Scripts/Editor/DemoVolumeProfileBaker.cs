@@ -2,12 +2,14 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 
 namespace SolarMajesty.EditorTools
 {
     /// <summary>
-    /// Bakes the runtime lunar grade into Resources/Atmosphere/DemoVolumeProfile.asset.
+    /// Bakes the lunar grade into Resources/Atmosphere/DemoVolumeProfile.asset for previewing in
+    /// the Scene view. The game no longer loads this asset: <see cref="DemoAtmosphere"/> builds
+    /// its profile in code from <see cref="WorldLook"/> through <see cref="LookVolume"/>, and this
+    /// bakes from the same source so the preview cannot drift.
     /// </summary>
     public static class DemoVolumeProfileBaker
     {
@@ -39,27 +41,22 @@ namespace SolarMajesty.EditorTools
             if (existing != null)
                 AssetDatabase.DeleteAsset(AssetPath);
 
-            var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            profile.name = "DemoVolumeProfile";
-
-            var color = profile.Add<ColorAdjustments>(true);
-            color.contrast.Override(8f);
-            color.saturation.Override(6f);
-            color.postExposure.Override(0.05f);
-            color.colorFilter.Override(new Color(1f, 0.97f, 0.93f));
-
-            var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(0.95f);
-            bloom.intensity.Override(0.22f);
-            bloom.scatter.Override(0.55f);
-
-            var vignette = profile.Add<Vignette>(true);
-            vignette.intensity.Override(0.28f);
-            vignette.smoothness.Override(0.4f);
-            vignette.color.Override(new Color(0.05f, 0.06f, 0.1f));
+            var luna = CelestialBodyCatalog.Default(CelestialBodyId.Luna);
+            var profile = LookVolume.NewProfile("DemoVolumeProfile");
+            LookVolume.Apply(profile, WorldLook.For(CelestialBodyId.Luna), luna.GradeFilter, LookTier.Ultra);
 
             AssetDatabase.CreateAsset(profile, AssetPath);
-            // Components are sub-assets of VolumeProfile when added via Add<>.
+            // VolumeProfile.Add<> only creates the components in memory. Unless each one is
+            // stored as a sub-asset the profile serializes a list of null references, which is
+            // how the previous bake ended up empty.
+            for (int i = 0; i < profile.components.Count; i++)
+            {
+                var component = profile.components[i];
+                if (component == null) continue;
+                component.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
+                AssetDatabase.AddObjectToAsset(component, profile);
+            }
+            EditorUtility.SetDirty(profile);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }

@@ -957,6 +957,9 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>Opacity of the dark plate behind each floating log line (constant across the stack).</summary>
+        private const float LogBandAlpha = 0.72f;
+
         /// <summary>Last Overseer log lines, floating over the world just above the console like subtitles.</summary>
         private void DrawLogFeed(float stackTop)
         {
@@ -973,12 +976,19 @@ namespace SolarMajesty
                 var e = log.Entries[log.Entries.Count - n + i];
                 float y = stackTop - 12f - (n - i) * L(18f);
                 var rr = new Rect(x, y, w, L(18f));
-                float a = 0.45f + 0.55f * (i + 1f) / n;
+                // Older lines still dim, but never below what reads on sunlit regolith or grass:
+                // the text floor is 0.70 (was 0.63 with three lines) and the backing no longer
+                // fades with it. The band was 0.42 x alpha (0.26 behind the oldest line), which
+                // left pale text on pale ground; it is now a 0.72 plate plus a full outline.
+                float a = 0.55f + 0.45f * (i + 1f) / n;
                 float textW = Mathf.Min(w, _logLine.CalcSize(new GUIContent(e.Line)).x);
-                HudSkin.Band(new Rect(rr.center.x - textW * 0.5f - 60f, rr.y - 1f, textW + 120f, rr.height + 2f), 0.42f * a);
+                // The band texture fades over its outer quarter on each side, so it is drawn wide
+                // enough (and a little taller) that the whole line sits on the solid middle.
+                float bandW = textW * 1.7f + 120f;
+                HudSkin.Band(new Rect(rr.center.x - bandW * 0.5f, rr.y - 3f, bandW, rr.height + 6f), LogBandAlpha);
                 var prev = _logLine.normal.textColor;
                 _logLine.normal.textColor = new Color(TextPrimary.r, TextPrimary.g, TextPrimary.b, a);
-                HudSkin.ShadowLabel(rr, e.Line, _logLine, 0.7f);
+                HudSkin.OutlineLabel(rr, e.Line, _logLine, 0.85f);
                 _logLine.normal.textColor = prev;
             }
         }

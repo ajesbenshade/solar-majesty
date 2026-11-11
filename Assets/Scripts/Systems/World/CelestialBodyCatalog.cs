@@ -136,7 +136,8 @@ namespace SolarMajesty
                 SunColor = new Color(1f, 0.97f, 0.90f),
                 SunIntensity = 1.42f,
                 SunEuler = new Vector3(38f, -32f, 0f),
-                GradeFilter = new Color(0.98f, 1.00f, 1.04f),
+                // Warm-neutral: was a cool (0.98, 1.00, 1.04), which read close to Luna's grade.
+                GradeFilter = new Color(1.02f, 1.00f, 0.97f),
                 AmbientHum = 72f,
                 FillColor = new Color(0.58f, 0.70f, 0.90f),
                 AmbientSky = new Color(0.46f, 0.62f, 0.88f),
@@ -210,15 +211,18 @@ namespace SolarMajesty
                 LairPit = new Color(0.08f, 0.04f, 0.05f),
                 SkyTop = new Color(0.03f, 0.04f, 0.09f),
                 SkyHorizon = new Color(0.28f, 0.24f, 0.20f),
-                SunColor = new Color(1f, 0.94f, 0.86f),
+                // Vacuum light: near-white sun (no air to warm it), raking a little lower so
+                // crater rims and modules throw readable shadows, and a thin cool ambient so
+                // those shadows go deep. Earthshine (the blue fill) is what lifts them.
+                SunColor = new Color(1f, 0.98f, 0.95f),
                 SunIntensity = 1.45f,
-                SunEuler = new Vector3(48f, -35f, 0f),
+                SunEuler = new Vector3(40f, -35f, 0f),
                 GradeFilter = new Color(0.94f, 0.96f, 1f),
                 AmbientHum = 48f,
                 FillColor = new Color(0.35f, 0.48f, 0.72f),
-                AmbientSky = new Color(0.28f, 0.32f, 0.42f),
-                AmbientEquator = new Color(0.22f, 0.20f, 0.18f),
-                AmbientGround = new Color(0.12f, 0.10f, 0.09f),
+                AmbientSky = new Color(0.22f, 0.26f, 0.36f),
+                AmbientEquator = new Color(0.17f, 0.18f, 0.20f),
+                AmbientGround = new Color(0.08f, 0.08f, 0.09f),
                 FogColor = new Color(0.18f, 0.17f, 0.16f),
                 FogStart = 90f,
                 FogEnd = 420f,

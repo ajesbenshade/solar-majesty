@@ -64,10 +64,7 @@ namespace SolarMajesty
             sun.shadows = LightShadows.Soft;
             // Mars concept wants long readable shadows, not hard black plates: shadowed dirt
             // should hold >= 60 % of lit-dirt luminance (dream-loop round 6 Tier 2 gate).
-            sun.shadowStrength = body.Id == CelestialBodyId.Mars
-                ? 0.46f
-                : body.Id == CelestialBodyId.Luna ? 0.90f
-                : body.Id == CelestialBodyId.Earth ? 0.84f : 0.72f;
+            sun.shadowStrength = WorldLook.SunShadowStrength(body.Id);
             sun.shadowBias = 0.04f;
             sun.shadowNormalBias = 0.55f;
             sun.shadowNearPlane = 0.2f;
@@ -92,8 +89,7 @@ namespace SolarMajesty
             if (fill == null) fill = go.AddComponent<Light>();
             fill.type = LightType.Directional;
             fill.color = body.FillColor;
-            fill.intensity = body.Id == CelestialBodyId.Mars ? 0.50f
-                : body.Id == CelestialBodyId.Earth ? 0.34f : 0.28f;
+            fill.intensity = WorldLook.FillIntensity(body.Id);
             fill.shadows = LightShadows.None;
             return fill;
         }
@@ -307,6 +303,9 @@ namespace SolarMajesty
             additional.renderPostProcessing = true;
         }
 
+        private static Volume _volume;
+        private static int _gradedQuality = -1;
+
         private static Volume EnsureVolume(Transform parent, CelestialBodyProfile body)
         {
             var existing = GameObject.Find("DemoVolume");
@@ -318,8 +317,10 @@ namespace SolarMajesty
                 volume = go.AddComponent<Volume>();
                 volume.isGlobal = true;
                 volume.priority = 1f;
-                var authored = Resources.Load<VolumeProfile>("Atmosphere/DemoVolumeProfile");
-                volume.sharedProfile = authored != null ? authored : BuildRuntimeProfile();
+                // Built in code and filled by GradeVolume. The baked Resources profile this used
+                // to prefer had lost its components (three null entries), so the bloom and
+                // vignette it was meant to carry never reached the screen.
+                volume.profile = LookVolume.NewProfile("DemoVolumeProfile_Runtime");
             }
             else
             {
@@ -327,107 +328,35 @@ namespace SolarMajesty
             }
 
             GradeVolume(volume, body);
+            _volume = volume;
             return volume;
         }
 
+        /// <summary>
+        /// Every post-processing parameter of the world grade, from <see cref="WorldLook"/>:
+        /// tonemapping, white balance, colour adjustments, bloom, vignette. Nothing is inherited
+        /// from an asset, so a body hop can never keep the previous world's values.
+        /// </summary>
         private static void GradeVolume(Volume volume, CelestialBodyProfile body)
         {
             if (volume == null || body == null) return;
             var profile = volume.profile;
             if (profile == null) return;
 
-            EnsureTonemapping(profile);
-            EnsureWhiteBalance(profile, body);
-
-            if (!profile.TryGet(out ColorAdjustments color))
-                color = profile.Add<ColorAdjustments>(true);
-            color.colorFilter.Override(body.GradeFilter);
-            if (body.Id == CelestialBodyId.Earth)
-            {
-                color.contrast.Override(12f);
-                color.saturation.Override(14f);
-                color.postExposure.Override(0.10f);
-            }
-            else if (body.Id == CelestialBodyId.Mars)
-            {
-                color.contrast.Override(11f);
-                color.saturation.Override(4f);
-                color.postExposure.Override(0.22f);
-            }
-            else
-            {
-                color.contrast.Override(8f);
-                color.saturation.Override(6f);
-                color.postExposure.Override(0.05f);
-            }
+            LookVolume.Apply(profile, WorldLook.For(body.Id), body.GradeFilter, LookVolume.CurrentTier);
+            _gradedQuality = QualitySettings.GetQualityLevel();
         }
 
         /// <summary>
-        /// Without a tonemapper, HDR values above 1 clip per channel, which turns a lit white hull
-        /// under a warm sun into flat orange. ACES rolls the highlights off and keeps hue.
+        /// Re-apply the tier-dependent bloom cost after the player changes quality in Settings.
+        /// Cheap enough to call every frame (one int compare when nothing changed).
         /// </summary>
-        private static void EnsureTonemapping(VolumeProfile profile)
+        public static void RefreshQualityTier()
         {
-            if (!profile.TryGet(out Tonemapping tonemapping))
-                tonemapping = profile.Add<Tonemapping>(true);
-            tonemapping.active = true;
-            tonemapping.mode.Override(TonemappingMode.ACES);
-        }
-
-        /// <summary>
-        /// Pulls the body's colour cast out of the neutrals so ceramic hulls read as white against
-        /// the local ground instead of taking its hue. This is the difference between "on Mars"
-        /// and "everything is orange".
-        /// </summary>
-        private static void EnsureWhiteBalance(VolumeProfile profile, CelestialBodyProfile body)
-        {
-            if (!profile.TryGet(out WhiteBalance balance))
-                balance = profile.Add<WhiteBalance>(true);
-            balance.active = true;
-
-            switch (body.Id)
-            {
-                case CelestialBodyId.Mars:
-                    balance.temperature.Override(-16f);
-                    balance.tint.Override(-6f);
-                    break;
-                case CelestialBodyId.Europa:
-                    balance.temperature.Override(8f);
-                    balance.tint.Override(2f);
-                    break;
-                case CelestialBodyId.Belt:
-                    balance.temperature.Override(4f);
-                    balance.tint.Override(0f);
-                    break;
-                default:
-                    balance.temperature.Override(0f);
-                    balance.tint.Override(0f);
-                    break;
-            }
-        }
-
-        private static VolumeProfile BuildRuntimeProfile()
-        {
-            var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            profile.name = "DemoVolumeProfile_Runtime";
-
-            var color = profile.Add<ColorAdjustments>(true);
-            color.contrast.Override(8f);
-            color.saturation.Override(6f);
-            color.postExposure.Override(0.05f);
-            color.colorFilter.Override(new Color(1f, 0.97f, 0.93f));
-
-            var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(0.95f);
-            bloom.intensity.Override(0.22f);
-            bloom.scatter.Override(0.55f);
-
-            var vignette = profile.Add<Vignette>(true);
-            vignette.intensity.Override(0.28f);
-            vignette.smoothness.Override(0.4f);
-            vignette.color.Override(new Color(0.05f, 0.06f, 0.1f));
-
-            return profile;
+            int level = QualitySettings.GetQualityLevel();
+            if (level == _gradedQuality) return;
+            _gradedQuality = level;
+            if (_volume != null) LookVolume.ApplyTier(_volume.profile, LookVolume.CurrentTier);
         }
     }
 }

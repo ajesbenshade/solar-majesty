@@ -79,6 +79,8 @@ namespace SolarMajesty
 
         private void LateUpdate()
         {
+            // Quality changed in Settings: bloom cost follows the new tier.
+            DemoAtmosphere.RefreshQualityTier();
             if (_body == null || _sun == null) return;
             if (_loop == null) _loop = FindAnyObjectByType<GameLoop>();
             // Title / settings screens own their own lighting.

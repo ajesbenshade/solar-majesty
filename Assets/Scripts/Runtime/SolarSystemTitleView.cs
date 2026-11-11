@@ -45,6 +45,9 @@ namespace SolarMajesty
         private readonly List<Transform> _spinners = new List<Transform>(12);
         private readonly List<float> _spinRates = new List<float>(12);
         private bool _camPost;
+        private bool _camPostAdded;
+        private Volume _postVolume;
+        private int _postQuality = -1;
 
         private bool _fog;
         private FogMode _fogMode;
@@ -106,6 +109,7 @@ namespace SolarMajesty
             if (_cam == null) return;
             if (!_built) Build();
             if (_rig != null) _rig.gameObject.SetActive(true);
+            SyncPostTier();
             if (!_stolen) StealCamera();
             DimWorldLights(true);
             ApplySpaceLighting();
@@ -128,6 +132,7 @@ namespace SolarMajesty
         private void Update()
         {
             if (!_shown || _pivot == null) return;
+            SyncPostTier();
             float dt = Time.unscaledDeltaTime;
             if (!DemoSettings.ReduceMotion)
             {
@@ -252,6 +257,7 @@ namespace SolarMajesty
             _pivot = new GameObject("Pivot").transform;
             _pivot.SetParent(_rig, false);
 
+            BuildPostVolume(_rig);
             SpawnStars(_rig);
             SpawnSun(_pivot);
             var earthAnchor = Anchor(_pivot, "EarthAnchor",
@@ -281,6 +287,39 @@ namespace SolarMajesty
             Ring(_pivot, SolarSystemOrbits.JupiterOrbit, new Color(0.86f, 0.70f, 0.42f, 0.40f));
 
             _built = true;
+        }
+
+        /// <summary>
+        /// The title's own grade. It lives under the rig, so it is only active while the orrery is
+        /// shown, and it outranks the world grade (priority 1) and the diorama focus (5) while
+        /// overriding everything they set: a Mars white balance must not tint the title.
+        /// This is the only place the game's depth of field is always on.
+        /// </summary>
+        private void BuildPostVolume(Transform parent)
+        {
+            var go = new GameObject("TitlePostVolume");
+            go.hideFlags = HideFlags.HideAndDontSave;
+            go.transform.SetParent(parent, false);
+            _postVolume = go.AddComponent<Volume>();
+            _postVolume.isGlobal = true;
+            _postVolume.priority = 10f;
+            var profile = LookVolume.NewProfile("TitleLook_Runtime");
+            profile.hideFlags = HideFlags.HideAndDontSave;
+            _postVolume.profile = profile;
+            _postQuality = -1;
+        }
+
+        /// <summary>(Re)write the title grade when first shown and whenever the quality level changes.</summary>
+        private void SyncPostTier()
+        {
+            if (_postVolume == null) return;
+            int level = QualitySettings.GetQualityLevel();
+            if (level == _postQuality) return;
+            _postQuality = level;
+            var tier = LookVolume.CurrentTier;
+            var profile = _postVolume.profile;
+            LookVolume.Apply(profile, WorldLook.Title, Color.white, tier);
+            LookVolume.ApplyTitleFocus(profile, tier);
         }
 
         private void SpawnSun(Transform parent)
@@ -472,12 +511,13 @@ namespace SolarMajesty
             _cam.backgroundColor = new Color(0.012f, 0.014f, 0.03f);
             _cam.transform.position = origin + SolarSystemOrbits.CameraLocal;
             _cam.transform.LookAt(origin + SolarSystemOrbits.LookLocal, Vector3.up);
+            // Post is on for the title; the title volume replaces the world grade entirely (see
+            // BuildPostVolume). Before that volume existed, post was simply switched off here.
             var additional = _cam.GetComponent<UniversalAdditionalCameraData>();
-            if (additional != null)
-            {
-                _camPost = additional.renderPostProcessing;
-                additional.renderPostProcessing = false;
-            }
+            _camPostAdded = additional == null;
+            if (additional == null) additional = _cam.gameObject.AddComponent<UniversalAdditionalCameraData>();
+            _camPost = !_camPostAdded && additional.renderPostProcessing;
+            additional.renderPostProcessing = _postVolume != null;
             _stolen = true;
         }
 
