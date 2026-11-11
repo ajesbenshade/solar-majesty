@@ -92,10 +92,12 @@ namespace SolarMajesty.Tests
                 Assert.Greater(castle.Lod0.Length, 0, civ + " LOD0");
                 Assert.Greater(castle.Lod1.Length, 0, civ + " LOD1");
                 Assert.Greater(castle.Lod2.Length, 0, civ + " LOD2");
-                var group = go.GetComponent<LODGroup>();
-                Assert.IsNotNull(group, civ + " LOD group");
+                var group = castle.Model.GetComponent<LODGroup>();
+                Assert.IsNotNull(group, civ + ": the castle keeps its own LOD group");
+                Assert.AreSame(group, castle.Group, civ);
                 Assert.AreEqual(3, group.lodCount, civ + ": the castle's own three LODs");
-                Assert.AreEqual(1, go.GetComponentsInChildren<LODGroup>(true).Length, civ + ": no imported LODGroup left");
+                Assert.IsNull(go.GetComponent<LODGroup>(), civ + ": no LODGroup on the Commons root");
+                Assert.AreEqual(1, go.GetComponentsInChildren<LODGroup>(true).Length, civ + ": exactly one LODGroup");
 
                 // The crown sits on the model, not at the procedural Commons' height.
                 var crown = Find(go.transform, "CitadelCrownY");
@@ -106,6 +108,76 @@ namespace SolarMajesty.Tests
                 // The Core idles: crystal and both halos registered with BuildingLife.
                 Assert.IsNotNull(go.GetComponent<BuildingLife>(), civ + " Core spin registered");
             }
+        }
+
+        /// <summary>
+        /// Session 33: on New Campaign the castle renderers were also registered on the Commons'
+        /// own LODGroup (the imported group was only destroyed at end of frame in play mode), and
+        /// Unity warned once per renderer. Only the castle's group may hold castle renderers, a
+        /// second Apply (or a second Commons) changes nothing, and spawning logs no LOD warning.
+        /// </summary>
+        [Test]
+        public void Castle_OnlyItsOwnLodGroupHoldsItsRenderers_AndSpawnLogsNoLodWarnings()
+        {
+            var logged = new List<string>();
+            void Capture(string message, string stack, LogType type)
+            {
+                if (type != LogType.Log) logged.Add(type + ": " + message);
+            }
+            Application.logMessageReceived += Capture;
+            var spawned = new List<GameObject>();
+            try
+            {
+                foreach (var civ in CastleCivs)
+                {
+                    // Twice, like a New Campaign after a campaign, then re-apply the LODs.
+                    spawned.Add(SpawnCommons(civ, Slate));
+                    var go = SpawnCommons(civ, Slate);
+                    spawned.Add(go);
+                    BuildingLod.Apply(go);
+                }
+            }
+            finally
+            {
+                Application.logMessageReceived -= Capture;
+            }
+
+            foreach (var go in spawned)
+            {
+                var castle = go.GetComponent<CivCastle>();
+                Assert.IsNotNull(castle, go.name);
+                Assert.IsNull(go.GetComponent<LODGroup>(), castle.Civ + ": the Commons root carries no LODGroup");
+
+                var owned = new HashSet<Renderer>();
+                foreach (var lod in castle.Group.GetLODs())
+                    foreach (var r in lod.renderers) if (r != null) owned.Add(r);
+                foreach (var r in castle.Lod0) Assert.IsTrue(owned.Contains(r), castle.Civ + " castle group holds " + r.name);
+                foreach (var r in castle.Lod1) Assert.IsTrue(owned.Contains(r), castle.Civ + " castle group holds " + r.name);
+                foreach (var r in castle.Lod2) Assert.IsTrue(owned.Contains(r), castle.Civ + " castle group holds " + r.name);
+                foreach (var r in owned) Assert.IsTrue(castle.Owns(r), castle.Civ + ": castle group holds only castle parts, not " + r.name);
+            }
+
+            // No LODGroup anywhere under the test root, other than each castle's own, references a castle renderer.
+            var castleRenderers = new HashSet<Renderer>();
+            var castleGroups = new HashSet<LODGroup>();
+            foreach (var go in spawned)
+            {
+                var castle = go.GetComponent<CivCastle>();
+                castleGroups.Add(castle.Group);
+                foreach (var r in go.GetComponentsInChildren<Renderer>(true)) if (castle.Owns(r)) castleRenderers.Add(r);
+            }
+            foreach (var group in _root.GetComponentsInChildren<LODGroup>(true))
+            {
+                if (castleGroups.Contains(group)) continue;
+                foreach (var lod in group.GetLODs())
+                    foreach (var r in lod.renderers)
+                        Assert.IsFalse(r != null && castleRenderers.Contains(r),
+                            group.name + " (not a castle group) holds castle renderer " + (r != null ? r.name : ""));
+            }
+
+            var lodWarnings = logged.FindAll(m => m.IndexOf("LOD", System.StringComparison.OrdinalIgnoreCase) >= 0);
+            Assert.That(lodWarnings, Is.Empty, "LOD warnings while spawning castles:\n" + string.Join("\n", lodWarnings));
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]

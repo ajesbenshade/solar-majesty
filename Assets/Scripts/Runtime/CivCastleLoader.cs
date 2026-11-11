@@ -126,9 +126,14 @@ namespace SolarMajesty
             model.transform.localRotation = prefab.transform.localRotation;
             model.transform.localScale = prefab.transform.localScale;
 
-            // Imported LODGroup (from the _LOD0.._LOD2 names) would fight BuildingLod's group on the root.
+            // The castle keeps its own LODGroup on the model root (the importer makes one from the
+            // _LOD0.._LOD2 names; add one if not). Destroying it and grouping the castle on the
+            // building root instead broke in play mode: Object.Destroy is deferred, so for a frame
+            // both groups held the same renderers and Unity warned once per renderer (Session 33).
+            var group = model.GetComponent<LODGroup>();
             foreach (var g in model.GetComponentsInChildren<LODGroup>(true))
-                ColonyVisualUtility.DestroyNow(g);
+                if (g != group) ColonyVisualUtility.DestroyNow(g);
+            if (group == null) group = model.AddComponent<LODGroup>();
             foreach (var c in model.GetComponentsInChildren<Collider>(true))
                 ColonyVisualUtility.DestroyNow(c);
 
@@ -154,6 +159,8 @@ namespace SolarMajesty
             castle.Lod1 = l1.ToArray();
             castle.Lod2 = l2.ToArray();
             castle.Core = core.ToArray();
+            castle.Group = group;
+            castle.ConfigureLods();
 
             Paint(model, spec, civ);
             SpinCore(root, model.transform);
