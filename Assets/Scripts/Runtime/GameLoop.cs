@@ -526,7 +526,7 @@ namespace SolarMajesty
             var pad = Village.NearestByCategory(ColonyLayout.CampusOrigin, 400f, BuildingCategory.LandingPad);
             var market = pad != null ? Village.NearestByCategory(pad.WorldPosition, 400f, BuildingCategory.Market) : null;
             float d = pad != null && market != null ? FlatDist(pad.WorldPosition, market.WorldPosition) : 0f;
-            Economy.CaravanGold = MajestyEconomy.CaravanGold(d);
+            Economy.CaravanGold = CivRules.TradeGold(_civ, MajestyEconomy.CaravanGold(d));
         }
 
         /// <summary>Workshops that finished while the treasury was short hire as soon as it can pay.</summary>
@@ -557,6 +557,17 @@ namespace SolarMajesty
         /// </summary>
         private CivModifiers _civ = new CivModifiers(null);
         public CivModifiers Civ => _civ;
+
+        /// <summary>
+        /// Make <paramref name="civ"/> this colony's civ, and hand it to the economy and placer
+        /// that read it (they keep a reference; they never look the civ up themselves).
+        /// </summary>
+        private void SetCiv(CivModifiers civ)
+        {
+            _civ = civ ?? new CivModifiers(null);
+            if (Economy != null) Economy.Civ = _civ;
+            if (Placer != null) Placer.Civ = _civ;
+        }
         private bool _launchCraftStaged;
         private DemoScreen _settingsReturn = DemoScreen.Title;
         private IntroSequence _intro;
@@ -936,7 +947,7 @@ namespace SolarMajesty
             // save of its own still boots this civ.
             if (bootCiv != carriedCiv)
                 CivChoice.Set(bootCiv);
-            _civ = CivModifiers.For(bootCiv);
+            SetCiv(CivModifiers.For(bootCiv));
             _body = CelestialBodyCatalog.Get(celestialBody);
             ModularBuildingFactory.BindBody(_body);
             IndustrialArtDressing.BindBody(_body);
@@ -1282,7 +1293,7 @@ namespace SolarMajesty
                 drop = CampaignProgress.NewGameBody;
             CampaignProgress.BeginNewGame(drop);
             BeginFreshFiles(slot);
-            CivChoice.Set(civ);
+            CivChoice.Set(CivChoice.ForNewGame(civ, drop, DemoSettings.FirstHourDemo));
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             if (drop == CelestialBodyId.Mars)
@@ -1302,7 +1313,7 @@ namespace SolarMajesty
             CampaignProgress.ResetCampaign();
             CampaignProgress.UnlockThrough(body);
             BeginFreshFiles(slot);
-            CivChoice.Set(civ);
+            CivChoice.Set(CivChoice.ForNewGame(civ, body, DemoSettings.FirstHourDemo));
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
@@ -2943,7 +2954,7 @@ namespace SolarMajesty
 
             Flags = new FlagManager();
             Flags.FlagCompleted += OnFlagWorkCompleted;
-            Placer = new BuildingPlacer(Resources);
+            Placer = new BuildingPlacer(Resources) { Civ = _civ };
             if (grid != null)
                 Placer.BindGrid(grid.CellSize, grid.Origin);
             Placer.HasCommons = () =>
@@ -2966,7 +2977,7 @@ namespace SolarMajesty
             _heroDeaths = 0;
             ApplyReplayToBrain();
             // Mines are the trade posts now; no supply ships land with cargo.
-            Economy = new SimpleEconomy(Resources, economyTuning) { ResupplyEnabled = false };
+            Economy = new SimpleEconomy(Resources, economyTuning) { ResupplyEnabled = false, Civ = _civ };
             float resupply = economyTuning.resupplyBaseSeconds * (_body != null ? Mathf.Max(0.4f, _body.ResupplyIntervalScale) : 1f);
             int fee = _body != null ? Mathf.Max(0, _body.ResupplyDockFee) : 0;
             Economy.ConfigureResupply(resupply, fee);
@@ -2994,7 +3005,8 @@ namespace SolarMajesty
             // CRED is the only currency; the retired ICE / REG / PWR stocks stay at zero.
             Resources.Set(ResourceId.Regolith, 0);
             Resources.Set(ResourceId.WaterIce, 0);
-            Resources.Set(ResourceId.Metals, Mathf.Max(0, Mathf.RoundToInt(body.StartMetals * scale)));
+            Resources.Set(ResourceId.Metals,
+                Mathf.Max(0, Mathf.RoundToInt(CivRules.StartingTreasury(_civ, body.StartMetals) * scale)));
             Resources.Set(ResourceId.Power, 0);
         }
 
@@ -3507,7 +3519,7 @@ namespace SolarMajesty
             if (HasCorpse(cls.Value))
                 return false;
 
-            int hire = chargeHire ? MajestyEconomy.HireCost(cls.Value) : 0;
+            int hire = chargeHire ? CivRules.HireCost(_civ, cls.Value) : 0;
             if (hire > 0 && (Resources == null || !Resources.TrySpend(ResourceId.Metals, hire)))
             {
                 if (!_awaitingHire.Contains(workshop)) _awaitingHire.Add(workshop);
@@ -3526,7 +3538,7 @@ namespace SolarMajesty
                 return false;
             }
             if (chargeHire)
-                agent.EarnCredits(MajestyEconomy.HeroStartingPurse, null, taxed: false);
+                agent.EarnCredits(CivRules.HeroStartingPurse(_civ), null, taxed: false);
 
             if (restoreVeteran)
             {
@@ -5007,7 +5019,7 @@ namespace SolarMajesty
         {
             Resources = resources;
             Flags = flags;
-            Economy = new SimpleEconomy(resources) { ResupplyEnabled = false };
+            Economy = new SimpleEconomy(resources) { ResupplyEnabled = false, Civ = _civ };
         }
 
         /// <summary>
@@ -5165,15 +5177,16 @@ namespace SolarMajesty
                 return false;
             }
 
+            int armCost = CivRules.WatchtowerArmingCost(_civ);
             if (Resources == null ||
-                !Resources.TrySpend(ResourceId.Metals, OverseerRules.WatchtowerLaserCost))
+                !Resources.TrySpend(ResourceId.Metals, armCost))
             {
-                LogOverseer(Loc.F("Arming lasers needs {0} EU.", OverseerRules.WatchtowerLaserCost));
+                LogOverseer(Loc.F("Arming lasers needs {0} EU.", armCost));
                 return false;
             }
 
             tower.ArmLasers();
-            LogOverseer(Loc.F("Watchtower lasers armed — {0} EU.", OverseerRules.WatchtowerLaserCost));
+            LogOverseer(Loc.F("Watchtower lasers armed — {0} EU.", armCost));
             DemoVfx.ClaimRing(tower.WorldPosition, new Color(0.95f, 0.35f, 0.2f));
             return true;
         }
@@ -6456,7 +6469,7 @@ namespace SolarMajesty
             CivId savedCiv = CivCatalog.FromSaved(save.civ);
             if (savedCiv != _civ.Id)
             {
-                _civ = CivModifiers.For(savedCiv);
+                SetCiv(CivModifiers.For(savedCiv));
                 CivChoice.Set(savedCiv);
             }
 
@@ -7526,7 +7539,7 @@ namespace SolarMajesty
             if (shop != null && shop.IsAlive)
                 shop.ClearRobotFabricated();
             string salvageTxt = salvage > 0 ? " " + Loc.F("Salvage {0} EU.", salvage) : "";
-            int bill = OverseerRules.YardBill(rec.Level, rec.Class);
+            int bill = CivRules.YardBill(_civ, rec.Level, rec.Class);
             LogOverseer(Loc.F("{0} scrapped — wreck in the Fobot Yard. Stand-up {1} EU (L{2}).", label, bill, rec.Level) + salvageTxt);
         }
 
@@ -7817,11 +7830,11 @@ namespace SolarMajesty
                 var a = _agents[i];
                 if (a == null || !a.IsIncapacitated) continue;
                 met += a.Data != null
-                    ? OverseerRules.YardBill(a.Level, a.Data.specialistClass)
+                    ? CivRules.YardBill(_civ, a.Level, a.Data.specialistClass)
                     : OverseerRules.YardBill(a.Level);
             }
             for (int i = 0; i < _corpses.Count; i++)
-                met += OverseerRules.YardBill(_corpses[i].Level, _corpses[i].Class);
+                met += CivRules.YardBill(_civ, _corpses[i].Level, _corpses[i].Class);
             if (met <= 0)
                 met = OverseerRules.ReviveMet;
         }
@@ -8005,7 +8018,7 @@ namespace SolarMajesty
 
             if (!TryEnqueueScrapRefab(rec, alreadyPaid: false, out int met, out _, out string shopName))
             {
-                LogOverseer(Loc.F("Re-fab needs {0} EU at {1}.", OverseerRules.RefabMetals(shop.SourceData), shopName));
+                LogOverseer(Loc.F("Re-fab needs {0} EU at {1}.", CivRules.RefabMetals(_civ, shop.SourceData), shopName));
                 return false;
             }
 
@@ -8027,7 +8040,7 @@ namespace SolarMajesty
                 sb.Append(" L");
                 sb.Append(Mathf.Max(1, rec.Level));
                 sb.Append(" ");
-                sb.Append(OverseerRules.YardBill(rec.Level, rec.Class));
+                sb.Append(CivRules.YardBill(_civ, rec.Level, rec.Class));
                 sb.Append(" EU");
             }
             return sb.ToString();
@@ -8051,7 +8064,7 @@ namespace SolarMajesty
             ice = 0;
             shopName = ClassWorkshopName(rec.Class);
             var shop = FindWorkshopFor(rec.Class);
-            met = OverseerRules.RefabMetals(shop != null ? shop.SourceData : null);
+            met = CivRules.RefabMetals(_civ, shop != null ? shop.SourceData : null);
             if (shop == null || !shop.IsAlive)
                 return false;
             shopName = shop.DisplayName;
@@ -8256,6 +8269,12 @@ namespace SolarMajesty
             return false;
         }
 
+        /// <summary>
+        /// True within <see cref="OverseerRules.CommonsShadeRadius"/> (20 m) of a live Commons: the
+        /// "near home" of the civ near-home bonus (<see cref="CivStat.NearHomeUnitDamage"/>).
+        /// </summary>
+        public bool IsNearHome(Vector3 world) => HasCommonsShade(world);
+
         private bool HasCommonsShade(Vector3 world)
         {
             if (Village == null) return false;
@@ -8325,6 +8344,8 @@ namespace SolarMajesty
         private void TickBatteries(float dt)
         {
             if (Village == null) return;
+            float gunRange = CivRules.GunRange(_civ);
+            float gunDamage = CivRules.GunDamage(_civ);
             var list = Village.Structures;
             if (Time.time >= _batteryLockUntil)
                 _batteryLock = null;
@@ -8337,14 +8358,14 @@ namespace SolarMajesty
                 if (!battery) continue;
                 DustStalkerAgent target = _batteryLock;
                 if (target == null || !target.IsAlive ||
-                    FlatDist(st.WorldPosition, target.transform.position) > OverseerRules.BatteryRange)
+                    FlatDist(st.WorldPosition, target.transform.position) > gunRange)
                 {
-                    target = NearestFauna(st.WorldPosition, OverseerRules.BatteryRange);
+                    target = NearestFauna(st.WorldPosition, gunRange);
                     _batteryLock = target;
                     _batteryLockUntil = Time.time + OverseerRules.BatteryRetarget;
                 }
                 if (target == null) continue;
-                float dps = OverseerRules.BatteryDps;
+                float dps = gunDamage;
                 if (GuildBenefits != null && GuildBenefits.IsActive(RobotGuildId.Aegis))
                     dps *= 1.25f;
                 target.ApplyCombatDamage(dps * dt);

@@ -2059,14 +2059,18 @@ namespace SolarMajesty
                 row += L(16f);
                 if (st.LaserArmed)
                 {
-                    slot = CardNote(c, row, Loc.S("Lasers armed — 18 m."));
+                    // The stock line stays as it is (and stays translated) unless the civ moves the range.
+                    slot = CardNote(c, row, _loop.Civ.Changes(CivStat.GunRange)
+                        ? Loc.F("Lasers armed — {0:0.#} m.", CivRules.GunRange(_loop.Civ))
+                        : Loc.S("Lasers armed — 18 m."));
                 }
                 else
                 {
+                    int armCost = CivRules.WatchtowerArmingCost(_loop.Civ);
                     bool can = _loop.Resources != null &&
-                               _loop.Resources.Get(ResourceId.Metals) >= OverseerRules.WatchtowerLaserCost;
+                               _loop.Resources.Get(ResourceId.Metals) >= armCost;
                     var arm = new Rect(c.x, row, W(220f), chipH);
-                    if (Chip(arm, Loc.F("ARM LASERS {0} EU", OverseerRules.WatchtowerLaserCost), can, HudTips.ArmLasers()) && can)
+                    if (Chip(arm, Loc.F("ARM LASERS {0} EU", armCost), can, HudTips.ArmLasers()) && can)
                         _loop.TryArmWatchtower(st);
                 }
             }
@@ -2080,7 +2084,7 @@ namespace SolarMajesty
             else if (st.Category == BuildingCategory.Market)
             {
                 slot = CardNote(c, row,
-                    Loc.F("Potions + necklace. Pays {0} EU/day into its till.", MajestyEconomy.MarketDailyTax));
+                    Loc.F("Potions + necklace. Pays {0} EU/day into its till.", CivRules.DailyTax(_loop.Civ, BuildingCategory.Market)));
             }
             else if (st.Category == BuildingCategory.Blacksmith)
             {
@@ -2103,7 +2107,7 @@ namespace SolarMajesty
                 {
                     row += slot + 2f;
                     slot = chipH;
-                    int met = OverseerRules.RefabMetals(st.SourceData);
+                    int met = CivRules.RefabMetals(_loop.Civ, st.SourceData);
                     var refab = new Rect(c.x, row, W(150f), chipH);
                     if (Chip(refab, Loc.F("RE-FAB L1 {0} EU", met), true, HudTips.Refab()))
                         _loop.TryRefabRookie(st);
@@ -3445,6 +3449,13 @@ namespace SolarMajesty
         {
             FitLabel(new Rect(c.x, y, c.width, L(14f)), Loc.S("CIVILIZATION"), _micro);
             y += L(18f);
+
+            // The guided Earth start (tutorial) always plays as the neutral civ; no cards to pick.
+            if (CivChoice.IsGuidedStart(_pendingNewGameBody, DemoSettings.FirstHourDemo))
+            {
+                _newCampaignCiv = CivId.None;
+                return WrapBlock(c, y, Loc.S("The guided start plays without a civilization. Turn Guided start off in Settings to pick one."));
+            }
 
             var civs = CivCatalog.Playable();
             if (civs.Count > 0)

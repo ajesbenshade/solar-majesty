@@ -177,7 +177,7 @@ namespace SolarMajesty
         {
             int commons = _village.CountAlive(BuildingCategory.Commons);
             int towers = _village.CountAlive(BuildingCategory.Watchtower);
-            int want = Mathf.Max(0, MajestyEconomy.CollectorsFor(commons, towers) - _respawnAt.Count);
+            int want = Mathf.Max(0, CivRules.CollectorsFor(_loop.Civ, commons, towers) - _respawnAt.Count);
 
             while (_collectors.Count > want)
             {
@@ -206,9 +206,10 @@ namespace SolarMajesty
         /// <summary>First two collectors live at Commons, the rest one per Watchtower.</summary>
         private ColonyStructure HomeFor(int index, int commons)
         {
-            if (index < commons * MajestyEconomy.CollectorsPerCommons || commons <= 0)
+            int perCommons = CivRules.CollectorsPerCommons(_loop.Civ);
+            if (index < commons * perCommons || commons <= 0)
                 return _village.CommonsHub();
-            int towerIndex = index - commons * MajestyEconomy.CollectorsPerCommons;
+            int towerIndex = index - commons * perCommons;
             int seen = 0;
             var list = _village.Structures;
             for (int i = 0; i < list.Count; i++)

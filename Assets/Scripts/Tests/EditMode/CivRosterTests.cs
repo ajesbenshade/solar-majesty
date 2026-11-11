@@ -189,7 +189,8 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(3, Ability("mech_bulwark").minLevel);
             Assert.IsTrue(bulwark.TryGetAbilityChange("mech_bulwark", out var armour));
             Assert.AreEqual(1, armour.ApplyTo(Ability("mech_bulwark")).minLevel);
-            Assert.AreEqual(CivCatalog.NearHomeTag, bulwark.behaviourTag);
+            Assert.IsTrue(bulwark.nearHomeBonus, "Bulwark strikes harder near home");
+            Assert.IsEmpty(bulwark.behaviourTag);
 
             var scout = Today(SpecialistClass.ScoutDrone);
             Assert.AreEqual(1f, scout.explorePreference, 1e-5f);
@@ -199,7 +200,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual("Picket", scout.displayName);
             Assert.AreEqual(0.8f, scout.explorePreference, 1e-5f);
             Assert.AreEqual(0.5f, scout.defendPreference, 1e-5f);
-            Assert.AreEqual(CivCatalog.NearHomeTag, picket.behaviourTag);
+            Assert.IsTrue(picket.nearHomeBonus, "Picket strikes harder near home");
 
             var engineer = Today(SpecialistClass.EngineerBot);
             Assert.AreEqual(0.22f, engineer.courage, 1e-5f);
@@ -215,6 +216,41 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(1, lance.ApplyTo(Ability("terra_thermal")).minLevel, "the unlock level is unchanged");
 
             Assert.AreEqual("field_welder_repair", civ.UnitFor(SpecialistClass.Medic).behaviourTag);
+        }
+
+        [Test]
+        public void Pathfinder_Roster()
+        {
+            var civ = CivModifiers.For(CivId.PathfinderAccord);
+
+            var medic = Today(SpecialistClass.Medic);
+            Assert.AreEqual(0.90f, medic.defendPreference, 1e-5f);
+            Assert.AreEqual(0.18f, medic.explorePreference, 1e-5f);
+            civ.UnitFor(SpecialistClass.Medic).ApplyTo(medic);
+            Assert.AreEqual("Trail Medic", medic.displayName);
+            Assert.AreEqual(0.60f, medic.defendPreference, 1e-5f);
+            Assert.AreEqual(0.50f, medic.explorePreference, 1e-5f);
+
+            var courier = Today(SpecialistClass.CourierBot);
+            Assert.AreEqual(0.92f, courier.explorePreference, 1e-5f);
+            civ.UnitFor(SpecialistClass.CourierBot).ApplyTo(courier);
+            Assert.AreEqual("Strider", courier.displayName);
+            Assert.AreEqual(1.0f, courier.explorePreference, 1e-5f);
+
+            Assert.AreEqual("Vanguard", civ.UnitFor(SpecialistClass.SentinelMech).displayName);
+            Assert.AreEqual("vanguard_forward_post", civ.UnitFor(SpecialistClass.SentinelMech).behaviourTag);
+            Assert.AreEqual("Cartographer", civ.UnitFor(SpecialistClass.SurveyorBot).displayName);
+            Assert.AreEqual("Stakehand", civ.UnitFor(SpecialistClass.EngineerBot).displayName);
+            foreach (SpecialistClass c in Enum.GetValues(typeof(SpecialistClass)))
+                Assert.IsFalse(civ.UnitFor(c).nearHomeBonus, $"{c}: the near-home bonus is the Mandate's");
+        }
+
+        [Test]
+        public void NearHomeBonus_IsAChange_AndSurvivesAClone()
+        {
+            var unit = new CivUnitDefinition { baseClass = SpecialistClass.DefenseMech, nearHomeBonus = true };
+            Assert.IsFalse(unit.IsBase);
+            Assert.IsTrue(unit.Clone().nearHomeBonus);
         }
 
         [Test]

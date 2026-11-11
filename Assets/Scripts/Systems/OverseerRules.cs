@@ -182,6 +182,9 @@ namespace SolarMajesty
         public const float AidArrive = 3.6f;
 
         public const float CommonsShadeRadius = 20f;
+
+        /// <summary>Hit points of a Commons for the neutral civ (a civ may change it, see <see cref="CivRules.CommonsHealth"/>).</summary>
+        public const float CommonsHealth = 140f;
         public const float CommonsShadeDanger = 0.85f;
 
         public const float DefenseStalkerDpsMul = 1.35f;

@@ -559,7 +559,7 @@ namespace SolarMajesty
                 if (st == null || !st.IsAlive || !st.IsWorkshop) continue;
                 var cls = ColonyStructure.RobotClassForWorkshop(st.Category);
                 if (!cls.HasValue || !loop.HasWreckFor(cls.Value) || loop.RefabAt(st) != null) continue;
-                int met = OverseerRules.RefabMetals(st.SourceData);
+                int met = CivRules.RefabMetals(loop.Civ, st.SourceData);
                 if (TillEu(loop) < met) continue;
                 if (loop.TryRefabRookie(st))
                 {
@@ -723,7 +723,7 @@ namespace SolarMajesty
                     if (c.resource == ResourceId.Metals) metals += c.amount;
             // A workshop is only worth it with the money to hire its robot when it is done.
             var cls = ColonyStructure.RobotClassForWorkshop(data.category);
-            if (cls.HasValue) metals += MajestyEconomy.HireCost(cls.Value);
+            if (cls.HasValue) metals += CivRules.HireCost(loop.Civ, cls.Value);
             return metals;
         }
 

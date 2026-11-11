@@ -16,6 +16,18 @@ namespace SolarMajesty
         /// <summary>The civ the next boot should start with. None when nothing was picked.</summary>
         public static CivId Load() => CivCatalog.FromSaved(GamePrefs.GetInt(PrefsKey, (int)CivId.None));
 
+        /// <summary>
+        /// True when a new campaign dropping on <paramref name="drop"/> is the guided Earth start
+        /// (the tutorial). It always plays as the neutral civ (decision 1), and carries that on to
+        /// Luna with no prompt to pick (decision 6), because the carried choice stays None.
+        /// </summary>
+        public static bool IsGuidedStart(CelestialBodyId drop, bool guidedStart) =>
+            guidedStart && drop == CelestialBodyId.Earth;
+
+        /// <summary>The civ a new campaign starts with: the pick, except the guided Earth start plays as None.</summary>
+        public static CivId ForNewGame(CivId picked, CelestialBodyId drop, bool guidedStart) =>
+            IsGuidedStart(drop, guidedStart) ? CivId.None : CivCatalog.FromSaved((int)picked);
+
         /// <summary>Remember <paramref name="civ"/> for the next boot. An unknown value is stored as None.</summary>
         public static void Set(CivId civ)
         {

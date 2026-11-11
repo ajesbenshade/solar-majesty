@@ -176,11 +176,27 @@ namespace SolarMajesty
             _resources.Add(ResourceId.Metals, metals);
         }
 
-        /// <summary>Flag completed — metals stay spent, reserved readout clears.</summary>
+        /// <summary>
+        /// This treasury's civ. Null means the neutral civ. Set by whoever owns the economy
+        /// (GameLoop today, one per player later); never looked up.
+        /// </summary>
+        public CivModifiers Civ { get; set; }
+
+        /// <summary>Gold the civ returned to the treasury on the last completed bounty.</summary>
+        public int LastBountyRebate { get; private set; }
+
+        /// <summary>
+        /// Flag completed — metals stay spent, reserved readout clears. The hero was paid the
+        /// whole escrow; a civ whose treasury pays less than the full bounty gets the
+        /// difference back here (nothing for the neutral civ).
+        /// </summary>
         public void ReleaseBountyEscrow(int metals)
         {
             if (metals <= 0) return;
             EscrowedMetals = Mathf.Max(0, EscrowedMetals - metals);
+            LastBountyRebate = CivRules.BountyRebate(Civ, metals);
+            if (LastBountyRebate > 0 && _resources != null)
+                _resources.Add(ResourceId.Metals, LastBountyRebate);
         }
 
         /// <summary>Personal MET a specialist keeps from an extract (colony haul is separate).</summary>

@@ -15,15 +15,16 @@ namespace SolarMajesty
         TetherExchange = 2,
         BastionMandate = 3,
         /// <summary>
-        /// Reserved fourth civ. The name is provisional and the definition is a placeholder (no
-        /// perks, not offered in the picker) until the design fills it in. The number is final.
+        /// The fourth civ (expansion and mobility). "Pathfinder Accord" is a provisional name. Its
+        /// perks are live data, but it stays off the new-game cards (<see cref="CivDefinition.playable"/>)
+        /// until its castle (D1 Stilt Arcology) exists. The number is final.
         /// </summary>
-        CivD = 4
+        PathfinderAccord = 4
     }
 
     /// <summary>
-    /// The numbers a civ may change. Each one maps to one existing constant or rule; the call
-    /// sites are rerouted through <see cref="CivModifiers.Apply(CivStat,int)"/> in a later PR.
+    /// The numbers a civ may change. Each one maps to one existing constant or rule, and its call
+    /// sites go through <see cref="CivRules"/> with the owner's <see cref="CivModifiers"/>.
     /// Stored in designer assets by number: never renumber.
     /// </summary>
     public enum CivStat
@@ -47,10 +48,28 @@ namespace SolarMajesty
         CommonsHealth = 8,
         /// <summary>Laser Turret and armed Watchtower range, in metres.</summary>
         GunRange = 9,
-        /// <summary>Laser Turret and armed Watchtower damage per second.</summary>
+        /// <summary>
+        /// Laser Turret and armed Watchtower damage per second. Wired, but no built-in civ uses it
+        /// since the Mandate's gun damage perk moved onto its Bulwark and Picket.
+        /// </summary>
         GunDamage = 10,
         /// <summary>Price of arming a Watchtower with lasers.</summary>
-        WatchtowerArmingCost = 11
+        WatchtowerArmingCost = 11,
+        /// <summary>
+        /// Price of an outpost building (Watchtower, Ore Mine, Landing Pad; see
+        /// <see cref="CivRules.IsOutpostBuilding"/>), before the duplicate surcharge.
+        /// </summary>
+        OutpostBuildingCost = 12,
+        /// <summary>Hero walking speed (<c>SpecialistData.moveSpeed</c>, before gear and statuses).</summary>
+        HeroMoveSpeed = 13,
+        /// <summary>Seconds a player-placed building takes to go up (<c>BuildingData.buildTimeSeconds</c>).</summary>
+        BuildTime = 14,
+        /// <summary>
+        /// Strike damage of a unit whose roster entry has <see cref="CivUnitDefinition.nearHomeBonus"/>,
+        /// while it stands within <see cref="OverseerRules.CommonsShadeRadius"/> of a live Commons.
+        /// Units without the flag, and fights away from home, are never changed.
+        /// </summary>
+        NearHomeUnitDamage = 15
     }
 
     public enum CivModifierOp
@@ -114,7 +133,7 @@ namespace SolarMajesty
         public string summary = "";
         [Tooltip("Which castle the Commons is drawn as. Empty = today's Commons.")]
         public string castleKey = SharedArtKey;
-        [Tooltip("Offered on the new-game cards. Off for the neutral civ and for placeholders.")]
+        [Tooltip("Offered on the new-game cards. Off for the neutral civ, and for a civ whose castle does not exist yet (it still plays if a save names it).")]
         public bool playable;
         public Color teamPrimary = Color.white;
         public Color teamSecondary = Color.white;
@@ -177,5 +196,54 @@ namespace SolarMajesty
         /// <summary>True when <paramref name="c"/> is, or reads as, the Core cyan or the pod amber.</summary>
         public static bool IsReserved(Color c) =>
             Distance(c, CoreCyan) < ReservedDistance || Distance(c, PodAmber) < ReservedDistance;
+    }
+
+    /// <summary>
+    /// Per-player accent colours, for telling apart two players on the same civ (Aaron,
+    /// 2026-11-11: each player picks their own accent and duplicates are blocked). The accent
+    /// belongs to the player, not the civ: it is carried by that player's
+    /// <see cref="CivModifiers.Accent"/>. Pure checks, no state.
+    /// TODO(multiplayer): there is no player list yet. The lobby calls <see cref="CanUse"/> with
+    /// the accents the other players hold, and the save gains a per-player (civ, accent) list.
+    /// </summary>
+    public static class CivAccents
+    {
+        /// <summary>Two accents closer than this (RGB distance) count as the same colour.</summary>
+        public const float MinSeparation = 0.25f;
+
+        /// <summary>True when <paramref name="c"/> reads as cyan, amber or any civ's team colour.</summary>
+        public static bool IsReservedOrTeamColour(Color c)
+        {
+            if (CivPalette.IsReserved(c)) return true;
+            var all = CivCatalog.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var def = all[i];
+                if (def == null || def.id == CivId.None) continue;
+                if (CivPalette.Distance(c, def.teamPrimary) < MinSeparation ||
+                    CivPalette.Distance(c, def.teamSecondary) < MinSeparation)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>True when <paramref name="c"/> matches an accent in <paramref name="taken"/>.</summary>
+        public static bool IsTaken(Color c, IReadOnlyList<Color> taken)
+        {
+            if (taken == null) return false;
+            for (int i = 0; i < taken.Count; i++)
+            {
+                if (CivPalette.Distance(c, taken[i]) < MinSeparation)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// True when a player may pick <paramref name="accent"/>: it is not cyan, amber or a team
+        /// colour, and no other player already holds it (<paramref name="takenByOthers"/>).
+        /// </summary>
+        public static bool CanUse(Color accent, IReadOnlyList<Color> takenByOthers) =>
+            !IsReservedOrTeamColour(accent) && !IsTaken(accent, takenByOthers);
     }
 }

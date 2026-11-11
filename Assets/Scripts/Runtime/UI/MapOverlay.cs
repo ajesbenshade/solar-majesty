@@ -169,6 +169,7 @@ namespace SolarMajesty
             if (structures == null) return;
 
             // Batteries first so their discs sit under the uncovered markers.
+            float gunRange = CivRules.GunRange(_loop.Civ);
             var covered = new List<Vector3>(8);
             for (int i = 0; i < structures.Count; i++)
             {
@@ -177,7 +178,7 @@ namespace SolarMajesty
                 bool cover = s.Category == BuildingCategory.Defense ||
                              (s.IsWatchtower && s.LaserArmed);
                 if (!cover) continue;
-                Disc(s.WorldPosition, OverseerRules.BatteryRange, CoverGood);
+                Disc(s.WorldPosition, gunRange, CoverGood);
                 covered.Add(s.WorldPosition);
             }
 
@@ -193,7 +194,7 @@ namespace SolarMajesty
                 {
                     float dx = covered[c].x - s.WorldPosition.x;
                     float dz = covered[c].z - s.WorldPosition.z;
-                    if (dx * dx + dz * dz <= OverseerRules.BatteryRange * OverseerRules.BatteryRange)
+                    if (dx * dx + dz * dz <= gunRange * gunRange)
                     {
                         safe = true;
                         break;

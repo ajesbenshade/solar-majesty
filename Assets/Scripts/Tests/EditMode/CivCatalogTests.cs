@@ -52,7 +52,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(1, (int)CivId.LumenConcord);
             Assert.AreEqual(2, (int)CivId.TetherExchange);
             Assert.AreEqual(3, (int)CivId.BastionMandate);
-            Assert.AreEqual(4, (int)CivId.CivD);
+            Assert.AreEqual(4, (int)CivId.PathfinderAccord);
         }
 
         [Test]
@@ -102,13 +102,45 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void FourthCiv_IsAPlaceholderThatPlaysAsNeutral()
+        public void FourthCiv_HasItsPerks_ButIsHiddenFromTheCards()
         {
-            var d = CivCatalog.Get(CivId.CivD);
+            var d = CivCatalog.Get(CivId.PathfinderAccord);
             Assert.IsNotNull(d);
-            Assert.IsFalse(d.playable);
-            Assert.AreEqual(0, d.modifiers.Count);
-            Assert.IsTrue(new CivModifiers(d).IsIdentity);
+            Assert.AreEqual("Pathfinder Accord", d.displayName);
+            Assert.IsFalse(d.playable, "off the cards until the D1 castle exists");
+            Assert.IsFalse(CivCatalog.Playable().Exists(c => c.id == CivId.PathfinderAccord));
+            Assert.IsFalse(new CivModifiers(d).IsIdentity, "it still plays with its perks if a save names it");
+            int tradeOffs = 0;
+            foreach (var m in d.modifiers)
+                if (m.tradeOff) tradeOffs++;
+            Assert.AreEqual(1, tradeOffs, "one drawback, like the others");
+            // D1 Stilt Arcology livery (decision 5): teal-black #142226 and emerald #0D9954.
+            AssertColour(Hex(0x14, 0x22, 0x26), d.teamPrimary, "teal-black");
+            AssertColour(Hex(0x0D, 0x99, 0x54), d.teamSecondary, "emerald");
+        }
+
+        [Test]
+        public void Mandate_SecondaryIsOxideRed()
+        {
+            AssertColour(Hex(0x8A, 0x3B, 0x24), CivCatalog.Get(CivId.BastionMandate).teamSecondary, "oxide red");
+        }
+
+        /// <summary>A hex colour compared to the catalog's three-decimal channels.</summary>
+        private static Color Hex(int r, int g, int b) => new Color(r / 255f, g / 255f, b / 255f);
+
+        private static void AssertColour(Color expected, Color actual, string label)
+        {
+            Assert.AreEqual(expected.r, actual.r, 0.002f, label);
+            Assert.AreEqual(expected.g, actual.g, 0.002f, label);
+            Assert.AreEqual(expected.b, actual.b, 0.002f, label);
+        }
+
+        [Test]
+        public void EmeraldSeparatesFromMandateSage()
+        {
+            var sage = CivCatalog.Get(CivId.BastionMandate).teamPrimary;
+            var emerald = CivCatalog.Get(CivId.PathfinderAccord).teamSecondary;
+            Assert.Greater(CivPalette.Distance(sage, emerald), 0.2f);
         }
 
         [Test]

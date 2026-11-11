@@ -123,7 +123,7 @@ namespace SolarMajesty.Tests
         [TestCase(CivId.LumenConcord)]
         [TestCase(CivId.TetherExchange)]
         [TestCase(CivId.BastionMandate)]
-        [TestCase(CivId.CivD)]
+        [TestCase(CivId.PathfinderAccord)]
         public void Civ_RoundTripsThroughASlot(CivId civ)
         {
             Assert.IsTrue(SaveSystem.Write(3, new SaveGame { body = 0, seed = 9001, civ = (int)civ }));

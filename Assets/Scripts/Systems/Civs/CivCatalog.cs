@@ -180,7 +180,7 @@ namespace SolarMajesty
                     id = CivId.BastionMandate,
                     displayName = "Bastion Mandate",
                     pitch = "Defence and turtle",
-                    summary = "Commons health 200. Guns reach 21 m. Watchtower lasers cost 250. Hires 20% dearer.",
+                    summary = "Commons health 200. Guns reach 21 m. Watchtower lasers cost 250. Bulwark and Picket hit 25% harder near home. Hires 20% dearer.",
                     castleKey = "castle.dome_bunker",
                     playable = true,
                     teamPrimary = new Color(0.56f, 0.64f, 0.50f),   // sage
@@ -189,9 +189,11 @@ namespace SolarMajesty
                     {
                         CivModifier.Add(CivStat.CommonsHealth, 60),
                         CivModifier.Add(CivStat.GunRange, 3),
-                        // The gun damage perk (4 -> 5) moved off the civ onto the Bulwark and the
-                        // Picket as a near-home bonus; see NearHomeTag below.
                         CivModifier.Add(CivStat.WatchtowerArmingCost, -150),
+                        // The old gun damage perk (4 -> 5) is off the guns. Instead the units
+                        // marked nearHomeBonus (Bulwark, Picket) strike 25% harder within 20 m of
+                        // the Commons (OverseerRules.CommonsShadeRadius).
+                        CivModifier.Percent(CivStat.NearHomeUnitDamage, 125),
                         CivModifier.Percent(CivStat.HireCost, 120, tradeOff: true)
                     },
                     roster = new List<CivUnitDefinition>
@@ -201,7 +203,7 @@ namespace SolarMajesty
                         Unit(SpecialistClass.DefenseMech, "Bulwark",
                             Stats((CivUnitStat.MoveSpeed, 2.7f)),
                             Abilities(CivAbilityChange.UnlockAt("mech_bulwark", 1)),
-                            NearHomeTag),
+                            nearHomeBonus: true),
                         // TODO(design): "homebody" needs the same distance number as the Bulwark.
                         Unit(SpecialistClass.TerraformerBot, "Siege Lancer",
                             abilities: Abilities(CivAbilityChange.Radius("terra_thermal", 4f))),
@@ -209,41 +211,56 @@ namespace SolarMajesty
                         Unit(SpecialistClass.Medic, "Field Welder", behaviourTag: "field_welder_repair"),
                         Unit(SpecialistClass.ScoutDrone, "Picket",
                             Stats((CivUnitStat.ExplorePreference, 0.8f), (CivUnitStat.DefendPreference, 0.5f)),
-                            behaviourTag: NearHomeTag),
+                            nearHomeBonus: true),
                         Unit(SpecialistClass.EngineerBot, "Sapper",
                             Stats((CivUnitStat.Courage, 0.40f)))
                     }
                 },
 
-                // Placeholder: the id and the colours are real, the rest waits for the design.
-                // Until then it plays as the neutral civ and is not offered on the cards.
+                // Expansion and mobility. The name is provisional. Its castle is the D1 Stilt
+                // Arcology (Aaron, 2026-11-11); it stays off the cards until that model exists.
                 new CivDefinition
                 {
-                    id = CivId.CivD,
-                    displayName = "CivD",
-                    pitch = "",
-                    summary = "",
-                    castleKey = CivDefinition.SharedArtKey,
+                    id = CivId.PathfinderAccord,
+                    displayName = "Pathfinder Accord",
+                    pitch = "Expansion and mobility",
+                    summary = "Watchtowers, Ore Mines and Landing Pads 20% cheaper. Heroes 10% faster. Buildings go up 25% faster. Commons health 100.",
+                    castleKey = "castle.stilt_arcology",
                     playable = false,
-                    teamPrimary = new Color(0.059f, 0.165f, 0.165f),  // deep teal-black, #0F2A2A
-                    teamSecondary = new Color(0.122f, 0.643f, 0.388f) // emerald, #1FA463
+                    teamPrimary = new Color(0.078f, 0.133f, 0.149f),  // teal-black, #142226
+                    teamSecondary = new Color(0.051f, 0.600f, 0.329f), // emerald, #0D9954
+                    modifiers = new List<CivModifier>
+                    {
+                        CivModifier.Percent(CivStat.OutpostBuildingCost, 80),
+                        CivModifier.Percent(CivStat.HeroMoveSpeed, 110),
+                        CivModifier.Percent(CivStat.BuildTime, 75),
+                        CivModifier.Add(CivStat.CommonsHealth, -40, tradeOff: true)
+                    },
+                    roster = new List<CivUnitDefinition>
+                    {
+                        // New behaviour (phase 3): idles at the farthest owned building.
+                        Unit(SpecialistClass.SentinelMech, "Vanguard", behaviourTag: "vanguard_forward_post"),
+                        // TODO(roster PR): Snare Shot cooldown 30 -> 25 s needs a cooldown field on CivAbilityChange.
+                        Unit(SpecialistClass.SurveyorBot, "Cartographer"),
+                        Unit(SpecialistClass.Medic, "Trail Medic",
+                            Stats((CivUnitStat.DefendPreference, 0.60f), (CivUnitStat.ExplorePreference, 0.50f))),
+                        // TODO(roster PR): Outpost flag work 1.20 -> 1.35 has no CivUnitStat yet.
+                        Unit(SpecialistClass.CourierBot, "Strider",
+                            Stats((CivUnitStat.ExplorePreference, 1.0f))),
+                        // TODO(roster PR): build labour reach 28 -> 32 m has no CivUnitStat yet.
+                        Unit(SpecialistClass.EngineerBot, "Stakehand")
+                    }
                 }
             };
         }
-
-        /// <summary>
-        /// Marks a unit that is due a bonus while fighting near home (the Mandate's old gun damage
-        /// perk, moved onto its Bulwark and Picket). TODO: nothing reads this yet; it needs a
-        /// radius, an amount and a hook in hero combat, none of which the design has fixed.
-        /// </summary>
-        public const string NearHomeTag = "near_home_guard";
 
         private static CivUnitDefinition Unit(
             SpecialistClass baseClass,
             string name,
             List<CivUnitStatChange> stats = null,
             List<CivAbilityChange> abilities = null,
-            string behaviourTag = "")
+            string behaviourTag = "",
+            bool nearHomeBonus = false)
         {
             return new CivUnitDefinition
             {
@@ -251,7 +268,8 @@ namespace SolarMajesty
                 displayName = name,
                 stats = stats ?? new List<CivUnitStatChange>(),
                 abilities = abilities ?? new List<CivAbilityChange>(),
-                behaviourTag = behaviourTag
+                behaviourTag = behaviourTag,
+                nearHomeBonus = nearHomeBonus
             };
         }
 

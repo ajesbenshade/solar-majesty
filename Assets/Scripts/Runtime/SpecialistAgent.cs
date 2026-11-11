@@ -216,7 +216,7 @@ namespace SolarMajesty
         public ColonyStructure Workplace { get; private set; }
 
         public float EffectiveMoveSpeed =>
-            (data != null ? data.moveSpeed : 3.5f) *
+            (data != null ? CivRules.HeroMoveSpeed(_loop != null ? _loop.Civ : null, data.moveSpeed) : 3.5f) *
             (1f + _geneSpeed + SuitSpeedBonus()) *
             BodyMoveScale() *
             _statuses.SpeedMul;
@@ -776,7 +776,7 @@ namespace SolarMajesty
             if (!useNavMesh) return;
             _agent = GetComponent<NavMeshAgent>();
             if (_agent == null) _agent = gameObject.AddComponent<NavMeshAgent>();
-            _agent.speed = data != null ? data.moveSpeed : 3.5f;
+            _agent.speed = data != null ? CivRules.HeroMoveSpeed(_loop != null ? _loop.Civ : null, data.moveSpeed) : 3.5f;
             _agent.angularSpeed = 720f;
             _agent.acceleration = 18f;
             _agent.stoppingDistance = arriveDistance * 0.85f;
@@ -2061,7 +2061,19 @@ namespace SolarMajesty
 
         /// <summary>Normal strike damage per second against this kind of fauna.</summary>
         private float StrikeDps(FaunaKind kind) =>
-            EffectiveWorkRate * 8f * HuntDpsMul(kind) * LevelDpsMul * (1f + WeaponDamageBonus()) * _statuses.OutgoingMul;
+            EffectiveWorkRate * 8f * HuntDpsMul(kind) * LevelDpsMul * (1f + WeaponDamageBonus()) * _statuses.OutgoingMul *
+            CivStrikeMul();
+
+        /// <summary>
+        /// The civ's near-home bonus on strikes (the Mandate's Bulwark and Picket). Exactly 1 for
+        /// any other unit and away from home; the distance is only checked for units that have it.
+        /// </summary>
+        private float CivStrikeMul()
+        {
+            var civ = _loop != null ? _loop.Civ : null;
+            if (data == null || !CivRules.HasNearHomeBonus(civ, data.specialistClass)) return 1f;
+            return CivRules.StrikeDamageMul(civ, data.specialistClass, _loop.IsNearHome(transform.position));
+        }
 
         private void TickStatuses(float dt)
         {

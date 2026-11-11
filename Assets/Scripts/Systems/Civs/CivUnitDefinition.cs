@@ -80,13 +80,15 @@ namespace SolarMajesty
         public List<CivAbilityChange> abilities = new List<CivAbilityChange>();
         [Tooltip("Names a behaviour the game must implement (phase 3). Empty = none. Nothing reads it yet.")]
         public string behaviourTag = "";
+        [Tooltip("Strikes get the civ's NearHomeUnitDamage modifier while within the Commons radius (20 m).")]
+        public bool nearHomeBonus;
 
         public string DisplayNameText => Loc.S(displayName);
 
         /// <summary>True when this is the base class with nothing changed.</summary>
         public bool IsBase =>
             string.IsNullOrEmpty(displayName) && string.IsNullOrEmpty(modelKey) &&
-            string.IsNullOrEmpty(behaviourTag) &&
+            string.IsNullOrEmpty(behaviourTag) && !nearHomeBonus &&
             (stats == null || stats.Count == 0) && (abilities == null || abilities.Count == 0);
 
         /// <summary>The base class as it is today: the fallback for a role a civ does not list.</summary>
@@ -99,7 +101,8 @@ namespace SolarMajesty
             modelKey = modelKey,
             stats = stats != null ? new List<CivUnitStatChange>(stats) : new List<CivUnitStatChange>(),
             abilities = abilities != null ? new List<CivAbilityChange>(abilities) : new List<CivAbilityChange>(),
-            behaviourTag = behaviourTag
+            behaviourTag = behaviourTag,
+            nearHomeBonus = nearHomeBonus
         };
 
         /// <summary>The new value for <paramref name="stat"/>, if this unit changes it. The first entry wins.</summary>
