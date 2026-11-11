@@ -98,6 +98,58 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void Version8Save_LoadsAsTheNeutralCiv()
+        {
+            Assert.AreEqual(9, SaveGame.CurrentVersion, "civ arrived in v9");
+            File.WriteAllText(_path, "{\"version\":8,\"body\":0,\"seed\":9001}");
+            Assert.IsTrue(SaveSystem.TryRead(3, out var migrated));
+            Assert.AreEqual(SaveGame.CurrentVersion, migrated.version);
+            Assert.AreEqual((int)CivId.None, migrated.civ);
+            Assert.IsTrue(CivModifiers.For(CivCatalog.FromSaved(migrated.civ)).IsIdentity, "an old colony keeps today's rules");
+        }
+
+        [TestCase(1)]
+        [TestCase(5)]
+        [TestCase(8)]
+        public void OlderSave_ThatSomehowCarriesACiv_StillLoadsNeutral(int version)
+        {
+            // Nothing before v9 wrote the field, so a value there is not a choice the player made.
+            File.WriteAllText(_path, "{\"version\":" + version + ",\"body\":0,\"seed\":9001,\"civ\":2}");
+            Assert.IsTrue(SaveSystem.TryRead(3, out var migrated));
+            Assert.AreEqual((int)CivId.None, migrated.civ);
+        }
+
+        [TestCase(CivId.None)]
+        [TestCase(CivId.LumenConcord)]
+        [TestCase(CivId.TetherExchange)]
+        [TestCase(CivId.BastionMandate)]
+        [TestCase(CivId.CivD)]
+        public void Civ_RoundTripsThroughASlot(CivId civ)
+        {
+            Assert.IsTrue(SaveSystem.Write(3, new SaveGame { body = 0, seed = 9001, civ = (int)civ }));
+            Assert.IsTrue(SaveSystem.TryRead(3, out var loaded));
+            Assert.AreEqual((int)civ, loaded.civ);
+            Assert.AreEqual(civ, CivCatalog.FromSaved(loaded.civ));
+        }
+
+        [TestCase(99)]
+        [TestCase(-1)]
+        public void UnknownCiv_FallsBackToNeutral_AndStillLoads(int unknown)
+        {
+            var save = new SaveGame { body = 0, seed = 9001, label = "kept", civ = unknown };
+            File.WriteAllText(_path, JsonUtility.ToJson(save));
+            Assert.IsTrue(SaveSystem.TryRead(3, out var loaded));
+            Assert.AreEqual((int)CivId.None, loaded.civ);
+            Assert.AreEqual("kept", loaded.label, "the rest of the colony is untouched");
+        }
+
+        [Test]
+        public void NewSave_StartsOnTheNeutralCiv()
+        {
+            Assert.AreEqual((int)CivId.None, new SaveGame().civ);
+        }
+
+        [Test]
         public void InterruptedTemporaryWrite_DoesNotReplaceCompletePrimary()
         {
             Assert.IsTrue(SaveSystem.Write(3, new SaveGame { body = 0, seed = 9001, label = "complete" }));

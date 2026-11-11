@@ -427,6 +427,15 @@ namespace SolarMajesty
             // starter crew when it is 0, and the next drone waits a full interval.
             if (save.version < 8 && save.settlement != null)
                 save.settlement.droneSeconds = 0f;
+            // Before v9 there were no civs: those colonies were played with no perks, so they stay
+            // on the neutral civ. A number this build does not know also falls back to it.
+            if (save.version < 9)
+                save.civ = (int)CivId.None;
+            else if (!CivCatalog.IsKnown(save.civ))
+            {
+                Debug.LogWarning($"[SaveSystem] Slot {slot} names civ {save.civ}, which this build does not have; using the neutral civ.");
+                save.civ = (int)CivId.None;
+            }
             bool legacyFaunaOwnership = save.version < 4;
             bool legacyGoldScale = save.version < MajestyEconomy.GoldScaleSaveVersion;
             if (save.version < SaveGame.CurrentVersion)
