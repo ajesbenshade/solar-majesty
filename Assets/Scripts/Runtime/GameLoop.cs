@@ -548,6 +548,15 @@ namespace SolarMajesty
         private PlanetaryWorldGen _world;
         private CelestialBodyProfile _body;
         private TechEffects _tech = TechEffects.Neutral;
+        /// <summary>
+        /// This colony's civ rules. Built once in Awake from the save being loaded, or from the
+        /// new-game choice. The neutral civ changes nothing. Owned here, never static: multiplayer
+        /// builds one per player and resolves it from the owner.
+        /// TODO(civ UI, later PR): civ badge on the HUD, signature unit names on nameplates,
+        /// perk deltas in tooltips.
+        /// </summary>
+        private CivModifiers _civ = new CivModifiers(null);
+        public CivModifiers Civ => _civ;
         private bool _launchCraftStaged;
         private DemoScreen _settingsReturn = DemoScreen.Title;
         private IntroSequence _intro;
@@ -866,6 +875,10 @@ namespace SolarMajesty
             SaveGame pendingSave = null;
             bool pendingOk = pendingSlot >= 0 && SaveSystem.TryRead(pendingSlot, out pendingSave);
             _bootSlot = -1;
+            // A save being loaded decides the civ. With none (a new campaign, or a world this
+            // campaign has not saved yet) it is the carried choice.
+            CivId carriedCiv = CivChoice.Load();
+            CivId bootCiv = carriedCiv;
             if (freshCampaign)
             {
                 DemoSettings.SaveExists = false;
@@ -876,6 +889,7 @@ namespace SolarMajesty
                 DemoSettings.SaveExists = true;
                 CampaignSlots.AdoptStamp(pendingSave.campaignStamp);
                 celestialBody = (CelestialBodyId)pendingSave.body;
+                bootCiv = CivCatalog.FromSaved(pendingSave.civ);
                 CampaignProgress.UnlockThrough((CelestialBodyId)pendingSave.highestUnlocked);
                 CampaignProgress.UnlockThrough((CelestialBodyId)pendingSave.body);
                 ReplayRules.Restore(pendingSave.replay);
@@ -891,6 +905,7 @@ namespace SolarMajesty
                      && CampaignSlots.LiveSnapshotMatches(bootSave.campaignStamp))
             {
                 DemoSettings.SaveExists = true;
+                bootCiv = CivCatalog.FromSaved(bootSave.civ);
                 CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.highestUnlocked);
                 CampaignProgress.UnlockThrough((CelestialBodyId)bootSave.body);
                 // An explicit travel/retry request takes precedence over the last active planet.
@@ -917,6 +932,11 @@ namespace SolarMajesty
             }
             if (!CampaignProgress.IsUnlocked(celestialBody))
                 celestialBody = CelestialBodyId.Earth;
+            // Keep the carried choice in step with the campaign, so travel to a world with no
+            // save of its own still boots this civ.
+            if (bootCiv != carriedCiv)
+                CivChoice.Set(bootCiv);
+            _civ = CivModifiers.For(bootCiv);
             _body = CelestialBodyCatalog.Get(celestialBody);
             ModularBuildingFactory.BindBody(_body);
             IndustrialArtDressing.BindBody(_body);
@@ -6197,7 +6217,8 @@ namespace SolarMajesty
                 rosterBlob = SpecialistRoster.Encode(CaptureRoster()),
                 firstHourDemo = DemoSettings.FirstHourDemo,
                 tutorialDone = DemoSettings.TutorialDone,
-                stats = JsonUtility.FromJson<RunStats>(JsonUtility.ToJson(Stats))
+                civ = (int)_civ.Id,
+                stats =JsonUtility.FromJson<RunStats>(JsonUtility.ToJson(Stats))
             };
 
             if (Resources != null)
@@ -6421,6 +6442,15 @@ namespace SolarMajesty
         {
             // Never pour one planet's entities onto another planet (or a regenerated seed).
             if (save == null || !save.MatchesWorld(celestialBody, BodySeed.Current)) return false;
+
+            // The save decides the civ. Awake normally read the same file, so this is a no-op;
+            // it matters when a save is applied to a colony that booted without it.
+            CivId savedCiv = CivCatalog.FromSaved(save.civ);
+            if (savedCiv != _civ.Id)
+            {
+                _civ = CivModifiers.For(savedCiv);
+                CivChoice.Set(savedCiv);
+            }
 
             if (Resources != null)
             {
