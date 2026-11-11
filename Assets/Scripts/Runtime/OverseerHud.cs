@@ -60,6 +60,8 @@ namespace SolarMajesty
         private bool _pauseSlotsAreLoad;
         private bool _pendingUnlockThrough;
         private int _newCampaignSlot = 1;
+        /// <summary>Civ picked on the new-campaign dialog. Reset to the neutral civ each time it opens.</summary>
+        private CivId _newCampaignCiv = CivId.None;
         private CelestialBodyId _pendingNewGameBody = CelestialBodyId.Earth;
         private float _toastStart;
         private ColonyStructure _cardFor;
@@ -167,6 +169,7 @@ namespace SolarMajesty
             _pendingNewGameBody = body;
             _pendingUnlockThrough = unlockThrough;
             _newCampaignSlot = CampaignSlots.SlotReplacedByNewCampaign(_newCampaignSlot);
+            _newCampaignCiv = CivId.None;
             _titleLoad = false;
             _confirmNewGame = true;
         }
@@ -3266,6 +3269,7 @@ namespace SolarMajesty
                 _pendingNewGameBody = CampaignProgress.NewGameBody;
                 _pendingUnlockThrough = false;
                 _newCampaignSlot = 1;
+                _newCampaignCiv = CivId.None;
                 _confirmNewGame = true;
             }
             if (DemoSettings.SaveExists)
@@ -3369,7 +3373,7 @@ namespace SolarMajesty
         private void DrawCampaignDialog(bool newCampaign)
         {
             // The dialog hugs what it drew last pass (wrapped copy, slot count, text size).
-            float h = Mathf.Max(newCampaign ? 418f : 360f, _dialogMeasuredH);
+            float h = Mathf.Max(newCampaign ? 548f : 360f, _dialogMeasuredH);
             h = Mathf.Min(h, _sh - 20f);
             float dw = Mathf.Min(W(460f), _sw - M * 2f);
             var rect = new Rect((_sw - dw) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), dw, h);
@@ -3382,6 +3386,7 @@ namespace SolarMajesty
             {
                 FitLabel(new Rect(c.x, y, c.width, L(14f)), ReplayRules.NewCampaignChallengeLine, _micro);
                 y += L(18f);
+                y = DrawCivCards(c, y);
             }
             var slots = SaveSystem.ListSlots();
             float slotH = L(28f);
@@ -3408,11 +3413,12 @@ namespace SolarMajesty
                 int slot = _newCampaignSlot;
                 var body = _pendingNewGameBody;
                 bool unlock = _pendingUnlockThrough;
+                CivId civ = _newCampaignCiv;
                 _confirmNewGame = false;
                 if (unlock)
-                    _loop.StartNewGameOn(body, slot);
+                    _loop.StartNewGameOn(body, slot, civ);
                 else
-                    _loop.StartNewGame(body, slot);
+                    _loop.StartNewGame(body, slot, civ);
             }
             if (!newCampaign) y -= 4f;
             float backY = newCampaign ? y + L(32f) + 8f : y;
@@ -3428,6 +3434,50 @@ namespace SolarMajesty
                 _titleLoad = false;
                 Event.current.Use();
             }
+        }
+
+        /// <summary>
+        /// New-campaign civ picker: one card per playable civ, then the neutral default. The cards
+        /// come from the catalog, so a new civ is a data change. Returns the next free y.
+        /// TODO(civ UI, later PR): perk deltas in the card tooltip, castle thumbnail.
+        /// </summary>
+        private float DrawCivCards(Rect c, float y)
+        {
+            FitLabel(new Rect(c.x, y, c.width, L(14f)), Loc.S("CIVILIZATION"), _micro);
+            y += L(18f);
+
+            var civs = CivCatalog.Playable();
+            if (civs.Count > 0)
+            {
+                const float gap = 6f;
+                float cardW = (c.width - gap * (civs.Count - 1)) / civs.Count;
+                float cardH = L(40f);
+                for (int i = 0; i < civs.Count; i++)
+                {
+                    var def = civs[i];
+                    var card = new Rect(c.x + i * (cardW + gap), y, cardW, cardH);
+                    bool picked = def.id == _newCampaignCiv;
+                    if (Btn(card, def.DisplayNameText.ToUpperInvariant(), picked ? _chipOn : _chipOff,
+                            new HudTip(def.DisplayNameText, def.PitchText + ". " + def.SummaryText)))
+                        _newCampaignCiv = def.id;
+                    // The civ's two team colours along the foot of its card.
+                    float half = (card.width - 12f) * 0.5f;
+                    HudSkin.Pill(new Rect(card.x + 6f, card.yMax - 7f, half, 3f), def.teamPrimary);
+                    HudSkin.Pill(new Rect(card.x + 6f + half, card.yMax - 7f, half, 3f), def.teamSecondary);
+                }
+                y += cardH + 6f;
+            }
+
+            var standard = CivCatalog.Get(CivId.None);
+            bool neutral = _newCampaignCiv == CivId.None;
+            if (Btn(new Rect(c.x, y, c.width, L(26f)),
+                    Loc.F("{0}  ·  no perks", standard.DisplayNameText.ToUpperInvariant()),
+                    neutral ? _chipOn : _chipOff))
+                _newCampaignCiv = CivId.None;
+            y += L(26f) + 6f;
+
+            var chosen = CivCatalog.Get(_newCampaignCiv) ?? standard;
+            return WrapBlock(c, y, chosen.PitchText + ". " + chosen.SummaryText);
         }
 
         private void DrawPause()

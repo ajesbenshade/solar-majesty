@@ -52,6 +52,20 @@ namespace SolarMajesty.Tests
             Assert.AreEqual((int)CivId.None, GamePrefs.GetInt(CivChoice.PrefsKey, -1));
         }
 
+        [TestCase("StartNewGame")]
+        [TestCase("StartNewGameOn")]
+        public void NewGameMethods_DefaultToTheNeutralCiv(string method)
+        {
+            // Autoplay, benchmark and the shot harnesses call these without a civ.
+            var info = typeof(GameLoop).GetMethod(method,
+                new[] { typeof(CelestialBodyId), typeof(int), typeof(CivId) });
+            Assert.IsNotNull(info, method);
+            var parameters = info.GetParameters();
+            Assert.IsTrue(parameters[1].IsOptional);
+            Assert.IsTrue(parameters[2].IsOptional);
+            Assert.AreEqual((int)CivId.None, System.Convert.ToInt32(parameters[2].DefaultValue));
+        }
+
         [Test]
         public void ChosenCiv_ReachesTheSave()
         {

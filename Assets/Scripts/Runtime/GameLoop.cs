@@ -1263,6 +1263,7 @@ namespace SolarMajesty
         {
             CampaignProgress.ResetCampaign();
             BeginFreshFiles(slot);
+            CivChoice.Set(CivId.None);
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
@@ -1270,13 +1271,18 @@ namespace SolarMajesty
             ReloadActiveScene();
         }
 
-        /// <summary>Start a fresh campaign on the selected world; Earth is the default.</summary>
-        public void StartNewGame(CelestialBodyId drop, int slot = 1)
+        /// <summary>
+        /// Start a fresh campaign on the selected world; Earth is the default. <paramref name="civ"/>
+        /// is carried across the reload by <see cref="CivChoice"/>; callers that leave it out
+        /// (autoplay, benchmark and shot harnesses) get the neutral civ.
+        /// </summary>
+        public void StartNewGame(CelestialBodyId drop, int slot = 1, CivId civ = CivId.None)
         {
             if (!CampaignProgress.IsOnSpine(drop))
                 drop = CampaignProgress.NewGameBody;
             CampaignProgress.BeginNewGame(drop);
             BeginFreshFiles(slot);
+            CivChoice.Set(civ);
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             if (drop == CelestialBodyId.Mars)
@@ -1289,12 +1295,14 @@ namespace SolarMajesty
             ReloadActiveScene();
         }
 
-        public void StartNewGameOn(CelestialBodyId body, int slot = 1)
+        /// <summary>As <see cref="StartNewGame(CelestialBodyId,int,CivId)"/>, unlocking the campaign through <paramref name="body"/>.</summary>
+        public void StartNewGameOn(CelestialBodyId body, int slot = 1, CivId civ = CivId.None)
         {
             ResearchManager.WipeUnlocks();
             CampaignProgress.ResetCampaign();
             CampaignProgress.UnlockThrough(body);
             BeginFreshFiles(slot);
+            CivChoice.Set(civ);
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
             DemoSettings.ResetTutorial();
