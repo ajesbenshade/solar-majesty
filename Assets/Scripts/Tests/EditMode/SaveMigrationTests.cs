@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace SolarMajesty.Tests
 {
@@ -95,6 +96,79 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(SaveSystem.TryRead(3, out var migrated));
             Assert.AreEqual(1, migrated.fauna[0].lairIndex);
             Assert.AreEqual(-1, migrated.fauna[1].lairIndex);
+        }
+
+        [Test]
+        public void LoadMenu_ParsesAnOldSlotOnceAndLogsItsMigrationOnce()
+        {
+            // Session 31: an unloaded v7 slot was re-migrated and logged ~43 times a second while
+            // the load dialog was open, because the dialog lists slots every GUI pass.
+            File.WriteAllText(_path, "{\"version\":7,\"body\":0,\"seed\":9001}");
+            LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex("Migrating slot .* from v7"));
+            for (int i = 0; i < 5; i++)
+            {
+                var slots = SaveSystem.ListSlots();
+                Assert.IsTrue(slots[3].Occupied);
+            }
+            LogAssert.NoUnexpectedReceived();
+
+            // A new write to the slot is picked up on the next pass.
+            var fresh = new SaveGame { version = SaveGame.CurrentVersion, body = 0, seed = 4242, playSeconds = 99 };
+            Assert.IsTrue(SaveSystem.Write(3, fresh));
+            SaveSystem.Flush();
+            Assert.AreEqual(99, SaveSystem.ListSlots()[3].PlaySeconds, 1e-6);
+        }
+
+        [Test]
+        public void Version8Save_LoadsAsTheNeutralCiv()
+        {
+            Assert.AreEqual(9, SaveGame.CurrentVersion, "civ arrived in v9");
+            File.WriteAllText(_path, "{\"version\":8,\"body\":0,\"seed\":9001}");
+            Assert.IsTrue(SaveSystem.TryRead(3, out var migrated));
+            Assert.AreEqual(SaveGame.CurrentVersion, migrated.version);
+            Assert.AreEqual((int)CivId.None, migrated.civ);
+            Assert.IsTrue(CivModifiers.For(CivCatalog.FromSaved(migrated.civ)).IsIdentity, "an old colony keeps today's rules");
+        }
+
+        [TestCase(1)]
+        [TestCase(5)]
+        [TestCase(8)]
+        public void OlderSave_ThatSomehowCarriesACiv_StillLoadsNeutral(int version)
+        {
+            // Nothing before v9 wrote the field, so a value there is not a choice the player made.
+            File.WriteAllText(_path, "{\"version\":" + version + ",\"body\":0,\"seed\":9001,\"civ\":2}");
+            Assert.IsTrue(SaveSystem.TryRead(3, out var migrated));
+            Assert.AreEqual((int)CivId.None, migrated.civ);
+        }
+
+        [TestCase(CivId.None)]
+        [TestCase(CivId.LumenConcord)]
+        [TestCase(CivId.TetherExchange)]
+        [TestCase(CivId.BastionMandate)]
+        [TestCase(CivId.PathfinderAccord)]
+        public void Civ_RoundTripsThroughASlot(CivId civ)
+        {
+            Assert.IsTrue(SaveSystem.Write(3, new SaveGame { body = 0, seed = 9001, civ = (int)civ }));
+            Assert.IsTrue(SaveSystem.TryRead(3, out var loaded));
+            Assert.AreEqual((int)civ, loaded.civ);
+            Assert.AreEqual(civ, CivCatalog.FromSaved(loaded.civ));
+        }
+
+        [TestCase(99)]
+        [TestCase(-1)]
+        public void UnknownCiv_FallsBackToNeutral_AndStillLoads(int unknown)
+        {
+            var save = new SaveGame { body = 0, seed = 9001, label = "kept", civ = unknown };
+            File.WriteAllText(_path, JsonUtility.ToJson(save));
+            Assert.IsTrue(SaveSystem.TryRead(3, out var loaded));
+            Assert.AreEqual((int)CivId.None, loaded.civ);
+            Assert.AreEqual("kept", loaded.label, "the rest of the colony is untouched");
+        }
+
+        [Test]
+        public void NewSave_StartsOnTheNeutralCiv()
+        {
+            Assert.AreEqual((int)CivId.None, new SaveGame().civ);
         }
 
         [Test]

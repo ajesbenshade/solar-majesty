@@ -178,7 +178,7 @@ namespace SolarMajesty
                 GridCell = gridCell,
                 WorldPosition = worldPosition,
                 ProgressSeconds = 0f,
-                RequiredSeconds = Mathf.Max(0.1f, data.buildTimeSeconds),
+                RequiredSeconds = BuildSecondsFor(data),
                 PaidCost = cost
             };
 
@@ -208,19 +208,35 @@ namespace SolarMajesty
         public ResourceAmount[] CostFor(BuildingData data)
         {
             if (data?.buildCost == null || data.buildCost.Length == 0) return data?.buildCost;
-            if (!MajestyEconomy.ScalesWithCount(data.category)) return data.buildCost;
-            int owned = OwnedOrQueued(data.category);
-            if (owned <= 0) return data.buildCost;
+            // The civ moves the first price (outpost buildings only); the surcharge goes on top.
+            bool civPrice = Civ != null && CivRules.IsOutpostBuilding(data.category) &&
+                            Civ.Changes(CivStat.OutpostBuildingCost);
+            int owned = MajestyEconomy.ScalesWithCount(data.category) ? OwnedOrQueued(data.category) : 0;
+            if (!civPrice && owned <= 0) return data.buildCost;
             var cost = new ResourceAmount[data.buildCost.Length];
             for (int i = 0; i < cost.Length; i++)
             {
                 var c = data.buildCost[i];
-                cost[i] = c.resource == ResourceId.Metals
-                    ? new ResourceAmount(c.resource, MajestyEconomy.DuplicateCost(c.amount, owned))
-                    : c;
+                if (c.resource != ResourceId.Metals)
+                {
+                    cost[i] = c;
+                    continue;
+                }
+                int first = civPrice ? CivRules.BuildingPrice(Civ, data.category, c.amount) : c.amount;
+                cost[i] = new ResourceAmount(c.resource, owned > 0 ? MajestyEconomy.DuplicateCost(first, owned) : first);
             }
             return cost;
         }
+
+        /// <summary>
+        /// The civ of whoever places with this placer: it moves outpost prices and build times.
+        /// Null is the neutral civ. Set by the owner (GameLoop today, one placer per player later).
+        /// </summary>
+        public CivModifiers Civ { get; set; }
+
+        /// <summary>Seconds <paramref name="data"/> takes to go up for this placer's civ.</summary>
+        public float BuildSecondsFor(BuildingData data) =>
+            Mathf.Max(0.1f, CivRules.BuildSeconds(Civ, data != null ? data.buildTimeSeconds : 0f));
 
         /// <summary>Replay a saved piece without charging stockpile.</summary>
         public bool TryRestore(
@@ -235,7 +251,7 @@ namespace SolarMajesty
             if (!CanFit(data, gridCell)) return false;
 
             MarkFootprint(data, gridCell, occupied: true);
-            float required = Mathf.Max(0.1f, data.buildTimeSeconds);
+            float required = BuildSecondsFor(data);
             order = new ConstructionOrder
             {
                 Id = _nextId++,

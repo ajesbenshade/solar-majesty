@@ -14,7 +14,7 @@ namespace SolarMajesty
     public sealed class SaveGame
     {
         /// <summary>Bump when a field's meaning changes. Readers reject unknown future versions.</summary>
-        public const int CurrentVersion = 8; // v8: settlement.population counts worker drones (+ droneSeconds)
+        public const int CurrentVersion = 9; // v9: civ (v8: settlement.population counts worker drones)
 
         public int version = CurrentVersion;
         public string gameVersion = "";
@@ -37,6 +37,12 @@ namespace SolarMajesty
         public string rosterBlob;
         public bool firstHourDemo;
         public bool tutorialDone;
+        /// <summary>
+        /// The campaign's civilization, as a <see cref="CivId"/> number. Fixed for the slot across
+        /// worlds. Files from before v9 have none and load as 0 (None: no perks), which is the
+        /// game they were played in. TODO(multiplayer): becomes one entry per player.
+        /// </summary>
+        public int civ;
         /// <summary>
         /// This world's tallies, so achievements like Full Crew or Rebuilder survive quit and Continue.
         /// Older files read as zeros, which is what they already had after a reload.

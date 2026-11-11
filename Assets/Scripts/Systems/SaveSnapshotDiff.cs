@@ -38,6 +38,7 @@ namespace SolarMajesty
 
             d.Eq("body", expected.body, actual.body);
             d.Eq("seed", expected.seed, actual.seed);
+            d.Eq("civ", expected.civ, actual.civ);
             d.Eq("campaignStamp", expected.campaignStamp ?? "", actual.campaignStamp ?? "");
             d.Eq("simSteps", expected.simSteps, actual.simSteps);
             d.Eq("tutorialDone", expected.tutorialDone, actual.tutorialDone);

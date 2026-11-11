@@ -11,6 +11,9 @@ namespace SolarMajesty
     {
         private readonly List<ColonyStructure> _structures = new List<ColonyStructure>(24);
         private GameLoop _loop;
+
+        /// <summary>The owning colony's civ (null before Bind, which is the neutral civ).</summary>
+        private CivModifiers Civ => _loop != null ? _loop.Civ : null;
         private Transform _root;
 
         public IReadOnlyList<ColonyStructure> Structures => _structures;
@@ -192,7 +195,7 @@ namespace SolarMajesty
             ClearProject();
             _growCooldown = VillageGrowth.CooldownSeconds;
             if (raised)
-                _loop.LogOverseer(Loc.F("Bots built a {0}. It pays {1:N0} EU a day.", VillageName(data.category), MajestyEconomy.DailyTax(data.category)));
+                _loop.LogOverseer(Loc.F("Bots built a {0}. It pays {1:N0} EU a day.", VillageName(data.category), CivRules.DailyTax(Civ, data.category)));
         }
 
         private void ClearProject()
@@ -251,7 +254,7 @@ namespace SolarMajesty
             var st = go.GetComponent<ColonyStructure>();
             if (st == null)
                 st = go.AddComponent<ColonyStructure>();
-            float hp = cat == BuildingCategory.Commons ? 140f
+            float hp = cat == BuildingCategory.Commons ? CivRules.CommonsHealth(Civ)
                 : ColonyStructure.IsWonderCategory(cat) ? 120f
                 : role == StructureRole.Inn ? 80f
                 : role == StructureRole.Workshop || role == StructureRole.Guild ? 70f
@@ -641,9 +644,9 @@ namespace SolarMajesty
                 var hub = CommonsHub();
                 float d = hub != null ? Flat(s.WorldPosition, hub.WorldPosition) : 0f;
                 float yield = set != null ? set.MineYieldScale : 1f;
-                return Mathf.RoundToInt(MajestyEconomy.MineDailyEnergy(d) * yield);
+                return Mathf.RoundToInt(CivRules.TradeGold(Civ, MajestyEconomy.MineDailyEnergy(d)) * yield);
             }
-            int tax = MajestyEconomy.DailyTax(s.Category);
+            int tax = CivRules.DailyTax(Civ, s.Category);
             if (s.Category == BuildingCategory.Farm && set != null)
                 tax = Mathf.RoundToInt(tax * set.FarmTaxScale);
             return tax;
