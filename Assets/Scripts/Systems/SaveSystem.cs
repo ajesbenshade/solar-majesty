@@ -398,6 +398,8 @@ namespace SolarMajesty
             }
         }
 
+        private static readonly HashSet<string> MigrationLogged = new HashSet<string>();
+
         private static bool TryMigrate(SaveGame save, string slot)
         {
             if (save.version > SaveGame.CurrentVersion)
@@ -440,7 +442,9 @@ namespace SolarMajesty
             bool legacyGoldScale = save.version < MajestyEconomy.GoldScaleSaveVersion;
             if (save.version < SaveGame.CurrentVersion)
             {
-                Debug.Log($"[SaveSystem] Migrating slot {slot} from v{save.version} to v{SaveGame.CurrentVersion}.");
+                // Load menus read every slot each GUI pass; say it once per file and version.
+                if (MigrationLogged.Add(slot + "|" + save.version))
+                    Debug.Log($"[SaveSystem] Migrating slot {slot} from v{save.version} to v{SaveGame.CurrentVersion}.");
                 save.version = SaveGame.CurrentVersion;
             }
 
@@ -521,26 +525,56 @@ namespace SolarMajesty
         /// <summary>Header info for every populated slot, for a load menu.</summary>
         public static List<SaveSlotInfo> ListSlots()
         {
+            Flush();
             var list = new List<SaveSlotInfo>(SlotCount);
             for (int i = 0; i < SlotCount; i++)
             {
-                if (!TryRead(i, out SaveGame save))
+                // The load and save dialogs call this every GUI pass. Re-parse a slot only when
+                // its file (or its .bak) changed on disk, instead of reading every file each frame.
+                string stamp = SlotStamp(SlotPath(i));
+                if (SlotInfoCache.TryGetValue(i, out var cached) && cached.Stamp == stamp)
                 {
-                    list.Add(new SaveSlotInfo { Slot = i, Occupied = false });
+                    list.Add(cached.Info);
                     continue;
                 }
-
-                list.Add(new SaveSlotInfo
-                {
-                    Slot = i,
-                    Occupied = true,
-                    Summary = save.Describe(),
-                    SavedAtUtc = save.savedAtUtc,
-                    Body = (CelestialBodyId)save.body,
-                    PlaySeconds = save.playSeconds
-                });
+                var info = ReadSlotInfo(i);
+                SlotInfoCache[i] = (stamp, info);
+                list.Add(info);
             }
             return list;
+        }
+
+        private static readonly Dictionary<int, (string Stamp, SaveSlotInfo Info)> SlotInfoCache =
+            new Dictionary<int, (string Stamp, SaveSlotInfo Info)>();
+
+        private static string SlotStamp(string path)
+        {
+            string One(string p)
+            {
+                try
+                {
+                    var fi = new FileInfo(p);
+                    return fi.Exists ? fi.LastWriteTimeUtc.Ticks + ":" + fi.Length : "-";
+                }
+                catch (Exception) { return "?"; }
+            }
+            return SaveDirectory + "|" + One(path) + "|" + One(path + ".bak");
+        }
+
+        private static SaveSlotInfo ReadSlotInfo(int i)
+        {
+            if (!TryRead(i, out SaveGame save))
+                return new SaveSlotInfo { Slot = i, Occupied = false };
+
+            return new SaveSlotInfo
+            {
+                Slot = i,
+                Occupied = true,
+                Summary = save.Describe(),
+                SavedAtUtc = save.savedAtUtc,
+                Body = (CelestialBodyId)save.body,
+                PlaySeconds = save.playSeconds
+            };
         }
 
         /// <summary>Most recently written slot, or -1 when nothing is saved.</summary>

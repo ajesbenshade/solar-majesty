@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace SolarMajesty.Tests
 {
@@ -95,6 +96,27 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(SaveSystem.TryRead(3, out var migrated));
             Assert.AreEqual(1, migrated.fauna[0].lairIndex);
             Assert.AreEqual(-1, migrated.fauna[1].lairIndex);
+        }
+
+        [Test]
+        public void LoadMenu_ParsesAnOldSlotOnceAndLogsItsMigrationOnce()
+        {
+            // Session 31: an unloaded v7 slot was re-migrated and logged ~43 times a second while
+            // the load dialog was open, because the dialog lists slots every GUI pass.
+            File.WriteAllText(_path, "{\"version\":7,\"body\":0,\"seed\":9001}");
+            LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex("Migrating slot .* from v7"));
+            for (int i = 0; i < 5; i++)
+            {
+                var slots = SaveSystem.ListSlots();
+                Assert.IsTrue(slots[3].Occupied);
+            }
+            LogAssert.NoUnexpectedReceived();
+
+            // A new write to the slot is picked up on the next pass.
+            var fresh = new SaveGame { version = SaveGame.CurrentVersion, body = 0, seed = 4242, playSeconds = 99 };
+            Assert.IsTrue(SaveSystem.Write(3, fresh));
+            SaveSystem.Flush();
+            Assert.AreEqual(99, SaveSystem.ListSlots()[3].PlaySeconds, 1e-6);
         }
 
         [Test]

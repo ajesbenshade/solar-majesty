@@ -3468,8 +3468,9 @@ namespace SolarMajesty
                     var def = civs[i];
                     var card = new Rect(c.x + i * (cardW + gap), y, cardW, cardH);
                     bool picked = def.id == _newCampaignCiv;
-                    if (Btn(card, def.DisplayNameText.ToUpperInvariant(), picked ? _chipOn : _chipOff,
-                            new HudTip(def.DisplayNameText, def.PitchText + ". " + def.SummaryText)))
+                    // No hover tip: the paragraph under the cards already shows the picked civ's
+                    // pitch, and a tip over it covered that text and ran past the dialog edge.
+                    if (Btn(card, def.DisplayNameText.ToUpperInvariant(), picked ? _chipOn : _chipOff))
                         _newCampaignCiv = def.id;
                     // The civ's two team colours along the foot of its card.
                     float half = (card.width - 12f) * 0.5f;
