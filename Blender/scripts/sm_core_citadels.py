@@ -18,7 +18,7 @@ Scale: geometry is authored at concept proportions (~12.5 m footprint) and multi
 uniform CASTLE_SCALE (default 18/12.5 = 1.44, the 12 x 1.5 m Commons plot). The Core scales with it.
 Override: blender -b -P sm_core_citadels.py -- --scale 1.44 --blend-dir /some/dir
 
-One shared 2048 trim sheet (procedural, deterministic) in Assets/Art/Citadels/Textures/:
+One shared 2048 trim sheet (procedural, deterministic) in Assets/Resources/Citadels/Textures/ (Resources: CivCastleLoader loads by path):
   SM_Citadel_Trim_BaseColor.png, _Normal.png (OpenGL/+Y), _ORM.png (R AO, G rough, B metal),
   _MetallicSmoothness.png (URP: R metal, A smoothness), _Emission.png (white mask; tint HDR cyan in Unity).
 Material slots (max 4): Trim, Carbon, TeamColour (neutral grey band, tint per team), CoreEmission.
@@ -39,7 +39,7 @@ from mathutils.bvhtree import BVHTree
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
-OUT_DIR = PROJECT_ROOT / "Assets" / "Art" / "Citadels"
+OUT_DIR = PROJECT_ROOT / "Assets" / "Resources" / "Citadels"
 TEX_DIR = OUT_DIR / "Textures"
 
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []

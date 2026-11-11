@@ -23,6 +23,7 @@ namespace SolarMajesty.Tests
             _grid = gridGo.AddComponent<IsoGrid>();
             _grid.Resize(64, 64);
             LogAssert.ignoreFailingMessages = true;
+            ModularBuildingFactory.BindCiv(null); // neutral civ: the procedural Commons
         }
 
         [TearDown]
@@ -40,7 +41,10 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(FindChild(commons.transform, "CommonsDome"),
                 "upper command tier, not a geodesic lattice");
             Assert.IsNotNull(FindChild(commons.transform, "CommonsRoofDeck"), "flat roof deck, no bubble dome");
-            var tier = FindChild(commons.transform, "CommonsDome").GetComponent<MeshFilter>();
+            // CommonsDome is a mesh on the procedural Commons and an anchor (empty) on the civ
+            // castles: accept the mesh on the anchor or under it.
+            var tier = FindChild(commons.transform, "CommonsDome").GetComponentInChildren<MeshFilter>(true);
+            Assert.IsNotNull(tier, "neutral Commons: the command tier carries a mesh");
             Assert.IsFalse(tier.sharedMesh.name.Contains("Sphere"), "the bubble dome is gone");
             Assert.AreEqual(12, ColonyLayout.FootprintSide(BuildingCategory.Commons), "castle-sized: three guild halls wide");
             Assert.IsNotNull(FindChild(commons.transform, "CommonsKeep"), "a keep");

@@ -196,6 +196,29 @@ namespace SolarMajesty
         /// <summary>True when <paramref name="c"/> is, or reads as, the Core cyan or the pod amber.</summary>
         public static bool IsReserved(Color c) =>
             Distance(c, CoreCyan) < ReservedDistance || Distance(c, PodAmber) < ReservedDistance;
+
+        /// <summary>
+        /// The threat reds the game warns with. Mirrors <c>FlagMarker.threatColor</c> (threat
+        /// flags), <c>MapOverlay.DangerHot</c> (danger heat on the map) and <c>UiIcons.Red</c>
+        /// (alert icons). A player accent must never be mistaken for one of these.
+        /// </summary>
+        public static readonly Color ThreatFlagRed = new Color(1f, 0.3f, 0.25f);
+        public static readonly Color DangerMapRed = new Color(0.95f, 0.28f, 0.20f);
+        public static readonly Color AlertIconRed = new Color(0.95f, 0.34f, 0.28f);
+
+        /// <summary>HSV hue in degrees (0..360), saturation and value (0..1).</summary>
+        public static void Hsv(Color c, out float hueDegrees, out float saturation, out float value)
+        {
+            Color.RGBToHSV(c, out float h, out saturation, out value);
+            hueDegrees = h * 360f;
+        }
+
+        /// <summary>Shortest distance between two hues, in degrees (0..180).</summary>
+        public static float HueGap(float a, float b)
+        {
+            float d = Mathf.Abs(Mathf.Repeat(a - b, 360f));
+            return d > 180f ? 360f - d : d;
+        }
     }
 
     /// <summary>
@@ -240,10 +263,114 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// True when a player may pick <paramref name="accent"/>: it is not cyan, amber or a team
-        /// colour, and no other player already holds it (<paramref name="takenByOthers"/>).
+        /// True when a player may pick <paramref name="accent"/>: it is not cyan, amber, a team
+        /// colour, the Exchange violet or a threat red, and no other player already holds it
+        /// (<paramref name="takenByOthers"/>). Use the overload with a civ once the civ is known.
         /// </summary>
         public static bool CanUse(Color accent, IReadOnlyList<Color> takenByOthers) =>
-            !IsReservedOrTeamColour(accent) && !IsTaken(accent, takenByOthers);
+            !IsReservedOrTeamColour(accent) && !ReadsAsExchangeViolet(accent) && !ReadsAsThreatRed(accent) &&
+            !IsTaken(accent, takenByOthers);
+
+        /// <summary>
+        /// As <see cref="CanUse(Color, IReadOnlyList{Color})"/>, and the accent must not outshine
+        /// <paramref name="civ"/>'s colour (<see cref="OutshinesCiv"/>), so the civ reads first from
+        /// the play camera and the accent only tells two players on the same civ apart.
+        /// </summary>
+        public static bool CanUse(Color accent, CivId civ, IReadOnlyList<Color> takenByOthers) =>
+            CanUse(accent, takenByOthers) && !OutshinesCiv(accent, civ);
+
+        // ---- civ colour first ------------------------------------------------------------
+
+        /// <summary>Slack on the brightness / saturation comparison, so float noise never flips a verdict.</summary>
+        public const float OutshineSlack = 0.005f;
+
+        /// <summary>
+        /// The colour a civ is recognised by: <see cref="CivDefinition.teamSecondary"/>, which the
+        /// castles paint on their TeamColour bands (ivory hull with bronze bands, graphite with
+        /// violet, sage with oxide red, teal-black with emerald). Null for the neutral civ.
+        /// </summary>
+        public static Color? CivColour(CivId civ)
+        {
+            if (civ == CivId.None) return null;
+            var def = CivCatalog.Get(civ);
+            if (def == null || def.id == CivId.None) return null;
+            return def.teamSecondary;
+        }
+
+        /// <summary>
+        /// True when <paramref name="accent"/> is brighter (HSV value) or more saturated (HSV
+        /// saturation) than <paramref name="civ"/>'s colour (<see cref="CivColour"/>). The neutral
+        /// civ has no colour to protect, so nothing outshines it.
+        /// </summary>
+        public static bool OutshinesCiv(Color accent, CivId civ)
+        {
+            var civColour = CivColour(civ);
+            if (!civColour.HasValue) return false;
+            CivPalette.Hsv(accent, out _, out float s, out float v);
+            CivPalette.Hsv(civColour.Value, out _, out float cs, out float cv);
+            return v > cv + OutshineSlack || s > cs + OutshineSlack;
+        }
+
+        /// <summary>
+        /// The accent actually painted for <paramref name="civ"/>. No accent picked: the civ
+        /// colour a shade darker, so the accent bands read as part of the civ. An accent that
+        /// outshines the civ (an old or hand-edited setting) keeps its hue but has its saturation
+        /// and value capped at the civ colour's.
+        /// </summary>
+        public static Color ForCastle(Color? accent, CivId civ)
+        {
+            var civColour = CivColour(civ);
+            if (!accent.HasValue)
+            {
+                if (!civColour.HasValue) return new Color(0.5f, 0.5f, 0.5f);
+                CivPalette.Hsv(civColour.Value, out float h0, out float s0, out float v0);
+                return Color.HSVToRGB(h0 / 360f, s0, v0 * 0.8f);
+            }
+            if (!civColour.HasValue || !OutshinesCiv(accent.Value, civ)) return accent.Value;
+            CivPalette.Hsv(accent.Value, out float h, out float s, out float v);
+            CivPalette.Hsv(civColour.Value, out _, out float cs, out float cv);
+            return Color.HSVToRGB(h / 360f, Mathf.Min(s, cs), Mathf.Min(v, cv));
+        }
+
+        // ---- colours an accent may never look like --------------------------------------
+
+        /// <summary>Hues closer than this to the Exchange violet read as violet.</summary>
+        public const float VioletHueWindow = 22f;
+        /// <summary>Hues closer than this to the threat reds read as a warning.</summary>
+        public const float ThreatHueWindow = 16f;
+
+        /// <summary>
+        /// True when <paramref name="c"/> reads as the Tether Exchange violet
+        /// (<see cref="CivDefinition.teamSecondary"/> of <see cref="CivId.TetherExchange"/>): close in
+        /// RGB, or a clearly coloured hue within <see cref="VioletHueWindow"/> of it.
+        /// </summary>
+        public static bool ReadsAsExchangeViolet(Color c)
+        {
+            var def = CivCatalog.Get(CivId.TetherExchange);
+            if (def == null || def.id != CivId.TetherExchange) return false;
+            Color violet = def.teamSecondary;
+            if (CivPalette.Distance(c, violet) < MinSeparation) return true;
+            CivPalette.Hsv(c, out float h, out float s, out float v);
+            CivPalette.Hsv(violet, out float vh, out _, out _);
+            return s >= 0.3f && v >= 0.3f && CivPalette.HueGap(h, vh) <= VioletHueWindow;
+        }
+
+        /// <summary>
+        /// True when <paramref name="c"/> reads as a threat red (<see cref="CivPalette.ThreatFlagRed"/>,
+        /// <see cref="CivPalette.DangerMapRed"/>, <see cref="CivPalette.AlertIconRed"/>): close in
+        /// RGB, or a strong, bright hue within <see cref="ThreatHueWindow"/> of them.
+        /// </summary>
+        public static bool ReadsAsThreatRed(Color c)
+        {
+            Color[] reds = { CivPalette.ThreatFlagRed, CivPalette.DangerMapRed, CivPalette.AlertIconRed };
+            CivPalette.Hsv(c, out float h, out float s, out float v);
+            for (int i = 0; i < reds.Length; i++)
+            {
+                if (CivPalette.Distance(c, reds[i]) < MinSeparation) return true;
+                CivPalette.Hsv(reds[i], out float rh, out _, out _);
+                if (s >= 0.5f && v >= 0.55f && CivPalette.HueGap(h, rh) <= ThreatHueWindow) return true;
+            }
+            return false;
+        }
     }
 }

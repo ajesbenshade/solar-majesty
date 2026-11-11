@@ -18,6 +18,8 @@ namespace SolarMajesty
         public static LODGroup Apply(GameObject root)
         {
             if (root == null || root.name.StartsWith("Ghost")) return null;
+            var castle = root.GetComponent<CivCastle>();
+            if (castle != null && castle.Lod0.Length > 0) return ApplyCastle(root, castle);
 
             Transform top = root.transform;
             var found = root.GetComponentsInChildren<Renderer>();
@@ -69,6 +71,46 @@ namespace SolarMajesty
             }
 
             group.SetLODs(lods);
+            group.RecalculateBounds();
+            return group;
+        }
+
+        /// <summary>
+        /// A civ castle brings its own three LOD meshes (3D Artist: about 6-9k, 4k and 1.5k
+        /// triangles). Everything else on the building (the Core module, per-world dressing) is
+        /// in every level, so only the castle body steps down.
+        /// </summary>
+        private static LODGroup ApplyCastle(GameObject root, CivCastle castle)
+        {
+            Transform top = root.transform;
+            var shared = new List<Renderer>();
+            foreach (var r in root.GetComponentsInChildren<Renderer>())
+            {
+                if (r == null || !(r is MeshRenderer || r is SkinnedMeshRenderer)) continue;
+                if (castle.IsCastleLod(r)) continue;
+                if (UnderOverlay(r.transform, top, out _)) continue;
+                shared.Add(r);
+            }
+            Renderer[] Level(Renderer[] body, Renderer[] fallback)
+            {
+                var src = body != null && body.Length > 0 ? body : fallback;
+                var all = new List<Renderer>(src);
+                all.AddRange(shared);
+                return all.ToArray();
+            }
+            var l0 = Level(castle.Lod0, castle.Lod0);
+            var l1 = Level(castle.Lod1, castle.Lod0);
+            var l2 = Level(castle.Lod2, castle.Lod1.Length > 0 ? castle.Lod1 : castle.Lod0);
+
+            var group = root.GetComponent<LODGroup>();
+            if (group == null) group = root.AddComponent<LODGroup>();
+            group.fadeMode = LODFadeMode.None;
+            group.SetLODs(new[]
+            {
+                new LOD(CivCastle.Lod1Below, l0),
+                new LOD(CivCastle.Lod2Below, l1),
+                new LOD(BuildingLodRules.CullScreenHeight, l2)
+            });
             group.RecalculateBounds();
             return group;
         }

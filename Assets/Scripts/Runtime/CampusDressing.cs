@@ -205,7 +205,7 @@ namespace SolarMajesty
             pip.name = commons ? "Dress_StatusStar" : "Dress_StatusShield";
             pip.transform.SetParent(root, false);
             pip.transform.localPosition = new Vector3(
-                0f, commons ? HeroBuildingKits.CitadelCrownY + 2.2f : 3.35f, 0f);
+                0f, commons ? CivCastleLoader.CrownHeight(root) + 2.2f : 3.35f, 0f);
             pip.transform.localScale = new Vector3(0.32f, 0.32f, 0.32f);
             ColonyVisualUtility.DestroyNow(pip.GetComponent<Collider>());
             Color glow = commons

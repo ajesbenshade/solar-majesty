@@ -108,7 +108,7 @@ namespace SolarMajesty
                 bool anyOther = false;
                 for (int m = 0; m < src.Length; m++)
                 {
-                    if (!IsFaunaArtMaterial(src[m]))
+                    if (!IsAuthoredArtMaterial(src[m]))
                         anyOther = true;
                 }
 
@@ -117,7 +117,7 @@ namespace SolarMajesty
                     var next = new Material[src.Length];
                     for (int m = 0; m < src.Length; m++)
                     {
-                        next[m] = IsFaunaArtMaterial(src[m])
+                        next[m] = IsAuthoredArtMaterial(src[m])
                             ? src[m]
                             : Get(GuessSlot(rend, src[m]), unit);
                     }
@@ -128,6 +128,14 @@ namespace SolarMajesty
                 rend.receiveShadows = true;
             }
         }
+
+        /// <summary>
+        /// Materials Apply must keep: fauna v2 art, and the civ castles' slot materials
+        /// (<see cref="CivCastleLoader.MaterialPrefix"/>), which carry the civ and accent colours.
+        /// </summary>
+        public static bool IsAuthoredArtMaterial(Material mat) =>
+            IsFaunaArtMaterial(mat) ||
+            (mat != null && mat.name.StartsWith(CivCastleLoader.MaterialPrefix, System.StringComparison.Ordinal));
 
         /// <summary>Authored fauna v2 atlas or shared glow. Apply must not replace these.</summary>
         public static bool IsFaunaArtMaterial(Material mat) =>

@@ -565,6 +565,7 @@ namespace SolarMajesty
         private void SetCiv(CivModifiers civ)
         {
             _civ = civ ?? new CivModifiers(null);
+            ModularBuildingFactory.BindCiv(_civ);
             if (Economy != null) Economy.Civ = _civ;
             if (Placer != null) Placer.Civ = _civ;
         }
