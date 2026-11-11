@@ -18,6 +18,7 @@ namespace SolarMajesty.Tests
         {
             _root = new GameObject("ConstructionStagesTestRoot");
             LogAssert.ignoreFailingMessages = true;
+            ModularBuildingFactory.BindCiv(null); // neutral civ: the procedural Commons
         }
 
         [TearDown]
@@ -74,7 +75,9 @@ namespace SolarMajesty.Tests
         public void Commons_DomeWaitsForTheShellStage()
         {
             var go = ModularBuildingFactory.Spawn(BuildingCategory.Commons, Vector3.zero, _root.transform);
-            var dome = FindChild(go.transform, "CommonsDome").GetComponent<Renderer>();
+            // A renderer on the CommonsDome anchor or under it (the civ castles' anchor is an empty).
+            var dome = FindChild(go.transform, "CommonsDome").GetComponentInChildren<Renderer>(true);
+            Assert.IsNotNull(dome, "neutral Commons: the dome tier is drawn");
             var plinth = FindChild(go.transform, "CommonsPlinth").GetComponent<Renderer>();
             ConstructionStages.Show(go, 0.27f);
             Assert.IsTrue(plinth.enabled, "foundation is down by the end of its stage");

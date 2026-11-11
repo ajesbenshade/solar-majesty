@@ -13,6 +13,16 @@ namespace SolarMajesty
         private static Material _hull;
         private static Color _bodyHull = new Color(0.62f, 0.66f, 0.72f);
         private static CelestialBodyId? _body;
+        private static CivModifiers _civ;
+
+        /// <summary>
+        /// The colony's civ. The Commons is drawn as its castle (<see cref="CivCastleLoader"/>);
+        /// null or <see cref="CivId.None"/> keeps the procedural Commons. GameLoop binds it with
+        /// the civ; editor tools and tests that never bind get the neutral Commons.
+        /// </summary>
+        public static void BindCiv(CivModifiers civ) => _civ = civ;
+
+        public static CivId BoundCiv => _civ != null ? _civ.Id : CivId.None;
 
         /// <summary>Greybox hull tint per body. Hero kits lerp a white shell toward this grade.</summary>
         public static void BindBody(CelestialBodyProfile body)
@@ -94,7 +104,11 @@ namespace SolarMajesty
             if (_body.HasValue)
                 PlanetArchitectureDresser.Dress(root, category, _body.Value, worldW, worldD);
             if (ghost)
+            {
                 StripColliders(root);
+                var castle = root.GetComponent<CivCastle>();
+                if (castle != null) castle.ShowOnlyLod0();
+            }
             else
                 BuildingLod.Apply(root); // after dressing, so Dress_Arch parts are in the LODs
             return root;
@@ -111,7 +125,9 @@ namespace SolarMajesty
                     HeroBuildingKits.BuildHabitat(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.Commons:
-                    HeroBuildingKits.BuildCommons(root, w, d, HeroHull());
+                    // A civ colony draws its castle; the neutral civ keeps the procedural Commons.
+                    if (!CivCastleLoader.TryBuild(root, _civ))
+                        HeroBuildingKits.BuildCommons(root, w, d, HeroHull());
                     break;
                 case BuildingCategory.LandingPad:
                     HeroBuildingKits.BuildLandingPad(root, w, d, HeroHull());
@@ -261,6 +277,9 @@ namespace SolarMajesty
                 // citadel in HeroBuildingKits.BuildCommons. Joined Commons FBX (SM_Hero_Commons
                 // / SM_CommandDome_CentralHub) bake unused stubs. Do not attach them. Do not
                 // restore geodesic lattice.
+                // Lifted for civs (civ design doc, section 7): a colony with a civ draws its
+                // castle through CivCastleLoader in BuildCore; CivId.None still gets the
+                // procedural Commons. The hero-kit FBX path below stays off for the Commons.
                 case BuildingCategory.Commons: return true;
                 case BuildingCategory.Habitat: return true;
                 case BuildingCategory.Power: return true;

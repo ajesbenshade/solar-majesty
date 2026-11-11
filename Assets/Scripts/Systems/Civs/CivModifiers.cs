@@ -47,7 +47,8 @@ namespace SolarMajesty
         /// <summary>
         /// Optional per-player colour, for telling apart two players who picked the same civ.
         /// It belongs to the owner, not the civ, so it is given here and not stored on the
-        /// definition. Nothing draws it yet. TODO(multiplayer): pick accents per player slot.
+        /// definition. The castle's Accent slot draws it (capped by <see cref="CivAccents.ForCastle"/>).
+        /// TODO(multiplayer): pick accents per player slot.
         /// </summary>
         public Color? Accent { get; }
 

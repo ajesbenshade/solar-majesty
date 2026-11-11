@@ -18,6 +18,8 @@ namespace SolarMajesty
         public static LODGroup Apply(GameObject root)
         {
             if (root == null || root.name.StartsWith("Ghost")) return null;
+            var castle = root.GetComponent<CivCastle>();
+            if (castle != null && castle.Lod0.Length > 0) return ApplyCastle(root, castle);
 
             Transform top = root.transform;
             var found = root.GetComponentsInChildren<Renderer>();
@@ -71,6 +73,24 @@ namespace SolarMajesty
             group.SetLODs(lods);
             group.RecalculateBounds();
             return group;
+        }
+
+        /// <summary>
+        /// A civ castle brings its own three LOD meshes (3D Artist: about 6-9k, 4k and 1.5k
+        /// triangles) and its own LODGroup on the model (<see cref="CivCastle.Group"/>), with the
+        /// Core module in every level. The building root gets no group, so no castle renderer is
+        /// ever registered twice; per-world dressing outside the model stays ungrouped and always
+        /// draws, like the overlays.
+        /// </summary>
+        private static LODGroup ApplyCastle(GameObject root, CivCastle castle)
+        {
+            var leftover = root.GetComponent<LODGroup>();
+            if (leftover != null && leftover != castle.Group)
+            {
+                leftover.SetLODs(new LOD[0]);
+                ColonyVisualUtility.DestroyNow(leftover);
+            }
+            return castle.ConfigureLods();
         }
 
         /// <summary>
