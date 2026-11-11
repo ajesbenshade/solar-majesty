@@ -94,7 +94,7 @@ namespace SolarMajesty.Tests
                 Assert.Greater(castle.Lod2.Length, 0, civ + " LOD2");
                 var group = castle.Model.GetComponent<LODGroup>();
                 Assert.IsNotNull(group, civ + ": the castle keeps its own LOD group");
-                Assert.AreSame(group, castle.Group, civ);
+                Assert.AreSame(group, castle.Group, civ + ": CivCastle.Group is the model's group");
                 Assert.AreEqual(3, group.lodCount, civ + ": the castle's own three LODs");
                 Assert.IsNull(go.GetComponent<LODGroup>(), civ + ": no LODGroup on the Commons root");
                 Assert.AreEqual(1, go.GetComponentsInChildren<LODGroup>(true).Length, civ + ": exactly one LODGroup");
