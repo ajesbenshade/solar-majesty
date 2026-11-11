@@ -115,8 +115,8 @@ namespace SolarMajesty
                 {
                     id = CivId.LumenConcord,
                     displayName = "Lumen Concord",
-                    pitch = "Heroes and bounties",
-                    summary = "Bounties cost the treasury 10% less. Hires 20% cheaper. Buildings pay 20% less tax.",
+                    pitch = "Bots and bounties",
+                    summary = "Bounties cost the till 10% less. Hires 20% cheaper. Buildings pay 20% less tax.",
                     castleKey = "castle.ziggurat_keep",
                     playable = true,
                     teamPrimary = new Color(0.93f, 0.90f, 0.82f),   // ivory
@@ -147,7 +147,7 @@ namespace SolarMajesty
                     id = CivId.TetherExchange,
                     displayName = "Tether Exchange",
                     pitch = "Economy and trade",
-                    summary = "Three tax collectors per Commons. Trade pays 20% more. Starting treasury 15% smaller.",
+                    summary = "Three tax collectors per Commons. Trade pays 20% more. Starting till 15% smaller.",
                     castleKey = "castle.ring_citadel",
                     playable = true,
                     teamPrimary = new Color(0.16f, 0.17f, 0.19f),   // graphite
@@ -224,7 +224,7 @@ namespace SolarMajesty
                     id = CivId.PathfinderAccord,
                     displayName = "Pathfinder Accord",
                     pitch = "Expansion and mobility",
-                    summary = "Watchtowers, Ore Mines and Landing Pads 20% cheaper. Heroes 10% faster. Buildings go up 25% faster. Commons health 100.",
+                    summary = "Watchtowers, Ore Mines and Landing Pads 20% cheaper. Bots 10% faster. Buildings go up 25% faster. Commons health 100.",
                     castleKey = "castle.stilt_arcology",
                     playable = false,
                     teamPrimary = new Color(0.078f, 0.133f, 0.149f),  // teal-black, #142226
