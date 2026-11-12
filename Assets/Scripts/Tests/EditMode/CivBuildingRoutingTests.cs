@@ -349,6 +349,25 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(0, ghost.GetComponentsInChildren<Collider>(true).Length);
         }
 
+        [Test]
+        public void ChargerAmber_StaysASolidPodLight_AndIsNotRepaintedAsTrim()
+        {
+            var src = Mat("ChargerAmber");
+            Assert.AreEqual(CivCastleLoader.Slot.ChargerAmber, CivCastleLoader.SlotOf(src));
+
+            var civ = CivModifiers.For(CivId.LumenConcord);
+            var spec = CivCastleCatalog.For(CivId.LumenConcord);
+            var painted = CivCastleLoader.MaterialFor(CivCastleLoader.Slot.ChargerAmber, spec, civ);
+            AssertColour(CivCastleLoader.ChargerAmberColour, CivCastleLoader.BaseColour(painted), "pod");
+            Assert.IsNull(painted.GetTexture("_BaseMap"), "charger pods are not on the trim sheet");
+            Assert.IsNull(painted.GetTexture("_EmissionMap"), "the glow is solid, not the window mask");
+            Assert.IsTrue(painted.IsKeywordEnabled("_EMISSION"));
+            AssertColour(CivCastleLoader.ChargerAmberGlow, painted.GetColor("_EmissionColor"), "glow");
+            Assert.Greater(Mathf.Abs(CivCastleLoader.BaseColour(painted).r - spec.TrimTint.r), 0.05f,
+                "amber is not the Ziggurat trim tint");
+            StringAssert.StartsWith(CivCastleLoader.MaterialPrefix, painted.name);
+        }
+
         // ---- helpers -----------------------------------------------------------------------
 
         private static string Path(CivId civ, BuildingCategory category) =>

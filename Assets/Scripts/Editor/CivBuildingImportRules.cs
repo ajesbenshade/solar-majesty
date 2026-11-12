@@ -6,7 +6,7 @@ namespace SolarMajesty.EditorTools
     /// Import settings for civ building FBX dropped in Assets/Resources/Buildings/Civ
     /// (3D Artist). The same model settings as <see cref="CitadelImportRules"/>: scale 1,
     /// hierarchy and empties kept, embedded materials named after the FBX slots
-    /// (Trim, Carbon, TeamColour, Accent, CoreEmission), no cameras, lights, colliders
+    /// (Trim, Carbon, TeamColour, Accent, CoreEmission, and HAB's ChargerAmber), no cameras, lights, colliders
     /// or animation. Textures stay on the shared citadel trim sheet; this folder does not
     /// reimport them.
     /// </summary>

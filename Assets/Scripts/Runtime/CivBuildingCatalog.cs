@@ -20,7 +20,8 @@ namespace SolarMajesty
     /// Model on the catalog's 6 m plot (4×4 cells at 1.5 m), shorter than the Dome, scale 1,
     /// pivot at ground centre, front toward Blender -Y. The loader yaws 180° so the front faces
     /// -Z, the same turn the castles use. Material slots use the shared citadel trim sheet:
-    /// Trim, Carbon, TeamColour, Accent, CoreEmission. LOD meshes, when a building has them,
+    /// Trim, Carbon, TeamColour, Accent, CoreEmission. HAB also has ChargerAmber, a solid amber
+    /// pod light with no trim sheet. LOD meshes, when a building has them,
     /// end in <c>_LOD0</c>, <c>_LOD1</c> and <c>_LOD2</c>.
     ///
     /// A missing file keeps the shared hero kit or the procedural kit the neutral Commons civ
