@@ -162,7 +162,7 @@ namespace SolarMajesty
             castle.Group = group;
             castle.ConfigureLods();
 
-            Paint(model, spec, civ);
+            ApplySlots(model, spec, civ);
             SpinCore(root, model.transform);
             return true;
         }
@@ -271,7 +271,11 @@ namespace SolarMajesty
         private static Shader _lit;
         private static Texture2D _base, _metal, _normal, _emit;
 
-        private static void Paint(GameObject model, CivCastleSpec spec, CivModifiers civ)
+        /// <summary>
+        /// Paint every renderer from its FBX slot name. Shared by the castle and by
+        /// <see cref="CivBuildingLoader"/>. Never writes the imported material: those assets stay untouched.
+        /// </summary>
+        public static void ApplySlots(GameObject model, CivCastleSpec spec, CivModifiers civ)
         {
             foreach (var r in model.GetComponentsInChildren<Renderer>(true))
             {

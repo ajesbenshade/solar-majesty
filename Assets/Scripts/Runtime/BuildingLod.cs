@@ -20,6 +20,8 @@ namespace SolarMajesty
             if (root == null || root.name.StartsWith("Ghost")) return null;
             var castle = root.GetComponent<CivCastle>();
             if (castle != null && castle.Lod0.Length > 0) return ApplyCastle(root, castle);
+            var civBuilding = root.GetComponent<CivBuilding>();
+            if (civBuilding != null && civBuilding.Lod0.Length > 0) return ApplyCivBuilding(root, civBuilding);
 
             Transform top = root.transform;
             var found = root.GetComponentsInChildren<Renderer>();
@@ -91,6 +93,21 @@ namespace SolarMajesty
                 ColonyVisualUtility.DestroyNow(leftover);
             }
             return castle.ConfigureLods();
+        }
+
+        /// <summary>
+        /// A civ building with <c>_LOD0</c> meshes keeps one LODGroup on the model, same as a
+        /// castle. Meshes with no suffix stay in every level. The building root gets no group.
+        /// </summary>
+        private static LODGroup ApplyCivBuilding(GameObject root, CivBuilding built)
+        {
+            var leftover = root.GetComponent<LODGroup>();
+            if (leftover != null && leftover != built.Group)
+            {
+                leftover.SetLODs(new LOD[0]);
+                ColonyVisualUtility.DestroyNow(leftover);
+            }
+            return built.ConfigureLods();
         }
 
         /// <summary>

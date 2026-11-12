@@ -130,7 +130,7 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Materials Apply must keep: fauna v2 art, and the civ castles' slot materials
+        /// Materials Apply must keep: fauna v2 art, and civ castle / civ building slot materials
         /// (<see cref="CivCastleLoader.MaterialPrefix"/>), which carry the civ and accent colours.
         /// </summary>
         public static bool IsAuthoredArtMaterial(Material mat) =>
