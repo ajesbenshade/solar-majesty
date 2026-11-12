@@ -4,7 +4,11 @@ using UnityEngine;
 
 namespace SolarMajesty
 {
-    /// <summary>The <see cref="SpecialistData"/> numbers a civ unit may replace. Stored by number: never renumber.</summary>
+    /// <summary>
+    /// The numbers a civ unit may replace. Stored by number: never renumber. Most are
+    /// <see cref="SpecialistData"/> fields and land through <see cref="CivUnitDefinition.ApplyTo(SpecialistData)"/>;
+    /// the last ones are class rules the game reads at the call site through <see cref="CivRules"/>.
+    /// </summary>
     public enum CivUnitStat
     {
         None = 0,
@@ -17,7 +21,17 @@ namespace SolarMajesty
         ExtractPreference = 7,
         DefendPreference = 8,
         MoveSpeed = 9,
-        WorkRate = 10
+        WorkRate = 10,
+        /// <summary>
+        /// Factor on work done at an Establish Outpost flag (<see cref="OverseerRules.CourierOutpostWork"/>
+        /// for the Courier Bot, 1 for everyone else). Read by <see cref="CivRules.OutpostFlagWork"/>.
+        /// </summary>
+        OutpostFlagWork = 11,
+        /// <summary>
+        /// Metres a bot working a Build flag reaches to help the nearest building site
+        /// (<see cref="OverseerRules.BuildLabourRadius"/>). Read by <see cref="CivRules.BuildLabourReach"/>.
+        /// </summary>
+        BuildLabourReach = 12
     }
 
     /// <summary>Replace one personality number with <see cref="value"/> (the new value, not a delta).</summary>
@@ -46,6 +60,8 @@ namespace SolarMajesty
         public int minLevel;
         [Tooltip("New blast radius in metres. 0 = unchanged.")]
         public float aoeRadius;
+        [Tooltip("New cooldown in seconds. 0 = unchanged.")]
+        public float cooldownSeconds;
 
         public static CivAbilityChange UnlockAt(string abilityId, int level) =>
             new CivAbilityChange { abilityId = abilityId, minLevel = level };
@@ -53,12 +69,16 @@ namespace SolarMajesty
         public static CivAbilityChange Radius(string abilityId, float metres) =>
             new CivAbilityChange { abilityId = abilityId, aoeRadius = metres };
 
+        public static CivAbilityChange Cooldown(string abilityId, float seconds) =>
+            new CivAbilityChange { abilityId = abilityId, cooldownSeconds = seconds };
+
         /// <summary><paramref name="def"/> with this change applied. A different ability comes back untouched.</summary>
         public ClassAbilityDef ApplyTo(ClassAbilityDef def)
         {
             if (string.IsNullOrEmpty(abilityId) || def.id != abilityId) return def;
             if (minLevel > 0) def.minLevel = minLevel;
             if (aoeRadius > 0f) def.aoeRadius = aoeRadius;
+            if (cooldownSeconds > 0f) def.cooldownSeconds = cooldownSeconds;
             return def;
         }
     }
@@ -78,7 +98,7 @@ namespace SolarMajesty
         public string modelKey = "";
         public List<CivUnitStatChange> stats = new List<CivUnitStatChange>();
         public List<CivAbilityChange> abilities = new List<CivAbilityChange>();
-        [Tooltip("Names a behaviour the game must implement (phase 3). Empty = none. Nothing reads it yet.")]
+        [Tooltip("Names a behaviour the game must implement (phase 3). Empty = none. Data only: nothing reads it yet.")]
         public string behaviourTag = "";
         [Tooltip("Strikes get the civ's NearHomeUnitDamage modifier while within the Commons radius (20 m).")]
         public bool nearHomeBonus;
@@ -141,7 +161,10 @@ namespace SolarMajesty
         /// Write this unit's name and numbers onto <paramref name="data"/>. Call it after
         /// <see cref="SpecialistPersonality.Apply"/>, which resets every class to the shared table.
         /// A unit with no changes leaves <paramref name="data"/> exactly as it was. Data of a
-        /// different class is ignored. Nothing in the game calls this yet (roster wiring is a later PR).
+        /// different class is ignored. The game calls it through <see cref="CivRoster.UnitData"/>
+        /// whenever it hands out a class's data. Stats that are class rules rather than data fields
+        /// (<see cref="CivUnitStat.OutpostFlagWork"/>, <see cref="CivUnitStat.BuildLabourReach"/>) are
+        /// skipped here and read through <see cref="CivRules"/>.
         /// </summary>
         public void ApplyTo(SpecialistData data)
         {
