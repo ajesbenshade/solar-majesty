@@ -14,6 +14,9 @@ namespace SolarMajesty
     /// </summary>
     public static class CivCatalog
     {
+        /// <summary>Home name when the colony has no civ castle: the guided tutorial and pre-civ saves.</summary>
+        public const string NeutralHomeName = "Colony Commons";
+
         private static CivDefinition[] _defaults;
         private static IReadOnlyList<CivDefinition> _all;
 
@@ -105,6 +108,7 @@ namespace SolarMajesty
                     pitch = "The colony as it is today",
                     summary = "No perks and no drawback.",
                     castleKey = CivDefinition.SharedArtKey,
+                    castleName = "",
                     // Today's white hull and orange stripe, as a placeholder until the palette PR
                     // reads the kit's real constants.
                     teamPrimary = new Color(0.90f, 0.89f, 0.86f),
@@ -118,6 +122,7 @@ namespace SolarMajesty
                     pitch = "Bots and bounties",
                     summary = "Bounties cost the till 10% less. Hires 20% cheaper. Buildings pay 20% less tax.",
                     castleKey = "castle.ziggurat_keep",
+                    castleName = "Ziggurat Keep",
                     playable = true,
                     teamPrimary = new Color(0.93f, 0.90f, 0.82f),   // ivory
                     teamSecondary = new Color(0.66f, 0.44f, 0.20f), // bronze
@@ -149,6 +154,7 @@ namespace SolarMajesty
                     pitch = "Economy and trade",
                     summary = "Three tax collectors per Commons. Trade pays 20% more. Starting till 15% smaller.",
                     castleKey = "castle.ring_citadel",
+                    castleName = "Ring Citadel",
                     playable = true,
                     teamPrimary = new Color(0.16f, 0.17f, 0.19f),   // graphite
                     teamSecondary = new Color(0.55f, 0.36f, 0.86f), // violet
@@ -182,6 +188,7 @@ namespace SolarMajesty
                     pitch = "Defence and turtle",
                     summary = "Commons health 200. Guns reach 21 m. Watchtower lasers cost 250. Bulwark and Picket hit 25% harder near home. Hires 20% dearer.",
                     castleKey = "castle.dome_bunker",
+                    castleName = "Dome Bunker",
                     playable = true,
                     teamPrimary = new Color(0.56f, 0.64f, 0.50f),   // sage
                     teamSecondary = new Color(0.541f, 0.231f, 0.141f), // oxide red, about #8A3B24
@@ -226,6 +233,7 @@ namespace SolarMajesty
                     pitch = "Expansion and mobility",
                     summary = "Watchtowers, Ore Mines and Landing Pads 20% cheaper. Bots 10% faster. Buildings go up 25% faster. Commons health 100.",
                     castleKey = "castle.stilt_arcology",
+                    castleName = "Stilt Arcology",
                     playable = true,
                     teamPrimary = new Color(0.078f, 0.133f, 0.149f),  // teal-black, #142226
                     teamSecondary = new Color(0.051f, 0.600f, 0.329f), // emerald, #0D9954

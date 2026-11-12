@@ -198,7 +198,7 @@ namespace SolarMajesty
                 if (WasDeadlineFail)
                     return Loc.S("The window to secure the outpost closed. Restart for a tighter run.");
                 if (_loop != null && _loop.ColonyExtinct)
-                    return Loc.S("The Colony Commons fell and the till with it. Retry this body, or New Game.");
+                    return CivHomeCopy.Fell(_loop.Civ);
                 if (_loop != null && _loop.RobotCount == 0)
                     return Loc.S("No robots left and no re-fab in the shop. Rebuild a workshop, or retry.");
                 if (body != null && !string.IsNullOrEmpty(body.FailLog))

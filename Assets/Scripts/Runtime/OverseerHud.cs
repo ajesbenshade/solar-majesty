@@ -227,7 +227,7 @@ namespace SolarMajesty
             var body = _loop.BodyProfile;
             string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
                 ? body.BriefingText
-                : Loc.S("Colony Commons is down. Build anywhere on open ground.");
+                : CivHomeCopy.PlacedBrief(_loop.Civ);
             Toast(briefing, 6.5f);
         }
 
