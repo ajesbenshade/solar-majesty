@@ -241,8 +241,62 @@ namespace SolarMajesty.Tests
             Assert.AreEqual("vanguard_forward_post", civ.UnitFor(SpecialistClass.SentinelMech).behaviourTag);
             Assert.AreEqual("Cartographer", civ.UnitFor(SpecialistClass.SurveyorBot).displayName);
             Assert.AreEqual("Stakehand", civ.UnitFor(SpecialistClass.EngineerBot).displayName);
+
+            // Cartographer: Snare Shot cooldown 30 -> 25 s.
+            var cartographer = civ.UnitFor(SpecialistClass.SurveyorBot);
+            Assert.AreEqual(30f, Ability("surveyor_snare").cooldownSeconds, 1e-5f, "today's value the doc quotes");
+            Assert.IsTrue(cartographer.TryGetAbilityChange("surveyor_snare", out var snare));
+            var retuned = snare.ApplyTo(Ability("surveyor_snare"));
+            Assert.AreEqual(25f, retuned.cooldownSeconds, 1e-5f);
+            Assert.AreEqual(Ability("surveyor_snare").minLevel, retuned.minLevel, "the unlock level is unchanged");
+            Assert.AreEqual(Ability("surveyor_snare").aoeRadius, retuned.aoeRadius, "the blast is unchanged");
+            Assert.AreEqual(15f, snare.ApplyTo(Ability("surveyor_arc_bolt")).cooldownSeconds, 1e-5f, "other abilities are untouched");
+
+            // Strider: Outpost flag work 1.20 -> 1.35.
+            Assert.AreEqual(1.20f, OverseerRules.CourierOutpostWork, 1e-5f, "today's value the doc quotes");
+            Assert.AreEqual(1.35f, CivRules.OutpostFlagWork(civ, SpecialistClass.CourierBot), 1e-5f);
+            Assert.AreEqual(1f, CivRules.OutpostFlagWork(civ, SpecialistClass.EngineerBot), "only the Strider changes");
+
+            // Stakehand: build labour reach 28 -> 32 m.
+            Assert.AreEqual(28f, OverseerRules.BuildLabourRadius, 1e-5f, "today's value the doc quotes");
+            Assert.AreEqual(32f, CivRules.BuildLabourReach(civ, SpecialistClass.EngineerBot), 1e-5f);
+            Assert.AreEqual(28f, CivRules.BuildLabourReach(civ, SpecialistClass.CourierBot), 1e-5f, "only the Stakehand changes");
+
+            // The two class rules are not data fields: ApplyTo leaves the Stakehand's numbers alone.
+            var engineer = Today(SpecialistClass.EngineerBot);
+            string before = JsonUtility.ToJson(engineer);
+            civ.UnitFor(SpecialistClass.EngineerBot).ApplyTo(engineer);
+            Assert.AreEqual("Stakehand", engineer.displayName);
+            engineer.displayName = "Engineer Bot";
+            Assert.AreEqual(before, JsonUtility.ToJson(engineer));
             foreach (SpecialistClass c in Enum.GetValues(typeof(SpecialistClass)))
                 Assert.IsFalse(civ.UnitFor(c).nearHomeBonus, $"{c}: the near-home bonus is the Mandate's");
+        }
+
+        [Test]
+        public void ClassRules_AreTodaysValues_ForEveryOtherCiv()
+        {
+            foreach (var civ in new[] { null, CivModifiers.For(CivId.None), CivModifiers.For(CivId.LumenConcord),
+                         CivModifiers.For(CivId.TetherExchange), CivModifiers.For(CivId.BastionMandate) })
+            {
+                foreach (SpecialistClass cls in Enum.GetValues(typeof(SpecialistClass)))
+                {
+                    float outpost = cls == SpecialistClass.CourierBot ? OverseerRules.CourierOutpostWork : 1f;
+                    Assert.IsTrue(outpost.Equals(CivRules.OutpostFlagWork(civ, cls)), $"{civ?.Id} {cls} outpost work");
+                    Assert.IsTrue(OverseerRules.BuildLabourRadius.Equals(CivRules.BuildLabourReach(civ, cls)), $"{civ?.Id} {cls} reach");
+                }
+            }
+        }
+
+        [Test]
+        public void CooldownChange_OnlyTouchesItsAbility_AndZeroKeepsIt()
+        {
+            var change = CivAbilityChange.Cooldown("surveyor_snare", 25f);
+            Assert.AreEqual(25f, change.ApplyTo(Ability("surveyor_snare")).cooldownSeconds, 1e-5f);
+            Assert.AreEqual(Ability("mech_bulwark").cooldownSeconds,
+                change.ApplyTo(Ability("mech_bulwark")).cooldownSeconds, "another ability comes back untouched");
+            var unlock = CivAbilityChange.UnlockAt("surveyor_snare", 3);
+            Assert.AreEqual(30f, unlock.ApplyTo(Ability("surveyor_snare")).cooldownSeconds, 1e-5f, "0 = unchanged");
         }
 
         [Test]

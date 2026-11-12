@@ -218,7 +218,7 @@ namespace SolarMajesty
                 },
 
                 // Expansion and mobility. The name is provisional. Its castle is the D1 Stilt
-                // Arcology (Aaron, 2026-11-11); it stays off the cards until that model exists.
+                // Arcology (Aaron, 2026-11-11), drawn from Resources/Citadels.
                 new CivDefinition
                 {
                     id = CivId.PathfinderAccord,
@@ -226,7 +226,7 @@ namespace SolarMajesty
                     pitch = "Expansion and mobility",
                     summary = "Watchtowers, Ore Mines and Landing Pads 20% cheaper. Bots 10% faster. Buildings go up 25% faster. Commons health 100.",
                     castleKey = "castle.stilt_arcology",
-                    playable = false,
+                    playable = true,
                     teamPrimary = new Color(0.078f, 0.133f, 0.149f),  // teal-black, #142226
                     teamSecondary = new Color(0.051f, 0.600f, 0.329f), // emerald, #0D9954
                     modifiers = new List<CivModifier>
@@ -240,15 +240,17 @@ namespace SolarMajesty
                     {
                         // New behaviour (phase 3): idles at the farthest owned building.
                         Unit(SpecialistClass.SentinelMech, "Vanguard", behaviourTag: "vanguard_forward_post"),
-                        // TODO(roster PR): Snare Shot cooldown 30 -> 25 s needs a cooldown field on CivAbilityChange.
-                        Unit(SpecialistClass.SurveyorBot, "Cartographer"),
+                        // Snare Shot 30 -> 25 s: holds raiders off a far site.
+                        Unit(SpecialistClass.SurveyorBot, "Cartographer",
+                            abilities: Abilities(CivAbilityChange.Cooldown("surveyor_snare", 25f))),
                         Unit(SpecialistClass.Medic, "Trail Medic",
                             Stats((CivUnitStat.DefendPreference, 0.60f), (CivUnitStat.ExplorePreference, 0.50f))),
-                        // TODO(roster PR): Outpost flag work 1.20 -> 1.35 has no CivUnitStat yet.
+                        // Outpost flag work 1.20 -> 1.35 (OverseerRules.CourierOutpostWork).
                         Unit(SpecialistClass.CourierBot, "Strider",
-                            Stats((CivUnitStat.ExplorePreference, 1.0f))),
-                        // TODO(roster PR): build labour reach 28 -> 32 m has no CivUnitStat yet.
-                        Unit(SpecialistClass.EngineerBot, "Stakehand")
+                            Stats((CivUnitStat.ExplorePreference, 1.0f), (CivUnitStat.OutpostFlagWork, 1.35f))),
+                        // Build labour reach 28 -> 32 m (OverseerRules.BuildLabourRadius).
+                        Unit(SpecialistClass.EngineerBot, "Stakehand",
+                            Stats((CivUnitStat.BuildLabourReach, 32f)))
                     }
                 }
             };

@@ -1526,9 +1526,8 @@ namespace SolarMajesty
             _workPulse = 1f;
             float share = _loop != null ? _loop.FlagStackShare(_activeFlag, this) : 1f;
             float work = EffectiveWorkRate * share * dt;
-            if (data != null && data.specialistClass == SpecialistClass.CourierBot &&
-                _activeFlag.Data.flagType == FlagType.EstablishOutpost)
-                work *= OverseerRules.CourierOutpostWork;
+            if (data != null && _activeFlag.Data.flagType == FlagType.EstablishOutpost)
+                work *= CivRules.OutpostFlagWork(_loop != null ? _loop.Civ : null, data.specialistClass);
             bool done = _flags.ApplyWork(_activeFlag, work);
 
             if (_activeFlag.Data.flagType == FlagType.Build && _placer != null)
@@ -1651,7 +1650,9 @@ namespace SolarMajesty
             if (_placer == null || _activeFlag == null) return;
             var orders = _placer.Orders;
             ConstructionOrder best = null;
-            float bestDist = OverseerRules.BuildLabourRadius;
+            float bestDist = data != null
+                ? CivRules.BuildLabourReach(_loop != null ? _loop.Civ : null, data.specialistClass)
+                : OverseerRules.BuildLabourRadius;
             Vector3 me = transform.position;
             for (int i = 0; i < orders.Count; i++)
             {
@@ -2348,10 +2349,9 @@ namespace SolarMajesty
                 return;
 
             float work = EffectiveWorkRate * OverseerRules.PartyFollowerWork * dt;
-            if (data != null && data.specialistClass == SpecialistClass.CourierBot &&
-                lead.ActiveFlag.Data != null &&
+            if (data != null && lead.ActiveFlag.Data != null &&
                 lead.ActiveFlag.Data.flagType == FlagType.EstablishOutpost)
-                work *= OverseerRules.CourierOutpostWork;
+                work *= CivRules.OutpostFlagWork(_loop != null ? _loop.Civ : null, data.specialistClass);
             if (_flags.ApplyWork(lead.ActiveFlag, work))
                 _status = "party_work";
         }
