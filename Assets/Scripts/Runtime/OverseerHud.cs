@@ -404,14 +404,37 @@ namespace SolarMajesty
             return GUI.Button(r, GUIContent.none, GUIStyle.none) && enabled;
         }
 
-        private void Bar(Rect r, string label, float t01, Color fill)
+        private void Bar(Rect r, string label, float t01, Color fill) => Bar(r, label, t01, fill, null);
+
+        /// <summary>
+        /// A labelled meter. <paramref name="value"/> replaces the percent ("200/200"); its column
+        /// widens to fit it, never past a third of the row, so the track keeps its room.
+        /// </summary>
+        private void Bar(Rect r, string label, float t01, Color fill, string value)
         {
             float labelW = W(50f);
             float valueW = W(34f);
+            string shown = value ?? $"{Mathf.Clamp01(t01) * 100f:F0}%";
+            if (value != null)
+            {
+                _chipMeasure.text = value;
+                valueW = Mathf.Min(Mathf.Max(valueW, _microRight.CalcSize(_chipMeasure).x + 4f), r.width / 3f);
+            }
             FitLabel(new Rect(r.x, r.y, labelW, r.height), label, _caps);
             var track = new Rect(r.x + labelW, r.y + r.height * 0.5f - 2.5f, Mathf.Max(10f, r.width - labelW - valueW), 5f);
             Meter(track, t01, fill);
-            GUI.Label(new Rect(r.xMax - valueW, r.y, valueW, r.height), $"{Mathf.Clamp01(t01) * 100f:F0}%", _microRight);
+            GUI.Label(new Rect(r.xMax - valueW, r.y, valueW, r.height), shown, _microRight);
+        }
+
+        /// <summary>
+        /// The class name on a bot's card, as its owner's civ names it ("Oathblade", not "Defense
+        /// Mech"); a role the civ does not rename keeps today's name.
+        /// </summary>
+        private string UnitNameplate(SpecialistAgent a)
+        {
+            if (a == null || a.Data == null) return Loc.S("Specialist");
+            string baseName = Loc.S(a.Data.displayName) ?? Loc.S("Specialist");
+            return CivHud.UnitName(_loop.Civ, a.Data.specialistClass, baseName);
         }
 
         private void CheckBox(Rect r, bool done)
@@ -867,7 +890,9 @@ namespace SolarMajesty
         /// <summary>The colony at a glance: heroes, tax houses, collectors on their rounds, dens left.</summary>
         private void DrawStockpile(Rect r)
         {
-            FitLabel(new Rect(r.x, r.y - 2f, r.width, L(14f)),
+            var header = new Rect(r.x, r.y - 2f, r.width, L(14f));
+            float badgeW = DrawCivBadge(header);
+            FitLabel(new Rect(header.x, header.y, Mathf.Max(0f, header.width - badgeW), header.height),
                 Loc.F("{0}  ·  COLONY", _loop.BodyProfile != null ? _loop.BodyProfile.DisplayNameText.ToUpperInvariant() : Loc.S("COLONY")), _section,
                 HudTips.Colony());
 
@@ -893,6 +918,35 @@ namespace SolarMajesty
                 replacing > 0 ? Loc.F("-{0} replacing", replacing) : (bags > 0 ? Loc.F("{0} carried", bags) : null));
             ResourceChip(new Rect(r.x + cw + HudLayout.StockpileChipGap, top + ch + 4f, cw, ch), halted ? HaltedLabel : BuildLabel, halted ? Loc.S(HaltedLabel) : Loc.S(BuildLabel),
                 building ? pct : 0, halted, building ? Loc.S("% built") : Loc.S("idle"), halted ? "HALTED" : "WORKERS");
+        }
+
+        /// <summary>
+        /// The civ badge at the right end of the stockpile header: a dark well with the civ's
+        /// colour stripe and its name in caps, which steps down to the name's last word when the
+        /// header is narrow. The tooltip lists the perks and the live Commons hit points. The
+        /// neutral civ (tutorial, old saves) draws nothing. Returns the width it took, gap included.
+        /// </summary>
+        private float DrawCivBadge(Rect header)
+        {
+            var civ = _loop.Civ;
+            var variants = CivHud.BadgeVariants(civ);
+            if (variants.Length == 0) return 0f;
+
+            const float stripe = 3f, padL = 8f, padR = 6f, gap = 6f;
+            float maxW = Mathf.Max(48f, header.width * 0.5f);
+            string text = FitChipText(_caps, variants, maxW - padL - padR);
+            _chipMeasure.text = text;
+            float w = Mathf.Min(maxW, _caps.CalcSize(_chipMeasure).x + padL + padR);
+            var badge = new Rect(header.xMax - w, header.y, w, header.height);
+            HudSkin.Well(badge);
+            HudSkin.Pill(new Rect(badge.x + 2f, badge.y + 2f, stripe, badge.height - 4f), CivHud.BadgeColour(civ));
+            var prev = _caps.normal.textColor;
+            _caps.normal.textColor = TextPrimary;
+            var hub = _loop.Village != null ? _loop.Village.CommonsHub() : null;
+            FitLabel(new Rect(badge.x + padL, badge.y, badge.width - padL - padR, badge.height), text, _caps,
+                CivHud.BadgeTip(civ, hub != null ? hub.Health : 0f, hub != null ? hub.MaxHealth : -1f));
+            _caps.normal.textColor = prev;
+            return w + gap;
         }
 
         /// <summary>Where the gold is on its way home: building tills, collector bags, daily tax.</summary>
@@ -1351,7 +1405,7 @@ namespace SolarMajesty
             HudLayout.StatLine(bountyRow, out var bountyLabel, out var bountyValue);
             FitLabel(bountyLabel, Loc.S("BOUNTY"), _micro);
             FitLabel(bountyValue, Loc.F("{0:N0} EU", shown), _value);
-            Tooltip(bountyRow, HudTips.BountyAmount());
+            Tooltip(bountyRow, HudTips.BountyAmount(_loop.Civ, shown));
             float by = y + (bountyRow.height - 20f) * 0.5f;
             BountyButtons(fp, new Rect(c.xMax - 58f, by, 26f, 20f), new Rect(c.xMax - 28f, by, 26f, 20f));
 
@@ -1435,7 +1489,8 @@ namespace SolarMajesty
             }
 
             HudSkin.Dot(new Vector2(r.x + 11f, r.center.y), 8f, data.bannerColor);
-            FitLabel(new Rect(r.x + 22f, r.y, r.width - 28f, r.height), label, on ? _onText : _action, HudTips.FlagKind(data.flagType));
+            FitLabel(new Rect(r.x + 22f, r.y, r.width - 28f, r.height), label, on ? _onText : _action,
+                HudTips.FlagKind(data.flagType, _loop.Civ, data.defaultBounty));
             return r.yMax + 4f;
         }
 
@@ -1520,8 +1575,11 @@ namespace SolarMajesty
 
                 string full = BuildRowLabel(b);
                 string what = !string.IsNullOrEmpty(b.description) ? b.description : (full != b.displayName ? full : null);
-                Tooltip(r, HudTips.BuildEntry(b.displayName.ToUpperInvariant(), what, cost, locked, canAfford,
-                    slot <= 9 ? BuildHotkeyLabel(slot) : null));
+                // The row keeps the bare price (its column is narrow); the tooltip adds the civ's
+                // delta and, for a workshop, the hire fee its bot will cost.
+                Tooltip(r, HudTips.BuildEntry(b.displayName.ToUpperInvariant(), what,
+                    CivHud.WithDelta(cost, CivHud.BuildingDelta(_loop.Civ, b)), locked, canAfford,
+                    slot <= 9 ? BuildHotkeyLabel(slot) : null, CivHud.WorkshopHireLine(_loop.Civ, b.category)));
 
                 rowY += rowStep;
             }
@@ -1630,7 +1688,7 @@ namespace SolarMajesty
             _number.normal.textColor = fp.ShownBountyAffordable ? HudSkin.GoldBright : Alarm;
             float numW = 104f * HudTextScale.Font(17) / 17f;
             var amount = new Rect(minus.x - numW - 8f, rect.y, numW, rect.height);
-            FitLabel(amount, Loc.F("{0:N0} EU", fp.ShownBounty), _number, HudTips.BountyAmount());
+            FitLabel(amount, Loc.F("{0:N0} EU", fp.ShownBounty), _number, HudTips.BountyAmount(_loop.Civ, fp.ShownBounty));
             _number.alignment = prev;
             _number.normal.textColor = prevC;
 
@@ -1955,7 +2013,12 @@ namespace SolarMajesty
             row += L(15f);
 
             var hpRow = new Rect(c.x, row, c.width, L(14f));
-            Bar(hpRow, Loc.S("HP"), st.Health01, HpFill);
+            // The Commons reads in hit points (its civ sets the max: 140, 200 for the Mandate, 100
+            // for the Pathfinder); other buildings keep the percent.
+            if (st.Category == BuildingCategory.Commons)
+                Bar(hpRow, Loc.S("HP"), st.Health01, HpFill, CivHud.HpText(st.Health, st.MaxHealth));
+            else
+                Bar(hpRow, Loc.S("HP"), st.Health01, HpFill);
             Tooltip(hpRow, HudTips.Health());
             row += L(18f);
 
@@ -2070,7 +2133,7 @@ namespace SolarMajesty
                     bool can = _loop.Resources != null &&
                                _loop.Resources.Get(ResourceId.Metals) >= armCost;
                     var arm = new Rect(c.x, row, W(220f), chipH);
-                    if (Chip(arm, Loc.F("ARM LASERS {0} EU", armCost), can, HudTips.ArmLasers()) && can)
+                    if (Chip(arm, Loc.F("ARM LASERS {0} EU", armCost), can, HudTips.ArmLasers(_loop.Civ)) && can)
                         _loop.TryArmWatchtower(st);
                 }
             }
@@ -2109,7 +2172,7 @@ namespace SolarMajesty
                     slot = chipH;
                     int met = CivRules.RefabMetals(_loop.Civ, st.SourceData);
                     var refab = new Rect(c.x, row, W(150f), chipH);
-                    if (Chip(refab, Loc.F("RE-FAB L1 {0} EU", met), true, HudTips.Refab()))
+                    if (Chip(refab, Loc.F("RE-FAB L1 {0} EU", met), true, HudTips.Refab(_loop.Civ, st.SourceData)))
                         _loop.TryRefabRookie(st);
                     FitLabel(new Rect(refab.xMax + 8f, row, c.xMax - refab.xMax - 8f, chipH),
                         Loc.S("new chassis · wreck gone"), _micro);
@@ -2230,7 +2293,7 @@ namespace SolarMajesty
 
                 int campus = ColonyLayout.NearestCampusIndex(a.transform.position);
                 FitLabel(new Rect(c.x, row, c.width, L(13f)),
-                    Loc.F("{0} · {1} · Asks {2:N0} EU · Holds {3:N0} EU{4}", Loc.S(a.Data?.displayName) ?? Loc.S("Specialist"), ColonyLayout.CampusLabel(campus), a.HireMin, a.Credits, LevyCarryLine(a)), _micro);
+                    Loc.F("{0} · {1} · Asks {2:N0} EU · Holds {3:N0} EU{4}", UnitNameplate(a), ColonyLayout.CampusLabel(campus), a.HireMin, a.Credits, LevyCarryLine(a)), _micro);
                 row += L(16f);
 
                 var prevAct = _action.normal.textColor;
