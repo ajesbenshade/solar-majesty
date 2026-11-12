@@ -144,6 +144,47 @@ namespace SolarMajesty.Tests
                 "the two companions still read as different bodies");
         }
 
+        [Test]
+        public void Band_SitsAtTheWaist_AndStandsProudOfTheBody()
+        {
+            var pathfinder = Arm(CivId.PathfinderAccord);
+            var collector = SpawnCollector();
+            AssertReadable(collector.transform, pathfinder.TeamSecondary, "Pathfinder collector");
+
+            var owner = Track(new GameObject("owner")).AddComponent<SpecialistAgent>();
+            var tuning = new AbilityTuning();
+            var escort = CompanionDrone.Spawn(_loop, owner, tuning.companions[0]);
+            var hauler = CompanionDrone.Spawn(_loop, owner, tuning.companions[1]);
+            Track(escort.gameObject);
+            Track(hauler.gameObject);
+            AssertReadable(escort.transform, pathfinder.TeamSecondary, "Pathfinder escort");
+            AssertReadable(hauler.transform, pathfinder.TeamSecondary, "Pathfinder hauler");
+
+            var scout = LoadUnit(UnitMeshCatalog.LoadScout(), "Unit_ScoutDrone");
+            CivTeamStripe.ApplyToUnit(scout, SpecialistClass.ScoutDrone, pathfinder);
+            AssertReadable(scout.transform, pathfinder.TeamSecondary, "Pathfinder scout");
+        }
+
+        [Test]
+        public void Attach_UpdatesColour_AndDoesNotLeaveASecondBand()
+        {
+            Arm(CivId.PathfinderAccord);
+            var collector = SpawnCollector();
+            var visual = Find(collector.transform, "Drone");
+            Assert.IsNotNull(visual, "collector visual");
+            var concord = CivModifiers.For(CivId.LumenConcord, Slate);
+            CivTeamStripe.AttachToCollector(visual, concord);
+            var bands = 0;
+            var all = collector.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < all.Length; i++)
+                if (all[i].name == CivTeamStripe.StripeName) bands++;
+            Assert.AreEqual(1, bands, "still one rim");
+            AssertColour(concord.TeamSecondary,
+                CivTeamStripe.BaseColour(Find(collector.transform, CivTeamStripe.StripeName).GetComponent<Renderer>().sharedMaterial),
+                "re-attach picks up the new civ");
+            AssertReadable(collector.transform, concord.TeamSecondary, "re-sized rim");
+        }
+
         private CivModifiers Arm(CivId civ)
         {
             var go = Track(new GameObject("stripe-loop"));
@@ -274,6 +315,36 @@ namespace SolarMajesty.Tests
         {
             Assert.IsNotNull(t);
             return CivTeamStripe.BaseColour(t.GetComponent<Renderer>().sharedMaterial);
+        }
+
+        private static void AssertReadable(Transform root, Color expected, string what)
+        {
+            var stripe = Find(root, CivTeamStripe.StripeName);
+            Assert.IsNotNull(stripe, what + " has a rim");
+            var rend = stripe.GetComponent<Renderer>();
+            Assert.IsNotNull(rend, what + " renderer");
+            AssertColour(expected, CivTeamStripe.BaseColour(rend.sharedMaterial), what + " colour");
+
+            Bounds body = default;
+            bool any = false;
+            var rends = root.GetComponentsInChildren<Renderer>(false);
+            for (int i = 0; i < rends.Length; i++)
+            {
+                if (rends[i] == null || rends[i].gameObject.name == CivTeamStripe.StripeName) continue;
+                if (!any) { body = rends[i].bounds; any = true; }
+                else body.Encapsulate(rends[i].bounds);
+            }
+            Assert.IsTrue(any, what + " body bounds");
+
+            Bounds sb = rend.bounds;
+            float bodyXz = Mathf.Max(body.size.x, body.size.z);
+            float stripeXz = Mathf.Max(sb.size.x, sb.size.z);
+            Assert.GreaterOrEqual(stripeXz, bodyXz + 2f * CivTeamStripe.MinReadableRim - 0.02f,
+                what + " stands proud of the body (stripe xz " + stripeXz + " body xz " + bodyXz + ")");
+            Assert.GreaterOrEqual(sb.size.y, CivTeamStripe.MinReadableHeight - 0.01f,
+                what + " is tall enough to read from the play camera (height " + sb.size.y + ")");
+            Assert.Less(Mathf.Abs(sb.center.y - body.center.y), Mathf.Max(0.08f, body.size.y * 0.25f),
+                what + " sits at the waist, not as a cap (stripe y " + sb.center.y + " body y " + body.center.y + ")");
         }
 
         private static void AssertColour(Color expected, Color actual, string what)
