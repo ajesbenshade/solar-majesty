@@ -157,7 +157,25 @@ namespace SolarMajesty
         public int TutorialStep { get; private set; }
         private int TutorialGoal =>
             DemoSettings.FirstHourDemo ? FirstHourTutorial.Goal : TutorialCompleteStep;
-        public bool IsTutorialActive => !DemoSettings.TutorialDone && TutorialStep < TutorialGoal;
+        public bool IsTutorialActive => LessonBarVisible(DemoSettings.TutorialDone, TutorialStep, TutorialGoal);
+
+        /// <summary>
+        /// The opening lesson bar is only for the guided Earth start. Skipping guided start, a
+        /// named-civ start, and any drop that is not that tutorial leave the bar down.
+        /// <see cref="RestartTutorial"/> still opens it on purpose.
+        /// </summary>
+        internal static void ArmTutorialForNewCampaign(CelestialBodyId drop, bool guidedStart)
+        {
+            if (CivChoice.IsGuidedStart(drop, guidedStart))
+                DemoSettings.ResetTutorial();
+            else
+                DemoSettings.MarkTutorialDone();
+        }
+
+        /// <summary>The lesson bar draws while the tutorial is unfinished and still before its last step.</summary>
+        internal static bool LessonBarVisible(bool tutorialDone, int step, int goal) =>
+            !tutorialDone && step < goal;
+
         private bool _tutorialDefendPosted;
         private bool _tutorialPestSpawned;
         private readonly TutorialStepClock _tutorialClock = new TutorialStepClock();
@@ -1342,10 +1360,7 @@ namespace SolarMajesty
             CivChoice.Set(CivChoice.ForNewGame(civ, drop, DemoSettings.FirstHourDemo));
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
-            if (drop == CelestialBodyId.Mars)
-                DemoSettings.MarkTutorialDone();
-            else
-                DemoSettings.ResetTutorial();
+            ArmTutorialForNewCampaign(drop, DemoSettings.FirstHourDemo);
             ReplayRules.Save();
             DemoSettings.RequestBootIntoPlay();
             BodySeed.SetBody(drop);
@@ -1362,7 +1377,7 @@ namespace SolarMajesty
             CivChoice.Set(CivChoice.ForNewGame(civ, body, DemoSettings.FirstHourDemo));
             SimSpeed.Load(); // fresh runs start at the player's preferred speed, never held
             DemoSettings.ClearSave();
-            DemoSettings.ResetTutorial();
+            ArmTutorialForNewCampaign(body, DemoSettings.FirstHourDemo);
             ReplayRules.Save();
             DemoSettings.RequestBootIntoPlay();
             BodySeed.SetBody(body);
@@ -2269,7 +2284,7 @@ namespace SolarMajesty
                              celestialBody == CelestialBodyId.Earth &&
                              !StillCaptureHold.Active;
             if (!demoShell)
-                Log.Push(Loc.S("Colony Commons is down — build workshops, charging stations and shops anywhere nearby."));
+                Log.Push(CivHomeCopy.Placed(_civ));
             Debug.Log("[GameLoop] Auto-placed Colony Commons on the Campus A claim.");
         }
 

@@ -623,6 +623,11 @@
    "tr": "Bank 2,000 EU into the till."
   },
   {
+   "en": "Bastion Mandate",
+   "key": "",
+   "tr": "Bastion Mandate"
+  },
+  {
    "en": "Battery / watch",
    "key": "",
    "tr": "Battery / watch"
@@ -831,6 +836,11 @@
    "en": "CHILLED",
    "key": "",
    "tr": "CHILLED"
+  },
+  {
+   "en": "CIVILIZATION",
+   "key": "",
+   "tr": "CIVILIZATION"
   },
   {
    "en": "CLAIM SECURED",
@@ -1621,6 +1631,11 @@
    "en": "Dock {0} first.",
    "key": "",
    "tr": "Dock {0} first."
+  },
+  {
+   "en": "Dome Bunker",
+   "key": "",
+   "tr": "Dome Bunker"
   },
   {
    "en": "Drop manifest",
@@ -3033,6 +3048,11 @@
    "tr": "Lasers armed — 18 m."
   },
   {
+   "en": "Lasers armed — {0:0.#} m.",
+   "key": "",
+   "tr": "Lasers armed — {0:0.#} m."
+  },
+  {
    "en": "Launch craft",
    "key": "",
    "tr": "Launch craft"
@@ -3176,6 +3196,11 @@
    "en": "Lower the bounty",
    "key": "",
    "tr": "Lower the bounty"
+  },
+  {
+   "en": "Lumen Concord",
+   "key": "",
+   "tr": "Lumen Concord"
   },
   {
    "en": "Luna",
@@ -3988,6 +4013,11 @@
    "tr": "Patching a hull. Pay me when it holds."
   },
   {
+   "en": "Pathfinder Accord",
+   "key": "",
+   "tr": "Pathfinder Accord"
+  },
+  {
    "en": "Patrolling the Commons.",
    "key": "",
    "tr": "Patrolling the Commons."
@@ -4568,6 +4598,11 @@
    "tr": "Rim. Cheap Defend Area; will not wander or tinker."
   },
   {
+   "en": "Ring Citadel",
+   "key": "",
+   "tr": "Ring Citadel"
+  },
+  {
    "en": "Roaming fauna",
    "key": "",
    "tr": "Roaming fauna"
@@ -5128,6 +5163,11 @@
    "tr": "Stand-up bill {0} EU. Cost scales with level."
   },
   {
+   "en": "Standard",
+   "key": "",
+   "tr": "Standard"
+  },
+  {
    "en": "Standard: no challenge modifiers.",
    "key": "",
    "tr": "Standard: no challenge modifiers."
@@ -5141,6 +5181,11 @@
    "en": "Start",
    "key": "",
    "tr": "Start"
+  },
+  {
+   "en": "Stilt Arcology",
+   "key": "",
+   "tr": "Stilt Arcology"
   },
   {
    "en": "Stingshot",
@@ -5453,6 +5498,11 @@
    "tr": "Terraformer Workshop"
   },
   {
+   "en": "Tether Exchange",
+   "key": "",
+   "tr": "Tether Exchange"
+  },
+  {
    "en": "That building doesn't fit here.",
    "key": "",
    "tr": "That building doesn't fit here."
@@ -5583,6 +5633,11 @@
    "tr": "The crust took them. Revive, or the ice closes over the claim."
   },
   {
+   "en": "The guided start plays without a civilization. Turn Guided start off in Settings to pick one.",
+   "key": "",
+   "tr": "The guided start plays without a civilization. Turn Guided start off in Settings to pick one."
+  },
+  {
    "en": "The lab ate the sample. The pad will eat Anvil’s afternoon.",
    "key": "",
    "tr": "The lab ate the sample. The pad will eat Anvil’s afternoon."
@@ -5671,6 +5726,11 @@
    "en": "The yard wants {0} EU. Level is the scandal, not the corpse.",
    "key": "",
    "tr": "The yard wants {0} EU. Level is the scandal, not the corpse."
+  },
+  {
+   "en": "The {0} fell and the till with it. Retry this body, or New Game.",
+   "key": "",
+   "tr": "The {0} fell and the till with it. Retry this body, or New Game."
   },
   {
    "en": "Thermal Lance",
@@ -6171,6 +6231,11 @@
    "en": "Your workforce turned down more than it took. A low battery, or a hard sell.",
    "key": "",
    "tr": "Your workforce turned down more than it took. A low battery, or a hard sell."
+  },
+  {
+   "en": "Ziggurat Keep",
+   "key": "",
+   "tr": "Ziggurat Keep"
   },
   {
    "en": "Zoom in",
@@ -6733,6 +6798,11 @@
    "tr": "{0}  ·  locked"
   },
   {
+   "en": "{0}  ·  no perks",
+   "key": "",
+   "tr": "{0}  ·  no perks"
+  },
+  {
    "en": "{0}  ·  {1}\n{2}  ·  RMB cancel{3}  ·  w {4:F1}{5}",
    "key": "",
    "tr": "{0}  ·  {1}\n{2}  ·  RMB cancel{3}  ·  w {4:F1}{5}"
@@ -6896,6 +6966,16 @@
    "en": "{0} is already {1}. Move that first, or pick another key.",
    "key": "",
    "tr": "{0} is already {1}. Move that first, or pick another key."
+  },
+  {
+   "en": "{0} is down — build workshops, charging stations and shops anywhere nearby.",
+   "key": "",
+   "tr": "{0} is down — build workshops, charging stations and shops anywhere nearby."
+  },
+  {
+   "en": "{0} is down. Build anywhere on open ground.",
+   "key": "",
+   "tr": "{0} is down. Build anywhere on open ground."
   },
   {
    "en": "{0} is hunting pests",

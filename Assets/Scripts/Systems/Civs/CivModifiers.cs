@@ -41,6 +41,11 @@ namespace SolarMajesty
 
         public CivId Id { get; }
         public string CastleKey { get; }
+        /// <summary>
+        /// Player-facing name of this civ's home. Colony Commons for the neutral civ and for a
+        /// civ that has no castle name of its own.
+        /// </summary>
+        public string HomeName { get; }
         public Color TeamPrimary { get; }
         public Color TeamSecondary { get; }
 
@@ -63,6 +68,7 @@ namespace SolarMajesty
             {
                 Id = CivId.None;
                 CastleKey = CivDefinition.SharedArtKey;
+                HomeName = CivCatalog.NeutralHomeName;
                 TeamPrimary = Color.white;
                 TeamSecondary = Color.white;
                 return;
@@ -70,6 +76,7 @@ namespace SolarMajesty
 
             Id = def.id;
             CastleKey = def.castleKey ?? CivDefinition.SharedArtKey;
+            HomeName = string.IsNullOrEmpty(def.castleName) ? CivCatalog.NeutralHomeName : def.castleName;
             TeamPrimary = def.teamPrimary;
             TeamSecondary = def.teamSecondary;
 

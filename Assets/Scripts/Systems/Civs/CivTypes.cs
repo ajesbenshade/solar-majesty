@@ -132,6 +132,8 @@ namespace SolarMajesty
         public string summary = "";
         [Tooltip("Which castle the Commons is drawn as. Empty = today's Commons.")]
         public string castleKey = SharedArtKey;
+        [Tooltip("Player-facing name of that castle. Empty = Colony Commons (the neutral home).")]
+        public string castleName = "";
         [Tooltip("Offered on the new-game cards. Off for the neutral civ, and for a civ whose castle does not exist yet (it still plays if a save names it).")]
         public bool playable;
         public Color teamPrimary = Color.white;
@@ -154,6 +156,7 @@ namespace SolarMajesty
                 pitch = pitch,
                 summary = summary,
                 castleKey = castleKey,
+                castleName = castleName,
                 playable = playable,
                 teamPrimary = teamPrimary,
                 teamSecondary = teamSecondary,
