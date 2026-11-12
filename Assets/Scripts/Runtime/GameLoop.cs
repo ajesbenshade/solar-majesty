@@ -2628,7 +2628,7 @@ namespace SolarMajesty
                     buildingRoot != null ? buildingRoot : transform,
                     world,
                     "DropZone_Claim",
-                    new Color(0.96f, 0.42f, 0.08f),
+                    CivTeamMark.Colour(_civ),
                     ColonyLayout.CommonsSide * grid.CellSize + 0.5f);
             }
             else
@@ -7432,7 +7432,7 @@ namespace SolarMajesty
             }
             _parties.Add(party);
             DemoAudio.PlayPartyForm(leader.transform.position);
-            DemoVfx.ClaimRing(leader.transform.position, new Color(0.96f, 0.42f, 0.08f));
+            DemoVfx.ClaimRing(leader.transform.position, CivTeamMark.Colour(_civ));
             LogOverseer(Loc.F("Squad of {0} — {1} leads. Followers rest and hunt together.", party.Count, ColonyStructure.ClassLabel(leader.Data != null ? leader.Data.specialistClass : SpecialistClass.ScoutDrone)));
             Debug.Log($"[Party] Formed #{party.Id} from selection leader={leader.Data?.displayName} size={party.Count}");
             return true;
@@ -7473,7 +7473,7 @@ namespace SolarMajesty
             }
             _parties.Add(party);
             DemoAudio.PlayPartyForm(ColonyLayout.InnOutpost);
-            DemoVfx.ClaimRing(ColonyLayout.InnOutpost, new Color(0.96f, 0.42f, 0.08f));
+            DemoVfx.ClaimRing(ColonyLayout.InnOutpost, CivTeamMark.Colour(_civ));
             LogOverseer(Loc.F("Squad of {0} formed at the rest beacon.", party.Count));
             Debug.Log($"[Party] Formed #{party.Id} leader={leader.Data?.displayName} size={party.Count}");
         }

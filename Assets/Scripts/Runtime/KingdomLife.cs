@@ -132,7 +132,7 @@ namespace SolarMajesty
             if (parent != null) root.SetParent(parent, false);
 
             // Rest / party rally still use InnOutpost coords even without a mesh.
-            Marker(root, Inn(0), "Inn_RestBeacon", new Color(0.96f, 0.42f, 0.08f), emptyStart ? 0.55f : 1.15f);
+            Marker(root, Inn(0), "Inn_RestBeacon", CivTeamMark.ColourBound(), emptyStart ? 0.55f : 1.15f, emit: true);
 
             if (emptyStart) return;
 
@@ -185,7 +185,7 @@ namespace SolarMajesty
             return chosen;
         }
 
-        private static void Marker(Transform parent, Vector3 pos, string name, Color accent, float diameter = 1.15f)
+        private static void Marker(Transform parent, Vector3 pos, string name, Color accent, float diameter = 1.15f, bool emit = false)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = name;
@@ -193,7 +193,7 @@ namespace SolarMajesty
             go.transform.position = pos + Vector3.up * 0.12f;
             go.transform.localScale = new Vector3(diameter, 0.08f, diameter);
             Object.Destroy(go.GetComponent<Collider>());
-            Tint(go, accent, 0.18f);
+            Tint(go, accent, 0.18f, emit);
             ColonyVisualUtility.SnapToGround(go);
         }
 
@@ -213,11 +213,11 @@ namespace SolarMajesty
             cap.transform.localPosition = new Vector3(0f, 1.05f, 0f);
             cap.transform.localScale = new Vector3(0.55f, 0.22f, 0.55f);
             Object.Destroy(cap.GetComponent<Collider>());
-            Tint(cap, new Color(0.95f, 0.42f, 0.08f), 0.4f);
+            Tint(cap, CivTeamMark.ColourBound(), 0.4f, emit: true);
             ColonyVisualUtility.SnapToGround(go);
         }
 
-        private static void Tint(GameObject go, Color c, float smooth)
+        private static void Tint(GameObject go, Color c, float smooth, bool emit = false)
         {
             var rend = go.GetComponent<Renderer>();
             if (rend == null) return;
@@ -228,7 +228,8 @@ namespace SolarMajesty
             };
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smooth);
-            if (c.r > 0.8f && c.g < 0.5f && mat.HasProperty("_EmissionColor"))
+            // Today's orange beacons glow. A named civ's team colour glows the same way when asked.
+            if ((emit || (c.r > 0.8f && c.g < 0.5f)) && mat.HasProperty("_EmissionColor"))
             {
                 mat.EnableKeyword("_EMISSION");
                 mat.SetColor("_EmissionColor", c * 0.6f);

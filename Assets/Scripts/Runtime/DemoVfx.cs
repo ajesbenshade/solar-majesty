@@ -85,7 +85,7 @@ namespace SolarMajesty
 
         public static void BuildComplete(Vector3 worldPos)
         {
-            Color orange = new Color(0.96f, 0.42f, 0.08f);
+            Color orange = CivTeamMark.ColourBound();
             SpawnRing(worldPos, orange, 0.55f, 6f);
             SpawnPulse(worldPos + Vector3.up * 1.4f, Vector3.one * 0.45f, Color.white, 0.35f, 2.2f);
             for (int i = 0; i < 6; i++)

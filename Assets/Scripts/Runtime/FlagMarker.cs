@@ -113,6 +113,7 @@ namespace SolarMajesty
             EnsureHitCollider();
             EnsureLabels();
             EnsureClaimBadge();
+            CivTeamMark.AttachFlagRim(transform, CivModifiers.For(ModularBuildingFactory.BoundCiv));
             RefreshLabels();
             RefreshClaimVisual();
         }
@@ -365,7 +366,8 @@ namespace SolarMajesty
             Object.Destroy(go.GetComponent<Collider>());
             var rend = go.GetComponent<Renderer>();
             if (rend != null)
-                IndustrialArtDressing.SetUrpColor(rend, new Color(1f, 0.86f, 0.28f));
+                CivTeamMark.PaintMarker(rend, CivModifiers.For(ModularBuildingFactory.BoundCiv),
+                    new Color(1f, 0.86f, 0.28f, 1f));
             _selectRing = go;
         }
 

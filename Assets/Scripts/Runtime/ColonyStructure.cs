@@ -246,7 +246,7 @@ namespace SolarMajesty
                 {
                     var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
                                            ?? Shader.Find("Sprites/Default"));
-                    var c = new Color(0.96f, 0.42f, 0.08f);
+                    var c = CivTeamMark.ColourBound();
                     if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
                     else if (mat.HasProperty("_Color")) mat.color = c;
                     rend.sharedMaterial = mat;
@@ -705,11 +705,8 @@ namespace SolarMajesty
             var rend = _selectRing.GetComponent<Renderer>();
             if (rend != null)
             {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                       ?? Shader.Find("Sprites/Default"));
-                if (mat.HasProperty("_BaseColor"))
-                    mat.SetColor("_BaseColor", new Color(0.96f, 0.42f, 0.08f, 0.85f));
-                rend.sharedMaterial = mat;
+                CivTeamMark.PaintMarker(rend, CivModifiers.For(ModularBuildingFactory.BoundCiv),
+                    new Color(0.96f, 0.42f, 0.08f, 0.85f));
             }
             _selectRing.SetActive(false);
         }

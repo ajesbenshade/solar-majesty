@@ -48,7 +48,7 @@ namespace SolarMajesty
         public static void PlayDeparture(Vector3 from)
         {
             DemoVfx.LaunchPlume(from);
-            DemoVfx.ClaimRing(from, new Color(0.96f, 0.42f, 0.08f));
+            DemoVfx.ClaimRing(from, CivTeamMark.ColourBound());
             // The victory stinger already played when the mission was won; departure is the
             // engines. PlayLaunch is 2D so the whole screen rumbles, not just the pad.
             DemoAudio.PlayLaunch();
@@ -76,9 +76,15 @@ namespace SolarMajesty
             {
                 var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
                                        ?? Shader.Find("Sprites/Default"));
-                Color c = new Color(0.96f, 0.42f, 0.08f, 0.85f);
+                Color c = CivTeamMark.ColourBound();
+                c.a = 0.85f;
                 if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
                 else if (mat.HasProperty("_Color")) mat.color = c;
+                if (ModularBuildingFactory.BoundCiv != CivId.None && mat.HasProperty("_EmissionColor"))
+                {
+                    mat.EnableKeyword("_EMISSION");
+                    mat.SetColor("_EmissionColor", new Color(c.r * 0.45f, c.g * 0.45f, c.b * 0.45f, 1f));
+                }
                 rend.sharedMaterial = mat;
             }
         }

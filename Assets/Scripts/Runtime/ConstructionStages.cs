@@ -35,7 +35,8 @@ namespace SolarMajesty
         private static readonly Color Cream = new Color(0.88f, 0.82f, 0.74f);
         private static readonly Color Carbon = new Color(0.20f, 0.19f, 0.18f);
         private static readonly Color Soil = new Color(0.36f, 0.20f, 0.12f);
-        private static readonly Color Orange = new Color(0.96f, 0.42f, 0.08f);
+        // Site stakes and crane bits. Neutral colonies keep today's orange; a named civ uses its team colour.
+        private static Color Orange => CivTeamMark.ColourBound();
         private static readonly Color LampEmit = new Color(1.6f, 1.25f, 0.8f);
         private static readonly Color RedEmit = new Color(1.6f, 0.22f, 0.08f);
 

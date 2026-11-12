@@ -9,7 +9,6 @@ namespace SolarMajesty
     public static class ColonyVisualUtility
     {
         private static Shader _lit;
-        private static Material _ghostTemplate;
         private static Material _footprintValid;
         private static Material _footprintInvalid;
 
@@ -27,27 +26,9 @@ namespace SolarMajesty
 
         public static void ApplyGhostTint(GameObject ghost, bool valid)
         {
-            if (ghost == null) return;
-            EnsureGhostTemplate();
-            Color tint = valid
-                ? new Color(0.25f, 1f, 0.45f, 0.38f)
-                : new Color(1f, 0.28f, 0.22f, 0.42f);
-
-            var renderers = ghost.GetComponentsInChildren<Renderer>(true);
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                var mats = renderers[i].materials;
-                for (int m = 0; m < mats.Length; m++)
-                {
-                    var mat = mats[m];
-                    if (mat == null) continue;
-                    ForceTransparent(mat);
-                    if (mat.HasProperty("_BaseColor"))
-                        mat.SetColor("_BaseColor", tint);
-                    if (mat.HasProperty("_Color"))
-                        mat.color = tint;
-                }
-            }
+            // A named civ retints the orange trim and adds a team rim. Neutral ghosts stay
+            // the valid/invalid tint they wear today.
+            CivTeamMark.PaintGhost(ghost, valid, ModularBuildingFactory.BoundCiv);
         }
 
         public static Material GetFootprintMaterial(bool valid)
@@ -200,16 +181,6 @@ namespace SolarMajesty
             _lit = Shader.Find("Universal Render Pipeline/Lit");
             if (_lit == null)
                 _lit = Shader.Find("Universal Render Pipeline/Simple Lit");
-        }
-
-        private static void EnsureGhostTemplate()
-        {
-            if (_ghostTemplate != null) return;
-            EnsureLitShader();
-            if (_lit == null) return;
-            _ghostTemplate = new Material(_lit) { name = "SM_GhostLit" };
-            ForceTransparent(_ghostTemplate);
-            _ghostTemplate.SetColor("_BaseColor", new Color(0.3f, 1f, 0.4f, 0.35f));
         }
 
         private static void EnsureFootprintMaterials()

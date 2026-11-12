@@ -606,6 +606,7 @@ namespace SolarMajesty
             _status = "revived";
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
+            ApplyTeamMark();
             SetAgentStopped(false);
             BeginRecoverySafety();
         }
@@ -621,6 +622,7 @@ namespace SolarMajesty
             _status = "field_revive";
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
+            ApplyTeamMark();
             SetAgentStopped(false);
             BeginRecoverySafety();
         }
@@ -693,9 +695,11 @@ namespace SolarMajesty
             _baseScale = transform.localScale;
             if (tint.HasValue) bodyTint = tint.Value;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
+            ApplyTeamMark();
             EnsureNavAgent();
 
             // Attach before rings, labels, and orbs exist so only the body mesh gets adopted.
+            // The team mark is already a child, so it rides with the body.
             _motion = UnitMotion.Attach(gameObject, UnitMotion.KindFor(data.specialistClass), 1f);
             TerrainFollow.Attach(gameObject);
 
@@ -734,6 +738,17 @@ namespace SolarMajesty
             cap.direction = 1; // Y-axis
         }
 
+        /// <summary>
+        /// Hired classes and military units wear the colony's team colour. Standing back up
+        /// clears the downed tint, which also clears the orange slot's property block, so this
+        /// runs again after that clear. Scouts and engineers are left as they are.
+        /// </summary>
+        private void ApplyTeamMark()
+        {
+            if (data == null) return;
+            CivTeamMark.ApplyToHero(gameObject, data.specialistClass, _loop != null ? _loop.Civ : null);
+        }
+
         private void EnsureSelectRing()
         {
             if (_selectRing != null) return;
@@ -746,14 +761,8 @@ namespace SolarMajesty
             var rend = _selectRing.GetComponent<Renderer>();
             if (rend != null)
             {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")
-                                       ?? Shader.Find("Universal Render Pipeline/Unlit")
-                                       ?? Shader.Find("Sprites/Default"));
-                if (mat.HasProperty("_BaseColor"))
-                    mat.SetColor("_BaseColor", new Color(0.96f, 0.42f, 0.08f, 0.85f));
-                else if (mat.HasProperty("_Color"))
-                    mat.color = new Color(0.96f, 0.42f, 0.08f, 0.85f);
-                rend.material = mat;
+                CivTeamMark.PaintMarker(rend, _loop != null ? _loop.Civ : null,
+                    new Color(0.96f, 0.42f, 0.08f, 0.85f));
                 rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
             _selectRing.SetActive(false);
@@ -916,6 +925,7 @@ namespace SolarMajesty
                 _scrapRiskLogged = false;
                 _status = "recovered";
                 IndustrialArtDressing.ClearTintOverlay(gameObject);
+                ApplyTeamMark();
                 SetAgentStopped(false);
                 BeginRecoverySafety();
                 if (!_scrapRiskLogged)

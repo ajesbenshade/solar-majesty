@@ -130,12 +130,15 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Materials Apply must keep: fauna v2 art, and the civ castles' slot materials
-        /// (<see cref="CivCastleLoader.MaterialPrefix"/>), which carry the civ and accent colours.
+        /// Materials Apply must keep: fauna v2 art, the civ castles' slot materials
+        /// (<see cref="CivCastleLoader.MaterialPrefix"/>), and team marks
+        /// (<see cref="CivTeamMark.MaterialPrefix"/>). Those already carry the civ colour.
         /// </summary>
         public static bool IsAuthoredArtMaterial(Material mat) =>
             IsFaunaArtMaterial(mat) ||
-            (mat != null && mat.name.StartsWith(CivCastleLoader.MaterialPrefix, System.StringComparison.Ordinal));
+            (mat != null &&
+                (mat.name.StartsWith(CivCastleLoader.MaterialPrefix, System.StringComparison.Ordinal) ||
+                 mat.name.StartsWith(CivTeamMark.MaterialPrefix, System.StringComparison.Ordinal)));
 
         /// <summary>Authored fauna v2 atlas or shared glow. Apply must not replace these.</summary>
         public static bool IsFaunaArtMaterial(Material mat) =>
@@ -394,7 +397,7 @@ namespace SolarMajesty
         private static bool ShouldSkip(Renderer rend)
         {
             string n = rend.name;
-            if (n.Contains("SelectRing") || n.Contains("StatusOrb") || n.Contains("Label"))
+            if (n == CivTeamMark.MarkName || n.Contains("SelectRing") || n.Contains("StatusOrb") || n.Contains("Label"))
                 return true;
             if (n.Contains("Vfx") || n.StartsWith("Dress_") || n.Contains("YieldLabel"))
                 return true;
