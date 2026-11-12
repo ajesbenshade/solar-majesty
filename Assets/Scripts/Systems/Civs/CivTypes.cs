@@ -300,6 +300,31 @@ namespace SolarMajesty
         }
 
         /// <summary>
+        /// The colour painted on a team stripe. It is the civ's second colour, the same colour
+        /// castles paint on their TeamColour bands (<see cref="CivColour"/>). The neutral civ has
+        /// no civ colour, so the stripe stays today's orange. A player accent is never used.
+        /// </summary>
+        public static Color TeamStripe(CivId civ)
+        {
+            var colour = CivColour(civ);
+            return colour ?? NeutralStripe();
+        }
+
+        /// <summary>As <see cref="TeamStripe(CivId)"/> for the owner that is actually playing. Null is the neutral stripe.</summary>
+        public static Color TeamStripe(CivModifiers civ)
+        {
+            if (civ == null || civ.Id == CivId.None) return NeutralStripe();
+            return CivColour(civ.Id) ?? civ.TeamSecondary;
+        }
+
+        /// <summary>Today's orange stripe (<see cref="CivDefinition.teamSecondary"/> of <see cref="CivId.None"/>).</summary>
+        private static Color NeutralStripe()
+        {
+            var neutral = CivCatalog.Get(CivId.None);
+            return neutral != null ? neutral.teamSecondary : new Color(0.96f, 0.42f, 0.08f);
+        }
+
+        /// <summary>
         /// True when <paramref name="accent"/> is brighter (HSV value) or more saturated (HSV
         /// saturation) than <paramref name="civ"/>'s colour (<see cref="CivColour"/>). The neutral
         /// civ has no colour to protect, so nothing outshines it.

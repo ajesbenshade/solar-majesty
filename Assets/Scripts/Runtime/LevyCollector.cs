@@ -399,12 +399,14 @@ namespace SolarMajesty
             _bag = Prim(PrimitiveType.Cube, _visual, new Vector3(0f, -0.42f, 0f), Vector3.one * 0.18f, _goldMat).transform;
             _bag.name = "Bag";
             _bag.gameObject.SetActive(false);
+            // The gold skirt stays gold (that is the bag). The rim is the civ's team colour.
+            CivTeamStripe.AttachToCollector(_visual, _director != null && _director.Loop != null ? _director.Loop.Civ : null);
         }
 
         private static GameObject Prim(PrimitiveType type, Transform parent, Vector3 pos, Vector3 scale, Material mat)
         {
             var g = GameObject.CreatePrimitive(type);
-            Object.Destroy(g.GetComponent<Collider>());
+            ColonyVisualUtility.DestroyNow(g.GetComponent<Collider>());
             g.transform.SetParent(parent, false);
             g.transform.localPosition = pos;
             g.transform.localScale = scale;
