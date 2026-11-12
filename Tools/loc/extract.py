@@ -123,6 +123,7 @@ FIELD_RULES = {
     "Systems/ClassAbilities.cs": ["displayName"],
     "Systems/ControlsList.cs": ["Title"],
     "Systems/SpecialistPersonality.cs": ["displayName", "description"],
+    "Systems/Civs/CivCatalog.cs": ["castleName"],
 }
 
 CALL_RULES = {

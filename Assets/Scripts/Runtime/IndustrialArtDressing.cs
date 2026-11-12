@@ -130,12 +130,21 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Materials Apply must keep: fauna v2 art, and civ castle / civ building slot materials
-        /// (<see cref="CivCastleLoader.MaterialPrefix"/>), which carry the civ and accent colours.
+        /// Materials Apply must keep: fauna v2 art, civ castle / civ building slot materials
+        /// (<see cref="CivCastleLoader.MaterialPrefix"/>), and team stripes
+        /// (<see cref="CivTeamStripe.MaterialPrefix"/>). Those already carry the civ colour.
         /// </summary>
         public static bool IsAuthoredArtMaterial(Material mat) =>
-            IsFaunaArtMaterial(mat) ||
-            (mat != null && mat.name.StartsWith(CivCastleLoader.MaterialPrefix, System.StringComparison.Ordinal));
+            IsFaunaArtMaterial(mat) || IsCivColourMaterial(mat);
+
+        /// <summary>
+        /// Castle and civ-building slot materials, and team stripes. Apply must not remap them onto the orange library:
+        /// they already carry the civ colour.
+        /// </summary>
+        public static bool IsCivColourMaterial(Material mat) =>
+            mat != null &&
+            (mat.name.StartsWith(CivCastleLoader.MaterialPrefix, System.StringComparison.Ordinal) ||
+             mat.name.StartsWith(CivTeamStripe.MaterialPrefix, System.StringComparison.Ordinal));
 
         /// <summary>Authored fauna v2 atlas or shared glow. Apply must not replace these.</summary>
         public static bool IsFaunaArtMaterial(Material mat) =>

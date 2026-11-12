@@ -59,7 +59,7 @@ namespace SolarMajesty
             if (owner == null) return null;
             var go = GameObject.CreatePrimitive(def.taunts ? PrimitiveType.Cube : PrimitiveType.Capsule);
             go.name = "Companion_" + def.id;
-            Object.Destroy(go.GetComponent<Collider>()); // never steals selection clicks
+            ColonyVisualUtility.DestroyNow(go.GetComponent<Collider>()); // never steals selection clicks
             go.transform.localScale = Vector3.one * Mathf.Max(0.1f, def.scale);
             Vector2 j = Random.insideUnitCircle.normalized * 1.6f;
             go.transform.position = owner.transform.position + new Vector3(j.x, 0.5f * def.scale, j.y);
@@ -72,6 +72,8 @@ namespace SolarMajesty
             c._life = Mathf.Max(1f, def.lifetime);
             c._rend = go.GetComponent<Renderer>();
             IndustrialArtDressing.SetUrpColor(c._rend, def.color);
+            // The body stays the companion's own colour. The rim says which civ owns it.
+            CivTeamStripe.AttachToCompanion(go.transform, loop != null ? loop.Civ : null);
             Live.Add(c);
             DemoVfx.ClaimRing(go.transform.position, def.color);
             return c;
