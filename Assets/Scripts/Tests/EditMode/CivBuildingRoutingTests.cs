@@ -6,9 +6,10 @@ using UnityEngine.TestTools;
 namespace SolarMajesty.Tests
 {
     /// <summary>
-    /// Per-civ meshes for Inn, Guild Hall, HAB, Power and Defense. The drop path follows the
-    /// citadel stem. A missing or empty file keeps the shared hero kit or the procedural kit.
-    /// The neutral civ and the Commons castle are unchanged.
+    /// Per-civ meshes for Inn, Guild Hall, HAB, Power and Defense. The drop path is the
+    /// artist's #133 files (SM_{Lumen|Exchange|Mandate|Pathfinder}_* under Buildings/Civ),
+    /// mapped from the citadel stem. A missing or empty file keeps the shared hero kit or the
+    /// procedural kit. The neutral civ and the Commons castle are unchanged.
     /// </summary>
     public class CivBuildingRoutingTests
     {
@@ -48,7 +49,7 @@ namespace SolarMajesty.Tests
         // ---- the drop convention ----------------------------------------------------------
 
         [Test]
-        public void ResourcePaths_FollowTheCitadelStem()
+        public void ResourcePaths_UseTheArtStems_MappedFromTheCitadel()
         {
             Assert.AreEqual("Ziggurat", CivBuildingCatalog.ArchitectureOf(CivId.LumenConcord));
             Assert.AreEqual("Ring", CivBuildingCatalog.ArchitectureOf(CivId.TetherExchange));
@@ -57,15 +58,27 @@ namespace SolarMajesty.Tests
                 "Pathfinder Accord uses the Arcology castle stem");
             Assert.IsNull(CivBuildingCatalog.ArchitectureOf(CivId.None));
 
-            Assert.AreEqual("CivBuildings/SM_Ziggurat_Inn", Path(CivId.LumenConcord, BuildingCategory.Inn));
-            Assert.AreEqual("CivBuildings/SM_Ziggurat_GuildHall", Path(CivId.LumenConcord, BuildingCategory.GuildHall));
-            Assert.AreEqual("CivBuildings/SM_Ziggurat_HAB", Path(CivId.LumenConcord, BuildingCategory.Habitat));
-            Assert.AreEqual("CivBuildings/SM_Ziggurat_Power", Path(CivId.LumenConcord, BuildingCategory.Power));
-            Assert.AreEqual("CivBuildings/SM_Ziggurat_Defense", Path(CivId.LumenConcord, BuildingCategory.Defense));
-            Assert.AreEqual("CivBuildings/SM_Ring_Inn", Path(CivId.TetherExchange, BuildingCategory.Inn));
-            Assert.AreEqual("CivBuildings/SM_Dome_GuildHall", Path(CivId.BastionMandate, BuildingCategory.GuildHall));
-            Assert.AreEqual("CivBuildings/SM_Arcology_Defense", Path(CivId.PathfinderAccord, BuildingCategory.Defense));
-            Assert.AreEqual("Assets/Resources/CivBuildings/SM_Arcology_Inn.fbx",
+            Assert.AreEqual("Lumen", CivBuildingCatalog.ArtStemOf("Ziggurat"));
+            Assert.AreEqual("Exchange", CivBuildingCatalog.ArtStemOf("Ring"));
+            Assert.AreEqual("Mandate", CivBuildingCatalog.ArtStemOf("Dome"));
+            Assert.AreEqual("Pathfinder", CivBuildingCatalog.ArtStemOf("Arcology"));
+            Assert.AreEqual("Lumen", CivBuildingCatalog.ArtStemOf(CivId.LumenConcord));
+            Assert.AreEqual("Exchange", CivBuildingCatalog.ArtStemOf(CivId.TetherExchange));
+            Assert.AreEqual("Mandate", CivBuildingCatalog.ArtStemOf(CivId.BastionMandate));
+            Assert.AreEqual("Pathfinder", CivBuildingCatalog.ArtStemOf(CivId.PathfinderAccord));
+            Assert.IsNull(CivBuildingCatalog.ArtStemOf(CivId.None));
+            Assert.IsNull(CivBuildingCatalog.ArtStemOf("Unknown"));
+            Assert.IsNull(CivBuildingCatalog.ArtStemOf(""));
+
+            Assert.AreEqual("Buildings/Civ/SM_Lumen_Inn", Path(CivId.LumenConcord, BuildingCategory.Inn));
+            Assert.AreEqual("Buildings/Civ/SM_Lumen_GuildHall", Path(CivId.LumenConcord, BuildingCategory.GuildHall));
+            Assert.AreEqual("Buildings/Civ/SM_Lumen_HAB", Path(CivId.LumenConcord, BuildingCategory.Habitat));
+            Assert.AreEqual("Buildings/Civ/SM_Lumen_Power", Path(CivId.LumenConcord, BuildingCategory.Power));
+            Assert.AreEqual("Buildings/Civ/SM_Lumen_Defense", Path(CivId.LumenConcord, BuildingCategory.Defense));
+            Assert.AreEqual("Buildings/Civ/SM_Exchange_Inn", Path(CivId.TetherExchange, BuildingCategory.Inn));
+            Assert.AreEqual("Buildings/Civ/SM_Mandate_GuildHall", Path(CivId.BastionMandate, BuildingCategory.GuildHall));
+            Assert.AreEqual("Buildings/Civ/SM_Pathfinder_Defense", Path(CivId.PathfinderAccord, BuildingCategory.Defense));
+            Assert.AreEqual("Assets/Resources/Buildings/Civ/SM_Pathfinder_Inn.fbx",
                 CivBuildingCatalog.AssetPath(CivId.PathfinderAccord, BuildingCategory.Inn));
 
             Assert.IsNull(Path(CivId.None, BuildingCategory.Inn));
@@ -80,6 +93,19 @@ namespace SolarMajesty.Tests
                     Assert.IsTrue(paths.Add(Path(civ, cat)), Path(civ, cat));
             Assert.AreEqual(20, paths.Count, "four civs, five buildings");
 
+            // Exact #133 drop: SM_{Lumen|Exchange|Mandate|Pathfinder}_{Inn|GuildHall|HAB|Power|Defense}.
+            var dropped = new HashSet<string>();
+            string[] civStems = { "Lumen", "Exchange", "Mandate", "Pathfinder" };
+            string[] buildings = { "Inn", "GuildHall", "HAB", "Power", "Defense" };
+            foreach (var civStem in civStems)
+                foreach (var building in buildings)
+                    dropped.Add("Assets/Resources/Buildings/Civ/SM_" + civStem + "_" + building + ".fbx");
+            var assets = new HashSet<string>();
+            foreach (var civ in Civs)
+                foreach (var cat in CivBuildingCatalog.Batch)
+                    assets.Add(CivBuildingCatalog.AssetPath(civ, cat));
+            CollectionAssert.AreEquivalent(dropped, assets, "every #133 FBX path is the routed drop");
+
             // The mesh follows the castle this colony draws, not a second table.
             var ringed = new CivModifiers(new CivDefinition
             {
@@ -87,7 +113,8 @@ namespace SolarMajesty.Tests
                 castleKey = "castle.ring_citadel"
             });
             Assert.AreEqual("Ring", CivBuildingCatalog.ArchitectureOf(ringed));
-            Assert.AreEqual("CivBuildings/SM_Ring_HAB", CivBuildingCatalog.ResourcePath(ringed, BuildingCategory.Habitat));
+            Assert.AreEqual("Exchange", CivBuildingCatalog.ArtStemOf(ringed));
+            Assert.AreEqual("Buildings/Civ/SM_Exchange_HAB", CivBuildingCatalog.ResourcePath(ringed, BuildingCategory.Habitat));
             var noCastle = new CivModifiers(new CivDefinition { id = CivId.LumenConcord, castleKey = "" });
             Assert.IsNull(CivBuildingCatalog.ArchitectureOf(noCastle));
             Assert.IsNull(CivBuildingCatalog.ResourcePath(noCastle, BuildingCategory.Inn));
@@ -141,7 +168,7 @@ namespace SolarMajesty.Tests
         [Test]
         public void Neutral_Unrouted_AndEmpty_DoNotReplaceTheSharedKit()
         {
-            var cube = Cube("SM_Ziggurat_HAB");
+            var cube = Cube("SM_Lumen_HAB");
             CivBuildingLoader.LoadOverride = _ => cube;
 
             ModularBuildingFactory.BindCiv(null);
@@ -159,8 +186,8 @@ namespace SolarMajesty.Tests
             Assert.IsNull(farm.GetComponent<CivBuilding>(), "Farm is outside the batch");
             Assert.IsNull(Find(farm.transform, "CivBuilding_Ziggurat_Farm"));
 
-            var empty = Track(new GameObject("SM_Ziggurat_Power"));
-            CivBuildingLoader.LoadOverride = path => path.EndsWith("SM_Ziggurat_Power") ? empty : null;
+            var empty = Track(new GameObject("SM_Lumen_Power"));
+            CivBuildingLoader.LoadOverride = path => path.EndsWith("SM_Lumen_Power") ? empty : null;
             var power = Spawn(BuildingCategory.Power);
             Assert.IsNull(power.GetComponent<CivBuilding>(), "an empty drop is not a building");
             Assert.IsNotNull(Find(power.transform, "PwrHull"));
@@ -184,7 +211,7 @@ namespace SolarMajesty.Tests
         [Test]
         public void DroppedMesh_ReplacesTheSharedKit_AtAuthoredScale_WithCitadelSlots()
         {
-            var source = Track(new GameObject("SM_Ziggurat_Inn"));
+            var source = Track(new GameObject("SM_Lumen_Inn"));
             var slots = new[]
             {
                 CivCastleLoader.Slot.Trim, CivCastleLoader.Slot.Carbon, CivCastleLoader.Slot.TeamColour,
@@ -211,7 +238,7 @@ namespace SolarMajesty.Tests
             Assert.AreEqual(BuildingCategory.Inn, built.Category);
             Assert.AreEqual("Ziggurat", built.Architecture);
             Assert.AreEqual(Path(CivId.LumenConcord, BuildingCategory.Inn), built.ResourcePath);
-            Assert.AreEqual("SM_Ziggurat_Inn", built.Model.name);
+            Assert.AreEqual("SM_Lumen_Inn", built.Model.name);
             Assert.IsNull(Find(go.transform, "CoreMesh"), "the shared hero kit is not also attached");
             Assert.AreEqual(0, go.GetComponentsInChildren<Collider>(true).Length);
 
@@ -262,7 +289,7 @@ namespace SolarMajesty.Tests
             Assert.IsNotNull(Find(ring.transform, "CoreMesh"), "the Exchange keeps the shared Inn");
 
             // The same file painted for the Dome uses the Dome's trim, not the Ziggurat's.
-            var domeSource = Cube("SM_Dome_Defense");
+            var domeSource = Cube("SM_Mandate_Defense");
             domeSource.GetComponent<Renderer>().sharedMaterial = Mat("Trim");
             CivBuildingLoader.LoadOverride = path =>
                 path == Path(CivId.BastionMandate, BuildingCategory.Defense) ? domeSource : null;
@@ -280,7 +307,7 @@ namespace SolarMajesty.Tests
         [Test]
         public void DroppedMesh_UsesLodSuffixes_AndTheGhostShowsFullDetail()
         {
-            var source = Track(new GameObject("SM_Arcology_GuildHall"));
+            var source = Track(new GameObject("SM_Pathfinder_GuildHall"));
             AddLod(source.transform, "Hall_LOD0");
             AddLod(source.transform, "Hall_LOD1");
             AddLod(source.transform, "Hall_LOD2");

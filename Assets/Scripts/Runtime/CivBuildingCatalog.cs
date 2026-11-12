@@ -6,16 +6,16 @@ namespace SolarMajesty
     /// <summary>
     /// Where a civ's non-castle buildings load from, once the art exists. Castles stay in
     /// <see cref="CivCastleCatalog"/> (<c>Assets/Resources/Citadels</c>). These five drop in
-    /// <c>Assets/Resources/CivBuildings</c> as one FBX per civ, named
-    /// <c>SM_{architecture}_{building}</c>. The architecture token is the citadel file stem, so
-    /// the set matches the castle the colony already draws:
-    /// Ziggurat Keep → Ziggurat, Ring Citadel → Ring, Dome Bunker → Dome,
-    /// Pathfinder Accord → Arcology (<c>SM_Citadel_Arcology</c>).
+    /// <c>Assets/Resources/Buildings/Civ</c> as one FBX per civ, named
+    /// <c>SM_{civ}_{building}</c> — the names already in PR #133, left as the artist wrote them.
+    /// The civ token is mapped from the citadel the colony already draws (a stem map, not a
+    /// rename of the art): Ziggurat Keep → Lumen, Ring Citadel → Exchange, Dome Bunker → Mandate,
+    /// Stilt Arcology → Pathfinder (<c>SM_Citadel_Arcology</c>).
     ///
-    /// Example: <c>Assets/Resources/CivBuildings/SM_Ziggurat_Inn.fbx</c>
-    /// loads as <c>CivBuildings/SM_Ziggurat_Inn</c>. The same pattern covers
-    /// <c>SM_Ziggurat_GuildHall</c>, <c>SM_Ziggurat_HAB</c>, <c>SM_Ziggurat_Power</c> and
-    /// <c>SM_Ziggurat_Defense</c>, and the Ring, Dome and Arcology stems.
+    /// Example: <c>Assets/Resources/Buildings/Civ/SM_Lumen_Inn.fbx</c>
+    /// loads as <c>Buildings/Civ/SM_Lumen_Inn</c>. The same pattern covers
+    /// <c>SM_Lumen_GuildHall</c>, <c>SM_Lumen_HAB</c>, <c>SM_Lumen_Power</c> and
+    /// <c>SM_Lumen_Defense</c>, and the Exchange, Mandate and Pathfinder stems.
     ///
     /// Model on the catalog's 6 m plot (4×4 cells at 1.5 m), shorter than the Dome, scale 1,
     /// pivot at ground centre, front toward Blender -Y. The loader yaws 180° so the front faces
@@ -29,8 +29,8 @@ namespace SolarMajesty
     /// </summary>
     public static class CivBuildingCatalog
     {
-        /// <summary>Resources folder under Assets/Resources. Not Citadels, and not Buildings.</summary>
-        public const string Root = "CivBuildings";
+        /// <summary>Resources folder under Assets/Resources. The artist's drop from PR #133.</summary>
+        public const string Root = "Buildings/Civ";
 
         /// <summary>Citadel resource path up to the architecture stem (<c>Citadels/SM_Citadel_Ziggurat</c>).</summary>
         public const string CitadelStemPrefix = "Citadels/SM_Citadel_";
@@ -81,13 +81,35 @@ namespace SolarMajesty
 
         public static string ArchitectureOf(CivId civ) => ArchitectureOf(CivModifiers.For(civ));
 
+        /// <summary>
+        /// Artist file stem for a citadel architecture token (Ziggurat → Lumen). The art is
+        /// named by civ; this is the only map between those stems and the castle the colony draws.
+        /// Unknown or empty tokens return null, so a missing map keeps the shared kit.
+        /// </summary>
+        public static string ArtStemOf(string architecture)
+        {
+            if (string.IsNullOrEmpty(architecture)) return null;
+            switch (architecture)
+            {
+                case "Ziggurat": return "Lumen";
+                case "Ring": return "Exchange";
+                case "Dome": return "Mandate";
+                case "Arcology": return "Pathfinder";
+                default: return null;
+            }
+        }
+
+        public static string ArtStemOf(CivModifiers civ) => ArtStemOf(ArchitectureOf(civ));
+
+        public static string ArtStemOf(CivId civ) => ArtStemOf(ArchitectureOf(civ));
+
         /// <summary>Resources path (no extension), or null when this civ has no variant of <paramref name="category"/>.</summary>
         public static string ResourcePath(CivModifiers civ, BuildingCategory category)
         {
-            string architecture = ArchitectureOf(civ);
+            string art = ArtStemOf(civ);
             string stem = Stem(category);
-            if (string.IsNullOrEmpty(architecture) || string.IsNullOrEmpty(stem)) return null;
-            return Root + "/SM_" + architecture + "_" + stem;
+            if (string.IsNullOrEmpty(art) || string.IsNullOrEmpty(stem)) return null;
+            return Root + "/SM_" + art + "_" + stem;
         }
 
         public static string ResourcePath(CivId civ, BuildingCategory category) =>
