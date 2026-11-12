@@ -67,6 +67,10 @@ namespace SolarMajesty
         public bool HasVacancy => IsResidential && IsAlive && Residents < ResidentCapacity;
         public bool IsAlive => _health > 0f;
         public float Health01 => maxHealth > 0f ? Mathf.Clamp01(_health / maxHealth) : 0f;
+        /// <summary>Hit points left (the HUD prints the Commons as current/max).</summary>
+        public float Health => Mathf.Max(0f, _health);
+        /// <summary>Full hit points, as configured (a Commons gets its civ's value, see CivRules.CommonsHealth).</summary>
+        public float MaxHealth => maxHealth;
         public Vector3 WorldPosition => transform.position;
         public bool IsSelected => _selected;
         /// <summary>Watt leeches / wisps are on this node — gen is stolen until they leave.</summary>

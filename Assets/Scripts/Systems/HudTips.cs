@@ -100,12 +100,22 @@ namespace SolarMajesty
             "Click a building, then click open ground to place it. Each copy of a building costs more than the last.");
 
         /// <summary>One build-list row: what it does, what it costs, and why it cannot be bought yet.</summary>
-        public static HudTip BuildEntry(string name, string what, string cost, bool locked, bool canAfford, string hotkey)
+        public static HudTip BuildEntry(string name, string what, string cost, bool locked, bool canAfford, string hotkey) =>
+            BuildEntry(name, what, cost, locked, canAfford, hotkey, null);
+
+        /// <summary>
+        /// <see cref="BuildEntry(string,string,string,bool,bool,string)"/> with the civ's numbers:
+        /// <paramref name="cost"/> already carries its perk delta ("120 EU, -20%", see
+        /// <see cref="CivHud.WithDelta"/>), and <paramref name="hireLine"/> is a workshop's hire fee
+        /// (<see cref="CivHud.WorkshopHireLine"/>), or null.
+        /// </summary>
+        public static HudTip BuildEntry(string name, string what, string cost, bool locked, bool canAfford, string hotkey, string hireLine)
         {
             string state = locked
                 ? "Locked: research opens it."
                 : !canAfford ? $"Cost {cost}. Not enough EU yet."
                 : $"Cost {cost}.";
+            if (!string.IsNullOrEmpty(hireLine)) state += "\n" + hireLine;
             string body = string.IsNullOrEmpty(what) ? state : what + "\n" + state;
             return new HudTip(name, body, hotkey);
         }
@@ -138,6 +148,18 @@ namespace SolarMajesty
             }
         }
 
+        /// <summary>
+        /// <see cref="FlagKind(FlagType)"/> with the flag's price as this civ pays it
+        /// (<see cref="CivHud.FlagPriceLine"/>): "Bounty 400 EU." or, when the civ changes what the
+        /// till pays, the bounty and that price with its delta.
+        /// </summary>
+        public static HudTip FlagKind(FlagType type, CivModifiers civ, int bounty)
+        {
+            var tip = FlagKind(type);
+            if (bounty <= 0) return tip;
+            return new HudTip(tip.Title, tip.Body + "\n" + CivHud.FlagPriceLine(civ, bounty), tip.Key);
+        }
+
         public static HudTip BountyDown(int step) => new HudTip("LOWER BOUNTY",
             $"{step} EU less. Fewer bots will find the job worth it.", Key(GameAction.BountyDown));
 
@@ -146,6 +168,14 @@ namespace SolarMajesty
 
         public static HudTip BountyAmount() => new HudTip("BOUNTY",
             "What the next flag pays, or the selected pole's bounty. It is held from the till until the job is done.");
+
+        /// <summary><see cref="BountyAmount()"/>, plus what the till finally pays when the civ changes it (<see cref="CivHud.BountyTillLine"/>).</summary>
+        public static HudTip BountyAmount(CivModifiers civ, int bounty)
+        {
+            var tip = BountyAmount();
+            string till = CivHud.BountyTillLine(civ, bounty);
+            return string.IsNullOrEmpty(till) ? tip : new HudTip(tip.Title, tip.Body + "\n" + till, tip.Key);
+        }
 
         public static HudTip Orders() => new HudTip("WRITTEN ORDERS",
             "Optional rules for the next flag in plain words, like \"stay away unless level 9+\" or \"no scouts\". The line below shows what the bots understood.");
@@ -212,11 +242,23 @@ namespace SolarMajesty
         public static HudTip ArmLasers() => new HudTip("ARM LASERS",
             "A one-time payment: the tower fires on fauna within 18 m.");
 
+        /// <summary>The arming tip with this civ's price (and delta) and gun range.</summary>
+        public static HudTip ArmLasers(CivModifiers civ) => new HudTip("ARM LASERS",
+            Loc.F("A one-time payment of {0}: the tower fires on fauna within {1:0.#} m.",
+                CivHud.ArmingPriceText(civ), CivRules.GunRange(civ)));
+
         public static HudTip GuildBenefit() => new HudTip("GUILD BENEFIT",
             "A short boost for this guild's bots once its tech is researched. It costs EU and then cools down.");
 
         public static HudTip Refab() => new HudTip("RE-FAB",
             "Build a fresh level 1 bot from the wreck. The old chassis is gone for good.");
+
+        /// <summary>The re-fab tip with its price as charged and the civ's delta (<see cref="CivHud.RefabPriceText"/>).</summary>
+        public static HudTip Refab(CivModifiers civ, BuildingData shop)
+        {
+            var tip = Refab();
+            return new HudTip(tip.Title, tip.Body + "\n" + Loc.F("Cost {0}.", CivHud.RefabPriceText(civ, shop)), tip.Key);
+        }
 
         public static HudTip Talk() => new HudTip("TALK",
             "Open a conversation with this bot. It runs on a small model on this computer.", Key(GameAction.Confirm));
