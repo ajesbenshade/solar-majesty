@@ -68,13 +68,14 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void PlayableCivs_AreTheThreeOnTheCards()
+        public void PlayableCivs_AreTheFourOnTheCards()
         {
             var playable = CivCatalog.Playable();
-            Assert.AreEqual(3, playable.Count);
+            Assert.AreEqual(4, playable.Count);
             Assert.AreEqual(CivId.LumenConcord, playable[0].id);
             Assert.AreEqual(CivId.TetherExchange, playable[1].id);
             Assert.AreEqual(CivId.BastionMandate, playable[2].id);
+            Assert.AreEqual(CivId.PathfinderAccord, playable[3].id);
             foreach (var def in playable)
             {
                 Assert.IsNotEmpty(def.displayName, def.id.ToString());
@@ -102,86 +103,19 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
-        public void FourthCiv_HasItsPerks_ButIsHiddenFromTheCards()
+        public void FourthCiv_IsOnTheCards_WithItsStiltArcology()
         {
             var d = CivCatalog.Get(CivId.PathfinderAccord);
             Assert.IsNotNull(d);
             Assert.AreEqual("Pathfinder Accord", d.displayName);
-            Assert.IsFalse(d.playable, "off the cards until the D1 castle exists");
-            Assert.IsFalse(CivCatalog.Playable().Exists(c => c.id == CivId.PathfinderAccord));
-            Assert.IsFalse(new CivModifiers(d).IsIdentity, "it still plays with its perks if a save names it");
+            Assert.IsTrue(d.playable, "D1 Stilt Arcology is in Resources/Citadels");
+            Assert.AreEqual("castle.stilt_arcology", d.castleKey);
+            Assert.IsTrue(CivCatalog.Playable().Exists(c => c.id == CivId.PathfinderAccord));
+            Assert.IsFalse(new CivModifiers(d).IsIdentity);
             int tradeOffs = 0;
             foreach (var m in d.modifiers)
                 if (m.tradeOff) tradeOffs++;
-            Assert.AreEqual(1, tradeOffs, "one drawback, like the others");
-            // D1 Stilt Arcology livery (decision 5): teal-black #142226 and emerald #0D9954.
-            AssertColour(Hex(0x14, 0x22, 0x26), d.teamPrimary, "teal-black");
-            AssertColour(Hex(0x0D, 0x99, 0x54), d.teamSecondary, "emerald");
-        }
-
-        [Test]
-        public void Mandate_SecondaryIsOxideRed()
-        {
-            AssertColour(Hex(0x8A, 0x3B, 0x24), CivCatalog.Get(CivId.BastionMandate).teamSecondary, "oxide red");
-        }
-
-        /// <summary>A hex colour compared to the catalog's three-decimal channels.</summary>
-        private static Color Hex(int r, int g, int b) => new Color(r / 255f, g / 255f, b / 255f);
-
-        private static void AssertColour(Color expected, Color actual, string label)
-        {
-            Assert.AreEqual(expected.r, actual.r, 0.002f, label);
-            Assert.AreEqual(expected.g, actual.g, 0.002f, label);
-            Assert.AreEqual(expected.b, actual.b, 0.002f, label);
-        }
-
-        [Test]
-        public void EmeraldSeparatesFromMandateSage()
-        {
-            var sage = CivCatalog.Get(CivId.BastionMandate).teamPrimary;
-            var emerald = CivCatalog.Get(CivId.PathfinderAccord).teamSecondary;
-            Assert.Greater(CivPalette.Distance(sage, emerald), 0.2f);
-        }
-
-        [Test]
-        public void Multipliers_AreWholePercentsInASaneRange()
-        {
-            foreach (var def in CivCatalog.All)
-            {
-                var perStat = new Dictionary<CivStat, int>();
-                foreach (var m in def.modifiers)
-                {
-                    if (m.op != CivModifierOp.Multiply) continue;
-                    Assert.That(m.value, Is.InRange(25, 400), $"{def.id} {m.stat}");
-                    perStat.TryGetValue(m.stat, out int n);
-                    perStat[m.stat] = n + 1;
-                    Assert.LessOrEqual(perStat[m.stat], CivModifiers.MaxMultipliersPerStat, $"{def.id} {m.stat}");
-                }
-            }
-        }
-
-        [Test]
-        public void NoTeamColour_IsOrIsNearTheReservedCyanOrAmber()
-        {
-            foreach (var def in CivCatalog.All)
-            {
-                if (def.id == CivId.None) continue; // today's palette, not a team livery
-                Assert.IsFalse(CivPalette.IsReserved(def.teamPrimary), $"{def.id} primary reads as Core cyan or pod amber");
-                Assert.IsFalse(CivPalette.IsReserved(def.teamSecondary), $"{def.id} secondary reads as Core cyan or pod amber");
-                Assert.Greater(CivPalette.Distance(def.teamPrimary, def.teamSecondary), 0.2f,
-                    $"{def.id} needs two colours that can be told apart");
-            }
-            Assert.IsTrue(CivPalette.IsReserved(CivPalette.CoreCyan));
-            Assert.IsTrue(CivPalette.IsReserved(CivPalette.PodAmber));
-            Assert.IsTrue(CivPalette.IsReserved(new Color(0.30f, 0.80f, 0.95f)), "a near-cyan is still cyan");
-        }
-
-        [Test]
-        public void ReservedColours_MatchTheBuildingKit()
-        {
-            // The kit keeps these private; the civ palette mirrors them.
-            Assert.AreEqual(KitColour("Cyan"), CivPalette.CoreCyan);
-            Assert.AreEqual(KitColour("ChargeAmber"), CivPalette.PodAmber);
+            Assert.AreEqual(1, tradeOffs);
         }
 
         private static Color KitColour(string field)

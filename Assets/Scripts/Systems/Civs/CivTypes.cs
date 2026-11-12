@@ -16,8 +16,7 @@ namespace SolarMajesty
         BastionMandate = 3,
         /// <summary>
         /// The fourth civ (expansion and mobility). "Pathfinder Accord" is a provisional name. Its
-        /// perks are live data, but it stays off the new-game cards (<see cref="CivDefinition.playable"/>)
-        /// until its castle (D1 Stilt Arcology) exists. The number is final.
+        /// castle is the D1 Stilt Arcology, and it is on the new-game cards. The number is final.
         /// </summary>
         PathfinderAccord = 4
     }

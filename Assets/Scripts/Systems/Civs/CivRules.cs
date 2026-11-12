@@ -18,7 +18,8 @@ namespace SolarMajesty
     /// Commons health (VillageExpansion), gun range and laser arming (GameLoop batteries and
     /// Watchtower arming, HUD, map overlay), outpost building cost and build time
     /// (<see cref="BuildingPlacer"/>), hero speed (SpecialistAgent.EffectiveMoveSpeed), and the
-    /// near-home unit damage (SpecialistAgent strikes).
+    /// near-home unit damage (SpecialistAgent strikes). Roster class rules: outpost flag work
+    /// (SpecialistAgent flag work and party work) and build labour reach (SpecialistAgent build labour).
     /// TODO(civ UI, later PR): tooltips and cards that print these numbers show the civ's value
     /// where they already read it here; the perk deltas ("Scout 120, -20%") are not drawn yet.
     /// </summary>
@@ -152,6 +153,52 @@ namespace SolarMajesty
         /// <summary>A hero's walking speed before gear and statuses, <paramref name="speed"/> being the class value.</summary>
         public static float HeroMoveSpeed(CivModifiers civ, float speed) =>
             Mathf.Max(0f, Apply(civ, CivStat.HeroMoveSpeed, speed));
+
+        /// <summary>
+        /// True when a point <paramref name="flatDistanceToCommons"/> metres (flat) from a live
+        /// Commons is "near home": within <see cref="OverseerRules.CommonsShadeRadius"/>, edge included.
+        /// GameLoop's near-home check uses this, so the strike bonus and this rule never drift.
+        /// </summary>
+        public static bool IsNearHome(float flatDistanceToCommons) =>
+            flatDistanceToCommons >= 0f && flatDistanceToCommons <= OverseerRules.CommonsShadeRadius;
+
+        /// <summary>
+        /// <see cref="StrikeDamageMul"/> for a bot standing <paramref name="flatDistanceToCommons"/>
+        /// metres from the nearest live Commons (a negative distance means there is none).
+        /// </summary>
+        public static float StrikeDamageMulAt(CivModifiers civ, SpecialistClass cls, float flatDistanceToCommons) =>
+            StrikeDamageMul(civ, cls, IsNearHome(flatDistanceToCommons));
+
+        // ---- Class rules a civ unit may retune ----------------------------------------------
+
+        /// <summary>
+        /// This civ's value for a class rule its unit for <paramref name="cls"/> may replace
+        /// (<see cref="CivUnitDefinition.TryGetStat"/>), or <paramref name="baseValue"/>.
+        /// </summary>
+        public static float UnitRule(CivModifiers civ, SpecialistClass cls, CivUnitStat stat, float baseValue)
+        {
+            if (civ == null || !civ.HasUnitFor(cls)) return baseValue;
+            return civ.UnitFor(cls).TryGetStat(stat, out float v) ? v : baseValue;
+        }
+
+        /// <summary>
+        /// Factor on work <paramref name="cls"/> does at an Establish Outpost flag: today
+        /// <see cref="OverseerRules.CourierOutpostWork"/> for the Courier Bot and 1 for everyone
+        /// else, unless the civ's unit lists <see cref="CivUnitStat.OutpostFlagWork"/>.
+        /// </summary>
+        public static float OutpostFlagWork(CivModifiers civ, SpecialistClass cls)
+        {
+            float baseValue = cls == SpecialistClass.CourierBot ? OverseerRules.CourierOutpostWork : 1f;
+            return Mathf.Max(0f, UnitRule(civ, cls, CivUnitStat.OutpostFlagWork, baseValue));
+        }
+
+        /// <summary>
+        /// Metres a bot of <paramref name="cls"/> working a Build flag reaches to help the nearest
+        /// building site: <see cref="OverseerRules.BuildLabourRadius"/> unless the civ's unit lists
+        /// <see cref="CivUnitStat.BuildLabourReach"/>.
+        /// </summary>
+        public static float BuildLabourReach(CivModifiers civ, SpecialistClass cls) =>
+            Mathf.Max(0f, UnitRule(civ, cls, CivUnitStat.BuildLabourReach, OverseerRules.BuildLabourRadius));
 
         /// <summary>
         /// Factor on a hero's strike damage. Above 1 only when <paramref name="cls"/> is one of the

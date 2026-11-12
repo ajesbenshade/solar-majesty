@@ -427,7 +427,26 @@ namespace SolarMajesty
 
         [Tooltip("Class abilities (Majesty 2 unit actions) and status effects (perks).")]
         [SerializeField] private AbilityTuning abilityTuning = new AbilityTuning();
-        public AbilityTuning Abilities => abilityTuning;
+        private AbilityTuning _civAbilities;
+        private AbilityTuning _civAbilitiesSource;
+
+        /// <summary>
+        /// The ability table this colony's bots read: <see cref="abilityTuning"/> with the civ's
+        /// roster changes on top (<see cref="CivRoster.Abilities"/>). The neutral civ, and a civ that
+        /// changes no ability, read <see cref="abilityTuning"/> itself, so inspector edits stay live.
+        /// </summary>
+        public AbilityTuning Abilities
+        {
+            get
+            {
+                if (_civAbilities == null || !ReferenceEquals(_civAbilitiesSource, abilityTuning))
+                {
+                    _civAbilitiesSource = abilityTuning;
+                    _civAbilities = CivRoster.Abilities(abilityTuning, _civ);
+                }
+                return _civAbilities;
+            }
+        }
 
         [Tooltip("Statuses creature bites put on robots (Majesty 2 monster attacks).")]
         [SerializeField] private FaunaAfflictionTuning faunaAfflictions = new FaunaAfflictionTuning();
@@ -552,8 +571,8 @@ namespace SolarMajesty
         /// This colony's civ rules. Built once in Awake from the save being loaded, or from the
         /// new-game choice. The neutral civ changes nothing. Owned here, never static: multiplayer
         /// builds one per player and resolves it from the owner.
-        /// TODO(civ UI, later PR): civ badge on the HUD, signature unit names on nameplates,
-        /// perk deltas in tooltips.
+        /// Spawned bots carry the civ's signature names on their data (<see cref="DataForClass"/>).
+        /// TODO(civ UI, later PR): civ badge on the HUD, nameplate styling, perk deltas in tooltips.
         /// </summary>
         private CivModifiers _civ = new CivModifiers(null);
         public CivModifiers Civ => _civ;
@@ -568,6 +587,31 @@ namespace SolarMajesty
             ModularBuildingFactory.BindCiv(_civ);
             if (Economy != null) Economy.Civ = _civ;
             if (Placer != null) Placer.Civ = _civ;
+            // The roster resolves again from the new civ on the next spawn and ability read.
+            // Copies already handed to live bots are left alive (they still point at them).
+            _civUnitData.Clear();
+            _civAbilities = null;
+        }
+
+        /// <summary>
+        /// This civ's data per class, built from the shared class data on first use
+        /// (<see cref="CivRoster.UnitData"/>). Holds the shared object itself for a class the civ
+        /// does not list. Keyed with the shared object it was built from, so new shared data rebuilds it.
+        /// </summary>
+        private readonly Dictionary<SpecialistClass, (SpecialistData source, SpecialistData unit)> _civUnitData =
+            new Dictionary<SpecialistClass, (SpecialistData source, SpecialistData unit)>();
+        private readonly List<SpecialistData> _civUnitCopies = new List<SpecialistData>();
+
+        private void DestroyCivUnitCopies()
+        {
+            for (int i = 0; i < _civUnitCopies.Count; i++)
+            {
+                if (_civUnitCopies[i] == null) continue;
+                if (Application.isPlaying) Destroy(_civUnitCopies[i]);
+                else DestroyImmediate(_civUnitCopies[i]);
+            }
+            _civUnitCopies.Clear();
+            _civUnitData.Clear();
         }
         private bool _launchCraftStaged;
         private DemoScreen _settingsReturn = DemoScreen.Title;
@@ -1061,6 +1105,7 @@ namespace SolarMajesty
 
         private void OnDestroy()
         {
+            DestroyCivUnitCopies();
             if (Economy != null)
             {
                 Economy.UpkeepApplied -= OnUpkeepTithe;
@@ -3576,7 +3621,26 @@ namespace SolarMajesty
             return true;
         }
 
-        private SpecialistData DataForClass(SpecialistClass cls) => cls switch
+        /// <summary>
+        /// The data a bot of <paramref name="cls"/> is spawned with: the shared class data after
+        /// <see cref="SpecialistPersonality.Apply"/>, then this civ's roster entry on top (name and
+        /// numbers, <see cref="CivRoster.UnitData"/>). Every spawn goes through here: workshop hires,
+        /// save restore, Fobot Yard revival and the screenshot crew. HudShotHarness finds it by name.
+        /// </summary>
+        private SpecialistData DataForClass(SpecialistClass cls)
+        {
+            var shared = SharedDataForClass(cls);
+            if (shared == null) return null;
+            if (_civUnitData.TryGetValue(cls, out var cached) && ReferenceEquals(cached.source, shared) &&
+                cached.unit != null)
+                return cached.unit;
+            var unit = CivRoster.UnitData(shared, _civ);
+            if (!ReferenceEquals(unit, shared)) _civUnitCopies.Add(unit);
+            _civUnitData[cls] = (shared, unit);
+            return unit;
+        }
+
+        private SpecialistData SharedDataForClass(SpecialistClass cls) => cls switch
         {
             SpecialistClass.EngineerBot => engineerData,
             SpecialistClass.DefenseMech => defenseData,
@@ -5014,6 +5078,45 @@ namespace SolarMajesty
         /// which reads the player save folder and GamePrefs.
         /// </summary>
         internal void ArmThreat(ThreatPressure threat) => Threat = threat ?? new ThreatPressure();
+
+        /// <summary>
+        /// EditMode tests: give every class the factory data (shared table, no assets) and
+        /// <paramref name="civ"/> as the colony's civ, as Awake and EnsureContent would.
+        /// </summary>
+        internal void ArmRosterForTests(CivModifiers civ)
+        {
+            scoutData = CreateScout();
+            engineerData = CreateEngineer();
+            defenseData = CreateDefense();
+            medicData = CreateMedic();
+            harvesterData = CreateHarvester();
+            surveyorData = CreateSurveyor();
+            terraformerData = CreateTerraformer();
+            courierData = CreateCourier();
+            geologistData = CreateGeologist();
+            sentinelData = CreateSentinel();
+            SetCiv(civ);
+        }
+
+        /// <summary>EditMode tests: the data a spawn of <paramref name="cls"/> gets, through the game's own lookup.</summary>
+        internal SpecialistData SpawnDataForTests(SpecialistClass cls) => DataForClass(cls);
+
+        /// <summary>EditMode tests: the shared class data, before the civ's roster.</summary>
+        internal SpecialistData SharedDataForTests(SpecialistClass cls) => SharedDataForClass(cls);
+
+        /// <summary>EditMode tests: switch civ as a loaded save would.</summary>
+        internal void SetCivForTests(CivModifiers civ) => SetCiv(civ);
+
+        /// <summary>EditMode tests: destroy the roster copies and the factory data <see cref="ArmRosterForTests"/> made.</summary>
+        internal void ReleaseRosterForTests()
+        {
+            DestroyCivUnitCopies();
+            SetCiv(null); // ModularBuildingFactory holds the civ statically
+            _civAbilities = null;
+            foreach (var d in new[] { scoutData, engineerData, defenseData, medicData, harvesterData,
+                         surveyorData, terraformerData, courierData, geologistData, sentinelData })
+                if (d != null) DestroyImmediate(d);
+        }
 
         /// <summary>EditMode: the stockpile, bounty board and escrow without running Awake.</summary>
         internal void ArmEconomyForTests(ResourceManager resources, FlagManager flags)
@@ -8281,7 +8384,7 @@ namespace SolarMajesty
             if (Village == null) return false;
             var commons = Village.NearestByCategory(world, OverseerRules.CommonsShadeRadius, BuildingCategory.Commons);
             if (commons == null || !commons.IsAlive) return false;
-            return FlatDist(world, commons.WorldPosition) <= OverseerRules.CommonsShadeRadius;
+            return CivRules.IsNearHome(FlatDist(world, commons.WorldPosition));
         }
 
         private int ScoutDensInDisc(Vector3 at)
