@@ -310,5 +310,108 @@ namespace SolarMajesty
             if (withOut.Length <= TreasuryBudget) return withOut;
             return head;
         }
+
+        // ---- new-campaign civ cards -------------------------------------------------------------
+        // Four official names ("Pathfinder Accord") share one dialog row. A single line at the
+        // chip's 11 px caps is wider than the card, so each name breaks on its space and the card
+        // grows tall enough for both lines and the team-colour bars. The words themselves are
+        // never shortened here.
+
+        /// <summary>New-campaign and load dialog width at 100 % text, before the view clamps it.</summary>
+        public const float CampaignDialogDesignW = 460f;
+
+        /// <summary>Floor for the new-campaign dialog. Taller than the old one-line cards (40 px) by the two-line card.</summary>
+        public const float NewCampaignDialogMinH = 564f;
+
+        public const float CivCardGap = 6f;
+        /// <summary>Two text lines plus the team-colour bars along the foot.</summary>
+        public const float CivCardHeight = 56f;
+        public const int CivCardFont = 11;
+        public const int CivCardPadX = 4;
+        public const int CivCardPadTop = 2;
+        public const int CivCardPadBottom = 10;
+
+        /// <summary>Dialog width in GUI units: the design width, grown with TEXT SIZE, never wider than the view.</summary>
+        public static float CampaignDialogWidth(float viewWidth) =>
+            Mathf.Min(HudTextScale.Width(CampaignDialogDesignW), Mathf.Max(0f, viewWidth - Margin * 2f));
+
+        /// <summary>Inner width of a dialog panel (matches <c>OverseerHud.Panel</c>).</summary>
+        public static float DialogContentWidth(float dialogWidth) =>
+            Mathf.Max(0f, dialogWidth - Pad * 2f);
+
+        /// <summary>Width of one civ card when <paramref name="count"/> cards share <paramref name="contentWidth"/>.</summary>
+        public static float CivCardWidth(float contentWidth, int count)
+        {
+            if (count <= 1) return Mathf.Max(0f, contentWidth);
+            return (contentWidth - CivCardGap * (count - 1)) / count;
+        }
+
+        /// <summary>
+        /// Caps label for a civ card. Two or more words break on the last space so both words
+        /// show ("PATHFINDER" / "ACCORD"). A single word stays one line. Does not abbreviate.
+        /// </summary>
+        public static string CivCardLabel(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName)) return "";
+            string caps = displayName.ToUpperInvariant();
+            int split = caps.LastIndexOf(' ');
+            if (split <= 0 || split >= caps.Length - 1) return caps;
+            return caps.Substring(0, split) + "\n" + caps.Substring(split + 1);
+        }
+
+        /// <summary>
+        /// What a civ card draws. <paramref name="measure"/> is the width of one line at a font
+        /// size, in the same units as <paramref name="cardWidth"/> (GUIStyle.CalcSize, padding
+        /// included). The face keeps every word. A name tooltip is set only when the line still
+        /// cannot fit at <see cref="ChipLabelMinSize"/> and had to be cut.
+        /// </summary>
+        public static CivCardFace LayoutCivCard(string displayName, float cardWidth, System.Func<string, int, float> measure, int baseSize)
+        {
+            string full = string.IsNullOrEmpty(displayName) ? "" : displayName.ToUpperInvariant();
+            if (measure == null)
+                return new CivCardFace(CivCardLabel(displayName), baseSize, null);
+
+            string wrapped = CivCardLabel(displayName);
+            int size = FitFontSize(px => WidestLine(wrapped, px, measure), cardWidth, baseSize);
+            if (WidestLine(wrapped, size, measure) <= cardWidth)
+                return new CivCardFace(wrapped, size, null);
+
+            string cut = FitText(new[] { full }, line => measure(line, size), cardWidth);
+            return new CivCardFace(cut, size, cut == full ? null : full);
+        }
+
+        private static float WidestLine(string label, int size, System.Func<string, int, float> measure)
+        {
+            if (string.IsNullOrEmpty(label)) return measure("", size);
+            float widest = 0f;
+            int start = 0;
+            for (int i = 0; i <= label.Length; i++)
+            {
+                if (i != label.Length && label[i] != '\n') continue;
+                float w = measure(label.Substring(start, i - start), size);
+                if (w > widest) widest = w;
+                start = i + 1;
+            }
+            return widest;
+        }
+
+        /// <summary>The string a civ card shows, and the full name when that string had to be cut.</summary>
+        public readonly struct CivCardFace
+        {
+            public CivCardFace(string shown, int fontSize, string nameTooltip)
+            {
+                Shown = shown ?? "";
+                FontSize = fontSize;
+                NameTooltip = nameTooltip;
+            }
+
+            public readonly string Shown;
+            public readonly int FontSize;
+
+            /// <summary>The full caps name, when <see cref="Shown"/> was ellipsized. Null when the chip already shows every word.</summary>
+            public readonly string NameTooltip;
+
+            public bool HasNameTooltip => !string.IsNullOrEmpty(NameTooltip);
+        }
     }
 }

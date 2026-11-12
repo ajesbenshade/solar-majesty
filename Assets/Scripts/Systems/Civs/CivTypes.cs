@@ -132,6 +132,8 @@ namespace SolarMajesty
         public string summary = "";
         [Tooltip("Which castle the Commons is drawn as. Empty = today's Commons.")]
         public string castleKey = SharedArtKey;
+        [Tooltip("Player-facing name of that castle. Empty = Colony Commons (the neutral home).")]
+        public string castleName = "";
         [Tooltip("Offered on the new-game cards. Off for the neutral civ, and for a civ whose castle does not exist yet (it still plays if a save names it).")]
         public bool playable;
         public Color teamPrimary = Color.white;
@@ -154,6 +156,7 @@ namespace SolarMajesty
                 pitch = pitch,
                 summary = summary,
                 castleKey = castleKey,
+                castleName = castleName,
                 playable = playable,
                 teamPrimary = teamPrimary,
                 teamSecondary = teamSecondary,
@@ -294,6 +297,31 @@ namespace SolarMajesty
             var def = CivCatalog.Get(civ);
             if (def == null || def.id == CivId.None) return null;
             return def.teamSecondary;
+        }
+
+        /// <summary>
+        /// The colour painted on a team stripe. It is the civ's second colour, the same colour
+        /// castles paint on their TeamColour bands (<see cref="CivColour"/>). The neutral civ has
+        /// no civ colour, so the stripe stays today's orange. A player accent is never used.
+        /// </summary>
+        public static Color TeamStripe(CivId civ)
+        {
+            var colour = CivColour(civ);
+            return colour ?? NeutralStripe();
+        }
+
+        /// <summary>As <see cref="TeamStripe(CivId)"/> for the owner that is actually playing. Null is the neutral stripe.</summary>
+        public static Color TeamStripe(CivModifiers civ)
+        {
+            if (civ == null || civ.Id == CivId.None) return NeutralStripe();
+            return CivColour(civ.Id) ?? civ.TeamSecondary;
+        }
+
+        /// <summary>Today's orange stripe (<see cref="CivDefinition.teamSecondary"/> of <see cref="CivId.None"/>).</summary>
+        private static Color NeutralStripe()
+        {
+            var neutral = CivCatalog.Get(CivId.None);
+            return neutral != null ? neutral.teamSecondary : new Color(0.96f, 0.42f, 0.08f);
         }
 
         /// <summary>

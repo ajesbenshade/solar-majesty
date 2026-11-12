@@ -623,6 +623,11 @@
    "tr": "Versez 2 000 EU dans la caisse."
   },
   {
+   "en": "Bastion Mandate",
+   "key": "",
+   "tr": "Bastion Mandate"
+  },
+  {
    "en": "Battery / watch",
    "key": "",
    "tr": "Batterie / guet"
@@ -831,6 +836,11 @@
    "en": "CHILLED",
    "key": "",
    "tr": "REFROIDI"
+  },
+  {
+   "en": "CIVILIZATION",
+   "key": "",
+   "tr": "CIVILISATION"
   },
   {
    "en": "CLAIM SECURED",
@@ -1621,6 +1631,11 @@
    "en": "Dock {0} first.",
    "key": "",
    "tr": "Amarrez d'abord {0}."
+  },
+  {
+   "en": "Dome Bunker",
+   "key": "",
+   "tr": "Bunker Dôme"
   },
   {
    "en": "Drop manifest",
@@ -3033,6 +3048,11 @@
    "tr": "Lasers armés — 18 m."
   },
   {
+   "en": "Lasers armed — {0:0.#} m.",
+   "key": "",
+   "tr": "Lasers armés — {0:0.#} m."
+  },
+  {
    "en": "Launch craft",
    "key": "",
    "tr": "Lancer le vaisseau"
@@ -3176,6 +3196,11 @@
    "en": "Lower the bounty",
    "key": "",
    "tr": "Baisser la prime"
+  },
+  {
+   "en": "Lumen Concord",
+   "key": "",
+   "tr": "Lumen Concord"
   },
   {
    "en": "Luna",
@@ -3988,6 +4013,11 @@
    "tr": "Je rapièce une coque. Payez-moi quand elle tient."
   },
   {
+   "en": "Pathfinder Accord",
+   "key": "",
+   "tr": "Pathfinder Accord"
+  },
+  {
    "en": "Patrolling the Commons.",
    "key": "",
    "tr": "En patrouille aux Communs."
@@ -4568,6 +4598,11 @@
    "tr": "Rim. Défendre la zone à bas prix ; ne s'égare pas et ne bricole pas."
   },
   {
+   "en": "Ring Citadel",
+   "key": "",
+   "tr": "Citadelle Anneau"
+  },
+  {
    "en": "Roaming fauna",
    "key": "",
    "tr": "Faune errante"
@@ -5128,6 +5163,11 @@
    "tr": "Facture de relèvement : {0} EU. Le coût suit le niveau."
   },
   {
+   "en": "Standard",
+   "key": "",
+   "tr": "Standard"
+  },
+  {
    "en": "Standard: no challenge modifiers.",
    "key": "",
    "tr": "Standard : aucun modificateur de défi."
@@ -5141,6 +5181,11 @@
    "en": "Start",
    "key": "",
    "tr": "Start"
+  },
+  {
+   "en": "Stilt Arcology",
+   "key": "",
+   "tr": "Arcologie sur pilotis"
   },
   {
    "en": "Stingshot",
@@ -5453,6 +5498,11 @@
    "tr": "Atelier de terraformeurs"
   },
   {
+   "en": "Tether Exchange",
+   "key": "",
+   "tr": "Tether Exchange"
+  },
+  {
    "en": "That building doesn't fit here.",
    "key": "",
    "tr": "Ce bâtiment ne tient pas ici."
@@ -5583,6 +5633,11 @@
    "tr": "La croûte les a pris. Relevez-les, ou la glace se referme sur la concession."
   },
   {
+   "en": "The guided start plays without a civilization. Turn Guided start off in Settings to pick one.",
+   "key": "",
+   "tr": "Le départ guidé se joue sans civilisation. Désactivez Départ guidé dans les Paramètres pour en choisir une."
+  },
+  {
    "en": "The lab ate the sample. The pad will eat Anvil’s afternoon.",
    "key": "",
    "tr": "Le labo a mangé l'échantillon. L'aire mangera l'après-midi d'Anvil."
@@ -5671,6 +5726,11 @@
    "en": "The yard wants {0} EU. Level is the scandal, not the corpse.",
    "key": "",
    "tr": "Le chantier veut {0} EU. Le scandale, c'est le niveau, pas la carcasse."
+  },
+  {
+   "en": "The {0} fell and the till with it. Retry this body, or New Game.",
+   "key": "",
+   "tr": "{0} a cédé, et la caisse avec. Réessayez cet astre, ou Nouvelle partie."
   },
   {
    "en": "Thermal Lance",
@@ -6171,6 +6231,11 @@
    "en": "Your workforce turned down more than it took. A low battery, or a hard sell.",
    "key": "",
    "tr": "Vos effectifs ont refusé plus qu'ils n'ont accepté. Batterie faible, ou vente difficile."
+  },
+  {
+   "en": "Ziggurat Keep",
+   "key": "",
+   "tr": "Donjon Ziggurat"
   },
   {
    "en": "Zoom in",
@@ -6733,6 +6798,11 @@
    "tr": "{0}  ·  verrouillé"
   },
   {
+   "en": "{0}  ·  no perks",
+   "key": "",
+   "tr": "{0}  ·  sans atouts"
+  },
+  {
    "en": "{0}  ·  {1}\n{2}  ·  RMB cancel{3}  ·  w {4:F1}{5}",
    "key": "",
    "tr": "{0}  ·  {1}\n{2}  ·  clic droit : annuler{3}  ·  p {4:F1}{5}"
@@ -6896,6 +6966,16 @@
    "en": "{0} is already {1}. Move that first, or pick another key.",
    "key": "",
    "tr": "{0} sert déjà à {1}. Déplacez d'abord cette action, ou choisissez une autre touche."
+  },
+  {
+   "en": "{0} is down — build workshops, charging stations and shops anywhere nearby.",
+   "key": "",
+   "tr": "{0} est en place — construisez ateliers, stations de recharge et boutiques n'importe où à proximité."
+  },
+  {
+   "en": "{0} is down. Build anywhere on open ground.",
+   "key": "",
+   "tr": "{0} est en place. Construisez n'importe où en terrain dégagé."
   },
   {
    "en": "{0} is hunting pests",
