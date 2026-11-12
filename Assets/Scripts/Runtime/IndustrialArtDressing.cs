@@ -130,7 +130,7 @@ namespace SolarMajesty
         }
 
         /// <summary>
-        /// Materials Apply must keep: fauna v2 art, civ-castle slot materials
+        /// Materials Apply must keep: fauna v2 art, civ castle / civ building slot materials
         /// (<see cref="CivCastleLoader.MaterialPrefix"/>), and team stripes
         /// (<see cref="CivTeamStripe.MaterialPrefix"/>). Those already carry the civ colour.
         /// </summary>
@@ -138,7 +138,7 @@ namespace SolarMajesty
             IsFaunaArtMaterial(mat) || IsCivColourMaterial(mat);
 
         /// <summary>
-        /// Castle slot materials and team stripes. Apply must not remap them onto the orange library:
+        /// Castle and civ-building slot materials, and team stripes. Apply must not remap them onto the orange library:
         /// they already carry the civ colour.
         /// </summary>
         public static bool IsCivColourMaterial(Material mat) =>

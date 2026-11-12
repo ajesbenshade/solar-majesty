@@ -16,9 +16,11 @@ namespace SolarMajesty
         private static CivModifiers _civ;
 
         /// <summary>
-        /// The colony's civ. The Commons is drawn as its castle (<see cref="CivCastleLoader"/>);
-        /// null or <see cref="CivId.None"/> keeps the procedural Commons. GameLoop binds it with
-        /// the civ; editor tools and tests that never bind get the neutral Commons.
+        /// The colony's civ. The Commons is drawn as its castle (<see cref="CivCastleLoader"/>).
+        /// Inn, Guild Hall, HAB, Power and Defense use that civ's mesh when the file has been
+        /// dropped (<see cref="CivBuildingLoader"/>). Null or <see cref="CivId.None"/> keeps
+        /// today's kits. GameLoop binds it with the civ; editor tools and tests that never bind
+        /// get the neutral Commons.
         /// </summary>
         public static void BindCiv(CivModifiers civ) => _civ = civ;
 
@@ -108,6 +110,8 @@ namespace SolarMajesty
                 StripColliders(root);
                 var castle = root.GetComponent<CivCastle>();
                 if (castle != null) castle.ShowOnlyLod0();
+                var civBuilding = root.GetComponent<CivBuilding>();
+                if (civBuilding != null) civBuilding.ShowOnlyLod0();
             }
             else
                 BuildingLod.Apply(root); // after dressing, so Dress_Arch parts are in the LODs
@@ -116,6 +120,11 @@ namespace SolarMajesty
 
         private static void BuildCore(Transform root, BuildingCategory cat, float w, float d)
         {
+            // Civ mesh first, when the artist has dropped it. A miss keeps the hero kit or the
+            // procedural kit below, including the locked procedural HAB and Defense.
+            if (CivBuildingLoader.TryBuild(root, cat, _civ))
+                return;
+
             if (TryAttachHeroMesh(root, cat, w, d))
                 return;
 

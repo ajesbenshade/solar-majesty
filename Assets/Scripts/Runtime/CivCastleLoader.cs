@@ -162,7 +162,7 @@ namespace SolarMajesty
             castle.Group = group;
             castle.ConfigureLods();
 
-            Paint(model, spec, civ);
+            ApplySlots(model, spec, civ);
             SpinCore(root, model.transform);
             return true;
         }
@@ -228,7 +228,7 @@ namespace SolarMajesty
 
         // ---------------------------------------------------------------- materials
 
-        public enum Slot { Trim, Carbon, TeamColour, Accent, CoreEmission, Unknown }
+        public enum Slot { Trim, Carbon, TeamColour, Accent, CoreEmission, ChargerAmber, Unknown }
 
         /// <summary>Material names start with this; IndustrialArtDressing leaves them alone.</summary>
         public const string MaterialPrefix = "SM_Art_Citadel_";
@@ -236,6 +236,12 @@ namespace SolarMajesty
         public static readonly Color CarbonColour = new Color(0.118f, 0.125f, 0.141f); // #1E2024
         /// <summary>The Core's cyan glow (HeroBuildingKits' CoreCyanEmit).</summary>
         public static readonly Color CoreGlow = new Color(0.10f, 1.60f, 2.30f);
+        /// <summary>
+        /// HAB charger pods. Solid amber, no trim sheet: base (0.89, 0.45, 0.08) and emission
+        /// (1, 0.55, 0.10) at strength 3.5, the ChargerAmber slot on the civ-building FBX.
+        /// </summary>
+        public static readonly Color ChargerAmberColour = new Color(0.89f, 0.45f, 0.08f);
+        public static readonly Color ChargerAmberGlow = new Color(3.5f, 1.925f, 0.35f);
         /// <summary>Window strip glow relative to the Core (3D Artist: about 12x dimmer).</summary>
         public const float WindowGlowFraction = 1f / 12f;
 
@@ -250,6 +256,7 @@ namespace SolarMajesty
             if (n.StartsWith("Carbon", System.StringComparison.OrdinalIgnoreCase)) return Slot.Carbon;
             if (n.StartsWith("Accent", System.StringComparison.OrdinalIgnoreCase)) return Slot.Accent;
             if (n.StartsWith("CoreEmission", System.StringComparison.OrdinalIgnoreCase)) return Slot.CoreEmission;
+            if (n.StartsWith("ChargerAmber", System.StringComparison.OrdinalIgnoreCase)) return Slot.ChargerAmber;
             return Slot.Unknown;
         }
 
@@ -263,6 +270,7 @@ namespace SolarMajesty
                 case Slot.TeamColour: return CivAccents.CivColour(civ.Id) ?? civ.TeamSecondary;
                 case Slot.Accent: return CivAccents.ForCastle(civ.Accent, civ.Id);
                 case Slot.CoreEmission: return new Color(0.05f, 0.48f, 0.62f);
+                case Slot.ChargerAmber: return ChargerAmberColour;
                 default: return Color.white;
             }
         }
@@ -271,7 +279,11 @@ namespace SolarMajesty
         private static Shader _lit;
         private static Texture2D _base, _metal, _normal, _emit;
 
-        private static void Paint(GameObject model, CivCastleSpec spec, CivModifiers civ)
+        /// <summary>
+        /// Paint every renderer from its FBX slot name. Shared by the castle and by
+        /// <see cref="CivBuildingLoader"/>. Never writes the imported material: those assets stay untouched.
+        /// </summary>
+        public static void ApplySlots(GameObject model, CivCastleSpec spec, CivModifiers civ)
         {
             foreach (var r in model.GetComponentsInChildren<Renderer>(true))
             {
@@ -308,20 +320,24 @@ namespace SolarMajesty
             EnsureAssets();
             var m = new Material(_lit) { name = MaterialPrefix + slot + "_" + civ.Id };
             SetColour(m, col);
-            if (_base != null && slot != Slot.CoreEmission && m.HasProperty("_BaseMap")) m.SetTexture("_BaseMap", _base);
-            if (_metal != null && m.HasProperty("_MetallicGlossMap"))
+            // ChargerAmber is a solid pod light. CoreEmission keeps the sheet's metal and normal
+            // but not the colour map; every other slot uses the shared trim sheet.
+            bool sheet = slot != Slot.CoreEmission && slot != Slot.ChargerAmber;
+            if (_base != null && sheet && m.HasProperty("_BaseMap")) m.SetTexture("_BaseMap", _base);
+            if (slot != Slot.ChargerAmber && _metal != null && m.HasProperty("_MetallicGlossMap"))
             {
                 m.SetTexture("_MetallicGlossMap", _metal);
                 m.EnableKeyword("_METALLICSPECGLOSSMAP");
                 if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", 1f);
             }
-            if (_normal != null && m.HasProperty("_BumpMap"))
+            if (slot != Slot.ChargerAmber && _normal != null && m.HasProperty("_BumpMap"))
             {
                 m.SetTexture("_BumpMap", _normal);
                 m.EnableKeyword("_NORMALMAP");
             }
             Color glow = Color.black;
             if (slot == Slot.CoreEmission) glow = CoreGlow;
+            else if (slot == Slot.ChargerAmber) glow = ChargerAmberGlow;
             else if (slot == Slot.Trim)
             {
                 Color civCol = CivAccents.CivColour(civ.Id) ?? Color.white;
@@ -329,7 +345,8 @@ namespace SolarMajesty
             }
             if (glow.maxColorComponent > 0f && m.HasProperty("_EmissionColor"))
             {
-                if (_emit != null && m.HasProperty("_EmissionMap")) m.SetTexture("_EmissionMap", _emit);
+                if (slot != Slot.ChargerAmber && _emit != null && m.HasProperty("_EmissionMap"))
+                    m.SetTexture("_EmissionMap", _emit);
                 m.SetColor("_EmissionColor", glow);
                 m.EnableKeyword("_EMISSION");
                 m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
