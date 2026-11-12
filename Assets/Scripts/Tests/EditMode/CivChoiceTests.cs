@@ -84,6 +84,40 @@ namespace SolarMajesty.Tests
         }
 
         [Test]
+        public void SkippedGuidedStart_DoesNotOpenTheLessonBar()
+        {
+            // StartNewGame / StartNewGameOn call this before the scene reload. The bar draws only
+            // while the tutorial is unfinished (LessonBarVisible), so marking it done keeps it down.
+            bool priorDone = DemoSettings.TutorialDone;
+            try
+            {
+                GameLoop.ArmTutorialForNewCampaign(CelestialBodyId.Earth, guidedStart: false);
+                Assert.IsTrue(DemoSettings.TutorialDone);
+                Assert.IsFalse(GameLoop.LessonBarVisible(DemoSettings.TutorialDone, 0, FirstHourTutorial.Goal),
+                    "Skip Guided Start does not show the first-hour lesson bar");
+                Assert.IsFalse(GameLoop.LessonBarVisible(DemoSettings.TutorialDone, 0, GameLoop.TutorialCompleteStep));
+
+                GameLoop.ArmTutorialForNewCampaign(CelestialBodyId.Earth, guidedStart: true);
+                Assert.IsFalse(DemoSettings.TutorialDone, "the guided Earth start still opens the lesson");
+                Assert.IsTrue(GameLoop.LessonBarVisible(DemoSettings.TutorialDone, 0, FirstHourTutorial.Goal));
+
+                GameLoop.ArmTutorialForNewCampaign(CelestialBodyId.Luna, guidedStart: true);
+                Assert.IsTrue(DemoSettings.TutorialDone, "a drop past Earth is not the Earth lesson");
+                GameLoop.ArmTutorialForNewCampaign(CelestialBodyId.Mars, guidedStart: false);
+                Assert.IsTrue(DemoSettings.TutorialDone);
+
+                // The civ choice is unchanged by the lesson: skip keeps the picked civ.
+                Assert.AreEqual(CivId.PathfinderAccord,
+                    CivChoice.ForNewGame(CivId.PathfinderAccord, CelestialBodyId.Earth, guidedStart: false));
+            }
+            finally
+            {
+                if (priorDone) DemoSettings.MarkTutorialDone();
+                else DemoSettings.ResetTutorial();
+            }
+        }
+
+        [Test]
         public void ChosenCiv_ReachesTheSave()
         {
             // The path a new campaign takes: the dialog stores the choice, the reloaded scene

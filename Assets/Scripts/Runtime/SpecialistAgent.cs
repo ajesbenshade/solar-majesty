@@ -606,6 +606,7 @@ namespace SolarMajesty
             _status = "revived";
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
+            ApplyTeamStripe();
             SetAgentStopped(false);
             BeginRecoverySafety();
         }
@@ -621,6 +622,7 @@ namespace SolarMajesty
             _status = "field_revive";
             _stoodUpAt = Time.time;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
+            ApplyTeamStripe();
             SetAgentStopped(false);
             BeginRecoverySafety();
         }
@@ -647,6 +649,16 @@ namespace SolarMajesty
         {
             if (!_incapacitated || dt <= 0f) return;
             _recoverTimer -= dt;
+        }
+
+        /// <summary>
+        /// Scout drones wear the colony's team stripe. Standing back up clears the downed tint,
+        /// which also clears the stripe's property block, so this runs again after that clear.
+        /// </summary>
+        private void ApplyTeamStripe()
+        {
+            if (data == null) return;
+            CivTeamStripe.ApplyToUnit(gameObject, data.specialistClass, _loop != null ? _loop.Civ : null);
         }
 
         public void Initialize(
@@ -693,9 +705,11 @@ namespace SolarMajesty
             _baseScale = transform.localScale;
             if (tint.HasValue) bodyTint = tint.Value;
             IndustrialArtDressing.ClearTintOverlay(gameObject);
+            ApplyTeamStripe();
             EnsureNavAgent();
 
             // Attach before rings, labels, and orbs exist so only the body mesh gets adopted.
+            // The team stripe is already a child, so it rides with the body.
             _motion = UnitMotion.Attach(gameObject, UnitMotion.KindFor(data.specialistClass), 1f);
             TerrainFollow.Attach(gameObject);
 
@@ -916,6 +930,7 @@ namespace SolarMajesty
                 _scrapRiskLogged = false;
                 _status = "recovered";
                 IndustrialArtDressing.ClearTintOverlay(gameObject);
+                ApplyTeamStripe();
                 SetAgentStopped(false);
                 BeginRecoverySafety();
                 if (!_scrapRiskLogged)

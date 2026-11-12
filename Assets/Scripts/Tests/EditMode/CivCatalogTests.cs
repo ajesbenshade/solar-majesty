@@ -173,6 +173,7 @@ namespace SolarMajesty.Tests
             Assert.IsTrue(CivCatalog.UsingDatabase);
             var exchange = CivCatalog.Get(CivId.TetherExchange);
             Assert.AreEqual("Tether Exchange", exchange.displayName, "blank text keeps the built-in name");
+            Assert.AreEqual("Ring Citadel", exchange.castleName, "blank castle name keeps the built-in home");
             Assert.AreEqual(300, new CivModifiers(exchange).Apply(CivStat.TradeIncome, 200));
             Assert.AreSame(CivCatalog.Default(CivId.None), CivCatalog.Get(CivId.None));
             Assert.AreSame(CivCatalog.Default(CivId.LumenConcord), CivCatalog.Get(CivId.LumenConcord));
@@ -188,6 +189,7 @@ namespace SolarMajesty.Tests
             {
                 var got = CivCatalog.Get(builtIn.id);
                 Assert.AreEqual(builtIn.displayName, got.displayName);
+                Assert.AreEqual(builtIn.castleName, got.castleName);
                 Assert.AreEqual(builtIn.modifiers.Count, got.modifiers.Count);
                 Assert.AreEqual(builtIn.roster.Count, got.roster.Count);
                 Assert.AreEqual(builtIn.teamSecondary, got.teamSecondary);

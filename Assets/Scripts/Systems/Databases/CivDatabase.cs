@@ -49,6 +49,7 @@ namespace SolarMajesty
                 def.displayName = CatalogDatabase.TextOr(def.displayName, builtIn != null ? builtIn.displayName : def.id.ToString());
                 def.pitch = CatalogDatabase.TextOr(def.pitch, builtIn != null ? builtIn.pitch : "");
                 def.summary = CatalogDatabase.TextOr(def.summary, builtIn != null ? builtIn.summary : "");
+                def.castleName = CatalogDatabase.TextOr(def.castleName, builtIn != null ? builtIn.castleName : "");
                 list.Add(def);
             }
             return list;

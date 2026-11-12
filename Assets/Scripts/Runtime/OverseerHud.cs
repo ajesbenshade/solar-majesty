@@ -102,6 +102,8 @@ namespace SolarMajesty
         private GUIStyle _pill;
         private GUIStyle _chipOn;
         private GUIStyle _chipOff;
+        private GUIStyle _civCardOn;
+        private GUIStyle _civCardOff;
         private GUIStyle _rowOn;
         private GUIStyle _rowOff;
         private GUIStyle _onText;
@@ -225,7 +227,7 @@ namespace SolarMajesty
             var body = _loop.BodyProfile;
             string briefing = body != null && !string.IsNullOrEmpty(body.Briefing)
                 ? body.BriefingText
-                : Loc.S("Colony Commons is down. Build anywhere on open ground.");
+                : CivHomeCopy.PlacedBrief(_loop.Civ);
             Toast(briefing, 6.5f);
         }
 
@@ -533,6 +535,12 @@ namespace SolarMajesty
 
             _chipOff = HudSkin.Button(HudSkin.Plate.Quiet, display, 11, FontStyle.Bold, TextAnchor.MiddleCenter, 4, TextPrimary);
             _chipOn = HudSkin.Button(HudSkin.Plate.Primary, display, 11, FontStyle.Bold, TextAnchor.MiddleCenter, 4, Ink);
+            // Civ cards wrap the official name onto two lines. They do not share the one-line chip
+            // padding, or the second line would sit under the team-colour bars.
+            _civCardOff = HudSkin.Button(HudSkin.Plate.Quiet, display, HudLayout.CivCardFont, FontStyle.Bold, TextAnchor.MiddleCenter, HudLayout.CivCardPadX, TextPrimary);
+            _civCardOn = HudSkin.Button(HudSkin.Plate.Primary, display, HudLayout.CivCardFont, FontStyle.Bold, TextAnchor.MiddleCenter, HudLayout.CivCardPadX, Ink);
+            PadCivCard(_civCardOff);
+            PadCivCard(_civCardOn);
             _rowOff = HudSkin.Button(HudSkin.Plate.Row, body, 11, FontStyle.Normal, TextAnchor.MiddleLeft, 8, TextPrimary);
             _rowOn = HudSkin.Button(HudSkin.Plate.RowOn, body, 11, FontStyle.Bold, TextAnchor.MiddleLeft, 8, Color.white);
             _titleButton = Label(display, 13, FontStyle.Bold, TextPrimary, TextAnchor.MiddleLeft);
@@ -3440,9 +3448,9 @@ namespace SolarMajesty
         private void DrawCampaignDialog(bool newCampaign)
         {
             // The dialog hugs what it drew last pass (wrapped copy, slot count, text size).
-            float h = Mathf.Max(newCampaign ? 548f : 360f, _dialogMeasuredH);
+            float h = Mathf.Max(newCampaign ? HudLayout.NewCampaignDialogMinH : 360f, _dialogMeasuredH);
             h = Mathf.Min(h, _sh - 20f);
-            float dw = Mathf.Min(W(460f), _sw - M * 2f);
+            float dw = HudLayout.CampaignDialogWidth(_sw);
             var rect = new Rect((_sw - dw) * 0.5f, Mathf.Max(10f, (_sh - h) * 0.5f), dw, h);
             var c = Panel(rect, newCampaign ? Loc.S("New campaign") : Loc.S("Load"));
             HudSkin.CornerTicks(rect, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
@@ -3503,6 +3511,44 @@ namespace SolarMajesty
             }
         }
 
+        private static void PadCivCard(GUIStyle style)
+        {
+            if (style == null) return;
+            style.padding = new RectOffset(
+                HudLayout.CivCardPadX, HudLayout.CivCardPadX,
+                HudLayout.CivCardPadTop, HudLayout.CivCardPadBottom);
+            style.wordWrap = true;
+            style.alignment = TextAnchor.MiddleCenter;
+        }
+
+        /// <summary>
+        /// Civ-picker chip. The official name wraps onto two lines and steps its type down until
+        /// both words fit. The full name is a tooltip only when it still had to be cut. Pitch and
+        /// perks stay in the paragraph under the cards.
+        /// </summary>
+        private bool CivNameButton(Rect r, string displayName, bool on)
+        {
+            var style = on ? _civCardOn : _civCardOff;
+            int baseSize = style.fontSize;
+            var face = HudLayout.LayoutCivCard(displayName, r.width, (line, px) =>
+            {
+                style.fontSize = px;
+                _chipMeasure.text = line;
+                return style.CalcSize(_chipMeasure).x;
+            }, baseSize);
+            style.fontSize = face.FontSize;
+            try
+            {
+                if (face.HasNameTooltip)
+                    Tooltip(r, new HudTip(null, face.NameTooltip));
+                return GUI.Button(r, face.Shown, style);
+            }
+            finally
+            {
+                style.fontSize = baseSize;
+            }
+        }
+
         /// <summary>
         /// New-campaign civ picker: one card per playable civ, then the neutral default. The cards
         /// come from the catalog, so a new civ is a data change. Returns the next free y.
@@ -3523,17 +3569,18 @@ namespace SolarMajesty
             var civs = CivCatalog.Playable();
             if (civs.Count > 0)
             {
-                const float gap = 6f;
-                float cardW = (c.width - gap * (civs.Count - 1)) / civs.Count;
-                float cardH = L(40f);
+                float gap = HudLayout.CivCardGap;
+                float cardW = HudLayout.CivCardWidth(c.width, civs.Count);
+                float cardH = L(HudLayout.CivCardHeight);
                 for (int i = 0; i < civs.Count; i++)
                 {
                     var def = civs[i];
                     var card = new Rect(c.x + i * (cardW + gap), y, cardW, cardH);
                     bool picked = def.id == _newCampaignCiv;
-                    // No hover tip: the paragraph under the cards already shows the picked civ's
-                    // pitch, and a tip over it covered that text and ran past the dialog edge.
-                    if (Btn(card, def.DisplayNameText.ToUpperInvariant(), picked ? _chipOn : _chipOff))
+                    // No pitch tip: the paragraph under the cards already shows the picked civ,
+                    // and a tip over it covered that text and ran past the dialog edge. A name
+                    // tip is offered only when the chip itself had to cut the word.
+                    if (CivNameButton(card, def.DisplayNameText, picked))
                         _newCampaignCiv = def.id;
                     // The civ's two team colours along the foot of its card.
                     float half = (card.width - 12f) * 0.5f;
